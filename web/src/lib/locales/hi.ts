@@ -1330,6 +1330,7 @@ const hi: Partial<Translations> = {
   "pairing.hide": "वाक्यांश छिपाएँ",
   "pairing.passwordLabel": "लॉगिन पासवर्ड",
   "pairing.passwordWrong": "यह लॉगिन पासवर्ड नहीं है।",
+  "pairing.needsPassword": "पहले लॉगिन पासवर्ड सेट करें। ये बारह शब्द समूह के हर इंस्टेंस के बैकअप खोलते हैं, इसलिए इन्हें बनाने, दर्ज करने या दिखाने की अनुमति सिर्फ़ उसी को है जो लॉगिन कर सकता है।",
   "pairing.membersTitle": "समूह के अन्य इंस्टेंस",
   "pairing.noMembers": "अभी तक कोई दूसरा इंस्टेंस उपलब्ध नहीं है। वाक्यांश अगले पर दर्ज करें।",
   "pairing.direct": "सीधा",

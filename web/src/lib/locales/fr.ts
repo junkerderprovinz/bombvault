@@ -2107,6 +2107,7 @@ const fr: Partial<Translations> = {
   "pairing.hide": "Masquer la phrase",
   "pairing.passwordLabel": "Mot de passe de connexion",
   "pairing.passwordWrong": "Ce n'est pas le mot de passe de connexion.",
+  "pairing.needsPassword": "Définissez d'abord un mot de passe de connexion. Les douze mots ouvrent les sauvegardes de chaque instance du groupe : seule une personne capable de se connecter peut donc les créer, les saisir ou les afficher.",
   "pairing.membersTitle": "Autres instances du groupe",
   "pairing.noMembers": "Aucune autre instance n'est encore joignable. Saisissez la phrase sur la suivante.",
   "pairing.direct": "Directe",

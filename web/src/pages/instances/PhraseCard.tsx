@@ -8,6 +8,7 @@ import { RevealInput } from "../../components/RevealInput";
 import { IconAdd } from "../../components/Sidebar";
 import { IconEye, IconSignOut } from "../../components/glyphs";
 import {
+  ApiError,
   createPhrase,
   joinGroup,
   leaveGroup,
@@ -109,7 +110,10 @@ export function PhraseCard({
     try {
       await action();
     } catch (err) {
-      push(err instanceof Error ? err.message : t("pairing.actionError"), "fail");
+      // Every route that makes, shows or takes the phrase answers 403 while no
+      // login password is set.
+      if (err instanceof ApiError && err.status === 403) push(t("pairing.needsPassword"), "fail");
+      else push(err instanceof Error ? err.message : t("pairing.actionError"), "fail");
       setShake((n) => n + 1);
     } finally {
       setBusy(false);
@@ -170,12 +174,17 @@ export function PhraseCard({
     });
 
   const shakeCls = shake ? "glim-shake" : "";
+  const locked = !group.passwordSet;
+  const lockedNote = locked && (
+    <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">{t("pairing.needsPassword")}</p>
+  );
 
   return (
     <Card title={t("pairing.phraseTitle")} hint={t("pairing.phraseHint")} hueIndex={hueIndex}>
       {!group.active ? (
         <>
           <p className="text-sm text-carbon-textSub">{t("pairing.notPaired")}</p>
+          {lockedNote}
           {!joining && (
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -185,11 +194,11 @@ export function PhraseCard({
                 glyph={<IconAdd />}
                 tone="accent"
                 onClick={() => void create()}
-                disabled={busy}
+                disabled={busy || locked}
                 busy={busy}
                 className={shakeCls}
               />
-              <Button label={t("pairing.enter")} labelKey="pairing.enter" tone="neutral" onClick={() => setJoining(true)} />
+              <Button label={t("pairing.enter")} labelKey="pairing.enter" tone="neutral" onClick={() => setJoining(true)} disabled={locked} />
             </div>
           )}
           {joining && (
@@ -235,7 +244,7 @@ export function PhraseCard({
                   labelKey="pairing.join"
                   tone="accent"
                   onClick={() => void join()}
-                  disabled={busy || typed.trim() === ""}
+                  disabled={busy || locked || typed.trim() === ""}
                   busy={busy}
                   className={shakeCls}
                 />
@@ -251,6 +260,8 @@ export function PhraseCard({
               {t("pairing.thisInstance").replace("{name}", group.name)}
             </span>
           </div>
+
+          {lockedNote}
 
           {phrase ? (
             <WordGrid phrase={phrase} t={t} />
@@ -306,8 +317,8 @@ export function PhraseCard({
                   labelKey="pairing.show"
                   glyph={<IconEye />}
                   tone="neutral"
-                  onClick={() => (group.passwordSet ? setAskPassword(true) : void show())}
-                  disabled={busy}
+                  onClick={() => setAskPassword(true)}
+                  disabled={busy || locked}
                   className={shakeCls}
                 />
               )

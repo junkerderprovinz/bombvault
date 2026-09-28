@@ -1330,6 +1330,7 @@ const hr: Partial<Translations> = {
   "pairing.hide": "Sakrij frazu",
   "pairing.passwordLabel": "Lozinka za prijavu",
   "pairing.passwordWrong": "To nije lozinka za prijavu.",
+  "pairing.needsPassword": "Najprije postavi lozinku za prijavu. Dvanaest riječi otvara sigurnosne kopije svake instance u grupi, pa ih smije stvoriti, unijeti ili prikazati samo onaj tko se može prijaviti.",
   "pairing.membersTitle": "Druge instance u skupini",
   "pairing.noMembers": "Nijedna druga instanca još nije dostupna. Unesite frazu na sljedećoj.",
   "pairing.direct": "Izravno",

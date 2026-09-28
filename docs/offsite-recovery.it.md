@@ -68,7 +68,7 @@ La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto 
 
 I Riceventi, le fonti di Prelievo, la vista Flotta e il Mesh fuori sede parlano tutti con un altro BombVault. Lo fanno come membri di un unico gruppo di associazione, e un'istanza si unisce al gruppo con dodici parole.
 
-Sulla prima istanza apri **Istanze → Associazione** e premi **Crea frase**. Appaiono dodici parole. Su ogni altra istanza apri la stessa scheda, premi **Inserisci frase** e digitale. L'ultima parola porta un checksum, così una parola digitata male o scambiata viene rilevata sul momento, e la pagina indica la parola e la sua posizione. La frase può essere mostrata di nuovo in seguito; con una password di accesso impostata, BombVault la chiede prima. **Esci dal gruppo** fa uscire di nuovo un'istanza.
+Sulla prima istanza apri **Istanze → Associazione** e premi **Crea frase**. Appaiono dodici parole. Su ogni altra istanza apri la stessa scheda, premi **Inserisci frase** e digitale. L'ultima parola porta un checksum, così una parola digitata male o scambiata viene rilevata sul momento, e la pagina indica la parola e la sua posizione. L'associazione richiede una password di accesso su ogni istanza, perché le parole aprono i backup di tutte le istanze del gruppo. La frase può essere mostrata di nuovo in seguito, dopo aver inserito quella password. **Esci dal gruppo** fa uscire di nuovo un'istanza.
 
 Chiunque conosca le parole può unirsi al gruppo, trattale quindi come una password.
 

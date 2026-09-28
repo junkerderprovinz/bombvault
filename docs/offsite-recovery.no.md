@@ -68,7 +68,7 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 
 Mottakere, hentekilder, Fleet-visningen og Mesh-ekstern snakker alle med en annen BombVault. De gjør det som medlemmer av én paringsgruppe, og en instans blir med i gruppen med tolv ord.
 
-Åpne **Instanser → Paring** på den første instansen og trykk **Opprett frase**. Tolv ord dukker opp. Åpne den samme fanen på hver av de andre instansene, trykk **Angi frase** og tast dem inn. Det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp med det samme, og siden navngir ordet og plasseringen dets. Frasen kan vises igjen senere; med et innloggingspassord satt, spør BombVault om det først. **Forlat gruppen** tar en instans ut igjen.
+Åpne **Instanser → Paring** på den første instansen og trykk **Opprett frase**. Tolv ord dukker opp. Åpne den samme fanen på hver av de andre instansene, trykk **Angi frase** og tast dem inn. Det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp med det samme, og siden navngir ordet og plasseringen dets. Paring krever et innloggingspassord på hver instans, fordi ordene åpner sikkerhetskopiene til alle instansene i gruppen. Frasen kan vises igjen senere når du har skrevet inn det passordet. **Forlat gruppen** tar en instans ut igjen.
 
 Alle som kjenner ordene kan bli med i gruppen, så behandle dem som et passord.
 

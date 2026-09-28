@@ -2107,6 +2107,7 @@ const sv: Partial<Translations> = {
   "pairing.hide": "Dölj fras",
   "pairing.passwordLabel": "Inloggningslösenord",
   "pairing.passwordWrong": "Det är inte inloggningslösenordet.",
+  "pairing.needsPassword": "Ange ett inloggningslösenord först. De tolv orden öppnar säkerhetskopiorna för varje instans i gruppen, så bara den som kan logga in får skapa, skriva in eller visa dem.",
   "pairing.membersTitle": "Andra instanser i gruppen",
   "pairing.noMembers": "Ingen annan instans går att nå än. Ange frasen på nästa.",
   "pairing.direct": "Direkt",

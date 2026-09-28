@@ -68,7 +68,7 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracaln
 
 Odbiorcy, źródła pobierania, widok Fleet i Mesh poza siedzibą, wszystkie rozmawiają z inną instancją BombVault. Robią to jako członkowie jednej grupy parowania, a instancja dołącza do grupy dwunastoma słowami.
 
-Na pierwszej instancji otwórz **Instancje → Parowanie** i naciśnij **Utwórz frazę**. Pojawi się dwanaście słów. Na każdej kolejnej instancji otwórz tę samą zakładkę, naciśnij **Wpisz frazę** i wpisz je. Ostatnie słowo niesie sumę kontrolną, więc źle wpisane albo zamienione miejscami słowo od razu rzuca się w oczy, a strona podaje słowo i jego miejsce. Frazę można później wyświetlić ponownie; jeśli ustawione jest hasło logowania, BombVault najpierw o nie zapyta. **Opuść grupę** wyprowadza instancję z powrotem.
+Na pierwszej instancji otwórz **Instancje → Parowanie** i naciśnij **Utwórz frazę**. Pojawi się dwanaście słów. Na każdej kolejnej instancji otwórz tę samą zakładkę, naciśnij **Wpisz frazę** i wpisz je. Ostatnie słowo niesie sumę kontrolną, więc źle wpisane albo zamienione miejscami słowo od razu rzuca się w oczy, a strona podaje słowo i jego miejsce. Parowanie wymaga hasła logowania na każdej instancji, bo słowa otwierają kopie zapasowe wszystkich instancji w grupie. Frazę można później wyświetlić ponownie po wpisaniu tego hasła. **Opuść grupę** wyprowadza instancję z powrotem.
 
 Każdy, kto zna słowa, może dołączyć do grupy, więc traktuj je jak hasło.
 

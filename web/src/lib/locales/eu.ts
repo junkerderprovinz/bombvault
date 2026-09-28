@@ -1330,6 +1330,7 @@ const eu: Partial<Translations> = {
   "pairing.hide": "Ezkutatu esaldia",
   "pairing.passwordLabel": "Saioa hasteko pasahitza",
   "pairing.passwordWrong": "Hori ez da saioa hasteko pasahitza.",
+  "pairing.needsPassword": "Ezarri lehenik saioa hasteko pasahitz bat. Hamabi hitzek taldeko instantzia guztien babeskopiak irekitzen dituzte, beraz saioa has dezakeenak bakarrik sor, sar edo erakuts ditzake.",
   "pairing.membersTitle": "Taldeko beste instantziak",
   "pairing.noMembers": "Oraindik ez dago beste instantziarik eskuragarri. Sartu esaldia hurrengoan.",
   "pairing.direct": "Zuzenean",

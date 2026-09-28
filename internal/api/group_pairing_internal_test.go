@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -38,15 +40,20 @@ func (e *passwordEngine) RepoOpens(_ context.Context, _ string, m restic.Mode) b
 	return m.Encrypted && m.Password == e.want
 }
 
-// instance is one BombVault in a pairing test: its own store, APP_KEY and
-// router.
+// testPassword is the login password every instance in these tests has,
+// since pairing needs one.
+const testPassword = "hunter2"
+
+// instance is one BombVault in a pairing test: its own store, APP_KEY,
+// router and a session on it.
 type instance struct {
-	appKey string
-	st     *store.Repo
-	svc    *Service
-	h      *Handler
-	router http.Handler
-	engine *passwordEngine
+	appKey  string
+	session string
+	st      *store.Repo
+	svc     *Service
+	h       *Handler
+	router  http.Handler
+	engine  *passwordEngine
 }
 
 func newInstance(t *testing.T, name, appKey string) *instance {
@@ -60,8 +67,13 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 		t.Fatal(err)
 	}
 	st := store.New(db)
+	hash, err := secret.HashPassword(appKey, testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, err := st.MutateSettings(func(s *store.Settings) error {
 		s.InstanceName = name
+		s.AuthPasswordHash = hash
 		s.FleetEnabled = true
 		s.ContainersOffsite = ""
 		return nil
@@ -73,11 +85,12 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 	svc := NewService(cfg, st, nil, nil, eng)
 	t.Cleanup(svc.StopGroup)
 	h := NewHandler(cfg, st, nil, svc, nil, nil)
-	return &instance{appKey: appKey, st: st, svc: svc, h: h, router: h.Router(), engine: eng}
+	session := secret.NewSessionToken(appKey, hash, "", time.Hour)
+	return &instance{appKey: appKey, session: session, st: st, svc: svc, h: h, router: h.Router(), engine: eng}
 }
 
 // do sends one JSON request through the instance's full router, gates
-// included, and decodes the answer.
+// included, with the instance's session, and decodes the answer.
 func (in *instance) do(t *testing.T, method, path string, body any) (int, map[string]any) {
 	t.Helper()
 	var rd *bytes.Reader
@@ -92,6 +105,9 @@ func (in *instance) do(t *testing.T, method, path string, body any) (int, map[st
 	}
 	r := httptest.NewRequest(method, path, rd)
 	r.Header.Set("Content-Type", "application/json")
+	if in.session != "" {
+		r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: in.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+	}
 	w := httptest.NewRecorder()
 	in.router.ServeHTTP(w, r)
 	var out map[string]any
@@ -306,39 +322,59 @@ func TestJoiningWithAMistypedWordNamesTheWordAndItsPlace(t *testing.T) {
 	}
 }
 
-func TestShowingThePhraseAgainNeedsThePasswordWhenOneIsSet(t *testing.T) {
+func TestShowingThePhraseAgainNeedsThePassword(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	_, created := in.do(t, http.MethodPost, "/api/group/phrase", nil)
 	phrase, _ := created["phrase"].(string)
+	if len(strings.Fields(phrase)) != 12 {
+		t.Fatalf("create: %v", created)
+	}
+	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{"password": "wrong"}); code != http.StatusOK || out["code"] != "passwordWrong" || out["phrase"] != nil {
+		t.Fatalf("a session with the wrong password got %d %v", code, out)
+	}
+	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{"password": testPassword}); code != http.StatusOK || out["phrase"] != phrase {
+		t.Fatalf("the right password got %d %v", code, out)
+	}
+}
 
-	if _, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{}); out["phrase"] != phrase {
-		t.Fatalf("without a login password the phrase shows again: %v", out)
+// Without a login password anyone on the network could use the page, and the
+// phrase opens every member's repositories, so it is neither made, shown nor
+// taken.
+func TestWithoutALoginPasswordThePhraseIsNeitherMadeShownNorTaken(t *testing.T) {
+	donor := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	_, created := donor.do(t, http.MethodPost, "/api/group/phrase", nil)
+	phrase, _ := created["phrase"].(string)
+
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	in.session = ""
+	for _, try := range []struct {
+		path string
+		body any
+	}{
+		{"/api/group/phrase", nil},
+		{"/api/group/join", map[string]any{"phrase": phrase}},
+	} {
+		code, out := in.do(t, http.MethodPost, try.path, try.body)
+		if code != http.StatusForbidden || out["phrase"] != nil || !strings.Contains(fmt.Sprint(out["error"]), "set a login password") {
+			t.Errorf("POST %s without a login password = %d %v, want the 403 refusal", try.path, code, out)
+		}
+	}
+	if in.svc.pairing().Active() {
+		t.Fatal("an instance without a login password was paired")
 	}
 
-	hash, err := secret.HashPassword(in.appKey, "hunter2")
+	sec, err := seedphrase.Decode(phrase)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = hash; return nil }); err != nil {
+	if err := in.h.storeGroupSecret(sec); err != nil {
 		t.Fatal(err)
 	}
-	token := secret.NewSessionToken(in.appKey, hash, "", time.Hour)
-	show := func(password string) (int, map[string]any) {
-		b, _ := json.Marshal(map[string]any{"password": password})
-		r := httptest.NewRequest(http.MethodPost, "/api/group/phrase/show", bytes.NewReader(b))
-		r.Header.Set("Content-Type", "application/json")
-		r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: token}) //nolint:gosec // G124: a cookie on a test request, never set by a server
-		w := httptest.NewRecorder()
-		in.router.ServeHTTP(w, r)
-		var out map[string]any
-		_ = json.Unmarshal(w.Body.Bytes(), &out)
-		return w.Code, out
-	}
-	if code, out := show("wrong"); code != http.StatusOK || out["code"] != "passwordWrong" || out["phrase"] != nil {
-		t.Fatalf("a session with the wrong password got %d %v", code, out)
-	}
-	if code, out := show("hunter2"); code != http.StatusOK || out["phrase"] != phrase {
-		t.Fatalf("the right password got %d %v", code, out)
+	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{}); code != http.StatusForbidden || out["phrase"] != nil {
+		t.Fatalf("showing the phrase of a paired instance whose password was removed = %d %v, want the 403 refusal", code, out)
 	}
 }
 

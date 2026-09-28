@@ -1330,6 +1330,7 @@ const sk: Partial<Translations> = {
   "pairing.hide": "Skryť frázu",
   "pairing.passwordLabel": "Prihlasovacie heslo",
   "pairing.passwordWrong": "To nie je prihlasovacie heslo.",
+  "pairing.needsPassword": "Najprv nastav prihlasovacie heslo. Dvanásť slov otvára zálohy každej inštancie v skupine, preto ich smie vytvoriť, zadať alebo zobraziť len ten, kto sa vie prihlásiť.",
   "pairing.membersTitle": "Ostatné inštancie v skupine",
   "pairing.noMembers": "Zatiaľ nie je dostupná žiadna ďalšia inštancia. Zadajte frázu na ďalšej.",
   "pairing.direct": "Priamo",

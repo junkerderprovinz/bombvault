@@ -68,7 +68,7 @@ BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obno
 
 Příjemci, zdroje stahování, přehled Fleet i Mesh mimo lokalitu, to všechno mluví s jiným BombVaultem. Dělají to jako členové jedné párovací skupiny a instance do skupiny vstupuje dvanácti slovy.
 
-Na první instanci otevřete **Instance → Párování** a stiskněte **Vytvořit frázi**. Objeví se dvanáct slov. Na každé další instanci otevřete stejnou záložku, stiskněte **Zadat frázi** a napište je. Poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo odhalí hned na místě a stránka pojmenuje slovo i jeho pozici. Frázi lze později znovu zobrazit; je-li nastaveno přihlašovací heslo, BombVault se na něj nejdřív zeptá. **Opustit skupinu** instanci ze skupiny zase vyřadí.
+Na první instanci otevřete **Instance → Párování** a stiskněte **Vytvořit frázi**. Objeví se dvanáct slov. Na každé další instanci otevřete stejnou záložku, stiskněte **Zadat frázi** a napište je. Poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo odhalí hned na místě a stránka pojmenuje slovo i jeho pozici. Párování vyžaduje na každé instanci přihlašovací heslo, protože slova otevírají zálohy všech instancí ve skupině. Frázi lze později znovu zobrazit po zadání tohoto hesla. **Opustit skupinu** instanci ze skupiny zase vyřadí.
 
 Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte jako s heslem.
 

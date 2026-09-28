@@ -2099,6 +2099,7 @@ const vi: Partial<Translations> = {
   "pairing.hide": "Ẩn cụm từ",
   "pairing.passwordLabel": "Mật khẩu đăng nhập",
   "pairing.passwordWrong": "Đó không phải mật khẩu đăng nhập.",
+  "pairing.needsPassword": "Hãy đặt mật khẩu đăng nhập trước. Mười hai từ này mở được bản sao lưu của mọi phiên bản trong nhóm, nên chỉ người đăng nhập được mới được tạo, nhập hoặc hiển thị chúng.",
   "pairing.membersTitle": "Các phiên bản khác trong nhóm",
   "pairing.noMembers": "Chưa có phiên bản nào khác có thể kết nối được. Nhập cụm từ trên phiên bản tiếp theo.",
   "pairing.direct": "Trực tiếp",

@@ -1330,6 +1330,7 @@ const ca: Partial<Translations> = {
   "pairing.hide": "Amaga la frase",
   "pairing.passwordLabel": "Contrasenya d'accés",
   "pairing.passwordWrong": "Aquesta no és la contrasenya d'accés.",
+  "pairing.needsPassword": "Estableix primer una contrasenya d'accés. Les dotze paraules obren les còpies de seguretat de totes les instàncies del grup, així que només qui pot iniciar la sessió les pot crear, introduir o mostrar.",
   "pairing.membersTitle": "Altres instàncies del grup",
   "pairing.noMembers": "Encara no hi ha cap altra instància accessible. Introdueix la frase a la següent.",
   "pairing.direct": "Directa",

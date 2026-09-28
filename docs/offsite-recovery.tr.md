@@ -68,7 +68,7 @@ Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı ba
 
 Alıcılar, çekme kaynakları, Filo görünümü ve Mesh site dışı, hepsi başka bir BombVault ile konuşur. Bunu tek bir eşleştirme grubunun üyeleri olarak yaparlar ve bir örnek gruba on iki kelimeyle katılır.
 
-İlk örnekte **Örnekler → Eşleştirme** sekmesini açın ve **İfade oluştur**'a basın. On iki kelime görünür. Diğer her örnekte aynı sekmeyi açın, **İfadeyi gir**'e basın ve kelimeleri yazın. Son kelime bir sağlama toplamı taşır, böylece yanlış yazılan ya da yer değiştiren bir kelime anında yakalanır ve sayfa o kelimeyi ve konumunu belirtir. İfade daha sonra tekrar gösterilebilir; bir oturum açma parolası ayarlıysa BombVault önce onu ister. **Gruptan ayrıl**, bir örneği gruptan tekrar çıkarır.
+İlk örnekte **Örnekler → Eşleştirme** sekmesini açın ve **İfade oluştur**'a basın. On iki kelime görünür. Diğer her örnekte aynı sekmeyi açın, **İfadeyi gir**'e basın ve kelimeleri yazın. Son kelime bir sağlama toplamı taşır, böylece yanlış yazılan ya da yer değiştiren bir kelime anında yakalanır ve sayfa o kelimeyi ve konumunu belirtir. Eşleştirme her örnekte bir oturum açma parolası gerektirir, çünkü kelimeler gruptaki tüm örneklerin yedeklerini açar. İfade daha sonra, bu parola girildikten sonra tekrar gösterilebilir. **Gruptan ayrıl**, bir örneği gruptan tekrar çıkarır.
 
 Kelimeleri bilen herkes gruba katılabilir, bu yüzden onlara bir parola gibi davranın.
 

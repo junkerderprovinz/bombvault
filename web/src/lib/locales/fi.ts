@@ -2107,6 +2107,7 @@ const fi: Partial<Translations> = {
   "pairing.hide": "Piilota lause",
   "pairing.passwordLabel": "Kirjautumissalasana",
   "pairing.passwordWrong": "Tuo ei ole kirjautumissalasana.",
+  "pairing.needsPassword": "Aseta ensin kirjautumissalasana. Kaksitoista sanaa avaavat ryhmän jokaisen instanssin varmuuskopiot, joten vain sisäänkirjautumaan pystyvä saa luoda, syöttää tai näyttää ne.",
   "pairing.membersTitle": "Ryhmän muut instanssit",
   "pairing.noMembers": "Yhtään muuta instanssia ei ole vielä tavoitettavissa. Syötä lause seuraavaan.",
   "pairing.direct": "Suora",

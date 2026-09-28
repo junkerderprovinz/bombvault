@@ -2105,6 +2105,7 @@ const es: Partial<Translations> = {
   "pairing.hide": "Ocultar frase",
   "pairing.passwordLabel": "Contraseña de acceso",
   "pairing.passwordWrong": "Esa no es la contraseña de acceso.",
+  "pairing.needsPassword": "Establece primero una contraseña de acceso. Las doce palabras abren las copias de seguridad de todas las instancias del grupo, así que solo quien puede iniciar sesión puede crearlas, introducirlas o mostrarlas.",
   "pairing.membersTitle": "Otras instancias del grupo",
   "pairing.noMembers": "Aún no hay ninguna otra instancia accesible. Introduce la frase en la siguiente.",
   "pairing.direct": "Directa",

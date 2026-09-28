@@ -2099,6 +2099,7 @@ const zh: Partial<Translations> = {
   "pairing.hide": "隐藏口令",
   "pairing.passwordLabel": "登录密码",
   "pairing.passwordWrong": "这不是登录密码。",
+  "pairing.needsPassword": "请先设置登录密码。这十二个单词能打开组内每个实例的备份，所以只有能登录的人才可以创建、输入或显示它们。",
   "pairing.membersTitle": "组内的其他实例",
   "pairing.noMembers": "目前还没有其他实例可以连通。请在下一台上输入口令。",
   "pairing.direct": "直连",

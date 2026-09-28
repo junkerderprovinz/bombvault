@@ -1330,6 +1330,7 @@ const lv: Partial<Translations> = {
   "pairing.hide": "Slēpt frāzi",
   "pairing.passwordLabel": "Pieteikšanās parole",
   "pairing.passwordWrong": "Tā nav pieteikšanās parole.",
+  "pairing.needsPassword": "Vispirms iestati pieteikšanās paroli. Divpadsmit vārdi atver katras grupas instances rezerves kopijas, tāpēc tos izveidot, ievadīt vai parādīt drīkst tikai tas, kurš var pieteikties.",
   "pairing.membersTitle": "Citas instances grupā",
   "pairing.noMembers": "Neviena cita instance vēl nav sasniedzama. Ievadiet frāzi nākamajā.",
   "pairing.direct": "Tieši",

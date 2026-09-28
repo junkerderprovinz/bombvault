@@ -2107,6 +2107,7 @@ const he: Partial<Translations> = {
   "pairing.hide": "הסתר ביטוי",
   "pairing.passwordLabel": "סיסמת כניסה",
   "pairing.passwordWrong": "זו אינה סיסמת הכניסה.",
+  "pairing.needsPassword": "הגדר תחילה סיסמת כניסה. שתים עשרה המילים פותחות את הגיבויים של כל מופע בקבוצה, ולכן רק מי שיכול להתחבר רשאי ליצור, להזין או להציג אותן.",
   "pairing.membersTitle": "מופעים אחרים בקבוצה",
   "pairing.noMembers": "אין עדיין מופע אחר נגיש. הזן את הביטוי בבא בתור.",
   "pairing.direct": "ישיר",

@@ -2104,6 +2104,7 @@ const nl: Partial<Translations> = {
   "pairing.hide": "Frase verbergen",
   "pairing.passwordLabel": "Inlogwachtwoord",
   "pairing.passwordWrong": "Dat is niet het inlogwachtwoord.",
+  "pairing.needsPassword": "Stel eerst een inlogwachtwoord in. De twaalf woorden openen de back-ups van elke instantie in de groep, dus alleen wie kan inloggen mag ze aanmaken, invoeren of tonen.",
   "pairing.membersTitle": "Andere instanties in de groep",
   "pairing.noMembers": "Nog geen andere instantie bereikbaar. Voer de frase in op de volgende.",
   "pairing.direct": "Rechtstreeks",

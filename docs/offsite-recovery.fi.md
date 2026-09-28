@@ -68,7 +68,7 @@ BombVault tarjoaa kaksi tasoa todisteita siitä, että varmuuskopiosi ovat tosia
 
 Vastaanottajat, noutolähteet, Fleet-näkymä ja Mesh-etäsijainti kaikki puhuvat toiselle BombVaultille. Ne tekevät sen yhden pariliitosryhmän jäseninä, ja instanssi liittyy ryhmään kahdellatoista sanalla.
 
-Avaa ensimmäisessä instanssissa **Instanssit → Pariliitos** ja paina **Luo lause**. Näkyviin tulee kaksitoista sanaa. Avaa jokaisessa muussa instanssissa sama välilehti, paina **Anna lause** ja kirjoita ne. Viimeinen sana sisältää tarkistussumman, joten väärin kirjoitettu tai vaihtunut sana huomataan heti, ja sivu kertoo sanan ja sen sijainnin. Lauseen voi näyttää myöhemmin uudelleen; jos kirjautumissalasana on asetettu, BombVault kysyy sitä ensin. **Poistu ryhmästä** ottaa instanssin taas pois.
+Avaa ensimmäisessä instanssissa **Instanssit → Pariliitos** ja paina **Luo lause**. Näkyviin tulee kaksitoista sanaa. Avaa jokaisessa muussa instanssissa sama välilehti, paina **Anna lause** ja kirjoita ne. Viimeinen sana sisältää tarkistussumman, joten väärin kirjoitettu tai vaihtunut sana huomataan heti, ja sivu kertoo sanan ja sen sijainnin. Pariliitos vaatii kirjautumissalasanan jokaisessa instanssissa, koska sanat avaavat ryhmän jokaisen instanssin varmuuskopiot. Lauseen voi näyttää myöhemmin uudelleen, kun olet syöttänyt tämän salasanan. **Poistu ryhmästä** ottaa instanssin taas pois.
 
 Kuka tahansa sanat tietävä voi liittyä ryhmään, joten kohtele niitä kuin salasanaa.
 

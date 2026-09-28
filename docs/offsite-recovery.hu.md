@@ -68,7 +68,7 @@ A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tarto
 
 A Fogadók, a lehívási források, a Flotta nézet és a Mesh telephelyen kívüli mind egy másik BombVaulttal beszélnek. Ezt egyetlen párosítási csoport tagjaiként teszik, és egy példány tizenkét szóval csatlakozik a csoporthoz.
 
-Az első példányon nyisd meg a **Példányok → Párosítás** fület, és nyomd meg a **Jelmondat létrehozása** gombot. Megjelenik tizenkét szó. Minden további példányon nyisd meg ugyanezt a fület, nyomd meg a **Jelmondat megadása** gombot, és gépeld be őket. Az utolsó szó egy ellenőrző összeget hordoz, így egy elgépelt vagy felcserélt szó azonnal kiderül, és az oldal megnevezi a szót és a helyét. A jelmondat később újra megjeleníthető; ha be van állítva bejelentkezési jelszó, a BombVault először azt kéri. A **Kilépés a csoportból** ismét kivesz egy példányt.
+Az első példányon nyisd meg a **Példányok → Párosítás** fület, és nyomd meg a **Jelmondat létrehozása** gombot. Megjelenik tizenkét szó. Minden további példányon nyisd meg ugyanezt a fület, nyomd meg a **Jelmondat megadása** gombot, és gépeld be őket. Az utolsó szó egy ellenőrző összeget hordoz, így egy elgépelt vagy felcserélt szó azonnal kiderül, és az oldal megnevezi a szót és a helyét. A párosításhoz minden példányon bejelentkezési jelszó kell, mert a szavak a csoport minden példányának mentéseit megnyitják. A jelmondat később újra megjeleníthető, miután beírtad ezt a jelszót. A **Kilépés a csoportból** ismét kivesz egy példányt.
 
 Bárki, aki ismeri a szavakat, csatlakozhat a csoporthoz, ezért kezeld őket jelszóként.
 

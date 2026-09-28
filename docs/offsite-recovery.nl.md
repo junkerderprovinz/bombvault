@@ -68,7 +68,7 @@ De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een g
 
 Ontvangers, ophaalbronnen, het Fleet-overzicht en Mesh-off-site praten allemaal met een andere BombVault. Dat doen ze als leden van één koppelingsgroep, en een instantie treedt tot de groep toe met twaalf woorden.
 
-Open op de eerste instantie **Instanties → Koppeling** en druk op **Zin aanmaken**. Er verschijnen twaalf woorden. Open op elke andere instantie hetzelfde tabblad, druk op **Zin invoeren** en typ ze in. Het laatste woord bevat een checksum, zodat een verkeerd getypt of verwisseld woord meteen wordt opgemerkt, en de pagina noemt het woord en zijn plaats. De zin kan later opnieuw worden getoond; is er een inlogwachtwoord ingesteld, dan vraagt BombVault daar eerst om. Met **Groep verlaten** haal je een instantie er weer uit.
+Open op de eerste instantie **Instanties → Koppeling** en druk op **Zin aanmaken**. Er verschijnen twaalf woorden. Open op elke andere instantie hetzelfde tabblad, druk op **Zin invoeren** en typ ze in. Het laatste woord bevat een checksum, zodat een verkeerd getypt of verwisseld woord meteen wordt opgemerkt, en de pagina noemt het woord en zijn plaats. Koppelen vraagt op elke instantie een inlogwachtwoord, omdat de woorden de back-ups van alle instanties in de groep openen. De zin kan later opnieuw worden getoond nadat je dat wachtwoord hebt ingevoerd. Met **Groep verlaten** haal je een instantie er weer uit.
 
 Iedereen die de woorden kent kan tot de groep toetreden, behandel ze dus als een wachtwoord.
 

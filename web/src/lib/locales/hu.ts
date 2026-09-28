@@ -2110,6 +2110,7 @@ const hu: Partial<Translations> = {
   "pairing.hide": "Jelmondat elrejtése",
   "pairing.passwordLabel": "Bejelentkezési jelszó",
   "pairing.passwordWrong": "Ez nem a bejelentkezési jelszó.",
+  "pairing.needsPassword": "Előbb állíts be belépési jelszót. A tizenkét szó a csoport minden példányának mentéseit megnyitja, ezért csak az hozhatja létre, írhatja be vagy jelenítheti meg, aki be tud lépni.",
   "pairing.membersTitle": "A csoport többi példánya",
   "pairing.noMembers": "Még egyetlen másik példány sem érhető el. Add meg a jelmondatot a következőn.",
   "pairing.direct": "Közvetlen",

@@ -1324,6 +1324,7 @@ const sl: Partial<Translations> = {
   "pairing.hide": "Skrij frazo",
   "pairing.passwordLabel": "Geslo za prijavo",
   "pairing.passwordWrong": "To ni geslo za prijavo.",
+  "pairing.needsPassword": "Najprej nastavi prijavno geslo. Dvanajst besed odpre varnostne kopije vsake instance v skupini, zato jih sme ustvariti, vnesti ali prikazati le nekdo, ki se lahko prijavi.",
   "pairing.membersTitle": "Druge instance v skupini",
   "pairing.noMembers": "Še nobena druga instanca ni dosegljiva. Vnesi frazo na naslednji.",
   "pairing.direct": "Neposredno",

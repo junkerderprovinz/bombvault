@@ -68,7 +68,7 @@ BombVault oferă două niveluri de dovadă că backupurile tale sunt efectiv res
 
 Receptorii, sursele de preluare, vizualizarea Fleet și Mesh off-site vorbesc toate cu un alt BombVault. O fac ca membri ai unui singur grup de împerechere, iar o instanță se alătură grupului cu douăsprezece cuvinte.
 
-Pe prima instanță, deschide **Instanțe → Împerechere** și apasă **Creează fraza**. Apar douăsprezece cuvinte. Pe fiecare altă instanță, deschide aceeași filă, apasă **Introdu fraza** și tastează-le. Ultimul cuvânt poartă o sumă de control, așa că un cuvânt scris greșit sau schimbat între ele este prins pe loc, iar pagina numește cuvântul și poziția lui. Fraza poate fi afișată din nou mai târziu; cu o parolă de autentificare setată, BombVault o cere mai întâi. **Părăsește grupul** scoate o instanță din nou afară.
+Pe prima instanță, deschide **Instanțe → Împerechere** și apasă **Creează fraza**. Apar douăsprezece cuvinte. Pe fiecare altă instanță, deschide aceeași filă, apasă **Introdu fraza** și tastează-le. Ultimul cuvânt poartă o sumă de control, așa că un cuvânt scris greșit sau schimbat între ele este prins pe loc, iar pagina numește cuvântul și poziția lui. Împerecherea cere o parolă de autentificare pe fiecare instanță, pentru că cuvintele deschid copiile de rezervă ale tuturor instanțelor din grup. Fraza poate fi afișată din nou mai târziu, după ce introduci acea parolă. **Părăsește grupul** scoate o instanță din nou afară.
 
 Oricine cunoaște cuvintele se poate alătura grupului, așa că tratează-le ca pe o parolă.
 

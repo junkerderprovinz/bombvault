@@ -2107,6 +2107,7 @@ const da: Partial<Translations> = {
   "pairing.hide": "Skjul sætning",
   "pairing.passwordLabel": "Login-adgangskode",
   "pairing.passwordWrong": "Det er ikke login-adgangskoden.",
+  "pairing.needsPassword": "Sæt først en adgangskode til login. De tolv ord åbner backupperne på alle instanser i gruppen, så kun den, der kan logge ind, må oprette, indtaste eller vise dem.",
   "pairing.membersTitle": "Andre instanser i gruppen",
   "pairing.noMembers": "Ingen anden instans er tilgængelig endnu. Indtast sætningen på den næste.",
   "pairing.direct": "Direkte",

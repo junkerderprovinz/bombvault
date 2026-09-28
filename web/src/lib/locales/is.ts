@@ -1330,6 +1330,7 @@ const is: Partial<Translations> = {
   "pairing.hide": "Fela setningu",
   "pairing.passwordLabel": "Innskráningarlykilorð",
   "pairing.passwordWrong": "Þetta er ekki innskráningarlykilorðið.",
+  "pairing.needsPassword": "Settu fyrst innskráningarlykilorð. Orðin tólf opna afrit allra tilvika í hópnum, svo aðeins sá sem getur skráð sig inn má búa þau til, slá þau inn eða sýna þau.",
   "pairing.membersTitle": "Önnur tilvik í hópnum",
   "pairing.noMembers": "Ekkert annað tilvik er aðgengilegt ennþá. Sláðu setninguna inn á því næsta.",
   "pairing.direct": "Beint",

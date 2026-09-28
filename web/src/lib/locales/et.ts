@@ -1330,6 +1330,7 @@ const et: Partial<Translations> = {
   "pairing.hide": "Peida fraas",
   "pairing.passwordLabel": "Sisselogimisparool",
   "pairing.passwordWrong": "See ei ole sisselogimisparool.",
+  "pairing.needsPassword": "Määra kõigepealt sisselogimisparool. Kaksteist sõna avavad grupi iga eksemplari varukoopiad, seega tohib neid luua, sisestada või näidata ainult see, kes saab sisse logida.",
   "pairing.membersTitle": "Teised grupi eksemplarid",
   "pairing.noMembers": "Ühtegi teist eksemplari pole veel saadaval. Sisesta fraas järgmisesse.",
   "pairing.direct": "Otse",

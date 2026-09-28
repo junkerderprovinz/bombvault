@@ -17,7 +17,7 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
     active: true,
     instanceId: "self",
     name: "cellar",
-    passwordSet: false,
+    passwordSet: true,
     members: [{ id: "m1", name: "attic", version: "v9.2.0", direct: false, relay: true }],
     relay: {
       mode: "project",
@@ -151,5 +151,23 @@ describe("phrase card", () => {
     await renderTab();
     expect(screen.getByText("attic")).not.toBeNull();
     expect(screen.getAllByText(en["pairing.viaRelay"]).length).toBeGreaterThan(0);
+  });
+});
+
+describe("phrase card without a login password", () => {
+  it("says to set one and offers nothing that makes or takes a phrase", async () => {
+    group = makeGroup({ active: false, members: [], passwordSet: false });
+    await renderTab();
+    expect(screen.getByText(en["pairing.needsPassword"])).not.toBeNull();
+    for (const key of ["pairing.create", "pairing.enter"] as const) {
+      expect((screen.getByRole("button", { name: en[key] }) as HTMLButtonElement).disabled).toBe(true);
+    }
+  });
+
+  it("does not show the phrase of a paired instance whose password was removed", async () => {
+    group = makeGroup({ passwordSet: false });
+    await renderTab();
+    expect(screen.getByText(en["pairing.needsPassword"])).not.toBeNull();
+    expect((screen.getByRole("button", { name: en["pairing.show"] }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

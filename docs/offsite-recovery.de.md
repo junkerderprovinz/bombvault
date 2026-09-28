@@ -68,7 +68,7 @@ Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gel
 
 Empfänger, Holen, die Fleet-Ansicht und Mesh-Off-site sprechen alle mit einem anderen BombVault. Das tun sie als Mitglieder einer Kopplungsgruppe, und in die Gruppe kommt eine Instanz mit zwölf Wörtern.
 
-Öffne auf der ersten Instanz **Instanzen → Kopplung** und drück auf **Phrase erstellen**. Es erscheinen zwölf Wörter. Öffne auf jeder weiteren Instanz denselben Reiter, drück auf **Phrase eingeben** und tipp sie ein. Das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt sofort auf, und die Seite nennt das Wort und seine Stelle. Die Phrase lässt sich später wieder anzeigen; ist ein Anmeldepasswort gesetzt, fragt BombVault vorher danach. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
+Öffne auf der ersten Instanz **Instanzen → Kopplung** und drück auf **Phrase erstellen**. Es erscheinen zwölf Wörter. Öffne auf jeder weiteren Instanz denselben Reiter, drück auf **Phrase eingeben** und tipp sie ein. Das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt sofort auf, und die Seite nennt das Wort und seine Stelle. Koppeln geht nur mit einem Anmeldepasswort auf jeder Instanz, weil die Wörter die Backups aller Instanzen der Gruppe öffnen. Die Phrase lässt sich später wieder anzeigen, sobald du dieses Passwort eingibst. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
 
 Wer die Wörter kennt, kommt in die Gruppe. Behandle sie also wie ein Passwort.
 

@@ -76,7 +76,7 @@ The **ransomware-protection scorecard** on the Dashboard rolls this up into a gr
 
 Receivers, pull sources, the Fleet view and Mesh off-site all talk to another BombVault. They do it as members of one pairing group, and an instance joins the group with twelve words.
 
-On the first instance open **Instances → Pairing** and press **Create phrase**. Twelve words appear. On every other instance open the same tab, press **Enter phrase** and type them. The last word carries a checksum, so a mistyped or swapped word is caught on the spot, and the page names the word and its position. The phrase can be shown again later; with a login password set, BombVault asks for it first. **Leave group** takes an instance out again.
+On the first instance open **Instances → Pairing** and press **Create phrase**. Twelve words appear. On every other instance open the same tab, press **Enter phrase** and type them. The last word carries a checksum, so a mistyped or swapped word is caught on the spot, and the page names the word and its position. Pairing needs a login password on each instance, because the words open the backups of every instance in the group. The phrase can be shown again later once you enter that password. **Leave group** takes an instance out again.
 
 Anyone who knows the words can join the group, so treat them like a password.
 

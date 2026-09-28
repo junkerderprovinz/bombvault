@@ -2099,6 +2099,7 @@ const ja: Partial<Translations> = {
   "pairing.hide": "フレーズを非表示",
   "pairing.passwordLabel": "ログインパスワード",
   "pairing.passwordWrong": "それはログインパスワードではありません。",
+  "pairing.needsPassword": "先にログインパスワードを設定してください。12 個の単語でグループ内のすべてのインスタンスのバックアップを開けるため、作成・入力・表示はログインできる人だけに限られます。",
   "pairing.membersTitle": "グループ内の他のインスタンス",
   "pairing.noMembers": "まだ到達可能な他のインスタンスがありません。次のインスタンスでフレーズを入力してください。",
   "pairing.direct": "直接",

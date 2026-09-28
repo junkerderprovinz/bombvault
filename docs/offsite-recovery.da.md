@@ -68,7 +68,7 @@ BombVault tilbyder to niveauer af bevis for, at dine sikkerhedskopier faktisk ka
 
 Modtagere, hentekilder, Fleet-visningen og Mesh-off-site taler alle med en anden BombVault. De gør det som medlemmer af én parringsgruppe, og en instans kommer med i gruppen med tolv ord.
 
-Åbn **Instanser → Parring** på den første instans, og tryk på **Opret sætning**. Der dukker tolv ord op. Åbn den samme fane på hver af de andre instanser, tryk på **Indtast sætning**, og skriv dem ind. Det sidste ord bærer et tjeksum, så et forkert tastet eller byttet om ord bliver opdaget med det samme, og siden angiver ordet og dets placering. Sætningen kan vises igen senere; er der sat en adgangskode til login, spørger BombVault om den først. **Forlad gruppen** tager en instans ud igen.
+Åbn **Instanser → Parring** på den første instans, og tryk på **Opret sætning**. Der dukker tolv ord op. Åbn den samme fane på hver af de andre instanser, tryk på **Indtast sætning**, og skriv dem ind. Det sidste ord bærer et tjeksum, så et forkert tastet eller byttet om ord bliver opdaget med det samme, og siden angiver ordet og dets placering. Parring kræver en adgangskode til login på hver instans, fordi ordene åbner backupperne på alle instanser i gruppen. Sætningen kan vises igen senere, når du har indtastet den adgangskode. **Forlad gruppen** tager en instans ud igen.
 
 Enhver, der kender ordene, kan komme med i gruppen, så behandl dem som en adgangskode.
 

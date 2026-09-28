@@ -68,7 +68,7 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 
 Bộ nhận, nguồn Kéo về, khung nhìn Đội và Mesh off-site đều nói chuyện với một BombVault khác. Chúng làm vậy với tư cách thành viên của một nhóm ghép nối, và một phiên bản gia nhập nhóm bằng mười hai từ.
 
-Trên phiên bản đầu tiên, mở **Phiên bản → Ghép nối** rồi nhấn **Tạo cụm từ**. Mười hai từ hiện ra. Trên mọi phiên bản khác, mở cùng tab đó, nhấn **Nhập cụm từ** rồi gõ chúng vào. Từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện ngay tại chỗ, và trang sẽ nêu tên từ đó cùng vị trí của nó. Cụm từ có thể được hiện lại sau này; nếu đã đặt mật khẩu đăng nhập, BombVault sẽ hỏi mật khẩu đó trước. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
+Trên phiên bản đầu tiên, mở **Phiên bản → Ghép nối** rồi nhấn **Tạo cụm từ**. Mười hai từ hiện ra. Trên mọi phiên bản khác, mở cùng tab đó, nhấn **Nhập cụm từ** rồi gõ chúng vào. Từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện ngay tại chỗ, và trang sẽ nêu tên từ đó cùng vị trí của nó. Việc ghép nối cần mật khẩu đăng nhập trên mỗi phiên bản, vì các từ này mở được bản sao lưu của mọi phiên bản trong nhóm. Cụm từ có thể được hiện lại sau này, sau khi nhập mật khẩu đó. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
 
 Bất kỳ ai biết các từ đó đều có thể gia nhập nhóm, nên hãy coi chúng như một mật khẩu.
 

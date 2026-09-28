@@ -2107,6 +2107,7 @@ const tr: Partial<Translations> = {
   "pairing.hide": "İfadeyi gizle",
   "pairing.passwordLabel": "Giriş parolası",
   "pairing.passwordWrong": "Bu, giriş parolası değil.",
+  "pairing.needsPassword": "Önce bir giriş parolası belirle. On iki kelime gruptaki her örneğin yedeklerini açar, bu yüzden onları yalnızca oturum açabilen biri oluşturabilir, girebilir veya gösterebilir.",
   "pairing.membersTitle": "Gruptaki diğer örnekler",
   "pairing.noMembers": "Henüz erişilebilen başka bir örnek yok. İfadeyi bir sonrakine gir.",
   "pairing.direct": "Doğrudan",

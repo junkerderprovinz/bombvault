@@ -3882,7 +3882,8 @@ export interface GroupState extends OkEnvelope {
   active: boolean;
   instanceId: string;
   name: string;
-  /** A login password is set, so showing the phrase again asks for it. */
+  /** A login password is set. Without one the phrase can be neither made,
+   *  shown nor entered. */
   passwordSet: boolean;
   members: GroupMember[];
   relay: RelayState;
@@ -3909,13 +3910,12 @@ export function getGroup(): Promise<GroupState> {
 }
 
 /** POST /api/group/phrase - start a group. The answer carries the phrase, the
- *  only time it comes without the password. */
+ *  only time it comes without entering the password again. */
 export function createPhrase(): Promise<OkEnvelope & { phrase?: string; group?: GroupState }> {
   return fetchJSON("/api/group/phrase", { method: "POST" });
 }
 
-/** POST /api/group/phrase/show - the phrase again; asks for the login
- *  password when one is set. */
+/** POST /api/group/phrase/show - the phrase again, for the login password. */
 export function showPhrase(password: string): Promise<OkEnvelope & { phrase?: string }> {
   return fetchJSON("/api/group/phrase/show", { method: "POST", body: JSON.stringify({ password }) });
 }

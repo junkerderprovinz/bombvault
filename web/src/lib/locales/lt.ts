@@ -1330,6 +1330,7 @@ const lt: Partial<Translations> = {
   "pairing.hide": "Slėpti frazę",
   "pairing.passwordLabel": "Prisijungimo slaptažodis",
   "pairing.passwordWrong": "Tai nėra prisijungimo slaptažodis.",
+  "pairing.needsPassword": "Pirmiausia nustatyk prisijungimo slaptažodį. Dvylika žodžių atveria kiekvieno grupės egzemplioriaus atsargines kopijas, todėl juos sukurti, įvesti ar parodyti gali tik tas, kas gali prisijungti.",
   "pairing.membersTitle": "Kiti grupės egzemplioriai",
   "pairing.noMembers": "Kol kas nepasiekiamas nė vienas kitas egzempliorius. Įveskite frazę kitame.",
   "pairing.direct": "Tiesiogiai",

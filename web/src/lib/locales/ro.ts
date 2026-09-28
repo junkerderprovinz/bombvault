@@ -2110,6 +2110,7 @@ const ro: Partial<Translations> = {
   "pairing.hide": "Ascunde fraza",
   "pairing.passwordLabel": "Parola de autentificare",
   "pairing.passwordWrong": "Aceea nu este parola de autentificare.",
+  "pairing.needsPassword": "Setează mai întâi o parolă de autentificare. Cele douăsprezece cuvinte deschid copiile de rezervă ale fiecărei instanțe din grup, așa că doar cine se poate autentifica le poate crea, introduce sau afișa.",
   "pairing.membersTitle": "Alte instanțe din grup",
   "pairing.noMembers": "Nicio altă instanță nu e încă accesibilă. Introdu fraza pe următoarea.",
   "pairing.direct": "Direct",

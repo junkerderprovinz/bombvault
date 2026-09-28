@@ -68,7 +68,7 @@ El **cuadro de mando de protección contra ransomware** en el Panel lo resume en
 
 Los receptores, las fuentes de recogida, la vista Fleet y Mesh externo hablan todos con otro BombVault. Lo hacen como miembros de un grupo de emparejamiento, y una instancia se une al grupo con doce palabras.
 
-En la primera instancia, abre **Instancias → Emparejamiento** y pulsa **Crear frase**. Aparecen doce palabras. En cada una de las demás instancias, abre la misma pestaña, pulsa **Introducir frase** y escríbelas. La última palabra lleva una suma de comprobación, así que una palabra mal escrita o intercambiada se detecta al momento, y la página indica la palabra y su posición. La frase se puede volver a mostrar más tarde; si hay una contraseña de acceso configurada, BombVault la pide antes. **Salir del grupo** saca de nuevo a una instancia.
+En la primera instancia, abre **Instancias → Emparejamiento** y pulsa **Crear frase**. Aparecen doce palabras. En cada una de las demás instancias, abre la misma pestaña, pulsa **Introducir frase** y escríbelas. La última palabra lleva una suma de comprobación, así que una palabra mal escrita o intercambiada se detecta al momento, y la página indica la palabra y su posición. Emparejar requiere una contraseña de acceso en cada instancia, porque las palabras abren las copias de seguridad de todas las instancias del grupo. La frase se puede volver a mostrar más tarde, después de introducir esa contraseña. **Salir del grupo** saca de nuevo a una instancia.
 
 Cualquiera que conozca las palabras puede unirse al grupo, así que trátalas como una contraseña.
 

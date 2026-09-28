@@ -1330,6 +1330,7 @@ const gl: Partial<Translations> = {
   "pairing.hide": "Ocultar frase",
   "pairing.passwordLabel": "Contrasinal de acceso",
   "pairing.passwordWrong": "Ese non é o contrasinal de acceso.",
+  "pairing.needsPassword": "Estabelece primeiro un contrasinal de acceso. As doce palabras abren as copias de seguranza de todas as instancias do grupo, así que só quen pode iniciar sesión pode crealas, introducilas ou mostralas.",
   "pairing.membersTitle": "Outras instancias do grupo",
   "pairing.noMembers": "Aínda non hai outra instancia accesible. Introduce a frase na seguinte.",
   "pairing.direct": "Directa",

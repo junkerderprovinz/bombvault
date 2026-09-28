@@ -2099,6 +2099,7 @@ const ko: Partial<Translations> = {
   "pairing.hide": "문구 숨기기",
   "pairing.passwordLabel": "로그인 비밀번호",
   "pairing.passwordWrong": "로그인 비밀번호가 아닙니다.",
+  "pairing.needsPassword": "먼저 로그인 비밀번호를 설정하세요. 열두 단어로 그룹에 있는 모든 인스턴스의 백업을 열 수 있으므로, 로그인할 수 있는 사람만 단어를 만들고 입력하고 표시할 수 있습니다.",
   "pairing.membersTitle": "그룹 내 다른 인스턴스",
   "pairing.noMembers": "아직 연결 가능한 다른 인스턴스가 없습니다. 다음 인스턴스에서 문구를 입력하세요.",
   "pairing.direct": "직접",

@@ -2102,6 +2102,7 @@ const pl: Partial<Translations> = {
   "pairing.hide": "Ukryj frazę",
   "pairing.passwordLabel": "Hasło logowania",
   "pairing.passwordWrong": "To nie jest hasło logowania.",
+  "pairing.needsPassword": "Najpierw ustaw hasło logowania. Dwanaście słów otwiera kopie zapasowe każdej instancji w grupie, więc tworzyć, wpisywać i wyświetlać je może tylko ktoś, kto potrafi się zalogować.",
   "pairing.membersTitle": "Inne instancje w grupie",
   "pairing.noMembers": "Żadna inna instancja nie jest jeszcze osiągalna. Wpisz frazę na kolejnej.",
   "pairing.direct": "Bezpośrednio",

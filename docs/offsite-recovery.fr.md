@@ -68,7 +68,7 @@ Le **tableau de bord de protection contre les rançongiciels** du tableau de bor
 
 Les Récepteurs, les sources de Rapatriement, la vue Flotte et le Mesh hors site parlent tous à un autre BombVault. Ils le font en tant que membres d'un même groupe d'appairage, et une instance rejoint le groupe avec douze mots.
 
-Sur la première instance, ouvrez **Instances → Appairage** et appuyez sur **Créer une phrase**. Douze mots apparaissent. Sur chaque autre instance, ouvrez le même onglet, appuyez sur **Saisir une phrase** et tapez-les. Le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté sur-le-champ, et la page nomme le mot et sa position. La phrase peut être réaffichée plus tard ; si un mot de passe de connexion est défini, BombVault le demande d'abord. **Quitter le groupe** fait ressortir une instance.
+Sur la première instance, ouvrez **Instances → Appairage** et appuyez sur **Créer une phrase**. Douze mots apparaissent. Sur chaque autre instance, ouvrez le même onglet, appuyez sur **Saisir une phrase** et tapez-les. Le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté sur-le-champ, et la page nomme le mot et sa position. L'appairage exige un mot de passe de connexion sur chaque instance, car les mots ouvrent les sauvegardes de toutes les instances du groupe. La phrase peut être réaffichée plus tard, une fois ce mot de passe saisi. **Quitter le groupe** fait ressortir une instance.
 
 Quiconque connaît les mots peut rejoindre le groupe, traitez-les donc comme un mot de passe.
 

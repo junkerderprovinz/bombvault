@@ -1330,6 +1330,7 @@ const ms: Partial<Translations> = {
   "pairing.hide": "Sembunyikan frasa",
   "pairing.passwordLabel": "Kata laluan log masuk",
   "pairing.passwordWrong": "Itu bukan kata laluan log masuk.",
+  "pairing.needsPassword": "Tetapkan kata laluan log masuk dahulu. Dua belas perkataan ini membuka sandaran setiap instans dalam kumpulan, jadi hanya orang yang boleh log masuk dibenarkan mencipta, memasukkan atau menunjukkannya.",
   "pairing.membersTitle": "Instans lain dalam kumpulan",
   "pairing.noMembers": "Belum ada instans lain yang boleh dicapai. Masukkan frasa itu pada yang seterusnya.",
   "pairing.direct": "Terus",

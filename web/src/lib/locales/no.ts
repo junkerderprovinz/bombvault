@@ -2107,6 +2107,7 @@ const no: Partial<Translations> = {
   "pairing.hide": "Skjul frase",
   "pairing.passwordLabel": "Innloggingspassord",
   "pairing.passwordWrong": "Det er ikke innloggingspassordet.",
+  "pairing.needsPassword": "Sett et påloggingspassord først. De tolv ordene åpner sikkerhetskopiene til alle instansene i gruppen, så bare den som kan logge på, får opprette, skrive inn eller vise dem.",
   "pairing.membersTitle": "Andre instanser i gruppen",
   "pairing.noMembers": "Ingen annen instans er tilgjengelig ennå. Angi frasen på den neste.",
   "pairing.direct": "Direkte",

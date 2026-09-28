@@ -2105,6 +2105,7 @@ const cs: Partial<Translations> = {
   "pairing.hide": "Skrýt frázi",
   "pairing.passwordLabel": "Přihlašovací heslo",
   "pairing.passwordWrong": "To není přihlašovací heslo.",
+  "pairing.needsPassword": "Nejprve nastav přihlašovací heslo. Dvanáct slov otevírá zálohy každé instance ve skupině, proto je smí vytvořit, zadat nebo zobrazit jen ten, kdo se může přihlásit.",
   "pairing.membersTitle": "Ostatní instance ve skupině",
   "pairing.noMembers": "Zatím není dostupná žádná jiná instance. Zadejte frázi na další.",
   "pairing.direct": "Přímo",

@@ -1330,6 +1330,7 @@ const id: Partial<Translations> = {
   "pairing.hide": "Sembunyikan frasa",
   "pairing.passwordLabel": "Kata sandi login",
   "pairing.passwordWrong": "Itu bukan kata sandi login.",
+  "pairing.needsPassword": "Atur kata sandi masuk terlebih dahulu. Kedua belas kata ini membuka cadangan setiap instance dalam grup, jadi hanya orang yang bisa masuk yang boleh membuat, memasukkan, atau menampilkannya.",
   "pairing.membersTitle": "Instance lain di grup",
   "pairing.noMembers": "Belum ada instance lain yang dapat dijangkau. Masukkan frasa di instance berikutnya.",
   "pairing.direct": "Langsung",

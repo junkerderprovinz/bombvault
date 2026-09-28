@@ -2107,6 +2107,7 @@ const pt: Partial<Translations> = {
   "pairing.hide": "Ocultar frase",
   "pairing.passwordLabel": "Palavra-passe de início de sessão",
   "pairing.passwordWrong": "Essa não é a palavra-passe de início de sessão.",
+  "pairing.needsPassword": "Define primeiro uma palavra-passe de acesso. As doze palavras abrem as cópias de segurança de todas as instâncias do grupo, por isso só quem consegue iniciar sessão as pode criar, introduzir ou mostrar.",
   "pairing.membersTitle": "Outras instâncias no grupo",
   "pairing.noMembers": "Ainda não há nenhuma outra instância acessível. Introduza a frase na próxima.",
   "pairing.direct": "Direto",
