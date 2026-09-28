@@ -19,6 +19,16 @@ type BlockBackups interface {
 	// CheckpointDelete removes one checkpoint and merges its bitmap away.
 	// A checkpoint that is already gone is not an error.
 	CheckpointDelete(ctx context.Context, domain, checkpoint string) error
+	// CheckpointForget removes only libvirt's record of a checkpoint and
+	// leaves its bitmap in the disk image. A checkpoint that is already gone
+	// is not an error.
+	CheckpointForget(ctx context.Context, domain, checkpoint string) error
+	// CheckpointXML returns a checkpoint's definition without the domain.
+	CheckpointXML(ctx context.Context, domain, checkpoint string) (string, error)
+	// CheckpointRedefine brings back a forgotten checkpoint from its
+	// definition. With validate, libvirt first checks that the bitmap is
+	// still in the image, which it can only do while the domain runs.
+	CheckpointRedefine(ctx context.Context, domain, checkpointXML string, validate bool) error
 	// BackupBegin starts a backup job from a <domainbackup> document and
 	// creates the checkpoint described by checkpointXML at the same instant.
 	BackupBegin(ctx context.Context, domain, backupXML, checkpointXML string) error
@@ -56,6 +66,35 @@ func (c *Client) CheckpointDelete(ctx context.Context, domain, checkpoint string
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no domain checkpoint") {
 		return nil
 	}
+	return err
+}
+
+// CheckpointForget implements BlockBackups.
+func (c *Client) CheckpointForget(ctx context.Context, domain, checkpoint string) error {
+	_, err := c.run(ctx, "checkpoint-delete", "--metadata", "--", domain, checkpoint)
+	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no domain checkpoint") {
+		return nil
+	}
+	return err
+}
+
+// CheckpointXML implements BlockBackups.
+func (c *Client) CheckpointXML(ctx context.Context, domain, checkpoint string) (string, error) {
+	return c.run(ctx, "checkpoint-dumpxml", "--no-domain", "--", domain, checkpoint)
+}
+
+// CheckpointRedefine implements BlockBackups.
+func (c *Client) CheckpointRedefine(ctx context.Context, domain, checkpointXML string, validate bool) error {
+	f, err := writeTemp("bombvault-checkpoint-*.xml", checkpointXML)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f) //nolint:errcheck // a leftover temp file is harmless
+	args := []string{"checkpoint-create", "--redefine"}
+	if validate {
+		args = append(args, "--redefine-validate")
+	}
+	_, err = c.run(ctx, append(args, "--", domain, f)...)
 	return err
 }
 

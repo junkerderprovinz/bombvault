@@ -5,8 +5,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -120,13 +122,13 @@ func (s *Service) planBlockBackup(ctx context.Context, name string, domain virsh
 		disks:  disks,
 		budget: budget,
 		host: &vmBlockHost{
-			virsh:      bb,
-			ping:       s.virsh.GuestAgentPing,
-			fwd:        fwd,
-			hostDisks:  hostDisks,
-			skip:       domain.SkipSnapshotDevs,
-			localSock:  filepath.Join(s.cfg.DataDir, "vm-blocks", "nbd-"+short+".sock"),
-			remoteSock: remoteNBDSocketPrefix + short + ".sock",
+			BlockBackups: bb,
+			ping:         s.virsh.GuestAgentPing,
+			fwd:          fwd,
+			hostDisks:    hostDisks,
+			skip:         domain.SkipSnapshotDevs,
+			localSock:    filepath.Join(s.cfg.DataDir, "vm-blocks", "nbd-"+short+".sock"),
+			remoteSock:   remoteNBDSocketPrefix + short + ".sock",
 		},
 	}
 }
@@ -156,6 +158,7 @@ func (s *Service) backupVMBlocks(ctx context.Context, name string, tg store.VMTa
 		Budget:      plan.budget,
 		Latest:      latest,
 		Host:        plan.host,
+		Checkpoints: s.blockCheckpointFile(tg.ID),
 		Restic:      &vmBlockRestic{engine: s.engine, mode: mode},
 		Runs:        runs,
 	})
@@ -198,33 +201,75 @@ func (s *Service) dropBlockCheckpointsIfOn(ctx context.Context, name string) {
 	}
 }
 
-// dropBlockCheckpoints deletes every checkpoint BombVault created on the VM.
-// Best-effort: a VM that is gone took its checkpoints with it.
+// dropBlockCheckpoints ends BombVault's changed-block chain on the VM: the
+// kept checkpoint with its bitmap and every checkpoint of BombVault's still on
+// record. Best-effort: a VM that is gone took them with it. libvirt deletes a
+// bitmap only while the VM runs, so on a VM that is off the kept one stays in
+// the image, unused.
 func (s *Service) dropBlockCheckpoints(ctx context.Context, name string) {
 	bb, ok := s.virsh.(virshcli.BlockBackups)
 	if !ok {
 		return
 	}
-	names, err := bb.CheckpointNames(ctx, name)
-	if err != nil {
+	var kept blockCheckpointFile
+	if tg, err := s.store.GetVMTargetByName(name); err == nil {
+		kept = s.blockCheckpointFile(tg.ID)
+		defer kept.clear()
+	}
+	if _, err := bb.CheckpointNames(ctx, name); err != nil {
 		if !virshcli.IsNotFound(err) {
 			log.Printf("api: vm %q: list checkpoints: %v", name, err) //nolint:gosec // G706: %q-quoted
 		}
 		return
 	}
-	for _, n := range names {
-		if !strings.HasPrefix(n, backup.BlocksCheckpointPrefix) {
-			continue
+	if kept != "" {
+		if def, err := kept.Load(); err == nil && def != "" {
+			if err := bb.CheckpointRedefine(ctx, name, def, false); err != nil {
+				log.Printf("api: vm %q: restore checkpoint to delete it: %v", name, err) //nolint:gosec // G706: %q-quoted
+			}
 		}
-		if err := bb.CheckpointDelete(ctx, name, n); err != nil {
-			log.Printf("api: vm %q: delete checkpoint %s: %v", name, n, err) //nolint:gosec // G706: %q-quoted
-		}
+	}
+	backup.SettleBlockCheckpoints(ctx, bb, kept, name, "")
+}
+
+// blockCheckpointFile keeps the definition of a VM's checkpoint between
+// changed-block backups, one file per VM target.
+type blockCheckpointFile string
+
+var _ backup.CheckpointStore = blockCheckpointFile("")
+
+func (s *Service) blockCheckpointFile(targetID string) blockCheckpointFile {
+	return blockCheckpointFile(filepath.Join(s.cfg.DataDir, "vm-checkpoints", targetID+".xml"))
+}
+
+func (f blockCheckpointFile) Load() (string, error) {
+	b, err := os.ReadFile(string(f))
+	if errors.Is(err, fs.ErrNotExist) {
+		return "", nil
+	}
+	return string(b), err
+}
+
+func (f blockCheckpointFile) Save(def string) error {
+	if err := os.MkdirAll(filepath.Dir(string(f)), 0o700); err != nil {
+		return err
+	}
+	tmp := string(f) + ".tmp"
+	if err := os.WriteFile(tmp, []byte(def), 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, string(f))
+}
+
+func (f blockCheckpointFile) clear() {
+	if err := os.Remove(string(f)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		log.Printf("api: remove kept checkpoint: %v", err)
 	}
 }
 
 // vmBlockHost is backup.BlockHost over virsh and the SSH socket forward.
 type vmBlockHost struct {
-	virsh      virshcli.BlockBackups
+	virshcli.BlockBackups
 	ping       func(ctx context.Context, name string) bool
 	fwd        unixForwarder
 	hostDisks  map[string]string
@@ -235,33 +280,17 @@ type vmBlockHost struct {
 
 var _ backup.BlockHost = (*vmBlockHost)(nil)
 
-func (h *vmBlockHost) CheckpointNames(ctx context.Context, domain string) ([]string, error) {
-	return h.virsh.CheckpointNames(ctx, domain)
-}
-
-func (h *vmBlockHost) CheckpointDelete(ctx context.Context, domain, checkpoint string) error {
-	return h.virsh.CheckpointDelete(ctx, domain, checkpoint)
-}
-
 func (h *vmBlockHost) GuestAgentPing(ctx context.Context, domain string) bool {
 	return h.ping(ctx, domain)
-}
-
-func (h *vmBlockHost) FSFreeze(ctx context.Context, domain string) error {
-	return h.virsh.FSFreeze(ctx, domain)
-}
-
-func (h *vmBlockHost) FSThaw(ctx context.Context, domain string) error {
-	return h.virsh.FSThaw(ctx, domain)
 }
 
 func (h *vmBlockHost) StartJob(ctx context.Context, domain, base, checkpoint string, devs []string) (backup.BlockJob, error) {
 	// A job left running by an interrupted backup holds the disks; only one
 	// that exports on BombVault's own socket is ended here.
-	if job, err := h.virsh.BackupJobXML(ctx, domain); err == nil && job != "" {
+	if job, err := h.BackupJobXML(ctx, domain); err == nil && job != "" {
 		if strings.HasPrefix(virshcli.BackupJobSocket(job), remoteNBDSocketPrefix) {
 			log.Printf("api: vm %q: ending a backup job left by an interrupted run", domain) //nolint:gosec // G706: %q-quoted
-			if aErr := h.virsh.AbortJob(ctx, domain); aErr != nil {
+			if aErr := h.AbortJob(ctx, domain); aErr != nil {
 				return nil, fmt.Errorf("end leftover backup job: %w", aErr)
 			}
 		}
@@ -273,15 +302,15 @@ func (h *vmBlockHost) StartJob(ctx context.Context, domain, base, checkpoint str
 	for _, dev := range h.skip {
 		disks = append(disks, virshcli.BackupDisk{Dev: dev, Skip: true})
 	}
-	err := h.virsh.BackupBegin(ctx, domain, virshcli.PullBackupXML(h.remoteSock, base, disks), virshcli.CheckpointXML(checkpoint, disks))
+	err := h.BackupBegin(ctx, domain, virshcli.PullBackupXML(h.remoteSock, base, disks), virshcli.CheckpointXML(checkpoint, disks))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", backup.ErrBlockJobRefused, err)
 	}
 	stop, err := h.fwd.ForwardUnix(ctx, h.localSock, h.remoteSock)
 	if err != nil {
 		cctx := context.WithoutCancel(ctx)
-		_ = h.virsh.AbortJob(cctx, domain)
-		_ = h.virsh.CheckpointDelete(cctx, domain, checkpoint)
+		_ = h.AbortJob(cctx, domain)
+		_ = h.CheckpointDelete(cctx, domain, checkpoint)
 		return nil, err
 	}
 	return &vmBlockJob{host: h, domain: domain, incremental: base != "", stopForward: stop}, nil
@@ -312,7 +341,7 @@ func (j *vmBlockJob) Open(ctx context.Context, dev string) (backup.BlockReader, 
 }
 
 func (j *vmBlockJob) Stop(ctx context.Context) error {
-	err := j.host.virsh.AbortJob(ctx, j.domain)
+	err := j.host.AbortJob(ctx, j.domain)
 	j.stopForward()
 	return err
 }

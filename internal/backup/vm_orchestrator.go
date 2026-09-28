@@ -710,6 +710,9 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	}
 	if state != "" {
 		// VM exists on the host.
+		if err := releaseCheckpointsForRestore(ctx, d.VM, d.Name); err != nil {
+			return err
+		}
 		if state == "running" {
 			if err := d.VM.Destroy(ctx, d.Name); err != nil {
 				return fmt.Errorf("vm restore: destroy running vm: %w", err)
@@ -791,6 +794,43 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	if d.StartAfter {
 		if err := d.VM.Start(ctx, d.Name); err != nil {
 			return fmt.Errorf("vm restore: start: %w", err)
+		}
+	}
+	return nil
+}
+
+// checkpointRecords is the part of CheckpointHost a restore needs. A VM
+// without it has no checkpoints to worry about.
+type checkpointRecords interface {
+	CheckpointNames(ctx context.Context, domain string) ([]string, error)
+	CheckpointForget(ctx context.Context, domain, checkpoint string) error
+}
+
+// releaseCheckpointsForRestore clears the checkpoint records that would make
+// libvirt refuse to undefine the VM once it is off. BombVault's own go, since
+// the restore replaces their disks anyway; anyone else's stop the restore
+// before the VM is touched.
+func releaseCheckpointsForRestore(ctx context.Context, vm VM, name string) error {
+	cr, ok := vm.(checkpointRecords)
+	if !ok {
+		return nil
+	}
+	names, err := cr.CheckpointNames(ctx, name)
+	if err != nil {
+		return fmt.Errorf("vm restore: list checkpoints: %w", err)
+	}
+	var foreign []string
+	for _, n := range names {
+		if !strings.HasPrefix(n, BlocksCheckpointPrefix) {
+			foreign = append(foreign, n)
+		}
+	}
+	if len(foreign) > 0 {
+		return fmt.Errorf("vm restore: the VM has checkpoints BombVault did not create (%s); libvirt cannot remove a VM that has checkpoints, so delete them first", strings.Join(foreign, ", "))
+	}
+	for _, n := range names {
+		if err := cr.CheckpointForget(ctx, name, n); err != nil {
+			return fmt.Errorf("vm restore: remove checkpoint %s: %w", n, err)
 		}
 	}
 	return nil
