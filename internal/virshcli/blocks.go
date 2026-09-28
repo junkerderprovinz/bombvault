@@ -47,7 +47,7 @@ var _ BlockBackups = (*Client)(nil)
 
 // CheckpointNames implements BlockBackups.
 func (c *Client) CheckpointNames(ctx context.Context, domain string) ([]string, error) {
-	out, err := c.run(ctx, "checkpoint-list", domain, "--name")
+	out, err := c.run(ctx, "checkpoint-list", "--name", "--", domain)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *Client) CheckpointNames(ctx context.Context, domain string) ([]string, 
 
 // CheckpointDelete implements BlockBackups.
 func (c *Client) CheckpointDelete(ctx context.Context, domain, checkpoint string) error {
-	_, err := c.run(ctx, "checkpoint-delete", domain, checkpoint)
+	_, err := c.run(ctx, "checkpoint-delete", "--", domain, checkpoint)
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no domain checkpoint") {
 		return nil
 	}
@@ -111,7 +111,7 @@ func (c *Client) BackupBegin(ctx context.Context, domain, backupXML, checkpointX
 		return err
 	}
 	defer os.Remove(cp) //nolint:errcheck // a leftover temp file is harmless
-	_, err = c.run(ctx, "backup-begin", domain, bk, cp)
+	_, err = c.run(ctx, "backup-begin", "--", domain, bk, cp)
 	return err
 }
 
@@ -132,7 +132,7 @@ func writeTemp(pattern, content string) (string, error) {
 // BackupJobXML implements BlockBackups. No running job is the usual answer,
 // so it is neither an error nor logged.
 func (c *Client) BackupJobXML(ctx context.Context, domain string) (string, error) {
-	out, stderr, err := c.exec(ctx, "backup-dumpxml", domain)
+	out, stderr, err := c.exec(ctx, "backup-dumpxml", "--", domain)
 	if err != nil {
 		if noBackupJob(stderr) {
 			return "", nil
@@ -152,7 +152,7 @@ func noBackupJob(stderr string) bool {
 
 // AbortJob implements BlockBackups.
 func (c *Client) AbortJob(ctx context.Context, domain string) error {
-	_, err := c.run(ctx, "domjobabort", domain)
+	_, err := c.run(ctx, "domjobabort", "--", domain)
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no job") {
 		return nil
 	}
@@ -161,13 +161,13 @@ func (c *Client) AbortJob(ctx context.Context, domain string) error {
 
 // FSFreeze implements BlockBackups.
 func (c *Client) FSFreeze(ctx context.Context, domain string) error {
-	_, err := c.run(ctx, "domfsfreeze", domain)
+	_, err := c.run(ctx, "domfsfreeze", "--", domain)
 	return err
 }
 
 // FSThaw implements BlockBackups.
 func (c *Client) FSThaw(ctx context.Context, domain string) error {
-	_, err := c.run(ctx, "domfsthaw", domain)
+	_, err := c.run(ctx, "domfsthaw", "--", domain)
 	return err
 }
 
