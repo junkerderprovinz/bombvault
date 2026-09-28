@@ -101,7 +101,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
             <li>{t("vm.ssh.step3")}</li>
           </ol>
           <div className="flex items-start gap-2 max-md:flex-col max-md:items-stretch">
-            <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
+            <pre className="flex-1 min-w-0 rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap break-all">{authorizeCmd || "—"}</pre>
             <Button
               label={t("vm.ssh.copyCmd")}
               labelKey="vm.ssh.copyCmd"
