@@ -12,7 +12,7 @@ import { fieldLabelKey, folderRoots } from "./PlaceForm";
 import { retentionLowered } from "../../lib/directRepo";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { pushSaveWarnings } from "../../lib/placementCodes";
-import { domainName, placeErrorText } from "../../lib/placeText";
+import { domainName, placeErrorText, readableAddress } from "../../lib/placeText";
 import {
   PLACE_DOMAINS,
   patchPlace,
@@ -388,7 +388,7 @@ export function PlaceDetails({
               <InfoBubble tip={t("places.details.baseRemoteHint")} />
             </span>
             <span dir="ltr" className="break-all text-start font-mono text-sm text-carbon-text">
-              {place.base}
+              {readableAddress(place, place.base)}
             </span>
           </div>
         )}

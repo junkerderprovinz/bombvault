@@ -361,6 +361,20 @@ describe("PlaceDetails sections", () => {
     expect(screen.getByRole("button", { name: en["places.details.tamperTest"] })).toBeTruthy();
   });
 
+  it("shows a WebDAV place's address as its server address, not the remote BombVault names inside", () => {
+    details(
+      place({
+        kind: "webdav",
+        provider: "nextcloud",
+        base: "rclone:bvp1a2b:bombvault",
+        creds: { shared: false, fields: { url: "https://cloud.home.arpa/remote.php/dav/files/me", user: "me" }, set: ["password"] },
+      }),
+      undefined
+    );
+    expect(screen.getByText("https://cloud.home.arpa/remote.php/dav/files/me/bombvault")).toBeTruthy();
+    expect(screen.queryByText("rclone:bvp1a2b:bombvault")).toBeNull();
+  });
+
   it("offers the tamper test at a place that is itself one repository", () => {
     details(
       place({
