@@ -157,3 +157,35 @@ func TestCommonRootIsTheDeepestSharedFolder(t *testing.T) {
 		}
 	}
 }
+
+// A tree with more folders than the builder keeps adds the rest into their
+// deepest kept parent, so its memory stays bounded and the sizes still add up.
+func TestFoldersPastTheCapCountIntoTheirParent(t *testing.T) {
+	b := NewBuilder("/data", nil)
+	b.maxFolders = 3
+	b.Add("/data", "dir", 0)
+	b.Add("/data/a", "dir", 0)
+	b.Add("/data/a/x", "dir", 0)
+	b.Add("/data/a/x/deep.bin", "file", 40)
+	b.Add("/data/b", "dir", 0)
+	b.Add("/data/b/y", "dir", 0)
+	b.Add("/data/b/y/one.bin", "file", 10)
+	b.Add("/data/b/y/two.bin", "file", 20)
+	b.Add("/data/top.bin", "file", 5)
+	if n := len(b.folders); n > 3 {
+		t.Fatalf("%d folders tracked, want at most 3", n)
+	}
+	tr := b.Tree()
+	root := tr.Nodes[""]
+	if root.Size != 75 || root.Files != 4 {
+		t.Fatalf("root %+v, want all 75 bytes in 4 files", root)
+	}
+	for _, e := range root.Children {
+		if e.Name == "one.bin" || e.Name == "two.bin" {
+			t.Fatalf("a file of a folder past the cap is listed as the root's own: %+v", root.Children)
+		}
+	}
+	if root.Other == nil || root.Other.Size != 30 || root.Other.Files != 2 {
+		t.Fatalf("root rest %+v, want the 30 bytes of the folded folder", root.Other)
+	}
+}
