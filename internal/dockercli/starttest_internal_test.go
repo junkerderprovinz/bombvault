@@ -1,7 +1,9 @@
 package dockercli
 
 import (
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
@@ -45,6 +47,7 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 		MemoryBytes: 2 << 30,
 		PidsLimit:   512,
 		Labels:      map[string]string{"bombvault.starttest.of": "nextcloud"},
+		Instance:    "aaaa",
 	}
 	cfg, hc := isolatedConfig(spec)
 
@@ -72,7 +75,7 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 	if cfg.Labels[StartTestLabel] != "1" || cfg.Labels["bombvault.starttest.of"] != "nextcloud" {
 		t.Fatalf("labels = %v", cfg.Labels)
 	}
-	if len(cfg.Labels) != 2 {
+	if len(cfg.Labels) != 3 {
 		t.Fatalf("labels = %v, want only BombVault's own: another tool would act on the copy", cfg.Labels)
 	}
 	if len(hc.CapAdd) != 0 || len(hc.Sysctls) != 0 || hc.CgroupParent != "" {
@@ -86,5 +89,52 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 	}
 	if from.HostConfig.Privileged != true || len(from.HostConfig.Binds) != 2 {
 		t.Fatal("the recipe itself must stay untouched")
+	}
+}
+
+func TestStartTestLeftoversAreThisInstancesAndSafeOldOnes(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	mine := map[string]string{StartTestLabel: "1", StartTestInstanceLabel: "aaaa"}
+	theirs := map[string]string{StartTestLabel: "1", StartTestInstanceLabel: "bbbb"}
+	old := map[string]string{StartTestLabel: "1"}
+	containers := []testContainer{
+		{name: StartTestPrefix + "aaaa-app-1", labels: mine, running: true, created: now},
+		{name: StartTestPrefix + "bbbb-app-2", labels: theirs, running: true, created: now.Add(-48 * time.Hour)},
+		{name: StartTestPrefix + "app-3", labels: old, running: false, created: now},
+		{name: StartTestPrefix + "app-4", labels: old, running: true, created: now.Add(-2 * time.Hour)},
+		{name: StartTestPrefix + "app-5", labels: old, running: true, created: now.Add(-5 * time.Minute)},
+		{name: "nextcloud", labels: mine, running: true, created: now},
+	}
+	networks := []testNetwork{
+		{name: StartTestPrefix + "aaaa-net-1", labels: mine, attached: 1},
+		{name: StartTestPrefix + "bbbb-net-2", labels: theirs},
+		{name: StartTestPrefix + "net-3", labels: old},
+		{name: StartTestPrefix + "net-4", labels: old, attached: 1},
+	}
+	gotC, gotN := pickStartTestLeftovers(containers, networks, "aaaa", now)
+	if want := []string{StartTestPrefix + "aaaa-app-1", StartTestPrefix + "app-3", StartTestPrefix + "app-4"}; !slices.Equal(gotC, want) {
+		t.Fatalf("containers = %v, want %v", gotC, want)
+	}
+	if want := []string{StartTestPrefix + "aaaa-net-1", StartTestPrefix + "net-3"}; !slices.Equal(gotN, want) {
+		t.Fatalf("networks = %v, want %v", gotN, want)
+	}
+}
+
+func TestStartTestLeftoversWithoutAnIDTakeNothingLabelledForAnInstance(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	labels := map[string]string{StartTestLabel: "1", StartTestInstanceLabel: "bbbb"}
+	gotC, gotN := pickStartTestLeftovers(
+		[]testContainer{{name: StartTestPrefix + "bbbb-app-1", labels: labels, created: now.Add(-48 * time.Hour)}},
+		[]testNetwork{{name: StartTestPrefix + "bbbb-net-1", labels: labels}},
+		"", now)
+	if len(gotC) != 0 || len(gotN) != 0 {
+		t.Fatalf("got %v %v, want nothing while this instance does not know its id", gotC, gotN)
+	}
+}
+
+func TestIsolatedConfigNamesTheInstance(t *testing.T) {
+	cfg, _ := isolatedConfig(IsolatedSpec{Name: StartTestPrefix + "aaaa-x-1", Network: StartTestPrefix + "aaaa-net-1", Instance: "aaaa"})
+	if cfg.Labels[StartTestInstanceLabel] != "aaaa" {
+		t.Fatalf("labels = %v", cfg.Labels)
 	}
 }

@@ -25,6 +25,16 @@ const StartTestLabel = "bombvault.starttest"
 // StartTestPrefix starts the name of everything a start test creates.
 const StartTestPrefix = "bombvault-test-"
 
+// StartTestInstanceLabel names the BombVault instance that created a start
+// test's container or network. Several instances can share one Docker host,
+// and each clears only its own leftovers.
+const StartTestInstanceLabel = "bombvault.starttest.instance"
+
+// startTestOrphanAge is how old a running copy from a build that did not label
+// its instance must be before it counts as left behind. A copy is created
+// after its restore and lives for the health and port waits, well under this.
+const startTestOrphanAge = time.Hour
+
 // IsolatedSpec describes the copy a start test runs: From is the recipe a
 // restore would create the container from, Binds are the bind mounts already
 // pointed at the restored copy of its data.
@@ -37,6 +47,8 @@ type IsolatedSpec struct {
 	MemoryBytes int64
 	PidsLimit   int64
 	Labels      map[string]string
+	// Instance is the id of the BombVault instance running the test.
+	Instance string
 }
 
 // IsolatedState is what a start test reads off its running copy.
@@ -61,19 +73,20 @@ type ProberSpec struct {
 	Entrypoint []string
 	Cmd        []string
 	Timeout    time.Duration
+	Instance   string
 }
 
 // StartTestHost is what a start test needs from Docker beyond the Docker
 // interface. Everything it creates carries StartTestLabel and a name starting
 // with StartTestPrefix, and it removes nothing else.
 type StartTestHost interface {
-	CreateTestNetwork(ctx context.Context, name string) error
+	CreateTestNetwork(ctx context.Context, name, instance string) error
 	RemoveTestNetwork(ctx context.Context, name string) error
 	StartIsolated(ctx context.Context, spec IsolatedSpec) error
 	IsolatedState(ctx context.Context, name string) (IsolatedState, error)
 	RemoveTestContainer(ctx context.Context, name string) error
 	RunProber(ctx context.Context, spec ProberSpec) (int, error)
-	StartTestLeftovers(ctx context.Context) (containers, networks []string, err error)
+	StartTestLeftovers(ctx context.Context, instance string) (containers, networks []string, err error)
 }
 
 var _ StartTestHost = (*Client)(nil)
@@ -83,14 +96,14 @@ var errNotStartTest = errors.New("not created by a start test")
 
 // CreateTestNetwork creates an internal bridge network: its containers reach
 // each other and nothing else, and nothing outside reaches them.
-func (c *Client) CreateTestNetwork(ctx context.Context, name string) error {
+func (c *Client) CreateTestNetwork(ctx context.Context, name, instance string) error {
 	if !strings.HasPrefix(name, StartTestPrefix) {
 		return fmt.Errorf("dockercli: test network %q: %w", name, errNotStartTest)
 	}
 	_, err := c.api.NetworkCreate(ctx, name, network.CreateOptions{
 		Driver:   "bridge",
 		Internal: true,
-		Labels:   map[string]string{StartTestLabel: "1"},
+		Labels:   startTestLabels(instance),
 	})
 	if err != nil {
 		return fmt.Errorf("dockercli: create test network: %w", err)
@@ -155,7 +168,7 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	if labels == nil {
 		labels = map[string]string{}
 	}
-	labels[StartTestLabel] = "1"
+	maps.Copy(labels, startTestLabels(spec.Instance))
 	cfg.Labels = labels
 
 	if len(spec.From.HostConfig.PortBindings) > 0 {
@@ -287,7 +300,7 @@ func (c *Client) RunProber(ctx context.Context, spec ProberSpec) (int, error) {
 		Image:      spec.Image,
 		Entrypoint: spec.Entrypoint,
 		Cmd:        spec.Cmd,
-		Labels:     map[string]string{StartTestLabel: "1"},
+		Labels:     startTestLabels(spec.Instance),
 	}
 	if _, err := c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, spec.Name); err != nil {
 		return -1, fmt.Errorf("dockercli: create prober: %w", err)
@@ -311,31 +324,94 @@ func (c *Client) RunProber(ctx context.Context, spec ProberSpec) (int, error) {
 	}
 }
 
-// StartTestLeftovers lists the containers and networks earlier start tests
-// left behind, by label and name.
-func (c *Client) StartTestLeftovers(ctx context.Context) ([]string, []string, error) {
+// startTestLabels marks what a start test creates, and for whom.
+func startTestLabels(instance string) map[string]string {
+	labels := map[string]string{StartTestLabel: "1"}
+	if instance != "" {
+		labels[StartTestInstanceLabel] = instance
+	}
+	return labels
+}
+
+// StartTestLeftovers lists the containers and networks earlier start tests of
+// this instance left behind, and those of builds that did not label their
+// instance once nobody can be using them any more.
+func (c *Client) StartTestLeftovers(ctx context.Context, instance string) ([]string, []string, error) {
 	f := filters.NewArgs(filters.Arg("label", StartTestLabel+"=1"))
 	cs, err := c.api.ContainerList(ctx, container.ListOptions{All: true, Filters: f})
 	if err != nil {
 		return nil, nil, fmt.Errorf("dockercli: list test containers: %w", err)
 	}
-	var containers []string
+	var containers []testContainer
 	for _, s := range cs {
-		if len(s.Names) > 0 && strings.HasPrefix(normalizeName(s.Names[0]), StartTestPrefix) {
-			containers = append(containers, normalizeName(s.Names[0]))
+		if len(s.Names) == 0 {
+			continue
 		}
+		containers = append(containers, testContainer{
+			name: normalizeName(s.Names[0]), labels: s.Labels, running: s.State == "running", created: time.Unix(s.Created, 0),
+		})
 	}
 	ns, err := c.api.NetworkList(ctx, network.ListOptions{Filters: f})
 	if err != nil {
-		return containers, nil, fmt.Errorf("dockercli: list test networks: %w", err)
+		cNames, _ := pickStartTestLeftovers(containers, nil, instance, time.Now())
+		return cNames, nil, fmt.Errorf("dockercli: list test networks: %w", err)
 	}
-	var networks []string
+	var networks []testNetwork
 	for _, n := range ns {
-		if strings.HasPrefix(n.Name, StartTestPrefix) {
-			networks = append(networks, n.Name)
+		tn := testNetwork{name: n.Name, labels: n.Labels}
+		if n.Labels[StartTestInstanceLabel] == "" {
+			// The listing leaves out who is attached, and an unlabelled network
+			// stays while anything is.
+			full, iErr := c.api.NetworkInspect(ctx, n.ID, network.InspectOptions{})
+			if iErr != nil {
+				continue
+			}
+			tn.attached = len(full.Containers)
+		}
+		networks = append(networks, tn)
+	}
+	cNames, nNames := pickStartTestLeftovers(containers, networks, instance, time.Now())
+	return cNames, nNames, nil
+}
+
+type testContainer struct {
+	name    string
+	labels  map[string]string
+	running bool
+	created time.Time
+}
+
+type testNetwork struct {
+	name     string
+	labels   map[string]string
+	attached int
+}
+
+// pickStartTestLeftovers chooses what a cleanup of instance may remove: what
+// carries its id, and what carries none once it cannot belong to a test in
+// progress, a copy that stopped or outlived any test and a network nothing is
+// attached to. Anything labelled for another instance stays.
+func pickStartTestLeftovers(cs []testContainer, ns []testNetwork, instance string, now time.Time) ([]string, []string) {
+	var containers, networks []string
+	for _, c := range cs {
+		if !strings.HasPrefix(c.name, StartTestPrefix) || c.labels[StartTestLabel] != "1" {
+			continue
+		}
+		owner := c.labels[StartTestInstanceLabel]
+		if (owner != "" && owner == instance) || (owner == "" && (!c.running || now.Sub(c.created) > startTestOrphanAge)) {
+			containers = append(containers, c.name)
 		}
 	}
-	return containers, networks, nil
+	for _, n := range ns {
+		if !strings.HasPrefix(n.name, StartTestPrefix) || n.labels[StartTestLabel] != "1" {
+			continue
+		}
+		owner := n.labels[StartTestInstanceLabel]
+		if (owner != "" && owner == instance) || (owner == "" && n.attached == 0) {
+			networks = append(networks, n.name)
+		}
+	}
+	return containers, networks
 }
 
 // isNotFoundErr reports the daemon's "no such" answer for any kind of object.

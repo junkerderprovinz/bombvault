@@ -219,9 +219,14 @@ func (s *Service) runStartTestCopy(ctx context.Context, host dockercli.StartTest
 		}
 	}
 
+	instance := s.instanceID()
+	if instance == "" {
+		return "", startTestSetupError{errors.New("this instance has no id to mark its test copy with")}
+	}
 	suffix := randomSuffix()
-	netName := dockercli.StartTestPrefix + "net-" + suffix
-	name := dockercli.StartTestPrefix + truncateName(sanitizeName(tg.ContainerName), 40) + "-" + suffix
+	prefix := startTestNamePrefix(instance)
+	netName := prefix + "net-" + suffix
+	name := prefix + truncateName(sanitizeName(tg.ContainerName), 40) + "-" + suffix
 	defer func() {
 		cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), startTestCleanup)
 		defer cancel()
@@ -233,7 +238,7 @@ func (s *Service) runStartTestCopy(ctx context.Context, host dockercli.StartTest
 		}
 	}()
 
-	if err := host.CreateTestNetwork(ctx, netName); err != nil {
+	if err := host.CreateTestNetwork(ctx, netName, instance); err != nil {
 		return "", startTestSetupError{err}
 	}
 	spec := dockercli.IsolatedSpec{
@@ -245,11 +250,12 @@ func (s *Service) runStartTestCopy(ctx context.Context, host dockercli.StartTest
 		MemoryBytes: startTestMemory,
 		PidsLimit:   startTestPids,
 		Labels:      map[string]string{dockercli.StartTestLabel + ".of": tg.ContainerName},
+		Instance:    instance,
 	}
 	if err := host.StartIsolated(ctx, spec); err != nil {
 		return "", withoutPrivileges(fmt.Errorf("the copy did not start: %w", err), def.Inspect)
 	}
-	method, err := s.judgeStartTest(ctx, host, name, netName, suffix)
+	method, err := s.judgeStartTest(ctx, host, name, netName, prefix+"probe-"+suffix, instance)
 	return method, withoutPrivileges(err, def.Inspect)
 }
 
@@ -348,7 +354,7 @@ func throughSymlink(sandbox, p string) bool {
 // judgeStartTest waits for the copy to prove itself: healthy by its own
 // healthcheck, else answering on its first exposed TCP port, else still
 // running after a while. It returns the method it used.
-func (s *Service) judgeStartTest(ctx context.Context, host dockercli.StartTestHost, name, netName, suffix string) (string, error) {
+func (s *Service) judgeStartTest(ctx context.Context, host dockercli.StartTestHost, name, netName, proberName, instance string) (string, error) {
 	deadline := time.Now().Add(startTestHealthWait)
 	var st dockercli.IsolatedState
 	for {
@@ -381,12 +387,13 @@ func (s *Service) judgeStartTest(ctx context.Context, host dockercli.StartTestHo
 	if port := firstTCPPort(st.ExposedPorts); port != "" {
 		if image := s.proberImage(ctx); image != "" {
 			code, err := host.RunProber(ctx, dockercli.ProberSpec{
-				Name:       dockercli.StartTestPrefix + "probe-" + suffix,
+				Name:       proberName,
 				Image:      image,
 				Network:    netName,
 				Entrypoint: []string{imageBinaryPath},
 				Cmd:        []string{"tcp-probe", name + ":" + port, strconv.Itoa(int(startTestPortWait.Seconds()))},
 				Timeout:    startTestPortWait + 30*time.Second,
+				Instance:   instance,
 			})
 			if err != nil {
 				return "tcp", err
@@ -504,7 +511,7 @@ func truncateName(name string, n int) string {
 // name, the restored data by its marker.
 func (s *Service) CleanupStartTestLeftovers(ctx context.Context) {
 	if host, ok := s.docker.(dockercli.StartTestHost); ok {
-		containers, networks, err := host.StartTestLeftovers(ctx)
+		containers, networks, err := host.StartTestLeftovers(ctx, s.instanceID())
 		if err != nil {
 			log.Printf("api: start test leftovers: %v", err)
 		}
@@ -536,13 +543,62 @@ func (s *Service) CleanupStartTestLeftovers(ctx context.Context) {
 	}
 	for _, e := range entries {
 		ours := strings.HasPrefix(e.Name(), startTestSandboxPrefix+"-") || strings.HasPrefix(e.Name(), "bombvault-probe-")
-		if !e.IsDir() || !ours {
+		if !e.IsDir() || !ours || !s.sandboxLeftBehind(filepath.Join(dir, e.Name())) {
 			continue
 		}
 		if err := cleanupDrillSandbox(filepath.Join(dir, e.Name())); err != nil {
 			log.Printf("api: start test leftovers: %v", err)
 		}
 	}
+}
+
+// instanceID is this instance's stored id, "" when it cannot be read. It stays
+// the same across restarts, unlike the hostname, which is bombvault in every
+// install.
+func (s *Service) instanceID() string {
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return ""
+	}
+	return g.InstanceID
+}
+
+// startTestNamePrefix starts the names of what a start test of instance
+// creates, so a person looking at the Docker host can tell whose it is.
+func startTestNamePrefix(instance string) string {
+	return dockercli.StartTestPrefix + truncateName(instance, 8) + "-"
+}
+
+// sandboxMarker is the marker file's content, naming the instance that made
+// the sandbox.
+func sandboxMarker(instance string) []byte {
+	if instance == "" {
+		return []byte("bombvault sandbox\n")
+	}
+	return []byte("bombvault sandbox\ninstance " + instance + "\n")
+}
+
+// legacySandboxAge is how long a sandbox whose marker names no instance is
+// left alone. Such a sandbox may belong to an older build of another instance
+// sharing the restore folder, whose start test restores a whole container
+// before it runs.
+const legacySandboxAge = 24 * time.Hour
+
+// sandboxLeftBehind reports whether a marked sandbox is this instance's, or an
+// unnamed one old enough that no test can still be using it.
+func (s *Service) sandboxLeftBehind(sandbox string) bool {
+	marker := filepath.Join(sandbox, drillMarkerName)
+	raw, err := os.ReadFile(marker) //nolint:gosec // G304: the sandbox lies under the resolved restore folder
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(raw), "\n") {
+		if owner, ok := strings.CutPrefix(line, "instance "); ok {
+			return owner != "" && owner == s.instanceID()
+		}
+	}
+	fi, err := os.Stat(marker) //nolint:gosec // G703: as above
+	return err == nil && time.Since(fi.ModTime()) > legacySandboxAge
 }
 
 // notifyStartTestFailure reports a failed scheduled start test.

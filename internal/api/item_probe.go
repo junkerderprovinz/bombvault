@@ -461,7 +461,7 @@ func (s *Service) newDrillSandbox(settings store.Settings, prefix string) (strin
 	if err := os.Mkdir(sandbox, 0o700); err != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve
 		return "", nil, fmt.Errorf("create sandbox: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(sandbox, drillMarkerName), []byte("bombvault sandbox\n"), 0o600); err != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve
+	if err := os.WriteFile(filepath.Join(sandbox, drillMarkerName), sandboxMarker(s.instanceID()), 0o600); err != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve
 		if rmErr := os.Remove(sandbox); rmErr != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root and was just created empty
 			log.Printf("api: sandbox: could not remove %s after the marker write failed: %v", sandbox, rmErr)
 		}

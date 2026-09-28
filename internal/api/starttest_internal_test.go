@@ -35,14 +35,17 @@ type startTestDocker struct {
 	probers   []dockercli.ProberSpec
 	leftoverC []string
 	leftoverN []string
+	netOwners []string
+	askedFor  string
 }
 
 func (d *startTestDocker) Inspect(context.Context, string) (model.Inspect, error) {
 	return model.Inspect{Image: "sha256:bombvault"}, nil
 }
 
-func (d *startTestDocker) CreateTestNetwork(_ context.Context, name string) error {
+func (d *startTestDocker) CreateTestNetwork(_ context.Context, name, instance string) error {
 	d.networks = append(d.networks, name)
+	d.netOwners = append(d.netOwners, instance)
 	return nil
 }
 
@@ -76,7 +79,8 @@ func (d *startTestDocker) RunProber(_ context.Context, spec dockercli.ProberSpec
 	return d.proberRC, nil
 }
 
-func (d *startTestDocker) StartTestLeftovers(context.Context) ([]string, []string, error) {
+func (d *startTestDocker) StartTestLeftovers(_ context.Context, instance string) ([]string, []string, error) {
+	d.askedFor = instance
 	return d.leftoverC, d.leftoverN, nil
 }
 
@@ -356,11 +360,19 @@ func TestCleanupRemovesOnlyStartTestLeftovers(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(marked, drillMarkerName), nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
+	// An older build's sandbox, abandoned long ago.
+	old := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(filepath.Join(marked, drillMarkerName), old, old); err != nil {
+		t.Fatal(err)
+	}
 
 	s.CleanupStartTestLeftovers(context.Background())
 
 	if !slices.Equal(d.removedC, d.leftoverC) || !slices.Equal(d.removedN, d.leftoverN) {
 		t.Fatalf("removed %v %v", d.removedC, d.removedN)
+	}
+	if d.askedFor == "" || d.askedFor != instanceIDOf(t, s) {
+		t.Fatalf("the cleanup asked for the leftovers of %q, want this instance's", d.askedFor)
 	}
 	if _, err := os.Stat(marked); !os.IsNotExist(err) {
 		t.Fatal("a marked leftover sandbox must go")
@@ -378,5 +390,81 @@ func TestStartTestClearsStaleLocksBeforeItRestores(t *testing.T) {
 	}
 	if !slices.Equal(eng.calls, []string{"Unlock", "RestoreAll"}) {
 		t.Fatalf("calls = %v, want stale locks cleared before the restore", eng.calls)
+	}
+}
+
+func instanceIDOf(t *testing.T, s *Service) string {
+	t.Helper()
+	g, err := s.store.GetGroupState()
+	if err != nil || g.InstanceID == "" {
+		t.Fatalf("no instance id: %v", err)
+	}
+	return g.InstanceID
+}
+
+// Several BombVault instances can share one Docker host, so everything a start
+// test creates says which instance it belongs to.
+func TestStartTestLabelsEverythingWithThisInstance(t *testing.T) {
+	d := &startTestDocker{states: []dockercli.IsolatedState{{Running: true}}, proberRC: 0}
+	s, tg, _ := newStartTestService(t, d, whoamiRecipe())
+	if _, err := s.RunStartTest(context.Background(), tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	id := instanceIDOf(t, s)
+	if len(d.netOwners) != 1 || d.netOwners[0] != id || d.started[0].Instance != id {
+		t.Fatalf("network for %v, copy for %q, want %q", d.netOwners, d.started[0].Instance, id)
+	}
+	short := id[:8]
+	if !strings.HasPrefix(d.started[0].Name, dockercli.StartTestPrefix+short+"-") || !strings.HasPrefix(d.networks[0], dockercli.StartTestPrefix+short+"-") {
+		t.Fatalf("names %q and %q do not say which instance made them", d.started[0].Name, d.networks[0])
+	}
+	for _, p := range d.probers {
+		if p.Instance != id || !strings.HasPrefix(p.Name, dockercli.StartTestPrefix+short+"-") {
+			t.Fatalf("prober %+v", p)
+		}
+	}
+}
+
+// A sandbox from another instance that shares the restore folder stays, and
+// so does one an older build left until it is clearly abandoned.
+func TestCleanupLeavesSandboxesOfOtherInstancesAlone(t *testing.T) {
+	d := &startTestDocker{}
+	s, _, _ := newStartTestService(t, d, whoamiRecipe())
+	restore := filepath.Join(s.cfg.HostMountRoot, "restore")
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	own, _, err := s.newDrillSandbox(settings, startTestSandboxPrefix+"-mine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := filepath.Join(restore, "bombvault-starttest-theirs-1")
+	fresh := filepath.Join(restore, "bombvault-starttest-older-1")
+	stale := filepath.Join(restore, "bombvault-probe-older-2")
+	for dir, marker := range map[string]string{
+		other: "bombvault sandbox\ninstance 0123456789abcdef\n",
+		fresh: "bombvault sandbox\n",
+		stale: "bombvault sandbox\n",
+	} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, drillMarkerName), []byte(marker), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	old := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(filepath.Join(stale, drillMarkerName), old, old); err != nil {
+		t.Fatal(err)
+	}
+
+	s.CleanupStartTestLeftovers(context.Background())
+
+	for dir, gone := range map[string]bool{own: true, other: false, fresh: false, stale: true} {
+		_, err := os.Stat(dir)
+		if gone != os.IsNotExist(err) {
+			t.Fatalf("%s: gone=%v, want gone=%v", filepath.Base(dir), os.IsNotExist(err), gone)
+		}
 	}
 }
