@@ -72,11 +72,11 @@ Avaa ensimmäisessä instanssissa **Instanssit → Pariliitos** ja valitse **Luo
 
 Kuka tahansa sanat tietävä voi liittyä ryhmään, joten kohtele niitä kuin salasanaa.
 
-**Miten jäsenet tavoittavat toisensa.** Samassa verkossa ne löytävät toisensa multicastilla ja puhuvat suoraan. Eri verkoissa olevat instanssit kulkevat releen kautta, joka valitaan samalla välilehdellä:
+**Miten jäsenet tavoittavat toisensa.** Jokainen instanssi oppii oman osoitteensa verkossa selaimestasi heti, kun kirjaudut sisään, ja se näkyy relekortissa nimellä **Tämä instanssi verkossasi**; korjaa se siellä, jos edessä on käänteinen proxy tai epätavallinen portti. Samassa verkossa jäsenet ilmoittavat tuon osoitteen multicastilla ja puhuvat suoraan, ja siellä missä multicast ei pääse konttiverkon läpi, kuten Dockerin oletusarvoisen bridge-verkon, instanssi sen sijaan etsii omasta aliverkostaan muita allekirjoitetulla kutsulla, johon vain ryhmän jäsen osaa vastata, joten pariliitos valmistuu silti sekunneissa ilman relettä. Jos mitään ei löydy, **Etkö löydä sitä?** pariliitoskortin alla ottaa yhden osoitteen käsin syötettynä, toista aliverkkoa tai muuta kuin vakioporttia varten. Eri verkoissa olevat instanssit kulkevat releen kautta, joka valitaan samalla välilehdellä:
 
 - **Projektin rele** (oletus): `relay.halleluja.design`, sama rele jota myös KnightLoader käyttää. Ei mitään asennettavaa.
 - **Oma rele**: **BombVault Relay** -kontti Unraidin Community Appsista, tai joku instansseistasi, joka on jo tavoitettavissa ulkopuolelta ja jossa **Toimi releenä** on päällä. Kyseinen instanssi vastaa silloin osoitteessaan `/relay/connect`, sen jo olemassa olevan käänteisen proxyn ja sertifikaatin takana, ja päästää sisään vain oman ryhmäsi. Syötä releen osoite jokaiseen instanssiin, jonka pitäisi käyttää sitä.
-- **Ei relettä**: jäsenet löytävät toisensa vain samassa verkossa.
+- **Ei relettä**: jäsenet löytävät toisensa automaattisesti vain samassa verkossa, eivät missään muualla.
 
 **Mitä rele näkee.** Jokainen jäsenten välinen kutsu on sinetöity AES-256-GCM:llä avaimella, joka on johdettu kahdestatoista sanasta, eikä se avain koskaan poistu instansseistasi. Rele saa tietää hajautusarvon, joka ryhmittelee yhteydet, sekä sen, kenelle instanssille viesti on tarkoitettu, kuinka suuri se on ja milloin se kulkee läpi. Suora kutsu paikallisverkossa on sinetöity samalla tavalla ja lisäksi allekirjoitettu, joten mikään ei riipu instanssin tarjoamasta itse allekirjoitetusta varmenteesta.
 

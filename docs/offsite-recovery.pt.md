@@ -72,11 +72,11 @@ Na primeira instância, abra **Instâncias → Emparelhamento** e clique em **Ge
 
 Quem quer que conheça as palavras pode entrar no grupo, por isso trate-as como uma palavra-passe.
 
-**Como os membros se alcançam.** Na mesma rede encontram-se por multicast e falam diretamente entre si. Instâncias em redes diferentes passam por um retransmissor, escolhido no mesmo separador:
+**Como os membros se alcançam.** Cada instância aprende o seu próprio endereço na rede a partir do seu navegador assim que inicia sessão, mostrado no cartão do retransmissor como **Esta instância na sua rede**; corrija-o aí se houver um proxy reverso ou uma porta pouco habitual à frente. Na mesma rede, os membros anunciam esse endereço por multicast e falam diretamente entre si, e onde o multicast não consegue atravessar uma rede de contentores, como a rede bridge predefinida do Docker, uma instância passa antes a procurar na sua própria sub-rede pelas outras, com uma chamada assinada que só um membro do grupo consegue responder, por isso o emparelhamento continua a ficar concluído em segundos, sem retransmissor. Se nada aparecer, **Não a encontra?** por baixo do cartão de emparelhamento aceita um endereço à mão, para outra sub-rede ou uma porta não habitual. Instâncias em redes diferentes passam por um retransmissor, escolhido no mesmo separador:
 
 - **Retransmissor do projeto** (a predefinição): `relay.halleluja.design`, o mesmo retransmissor que o KnightLoader também usa. Nada a configurar.
 - **Retransmissor próprio**: o contentor **BombVault Relay** das Unraid Community Apps, ou uma das suas instâncias que já esteja acessível a partir de fora com **Servir de retransmissor** ativado. Essa instância passa a responder em `/relay/connect` no seu próprio endereço, atrás do proxy reverso e do certificado que já tem, e deixa entrar apenas o seu grupo. Introduza o endereço do retransmissor em cada instância que o deva usar.
-- **Sem retransmissor**: os membros só se encontram na mesma rede.
+- **Sem retransmissor**: os membros encontram-se automaticamente na mesma rede, e em mais lado nenhum.
 
 **O que o retransmissor vê.** Cada chamada entre membros é selada com AES-256-GCM sob uma chave derivada das doze palavras, e essa chave nunca sai das suas instâncias. O retransmissor fica a saber um hash que agrupa as ligações, para que instância é uma mensagem, qual o seu tamanho e quando passa. Uma chamada direta na rede local é selada da mesma forma e assinada também, por isso nada depende do certificado autoassinado que uma instância serve.
 

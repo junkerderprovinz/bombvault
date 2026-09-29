@@ -72,11 +72,11 @@ En la primera instancia, abre **Instancias → Emparejamiento** y pulsa **Genera
 
 Cualquiera que conozca las palabras puede unirse al grupo, así que trátalas como una contraseña.
 
-**Cómo se encuentran los miembros entre sí.** En la misma red se encuentran por multicast y hablan directamente. Las instancias en redes distintas pasan por un relay, elegido en la misma pestaña:
+**Cómo se encuentran los miembros entre sí.** Cada instancia aprende su propia dirección en la red desde tu navegador en el momento en que inicias sesión, mostrada en la tarjeta del relay como **Esta instancia en tu red**; corrígela ahí si un proxy inverso o un puerto inusual se interpone. En la misma red los miembros anuncian esa dirección por multicast y hablan directamente, y donde el multicast no puede cruzar una red de contenedores, como la red bridge por defecto de Docker, una instancia busca en su propia subred a las demás con una llamada firmada que solo un miembro del grupo puede responder, así que el emparejamiento sigue completándose en segundos sin relay. Si no aparece nada, **¿No la encuentras?**, debajo de la tarjeta de emparejamiento, acepta una dirección a mano, para otra subred o un puerto no estándar. Las instancias en redes distintas pasan por un relay, elegido en la misma pestaña:
 
 - **Relay del proyecto** (el predeterminado): `relay.halleluja.design`, el mismo relay que usa también KnightLoader. Nada que configurar.
 - **Relay propio**: el contenedor **BombVault Relay** de las Unraid Community Apps, o una de tus instancias que ya sea accesible desde fuera con **Actuar como relay** activado. Esa instancia responde entonces en `/relay/connect` en su propia dirección, detrás del proxy inverso y el certificado que ya tiene, y deja entrar solo a tu grupo. Introduce la dirección del relay en cada instancia que deba usarlo.
-- **Sin relay**: los miembros solo se encuentran en la misma red.
+- **Sin relay**: los miembros se encuentran automáticamente solo en la misma red, y en ningún otro sitio.
 
 **Lo que ve el relay.** Cada llamada entre miembros va sellada con AES-256-GCM bajo una clave derivada de las doce palabras, y esa clave nunca sale de tus instancias. El relay conoce un hash que agrupa las conexiones, para qué instancia es un mensaje, qué tamaño tiene y cuándo pasa. Una llamada directa en la red local va sellada del mismo modo y además firmada, así que nada depende del certificado autofirmado que ofrece una instancia.
 

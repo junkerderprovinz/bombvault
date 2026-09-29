@@ -72,11 +72,11 @@ Na první instanci otevřete **Instance → Párování** a klikněte na **Vygen
 
 Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte jako s heslem.
 
-**Jak se členové navzájem najdou.** Ve stejné síti se najdou pomocí multicastu a mluví spolu přímo. Instance v různých sítích jdou přes relay, který se vybírá na stejné záložce:
+**Jak se členové navzájem najdou.** Každá instance se dozví svou vlastní adresu v síti z vašeho prohlížeče hned, jak se přihlásíte; v kartě relay se zobrazí jako **Tato instance ve vaší síti**, a pokud před ní stojí reverzní proxy nebo neobvyklý port, opravte ji tam. Ve stejné síti si členové tuto adresu oznamují multicastem a mluví spolu přímo, a tam, kde multicast nedokáže projít sítí kontejnerů, jako je výchozí bridge síť Dockeru, instance místo toho prohledá svou vlastní podsíť a najde ostatní podepsaným voláním, na které umí odpovědět jen člen skupiny, takže se páruje v řádu sekund i bez relay. Pokud se nic nenajde, **Nemůžete ji najít?** pod kartou párování přijme jednu adresu ručně, pro jinou podsíť nebo neobvyklý port. Instance v různých sítích jdou přes relay, který se vybírá na stejné záložce:
 
 - **Relay projektu** (výchozí): `relay.halleluja.design`, stejný relay, jaký používá i KnightLoader. Není co nastavovat.
 - **Vlastní relay**: kontejner **BombVault Relay** z Unraid Community Apps, nebo jedna z vašich instancí, která je už zvenčí dostupná se zapnutým přepínačem **Sloužit jako relay**. Taková instance pak odpovídá na `/relay/connect` na své vlastní adrese, za reverzní proxy a certifikátem, které už má, a pustí dovnitř jen vaši skupinu. Adresu relay zadejte na každé instanci, která ho má používat.
-- **Žádný relay**: členové se najdou jen ve stejné síti.
+- **Žádný relay**: členové se najdou automaticky jen ve stejné síti, a nikde jinde.
 
 **Co vidí relay.** Každé volání mezi členy je zapečetěné pomocí AES-256-GCM klíčem odvozeným z dvanácti slov, a ten klíč nikdy neopustí vaše instance. Relay se dozví hash, který sdružuje spojení, dále pro kterou instanci je zpráva určená, jak je velká a kdy prochází. Přímé volání v lokální síti je zapečetěné stejným způsobem a navíc podepsané, takže nic nezávisí na self-signed certifikátu, který instance nabízí.
 

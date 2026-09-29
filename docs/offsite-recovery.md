@@ -80,11 +80,11 @@ On the first instance open **Instances → Pairing** and press **Generate phrase
 
 Anyone who knows the words can join the group, so treat them like a password.
 
-**How members reach each other.** On the same network they find each other by multicast and talk directly. Instances on different networks go through a relay, picked on the same tab:
+**How members reach each other.** Each instance learns its own address on the network from your browser the moment you sign in, shown in the relay card as **This instance on your network**; correct it there if a reverse proxy or an unusual port sits in front. On the same network members announce that address by multicast and talk directly, and where multicast cannot cross a container network, such as Docker's default bridge, an instance instead searches its own subnet for the others with a signed call only a group member can answer, so pairing still finishes in seconds without a relay. If nothing turns up, **Can't find it?** under the pairing card takes one address by hand, for another subnet or a non-standard port. Instances on different networks go through a relay, picked on the same tab:
 
 - **Project relay** (the default): `relay.halleluja.design`, the relay KnightLoader uses as well. Nothing to set up.
 - **Own relay**: the **BombVault Relay** container from the Unraid Community Apps, or one of your instances that is already reachable from outside with **Serve as relay** switched on. That instance then answers at `/relay/connect` on its own address, behind the reverse proxy and certificate it already has, and lets in your group only. Enter the relay's address on every instance that should use it.
-- **No relay**: members find each other on the same network only.
+- **No relay**: members find each other automatically on the same network, and nowhere else.
 
 **What the relay sees.** Every call between members is sealed with AES-256-GCM under a key derived from the twelve words, and that key never leaves your instances. The relay learns a hash that groups the connections, which instance a message is for, how big it is and when it passes. A direct call on the local network is sealed the same way and signed as well, so nothing depends on the self-signed certificate an instance serves.
 

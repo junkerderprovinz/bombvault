@@ -72,11 +72,11 @@ Sur la première instance, ouvrez **Instances → Appairage** et cliquez sur **G
 
 Quiconque connaît les mots peut rejoindre le groupe, traitez-les donc comme un mot de passe.
 
-**Comment les membres se joignent.** Sur le même réseau, ils se trouvent par multicast et se parlent directement. Les instances sur des réseaux différents passent par un relais, choisi sur le même onglet :
+**Comment les membres se joignent.** Chaque instance apprend sa propre adresse sur le réseau depuis votre navigateur dès que vous vous connectez, affichée dans la carte du relais comme **Cette instance sur votre réseau** ; corrigez-la là si un reverse proxy ou un port inhabituel se trouve devant. Sur le même réseau, les membres annoncent cette adresse par multicast et se parlent directement, et là où le multicast ne peut pas traverser un réseau de conteneurs, comme le réseau bridge par défaut de Docker, une instance recherche plutôt les autres dans son propre sous-réseau avec un appel signé auquel seul un membre du groupe peut répondre, si bien que l'appairage se termine quand même en quelques secondes sans relais. Si rien n'apparaît, **Vous ne la trouvez pas ?**, sous la carte d'appairage, accepte une adresse saisie à la main, pour un autre sous-réseau ou un port non standard. Les instances sur des réseaux différents passent par un relais, choisi sur le même onglet :
 
 - **Relais du projet** (par défaut) : `relay.halleluja.design`, le relais qu'utilise aussi KnightLoader. Rien à configurer.
 - **Relais personnel** : le conteneur **BombVault Relay** des Unraid Community Apps, ou l'une de vos instances déjà joignable depuis l'extérieur avec **Servir de relais** activé. Cette instance répond alors sur `/relay/connect` à sa propre adresse, derrière le reverse proxy et le certificat qu'elle possède déjà, et n'y laisse entrer que votre groupe. Saisissez l'adresse du relais sur chaque instance qui doit l'utiliser.
-- **Aucun relais** : les membres ne se trouvent que sur le même réseau.
+- **Aucun relais** : les membres se trouvent automatiquement uniquement sur le même réseau, et nulle part ailleurs.
 
 **Ce que voit le relais.** Chaque appel entre membres est scellé avec AES-256-GCM sous une clé dérivée des douze mots, et cette clé ne quitte jamais vos instances. Le relais apprend un hash qui regroupe les connexions, pour quelle instance un message est destiné, sa taille et son horodatage. Un appel direct sur le réseau local est scellé de la même façon et signé également, si bien que rien ne dépend du certificat auto-signé que sert une instance.
 
