@@ -72,11 +72,11 @@ Mottakere, hentekilder, Fleet-visningen og Mesh-ekstern snakker alle med en anne
 
 Alle som kjenner ordene kan bli med i gruppen, så behandle dem som et passord.
 
-**Hvordan medlemmene når hverandre.** På samme nettverk finner de hverandre via multicast og snakker direkte sammen. Instanser på ulike nettverk går gjennom et relé, valgt på samme fane:
+**Hvordan medlemmene når hverandre.** Hver instans lærer sin egen adresse på nettverket fra nettleseren din i det du logger inn, vist i relékortet som **Denne instansen på nettverket ditt**; rett den der hvis en revers-proxy eller en uvanlig port ligger foran. På samme nettverk kunngjør medlemmene den adressen via multicast og snakker direkte sammen, og der multicast ikke kommer gjennom et containernettverk, som Dockers standard bridge-nettverk, søker en instans i stedet gjennom sitt eget subnett etter de andre med et signert kall bare et gruppemedlem kan svare på, så paringen likevel er ferdig på sekunder uten relé. Dukker det ikke opp noe, tar **Finner du den ikke?** under paringskortet imot en adresse for hånd, for et annet subnett eller en uvanlig port. Instanser på ulike nettverk går gjennom et relé, valgt på samme fane:
 
 - **Prosjektrelé** (standarden): `relay.halleluja.design`, det samme reléet som KnightLoader også bruker. Ingenting å sette opp.
 - **Eget relé**: containeren **BombVault Relay** fra Unraid Community Apps, eller en av instansene dine som allerede er tilgjengelig utenfra med **Fungere som relé** slått på. Den instansen svarer da på `/relay/connect` på sin egen adresse, bak revers-proxyen og sertifikatet den allerede har, og slipper bare inn din gruppe. Skriv inn reléets adresse på hver instans som skal bruke det.
-- **Ingen relé**: medlemmer finner bare hverandre på samme nettverk.
+- **Ingen relé**: medlemmer finner hverandre automatisk på samme nettverk, og ingen andre steder.
 
 **Hva reléet ser.** Hvert kall mellom medlemmer er forseglet med AES-256-GCM under en nøkkel utledet fra de tolv ordene, og den nøkkelen forlater aldri instansene dine. Reléet får vite en hash som grupperer forbindelsene, hvilken instans en melding er til, hvor stor den er og når den passerer. Et direkte kall på det lokale nettverket er forseglet på samme måte og signert i tillegg, så ingenting avhenger av det selvsignerte sertifikatet en instans tilbyr.
 

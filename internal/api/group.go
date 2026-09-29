@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -98,7 +99,7 @@ func (s *Service) applyGroup() {
 		InstanceID: g.InstanceID,
 		Name:       instanceDisplayName(settings),
 		Version:    Version,
-		DirectURL:  s.directURL(),
+		DirectURL:  s.directURL(g),
 		Mode:       group.Mode(g.RelayMode),
 		RelayURL:   g.RelayURL,
 	})
@@ -116,9 +117,16 @@ func instanceDisplayName(settings store.Settings) string {
 	return "BombVault"
 }
 
-// directURL is where this instance answers members on the local network: its
-// first LAN address on the port it listens on.
-func (s *Service) directURL() string {
+// directURL is where this instance answers members on the local network: the
+// address stored in g, learned from a browser or set by hand, or, when
+// nothing better is known, its first LAN address on the port it listens on.
+// The stored address is what a host or macvlan setup needs a reverse proxy
+// hostname for and what a Docker bridge network needs at all, since the
+// container's own address is never reachable from outside it.
+func (s *Service) directURL(g store.GroupState) string {
+	if addr := strings.TrimSpace(g.DirectURL); addr != "" {
+		return addr
+	}
 	ip := discovery.LocalIPv4()
 	if ip == "" {
 		return ""
@@ -127,6 +135,61 @@ func (s *Service) directURL() string {
 		return "http://" + ip + ":" + strconv.Itoa(s.cfg.Port)
 	}
 	return "https://" + ip + ":" + strconv.Itoa(s.cfg.HTTPSPort)
+}
+
+// learnDirectURL takes the scheme, host and port a browser used to reach
+// this instance and stores it as the instance's own direct address, unless a
+// person has set one by hand. localhost, a loopback or a link-local address
+// is ignored: none of those mean anything to another instance on the
+// network, and storing one would silence the real address underneath it.
+func (s *Service) learnDirectURL(r *http.Request) {
+	addr := directAddressFromRequest(s.cfg.HTTPOnly, r)
+	if addr == "" {
+		return
+	}
+	if err := s.store.LearnGroupDirectURL(addr); err != nil {
+		log.Printf("group: learn this instance's direct address: %v", err)
+	}
+}
+
+// directAddressFromRequest rebuilds scheme://host from a request the way
+// originFor rebuilds an origin for WebAuthn, since both need what the
+// browser's address bar actually shows rather than this container's own
+// idea of its address.
+func directAddressFromRequest(httpOnly bool, r *http.Request) string {
+	host := strings.TrimSpace(r.Host)
+	if host == "" || isLocalHost(host) {
+		return ""
+	}
+	scheme := "https"
+	if httpOnly {
+		scheme = "http"
+	}
+	if fp := strings.TrimSpace(r.Header.Get("X-Forwarded-Proto")); fp != "" {
+		if i := strings.IndexByte(fp, ','); i > 0 {
+			fp = strings.TrimSpace(fp[:i])
+		}
+		if fp == "http" || fp == "https" {
+			scheme = fp
+		}
+	}
+	return scheme + "://" + host
+}
+
+// isLocalHost reports whether host, as found in a Host header (so possibly
+// with a port and IPv6 brackets), names this machine to itself rather than
+// an address another instance could dial.
+func isLocalHost(host string) bool {
+	h := host
+	if hh, _, err := net.SplitHostPort(host); err == nil {
+		h = hh
+	}
+	h = strings.Trim(h, "[]")
+	if strings.EqualFold(h, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(h)
+	return ip != nil && (ip.IsLoopback() || ip.IsLinkLocalUnicast())
 }
 
 // servePeer answers one call from a group member. Only the routes in
@@ -158,13 +221,15 @@ type peerRoute struct {
 }
 
 // peerRoutes is everything a group member can reach on this instance: the
-// Fleet scorecard, a storage offer, what receiver and pull pairing need, and
-// starting a check. Settings, secrets and the phrase are not among them.
+// Fleet scorecard, a storage offer, what receiver and pull pairing need,
+// starting a check, and the bare hello a blind probe gets. Settings, secrets
+// and the phrase are not among them.
 var peerRoutes = []peerRoute{
 	{"GET /api/group/peer/status", (*Service).handlePeerStatus},
 	{"POST /api/group/peer/mesh-offer", (*Service).handlePeerMeshOffer},
 	{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
 	{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
+	{"GET " + group.ProbePath, (*Service).handlePeerHello},
 }
 
 func (s *Service) peerMux() http.Handler {
@@ -234,7 +299,22 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 	if out != nil && json.Unmarshal(raw, out) != nil {
 		return errMemberUnreadable
 	}
+	s.harvestDirectURL(memberID, raw)
 	return nil
+}
+
+// harvestDirectURL notes memberID's self-reported direct address, when its
+// answer carries one, as a hint for Call to try before falling back to the
+// relay. Every peer route that answers over the relay ends up feeding this,
+// since the field is the same on all of them; a member that never sends one
+// leaves nothing to note.
+func (s *Service) harvestDirectURL(memberID string, raw []byte) {
+	var hint struct {
+		DirectURL string `json:"directUrl"`
+	}
+	if json.Unmarshal(raw, &hint) == nil && hint.DirectURL != "" {
+		s.pairing().NoteAddress(memberID, hint.DirectURL)
+	}
 }
 
 // handlePeerStatus is the protection summary a member's Fleet page shows.
@@ -255,6 +335,44 @@ func (s *Service) handlePeerStatus(w http.ResponseWriter, _ *http.Request) {
 		InstanceName: instanceDisplayName(settings),
 		Version:      Version,
 		Domains:      domains,
+		DirectURL:    s.selfDirectURL(),
+	})
+}
+
+// selfDirectURL is this instance's own direct address, fetched fresh so it
+// reflects whatever was last learned or set. It is what this instance tells
+// a member calling it over the relay, the address exchange a poll or a
+// pairing already makes.
+func (s *Service) selfDirectURL() string {
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return ""
+	}
+	return s.directURL(g)
+}
+
+// handlePeerHello answers a probe that does not yet know which member, if
+// any, it is calling: the LAN sweep and a manually entered address both use
+// it. It carries nothing a probe is not owed once it has proven group
+// membership by reaching this route at all.
+// GET /api/group/peer/hello
+func (s *Service) handlePeerHello(w http.ResponseWriter, _ *http.Request) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, group.Hello{
+		OK:         true,
+		InstanceID: g.InstanceID,
+		Name:       instanceDisplayName(settings),
+		Version:    Version,
+		DirectURL:  s.directURL(g),
 	})
 }
 
@@ -266,6 +384,7 @@ type peerPairing struct {
 	InstanceName   string         `json:"instanceName"`
 	ResticPassword string         `json:"resticPassword"`
 	Repos          []pairableRepo `json:"repos"`
+	DirectURL      string         `json:"directUrl,omitempty"`
 }
 
 // pairableRepo is one repository location a member offers, with any
@@ -294,6 +413,7 @@ func (s *Service) handlePeerPairing(w http.ResponseWriter, _ *http.Request) {
 		InstanceName:   instanceDisplayName(settings),
 		ResticPassword: s.resticPassword(),
 		Repos:          repos,
+		DirectURL:      s.selfDirectURL(),
 	})
 }
 
@@ -357,6 +477,13 @@ type groupView struct {
 	// forms by them, on the server's clock rather than the browser's.
 	JoinedAgo  int64 `json:"joinedAgo"`
 	MemberSeen bool  `json:"memberSeen"`
+	// SelfAddress is this instance's own address on the local network, as
+	// announced to other members: learned from a browser, set by hand, or,
+	// failing both, this host's own LAN address.
+	SelfAddress string `json:"selfAddress"`
+	// SelfAddressManual is true once a person has set SelfAddress by hand,
+	// so a newly learned address stops replacing it until it is cleared.
+	SelfAddressManual bool `json:"selfAddressManual"`
 }
 
 type relayView struct {
@@ -394,6 +521,11 @@ func (h *Handler) groupViewNow() (groupView, error) {
 	if !g.JoinedAt.IsZero() {
 		joinedAgo = max(int64(now.Sub(g.JoinedAt).Seconds()), 0)
 	}
+	// Cheap to call on every load: NeedsSweep decides whether there is
+	// anything to look for, and this is also what makes joining with a
+	// phrase kick off a sweep at once, since that join answers with this
+	// same view.
+	h.svc.pairing().MaybeSweep()
 	return groupView{
 		OK:          true,
 		Active:      h.svc.pairing().Active(),
@@ -409,8 +541,10 @@ func (h *Handler) groupViewNow() (groupView, error) {
 			Serve:        g.RelayServe,
 			ServeClients: clients,
 		},
-		JoinedAgo:  joinedAgo,
-		MemberSeen: !g.MemberSeenAt.IsZero(),
+		JoinedAgo:         joinedAgo,
+		MemberSeen:        !g.MemberSeenAt.IsZero(),
+		SelfAddress:       h.svc.directURL(g),
+		SelfAddressManual: g.DirectURLManual,
 	}, nil
 }
 
@@ -635,6 +769,84 @@ func normalizeRelayURL(raw string) (string, string) {
 		return "", "a relay address carries no user name or password"
 	}
 	return v, ""
+}
+
+// handleGroupAddress sets or clears this instance's own direct address by
+// hand: a reverse proxy hostname, a port a browser never sees, or any other
+// case a learned address gets wrong. An empty url clears the override, so
+// the next signed-in request is learned again. PUT /api/group/address
+func (h *Handler) handleGroupAddress(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		URL string `json:"url"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	v := strings.TrimSpace(body.URL)
+	if v == "" {
+		if err := h.store.SetGroupDirectURL("", false); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		h.svc.applyGroup()
+		h.writeGroupView(w)
+		return
+	}
+	addr, msg := normalizeDirectURL(v)
+	if msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if err := h.store.SetGroupDirectURL(addr, true); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.svc.applyGroup()
+	h.writeGroupView(w)
+}
+
+// normalizeDirectURL trims a pasted address and requires the scheme a member
+// actually dials: http or https, never ws, since this is where the direct
+// call transport connects, not the relay.
+func normalizeDirectURL(raw string) (string, string) {
+	v := strings.TrimRight(strings.TrimSpace(raw), "/")
+	if !strings.Contains(v, "://") {
+		v = "https://" + v
+	}
+	u, err := url.Parse(v)
+	if err != nil || u.Host == "" {
+		return "", "this is not an address; use http:// or https://"
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", "an instance address needs http:// or https://"
+	}
+	if u.User != nil {
+		return "", "an address carries no user name or password"
+	}
+	return v, ""
+}
+
+// handleGroupProbe makes one blind, signed call to an address a person typed
+// under "Can't find it?", for a subnet or a port the LAN sweep does not try
+// on its own. A successful answer is recorded exactly as the sweep records
+// one. POST /api/group/probe
+func (h *Handler) handleGroupProbe(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		URL string `json:"url"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	addr, msg := normalizeDirectURL(body.URL)
+	if msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if _, err := h.svc.pairing().Probe(r.Context(), addr); err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "nothing at that address answered as a member of this group"})
+		return
+	}
+	h.writeGroupView(w)
 }
 
 // handleRelayConnect is the relay socket while this instance serves one. It

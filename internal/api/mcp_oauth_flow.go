@@ -196,7 +196,7 @@ func (h *Handler) openConsent(session, ticket string, now time.Time) (consentTic
 // has checked it already; the value is what a consent ticket is bound to.
 func (h *Handler) operatorSession(r *http.Request) (string, bool) {
 	hash, epoch, on := h.authEnabled()
-	c, err := r.Cookie(sessionCookieName)
+	c, err := h.sessionCookie(r)
 	if !on || err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
 		return "", false
 	}

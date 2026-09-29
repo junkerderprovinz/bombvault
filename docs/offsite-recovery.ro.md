@@ -72,11 +72,11 @@ Pe prima instanță, deschide **Instanțe → Împerechere** și apasă pe **Gen
 
 Oricine cunoaște cuvintele se poate alătura grupului, așa că tratează-le ca pe o parolă.
 
-**Cum se găsesc membrii între ei.** În aceeași rețea se găsesc prin multicast și vorbesc direct. Instanțele din rețele diferite trec printr-un releu, ales pe aceeași filă:
+**Cum se găsesc membrii între ei.** Fiecare instanță își află propria adresă din rețea de la browserul tău chiar în momentul autentificării, arătată pe cardul de releu ca **Această instanță în rețeaua ta**; corecteaz-o acolo dacă în față se află un reverse proxy sau un port neobișnuit. În aceeași rețea, membrii anunță acea adresă prin multicast și vorbesc direct între ei, iar acolo unde multicast-ul nu poate traversa o rețea de containere, cum e rețeaua bridge implicită a Docker, o instanță își caută în schimb propriul subnet pentru a găsi celelalte, cu un apel semnat la care poate răspunde doar un membru al grupului, așa că împerecherea tot se încheie în câteva secunde, fără releu. Dacă nu apare nimic, **Nu o găsești?** de sub cardul de împerechere primește o adresă introdusă manual, pentru un alt subnet sau un port neobișnuit. Instanțele din rețele diferite trec printr-un releu, ales pe aceeași filă:
 
 - **Releul proiectului** (implicit): `relay.halleluja.design`, același releu pe care îl folosește și KnightLoader. Nimic de configurat.
 - **Releu propriu**: containerul **BombVault Relay** din Unraid Community Apps, sau una dintre instanțele tale care este deja accesibilă din exterior cu **Funcționează ca releu** activat. Acea instanță răspunde apoi la `/relay/connect` pe propria adresă, în spatele reverse proxy-ului și certificatului pe care le are deja, și lasă să intre doar grupul tău. Introdu adresa releului pe fiecare instanță care ar trebui să îl folosească.
-- **Fără releu**: membrii se găsesc doar în aceeași rețea.
+- **Fără releu**: membrii se găsesc automat în aceeași rețea, și nicăieri altundeva.
 
 **Ce vede releul.** Fiecare apel dintre membri este sigilat cu AES-256-GCM sub o cheie derivată din cele douăsprezece cuvinte, iar acea cheie nu părăsește niciodată instanțele tale. Releul află un hash care grupează conexiunile, pentru ce instanță este destinat un mesaj, cât de mare este și când trece. Un apel direct în rețeaua locală este sigilat la fel și semnat în plus, așa că nimic nu depinde de certificatul autosemnat pe care îl servește o instanță.
 
