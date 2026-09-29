@@ -10,9 +10,9 @@ import (
 
 // testLimiter returns a limiter whose clock the test drives, so a backoff
 // can be waited out in nanoseconds instead of minutes.
-func testLimiter() (*limiter, func(time.Duration)) {
+func testLimiter() (*Limiter, func(time.Duration)) {
 	now := time.Date(2026, 8, 27, 12, 0, 0, 0, time.UTC)
-	l := newLimiter()
+	l := NewLimiter()
 	l.now = func() time.Time { return now }
 	return l, func(d time.Duration) { now = now.Add(d) }
 }
@@ -21,8 +21,8 @@ func testLimiter() (*limiter, func(time.Duration)) {
 func TestLimiterLetsOccasionalFailuresThrough(t *testing.T) {
 	l, _ := testLimiter()
 	for i := 0; i < failsBeforeBlock-1; i++ {
-		l.fail("198.51.100.7")
-		if l.blocked("198.51.100.7") {
+		l.Fail("198.51.100.7")
+		if l.Blocked("198.51.100.7") {
 			t.Fatalf("blocked after only %d failures, threshold is %d", i+1, failsBeforeBlock)
 		}
 	}
@@ -31,9 +31,9 @@ func TestLimiterLetsOccasionalFailuresThrough(t *testing.T) {
 func TestLimiterBlocksAfterThreshold(t *testing.T) {
 	l, _ := testLimiter()
 	for i := 0; i < failsBeforeBlock; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 	}
-	if !l.blocked("198.51.100.7") {
+	if !l.Blocked("198.51.100.7") {
 		t.Fatalf("not blocked after %d failures", failsBeforeBlock)
 	}
 }
@@ -41,12 +41,12 @@ func TestLimiterBlocksAfterThreshold(t *testing.T) {
 func TestLimiterIsPerAddress(t *testing.T) {
 	l, _ := testLimiter()
 	for i := 0; i < failsBeforeBlock*3; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 	}
-	if !l.blocked("198.51.100.7") {
+	if !l.Blocked("198.51.100.7") {
 		t.Fatal("the offending address is not blocked")
 	}
-	if l.blocked("203.0.113.9") {
+	if l.Blocked("203.0.113.9") {
 		t.Fatal("an unrelated address was blocked")
 	}
 }
@@ -54,13 +54,13 @@ func TestLimiterIsPerAddress(t *testing.T) {
 func TestLimiterBlockExpires(t *testing.T) {
 	l, advance := testLimiter()
 	for i := 0; i < failsBeforeBlock; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 	}
-	if !l.blocked("198.51.100.7") {
+	if !l.Blocked("198.51.100.7") {
 		t.Fatal("not blocked")
 	}
 	advance(baseBlock + time.Second)
-	if l.blocked("198.51.100.7") {
+	if l.Blocked("198.51.100.7") {
 		t.Fatal("still blocked after the first backoff elapsed")
 	}
 }
@@ -70,12 +70,12 @@ func TestLimiterBlockExpires(t *testing.T) {
 func TestLimiterBackoffGrows(t *testing.T) {
 	l, advance := testLimiter()
 	for i := 0; i < failsBeforeBlock; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 	}
 	first := l.addrs["198.51.100.7"].blockFor
 
 	advance(first + time.Second)
-	l.fail("198.51.100.7")
+	l.Fail("198.51.100.7")
 	second := l.addrs["198.51.100.7"].blockFor
 
 	if second <= first {
@@ -86,7 +86,7 @@ func TestLimiterBackoffGrows(t *testing.T) {
 func TestLimiterBackoffIsCapped(t *testing.T) {
 	l, advance := testLimiter()
 	for i := 0; i < failsBeforeBlock+40; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 		advance(time.Second)
 	}
 	if got := l.addrs["198.51.100.7"].blockFor; got > maxBlock {
@@ -99,13 +99,13 @@ func TestLimiterBackoffIsCapped(t *testing.T) {
 func TestLimiterSuccessClearsTheRecord(t *testing.T) {
 	l, _ := testLimiter()
 	for i := 0; i < failsBeforeBlock-1; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 	}
-	l.succeed("198.51.100.7")
+	l.Succeed("198.51.100.7")
 
 	for i := 0; i < failsBeforeBlock-1; i++ {
-		l.fail("198.51.100.7")
-		if l.blocked("198.51.100.7") {
+		l.Fail("198.51.100.7")
+		if l.Blocked("198.51.100.7") {
 			t.Fatal("old failures still counted after a successful handshake")
 		}
 	}
@@ -115,9 +115,9 @@ func TestLimiterSuccessClearsTheRecord(t *testing.T) {
 func TestLimiterFailuresAgeOut(t *testing.T) {
 	l, advance := testLimiter()
 	for i := 0; i < failsBeforeBlock*2; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 		advance(failWindow + time.Minute)
-		if l.blocked("198.51.100.7") {
+		if l.Blocked("198.51.100.7") {
 			t.Fatalf("blocked by failures spaced more than %s apart", failWindow)
 		}
 	}
@@ -126,7 +126,7 @@ func TestLimiterFailuresAgeOut(t *testing.T) {
 func TestLimiterBoundsItsOwnMemory(t *testing.T) {
 	l, advance := testLimiter()
 	for i := 0; i < maxTrackedAddrs+500; i++ {
-		l.fail(strings.Repeat("a", 3) + string(rune('0'+i%10)) + "." + string(rune('a'+i%26)) + strconv.Itoa(i))
+		l.Fail(strings.Repeat("a", 3) + string(rune('0'+i%10)) + "." + string(rune('a'+i%26)) + strconv.Itoa(i))
 		advance(time.Millisecond)
 	}
 	if got := len(l.addrs); got > maxTrackedAddrs {
@@ -136,16 +136,16 @@ func TestLimiterBoundsItsOwnMemory(t *testing.T) {
 
 // Buckets are per IP, not per connection: every connection gets a fresh
 // source port, so counting the pair would never block anyone.
-func TestDefaultClientAddrDropsThePort(t *testing.T) {
+func TestRequestAddrDropsThePort(t *testing.T) {
 	for _, c := range []struct{ in, want string }{
 		{"198.51.100.7:54321", "198.51.100.7"},
 		{"198.51.100.7:1", "198.51.100.7"},
 		{"[2a01:4f8:c014:3544::1]:44444", "2a01:4f8:c014:3544::1"},
 		{"no-port-here", "no-port-here"},
 	} {
-		got := defaultClientAddr(&http.Request{RemoteAddr: c.in})
+		got := RequestAddr(&http.Request{RemoteAddr: c.in})
 		if got != c.want {
-			t.Errorf("defaultClientAddr(%q) = %q, want %q", c.in, got, c.want)
+			t.Errorf("RequestAddr(%q) = %q, want %q", c.in, got, c.want)
 		}
 	}
 }
@@ -155,9 +155,9 @@ func TestDefaultClientAddrDropsThePort(t *testing.T) {
 // request path does, since there is no exported sweep to call directly.
 func TestLimiterForgetsAnAddressThatNeverReturns(t *testing.T) {
 	l, advance := testLimiter()
-	l.fail("198.51.100.7")
+	l.Fail("198.51.100.7")
 	advance(failWindow + time.Second)
-	l.blocked("198.51.100.7")
+	l.Blocked("198.51.100.7")
 	if n := len(l.addrs); n != 0 {
 		t.Fatalf("%d records left after the failure aged out, want 0", n)
 	}
@@ -166,10 +166,10 @@ func TestLimiterForgetsAnAddressThatNeverReturns(t *testing.T) {
 func TestLimiterKeepsABlockedAddressUntilTheBlockEnds(t *testing.T) {
 	l, advance := testLimiter()
 	for i := 0; i < failsBeforeBlock+16; i++ {
-		l.fail("198.51.100.7")
+		l.Fail("198.51.100.7")
 	}
 	advance(failWindow + time.Minute)
-	if !l.blocked("198.51.100.7") {
+	if !l.Blocked("198.51.100.7") {
 		t.Fatal("the sweep lifted a block that had not run out")
 	}
 }
@@ -185,10 +185,10 @@ func TestLimiterRetentionIsBoundedAfterTheLastFailure(t *testing.T) {
 	for _, fails := range []int{1, failsBeforeBlock - 1, failsBeforeBlock, failsBeforeBlock + 3, failsBeforeBlock + 40} {
 		l, advance := testLimiter()
 		for i := 0; i < fails; i++ {
-			l.fail("198.51.100.7")
+			l.Fail("198.51.100.7")
 		}
 		advance(policyRetention - sweepEvery + time.Second)
-		l.blocked("198.51.100.7")
+		l.Blocked("198.51.100.7")
 		if n := len(l.addrs); n != 0 {
 			t.Fatalf("after %d failures, %d records left %s past the last failure, want 0", fails, n, policyRetention-sweepEvery)
 		}
@@ -204,8 +204,8 @@ func TestLimiterBackoffGrowsForACallerThatWaitsOutEachBlock(t *testing.T) {
 		l, advance := testLimiter()
 		var longest time.Duration
 		for elapsed := time.Duration(0); elapsed < 6*time.Hour; elapsed += every {
-			if !l.blocked("198.51.100.7") {
-				l.fail("198.51.100.7")
+			if !l.Blocked("198.51.100.7") {
+				l.Fail("198.51.100.7")
 			}
 			a := l.addrs["198.51.100.7"]
 			if a == nil || a.blockFor < longest {
@@ -224,9 +224,9 @@ func TestLimiterBackoffGrowsForACallerThatWaitsOutEachBlock(t *testing.T) {
 // only ever sees traffic still forgets without a separate timer.
 func TestLimiterSweepsOnTheRequestPath(t *testing.T) {
 	l, advance := testLimiter()
-	l.fail("198.51.100.7")
+	l.Fail("198.51.100.7")
 	advance(policyRetention)
-	l.blocked("203.0.113.9")
+	l.Blocked("203.0.113.9")
 	if n := len(l.addrs); n != 0 {
 		t.Fatalf("%d records left after a request came in past the retention bound, want 0", n)
 	}

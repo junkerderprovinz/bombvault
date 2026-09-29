@@ -302,6 +302,26 @@ func multicastInterfaces() []net.Interface {
 	return out
 }
 
+// PrivateIPv4 reports whether ip is an RFC 1918 address: 10/8, 172.16/12 or
+// 192.168/16. A sweep of the local network must never leave this range, so
+// it is what tells the sweep its own address is safe to scan around.
+func PrivateIPv4(ip net.IP) bool {
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return false
+	}
+	switch {
+	case ip4[0] == 10:
+		return true
+	case ip4[0] == 172 && ip4[1]&0xf0 == 16:
+		return true
+	case ip4[0] == 192 && ip4[1] == 168:
+		return true
+	default:
+		return false
+	}
+}
+
 // LocalIPv4 is the address to announce: the first IPv4 on a local interface
 // that is neither loopback nor link-local, since a 169.254 address is what a
 // NIC gives itself when DHCP fails and nothing else can reach it.

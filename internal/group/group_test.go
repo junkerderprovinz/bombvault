@@ -382,3 +382,397 @@ func TestAnInstanceWithAVeryLongNameStillReachesTheRelay(t *testing.T) {
 		t.Fatalf("B's members = %+v, want A under its name clipped to whole characters", got)
 	}
 }
+
+// helloServe answers only ProbePath, the way a real instance's peer/hello
+// route does, so a probe test does not need the api package's handler.
+func helloServe(id, name, version string) relay.Handler {
+	return func(_ context.Context, call relay.ProxyCall) (int, []byte) {
+		if call.Path != ProbePath {
+			return http.StatusNotFound, nil
+		}
+		b, _ := json.Marshal(Hello{OK: true, InstanceID: id, Name: name, Version: version})
+		return http.StatusOK, b
+	}
+}
+
+func TestProbeConfirmsAGroupMemberAtAnUnknownAddress(t *testing.T) {
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+
+	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+
+	h, err := a.Probe(context.Background(), srv.URL)
+	if err != nil || h.InstanceID != "id-b" || h.Name != "Attic" {
+		t.Fatalf("Probe = %+v, %v", h, err)
+	}
+	got := a.Members()
+	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct || got[0].Name != "Attic" {
+		t.Fatalf("members after a successful probe = %+v, want b listed and direct", got)
+	}
+}
+
+// A probe against a host running BombVault for a different group must find
+// nothing: the signature is checked with this group's key, not the
+// stranger's.
+func TestProbeOfANonMemberFindsNothing(t *testing.T) {
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+
+	stranger := NewManager(helloServe("id-x", "Stranger", "1.0.0"))
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, stranger.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(stranger.Close)
+	stranger.Apply(Config{Secret: []byte("fedcba9876543210"), InstanceID: "id-x", Mode: ModeOff})
+
+	if _, err := a.Probe(context.Background(), srv.URL); err == nil {
+		t.Fatal("a probe of an instance in another group was not refused")
+	}
+	if got := a.Members(); len(got) != 0 {
+		t.Fatalf("members after a failed probe = %+v, want none", got)
+	}
+}
+
+// A call sealed for ProbeTarget must reach the hello route and nothing else,
+// so a blind probe cannot be turned into a call against a route meant for a
+// known member.
+func TestOnlyTheHelloRouteAcceptsAProbeTargetedCall(t *testing.T) {
+	b := NewManager(echo)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+	good := PeerAuthKey(testSecret)
+
+	other := sealedCall(t, ProbeTarget, relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/status"})
+	w := httptest.NewRecorder()
+	r := directRequest("", good, "id-a", time.Now(), other)
+	b.ServeDirect(w, r)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("a probe-targeted call to a non-hello path got HTTP %d, want 403", w.Code)
+	}
+
+	hello := sealedCall(t, ProbeTarget, relay.ProxyCall{Method: http.MethodGet, Path: ProbePath})
+	w2 := httptest.NewRecorder()
+	r2 := directRequest("", good, "id-a", time.Now(), hello)
+	b.ServeDirect(w2, r2)
+	if w2.Code != http.StatusOK {
+		t.Fatalf("a probe-targeted call to the hello path got HTTP %d, want 200", w2.Code)
+	}
+}
+
+func TestSubnetCandidatesOnlyForAPrivateIPv4OwnAddress(t *testing.T) {
+	for _, own := range []string{"", "not a url", "https://8.8.8.8:3443", "https://bombvault.example.org:3443", "https://203.0.113.5:3443"} {
+		if got := subnetCandidates(own); got != nil {
+			t.Errorf("subnetCandidates(%q) = %d candidates, want none for a non-private address", own, len(got))
+		}
+	}
+
+	got := subnetCandidates("https://192.168.1.5:3443")
+	if len(got) != 253 {
+		t.Fatalf("subnetCandidates on the default port = %d candidates, want 253 (every other host of the /24, one port)", len(got))
+	}
+	for _, addr := range got {
+		if strings.Contains(addr, "192.168.1.5:") {
+			t.Fatalf("subnetCandidates included this instance's own address: %v", got)
+		}
+		if !strings.HasPrefix(addr, "https://192.168.1.") {
+			t.Fatalf("subnetCandidates left its own /24: %q", addr)
+		}
+	}
+
+	got2 := subnetCandidates("http://10.0.5.9:8080")
+	if len(got2) != 253*2 {
+		t.Fatalf("subnetCandidates on a non-default port = %d candidates, want 253*2 (own port and 3443)", len(got2))
+	}
+	sawOwnPort, saw3443 := false, false
+	for _, addr := range got2 {
+		if strings.HasSuffix(addr, ":8080") {
+			sawOwnPort = true
+		}
+		if strings.HasSuffix(addr, ":3443") {
+			saw3443 = true
+		}
+		if !strings.HasPrefix(addr, "http://10.0.5.") {
+			t.Fatalf("subnetCandidates left its own /24: %q", addr)
+		}
+	}
+	if !sawOwnPort || !saw3443 {
+		t.Fatalf("subnetCandidates did not probe both its own port and 3443: %v", got2[:4])
+	}
+}
+
+func TestSweepFindsAMemberAmongUnreachableDecoys(t *testing.T) {
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+
+	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+
+	// The unreachable addresses stand in for the rest of a /24 a real sweep
+	// would probe; sweepWith takes the candidate list as a parameter exactly
+	// so a test can substitute a short one with a real member mixed in,
+	// rather than dialling an actual subnet.
+	candidates := []string{"https://127.0.0.1:1", "https://127.0.0.1:2", srv.URL, "https://127.0.0.1:4"}
+	a.sweepWith(context.Background(), candidates)
+
+	got := a.Members()
+	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct {
+		t.Fatalf("members after a sweep of mixed candidates = %+v, want only b, found directly", got)
+	}
+}
+
+// The sweep must never run more than sweepConcurrency probes at once, so a
+// misconfigured or hostile /24 cannot turn it into a flood.
+func TestSweepConcurrencyIsBounded(t *testing.T) {
+	var cur, peak atomic.Int32
+	release := make(chan struct{})
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, _ *http.Request) {
+		n := cur.Add(1)
+		for {
+			p := peak.Load()
+			if n <= p || peak.CompareAndSwap(p, n) {
+				break
+			}
+		}
+		<-release
+		cur.Add(-1)
+		w.WriteHeader(http.StatusForbidden)
+	})
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+
+	candidates := make([]string, sweepConcurrency*3)
+	for i := range candidates {
+		candidates[i] = srv.URL
+	}
+	done := make(chan struct{})
+	go func() {
+		a.sweepWith(context.Background(), candidates)
+		close(done)
+	}()
+	deadline := time.Now().Add(5 * time.Second)
+	for cur.Load() < sweepConcurrency && time.Now().Before(deadline) {
+		time.Sleep(5 * time.Millisecond)
+	}
+	if cur.Load() != sweepConcurrency {
+		t.Fatalf("only %d probes were in flight, want exactly %d before any is released", cur.Load(), sweepConcurrency)
+	}
+	close(release)
+	<-done
+	if got := peak.Load(); got > sweepConcurrency {
+		t.Fatalf("peak concurrent probes = %d, want at most %d", got, sweepConcurrency)
+	}
+}
+
+func TestNeedsSweepOutsideAGroupIsFalse(t *testing.T) {
+	m := NewManager(echo)
+	t.Cleanup(m.Close)
+	if m.NeedsSweep() {
+		t.Fatal("an instance in no group must never need a sweep")
+	}
+}
+
+func TestNeedsSweepIsTrueUntilSomethingIsFoundDirectly(t *testing.T) {
+	m := NewManager(echo)
+	t.Cleanup(m.Close)
+	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+	if !m.NeedsSweep() {
+		t.Fatal("a group with nobody found by any route yet must need a sweep")
+	}
+	m.ConfirmAddress("id-b", "https://192.168.1.9:3443", "Attic", "9.9.9")
+	if m.NeedsSweep() {
+		t.Fatal("a confirmed direct address should stop the sweep from being needed")
+	}
+}
+
+// A relay sibling this instance has no direct address for still needs a
+// sweep, even though another member is already reachable directly: the
+// point is to upgrade every member to a direct route, not just the first.
+func TestNeedsSweepIsTrueForARelaySiblingWithNoDirectAddress(t *testing.T) {
+	rs := httptest.NewServer(relay.NewServer())
+	t.Cleanup(rs.Close)
+	a := NewManager(echo)
+	b := NewManager(echo)
+	c := NewManager(echo)
+	t.Cleanup(a.Close)
+	t.Cleanup(b.Close)
+	t.Cleanup(c.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
+	c.Apply(Config{Secret: testSecret, InstanceID: "id-c", Name: "Garage", Mode: ModeOwn, RelayURL: rs.URL})
+
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) && len(a.Members()) < 2 {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if len(a.Members()) != 2 {
+		t.Fatalf("a never saw both siblings over the relay: %+v", a.Members())
+	}
+	// b is confirmed directly, c is relay-only: a sweep is still needed for c.
+	a.ConfirmAddress("id-b", "https://192.168.1.9:3443", "Attic", "9.9.9")
+	if !a.NeedsSweep() {
+		t.Fatal("a relay sibling with no known direct address should still need a sweep")
+	}
+	a.ConfirmAddress("id-c", "https://192.168.1.10:3443", "Garage", "9.9.9")
+	if a.NeedsSweep() {
+		t.Fatal("once every member has a confirmed direct address, no sweep should be needed")
+	}
+}
+
+func TestMaybeSweepIsThrottled(t *testing.T) {
+	m := NewManager(echo)
+	t.Cleanup(m.Close)
+	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", DirectURL: "https://198.51.100.5:3443", Mode: ModeOff})
+
+	m.sweepMu.Lock()
+	m.lastSweep = time.Now()
+	m.sweepMu.Unlock()
+
+	// A sweep is due (nobody found yet) but the last one was just now, so
+	// MaybeSweep must not touch the timestamp again this soon.
+	m.MaybeSweep()
+	m.sweepMu.Lock()
+	last := m.lastSweep
+	m.sweepMu.Unlock()
+	if time.Since(last) > time.Second {
+		t.Fatal("MaybeSweep started a new sweep before sweepMinInterval had passed")
+	}
+}
+
+// Joining or creating a group must be able to sweep at once: with no prior
+// sweep on record, MaybeSweep does not wait out sweepMinInterval.
+func TestMaybeSweepRunsImmediatelyWithNoPriorSweep(t *testing.T) {
+	m := NewManager(echo)
+	t.Cleanup(m.Close)
+	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", DirectURL: "https://198.51.100.5:3443", Mode: ModeOff})
+
+	m.MaybeSweep()
+	m.sweepMu.Lock()
+	started := !m.lastSweep.IsZero()
+	m.sweepMu.Unlock()
+	if !started {
+		t.Fatal("MaybeSweep did not start a sweep for a group that just joined")
+	}
+}
+
+// Leaving and joining a different group must not let a sweep due under the
+// old one skip the new one's first sweep, and must forget the old
+// addresses: neither means anything once the secret has changed.
+func TestApplyResetsAddressesAndTheSweepClockOnANewGroup(t *testing.T) {
+	m := NewManager(echo)
+	t.Cleanup(m.Close)
+	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+	m.ConfirmAddress("id-b", "https://192.168.1.9:3443", "Attic", "9.9.9")
+	m.sweepMu.Lock()
+	m.lastSweep = time.Now()
+	m.sweepMu.Unlock()
+
+	m.Apply(Config{Secret: []byte("fedcba9876543210"), InstanceID: "id-a", Mode: ModeOff})
+	if got := m.Members(); len(got) != 0 {
+		t.Fatalf("members after joining a different group = %+v, want the old ones forgotten", got)
+	}
+	m.sweepMu.Lock()
+	zero := m.lastSweep.IsZero()
+	m.sweepMu.Unlock()
+	if !zero {
+		t.Fatal("the sweep clock was not reset on a new group")
+	}
+}
+
+func TestCallTriesAStoredAddressBeforeFallingBackToTheRelay(t *testing.T) {
+	rs := httptest.NewServer(relay.NewServer())
+	t.Cleanup(rs.Close)
+
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
+
+	b := NewManager(echo)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	direct := httptest.NewTLSServer(mux)
+	t.Cleanup(direct.Close)
+	t.Cleanup(b.Close)
+	// b never joins the relay a uses, so a's only possible route to it is
+	// the address noted below.
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+
+	a.NoteAddress("id-b", direct.URL)
+	status, body, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
+		t.Fatalf("Call via a noted address = %d %q %v", status, body, err)
+	}
+}
+
+func TestCallFallsBackToTheRelayWhenTheStoredAddressDoesNotAnswer(t *testing.T) {
+	rs := httptest.NewServer(relay.NewServer())
+	t.Cleanup(rs.Close)
+	a := NewManager(echo)
+	b := NewManager(echo)
+	t.Cleanup(a.Close)
+	t.Cleanup(b.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
+
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) && len(a.Members()) == 0 {
+		time.Sleep(20 * time.Millisecond)
+	}
+	a.NoteAddress("id-b", "https://127.0.0.1:1")
+	status, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if err != nil || status != http.StatusOK {
+		t.Fatalf("Call did not fall back to the relay once the stored address failed: %d %v", status, err)
+	}
+}
+
+// A flood of bad signatures from one source must not keep being checked
+// forever: it earns that address a block, which holds even against a
+// correctly signed call, and leaves an unrelated address alone.
+func TestServeDirectBlocksAnAddressAfterRepeatedBadSignatures(t *testing.T) {
+	b := NewManager(echo)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+	bad := PeerAuthKey([]byte("fedcba9876543210"))
+	good := PeerAuthKey(testSecret)
+
+	for i := 0; i < 15; i++ {
+		r := directRequest("", bad, "id-a", time.Now(), sealedFor(t, "id-b"))
+		r.RemoteAddr = "203.0.113.9:1"
+		b.ServeDirect(httptest.NewRecorder(), r)
+	}
+
+	r := directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b"))
+	r.RemoteAddr = "203.0.113.9:2"
+	w := httptest.NewRecorder()
+	b.ServeDirect(w, r)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("a correctly signed call from a blocked address got HTTP %d, want 403", w.Code)
+	}
+
+	r2 := directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b"))
+	r2.RemoteAddr = "198.51.100.5:1"
+	w2 := httptest.NewRecorder()
+	b.ServeDirect(w2, r2)
+	if w2.Code != http.StatusOK {
+		t.Fatalf("a correctly signed call from an unrelated address got HTTP %d, want 200", w2.Code)
+	}
+}

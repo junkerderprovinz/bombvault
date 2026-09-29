@@ -2181,6 +2181,16 @@ UPDATE fleet_peers SET token_enc = x'';`,
 ALTER TABLE group_state ADD COLUMN member_seen_at INTEGER NOT NULL DEFAULT 0;
 UPDATE group_state SET joined_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE length(secret_enc) > 0;`,
 	},
+	{
+		// This instance's own address on the local network, learned from the
+		// browser or set by hand, so it can be announced instead of a Docker
+		// bridge network's unreachable container IP.
+		version:          pairingMigration + 6,
+		name:             "group_state_direct_url",
+		alreadySatisfied: columnPresent("group_state", "direct_url"),
+		sql: `ALTER TABLE group_state ADD COLUMN direct_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE group_state ADD COLUMN direct_url_manual INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

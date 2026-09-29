@@ -4086,8 +4086,31 @@ const maxBrowseEntries = 500
 
 const (
 	sessionCookieName = "bv_session"
-	sessionTTL        = 7 * 24 * time.Hour // 7 days
+	// sessionCookieNameHTTP is the session cookie's name in HTTP-only mode.
+	// A cookie is scoped to a host, not a port: on the same host a browser
+	// refuses to let an insecure origin overwrite a Secure cookie of the
+	// same name that another port set over HTTPS. An instance reachable both
+	// ways, plain HTTP on one port and HTTPS on another, would otherwise set
+	// a Secure cookie on login that the HTTP side can never read back, so
+	// the login appears to succeed and then bounces straight to the login
+	// screen again. Giving the two modes distinct names keeps each cookie on
+	// its own, so neither can shadow the other.
+	sessionCookieNameHTTP = "bv_session_http"
+	sessionTTL            = 7 * 24 * time.Hour // 7 days
 )
+
+// sessionCookieNameFor is the session cookie name this instance's mode uses.
+func (h *Handler) sessionCookieNameFor() string {
+	if h.cfg.HTTPOnly {
+		return sessionCookieNameHTTP
+	}
+	return sessionCookieName
+}
+
+// sessionCookie reads the session cookie for this instance's mode.
+func (h *Handler) sessionCookie(r *http.Request) (*http.Cookie, error) {
+	return r.Cookie(h.sessionCookieNameFor())
+}
 
 // authEnabled reads the stored password hash + session epoch and reports whether
 // authentication is enabled.  On a store error it logs and treats auth as OFF
@@ -4129,13 +4152,13 @@ func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, action string) bo
 	return false
 }
 
-// newSessionCookie constructs the bv_session cookie with the correct attributes.
-// Secure is set to true when the server is in HTTPS mode (cfg.HTTPOnly == false)
-// and false for plain HTTP — which is intentional for local/LAN HTTP-only
-// deployments.
+// newSessionCookie constructs the session cookie with the correct name and
+// attributes. Secure is set to true when the server is in HTTPS mode
+// (cfg.HTTPOnly == false) and false for plain HTTP, which is intentional
+// for local/LAN HTTP-only deployments.
 func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 	return &http.Cookie{ //nolint:gosec // G124: Secure is conditionally false only in HTTP-only (cfg.HTTPOnly) mode; intentional for LAN deployments
-		Name:     sessionCookieName,
+		Name:     h.sessionCookieNameFor(),
 		Value:    value,
 		Path:     "/",
 		MaxAge:   maxAge,
@@ -4158,7 +4181,7 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	authed := false
 	if on {
-		if c, err := r.Cookie(sessionCookieName); err == nil {
+		if c, err := h.sessionCookie(r); err == nil {
 			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
 		}
 	}
@@ -5018,6 +5041,9 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		hash := s.AuthPasswordHash
 		on := hash != ""
 		if !on {
+			if h.svc != nil && !authGatePublicPath(r.URL.Path) {
+				h.svc.learnDirectURL(r)
+			}
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -5028,7 +5054,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		}
 
 		// All other /api/* routes require a valid session cookie.
-		c, err := r.Cookie(sessionCookieName)
+		c, err := h.sessionCookie(r)
 		if err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, s.SessionEpoch, c.Value) {
 			writeJSON(w, http.StatusUnauthorized, map[string]any{
 				"ok":    false,
@@ -5037,6 +5063,12 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
+		// This request came from a signed-in browser, so its Host header is
+		// what actually reaches this instance: the one address worth
+		// learning as where members should send it direct calls.
+		if h.svc != nil {
+			h.svc.learnDirectURL(r)
+		}
 		next.ServeHTTP(w, r)
 	})
 }

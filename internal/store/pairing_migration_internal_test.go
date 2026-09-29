@@ -89,3 +89,21 @@ func TestAnExistingGroupCountsAsEnteredAtTheUpgrade(t *testing.T) {
 		t.Fatalf("joined %v, seen %v; want now and never", g.JoinedAt, g.MemberSeenAt)
 	}
 }
+
+// An instance updated from before this instance's own direct address existed
+// starts out with none set and no manual override, so it falls back to
+// LocalIPv4 until a browser or a person supplies one.
+func TestGroupStateDirectURLStartsEmpty(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, pairingMigration+5)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	g, err := New(db).GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.DirectURL != "" || g.DirectURLManual {
+		t.Fatalf("group state after migration = %+v, want no direct address yet", g)
+	}
+}

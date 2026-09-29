@@ -8,8 +8,10 @@ import (
 )
 
 // The group key's 128 bits keep strangers out. This backoff only limits
-// clients that fail the handshake over and over, each attempt costing a TLS
-// negotiation and a goroutine for up to helloTimeout.
+// clients that fail over and over: the relay handshake, each attempt costing
+// a TLS negotiation and a goroutine for up to helloTimeout, and a group
+// member's direct call, where it stands between a guessed address and a
+// hammering flood of signature attempts.
 const (
 	// failWindow is how long a failure stays on an address's record.
 	failWindow = 10 * time.Minute
@@ -32,20 +34,22 @@ type attempts struct {
 	blockFor     time.Duration
 }
 
-// limiter tracks failed handshakes per client address. now is a field so
-// tests can drive the clock.
-type limiter struct {
+// Limiter tracks failed attempts per client address and blocks one with too
+// many recent failures. now is a field so tests can drive the clock.
+type Limiter struct {
 	mu        sync.Mutex
 	addrs     map[string]*attempts
 	now       func() time.Time
 	lastSweep time.Time
 }
 
-func newLimiter() *limiter {
-	return &limiter{addrs: map[string]*attempts{}, now: time.Now}
+// NewLimiter returns a Limiter that has blocked nobody yet.
+func NewLimiter() *Limiter {
+	return &Limiter{addrs: map[string]*attempts{}, now: time.Now}
 }
 
-func (l *limiter) blocked(addr string) bool {
+// Blocked reports whether addr is presently blocked.
+func (l *Limiter) Blocked(addr string) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	now := l.now()
@@ -54,7 +58,7 @@ func (l *limiter) blocked(addr string) bool {
 	return a != nil && now.Before(a.blockedUntil)
 }
 
-func (l *limiter) maybeSweepLocked(now time.Time) {
+func (l *Limiter) maybeSweepLocked(now time.Time) {
 	if now.Sub(l.lastSweep) < sweepEvery {
 		return
 	}
@@ -66,10 +70,10 @@ func (l *limiter) maybeSweepLocked(now time.Time) {
 	}
 }
 
-// fail records one failed handshake and extends the block once the address
-// has earned one. The gap is measured from the end of a block, so waiting out
-// a long block does not reset the backoff.
-func (l *limiter) fail(addr string) {
+// Fail records one failed attempt and extends the block once the address has
+// earned one. The gap is measured from the end of a block, so waiting out a
+// long block does not reset the backoff.
+func (l *Limiter) Fail(addr string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	now := l.now()
@@ -99,9 +103,9 @@ func (l *limiter) fail(addr string) {
 	a.blockedUntil = now.Add(a.blockFor)
 }
 
-// succeed clears an address's record: a working handshake shows a real
-// client, and its earlier failures should not count against it.
-func (l *limiter) succeed(addr string) {
+// Succeed clears an address's record: a working attempt shows a real client,
+// and its earlier failures should not count against it.
+func (l *Limiter) Succeed(addr string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	delete(l.addrs, addr)
@@ -116,7 +120,7 @@ func lastActive(a *attempts) time.Time {
 
 // evictIfFullLocked drops the least recently active record, so an address
 // whose block is still running goes last.
-func (l *limiter) evictIfFullLocked() {
+func (l *Limiter) evictIfFullLocked() {
 	if len(l.addrs) < maxTrackedAddrs {
 		return
 	}
@@ -130,7 +134,9 @@ func (l *limiter) evictIfFullLocked() {
 	delete(l.addrs, oldestKey)
 }
 
-func defaultClientAddr(r *http.Request) string {
+// RequestAddr is the client address a request's remote address names, with
+// no port: the bucket a Limiter keys its blocks on by default.
+func RequestAddr(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
@@ -142,5 +148,5 @@ func (s *Server) clientAddrOf(r *http.Request) string {
 	if s.ClientAddr != nil {
 		return s.ClientAddr(r)
 	}
-	return defaultClientAddr(r)
+	return RequestAddr(r)
 }
