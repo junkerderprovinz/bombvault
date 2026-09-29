@@ -2428,6 +2428,8 @@ const et: Partial<Translations> = {
   "placementCode.snapshotMissing": "Seda varukoopiat pole enam valitud kohas.",
   "placementCode.directAccessDenied": "Võti ei saa seda kohta lugeda. Sihtmärgi enda kausta piiratud võti ei pääse selle kõrval olevasse kausta; piira võti selle asemel sihtmärgist ülalpool oleva kaustaga.",
   "placementCode.restPathTooDeep": "rest-server loob hoidlaid kõige rohkem kahe kausta sügavusele, näiteks /files-direct või /user/files-direct. Vali lühem tee.",
+  "placementCode.repoWrongKey": "Siin on juba restic-hoidla ja selle eksemplari võti ei ava seda. Vali tühi koht või kasuta APP_KEY-d, millega see loodi.",
+  "placementCode.repoUnopened": "Hoidla loodi, kuid see ei avane, seega ei salvestatud midagi. Kontrolli kohta ja selle sisselogimisandmeid ning proovi uuesti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",

@@ -380,8 +380,12 @@ func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	if err := s.EnsureRepo(ctx, loc, s.offsiteModeForTarget(settings, target)); err != nil {
+	opened, err := s.ensureRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
+	if err != nil {
 		return store.OffsiteTarget{}, err
+	}
+	if !opened {
+		return store.OffsiteTarget{}, errRepoUnopened
 	}
 	if strings.TrimSpace(name) == "" {
 		name = placementTargetName(target) + " direct"

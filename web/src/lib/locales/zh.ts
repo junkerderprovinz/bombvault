@@ -2409,6 +2409,8 @@ const zh: Partial<Translations> = {
   "placementCode.snapshotMissing": "此备份不再位于所选位置。",
   "placementCode.directAccessDenied": "密钥无法读取此位置。限定在目标自身文件夹的密钥无法到达它旁边的文件夹；应把密钥限定在目标上一级的文件夹。",
   "placementCode.restPathTooDeep": "rest-server 最多只能在两层文件夹深处创建存储库，例如 /files-direct 或 /user/files-direct。请选择更短的路径。",
+  "placementCode.repoWrongKey": "这里已有一个 restic 存储库，本实例的密钥无法打开它。请选择一个空的位置，或使用创建它时的 APP_KEY。",
+  "placementCode.repoUnopened": "存储库已创建但无法打开，因此没有保存任何内容。请检查该位置及其登录信息，然后重试。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的项目：{n}。",

@@ -2428,6 +2428,8 @@ const hi: Partial<Translations> = {
   "placementCode.snapshotMissing": "यह बैकअप अब चुनी गई जगह पर नहीं है।",
   "placementCode.directAccessDenied": "कुंजी इस स्थान को नहीं पढ़ सकती। लक्ष्य के अपने ही फ़ोल्डर तक सीमित कुंजी उसके बगल वाले फ़ोल्डर तक नहीं पहुँच सकती; इसके बजाय कुंजी को लक्ष्य के ऊपर वाले फ़ोल्डर तक सीमित करें।",
   "placementCode.restPathTooDeep": "rest-server रिपॉज़िटरी अधिकतम दो फ़ोल्डर की गहराई तक बनाता है, जैसे /files-direct या /user/files-direct। छोटा पाथ चुनें।",
+  "placementCode.repoWrongKey": "यहाँ पहले से एक restic रिपॉज़िटरी है, और इस इंस्टेंस की कुंजी उसे नहीं खोलती। कोई खाली स्थान चुनें, या वह APP_KEY इस्तेमाल करें जिससे वह बनाई गई थी।",
+  "placementCode.repoUnopened": "रिपॉज़िटरी बन गई लेकिन खुलती नहीं, इसलिए कुछ भी सहेजा नहीं गया। स्थान और उसके लॉगिन की जाँच करें, फिर दोबारा कोशिश करें।",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",

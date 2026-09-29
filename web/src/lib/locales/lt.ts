@@ -2428,6 +2428,8 @@ const lt: Partial<Translations> = {
   "placementCode.snapshotMissing": "Šios atsarginės kopijos nebėra pasirinktoje vietoje.",
   "placementCode.directAccessDenied": "Raktas negali nuskaityti šios vietos. Raktas, apribotas tik iki paties tikslo aplanko, negali pasiekti šalia esančio aplanko; vietoj to apribokite raktą iki aplanko virš tikslo.",
   "placementCode.restPathTooDeep": "rest-server kuria saugyklas ne giliau kaip dviem aplankais, pvz., /files-direct arba /user/files-direct. Pasirinkite trumpesnį kelią.",
+  "placementCode.repoWrongKey": "Čia jau yra restic saugykla, ir šio egzemplioriaus raktas jos neatidaro. Pasirinkite tuščią vietą arba naudokite APP_KEY, su kuriuo ji buvo sukurta.",
+  "placementCode.repoUnopened": "Saugykla sukurta, bet neatsidaro, todėl niekas neišsaugota. Patikrinkite vietą ir jos prisijungimo duomenis, tada bandykite dar kartą.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Elementai, kurių vienintelė kopija yra ten: {n}.",

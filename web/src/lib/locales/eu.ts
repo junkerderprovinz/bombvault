@@ -2428,6 +2428,8 @@ const eu: Partial<Translations> = {
   "placementCode.snapshotMissing": "Babeskopia hau ez dago jada aukeratutako lekuan.",
   "placementCode.directAccessDenied": "Gakoak ezin du leku hau irakurri. Helburuaren beraren karpetara mugatutako gako batek ezin du haren alboko karpeta atzitu; horren ordez, mugatu gakoa helburuaren gaineko karpetara.",
   "placementCode.restPathTooDeep": "rest-server batek gehienez bi karpetako sakoneran sortzen ditu biltegiak, adibidez /files-direct edo /user/files-direct. Aukeratu bide laburrago bat.",
+  "placementCode.repoWrongKey": "Hemen badago jada restic biltegi bat, eta instantzia honen gakoak ez du irekitzen. Aukeratu leku huts bat, edo erabili sortu zeneko APP_KEY.",
+  "placementCode.repoUnopened": "Biltegia sortu da, baina ez da irekitzen, beraz ez da ezer gorde. Egiaztatu lekua eta bere saio-hasierako datuak, eta saiatu berriro.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

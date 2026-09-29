@@ -2428,6 +2428,8 @@ const gl: Partial<Translations> = {
   "placementCode.snapshotMissing": "Esta copia de seguranza xa non está no lugar escollido.",
   "placementCode.directAccessDenied": "A clave non pode ler este lugar. Unha clave limitada ao propio cartafol do destino non pode acadar o cartafol veciño; limita a clave ao cartafol superior ao destino no seu lugar.",
   "placementCode.restPathTooDeep": "Un rest-server crea repositorios como máximo a dous cartafoles de profundidade, como /files-direct ou /user/files-direct. Escolle unha ruta máis curta.",
+  "placementCode.repoWrongKey": "Aquí xa hai un repositorio de restic e a clave desta instancia non o abre. Escolle un lugar baleiro ou usa a APP_KEY coa que se creou.",
+  "placementCode.repoUnopened": "O repositorio creouse pero non se abre, así que non se gardou nada. Comproba o lugar e as súas credenciais e téntao de novo.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

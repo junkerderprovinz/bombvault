@@ -2428,6 +2428,8 @@ const fa: Partial<Translations> = {
   "placementCode.snapshotMissing": "این پشتیبان دیگر در مکان انتخاب‌شده نیست.",
   "placementCode.directAccessDenied": "این کلید نمی‌تواند این مکان را بخواند. کلیدی که به پوشه خود هدف محدود شده نمی‌تواند به پوشه کنار آن دسترسی پیدا کند؛ در عوض کلید را به پوشه بالای هدف محدود کنید.",
   "placementCode.restPathTooDeep": "rest-server مخزن‌ها را حداکثر در عمق دو پوشه می‌سازد، مانند /files-direct یا /user/files-direct. مسیر کوتاه‌تری انتخاب کنید.",
+  "placementCode.repoWrongKey": "اینجا از قبل یک مخزن restic وجود دارد و کلید این نمونه آن را باز نمی‌کند. یک مکان خالی انتخاب کنید یا از APP_KEY که با آن ساخته شده استفاده کنید.",
+  "placementCode.repoUnopened": "مخزن ساخته شد اما باز نمی‌شود، بنابراین چیزی ذخیره نشد. مکان و اطلاعات ورود آن را بررسی کنید و دوباره امتحان کنید.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",

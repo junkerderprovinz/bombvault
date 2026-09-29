@@ -68,12 +68,14 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 	root := filepath.ToSlash(dir)
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
 	eng := &placementEngine{
-		snaps:   map[string][]restic.Snapshot{},
-		listErr: map[string]error{},
-		copyErr: map[string]error{},
-		opens:   map[string]bool{},
-		openErr: map[string]error{},
-		lists:   map[string]int{},
+		snaps:         map[string][]restic.Snapshot{},
+		listErr:       map[string]error{},
+		copyErr:       map[string]error{},
+		opens:         map[string]bool{},
+		openErr:       map[string]error{},
+		initErr:       map[string]error{},
+		initStaysShut: map[string]bool{},
+		lists:         map[string]int{},
 	}
 	dock := &placementDocker{installed: map[string]bool{}}
 	virsh := &placementVirsh{}
@@ -423,11 +425,15 @@ type placementEngine struct {
 	opens   map[string]bool  // RepoOpens; a missing entry is true
 	openErr map[string]error // RepoOpensErr's message for a location in opens=false; default is a generic one
 	lists   map[string]int   // Snapshots calls per location
-	copies  []copyCall
-	forgets []forgetCall
-	deletes []forgetIDsCall
-	prunes  []string
-	ensured []string // Init calls: the repositories EnsureRepo had to create
+	initErr map[string]error // Init fails here and leaves the location as it was
+	// initStaysShut lists locations where Init succeeds and the repository
+	// still does not open afterwards.
+	initStaysShut map[string]bool
+	copies        []copyCall
+	forgets       []forgetCall
+	deletes       []forgetIDsCall
+	prunes        []string
+	ensured       []string // Init calls: the repositories EnsureRepo had to create
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
@@ -453,7 +459,14 @@ type forgetIDsCall struct {
 func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.ensured = append(e.ensured, filepath.ToSlash(repo))
+	key := filepath.ToSlash(repo)
+	e.ensured = append(e.ensured, key)
+	if err := e.initErr[key]; err != nil {
+		return err
+	}
+	if _, known := e.opens[key]; known && !e.initStaysShut[key] {
+		e.opens[key] = true
+	}
 	return nil
 }
 

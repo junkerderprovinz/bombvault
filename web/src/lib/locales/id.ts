@@ -2428,6 +2428,8 @@ const id: Partial<Translations> = {
   "placementCode.snapshotMissing": "Cadangan ini tidak lagi berada di tempat yang dipilih.",
   "placementCode.directAccessDenied": "Kunci tidak dapat membaca tempat ini. Kunci yang dibatasi pada folder target itu sendiri tidak dapat menjangkau folder di sebelahnya; batasi kunci itu pada folder di atas target sebagai gantinya.",
   "placementCode.restPathTooDeep": "rest-server membuat repositori paling dalam dua folder, seperti /files-direct atau /user/files-direct. Pilih jalur yang lebih pendek.",
+  "placementCode.repoWrongKey": "Di sini sudah ada repositori restic, dan kunci instans ini tidak dapat membukanya. Pilih tempat yang kosong, atau gunakan APP_KEY yang dipakai saat membuatnya.",
+  "placementCode.repoUnopened": "Repositori sudah dibuat tetapi tidak dapat dibuka, jadi tidak ada yang disimpan. Periksa tempat dan data masuknya, lalu coba lagi.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Item yang satu-satunya salinannya ada di sana: {n}.",

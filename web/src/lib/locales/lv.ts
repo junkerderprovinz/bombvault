@@ -2428,6 +2428,8 @@ const lv: Partial<Translations> = {
   "placementCode.snapshotMissing": "Šī dublējumkopija vairs nav izvēlētajā vietā.",
   "placementCode.directAccessDenied": "Atslēga nevar nolasīt šo vietu. Atslēga, kas ir ierobežota tikai ar mērķa paša mapi, nevar piekļūt blakus esošajai mapei; tā vietā ierobežojiet atslēgu ar mapi virs mērķa.",
   "placementCode.restPathTooDeep": "rest-server izveido krātuves ne dziļāk par divām mapēm, piemēram, /files-direct vai /user/files-direct. Izvēlies īsāku ceļu.",
+  "placementCode.repoWrongKey": "Šeit jau ir restic krātuve, un šīs instances atslēga to neatver. Izvēlies tukšu vietu vai izmanto APP_KEY, ar kuru tā tika izveidota.",
+  "placementCode.repoUnopened": "Krātuve tika izveidota, bet neatveras, tāpēc nekas netika saglabāts. Pārbaudi vietu un tās pieteikšanās datus un mēģini vēlreiz.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Vienumi, kuru vienīgā kopija ir tur: {n}.",

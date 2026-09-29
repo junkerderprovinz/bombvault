@@ -2428,6 +2428,8 @@ const is: Partial<Translations> = {
   "placementCode.snapshotMissing": "Þetta afrit er ekki lengur á valda staðnum.",
   "placementCode.directAccessDenied": "Lykillinn getur ekki lesið þennan stað. Lykill sem er takmarkaður við möppu skotmarksins sjálfs nær ekki í möppuna við hliðina á henni; takmarkaðu lykilinn þess í stað við möppuna fyrir ofan skotmarkið.",
   "placementCode.restPathTooDeep": "rest-server býr til geymslur í mesta lagi tveimur möppum niður, t.d. /files-direct eða /user/files-direct. Veldu styttri slóð.",
+  "placementCode.repoWrongKey": "Hér er þegar restic-geymsla og lykill þessa tilviks opnar hana ekki. Veldu tóman stað eða notaðu APP_KEY sem hún var búin til með.",
+  "placementCode.repoUnopened": "Geymslan var búin til en opnast ekki, svo ekkert var vistað. Athugaðu staðinn og innskráningu hans og reyndu aftur.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",

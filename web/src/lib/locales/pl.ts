@@ -2412,6 +2412,8 @@ const pl: Partial<Translations> = {
   "placementCode.snapshotMissing": "Tej kopii zapasowej nie ma już w wybranym miejscu.",
   "placementCode.directAccessDenied": "Klucz nie może odczytać tego miejsca. Klucz ograniczony do własnego katalogu celu nie sięga do katalogu obok niego; ogranicz klucz zamiast tego do katalogu nad celem.",
   "placementCode.restPathTooDeep": "rest-server tworzy repozytoria najwyżej dwa foldery w głąb, np. /files-direct lub /user/files-direct. Wybierz krótszą ścieżkę.",
+  "placementCode.repoWrongKey": "Tu już jest repozytorium restic, a klucz tej instancji go nie otwiera. Wybierz puste miejsce albo użyj APP_KEY, z którym zostało utworzone.",
+  "placementCode.repoUnopened": "Repozytorium zostało utworzone, ale się nie otwiera, więc nic nie zapisano. Sprawdź miejsce i dane logowania do niego, a potem spróbuj ponownie.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

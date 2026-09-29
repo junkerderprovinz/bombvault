@@ -2412,6 +2412,8 @@ const sl: Partial<Translations> = {
   "placementCode.snapshotMissing": "Te varnostne kopije ni več na izbranem mestu.",
   "placementCode.directAccessDenied": "Ključ ne more prebrati tega mesta. Ključ, omejen na lastno mapo cilja, ne more doseči mape ob njej; namesto tega omeji ključ na mapo nad ciljem.",
   "placementCode.restPathTooDeep": "rest-server ustvari repozitorije največ dve mapi globoko, na primer /files-direct ali /user/files-direct. Izberi krajšo pot.",
+  "placementCode.repoWrongKey": "Tu je že repozitorij restic, ključ te instance pa ga ne odpre. Izberi prazno mesto ali uporabi APP_KEY, s katerim je bil ustvarjen.",
+  "placementCode.repoUnopened": "Repozitorij je bil ustvarjen, vendar se ne odpre, zato ni bilo nič shranjeno. Preveri mesto in podatke za prijavo ter poskusi znova.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Elementi, katerih edina kopija je tam: {n}.",

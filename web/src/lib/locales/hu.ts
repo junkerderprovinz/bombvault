@@ -2420,6 +2420,8 @@ const hu: Partial<Translations> = {
   "placementCode.snapshotMissing": "Ez a mentés már nincs a kiválasztott helyen.",
   "placementCode.directAccessDenied": "A kulcs nem tudja beolvasni ezt a helyet. A cél saját mappájára korlátozott kulcs nem éri el a mellette lévő mappát; korlátozd inkább a kulcsot a cél feletti mappára.",
   "placementCode.restPathTooDeep": "A rest-server legfeljebb két mappa mélységben hoz létre tárolókat, például /files-direct vagy /user/files-direct. Válassz rövidebb útvonalat.",
+  "placementCode.repoWrongKey": "Itt már van egy restic-tároló, és ennek a példánynak a kulcsa nem nyitja meg. Válassz üres helyet, vagy használd azt az APP_KEY-t, amellyel létrehozták.",
+  "placementCode.repoUnopened": "A tároló létrejött, de nem nyílik meg, ezért semmi sem lett mentve. Ellenőrizd a helyet és a belépési adatait, majd próbáld újra.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

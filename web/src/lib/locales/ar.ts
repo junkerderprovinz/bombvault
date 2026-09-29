@@ -2420,6 +2420,8 @@ const ar: Partial<Translations> = {
   "placementCode.snapshotMissing": "هذه النسخة الاحتياطية لم تعد في المكان المختار.",
   "placementCode.directAccessDenied": "المفتاح لا يستطيع قراءة هذا المكان. مفتاح مقتصر على مجلد الهدف نفسه لا يستطيع الوصول إلى المجلد المجاور له؛ اقصر المفتاح بدلاً من ذلك على المجلد الذي يعلو الهدف.",
   "placementCode.restPathTooDeep": "يُنشئ rest-server المستودعات على عمق مجلدين كحد أقصى، مثل /files-direct أو /user/files-direct. اختر مسارًا أقصر.",
+  "placementCode.repoWrongKey": "يوجد هنا مستودع restic بالفعل، ومفتاح هذا المثيل لا يفتحه. اختر مكانًا فارغًا، أو استخدم APP_KEY الذي أُنشئ به.",
+  "placementCode.repoUnopened": "أُنشئ المستودع لكنه لا يُفتح، لذلك لم يُحفظ شيء. تحقق من المكان وبيانات الدخول إليه، ثم حاول مرة أخرى.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

@@ -71,6 +71,8 @@ var placementCodes = []struct {
 	{errTargetInUse, "target-in-use"},
 	{store.ErrDirectRepo, "direct-repo"},
 	{errDirectAccessDenied, "direct-access-denied"},
+	{errRepoWrongKey, "repo-wrong-key"},
+	{errRepoUnopened, "repo-unopened"},
 	{errRestPathTooDeep, "rest-path-too-deep"},
 	{errAppendOnlyOffsiteTarget, "append-only"},
 	{errRemovalGrown, "removal-grown"},

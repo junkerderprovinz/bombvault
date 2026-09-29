@@ -2409,6 +2409,8 @@ const vi: Partial<Translations> = {
   "placementCode.snapshotMissing": "Bản sao lưu này không còn ở vị trí đã chọn.",
   "placementCode.directAccessDenied": "Khóa này không thể đọc được vị trí này. Khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó; hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.",
   "placementCode.restPathTooDeep": "rest-server chỉ tạo kho sâu tối đa hai thư mục, ví dụ /files-direct hoặc /user/files-direct. Hãy chọn đường dẫn ngắn hơn.",
+  "placementCode.repoWrongKey": "Ở đây đã có một kho restic và khóa của phiên bản này không mở được nó. Hãy chọn một vị trí trống, hoặc dùng APP_KEY đã tạo ra kho đó.",
+  "placementCode.repoUnopened": "Kho đã được tạo nhưng không mở được, nên chưa có gì được lưu. Hãy kiểm tra vị trí và thông tin đăng nhập của nó, rồi thử lại.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

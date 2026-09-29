@@ -2414,6 +2414,8 @@ const nl: Partial<Translations> = {
   "placementCode.snapshotMissing": "Deze back-up staat niet meer op de gekozen plek.",
   "placementCode.directAccessDenied": "De sleutel kan deze plek niet lezen. Een sleutel die beperkt is tot de eigen map van het doel, kan niet bij de map ernaast; beperk de sleutel in plaats daarvan tot de map boven het doel.",
   "placementCode.restPathTooDeep": "Een rest-server maakt repository's hoogstens twee mappen diep aan, zoals /files-direct of /user/files-direct. Kies een korter pad.",
+  "placementCode.repoWrongKey": "Hier staat al een restic-repository, en de sleutel van deze instantie opent het niet. Kies een lege plek, of gebruik de APP_KEY waarmee het is aangemaakt.",
+  "placementCode.repoUnopened": "Het repository is aangemaakt maar gaat niet open, dus er is niets opgeslagen. Controleer de plek en de inloggegevens ervan en probeer het opnieuw.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

@@ -2420,6 +2420,8 @@ const ro: Partial<Translations> = {
   "placementCode.snapshotMissing": "Această copie de rezervă nu mai este în locul ales.",
   "placementCode.directAccessDenied": "Cheia nu poate citi acest loc. O cheie limitată la dosarul propriu al țintei nu poate ajunge la dosarul alăturat; limitează în schimb cheia la dosarul de deasupra țintei.",
   "placementCode.restPathTooDeep": "Un rest-server creează depozite la cel mult două foldere adâncime, de exemplu /files-direct sau /user/files-direct. Alege o cale mai scurtă.",
+  "placementCode.repoWrongKey": "Aici există deja un depozit restic, iar cheia acestei instanțe nu îl deschide. Alege un loc gol sau folosește APP_KEY cu care a fost creat.",
+  "placementCode.repoUnopened": "Depozitul a fost creat, dar nu se deschide, așa că nu s-a salvat nimic. Verifică locul și datele de autentificare pentru el, apoi încearcă din nou.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

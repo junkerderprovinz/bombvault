@@ -2417,6 +2417,8 @@ const tr: Partial<Translations> = {
   "placementCode.snapshotMissing": "Bu yedek artık seçilen yerde değil.",
   "placementCode.directAccessDenied": "Anahtar bu yeri okuyamaz. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez; bunun yerine anahtarı hedefin üstündeki klasörle sınırla.",
   "placementCode.restPathTooDeep": "rest-server depoları en fazla iki klasör derinliğinde oluşturur, örneğin /files-direct veya /user/files-direct. Daha kısa bir yol seçin.",
+  "placementCode.repoWrongKey": "Burada zaten bir restic deposu var ve bu örneğin anahtarı onu açmıyor. Boş bir yer seçin ya da deponun oluşturulduğu APP_KEY'i kullanın.",
+  "placementCode.repoUnopened": "Depo oluşturuldu ama açılmıyor, bu yüzden hiçbir şey kaydedilmedi. Yeri ve oturum açma bilgilerini kontrol edip yeniden deneyin.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

@@ -2409,6 +2409,8 @@ const ko: Partial<Translations> = {
   "placementCode.snapshotMissing": "이 백업은 더 이상 선택한 위치에 없습니다.",
   "placementCode.directAccessDenied": "키는 이 위치를 읽을 수 없습니다. 대상 자신의 폴더로 제한된 키는 그 옆 폴더에는 닿지 못합니다. 대신 키를 대상보다 한 단계 위 폴더로 제한하세요.",
   "placementCode.restPathTooDeep": "rest-server는 저장소를 최대 두 폴더 깊이까지만 만듭니다(예: /files-direct 또는 /user/files-direct). 더 짧은 경로를 선택하세요.",
+  "placementCode.repoWrongKey": "여기에 이미 restic 저장소가 있으며 이 인스턴스의 키로는 열리지 않습니다. 빈 위치를 선택하거나 저장소를 만들 때 사용한 APP_KEY를 사용하세요.",
+  "placementCode.repoUnopened": "저장소는 만들어졌지만 열리지 않아 아무것도 저장되지 않았습니다. 위치와 로그인 정보를 확인한 뒤 다시 시도하세요.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

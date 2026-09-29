@@ -2428,6 +2428,8 @@ const bg: Partial<Translations> = {
   "placementCode.snapshotMissing": "Това архивиране вече не е на избраното място.",
   "placementCode.directAccessDenied": "Ключът не може да прочете това място. Ключ, ограничен до собствената папка на целта, не може да достигне папката до нея; ограничи ключа до папката над целта.",
   "placementCode.restPathTooDeep": "rest-server създава хранилища най-много на две папки дълбочина, например /files-direct или /user/files-direct. Избери по-кратък път.",
+  "placementCode.repoWrongKey": "Тук вече има хранилище на restic и ключът на тази инстанция не го отваря. Избери празно място или използвай APP_KEY, с който е създадено.",
+  "placementCode.repoUnopened": "Хранилището е създадено, но не се отваря, затова нищо не е запазено. Провери мястото и данните за вход и опитай отново.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно вече пази по-малко. Елементи, чието единствено копие е там: {n}.",

@@ -2417,6 +2417,8 @@ const he: Partial<Translations> = {
   "placementCode.snapshotMissing": "הגיבוי הזה כבר לא נמצא במקום שנבחר.",
   "placementCode.directAccessDenied": "המפתח אינו יכול לקרוא את המקום הזה. מפתח המוגבל לתיקייה של היעד עצמו לא יכול להגיע לתיקייה הסמוכה לה; הגבל את המפתח במקום זאת לתיקייה שמעל היעד.",
   "placementCode.restPathTooDeep": "rest-server יוצר מאגרים בעומק של שתי תיקיות לכל היותר, למשל /files-direct או /user/files-direct. בחר נתיב קצר יותר.",
+  "placementCode.repoWrongKey": "כבר קיים כאן מאגר restic, והמפתח של המופע הזה לא פותח אותו. בחר מקום ריק, או השתמש ב-APP_KEY שאיתו הוא נוצר.",
+  "placementCode.repoUnopened": "המאגר נוצר אבל לא נפתח, ולכן שום דבר לא נשמר. בדוק את המקום ואת פרטי הכניסה אליו ונסה שוב.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",

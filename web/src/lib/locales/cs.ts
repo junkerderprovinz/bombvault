@@ -2415,6 +2415,8 @@ const cs: Partial<Translations> = {
   "placementCode.snapshotMissing": "Tato záloha už není na zvoleném místě.",
   "placementCode.directAccessDenied": "Klíč nemůže tento cíl přečíst. Klíč omezený na vlastní složku cíle se nedostane do složky vedle ní; omezte klíč místo toho na složku nad cílem.",
   "placementCode.restPathTooDeep": "rest-server vytváří repozitáře nejvýše dvě složky hluboko, například /files-direct nebo /user/files-direct. Zvol kratší cestu.",
+  "placementCode.repoWrongKey": "Tady už je repozitář restic a klíč této instance ho neotevře. Zvol prázdné místo, nebo použij APP_KEY, se kterým byl vytvořen.",
+  "placementCode.repoUnopened": "Repozitář byl vytvořen, ale nejde otevřít, takže se nic neuložilo. Zkontroluj místo a přihlašovací údaje k němu a zkus to znovu.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

@@ -2428,6 +2428,8 @@ const ca: Partial<Translations> = {
   "placementCode.snapshotMissing": "Aquesta còpia de seguretat ja no és al lloc escollit.",
   "placementCode.directAccessDenied": "La clau no pot llegir aquest lloc. Una clau limitada a la carpeta pròpia de la destinació no pot arribar a la carpeta del costat; limita la clau a la carpeta superior a la destinació.",
   "placementCode.restPathTooDeep": "Un rest-server crea repositoris com a màxim a dues carpetes de profunditat, com ara /files-direct o /user/files-direct. Tria un camí més curt.",
+  "placementCode.repoWrongKey": "Aquí ja hi ha un repositori de restic i la clau d'aquesta instància no l'obre. Tria un lloc buit o fes servir l'APP_KEY amb què es va crear.",
+  "placementCode.repoUnopened": "El repositori s'ha creat però no s'obre, així que no s'ha desat res. Comprova el lloc i les seves credencials i torna-ho a provar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

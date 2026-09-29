@@ -33,6 +33,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "snapshot-missing": "placementCode.snapshotMissing",
   "direct-access-denied": "placementCode.directAccessDenied",
   "rest-path-too-deep": "placementCode.restPathTooDeep",
+  "repo-wrong-key": "placementCode.repoWrongKey",
+  "repo-unopened": "placementCode.repoUnopened",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

@@ -2417,6 +2417,8 @@ const sv: Partial<Translations> = {
   "placementCode.snapshotMissing": "Den här säkerhetskopian finns inte längre på den valda platsen.",
   "placementCode.directAccessDenied": "Nyckeln kan inte läsa den här platsen. En nyckel som är begränsad till målets egen mapp når inte mappen bredvid den; begränsa i stället nyckeln till mappen ovanför målet.",
   "placementCode.restPathTooDeep": "En rest-server skapar arkiv högst två mappar djupt, till exempel /files-direct eller /user/files-direct. Välj en kortare sökväg.",
+  "placementCode.repoWrongKey": "Här finns redan ett restic-arkiv, och den här instansens nyckel öppnar det inte. Välj en tom plats, eller använd den APP_KEY det skapades med.",
+  "placementCode.repoUnopened": "Arkivet skapades men går inte att öppna, så inget sparades. Kontrollera platsen och inloggningen till den och försök igen.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",

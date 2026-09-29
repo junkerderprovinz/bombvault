@@ -2417,6 +2417,8 @@ const it: Partial<Translations> = {
   "placementCode.snapshotMissing": "Questo backup non si trova più nel luogo scelto.",
   "placementCode.directAccessDenied": "La chiave non riesce a leggere questo posto. Una chiave limitata alla cartella propria della destinazione non riesce a raggiungere la cartella accanto; limita invece la chiave alla cartella sopra la destinazione.",
   "placementCode.restPathTooDeep": "Un rest-server crea repository al massimo a due cartelle di profondità, come /files-direct o /user/files-direct. Scegli un percorso più corto.",
+  "placementCode.repoWrongKey": "Qui c'è già un repository restic e la chiave di questa istanza non lo apre. Scegli un posto vuoto oppure usa l'APP_KEY con cui è stato creato.",
+  "placementCode.repoUnopened": "Il repository è stato creato ma non si apre, quindi non è stato salvato nulla. Controlla il posto e le sue credenziali, poi riprova.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

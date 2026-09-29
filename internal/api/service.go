@@ -4531,88 +4531,104 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	return false, false, primaryErr
 }
 
+// errRepoWrongKey marks a location that holds a restic repository this
+// instance's key does not open: another instance's, or one made under a
+// different APP_KEY. Initialising there would fail at best.
+var errRepoWrongKey = errors.New("a restic repository already exists here and this instance's key does not open it; " +
+	"choose an empty location, or the APP_KEY it was created with")
+
+// errRepoUnopened marks a repository restic reported as created that still does
+// not open, so nothing may be pointed at it.
+var errRepoUnopened = errors.New("the repository was set up but does not open")
+
+// isWrongKey reports whether a restic open failure means the repository is
+// there and the password or key does not fit it.
+func isWrongKey(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "wrong password or no key found")
+}
+
 // EnsureRepo makes sure the restic repo at repo is ready to use with the
-// configured encryption mode. It is idempotent AND reconciles the mode:
+// configured encryption mode. It is idempotent and reconciles the mode:
 //
 //   - opens with mode                  → exists and consistent; nothing to do
 //   - opens only with the opposite mode → the Encryption setting was toggled
 //     against an existing repo; return a clear, actionable error instead of
 //     letting every later restic call fail cryptically
+//   - is there but refuses the key      → errRepoWrongKey, never an init over it
 //   - opens with neither mode          → not initialised yet, so create it
 //
 // The probe is `restic cat config` (cheap, needs no lock). Telling a real mode
 // mismatch apart from a not-yet-created repo is what stops a flipped Encryption
 // setting from silently breaking backups (issue #14).
 func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode) error {
-	// Fast path: the repo opens with the configured mode → it exists and its
-	// encryption mode matches. This is the common case on every backup after the
-	// first, and it replaces the old `config`-marker stat (which never checked the
-	// mode) with one that does.
+	_, err := s.ensureRepo(ctx, repo, mode)
+	return err
+}
+
+// ensureRepo is EnsureRepo, and also reports whether the repository opened at
+// the end, which a caller about to save a pointer to it needs to know.
+func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode) (bool, error) {
 	if s.engine.RepoOpens(ctx, repo, mode) {
 		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
-		return nil
+		return true, nil
 	}
-	// It did not open. Probe the OPPOSITE encryption mode (same backend creds): if
-	// that opens it, the repo exists but was created under the other mode — the
-	// user toggled the Encryption setting. Fail fast with an actionable message
-	// rather than running Init (which would log "config already exists") and then
-	// failing every subsequent backup against the now-mismatched repo.
+	// A repo that opens under the other encryption mode exists and the user
+	// toggled the Encryption setting. Init would only fail on it, and every
+	// later backup with it.
 	if s.engine.RepoOpens(ctx, repo, s.oppositeMode(mode)) {
-		return fmt.Errorf("this backup repository was created %s, but the Encryption setting is now %s, so "+
+		return false, fmt.Errorf("this backup repository was created %s, but the Encryption setting is now %s, so "+
 			"restic cannot open it after the change. Set Encryption back to %s, or point this backup at a "+
 			"new, empty repository location",
 			encryptionWord(!mode.Encrypted), enabledWord(mode.Encrypted), enabledWord(!mode.Encrypted))
+	}
+	// Only a location that fails to open is asked why, so the probe costs
+	// nothing on the runs where the repository is there.
+	if openErr := s.engine.RepoOpensErr(ctx, repo, mode); isWrongKey(openErr) {
+		return false, errRepoWrongKey
 	}
 	// Opens with neither mode → not initialised (a brand-new location) OR its
 	// backing store vanished. Local repos need their directory; remote backends do not.
 	if !restic.IsRemoteRepo(repo) {
 		// #55/#120: a repo was established here before but its `config` is now
 		// missing. Two very different causes:
-		//   - The backing store genuinely vanished (typically a remote share that
-		//     mounts AFTER the container started, so it is invisible right now).
-		//     RE-INIT would write an empty repo that shadows the real backups once
-		//     the share reappears, so we REFUSE and surface "not mounted" (#55).
+		//   - The backing store vanished (typically a remote share that mounts
+		//     after the container started, so it is invisible right now). A
+		//     re-init would write an empty repo that shadows the real backups
+		//     once the share reappears, so it is refused as "not mounted" (#55).
 		//   - The destination is present, writable, and mounted, but this repo is
-		//     legitimately not there yet — e.g. a phantom marker from a pre-mount
-		//     init on a UD disk that mounted over it later (#120). The established
-		//     marker is permanent (nothing deletes it, so a restart cannot clear
-		//     it), so we must recognise the healthy disk and re-establish on it.
+		//     legitimately not there yet, e.g. a phantom marker from a pre-mount
+		//     init on a UD disk that mounted over it later (#120). The marker is
+		//     permanent, so the healthy disk has to be recognised and the repo
+		//     established on it again.
 		// destinationMounted (kernel mount table, not a stat/write probe) tells the
-		// two apart: an unmounted mountpoint dir is often still writable, which is
-		// exactly the #55 case we keep protecting.
+		// two apart: an unmounted mountpoint dir is often still writable.
 		if localRepoMissing(repo) && s.repoEstablished(repo) {
 			if !s.destinationMounted(repo) {
-				return ErrBackupPathNotMounted // #55: backing store not mounted
+				return false, ErrBackupPathNotMounted
 			}
-			// #120: stale/phantom marker on a live disk — drop it and fall through
-			// to EnsureDir+Init so the repo is re-established on the mounted disk.
 			s.clearRepoEstablished(repo)
 		}
-		// Genuine first run (marker unset): create the repo dir chain as before.
-		// The marker guard above is what prevents re-initialising over an
-		// established-but-now-unmounted repo, so MkdirAll here is safe.
+		// The marker guard above keeps this from creating a directory over an
+		// established repo that is only unmounted.
 		if err := paths.EnsureDir(repo); err != nil {
-			return fmt.Errorf("ensure repo dir: %w", err)
+			return false, fmt.Errorf("ensure repo dir: %w", err)
 		}
 	}
 	if err := s.engine.Init(ctx, repo, mode); err != nil {
-		// Tolerate a race / pre-existing repo: the scrubbed adapter error may not
-		// name the cause, so re-probe with the configured mode before failing.
+		// Another run may have created it in the meantime.
 		if s.engine.RepoOpens(ctx, repo, mode) {
 			s.markRepoEstablished(repo)
-			return nil
+			return true, nil
 		}
-		if !strings.Contains(strings.ToLower(err.Error()), "already") {
-			return fmt.Errorf("init repo: %w", err)
-		}
+		return false, fmt.Errorf("init repo: %w", err)
 	}
-	// Mark established only when the repo VERIFIABLY opens now (a real config was
-	// written), never on a no-op init, so the not-mounted guard can only trip on a
-	// location that genuinely held a repo.
-	if s.engine.RepoOpens(ctx, repo, mode) {
-		s.markRepoEstablished(repo)
+	// Mark established only when the repo verifiably opens now, so the
+	// not-mounted guard can only trip on a location that held a repo.
+	if !s.engine.RepoOpens(ctx, repo, mode) {
+		return false, nil
 	}
-	return nil
+	s.markRepoEstablished(repo)
+	return true, nil
 }
 
 // ErrBackupPathNotMounted is returned when a LOCAL backup repo BombVault

@@ -2428,6 +2428,8 @@ const sk: Partial<Translations> = {
   "placementCode.snapshotMissing": "Táto záloha už nie je na zvolenom mieste.",
   "placementCode.directAccessDenied": "Kľúč nedokáže prečítať toto miesto. Kľúč obmedzený na vlastný priečinok cieľa sa nedostane do priečinka vedľa neho; namiesto toho obmedzte kľúč na priečinok nad cieľom.",
   "placementCode.restPathTooDeep": "rest-server vytvára repozitáre najviac dva priečinky hlboko, napríklad /files-direct alebo /user/files-direct. Zvoľ kratšiu cestu.",
+  "placementCode.repoWrongKey": "Tu už je repozitár restic a kľúč tejto inštancie ho neotvorí. Zvoľ prázdne miesto alebo použi APP_KEY, s ktorým bol vytvorený.",
+  "placementCode.repoUnopened": "Repozitár sa vytvoril, ale nedá sa otvoriť, takže sa nič neuložilo. Skontroluj miesto a prihlasovacie údaje k nemu a skús to znova.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

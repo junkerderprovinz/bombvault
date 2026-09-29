@@ -2415,6 +2415,8 @@ const es: Partial<Translations> = {
   "placementCode.snapshotMissing": "Esta copia de seguridad ya no está en el lugar elegido.",
   "placementCode.directAccessDenied": "La clave no puede leer este lugar. Una clave limitada a la carpeta propia del destino no puede alcanzar la carpeta contigua a ella; limita la clave a la carpeta superior al destino en su lugar.",
   "placementCode.restPathTooDeep": "Un rest-server crea repositorios como máximo a dos carpetas de profundidad, como /files-direct o /user/files-direct. Elige una ruta más corta.",
+  "placementCode.repoWrongKey": "Aquí ya hay un repositorio de restic y la clave de esta instancia no lo abre. Elige un lugar vacío o usa la APP_KEY con la que se creó.",
+  "placementCode.repoUnopened": "El repositorio se creó pero no se abre, así que no se guardó nada. Comprueba el lugar y sus credenciales y vuelve a intentarlo.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

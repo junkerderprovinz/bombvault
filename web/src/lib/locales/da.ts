@@ -2417,6 +2417,8 @@ const da: Partial<Translations> = {
   "placementCode.snapshotMissing": "Denne sikkerhedskopi er ikke længere på det valgte sted.",
   "placementCode.directAccessDenied": "Nøglen kan ikke læse dette sted. En nøgle, der er begrænset til destinationens egen mappe, kan ikke nå mappen ved siden af den; begræns i stedet nøglen til mappen over destinationen.",
   "placementCode.restPathTooDeep": "En rest-server opretter depoter højst to mapper dybt, fx /files-direct eller /user/files-direct. Vælg en kortere sti.",
+  "placementCode.repoWrongKey": "Her ligger allerede et restic-depot, og denne instans' nøgle åbner det ikke. Vælg et tomt sted, eller brug den APP_KEY, det blev oprettet med.",
+  "placementCode.repoUnopened": "Depotet blev oprettet, men kan ikke åbnes, så intet blev gemt. Tjek stedet og login til det, og prøv igen.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte bevarer nu mindre. Elementer hvis eneste kopi ligger der: {n}.",
