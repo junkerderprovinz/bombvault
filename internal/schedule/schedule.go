@@ -1782,6 +1782,7 @@ func (s *Scheduler) scheduledContainers(names []string) []store.Target {
 // backUpContainers backs up containers outside a domain run, with their compose
 // project folders, since only a domain run backs those up otherwise.
 func (s *Scheduler) backUpContainers(targets []store.Target) {
+	defer s.openRun("containers")()
 	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob(targets, s.backup)
 	})
