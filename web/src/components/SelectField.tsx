@@ -35,6 +35,7 @@ export function SelectField<T extends string>({
   label,
   disabled = false,
   className = "",
+  wrap = false,
   id,
   ref,
 }: {
@@ -46,6 +47,9 @@ export function SelectField<T extends string>({
   disabled?: boolean;
   /** Classes for the trigger. */
   className?: string;
+  /** Lets a label run onto a second line where the row is narrower than it,
+   *  for a value whose end says as much as its start, such as a location. */
+  wrap?: boolean;
   /** Set on the trigger, for a visible <label htmlFor>. */
   id?: string;
   /** The trigger's own DOM node, for a caller that opens this field already
@@ -99,7 +103,7 @@ export function SelectField<T extends string>({
             <span
               key={o.value}
               aria-hidden={o.value !== value}
-              className={`col-start-1 row-start-1 truncate ${o.value === value ? "" : "invisible"}`}
+              className={`col-start-1 row-start-1 ${wrap ? "wrap-break-word" : "truncate"} ${o.value === value ? "" : "invisible"}`}
             >
               {o.label}
             </span>
