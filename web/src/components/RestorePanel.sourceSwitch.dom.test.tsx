@@ -4,8 +4,10 @@
 // stay on screen under the off-site toggle.
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 
 class NoopEventSource {
@@ -48,13 +50,17 @@ afterEach(() => {
 it("drops the local rows when the off-site list fails", async () => {
   await act(async () => {
     render(
-      <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <RestorePanel name="plex" t={t} open />
-          </ToastProvider>
-        </AdvancedProvider>
-      </I18nProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <AdvancedProvider>
+              <ToastProvider>
+                <RestorePanel name="plex" t={t} open />
+              </ToastProvider>
+            </AdvancedProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
   });
   expect(await screen.findByText("a1b2c3d4")).toBeTruthy();

@@ -3,7 +3,9 @@
 // source is a short block that keeps its date and size in view.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 
@@ -73,11 +75,15 @@ window.matchMedia = ((query: string) => ({
 async function openInventory() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <Receiver embedded />
-        </ToastProvider>
-      </I18nProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <Receiver embedded />
+            </ToastProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
   });
   await act(async () => {

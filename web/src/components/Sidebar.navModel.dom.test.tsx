@@ -150,15 +150,16 @@ describe("Sidebar renders exactly the navModel registry", () => {
     expect(renderedNavEntries(settings)).toEqual(registryNavEntries(settings));
   });
 
-  // Remote view: Recovery, Instances and Settings drop out the same way a
-  // domain drops out when its own setting is off; every other gate is
-  // unaffected. Checked against ALL_ON so the domain rows it would otherwise
-  // share a route or label with stay in the comparison.
-  it("remote view: the rail equals destinations(settings, true), with Recovery, Instances and Settings off", () => {
+  // Remote view: Recovery and Settings drop out the same way a domain drops
+  // out when its own setting is off; Instances stays, since a peer's receiver
+  // and pull lists are part of what remote view shows, and every other gate
+  // is unaffected. Checked against ALL_ON so the domain rows it would
+  // otherwise share a route or label with stay in the comparison.
+  it("remote view: the rail equals destinations(settings, true), with Recovery and Settings off", () => {
     expect(renderedNavEntries(ALL_ON, true)).toEqual(registryNavEntries(ALL_ON, true));
     const hrefs = renderedNavEntries(ALL_ON, true).map((e) => e.href);
     expect(hrefs).not.toContain("/recovery");
-    expect(hrefs).not.toContain("/instances");
+    expect(hrefs).toContain("/instances");
     expect(hrefs).not.toContain("/settings");
   });
 });

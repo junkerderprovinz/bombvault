@@ -5,6 +5,8 @@
 // cases there).
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import type { ReactElement } from "react";
 import type { Container } from "../lib/api";
 
 class FakeEventSource {
@@ -28,11 +30,22 @@ vi.mock("../lib/api", async () => {
 const { deleteBackups, forgetContainer, setInclude } = await import("../lib/api");
 const { ContainerRow } = await import("./Containers");
 const { en } = await import("../lib/i18n");
+const { InstanceProvider } = await import("../lib/instanceScope");
 
 const noop = () => {
   /* no-op */
 };
 const t = ((key: string) => key) as unknown as Parameters<typeof ContainerRow>[0]["t"];
+
+/** ContainerRow reads the instance scope, so every render needs a router and
+ *  a provider around it, same as the app shell gives it. */
+function renderRow(el: ReactElement) {
+  return render(
+    <MemoryRouter>
+      <InstanceProvider>{el}</InstanceProvider>
+    </MemoryRouter>,
+  );
+}
 
 const orphan: Container = {
   name: "radarr-movies",
@@ -63,13 +76,13 @@ describe("ContainerRow when the container is no longer installed", () => {
   });
 
   it("offers the schedule switch", () => {
-    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
+    renderRow(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
     expect(sw.getAttribute("aria-checked")).toBe("true");
   });
 
   it("saves the switch", async () => {
-    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
+    renderRow(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
 
     fireEvent.click(sw);
@@ -79,7 +92,7 @@ describe("ContainerRow when the container is no longer installed", () => {
   });
 
   it("offers Remove entry, not Delete all backups, when it has no backups", async () => {
-    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
+    renderRow(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
     expect(screen.queryByRole("button", { name: "containers.deleteBackups" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "vms.removeEntry" }));
@@ -90,7 +103,7 @@ describe("ContainerRow when the container is no longer installed", () => {
   });
 
   it("offers Delete all backups, not Remove entry, when it has backups", async () => {
-    render(
+    renderRow(
       <ContainerRow
         container={{ ...orphan, lastBackup: 1_757_000_000 }}
         installedContainers={[]}

@@ -4,7 +4,9 @@
 // falls back to pairing.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 
 type Flags = { receiverEnabled: boolean; fleetEnabled: boolean; pullEnabled: boolean };
 
@@ -29,9 +31,13 @@ const { Instances } = await import("./Instances");
 async function renderPage() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <Instances />
-      </I18nProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <Instances />
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
   });
 }

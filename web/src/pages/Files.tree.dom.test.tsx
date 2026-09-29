@@ -5,7 +5,9 @@
 // step.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, useT } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, FileSetView } from "../lib/api";
 
@@ -113,9 +115,13 @@ function DialogHarness({ initial }: { initial: FileSetView | null }) {
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <I18nProvider>
-      <ToastProvider>{children}</ToastProvider>
-    </I18nProvider>
+    <MemoryRouter>
+      <InstanceProvider>
+        <I18nProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </I18nProvider>
+      </InstanceProvider>
+    </MemoryRouter>
   );
 }
 

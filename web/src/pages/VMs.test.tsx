@@ -6,7 +6,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import type { ReactElement } from "react";
 import { VMRow, VMs } from "./VMs";
+import { InstanceProvider } from "../lib/instanceScope";
 import type { VM, Settings } from "../lib/api";
 
 // useProgress() opens an EventSource on mount, which jsdom lacks; the hook
@@ -57,6 +59,16 @@ const noop = () => {
 // assertions depend on real translations.
 const t = ((key: string) => key) as unknown as Parameters<typeof VMRow>[0]["t"];
 
+/** VMRow reads the instance scope, so every render needs a router and a
+ *  provider around it, same as the app shell gives it. */
+function renderRow(el: ReactElement) {
+  return render(
+    <MemoryRouter>
+      <InstanceProvider>{el}</InstanceProvider>
+    </MemoryRouter>,
+  );
+}
+
 // A TrueNAS-shaped VM whose display name and libvirt name differ.
 const trueNasVM: VM = {
   name: "debian",
@@ -78,7 +90,7 @@ describe("VMRow action wiring", () => {
   });
 
   it("sends VM.libvirtName to backupVMNow, never the display VM.name", async () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
     // By role and name: the viewer chooses whether a control shows its text,
     // its glyph or both, and only the accessible name stays the same.
@@ -90,7 +102,7 @@ describe("VMRow action wiring", () => {
   });
 
   it("still shows the display name to the user, not the raw identifier", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
     expect(screen.getByText(trueNasVM.name)).toBeTruthy();
     expect(screen.queryByText(trueNasVM.libvirtName)).toBeNull();
   });
@@ -105,7 +117,7 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("renders the backups disclosure as a pressable chip, not a bespoke button", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
     // Selector's segments carry aria-pressed, which a plain <button> lacks.
     const chip = screen.getByRole("button", { name: "snapshots.title" });
@@ -113,7 +125,7 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("keeps the backups pane collapsed until the chip is pressed, and the row owns that state", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
     // Closed: VMRestorePanel returns null, so nothing of its content exists.
     expect(screen.queryByText("source.label")).toBeNull();
@@ -125,7 +137,7 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("shows last-backup as one combined summary line, like the container row", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
     // lastBackup is null on the fixture, so the line ends in the "never" key.
     // Two stacked <p>s would leave no single node with both halves.
@@ -133,7 +145,7 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("offers the backup method as two icon-only badges, with the stored one active", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
     // A native <select> would expose a combobox and no per-option segments.
     expect(screen.queryByRole("combobox")).toBeNull();
@@ -161,13 +173,13 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 
   it("offers the schedule switch", () => {
-    render(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
     expect(sw.getAttribute("aria-checked")).toBe("true");
   });
 
   it("saves the switch as a VM setting, under the libvirt name", async () => {
-    render(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
 
     fireEvent.click(sw);
@@ -177,7 +189,7 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 
   it("offers Remove entry, not Delete all backups, when it has no backups", async () => {
-    render(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
     expect(screen.queryByRole("button", { name: "containers.deleteBackups" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "vms.removeEntry" }));
@@ -188,7 +200,7 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 
   it("offers Delete all backups, not Remove entry, when it has backups", async () => {
-    render(<VMRow vm={{ ...orphan, lastBackup: 1_757_000_000 }} t={t} onRefresh={noop} index={0} />);
+    renderRow(<VMRow vm={{ ...orphan, lastBackup: 1_757_000_000 }} t={t} onRefresh={noop} index={0} />);
     expect(screen.queryByRole("button", { name: "vms.removeEntry" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "containers.deleteBackups" }));
@@ -241,7 +253,9 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
   it("renders the desktop face with no hidden twin and the mobile block absent", async () => {
     const { container } = render(
       <MemoryRouter>
-        <VMs />
+        <InstanceProvider>
+          <VMs />
+        </InstanceProvider>
       </MemoryRouter>
     );
 

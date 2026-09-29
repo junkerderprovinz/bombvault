@@ -4,8 +4,10 @@
 // it, and the link from the finding opens the last good snapshot ready to go.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import type { AnomalySummary, AnomalyView } from "../lib/api";
@@ -94,15 +96,19 @@ const t = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Pan
 async function renderPanel(over: Partial<PanelProps> = {}) {
   await act(async () => {
     render(
-      <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <AnomalyProvider>
-              <RestorePanel name="plex" t={t} open {...over} />
-            </AnomalyProvider>
-          </ToastProvider>
-        </AdvancedProvider>
-      </I18nProvider>
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <AdvancedProvider>
+              <ToastProvider>
+                <AnomalyProvider>
+                  <RestorePanel name="plex" t={t} open {...over} />
+                </AnomalyProvider>
+              </ToastProvider>
+            </AdvancedProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>
     );
   });
 }

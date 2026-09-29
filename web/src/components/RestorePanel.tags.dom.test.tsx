@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { InstanceProvider } from "../lib/instanceScope";
 import type { TranslationKey } from "../lib/i18n";
 
 class FakeEventSource {
@@ -53,9 +55,13 @@ afterEach(() => {
 it("hides the tags of the entry's own name and its former names", async () => {
   localStorage.setItem("bombvault.advanced", "1");
   render(
-    <AdvancedProvider>
-      <RestorePanel name="radarr" aliases={["radarr-movies", "radarr-old"]} t={t} open />
-    </AdvancedProvider>,
+    <MemoryRouter>
+      <InstanceProvider>
+        <AdvancedProvider>
+          <RestorePanel name="radarr" aliases={["radarr-movies", "radarr-old"]} t={t} open />
+        </AdvancedProvider>
+      </InstanceProvider>
+    </MemoryRouter>,
   );
 
   expect(await screen.findByText("before-upgrade")).toBeTruthy();
@@ -67,9 +73,13 @@ it("hides the tags of the entry's own name and its former names", async () => {
 it("hides the formerly marker tag a takeover leaves on older backups", async () => {
   localStorage.setItem("bombvault.advanced", "1");
   render(
-    <AdvancedProvider>
-      <RestorePanel name="radarr" aliases={["radarr-movies", "radarr-old"]} t={t} open />
-    </AdvancedProvider>,
+    <MemoryRouter>
+      <InstanceProvider>
+        <AdvancedProvider>
+          <RestorePanel name="radarr" aliases={["radarr-movies", "radarr-old"]} t={t} open />
+        </AdvancedProvider>
+      </InstanceProvider>
+    </MemoryRouter>,
   );
 
   expect(await screen.findByText("before-upgrade")).toBeTruthy();

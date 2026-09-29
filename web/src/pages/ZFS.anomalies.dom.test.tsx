@@ -8,6 +8,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { MemoryRouter } from "react-router-dom";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, countText, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
@@ -129,9 +130,11 @@ async function renderPage(search = "") {
         <AdvancedProvider>
           <ToastProvider>
             <MemoryRouter>
-              <AnomalyProvider>
-                <ZFS />
-              </AnomalyProvider>
+              <InstanceProvider>
+                <AnomalyProvider>
+                  <ZFS />
+                </AnomalyProvider>
+              </InstanceProvider>
             </MemoryRouter>
           </ToastProvider>
         </AdvancedProvider>

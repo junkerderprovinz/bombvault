@@ -5,8 +5,10 @@
 // endpoint shows up here.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, countText, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 import type {
   Run,
@@ -151,13 +153,17 @@ function item(overrides: Partial<ZFSDatasetView>): ZFSDatasetView {
 
 function renderPage() {
   return render(
-    <I18nProvider>
-      <AdvancedProvider>
-        <ToastProvider>
-          <ZFS />
-        </ToastProvider>
-      </AdvancedProvider>
-    </I18nProvider>,
+    <MemoryRouter>
+      <InstanceProvider>
+        <I18nProvider>
+          <AdvancedProvider>
+            <ToastProvider>
+              <ZFS />
+            </ToastProvider>
+          </AdvancedProvider>
+        </I18nProvider>
+      </InstanceProvider>
+    </MemoryRouter>,
   );
 }
 

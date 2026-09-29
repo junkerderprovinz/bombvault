@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import type { Container, Snapshot } from "../lib/api";
 import type { TranslationKey } from "../lib/i18n";
 
@@ -36,6 +37,7 @@ const { ContainerRow, Containers } = await import("./Containers");
 const { countText, en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
 const { AdvancedProvider } = await import("../lib/advanced");
+const { InstanceProvider } = await import("../lib/instanceScope");
 
 const t = ((key: TranslationKey, n?: number) => countText(en[key], "en", n)) as unknown as Parameters<typeof ContainerRow>[0]["t"];
 
@@ -62,16 +64,20 @@ type RowExtra = { onDeleted?: () => void; linkCandidates?: string[] };
 
 function row(container: Container, extra: RowExtra = {}) {
   return (
-    <ToastProvider>
-      <ContainerRow
-        container={container}
-        installedContainers={[]}
-        t={t}
-        onDeleted={extra.onDeleted ?? (() => {})}
-        linkCandidates={extra.linkCandidates}
-        index={0}
-      />
-    </ToastProvider>
+    <MemoryRouter>
+      <InstanceProvider>
+        <ToastProvider>
+          <ContainerRow
+            container={container}
+            installedContainers={[]}
+            t={t}
+            onDeleted={extra.onDeleted ?? (() => {})}
+            linkCandidates={extra.linkCandidates}
+            index={0}
+          />
+        </ToastProvider>
+      </InstanceProvider>
+    </MemoryRouter>
   );
 }
 
@@ -282,9 +288,13 @@ describe("linking a container card to an entry by hand", () => {
       ],
     });
     render(
-      <ToastProvider>
-        <Containers />
-      </ToastProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <ToastProvider>
+            <Containers />
+          </ToastProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: "Link to an entry…" }));
     fireEvent.click(screen.getByRole("combobox", { name: "Former entry" }));
@@ -304,9 +314,13 @@ describe("linking a container card to an entry by hand", () => {
       ],
     });
     render(
-      <ToastProvider>
-        <Containers />
-      </ToastProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <ToastProvider>
+            <Containers />
+          </ToastProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: "Link to an entry…" }));
     fireEvent.click(screen.getByRole("combobox", { name: "Former entry" }));
@@ -330,9 +344,13 @@ describe("a container card that took over an entry", () => {
       snapshots: [{ ...snap("0123456789"), tags: ["container:radarr-old", "before-upgrade"] }],
     });
     render(
-      <AdvancedProvider>
-        <ContainerRow container={linked} installedContainers={[]} t={t} onDeleted={() => {}} index={0} />
-      </AdvancedProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <AdvancedProvider>
+            <ContainerRow container={linked} installedContainers={[]} t={t} onDeleted={() => {}} index={0} />
+          </AdvancedProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
 

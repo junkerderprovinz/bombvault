@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
 
@@ -53,11 +55,15 @@ afterEach(() => {
 async function renderPage() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <Config />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <Config />
+            </ToastProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>
     );
   });
 }

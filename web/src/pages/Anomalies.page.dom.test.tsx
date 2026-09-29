@@ -12,6 +12,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { MemoryRouter } from "react-router-dom";
 
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
@@ -150,9 +151,11 @@ async function renderPage(path = "/anomalies") {
       <I18nProvider>
         <ToastProvider>
           <MemoryRouter initialEntries={[path]}>
-            <AnomalyProvider>
-              <Anomalies />
-            </AnomalyProvider>
+            <InstanceProvider>
+              <AnomalyProvider>
+                <Anomalies />
+              </AnomalyProvider>
+            </InstanceProvider>
           </MemoryRouter>
         </ToastProvider>
       </I18nProvider>

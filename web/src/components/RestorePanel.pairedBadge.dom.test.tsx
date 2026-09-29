@@ -4,8 +4,10 @@
 // source id. The tags that make the pairing possible stay out of the row.
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 
 class NoopEventSource {
@@ -62,13 +64,17 @@ const t = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Pan
 async function renderPanel(over: Partial<PanelProps> = {}) {
   await act(async () => {
     render(
-      <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <RestorePanel name="immich_postgres" t={t} open isDatabase dbCoverage="live" containerRunning {...over} />
-          </ToastProvider>
-        </AdvancedProvider>
-      </I18nProvider>
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <AdvancedProvider>
+              <ToastProvider>
+                <RestorePanel name="immich_postgres" t={t} open isDatabase dbCoverage="live" containerRunning {...over} />
+              </ToastProvider>
+            </AdvancedProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>
     );
   });
 }

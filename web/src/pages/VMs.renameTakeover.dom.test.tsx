@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import type { Snapshot, VM } from "../lib/api";
 import type { TranslationKey } from "../lib/i18n";
 
@@ -33,6 +34,7 @@ const { listVMs, listVMSnapshots, takeOverVM, unlinkVMAlias } = await import("..
 const { VMRow, VMs } = await import("./VMs");
 const { countText, en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
+const { InstanceProvider } = await import("../lib/instanceScope");
 
 const t = ((key: TranslationKey, n?: number) => countText(en[key], "en", n)) as unknown as Parameters<typeof VMRow>[0]["t"];
 
@@ -50,9 +52,13 @@ const win11: VM = {
 
 function renderRow(vm: VM, linkCandidates?: string[], onRefresh: () => void = () => {}) {
   return render(
-    <ToastProvider>
-      <VMRow vm={vm} t={t} onRefresh={onRefresh} linkCandidates={linkCandidates} index={0} />
-    </ToastProvider>,
+    <MemoryRouter>
+      <InstanceProvider>
+        <ToastProvider>
+          <VMRow vm={vm} t={t} onRefresh={onRefresh} linkCandidates={linkCandidates} index={0} />
+        </ToastProvider>
+      </InstanceProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -91,9 +97,13 @@ describe("taking over a renamed VM's entry", () => {
     const view = renderRow(suggested);
     fireEvent.click(screen.getByRole("button", { name: "Not this one" }));
     view.rerender(
-      <ToastProvider>
-        <VMRow vm={{ ...suggested, renameFrom: "1_win-11" }} t={t} onRefresh={() => {}} index={0} />
-      </ToastProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <ToastProvider>
+            <VMRow vm={{ ...suggested, renameFrom: "1_win-11" }} t={t} onRefresh={() => {}} index={0} />
+          </ToastProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("Looks like 1_win-11")).toBeTruthy();
@@ -129,9 +139,13 @@ describe("taking over a renamed VM's entry", () => {
       ],
     });
     render(
-      <ToastProvider>
-        <VMs />
-      </ToastProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <ToastProvider>
+            <VMs />
+          </ToastProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: "Link to an entry…" }));
     fireEvent.click(screen.getByRole("combobox", { name: "Former entry" }));
@@ -155,9 +169,13 @@ describe("taking over a renamed VM's entry", () => {
       ],
     });
     render(
-      <ToastProvider>
-        <VMs />
-      </ToastProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <ToastProvider>
+            <VMs />
+          </ToastProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: "Link to an entry…" }));
     fireEvent.click(screen.getByRole("combobox", { name: "Former entry" }));

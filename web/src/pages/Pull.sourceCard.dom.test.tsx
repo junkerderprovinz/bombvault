@@ -4,7 +4,9 @@
 // succeeded, failed and switched off each have their own wording.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, countText, en } from "../lib/i18n";
+import { InstanceProvider } from "../lib/instanceScope";
 import { ToastProvider } from "../lib/toast";
 import type { PullSourceView } from "../lib/api";
 
@@ -48,11 +50,15 @@ const { Pull } = await import("./Pull");
 async function renderPull() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <Pull />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <Pull />
+            </ToastProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>
     );
   });
 }
