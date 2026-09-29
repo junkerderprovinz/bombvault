@@ -2579,6 +2579,15 @@ const no: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementer som ikke kunne sjekkes i siste runde: {n}. Loggen navngir dem.",
   "anomaly.settings.unmeasured": "Repositorier uten tall for ledig plass: {names}",
   "anomaly.settings.openPage": "Vis avvik",
+  "fleet.open": "Åpne",
+  "fleet.openTip": "Se dataene til denne instansen, og start en sikkerhetskopi, en sjekk eller en ekstern kopi på den. Gjenoppretting, sletting og innstillinger forblir alltid lokale på den instansen.",
+  "fleet.remoteViewOff": "Fjernvisning er slått av på denne instansen",
+  "fleet.remoteViewSettingsLink": "Innstillinger for fjernvisning",
+  "remoteView.viewing": "Du ser {name}",
+  "remoteView.unnamed": "en annen instans",
+  "remoteView.back": "Tilbake til denne instansen",
+  "settings.remoteView": "Andre instanser kan se denne og starte sikkerhetskopier",
+  "settings.remoteViewHint": "Gjenoppretting, sletting og alle innstillinger forblir lokale uansett denne bryteren.",
 };
 
 export default no;

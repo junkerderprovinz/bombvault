@@ -2574,6 +2574,15 @@ const sr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Ставке које није било могуће проверити у последњем пролазу: {n}. Дневник их именује.",
   "anomaly.settings.unmeasured": "Репозиторијуми без податка о слободном простору: {names}",
   "anomaly.settings.openPage": "Прикажи аномалије",
+  "fleet.open": "Отвори",
+  "fleet.openTip": "Погледај податке ове инстанце и покрени на њој резервну копију, проверу или спољну копију. Свако враћање, брисање и подешавање остаје локално на тој инстанци.",
+  "fleet.remoteViewOff": "Удаљени приказ је искључен на овој инстанци",
+  "fleet.remoteViewSettingsLink": "Подешавања удаљеног приказа",
+  "remoteView.viewing": "Гледаш {name}",
+  "remoteView.unnamed": "друга инстанца",
+  "remoteView.back": "Назад на ову инстанцу",
+  "settings.remoteView": "Друге инстанце могу да гледају ову и покрећу резервне копије",
+  "settings.remoteViewHint": "Враћања, брисања и сва подешавања остају локална без обзира на овај прекидач.",
 };
 
 export default sr;

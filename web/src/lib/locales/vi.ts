@@ -2571,6 +2571,15 @@ const vi: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Mục không kiểm tra được trong lượt gần nhất: {n}. Nhật ký nêu tên chúng.",
   "anomaly.settings.unmeasured": "Kho lưu trữ không có số liệu dung lượng trống: {names}",
   "anomaly.settings.openPage": "Xem bất thường",
+  "fleet.open": "Mở",
+  "fleet.openTip": "Xem dữ liệu của phiên bản này và bắt đầu một bản sao lưu, một lần kiểm tra hoặc một bản sao ngoài site trên đó. Mọi khôi phục, xóa và cài đặt đều chỉ ở lại cục bộ trên phiên bản đó.",
+  "fleet.remoteViewOff": "Xem từ xa đang tắt trên phiên bản này",
+  "fleet.remoteViewSettingsLink": "Cài đặt xem từ xa",
+  "remoteView.viewing": "Đang xem {name}",
+  "remoteView.unnamed": "một phiên bản khác",
+  "remoteView.back": "Quay lại phiên bản này",
+  "settings.remoteView": "Các phiên bản khác có thể xem phiên bản này và bắt đầu sao lưu",
+  "settings.remoteViewHint": "Khôi phục, xóa và mọi cài đặt luôn ở lại cục bộ bất kể công tắc này.",
 };
 
 export default vi;

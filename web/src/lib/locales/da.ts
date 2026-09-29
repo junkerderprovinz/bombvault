@@ -2579,6 +2579,15 @@ const da: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementer der ikke kunne tjekkes i sidste gennemløb: {n}. Loggen nævner dem.",
   "anomaly.settings.unmeasured": "Repositories uden tal for ledig plads: {names}",
   "anomaly.settings.openPage": "Vis afvigelser",
+  "fleet.open": "Åbn",
+  "fleet.openTip": "Se denne instans' data, og start en sikkerhedskopi, et tjek eller en ekstern kopi på den. Gendannelser, sletninger og indstillinger forbliver altid lokale på den instans.",
+  "fleet.remoteViewOff": "Fjernvisning er slået fra på denne instans",
+  "fleet.remoteViewSettingsLink": "Indstillinger for fjernvisning",
+  "remoteView.viewing": "Du ser {name}",
+  "remoteView.unnamed": "en anden instans",
+  "remoteView.back": "Tilbage til denne instans",
+  "settings.remoteView": "Andre instanser kan se denne og starte sikkerhedskopier",
+  "settings.remoteViewHint": "Gendannelser, sletninger og alle indstillinger forbliver lokale uanset denne kontakt.",
 };
 
 export default da;

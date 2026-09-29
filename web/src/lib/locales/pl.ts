@@ -2574,6 +2574,15 @@ const pl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementy, których nie udało się sprawdzić w ostatnim przebiegu: {n}. Dziennik je wymienia.",
   "anomaly.settings.unmeasured": "Repozytoria bez danych o wolnym miejscu: {names}",
   "anomaly.settings.openPage": "Pokaż anomalie",
+  "fleet.open": "Otwórz",
+  "fleet.openTip": "Zobacz dane tej instancji i uruchom na niej kopię zapasową, sprawdzenie lub kopię poza siedzibą. Każde przywracanie, usuwanie i ustawienie pozostaje lokalne dla tej instancji.",
+  "fleet.remoteViewOff": "Podgląd zdalny jest wyłączony na tej instancji",
+  "fleet.remoteViewSettingsLink": "Ustawienia podglądu zdalnego",
+  "remoteView.viewing": "Oglądasz {name}",
+  "remoteView.unnamed": "inna instancja",
+  "remoteView.back": "Powrót do tej instancji",
+  "settings.remoteView": "Inne instancje mogą oglądać tę i uruchamiać kopie zapasowe",
+  "settings.remoteViewHint": "Przywracanie, usuwanie i wszystkie ustawienia pozostają lokalne niezależnie od tego przełącznika.",
 };
 
 export default pl;

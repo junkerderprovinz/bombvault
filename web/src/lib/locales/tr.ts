@@ -2579,6 +2579,15 @@ const tr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Son geçişte denetlenemeyen ögeler: {n}. Günlük onları adlandırıyor.",
   "anomaly.settings.unmeasured": "Boş alan bilgisi olmayan depolar: {names}",
   "anomaly.settings.openPage": "Anormallikleri göster",
+  "fleet.open": "Aç",
+  "fleet.openTip": "Bu örneğin verilerini gör ve üzerinde bir yedekleme, kontrol veya site dışı kopya başlat. Her geri yükleme, silme ve ayar o örnekte yerel kalır.",
+  "fleet.remoteViewOff": "Bu örnekte uzaktan görünüm kapalı",
+  "fleet.remoteViewSettingsLink": "Uzaktan görünüm ayarları",
+  "remoteView.viewing": "{name} görüntüleniyor",
+  "remoteView.unnamed": "başka bir örnek",
+  "remoteView.back": "Bu örneğe dön",
+  "settings.remoteView": "Diğer örnekler bunu görüntüleyebilir ve yedekleme başlatabilir",
+  "settings.remoteViewHint": "Geri yüklemeler, silmeler ve tüm ayarlar bu anahtardan bağımsız olarak yerel kalır.",
 };
 
 export default tr;

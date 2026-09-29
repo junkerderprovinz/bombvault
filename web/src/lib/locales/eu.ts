@@ -2590,6 +2590,15 @@ const eu: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Azken pasaldian egiaztatu ezin izan diren elementuak: {n}. Egunkariak izendatzen ditu.",
   "anomaly.settings.unmeasured": "Leku libreko daturik gabeko biltegiak: {names}",
   "anomaly.settings.openPage": "Erakutsi anomaliak",
+  "fleet.open": "Ireki",
+  "fleet.openTip": "Ikusi instantzia honen datuak eta abiarazi bertan babeskopia, egiaztapen edo kanpoko kopia bat. Leheneratze, ezabatze eta ezarpen guztiak instantzia horretan bertan geratzen dira.",
+  "fleet.remoteViewOff": "Urruneko ikuspegia desgaituta dago instantzia honetan",
+  "fleet.remoteViewSettingsLink": "Urruneko ikuspegiaren ezarpenak",
+  "remoteView.viewing": "{name} ikusten ari zara",
+  "remoteView.unnamed": "beste instantzia bat",
+  "remoteView.back": "Itzuli instantzia honetara",
+  "settings.remoteView": "Beste instantziek hau ikusi eta babeskopiak abiarazi ditzakete",
+  "settings.remoteViewHint": "Leheneratzeak, ezabatzeak eta ezarpen guztiak lokal geratzen dira etengailu honen egoera edozein dela ere.",
 };
 
 export default eu;

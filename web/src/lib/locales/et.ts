@@ -2590,6 +2590,15 @@ const et: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Üksusi, mida viimasel läbimisel ei saanud kontrollida: {n}. Logi nimetab need.",
   "anomaly.settings.unmeasured": "Hoidlad ilma vaba ruumi näitajata: {names}",
   "anomaly.settings.openPage": "Näita kõrvalekaldeid",
+  "fleet.open": "Ava",
+  "fleet.openTip": "Vaata selle eksemplari andmeid ja käivita sellel varundus, kontroll või väline koopia. Iga taastamine, kustutamine ja seadistus jääb kohalikuks selles eksemplaris.",
+  "fleet.remoteViewOff": "Kaugvaade on selles eksemplaris välja lülitatud",
+  "fleet.remoteViewSettingsLink": "Kaugvaate seaded",
+  "remoteView.viewing": "Vaatad {name}",
+  "remoteView.unnamed": "teine eksemplar",
+  "remoteView.back": "Tagasi selle eksemplari juurde",
+  "settings.remoteView": "Teised eksemplarid võivad seda vaadata ja käivitada varundusi",
+  "settings.remoteViewHint": "Taastamised, kustutamised ja kõik seaded jäävad kohalikuks olenemata sellest lülitist.",
 };
 
 export default et;

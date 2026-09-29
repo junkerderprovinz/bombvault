@@ -2590,6 +2590,15 @@ const lv: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Vienumi, kurus pēdējā pārskatā neizdevās pārbaudīt: {n}. Žurnāls tos nosauc.",
   "anomaly.settings.unmeasured": "Krātuves bez brīvās vietas rādītāja: {names}",
   "anomaly.settings.openPage": "Rādīt anomālijas",
+  "fleet.open": "Atvērt",
+  "fleet.openTip": "Skatiet šīs instances datus un sāciet tajā rezerves kopiju, pārbaudi vai attālinātu kopiju. Katra atjaunošana, dzēšana un iestatījums paliek lokāls tajā instancē.",
+  "fleet.remoteViewOff": "Attālinātais skats šajā instancē ir izslēgts",
+  "fleet.remoteViewSettingsLink": "Attālinātā skata iestatījumi",
+  "remoteView.viewing": "Skatāt {name}",
+  "remoteView.unnamed": "cita instance",
+  "remoteView.back": "Atpakaļ uz šo instanci",
+  "settings.remoteView": "Citas instances var skatīt šo un sākt rezerves kopijas",
+  "settings.remoteViewHint": "Atjaunošanas, dzēšanas un visi iestatījumi paliek lokāli neatkarīgi no šī slēdža.",
 };
 
 export default lv;

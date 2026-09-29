@@ -2590,6 +2590,15 @@ const fa: Partial<Translations> = {
   "anomaly.settings.evalErrors": "مواردی که در دور آخر بررسی نشدند: {n}. گزارش آن‌ها را نام می‌برد.",
   "anomaly.settings.unmeasured": "مخزن‌های بدون رقم فضای آزاد: {names}",
   "anomaly.settings.openPage": "نمایش ناهنجاری‌ها",
+  "fleet.open": "باز کردن",
+  "fleet.openTip": "داده‌های این نمونه را ببین و روی آن یک پشتیبان‌گیری، بررسی یا نسخه خارج از محل شروع کن. هر بازیابی، حذف و تنظیمی روی همان نمونه محلی می‌ماند.",
+  "fleet.remoteViewOff": "نمای از راه دور در این نمونه خاموش است",
+  "fleet.remoteViewSettingsLink": "تنظیمات نمای از راه دور",
+  "remoteView.viewing": "در حال دیدن {name}",
+  "remoteView.unnamed": "نمونه‌ای دیگر",
+  "remoteView.back": "بازگشت به این نمونه",
+  "settings.remoteView": "نمونه‌های دیگر می‌توانند این را ببینند و پشتیبان‌گیری را شروع کنند",
+  "settings.remoteViewHint": "بازیابی‌ها، حذف‌ها و همه تنظیمات صرف‌نظر از این کلید محلی می‌مانند.",
 };
 
 export default fa;

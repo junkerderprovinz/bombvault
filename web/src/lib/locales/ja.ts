@@ -2571,6 +2571,15 @@ const ja: Partial<Translations> = {
   "anomaly.settings.evalErrors": "前回の確認で調べられなかった項目: {n}。ログに名前があります。",
   "anomaly.settings.unmeasured": "空き容量がわからないリポジトリ: {names}",
   "anomaly.settings.openPage": "異常を表示",
+  "fleet.open": "開く",
+  "fleet.openTip": "このインスタンスのデータを確認し、バックアップ、チェック、オフサイトコピーを開始できます。復元、削除、設定はそのインスタンス内にとどまります。",
+  "fleet.remoteViewOff": "このインスタンスではリモートビューがオフです",
+  "fleet.remoteViewSettingsLink": "リモートビューの設定",
+  "remoteView.viewing": "{name} を表示中",
+  "remoteView.unnamed": "別のインスタンス",
+  "remoteView.back": "このインスタンスに戻る",
+  "settings.remoteView": "他のインスタンスがこれを閲覧してバックアップを開始できるようにする",
+  "settings.remoteViewHint": "復元、削除、設定はこのスイッチに関係なく常にローカルのままです。",
 };
 
 export default ja;

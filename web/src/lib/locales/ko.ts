@@ -2571,6 +2571,15 @@ const ko: Partial<Translations> = {
   "anomaly.settings.evalErrors": "지난 점검에서 확인하지 못한 항목: {n}. 로그에 이름이 있습니다.",
   "anomaly.settings.unmeasured": "여유 공간 수치가 없는 저장소: {names}",
   "anomaly.settings.openPage": "이상 징후 보기",
+  "fleet.open": "열기",
+  "fleet.openTip": "이 인스턴스의 데이터를 보고 백업, 점검, 오프사이트 복사를 시작할 수 있습니다. 복원, 삭제, 설정은 모두 해당 인스턴스에만 남습니다.",
+  "fleet.remoteViewOff": "이 인스턴스에서는 원격 보기가 꺼져 있습니다",
+  "fleet.remoteViewSettingsLink": "원격 보기 설정",
+  "remoteView.viewing": "{name} 보는 중",
+  "remoteView.unnamed": "다른 인스턴스",
+  "remoteView.back": "이 인스턴스로 돌아가기",
+  "settings.remoteView": "다른 인스턴스가 이 인스턴스를 보고 백업을 시작할 수 있습니다",
+  "settings.remoteViewHint": "복원, 삭제, 모든 설정은 이 스위치와 상관없이 항상 로컬에 남습니다.",
 };
 
 export default ko;

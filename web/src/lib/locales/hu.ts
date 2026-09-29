@@ -2582,6 +2582,15 @@ const hu: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Az utolsó körben nem ellenőrizhető elemek: {n}. A napló megnevezi őket.",
   "anomaly.settings.unmeasured": "Tárolók szabad hely adat nélkül: {names}",
   "anomaly.settings.openPage": "Anomáliák megjelenítése",
+  "fleet.open": "Megnyitás",
+  "fleet.openTip": "Tekintsd meg ennek a példánynak az adatait, és indíts rajta mentést, ellenőrzést vagy telephelyen kívüli másolatot. Minden visszaállítás, törlés és beállítás helyben marad azon a példányon.",
+  "fleet.remoteViewOff": "A távoli nézet ki van kapcsolva ezen a példányon",
+  "fleet.remoteViewSettingsLink": "Távoli nézet beállításai",
+  "remoteView.viewing": "Megtekintés: {name}",
+  "remoteView.unnamed": "egy másik példány",
+  "remoteView.back": "Vissza ehhez a példányhoz",
+  "settings.remoteView": "Más példányok megtekinthetik ezt, és mentést indíthatnak",
+  "settings.remoteViewHint": "A visszaállítások, törlések és minden beállítás helyben marad, függetlenül ettől a kapcsolótól.",
 };
 
 export default hu;

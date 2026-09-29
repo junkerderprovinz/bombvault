@@ -2582,6 +2582,15 @@ const ar: Partial<Translations> = {
   "anomaly.settings.evalErrors": "عناصر تعذر فحصها في الجولة الأخيرة: {n}. السجل يسمّيها.",
   "anomaly.settings.unmeasured": "مستودعات بلا رقم للمساحة الحرة: {names}",
   "anomaly.settings.openPage": "عرض الحالات الشاذة",
+  "fleet.open": "افتح",
+  "fleet.openTip": "اطّلع على بيانات هذا المثيل وابدأ عليه نسخة احتياطية أو فحصًا أو نسخة خارج الموقع. كل استعادة أو حذف أو إعداد يبقى محليًا على ذلك المثيل.",
+  "fleet.remoteViewOff": "العرض عن بُعد معطّل على هذا المثيل",
+  "fleet.remoteViewSettingsLink": "إعدادات العرض عن بُعد",
+  "remoteView.viewing": "تشاهد الآن {name}",
+  "remoteView.unnamed": "مثيل آخر",
+  "remoteView.back": "العودة إلى هذا المثيل",
+  "settings.remoteView": "يمكن للمثيلات الأخرى مشاهدة هذا المثيل وبدء نسخ احتياطية",
+  "settings.remoteViewHint": "تبقى الاستعادات والحذف وكل إعداد محليةً بصرف النظر عن هذا المفتاح.",
 };
 
 export default ar;

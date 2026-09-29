@@ -2582,6 +2582,15 @@ const th: Partial<Translations> = {
   "anomaly.settings.evalErrors": "รายการที่ตรวจไม่ได้ในรอบล่าสุด: {n} บันทึกระบุชื่อไว้",
   "anomaly.settings.unmeasured": "คลังข้อมูลที่ไม่มีตัวเลขพื้นที่ว่าง: {names}",
   "anomaly.settings.openPage": "แสดงความผิดปกติ",
+  "fleet.open": "เปิด",
+  "fleet.openTip": "ดูข้อมูลของอินสแตนซ์นี้และเริ่มการสำรองข้อมูล การตรวจสอบ หรือสำเนานอกสถานที่บนอินสแตนซ์นั้นได้ การกู้คืน การลบ และการตั้งค่าทุกอย่างยังคงอยู่ในอินสแตนซ์นั้นเท่านั้น",
+  "fleet.remoteViewOff": "มุมมองระยะไกลปิดอยู่บนอินสแตนซ์นี้",
+  "fleet.remoteViewSettingsLink": "การตั้งค่ามุมมองระยะไกล",
+  "remoteView.viewing": "กำลังดู {name}",
+  "remoteView.unnamed": "อินสแตนซ์อื่น",
+  "remoteView.back": "กลับไปยังอินสแตนซ์นี้",
+  "settings.remoteView": "อินสแตนซ์อื่นสามารถดูเครื่องนี้และเริ่มการสำรองข้อมูลได้",
+  "settings.remoteViewHint": "การกู้คืน การลบ และการตั้งค่าทั้งหมดยังคงอยู่ในเครื่องเสมอ ไม่ว่าสวิตช์นี้จะเปิดหรือปิด",
 };
 
 export default th;

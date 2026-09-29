@@ -2577,6 +2577,15 @@ const cs: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Položky, které v posledním průchodu nešlo zkontrolovat: {n}. Protokol je jmenuje.",
   "anomaly.settings.unmeasured": "Repozitáře bez údaje o volném místě: {names}",
   "anomaly.settings.openPage": "Zobrazit anomálie",
+  "fleet.open": "Otevřít",
+  "fleet.openTip": "Zobrazí data této instance a umožní na ní spustit zálohu, kontrolu nebo kopii mimo lokalitu. Každé obnovení, smazání a nastavení zůstává lokální na dané instanci.",
+  "fleet.remoteViewOff": "Vzdálené zobrazení je na této instanci vypnuté",
+  "fleet.remoteViewSettingsLink": "Nastavení vzdáleného zobrazení",
+  "remoteView.viewing": "Zobrazujete {name}",
+  "remoteView.unnamed": "jiná instance",
+  "remoteView.back": "Zpět na tuto instanci",
+  "settings.remoteView": "Ostatní instance mohou zobrazit tuto a spustit zálohy",
+  "settings.remoteViewHint": "Obnovení, smazání a všechna nastavení zůstávají lokální bez ohledu na tento přepínač.",
 };
 
 export default cs;

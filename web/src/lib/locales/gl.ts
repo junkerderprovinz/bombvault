@@ -2590,6 +2590,15 @@ const gl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementos que non se puideron comprobar na última pasada: {n}. O rexistro nómeaos.",
   "anomaly.settings.unmeasured": "Repositorios sen dato de espazo libre: {names}",
   "anomaly.settings.openPage": "Ver anomalías",
+  "fleet.open": "Abrir",
+  "fleet.openTip": "Consulta os datos desta instancia e inicia nela unha copia, unha comprobación ou unha copia externa. Cada restauración, eliminación e axuste permanece local nesa instancia.",
+  "fleet.remoteViewOff": "A vista remota está desactivada nesta instancia",
+  "fleet.remoteViewSettingsLink": "Configuración da vista remota",
+  "remoteView.viewing": "Estás a ver {name}",
+  "remoteView.unnamed": "outra instancia",
+  "remoteView.back": "Volver a esta instancia",
+  "settings.remoteView": "Outras instancias poden ver esta e iniciar copias",
+  "settings.remoteViewHint": "As restauracións, eliminacións e todos os axustes permanecen locais independentemente deste interruptor.",
 };
 
 export default gl;

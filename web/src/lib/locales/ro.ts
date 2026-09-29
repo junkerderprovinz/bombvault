@@ -2582,6 +2582,15 @@ const ro: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elemente care nu au putut fi verificate la ultima trecere: {n}. Jurnalul le numește.",
   "anomaly.settings.unmeasured": "Depozite fără valoare pentru spațiul liber: {names}",
   "anomaly.settings.openPage": "Arată anomaliile",
+  "fleet.open": "Deschide",
+  "fleet.openTip": "Vezi datele acestei instanțe și pornește pe ea un backup, o verificare sau o copie externă. Fiecare restaurare, ștergere și setare rămâne locală pe acea instanță.",
+  "fleet.remoteViewOff": "Vizualizarea la distanță este dezactivată pe această instanță",
+  "fleet.remoteViewSettingsLink": "Setări de vizualizare la distanță",
+  "remoteView.viewing": "Vizualizezi {name}",
+  "remoteView.unnamed": "o altă instanță",
+  "remoteView.back": "Înapoi la această instanță",
+  "settings.remoteView": "Alte instanțe pot vizualiza aceasta și pot porni backupuri",
+  "settings.remoteViewHint": "Restaurările, ștergerile și toate setările rămân locale indiferent de acest comutator.",
 };
 
 export default ro;

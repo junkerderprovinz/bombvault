@@ -2590,6 +2590,15 @@ const sk: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Položky, ktoré sa v poslednom prechode nedali skontrolovať: {n}. Denník ich menuje.",
   "anomaly.settings.unmeasured": "Repozitáre bez údaja o voľnom mieste: {names}",
   "anomaly.settings.openPage": "Zobraziť anomálie",
+  "fleet.open": "Otvoriť",
+  "fleet.openTip": "Zobrazte údaje tejto inštancie a spustite na nej zálohu, kontrolu alebo externú kópiu. Každé obnovenie, odstránenie a nastavenie zostáva lokálne na danej inštancii.",
+  "fleet.remoteViewOff": "Vzdialené zobrazenie je na tejto inštancii vypnuté",
+  "fleet.remoteViewSettingsLink": "Nastavenia vzdialeného zobrazenia",
+  "remoteView.viewing": "Zobrazujete {name}",
+  "remoteView.unnamed": "iná inštancia",
+  "remoteView.back": "Späť na túto inštanciu",
+  "settings.remoteView": "Ostatné inštancie môžu zobraziť túto a spustiť zálohy",
+  "settings.remoteViewHint": "Obnovenia, odstránenia a všetky nastavenia zostávajú lokálne bez ohľadu na tento prepínač.",
 };
 
 export default sk;

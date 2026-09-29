@@ -2579,6 +2579,15 @@ const fr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Éléments qui n'ont pas pu être contrôlés lors du dernier passage : {n}. Le journal les nomme.",
   "anomaly.settings.unmeasured": "Dépôts sans valeur d'espace libre : {names}",
   "anomaly.settings.openPage": "Voir les anomalies",
+  "fleet.open": "Ouvrir",
+  "fleet.openTip": "Consultez les données de cette instance et lancez-y une sauvegarde, une vérification ou une copie hors site. Les restaurations, suppressions et paramètres restent locaux à cette instance.",
+  "fleet.remoteViewOff": "La vue à distance est désactivée sur cette instance",
+  "fleet.remoteViewSettingsLink": "Paramètres de la vue à distance",
+  "remoteView.viewing": "Vous consultez {name}",
+  "remoteView.unnamed": "une autre instance",
+  "remoteView.back": "Retour à cette instance",
+  "settings.remoteView": "D'autres instances peuvent consulter celle-ci et lancer des sauvegardes",
+  "settings.remoteViewHint": "Les restaurations, suppressions et tous les paramètres restent locaux, quel que soit l'état de ce commutateur.",
 };
 
 export default fr;

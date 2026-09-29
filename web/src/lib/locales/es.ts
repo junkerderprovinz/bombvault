@@ -2577,6 +2577,15 @@ const es: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementos que no se pudieron comprobar en la última pasada: {n}. El registro los nombra.",
   "anomaly.settings.unmeasured": "Repositorios sin dato de espacio libre: {names}",
   "anomaly.settings.openPage": "Ver anomalías",
+  "fleet.open": "Abrir",
+  "fleet.openTip": "Consulta los datos de esta instancia e inicia en ella una copia de seguridad, una comprobación o una copia externa. Cada restauración, eliminación y ajuste permanece local en esa instancia.",
+  "fleet.remoteViewOff": "La vista remota está desactivada en esta instancia",
+  "fleet.remoteViewSettingsLink": "Ajustes de vista remota",
+  "remoteView.viewing": "Estás viendo {name}",
+  "remoteView.unnamed": "otra instancia",
+  "remoteView.back": "Volver a esta instancia",
+  "settings.remoteView": "Otras instancias pueden ver esta e iniciar copias de seguridad",
+  "settings.remoteViewHint": "Las restauraciones, eliminaciones y todos los ajustes permanecen locales sin importar este interruptor.",
 };
 
 export default es;

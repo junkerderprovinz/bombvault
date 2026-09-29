@@ -2579,6 +2579,15 @@ const he: Partial<Translations> = {
   "anomaly.settings.evalErrors": "פריטים שלא ניתן היה לבדוק בסבב האחרון: {n}. היומן מפרט אותם.",
   "anomaly.settings.unmeasured": "מאגרים ללא נתון שטח פנוי: {names}",
   "anomaly.settings.openPage": "להציג חריגות",
+  "fleet.open": "פתח",
+  "fleet.openTip": "צפה בנתונים של המופע הזה והפעל עליו גיבוי, בדיקה או עותק מחוץ לאתר. כל שחזור, מחיקה והגדרה נשארים מקומיים לאותו מופע.",
+  "fleet.remoteViewOff": "הצפייה מרחוק כבויה במופע הזה",
+  "fleet.remoteViewSettingsLink": "הגדרות צפייה מרחוק",
+  "remoteView.viewing": "צופה כעת ב-{name}",
+  "remoteView.unnamed": "מופע אחר",
+  "remoteView.back": "חזרה למופע הזה",
+  "settings.remoteView": "מופעים אחרים יכולים לצפות בזה ולהפעיל גיבויים",
+  "settings.remoteViewHint": "שחזורים, מחיקות וכל הגדרה נשארים מקומיים בלי קשר למתג הזה.",
 };
 
 export default he;

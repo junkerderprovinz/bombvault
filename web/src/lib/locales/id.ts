@@ -2590,6 +2590,15 @@ const id: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Item yang tidak dapat diperiksa pada putaran terakhir: {n}. Log menyebutkan namanya.",
   "anomaly.settings.unmeasured": "Repositori tanpa angka ruang kosong: {names}",
   "anomaly.settings.openPage": "Tampilkan anomali",
+  "fleet.open": "Buka",
+  "fleet.openTip": "Lihat data instance ini dan mulai pencadangan, pemeriksaan, atau salinan off-site di atasnya. Setiap pemulihan, penghapusan, dan pengaturan tetap lokal pada instance itu.",
+  "fleet.remoteViewOff": "Tampilan jarak jauh nonaktif pada instance ini",
+  "fleet.remoteViewSettingsLink": "Pengaturan tampilan jarak jauh",
+  "remoteView.viewing": "Melihat {name}",
+  "remoteView.unnamed": "instance lain",
+  "remoteView.back": "Kembali ke instance ini",
+  "settings.remoteView": "Instance lain dapat melihat yang ini dan memulai pencadangan",
+  "settings.remoteViewHint": "Pemulihan, penghapusan, dan semua pengaturan tetap lokal terlepas dari sakelar ini.",
 };
 
 export default id;

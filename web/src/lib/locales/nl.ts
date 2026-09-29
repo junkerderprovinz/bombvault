@@ -2576,6 +2576,15 @@ const nl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Items die bij de laatste ronde niet gecontroleerd konden worden: {n}. Het logboek noemt ze.",
   "anomaly.settings.unmeasured": "Repositories zonder cijfer voor vrije ruimte: {names}",
   "anomaly.settings.openPage": "Anomalieën tonen",
+  "fleet.open": "Openen",
+  "fleet.openTip": "Bekijk de gegevens van deze instantie en start er een back-up, controle of off-site kopie op. Elke herstelbewerking, verwijdering en instelling blijft lokaal op die instantie.",
+  "fleet.remoteViewOff": "Weergave op afstand staat uit voor deze instantie",
+  "fleet.remoteViewSettingsLink": "Instellingen voor weergave op afstand",
+  "remoteView.viewing": "Je bekijkt {name}",
+  "remoteView.unnamed": "een andere instantie",
+  "remoteView.back": "Terug naar deze instantie",
+  "settings.remoteView": "Andere instanties mogen deze bekijken en back-ups starten",
+  "settings.remoteViewHint": "Herstelbewerkingen, verwijderingen en alle instellingen blijven lokaal, ongeacht deze schakelaar.",
 };
 
 export default nl;

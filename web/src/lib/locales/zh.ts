@@ -2571,6 +2571,15 @@ const zh: Partial<Translations> = {
   "anomaly.settings.evalErrors": "上一轮无法检查的项目：{n}。日志里有名称。",
   "anomaly.settings.unmeasured": "没有可用空间数据的存储库：{names}",
   "anomaly.settings.openPage": "查看异常",
+  "fleet.open": "打开",
+  "fleet.openTip": "查看该实例的数据，并在其上启动备份、检查或异地复制。所有恢复、删除和设置都只保留在该实例本地。",
+  "fleet.remoteViewOff": "该实例已关闭远程视图",
+  "fleet.remoteViewSettingsLink": "远程视图设置",
+  "remoteView.viewing": "正在查看 {name}",
+  "remoteView.unnamed": "另一个实例",
+  "remoteView.back": "返回本机",
+  "settings.remoteView": "允许其他实例查看本机并启动备份",
+  "settings.remoteViewHint": "无论此开关状态如何，恢复、删除和所有设置始终只在本地生效。",
 };
 
 export default zh;

@@ -2579,6 +2579,15 @@ const sv: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Objekt som inte kunde kontrolleras i senaste omgången: {n}. Loggen namnger dem.",
   "anomaly.settings.unmeasured": "Repositorier utan siffra för ledigt utrymme: {names}",
   "anomaly.settings.openPage": "Visa avvikelser",
+  "fleet.open": "Öppna",
+  "fleet.openTip": "Se den här instansens data och starta en säkerhetskopia, en kontroll eller en kopia utanför platsen på den. Återställningar, borttagningar och inställningar förblir alltid lokala på den instansen.",
+  "fleet.remoteViewOff": "Fjärrvy är avstängd på den här instansen",
+  "fleet.remoteViewSettingsLink": "Inställningar för fjärrvy",
+  "remoteView.viewing": "Du tittar på {name}",
+  "remoteView.unnamed": "en annan instans",
+  "remoteView.back": "Tillbaka till den här instansen",
+  "settings.remoteView": "Andra instanser får se den här och starta säkerhetskopior",
+  "settings.remoteViewHint": "Återställningar, borttagningar och alla inställningar förblir lokala oavsett den här switchen.",
 };
 
 export default sv;

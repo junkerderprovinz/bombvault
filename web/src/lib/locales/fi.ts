@@ -2579,6 +2579,15 @@ const fi: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Kohteet, joita ei voitu tarkistaa viime kierroksella: {n}. Loki nimeää ne.",
   "anomaly.settings.unmeasured": "Säilöt ilman tietoa vapaasta tilasta: {names}",
   "anomaly.settings.openPage": "Näytä poikkeamat",
+  "fleet.open": "Avaa",
+  "fleet.openTip": "Katso tämän instanssin tiedot ja käynnistä siinä varmuuskopio, tarkistus tai etäkopio. Palautukset, poistot ja asetukset pysyvät aina paikallisina kyseisessä instanssissa.",
+  "fleet.remoteViewOff": "Etänäkymä on pois päältä tässä instanssissa",
+  "fleet.remoteViewSettingsLink": "Etänäkymän asetukset",
+  "remoteView.viewing": "Tarkastelet instanssia {name}",
+  "remoteView.unnamed": "toinen instanssi",
+  "remoteView.back": "Takaisin tähän instanssiin",
+  "settings.remoteView": "Muut instanssit voivat katsoa tätä ja käynnistää varmuuskopioita",
+  "settings.remoteViewHint": "Palautukset, poistot ja kaikki asetukset pysyvät paikallisina tästä kytkimestä riippumatta.",
 };
 
 export default fi;

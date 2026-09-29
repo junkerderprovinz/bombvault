@@ -2590,6 +2590,15 @@ const hi: Partial<Translations> = {
   "anomaly.settings.evalErrors": "पिछले दौर में जिन आइटम की जाँच नहीं हो सकी: {n}। लॉग उनके नाम बताता है।",
   "anomaly.settings.unmeasured": "जिन रिपॉज़िटरी की खाली जगह का आँकड़ा नहीं है: {names}",
   "anomaly.settings.openPage": "विसंगतियाँ दिखाएँ",
+  "fleet.open": "खोलें",
+  "fleet.openTip": "इस इंस्टेंस का डेटा देखें और उस पर बैकअप, जाँच या ऑफ़-साइट कॉपी शुरू करें। हर रीस्टोर, डिलीट और सेटिंग उसी इंस्टेंस तक सीमित रहती है।",
+  "fleet.remoteViewOff": "इस इंस्टेंस पर रिमोट व्यू बंद है",
+  "fleet.remoteViewSettingsLink": "रिमोट व्यू सेटिंग्स",
+  "remoteView.viewing": "{name} देख रहे हैं",
+  "remoteView.unnamed": "कोई और इंस्टेंस",
+  "remoteView.back": "इस इंस्टेंस पर वापस जाएँ",
+  "settings.remoteView": "दूसरे इंस्टेंस इसे देख सकते हैं और बैकअप शुरू कर सकते हैं",
+  "settings.remoteViewHint": "रीस्टोर, डिलीट और हर सेटिंग इस स्विच से बेअसर होकर हमेशा लोकल रहती है।",
 };
 
 export default hi;

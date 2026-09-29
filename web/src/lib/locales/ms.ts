@@ -2590,6 +2590,15 @@ const ms: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Item yang tidak dapat diperiksa dalam pusingan terakhir: {n}. Log menamakannya.",
   "anomaly.settings.unmeasured": "Repositori tanpa angka ruang kosong: {names}",
   "anomaly.settings.openPage": "Tunjukkan anomali",
+  "fleet.open": "Buka",
+  "fleet.openTip": "Lihat data instans ini dan mulakan sandaran, semakan atau salinan luar tapak padanya. Setiap pemulihan, pemadaman dan tetapan kekal setempat pada instans itu.",
+  "fleet.remoteViewOff": "Paparan jauh dimatikan pada instans ini",
+  "fleet.remoteViewSettingsLink": "Tetapan paparan jauh",
+  "remoteView.viewing": "Melihat {name}",
+  "remoteView.unnamed": "instans lain",
+  "remoteView.back": "Kembali ke instans ini",
+  "settings.remoteView": "Instans lain boleh melihat yang ini dan memulakan sandaran",
+  "settings.remoteViewHint": "Pemulihan, pemadaman dan semua tetapan kekal setempat tanpa mengira suis ini.",
 };
 
 export default ms;

@@ -2590,6 +2590,15 @@ const lt: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementai, kurių nepavyko patikrinti per paskutinį ėjimą: {n}. Žurnalas juos įvardija.",
   "anomaly.settings.unmeasured": "Saugyklos be laisvos vietos duomenų: {names}",
   "anomaly.settings.openPage": "Rodyti anomalijas",
+  "fleet.open": "Atverti",
+  "fleet.openTip": "Peržiūrėkite šio egzemplioriaus duomenis ir paleiskite jame atsarginę kopiją, patikrinimą ar nuotolinę kopiją. Kiekvienas atkūrimas, trynimas ir nustatymas lieka vietinis tame egzemplioriuje.",
+  "fleet.remoteViewOff": "Nuotolinė peržiūra šiame egzemplioriuje išjungta",
+  "fleet.remoteViewSettingsLink": "Nuotolinės peržiūros nustatymai",
+  "remoteView.viewing": "Peržiūrite {name}",
+  "remoteView.unnamed": "kitas egzempliorius",
+  "remoteView.back": "Grįžti į šį egzempliorių",
+  "settings.remoteView": "Kiti egzemplioriai gali peržiūrėti šį ir paleisti atsargines kopijas",
+  "settings.remoteViewHint": "Atkūrimai, trynimai ir visi nustatymai lieka vietiniai nepriklausomai nuo šio jungiklio.",
 };
 
 export default lt;

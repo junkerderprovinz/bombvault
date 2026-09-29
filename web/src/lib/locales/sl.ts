@@ -2574,6 +2574,15 @@ const sl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementi, ki jih v zadnjem prehodu ni bilo mogoče preveriti: {n}. Dnevnik jih poimenuje.",
   "anomaly.settings.unmeasured": "Repozitoriji brez podatka o prostem prostoru: {names}",
   "anomaly.settings.openPage": "Prikaži anomalije",
+  "fleet.open": "Odpri",
+  "fleet.openTip": "Oglej si podatke te instance in na njej zaženi varnostno kopijo, preverjanje ali zunanjo kopijo. Vsaka obnovitev, brisanje in nastavitev ostane lokalna na tisti instanci.",
+  "fleet.remoteViewOff": "Oddaljeni pogled je na tej instanci izklopljen",
+  "fleet.remoteViewSettingsLink": "Nastavitve oddaljenega pogleda",
+  "remoteView.viewing": "Ogleduješ si {name}",
+  "remoteView.unnamed": "druga instanca",
+  "remoteView.back": "Nazaj na to instanco",
+  "settings.remoteView": "Druge instance si lahko ogledajo to in zaženejo varnostne kopije",
+  "settings.remoteViewHint": "Obnovitve, brisanja in vse nastavitve ostanejo lokalne ne glede na to stikalo.",
 };
 
 export default sl;

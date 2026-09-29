@@ -2590,6 +2590,15 @@ const is: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Einingar sem ekki tókst að athuga í síðustu umferð: {n}. Annállinn nefnir þær.",
   "anomaly.settings.unmeasured": "Geymslur án tölu um laust pláss: {names}",
   "anomaly.settings.openPage": "Sýna frávik",
+  "fleet.open": "Opna",
+  "fleet.openTip": "Skoðaðu gögn þessa tilviks og ræstu á því afrit, athugun eða fjarlægt afrit. Sérhver endurheimt, eyðing og stilling er áfram staðbundin á því tilviki.",
+  "fleet.remoteViewOff": "Fjarskoðun er slökkt á þessu tilviki",
+  "fleet.remoteViewSettingsLink": "Stillingar fjarskoðunar",
+  "remoteView.viewing": "Þú skoðar {name}",
+  "remoteView.unnamed": "annað tilvik",
+  "remoteView.back": "Til baka í þetta tilvik",
+  "settings.remoteView": "Önnur tilvik mega skoða þetta og ræsa afrit",
+  "settings.remoteViewHint": "Endurheimtir, eyðingar og allar stillingar eru áfram staðbundnar óháð þessum rofa.",
 };
 
 export default is;
