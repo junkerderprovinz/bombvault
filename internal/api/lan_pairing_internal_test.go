@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 func TestDirectAddressFromRequestIgnoresLocalAddresses(t *testing.T) {
@@ -59,6 +61,41 @@ func TestSignedInRequestLearnsThisInstancesDirectAddress(t *testing.T) {
 	}
 	if g.DirectURL != "http://192.168.1.20:3443" {
 		t.Fatalf("DirectURL = %q, want the address learned from the request (this instance runs HTTPOnly)", g.DirectURL)
+	}
+}
+
+// Only a signed-in browser may name this instance's address: without that, any
+// host on the network could steer the members' direct calls elsewhere.
+func TestOnlyASignedInRequestTeachesTheDirectAddress(t *testing.T) {
+	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	learned := func() string {
+		t.Helper()
+		g, err := in.st.GetGroupState()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return g.DirectURL
+	}
+	before := learned()
+
+	r := httptest.NewRequest(http.MethodGet, "/api/group", nil)
+	r.Host = "10.0.0.66:3443"
+	in.router.ServeHTTP(httptest.NewRecorder(), r)
+	if got := learned(); got != before {
+		t.Fatalf("a request without a session set DirectURL to %q", got)
+	}
+
+	if _, err := in.st.MutateSettings(func(s *store.Settings) error {
+		s.AuthPasswordHash = ""
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	r = httptest.NewRequest(http.MethodGet, "/api/group", nil)
+	r.Host = "10.0.0.66:3443"
+	in.router.ServeHTTP(httptest.NewRecorder(), r)
+	if got := learned(); got != before {
+		t.Fatalf("a request to an instance without a password set DirectURL to %q", got)
 	}
 }
 

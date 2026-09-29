@@ -5040,10 +5040,9 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		}
 		hash := s.AuthPasswordHash
 		on := hash != ""
+		// Without a password any host on the network could name itself as
+		// this instance's direct address, so only a signed-in browser teaches it.
 		if !on {
-			if h.svc != nil && !authGatePublicPath(r.URL.Path) {
-				h.svc.learnDirectURL(r)
-			}
 			next.ServeHTTP(w, r)
 			return
 		}
