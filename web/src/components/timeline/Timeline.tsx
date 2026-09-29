@@ -165,6 +165,7 @@ export function Timeline({
                   active={mark?.place ?? null}
                   onChange={(id) => setChosen((c) => ({ ...c, [row.key]: id }))}
                   size="sm"
+                  inline
                 />
                 {pending.length === 0 && row.places.length === 1 && (
                   <span className="text-caption text-carbon-textMuted">{t("timeline.onlyHere")}</span>

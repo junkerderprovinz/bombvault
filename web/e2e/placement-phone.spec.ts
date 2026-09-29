@@ -1,7 +1,8 @@
 // The placement row in the Settings defaults card, with a target staged at the
 // route layer. Below 600px its three segments sit in two rows, two over one,
 // every label whole; wider, they share one row. A screen reader hears a radio
-// group, and the keyboard moves along it without choosing until Space.
+// group, and the keyboard moves along it without choosing until Space. The
+// copy chips under it keep to their segments beside their caption.
 // German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
@@ -92,4 +93,16 @@ test("the keyboard moves along the placement row and chooses on Space", async ({
 
   await page.keyboard.press("Space");
   await expect.poll(() => asked.length).toBeGreaterThan(0);
+});
+
+test("the copy chips keep to their segments beside their caption", async ({ page }) => {
+  await stage(page);
+  await containersRow(page);
+  const chips = page.getByRole("group", { name: "Kopie nach" }).first();
+  await expect(chips).toBeVisible();
+  const caption = page.getByText("Kopie nach", { exact: true }).first();
+  const [chipBox, captionBox] = [await chips.boundingBox(), await caption.boundingBox()];
+  expect(chipBox!.x, "the chips start after the caption").toBeGreaterThan(captionBox!.x + captionBox!.width);
+  const segments = await chips.getByRole("button").evaluateAll((els) => els.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0));
+  expect(chipBox!.width, "the track hugs its chip").toBeLessThan(segments + 20);
 });

@@ -44,6 +44,7 @@ export function TargetChips({
         items={items}
         label={label}
         select="many"
+        inline
         active={active}
         hueOffset={hueOffset}
         disabled={disabled}
