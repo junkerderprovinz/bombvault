@@ -2,14 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// One file carries the yearly rules and the compression of every repository
-// together, and a fresh instance comes out of the import with all of them.
-func TestSettingsExportImportCarriesRetentionAndCompressionTogether(t *testing.T) {
+// One file carries the yearly rules, the compression of every repository and
+// the streaming and idle cards together, and a fresh instance comes out of the
+// import with all of them.
+func TestSettingsExportImportCarriesRetentionCompressionAndTrafficTogether(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
 	s, err := srcStore.GetSettings()
@@ -33,6 +35,12 @@ func TestSettingsExportImportCarriesRetentionAndCompressionTogether(t *testing.T
 		t.Fatal(err)
 	}
 
+	traffic := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"plex"}, StreamMbit: 6, StreamLimitKiB: 300, StreamHoldMin: 9,
+		IdleCPUPct: 30, IdleNetMbit: 2, IdleQuietMin: 7}
+	if err := srcStore.SetTrafficSettings(traffic); err != nil {
+		t.Fatal(err)
+	}
+
 	body, _ := doExport(t, src, "?includeCredentials=true")
 	dst, dstStore := newPortableHandler(t, appKeyB)
 	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
@@ -52,6 +60,9 @@ func TestSettingsExportImportCarriesRetentionAndCompressionTogether(t *testing.T
 	target, found, err := dstStore.GetOffsiteTarget("tgt-2")
 	if err != nil || !found || target.RetentionKeepYearly != 2 || target.Compression != "max" {
 		t.Fatalf("the archive target came back as %+v (found=%v, err=%v)", target, found, err)
+	}
+	if gotTraffic, err := dstStore.TrafficSettings(); err != nil || !reflect.DeepEqual(gotTraffic, traffic) {
+		t.Fatalf("traffic = %+v (err=%v), want %+v", gotTraffic, err, traffic)
 	}
 }
 
