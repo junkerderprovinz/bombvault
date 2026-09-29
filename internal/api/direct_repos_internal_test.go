@@ -1378,19 +1378,20 @@ func withPassword(drafts []map[string]any, id, password string) []map[string]any
 	return drafts
 }
 
-// passwordEngine opens a location only with the REST password it holds for it.
-type passwordEngine struct {
+// restPasswordEngine opens a location only with the REST password it holds
+// for that location.
+type restPasswordEngine struct {
 	*placementEngine
 	passwords map[string]string
 }
 
-func (e *passwordEngine) RepoOpens(_ context.Context, repo string, mode restic.Mode) bool {
+func (e *restPasswordEngine) RepoOpens(_ context.Context, repo string, mode restic.Mode) bool {
 	return slices.Contains(mode.Env, "RESTIC_REST_PASSWORD="+e.passwords[repo])
 }
 
 // opensOnlyWith lets location open with password and nothing else.
-func (f *placementFixture) opensOnlyWith(location, password string) *passwordEngine {
-	eng := &passwordEngine{placementEngine: f.eng, passwords: map[string]string{location: password}}
+func (f *placementFixture) opensOnlyWith(location, password string) *restPasswordEngine {
+	eng := &restPasswordEngine{placementEngine: f.eng, passwords: map[string]string{location: password}}
 	f.svc.engine = eng
 	return eng
 }
