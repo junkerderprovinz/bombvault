@@ -128,8 +128,8 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
           ) : (
             <ul className="flex flex-col rounded-card bg-carbon-background px-3 py-1">
               {archives.map((a) => (
-                <li key={`${a.folder}/${a.file}`} className="flex flex-wrap items-center gap-3 border-b border-carbon-border py-1.5 text-xs last:border-0">
-                  <span className="w-36 shrink-0 text-carbon-textMuted">{new Date(a.time * 1000).toLocaleString()}</span>
+                <li key={`${a.folder}/${a.file}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-carbon-border py-1.5 text-xs last:border-0">
+                  <span className="w-full shrink-0 text-carbon-textMuted sm:w-36">{new Date(a.time * 1000).toLocaleString()}</span>
                   <span dir="ltr" className="min-w-0 flex-1 truncate text-start font-mono text-carbon-text">{a.container}</span>
                   <span className="text-carbon-textSub">{humanBytes(a.size)}</span>
                   <Badge tone={STATUS[a.status].tone} size="small">
