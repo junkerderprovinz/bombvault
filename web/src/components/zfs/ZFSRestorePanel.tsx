@@ -358,6 +358,7 @@ export function ZFSRestorePanel({
                   select="one"
                   active={active}
                   buttonHeight
+                  inline
                   onChange={(id) => setMode(id as Mode)}
                   disabled={isPending}
                 />

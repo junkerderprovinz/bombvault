@@ -1,30 +1,36 @@
-// Fleet is the read-only view of peer BombVault instances and their cached
-// protection scorecards, the same red/amber/green aggregate as the local
-// dashboard. Polling GET /api/fleet/status is all this box does to a peer's
-// protection data; it never starts a backup, restore or drill there. The
-// exception is Mesh off-site: the page can offer this instance's off-site
-// storage to a peer (connection details, never backup data) and review offers
-// peers sent here. Accepting one creates an ordinary credential set and
-// off-site target, since BombVault never hosts storage itself.
+// Fleet shows every instance of the pairing group, this one included, as a
+// card with its connection state and cached protection scorecard, the same
+// red/amber/green aggregate as the local dashboard. Everything goes over the
+// group: the scorecard, a request to check one domain now, and Mesh off-site,
+// where this instance offers its off-site storage to a member (connection
+// details, never backup data) and reviews offers members sent here. Accepting
+// one creates an ordinary credential set and off-site target, since BombVault
+// never hosts storage itself.
 //
-// Peers are polled by the daily sweep and by "Poll now", not by opening the
-// page, because each poll is a round trip to another site.
+// While the page is open it asks the server every few seconds who is
+// connected, which costs nothing on the network. A member's scorecard is
+// fetched over the group only once it is older than SCORECARD_STALE_S, since
+// that call may cross a relay; the daily sweep keeps it fresh otherwise.
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
+  getGroup,
+  getHealth,
+  getStatus,
   listFleetPeers,
-  createFleetPeer,
   updateFleetPeer,
   deleteFleetPeer,
   pollFleetPeer,
+  checkFleetPeer,
   listMeshOffers,
   acceptMeshOffer,
   declineMeshOffer,
   proposeMeshOffer,
 } from "../lib/api";
 import { IconDisclosure } from "../components/IconDisclosure";
-import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
+import { PageTitle } from "../components/PageTitle";
+import type { FleetPeer, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
 import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
 import { placementErrorText } from "../lib/placementCodes";
@@ -38,8 +44,6 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
-import { RevealInput } from "../components/RevealInput";
-import { useReveal } from "../lib/useReveal";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
@@ -130,23 +134,48 @@ function protectionLabelKey(level: string): TranslationKey {
   }
 }
 
-function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
+function PeerScorecard({
+  domains,
+  t,
+  onCheck,
+}: {
+  domains: DomainStatus[];
+  t: T;
+  /** Asks the member to check one domain now; absent for a peer that has to
+   *  be paired again. */
+  onCheck?: (domain: string) => void;
+}) {
   const shown = domains.filter((d) => d.enabled && d.protection !== "");
   if (shown.length === 0) {
-    return <p className="py-2 text-xs text-carbon-textMuted">{t("fleet.noScorecard")}</p>;
+    return <p className="text-xs text-carbon-textMuted">{t("fleet.noScorecard")}</p>;
   }
+  // One grid for all rows, so the badges and the times line up in columns.
+  // On a phone a row has no room left for its button, which takes a line of
+  // its own under the row.
   return (
-    <div className="mt-2 flex flex-col gap-1.5">
+    <div
+      className={`grid items-center gap-x-3 gap-y-2 ${
+        onCheck ? "grid-cols-[auto_auto_minmax(0,1fr)] md:grid-cols-[auto_auto_minmax(0,1fr)_auto]" : "grid-cols-[auto_auto_minmax(0,1fr)]"
+      }`}
+    >
       {shown.map((d) => (
-        <div key={d.domain} className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-carbon-textSub w-20 shrink-0">{t(domainLabelKey(d.domain))}</span>
-          <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection))}</Badge>
-          {d.lastSuccess > 0 && (
-            <span className="text-xs text-carbon-textMuted">
-              {t("fleet.lastBackup").replace("{time}", relativeTime(t, d.lastSuccess))}
-            </span>
-          )}
-        </div>
+        <Fragment key={d.domain}>
+          <span className="text-xs text-carbon-textSub">{t(domainLabelKey(d.domain))}</span>
+          <span>
+            <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection))}</Badge>
+          </span>
+          <span className="text-xs text-carbon-textMuted">
+            {d.lastSuccess > 0 && t("fleet.lastBackup").replace("{time}", relativeTime(t, d.lastSuccess))}
+          </span>
+          {onCheck &&
+            (d.domain === "config" ? (
+              <span className="max-md:hidden" />
+            ) : (
+              <span className="max-md:col-span-3 max-md:justify-self-end">
+                <Button label={t("fleet.checkNow")} labelKey="fleet.checkNow" tone="neutral" onClick={() => onCheck(d.domain)} />
+              </span>
+            ))}
+        </Fragment>
       ))}
     </div>
   );
@@ -421,18 +450,85 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   );
 }
 
+/** InstanceMark is the BombVault logo on the start edge of a card, in the
+ *  variant the colour mode needs, as in the sidebar. */
+function InstanceMark() {
+  const cls = "h-16 md:h-20 w-auto shrink-0";
+  return (
+    <>
+      <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className={`${cls} block dark:hidden`} />
+      <img src="/logo-light.svg" alt="" aria-hidden="true" draggable={false} className={`${cls} hidden dark:block`} />
+    </>
+  );
+}
+
+/** FleetCard is one instance of the group: the logo beside the name with its
+ *  badges and a line of facts, the scorecard across the card below, and the
+ *  actions along the foot. */
+function FleetCard({
+  name,
+  self,
+  badges,
+  facts,
+  children,
+  actions,
+  index,
+  t,
+}: {
+  name: string;
+  self?: boolean;
+  badges: ReactNode;
+  facts?: ReactNode;
+  children?: ReactNode;
+  actions?: ReactNode;
+  /** Rainbow position by list index, as for ContainerRow and VMRow. */
+  index: number;
+  t: T;
+}) {
+  return (
+    <div
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
+      className="relative flex h-full flex-col overflow-hidden rounded-card bg-carbon-surface glim-hue glim-stagger-row"
+      data-self={self ? "" : undefined}
+    >
+      <div className="flex items-stretch">
+        <div className="flex shrink-0 items-center ps-4 pt-4">
+          <InstanceMark />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-5 pt-5">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+            <span className="min-w-0 truncate font-semibold text-carbon-text max-md:whitespace-normal max-md:wrap-break-word">
+              {name}
+            </span>
+            {self && (
+              <span className="shrink-0 text-caption font-semibold uppercase tracking-widest text-carbon-textMuted">
+                {t("instances.thisInstance")}
+              </span>
+            )}
+            <span className="ms-auto flex flex-wrap items-center gap-2">{badges}</span>
+          </div>
+          {facts && <p className="text-xs text-carbon-textMuted wrap-break-word">{facts}</p>}
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-5">{children}</div>
+      {actions && <div className="flex flex-wrap items-center justify-end gap-2 px-5 pb-5">{actions}</div>}
+    </div>
+  );
+}
+
+function ConnectionBadge({ connected, t }: { connected: boolean; t: T }) {
+  return <Badge tone={connected ? "ok" : "fail"} size="large">{connected ? t("instances.connected") : t("instances.notConnected")}</Badge>;
+}
+
 function FleetPeerCard({
   peer,
   t,
   onRefresh,
-  onEdit,
   index,
 }: {
   peer: FleetPeer;
   t: T;
   onRefresh: () => void;
-  onEdit: () => void;
-  /** Rainbow position by list index, as for ContainerRow and VMRow. */
   index: number;
 }) {
   // One key for all cards rather than one per peer, so a renamed or removed
@@ -444,7 +540,6 @@ function FleetPeerCard({
       return false;
     }
   });
-  const [polling, setPolling] = useState(false);
   const [removing, setRemoving] = useState(false);
 
   function toggleDetails() {
@@ -463,25 +558,27 @@ function FleetPeerCard({
   // Removing a monitoring entry never contacts the peer and is undone by adding
   // it again, so a two-click inline confirm is enough, as in Receiver.tsx.
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const [shakePoll, setShakePoll] = useState(0);
   const [shakeRemove, setShakeRemove] = useState(0);
 
-  // Any answer from the server reloads the list, so the poll badge shows the
-  // outcome the server recorded.
-  async function handlePoll() {
-    setPolling(true);
+  // A check outlasts any request, so the member only confirms it started; the
+  // verdict shows in its next scorecard.
+  async function handleCheck(domain: string) {
     try {
-      const res = await pollFleetPeer(peer.id);
-      if (!res.ok) {
-        push(res.error ?? t("fleet.saveError"), "fail");
-        setShakePoll((n) => n + 1);
-      }
+      const res = await checkFleetPeer(peer.id, domain);
+      if (res.ok) push(t("fleet.checkStarted"), "success");
+      else push(res.error ?? t("fleet.saveError"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
+    }
+  }
+
+  async function handleEnabled(enabled: boolean) {
+    try {
+      const res = await updateFleetPeer(peer.id, { enabled });
+      if (!res.ok) push(res.error ?? t("fleet.saveError"), "fail");
       onRefresh();
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
-      setShakePoll((n) => n + 1);
-    } finally {
-      setPolling(false);
     }
   }
 
@@ -506,293 +603,153 @@ function FleetPeerCard({
     }
   }
 
-  const pollTone: "ok" | "fail" | "neutral" = peer.lastPollOk === null ? "neutral" : peer.lastPollOk ? "ok" : "fail";
-  const pollLabel =
-    peer.lastPollOk === null ? t("fleet.pollNever") : peer.lastPollOk ? t("fleet.pollOk") : t("fleet.pollFailed");
+  const badges = (
+    <>
+      {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
+      {peer.needsPairing ? (
+        <Badge tone="warn">
+          {t("pairing.pairAgain")}
+          <InfoBubble tip={t("fleet.pairAgainTip")} onAccent />
+        </Badge>
+      ) : (
+        <ConnectionBadge connected={peer.direct || peer.relay} t={t} />
+      )}
+    </>
+  );
+
+  // api.Version already starts with "v".
+  const facts = (
+    <>
+      {peer.lastPollVersion && <span>{peer.lastPollVersion}</span>}
+      {peer.lastPollVersion && peer.lastPollAt > 0 && " · "}
+      {peer.lastPollAt > 0 && t("fleet.lastPolled").replace("{time}", relativeTime(t, peer.lastPollAt))}
+      {peer.lastPollOk === false && peer.lastPollError && <span className="text-statusFail"> · {peer.lastPollError}</span>}
+      {peer.needsPairing && peer.url && (
+        <span dir="ltr" className="block truncate text-start font-mono max-md:whitespace-normal max-md:break-all">
+          {peer.url}
+        </span>
+      )}
+    </>
+  );
+
+  const actions = (
+    <>
+      {!peer.needsPairing && (
+        <Button
+          label={t("fleet.mesh.proposeButton")}
+          labelKey="fleet.mesh.proposeButton"
+          tone="neutral"
+          onClick={() => setShowPropose(true)}
+        />
+      )}
+      {!peer.needsPairing && (
+        <Button
+          label={t("fleet.details")}
+          labelKey="fleet.details"
+          tone="neutral"
+          onClick={() => toggleDetails()}
+          ariaExpanded={open}
+          glyph={<IconDisclosure open={open} />}
+        />
+      )}
+      {/* A text button rather than an icon badge, because the label carries
+          the two-click confirm state and a glyph cannot. Neutral like its
+          neighbours, with no red of its own. */}
+      {confirmRemove ? (
+        <Button
+          key={shakeRemove}
+          label={t("fleet.confirmRemove")}
+          labelKey="fleet.confirmRemove"
+          tone="neutral"
+          onClick={() => void handleRemove()}
+          disabled={removing}
+          busy={removing}
+          title={removing ? t("fleet.removing") : undefined}
+          className={shakeRemove ? "glim-shake" : ""}
+        />
+      ) : (
+        <Button label={t("fleet.remove")} labelKey="fleet.remove" tone="neutral" onClick={() => setConfirmRemove(true)} />
+      )}
+    </>
+  );
 
   return (
-    <div
-      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
-      // The same hued shell as ContainerRow, without glim-active: polling and
-      // proposing are quick requests, not a tracked job.
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
+    <FleetCard
+      name={peer.lastPollInstanceName || peer.name}
+      badges={badges}
+      facts={facts}
+      actions={actions}
+      index={index}
+      t={t}
     >
-      <div className="flex items-start gap-3 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">
-              {peer.lastPollInstanceName || peer.name}
-            </span>
-            {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
-            <Badge tone={pollTone}>{pollLabel}</Badge>
-          </div>
-          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{peer.url}</p>
-        </div>
-        {/* api.Version already starts with "v". */}
-        {peer.lastPollVersion && (
-          <span className="text-xs text-carbon-textMuted shrink-0">{peer.lastPollVersion}</span>
-        )}
-      </div>
-
-      {peer.lastPollAt > 0 && (
-        <p className="text-xs text-carbon-textMuted">
-          {t("fleet.lastPolled").replace("{time}", relativeTime(t, peer.lastPollAt))}
-          {peer.lastPollOk === false && peer.lastPollError && (
-            <span className="text-statusFail"> · {peer.lastPollError}</span>
-          )}
-        </p>
-      )}
-
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button
-          key={shakePoll}
-          label={t("fleet.pollNow")}
-          labelKey="fleet.pollNow"
-          title={polling ? t("fleet.polling") : undefined}
-          tone="accent"
-          onClick={() => void handlePoll()}
-          disabled={polling}
-          busy={polling}
-          className={`inline-flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shakePoll ? " glim-shake" : ""
-          }`}
-        />
-
-        <div className="ms-auto flex items-center gap-2 flex-wrap max-md:w-full max-md:justify-end">
-          <Button
-            label={t("fleet.mesh.proposeButton")}
-            labelKey="fleet.mesh.proposeButton"
-            tone="neutral"
-            onClick={() => setShowPropose(true)}
-          />
-          <Button
-            label={t("fleet.details")}
-            labelKey="fleet.details"
-            tone="neutral"
-            onClick={() => toggleDetails()}
-            glyph={<IconDisclosure open={open} />}
-          />
-          <Button
-            label={t("fleet.edit")}
-            labelKey="fleet.edit"
-            tone="neutral"
-            onClick={onEdit}
-          />
-          {/* A text button rather than an icon badge, because the label
-              carries the two-click confirm state and a glyph cannot. Neutral
-              like its neighbours, with no red of its own. */}
-          {confirmRemove ? (
-            <Button
-              key={shakeRemove}
-              label={t("fleet.confirmRemove")}
-              labelKey="fleet.confirmRemove"
-              tone="neutral"
-              onClick={() => void handleRemove()}
-              disabled={removing}
-              busy={removing}
-              title={removing ? t("fleet.removing") : undefined}
-              className={shakeRemove ? "glim-shake" : ""}
-            />
-          ) : (
-            <Button
-              label={t("fleet.remove")}
-              labelKey="fleet.remove"
-              tone="neutral"
-              onClick={() => setConfirmRemove(true)}
-            />
-          )}
-        </div>
-      </div>
-
-      {open && (
-        <div className="rounded-card bg-carbon-background px-3 py-2">
-          <p className="text-xs font-medium text-carbon-textSub">{t("fleet.scorecardTitle")}</p>
-          <PeerScorecard domains={peer.lastPollDomains} t={t} />
-        </div>
+      <PeerScorecard
+        domains={peer.lastPollDomains}
+        t={t}
+        onCheck={open && !peer.needsPairing ? (domain) => handleCheck(domain) : undefined}
+      />
+      {open && !peer.needsPairing && (
+        <ToggleRow checked={peer.enabled} onChange={(v) => void handleEnabled(v)} label={t("fleet.enabledLabel")} />
       )}
       {showPropose && <ProposeMeshDialog peer={peer} t={t} onClose={() => setShowPropose(false)} />}
-    </div>
+    </FleetCard>
   );
 }
 
-function FleetDialog({
-  initial,
-  t,
-  onClose,
-  onSaved,
-}: {
-  /** null = create; a peer = edit that peer. */
-  initial: FleetPeer | null;
-  t: T;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const { push } = useToast();
-  const [name, setName] = useState(initial?.name ?? "");
-  const [url, setUrl] = useState(initial?.url ?? "");
-  const [token, setToken] = useState("");
-  const [enabled, setEnabled] = useState(initial?.enabled ?? true);
-  const [saving, setSaving] = useState(false);
-  const revealToken = useReveal();
-  const [shake, setShake] = useState(0);
+/** How often the page asks who is connected. The answer comes from this
+ *  instance's own view of the group, so asking costs no network traffic. */
+export const FLEET_REFRESH_MS = 20_000;
 
-  const editing = initial !== null;
-  const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
+/** How old a connected member's scorecard may get before the page fetches it
+ *  again over the group. */
+export const SCORECARD_STALE_S = 15 * 60;
 
-  // The dialog closes on success, so every outcome is reported as a toast.
-  async function handleSave() {
-    if (name.trim() === "") {
-      push(t("fleet.nameRequired"), "fail");
-      setShake((n) => n + 1);
-      return;
-    }
-    if (url.trim() === "") {
-      push(t("fleet.urlRequired"), "fail");
-      setShake((n) => n + 1);
-      return;
-    }
-    setSaving(true);
-    const input: FleetPeerInput = {
-      name: name.trim(),
-      url: url.trim(),
-      token: token.trim(),
-      enabled,
-      sortOrder: initial?.sortOrder ?? 0,
-    };
-    try {
-      const res = editing ? await updateFleetPeer(initial.id, input) : await createFleetPeer(input);
-      if (res.ok) {
-        push(t("settings.saved"), "success");
-        onSaved();
-      } else {
-        push(res.error ?? t("fleet.saveError"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setSaving(false);
-    }
-  }
+/** scorecardDue says whether the page should fetch a member's scorecard now. */
+export function scorecardDue(peer: FleetPeer, nowS: number): boolean {
+  return peer.enabled && !peer.needsPairing && (peer.direct || peer.relay) && nowS - peer.lastPollAt >= SCORECARD_STALE_S;
+}
 
-  const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
-
-  // Centred and split into shell and scrolling box like ProposeMeshDialog.
-  return createPortal(
-    <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-      onClick={onClose}
-    >
-      <div className="relative w-full max-w-lg">
-      <h2 className="flex items-center px-5">
-        <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
-      </h2>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={editing ? t("fleet.editTitle") : t("fleet.addTitle")}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
-      >
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="tower"
-            className={inputCls}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.url")}</label>
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="https://192.168.1.50:3443"
-            dir="ltr"
-            className={`${inputCls} font-mono text-start`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("fleet.urlHint")}</p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
-          <RevealInput
-            {...revealToken}
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
-            wrapperClassName="w-full"
-            className={`${inputCls} font-mono`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
-        </div>
-
-        {/* ToggleRow puts the words at the start and the switch at the end,
-            like every setting row. */}
-        <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
-
-        <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-          <Button
-            label={t("files.cancel")}
-            labelKey="files.cancel"
-            tone="neutral"
-            onClick={onClose}
-            disabled={saving}
-          />
-          <Button
-            key={shake}
-            label={t("settings.save")}
-            labelKey="settings.save"
-            tone="accent"
-            onClick={() => void handleSave()}
-            disabled={!canSave}
-            busy={saving}
-            title={saving ? t("common.saving") : undefined}
-            className={shake ? "glim-shake" : ""}
-          />
-        </div>
-      </div>
-      </div>
-    </div>,
-    document.body,
-  );
+interface Self {
+  name: string;
+  version: string;
+  domains: DomainStatus[];
+  ok: boolean;
 }
 
 /** With `embedded` the page is a tab of Instances, which owns the shell and
- *  the heading; the subtitle stays. */
+ *  the heading. */
 export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
   const [peers, setPeers] = useState<FleetPeer[]>([]);
+  const [self, setSelf] = useState<Self | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // null = closed; "new" = create dialog; a row = edit dialog for that peer.
-  const [dialog, setDialog] = useState<"new" | FleetPeer | null>(null);
   const [offers, setOffers] = useState<MeshOffer[]>([]);
+  const polling = useRef(new Set<string>());
 
-  function loadPeers() {
-    return listFleetPeers()
-      .then((res) => {
-        if (res.ok) {
-          setPeers(res.peers ?? []);
-          setError(null);
-        } else {
-          setError(res.error ?? t("fleet.loadError"));
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : t("fleet.loadError")));
-  }
+  const loadPeers = useCallback(
+    (): Promise<void> =>
+      listFleetPeers()
+        .then((res) => {
+          if (res.ok) {
+            setPeers(res.peers ?? []);
+            setError(null);
+          } else {
+            setError(res.error ?? t("fleet.loadError"));
+          }
+        })
+        .catch((err) => setError(err instanceof Error ? err.message : t("fleet.loadError"))),
+    [t],
+  );
+
+  const loadSelf = useCallback(
+    (): Promise<void> =>
+      Promise.all([getGroup(), getHealth(), getStatus()])
+        .then(([group, health, status]) =>
+          setSelf({ name: group.name, version: health.version ?? "", domains: status.domains ?? [], ok: status.ok }),
+        )
+        .catch(() => setSelf((prev) => (prev ? { ...prev, ok: false } : prev))),
+    [],
+  );
 
   function loadOffers() {
     return listMeshOffers()
@@ -803,40 +760,47 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   }
 
   useEffect(() => {
-    void Promise.all([loadPeers(), loadOffers()]).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void Promise.all([loadPeers(), loadSelf(), loadOffers()]).finally(() => setLoading(false));
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void loadPeers();
+      void loadSelf();
+    };
+    const id = setInterval(refresh, FLEET_REFRESH_MS);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [loadPeers, loadSelf]);
+
+  // A member that is connected and has no recent scorecard gets asked for one.
+  // A failure lands in the member's row, which the reload then shows.
+  useEffect(() => {
+    const nowS = Date.now() / 1000;
+    for (const p of peers) {
+      if (!scorecardDue(p, nowS) || polling.current.has(p.id)) continue;
+      polling.current.add(p.id);
+      void pollFleetPeer(p.id)
+        .catch(() => undefined)
+        .finally(() => {
+          polling.current.delete(p.id);
+          void loadPeers();
+        });
+    }
+  }, [peers, loadPeers]);
 
   const pendingOffers = offers.filter((o) => o.status === "pending");
-
-  // The empty state has its own Add button, so the header one waits for the
-  // first peer.
   const showEmptyState = !loading && !error && peers.length === 0;
 
   // Heading notches take hues in render order. The offers card and the empty
-  // state can show together (a peer offered storage before any peer is
-  // watched), so neither can assume hue 0. Both calls sit directly in this
-  // component's JSX, so a notch that does not render takes no hue.
+  // state can show together, so neither can assume hue 0.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
   return (
     <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>}
-          <p className="mt-1 text-sm text-carbon-textSub">{t("fleet.subtitle")}</p>
-        </div>
-        {!showEmptyState && (
-          <Button
-            label={t("fleet.addPeer")}
-            labelKey="fleet.addPeer"
-            tone="accent"
-            onClick={() => setDialog("new")}
-            className="shrink-0"
-          />
-        )}
-      </div>
+      {!embedded && <PageTitle>{t("fleet.title")}</PageTitle>}
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
@@ -859,10 +823,28 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
+      {!loading && (self || peers.length > 0) && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,28rem),1fr))] gap-4 glim-content-fade">
+          {self && (
+            <FleetCard
+              name={self.name}
+              self
+              badges={<ConnectionBadge connected={self.ok} t={t} />}
+              facts={self.version || undefined}
+              index={0}
+              t={t}
+            >
+              <PeerScorecard domains={self.domains} t={t} />
+            </FleetCard>
+          )}
+          {peers.map((p, i) => (
+            <FleetPeerCard key={p.id} peer={p} t={t} onRefresh={() => void loadPeers()} index={i + 1} />
+          ))}
+        </div>
+      )}
+
       {/* insetStart corrects the notch in a centred card, see Badge.tsx. */}
       {showEmptyState && (() => {
-        // One hue for the notch and the card, so glim-hue gives the Add
-        // button the same accent.
         const emptyHue = nextHue();
         return (
           <div
@@ -877,41 +859,16 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
             </h2>
             <EmptyStateIcon icon={IconFleet} />
             <Button
-              label={t("fleet.addPeer")}
-              labelKey="fleet.addPeer"
+              label={t("fleet.openPairing")}
+              labelKey="fleet.openPairing"
               tone="accent"
-              onClick={() => setDialog("new")}
+              onClick={() => {
+                window.location.hash = "#pairing";
+              }}
             />
           </div>
         );
       })()}
-
-      {!loading && peers.length > 0 && (
-        <div className="flex flex-col gap-3 glim-content-fade">
-          {peers.map((p, i) => (
-            <FleetPeerCard
-              key={p.id}
-              peer={p}
-              t={t}
-              onRefresh={() => void loadPeers()}
-              onEdit={() => setDialog(p)}
-              index={i}
-            />
-          ))}
-        </div>
-      )}
-
-      {dialog !== null && (
-        <FleetDialog
-          initial={dialog === "new" ? null : dialog}
-          t={t}
-          onClose={() => setDialog(null)}
-          onSaved={() => {
-            setDialog(null);
-            void loadPeers();
-          }}
-        />
-      )}
     </div>
   );
 }

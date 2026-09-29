@@ -55,34 +55,40 @@ func postJSONReq(t *testing.T, target string, body any) *http.Request {
 	return jsonReq(http.MethodPost, target, bytes.NewReader(b))
 }
 
-// None of these refusals needs restic, and none may persist a row.
+// None of these refusals needs restic or a group, and none may persist a row.
 func TestReceiverCreateValidation(t *testing.T) {
 	h, st := receiverHandlerFixture(t, strings.Repeat("ab", 32))
 
 	w := httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
-		"repo": "rest:https://box:8000/vault", "appKey": "not-hex",
+		"repo": "rest:https://box:8000/vault",
 	}))
-	if resp := decodeResp(t, w); resp["ok"] != false || !strings.Contains(resp["error"].(string), "64 lowercase hex") {
-		t.Fatalf("bad app key must be rejected: %v", resp)
+	if resp := decodeResp(t, w); resp["ok"] != false || !strings.Contains(resp["error"].(string), "choose the instance") {
+		t.Fatalf("a receiver without a sending instance must be rejected: %v", resp)
 	}
 
 	w = httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
-		"repo": "   ", "appKey": strings.Repeat("cd", 32),
+		"repo": "   ", "memberId": "member-sender",
 	}))
 	if resp := decodeResp(t, w); resp["ok"] != false || !strings.Contains(resp["error"].(string), "repo must not be empty") {
 		t.Fatalf("empty repo must be rejected: %v", resp)
 	}
 
-	// The probe refuses a location that does not open, with or without restic
-	// installed.
 	w = httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
-		"repo": filepath.Join(t.TempDir(), "not-a-repo"), "appKey": strings.Repeat("cd", 32),
+		"repo": "rest:https://box:8000/vault", "memberId": "member-nobody-knows",
+	}))
+	if resp := decodeResp(t, w); resp["ok"] != false || resp["error"] != errMemberGone.Error() {
+		t.Fatalf("a member outside the group must be rejected: %v", resp)
+	}
+
+	w = httptest.NewRecorder()
+	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
+		"repo": "rest:https://box:8000/vault", "appKey": strings.Repeat("cd", 32),
 	}))
 	if resp := decodeResp(t, w); resp["ok"] != false {
-		t.Fatalf("an unopenable repo must be rejected: %v", resp)
+		t.Fatalf("an APP_KEY in the body must be refused: %v", resp)
 	}
 
 	if all, _ := st.ListReceivedRepos(); len(all) != 0 {
@@ -90,7 +96,7 @@ func TestReceiverCreateValidation(t *testing.T) {
 	}
 }
 
-func TestReceiverCreateAndCheckNow(t *testing.T) {
+func TestReceiverCheckNowOnAPairedRepo(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
 	}
@@ -98,25 +104,22 @@ func TestReceiverCreateAndCheckNow(t *testing.T) {
 	sendingKey := strings.Repeat("cd", 32)
 	repo := seedReceivedRepo(t, sendingKey)
 	h, st := receiverHandlerFixture(t, appKey)
+	created, err := st.CreateReceivedRepo(makeReceivedRepo(t, appKey, sendingKey, repo, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := created.ID
 
 	w := httptest.NewRecorder()
-	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
-		"name": "Off-site A", "repo": repo, "appKey": sendingKey, "checkCadence": "daily 04:00",
-	}))
+	h.handleListReceiverRepos(w, httptest.NewRequest(http.MethodGet, "/api/receiver/repos", nil))
 	resp := decodeResp(t, w)
-	if resp["ok"] != true {
-		t.Fatalf("create against a real repo must succeed: %v", resp)
+	repos, _ := resp["repos"].([]any)
+	if len(repos) != 1 {
+		t.Fatalf("list = %v", resp)
 	}
-	repoView, _ := resp["repo"].(map[string]any)
-	id, _ := repoView["id"].(string)
-	if id == "" {
-		t.Fatalf("create must return a repo id: %v", resp)
-	}
-	if repoView["hasAppKey"] != true {
-		t.Fatalf("view must report a stored key: %v", repoView)
-	}
-	if _, leaked := repoView["appKey"]; leaked {
-		t.Fatal("the view must NEVER carry the app key")
+	repoView, _ := repos[0].(map[string]any)
+	if repoView["needsPairing"] != false || repoView["reachable"] != true {
+		t.Fatalf("a paired repo with the right password must list as paired and reachable: %v", repoView)
 	}
 	if repoView["lastCheckOk"] != nil {
 		t.Fatalf("a fresh repo must have a null lastCheckOk: %v", repoView["lastCheckOk"])
@@ -178,9 +181,9 @@ func TestReceiverDeleteRemovesRowOnly(t *testing.T) {
 }
 
 // Without restic the row lists as unreachable, which does not matter here.
-func TestReceiverListReturnsStatusNoKey(t *testing.T) {
+func TestReceiverListShowsPairingAndNoPassword(t *testing.T) {
 	h, st := receiverHandlerFixture(t, strings.Repeat("ab", 32))
-	if _, err := st.CreateReceivedRepo(store.ReceivedRepo{Name: "A", Repo: "rest:https://box/vault", AppKeyEnc: []byte("ciphertext"), Enabled: true}); err != nil {
+	if _, err := st.CreateReceivedRepo(store.ReceivedRepo{Name: "A", Repo: "rest:https://box/vault", ResticPasswordEnc: []byte("ciphertext"), Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,11 +198,13 @@ func TestReceiverListReturnsStatusNoKey(t *testing.T) {
 		t.Fatalf("want 1 repo, got %d", len(repos))
 	}
 	row, _ := repos[0].(map[string]any)
-	if row["hasAppKey"] != true {
-		t.Fatalf("a stored key must surface as hasAppKey: %v", row)
+	if row["needsPairing"] != true {
+		t.Fatalf("a row without a member must surface as needsPairing: %v", row)
 	}
-	if _, leaked := row["appKey"]; leaked {
-		t.Fatal("the list must NEVER carry the app key")
+	for _, field := range []string{"appKey", "resticPassword", "resticPasswordEnc"} {
+		if _, leaked := row[field]; leaked {
+			t.Fatalf("the list carries %s", field)
+		}
 	}
 	if _, ok := row["lastReceived"]; !ok {
 		t.Fatalf("the list status must carry lastReceived: %v", row)

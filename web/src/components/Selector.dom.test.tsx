@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { Selector, MIN_PINNED_WIDTH, type SelectorItem } from "./Selector";
+import { Selector, MAX_PINNED_WIDTH, MIN_PINNED_WIDTH, type SelectorItem } from "./Selector";
 import { RAINBOW_OFF, applyRainbow } from "../lib/appearance";
 import { setLabelMode } from "../lib/controls";
 
@@ -251,101 +251,250 @@ describe("Selector under a coarse pointer", () => {
   });
 });
 
-describe("Selector equalWidth", () => {
-  it("default (equalWidth unset) keeps content-hugging chips, flex-wrap, no flex-1", () => {
-    render(<OneOfThree />);
-    expect(screen.getByRole("tablist").className).toContain("flex-wrap");
-    const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("flex-1");
+// jsdom lays nothing out, so the room and each segment's widths are stubbed:
+// the track, or the `data-room` box a hugging track sits in, reports `room` as
+// its clientWidth, and a segment measured at max-content or min-content
+// reports its entry in `widths`.
+function layOut(room: number, widths: Record<string, { oneLine: number; narrowest: number }>) {
+  const clientWidth = Object.getOwnPropertyDescriptor(Element.prototype, "clientWidth")!;
+  Object.defineProperty(Element.prototype, "clientWidth", {
+    configurable: true,
+    get(this: Element) {
+      return this.getAttribute("aria-orientation") === "horizontal" || this.hasAttribute("data-room") ? room : 0;
+    },
+  });
+  const computed = window.getComputedStyle;
+  const spy = vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) => {
+    const style = computed(el);
+    const id = el.getAttribute("data-sel-id") ?? el.querySelector("[data-sel-id]")?.getAttribute("data-sel-id");
+    const w = id ? widths[id] : undefined;
+    const set = (el as HTMLElement).style.width;
+    const overrides: Record<string, string> = {
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      columnGap: "3.2px",
+    };
+    if (w && set === "max-content") overrides.width = `${w.oneLine}px`;
+    if (w && set === "min-content") overrides.width = `${w.narrowest}px`;
+    // A browser computes no style for a node outside the document.
+    if (!el.isConnected) overrides.width = "";
+    return new Proxy(style, {
+      get: (target, key: string) => (key in overrides ? overrides[key] : Reflect.get(target, key)),
+    });
+  });
+  return () => {
+    Object.defineProperty(Element.prototype, "clientWidth", clientWidth);
+    spy.mockRestore();
+  };
+}
+
+const oneLine = (...ws: number[]) =>
+  Object.fromEntries(ws.map((w, i) => [ITEMS[i]?.id ?? `x${i}`, { oneLine: w, narrowest: w }]));
+
+const seg = (id: string) => document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
+
+const classes = (el: Element) => el.className.split(/\s+/);
+
+// How many segments share a row, read back from the flex basis
+// `calc((100% - n * gap) / n)`, which jsdom serialises as `calc(1/n*(...))`.
+const perRow = (el: HTMLElement) => {
+  const share = /^1 0 calc\(([\d.]+)\*/.exec(el.style.flex);
+  return share ? Math.round(1 / parseFloat(share[1])) : null;
+};
+
+describe("Selector width", () => {
+  it("spans its box at both scales and in both stylings", () => {
+    for (const props of [{}, { equalWidth: true }, { variant: "chip" as const }]) {
+      cleanup();
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} {...props} />);
+      const list = screen.getByRole("tablist");
+      expect(classes(list)).toContain("w-full");
+      expect(classes(list)).not.toContain("w-fit");
+    }
   });
 
-  it("equalWidth keeps the strip wrapping and makes every segment flex-none with its own chip fill", () => {
-    render(
-      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
-    );
+  it("hugs its segments with `inline`, for a toolbar row", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} inline />);
     const list = screen.getByRole("tablist");
-    // A row of fixed-width segments can overflow a narrow viewport, so it wraps.
+    expect(classes(list)).toContain("w-fit");
+    expect(classes(list)).toContain("max-w-full");
+    expect(classes(list)).not.toContain("w-full");
+  });
+
+  it("wraps rather than forcing one row, and never needs self-start", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+    const list = screen.getByRole("tablist");
     expect(list.className).toContain("flex-wrap");
-    expect(list.className).not.toContain("flex-nowrap");
-    // No shared track; each segment carries its own chip fill.
-    expect(list.className).not.toContain("bg-carbon-surface2");
-
-    const idle = screen.getByRole("tab", { name: "Beta" });
-    // Pinned to a measured width, not stretched with a flex share.
-    expect(idle.className).toContain("flex-none");
-    expect(idle.className).not.toContain("flex-1");
-    expect(idle.className).toContain("justify-center");
-    expect(idle.className).toContain("bg-carbon-surface2");
-    expect(idle.className).not.toContain("h-[var(--badge-md)]");
-
-    const active = screen.getByRole("tab", { name: "Alpha" });
-    expect(active.className).toContain("bg-accent");
-    expect(active.className).toContain("text-accentContrast");
+    expect(list.className).not.toContain("self-start");
   });
 
-  it("equalWidth pins every segment to the widest segment's natural width", () => {
-    // jsdom returns zero rects, so each segment gets a stubbed width by
-    // data-sel-id. All are above MIN_PINNED_WIDTH; the floor has its own test.
-    const restore = HTMLElement.prototype.getBoundingClientRect;
-    const widths: Record<string, number> = { a: 220, b: 180, c: 260 };
-    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
-      const id = this.getAttribute("data-sel-id");
-      const w = id ? (widths[id] ?? 0) : 0;
-      return { x: 0, y: 0, left: 0, top: 0, right: w, bottom: 0, width: w, height: 0, toJSON() {} } as DOMRect;
-    };
+  it("lets an unpinned segment grow from its label into the row", () => {
+    render(<OneOfThree />);
+    expect(screen.getByRole("tab", { name: "Alpha" }).style.flex).toBe("1 0 auto");
+  });
+});
+
+describe("Selector equalWidth", () => {
+  it("pins every segment to the widest label and grows it into its share of the row", () => {
+    const restore = layOut(900, oneLine(220, 180, 260));
     try {
-      render(
-        <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
-      );
-      // Gamma is the widest at 260px, so every segment gets 260px.
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
       for (const id of ["a", "b", "c"]) {
-        const btn = document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
-        expect(btn.style.width).toBe("260px");
+        expect(seg(id).style.minWidth).toBe("260px");
+        expect(perRow(seg(id))).toBe(3);
       }
     } finally {
-      HTMLElement.prototype.getBoundingClientRect = restore;
+      restore();
     }
   });
 
-  it("equalWidth never pins narrower than MIN_PINNED_WIDTH, even when every segment is smaller", () => {
-    const restore = HTMLElement.prototype.getBoundingClientRect;
-    // All three are below the floor.
-    const widths: Record<string, number> = { a: 60, b: 40, c: 80 };
-    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
-      const id = this.getAttribute("data-sel-id");
-      const w = id ? (widths[id] ?? 0) : 0;
-      return { x: 0, y: 0, left: 0, top: 0, right: w, bottom: 0, width: w, height: 0, toJSON() {} } as DOMRect;
-    };
+  it("never pins narrower than MIN_PINNED_WIDTH while the row has room for it", () => {
+    const restore = layOut(900, oneLine(60, 40, 80));
     try {
-      render(
-        <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
-      );
-      for (const id of ["a", "b", "c"]) {
-        const btn = document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
-        expect(btn.style.width).toBe(`${MIN_PINNED_WIDTH}px`);
-      }
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+      for (const id of ["a", "b", "c"]) expect(seg(id).style.minWidth).toBe(`${MIN_PINNED_WIDTH}px`);
     } finally {
-      HTMLElement.prototype.getBoundingClientRect = restore;
+      restore();
     }
   });
 
-  it("equalWidth gives a \"well\" strip pinned widths and the fixed --badge-md height", () => {
-    render(
-      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth variant="well" />
-    );
+  it("lets the floor give way to an even share of a narrow row, keeping the options side by side", () => {
+    const restore = layOut(320, oneLine(90, 97, 80));
+    try {
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+      expect(seg("a").style.minWidth).toBe(`${Math.floor((320 - 2 * 3.2) / 3)}px`);
+      expect(perRow(seg("a"))).toBe(3);
+    } finally {
+      restore();
+    }
+  });
+
+  it("splits the segments into even rows once they do not fit on one", () => {
+    const six = ["a", "b", "c", "d", "e", "f"].map((id) => ({ id, label: id.toUpperCase() }));
+    const widths = Object.fromEntries(six.map((i) => [i.id, { oneLine: 150, narrowest: 150 }]));
+    const restore = layOut(700, widths);
+    try {
+      render(<Selector items={six} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+      // Four fit to a row, so six go three and three rather than four and two.
+      expect(perRow(seg("a"))).toBe(3);
+      expect(seg("a").style.minWidth).toBe("150px");
+    } finally {
+      restore();
+    }
+  });
+
+  it("caps the pinned width, so one long label does not widen every segment", () => {
+    const restore = layOut(700, oneLine(500, 90, 90));
+    try {
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+      expect(seg("b").style.minWidth).toBe(`${MAX_PINNED_WIDTH}px`);
+      expect(screen.getByRole("tablist").style.flexWrap).toBe("");
+    } finally {
+      restore();
+    }
+  });
+
+  it("lays the row out by content where a capped label would wrap and the options fit side by side", () => {
+    const restore = layOut(700, { a: { oneLine: 420, narrowest: 180 }, b: { oneLine: 90, narrowest: 90 }, c: { oneLine: 90, narrowest: 90 } });
+    try {
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+      const list = screen.getByRole("tablist");
+      expect(list.style.flexWrap).toBe("nowrap");
+      expect(list.style.width).toBe("100%");
+      for (const id of ["a", "b", "c"]) {
+        expect(seg(id).style.flex).toBe("1 0 auto");
+        expect(seg(id).style.minWidth).toBe("");
+      }
+    } finally {
+      restore();
+    }
+  });
+
+  it("lets a pinned label wrap, where an unpinned one truncates", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
+    expect(seg("a").querySelector("[data-sel-label]")!.className).not.toContain("truncate");
+    cleanup();
+    render(<OneOfThree />);
+    expect(seg("a").querySelector("[data-sel-label]")!.className).toContain("truncate");
+  });
+
+  it("puts the row's flex on the span that wraps a disabled segment with a tip", () => {
+    const restore = layOut(900, oneLine(220, 180, 260));
+    try {
+      render(
+        <Selector
+          items={[ITEMS[0], { ...ITEMS[1], disabled: true, title: "Pick a folder first" }, ITEMS[2]]}
+          label="Test strip"
+          active="a"
+          onChange={() => {}}
+          equalWidth
+        />
+      );
+      const wrapper = seg("b").parentElement!;
+      expect(wrapper.tagName).toBe("SPAN");
+      expect(wrapper.style.minWidth).toBe("260px");
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps a hugging strip's segments at one width in even rows that end with them", () => {
+    const eight = ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) => ({ id, label: id.toUpperCase() }));
+    const restore = layOut(900, Object.fromEntries(eight.map((i) => [i.id, { oneLine: 150, narrowest: 150 }])));
+    try {
+      render(
+        <div data-room>
+          <Selector items={eight} label="Test strip" active="a" onChange={() => {}} equalWidth inline variant="chip" />
+        </div>,
+      );
+      // Four to a row leave each the full floor, however narrow the labels.
+      for (const item of eight) expect(seg(item.id).style.flex).toBe(`0 0 ${MIN_PINNED_WIDTH}px`);
+      expect(screen.getByRole("tablist").style.maxWidth).toBe(`${4 * MIN_PINNED_WIDTH + 3 * 3.2 + 1}px`);
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps its pinned width while the strip is disabled and after", () => {
+    const restore = layOut(900, oneLine(220, 180, 260));
+    const observers: Array<() => void> = [];
+    const native = window.ResizeObserver;
+    window.ResizeObserver = class {
+      constructor(callback: () => void) {
+        observers.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    const resize = () => act(() => observers.forEach((callback) => callback()));
+    const items = ITEMS.map((item) => ({ ...item, tip: `${item.label} tip` }));
+    try {
+      const strip = (disabled: boolean) => (
+        <Selector items={items} label="Test strip" active="a" onChange={() => {}} equalWidth disabled={disabled} />
+      );
+      const { rerender } = render(strip(false));
+      rerender(strip(true));
+      resize();
+      expect(seg("a").parentElement!.style.minWidth).toBe("260px");
+      rerender(strip(false));
+      resize();
+      for (const id of ["a", "b", "c"]) expect(seg(id).style.minWidth).toBe("260px");
+    } finally {
+      window.ResizeObserver = native;
+      restore();
+    }
+  });
+
+  it("gives a \"well\" strip the fixed --badge-md height", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />);
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    // A measured width, never a flex-1 share.
-    expect(tab.className).toContain("flex-none");
-    expect(tab.className).not.toContain("flex-1");
     expect(tab.className).toContain("h-[var(--badge-md)]");
     expect(tab.className).toContain("justify-center");
   });
 
   it("keyboard navigation still works with equalWidth", () => {
     const spy = vi.fn();
-    render(<OneOfThree onChangeSpy={spy} />);
-    // Re-render with equalWidth via a fresh controlled instance.
-    cleanup();
     function EqualWidthThree() {
       const [active, setActive] = useState("a");
       return (
@@ -370,17 +519,85 @@ describe("Selector equalWidth", () => {
   });
 });
 
-// variant="well" is the grooved selector, at two scales: with and without
-// equalWidth. These tests keep the two scales from drifting apart.
-describe("Selector variant=\"well\" at both scales", () => {
-  it("default variant (\"chip\") renders none of the groove's wrapper/segment classes", () => {
-    render(<OneOfThree />);
-    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface3");
-    expect(screen.getByRole("tablist").className).not.toContain("w-fit");
+describe("Selector fit", () => {
+  const ICON_TWO: SelectorItem[] = [
+    { id: "a", label: "Alpha", icon: <span /> },
+    { id: "b", label: "Beta", icon: <span /> },
+  ];
+
+  it("keeps the track to one row, the segments sharing it evenly up to MAX_PINNED_WIDTH", () => {
+    render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
+    const list = screen.getByRole("tablist");
+    expect(list.style.flexWrap).toBe("nowrap");
+    expect(classes(list)).toContain("w-full");
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("flex-1");
+    expect(tab.style.flex).toBe("1 1 0px");
+    expect(tab.style.maxWidth).toBe(`${MAX_PINNED_WIDTH}px`);
+  });
+
+  it("drops every segment to its glyph once the labels together no longer fit the row", () => {
+    const restore = layOut(200, oneLine(500, 90));
+    try {
+      render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
+      // seg(), not getByRole(..., {name}): the accessible-name lookup calls
+      // getComputedStyle().getPropertyValue(), a method layOut's stub proxy
+      // does not implement.
+      const tab = seg("a");
+      expect(tab.querySelector("[data-sel-label]")!.className).toContain("sr-only");
+      expect(tab.style.flex).toBe("1 1 0px");
+      fireEvent.mouseEnter(tab);
+      expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha");
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps the labels on screen while they fit the row together, even when one is wider than an even share", () => {
+    const restore = layOut(400, oneLine(250, 90));
+    try {
+      render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
+      expect(seg("a").querySelector("[data-sel-label]")!.className).not.toContain("sr-only");
+      expect(seg("a").style.flex).toBe("1 1 auto");
+    } finally {
+      restore();
+    }
+  });
+
+  it("shares the row evenly while the widest label fits an even share", () => {
+    const restore = layOut(400, oneLine(150, 90));
+    try {
+      render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
+      expect(seg("a").querySelector("[data-sel-label]")!.className).not.toContain("sr-only");
+      expect(seg("a").style.flex).toBe("1 1 0px");
+    } finally {
+      restore();
+    }
+  });
+
+  it("never squeezes a strip with an item that has no glyph to fall back to", () => {
+    const restore = layOut(120, oneLine(500, 90));
+    try {
+      render(
+        <Selector items={ITEMS.slice(0, 2)} label="Test strip" active="a" onChange={() => {}} fit />,
+      );
+      const label = seg("a").querySelector("[data-sel-label]")!;
+      expect(label.className).not.toContain("sr-only");
+      expect(label.className).toContain("truncate");
+    } finally {
+      restore();
+    }
+  });
+});
+
+// The well is the default styling, at two scales: with and without
+// equalWidth. These tests keep the two scales from drifting apart.
+describe("Selector well at both scales", () => {
+  it("the chip styling renders none of the groove's classes", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="chip" />);
+    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface3");
+    const tab = screen.getByRole("tab", { name: "Alpha" });
     expect(tab.className).not.toContain("--badge-md");
-    expect(tab.className).not.toContain("bg-transparent");
+    expect(screen.getByRole("tab", { name: "Beta" }).className).toContain("bg-carbon-surface2");
   });
 
   // The groove sits on a Card (surface) or a CadenceBuilder well (surface2),
@@ -388,7 +605,7 @@ describe("Selector variant=\"well\" at both scales", () => {
   it("the strip is a groove at surface3, not surface2, which would vanish inside a surface2 well", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
-      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} {...props} />);
       const list = screen.getByRole("tablist");
       expect(list.className).toContain("bg-carbon-surface3");
       expect(list.className).not.toContain("bg-carbon-surface2");
@@ -399,29 +616,11 @@ describe("Selector variant=\"well\" at both scales", () => {
     }
   });
 
-  it("the groove hugs its own segments (w-fit max-w-full) at both scales, and never forces one row", () => {
-    for (const props of [{}, { equalWidth: true }]) {
-      cleanup();
-      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
-      const list = screen.getByRole("tablist");
-      expect(list.className).toContain("w-fit");
-      expect(list.className).toContain("max-w-full");
-      // A pinned strip is N x max(widest label, MIN_PINNED_WIDTH) wide, which
-      // can exceed the available width. Wrapping beats spilling off the page.
-      expect(list.className).toContain("flex-wrap");
-      expect(list.className).not.toContain("flex-nowrap");
-      // No self-start: width: fit-content already stops a flex column from
-      // stretching it, and self-start would top-align it in the rows that
-      // centre a label beside it.
-      expect(list.className).not.toContain("self-start");
-    }
-  });
-
   // An unselected option is not a badge, so idle segments have no fill.
   it("idle segments are transparent at both scales while the active segment fills with the accent", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
-      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} {...props} />);
       const active = screen.getByRole("tab", { name: "Alpha" });
       const idle = screen.getByRole("tab", { name: "Beta" });
       expect(active.className).toContain("bg-accent");
@@ -440,11 +639,11 @@ describe("Selector variant=\"well\" at both scales", () => {
   });
 
   it("the two scales differ only in pinning", () => {
-    render(<Selector items={ITEMS} label="Small" active="a" onChange={() => {}} variant="well" />);
+    render(<Selector items={ITEMS} label="Small" active="a" onChange={() => {}} />);
     const smallList = screen.getByRole("tablist").className;
     const smallTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
     cleanup();
-    render(<Selector items={ITEMS} label="Big" active="a" onChange={() => {}} variant="well" equalWidth />);
+    render(<Selector items={ITEMS} label="Big" active="a" onChange={() => {}} equalWidth />);
     const bigList = screen.getByRole("tablist").className;
     const bigTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
 
@@ -454,7 +653,7 @@ describe("Selector variant=\"well\" at both scales", () => {
     // big scale carries, and the touch height of the small one, which the big
     // scale's fixed height already clears. They are stripped before the
     // byte-identity compare, so the guard keeps catching any third divergence.
-    const PIN = ["flex-none", "justify-center", "text-center", "h-[var(--badge-md)]"];
+    const PIN = ["text-center", "h-[var(--badge-md)]"];
     const TOUCH = "pointer-coarse:min-h-(--btn-h)";
     const strip = (s: string) =>
       s
@@ -470,24 +669,14 @@ describe("Selector variant=\"well\" at both scales", () => {
     expect(bigTab.split(/\s+/)).not.toContain(TOUCH);
   });
 
-  it("without equalWidth a \"well\" strip hugs its content, with no pinned width or fixed height", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
+  it("without equalWidth a strip has no pinned width or fixed height", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} />);
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("flex-none");
     expect(tab.className).not.toContain("h-[var(--badge-md)]");
-    expect(tab.style.width).toBe("");
+    expect(tab.style.minWidth).toBe("");
   });
 
-  it("`plain` and `raised` are ignored under variant=\"well\"", () => {
-    render(
-      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" plain raised />
-    );
-    const idle = screen.getByRole("tab", { name: "Beta" });
-    expect(idle.className).toContain("bg-transparent");
-    expect(idle.className).not.toContain("bg-carbon-surface3");
-  });
-
-  it("arrow keys still move focus and select under variant=\"well\" at both scales", () => {
+  it("arrow keys still move focus and select at both scales", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       const spy = vi.fn();
@@ -503,7 +692,6 @@ describe("Selector variant=\"well\" at both scales", () => {
               setActive(id);
               spy(id);
             }}
-            variant="well"
             {...props}
           />
         );
@@ -518,8 +706,8 @@ describe("Selector variant=\"well\" at both scales", () => {
     }
   });
 
-  it("ArrowRight still moves backward under RTL with variant=\"well\"", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
+  it("ArrowRight still moves backward under RTL in the well", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} />);
     const list = screen.getByRole("tablist");
     list.style.direction = "rtl";
     screen.getByRole("tab", { name: "Beta" }).focus();
@@ -530,7 +718,7 @@ describe("Selector variant=\"well\" at both scales", () => {
   it("every segment carries its own rainbow position at both scales", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
-      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} {...props} />);
       const tabs = Array.from(
         screen.getByRole("tablist").querySelectorAll<HTMLElement>("[data-sel-id]")
       );

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Link } from "react-router-dom";
 import { listVMs, backupVMNow, restoreVM, setVMInclude, setVMIncludeAll, setVMMethod, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, getSettings } from "../lib/api";
 import type { AnomalyItem, VM, VmOrder, PlacementView, Run } from "../lib/api";
+import { PageTitle } from "../components/PageTitle";
 import { FilterPopover } from "../components/FilterPopover";
 import { ChipFilter, loadStoredFilterKey } from "../components/ChipFilter";
 import { IconTipButton } from "../components/IconTipButton";
@@ -9,7 +10,7 @@ import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
-import { useDragReorder } from "../lib/useDragReorder";
+import { useReorder } from "../lib/dragLift";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
@@ -120,7 +121,7 @@ function SortControl({
       <Selector
         items={(["name", "status"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
         label={t("sort.label")}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as SortKey)}
@@ -215,6 +216,7 @@ function VMMethodSelect({
       size="sm"
       select="one"
       equalWidth
+      inline
       disabled={busy}
       active={method}
       onChange={(id) => void handleChange(id)}
@@ -703,6 +705,8 @@ export function VMRow({
           <Selector
             items={[{ id: "backups", label: t("snapshots.title") }]}
             label={t("containers.sectionsLabel")}
+            variant="chip"
+            inline
             select="many"
             active={openSections}
             buttonHeight
@@ -970,18 +974,21 @@ function VMBackupOrderPanel({
     setSaveState("idle");
   }
 
-  function reorder(from: number, to: number) {
-    setNames((prev) => {
-      if (from === to || to < 0 || to >= prev.length) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
-    setSaveState("idle");
-  }
-
-  const { dragIndex, rowProps } = useDragReorder<HTMLLIElement>(reorder, saveState === "saving");
+  // A row is carried by its grip and lands in its gap; the arrows are the
+  // keyboard's way to do the same.
+  const list = useRef<HTMLOListElement>(null);
+  const drag = useReorder({
+    ids: names,
+    container: list,
+    attr: "data-order-name",
+    axis: "y",
+    arm: "move",
+    enabled: saveState !== "saving",
+    onReorder: (next) => {
+      setNames(next);
+      setSaveState("idle");
+    },
+  });
 
   function toggleCollapsed() {
     setCollapsed((v) => {
@@ -1082,16 +1089,21 @@ function VMBackupOrderPanel({
           <p className="text-xs text-carbon-textMuted">{t("vmBackupOrder.empty")}</p>
         ) : (
           <>
-            <ol className="flex flex-col gap-1">
-              {names.map((name, i) => (
+            {/* The list is the rows' offsetParent, the layout a drag measures
+                in. While a row is carried the others wiggle. */}
+            <ol ref={list} className={`relative flex flex-col gap-1 ${drag.held !== null ? "glim-drag-armed" : ""}`}>
+              {drag.order.map((name, i) => (
                 <li
                   key={name}
-                  {...rowProps(i)}
-                  className={`flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${
-                    dragIndex === i ? "opacity-40" : ""
-                  }`}
+                  data-order-name={name}
+                  className={`flex select-none items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${drag.look(name)}`}
                 >
-                  <span className="shrink-0 cursor-grab text-carbon-textSub active:cursor-grabbing" aria-hidden="true">
+                  {/* The grip is for a pointer; the keyboard uses the arrows. */}
+                  <span
+                    className="shrink-0 cursor-grab touch-none text-carbon-textSub active:cursor-grabbing"
+                    aria-hidden="true"
+                    onPointerDown={(e) => drag.press(e, name)}
+                  >
                     <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
                       <circle cx="3" cy="3" r="1" />
                       <circle cx="7" cy="3" r="1" />
@@ -1405,13 +1417,8 @@ export function VMs() {
           widths, the same header the Containers page renders. */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("vms.title")}
-          </h1>
-          <p className="mt-1 text-sm text-carbon-textSub">
-            {t("vms.subtitle")}
-          </p>
-          <div className="mt-2"><OffsiteIndicator domain="vms" /></div>
+          <PageTitle>{t("vms.title")}</PageTitle>
+          <OffsiteIndicator domain="vms" />
         </div>
         {/* Discover is the way back after a lost database, so it stays
             whether or not VM backups are switched on, as on Containers. */}
@@ -2152,6 +2159,8 @@ function MobileVMDetail({
           <Selector
             items={[{ id: "backups", label: t("snapshots.title") }]}
             label={t("containers.sectionsLabel")}
+            variant="chip"
+            inline
             select="many"
             active={openSections}
             buttonHeight

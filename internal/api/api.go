@@ -179,20 +179,20 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/widget/token", h.handleWidgetTokenGenerate)
 	mux.HandleFunc("DELETE /api/widget/token", h.handleWidgetTokenDisable)
 
-	// Fleet view peer status (v8.0.0). Same pattern as the widget: another
-	// BombVault instance polling this one can't carry a session cookie either,
-	// so the endpoint is allow-listed in authGate and self-gated on the stored
-	// fleet token instead — no token stored = 403, fail closed. The token
-	// management + peer-list endpoints stay session-protected.
-	mux.HandleFunc("GET /api/fleet/status", h.handleFleetStatus)
-	mux.HandleFunc("POST /api/fleet/token", h.handleFleetTokenGenerate)
-	mux.HandleFunc("DELETE /api/fleet/token", h.handleFleetTokenDisable)
-
-	// Mesh off-site (v8.0.0): a peer offering its own off-site storage arrives
-	// the same way a status poll does — self-gated on the same fleet token, so
-	// it needs the same authGate bypass. The offer is only ever STORED here
-	// pending human review; accept/decline/propose stay session-protected.
-	mux.HandleFunc("POST /api/fleet/mesh-offer", h.handleFleetMeshOfferReceive)
+	// The pairing group. A member's direct call and the relay socket carry no
+	// session, so both are on authGate's allowlist and gate themselves: the
+	// call on the group's signing and sealing keys, the socket on the group's
+	// relay key and the serve switch. What a member may ask once inside is
+	// peerRoutes in group.go, not this router.
+	mux.HandleFunc("POST /api/group/call", h.handleGroupCall)
+	mux.HandleFunc("GET "+relayConnectPath, h.handleRelayConnect)
+	mux.HandleFunc("GET /api/group", h.handleGroup)
+	mux.HandleFunc("POST /api/group/phrase", h.handleGroupCreate)
+	mux.HandleFunc("POST /api/group/phrase/show", h.handleGroupShow)
+	mux.HandleFunc("POST /api/group/join", h.handleGroupJoin)
+	mux.HandleFunc("DELETE /api/group", h.handleGroupLeave)
+	mux.HandleFunc("PUT /api/group/relay", h.handleGroupRelay)
+	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
 
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
@@ -472,21 +472,18 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/pull/sources/{id}/test", h.handleTestPullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/run", h.handleRunPullSource)
 
-	// Fleet view (read-only): the list of PEER BombVault instances this box
-	// polls for their protection status. Gated behind the fleetEnabled settings
-	// flag in the SPA; the endpoints stay session-protected like every other
-	// /api route (only GET /api/fleet/status, above, is publicly allow-listed).
+	// Fleet view (read-only): the members of this instance's pairing group,
+	// polled over the group for their protection status. Gated behind the
+	// fleetEnabled settings flag in the SPA.
 	mux.HandleFunc("GET /api/fleet/peers", h.handleListFleetPeers)
-	mux.HandleFunc("POST /api/fleet/peers", h.handleCreateFleetPeer)
 	mux.HandleFunc("PUT /api/fleet/peers/{id}", h.handleUpdateFleetPeer)
 	mux.HandleFunc("DELETE /api/fleet/peers/{id}", h.handleDeleteFleetPeer)
 	mux.HandleFunc("POST /api/fleet/peers/{id}/poll", h.handleFleetPeerPoll)
+	mux.HandleFunc("POST /api/fleet/peers/{id}/check/{domain}", h.handleFleetPeerCheck)
 
-	// Mesh off-site (v8.0.0): review offers this box has RECEIVED from peers
-	// (accept turns one into a normal named credential set + off-site target,
-	// both pre-existing mechanisms) and propose this box's OWN storage to a
-	// peer. Only POST /api/fleet/mesh-offer (above) is publicly allow-listed —
-	// everything here requires a logged-in admin, same as the fleet peer CRUD.
+	// Mesh off-site: review offers members sent this box (accept turns one
+	// into a named credential set and an off-site target) and offer this
+	// box's own storage to a member.
 	mux.HandleFunc("GET /api/fleet/mesh-offers", h.handleListMeshOffers)
 	mux.HandleFunc("POST /api/fleet/mesh-offers/{id}/accept", h.handleAcceptMeshOffer)
 	mux.HandleFunc("POST /api/fleet/mesh-offers/{id}/decline", h.handleDeclineMeshOffer)

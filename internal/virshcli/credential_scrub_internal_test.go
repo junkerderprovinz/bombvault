@@ -51,3 +51,10 @@ func TestLastReasonScrubsAbsolutePath(t *testing.T) {
 		t.Fatalf("lastReason should still scrub the absolute path, got %q", got)
 	}
 }
+
+func TestLastReasonScrubsAPasswordWithoutAUserName(t *testing.T) {
+	got := lastReason(`error: failed to connect to the hypervisor "//:hunter2@tower/system"`)
+	if strings.Contains(got, "hunter2") {
+		t.Fatalf("lastReason leaked a password with no user name, got %q", got)
+	}
+}

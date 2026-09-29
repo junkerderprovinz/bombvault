@@ -1,149 +1,137 @@
-// The Anomalies page. Two tabs answer two different questions: Findings is
-// "what did the history turn up", Items is "what does BombVault know about
-// each thing it backs up, and how closely should it watch". They share a page
-// because a finding is only actionable next to the item's usual figures.
-import { useCallback, useEffect, useId, useMemo, useState, type CSSProperties } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+// The Anomalies page: one card per item with open findings, because the
+// question a reader brings is which of their things is in trouble and what to
+// press. Items without findings keep their monitoring settings in one card at
+// the end, and what was closed lately sits in a row below that.
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { AnomalyRow } from "../components/AnomalyRow";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { InfoBubble } from "../components/InfoBubble";
-import { ItemAnomalySettings, type AnomalyGlobals } from "../components/ItemAnomalySettings";
-import { LabelledSelect } from "../components/SelectField";
-import { Selector } from "../components/Selector";
+import { IconDisclosure } from "../components/IconDisclosure";
+import { FindingLine, RetentionNote, type FindingAction } from "../components/anomalies/FindingLine";
+import { ItemMonitoring } from "../components/anomalies/ItemMonitoring";
+import { PageTitle } from "../components/PageTitle";
+import type { AnomalyGlobals } from "../components/ItemAnomalySettings";
 import { Card } from "./settings/shared";
 import {
   acknowledgeAnomalies,
-  forgetAnomalyExpectation,
   getAnomalies,
   getSettings,
   markAnomaliesExpected,
-  type AnomalyActionResult,
-  type AnomalyFilter,
   type AnomalyItem,
-  type AnomalySeriesInfo,
   type AnomalySeverity,
   type AnomalyView,
   type Settings,
 } from "../lib/api";
 import {
   ANOMALY_CHANGED_EVENT,
-  ANOMALY_DETECTOR_LABEL,
-  ANOMALY_DOMAIN_LABEL,
-  ANOMALY_FAMILY_LABEL,
   ANOMALY_SEVERITY_LABEL,
+  anomalyDomainsLabel,
   anomalyErrorText,
-  anomalyItemLabel,
+  anomalyGroupKey,
   anomalyLearningText,
+  anomalyRestorePath,
   anomalySeverityTone,
-  itemOpenCounts,
-  worstSeverity,
+  groupAnomalies,
+  type AnomalyGroup,
 } from "../lib/anomalies";
-import { humanBytes } from "../lib/forecast";
+import { hueVars } from "../lib/appearance";
 import { useT, type TranslationKey } from "../lib/i18n";
-import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
-import { formatMillis, formatTs } from "../lib/reltime";
 import { isolateLtr } from "../lib/ltrFragments";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { formatTs } from "../lib/reltime";
 import { useToast } from "../lib/toast";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useConfirm } from "../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
-const TABS = ["findings", "items"] as const;
-type AnomalyTab = (typeof TABS)[number];
+const PAGE_SIZE = 500;
+const CLOSED_DAYS = 30;
+const SEVERITIES: AnomalySeverity[] = ["critical", "warning", "info"];
 
-const PAGE_SIZE = 200;
-// The acknowledge and expected endpoints take a bounded list, so a selection
-// over that size goes in several calls.
-const BULK_CHUNK = 500;
-const NOTE_MAX = 500;
-const FILTER_STORAGE_KEY = "bv-anomalies-filter";
+const TILE_LABEL: Record<AnomalySeverity, TranslationKey> = {
+  critical: "anomaly.severity.critical",
+  warning: "anomaly.tile.warning",
+  info: "anomaly.tile.info",
+};
 
-type StateFilter = "open" | "closed" | "all";
-type PeriodFilter = "7" | "30" | "90" | "all";
+const NUMBER_TONE: Record<AnomalySeverity, string> = {
+  critical: "text-statusFail",
+  warning: "text-statusWarn",
+  info: "text-carbon-text",
+};
 
-interface Filters {
-  state: StateFilter;
-  period: PeriodFilter;
-  severity: string;
-  detector: string;
-  domain: string;
+interface FindingList {
+  list: AnomalyView[];
+  loaded: boolean;
+  failed: boolean;
+  retry: () => void;
 }
 
-const DEFAULT_FILTERS: Filters = {
-  state: "open",
-  period: "30",
-  severity: "",
-  detector: "",
-  domain: "",
-};
+/**
+ * useFindings reads every finding in one state, following the cursor to the
+ * end: the counts on the page are drawn from this list, and a list cut short
+ * would show an item as quiet. It waits for the summary, so its generation and
+ * the list arrive together and every later pass refetches.
+ */
+function useFindings(state: "open" | "closed"): FindingList {
+  const { summary, loading: summaryLoading } = useAnomalySummary();
+  const generation = summary?.generation;
+  const [list, setList] = useState<AnomalyView[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-const STATE_LABEL: Record<StateFilter, TranslationKey> = {
-  open: "anomaly.filter.stateOpen",
-  closed: "anomaly.filter.stateClosed",
-  all: "anomaly.filter.any",
-};
-
-const PERIOD_LABEL: Record<PeriodFilter, TranslationKey> = {
-  "7": "anomaly.filter.period7",
-  "30": "anomaly.filter.period30",
-  "90": "anomaly.filter.period90",
-  all: "anomaly.filter.periodAll",
-};
-
-// A finding of an item carries the singular domain, one of a whole domain
-// the plural, so each choice sends both spellings.
-const DOMAIN_FILTERS: { value: string; key: TranslationKey }[] = [
-  { value: "container,containers", key: "dashboard.domainContainers" },
-  { value: "vm,vms", key: "dashboard.domainVMs" },
-  { value: "flash", key: "dashboard.domainFlash" },
-  { value: "files", key: "dashboard.domainFiles" },
-  { value: "zfs", key: "dashboard.domainZFS" },
-  { value: "config", key: "dashboard.domainConfig" },
-];
-
-function isTab(value: string): value is AnomalyTab {
-  return (TABS as readonly string[]).includes(value);
-}
-
-function loadFilters(): Filters {
-  try {
-    const raw = localStorage.getItem(FILTER_STORAGE_KEY);
-    if (!raw) return DEFAULT_FILTERS;
-    const stored = JSON.parse(raw) as Partial<Filters>;
-    return {
-      state: stored.state && stored.state in STATE_LABEL ? stored.state : DEFAULT_FILTERS.state,
-      period: stored.period && stored.period in PERIOD_LABEL ? stored.period : DEFAULT_FILTERS.period,
-      severity: typeof stored.severity === "string" ? stored.severity : "",
-      detector: typeof stored.detector === "string" ? stored.detector : "",
-      domain: typeof stored.domain === "string" ? stored.domain : "",
+  useEffect(() => {
+    if (summaryLoading) return;
+    let active = true;
+    const since = state === "closed" ? Math.floor(Date.now() / 1000) - CLOSED_DAYS * 86400 : undefined;
+    (async () => {
+      const all: AnomalyView[] = [];
+      let cursor = "";
+      do {
+        const res = await getAnomalies({ state, since, limit: PAGE_SIZE, cursor: cursor || undefined });
+        if (!res.ok) throw new Error("the findings were refused");
+        all.push(...res.anomalies);
+        cursor = res.nextCursor;
+      } while (cursor);
+      return all;
+    })()
+      .then((all) => {
+        if (!active) return;
+        setList(all);
+        setFailed(false);
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      });
+    return () => {
+      active = false;
     };
-  } catch {
-    return DEFAULT_FILTERS;
-  }
+  }, [state, generation, summaryLoading, attempt]);
+
+  return { list, loaded, failed, retry: () => setAttempt((n) => n + 1) };
 }
 
-function storeFilters(filters: Filters) {
-  try {
-    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
-  } catch {
-    /* a browser that refuses storage still filters, it just forgets */
-  }
+async function settle(call: (ids: string[]) => ReturnType<typeof acknowledgeAnomalies>, ids: string[]) {
+  const res = await call(ids);
+  if (res.ok) window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
+  return res;
 }
 
-function periodSince(period: PeriodFilter): number {
-  if (period === "all") return 0;
-  return Math.floor(Date.now() / 1000) - Number(period) * 86400;
-}
+const acknowledgeOne: FindingAction = (a) => settle(acknowledgeAnomalies, [a.id]);
+const expectOne: FindingAction = (a) => settle(markAnomaliesExpected, [a.id]);
 
 export function Anomalies() {
   const { t } = useT();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { items, byTarget, error: itemsFailed, loading: itemsLoading, retry } = useAnomalyItems();
+  const [params] = useSearchParams();
+  const { items, byTarget, error: itemsFailed, loading: itemsLoading, retry: retryItems } = useAnomalyItems();
+  const open = useFindings("open");
+  const closed = useFindings("closed");
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [hidden, setHidden] = useState<Set<AnomalySeverity>>(new Set());
 
   useEffect(() => {
     getSettings()
@@ -153,604 +141,489 @@ export function Anomalies() {
       .catch(() => undefined);
   }, []);
 
-  const hash = location.hash.replace(/^#/, "");
-  const tab: AnomalyTab = isTab(hash) ? hash : "findings";
-
-  function choose(next: AnomalyTab) {
-    navigate({ search: location.search, hash: `#${next}` }, { replace: true });
-  }
-
-  return (
-    <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("anomaly.title")}</h1>
-        <p className="mt-1 text-sm text-carbon-textSub">{t("anomaly.pageSubtitle")}</p>
-      </div>
-
-      {settings && !settings.anomalyEnabled && (
-        <p className="text-sm text-statusWarn">{t("anomaly.offPage")}</p>
-      )}
-
-      <div className="inline-flex self-start max-w-full">
-        <Selector
-          items={[
-            { id: "findings", label: t("anomaly.tab.findings") },
-            { id: "items", label: t("anomaly.tab.items") },
-          ]}
-          label={t("anomaly.title")}
-          select="one"
-          active={tab}
-          onChange={(id) => {
-            if (isTab(id)) choose(id);
-          }}
-          size="lg"
-          equalWidth
-        />
-      </div>
-
-      {/* Keyed on the tab so the slide replays on every switch, as on
-          Instances and in Settings. */}
-      <div
-        key={tab}
-        className="glim-tab-slide flex flex-col gap-10"
-        style={{ "--tab-dir": tab === "items" ? 1 : -1 } as CSSProperties}
-      >
-        {tab === "findings" ? (
-          <FindingsTab t={t} byTarget={byTarget} />
-        ) : (
-          <ItemsTab
-            t={t}
-            items={items}
-            settings={settings}
-            failed={itemsFailed}
-            loading={itemsLoading}
-            onRetry={retry}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem> }) {
-  const { summary, loading: summaryLoading } = useAnomalySummary();
-  const { confirm, confirmDialog } = useConfirm();
-  const { push } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [filters, setFilters] = useState<Filters>(loadFilters);
-  const [rows, setRows] = useState<AnomalyView[]>([]);
-  const [cursor, setCursor] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  const countId = useId();
-
-  const scope = searchParams.get("scope") ?? "";
-  const generation = summary?.generation;
-
-  const query: AnomalyFilter = useMemo(
-    () => ({
-      state: filters.state,
-      severity: filters.severity || undefined,
-      detector: filters.detector || undefined,
-      domain: filters.domain || undefined,
-      scope: scope || undefined,
-      since: filters.state === "open" ? undefined : periodSince(filters.period),
-      limit: PAGE_SIZE,
-    }),
-    [filters, scope]
-  );
-
-  // The first pass waits for the summary, so its generation and this listing
-  // arrive together instead of costing two requests on every mount.
-  useEffect(() => {
-    if (summaryLoading) return;
-    let active = true;
-    setLoading(true);
-    getAnomalies(query)
-      .then((res) => {
-        if (!active) return;
-        if (!res.ok) {
-          setFailed(true);
-        } else {
-          setRows(res.anomalies);
-          setCursor(res.nextCursor);
-          setSelected(new Set());
-          setFailed(false);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!active) return;
-        setFailed(true);
-        setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [query, attempt, generation, summaryLoading]);
-
-  function change(patch: Partial<Filters>) {
-    setFilters((prev) => {
-      const next = { ...prev, ...patch };
-      storeFilters(next);
-      return next;
-    });
-  }
-
-  function clearScope() {
-    const next = new URLSearchParams(searchParams);
-    next.delete("scope");
-    setSearchParams(next, { replace: true });
-  }
-
-  async function loadMore() {
-    const res = await getAnomalies({ ...query, cursor });
-    if (!res.ok) {
-      push(anomalyErrorText(res.code, t), "fail");
-      return;
-    }
-    setRows((prev) => [...prev, ...res.anomalies]);
-    setCursor(res.nextCursor);
-  }
-
-  const openRows = rows.filter((a) => a.state === "open");
-  const chosen = rows.filter((a) => selected.has(a.id));
-  const allSelected = openRows.length > 0 && openRows.every((a) => selected.has(a.id));
-
-  function toggleRow(id: string, on: boolean) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(openRows.map((a) => a.id)));
-  }
-
-  async function bulk(
-    call: (ids: string[], note?: string) => Promise<AnomalyActionResult>,
-    confirmKey: TranslationKey
-  ) {
-    setBusy(true);
-    try {
-      const held = chosen.filter((a) => a.retentionHeld);
-      if (held.length > 0) {
-        const names = held.map((a) => anomalyItemLabel(a, t)).join(", ");
-        if (!(await confirm(t("anomaly.releaseConfirmMany").replace("{names}", names), { confirmKey }))) {
-          return;
-        }
-      }
-      const ids = chosen.map((a) => a.id);
-      let changed = 0;
-      let skipped = 0;
-      for (let at = 0; at < ids.length; at += BULK_CHUNK) {
-        const res = await call(ids.slice(at, at + BULK_CHUNK), note);
-        if (!res.ok) {
-          push(anomalyErrorText(res.code, t), "fail");
-          return;
-        }
-        changed += res.changed;
-        skipped += res.skipped;
-      }
-      push(
-        t("anomaly.bulk.done")
-          .replace("{changed}", changed.toLocaleString())
-          .replace("{skipped}", skipped.toLocaleString())
-      );
-      window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
-      setSelected(new Set());
-      setNote("");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const single = useCallback(
-    (call: (ids: string[]) => Promise<AnomalyActionResult>) => async (a: AnomalyView) => {
-      const res = await call([a.id]);
-      if (res.ok) window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
-      return res;
-    },
-    []
-  );
-
-  const narrowed = Boolean(filters.severity || filters.detector || filters.domain || scope);
-  const scopeTarget = scope.startsWith("item:") ? scope.slice("item:".length) : "";
-  const scopeName =
-    byTarget.get(scopeTarget)?.name ?? rows.find((a) => a.targetId === scopeTarget)?.name ?? scopeTarget;
-
-  const severityOptions = [
-    { value: "", label: t("anomaly.filter.any") },
-    ...(["critical", "warning", "info"] as AnomalySeverity[]).map((s) => ({
-      value: s as string,
-      label: t(ANOMALY_SEVERITY_LABEL[s]),
-    })),
-  ];
-  const detectorOptions = [
-    { value: "", label: t("anomaly.filter.any") },
-    ...Object.entries(ANOMALY_DETECTOR_LABEL).map(([value, key]) => ({ value, label: t(key) })),
-  ];
-  const domainOptions = [
-    { value: "", label: t("anomaly.filter.any") },
-    ...DOMAIN_FILTERS.map((d) => ({ value: d.value, label: t(d.key) })),
-  ];
-
-  return (
-    <Card title={t("anomaly.tab.findings")} hueIndex={0}>
-      <div className="flex flex-wrap items-end gap-3">
-        <LabelledSelect
-          label={t("anomaly.filter.state")}
-          value={filters.state}
-          onChange={(state: StateFilter) => change({ state })}
-          options={(["open", "closed", "all"] as StateFilter[]).map((s) => ({
-            value: s,
-            label: t(STATE_LABEL[s]),
-          }))}
-        />
-        {filters.state !== "open" && (
-          <LabelledSelect
-            label={t("anomaly.filter.period")}
-            value={filters.period}
-            onChange={(period: PeriodFilter) => change({ period })}
-            options={(["7", "30", "90", "all"] as PeriodFilter[]).map((p) => ({
-              value: p,
-              label: t(PERIOD_LABEL[p]),
-            }))}
-          />
-        )}
-        <LabelledSelect
-          label={t("anomaly.filter.severity")}
-          value={filters.severity}
-          onChange={(severity: string) => change({ severity })}
-          options={severityOptions}
-        />
-        <LabelledSelect
-          label={t("anomaly.filter.detector")}
-          value={filters.detector}
-          onChange={(detector: string) => change({ detector })}
-          options={detectorOptions}
-        />
-        <LabelledSelect
-          label={t("common.domain")}
-          value={filters.domain}
-          onChange={(domain: string) => change({ domain })}
-          options={domainOptions}
-        />
-        {scopeTarget && (
-          <span className="inline-flex max-w-full items-center gap-1 rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text">
-            <span className="min-w-0 wrap-anywhere">{t("anomaly.filter.itemChip").replace("{name}", scopeName)}</span>
-            {/* The only way back to every item, so under a touch pointer an
-                ::after widens the 18px chip to 46px. */}
-            <Button
-              label={t("anomaly.filter.removeChip")}
-              labelKey="anomaly.filter.removeChip"
-              variant="chip"
-              onClick={clearScope}
-              className="relative shrink-0 pointer-coarse:after:absolute pointer-coarse:after:-inset-3.5 pointer-coarse:after:content-['']"
-            />
-          </span>
-        )}
-      </div>
-
-      {failed ? (
-        <div className="flex flex-col items-start gap-2">
-          <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
-          <Button
-            label={t("anomaly.retry")}
-            labelKey="anomaly.retry"
-            onClick={() => setAttempt((n) => n + 1)}
-          />
-        </div>
-      ) : loading && rows.length === 0 ? (
-        <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
-      ) : rows.length === 0 ? (
-        <p className="text-sm text-carbon-textSub">
-          {t(
-            narrowed
-              ? "anomaly.emptyFiltered"
-              : filters.state === "closed"
-                ? "anomaly.emptyClosed"
-                : filters.state === "all"
-                  ? "anomaly.emptyAny"
-                  : "anomaly.emptyOpen"
-          )}
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {openRows.length > 0 && (
-            <div
-              role="group"
-              aria-labelledby={countId}
-              className="flex flex-wrap items-center gap-3 rounded-card bg-carbon-surface2 px-3 py-2"
-            >
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-carbon-textSub pointer-coarse:min-h-11">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  className="h-4 w-4 cursor-pointer"
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                {t("anomaly.bulk.selectAll")}
-              </label>
-              <span id={countId} className="text-xs text-carbon-textSub">
-                {t("anomaly.bulk.selected").replace("{n}", selected.size.toLocaleString())}
-              </span>
-              {cursor && <span className="text-xs text-carbon-textMuted">{t("anomaly.bulk.loadedOnly")}</span>}
-              <input
-                type="text"
-                value={note}
-                maxLength={NOTE_MAX}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder={t("anomaly.notePlaceholder")}
-                aria-label={t("anomaly.notePlaceholder")}
-                className="min-w-40 flex-1 rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text glim-field-focus max-md:min-w-0 max-md:basis-full"
-              />
-              <Button
-                label={t("anomaly.bulk.clearSelection")}
-                labelKey="anomaly.bulk.clearSelection"
-                onClick={() => setSelected(new Set())}
-                disabled={busy || selected.size === 0}
-                className="glim-btn-wrap"
-              />
-              <Button
-                label={t("anomaly.action.expected")}
-                labelKey="anomaly.action.expected"
-                onClick={() => void bulk(markAnomaliesExpected, "anomaly.action.expected")}
-                disabled={busy || !chosen.some((a) => a.expectable)}
-                className="glim-btn-wrap"
-              />
-              <Button
-                label={t("anomaly.action.acknowledge")}
-                labelKey="anomaly.action.acknowledge"
-                tone="accent"
-                onClick={() => void bulk(acknowledgeAnomalies, "anomaly.action.acknowledge")}
-                disabled={busy || selected.size === 0}
-                className="glim-btn-wrap"
-              />
-            </div>
-          )}
-
-          {rows.map((a) => (
-            <AnomalyRow
-              key={a.id}
-              a={a}
-              t={t}
-              selectable
-              selected={selected.has(a.id)}
-              onSelect={toggleRow}
-              onAcknowledge={single(acknowledgeAnomalies)}
-              onExpected={single(markAnomaliesExpected)}
-            />
-          ))}
-
-          {cursor && (
-            <div className="self-start">
-              <Button label={t("anomaly.loadMore")} labelKey="anomaly.loadMore" onClick={() => void loadMore()} />
-            </div>
-          )}
-        </div>
-      )}
-      {confirmDialog}
-    </Card>
-  );
-}
-
-/** The figures of a series that has one rule set rather than all of them. */
-function SeriesLine({ t, label, series }: { t: T; label: string; series: AnomalySeriesInfo }) {
-  return (
-    <div className="flex flex-wrap items-baseline gap-x-3 ps-4 text-xs text-carbon-textSub">
-      <span className="min-w-0 text-carbon-text wrap-anywhere">{label}</span>
-      <span>{anomalyLearningText(t, series.learning.samples, series.learning.needed, false)}</span>
-      {series.typical.sourceBytes !== null && series.typical.resticMs !== null && (
-        <span>
-          {t("anomaly.items.typicalSize")
-            .replace("{size}", isolateLtr(humanBytes(series.typical.sourceBytes)))
-            .replace("{duration}", isolateLtr(formatMillis(series.typical.resticMs)))}
-        </span>
-      )}
-      {series.retentionHeld && <span className="text-statusWarn">{t("anomaly.retentionPaused")}</span>}
-    </div>
-  );
-}
-
-function ItemsTab({
-  t,
-  items,
-  settings,
-  failed,
-  loading,
-  onRetry,
-}: {
-  t: T;
-  items: AnomalyItem[];
-  settings: Settings | null;
-  failed: boolean;
-  loading: boolean;
-  onRetry: () => void;
-}) {
+  const scope = params.get("scope") ?? "";
+  const focusKey = scope.startsWith("item:") ? scope.slice("item:".length) : "";
   const globals: AnomalyGlobals = {
     sensitivity: settings?.anomalySensitivity ?? "balanced",
     notifyMin: settings?.anomalyNotifyMin ?? "critical",
   };
   const enabled = settings?.anomalyEnabled ?? true;
 
-  if (failed || loading || items.length === 0) {
-    return (
-      <Card title={t("anomaly.tab.items")} hint={t("anomaly.items.hint")} hueIndex={0}>
-        {failed ? (
-          // A listing that never arrived says nothing about what is watched,
-          // so it must not borrow the empty list's wording.
-          <div className="flex flex-col items-start gap-2">
-            <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
-            <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={onRetry} />
-          </div>
-        ) : (
-          <p className="text-sm text-carbon-textSub">
-            {t(loading ? "dashboard.checking" : "anomaly.items.empty")}
-          </p>
-        )}
-      </Card>
-    );
+  const counts = useMemo(() => {
+    const out: Record<AnomalySeverity, number> = { critical: 0, warning: 0, info: 0 };
+    for (const a of open.list) out[a.severity] += 1;
+    return out;
+  }, [open.list]);
+  const groups = useMemo(
+    () => groupAnomalies(open.list.filter((a) => !hidden.has(a.severity))),
+    [open.list, hidden]
+  );
+  const loud = useMemo(() => new Set(open.list.map(anomalyGroupKey)), [open.list]);
+  const quiet = items.filter((item) => !loud.has(item.targetId));
+
+  function toggle(severity: AnomalySeverity) {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(severity)) next.delete(severity);
+      else next.add(severity);
+      return next;
+    });
   }
 
-  const domains: string[] = [];
-  for (const item of items) if (!domains.includes(item.domain)) domains.push(item.domain);
+  return (
+    <div className={PAGE_SHELL_RESPONSIVE}>
+      <PageTitle>{t("anomaly.title")}</PageTitle>
+      {settings && !settings.anomalyEnabled && (
+        <p className="text-sm text-statusWarn">{t("anomaly.offPage")}</p>
+      )}
+
+      {open.failed ? (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
+          <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={open.retry} />
+        </div>
+      ) : !open.loaded ? (
+        <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
+      ) : (
+        <>
+          <SeverityTiles t={t} counts={counts} hidden={hidden} onToggle={toggle} />
+          {open.list.length === 0 ? (
+            <p className="text-sm text-carbon-textSub">{t("anomaly.emptyOpen")}</p>
+          ) : groups.length === 0 ? (
+            <p className="text-sm text-carbon-textSub">{t("anomaly.emptyHidden")}</p>
+          ) : (
+            <div className="grid gap-6 md:gap-10 lg:grid-cols-2 lg:gap-x-6">
+              {groups.map((g, i) => (
+                <FindingCard
+                  key={g.key}
+                  t={t}
+                  group={g}
+                  item={byTarget.get(g.key)}
+                  globals={globals}
+                  enabled={enabled}
+                  hueIndex={i}
+                  focused={focusKey === g.key}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {itemsFailed ? (
+        <Card title={t("anomaly.quiet")} hint={t("anomaly.items.hint")} hueIndex={groups.length}>
+          {/* A listing that never arrived says nothing about what is watched,
+              so it must not look like an empty one. */}
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
+            <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retryItems} />
+          </div>
+        </Card>
+      ) : (
+        !itemsLoading &&
+        open.loaded &&
+        quiet.length > 0 && (
+          <QuietCard
+            t={t}
+            items={quiet}
+            globals={globals}
+            enabled={enabled}
+            hueIndex={groups.length}
+            focusKey={focusKey}
+          />
+        )
+      )}
+
+      <ClosedRow t={t} closed={closed} />
+    </div>
+  );
+}
+
+/**
+ * SeverityTiles count the open findings by severity and double as the only
+ * filter: a press hides that severity's findings and a second one brings them
+ * back. The count is a status readout in its fixed hue; the tile itself is a
+ * control, so it keeps neutral chrome and takes its colour-engine position
+ * like any other member of a set.
+ */
+function SeverityTiles({
+  t,
+  counts,
+  hidden,
+  onToggle,
+}: {
+  t: T;
+  counts: Record<AnomalySeverity, number>;
+  hidden: Set<AnomalySeverity>;
+  onToggle: (severity: AnomalySeverity) => void;
+}) {
+  return (
+    <div role="group" aria-label={t("anomaly.filter.severity")} className="grid grid-cols-3 gap-2 sm:gap-4">
+      {SEVERITIES.map((severity, i) => {
+        const shown = !hidden.has(severity);
+        return (
+          <button
+            key={severity}
+            type="button"
+            aria-pressed={shown}
+            onClick={() => onToggle(severity)}
+            style={hueVars(i) as CSSProperties}
+            className={`glim-hue glim-tint${shown ? " glim-active" : ""} flex min-w-0 flex-col items-start gap-0.5 rounded-card bg-carbon-surface px-3 py-2.5 text-start hover:bg-carbon-surface2 sm:px-4 sm:py-3`}
+          >
+            <span
+              className={`glim-num text-2xl font-semibold leading-tight ${shown ? NUMBER_TONE[severity] : "text-carbon-textMuted"}`}
+            >
+              {counts[severity].toLocaleString()}
+            </span>
+            <span className={`min-w-0 text-sm wrap-anywhere ${shown ? "text-carbon-text" : "text-carbon-textMuted"}`}>
+              {t(TILE_LABEL[severity])}
+            </span>
+            <span aria-hidden="true" className="min-w-0 text-xs text-carbon-textSub wrap-anywhere">
+              {t(shown ? "anomaly.tile.shown" : "anomaly.tile.hidden")}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function cardTitle(g: AnomalyGroup, item: AnomalyItem | undefined, t: T): string {
+  const a = g.findings[0];
+  if (a.scopeKind === "domain") return t("anomaly.detector.integrity");
+  if (a.scopeKind === "volume") return t("anomaly.detector.capacity");
+  return item?.name || a.name || anomalyDomainsLabel(a.domain, t);
+}
+
+/** What kind of thing the card is about, ahead of its count. */
+function cardKind(g: AnomalyGroup, t: T): string {
+  const a = g.findings[0];
+  const domains = anomalyDomainsLabel(a.domain, t);
+  if (a.scopeKind === "volume") return t("anomaly.card.volume").replace("{domains}", domains);
+  if (a.scopeKind === "domain") {
+    const offsite = a.metric === "drill_dr" || a.details.source === "offsite";
+    return `${domains} · ${a.targetName || t(offsite ? "source.offsite" : "source.local")}`;
+  }
+  return domains;
+}
+
+function FindingCard({
+  t,
+  group,
+  item,
+  globals,
+  enabled,
+  hueIndex,
+  focused,
+}: {
+  t: T;
+  group: AnomalyGroup;
+  item?: AnomalyItem;
+  globals: AnomalyGlobals;
+  enabled: boolean;
+  hueIndex: number;
+  focused: boolean;
+}) {
+  const navigate = useNavigate();
+  const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
+  const ref = useRef<HTMLElement>(null);
+  const [openIds, setOpenIds] = useState<Set<string>>(
+    () => new Set(focused ? group.findings.map((a) => a.id) : [])
+  );
+  const [monitoring, setMonitoring] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const monitoringId = `monitoring-${group.key}`;
+
+  useEffect(() => {
+    if (!focused) return;
+    setOpenIds(new Set(group.findings.map((a) => a.id)));
+    ref.current?.scrollIntoView({ block: "start" });
+    // The link names the card once; findings arriving later must not pull
+    // the page back to it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused]);
+
+  const title = cardTitle(group, item, t);
+  const findings = group.findings;
+  const restore = findings.find((a) => a.severity === "critical" && anomalyRestorePath(a));
+  const heldAndClosed = findings.some((a) => a.retentionHeld && !openIds.has(a.id));
+
+  function toggleLine(id: string) {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function acknowledgeAll() {
+    if (findings.some((a) => a.retentionHeld)) {
+      const message = t("anomaly.releaseConfirm").replace("{name}", title);
+      if (!(await confirm(message, { confirmKey: "anomaly.action.acknowledge" }))) return;
+    }
+    setBusy(true);
+    try {
+      const res = await settle(acknowledgeAnomalies, findings.map((a) => a.id));
+      if (!res.ok) push(anomalyErrorText(res.code, t), "fail");
+    } catch {
+      push(anomalyErrorText(undefined, t), "fail");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <Card title={t("anomaly.tab.items")} hint={t("anomaly.items.hint")} hueIndex={0}>
-      {domains.map((domain) => (
-        <div key={domain} className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-carbon-text">
-            {t(ANOMALY_DOMAIN_LABEL[domain] ?? "repos.title")}
-          </h3>
-          {items
-            .filter((item) => item.domain === domain)
-            .map((item) => (
-              <ItemRow
-                key={item.targetId}
-                t={t}
-                item={item}
-                globals={globals}
-                enabled={enabled}
-              />
-            ))}
+    <section
+      ref={ref}
+      aria-label={title}
+      style={hueVars(hueIndex) as CSSProperties}
+      className={`glim-hue glim-notch-card relative flex scroll-mt-10 flex-col gap-1 rounded-card p-5 pt-6 ${
+        group.worst === "critical" ? "bg-statusFailBgSoft" : "bg-carbon-surface"
+      }${findings.length > 1 ? " lg:col-span-2" : ""}`}
+    >
+      {/* Two heading badges in the flow of one positioned h2, as in StepCard,
+          so the pair stays centred on the card's top edge when a long name
+          wraps. */}
+      <h2 className="absolute top-0 z-10 flex max-w-[calc(100%-2.5rem)] -translate-y-1/2 items-center gap-1.5">
+        <Badge tone="heading" size="heading" inFlow wrap hueIndex={hueIndex} className="min-w-0">
+          {/* An item name is an identifier, so it keeps its own case. */}
+          <span className="min-w-0 normal-case tracking-normal wrap-anywhere">{title}</span>
+        </Badge>
+        <Badge tone={anomalySeverityTone(group.worst)} size="heading" className="shrink-0 shadow-[var(--elevation)]">
+          {t(ANOMALY_SEVERITY_LABEL[group.worst])}
+        </Badge>
+      </h2>
+
+      <p className="text-xs text-carbon-textSub wrap-anywhere">
+        {cardKind(group, t)} · {t("anomaly.card.open").replace("{n}", findings.length.toLocaleString())}
+      </p>
+
+      <div className="flex flex-col divide-y divide-carbon-border/60">
+        {findings.map((a) => (
+          <FindingLine
+            key={a.id}
+            a={a}
+            t={t}
+            open={openIds.has(a.id)}
+            onToggle={() => toggleLine(a.id)}
+            restoreIsPrimary={a === restore}
+            onAcknowledge={acknowledgeOne}
+            onExpected={expectOne}
+          />
+        ))}
+      </div>
+
+      {heldAndClosed && <RetentionNote t={t} />}
+
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        {item && (
+          <button
+            type="button"
+            onClick={() => setMonitoring(!monitoring)}
+            aria-expanded={monitoring}
+            aria-controls={monitoring ? monitoringId : undefined}
+            className="-mx-1 flex min-h-11 items-center gap-1.5 rounded-control px-1 text-xs text-carbon-textSub hover:text-carbon-text"
+          >
+            {t("anomaly.card.monitoring")}
+            <IconDisclosure open={monitoring} />
+          </button>
+        )}
+        <div className="ms-auto">
+          {restore?.lastGood ? (
+            <Button
+              label={t("anomaly.action.restoreLastGood").replace("{date}", isolateLtr(formatTs(restore.lastGood.at)))}
+              labelKey="anomaly.action.restoreLastGood"
+              tone="accent"
+              onClick={() => navigate(anomalyRestorePath(restore)!)}
+              className="glim-btn-wrap"
+            />
+          ) : findings.length === 1 ? (
+            <Button
+              label={t("anomaly.action.acknowledge")}
+              labelKey="anomaly.action.acknowledge"
+              onClick={() => void acknowledgeAll()}
+              disabled={busy}
+              hint={t("anomaly.acknowledgeHint")}
+              className="glim-btn-wrap"
+            />
+          ) : (
+            <Button
+              label={t("anomaly.action.acknowledgeAll").replace("{n}", findings.length.toLocaleString())}
+              labelKey="anomaly.action.acknowledgeAll"
+              onClick={() => void acknowledgeAll()}
+              disabled={busy}
+              hint={t("anomaly.acknowledgeHint")}
+              className="glim-btn-wrap"
+            />
+          )}
         </div>
-      ))}
+      </div>
+
+      {item && monitoring && (
+        <div className="mt-2">
+          <ItemMonitoring id={monitoringId} t={t} item={item} globals={globals} enabled={enabled} />
+        </div>
+      )}
+      {confirmDialog}
+    </section>
+  );
+}
+
+function QuietCard({
+  t,
+  items,
+  globals,
+  enabled,
+  hueIndex,
+  focusKey,
+}: {
+  t: T;
+  items: AnomalyItem[];
+  globals: AnomalyGlobals;
+  enabled: boolean;
+  hueIndex: number;
+  focusKey: string;
+}) {
+  return (
+    <Card title={`${t("anomaly.quiet")} · ${items.length.toLocaleString()}`} hint={t("anomaly.items.hint")} hueIndex={hueIndex}>
+      <ul className="grid gap-x-8 md:grid-cols-2">
+        {items.map((item) => (
+          <QuietRow
+            key={item.targetId}
+            t={t}
+            item={item}
+            globals={globals}
+            enabled={enabled}
+            focused={focusKey === item.targetId}
+          />
+        ))}
+      </ul>
     </Card>
   );
 }
 
-function ItemRow({
+function QuietRow({
   t,
   item,
   globals,
   enabled,
+  focused,
 }: {
   t: T;
   item: AnomalyItem;
   globals: AnomalyGlobals;
   enabled: boolean;
+  focused: boolean;
 }) {
-  const { confirm, confirmDialog } = useConfirm();
-  const { push } = useToast();
-  const [forgotten, setForgotten] = useState<string[]>([]);
+  const ref = useRef<HTMLLIElement>(null);
+  const [open, setOpen] = useState(focused);
+  const panelId = `monitoring-${item.targetId}`;
+  const { samples, needed, noData } = item.learning;
+  // An item with nothing to back up says so in its panel; the chip is for
+  // the count only.
+  const learning = enabled && item.scheduled && !noData && samples < needed;
 
-  async function forget(family: string, scopeKind: string, part: string) {
-    if (!(await confirm(t("anomaly.expectation.forgetConfirm"), { confirmKey: "anomaly.expectation.forget" }))) {
-      return;
-    }
-    const res = await forgetAnomalyExpectation(item.targetId, family, scopeKind, part);
-    if (!res.ok) {
-      push(anomalyErrorText(res.code, t), "fail");
-      return;
-    }
-    setForgotten((prev) => [...prev, `${scopeKind}:${part}:${family}`]);
-    window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
-  }
-
-  const counts = itemOpenCounts(item);
-  const openCount = counts.critical + counts.warning + counts.info;
-  const worst = worstSeverity(counts);
-  const typical = item.typical;
+  useEffect(() => {
+    if (!focused) return;
+    setOpen(true);
+    ref.current?.scrollIntoView({ block: "center" });
+  }, [focused]);
 
   return (
-    <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="min-w-0 text-sm text-carbon-text wrap-anywhere">{item.name}</span>
-        {!item.scheduled ? (
-          <span className="text-xs text-carbon-textSub">{t("anomaly.items.notScheduled")}</span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
-            {anomalyLearningText(t, item.learning.samples, item.learning.needed, item.learning.noData)}
-            <InfoBubble
-              tip={t("anomaly.items.learningDetail")
-                .replace("{newData}", item.learning.newData.toLocaleString())
-                .replace("{source}", item.learning.source.toLocaleString())
-                .replace("{duration}", item.learning.duration.toLocaleString())
-                .replace("{needed}", item.learning.needed.toLocaleString())}
-            />
-          </span>
+    <li ref={ref} className="flex min-w-0 flex-col">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        className="-mx-2 flex min-h-11 items-center gap-2 rounded-control px-2 py-1.5 text-start hover:bg-carbon-hover"
+      >
+        <span className="min-w-0 flex-1 text-sm text-carbon-text wrap-anywhere">
+          {item.name || anomalyDomainsLabel(item.domain, t)}
+        </span>
+        {!item.scheduled && (
+          <Badge tone="neutral" size="small" className="shrink-0">
+            {t("anomaly.items.notScheduled")}
+          </Badge>
         )}
-        {typical.sourceBytes !== null && typical.resticMs !== null && (
-          <span className="text-xs text-carbon-textSub">
-            {typical.newDataBytes !== null
-              ? t("anomaly.items.typical")
-                  .replace("{size}", isolateLtr(humanBytes(typical.sourceBytes)))
-                  .replace("{newData}", isolateLtr(humanBytes(typical.newDataBytes)))
-                  .replace("{duration}", isolateLtr(formatMillis(typical.resticMs)))
-              : t("anomaly.items.typicalSize")
-                  .replace("{size}", isolateLtr(humanBytes(typical.sourceBytes)))
-                  .replace("{duration}", isolateLtr(formatMillis(typical.resticMs)))}
-          </span>
+        {learning && (
+          <Badge tone="neutral" size="small" className="shrink-0">
+            {anomalyLearningText(t, samples, needed, noData)}
+          </Badge>
         )}
-        {openCount > 0 && worst && (
-          <Link
-            to={`/anomalies?scope=item:${encodeURIComponent(item.targetId)}#findings`}
-            aria-label={t("anomaly.itemBadgeAria")
-              .replace("{name}", item.name)
-              .replace("{n}", openCount.toLocaleString())}
-          >
-            <Badge tone={anomalySeverityTone(worst)} size="small" shape="pill">
-              {openCount}
-            </Badge>
-          </Link>
-        )}
-        {item.retentionHeld && <span className="text-xs text-statusWarn">{t("anomaly.retentionPaused")}</span>}
-      </div>
-
-      {item.dump && <SeriesLine t={t} label={t("anomaly.items.dumpSeries")} series={item.dump} />}
-      {item.datasets.map((series) => (
-        <SeriesLine key={series.part} t={t} label={series.part} series={series} />
-      ))}
-
-      {item.selectionSince > 0 && (
-        <p className="text-xs text-carbon-textSub">
-          {t("anomaly.expectation.selectionSince").replace("{date}", formatTs(item.selectionSince))}
-        </p>
+        <span className="shrink-0 text-xs text-carbon-textSub max-sm:hidden">
+          {anomalyDomainsLabel(item.domain, t)}
+        </span>
+        <span className="shrink-0 text-carbon-textSub">
+          <IconDisclosure open={open} />
+        </span>
+      </button>
+      {open && (
+        <div className="pb-3 pt-1">
+          <ItemMonitoring id={panelId} t={t} item={item} globals={globals} enabled={enabled} />
+        </div>
       )}
-
-      {item.expectations
-        .filter((e) => !forgotten.includes(`${e.scopeKind}:${e.part}:${e.family}`))
-        .map((e) => (
-          <div
-            key={`${e.scopeKind}:${e.part}:${e.family}`}
-            className="flex flex-wrap items-center gap-2 text-xs text-carbon-textSub"
-          >
-            {/* An expectation of a dump or a dataset says which series it
-                belongs to, or it would read as the item's own. */}
-            {e.scopeKind === "zfsds" && (
-              <span dir="ltr" className="min-w-0 font-mono text-carbon-text text-start wrap-anywhere">
-                {e.part}
-              </span>
-            )}
-            {e.scopeKind === "dump" && <span className="text-carbon-text">{t("anomaly.items.dumpSeries")}</span>}
-            <span>
-              {e.ceiling > 0
-                ? t("anomaly.expectation.ceiling")
-                    .replace("{family}", t(ANOMALY_FAMILY_LABEL[e.family] ?? "anomaly.family.newData"))
-                    .replace("{bytes}", humanBytes(e.ceiling))
-                : t("anomaly.expectation.since")
-                    .replace("{family}", t(ANOMALY_FAMILY_LABEL[e.family] ?? "anomaly.family.newData"))
-                    .replace("{date}", formatTs(e.sinceAt))}
-            </span>
-            <Button
-              label={t("anomaly.expectation.forget")}
-              labelKey="anomaly.expectation.forget"
-              onClick={() => void forget(e.family, e.scopeKind, e.part)}
-            />
-          </div>
-        ))}
-
-      <ItemAnomalySettings item={item} enabled={enabled} globals={globals} t={t} />
-      {confirmDialog}
-    </div>
+    </li>
   );
 }
+
+function ClosedRow({ t, closed }: { t: T; closed: FindingList }) {
+  const [open, setOpen] = useState(false);
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  function toggleLine(id: string) {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <section className="flex flex-col rounded-card bg-carbon-surface px-5 py-1">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="-mx-2 flex min-h-12 items-center gap-3 rounded-control px-2 text-start hover:bg-carbon-hover"
+      >
+        <span className="text-carbon-textSub">
+          <IconDisclosure open={open} />
+        </span>
+        <span className="min-w-0 flex-1 text-sm text-carbon-text">{t("anomaly.closedRecent")}</span>
+        {closed.loaded && (
+          <span className="glim-num shrink-0 text-sm text-carbon-textSub">{closed.list.length.toLocaleString()}</span>
+        )}
+      </button>
+      {open && (
+        <div className="flex flex-col divide-y divide-carbon-border/60 pb-2 glim-content-fade">
+          {closed.failed ? (
+            <div className="flex flex-col items-start gap-2 py-2">
+              <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
+              <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={closed.retry} />
+            </div>
+          ) : !closed.loaded ? (
+            <p className="py-2 text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
+          ) : closed.list.length === 0 ? (
+            <p className="py-2 text-sm text-carbon-textSub">{t("anomaly.emptyClosed")}</p>
+          ) : (
+            closed.list.map((a) => (
+              <FindingLine
+                key={a.id}
+                a={a}
+                t={t}
+                closed
+                open={openIds.has(a.id)}
+                onToggle={() => toggleLine(a.id)}
+              />
+            ))
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+

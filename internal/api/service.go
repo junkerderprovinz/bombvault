@@ -19,6 +19,7 @@ import (
 	"io/fs"
 	"log"
 	"maps"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,11 +37,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -510,6 +513,18 @@ type Service struct {
 	// background, so a second request for the same pair does not list it twice.
 	listingMu sync.Mutex
 	listing   map[string]bool
+
+	// groupOnce builds groupMgr, which connects this instance to the others
+	// that share its pairing phrase, and relaySrv, the relay it serves when
+	// that switch is on. Built on first use, so a Service literal works too.
+	groupOnce sync.Once
+	groupMgr  *group.Manager
+	relaySrv  *relay.Server
+	// relayServe mirrors the stored serve switch for relaySrv.Admit, which
+	// runs on every relay handshake.
+	relayServe     atomic.Bool
+	peerMuxOnce    sync.Once
+	peerMuxHandler http.Handler
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -1136,28 +1151,9 @@ func (s *Service) filesRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.FilesPath)
 }
 
-// fileSetRepoPath resolves the restic repo for ONE file set (#204): its own
-// repository if it has one, otherwise the Folders domain repository.
-//
-// WHAT THIS IS FOR: "I would like to back up a VM or folder directly to a B2 or
-// NAS share, bypassing the primary backup location. This is useful for large,
-// static folders where only an offsite copy is needed." A domain path could
-// already be a restic remote, but that moved EVERY folder set at once; this
-// moves one.
-//
-// The override goes through the same resolveRepo as the domain path, so the
-// same string shapes work and the same containment rules apply: a relative
-// subpath is resolved under the host mount root, a raw remote ("b2:…", "s3:…",
-// "sftp:…", "rest:…", "rclone:…") is handed to restic verbatim.
-//
-// WHAT STILL FOLLOWS THE DOMAIN, and it is worth being plain about it, because
-// it is the part a user will meet: PruneDomain and CheckDomain operate on the
-// DOMAIN repository. A set living in its own repository is backed up there and
-// restored from there, and its retention runs with it (applyRetention already
-// takes the repo it was handed, which is this one) - but a whole-domain prune or
-// integrity check does not reach into it. That gap is disclosed in the UI rather
-// than hidden, and closing it means teaching those two to iterate repositories,
-// which is its own change.
+// fileSetRepoPath resolves the repository of one file set: its own named
+// repository if it has one (#204), otherwise the Folders domain repository.
+// Whole-domain prune and check reach the named one through domainReposForOp.
 func (s *Service) fileSetRepoPath(settings store.Settings, set store.FileSet) (string, error) {
 	return s.itemRepoPath(set.Repo, func() (string, error) { return s.filesRepoPath(settings) })
 }

@@ -94,6 +94,28 @@ BombVault erbjuder två nivåer av bevis på att dina säkerhetskopior faktiskt 
 
 **Poängkortet för ransomware-skydd** på Översikten rullar upp detta i en grön / gul / röd hållning per domän, med en åldersstämplad checklista (off-site konfigurerat, append-only verifierat, replikering aktuell, återställningsövning godkänd, kryptering på, rensningsstrategi satt). Varje röd rad djuplänkar till åtgärden, och kortet blir grönt endast på verifierade fakta.
 
+## Parkoppling av instanser {#pairing}
+
+Mottagare, Hämtning-källor, flottvyn och Mesh-off-site pratar alla med en annan BombVault. De gör det som medlemmar i en och samma parkopplingsgrupp, och en instans går med i gruppen med tolv ord.
+
+På den första instansen, öppna **Instanser → Parkoppling** och klicka på **Skapa fras**. Tolv ord dyker upp. På varje annan instans, öppna samma flik, klicka på **Ange fras** och klistra in eller skriv in orden. Ett ord som inte finns i listan namnges med sin plats redan medan du skriver, och det sista ordet bär en kontrollsumma, så ett feltippat eller omkastat ord fångas innan något parkopplas. Skapa frasen på bara en instans: två instanser som båda skapar en fras bildar två separata grupper. Om ingen dyker upp inom en minut visar fliken hur du lämnar den extra gruppen och går med i den andra. Parkoppling kräver ett inloggningslösenord på varje instans, eftersom orden öppnar säkerhetskopiorna för alla instanser i gruppen. Frasen kan visas igen senare när du har angett det lösenordet. **Lämna gruppen** tar en instans ur den igen.
+
+Den som känner till orden kan gå med i gruppen, så behandla dem som ett lösenord.
+
+**Hur medlemmar når varandra.** I samma nätverk hittar de varandra via multicast och pratar direkt. Instanser i olika nätverk går via ett relä, valt på samma flik:
+
+- **Projektrelä** (standard): `relay.halleluja.design`, samma relä som KnightLoader använder. Inget att ställa in.
+- **Eget relä**: containern **BombVault Relay** från Unraid Community Apps, eller en av dina instanser som redan är nåbar utifrån med **Fungera som relä** påslaget. Den instansen svarar då på `/relay/connect` på sin egen adress, bakom den reverse proxy och det certifikat den redan har, och släpper bara in din grupp. Ange reläets adress på varje instans som ska använda det.
+- **Inget relä**: medlemmar hittar bara varandra i samma nätverk.
+
+**Vad reläet ser.** Varje anrop mellan medlemmar är förseglat med AES-256-GCM under en nyckel härledd ur de tolv orden, och den nyckeln lämnar aldrig dina instanser. Reläet lär sig en hash som grupperar anslutningarna, vilken instans ett meddelande är till, hur stort det är och när det passerar. Ett direkt anrop i det lokala nätverket är förseglat på samma sätt och även signerat, så inget beror på det självsignerade certifikat en instans visar upp.
+
+**Vad som färdas över gruppen.** Flottans poängkort, en begäran att kontrollera en domän just nu, erbjudanden om extern lagring från Mesh, och det en mottagare eller en Hämtning-källa behöver: den andra instansens repository-platser och dess restic-lösenord. Säkerhetskopieringsdata gör det aldrig; den går alltid direkt till restic-backendarna. Inte heller APP_KEY: restic-lösenordet öppnar bara den instansens repositorier och inget annat, inte dess sparade hemligheter, sessioner eller återställningskoder.
+
+**Poster från innan parkoppling.** Flottinstanser som lagts till med en flotta-token, och mottagare och Hämtning-källor som satts upp med den andra instansens APP_KEY, finns kvar efter uppdateringen och märks **Koppla igen**. Mottagare och Hämtning-källor fortsätter att fungera: vid sin första start ersätter BombVault varje sparad APP_KEY med det restic-lösenord som härletts ur den. Parkoppla båda instanserna, redigera sedan posten och välj dess instans. En flottinstans tar över sin gamla rad så snart en instans med samma namn dyker upp i gruppen.
+
+Den enda plats som fortfarande tar emot en APP_KEY för hand är [Återställ från ett annat BombVault-repo](#restore-from-another-bombvault-repo), för fallet att den andra instansen är borta och inte kan svara i en grupp.
+
 ## Mottagarpanel (den mottagande sidan)
 
 ![Den mottagande sidan, bevakad skrivskyddat, med en integritetskontroll körd på denna maskin.](assets/screenshots/receiver.png)
@@ -102,7 +124,7 @@ BombVault erbjuder två nivåer av bevis på att dina säkerhetskopior faktiskt 
 
 Allt ovan är den *sändande* sidan. På boxen som **tar emot** oföränderliga off-site-kopior från en annan BombVault ger mottagarpanelen dig oberoende, skrivskyddad övervakning av de repositorierna på den mottagande hårdvaran, så att ett tyst fel i den bortre änden inte förblir obemärkt.
 
-Slå på **Mottagare**-växeln i Inställningar för att avslöja en **Mottagare**-flik. Den är av som standard; aktivera den endast på en box som faktiskt tar emot oföränderliga off-site-säkerhetskopior. Registrera sedan ett mottaget repository (skrivskyddat, öppnat med den sändande instansens nyckel) för att få:
+Slå på **Mottagare**-växeln i Inställningar för att avslöja en **Mottagare**-flik. Den är av som standard; aktivera den endast på en box som faktiskt tar emot oföränderliga off-site-säkerhetskopior. Registrera sedan ett mottaget repository (skrivskyddat, öppnat med den sändande instansens restic-lösenord, som den får via [parkopplingsgruppen](#pairing)) för att få:
 
 - **En ögonblicksbildsinventering grupperad per källa**, så att du exakt kan se vilka containrar, VM:ar och filuppsättningar som har landat.
 - **Senast mottaget** per källa, så att du vet hur färsk var och en är.
@@ -136,12 +158,12 @@ Första segmentet i sökvägen är htpasswd-användaren, det andra är arkivet. 
 | **INTE skyddad** | VAULT accepterade en radering. `--append-only` saknas eller har tagits bort. |
 | **ej avgörande** | Varken eller. Oftast är adressen inte den restic själv använder, eller så har uppgifterna ändrats. Inget registreras och inget larm utlöses. |
 
-**4. Se på VAULT vad som kommer in.** Slå på *Inställningar → Mottagare*, öppna fliken **Mottagare** och registrera arkivet skrivskyddat.
+**4. Se på VAULT vad som kommer in.** Parkoppla de två boxarna ([Parkoppling av instanser](#pairing)), slå på *Inställningar → Mottagare*, öppna fliken **Mottagare** och registrera arkivet skrivskyddat med TOWER som sändande instans.
 
 !!! warning "Platsen är en sökväg **inuti** containern, skriven relativt värdmonteringen"
     Ange `user/appdata/rest-server/bombvault-containers/containers`, **inte** `/mnt/user/appdata/…`. BombVault kör i en container där värdens `/mnt` är monterad någon annanstans; en absolut värdsökväg finns inte där. Klistrar du in en sådan talar BombVault nu om vilken relativ sökväg du ska använda i stället.
 
-    **Sändande APP_KEY** är TOWERs nyckel, inte VAULTs. Du hittar den på TOWER under *Inställningar → System*.
+    VAULT hämtar TOWERs restic-lösenord via gruppen när du sparar; ingen behöver skriva in en nyckel.
 
 **5. Gör det ömsesidigt, om du vill.** Upprepa samma fem steg åt andra hållet: en rest-server på TOWER som tar emot VAULTs kopia. Då upprätthåller varje maskin oföränderligheten åt den andra, och ingen kan radera den andras säkerhetskopior.
 
@@ -161,7 +183,7 @@ En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation ge
 !!! tip "Planerad migrering kontra katastrof"
     Guidad återställning återställer BombVaults egna inställningar från en säkerhetskopia. För en *planerad* flytt till en ny box kan du istället ta med din konfiguration direkt med kortet **Exportera och importera inställningar** (en portabel JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 
-### Återställ från ett annat BombVault-repo
+### Återställ från ett annat BombVault-repo {#restore-from-another-bombvault-repo}
 
 Ett separat kort på fliken **Återställning** öppnar en *annan* BombVault-instans repo (en resurs monterad under `/mnt`, eller en fjärr-URL) med **den instansens `APP_KEY`**, i en engångs, skrivskyddad session. Bläddra bland containrarna, VM:arna och filuppsättningarna som lagras där, välj en ögonblicksbild och återställ den, och det återställda objektet blir en normal lokal container, VM eller filuppsättning. Inget skrivs någonsin till det andra repot, och dina egna säkerhetskopieringsinställningar förblir orörda (sessionen lever i minnet och löper ut av sig själv). Att flytta en container från server A till server B innebär inte längre att peka om dina repo-inställningar och återställa dem efteråt. Live server-till-server-federation är uttryckligen utanför omfånget; detta är en avsiktlig engångshämtning.
 

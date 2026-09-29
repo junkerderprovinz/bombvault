@@ -1,13 +1,13 @@
 // Settings at phone width, with a filled instance staged at the route layer: a
 // fresh harness database has every domain off and nothing configured, which
 // hides most of the page. On the phones, per tab: the 24px card rhythm, the
-// seven tabs four over three, nothing panning or reaching past the viewport or
+// eight tabs four over four, nothing panning or reaching past the viewport or
 // its card, no stray backtick, and every control big enough to hit. Then the
 // arrangements that change on a phone: target and credential rows put their
 // actions under the name, repository and passkey rows wrap instead of cutting,
 // the every-N-days field keeps three digits clear of its steppers, and the MCP
-// card's confirmations come up as a sheet. On the desktop: the
-// 40px rhythm and the unchanged strip of seven 200px tabs. German, because its
+// card's confirmations come up as a sheet. On the desktop: the 40px rhythm and
+// separate tabs of one width in even rows, hugging them. German, because its
 // labels run longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -57,7 +57,6 @@ const SETTINGS = {
   metricsEnabled: true,
   metricsTokenSet: true,
   widgetTokenSet: true,
-  fleetTokenSet: true,
   instanceName: "Tower im Keller (Hauptserver)",
   drillsEnabled: true,
   drillsSchedule: "weekly Sun 05:00",
@@ -297,6 +296,7 @@ const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
 
 const TABS = [
   ["general", "Allgemein"],
+  ["look", "Aussehen"],
   ["storage", "Pfade & Speicher"],
   ["schedules", "Zeitpläne"],
   ["offsite", "Off-site"],
@@ -376,24 +376,32 @@ async function openTab(page: Page, width: number, tab: string, name: string): Pr
   await settle(page);
 }
 
-// The page root holds the heading block and the tab panels; the panels hold
-// the cards. Both carry the rhythm.
+// The page root holds the sr-only heading, the tab strip and the tab panels;
+// the panels hold the cards. Root and panels both carry the rhythm.
 async function gaps(page: Page): Promise<string[]> {
   return page
     .getByRole("heading", { level: 1 })
-    .locator("xpath=../../..")
-    .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[1]).rowGap]);
+    .locator("xpath=..")
+    .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[2]).rowGap]);
 }
 
-async function tabRows(page: Page): Promise<{ perRow: number[]; widths: number[] }> {
+async function tabRows(page: Page): Promise<{ perRow: number[] }> {
   return page.getByRole("tablist", { name: "Einstellungen" }).evaluate((strip) => {
     const boxes = [...strip.querySelectorAll('[role="tab"]')].map((tab) => tab.getBoundingClientRect());
     const tops = [...new Set(boxes.map((b) => Math.round(b.top)))];
     return {
       perRow: tops.map((top) => boxes.filter((b) => Math.round(b.top) === top).length),
-      widths: boxes.map((b) => Math.round(b.width)),
     };
   });
+}
+
+async function tabFills(page: Page): Promise<{ strip: string; tabsWithoutFill: number }> {
+  return page.getByRole("tablist", { name: "Einstellungen" }).evaluate((strip) => ({
+    strip: getComputedStyle(strip).backgroundColor,
+    tabsWithoutFill: [...strip.querySelectorAll('[role="tab"]')].filter(
+      (tab) => getComputedStyle(tab).backgroundColor === "rgba(0, 0, 0, 0)",
+    ).length,
+  }));
 }
 
 for (const width of [320, 360]) {
@@ -404,7 +412,11 @@ for (const width of [320, 360]) {
 
       // Soft, so one run reports every check a tab fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
-      expect.soft((await tabRows(page)).perRow, "the seven tabs sit four over three").toEqual([4, 3]);
+      expect.soft((await tabRows(page)).perRow, "the eight tabs stay on one row").toEqual([8]);
+      expect.soft(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+        strip: "rgba(0, 0, 0, 0)",
+        tabsWithoutFill: 0,
+      });
 
       const layout = await page.evaluate(() => {
         const main = document.querySelector("#bv-main");
@@ -472,10 +484,10 @@ test("settings on a phone: each tab shows its glyph alone and keeps its name", a
     const tab = page.getByRole("tab", { name, exact: true });
     await expect(tab).toBeVisible();
     const box = (await tab.boundingBox())!;
-    expect(box.width, `the ${name} tab is narrower than a fingertip`).toBeGreaterThanOrEqual(43.5);
+    expect(box.width, `the ${name} tab is under the 24px tap-target floor`).toBeGreaterThanOrEqual(23.5);
     // The label is there for the accessible name only; shown, it would be a
     // letter and an ellipsis.
-    const label = tab.locator("span.truncate");
+    const label = tab.locator("[data-sel-label]");
     expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
   }
 });
@@ -565,18 +577,36 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and the strip of 200px tabs", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm and one row of tabs", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
-  const { widths } = await tabRows(page);
-  expect(widths).toEqual(Array(7).fill(200));
+  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
+  expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+    strip: "rgba(0, 0, 0, 0)",
+    tabsWithoutFill: 0,
+  });
+  // The eight German names do not fit this column together, so every tab
+  // drops to its glyph at once rather than some keeping their words.
   for (const [, name] of TABS) {
-    const label = page.getByRole("tab", { name, exact: true }).locator("span.truncate");
-    expect(await label.evaluate((el) => el.getBoundingClientRect().width), `the ${name} label is hidden`).toBeGreaterThan(1);
+    const tab = page.getByRole("tab", { name, exact: true });
+    await expect(tab).toBeVisible();
+    const label = tab.locator("[data-sel-label]");
+    expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
   }
-  // The strip hugs its tabs rather than spanning the column.
-  const strip = page.getByRole("tablist", { name: "Einstellungen" });
-  expect(await strip.evaluate((el) => getComputedStyle(el).display)).toBe("flex");
+});
+
+test("settings on a wide screen shows every tab with its name in one row", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
+  await openTab(page, 1920, "general", "Allgemein");
+
+  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
+  // Benachrichtigungen is wider than an even eighth of the row; each tab is
+  // as wide as its own name, so it still fits whole.
+  for (const [, name] of TABS) {
+    const label = page.getByRole("tab", { name, exact: true }).locator("[data-sel-label]");
+    await expect(label).toBeVisible();
+    expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `"${name}" is cut off`).toBe(true);
+  }
 });

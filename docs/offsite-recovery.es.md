@@ -94,6 +94,28 @@ BombVault ofrece dos niveles de prueba de que tus copias son realmente restaurab
 
 El **cuadro de mando de protección contra ransomware** en el Panel lo resume en una postura verde / ámbar / rojo por dominio, con una lista de comprobación con marca de antigüedad (externo configurado, append-only verificado, replicación al día, ensayo de restauración superado, cifrado activado, estrategia de poda definida). Cada fila roja enlaza directamente con la solución, y la tarjeta solo se pone verde con hechos verificados.
 
+## Emparejamiento de instancias {#pairing}
+
+Los receptores, las fuentes de recogida, la vista Fleet y Mesh externo hablan todos con otro BombVault. Lo hacen como miembros de un grupo de emparejamiento, y una instancia se une al grupo con doce palabras.
+
+En la primera instancia, abre **Instancias → Emparejamiento** y pulsa **Generar frase**. Aparecen doce palabras. En cada una de las demás instancias, abre la misma pestaña, pulsa **Introducir frase** y pégalas o escríbelas. Una palabra que no está en la lista se indica con su posición mientras escribes, y la última palabra lleva una suma de comprobación, así que una palabra mal escrita o intercambiada se detecta antes de que se complete el emparejamiento. Genera la frase en una sola instancia: dos instancias que crean cada una una frase forman dos grupos separados. Si nadie aparece en un minuto, la pestaña indica cómo salir del grupo sobrante y unirte al otro. Emparejar requiere una contraseña de acceso en cada instancia, porque las palabras abren las copias de seguridad de todas las instancias del grupo. La frase se puede volver a mostrar más tarde, después de introducir esa contraseña. **Salir del grupo** saca de nuevo a una instancia.
+
+Cualquiera que conozca las palabras puede unirse al grupo, así que trátalas como una contraseña.
+
+**Cómo se encuentran los miembros entre sí.** En la misma red se encuentran por multicast y hablan directamente. Las instancias en redes distintas pasan por un relay, elegido en la misma pestaña:
+
+- **Relay del proyecto** (el predeterminado): `relay.halleluja.design`, el mismo relay que usa también KnightLoader. Nada que configurar.
+- **Relay propio**: el contenedor **BombVault Relay** de las Unraid Community Apps, o una de tus instancias que ya sea accesible desde fuera con **Actuar como relay** activado. Esa instancia responde entonces en `/relay/connect` en su propia dirección, detrás del proxy inverso y el certificado que ya tiene, y deja entrar solo a tu grupo. Introduce la dirección del relay en cada instancia que deba usarlo.
+- **Sin relay**: los miembros solo se encuentran en la misma red.
+
+**Lo que ve el relay.** Cada llamada entre miembros va sellada con AES-256-GCM bajo una clave derivada de las doce palabras, y esa clave nunca sale de tus instancias. El relay conoce un hash que agrupa las conexiones, para qué instancia es un mensaje, qué tamaño tiene y cuándo pasa. Una llamada directa en la red local va sellada del mismo modo y además firmada, así que nada depende del certificado autofirmado que ofrece una instancia.
+
+**Lo que viaja por el grupo.** El cuadro de mando Fleet, una petición de comprobar un dominio ahora, las ofertas Mesh externo, y lo que necesita un receptor o una fuente de recogida: las ubicaciones del repositorio de la otra instancia y su contraseña restic. Los datos de copia nunca lo hacen; siguen yendo directos a los backends de restic. Tampoco la APP_KEY: la contraseña restic abre los repositorios de esa instancia y nada más, ni sus secretos guardados, ni sesiones, ni códigos de recuperación.
+
+**Entradas de antes del emparejamiento.** Los pares de Fleet añadidos con un token de Fleet, y los receptores y fuentes de recogida configurados con la APP_KEY de la otra instancia, se mantienen tras la actualización y quedan marcados como **Emparejar de nuevo**. Los receptores y fuentes de recogida siguen funcionando: en su primer arranque, BombVault sustituye cada APP_KEY guardada por la contraseña restic derivada de ella. Empareja ambas instancias, luego edita la entrada y elige su instancia. Un par de Fleet retoma su fila anterior en cuanto aparece en el grupo una instancia con el mismo nombre.
+
+El único lugar que todavía acepta una APP_KEY a mano es [Restaurar desde otro repo de BombVault](#restore-from-another-bombvault-repo), para el caso en que la otra instancia haya desaparecido y no pueda responder en un grupo.
+
 ## Panel receptor (el lado receptor)
 
 ![El lado receptor, vigilado en solo lectura, con una comprobación de integridad hecha en esta máquina.](assets/screenshots/receiver.png)
@@ -102,7 +124,7 @@ El **cuadro de mando de protección contra ransomware** en el Panel lo resume en
 
 Todo lo anterior es el lado *emisor*. En la máquina que **recibe** copias externas inmutables de otro BombVault, el panel receptor te ofrece monitorización independiente y de solo lectura de esos repositorios en el hardware receptor, de modo que un fallo silencioso en el otro extremo no pase desapercibido.
 
-Activa el conmutador **Receptor** en Ajustes para revelar una pestaña **Receptor**. Está desactivado por defecto; actívalo solo en una máquina que realmente reciba copias externas inmutables. Después registra un repositorio recibido (de solo lectura, abierto con la clave de la instancia emisora) para obtener:
+Activa el conmutador **Receptor** en Ajustes para revelar una pestaña **Receptor**. Está desactivado por defecto; actívalo solo en una máquina que realmente reciba copias externas inmutables. Después registra un repositorio recibido (de solo lectura, abierto con la contraseña restic de la instancia emisora, que llega a través del [grupo de emparejamiento](#pairing)) para obtener:
 
 - **Un inventario de instantáneas agrupado por fuente**, para que puedas ver exactamente qué contenedores, VMs y conjuntos de archivos han llegado.
 - **Última recepción** por fuente, para que sepas cómo de fresca es cada una.
@@ -136,12 +158,12 @@ El primer segmento de la ruta es el usuario htpasswd, el segundo el repositorio.
 | **NO protegido** | VAULT aceptó un borrado. Falta `--append-only` o se ha quitado. |
 | **no concluyente** | Ninguna de las dos. Normalmente la URL no es la que usa restic, o las credenciales han cambiado. No se registra nada ni se dispara ninguna alerta. |
 
-**4. En VAULT, observa lo que llega.** Activa *Ajustes → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura.
+**4. En VAULT, observa lo que llega.** Empareja los dos equipos ([Emparejamiento de instancias](#pairing)), activa *Ajustes → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura con TOWER como instancia emisora.
 
 !!! warning "La ubicación es una ruta **dentro** del contenedor, escrita relativa al montaje del host"
     Introduce `user/appdata/rest-server/bombvault-containers/containers`, **no** `/mnt/user/appdata/…`. BombVault se ejecuta en un contenedor donde el `/mnt` del host está montado en otro sitio; una ruta absoluta del host no existe ahí. Si pegas una, BombVault ahora te indica la ruta relativa que debes usar.
 
-    La **APP_KEY emisora** es la clave de TOWER, no la de VAULT. La encuentras en TOWER en *Ajustes → Sistema*.
+    VAULT recibe la contraseña restic de TOWER a través del grupo al guardar; nadie escribe una clave.
 
 **5. Hazlo mutuo, si quieres.** Repite los mismos cinco pasos en sentido contrario: un rest-server en TOWER que reciba la copia de VAULT. Entonces cada equipo impone la inmutabilidad al otro, y ninguno puede borrar las copias del otro.
 
@@ -161,7 +183,7 @@ Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstru
 !!! tip "Migración planificada frente a desastre"
     La recuperación guiada restaura los propios ajustes de BombVault desde una copia. Para un traslado *planificado* a una máquina nueva, puedes en su lugar llevar tu configuración directamente con la tarjeta **Exportar e importar ajustes** (un archivo JSON portátil). Consulta [Configuración](configuration.md#portable-settings-export-and-import).
 
-### Restaurar desde otro repo de BombVault
+### Restaurar desde otro repo de BombVault {#restore-from-another-bombvault-repo}
 
 Una tarjeta aparte en la pestaña **Recuperación** abre el repo de una instancia *distinta* de BombVault (un recurso compartido montado bajo `/mnt`, o una URL remota) con **la `APP_KEY` de esa instancia**, en una sesión única y de solo lectura. Explora los contenedores, VMs y conjuntos de archivos almacenados ahí, elige una instantánea y restáurala, y el objeto restaurado se convierte en un contenedor, VM o conjunto de archivos local normal. Nunca se escribe nada en el otro repo, y tus propios ajustes de copia quedan intactos (la sesión vive en memoria y expira por sí sola). Mover un contenedor del servidor A al servidor B ya no significa reapuntar los ajustes de tu repo y revertirlos después. La federación en vivo servidor a servidor queda explícitamente fuera de alcance; esto es una extracción única y deliberada.
 

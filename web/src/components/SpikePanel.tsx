@@ -3,8 +3,8 @@ import { runSpike } from "../lib/api";
 import type { SpikeCheck } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
-import { useToast } from "../lib/toast";
-import { Button } from "./Button";
+import { useTestVerdict } from "../lib/useTestVerdict";
+import { TestButton, VerdictLine } from "./TestButton";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -23,34 +23,24 @@ interface SpikePanelProps {
 }
 
 export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
-  const { push } = useToast();
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
-  const [allOk, setAllOk] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
-  // A failure shows a toast and shakes the button. The counter is bumped on
-  // every failure so a repeated one replays the animation.
-  const [shake, setShake] = useState(0);
+  const test = useTestVerdict(null, t("common.checkFailed"));
 
-  async function handleCheck() {
-    setLoading(true);
-    try {
-      const res = await runSpike();
-      setChecks(res.checks ?? []);
-      setAllOk(res.allOk);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : t("common.checkFailed");
-      push(msg, "fail");
-      setShake((n) => n + 1);
-      setChecks(null);
-      setAllOk(false);
-    } finally {
-      setLoading(false);
-    }
+  // A failed best-effort check is informational, so only a required one fails
+  // the run. The table below says which.
+  function handleCheck() {
+    void test.run(async () => {
+      try {
+        const res = await runSpike();
+        const found = res.checks ?? [];
+        setChecks(found);
+        return { ok: !found.some((c) => !c.OK && !c.BestEffort) };
+      } catch (e) {
+        setChecks(null);
+        throw e;
+      }
+    });
   }
-
-  const hasRequiredFails = checks
-    ? checks.some((c) => !c.OK && !c.BestEffort)
-    : false;
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,28 +53,17 @@ export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
         only and will not block backups.
       </p>
 
+      <VerdictLine verdict={test.verdict} />
       <div className="flex items-center gap-3">
-        <Button
+        <TestButton
           label={t("spike.checkNow")}
           labelKey="spike.checkNow"
+          words="check"
           tone="accent"
-          onClick={() => void handleCheck()}
-          disabled={loading}
-          busy={loading}
-          title={loading ? t("dashboard.checking") : undefined}
-          className={shake ? "glim-shake" : ""}
+          test={test}
+          onClick={handleCheck}
           hueIndex={hueIndex}
         />
-
-        {allOk !== null && !loading && (
-          <span
-            className={`text-sm font-medium ${
-              !hasRequiredFails ? "text-statusOk" : "text-statusFail"
-            }`}
-          >
-            {!hasRequiredFails ? t("spike.allOk") : t("spike.degraded")}
-          </span>
-        )}
       </div>
 
       {checks && checks.length > 0 && (

@@ -47,24 +47,25 @@ func TestReceivedRepoCRUD(t *testing.T) {
 	r := store.New(db)
 
 	appKey := strings.Repeat("ab", 32)     // this instance's key
-	sendingKey := strings.Repeat("cd", 32) // the sending instance's APP_KEY, which is stored
+	sendingKey := strings.Repeat("cd", 32) // the sending instance's restic password
 	enc, err := secret.Encrypt(appKey, []byte(sendingKey))
 	if err != nil {
 		t.Fatalf("Encrypt: %v", err)
 	}
 	if strings.Contains(string(enc), sendingKey) {
-		t.Fatal("stored app_key_enc must not contain the plaintext key")
+		t.Fatal("stored restic_password_enc must not contain the plaintext password")
 	}
 
 	in := store.ReceivedRepo{
-		Name:            "Off-site A",
-		Repo:            "rest:https://box:8000/vault",
-		AppKeyEnc:       enc,
-		DeadManHours:    26,
-		CheckCadence:    "weekly Sun 05:00",
-		ReadDataPercent: 5,
-		Enabled:         true,
-		SortOrder:       0,
+		Name:              "Off-site A",
+		Repo:              "rest:https://box:8000/vault",
+		ResticPasswordEnc: enc,
+		MemberID:          "member-a",
+		DeadManHours:      26,
+		CheckCadence:      "weekly Sun 05:00",
+		ReadDataPercent:   5,
+		Enabled:           true,
+		SortOrder:         0,
 	}
 	got, err := r.CreateReceivedRepo(in)
 	if err != nil {
@@ -92,15 +93,15 @@ func TestReceivedRepoCRUD(t *testing.T) {
 		t.Fatalf("check state should be zero initially: %+v", back)
 	}
 
-	dec, err := secret.Decrypt(appKey, back.AppKeyEnc)
+	dec, err := secret.Decrypt(appKey, back.ResticPasswordEnc)
 	if err != nil {
-		t.Fatalf("Decrypt stored app_key_enc: %v", err)
+		t.Fatalf("Decrypt stored restic_password_enc: %v", err)
 	}
 	if string(dec) != sendingKey {
-		t.Fatalf("app_key round-trip mismatch: got %q want %q", dec, sendingKey)
+		t.Fatalf("restic password round-trip mismatch: got %q want %q", dec, sendingKey)
 	}
-	if _, err := secret.Decrypt(strings.Repeat("ff", 32), back.AppKeyEnc); err == nil {
-		t.Fatal("a wrong app secret key must fail to decrypt the stored key")
+	if _, err := secret.Decrypt(strings.Repeat("ff", 32), back.ResticPasswordEnc); err == nil {
+		t.Fatal("a wrong app secret key must fail to decrypt the stored password")
 	}
 
 	// Record a successful deep check and disable the repo.

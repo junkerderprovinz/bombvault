@@ -32,6 +32,7 @@ import type {
   FileSetPresetResponse,
 } from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
+import { PageTitle } from "../components/PageTitle";
 import { SelectionTree } from "../components/SelectionTree";
 import { PlacementDraft, type PlacementDraftValue } from "../components/placement/PlacementDraft";
 import { PlacementRow } from "../components/placement/PlacementRow";
@@ -417,6 +418,7 @@ function FileSetRestoreControl({
           select="one"
           active={dest}
           buttonHeight
+          inline
           onChange={(id) => setDest(id as RestoreDest)}
           disabled={isPending}
         />
@@ -1415,9 +1417,8 @@ export function Files() {
       {/* Heading with Discover, for disaster recovery, and the Add actions. */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">{t("files.title")}</h1>
-          <p className="mt-1 text-sm text-carbon-textSub">{t("files.subtitle")}</p>
-          <div className="mt-2"><OffsiteIndicator domain="files" /></div>
+          <PageTitle>{t("files.title")}</PageTitle>
+          <OffsiteIndicator domain="files" />
         </div>
         <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
           <Button

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-// A wheel notch steps a picker and is clamped rather than wrapped, so one notch
-// too many cannot land a value from the other end of the list. While the
-// pointer is on the control the handler is the scroll, and the page underneath
-// stays put.
+// A wheel notch steps a focused picker and is clamped rather than wrapped, so
+// one notch too many cannot land a value from the other end of the list. While
+// the control has focus the handler is the scroll, and the page underneath
+// stays put; a control the pointer only passes over leaves the scroll alone.
 import { afterEach, expect, it } from "vitest";
 import { enableSelectScrollHere, enableWheelStep, stepIndex } from "./selectScroll";
 
@@ -26,9 +26,10 @@ it("clamps at both ends instead of wrapping", () => {
   expect(stepIndex(0, 0, -1)).toBe(0);
 });
 
-it("steps a trigger and swallows the page scroll", () => {
+it("steps a focused trigger and swallows the page scroll", () => {
   const trigger = document.createElement("button");
   document.body.append(trigger);
+  trigger.focus();
   const seen: number[] = [];
   detachers.push(enableWheelStep(trigger, (delta) => seen.push(delta)));
 
@@ -44,9 +45,23 @@ it("steps a trigger and swallows the page scroll", () => {
   expect(up.defaultPrevented).toBe(true);
 });
 
+it("lets the page scroll past a trigger without focus", () => {
+  const trigger = document.createElement("button");
+  document.body.append(trigger);
+  const seen: number[] = [];
+  detachers.push(enableWheelStep(trigger, (delta) => seen.push(delta)));
+
+  const event = wheel(120);
+  trigger.dispatchEvent(event);
+
+  expect(seen).toEqual([]);
+  expect(event.defaultPrevented).toBe(false);
+});
+
 it("ignores a horizontal wheel", () => {
   const trigger = document.createElement("button");
   document.body.append(trigger);
+  trigger.focus();
   const seen: number[] = [];
   detachers.push(enableWheelStep(trigger, (delta) => seen.push(delta)));
   trigger.dispatchEvent(wheel(0));
@@ -71,6 +86,7 @@ it("steps a native select rendered after the listener was attached", () => {
   // delegated rather than attached per element at boot.
   detachers.push(enableSelectScrollHere());
   const select = makeSelect(["a", "b", "c"]);
+  select.focus();
 
   let changes = 0;
   select.addEventListener("change", () => changes++);
@@ -87,6 +103,15 @@ it("steps a native select rendered after the listener was attached", () => {
   expect(changes).toBe(2);
 });
 
+it("leaves a select without focus to the page", () => {
+  detachers.push(enableSelectScrollHere());
+  const select = makeSelect(["a", "b", "c"]);
+  const event = wheel(120);
+  select.dispatchEvent(event);
+  expect(select.selectedIndex).toBe(0);
+  expect(event.defaultPrevented).toBe(false);
+});
+
 it("leaves a disabled select and a one-option select alone", () => {
   detachers.push(enableSelectScrollHere());
   const off = makeSelect(["a", "b"], true);
@@ -94,6 +119,7 @@ it("leaves a disabled select and a one-option select alone", () => {
   expect(off.selectedIndex).toBe(0);
 
   const lonely = makeSelect(["only"]);
+  lonely.focus();
   const event = wheel(120);
   lonely.dispatchEvent(event);
   expect(lonely.selectedIndex).toBe(0);

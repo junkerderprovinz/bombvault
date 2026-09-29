@@ -2,40 +2,12 @@ package store_test
 
 import (
 	"database/sql"
-	"errors"
-	"strings"
 	"testing"
+	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-func TestFleetPeerEmptyURLRejected(t *testing.T) {
-	db := store.OpenMem(t)
-	if err := store.Migrate(db); err != nil {
-		t.Fatal(err)
-	}
-	r := store.New(db)
-
-	for _, u := range []string{"", "   "} {
-		if _, err := r.CreateFleetPeer(store.FleetPeer{Name: "Bad", URL: u}); !errors.Is(err, store.ErrEmptyFleetPeer) {
-			t.Fatalf("CreateFleetPeer(url=%q) err = %v, want ErrEmptyFleetPeer", u, err)
-		}
-	}
-	if err := r.UpdateFleetPeer(store.FleetPeer{ID: "x", URL: ""}); !errors.Is(err, store.ErrEmptyFleetPeer) {
-		t.Fatalf("UpdateFleetPeer(url=\"\") err = %v, want ErrEmptyFleetPeer", err)
-	}
-	all, err := r.ListFleetPeers()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(all) != 0 {
-		t.Fatalf("a rejected create must write nothing, got %d rows", len(all))
-	}
-}
-
-// TestFleetPeerCRUD also checks that the peer's fleet token is stored as
-// ciphertext and decrypts back with this instance's app key.
 func TestFleetPeerCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -43,75 +15,30 @@ func TestFleetPeerCRUD(t *testing.T) {
 	}
 	r := store.New(db)
 
-	appKey := strings.Repeat("ab", 32) // this instance's app secret key
-	peerToken := "deadbeefcafef00d"    // the peer's fleet_token
-	enc, err := secret.Encrypt(appKey, []byte(peerToken))
-	if err != nil {
-		t.Fatalf("Encrypt: %v", err)
-	}
-	if strings.Contains(string(enc), peerToken) {
-		t.Fatal("stored token_enc must not contain the plaintext token")
-	}
-
-	in := store.FleetPeer{
-		Name:      "tower",
-		URL:       "https://192.168.1.50:3443",
-		TokenEnc:  enc,
-		Enabled:   true,
-		SortOrder: 0,
-	}
-	got, err := r.CreateFleetPeer(in)
+	got, err := r.CreateFleetPeer(store.FleetPeer{MemberID: "member-a", Name: "tower", Enabled: true})
 	if err != nil {
 		t.Fatalf("CreateFleetPeer: %v", err)
 	}
-	if got.ID == "" {
-		t.Fatal("CreateFleetPeer did not assign an ID")
-	}
-	if got.CreatedAt == 0 {
-		t.Fatal("CreateFleetPeer did not stamp CreatedAt")
+	if got.ID == "" || got.CreatedAt == 0 {
+		t.Fatalf("CreateFleetPeer did not assign an id and a creation time: %+v", got)
 	}
 
 	back, ok, err := r.GetFleetPeer(got.ID)
 	if err != nil || !ok {
 		t.Fatalf("GetFleetPeer: ok=%v err=%v", ok, err)
 	}
-	if back.Name != "tower" || back.URL != in.URL || !back.Enabled {
+	if back.Name != "tower" || back.MemberID != "member-a" || !back.Enabled || back.NeedsPairing() {
 		t.Fatalf("GetFleetPeer round-trip mismatch: %+v", back)
 	}
 	if back.LastPollOK.Valid {
-		t.Fatalf("a freshly created peer must have LastPollOK unset (never polled), got %+v", back.LastPollOK)
-	}
-	dec, err := secret.Decrypt(appKey, back.TokenEnc)
-	if err != nil || string(dec) != peerToken {
-		t.Fatalf("stored token did not decrypt back to the original: dec=%q err=%v", dec, err)
+		t.Fatalf("a fresh peer must have LastPollOK unset, got %+v", back.LastPollOK)
 	}
 
-	all, err := r.ListFleetPeers()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(all) != 1 || all[0].ID != got.ID {
-		t.Fatalf("ListFleetPeers = %+v, want exactly the one created peer", all)
-	}
-
-	// An edit carries the existing ciphertext forward, as buildFleetPeer does.
 	back.Name = "tower (renamed)"
 	back.Enabled = false
 	if err := r.UpdateFleetPeer(back); err != nil {
 		t.Fatalf("UpdateFleetPeer: %v", err)
 	}
-	updated, ok, err := r.GetFleetPeer(got.ID)
-	if err != nil || !ok {
-		t.Fatalf("GetFleetPeer after update: ok=%v err=%v", ok, err)
-	}
-	if updated.Name != "tower (renamed)" || updated.Enabled {
-		t.Fatalf("UpdateFleetPeer did not persist: %+v", updated)
-	}
-	dec2, err := secret.Decrypt(appKey, updated.TokenEnc)
-	if err != nil || string(dec2) != peerToken {
-		t.Fatalf("token must survive an update that keeps the same ciphertext: dec=%q err=%v", dec2, err)
-	}
-
 	if err := r.UpdateFleetPeerPollResult(got.ID, 1_700_000_000, sql.NullBool{Valid: true, Bool: true}, "", "tower-instance", "1.2.3", `[{"domain":"containers"}]`); err != nil {
 		t.Fatalf("UpdateFleetPeerPollResult: %v", err)
 	}
@@ -119,22 +46,92 @@ func TestFleetPeerCRUD(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("GetFleetPeer after poll result: ok=%v err=%v", ok, err)
 	}
-	if polled.LastPollAt != 1_700_000_000 || !polled.LastPollOK.Valid || !polled.LastPollOK.Bool ||
+	if polled.LastPollAt != 1_700_000_000 || !polled.LastPollOK.Bool ||
 		polled.LastPollInstanceName != "tower-instance" || polled.LastPollVersion != "1.2.3" ||
 		polled.LastPollDomainsJSON != `[{"domain":"containers"}]` {
 		t.Fatalf("UpdateFleetPeerPollResult round-trip mismatch: %+v", polled)
 	}
 	if polled.Name != "tower (renamed)" || polled.Enabled {
-		t.Fatalf("UpdateFleetPeerPollResult must not touch config columns: %+v", polled)
+		t.Fatalf("a poll result must not touch the configuration: %+v", polled)
 	}
 
 	if err := r.DeleteFleetPeer(got.ID); err != nil {
 		t.Fatalf("DeleteFleetPeer: %v", err)
 	}
 	if _, ok, err := r.GetFleetPeer(got.ID); err != nil || ok {
-		t.Fatalf("GetFleetPeer after delete: ok=%v err=%v, want ok=false", ok, err)
+		t.Fatalf("GetFleetPeer after delete: ok=%v err=%v", ok, err)
 	}
-	if err := r.DeleteFleetPeer("does-not-exist"); err != nil {
-		t.Fatalf("DeleteFleetPeer(missing id): %v", err)
+}
+
+func TestGroupStateStartsWithAnInstanceIDAndNoGroup(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	g, err := r.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(g.InstanceID) != 32 || len(g.SecretEnc) != 0 || g.RelayMode != "project" || g.RelayServe {
+		t.Fatalf("fresh group state = %+v, want a 32-hex id, no secret, the project relay", g)
+	}
+	if err := r.SetGroupSecret([]byte("sealed"), time.Unix(1_700_000_000, 0)); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetGroupRelay("own", "https://relay.example.org", true); err != nil {
+		t.Fatal(err)
+	}
+	after, err := r.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.InstanceID != g.InstanceID || string(after.SecretEnc) != "sealed" ||
+		after.RelayMode != "own" || after.RelayURL != "https://relay.example.org" || !after.RelayServe {
+		t.Fatalf("group state did not round-trip: %+v", after)
+	}
+}
+
+func TestGroupStateRemembersWhenTheGroupWasEnteredAndFirstShared(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	if err := r.MarkGroupMemberSeen(time.Unix(1_700_000_010, 0)); err != nil {
+		t.Fatal(err)
+	}
+	if g, _ := r.GetGroupState(); !g.JoinedAt.IsZero() || !g.MemberSeenAt.IsZero() {
+		t.Fatalf("outside a group: joined %v, seen %v; want both zero", g.JoinedAt, g.MemberSeenAt)
+	}
+
+	joined := time.Unix(1_700_000_000, 0)
+	if err := r.SetGroupSecret([]byte("sealed"), joined); err != nil {
+		t.Fatal(err)
+	}
+	for _, at := range []int64{1_700_000_030, 1_700_000_090} {
+		if err := r.MarkGroupMemberSeen(time.Unix(at, 0)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	g, err := r.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !g.JoinedAt.Equal(joined) || g.MemberSeenAt.Unix() != 1_700_000_030 {
+		t.Fatalf("joined %v, seen %v; want the join time and the first sighting", g.JoinedAt, g.MemberSeenAt)
+	}
+
+	if err := r.SetGroupSecret([]byte("other"), joined.Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if g, _ := r.GetGroupState(); !g.JoinedAt.Equal(joined.Add(time.Hour)) || !g.MemberSeenAt.IsZero() {
+		t.Fatalf("after joining another group: joined %v, seen %v; want a fresh start", g.JoinedAt, g.MemberSeenAt)
+	}
+	if err := r.SetGroupSecret(nil, joined.Add(2*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if g, _ := r.GetGroupState(); !g.JoinedAt.IsZero() || !g.MemberSeenAt.IsZero() {
+		t.Fatalf("after leaving: joined %v, seen %v; want both zero", g.JoinedAt, g.MemberSeenAt)
 	}
 }

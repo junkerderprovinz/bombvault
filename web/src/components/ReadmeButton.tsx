@@ -146,3 +146,8 @@ export function fitReadmeText(root: HTMLElement): void {
     if (over > 1) line.style.fontSize = `${parseFloat(getComputedStyle(line).fontSize) / over}px`;
   }
 }
+
+/** A vendor mark kept as its own markup, from lib/appMarks.ts. */
+export function BrandMark({ svg }: { svg: string }) {
+  return <span className="contents" aria-hidden dangerouslySetInnerHTML={{ __html: svg }} />;
+}

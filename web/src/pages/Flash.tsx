@@ -18,6 +18,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { PageTitle } from "../components/PageTitle";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest } from "../lib/restoreRequest";
@@ -144,20 +145,10 @@ export function Flash() {
   const reload = () => setReloadTick((n) => n + 1);
 
   return (
-    // The OffsiteIndicator sits inside the heading div, so the shell gap alone
-    // spaces the heading and the cards.
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
-          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
-        </div>
-        <p className="mt-1 text-sm text-carbon-textSub">{tLtr(t, "flash.subtitle")}</p>
-        <div className="mt-2 flex flex-col gap-1">
-          <OffsiteIndicator domain="flash" />
-          <PlacementFlow domain="flash" />
-        </div>
-      </div>
+      <PageTitle>{t("flash.title")}</PageTitle>
+      <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+      <OffsiteIndicator domain="flash" />
 
       {/* The outer div holds the heading badge, so it carries the notch hover
           zone and the hue, and stays unpadded so its top edge matches the
@@ -180,6 +171,7 @@ export function Flash() {
               busyPhase={running.phase}
             />
           </div>
+          <PlacementFlow domain="flash" />
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
           {/* As on the Folders page: a restore has its own control with its

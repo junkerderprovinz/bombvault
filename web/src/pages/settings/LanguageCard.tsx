@@ -5,8 +5,8 @@ import { useRef, useState } from "react";
 import { useT } from "../../lib/i18n";
 import { stepIndex } from "../../lib/selectScroll";
 
-// LanguageCard switches the UI language. The choice is stored and applied at
-// once, with no Save step.
+// LanguageCard switches the UI language. It stands first on the Look tab, and
+// the choice is stored and applied at once, with no Save step.
 export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { lang, setLanguage, languages } = useT();
   const [open, setOpen] = useState(false);
@@ -20,8 +20,9 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
   return (
     <Card title={t("settings.language")} hueIndex={hueIndex}>
       <div className="inline-block">
-        {/* A fixed width, which the panel takes over from the trigger;
-            truncate keeps a long locale name inside it. */}
+        {/* A field's height, like the buttons beside fields, and a fixed width,
+            which the panel takes over from the trigger; truncate keeps a long
+            locale name inside it. */}
         <button
           ref={ref}
           type="button"
@@ -30,7 +31,7 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-surface3 transition-colors"
+          className="flex h-[var(--btn-h)] items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 text-sm text-carbon-text hover:bg-carbon-surface3 transition-colors"
         >
           <Flag code={current.flag} />
           <span className="min-w-0 truncate text-start">{current.label}</span>

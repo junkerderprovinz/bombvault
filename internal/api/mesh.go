@@ -1,11 +1,9 @@
 package api
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,10 +25,10 @@ func newCredSetID() string {
 	return hex.EncodeToString(b)
 }
 
-// meshOfferRequest is the body of POST /api/fleet/mesh-offer: a fleet peer
+// meshOfferRequest is the body of POST /api/group/peer/mesh-offer: a member
 // offering a rest-server it deployed as off-site storage. Only these
-// connection details cross the fleet channel; backups replicate straight to
-// the rest-server. Anyone holding this instance's fleet token may send one.
+// connection details cross the group; backups replicate straight to the
+// rest-server.
 type meshOfferRequest struct {
 	FromName        string `json:"fromName"`
 	SuggestedDomain string `json:"suggestedDomain"`
@@ -39,16 +37,16 @@ type meshOfferRequest struct {
 	RESTPassword    string `json:"restPassword"`
 }
 
-// handleFleetMeshOfferReceive stores a peer's offer as a pending
-// store.MeshOffer for the admin to review. Like handleFleetStatus it checks
-// the fleet token itself.
-func (h *Handler) handleFleetMeshOfferReceive(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.fleetGate(w, r); !ok {
-		return
-	}
-	body := io.LimitReader(r.Body, fleetResponseMax)
+// meshOfferBodyMax caps an offer's body. A real offer is a few hundred bytes,
+// and the cap keeps the largest one inside group.MaxCallBytes once it is
+// sealed and encoded for the wire.
+const meshOfferBodyMax = 64 << 10
+
+// handlePeerMeshOffer stores a member's offer as a pending store.MeshOffer
+// for the admin to review. POST /api/group/peer/mesh-offer
+func (s *Service) handlePeerMeshOffer(w http.ResponseWriter, r *http.Request) {
 	var in meshOfferRequest
-	if err := json.NewDecoder(body).Decode(&in); err != nil {
+	if err := json.NewDecoder(io.LimitReader(r.Body, meshOfferBodyMax)).Decode(&in); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed mesh offer body"})
 		return
 	}
@@ -57,12 +55,12 @@ func (h *Handler) handleFleetMeshOfferReceive(w http.ResponseWriter, r *http.Req
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "offer repo must not be empty"})
 		return
 	}
-	enc, err := secret.Encrypt(h.cfg.AppKey, []byte(in.RESTPassword))
+	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(in.RESTPassword))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	stored, err := h.store.CreateMeshOffer(store.MeshOffer{
+	stored, err := s.store.CreateMeshOffer(store.MeshOffer{
 		From:            strings.TrimSpace(in.FromName),
 		SuggestedDomain: strings.TrimSpace(in.SuggestedDomain),
 		Repo:            repo,
@@ -272,18 +270,18 @@ type meshProposeResponse struct {
 	Repo string `json:"repo"`
 }
 
-// handleProposeMeshOffer offers storage to a fleet peer. It generates a
-// one-time rest-server credential, sends the connection details to the peer's
-// mesh-offer inbox with the peer's stored token, and returns the deploy
-// snippet. Deploying the rest-server is left to the admin.
+// handleProposeMeshOffer offers storage to a group member. It generates a
+// one-time rest-server credential, sends the connection details to the
+// member's mesh-offer inbox over the group, and returns the deploy snippet.
+// Deploying the rest-server is left to the admin.
+// POST /api/fleet/peers/{id}/mesh-offer
 func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request) {
-	peer, ok, err := h.store.GetFleetPeer(r.PathValue("id"))
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	peer, ok := h.lookupFleetPeer(w, r)
+	if !ok {
 		return
 	}
-	if !ok {
-		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such fleet peer"})
+	if peer.NeedsPairing() {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "pair this instance again first"})
 		return
 	}
 	var in meshProposeInput
@@ -307,53 +305,20 @@ func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request)
 	}
 	repo := fmt.Sprintf("rest:%s/%s/%s", base, snip.User, in.Domain)
 
-	token, err := h.svc.decryptFleetPeerToken(peer)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("decrypt peer token: %w", err)))
-		return
-	}
 	settings, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := postMeshOffer(r.Context(), peer.URL, token, meshOfferRequest{
-		FromName:        settings.InstanceName,
+	if err := h.svc.callMember(r.Context(), peer.MemberID, http.MethodPost, "/api/group/peer/mesh-offer", meshOfferRequest{
+		FromName:        instanceDisplayName(settings),
 		SuggestedDomain: in.Domain,
 		Repo:            repo,
 		RESTUser:        snip.User,
 		RESTPassword:    snip.Password,
-	}); err != nil {
+	}, nil); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("send offer to peer: %w", err)))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snippet": meshProposeResponse{DeploySnippet: snip, Repo: repo}}))
-}
-
-// postMeshOffer sends an offer to a peer over the same client pollFleetPeer
-// uses: bounded, no redirects, and no TLS verification because peers usually
-// run self-signed certificates.
-func postMeshOffer(ctx context.Context, peerURL, token string, offer meshOfferRequest) error {
-	ctx, cancel := context.WithTimeout(ctx, fleetPollTimeout)
-	defer cancel()
-	body, err := json.Marshal(offer)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(peerURL, "/")+"/api/fleet/mesh-offer", strings.NewReader(string(body)))
-	if err != nil {
-		return fmt.Errorf("build mesh offer request: %w", err)
-	}
-	req.Header.Set("X-Fleet-Token", token)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := fleetHTTPClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close() //nolint:errcheck // response body close error is not actionable
-	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, fleetResponseMax))
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("peer refused the offer (check its fleet token)")
-	}
-	return nil
 }

@@ -94,6 +94,28 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 
 **Bảng điểm bảo vệ chống ransomware** trên bảng điều khiển gom điều này thành một thế phòng thủ xanh / hổ phách / đỏ cho mỗi miền, với một danh sách kiểm tra có đóng dấu tuổi (off-site đã cấu hình, append-only đã xác minh, nhân bản hiện thời, diễn tập khôi phục đã qua, mã hóa đã bật, chiến lược dọn bớt đã đặt). Mỗi hàng đỏ liên kết sâu tới bản sửa, và thẻ chỉ bao giờ chuyển xanh dựa trên các sự thật đã xác minh.
 
+## Ghép nối các phiên bản {#pairing}
+
+Bộ nhận, nguồn Kéo về, khung nhìn Đội và Mesh off-site đều nói chuyện với một BombVault khác. Chúng làm vậy với tư cách thành viên của một nhóm ghép nối, và một phiên bản gia nhập nhóm bằng mười hai từ.
+
+Trên phiên bản đầu tiên, mở **Phiên bản → Ghép nối** rồi nhấn **Tạo cụm từ**. Mười hai từ hiện ra. Trên mọi phiên bản khác, mở cùng tab đó, nhấn **Nhập cụm từ** rồi dán hoặc gõ các từ vào. Một từ không có trong danh sách sẽ được nêu tên cùng vị trí của nó ngay khi bạn gõ, và từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện trước khi việc ghép nối xảy ra. Chỉ tạo cụm từ trên một phiên bản duy nhất: hai phiên bản mà cả hai đều tạo cụm từ sẽ tạo thành hai nhóm riêng biệt. Nếu không ai xuất hiện trong một phút, tab sẽ cho biết cách rời khỏi nhóm thừa và tham gia nhóm kia. Việc ghép nối cần mật khẩu đăng nhập trên mỗi phiên bản, vì các từ này mở được bản sao lưu của mọi phiên bản trong nhóm. Cụm từ có thể được hiện lại sau này, sau khi nhập mật khẩu đó. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
+
+Bất kỳ ai biết các từ đó đều có thể gia nhập nhóm, nên hãy coi chúng như một mật khẩu.
+
+**Các thành viên đến được với nhau như thế nào.** Trong cùng một mạng, chúng tìm nhau bằng multicast và nói chuyện trực tiếp. Các phiên bản ở mạng khác nhau đi qua một relay, được chọn trên cùng tab đó:
+
+- **Relay của dự án** (mặc định): `relay.halleluja.design`, cũng là relay mà KnightLoader dùng. Không cần thiết lập gì cả.
+- **Relay riêng**: container **BombVault Relay** từ Unraid Community Apps, hoặc một trong các phiên bản của bạn vốn đã truy cập được từ bên ngoài với **Làm relay** được bật. Phiên bản đó khi ấy sẽ trả lời tại `/relay/connect` trên địa chỉ của chính nó, phía sau reverse proxy và chứng chỉ mà nó đã có sẵn, và chỉ cho nhóm của bạn vào. Nhập địa chỉ của relay trên mọi phiên bản cần dùng nó.
+- **Không dùng relay**: các thành viên chỉ tìm thấy nhau trong cùng một mạng.
+
+**Relay thấy được gì.** Mọi cuộc gọi giữa các thành viên được niêm phong bằng AES-256-GCM dưới một khóa suy ra từ mười hai từ, và khóa đó không bao giờ rời khỏi các phiên bản của bạn. Relay chỉ biết một hash gom nhóm các kết nối, phiên bản nào là đích của một thông điệp, nó lớn bao nhiêu và khi nào nó đi qua. Một cuộc gọi trực tiếp trên mạng cục bộ cũng được niêm phong theo cùng cách và còn được ký nữa, nên không có gì phụ thuộc vào chứng chỉ tự ký mà một phiên bản đang dùng.
+
+**Những gì đi qua nhóm.** Bảng điểm của Đội, một yêu cầu kiểm tra một miền ngay bây giờ, các đề nghị lưu trữ ngoài site của Mesh, và những gì một bộ nhận hay nguồn Kéo về cần: vị trí kho của phiên bản kia và mật khẩu restic của nó. Dữ liệu sao lưu thì không bao giờ; nó vẫn luôn đi thẳng tới các restic backend. APP_KEY cũng không: mật khẩu restic chỉ mở kho của phiên bản đó và không gì khác, không phải các bí mật đã lưu, phiên làm việc hay mã khôi phục của nó.
+
+**Các mục có từ trước khi ghép nối.** Các phiên bản Đội được thêm bằng mã thông báo Đội, cùng các bộ nhận và nguồn Kéo về được thiết lập bằng APP_KEY của phiên bản kia, vẫn còn sau bản cập nhật và được đánh dấu **Ghép nối lại**. Bộ nhận và nguồn Kéo về vẫn tiếp tục hoạt động: ở lần khởi động đầu tiên, BombVault thay mỗi APP_KEY đã lưu bằng mật khẩu restic suy ra từ nó. Hãy ghép nối cả hai phiên bản, rồi sửa mục đó và chọn phiên bản của nó. Một phiên bản Đội sẽ nhận lại hàng cũ của nó ngay khi một phiên bản cùng tên xuất hiện trong nhóm.
+
+Nơi duy nhất vẫn còn nhận APP_KEY nhập bằng tay là [Khôi phục từ một kho BombVault khác](#restore-from-another-bombvault-repo), cho trường hợp phiên bản kia đã biến mất và không thể trả lời trong một nhóm.
+
 ## Bảng điều khiển bên nhận (phía nhận)
 
 ![Phía nhận, được theo dõi ở chế độ chỉ đọc, với kiểm tra toàn vẹn chạy trên máy này.](assets/screenshots/receiver.png)
@@ -102,7 +124,7 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 
 Mọi thứ ở trên là phía *gửi*. Trên máy **nhận** các bản sao off-site bất biến từ một BombVault khác, bảng điều khiển bên nhận cho bạn giám sát độc lập, chỉ đọc các kho đó trên phần cứng bên nhận, nên một lần thất bại âm thầm ở đầu xa không bị bỏ qua.
 
-Bật công tắc **Receiver** trong Settings để hé lộ một tab **Receiver**. Nó mặc định tắt; chỉ bật nó trên một máy thực sự nhận các bản sao lưu off-site bất biến. Sau đó đăng ký một kho đã nhận (chỉ đọc, mở bằng khóa của phiên bản gửi) để có được:
+Bật công tắc **Receiver** trong Settings để hé lộ một tab **Receiver**. Nó mặc định tắt; chỉ bật nó trên một máy thực sự nhận các bản sao lưu off-site bất biến. Sau đó đăng ký một kho đã nhận (chỉ đọc, mở bằng mật khẩu restic của phiên bản gửi, đến qua [nhóm ghép nối](#pairing)) để có được:
 
 - **Một kho snapshot được gom theo nguồn**, nên bạn có thể thấy chính xác những container, VM và bộ tập tin nào đã đến.
 - **Nhận lần cuối** cho mỗi nguồn, nên bạn biết mỗi cái mới đến mức nào.
@@ -136,12 +158,12 @@ Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nh
 | **KHÔNG được bảo vệ** | VAULT đã chấp nhận một lệnh xóa. Thiếu `--append-only` hoặc nó đã bị bỏ đi. |
 | **không kết luận được** | Không thuộc trường hợp nào. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
 
-**4. Trên VAULT, xem những gì tới nơi.** Bật *Cài đặt → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc.
+**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
 
 !!! warning "Vị trí là đường dẫn **bên trong** container, viết tương đối so với điểm gắn của máy chủ"
     Nhập `user/appdata/rest-server/bombvault-containers/containers`, **không phải** `/mnt/user/appdata/…`. BombVault chạy trong container, nơi `/mnt` của máy chủ được gắn ở chỗ khác; đường dẫn tuyệt đối của máy chủ không tồn tại bên trong. Nếu bạn dán vào, BombVault nay sẽ cho biết đường dẫn tương đối cần dùng.
 
-    **APP_KEY bên gửi** là khóa của TOWER, không phải của VAULT. Bạn tìm thấy nó trên TOWER tại *Cài đặt → Hệ thống*.
+    VAULT nhận mật khẩu restic của TOWER qua nhóm khi bạn lưu; không ai phải gõ khóa nào cả.
 
 **5. Nếu muốn, hãy làm hai chiều.** Lặp lại đúng năm bước theo chiều ngược lại: một rest-server trên TOWER nhận bản sao của VAULT. Khi đó mỗi máy cưỡng chế tính bất biến cho máy kia, và không máy nào xóa được bản sao lưu của máy kia.
 
@@ -161,7 +183,7 @@ Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới hoặc
 !!! tip "Di chuyển theo kế hoạch so với thảm họa"
     Khôi phục có hướng dẫn khôi phục cài đặt của chính BombVault từ một bản sao lưu. Với một lần chuyển *theo kế hoạch* sang một máy mới, thay vào đó bạn có thể mang cấu hình của mình theo trực tiếp bằng thẻ **Xuất và nhập cài đặt** (một tệp JSON di động). Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
 
-### Khôi phục từ một kho BombVault khác
+### Khôi phục từ một kho BombVault khác {#restore-from-another-bombvault-repo}
 
 Một thẻ riêng trên tab **Recovery** mở kho của một phiên bản BombVault *khác* (một share được gắn kết dưới `/mnt`, hoặc một URL từ xa) bằng **`APP_KEY` của phiên bản đó**, trong một phiên chỉ đọc, dùng một lần. Duyệt các container, VM và bộ tập tin được lưu ở đó, chọn một snapshot và khôi phục nó, và đối tượng đã khôi phục trở thành một container, VM hay bộ tập tin cục bộ bình thường. Không có gì bao giờ được ghi vào kho kia, và các cài đặt sao lưu của chính bạn giữ nguyên không bị đụng (phiên sống trong bộ nhớ và tự hết hạn). Chuyển một container từ máy chủ A sang máy chủ B không còn có nghĩa là trỏ lại cài đặt kho của bạn rồi hoàn nguyên chúng sau đó. Liên kết máy-chủ-với-máy-chủ trực tiếp được rõ ràng nằm ngoài phạm vi; đây là một lần kéo một phát có chủ đích.
 

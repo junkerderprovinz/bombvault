@@ -94,6 +94,28 @@ A BombVault kétféle szintű bizonyítékot kínál arra, hogy a mentéseid té
 
 A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tartományonkénti zöld / sárga / piros helyzetté gyűjti össze, egy korral bélyegzett ellenőrzőlistával (telephelyen kívüli beállítva, append-only igazolva, replikáció naprakész, visszaállítási próba sikeres, titkosítás be, nyesési stratégia beállítva). Minden piros sor mélyhivatkozással a javításra mutat, és a kártya csak igazolt tényeken vált valaha is zöldre.
 
+## Példányok párosítása {#pairing}
+
+A Fogadók, a lehívási források, a Flotta nézet és a Mesh telephelyen kívüli mind egy másik BombVaulttal beszélnek. Ezt egyetlen párosítási csoport tagjaiként teszik, és egy példány tizenkét szóval csatlakozik a csoporthoz.
+
+Az első példányon nyisd meg a **Példányok → Párosítás** fület, és kattints a **Jelmondat létrehozása** gombra. Megjelenik tizenkét szó. Minden további példányon nyisd meg ugyanezt a fület, kattints a **Jelmondat megadása** gombra, és illeszd be vagy gépeld be őket. Egy szót, amely nincs a listán, az oldal már gépelés közben megnevez a helyével együtt, az utolsó szó pedig egy ellenőrző összeget hordoz, így egy elgépelt vagy felcserélt szó kiderül, mielőtt bármi párosodna. A jelmondatot csak egyetlen példányon hozd létre: két példány, amely mindkettő jelmondatot hoz létre, két külön csoportot alkot. Ha egy percig senki nem jelentkezik, a fül megmutatja, hogyan léphetsz ki a fölösleges csoportból, és hogyan csatlakozhatsz a másikhoz. A párosításhoz minden példányon bejelentkezési jelszó kell, mert a szavak a csoport minden példányának mentéseit megnyitják. A jelmondat később újra megjeleníthető, miután beírtad ezt a jelszót. A **Kilépés a csoportból** ismét kivesz egy példányt.
+
+Bárki, aki ismeri a szavakat, csatlakozhat a csoporthoz, ezért kezeld őket jelszóként.
+
+**Hogyan érik el egymást a tagok.** Ugyanazon a hálózaton multicasttal találják meg egymást, és közvetlenül beszélnek. A különböző hálózatokon lévő példányok egy relén mennek keresztül, amelyet ugyanazon a fülön választasz ki:
+
+- **Projekt relé** (alapértelmezett): `relay.halleluja.design`, ugyanaz a relé, amelyet a KnightLoader is használ. Nincs mit beállítani.
+- **Saját relé**: a **BombVault Relay** konténer az Unraid Community Apps-ból, vagy az egyik példányod, amely már elérhető kívülről, és be van kapcsolva a **Relé üzemeltetése**. Az a példány ezután a saját címén, a `/relay/connect` alatt válaszol, a már meglévő reverse proxyja és tanúsítványa mögött, és csak a te csoportodat engedi be. Add meg a relé címét minden példányon, amelynek használnia kell azt.
+- **Nincs relé**: a tagok csak ugyanazon a hálózaton találják meg egymást.
+
+**Mit lát a relé.** Minden hívás a tagok között AES-256-GCM-mel van lezárva, a tizenkét szóból származtatott kulccsal, és ez a kulcs sosem hagyja el a példányaidat. A relé megismer egy hash-t, amely csoportosítja a kapcsolatokat, hogy melyik példánynak szól egy üzenet, mekkora, és mikor halad át. Egy közvetlen hívás a helyi hálózaton ugyanígy van lezárva, és alá is van írva, így semmi sem függ az önaláírt tanúsítványtól, amelyet egy példány kiszolgál.
+
+**Mi utazik a csoporton át.** A Flotta eredményjelzője, egy kérés egy tartomány azonnali ellenőrzésére, a Mesh telephelyen kívüli ajánlatai, és amire egy fogadónak vagy lehívási forrásnak szüksége van: a másik példány tárolóhelyei és a restic jelszava. Mentési adat soha: az mindig egyenesen a restic háttérrendszerekhez megy. Az APP_KEY sem: a restic jelszó azon példány tárolóit nyitja meg, és semmi mást, sem a tárolt titkait, sem a munkameneteit, sem a helyreállítási kódjait.
+
+**A párosítás előtti bejegyzések.** A flottatokennel hozzáadott Flotta-társak, valamint a másik példány APP_KEY-ével beállított Fogadók és lehívási források a frissítés után is megmaradnak, és **Párosítás újra** jelöléssel jelennek meg. A Fogadók és lehívási források továbbra is működnek: első indulásakor a BombVault minden tárolt APP_KEY-t lecserél az abból származtatott restic jelszóra. Párosítsd a két példányt, majd szerkeszd a bejegyzést, és válaszd ki a példányát. Egy Flotta-társ átveszi a régi sorát, amint egy azonos nevű példány megjelenik a csoportban.
+
+Az egyetlen hely, amely még mindig kézzel kér APP_KEY-t, a [Visszaállítás egy másik BombVault tárolóból](#restore-from-another-bombvault-repo), arra az esetre, ha a másik példány eltűnt, és nem tud válaszolni egy csoportban.
+
 ## Fogadó irányítópult (a fogadó oldal)
 
 ![A fogadó oldal, csak olvasható módon figyelve, integritás-ellenőrzéssel ezen a gépen.](assets/screenshots/receiver.png)
@@ -102,7 +124,7 @@ A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tarto
 
 Minden fenti a *küldő* oldal. Azon a gépen, amely módosíthatatlan telephelyen kívüli másolatokat **fogad** egy másik BombVaulttól, a Fogadó irányítópult független, csak olvasható monitorozást ad azokról a tárolókról a fogadó hardveren, így egy csendes hiba a túlsó végen nem marad észrevétlen.
 
-Kapcsold be a **Fogadó** kapcsolót a Beállításokban egy **Fogadó** fül felfedéséhez. Alapból ki van kapcsolva; csak olyan gépen engedélyezd, amely ténylegesen fogad módosíthatatlan telephelyen kívüli mentéseket. Ezután regisztrálj egy fogadott tárolót (csak olvasható, a küldő példány kulcsával megnyitva), hogy megkapd:
+Kapcsold be a **Fogadó** kapcsolót a Beállításokban egy **Fogadó** fül felfedéséhez. Alapból ki van kapcsolva; csak olyan gépen engedélyezd, amely ténylegesen fogad módosíthatatlan telephelyen kívüli mentéseket. Ezután regisztrálj egy fogadott tárolót (csak olvasható, a küldő példány restic jelszavával megnyitva, amelyet a [párosítási csoporton](#pairing) keresztül kap meg), hogy megkapd:
 
 - **Egy forrás szerint csoportosított pillanatkép-leltárt**, így pontosan látod, mely konténerek, VM-ek és fájlkészletek landoltak.
 - **Utoljára fogadva** forrásonként, így tudod, mindegyik mennyire friss.
@@ -136,12 +158,12 @@ Az útvonal első szakasza a htpasswd felhasználó, a második a tároló. Add 
 | **NEM védett** | A VAULT elfogadott egy törlést. Hiányzik a `--append-only`, vagy eltávolították. |
 | **nem egyértelmű** | Egyik sem. Általában a cím nem az, amit maga a restic használ, vagy megváltoztak a hitelesítő adatok. Semmi nem kerül rögzítésre, és nem indul riasztás. |
 
-**4. A VAULT gépen nézd meg, mi érkezik.** Kapcsold be a *Beállítások → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon.
+**4. A VAULT gépen nézd meg, mi érkezik.** Párosítsd a két gépet ([Példányok párosítása](#pairing)), kapcsold be a *Beállítások → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon, a TOWER-t megadva küldő példányként.
 
 !!! warning "A hely a konténeren **belüli** útvonal, a gazdagép csatolási pontjához képest megadva"
     Ezt add meg: `user/appdata/rest-server/bombvault-containers/containers`, és **ne** ezt: `/mnt/user/appdata/…`. A BombVault konténerben fut, ahol a gazdagép `/mnt` könyvtára máshová van csatolva; abszolút gazdagép-útvonal ott nem létezik. Ha mégis beilleszted, a BombVault mostantól megmondja a helyette használandó relatív útvonalat.
 
-    A **küldő APP_KEY** a TOWER kulcsa, nem a VAULT-é. A TOWER gépen a *Beállítások → Rendszer* alatt találod.
+    A VAULT a mentéskor megkapja a TOWER restic jelszavát a csoporton keresztül; senkinek sem kell kulcsot beírnia.
 
 **5. Ha akarod, tedd kölcsönössé.** Ismételd meg ugyanazt az öt lépést a másik irányban: egy rest-server a TOWER gépen, amely a VAULT másolatát fogadja. Ekkor mindkét gép kikényszeríti a másik változtathatatlanságát, és egyik sem tudja törölni a másik mentéseit.
 
@@ -161,7 +183,7 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 !!! tip "Tervezett migráció versus katasztrófa"
     A vezetett helyreállítás egy mentésből állítja vissza a BombVault saját beállításait. Egy *tervezett* átköltözéshez egy új gépre ehelyett közvetlenül átviheted a konfigurációdat az **Exportálás és importálás beállítások** kártyával (egy hordozható JSON-fájl). Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
 
-### Visszaállítás egy másik BombVault tárolóból
+### Visszaállítás egy másik BombVault tárolóból {#restore-from-another-bombvault-repo}
 
 Egy külön kártya a **Helyreállítás** fülön megnyit egy *másik* BombVault-példány tárolóját (egy a `/mnt` alá csatolt megosztás vagy egy távoli URL) **annak a példánynak az `APP_KEY`-ével**, egy egyszeri, csak olvasható munkamenetben. Böngészd az ott tárolt konténereket, VM-eket és fájlkészleteket, válassz egy pillanatképet és állítsd vissza, és a visszaállított objektum normál helyi konténerré, VM-mé vagy fájlkészletté válik. Semmi sem íródik soha a másik tárolóba, és a saját mentési beállításaid érintetlenek maradnak (a munkamenet a memóriában él és magától lejár). Egy konténer áthelyezése az A szerverről a B szerverre többé nem jelenti a tárolóbeállításaid átirányítását és utólagos visszaállítását. Az élő szerver-szerver federáció kifejezetten hatókörön kívüli; ez egy szándékos, egyszeri áthúzás.
 

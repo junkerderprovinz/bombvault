@@ -143,7 +143,7 @@ export function ToggleRow({
    *  the Toggle's key, so a new value remounts the switch and the animation
    *  restarts even when the same row fails twice in a row. */
   shakeNonce?: number;
-  /** Bump to replay .glim-pulse, the success counterpart of shakeNonce. */
+  /** Bump to replay .glim-confirm, the success counterpart of shakeNonce. */
   pulseNonce?: number;
   /** Rainbow position of this row's switch, as its 0-based index among the
    *  ToggleRows rendered together in one group. Omit it only for a lone row
@@ -183,7 +183,7 @@ export function ToggleRow({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className={`mt-0.5${shakeNonce ? " glim-shake" : pulseNonce ? " glim-pulse" : ""}`}
+        className={`mt-0.5${shakeNonce ? " glim-shake" : pulseNonce ? " glim-confirm" : ""}`}
       />
     </div>
   );

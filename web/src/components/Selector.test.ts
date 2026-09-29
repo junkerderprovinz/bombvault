@@ -1,7 +1,15 @@
 // The navigation math of Selector. Focus, clicks and the RTL read are tested in
 // Selector.dom.test.tsx.
 import { describe, expect, it } from "vitest";
-import { nextFocusIndex, rovedIndex, rowFill, stepFor, type SelectorNavKey } from "./Selector";
+import {
+  MAX_PINNED_WIDTH,
+  MIN_PINNED_WIDTH,
+  nextFocusIndex,
+  pinnedWidth,
+  rovedIndex,
+  stepFor,
+  type SelectorNavKey,
+} from "./Selector";
 
 describe("stepFor", () => {
   it("ArrowRight steps +1 in LTR", () => {
@@ -108,40 +116,27 @@ describe("rovedIndex", () => {
   });
 });
 
-describe("rowFill", () => {
-  // The widths are the settings column at the viewport named, measured on a
-  // running instance: the card's content box less the groove's own padding.
-  const PIN = 200;
+describe("pinnedWidth", () => {
+  const GAP = 3.2;
 
-  it("keeps the pinned width while the whole strip fits one row", () => {
-    expect(rowFill(PIN, 4, 898.6)).toBe(PIN);
-    expect(rowFill(PIN, 2, 898.6)).toBe(PIN);
+  it("takes the shared floor while the row holds that many", () => {
+    expect(pinnedWidth(90, 3, 900, GAP)).toBe(MIN_PINNED_WIDTH);
   });
 
-  it("keeps it at the exact boundary, where the last segment still fits", () => {
-    expect(rowFill(PIN, 4, 4 * PIN + 3 * 3.2)).toBe(PIN);
+  it("takes the widest label where it needs more than the floor", () => {
+    expect(pinnedWidth(260, 3, 900, GAP)).toBe(260);
   });
 
-  it("gives a segment the whole row once two do not fit", () => {
-    // 390px viewport: four label modes, one under the other, no bare track.
-    expect(rowFill(PIN, 4, 287.6)).toBeCloseTo(287.6, 5);
-    expect(rowFill(PIN, 3, 287.6)).toBeCloseTo(287.6, 5);
+  it("gives the floor up for an even share of a phone's row", () => {
+    // A 390px phone: the Theme card's groove holds 311.6px.
+    expect(pinnedWidth(97, 2, 311.6, GAP)).toBe(154);
   });
 
-  it("divides into columns that go into the strip, not as many as fit", () => {
-    // 1024px viewport: three segments fit, so four come out two and two
-    // rather than three and a lone stretched one.
-    expect(rowFill(PIN, 4, 642.6)).toBeCloseTo(319.7, 5);
+  it("never goes below the widest label to fit a share", () => {
+    expect(pinnedWidth(120, 4, 311.6, GAP)).toBe(120);
   });
 
-  it("drops to one column when no wider one divides the strip", () => {
-    // 600px viewport: two fit, and three over two columns would leave the
-    // second row half empty, which is the track this is here to remove.
-    expect(rowFill(PIN, 3, 497.6)).toBeCloseTo(497.6, 5);
-  });
-
-  it("leaves the pinned width alone for a row that measures nothing", () => {
-    expect(rowFill(PIN, 4, 0)).toBe(PIN);
-    expect(rowFill(PIN, 4, -6.4)).toBe(PIN);
+  it("stops at the cap for a label longer than it", () => {
+    expect(pinnedWidth(500, 3, 1400, GAP)).toBe(MAX_PINNED_WIDTH);
   });
 });

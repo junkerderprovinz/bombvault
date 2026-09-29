@@ -6,19 +6,21 @@ holding them together with the donation buttons, and every button row in
 README.md.
 
 The rows are always the same three, in this order: the desktop apps, then the
-container, the source and the manual, then the phone apps and the browser
-extensions. What a repository does not ship is left out. Windows on ARM and the
-portable build are segments of the Windows button, and Linux on ARM one of the
-Linux button, so the desktop row keeps to the four places a row has.
+Unraid template, the container, the source and the manual, then the phone apps
+and the browser extensions. What a repository does not ship is left out.
+Windows on ARM and the portable build are segments of the Windows button, and
+Linux on ARM one of the Linux button, so the desktop row keeps to the four
+places a row has.
 
 Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
 
 The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
-icons; see scripts/brand-paths/). Each is a trademark of its owner, used
-unmodified and only to name the platform a button downloads for, with no claim
-of endorsement by or affiliation with its owner. The ZIP and the book are Font
-Awesome's file-zipper and book, nobody's mark.
+icons), and Unraid's from Dashboard Icons (Apache-2.0); see scripts/brand-paths/.
+Each is a trademark of its owner, used unmodified and only to name the platform
+a button downloads for, with no claim of endorsement by or affiliation with its
+owner. The ZIP and the book are Font Awesome's file-zipper and book, nobody's
+mark.
 
 Run from anywhere:  uv run --no-project --python 3.12 python scripts/gen_download_buttons.py
 Writes .github/assets/download-buttons/*.svg, which are committed, and the
@@ -56,6 +58,9 @@ W, H, R = 841.9, 245.3, 38.2
 # inset centres a mark with a line as wide as "Windows" beside it.
 GLYPH = 132.0
 GX, GY = 160.0, (H - GLYPH) / 2
+# Docker's whale, 640 units wide against 512 high, is as wide as a mark gets
+# before it runs into the words. A wider one is scaled to this width instead.
+WIDEST = GLYPH * 1.25
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -76,6 +81,9 @@ KINDS = {
     "linux":            (0, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
     "linux-arm":        (0, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
     "linux-script":     (0, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
+    # The middle of the orange in Unraid's logo, where white holds 3.4:1,
+    # enough for type this large.
+    "unraid":           (1, "unraid", "#f15a2c", "#ffffff", "Unraid", "Template", "Install from Unraid's Community Applications"),
     "docker":           (1, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
     "compose":          (1, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
     # Slate, since GitHub's black vanishes in the dark theme.
@@ -96,9 +104,10 @@ SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm
 SOON = {
     "google-play": ("coming soon", "On Google Play soon"),
     "firefox": ("coming soon", "The Firefox add-on, soon"),
+    "unraid": ("coming soon", "In Unraid's Community Applications soon"),
 }
 # Links that may lead away from the repository.
-STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com")
+STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com", "unraid.net")
 
 # The sheen is a tilted white band, clipped to each button, that appears to
 # travel along the whole row, the same band as the donation row's. Its numbers
@@ -272,14 +281,16 @@ def outline(w, corners):
 
 
 def brand(name):
-    """One mark: its path, and the scale and offset that centre it in GLYPH."""
+    """One mark: its path, and the scale and offsets that centre it in GLYPH."""
     path = io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().strip()
     box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
-    _, _, width, height = (float(n) for n in box.split())
+    x, y, width, height = (float(n) for n in box.split())
     # Scaled by height so the marks share an optical size, then nudged right by
-    # half the width they do not use, since Apple's mark is narrower.
-    scale = GLYPH / height
-    return path, scale, (GLYPH - width * scale) / 2
+    # half the width they do not use, since Apple's mark is narrower. A mark
+    # wider than WIDEST is scaled by width and lowered by half the height it
+    # leaves. The box's origin is taken off, since not every viewBox starts at 0.
+    scale = min(GLYPH / height, WIDEST / width)
+    return path, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
 
 
 def num(x):
@@ -291,8 +302,8 @@ def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
     if part.mark:
-        path, scale, inset = brand(part.mark)
-        face = FULL_FACE.format(gx=round(GX + inset, 2), gy=round(GY, 2), scale=round(scale, 5), path=path, **common)
+        path, scale, dx, dy = brand(part.mark)
+        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), path=path, **common)
     else:
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED

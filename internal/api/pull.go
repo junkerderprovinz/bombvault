@@ -13,9 +13,7 @@ import (
 	"database/sql"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
-	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -29,8 +27,8 @@ import (
 // Unlock, Forget or Prune. A lock on it usually means its owner is backing up.
 //
 // The two ends have different passwords, because each instance derives its own
-// from its APP_KEY, and restic.Mode.From carries the source's. Getting that
-// wrong reads as "wrong APP_KEY" for a correctly typed key.
+// from its APP_KEY, and restic.Mode.From carries the source's. The source's
+// password arrives over the pairing group; its APP_KEY never does.
 
 // pullOpen resolves a pull source's location and opens it read-only, returning
 // the location and the mode to read it with. It follows receiverOpen and adds
@@ -63,15 +61,9 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 		repo = resolved
 	}
 
-	keyBytes, err := secret.Decrypt(s.cfg.AppKey, ps.AppKeyEnc)
+	password, err := s.openResticPassword(ps.ResticPasswordEnc)
 	if err != nil {
-		return "", restic.Mode{}, errors.New("could not decrypt the stored APP_KEY for this pull source")
-	}
-	sourceKey := string(keyBytes)
-	// restickey.Derive panics on non-hex input, so a corrupted row has to be
-	// caught here.
-	if !foreignKeyRe.MatchString(sourceKey) {
-		return "", restic.Mode{}, errors.New("the stored APP_KEY is not 64 lowercase hex characters")
+		return "", restic.Mode{}, err
 	}
 
 	// The source's own backend credentials, never this box's. Without a
@@ -89,14 +81,14 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 	base := restic.Mode{NoLock: true, NoAmbientCreds: true, Env: env}
 	encMode := base
 	encMode.Encrypted = true
-	encMode.Password = restickey.Derive(sourceKey)
+	encMode.Password = password
 	switch {
 	case s.engine.RepoOpens(ctx, repo, encMode):
 		return repo, encMode, nil
 	case s.engine.RepoOpens(ctx, repo, base):
 		return repo, base, nil
 	default:
-		return "", restic.Mode{}, errors.New("could not open the pull source: wrong APP_KEY, or the location is not a BombVault or restic repository")
+		return "", restic.Mode{}, errors.New("could not open the pull source: wrong restic password, or the location is not a BombVault or restic repository")
 	}
 }
 
@@ -208,7 +200,7 @@ func (s *Service) RunPulls(ctx context.Context) error {
 
 // pullProbe opens a source read-only and discards the result. The Test button
 // runs it, and create and update run it before saving, so a mistyped location
-// or key is refused on the form.
+// is refused on the form.
 func (s *Service) pullProbe(ctx context.Context, ps store.PullSource) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {

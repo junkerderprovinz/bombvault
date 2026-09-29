@@ -4,7 +4,8 @@
 // the tab panel, and with every card open and every remove armed, no pan, no
 // control past the viewport or its card, no text cut short and no stray
 // backtick, in the lists, the dialogs and the empty states. On the desktop:
-// the 40px rhythm and the one-line cards and inventory table as they were.
+// the 40px rhythm, separate tabs of one width, and the one-line cards and
+// inventory table as they were.
 // German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -27,7 +28,8 @@ const receivedRepo = (id: string, name: string, repo: string, over: Record<strin
   enabled: true,
   createdAt: now - 90 * 86400,
   sortOrder: 0,
-  hasAppKey: true,
+  memberId: "member-1",
+  needsPairing: false,
   lastReceived: iso(5 * 3600),
   snapshotCount: 1284,
   reachable: true,
@@ -100,7 +102,10 @@ const peer = (id: string, name: string, url: string, over: Record<string, unknow
   ],
   createdAt: now - 60 * 86400,
   sortOrder: 0,
-  hasToken: true,
+  memberId: "member-1",
+  needsPairing: false,
+  direct: false,
+  relay: true,
   ...over,
 });
 
@@ -160,7 +165,8 @@ const pullSource = (id: string, name: string, repo: string, over: Record<string,
   enabled: true,
   createdAt: now - 30 * 86400,
   sortOrder: 0,
-  hasAppKey: true,
+  memberId: "member-1",
+  needsPairing: false,
   ...over,
 });
 
@@ -198,6 +204,34 @@ const SNIPPET = {
   repo: "rest:http://bombvault-mesh@192.168.178.20:8000/tower-containers",
 };
 
+const GROUP = {
+  ok: true,
+  active: true,
+  instanceId: "self",
+  name: "Tower Linz",
+  passwordSet: false,
+  members: [
+    { id: "member-1", name: "Schwiegereltern Tower Gmunden Keller", version: "v9.2.0", direct: false, relay: true },
+    { id: "member-2", name: "Büro Linz", version: "v9.2.0", direct: true, relay: true },
+  ],
+  relay: {
+    mode: "project",
+    url: "",
+    projectUrl: "wss://relay.halleluja.design/relay/connect",
+    connected: true,
+    serve: false,
+    serveClients: 0,
+  },
+};
+
+const MEMBER_REPOS = [
+  {
+    domain: "containers",
+    name: "Offsite Gmunden",
+    location: "rest:https://backup-empfang.familie-hofer.example.at:8443/schwiegereltern-tower-containers",
+  },
+];
+
 type Staged = { empty?: boolean };
 
 async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> {
@@ -224,6 +258,10 @@ async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> 
   await page.route("**/api/pull/sources", (route) =>
     route.fulfill({ json: { ok: true, sources: empty ? [] : PULLS } }),
   );
+  await page.route("**/api/group", (route) => route.fulfill({ json: GROUP }));
+  await page.route("**/api/group/members/*/repos", (route) =>
+    route.fulfill({ json: { ok: true, instanceName: "Schwiegereltern Tower Gmunden Keller", repos: MEMBER_REPOS } }),
+  );
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -244,11 +282,15 @@ async function settle(page: Page): Promise<void> {
 const LANES = ["receiver", "fleet", "pull"] as const;
 type Lane = (typeof LANES)[number];
 
+// The button a lane is ready by. Fleet rows come from the pairing group, so
+// that lane has nothing to add and waits for a member card's offer button.
 const ADD_LABEL: Record<Lane, string> = {
   receiver: "Empfangenes Repo hinzufügen",
-  fleet: "Instanz hinzufügen",
+  fleet: "Speicher anbieten",
   pull: "Quelle hinzufügen",
 };
+
+const EMPTY_LABEL: Record<Lane, string> = { ...ADD_LABEL, fleet: "Zur Kopplung" };
 
 async function openLane(page: Page, width: number, lane: Lane, staged: Staged = {}): Promise<void> {
   await stage(page, staged);
@@ -274,7 +316,7 @@ async function gaps(page: Page): Promise<{ page: string; lane: string }> {
   return {
     page: await page
       .getByRole("heading", { level: 1 })
-      .locator("xpath=../..")
+      .locator("xpath=..")
       .evaluate((root) => getComputedStyle(root).rowGap),
     lane: await page.locator("#bv-main .glim-tab-slide > div").evaluate((root) => getComputedStyle(root).rowGap),
   };
@@ -333,6 +375,15 @@ async function expectDialogFits(page: Page, title: string): Promise<void> {
   await expectFits(page, "[data-probe]");
 }
 
+async function tabFills(page: Page): Promise<{ strip: string; tabsWithoutFill: number }> {
+  return page.getByRole("tablist", { name: "Instanzen" }).evaluate((strip) => ({
+    strip: getComputedStyle(strip).backgroundColor,
+    tabsWithoutFill: [...strip.querySelectorAll('[role="tab"]')].filter(
+      (tab) => getComputedStyle(tab).backgroundColor === "rgba(0, 0, 0, 0)",
+    ).length,
+  }));
+}
+
 for (const width of [320, 360]) {
   for (const lane of LANES) {
     test(`${lane} @ ${width}px: every card open, nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
@@ -343,6 +394,10 @@ for (const width of [320, 360]) {
 
       expect(await gaps(page)).toEqual({ page: "24px", lane: "24px" });
       await expectFits(page, "#bv-main");
+      expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+        strip: "rgba(0, 0, 0, 0)",
+        tabsWithoutFill: 0,
+      });
 
       if (lane !== "fleet") {
         // The last-received or last-pull block moves under the name and
@@ -372,14 +427,16 @@ for (const width of [320, 360]) {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
       await openLane(page, width, lane);
 
-      await page.getByRole("button", { name: ADD_LABEL[lane] }).click();
-      await expectDialogFits(page, ADD_LABEL[lane]);
-      await page.getByRole("button", { name: "Abbrechen" }).click();
+      if (lane !== "fleet") {
+        await page.getByRole("button", { name: ADD_LABEL[lane] }).click();
+        await expectDialogFits(page, ADD_LABEL[lane]);
+        await page.getByRole("button", { name: "Abbrechen" }).click();
 
-      await page.locator("#bv-main").getByRole("button", { name: "Bearbeiten", exact: true }).first().click();
-      const editTitle = { receiver: "Empfangenes Repo bearbeiten", fleet: "Instanz bearbeiten", pull: "Bearbeiten" }[lane];
-      await expectDialogFits(page, editTitle);
-      await page.getByRole("button", { name: "Abbrechen" }).click();
+        await page.locator("#bv-main").getByRole("button", { name: "Bearbeiten", exact: true }).first().click();
+        const editTitle = { receiver: "Empfangenes Repo bearbeiten", pull: "Bearbeiten" }[lane];
+        await expectDialogFits(page, editTitle);
+        await page.getByRole("button", { name: "Abbrechen" }).click();
+      }
 
       if (lane === "fleet") {
         await page.getByRole("button", { name: "Speicher anbieten" }).first().click();
@@ -397,7 +454,7 @@ for (const width of [320, 360]) {
     await openLane(page, width, "receiver", { empty: true });
     for (const [lane, tab] of [["receiver", "Empfänger"], ["fleet", "Flotte"], ["pull", "Holen"]] as const) {
       await page.getByRole("tab", { name: tab }).click();
-      await expect(page.getByRole("button", { name: ADD_LABEL[lane] })).toBeVisible();
+      await expect(page.getByRole("button", { name: EMPTY_LABEL[lane] })).toBeVisible();
       await settle(page);
       expect(await gaps(page)).toEqual({ page: "24px", lane: "24px" });
       await expectFits(page, "#bv-main");
@@ -414,12 +471,33 @@ for (const lane of LANES) {
 
     expect(await gaps(page)).toEqual({ page: "40px", lane: "40px" });
     await expectFits(page, "#bv-main", { desktop: true });
+    expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+      strip: "rgba(0, 0, 0, 0)",
+      tabsWithoutFill: 0,
+    });
+    // One row of tabs, each keeping its whole name: in even shares where the
+    // widest fits one, sized to the names where only the row as a whole does.
+    const tabs = await page
+      .getByRole("tablist", { name: "Instanzen" })
+      .getByRole("tab")
+      .evaluateAll((els) =>
+        els.map((tab) => {
+          const label = tab.querySelector<HTMLElement>("[data-sel-label]")!;
+          return { top: Math.round(tab.getBoundingClientRect().top), cut: label.scrollWidth > label.clientWidth + 1 };
+        }),
+      );
+    expect(new Set(tabs.map((tab) => tab.top)).size, "tab rows").toBe(1);
+    expect(tabs.filter((tab) => tab.cut), "tabs with a cut-off name").toEqual([]);
     if (lane === "pull") return;
 
     // Names and addresses stay one truncated line, and the receiver's
-    // last-received block stays beside the name.
-    const card = page.locator("#bv-main div.rounded-card.glim-hue").first();
-    for (const el of [card.locator("span.font-semibold").first(), card.locator("p.font-mono").first()]) {
+    // last-received block stays beside the name. The Fleet lane opens with
+    // this instance's card, which has no actions, so a member's card stands in.
+    const card = page.locator("#bv-main div.rounded-card.glim-hue:not([data-self])").first();
+    // A fleet card of a paired member shows no address, only its name.
+    const oneLine = [card.locator("span.font-semibold").first()];
+    if (lane !== "fleet") oneLine.push(card.locator("p.font-mono").first());
+    for (const el of oneLine) {
       expect(await el.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
     }
     if (lane === "receiver") {
@@ -429,7 +507,8 @@ for (const lane of LANES) {
       await expect(page.locator("#bv-main table")).toHaveCount(RECEIVED.length);
     }
     // At 768px the armed confirm needs a second row; at 1280px there is room.
-    if (width >= 1280) {
+    // Fleet cards share the row two by two and wrap their actions as needed.
+    if (width >= 1280 && lane !== "fleet") {
       const tops = await card
         .getByRole("button", { name: /^(Details|Bearbeiten|Entfernen bestätigen)$/ })
         .evaluateAll((buttons) => [...new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top)))]);

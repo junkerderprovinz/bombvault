@@ -5,6 +5,7 @@ import { hueVars } from "../lib/appearance";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getCoverage, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext, backupEverythingNow, acknowledgeAnomalies, markAnomaliesExpected, ApiError } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, CoverageReport, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext, AnomalySummary, AnomalyView, AnomalyActionResult } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
+import { PageTitle } from "../components/PageTitle";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
 import { isOwnReason, isWarningNote, RunReasonText } from "../lib/runReason";
@@ -30,7 +31,8 @@ import { useToast } from "../lib/toast";
 import { formatCadence } from "../components/CadenceBuilder";
 import { NO_VALUE, relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
-import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
+import { useDashboardLayout, CustomizableBlock } from "../lib/dashboardLayout";
+import { useReorder } from "../lib/dragLift";
 import { ActivityLog } from "../components/ActivityLog";
 import { AnomalyRow, type AnomalyAction } from "../components/AnomalyRow";
 import { RunAnomalyBadge } from "../components/RunAnomalyBadge";
@@ -304,7 +306,6 @@ function Card({
   title,
   hint,
   children,
-  action,
   hueIndex,
 }: {
   title: string;
@@ -312,7 +313,6 @@ function Card({
    *  the title, as on the Settings cards. */
   hint?: string;
   children: React.ReactNode;
-  action?: React.ReactNode;
   /** Rainbow position for THIS Card's own heading notch — GlimStone
    *  follow-up pass, jdp's live review of this page specifically: "Dashboard:
    *  Cardtitelbadges sind falsch platziert. Alle sind nicht im
@@ -388,13 +388,6 @@ function Card({
         </Badge>
       </h2>
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
-        {/* action used to share a `justify-between` row with the <h2> above,
-            pinned to the row's far end opposite the title. Now that the
-            title lives outside this div entirely, `justify-end` replaces
-            `justify-between` (which needs 2+ items to do anything — with
-            only `action` left in the row, `justify-between` would dock it
-            to the START instead of the end it always visually occupied). */}
-        {action && <div className="flex justify-end">{action}</div>}
         {children}
       </div>
     </div>
@@ -670,7 +663,6 @@ export function AnomaliesCard({
               key={a.id}
               a={a}
               t={t}
-              compact
               onAcknowledge={onAcknowledge}
               onExpected={onExpected}
             />
@@ -1699,7 +1691,7 @@ function mondayIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
 
-function HealthHeatmapCard({
+export function HealthHeatmapCard({
   t,
   selectedDay,
   onSelectDay,
@@ -1784,41 +1776,23 @@ function HealthHeatmapCard({
     }
   };
 
-  // REVERSED (jdp, live-review, extremely emphatic — "Es soll immer alles in
-  // die Farb- und Formengine integriert werden!! IMMER!!"): this used to
-  // carry `hue={false}`, justified as "a small, fixed set of 5 where each
-  // entry already has its own durable identity, and a 5-way rainbow strip
-  // competing with the heatmap's own fixed red/green state hues would hurt
-  // legibility for no tracking benefit." That reasoning is exactly the kind
-  // of self-authored aesthetic exception jdp has now ruled out categorically
-  // — a plausible-sounding taste judgement is never grounds to unilaterally
-  // exclude a control from the colour engine, no matter how reasonable it
-  // reads in isolation. This strip is a genuine "select one of several"
-  // Selector like every other hue-enabled one in this app, so it gets the
-  // same default `hue` (true) as the rest — no opt-out prop at all now.
-  //   KNOWN COINCIDENCE, not a reason to exclude: RAINBOW[0] (#FF8389) and
-  // RAINBOW[3] (#6FDC8C) happen to match this page's own fixed --status-fail/
-  // --status-ok hues in dark theme (see lib/appearance.ts's own documented
-  // KNOWN LIMITATION for the full writeup) — a coincidence, not a WCAG
-  // failure (every cell still carries its own count as text, not colour
-  // alone), and not grounds for a fresh opt-out either.
-  const toggle = (
-    <Selector
-      items={(["containers", "vms", "flash", "config", "files", "zfs"] as HeatDomain[]).map((d) => ({
-        id: d,
-        label: domainLabel(d),
-      }))}
-      label={t("dashboard.healthTitle")}
-      select="one"
-      active={domain}
-      onChange={(id) => setDomain(id as HeatDomain)}
-      size="sm"
-      plain
-    />
-  );
-
   return (
-    <Card title={t("dashboard.healthTitle")} action={toggle} hueIndex={hueIndex}>
+    <Card title={t("dashboard.healthTitle")} hueIndex={hueIndex}>
+      {/* Hued like every other selector. Two rainbow positions match the
+          grid's fail and ok colours in the dark theme, which is harmless:
+          every cell says its counts in text as well. */}
+      <Selector
+        items={(["containers", "vms", "flash", "config", "files", "zfs"] as HeatDomain[]).map((d) => ({
+          id: d,
+          label: domainLabel(d),
+        }))}
+        label={t("dashboard.healthTitle")}
+        select="one"
+        active={domain}
+        onChange={(id) => setDomain(id as HeatDomain)}
+        size="lg"
+        equalWidth
+      />
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -3363,7 +3337,7 @@ export function Dashboard() {
   ];
 
   const defaultOrder = blocks.map((b) => b.id);
-  const { order, hidden, reorder, toggleHidden, toggleWidth, getWidth, reset } =
+  const { order, hidden, reorder, setVisibleOrder, toggleHidden, toggleWidth, getWidth, reset } =
     useDashboardLayout(defaultOrder);
 
   // Persisted order → concrete blocks. Unknown/stale ids are guarded out, and
@@ -3380,41 +3354,22 @@ export function Dashboard() {
   const visibleBlocks = orderedAvailable.filter((b) => shown(b.id));
   const hiddenBlocks = orderedAvailable.filter((b) => !shown(b.id));
 
-  // Native HTML5 drag-and-drop — the dragged id lives in a ref (no re-render
-  // mid-drag); onDrop reorders relative to the drop-target block. The move
-  // up/down buttons on each block are the accessible + touch fallback.
-  const draggingId = useRef<string | null>(null);
-  const dragHandlersFor = (blockId: string): BlockDragHandlers => ({
-    onDragStart: (e) => {
-      draggingId.current = blockId;
-      e.dataTransfer.effectAllowed = "move";
-      try {
-        e.dataTransfer.setData("text/plain", blockId);
-      } catch {
-        /* some browsers restrict setData during dragstart — the ref suffices */
-      }
-    },
-    onDragOver: (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    },
-    onDrop: (e) => {
-      e.preventDefault();
-      let dragged = draggingId.current;
-      if (!dragged) {
-        try {
-          dragged = e.dataTransfer.getData("text/plain") || null;
-        } catch {
-          dragged = null;
-        }
-      }
-      if (dragged && dragged !== blockId) reorder(dragged, blockId);
-      draggingId.current = null;
-    },
-    onDragEnd: () => {
-      draggingId.current = null;
-    },
+  // A card is carried by the grip in its control bar and lands in its gap;
+  // the move buttons are the keyboard's way to do the same.
+  const grid = useRef<HTMLDivElement>(null);
+  const drag = useReorder({
+    ids: visibleBlocks.map((b) => b.id),
+    container: grid,
+    attr: "data-grid-block",
+    axis: "x",
+    arm: "move",
+    enabled: editing,
+    onReorder: setVisibleOrder,
   });
+  const byVisibleId = new Map(visibleBlocks.map((b) => [b.id, b]));
+  const carriedBlocks = drag.order
+    .map((id) => byVisibleId.get(id))
+    .filter((b): b is (typeof visibleBlocks)[number] => !!b);
 
   return (
     // GlimStone follow-up pass (live-review round, jdp emphatic: "Die
@@ -3486,21 +3441,8 @@ export function Dashboard() {
               BombVault
             </span>
           </div>
-          {/* The house heading form, every tab identical (pageHeading guard):
-              no max-md shrink here even on mobile; a tab whose title is
-              smaller than its siblings' reads as less important than they
-              are, and every other tab's h1 is text-2xl at every width. */}
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("dashboard.title")}
-          </h1>
-          {/* The 12px meta line under the 20px heading: the subtitle
-              steps down to text-xs below the breakpoint. The live instance
-              facts beneath it (per-domain off-site replication indicators)
-              are shared with desktop and untouched. */}
-          <p className="mt-1 text-sm max-md:text-xs text-carbon-textSub">
-            {t("dashboard.subtitle")}
-          </p>
-          <div className="mt-2 flex flex-col gap-1">
+          <PageTitle>{t("dashboard.title")}</PageTitle>
+          <div className="flex flex-col gap-1">
             <OffsiteIndicator domain="containers" withLabel />
             <OffsiteIndicator domain="vms" withLabel />
             <OffsiteIndicator domain="flash" withLabel />
@@ -3644,12 +3586,11 @@ export function Dashboard() {
           grid is JSX-gated on isDesktop (see the max-md note by the gate
           below); the phone reads the Home blocks above instead. The
           width. The col-span lives on this wrapper div (not on
-          CustomizableBlock's own root) so it applies in BOTH edit mode (where
+          CustomizableBlock's own root) so it applies in both edit mode (where
           CustomizableBlock renders its control-bar div) and view mode (where
-          it renders only `<>{children}</>`). In edit mode each block carries a
-          control bar + native drag-and-drop; otherwise the card renders
-          plainly. Dragging still reorders the flat `order` array — the grid
-          simply derives each cell's span from order + width. */}
+          it renders only `<>{children}</>`). In edit mode the wrapper is also
+          what lifts when a card is carried by its grip; the grid derives each
+          cell's span from order and width. */}
       {/* hueSeq/nextHue — SAME page-wide running-counter pattern as
           Settings.tsx's own `nextHue()` (see that file's own `hueSeq`
           comment), just declared here instead of at the top of the return:
@@ -3687,14 +3628,18 @@ export function Dashboard() {
           is ever alive, whichever way the breakpoint is crossed. At md+ the
           gate is transparent, so the desktop grid is unchanged. */}
       {isDesktop && (
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+      <div
+        ref={grid}
+        className={`relative grid grid-cols-1 gap-10 md:grid-cols-2 ${drag.held !== null ? "glim-drag-armed" : ""}`}
+      >
         {(() => {
           let hueSeq = 0;
           const nextHue = () => hueSeq++;
-          return visibleBlocks.map((b, i) => (
+          return carriedBlocks.map((b, i) => (
             <div
               key={b.id}
-              className={getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"}
+              data-grid-block={b.id}
+              className={`${getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"} ${drag.look(b.id)}`}
             >
               <CustomizableBlock
                 id={b.id}
@@ -3704,7 +3649,7 @@ export function Dashboard() {
                 isFirst={i === 0}
                 isLast={i === visibleBlocks.length - 1}
                 editing={editing}
-                dragHandlers={dragHandlersFor(b.id)}
+                onGripPointerDown={(e) => drag.press(e, b.id)}
                 /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
                    blocks in the stored order) so a single press always reorders. */
                 onMoveUp={() => {

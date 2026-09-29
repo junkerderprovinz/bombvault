@@ -4,28 +4,21 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 )
 
-// ErrEmptyFleetPeer is returned for a fleet peer without a URL, which could
-// never be polled.
-var ErrEmptyFleetPeer = errors.New("fleet peer URL must not be empty")
-
-// FleetPeer is another BombVault instance this one polls, read-only, for its
-// protection status (the Fleet view). The LastPoll fields cache the peer's
-// latest response so the Fleet page renders without a live round-trip.
+// FleetPeer is another BombVault instance whose protection status this one
+// shows on the Fleet page. The LastPoll fields cache the peer's latest answer
+// so the page renders without a live round trip.
 type FleetPeer struct {
-	ID   string
-	Name string
-	URL  string
-	// TokenEnc is the peer's fleet token, which this instance presents to the
-	// peer's GET /api/fleet/status. It is encrypted with this instance's
-	// APP_KEY (internal/secret); the store only handles the ciphertext and the
-	// poller decrypts it for the outbound request. It is never logged or
-	// returned in the clear.
-	TokenEnc []byte
-	Enabled  bool
+	ID string
+	// MemberID is the peer's instance id in the pairing group. It is empty on
+	// a row from before pairing, which has to be paired again to be polled.
+	MemberID string
+	Name     string
+	// URL is where a peer from before pairing was polled. It is only shown.
+	URL     string
+	Enabled bool
 	// LastPollAt is the Unix time of the last poll attempt (0 = never polled).
 	LastPollAt int64
 	// LastPollOK is the last poll's verdict. Valid=false means never polled.
@@ -43,29 +36,26 @@ type FleetPeer struct {
 	SortOrder           int
 }
 
-const fleetPeerCols = `id, name, url, token_enc, enabled, last_poll_at, last_poll_ok, last_poll_error,
+// NeedsPairing reports whether the row predates pairing and has no member to
+// poll.
+func (p FleetPeer) NeedsPairing() bool { return p.MemberID == "" }
+
+const fleetPeerCols = `id, member_id, name, url, enabled, last_poll_at, last_poll_ok, last_poll_error,
 	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order`
 
 // CreateFleetPeer inserts a new fleet peer and returns the stored row. An
-// empty ID is assigned via newID() and a zero CreatedAt is set to now. The
-// peer URL must not be empty.
+// empty ID is assigned and a zero CreatedAt is set to now.
 func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
-	if strings.TrimSpace(p.URL) == "" {
-		return FleetPeer{}, ErrEmptyFleetPeer
-	}
 	if p.ID == "" {
 		p.ID = newID()
 	}
 	if p.CreatedAt == 0 {
 		p.CreatedAt = time.Now().Unix()
 	}
-	if p.TokenEnc == nil {
-		p.TokenEnc = []byte{} // token_enc is not nullable, and a nil slice binds as NULL
-	}
 	_, err := r.db.Exec(`
 		INSERT INTO fleet_peers (`+fleetPeerCols+`)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.ID, p.Name, p.URL, p.TokenEnc, boolInt(p.Enabled), p.LastPollAt, nullBool(p.LastPollOK), p.LastPollError,
+		p.ID, p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.LastPollAt, nullBool(p.LastPollOK), p.LastPollError,
 		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder,
 	)
 	if err != nil {
@@ -74,25 +64,18 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 	return p, nil
 }
 
-// UpdateFleetPeer updates the fleet peer identified by p.ID in place. The peer
-// URL must not be empty. Updating a missing id affects no rows and is not an
-// error.
+// UpdateFleetPeer updates the editable columns of the fleet peer p.ID.
+// Updating a missing id affects no rows and is not an error.
 func (r *Repo) UpdateFleetPeer(p FleetPeer) error {
-	if strings.TrimSpace(p.URL) == "" {
-		return ErrEmptyFleetPeer
-	}
-	if p.TokenEnc == nil {
-		p.TokenEnc = []byte{} // token_enc is not nullable, and a nil slice binds as NULL
-	}
 	_, err := r.db.Exec(`
 		UPDATE fleet_peers SET
+		  member_id  = ?,
 		  name       = ?,
 		  url        = ?,
-		  token_enc  = ?,
 		  enabled    = ?,
 		  sort_order = ?
 		WHERE id = ?`,
-		p.Name, p.URL, p.TokenEnc, boolInt(p.Enabled), p.SortOrder, p.ID,
+		p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.SortOrder, p.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateFleetPeer: %w", err)
@@ -169,7 +152,7 @@ func scanFleetPeer(s scanner) (FleetPeer, error) {
 	var p FleetPeer
 	var enabled int
 	err := s.Scan(
-		&p.ID, &p.Name, &p.URL, &p.TokenEnc, &enabled, &p.LastPollAt, &p.LastPollOK, &p.LastPollError,
+		&p.ID, &p.MemberID, &p.Name, &p.URL, &enabled, &p.LastPollAt, &p.LastPollOK, &p.LastPollError,
 		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder,
 	)
 	if err != nil {

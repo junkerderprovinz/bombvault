@@ -94,6 +94,28 @@ BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obno
 
 **Vysvědčení ochrany proti ransomwaru** na Přehledu to shrne do zeleného / oranžového / červeného postoje na doménu, s kontrolním seznamem s věkovou značkou (mimo lokalitu nakonfigurováno, append-only ověřeno, replikace aktuální, cvičná obnova prošla, šifrování zapnuto, strategie prořezávání nastavena). Každý červený řádek odkazuje přímo na opravu a karta se rozsvítí zeleně jen na ověřených faktech.
 
+## Párování instancí {#pairing}
+
+Příjemci, zdroje stahování, přehled Fleet i Mesh mimo lokalitu, to všechno mluví s jiným BombVaultem. Dělají to jako členové jedné párovací skupiny a instance do skupiny vstupuje dvanácti slovy.
+
+Na první instanci otevřete **Instance → Párování** a klikněte na **Vygenerovat frázi**. Objeví se dvanáct slov. Na každé další instanci otevřete stejnou záložku, klikněte na **Zadat frázi** a vložte je nebo je napište. Slovo, které není na seznamu, stránka pojmenuje i s jeho pozicí hned při psaní, a poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo odhalí dřív, než se cokoli spáruje. Vygenerujte frázi jen na jedné instanci: dvě instance, které obě vytvoří frázi, vytvoří dvě oddělené skupiny. Pokud se minutu nikdo neohlásí, záložka ukáže, jak opustit tu přebytečnou skupinu a připojit se ke druhé. Párování vyžaduje na každé instanci přihlašovací heslo, protože slova otevírají zálohy všech instancí ve skupině. Frázi lze později znovu zobrazit po zadání tohoto hesla. **Opustit skupinu** instanci ze skupiny zase vyřadí.
+
+Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte jako s heslem.
+
+**Jak se členové navzájem najdou.** Ve stejné síti se najdou pomocí multicastu a mluví spolu přímo. Instance v různých sítích jdou přes relay, který se vybírá na stejné záložce:
+
+- **Relay projektu** (výchozí): `relay.halleluja.design`, stejný relay, jaký používá i KnightLoader. Není co nastavovat.
+- **Vlastní relay**: kontejner **BombVault Relay** z Unraid Community Apps, nebo jedna z vašich instancí, která je už zvenčí dostupná se zapnutým přepínačem **Sloužit jako relay**. Taková instance pak odpovídá na `/relay/connect` na své vlastní adrese, za reverzní proxy a certifikátem, které už má, a pustí dovnitř jen vaši skupinu. Adresu relay zadejte na každé instanci, která ho má používat.
+- **Žádný relay**: členové se najdou jen ve stejné síti.
+
+**Co vidí relay.** Každé volání mezi členy je zapečetěné pomocí AES-256-GCM klíčem odvozeným z dvanácti slov, a ten klíč nikdy neopustí vaše instance. Relay se dozví hash, který sdružuje spojení, dále pro kterou instanci je zpráva určená, jak je velká a kdy prochází. Přímé volání v lokální síti je zapečetěné stejným způsobem a navíc podepsané, takže nic nezávisí na self-signed certifikátu, který instance nabízí.
+
+**Co prochází skupinou.** Vysvědčení Fleet, žádost o okamžitou kontrolu jedné domény, nabídky Mesh mimo lokalitu a to, co potřebuje příjemce nebo zdroj stahování: umístění repozitářů druhé instance a její heslo restic. Data záloh po ní nikdy neprochází, ta jdou pořád přímo do backendů restic. Ani APP_KEY ne: heslo restic otevírá repozitáře té instance a nic jiného, ne její uložená tajemství, relace ani obnovovací kódy.
+
+**Záznamy z doby před párováním.** Protějšky Fleet přidané fleet tokenem a příjemci i zdroje stahování nastavené pomocí APP_KEY druhé instance zůstávají po aktualizaci zachované a jsou označené jako **Spárovat znovu**. Příjemci a zdroje stahování dál fungují: při prvním spuštění BombVault nahradí každý uložený APP_KEY heslem restic z něj odvozeným. Spárujte obě instance, pak upravte záznam a vyberte jeho instanci. Protějšek Fleet převezme svůj starý řádek, jakmile se ve skupině objeví instance se stejným jménem.
+
+Jediné místo, které pořád bere APP_KEY ručně, je [Obnova z jiného BombVault repozitáře](#restore-from-another-bombvault-repo), pro případ, že druhá instance zmizela a nemůže odpovídat ve skupině.
+
 ## Řídicí panel příjemce (přijímací strana)
 
 ![Přijímající strana, sledovaná jen pro čtení, s kontrolou integrity na tomto stroji.](assets/screenshots/receiver.png)
@@ -102,7 +124,7 @@ BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obno
 
 Vše výše je *odesílající* strana. Na stroji, který **přijímá** neměnné kopie mimo lokalitu z jiného BombVaultu, vám řídicí panel příjemce dává nezávislé monitorování těchto repozitářů jen pro čtení na přijímacím hardwaru, takže tiché selhání na druhém konci nezůstane bez povšimnutí.
 
-Zapněte přepínač **Příjemce** v Nastavení k odhalení záložky **Příjemce**. Ve výchozím stavu je vypnuto; zapněte jej jen na stroji, který skutečně přijímá neměnné zálohy mimo lokalitu. Poté zaregistrujte přijatý repozitář (jen pro čtení, otevřený klíčem odesílající instance) pro získání:
+Zapněte přepínač **Příjemce** v Nastavení k odhalení záložky **Příjemce**. Ve výchozím stavu je vypnuto; zapněte jej jen na stroji, který skutečně přijímá neměnné zálohy mimo lokalitu. Poté zaregistrujte přijatý repozitář (jen pro čtení, otevřený heslem restic odesílající instance, které přichází přes [párovací skupinu](#pairing)) pro získání:
 
 - **Inventáře snímků seskupeného podle zdroje**, takže vidíte přesně, které kontejnery, VM a sady souborů dorazily.
 - **Naposledy přijato** na zdroj, takže víte, jak čerstvý každý je.
@@ -136,12 +158,12 @@ První část cesty je uživatel htpasswd, druhá je repozitář. Zadejte vygene
 | **NENÍ chráněno** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
 | **neprůkazné** | Ani jedno. Obvykle URL není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
 
-**4. Na VAULT sledujte, co přichází.** Zapněte *Nastavení → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení.
+**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
 
 !!! warning "Umístění je cesta **uvnitř** kontejneru, zapsaná relativně k připojení hostitele"
     Zadejte `user/appdata/rest-server/bombvault-containers/containers`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám nyní sdělí relativní cestu, kterou máte použít.
 
-    **Odesílající APP_KEY** je klíč stroje TOWER, ne VAULT. Najdete jej na TOWER v *Nastavení → Systém*.
+    VAULT dostane heslo restic od TOWER přes skupinu, když uložíte; klíč nikdo neopisuje.
 
 **5. Pokud chcete, udělejte to oboustranně.** Zopakujte stejných pět kroků opačným směrem: rest-server na TOWER přijímající kopii z VAULT. Každý stroj pak vynucuje neměnnost pro ten druhý a ani jeden nemůže smazat zálohy toho druhého.
 
@@ -161,7 +183,7 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 !!! tip "Plánovaná migrace versus havárie"
     Řízená obnova obnovuje vlastní nastavení BombVaultu ze zálohy. Pro *plánovaný* přesun na nový stroj můžete místo toho přenést konfiguraci přímo pomocí karty **Export a import nastavení** (přenosný soubor JSON). Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
 
-### Obnova z jiného BombVault repozitáře
+### Obnova z jiného BombVault repozitáře {#restore-from-another-bombvault-repo}
 
 Samostatná karta v záložce **Obnova** otevře repozitář *jiné* instance BombVaultu (sdílená složka připojená pod `/mnt`, nebo vzdálená URL) s **`APP_KEY` dané instance**, v jednorázové relaci jen pro čtení. Procházejte kontejnery, VM a sady souborů tam uložené, vyberte snímek a obnovte jej, a obnovený objekt se stane běžným místním kontejnerem, VM nebo sadou souborů. Do druhého repozitáře se nikdy nic nezapíše a vaše vlastní nastavení záloh zůstane nedotčeno (relace žije v paměti a sama vyprší). Přesun kontejneru ze serveru A na server B už neznamená přesměrovávat nastavení repozitáře a poté je vracet zpět. Živá federace server-server je explicitně mimo rozsah; toto je záměrné jednorázové stažení.
 

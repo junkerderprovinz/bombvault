@@ -2,10 +2,10 @@
 /**
  * The Anomalies page.
  *
- * Two things have to hold here. A filter has to reach the server as the query
- * the server understands, because a listing that quietly drops a narrowing
- * reads as an all-clear. And a bulk action has to be one call with every id in
- * it, asked for first when it would let old backups be deleted again.
+ * A card stands for one item, so every finding has to land on the card of the
+ * item it belongs to, and settling a card has to send that card's ids and no
+ * others. What a card leaves out of sight (the figures, the actions, the
+ * monitoring settings) has to be one press away.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -16,7 +16,7 @@ import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { ANOMALY_CHANGED_EVENT } from "../lib/anomalies";
-import type { AnomalyItem, AnomalySummary, AnomalyView, Settings } from "../lib/api";
+import type { AnomalyFilter, AnomalyItem, AnomalySummary, AnomalyView, Settings } from "../lib/api";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -44,7 +44,7 @@ const setItemAnomalyPrefs = vi.mocked(api.setItemAnomalyPrefs);
 
 const { Anomalies } = await import("./Anomalies");
 
-const DAY = 86400;
+const GB = 1024 ** 3;
 
 function summary(over: Partial<AnomalySummary> = {}): AnomalySummary {
   return {
@@ -82,9 +82,9 @@ function finding(over: Partial<AnomalyView> = {}): AnomalyView {
     runId: `run-${seq}`,
     lastRunId: `run-${seq}`,
     lastRunAt: 1700000000,
-    observed: 1024,
-    expected: 1024 ** 3,
-    threshold: 1024 ** 2,
+    observed: 2 * GB,
+    expected: 40 * GB,
+    threshold: 20 * GB,
     samples: 12,
     sensitivity: "balanced",
     details: {},
@@ -115,7 +115,7 @@ function item(over: Partial<AnomalyItem> = {}): AnomalyItem {
     notifyMin: "",
     effectiveNotifyMin: "warning",
     learning: { samples: 10, needed: 10, newData: 10, source: 10, duration: 10, noData: false },
-    typical: { sourceBytes: 1024 ** 3, newDataBytes: 1024 ** 2, resticMs: 30000 },
+    typical: { sourceBytes: GB, newDataBytes: 1024 ** 2, resticMs: 30000 },
     dump: null,
     datasets: [],
     open: { critical: 0, warning: 0, info: 0 },
@@ -137,6 +137,11 @@ function settings(over: Partial<Settings> = {}): Settings {
 
 function page(anomalies: AnomalyView[], nextCursor = "") {
   return Promise.resolve({ ok: true as const, anomalies, nextCursor });
+}
+
+/** Serves the open and the closed listing the page asks for. */
+function serve(open: AnomalyView[], closed: AnomalyView[] = []) {
+  getAnomalies.mockImplementation((f?: AnomalyFilter) => page(f?.state === "closed" ? closed : open));
 }
 
 async function renderPage(path = "/anomalies") {
@@ -163,11 +168,24 @@ async function pick(fieldLabel: string, optionLabel: string) {
   });
 }
 
+function card(name: string): HTMLElement {
+  return screen.getByRole("region", { name });
+}
+
+async function openQuiet(name: string) {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${name}`) }));
+  });
+}
+
+const scrolled = vi.fn();
+
 beforeEach(() => {
   seq = 0;
   localStorage.clear();
   localStorage.setItem("bv-lang", "en");
-  window.location.hash = "";
+  Element.prototype.scrollIntoView = scrolled;
+  scrolled.mockReset();
   getAnomalies.mockReset();
   getAnomalySummary.mockReset();
   getAnomalyItems.mockReset();
@@ -179,7 +197,7 @@ beforeEach(() => {
   getAnomalySummary.mockResolvedValue({ ok: true, summary: summary() });
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   getSettings.mockResolvedValue({ ok: true, settings: settings() });
-  getAnomalies.mockImplementation(() => page([]));
+  serve([]);
 });
 
 afterEach(() => {
@@ -187,194 +205,170 @@ afterEach(() => {
   localStorage.removeItem("bv-lang");
 });
 
-describe("the findings tab's filters", () => {
-  it("asks the server for the period the reader picked", async () => {
+describe("the cards", () => {
+  it("gives every item one card holding its own findings, its dump's and its datasets'", async () => {
+    serve([
+      finding({ targetId: "tg-plex", name: "plex" }),
+      finding({ targetId: "tg-plex", name: "plex", scopeKind: "dump", metric: "dump_bytes_growth", severity: "warning" }),
+      finding({ targetId: "tg-sonarr", name: "sonarr", severity: "warning" }),
+    ]);
     await renderPage();
-    await pick(en["anomaly.filter.state"], en["anomaly.filter.stateClosed"]);
-    await pick(en["anomaly.filter.period"], en["anomaly.filter.period90"]);
 
-    const now = Math.floor(Date.now() / 1000);
-    const last = getAnomalies.mock.calls.at(-1)![0]!;
-    expect(last.state).toBe("closed");
-    expect(last.since).toBeGreaterThan(now - 90 * DAY - 60);
-    expect(last.since).toBeLessThanOrEqual(now - 90 * DAY + 60);
-
-    await pick(en["anomaly.filter.period"], en["anomaly.filter.periodAll"]);
-    expect(getAnomalies.mock.calls.at(-1)![0]!.since).toBe(0);
+    expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(["plex", "sonarr"]);
+    const lines = within(card("plex")).getAllByRole("button", { expanded: false });
+    expect(lines.map((b) => b.textContent)).toEqual([
+      expect.stringContaining(en["anomaly.short.shrink"].slice(0, 9)),
+      expect.stringContaining(en["anomaly.items.dumpSeries"]),
+    ]);
   });
 
-  it("leaves the period out while only open findings are listed", async () => {
+  it("gives a restore check and a disk a card of their own", async () => {
+    serve([
+      finding({ metric: "drill_dr", detector: "integrity", scopeKind: "domain", scopeId: "files:offsite:t1", targetId: "", domain: "files", name: "", targetName: "wasabi" }),
+      finding({ metric: "capacity_low", detector: "capacity", severity: "info", scopeKind: "volume", scopeId: "vol-1", targetId: "", domain: "container", name: "", observed: 0.04, details: { freeBytes: 30 * GB } }),
+    ]);
     await renderPage();
-    await pick(en["anomaly.filter.severity"], en["anomaly.severity.warning"]);
 
-    const last = getAnomalies.mock.calls.at(-1)![0]!;
-    expect(last.state).toBe("open");
-    expect(last.severity).toBe("warning");
-    expect(last.since).toBeUndefined();
-    expect(screen.queryByRole("combobox", { name: en["anomaly.filter.period"] })).toBeNull();
+    expect(within(card(en["anomaly.detector.integrity"])).getByText(/wasabi/)).toBeTruthy();
+    expect(
+      within(card(en["anomaly.detector.capacity"])).getByText(
+        new RegExp(en["anomaly.card.volume"].replace("{domains}", "Containers"))
+      )
+    ).toBeTruthy();
   });
 
-  it("narrows to the findings about ZFS datasets", async () => {
+  it("puts the worst card first and tints only a critical one", async () => {
+    serve([
+      finding({ targetId: "tg-a", name: "calm", severity: "info" }),
+      finding({ targetId: "tg-b", name: "loud", severity: "critical" }),
+    ]);
     await renderPage();
-    await pick(en["common.domain"], en["dashboard.domainZFS"]);
-    expect(getAnomalies.mock.calls.at(-1)![0]!.domain).toBe("zfs");
+
+    const [first, second] = screen.getAllByRole("region");
+    expect(first.getAttribute("aria-label")).toBe("loud");
+    expect(first.className).toContain("bg-statusFailBgSoft");
+    expect(second.className).not.toContain("bg-statusFailBgSoft");
   });
 
-  it("lists the domains in the sidebar's order", async () => {
+  it("leaves the item's name out of the line and says the whole sentence once it is opened", async () => {
+    serve([finding({ targetId: "tg-plex", name: "plex" })]);
     await renderPage();
-    fireEvent.click(screen.getByRole("combobox", { name: en["common.domain"] }));
-    const options = screen.getAllByRole("option").map((o) => o.textContent);
-    const sidebar = ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const;
-    expect(options.filter((o) => sidebar.some((k) => en[k] === o))).toEqual(sidebar.map((k) => en[k]));
-  });
 
-  it("narrows to one item from the query string and lets that go again", async () => {
-    getAnomalies.mockImplementation(() => page([finding({ targetId: "tg-plex", name: "plex" })]));
-    await renderPage("/anomalies?scope=item:tg-plex");
-    expect(getAnomalies.mock.calls[0]![0]!.scope).toBe("item:tg-plex");
-    expect(screen.getByText(en["anomaly.filter.itemChip"].replace("{name}", "plex"))).toBeTruthy();
-
+    const line = within(card("plex")).getByRole("button", { expanded: false });
+    expect(line.textContent).not.toContain("plex");
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["anomaly.filter.removeChip"] }));
+      fireEvent.click(line);
     });
-    expect(getAnomalies.mock.calls.at(-1)![0]!.scope).toBeUndefined();
+    expect(line.getAttribute("aria-expanded")).toBe("true");
+    expect(
+      screen.getByText(
+        en["anomaly.sentence.sourceShrink"]
+          .replace("{name}", "plex")
+          .replace("{current}", isolateLtr("2.0 GB"))
+          .replace("{typical}", isolateLtr("40.0 GB"))
+      )
+    ).toBeTruthy();
   });
 
-  // jsdom lays nothing out, so this pins the classes the phone layout rests on.
-  it("breaks a long item name inside its chip and gives the chip's remove control a touch-sized target", async () => {
-    const name = "nextcloud_aio_nextcloud_database";
-    getAnomalies.mockImplementation(() => page([finding({ targetId: "tg-long", name })]));
-    await renderPage("/anomalies?scope=item:tg-long");
-    const text = screen.getByText(en["anomaly.filter.itemChip"].replace("{name}", name));
-    expect(text.className).toContain("wrap-anywhere");
-    expect(text.parentElement!.className).toContain("max-w-full");
-    const remove = screen.getByRole("button", { name: en["anomaly.filter.removeChip"] });
-    expect(remove.className).toContain("pointer-coarse:after:-inset-3.5");
+  it("names the dataset in front of a dataset's line", async () => {
+    serve([
+      finding({ targetId: "tg-tank", name: "tank", domain: "zfs", scopeKind: "zfsds", part: "tank/media" }),
+    ]);
+    await renderPage();
+    const series = within(card("tank")).getByText(/^tank\/media/);
+    expect(series.getAttribute("dir")).toBe("ltr");
   });
 });
 
-describe("the findings tab's empty states", () => {
-  it.each([
-    [en["anomaly.filter.stateOpen"], "anomaly.emptyOpen"],
-    [en["anomaly.filter.stateClosed"], "anomaly.emptyClosed"],
-    [en["anomaly.filter.any"], "anomaly.emptyAny"],
-  ])("says what %s found nothing means", async (stateLabel, key) => {
-    await renderPage();
-    await pick(en["anomaly.filter.state"], stateLabel);
-    expect(screen.getByText(en[key as keyof typeof en])).toBeTruthy();
-  });
-
-  it("says a narrowed listing is empty because of the narrowing", async () => {
-    await renderPage();
-    await pick(en["anomaly.filter.detector"], en["anomaly.detector.capacity"]);
-    expect(screen.getByText(en["anomaly.emptyFiltered"])).toBeTruthy();
-    expect(screen.queryByText(en["anomaly.emptyOpen"])).toBeNull();
-  });
-
-  it("offers another try instead of an empty state when the listing failed", async () => {
-    getAnomalies.mockImplementationOnce(() => Promise.reject(new Error("offline")));
-    await renderPage();
-    expect(screen.getByText(en["anomaly.loadFailed"])).toBeTruthy();
-    expect(screen.queryByText(en["anomaly.emptyOpen"])).toBeNull();
-
-    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["anomaly.retry"] }));
-    });
-    expect(screen.queryByText(en["anomaly.loadFailed"])).toBeNull();
-  });
-});
-
-describe("settling several findings at once", () => {
-  it("sends every selected id in one call and tells the rest of the app", async () => {
-    const rows = [finding({ name: "plex" }), finding({ name: "sonarr" })];
-    getAnomalies.mockImplementation(() => page(rows));
+describe("settling findings", () => {
+  it("acknowledges all of one item's findings in one call and leaves the other items alone", async () => {
+    const plex = [
+      finding({ targetId: "tg-plex", name: "plex", severity: "warning" }),
+      finding({ targetId: "tg-plex", name: "plex", severity: "warning", metric: "duration_slower" }),
+    ];
+    serve([...plex, finding({ targetId: "tg-sonarr", name: "sonarr", severity: "warning" })]);
     acknowledgeAnomalies.mockResolvedValue({ ok: true, changed: 2, skipped: 0, released: 0 });
     const heard = vi.fn();
     window.addEventListener(ANOMALY_CHANGED_EVENT, heard);
 
     await renderPage();
-    fireEvent.click(screen.getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", "plex") }));
-    fireEvent.click(screen.getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", "sonarr") }));
-    expect(screen.getByText(en["anomaly.bulk.selected"].replace("{n}", "2"))).toBeTruthy();
-
-    const bar = screen.getByRole("group", { name: en["anomaly.bulk.selected"].replace("{n}", "2") });
     await act(async () => {
-      fireEvent.click(within(bar).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+      fireEvent.click(
+        within(card("plex")).getByRole("button", { name: en["anomaly.action.acknowledgeAll"].replace("{n}", "2") })
+      );
     });
 
     expect(acknowledgeAnomalies).toHaveBeenCalledTimes(1);
-    expect(acknowledgeAnomalies.mock.calls[0]![0]).toEqual([rows[0]!.id, rows[1]!.id]);
+    expect(acknowledgeAnomalies.mock.calls[0]![0]).toEqual(plex.map((a) => a.id));
     expect(heard).toHaveBeenCalled();
     window.removeEventListener(ANOMALY_CHANGED_EVENT, heard);
   });
 
-  it("asks first when a selected finding is keeping old backups", async () => {
-    const rows = [finding({ name: "plex", retentionHeld: true })];
-    getAnomalies.mockImplementation(() => page(rows));
+  it("asks first when a finding of the card is keeping old backups", async () => {
+    serve([finding({ targetId: "tg-plex", name: "plex", severity: "warning", retentionHeld: true })]);
     acknowledgeAnomalies.mockResolvedValue({ ok: true, changed: 1, skipped: 0, released: 1 });
-
     await renderPage();
-    fireEvent.click(screen.getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", "plex") }));
-    const bar = screen.getByRole("group", { name: en["anomaly.bulk.selected"].replace("{n}", "1") });
-    fireEvent.click(within(bar).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
 
-    expect(
-      screen.getByText(en["anomaly.releaseConfirmMany"].replace("{names}", "plex"))
-    ).toBeTruthy();
+    fireEvent.click(within(card("plex")).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    expect(screen.getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
     expect(acknowledgeAnomalies).not.toHaveBeenCalled();
 
-    const dialog = screen.getByRole("dialog");
     await act(async () => {
-      fireEvent.click(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
     });
-    expect(acknowledgeAnomalies).toHaveBeenCalledTimes(1);
+    expect(acknowledgeAnomalies).toHaveBeenCalledWith(["an-1"]);
   });
 
-  it("keeps the expected button shut while nothing selected can be expected", async () => {
-    getAnomalies.mockImplementation(() => page([finding({ name: "plex", expectable: false })]));
+  it("settles one finding from its opened line, without a note", async () => {
+    const rows = [
+      finding({ targetId: "tg-plex", name: "plex", severity: "warning" }),
+      finding({ targetId: "tg-plex", name: "plex", severity: "warning", metric: "source_bytes_growth" }),
+    ];
+    serve(rows);
+    markAnomaliesExpected.mockResolvedValue({ ok: true, changed: 1, skipped: 0, released: 0 });
     await renderPage();
-    fireEvent.click(screen.getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", "plex") }));
 
-    const bar = screen.getByRole("group", { name: en["anomaly.bulk.selected"].replace("{n}", "1") });
-    const expected = within(bar).getByRole("button", { name: en["anomaly.action.expected"] });
-    expect((expected as HTMLButtonElement).disabled).toBe(true);
-    expect(markAnomaliesExpected).not.toHaveBeenCalled();
+    const plex = card("plex");
+    await act(async () => {
+      fireEvent.click(within(plex).getAllByRole("button", { expanded: false })[1]!);
+    });
+    await act(async () => {
+      fireEvent.click(within(plex).getByRole("button", { name: en["anomaly.action.expected"] }));
+    });
+    expect(markAnomaliesExpected).toHaveBeenCalledWith([rows[1]!.id]);
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 
-  it("explains acknowledging and marking as expected inside the finding's own buttons", async () => {
-    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
+  it("makes restoring the card's main action for a critical finding with a good backup", async () => {
+    serve([
+      finding({
+        targetId: "tg-plex",
+        name: "plex",
+        lastGood: { runId: "run-9", snapshotId: "snap-9", at: 1700000000 },
+      }),
+    ]);
     await renderPage();
-    for (const [label, hint] of [
-      [en["anomaly.action.acknowledge"], en["anomaly.acknowledgeHint"]],
-      [en["anomaly.action.expected"], en["anomaly.expectedHint"]],
-    ]) {
-      const info = await screen.findByLabelText(hint);
-      const own = screen.getAllByRole("button", { name: label }).filter((b) => b.parentElement?.contains(info));
-      expect(own).toHaveLength(1);
-      expect(own[0].contains(info)).toBe(false);
-    }
-  });
-
-  it("says that a selection covers the loaded entries only while a page is left", async () => {
-    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })], "cur-2"));
-    await renderPage();
-    expect(screen.getByText(en["anomaly.bulk.loadedOnly"])).toBeTruthy();
-    expect(screen.getByRole("button", { name: en["anomaly.loadMore"] })).toBeTruthy();
-  });
-});
-
-describe("a finding's own lines", () => {
-  it("links the last good backup at the item's restore panel", async () => {
-    getAnomalies.mockImplementation(() =>
-      page([
-        finding({
-          name: "plex",
-          lastGood: { runId: "run-9", snapshotId: "snap-9", at: 1700000000 },
-        }),
-      ])
+    const label = en["anomaly.action.restoreLastGood"].replace(
+      "{date}",
+      isolateLtr(new Date(1700000000 * 1000).toLocaleString())
     );
+    expect(within(card("plex")).getByRole("button", { name: label })).toBeTruthy();
+    expect(within(card("plex")).queryByRole("button", { name: en["anomaly.action.acknowledge"] })).toBeNull();
+  });
+
+  it("links a warning's last good backup from its opened line", async () => {
+    serve([
+      finding({
+        targetId: "tg-plex",
+        name: "plex",
+        severity: "warning",
+        lastGood: { runId: "run-9", snapshotId: "snap-9", at: 1700000000 },
+      }),
+    ]);
     await renderPage();
+    await act(async () => {
+      fireEvent.click(within(card("plex")).getByRole("button", { expanded: false }));
+    });
     const link = screen.getByRole("link", {
       name: en["anomaly.action.restoreLastGood"].replace("{date}", isolateLtr(new Date(1700000000 * 1000).toLocaleString())),
     });
@@ -382,71 +376,179 @@ describe("a finding's own lines", () => {
   });
 
   it("links a dataset's last good backup at its ZFS item, naming the dataset", async () => {
-    getAnomalies.mockImplementation(() =>
-      page([
-        finding({
-          domain: "zfs",
-          name: "tank/media",
-          scopeKind: "zfsds",
-          scopeId: "tank/media/photos",
-          part: "tank/media/photos",
-          lastGood: { runId: "run-9", snapshotId: "snap-9", at: 1700000000 },
-        }),
-      ])
-    );
+    serve([
+      finding({
+        targetId: "tg-tank",
+        severity: "warning",
+        domain: "zfs",
+        name: "tank/media",
+        scopeKind: "zfsds",
+        scopeId: "tank/media/photos",
+        part: "tank/media/photos",
+        lastGood: { runId: "run-9", snapshotId: "snap-9", at: 1700000000 },
+      }),
+    ]);
     await renderPage();
+    await act(async () => {
+      fireEvent.click(within(card("tank/media")).getByRole("button", { expanded: false }));
+    });
     const link = screen.getByRole("link", {
       name: en["anomaly.action.restoreLastGood"].replace("{date}", isolateLtr(new Date(1700000000 * 1000).toLocaleString())),
     });
     expect(link.getAttribute("href")).toBe("/zfs?restore=snap-9&at=1700000000&item=tank%2Fmedia&dataset=tank%2Fmedia%2Fphotos");
   });
+});
 
-  // The detector measures a rate per second; the row has to say per hour.
+describe("a finding's figures", () => {
+  function figure(label: string, value: string) {
+    return en["anomaly.figure"].replace("{label}", label).replace("{value}", value);
+  }
+
+  async function openOnly() {
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("region")[0]!.querySelector("button[aria-expanded]")!);
+    });
+  }
+
+  // The detector measures a rate per second; the bubble has to say per hour.
   it("reads the largest usual amount per hour out of a per-second rate", async () => {
-    getAnomalies.mockImplementation(() =>
-      page([finding({ metric: "new_data", detector: "new_data", details: { refRate: 1024 } })])
-    );
+    serve([finding({ metric: "new_data", detector: "new_data", details: { refRate: 1024 } })]);
     await renderPage();
-    fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.details"] }));
-    const term = screen.getByText(en["anomaly.detail.refRate"]);
-    expect(term.nextElementSibling?.textContent).toBe(isolateLtr("3.5 MB"));
+    await openOnly();
+    const bubble = screen.getByLabelText(new RegExp(en["anomaly.detail.refRate"]));
+    expect(bubble.getAttribute("aria-label")).toContain(figure(en["anomaly.detail.refRate"], isolateLtr("3.5 MB")));
   });
 
   // The two projections are independent: one is what BombVault itself writes,
   // the other is everything filling the same disk.
   it("says where a capacity projection comes from", async () => {
-    getAnomalies.mockImplementation(() =>
-      page([
-        finding({
-          metric: "capacity_eta",
-          detector: "capacity",
-          scopeKind: "volume",
-          observed: 6,
-          details: { etaGrowthDays: 12, etaFreeDays: 6, slopePerDay: 2 * 1024 ** 3 },
-        }),
-      ])
-    );
+    serve([
+      finding({
+        metric: "capacity_eta",
+        detector: "capacity",
+        scopeKind: "volume",
+        targetId: "",
+        observed: 6,
+        details: { etaGrowthDays: 12, etaFreeDays: 6, slopePerDay: 2 * GB },
+      }),
+    ]);
     await renderPage();
-    fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.details"] }));
-    const value = (label: string) => screen.getByText(label).nextElementSibling?.textContent;
-    expect(value(en["anomaly.detail.etaGrowth"])).toBe("12 days");
-    expect(value(en["anomaly.detail.etaFree"])).toBe("6 days");
-    expect(value(en["anomaly.detail.slope"])).toBe(isolateLtr("2.0 GB"));
+    await openOnly();
+    const tip = screen.getByLabelText(new RegExp(en["anomaly.detail.etaGrowth"])).getAttribute("aria-label");
+    expect(tip).toContain(figure(en["anomaly.detail.etaGrowth"], "12 days"));
+    expect(tip).toContain(figure(en["anomaly.detail.etaFree"], "6 days"));
+    expect(tip).toContain(figure(en["anomaly.detail.slope"], isolateLtr("2.0 GB")));
+  });
+
+  it("shows the measured and the usual level beside the line", async () => {
+    serve([finding({})]);
+    await renderPage();
+    await openOnly();
+    expect(screen.getByText(en["anomaly.detail.observed"]).nextElementSibling?.textContent).toBe(isolateLtr("2.0 GB"));
+    expect(screen.getByText(en["anomaly.detail.expected"]).nextElementSibling?.textContent).toBe(isolateLtr("40.0 GB"));
   });
 });
 
-describe("the items tab", () => {
-  async function openItems() {
+describe("the severity tiles", () => {
+  it("count the open findings and hide a severity until pressed again", async () => {
+    serve([
+      finding({ targetId: "tg-a", name: "alpha", severity: "critical" }),
+      finding({ targetId: "tg-b", name: "beta", severity: "warning" }),
+      finding({ targetId: "tg-b", name: "beta", severity: "warning" }),
+    ]);
+    await renderPage();
+
+    const tiles = screen.getByRole("group", { name: en["anomaly.filter.severity"] });
+    const warnings = within(tiles).getByRole("button", { name: new RegExp(en["anomaly.tile.warning"]) });
+    expect(warnings.textContent).toContain("2");
+    expect(warnings.getAttribute("aria-pressed")).toBe("true");
+
+    fireEvent.click(warnings);
+    expect(warnings.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByRole("region", { name: "beta" })).toBeNull();
+    expect(card("alpha")).toBeTruthy();
+
+    fireEvent.click(warnings);
+    expect(card("beta")).toBeTruthy();
+  });
+
+  it("say so when every open finding is hidden", async () => {
+    serve([finding({ severity: "info" })]);
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["anomaly.tile.info"]) }));
+    expect(screen.getByText(en["anomaly.emptyHidden"])).toBeTruthy();
+  });
+});
+
+describe("the closed findings", () => {
+  it("counts the last 30 days and shows a stored note once a finding is opened", async () => {
+    serve([], [
+      finding({ name: "plex", state: "acknowledged", ackedAt: 1700000000, ackNote: "cleaned up on purpose" }),
+      finding({ name: "sonarr", state: "resolved", resolvedAt: 1700000000 }),
+    ]);
+    await renderPage();
+
+    const since = getAnomalies.mock.calls.find(([f]) => f?.state === "closed")![0]!.since!;
+    expect(Math.abs(since - (Date.now() / 1000 - 30 * 86400))).toBeLessThan(60);
+
+    const row = screen.getByRole("button", { name: new RegExp(en["anomaly.closedRecent"]) });
+    expect(row.textContent).toContain("2");
+    fireEvent.click(row);
     await act(async () => {
-      fireEvent.click(screen.getByRole("tab", { name: en["anomaly.tab.items"] }));
+      fireEvent.click(screen.getByRole("button", { name: /^plex:/ }));
     });
-  }
+    expect(screen.getByText(`${en["anomaly.noteLabel"]}: cleaned up on purpose`)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["anomaly.action.acknowledge"] })).toBeNull();
+  });
+
+  it("says when nothing was closed", async () => {
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["anomaly.closedRecent"]) }));
+    expect(screen.getByText(en["anomaly.emptyClosed"])).toBeTruthy();
+  });
+});
+
+describe("a link to one item", () => {
+  it("opens and scrolls to the card of that item", async () => {
+    serve([
+      finding({ targetId: "tg-a", name: "alpha" }),
+      finding({ targetId: "tg-b", name: "beta", severity: "warning" }),
+    ]);
+    await renderPage("/anomalies?scope=item:tg-b");
+
+    expect(within(card("beta")).getByRole("button", { expanded: true })).toBeTruthy();
+    expect(within(card("alpha")).queryByRole("button", { expanded: true })).toBeNull();
+    expect(scrolled).toHaveBeenCalledTimes(1);
+    expect(scrolled.mock.contexts[0]).toBe(card("beta"));
+  });
+
+  it("opens the monitoring of an item without findings", async () => {
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item(), item({ targetId: "tg-2", name: "sonarr" })] });
+    await renderPage("/anomalies?scope=item:tg-2");
+    expect(screen.getByRole("button", { name: /^sonarr/ }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /^plex/ }).getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("monitoring", () => {
+  it("opens an item's settings from its card", async () => {
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
+    serve([finding({ targetId: "tg-plex", name: "plex" })]);
+    await renderPage();
+
+    const toggle = within(card("plex")).getByRole("button", { name: en["anomaly.card.monitoring"] });
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+    expect(within(card("plex")).getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
+    expect(screen.queryByText(`${en["anomaly.quiet"]} · 1`)).toBeNull();
+  });
 
   it("saves a sensitivity straight away and puts it back when the server refuses", async () => {
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
     setItemAnomalyPrefs.mockResolvedValue({ ok: false, error: "no", code: "bad-request" });
     await renderPage();
-    await openItems();
+    await openQuiet("plex");
 
     await pick(en["anomaly.items.sensitivity"], en["anomaly.sensitivity.strict"]);
     expect(setItemAnomalyPrefs).toHaveBeenCalledWith("tg-plex", { sensitivity: "strict" });
@@ -460,21 +562,26 @@ describe("the items tab", () => {
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
     setItemAnomalyPrefs.mockResolvedValue({ ok: true });
     await renderPage();
-    await openItems();
+    await openQuiet("plex");
 
     await pick(en["anomaly.items.notifyMin"], en["anomaly.settings.notify.critical"]);
     expect(setItemAnomalyPrefs).toHaveBeenCalledWith("tg-plex", { notifyMin: "critical" });
   });
 
-  it("says an item is not scheduled instead of how much it has learned", async () => {
+  it("lists the items without findings in one card and marks one that is not scheduled", async () => {
     getAnomalyItems.mockResolvedValue({
       ok: true,
-      items: [item({ scheduled: false, learning: { samples: 0, needed: 10, newData: 0, source: 0, duration: 0, noData: false } })],
+      items: [
+        item(),
+        item({ targetId: "tg-2", name: "sonarr", scheduled: false }),
+        item({ targetId: "tg-3", name: "radarr" }),
+      ],
     });
+    serve([finding({ targetId: "tg-3", name: "radarr" })]);
     await renderPage();
-    await openItems();
-    expect(screen.getByText(en["anomaly.items.notScheduled"])).toBeTruthy();
-    expect(screen.queryByText(en["anomaly.learning"].replace("{n}", "0").replace("{needed}", "10"))).toBeNull();
+
+    expect(screen.getByText(`${en["anomaly.quiet"]} · 2`)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^sonarr/ }).textContent).toContain(en["anomaly.items.notScheduled"]);
   });
 
   it("gives a dump and a dataset series the size line that has no new-data figure", async () => {
@@ -493,7 +600,7 @@ describe("the items tab", () => {
             {
               part: "tank/media",
               learning: { samples: 10, needed: 10 },
-              typical: { sourceBytes: 3 * 1024 ** 3, resticMs: 9000 },
+              typical: { sourceBytes: 3 * GB, resticMs: 9000 },
               open: { critical: 0, warning: 0, info: 0 },
               retentionHeld: false,
             },
@@ -502,10 +609,10 @@ describe("the items tab", () => {
       ],
     });
     await renderPage();
-    await openItems();
+    await openQuiet("plex");
 
     expect(screen.getByText(en["anomaly.items.dumpSeries"])).toBeTruthy();
-    expect(screen.getByText("tank/media")).toBeTruthy();
+    expect(screen.getByText("tank/media").getAttribute("dir")).toBe("ltr");
     const sized = screen.getAllByText((text) => text.startsWith("Usually:") && text.includes("restic time"));
     for (const line of sized) expect(line.textContent).not.toContain("{");
     expect(
@@ -531,12 +638,10 @@ describe("the items tab", () => {
       ],
     });
     await renderPage();
-    await openItems();
+    await openQuiet("plex");
     expect(
       screen.getByText(
-        en["anomaly.items.typicalSize"]
-          .replace("{size}", isolateLtr("2.0 MB"))
-          .replace("{duration}", isolateLtr("359ms"))
+        en["anomaly.items.typicalSize"].replace("{size}", isolateLtr("2.0 MB")).replace("{duration}", isolateLtr("359ms"))
       )
     ).toBeTruthy();
   });
@@ -562,7 +667,8 @@ describe("the items tab", () => {
       ],
     });
     await renderPage();
-    await openItems();
+    await openQuiet("tank");
+    await openQuiet("postgres");
     const dataset = screen.getByText("tank/media");
     expect(dataset.parentElement?.textContent).toContain(en["anomaly.family.sourceBytesDown"]);
     const dump = screen.getByText(en["anomaly.items.dumpSeries"]);
@@ -575,129 +681,93 @@ describe("the items tab", () => {
       items: [
         item({
           expectations: [
-            { scopeKind: "item", part: "", family: "new_data", sinceAt: 0, ceiling: 1024 ** 3, updatedAt: 1700000000 },
+            { scopeKind: "item", part: "", family: "new_data", sinceAt: 0, ceiling: GB, updatedAt: 1700000000 },
           ],
         }),
       ],
     });
     await renderPage();
-    await openItems();
+    await openQuiet("plex");
     expect(
       screen.getByText(
-        en["anomaly.expectation.ceiling"]
-          .replace("{family}", en["anomaly.family.newData"])
-          .replace("{bytes}", "1.0 GB")
+        en["anomaly.expectation.ceiling"].replace("{family}", en["anomaly.family.newData"]).replace("{bytes}", "1.0 GB")
       )
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: en["anomaly.expectation.forget"] })).toBeTruthy();
   });
 
-  it("says when there is nothing to list", async () => {
-    await renderPage();
-    await openItems();
-    expect(screen.getByText(en["anomaly.items.empty"])).toBeTruthy();
-  });
-
   it("offers another try instead of an empty list when the items were refused", async () => {
     getAnomalyItems.mockRejectedValueOnce(new Error("offline"));
     await renderPage();
-    await openItems();
     expect(screen.getByText(en["anomaly.loadFailed"])).toBeTruthy();
-    expect(screen.queryByText(en["anomaly.items.empty"])).toBeNull();
 
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["anomaly.retry"] }));
     });
-    expect(screen.getByText("plex")).toBeTruthy();
-  });
-
-  it("keeps quiet about an empty list while the first pass is still out", async () => {
-    getAnomalySummary.mockReturnValue(new Promise<never>(() => undefined));
-    await renderPage("/anomalies#items");
-    expect(screen.getByText(en["dashboard.checking"])).toBeTruthy();
-    expect(screen.queryByText(en["anomaly.items.empty"])).toBeNull();
-  });
-
-  it("says the list is unreadable when the pass behind it was refused", async () => {
-    getAnomalySummary.mockResolvedValue({ ok: false, error: "no session", summary: summary() });
-    await renderPage("/anomalies#items");
-    expect(screen.getByText(en["anomaly.loadFailed"])).toBeTruthy();
-    expect(screen.queryByText(en["anomaly.items.empty"])).toBeNull();
-    expect(getAnomalyItems).not.toHaveBeenCalled();
-  });
-
-  it("groups a four-digit open count in the badge's label", async () => {
-    getAnomalyItems.mockResolvedValue({
-      ok: true,
-      items: [item({ open: { critical: 0, warning: 1200, info: 0 } })],
-    });
-    await renderPage();
-    await openItems();
-    const label = en["anomaly.itemBadgeAria"]
-      .replace("{name}", "plex")
-      .replace("{n}", (1200).toLocaleString());
-    expect(screen.getByRole("link", { name: label })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^plex/ })).toBeTruthy();
   });
 });
 
-it("draws no native select on either tab", async () => {
-  getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
-  getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
-  const { container } = render(
-    <I18nProvider>
-      <ToastProvider>
-        <MemoryRouter initialEntries={["/anomalies"]}>
-          <AnomalyProvider>
-            <Anomalies />
-          </AnomalyProvider>
-        </MemoryRouter>
-      </ToastProvider>
-    </I18nProvider>
-  );
-  await act(async () => undefined);
-  expect(screen.getByRole("combobox", { name: en["anomaly.filter.state"] })).toBeTruthy();
-  expect(container.querySelectorAll("select")).toHaveLength(0);
-
-  await act(async () => {
-    fireEvent.click(screen.getByRole("tab", { name: en["anomaly.tab.items"] }));
+describe("before and without findings", () => {
+  it("keeps quiet about an empty page while the first pass is still out", async () => {
+    getAnomalySummary.mockReturnValue(new Promise<never>(() => undefined));
+    await renderPage();
+    expect(screen.getByText(en["dashboard.checking"])).toBeTruthy();
+    expect(screen.queryByText(en["anomaly.emptyOpen"])).toBeNull();
   });
+
+  it("offers another try when the open findings were refused", async () => {
+    getAnomalies.mockRejectedValueOnce(new Error("offline"));
+    await renderPage();
+    expect(screen.getByText(en["anomaly.loadFailed"])).toBeTruthy();
+    expect(screen.queryByText(en["anomaly.emptyOpen"])).toBeNull();
+
+    serve([finding({ targetId: "tg-plex", name: "plex" })]);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["anomaly.retry"] }));
+    });
+    expect(card("plex")).toBeTruthy();
+  });
+
+  it("says there is nothing open", async () => {
+    await renderPage();
+    expect(screen.getByText(en["anomaly.emptyOpen"])).toBeTruthy();
+  });
+
+  it("follows the cursor to the end, so no open finding is left off a card", async () => {
+    const first = finding({ targetId: "tg-plex", name: "plex" });
+    const second = finding({ targetId: "tg-sonarr", name: "sonarr" });
+    getAnomalies.mockImplementation((f?: AnomalyFilter) =>
+      f?.state === "open" ? (f.cursor ? page([second]) : page([first], "cur-2")) : page([])
+    );
+    await renderPage();
+    expect(card("plex")).toBeTruthy();
+    expect(card("sonarr")).toBeTruthy();
+  });
+});
+
+it("draws no native select and no checkbox", async () => {
+  getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
+  serve([finding({ targetId: "tg-x", name: "sonarr" })]);
+  await renderPage();
+  await openQuiet("plex");
   expect(screen.getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
-  expect(container.querySelectorAll("select")).toHaveLength(0);
+  expect(document.querySelectorAll("select, input[type=checkbox]")).toHaveLength(0);
 });
 
 // jsdom lays nothing out, so these pin the classes the phone layout rests on.
-describe("the findings tab at phone width", () => {
-  it("gives the note field a line of its own and lets the bulk labels wrap", async () => {
-    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
+describe("at phone width", () => {
+  it("gives a finding's line a finger-sized target", async () => {
+    serve([finding({ targetId: "tg-plex", name: "plex" })]);
     await renderPage();
-    const bar = screen.getByRole("group", { name: en["anomaly.bulk.selected"].replace("{n}", "0") });
-    const note = within(bar).getByRole("textbox", { name: en["anomaly.notePlaceholder"] });
-    expect(note.className).toContain("max-md:basis-full");
-    expect(note.className).toContain("max-md:min-w-0");
-    for (const key of ["anomaly.bulk.clearSelection", "anomaly.action.expected", "anomaly.action.acknowledge"] as const) {
-      expect(within(bar).getByRole("button", { name: en[key] }).className).toContain("glim-btn-wrap");
-    }
+    expect(within(card("plex")).getByRole("button", { expanded: false }).className).toContain("min-h-11");
   });
 
-  it("gives the small controls a finger-sized target under a touch pointer", async () => {
-    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
-    await renderPage();
-    const box = screen.getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", "plex") });
-    expect(box.closest("label")?.className).toContain("pointer-coarse:after:-inset-3.5");
-    const all = screen.getByRole("checkbox", { name: en["anomaly.bulk.selectAll"] });
-    expect(all.closest("label")?.className).toContain("pointer-coarse:min-h-11");
-    expect(screen.getByRole("button", { name: en["anomaly.action.details"] }).className).toContain(
-      "pointer-coarse:min-h-11"
-    );
-  });
-});
-
-describe("the items tab at phone width", () => {
   it("breaks an item name without spaces instead of running out of the card", async () => {
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item({ name: "nextcloud_aio_nextcloud_database" })] });
-    await renderPage("/anomalies#items");
-    const name = await screen.findByText("nextcloud_aio_nextcloud_database", { selector: "span" });
+    await renderPage();
+    const name = screen.getByText("nextcloud_aio_nextcloud_database", { selector: "span" });
     expect(name.className).toContain("wrap-anywhere");
   });
 });

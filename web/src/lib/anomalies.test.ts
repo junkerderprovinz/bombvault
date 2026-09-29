@@ -7,8 +7,10 @@ import {
   anomalyErrorText,
   anomalyItemLabel,
   anomalySentence,
+  anomalyShortLine,
   anomalySeverityTone,
   anomalyTimeSpan,
+  groupAnomalies,
   sortOpenAnomalies,
   worstSeverity,
 } from "./anomalies";
@@ -477,5 +479,66 @@ describe("sortOpenAnomalies", () => {
     const rows = [view({ id: "a", severity: "info" }), view({ id: "b", severity: "critical" })];
     sortOpenAnomalies(rows);
     expect(rows.map((a) => a.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("anomalyShortLine", () => {
+  // The card's heading and caption name the item, the backup type and the
+  // target, so the line keeps only the figures.
+  const NAMED_BY_THE_CARD = new Set(["plex", "wasabi", "Containers", "Folders", "Containers, Folders", en["source.local"]]);
+
+  it.each(CASES)("says %s without the item's name", (_what, a, _key, parts) => {
+    const { text } = anomalyShortLine(a, t, "en");
+    expect(text).not.toMatch(/\{[a-zA-Z]+\}/);
+    expect(text).not.toContain("plex");
+    for (const part of parts.filter((p) => !NAMED_BY_THE_CARD.has(p))) expect(text).toContain(part);
+  });
+
+  it("names a dump or a dataset in front of the line", () => {
+    expect(anomalyShortLine(view({ metric: "dump_bytes_shrink", scopeKind: "dump" }), t).series).toBe(
+      en["anomaly.items.dumpSeries"]
+    );
+    expect(anomalyShortLine(view({ metric: "duration_slower", scopeKind: "zfsds", part: "tank/media" }), t).series).toBe(
+      "tank/media"
+    );
+    expect(anomalyShortLine(view({ metric: "duration_slower" }), t).series).toBe("");
+  });
+});
+
+describe("groupAnomalies", () => {
+  it("puts an item's own findings, its dump's and its datasets' on one card", () => {
+    const groups = groupAnomalies([
+      view({ id: "a", targetId: "tg-1" }),
+      view({ id: "b", targetId: "tg-1", scopeKind: "dump" }),
+      view({ id: "c", targetId: "tg-1", scopeKind: "zfsds", part: "tank/x" }),
+      view({ id: "d", targetId: "tg-2" }),
+    ]);
+    expect(groups.map((g) => [g.key, g.findings.map((a) => a.id)])).toEqual([
+      ["tg-1", ["a", "b", "c"]],
+      ["tg-2", ["d"]],
+    ]);
+  });
+
+  it("gives each restore check series and each disk a card of its own", () => {
+    const groups = groupAnomalies([
+      view({ id: "a", targetId: "", scopeKind: "domain", scopeId: "containers:local" }),
+      view({ id: "b", targetId: "", scopeKind: "domain", scopeId: "files:local" }),
+      view({ id: "c", targetId: "", scopeKind: "volume", scopeId: "vol-1" }),
+    ]);
+    expect(groups.map((g) => g.key)).toEqual(["domain:containers:local", "domain:files:local", "volume:vol-1"]);
+  });
+
+  it("orders cards by their worst finding, then by the newest", () => {
+    const groups = groupAnomalies([
+      view({ id: "a", targetId: "old", severity: "warning", lastSeenAt: 100 }),
+      view({ id: "b", targetId: "new", severity: "warning", lastSeenAt: 200 }),
+      view({ id: "c", targetId: "bad", severity: "info", lastSeenAt: 300 }),
+      view({ id: "d", targetId: "bad", severity: "critical", lastSeenAt: 50 }),
+    ]);
+    expect(groups.map((g) => [g.key, g.worst])).toEqual([
+      ["bad", "critical"],
+      ["new", "warning"],
+      ["old", "warning"],
+    ]);
   });
 });

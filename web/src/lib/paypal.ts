@@ -67,12 +67,18 @@ export function loadPaypal(config: PaypalConfig, recurring: boolean): Promise<Pa
       const script = document.createElement("script");
       script.src = src;
       script.dataset.namespace = namespace;
-      script.onload = () => resolve((window as unknown as Record<string, PaypalNamespace>)[namespace]!);
-      script.onerror = () => {
+      const fail = () => {
         loads.delete(src);
         script.remove();
         reject(new Error("paypal sdk"));
       };
+      // A blocker can let the script load and still keep the SDK from running.
+      script.onload = () => {
+        const paypal = (window as unknown as Record<string, PaypalNamespace | undefined>)[namespace];
+        if (paypal) resolve(paypal);
+        else fail();
+      };
+      script.onerror = fail;
       document.head.appendChild(script);
     });
     loads.set(src, load);

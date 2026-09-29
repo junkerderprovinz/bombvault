@@ -331,7 +331,8 @@ describe("ZFS restore panel at phone width", () => {
   it("moves the source switch under its label when the two do not fit", async () => {
     localStorage.setItem("bombvault.advanced", "1");
     await openPanel();
-    const toggle = screen.getByRole("tab", { name: en["source.local"] }).closest("span.inline-flex")!;
+    const toggle = screen.getByRole("tablist", { name: en["source.label"] }).parentElement!;
+    expect(toggle.className).toContain("basis-64");
     expect(toggle.parentElement!.className).toContain("flex-wrap");
   });
 });

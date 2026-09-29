@@ -1,4 +1,6 @@
-// A picker answers the mouse wheel, whether or not the platform draws it.
+// A picker with focus answers the mouse wheel, whether or not the platform
+// draws it. Focus is the condition a number field has too: a list with a
+// dropdown on every row would otherwise change whatever the page scrolls past.
 //
 // Taken from GlimStone's reference/selectScroll.ts, plus enableSelectScrollHere
 // at the bottom for this app. Everything above that talks only to the element
@@ -13,6 +15,7 @@ export function enableSelectScroll(select: HTMLSelectElement): void {
     "wheel",
     (event) => {
       if (select.disabled || select.options.length < 2) return;
+      if (select.ownerDocument.activeElement !== select) return;
       // Keeps the page from scrolling while the pointer is over the control.
       event.preventDefault();
 
@@ -32,7 +35,8 @@ export function enableSelectScroll(select: HTMLSelectElement): void {
 /**
  * The same behaviour for a custom picker that replaces a native <select>.
  * Attach it to the trigger, the button that opens the list; it returns the
- * detach. `step` receives 1 for a wheel roll downwards and -1 for one upwards.
+ * detach. It steps only while the trigger has focus, which the trigger gets
+ * back when the list closes. `step` receives 1 for a wheel roll downwards and -1 for one upwards.
  *
  * This is a native listener rather than an onWheel prop because React
  * registers onWheel as a passive listener on its root, where preventDefault
@@ -40,7 +44,7 @@ export function enableSelectScroll(select: HTMLSelectElement): void {
  */
 export function enableWheelStep(el: HTMLElement, step: (delta: 1 | -1) => void): () => void {
   function onWheel(event: WheelEvent) {
-    if (event.deltaY === 0) return;
+    if (event.deltaY === 0 || el.ownerDocument.activeElement !== el) return;
     event.preventDefault();
     step(event.deltaY > 0 ? 1 : -1);
   }
@@ -70,6 +74,7 @@ export function enableSelectScrollHere(root: Document = document): () => void {
     const target = event.target as Element | null;
     const select = target?.closest?.("select") as HTMLSelectElement | null;
     if (!select || select.disabled || select.options.length < 2) return;
+    if (root.activeElement !== select) return;
     event.preventDefault();
 
     const delta = event.deltaY > 0 ? 1 : -1;

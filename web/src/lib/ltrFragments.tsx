@@ -119,6 +119,9 @@ export const CONFIG_VOLUME_LTR_FRAGMENTS = ["/config"] as const;
 /** The Unraid USB mount, named by the Flash tab and its schedule/settings rows. */
 export const BOOT_VOLUME_LTR_FRAGMENTS = ["/boot"] as const;
 
+/** The path an instance serving a relay answers on, named in the relay card. */
+export const RELAY_CONNECT_LTR_FRAGMENTS = ["/relay/connect"] as const;
+
 /** notify.unraidPlatformMismatch names both the host path and the in-container
  *  one, so the longer `/host/boot` comes first. */
 export const UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS = ["/host/boot", "/boot"] as const;
@@ -173,6 +176,8 @@ export const REST_PATH_EXAMPLE_LTR_FRAGMENTS = ["/user/files-direct", "/files-di
  */
 export const LTR_FRAGMENTS_BY_KEY = {
   "offsite.repoLocalHint": REPO_LOCAL_HINT_LTR_FRAGMENTS,
+  "relay.serveHint": RELAY_CONNECT_LTR_FRAGMENTS,
+  "relay.instanceCert": RELAY_CONNECT_LTR_FRAGMENTS,
   "excludes.hint": EXCLUDES_HINT_LTR_FRAGMENTS,
   "recovery.foreignAppdataDestHint": FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
   "config.backupHint": CONFIG_VOLUME_LTR_FRAGMENTS,
@@ -182,7 +187,6 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "excludes.placeholder": EXCLUDES_PLACEHOLDER_LTR_FRAGMENTS,
   "flash.backupHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "flash.restoreNote": BOOT_VOLUME_LTR_FRAGMENTS,
-  "flash.subtitle": BOOT_VOLUME_LTR_FRAGMENTS,
   "jobs.flashScheduleHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "settings.flashEnabledHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "notify.unraidPlatformMismatch": UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS,

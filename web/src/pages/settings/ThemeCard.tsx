@@ -65,7 +65,6 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
         active={theme}
         onChange={(id) => selectTheme(id as ResolvedTheme)}
         size="lg"
-        variant="well"
         // Pins every segment to the widest one, floored at MIN_PINNED_WIDTH,
         // like the other large pickers on this tab.
         equalWidth
