@@ -1,13 +1,14 @@
 import type { Compression, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { IconCompressAuto, IconCompressMax, IconCompressOff } from "./glyphs";
 import { InfoBubble } from "./InfoBubble";
 import { Selector } from "./Selector";
 
 const MODES = [
-  { id: "off", labelKey: "settings.compression.off" },
-  { id: "auto", labelKey: "settings.compression.auto" },
-  { id: "max", labelKey: "settings.compression.max" },
-] as const satisfies readonly { id: Compression; labelKey: string }[];
+  { id: "off", labelKey: "settings.compression.off", Glyph: IconCompressOff },
+  { id: "auto", labelKey: "settings.compression.auto", Glyph: IconCompressAuto },
+  { id: "max", labelKey: "settings.compression.max", Glyph: IconCompressMax },
+] as const satisfies readonly { id: Compression; labelKey: string; Glyph: () => React.JSX.Element }[];
 
 /** Picks restic's --compression for one repository. */
 export function CompressionSelector({
@@ -27,7 +28,7 @@ export function CompressionSelector({
         <InfoBubble tip={t("settings.compressionInfo")} />
       </span>
       <Selector
-        items={MODES.map((m) => ({ id: m.id, label: t(m.labelKey) }))}
+        items={MODES.map(({ id, labelKey, Glyph }) => ({ id, label: t(labelKey), icon: <Glyph /> }))}
         label={t("settings.compression")}
         size="sm"
         select="one"
