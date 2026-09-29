@@ -1,0 +1,51 @@
+package api
+
+import "testing"
+
+// One file carries the yearly rules and the compression of every repository
+// together, and a fresh instance comes out of the import with all of them.
+func TestSettingsExportImportCarriesRetentionAndCompressionTogether(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.RetentionKeepYearly = 3
+	s.OffsiteRetentionKeepYearly = 5
+	s.SetCompression("containers", "max")
+	s.SetCompression("offsite:containers", "off")
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	archive, _, err := srcStore.GetOffsiteTarget("tgt-2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive.RetentionKeepYearly = 2
+	archive.Compression = "max"
+	if _, err := srcStore.UpsertOffsiteTarget(archive); err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := doExport(t, src, "?includeCredentials=true")
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.RetentionKeepYearly != 3 || got.OffsiteRetentionKeepYearly != 5 {
+		t.Fatalf("yearly rules = %d local, %d off-site", got.RetentionKeepYearly, got.OffsiteRetentionKeepYearly)
+	}
+	if got.CompressionFor("containers") != "max" || got.CompressionFor("offsite:containers") != "off" {
+		t.Fatalf("compression = %q", got.Compression)
+	}
+	target, found, err := dstStore.GetOffsiteTarget("tgt-2")
+	if err != nil || !found || target.RetentionKeepYearly != 2 || target.Compression != "max" {
+		t.Fatalf("the archive target came back as %+v (found=%v, err=%v)", target, found, err)
+	}
+}
