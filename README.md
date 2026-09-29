@@ -147,7 +147,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Web UI usable on a phone | ✅ | ✅ per its README | ❓ | ✅ | ❓ | ❓ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. The BombVault column is v9.3.0. The other tools were checked against their code and docs on 25 September 2026, and the start-test row again on 28 September 2026 against Vault v2026.09.01.
+✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. The BombVault column is v9.4.0. The other tools were checked against their code and docs on 25 September 2026, and the start-test row again on 28 September 2026 against Vault v2026.09.01.
 
 <br>
 
@@ -261,6 +261,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - **Run timing everywhere** — every run-history entry reads `start → end (duration)`, and each container and VM carries its own **Recent runs** list right on its page, so per-item timing never hides in a log.
 - **A dashboard you can rearrange** — the pencil icon in the top-right toggles customize mode: drag the cards into your order (or nudge them up/down) and hide the ones you don't need; the layout is saved per browser.
 - **Repository size & dedup trend** — current repo size, deduplication ratio and snapshot count per domain, with a sparkline of how storage grows over time.
+- **Free space and weeks until full** for local repositories, SFTP repositories and SMB or WebDAV destinations that report it. S3, B2 and REST repositories say "Free space unknown", since those backends do not report it.
 - **Restore-verification drills** — BombVault periodically *proves* your backups are restorable (`restic check --read-data-subset`, bounded — never a disk-filling full restore) and shows a **"last verified restorable"** badge per domain. Both the drill itself and how often it runs now sit together on **Settings → Integrity**: what gets verified and how often belongs next to the verify/unlock/prune actions, not on the Schedules tab with the backup jobs.
 - **Restore check after the first backup**: once an item's first backup is done, BombVault restores a sample of it into a temporary folder, has restic read every file back against its hashes and compares the sizes. **Check restore** runs the same check on the newest backup whenever you want.
 - **Start test**: restores a container's newest backup into an isolated copy with its own name and an internal network, starts it and checks its healthcheck or port. The original container is never stopped or changed, and the copy is removed afterwards. One container per scheduled restore check if you switch it on under **Settings → Integrity**.
