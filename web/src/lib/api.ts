@@ -193,6 +193,10 @@ export interface Settings {
   fleetEnabled: boolean;
   /** Fetching another instance's backups into this box's own repository (#227). */
   pullEnabled: boolean;
+  /** Lets a paired member open this instance in remote view: see its data and
+   *  start the harmless actions remote view allows. Every restore, delete and
+   *  setting stays reachable only from this instance itself. Default true. */
+  remoteViewEnabled: boolean;
   /** Dumping recognised database containers before their backup, for every
    *  container at once. A container can still be switched off on its card. */
   dbDumpsEnabled: boolean;
@@ -451,12 +455,13 @@ export interface Run {
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
   /** What asked for the run: "" for the web interface and the scheduler,
-   *  "mcp" for an assistant. */
-  startedVia?: "" | "mcp";
+   *  "mcp" for an assistant, "remote" for a paired member's remote-view call. */
+  startedVia?: "" | "mcp" | "remote";
   startedViaKey?: string;
-  /** The operator's name for the MCP key behind the run, "" once that key is
-   *  purged from the list. */
+  /** The operator's name for the MCP key or the member's name behind the
+   *  run, "" once an MCP key is purged from the list. */
   startedViaLabel?: string;
+  /** Set only for a purged MCP key; a remote-view run has no "revoked" state. */
   startedViaRevoked?: boolean;
 }
 
@@ -666,17 +671,37 @@ export class ApiError extends Error {
   }
 }
 
+/** The API prefix for a member id, "" for this instance. instanceScope.tsx's
+ *  InstanceProvider is the one caller with a reason to pass anything else. */
+export function apiBase(instanceId: string): string {
+  return instanceId ? `/api/instances/${instanceId}` : "";
+}
+
+// fetchJSON prefixes every /api/ call with the scoped instance itself, kept
+// in step by setInstanceScope, rather than threading a base through the
+// roughly 150 functions below. InstanceProvider is the only writer.
+let activeInstanceId = "";
+
+export function setInstanceScope(instanceId: string): void {
+  activeInstanceId = instanceId;
+}
+
+export function currentInstanceScope(): string {
+  return activeInstanceId;
+}
+
 async function fetchJSON<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
+  const url = activeInstanceId && path.startsWith("/api/") ? apiBase(activeInstanceId) + path : path;
   // headers AFTER ...options, not before. Spread the other way round, a caller
   // passing any headers of its own replaced this object wholesale and silently
   // dropped the Content-Type — which the server now refuses a body without, so
   // the next such caller would have got a 415 for a reason nothing on screen
   // could explain. No caller passes headers today; this keeps it that way by
   // construction rather than by everyone remembering.
-  const res = await fetch(path, {
+  const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -3971,6 +3996,9 @@ export interface FleetPeer {
   /** The peer's cached protection scorecard from the last successful poll,
    *  the same shape as StatusResponse.domains. */
   lastPollDomains: DomainStatus[];
+  /** Whether the peer's own remote-view switch was on as of the last poll, so
+   *  the Fleet card can offer Open without a call that would only fail. */
+  remoteViewEnabled: boolean;
   createdAt: number;
   sortOrder: number;
 }

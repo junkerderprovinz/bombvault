@@ -4,8 +4,10 @@
 // and its error would otherwise sit right above them.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
+import { InstanceProvider } from "../lib/instanceScope";
 
 class NoopEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
@@ -45,11 +47,15 @@ afterEach(cleanup);
 async function renderPage() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <Flash />
-        </ToastProvider>
-      </I18nProvider>,
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <Flash />
+            </ToastProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>,
     );
   });
   expect(await screen.findByText("a1b2c3d4")).toBeTruthy();

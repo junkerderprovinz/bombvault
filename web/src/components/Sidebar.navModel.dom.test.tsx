@@ -84,12 +84,12 @@ interface NavEntry {
  *  navGlyphs are deterministic function components (static paths, no ids, no
  *  randomness), so byte-identical markup is exactly component identity, and
  *  whitespace is collapsed to keep the comparison off formatting. */
-function renderedNavEntries(settings: Settings | null): NavEntry[] {
+function renderedNavEntries(settings: Settings | null, remote = false): NavEntry[] {
   const { container } = render(
     <MemoryRouter initialEntries={["/"]}>
       <I18nProvider>
         <AdvancedProvider>
-          <Sidebar settings={settings} authEnabled={false} />
+          <Sidebar settings={settings} authEnabled={false} remote={remote} />
         </AdvancedProvider>
       </I18nProvider>
     </MemoryRouter>,
@@ -105,8 +105,8 @@ function renderedNavEntries(settings: Settings | null): NavEntry[] {
 /** The registry side of the triple, derived the way every consumer must:
  *  the en-table label for labelKey (what t() resolves to at render) and the
  *  registry icon rendered to static markup. */
-function registryNavEntries(settings: Settings | null): NavEntry[] {
-  return destinations(settings)
+function registryNavEntries(settings: Settings | null, remote = false): NavEntry[] {
+  return destinations(settings, remote)
     .filter((d) => d.enabled)
     .map((d) => ({
       href: d.to,
@@ -148,5 +148,17 @@ describe("Sidebar renders exactly the navModel registry", () => {
     ["null settings (pre-boot)", null],
   ])("%s: the rail's rows equal destinations(settings) filtered to enabled, in registry order, on route + name + glyph", (_name, settings) => {
     expect(renderedNavEntries(settings)).toEqual(registryNavEntries(settings));
+  });
+
+  // Remote view: Recovery, Instances and Settings drop out the same way a
+  // domain drops out when its own setting is off; every other gate is
+  // unaffected. Checked against ALL_ON so the domain rows it would otherwise
+  // share a route or label with stay in the comparison.
+  it("remote view: the rail equals destinations(settings, true), with Recovery, Instances and Settings off", () => {
+    expect(renderedNavEntries(ALL_ON, true)).toEqual(registryNavEntries(ALL_ON, true));
+    const hrefs = renderedNavEntries(ALL_ON, true).map((e) => e.href);
+    expect(hrefs).not.toContain("/recovery");
+    expect(hrefs).not.toContain("/instances");
+    expect(hrefs).not.toContain("/settings");
   });
 });

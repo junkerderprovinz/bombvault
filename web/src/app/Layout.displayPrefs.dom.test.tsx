@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { InstanceProvider } from "../lib/instanceScope";
 
 const syncSpy = vi.fn(async () => {});
 const authState = { authed: false };
@@ -19,6 +20,11 @@ vi.mock("../lib/api", () => ({
   getAuth: async () => ({ ok: true, enabled: true, authed: authState.authed }),
   getSettings: async () => ({ ok: true, settings: null }),
   getHealth: async () => ({ ok: true, version: "v8.5.4" }),
+  // InstanceProvider (lib/instanceScope.tsx) reads and writes these; this
+  // suite never scopes to a peer, so a plain no-op pair is enough.
+  apiBase: (id: string) => (id ? `/api/instances/${id}` : ""),
+  setInstanceScope: () => {},
+  currentInstanceScope: () => "",
   // The layout polls the anomaly summary for the rail and the dashboard card.
   getAnomalySummary: async () => ({
     ok: true,
@@ -61,7 +67,9 @@ describe("reconciling the look once the auth gate opens", () => {
   it("asks the server again after a sign-in, not only at boot", async () => {
     render(
       <MemoryRouter>
-        <Layout />
+        <InstanceProvider>
+          <Layout />
+        </InstanceProvider>
       </MemoryRouter>
     );
 
@@ -84,7 +92,9 @@ describe("reconciling the look once the auth gate opens", () => {
 
     render(
       <MemoryRouter>
-        <Layout />
+        <InstanceProvider>
+          <Layout />
+        </InstanceProvider>
       </MemoryRouter>
     );
 

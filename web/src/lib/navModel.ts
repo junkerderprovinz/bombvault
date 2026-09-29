@@ -98,8 +98,13 @@ export interface NavDestination {
  * missing gate field; Sidebar's dom tests pass partial fixtures) means the
  * gate is off, matching the `?? false` defaults the Sidebar applies to the
  * same fields.
+ *
+ * `remote` is true while a paired member's instance is open (see
+ * lib/instanceScope.tsx). Recovery, Instances and Settings gate on it the
+ * same way a domain gates on its settings flag: restores, pairing and every
+ * setting stay reachable only from the instance itself.
  */
-export function destinations(settings: Settings | null): NavDestination[] {
+export function destinations(settings: Settings | null, remote = false): NavDestination[] {
   return [
     { to: "/dashboard", labelKey: "nav.dashboard", icon: IconDashboard, bar: true, enabled: true },
     // Detection is a feature switch, not a domain, so the row goes when it is off.
@@ -112,13 +117,15 @@ export function destinations(settings: Settings | null): NavDestination[] {
     { to: "/files", labelKey: "nav.files", icon: IconFiles, bar: true, enabled: settings?.filesEnabled ?? false },
     { to: "/zfs", labelKey: "nav.zfs", icon: IconZFS, bar: false, enabled: settings?.zfsEnabled ?? false },
     { to: "/config", labelKey: "nav.config", icon: IconConfig, bar: false, enabled: settings?.configEnabled ?? false },
-    // Always visible: disaster recovery is a core, non-expert flow. It sits
-    // below the backup types because it restores them.
-    { to: "/recovery", labelKey: "nav.recovery", icon: IconRecovery, bar: true, enabled: true },
+    // Always visible locally: disaster recovery is a core, non-expert flow. It
+    // sits below the backup types because it restores them. Every restore
+    // stays local, so remote view leaves the row off.
+    { to: "/recovery", labelKey: "nav.recovery", icon: IconRecovery, bar: true, enabled: !remote },
     // Receiver, Fleet and Pull share one row. The Instances page shows only
-    // the tabs whose setting is on.
-    { to: "/instances", labelKey: "instances.title", icon: IconFleet, bar: false, enabled: settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled || false },
-    { to: "/settings", labelKey: "nav.settings", icon: IconGear, bar: false, enabled: true },
+    // the tabs whose setting is on, and none of it (pairing, mesh, removing a
+    // peer) is something remote view may reach.
+    { to: "/instances", labelKey: "instances.title", icon: IconFleet, bar: false, enabled: !remote && (settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled || false) },
+    { to: "/settings", labelKey: "nav.settings", icon: IconGear, bar: false, enabled: !remote },
   ];
 }
 
@@ -133,8 +140,8 @@ export function destinations(settings: Settings | null): NavDestination[] {
  * desktop Sidebar hides it" hold by construction rather than by a special
  * case.
  */
-export function barDestinations(settings: Settings | null): NavDestination[] {
-  return destinations(settings).filter((d) => d.bar && d.enabled);
+export function barDestinations(settings: Settings | null, remote = false): NavDestination[] {
+  return destinations(settings, remote).filter((d) => d.bar && d.enabled);
 }
 
 /**
@@ -147,6 +154,6 @@ export function barDestinations(settings: Settings | null): NavDestination[] {
  * why the bar's More trigger renders unconditionally rather than gating on
  * this list's length.
  */
-export function moreDestinations(settings: Settings | null): NavDestination[] {
-  return destinations(settings).filter((d) => !d.bar && d.enabled);
+export function moreDestinations(settings: Settings | null, remote = false): NavDestination[] {
+  return destinations(settings, remote).filter((d) => !d.bar && d.enabled);
 }

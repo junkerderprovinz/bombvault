@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { BottomNav } from "../components/mobile/BottomNav";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -8,6 +8,8 @@ import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
+import { RemoteViewBar } from "../components/RemoteViewBar";
+import { useInstanceScope } from "../lib/instanceScope";
 
 // The last BombVault version this browser has seen. The "What's new" dialog
 // opens once when the running version differs.
@@ -35,6 +37,21 @@ export function Layout() {
   const [authEnabled, setAuthEnabled] = useState(false);
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { remote } = useInstanceScope();
+
+  // Remote view's own page set: the domain pages carry its triggers, and the
+  // dashboard and anomalies pages carry its reads. Everything else (Recovery,
+  // Instances, Settings) is a restore, pairing or a setting, which stays
+  // local, so a bookmark, a typed URL or the back button lands here instead
+  // of just a hidden nav row.
+  useEffect(() => {
+    if (!remote) return;
+    const safe = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs"];
+    if (!safe.includes(location.pathname)) {
+      navigate({ pathname: "/dashboard", search: location.search }, { replace: true });
+    }
+  }, [remote, location.pathname, location.search, navigate]);
   // the one chrome switch: at/above Tailwind's md breakpoint the
   // desktop shell renders exactly as it always has; below it the mobile shell
   // renders in its place. The breakpoint literal lives only in
@@ -268,6 +285,7 @@ export function Layout() {
           only: the first row starts on the rail's top line, and the last card
           ends level with the rail instead of 24px above it. */}
       <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col px-6 pt-0 pb-0">
+        <RemoteViewBar />
         <Outlet />
       </div>
     </main>
@@ -295,6 +313,7 @@ export function Layout() {
       className="flex-1 flex flex-col overflow-y-auto p-4 pb-0 scroll-pb-[var(--sticky-action-h)] pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))] min-w-0"
     >
       <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col">
+        <RemoteViewBar />
         <Outlet />
       </div>
     </main>
@@ -345,7 +364,7 @@ export function Layout() {
             shells. */}
         {isDesktop ? (
           <>
-            <Sidebar settings={settings} authEnabled={authEnabled} />
+            <Sidebar settings={settings} authEnabled={authEnabled} remote={remote} />
             {scroller}
           </>
         ) : (
@@ -355,6 +374,7 @@ export function Layout() {
               settings={settings}
               authEnabled={authEnabled}
               scrollMainToTop={scrollMainToTop}
+              remote={remote}
             />
           </>
         )}

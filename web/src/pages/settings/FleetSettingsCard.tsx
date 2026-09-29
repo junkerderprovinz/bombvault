@@ -1,8 +1,9 @@
 // FleetSettingsCard holds this instance's name as the other members of its
-// pairing group show it. Pairing itself lives on the Instances page.
+// pairing group show it, and the switch that lets them open it in remote
+// view. Pairing itself lives on the Instances page.
 import { Settings } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { Card, type SaveState } from "./shared";
+import { Card, ToggleRow, type SaveState } from "./shared";
 import { useRef, useState } from "react";
 
 export function FleetSettingsCard({
@@ -25,6 +26,8 @@ export function FleetSettingsCard({
   // save() reports the outcome in a toast, so only the setters are used.
   const [, setNameSaveState] = useState<SaveState>("idle");
   const [, setNameSaveError] = useState<string | null>(null);
+  const [, setRemoteViewSaveState] = useState<SaveState>("idle");
+  const [, setRemoteViewSaveError] = useState<string | null>(null);
   // The name saves itself after a pause in typing. Only the save prop
   // crosses over from the settings page, so the card keeps its own debounce.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,6 +52,15 @@ export function FleetSettingsCard({
         />
       </div>
       <p className="text-xs text-carbon-textSub">{t("settings.fleetHow")}</p>
+      <ToggleRow
+        label={t("settings.remoteView")}
+        hint={t("settings.remoteViewHint")}
+        checked={settings.remoteViewEnabled}
+        onChange={(v) => {
+          setSettings((prev) => (prev ? { ...prev, remoteViewEnabled: v } : prev));
+          void save({ remoteViewEnabled: v }, setRemoteViewSaveState, setRemoteViewSaveError);
+        }}
+      />
     </Card>
   );
 }

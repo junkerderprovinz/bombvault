@@ -83,6 +83,7 @@ const testMatch = [
   "zfs-phone.spec.ts",
   "instances-phone.spec.ts",
   "pairing.spec.ts",
+  "remote-view.spec.ts",
   "settings-phone.spec.ts",
   "activity-log-jump.spec.ts",
   "selector-span.spec.ts",

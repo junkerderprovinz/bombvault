@@ -52,6 +52,7 @@ import { useAdvanced } from "../../lib/advanced";
 import { hueVars } from "../../lib/appearance";
 import { moreDestinations } from "../../lib/navModel";
 import { useLoudAnomalies } from "../../lib/useAnomalies";
+import { withInstanceScope } from "../../lib/instanceScope";
 import { Badge } from "../Badge";
 import { IconSignOut } from "../glyphs";
 import { IconViewAdvanced, IconViewSimple } from "../navGlyphs";
@@ -63,6 +64,9 @@ export interface MoreSheetProps {
   /** Every close path funnels here; including a row navigation, which
    *  closes the sheet so the destination is visible behind it. */
   onClose: () => void;
+  /** True while a paired member's instance is open; hides the same
+   *  destinations the desktop Sidebar hides for it. */
+  remote?: boolean;
   /** Already-loaded settings, owned by Layout; the chrome performs no
    *  fetches of its own. */
   settings: Settings | null;
@@ -84,11 +88,11 @@ export interface MoreSheetProps {
 // touch floor; the padding never carries the floor, the min-height does.
 const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 text-body hover:bg-carbon-hover";
 
-export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTop, hueOffset = 0 }: MoreSheetProps) {
+export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTop, hueOffset = 0, remote = false }: MoreSheetProps) {
   const { t } = useT();
   const location = useLocation();
   const { advanced, setAdvanced } = useAdvanced();
-  const rows = moreDestinations(settings);
+  const rows = moreDestinations(settings, remote);
   const loudAnomalies = useLoudAnomalies();
 
   // The Sidebar footer's signOut, copied verbatim (Sidebar.tsx): best-effort
@@ -119,7 +123,7 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
           return (
             <NavLink
               key={d.to}
-              to={d.to}
+              to={withInstanceScope(d.to, location.search)}
               onClick={(e) => {
                 // NavLink's onClick fires before react-router's own Link
                 // handler, and Link checks event.defaultPrevented before

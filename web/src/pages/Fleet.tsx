@@ -14,6 +14,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   getGroup,
   getHealth,
@@ -41,6 +42,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
+import { IconEye } from "../components/glyphs";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
@@ -538,6 +540,8 @@ function FleetPeerCard({
   // it again, so a two-click inline confirm is enough, as in Receiver.tsx.
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [shakeRemove, setShakeRemove] = useState(0);
+  const navigate = useNavigate();
+  const connected = !peer.needsPairing && (peer.direct || peer.relay);
 
   // A check outlasts any request, so the member only confirms it started; the
   // verdict shows in its next scorecard.
@@ -613,6 +617,30 @@ function FleetPeerCard({
 
   const actions = (
     <>
+      {connected && (
+        <>
+          <Button
+            label={t("fleet.open")}
+            labelKey="fleet.open"
+            glyph={<IconEye />}
+            tone="accent"
+            onClick={() => {
+              // One navigation, not scope.open() followed by a path change:
+              // the scope lives in this page's own URL, so leaving it for
+              // /dashboard without carrying the query would land there
+              // scoped to nothing.
+              const params = new URLSearchParams({
+                instance: peer.memberId,
+                instanceName: peer.lastPollInstanceName || peer.name,
+              });
+              navigate({ pathname: "/dashboard", search: `?${params.toString()}` });
+            }}
+            disabled={!peer.remoteViewEnabled}
+            title={t("fleet.openTip")}
+          />
+          {!peer.remoteViewEnabled && <InfoBubble tip={t("fleet.remoteViewOff")} />}
+        </>
+      )}
       {!peer.needsPairing && (
         <Button
           label={t("fleet.mesh.proposeButton")}
@@ -698,6 +726,7 @@ interface Self {
  *  the heading. */
 export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
+  const navigate = useNavigate();
   const [peers, setPeers] = useState<FleetPeer[]>([]);
   const [self, setSelf] = useState<Self | null>(null);
   const [loading, setLoading] = useState(true);
@@ -810,6 +839,14 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
               self
               badges={<ConnectionBadge connected={self.ok} t={t} />}
               facts={self.version || undefined}
+              actions={
+                <Button
+                  label={t("fleet.remoteViewSettingsLink")}
+                  labelKey="fleet.remoteViewSettingsLink"
+                  tone="neutral"
+                  onClick={() => navigate("/settings")}
+                />
+              }
               index={0}
               t={t}
             >

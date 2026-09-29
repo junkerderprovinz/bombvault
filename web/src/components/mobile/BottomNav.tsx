@@ -85,6 +85,7 @@ import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { useLoudAnomalies } from "../../lib/useAnomalies";
+import { withInstanceScope } from "../../lib/instanceScope";
 import { IconEllipsis } from "../navGlyphs";
 import { MoreSheet } from "./MoreSheet";
 
@@ -99,6 +100,9 @@ export interface BottomNavProps {
   /** Layout's tap-on-active scroll (the scroller is Layout's
    *  <main id="bv-main">); passed on to the sheet's rows too. */
   scrollMainToTop: () => void;
+  /** True while a paired member's instance is open; hides the same
+   *  destinations the desktop Sidebar hides for it. */
+  remote?: boolean;
 }
 
 // One bar slot, destination or More trigger alike: the 24px glyph box over
@@ -110,13 +114,13 @@ export interface BottomNavProps {
 const slotBase =
   "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-caption motion-safe:active:scale-[var(--motion-press-scale)]";
 
-export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavProps) {
+export function BottomNav({ settings, authEnabled, scrollMainToTop, remote = false }: BottomNavProps) {
   const { t } = useT();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   // The one registry, filtered to enabled bottom-bar destinations; the same
   // derivation the Sidebar's order guarantee rides on.
-  const slots = barDestinations(settings);
+  const slots = barDestinations(settings, remote);
   // The bar's own label axis (see the header): hiding modes gate the caption,
   // reactive pairs with index.css's coarse-pointer at-rest reveal.
   const labelMode = useLabelMode("bottombar");
@@ -129,7 +133,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
   // case: /settings is an always-enabled registry entry, so a literal
   // `pathname === "/settings"` disjunct beside the lookup was dead code that
   // could only ever drift from it.
-  const moreActive = moreDestinations(settings).some((d) => d.to === location.pathname);
+  const moreActive = moreDestinations(settings, remote).some((d) => d.to === location.pathname);
   // The More trigger's bubble: worded only in hiding modes, the same rule
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
@@ -249,6 +253,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
         authEnabled={authEnabled}
         scrollMainToTop={scrollMainToTop}
         hueOffset={slots.length + 1}
+        remote={remote}
       />
     </nav>
   );
@@ -286,10 +291,11 @@ function BarSlot({
   // sidebar row's own mechanism; reactive mode needs none, since hovering
   // brings the word back.
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
+  const location = useLocation();
   return (
     <>
       <NavLink
-        to={destination.to}
+        to={withInstanceScope(destination.to, location.search)}
         onClick={onTap}
         ref={tooltip.ref}
         aria-label={showLabel ? undefined : label}

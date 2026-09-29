@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { withInstanceScope } from "../lib/instanceScope";
 import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
 import { Badge, type BadgeTone } from "./Badge";
@@ -64,6 +65,9 @@ interface SidebarProps {
   settings: Settings | null;
   /** Whether a login password is set; the sign-out row appears only then. */
   authEnabled: boolean;
+  /** True while a paired member's instance is open. Hides Recovery,
+   *  Instances and Settings the same way a domain hides on its own gate. */
+  remote?: boolean;
 }
 
 interface NavItem {
@@ -158,10 +162,11 @@ function NavItem({ to, label, icon, hueIndex, count }: NavItem) {
   // A row whose text is hidden names itself in the tooltip bubble. Reactive
   // mode needs none, since hovering brings the word back.
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
+  const location = useLocation();
   return (
     <>
       <NavLink
-        to={to}
+        to={withInstanceScope(to, location.search)}
         ref={tooltip.ref}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
@@ -282,7 +287,7 @@ function SidebarControls({ hueIndex }: { hueIndex: number }) {
   );
 }
 
-export function Sidebar({ settings, authEnabled }: SidebarProps) {
+export function Sidebar({ settings, authEnabled, remote = false }: SidebarProps) {
   const { t } = useT();
   const navigate = useNavigate();
   const vmsEnabled = settings?.vmsEnabled ?? false;
@@ -525,17 +530,22 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               {configEnabled && (
                 <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
               )}
-              {/* Always visible: disaster recovery is a core, non-expert flow.
-                  It sits below the backup types because it restores them. */}
-              <NavItem
-                to="/recovery"
-                label={t("nav.recovery")}
-                icon={<IconRecovery />}
-                hueIndex={nextHue()}
-              />
+              {/* Always visible locally: disaster recovery is a core,
+                  non-expert flow. It sits below the backup types because it
+                  restores them. Every restore stays local, so remote view
+                  leaves the row off. */}
+              {!remote && (
+                <NavItem
+                  to="/recovery"
+                  label={t("nav.recovery")}
+                  icon={<IconRecovery />}
+                  hueIndex={nextHue()}
+                />
+              )}
               {/* Receiver, Fleet and Pull share one row. The Instances page
-                  shows only the tabs whose setting is on. */}
-              {(receiverEnabled || fleetEnabled || pullEnabled) && (
+                  shows only the tabs whose setting is on, and pairing itself
+                  stays local. */}
+              {!remote && (receiverEnabled || fleetEnabled || pullEnabled) && (
                 <NavItem
                   to="/instances"
                   label={t("instances.title")}
@@ -548,12 +558,14 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
             <div className="flex flex-col gap-1 p-3">
               {authEnabled && <SidebarSignOut hueIndex={nextHue()} />}
               <SidebarControls hueIndex={nextHue()} />
-              <NavItem
-                to="/settings"
-                label={t("nav.settings")}
-                icon={<IconGear />}
-                hueIndex={nextHue()}
-              />
+              {!remote && (
+                <NavItem
+                  to="/settings"
+                  label={t("nav.settings")}
+                  icon={<IconGear />}
+                  hueIndex={nextHue()}
+                />
+              )}
             </div>
           </>
         );

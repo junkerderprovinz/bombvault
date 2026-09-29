@@ -18,6 +18,7 @@ import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
+import { useInstanceScope } from "../lib/instanceScope";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { PageTitle } from "../components/PageTitle";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
@@ -124,6 +125,7 @@ function FlashSnapshotRow({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [shake, setShake] = useState(0);
+  const { remote } = useInstanceScope();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
@@ -180,26 +182,30 @@ function FlashSnapshotRow({
             cascade. Delete gets no colour of its own, since a neutral badge
             would sit flat grey beside a hued one; the glyph, the tip and the
             confirm dialog carry its meaning. */}
-        <Button
-          label={t("flash.download")}
-          labelKey="flash.download"
-          glyph={<IconDownload />}
-          tone="accent"
-          onClick={handleDownload}
-          disabled={preparing}
-          busy={preparing}
-          className={"shrink-0"}
-        />
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || preparing}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
+        {!remote && (
+          <Button
+            label={t("flash.download")}
+            labelKey="flash.download"
+            glyph={<IconDownload />}
+            tone="accent"
+            onClick={handleDownload}
+            disabled={preparing}
+            busy={preparing}
+            className={"shrink-0"}
+          />
+        )}
+        {!remote && (
+          <Button
+            key={shake}
+            label={t("snapshots.delete")}
+            labelKey="snapshots.delete"
+            glyph={<IconTrash />}
+            tone="accent"
+            onClick={() => void handleDelete()}
+            disabled={deleting || preparing}
+            className={`shrink-0${shake ? " glim-shake" : ""}`}
+          />
+        )}
       </div>
       {confirmDialog}
     </div>

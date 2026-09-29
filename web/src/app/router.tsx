@@ -16,6 +16,7 @@ import { OAuthConsent } from "../pages/OAuthConsent";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
+import { InstanceProvider } from "../lib/instanceScope";
 
 export function AppRouter() {
   return (
@@ -23,39 +24,43 @@ export function AppRouter() {
       {/* Inside I18nProvider: the dismiss button's aria-label is translated. */}
       <ToastProvider>
         <BrowserRouter>
-          <Routes>
-            {/* The page an OAuth client sends the operator to. It stands on its
-                own like the login screen, without the rail, and checks the
-                session itself. */}
-            {mcpShipped && <Route path="/oauth/authorize" element={<OAuthConsent />} />}
-            <Route element={<Layout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/anomalies" element={<Anomalies />} />
-              <Route path="/containers" element={<Containers />} />
-              <Route path="/vms" element={<VMs />} />
-              <Route path="/flash" element={<Flash />} />
-              <Route path="/config" element={<Config />} />
-              <Route path="/files" element={<Files />} />
-              <Route path="/zfs" element={<ZFS />} />
-              {/* Receiver, Pull and Fleet are tabs of Instances. Their own
-                  paths stay as redirects because bookmarks, release notes and
-                  support answers link to them. */}
-              <Route path="/instances" element={<Instances />} />
-              <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
-              <Route path="/pull" element={<Navigate to="/instances#pull" replace />} />
-              <Route path="/fleet" element={<Navigate to="/instances#fleet" replace />} />
-              <Route path="/recovery" element={<Recovery />} />
-              {/* Schedules are a Settings tab; /jobs stays for existing links. */}
-              <Route path="/jobs" element={<Navigate to="/settings#schedules" replace />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              {/* Every glyph at its real size with its measured fill, so a
-                  mis-sized icon shows up before it reaches a card. Unlisted:
-                  no nav entry and no translation. */}
-              <Route path="/glyphs" element={<GlyphSheet />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Route>
-          </Routes>
+          {/* Inside BrowserRouter: reads the ?instance= query string every
+              route below shares. */}
+          <InstanceProvider>
+            <Routes>
+              {/* The page an OAuth client sends the operator to. It stands on
+                  its own like the login screen, without the rail, and checks
+                  the session itself. */}
+              {mcpShipped && <Route path="/oauth/authorize" element={<OAuthConsent />} />}
+              <Route element={<Layout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/anomalies" element={<Anomalies />} />
+                <Route path="/containers" element={<Containers />} />
+                <Route path="/vms" element={<VMs />} />
+                <Route path="/flash" element={<Flash />} />
+                <Route path="/config" element={<Config />} />
+                <Route path="/files" element={<Files />} />
+                <Route path="/zfs" element={<ZFS />} />
+                {/* Receiver, Pull and Fleet are tabs of Instances. Their own
+                    paths stay as redirects because bookmarks, release notes and
+                    support answers link to them. */}
+                <Route path="/instances" element={<Instances />} />
+                <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
+                <Route path="/pull" element={<Navigate to="/instances#pull" replace />} />
+                <Route path="/fleet" element={<Navigate to="/instances#fleet" replace />} />
+                <Route path="/recovery" element={<Recovery />} />
+                {/* Schedules are a Settings tab; /jobs stays for existing links. */}
+                <Route path="/jobs" element={<Navigate to="/settings#schedules" replace />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                {/* Every glyph at its real size with its measured fill, so a
+                    mis-sized icon shows up before it reaches a card. Unlisted:
+                    no nav entry and no translation. */}
+                <Route path="/glyphs" element={<GlyphSheet />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Route>
+            </Routes>
+          </InstanceProvider>
         </BrowserRouter>
       </ToastProvider>
     </I18nProvider>

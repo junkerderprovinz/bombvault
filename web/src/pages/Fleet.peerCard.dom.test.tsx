@@ -5,8 +5,11 @@
 // gone stale. A card's details open state is remembered per browser.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
+import { InstanceProvider } from "../lib/instanceScope";
+import { currentInstanceScope } from "../lib/api";
 import type { FleetPeer } from "../lib/api";
 
 const NOW_S = Math.floor(Date.now() / 1000);
@@ -27,6 +30,7 @@ function peer(over: Partial<FleetPeer>): FleetPeer {
     lastPollInstanceName: "",
     lastPollVersion: "v8.0.0+main.e3db401",
     lastPollDomains: [],
+    remoteViewEnabled: true,
     createdAt: 0,
     sortOrder: 0,
     ...over,
@@ -61,11 +65,15 @@ const { Fleet, FLEET_REFRESH_MS, SCORECARD_STALE_S, scorecardDue } = await impor
 async function renderFleet() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <Fleet />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter>
+        <InstanceProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <Fleet />
+            </ToastProvider>
+          </I18nProvider>
+        </InstanceProvider>
+      </MemoryRouter>
     );
   });
 }
@@ -152,6 +160,40 @@ describe("fleet cards", () => {
     await renderFleet();
     expect(screen.getByText("v8.0.0+main.e3db401")).toBeTruthy();
     expect(screen.queryByText(/vv8\.0\.0/)).toBeNull();
+  });
+});
+
+describe("fleet card open button", () => {
+  it("offers Open for a connected member, not for one that needs pairing again", async () => {
+    peers = [
+      peer({ id: "here", direct: true }),
+      peer({ id: "gone", name: "attic", needsPairing: true, url: "http://old" }),
+    ];
+    await renderFleet();
+    const buttons = screen.getAllByRole("button", { name: en["fleet.open"] });
+    expect(buttons).toHaveLength(1);
+  });
+
+  it("disables Open when the peer's own switch is off", async () => {
+    peers = [peer({ direct: true, remoteViewEnabled: false })];
+    await renderFleet();
+    const openBtn = screen.getByRole("button", { name: en["fleet.open"] });
+    expect((openBtn as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("leaves Open enabled when the peer's own switch is on", async () => {
+    peers = [peer({ direct: true, remoteViewEnabled: true })];
+    await renderFleet();
+    const openBtn = screen.getByRole("button", { name: en["fleet.open"] });
+    expect((openBtn as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("opening a peer scopes api.ts's active instance to its member id", async () => {
+    peers = [peer({ direct: true, remoteViewEnabled: true, memberId: "m9", name: "attic" })];
+    await renderFleet();
+    const openBtn = screen.getByRole("button", { name: en["fleet.open"] });
+    await act(async () => fireEvent.click(openBtn));
+    expect(currentInstanceScope()).toBe("m9");
   });
 });
 
