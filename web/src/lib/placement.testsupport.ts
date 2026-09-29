@@ -352,8 +352,10 @@ export function renderWithProviders(ui: ReactElement): RenderResult {
   return render(createElement(I18nProvider, { children: createElement(ToastProvider, { children: ui }) }));
 }
 
-/** Sends wheel notches downwards to a picker's trigger, the way a mouse does. */
+/** Sends wheel notches downwards to a picker's trigger, the way a mouse does.
+ *  A closed picker steps only while it has focus, so it takes focus first. */
 export function wheel(el: Element, notches: number): void {
+  (el as HTMLElement).focus();
   for (let i = 0; i < notches; i++) {
     fireEvent.wheel(el, { deltaY: 100 });
   }
