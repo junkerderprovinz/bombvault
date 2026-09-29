@@ -426,7 +426,7 @@ export interface GetSettingsResponse {
  * present (never the values), and `settingsGroups` names the setting areas the
  * file populates (machine ids: "domains","schedules","retention","offsite",
  * "drills","digest","monitoring","language","exportEncryption","anomalies",
- * "streaming","idle").
+ * "streaming","idle","homeAssistant","network").
  */
 export interface ImportSettingsSummary {
   schemaVersion: number;
@@ -443,6 +443,7 @@ export interface ImportSettingsSummary {
     cloud: boolean;
     rclone: boolean;
     notify: boolean;
+    mqtt: boolean;
   };
   settingsGroups: string[];
 }
@@ -477,11 +478,12 @@ export interface Run {
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
   /** What asked for the run: "" for the web interface and the scheduler,
-   *  "mcp" for an assistant. */
-  startedVia?: "" | "mcp";
+   *  "mcp" for an assistant, "api" for an API token, "mqtt" for a Home
+   *  Assistant button. */
+  startedVia?: "" | "mcp" | "api" | "mqtt";
   startedViaKey?: string;
-  /** The operator's name for the MCP key behind the run, "" once that key is
-   *  purged from the list. */
+  /** The operator's name for the MCP key or API token behind the run, "" once
+   *  it is purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
   /** What held a slow backup back, when one thing clearly did. */
@@ -5348,6 +5350,115 @@ export function revokeMcpKey(id: string): Promise<OkEnvelope> {
 
 export function purgeMcpKey(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** GET /api/tokens: the API tokens for their settings card. A token is an MCP
+ *  key of another kind, with the same tile and log, that opens /api/v1. */
+export interface ApiTokensResponse extends OkEnvelope {
+  basePath: string;
+  openapiPath: string;
+  limit: number;
+  authEnabled: boolean;
+  /** False when no login password is set and the page was opened under a
+   *  public-looking host name: tokens can then neither be created nor replaced. */
+  hostAllowsKeys: boolean;
+  startsPerHour: number;
+  cooldownMinutes: number;
+  itemStartsPerDay: number;
+  tokens: McpKeyView[];
+  revoked: McpKeyView[];
+}
+
+export function listApiTokens(): Promise<ApiTokensResponse> {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return fetchJSON(`/api/tokens?since=${Math.floor(midnight.getTime() / 1000)}`);
+}
+
+export function createApiToken(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {
+  return fetchJSON("/api/tokens", {
+    method: "POST",
+    body: JSON.stringify({ label, canStartBackups }),
+  });
+}
+
+export function updateApiToken(
+  id: string,
+  patch: { label?: string; canStartBackups?: boolean }
+): Promise<OkEnvelope & { item?: McpKeyView }> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function rotateApiToken(id: string): Promise<McpKeySecretResponse> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+}
+
+export function revokeApiToken(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/revoke`, { method: "POST" });
+}
+
+export function purgeApiToken(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export function getApiTokenActivity(id: string): Promise<McpKeyActivity> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/activity`);
+}
+
+/** The Home Assistant link over MQTT. The password never comes back;
+ *  passwordSet says whether one is stored. */
+export interface HomeAssistantSettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  passwordSet: boolean;
+  tls: boolean;
+  prefix: string;
+  buttons: boolean;
+  nodeId: string;
+  status: { connected: boolean; error: string };
+}
+
+export function getHomeAssistant(): Promise<
+  OkEnvelope & { settings?: HomeAssistantSettings; cooldownMinutes?: number; itemStartsPerDay?: number }
+> {
+  return fetchJSON("/api/homeassistant");
+}
+
+/** Saves and reconnects. An empty password keeps the stored one. */
+export function setHomeAssistant(body: {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  tls: boolean;
+  prefix: string;
+  buttons: boolean;
+}): Promise<OkEnvelope & { settings?: HomeAssistantSettings; warning?: string }> {
+  return fetchJSON("/api/homeassistant", { method: "PUT", body: JSON.stringify(body) });
+}
+
+/** The mDNS announcement: whether it is switched on, whether it runs, and
+ *  the address it announces. */
+export interface MdnsState extends OkEnvelope {
+  enabled: boolean;
+  running: boolean;
+  url: string;
+  instance: string;
+  error: string;
+}
+
+export function getMdns(): Promise<MdnsState> {
+  return fetchJSON("/api/mdns");
+}
+
+export function setMdns(enabled: boolean): Promise<MdnsState> {
+  return fetchJSON("/api/mdns", { method: "PUT", body: JSON.stringify({ enabled }) });
 }
 
 /** Reissues BombVault's own certificate with `host` among its names, so a

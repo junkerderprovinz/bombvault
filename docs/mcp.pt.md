@@ -39,6 +39,8 @@ Como uma cópia para serviços e faz sair pontos de restauro antigos, os início
 
 Um início de domínio ou de Backup Everything deixa de fora os elementos que um limite retém e indica-os na resposta. A interface web e o agendamento não são afetados por nada disto. A quota horária vive em memória, por isso um reinício do BombVault repõe-na a zero.
 
+Os inícios pela [API](api.md#errors) e a partir do [Home Assistant](api.md#home-assistant) contam para os mesmos limites por item que os inícios por MCP, e para a proteção da retenção.
+
 ## Ativar {#switch-on}
 
 1. Abre **Definições, Sistema, Servidor MCP** e clica no botão do teu cliente. Um cliente que não está na lista liga-se através de **Outro cliente**.
@@ -54,7 +56,7 @@ Cada chave tem o seu próprio mosaico no cartão. Mostra o nome da chave, se pod
 
 Ao lado do nome, o mosaico mostra o logótipo do cliente para o qual a chave foi criada. Uma chave criada através de **Outro cliente**, ou antes de o cartão listar clientes, mostra uma chave no seu lugar.
 
-**Registo** num mosaico abre o que essa chave fez. Primeiro vêm as cópias que iniciou, cada uma com o seu estado e uma ligação a essa execução no registo de atividade do painel. Por baixo estão as chamadas, das mais recentes para as mais antigas, com a ferramenta e o que aconteceu à chamada. Uma recusa diz porquê: a chave só pode ler, a proteção de retenção travou a cópia, já havia outra cópia em curso, o item foi copiado por MCP há poucos minutos, ou a chave enviou demasiados pedidos. Um cancelamento liga à execução a que se referia.
+**Registo** num mosaico abre o que essa chave fez. Primeiro vêm as cópias que iniciou, cada uma com o seu estado e uma ligação a essa execução no registo de atividade do painel. Por baixo estão as chamadas, das mais recentes para as mais antigas, com a ferramenta e o que aconteceu à chamada. Uma recusa diz porquê: a chave só pode ler, a proteção de retenção travou a cópia, já havia outra cópia em curso, uma cópia do item foi iniciada fora da interface web há poucos minutos, ou a chave enviou demasiados pedidos. Um cancelamento liga à execução a que se referia.
 
 O BombVault guarda as entradas de cada chave durante 30 dias no máximo: os 500 inícios e cancelamentos bem-sucedidos mais recentes e, ao lado deles, as 200 outras chamadas mais recentes (leituras, recusas e erros). Assim, um assistente que consulta repetidamente uma cópia em curso, ou que repete uma chamada recusada, não consegue empurrar o seu início para fora do registo. De cada chamada guarda a ferramenta, o resultado e a execução indicada por um cancelamento. Nunca guarda o que o assistente enviou, nem a chave ou a sua impressão digital. O pacote de diagnóstico só conta as entradas, e uma exportação das definições deixa-as de fora.
 
@@ -256,7 +258,7 @@ Tudo o que um assistente lê vai para o fornecedor de IA por trás dele: nomes d
 | `429` | Demasiadas chaves erradas deste endereço, ou mais de 120 pedidos por minuto com uma chave. Espere um minuto e verifique se o assistente está preso num ciclo. |
 | Erros com "certificate", "self-signed" ou "unable to verify" | O cliente não confia no certificado do BombVault. Ver [TLS e certificados](#tls). |
 | `busy` | Outra cópia ou uma tarefa de manutenção ocupa esse domínio. Tente de novo quando terminar. |
-| `cooldown` | Este elemento, este domínio ou Backup Everything foi iniciado por MCP há menos de 15 minutos. |
+| `cooldown` | Este elemento, este domínio ou Backup Everything foi iniciado fora da interface web há menos de 15 minutos. |
 | `retention_guard` | Mais uma cópia MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N", ou o elemento já recebeu 4 cópias por MCP nas últimas 24 horas, contando as que falharam e as canceladas. No primeiro caso a próxima cópia agendada abre espaço; no segundo o elemento fica livre outra vez 24 horas depois da mais antiga dessas cópias. Em qualquer dos casos pode iniciá-la na interface web. |
 | `rate_limited` | A chave gastou os seus 12 inícios desta hora. |
 | `not_permitted` num início | A chave é só de leitura. Ligue **Permitir iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |

@@ -7,6 +7,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/homeassistant"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
@@ -74,6 +75,12 @@ type Handler struct {
 	// mcp holds the MCP endpoint's transport, its per-key budget and the
 	// counters /metrics reports. mountMCP creates one when NewHandler did not.
 	mcp *mcpState
+
+	// ha is the MQTT link to Home Assistant, created by Router.
+	ha *homeassistant.Bridge
+
+	// mdns is the running network announcement, if any.
+	mdns mdnsState
 }
 
 // NewHandler constructs the API handler.
@@ -129,6 +136,28 @@ func (h *Handler) Router() http.Handler {
 	if mcpShipped {
 		h.mountMCP(mux)
 	}
+
+	// The public API (api_v1.go) gates itself on its own tokens, like /mcp,
+	// and is allow-listed in authGate. The token routes below manage those
+	// tokens and stay session-protected.
+	h.mountAPIV1(mux)
+	mux.HandleFunc("GET /api/tokens", h.handleListAPITokens)
+	mux.HandleFunc("POST /api/tokens", h.handleCreateAPIToken)
+	mux.HandleFunc("PATCH /api/tokens/{id}", h.handleUpdateMCPKey)
+	mux.HandleFunc("POST /api/tokens/{id}/rotate", h.handleRotateMCPKey)
+	mux.HandleFunc("POST /api/tokens/{id}/revoke", h.handleRevokeMCPKey)
+	mux.HandleFunc("DELETE /api/tokens/{id}", h.handlePurgeMCPKey)
+	mux.HandleFunc("GET /api/tokens/{id}/activity", h.handleMCPKeyActivity)
+
+	// Home Assistant over MQTT (homeassistant.go). Session-protected: the
+	// settings carry the broker password.
+	if h.ha == nil {
+		h.ha = h.newHomeAssistantBridge()
+	}
+	mux.HandleFunc("GET /api/homeassistant", h.handleGetHomeAssistant)
+	mux.HandleFunc("PUT /api/homeassistant", h.handleSetHomeAssistant)
+	mux.HandleFunc("GET /api/mdns", h.handleGetMDNS)
+	mux.HandleFunc("PUT /api/mdns", h.handleSetMDNS)
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)

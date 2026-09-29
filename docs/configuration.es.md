@@ -111,4 +111,4 @@ Cada elemento puede tener su propia sensibilidad y su propio mínimo de notifica
 La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
 
 !!! warning "La exportación puede contener credenciales"
-    Tú eliges si incluir las credenciales externas y de notificación en el archivo. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.
+    Tú eliges si incluir las credenciales externas, de notificación y del broker MQTT en el archivo. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.

@@ -633,11 +633,13 @@ func run() error {
 	svc.StartTrafficWatch(ctx)
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	handler.StartIntegrations()
 	// An MCP listing of a repository that stopped answering holds its request
 	// open until the stop context ends; without this the server would wait out
 	// its grace for it and exit with an error.
 	server.BeforeShutdown = svc.EndDetachedWork
 	runErr := server.Run(ctx)
+	handler.StopIntegrations()
 
 	if ctx.Err() != nil {
 		log.Printf("shutdown: signal received, stopping")

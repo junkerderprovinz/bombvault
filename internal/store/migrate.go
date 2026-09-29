@@ -2291,6 +2291,41 @@ ALTER TABLE traffic_settings ADD COLUMN idle_quiet_min INTEGER NOT NULL DEFAULT 
 );`,
 	},
 	{
+		// API tokens are rows of mcp_keys with kind 'api'. Their names only have
+		// to differ from each other, so a token and an MCP key can both be called
+		// "Home Assistant".
+		version: apiMigrationBase,
+		name:    "mcp_keys_api_token_labels",
+		sql: `DROP INDEX IF EXISTS idx_mcp_keys_active_label;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(kind = 'api', lower(label)) WHERE revoked_at = 0;`,
+	},
+	{
+		// The Home Assistant link: one row, written by the first save.
+		version: apiMigrationBase + 1,
+		name:    "mqtt_settings",
+		sql: `CREATE TABLE IF NOT EXISTS mqtt_settings (
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
+  enabled      INTEGER NOT NULL DEFAULT 0,
+  host         TEXT    NOT NULL DEFAULT '',
+  port         INTEGER NOT NULL DEFAULT 1883,
+  username     TEXT    NOT NULL DEFAULT '',
+  password_enc BLOB,
+  tls          INTEGER NOT NULL DEFAULT 0,
+  topic_prefix TEXT    NOT NULL DEFAULT 'bombvault',
+  buttons      INTEGER NOT NULL DEFAULT 1,
+  node_id      TEXT    NOT NULL DEFAULT ''
+);`,
+	},
+	{
+		// The switch for the mDNS announcement. No row means on.
+		version: apiMigrationBase + 2,
+		name:    "mdns_settings",
+		sql: `CREATE TABLE IF NOT EXISTS mdns_settings (
+  id      INTEGER PRIMARY KEY CHECK (id = 1),
+  enabled INTEGER NOT NULL DEFAULT 1
+);`,
+	},
+	{
 		// The pairing group: this instance's id within it, the secret behind
 		// the twelve words sealed under the APP_KEY, and the relay settings.
 		version: pairingMigration,
@@ -2410,6 +2445,10 @@ const trafficMigration = 210
 // vmBlocksMigration numbers the changed-block VM backup table. 220 to 229 are
 // kept for it so branches built alongside it do not collide.
 const vmBlocksMigration = 220
+
+// apiMigrationBase numbers the public API, the Home Assistant link and the
+// network announcement.
+const apiMigrationBase = 230
 
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.

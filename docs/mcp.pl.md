@@ -39,6 +39,8 @@ Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomi
 
 Uruchomienie domeny lub Backup Everything pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
 
+Uruchomienia przez [API](api.md#errors) i z [Home Assistant](api.md#home-assistant) liczą się do tych samych limitów na element co uruchomienia przez MCP oraz do ochrony retencji.
+
 ## Włączanie {#switch-on}
 
 1. Otwórz **Ustawienia, System, Serwer MCP** i kliknij przycisk swojego klienta. Klient, którego nie ma na liście, łączy się przez **Inny klient**.
@@ -54,7 +56,7 @@ Każdy klucz ma na karcie własny kafelek. Pokazuje nazwę klucza, czy może uru
 
 Obok nazwy kafelek pokazuje logo klienta, dla którego utworzono klucz. Klucz utworzony przez **Inny klient** albo zanim karta zaczęła wymieniać klientów pokazuje zamiast tego klucz.
 
-**Dziennik** na kafelku otwiera to, co zrobił ten klucz. Najpierw są kopie, które uruchomił, każda ze stanem i linkiem do tego uruchomienia w dzienniku aktywności na pulpicie. Pod nimi są jego wywołania, od najnowszych, z narzędziem i wynikiem. Odmowa podaje powód: klucz może tylko czytać, ochrona przechowywania wstrzymała kopię, trwała już inna kopia, element skopiowano przez MCP kilka minut temu albo klucz wysłał zbyt wiele żądań. Anulowanie prowadzi do uruchomienia, którego dotyczyło.
+**Dziennik** na kafelku otwiera to, co zrobił ten klucz. Najpierw są kopie, które uruchomił, każda ze stanem i linkiem do tego uruchomienia w dzienniku aktywności na pulpicie. Pod nimi są jego wywołania, od najnowszych, z narzędziem i wynikiem. Odmowa podaje powód: klucz może tylko czytać, ochrona przechowywania wstrzymała kopię, trwała już inna kopia, kopię elementu uruchomiono spoza interfejsu WWW kilka minut temu albo klucz wysłał zbyt wiele żądań. Anulowanie prowadzi do uruchomienia, którego dotyczyło.
 
 BombVault przechowuje wpisy każdego klucza przez najwyżej 30 dni: 500 najnowszych udanych uruchomień i anulowań, a obok nich 200 najnowszych pozostałych wywołań (odczyty, odmowy i błędy), więc asystent, który raz po raz odpytuje trwającą kopię albo ponawia odrzucone wywołanie, nie wypchnie z dziennika jej uruchomienia. Przy każdym wywołaniu zapisuje narzędzie, wynik i uruchomienie wskazane przez anulowanie. Nigdy nie zapisuje tego, co wysłał asystent, ani klucza czy jego odcisku. Pakiet diagnostyczny tylko liczy wpisy, a eksport ustawień je pomija.
 
@@ -256,7 +258,7 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | `429` | Za dużo złych kluczy z tego adresu albo ponad 120 żądań na minutę z jednym kluczem. Odczekaj minutę i sprawdź, czy asystent nie utknął w pętli. |
 | Błędy z "certificate", "self-signed" albo "unable to verify" | Klient nie ufa certyfikatowi BombVault. Zobacz [TLS i certyfikaty](#tls). |
 | `busy` | Domenę zajmuje inna kopia albo zadanie konserwacji. Spróbuj ponownie, gdy się skończy. |
-| `cooldown` | Ten element, ta domena albo Backup Everything został uruchomiony przez MCP mniej niż 15 minut temu. |
+| `cooldown` | Ten element, ta domena albo Backup Everything został uruchomiony spoza interfejsu WWW mniej niż 15 minut temu. |
 | `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP albo element dostał już 4 kopie przez MCP w ciągu ostatnich 24 godzin, licząc nieudane i anulowane. W pierwszym przypadku miejsce zrobi następna zaplanowana kopia, w drugim element zwolni się 24 godziny po najstarszej z tych kopii. W interfejsie WWW możesz ją uruchomić w każdej chwili. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
 | `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
