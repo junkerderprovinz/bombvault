@@ -17,6 +17,7 @@ import type {
   AnomalyItem,
   AnomalySeriesInfo,
   Container,
+  ItemChecks,
   Run,
   ZFSDatasetPatch,
   ZFSDatasetView,
@@ -46,6 +47,7 @@ import { EffectiveScheduleLine } from "../EffectiveScheduleLine";
 import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
 import { ItemAnomalyBadge } from "../ItemAnomalyBadge";
+import { ItemChecksLine } from "../ItemChecksLine";
 import { ItemAnomalySettings } from "../ItemAnomalySettings";
 import { ProgressBar } from "../ProgressBar";
 import { RecentRunsList } from "../RecentRunsList";
@@ -640,6 +642,8 @@ export function ZFSDatasetRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   item: ZFSDatasetView;
   t: T;
@@ -655,6 +659,8 @@ export function ZFSDatasetRow({
   anomalyEnabled?: boolean;
   /** A finding's link to a backup of this item to restore. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -860,6 +866,8 @@ export function ZFSDatasetRow({
       <p className="text-xs text-carbon-textMuted">
         {`${t("containers.lastBackup")}: ${item.lastBackup ? formatTs(item.lastBackup) : t("containers.never")}`}
       </p>
+
+      <ItemChecksLine checks={checks} hasBackup={item.lastBackup > 0} onChanged={onChecksChanged} />
 
       {item.restartPending.length > 0 && (
         <p className="flex items-center gap-1.5 text-xs text-statusFail">

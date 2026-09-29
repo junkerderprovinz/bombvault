@@ -132,6 +132,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
 | Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Start test: a restored container is started in isolation and checked | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Several off-site targets, each with its own credentials | ✅ | ⚠️ one per job | ❌ | ✅ | ⚠️ CLI sync | ⚠️ via Borgmatic |
 | Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
 | Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |

@@ -48,6 +48,11 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "dbdump-stream" {
 		os.Exit(runDBDumpStream(context.Background(), os.Args[2:], os.Stdout, os.Stderr, defaultDBDumpDeps()))
 	}
+	// The port check of a start test runs this binary in a container on the
+	// test's isolated network, so it needs no tool from the app's image.
+	if len(os.Args) > 1 && os.Args[1] == "tcp-probe" {
+		os.Exit(tcpProbe(os.Args[2:], time.Second))
+	}
 	ignoreHangup()
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
@@ -537,6 +542,13 @@ func run() error {
 		defer cancel()
 		svc.SweepZFSLeftoversOnStartup(sctx)
 	}()
+	// A start test that was running when BombVault stopped left its copy,
+	// network and restored data behind.
+	go func() {
+		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		svc.CleanupStartTestLeftovers(cctx)
+	}()
 
 	scheduler.Start()
 	defer scheduler.Stop()
@@ -594,6 +606,7 @@ func run() error {
 	// The anomaly worker evaluates the backup history after every run and stops
 	// with the same context the server does.
 	svc.StartAnomalyEngine(ctx)
+	svc.EnableFirstProbes()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	// An MCP listing of a repository that stopped answering holds its request

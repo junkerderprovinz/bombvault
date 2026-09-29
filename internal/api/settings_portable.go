@@ -737,7 +737,7 @@ func settingsGroups(v settingsView) []string {
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
 		v.FilesOffsite != "" || v.ZFSOffsite != "")
-	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled)
+	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled || v.StartTestEnabled)
 	add("digest", v.DigestEnabled || v.DigestSchedule != "")
 	add("monitoring", v.MetricsEnabled || v.WidgetTokenSet)
 	add("language", v.DefaultLanguage != "")
@@ -1100,6 +1100,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.DrillsSchedule = v.DrillsSchedule
 	out.DrillsSubsetPct = max(1, min(100, v.DrillsSubsetPct))
 	out.OffsiteDrillsEnabled = v.OffsiteDrillsEnabled
+	out.StartTestEnabled = v.StartTestEnabled
 	out.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
 	out.VMsOffsiteImmutable = v.VMsOffsiteImmutable
 	out.FlashOffsiteImmutable = v.FlashOffsiteImmutable

@@ -34,6 +34,15 @@ vi.mock("../../lib/toast", () => ({
 import { IntegrityCard } from "./IntegrityCard";
 import { en } from "../../lib/i18n";
 
+// The card follows live progress, and jsdom has no EventSource.
+class FakeEventSource {
+  onmessage: ((ev: MessageEvent) => void) | null = null;
+  close() {
+    /* no-op */
+  }
+}
+vi.stubGlobal("EventSource", FakeEventSource);
+
 // The real English table rather than a key-echoing stub: the assertions are
 // about the sentence an operator reads, with {list} filled in.
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<typeof IntegrityCard>[0]["t"];

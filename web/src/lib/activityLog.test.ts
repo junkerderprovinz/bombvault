@@ -893,3 +893,58 @@ describe("a run an assistant started", () => {
     expect(lines.map((l) => l.text).join(" ")).not.toContain("viaMcp");
   });
 });
+
+describe("buildLogLines live restore probe", () => {
+  it("names the item the probe reads back", () => {
+    const progress: ProgressMap = {
+      "probe:containers:nextcloud": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.id).toBe("live:probe:containers:nextcloud");
+    expect(line.kind).toBe("drill");
+    expect(line.domain).toBe("containers");
+    expect(line.text).toBe("activityLog.lineProbeRunning name=nextcloud");
+  });
+
+  it("uses the domain label for the flash drive", () => {
+    const progress: ProgressMap = {
+      "probe:flash:Unraid flash": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toBe("activityLog.lineProbeRunning name=activityLog.domainFlash");
+  });
+});
+
+describe("buildLogLines live start test", () => {
+  it("names the container being start-tested", () => {
+    const progress: ProgressMap = {
+      "starttest:whoami": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.domain).toBe("containers");
+    expect(line.text).toBe("activityLog.lineStartTestRunning name=whoami");
+  });
+});
+
+describe("buildLogLines live check progress", () => {
+  it("adds how far a verify has counted and the time left", () => {
+    const progress: ProgressMap = {
+      "verify:containers": {
+        phase: "maintenance", percent: 25, active: true, lastSeen: 5_000_000,
+        done: 12, total: 47, unit: "packs", remaining: 125,
+      },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toBe(
+      "activityLog.lineVerifyRunning domain=activityLog.domainContainers progress.count.packs done=12 · progress.remaining time=2m 5s"
+    );
+  });
+
+  it("stays the plain running line before restic counts anything", () => {
+    const progress: ProgressMap = {
+      "prune:vms": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toBe("activityLog.linePruneRunning domain=activityLog.domainVMs");
+  });
+});

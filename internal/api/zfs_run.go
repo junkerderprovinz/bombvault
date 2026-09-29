@@ -408,6 +408,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 	if runErr != nil {
 		return backup.Summary{}, runErr
 	}
+	s.queueFirstProbe(d.ID)
 	return sum, nil
 }
 

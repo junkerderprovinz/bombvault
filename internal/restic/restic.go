@@ -751,6 +751,23 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	return args
 }
 
+// RestoreVerifyArgs returns the argv for restoring the given files of a
+// snapshot into target and reading every restored file back against its
+// content hashes (--verify). The paths are include patterns, so a caller must
+// leave out any path with a glob character in it.
+func RestoreVerifyArgs(repo, snapshotID string, files []string, target string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--json", "--verify", "--target", target)
+	for _, f := range files {
+		args = append(args, "--include", f)
+	}
+	return append(args, "--", snapshotID)
+}
+
 // RestoreSubtreeIncludeArgs returns the argv for restoring ONLY includePath out
 // of a snapshot's subtree INTO target:
 // `restic restore <id>:<subtreePath> --target <target> --include <includePath>`.
@@ -2209,6 +2226,13 @@ func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string,
 	return err
 }
 
+// RestoreVerify restores the given files of a snapshot into target and has
+// restic read each one back against its content hashes.
+func (r Restic) RestoreVerify(ctx context.Context, repo, snapshotID string, files []string, target string, m Mode) error {
+	_, err := r.run(ctx, RestoreVerifyArgs(repo, snapshotID, files, target, m), m)
+	return err
+}
+
 // DumpZip streams the snapshot subtree rooted at subfolder as a zip into w
 // (restic dump -a zip). Used for flash restore: a zip carries no filesystem
 // metadata, so it sidesteps the per-file ownership/permission errors a to-disk
@@ -2611,8 +2635,7 @@ func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, p
 // (`restic check`). It returns nil when the repo is healthy, or a scrubbed error
 // describing the problem.
 func (r Restic) Check(ctx context.Context, repo string, m Mode) error {
-	_, err := r.run(ctx, CheckArgs(repo, m), m)
-	return err
+	return r.runCounted(ctx, CheckArgs(repo, m), m)
 }
 
 // CheckData runs a restore-readiness drill: `restic check
@@ -2621,8 +2644,7 @@ func (r Restic) Check(ctx context.Context, repo string, m Mode) error {
 // returns nil when the checked data is intact, or a scrubbed error describing the
 // corruption. subsetPercent is clamped to 1..100 by CheckDataArgs.
 func (r Restic) CheckData(ctx context.Context, repo string, subsetPercent int, m Mode) error {
-	_, err := r.run(ctx, CheckDataArgs(repo, subsetPercent, m), m)
-	return err
+	return r.runCounted(ctx, CheckDataArgs(repo, subsetPercent, m), m)
 }
 
 // ForgetPolicy applies a keep-policy to the repo. An inert policy (no keep
@@ -2634,8 +2656,7 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	if !p.Any() {
 		return nil
 	}
-	_, err := r.run(ctx, ForgetPolicyArgs(repo, p, m, tags, prune), m)
-	return err
+	return r.runCounted(ctx, ForgetPolicyArgs(repo, p, m, tags, prune), m)
 }
 
 // ForgetPreview reports what ForgetPolicy WOULD remove for the same policy and
@@ -2678,8 +2699,58 @@ func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode)
 
 // Prune reclaims repository space freed by forgotten snapshots (`restic prune`).
 func (r Restic) Prune(ctx context.Context, repo string, m Mode) error {
-	_, err := r.run(ctx, PruneArgs(repo, m), m)
-	return err
+	return r.runCounted(ctx, PruneArgs(repo, m), m)
+}
+
+// runCounted runs a command whose only progress is restic's plain-text counter
+// lines, "[0:12] 45.00%  12 / 30 packs", and hands each one to the count sink
+// in ctx. check and prune have no JSON progress in restic 0.17. Without a sink
+// it behaves like run.
+func (r Restic) runCounted(ctx context.Context, args []string, m Mode) error {
+	sink := progress.CountSinkFrom(ctx)
+	if sink == nil {
+		_, err := r.run(ctx, args, m)
+		return err
+	}
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
+	configureProcGroup(cmd)
+	// restic prints its counters on a pipe only when told how often to.
+	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=1")
+	_, err := scanLines(cmd, args, func(line []byte) {
+		if c, ok := parseCounter(line); ok {
+			sink(c)
+		}
+	})
+	return ctxCancelErr(ctx, args, err)
+}
+
+var counterRe = regexp.MustCompile(`^\[[0-9:]+\]\s+[0-9.]+%\s+([0-9]+)\s*/\s*([0-9]+)\s+(\S.*?)\s*$`)
+
+// parseCounter reads one of restic's counter lines. The unit is reduced to the
+// few the interface has words for.
+func parseCounter(line []byte) (progress.CountProgress, bool) {
+	m := counterRe.FindSubmatch(line)
+	if m == nil {
+		return progress.CountProgress{}, false
+	}
+	done, dErr := strconv.ParseInt(string(m[1]), 10, 64)
+	total, tErr := strconv.ParseInt(string(m[2]), 10, 64)
+	if dErr != nil || tErr != nil || total <= 0 {
+		return progress.CountProgress{}, false
+	}
+	desc := strings.ToLower(string(m[3]))
+	unit := "items"
+	switch {
+	case strings.HasPrefix(desc, "packs"):
+		unit = "packs"
+	case strings.HasPrefix(desc, "snapshots"):
+		unit = "snapshots"
+	case strings.Contains(desc, "index"):
+		unit = "indexes"
+	case strings.HasPrefix(desc, "files"):
+		unit = "files"
+	}
+	return progress.CountProgress{Done: done, Total: total, Unit: unit}, true
 }
 
 // CacheCleanup removes old per-repo cache directories (`restic cache --cleanup`).

@@ -1146,3 +1146,12 @@ func argsContain(args []string, needle string) bool {
 	}
 	return false
 }
+
+func TestRestoreVerifyArgsReadsEveryFileBack(t *testing.T) {
+	got := RestoreVerifyArgs("/repo", "abc123", []string{"/data/a", "/data/b"}, "/sandbox", Mode{})
+	want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--verify", "--target", "/sandbox",
+		"--include", "/data/a", "--include", "/data/b", "--", "abc123"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}

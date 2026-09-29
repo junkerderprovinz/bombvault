@@ -119,6 +119,9 @@ type ResticEngine interface {
 	// exclude patterns match. A ZFS member's tree root is the dataset root, so
 	// its files land directly in target.
 	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode, excludes ...string) error
+	// RestoreVerify restores the given files of a snapshot into target and
+	// reads each one back against its content hashes. The restore probe uses it.
+	RestoreVerify(ctx context.Context, repo, snapshotID string, files []string, target string, mode restic.Mode) error
 	// DumpRaw streams the synthetic file at path, from the given snapshot, into
 	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
 	// over SSH (see backup.ZvolRestic's doc comment).
@@ -514,6 +517,13 @@ type Service struct {
 	relayServe     atomic.Bool
 	peerMuxOnce    sync.Once
 	peerMuxHandler http.Handler
+	// probeQueue holds the items waiting for the restore probe after their
+	// first backup, and probeWorking says whether its worker is running. Both
+	// are guarded by probeMu.
+	probeMu      sync.Mutex
+	probeQueue   []string
+	probeWorking bool
+	firstProbes  atomic.Bool
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -925,6 +935,84 @@ func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Con
 		last = pct
 		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true, StartedAt: startedAt})
 	}), startedAt
+}
+
+// countHeartbeat is how often a counted run repeats its last event while
+// restic prints nothing, as it does while it loads indexes or lists packs.
+// Without it a client takes a long silent step for a run that has died.
+var countHeartbeat = 5 * time.Second
+
+// progCounted returns a context that turns restic's counter lines into live
+// "maintenance" events for key: done, total, unit, and the seconds left in the
+// current step, estimated from how long its units have taken so far. A step is
+// a run of counters with the same unit and total, since restic starts a fresh
+// one for each part of a check or prune. The last event is repeated every
+// countHeartbeat until stop, which the caller must run before its progEnd so no
+// repeat lands after the terminal event.
+func (s *Service) progCounted(ctx context.Context, key string, startedAt int64) (context.Context, func()) {
+	if s.progress == nil {
+		return ctx, func() {}
+	}
+	var mu sync.Mutex
+	last := progress.Event{Key: key, Phase: "maintenance", Active: true, StartedAt: startedAt}
+	var step progress.CountProgress
+	var stepStart time.Time
+	publish := func(ev progress.Event) {
+		mu.Lock()
+		defer mu.Unlock()
+		last = ev
+		s.progress.Publish(ev)
+	}
+
+	quit := make(chan struct{})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		t := time.NewTicker(countHeartbeat)
+		defer t.Stop()
+		for {
+			select {
+			case <-quit:
+				return
+			case <-t.C:
+				mu.Lock()
+				s.progress.Publish(last)
+				mu.Unlock()
+			}
+		}
+	}()
+	var once sync.Once
+	stop := func() {
+		once.Do(func() {
+			close(quit)
+			<-done
+		})
+	}
+
+	return progress.WithCountSink(ctx, func(c progress.CountProgress) {
+		now := time.Now()
+		if c.Unit != step.Unit || c.Total != step.Total || c.Done < step.Done {
+			stepStart = now
+		}
+		step = c
+		publish(progress.Event{
+			Key: key, Phase: "maintenance", Active: true, StartedAt: startedAt,
+			Percent: float64(c.Done) / float64(c.Total) * 100,
+			Done:    c.Done, Total: c.Total, Unit: c.Unit,
+			Remaining: remainingSeconds(now.Sub(stepStart), c.Done, c.Total),
+		})
+	}), stop
+}
+
+// remainingSeconds extrapolates the time left from the units done so far. It
+// gives 0, meaning unknown, until the step has run five seconds and done one
+// unit, because an estimate from less jumps around too much to read.
+func remainingSeconds(elapsed time.Duration, done, total int64) int64 {
+	if done <= 0 || done >= total || elapsed < 5*time.Second {
+		return 0
+	}
+	left := elapsed.Seconds() / float64(done) * float64(total-done)
+	return int64(left + 0.5)
 }
 
 // offsiteLastCopy holds the most recently PUBLISHED live restic-copy
@@ -2403,6 +2491,9 @@ type DomainStatusEntry struct {
 	// so carrying them unconditionally is safe.
 	VerifiedDetail string `json:"verifiedDetail"`
 	DrillDetail    string `json:"drillDetail"`
+	// LastStartTest is the newest start test of any container, only on the
+	// containers row.
+	LastStartTest *store.StartTest `json:"lastStartTest,omitempty"`
 
 	// Ransomware-protection scorecard facts (Task 8): whether the domain has an
 	// off-site copy, whether it is flagged append-only (immutable), and the
@@ -2753,6 +2844,17 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
 	}
 
+	startTests, err := s.store.LatestStartTests()
+	if err != nil {
+		return nil, fmt.Errorf("start tests: %w", err)
+	}
+	var lastStartTest *store.StartTest
+	for _, t := range startTests {
+		if lastStartTest == nil || t.At > lastStartTest.At {
+			lastStartTest = &t
+		}
+	}
+
 	out := make([]DomainStatusEntry, 0, len(domains))
 	for _, d := range domains {
 		last, lErr := d.lastFn()
@@ -2894,6 +2996,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			EncryptionOn:          settings.EncryptionEnabled,
 			PruneStrategySet:      pruneStrategySet,
 		})
+		if d.name == "containers" {
+			out[len(out)-1].LastStartTest = lastStartTest
+		}
 	}
 	return out, nil
 }
@@ -5565,6 +5670,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(tg.ID)
 
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild its state via Discover after losing
@@ -12004,6 +12110,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(tg.ID)
 	// A successful live backup commits its overlay back into the base and pivots
 	// the VM onto it, but leaves the orphaned overlay file behind — delete it so
 	// the next snapshot doesn't fail "already exists". No-op after graceful.
@@ -12989,6 +13096,7 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(store.FlashTargetID)
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash", anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
@@ -13298,6 +13406,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(set.ID)
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files", anomalyScope{Kind: anomalyScopeItem, ID: set.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
@@ -14492,6 +14601,7 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(store.ConfigTargetID)
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config", anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
 	s.replicateOffsite(ctx, "config", settings, mode, repo)
 	s.collectStatsAfterItem(ctx, "config")
@@ -15123,13 +15233,14 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	// repositories a domain HAS, which is the number of rows an operator created.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*15*time.Minute)
 	defer cancel()
-	// Publish a "maintenance" progress pair (begin/terminal, indeterminate — restic
-	// check streams no percentage) and record a "verify" run, so a manual/scheduled
-	// verify shows up on the dashboard activity log/run history instead of running
-	// invisibly.
+	// Publish "maintenance" progress, with restic's pack counts while it reads,
+	// and record a "verify" run, so a manual or scheduled verify shows up on the
+	// dashboard activity log and run history instead of running invisibly.
 	vkey := "verify:" + domain
 	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
+	ctx, stopCounting := s.progCounted(ctx, vkey, startedAt)
+	defer stopCounting()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -15204,6 +15315,10 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 		return s.runSubsetDrill(ctx, domain, source, wait)
 	case "dr":
 		return s.runDRDrill(ctx, domain, source, wait)
+	case "start":
+		// A start test records its own row, per container rather than per
+		// domain, so there is no drill to hand back.
+		return store.RestoreDrill{}, s.runScheduledStartTest(ctx)
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown drill kind %q", kind)
 	}
@@ -15332,6 +15447,8 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	dkey := "drill:" + domain
 	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
 	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
+	ctx, stopCounting := s.progCounted(ctx, dkey, startedAt)
+	defer stopCounting()
 
 	// Reading back a subset of real pack data can be slow on a large repo; bound
 	// the whole pass over the domain's repositories.
@@ -15779,37 +15896,11 @@ func (s *Service) newestBackedUpVM() (string, error) {
 // removed. Reuses the SAME RestoreInclude machinery + paths.Resolve containment as
 // a real restore-to-folder.
 func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, settings store.Settings, repo, snapID string, mode restic.Mode) error {
-	sub := path.Join(settings.RestoreFolder, fmt.Sprintf("bombvault-drill-%s-%d", domain, time.Now().UnixNano()))
-	sandbox, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+	sandbox, cleanup, err := s.newDrillSandbox(settings, "bombvault-drill-"+domain)
 	if err != nil {
-		return errors.New("invalid restore folder: must be a relative subpath under the host mount")
+		return err
 	}
-	// Create the parent (restore folder) then the sandbox LEAF with os.Mkdir, which
-	// FAILS if it already exists — a positive assertion that this is a fresh dir of
-	// ours before it becomes a marker-guarded RemoveAll target (MkdirAll would
-	// silently adopt a pre-existing directory).
-	if err := paths.EnsureDir(filepath.Dir(sandbox)); err != nil {
-		return fmt.Errorf("create drill sandbox parent: %w", err)
-	}
-	if err := os.Mkdir(sandbox, 0o700); err != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve
-		return fmt.Errorf("create drill sandbox: %w", err)
-	}
-	// Marker FIRST — before any restore — so the cleanup interlock can always
-	// confirm this is a sandbox we created, even if the restore fails midway. If the
-	// marker write itself fails the (still empty) dir would leak, so remove it
-	// explicitly on that path before the cleanup defer is even registered.
-	markerPath := filepath.Join(sandbox, drillMarkerName)
-	if err := os.WriteFile(markerPath, []byte("bombvault dr drill\n"), 0o600); err != nil { //nolint:gosec // G306: marker is a non-secret sentinel; 0600 is already restrictive
-		if rmErr := os.Remove(sandbox); rmErr != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve (rejects absolute/traversal); it was just created empty by os.Mkdir above
-			log.Printf("api: dr-drill: could not remove sandbox after marker-write failure: %v", rmErr)
-		}
-		return fmt.Errorf("write drill marker: %w", err)
-	}
-	defer func() {
-		if cErr := cleanupDrillSandbox(sandbox); cErr != nil {
-			log.Printf("api: dr-drill: cleanup: %v", cErr)
-		}
-	}()
+	defer cleanup()
 
 	// Bound the restore at restoreTimeout, matching a real restore — reading a whole
 	// snapshot back over a slow off-site link can take many hours, far more than a
@@ -16401,10 +16492,10 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 
 // PruneDomain reclaims repository space freed by forgotten snapshots
 // (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
-// Once the domain lock is held it publishes a "maintenance" progress pair
-// (begin/terminal, indeterminate — restic prune/forget streams no percentage)
-// and records a "prune" run, so a manual/scheduled prune shows up on the
-// dashboard activity log/run history instead of running invisibly.
+// Once the domain lock is held it publishes "maintenance" progress, with
+// restic's counts for each step of the prune, and records a "prune" run, so a
+// manual or scheduled prune shows up on the dashboard activity log and run
+// history instead of running invisibly.
 // The tags it returns are the items whose old backups it kept because an
 // unusual backup is holding them.
 func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
@@ -16515,6 +16606,8 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
+	ctx, stopCounting := s.progCounted(ctx, pkey, startedAt)
+	defer stopCounting()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
