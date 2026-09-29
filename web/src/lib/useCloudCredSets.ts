@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CloudCredSetInfo } from "./api";
 import { getCloudCredSets } from "./api";
+import type { TranslationKey } from "./i18n";
 
 const CRED_SETS_CHANGED = "bv:cred-sets-changed";
 
@@ -10,6 +11,13 @@ const CRED_SETS_CHANGED = "bv:cred-sets-changed";
  */
 export function credSetsChanged(): void {
   window.dispatchEvent(new Event(CRED_SETS_CHANGED));
+}
+
+/** credSetLabel is how a set is named on screen. A set kept for a direct
+ *  repository carries that repository's name, and the rest of its label is
+ *  said in the reader's language. */
+export function credSetLabel(t: (key: TranslationKey) => string, set: CloudCredSetInfo): string {
+  return set.keptFor ? t("cloud.credSets.kept").replace("{name}", () => set.name) : set.name;
 }
 
 /**

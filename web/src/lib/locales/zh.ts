@@ -590,6 +590,7 @@ const zh: Partial<Translations> = {
   "cloud.credSets.add": "添加凭据集",
   "cloud.credSets.name": "名称",
   "cloud.credSets.none": "尚无附加凭据集。",
+  "cloud.credSets.kept": "{name}（保留的凭据）",
   "export.encrypt.hint": "restic 仓库已经加密。此项可选地使用 age 加密明文导出产物 (容器和虚拟机的 tar.gz 及其 xml，以及闪存 zip)，以便安全地在服务器外存储或移动。",
   "export.encrypt.ageInfo": "age (age-encryption.org) 是一个小巧的现代文件加密工具：为一个或多个接收者封装文件时，比 GPG 更简单的替代方案。",
   "export.encrypt.enable": "使用 age 加密导出",

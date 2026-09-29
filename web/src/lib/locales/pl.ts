@@ -586,6 +586,7 @@ const pl: Partial<Translations> = {
   "cloud.credSets.add": "Dodaj zestaw poświadczeń",
   "cloud.credSets.name": "Nazwa",
   "cloud.credSets.none": "Brak dodatkowych zestawów poświadczeń.",
+  "cloud.credSets.kept": "{name} (zachowane poświadczenia)",
   "export.encrypt.hint": "Repozytoria restic są już zaszyfrowane. To opcjonalnie szyfruje jawne artefakty eksportu (tar.gz kontenera i VM wraz z ich plikami xml oraz zip flash) za pomocą age, aby można je było bezpiecznie przechowywać lub przenosić poza serwer.",
   "export.encrypt.ageInfo": "age (age-encryption.org) to małe, nowoczesne narzędzie do szyfrowania plików, prostsza alternatywa dla GPG do zapieczętowania pliku dla jednego lub wielu odbiorców.",
   "export.encrypt.enable": "Szyfruj eksporty za pomocą age",

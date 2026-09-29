@@ -594,6 +594,7 @@ const tr: Partial<Translations> = {
   "cloud.credSets.add": "Kimlik bilgisi kümesi ekle",
   "cloud.credSets.name": "Ad",
   "cloud.credSets.none": "Henüz ek kimlik bilgisi kümesi yok.",
+  "cloud.credSets.kept": "{name} (korunan kimlik bilgileri)",
   "export.encrypt.hint": "restic depoları zaten şifrelidir. Bu, düz metin dışa aktarma yapıtlarını (konteyner ve VM tar.gz dosyaları ile xml'leri ve flash zip) isteğe bağlı olarak age ile şifreler; böylece sunucu dışında güvenle saklanabilir veya taşınabilirler.",
   "export.encrypt.ageInfo": "age (age-encryption.org), küçük ve modern bir dosya şifreleme aracıdır. Bir dosyayı bir veya daha fazla alıcı için mühürlemek üzere GPG'ye göre daha basit bir alternatiftir.",
   "export.encrypt.enable": "Dışa aktarmaları age ile şifrele",

@@ -7,7 +7,11 @@ import { ToastProvider } from "../../lib/toast";
 const credsKept = { code: "direct-creds-kept", targetId: "t-b2", targetName: "B2", items: 2 };
 const credsKeptText = "B2 direct cannot be opened with the new key and keeps the old one.";
 
-vi.mock("../../lib/useCloudCredSets", () => ({ useCloudCredSets: () => [], credSetsChanged: () => {} }));
+vi.mock("../../lib/useCloudCredSets", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/useCloudCredSets")>()),
+  useCloudCredSets: () => [],
+  credSetsChanged: () => {},
+}));
 vi.mock("../../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/api")>()),
   getCloud: () =>

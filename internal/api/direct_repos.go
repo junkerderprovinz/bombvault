@@ -708,7 +708,7 @@ func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, di
 	if !s.opensWith(ctx, loc, mode) {
 		return false, nil
 	}
-	kept := CloudCredSet{ID: newCredSetID(), Name: direct.Name + " (kept credentials)", KeptFor: direct.ID, CloudCreds: old}
+	kept := CloudCredSet{ID: newCredSetID(), Name: direct.Name, KeptFor: direct.ID, CloudCreds: old}
 	if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet { return append(sets, kept) }); err != nil {
 		return false, err
 	}

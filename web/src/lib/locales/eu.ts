@@ -591,6 +591,7 @@ const eu: Partial<Translations> = {
   "cloud.credSets.add": "Gehitu kredentzial-multzoa",
   "cloud.credSets.name": "Izena",
   "cloud.credSets.none": "Oraindik ez dago kredentzial-multzo gehigarririk.",
+  "cloud.credSets.kept": "{name} (gordetako kredentzialak)",
   "rclone.save": "Gorde konfigurazioa",
   "notify.title": "Jakinarazpenak",
   "notify.hint": "Jaso jakinarazpena babeskopia bat amaitzean, eta aukeratu behean zein gertaerak abiarazten duten. Unraid-en jakinarazpenak hemen funtzionatzen dute modu soilean; bidalketa-kanal gehiago (webhook, Matrix, Healthchecks, posta elektronikoa) Aurreratua atalean daude.",

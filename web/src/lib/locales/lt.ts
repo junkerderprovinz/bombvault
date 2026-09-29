@@ -591,6 +591,7 @@ const lt: Partial<Translations> = {
   "cloud.credSets.add": "Pridėti prisijungimo duomenų rinkinį",
   "cloud.credSets.name": "Pavadinimas",
   "cloud.credSets.none": "Papildomų prisijungimo duomenų rinkinių dar nėra.",
+  "cloud.credSets.kept": "{name} (išsaugoti prisijungimo duomenys)",
   "rclone.save": "Išsaugoti konfigūraciją",
   "notify.title": "Pranešimai",
   "notify.hint": "Gaukite pranešimą, kai baigsis atsarginė kopija, ir apačioje pasirinkite, kokie įvykiai jį suaktyvina. Unraid pranešimai čia veikia paprastu režimu; daugiau pristatymo kanalų (webhook, Matrix, Healthchecks, el. paštas) yra Išplėstiniame skirtuke.",

@@ -591,6 +591,7 @@ const hr: Partial<Translations> = {
   "cloud.credSets.add": "Dodaj skup vjerodajnica",
   "cloud.credSets.name": "Naziv",
   "cloud.credSets.none": "Još nema dodatnih skupova vjerodajnica.",
+  "cloud.credSets.kept": "{name} (zadržane vjerodajnice)",
   "rclone.save": "Spremi konfiguraciju",
   "notify.title": "Obavijesti",
   "notify.hint": "Primite obavijest kad sigurnosna kopija završi, a u nastavku odaberite koji je događaji pokreću. Unraid obavijesti ovdje rade u jednostavnom načinu; više kanala isporuke (webhook, Matrix, Healthchecks, e-pošta) nalazi se u Napredno.",

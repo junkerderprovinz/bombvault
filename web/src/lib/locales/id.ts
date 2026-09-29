@@ -591,6 +591,7 @@ const id: Partial<Translations> = {
   "cloud.credSets.add": "Tambah set kredensial",
   "cloud.credSets.name": "Nama",
   "cloud.credSets.none": "Belum ada set kredensial tambahan.",
+  "cloud.credSets.kept": "{name} (kredensial yang dipertahankan)",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Notifikasi",
   "notify.hint": "Dapatkan notifikasi saat pencadangan selesai, dan pilih di bawah peristiwa mana yang memicunya. Notifikasi Unraid berfungsi di sini pada mode Sederhana; lebih banyak saluran pengiriman (webhook, Matrix, Healthchecks, email) ada di Lanjutan.",

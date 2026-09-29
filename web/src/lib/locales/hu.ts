@@ -594,6 +594,7 @@ const hu: Partial<Translations> = {
   "cloud.credSets.add": "Hitelesítő adatkészlet hozzáadása",
   "cloud.credSets.name": "Név",
   "cloud.credSets.none": "Még nincs további hitelesítő adatkészlet.",
+  "cloud.credSets.kept": "{name} (megtartott hitelesítő adatok)",
   "export.encrypt.hint": "A restic tárolók már titkosítottak. Ez opcionálisan titkosítja a sima exportált fájlokat (konténer és VM tar.gz az xml fájljaikkal, valamint a flash zip) age segítségével, hogy biztonságosan tárolhatók vagy mozgathatók legyenek a szerveren kívülre.",
   "export.encrypt.ageInfo": "Az age (age-encryption.org) egy kicsi, modern fájltitkosító eszköz: egyszerűbb alternatíva a GPG-nek egy fájl egy vagy több címzett számára történő lezárásához.",
   "export.encrypt.enable": "Exportok titkosítása age-dzsel",

@@ -591,6 +591,7 @@ const et: Partial<Translations> = {
   "cloud.credSets.add": "Lisa mandaadikomplekt",
   "cloud.credSets.name": "Nimi",
   "cloud.credSets.none": "Täiendavaid mandaadikomplekte veel pole.",
+  "cloud.credSets.kept": "{name} (alles hoitud mandaat)",
   "rclone.save": "Salvesta seadistus",
   "notify.title": "Teavitused",
   "notify.hint": "Saa teavitus, kui varundus lõpeb, ja vali allpool, millised sündmused selle käivitavad. Unraidi teavitused töötavad siin lihtsas režiimis; rohkem edastuskanaleid (veebihook, Matrix, Healthchecks, e-post) on jaotises Täpsem.",

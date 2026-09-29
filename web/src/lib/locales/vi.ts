@@ -590,6 +590,7 @@ const vi: Partial<Translations> = {
   "cloud.credSets.add": "Thêm bộ thông tin xác thực",
   "cloud.credSets.name": "Tên",
   "cloud.credSets.none": "Chưa có bộ thông tin xác thực bổ sung nào.",
+  "cloud.credSets.kept": "{name} (thông tin xác thực được giữ lại)",
   "export.encrypt.hint": "Các kho restic đã được mã hóa. Tùy chọn này mã hóa các thành phần xuất dạng thô (tar.gz của container và VM cùng với xml của chúng, và zip flash) bằng age, để có thể lưu trữ hoặc di chuyển ra ngoài máy chủ một cách an toàn.",
   "export.encrypt.ageInfo": "age (age-encryption.org) là một công cụ mã hóa tệp nhỏ gọn, hiện đại, một lựa chọn thay thế đơn giản hơn GPG để niêm phong một tệp cho một hoặc nhiều người nhận.",
   "export.encrypt.enable": "Mã hóa bản xuất bằng age",

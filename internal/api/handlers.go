@@ -3747,6 +3747,10 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 			"s3SecretSet":     c.S3Secret != "",
 			"restPasswordSet": c.RESTPassword != "",
 		}
+		// The interface names a kept set in the reader's language from this.
+		if c.KeptFor != "" {
+			out[i]["keptFor"] = c.KeptFor
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"sets": out}))
 }

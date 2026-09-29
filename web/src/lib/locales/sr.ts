@@ -591,6 +591,7 @@ const sr: Partial<Translations> = {
   "cloud.credSets.add": "Додај скуп акредитива",
   "cloud.credSets.name": "Назив",
   "cloud.credSets.none": "Тренутно нема додатних скупова акредитива.",
+  "cloud.credSets.kept": "{name} (задржани акредитиви)",
   "rclone.save": "Сачувај конфигурацију",
   "notify.title": "Обавештења",
   "notify.hint": "Прими обавештење када се резервна копија заврши, и испод изабери који догађаји то покрећу. Unraid обавештења овде раде у једноставном режиму; више канала испоруке (webhook, Matrix, Healthchecks, е-пошта) налази се под Напредно.",

@@ -1169,6 +1169,9 @@ export interface CloudCredSetInfo {
   s3StorageClass: string;
   s3SecretSet: boolean;
   restPasswordSet: boolean;
+  /** The direct repository this set keeps the old values for, when a save
+   *  changed them to ones that do not open it. */
+  keptFor?: string;
 }
 
 /** GET /api/cloud/creds-sets — additional named credential sets (no secrets returned). */

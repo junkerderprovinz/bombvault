@@ -15,7 +15,10 @@ const DIRECT: NamedRepo = {
   limitDownload: 0, immutable: true, enabled: true, offPremises: false, inUse: 2, companionOf: "t-f", companionLost: false,
 };
 
-vi.mock("../lib/useCloudCredSets", () => ({ useCloudCredSets: () => [] }));
+vi.mock("../lib/useCloudCredSets", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/useCloudCredSets")>()),
+  useCloudCredSets: () => [],
+}));
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
   getCloud: () =>

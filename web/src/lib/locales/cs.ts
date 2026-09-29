@@ -592,6 +592,7 @@ const cs: Partial<Translations> = {
   "cloud.credSets.add": "Přidat sadu přihlašovacích údajů",
   "cloud.credSets.name": "Název",
   "cloud.credSets.none": "Zatím žádné další sady přihlašovacích údajů.",
+  "cloud.credSets.kept": "{name} (ponechané přihlašovací údaje)",
   "export.encrypt.hint": "Repozitáře restic jsou už šifrované. Toto volitelně šifruje prosté artefakty exportu (tar.gz kontejneru a VM spolu s jejich xml a flash zip) pomocí age, aby je bylo možné bezpečně uložit nebo přesunout mimo server.",
   "export.encrypt.ageInfo": "age (age-encryption.org) je malý, moderní nástroj pro šifrování souborů, jednodušší alternativa k GPG pro zapečetění souboru pro jednoho nebo více příjemců.",
   "export.encrypt.enable": "Šifrovat exporty pomocí age",

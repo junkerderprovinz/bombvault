@@ -590,6 +590,7 @@ const ja: Partial<Translations> = {
   "cloud.credSets.add": "認証情報セットを追加",
   "cloud.credSets.name": "名前",
   "cloud.credSets.none": "追加の認証情報セットはまだありません。",
+  "cloud.credSets.kept": "{name}（保持された認証情報）",
   "export.encrypt.hint": "restic リポジトリはすでに暗号化されています。これはオプションで平文のエクスポート成果物 (コンテナと VM の tar.gz とその xml、およびフラッシュ zip) を age で暗号化し、サーバー外に安全に保存または移動できるようにします。",
   "export.encrypt.ageInfo": "age (age-encryption.org) は小さくてモダンなファイル暗号化ツールです。1人以上の受信者に向けてファイルを封印するための、GPGよりシンプルな代替手段です。",
   "export.encrypt.enable": "age でエクスポートを暗号化",

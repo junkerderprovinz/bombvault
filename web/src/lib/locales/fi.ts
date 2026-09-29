@@ -594,6 +594,7 @@ const fi: Partial<Translations> = {
   "cloud.credSets.add": "Lisää kirjautumistietojoukko",
   "cloud.credSets.name": "Nimi",
   "cloud.credSets.none": "Ei vielä lisäkirjautumistietojoukkoja.",
+  "cloud.credSets.kept": "{name} (säilytetyt kirjautumistiedot)",
   "export.encrypt.hint": "restic-arkistot ovat jo salattuja. Tämä salaa valinnaisesti selkokieliset vientiartefaktit (kontin ja virtuaalikoneen tar.gz sekä niiden xml, ja flash-zip) age:lla, jotta ne voi tallentaa tai siirtää turvallisesti pois palvelimelta.",
   "export.encrypt.ageInfo": "age (age-encryption.org) on pieni, moderni tiedostojen salaustyökalu, yksinkertaisempi vaihtoehto GPG:lle tiedoston sinetöimiseen yhdelle tai useammalle vastaanottajalle.",
   "export.encrypt.enable": "Salaa viennit age:lla",

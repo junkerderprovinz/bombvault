@@ -9,7 +9,7 @@ import {
   testOffsiteTarget,
 } from "../lib/api";
 import type { NewTargetExclusion } from "../lib/api";
-import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged, subscribeOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { useT } from "../lib/i18n";
 import { STORAGE_CLASSES } from "../lib/storageClasses";
@@ -427,7 +427,7 @@ export function OffsiteTargetsSection({
               label={t("offsite.targets.credsLabel")}
               options={[
                 { value: "", label: t("offsite.targets.credsDefault") },
-                ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
               ]}
               className={inputCls}
             />

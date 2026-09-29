@@ -33,7 +33,8 @@ const PRIMARY_TARGET = {
   sortOrder: 0,
 };
 
-vi.mock("../lib/useCloudCredSets", () => ({
+vi.mock("../lib/useCloudCredSets", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/useCloudCredSets")>()),
   useCloudCredSets: () => [{ id: "set-a", name: "Backblaze" }],
 }));
 

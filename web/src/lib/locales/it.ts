@@ -594,6 +594,7 @@ const it: Partial<Translations> = {
   "cloud.credSets.add": "Aggiungi set di credenziali",
   "cloud.credSets.name": "Nome",
   "cloud.credSets.none": "Nessun set di credenziali aggiuntivo ancora.",
+  "cloud.credSets.kept": "{name} (credenziali mantenute)",
   "export.encrypt.hint": "I repository restic sono già cifrati. Questo cifra facoltativamente gli artefatti di esportazione in chiaro (tar.gz di container e VM con i relativi xml, e lo zip flash) con age, così da poterli archiviare o spostare fuori dal server in sicurezza.",
   "export.encrypt.ageInfo": "age (age-encryption.org) è uno strumento di cifratura file piccolo e moderno, un'alternativa più semplice a GPG per sigillare un file per uno o più destinatari.",
   "export.encrypt.enable": "Cifra le esportazioni con age",

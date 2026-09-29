@@ -591,6 +591,7 @@ const gl: Partial<Translations> = {
   "cloud.credSets.add": "Engadir conxunto de credenciais",
   "cloud.credSets.name": "Nome",
   "cloud.credSets.none": "Aínda non hai conxuntos de credenciais adicionais.",
+  "cloud.credSets.kept": "{name} (credenciais conservadas)",
   "rclone.save": "Gardar configuración",
   "notify.title": "Notificacións",
   "notify.hint": "Recibe unha notificación cando remate unha copia, e escolle abaixo que eventos a activan. As notificacións de Unraid funcionan aquí no modo sinxelo; máis canles de entrega (webhook, Matrix, Healthchecks, correo) están en Avanzado.",

@@ -591,6 +591,7 @@ const sk: Partial<Translations> = {
   "cloud.credSets.add": "Pridať sadu poverení",
   "cloud.credSets.name": "Názov",
   "cloud.credSets.none": "Zatiaľ žiadne ďalšie sady poverení.",
+  "cloud.credSets.kept": "{name} (ponechané poverenia)",
   "rclone.save": "Uložiť konfiguráciu",
   "notify.title": "Upozornenia",
   "notify.hint": "Dostávajte upozornenie po dokončení zálohy a nižšie vyberte, ktoré udalosti ho spúšťajú. Upozornenia Unraid tu fungujú v jednoduchom režime; ďalšie kanály doručovania (webhook, Matrix, Healthchecks, e-mail) nájdete v Pokročilom.",

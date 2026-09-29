@@ -13,7 +13,7 @@ import {
   getCloud,
 } from "../lib/api";
 import type { OffsiteTarget } from "../lib/api";
-import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
 import { restPathUserMismatch } from "../lib/restRepo";
 import { SelectField } from "./SelectField";
 import { useT } from "../lib/i18n";
@@ -705,7 +705,7 @@ export function OffsiteWizard({
                   onChange={(v) => void (primary ? pickPrimaryCredSet(v) : pickCredSet(v))}
                   options={[
                     { value: "", label: t("offsite.targets.credsDefault") },
-                    ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                    ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
                   ]}
                   className={inputCls}
                 />

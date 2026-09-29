@@ -591,6 +591,7 @@ const fa: Partial<Translations> = {
   "cloud.credSets.add": "افزودن مجموعه اطلاعات ورود",
   "cloud.credSets.name": "نام",
   "cloud.credSets.none": "هنوز مجموعه اطلاعات ورود اضافی‌ای وجود ندارد.",
+  "cloud.credSets.kept": "{name} (اطلاعات ورود نگه‌داشته‌شده)",
   "rclone.save": "ذخیره پیکربندی",
   "notify.title": "اعلان‌ها",
   "notify.hint": "با پایان یک پشتیبان‌گیری اعلان دریافت کنید، و در زیر انتخاب کنید کدام رویدادها آن را فعال کنند. اعلان‌های Unraid در حالت ساده اینجا کار می‌کنند؛ کانال‌های تحویل بیشتر (webhook، Matrix، Healthchecks، ایمیل) زیر پیشرفته قرار دارند.",

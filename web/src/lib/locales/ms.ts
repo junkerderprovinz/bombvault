@@ -591,6 +591,7 @@ const ms: Partial<Translations> = {
   "cloud.credSets.add": "Tambah set kelayakan",
   "cloud.credSets.name": "Nama",
   "cloud.credSets.none": "Belum ada set kelayakan tambahan.",
+  "cloud.credSets.kept": "{name} (kelayakan yang dikekalkan)",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Pemberitahuan",
   "notify.hint": "Dapatkan pemberitahuan apabila sandaran selesai, dan pilih di bawah acara mana yang mencetuskannya. Pemberitahuan Unraid berfungsi di sini dalam mod Ringkas; lebih banyak saluran penghantaran (webhook, Matrix, Healthchecks, e-mel) terdapat di bawah Lanjutan.",

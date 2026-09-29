@@ -591,6 +591,7 @@ const is: Partial<Translations> = {
   "cloud.credSets.add": "Bæta við aðgangsgagnasetti",
   "cloud.credSets.name": "Nafn",
   "cloud.credSets.none": "Engin viðbótarsett af aðgangsgögnum ennþá.",
+  "cloud.credSets.kept": "{name} (varðveitt aðgangsgögn)",
   "rclone.save": "Vista stillingu",
   "notify.title": "Tilkynningar",
   "notify.hint": "Fáðu tilkynningu þegar afritun lýkur, og veldu hér að neðan hvaða atburðir kveikja á henni. Unraid-tilkynningar virka hér í einfalda hamnum; fleiri sendileiðir (webhook, Matrix, Healthchecks, tölvupóstur) eru undir Ítarlegt.",

@@ -591,6 +591,7 @@ const ca: Partial<Translations> = {
   "cloud.credSets.add": "Afegeix conjunt de credencials",
   "cloud.credSets.name": "Nom",
   "cloud.credSets.none": "Encara no hi ha conjunts de credencials addicionals.",
+  "cloud.credSets.kept": "{name} (credencials conservades)",
   "rclone.save": "Desa la configuració",
   "notify.title": "Notificacions",
   "notify.hint": "Rep una notificació quan acabi una còpia, i tria a sota quins esdeveniments la disparen. Les notificacions d'Unraid funcionen aquí en el mode senzill; més canals de lliurament (webhook, Matrix, Healthchecks, correu) són a Avançat.",

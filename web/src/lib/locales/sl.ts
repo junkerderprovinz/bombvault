@@ -591,6 +591,7 @@ const sl: Partial<Translations> = {
   "cloud.credSets.add": "Dodaj nabor poverilnic",
   "cloud.credSets.name": "Ime",
   "cloud.credSets.none": "Trenutno ni dodatnih naborov poverilnic.",
+  "cloud.credSets.kept": "{name} (ohranjene poverilnice)",
   "rclone.save": "Shrani konfiguracijo",
   "notify.title": "Obvestila",
   "notify.hint": "Prejmi obvestilo, ko se varnostno kopiranje konča, in spodaj izberi, kateri dogodki ga sprožijo. Unraidova obvestila tukaj delujejo v enostavnem načinu; več dostavnih kanalov (webhook, Matrix, Healthchecks, e-pošta) je pod Napredno.",

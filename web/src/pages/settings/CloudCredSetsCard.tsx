@@ -6,7 +6,7 @@ import { setCloudCredSets, type CloudCredSet, type CloudCredSetInfo } from "../.
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { pushSaveWarnings } from "../../lib/placementCodes";
-import { credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { credSetLabel, credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
 import { Card, type SaveState } from "./shared";
@@ -124,7 +124,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         // to a column one character wide.
         <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3 max-md:flex-col">
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-sm text-carbon-text truncate">{s.name}</span>
+            <span className="text-sm text-carbon-text truncate">{credSetLabel(t, s)}</span>
             <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
               {s.s3KeyId || s.restUser || "—"}
             </span>

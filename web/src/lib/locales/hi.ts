@@ -591,6 +591,7 @@ const hi: Partial<Translations> = {
   "cloud.credSets.add": "क्रेडेंशियल सेट जोड़ें",
   "cloud.credSets.name": "नाम",
   "cloud.credSets.none": "अभी तक कोई अतिरिक्त क्रेडेंशियल सेट नहीं है।",
+  "cloud.credSets.kept": "{name} (रखे गए क्रेडेंशियल)",
   "rclone.save": "कॉन्फ़िगरेशन सहेजें",
   "notify.title": "सूचनाएँ",
   "notify.hint": "बैकअप पूरा होने पर सूचना पाएँ, और नीचे चुनें कि कौन-सी घटनाएँ इसे ट्रिगर करती हैं। Unraid सूचनाएँ यहाँ सरल मोड में काम करती हैं; अधिक डिलीवरी चैनल (webhook, Matrix, Healthchecks, ईमेल) Advanced में मिलते हैं।",

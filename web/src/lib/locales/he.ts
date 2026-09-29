@@ -594,6 +594,7 @@ const he: Partial<Translations> = {
   "cloud.credSets.add": "הוסף ערכת אישורים",
   "cloud.credSets.name": "שם",
   "cloud.credSets.none": "אין עדיין ערכות אישורים נוספות.",
+  "cloud.credSets.kept": "{name} (אישורים שנשמרו)",
   "export.encrypt.hint": "מאגרי restic כבר מוצפנים. זה מצפין באופן אופציונלי את פריטי הייצוא הרגילים (tar.gz של קונטיינר ו-VM יחד עם קובצי ה-xml שלהם, וה-zip של flash) באמצעות age, כדי שניתן יהיה לאחסן או להעביר אותם מחוץ לשרת בבטחה.",
   "export.encrypt.ageInfo": "age (age-encryption.org) הוא כלי הצפנת קבצים קטן ומודרני, חלופה פשוטה יותר ל-GPG לאיטום קובץ עבור נמען אחד או יותר.",
   "export.encrypt.enable": "הצפנת ייצוא באמצעות age",

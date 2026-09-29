@@ -594,6 +594,7 @@ const ar: Partial<Translations> = {
   "cloud.credSets.add": "إضافة مجموعة بيانات اعتماد",
   "cloud.credSets.name": "الاسم",
   "cloud.credSets.none": "لا توجد مجموعات بيانات اعتماد إضافية بعد.",
+  "cloud.credSets.kept": "{name} (بيانات اعتماد محتفظ بها)",
   "export.encrypt.hint": "مستودعات restic مشفّرة بالفعل. هذا يشفّر اختياريًا مخرجات التصدير النصية (ملفات tar.gz للحاوية والجهاز الافتراضي مع ملفات xml الخاصة بها، وملف flash المضغوط) باستخدام age، لتخزينها أو نقلها خارج الخادم بأمان.",
   "export.encrypt.ageInfo": "age (age-encryption.org) هي أداة تشفير ملفات صغيرة وحديثة: بديل أبسط لـ GPG لتشفير ملف لمستلم واحد أو أكثر.",
   "export.encrypt.enable": "تشفير عمليات التصدير باستخدام age",

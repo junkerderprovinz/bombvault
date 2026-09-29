@@ -591,6 +591,7 @@ const lv: Partial<Translations> = {
   "cloud.credSets.add": "Pievienot akreditācijas datu kopu",
   "cloud.credSets.name": "Nosaukums",
   "cloud.credSets.none": "Vēl nav papildu akreditācijas datu kopu.",
+  "cloud.credSets.kept": "{name} (saglabātie akreditācijas dati)",
   "rclone.save": "Saglabāt konfigurāciju",
   "notify.title": "Paziņojumi",
   "notify.hint": "Saņemiet paziņojumu, kad pabeigta rezerves kopija, un zemāk izvēlieties, kuri notikumi to izraisa. Unraid paziņojumi šeit darbojas vienkāršajā režīmā; vairāk piegādes kanālu (webhook, Matrix, Healthchecks, e-pasts) atrodas sadaļā Papildu.",

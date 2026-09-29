@@ -591,6 +591,7 @@ const bg: Partial<Translations> = {
   "cloud.credSets.add": "Добави набор с данни за достъп",
   "cloud.credSets.name": "Име",
   "cloud.credSets.none": "Все още няма допълнителни набори с данни за достъп.",
+  "cloud.credSets.kept": "{name} (запазени данни за достъп)",
   "rclone.save": "Запази конфигурацията",
   "notify.title": "Известия",
   "notify.hint": "Получавай известие, когато архивирането приключи, и избери по-долу кои събития го задействат. Известията на Unraid работят тук в опростения режим; още канали за доставка (webhook, Matrix, Healthchecks, имейл) са в Разширени.",

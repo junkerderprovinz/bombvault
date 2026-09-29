@@ -588,6 +588,7 @@ const nl: Partial<Translations> = {
   "cloud.credSets.add": "Referentieset toevoegen",
   "cloud.credSets.name": "Naam",
   "cloud.credSets.none": "Nog geen extra referentiesets.",
+  "cloud.credSets.kept": "{name} (behouden referenties)",
   "export.encrypt.hint": "De restic-repositories zijn al versleuteld. Dit versleutelt optioneel de platte export-artefacten (container- en VM-tar.gz met hun xml, en de flash-zip) met age, zodat ze veilig buiten de server kunnen worden bewaard of verplaatst.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is een klein, modern bestandsversleutelingsprogramma, een eenvoudiger alternatief voor GPG om een bestand voor een of meer ontvangers te verzegelen.",
   "export.encrypt.enable": "Exports versleutelen met age",

@@ -1405,11 +1405,18 @@ func TestADirectRepositoryKeepsTheSetValuesItOpenedWith(t *testing.T) {
 		t.Fatalf("warnings = %v", codes)
 	}
 	kept := f.keptFor(d.ID)
-	if len(kept) != 1 || kept[0].RESTUser != "bv" || kept[0].RESTPassword != "old" || kept[0].Name != "NAS direct (kept credentials)" {
+	if len(kept) != 1 || kept[0].RESTUser != "bv" || kept[0].RESTPassword != "old" || kept[0].Name != "NAS direct" {
 		t.Fatalf("kept sets = %+v, want one holding the old password", kept)
 	}
 	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != kept[0].ID {
 		t.Fatalf("direct repository = %+v, %v; want it on the kept set %s", got, err, kept[0].ID)
+	}
+	listed, _ := f.do("GET", "/api/cloud/creds-sets", nil)["sets"].([]any)
+	if !slices.ContainsFunc(listed, func(s any) bool {
+		m, _ := s.(map[string]any)
+		return m["id"] == kept[0].ID && m["keptFor"] == d.ID && m["name"] == "NAS direct"
+	}) {
+		t.Fatalf("listed sets = %v, want the kept one with what it was kept for", listed)
 	}
 	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=old") || !slices.Contains(env, "RESTIC_REST_USERNAME=bv") {
 		t.Fatalf("a backup into the direct repository runs with %v, want the old password", env)

@@ -591,6 +591,7 @@ const ro: Partial<Translations> = {
   "cloud.credSets.add": "Adaugă set de credențiale",
   "cloud.credSets.name": "Nume",
   "cloud.credSets.none": "Încă nu există seturi suplimentare de credențiale.",
+  "cloud.credSets.kept": "{name} (credențiale păstrate)",
   "export.encrypt.hint": "Depozitele restic sunt deja criptate. Aceasta criptează opțional artefactele de export în clar (tar.gz de container și VM împreună cu fișierele lor xml, și zip-ul flash) cu age, astfel încât să poată fi stocate sau mutate în siguranță în afara serverului.",
   "export.encrypt.ageInfo": "age (age-encryption.org) este un instrument mic și modern de criptare a fișierelor, o alternativă mai simplă la GPG pentru sigilarea unui fișier către unul sau mai mulți destinatari.",
   "export.encrypt.enable": "Criptează exporturile cu age",

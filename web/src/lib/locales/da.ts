@@ -594,6 +594,7 @@ const da: Partial<Translations> = {
   "cloud.credSets.add": "Tilføj legitimationssæt",
   "cloud.credSets.name": "Navn",
   "cloud.credSets.none": "Ingen ekstra legitimationssæt endnu.",
+  "cloud.credSets.kept": "{name} (bevarede legitimationsoplysninger)",
   "export.encrypt.hint": "restic-repositorierne er allerede krypterede. Dette krypterer valgfrit de almindelige eksportartefakter (container- og VM-tar.gz med deres xml, og flash-zip) med age, så de trygt kan gemmes eller flyttes væk fra serveren.",
   "export.encrypt.ageInfo": "age (age-encryption.org) er et lille, moderne filkrypteringsværktøj, et enklere alternativ til GPG til at forsegle en fil til en eller flere modtagere.",
   "export.encrypt.enable": "Krypter eksporter med age",
