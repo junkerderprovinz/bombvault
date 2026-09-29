@@ -15,6 +15,9 @@ const relayCalls: Array<Record<string, unknown>> = [];
 const joined: string[] = [];
 let joinAnswer: Record<string, unknown> = {};
 let left = 0;
+const selfAddressCalls: string[] = [];
+const probeCalls: string[] = [];
+let probeAnswer: Record<string, unknown> | null = null;
 
 // The BIP39 test vector: twelve listed words that check out.
 const PHRASE = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
@@ -37,6 +40,8 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
     },
     joinedAgo: 300,
     memberSeen: true,
+    selfAddress: "https://192.168.1.20:3443",
+    selfAddressManual: false,
     ...over,
   };
 }
@@ -65,6 +70,16 @@ vi.mock("../lib/api", async (importOriginal) => {
     leaveGroup: () => {
       left++;
       group = outside();
+      return Promise.resolve(group);
+    },
+    setDirectAddress: (url: string) => {
+      selfAddressCalls.push(url);
+      group = { ...group, selfAddress: url, selfAddressManual: url !== "" };
+      return Promise.resolve(group);
+    },
+    probeAddress: (url: string) => {
+      probeCalls.push(url);
+      if (probeAnswer) return Promise.resolve(probeAnswer);
       return Promise.resolve(group);
     },
   };
@@ -97,6 +112,9 @@ beforeEach(() => {
   joined.length = 0;
   joinAnswer = {};
   left = 0;
+  selfAddressCalls.length = 0;
+  probeCalls.length = 0;
+  probeAnswer = null;
   localStorage.clear();
 });
 
@@ -302,6 +320,32 @@ describe("after a minute alone", () => {
     expect(screen.queryByText(en["pairing.otherNetTitle"])).toBeNull();
   });
 
+  it("offers Can't find it? only without a relay, and searches an address on demand", async () => {
+    group = alone();
+    await renderTab();
+    expect(screen.queryByText(en["pairing.cantFindTitle"])).toBeNull();
+    cleanup();
+
+    group = alone({ relay: { ...makeGroup().relay, mode: "off", connected: false } });
+    await renderTab();
+    const disclosure = screen.getByRole("button", { name: en["pairing.cantFindTitle"] });
+    expect(disclosure.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByLabelText(en["pairing.cantFindLabel"])).toBeNull();
+
+    fireEvent.click(disclosure);
+    expect(disclosure.getAttribute("aria-expanded")).toBe("true");
+    const field = screen.getByLabelText(en["pairing.cantFindLabel"]) as HTMLInputElement;
+    const search = screen.getByRole("button", { name: en["pairing.cantFindSearch"] }) as HTMLButtonElement;
+    expect(search.disabled).toBe(true);
+
+    fireEvent.change(field, { target: { value: "https://192.168.2.20:3443" } });
+    expect(search.disabled).toBe(false);
+    await act(async () => {
+      fireEvent.click(search);
+    });
+    expect(probeCalls).toEqual(["https://192.168.2.20:3443"]);
+  });
+
   it("says what to check when the relay cannot be reached", async () => {
     group = alone({ relay: { ...makeGroup().relay, connected: false } });
     await renderTab();
@@ -406,6 +450,19 @@ describe("relay card", () => {
     });
     expect(relayCalls).toContainEqual({ url: "relay.example.org" });
     expect(screen.queryByRole("button", { name: en["settings.save"] })).toBeNull();
+  });
+
+  it("prefills this instance's own address and saves a change after a pause", async () => {
+    await renderTab();
+    const input = screen.getByTestId("self-address-input") as HTMLInputElement;
+    expect(input.value).toBe("https://192.168.1.20:3443");
+    vi.useFakeTimers();
+    fireEvent.change(input, { target: { value: "https://192.168.1.55:3443" } });
+    expect(selfAddressCalls).toEqual([]);
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+    expect(selfAddressCalls).toEqual(["https://192.168.1.55:3443"]);
   });
 
   it("warns that an address without TLS carries the relay key in plain text", async () => {
