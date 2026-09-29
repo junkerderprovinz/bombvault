@@ -2,6 +2,8 @@
 // orchestrator and the dockercli adapter, so neither has to import the other.
 package model
 
+import "time"
+
 // PortBinding maps a published host endpoint for a container port.
 type PortBinding struct {
 	HostIP   string
@@ -52,6 +54,19 @@ type Config struct {
 	// labels (managed, icon, webui, shell) to show the container as a managed
 	// app instead of a third-party one.
 	Labels map[string]string
+	// Healthcheck is the container's own healthcheck, or the image's. A
+	// definition captured before it was recorded leaves it nil, and the image's
+	// own then applies.
+	Healthcheck *Healthcheck `json:",omitempty"`
+}
+
+// Healthcheck mirrors Docker's HealthConfig.
+type Healthcheck struct {
+	Test        []string
+	Interval    time.Duration
+	Timeout     time.Duration
+	StartPeriod time.Duration
+	Retries     int
 }
 
 // NetworkEndpoint is a network attachment, kept so a recreated container gets

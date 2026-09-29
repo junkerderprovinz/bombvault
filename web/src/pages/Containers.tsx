@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
-import type { AnomalyItem, Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
+import type { AnomalyItem, Container, ItemChecks, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
 import { PageTitle } from "../components/PageTitle";
@@ -27,6 +27,8 @@ import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
@@ -61,6 +63,8 @@ import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
 
 import { Toggle } from "../components/Toggle";
+import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 type T = ReturnType<typeof useT>["t"];
 
 // Helpers
@@ -1689,7 +1693,7 @@ function MobileContainerCard({
         // folders.previewPaths ("{n} paths") is the sanctioned existing key
         // for this line: the ticked include count is the mount+custom folder
         // count the editor derives.
-        ticked === null ? undefined : t("folders.previewPaths").replace("{n}", String(ticked))
+        ticked === null ? undefined : t("folders.previewPaths", ticked)
       }
       badge={
         container.installed ? (
@@ -1714,6 +1718,8 @@ function MobileContainerDetail({
   linkCandidates,
   anomaly,
   anomalyEnabled,
+  checks,
+  onChecksChanged,
   restoreRequest,
 }: {
   container: Container;
@@ -1730,6 +1736,8 @@ function MobileContainerDetail({
   linkCandidates: string[];
   anomaly?: AnomalyItem;
   anomalyEnabled: boolean;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
   /** A link from another page asking to restore this container. */
   restoreRequest?: RestoreRequest;
 }) {
@@ -1900,6 +1908,9 @@ function MobileContainerDetail({
           treeViewportClassName="h-auto"
         />
       </Advanced>
+      {!self && (
+        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
+      )}
       {/* The remaining sections through the SAME chips block the desktop row
           renders (folders is the detail's own body, already open), then
           stop-a-running-backup and the live progress, both gated exactly as
@@ -2754,6 +2765,8 @@ export function ContainerRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2779,6 +2792,8 @@ export function ContainerRow({
   /** A finding's restore link for this container: the card opens its backups
    *  and comes into view. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -2958,6 +2973,10 @@ export function ContainerRow({
           </Advanced>
         </div>
       </div>
+
+      {!container.self && (
+        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
+      )}
 
       {/* Disclosure sections through the shared chips block (the phone
           detail renders the same one): `lastBackupText` trails the chips as
@@ -3167,7 +3186,7 @@ const STACK_DONE_GRACE_MS = 8000;
 // only acks {started:true} and carries no member results), so on start the card
 // shows a sticky "restore started" hint; per-member outcomes land in the run
 // history. Synchronous validation errors (empty stack, busy, …) show inline.
-function StackCard({
+export function StackCard({
   group,
   onRestored,
   t,
@@ -3237,7 +3256,12 @@ function StackCard({
     const question = live.length
       ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn", live.length).replace("{names}", listSeparated(lang, live))}`
       : t("stack.restoreConfirm");
-    if (!(await confirm(question))) return;
+    setBusy(true);
+    const check = await checkRestoreOnce({ kind: "stack", name: group.project, source });
+    setBusy(false);
+    const refusal = restoreBlockReason(check, t);
+    const extra = <RestoreCheckPanel check={check} t={t} />;
+    if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
     setBusy(true);
     setStarted(false);
     setFinished(false);
@@ -3742,6 +3766,7 @@ export function Containers() {
   const { t } = useT();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
   // Advanced-mode flag read directly (not just via the <Advanced> wrapper
   // below): BackupOrderPanel's own hueIndex must only be resolved via
@@ -4271,6 +4296,8 @@ export function Containers() {
           linkCandidates={notInstalledNames}
           anomaly={anomalies.find("container", openContainer.name)}
           anomalyEnabled={anomalyEnabled}
+          checks={itemChecks.find("container", openContainer.name)}
+          onChecksChanged={itemChecks.reload}
           restoreRequest={restoreRequest.item === openContainer.name ? restoreRequest : undefined}
         />
       )}
@@ -4470,6 +4497,8 @@ export function Containers() {
               anomaly={anomalies.find("container", c.name)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
+              checks={itemChecks.find("container", c.name)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>
@@ -4611,6 +4640,8 @@ export function Containers() {
               anomaly={anomalies.find("container", c.name)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
+              checks={itemChecks.find("container", c.name)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>

@@ -63,6 +63,37 @@ func CopySinkFrom(ctx context.Context) CopySink {
 	return nil
 }
 
+// CountProgress is one counter line of a restic command that reports no
+// percentage of its own, such as check or prune: Done of Total units, where
+// Unit is "packs", "snapshots", "indexes", "files" or "items".
+type CountProgress struct {
+	Done  int64
+	Total int64
+	Unit  string
+}
+
+// CountSink receives restic's counter lines.
+type CountSink func(CountProgress)
+
+type countSinkKey struct{}
+
+// WithCountSink returns a context carrying fn so restic check and prune report
+// their counters. A nil fn returns ctx unchanged.
+func WithCountSink(ctx context.Context, fn CountSink) context.Context {
+	if fn == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, countSinkKey{}, fn)
+}
+
+// CountSinkFrom returns the CountSink carried by ctx, or nil when none is set.
+func CountSinkFrom(ctx context.Context) CountSink {
+	if fn, ok := ctx.Value(countSinkKey{}).(CountSink); ok {
+		return fn
+	}
+	return nil
+}
+
 // Event is one progress update for a target. Key is "container:<name>",
 // "vm:<name>", "flash" or "offsite:<domain>"; Phase is "backup", "restore",
 // "replicate" or "maintenance". Active is false on the final event. StartedAt
@@ -90,6 +121,13 @@ type Event struct {
 	// Committed marks a backup whose restore point is written and that only
 	// starts its containers again, so it can no longer be cancelled.
 	Committed bool `json:"committed,omitempty"`
+	// Done, Total and Unit are set for a check or prune while restic counts
+	// through a step, and Remaining is the estimated seconds left in that step,
+	// 0 while there is too little to go by.
+	Done      int64  `json:"done,omitempty"`
+	Total     int64  `json:"total,omitempty"`
+	Unit      string `json:"unit,omitempty"`
+	Remaining int64  `json:"remaining,omitempty"`
 }
 
 // Store is an in-process fan-out of progress Events. It keeps the latest active

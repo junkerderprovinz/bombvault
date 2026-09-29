@@ -13,7 +13,7 @@
 // with the desktop media query held at "phone"; jsdom otherwise answers
 // desktop and the phone surface would never mount.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -125,10 +125,6 @@ function renderPage() {
   );
 }
 
-async function settle() {
-  await new Promise((r) => setTimeout(r, 0));
-}
-
 /** The phone storage section, located by its filled section label. */
 function storageSection(): HTMLElement {
   const labels = screen.getAllByText(en["dashboard.storageTitle"]);
@@ -140,7 +136,7 @@ describe("Dashboard phone off-site line states", () => {
   it("reads checking while the status read is in flight, never a claim", async () => {
     statusAnswer = () => new Promise(() => {}); // never settles
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = storageSection();
     // Several lines in the section legitimately say "checking" (health and
     // stats read their own fetches); the assertion is that the off-site line
@@ -152,7 +148,7 @@ describe("Dashboard phone off-site line states", () => {
   it("reports the failed read instead of an answer when status errors", async () => {
     statusAnswer = () => Promise.reject(new Error("boom"));
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = storageSection();
     expect(within(section).getByText(en["dashboard.statusLoadFailed"])).toBeTruthy();
     expect(within(section).queryByText(en["dashboard.noOffsite"])).toBeNull();
@@ -162,7 +158,7 @@ describe("Dashboard phone off-site line states", () => {
     statusAnswer = () =>
       Promise.resolve({ ok: true, domains: [disabledDomain({ domain: "containers" })] });
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = storageSection();
     expect(within(section).getByText(en["dashboard.noOffsite"])).toBeTruthy();
     expect(within(section).queryByText(en["dashboard.statusLoadFailed"])).toBeNull();

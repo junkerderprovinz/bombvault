@@ -29,7 +29,7 @@ Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và 
 
 ## Một lần sao lưu thất bại với "repository is already locked"
 
-Đây thường là một khóa restic mồ côi bị bỏ lại khi container được cập nhật hoặc khởi động lại giữa chừng thao tác. BombVault phát hiện một khóa mồ côi được chứng minh, xóa cưỡng bức nó và thử lại một lần, tự động. Nếu nó cứ dai dẳng, dùng **Settings, Integrity & maintenance, Unlock** cho miền bị ảnh hưởng để xóa một khóa bị kẹt bằng tay. Một vấn đề thực sự vẫn hiện ra thay vì bị ẩn đi.
+Đây thường là một khóa restic mồ côi bị bỏ lại khi container được cập nhật hoặc khởi động lại giữa chừng thao tác. BombVault phát hiện một khóa mồ côi được chứng minh, xóa cưỡng bức nó và thử lại một lần, tự động. Nếu nó cứ dai dẳng, dùng **Settings, Integrity & maintenance, Unlock** cho miền bị ảnh hưởng để xóa một khóa bị kẹt bằng tay. Một vấn đề thực sự vẫn hiện ra thay vì bị ẩn đi. Sau khi khởi động lại, BombVault chờ đến khi khóa đó đã mười phút không được làm mới. Một restic vẫn đang chạy, chẳng hạn trong một BombVault thứ hai trên cùng kho lưu trữ, làm mới khóa của nó mỗi năm phút.
 
 ## Bản sao off-site của tôi đã không diễn ra sau một lần sao lưu
 

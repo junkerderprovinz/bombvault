@@ -14,6 +14,13 @@ const importDbDump = vi.fn(() => Promise.resolve({ ok: true, started: true }));
 const saveDbDumpTo = vi.fn(() => Promise.resolve({ ok: true, started: true, target: "/host/user/dumps/pg.sql" }));
 const deleteSnapshot = vi.fn(() => Promise.resolve({ ok: true }));
 const listRuns = vi.fn(() => Promise.resolve({ ok: true, runs: [] as unknown[] }));
+const passing = [
+  { id: "repository", status: "ok" },
+  { id: "key", status: "ok" },
+  { id: "snapshot", status: "ok" },
+  { id: "space", status: "ok", need: 10, free: 100 },
+];
+const checkRestore = vi.fn((): Promise<unknown> => Promise.resolve({ ok: true, ready: true, checks: passing, plan: null }));
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -25,6 +32,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     saveDbDumpTo: (...a: unknown[]) => saveDbDumpTo(...(a as [])),
     deleteSnapshot: (...a: unknown[]) => deleteSnapshot(...(a as [])),
     listRuns: (...a: unknown[]) => listRuns(...(a as [])),
+    checkRestore: (...a: unknown[]) => checkRestore(...(a as [])),
   };
 });
 
@@ -228,6 +236,26 @@ describe("the database dump list", () => {
     await waitFor(() => expect(screen.getByText(question)).toBeTruthy());
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["dbdump.import"] }));
     await waitFor(() => expect(importDbDump).toHaveBeenCalledWith("immich_postgres", "aaaa1111bbbb2222", "local"));
+  });
+
+  it("checks the import first and keeps it locked when the data folder has no room", async () => {
+    checkRestore.mockResolvedValueOnce({
+      ok: true,
+      ready: false,
+      checks: [...passing.slice(0, 3), { id: "space", status: "fail", reason: "short", need: 1000, free: 10 }],
+      plan: null,
+    });
+    renderList();
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(checkRestore).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "dbImport", name: "immich_postgres", snapshotId: "aaaa1111bbbb2222" })
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(en["restoreCheck.line.space"])).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: en["dbdump.import"] }).hasAttribute("disabled")).toBe(true);
+    expect(importDbDump).not.toHaveBeenCalled();
   });
 
   it("names the one app the import stops while it runs", async () => {

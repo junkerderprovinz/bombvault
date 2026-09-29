@@ -161,3 +161,19 @@ func TestDrillTasks(t *testing.T) {
 		}
 	})
 }
+
+func TestDrillTasksAddTheStartTestOnlyWhenSwitchedOn(t *testing.T) {
+	start := drillTask{domain: "containers", source: "local", kind: "start"}
+	settings := store.Settings{ContainersEnabled: true}
+	if hasDrillTask(drillTasks(settings), start) {
+		t.Fatal("a start test starts containers, so it must stay off until switched on")
+	}
+	settings.StartTestEnabled = true
+	if !hasDrillTask(drillTasks(settings), start) {
+		t.Fatal("the switched-on start test must join the drills")
+	}
+	settings.ContainersEnabled = false
+	if hasDrillTask(drillTasks(settings), start) {
+		t.Fatal("no start test for a switched-off containers domain")
+	}
+}

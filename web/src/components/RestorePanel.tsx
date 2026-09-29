@@ -25,6 +25,8 @@ import { IconRestore, IconTrash } from "./Sidebar";
 import { IconDisclosure } from "./IconDisclosure";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useOpenAnomalies } from "../lib/useAnomalies";
+import { restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "./restore/RestoreCheckPanel";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -109,6 +111,13 @@ function SnapshotFileBrowser({
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
+  const targetPath = dest === "toFolder" ? folder.trim() : "";
+  const check = useRestoreCheck(
+    selected.size > 0 && (dest === "inPlace" || targetPath)
+      ? { kind: "containerFiles", name: containerName, snapshotId, source, paths: [...selected], targetPath }
+      : null
+  );
+  const idle = isPending || restoreState.phase === "success";
 
   useEffect(() => {
     setLoading(true);
@@ -198,6 +207,7 @@ function SnapshotFileBrowser({
               onChange={pickFolder}
             />
           )}
+          {!idle && <RestoreCheckPanel check={check} t={t} />}
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
@@ -205,9 +215,10 @@ function SnapshotFileBrowser({
               glyph={<IconRestore />}
               tone="accent"
               onClick={() => void handleRestoreSelected()}
-              disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim())}
+              disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim()) || !check.ready}
               busy={isPending}
               title={isPending ? t("common.restoring") : undefined}
+              hint={idle ? undefined : restoreBlockReason(check, t)}
               className="shrink-0"
             />
             {blockedByOther && (
@@ -281,20 +292,24 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
+  const check = useRestoreCheck({ kind: "container", name, snapshotId: "latest", source });
+  const idle = isPending || state.phase === "success";
   async function handle() {
     if (!(await confirm(t("snapshots.recreateConfirm")))) return;
     void fire();
   }
   return (
     <div className="flex flex-col gap-1 py-2">
+      {!idle && <RestoreCheckPanel check={check} t={t} />}
       <Button
         label={t("snapshots.recreate")}
         labelKey="snapshots.recreate"
         tone="accent"
         onClick={() => void handle()}
-        disabled={isPending || blockedByOther || state.phase === "success"}
+        disabled={isPending || blockedByOther || state.phase === "success" || !check.ready}
         busy={isPending}
         title={isPending ? t("common.restoring") : undefined}
+        hint={idle ? undefined : restoreBlockReason(check, t)}
         className="self-start"
       />
       {blockedByOther && (
@@ -362,6 +377,9 @@ function RestoreToFolder({
   }
 
   const done = state.phase === "success";
+  const check = useRestoreCheck(
+    path.trim() ? { kind: "containerTo", name: containerName, snapshotId, source, targetPath: path.trim() } : null
+  );
   return (
     <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-1.5">
       <p className="text-caption text-carbon-textMuted">{t("restore.toFolderHint")}</p>
@@ -371,15 +389,17 @@ function RestoreToFolder({
         hostMountRoot={hostMountRoot}
         onChange={pickPath}
       />
+      {!isPending && !done && <RestoreCheckPanel check={check} t={t} />}
       <div className="flex items-center gap-2">
         <Button
           label={t("common.confirm")}
           labelKey="common.confirm"
           tone="accent"
           onClick={() => void fire()}
-          disabled={!path.trim() || isPending || blockedByOther || done}
+          disabled={!path.trim() || isPending || blockedByOther || done || !check.ready}
           busy={isPending}
           title={isPending ? t("common.restoring") : undefined}
+          hint={isPending || done ? undefined : restoreBlockReason(check, t)}
           className="shrink-0"
         />
         {blockedByOther && (

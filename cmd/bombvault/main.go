@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -48,6 +49,11 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "dbdump-stream" {
 		os.Exit(runDBDumpStream(context.Background(), os.Args[2:], os.Stdout, os.Stderr, defaultDBDumpDeps()))
 	}
+	// The port check of a start test runs this binary in a container on the
+	// test's isolated network, so it needs no tool from the app's image.
+	if len(os.Args) > 1 && os.Args[1] == "tcp-probe" {
+		os.Exit(tcpProbe(os.Args[2:], time.Second))
+	}
 	ignoreHangup()
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
@@ -55,12 +61,12 @@ func main() {
 	}
 }
 
-// healthcheck is the Docker HEALTHCHECK probe (#60, requested by @BaukeZwart). It
+// healthcheck is the Docker HEALTHCHECK probe. It
 // asks the engine's own /api/health endpoint (open, LAN trust model) whether it is
 // serving and returns 0 on HTTP 200, non-zero otherwise, so an auto-heal tool
 // (e.g. Autoheal / willfarrell) can restart a container whose engine has wedged.
-// It reuses this binary, so the image needs no shell or curl. PORT/HTTPS_PORT come
-// from the environment (the Dockerfile sets both).
+// It reuses this binary, so the image needs no shell or curl. BIND_HOST, PORT and
+// HTTPS_PORT come from the environment (the Dockerfile sets both ports).
 func healthcheck() int {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -70,13 +76,23 @@ func healthcheck() int {
 	if httpsPort == "" {
 		httpsPort = "3443"
 	}
-	return healthcheckAt(port, httpsPort)
+	return healthcheckAt(healthcheckHost(os.Getenv("BIND_HOST")), port, httpsPort)
+}
+
+// healthcheckHost is where the probe finds the WebUI: loopback when it listens on
+// every interface, else the one address it is bound to.
+func healthcheckHost(bind string) string {
+	if bind == "" || net.ParseIP(bind).IsUnspecified() {
+		return "127.0.0.1"
+	}
+	return bind
 }
 
 // healthcheckAt is the testable core: it tries HTTP first, then HTTPS (the local
-// cert is self-signed, so verification is skipped — this is a liveness probe on
-// loopback, not a trust boundary), and returns 0 as soon as /api/health answers 200.
-func healthcheckAt(port, httpsPort string) int {
+// cert is self-signed, so verification is skipped; this is a liveness probe on
+// the container's own address, not a trust boundary), and returns 0 as soon as
+// /api/health answers 200.
+func healthcheckAt(host, port, httpsPort string) int {
 	client := &http.Client{
 		Timeout: 4 * time.Second,
 		Transport: &http.Transport{
@@ -84,10 +100,10 @@ func healthcheckAt(port, httpsPort string) int {
 		},
 	}
 	for _, url := range []string{
-		"http://127.0.0.1:" + port + "/api/health",
-		"https://127.0.0.1:" + httpsPort + "/api/health",
+		"http://" + net.JoinHostPort(host, port) + "/api/health",
+		"https://" + net.JoinHostPort(host, httpsPort) + "/api/health",
 	} {
-		resp, err := client.Get(url) //nolint:gosec // G107: 127.0.0.1 with an env-configured port, not user input
+		resp, err := client.Get(url) //nolint:gosec // G107: the container's own listen address from its environment, not user input
 		if err != nil {
 			continue
 		}
@@ -431,6 +447,9 @@ func run() error {
 			log.Printf("schedule: stack backup: %v", err)
 		}
 	})
+	// The restore probe after an item's first backup waits for the rest of
+	// its scheduled run instead of taking the domain between two items.
+	scheduler.SetRunBracket(svc.OpenScheduledRun)
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
 	// suppressed via WithBulkReplicateSuppressed above), so a high-latency off-site
@@ -537,6 +556,15 @@ func run() error {
 		defer cancel()
 		svc.SweepZFSLeftoversOnStartup(sctx)
 	}()
+	// A start test that was running when BombVault stopped left its copy,
+	// network and restored data behind. They go before the scheduler and the
+	// web interface start, so no new test can meet them and none of it is
+	// removed from under one.
+	func() {
+		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		svc.CleanupStartTestLeftovers(cctx)
+	}()
 
 	scheduler.Start()
 	defer scheduler.Stop()
@@ -594,6 +622,7 @@ func run() error {
 	// The anomaly worker evaluates the backup history after every run and stops
 	// with the same context the server does.
 	svc.StartAnomalyEngine(ctx)
+	svc.EnableFirstProbes()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	// An MCP listing of a repository that stopped answering holds its request

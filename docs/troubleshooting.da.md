@@ -29,7 +29,7 @@ Live-øjebliksbilleder kræver qemu guest agent installeret i VM'en og disken p�
 
 ## En sikkerhedskopi fejlede med "repository is already locked"
 
-Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, brug **Settings, Integrity & maintenance, Unlock** for det berørte domæne for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult.
+Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, brug **Settings, Integrity & maintenance, Unlock** for det berørte domæne for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult. Efter en genstart venter BombVault, til sådan en lås har været ti minutter uden fornyelse. En restic, der stadig kører, for eksempel i en anden BombVault på samme repository, fornyer sin lås hvert femte minut.
 
 ## Min off-site-kopi skete ikke efter en sikkerhedskopi
 

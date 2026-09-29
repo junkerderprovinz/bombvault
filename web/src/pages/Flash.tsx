@@ -20,11 +20,15 @@ import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { PageTitle } from "../components/PageTitle";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest } from "../lib/restoreRequest";
+import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -146,9 +150,17 @@ function FlashSnapshotRow({
   // A native <a download> leaves progress to the browser's download manager,
   // which survives this row unmounting on a tab switch. It gives up the JSON
   // error fetch() could show before the stream starts; a flash zip is large
-  // and rarely fails.
-  function handleDownload() {
+  // and rarely fails. The pre-flight check runs first and only speaks up when
+  // the download cannot work.
+  async function handleDownload() {
     setPreparing(true);
+    const check = await checkRestoreOnce({ kind: "flash", snapshotId: snap.id, source });
+    const blocked = restoreBlockReason(check, t);
+    if (blocked !== undefined) {
+      setPreparing(false);
+      await confirm(blocked, { extra: <RestoreCheckPanel check={check} t={t} />, confirmBlocked: blocked });
+      return;
+    }
     setTimeout(() => setPreparing(false), DOWNLOAD_PREPARING_MS);
     const a = document.createElement("a");
     a.href = flashDownloadURL(snap.id, source);
@@ -185,7 +197,7 @@ function FlashSnapshotRow({
           labelKey="flash.download"
           glyph={<IconDownload />}
           tone="accent"
-          onClick={handleDownload}
+          onClick={() => void handleDownload()}
           disabled={preparing}
           busy={preparing}
           className={"shrink-0"}
@@ -209,6 +221,7 @@ function FlashSnapshotRow({
 export function Flash() {
   const { t } = useT();
   const anomaly = useAnomalyItems().find("flash", "flash");
+  const itemChecks = useItemChecks();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const { flagged } = useOpenAnomalies();
   const restoreRequest = useRestoreRequest();
@@ -280,6 +293,7 @@ export function Flash() {
             />
           </div>
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+          <ItemChecksLine checks={itemChecks.find("flash", "flash")} hasBackup={snapshots.length > 0} onChanged={itemChecks.reload} />
 
           {/* As on the Folders page: a restore has its own control with its
               own warning. */}

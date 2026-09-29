@@ -48,12 +48,16 @@ type Config struct {
 	// LibvirtHostWasPlaceholder records that LIBVIRT_HOST still held the value
 	// the Unraid template ships, which reaches no host.
 	LibvirtHostWasPlaceholder bool
-	Port                      int
-	HTTPSPort                 int
-	HTTPOnly                  bool
-	FlashTemplatesDir         string
-	FlashDir                  string
-	DBPath                    string
+	// BindHost (env BIND_HOST) is the address the WebUI listens on. It defaults
+	// to every interface, because the container's own hostname leaves the WebUI
+	// unreachable; tests and local runs use 127.0.0.1.
+	BindHost          string
+	Port              int
+	HTTPSPort         int
+	HTTPOnly          bool
+	FlashTemplatesDir string
+	FlashDir          string
+	DBPath            string
 	// TrustedProxies (env TRUSTED_PROXY, comma-separated addresses or CIDR
 	// ranges) are the hops whose X-Forwarded-For is believed. The login
 	// throttle counts failures per client, and behind a reverse proxy every
@@ -96,6 +100,7 @@ func Load(env map[string]string) (Config, error) {
 		LibvirtURIUser:            uriUser,
 		LibvirtURIPort:            uriPort,
 		LibvirtHostWasPlaceholder: wasPlaceholder,
+		BindHost:                  stringOr(env["BIND_HOST"], "0.0.0.0"),
 		Port:                      intOr(env["PORT"], 3000),
 		HTTPSPort:                 intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:                  strings.EqualFold(env["HTTP_ONLY"], "true"),

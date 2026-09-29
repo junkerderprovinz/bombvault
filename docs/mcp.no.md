@@ -7,9 +7,9 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollen s
 | Verktøy | Hva det gjør | Type |
 |---|---|---|
 | `get_health` | Versjon, instansnavn, om en sikkerhetskopi kjører, og hva denne nøkkelen får gjøre | lese |
-| `get_status` | Beskyttelsesstatus per domene: siste vellykkede sikkerhetskopi, forventet intervall, verifiseringer og off-site-kontroller, neste planlagte kjøringer | lese |
+| `get_status` | Beskyttelsesstatus per domene: siste vellykkede sikkerhetskopi, forventet intervall, verifiseringer og off-site-kontroller, neste planlagte kjøringer, for containere den nyeste starttesten | lese |
 | `get_coverage` | Hva BombVault beskytter og hva det ikke beskytter, med grunnen for hver | lese |
-| `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump; ZFS-datasett er også med, med resultatet av den siste kontrollen | lese |
+| `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump; ZFS-datasett er også med, med resultatet av den siste kontrollen; hvert element har sin siste gjenopprettingssjekk, og en container sin siste starttest eller grunnen til at den ikke kan testes | lese |
 | `list_runs` | Kjøringshistorikk, nyeste først, kan filtreres på domene, element, status, type og tid | lese |
 | `list_restore_points` | Gjenopprettingspunkter for ett element fra dets primære repository, og for en container også databasedumpene; et ZFS-datasett får ett gjenopprettingspunkt per sikkerhetskopi, med et snapshot av hvert datasett under det | lese |
 | `get_activity` | Hva som kjører akkurat nå, med fase og prosent | lese |

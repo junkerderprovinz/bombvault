@@ -5,6 +5,8 @@
 // dialog with a folder picker and one exclude pattern per line.
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { checkRestoreOnce, restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 import { createPortal } from "react-dom";
 import {
   listFileSets,
@@ -23,7 +25,7 @@ import {
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { AnomalyItem, BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type { AnomalyItem, BrowseResponse, ItemChecks, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { PageTitle } from "../components/PageTitle";
 import { SelectionTree } from "../components/SelectionTree";
@@ -60,6 +62,8 @@ import { useToast } from "../lib/toast";
 import { IconRestore } from "../components/Sidebar";
 import { IconDisclosure } from "../components/IconDisclosure";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
@@ -229,6 +233,12 @@ function FileSetFileBrowser({
   });
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
+  const check = useRestoreCheck(
+    selected.size > 0 && folder.trim()
+      ? { kind: "fileSetFiles", name: set.id, snapshotId, source, paths: [...selected], targetPath: folder.trim() }
+      : null
+  );
+  const idle = isPending || state.phase === "success";
 
   useEffect(() => {
     setLoading(true);
@@ -288,6 +298,7 @@ function FileSetFileBrowser({
             hostMountRoot={hostMountRoot}
             onChange={pickFolder}
           />
+          {!idle && <RestoreCheckPanel check={check} t={t} />}
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
@@ -295,9 +306,10 @@ function FileSetFileBrowser({
               glyph={<IconRestore />}
               tone="accent"
               onClick={handleRestoreSelected}
-              disabled={isPending || blockedByOther || !folder.trim()}
+              disabled={isPending || blockedByOther || !folder.trim() || !check.ready}
               busy={isPending}
               title={isPending ? t("common.restoring") : undefined}
+              hint={idle ? undefined : restoreBlockReason(check, t)}
               className="shrink-0"
             />
             {blockedByOther && (
@@ -371,14 +383,32 @@ function FileSetRestoreControl({
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
+  const [checking, setChecking] = useState(false);
 
   // An old result would describe another destination, so a new choice clears
   // it (a no-op while a restore runs).
   useEffect(() => reset(), [dest, targetPath, reset]);
 
+  // Every snapshot row carries this control, so the pre-flight check runs on
+  // the click rather than for each row. In place it always asks; into a folder
+  // it only speaks up when the restore cannot work.
   async function handleRestore() {
-    if (dest === "original" && !(await confirm(t("files.restoreOriginalConfirm")))) return;
     if (dest === "folder" && targetPath.trim() === "") return;
+    setChecking(true);
+    const check = await checkRestoreOnce({
+      kind: "fileSet",
+      name: set.id,
+      snapshotId,
+      source,
+      targetPath: dest === "folder" ? targetPath.trim() : "",
+    });
+    setChecking(false);
+    const refusal = restoreBlockReason(check, t);
+    const question = dest === "original" ? t("files.restoreOriginalConfirm") : refusal;
+    if (question !== undefined) {
+      const extra = <RestoreCheckPanel check={check} t={t} />;
+      if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
+    }
     void fire();
   }
 
@@ -411,8 +441,8 @@ function FileSetRestoreControl({
             labelKey="snapshots.restore"
             tone="accent"
             onClick={() => void handleRestore()}
-            disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
-            busy={isPending}
+            disabled={isPending || checking || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
+            busy={isPending || checking}
             title={isPending ? t("common.restoring") : undefined}
             className="shrink-0"
           />
@@ -1203,6 +1233,8 @@ export function FileSetRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -1217,6 +1249,8 @@ export function FileSetRow({
   /** A finding's restore link for this set: the card opens its backups and
    *  comes into view. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`files:${set.name}`];
@@ -1262,9 +1296,10 @@ export function FileSetRow({
         progress?.active ? "glim-active" : ""
       }`}
     >
-      {/* Top row: name, chips and path, with the action badges. */}
+      {/* Top row: name, chips and path, with the action badges. The name keeps
+          12rem before the badges go under it. */}
       <div className="flex items-start gap-3 flex-wrap">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 basis-48 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-carbon-text text-sm truncate">
               {set.name}
@@ -1339,6 +1374,8 @@ export function FileSetRow({
           server-computed sentence as the Schedules card. */}
       <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
+      <ItemChecksLine checks={checks} hasBackup={!!set.lastBackup} onChanged={onChecksChanged} />
+
       {/* Backups disclosure with the last-backup date on its row, as on the
           container card. */}
       <FileSetRestorePanel
@@ -1403,6 +1440,7 @@ export function Files() {
   const { t } = useT();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
   const { push } = useToast();
   // Any backup, restore or replication in flight disables the bulk buttons.
@@ -1538,7 +1576,7 @@ export function Files() {
           <PageTitle>{t("files.title")}</PageTitle>
           <OffsiteIndicator domain="files" />
         </div>
-        <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
+        <div className="flex min-w-0 max-w-full items-center justify-end gap-2 flex-wrap max-md:w-full max-md:justify-start">
           <Button
             key={shakeDiscover}
             label={t("containers.discover")}
@@ -1648,6 +1686,8 @@ export function Files() {
               index={i}
               anomaly={anomalies.find("files", s.id)}
               anomalyEnabled={anomalyEnabled}
+              checks={itemChecks.find("files", s.id)}
+              onChecksChanged={itemChecks.reload}
               restoreRequest={restoreRequest.item === s.name ? restoreRequest : undefined}
             />
           ))}

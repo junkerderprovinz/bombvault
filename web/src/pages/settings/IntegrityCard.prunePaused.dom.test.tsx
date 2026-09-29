@@ -30,6 +30,15 @@ import { IntegrityCard } from "./IntegrityCard";
 import { AdvancedProvider } from "../../lib/advanced";
 import { en } from "../../lib/i18n";
 
+// The card follows live progress, and jsdom has no EventSource.
+class FakeEventSource {
+  onmessage: ((ev: MessageEvent) => void) | null = null;
+  close() {
+    /* no-op */
+  }
+}
+vi.stubGlobal("EventSource", FakeEventSource);
+
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<typeof IntegrityCard>[0]["t"];
 const settings = { drDrillTarget: "", drDrillTargetVm: "" } as never;
 

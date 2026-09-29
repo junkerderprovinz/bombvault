@@ -24,12 +24,14 @@ import { anyActive, busyPhraseKey, useProgress } from "../lib/progress";
 import { useRestoreRequest } from "../lib/restoreRequest";
 import { useToast } from "../lib/toast";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
+import { useItemChecks } from "../lib/useItemChecks";
 
 export function ZFS() {
   const { t } = useT();
   const { push } = useToast();
   const running = anyActive(useProgress());
   const anomalies = useAnomalyItems();
+  const itemChecks = useItemChecks();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const restoreRequest = useRestoreRequest();
   const [items, setItems] = useState<ZFSDatasetView[]>([]);
@@ -134,7 +136,7 @@ export function ZFS() {
           <PageTitle>{t("zfs.title")}</PageTitle>
           <OffsiteIndicator domain="zfs" />
         </div>
-        <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
+        <div className="flex min-w-0 max-w-full items-center justify-end gap-2 flex-wrap max-md:w-full max-md:justify-start">
           <Button
             key={shakeDiscover}
             label={t("containers.discover")}
@@ -212,6 +214,8 @@ export function ZFS() {
               restoreFolder={restoreFolder}
               anomaly={anomalies.find("zfs", item.id)}
               anomalyEnabled={anomalyEnabled}
+              checks={itemChecks.find("zfs", item.id)}
+              onChecksChanged={itemChecks.reload}
               restoreRequest={restoreRequest.item === item.dataset ? restoreRequest : undefined}
             />
           ))}

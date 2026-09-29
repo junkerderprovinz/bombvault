@@ -28,12 +28,21 @@ type lockFile struct {
 
 var lockIDRe = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
+// lockRefreshSilence is how long a lock has to go without a refresh before it
+// counts as left behind. restic 0.17 writes a held lock again with a new time
+// every five minutes (defaultRefreshInterval in internal/repository/lock.go);
+// the rest is room for clocks that drift apart.
+const lockRefreshSilence = 10 * time.Minute
+
 // orphanLock reports whether a lock was left by a restic of an earlier run on
 // this host whose process is gone. restic's own stale test asks only whether
 // the PID is alive, and in a container that has just restarted the few PIDs
 // in use are handed out again at once, so a dead run's lock often looks held.
-func orphanLock(l lockFile, host string, started time.Time, ownerMayLive func(pid int) bool) bool {
-	return l.Hostname == host && l.Time.Before(started) && !ownerMayLive(l.PID)
+// Every install runs under the hostname bombvault, so the lock of a second
+// install on the same repository looks like this host's with its owner gone;
+// that restic still refreshes it, and a dead one does not.
+func orphanLock(l lockFile, host string, started, now time.Time, ownerMayLive func(pid int) bool) bool {
+	return l.Hostname == host && l.Time.Before(started) && now.Sub(l.Time) > lockRefreshSilence && !ownerMayLive(l.PID)
 }
 
 // removeOrphanLocks deletes the orphaned locks of a local repository, the
@@ -41,10 +50,9 @@ func orphanLock(l lockFile, host string, started time.Time, ownerMayLive func(pi
 // repository, and any repository where the process table cannot be read, is
 // left to restic's own rule, which frees such a lock after 30 minutes.
 //
-// It assumes BombVault is the only writer of a local repository. Every
-// install runs under the hostname bombvault, so the held lock of a second
-// instance on the same path looks like one of this host's and can be removed.
-func (r Restic) removeOrphanLocks(ctx context.Context, repo string, m Mode, started time.Time) error {
+// A lock goes only once it has not been refreshed for lockRefreshSilence, so
+// after a restart the lock of the killed run stays until then.
+func (r Restic) removeOrphanLocks(ctx context.Context, repo string, m Mode, started, now time.Time) error {
 	if m.NoLock || IsRemoteRepo(repo) || runtime.GOOS != "linux" {
 		return nil
 	}
@@ -67,7 +75,7 @@ func (r Restic) removeOrphanLocks(ctx context.Context, repo string, m Mode, star
 			continue
 		}
 		var l lockFile
-		if json.Unmarshal(bytes.TrimSpace(raw), &l) != nil || !orphanLock(l, host, started, ownerMayLive) {
+		if json.Unmarshal(bytes.TrimSpace(raw), &l) != nil || !orphanLock(l, host, started, now, ownerMayLive) {
 			continue
 		}
 		if rmErr := os.Remove(filepath.Join(strings.TrimPrefix(repo, "local:"), "locks", id)); rmErr != nil && !errors.Is(rmErr, fs.ErrNotExist) {

@@ -29,7 +29,7 @@ Canlı anlık görüntüler, VM'de qemu guest agent'ın kurulu olmasını ve dis
 
 ## Bir yedekleme "repository is already locked" ile başarısız oldu
 
-Bu genellikle, konteyner işlem ortasında güncellendiğinde ya da yeniden başlatıldığında geride kalan öksüz bir restic kilididir. BombVault, kanıtlanabilir biçimde öksüz bir kilidi algılar, zorla temizler ve otomatik olarak bir kez yeniden dener. Sürerse, eski bir kilidi elle temizlemek için etkilenen etki alanı için **Ayarlar, Bütünlük ve bakım, Kilidi aç**'ı kullanın. Gerçek bir sorun gizlenmek yerine yine de ortaya çıkar.
+Bu genellikle, konteyner işlem ortasında güncellendiğinde ya da yeniden başlatıldığında geride kalan öksüz bir restic kilididir. BombVault, kanıtlanabilir biçimde öksüz bir kilidi algılar, zorla temizler ve otomatik olarak bir kez yeniden dener. Sürerse, eski bir kilidi elle temizlemek için etkilenen etki alanı için **Ayarlar, Bütünlük ve bakım, Kilidi aç**'ı kullanın. Gerçek bir sorun gizlenmek yerine yine de ortaya çıkar. Yeniden başlatmadan sonra BombVault, böyle bir kilit on dakika boyunca yenilenmeyene kadar bekler. Hâlâ çalışan bir restic, örneğin aynı depodaki ikinci bir BombVault içinde, kilidini beş dakikada bir yeniler.
 
 ## Bir yedeklemeden sonra site dışı kopyam gerçekleşmedi
 

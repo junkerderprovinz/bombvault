@@ -145,3 +145,15 @@ describe("anyActive", () => {
     });
   });
 });
+
+describe("parseProgressFrame counts", () => {
+  it("keeps a check's counts and drops a unit it has no words for", () => {
+    const f = parseProgressFrame(
+      JSON.stringify({ key: "verify:vms", phase: "maintenance", percent: 50, active: true, done: 3, total: 6, unit: "packs", remaining: 40 })
+    );
+    expect(f).toMatchObject({ done: 3, total: 6, unit: "packs", remaining: 40 });
+    const odd = parseProgressFrame(JSON.stringify({ key: "prune:vms", phase: "maintenance", active: true, done: 1, total: 2, unit: "blobs" }));
+    expect(odd?.unit).toBe("items");
+    expect(odd?.remaining).toBeUndefined();
+  });
+});

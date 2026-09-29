@@ -29,7 +29,7 @@ Live-ögonblicksbilder behöver qemu-gästagenten installerad i VM:en och disken
 
 ## En säkerhetskopiering misslyckades med "repository is already locked"
 
-Detta är oftast ett övergivet restic-lås som lämnats kvar när containern uppdaterades eller startades om mitt i en operation. BombVault upptäcker ett bevisligen övergivet lås, tvingar bort det och gör om en gång, automatiskt. Om det kvarstår, använd **Inställningar, Integritet och underhåll, Lås upp** för den drabbade domänen för att rensa ett fastnat lås för hand. Ett äkta problem dyker fortfarande upp istället för att döljas.
+Detta är oftast ett övergivet restic-lås som lämnats kvar när containern uppdaterades eller startades om mitt i en operation. BombVault upptäcker ett bevisligen övergivet lås, tvingar bort det och gör om en gång, automatiskt. Om det kvarstår, använd **Inställningar, Integritet och underhåll, Lås upp** för den drabbade domänen för att rensa ett fastnat lås för hand. Ett äkta problem dyker fortfarande upp istället för att döljas. Efter en omstart väntar BombVault tills ett sådant lås har gått tio minuter utan att förnyas. En restic som fortfarande körs, till exempel i en andra BombVault mot samma repository, förnyar sitt lås var femte minut.
 
 ## Min off-site-kopia hände inte efter en säkerhetskopiering
 

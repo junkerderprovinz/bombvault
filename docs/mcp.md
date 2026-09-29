@@ -7,9 +7,9 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 | Tool | What it does | Kind |
 |---|---|---|
 | `get_health` | Version, instance name, whether a backup is running, and what this key may do | read |
-| `get_status` | Protection status per domain: last successful backup, expected interval, verification and off-site checks, next scheduled runs | read |
+| `get_status` | Protection status per domain: last successful backup, expected interval, verification and off-site checks, next scheduled runs, and for containers the newest start test | read |
 | `get_coverage` | What BombVault protects and what it does not, with the reason for each | read |
-| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check | read |
+| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check; every item carries its last restore check, and a container its last start test or why it cannot be tested | read |
 | `list_runs` | Run history, newest first, filterable by domain, item, status, kind and time | read |
 | `list_restore_points` | Restore points of one item from its primary repository, and for a container its database dumps; a ZFS dataset gets one restore point per backup, with a snapshot of every dataset below it | read |
 | `get_activity` | What is running right now, with phase and percentage | read |

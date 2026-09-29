@@ -208,6 +208,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/containers/{name}/snapshots", h.handleSnapshots)
 	mux.HandleFunc("POST /api/containers/{name}/restore", h.handleRestore)
 	mux.HandleFunc("POST /api/restore/cancel", h.handleRestoreCancel)
+	mux.HandleFunc("POST /api/restore/check", h.handleRestoreCheck)
 	mux.HandleFunc("POST /api/backup/cancel", h.handleBackupCancel)
 	mux.HandleFunc("POST /api/stacks/{project}/restore", h.handleRestoreStack)
 	mux.HandleFunc("GET /api/containers/{name}/mounts", h.handleContainerMounts)
@@ -263,6 +264,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/check/{domain}", h.handleCheck)
 	mux.HandleFunc("POST /api/verify/{domain}", h.handleRunDrill)
 	mux.HandleFunc("GET /api/verify", h.handleDrills)
+	mux.HandleFunc("GET /api/checks/items", h.handleItemChecks)
+	mux.HandleFunc("POST /api/checks/probe/{id}", h.handleProbeItem)
+	mux.HandleFunc("POST /api/checks/starttest/{id}", h.handleStartTest)
 	mux.HandleFunc("POST /api/unlock/{domain}", h.handleUnlock)
 	mux.HandleFunc("POST /api/prune/{domain}", h.handlePrune)
 	// What the prune above WOULD remove, without removing it. Read-only, so a

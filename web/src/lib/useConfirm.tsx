@@ -27,6 +27,8 @@ export interface ConfirmOptions {
   cancelLabel?: string;
   /** A switch the action needs an answer to, shown under the question. */
   extra?: ReactNode;
+  /** Why the action cannot go ahead; disables Confirm. */
+  confirmBlocked?: string;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -131,6 +133,7 @@ export function useConfirm() {
             confirmLabelKey={pending.confirmKey ?? "common.confirm"}
             cancelLabel={pending.cancelLabel ?? t("common.cancel")}
             extra={pending.extra}
+            confirmBlocked={pending.confirmBlocked}
             onConfirm={() => settle(true)}
             onCancel={() => settle(false)}
           />
@@ -142,6 +145,7 @@ export function useConfirm() {
             confirmLabelKey={pending.confirmKey ?? "common.confirm"}
             cancelLabel={pending.cancelLabel ?? t("common.cancel")}
             extra={pending.extra}
+            confirmBlocked={pending.confirmBlocked}
             onConfirm={() => settle(true)}
             onCancel={() => settle(false)}
           />

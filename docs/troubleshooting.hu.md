@@ -29,7 +29,7 @@ Az élő pillanatképekhez szükség van a qemu guest agent telepítésére a VM
 
 ## Egy mentés a "repository is already locked" hibával hiúsult meg
 
-Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a konténert egy művelet közben frissítették vagy újraindították. A BombVault észlel egy bizonyíthatóan árva zárolást, kényszerítve törli és egyszer újrapróbálja, automatikusan. Ha továbbra is fennáll, használd a **Beállítások, Integritás és karbantartás, Feloldás** funkciót az érintett tartományhoz, hogy kézzel törölj egy elavult zárolást. Egy valódi probléma továbbra is felszínre kerül, ahelyett hogy elrejtenék.
+Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a konténert egy művelet közben frissítették vagy újraindították. A BombVault észlel egy bizonyíthatóan árva zárolást, kényszerítve törli és egyszer újrapróbálja, automatikusan. Ha továbbra is fennáll, használd a **Beállítások, Integritás és karbantartás, Feloldás** funkciót az érintett tartományhoz, hogy kézzel törölj egy elavult zárolást. Egy valódi probléma továbbra is felszínre kerül, ahelyett hogy elrejtenék. Újraindítás után a BombVault megvárja, hogy egy ilyen zárolás tíz percig ne frissüljön. A még futó restic, például egy második BombVaultban ugyanazon a tárolón, ötpercenként frissíti a zárolását.
 
 ## A telephelyen kívüli másolatom nem történt meg egy mentés után
 

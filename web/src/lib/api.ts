@@ -296,6 +296,8 @@ export interface Settings {
   /** Scheduled off-site DR drill; default on. When off, only the manual
    *  off-site DR button runs (the free local integrity check still runs). */
   offsiteDrillsEnabled: boolean;
+  /** Adds a container start test to every scheduled restore check. */
+  startTestEnabled: boolean;
   drillsSchedule: string;
   drillsSubsetPct: number;
   /** True once the user has downloaded + safely stored the encryption recovery
@@ -482,6 +484,8 @@ export interface DomainStatus {
   lastVerifiedOK: boolean; // whether that last drill passed
   verifiedDetail: string; // scrubbed reason of the last LOCAL subset drill; "" on success
   drillDetail: string; // scrubbed reason of the last OFF-SITE DR drill; "" on success
+  /** The newest start test of any container, on the containers row only. */
+  lastStartTest?: StartTest;
   // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
   // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
   offsiteConfigured: boolean; // an off-site repo is configured for this domain
@@ -817,6 +821,102 @@ export function cancelRestore(key: string): Promise<{ ok: boolean; cancelled: bo
   return fetchJSON("/api/restore/cancel", {
     method: "POST",
     body: JSON.stringify({ key }),
+  });
+}
+
+/** The restore a check describes, with what that restore's own endpoint takes. */
+export interface RestoreCheckRequest {
+  kind:
+    | "container"
+    | "containerFiles"
+    | "containerTo"
+    | "vm"
+    | "fileSet"
+    | "fileSetFiles"
+    | "zfs"
+    | "foreign"
+    | "flash"
+    | "config"
+    | "dbImport"
+    | "stack";
+  /** The container, the VM, the file set id, the ZFS item id, the compose
+   *  project of a stack or the foreign item. */
+  name?: string;
+  snapshotId?: string;
+  source?: string;
+  paths?: string[];
+  targetPath?: string;
+  zfs?: ZFSRestoreRequest;
+  session?: string;
+  domain?: string;
+  overwrite?: boolean;
+  zvolPool?: string;
+  wholeTree?: boolean;
+}
+
+export type CheckLineId = "repository" | "key" | "snapshot" | "space";
+
+/** One line of the pre-flight checklist. need and free are bytes. */
+export interface CheckLine {
+  id: CheckLineId;
+  status: "ok" | "fail" | "skip";
+  reason?: string;
+  detail?: string;
+  need?: number;
+  free?: number;
+}
+
+export type PlanChange = "added" | "changed" | "removed" | "extra";
+
+export interface DefinitionChange {
+  field: "image" | "port" | "env" | "volume" | "memory" | "vcpus" | "disk" | "network";
+  name?: string;
+  change: PlanChange;
+  backup?: string;
+  now?: string;
+}
+
+/** What a restore would do compared with what is there now. */
+export interface RestorePlan {
+  inPlace: boolean;
+  added: number;
+  changed: number;
+  unchanged: number;
+  extra: number;
+  files: { path: string; change: PlanChange }[];
+  listCapped: boolean;
+  partial: boolean;
+  error?: string;
+  missing: boolean;
+  definition: DefinitionChange[];
+  shared: { path: string; containers: string[] }[];
+}
+
+/** The check of one container of a stack restore. */
+export interface StackMemberCheck {
+  name: string;
+  ready: boolean;
+  checks: CheckLine[];
+  plan?: RestorePlan | null;
+}
+
+export interface RestoreCheckResponse extends OkEnvelope {
+  ready?: boolean;
+  checks?: CheckLine[] | null;
+  plan?: RestorePlan | null;
+  /** A stack answers per member instead of with checks of its own. */
+  members?: StackMemberCheck[] | null;
+}
+
+/**
+ * POST /api/restore/check: the pre-flight checks of a restore and its plan.
+ * Read-only on the server, so it may run while a backup does.
+ */
+export function checkRestore(req: RestoreCheckRequest, signal?: AbortSignal): Promise<RestoreCheckResponse> {
+  return fetchJSON("/api/restore/check", {
+    method: "POST",
+    body: JSON.stringify(req),
+    signal,
   });
 }
 
@@ -1951,6 +2051,66 @@ export function runDrill(
   );
 }
 
+/** One restore probe of one item: a sample of its backup restored into a
+ *  sandbox and compared with what the backup recorded. */
+export interface ItemProbe {
+  targetId: string;
+  domain: string;
+  at: number;
+  ok: boolean;
+  detail: string;
+  snapshotId: string;
+  files: number;
+  bytes: number;
+  /** "first" after the item's first backup, "manual" when somebody asked. */
+  trigger: "first" | "manual";
+}
+
+/** One start test of one container: its backup restored into an isolated
+ *  copy, started and checked. */
+export interface StartTest {
+  targetId: string;
+  container: string;
+  at: number;
+  ok: boolean;
+  detail: string;
+  /** How the copy was judged: its healthcheck, its port, or staying up. */
+  method: "health" | "tcp" | "running" | "";
+  durationMs: number;
+  trigger: "schedule" | "manual";
+}
+
+/** Why a container cannot be start-tested. */
+export type StartTestBlocked = "host-network" | "privileged" | "devices" | "host-namespace" | "depends-on" | "no-definition";
+
+/** What the item cards show about the checks of one item. `domain` and `name`
+ *  are the ones the anomaly list uses. */
+export interface ItemChecks {
+  targetId: string;
+  domain: string;
+  name: string;
+  probe?: ItemProbe;
+  startTest?: StartTest;
+  startTestBlocked?: StartTestBlocked;
+}
+
+/** GET /api/checks/items: the newest check results of every item. */
+export function getItemChecks(): Promise<{ ok: boolean; items?: ItemChecks[]; error?: string }> {
+  return fetchJSON("/api/checks/items");
+}
+
+/** POST /api/checks/starttest/{id}: a start test of the container, run now. */
+export function runStartTest(
+  targetId: string
+): Promise<{ ok: boolean; startTest?: StartTest; blocked?: StartTestBlocked; error?: string }> {
+  return fetchJSON(`/api/checks/starttest/${encodeURIComponent(targetId)}`, { method: "POST" });
+}
+
+/** POST /api/checks/probe/{id}: a restore probe of the item's newest backup. */
+export function probeItem(targetId: string): Promise<{ ok: boolean; probe?: ItemProbe; error?: string }> {
+  return fetchJSON(`/api/checks/probe/${encodeURIComponent(targetId)}`, { method: "POST" });
+}
+
 /**
  * GET /api/verify?domain=&source=&limit= — the recorded restore-verification
  * drills for a domain + source (newest first), plus the latest one for the badge.
@@ -2801,6 +2961,9 @@ export interface EffectiveSchedule {
   kind: "none" | "own" | "domain" | "everything" | "both";
   spec: string;
   alsoSpec: string;
+  /** Why nothing runs, for "none". Every reason but "schedule-invalid" is a
+   *  setting someone chose. */
+  reason?: "domain-off" | "excluded" | "override-off" | "schedule-off" | "schedule-invalid";
 }
 
 export interface ListFileSetsResponse {

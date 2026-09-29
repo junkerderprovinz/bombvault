@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // TestCleanupDrillSandboxMarkerGuard: cleanupDrillSandbox removes only a
@@ -42,4 +45,24 @@ func TestCleanupDrillSandboxMarkerGuard(t *testing.T) {
 			t.Fatalf("a marked sandbox must be removed, stat=%v", err)
 		}
 	})
+}
+
+func TestTheContainersDrillRestoresTheDumpOfAContainerWithOnlyDumps(t *testing.T) {
+	s, _, settings := zfsDomainFixture(t)
+	settings.DRDrillTarget = "nextcloud-db"
+	eng := s.engine.(*zfsFakeEngine)
+	eng.snaps = []restic.Snapshot{
+		{ID: "other", Time: "2026-09-28T03:00:00Z", Tags: []string{"container:plex"}},
+		{ID: "dump1", Time: "2026-09-27T03:00:00Z", Tags: []string{"dbdump:nextcloud-db", "p1"}},
+		{ID: "dump2", Time: "2026-09-28T03:00:00Z", Tags: []string{"dbdump:nextcloud-db", "p1"}},
+	}
+	id, err := s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{})
+	if err != nil || id != "dump2" {
+		t.Fatalf("pickDRSnapshot = %q, %v, want the newest dump of the container", id, err)
+	}
+
+	eng.snaps = append(eng.snaps, restic.Snapshot{ID: "volumes", Time: "2026-09-26T03:00:00Z", Tags: []string{"container:nextcloud-db"}})
+	if id, err = s.pickDRSnapshot(context.Background(), "containers", settings, "repo", restic.Mode{}); err != nil || id != "volumes" {
+		t.Fatalf("pickDRSnapshot = %q, %v, want the container's own snapshot while it has one", id, err)
+	}
 }

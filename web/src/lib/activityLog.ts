@@ -9,6 +9,7 @@ import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
 import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
+import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
 import { isWarningNote, runReason, runReasonParts } from "./runReason";
 
@@ -156,7 +157,8 @@ function formatBytesShort(n: number): string {
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
-  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
+  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string }
+  | { scope: "check"; check: "probe" | "start"; domain: string; name: string };
 
 /**
  * parseProgressKey decodes a live SSE progress key; progress.ts documents the
@@ -179,6 +181,15 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("drdrill:")) return { scope: "drdrill", domain: key.slice("drdrill:".length) };
   if (key.startsWith("tamper:")) return { scope: "tamper", domain: key.slice("tamper:".length) };
   if (key.startsWith("export:")) return { scope: "export", domain: key.slice("export:".length) };
+  // "probe:<domain>:<name>", the restore probe of one item.
+  if (key.startsWith("probe:")) {
+    const rest = key.slice("probe:".length);
+    const at = rest.indexOf(":");
+    if (at > 0) return { scope: "check", check: "probe", domain: rest.slice(0, at), name: rest.slice(at + 1) };
+  }
+  if (key.startsWith("starttest:")) {
+    return { scope: "check", check: "start", domain: "containers", name: key.slice("starttest:".length) };
+  }
   return null;
 }
 
@@ -222,6 +233,25 @@ function itemSignature(kind: string, domain: LogDomain, name: string): string {
 
 function domainOpSignature(kind: string, domain: string): string {
   return `domain|${kind}|${domain}`;
+}
+
+const COUNT_KEYS: Record<CountUnit, string> = {
+  packs: "progress.count.packs",
+  snapshots: "progress.count.snapshots",
+  indexes: "progress.count.indexes",
+  files: "progress.count.files",
+  items: "progress.count.items",
+};
+
+/**
+ * countProgressText says how far a check or prune has counted, "12 of 47
+ * packs · 2m 5s left", or "" before restic has counted anything.
+ */
+export function countProgressText(resolveName: ResolveName, state: ProgressState): string {
+  if (!state.total) return "";
+  const count = resolveName(COUNT_KEYS[state.unit ?? "items"], { done: String(state.done ?? 0) }, state.total);
+  if (!state.remaining) return count;
+  return `${count} · ${resolveName("progress.remaining", { time: formatDuration(state.remaining) })}`;
 }
 
 /** Live-line text per domain-scoped operation. The export line takes no
@@ -342,10 +372,23 @@ function buildLiveLines(
       continue;
     }
 
+    if (parsed.scope === "check") {
+      // A probe or start test records no run, so staleness is all there is
+      // to end it.
+      if (!keep(null)) continue;
+      const domain = normalizeDomain(parsed.domain);
+      const name = parsed.domain === "flash" || parsed.domain === "config" ? domainLabel(resolveName, domain) : parsed.name;
+      const text = resolveName(parsed.check === "start" ? "activityLog.lineStartTestRunning" : "activityLog.lineProbeRunning", { name });
+      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: "drill", live: true });
+      continue;
+    }
+
     // prune, verify, drill, drdrill, tamper and export: domain-wide
     // operations that record a Run row on the domain target the same way.
     const domain = normalizeDomain(parsed.domain);
-    const text = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
+    const base = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
+    const counted = countProgressText(resolveName, state);
+    const text = counted ? `${base} ${counted}` : base;
     const opSig = domainOpSignature(parsed.scope, domain);
     if (!keep(opSig)) continue;
     signatures.add(opSig);

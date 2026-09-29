@@ -7,9 +7,9 @@ O BombVault tem um servidor integrado para o Model Context Protocol (MCP), o pro
 | Ferramenta | O que faz | Tipo |
 |---|---|---|
 | `get_health` | Versão, nome da instância, se há uma cópia em curso e o que esta chave pode fazer | leitura |
-| `get_status` | Estado de proteção por domínio: última cópia bem-sucedida, intervalo esperado, verificações e controlos externos, próximas execuções agendadas | leitura |
+| `get_status` | Estado de proteção por domínio: última cópia bem-sucedida, intervalo esperado, verificações e controlos externos, próximas execuções agendadas e, para os contentores, o teste de arranque mais recente | leitura |
 | `get_coverage` | O que o BombVault protege e o que não protege, com o motivo de cada caso | leitura |
-| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que uma cópia para, a última cópia e quanto demorou; os contentores de base de dados indicam também o último dump; os datasets ZFS também aparecem, com o resultado da sua última verificação | leitura |
+| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que uma cópia para, a última cópia e quanto demorou; os contentores de base de dados indicam também o último dump; os datasets ZFS também aparecem, com o resultado da sua última verificação; cada item traz a sua última verificação de restauro, e um contentor o seu último teste de arranque ou o motivo por que não pode ser testado | leitura |
 | `list_runs` | Histórico de execuções, as mais recentes primeiro, filtrável por domínio, elemento, estado, tipo e data | leitura |
 | `list_restore_points` | Pontos de restauro de um elemento no seu repositório principal e, para um contentor, os seus dumps de base de dados; um dataset ZFS tem um ponto de restauro por cópia, com um snapshot de cada dataset abaixo dele | leitura |
 | `get_activity` | O que está a correr agora, com fase e percentagem | leitura |

@@ -350,6 +350,9 @@ func (s *Service) planZFSRestoreToFolder(ctx context.Context, plan *zfsRestorePl
 	if err := s.guardZFSRestoreFolder(ctx, *plan, target); err != nil {
 		return ZFSRestoreAck{}, err
 	}
+	if isPlanOnly(ctx) {
+		return ZFSRestoreAck{Target: target}, nil
+	}
 	if err := paths.EnsureDirReadable(target); err != nil {
 		return ZFSRestoreAck{}, fmt.Errorf("create target folder: %w", err)
 	}
@@ -389,7 +392,7 @@ func (s *Service) planZFSRestoreInPlace(ctx context.Context, plan *zfsRestorePla
 		plan.consistency = s.newZFSConsistency(d, settings, zfsLockWait(ctx))
 	}
 	ack := ZFSRestoreAck{Target: cpath}
-	if req.SafetySnapshot {
+	if req.SafetySnapshot && !isPlanOnly(ctx) {
 		name, err := s.takeZFSSafetySnapshot(ctx, d, req.Dataset)
 		if err != nil {
 			return ZFSRestoreAck{}, err

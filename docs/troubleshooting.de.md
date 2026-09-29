@@ -29,7 +29,7 @@ Live-Snapshots benötigen den in der VM installierten qemu-Gast-Agenten und den 
 
 ## Ein Backup schlug mit "repository is already locked" fehl
 
-Das ist meist ein verwaister restic-Lock, der zurückblieb, als der Container mitten im Betrieb aktualisiert oder neu gestartet wurde. BombVault erkennt einen nachweislich verwaisten Lock, löst ihn zwangsweise und wiederholt einmal, automatisch. Falls er bestehen bleibt, nutze **Einstellungen, Integrität & Wartung, Entsperren** für den betroffenen Bereich, um einen veralteten Lock von Hand zu lösen. Ein echtes Problem tritt weiterhin zutage, statt verborgen zu werden.
+Das ist meist ein verwaister restic-Lock, der zurückblieb, als der Container mitten im Betrieb aktualisiert oder neu gestartet wurde. BombVault erkennt einen nachweislich verwaisten Lock, löst ihn zwangsweise und wiederholt einmal, automatisch. Falls er bestehen bleibt, nutze **Einstellungen, Integrität & Wartung, Entsperren** für den betroffenen Bereich, um einen veralteten Lock von Hand zu lösen. Ein echtes Problem tritt weiterhin zutage, statt verborgen zu werden. Nach einem Neustart wartet BombVault, bis so ein Lock zehn Minuten lang nicht erneuert wurde. Ein restic, der noch läuft, etwa in einem zweiten BombVault am selben Repository, erneuert seinen Lock alle fünf Minuten.
 
 ## Meine Off-site-Kopie erfolgte nicht nach einem Backup
 

@@ -718,6 +718,11 @@ type Scheduler struct {
 	pullFn            func() error
 	fleetFn           func() error
 	everythingFn      func() error
+
+	// runBracket marks a multi-item run open until the func it returns is
+	// called; see SetRunBracket.
+	runBracket func(domain string) func()
+
 	// hcRunStart and hcRunFinish send one Healthchecks start and one result ping
 	// per scheduled multi-item run instead of one per item.
 	hcRunStart  func(domain string)
@@ -943,6 +948,21 @@ func (s *Scheduler) SetStacksAfterBulkJob(fn func(names []string)) {
 	s.stacksAfterBulkFn = fn
 }
 
+// SetRunBracket wires what learns that a scheduled multi-item run of a domain
+// started, from before its first item until after its prune and off-site
+// copy. Between two items the domain lock is free, and fn lets other work
+// that could take it wait for the whole run instead.
+func (s *Scheduler) SetRunBracket(fn func(domain string) func()) {
+	s.runBracket = fn
+}
+
+func (s *Scheduler) openRun(domain string) func() {
+	if s.runBracket == nil {
+		return func() {}
+	}
+	return s.runBracket(domain)
+}
+
 // SetDrillJob wires the scheduled restore-verification drills. drillFn is called
 // with (domain, source, kind) for each task from drillTasks. Call before Reload.
 func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error) {
@@ -1153,6 +1173,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasWork(targets) {
 					return
 				}
+				defer s.openRun("containers")()
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
@@ -1196,6 +1217,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasVMWork(vms) {
 					return
 				}
+				defer s.openRun("vms")()
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
@@ -1256,6 +1278,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasFileWork(sets) {
 					return
 				}
+				defer s.openRun("files")()
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
@@ -1286,6 +1309,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasZFSWork(ds) {
 					return
 				}
+				defer s.openRun("zfs")()
 				s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
 					return RunZFSJob(ds, s.backupZFS)
 				})
@@ -1707,6 +1731,7 @@ func (s *Scheduler) runContainerItem(name string) {
 	if one == nil || !one.IncludeInSchedule {
 		return
 	}
+	defer s.openRun("containers")()
 	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob([]store.Target{*one}, s.backup)
 	})
@@ -1735,6 +1760,7 @@ func (s *Scheduler) runVMItem(name string) {
 	if one == nil || !one.IncludeInSchedule {
 		return
 	}
+	defer s.openRun("vms")()
 	s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 		return RunVMsJob([]store.VMTarget{*one}, s.backupVM)
 	})
@@ -1765,6 +1791,7 @@ func (s *Scheduler) runFileSetItem(id string) {
 	if one == nil || !one.Enabled {
 		return
 	}
+	defer s.openRun("files")()
 	s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 		return RunFilesJob([]store.FileSet{*one}, s.backupFiles)
 	})
@@ -1794,6 +1821,7 @@ func (s *Scheduler) runZFSItem(id string) {
 	if one == nil || !one.Enabled {
 		return
 	}
+	defer s.openRun("zfs")()
 	s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
 		return RunZFSJob([]store.ZFSDataset{*one}, s.backupZFS)
 	})
@@ -1859,6 +1887,11 @@ func drillTasks(settings store.Settings) []drillTask {
 	var out []drillTask
 	for _, d := range enabledDrillDomains(settings) {
 		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
+	}
+	// A start test starts a restored copy of a container, so it waits for
+	// its own switch.
+	if settings.StartTestEnabled && settings.ContainersEnabled {
+		out = append(out, drillTask{domain: "containers", source: "local", kind: "start"})
 	}
 	// An off-site DR drill downloads a whole snapshot, which costs egress on
 	// metered clouds, so these have their own switch.

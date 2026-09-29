@@ -38,6 +38,9 @@ export interface ConfirmSheetProps {
   cancelLabel: string;
   /** The same slot ConfirmDialog has under the message. */
   extra?: ReactNode;
+  /** Why the action cannot go ahead, as on ConfirmDialog: it disables
+   *  Confirm and becomes the (i) in the button. */
+  confirmBlocked?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -49,6 +52,7 @@ export function ConfirmSheet({
   confirmLabelKey,
   cancelLabel,
   extra,
+  confirmBlocked,
   onConfirm,
   onCancel,
 }: ConfirmSheetProps) {
@@ -81,6 +85,8 @@ export function ConfirmSheet({
             labelKey={confirmLabelKey ?? "common.confirm"}
             tone="accent"
             onClick={onConfirm}
+            disabled={confirmBlocked !== undefined}
+            hint={confirmBlocked}
             className="glim-btn-key w-full"
           />
         </div>

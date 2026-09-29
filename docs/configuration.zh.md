@@ -14,6 +14,7 @@
 | `PORT` | 否 | HTTP 端口（默认 `3000`；仅在 `HTTP_ONLY=true` 时使用）。 |
 | `HTTPS_PORT` | 否 | HTTPS 端口（默认 `3443`；模板以 1:1 发布它，因此 WebUI 在 `https://<ip>:3443` 上应答）。 |
 | `HTTP_ONLY` | 否 | 设为 `true` 以禁用自签名 HTTPS 监听器，仅提供纯 HTTP 服务（用于在一个终止 TLS 的反向代理之后）。 |
+| `BIND_HOST` | 否 | WebUI 监听的地址（默认 `0.0.0.0`，即所有接口）。在容器中请保持不设置，因为其发布的端口需要所有接口；`127.0.0.1` 适用于在 Docker 之外运行。健康检查也访问同一地址。 |
 | `TRUSTED_PROXY` | 否 | BombVault 前面反向代理的地址或 CIDR 网段，以逗号分隔（例如 `192.168.20.11` 或 `10.0.0.0/8`）。只有来自这些跳点的 `X-Forwarded-For` 才会被采信，登录限流随后按真实客户端分别计数，而不是把代理后面的所有人放进同一个桶。未设置（默认）表示谁都不信任：无条件采信的标头会让任何调用方自行挑选计数桶。 |
 | `HOST_SOURCE_ROOT` | 否 | 挂载为 **Host Data** 的主机路径（默认 `/mnt`）。BombVault 会将 Docker 报告的绑定挂载来源转换为此挂载下的路径。仅在您挂载了不同的主机根目录时才更改。 |
 | `DATA_ROOT_SEGMENTS` | 否 | 以逗号分隔的路径片段名称，用于将绑定挂载来源标记为备份数据（默认为 `appdata`，对应 Unraid 的 `/mnt/user/appdata/<container>` 约定）。当所列片段中的任意一个作为完整路径片段出现在某容器绑定挂载的主机来源中时，该挂载就会被自动选中用于备份，例如 `DATA_ROOT_SEGMENTS=appdata,config` 也会选中类似 `.../config` 的绑定挂载。关于查找容器数据文件夹的其他常驻方式，参见[备份来源检测](#backup-source-detection)。 |

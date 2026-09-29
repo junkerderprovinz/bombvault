@@ -29,7 +29,7 @@ Les instantanés à chaud nécessitent l'agent invité qemu installé dans la VM
 
 ## Une sauvegarde a échoué avec « repository is already locked »
 
-C'est généralement un verrou restic orphelin laissé lorsque le conteneur a été mis à jour ou redémarré en pleine opération. BombVault détecte un verrou prouvé orphelin, le force à se libérer et réessaie une fois, automatiquement. S'il persiste, utilisez **Paramètres, Intégrité et maintenance, Déverrouiller** pour le domaine concerné afin de libérer un verrou bloqué à la main. Un vrai problème remonte tout de même au lieu d'être caché.
+C'est généralement un verrou restic orphelin laissé lorsque le conteneur a été mis à jour ou redémarré en pleine opération. BombVault détecte un verrou prouvé orphelin, le force à se libérer et réessaie une fois, automatiquement. S'il persiste, utilisez **Paramètres, Intégrité et maintenance, Déverrouiller** pour le domaine concerné afin de libérer un verrou bloqué à la main. Un vrai problème remonte tout de même au lieu d'être caché. Après un redémarrage, BombVault attend qu'un tel verrou soit resté dix minutes sans être rafraîchi. Un restic encore en marche, par exemple dans un second BombVault sur le même dépôt, rafraîchit son verrou toutes les cinq minutes.
 
 ## Ma copie hors site n'a pas eu lieu après une sauvegarde
 

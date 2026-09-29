@@ -1,8 +1,8 @@
 // The Folders page at phone width, with sets staged at the route layer (a
 // fresh harness database has none). On the phones: the 24px card rhythm, no
 // pan, no control past the edge, and each card's actions on their own row
-// below the name. On the desktop: the 40px rhythm and a header whose actions
-// stay on one line. German, because its labels run longest.
+// below the name. On the desktop: the 40px rhythm and a header inside the
+// window, on one line at 1280px. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -95,15 +95,21 @@ for (const width of [320, 360]) {
   });
 }
 
-test("folders on the desktop keep the 40px rhythm and a one-line header", async ({ page }, testInfo) => {
+test("folders on the desktop keep the 40px rhythm and a header inside the window", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await bootGerman(page, testInfo.project.use.viewport!.width);
 
   expect(await cardGap(page)).toBe("40px");
-  const tops = await page
+  // A window of 768px leaves the header less room than its German actions
+  // take, so there they wrap rather than run past the window.
+  const header = await page
     .getByRole("heading", { level: 1 })
     .locator("xpath=../following-sibling::div[1]")
     .locator("button")
-    .evaluateAll((buttons) => [...new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top)))]);
-  expect(tops, "the header actions wrapped").toHaveLength(1);
+    .evaluateAll((buttons) => ({
+      tops: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top))).size,
+      past: buttons.filter((b) => b.getBoundingClientRect().right > document.documentElement.clientWidth + 1).length,
+    }));
+  expect(header.past, "a header action runs past the window").toBe(0);
+  if (testInfo.project.name === "desktop-1280") expect(header.tops, "the header actions wrapped").toBe(1);
 });
