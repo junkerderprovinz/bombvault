@@ -134,36 +134,6 @@ func TestBackupJobXMLReportsOtherFailures(t *testing.T) {
 	}
 }
 
-// recordingVirsh writes a script that appends its arguments, one per line,
-// to a file and succeeds, and returns a client that runs it with that file.
-func recordingVirsh(t *testing.T) (*Client, string) {
-	t.Helper()
-	if runtime.GOOS == "windows" {
-		t.Skip("needs a shell script as the virsh binary")
-	}
-	dir := t.TempDir()
-	calls := filepath.Join(dir, "calls")
-	bin := filepath.Join(dir, "virsh")
-	script := "#!/bin/sh\nfor a in \"$@\"; do case \"$a\" in *.xml) cat \"$a\" >> '" + calls + "';; *) echo \"$a\" >> '" + calls + "';; esac; done\necho '--' >> '" + calls + "'\n"
-	if err := os.WriteFile(bin, []byte(script), 0o700); err != nil { //nolint:gosec // G306: the test needs it executable
-		t.Fatal(err)
-	}
-	return &Client{bin: bin}, calls
-}
-
-func recordedCalls(t *testing.T, file string) []string {
-	t.Helper()
-	b, err := os.ReadFile(file) //nolint:gosec // G304: a file of the test
-	if err != nil {
-		t.Fatal(err)
-	}
-	var calls []string
-	for _, c := range strings.Split(strings.TrimSuffix(string(b), "--\n"), "\n--\n") {
-		calls = append(calls, strings.Join(strings.Fields(c), " "))
-	}
-	return calls
-}
-
 func TestCheckpointForgetKeepsTheBitmap(t *testing.T) {
 	c, file := recordingVirsh(t)
 	if err := c.CheckpointForget(context.Background(), "win", "bombvault-1"); err != nil {
