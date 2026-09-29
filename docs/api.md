@@ -58,7 +58,7 @@ An error comes back as `{"error": {"code": "...", "message": "..."}}` with a mat
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | An argument is missing or wrong |
 | 401 | `no_token`, `invalid_token` | No token, or not an active one |
-| 403 | `not_permitted` | The token may only read, or the run was not started by it |
+| 403 | `not_permitted`, `forbidden_origin` | The token may only read, the run was not started by it, or the request came from a page on another origin |
 | 404 | `not_found` | No such item, run or anomaly |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Something else is running, the domain is off, or there is nothing to do |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | A limit holds the request back; `Retry-After` says when to try again |
@@ -74,7 +74,7 @@ BombVault serves a description of these routes at `/api/v1/openapi.json` (OpenAP
 BombVault can appear in Home Assistant as a device, through MQTT discovery. Home Assistant needs its MQTT integration and a broker, for example the Mosquitto add-on. No custom component is involved.
 
 1. In BombVault, open **Settings, System, Home Assistant**.
-2. Enter the broker's address and port, and its user name and password if it asks for them. Switch **Use TLS** on if the broker takes TLS, usually on port 8883; its certificate has to be valid for the address you entered.
+2. Enter the broker's address and port, and its user name and password if it asks for them. Switch **Use TLS** on if the broker takes TLS, usually on port 8883; its certificate has to be valid for the address you entered. If you change the address, the port or the user name, enter the password again: BombVault does not pass the stored one on to another broker or user.
 3. Switch **Connect to Home Assistant** on and click **Save**. The card shows when the connection is up.
 
 The device is called BombVault, or BombVault with the instance name in brackets, and has these entities:
@@ -90,7 +90,7 @@ The device is called BombVault, or BombVault with the instance name in brackets,
 | *Domain* repository free space | Free space where its primary repository lives, if BombVault can read it |
 | Back up *domain* | A button that backs up the whole domain |
 
-Every switched-on domain gets its own entities, and a domain you switch off loses them. The buttons follow the same limits as [starts through the API](#errors). Anyone who can publish to the broker can press them, so give the broker a password, or switch **Buttons start backups** off.
+Every switched-on domain gets its own entities, and a domain you switch off loses them. The buttons appear once you switch **Buttons start backups** on; a new install has it off. They follow the same limits as [starts through the API](#errors). On top of that BombVault handles one press per domain at a time and no more than six a minute, and ignores a press the broker kept as a retained message. Anyone who can publish to the broker can press them, so give the broker a password.
 
 BombVault reads its state every 15 seconds and publishes it when something changed, as JSON under `<prefix>/<node>/state`. The prefix is `bombvault` unless you change it, and the node is a short id BombVault picks once. The discovery messages go to Home Assistant's default prefix `homeassistant`. Both are retained. A last will marks the device unavailable if BombVault stops without saying so. Switching the link off removes the device and its entities from Home Assistant.
 
@@ -102,6 +102,6 @@ Whether the announcement reaches your network depends on how the container is co
 
 - **bridge**, the default in the Unraid template: the announcement stays inside Docker's network and nobody on the LAN sees it. Open BombVault by the host's address as before.
 - **br0** or another macvlan or ipvlan network: the container has its own address on the LAN, and the announcement reaches it.
-- **host**: the announcement goes out on the host's interfaces, next to Unraid's own.
+- **host**: the announcement goes out on the host's interfaces, next to Unraid's own. It skips Docker's and libvirt's bridges.
 
 Only IPv4 addresses are announced.

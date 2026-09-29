@@ -58,7 +58,7 @@ Um erro volta como `{"error": {"code": "...", "message": "..."}}` com o estado c
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Falta um argumento ou está errado |
 | 401 | `no_token`, `invalid_token` | Sem token, ou não é um token ativo |
-| 403 | `not_permitted` | O token só pode ler, ou não iniciou essa execução |
+| 403 | `not_permitted`, `forbidden_origin` | O token só pode ler, ou não iniciou essa execução, ou o pedido veio de uma página de outra origem |
 | 404 | `not_found` | Não existe esse item, execução ou anomalia |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Já há algo a correr, o domínio está desligado ou não há nada a fazer |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Um limite retém o pedido; `Retry-After` diz quando tentar de novo |
@@ -74,7 +74,7 @@ O BombVault serve uma descrição destas rotas em `/api/v1/openapi.json` (OpenAP
 O BombVault pode aparecer no Home Assistant como um dispositivo, através da descoberta MQTT. O Home Assistant precisa da sua integração MQTT e de um broker, por exemplo o add-on Mosquitto. Não é preciso nenhum componente próprio.
 
 1. No BombVault, abre **Definições, Sistema, Home Assistant**.
-2. Escreve o endereço e a porta do broker, e o utilizador e a palavra-passe se os pedir. Liga **Usar TLS** se o broker usar TLS, normalmente na porta 8883; o certificado tem de ser válido para o endereço que escreveste.
+2. Escreve o endereço e a porta do broker, e o utilizador e a palavra-passe se os pedir. Liga **Usar TLS** se o broker usar TLS, normalmente na porta 8883; o certificado tem de ser válido para o endereço que escreveste. Se mudares o endereço, a porta ou o nome de utilizador, volta a introduzir a palavra-passe: o BombVault não passa a guardada a outro broker ou utilizador.
 3. Liga **Ligar ao Home Assistant** e clica em **Guardar**. O cartão mostra quando a ligação está estabelecida.
 
 O dispositivo chama-se BombVault, ou BombVault com o nome da instância entre parênteses, e tem estas entidades:
@@ -90,7 +90,7 @@ O dispositivo chama-se BombVault, ou BombVault com o nome da instância entre pa
 | *Domínio* repository free space | O espaço livre onde está o seu repositório principal, se o BombVault o conseguir ler |
 | Back up *domínio* | Um botão que copia o domínio inteiro |
 
-Os nomes das entidades estão em inglês, porque o Home Assistant usa-os tal como o BombVault os envia. Cada domínio ligado tem as suas entidades, e um domínio que desligues perde-as. Os botões seguem os mesmos limites dos [inícios pela API](#errors). Qualquer pessoa que consiga publicar no broker pode carregar neles, por isso protege o broker com uma palavra-passe ou desliga **Os botões iniciam cópias**.
+Os nomes das entidades estão em inglês, porque o Home Assistant usa-os tal como o BombVault os envia. Cada domínio ligado tem as suas entidades, e um domínio que desligues perde-as. Os botões aparecem quando ligas **Os botões iniciam cópias**, que vem desligado numa instalação nova. Seguem os mesmos limites dos [inícios pela API](#errors). Além disso, o BombVault aceita um só toque de cada vez por domínio e no máximo seis por minuto, e ignora um toque que o broker guardou como mensagem retida (retained). Qualquer pessoa que consiga publicar no broker pode carregar neles, por isso protege o broker com uma palavra-passe.
 
 O BombVault lê o seu estado a cada 15 segundos e publica-o quando algo mudou, como JSON em `<prefixo>/<nó>/state`. O prefixo é `bombvault` enquanto não o mudares, e o nó é um identificador curto que o BombVault escolhe uma vez. As mensagens de descoberta vão para o prefixo predefinido do Home Assistant, `homeassistant`. Ambos ficam retidos (retained). Uma última mensagem (last will) marca o dispositivo como indisponível se o BombVault parar sem avisar. Desligar a ligação remove o dispositivo e as suas entidades do Home Assistant.
 
@@ -102,6 +102,6 @@ Se o anúncio chega à tua rede depende de como o contentor está ligado:
 
 - **bridge**, o predefinido no modelo do Unraid: o anúncio fica dentro da rede do Docker e ninguém na rede local o vê. Abre o BombVault pelo endereço do anfitrião como até agora.
 - **br0** ou outra rede macvlan ou ipvlan: o contentor tem o seu próprio endereço na rede local e o anúncio chega lá.
-- **host**: o anúncio sai pelas interfaces do anfitrião, ao lado do anúncio do próprio Unraid.
+- **host**: o anúncio sai pelas interfaces do anfitrião, ao lado do anúncio do próprio Unraid. As bridges do Docker e do libvirt ficam de fora.
 
 Só são anunciados endereços IPv4.
