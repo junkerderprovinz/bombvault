@@ -3,6 +3,15 @@ import { formatCadence } from "./CadenceBuilder";
 import type { EffectiveSchedule } from "../lib/api";
 import { useForeignScheduleZone, zoneLabel } from "../lib/scheduleZone";
 
+// The sentence for each reason an item is switched off on purpose. Any other
+// "none" is a schedule the scheduler cannot read, and stays a failure.
+const CHOSEN_OFF: Partial<Record<NonNullable<EffectiveSchedule["reason"]>, TranslationKey>> = {
+  "domain-off": "files.effectiveNoneDomainOff",
+  excluded: "files.effectiveNoneExcluded",
+  "override-off": "files.effectiveNoneOverrideOff",
+  "schedule-off": "files.effectiveNoneScheduleOff",
+};
+
 /**
  * EffectiveScheduleLine says in one sentence what happens to one item, since
  * "Include in schedule", the domain schedule and Backup Everything interact.
@@ -32,10 +41,14 @@ export function EffectiveScheduleLine({
   let text: string;
   let tone: string;
   switch (effective.kind) {
-    case "none":
-      text = t("files.effectiveNone");
-      tone = "text-statusFail";
+    case "none": {
+      const chosen = effective.reason ? CHOSEN_OFF[effective.reason] : undefined;
+      text = chosen
+        ? t(chosen).replace("{domain}", t(domainLabelKey)).replace("{everything}", t("settings.everythingTitle"))
+        : t("files.effectiveNone");
+      tone = chosen ? "text-carbon-textMuted" : "text-statusFail";
       break;
+    }
     case "both":
       text = t("files.effectiveBoth").replace("{when}", when).replace("{when2}", alsoWhen);
       tone = "text-statusWarn";

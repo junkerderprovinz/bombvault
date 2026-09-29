@@ -27,10 +27,29 @@ describe("EffectiveScheduleLine", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("shows a set that is not backed up in the fail colour", () => {
-    draw({ kind: "none", spec: "", alsoSpec: "" });
-    const line = screen.getByText(/not backed up automatically/i);
-    expect(line.closest("p")?.className).toContain("text-statusFail");
+  it("shows a set that is not backed up for no chosen reason in the fail colour", () => {
+    for (const reason of [undefined, "schedule-invalid"] as const) {
+      draw({ kind: "none", spec: "", alsoSpec: "", reason });
+      const line = screen.getByText(/not backed up automatically/i);
+      expect(line.closest("p")?.className).toContain("text-statusFail");
+      cleanup();
+    }
+  });
+
+  it("says why a set is switched off on purpose, muted rather than red", () => {
+    const cases = [
+      ["domain-off", "Not backed up automatically: the Folders domain is off"],
+      ["excluded", "Not backed up automatically: left out of the schedule"],
+      ["override-off", "Not backed up automatically: its own schedule is off"],
+      ["schedule-off", "Not backed up automatically: neither the Folders schedule nor Backup Everything is on"],
+    ] as const;
+    for (const [reason, text] of cases) {
+      draw({ kind: "none", spec: "", alsoSpec: "", reason });
+      const line = screen.getByText(text);
+      expect(line.closest("p")?.className, reason).toContain("text-carbon-textMuted");
+      expect(line.closest("p")?.className, reason).not.toContain("text-statusFail");
+      cleanup();
+    }
   });
 
   it("names both cadences when a set runs twice, in the warning colour", () => {
