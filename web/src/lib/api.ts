@@ -2961,6 +2961,9 @@ export interface EffectiveSchedule {
   kind: "none" | "own" | "domain" | "everything" | "both";
   spec: string;
   alsoSpec: string;
+  /** Why nothing runs, for "none". Every reason but "schedule-invalid" is a
+   *  setting someone chose. */
+  reason?: "domain-off" | "excluded" | "override-off" | "schedule-off" | "schedule-invalid";
 }
 
 export interface ListFileSetsResponse {

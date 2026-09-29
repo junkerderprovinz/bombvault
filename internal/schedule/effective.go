@@ -35,7 +35,19 @@ type EffectiveSchedule struct {
 	// AlsoSpec is the SECOND cadence, set only for EffectiveBoth: the run that
 	// duplicates the first one.
 	AlsoSpec string `json:"alsoSpec"`
+	// Reason says why nothing runs, one of the None* constants, set only for
+	// EffectiveNone. All but NoneScheduleInvalid are a setting someone chose.
+	Reason string `json:"reason,omitempty"`
 }
+
+// The reasons an item is not backed up automatically.
+const (
+	NoneDomainOff       = "domain-off"       // the domain is switched off
+	NoneExcluded        = "excluded"         // "Include in schedule" is off
+	NoneOverrideOff     = "override-off"     // the item's own schedule is "off"
+	NoneScheduleOff     = "schedule-off"     // neither the domain schedule nor Backup Everything is on
+	NoneScheduleInvalid = "schedule-invalid" // a schedule does not parse, so the scheduler skips it
+)
 
 const (
 	// EffectiveNone: nothing backs this set up automatically. Either the Folders
@@ -80,15 +92,18 @@ func EffectiveVMSchedule(v store.VMTarget, s store.Settings) EffectiveSchedule {
 // order, reading the same inputs the scheduler reads. See
 // EffectiveFileSetSchedule below for what each branch mirrors and why.
 func effectiveItemSchedule(domainEnabled, included bool, override, domainSchedule string, s store.Settings) EffectiveSchedule {
-	if !domainEnabled || !included {
-		return EffectiveSchedule{Kind: EffectiveNone}
+	if !domainEnabled {
+		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneDomainOff}
+	}
+	if !included {
+		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneExcluded}
 	}
 	if s.PerItemSchedules {
 		switch cls := classifyItemOverride(override); {
 		case cls.ownEntry:
 			return EffectiveSchedule{Kind: EffectiveOwn, Spec: override}
 		case !cls.inDomainRun:
-			return EffectiveSchedule{Kind: EffectiveNone}
+			return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneOverrideOff}
 		}
 	}
 	domain := cadenceRuns(domainSchedule)
@@ -100,8 +115,10 @@ func effectiveItemSchedule(domainEnabled, included bool, override, domainSchedul
 		return EffectiveSchedule{Kind: EffectiveDomain, Spec: domainSchedule}
 	case everything:
 		return EffectiveSchedule{Kind: EffectiveEverything, Spec: s.EverythingSchedule}
+	case !cadenceParses(domainSchedule) || !cadenceParses(s.EverythingSchedule):
+		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneScheduleInvalid}
 	default:
-		return EffectiveSchedule{Kind: EffectiveNone}
+		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneScheduleOff}
 	}
 }
 
@@ -140,6 +157,12 @@ func PausedByOverride(override string, perItem bool) bool {
 	}
 	cls := classifyItemOverride(override)
 	return !cls.ownEntry && !cls.inDomainRun
+}
+
+// cadenceParses reports whether ParseCadence accepts a cadence string.
+func cadenceParses(cadence string) bool {
+	_, err := ParseCadence(cadence)
+	return err == nil
 }
 
 // cadenceRuns reports whether a cadence string would ever fire. An unparseable
