@@ -558,12 +558,16 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 // records a successful answer the same way a normal direct call does.
 func (m *Manager) Probe(ctx context.Context, addr string) (Hello, error) {
 	m.mu.Lock()
-	k, self := m.keys, m.cfg.InstanceID
+	k, self, own := m.keys, m.cfg.InstanceID, m.cfg.DirectURL
 	m.mu.Unlock()
 	if k == nil {
 		return Hello{}, ErrNotMember
 	}
-	call := relay.ProxyCall{Method: http.MethodGet, Path: ProbePath}
+	intro, err := json.Marshal(probeIntro{DirectURL: own})
+	if err != nil {
+		return Hello{}, err
+	}
+	call := relay.ProxyCall{Method: http.MethodGet, Path: ProbePath, Body: intro}
 	res, err := m.callDirect(ctx, k, self, discovery.Peer{ID: ProbeTarget, URL: addr, Name: addr}, call)
 	if err != nil {
 		return Hello{}, err
@@ -578,6 +582,33 @@ func (m *Manager) Probe(ctx context.Context, addr string) (Hello, error) {
 	}
 	m.ConfirmAddress(h.InstanceID, confirmedAt, h.Name, h.Version)
 	return h, nil
+}
+
+// probeIntro is what a probe tells the member it reaches: where the prober
+// itself takes direct calls, so the pair knows each other after one probe
+// instead of waiting for the other side's own sweep.
+type probeIntro struct {
+	DirectURL string `json:"directUrl,omitempty"`
+}
+
+// probeBack answers a probe's introduction by probing the prober at the
+// address it named. Only a member not yet confirmed is probed back, so two
+// instances stop after one round instead of probing each other forever.
+func (m *Manager) probeBack(sender string, body []byte) {
+	var in probeIntro
+	if json.Unmarshal(body, &in) != nil {
+		return
+	}
+	u, err := url.Parse(strings.TrimSpace(in.DirectURL))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || m.confirmedDirect(sender) {
+		return
+	}
+	m.NoteAddress(sender, u.String())
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*sweepTimeout)
+		defer cancel()
+		_, _ = m.Probe(ctx, u.String())
+	}()
 }
 
 // The LAN sweep's bounds: sweepConcurrency limits how many probes run at
@@ -835,9 +866,12 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-	if target == ProbeTarget && call.Path != ProbePath {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+	if target == ProbeTarget {
+		if call.Path != ProbePath {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		m.probeBack(sender, call.Body)
 	}
 	status, out := m.serve(r.Context(), call)
 	sealed, err := relay.SealResult(k.frameKey, req.RequestID, relay.ProxyResult{Status: status, Body: out})

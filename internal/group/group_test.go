@@ -419,6 +419,38 @@ func TestProbeConfirmsAGroupMemberAtAnUnknownAddress(t *testing.T) {
 	}
 }
 
+// The member a probe reaches learns the prober from the same exchange, so the
+// two know each other without waiting for the other side's own sweep.
+func TestAProbedMemberProbesBackAndKnowsTheProber(t *testing.T) {
+	serveOn := func(m *Manager) *httptest.Server {
+		mux := http.NewServeMux()
+		mux.HandleFunc("POST "+directPath, m.ServeDirect)
+		srv := httptest.NewTLSServer(mux)
+		t.Cleanup(srv.Close)
+		return srv
+	}
+	a := NewManager(helloServe("id-a", "Cellar", "9.9.9"))
+	t.Cleanup(a.Close)
+	srvA := serveOn(a)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Name: "Cellar", Mode: ModeOff, DirectURL: srvA.URL})
+
+	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
+	t.Cleanup(b.Close)
+	srvB := serveOn(b)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOff, DirectURL: srvB.URL})
+
+	if _, err := a.Probe(context.Background(), srvB.URL); err != nil {
+		t.Fatalf("Probe: %v", err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for !b.confirmedDirect("id-a") {
+		if time.Now().After(deadline) {
+			t.Fatalf("B's members after A probed it = %+v, want A confirmed direct", b.Members())
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
 // A probe against a host running BombVault for a different group must find
 // nothing: the signature is checked with this group's key, not the
 // stranger's.
