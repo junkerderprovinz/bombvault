@@ -168,7 +168,7 @@ func TestAnEmptiedTargetLosesItsRows(t *testing.T) {
 	}
 }
 
-func TestATargetGettingRealContentAgainClearsItsAgingMark(t *testing.T) {
+func TestATargetGettingRealContentAgainIsAgedAgain(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := photosOnTheNAS(t, f)
 	// Docs lives at the domain path and copies to Hetzner, not B2, so the
@@ -189,6 +189,7 @@ func TestATargetGettingRealContentAgainClearsItsAgingMark(t *testing.T) {
 	// so the rules still predict B2 as aging-only even though this lands
 	// there for real.
 	f.hold(f.domainPath("files"), snap("orphan1", 9000, "misc"))
+	f.eng.forgets = nil
 
 	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
 		t.Fatal(err)
@@ -196,12 +197,12 @@ func TestATargetGettingRealContentAgainClearsItsAgingMark(t *testing.T) {
 	if n := len(heldAt(t, f, "b2:bucket:files")); n != 8 {
 		t.Fatalf("B2 holds %d, want the 7 kept photos plus the untracked snapshot", n)
 	}
-	if obs, found, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !found || obs.AgedAt != 0 {
-		t.Fatalf("B2's observation = %+v found=%v err=%v, want the aging mark cleared once something landed", obs, found, err)
+	if len(forgetLines(f, "b2:bucket:files")) == 0 {
+		t.Fatal("B2 was not aged although something landed there")
 	}
 }
 
-func TestATargetCopiedToAgainClearsItsAgingMarkEvenWithNothingNewToSend(t *testing.T) {
+func TestATargetCopiedToAgainIsAgedAgainEvenWithNothingNewToSend(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := keepLast(t, f, f.target("files", "B2", "b2:bucket:files"), 5)
 	f.fileSet("Docs", "")
@@ -220,6 +221,7 @@ func TestATargetCopiedToAgainClearsItsAgingMarkEvenWithNothingNewToSend(t *testi
 	// Docs back on to it sends nothing new.
 	f.hold("b2:bucket:files", copied("c1", "d1", 100, "fileset:Docs"))
 	f.rule("files", "fileset:Docs")
+	f.eng.forgets = nil
 
 	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
 		t.Fatal(err)
@@ -227,8 +229,8 @@ func TestATargetCopiedToAgainClearsItsAgingMarkEvenWithNothingNewToSend(t *testi
 	if n := len(heldAt(t, f, "b2:bucket:files")); n != 1 {
 		t.Fatalf("B2 holds %d, want the one copy it already had and nothing new", n)
 	}
-	if obs, found, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !found || obs.AgedAt != 0 {
-		t.Fatalf("B2's observation = %+v found=%v err=%v, want the aging mark cleared once Docs copies there again, even though nothing new landed", obs, found, err)
+	if len(forgetLines(f, "b2:bucket:files")) == 0 {
+		t.Fatal("B2 was not aged although its rules changed")
 	}
 }
 
@@ -249,5 +251,56 @@ func TestChangedRetentionAgesAMarkedTargetAgain(t *testing.T) {
 	}
 	if n := len(heldAt(t, f, "b2:bucket:files")); n != 5 {
 		t.Fatalf("B2 holds %d once its keep-policy tightened, want 5", n)
+	}
+}
+
+// quietScene is plex on the domain path with both of its snapshots already at
+// B2, which keeps the last three: a pass finds nothing to send.
+func quietScene(t *testing.T) (*placementFixture, store.OffsiteTarget) {
+	t.Helper()
+	f := newPlacementFixture(t)
+	b2 := keepLast(t, f, f.target("containers", "B2", "b2:bucket:containers"), 3)
+	f.container("plex", "")
+	f.replicated("containers")
+	f.hold(f.domainPath("containers"), snap("p1", 100, "container:plex"), snap("p2", 200, "container:plex"))
+	f.hold("b2:bucket:containers", copied("b1", "p1", 100, "container:plex"), copied("b2", "p2", 200, "container:plex"))
+	return f, b2
+}
+
+func TestACopyTargetNothingArrivedAtIsNotAgedAgain(t *testing.T) {
+	f, _ := quietScene(t)
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.forgets) == 0 || len(f.eng.prunes) == 0 {
+		t.Fatalf("the first pass did not age B2: forgot %+v, pruned %v", f.eng.forgets, f.eng.prunes)
+	}
+	f.eng.forgets, f.eng.prunes = nil, nil
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.forgets)+len(f.eng.prunes) != 0 {
+		t.Fatalf("a pass that sent nothing aged B2 again: forgot %+v, pruned %v", f.eng.forgets, f.eng.prunes)
+	}
+}
+
+func TestACopyTargetIsAgedWhenItsPolicyWouldForgetWhatItHolds(t *testing.T) {
+	f, b2 := quietScene(t)
+	b2.RetentionKeepLast, b2.RetentionKeepDaily = 0, 1
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	// Another instance leaves a second snapshot of plex on the same day at B2,
+	// which the daily rule forgets although nothing was copied there.
+	f.hold("b2:bucket:containers", append(heldAt(t, f, "b2:bucket:containers"), snap("x1", 150, "container:plex"))...)
+	f.eng.forgets = nil
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(forgetLines(f, "b2:bucket:containers")) == 0 {
+		t.Fatal("B2 was not aged although its keep-daily rule forgets a snapshot it holds")
 	}
 }

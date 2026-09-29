@@ -3914,12 +3914,16 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		log.Printf("api: offsite %s: not applying retention - no source could account for this domain's snapshots this pass", domain) //nolint:gosec // G706: domain is a fixed literal
 	case target.Immutable:
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
-	case agingOnly && visit.aged:
-		log.Printf("api: offsite %s: %s was aged under these rules already; listed only", domain, placementTargetName(target)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+	case visit.aged && len(out.landed) == 0 && !out.uncertain && dstErr == nil &&
+		!s.policyWouldForget(dstSnaps, targetOffsiteRetentionPolicy(target)):
+		// Nothing arrived since the target was aged under these rules, and
+		// the listing shows nothing its keep-policy would forget, so a forget
+		// and a prune would only bill the calls.
+		log.Printf("api: offsite %s: %s was aged under these rules already and nothing arrived; listed only", domain, placementTargetName(target)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
 	default:
 		settled = s.ageTarget(ctx, domain, dest, mode, target, visit, dstSnaps, dstErr, out.landed)
 	}
-	s.noteAged(domain, target, visit, agingOnly, settled, len(out.landed) > 0)
+	s.noteAged(domain, target, visit, settled, len(out.landed) > 0)
 	// Sample the off-site repo size into the repo_stats time series and evaluate the
 	// growth budget. When a budget is set we sample SYNCHRONOUSLY first so the check
 	// sees THIS replication's fresh size — including the very first replication,

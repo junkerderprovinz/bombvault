@@ -82,8 +82,9 @@ func TestASnapshotTheTargetWouldForgetIsNotCopied(t *testing.T) {
 	if got := copiedIDs(f, s3); len(got) != 0 {
 		t.Fatalf("second pass copied %v again, which S3's keep-last 2 forgets right after", got)
 	}
-	if got, want := forgetLines(f, s3), []string{"fileset:A keep-last 2 prune=false", "fileset:C keep-last 2 prune=false"}; !slices.Equal(got, want) {
-		t.Fatalf("forgets = %v, want the keep-policy still applied", got)
+	// S3 already holds what its keep-policy leaves, so the pass does not age it.
+	if got := forgetLines(f, s3); len(got) != 0 {
+		t.Fatalf("forgets = %v, want none at a target the policy has nothing to take from", got)
 	}
 	if n := len(heldAt(t, f, s3)); n != 4 {
 		t.Fatalf("S3 holds %d, want the newest two of A and of C", n)

@@ -96,8 +96,8 @@ type targetVisit struct {
 	filtered    bool // a name is left out here, so every id restic gets is chosen by the rules
 	observe     bool // the target has a row, so what it holds is recorded
 	agingOnly   bool // no item is copied here; the visit lists and ages what the target holds
-	aged        bool // it was aged under this state of the rules already
-	wasAged     bool // an aging mark exists, cleared when items are copied here again
+	aged        bool // it was aged under this state of the rules and nothing landed since
+	wasAged     bool // an aging mark exists
 	unreachable bool // a source could not be reached, so the keep-policy does not run after this pass
 }
 
@@ -106,13 +106,16 @@ type targetVisit struct {
 // last listing stays closed.
 func (r replicationPass) visit(t store.OffsiteTarget) (targetVisit, bool) {
 	v := targetVisit{p: r.p, owners: r.owners, targetID: t.ID, filtered: r.p.leavesOutAny(t.ID), observe: t.ID != ""}
-	if !r.p.State.HasRules() || t.ID == "" {
+	if t.ID == "" {
 		return v, true
 	}
 	o, listed := r.listed[t.ID]
-	v.agingOnly = !r.itemsCopiedTo(t.ID)
 	v.wasAged = listed && o.AgedAt > 0
 	v.aged = v.wasAged && o.RulesRev == r.p.rulesRev(t)
+	if !r.p.State.HasRules() {
+		return v, true
+	}
+	v.agingOnly = !r.itemsCopiedTo(t.ID)
 	return v, r.p.anyCopiesTo(t.ID) || !listed || r.holds(t.ID)
 }
 
@@ -366,15 +369,53 @@ func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionP
 	if err != nil {
 		return nil
 	}
-	groups, _ := s.foldAliasedIdentityTags(identityTags(snaps), snaps)
+	groups, members, shared := s.policyGroups(snaps)
+	out := map[string]bool{}
+	for i, g := range groups {
+		if shared[i] || held.holdsAny(g) {
+			continue
+		}
+		if removed, ok := p.Forgets(members[i]); ok {
+			maps.Copy(out, removed)
+		}
+	}
+	return out
+}
+
+// policyWouldForget reports whether the per-item forget ageTarget runs could
+// remove anything from snaps. A group whose outcome cannot be predicted counts
+// as one that would; a held group is left alone by the forget as well.
+func (s *Service) policyWouldForget(snaps []restic.Snapshot, p restic.RetentionPolicy) bool {
+	held, err := s.anomalies.HeldIdentityTags()
+	if err != nil {
+		return true
+	}
+	groups, members, shared := s.policyGroups(snaps)
+	for i, g := range groups {
+		if held.holdsAny(g) {
+			continue
+		}
+		removed, ok := p.Forgets(members[i])
+		if shared[i] || !ok || len(removed) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// policyGroups splits snaps into the identity groups applyRetentionToTags
+// forgets one by one. shared marks a group with a snapshot that is in another
+// group too.
+func (s *Service) policyGroups(snaps []restic.Snapshot) (groups [][]string, members [][]restic.Snapshot, shared []bool) {
+	groups, _ = s.foldAliasedIdentityTags(identityTags(snaps), snaps)
 	groupOf := map[string]int{}
 	for i, g := range groups {
 		for _, tag := range g {
 			groupOf[tag] = i
 		}
 	}
-	members := make([][]restic.Snapshot, len(groups))
-	shared := make([]bool, len(groups))
+	members = make([][]restic.Snapshot, len(groups))
+	shared = make([]bool, len(groups))
 	for _, sn := range snaps {
 		in := map[int]bool{}
 		for _, tag := range sn.Tags {
@@ -387,16 +428,7 @@ func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionP
 			shared[i] = shared[i] || len(in) > 1
 		}
 	}
-	out := map[string]bool{}
-	for i, g := range groups {
-		if shared[i] || held.holdsAny(g) {
-			continue
-		}
-		if removed, ok := p.Forgets(members[i]); ok {
-			maps.Copy(out, removed)
-		}
-	}
-	return out
+	return groups, members, shared
 }
 
 // copyTo is restic copy into dest, run once more when a stale lock at dest was
@@ -547,17 +579,20 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 	return err == nil
 }
 
-// noteAged keeps the aging mark: set after a pass that only aged the target,
-// cleared once something lands there again, predicted or not, since an
-// untracked snapshot can slip through a pass the rules still call
-// aging-only. A new state of the rules needs no clearing, because its
-// fingerprint differs.
-func (s *Service) noteAged(domain string, target store.OffsiteTarget, v targetVisit, agingOnly, settled, landed bool) {
+// noteAged keeps the aging mark, which says the target holds what its
+// keep-policy leaves under the rules it was aged by: set after every pass that
+// aged it, cleared when something landed that no aging followed. A new state
+// of the rules needs no clearing, because its fingerprint differs. Only the
+// domains with copy rules keep observations to hold the mark.
+func (s *Service) noteAged(domain string, target store.OffsiteTarget, v targetVisit, settled, landed bool) {
+	if !v.observe || !validPlacementDomain(domain) {
+		return
+	}
 	var err error
 	switch {
-	case agingOnly && settled:
+	case settled:
 		err = s.store.MarkTargetAged(domain, target.ID, v.p.rulesRev(target), time.Now().Unix())
-	case (landed || !v.agingOnly) && v.wasAged:
+	case landed && v.wasAged:
 		err = s.store.ResetTargetAged(domain, target.ID)
 	}
 	if err != nil {
