@@ -7,7 +7,7 @@
 // a header inside the window and on one line at 1280px, the actions beside
 // the name and the one-line rows the phone lets wrap. German, because its
 // labels run longest.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -322,6 +322,13 @@ async function settle(page: Page): Promise<void> {
   );
 }
 
+// boxesInOneFrame reads the boxes of several elements in one frame, so a
+// layout change between two separate reads cannot set them apart.
+async function boxesInOneFrame(...locators: Locator[]): Promise<DOMRect[]> {
+  const handles = await Promise.all(locators.map((l) => l.elementHandle()));
+  return locators[0].page().evaluate((els) => els.map((el) => el!.getBoundingClientRect().toJSON() as DOMRect), handles);
+}
+
 async function cardGap(page: Page): Promise<string> {
   return page
     .getByRole("heading", { level: 1 })
@@ -399,6 +406,10 @@ for (const width of [320, 360]) {
     await expect(nextcloud.getByText("Backup vom", { exact: true })).toBeVisible();
     await nextcloud.getByRole("button", { expanded: false }).filter({ hasText: "→" }).last().click();
     await card(page, WINDOWS).getByRole("button", { name: "Backups", exact: true }).click();
+    // The restore checks of both open panels answer after the clicks and grow
+    // the cards above the viewport, which scroll anchoring then follows.
+    await expect(page.getByText("Repository erreichbar", { exact: true })).toHaveCount(2);
+    await expect(page.getByText("Wird geprüft…")).toHaveCount(0);
     await settle(page);
 
     await expectFits(page);
@@ -409,8 +420,7 @@ for (const width of [320, 360]) {
     // the width it needs.
     for (const { dataset } of DATASETS) {
       const row = card(page, dataset);
-      const nameBox = (await row.getByText(dataset, { exact: true }).first().boundingBox())!;
-      const editBox = (await row.getByRole("button", { name: "Bearbeiten" }).boundingBox())!;
+      const [nameBox, editBox] = await boxesInOneFrame(row.getByText(dataset, { exact: true }).first(), row.getByRole("button", { name: "Bearbeiten" }));
       expect(editBox.y, `the actions of "${dataset}" share the name's row`).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
     }
   });
