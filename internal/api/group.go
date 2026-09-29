@@ -133,6 +133,9 @@ func (s *Service) directURL() string {
 // peerRoutes exist here, so nothing else on this instance is reachable from
 // the group however the main router grows.
 func (s *Service) servePeer(ctx context.Context, call relay.ProxyCall) (status int, body []byte) {
+	if status, body, matched := s.serveRemoteView(ctx, call); matched {
+		return status, body
+	}
 	req, err := http.NewRequestWithContext(ctx, call.Method, call.Path, bytes.NewReader(call.Body))
 	if err != nil {
 		return http.StatusBadRequest, nil
@@ -251,10 +254,11 @@ func (s *Service) handlePeerStatus(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, fleetStatusResponse{
-		OK:           true,
-		InstanceName: instanceDisplayName(settings),
-		Version:      Version,
-		Domains:      domains,
+		OK:                true,
+		InstanceName:      instanceDisplayName(settings),
+		Version:           Version,
+		Domains:           domains,
+		RemoteViewEnabled: settings.RemoteViewEnabled,
 	})
 }
 

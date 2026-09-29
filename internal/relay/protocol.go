@@ -109,6 +109,12 @@ type ProxyCall struct {
 	// the receiver can refuse a frame it has run before or one that is old.
 	ID   string `json:"id"`
 	Sent int64  `json:"sent"`
+	// Sender is the instance id of the caller, set by the same key that seals
+	// the rest of the call. Direct and relay calls both carry it here, so a
+	// handler names who asked for something regardless of which transport
+	// carried the call. Like every other claim under the group key, it is
+	// claimed rather than proven: any member can seal a call under this key.
+	Sender string `json:"sender,omitempty"`
 }
 
 // ProxyResponse is the wire form of the answer to one ProxyRequest.

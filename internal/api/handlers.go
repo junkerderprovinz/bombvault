@@ -25,6 +25,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -2312,6 +2313,11 @@ type settingsView struct {
 	// InstanceName is this instance's own display name, the name the other
 	// members of its pairing group show it under. Not a secret.
 	InstanceName string `json:"instanceName"`
+	// RemoteViewEnabled lets a paired member open this instance in remote
+	// view. On by default, so it is a pointer for the same reason
+	// DBDumpsEnabled above is one: nil (an old client's PUT) leaves it
+	// untouched instead of silently switching it off.
+	RemoteViewEnabled *bool `json:"remoteViewEnabled"`
 	// EverythingSchedule is the cadence for the "Backup Everything" pass (a 6th,
 	// independent pseudo-domain that runs containers/vms/flash/files/config in
 	// sequence). 'off' (the default) leaves it fully inert. EverythingPreHook /
@@ -2441,6 +2447,7 @@ func toView(s store.Settings) settingsView {
 		AnomalyNotifyMin:            s.AnomalyNotifyMin,
 		AnomalyRetentionHold:        &s.AnomalyRetentionHold,
 		InstanceName:                s.InstanceName,
+		RemoteViewEnabled:           &s.RemoteViewEnabled,
 		EverythingSchedule:          s.EverythingSchedule,
 		EverythingPreHook:           s.EverythingPreHook,
 		EverythingPostHook:          s.EverythingPostHook,
@@ -2965,6 +2972,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		// on a save of an unrelated card.
 		if v.DBDumpsEnabled != nil {
 			cur.DBDumpsEnabled = *v.DBDumpsEnabled
+		}
+		if v.RemoteViewEnabled != nil {
+			cur.RemoteViewEnabled = *v.RemoteViewEnabled
 		}
 		anomalyChanged = applyAnomalySettings(cur, v)
 		nameChanged = cur.InstanceName != strings.TrimSpace(v.InstanceName)
@@ -3861,21 +3871,40 @@ func (h *Handler) handleRuns(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": h.runViews(runs)})
 }
 
-// runViews enriches stored runs with their target's name and domain and names
-// the MCP key behind the ones an assistant started.
+// runViews enriches stored runs with their target's name and domain, names
+// the MCP key behind the ones an assistant started, and names the group
+// member behind the ones a remote-view call started.
 func (h *Handler) runViews(runs []store.Run) []runView {
 	name, domain := h.runTargetMaps()
 	keys := h.mcpKeysBehind(runs)
+	members := h.svc.pairing().Members()
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
 		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]}
-		if key, ok := keys[r.StartedViaKey]; ok {
-			v.StartedViaLabel = key.Label
-			v.StartedViaRevoked = key.RevokedAt > 0
+		switch r.StartedVia {
+		case "mcp":
+			if key, ok := keys[r.StartedViaKey]; ok {
+				v.StartedViaLabel = key.Label
+				v.StartedViaRevoked = key.RevokedAt > 0
+			}
+		case "remote":
+			v.StartedViaLabel = remoteMemberLabel(members, r.StartedViaKey)
 		}
 		views = append(views, v)
 	}
 	return views
+}
+
+// remoteMemberLabel is the name a remote-view run's StartedViaLabel shows: the
+// member's current display name where this instance still sees it, else the
+// id it claimed, so a run stays attributed after the member drops offline.
+func remoteMemberLabel(members []group.Member, memberID string) string {
+	for _, m := range members {
+		if m.ID == memberID {
+			return m.Name
+		}
+	}
+	return memberID
 }
 
 // mcpKeysBehind indexes the MCP keys the runs name, and reads none at all when

@@ -32,8 +32,12 @@ type FleetPeer struct {
 	// LastPollDomainsJSON is the peer's DomainStatusEntry[] response as
 	// received. The store treats it as an opaque string.
 	LastPollDomainsJSON string
-	CreatedAt           int64
-	SortOrder           int
+	// LastPollRemoteViewEnabled is whether the peer's remote-view switch was on
+	// as of the last poll, so the Fleet card can grey out Open without a live
+	// call.
+	LastPollRemoteViewEnabled bool
+	CreatedAt                 int64
+	SortOrder                 int
 }
 
 // NeedsPairing reports whether the row predates pairing and has no member to
@@ -41,7 +45,7 @@ type FleetPeer struct {
 func (p FleetPeer) NeedsPairing() bool { return p.MemberID == "" }
 
 const fleetPeerCols = `id, member_id, name, url, enabled, last_poll_at, last_poll_ok, last_poll_error,
-	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order`
+	last_poll_instance_name, last_poll_version, last_poll_domains_json, last_poll_remote_view_enabled, created_at, sort_order`
 
 // CreateFleetPeer inserts a new fleet peer and returns the stored row. An
 // empty ID is assigned and a zero CreatedAt is set to now.
@@ -54,9 +58,9 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 	}
 	_, err := r.db.Exec(`
 		INSERT INTO fleet_peers (`+fleetPeerCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.LastPollAt, nullBool(p.LastPollOK), p.LastPollError,
-		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder,
+		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, boolInt(p.LastPollRemoteViewEnabled), p.CreatedAt, p.SortOrder,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("CreateFleetPeer: %w", err)
@@ -87,7 +91,7 @@ func (r *Repo) UpdateFleetPeer(p FleetPeer) error {
 // the given id, so the scheduled poll and the poll-now endpoint can store a
 // result without rewriting the whole row. Updating a missing id affects no
 // rows and is not an error.
-func (r *Repo) UpdateFleetPeerPollResult(id string, at int64, ok sql.NullBool, pollErr, instanceName, version, domainsJSON string) error {
+func (r *Repo) UpdateFleetPeerPollResult(id string, at int64, ok sql.NullBool, pollErr, instanceName, version, domainsJSON string, remoteViewEnabled bool) error {
 	_, err := r.db.Exec(`
 		UPDATE fleet_peers SET
 		  last_poll_at            = ?,
@@ -95,9 +99,10 @@ func (r *Repo) UpdateFleetPeerPollResult(id string, at int64, ok sql.NullBool, p
 		  last_poll_error         = ?,
 		  last_poll_instance_name = ?,
 		  last_poll_version       = ?,
-		  last_poll_domains_json  = ?
+		  last_poll_domains_json  = ?,
+		  last_poll_remote_view_enabled = ?
 		WHERE id = ?`,
-		at, nullBool(ok), pollErr, instanceName, version, domainsJSON, id,
+		at, nullBool(ok), pollErr, instanceName, version, domainsJSON, boolInt(remoteViewEnabled), id,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateFleetPeerPollResult: %w", err)
@@ -150,14 +155,15 @@ func (r *Repo) DeleteFleetPeer(id string) error {
 
 func scanFleetPeer(s scanner) (FleetPeer, error) {
 	var p FleetPeer
-	var enabled int
+	var enabled, remoteViewEnabled int
 	err := s.Scan(
 		&p.ID, &p.MemberID, &p.Name, &p.URL, &enabled, &p.LastPollAt, &p.LastPollOK, &p.LastPollError,
-		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder,
+		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &remoteViewEnabled, &p.CreatedAt, &p.SortOrder,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("scanFleetPeer: %w", err)
 	}
 	p.Enabled = enabled != 0
+	p.LastPollRemoteViewEnabled = remoteViewEnabled != 0
 	return p, nil
 }

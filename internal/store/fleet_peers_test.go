@@ -39,7 +39,7 @@ func TestFleetPeerCRUD(t *testing.T) {
 	if err := r.UpdateFleetPeer(back); err != nil {
 		t.Fatalf("UpdateFleetPeer: %v", err)
 	}
-	if err := r.UpdateFleetPeerPollResult(got.ID, 1_700_000_000, sql.NullBool{Valid: true, Bool: true}, "", "tower-instance", "1.2.3", `[{"domain":"containers"}]`); err != nil {
+	if err := r.UpdateFleetPeerPollResult(got.ID, 1_700_000_000, sql.NullBool{Valid: true, Bool: true}, "", "tower-instance", "1.2.3", `[{"domain":"containers"}]`, true); err != nil {
 		t.Fatalf("UpdateFleetPeerPollResult: %v", err)
 	}
 	polled, ok, err := r.GetFleetPeer(got.ID)
@@ -48,7 +48,7 @@ func TestFleetPeerCRUD(t *testing.T) {
 	}
 	if polled.LastPollAt != 1_700_000_000 || !polled.LastPollOK.Bool ||
 		polled.LastPollInstanceName != "tower-instance" || polled.LastPollVersion != "1.2.3" ||
-		polled.LastPollDomainsJSON != `[{"domain":"containers"}]` {
+		polled.LastPollDomainsJSON != `[{"domain":"containers"}]` || !polled.LastPollRemoteViewEnabled {
 		t.Fatalf("UpdateFleetPeerPollResult round-trip mismatch: %+v", polled)
 	}
 	if polled.Name != "tower (renamed)" || polled.Enabled {

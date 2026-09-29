@@ -726,7 +726,7 @@ func settingsGroups(v settingsView) []string {
 	// above: it is on by default, so switching it off is what an apply imposes.
 	add("domains", v.ContainersEnabled || v.VMsEnabled || v.FlashEnabled || v.ConfigEnabled || v.FilesEnabled || v.ZFSEnabled ||
 		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "" || v.ZFSPath != "" ||
-		(v.DBDumpsEnabled != nil && !*v.DBDumpsEnabled))
+		(v.DBDumpsEnabled != nil && !*v.DBDumpsEnabled) || (v.RemoteViewEnabled != nil && !*v.RemoteViewEnabled))
 	add("schedules", v.ContainersSchedule != "" || v.VMsSchedule != "" || v.FlashSchedule != "" ||
 		v.ConfigSchedule != "" || v.FilesSchedule != "" || v.ZFSSchedule != "")
 	// The whole-server pass is its own area, not part of "schedules": it is the
@@ -1128,6 +1128,12 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	// file is applied to.
 	if v.DBDumpsEnabled != nil {
 		out.DBDumpsEnabled = *v.DBDumpsEnabled
+	}
+	// Same contract again: an export from before remote view existed carries
+	// no value for it, and reading that as "off" would silently withdraw this
+	// instance from every peer's Open button on import.
+	if v.RemoteViewEnabled != nil {
+		out.RemoteViewEnabled = *v.RemoteViewEnabled
 	}
 	// Same contract as the dump switch, and the same reason: a file written
 	// before this version carries none of the four, and reading that as "off"

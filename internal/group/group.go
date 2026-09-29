@@ -334,7 +334,7 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 	if k == nil {
 		return 0, nil, ErrNotMember
 	}
-	call := relay.ProxyCall{Method: method, Path: path, Body: body}
+	call := relay.ProxyCall{Method: method, Path: path, Body: body, Sender: self}
 
 	var directErr error
 	for _, p := range m.disc.Peers() {

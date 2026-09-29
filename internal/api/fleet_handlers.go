@@ -25,8 +25,12 @@ type fleetPeerView struct {
 	LastPollInstanceName string              `json:"lastPollInstanceName"`
 	LastPollVersion      string              `json:"lastPollVersion"`
 	LastPollDomains      []DomainStatusEntry `json:"lastPollDomains"`
-	CreatedAt            int64               `json:"createdAt"`
-	SortOrder            int                 `json:"sortOrder"`
+	// RemoteViewEnabled is whether the peer's remote-view switch was on as of
+	// the last poll. The Fleet card's Open button reads this rather than
+	// calling out just to find out.
+	RemoteViewEnabled bool  `json:"remoteViewEnabled"`
+	CreatedAt         int64 `json:"createdAt"`
+	SortOrder         int   `json:"sortOrder"`
 }
 
 // fleetPeerInput is the update request body. The pointers tell a field left
@@ -59,6 +63,7 @@ func fleetPeerToView(p store.FleetPeer, members []group.Member) fleetPeerView {
 		LastPollInstanceName: p.LastPollInstanceName,
 		LastPollVersion:      p.LastPollVersion,
 		LastPollDomains:      domains,
+		RemoteViewEnabled:    p.LastPollRemoteViewEnabled,
 		CreatedAt:            p.CreatedAt,
 		SortOrder:            p.SortOrder,
 	}

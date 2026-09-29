@@ -22,6 +22,9 @@ type fleetStatusResponse struct {
 	InstanceName string              `json:"instanceName"`
 	Version      string              `json:"version"`
 	Domains      []DomainStatusEntry `json:"domains"`
+	// RemoteViewEnabled is the peer's own remote-view switch, so the Fleet
+	// card can offer or grey out Open without a call that would only fail.
+	RemoteViewEnabled bool `json:"remoteViewEnabled"`
 }
 
 // syncFleetPeers gives every reachable member a Fleet row. A row from before
@@ -92,6 +95,7 @@ func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer)
 	domainsJSON := p.LastPollDomainsJSON
 	instanceName := p.LastPollInstanceName
 	version := p.LastPollVersion
+	remoteViewEnabled := p.LastPollRemoteViewEnabled
 	if err != nil {
 		detail = scrubError(err)
 		if len(detail) > 200 {
@@ -100,11 +104,12 @@ func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer)
 	} else {
 		instanceName = resp.InstanceName
 		version = resp.Version
+		remoteViewEnabled = resp.RemoteViewEnabled
 		if b, mErr := json.Marshal(resp.Domains); mErr == nil {
 			domainsJSON = string(b)
 		}
 	}
-	if uErr := s.store.UpdateFleetPeerPollResult(p.ID, time.Now().Unix(), ok, detail, instanceName, version, domainsJSON); uErr != nil {
+	if uErr := s.store.UpdateFleetPeerPollResult(p.ID, time.Now().Unix(), ok, detail, instanceName, version, domainsJSON, remoteViewEnabled); uErr != nil {
 		log.Printf("api: fleet: record poll result for %q: %v", p.Name, uErr)
 	}
 	return resp, err

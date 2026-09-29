@@ -2181,6 +2181,19 @@ UPDATE fleet_peers SET token_enc = x'';`,
 ALTER TABLE group_state ADD COLUMN member_seen_at INTEGER NOT NULL DEFAULT 0;
 UPDATE group_state SET joined_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE length(secret_enc) > 0;`,
 	},
+	{
+		// Remote view: a paired member may open this instance, see its data and
+		// start its harmless actions, gated by this switch (default on, unlike
+		// the other group features, since it only ever exposes what the
+		// remote-view allowlist already lets a member reach). last_poll_remote_
+		// view_enabled caches whether the LAST poll of a Fleet peer found remote
+		// view on there, so the Open button reads its state without a live call.
+		version:          pairingMigration + 6,
+		name:             "remote_view",
+		alreadySatisfied: columnPresent("settings", "remote_view_enabled"),
+		sql: `ALTER TABLE settings ADD COLUMN remote_view_enabled INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE fleet_peers ADD COLUMN last_poll_remote_view_enabled INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

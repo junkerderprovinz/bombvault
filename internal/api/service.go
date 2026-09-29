@@ -247,6 +247,11 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// remoteHandler is the API handler remote-view calls from a group member
+	// are dispatched into, wired by NewHandler once the two are built. It is
+	// the same handler a browser reaches, so a remote-view call runs the exact
+	// route it would locally, just gated by the remote-view allowlist first.
+	remoteHandler *Handler
 	// zfs owns the pools the ZFS domain snapshots. Optional; nil refuses every
 	// entry point of that domain with ssh-missing rather than skipping silently.
 	zfs zfs.Host

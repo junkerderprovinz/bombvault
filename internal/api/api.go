@@ -74,6 +74,14 @@ type Handler struct {
 	// mcp holds the MCP endpoint's transport, its per-key budget and the
 	// counters /metrics reports. mountMCP creates one when NewHandler did not.
 	mcp *mcpState
+
+	// remoteMuxOnce builds remoteMuxHandler, the allowlisted subset of this
+	// handler's own routes that a group member's remote-view call may reach.
+	// Built once and reused by both the outbound forward route (checking what
+	// a call to a peer may ask) and svc.servePeer (serving what a peer asks of
+	// this instance), so the two sides can never drift apart.
+	remoteMuxOnce    sync.Once
+	remoteMuxHandler http.Handler
 }
 
 // NewHandler constructs the API handler.
@@ -85,7 +93,7 @@ func NewHandler(
 	scheduler *schedule.Scheduler,
 	probes []spike.Probe,
 ) *Handler {
-	return &Handler{
+	h := &Handler{
 		cfg:       cfg,
 		store:     st,
 		docker:    d,
@@ -112,6 +120,13 @@ func NewHandler(
 		loginFails: make(map[string][]time.Time),
 		mcp:        newMCPState(),
 	}
+	// Back-reference so a group member's remote-view call, served by svc, can
+	// run through this handler's own routes. Some tests build a Service with
+	// no Handler around it, so svc may be nil here.
+	if svc != nil {
+		svc.remoteHandler = h
+	}
+	return h
 }
 
 // SetProgress wires the live-progress store the SSE endpoint streams from (the
@@ -193,6 +208,12 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/group", h.handleGroupLeave)
 	mux.HandleFunc("PUT /api/group/relay", h.handleGroupRelay)
 	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
+
+	// Remote view: forwards an allowlisted call to a paired member and answers
+	// with whatever it answered. Protected like every route below, since the
+	// browser needs this instance's own session; the pattern carries no
+	// method, so every verb reaches handleInstanceForward for the same check.
+	mux.HandleFunc("/api/instances/{id}/{rest...}", h.handleInstanceForward)
 
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
