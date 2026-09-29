@@ -301,7 +301,7 @@ func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	authed := false
 	if on {
-		if c, cErr := r.Cookie(sessionCookieName); cErr == nil {
+		if c, cErr := h.sessionCookie(r); cErr == nil {
 			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
 		}
 	}

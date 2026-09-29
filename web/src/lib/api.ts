@@ -4143,6 +4143,13 @@ export interface GroupState extends OkEnvelope {
   joinedAgo: number;
   /** Another member has shown up since this instance entered the group. */
   memberSeen: boolean;
+  /** This instance's own address on the local network, as announced to
+   *  members: learned from the browser, set by hand, or a last-resort LAN
+   *  guess. */
+  selfAddress: string;
+  /** selfAddress was set by hand and stops being replaced by a newly
+   *  learned one. */
+  selfAddressManual: boolean;
 }
 
 /** Why a phrase did not decode, with the word at fault. */
@@ -4190,6 +4197,18 @@ export function leaveGroup(): Promise<GroupState> {
  *  the serve switch; fields left out keep their value. */
 export function setRelay(patch: { mode?: RelayMode; url?: string; serve?: boolean }): Promise<GroupState> {
   return fetchJSON("/api/group/relay", { method: "PUT", body: JSON.stringify(patch) });
+}
+
+/** PUT /api/group/address - set this instance's own direct address by hand,
+ *  or clear the override with an empty url so it is learned again. */
+export function setDirectAddress(url: string): Promise<GroupState> {
+  return fetchJSON("/api/group/address", { method: "PUT", body: JSON.stringify({ url }) });
+}
+
+/** POST /api/group/probe - try one address for a group member directly,
+ *  for a subnet or a port the LAN sweep does not reach on its own. */
+export function probeAddress(url: string): Promise<GroupState> {
+  return fetchJSON("/api/group/probe", { method: "POST", body: JSON.stringify({ url }) });
 }
 
 /** GET /api/group/members/{id}/repos - the locations a member offers. */

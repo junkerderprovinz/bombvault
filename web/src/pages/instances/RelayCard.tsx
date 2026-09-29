@@ -11,7 +11,7 @@ import { Button } from "../../components/Button";
 import { IconDisclosure } from "../../components/IconDisclosure";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Selector } from "../../components/Selector";
-import { setRelay, type GroupState, type RelayMode } from "../../lib/api";
+import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../lib/api";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { tLtr } from "../../lib/ltrFragments";
@@ -57,6 +57,71 @@ function hostOf(url: string): string {
   } catch {
     return url;
   }
+}
+
+/** SelfAddressField is where this instance's own address on the local
+ *  network is shown and, when it is wrong, corrected: prefilled from the
+ *  browser, saved on its own like the rest of the card. */
+function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
+  const [value, setValue] = useState(group.selfAddress);
+  const [error, setError] = useState<string | null>(null);
+  const editing = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!editing.current) setValue(group.selfAddress);
+  }, [group.selfAddress]);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  async function save(v: string) {
+    try {
+      const res = await setDirectAddress(v);
+      if (res.ok) {
+        onGroup(res);
+        setError(null);
+      } else {
+        setError(res.error ?? t("relay.selfAddressError"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("relay.selfAddressError"));
+    }
+  }
+
+  function type(v: string) {
+    editing.current = true;
+    setValue(v);
+    setError(null);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      void save(v).then(() => {
+        editing.current = false;
+      });
+    }, 800);
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor="self-address" className="inline-flex items-center gap-1.5 text-sm font-medium text-carbon-text">
+        {t("relay.selfAddressLabel")}
+        <InfoBubble tip={t("relay.selfAddressTip")} />
+      </label>
+      <input
+        id="self-address"
+        data-testid="self-address-input"
+        type="url"
+        value={value}
+        onChange={(e) => type(e.target.value)}
+        spellCheck={false}
+        autoComplete="off"
+        placeholder="https://192.168.1.20:3443"
+        dir="ltr"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
+      />
+      {error && <p className="text-caption text-statusFail">{error}</p>}
+    </div>
+  );
 }
 
 function Fact({ glyph, label, text }: { glyph: "need" | "sees" | "search" | "shield"; label?: string; text: React.ReactNode }) {
@@ -200,6 +265,8 @@ export function RelayCard({
         <p className="min-w-0 flex-[1_1_16rem] text-[15px] text-carbon-text">{t("relay.lead")}</p>
         <span data-testid="relay-state">{state}</span>
       </div>
+
+      <SelfAddressField group={group} onGroup={onGroup} t={t} />
 
       <Selector
         items={MODES.map((m) => ({ id: m, label: t(COPY[m].name), icon: <RouteGlyph kind={m} /> }))}

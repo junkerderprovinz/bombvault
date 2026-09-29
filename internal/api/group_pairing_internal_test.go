@@ -115,7 +115,9 @@ func (in *instance) do(t *testing.T, method, path string, body any) (int, map[st
 	r := httptest.NewRequest(method, path, rd)
 	r.Header.Set("Content-Type", "application/json")
 	if in.session != "" {
-		r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: in.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+		// Every instance in these tests runs with HTTPOnly: true, so this is
+		// the cookie name that mode reads.
+		r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
 	}
 	w := httptest.NewRecorder()
 	in.router.ServeHTTP(w, r)
