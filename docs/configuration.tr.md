@@ -90,6 +90,7 @@ Hızlı kurulum:
 - **Etki alanı başına birden fazla site dışı hedef:** her etki alanı aynı anda birkaç site dışı hedefe çoğaltabilir. Ayarlar, Site dışı'nda her biri kendi deposu, S3 depolama sınıfı, yalnızca ekleme bayrağı, saklama ve büyüme bütçesiyle ek hedefler ekleyin; hepsi o etki alanının site dışı zamanlamasında çoğaltılır. Mevcut tek bir site dışı kurulum ilk hedef olarak taşınır.
 - **Kaynak başına saklama:** yerel ilke Ayarlar, Yollar ve Depolama'da yer alır; site dışı ilke Ayarlar, Site dışı'nda (site dışı anlık görüntüleri asla otomatik kırpmamak için tümünü sıfır bırakın).
 - **Bant genişliği sınırları:** Ayarlar, Site dışı altında restic yükleme/indirme hızını sınırlayın.
+- **Önce yayın:** Ayarlar, Site dışı altında medya sunucularını (Plex, Jellyfin ve Emby imaj adına göre önceden seçilir), bir sunucunun yayın yapıyor sayılacağı gönderim hızını, yayın sırasındaki yükleme sınırını ve bir yayından ne kadar sonra normal sınırın döneceğini seçersin.
 - **Soğuk ve arşiv depolama sınıfı (S3):** yerel bir S3 site dışı deposu için geri yüklenebilir bir katman seçin (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone uzak konumları sınıflarını rclone yapılandırmasında ayarlar.
 
 ## Anormallikler {#anomalies}

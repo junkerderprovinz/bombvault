@@ -90,6 +90,7 @@ Richte eine Off-site-Replik im Tab **Einstellungen, Off-site** ein. Siehe [Off-s
 - **Mehrere Off-site-Ziele pro Bereich:** jeder Bereich kann gleichzeitig an mehrere Off-site-Ziele replizieren. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget; sie alle replizieren nach dem Off-site-Zeitplan dieses Bereichs. Eine bestehende einzelne Off-site-Einrichtung wird als erstes Ziel übernommen.
 - **Aufbewahrung pro Quelle:** die lokale Richtlinie liegt unter Einstellungen, Pfade & Speicher; die Off-site-Richtlinie unter Einstellungen, Off-site (lasse sie ganz auf null, um Off-site-Snapshots nie automatisch zu kürzen).
 - **Bandbreitenlimits:** begrenze die restic-Upload-/Download-Rate unter Einstellungen, Off-site.
+- **Streaming zuerst:** unter Einstellungen, Off-site wählst du die Mediaserver (Plex, Jellyfin und Emby sind nach Image-Namen vorausgewählt), die Senderate, ab der einer als streamend gilt, die Upload-Grenze während des Streams und wie lange nach einem Stream die normale Grenze zurückkommt.
 - **Kalt- und Archiv-Speicherklasse (S3):** wähle für ein natives S3-Off-site-Repo eine wiederherstellungslesbare Stufe (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-Remotes setzen ihre Klasse in der rclone-Konfiguration.
 
 ## Anomalien {#anomalies}

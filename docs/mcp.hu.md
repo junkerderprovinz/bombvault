@@ -7,7 +7,7 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 | Eszköz | Mit csinál | Fajta |
 |---|---|---|
 | `get_health` | Verzió, a példány neve, fut-e mentés, és mit tehet ez a kulcs | olvasás |
-| `get_status` | Védettségi állapot tartományonként: utolsó sikeres mentés, várt időköz, ellenőrzések és off-site vizsgálatok, következő ütemezett futások, konténereknél a legutóbbi indítási teszt | olvasás |
+| `get_status` | Védettségi állapot tartományonként: utolsó sikeres mentés, várt időköz, ellenőrzések és off-site vizsgálatok, következő ütemezett futások, az alkalmazás nyugalmára váró mentések, konténereknél a legutóbbi indítási teszt | olvasás |
 | `get_coverage` | Mit véd a BombVault és mit nem, mindegyiknél az okkal | olvasás |
 | `list_items` | Minden védett konténer, VM és mappakészlet, a flash meghajtó és az alkalmazás beállításai, ütemezéssel, azzal, hogy egy mentés mit állít le, az utolsó mentéssel és annak idejével; az adatbázis-konténerek az utolsó dumpot is megadják; a ZFS-adatkészletek is szerepelnek, a legutóbbi ellenőrzésük eredményével; minden elem mellett ott a legutóbbi visszaállítási ellenőrzése, egy konténernél a legutóbbi indítási teszt vagy az ok, amiért nem tesztelhető; a legutóbbi mentés óta más beállításokkal újra létrehozott konténer felsorolja a változásokat | olvasás |
 | `list_runs` | Futási előzmények, a legújabbak elöl, tartomány, elem, állapot, fajta és idő szerint szűrhetően; a lassú mentés, amelyet egyetlen dolog fékezett, megnevezi azt | olvasás |

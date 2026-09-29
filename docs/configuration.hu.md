@@ -90,6 +90,7 @@ A sablon hozzáadja a `--add-host=host.docker.internal:host-gateway` opciót, ho
 - **Több telephelyen kívüli cél tartományonként:** minden tartomány egyszerre több telephelyen kívüli célra is replikálhat. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel; mindegyik az adott tartomány telephelyen kívüli ütemezése szerint replikál. Egy meglévő egyetlen telephelyen kívüli beállítás az első célként öröklődik át.
 - **Megőrzés forrásonként:** a helyi szabály a Beállítások, Útvonalak és tárolás alatt él; a telephelyen kívüli szabály a Beállítások, Telephelyen kívüli alatt (hagyd mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket).
 - **Sávszélesség-korlátok:** korlátozd a restic fel- és letöltési sebességét a Beállítások, Telephelyen kívüli alatt.
+- **Elsőbbség a streamelésnek:** a Beállítások, Telephelyen kívüli alatt választod ki a médiaszervereket (a Plex, Jellyfin és Emby a képnév alapján előre ki van jelölve), azt a küldési sebességet, amelytől egy szerver streamelőnek számít, a streamelés alatti feltöltési korlátot, és hogy egy stream után mennyi idővel tér vissza a szokásos korlát.
 - **Hideg és archív tárolási osztály (S3):** egy natív S3 telephelyen kívüli tárolóhoz válassz egy visszaállításra olvasható szintet (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Az rclone remote-ok a saját osztályukat az rclone konfigban állítják be.
 
 ## Anomáliák {#anomalies}

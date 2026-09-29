@@ -91,6 +91,7 @@ Set up an off-site replica on the **Settings, Off-site** tab. See [Off-site & re
 - **Multiple off-site targets per domain:** each domain can replicate to several off-site destinations at once. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget; they all replicate on that domain's off-site schedule. An existing single off-site setup is carried over as the first target.
 - **Retention per source:** the local policy lives on Settings, Paths & Storage; the off-site policy on Settings, Off-site (leave it all-zero to never auto-trim off-site snapshots).
 - **Bandwidth limits:** cap the restic upload/download rate under Settings, Off-site.
+- **Streaming first:** under Settings, Off-site, pick the media servers (Plex, Jellyfin and Emby are preselected by image name), the send rate from which one counts as streaming, the upload limit while it streams and how long after a stream the normal limit comes back.
 - **Cold and archival storage class (S3):** for a native S3 off-site repo, pick a restore-readable tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes set their class in the rclone config.
 - **Remote primary instead of local:** a domain's Backup Path itself can be one of the backends above, with no local copy and no replication step — see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories) for the inline Local/Remote switch and its bandwidth/append-only/growth-budget safety settings.
 

@@ -90,6 +90,7 @@ Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Komple
 - **Více cílů mimo lokalitu na doménu:** každá doména může replikovat na několik cílů mimo lokalitu najednou. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu; všechny replikují podle plánu mimo lokalitu dané domény. Stávající jednotlivé nastavení mimo lokalitu se přenese jako první cíl.
 - **Uchovávání na zdroj:** místní zásada žije v Nastavení, Cesty a úložiště; zásada mimo lokalitu v Nastavení, Mimo lokalitu (ponechte vše na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).
 - **Limity šířky pásma:** omezte rychlost nahrávání/stahování restic pod Nastavení, Mimo lokalitu.
+- **Nejdřív streamování:** v Nastavení, Mimo lokalitu vyber mediální servery (Plex, Jellyfin a Emby jsou předvybrány podle názvu obrazu), rychlost odesílání, od které se server počítá jako streamující, limit nahrávání během streamu a jak dlouho po streamu se vrátí běžný limit.
 - **Studená a archivní třída úložiště (S3):** pro nativní S3 repozitář mimo lokalitu vyberte úroveň čitelnou pro obnovu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes nastavují svou třídu v konfiguraci rclone.
 
 ## Anomálie {#anomalies}

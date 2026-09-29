@@ -7,7 +7,7 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | Narzędzie | Co robi | Rodzaj |
 |---|---|---|
 | `get_health` | Wersja, nazwa instancji, czy trwa kopia i co wolno temu kluczowi | odczyt |
-| `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, a dla kontenerów najnowszy test uruchomienia | odczyt |
+| `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, kopie czekające na bezczynność aplikacji, a dla kontenerów najnowszy test uruchomienia | odczyt |
 | `get_coverage` | Co BombVault chroni, a czego nie, z podanym powodem | odczyt |
 | `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli; każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować; kontener utworzony ponownie z innymi ustawieniami od ostatniej kopii wymienia zmiany | odczyt |
 | `list_runs` | Historia przebiegów od najnowszych, z filtrem według domeny, elementu, stanu, rodzaju i czasu; wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |

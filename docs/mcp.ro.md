@@ -7,7 +7,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | Unealtă | Ce face | Tip |
 |---|---|---|
 | `get_health` | Versiunea, numele instanței, dacă rulează o copie și ce are voie să facă această cheie | citire |
-| `get_status` | Starea protecției pe fiecare domeniu: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate, iar pentru containere cel mai recent test de pornire | citire |
+| `get_status` | Starea protecției pe fiecare domeniu: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate, copiile care așteaptă o aplicație inactivă, iar pentru containere cel mai recent test de pornire | citire |
 | `get_coverage` | Ce protejează BombVault și ce nu, cu motivul pentru fiecare | citire |
 | `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump; apar și seturile de date ZFS, cu rezultatul ultimei lor verificări; fiecare element are ultima sa verificare a restaurării, iar un container și ultimul test de pornire sau motivul pentru care nu poate fi testat; un container recreat cu alte setări de la ultima copie arată ce s-a schimbat | citire |
 | `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după domeniu, element, stare, tip și timp; o copie lentă frânată de un singur lucru îl numește | citire |

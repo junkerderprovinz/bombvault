@@ -4,6 +4,7 @@ import type { ProgressState } from "../lib/progress";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
 import { elapsedSince } from "../lib/reltime";
+import { THROTTLE_KEYS } from "../lib/activityLog";
 import { InfoBubble } from "./InfoBubble";
 
 type Domain = "containers" | "vms" | "flash" | "files" | "zfs";
@@ -95,7 +96,8 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
   } as const;
   const label = withLabel ? `${t(navKey[domain])} · ` : "";
   const duration = elapsedSince(state?.startedAt, now);
-  const statusText = offsiteStatusText(t, state, duration);
+  const throttle = state?.throttle ? ` · ${t(THROTTLE_KEYS[state.throttle])}` : "";
+  const statusText = offsiteStatusText(t, state, duration) + throttle;
   // The (i) says the percentage counts snapshots against an estimate, not
   // bytes, so it only appears when a percentage does.
   const showsRunPercent = offsiteRunProgress(state) !== null;

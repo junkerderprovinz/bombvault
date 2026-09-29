@@ -30,6 +30,8 @@ import { InfoBubble } from "../components/InfoBubble";
 import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { PageTitle } from "../components/PageTitle";
+import { StreamingCard } from "./settings/StreamingCard";
+import { IdleCard } from "./settings/IdleCard";
 // Every cadence picker on this page edits a schedule that can count an
 // interval (#166): the six domains and Backup Everything from their last
 // successful backup, drills, tamper test and digest from schedule_job_runs.
@@ -2831,6 +2833,8 @@ export function SettingsPage() {
             )}
           </Card>
 
+          {advanced && <IdleCard t={t} hueIndex={nextHue()} />}
+
           {/* Restore-check schedule (schedulesChecks) moved to the Integrity
               tab alongside RestoreChecksSection above (jdp, live-review —
               same "belongs with WHAT/how-often gets verified, not WHEN
@@ -4017,6 +4021,8 @@ export function SettingsPage() {
         </div>
       </Card>
       )}
+
+      {tab === "offsite" && advanced && <StreamingCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Monitoring (Prometheus)                                   */}

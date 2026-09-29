@@ -7,7 +7,7 @@ BombVault bringt einen Server für das Model Context Protocol (MCP) mit. Über d
 | Werkzeug | Was es tut | Art |
 |---|---|---|
 | `get_health` | Version, Instanzname, ob gerade ein Backup läuft und was dieser Schlüssel darf | lesen |
-| `get_status` | Schutzstatus je Domäne: letztes erfolgreiches Backup, erwartetes Intervall, Prüfungen und Off-site-Kontrollen, nächste geplante Läufe, bei Containern der neueste Start-Test | lesen |
+| `get_status` | Schutzstatus je Domäne: letztes erfolgreiches Backup, erwartetes Intervall, Prüfungen und Off-site-Kontrollen, nächste geplante Läufe, Backups, die auf eine ruhige App warten, bei Containern der neueste Start-Test | lesen |
 | `get_coverage` | Was BombVault schützt und was nicht, jeweils mit Grund | lesen |
 | `list_items` | Jeder geschützte Container, jede VM, jedes Ordner-Set, der Flash-Stick und die App-Konfiguration, mit Zeitplan, was ein Backup davon stoppt, dem letzten Backup und seiner Dauer; Datenbank-Container tragen zusätzlich ihren letzten Dump; ZFS-Datasets stehen ebenfalls darin, mit dem Ergebnis ihrer letzten Prüfung; jedes Element trägt seine letzte Wiederherstellungsprüfung, ein Container dazu seinen letzten Start-Test oder den Grund, warum er nicht testbar ist; ein Container, der seit seinem letzten Backup mit anderen Einstellungen neu erstellt wurde, nennt die Änderungen | lesen |
 | `list_runs` | Laufverlauf, neueste zuerst, filterbar nach Domäne, Element, Status, Art und Zeit; ein langsames Backup, das eine Sache gebremst hat, nennt sie | lesen |

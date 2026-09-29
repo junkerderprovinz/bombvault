@@ -90,6 +90,7 @@ Sätt upp en off-site-replik på fliken **Inställningar, Off-site**. Se [Off-si
 - **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
 - **Retention per källa:** den lokala policyn finns under Inställningar, Sökvägar och lagring; off-site-policyn under Inställningar, Off-site (lämna den helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
 - **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Off-site.
+- **Streaming först:** under Inställningar, Off-site väljer du mediaservrarna (Plex, Jellyfin och Emby är förvalda efter image-namnet), sändningstakten från vilken en server räknas som streamande, uppladdningsgränsen under streaming och hur länge efter en stream den vanliga gränsen kommer tillbaka.
 - **Kall och arkivlagringsklass (S3):** för ett native S3-off-site-repo, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
 
 ## Avvikelser {#anomalies}

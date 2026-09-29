@@ -90,6 +90,7 @@ Configura una réplica externa en la pestaña **Ajustes, Externo**. Consulta [Co
 - **Varios destinos externos por dominio:** cada dominio puede replicarse a varios destinos externos a la vez. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento; todos se replican según el calendario externo de ese dominio. Una configuración externa única existente se traslada como el primer destino.
 - **Retención por fuente:** la política local vive en Ajustes, Rutas y Almacenamiento; la política externa en Ajustes, Externo (déjala toda a cero para no recortar nunca automáticamente las instantáneas externas).
 - **Límites de ancho de banda:** limita la velocidad de subida/bajada de restic en Ajustes, Externo.
+- **Primero el streaming:** en Ajustes, Externo, elige los servidores multimedia (Plex, Jellyfin y Emby vienen preseleccionados por el nombre de la imagen), la tasa de envío a partir de la cual uno cuenta como en streaming, el límite de subida mientras dura y cuánto tiempo después vuelve el límite normal.
 - **Clase de almacenamiento en frío y de archivo (S3):** para un repo externo S3 nativo, elige un nivel legible para restauración (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Los remotos de rclone establecen su clase en la configuración de rclone.
 
 ## Anomalías {#anomalies}

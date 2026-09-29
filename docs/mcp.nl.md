@@ -7,7 +7,7 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 | Hulpmiddel | Wat het doet | Soort |
 |---|---|---|
 | `get_health` | Versie, naam van de instantie, of er een back-up loopt en wat deze sleutel mag | lezen |
-| `get_status` | Beschermingsstatus per domein: laatste geslaagde back-up, verwacht interval, verificaties en off-site-controles, volgende geplande runs, voor containers de nieuwste starttest | lezen |
+| `get_status` | Beschermingsstatus per domein: laatste geslaagde back-up, verwacht interval, verificaties en off-site-controles, volgende geplande runs, back-ups die op een rustige app wachten, voor containers de nieuwste starttest | lezen |
 | `get_coverage` | Wat BombVault beschermt en wat niet, telkens met de reden | lezen |
 | `list_items` | Elke beschermde container, VM en mappenset, de flashstick en de app-configuratie, met planning, wat een back-up ervan stopt, de laatste back-up en hoe lang die duurde; databasecontainers vermelden ook hun laatste dump; ZFS-datasets staan er ook in, met de uitkomst van hun laatste controle; elk item draagt zijn laatste herstelcontrole, een container ook zijn laatste starttest of de reden waarom hij niet te testen is; een container die sinds zijn laatste back-up opnieuw is gemaakt met andere instellingen, noemt wat er veranderd is | lezen |
 | `list_runs` | Runhistorie, nieuwste eerst, te filteren op domein, item, status, soort en tijd; een trage back-up die door één ding werd afgeremd, noemt dat | lezen |

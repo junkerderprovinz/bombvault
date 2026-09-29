@@ -56,7 +56,13 @@ export interface ProgressState {
   total?: number;
   unit?: CountUnit;
   remaining?: number;
+  // An off-site copy slowed for a media server's stream: "now" while it runs
+  // at the streaming limit, "next" while a stream runs that the copy can only
+  // meet from its next step.
+  throttle?: OffsiteThrottle;
 }
+
+export type OffsiteThrottle = "now" | "next";
 
 /** The units restic counts in during a check or prune. */
 export type CountUnit = "packs" | "snapshots" | "indexes" | "files" | "items";
@@ -166,6 +172,7 @@ function applyEvent(ev: ProgressFrame): void {
     stage: ev.stage,
     bytes: ev.bytes,
     committed: ev.committed,
+    throttle: ev.throttle,
     finished: ev.active ? undefined : true,
     done: ev.done,
     total: ev.total,
@@ -227,6 +234,7 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
     stage: ev.stage && STAGES.includes(ev.stage) ? ev.stage : undefined,
     bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
     committed: ev.committed === true ? true : undefined,
+    throttle: ev.throttle === "now" || ev.throttle === "next" ? ev.throttle : undefined,
     done: typeof ev.done === "number" ? ev.done : undefined,
     total: typeof ev.total === "number" && ev.total > 0 ? ev.total : undefined,
     unit: ev.unit && COUNT_UNITS.includes(ev.unit) ? ev.unit : ev.total ? "items" : undefined,

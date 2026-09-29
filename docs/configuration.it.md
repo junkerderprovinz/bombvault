@@ -90,6 +90,7 @@ Configura una replica off-site nella scheda **Impostazioni, Off-site**. Vedi [Of
 - **Più destinazioni off-site per dominio:** ogni dominio può replicare verso più destinazioni off-site contemporaneamente. Aggiungi destinazioni extra in Impostazioni, Off-site, ciascuna con il proprio repository, classe di archiviazione S3, flag append-only, conservazione e budget di crescita; replicano tutte secondo il calendario off-site di quel dominio. Una configurazione off-site singola esistente viene riportata come prima destinazione.
 - **Conservazione per sorgente:** la policy locale risiede su Impostazioni, Percorsi e Archiviazione; la policy off-site su Impostazioni, Off-site (lasciala tutta a zero per non tagliare mai automaticamente gli snapshot off-site).
 - **Limiti di banda:** limita la velocità di upload/download di restic sotto Impostazioni, Off-site.
+- **Prima lo streaming:** in Impostazioni, Off-site scegli i media server (Plex, Jellyfin ed Emby sono preselezionati in base al nome dell'immagine), la velocità di invio oltre la quale uno conta come in streaming, il limite di upload durante lo streaming e dopo quanto tempo da uno stream torna il limite normale.
 - **Classe di archiviazione fredda e d'archivio (S3):** per un repo off-site S3 nativo, scegli un livello leggibile in ripristino (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). I remote rclone impostano la loro classe nella configurazione rclone.
 
 ## Anomalie {#anomalies}
