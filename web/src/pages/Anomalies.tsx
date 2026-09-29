@@ -43,6 +43,7 @@ import { formatTs } from "../lib/reltime";
 import { useToast } from "../lib/toast";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useConfirm } from "../lib/useConfirm";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -327,6 +328,7 @@ function FindingCard({
   const navigate = useNavigate();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const { remote } = useRemoteView();
   const ref = useRef<HTMLElement>(null);
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(focused ? group.findings.map((a) => a.id) : [])
@@ -430,35 +432,40 @@ function FindingCard({
             <IconDisclosure open={monitoring} />
           </button>
         )}
-        <div className="ms-auto">
-          {restore?.lastGood ? (
-            <Button
-              label={t("anomaly.action.restoreLastGood").replace("{date}", isolateLtr(formatTs(restore.lastGood.at)))}
-              labelKey="anomaly.action.restoreLastGood"
-              tone="accent"
-              onClick={() => navigate(anomalyRestorePath(restore)!)}
-              className="glim-btn-wrap"
-            />
-          ) : findings.length === 1 ? (
-            <Button
-              label={t("anomaly.action.acknowledge")}
-              labelKey="anomaly.action.acknowledge"
-              onClick={() => void acknowledgeAll()}
-              disabled={busy}
-              hint={t("anomaly.acknowledgeHint")}
-              className="glim-btn-wrap"
-            />
-          ) : (
-            <Button
-              label={t("anomaly.action.acknowledgeAll").replace("{n}", findings.length.toLocaleString())}
-              labelKey="anomaly.action.acknowledgeAll"
-              onClick={() => void acknowledgeAll()}
-              disabled={busy}
-              hint={t("anomaly.acknowledgeHint")}
-              className="glim-btn-wrap"
-            />
-          )}
-        </div>
+        {/* Restoring and acknowledging are both settled here, not read, and
+            decision 1 leaves acknowledging out of remote view on purpose, so
+            the whole primary action stays local. */}
+        {!remote && (
+          <div className="ms-auto">
+            {restore?.lastGood ? (
+              <Button
+                label={t("anomaly.action.restoreLastGood").replace("{date}", isolateLtr(formatTs(restore.lastGood.at)))}
+                labelKey="anomaly.action.restoreLastGood"
+                tone="accent"
+                onClick={() => navigate(anomalyRestorePath(restore)!)}
+                className="glim-btn-wrap"
+              />
+            ) : findings.length === 1 ? (
+              <Button
+                label={t("anomaly.action.acknowledge")}
+                labelKey="anomaly.action.acknowledge"
+                onClick={() => void acknowledgeAll()}
+                disabled={busy}
+                hint={t("anomaly.acknowledgeHint")}
+                className="glim-btn-wrap"
+              />
+            ) : (
+              <Button
+                label={t("anomaly.action.acknowledgeAll").replace("{n}", findings.length.toLocaleString())}
+                labelKey="anomaly.action.acknowledgeAll"
+                onClick={() => void acknowledgeAll()}
+                disabled={busy}
+                hint={t("anomaly.acknowledgeHint")}
+                className="glim-btn-wrap"
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {item && monitoring && (

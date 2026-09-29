@@ -3,6 +3,7 @@ import type { OkEnvelope } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
+import { useRemoteView } from "../lib/remoteView";
 import { Button } from "./Button";
 
 type T = ReturnType<typeof useT>["t"];
@@ -45,7 +46,11 @@ export function OrphanRemoveButton({
   const [shake, setShake] = useState(0);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   const failText = t(hasBackups ? "common.deleteFailed" : "common.removeFailed");
+
+  // Deleting backups and removing an orphaned entry both stay local, always.
+  if (remote) return null;
 
   async function run() {
     // TODO: pass what is at stake ("N snapshots, X GB") to confirm() once the

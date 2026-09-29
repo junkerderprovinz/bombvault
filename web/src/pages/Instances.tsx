@@ -17,6 +17,7 @@ import { Fleet } from "./Fleet";
 import { Pull } from "./Pull";
 import { Pairing } from "./Pairing";
 import { IconLink } from "../components/glyphs";
+import { useRemoteView } from "../lib/remoteView";
 
 export const INSTANCE_TABS = ["pairing", "receiver", "fleet", "pull"] as const;
 export type InstanceTab = (typeof INSTANCE_TABS)[number];
@@ -48,6 +49,7 @@ function tabFromHash(): InstanceTab {
 
 export function Instances() {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [tab, setTab] = useState<InstanceTab>(tabFromHash);
   const [tabDir, setTabDir] = useState<1 | -1>(1);
@@ -81,10 +83,14 @@ export function Instances() {
     pull: t("pull.title"),
   };
 
+  // Pairing and fleet management belong to this instance alone: opening a
+  // member's own pairing phrase or its list of peers is not part of what
+  // remote view shows, so both tabs disappear while a peer's instance is
+  // open, whatever their settings say.
   const enabled: Record<InstanceTab, boolean> = {
-    pairing: (settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled) ?? false,
+    pairing: !remote && ((settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled) ?? false),
     receiver: settings?.receiverEnabled ?? false,
-    fleet: settings?.fleetEnabled ?? false,
+    fleet: !remote && (settings?.fleetEnabled ?? false),
     pull: settings?.pullEnabled ?? false,
   };
   const visible = INSTANCE_TABS.filter((k) => enabled[k]);

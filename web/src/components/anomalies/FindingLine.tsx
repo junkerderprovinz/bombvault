@@ -27,6 +27,7 @@ import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useRemoteView } from "../../lib/remoteView";
 
 export type FindingAction = (a: AnomalyView) => Promise<AnomalyActionResult>;
 
@@ -64,6 +65,7 @@ export function FindingLine({
   const { lang } = useT();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const { remote } = useRemoteView();
   const [busy, setBusy] = useState(false);
   const panelId = useId();
 
@@ -169,7 +171,12 @@ export function FindingLine({
 
           {!closed && (
             <div className="flex flex-wrap items-center gap-2">
-              {onExpected && a.expectable && (
+              {/* Marking a finding as expected, acknowledging it and opening
+                  its restore are all settled here, not remote view's read of
+                  the finding, so all three stay local (decision 1 leaves
+                  acknowledging out on purpose; the other two are the same
+                  kind of settled-here action). */}
+              {!remote && onExpected && a.expectable && (
                 <Button
                   label={t("anomaly.action.expected")}
                   labelKey="anomaly.action.expected"
@@ -179,7 +186,7 @@ export function FindingLine({
                   className="glim-btn-wrap"
                 />
               )}
-              {onAcknowledge && (
+              {!remote && onAcknowledge && (
                 <Button
                   label={t("anomaly.action.acknowledge")}
                   labelKey="anomaly.action.acknowledge"
@@ -189,7 +196,7 @@ export function FindingLine({
                   className="glim-btn-wrap"
                 />
               )}
-              {restorePath && a.lastGood && !restoreIsPrimary && (
+              {!remote && restorePath && a.lastGood && !restoreIsPrimary && (
                 <Link to={restorePath} className="text-xs text-accentText hover:underline">
                   {t("anomaly.action.restoreLastGood").replace("{date}", when(a.lastGood.at))}
                 </Link>

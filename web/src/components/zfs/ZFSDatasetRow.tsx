@@ -53,6 +53,7 @@ import { RepoPicker } from "../RepoPicker";
 import { SelectField } from "../SelectField";
 import { IconBackupNow, IconPencil, IconTrash } from "../Sidebar";
 import { ToggleRow } from "../../pages/settings/shared";
+import { useRemoteView } from "../../lib/remoteView";
 import { ZFSMemberList, zfsMemberActionable } from "./ZFSMemberList";
 import { ZFSRestorePanel } from "./ZFSRestorePanel";
 
@@ -658,6 +659,7 @@ export function ZFSDatasetRow({
 }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   const progressMap = useProgress();
   const progress = progressMap[progressKeyOf(item)];
   const running = anyActive(progressMap);
@@ -794,7 +796,7 @@ export function ZFSDatasetRow({
                 {fixKey && <InfoBubble tip={tLtr(t, fixKey)} />}
               </Badge>
             )}
-            {checkCode === "not-found" && (
+            {checkCode === "not-found" && !remote && (
               <Button
                 label={t("zfs.removeMissing")}
                 labelKey="zfs.removeMissing"
@@ -815,35 +817,44 @@ export function ZFSDatasetRow({
 
         <div className="ms-auto flex items-start gap-1.5 shrink-0 flex-wrap max-md:w-full max-md:justify-end">
           <ZFSBackupButton item={item} t={t} onDone={onRefresh} running={running} />
-          <Button
-            label={t("common.edit")}
-            labelKey="common.edit"
-            glyph={<IconPencil />}
-            tone="accent"
-            onClick={() => setEditing((open) => !open)}
-          />
-          <Button
-            key={shake}
-            label={t("common.delete")}
-            labelKey="common.delete"
-            glyph={<IconTrash />}
-            tone="accent"
-            onClick={() => void handleRemove()}
-            className={shake ? "glim-shake" : ""}
-          />
+          {/* Editing the dataset's settings and removing it are both local
+              only; starting a backup, just above, stays remote view's own
+              trigger. */}
+          {!remote && (
+            <Button
+              label={t("common.edit")}
+              labelKey="common.edit"
+              glyph={<IconPencil />}
+              tone="accent"
+              onClick={() => setEditing((open) => !open)}
+            />
+          )}
+          {!remote && (
+            <Button
+              key={shake}
+              label={t("common.delete")}
+              labelKey="common.delete"
+              glyph={<IconTrash />}
+              tone="accent"
+              onClick={() => void handleRemove()}
+              className={shake ? "glim-shake" : ""}
+            />
+          )}
         </div>
       </div>
 
-      <div className="flex items-start">
-        <div className="ms-auto">
-          <ToggleRow
-            label={t("zfs.enabled")}
-            checked={enabled}
-            onChange={(next) => void handleEnabled(next)}
-            disabled={enabledBusy}
-          />
+      {!remote && (
+        <div className="flex items-start">
+          <div className="ms-auto">
+            <ToggleRow
+              label={t("zfs.enabled")}
+              checked={enabled}
+              onChange={(next) => void handleEnabled(next)}
+              disabled={enabledBusy}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <EffectiveScheduleLine effective={item.effectiveSchedule} domainLabelKey="jobs.zfsSection" />
 
@@ -872,15 +883,17 @@ export function ZFSDatasetRow({
         <p className="flex flex-wrap items-center gap-1.5 text-xs text-statusWarn">
           {t("zfs.leftovers", item.leftoverCount)}
           <InfoBubble tip={t("zfs.leftoversHint")} />
-          <Button
-            label={t("zfs.removeLeftovers")}
-            labelKey="zfs.removeLeftovers"
-            tone="subtle"
-            onClick={() => void handleSweep()}
-            disabled={sweeping}
-            busy={sweeping}
-            className="glim-btn-wrap"
-          />
+          {!remote && (
+            <Button
+              label={t("zfs.removeLeftovers")}
+              labelKey="zfs.removeLeftovers"
+              tone="subtle"
+              onClick={() => void handleSweep()}
+              disabled={sweeping}
+              busy={sweeping}
+              className="glim-btn-wrap"
+            />
+          )}
         </p>
       )}
 
@@ -906,9 +919,11 @@ export function ZFSDatasetRow({
         )}
       </div>
 
-      {item.safetyCount > 0 && <ZFSSafetySection item={item} t={t} onRefresh={onRefresh} />}
+      {/* Pre-restore safety snapshots are a local cleanup concern, not
+          something a backup or its history need to show remotely. */}
+      {!remote && item.safetyCount > 0 && <ZFSSafetySection item={item} t={t} onRefresh={onRefresh} />}
 
-      {editing && (
+      {!remote && editing && (
         <ZFSItemSettings
           item={item}
           t={t}
@@ -919,13 +934,17 @@ export function ZFSDatasetRow({
         />
       )}
 
-      <ZFSRestorePanel
-        item={item}
-        host={host}
-        hostMountRoot={hostMountRoot}
-        restoreFolder={restoreFolder}
-        preselect={restoreRequest}
-      />
+      {/* Restoring is always local; gated here rather than left to its own
+          state, since a finding's deep link can open it on mount. */}
+      {!remote && (
+        <ZFSRestorePanel
+          item={item}
+          host={host}
+          hostMountRoot={hostMountRoot}
+          restoreFolder={restoreFolder}
+          preselect={restoreRequest}
+        />
+      )}
 
       <RecentRunsList
         name={item.dataset}

@@ -4,6 +4,7 @@ import { countBackups, useTakeOver, type TakeoverEntry } from "../lib/useTakeOve
 import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
 import { SelectField } from "./SelectField";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -27,6 +28,7 @@ export function LinkEntryPicker({
   const openerRef = useRef<HTMLButtonElement>(null);
   const selectRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
+  const { remote } = useRemoteView();
   // A reload can take the chosen entry out of the list while the picker is open.
   const selected = candidates.includes(choice) ? choice : candidates[0];
 
@@ -41,6 +43,8 @@ export function LinkEntryPicker({
     }
     wasOpen.current = open;
   }, [open]);
+
+  if (remote) return null;
 
   async function submit() {
     setCounting(true);

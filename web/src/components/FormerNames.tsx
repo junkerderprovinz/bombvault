@@ -3,6 +3,7 @@ import type { useT } from "../lib/i18n";
 import { useTakeOver, type TakeoverEntry } from "../lib/useTakeOver";
 import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -46,8 +47,13 @@ export function FormerNames({
   t: T;
 }) {
   const { unlink, busy, confirmDialog } = useTakeOver(entry, onDone, t);
+  const { remote } = useRemoteView();
   const conflictSet = new Set(conflicts);
   const unlinkable = aliases.filter((old) => !conflictSet.has(old));
+
+  // Every part of this row (unlinking a former name, the conflict notice) is
+  // about a takeover, always local.
+  if (remote) return null;
 
   return (
     <>

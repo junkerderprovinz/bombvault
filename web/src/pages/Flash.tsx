@@ -18,7 +18,7 @@ import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
-import { useInstanceScope } from "../lib/instanceScope";
+import { useRemoteView } from "../lib/remoteView";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { PageTitle } from "../components/PageTitle";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
@@ -125,7 +125,7 @@ function FlashSnapshotRow({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [shake, setShake] = useState(0);
-  const { remote } = useInstanceScope();
+  const { remote } = useRemoteView();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
@@ -214,6 +214,7 @@ function FlashSnapshotRow({
 
 export function Flash() {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const anomaly = useAnomalyItems().find("flash", "flash");
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const { flagged } = useOpenAnomalies();
@@ -285,7 +286,7 @@ export function Flash() {
               busyPhase={running.phase}
             />
           </div>
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+          {!remote && <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />}
 
           {/* As on the Folders page: a restore has its own control with its
               own warning. */}
@@ -363,8 +364,10 @@ export function Flash() {
         )}
       </div>
 
-      {/* This page numbers its notches by hand: backup 0, restore 1, this 2. */}
-      <FlashZipExportCard t={t} hueIndex={2} />
+      {/* This page numbers its notches by hand: backup 0, restore 1, this 2.
+          Auto-export writes zips onto this host's own disk, so it is a
+          setting like any other and stays out of remote view entirely. */}
+      {!remote && <FlashZipExportCard t={t} hueIndex={2} />}
     </div>
   );
 }

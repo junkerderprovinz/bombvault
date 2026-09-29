@@ -40,14 +40,16 @@ export function Layout() {
   const navigate = useNavigate();
   const { remote } = useInstanceScope();
 
-  // Remote view's own page set: the domain pages carry its triggers, and the
-  // dashboard and anomalies pages carry its reads. Everything else (Recovery,
-  // Instances, Settings) is a restore, pairing or a setting, which stays
-  // local, so a bookmark, a typed URL or the back button lands here instead
-  // of just a hidden nav row.
+  // Remote view's own page set: the domain pages carry its triggers, the
+  // dashboard and anomalies pages carry its reads, and Instances carries the
+  // receiver and pull lists decision 1 names. Instances.tsx itself narrows
+  // further, to the receiver and pull tabs only: pairing and fleet stay
+  // local there the same way Recovery and Settings do here. A bookmark, a
+  // typed URL or the back button into anything outside this set lands on
+  // the dashboard instead of a page whose nav row is simply hidden.
   useEffect(() => {
     if (!remote) return;
-    const safe = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs"];
+    const safe = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs", "/instances"];
     if (!safe.includes(location.pathname)) {
       navigate({ pathname: "/dashboard", search: location.search }, { replace: true });
     }

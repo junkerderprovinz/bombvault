@@ -57,6 +57,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
+import { useRemoteView } from "../lib/remoteView";
 import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
 
@@ -378,6 +379,7 @@ function ExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
   // failed action toasts AND shakes its button, layered ON TOP of this
   // button's own pre-existing sticky inline error (kept deliberately — see
@@ -408,6 +410,10 @@ function ExportButton({ name, t }: { name: string; t: T }) {
       setShake((n) => n + 1);
     }
   }
+
+  // An export leaves the site as a download; remote view forwards no such
+  // route (see internal/api/group_remote.go's remoteViewRoutes).
+  if (remote) return null;
 
   return (
     <div className="flex flex-col items-end gap-1">
@@ -1611,6 +1617,7 @@ function ContainerSectionChips({
   showFoldersChip?: boolean;
 }) {
   const { advanced } = useAdvanced();
+  const { remote } = useRemoteView();
   const installed = container.installed;
   // "Has data configured" dots: the same three facts the three editors
   // render on the desktop card's chips.
@@ -1621,10 +1628,12 @@ function ContainerSectionChips({
     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-statusOk shrink-0" />
   );
   // Advanced+installed-only sections mirror the exact gate their panes sit
-  // behind, so a chip never exists for a pane that could not render. Backups
-  // (RestorePanel) is always offered: it works on a not-installed entry too.
+  // behind, so a chip never exists for a pane that could not render. None of
+  // the four are remote view's own triggers, so they drop out with it too.
+  // Backups (RestorePanel) is always offered: it works on a not-installed
+  // entry, and remote view shows the list as a read.
   const sectionItems: SelectorItem[] = [];
-  if (advanced && installed) {
+  if (advanced && installed && !remote) {
     if (showFoldersChip) sectionItems.push({ id: "folders", label: t("folders.title") });
     sectionItems.push(
       { id: "stop", label: t("stophook.title"), icon: stopHasData ? configuredDot : undefined },
@@ -1771,6 +1780,7 @@ function MobileContainerDetail({
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(restoreRequest ? ["backups"] : [])
   );
+  const { remote } = useRemoteView();
   function toggleSection(id: string) {
     setOpenSections((prev) => (prev.has(id) ? new Set() : new Set([id])));
   }
@@ -1863,7 +1873,12 @@ function MobileContainerDetail({
           A not-installed entry keeps the switch too, same as the desktop
           card: it stays scheduled and every run records a skip for it, and
           this switch ends that without deleting its backups. */}
-      {installed && (
+      {/* Everything from here through the section editors is this
+          container's own configuration, not a read or one of remote view's
+          triggers, so the whole block stays local; the snapshot list right
+          after it (RestorePanel, itself gated internally) is not part of
+          this block on purpose. */}
+      {installed && !remote && (
         <div className="flex flex-col gap-2">
           <IncludeToggle name={container.name} initial={container.includeInSchedule} />
           {/* Outside Advanced: the dump is on by default and changes what a
@@ -1886,24 +1901,28 @@ function MobileContainerDetail({
           never inherit the previous container's mirror, browse cache or save
           queue. Advanced+installed gating mirrors the desktop row's folders
           chip exactly. */}
-      <Advanced when={installed}>
-        <FoldersEditor
-          key={container.name}
-          name={container.name}
-          stack={container.stack}
-          open
-          t={t}
-          lastBackup={container.lastBackup}
-          repo={container.repo ?? ""}
-          anomaly={anomaly}
-          anomalyEnabled={anomalyEnabled}
-          treeViewportClassName="h-auto"
-        />
-      </Advanced>
+      {!remote && (
+        <Advanced when={installed}>
+          <FoldersEditor
+            key={container.name}
+            name={container.name}
+            stack={container.stack}
+            open
+            t={t}
+            lastBackup={container.lastBackup}
+            repo={container.repo ?? ""}
+            anomaly={anomaly}
+            anomalyEnabled={anomalyEnabled}
+            treeViewportClassName="h-auto"
+          />
+        </Advanced>
+      )}
       {/* The remaining sections through the SAME chips block the desktop row
           renders (folders is the detail's own body, already open), then
           stop-a-running-backup and the live progress, both gated exactly as
-          on the desktop card. */}
+          on the desktop card. The chips row itself stays: it is how remote
+          view opens the Backups disclosure below, since its own advanced
+          chips already drop out while remote. */}
       <div className="flex flex-col gap-2">
         <ContainerSectionChips
           container={container}
@@ -1912,28 +1931,30 @@ function MobileContainerDetail({
           onToggle={toggleSection}
           showFoldersChip={false}
         />
-        <Advanced when={installed}>
-          <StopContainersEditor
-            name={container.name}
-            initial={container.stopContainers ?? []}
-            installedContainers={installedContainers}
-            open={openSections.has("stop")}
-            t={t}
-          />
-          <ExcludesEditor
-            name={container.name}
-            initial={container.excludes ?? []}
-            open={openSections.has("excludes")}
-            t={t}
-          />
-          <HooksEditor
-            name={container.name}
-            initialPre={container.preHook}
-            initialPost={container.postHook}
-            open={openSections.has("hooks")}
-            t={t}
-          />
-        </Advanced>
+        {!remote && (
+          <Advanced when={installed}>
+            <StopContainersEditor
+              name={container.name}
+              initial={container.stopContainers ?? []}
+              installedContainers={installedContainers}
+              open={openSections.has("stop")}
+              t={t}
+            />
+            <ExcludesEditor
+              name={container.name}
+              initial={container.excludes ?? []}
+              open={openSections.has("excludes")}
+              t={t}
+            />
+            <HooksEditor
+              name={container.name}
+              initialPre={container.preHook}
+              initialPost={container.postHook}
+              open={openSections.has("hooks")}
+              t={t}
+            />
+          </Advanced>
+        )}
         <RestorePanel
           name={container.name}
           preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
@@ -2795,6 +2816,7 @@ export function ContainerRow({
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(restoreRequest ? ["backups"] : [])
   );
+  const { remote } = useRemoteView();
   function toggleSection(id: string) {
     setOpenSections((prev) => (prev.has(id) ? new Set() : new Set([id])));
   }
@@ -2935,34 +2957,42 @@ export function ContainerRow({
         {/* The start of this row is free, so the link picker takes it instead
             of a line of its own on every card without backups. A card with
             former names is already linked, even before its first run. */}
-        {installed && !container.self && container.lastBackup == null && aliases.length === 0 && linkCandidates.length > 0 && (
+        {!remote && installed && !container.self && container.lastBackup == null && aliases.length === 0 && linkCandidates.length > 0 && (
           <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onDeleted} t={t} />
         )}
-        <div className="ms-auto flex flex-col items-end gap-2">
-          <IncludeToggle
-            name={container.name}
-            initial={container.includeInSchedule}
-          />
-          {/* The dump row shows in both views: it is on by default and changes
-              what a backup does, so it must not hide behind advanced. */}
-          <DatabaseDumpRow container={container} t={t} />
-          <Advanced when={installed}>
-            <UpdateAfterBackupRow
+        {/* Everything below, through the section editors past the chips, is
+            this container's own configuration, not a read or one of remote
+            view's triggers, so it all stays local. */}
+        {!remote && (
+          <div className="ms-auto flex flex-col items-end gap-2">
+            <IncludeToggle
               name={container.name}
-              initial={container.updateAfterBackup ?? false}
-              lastUpdateCheck={container.lastUpdateCheck}
-              lastUpdateResult={container.lastUpdateResult}
-              databaseWarn={updateWarnKey(container)}
-              t={t}
+              initial={container.includeInSchedule}
             />
-          </Advanced>
-        </div>
+            {/* The dump row shows in both views: it is on by default and changes
+                what a backup does, so it must not hide behind advanced. */}
+            <DatabaseDumpRow container={container} t={t} />
+            <Advanced when={installed}>
+              <UpdateAfterBackupRow
+                name={container.name}
+                initial={container.updateAfterBackup ?? false}
+                lastUpdateCheck={container.lastUpdateCheck}
+                lastUpdateResult={container.lastUpdateResult}
+                databaseWarn={updateWarnKey(container)}
+                t={t}
+              />
+            </Advanced>
+          </div>
+        )}
       </div>
 
       {/* Disclosure sections through the shared chips block (the phone
           detail renders the same one): `lastBackupText` trails the chips as
           always-visible summary data, wrapping onto its own line at narrow
-          widths via the same `flex-wrap` the chips themselves need. */}
+          widths via the same `flex-wrap` the chips themselves need. The chips
+          row itself stays: it is how remote view opens the Backups
+          disclosure below, since its own advanced chips already drop out
+          while remote. */}
       <div className="flex flex-col gap-2">
         <ContainerSectionChips
           container={container}
@@ -2980,38 +3010,40 @@ export function ContainerRow({
             `sectionItems` construction mirrors, so these stay entirely
             unmounted (no wasted fetches/effects) whenever their chip
             couldn't have been clicked in the first place. */}
-        <Advanced when={installed}>
-          <FoldersEditor
-            name={container.name}
-            stack={container.stack}
-            open={openSections.has("folders")}
-            t={t}
-            lastBackup={container.lastBackup}
-            repo={container.repo ?? ""}
-            anomaly={anomaly}
-            anomalyEnabled={anomalyEnabled}
-          />
-          <StopContainersEditor
-            name={container.name}
-            initial={container.stopContainers ?? []}
-            installedContainers={installedContainers}
-            open={openSections.has("stop")}
-            t={t}
-          />
-          <ExcludesEditor
-            name={container.name}
-            initial={container.excludes ?? []}
-            open={openSections.has("excludes")}
-            t={t}
-          />
-          <HooksEditor
-            name={container.name}
-            initialPre={container.preHook}
-            initialPost={container.postHook}
-            open={openSections.has("hooks")}
-            t={t}
-          />
-        </Advanced>
+        {!remote && (
+          <Advanced when={installed}>
+            <FoldersEditor
+              name={container.name}
+              stack={container.stack}
+              open={openSections.has("folders")}
+              t={t}
+              lastBackup={container.lastBackup}
+              repo={container.repo ?? ""}
+              anomaly={anomaly}
+              anomalyEnabled={anomalyEnabled}
+            />
+            <StopContainersEditor
+              name={container.name}
+              initial={container.stopContainers ?? []}
+              installedContainers={installedContainers}
+              open={openSections.has("stop")}
+              t={t}
+            />
+            <ExcludesEditor
+              name={container.name}
+              initial={container.excludes ?? []}
+              open={openSections.has("excludes")}
+              t={t}
+            />
+            <HooksEditor
+              name={container.name}
+              initialPre={container.preHook}
+              initialPost={container.postHook}
+              open={openSections.has("hooks")}
+              t={t}
+            />
+          </Advanced>
+        )}
         <RestorePanel
           name={container.name}
           preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
@@ -3065,11 +3097,15 @@ function ScheduleIncludeAllControl({
 }) {
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // whichever of the two buttons was actually clicked — a separate nonce per
   // direction, mirroring VMs.tsx's identical ScheduleIncludeAllControl.
   const [shakeInclude, setShakeInclude] = useState(0);
   const [shakeExclude, setShakeExclude] = useState(0);
+
+  // Which containers are scheduled is a setting, always local.
+  if (remote) return null;
 
   async function run(include: boolean) {
     setBusy(true);
@@ -3365,8 +3401,11 @@ function StacksPanel({
    *  unrendered heading must not use up a position. */
   hueIndex?: number;
 }) {
+  const { remote } = useRemoteView();
   const stacks = groupStacks(containers);
-  if (stacks.length === 0) return null;
+  // A stack card is a restore trigger and nothing else, so the whole panel
+  // stays local.
+  if (stacks.length === 0 || remote) return null;
   return (
     <div className="flex flex-col gap-3">
       {/* GlimStone follow-up pass ("half-overlap card notch"): `relative`
@@ -3431,6 +3470,7 @@ function BackupOrderPanel({
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // whichever button triggered the failed persist() — Save or Reset — kept as
   // two separate nonces, mirroring VMs.tsx's identical VMBackupOrderPanel.
@@ -3547,7 +3587,8 @@ function BackupOrderPanel({
     void persist([], "reset");
   }
 
-  if (savedOrder === null) return null;
+  // The manual backup order is a setting, always local.
+  if (savedOrder === null || remote) return null;
 
   return (
     // Rainbow-mode completeness sweep (jdp, live review, sixth escalation of
@@ -3753,6 +3794,7 @@ export function Containers() {
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const { remote } = useRemoteView();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   // Page-level load failure — NOT migrated to a toast (GlimStone follow-up pass,
@@ -4202,18 +4244,22 @@ export function Containers() {
           <OffsiteIndicator domain="containers" />
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            key={shakeDiscover}
-            label={t("containers.discover")}
-            labelKey="containers.discover"
-            hueIndex={BULK_HUE.discover}
-            tone="accent"
-            onClick={() => void handleDiscover()}
-            disabled={discovering}
-            busy={discovering}
-            title={discovering ? t("containers.discovering") : tLtr(t, "containers.discoverHint")}
-            className={shakeDiscover ? "glim-shake" : ""}
-          />
+          {/* Discovering tracks a container that was not tracked before, a
+              setting, always local. */}
+          {!remote && (
+            <Button
+              key={shakeDiscover}
+              label={t("containers.discover")}
+              labelKey="containers.discover"
+              hueIndex={BULK_HUE.discover}
+              tone="accent"
+              onClick={() => void handleDiscover()}
+              disabled={discovering}
+              busy={discovering}
+              title={discovering ? t("containers.discovering") : tLtr(t, "containers.discoverHint")}
+              className={shakeDiscover ? "glim-shake" : ""}
+            />
+          )}
         </div>
       </div>
 
@@ -4415,17 +4461,20 @@ export function Containers() {
               shakeBackupSelected ? " glim-shake" : ""
             }`}
           />
-          {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-          <Advanced>
-            <Button
-              label={t("containers.restoreSelected")}
-              labelKey="containers.restoreSelected"
-              hueIndex={BULK_HUE.restore}
-              tone="accent"
-              onClick={() => void restoreSelected()}
-              disabled={bulkBusy || running.active}
-            />
-          </Advanced>
+          {/* Bulk restore is advanced-only; bulk backup stays basic. Remote
+              view never shows a restore trigger of any kind. */}
+          {!remote && (
+            <Advanced>
+              <Button
+                label={t("containers.restoreSelected")}
+                labelKey="containers.restoreSelected"
+                hueIndex={BULK_HUE.restore}
+                tone="accent"
+                onClick={() => void restoreSelected()}
+                disabled={bulkBusy || running.active}
+              />
+            </Advanced>
+          )}
           <Button
             label={t("containers.clearSelection")}
             labelKey="containers.clearSelection"

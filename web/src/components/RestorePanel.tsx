@@ -25,6 +25,7 @@ import { IconRestore, IconTrash } from "./Sidebar";
 import { IconDisclosure } from "./IconDisclosure";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useOpenAnomalies } from "../lib/useAnomalies";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -676,6 +677,7 @@ function SnapshotRow({
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   // Bumping shake remounts the delete button, which replays .glim-shake.
   const [shake, setShake] = useState(0);
 
@@ -726,38 +728,49 @@ function SnapshotRow({
             <InfoBubble tip={t("dbdump.pairedTip")} />
           </span>
         )}
-        <Advanced>
-          <div className="hidden sm:flex">
-            <SnapshotTags snap={snap} containerName={containerName} aliases={aliases} source={source} onTagged={onTagged} t={t} />
-          </div>
-        </Advanced>
+        {/* Tagging, restoring and deleting are all settled here on stored
+            data, none of them remote view's own triggers, so all three stay
+            local; nothing sets showRestore true while remote, but the panel
+            below is still gated on it directly, since a stale preselected
+            deep link must not open it either. */}
+        {!remote && (
+          <Advanced>
+            <div className="hidden sm:flex">
+              <SnapshotTags snap={snap} containerName={containerName} aliases={aliases} source={source} onTagged={onTagged} t={t} />
+            </div>
+          </Advanced>
+        )}
 
         {/* No hueIndex on these buttons: the row sits inside ContainerRow's
             .glim-hue element, so the accent already resolves to the row's
             colour. */}
-        <Button
-          label={t("restore.open")}
-          labelKey="restore.open"
-          glyph={<IconRestore />}
-          tone="accent"
-          onClick={() => setShowRestore((p) => !p)}
-        />
+        {!remote && (
+          <Button
+            label={t("restore.open")}
+            labelKey="restore.open"
+            glyph={<IconRestore />}
+            tone="accent"
+            onClick={() => setShowRestore((p) => !p)}
+          />
+        )}
 
         {/* Not red: the trash glyph, the tooltip and the confirm dialog carry
             the destructive meaning. */}
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={shake ? "glim-shake" : ""}
-        />
+        {!remote && (
+          <Button
+            key={shake}
+            label={t("snapshots.delete")}
+            labelKey="snapshots.delete"
+            glyph={<IconTrash />}
+            tone="accent"
+            onClick={() => void handleDelete()}
+            disabled={deleting || busy}
+            className={shake ? "glim-shake" : ""}
+          />
+        )}
       </div>
 
-      {showRestore && (
+      {!remote && showRestore && (
         <div className="mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
           <Advanced>
             <div className="flex flex-col gap-1.5">
@@ -879,6 +892,7 @@ export function RestorePanel({
   // snapshot rows above it.
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
   const { flagged } = useOpenAnomalies();
+  const { remote } = useRemoteView();
 
   // Seeds the restore-to-folder pickers once the panel opens.
   useEffect(() => {
@@ -948,7 +962,7 @@ export function RestorePanel({
           {installed ? (
             <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
           ) : (
-            <RecreateButton name={name} source={source} t={t} />
+            !remote && <RecreateButton name={name} source={source} t={t} />
           )}
         </div>
       )}
@@ -960,9 +974,13 @@ export function RestorePanel({
           t={t}
         />
       )}
-      <Advanced when={!loading && !error && snapshots.length >= 2}>
-        <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
-      </Advanced>
+      {/* The diff has no route on remote view's allowlist, so it stays local
+          like the restore controls below it. */}
+      {!remote && (
+        <Advanced when={!loading && !error && snapshots.length >= 2}>
+          <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
+        </Advanced>
+      )}
       {!loading && snapshots.map((snap) => (
         <SnapshotRow
           key={snap.id}
@@ -981,20 +999,25 @@ export function RestorePanel({
           t={t}
         />
       ))}
-      <DatabaseDumpList
-        containerName={name}
-        source={source}
-        recognised={isDatabase}
-        canImport={installed && containerRunning}
-        importStops={importStops}
-        hostMountRoot={hostMountRoot}
-        defaultFolder={restoreFolder}
-        reloadTick={reloadTick}
-        onDumps={setDumps}
-        preselect={preselectDump}
-        preselectAt={preselectAt}
-        t={t}
-      />
+      {/* Database dumps are downloads and imports, both left out of remote
+          view: decision 4 groups them with the flash zip as not offered
+          remotely at all, not merely disabled. */}
+      {!remote && (
+        <DatabaseDumpList
+          containerName={name}
+          source={source}
+          recognised={isDatabase}
+          canImport={installed && containerRunning}
+          importStops={importStops}
+          hostMountRoot={hostMountRoot}
+          defaultFolder={restoreFolder}
+          reloadTick={reloadTick}
+          onDumps={setDumps}
+          preselect={preselectDump}
+          preselectAt={preselectAt}
+          t={t}
+        />
+      )}
     </div>
   );
 }

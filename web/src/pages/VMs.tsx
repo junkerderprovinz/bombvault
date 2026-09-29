@@ -38,6 +38,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
 import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
+import { useRemoteView } from "../lib/remoteView";
 import { RepoPicker } from "../components/RepoPicker";
 // The phone face's building blocks: the breakpoint hook, the ONE pagination
 // primitive, the shared mobile list chrome and the card block's surfaces.
@@ -231,6 +232,7 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
   const { push } = useToast();
+  const { remote } = useRemoteView();
   const [shake, setShake] = useState(0);
   async function run() {
     setState("pending");
@@ -255,6 +257,9 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
       setShake((n) => n + 1);
     }
   }
+  // An export leaves the site as a download, which remote view forwards no
+  // route for.
+  if (remote) return null;
   return (
     <div className="flex flex-col items-end gap-1">
       {/* No hueIndex: the VMRow card already carries this VM's hue. The
@@ -396,6 +401,7 @@ function VMSnapshotRow({
   // Collapsed by default so the list stays compact.
   const [showRestore, setShowRestore] = useState(preselected);
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
@@ -439,28 +445,32 @@ function VMSnapshotRow({
         {/* No hueIndex: the VMRow card carries this VM's hue. Delete gets no
             colour of its own; the glyph and the confirm dialog carry its
             meaning. */}
-        <Button
-          label={t("restore.open")}
-          labelKey="restore.open"
-          glyph={<IconRestore />}
-          tone="accent"
-          onClick={() => setShowRestore((p) => !p)}
-          className={"shrink-0"}
-        />
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
+        {!remote && (
+          <Button
+            label={t("restore.open")}
+            labelKey="restore.open"
+            glyph={<IconRestore />}
+            tone="accent"
+            onClick={() => setShowRestore((p) => !p)}
+            className={"shrink-0"}
+          />
+        )}
+        {!remote && (
+          <Button
+            key={shake}
+            label={t("snapshots.delete")}
+            labelKey="snapshots.delete"
+            glyph={<IconTrash />}
+            tone="accent"
+            onClick={() => void handleDelete()}
+            disabled={deleting || busy}
+            className={`shrink-0${shake ? " glim-shake" : ""}`}
+          />
+        )}
       </div>
       {/* Indented past the id column; ps-24 is logical, so it follows the
           reading direction. */}
-      {showRestore && (
+      {!remote && showRestore && (
         <div className="ps-24">
           <RestoreAction
             domain="vm"
@@ -515,6 +525,7 @@ function VMRestorePanel({
   const { confirm, confirmDialog } = useConfirm();
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
   const { flagged } = useOpenAnomalies();
+  const { remote } = useRemoteView();
 
   useEffect(() => {
     if (!open) return;
@@ -583,7 +594,7 @@ function VMRestorePanel({
                 </span>
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" inline />
               </Advanced>
-              {snapshots.length > 0 && (
+              {snapshots.length > 0 && !remote && (
                 // Neutral, with no red of its own, like the same control in
                 // Files.tsx; the label and the confirm dialog carry the
                 // meaning.
@@ -687,6 +698,7 @@ export function VMRow({
     if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
   }, [restoreRequest]);
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // Reverted on a failed save, so the picker never shows a destination the
   // server did not accept.
   const [repoChoice, setRepoChoice] = useState(vm.repo ?? "");
@@ -812,14 +824,16 @@ export function VMRow({
         {installed && vm.lastBackup == null && aliases.length === 0 && linkCandidates.length > 0 && (
           <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onRefresh} t={t} />
         )}
-        {/* IncludeToggle renders its own label. */}
-        <div className="ms-auto">
-          <IncludeToggle
-            name={vm.libvirtName}
-            initial={vm.includeInSchedule}
-            save={setVMInclude}
-          />
-        </div>
+        {/* IncludeToggle renders its own label; scheduling is a setting. */}
+        {!remote && (
+          <div className="ms-auto">
+            <IncludeToggle
+              name={vm.libvirtName}
+              initial={vm.includeInSchedule}
+              save={setVMInclude}
+            />
+          </div>
+        )}
       </div>
 
       {/* ContainerRow's disclosure block with a single section. */}
@@ -841,27 +855,29 @@ export function VMRow({
           </span>
         </div>
 
-        {/* Where this VM's backups go. Locked once the VM has backups: they
-            stay in the repository they were written to. */}
-        <Advanced>
-          <RepoPicker
-            value={repoChoice}
-            onChange={(next) => {
-              const before = repoChoice;
-              setRepoChoice(next);
-              void setVMRepo(vm.libvirtName, next).then((r) => {
-                if (r.ok) {
-                  push(t("folders.saved"), "success");
-                  return;
-                }
-                push(r.error ?? t("settings.error"), "fail");
-                setRepoChoice(before);
-              });
-            }}
-            locked={vm.lastBackup != null}
-          />
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </Advanced>
+        {/* Where this VM's backups go and its anomaly preset: both settings,
+            always local. */}
+        {!remote && (
+          <Advanced>
+            <RepoPicker
+              value={repoChoice}
+              onChange={(next) => {
+                const before = repoChoice;
+                setRepoChoice(next);
+                void setVMRepo(vm.libvirtName, next).then((r) => {
+                  if (r.ok) {
+                    push(t("folders.saved"), "success");
+                    return;
+                  }
+                  push(r.error ?? t("settings.error"), "fail");
+                  setRepoChoice(before);
+                });
+              }}
+              locked={vm.lastBackup != null}
+            />
+            <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+          </Advanced>
+        )}
 
         <VMRestorePanel
           name={vm.libvirtName}
@@ -906,9 +922,13 @@ function ScheduleIncludeAllControl({
 }) {
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // One shake counter per button, so only the one that was clicked shakes.
   const [shakeInclude, setShakeInclude] = useState(0);
   const [shakeExclude, setShakeExclude] = useState(0);
+
+  // Which VMs are scheduled is a setting, always local.
+  if (remote) return null;
 
   async function run(include: boolean) {
     setBusy(true);
@@ -989,6 +1009,7 @@ function VMBulkBar({
   onRestore: () => void;
   onClear: () => void;
 }) {
+  const { remote } = useRemoteView();
   return (
     <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
       <span className="text-xs text-carbon-textSub">
@@ -1002,17 +1023,20 @@ function VMBulkBar({
         onClick={onBackup}
         disabled={busy || running.active}
       />
-      {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-      <Advanced>
-        <Button
-          label={t("vms.restoreSelected")}
-          labelKey="vms.restoreSelected"
-          hueIndex={BULK_HUE.restore}
-          tone="accent"
-          onClick={onRestore}
-          disabled={busy || running.active}
-        />
-      </Advanced>
+      {/* Bulk restore is advanced-only; bulk backup stays basic. Remote view
+          never shows a restore trigger of any kind. */}
+      {!remote && (
+        <Advanced>
+          <Button
+            label={t("vms.restoreSelected")}
+            labelKey="vms.restoreSelected"
+            hueIndex={BULK_HUE.restore}
+            tone="accent"
+            onClick={onRestore}
+            disabled={busy || running.active}
+          />
+        </Advanced>
+      )}
       <Button
         label={t("containers.clearSelection")}
         labelKey="containers.clearSelection"
@@ -1055,6 +1079,7 @@ function VMBackupOrderPanel({
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // persist() cannot tell Save from Reset, so each has its own counter.
   const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
@@ -1174,7 +1199,8 @@ function VMBackupOrderPanel({
     void persist([], "reset");
   }
 
-  if (savedOrder === null) return null;
+  // The manual backup order is a setting, always local.
+  if (savedOrder === null || remote) return null;
 
   return (
     // glim-notch-card makes the card the notch's positioned ancestor and lets
@@ -1333,6 +1359,7 @@ export function VMs() {
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // Any backup, restore or replication in flight disables the bulk start
   // buttons and shows a hint.
   const running = anyActive(useProgress());
@@ -1544,20 +1571,23 @@ export function VMs() {
           <OffsiteIndicator domain="vms" />
         </div>
         {/* Discover is the way back after a lost database, so it stays
-            whether or not VM backups are switched on, as on Containers. */}
+            whether or not VM backups are switched on, as on Containers.
+            Tracking a VM that was not tracked before is a setting, local. */}
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            key={shakeDiscover}
-            label={t("containers.discover")}
-            labelKey="containers.discover"
-            hueIndex={BULK_HUE.discover}
-            tone="accent"
-            onClick={() => void handleDiscover()}
-            disabled={discovering}
-            busy={discovering}
-            title={t("vms.discoverHint")}
-            className={shakeDiscover ? "glim-shake" : ""}
-          />
+          {!remote && (
+            <Button
+              key={shakeDiscover}
+              label={t("containers.discover")}
+              labelKey="containers.discover"
+              hueIndex={BULK_HUE.discover}
+              tone="accent"
+              onClick={() => void handleDiscover()}
+              disabled={discovering}
+              busy={discovering}
+              title={t("vms.discoverHint")}
+              className={shakeDiscover ? "glim-shake" : ""}
+            />
+          )}
         </div>
       </div>
 
@@ -2147,6 +2177,7 @@ function MobileVMDetail({
   restoreRequest?: RestoreRequest;
 }) {
   const { push } = useToast();
+  const { remote } = useRemoteView();
   // Reverted on a failed save, so the picker never shows a destination the
   // server did not accept.
   const [repoChoice, setRepoChoice] = useState(vm.repo ?? "");
@@ -2264,8 +2295,8 @@ function MobileVMDetail({
       {/* The schedule switch, the desktop card's own: without it there is no
           way to schedule or unschedule a VM from a phone at all. It shows on
           a removed VM too: the entry stays scheduled and every run logs a
-          skip until this switch goes off. */}
-      <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />
+          skip until this switch goes off. Scheduling is a setting, local. */}
+      {!remote && <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />}
 
       {/* ContainerRow's disclosure block with a single section. */}
       <div className="flex flex-col gap-2">
@@ -2284,27 +2315,29 @@ function MobileVMDetail({
             {`${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`}
           </span>
         </div>
-        {/* Where this VM's backups go. Locked once the VM has backups: they
-            stay in the repository they were written to. */}
-        <Advanced>
-          <RepoPicker
-            value={repoChoice}
-            onChange={(next) => {
-              const before = repoChoice;
-              setRepoChoice(next);
-              void setVMRepo(vm.libvirtName, next).then((r) => {
-                if (r.ok) {
-                  push(t("folders.saved"), "success");
-                  return;
-                }
-                push(r.error ?? t("settings.error"), "fail");
-                setRepoChoice(before);
-              });
-            }}
-            locked={vm.lastBackup != null}
-          />
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </Advanced>
+        {/* Where this VM's backups go and its anomaly preset: both settings,
+            always local. */}
+        {!remote && (
+          <Advanced>
+            <RepoPicker
+              value={repoChoice}
+              onChange={(next) => {
+                const before = repoChoice;
+                setRepoChoice(next);
+                void setVMRepo(vm.libvirtName, next).then((r) => {
+                  if (r.ok) {
+                    push(t("folders.saved"), "success");
+                    return;
+                  }
+                  push(r.error ?? t("settings.error"), "fail");
+                  setRepoChoice(before);
+                });
+              }}
+              locked={vm.lastBackup != null}
+            />
+            <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+          </Advanced>
+        )}
 
         <VMRestorePanel
           name={vm.libvirtName}

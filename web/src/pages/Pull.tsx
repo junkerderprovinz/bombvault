@@ -32,6 +32,7 @@ import { Button } from "../components/Button";
 import { TestButton, VerdictLine } from "../components/TestButton";
 import { useTestVerdict } from "../lib/useTestVerdict";
 import { ToggleRow } from "./settings/shared";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -57,6 +58,7 @@ function PullSourceCard({
   onEdit: () => void;
 }) {
   const { push } = useToast();
+  const { remote } = useRemoteView();
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
 
@@ -152,38 +154,46 @@ function PullSourceCard({
           busy={busy}
           hueIndex={index}
         />
-        <TestButton
-          label={t("offsite.test")}
-          labelKey="offsite.test"
-          test={test}
-          onClick={handleTest}
-          disabled={busy}
-          hueIndex={index}
-        />
-        <Button
-          label={t("common.edit")}
-          labelKey="common.edit"
-          tone="neutral"
-          onClick={onEdit}
-          hueIndex={index}
-        />
-        {confirmRemove ? (
-          <Button
-            label={t("offsite.targets.confirmRemove")}
-            labelKey="offsite.targets.confirmRemove"
-            tone="neutral"
-            onClick={() => void handleRemove()}
-            hueIndex={index}
-          />
-        ) : (
-          <Button
-            label={t("receiver.remove")}
-            labelKey="receiver.remove"
-            tone="neutral"
-            onClick={() => setConfirmRemove(true)}
+        {/* Testing the connection, editing and removing a source are all
+            settings, not reads or remote view's own pull trigger, so all
+            three stay local. */}
+        {!remote && (
+          <TestButton
+            label={t("offsite.test")}
+            labelKey="offsite.test"
+            test={test}
+            onClick={handleTest}
+            disabled={busy}
             hueIndex={index}
           />
         )}
+        {!remote && (
+          <Button
+            label={t("common.edit")}
+            labelKey="common.edit"
+            tone="neutral"
+            onClick={onEdit}
+            hueIndex={index}
+          />
+        )}
+        {!remote &&
+          (confirmRemove ? (
+            <Button
+              label={t("offsite.targets.confirmRemove")}
+              labelKey="offsite.targets.confirmRemove"
+              tone="neutral"
+              onClick={() => void handleRemove()}
+              hueIndex={index}
+            />
+          ) : (
+            <Button
+              label={t("receiver.remove")}
+              labelKey="receiver.remove"
+              tone="neutral"
+              onClick={() => setConfirmRemove(true)}
+              hueIndex={index}
+            />
+          ))}
       </div>
     </div>
   );
@@ -407,6 +417,7 @@ function PullDialog({
  *  the heading; the subtitle stays. */
 export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const [sources, setSources] = useState<PullSourceView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -447,7 +458,7 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
         }`}
       >
         {!embedded && <PageTitle>{t("pull.title")}</PageTitle>}
-        {!showEmptyState && (
+        {!showEmptyState && !remote && (
           <Button
             label={t("pull.addSource")}
             labelKey="pull.addSource"
@@ -473,12 +484,14 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
             </Badge>
           </h2>
           <EmptyStateIcon icon={IconReceiver} />
-          <Button
-            label={t("pull.addSource")}
-            labelKey="pull.addSource"
-            tone="accent"
-            onClick={() => setDialog("new")}
-          />
+          {!remote && (
+            <Button
+              label={t("pull.addSource")}
+              labelKey="pull.addSource"
+              tone="accent"
+              onClick={() => setDialog("new")}
+            />
+          )}
         </div>
       )}
 

@@ -20,6 +20,7 @@ import { isolateLtr } from "../../lib/ltrFragments";
 import { formatMillis, formatTs } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useRemoteView } from "../../lib/remoteView";
 
 function typicalSize(t: TranslateAnomaly, sourceBytes: number, resticMs: number): string {
   return t("anomaly.items.typicalSize")
@@ -61,6 +62,7 @@ export function ItemMonitoring({
 }) {
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const { remote } = useRemoteView();
   const [forgotten, setForgotten] = useState<string[]>([]);
 
   async function forget(family: string, scopeKind: string, part: string) {
@@ -142,15 +144,20 @@ export function ItemMonitoring({
                     .replace("{family}", t(ANOMALY_FAMILY_LABEL[e.family] ?? "anomaly.family.newData"))
                     .replace("{date}", formatTs(e.sinceAt))}
             </span>
-            <Button
-              label={t("anomaly.expectation.forget")}
-              labelKey="anomaly.expectation.forget"
-              onClick={() => void forget(e.family, e.scopeKind, e.part)}
-            />
+            {/* Forgetting an expectation changes how detection judges this
+                item from here on, the same as its sensitivity below, so it
+                stays local with it. */}
+            {!remote && (
+              <Button
+                label={t("anomaly.expectation.forget")}
+                labelKey="anomaly.expectation.forget"
+                onClick={() => void forget(e.family, e.scopeKind, e.part)}
+              />
+            )}
           </div>
         ))}
 
-      <ItemAnomalySettings item={item} enabled={enabled} globals={globals} t={t} />
+      {!remote && <ItemAnomalySettings item={item} enabled={enabled} globals={globals} t={t} />}
       {confirmDialog}
     </div>
   );

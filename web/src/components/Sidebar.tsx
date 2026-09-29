@@ -543,9 +543,10 @@ export function Sidebar({ settings, authEnabled, remote = false }: SidebarProps)
                 />
               )}
               {/* Receiver, Fleet and Pull share one row. The Instances page
-                  shows only the tabs whose setting is on, and pairing itself
-                  stays local. */}
-              {!remote && (receiverEnabled || fleetEnabled || pullEnabled) && (
+                  shows only the tabs whose setting is on; remotely it narrows
+                  to receiver and pull, so the row needs one of those two on
+                  instead of any of the three. */}
+              {(remote ? receiverEnabled || pullEnabled : receiverEnabled || fleetEnabled || pullEnabled) && (
                 <NavItem
                   to="/instances"
                   label={t("instances.title")}

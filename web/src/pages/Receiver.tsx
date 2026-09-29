@@ -37,6 +37,7 @@ import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
 import { Toggle } from "../components/Toggle";
 import { ToggleRow } from "./settings/shared";
+import { useRemoteView } from "../lib/remoteView";
 import { IconDisclosure } from "../components/IconDisclosure";
 
 type T = ReturnType<typeof useT>["t"];
@@ -174,6 +175,7 @@ function ReceivedRepoCard({
   const [deepCheck, setDeepCheck] = useState(false);
   const [checking, setChecking] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const { remote } = useRemoteView();
   const { push } = useToast();
   // Removing only drops the monitoring entry and leaves the repo on disk, so a
   // two-click inline confirm is enough.
@@ -317,34 +319,39 @@ function ReceivedRepoCard({
             onClick={() => setOpen((v) => !v)}
             glyph={<IconDisclosure open={open} />}
           />
-          <Button
-            label={t("receiver.edit")}
-            labelKey="receiver.edit"
-            tone="neutral"
-            onClick={onEdit}
-          />
-          {/* A text button rather than an icon: the two-click confirm needs a
-              label to flip. */}
-          {confirmRemove ? (
+          {/* Editing and removing a monitoring entry are settings, not reads
+              or one of remote view's own triggers, so both stay local. */}
+          {!remote && (
             <Button
-              key={shakeRemove}
-              label={t("receiver.confirmRemove")}
-              labelKey="receiver.confirmRemove"
+              label={t("receiver.edit")}
+              labelKey="receiver.edit"
               tone="neutral"
-              onClick={() => void handleRemove()}
-              disabled={removing}
-              busy={removing}
-              title={removing ? t("receiver.removing") : undefined}
-              className={shakeRemove ? "glim-shake" : ""}
-            />
-          ) : (
-            <Button
-              label={t("receiver.remove")}
-              labelKey="receiver.remove"
-              tone="neutral"
-              onClick={() => setConfirmRemove(true)}
+              onClick={onEdit}
             />
           )}
+          {/* A text button rather than an icon: the two-click confirm needs a
+              label to flip. */}
+          {!remote &&
+            (confirmRemove ? (
+              <Button
+                key={shakeRemove}
+                label={t("receiver.confirmRemove")}
+                labelKey="receiver.confirmRemove"
+                tone="neutral"
+                onClick={() => void handleRemove()}
+                disabled={removing}
+                busy={removing}
+                title={removing ? t("receiver.removing") : undefined}
+                className={shakeRemove ? "glim-shake" : ""}
+              />
+            ) : (
+              <Button
+                label={t("receiver.remove")}
+                labelKey="receiver.remove"
+                tone="neutral"
+                onClick={() => setConfirmRemove(true)}
+              />
+            ))}
         </div>
       </div>
 
@@ -569,6 +576,7 @@ function ReceiverDialog({
  *  shell and the heading, so the tab does not repeat the strip's label. */
 export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const [repos, setRepos] = useState<ReceivedRepoStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -608,7 +616,7 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
         }`}
       >
         {!embedded && <PageTitle>{t("receiver.title")}</PageTitle>}
-        {!showEmptyState && (
+        {!showEmptyState && !remote && (
           <Button
             label={t("receiver.addRepo")}
             labelKey="receiver.addRepo"
@@ -638,12 +646,14 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
             </Badge>
           </h2>
           <EmptyStateIcon icon={IconReceiver} />
-          <Button
-            label={t("receiver.addRepo")}
-            labelKey="receiver.addRepo"
-            tone="accent"
-            onClick={() => setDialog("new")}
-          />
+          {!remote && (
+            <Button
+              label={t("receiver.addRepo")}
+              labelKey="receiver.addRepo"
+              tone="accent"
+              onClick={() => setDialog("new")}
+            />
+          )}
         </div>
       )}
 

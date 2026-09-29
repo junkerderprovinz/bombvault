@@ -30,6 +30,7 @@ import { MissingRestorePoint, restorePointOf } from "../components/restore/Missi
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest } from "../lib/restoreRequest";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -210,6 +211,7 @@ function ConfigSnapshotRow({
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   const [shake, setShake] = useState(0);
 
   async function handleDelete() {
@@ -248,17 +250,19 @@ function ConfigSnapshotRow({
           </Badge>
         )}
         {/* Accent rather than red: the glyph, the label and the confirm dialog
-            already mark the action as destructive. */}
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting}
-          className={`max-md:ms-auto shrink-0${shake ? " glim-shake" : ""}`}
-        />
+            already mark the action as destructive. Deleting stays local. */}
+        {!remote && (
+          <Button
+            key={shake}
+            label={t("snapshots.delete")}
+            labelKey="snapshots.delete"
+            glyph={<IconTrash />}
+            tone="accent"
+            onClick={() => void handleDelete()}
+            disabled={deleting}
+            className={`max-md:ms-auto shrink-0${shake ? " glim-shake" : ""}`}
+          />
+        )}
       </div>
       {confirmDialog}
     </div>
@@ -270,6 +274,7 @@ function ConfigSnapshotRow({
 // stays in the Recovery tab.
 export function Config() {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const [settings, setSettings] = useState<Settings | null>(null);
   const anomaly = useAnomalyItems().find("config", "config");
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
@@ -329,7 +334,8 @@ export function Config() {
       <PageTitle>{t("config.title")}</PageTitle>
       <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
 
-      {settings && (
+      {/* Whether self-backup runs at all is a setting, always local. */}
+      {!remote && settings && (
         <ConfigSettingsCard t={t} settings={settings} setSettings={(u) => setSettings((prev) => (prev ? u(prev) : prev))} hueIndex={0} />
       )}
 
@@ -352,16 +358,18 @@ export function Config() {
               busyPhase={running.phase}
             />
           </div>
-          <ItemAnomalySettings
-            item={anomaly}
-            enabled={anomalyEnabled}
-            globals={
-              settings
-                ? { sensitivity: settings.anomalySensitivity, notifyMin: settings.anomalyNotifyMin }
-                : undefined
-            }
-            t={t}
-          />
+          {!remote && (
+            <ItemAnomalySettings
+              item={anomaly}
+              enabled={anomalyEnabled}
+              globals={
+                settings
+                  ? { sensitivity: settings.anomalySensitivity, notifyMin: settings.anomalyNotifyMin }
+                  : undefined
+              }
+              t={t}
+            />
+          )}
 
           {/* A restore has its own control with its own warning. */}
           {progress && progress.active && progress.phase !== "restore" && (

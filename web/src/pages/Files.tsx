@@ -49,6 +49,7 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
+import { useRemoteView } from "../lib/remoteView";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { Badge } from "../components/Badge";
@@ -498,6 +499,7 @@ function FileSetSnapshotRow({
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   const [shake, setShake] = useState(0);
 
   async function handleDelete() {
@@ -547,30 +549,34 @@ function FileSetSnapshotRow({
       </div>
       {/* Everything a snapshot does sits in one row, delete last. The badge
           takes the hue of FileSetRow's card and no red of its own; the glyph,
-          the tip and the confirm dialog carry its meaning. */}
-      <div>
-        <FileSetRestoreControl
-          set={set}
-          snapshotId={snap.id}
-          source={source}
-          hostMountRoot={hostMountRoot}
-          restoreFolder={restoreFolder}
-          otherActive={running}
-          t={t}
-          trailing={
-            <Button
-              key={shake}
-              label={t("snapshots.delete")}
-              labelKey="snapshots.delete"
-              glyph={<IconTrash />}
-              tone="accent"
-              onClick={() => void handleDelete()}
-              disabled={deleting || busy}
-              className={`shrink-0${shake ? " glim-shake" : ""}`}
-            />
-          }
-        />
-      </div>
+          the tip and the confirm dialog carry its meaning. Restoring and
+          deleting both stay local, so this whole row of actions goes with
+          them; the metadata above it (id, time, tags) stays. */}
+      {!remote && (
+        <div>
+          <FileSetRestoreControl
+            set={set}
+            snapshotId={snap.id}
+            source={source}
+            hostMountRoot={hostMountRoot}
+            restoreFolder={restoreFolder}
+            otherActive={running}
+            t={t}
+            trailing={
+              <Button
+                key={shake}
+                label={t("snapshots.delete")}
+                labelKey="snapshots.delete"
+                glyph={<IconTrash />}
+                tone="accent"
+                onClick={() => void handleDelete()}
+                disabled={deleting || busy}
+                className={`shrink-0${shake ? " glim-shake" : ""}`}
+              />
+            }
+          />
+        </div>
+      )}
       {confirmDialog}
     </div>
   );
@@ -614,6 +620,7 @@ function FileSetRestorePanel({
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
 
   useEffect(() => {
@@ -696,8 +703,8 @@ function FileSetRestorePanel({
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" inline />
               </Advanced>
               {/* Delete-all acts on the local repository and forgets the set,
-                  so it only shows with the local source. */}
-              {source === "local" && snapshots.length > 0 && (
+                  so it only shows with the local source, and never remotely. */}
+              {source === "local" && snapshots.length > 0 && !remote && (
                 // A neutral full-size Button like the container card's
                 // delete-all; bombvault/no-status-color-on-control keeps red
                 // off it. glyphFor gives snapshots.deleteAll its trash glyph.
@@ -1224,6 +1231,7 @@ export function FileSetRow({
   const [removing, setRemoving] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  const { remote } = useRemoteView();
   const [shake, setShake] = useState(0);
 
   const noPath = set.path === "";
@@ -1304,36 +1312,44 @@ export function FileSetRow({
         <div className="ms-auto flex items-start gap-1.5 shrink-0 flex-wrap max-md:w-full max-md:justify-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
           {/* Just the verb: the card already names the set. files.editSet
-              stays the dialog heading, where the set has to be named. */}
-          <Button
-            label={t("common.edit")}
-            labelKey="common.edit"
-            glyph={<IconPencil />}
-            tone="accent"
-            title={t("files.editSet")}
-            onClick={onEdit}
-          />
-          <Button
-            key={shake}
-            label={t("common.delete")}
-            labelKey="common.delete"
-            glyph={<IconTrash />}
-            tone="accent"
-            title={t("files.deleteSet")}
-            onClick={() => void handleRemove()}
-            disabled={removing}
-            className={shake ? "glim-shake" : ""}
-          />
+              stays the dialog heading, where the set has to be named.
+              Editing and deleting a set are both settings, always local. */}
+          {!remote && (
+            <Button
+              label={t("common.edit")}
+              labelKey="common.edit"
+              glyph={<IconPencil />}
+              tone="accent"
+              title={t("files.editSet")}
+              onClick={onEdit}
+            />
+          )}
+          {!remote && (
+            <Button
+              key={shake}
+              label={t("common.delete")}
+              labelKey="common.delete"
+              glyph={<IconTrash />}
+              tone="accent"
+              title={t("files.deleteSet")}
+              onClick={() => void handleRemove()}
+              disabled={removing}
+              className={shake ? "glim-shake" : ""}
+            />
+          )}
         </div>
       </div>
 
       {/* The schedule toggle, flush right below the badges, as on the
-          container card. */}
-      <div className="flex items-start">
-        <div className="ms-auto flex flex-col items-end gap-2">
-          <FileSetEnabledToggle id={set.id} initial={set.enabled} />
+          container card. Whether a set is scheduled is a settings change,
+          always local. */}
+      {!remote && (
+        <div className="flex items-start">
+          <div className="ms-auto flex flex-col items-end gap-2">
+            <FileSetEnabledToggle id={set.id} initial={set.enabled} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* What the toggle above means for this set, in the same
           server-computed sentence as the Schedules card. */}
@@ -1366,8 +1382,9 @@ export function FileSetRow({
       />
 
       {/* Keyed by fileSetEditorKey, because the editor seeds from its
-          mount-time props and has to remount after a path edit. */}
-      {!noPath && (
+          mount-time props and has to remount after a path edit. Editing
+          which folders a set covers is a settings change, always local. */}
+      {!noPath && !remote && (
         <FileSetFoldersEditor
           key={fileSetEditorKey(set)}
           set={set}
@@ -1401,6 +1418,7 @@ export function FileSetRow({
 
 export function Files() {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const restoreRequest = useRestoreRequest();
@@ -1539,20 +1557,23 @@ export function Files() {
           <OffsiteIndicator domain="files" />
         </div>
         <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
-          <Button
-            key={shakeDiscover}
-            label={t("containers.discover")}
-            labelKey="containers.discover"
-            tone="neutral"
-            onClick={() => void handleDiscover()}
-            disabled={discovering}
-            busy={discovering}
-            title={t("files.discoverHint")}
-            className={shakeDiscover ? "glim-shake" : ""}
-          />
+          {!remote && (
+            <Button
+              key={shakeDiscover}
+              label={t("containers.discover")}
+              labelKey="containers.discover"
+              tone="neutral"
+              onClick={() => void handleDiscover()}
+              disabled={discovering}
+              busy={discovering}
+              title={t("files.discoverHint")}
+              className={shakeDiscover ? "glim-shake" : ""}
+            />
+          )}
           {/* Offered on generic hosts and TrueNAS only; Unraid has the flash
-              domain for host config. */}
-          {!showEmptyState && preset?.offered && (
+              domain for host config. Adding a set is a settings change,
+              always local. */}
+          {!remote && !showEmptyState && preset?.offered && (
             <Button
               label={t("files.addPreset")}
               labelKey="files.addPreset"
@@ -1561,7 +1582,7 @@ export function Files() {
               title={t("files.addPresetHint")}
             />
           )}
-          {!showEmptyState && (
+          {!remote && !showEmptyState && (
             <Button
               label={t("files.addSet")}
               labelKey="files.addSet"
@@ -1594,23 +1615,25 @@ export function Files() {
             </Badge>
           </h2>
           <EmptyStateIcon icon={IconFiles} />
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            {preset?.offered && (
+          {!remote && (
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              {preset?.offered && (
+                <Button
+                  label={t("files.addPreset")}
+                  labelKey="files.addPreset"
+                  tone="neutral"
+                  onClick={handleAddPreset}
+                  title={t("files.addPresetHint")}
+                />
+              )}
               <Button
-                label={t("files.addPreset")}
-                labelKey="files.addPreset"
-                tone="neutral"
-                onClick={handleAddPreset}
-                title={t("files.addPresetHint")}
+                label={t("files.addSet")}
+                labelKey="files.addSet"
+                tone="accent"
+                onClick={handleAddBlank}
               />
-            )}
-            <Button
-              label={t("files.addSet")}
-              labelKey="files.addSet"
-              tone="accent"
-              onClick={handleAddBlank}
-            />
-          </div>
+            </div>
+          )}
         </div>
       )}
 

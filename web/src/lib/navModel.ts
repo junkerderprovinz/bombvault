@@ -122,9 +122,19 @@ export function destinations(settings: Settings | null, remote = false): NavDest
     // stays local, so remote view leaves the row off.
     { to: "/recovery", labelKey: "nav.recovery", icon: IconRecovery, bar: true, enabled: !remote },
     // Receiver, Fleet and Pull share one row. The Instances page shows only
-    // the tabs whose setting is on, and none of it (pairing, mesh, removing a
-    // peer) is something remote view may reach.
-    { to: "/instances", labelKey: "instances.title", icon: IconFleet, bar: false, enabled: !remote && (settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled || false) },
+    // the tabs whose setting is on. Remotely it narrows further, to the
+    // receiver and pull lists decision 1 names: pairing and fleet management
+    // never belong to another instance, so the row needs one of the other
+    // two on to earn its place while remote.
+    {
+      to: "/instances",
+      labelKey: "instances.title",
+      icon: IconFleet,
+      bar: false,
+      enabled: remote
+        ? (settings?.receiverEnabled || settings?.pullEnabled || false)
+        : (settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled || false),
+    },
     { to: "/settings", labelKey: "nav.settings", icon: IconGear, bar: false, enabled: !remote },
   ];
 }

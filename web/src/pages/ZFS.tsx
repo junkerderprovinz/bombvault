@@ -24,9 +24,11 @@ import { anyActive, busyPhraseKey, useProgress } from "../lib/progress";
 import { useRestoreRequest } from "../lib/restoreRequest";
 import { useToast } from "../lib/toast";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
+import { useRemoteView } from "../lib/remoteView";
 
 export function ZFS() {
   const { t } = useT();
+  const { remote } = useRemoteView();
   const { push } = useToast();
   const running = anyActive(useProgress());
   const anomalies = useAnomalyItems();
@@ -135,17 +137,19 @@ export function ZFS() {
           <OffsiteIndicator domain="zfs" />
         </div>
         <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
-          <Button
-            key={shakeDiscover}
-            label={t("containers.discover")}
-            labelKey="containers.discover"
-            tone="neutral"
-            onClick={() => void handleDiscover()}
-            disabled={discovering}
-            busy={discovering}
-            title={t("zfs.discoverHint")}
-            className={shakeDiscover ? "glim-shake" : ""}
-          />
+          {!remote && (
+            <Button
+              key={shakeDiscover}
+              label={t("containers.discover")}
+              labelKey="containers.discover"
+              tone="neutral"
+              onClick={() => void handleDiscover()}
+              disabled={discovering}
+              busy={discovering}
+              title={t("zfs.discoverHint")}
+              className={shakeDiscover ? "glim-shake" : ""}
+            />
+          )}
           {!showEmptyState && (
             <Button
               key={shakeBackupAll}
@@ -161,7 +165,7 @@ export function ZFS() {
           {!backupAllBusy && running.active && (
             <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
           )}
-          {!showEmptyState && (
+          {!remote && !showEmptyState && (
             <Button
               label={t("zfs.addDatasets")}
               labelKey="zfs.addDatasets"
@@ -172,7 +176,9 @@ export function ZFS() {
         </div>
       </div>
 
-      <ZFSConnectionCard />
+      {/* SSH reachability and key setup are diagnostics for this host, not a
+          view of what it backed up, so the card stays local. */}
+      {!remote && <ZFSConnectionCard />}
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error !== null && <p className="text-sm text-statusFail">{error}</p>}
@@ -189,12 +195,14 @@ export function ZFS() {
             </Badge>
           </h2>
           <EmptyStateIcon icon={IconZFS} />
-          <Button
-            label={t("zfs.addDatasets")}
-            labelKey="zfs.addDatasets"
-            tone="accent"
-            onClick={() => setAdding(true)}
-          />
+          {!remote && (
+            <Button
+              label={t("zfs.addDatasets")}
+              labelKey="zfs.addDatasets"
+              tone="accent"
+              onClick={() => setAdding(true)}
+            />
+          )}
         </div>
       )}
 
@@ -221,12 +229,14 @@ export function ZFS() {
       {notInItem > 0 && (
         <p className="flex flex-wrap items-center gap-2 text-xs text-carbon-textMuted">
           {t("zfs.notInItem", notInItem)}
-          <Button
-            label={t("zfs.addDatasets")}
-            labelKey="zfs.addDatasets"
-            tone="subtle"
-            onClick={() => setAdding(true)}
-          />
+          {!remote && (
+            <Button
+              label={t("zfs.addDatasets")}
+              labelKey="zfs.addDatasets"
+              tone="subtle"
+              onClick={() => setAdding(true)}
+            />
+          )}
         </p>
       )}
       {unusedZvols > 0 && (

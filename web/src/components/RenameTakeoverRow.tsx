@@ -3,6 +3,7 @@ import type { TranslationKey, useT } from "../lib/i18n";
 import { backupCountText, countBackups, useTakeOver, type TakeoverEntry } from "../lib/useTakeOver";
 import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
+import { useRemoteView } from "../lib/remoteView";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -68,6 +69,7 @@ export function RenameTakeoverRow({
   const [shake, setShake] = useState(0);
   const { takeOver, busy, confirmDialog } = useTakeOver(entry, onDone, t);
   const rowRef = useRef<HTMLDivElement>(null);
+  const { remote } = useRemoteView();
 
   useEffect(() => {
     if (dismissed) return;
@@ -81,6 +83,8 @@ export function RenameTakeoverRow({
   }, [entry.api, from, dismissed]);
 
   if (dismissed) return null;
+  // A takeover changes what an entry points at, always local.
+  if (remote) return null;
 
   const facts = [REASONS[reason] && t(REASONS[reason]), backups !== null && backupCountText(t, backups)]
     .filter(Boolean)
