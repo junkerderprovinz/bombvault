@@ -26,7 +26,8 @@ import { Selector, type SelectorItem } from "../Selector";
 import { SelectField } from "../SelectField";
 import { SnapshotFileTree } from "../SnapshotFileTree";
 import { ZFSPropertyList } from "./ZFSPropertyList";
-import { IconCopy, IconRestore } from "../Sidebar";
+import { IconAdd, IconCopy, IconFolder, IconRestore } from "../Sidebar";
+import { IconSelectAll } from "../glyphs";
 import { SourceToggle, type RepoSource } from "../SourceToggle";
 import { ToggleRow } from "../../pages/settings/shared";
 
@@ -313,13 +314,14 @@ export function ZFSRestorePanel({
     {
       id: "inPlace",
       label: t("zfs.restore.inPlace"),
+      icon: <IconRestore />,
       disabled: folderOnly,
       title: blocked !== null ? t(blocked) : undefined,
     },
-    { id: "newDataset", label: t("zfs.restore.newDataset"), disabled: !newDatasetPossible },
-    { id: "folder", label: t("zfs.restore.toFolder") },
+    { id: "newDataset", label: t("zfs.restore.newDataset"), icon: <IconAdd />, disabled: !newDatasetPossible },
+    { id: "folder", label: t("zfs.restore.toFolder"), icon: <IconFolder /> },
     ...(advanced
-      ? [{ id: "select", label: t("zfs.restore.selectFiles"), disabled: folderOnly }]
+      ? [{ id: "select", label: t("zfs.restore.selectFiles"), icon: <IconSelectAll />, disabled: folderOnly }]
       : []),
   ];
 

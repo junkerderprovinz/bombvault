@@ -207,6 +207,15 @@ describe("ZFS restore panel", () => {
     expect(screen.getByRole("option", { name: en["zfs.restore.wholeTree"] })).toBeTruthy();
   });
 
+  it("gives each destination its own glyph", async () => {
+    localStorage.setItem("bombvault.advanced", "1");
+    await openPanel();
+    const keys = ["zfs.restore.inPlace", "zfs.restore.newDataset", "zfs.restore.toFolder", "zfs.restore.selectFiles"];
+    const glyphs = keys.map((k) => modeTab(en[k]).querySelector("svg")?.innerHTML);
+    expect(glyphs.every(Boolean)).toBe(true);
+    expect(new Set(glyphs).size).toBe(keys.length);
+  });
+
   it("will not write into a dataset the server has not mounted", async () => {
     await openPanel(item({ members: [member({ outcome: "not-mounted" })] }));
     expect(modeTab(en["zfs.restore.inPlace"]).hasAttribute("disabled")).toBe(true);
