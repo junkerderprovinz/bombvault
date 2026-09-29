@@ -35,7 +35,7 @@ Protože záloha zastavuje služby a vytlačuje staré body obnovy, jsou spušt�
 - 12 spuštěných záloh za hodinu na klíč.
 - 15 minut mezi dvěma spuštěními přes MCP u téže položky, téže domény nebo Backup Everything.
 - Nejvýše 4 spuštění téže položky přes MCP za 24 hodin.
-- **Ochrana uchovávání.** Když doména uchovává pevný počet bodů obnovy (jen "ponechat posledních N", bez denního, týdenního či měsíčního pravidla, lokálně nebo v cíli off-site), každá nová záloha vytlačí tu nejstarší. BombVault pak odmítne spuštění položky přes MCP, pokud jejích nejnovějších N-1 úspěšných záloh spustilo MCP. V uchovávané sadě tak vždy zůstane alespoň jeden bod obnovy, který vytvořil plán nebo vy. Při nastavení "ponechat poslední 1" nemůže asistent tuto položku zálohovat vůbec. Další naplánovaná záloha zase udělá místo.
+- **Ochrana uchovávání.** Když doména uchovává pevný počet bodů obnovy (jen "ponechat posledních N", bez denního, týdenního či měsíčního pravidla, lokálně nebo v cíli off-site), každá nová záloha vytlačí tu nejstarší. BombVault pak odmítne spuštění položky přes MCP, pokud jejích nejnovějších N-1 úspěšných záloh spustilo MCP. V uchovávané sadě tak vždy zůstane alespoň jeden bod obnovy, který vytvořil plán nebo vy. Při nastavení "ponechat poslední 1" nemůže asistent tuto položku zálohovat vůbec. Další naplánovaná záloha zase udělá místo. Samotné roční pravidlo se počítá jako "ponechat poslední 1", protože pro aktuální rok ponechá jen jeden bod obnovení.
 
 Spuštění domény nebo Backup Everything vynechá položky, které nějaký limit zadrží, a vyjmenuje je v odpovědi. Webové rozhraní ani plán se žádného z těchto limitů netýkají. Hodinový rozpočet je jen v paměti, takže restart BombVaultu ho vynuluje.
 

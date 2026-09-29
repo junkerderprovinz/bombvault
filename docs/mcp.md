@@ -35,7 +35,7 @@ Because a backup stops things and rotates old restore points out, starts through
 - 12 started backups per hour per key.
 - 15 minutes between two MCP starts of the same item, domain or Backup Everything.
 - At most 4 MCP starts of the same item in 24 hours.
-- **Retention guard.** When a domain keeps a fixed number of restore points (only "keep last N", no daily, weekly or monthly rule, locally or on an off-site destination), every new backup pushes the oldest one out. BombVault then refuses an MCP start of an item whose newest N-1 successful backups were all started through MCP. At least one restore point that the schedule or you made therefore always stays in the kept set. With "keep last 1" an assistant cannot back that item up at all. The next scheduled backup makes room again.
+- **Retention guard.** When a domain keeps a fixed number of restore points (only "keep last N", no daily, weekly or monthly rule, locally or on an off-site destination), every new backup pushes the oldest one out. BombVault then refuses an MCP start of an item whose newest N-1 successful backups were all started through MCP. At least one restore point that the schedule or you made therefore always stays in the kept set. With "keep last 1" an assistant cannot back that item up at all. The next scheduled backup makes room again. A yearly rule on its own counts as "keep last 1", since it keeps a single restore point for the current year.
 
 A domain or Backup Everything start leaves out the items a limit holds back and names them in its answer. The web interface and the schedule are not limited by any of this. The hourly budget lives in memory, so a restart of BombVault resets it.
 
