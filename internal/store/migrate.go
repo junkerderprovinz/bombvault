@@ -2222,6 +2222,14 @@ CREATE INDEX IF NOT EXISTS idx_start_tests_target ON start_tests(target_id, at);
 CREATE INDEX IF NOT EXISTS idx_size_breakdowns_target ON size_breakdowns(target_id, created_at);`,
 	},
 	{
+		// The locally set ZFS properties of each dataset a run backed up, as
+		// JSON, so a restore can create a new dataset with them.
+		version:          zfsPropertiesMigration,
+		name:             "zfs_run_members_properties",
+		alreadySatisfied: columnPresent("zfs_run_members", "properties"),
+		sql:              `ALTER TABLE zfs_run_members ADD COLUMN properties TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// The pairing group: this instance's id within it, the secret behind
 		// the twelve words sealed under the APP_KEY, and the relay settings.
 		version: pairingMigration,
@@ -2330,6 +2338,10 @@ const verifyMigrationBase = 180
 // insightMigration numbers the migrations behind the change notice, the load
 // summary of a run and the size breakdown.
 const insightMigration = 190
+
+// zfsPropertiesMigration numbers the column that keeps each dataset's ZFS
+// properties.
+const zfsPropertiesMigration = 200
 
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.

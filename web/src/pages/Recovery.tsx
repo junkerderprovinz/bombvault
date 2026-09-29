@@ -7,6 +7,7 @@ import { hueVars } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { AppdataBackupImport } from "../components/recovery/AppdataBackupImport";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
@@ -2334,6 +2335,7 @@ export default function Recovery() {
       </StepCard>
 
       <ForeignRestoreCard hostMountRoot={hostMountRoot} t={t} otherActive={rowOtherActive} nextHue={nextHue} />
+      <AppdataBackupImport hostMountRoot={hostMountRoot} nextHue={nextHue} t={t} />
       {confirmDialog}
     </div>
   );

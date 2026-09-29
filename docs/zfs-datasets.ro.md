@@ -63,6 +63,7 @@ Deschide **Copii de rezervă** la element, alege copia, apoi setul de date. Impl
 
 - **Restaurează în setul de date.** Fișierele din copie sunt scrise în punctul de montare al setului de date. Fișierele cu același nume sunt suprascrise, celelalte rămân. Setul de date nu este niciodată readus la o stare anterioară sau înlocuit. BombVault verifică dacă setul de date este montat, vizibil și inscriptibil, o dată înainte de început și din nou chiar înainte de scriere. Acolo unde în interior e montat un set de date copil, nu se scrie nimic: copilul își păstrează fișierele, proprietarul și permisiunile și este restaurat din propria copie.
 - **Restaurează într-un dosar.** Alege un dosar sub `/mnt`. BombVault verifică dacă dosarul e pe un pool sau o partajare montată și dacă există destul spațiu liber. Funcționează fără legătura SSH și pentru seturi de date care nu mai există.
+- **Într-un set de date nou.** Dă numele unui set de date care nu există încă. BombVault îl creează cu proprietățile ZFS salvate în backup și restaurează în el, vezi [Restaurare ca set de date nou](#new-dataset).
 - **Alege fișiere** (avansat): scrie înapoi în setul de date doar fișierele și dosarele pe care le alegi.
 - **Toate seturile de date ale acestei copii** (avansat): fiecare set de date al arborelui în propriul subdosar al dosarului ales. Seturile de date sărite în acea copie sunt numite.
 - **De pe alt server:** pagina **Recuperare** restaurează din depozitul unui alt BombVault, mereu într-un dosar: toate seturile de date ale unei copii, fiecare în propriul subdosar, sau un set de date al arborelui, întreg sau fișiere alese.
@@ -79,27 +80,23 @@ Ca să revii după o restaurare, copiază fișiere individuale din `.zfs/snapsho
 
 ### Restaurare ca set de date nou {#new-dataset}
 
-BombVault nu creează seturi de date. Creează-l pe server cu proprietățile dorite, apoi restaurează într-un dosar care este punctul lui de montare:
+BombVault salvează la fiecare backup proprietățile ZFS setate local ale fiecărui set de date: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity și propriile tale proprietăți de utilizator. Valorile moștenite și cele doar pentru citire sunt lăsate deoparte, pentru că revin singure. Backupurile de dinainte ca BombVault să le salveze nu au niciuna.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-iar în BombVault restaurează în dosarul `cache/appdata-restored` sub `/mnt`.
+- **Într-un set de date nou** rulează `zfs create` cu fiecare proprietate salvată. casesensitivity, normalization și utf8only pot fi setate doar așa. Punctul de montare este lăsat deoparte, ca să nu se ciocnească copia de original, la fel `canmount`, `readonly` și criptarea, ca restaurarea să poată scrie. Un set de date nou sub unul criptat îi preia criptarea. Setul de date de deasupra trebuie să existe. Dacă ceva eșuează după creare, setul de date nou rămâne pe server, pentru că BombVault nu distruge niciodată un set de date.
+- **Restaurează în setul de date** arată proprietățile salvate lângă restaurare. **Setează și aceste proprietăți** le setează pe cele pe care un set de date existent le mai acceptă, înainte să fie scris vreun fișier. Fără acest comutator, setul de date își păstrează setările.
 
 ## Ce conține copia {#contents}
 
-În copie: fișierele și dosarele fiecărui set de date salvat, cu proprietarul, permisiunile, marcajele de timp și atributele extinse așa cum le stochează restic.
+În copie: fișierele și dosarele fiecărui set de date salvat, cu proprietarul, permisiunile, marcajele de timp și atributele extinse așa cum le stochează restic, precum și proprietățile ZFS setate local ale fiecărui set de date.
 
 Nu sunt în copie:
 
-- proprietățile ZFS ale seturilor de date (compression, recordsize, quota, mountpoint și restul);
 - proprietarul și permisiunile dosarului de sus al fiecărui set de date în sine (tot ce e sub el este inclus). O restaurare în setul de date lasă dosarul de sus existent așa cum e, o restaurare într-un dosar îl creează cu permisiunile `0755`;
 - instantaneele ZFS existente;
 - copiii care au fost săriți sau excluși;
 - volumele.
 
-Ca să restaurezi pe un pool nou, creează mai întâi seturile de date cu proprietățile dorite. Nu s-a verificat încă dacă ACL-urile NFSv4, așa cum le folosește TrueNAS pe seturile de date SMB, revin așa cum te aștepți, așa că testează o restaurare cu propriile date înainte să te bazezi pe ele.
+Pentru a restaura pe un pool nou, creează poolul și restaurează fiecare set de date într-un set de date nou. Nu s-a verificat încă dacă ACL-urile NFSv4, așa cum le folosește TrueNAS pe seturile de date SMB, revin așa cum te aștepți, așa că testează o restaurare cu propriile date înainte să te bazezi pe ele.
 
 ## Seturi de date criptate {#encryption}
 
@@ -180,6 +177,10 @@ Pagina, istoricul rulărilor și notificările numesc o problemă cu unul dintre
 | `not-enough-space` | Nu e destul spațiu liber la destinație. | Eliberează spațiu sau alege alt dosar. |
 | `safety-snapshot-failed` | Instantaneul de siguranță nu a putut fi făcut, așa că nu s-a restaurat nimic. | Detaliile arată mesajul zfs. |
 | `safety-name-too-long` | Numele setului de date este prea lung pentru un instantaneu de siguranță. | Dezactivează instantaneul de siguranță sau restaurează într-un dosar. |
+| `dataset-exists` | Există deja un set de date cu acest nume. | Alege un nume nou sau restaurează chiar în setul de date. |
+| `create-failed` | Setul de date nou nu a putut fi creat. | Detaliile arată mesajul zfs. Verifică dacă setul de date de deasupra există. |
+| `new-dataset-not-visible` | Setul de date nou a fost creat, dar BombVault nu îl vede, așa că nu s-a restaurat nimic. | Setul de date rămâne pe server. Montează-l sub calea Host Data și restaurează în el. |
+| `set-properties-failed` | Proprietățile salvate nu au putut fi setate, așa că nu s-a restaurat nimic. | Detaliile arată mesajul zfs. |
 
 ### Verifică ce vede containerul {#mountinfo}
 
@@ -201,6 +202,8 @@ Fiecare linie este o montare în container. Linia unui set de date arată calea 
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Restaurarea într-un set de date nou are nevoie în plus de `create` pe setul de date de deasupra, iar setarea proprietăților salvate are nevoie de drepturi pentru acele proprietăți.
 
   O sesiune SSH fără root pe TrueNAS nu are `/usr/sbin` în cale; BombVault apelează atunci direct `/usr/sbin/zfs`.
 - **Host Data** al aplicației trebuie să fie o cale a gazdei deasupra seturilor de date, de exemplu `/mnt/tank`, nu un ixVolume. Cu o cale a gazdei, aplicația transmite montările noi ale gazdei către BombVault (`rslave`), iar de asta are nevoie accesul la instantanee.

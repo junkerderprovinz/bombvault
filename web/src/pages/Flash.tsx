@@ -14,6 +14,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { useToast } from "../lib/toast";
+import { FlashPluginList } from "../components/FlashPluginList";
 import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
@@ -125,6 +126,7 @@ function FlashSnapshotRow({
 }) {
   const [deleting, setDeleting] = useState(false);
   const [preparing, setPreparing] = useState(false);
+  const [showPlugins, setShowPlugins] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [shake, setShake] = useState(0);
@@ -193,6 +195,19 @@ function FlashSnapshotRow({
             would sit flat grey beside a hued one; the glyph, the tip and the
             confirm dialog carry its meaning. */}
         <Button
+          label={t("flash.plugins")}
+          labelKey="flash.plugins"
+          tone="neutral"
+          onClick={() => setShowPlugins((v) => !v)}
+          ariaExpanded={showPlugins}
+          glyph={
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${showPlugins ? "rotate-90" : "rtl:rotate-180"}`}>
+              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+            </svg>
+          }
+          className={"shrink-0"}
+        />
+        <Button
           label={t("flash.download")}
           labelKey="flash.download"
           glyph={<IconDownload />}
@@ -213,6 +228,7 @@ function FlashSnapshotRow({
           className={`shrink-0${shake ? " glim-shake" : ""}`}
         />
       </div>
+      {showPlugins && <FlashPluginList snapshotId={snap.id} source={source} t={t} />}
       {confirmDialog}
     </div>
   );

@@ -25,6 +25,9 @@ type Host interface {
 	DestroySafety(ctx context.Context, dataset, snap string) error
 	Snapshots(ctx context.Context, root string) ([]SnapshotEntry, error)
 	Prime(ctx context.Context, hostMountpoint, snap string) error
+	Properties(ctx context.Context, root string) (map[string]Properties, error)
+	Create(ctx context.Context, dataset string, p Properties) error
+	SetProperties(ctx context.Context, dataset string, p Properties) error
 }
 
 // ListEntry is one dataset or volume as zfs list reports it. Used is 0 in a

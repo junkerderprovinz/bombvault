@@ -205,6 +205,9 @@ type SuggestResult struct {
 	// text lives in the 42 locale tables like every other sentence, and an id a
 	// newer server invents renders nothing rather than a raw literal.
 	Advisories []string
+	// Preset holds the folders a recognised app fills again by itself, offered
+	// for the user to pick from. Nothing in it is applied on its own.
+	Preset *ExcludePreset
 }
 
 // suggestCacheEntry is one container's cached snapshot aggregate. Key pins the
@@ -1025,10 +1028,12 @@ func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (out
 		image = in.Image
 	}
 	advisories := appAdvisoriesFor(image)
+	var preset *ExcludePreset
 	defer func() {
 		if len(advisories) > 0 {
 			out.Advisories = advisories
 		}
+		out.Preset = preset
 	}()
 	configured := s.configuredBackupPaths(name, in)
 	if len(configured) == 0 {
@@ -1037,10 +1042,12 @@ func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (out
 		return SuggestResult{Source: suggestSourceLive, LiveReason: suggestLiveNoSnapshot}, nil
 	}
 	roots := onlyExistingPaths(configured)
-	var resolved []string
+	var resolved, stored []string
 	if tg, gErr := s.store.GetTargetByContainer(name); gErr == nil {
+		stored = tg.Excludes
 		resolved = s.resolveExcludePatterns(tg.Excludes, in)
 	}
+	preset = s.excludePresetFor(image, in, configured, stored)
 	opts := suggestOpts{maxDepth: suggestMaxDepth, largeBytes: suggestLargeBytes}
 
 	res := SuggestResult{Source: suggestSourceSnapshot}
@@ -1219,6 +1226,7 @@ func (h *Handler) handleExcludesSuggest(w http.ResponseWriter, r *http.Request) 
 				"source":      suggestSourceSnapshot,
 				"indexFailed": true,
 				"advisories":  res.Advisories,
+				"preset":      res.Preset,
 			}))
 			return
 		}
@@ -1240,5 +1248,6 @@ func (h *Handler) handleExcludesSuggest(w http.ResponseWriter, r *http.Request) 
 		"pathsUnavailable": res.PathsUnavailable,
 		"indexFailed":      false,
 		"advisories":       res.Advisories,
+		"preset":           res.Preset,
 	}))
 }

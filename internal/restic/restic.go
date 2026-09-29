@@ -519,6 +519,16 @@ func BackupDirArgs(repo string, tags []string, m Mode, excludes ...string) []str
 	return backupArgs(repo, tags, m, "host,tags", excludes, []string{"."})
 }
 
+// ImportDirArgs is BackupDirArgs for a backup that did not happen now: --time
+// dates the snapshot at the moment the imported copy was made.
+func ImportDirArgs(repo string, tags []string, at time.Time, m Mode) []string {
+	args := BackupDirArgs(repo, tags, m)
+	sep := slices.Index(args, "--")
+	out := append([]string(nil), args[:sep]...)
+	out = append(out, "--time", at.Local().Format("2006-01-02 15:04:05"))
+	return append(out, args[sep:]...)
+}
+
 func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, positionals []string) []string {
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
@@ -2247,6 +2257,29 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 	if err != nil {
 		// Exit 3 means a source file could not be read but the snapshot exists,
 		// the same as in Backup.
+		if errors.Is(err, ErrBackupSourceUnreadable) {
+			if sum, perr := summarySince(out, start); perr == nil {
+				return sum, nil
+			}
+		}
+		return Summary{}, err
+	}
+	return summarySince(out, start)
+}
+
+// ImportDir backs up the contents of dir as the snapshot's own tree root, dated
+// at. It serves copies made by another tool, laid out below dir the way the
+// source paths looked.
+func (r Restic) ImportDir(ctx context.Context, repo, dir string, tags []string, at time.Time, m Mode) (Summary, error) {
+	if !filepath.IsAbs(dir) {
+		return Summary{}, fmt.Errorf("restic import directory %q is not absolute", dir)
+	}
+	if !IsRemoteRepo(repo) && !filepath.IsAbs(repo) {
+		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
+	}
+	start := time.Now()
+	out, err := r.runIn(ctx, dir, ImportDirArgs(repo, tags, at, m), m)
+	if err != nil {
 		if errors.Is(err, ErrBackupSourceUnreadable) {
 			if sum, perr := summarySince(out, start); perr == nil {
 				return sum, nil

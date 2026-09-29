@@ -144,6 +144,43 @@ func (h *SSHHost) Prime(ctx context.Context, hostMountpoint, snap string) error 
 	return nil
 }
 
+// Properties reads the stored-worthy properties of every filesystem in a tree.
+func (h *SSHHost) Properties(ctx context.Context, root string) (map[string]Properties, error) {
+	args, err := PropertiesArgs(root)
+	if err != nil {
+		return nil, err
+	}
+	out, err := h.runCapped(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	props, err := ParseProperties(out)
+	if err != nil {
+		return nil, &CmdError{Args: args, Code: "zfs-error", Err: err}
+	}
+	return props, nil
+}
+
+// Create makes a new dataset with the properties it can take at creation.
+func (h *SSHHost) Create(ctx context.Context, dataset string, p Properties) error {
+	args, err := CreateArgs(dataset, p)
+	if err != nil {
+		return err
+	}
+	_, err = h.run(ctx, args)
+	return err
+}
+
+// SetProperties applies the properties an existing dataset can still take.
+func (h *SSHHost) SetProperties(ctx context.Context, dataset string, p Properties) error {
+	args, err := SetArgs(dataset, p)
+	if err != nil || args == nil {
+		return err
+	}
+	_, err = h.run(ctx, args)
+	return err
+}
+
 // runCapped runs a listing. A listing the transport cut would parse into a
 // tree with datasets silently missing, so it is refused whole.
 func (h *SSHHost) runCapped(ctx context.Context, args []string) (string, error) {

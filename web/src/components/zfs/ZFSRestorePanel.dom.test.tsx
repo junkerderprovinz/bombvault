@@ -244,6 +244,8 @@ describe("ZFS restore panel", () => {
       wholeTree: false,
       paths: [],
       targetPath: "",
+      newDataset: "",
+      applyProperties: false,
       confirm: true,
       safetySnapshot: true,
       safetyOffConfirm: false,
@@ -336,6 +338,40 @@ describe("ZFS restore panel", () => {
       screen.getByText(en["zfs.restore.started"].replace("{target}", "/mnt/cache/appdata")),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: en["common.copy"] })).toBeTruthy();
+  });
+
+  it("creates a new dataset under the name the user gave", async () => {
+    await openPanel();
+    fireEvent.click(modeTab(en["zfs.restore.newDataset"]));
+    const name = screen.getByRole("textbox", { name: en["zfs.restore.newDatasetName"] });
+    expect((name as HTMLInputElement).value).toBe("cache/appdata-restored");
+    fireEvent.change(name, { target: { value: "cache/copy" } });
+    expect(screen.queryByRole("switch", { name: en["zfs.restore.safetySnapshot"] })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: en["snapshots.restore"] }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: en["snapshots.restore"] }),
+    );
+    await waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0].req.newDataset).toBe("cache/copy");
+    expect(sent[0].req.targetPath).toBe("");
+    expect(sent[0].req.safetySnapshot).toBe(false);
+  });
+
+  it("shows the stored properties and sets them only when asked", async () => {
+    points[0].members[0].properties = { compression: "zstd", mountpoint: "/mnt/elsewhere", casesensitivity: "insensitive" };
+    await openPanel();
+    expect(screen.getByText("compression=zstd")).toBeTruthy();
+    expect(screen.getByText(en["zfs.restore.propertyNotApplied"])).toBeTruthy();
+    expect(screen.getByText(en["zfs.restore.propertyCreateOnly"])).toBeTruthy();
+    const apply = screen.getByRole("switch", { name: en["zfs.restore.applyProperties"] });
+    expect(apply.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(apply);
+    fireEvent.click(screen.getByRole("button", { name: en["snapshots.restore"] }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: en["snapshots.restore"] }),
+    );
+    await waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0].req.applyProperties).toBe(true);
   });
 });
 

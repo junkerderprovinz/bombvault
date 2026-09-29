@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
-import type { AnomalyItem, Container, ItemChecks, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
+import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
 import { PageTitle } from "../components/PageTitle";
@@ -62,6 +62,7 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
+import { ExcludePresetPanel } from "../components/ExcludePresetPanel";
 
 import { Toggle } from "../components/Toggle";
 import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
@@ -2379,6 +2380,7 @@ export function ExcludesEditor({
   // single exclusion is offered, and the most important one is true precisely
   // when the list is empty.
   const [advisories, setAdvisories] = useState<string[]>([]);
+  const [preset, setPreset] = useState<ExcludePreset | null>(null);
   // The backup index could not be read. Not a failed scan: the panel stays up
   // and offers the folder scan as an explicit second request.
   const [indexFailed, setIndexFailed] = useState(false);
@@ -2410,6 +2412,7 @@ export function ExcludesEditor({
     setUnreadable([]);
     setPathsUnavailable(false);
     setAdvisories([]);
+    setPreset(null);
     try {
       const r = await suggestContainerExcludes(name, live ? "live" : undefined);
       if (r.ok) {
@@ -2427,6 +2430,7 @@ export function ExcludesEditor({
         setPathsUnavailable(r.pathsUnavailable === true);
         setIndexFailed(r.indexFailed === true);
         setAdvisories(r.advisories ?? []);
+        setPreset(r.preset ?? null);
       } else {
         setSuggestions([]);
         setScanFailed(true);
@@ -2457,6 +2461,13 @@ export function ExcludesEditor({
     if (currentLines.includes(line)) return;
     cancelPendingSave();
     await saveLines([...currentLines, line]);
+  }
+
+  async function addExcludes(lines: string[]) {
+    const fresh = lines.filter((l) => !currentLines.includes(l));
+    if (fresh.length === 0) return;
+    cancelPendingSave();
+    await saveLines([...currentLines, ...fresh]);
   }
 
   async function removeExclude(line: string) {
@@ -2609,6 +2620,16 @@ export function ExcludesEditor({
                   </p>
                 ) : null;
               })}
+            {!scanning && preset && (
+              <ExcludePresetPanel
+                key={preset.app}
+                preset={preset}
+                currentLines={currentLines}
+                saving={state === "saving"}
+                onApply={(lines) => void addExcludes(lines)}
+                t={t}
+              />
+            )}
             {!scanning && unexamined.length > 0 && (
               <p className="text-xs text-statusWarn">
                 {withLtrPlaceholder(t("excludes.assistUnexamined"), "{paths}", unexamined.join(", "))}
