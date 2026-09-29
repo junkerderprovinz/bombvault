@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -489,8 +490,11 @@ func TestSubnetCandidatesOnlyForAPrivateIPv4OwnAddress(t *testing.T) {
 	}
 
 	got2 := subnetCandidates("http://10.0.5.9:8080")
-	if len(got2) != 253*2 {
-		t.Fatalf("subnetCandidates on a non-default port = %d candidates, want 253*2 (own port and 3443)", len(got2))
+	if len(got2) != 253*2+1 {
+		t.Fatalf("subnetCandidates on a non-default port = %d candidates, want 253*2+1 (own port and 3443, plus 3443 on this machine)", len(got2))
+	}
+	if !slices.Contains(got2, "http://10.0.5.9:3443") || slices.Contains(got2, "http://10.0.5.9:8080") {
+		t.Fatalf("subnetCandidates must try a second instance on this machine's other port and never itself: %v", got2)
 	}
 	sawOwnPort, saw3443 := false, false
 	for _, addr := range got2 {

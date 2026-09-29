@@ -699,13 +699,21 @@ func subnetCandidates(own string) []string {
 	}
 	base := ip.Mask(net.CIDRMask(24, 32))
 	self := ip[3]
+	ownPort := u.Port()
+	if ownPort == "" {
+		ownPort = "443"
+		if scheme == "http" {
+			ownPort = "80"
+		}
+	}
 	out := make([]string, 0, 254*len(ports))
 	for host := 1; host <= 254; host++ {
-		if byte(host) == self {
-			continue
-		}
 		addr := net.IPv4(base[0], base[1], base[2], byte(host)).String()
 		for _, port := range ports {
+			// A second instance on this same machine publishes another port.
+			if byte(host) == self && port == ownPort {
+				continue
+			}
 			out = append(out, scheme+"://"+addr+":"+port)
 		}
 	}
