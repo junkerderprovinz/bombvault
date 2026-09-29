@@ -25,6 +25,9 @@ type DiskRef struct {
 	Dev           string // target dev, e.g. "hdc"
 	Source        string // file path or block device path
 	IsBlockDevice bool
+	// Format is the driver type, such as "qcow2" or "raw", empty when the
+	// XML names none.
+	Format string
 }
 
 // DomainInfo holds what ParseDomain reads from a domain XML. DiskDevice is

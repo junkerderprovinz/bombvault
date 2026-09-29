@@ -2910,6 +2910,13 @@ export interface VM {
   aliases?: string[];
   /** The former names of this entry that a live VM carries again, sorted. */
   aliasConflicts?: string[];
+  /** Whether backups read only the blocks changed since the last one. */
+  blockBackup?: boolean;
+  /** How the last backup read the disks while blockBackup is on: "changed",
+   *  "full" or "classic"; "" before the first run. */
+  blockMode?: string;
+  /** Why the last run was "full" or "classic", as a reason code. */
+  blockReason?: string;
 }
 
 export interface ListVMsResponse {
@@ -2993,6 +3000,14 @@ export function setVMMethod(name: string, method: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ method }),
+  });
+}
+
+/** PATCH /api/vms/{name}: turns changed-block backups on or off. */
+export function setVMBlockBackup(name: string, blockBackup: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ blockBackup }),
   });
 }
 
