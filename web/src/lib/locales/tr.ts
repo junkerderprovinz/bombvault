@@ -1170,7 +1170,6 @@ const tr: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Bağlantıyı test et",
-  "offsite.testing": "Test ediliyor…",
   "offsite.testFailed": "erişilemiyor",
   "offsite.testNoRepoYet": "Depo henüz yok. İlk çoğaltma onu oluşturur.",
   "verdict.connected": "Bağlandı",

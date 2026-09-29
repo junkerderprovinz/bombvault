@@ -348,7 +348,6 @@ const lt: Partial<Translations> = {
   "offsite.replicateFailed": "Replikavimas nepavyko",
   "offsite.test": "Tikrinti ryšį",
   "offsite.testPrimary": "Tikrinti pagrindinę paskirtį",
-  "offsite.testing": "Tikrinama…",
   "offsite.testFailed": "nepasiekiama",
   "offsite.testNoRepoYet": "Saugyklos dar nėra. Ją sukurs pirmoji replikacija.",
   "verdict.connected": "Prijungta",

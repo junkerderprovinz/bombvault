@@ -1173,7 +1173,6 @@ const th: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "ทดสอบการเชื่อมต่อ",
-  "offsite.testing": "กำลังทดสอบ…",
   "offsite.testFailed": "เข้าถึงไม่ได้",
   "offsite.testNoRepoYet": "ยังไม่มีคลังข้อมูล การจำลองครั้งแรกจะสร้างให้",
   "verdict.connected": "เชื่อมต่อแล้ว",

@@ -1144,7 +1144,6 @@ const ko: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "연결 테스트",
-  "offsite.testing": "테스트 중…",
   "offsite.testFailed": "도달 불가",
   "offsite.testNoRepoYet": "저장소가 아직 없습니다. 첫 복제 때 만들어집니다.",
   "verdict.connected": "연결됨",

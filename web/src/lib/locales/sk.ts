@@ -348,7 +348,6 @@ const sk: Partial<Translations> = {
   "offsite.replicateFailed": "Replikácia zlyhala",
   "offsite.test": "Otestovať pripojenie",
   "offsite.testPrimary": "Otestovať primárny cieľ",
-  "offsite.testing": "Testuje sa…",
   "offsite.testFailed": "nedostupné",
   "offsite.testNoRepoYet": "Repozitár ešte neexistuje. Prvá replikácia ho vytvorí.",
   "verdict.connected": "Pripojené",

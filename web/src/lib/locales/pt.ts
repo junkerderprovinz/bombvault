@@ -1148,7 +1148,6 @@ const pt: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testar ligação",
-  "offsite.testing": "A testar…",
   "offsite.testFailed": "não acessível",
   "offsite.testNoRepoYet": "O repositório ainda não existe. A primeira replicação cria-o.",
   "verdict.connected": "Ligado",

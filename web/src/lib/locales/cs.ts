@@ -1168,7 +1168,6 @@ const cs: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Otestovat připojení",
-  "offsite.testing": "Testuji…",
   "offsite.testFailed": "nedostupné",
   "offsite.testNoRepoYet": "Repozitář ještě neexistuje. První replikace ho vytvoří.",
   "verdict.connected": "Připojeno",

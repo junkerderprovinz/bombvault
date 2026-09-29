@@ -348,7 +348,6 @@ const ca: Partial<Translations> = {
   "offsite.replicateFailed": "La replicació ha fallat",
   "offsite.test": "Prova la connexió",
   "offsite.testPrimary": "Prova el destí primari",
-  "offsite.testing": "Provant…",
   "offsite.testFailed": "no accessible",
   "offsite.testNoRepoYet": "El repositori encara no existeix. La primera rèplica el crearà.",
   "verdict.connected": "Connectat",

@@ -1145,7 +1145,6 @@ const nl: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Verbinding testen",
-  "offsite.testing": "Testen…",
   "offsite.testFailed": "niet bereikbaar",
   "offsite.testNoRepoYet": "De repository bestaat nog niet. De eerste replicatie maakt hem aan.",
   "verdict.connected": "Verbonden",

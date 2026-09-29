@@ -348,7 +348,6 @@ const is: Partial<Translations> = {
   "offsite.replicateFailed": "Fjarafritun mistókst",
   "offsite.test": "Prófa tengingu",
   "offsite.testPrimary": "Prófa aðaláfangastað",
-  "offsite.testing": "Prófa…",
   "offsite.testFailed": "ekki aðgengilegt",
   "offsite.testNoRepoYet": "Safnið er ekki til enn. Fyrsta afritunin býr það til.",
   "verdict.connected": "Tengt",

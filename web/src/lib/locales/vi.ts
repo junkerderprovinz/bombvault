@@ -1162,7 +1162,6 @@ const vi: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Kiểm tra kết nối",
-  "offsite.testing": "Đang kiểm tra…",
   "offsite.testFailed": "không thể truy cập",
   "offsite.testNoRepoYet": "Kho lưu trữ chưa tồn tại. Lần sao chép đầu tiên sẽ tạo nó.",
   "verdict.connected": "Đã kết nối",

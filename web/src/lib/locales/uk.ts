@@ -1165,7 +1165,6 @@ const uk: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Перевірити з'єднання",
-  "offsite.testing": "Перевірка…",
   "offsite.testFailed": "недоступний",
   "offsite.testNoRepoYet": "Репозиторію ще немає. Перша реплікація створить його.",
   "verdict.connected": "Підключено",

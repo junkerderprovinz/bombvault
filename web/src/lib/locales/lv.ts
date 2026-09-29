@@ -348,7 +348,6 @@ const lv: Partial<Translations> = {
   "offsite.replicateFailed": "Replicēšana neizdevās",
   "offsite.test": "Pārbaudīt savienojumu",
   "offsite.testPrimary": "Pārbaudīt primāro mērķi",
-  "offsite.testing": "Pārbauda…",
   "offsite.testFailed": "nav sasniedzams",
   "offsite.testNoRepoYet": "Repozitorija vēl nav. Pirmā replicēšana to izveidos.",
   "verdict.connected": "Savienots",

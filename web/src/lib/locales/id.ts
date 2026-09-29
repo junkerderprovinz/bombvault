@@ -348,7 +348,6 @@ const id: Partial<Translations> = {
   "offsite.replicateFailed": "Replikasi gagal",
   "offsite.test": "Uji koneksi",
   "offsite.testPrimary": "Uji target utama",
-  "offsite.testing": "Menguji…",
   "offsite.testFailed": "tidak dapat dijangkau",
   "offsite.testNoRepoYet": "Repositori belum ada. Replikasi pertama akan membuatnya.",
   "verdict.connected": "Terhubung",

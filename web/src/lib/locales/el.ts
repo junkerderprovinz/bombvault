@@ -1170,7 +1170,6 @@ const el: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Δοκιμή σύνδεσης",
-  "offsite.testing": "Δοκιμή…",
   "offsite.testFailed": "μη προσβάσιμο",
   "offsite.testNoRepoYet": "Το αποθετήριο δεν υπάρχει ακόμα. Η πρώτη αναπαραγωγή θα το δημιουργήσει.",
   "verdict.connected": "Συνδέθηκε",

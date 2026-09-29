@@ -348,7 +348,6 @@ const sl: Partial<Translations> = {
   "offsite.replicateFailed": "Podvajanje ni uspelo",
   "offsite.test": "Preizkusi povezavo",
   "offsite.testPrimary": "Preizkusi primarno",
-  "offsite.testing": "Preizkušanje…",
   "offsite.testFailed": "ni dosegljivo",
   "offsite.testNoRepoYet": "Repozitorij še ne obstaja. Ustvarilo ga bo prvo podvajanje.",
   "verdict.connected": "Povezano",

@@ -458,7 +458,6 @@ export const en = {
   // Shown instead of offsite.test once the domain has additional targets: that
   // button probes the PRIMARY target ONLY, and saying so is the whole point.
   "offsite.testPrimary": "Test primary",
-  "offsite.testing": "Testing…",
   "offsite.testFailed": "not reachable",
   "offsite.testNoRepoYet": "The repository does not exist yet. The first replication creates it.",
   "verdict.connected": "Connected",
@@ -3527,7 +3526,6 @@ export const de: Translations = {
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
   "offsite.testPrimary": "Primäres Ziel testen",
-  "offsite.testing": "Teste…",
   "offsite.testFailed": "nicht erreichbar",
   "offsite.testNoRepoYet": "Das Repository gibt es noch nicht. Die erste Replikation legt es an.",
   "verdict.connected": "Verbunden",

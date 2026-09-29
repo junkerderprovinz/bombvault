@@ -1144,7 +1144,6 @@ const ja: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "接続をテスト",
-  "offsite.testing": "テスト中…",
   "offsite.testFailed": "到達不可",
   "offsite.testNoRepoYet": "リポジトリはまだありません。最初の複製で作成されます。",
   "verdict.connected": "接続済み",

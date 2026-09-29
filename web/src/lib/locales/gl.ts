@@ -348,7 +348,6 @@ const gl: Partial<Translations> = {
   "offsite.replicateFailed": "A replicación fallou",
   "offsite.test": "Probar conexión",
   "offsite.testPrimary": "Probar destino primario",
-  "offsite.testing": "Probando…",
   "offsite.testFailed": "non accesible",
   "offsite.testNoRepoYet": "O repositorio aínda non existe. A primeira réplica crearao.",
   "verdict.connected": "Conectado",

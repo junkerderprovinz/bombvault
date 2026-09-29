@@ -348,7 +348,6 @@ const hr: Partial<Translations> = {
   "offsite.replicateFailed": "Repliciranje nije uspjelo",
   "offsite.test": "Testiraj vezu",
   "offsite.testPrimary": "Testiraj primarno odredište",
-  "offsite.testing": "Testiranje…",
   "offsite.testFailed": "nije dostupno",
   "offsite.testNoRepoYet": "Repozitorij još ne postoji. Prva replikacija će ga stvoriti.",
   "verdict.connected": "Povezano",

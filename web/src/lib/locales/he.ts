@@ -1152,7 +1152,6 @@ const he: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "בדוק חיבור",
-  "offsite.testing": "בודק…",
   "offsite.testFailed": "לא נגיש",
   "offsite.testNoRepoYet": "המאגר עדיין לא קיים. השכפול הראשון ייצור אותו.",
   "verdict.connected": "מחובר",

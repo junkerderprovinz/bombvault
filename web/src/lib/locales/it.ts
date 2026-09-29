@@ -1152,7 +1152,6 @@ const it: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Prova connessione",
-  "offsite.testing": "Prova in corso…",
   "offsite.testFailed": "non raggiungibile",
   "offsite.testNoRepoYet": "Il repository non esiste ancora. La prima replica lo crea.",
   "verdict.connected": "Collegato",

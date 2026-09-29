@@ -1170,7 +1170,6 @@ const sv: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testa anslutning",
-  "offsite.testing": "Testar…",
   "offsite.testFailed": "inte nåbar",
   "offsite.testNoRepoYet": "Förrådet finns inte än. Den första replikeringen skapar det.",
   "verdict.connected": "Ansluten",

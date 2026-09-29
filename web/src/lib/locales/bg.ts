@@ -348,7 +348,6 @@ const bg: Partial<Translations> = {
   "offsite.replicateFailed": "Репликацията е неуспешна",
   "offsite.test": "Провери връзката",
   "offsite.testPrimary": "Провери основната цел",
-  "offsite.testing": "Проверка…",
   "offsite.testFailed": "недостъпно",
   "offsite.testNoRepoYet": "Хранилището още не съществува. Първата репликация ще го създаде.",
   "verdict.connected": "Свързано",

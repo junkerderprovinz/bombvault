@@ -1151,7 +1151,6 @@ const ro: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testează conexiunea",
-  "offsite.testing": "Se testează…",
   "offsite.testFailed": "inaccesibil",
   "offsite.testNoRepoYet": "Depozitul nu există încă. Prima replicare îl va crea.",
   "verdict.connected": "Conectat",

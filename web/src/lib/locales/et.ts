@@ -348,7 +348,6 @@ const et: Partial<Translations> = {
   "offsite.replicateFailed": "Replitseerimine ebaõnnestus",
   "offsite.test": "Testi ühendust",
   "offsite.testPrimary": "Testi peamist sihtkohta",
-  "offsite.testing": "Testimine…",
   "offsite.testFailed": "pole kättesaadav",
   "offsite.testNoRepoYet": "Hoidlat veel pole. Esimene replitseerimine loob selle.",
   "verdict.connected": "Ühendatud",

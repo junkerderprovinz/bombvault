@@ -1162,7 +1162,6 @@ const zh: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "测试连接",
-  "offsite.testing": "测试中…",
   "offsite.testFailed": "不可达",
   "offsite.testNoRepoYet": "仓库尚不存在。首次复制时会创建它。",
   "verdict.connected": "已连接",

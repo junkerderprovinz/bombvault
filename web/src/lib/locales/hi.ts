@@ -348,7 +348,6 @@ const hi: Partial<Translations> = {
   "offsite.replicateFailed": "रेप्लिकेशन विफल हुआ",
   "offsite.test": "कनेक्शन जाँचें",
   "offsite.testPrimary": "प्राइमरी गंतव्य जाँचें",
-  "offsite.testing": "जाँचा जा रहा है…",
   "offsite.testFailed": "पहुँच योग्य नहीं",
   "offsite.testNoRepoYet": "रिपॉज़िटरी अभी मौजूद नहीं है। पहला रेप्लिकेशन इसे बनाएगा।",
   "verdict.connected": "जुड़ गया",

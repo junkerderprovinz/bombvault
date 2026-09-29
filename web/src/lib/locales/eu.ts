@@ -348,7 +348,6 @@ const eu: Partial<Translations> = {
   "offsite.replicateFailed": "Errepikapenak huts egin du",
   "offsite.test": "Probatu konexioa",
   "offsite.testPrimary": "Probatu helmuga nagusia",
-  "offsite.testing": "Probatzen…",
   "offsite.testFailed": "ez dago eskuragarri",
   "offsite.testNoRepoYet": "Biltegia ez dago oraindik. Lehen errepikapenak sortuko du.",
   "verdict.connected": "Konektatuta",

@@ -1170,7 +1170,6 @@ const da: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Test forbindelse",
-  "offsite.testing": "Tester…",
   "offsite.testFailed": "ikke tilgængelig",
   "offsite.testNoRepoYet": "Repositoriet findes ikke endnu. Den første replikering opretter det.",
   "verdict.connected": "Forbundet",

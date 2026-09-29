@@ -348,7 +348,6 @@ const fa: Partial<Translations> = {
   "offsite.replicateFailed": "همانندسازی ناموفق بود",
   "offsite.test": "آزمایش اتصال",
   "offsite.testPrimary": "آزمایش مقصد اصلی",
-  "offsite.testing": "در حال آزمایش…",
   "offsite.testFailed": "در دسترس نیست",
   "offsite.testNoRepoYet": "مخزن هنوز وجود ندارد. نخستین همانندسازی آن را می‌سازد.",
   "verdict.connected": "وصل شد",

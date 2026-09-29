@@ -1170,7 +1170,6 @@ const fi: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testaa yhteys",
-  "offsite.testing": "Testataan…",
   "offsite.testFailed": "ei tavoitettavissa",
   "offsite.testNoRepoYet": "Säilöä ei ole vielä olemassa. Ensimmäinen replikointi luo sen.",
   "verdict.connected": "Yhdistetty",
