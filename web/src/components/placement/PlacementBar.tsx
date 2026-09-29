@@ -68,6 +68,7 @@ export function PlacementBar({
         label={t("placement.title")}
         select="one"
         activation="manual"
+        pairsOnPhone
         active={segment}
         hueOffset={hueOffset}
         disabled={disabled}

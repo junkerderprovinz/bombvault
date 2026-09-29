@@ -98,6 +98,9 @@ interface SelectorCommon {
    *  together every segment shows its glyph alone, the label staying its
    *  accessible name and tooltip. Overrides `equalWidth` and `inline`. */
   fit?: boolean;
+  /** Below 600px, sets the segments two to a row and lets a label wrap rather
+   *  than truncate, so a strip of three on a phone reads as two full rows. */
+  pairsOnPhone?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -408,6 +411,7 @@ export function Selector(props: SelectorProps) {
     equalWidth = false,
     inline = false,
     fit = false,
+    pairsOnPhone = false,
     disabled = false,
     activation = "auto",
     className = "",
@@ -561,7 +565,7 @@ export function Selector(props: SelectorProps) {
             minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
             flex: `1 0 calc((100% - ${pinnedRows.perRow} * ${pinnedRows.gap}px) / ${pinnedRows.perRow})`,
           }
-        : { flex: "1 0 auto" };
+        : { flex: pairsOnPhone ? "1 0 var(--seg-basis, auto)" : "1 0 auto" };
   const trackStyle: CSSProperties | undefined = fit
     ? { flexWrap: "nowrap" }
     : byContent
@@ -629,6 +633,8 @@ export function Selector(props: SelectorProps) {
       className={[
         "flex flex-wrap items-center",
         inline && !fit ? "w-fit max-w-full" : "w-full",
+        // The larger of the two gaps, so two segments always fit a row.
+        pairsOnPhone ? "max-[600px]:[--seg-basis:calc(50%_-_0.25rem)]" : "",
         well
           ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "gap-1",
@@ -671,7 +677,7 @@ export function Selector(props: SelectorProps) {
           // sizes have to be kept in step by hand.
           well && equalWidth
             ? `text-center h-[var(--badge-md)] ${SIZE[size].padding}`
-            : equalWidth
+            : equalWidth || pairsOnPhone
               ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
@@ -692,7 +698,7 @@ export function Selector(props: SelectorProps) {
             className={cls}
             style={hue ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
             flex={segmentFlex}
-            wraps={pinWidth}
+            wraps={pinWidth || pairsOnPhone}
             squeezed={canSqueeze && squeezed}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);
