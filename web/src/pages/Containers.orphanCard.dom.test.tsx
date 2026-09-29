@@ -117,13 +117,13 @@ describe("ContainerRow when the container is no longer installed", () => {
 describe("ContainerRow placement", () => {
   it("shows the placement bar in the simple view, between the header and the section chips", async () => {
     render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} onPlacement={noop} index={0} />);
-    const bar = await screen.findByRole("toolbar", { name: en["placement.title"] });
+    const bar = await screen.findByRole("radiogroup", { name: en["placement.title"] });
     const sections = screen.getByRole("group", { name: "containers.sectionsLabel" });
     expect(bar.compareDocumentPosition(sections) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  // The label is there from the row's first render, the toolbar only once the
-  // options resolve, so a missing toolbar would prove nothing here.
+  // The label is there from the row's first render, the bar only once the
+  // options resolve, so a missing bar would prove nothing here.
   it("gives BombVault's own container no placement", () => {
     render(
       <ContainerRow

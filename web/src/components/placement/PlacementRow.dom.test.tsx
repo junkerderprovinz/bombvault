@@ -33,7 +33,7 @@ function renderRow(view: PlacementView) {
 }
 
 async function segment(name: string): Promise<HTMLButtonElement> {
-  return (await screen.findByRole("button", { name })) as HTMLButtonElement;
+  return (await screen.findByRole("radio", { name })) as HTMLButtonElement;
 }
 
 // A disabled button takes no pointer events, so its bubble answers on the wrapper.
@@ -73,7 +73,7 @@ describe("PlacementRow", () => {
     const locks = { "local-offsite": "no-target", "offsite-only": "no-target" } as const;
     fake.reply("getPlacementOptions", { ok: true, options: placementOptions({ targets: [], sendTo: [], segmentLocks: locks }) });
     renderRow(placementView({ segment: "local", skip: ["*"], segmentLocks: locks }));
-    expect((await segment("Local")).getAttribute("aria-pressed")).toBe("true");
+    expect((await segment("Local")).getAttribute("aria-checked")).toBe("true");
     expect((await segment("Local + off-site")).disabled).toBe(true);
     const offsiteOnly = await segment("Off-site only");
     expect(offsiteOnly.disabled).toBe(true);
@@ -92,7 +92,7 @@ describe("PlacementRow", () => {
     renderRow(placementView());
     const local = await segment("Local");
     local.focus();
-    const bar = screen.getByRole("toolbar", { name: "Placement" });
+    const bar = screen.getByRole("radiogroup", { name: "Placement" });
     for (const key of ["ArrowRight", "ArrowRight", "ArrowLeft", "End", "Home"]) fireEvent.keyDown(bar, { key });
     expect(document.activeElement).toBe(local);
     expect(fake.callsTo("setItemPlacement")).toEqual([]);
@@ -102,7 +102,7 @@ describe("PlacementRow", () => {
     renderRow(placementView());
     const local = await segment("Local");
     local.focus();
-    fireEvent.keyDown(screen.getByRole("toolbar", { name: "Placement" }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("radiogroup", { name: "Placement" }), { key: "Enter" });
     fireEvent.click(local);
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: ["*"] } }]]));
   });
@@ -134,8 +134,8 @@ describe("PlacementRow", () => {
     renderRow(placementView());
     fireEvent.click(await segment("Local"));
     expect(await screen.findByText("A backup is running. Choose again once it has finished.")).toBeTruthy();
-    expect((await segment("Local + off-site")).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("toolbar", { name: "Placement" }).closest(".glim-shake")).not.toBeNull();
+    expect((await segment("Local + off-site")).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("radiogroup", { name: "Placement" }).closest(".glim-shake")).not.toBeNull();
   });
 
   it("warns when copies are on and every ticked target is switched off", async () => {
@@ -193,7 +193,7 @@ describe("PlacementRow", () => {
     await act(async () => release());
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
-    await waitFor(() => expect((screen.getByRole("button", { name: "Local" }) as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() => expect((screen.getByRole("radio", { name: "Local" }) as HTMLButtonElement).disabled).toBe(false));
     expect(fake.callsTo("previewItemPlacement")).toHaveLength(1);
     expect(fake.callsTo("setItemPlacement")).toEqual([]);
   });
@@ -271,7 +271,7 @@ describe("PlacementRow", () => {
     } as const;
     for (const copiesFollow of [true, false]) {
       renderRow(placementView({ ...onDirect, skip: [...onDirect.skip], copiesFollow }));
-      expect((await segment("Off-site only")).getAttribute("aria-pressed")).toBe("true");
+      expect((await segment("Off-site only")).getAttribute("aria-checked")).toBe("true");
       expect(screen.queryByText("Copies follow the default")).toBeNull();
       expect(screen.queryByText("Own copies")).toBeNull();
       expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
@@ -293,13 +293,13 @@ describe("PlacementRow", () => {
   it("shows only its sentence when the placement cannot be read", async () => {
     renderRow(placementView({ unreadable: true, segment: "", repoKind: "" }));
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
-    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
   });
 
   it("shows only its sentence when the domain's options cannot be read", async () => {
     fake.reply("getPlacementOptions", { ok: false, error: "the repository list could not be read" });
     renderRow(placementView());
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
-    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
   });
 });

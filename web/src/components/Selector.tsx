@@ -5,7 +5,9 @@
 // The strip is a single tab stop. Arrow keys, Home and End move between
 // segments with a roving tabindex, and the arrows follow the reading direction
 // under dir="rtl". With select="one" moving also selects, as in a tab strip;
-// with select="many" the segments are toggle buttons.
+// with select="many" the segments are toggle buttons. A strip that saves a
+// setting takes activation="manual" and is a radio group instead, since a tab
+// strip promises a panel that changes.
 //
 // The strip spans its box and its segments share the width, so a card of
 // stacked selectors ends in one edge. A strip that shares a toolbar row with a
@@ -100,7 +102,8 @@ interface SelectorCommon {
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
   /** "manual" moves focus with the arrow keys, Home and End and chooses only on
-   *  Space, Enter or a click, as a toolbar of pressed buttons. For select="one". */
+   *  Space, Enter or a click, as a radio group inside a toolbar does. For
+   *  select="one". */
   activation?: "auto" | "manual";
   className?: string;
 }
@@ -278,8 +281,8 @@ export function rovedIndex(disabled: boolean[], activeIndex: number): number {
 // hold its own tooltip hook.
 interface SelectorTabProps {
   item: SelectorItem;
-  /** A tab of a tablist; otherwise a pressed button. */
-  tab: boolean;
+  /** A tab of a tablist, a radio of a radio group, or a pressed button. */
+  kind: "tab" | "radio" | "toggle";
   on: boolean;
   disabled: boolean;
   roved: boolean;
@@ -302,7 +305,7 @@ interface SelectorTabProps {
 
 function SelectorTab({
   item,
-  tab,
+  kind,
   on,
   disabled,
   roved,
@@ -347,9 +350,10 @@ function SelectorTab({
           ref={tooltip.ref}
           type="button"
           data-sel-id={item.id}
-          role={tab ? "tab" : undefined}
-          aria-selected={tab ? on : undefined}
-          aria-pressed={tab ? undefined : on}
+          role={kind === "toggle" ? undefined : kind}
+          aria-selected={kind === "tab" ? on : undefined}
+          aria-checked={kind === "radio" ? on : undefined}
+          aria-pressed={kind === "toggle" ? on : undefined}
           aria-label={nameHidden ? item.label : undefined}
           aria-describedby={hiddenDescId ?? tooltip.describedBy}
           disabled={disabled}
@@ -611,7 +615,7 @@ export function Selector(props: SelectorProps) {
   return (
     <div
       ref={strip}
-      role={many ? "group" : manual ? "toolbar" : "tablist"}
+      role={many ? "group" : manual ? "radiogroup" : "tablist"}
       aria-label={label}
       aria-orientation="horizontal"
       onKeyDown={onKeyDown}
@@ -681,7 +685,7 @@ export function Selector(props: SelectorProps) {
             key={item.id}
             item={item}
             axis={labelAxis}
-            tab={!many && !manual}
+            kind={many ? "toggle" : manual ? "radio" : "tab"}
             on={on}
             disabled={itemDisabled}
             roved={i === roved}

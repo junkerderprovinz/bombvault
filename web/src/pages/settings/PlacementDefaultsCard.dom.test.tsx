@@ -37,7 +37,7 @@ function withContainers(over: Partial<DefaultRow>) {
 async function containersRow(): Promise<HTMLElement> {
   renderWithProviders(<PlacementDefaultsCard />);
   const row = await screen.findByRole("region", { name: "Containers" });
-  await within(row).findByRole("toolbar", { name: "Placement" });
+  await within(row).findByRole("radiogroup", { name: "Placement" });
   return row;
 }
 
@@ -55,7 +55,7 @@ describe("PlacementDefaultsCard", () => {
     const impact = defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] });
     fake.reply("previewPlacementDefault", { ok: true, impact });
     const row = await containersRow();
-    fireEvent.click(within(row).getByRole("button", { name: "Local" }));
+    fireEvent.click(within(row).getByRole("radio", { name: "Local" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("Items and project folders that B2 no longer gets: 15. Copies that stay there: 210.");
     expect(accentButtons(dialog)).toEqual(["Confirm"]);
@@ -72,7 +72,7 @@ describe("PlacementDefaultsCard", () => {
     fake.reply("previewPlacementDefault", { ok: true, impact });
     renderWithProviders(<PlacementDefaultsCard />);
     const row = await screen.findByRole("region", { name: "Folders" });
-    fireEvent.click(await within(row).findByRole("button", { name: "Local" }));
+    fireEvent.click(await within(row).findByRole("radio", { name: "Local" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("Items that B2 no longer gets: 3. Copies that stay there: 6.");
     expect(dialog.textContent).toContain("Items that Hetzner gets from now on: 3.");
@@ -85,7 +85,7 @@ describe("PlacementDefaultsCard", () => {
     fake.reply("previewPlacementDefault", { ok: true, impact: first });
     fake.reply("putPlacementDefault", { ok: false, error: "stale", code: "stale", impact: second }, { ok: true, default: defaultRow() });
     const row = await containersRow();
-    fireEvent.click(within(row).getByRole("button", { name: "Local" }));
+    fireEvent.click(within(row).getByRole("radio", { name: "Local" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText(/no longer gets: 16\. Copies that stay there: 230\./)).toBeTruthy();
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
@@ -129,8 +129,8 @@ describe("PlacementDefaultsCard", () => {
     const noTarget = { ok: true, options: placementOptions({ targets: [], sendTo: [], segmentLocks: locks }) };
     fake.reply("getPlacementOptions", noTarget, noTarget, noTarget);
     const row = await containersRow();
-    const local = within(row).getByRole("button", { name: "Local" });
-    expect(local.getAttribute("aria-pressed")).toBe("true");
+    const local = within(row).getByRole("radio", { name: "Local" });
+    expect(local.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(local);
     expect(fake.callsTo("previewPlacementDefault")).toEqual([]);
     expect(fake.callsTo("putPlacementDefault")).toEqual([]);
@@ -138,7 +138,7 @@ describe("PlacementDefaultsCard", () => {
 
   it("opens the direct repository window for Off-site only and moves the default there", async () => {
     const row = await containersRow();
-    fireEvent.click(within(row).getByRole("button", { name: "Off-site only" }));
+    fireEvent.click(within(row).getByRole("radio", { name: "Off-site only" }));
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
     expect(await screen.findByText(/New items in Containers take/)).toBeTruthy();
@@ -238,7 +238,7 @@ describe("PlacementDefaultsCard", () => {
     fake.reply("listPlacementDefaults", { ok: false, error: "database is locked" });
     act(() => placementChanged());
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
-    expect(within(row).getByRole("toolbar", { name: "Placement" })).toBeTruthy();
+    expect(within(row).getByRole("radiogroup", { name: "Placement" })).toBeTruthy();
   });
 
   describe("says so when the server cannot be reached", () => {
@@ -274,6 +274,6 @@ describe("PlacementDefaultsCard", () => {
     renderWithProviders(<PlacementDefaultsCard />);
     const row = await screen.findByRole("region", { name: "Containers" });
     expect(await within(row).findByText("Placement could not be read")).toBeTruthy();
-    expect(within(row).queryByRole("toolbar")).toBeNull();
+    expect(within(row).queryByRole("radiogroup")).toBeNull();
   });
 });

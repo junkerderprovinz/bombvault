@@ -34,7 +34,7 @@ function Harness({ initial }: { initial: FileSetView | null }) {
 
 async function openAdd() {
   renderWithProviders(<Harness initial={null} />);
-  await screen.findByRole("toolbar", { name: "Placement" });
+  await screen.findByRole("radiogroup", { name: "Placement" });
 }
 
 function fillAndSave() {
@@ -78,7 +78,7 @@ describe("adding a folder set", () => {
 
   it("creates the remembered direct repository before the set", async () => {
     await openAdd();
-    fireEvent.click(screen.getByRole("button", { name: "Off-site only" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Off-site only" }));
     expect(await screen.findByText("Created together with the folder set.")).toBeTruthy();
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
@@ -97,7 +97,7 @@ describe("adding a folder set", () => {
   it("keeps the direct repository when the set fails and does not make a second one", async () => {
     fake.reply("createFileSet", { ok: false, error: "name taken" }, { ok: true, id: "set-new" });
     await openAdd();
-    fireEvent.click(screen.getByRole("button", { name: "Off-site only" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Off-site only" }));
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
     fillAndSave();
@@ -119,7 +119,7 @@ describe("editing a folder set", () => {
   it("has no placement field and never sends a location", async () => {
     const set = { id: "set1", ...BASE, lastBackup: 0, pathExists: true, placement: placementView() } as FileSetView;
     renderWithProviders(<Harness initial={set} />);
-    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(patchFileSet).toHaveBeenCalledTimes(1));
     expect(patchFileSet.mock.calls[0]).toEqual(["set1", BASE]);

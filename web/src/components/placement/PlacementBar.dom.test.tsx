@@ -37,17 +37,18 @@ function offsiteDefault(): { view: PlacementView; options: PlacementOptions } {
 describe("PlacementBar", () => {
   afterEach(cleanup);
 
-  it("shows all three segments as a toolbar, the chosen one pressed", () => {
+  it("announces the three segments as a choice group with the chosen one checked", () => {
     renderBar(placementView());
-    expect(screen.getByRole("toolbar", { name: "Placement" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Local + off-site" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("button", { name: "Local" }).getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByRole("button", { name: "Off-site only" }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.getByRole("radiogroup", { name: "Placement" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Local + off-site" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("radio", { name: "Local" }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("radio", { name: "Off-site only" }).getAttribute("aria-checked")).toBe("false");
   });
 
   it("locks Off-site only while the options offer nothing to send to", () => {
     renderBar(placementView(), placementOptions({ sendTo: [] }));
-    expect((screen.getByRole("button", { name: "Off-site only" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("radio", { name: "Off-site only" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("puts Stored on and the chips under Local + off-site", () => {
@@ -95,9 +96,9 @@ describe("PlacementBar", () => {
 
   it("chooses nothing while the arrow keys move along it", () => {
     const { onSegment } = renderBar(placementView());
-    screen.getByRole("button", { name: "Local" }).focus();
-    fireEvent.keyDown(screen.getByRole("toolbar"), { key: "ArrowRight" });
-    fireEvent.keyDown(screen.getByRole("toolbar"), { key: "End" });
+    screen.getByRole("radio", { name: "Local" }).focus();
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "End" });
     expect(onSegment).not.toHaveBeenCalled();
   });
 });

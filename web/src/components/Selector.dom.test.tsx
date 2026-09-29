@@ -1022,34 +1022,36 @@ describe("Selector with activation=\"manual\"", () => {
     );
   }
 
-  it("renders a toolbar of pressed buttons rather than a tablist", () => {
+  it("announces a radio group with the chosen segment checked rather than a tablist", () => {
     render(<Manual spy={vi.fn()} />);
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.getByRole("toolbar", { name: "Placement" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Alpha" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("button", { name: "Beta" }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("radiogroup", { name: "Placement" })).toBeTruthy();
+    const alpha = screen.getByRole("radio", { name: "Alpha" });
+    expect(alpha.getAttribute("aria-checked")).toBe("true");
+    expect(alpha.hasAttribute("aria-pressed")).toBe(false);
+    expect(screen.getByRole("radio", { name: "Beta" }).getAttribute("aria-checked")).toBe("false");
   });
 
   it("moves focus with the arrow keys, Home and End without choosing", () => {
     const spy = vi.fn();
     render(<Manual spy={spy} />);
-    screen.getByRole("button", { name: "Alpha" }).focus();
-    const bar = screen.getByRole("toolbar");
+    screen.getByRole("radio", { name: "Alpha" }).focus();
+    const bar = screen.getByRole("radiogroup");
     fireEvent.keyDown(bar, { key: "ArrowRight" });
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Beta" }));
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "Beta" }));
     fireEvent.keyDown(bar, { key: "End" });
     fireEvent.keyDown(bar, { key: "Home" });
     fireEvent.keyDown(bar, { key: "ArrowLeft" });
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Gamma" }));
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "Gamma" }));
     expect(spy).not.toHaveBeenCalled();
   });
 
   it("chooses once for Enter and the click the browser sends with it", () => {
     const spy = vi.fn();
     render(<Manual spy={spy} />);
-    const beta = screen.getByRole("button", { name: "Beta" });
+    const beta = screen.getByRole("radio", { name: "Beta" });
     beta.focus();
-    fireEvent.keyDown(screen.getByRole("toolbar"), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Enter" });
     fireEvent.click(beta);
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledWith("b");
