@@ -880,7 +880,7 @@ export function RestorePanel({
         )}
       />
       <Advanced>
-        <div className="flex items-center gap-2 py-2 border-t border-carbon-border">
+        <div className="flex flex-wrap items-center gap-2 py-2 border-t border-carbon-border">
           <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
           <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" />
         </div>
