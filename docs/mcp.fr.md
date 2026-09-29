@@ -7,9 +7,9 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 | Outil | Ce qu'il fait | Type |
 |---|---|---|
 | `get_health` | Version, nom de l'instance, si une sauvegarde est en cours et ce que cette clé a le droit de faire | lecture |
-| `get_status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications et contrôles hors site, prochaines exécutions planifiées | lecture |
+| `get_status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications et contrôles hors site, prochaines exécutions planifiées, et pour les conteneurs le test de démarrage le plus récent | lecture |
 | `get_coverage` | Ce que BombVault protège et ce qu'il ne protège pas, avec la raison pour chaque élément | lecture |
-| `list_items` | Chaque conteneur, VM, ensemble de dossiers protégé, la clé USB flash et la configuration de l'application, avec sa planification, ce qu'une sauvegarde arrête, sa dernière sauvegarde et sa durée ; les conteneurs de base de données indiquent aussi leur dernier dump ; les datasets ZFS y figurent aussi, avec le résultat de leur dernière vérification | lecture |
+| `list_items` | Chaque conteneur, VM, ensemble de dossiers protégé, la clé USB flash et la configuration de l'application, avec sa planification, ce qu'une sauvegarde arrête, sa dernière sauvegarde et sa durée ; les conteneurs de base de données indiquent aussi leur dernier dump ; les datasets ZFS y figurent aussi, avec le résultat de leur dernière vérification ; chaque élément porte son dernier contrôle de restauration, et un conteneur son dernier test de démarrage ou la raison pour laquelle il ne peut pas être testé | lecture |
 | `list_runs` | Historique des exécutions, les plus récentes d'abord, filtrable par domaine, élément, statut, type et date | lecture |
 | `list_restore_points` | Points de restauration d'un élément dans son dépôt principal, et pour un conteneur ses dumps de base de données ; un dataset ZFS a un point de restauration par sauvegarde, avec un snapshot de chaque dataset en dessous | lecture |
 | `get_activity` | Ce qui tourne en ce moment, avec la phase et le pourcentage | lecture |

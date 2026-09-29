@@ -7,9 +7,9 @@ BombVault incluye un servidor para el Model Context Protocol (MCP), el protocolo
 | Herramienta | Qué hace | Tipo |
 |---|---|---|
 | `get_health` | Versión, nombre de la instancia, si hay una copia en curso y qué puede hacer esta clave | lectura |
-| `get_status` | Estado de protección por dominio: última copia correcta, intervalo esperado, verificaciones y comprobaciones externas, próximas ejecuciones programadas | lectura |
+| `get_status` | Estado de protección por dominio: última copia correcta, intervalo esperado, verificaciones y comprobaciones externas, próximas ejecuciones programadas y, para los contenedores, la prueba de arranque más reciente | lectura |
 | `get_coverage` | Qué protege BombVault y qué no, con el motivo de cada caso | lectura |
-| `list_items` | Cada contenedor, VM y conjunto de carpetas protegido, la memoria flash y la configuración de la app, con su programación, lo que detiene una copia, su última copia y cuánto duró; los contenedores de bases de datos indican también su último volcado; los datasets ZFS también aparecen, con el resultado de su última comprobación | lectura |
+| `list_items` | Cada contenedor, VM y conjunto de carpetas protegido, la memoria flash y la configuración de la app, con su programación, lo que detiene una copia, su última copia y cuánto duró; los contenedores de bases de datos indican también su último volcado; los datasets ZFS también aparecen, con el resultado de su última comprobación; cada elemento lleva su última comprobación de restauración, y un contenedor su última prueba de arranque o el motivo por el que no se puede probar | lectura |
 | `list_runs` | Historial de ejecuciones, primero las más recientes, filtrable por dominio, elemento, estado, tipo y fecha | lectura |
 | `list_restore_points` | Puntos de restauración de un elemento en su repositorio principal y, para un contenedor, sus volcados de base de datos; un dataset ZFS tiene un punto de restauración por copia, con un snapshot de cada dataset que cuelga de él | lectura |
 | `get_activity` | Lo que se está ejecutando ahora, con fase y porcentaje | lectura |
