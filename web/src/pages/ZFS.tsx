@@ -134,7 +134,7 @@ export function ZFS() {
           <PageTitle>{t("zfs.title")}</PageTitle>
           <OffsiteIndicator domain="zfs" />
         </div>
-        <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
+        <div className="flex min-w-0 max-w-full items-center justify-end gap-2 flex-wrap max-md:w-full max-md:justify-start">
           <Button
             key={shakeDiscover}
             label={t("containers.discover")}

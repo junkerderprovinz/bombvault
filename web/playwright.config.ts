@@ -88,6 +88,7 @@ const testMatch = [
   "selector-span.spec.ts",
   "page-width.spec.ts",
   "placement-phone.spec.ts",
+  "narrow-window.spec.ts",
 ];
 
 for (const spec of testMatch) {

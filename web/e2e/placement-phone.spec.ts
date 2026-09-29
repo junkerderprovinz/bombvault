@@ -2,7 +2,8 @@
 // route layer. Below 600px its three segments sit in two rows, two over one,
 // every label whole; wider, they share one row. A screen reader hears a radio
 // group, and the keyboard moves along it without choosing until Space. The
-// copy chips under it keep to their segments beside their caption.
+// copy chips under it keep to their segments beside their caption, and the
+// location field and the apply button keep their words whole.
 // German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
@@ -28,7 +29,10 @@ function options(domain: string) {
     domain,
     unreadable: false,
     paused: false,
-    homes: [{ id: "", name: "", location: `backups/${domain}`, kind: "domain", scheme: "" }],
+    homes: [
+      { id: "", name: "", location: `backups/${domain}`, kind: "domain", scheme: "" },
+      { id: "r-nas", name: "NAS Keller", location: "/mnt/remotes/nas/bombvault", kind: "local", scheme: "" },
+    ],
     targets: [{ id: "t-b2", name: "B2", enabled: true, primary: true, appendOnly: false, hint: "" }],
     sendTo: [{ kind: "direct", repoId: "", targetId: "t-b2", name: "B2", location: "" }],
     segmentLocks: {},
@@ -105,4 +109,22 @@ test("the copy chips keep to their segments beside their caption", async ({ page
   expect(chipBox!.x, "the chips start after the caption").toBeGreaterThan(captionBox!.x + captionBox!.width);
   const segments = await chips.getByRole("button").evaluateAll((els) => els.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0));
   expect(chipBox!.width, "the track hugs its chip").toBeLessThan(segments + 20);
+});
+
+test("the default's location and its apply button keep their words whole", async ({ page }) => {
+  await stage(page);
+  await containersRow(page);
+  const card = page.locator("section").filter({ has: page.getByRole("radiogroup", { name: "Ablage" }) }).first();
+  const cut = await card.evaluate((root) =>
+    [...root.querySelectorAll("[role='combobox'] span:not(.invisible), .glim-btn-label")]
+      .filter((el) => el.getBoundingClientRect().width > 0 && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1))
+      .map((el) => el.textContent),
+  );
+  expect(cut, "words cut short").toEqual([]);
+  const vw = page.viewportSize()!.width;
+  const past = await card.evaluate(
+    (root, width) => [...root.querySelectorAll("button, [role='combobox']")].filter((el) => el.getBoundingClientRect().right > width + 1).length,
+    vw,
+  );
+  expect(past, "controls past the window").toBe(0);
 });

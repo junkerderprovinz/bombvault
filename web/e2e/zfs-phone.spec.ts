@@ -4,8 +4,9 @@
 // off with every section of every item open, the add dialog and the delete
 // sheet inside the viewport, each item's actions on their own row below its
 // name, and disclosures large enough to tap. On the desktop: the 40px rhythm,
-// a one-line header, the actions beside the name and the one-line rows the
-// phone lets wrap. German, because its labels run longest.
+// a header inside the window and on one line at 1280px, the actions beside
+// the name and the one-line rows the phone lets wrap. German, because its
+// labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -468,17 +469,23 @@ test("zfs on a phone: the disclosures are big enough to tap", async ({ page }, t
   }
 });
 
-test("zfs on the desktop keeps the 40px rhythm, a one-line header and the actions beside the name", async ({ page }, testInfo) => {
+test("zfs on the desktop keeps the 40px rhythm, a header inside the window and the actions beside the name", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await bootGerman(page, testInfo.project.use.viewport!.width);
 
   expect(await cardGap(page)).toBe("40px");
-  const tops = await page
+  // A window of 768px leaves the header less room than its German actions
+  // take, so there they wrap rather than run past the window.
+  const header = await page
     .getByRole("heading", { level: 1 })
     .locator("xpath=../following-sibling::div[1]")
     .locator("button")
-    .evaluateAll((buttons) => [...new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top)))]);
-  expect(tops, "the header actions wrapped").toHaveLength(1);
+    .evaluateAll((buttons) => ({
+      tops: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top))).size,
+      past: buttons.filter((b) => b.getBoundingClientRect().right > document.documentElement.clientWidth + 1).length,
+    }));
+  expect(header.past, "a header action runs past the window").toBe(0);
+  if (testInfo.project.name === "desktop-1280") expect(header.tops, "the header actions wrapped").toBe(1);
 
   const row = card(page, MEDIA);
   const nameBox = (await row.getByText(MEDIA, { exact: true }).boundingBox())!;

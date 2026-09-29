@@ -49,7 +49,8 @@ export function HomeSelect({
         options={options}
         label={label}
         disabled={disabled}
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start"
+        wrap
+        className="max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start"
       />
       {draft !== value && (
         <Button

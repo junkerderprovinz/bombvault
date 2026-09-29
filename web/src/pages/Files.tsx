@@ -1118,9 +1118,10 @@ export function FileSetRow({
         progress?.active ? "glim-active" : ""
       }`}
     >
-      {/* Top row: name, chips and path, with the action badges. */}
+      {/* Top row: name, chips and path, with the action badges. The name keeps
+          12rem before the badges go under it. */}
       <div className="flex items-start gap-3 flex-wrap">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 basis-48 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-carbon-text text-sm truncate">
               {set.name}
@@ -1420,7 +1421,7 @@ export function Files() {
           <PageTitle>{t("files.title")}</PageTitle>
           <OffsiteIndicator domain="files" />
         </div>
-        <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
+        <div className="flex min-w-0 max-w-full items-center justify-end gap-2 flex-wrap max-md:w-full max-md:justify-start">
           <Button
             key={shakeDiscover}
             label={t("containers.discover")}
