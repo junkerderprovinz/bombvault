@@ -540,20 +540,7 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 	if !confirm {
 		return "", nil, nil, backup.ErrNotConfirmed
 	}
-	// Domain-aware name check: libvirt VM names legitimately contain spaces
-	// (e.g. "Windows Server 2022"), so VMs use the libvirt-aware validVMName
-	// (still blocks empty/over-long/path-separators/".."/leading "-"/control
-	// chars) while containers and file sets keep the strict validResourceName.
-	nameOK := validResourceName(item)
-	switch domain {
-	case "vms":
-		nameOK = validVMName(item)
-	case "zfs":
-		// A dataset name carries slashes, which the resource name rules reject,
-		// and a child of a tree may be longer than an item root.
-		nameOK = zfs.ValidateMemberName(item) == nil
-	}
-	if !nameOK {
+	if !foreignItemNameOK(domain, item) {
 		return "", nil, nil, errors.New("invalid item name")
 	}
 	sess, err := s.foreignSession(sessionID)
@@ -711,6 +698,41 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 	}
 }
 
+// foreignItemNameOK is the domain-aware name check: libvirt VM names
+// legitimately contain spaces (e.g. "Windows Server 2022"), so VMs use the
+// libvirt-aware validVMName (still blocks empty/over-long/path-separators/".."/
+// leading "-"/control chars) while containers and file sets keep the strict
+// validResourceName.
+func foreignItemNameOK(domain, item string) bool {
+	switch domain {
+	case "vms":
+		return validVMName(item)
+	case "zfs":
+		// A dataset name carries slashes, which the resource name rules reject,
+		// and a child of a tree may be longer than an item root.
+		return zfs.ValidateMemberName(item) == nil
+	}
+	return validResourceName(item)
+}
+
+// adoptForeignFileSet returns the id of the local set a foreign file set's
+// restore is recorded against, creating it disabled and path-less, like
+// DiscoverFileSets, when there is none. An existing local set of the same name
+// is reused untouched. A check only looks, so it creates nothing.
+func (s *Service) adoptForeignFileSet(ctx context.Context, item string) (string, error) {
+	if set, err := s.store.GetFileSetByName(item); err == nil {
+		return set.ID, nil
+	}
+	if isPlanOnly(ctx) {
+		return "", nil
+	}
+	created, err := s.store.CreateFileSet(store.FileSet{Name: item, Enabled: false})
+	if err != nil {
+		return "", fmt.Errorf("adopt file set %q: %w", item, err)
+	}
+	return created.ID, nil
+}
+
 // prepareForeignZFSRestore validates a dataset restore out of a foreign
 // repository. It only ever writes into a folder: another server's live paths
 // are not this server's, and its datasets do not exist here at all. item is
@@ -751,10 +773,13 @@ func (s *Service) prepareForeignZFSRestore(ctx context.Context, sess foreignSess
 	} else {
 		plan.steps = []zfsRestoreStep{{snapshotID: pick.snap.ID, target: target}}
 	}
-	if plan.itemID, err = s.adoptForeignZFSDataset(item); err != nil {
+	if err := s.guardZFSRestoreFolder(ctx, plan, target); err != nil {
 		return zfsRestorePlan{}, err
 	}
-	if err := s.guardZFSRestoreFolder(ctx, plan, target); err != nil {
+	if isPlanOnly(ctx) {
+		return plan, nil
+	}
+	if plan.itemID, err = s.adoptForeignZFSDataset(item); err != nil {
 		return zfsRestorePlan{}, err
 	}
 	if err := paths.EnsureDirReadable(target); err != nil {
@@ -1005,22 +1030,18 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 	// run records against a stable file_sets.id. An existing local set of the
 	// same name is reused untouched (its path/excludes/enabled state is user
 	// configuration).
-	setID := ""
-	if set, gErr := s.store.GetFileSetByName(item); gErr == nil {
-		setID = set.ID
-	} else {
-		created, cErr := s.store.CreateFileSet(store.FileSet{Name: item, Enabled: false})
-		if cErr != nil {
-			return fileSetRestorePlan{}, fmt.Errorf("adopt file set %q: %w", item, cErr)
-		}
-		setID = created.ID
+	setID, err := s.adoptForeignFileSet(ctx, item)
+	if err != nil {
+		return fileSetRestorePlan{}, err
 	}
 
 	// Create the target dir ONLY after every validation passed. Readable (0o755)
 	// so the operator's non-root SMB user can read what root restored onto the
 	// user-visible share (see EnsureDirReadable).
-	if err := paths.EnsureDirReadable(target); err != nil {
-		return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+	if !isPlanOnly(ctx) {
+		if err := paths.EnsureDirReadable(target); err != nil {
+			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+		}
 	}
 	return fileSetRestorePlan{
 		repo:       sess.repo,
@@ -1073,20 +1094,14 @@ func (s *Service) prepareForeignFileSetFilesRestore(ctx context.Context, sess fo
 	// Adopt the name locally when unknown (disabled + path-less, like DiscoverFileSets)
 	// so the restore run records against a stable file_sets.id; an existing local set
 	// of the same name is reused untouched. Mirrors the whole-set foreign path.
-	setID := ""
-	if set, gErr := s.store.GetFileSetByName(item); gErr == nil {
-		setID = set.ID
-	} else {
-		created, cErr := s.store.CreateFileSet(store.FileSet{Name: item, Enabled: false})
-		if cErr != nil {
-			return fileSetFilesRestorePlan{}, fmt.Errorf("adopt file set %q: %w", item, cErr)
-		}
-		setID = created.ID
+	setID, err := s.adoptForeignFileSet(ctx, item)
+	if err != nil {
+		return fileSetFilesRestorePlan{}, err
 	}
 
 	// The shared builder does the strict snapshot/selection validation, the
 	// subtree-containment traversal guard, target resolution + EnsureDirReadable.
-	return s.buildFileSetFilesPlan(snaps, snapshotID, setID, item, sess.repo, sess.mode, filePaths, targetSubPath)
+	return s.buildFileSetFilesPlan(ctx, snaps, snapshotID, setID, item, sess.repo, sess.mode, filePaths, targetSubPath)
 }
 
 // ListForeignFiles lists the files of one file set's or one dataset's snapshot

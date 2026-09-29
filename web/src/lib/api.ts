@@ -820,6 +820,102 @@ export function cancelRestore(key: string): Promise<{ ok: boolean; cancelled: bo
   });
 }
 
+/** The restore a check describes, with what that restore's own endpoint takes. */
+export interface RestoreCheckRequest {
+  kind:
+    | "container"
+    | "containerFiles"
+    | "containerTo"
+    | "vm"
+    | "fileSet"
+    | "fileSetFiles"
+    | "zfs"
+    | "foreign"
+    | "flash"
+    | "config"
+    | "dbImport"
+    | "stack";
+  /** The container, the VM, the file set id, the ZFS item id, the compose
+   *  project of a stack or the foreign item. */
+  name?: string;
+  snapshotId?: string;
+  source?: string;
+  paths?: string[];
+  targetPath?: string;
+  zfs?: ZFSRestoreRequest;
+  session?: string;
+  domain?: string;
+  overwrite?: boolean;
+  zvolPool?: string;
+  wholeTree?: boolean;
+}
+
+export type CheckLineId = "repository" | "key" | "snapshot" | "space";
+
+/** One line of the pre-flight checklist. need and free are bytes. */
+export interface CheckLine {
+  id: CheckLineId;
+  status: "ok" | "fail" | "skip";
+  reason?: string;
+  detail?: string;
+  need?: number;
+  free?: number;
+}
+
+export type PlanChange = "added" | "changed" | "removed" | "extra";
+
+export interface DefinitionChange {
+  field: "image" | "port" | "env" | "volume" | "memory" | "vcpus" | "disk" | "network";
+  name?: string;
+  change: PlanChange;
+  backup?: string;
+  now?: string;
+}
+
+/** What a restore would do compared with what is there now. */
+export interface RestorePlan {
+  inPlace: boolean;
+  added: number;
+  changed: number;
+  unchanged: number;
+  extra: number;
+  files: { path: string; change: PlanChange }[];
+  listCapped: boolean;
+  partial: boolean;
+  error?: string;
+  missing: boolean;
+  definition: DefinitionChange[];
+  shared: { path: string; containers: string[] }[];
+}
+
+/** The check of one container of a stack restore. */
+export interface StackMemberCheck {
+  name: string;
+  ready: boolean;
+  checks: CheckLine[];
+  plan?: RestorePlan | null;
+}
+
+export interface RestoreCheckResponse extends OkEnvelope {
+  ready?: boolean;
+  checks?: CheckLine[] | null;
+  plan?: RestorePlan | null;
+  /** A stack answers per member instead of with checks of its own. */
+  members?: StackMemberCheck[] | null;
+}
+
+/**
+ * POST /api/restore/check: the pre-flight checks of a restore and its plan.
+ * Read-only on the server, so it may run while a backup does.
+ */
+export function checkRestore(req: RestoreCheckRequest, signal?: AbortSignal): Promise<RestoreCheckResponse> {
+  return fetchJSON("/api/restore/check", {
+    method: "POST",
+    body: JSON.stringify(req),
+    signal,
+  });
+}
+
 /**
  * POST /api/backup/cancel {key} — stop a backup that is running, by its progress
  * key ("files:<name>" / "container:<name>" / "vm:<name>" / "flash" / "config").

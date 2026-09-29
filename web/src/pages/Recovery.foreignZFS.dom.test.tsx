@@ -63,6 +63,18 @@ vi.mock("../lib/api", async (importOriginal) => {
     foreignClose: () => Promise.resolve({ ok: true }),
     foreignRestore: (req: unknown) => foreignRestore(req),
     listForeignFiles: (...a: unknown[]) => listForeignFiles(...a),
+    checkRestore: () =>
+      Promise.resolve({
+        ok: true,
+        ready: true,
+        checks: [
+          { id: "repository", status: "ok" },
+          { id: "key", status: "ok" },
+          { id: "snapshot", status: "ok" },
+          { id: "space", status: "ok", need: 1, free: 2 },
+        ],
+        plan: null,
+      }),
   };
 });
 
