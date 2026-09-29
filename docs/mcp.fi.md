@@ -9,11 +9,12 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 | `get_health` | Versio, instanssin nimi, onko varmuuskopio käynnissä ja mitä tämä avain saa tehdä | luku |
 | `get_status` | Suojauksen tila toimialueittain: viimeisin onnistunut varmuuskopio, odotettu väli, tarkistukset ja off-site-valvonta, seuraavat ajastetut ajot sekä konteille uusin käynnistystesti | luku |
 | `get_coverage` | Mitä BombVault suojaa ja mitä ei, kunkin kohdalla syy | luku |
-| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi; mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera; jokaisella kohteella on viimeisin palautustarkistuksensa ja kontilla lisäksi viimeisin käynnistystesti tai syy, miksi sitä ei voi testata | luku |
-| `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa toimialueen, kohteen, tilan, lajin ja ajan mukaan | luku |
+| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi; mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera; jokaisella kohteella on viimeisin palautustarkistuksensa ja kontilla lisäksi viimeisin käynnistystesti tai syy, miksi sitä ei voi testata; kontti, joka on luotu uudelleen eri asetuksilla viimeisimmän varmuuskopion jälkeen, luettelee muutokset | luku |
+| `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa toimialueen, kohteen, tilan, lajin ja ajan mukaan; hidas varmuuskopio, jota yksi asia jarrutti, nimeää sen | luku |
 | `list_restore_points` | Yhden kohteen palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit; ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
 | `get_activity` | Mikä on käynnissä juuri nyt, vaiheen ja prosentin kera | luku |
 | `get_storage_stats` | Toimialueen ensisijaisen repositorion koon historia ja kasvu viikossa sekä käytetty, vapaa ja kokonaistila kunkin sen repositorion levyllä tai etäkohteessa | luku |
+| `get_size_breakdown` | Mitkä kansiot ja tiedostot vievät tilaa kontin, virtuaalikoneen tai kansiojoukon uusimmassa varmuuskopiossa ja kuinka paljon niistä viimeisin varmuuskopio lisäsi | luku |
 | `list_anomalies` | Poikkeamat, jotka BombVault on huomannut varmuuskopioissa, suodatettavissa tilan, vakavuuden ja toimialueen mukaan, sekä yhteenveto avoimista | luku |
 | `get_anomaly` | Yksi näistä havainnoista sekä muistiinpano, joka jätettiin sitä kuitatessa | luku |
 | `start_backup` | Varmuuskopioi yhden kohteen heti | käynnistys |

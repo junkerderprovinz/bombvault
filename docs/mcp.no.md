@@ -9,11 +9,12 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollen s
 | `get_health` | Versjon, instansnavn, om en sikkerhetskopi kjører, og hva denne nøkkelen får gjøre | lese |
 | `get_status` | Beskyttelsesstatus per domene: siste vellykkede sikkerhetskopi, forventet intervall, verifiseringer og off-site-kontroller, neste planlagte kjøringer, for containere den nyeste starttesten | lese |
 | `get_coverage` | Hva BombVault beskytter og hva det ikke beskytter, med grunnen for hver | lese |
-| `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump; ZFS-datasett er også med, med resultatet av den siste kontrollen; hvert element har sin siste gjenopprettingssjekk, og en container sin siste starttest eller grunnen til at den ikke kan testes | lese |
-| `list_runs` | Kjøringshistorikk, nyeste først, kan filtreres på domene, element, status, type og tid | lese |
+| `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump; ZFS-datasett er også med, med resultatet av den siste kontrollen; hvert element har sin siste gjenopprettingssjekk, og en container sin siste starttest eller grunnen til at den ikke kan testes; en container som er opprettet på nytt med andre innstillinger siden siste sikkerhetskopi, viser endringene | lese |
+| `list_runs` | Kjøringshistorikk, nyeste først, kan filtreres på domene, element, status, type og tid; en treg sikkerhetskopi som én ting holdt tilbake, nevner den | lese |
 | `list_restore_points` | Gjenopprettingspunkter for ett element fra dets primære repository, og for en container også databasedumpene; et ZFS-datasett får ett gjenopprettingspunkt per sikkerhetskopi, med et snapshot av hvert datasett under det | lese |
 | `get_activity` | Hva som kjører akkurat nå, med fase og prosent | lese |
 | `get_storage_stats` | Størrelseshistorikk for et domenes primære repository og veksten per uke, pluss brukt, ledig og total plass på disken eller fjernlageret til hvert av repositoriene | lese |
+| `get_size_breakdown` | Hvilke mapper og filer som tar plass i den nyeste sikkerhetskopien av en container, en VM eller et mappesett, og hvor mye av det den siste sikkerhetskopien la til | lese |
 | `list_anomalies` | Avvik BombVault har lagt merke til i sikkerhetskopiene, kan filtreres på tilstand, alvorlighet og domene, med en oversikt over det som er åpent | lese |
 | `get_anomaly` | Ett av disse avvikene, med notatet som ble skrevet da det ble kvittert ut | lese |
 | `start_backup` | Sikkerhetskopierer ett element med en gang | starte |

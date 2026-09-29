@@ -9,11 +9,12 @@ BombVault bringt einen Server für das Model Context Protocol (MCP) mit. Über d
 | `get_health` | Version, Instanzname, ob gerade ein Backup läuft und was dieser Schlüssel darf | lesen |
 | `get_status` | Schutzstatus je Domäne: letztes erfolgreiches Backup, erwartetes Intervall, Prüfungen und Off-site-Kontrollen, nächste geplante Läufe, bei Containern der neueste Start-Test | lesen |
 | `get_coverage` | Was BombVault schützt und was nicht, jeweils mit Grund | lesen |
-| `list_items` | Jeder geschützte Container, jede VM, jedes Ordner-Set, der Flash-Stick und die App-Konfiguration, mit Zeitplan, was ein Backup davon stoppt, dem letzten Backup und seiner Dauer; Datenbank-Container tragen zusätzlich ihren letzten Dump; ZFS-Datasets stehen ebenfalls darin, mit dem Ergebnis ihrer letzten Prüfung; jedes Element trägt seine letzte Wiederherstellungsprüfung, ein Container dazu seinen letzten Start-Test oder den Grund, warum er nicht testbar ist | lesen |
-| `list_runs` | Laufverlauf, neueste zuerst, filterbar nach Domäne, Element, Status, Art und Zeit | lesen |
+| `list_items` | Jeder geschützte Container, jede VM, jedes Ordner-Set, der Flash-Stick und die App-Konfiguration, mit Zeitplan, was ein Backup davon stoppt, dem letzten Backup und seiner Dauer; Datenbank-Container tragen zusätzlich ihren letzten Dump; ZFS-Datasets stehen ebenfalls darin, mit dem Ergebnis ihrer letzten Prüfung; jedes Element trägt seine letzte Wiederherstellungsprüfung, ein Container dazu seinen letzten Start-Test oder den Grund, warum er nicht testbar ist; ein Container, der seit seinem letzten Backup mit anderen Einstellungen neu erstellt wurde, nennt die Änderungen | lesen |
+| `list_runs` | Laufverlauf, neueste zuerst, filterbar nach Domäne, Element, Status, Art und Zeit; ein langsames Backup, das eine Sache gebremst hat, nennt sie | lesen |
 | `list_restore_points` | Wiederherstellungspunkte eines Elements aus seinem primären Repository, bei einem Container auch seine Datenbank-Dumps; ein ZFS-Dataset bekommt einen Wiederherstellungspunkt je Backup, mit einem Snapshot jedes Datasets darunter | lesen |
 | `get_activity` | Was gerade läuft, mit Phase und Prozentangabe | lesen |
 | `get_storage_stats` | Größenverlauf des primären Repositorys einer Domäne und sein Wachstum pro Woche, dazu belegter, freier und gesamter Platz auf dem Datenträger oder Remote jedes ihrer Repositorys | lesen |
+| `get_size_breakdown` | Welche Ordner und Dateien im neuesten Backup eines Containers, einer VM oder eines Ordner-Sets Platz belegen und wie viel davon das letzte Backup mitgebracht hat | lesen |
 | `list_anomalies` | Anomalien, die BombVault in den Backups bemerkt hat, filterbar nach Zustand, Schweregrad und Domäne, mit einer Übersicht über das, was offen ist | lesen |
 | `get_anomaly` | Einer dieser Funde, mit der Notiz, die beim Quittieren hinterlassen wurde | lesen |
 | `start_backup` | Sichert ein Element sofort | starten |

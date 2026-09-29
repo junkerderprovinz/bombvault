@@ -9,11 +9,12 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | `get_health` | Phiên bản, tên phiên bản cài đặt, có đang sao lưu không và khóa này được phép làm gì | đọc |
 | `get_status` | Trạng thái bảo vệ theo từng miền: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo, và với container là lần kiểm tra khởi động gần nhất | đọc |
 | `get_coverage` | Những gì BombVault bảo vệ và không bảo vệ, kèm lý do cho từng mục | đọc |
-| `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất; các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất; mỗi mục kèm lần kiểm tra khôi phục gần nhất, còn container kèm lần kiểm tra khởi động gần nhất hoặc lý do không thể kiểm tra | đọc |
-| `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo miền, mục, trạng thái, loại và thời gian | đọc |
+| `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất; các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất; mỗi mục kèm lần kiểm tra khôi phục gần nhất, còn container kèm lần kiểm tra khởi động gần nhất hoặc lý do không thể kiểm tra; container được tạo lại với cài đặt khác kể từ lần sao lưu gần nhất liệt kê những gì đã đổi | đọc |
+| `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo miền, mục, trạng thái, loại và thời gian; lần sao lưu chậm do một thứ kìm lại sẽ nêu tên thứ đó | đọc |
 | `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu; một dataset ZFS có một điểm khôi phục cho mỗi lần sao lưu, kèm snapshot của mọi dataset bên dưới nó | đọc |
 | `get_activity` | Những gì đang chạy ngay lúc này, kèm giai đoạn và phần trăm | đọc |
 | `get_storage_stats` | Lịch sử dung lượng kho chính của một miền và mức tăng mỗi tuần, cùng dung lượng đã dùng, còn trống và tổng trên ổ đĩa hoặc nơi lưu từ xa của từng kho | đọc |
+| `get_size_breakdown` | Thư mục và tệp nào chiếm chỗ trong bản sao lưu mới nhất của một container, VM hoặc bộ thư mục, và lần sao lưu gần nhất đã thêm bao nhiêu | đọc |
 | `list_anomalies` | Những bất thường mà BombVault nhận thấy trong các bản sao lưu, lọc được theo trạng thái, mức độ nghiêm trọng và miền, kèm bản tóm tắt những mục còn mở | đọc |
 | `get_anomaly` | Một trong các phát hiện đó, kèm ghi chú để lại khi xác nhận | đọc |
 | `start_backup` | Sao lưu ngay một mục | bắt đầu |

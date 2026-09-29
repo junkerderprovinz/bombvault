@@ -2186,6 +2186,42 @@ CREATE INDEX IF NOT EXISTS idx_start_tests_target ON start_tests(target_id, at);
 		sql:              `ALTER TABLE settings ADD COLUMN start_test_enabled INTEGER NOT NULL DEFAULT 0;`,
 	},
 	{
+		// What a container looked like when its last backup succeeded, so the
+		// card can say what changed since. The definition cannot serve: it is
+		// written before restic runs, so a failed backup would replace it.
+		version:          insightMigration,
+		name:             "targets_backed_up_shape",
+		alreadySatisfied: columnPresent("targets", "backed_up_shape"),
+		sql:              `ALTER TABLE targets ADD COLUMN backed_up_shape TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// How busy the CPU, the disks and the network were during a backup, and
+		// the one thing that held it back when it was slow. JSON, written by the
+		// api package after the run.
+		version:          insightMigration + 1,
+		name:             "runs_load_summary",
+		alreadySatisfied: columnPresent("runs", "load_summary"),
+		sql:              `ALTER TABLE runs ADD COLUMN load_summary TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The size of each folder in a backup and what the backup added, one
+		// row per item and snapshot. Rows are built from the repository and
+		// can be dropped at any time; the newest few per item are kept.
+		version: insightMigration + 2,
+		name:    "size_breakdowns",
+		sql: `CREATE TABLE IF NOT EXISTS size_breakdowns (
+  target_id   TEXT    NOT NULL,
+  snapshot_id TEXT    NOT NULL,
+  domain      TEXT    NOT NULL,
+  parent_id   TEXT    NOT NULL DEFAULT '',
+  created_at  INTEGER NOT NULL,
+  partial     INTEGER NOT NULL DEFAULT 0,
+  tree        TEXT    NOT NULL,
+  PRIMARY KEY (target_id, snapshot_id)
+);
+CREATE INDEX IF NOT EXISTS idx_size_breakdowns_target ON size_breakdowns(target_id, created_at);`,
+	},
+	{
 		// The pairing group: this instance's id within it, the secret behind
 		// the twelve words sealed under the APP_KEY, and the relay settings.
 		version: pairingMigration,
@@ -2290,6 +2326,10 @@ const retentionYearlyMigration = 160
 // verifyMigrationBase numbers the restore probes and start tests from one
 // place, for the same reason dbDumpMigrationBase does.
 const verifyMigrationBase = 180
+
+// insightMigration numbers the migrations behind the change notice, the load
+// summary of a run and the size breakdown.
+const insightMigration = 190
 
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.

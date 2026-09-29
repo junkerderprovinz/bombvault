@@ -16,10 +16,11 @@ type Repo struct {
 	// writer changed in between. MutateSettings also holds a transaction, which
 	// covers a second Repo on the same database.
 	settingsMu sync.Mutex
-	// runFinishedMu guards the run-finished hook. It is installed once during
-	// startup, but tests install it after New while other goroutines finish runs.
-	runFinishedMu sync.RWMutex
-	runFinished   func(RunFinished)
+	// hooksMu guards the run hooks. They are installed during startup,
+	// but tests install them after New while other goroutines finish runs.
+	hooksMu     sync.RWMutex
+	runFinished []func(RunFinished)
+	runStarted  func(RunStarted)
 }
 
 // New wraps db in a Repo. Migrate must have been called before using the Repo.

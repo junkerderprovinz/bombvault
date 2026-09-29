@@ -38,6 +38,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -159,6 +160,11 @@ type ResticEngine interface {
 	// buffer the entire listing (measured 1.36 GiB on a 672k-node snapshot) —
 	// see restic.LsStream's own doc comment.
 	LsStream(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
+	// LsStreamNoLock is LsStream without a repository lock, and DiffStream
+	// hands over the paths two snapshots differ in. The size breakdown reads
+	// both beside running backups.
+	LsStreamNoLock(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
+	DiffStream(ctx context.Context, repo, snap1, snap2 string, mode restic.Mode, onChange func(restic.DiffChange)) error
 	// LsPath lists one directory's own node plus its direct children, scoped to
 	// dirPath (a subtree root) — used to read back a restored directory's
 	// original owner/mode after a remapped restore, since restic's restorer
@@ -425,6 +431,10 @@ type Service struct {
 	// OpenScheduledRun.
 	runsOpenMu sync.Mutex
 	runsOpen   map[string]int
+	// load measures the host while backups run, for the bottleneck line.
+	load *hostload.Sampler
+
+	breakdowns breakdowns
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
@@ -571,6 +581,11 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestFlights:    map[string]*suggestFlight{},
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
+	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
+	if st != nil {
+		st.SetRunStartedHook(s.runStarted)
+		st.AddRunFinishedHook(s.runEnded)
+	}
 	return s
 }
 
@@ -5691,6 +5706,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		return backup.Summary{}, err
 	}
 	s.queueFirstProbe(tg.ID)
+	s.recordBackedUpShape(tg.ID, name, in)
 
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild its state via Discover after losing
