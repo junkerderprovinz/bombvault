@@ -396,7 +396,7 @@ func TestMCPStorageStatsListsDirectRepositoriesAndTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "USB", Repo: usb, SortOrder: 1, Enabled: true}); err != nil {
+	if _, err := repo.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "USB", Repo: "usb/containers", SortOrder: 1, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
 	direct, err := repo.CreateCompanionRepo(cloud.ID, "Cloud direct", "s3:s3.example.com/bkt/direct")
