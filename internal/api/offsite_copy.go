@@ -240,7 +240,7 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		var err error
 		var landed []restic.Snapshot
 		if c.whole {
-			if err = s.engine.Copy(withIndexOffset(copyCtx, done), dest, c.src.Loc, nil, lim, mode); err == nil {
+			if err = s.copyTo(withIndexOffset(copyCtx, done), dest, c.src.Loc, nil, lim, mode); err == nil {
 				landed = c.send
 				if c.unmeasured {
 					out.uncertain = true
@@ -399,12 +399,18 @@ func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionP
 	return out
 }
 
+// copyTo is restic copy into dest, run once more when a stale lock at dest was
+// in its way.
+func (s *Service) copyTo(ctx context.Context, dest, src string, ids []string, lim restic.Limits, mode restic.Mode) error {
+	return s.retryAfterUnlock(ctx, dest, mode, func() error { return s.engine.Copy(ctx, dest, src, ids, lim, mode) })
+}
+
 // copyInChunks hands restic the snapshots in blocks of copyChunkSize and returns
 // those that landed before the first failure.
 func (s *Service) copyInChunks(ctx context.Context, dest, src string, send []restic.Snapshot, lim restic.Limits, mode restic.Mode, done int) ([]restic.Snapshot, error) {
 	var landed []restic.Snapshot
 	for chunk := range slices.Chunk(send, copyChunkSize) {
-		if err := s.engine.Copy(withIndexOffset(ctx, done+len(landed)), dest, src, snapshotIDs(chunk), lim, mode); err != nil {
+		if err := s.copyTo(withIndexOffset(ctx, done+len(landed)), dest, src, snapshotIDs(chunk), lim, mode); err != nil {
 			return landed, err
 		}
 		landed = append(landed, chunk...)

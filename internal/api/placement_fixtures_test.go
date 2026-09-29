@@ -466,6 +466,7 @@ func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) er
 	}
 	if _, known := e.opens[key]; known && !e.initStaysShut[key] {
 		e.opens[key] = true
+		delete(e.listErr, key)
 	}
 	return nil
 }

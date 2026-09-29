@@ -1802,14 +1802,48 @@ func (s *Service) retentionTagsFor(ctx context.Context, repo string, mode restic
 	return tags, true
 }
 
-// forgetWithLockHeal runs a ForgetPolicy pass after clearing stale locks with
-// unlockStale. forget needs an exclusive lock, so a single stale non-exclusive
-// lock, which backups work around, would otherwise block every retention pass.
+// forgetWithLockHeal runs a ForgetPolicy pass. forget needs an exclusive lock,
+// so a single stale non-exclusive lock, which backups work around, would
+// otherwise block every retention pass.
 func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error {
-	// unlockStale leaves the locks of this process's own restic runs alone, and
-	// forget passes --retry-lock to wait them out.
+	return s.retryAfterUnlock(ctx, repo, mode, func() error {
+		return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
+	})
+}
+
+// retryAfterUnlock runs op, and once more after clearing stale locks when a
+// lock was in its way. Clearing is a call to the repository, which a paid
+// backend bills, so it is made only when a lock actually blocked op. unlockStale
+// leaves the locks of this process's own restic runs alone, and op waits those
+// out with --retry-lock.
+func (s *Service) retryAfterUnlock(ctx context.Context, repo string, mode restic.Mode, op func() error) error {
+	err := op()
+	if !isLockErr(err) || mode.NoLock {
+		return err
+	}
 	s.unlockStale(ctx, repo, mode)
-	return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
+	return op()
+}
+
+// listDestination lists what an off-site destination holds. A destination that
+// lists is there and opens, so a run to it costs this one call; the probe, the
+// init and their guards in EnsureRepo run only when it does not list. err is a
+// destination that cannot be used, listErr one whose listing failed after all.
+func (s *Service) listDestination(ctx context.Context, dest string, mode restic.Mode) (snaps []restic.Snapshot, listErr, err error) {
+	err = s.retryAfterUnlock(ctx, dest, mode, func() error {
+		var lErr error
+		snaps, lErr = s.engine.Snapshots(ctx, dest, mode)
+		return lErr
+	})
+	if err == nil {
+		s.markRepoEstablished(dest)
+		return snaps, nil, nil
+	}
+	if err := s.EnsureRepo(ctx, dest, mode); err != nil {
+		return nil, nil, err
+	}
+	snaps, listErr = s.listSnapshots(ctx, dest, mode)
+	return snaps, listErr, nil
 }
 
 // identityTags returns the distinct item-identity tags present in snaps:
@@ -1894,7 +1928,7 @@ func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p resti
 			errs = append(errs, fmt.Errorf("%s: %w", strings.Join(group, ","), fErr))
 		}
 	}
-	if pErr := s.engine.Prune(ctx, repo, mode); pErr != nil {
+	if pErr := s.retryAfterUnlock(ctx, repo, mode, func() error { return s.engine.Prune(ctx, repo, mode) }); pErr != nil {
 		errs = append(errs, pErr)
 	}
 	return paused, errors.Join(errs...)
@@ -3792,18 +3826,12 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// offsiteModeForTarget: the global class is preserved for a backfilled N=1
 	// target whose class is "").
 	mode := s.offsiteModeForTarget(settings, target)
-	if err = s.EnsureRepo(ctx, dest, mode); err != nil {
-		return fmt.Errorf("ensure off-site repo: %w", err)
-	}
-	// Clear any stale lock a previously interrupted off-site op (replication copy /
-	// integrity check) left on the destination repo, so restic copy can take its
-	// lock instead of failing with "repository is already locked". BombVault is the
-	// sole writer, so an existing off-site lock is always stale — this self-heals the
-	// off-site repo on the next run (defence-in-depth for bug #29).
-	s.unlockStale(ctx, dest, mode)
 	// One listing of the destination serves the copy, the record of what it holds
 	// and the names its keep-policy ages.
-	dstSnaps, dstErr := s.listSnapshots(ctx, dest, mode)
+	dstSnaps, dstErr, err := s.listDestination(ctx, dest, mode)
+	if err != nil {
+		return fmt.Errorf("ensure off-site repo: %w", err)
+	}
 	if dstErr != nil {
 		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
 	}
