@@ -284,6 +284,7 @@ const eu: Partial<Translations> = {
   "restoreCheck.reason.download": "Zure nabigatzaileak gordetzen du fitxategia.",
   "restoreCheck.reason.nothing": "Leheneratze honek ez du fitxategirik idazten.",
   "restoreCheck.reason.unmeasured": "Ezin izan da neurtu, beraz ez du blokeatzen.",
+  "restoreCheck.reason.parentMissing": "Gaineko datu multzoa, {name}, ez dago. Sortu lehenik edo aukeratu beste izen bat.",
   "restoreCheck.space": "{need} behar da, {free} libre.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "berria",

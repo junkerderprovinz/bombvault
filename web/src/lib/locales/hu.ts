@@ -227,6 +227,7 @@ const hu: Partial<Translations> = {
   "restoreCheck.reason.download": "A fájlt a böngésződ menti.",
   "restoreCheck.reason.nothing": "Ez a visszaállítás nem ír fájlt.",
   "restoreCheck.reason.unmeasured": "Nem sikerült mérni, ezért nem zárol.",
+  "restoreCheck.reason.parentMissing": "A fölötte lévő adatkészlet, {name}, nem létezik. Előbb hozd létre, vagy válassz másik nevet.",
   "restoreCheck.space": "Kell {need}, szabad {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "új",

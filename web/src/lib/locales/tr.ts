@@ -227,6 +227,7 @@ const tr: Partial<Translations> = {
   "restoreCheck.reason.download": "Dosyayı tarayıcın kaydeder.",
   "restoreCheck.reason.nothing": "Bu geri yükleme hiç dosya yazmaz.",
   "restoreCheck.reason.unmeasured": "Ölçülemedi, bu yüzden engellemiyor.",
+  "restoreCheck.reason.parentMissing": "Üstündeki veri kümesi {name} yok. Önce onu oluştur ya da başka bir ad seç.",
   "restoreCheck.space": "{need} gerekiyor, {free} boş.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "yeni",

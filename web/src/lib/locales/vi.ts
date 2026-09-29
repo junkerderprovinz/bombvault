@@ -227,6 +227,7 @@ const vi: Partial<Translations> = {
   "restoreCheck.reason.download": "Trình duyệt của bạn lưu tệp.",
   "restoreCheck.reason.nothing": "Lần khôi phục này không ghi tệp nào.",
   "restoreCheck.reason.unmeasured": "Không đo được nên không chặn.",
+  "restoreCheck.reason.parentMissing": "Tập dữ liệu phía trên, {name}, không tồn tại. Hãy tạo nó trước hoặc chọn tên khác.",
   "restoreCheck.space": "Cần {need}, còn trống {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "mới",

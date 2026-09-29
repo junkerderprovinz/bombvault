@@ -226,6 +226,7 @@ const ro: Partial<Translations> = {
   "restoreCheck.reason.download": "Browserul tău salvează fișierul.",
   "restoreCheck.reason.nothing": "Această restaurare nu scrie fișiere.",
   "restoreCheck.reason.unmeasured": "Nu a putut fi măsurat, așa că nu blochează.",
+  "restoreCheck.reason.parentMissing": "Setul de date de deasupra, {name}, nu există. Creează-l întâi sau alege alt nume.",
   "restoreCheck.space": "Necesită {need}, liber {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nou",

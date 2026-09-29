@@ -227,6 +227,7 @@ const ar: Partial<Translations> = {
   "restoreCheck.reason.download": "يحفظ متصفحك الملف.",
   "restoreCheck.reason.nothing": "هذه الاستعادة لا تكتب أي ملفات.",
   "restoreCheck.reason.unmeasured": "تعذر القياس، لذا لا يمنع الاستعادة.",
+  "restoreCheck.reason.parentMissing": "مجموعة البيانات التي فوقها، {name}، غير موجودة. أنشئها أولًا أو اختر اسمًا آخر.",
   "restoreCheck.space": "يحتاج {need}، والمتاح {free}.",
   "restoreCheck.snapshotId": "اللقطة {id}",
   "restoreCheck.change.added": "جديد",

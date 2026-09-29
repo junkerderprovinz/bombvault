@@ -227,6 +227,7 @@ const it: Partial<Translations> = {
   "restoreCheck.reason.download": "Il tuo browser salva il file.",
   "restoreCheck.reason.nothing": "Questo ripristino non scrive file.",
   "restoreCheck.reason.unmeasured": "Non misurabile, quindi non blocca.",
+  "restoreCheck.reason.parentMissing": "Il dataset superiore, {name}, non esiste. Crealo prima o scegli un altro nome.",
   "restoreCheck.space": "Servono {need}, {free} liberi.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nuovo",

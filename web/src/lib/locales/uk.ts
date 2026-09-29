@@ -226,6 +226,7 @@ const uk: Partial<Translations> = {
   "restoreCheck.reason.download": "Файл зберігає ваш браузер.",
   "restoreCheck.reason.nothing": "Це відновлення не записує файлів.",
   "restoreCheck.reason.unmeasured": "Не вдалося виміряти, тому не блокує.",
+  "restoreCheck.reason.parentMissing": "Набору даних рівнем вище, {name}, немає. Спершу створи його або вибери іншу назву.",
   "restoreCheck.space": "Потрібно {need}, вільно {free}.",
   "restoreCheck.snapshotId": "Знімок {id}",
   "restoreCheck.change.added": "новий",

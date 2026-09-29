@@ -284,6 +284,7 @@ const sr: Partial<Translations> = {
   "restoreCheck.reason.download": "Датотеку чува твој прегледач.",
   "restoreCheck.reason.nothing": "Ово враћање не уписује ниједну датотеку.",
   "restoreCheck.reason.unmeasured": "Није могло да се измери, па не блокира.",
+  "restoreCheck.reason.parentMissing": "Скуп података изнад њега, {name}, не постоји. Прво га направи или изабери друго име.",
   "restoreCheck.space": "Потребно {need}, слободно {free}.",
   "restoreCheck.snapshotId": "Снимак {id}",
   "restoreCheck.change.added": "ново",

@@ -225,6 +225,7 @@ const nl: Partial<Translations> = {
   "restoreCheck.reason.download": "Je browser slaat het bestand op.",
   "restoreCheck.reason.nothing": "Dit herstel schrijft geen bestanden.",
   "restoreCheck.reason.unmeasured": "Kon niet worden gemeten, dus blokkeert niet.",
+  "restoreCheck.reason.parentMissing": "De dataset erboven, {name}, bestaat niet. Maak die eerst aan of kies een andere naam.",
   "restoreCheck.space": "Heeft {need} nodig, {free} vrij.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nieuw",

@@ -226,6 +226,7 @@ const no: Partial<Translations> = {
   "restoreCheck.reason.download": "Nettleseren din lagrer filen.",
   "restoreCheck.reason.nothing": "Denne gjenopprettingen skriver ingen filer.",
   "restoreCheck.reason.unmeasured": "Kunne ikke måles, så den blokkerer ikke.",
+  "restoreCheck.reason.parentMissing": "Datasettet over det, {name}, finnes ikke. Opprett det først eller velg et annet navn.",
   "restoreCheck.space": "Trenger {need}, {free} ledig.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "ny",

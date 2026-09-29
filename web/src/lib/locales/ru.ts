@@ -225,6 +225,7 @@ const ru: Partial<Translations> = {
   "restoreCheck.reason.download": "Файл сохраняет ваш браузер.",
   "restoreCheck.reason.nothing": "Это восстановление не записывает файлов.",
   "restoreCheck.reason.unmeasured": "Не удалось измерить, поэтому не блокирует.",
+  "restoreCheck.reason.parentMissing": "Набора данных уровнем выше, {name}, нет. Сначала создай его или выбери другое имя.",
   "restoreCheck.space": "Нужно {need}, свободно {free}.",
   "restoreCheck.snapshotId": "Снимок {id}",
   "restoreCheck.change.added": "новый",

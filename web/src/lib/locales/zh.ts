@@ -227,6 +227,7 @@ const zh: Partial<Translations> = {
   "restoreCheck.reason.download": "文件由你的浏览器保存。",
   "restoreCheck.reason.nothing": "此恢复不写入任何文件。",
   "restoreCheck.reason.unmeasured": "无法测量，因此不阻止。",
+  "restoreCheck.reason.parentMissing": "上一级数据集 {name} 不存在。请先创建它，或换一个名称。",
   "restoreCheck.space": "需要 {need}，可用 {free}。",
   "restoreCheck.snapshotId": "快照 {id}",
   "restoreCheck.change.added": "新增",

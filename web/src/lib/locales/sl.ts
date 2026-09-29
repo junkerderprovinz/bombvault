@@ -284,6 +284,7 @@ const sl: Partial<Translations> = {
   "restoreCheck.reason.download": "Datoteko shrani tvoj brskalnik.",
   "restoreCheck.reason.nothing": "Ta obnovitev ne zapiše nobene datoteke.",
   "restoreCheck.reason.unmeasured": "Ni bilo mogoče izmeriti, zato ne blokira.",
+  "restoreCheck.reason.parentMissing": "Nabor podatkov nad njim, {name}, ne obstaja. Najprej ga ustvari ali izberi drugo ime.",
   "restoreCheck.space": "Potrebuje {need}, prosto {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "novo",

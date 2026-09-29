@@ -284,6 +284,7 @@ const gl: Partial<Translations> = {
   "restoreCheck.reason.download": "O teu navegador garda o ficheiro.",
   "restoreCheck.reason.nothing": "Esta restauración non escribe ficheiros.",
   "restoreCheck.reason.unmeasured": "Non se puido medir, así que non bloquea.",
+  "restoreCheck.reason.parentMissing": "O conxunto de datos superior, {name}, non existe. Créao primeiro ou escolle outro nome.",
   "restoreCheck.space": "Precisa {need}, {free} libres.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "novo",

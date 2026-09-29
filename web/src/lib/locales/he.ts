@@ -227,6 +227,7 @@ const he: Partial<Translations> = {
   "restoreCheck.reason.download": "הדפדפן שלך שומר את הקובץ.",
   "restoreCheck.reason.nothing": "השחזור הזה לא כותב קבצים.",
   "restoreCheck.reason.unmeasured": "לא ניתן היה למדוד, ולכן לא חוסם.",
+  "restoreCheck.reason.parentMissing": "מאגר הנתונים שמעליו, {name}, לא קיים. צור אותו קודם או בחר שם אחר.",
   "restoreCheck.space": "נדרש {need}, פנוי {free}.",
   "restoreCheck.snapshotId": "תמונת מצב {id}",
   "restoreCheck.change.added": "חדש",

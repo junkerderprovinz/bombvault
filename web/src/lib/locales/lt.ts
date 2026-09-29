@@ -284,6 +284,7 @@ const lt: Partial<Translations> = {
   "restoreCheck.reason.download": "Failą išsaugo tavo naršyklė.",
   "restoreCheck.reason.nothing": "Šis atkūrimas nerašo jokių failų.",
   "restoreCheck.reason.unmeasured": "Nepavyko išmatuoti, todėl neblokuoja.",
+  "restoreCheck.reason.parentMissing": "Aukščiau esančio duomenų rinkinio {name} nėra. Pirmiausia jį sukurk arba pasirink kitą pavadinimą.",
   "restoreCheck.space": "Reikia {need}, laisva {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "naujas",

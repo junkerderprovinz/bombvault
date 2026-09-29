@@ -227,6 +227,7 @@ const fi: Partial<Translations> = {
   "restoreCheck.reason.download": "Selaimesi tallentaa tiedoston.",
   "restoreCheck.reason.nothing": "Tämä palautus ei kirjoita tiedostoja.",
   "restoreCheck.reason.unmeasured": "Ei voitu mitata, joten ei estä.",
+  "restoreCheck.reason.parentMissing": "Sen yläpuolella olevaa tietojoukkoa {name} ei ole. Luo se ensin tai valitse toinen nimi.",
   "restoreCheck.space": "Tarvitaan {need}, vapaana {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "uusi",

@@ -284,6 +284,7 @@ const et: Partial<Translations> = {
   "restoreCheck.reason.download": "Sinu brauser salvestab faili.",
   "restoreCheck.reason.nothing": "See taastamine ei kirjuta ühtegi faili.",
   "restoreCheck.reason.unmeasured": "Ei õnnestunud mõõta, seega ei blokeeri.",
+  "restoreCheck.reason.parentMissing": "Selle kohal olevat andmekogumit {name} ei ole olemas. Loo see enne või vali teine nimi.",
   "restoreCheck.space": "Vaja {need}, vaba {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "uus",

@@ -227,6 +227,7 @@ const th: Partial<Translations> = {
   "restoreCheck.reason.download": "เบราว์เซอร์ของคุณเป็นผู้บันทึกไฟล์",
   "restoreCheck.reason.nothing": "การกู้คืนนี้ไม่เขียนไฟล์ใด",
   "restoreCheck.reason.unmeasured": "วัดไม่ได้ จึงไม่บล็อก",
+  "restoreCheck.reason.parentMissing": "ชุดข้อมูลที่อยู่เหนือขึ้นไป {name} ไม่มีอยู่ สร้างก่อนหรือเลือกชื่ออื่น",
   "restoreCheck.space": "ต้องใช้ {need} ว่าง {free}",
   "restoreCheck.snapshotId": "สแนปช็อต {id}",
   "restoreCheck.change.added": "ใหม่",

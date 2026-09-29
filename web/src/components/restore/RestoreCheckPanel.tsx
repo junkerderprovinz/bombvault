@@ -67,6 +67,7 @@ function lineText(c: CheckLine, t: T): string {
       .replace("{need}", humanBytes(c.need ?? 0))
       .replace("{free}", humanBytes(c.free ?? 0));
   }
+  if (c.reason === "parent-missing") return t("restoreCheck.reason.parentMissing").replace("{name}", c.detail ?? "");
   if (c.detail)
     return c.id === "snapshot" && c.status === "ok" ? t("restoreCheck.snapshotId").replace("{id}", c.detail) : c.detail;
   return c.reason && REASON[c.reason] ? t(REASON[c.reason]) : "";

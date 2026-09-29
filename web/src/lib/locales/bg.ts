@@ -284,6 +284,7 @@ const bg: Partial<Translations> = {
   "restoreCheck.reason.download": "Браузърът ти записва файла.",
   "restoreCheck.reason.nothing": "Това възстановяване не записва файлове.",
   "restoreCheck.reason.unmeasured": "Не можа да се измери, затова не блокира.",
+  "restoreCheck.reason.parentMissing": "Наборът от данни над него, {name}, не съществува. Първо го създай или избери друго име.",
   "restoreCheck.space": "Нужни са {need}, свободни {free}.",
   "restoreCheck.snapshotId": "Моментна снимка {id}",
   "restoreCheck.change.added": "нов",
