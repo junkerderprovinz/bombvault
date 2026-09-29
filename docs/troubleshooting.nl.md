@@ -29,7 +29,7 @@ Live snapshots hebben de qemu guest agent geïnstalleerd in de VM nodig en de sc
 
 ## Een back-up mislukte met "repository is already locked"
 
-Dit is meestal een verweesde restic-lock die achterblijft wanneer de container werd bijgewerkt of herstart midden in een operatie. BombVault detecteert een aantoonbaar verweesde lock, wist hem geforceerd en probeert automatisch één keer opnieuw. Als het aanhoudt, gebruik **Instellingen, Integriteit en onderhoud, Ontgrendelen** voor het betrokken domein om een verouderde lock met de hand te wissen. Een echt probleem komt nog steeds boven in plaats van verborgen te worden.
+Dit is meestal een verweesde restic-lock die achterblijft wanneer de container werd bijgewerkt of herstart midden in een operatie. BombVault detecteert een aantoonbaar verweesde lock, wist hem geforceerd en probeert automatisch één keer opnieuw. Als het aanhoudt, gebruik **Instellingen, Integriteit en onderhoud, Ontgrendelen** voor het betrokken domein om een verouderde lock met de hand te wissen. Een echt probleem komt nog steeds boven in plaats van verborgen te worden. Na een herstart wacht BombVault tot zo'n lock tien minuten niet is vernieuwd. Een restic die nog draait, bijvoorbeeld in een tweede BombVault op dezelfde repository, vernieuwt zijn lock elke vijf minuten.
 
 ## Mijn off-site kopie is niet gemaakt na een back-up
 

@@ -29,7 +29,7 @@ Migawki na żywo wymagają agenta gościa qemu zainstalowanego w VM oraz dysku n
 
 ## Kopia zapasowa zawiodła z "repository is already locked"
 
-To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualizowany lub zrestartowany w trakcie operacji. BombVault wykrywa bezspornie osieroconą blokadę, wymuszenie ją usuwa i ponawia raz, automatycznie. Jeśli się utrzymuje, użyj **Ustawienia, Integralność i konserwacja, Odblokuj** dla dotkniętej domeny, aby ręcznie usunąć nieaktualną blokadę. Prawdziwy problem nadal wychodzi na jaw zamiast być ukrywany.
+To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualizowany lub zrestartowany w trakcie operacji. BombVault wykrywa bezspornie osieroconą blokadę, wymuszenie ją usuwa i ponawia raz, automatycznie. Jeśli się utrzymuje, użyj **Ustawienia, Integralność i konserwacja, Odblokuj** dla dotkniętej domeny, aby ręcznie usunąć nieaktualną blokadę. Prawdziwy problem nadal wychodzi na jaw zamiast być ukrywany. Po restarcie BombVault czeka, aż taka blokada przez dziesięć minut nie zostanie odświeżona. Restic, który wciąż działa, na przykład w drugim BombVaulcie na tym samym repozytorium, odświeża swoją blokadę co pięć minut.
 
 ## Moja kopia poza siedzibą nie zdarzyła się po kopii
 
