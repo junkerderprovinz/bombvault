@@ -108,3 +108,25 @@ describe("humanBytes", () => {
     expect(humanBytes(2 * GIB)).toBe("2.0 GB");
   });
 });
+
+describe("a backend that reports no free space", () => {
+  it("keeps the growth and says the free space is unknown, with the reason behind an info bubble", () => {
+    const line = buildForecastLine({ growthBytesPerWeek: GIB, capacityUnsupported: true }, resolve);
+    expect(line!.growth).toBe("dashboard.forecastGrowth bytes=1.0 GB");
+    expect(line!.free).toBeNull();
+    expect(line!.freeUnknown).toBe("dashboard.forecastFreeUnknown");
+    expect(line!.freeUnknownTip).toBe("dashboard.forecastFreeUnknownInfo");
+  });
+
+  it("still renders a line when no growth is known yet", () => {
+    const line = buildForecastLine({ capacityUnsupported: true }, resolve);
+    expect(line).not.toBeNull();
+    expect(line!.growth).toBeNull();
+    expect(line!.freeUnknown).toBe("dashboard.forecastFreeUnknown");
+  });
+
+  it("stays quiet about it for a volume that was measured", () => {
+    const line = buildForecastLine({ growthBytesPerWeek: GIB, freeBytes: 4 * GIB, capacitySource: "sftp" }, resolve);
+    expect(line!.freeUnknown).toBeNull();
+  });
+});

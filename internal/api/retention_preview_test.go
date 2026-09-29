@@ -228,3 +228,29 @@ func TestRetentionPreviewServesAnEmptyItemListPerRepository(t *testing.T) {
 		t.Fatalf("want every repository with an items array, got %s", raw)
 	}
 }
+
+// A yearly rule on its own is a policy: the preview asks restic about it and
+// reports it back, instead of calling retention off.
+func TestPreviewRetentionReportsAYearlyRule(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st, own, _ := twoRepoDomain(t, eng)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatalf("GetSettings: %v", err)
+	}
+	s.RetentionKeepYearly = 4
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatalf("UpdateSettings: %v", err)
+	}
+
+	got, err := svc.PreviewRetention(context.Background(), "containers", "local")
+	if err != nil {
+		t.Fatalf("PreviewRetention: %v", err)
+	}
+	if !got.Policy.On || got.Policy.KeepYearly != 4 {
+		t.Fatalf("policy = %+v, want on with keepYearly 4", got.Policy)
+	}
+	if !hasRepo(eng.previewRepos, own) {
+		t.Fatalf("the domain repository was never previewed: %v", eng.previewRepos)
+	}
+}

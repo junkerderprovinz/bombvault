@@ -458,6 +458,11 @@ export const en = {
   // path already accepts a restic remote URL directly, so switching to Remote
   // opens the connection-test/safety-settings dialog instead of the folder browser.
   "settings.pathMode.local": "Local",
+  "settings.compression": "Compression",
+  "settings.compressionInfo": "How restic packs new data into this repository. Automatic is restic's default and suits most data. Maximum saves more space and costs more CPU time during backups and copies. Off stores data uncompressed, which helps when it is already compressed, such as video or photos. A repository in the old format version 1 cannot compress and ignores this setting.",
+  "settings.compression.off": "Off",
+  "settings.compression.auto": "Automatic",
+  "settings.compression.max": "Maximum",
   "settings.pathMode.remote": "Remote",
   // Hover/focus explanation for the icon-only Local/Remote segments above
   // (GlimStone follow-up round, point 2) — removing the text label loses the
@@ -573,7 +578,7 @@ export const en = {
   "offsite.prune.stateFarSide": "Nothing here prunes this copy. Append-only is on, so BombVault only ever adds to it, and pruning is the storage side's job.",
   "offsite.prune.statePolicy": "BombVault prunes this copy after each replication, following the off-site retention policy.",
   "offsite.prune.stateNone": "Nothing prunes this copy. Append-only is off and every off-site keep value is 0, so it grows until the disk does.",
-  "offsite.prune.effective": "Keeping {last} latest, {daily} daily, {weekly} weekly, {monthly} monthly.",
+  "offsite.prune.effective": "Keeping {last} latest, {daily} daily, {weekly} weekly, {monthly} monthly, {yearly} yearly.",
   "offsite.prune.editedElsewhere": "Set in Settings, Off-site retention. The values are shared by every domain.",
   "offsite.prune.budgetInfo": "Raises an alarm once the off-site repository grows past this many gigabytes. It never deletes anything, so it is the safety net for a copy nothing prunes.",
   "settings.retentionImmutableNotPruned": "An append-only off-site destination is never pruned from here, whatever these values say. Its own step in the off-site assistant explains how to prune it from the storage side.",
@@ -697,10 +702,12 @@ export const en = {
   "settings.retentionDaily": "Keep daily",
   "settings.retentionWeekly": "Keep weekly",
   "settings.retentionMonthly": "Keep monthly",
+  "settings.retentionYearly": "Keep yearly",
   "settings.retentionLastInfo": "Keeps the N most recent snapshots, no matter when they were made.",
   "settings.retentionDailyInfo": "Keeps one snapshot for each of the last N calendar days that has a backup, one per day, not N backups.",
   "settings.retentionWeeklyInfo": "Keeps one snapshot for each of the last N calendar weeks that has a backup.",
   "settings.retentionMonthlyInfo": "Keeps one snapshot for each of the last N calendar months that has a backup.",
+  "settings.retentionYearlyInfo": "Keeps one snapshot for each of the last N calendar years that has a backup.",
   "settings.retentionCombineInfo": "The four rules combine with OR: a snapshot survives if any single rule would keep it. They don't add up to a fixed count. Applied separately to each backed-up item.",
   "settings.retentionLocal": "Local repo",
   "settings.retentionOffsite": "Off-site repo",
@@ -829,7 +836,7 @@ export const en = {
   "integrity.unlockHint": "Clear stale repository locks left by a crashed or interrupted run (fixes 'repository is already locked').",
   "integrity.unlockPartial": "Not every repository was fully unlocked: {list}",
   "integrity.pruneHint": "Apply your retention policy and reclaim space (reclaims space only when no policy is set; can take a while).",
-  "integrity.pruneConfirm": "Prune now applies your retention policy. It removes snapshots beyond your keep rules (last/daily/weekly/monthly) and reclaims space. With no policy set it only reclaims space. Continue?",
+  "integrity.pruneConfirm": "Prune now applies your retention policy. It removes snapshots beyond your keep rules (last/daily/weekly/monthly/yearly) and reclaims space. With no policy set it only reclaims space. Continue?",
   // #109: the off-site wizard's tamper test, surfaced in Integrity & maintenance
   // under its plainer name. The verdict strings are shared (offsite.tamperOk/…).
   "integrity.appendOnly": "Append-only check",
@@ -1314,6 +1321,8 @@ export const en = {
   "dashboard.forecastFullOneWeek": "Repo volume full in ~1 week",
   "dashboard.forecastFullOverYear": "Repo volume full in > 1 year",
   "dashboard.forecastFree": "{bytes} free",
+  "dashboard.forecastFreeUnknown": "Free space unknown",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 and REST servers do not report how much room is left, so only the growth is shown. Keep an eye on the provider's own quota.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duration",
@@ -3454,6 +3463,11 @@ export const de: Translations = {
   "settings.restoreFolder": "Standard-Restore-Ordner",
   "settings.restoreFolderHint": "Wohin 'in einen Ordner wiederherstellen' Snapshots standardmäßig entpackt.",
   "settings.pathMode.local": "Lokal",
+  "settings.compression": "Kompression",
+  "settings.compressionInfo": "Wie restic neue Daten in dieses Repository packt. Automatisch ist restics Standard und passt für die meisten Daten. Maximum spart mehr Platz und kostet bei Backups und Kopien mehr CPU-Zeit. Aus speichert unkomprimiert, was hilft, wenn die Daten schon komprimiert sind, etwa Videos oder Fotos. Ein Repository im alten Format 1 kann nicht komprimieren und ignoriert die Einstellung.",
+  "settings.compression.off": "Aus",
+  "settings.compression.auto": "Automatisch",
+  "settings.compression.max": "Maximum",
   "settings.pathMode.remote": "Remote",
   "settings.pathMode.localTip": "Lokaler Pfad auf diesem Host",
   "settings.pathMode.remoteTip": "Remote-restic-Repository",
@@ -3535,7 +3549,7 @@ export const de: Translations = {
   "offsite.prune.stateFarSide": "Von hier prunt nichts diese Kopie. Append-only ist an, BombVault legt also nur dazu, und das Prunen ist Sache der Gegenseite.",
   "offsite.prune.statePolicy": "BombVault prunt diese Kopie nach jeder Replikation nach der Off-site-Aufbewahrungsrichtlinie.",
   "offsite.prune.stateNone": "Nichts prunt diese Kopie. Append-only ist aus und alle Off-site-Keep-Werte stehen auf 0, sie wächst also, bis die Platte nicht mehr mitmacht.",
-  "offsite.prune.effective": "Behält {last} neueste, {daily} täglich, {weekly} wöchentlich, {monthly} monatlich.",
+  "offsite.prune.effective": "Behält {last} neueste, {daily} täglich, {weekly} wöchentlich, {monthly} monatlich, {yearly} jährlich.",
   "offsite.prune.editedElsewhere": "Eingestellt unter Einstellungen, Off-site-Aufbewahrung. Die Werte gelten für alle Bereiche gemeinsam.",
   "offsite.prune.budgetInfo": "Schlägt Alarm, sobald das Off-site-Repository über so viele Gigabyte wächst. Es löscht nie etwas, ist also das Sicherheitsnetz für eine Kopie, die niemand prunt.",
   "settings.retentionImmutableNotPruned": "Ein Append-only-Off-site-Ziel wird von hier nie geprunt, egal was hier steht. Der zugehörige Schritt im Off-site-Assistenten erklärt, wie man es von der Gegenseite aus prunt.",
@@ -3653,10 +3667,12 @@ export const de: Translations = {
   "settings.retentionDaily": "Täglich behalten",
   "settings.retentionWeekly": "Wöchentlich behalten",
   "settings.retentionMonthly": "Monatlich behalten",
+  "settings.retentionYearly": "Jährlich behalten",
   "settings.retentionLastInfo": "Behält die N neuesten Snapshots, unabhängig davon, wann sie erstellt wurden.",
   "settings.retentionDailyInfo": "Behält einen Snapshot für jeden der letzten N Kalendertage mit einem Backup, einen pro Tag, nicht N Backups.",
   "settings.retentionWeeklyInfo": "Behält einen Snapshot für jede der letzten N Kalenderwochen mit einem Backup.",
   "settings.retentionMonthlyInfo": "Behält einen Snapshot für jeden der letzten N Kalendermonate mit einem Backup.",
+  "settings.retentionYearlyInfo": "Behält einen Snapshot für jedes der letzten N Kalenderjahre mit einem Backup.",
   "settings.retentionCombineInfo": "Die vier Regeln kombinieren sich per ODER: ein Snapshot bleibt erhalten, wenn ihn irgendeine Regel behalten würde. Sie addieren sich nicht zu einer festen Anzahl. Gilt separat für jedes gesicherte Objekt.",
   "settings.retentionLocal": "Lokales Repo",
   "settings.retentionOffsite": "Off-site-Repo",
@@ -3782,7 +3798,7 @@ export const de: Translations = {
   "integrity.unlockHint": "Verwaiste Repo-Locks eines abgestürzten/abgebrochenen Laufs entfernen (behebt „repository is already locked“).",
   "integrity.unlockPartial": "Nicht jedes Repository wurde vollständig entsperrt: {list}",
   "integrity.pruneHint": "Retention anwenden und Speicher freigeben (ohne Policy nur Speicher; kann dauern).",
-  "integrity.pruneConfirm": "Aufräumen wendet jetzt deine Retention an: entfernt Snapshots jenseits deiner Keep-Regeln (last/daily/weekly/monthly) und gibt Speicher frei. Ohne Policy wird nur Speicher freigegeben. Fortfahren?",
+  "integrity.pruneConfirm": "Aufräumen wendet jetzt deine Retention an: entfernt Snapshots jenseits deiner Keep-Regeln (last/daily/weekly/monthly/yearly) und gibt Speicher frei. Ohne Policy wird nur Speicher freigegeben. Fortfahren?",
   "integrity.appendOnly": "Append-only-Prüfung",
   "integrity.appendOnlyHint": "Beweist, dass das Off-site-Repository Löschungen weiterhin verweigert (Append-only-Schutz), dieselbe Prüfung wie der Tamper-Test im Off-site-Assistenten.",
   "integrity.appendOnlyLast": "Append-only-Schutz · Zuletzt geprüft {time}",
@@ -4158,6 +4174,8 @@ export const de: Translations = {
   "dashboard.forecastFullOneWeek": "Repo-Volume voll in ~1 Woche",
   "dashboard.forecastFullOverYear": "Repo-Volume voll in > 1 Jahr",
   "dashboard.forecastFree": "{bytes} frei",
+  "dashboard.forecastFreeUnknown": "Freier Platz unbekannt",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 und REST-Server melden nicht, wie viel Platz noch frei ist, darum steht hier nur das Wachstum. Behalte das Kontingent beim Anbieter selbst im Blick.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Dauer",

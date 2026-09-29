@@ -5,6 +5,7 @@ import { OffsiteWizard } from "./OffsiteWizard";
 import { Selector } from "./Selector";
 import { IconCloud, IconLocal } from "./Sidebar";
 import { Badge } from "./Badge";
+import { CompressionSelector, saveCompression } from "./CompressionSelector";
 import { useT } from "../lib/i18n";
 
 // Local/Remote switch for a domain's backup path. A path already accepts a
@@ -137,6 +138,10 @@ export function PathModeSwitch({
           placeholder={placeholder}
         />
       )}
+      <CompressionSelector
+        value={settings.compression[domain]}
+        onChange={(c) => void saveCompression(domain, c, settings, setSettings, save)}
+      />
     </div>
   );
 }

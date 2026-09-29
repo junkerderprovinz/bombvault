@@ -546,3 +546,63 @@ func TestSettingsAnomalyFieldsRoundTrip(t *testing.T) {
 		t.Fatalf("preset and minimum round-tripped as (%q, %q)", stored.AnomalySensitivity, stored.AnomalyNotifyMin)
 	}
 }
+
+func TestSettingsYearlyRetentionRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RetentionKeepYearly != 0 || s.OffsiteRetentionKeepYearly != 0 {
+		t.Fatalf("a fresh install must keep no yearly rule, got %d and %d", s.RetentionKeepYearly, s.OffsiteRetentionKeepYearly)
+	}
+	if _, err := r.MutateSettings(func(m *store.Settings) error {
+		m.RetentionKeepYearly = 3
+		m.OffsiteRetentionKeepYearly = 10
+		return nil
+	}); err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+	stored, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.RetentionKeepYearly != 3 || stored.OffsiteRetentionKeepYearly != 10 {
+		t.Fatalf("yearly rules came back as %d and %d", stored.RetentionKeepYearly, stored.OffsiteRetentionKeepYearly)
+	}
+}
+
+func TestSettingsCompressionRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Compression != "" {
+		t.Fatalf("a fresh install must leave every repository on restic's default, got %v", s.Compression)
+	}
+	if _, err := r.MutateSettings(func(m *store.Settings) error {
+		m.SetCompression("vms", "off")
+		m.SetCompression("offsite:containers", "max")
+		return nil
+	}); err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+	stored, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.CompressionFor("vms") != "off" || stored.CompressionFor("offsite:containers") != "max" || stored.CompressionFor("containers") != "" {
+		t.Fatalf("compression came back as %v", stored.Compression)
+	}
+}

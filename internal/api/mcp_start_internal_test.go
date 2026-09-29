@@ -340,6 +340,30 @@ func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
 		}
 	})
 
+	t.Run("a yearly rule does not hold this year's restore points", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "docs")
+		set := sets["docs"]
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.RetentionKeepLast = 3
+		s.RetentionKeepYearly = 5
+		if err := repo.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		seedBackup(t, repo, set.ID, "mcp", "0b7e")
+		seedBackup(t, repo, set.ID, "mcp", "0b7e")
+
+		hold, err := h.mcpRetentionHold(s, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hold == nil {
+			t.Fatal("the yearly rule keeps one restore point a year, so the last three must still be guarded")
+		}
+	})
+
 	t.Run("a window of one leaves no room at all", func(t *testing.T) {
 		s := keepLast(t, 1)
 		if hold := held(t, s); hold == nil {

@@ -14,6 +14,7 @@ var errNoDiskStat = errors.New("free-space probe is only supported on Linux")
 type diskStatResult struct {
 	Free, Used, Total uint64
 	Volume            string
+	FSType            string
 }
 
 func diskStat(string) (diskStatResult, error) {

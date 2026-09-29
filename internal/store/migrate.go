@@ -2120,6 +2120,25 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
 	{
+		// A yearly rule next to daily, weekly and monthly, for the local policy,
+		// the settings-level off-site policy and every off-site destination.
+		// Zero keeps the policies exactly as they were.
+		version:          retentionYearlyMigration,
+		name:             "retention_keep_yearly",
+		alreadySatisfied: columnPresent("offsite_targets", "retention_keep_yearly"),
+		sql: `ALTER TABLE settings ADD COLUMN retention_keep_yearly INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN offsite_retention_keep_yearly INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE offsite_targets ADD COLUMN retention_keep_yearly INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// restic's --compression per repository. Empty is restic's own default.
+		version:          retentionYearlyMigration + 1,
+		name:             "repo_compression",
+		alreadySatisfied: columnPresent("offsite_targets", "compression"),
+		sql: `ALTER TABLE settings ADD COLUMN repo_compression TEXT NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN compression TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// One restore probe of one item: the check after its first backup, or
 		// one somebody asked for. The time this migration ran is when first
 		// backups start counting, so items backed up before it are not all
@@ -2263,6 +2282,10 @@ const mcpActivityMigration = 148
 
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
+
+// retentionYearlyMigration starts the block of retention and destination
+// settings, 160 to 169.
+const retentionYearlyMigration = 160
 
 // verifyMigrationBase numbers the restore probes and start tests from one
 // place, for the same reason dbDumpMigrationBase does.

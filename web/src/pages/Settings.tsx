@@ -16,6 +16,7 @@ import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
+import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
 import {
   CONTROL_AXES,
   LABEL_MODES,
@@ -3134,12 +3135,13 @@ export function SettingsPage() {
         hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
         hueIndex={nextHue()}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {([
             ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
             ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
             ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
             ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+            ["retentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
           ] as const).map(([key, label, info]) => (
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
@@ -3908,6 +3910,12 @@ export function SettingsPage() {
                 <span className="text-xs text-carbon-textMuted">
                   {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
                 </span>
+                {settings[repoKey] && (
+                  <CompressionSelector
+                    value={settings.compression[`offsite:${domain}`]}
+                    onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
+                  />
+                )}
               </>
             )}
             {/* Additional off-site targets (multi-off-site): extra copies of this
@@ -3935,12 +3943,13 @@ export function SettingsPage() {
         hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionImmutableNotPruned")}`}
         hueIndex={nextHue()}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {([
             ["offsiteRetentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
             ["offsiteRetentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
             ["offsiteRetentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
             ["offsiteRetentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+            ["offsiteRetentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
           ] as const).map(([key, label, info]) => (
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
