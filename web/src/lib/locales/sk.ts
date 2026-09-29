@@ -284,6 +284,7 @@ const sk: Partial<Translations> = {
   "restoreCheck.reason.download": "Súbor uloží tvoj prehliadač.",
   "restoreCheck.reason.nothing": "Táto obnova nezapisuje žiadne súbory.",
   "restoreCheck.reason.unmeasured": "Nedalo sa zmerať, preto neblokuje.",
+  "restoreCheck.reason.parentMissing": "Dataset nad ním, {name}, neexistuje. Najprv ho vytvor alebo zvoľ iný názov.",
   "restoreCheck.space": "Treba {need}, voľné {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nový",

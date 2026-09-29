@@ -284,6 +284,7 @@ const is: Partial<Translations> = {
   "restoreCheck.reason.download": "Vafrinn þinn vistar skrána.",
   "restoreCheck.reason.nothing": "Þessi endurheimt skrifar engar skrár.",
   "restoreCheck.reason.unmeasured": "Ekki tókst að mæla, svo það hindrar ekki.",
+  "restoreCheck.reason.parentMissing": "Gagnasafnið fyrir ofan, {name}, er ekki til. Búðu það fyrst til eða veldu annað nafn.",
   "restoreCheck.space": "Þarf {need}, {free} laust.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nýtt",

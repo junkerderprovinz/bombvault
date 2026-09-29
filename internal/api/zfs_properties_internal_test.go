@@ -303,3 +303,35 @@ func TestZFSRestoreCheckIntoANewDatasetComparesAgainstNothing(t *testing.T) {
 		}
 	}
 }
+
+func TestZFSRestoreCheckBlocksANewDatasetWhoseParentIsMissing(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	s.engine = &emptyTargetEngine{zfsFakeEngine: eng}
+	host.strictTree = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = "cache/nosuch/copy"
+	req.SafetySnapshot = false
+
+	res, err := s.CheckRestore(context.Background(), RestoreCheckRequest{Kind: checkZFS, Name: d.ID, Source: "local", ZFS: req})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Ready {
+		t.Fatalf("a restore under a missing dataset was ready: %+v", res.Checks)
+	}
+	var space CheckLine
+	for _, c := range res.Checks {
+		if c.ID == lineSpace {
+			space = c
+		}
+	}
+	if space.Status != lineFail || space.Reason != reasonParentMissing || space.Detail != "cache/nosuch" {
+		t.Fatalf("space line = %+v, want a failure naming cache/nosuch", space)
+	}
+	for _, c := range host.recorded() {
+		if strings.HasPrefix(c, "create") {
+			t.Fatalf("the check created something: %q", c)
+		}
+	}
+}

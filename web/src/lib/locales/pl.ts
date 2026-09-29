@@ -225,6 +225,7 @@ const pl: Partial<Translations> = {
   "restoreCheck.reason.download": "Przeglądarka zapisuje plik.",
   "restoreCheck.reason.nothing": "To przywracanie nie zapisuje żadnych plików.",
   "restoreCheck.reason.unmeasured": "Nie dało się zmierzyć, więc nie blokuje.",
+  "restoreCheck.reason.parentMissing": "Zbiór danych nad nim, {name}, nie istnieje. Najpierw go utwórz albo wybierz inną nazwę.",
   "restoreCheck.space": "Potrzeba {need}, wolne {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nowy",

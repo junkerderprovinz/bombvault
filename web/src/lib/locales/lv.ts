@@ -284,6 +284,7 @@ const lv: Partial<Translations> = {
   "restoreCheck.reason.download": "Failu saglabā tava pārlūkprogramma.",
   "restoreCheck.reason.nothing": "Šī atjaunošana neraksta nevienu failu.",
   "restoreCheck.reason.unmeasured": "Neizdevās izmērīt, tāpēc nebloķē.",
+  "restoreCheck.reason.parentMissing": "Augstākā datu kopa {name} nepastāv. Vispirms to izveido vai izvēlies citu nosaukumu.",
   "restoreCheck.space": "Vajag {need}, brīvs {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "jauns",

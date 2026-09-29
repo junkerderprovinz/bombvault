@@ -227,6 +227,7 @@ const ja: Partial<Translations> = {
   "restoreCheck.reason.download": "ファイルはブラウザーが保存します。",
   "restoreCheck.reason.nothing": "この復元はファイルを書き込みません。",
   "restoreCheck.reason.unmeasured": "計測できなかったため、ブロックしません。",
+  "restoreCheck.reason.parentMissing": "その上位のデータセット {name} がありません。先に作成するか、別の名前を選んでください。",
   "restoreCheck.space": "必要 {need}、空き {free}。",
   "restoreCheck.snapshotId": "スナップショット {id}",
   "restoreCheck.change.added": "新規",

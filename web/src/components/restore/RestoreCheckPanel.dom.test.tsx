@@ -96,4 +96,19 @@ describe("the restore plan", () => {
     expect(screen.getByText("snapshot bbbb2222 does not belong to this container")).toBeTruthy();
     expect(screen.getByText(en["restoreCheck.reason.noSnapshot"])).toBeTruthy();
   });
+
+  it("names the missing dataset a new dataset would go under", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "space", status: "fail", reason: "parent-missing", detail: "tank/gone" },
+      ],
+      plan: null,
+    });
+    expect(screen.getByText(en["restoreCheck.reason.parentMissing"].replace("{name}", "tank/gone"))).toBeTruthy();
+  });
 });

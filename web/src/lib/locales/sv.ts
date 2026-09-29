@@ -227,6 +227,7 @@ const sv: Partial<Translations> = {
   "restoreCheck.reason.download": "Din webbläsare sparar filen.",
   "restoreCheck.reason.nothing": "Den här återställningen skriver inga filer.",
   "restoreCheck.reason.unmeasured": "Kunde inte mätas, så den blockerar inte.",
+  "restoreCheck.reason.parentMissing": "Datasetet ovanför, {name}, finns inte. Skapa det först eller välj ett annat namn.",
   "restoreCheck.space": "Behöver {need}, {free} ledigt.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "ny",

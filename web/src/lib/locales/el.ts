@@ -227,6 +227,7 @@ const el: Partial<Translations> = {
   "restoreCheck.reason.download": "Το αρχείο το αποθηκεύει ο φυλλομετρητής σου.",
   "restoreCheck.reason.nothing": "Αυτή η επαναφορά δεν γράφει αρχεία.",
   "restoreCheck.reason.unmeasured": "Δεν μετρήθηκε, οπότε δεν μπλοκάρει.",
+  "restoreCheck.reason.parentMissing": "Το σύνολο δεδομένων από πάνω, {name}, δεν υπάρχει. Δημιούργησέ το πρώτα ή διάλεξε άλλο όνομα.",
   "restoreCheck.space": "Χρειάζεται {need}, ελεύθερα {free}.",
   "restoreCheck.snapshotId": "Στιγμιότυπο {id}",
   "restoreCheck.change.added": "νέο",

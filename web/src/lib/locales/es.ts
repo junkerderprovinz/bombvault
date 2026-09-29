@@ -227,6 +227,7 @@ const es: Partial<Translations> = {
   "restoreCheck.reason.download": "Tu navegador guarda el archivo.",
   "restoreCheck.reason.nothing": "Esta restauración no escribe archivos.",
   "restoreCheck.reason.unmeasured": "No se pudo medir, así que no bloquea.",
+  "restoreCheck.reason.parentMissing": "El conjunto de datos superior, {name}, no existe. Créalo primero o elige otro nombre.",
   "restoreCheck.space": "Necesita {need}, {free} libres.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nuevo",

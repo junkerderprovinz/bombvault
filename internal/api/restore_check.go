@@ -74,14 +74,15 @@ const (
 	lineFail = "fail"
 	lineSkip = "skip"
 
-	reasonUnencrypted = "unencrypted"
-	reasonNoRepo      = "no-repository"
-	reasonNoSnapshot  = "no-snapshot"
-	reasonDownload    = "download"
-	reasonNothing     = "nothing-written"
-	reasonUnmeasured  = "unmeasured"
-	reasonShort       = "short"
-	reasonRefused     = "refused"
+	reasonUnencrypted   = "unencrypted"
+	reasonNoRepo        = "no-repository"
+	reasonNoSnapshot    = "no-snapshot"
+	reasonDownload      = "download"
+	reasonNothing       = "nothing-written"
+	reasonUnmeasured    = "unmeasured"
+	reasonShort         = "short"
+	reasonRefused       = "refused"
+	reasonParentMissing = "parent-missing"
 )
 
 // CheckLine is one line of the pre-flight checklist. Detail carries the
@@ -179,6 +180,11 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	switch {
 	case ctx.Err() != nil:
 		return RestoreCheck{}, ctx.Err()
+	case zfsParentMissing(err) != "":
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineSpace, Status: lineFail, Reason: reasonParentMissing, Detail: zfsParentMissing(err)})
+		return out, nil
 	case isDestinationRefusal(err):
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},

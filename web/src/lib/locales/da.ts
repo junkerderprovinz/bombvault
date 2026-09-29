@@ -227,6 +227,7 @@ const da: Partial<Translations> = {
   "restoreCheck.reason.download": "Din browser gemmer filen.",
   "restoreCheck.reason.nothing": "Denne gendannelse skriver ingen filer.",
   "restoreCheck.reason.unmeasured": "Kunne ikke måles, så den blokerer ikke.",
+  "restoreCheck.reason.parentMissing": "Datasættet over det, {name}, findes ikke. Opret det først, eller vælg et andet navn.",
   "restoreCheck.space": "Kræver {need}, {free} ledigt.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "ny",

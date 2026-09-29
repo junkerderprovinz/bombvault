@@ -284,6 +284,7 @@ const hi: Partial<Translations> = {
   "restoreCheck.reason.download": "फ़ाइल आपका ब्राउज़र सहेजता है।",
   "restoreCheck.reason.nothing": "यह रीस्टोर कोई फ़ाइल नहीं लिखता।",
   "restoreCheck.reason.unmeasured": "मापा नहीं जा सका, इसलिए रोकता नहीं।",
+  "restoreCheck.reason.parentMissing": "इसके ऊपर का डेटासेट, {name}, मौजूद नहीं है। पहले उसे बनाएँ या कोई दूसरा नाम चुनें।",
   "restoreCheck.space": "{need} चाहिए, {free} खाली।",
   "restoreCheck.snapshotId": "स्नैपशॉट {id}",
   "restoreCheck.change.added": "नई",

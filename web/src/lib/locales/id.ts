@@ -284,6 +284,7 @@ const id: Partial<Translations> = {
   "restoreCheck.reason.download": "Browser kamu yang menyimpan berkasnya.",
   "restoreCheck.reason.nothing": "Pemulihan ini tidak menulis berkas.",
   "restoreCheck.reason.unmeasured": "Tidak bisa diukur, jadi tidak menghalangi.",
+  "restoreCheck.reason.parentMissing": "Dataset di atasnya, {name}, tidak ada. Buat dulu atau pilih nama lain.",
   "restoreCheck.space": "Perlu {need}, tersedia {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "baru",

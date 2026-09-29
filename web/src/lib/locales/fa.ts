@@ -284,6 +284,7 @@ const fa: Partial<Translations> = {
   "restoreCheck.reason.download": "مرورگر شما فایل را ذخیره می‌کند.",
   "restoreCheck.reason.nothing": "این بازیابی هیچ فایلی نمی‌نویسد.",
   "restoreCheck.reason.unmeasured": "اندازه‌گیری نشد، پس مانع نمی‌شود.",
+  "restoreCheck.reason.parentMissing": "مجموعه‌داده بالای آن، {name}، وجود ندارد. اول آن را بساز یا نام دیگری انتخاب کن.",
   "restoreCheck.space": "به {need} نیاز دارد، {free} آزاد است.",
   "restoreCheck.snapshotId": "اسنپ‌شات {id}",
   "restoreCheck.change.added": "جدید",

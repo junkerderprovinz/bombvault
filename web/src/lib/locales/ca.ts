@@ -284,6 +284,7 @@ const ca: Partial<Translations> = {
   "restoreCheck.reason.download": "El teu navegador desa el fitxer.",
   "restoreCheck.reason.nothing": "Aquesta restauració no escriu cap fitxer.",
   "restoreCheck.reason.unmeasured": "No s'ha pogut mesurar, així que no bloqueja.",
+  "restoreCheck.reason.parentMissing": "El conjunt de dades superior, {name}, no existeix. Crea'l primer o tria un altre nom.",
   "restoreCheck.space": "Necessita {need}, {free} lliures.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nou",

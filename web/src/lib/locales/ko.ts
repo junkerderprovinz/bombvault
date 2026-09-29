@@ -227,6 +227,7 @@ const ko: Partial<Translations> = {
   "restoreCheck.reason.download": "파일은 브라우저가 저장합니다.",
   "restoreCheck.reason.nothing": "이 복원은 파일을 쓰지 않습니다.",
   "restoreCheck.reason.unmeasured": "측정하지 못해 막지 않습니다.",
+  "restoreCheck.reason.parentMissing": "상위 데이터세트 {name}이(가) 없습니다. 먼저 만들거나 다른 이름을 고르세요.",
   "restoreCheck.space": "필요 {need}, 여유 {free}.",
   "restoreCheck.snapshotId": "스냅샷 {id}",
   "restoreCheck.change.added": "새 파일",

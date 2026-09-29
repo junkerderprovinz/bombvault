@@ -467,6 +467,15 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 		return ZFSRestoreAck{}, zfsRefuse(zfsErrCode(err), name)
 	}
 	if isPlanOnly(ctx) {
+		// The real restore learns this from zfs create, after the user
+		// pressed Start; the check has to say it before.
+		parent := path.Dir(name)
+		lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
+		_, err := s.zfs.Tree(lctx, parent)
+		cancel()
+		if zfsErrCode(err) == "not-found" {
+			return ZFSRestoreAck{}, zfsRefuse(reasonParentMissing, parent)
+		}
 		target := s.zfsNewDatasetPath(ctx, name)
 		plan.dataset = req.Dataset
 		plan.newDataset = name
@@ -492,6 +501,15 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: cpath}}
 	plan.snapshotID = member.SnapshotID
 	return ZFSRestoreAck{Target: cpath, Created: name}, nil
+}
+
+// zfsParentMissing is the missing parent a check of a new dataset named, or "".
+func zfsParentMissing(err error) string {
+	var ref *backup.ZFSRefusal
+	if errors.As(err, &ref) && ref.Code == reasonParentMissing {
+		return ref.Detail
+	}
+	return ""
 }
 
 // zfsNewDatasetPath is where the container will see a dataset that does not

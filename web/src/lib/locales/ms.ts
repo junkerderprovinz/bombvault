@@ -284,6 +284,7 @@ const ms: Partial<Translations> = {
   "restoreCheck.reason.download": "Pelayar anda yang menyimpan fail itu.",
   "restoreCheck.reason.nothing": "Pemulihan ini tidak menulis sebarang fail.",
   "restoreCheck.reason.unmeasured": "Tidak dapat diukur, jadi tidak menghalang.",
+  "restoreCheck.reason.parentMissing": "Set data di atasnya, {name}, tidak wujud. Cipta dahulu atau pilih nama lain.",
   "restoreCheck.space": "Perlu {need}, kosong {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "baharu",

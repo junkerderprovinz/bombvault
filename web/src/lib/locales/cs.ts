@@ -227,6 +227,7 @@ const cs: Partial<Translations> = {
   "restoreCheck.reason.download": "Soubor uloží tvůj prohlížeč.",
   "restoreCheck.reason.nothing": "Tato obnova nezapisuje žádné soubory.",
   "restoreCheck.reason.unmeasured": "Nešlo změřit, proto neblokuje.",
+  "restoreCheck.reason.parentMissing": "Dataset nad ním, {name}, neexistuje. Nejdřív ho vytvoř, nebo zvol jiný název.",
   "restoreCheck.space": "Potřeba {need}, volno {free}.",
   "restoreCheck.snapshotId": "Snapshot {id}",
   "restoreCheck.change.added": "nový",
