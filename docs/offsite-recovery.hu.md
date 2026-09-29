@@ -72,11 +72,11 @@ Az első példányon nyisd meg a **Példányok → Párosítás** fület, és ka
 
 Bárki, aki ismeri a szavakat, csatlakozhat a csoporthoz, ezért kezeld őket jelszóként.
 
-**Hogyan érik el egymást a tagok.** Ugyanazon a hálózaton multicasttal találják meg egymást, és közvetlenül beszélnek. A különböző hálózatokon lévő példányok egy relén mennek keresztül, amelyet ugyanazon a fülön választasz ki:
+**Hogyan érik el egymást a tagok.** Minden példány a böngésződből ismeri meg a saját hálózati címét, amint bejelentkezel, ez a relékártyán **Ez a példány a hálózatodon** néven jelenik meg; javítsd ott, ha reverse proxy vagy szokatlan port áll előtte. Ugyanazon a hálózaton a tagok multicasttal hirdetik meg ezt a címet, és közvetlenül beszélnek egymással, és ahol a multicast nem tud átjutni egy konténerhálózaton, mint amilyen a Docker alapértelmezett bridge hálózata, egy példány ehelyett a saját alhálózatában keresi meg a többieket egy aláírt hívással, amelyre csak egy csoporttag tud válaszolni, így a párosítás relé nélkül is másodpercek alatt befejeződik. Ha semmi nem jön elő, a párosítókártya alatti **Nem találod?** egyetlen címet fogad el kézzel megadva, egy másik alhálózathoz vagy nem szabványos porthoz. A különböző hálózatokon lévő példányok egy relén mennek keresztül, amelyet ugyanazon a fülön választasz ki:
 
 - **Projekt relé** (alapértelmezett): `relay.halleluja.design`, ugyanaz a relé, amelyet a KnightLoader is használ. Nincs mit beállítani.
 - **Saját relé**: a **BombVault Relay** konténer az Unraid Community Apps-ból, vagy az egyik példányod, amely már elérhető kívülről, és be van kapcsolva a **Relé üzemeltetése**. Az a példány ezután a saját címén, a `/relay/connect` alatt válaszol, a már meglévő reverse proxyja és tanúsítványa mögött, és csak a te csoportodat engedi be. Add meg a relé címét minden példányon, amelynek használnia kell azt.
-- **Nincs relé**: a tagok csak ugyanazon a hálózaton találják meg egymást.
+- **Nincs relé**: a tagok automatikusan csak ugyanazon a hálózaton találják meg egymást, sehol máshol.
 
 **Mit lát a relé.** Minden hívás a tagok között AES-256-GCM-mel van lezárva, a tizenkét szóból származtatott kulccsal, és ez a kulcs sosem hagyja el a példányaidat. A relé megismer egy hash-t, amely csoportosítja a kapcsolatokat, hogy melyik példánynak szól egy üzenet, mekkora, és mikor halad át. Egy közvetlen hívás a helyi hálózaton ugyanígy van lezárva, és alá is van írva, így semmi sem függ az önaláírt tanúsítványtól, amelyet egy példány kiszolgál.
 

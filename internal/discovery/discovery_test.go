@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"sync"
@@ -181,5 +182,32 @@ func TestAnOlderAnnounceDoesNotReplaceANewerOne(t *testing.T) {
 	s.Observe(Peer{ID: "id-member", URL: "https://192.168.1.99:3443", Sent: 100, Tag: "member"})
 	if got := s.Peers(); len(got) != 1 || got[0].URL != "https://192.168.1.3:3443" {
 		t.Fatalf("peers = %+v, want the newer address kept", got)
+	}
+}
+
+func TestPrivateIPv4(t *testing.T) {
+	for _, c := range []struct {
+		ip   string
+		want bool
+	}{
+		{"10.0.0.1", true},
+		{"10.255.255.255", true},
+		{"172.16.0.1", true},
+		{"172.31.255.255", true},
+		{"192.168.0.1", true},
+		{"192.168.255.255", true},
+		{"172.15.0.1", false},
+		{"172.32.0.1", false},
+		{"192.167.0.1", false},
+		{"192.169.0.1", false},
+		{"1.1.1.1", false},
+		{"127.0.0.1", false},
+		{"169.254.1.1", false},
+		{"::1", false},
+	} {
+		got := PrivateIPv4(net.ParseIP(c.ip))
+		if got != c.want {
+			t.Errorf("PrivateIPv4(%s) = %v, want %v", c.ip, got, c.want)
+		}
 	}
 }

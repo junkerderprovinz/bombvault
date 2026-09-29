@@ -192,6 +192,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/group/join", h.handleGroupJoin)
 	mux.HandleFunc("DELETE /api/group", h.handleGroupLeave)
 	mux.HandleFunc("PUT /api/group/relay", h.handleGroupRelay)
+	mux.HandleFunc("PUT /api/group/address", h.handleGroupAddress)
+	mux.HandleFunc("POST /api/group/probe", h.handleGroupProbe)
 	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
 
 	// Protected endpoints.

@@ -8,12 +8,14 @@ import { Badge, type BadgeTone } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
+import { IconDisclosure } from "../../components/IconDisclosure";
 import { IconEye, IconRefresh, IconSignOut } from "../../components/glyphs";
 import {
   ApiError,
   createPhrase,
   joinGroup,
   leaveGroup,
+  probeAddress,
   setRelay,
   showPhrase,
   type GroupMember,
@@ -249,6 +251,58 @@ function RelayDownHint({ group, onRefresh, t }: { group: GroupState; onRefresh: 
   );
 }
 
+/** CantFindIt is the fallback for when the LAN sweep finds nobody: a person
+ *  types the other instance's address by hand, for a subnet or a port the
+ *  sweep does not try on its own. */
+function CantFindIt({ onProbe, busy, t, shake }: { onProbe: (url: string) => void; busy: boolean; t: T; shake: number }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        label={t("pairing.cantFindTitle")}
+        labelKey="pairing.cantFindTitle"
+        tone="neutral"
+        onClick={() => setOpen((v) => !v)}
+        ariaExpanded={open}
+        glyph={<IconDisclosure open={open} />}
+      />
+      {open && (
+        <div className="flex flex-col gap-2.5 rounded-control bg-carbon-surface2 p-3.5">
+          <p className="text-sm text-carbon-textSub">{t("pairing.cantFindBody")}</p>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex min-w-0 flex-[1_1_16rem] flex-col gap-1.5">
+              <label htmlFor="pairing-cant-find" className="text-xs text-carbon-textSub">
+                {t("pairing.cantFindLabel")}
+              </label>
+              <input
+                id="pairing-cant-find"
+                type="url"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="https://192.168.2.20:3443"
+                dir="ltr"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
+              />
+            </div>
+            <Button
+              key={`cant-find-${shake}`}
+              label={t("pairing.cantFindSearch")}
+              labelKey="pairing.cantFindSearch"
+              tone="accent"
+              onClick={() => onProbe(value)}
+              disabled={busy || value.trim() === ""}
+              busy={busy}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PhraseCard({
   group,
   onGroup,
@@ -363,6 +417,19 @@ export function PhraseCard({
         onGroup(res);
       } else {
         refuse(res.error);
+      }
+    });
+
+  /** probe tries one address a person typed under "Can't find it?" for a
+   *  member, the same way the LAN sweep tries an address on its own. */
+  const probe = (url: string) =>
+    run(async () => {
+      const res = await probeAddress(url);
+      if (res.ok) {
+        onGroup(res);
+        push(t("pairing.cantFindFound"), "success");
+      } else {
+        refuse(res.error ?? t("pairing.cantFindError"));
       }
     });
 
@@ -605,6 +672,7 @@ export function PhraseCard({
         {lockedNote}
         {relayHint}
         {aloneHint(false)}
+        {noRelay && <CantFindIt onProbe={probe} busy={busy} t={t} shake={shake} />}
         {foot(false)}
       </>
     );

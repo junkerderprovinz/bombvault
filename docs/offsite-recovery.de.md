@@ -72,11 +72,11 @@ Empfänger, Holen, die Flotte und Mesh-Off-site sprechen alle mit einem anderen 
 
 Wer die Wörter kennt, kommt in die Gruppe. Behandle sie also wie ein Passwort.
 
-**Wie sich die Mitglieder erreichen.** Im selben Netzwerk finden sie sich per Multicast und sprechen direkt miteinander. Instanzen in verschiedenen Netzen laufen über ein Relay, das du auf demselben Reiter wählst:
+**Wie sich die Mitglieder erreichen.** Jede Instanz übernimmt ihre eigene Adresse im Netzwerk aus deinem Browser, sobald du dich anmeldest, zu sehen in der Relay-Karte als **Diese Instanz in deinem Netzwerk**; korrigier sie dort, wenn ein Reverse Proxy oder ein ungewöhnlicher Port davorliegt. Im selben Netzwerk geben die Mitglieder diese Adresse per Multicast bekannt und sprechen direkt miteinander, und wo Multicast ein Container-Netz wie Dockers Standard-Bridge-Netz nicht durchquert, durchsucht eine Instanz stattdessen ihr eigenes Subnetz nach den anderen, mit einem signierten Aufruf, den nur ein Gruppenmitglied beantworten kann, sodass die Kopplung auch ohne Relay in Sekunden steht. Findet sich nichts, nimmt **Findest du sie nicht?** unter der Kopplungskarte eine Adresse von Hand entgegen, für ein anderes Subnetz oder einen unüblichen Port. Instanzen in verschiedenen Netzen laufen über ein Relay, das du auf demselben Reiter wählst:
 
 - **Projekt-Relay** (Vorgabe): `relay.halleluja.design`, dasselbe Relay, das auch KnightLoader nutzt. Einzurichten gibt es nichts.
 - **Eigenes Relay**: der Container **BombVault Relay** aus den Unraid Community Apps oder eine deiner Instanzen, die schon von außen erreichbar ist, mit eingeschaltetem **Als Relay dienen**. Diese Instanz antwortet dann unter `/relay/connect` an ihrer eigenen Adresse, hinter dem Reverse Proxy und dem Zertifikat, die sie schon hat, und lässt nur deine Gruppe hinein. Trag die Adresse des Relays auf jeder Instanz ein, die es nutzen soll.
-- **Kein Relay**: Die Mitglieder finden sich nur im selben Netzwerk.
+- **Kein Relay**: Die Mitglieder finden sich automatisch im selben Netzwerk, und sonst nirgends.
 
 **Was das Relay sieht.** Jeder Aufruf zwischen Mitgliedern ist mit AES-256-GCM unter einem Schlüssel versiegelt, der aus den zwölf Wörtern entsteht und deine Instanzen nie verlässt. Das Relay erfährt einen Hash, über den es die Verbindungen zusammenführt, dazu für welche Instanz eine Nachricht ist, wie groß sie ist und wann sie durchläuft. Ein direkter Aufruf im lokalen Netz ist genauso versiegelt und zusätzlich signiert, damit hängt nichts am selbstsignierten Zertifikat einer Instanz.
 
