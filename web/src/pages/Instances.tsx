@@ -1,10 +1,10 @@
 // Instances puts everything about other BombVault instances behind one entry,
-// a tab each. Pairing comes first, because the other three build on its
-// group: a receiver watches a repository a member sends here, a fleet peer is
-// a member asked for its scorecard, and a pull source is a member's
-// repository this box fetches from. Pairing shows whenever one of those is
-// on; each of the three is gated on its own setting.
+// a tab each, all built on the pairing group from Settings: the instances of
+// the group with their scorecards, a receiver watching a repository a member
+// sends here, and a pull source fetching a member's repository to this box.
+// Each tab is gated on its own setting.
 import { useEffect, useState, type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { getSettings } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -15,14 +15,11 @@ import { IconReceiver, IconFleet, IconDownload } from "../components/navGlyphs";
 import { Receiver } from "./Receiver";
 import { Fleet } from "./Fleet";
 import { Pull } from "./Pull";
-import { Pairing } from "./Pairing";
-import { IconLink } from "../components/glyphs";
 
-export const INSTANCE_TABS = ["pairing", "receiver", "fleet", "pull"] as const;
+export const INSTANCE_TABS = ["fleet", "receiver", "pull"] as const;
 export type InstanceTab = (typeof INSTANCE_TABS)[number];
 
 const TAB_ICON: Record<InstanceTab, React.ReactNode> = {
-  pairing: <IconLink />,
   receiver: <IconReceiver />,
   fleet: <IconFleet />,
   // Receiver's glyph twice would be ambiguous in glyph mode, and pulling moves
@@ -40,9 +37,9 @@ function isTab(v: string): v is InstanceTab {
 function tabFromHash(): InstanceTab {
   try {
     const h = window.location.hash.replace(/^#/, "");
-    return isTab(h) ? h : "pairing";
+    return isTab(h) ? h : "fleet";
   } catch {
-    return "pairing";
+    return "fleet";
   }
 }
 
@@ -51,6 +48,12 @@ export function Instances() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [tab, setTab] = useState<InstanceTab>(tabFromHash);
   const [tabDir, setTabDir] = useState<1 | -1>(1);
+  const navigate = useNavigate();
+
+  // Pairing moved to Settings; a link or bookmark to its old tab follows it.
+  useEffect(() => {
+    if (window.location.hash === "#pairing") navigate("/settings#pairing", { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
     getSettings()
@@ -75,14 +78,12 @@ export function Instances() {
   // i18n.orphans.test.ts count every page title as used; its scanner reads the
   // source text, comments included.
   const tabLabel: Record<InstanceTab, string> = {
-    pairing: t("pairing.title"),
     receiver: t("receiver.title"),
-    fleet: t("fleet.title"),
+    fleet: t("instances.title"),
     pull: t("pull.title"),
   };
 
   const enabled: Record<InstanceTab, boolean> = {
-    pairing: (settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled) ?? false,
     receiver: settings?.receiverEnabled ?? false,
     fleet: settings?.fleetEnabled ?? false,
     pull: settings?.pullEnabled ?? false,
@@ -124,7 +125,7 @@ export function Instances() {
             if (isTab(id)) choose(id);
           }}
           size="lg"
-          // Separate tabs, as in Settings, on one row even when all four show.
+          // Separate tabs, as in Settings, on one row even when all three show.
           variant="chip"
           fit
         />
@@ -134,7 +135,6 @@ export function Instances() {
           sending it the way the click went, as in Settings. */}
       {active && (
         <div key={active} className="glim-tab-slide flex flex-col" style={{ "--tab-dir": tabDir } as CSSProperties}>
-          {active === "pairing" && <Pairing embedded />}
           {active === "receiver" && <Receiver embedded />}
           {active === "fleet" && <Fleet embedded />}
           {active === "pull" && <Pull embedded />}

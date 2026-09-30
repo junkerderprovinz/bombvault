@@ -5,16 +5,16 @@
 // relay sees next to what it never does, and the encryption underneath both.
 // Every control saves on its own, as the rest of the settings do.
 import { useEffect, useId, useRef, useState } from "react";
-import { Card, ToggleRow } from "../settings/shared";
-import { Badge } from "../../components/Badge";
-import { Button } from "../../components/Button";
-import { IconDisclosure } from "../../components/IconDisclosure";
-import { InfoBubble } from "../../components/InfoBubble";
-import { Selector } from "../../components/Selector";
-import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../lib/api";
-import type { TranslationKey, useT } from "../../lib/i18n";
-import { useToast } from "../../lib/toast";
-import { tLtr } from "../../lib/ltrFragments";
+import { Card, ToggleRow } from "../shared";
+import { Badge } from "../../../components/Badge";
+import { Button } from "../../../components/Button";
+import { IconDisclosure } from "../../../components/IconDisclosure";
+import { InfoBubble } from "../../../components/InfoBubble";
+import { Selector } from "../../../components/Selector";
+import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../../lib/api";
+import type { TranslationKey, useT } from "../../../lib/i18n";
+import { useToast } from "../../../lib/toast";
+import { tLtr } from "../../../lib/ltrFragments";
 import { FactGlyph, LegendKey, LegendMessage, RouteDiagram, RouteGlyph } from "./pairingArt";
 import { emphasize } from "./PairingSteps";
 
@@ -248,15 +248,17 @@ export function RelayCard({
 
   const copy = COPY[mode];
   const relay = group.relay;
-  // The relay is only dialled inside a group, so outside one a missing
-  // connection is the expected state rather than a fault.
+  // The relay key comes from the twelve words, so the relay is only dialled
+  // inside a group; before that there is nothing to be connected.
   const state =
     mode === "off" ? (
       <Badge tone="neutral" size="large">{t("relay.off")}</Badge>
+    ) : !group.active ? (
+      <Badge tone="neutral" size="large">{t("relay.noGroup")}</Badge>
     ) : relay.connected ? (
       <Badge tone="ok" size="large">{t("instances.connected")}</Badge>
     ) : (
-      <Badge tone={group.active ? "fail" : "neutral"} size="large">{t("instances.notConnected")}</Badge>
+      <Badge tone="fail" size="large">{t("instances.notConnected")}</Badge>
     );
 
   return (
@@ -265,6 +267,7 @@ export function RelayCard({
         <p className="min-w-0 flex-[1_1_16rem] text-[15px] text-carbon-text">{t("relay.lead")}</p>
         <span data-testid="relay-state">{state}</span>
       </div>
+      {mode !== "off" && !group.active && <p className="text-sm text-carbon-textSub">{t("relay.noGroupLine")}</p>}
 
       <SelfAddressField group={group} onGroup={onGroup} t={t} />
 

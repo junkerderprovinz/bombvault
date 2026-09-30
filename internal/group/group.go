@@ -83,6 +83,9 @@ type Member struct {
 	Direct bool `json:"direct"`
 	// Relay is true when the member is connected to the same relay.
 	Relay bool `json:"relay"`
+	// Address is where the member takes direct calls, as it announced it on
+	// this network or passed it over the relay; empty when none is known.
+	Address string `json:"address"`
 }
 
 // ErrNotMember is returned for a call to an instance that is not reachable
@@ -194,6 +197,9 @@ type Manager struct {
 
 	sweepMu   sync.Mutex
 	lastSweep time.Time
+
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 // NewManager returns a Manager that answers members' calls with serve. It is
@@ -206,6 +212,7 @@ func NewManager(serve relay.Handler) *Manager {
 		limiter: relay.NewLimiter(),
 		slots:   make(chan struct{}, maxDirectCalls),
 		addrs:   map[string]*remoteAddr{},
+		stop:    make(chan struct{}),
 		hc: &http.Client{
 			Timeout: relay.CallTimeout,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -222,11 +229,16 @@ func NewManager(serve relay.Handler) *Manager {
 	}
 }
 
-// Start begins listening for members on the local network.
-func (m *Manager) Start() { m.disc.Start() }
+// Start begins listening for members on the local network and keeps the
+// members found by address in reach.
+func (m *Manager) Start() {
+	m.disc.Start()
+	go m.keepAlive()
+}
 
-// Close stops the relay connection and the discovery service.
+// Close stops the relay connection, the discovery service and the refresh.
 func (m *Manager) Close() {
+	m.stopOnce.Do(func() { close(m.stop) })
 	m.mu.Lock()
 	c := m.client
 	m.client = nil
@@ -376,7 +388,7 @@ func (m *Manager) Members() []Member {
 	}
 	byID := map[string]*Member{}
 	for _, p := range m.disc.Peers() {
-		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: true}
+		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: true, Address: p.URL}
 	}
 	if c != nil {
 		for _, s := range c.Siblings() {
@@ -394,10 +406,13 @@ func (m *Manager) Members() []Member {
 		if _, ok := byID[id]; ok {
 			continue
 		}
-		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true}
+		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true, Address: a.url}
 	}
 	out := make([]Member, 0, len(byID))
-	for _, mem := range byID {
+	for id, mem := range byID {
+		if mem.Address == "" {
+			mem.Address, _ = m.knownAddress(id)
+		}
 		out = append(out, *mem)
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -620,6 +635,54 @@ const (
 	sweepBudget      = 45 * time.Second
 	sweepMinInterval = 3 * time.Minute
 )
+
+// refreshEvery is how often the Manager asks its known members again, well
+// inside addrTTL. Without it a member reached only by address, with no relay
+// and no multicast between the two, drops out of the group after addrTTL and
+// comes back only once somebody opens a page that triggers a sweep.
+const refreshEvery = addrTTL / 2
+
+func (m *Manager) keepAlive() {
+	t := time.NewTicker(refreshEvery)
+	defer t.Stop()
+	for {
+		select {
+		case <-m.stop:
+			return
+		case <-t.C:
+			m.refresh(context.Background())
+		}
+	}
+}
+
+// refresh probes every member address on record, which confirms the ones that
+// still answer, and then starts a sweep if one is due.
+func (m *Manager) refresh(ctx context.Context) {
+	m.mu.Lock()
+	active := m.keys != nil
+	m.mu.Unlock()
+	if !active {
+		return
+	}
+	for _, url := range m.knownURLs() {
+		cctx, cancel := context.WithTimeout(ctx, sweepTimeout)
+		_, _ = m.Probe(cctx, url)
+		cancel()
+	}
+	m.MaybeSweep()
+}
+
+func (m *Manager) knownURLs() []string {
+	m.addrMu.Lock()
+	defer m.addrMu.Unlock()
+	out := make([]string, 0, len(m.addrs))
+	for _, a := range m.addrs {
+		if a.url != "" {
+			out = append(out, a.url)
+		}
+	}
+	return out
+}
 
 // NeedsSweep reports whether the LAN sweep should run: this instance is in a
 // group, and either nobody has been found by any route yet, or the relay

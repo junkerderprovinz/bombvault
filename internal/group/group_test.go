@@ -80,6 +80,22 @@ func TestMembersOnOneNetworkCallEachOtherDirectly(t *testing.T) {
 	}
 }
 
+func TestMembersCarryTheAddressTheyAnswerOn(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	a.disc.Observe(pb)
+	a.ConfirmAddress("id-c", "https://192.168.1.10:3443", "Garage", "9.9.9")
+
+	got := map[string]string{}
+	for _, m := range a.Members() {
+		got[m.ID] = m.Address
+	}
+	want := map[string]string{"id-b": pb.URL, "id-c": "https://192.168.1.10:3443"}
+	if len(got) != len(want) || got["id-b"] != want["id-b"] || got["id-c"] != want["id-c"] {
+		t.Fatalf("member addresses = %v, want %v", got, want)
+	}
+}
+
 func TestAnnounceFromAnotherGroupIsNotAMember(t *testing.T) {
 	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
 	_, stranger := member(t, "id-x", "Stranger", []byte("fedcba9876543210"), echo)
@@ -416,6 +432,44 @@ func TestProbeConfirmsAGroupMemberAtAnUnknownAddress(t *testing.T) {
 	got := a.Members()
 	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct || got[0].Name != "Attic" {
 		t.Fatalf("members after a successful probe = %+v, want b listed and direct", got)
+	}
+}
+
+// A member found only by its address, with no relay and no multicast, would
+// drop out once its confirmation ages past addrTTL; the refresh asks it again
+// before that, with nobody opening a page.
+func TestRefreshKeepsAMemberFoundByAddressInTheGroup(t *testing.T) {
+	a := NewManager(echo)
+	t.Cleanup(a.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
+
+	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+
+	if _, err := a.Probe(context.Background(), srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	age := func() {
+		a.addrMu.Lock()
+		a.addrs["id-b"].confirmed = time.Now().Add(-addrTTL - time.Second)
+		a.addrMu.Unlock()
+	}
+
+	age()
+	if got := a.Members(); len(got) != 0 {
+		t.Fatalf("members with an aged address = %+v, want nobody before a refresh", got)
+	}
+	a.refresh(context.Background())
+	if got := a.Members(); len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct {
+		t.Fatalf("members after a refresh = %+v, want b listed and direct again", got)
+	}
+	if refreshEvery >= addrTTL {
+		t.Fatalf("refreshEvery %v must come round before addrTTL %v runs out", refreshEvery, addrTTL)
 	}
 }
 

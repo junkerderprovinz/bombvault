@@ -1,7 +1,8 @@
 name: Registry Cleanup
 
-# Deletes a single image tag from GHCR and Docker Hub, run by hand. A GHCR
-# version that also carries "latest" is refused.
+# Deletes a single image tag from GHCR and Docker Hub, run by hand. GHCR
+# deletes whole versions, so a version that still carries another tag besides
+# its sha tag is refused; point that tag elsewhere first with "move".
 
 on:
   workflow_dispatch:
@@ -9,6 +10,10 @@ on:
       tag:
         description: "Image tag to delete (e.g. 1.0.1)"
         required: true
+      move:
+        description: "Tags to point at another image first, as tag=source pairs separated by spaces (e.g. 1.0=1.0.0)"
+        required: false
+        default: ""
 
 env:
   IMAGE_NAME: bombvault
@@ -19,6 +24,44 @@ jobs:
     permissions:
       packages: write
     steps:
+      - name: Log in to GHCR
+        if: ${{ inputs.move != '' }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: ${{ inputs.move != '' && vars.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Move tags
+        if: ${{ inputs.move != '' }}
+        env:
+          MOVE: ${{ inputs.move }}
+          GHCR_REGISTRY: ghcr.io/${{ github.repository_owner }}
+          DH_USER: ${{ vars.DOCKERHUB_USERNAME }}
+        run: |
+          set -euo pipefail
+          for pair in $MOVE; do
+            tag="${pair%%=*}"
+            src="${pair#*=}"
+            if [ -z "$tag" ] || [ "$src" = "$pair" ] || [ -z "$src" ]; then
+              echo "::error::'$pair' is not a tag=source pair"
+              exit 1
+            fi
+            docker buildx imagetools create -t "${GHCR_REGISTRY}/${IMAGE_NAME}:${tag}" "${GHCR_REGISTRY}/${IMAGE_NAME}:${src}"
+            echo "GHCR: ${tag} -> ${src}"
+            if [ -n "$DH_USER" ]; then
+              docker buildx imagetools create -t "docker.io/${DH_USER}/${IMAGE_NAME}:${tag}" "docker.io/${DH_USER}/${IMAGE_NAME}:${src}"
+              echo "Docker Hub: ${tag} -> ${src}"
+            fi
+          done
+
       - name: Delete tag from GHCR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,12 +82,13 @@ jobs:
           tags=$(echo "$versions" | jq -r --arg t "$TAG" \
             '.[] | select(.metadata.container.tags | index($t)) | .metadata.container.tags | join(", ")')
           echo "GHCR: version $id carries tags: $tags"
-          case ", $tags," in
-            *", latest,"*)
-              echo "::error::Refusing to delete: this version also carries 'latest'"
-              exit 1
-              ;;
-          esac
+          others=$(echo "$versions" | jq -r --arg t "$TAG" \
+            '.[] | select(.metadata.container.tags | index($t)) | .metadata.container.tags
+              | map(select(. != $t and (startswith("sha-") | not))) | join(", ")')
+          if [ -n "$others" ]; then
+            echo "::error::Refusing to delete: this version also carries $others. Move them first."
+            exit 1
+          fi
           gh api -X DELETE "${api}/versions/${id}"
           echo "GHCR: deleted version $id (tag $TAG)"
 

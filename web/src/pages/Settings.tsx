@@ -85,6 +85,7 @@ import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./setting
 import { IntegrityCard } from "./settings/IntegrityCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
+import { PairingSection } from "./settings/pairing/PairingSection";
 import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
 import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
 import { AboutCard } from "./settings/AboutCard";
@@ -989,6 +990,7 @@ const TAB_ORDER: TabKey[] = [
  *  and the card scrolls into view, since it sits below the fold. */
 const CARD_TAB: Record<string, TabKey> = {
   anomalies: "integrity",
+  pairing: "system",
 };
 
 // The Settings tab glyphs. General and Look wear the glyphs GlimStone gives
@@ -2434,6 +2436,7 @@ export function SettingsPage() {
   // one function-call away inside a child component.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
+  const pairingUsed = settings.receiverEnabled || settings.fleetEnabled || settings.pullEnabled;
 
   return (
     // The root's gap is the card rhythm between the tab strip and the first
@@ -4105,13 +4108,6 @@ export function SettingsPage() {
           }}
           hueIndex={nextHue()}
         />
-        <FleetSettingsCard
-          t={t}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={nextHue()}
-        />
         {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
         </>
       )}
@@ -4529,6 +4525,16 @@ export function SettingsPage() {
       {/* available, so the card's first job is explaining when it is not.     */}
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
+
+      {/* Pairing sits with the password it warns about. It only matters to
+          the domains that work over the group, the same ones that bring up
+          the Instances page, whose Pairing button lands here by #pairing. */}
+      {tab === "system" && pairingUsed && (
+        <div id="pairing" className="flex scroll-mt-6 flex-col gap-10">
+          <PairingSection t={t} nextHue={nextHue} />
+          <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+        </div>
+      )}
 
       {/* The Look tab: language first, at a field's height, then the other
           axes the person owns. None of them waits for a Save. */}
