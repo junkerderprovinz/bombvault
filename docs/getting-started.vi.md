@@ -54,7 +54,7 @@ Tạo một khóa trên bất kỳ máy nào:
 openssl rand -hex 32
 ```
 
-Dán kết quả vào trường `APP_KEY` của template.
+Dán kết quả vào trường `APP_KEY` của template (Unraid), hoặc biến môi trường `APP_KEY` trong `docker-compose.yml` (máy chủ Docker thông thường).
 
 !!! danger "Đừng đánh mất APP_KEY của bạn"
     Đánh mất `APP_KEY` khiến các bản sao lưu đã mã hóa của bạn không thể khôi phục được. Hãy cất giữ nó ở nơi an toàn và tách biệt khỏi máy chủ. Sau khi BombVault chạy, hãy dùng **bộ khôi phục khóa mã hóa** một cú nhấp của nó (xem [Off-site & khôi phục](offsite-recovery.md)) để lưu trọn gói khôi phục đầy đủ.

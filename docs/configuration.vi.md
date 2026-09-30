@@ -1,13 +1,13 @@
 # Cấu hình
 
-Trang này bao quát các biến môi trường của container, các điểm gắn kết mà template cung cấp, sao lưu VM qua SSH, và thiết lập off-site. Các **đường dẫn kho** sao lưu được cấu hình bên trong ứng dụng (Settings, Backup paths), không phải qua biến môi trường.
+Trang này bao quát các biến môi trường của container, các điểm gắn kết mà template cung cấp, sao lưu VM qua SSH, và thiết lập off-site. Các **đường dẫn kho** sao lưu được cấu hình bên trong ứng dụng (Settings, Storage, Backup paths), không phải qua biến môi trường.
 
 ## Biến môi trường
 
 | Biến | Bắt buộc | Mô tả |
 |---|---|---|
 | `APP_KEY` | **Có** | Bí mật hex 32 byte (64 ký tự hex) dùng để dẫn xuất mật khẩu kho restic. Tạo bằng `openssl rand -hex 32`. Giữ nó an toàn: đánh mất nó khiến các bản sao lưu đã mã hóa không thể khôi phục được. |
-| `LIBVIRT_HOST` | Cho VM | Máy chủ Unraid được kết nối qua SSH để sao lưu VM (mặc định `host.docker.internal`; template điền sẵn một chỗ giữ chỗ IP-LAN). Dùng IP LAN Unraid của bạn, bắt buộc trên một mạng `br0.x` tùy chỉnh. Cũng dùng cho sao lưu tập dữ liệu ZFS (trường mẫu **Host SSH: Address**); giá trị giữ chỗ `192.168.x.x` được coi là chưa đặt. |
+| `LIBVIRT_HOST` | Cho VM và tập dữ liệu ZFS | Máy chủ Unraid được kết nối qua SSH để sao lưu VM (mặc định `host.docker.internal`; template điền sẵn một chỗ giữ chỗ IP-LAN). Dùng IP LAN Unraid của bạn, bắt buộc trên một mạng `br0.x` tùy chỉnh. Cũng dùng cho sao lưu tập dữ liệu ZFS (trường mẫu **Host SSH: Address**); giá trị giữ chỗ `192.168.x.x` được coi là chưa đặt. |
 | `LIBVIRT_SSH_PORT` | Không | Cổng SSH của máy chủ để sao lưu VM (mặc định `22`). Trường mẫu **Host SSH: Port**, cũng dùng cho tập dữ liệu ZFS. |
 | `LIBVIRT_SSH_USER` | Không | Người dùng SSH trên máy chủ để sao lưu VM (mặc định `root`). Trường mẫu **Host SSH: User**, cũng dùng cho tập dữ liệu ZFS. |
 | `LIBVIRT_URI` | Không | URI kết nối libvirt đầy đủ, được dùng **nguyên văn** thay vì xây dựng từ ba biến `LIBVIRT_*` phía trên (khi đó các biến này bị bỏ qua đối với chuỗi kết nối). Mặc định không đặt. Cần thiết trên TrueNAS Scale, nơi libvirtd của nó lắng nghe trên một socket không chuẩn mà dạng chuỗi dựng sẵn không thể diễn đạt được: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Xem phần TrueNAS Scale trong [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Nếu là URI `qemu+ssh://`, mỗi biến trong `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` và `LIBVIRT_SSH_PORT` chưa đặt sẽ lấy từ đó, kể cả cho các lệnh SSH riêng của BombVault (chuyển NVRAM, tập dữ liệu ZFS). |
@@ -21,6 +21,7 @@ Trang này bao quát các biến môi trường của container, các điểm g�
 | `PLATFORM` | Không | Buộc BombVault coi mình đang chạy trên nền tảng nào, thay vì tự phát hiện: `unraid`, `generic`, hoặc `truenas` (mặc định không đặt: tự phát hiện Unraid bằng cách dò tìm dấu hiệu `dockerMan` của nó dưới điểm gắn kết flash, nếu không thì dùng `generic`; một giá trị không nhận dạng được cũng quay về `generic`, được ghi log). Đặt nó rõ ràng trên một máy chủ Docker thông thường hoặc TrueNAS Scale, thay vì dựa vào việc dò tìm tự động chỉ dành cho Unraid; tệp compose thông thường đã làm đúng như vậy. Thay đổi quy ước dự phòng appdata, các đích khôi phục mặc định khi khôi phục sang một phiên bản khác, và liệu các bước thông báo/plugin đồng hành chỉ dành cho Unraid có được thử hay không (xem `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Không | Tên của chính container BombVault, để nó không bao giờ sao lưu (và do đó dừng) chính mình. |
 | `BACKUP_MAX_HOURS` | Không | Số giờ đồng hồ tối đa mà một lần sao lưu đơn có thể giữ khóa miền của nó trước khi bị hủy cưỡng bức (một biện pháp bảo vệ để một lần chạy bị kẹt không thể chặn miền mãi mãi). Để trống (mặc định) dùng `48`. Tăng nó lên cho các bản sao lưu đám mây rất lớn hoặc chậm (một lần chạy bị hủy ở mức giới hạn thất bại với `context deadline exceeded`). Đặt `0` để tắt hoàn toàn giới hạn. |
+| `BACKUP_STALL_HOURS` | Không | Số giờ một bản sao lưu có thể **hoàn toàn không tiến triển** trước khi bị hủy. Để trống (mặc định) dùng `2`; đặt `0` để không bao giờ hủy vì bị đình trệ. Đây là biện pháp bảo vệ tinh hơn trong hai cái và thường là cái kích hoạt: nó theo dõi xem còn điều gì đang diễn ra hay không thay vì lần chạy đã mất bao lâu, nên một bản sao lưu nhiều terabyte chậm nhưng khỏe mạnh được để yên, còn một bản bị kẹt trên một share không phản hồi sẽ bị dừng sau vài giờ thay vì vài ngày. Một cảnh báo được ghi vào nhật ký sau 30 phút im lặng, trước khi bất cứ thứ gì bị hủy. Việc quét được tính là tiến triển: restic không ghi byte nào khi đi qua một cây thư mục lớn, và giai đoạn đó được theo dõi qua tổng số tập tin và byte của nó thay vì qua số byte đã ghi. Hai biến độc lập với nhau, và `BACKUP_MAX_HOURS` vẫn giới hạn các giai đoạn sau chính bản sao lưu (lưu giữ, thống kê, bản sao off-site), nơi không có bộ đếm nào để theo dõi. |
 | `DB_DUMP_MAX_HOURS` | Không | Số giờ một lần kết xuất cơ sở dữ liệu tự động được phép chạy trước khi bị dừng. Để trống (mặc định) là `6`; giá trị cho phép từ `1` đến `48`, và giới hạn này được giữ thấp hơn `BACKUP_MAX_HOURS` một giờ (bằng một nửa giá trị đó khi nó dưới hai giờ), để một bản kết xuất dài bị chính giới hạn của nó cắt và được báo cáo như vậy, thay vì kéo cả bản sao lưu theo. Bản kết xuất không còn tiến triển sẽ bị dừng sớm hơn, sau `BACKUP_STALL_HOURS`. Một bản kết xuất bị dừng chỉ thất bại cho riêng nó, còn bản sao lưu của container vẫn tiếp tục. Trên Unraid, thêm biến này vào container BombVault bằng **Add another Path, Port, Variable**. |
 | `TZ` | Không | Múi giờ cho bộ lập lịch (ví dụ `Europe/Berlin`). **Nếu không đặt, mọi lịch trình sẽ chạy theo UTC**: lịch đặt lúc 02:30 sẽ bắt đầu lúc 02:30 UTC chứ không theo giờ địa phương. Trên Unraid bạn không bao giờ tự đặt giá trị này: hệ thống truyền múi giờ của chính nó vào mọi container. |
 
@@ -30,7 +31,7 @@ Gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) như
 
 Sao lưu tập dữ liệu ZFS cũng cần chế độ này: máy chủ chỉ gắn ảnh chụp của một tập dữ liệu sau khi container đã khởi động. Xem [Tập dữ liệu ZFS](zfs-datasets.md).
 
-Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Settings, Backup paths**.
+Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Settings, Storage, Backup paths**. Mỗi trường đường dẫn còn có một công tắc **Cục bộ / Từ xa** ngay trong dòng: một đường dẫn có thể là một remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) thay vì một thư mục cục bộ, sao lưu thẳng tới đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kiểm tra tích hợp máy chủ"
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu.
@@ -62,7 +63,7 @@ Với mỗi container, BombVault tự chọn những bind mount và volume có t
 
 ## Máy chủ MCP {#mcp-server}
 
-Máy chủ MCP không cần biến môi trường nào. Bạn bật nó bằng cách tạo một khóa tại **Cài đặt, Hệ thống, Máy chủ MCP**, và nó trả lời ở `/mcp` trên cùng cổng với giao diện web (ví dụ `https://192.168.1.10:3443/mcp`). Khi không có khóa đang hoạt động, đường dẫn này trả lời `404`. Máy khách, chứng chỉ và các giới hạn được mô tả tại [Máy chủ MCP](mcp.md).
+Máy chủ MCP không cần biến môi trường nào. Bạn bật nó bằng cách tạo một khóa tại **Cài đặt, Tích hợp, Máy chủ MCP**, và nó trả lời ở `/mcp` trên cùng cổng với giao diện web (ví dụ `https://192.168.1.10:3443/mcp`). Khi không có khóa đang hoạt động, đường dẫn này trả lời `404`. Máy khách, chứng chỉ và các giới hạn được mô tả tại [Máy chủ MCP](mcp.md).
 
 ## Sao lưu VM qua SSH
 
@@ -70,7 +71,7 @@ BombVault sao lưu các KVM/libvirt VM **mà không gắn kết bất kỳ đư�
 
 Thiết lập nhanh:
 
-1. **Settings, System, Host SSH:** sao chép khóa công khai được hiển thị.
+1. **Settings, Integrations, Host SSH:** sao chép khóa công khai được hiển thị.
 2. Thêm nó vào `/root/.ssh/authorized_keys` của Unraid (cũng được lưu vào flash để nó tồn tại qua các lần khởi động lại).
 3. Nhấp **Test connection**.
 
@@ -81,16 +82,17 @@ Template thêm `--add-host=host.docker.internal:host-gateway` để container c�
 
 ## Thiết lập off-site
 
-Thiết lập một bản sao off-site trên tab **Settings, Off-site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
+Thiết lập một bản sao off-site trên trang **Settings, Off-site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
 
 - **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một Backup Path tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
-- **Thông tin đăng nhập đám mây** được lưu mã hóa dưới Settings, Off-site, Cloud credentials.
-- **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Settings, System, Host SSH** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
-- **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa. Kho cục bộ vẫn là chính. Mỗi miền có lịch trình off-site riêng, cùng với một nút **Replicate now**.
+- **Thông tin đăng nhập đám mây dùng chung** được lưu mã hóa dưới Settings, Cloud access, Shared cloud credentials.
+- **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Settings, Integrations, Host SSH** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
+- **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa, bổ sung cho một kho chính (thường là cục bộ). Mỗi miền có lịch trình off-site riêng, cùng với một nút **Replicate now**.
 - **Nhiều đích off-site cho mỗi miền:** mỗi miền có thể nhân bản tới nhiều đích off-site cùng lúc. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng; tất cả chúng nhân bản theo lịch trình off-site của miền đó. Một thiết lập off-site đơn hiện có được chuyển sang làm đích đầu tiên.
-- **Lưu giữ theo từng nguồn:** chính sách cục bộ nằm trên Settings, Paths & Storage; chính sách off-site trên Settings, Off-site (để tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site).
+- **Lưu giữ theo từng nguồn:** cả chính sách cục bộ và off-site đều nằm trên Settings, Retention (để chính sách off-site bằng 0 toàn bộ để không bao giờ tự động dọn bớt các snapshot off-site).
 - **Giới hạn băng thông:** giới hạn tốc độ tải lên/tải xuống của restic dưới Settings, Off-site.
 - **Lớp lưu trữ nguội và lưu trữ dài hạn (S3):** với một kho off-site S3 gốc, chọn một tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Các remote rclone đặt lớp của chúng trong cấu hình rclone.
+- **Kho chính từ xa thay vì cục bộ:** bản thân Backup Path của một miền có thể là một trong các backend ở trên, không có bản sao cục bộ và không có bước nhân bản; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories) về công tắc Cục bộ/Từ xa ngay trong dòng và các cài đặt an toàn về băng thông, append-only và ngân sách tăng trưởng của nó.
 
 ## Bất thường {#anomalies}
 
@@ -107,7 +109,7 @@ Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riên
 
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 
-Thẻ **Xuất và nhập cài đặt** trên trang Settings ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
+Thẻ **Xuất và nhập cài đặt** trên trang Settings, System ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
 
 !!! warning "Bản xuất có thể chứa thông tin đăng nhập"
     Bạn chọn có bao gồm thông tin đăng nhập off-site và thông báo trong tệp hay không. Khi có kèm thông tin đăng nhập, bản xuất nhạy cảm như bộ khôi phục của bạn, nên hãy cất giữ nó ở nơi an toàn. Không có chúng, tệp chỉ chứa các cài đặt không bí mật.

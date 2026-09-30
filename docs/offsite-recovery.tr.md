@@ -4,11 +4,11 @@ Yerel yedekler sizi kaybolmuş bir konteynerden ya da hatalı bir güncellemeden
 
 ## Site dışı çoğaltma
 
-Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. **Ayarlar, Site dışı** sekmesinde etki alanı başına bir depo ayarlayın. BombVault yeni anlık görüntüleri oraya en iyi çaba temelinde `restic copy` ile çoğaltır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. Yerel depo birincil kalır.
+Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. **Ayarlar, Site dışı** sayfasında etki alanı başına bir depo ayarlayın. BombVault yeni anlık görüntüleri oraya en iyi çaba temelinde `restic copy` ile çoğaltır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. Bu düzende yerel depo birincil kalır ve site dışı depo bir kopyadır, ama bir etki alanının birincil deposunun yerel olması hiç gerekmez; S3'e, rest-server'a vb. çoğaltmak yerine doğrudan oraya yedeklemek için aşağıdaki [Uzak birincil depolar](#remote-primary-repositories) bölümüne bakın.
 
 - **Etki alanı başına birden fazla site dışı hedef.** Her etki alanı (konteynerler, VM'ler, flash, config, dosya kümeleri ve ZFS veri kümeleri) yalnızca birine değil, aynı anda birkaç site dışı hedefe çoğaltabilir, böylece örneğin bir arkadaşınızın makinesinde bir rest-server ve paralel olarak bir S3 kovası tutabilirsiniz. Ayarlar, Site dışı'nda her biri kendi deposu, S3 depolama sınıfı, yalnızca ekleme bayrağı, saklama ve büyüme bütçesiyle ek hedefler ekleyin. Mevcut tek bir site dışı kurulum, ilk hedef olarak dokunulmadan taşınır ve bir etki alanının her hedefi o etki alanının site dışı zamanlamasında çoğaltılır.
 - **Etki alanı başına site dışı zamanlama** (Ayarlar, Zamanlamalar'da diğer her zamanlamanın yanında düzenlenir): her yerel yedeklemeden sonra çoğaltmak için boş bırakın ya da yerelde yedeklediğinizden daha seyrek site dışına göndermek için bir sıklık ayarlayın (örneğin `weekly Sun 03:00`). Bir **Şimdi çoğalt** düğmesi istek üzerine çalışmaları kapsar.
-- **Site dışı saklama** Ayarlar, Site dışı'nda yer alır, böylece site dışı kopyaları bir arşiv olarak daha uzun tutabilirsiniz. Site dışı anlık görüntüleri asla otomatik kırpmamak için ilkeyi tümü sıfır bırakın.
+- **Site dışı saklama** Ayarlar, Saklama'da yer alır, böylece site dışı kopyaları bir arşiv olarak daha uzun tutabilirsiniz. Site dışı anlık görüntüleri asla otomatik kırpmamak için ilkeyi tümü sıfır bırakın.
 - **Bant genişliği sınırları** (Ayarlar, Site dışı) restic yükleme/indirme hızını sınırlar, böylece çoğaltma WAN'ınızı doyurmaz.
 - Bir **çoğaltma göstergesi**, çalışırken hangi etki alanının çoğaltıldığını gösterir (kendi sayfasında ve Kontrol Paneli'nde). Bu bir etkin göstergedir, bir yüzde çubuğu değil, çünkü `restic copy` makine tarafından okunabilir bir ilerleme sunmaz.
 
@@ -17,7 +17,7 @@ Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. *
 
 ## Uzak birincil depolar {#remote-primary-repositories}
 
-Bir alanın yedekleme yolu (Ayarlar, Yollar ve depolama) yerel bir klasörle sınırlı değildir: doğrudan bir restic uzak deposuna yöneltin (`s3:...`, `rest:http://host:8000/depo`, `b2:...`, `sftp:kullanici@host:/depo`, `rclone:remote:bucket/yol`), BombVault ayrı bir yerel kopya ve çoğaltma adımı olmadan doğrudan oraya yedekler. Bu, yukarıdaki saha dışı çoğaltmadan gerçekten farklı bir biçimdir: orada yerel depo birincildir ve saha dışı depo onun elden geldiğince tutulan arşividir; burada uzak depo birincilin **kendisidir** ve o alan için ayrıca bir saha dışı çoğaltma (ya da ikinci bir uzak depo) kurmadığınız sürece tek kopyadır.
+Bir alanın yedekleme yolu (Ayarlar, Depolama) yerel bir klasörle sınırlı değildir: doğrudan bir restic uzak deposuna yöneltin (`s3:...`, `rest:http://host:8000/depo`, `b2:...`, `sftp:kullanici@host:/depo`, `rclone:remote:bucket/yol`), BombVault ayrı bir yerel kopya ve çoğaltma adımı olmadan doğrudan oraya yedekler. Bu, yukarıdaki saha dışı çoğaltmadan gerçekten farklı bir biçimdir: orada yerel depo birincildir ve saha dışı depo onun elden geldiğince tutulan arşividir; burada uzak depo birincilin **kendisidir** ve o alan için ayrıca bir saha dışı çoğaltma (ya da ikinci bir uzak depo) kurmadığınız sürece tek kopyadır.
 
 Altı yol alanının her birinin (Kapsayıcılar, Sanal makineler, Flash, Yapılandırma, Dosyalar, ZFS veri kümeleri) hemen yanında bir **Yerel / Uzak** anahtarı vardır:
 
@@ -31,7 +31,15 @@ Altı yol alanının her birinin (Kapsayıcılar, Sanal makineler, Flash, Yapıl
 Bunların hiçbiri zorunlu değildir: elle yazılmış, kayıtlı güvenlik ayarı olmayan bir uzak yol tam da eskisi gibi yedekler (sınırsız bant genişliği, budanabilir, bütçe uyarısı yok). Güvenlik penceresi, saha dışı bir kopyanın aldığı korumaların aynısını, salt bunun için ayrı bir saha dışı hedef kurmak zorunda kalmadan istediğiniz durum içindir.
 
 !!! note "Bulut ve REST kimlik bilgileri ortaktır"
-    Uzak bir birincil depo, Ayarlar, Saha dışı, Bulut kimlik bilgileri altında yapılandırılan S3/REST kimlik bilgilerinin aynısıyla kimlik doğrular. Birincil depolar için ayrı bir kimlik bilgisi deposu yoktur.
+    Uzak bir birincil depo, Ayarlar, Bulut erişimi, Paylaşılan bulut kimlik bilgileri altında yapılandırılan S3/REST kimlik bilgilerinin aynısıyla kimlik doğrular. Birincil depolar için ayrı bir kimlik bilgisi deposu yoktur.
+
+### Host'ta bağlama olmadan SMB ve WebDAV {#smb-webdav}
+
+Ayarlar, Bulut erişimi, rclone altında bir Windows ya da Samba paylaşımı ve bir WebDAV sunucusu (Nextcloud, ownCloud, SharePoint ya da herhangi bir başkası) için bir form vardır. Kısa bir ad, host ve paylaşım (SMB) ya da URL ve sunucu türü (WebDAV), kullanıcı ve parolayı doldurun; BombVault rclone bölümünü sizin için yazar. rclone parolayı saklanmadan önce kendisi gizler; zaten var olan bir adla bir hedef eklemek ikinci bir bölüm eklemek yerine o bölümü değiştirir.
+
+Form, tamamlanmış konumla yanıt verir, örneğin `rclone:nas:backups`. Bunu bir Yedekleme Yolu'na ya da bir site dışı hedefe girin ve isterseniz bir alt klasör ekleyin (`rclone:nas:backups/bombvault`). Paylaşım adın bir parçası değil, yolun ilk bölümüdür.
+
+Bu, paylaşımı Unraid'e bağlamaktan daha iyi bir yoldur: restic bir depoyu bağlanmış bir CIFS paylaşımında tutmamayı önerir ve burada hiçbir şey bağlanmaz. NFS formda yoktur, çünkü ne restic'in ne de rclone'un bir NFS arka ucu vardır; NFS için dışa aktarımı host'a bağlayın ve bir Yedekleme Yolu'nu ona yönlendirin.
 
 ## Değiştirilemez (yalnızca ekleme) site dışı
 
@@ -40,7 +48,7 @@ Fidye yazılımı ya da ele geçirilmiş bir host yedeklerinizi silemesin veya y
 **Rehberli site dışı kurulum** sihirbazı sizi arka uç seçiminden (rest-server / rclone / S3), yapıştırmaya hazır bir rest-server dağıtım parçacığı, bir bağlantı testi, değiştirilemez geçişi (bu, kurcalama testini hemen çalıştırır) ve bir saklama stratejisinden geçirir, böylece yalnızca ekleme site dışına yapılandırmaları elle düzenlemeden ulaşılabilir.
 
 !!! note "`/locks/` altında başarılı bir silme beklenen davranıştır"
-    Append-only, artık hiçbir şeyin silinemeyeceği anlamına gelmez. restic kendi kilitlerini alıp bırakmak zorundadır, bu yüzden `/locks/` bilerek yazılabilir ve silinebilir kalır. Anlık görüntüler ve arkasındaki veriler, yani fidye yazılımının hedefi tam olarak budur, kaldırılamaz. Uzak tarafı kendin denersen, `/locks/` altında başarılı olan bir silme doğru davranıştır ve korumada bir delik değildir.
+    Append-only, artık hiçbir şeyin silinemeyeceği anlamına gelmez. restic kendi kilitlerini alıp bırakmak zorundadır, bu yüzden `/locks/` bilerek yazılabilir ve silinebilir kalır. Anlık görüntüler ve arkasındaki veriler, yani fidye yazılımının hedefi tam olarak budur, kaldırılamaz. Uzak tarafı kendiniz denerseniz, `/locks/` altında başarılı olan bir silme doğru davranıştır ve korumada bir delik değildir.
 
 !!! warning "Değiştirilemez depolar bu makineden asla budanmaz"
     Değiştirilemez bir site dışı, eski anlık görüntüleri kasıtlı olarak asla budamaz. Depo boyutu kontrolden çıkmadan önce uyarılmanız için ona bir **büyüme bütçesi alarmı** ayarlayın.
@@ -68,7 +76,7 @@ Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı ba
 
 Alıcılar, çekme kaynakları, Örnekler sayfası ve Mesh site dışı, hepsi başka bir BombVault ile konuşur. Bunu tek bir eşleştirme grubunun üyeleri olarak yaparlar ve bir örnek gruba on iki kelimeyle katılır.
 
-İlk örnekte **Ayarlar → Sistem** sekmesini açın ve eşleştirme kartlarında **İfade oluştur** düğmesine basın. On iki kelime, **Kopyala** düğmesi olan bir pencerede görünür. Diğer her örnekte aynı yeri açın, **İfade gir** düğmesine basın ve kelimeleri yapıştırın ya da yazın, ya da o pencerede **Yapıştır** düğmesine basın. Listede olmayan bir kelime yazarken hemen konumuyla birlikte belirtilir, son kelime ise bir sağlama toplamı taşır, böylece yanlış yazılan ya da yer değiştiren bir kelime herhangi bir eşleştirme olmadan önce yakalanır. İfadeyi yalnızca bir örnekte oluşturun: her ikisi de ifade oluşturan iki örnek, iki ayrı grup oluşturur. Bir dakika boyunca kimse görünmezse, sekme iki çıkış yolu sunar: kelimeleri tekrar göstererek karşı tarafta girmek, ya da diğer örneğin kelimelerini girip onun grubuna tek adımda katılmak. Eşleştirme oturum açma parolası olmadan da çalışır, ama bir tane belirleyin: parola yoksa bu web arayüzünü açabilen herkes kelimeleri okuyabilir ve grup üzerinden içindeki her örneğin restic parolasını elde edebilir. Parola belirlenene kadar eşleştirme kartı bunu belirtir. Parola varsa, ifadeyi tekrar göstermek bu parolayı ister. **Gruptan ayrıl**, bir örneği gruptan tekrar çıkarır.
+İlk örnekte **Ayarlar → Eşleştirme** sekmesini açın ve eşleştirme kartlarında **İfade oluştur** düğmesine basın. On iki kelime, **Kopyala** düğmesi olan bir pencerede görünür. Diğer her örnekte aynı yeri açın, **İfade gir** düğmesine basın ve kelimeleri yapıştırın ya da yazın, ya da o pencerede **Yapıştır** düğmesine basın. Listede olmayan bir kelime yazarken hemen konumuyla birlikte belirtilir, son kelime ise bir sağlama toplamı taşır, böylece yanlış yazılan ya da yer değiştiren bir kelime herhangi bir eşleştirme olmadan önce yakalanır. İfadeyi yalnızca bir örnekte oluşturun: her ikisi de ifade oluşturan iki örnek, iki ayrı grup oluşturur. Bir dakika boyunca kimse görünmezse, sekme iki çıkış yolu sunar: kelimeleri tekrar göstererek karşı tarafta girmek, ya da diğer örneğin kelimelerini girip onun grubuna tek adımda katılmak. Eşleştirme oturum açma parolası olmadan da çalışır, ama bir tane belirleyin: parola yoksa bu web arayüzünü açabilen herkes kelimeleri okuyabilir ve grup üzerinden içindeki her örneğin restic parolasını elde edebilir. Parola belirlenene kadar eşleştirme kartı bunu belirtir. Parola varsa, ifadeyi tekrar göstermek bu parolayı ister. **Gruptan ayrıl**, bir örneği gruptan tekrar çıkarır.
 
 Kelimeleri bilen herkes gruba katılabilir, bu yüzden onlara bir parola gibi davranın.
 
@@ -110,7 +118,7 @@ Yukarıda parçalar anlatılıyor. Burada gerçek değerlerle tek bir eksiksiz k
 
 İki makine: **TOWER** kapsayıcıları çalıştırır ve yedekleri gönderir, **VAULT** onları alır ve değiştirilemezliği dayatır. Kendi adlarınızı, adreslerinizi ve paylaşım yollarınızı koyun.
 
-**1. VAULT üzerinde append-only sunucusunu kurun.** TOWER üzerindeki BombVault'ta *Ayarlar → Saha dışı → rehberli kurulum* bölümüne gidin, **rest-server** seçin ve tarifi oluşturun. **Unraid şablonu (XML)** sekmesini kopyalayın, VAULT üzerinde `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` olarak kaydedin, sonra *Docker → Add Container* deyip şablon listesinden **rest-server** seçin. Başlatmadan önce gösterilen `htpasswd` satırını VAULT üzerinde `/mnt/user/appdata/rest-server/.htpasswd` dosyasına yazın. Tek kullanımlık parola bir kez gösterilir ve hiç saklanmaz, şimdi kopyalayın. O satır aynı parolayı taşır, senin için bcrypt ile özetlenmiş olarak: düz metin TOWER üzerindeki REST kimlik bilgilerine, özetlenmiş satır VAULT üzerindeki `.htpasswd` dosyasına gider. Kendin bir şey özetlemek zorunda değilsin.
+**1. VAULT üzerinde append-only sunucusunu kurun.** TOWER üzerindeki BombVault'ta *Ayarlar → Site dışı → rehberli kurulum* bölümüne gidin, **rest-server** seçin ve tarifi oluşturun. **Unraid şablonu (XML)** sekmesini kopyalayın, VAULT üzerinde `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` olarak kaydedin, sonra *Docker → Add Container* deyip şablon listesinden **rest-server** seçin. Başlatmadan önce gösterilen `htpasswd` satırını VAULT üzerinde `/mnt/user/appdata/rest-server/.htpasswd` dosyasına yazın. Tek kullanımlık parola bir kez gösterilir ve hiç saklanmaz, şimdi kopyalayın. O satır aynı parolayı taşır, senin için bcrypt ile özetlenmiş olarak: düz metin TOWER üzerindeki REST kimlik bilgilerine, özetlenmiş satır VAULT üzerindeki `.htpasswd` dosyasına gider. Kendin bir şey özetlemek zorunda değilsin.
 
     OPTIONS alanındaki `--append-only` kalsın. Bütün mesele bu: onsuz VAULT yine sıradan bir paylaşıma döner.
 
@@ -128,7 +136,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 | **KORUNMUYOR** | VAULT bir silmeyi kabul etti. `--append-only` yok ya da kaldırılmış. |
 | **belirsiz** | İkisi de değil. Genelde adres restic'in kendi kullandığı adres değildir ya da kimlik bilgileri değişmiştir. Hiçbir şey kaydedilmez ve uyarı verilmez. |
 
-**4. VAULT üzerinde neyin geldiğini izleyin.** İki makineyi eşleştirin ([Örnekleri eşleştirme](#pairing)), *Ayarlar → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu gönderen örnek olarak TOWER ile salt okunur olarak kaydedin.
+**4. VAULT üzerinde neyin geldiğini izleyin.** İki makineyi eşleştirin ([Örnekleri eşleştirme](#pairing)), *Ayarlar → Eşleştirme → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu gönderen örnek olarak TOWER ile salt okunur olarak kaydedin.
 
 !!! warning "Konum, kapsayıcının **içindeki** bir yoldur ve ana makine bağlama noktasına göre yazılır"
     `user/appdata/rest-server/bombvault-containers/containers` girin, `/mnt/user/appdata/…` **değil**. BombVault, ana makinenin `/mnt` dizininin başka yere bağlandığı bir kapsayıcıda çalışır; mutlak ana makine yolu orada yoktur. Yapıştırırsanız BombVault artık kullanmanız gereken göreli yolu söyler.
@@ -152,7 +160,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 
 ### Başka bir BombVault deposundan geri yükleme {#restore-from-another-bombvault-repo}
 
-**Kurtarma** sekmesindeki ayrı bir kart, *farklı* bir BombVault örneğinin deposunu (`/mnt` altında bağlanmış bir paylaşım ya da bir uzak URL) **o örneğin `APP_KEY`'iyle**, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere ve dosya kümelerine göz atın, bir anlık görüntü seçip geri yükleyin; geri yüklenen nesne normal bir yerel konteyner, VM ya da dosya kümesi olur. Diğer depoya asla hiçbir şey yazılmaz ve kendi yedekleme ayarlarınız dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak artık depo ayarlarınızı yeniden yönlendirmek ve sonrasında geri almak anlamına gelmez. Canlı sunucudan sunucuya federasyon açıkça kapsam dışıdır; bu kasıtlı bir tek atışlık çekmedir.
+**Kurtarma** sekmesindeki ayrı bir kart, *farklı* bir BombVault örneğinin deposunu (`/mnt` altında bağlanmış bir paylaşım ya da bir uzak URL) **o örneğin `APP_KEY`'iyle**, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere ve dosya kümelerine göz atın, bir anlık görüntü seçip geri yükleyin; geri yüklenen nesne normal bir yerel konteyner, VM ya da dosya kümesi olur. Diğer depoya asla hiçbir şey yazılmaz ve kendi yedekleme ayarlarınız dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak, depo ayarlarınızı yeniden yönlendirmek ve sonrasında geri almak anlamına gelmez. Bu kart tek seferliktir: bir oturum açar, seçtiğinizi geri yükler ve diğer örneği unutur. Bunun yerine bu makinenin başka bir örneğin anlık görüntülerini bir zamanlamaya göre kendi deposuna çektiği kalıcı bir düzen istiyorsanız, bu **Örnekler** sayfasının **Çekme** sekmesidir.
 
 ## Şifreleme anahtarı kurtarma kiti
 
@@ -165,6 +173,15 @@ Tek tık, **ana anahtarı**, **türetilen restic parolasını** ve **tam depo ko
 
 !!! warning "En yeni anlık görüntü her zaman geri yüklenecek olan değildir"
     restic 0.17'den beri `restic snapshots` her anlık görüntünün boyutunu gösterir. Veri kaybından sonra en yeni anlık görüntü boşaltılmış olan olabilir, bu yüzden öncekilerden çok daha küçük bir anlık görüntüyü geri yüklemeyin. Fidye yazılımından sonra olağan boyutta şifrelenmiş olan olabilir. BombVault hâlâ çalışıyorsa önce **Anormallikler** sayfasına bakın: son iyi yedeği gösterir. Geri yükleme için BombVault'un anomali verilerine gerek yoktur ve saklama duraklatması yalnızca daha fazla anlık görüntü tutar.
+
+### Kitin mühürlenmesi
+
+Düz dışa aktarmalar için age şifrelemesini açtıysanız (Ayarlar), kit de onunla mühürlenir ve `bombvault-recovery-kit.md.age` olarak iner. İkili değil ASCII zırhlı olduğu için yine düz metindir: bir parola yöneticisine yapıştırmak ya da yazdırmak tam olarak önceki gibi çalışır, yalnızca içerik anahtarınız olmadan okunamaz.
+
+!!! warning "age anahtarını kitin içinde saklamayın"
+    Mühürlü bir kiti açmak için age **özel** anahtarınıza ihtiyacınız vardır. Onu kitin kendisine bağlı olmayan bir yerde saklayın, yoksa kurtarmanız gereken bir değil iki şey olur. Mühürleme, kit tam olarak denetlemediğiniz bir yerde saklandığında (paylaşılan bir parola yöneticisi, bulut notları, bir ofisteki çıktı) buna değer; kendi kasanızdaki bir kit zaten kasa tarafından korunur.
+
+    Şifreleme açıkken ve yapılandırılmış kullanılabilir bir alıcı yokken indirme doğrudan reddedilir. BombVault ana anahtarı açık metin olarak vermeye asla geri dönmez.
 
 ### Kurtarma seti elinizin altında değilse
 

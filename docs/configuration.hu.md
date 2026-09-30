@@ -1,13 +1,13 @@
 # Konfiguráció
 
-Ez az oldal a konténer környezeti változóit, a sablon által biztosított csatolásokat, a VM-mentést SSH-n keresztül, valamint a telephelyen kívüli beállítást ismerteti. A mentési **tároló-útvonalak** az alkalmazáson belül konfigurálhatók (Beállítások, Mentési útvonalak), nem környezeti változókon keresztül.
+Ez az oldal a konténer környezeti változóit, a sablon által biztosított csatolásokat, a VM-mentést SSH-n keresztül, valamint a telephelyen kívüli beállítást ismerteti. A mentési **tároló-útvonalak** az alkalmazáson belül konfigurálhatók (Beállítások, Tárolás, Mentési útvonalak), nem környezeti változókon keresztül.
 
 ## Környezeti változók
 
 | Változó | Kötelező | Leírás |
 |---|---|---|
 | `APP_KEY` | **Igen** | 32 bájtos hexadecimális titok (64 hexadecimális karakter), amely a restic tároló jelszavának származtatására szolgál. Generáld az `openssl rand -hex 32` paranccsal. Óvd ezt: az elvesztése visszaállíthatatlanná teszi a titkosított mentéseket. |
-| `LIBVIRT_HOST` | VM-ekhez | Az SSH-n keresztül elért Unraid hoszt a VM-mentéshez (alapból `host.docker.internal`; a sablon egy LAN-IP helyőrzővel tölti ki előre). Használd az Unraid LAN IP-jét, egyéni `br0.x` hálózaton kötelező. A ZFS-adatkészletek mentése is ezt használja (sablonmező: **Host SSH: Address**); a `192.168.x.x` helykitöltő nem beállítottnak számít. |
+| `LIBVIRT_HOST` | VM-ekhez és ZFS-adatkészletekhez | Az SSH-n keresztül elért Unraid hoszt a VM-mentéshez (alapból `host.docker.internal`; a sablon egy LAN-IP helyőrzővel tölti ki előre). Használd az Unraid LAN IP-jét, egyéni `br0.x` hálózaton kötelező. A ZFS-adatkészletek mentése is ezt használja (sablonmező: **Host SSH: Address**); a `192.168.x.x` helykitöltő nem beállítottnak számít. |
 | `LIBVIRT_SSH_PORT` | Nem | A hoszt SSH-portja a VM-mentéshez (alapból `22`). Sablonmező: **Host SSH: Port**, a ZFS-adatkészletekhez is. |
 | `LIBVIRT_SSH_USER` | Nem | SSH-felhasználó a hoszton a VM-mentéshez (alapból `root`). Sablonmező: **Host SSH: User**, a ZFS-adatkészletekhez is. |
 | `LIBVIRT_URI` | Nem | Teljes libvirt kapcsolati URI, amelyet a rendszer **szó szerint** használ a fenti három `LIBVIRT_*` változóból történő összeállítás helyett (ezeket a kapcsolati karakterlánc előállításakor ekkor figyelmen kívül hagyja). Alapból nincs beállítva. TrueNAS Scale-en szükséges, ahol a libvirtd egy nem szabványos socketen figyel, amit az összeállított forma nem tud kifejezni: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Lásd a [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) TrueNAS Scale szakaszát. Ha ez egy `qemu+ssh://` URI, a `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` és `LIBVIRT_SSH_PORT` közül mindegyik, amelyik nincs beállítva, ebből kerül átvételre, a BombVault saját SSH-parancsaihoz is (NVRAM-átvitel, ZFS-adatkészletek). |
@@ -21,8 +21,9 @@ Ez az oldal a konténer környezeti változóit, a sablon által biztosított cs
 | `PLATFORM` | Nem | Kikényszeríti, hogy a BombVault milyen platformon fut szerinte, ahelyett hogy automatikusan felismerné: `unraid`, `generic` vagy `truenas` (alapból nincs beállítva: a flash csatolás alatti `dockerMan` jelző keresésével automatikusan felismeri az Unraidet, egyébként `generic`; egy nem felismert érték szintén `generic`-re esik vissza, naplózva). Állítsd be kifejezetten egy generikus Docker-hoszton vagy TrueNAS Scale-en, ahelyett hogy a csak Unraidre működő automatikus felismerésre hagyatkoznál; a generikus compose-fájl ezt teszi. Megváltoztatja az appdata-tartalék konvenciót, a példányok közötti visszaállítási cél alapértelmezéseit, valamint azt, hogy a csak Unraidre vonatkozó értesítési és kísérő bővítmény lépéseket egyáltalán megkísérli-e (lásd: `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nem | Magának a BombVault konténernek a neve, hogy soha ne mentse (és így ne állítsa le) önmagát. |
 | `BACKUP_MAX_HOURS` | Nem | A maximális valós idejű órák száma, ameddig egyetlen mentési futás a tartományzárolását tarthatja, mielőtt kényszerítve megszakadna (egy védelem, hogy egy beragadt futás ne blokkolhassa örökre a tartományt). Üresen (az alapértelmezett) `48`-at használ. Emeld nagyon nagy vagy lassú felhőmentésekhez (egy a korlátnál megszakított futás `context deadline exceeded` hibával hiúsul meg). Állítsd `0`-ra a korlát teljes letiltásához. |
+| `BACKUP_STALL_HOURS` | Nem | Órák, ameddig egy mentés **egyáltalán nem haladhat**, mielőtt megszakad. Üresen (az alapértelmezett) `2`-t használ; állítsd `0`-ra, hogy elakadás miatt soha ne szakadjon meg. Ez a két védelem közül a finomabb, és általában ez lép működésbe: azt figyeli, történik-e még valami, nem azt, mennyi ideje tart a futás, így egy lassú, de egészséges, több terabájtos mentést békén hagy, míg egy nem válaszoló megosztáson beragadt mentést napok helyett órák alatt leállít. 30 perc csend után, még mielőtt bármi megszakadna, figyelmeztetés kerül a naplóba. A bejárás haladásnak számít: a restic egy nagy fa bejárása közben egyetlen bájtot sem ír, és ezt a szakaszt a fájl- és bájtösszesítői alapján figyeli, nem a kiírt bájtok alapján. A két változó független egymástól, és a `BACKUP_MAX_HOURS` továbbra is korlátozza a tényleges mentés utáni szakaszokat (megőrzés, statisztikák, telephelyen kívüli másolat), ahol nincsenek figyelhető számlálók. |
 | `DB_DUMP_MAX_HOURS` | Nem | Órák, ameddig egy automatikus adatbázis-dump futhat, mielőtt leállítják. Üresen (alapértelmezés) `6` órát jelent; a megengedett értékek `1`-től `48`-ig tartanak, és a korlát egy órával `BACKUP_MAX_HOURS` alatt marad (két óránál rövidebb érték esetén annak felénél), hogy egy hosszú dumpot a saját korlátja vágjon el és így is jelentsék, ahelyett hogy magával rántaná a mentést. Az a dump, amelyik nem halad tovább, már `BACKUP_STALL_HOURS` után leáll. A leállított dump önmagában lesz sikertelen, a konténer mentése pedig folytatódik. Unraidon a változót a BombVault konténerhez az **Add another Path, Port, Variable** ponttal veszed fel. |
-| `TZ` | Nem | Időzóna az ütemezőhöz (például `Europe/Berlin`). **Ha nincs beállítva, minden ütemezés UTC szerint fut**: a 02:30-ra állított ütemezés ekkor 02:30 UTC-kor indul, nem a helyi idő szerint. Unraiden ezt soha nem kell beállítania: a rendszer a saját időzónáját adja át minden konténernek. |
+| `TZ` | Nem | Időzóna az ütemezőhöz (például `Europe/Berlin`). **Ha nincs beállítva, minden ütemezés UTC szerint fut**: a 02:30-ra állított ütemezés ekkor 02:30 UTC-kor indul, nem a helyi idő szerint. Unraiden ezt soha nem kell beállítanod: a rendszer a saját időzónáját adja át minden konténernek. |
 
 ## Csatolások
 
@@ -30,7 +31,7 @@ Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/m
 
 A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatképét a hoszt csak a konténer indulása után csatolja. Lásd: [ZFS-adatkészletek](zfs-datasets.md).
 
-A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Mentési útvonalak** alatt.
+A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Tárolás, Mentési útvonalak** alatt. Minden útvonalmező mellett van egy beépített **Helyi / Távoli** kapcsoló is: egy útvonal helyi mappa helyett lehet távoli restic tároló is (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), ilyenkor a mentés közvetlenül oda megy, külön helyi másolat nélkül; lásd: [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Hosztintegráció-ellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.
@@ -62,7 +63,7 @@ Minden konténernél a BombVault maga választja ki, mely bind csatolások és n
 
 ## MCP-kiszolgáló {#mcp-server}
 
-Az MCP-kiszolgálóhoz nem kell környezeti változó. Úgy kapcsolod be, hogy létrehozol egy kulcsot a **Beállítások, Rendszer, MCP-kiszolgáló** részen, és a `/mcp` útvonalon válaszol ugyanazon a porton, mint a webes felület (például `https://192.168.1.10:3443/mcp`). Aktív kulcs nélkül ez az útvonal `404`-gyel válaszol. A klienseket, a tanúsítványokat és a korlátokat az [MCP-kiszolgáló](mcp.md) oldal írja le.
+Az MCP-kiszolgálóhoz nem kell környezeti változó. Úgy kapcsolod be, hogy létrehozol egy kulcsot a **Beállítások, Integrációk, MCP-kiszolgáló** részen, és a `/mcp` útvonalon válaszol ugyanazon a porton, mint a webes felület (például `https://192.168.1.10:3443/mcp`). Aktív kulcs nélkül ez az útvonal `404`-gyel válaszol. A klienseket, a tanúsítványokat és a korlátokat az [MCP-kiszolgáló](mcp.md) oldal írja le.
 
 ## VM-mentés SSH-n keresztül
 
@@ -70,7 +71,7 @@ A BombVault a KVM/libvirt VM-eket **bármely libvirt-útvonal csatolása nélkü
 
 Gyors beállítás:
 
-1. **Beállítások, Rendszer, Gazdagép SSH:** másold ki a megjelenített nyilvános kulcsot.
+1. **Beállítások, Integrációk, Gazdagép SSH:** másold ki a megjelenített nyilvános kulcsot.
 2. Fűzd hozzá az Unraid `/root/.ssh/authorized_keys` fájljához (a flashre is mentve, így túléli az újraindításokat).
 3. Kattints a **Kapcsolat tesztelése** gombra.
 
@@ -81,16 +82,17 @@ A sablon hozzáadja a `--add-host=host.docker.internal:host-gateway` opciót, ho
 
 ## Telephelyen kívüli beállítás
 
-Állíts be egy telephelyen kívüli replikát a **Beállítások, Telephelyen kívüli** fülön. A teljes munkafolyamathoz (módosíthatatlan/append-only, manipulációs tesztelés és DR-próbák) lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md). Röviden:
+Állíts be egy telephelyen kívüli replikát a **Beállítások, Telephelyen kívüli** oldalon. A teljes munkafolyamathoz (módosíthatatlan/append-only, manipulációs tesztelés és DR-próbák) lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md). Röviden:
 
 - **Backendek:** SMB/CIFS és NFS (csatold a megosztást, és irányíts rá egy Mentési útvonalat), natív restic backendek rclone nélkül (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), vagy bármely rclone remote (`rclone:<remote>:<bucket>/path`).
-- **A felhő hitelesítő adatai** titkosítva tárolódnak a Beállítások, Telephelyen kívüli, Felhő hitelesítő adatok alatt.
-- **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Az `sftp:` csak egy SSH-szervert igényel. Add hozzá a nyilvános kulcsot a **Beállítások, Rendszer, Gazdagép SSH** alól (a `/config/ssh/id_ed25519.pub` alatt is) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
-- **Telephelyen kívüli másolat:** A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja. A helyi tároló marad az elsődleges. Minden tartománynak saját telephelyen kívüli ütemezése van, plusz egy **Replikálás most** gomb.
+- **A megosztott felhőbeli hitelesítő adatok** titkosítva tárolódnak a Beállítások, Felhőhozzáférés, Megosztott felhőbeli hitelesítő adatok alatt.
+- **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Az `sftp:` csak egy SSH-szervert igényel. Add hozzá a nyilvános kulcsot a **Beállítások, Integrációk, Gazdagép SSH** alól (a `/config/ssh/id_ed25519.pub` alatt is) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
+- **Telephelyen kívüli másolat:** A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja, egy (általában helyi) elsődleges tároló mellé. Minden tartománynak saját telephelyen kívüli ütemezése van, plusz egy **Replikálás most** gomb.
 - **Több telephelyen kívüli cél tartományonként:** minden tartomány egyszerre több telephelyen kívüli célra is replikálhat. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel; mindegyik az adott tartomány telephelyen kívüli ütemezése szerint replikál. Egy meglévő egyetlen telephelyen kívüli beállítás az első célként öröklődik át.
-- **Megőrzés forrásonként:** a helyi szabály a Beállítások, Útvonalak és tárolás alatt él; a telephelyen kívüli szabály a Beállítások, Telephelyen kívüli alatt (hagyd mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket).
+- **Megőrzés forrásonként:** a helyi és a telephelyen kívüli szabály egyaránt a Beállítások, Megőrzés alatt él (hagyd a telephelyen kívülit nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket).
 - **Sávszélesség-korlátok:** korlátozd a restic fel- és letöltési sebességét a Beállítások, Telephelyen kívüli alatt.
 - **Hideg és archív tárolási osztály (S3):** egy natív S3 telephelyen kívüli tárolóhoz válassz egy visszaállításra olvasható szintet (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Az rclone remote-ok a saját osztályukat az rclone konfigban állítják be.
+- **Távoli elsődleges tároló helyi helyett:** egy tartomány Mentési útvonala maga is lehet a fenti backendek egyike, helyi másolat és replikációs lépés nélkül. A beépített Helyi/Távoli kapcsolót és a biztonsági beállításait (sávszélesség, append-only, növekedési keret) a [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories) szakasz írja le.
 
 ## Anomáliák {#anomalies}
 
@@ -107,7 +109,7 @@ Minden elemnek lehet saját érzékenysége és saját értesítési minimuma. E
 
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 
-Az **Exportálás és importálás beállítások** kártya a Beállítások oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, telephelyen kívüli célok, ütemezések, megőrzés, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
+Az **Exportálás és importálás beállítások** kártya a Beállítások, Rendszer oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, telephelyen kívüli célok, ütemezések, megőrzés, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
 
 !!! warning "Az export hitelesítő adatokat tartalmazhat"
     Te választod meg, hogy belefoglalod-e a telephelyen kívüli és értesítési hitelesítő adatokat a fájlba. A hitelesítő adatokkal együtt az export olyan érzékeny, mint a helyreállítási csomagod, ezért tárold biztonságos helyen. Nélkülük a fájl csak nem-titkos beállításokat tartalmaz.

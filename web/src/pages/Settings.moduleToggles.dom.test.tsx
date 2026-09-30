@@ -3,6 +3,7 @@
 // show under Instances, so a switch and its tab never go by two names.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
@@ -96,15 +97,23 @@ function stubResizeObserver() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderGeneralTab() {
+async function renderGeneralPage() {
   await act(async () => {
-    window.location.hash = "#general";
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <SettingsPage />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter initialEntries={["/settings/general"]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <SettingsPage />
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
     );
   });
 }
@@ -120,14 +129,14 @@ afterEach(() => {
 
 describe("module switches", () => {
   it("names receiver and pull after the Instances tabs they show", async () => {
-    await renderGeneralTab();
+    await renderGeneralPage();
     for (const key of ["receiver.title", "pull.title"] as const) {
       expect(screen.getByRole("switch", { name: en[key] })).not.toBeNull();
     }
   });
 
   it("names the fleet switch after the Instances page it shows", async () => {
-    await renderGeneralTab();
+    await renderGeneralPage();
     expect(screen.getByRole("switch", { name: en["instances.title"] })).not.toBeNull();
   });
 });

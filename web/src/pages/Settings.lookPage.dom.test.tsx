@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-// The axes the person owns (language, theme, shape, motion, labels, colours)
-// stand on a Look tab of their own, second after General, with the language
-// first. General keeps what concerns the app as a whole.
+// The axes the person owns (theme, shape, motion, labels, colours) stand on a
+// Look page of their own, second in the rail after General. Language sits on
+// General instead, alongside what concerns the app as a whole.
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
@@ -79,22 +79,28 @@ function stubBrowser() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderAt(hash: string) {
+async function renderAt(path: string) {
   await act(async () => {
-    window.location.hash = hash;
     render(
-      <MemoryRouter>
-        <I18nProvider>
-          <ToastProvider>
-            <SettingsPage />
-          </ToastProvider>
-        </I18nProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <SettingsPage />
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
       </MemoryRouter>
     );
   });
 }
 
-/** The card headings of the open tab, top to bottom. */
+/** The card headings of the open page, top to bottom. */
 function headings(): string[] {
   return screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent?.trim() ?? "");
 }
@@ -106,30 +112,30 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  window.location.hash = "";
   localStorage.removeItem("bv-lang");
 });
 
-it("puts the Look tab second, after General", async () => {
-  await renderAt("#general");
-  const tabs = within(screen.getByRole("tablist", { name: en["settings.title"] })).getAllByRole("tab");
-  expect(tabs.slice(0, 2).map((tab) => tab.textContent?.trim())).toEqual([
+it("puts Look second in the settings rail, after General", async () => {
+  await renderAt("/settings/general");
+  const rail = screen.getByRole("navigation", { name: en["settings.railLabel"] });
+  const links = within(rail).getAllByRole("link");
+  expect(links.slice(0, 2).map((link) => link.textContent?.trim())).toEqual([
     en["settings.tab.general"],
     en["settings.tab.look"],
   ]);
 });
 
-it("opens the Look tab on the language, then theme and shape", async () => {
-  await renderAt("#look");
-  await screen.findByRole("button", { name: /English/ });
-  expect(headings().slice(0, 3)).toEqual([en["settings.language"], en["settings.theme"], en["settings.shape"]]);
+it("opens the Look page on Theme, then Corners", async () => {
+  await renderAt("/settings/look");
+  await screen.findByRole("heading", { name: en["settings.theme"] });
+  expect(headings().slice(0, 2)).toEqual([en["settings.theme"], en["settings.shape"]]);
 });
 
-it("keeps the look off the General tab", async () => {
-  await renderAt("#general");
-  await screen.findByText(en["about.title"]);
+it("keeps theme, shape, motion and colours off the General page", async () => {
+  await renderAt("/settings/general");
+  await screen.findByRole("button", { name: /English/ });
   const general = headings();
-  for (const key of ["settings.language", "settings.theme", "settings.shape", "settings.motion", "settings.colors"] as const) {
+  for (const key of ["settings.theme", "settings.shape", "settings.motion", "settings.colors"] as const) {
     expect(general, key).not.toContain(en[key]);
   }
 });

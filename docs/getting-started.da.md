@@ -54,7 +54,7 @@ Generer en på en hvilken som helst maskine:
 openssl rand -hex 32
 ```
 
-Indsæt resultatet i skabelonens `APP_KEY`-felt.
+Indsæt resultatet i skabelonens `APP_KEY`-felt (Unraid) eller i miljøvariablen `APP_KEY` i `docker-compose.yml` (generisk Docker-vært).
 
 !!! danger "Mist ikke din APP_KEY"
     Mister du `APP_KEY`, kan dine krypterede sikkerhedskopier ikke gendannes. Opbevar den et sikkert sted adskilt fra serveren. Når BombVault kører, kan du bruge dens ét-klik **gendannelseskit til krypteringsnøglen** (se [Off-site og gendannelse](offsite-recovery.md)) til at gemme den fulde gendannelsespakke.

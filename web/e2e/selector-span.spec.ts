@@ -15,7 +15,7 @@ async function stage(page: Page): Promise<void> {
     if (route.request().method() !== "GET") return route.continue();
     const response = await route.fetch();
     const body = await response.json();
-    await route.fulfill({ response, json: { ...body, settings: { ...body.settings, vmsEnabled: true } } });
+    await route.fulfill({ response, json: { ...body, settings: { ...body.settings, vmsEnabled: true, receiverEnabled: true, fleetEnabled: true, pullEnabled: true } } });
   });
   await page.route("**/api/vms", (route) =>
     route.fulfill({
@@ -52,7 +52,7 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the phone Dashboard has no history strip");
   await stage(page);
 
-  await page.goto("/settings#look");
+  await page.goto("/settings/look");
   const theme = page.getByRole("tablist", { name: "Theme" });
   await expect(theme).toBeVisible();
   const themeWidths = await widths(theme);
@@ -66,19 +66,19 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
   expect(Math.abs(historyWidths.track - historyWidths.box), JSON.stringify(historyWidths)).toBeLessThanOrEqual(1);
 });
 
-test("a page-level tab strip never wraps, even with eight tabs", async ({ page }, testInfo) => {
+test("a page-level tab strip never wraps", async ({ page }, testInfo) => {
   // The phone width case (glyph-only, one row down to 320px) has its own
-  // geometry coverage in narrow-viewport.spec.ts; this checks the desktop
+  // geometry coverage in instances-phone.spec.ts; this checks the desktop
   // scale of the same `fit` strip.
-  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: narrow-viewport.spec.ts covers the phone scale");
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: instances-phone.spec.ts covers the phone scale");
   await stage(page);
 
-  await page.goto("/settings");
-  const tabs = page.getByRole("tablist", { name: "Settings" });
+  await page.goto("/instances");
+  const tabs = page.getByRole("tablist", { name: "Instances" });
   await expect(tabs).toBeVisible();
   expect(await tabs.evaluate((el) => getComputedStyle(el).flexWrap)).toBe("nowrap");
   const tops = await tabs.getByRole("tab").evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().top))).size);
-  expect(tops, "all eight tabs share one row").toBe(1);
+  expect(tops, "the tabs share one row").toBe(1);
 });
 
 test("a toolbar's selector hugs its segments", async ({ page }, testInfo) => {

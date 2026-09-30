@@ -81,7 +81,7 @@ async function renderFleet() {
           <MemoryRouter initialEntries={["/instances"]}>
             <Routes>
               <Route path="/instances" element={<Fleet />} />
-              <Route path="/settings" element={<Where />} />
+              <Route path="/settings/:page" element={<Where />} />
             </Routes>
           </MemoryRouter>
         </ToastProvider>
@@ -142,7 +142,7 @@ describe("fleet cards", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["pairing.title"] }));
     });
-    expect(screen.getByTestId("where").textContent).toBe("/settings#pairing");
+    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
   it("is one tile leading to pairing while this instance is in no group", async () => {
@@ -154,7 +154,7 @@ describe("fleet cards", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: new RegExp(en["pairing.title"]) }));
     });
-    expect(screen.getByTestId("where").textContent).toBe("/settings#pairing");
+    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
   it("says for each member whether it is connected, without naming the route", async () => {

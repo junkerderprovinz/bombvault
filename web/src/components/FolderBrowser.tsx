@@ -289,7 +289,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           glyph={<IconFolder />}
           tone="accent"
           onClick={handleOpen}
-          className={"shrink-0"}
+          className="glim-btn-wrap shrink-0"
         />
       </div>
 

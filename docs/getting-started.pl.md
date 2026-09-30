@@ -54,7 +54,7 @@ Wygeneruj go na dowolnej maszynie:
 openssl rand -hex 32
 ```
 
-Wklej wynik do pola `APP_KEY` w szablonie.
+Wklej wynik do pola `APP_KEY` w szablonie (Unraid) albo do zmiennej środowiskowej `APP_KEY` w `docker-compose.yml` (zwykły host Docker).
 
 !!! danger "Nie zgub swojego APP_KEY"
     Utrata `APP_KEY` sprawia, że zaszyfrowane kopie zapasowe stają się nieodzyskiwalne. Przechowuj go w bezpiecznym miejscu, oddzielnie od serwera. Gdy BombVault już działa, użyj jego funkcji **zestaw odzyskiwania klucza szyfrowania** dostępnej za jednym kliknięciem (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)), aby zapisać pełny pakiet odzyskiwania.
@@ -73,7 +73,7 @@ Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog gł�
 4. Skonfiguruj harmonogramowanie w **Ustawienia, Harmonogramy**. Dostępna jest funkcja *uwzględnij wszystkie w harmonogramie* za jednym kliknięciem dla kontenerów i VM.
 
 !!! tip "Opcjonalnie: wybierz kolejność kopii zapasowych"
-    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz panel **kolejności kopii** na stronie Kontenery i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i wielokrotnego wyboru będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych, jak poprzednio.
+    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz panel **kolejności kopii** na stronie Containers i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i wielokrotnego wyboru będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych, jak poprzednio.
 
 !!! note "Kontrola integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz.

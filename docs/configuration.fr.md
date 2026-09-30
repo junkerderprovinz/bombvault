@@ -1,13 +1,13 @@
 # Configuration
 
-Cette page couvre les variables d'environnement du conteneur, les montages fournis par le modèle, la sauvegarde de VM via SSH et la configuration hors site. Les **chemins de dépôt** de sauvegarde se configurent dans l'application (Paramètres, Chemins de sauvegarde), pas via des variables d'environnement.
+Cette page couvre les variables d'environnement du conteneur, les montages fournis par le modèle, la sauvegarde de VM via SSH et la configuration hors site. Les **chemins de dépôt** de sauvegarde se configurent dans l'application (Paramètres, Stockage, Chemins de sauvegarde), pas via des variables d'environnement.
 
 ## Variables d'environnement
 
 | Variable | Requise | Description |
 |---|---|---|
 | `APP_KEY` | **Oui** | Secret hexadécimal de 32 octets (64 caractères hexa) utilisé pour dériver le mot de passe du dépôt restic. Générez avec `openssl rand -hex 32`. Gardez-le en lieu sûr : le perdre rend les sauvegardes chiffrées irrécupérables. |
-| `LIBVIRT_HOST` | Pour les VMs | Hôte Unraid atteint via SSH pour la sauvegarde de VM (par défaut `host.docker.internal` ; le modèle pré-remplit un placeholder d'IP LAN). Utilisez l'IP LAN de votre Unraid, requis sur un réseau `br0.x` personnalisé. Sert aussi aux sauvegardes de jeux de données ZFS (champ du modèle **Host SSH: Address**) ; la valeur fictive `192.168.x.x` compte comme non définie. |
+| `LIBVIRT_HOST` | Pour les VMs et les jeux de données ZFS | Hôte Unraid atteint via SSH pour la sauvegarde de VM (par défaut `host.docker.internal` ; le modèle pré-remplit un placeholder d'IP LAN). Utilisez l'IP LAN de votre Unraid, requis sur un réseau `br0.x` personnalisé. Sert aussi aux sauvegardes de jeux de données ZFS (champ du modèle **Host SSH: Address**) ; la valeur fictive `192.168.x.x` compte comme non définie. |
 | `LIBVIRT_SSH_PORT` | Non | Port SSH de l'hôte pour la sauvegarde de VM (par défaut `22`). Champ du modèle **Host SSH: Port**, aussi pour les jeux de données ZFS. |
 | `LIBVIRT_SSH_USER` | Non | Utilisateur SSH sur l'hôte pour la sauvegarde de VM (par défaut `root`). Champ du modèle **Host SSH: User**, aussi pour les jeux de données ZFS. |
 | `LIBVIRT_URI` | Non | URI de connexion libvirt complète, utilisée **telle quelle** au lieu d'en construire une à partir des trois variables `LIBVIRT_*` ci-dessus (qui sont alors ignorées pour la chaîne de connexion). Non définie par défaut. Nécessaire sur TrueNAS Scale, dont le libvirtd écoute sur un socket non standard que le format construit automatiquement ne peut pas exprimer : `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Voir la section TrueNAS Scale de [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Si c'est une URI `qemu+ssh://`, chacune des variables `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` et `LIBVIRT_SSH_PORT` qui n'est pas définie en est tirée, y compris pour les commandes SSH de BombVault (transfert NVRAM, jeux de données ZFS). |
@@ -21,6 +21,7 @@ Cette page couvre les variables d'environnement du conteneur, les montages fourn
 | `PLATFORM` | Non | Force la plateforme sur laquelle BombVault se considère comme s'exécutant, au lieu de la détecter automatiquement : `unraid`, `generic` ou `truenas` (non définie par défaut : détecte automatiquement Unraid en sondant son marqueur `dockerMan` sous le montage flash, sinon `generic` ; une valeur non reconnue retombe elle aussi sur `generic`, journalisé). Définissez-la explicitement sur un hôte Docker générique ou sur TrueNAS Scale plutôt que de vous fier à la sonde automatique propre à Unraid : c'est ce que fait le fichier compose générique. Modifie la convention de repli appdata, les valeurs par défaut de destination de restauration entre instances, et si les étapes de notification/plugin compagnon propres à Unraid sont tentées ou non (voir `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Non | Le nom du conteneur BombVault lui-même, afin qu'il ne se sauvegarde jamais (et donc ne s'arrête jamais) lui-même. |
 | `BACKUP_MAX_HOURS` | Non | Nombre maximal d'heures d'horloge qu'une exécution de sauvegarde unique peut détenir le verrou de son domaine avant d'être forcée à s'annuler (une protection pour qu'une exécution coincée ne puisse pas bloquer le domaine à jamais). Vide (la valeur par défaut) utilise `48`. Augmentez-le pour de très grandes ou lentes sauvegardes cloud (une exécution annulée au plafond échoue avec `context deadline exceeded`). Mettez `0` pour désactiver complètement le plafond. |
+| `BACKUP_STALL_HOURS` | Non | Heures pendant lesquelles une sauvegarde peut ne faire **aucun progrès** avant d'être annulée. Vide (par défaut) utilise `2` ; mettez `0` pour ne jamais annuler sur un blocage. C'est la plus fine des deux protections et généralement celle qui se déclenche : elle regarde si quelque chose se passe encore plutôt que depuis combien de temps l'exécution dure, de sorte qu'une sauvegarde lente mais saine de plusieurs téraoctets est laissée tranquille, tandis qu'une sauvegarde coincée sur un partage qui ne répond plus est arrêtée en quelques heures au lieu de plusieurs jours. Un avertissement est journalisé après 30 minutes de silence, avant toute annulation. L'analyse compte comme un progrès : restic n'écrit aucun octet pendant qu'il parcourt une grande arborescence, et cette phase est surveillée via ses totaux de fichiers et d'octets plutôt que via les octets écrits. Les deux variables sont indépendantes, et `BACKUP_MAX_HOURS` borne toujours les phases qui suivent la sauvegarde elle-même (rétention, statistiques, copie hors site), où il n'y a pas de compteurs à surveiller. |
 | `DB_DUMP_MAX_HOURS` | Non | Heures pendant lesquelles un dump automatique de base de données peut tourner avant d'être arrêté. Vide (par défaut) utilise `6` ; les valeurs admises vont de `1` à `48`, et la limite reste une heure sous `BACKUP_MAX_HOURS` (à la moitié de celui-ci quand il est inférieur à deux heures), pour qu'un long dump soit coupé par sa propre limite et signalé comme tel au lieu d'emporter la sauvegarde avec lui. Un dump qui n'avance plus est arrêté plus tôt, après `BACKUP_STALL_HOURS`. Un dump arrêté échoue pour lui-même et la sauvegarde du conteneur continue. Sur Unraid, ajoutez la variable au conteneur BombVault avec **Add another Path, Port, Variable**. |
 | `TZ` | Non | Fuseau horaire pour le planificateur (par exemple `Europe/Berlin`). **Si elle n'est pas définie, toutes les planifications s'exécutent en UTC** : une planification à 02:30 démarre alors à 02:30 UTC et non à l'heure locale. Sur Unraid, vous ne le définissez jamais vous-même : le système transmet son propre fuseau horaire à chaque conteneur. |
 
@@ -30,7 +31,7 @@ Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) 
 
 Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
 
-Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
+Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Stockage, Chemins de sauvegarde**. Chaque champ de chemin a aussi un commutateur **Local / Distant** intégré : un chemin peut être un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) au lieu d'un dossier local, et la sauvegarde y va alors directement, sans copie locale séparée ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Vérification de l'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
@@ -62,7 +63,7 @@ Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volu
 
 ## Serveur MCP {#mcp-server}
 
-Le serveur MCP n'a besoin d'aucune variable d'environnement. Vous l'activez en créant une clé sous **Paramètres, Système, Serveur MCP**, et il répond sur `/mcp` sur le même port que l'interface web (par exemple `https://192.168.1.10:3443/mcp`). Sans clé active, ce chemin répond `404`. Les clients, les certificats et les limites sont décrits sur la page [Serveur MCP](mcp.md).
+Le serveur MCP n'a besoin d'aucune variable d'environnement. Vous l'activez en créant une clé sous **Paramètres, Intégrations, Serveur MCP**, et il répond sur `/mcp` sur le même port que l'interface web (par exemple `https://192.168.1.10:3443/mcp`). Sans clé active, ce chemin répond `404`. Les clients, les certificats et les limites sont décrits sur la page [Serveur MCP](mcp.md).
 
 ## Sauvegarde de VM via SSH
 
@@ -70,7 +71,7 @@ BombVault sauvegarde les VMs KVM/libvirt **sans monter aucun chemin libvirt**. I
 
 Configuration rapide :
 
-1. **Paramètres, Système, SSH de l'hôte :** copiez la clé publique affichée.
+1. **Paramètres, Intégrations, SSH de l'hôte :** copiez la clé publique affichée.
 2. Ajoutez-la à l'`/root/.ssh/authorized_keys` d'Unraid (également persistée sur la flash afin qu'elle survive aux redémarrages).
 3. Cliquez sur **Tester la connexion**.
 
@@ -81,16 +82,17 @@ Le modèle ajoute `--add-host=host.docker.internal:host-gateway` afin que le con
 
 ## Configuration hors site
 
-Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
+Configurez un réplica hors site dans la page **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
 
 - **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Les identifiants cloud** sont stockés chiffrés sous Paramètres, Hors site, Identifiants cloud.
-- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
-- **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux. Le dépôt local reste principal. Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
+- Les **identifiants cloud partagés** sont stockés chiffrés sous Paramètres, Accès cloud, Identifiants cloud partagés.
+- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Intégrations, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
+- **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux, en plus d'un dépôt primaire (généralement local). Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
 - **Plusieurs cibles hors site par domaine :** chaque domaine peut répliquer vers plusieurs destinations hors site à la fois. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance ; elles répliquent toutes selon le planning hors site de ce domaine. Une configuration hors site unique existante est reprise comme première cible.
-- **Rétention par source :** la politique locale vit dans Paramètres, Chemins et stockage ; la politique hors site dans Paramètres, Hors site (laissez-la entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
+- **Rétention par source :** les politiques locale et hors site vivent toutes deux dans Paramètres, Rétention (laissez celle hors site entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
 - **Limites de bande passante :** plafonnez le débit d'envoi/de téléchargement de restic sous Paramètres, Hors site.
 - **Classe de stockage froid et archivage (S3) :** pour un dépôt hors site S3 natif, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
+- **Primaire distant au lieu de local :** le Chemin de sauvegarde d'un domaine peut lui-même être l'un des backends ci-dessus, sans copie locale ni étape de réplication ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories) pour le commutateur Local/Distant intégré et ses réglages de sécurité (bande passante, append-only, budget de croissance).
 
 ## Anomalies {#anomalies}
 
@@ -107,7 +109,7 @@ Chaque élément peut avoir sa propre sensibilité et son propre minimum de noti
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 
-La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
+La carte **Exporter et importer les réglages** sur la page Paramètres, Système écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
 
 !!! warning "L'export peut contenir des identifiants"
     Vous choisissez d'inclure ou non les identifiants hors site et de notification dans le fichier. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.

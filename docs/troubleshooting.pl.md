@@ -18,7 +18,7 @@ BombVault serwuje HTTPS od razu po instalacji na porcie `3443` (certyfikat samop
 
 Kopia VM komunikuje się z libvirt przez SSH, nigdy przez montaż.
 
-- Potwierdź, że SSH jest włączone na hoście, a klucz publiczny BombVault jest autoryzowany w `/root/.ssh/authorized_keys` (Ustawienia, System, SSH hosta pokazuje klucz oraz przycisk **Test połączenia**).
+- Potwierdź, że SSH jest włączone na hoście, a klucz publiczny BombVault jest autoryzowany w `/root/.ssh/authorized_keys` (Ustawienia, Integracje, SSH hosta pokazuje klucz oraz przycisk **Test połączenia**).
 - W niestandardowej sieci `br0.x` ustaw `LIBVIRT_HOST` na swoje IP Unraid w LAN (kontener nie może tam dotrzeć do hosta przez `host.docker.internal`). Włącz **Settings, Docker, Host access to custom networks**.
 - Jeśli zmieniłeś port SSH Unraid, ustaw `LIBVIRT_SSH_PORT`, aby pasował.
 - Pełna diagnoza krok po kroku (test osiągalności, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) znajduje się w [przewodniku Kopia VM przez SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Migawki na żywo wymagają agenta gościa qemu zainstalowanego w VM oraz dysku n
 
 ## Kopia zapasowa zawiodła z "repository is already locked"
 
-To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualizowany lub zrestartowany w trakcie operacji. BombVault wykrywa bezspornie osieroconą blokadę, wymuszenie ją usuwa i ponawia raz, automatycznie. Jeśli się utrzymuje, użyj **Ustawienia, Integralność i konserwacja, Odblokuj** dla dotkniętej domeny, aby ręcznie usunąć nieaktualną blokadę. Prawdziwy problem nadal wychodzi na jaw zamiast być ukrywany. Po restarcie BombVault czeka, aż taka blokada przez dziesięć minut nie zostanie odświeżona. Restic, który wciąż działa, na przykład w drugim BombVaulcie na tym samym repozytorium, odświeża swoją blokadę co pięć minut.
+To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualizowany lub zrestartowany w trakcie operacji. BombVault wykrywa bezspornie osieroconą blokadę, wymuszenie ją usuwa i ponawia raz, automatycznie. Jeśli się utrzymuje, użyj **Ustawienia, Integralność, Odblokuj** dla dotkniętej domeny, aby ręcznie usunąć nieaktualną blokadę. Prawdziwy problem nadal wychodzi na jaw zamiast być ukrywany. Po restarcie BombVault czeka, aż taka blokada przez dziesięć minut nie zostanie odświeżona. Restic, który wciąż działa, na przykład w drugim BombVaulcie na tym samym repozytorium, odświeża swoją blokadę co pięć minut.
 
 ## Moja kopia poza siedzibą nie zdarzyła się po kopii
 
-Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź harmonogram poza siedzibą dla tej domeny (Ustawienia, Harmonogramy): pusty harmonogram replikuje po każdej kopii lokalnej, podczas gdy kadencja wysyła rzadziej. Użyj **Replikuj teraz** w zakładce Poza siedzibą do uruchomienia na żądanie i obserwuj wskaźnik replikacji na panelu.
+Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź harmonogram poza siedzibą dla tej domeny (Ustawienia, Harmonogramy): pusty harmonogram replikuje po każdej kopii lokalnej, podczas gdy kadencja wysyła rzadziej. Użyj **Replikuj teraz** na stronie Poza siedzibą do uruchomienia na żądanie i obserwuj wskaźnik replikacji na panelu.
 
 ## Przywracanie przerwane, zanim się zaczęło
 

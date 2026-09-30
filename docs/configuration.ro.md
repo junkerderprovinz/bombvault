@@ -1,13 +1,13 @@
 # Configurare
 
-Această pagină acoperă variabilele de mediu ale containerului, montările pe care le oferă șablonul, backupul VM prin SSH și configurarea off-site. **Căile depozitelor** de backup sunt configurate în interiorul aplicației (Setări, Căi de backup), nu prin variabile de mediu.
+Această pagină acoperă variabilele de mediu ale containerului, montările pe care le oferă șablonul, backupul VM prin SSH și configurarea off-site. **Căile depozitelor** de backup sunt configurate în interiorul aplicației (Setări, Stocare, Căi de backup), nu prin variabile de mediu.
 
 ## Variabile de mediu
 
 | Variabilă | Obligatorie | Descriere |
 |---|---|---|
 | `APP_KEY` | **Da** | Secret hex de 32 de octeți (64 de caractere hex) folosit pentru a deriva parola depozitului restic. Generează cu `openssl rand -hex 32`. Păstrează-l în siguranță: pierderea lui face ca backupurile criptate să nu mai poată fi recuperate. |
-| `LIBVIRT_HOST` | Pentru VM-uri | Gazda Unraid accesată prin SSH pentru backupul VM (implicit `host.docker.internal`; șablonul precompletează un placeholder cu IP-LAN). Folosește IP-ul LAN al Unraid, obligatoriu pe o rețea `br0.x` personalizată. Folosit și pentru backup-urile seturilor de date ZFS (câmpul de șablon **Host SSH: Address**); substituentul `192.168.x.x` contează ca nesetat. |
+| `LIBVIRT_HOST` | Pentru VM-uri și seturi de date ZFS | Gazda Unraid accesată prin SSH pentru backupul VM (implicit `host.docker.internal`; șablonul precompletează un placeholder cu IP-LAN). Folosește IP-ul LAN al Unraid, obligatoriu pe o rețea `br0.x` personalizată. Folosit și pentru backup-urile seturilor de date ZFS (câmpul de șablon **Host SSH: Address**); substituentul `192.168.x.x` contează ca nesetat. |
 | `LIBVIRT_SSH_PORT` | Nu | Portul SSH al gazdei pentru backupul VM (implicit `22`). Câmpul de șablon **Host SSH: Port**, și pentru seturile de date ZFS. |
 | `LIBVIRT_SSH_USER` | Nu | Utilizatorul SSH de pe gazdă pentru backupul VM (implicit `root`). Câmpul de șablon **Host SSH: User**, și pentru seturile de date ZFS. |
 | `LIBVIRT_URI` | Nu | URI-ul complet de conexiune libvirt, folosit **ca atare** în locul construirii unuia dintre cele trei variabile `LIBVIRT_*` de mai sus (care sunt apoi ignorate pentru șirul de conexiune). Nesetat implicit. Necesar pe TrueNAS Scale, al cărui libvirtd ascultă pe un socket non-standard pe care forma construită nu îl poate exprima: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Vezi secțiunea TrueNAS Scale din [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Dacă este un URI `qemu+ssh://`, fiecare dintre `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` și `LIBVIRT_SSH_PORT` care nu este setată se ia din el, și pentru comenzile SSH proprii ale BombVault (transferul NVRAM, seturile de date ZFS). |
@@ -21,6 +21,7 @@ Această pagină acoperă variabilele de mediu ale containerului, montările pe 
 | `PLATFORM` | Nu | Forțează platforma pe care BombVault se consideră că rulează, în loc să o detecteze automat: `unraid`, `generic` sau `truenas` (nesetat implicit: detectează automat Unraid sondând markerul său `dockerMan` sub montarea flash-ului, altfel `generic`; o valoare nerecunoscută revine de asemenea la `generic`, înregistrată în jurnal). Setează-o explicit pe o gazdă Docker generică sau pe TrueNAS Scale, în loc să te bazezi pe auto-sondarea specifică Unraid; fișierul compose generic face exact acest lucru. Schimbă convenția de rezervă pentru appdata, valorile implicite ale destinației de restaurare între instanțe și dacă pașii specifici Unraid de notificare/plugin însoțitor sunt încercați deloc (vezi `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nu | Numele containerului BombVault însuși, astfel încât să nu-și facă niciodată backup (și deci să nu se oprească) singur. |
 | `BACKUP_MAX_HOURS` | Nu | Numărul maxim de ore de ceas pe care o singură rulare de backup îl poate ține blocajul de domeniu înainte de a fi forțat anulată (o gardă astfel încât o rulare blocată să nu poată bloca domeniul la nesfârșit). Gol (implicitul) folosește `48`. Ridică-l pentru backupuri cloud foarte mari sau lente (o rulare anulată la limită eșuează cu `context deadline exceeded`). Setează `0` pentru a dezactiva complet limita. |
+| `BACKUP_STALL_HOURS` | Nu | Orele în care un backup poate să nu facă **niciun progres** înainte de a fi anulat. Gol (implicit) folosește `2`; setează `0` pentru a nu anula niciodată la blocare. Este cea mai fină dintre cele două gărzi și de obicei cea care se declanșează: urmărește dacă se mai întâmplă ceva, nu cât durează rularea, așa că un backup de mai mulți terabytes lent dar sănătos este lăsat în pace, în timp ce unul blocat pe o partajare care nu răspunde este oprit în câteva ore în loc de zile. După 30 de minute de liniște se scrie un avertisment în jurnal, înainte de a anula ceva. Scanarea contează ca progres: restic nu scrie niciun octet cât timp parcurge un arbore mare, iar acea fază este urmărită prin totalurile sale de fișiere și octeți, nu prin octeții scriși. Cele două variabile sunt independente, iar `BACKUP_MAX_HOURS` limitează în continuare fazele de după backupul propriu-zis (retenție, statistici, copie off-site), unde nu există contoare de urmărit. |
 | `DB_DUMP_MAX_HOURS` | Nu | Orele în care un dump automat de bază de date poate rula înainte să fie oprit. Gol (implicit) înseamnă `6`; sunt permise valori de la `1` la `48`, iar limita rămâne cu o oră sub `BACKUP_MAX_HOURS` (la jumătatea acesteia când e sub două ore), astfel încât un dump lung să fie tăiat de propria limită și raportat ca atare, în loc să tragă backupul după el. Un dump care nu mai avansează este oprit mai devreme, după `BACKUP_STALL_HOURS`. Un dump oprit eșuează de unul singur, iar backupul containerului continuă. Pe Unraid adaugi variabila la containerul BombVault cu **Add another Path, Port, Variable**. |
 | `TZ` | Nu | Fusul orar pentru programator (de exemplu `Europe/Berlin`). **Dacă nu este setată, toate programările rulează în UTC**: o programare la 02:30 pornește atunci la 02:30 UTC, nu la ora locală. Pe Unraid nu setați niciodată acest lucru: sistemul transmite propriul fus orar fiecărui container. |
 
@@ -30,7 +31,7 @@ Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/m
 
 Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
-Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Căi de backup**.
+Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**. Fiecare câmp de cale are și un comutator **Local / La distanță** integrat: o cale poate fi un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verificarea integrării cu gazda"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
@@ -62,7 +63,7 @@ Pentru fiecare container, BombVault alege singur ce montări bind și ce volume 
 
 ## Server MCP {#mcp-server}
 
-Serverul MCP nu are nevoie de nicio variabilă de mediu. Îl pornești creând o cheie în **Setări, Sistem, Server MCP**, iar el răspunde la `/mcp` pe același port ca interfața web (de exemplu `https://192.168.1.10:3443/mcp`). Fără o cheie activă, calea răspunde `404`. Clienții, certificatele și limitele sunt descrise în [Server MCP](mcp.md).
+Serverul MCP nu are nevoie de nicio variabilă de mediu. Îl pornești creând o cheie în **Setări, Integrări, Server MCP**, iar el răspunde la `/mcp` pe același port ca interfața web (de exemplu `https://192.168.1.10:3443/mcp`). Fără o cheie activă, calea răspunde `404`. Clienții, certificatele și limitele sunt descrise în [Server MCP](mcp.md).
 
 ## Backup VM prin SSH
 
@@ -70,7 +71,7 @@ BombVault face backup VM-urilor KVM/libvirt **fără a monta vreo cale libvirt**
 
 Configurare rapidă:
 
-1. **Setări, Sistem, SSH al gazdei:** copiază cheia publică afișată.
+1. **Setări, Integrări, SSH al gazdei:** copiază cheia publică afișată.
 2. Adaug-o la `/root/.ssh/authorized_keys` al Unraid (persistată de asemenea în flash astfel încât să supraviețuiască reporniri).
 3. Apasă **Test connection**.
 
@@ -81,16 +82,17 @@ Configurare rapidă:
 
 ## Configurare off-site
 
-Configurează o replică off-site în fila **Setări, Off-site**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
+Configurează o replică off-site în pagina **Setări, Extern**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
 
 - **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Credențialele cloud** sunt stocate criptat sub Setări, Off-site, Credențiale cloud.
-- **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Sistem, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
-- **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort. Depozitul local rămâne principal. Fiecare domeniu are propria programare off-site, plus un buton **Replicate now**.
-- **Mai multe ținte off-site per domeniu:** fiecare domeniu poate replica către mai multe destinații off-site simultan. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere; toate replică conform programării off-site a acelui domeniu. O configurare off-site unică existentă este preluată ca prima țintă.
-- **Retenție per sursă:** politica locală se află în Setări, Căi și Stocare; politica off-site în Setări, Off-site (las-o toată zero pentru a nu tăia niciodată automat instantaneele off-site).
-- **Limite de lățime de bandă:** limitează rata de upload/download restic sub Setări, Off-site.
+- **Credențialele cloud partajate** sunt stocate criptat sub Setări, Acces cloud, Credențiale cloud partajate.
+- **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Integrări, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
+- **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort, pe lângă un depozit primar (de obicei local). Fiecare domeniu are propria programare off-site, plus un buton **Replică acum**.
+- **Mai multe ținte off-site per domeniu:** fiecare domeniu poate replica către mai multe destinații off-site simultan. Adaugă ținte suplimentare în Setări, Extern, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere; toate replică conform programării off-site a acelui domeniu. O configurare off-site unică existentă este preluată ca prima țintă.
+- **Retenție per sursă:** politicile locală și off-site se află ambele în Setări, Retenție (las-o pe cea off-site toată zero pentru a nu tăia niciodată automat instantaneele off-site).
+- **Limite de lățime de bandă:** limitează rata de upload/download restic sub Setări, Extern.
 - **Clasă de stocare la rece și de arhivă (S3):** pentru un depozit off-site S3 nativ, alege un nivel care permite restaurarea (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Remote-urile rclone își setează clasa în configurația rclone.
+- **Primar la distanță în loc de local:** calea de backup a unui domeniu poate fi ea însăși unul dintre backendurile de mai sus, fără copie locală și fără pas de replicare; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories) pentru comutatorul Local/La distanță integrat și setările lui de siguranță (lățime de bandă, append-only, buget de creștere).
 
 ## Anomalii {#anomalies}
 
@@ -107,7 +109,7 @@ Fiecare element poate avea propria sensibilitate și propriul minim de notificar
 
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 
-Cardul **Export și import setări** de pe pagina Setări scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
+Cardul **Export și import setări** de pe pagina Setări, Sistem scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
 
 !!! warning "Exportul poate conține credențiale"
     Alegi dacă incluzi credențialele off-site și de notificare în fișier. Cu credențialele incluse, exportul este la fel de sensibil ca kitul tău de recuperare, deci păstrează-l undeva în siguranță. Fără ele, fișierul conține doar setări nesecrete.

@@ -4,11 +4,11 @@ A helyi mentések megvédenek egy elveszett konténertől vagy egy rossz frissí
 
 ## Telephelyen kívüli replikáció
 
-Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** fülön. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. A helyi tároló marad az elsődleges.
+Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** oldalán. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ebben a felállásban a helyi tároló marad az elsődleges, a telephelyen kívüli pedig egy replika, de egy tartomány elsődleges tárolójának egyáltalán nem kell helyinek lennie; lásd lejjebb a [Távoli elsődleges tárolók](#remote-primary-repositories) szakaszt arról, hogyan menthetsz közvetlenül S3-ra, rest-serverre stb., ahelyett hogy oda replikálnál.
 
 - **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config, fájlkészletek és ZFS-adatkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
 - **Tartományonkénti telephelyen kívüli ütemezés** (minden más ütemezés mellett a Beállítások, Ütemezések alatt szerkesztve): hagyd üresen, hogy minden helyi mentés után replikáljon, vagy állíts be egy ütemet (például `weekly Sun 03:00`), hogy ritkábban szállítson telephelyen kívülre, mint amilyen gyakran helyben mentesz. Egy **Replikálás most** gomb fedi le az igény szerinti futásokat.
-- **A telephelyen kívüli megőrzés** a Beállítások, Telephelyen kívüli alatt él, így a telephelyen kívüli másolatokat archívumként tovább megtarthatod. Hagyd a szabályt mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket.
+- **A telephelyen kívüli megőrzés** a Beállítások, Megőrzés alatt él, így a telephelyen kívüli másolatokat archívumként tovább megtarthatod. Hagyd a szabályt mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket.
 - **A sávszélesség-korlátok** (Beállítások, Telephelyen kívüli) korlátozzák a restic fel- és letöltési sebességét, hogy a replikáció ne telítse a WAN-odat.
 - Egy **replikációs jelző** mutatja, melyik tartomány replikál éppen, amíg fut (a saját oldalán és az irányítópulton). Ez egy aktív jelző, nem egy százalékos sáv, mert a `restic copy` nem tesz közzé géppel olvasható folyamatjelzést.
 
@@ -17,7 +17,7 @@ Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kí
 
 ## Távoli elsődleges tárolók {#remote-primary-repositories}
 
-Egy tartomány mentési útvonala (Beállítások, Útvonalak és tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
+Egy tartomány mentési útvonala (Beállítások, Tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
 
 A hat útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok, ZFS-adatkészletek) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
 
@@ -31,7 +31,15 @@ A hat útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fáj
 Ezek közül semmi sem kötelező: egy kézzel beírt távoli útvonal mentett biztonsági beállítások nélkül pontosan úgy ment, ahogy eddig (korlátlan sávszélesség, nyesehető, nincs keretriasztás). A biztonsági párbeszéd arra az esetre van, amikor ugyanazt a védelmet szeretnéd, amit egy külső telephelyi másolat kap, anélkül hogy pusztán ezért külön külső célt kellene létrehoznod.
 
 !!! note "A felhő- és REST-hitelesítő adatok közösek"
-    Egy távoli elsődleges tároló ugyanazokkal az S3/REST hitelesítő adatokkal azonosít, amelyek a Beállítások, Külső telephely, Felhő hitelesítő adatok alatt vannak beállítva. Az elsődleges tárolóknak nincs külön hitelesítőadat-tárolójuk.
+    Egy távoli elsődleges tároló ugyanazokkal az S3/REST hitelesítő adatokkal azonosít, amelyek a Beállítások, Felhőhozzáférés, Megosztott felhőbeli hitelesítő adatok alatt vannak beállítva. Az elsődleges tárolóknak nincs külön hitelesítőadat-tárolójuk.
+
+### SMB és WebDAV hoszt-csatolás nélkül {#smb-webdav}
+
+A Beállítások, Felhőhozzáférés, rclone alatt van egy űrlap Windows- vagy Samba-megosztáshoz és WebDAV-szerverhez (Nextcloud, ownCloud, SharePoint vagy bármely más). Add meg a rövid nevet, a hosztot és a megosztást (SMB) vagy az URL-t és a szervertípust (WebDAV), a felhasználót és a jelszót, és a BombVault megírja helyetted az rclone szakaszt. A jelszót tárolás előtt maga az rclone homályosítja el; ha már létező névvel adsz hozzá célt, az lecseréli azt a szakaszt, ahelyett hogy egy másodikat adna hozzá.
+
+Az űrlap a kész hellyel válaszol, például `rclone:nas:backups`. Írd ezt egy Mentési útvonalba vagy egy telephelyen kívüli célba, és ha szeretnél, adj hozzá egy almappát (`rclone:nas:backups/bombvault`). A megosztás az útvonal első szakasza, nem a név része.
+
+Ez jobb út, mint a megosztást az Unraidben csatolni: a restic nem javasolja, hogy egy tároló csatolt CIFS-megosztáson legyen, itt pedig semmi sincs csatolva. Az NFS azért nincs az űrlapon, mert sem a resticnek, sem az rclone-nak nincs NFS-backendje; NFS-hez csatold az exportot a hoszton, és irányíts rá egy Mentési útvonalat.
 
 ## Módosíthatatlan (append-only) telephelyen kívüli
 
@@ -68,7 +76,7 @@ A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tarto
 
 A Fogadók, a lehívási források, a Példányok oldal és a Mesh telephelyen kívüli mind egy másik BombVaulttal beszélnek. Ezt egyetlen párosítási csoport tagjaiként teszik, és egy példány tizenkét szóval csatlakozik a csoporthoz.
 
-Az első példányon nyisd meg a **Beállítások → Rendszer** fület, és a párosítókártyákon kattints a **Jelmondat létrehozása** gombra. Megjelenik tizenkét szó egy ablakban, amelyben egy **Másolás** gomb is van. Minden további példányon nyisd meg ugyanazt a helyet, kattints a **Jelmondat megadása** gombra, és illeszd be vagy gépeld be őket, vagy kattints az ablakban a **Beillesztés** gombra. Egy szót, amely nincs a listán, az oldal már gépelés közben megnevez a helyével együtt, az utolsó szó pedig egy ellenőrző összeget hordoz, így egy elgépelt vagy felcserélt szó kiderül, mielőtt bármi párosodna. A jelmondatot csak egyetlen példányon hozd létre: két példány, amely mindkettő jelmondatot hoz létre, két külön csoportot alkot. Ha egy percig senki nem jelentkezik, a fül két kiutat kínál: jelenítsd meg újra a szavakat, hogy ott add meg őket, vagy add meg a másik példány szavait, és csatlakozz a csoportjához egy lépésben. A párosítás bejelentkezési jelszó nélkül is működik, de állíts be egyet: enélkül bárki, aki meg tudja nyitni ezt a webes felületet, elolvashatja a szavakat, és a csoporton keresztül megszerezheti a benne lévő minden példány restic jelszavát. A párosítókártya erre figyelmeztet, amíg nincs beállítva jelszó. Jelszóval a jelmondat újbóli megjelenítése kéri azt. A **Kilépés a csoportból** ismét kivesz egy példányt.
+Az első példányon nyisd meg a **Beállítások → Párosítás** fület, és a párosítókártyákon kattints a **Jelmondat létrehozása** gombra. Megjelenik tizenkét szó egy ablakban, amelyben egy **Másolás** gomb is van. Minden további példányon nyisd meg ugyanazt a helyet, kattints a **Jelmondat megadása** gombra, és illeszd be vagy gépeld be őket, vagy kattints az ablakban a **Beillesztés** gombra. Egy szót, amely nincs a listán, az oldal már gépelés közben megnevez a helyével együtt, az utolsó szó pedig egy ellenőrző összeget hordoz, így egy elgépelt vagy felcserélt szó kiderül, mielőtt bármi párosodna. A jelmondatot csak egyetlen példányon hozd létre: két példány, amely mindkettő jelmondatot hoz létre, két külön csoportot alkot. Ha egy percig senki nem jelentkezik, a fül két kiutat kínál: jelenítsd meg újra a szavakat, hogy ott add meg őket, vagy add meg a másik példány szavait, és csatlakozz a csoportjához egy lépésben. A párosítás bejelentkezési jelszó nélkül is működik, de állíts be egyet: enélkül bárki, aki meg tudja nyitni ezt a webes felületet, elolvashatja a szavakat, és a csoporton keresztül megszerezheti a benne lévő minden példány restic jelszavát. A párosítókártya erre figyelmeztet, amíg nincs beállítva jelszó. Jelszóval a jelmondat újbóli megjelenítése kéri azt. A **Kilépés a csoportból** ismét kivesz egy példányt.
 
 Bárki, aki ismeri a szavakat, csatlakozhat a csoporthoz, ezért kezeld őket jelszóként.
 
@@ -110,7 +118,7 @@ Fent az alkatrészek szerepelnek. Itt egy teljes összeállítás valódi érté
 
 Két gép: a **TOWER** futtatja a konténereket és küldi a mentéseket, a **VAULT** fogadja őket és kikényszeríti a változtathatatlanságot. Cseréld a saját neveidre, címeidre és megosztási útvonalaidra.
 
-**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában menj a *Beállítások → Külső telephely → vezetett beállítás* pontra, válaszd a **rest-server** lehetőséget, és készítsd el a receptet. Másold ki az **Unraid sablon (XML)** fület, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. Az egyszer használatos jelszó egyszer jelenik meg és sosem kerül tárolásra, másold ki most. Az a sor ugyanazt a jelszót hordozza, már bcrypttel kivonatolva: a nyílt szöveg a TOWER REST-hitelesítő adataiba kerül, a kivonatolt sor a VAULT `.htpasswd` fájljába. Neked semmit sem kell kivonatolnod.
+**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában menj a *Beállítások → Telephelyen kívüli → vezetett beállítás* pontra, válaszd a **rest-server** lehetőséget, és készítsd el a receptet. Másold ki az **Unraid sablon (XML)** fület, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. Az egyszer használatos jelszó egyszer jelenik meg és sosem kerül tárolásra, másold ki most. Az a sor ugyanazt a jelszót hordozza, már bcrypttel kivonatolva: a nyílt szöveg a TOWER REST-hitelesítő adataiba kerül, a kivonatolt sor a VAULT `.htpasswd` fájljába. Neked semmit sem kell kivonatolnod.
 
     Hagyd bent a `--append-only` kapcsolót az OPTIONS mezőben. Ez az egésznek a lényege: nélküle a VAULT megint csak egy hétköznapi megosztás.
 
@@ -128,7 +136,7 @@ Az útvonal első szakasza a htpasswd felhasználó, a második a tároló. Add 
 | **NEM védett** | A VAULT elfogadott egy törlést. Hiányzik a `--append-only`, vagy eltávolították. |
 | **nem egyértelmű** | Egyik sem. Általában a cím nem az, amit maga a restic használ, vagy megváltoztak a hitelesítő adatok. Semmi nem kerül rögzítésre, és nem indul riasztás. |
 
-**4. A VAULT gépen nézd meg, mi érkezik.** Párosítsd a két gépet ([Példányok párosítása](#pairing)), kapcsold be a *Beállítások → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon, a TOWER-t megadva küldő példányként.
+**4. A VAULT gépen nézd meg, mi érkezik.** Párosítsd a két gépet ([Példányok párosítása](#pairing)), kapcsold be a *Beállítások → Párosítás → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon, a TOWER-t megadva küldő példányként.
 
 !!! warning "A hely a konténeren **belüli** útvonal, a gazdagép csatolási pontjához képest megadva"
     Ezt add meg: `user/appdata/rest-server/bombvault-containers/containers`, és **ne** ezt: `/mnt/user/appdata/…`. A BombVault konténerben fut, ahol a gazdagép `/mnt` könyvtára máshová van csatolva; abszolút gazdagép-útvonal ott nem létezik. Ha mégis beilleszted, a BombVault mostantól megmondja a helyette használandó relatív útvonalat.
@@ -152,7 +160,7 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 
 ### Visszaállítás egy másik BombVault tárolóból {#restore-from-another-bombvault-repo}
 
-Egy külön kártya a **Helyreállítás** fülön megnyit egy *másik* BombVault-példány tárolóját (egy a `/mnt` alá csatolt megosztás vagy egy távoli URL) **annak a példánynak az `APP_KEY`-ével**, egy egyszeri, csak olvasható munkamenetben. Böngészd az ott tárolt konténereket, VM-eket és fájlkészleteket, válassz egy pillanatképet és állítsd vissza, és a visszaállított objektum normál helyi konténerré, VM-mé vagy fájlkészletté válik. Semmi sem íródik soha a másik tárolóba, és a saját mentési beállításaid érintetlenek maradnak (a munkamenet a memóriában él és magától lejár). Egy konténer áthelyezése az A szerverről a B szerverre többé nem jelenti a tárolóbeállításaid átirányítását és utólagos visszaállítását. Az élő szerver-szerver federáció kifejezetten hatókörön kívüli; ez egy szándékos, egyszeri áthúzás.
+Egy külön kártya a **Helyreállítás** fülön megnyit egy *másik* BombVault-példány tárolóját (egy a `/mnt` alá csatolt megosztás vagy egy távoli URL) **annak a példánynak az `APP_KEY`-ével**, egy egyszeri, csak olvasható munkamenetben. Böngészd az ott tárolt konténereket, VM-eket és fájlkészleteket, válassz egy pillanatképet és állítsd vissza, és a visszaállított objektum normál helyi konténerré, VM-mé vagy fájlkészletté válik. Semmi sem íródik soha a másik tárolóba, és a saját mentési beállításaid érintetlenek maradnak (a munkamenet a memóriában él és magától lejár). Egy konténer áthelyezése az A szerverről a B szerverre nem jelenti a tárolóbeállításaid átirányítását és utólagos visszaállítását. Ez a kártya egyszeri: megnyit egy munkamenetet, visszaállítja, amit kiválasztasz, és elfelejti a másik példányt. Ha ehelyett állandó elrendezést szeretnél, amelyben ez a gép ütemezetten lehívja egy másik példány pillanatképeit a saját tárolójába, arra a **Példányok** oldal **Lehívás** füle való.
 
 ## Titkosításikulcs-helyreállító csomag
 
@@ -165,6 +173,15 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 
 !!! warning "Nem mindig a legújabb pillanatképet kell visszaállítani"
     A restic 0.17 óta a `restic snapshots` minden pillanatkép méretét mutatja. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely sokkal kisebb az előzőeknél. Zsarolóvírus után lehet a titkosított, szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzés szüneteltetése mindig csak több pillanatképet tart meg.
+
+### A csomag lezárása
+
+Ha bekapcsoltad az age-titkosítást az egyszerű exportokhoz (Beállítások), a csomag is le lesz vele zárva, és `bombvault-recovery-kit.md.age` néven töltődik le. Bináris helyett ASCII-armored formátumú, így továbbra is sima szöveg: jelszókezelőbe illesztése vagy kinyomtatása pontosan úgy működik, mint eddig, csak a tartalma olvashatatlan a kulcsod nélkül.
+
+!!! warning "Ne tárold az age-kulcsot a csomagban"
+    Egy lezárt csomag megnyitásához szükséged van az age **privát** kulcsodra. Olyan helyen tartsd, amely nem magától a csomagtól függ, különben egy helyett két dolgot kell majd helyreállítanod. A lezárás akkor éri meg, ha a csomag olyan helyen van, amely felett nincs teljes ellenőrzésed (megosztott jelszókezelő, felhős jegyzetek, egy kinyomtatott példány egy irodában); a saját széfedben lévő csomagot már a széf védi.
+
+    Bekapcsolt titkosítás és beállított, használható címzett nélkül a letöltést a BombVault eleve elutasítja. Soha nem tér át arra, hogy a mesterkulcsot nyílt szövegként adja ki.
 
 ### Ha a csomag épp nincs kéznél
 

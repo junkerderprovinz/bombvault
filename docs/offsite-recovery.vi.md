@@ -4,11 +4,11 @@ Các bản sao lưu cục bộ bảo vệ bạn khỏi một container bị mấ
 
 ## Nhân bản off-site
 
-Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên tab **Settings, Off-site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kho cục bộ vẫn là chính.
+Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên trang **Settings, Off-site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Ở dạng này kho cục bộ vẫn là chính và kho off-site là một bản sao, nhưng kho chính của một miền hoàn toàn không cần phải là cục bộ; xem [Kho chính từ xa](#remote-primary-repositories) bên dưới để sao lưu thẳng tới S3/rest-server/v.v. thay vì nhân bản tới đó.
 
 - **Nhiều đích off-site cho mỗi miền.** Mỗi miền (container, VM, flash, config, bộ tập tin và tập dữ liệu ZFS) có thể nhân bản tới nhiều đích off-site cùng lúc, không chỉ một, nên bạn có thể giữ, ví dụ, một rest-server trên máy của một người bạn và một S3 bucket song song. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng. Một thiết lập off-site đơn hiện có được chuyển sang nguyên vẹn làm đích đầu tiên, và mọi đích của một miền đều nhân bản theo lịch trình off-site của miền đó.
 - **Lịch trình off-site theo từng miền** (được chỉnh cùng với mọi lịch trình khác trên Settings, Schedules): để trống để nhân bản sau mỗi lần sao lưu cục bộ, hoặc đặt một nhịp độ (ví dụ `weekly Sun 03:00`) để gửi off-site ít thường xuyên hơn tần suất bạn sao lưu cục bộ. Một nút **Replicate now** lo các lần chạy theo yêu cầu.
-- **Lưu giữ off-site** nằm trên Settings, Off-site để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
+- **Lưu giữ off-site** nằm trên Settings, Retention để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
 - **Giới hạn băng thông** (Settings, Off-site) giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
 - Một **chỉ báo nhân bản** hiển thị miền nào đang nhân bản trong khi nó chạy (trên trang của nó và bảng điều khiển). Đó là một chỉ báo hoạt động, không phải một thanh phần trăm, vì `restic copy` không phơi bày tiến độ đọc được bằng máy.
 
@@ -17,7 +17,7 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 
 ## Kho chính từ xa {#remote-primary-repositories}
 
-Đường dẫn sao lưu của một miền (Cài đặt, Đường dẫn và lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
+Đường dẫn sao lưu của một miền (Cài đặt, Lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
 
 Mỗi trong sáu ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, Tệp, Tập dữ liệu ZFS) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
 
@@ -31,7 +31,15 @@ Mỗi trong sáu ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, T
 Không điều nào trong số này là bắt buộc: một đường dẫn từ xa gõ tay, không lưu thiết lập an toàn nào, vẫn sao lưu y như trước (băng thông không giới hạn, cắt tỉa được, không cảnh báo ngân sách). Hộp thoại an toàn có ở đó cho lúc bạn muốn đúng những lớp bảo vệ mà một bản sao ngoại vi nhận được, mà không phải tạo riêng một đích ngoại vi chỉ để có chúng.
 
 !!! note "Thông tin đăng nhập đám mây và REST dùng chung"
-    Kho chính từ xa xác thực bằng đúng thông tin đăng nhập S3/REST đã cấu hình ở Cài đặt, Ngoại vi, Thông tin đăng nhập đám mây. Không có kho thông tin đăng nhập riêng cho các kho chính.
+    Kho chính từ xa xác thực bằng đúng thông tin đăng nhập S3/REST đã cấu hình ở Cài đặt, Truy cập đám mây, Thông tin đăng nhập đám mây dùng chung. Không có kho thông tin đăng nhập riêng cho các kho chính.
+
+### SMB và WebDAV không cần gắn kết trên máy chủ {#smb-webdav}
+
+Cài đặt, Truy cập đám mây, rclone có một biểu mẫu cho share Windows hoặc Samba và cho máy chủ WebDAV (Nextcloud, ownCloud, SharePoint hoặc bất kỳ loại nào khác). Điền một tên ngắn, máy chủ và share (SMB) hoặc URL và loại máy chủ (WebDAV), người dùng và mật khẩu, rồi BombVault sẽ viết phần cấu hình rclone cho bạn. rclone tự làm rối mật khẩu trước khi nó được lưu; thêm một đích có tên đã tồn tại sẽ thay thế phần đó thay vì thêm một phần thứ hai.
+
+Biểu mẫu trả về vị trí hoàn chỉnh, ví dụ `rclone:nas:backups`. Đặt nó vào một Backup Path hoặc một đích off-site và thêm một thư mục con nếu muốn (`rclone:nas:backups/bombvault`). Share là đoạn đường dẫn đầu tiên, không phải một phần của tên.
+
+Đây là cách tốt hơn so với gắn kết share trên Unraid: restic khuyên không nên đặt kho trên một share CIFS được gắn kết, và ở đây không có gì được gắn kết. NFS không có trong biểu mẫu vì cả restic lẫn rclone đều không có backend NFS; với NFS, hãy gắn kết export trên máy chủ và trỏ một Backup Path tới đó.
 
 ## Off-site bất biến (append-only)
 
@@ -68,7 +76,7 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 
 Bộ nhận, nguồn Kéo về, trang Phiên bản và Mesh off-site đều nói chuyện với một BombVault khác. Chúng làm vậy với tư cách thành viên của một nhóm ghép nối, và một phiên bản gia nhập nhóm bằng mười hai từ.
 
-Trên phiên bản đầu tiên, mở **Cài đặt → Hệ thống** rồi nhấn **Tạo cụm từ** trong các thẻ ghép nối. Mười hai từ hiện ra trong một cửa sổ có nút **Sao chép**. Trên mọi phiên bản khác, mở cùng chỗ đó, nhấn **Nhập cụm từ** rồi dán hoặc gõ các từ vào, hoặc nhấn **Dán** trong cửa sổ đó. Một từ không có trong danh sách sẽ được nêu tên cùng vị trí của nó ngay khi bạn gõ, và từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện trước khi việc ghép nối xảy ra. Chỉ tạo cụm từ trên một phiên bản duy nhất: hai phiên bản mà cả hai đều tạo cụm từ sẽ tạo thành hai nhóm riêng biệt. Nếu không ai xuất hiện trong một phút, tab sẽ đưa ra hai cách thoát: hiện lại các từ để nhập chúng ở phía bên kia, hoặc nhập các từ của phiên bản kia và tham gia nhóm của nó trong một bước. Việc ghép nối vẫn hoạt động khi không có mật khẩu đăng nhập, nhưng hãy đặt một mật khẩu: nếu không, bất kỳ ai mở được giao diện web này đều có thể đọc các từ đó và, thông qua nhóm, lấy được mật khẩu restic của mọi phiên bản trong nhóm. Thẻ ghép nối sẽ nhắc điều này cho đến khi mật khẩu được đặt. Khi đã có mật khẩu, việc hiện lại cụm từ sẽ hỏi mật khẩu đó. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
+Trên phiên bản đầu tiên, mở **Cài đặt → Ghép nối** rồi nhấn **Tạo cụm từ** trong các thẻ ghép nối. Mười hai từ hiện ra trong một cửa sổ có nút **Sao chép**. Trên mọi phiên bản khác, mở cùng chỗ đó, nhấn **Nhập cụm từ** rồi dán hoặc gõ các từ vào, hoặc nhấn **Dán** trong cửa sổ đó. Một từ không có trong danh sách sẽ được nêu tên cùng vị trí của nó ngay khi bạn gõ, và từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện trước khi việc ghép nối xảy ra. Chỉ tạo cụm từ trên một phiên bản duy nhất: hai phiên bản mà cả hai đều tạo cụm từ sẽ tạo thành hai nhóm riêng biệt. Nếu không ai xuất hiện trong một phút, tab sẽ đưa ra hai cách thoát: hiện lại các từ để nhập chúng ở phía bên kia, hoặc nhập các từ của phiên bản kia và tham gia nhóm của nó trong một bước. Việc ghép nối vẫn hoạt động khi không có mật khẩu đăng nhập, nhưng hãy đặt một mật khẩu: nếu không, bất kỳ ai mở được giao diện web này đều có thể đọc các từ đó và, thông qua nhóm, lấy được mật khẩu restic của mọi phiên bản trong nhóm. Thẻ ghép nối sẽ nhắc điều này cho đến khi mật khẩu được đặt. Khi đã có mật khẩu, việc hiện lại cụm từ sẽ hỏi mật khẩu đó. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
 
 Bất kỳ ai biết các từ đó đều có thể gia nhập nhóm, nên hãy coi chúng như một mật khẩu.
 
@@ -128,7 +136,7 @@ Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nh
 | **KHÔNG được bảo vệ** | VAULT đã chấp nhận một lệnh xóa. Thiếu `--append-only` hoặc nó đã bị bỏ đi. |
 | **không kết luận được** | Không thuộc trường hợp nào. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
 
-**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
+**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Ghép nối → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
 
 !!! warning "Vị trí là đường dẫn **bên trong** container, viết tương đối so với điểm gắn của máy chủ"
     Nhập `user/appdata/rest-server/bombvault-containers/containers`, **không phải** `/mnt/user/appdata/…`. BombVault chạy trong container, nơi `/mnt` của máy chủ được gắn ở chỗ khác; đường dẫn tuyệt đối của máy chủ không tồn tại bên trong. Nếu bạn dán vào, BombVault nay sẽ cho biết đường dẫn tương đối cần dùng.
@@ -152,7 +160,7 @@ Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới hoặc
 
 ### Khôi phục từ một kho BombVault khác {#restore-from-another-bombvault-repo}
 
-Một thẻ riêng trên tab **Recovery** mở kho của một phiên bản BombVault *khác* (một share được gắn kết dưới `/mnt`, hoặc một URL từ xa) bằng **`APP_KEY` của phiên bản đó**, trong một phiên chỉ đọc, dùng một lần. Duyệt các container, VM và bộ tập tin được lưu ở đó, chọn một snapshot và khôi phục nó, và đối tượng đã khôi phục trở thành một container, VM hay bộ tập tin cục bộ bình thường. Không có gì bao giờ được ghi vào kho kia, và các cài đặt sao lưu của chính bạn giữ nguyên không bị đụng (phiên sống trong bộ nhớ và tự hết hạn). Chuyển một container từ máy chủ A sang máy chủ B không còn có nghĩa là trỏ lại cài đặt kho của bạn rồi hoàn nguyên chúng sau đó. Liên kết máy-chủ-với-máy-chủ trực tiếp được rõ ràng nằm ngoài phạm vi; đây là một lần kéo một phát có chủ đích.
+Một thẻ riêng trên tab **Recovery** mở kho của một phiên bản BombVault *khác* (một share được gắn kết dưới `/mnt`, hoặc một URL từ xa) bằng **`APP_KEY` của phiên bản đó**, trong một phiên chỉ đọc, dùng một lần. Duyệt các container, VM và bộ tập tin được lưu ở đó, chọn một snapshot và khôi phục nó, và đối tượng đã khôi phục trở thành một container, VM hay bộ tập tin cục bộ bình thường. Không có gì bao giờ được ghi vào kho kia, và các cài đặt sao lưu của chính bạn giữ nguyên không bị đụng (phiên sống trong bộ nhớ và tự hết hạn). Chuyển một container từ máy chủ A sang máy chủ B không còn có nghĩa là trỏ lại cài đặt kho của bạn rồi hoàn nguyên chúng sau đó. Thẻ này chỉ dùng một lần: nó mở một phiên, khôi phục những gì bạn chọn, rồi quên phiên bản kia. Nếu bạn muốn một sắp xếp lâu dài thay vào đó, trong đó máy này lấy các snapshot của một phiên bản khác về kho của chính nó theo lịch, thì đó là tab **Kéo về** của trang **Phiên bản**.
 
 ## Bộ khôi phục khóa mã hóa
 
@@ -165,6 +173,15 @@ Một cú nhấp tải xuống **khóa chính**, **mật khẩu restic dẫn xu�
 
 !!! warning "Snapshot mới nhất không phải lúc nào cũng là cái nên khôi phục"
     Từ restic 0.17, `restic snapshots` hiển thị kích thước của mỗi snapshot. Sau khi mất dữ liệu, snapshot mới nhất có thể là cái đã bị làm trống, vì vậy đừng khôi phục một snapshot nhỏ hơn nhiều so với các snapshot trước nó. Sau ransomware, đó có thể là cái đã bị mã hóa với kích thước bình thường. Nếu BombVault vẫn chạy, hãy xem trang **Bất thường** trước: trang này nêu bản sao lưu tốt cuối cùng. Việc khôi phục không cần dữ liệu bất thường nào của BombVault, và việc tạm dừng lưu giữ chỉ giữ lại nhiều snapshot hơn.
+
+### Niêm phong bộ khôi phục
+
+Nếu bạn đã bật mã hóa age cho các bản xuất thô (Cài đặt), bộ khôi phục cũng được niêm phong bằng nó và được tải xuống dưới dạng `bombvault-recovery-kit.md.age`. Nó ở dạng ASCII-armored chứ không phải nhị phân, nên vẫn là văn bản thô: dán vào trình quản lý mật khẩu hay in ra vẫn hoạt động y như trước, chỉ là nội dung không đọc được nếu không có khóa của bạn.
+
+!!! warning "Đừng cất khóa age bên trong bộ khôi phục"
+    Bạn cần khóa **riêng** age để mở một bộ khôi phục đã niêm phong. Hãy cất nó ở nơi không phụ thuộc vào chính bộ khôi phục, nếu không bạn sẽ có hai thứ phải khôi phục thay vì một. Niêm phong đáng làm khi bộ khôi phục được cất ở nơi bạn không hoàn toàn kiểm soát (một trình quản lý mật khẩu dùng chung, ghi chú trên đám mây, một bản in ở văn phòng); một bộ khôi phục trong két sắt của chính bạn đã được két sắt bảo vệ.
+
+    Khi bật mã hóa mà không cấu hình người nhận dùng được, việc tải xuống bị từ chối thẳng. BombVault không bao giờ quay về giao khóa chính dưới dạng văn bản rõ.
 
 ### Khi không có bộ khôi phục trong tay
 

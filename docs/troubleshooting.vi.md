@@ -18,7 +18,7 @@ BombVault phục vụ HTTPS ngay từ đầu trên cổng `3443` (chứng chỉ 
 
 Sao lưu VM kết nối libvirt qua SSH, không bao giờ qua một điểm gắn kết.
 
-- Xác nhận SSH được bật trên máy chủ và khóa công khai của BombVault được ủy quyền trong `/root/.ssh/authorized_keys` (Settings, System, Host SSH hiển thị khóa và một nút **Test connection**).
+- Xác nhận SSH được bật trên máy chủ và khóa công khai của BombVault được ủy quyền trong `/root/.ssh/authorized_keys` (Settings, Integrations, Host SSH hiển thị khóa và một nút **Test connection**).
 - Trên một mạng `br0.x` tùy chỉnh, đặt `LIBVIRT_HOST` thành IP LAN Unraid của bạn (container không thể tiếp cận máy chủ qua `host.docker.internal` ở đó). Bật **Settings, Docker, Host access to custom networks**.
 - Nếu bạn đã đổi cổng SSH của Unraid, đặt `LIBVIRT_SSH_PORT` cho khớp.
 - Chẩn đoán từng bước đầy đủ (kiểm tra khả năng tiếp cận, định tuyến VLAN, `Permission denied (publickey)`, `Host key verification failed`) nằm trong [hướng dẫn Sao lưu VM qua SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và 
 
 ## Một lần sao lưu thất bại với "repository is already locked"
 
-Đây thường là một khóa restic mồ côi bị bỏ lại khi container được cập nhật hoặc khởi động lại giữa chừng thao tác. BombVault phát hiện một khóa mồ côi được chứng minh, xóa cưỡng bức nó và thử lại một lần, tự động. Nếu nó cứ dai dẳng, dùng **Settings, Integrity & maintenance, Unlock** cho miền bị ảnh hưởng để xóa một khóa bị kẹt bằng tay. Một vấn đề thực sự vẫn hiện ra thay vì bị ẩn đi. Sau khi khởi động lại, BombVault chờ đến khi khóa đó đã mười phút không được làm mới. Một restic vẫn đang chạy, chẳng hạn trong một BombVault thứ hai trên cùng kho lưu trữ, làm mới khóa của nó mỗi năm phút.
+Đây thường là một khóa restic mồ côi bị bỏ lại khi container được cập nhật hoặc khởi động lại giữa chừng thao tác. BombVault phát hiện một khóa mồ côi được chứng minh, xóa cưỡng bức nó và thử lại một lần, tự động. Nếu nó cứ dai dẳng, dùng **Settings, Integrity, Unlock** cho miền bị ảnh hưởng để xóa một khóa bị kẹt bằng tay. Một vấn đề thực sự vẫn hiện ra thay vì bị ẩn đi. Sau khi khởi động lại, BombVault chờ đến khi khóa đó đã mười phút không được làm mới. Một restic vẫn đang chạy, chẳng hạn trong một BombVault thứ hai trên cùng kho lưu trữ, làm mới khóa của nó mỗi năm phút.
 
 ## Bản sao off-site của tôi đã không diễn ra sau một lần sao lưu
 
-Nhân bản off-site theo thiết kế là nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kiểm tra lịch trình off-site cho miền đó (Settings, Schedules): một lịch trình trống sẽ nhân bản sau mỗi lần sao lưu cục bộ, trong khi một nhịp độ sẽ gửi ít thường xuyên hơn. Dùng **Replicate now** trên tab Off-site cho một lần chạy theo yêu cầu, và theo dõi chỉ báo nhân bản trên bảng điều khiển.
+Nhân bản off-site theo thiết kế là nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kiểm tra lịch trình off-site cho miền đó (Settings, Schedules): một lịch trình trống sẽ nhân bản sau mỗi lần sao lưu cục bộ, trong khi một nhịp độ sẽ gửi ít thường xuyên hơn. Dùng **Replicate now** trên trang Off-site cho một lần chạy theo yêu cầu, và theo dõi chỉ báo nhân bản trên bảng điều khiển.
 
 ## Một lần khôi phục đã hủy trước khi nó bắt đầu
 

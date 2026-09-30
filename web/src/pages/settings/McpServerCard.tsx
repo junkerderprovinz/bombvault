@@ -635,7 +635,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                           tone="neutral"
                           onClick={() => setPending({ kind: "rotate", item: k })}
                           disabled={busy}
-                          className={shake[`rotate:${k.id}`] ? "glim-shake" : ""}
+                          className={`glim-btn-wrap${shake[`rotate:${k.id}`] ? " glim-shake" : ""}`}
                           hueIndex={hueIndex}
                         />
                       )}

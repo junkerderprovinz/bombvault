@@ -1,6 +1,6 @@
 # Konfiguration
 
-Den här sidan täcker containerns miljövariabler, monteringarna som mallen tillhandahåller, VM-säkerhetskopiering över SSH och off-site-uppsättningen. Säkerhetskopieringens **repository-sökvägar** konfigureras inuti appen (Inställningar, Säkerhetskopiesökvägar), inte via miljövariabler.
+Den här sidan täcker containerns miljövariabler, monteringarna som mallen tillhandahåller, VM-säkerhetskopiering över SSH och off-site-uppsättningen. Säkerhetskopieringens **repository-sökvägar** konfigureras inuti appen (Inställningar, Lagring, Säkerhetskopiesökvägar), inte via miljövariabler.
 
 ## Miljövariabler
 
@@ -21,6 +21,7 @@ Den här sidan täcker containerns miljövariabler, monteringarna som mallen til
 | `PLATFORM` | Nej | Tvingar vilken plattform BombVault uppfattar sig själv som att köra på, i stället för att identifiera den automatiskt: `unraid`, `generic` eller `truenas` (standard inte satt: identifierar Unraid automatiskt genom att sondera efter dess `dockerMan`-markör under flash-monteringen, annars `generic`; ett okänt värde faller också tillbaka till `generic`, vilket loggas). Sätt den explicit på en generisk Docker-värd eller TrueNAS Scale i stället för att förlita dig på den Unraid-specifika autosonderingen, vilket den generiska compose-filen gör. Ändrar reservkonventionen för appdata, standardmålen för återställning mellan instanser, och om de Unraid-specifika stegen för aviseringar och kompanjonsplugin ens försöks (se `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nej | Namnet på själva BombVault-containern, så att den aldrig säkerhetskopierar (och därmed stoppar) sig själv. |
 | `BACKUP_MAX_HOURS` | Nej | Maximalt antal väggklockstimmar en enskild säkerhetskopieringskörning får hålla sitt domänlås innan den tvingas avbrytas (ett skydd så att en fastnad körning inte kan blockera domänen för alltid). Tomt (standard) använder `48`. Höj det för mycket stora eller långsamma molnsäkerhetskopior (en körning som avbryts vid taket misslyckas med `context deadline exceeded`). Sätt `0` för att inaktivera taket helt. |
+| `BACKUP_STALL_HOURS` | Nej | Timmar en säkerhetskopiering får gå **helt utan framsteg** innan den avbryts. Tomt (standard) använder `2`; sätt `0` för att aldrig avbryta vid stillastående. Det här är det finare av de två skydden och oftast det som slår till: det bevakar om något fortfarande händer, inte hur länge körningen har pågått, så en långsam men frisk säkerhetskopiering på flera terabyte lämnas i fred, medan en som har fastnat på en resurs som inte svarar stoppas efter timmar i stället för dagar. En varning loggas efter 30 minuters tystnad, innan något avbryts. Skanning räknas som framsteg: restic skriver inga byte medan det går igenom ett stort träd, och den fasen bevakas via summorna för filer och byte i stället för via skrivna byte. De två variablerna är oberoende av varandra, och `BACKUP_MAX_HOURS` begränsar fortfarande faserna efter själva säkerhetskopieringen (gallring, statistik, off-site-kopia), där det inte finns några räknare att bevaka. |
 | `DB_DUMP_MAX_HOURS` | Nej | Timmar som en automatisk databasdump får köra innan den stoppas. Tomt (standard) använder `6`; tillåtna värden är `1` till `48`, och gränsen hålls en timme under `BACKUP_MAX_HOURS` (på hälften av den när den är under två timmar), så att en lång dump kapas av sin egen gräns och rapporteras som det i stället för att dra med sig säkerhetskopian. En dump som slutar göra framsteg stoppas tidigare, efter `BACKUP_STALL_HOURS`. En stoppad dump misslyckas för sig själv och containerns säkerhetskopiering fortsätter. På Unraid lägger du till variabeln på BombVault-containern med **Add another Path, Port, Variable**. |
 | `TZ` | Nej | Tidszon för schemaläggaren (till exempel `Europe/Berlin`). **Om den inte anges körs alla scheman i UTC**: ett schema satt till 02:30 startar då 02:30 UTC och inte enligt lokal tid. På Unraid ställer du aldrig in detta själv: systemet skickar sin egen tidszon till varje container. |
 
@@ -30,7 +31,7 @@ Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som 
 
 Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
 
-Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Säkerhetskopiesökvägar**.
+Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Lagring, Säkerhetskopiesökvägar**. Varje sökvägsfält har också en omkopplare **Lokal / Fjärran** alldeles intill: en sökväg kan vara en restic-fjärr (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stället för en lokal mapp, och då säkerhetskopieras det direkt dit utan separat lokal kopia; se [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.
@@ -62,7 +63,7 @@ För varje container väljer BombVault själv vilka bind-monteringar och namngiv
 
 ## MCP-server {#mcp-server}
 
-MCP-servern behöver ingen miljövariabel. Du slår på den genom att skapa en nyckel under **Inställningar, System, MCP-server**, och den svarar på `/mcp` på samma port som webbgränssnittet (till exempel `https://192.168.1.10:3443/mcp`). Utan en aktiv nyckel svarar den sökvägen med `404`. Klienter, certifikat och gränser beskrivs på [MCP-server](mcp.md).
+MCP-servern behöver ingen miljövariabel. Du slår på den genom att skapa en nyckel under **Inställningar, Integrationer, MCP-server**, och den svarar på `/mcp` på samma port som webbgränssnittet (till exempel `https://192.168.1.10:3443/mcp`). Utan en aktiv nyckel svarar den sökvägen med `404`. Klienter, certifikat och gränser beskrivs på [MCP-server](mcp.md).
 
 ## VM-säkerhetskopiering över SSH
 
@@ -70,7 +71,7 @@ BombVault säkerhetskopierar KVM/libvirt-VM:ar **utan att montera någon libvirt
 
 Snabbuppsättning:
 
-1. **Inställningar, System, Värd-SSH:** kopiera den visade publika nyckeln.
+1. **Inställningar, Integrationer, Värd-SSH:** kopiera den visade publika nyckeln.
 2. Lägg till den i Unraids `/root/.ssh/authorized_keys` (även bevarad till flashen så att den överlever omstarter).
 3. Klicka på **Testa anslutning**.
 
@@ -81,16 +82,17 @@ Mallen lägger till `--add-host=host.docker.internal:host-gateway` så att conta
 
 ## Off-site-uppsättning
 
-Sätt upp en off-site-replik på fliken **Inställningar, Off-site**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
+Sätt upp en off-site-replik på sidan **Inställningar, Off-site**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
 
 - **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
-- **Molnuppgifter** lagras krypterade under Inställningar, Off-site, Molnuppgifter.
-- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, System, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
-- **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis. Det lokala repot förblir primärt. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
+- **Delade molnautentiseringsuppgifter** lagras krypterade under Inställningar, Molnåtkomst, Delade molnautentiseringsuppgifter.
+- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, Integrationer, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
+- **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis, ovanpå ett (oftast lokalt) primärt repo. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
 - **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
-- **Retention per källa:** den lokala policyn finns under Inställningar, Sökvägar och lagring; off-site-policyn under Inställningar, Off-site (lämna den helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
+- **Retention per källa:** både den lokala och off-site-policyn finns under Inställningar, Bevarande (lämna off-site-policyn helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
 - **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Off-site.
 - **Kall och arkivlagringsklass (S3):** för ett native S3-off-site-repo, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
+- **Fjärrprimärt i stället för lokalt:** en domäns säkerhetskopieringssökväg kan själv vara en av backenderna ovan, utan lokal kopia och utan replikeringssteg. Omkopplaren Lokal/Fjärran vid fältet och dess säkerhetsinställningar för bandbredd, append-only och tillväxtbudget beskrivs under [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
 
 ## Avvikelser {#anomalies}
 
@@ -107,7 +109,7 @@ Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ i
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 
-Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
+Kortet **Exportera och importera inställningar** på sidan Inställningar, System skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
 
 !!! warning "Exporten kan innehålla uppgifter"
     Du väljer om off-site- och aviseringsuppgifterna ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.

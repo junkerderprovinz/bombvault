@@ -625,7 +625,7 @@ export function AnomaliesCard({
       ) : !summary.enabled ? (
         <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
           <p>{t("anomaly.off")}</p>
-          <Link to="/settings#anomalies" className="text-accentText hover:underline">
+          <Link to="/settings/integrity#anomalies" className="text-accentText hover:underline">
             {t("anomaly.openSettings")}
           </Link>
           {open.length > 0 && (
@@ -1271,7 +1271,7 @@ export function RansomwareCard({
                           // colour + hover underline already signals both
                           // "this is wrong" and "this is clickable" without
                           // breaking row alignment.
-                          <Link to="/settings#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0 pointer-coarse:py-3">
+                          <Link to="/settings/offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0 pointer-coarse:py-3">
                             {row.label}
                           </Link>
                         ) : (

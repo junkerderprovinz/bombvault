@@ -1,13 +1,13 @@
 # Configuração
 
-Esta página cobre as variáveis de ambiente do container, as montagens que o template fornece, o backup de VMs por SSH e a configuração do externo. Os **caminhos de repositório** de backup são configurados dentro da aplicação (Definições, Caminhos de backup), não através de variáveis de ambiente.
+Esta página cobre as variáveis de ambiente do container, as montagens que o template fornece, o backup de VMs por SSH e a configuração do externo. Os **caminhos de repositório** de backup são configurados dentro da aplicação (Definições, Armazenamento, Caminhos de backup), não através de variáveis de ambiente.
 
 ## Variáveis de ambiente
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `APP_KEY` | **Sim** | Segredo hexadecimal de 32 bytes (64 caracteres hex) usado para derivar a palavra-passe do repo restic. Gere com `openssl rand -hex 32`. Guarde-a em segurança: perdê-la torna os backups encriptados irrecuperáveis. |
-| `LIBVIRT_HOST` | Para VMs | Host do Unraid alcançado por SSH para o backup de VMs (predefinição `host.docker.internal`; o template pré-preenche um placeholder de IP LAN). Use o IP LAN do seu Unraid, obrigatório numa rede `br0.x` personalizada. Também usado pelas cópias de conjuntos de dados ZFS (campo do template **Host SSH: Address**); o marcador `192.168.x.x` conta como não definido. |
+| `LIBVIRT_HOST` | Para VMs e conjuntos de dados ZFS | Host do Unraid alcançado por SSH para o backup de VMs (predefinição `host.docker.internal`; o template pré-preenche um placeholder de IP LAN). Use o IP LAN do seu Unraid, obrigatório numa rede `br0.x` personalizada. Também usado pelas cópias de conjuntos de dados ZFS (campo do template **Host SSH: Address**); o marcador `192.168.x.x` conta como não definido. |
 | `LIBVIRT_SSH_PORT` | Não | Porta SSH do host para o backup de VMs (predefinição `22`). Campo do template **Host SSH: Port**, também para conjuntos de dados ZFS. |
 | `LIBVIRT_SSH_USER` | Não | Utilizador SSH no host para o backup de VMs (predefinição `root`). Campo do template **Host SSH: User**, também para conjuntos de dados ZFS. |
 | `LIBVIRT_URI` | Não | URI de ligação libvirt completo, usado **textualmente** em vez de o construir a partir das três variáveis `LIBVIRT_*` acima (que são então ignoradas para a string de ligação). Não definido por predefinição. Necessário no TrueNAS Scale, cujo libvirtd escuta num socket não padrão que a forma construída não consegue exprimir: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Consulte a secção do TrueNAS Scale em [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Se for um URI `qemu+ssh://`, cada uma de `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` e `LIBVIRT_SSH_PORT` que não esteja definida é tirada dele, também para os próprios comandos SSH do BombVault (transferência de NVRAM, conjuntos de dados ZFS). |
@@ -21,7 +21,8 @@ Esta página cobre as variáveis de ambiente do container, as montagens que o te
 | `PLATFORM` | Não | Força a plataforma que o BombVault assume estar a correr, em vez de a detetar automaticamente: `unraid`, `generic` ou `truenas` (não definido por predefinição, deteta automaticamente o Unraid ao procurar o seu marcador `dockerMan` sob a montagem flash, caso contrário `generic`; um valor não reconhecido também recai em `generic`, registado no log). Defina-o explicitamente num host Docker genérico ou no TrueNAS Scale em vez de depender da autodeteção exclusiva do Unraid, o ficheiro compose genérico já faz isto. Altera a convenção de recurso de appdata, as predefinições de destino de restauro entre instâncias, e se os passos de notificação/plugin complementar exclusivos do Unraid sequer são tentados (ver `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Não | O nome do próprio container BombVault, para que nunca faça backup (e assim pare) de si próprio. |
 | `BACKUP_MAX_HOURS` | Não | Máximo de horas de relógio que uma única execução de backup pode reter o bloqueio do seu domínio antes de ser forçada a cancelar (uma salvaguarda para que uma execução encravada não possa bloquear o domínio para sempre). Vazio (a predefinição) usa `48`. Aumente-o para backups em nuvem muito grandes ou lentos (uma execução cancelada no limite falha com `context deadline exceeded`). Defina `0` para desativar o limite por completo. |
-| `DB_DUMP_MAX_HOURS` | Não | Horas que um dump automático de base de dados pode correr antes de ser parado. Vazio (a predefinição) usa `6`; são aceites valores de `1` a `48`, e o limite fica uma hora abaixo de `BACKUP_MAX_HOURS` (em metade dele quando este é inferior a duas horas), para que um dump longo seja cortado pelo seu próprio limite e relatado como tal, em vez de levar o backup atrás. Um dump que deixa de avançar é parado mais cedo, ao fim de `BACKUP_STALL_HOURS`. Um dump parado falha por si e o backup do container continua. No Unraid, acrescenta a variável ao container BombVault com **Add another Path, Port, Variable**. |
+| `BACKUP_STALL_HOURS` | Não | Horas que um backup pode passar **sem qualquer progresso** antes de ser cancelado. Vazio (a predefinição) usa `2`; defina `0` para nunca cancelar por paragem. É a mais fina das duas salvaguardas e normalmente a que dispara: observa se ainda está a acontecer alguma coisa em vez de quanto tempo a execução já leva, por isso um backup de vários terabytes lento mas saudável é deixado em paz, enquanto um encravado numa partilha que não responde é parado em horas em vez de dias. É registado um aviso após 30 minutos de silêncio, antes de qualquer cancelamento. A análise conta como progresso: o restic não escreve bytes enquanto percorre uma árvore grande, e essa fase é vigiada através dos seus totais de ficheiros e bytes em vez dos bytes escritos. As duas variáveis são independentes, e `BACKUP_MAX_HOURS` continua a limitar as fases depois do backup propriamente dito (retenção, estatísticas, cópia externa), onde não há contadores para vigiar. |
+| `DB_DUMP_MAX_HOURS` | Não | Horas que um dump automático de base de dados pode correr antes de ser parado. Vazio (a predefinição) usa `6`; são aceites valores de `1` a `48`, e o limite fica uma hora abaixo de `BACKUP_MAX_HOURS` (em metade dele quando este é inferior a duas horas), para que um dump longo seja cortado pelo seu próprio limite e relatado como tal, em vez de levar o backup atrás. Um dump que deixa de avançar é parado mais cedo, ao fim de `BACKUP_STALL_HOURS`. Um dump parado falha por si e o backup do container continua. No Unraid, acrescente a variável ao container BombVault com **Add another Path, Port, Variable**. |
 | `TZ` | Não | Fuso horário para o agendador (por exemplo `Europe/Berlin`). **Se não for definido, todos os agendamentos são executados em UTC**: um agendamento às 02:30 é então iniciado às 02:30 UTC e não na hora local. No Unraid você nunca define isto: o sistema passa o próprio fuso horário para cada contêiner. |
 
 ## Montagens
@@ -30,7 +31,7 @@ Monte o socket Docker, o flash (`/boot`) e a raiz **Host Data** (`/mnt`) como mo
 
 As cópias de conjuntos de dados ZFS também precisam deste modo: o host só monta o instantâneo de um conjunto depois de o container ter arrancado. Veja [Conjuntos de dados ZFS](zfs-datasets.md).
 
-Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Caminhos de backup**.
+Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Armazenamento, Caminhos de backup**. Cada campo de caminho tem também um interruptor **Local / Remoto** integrado: um caminho pode ser um remoto restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) em vez de uma pasta local, e o backup vai diretamente para lá, sem cópia local separada; consulte [Repositórios primários remotos](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verificação de integração com o host"
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta.
@@ -62,7 +63,7 @@ Para cada contentor, o BombVault escolhe por si que bind mounts e volumes nomead
 
 ## Servidor MCP {#mcp-server}
 
-O servidor MCP não precisa de nenhuma variável de ambiente. Ativa-o criando uma chave em **Definições, Sistema, Servidor MCP**, e ele responde em `/mcp` na mesma porta da interface web (por exemplo `https://192.168.1.10:3443/mcp`). Sem uma chave ativa, esse caminho responde `404`. Clientes, certificados e limites estão descritos em [Servidor MCP](mcp.md).
+O servidor MCP não precisa de nenhuma variável de ambiente. Ativa-o criando uma chave em **Definições, Integrações, Servidor MCP**, e ele responde em `/mcp` na mesma porta da interface web (por exemplo `https://192.168.1.10:3443/mcp`). Sem uma chave ativa, esse caminho responde `404`. Clientes, certificados e limites estão descritos em [Servidor MCP](mcp.md).
 
 ## Backup de VMs por SSH
 
@@ -70,7 +71,7 @@ O BombVault faz backup de VMs KVM/libvirt **sem montar qualquer caminho de libvi
 
 Configuração rápida:
 
-1. **Definições, Sistema, SSH do anfitrião:** copie a chave pública mostrada.
+1. **Definições, Integrações, SSH do anfitrião:** copie a chave pública mostrada.
 2. Adicione-a ao `/root/.ssh/authorized_keys` do Unraid (também persistida no flash para sobreviver a reinícios).
 3. Clique em **Testar ligação**.
 
@@ -81,16 +82,17 @@ O template adiciona `--add-host=host.docker.internal:host-gateway` para que o co
 
 ## Configuração do externo
 
-Configure uma réplica externa no separador **Definições, Externo**. Consulte [Externo e recuperação](offsite-recovery.md) para o fluxo de trabalho completo (imutável/append-only, teste de adulteração e ensaios de DR). Em resumo:
+Configure uma réplica externa na página **Definições, Externo**. Consulte [Externo e recuperação](offsite-recovery.md) para o fluxo de trabalho completo (imutável/append-only, teste de adulteração e ensaios de DR). Em resumo:
 
 - **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`).
-- **As credenciais de nuvem** são guardadas encriptadas em Definições, Externo, Credenciais da nuvem.
-- **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Sistema, SSH do anfitrião** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
-- **Cópia externa:** o BombVault replica novos instantâneos com `restic copy` numa base de melhor esforço. O repo local mantém-se primário. Cada domínio tem o seu próprio agendamento externo, mais um botão **Replicar agora**.
+- **Credenciais de nuvem partilhadas** são guardadas encriptadas em Definições, Acesso à nuvem, Credenciais de nuvem partilhadas.
+- **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Integrações, SSH do anfitrião** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
+- **Cópia externa:** o BombVault replica novos instantâneos com `restic copy` numa base de melhor esforço, além de um repositório primário (normalmente local). Cada domínio tem o seu próprio agendamento externo, mais um botão **Replicar agora**.
 - **Vários destinos externos por domínio:** cada domínio pode replicar para vários destinos externos de uma só vez. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento; todos replicam no agendamento externo desse domínio. Uma configuração externa única existente é transferida como o primeiro destino.
-- **Retenção por origem:** a política local vive em Definições, Caminhos e Armazenamento; a política externa em Definições, Externo (deixe-a toda a zero para nunca aparar automaticamente os instantâneos externos).
+- **Retenção por origem:** as políticas local e externa vivem ambas em Definições, Retenção (deixe a política externa toda a zero para nunca aparar automaticamente os instantâneos externos).
 - **Limites de largura de banda:** limite a taxa de envio/receção do restic em Definições, Externo.
 - **Classe de armazenamento fria e de arquivo (S3):** para um repo externo S3 nativo, escolha um nível legível para restauro (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Os remotos rclone definem a sua classe na configuração do rclone.
+- **Primário remoto em vez de local:** o Caminho de backup de um domínio pode ser ele próprio um dos backends acima, sem cópia local nem passo de replicação; consulte [Repositórios primários remotos](offsite-recovery.md#remote-primary-repositories) para o interruptor Local/Remoto integrado e as suas definições de segurança (largura de banda, append-only, orçamento de crescimento).
 
 ## Anomalias {#anomalies}
 
@@ -107,7 +109,7 @@ Cada elemento pode ter a sua própria sensibilidade e o seu próprio mínimo de 
 
 ## Definições portáteis (exportar e importar) {#portable-settings-export-and-import}
 
-O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
+O cartão **Exportar e importar definições** na página Definições, Sistema escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
 
 !!! warning "A exportação pode conter credenciais"
     Escolhe se inclui as credenciais externas e de notificação no ficheiro. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.
