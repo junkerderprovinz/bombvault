@@ -251,19 +251,16 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             {/* The location is not editable here on purpose - see the card's
                 own note. The tooltip says why rather than leaving a greyed
                 field to puzzle over. */}
-            {r.inUse !== 0 && <InfoBubble tip={t("repos.locationLocked")} />}
-            {/* A direct repository goes with its target, so this button leads
-                nowhere: it is locked like the append-only toggle above, and
-                the tip says where to go instead. */}
-            {r.companionOf !== "" && (
-              <InfoBubble tip={t("repos.removeWithTarget").replace("{target}", targetOf(r))} />
-            )}
+            {r.inUse !== 0 && r.companionOf === "" && <InfoBubble tip={t("repos.locationLocked")} />}
+            {/* A direct repository goes with its target and writes where the
+                target decides, so the button's hint says where to go instead. */}
             <Button
               label={t("offsite.targets.remove")}
               labelKey="offsite.targets.remove"
               tone="neutral"
               onClick={() => void remove(r)}
               disabled={r.inUse !== 0 || r.companionOf !== ""}
+              hint={r.companionOf !== "" ? t("repos.removeWithTarget").replace("{target}", targetOf(r)) : undefined}
             />
           </div>
         ))}
