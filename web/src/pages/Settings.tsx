@@ -84,6 +84,8 @@ import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./setting
 import { IntegrityCard } from "./settings/IntegrityCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
+import { PairingSection } from "./settings/pairing/PairingSection";
+import { IconLink } from "../components/glyphs";
 import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
 import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
 import { AboutCard } from "./settings/AboutCard";
@@ -968,6 +970,7 @@ type TabKey =
   | "offsite"
   | "notifications"
   | "integrity"
+  | "pairing"
   | "system";
 
 /** The tab strip's left-to-right order, which both the deep-link hashchange
@@ -981,6 +984,7 @@ const TAB_ORDER: TabKey[] = [
   "offsite",
   "notifications",
   "integrity",
+  "pairing",
   "system",
 ];
 
@@ -1106,6 +1110,7 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
   offsite: <IconTabOffsite />,
   notifications: <IconTabNotifications />,
   integrity: <IconTabIntegrity />,
+  pairing: <IconLink />,
   system: <IconTabSystem />,
 };
 
@@ -2433,6 +2438,7 @@ export function SettingsPage() {
   // one function-call away inside a child component.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
+  const pairingUsed = settings.receiverEnabled || settings.fleetEnabled || settings.pullEnabled;
 
   return (
     // The root's gap is the card rhythm between the tab strip and the first
@@ -2452,8 +2458,13 @@ export function SettingsPage() {
           ["offsite", t("settings.tab.offsite")],
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
+          ["pairing", t("pairing.title")],
           ["system", t("settings.tab.system")],
-        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key], title: label }))}
+        ] as const)
+          // Pairing only matters to the domains that work over the group,
+          // the same ones that bring up the Instances page.
+          .filter(([key]) => key !== "pairing" || pairingUsed)
+          .map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key], title: label }))}
         label={t("settings.title")}
         // 0, which is also the default - stated anyway, because it is the one
         // start every other selector in the tree has to avoid.
@@ -4096,13 +4107,6 @@ export function SettingsPage() {
           }}
           hueIndex={nextHue()}
         />
-        <FleetSettingsCard
-          t={t}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={nextHue()}
-        />
         {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
         </>
       )}
@@ -4285,6 +4289,13 @@ export function SettingsPage() {
       {/* off-site DR restore — are part of the core ransomware-protection     */}
       {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
+      {tab === "pairing" && (
+        <>
+          <PairingSection t={t} nextHue={nextHue} />
+          <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+        </>
+      )}
+
       {tab === "integrity" && (
       <>
         {/* IntegrityCard used to be documented here as the ONLY Card this tab

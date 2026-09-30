@@ -2,9 +2,9 @@
 // three numbered cards before any button does anything: generate a phrase on
 // the first instance, enter it on every other, done.
 import { Fragment, type ReactNode } from "react";
-import { StepCard } from "../../components/recovery/StepCard";
-import { InfoBubble } from "../../components/InfoBubble";
-import type { useT } from "../../lib/i18n";
+import { StepCard } from "../../../components/recovery/StepCard";
+import { InfoBubble } from "../../../components/InfoBubble";
+import type { useT } from "../../../lib/i18n";
 import { StepPicture } from "./pairingArt";
 
 type T = ReturnType<typeof useT>["t"];

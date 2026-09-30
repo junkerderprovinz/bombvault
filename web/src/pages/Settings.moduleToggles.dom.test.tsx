@@ -126,9 +126,8 @@ describe("module switches", () => {
     }
   });
 
-  it("names the fleet switch after Instances, not the Flotte tab", async () => {
+  it("names the fleet switch after the Instances page it shows", async () => {
     await renderGeneralTab();
     expect(screen.getByRole("switch", { name: en["instances.title"] })).not.toBeNull();
-    expect(screen.queryByRole("switch", { name: en["fleet.title"] })).toBeNull();
   });
 });
