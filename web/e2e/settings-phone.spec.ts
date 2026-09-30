@@ -393,7 +393,10 @@ async function gaps(page: Page): Promise<string[]> {
   return page
     .getByRole("heading", { level: 1 })
     .locator("xpath=..")
-    .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[2]).rowGap]);
+    .evaluate((root) => [
+      getComputedStyle(root).rowGap,
+      getComputedStyle(root.querySelector(":scope > [data-settings-page]")!).rowGap,
+    ]);
 }
 
 /** The rail's tiles: how many, how many end below the window, the smallest side. */

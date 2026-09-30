@@ -82,15 +82,15 @@ Mallen lägger till `--add-host=host.docker.internal:host-gateway` så att conta
 
 ## Off-site-uppsättning
 
-Sätt upp en off-site-replik på sidan **Inställningar, Off-site**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
+Sätt upp en off-site-replik på sidan **Inställningar, Extern**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
 
 - **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
 - **Delade molnautentiseringsuppgifter** lagras krypterade under Inställningar, Molnåtkomst, Delade molnautentiseringsuppgifter.
 - **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, Integrationer, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
 - **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis, ovanpå ett (oftast lokalt) primärt repo. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
-- **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
+- **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Extern, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
 - **Retention per källa:** både den lokala och off-site-policyn finns under Inställningar, Bevarande (lämna off-site-policyn helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
-- **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Off-site.
+- **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Extern.
 - **Kall och arkivlagringsklass (S3):** för ett native S3-off-site-repo, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
 - **Fjärrprimärt i stället för lokalt:** en domäns säkerhetskopieringssökväg kan själv vara en av backenderna ovan, utan lokal kopia och utan replikeringssteg. Omkopplaren Lokal/Fjärran vid fältet och dess säkerhetsinställningar för bandbredd, append-only och tillväxtbudget beskrivs under [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
 

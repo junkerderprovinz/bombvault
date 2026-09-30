@@ -18,7 +18,6 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 import { hueVars } from "../lib/appearance";
-import { labelWidth } from "../lib/controls";
 import { useReorder } from "../lib/dragLift";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useIsWide } from "../lib/useIsWide";
@@ -83,8 +82,10 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
     <nav
       aria-label={label}
       // Sticky at the scroller's top, so the rail stays put while the page
-      // scrolls past it.
-      className={`sticky top-0 flex shrink-0 flex-col self-start ${glyphs ? "w-13" : "w-51"}`}
+      // scrolls past it. On desktop it moves out of the page padding to 4px
+      // from the sidebar, the room the focus ring and a lifted tile's shadow
+      // need, since main clips there.
+      className={`sticky top-0 flex shrink-0 flex-col self-start md:-ms-5 ${glyphs ? "w-13" : "w-51"}`}
       style={height ? { height } : undefined}
     >
       <div
@@ -127,7 +128,9 @@ interface RailTileProps {
 
 function RailTile({ item, hue, on, glyphs, reactive, showIcon, look, onPress, endsDrag }: RailTileProps) {
   const tooltip = useTipBubble(glyphs ? item.label : undefined);
-  const centred = glyphs || reactive;
+  // With glyphs only, or names on hover, the glyph stands centred and a name
+  // opens as a caption under it, the shape of the phone's bottom bar tab.
+  const stacked = glyphs || reactive;
   return (
     <>
       <Link
@@ -147,10 +150,11 @@ function RailTile({ item, hue, on, glyphs, reactive, showIcon, look, onPress, en
           }
         }}
         className={[
-          "glim-nav-row glim-hue glim-hue-icon group flex min-h-10 w-full min-w-0 shrink-0 grow basis-0 items-center",
+          "glim-nav-row glim-hue glim-hue-icon group flex w-full min-w-0 shrink-0 grow basis-0 items-center",
           "overflow-hidden rounded-pill text-[15px] font-medium transition-colors select-none [-webkit-touch-callout:none]",
-          centred ? "justify-center px-2" : "gap-3 px-3",
-          reactive ? "glim-reactive" : "",
+          stacked
+            ? `flex-col justify-center gap-0.5 px-2 ${reactive ? "min-h-12 py-1" : "min-h-10 py-1.5"}`
+            : "min-h-10 flex-row gap-3 px-3",
           on
             ? "glim-active bg-accent text-accentContrast"
             : "bg-carbon-sidebar text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text",
@@ -160,13 +164,7 @@ function RailTile({ item, hue, on, glyphs, reactive, showIcon, look, onPress, en
           .join(" ")}
         // The tiles share the rail's height, so the row token's fixed height
         // gives way to the flex share.
-        style={
-          {
-            ...hueVars(hue),
-            height: "auto",
-            ...(reactive ? { "--reactive-chars": labelWidth(item.label) } : {}),
-          } as CSSProperties
-        }
+        style={{ ...hueVars(hue), height: "auto" } as CSSProperties}
       >
         {showIcon && item.icon}
         <span
@@ -174,7 +172,7 @@ function RailTile({ item, hue, on, glyphs, reactive, showIcon, look, onPress, en
             glyphs
               ? "sr-only"
               : reactive
-                ? "glim-label-reactive"
+                ? "glim-rail-caption text-xs"
                 : // Two lines at 20px fill the 40px floor without cutting a
                   // descender; the clip reaches further for the marks Arabic
                   // and Devanagari set outside the line.

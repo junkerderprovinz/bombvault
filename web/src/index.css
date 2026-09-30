@@ -478,6 +478,46 @@
   }
 }
 
+/* A card's title badge stands half its height above the card. Settings has no
+   padding above its first row, so while the search bar is hidden the first
+   card moves down by that half, or the scroller's edge would cut the badge. */
+[data-settings-content]:not(:has(> [data-settings-search])) > [data-settings-page] > :first-child {
+  margin-top: 0.75rem;
+}
+
+/* A settings rail tile with names on hover keeps its glyph centred and opens
+   the name as a caption under it, so the tile never changes size. The current
+   page keeps its name, as every reactive strip does, and a coarse pointer
+   shows it at rest. */
+.glim-rail-caption {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+.glim-active .glim-rail-caption,
+.group:hover .glim-rail-caption,
+.group:focus-visible .glim-rail-caption {
+  max-height: 1.4em;
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .glim-rail-caption {
+    max-height: 1.4em;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glim-rail-caption {
+    transition:
+      max-height var(--motion-label-dur) var(--motion-label-ease),
+      opacity calc(var(--motion-label-dur) * 0.6) ease-out;
+  }
+}
+
 /* The sidebar's brand name sits under the mark, not beside a glyph, so it
    opens from its centre with no inline gap. Its line box stays at rest, which
    keeps the rail from moving when the name comes back. */

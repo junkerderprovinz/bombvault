@@ -10,7 +10,7 @@ import {
   IconTabStorage,
   IconTabSystem,
 } from "../../components/navGlyphs";
-import { IconKey, IconLink, IconPrune, IconSignIn } from "../../components/glyphs";
+import { IconKey, IconLink, IconPrune, IconShield } from "../../components/glyphs";
 import { save as saveDisplayPrefs } from "../../lib/displayPrefs";
 
 // Each Settings page lives at /settings/<id>. The ids are part of bookmarks
@@ -70,7 +70,7 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "cloud", label: "settings.tab.cloud", icon: <IconKey /> },
   { id: "notifications", label: "settings.tab.notifications", icon: <IconNotifications /> },
   { id: "integrity", label: "settings.tab.integrity", icon: <IconTabIntegrity /> },
-  { id: "security", label: "settings.tab.security", icon: <IconSignIn /> },
+  { id: "security", label: "settings.tab.security", icon: <IconShield /> },
   { id: "pairing", label: "pairing.title", icon: <IconLink /> },
   { id: "integrations", label: "settings.tab.integrations", icon: <IconLive /> },
   { id: "system", label: "settings.tab.system", icon: <IconTabSystem /> },

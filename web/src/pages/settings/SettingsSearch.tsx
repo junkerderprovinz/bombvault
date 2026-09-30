@@ -3,12 +3,13 @@
 // its (i), in the reader's language, and a result opens its page and marks the
 // card or row (see useSearchJump).
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { IconSearch } from "../../components/glyphs";
 import { IconClose } from "../../components/navGlyphs";
 import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { useRevealOnScrollUp } from "./revealOnScrollUp";
 import { SETTINGS_INDEX, type SearchCard } from "./searchIndex";
 import type { SettingsPageDef, SettingsPageId } from "./settingsPages";
 
@@ -107,6 +108,11 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   const [active, setActive] = useState(0);
   const field = useRef<HTMLInputElement>(null);
   const listId = useId();
+  // Pinned while in use, so a wheel tick cannot take it from somebody typing.
+  const pinned =
+    open || query !== "" || (typeof document !== "undefined" && document.activeElement === field.current);
+  const { pathname } = useLocation();
+  const { revealed, barRef } = useRevealOnScrollUp(pathname, pinned);
 
   const items = useMemo(() => buildItems(t, pages), [t, pages]);
   const hits: Hit[] = useMemo(() => search(items, query), [items, query]);
@@ -153,8 +159,12 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
     group.hits.push({ hit, index });
   });
 
+  // Not rendered until summoned, so it is out of the tab order and hidden from
+  // screen readers.
+  if (!revealed) return null;
+
   return (
-    <div className="relative">
+    <div ref={barRef} data-settings-search className="relative">
       <div className="flex h-(--btn-h) items-center gap-2 rounded-control bg-carbon-surface2 ps-3 pe-1 glim-field-focus-within">
         <span className="shrink-0 text-carbon-textMuted [&_svg]:h-4 [&_svg]:w-4">
           <IconSearch />

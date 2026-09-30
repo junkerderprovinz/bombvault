@@ -27,9 +27,12 @@ export interface FolderBrowserProps {
   /** Render in place instead of as a dialog, for call sites that are already
    *  inside one. */
   inDialog?: boolean;
+  /** The row's rainbow position for the Browse button, where several folder
+   *  rows stand in one card and would otherwise share its colour. */
+  hueIndex?: number;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, hueIndex }: FolderBrowserProps) {
   const { t } = useT();
   // "New folder" and "Use this folder" sit one above the other; one stage for
   // both gives the column a straight edge in every language.
@@ -288,6 +291,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           labelKey="folder.browseTitle"
           glyph={<IconFolder />}
           tone="accent"
+          hueIndex={hueIndex}
           onClick={handleOpen}
           className="glim-btn-wrap shrink-0"
         />
