@@ -156,7 +156,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             key={r.id}
             className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2"
           >
-            <div className="flex-1 min-w-0 max-md:basis-full">
+            <div className="flex-1 min-w-[min(12rem,100%)] max-md:basis-full">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-carbon-text font-semibold truncate max-md:whitespace-normal max-md:wrap-anywhere">
                   {r.name}
