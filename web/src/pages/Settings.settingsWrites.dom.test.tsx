@@ -7,11 +7,12 @@
 // mocked client, and the tests decide when each PUT resolves.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
 
-/** A settings object with every field the page reads on the General tab. */
+/** A settings object with every field the page reads on the General page. */
 function baseSettings(over: Partial<Settings> = {}): Settings {
   return {
     encryptionEnabled: true,
@@ -106,15 +107,26 @@ vi.mock("../lib/api", async (importOriginal) => {
 // Imported after vi.mock so the page picks up the mocked client.
 const { SettingsPage } = await import("./Settings");
 
+let router: ReturnType<typeof createMemoryRouter>;
+
 async function renderPage() {
+  router = createMemoryRouter(
+    [
+      {
+        path: "/settings/:page",
+        element: (
+          <I18nProvider>
+            <ToastProvider>
+              <SettingsPage />
+            </ToastProvider>
+          </I18nProvider>
+        ),
+      },
+    ],
+    { initialEntries: ["/settings/general"] }
+  );
   await act(async () => {
-    render(
-      <I18nProvider>
-        <ToastProvider>
-          <SettingsPage />
-        </ToastProvider>
-      </I18nProvider>
-    );
+    render(<RouterProvider router={router} />);
   });
 }
 
@@ -123,13 +135,12 @@ function toggle(name: string) {
   return screen.getByRole("switch", { name });
 }
 
-/** Selects a tab through the deep link, because the strip measures itself in
- * two passes and a label query there matches more than one node. Switching
- * tabs does not remount the page, so a stale baseline survives it. */
-async function gotoTab(tab: string) {
+/** Navigates to another settings page in place. The rail's own links do the
+ * same thing, and the page must not remount when they do: a stale baseline
+ * would otherwise survive the switch. */
+async function gotoPage(page: string) {
   await act(async () => {
-    window.location.hash = "#" + tab;
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    await router.navigate(`/settings/${page}`);
   });
 }
 
@@ -147,7 +158,7 @@ function stubMatchMedia() {
   })) as unknown as typeof window.matchMedia;
 }
 
-/** The page measures its tab strip on mount, and jsdom has no ResizeObserver.
+/** The page measures its rail on mount, and jsdom has no ResizeObserver.
  * Nothing here depends on the width, so a no-op is enough. */
 function stubResizeObserver() {
   (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
@@ -227,7 +238,7 @@ describe("two settings writes inside one round-trip", () => {
 
 describe("a settings import", () => {
   async function importAFile() {
-    await gotoTab("system");
+    await gotoPage("system");
     const file = new File(['{"schemaVersion":1}'], "settings.json", { type: "application/json" });
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await act(async () => {
@@ -250,7 +261,7 @@ describe("a settings import", () => {
     expect(importApplyCalls.length).toBe(1);
 
     // One click on an unrelated switch, the way a user would carry on.
-    await gotoTab("general");
+    await gotoPage("general");
     fireEvent.click(toggle(en["settings.containersEnabled"]));
     await waitFor(() => expect(putCalls.length).toBe(1));
 
@@ -271,7 +282,7 @@ describe("a settings import", () => {
     importApplyResult = { ok: false, error: "unsupported schemaVersion 2" };
     await importAFile();
 
-    await gotoTab("general");
+    await gotoPage("general");
     fireEvent.click(toggle(en["settings.containersEnabled"]));
     await waitFor(() => expect(putCalls.length).toBe(1));
     // The import did not happen, so the page's own (unchanged) configuration

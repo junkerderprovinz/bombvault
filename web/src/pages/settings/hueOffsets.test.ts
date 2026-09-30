@@ -46,13 +46,13 @@ function selectorElements(text: string): string[] {
   return out;
 }
 
-/** The union of the JSX each `tab === "X"` gate renders in Settings.tsx:
- *  every `{tab === "X" && …}` block, brace-matched to its own close. The
- *  tab strip itself sits above all gates, so it never appears in a region;
- *  the groups below add it explicitly (it shows on every tab). */
-function settingsTabRegion(tab: string): string {
+/** The union of the JSX each `page === "X"` gate renders in Settings.tsx:
+ *  every `{page === "X" && …}` block, brace-matched to its own close. The
+ *  rail sits outside all gates, so it never appears in a region; the groups
+ *  below add it explicitly (it shows on every page). */
+function settingsPageRegion(page: string): string {
   const text = readFileSync(SETTINGS_PAGE, "utf8");
-  const needle = `{tab === "${tab}" &&`;
+  const needle = `{page === "${page}" &&`;
   let out = "";
   for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) {
     let depth = 0;
@@ -110,59 +110,59 @@ describe("settings selectors", () => {
   });
 });
 
-// The per-tab collision property itself. The groups name every hued selector
-// a tab can show at the same time, and the truthfulness test below keeps
-// them honest against the source: if a card moves tabs (ThemeCard did), the
-// stale group fails here instead of silently protecting the wrong screen.
+// The per-page collision property itself. The groups name every hued selector
+// a page can show at the same time, and the truthfulness test below keeps
+// them honest against the source: if a card moves pages, the stale group
+// fails here instead of silently protecting the wrong screen.
 
-/** Which hued selectors each tab can show simultaneously. The tab strip is
- *  implicit; it renders on every tab and is added by the test. A selector
+/** Which hued selectors each page can show simultaneously. The rail is
+ *  implicit; it renders on every page and is added by the test. A selector
  *  whose offset is a span (the label rows, one per control axis) is listed
  *  once with `span: true` and expanded below. `marker` is what must appear
- *  inside the tab's gated JSX for the claim to be true (the offset
+ *  inside the page's gated JSX for the claim to be true (the offset
  *  expression for a selector inline in Settings.tsx, the card tag for one
  *  carried by a card file; whose `cardFile` must then name that key). */
-const TAB_GROUPS: {
-  tab: string;
+const PAGE_GROUPS: {
+  page: string;
   selectors: { key: keyof typeof HUE_OFFSET; span?: boolean; marker: string; cardFile?: string }[];
 }[] = [
   {
-    tab: "look",
+    page: "look",
     selectors: [
       { key: "labels", span: true, marker: "HUE_OFFSET.labels" },
       { key: "shape", marker: "HUE_OFFSET.shape" },
       { key: "motion", marker: "HUE_OFFSET.motion" },
-      // ThemeCard's own picker; the card lives on the Look tab (its file
-      // carries the Selector, Settings.tsx's Look region mounts it).
+      // ThemeCard's own picker; its file carries the Selector and the Look
+      // region mounts it.
       { key: "theme", marker: "<ThemeCard", cardFile: "ThemeCard.tsx" },
     ],
   },
   {
-    tab: "integrity",
+    page: "integrity",
     selectors: [{ key: "drillKind", marker: "<IntegrityCard", cardFile: "IntegrityCard.tsx" }],
   },
   {
-    tab: "notifications",
+    page: "notifications",
     selectors: [{ key: "notifyOn", marker: "<NotifyCard", cardFile: "NotifyCard.tsx" }],
   },
 ];
 
-describe("per-tab palette starts", () => {
+describe("per-page palette starts", () => {
   it("names groups the source still agrees with (cards live where the groups say)", () => {
     const offenders: string[] = [];
     const sources = new Map(settingsSources().map(({ file, text }) => [file, text]));
-    for (const group of TAB_GROUPS) {
-      const region = settingsTabRegion(group.tab);
+    for (const group of PAGE_GROUPS) {
+      const region = settingsPageRegion(group.page);
       if (region.length === 0) {
-        offenders.push(`tab "${group.tab}": no {tab === "…"} gate found in Settings.tsx`);
+        offenders.push(`page "${group.page}": no {page === "…"} gate found in Settings.tsx`);
         continue;
       }
       for (const sel of group.selectors) {
         // The card/selector the group claims must actually render inside this
-        // tab's gated JSX; a card moving tabs (ThemeCard has) must fail here,
-        // not silently protect the wrong screen.
+        // page's gated JSX; a card moving pages must fail here, not silently
+        // protect the wrong screen.
         if (!region.includes(sel.marker)) {
-          offenders.push(`tab "${group.tab}": ${sel.marker} not found in its gated region`);
+          offenders.push(`page "${group.page}": ${sel.marker} not found in its gated region`);
         }
         // And the claimed key must be the one the selector really reads.
         if (sel.cardFile) {
@@ -176,10 +176,10 @@ describe("per-tab palette starts", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("no two simultaneously-visible selectors on one tab start on the same palette position", () => {
+  it("no two simultaneously-visible selectors on one page start on the same palette position", () => {
     const offenders: string[] = [];
-    for (const group of TAB_GROUPS) {
-      // Every tab also shows the strip.
+    for (const group of PAGE_GROUPS) {
+      // Every page also shows the rail.
       const used = new Map<number, string>([[HUE_OFFSET.tabs, "tabs"]]);
       for (const sel of group.selectors) {
         const starts = sel.span
@@ -189,7 +189,7 @@ describe("per-tab palette starts", () => {
           const previous = used.get(start);
           if (previous !== undefined) {
             offenders.push(
-              `tab "${group.tab}": ${sel.key} starts at ${start}, already taken by ${previous}`
+              `page "${group.page}": ${sel.key} starts at ${start}, already taken by ${previous}`
             );
           } else {
             used.set(start, sel.key);

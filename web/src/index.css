@@ -1165,6 +1165,29 @@ body {
   outline: 1px solid var(--field-focus-ring);
   outline-offset: -1px;
 }
+/* The same for a box around a bare input, such as the settings search with
+   its glyph and buttons inside. */
+.glim-field-focus-within:focus-within {
+  background-color: var(--carbon-surface3);
+  outline: 1px solid var(--field-focus-ring);
+  outline-offset: -1px;
+}
+
+/* The card or row a settings search result leads to, ringed for a moment so
+   the eye finds it after the scroll. */
+.glim-search-hit {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-card);
+  animation: glim-search-hit 1.8s ease-out forwards;
+}
+@keyframes glim-search-hit {
+  0%, 60% { outline-color: var(--accent); }
+  100% { outline-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glim-search-hit { animation-duration: 0.01s; animation-delay: 1.5s; }
+}
 
 /* The base focus ring, from GlimStone's reference. Nothing in the app sets
    `outline: none`, so it reaches every button and link. It reads

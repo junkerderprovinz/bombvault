@@ -82,7 +82,7 @@ function TargetRow({ tgt, t, children }: { tgt: OffsiteTarget; t: T; children: R
   return (
     <div className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
+        <span className="text-sm text-carbon-text truncate max-md:whitespace-normal max-md:wrap-anywhere">{tgt.name || tgt.repo}</span>
         <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
         {/* A long repo can squeeze this column until the chip labels wrap
             to several lines; without `wrap` the tinted background would

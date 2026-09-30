@@ -52,7 +52,7 @@ export function Instances() {
 
   // Pairing moved to Settings; a link or bookmark to its old tab follows it.
   useEffect(() => {
-    if (window.location.hash === "#pairing") navigate("/settings#pairing", { replace: true });
+    if (window.location.hash === "#pairing") navigate("/settings/pairing", { replace: true });
   }, [navigate]);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export function Instances() {
             if (isTab(id)) choose(id);
           }}
           size="lg"
-          // Separate tabs, as in Settings, on one row even when all three show.
+          // Separate tabs, on one row even when all three show.
           variant="chip"
           fit
         />

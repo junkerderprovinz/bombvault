@@ -484,7 +484,7 @@ export function PhraseCard({
 
   const enterTip = t("pairing.enterTip").replace(
     "{path}",
-    [t("settings.title"), t("settings.tab.system"), t("pairing.title"), t("pairing.show")].join(", "),
+    [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "),
   );
 
   const foot = (
@@ -719,7 +719,7 @@ function Choice({
 /** NextStep points at the button to press on the other instance, along the
  *  path to it. */
 function NextStep({ t }: { t: T }) {
-  const path = [t("settings.title"), t("settings.tab.system"), t("pairing.enter")];
+  const path = [t("settings.title"), t("pairing.title"), t("pairing.enter")];
   return (
     <div className="grid grid-cols-[28px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 rounded-control bg-accentSoft px-4 py-3.5">
       <span className="row-span-2 grid h-7 w-7 place-items-center rounded-full bg-accent text-accentContrast">

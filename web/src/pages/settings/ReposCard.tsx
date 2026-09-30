@@ -222,7 +222,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
           </div>
-          <div className="flex flex-col gap-1 flex-[2] min-w-[14rem]">
+          <div className="flex flex-col gap-1 flex-[2] min-w-[min(14rem,100%)]">
             <label className="flex items-center gap-1 text-xs text-carbon-textSub" htmlFor="repo-location">
               {t("repos.location")}
               <InfoBubble tip={t("repos.locationHint")} />

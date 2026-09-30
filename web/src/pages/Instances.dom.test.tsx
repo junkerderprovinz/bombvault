@@ -39,7 +39,7 @@ async function renderPage() {
         <MemoryRouter initialEntries={[`/instances${window.location.hash}`]}>
           <Routes>
             <Route path="/instances" element={<Instances />} />
-            <Route path="/settings" element={<Where />} />
+            <Route path="/settings/:page" element={<Where />} />
           </Routes>
         </MemoryRouter>
       </I18nProvider>,
@@ -98,7 +98,7 @@ describe("instances tab strip", () => {
   it("sends a link to the old pairing tab on to Settings", async () => {
     window.location.hash = "#pairing";
     await renderPage();
-    expect(screen.getByTestId("where").textContent).toBe("/settings#pairing");
+    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
   it("shows nothing but the heading when all three are off", async () => {

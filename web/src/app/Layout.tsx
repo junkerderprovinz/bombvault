@@ -35,6 +35,9 @@ export function Layout() {
   const [authEnabled, setAuthEnabled] = useState(false);
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
+  // The page wrapper remounts per section, so moving between Settings pages
+  // keeps the page and its loaded settings.
+  const section = location.pathname.split("/")[1];
   // the one chrome switch: at/above Tailwind's md breakpoint the
   // desktop shell renders exactly as it always has; below it the mobile shell
   // renders in its place. The breakpoint literal lives only in
@@ -267,7 +270,7 @@ export function Layout() {
       {/* The page padding lives inside the scroll container, at the sides
           only: the first row starts on the rail's top line, and the last card
           ends level with the rail instead of 24px above it. */}
-      <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col px-6 pt-0 pb-0">
+      <div key={section} className="glim-page-enter flex-1 flex flex-col px-6 pt-0 pb-0">
         <Outlet />
       </div>
     </main>
@@ -294,7 +297,7 @@ export function Layout() {
       id="bv-main"
       className="flex-1 flex flex-col overflow-y-auto p-4 pb-0 scroll-pb-[var(--sticky-action-h)] pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))] min-w-0"
     >
-      <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col">
+      <div key={section} className="glim-page-enter flex-1 flex flex-col">
         <Outlet />
       </div>
     </main>

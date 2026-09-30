@@ -25,6 +25,8 @@ const KEYS = [
   // Whether a Fleet peer card shows its scorecard. Unlike a filter, losing it on
   // a new browser is as annoying as losing the theme.
   "bombvault.fleetDetailsOpen",
+  // The order of the Settings rail, which a reader arranges once for good.
+  "bombvault.settingsOrder",
 ] as const;
 
 /** Fired on `window` once this browser has adopted the server's look.

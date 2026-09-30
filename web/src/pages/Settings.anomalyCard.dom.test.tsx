@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 // The Anomalies card is reached from the dashboard and from the Notifications
-// tab through /settings#anomalies, and it is the last card on the Integrity
-// tab, so the link has to bring it into view. Each control saves on its own,
-// and a refused save must leave the control showing what the server still
-// holds.
+// page through /settings/integrity#anomalies, and it is the last card on the
+// Integrity page, so the link has to bring it into view. Each control saves
+// on its own, and a refused save must leave the control showing what the
+// server still holds.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
@@ -95,16 +95,22 @@ function stubBrowser() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderAt(hash: string) {
+async function renderAt(path: string) {
   await act(async () => {
-    window.location.hash = hash;
     render(
-      <MemoryRouter>
-        <I18nProvider>
-          <ToastProvider>
-            <SettingsPage />
-          </ToastProvider>
-        </I18nProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <SettingsPage />
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
       </MemoryRouter>
     );
   });
@@ -136,16 +142,22 @@ function stubSummary(over: Record<string, unknown>) {
 
 async function renderWithSummary() {
   await act(async () => {
-    window.location.hash = "#integrity";
     render(
-      <MemoryRouter>
-        <I18nProvider>
-          <ToastProvider>
-            <AnomalyProvider>
-              <SettingsPage />
-            </AnomalyProvider>
-          </ToastProvider>
-        </I18nProvider>
+      <MemoryRouter initialEntries={["/settings/integrity"]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <AnomalyProvider>
+                    <SettingsPage />
+                  </AnomalyProvider>
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
       </MemoryRouter>
     );
   });
@@ -169,17 +181,16 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  window.location.hash = "";
 });
 
-describe("the Anomalies card on the Integrity tab", () => {
-  it("is where #anomalies lands, scrolled into view", async () => {
-    await renderAt("#anomalies");
+describe("the Anomalies card on the Integrity page", () => {
+  it("is where the anomalies anchor lands, scrolled into view", async () => {
+    await renderAt("/settings/integrity#anomalies");
     await waitFor(() => expect(scrolled.map((el) => el.id)).toContain("anomalies"));
   });
 
   it("comes after the restore-check schedule, so the checks and their schedule stay together", async () => {
-    await renderAt("#integrity");
+    await renderAt("/settings/integrity");
     const schedule = screen.getByRole("heading", { name: en["settings.schedulesChecks"] });
     const anomalies = document.getElementById("anomalies");
     expect(anomalies).not.toBeNull();
@@ -187,7 +198,7 @@ describe("the Anomalies card on the Integrity tab", () => {
   });
 
   it("saves the switch on its own", async () => {
-    await renderAt("#integrity");
+    await renderAt("/settings/integrity");
     await act(async () => {
       fireEvent.click(screen.getByRole("switch", { name: en["anomaly.settings.toggle"] }));
     });
@@ -197,7 +208,7 @@ describe("the Anomalies card on the Integrity tab", () => {
 
   it("puts a refused switch back and says why", async () => {
     putAnswer = { ok: false, error: "the database is read-only" };
-    await renderAt("#integrity");
+    await renderAt("/settings/integrity");
     const toggle = screen.getByRole("switch", { name: en["anomaly.settings.toggle"] });
     await act(async () => {
       fireEvent.click(toggle);
@@ -234,7 +245,7 @@ describe("the Anomalies card on the Integrity tab", () => {
 
   it("puts a refused sensitivity back and says why", async () => {
     putAnswer = { ok: false, error: "the database is read-only" };
-    await renderAt("#integrity");
+    await renderAt("/settings/integrity");
     await act(async () => {
       fireEvent.click(screen.getByRole("combobox", { name: en["anomaly.settings.sensitivity"] }));
     });

@@ -46,6 +46,7 @@ export function Card({
     // in index.css. `.glim-hue` sets --accent and --focus-ring once for the
     // whole card, so no control inside has to repeat its card's hue.
     <div
+      data-search-card={title}
       className={`relative glim-notch-card flex flex-col gap-4 ${
         nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
       }${hueIndex !== undefined ? " glim-hue" : ""}`}
@@ -164,15 +165,16 @@ export function ToggleRow({
   const feedbackKey = shakeNonce || pulseNonce ? `${shakeNonce ?? 0}:${pulseNonce ?? 0}` : undefined;
   return (
     <div
+      data-search-row={label}
       className={`flex items-start justify-between gap-4${hueOn ? " glim-hue" : ""}`}
       style={hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
-      <div className="flex flex-col gap-0.5">
+      <div className="flex min-w-0 flex-col gap-0.5">
         {/* The dimming goes on the label, not on the span that holds the
             bubble: a child cannot be less transparent than its parent, and
             on a disabled row the bubble is what explains why. */}
         <span className="flex items-center gap-1.5 text-sm">
-          <span className={`text-carbon-text${dim}`}>{label}</span>
+          <span className={`min-w-0 wrap-break-word text-carbon-text${dim}`}>{label}</span>
           {hint && <InfoBubble tip={hint} />}
         </span>
       </div>

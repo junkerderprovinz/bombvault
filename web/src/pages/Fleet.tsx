@@ -797,7 +797,7 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const pendingOffers = offers.filter((o) => o.status === "pending");
   // Nothing to show but this instance: the tab is the way into pairing.
   const empty = !loading && !error && self !== null && !self.active && peers.length === 0;
-  const openPairing = () => navigate("/settings#pairing");
+  const openPairing = () => navigate("/settings/pairing");
 
   return (
     <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -61,24 +61,21 @@ import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { HUE_OFFSET, Selector } from "../components/Selector";
-import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
-// The integrity row's own two verbs ([324]). They live in the ACTION set
-// rather than the nav one, same split IconUpload already crosses.
-// The tab glyphs that are generated rather than drawn below. Aliased so the
-// wrappers further down keep their own names and TAB_ICON reads the same for
-// every tab, generated and hand-drawn alike.
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { SettingsRail } from "../components/SettingsRail";
+import { SettingsSearch, jumpTarget, markHit, type SearchJump } from "./settings/SettingsSearch";
 import {
-  IconTabGeneral,
-  IconTabLook,
-  IconTabOffsite as IconTabOffsiteGlyph,
-  IconTabSystem as IconTabSystemGlyph,
-  IconTabIntegrity as IconTabIntegrityGlyph,
-  IconTabStorage as IconTabStorageGlyph,
-} from "../components/navGlyphs";
-// IconUpload lives in the ACTION set while its twin IconDownload sits in the
-// nav set, so the export/import pair ([293]) has to reach across both. Worth a
-// line because the split is by generator file, not by meaning: `upload-box-1`
-// and `download-box-1` are one Streamline drawing with the arrow reversed.
+  FALLBACK_PAGE,
+  LEGACY_HASH,
+  isSettingsPage,
+  orderPages,
+  readLastPage,
+  readOrder,
+  writeLastPage,
+  writeOrder,
+  type SettingsPageId,
+} from "./settings/settingsPages";
+import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
@@ -889,7 +886,7 @@ export function EverythingSection({
               onChange={(e) => update({ everythingPreHook: e.target.value })}
               spellCheck={false}
               placeholder={settings.everythingPreHookSet ? t("cloud.secretSet") : "echo starting"}
-              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
+              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
             />
             {settings.everythingPreHookSet && (
               <Badge
@@ -915,7 +912,7 @@ export function EverythingSection({
               placeholder={
                 settings.everythingPostHookSet ? t("cloud.secretSet") : "curl -fsS https://hc-ping.com/your-uuid"
               }
-              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
+              className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
             />
             {settings.everythingPostHookSet && (
               <Badge
@@ -955,110 +952,6 @@ export function EverythingSection({
   );
 }
 
-
-// TabKey enumerates the Settings tabs. The active tab is the single source of
-// truth for which card group renders; SettingsPage owns all shared state so every
-// tab shares one `settings`/`save()` instance regardless of which tab is visible.
-// Look holds the user-owned axes (language, theme, shape, motion, labels and
-// colours), which GlimStone keeps off the General tab in every app.
-type TabKey =
-  | "general"
-  | "look"
-  | "storage"
-  | "schedules"
-  | "offsite"
-  | "notifications"
-  | "integrity"
-  | "system";
-
-/** The tab strip's left-to-right order, which both the deep-link hashchange
- *  effect and the tab-slide direction read to tell a later tab from an
- *  earlier one. */
-const TAB_ORDER: TabKey[] = [
-  "general",
-  "look",
-  "storage",
-  "schedules",
-  "offsite",
-  "notifications",
-  "integrity",
-  "system",
-];
-
-/** Hashes that name a card rather than a tab: the tab holding the card opens
- *  and the card scrolls into view, since it sits below the fold. */
-const CARD_TAB: Record<string, TabKey> = {
-  anomalies: "integrity",
-  pairing: "system",
-};
-
-// The Settings tab glyphs. General and Look wear the glyphs GlimStone gives
-// those tabs in every app; the others name this app's own sections. Each is a
-// filled shape whose details are cut out as real holes (evenodd), so a
-// selected tab's ink reads against whatever ground the badge has, and each
-// viewBox is cropped to the drawing's ink so it fills its box as fully as the
-// rail's glyphs do.
-function IconTabStorage() {
-  // jdp's own file now ([320]), cropped to its measured ink like every
-  // other imported glyph. The hand-drawn disk stack it replaces went
-  // through three redraws chasing legibility; an icon needing that many
-  // attempts is a better candidate for replacing than for a fourth
-  // redraw. See scripts/gen_glyphs.py.
-  return <IconTabStorageGlyph />;
-}
-
-function IconTabSchedules() {
-  // A clock — cadence/timing. Dial + both hands as one evenodd path — the
-  // hands are a real cut-out, not a second painted colour (see the fix note
-  // above this section). Sharp-edged (not rounded-cap) hands: a deliberate
-  // simplification over the old cutout's rounded rects, made so the
-  // diagonal hour hand's four corners are exact rotated points instead of
-  // needing rotated arc math — verified live, reads identically at this
-  // icon's actual 15px size.
-  return (
-    <svg viewBox="1.8 1.8 12.4 12.4" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M14.2,8 A6.2,6.2 0 1 0 1.8,8 A6.2,6.2 0 1 0 14.2,8 Z M7.35,4.5 H8.65 V8.1 H7.35 Z M8.163,7.339 L11.506,9.347 L10.837,10.462 L7.494,8.453 Z"
-      />
-    </svg>
-  );
-}
-
-function IconTabOffsite() {
-  // Was a hand-drawn cloud silhouette; jdp asked for a nicer one. Now the
-  // generated `cloud-data-transfer`, which is both a better-shaped cloud AND
-  // says what this tab is: a cloud something is copied TO and FROM, not just
-  // weather. See scripts/gen_glyphs.py.
-  return <IconTabOffsiteGlyph />;
-}
-
-function IconTabNotifications() {
-  // A bell — alerts. The bell body was already a closed silhouette (rule
-  // 218 — direct flip). The clapper "ring" beneath it was a short open
-  // stroke — redrawn as a small solid filled tab rather than a line.
-  return (
-    <svg viewBox="2.45 2.5 11.1 11.1" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" />
-      <path d="M6.5 12.1h3a1.5 1.5 0 0 1-3 0Z" />
-    </svg>
-  );
-}
-
-function IconTabIntegrity() {
-  // jdp's own file now ([317]), a Material shield-check. Same silhouette
-  // idea as the hand-drawn one it replaces, drawn by people who do this
-  // for a living. See scripts/gen_glyphs.py.
-  return <IconTabIntegrityGlyph />;
-}
-
-function IconTabSystem() {
-  // Was inline sliders, which jdp read as too close to IconTabGeneral's
-  // stacked toggles — two rounded horizontal bars with a knob each, at 20px
-  // barely tellable apart. A chip is a different shape entirely and still
-  // says "system". See scripts/gen_glyphs.py.
-  return <IconTabSystemGlyph />;
-}
 
 export function keepRegistryAuths(
   auths: RegistryAuthEntry[],
@@ -1100,17 +993,6 @@ export function markRegistryTokensStored(
     tokenSet: a.tokenSet || a.token.trim() !== "",
   }));
 }
-const TAB_ICON: Record<TabKey, ReactNode> = {
-  general: <IconTabGeneral />,
-  look: <IconTabLook />,
-  storage: <IconTabStorage />,
-  schedules: <IconTabSchedules />,
-  offsite: <IconTabOffsite />,
-  notifications: <IconTabNotifications />,
-  integrity: <IconTabIntegrity />,
-  system: <IconTabSystem />,
-};
-
 // keepRegistryAuths — what the SERVER should store for the Image Cleanup &
 // Registries card: untouched blank rows dropped, and a freshly typed token
 // marked "stored" so the field shows the kept-placeholder once the save lands.
@@ -1133,31 +1015,8 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // up. A blank row is worth nothing to the server and everything to the person
 // typing into it.
 
-// Why the split stops here, and it is a measurement rather than a preference
-// ([337]).
-//
-// This file went 9,841 -> 6,177 -> 4,994 by lifting whole cards out, and that
-// is where the cheap wins end: of what is left, THIS component is 3,953 lines.
-// The other twenty-odd declarations share the rest. So any further reduction
-// has to come out of SettingsPage, and both obvious ways of doing that are
-// worse than the file:
-//
-//   · One file per tab. The JSX is not seven sections — it is one long list of
-//     cards, each gated on its own `tab === "…"`, and the tabs INTERLEAVE:
-//     storage appears six times, general eight, system seven. Splitting by tab
-//     means reordering the render tree, and the hue counter runs in render
-//     order (see nextHue()'s own notes, and [413]). A cosmetic split that
-//     silently recolours the page is a bad trade.
-//
-//   · The logic into a hook. Everything before `return (` is 1,100 lines but
-//     only 445 of code — and 73 useState calls. A useSettingsPage() hook would
-//     have to hand all 73 back across a seam, to be destructured again by the
-//     2,852 lines of JSX below. That is the same complexity plus an interface.
-//
-// What actually worked is what keeps working: when a card is next touched for
-// its own reasons, it moves to pages/settings/ then. Seven did this round, each
-// a byte-identical move of a module-level, prop-driven component — no seam, no
-// reordering, nothing to get wrong.
+// bv-convention-exception: page-uses-page-shell -- the rail stands beside the
+// page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
 export function SettingsPage() {
   const { t } = useT();
   const { summary: anomalySummary } = useAnomalySummary();
@@ -1165,23 +1024,28 @@ export function SettingsPage() {
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
 
-  const [tab, setTab] = useState<TabKey>("general");
-  // Settings tab slide (GlimStone motion-engine animation 7) — 1 = the tab
-  // strip's onChange below just moved to a LATER tab (slide in from the
-  // trailing edge), -1 = an EARLIER one. Computed synchronously in the SAME
-  // event handler that calls setTab() (see that call site's own comment), so
-  // by the time the tab-content wrapper remounts with the new `tab`, this
-  // state has already committed alongside it in the same render. A ref, not
-  // state, tracks the CURRENT tab for the hashchange effect below — that
-  // effect only ever runs once (mount) and closes over a stale `tab`
-  // otherwise; `setTab`/`setTabDir` themselves stay stable across renders
-  // (React guarantees this), so only the VALUE read needs the ref, not the
-  // setters.
-  const [tabDir, setTabDir] = useState<1 | -1>(1);
-  const tabRef = useRef<TabKey>(tab);
-  useEffect(() => {
-    tabRef.current = tab;
-  }, [tab]);
+  const { page: param } = useParams();
+  const page: SettingsPageId = isSettingsPage(param) ? param : FALLBACK_PAGE;
+  const location = useLocation();
+  const { hash } = location;
+  // /settings alone names no page: a hash from the tabbed Settings page leads
+  // to the page holding that tab or card, otherwise the page opened last.
+  const redirect = isSettingsPage(param)
+    ? null
+    : param === undefined
+      ? (LEGACY_HASH[hash.replace(/^#/, "")] ?? readLastPage())
+      : FALLBACK_PAGE;
+  const [order, setOrder] = useState(readOrder);
+  const pages = orderPages(order);
+  // A page slides in from the side its tile sits on in the rail.
+  const shownPage = useRef(page);
+  const pageDir = useRef<1 | -1>(1);
+  if (shownPage.current !== page) {
+    const ids = pages.map((p) => p.id);
+    pageDir.current = ids.indexOf(page) > ids.indexOf(shownPage.current) ? 1 : -1;
+    shownPage.current = page;
+  }
+  useEffect(() => writeLastPage(page), [page]);
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedBaseline is the server's last-confirmed state. Every save persists its
   // own fields merged onto THIS baseline (not the live, possibly-edited
@@ -1636,39 +1500,34 @@ export function SettingsPage() {
       });
   }
 
-  // A tab hash such as /settings#offsite selects that tab, and a card hash
-  // (CARD_TAB) selects the card's tab. Read on mount and on hashchange, since
-  // an in-app hash link fired while already on /settings remounts nothing.
-  const [cardAnchor, setCardAnchor] = useState("");
-  useEffect(() => {
-    const applyHash = () => {
-      const h = window.location.hash.replace(/^#/, "");
-      const target = CARD_TAB[h] ?? h;
-      if ((TAB_ORDER as string[]).includes(target)) {
-        // The slide direction reads the current tab off tabRef: this effect
-        // runs once, so its own `tab` is the one from mount.
-        const from = TAB_ORDER.indexOf(tabRef.current);
-        const to = TAB_ORDER.indexOf(target as TabKey);
-        if (from !== -1 && to !== -1) setTabDir(to > from ? 1 : -1);
-        setTab(target as TabKey);
-        setCardAnchor(target === h ? "" : h);
-      }
-    };
-    applyHash();
-    window.addEventListener("hashchange", applyHash);
-    return () => window.removeEventListener("hashchange", applyHash);
-  }, []);
-
-  // The card exists only once the settings have loaded and its tab is showing.
+  // A hash such as /settings/integrity#anomalies names a card below the fold,
+  // and a search result names a card and row to mark. Anything else opens a
+  // page at its top, since the scroller is shared by every page.
   const settingsLoaded = settings !== null;
+  const handledJump = useRef("");
   useEffect(() => {
-    if (!cardAnchor || !settingsLoaded) return;
-    const card = document.getElementById(cardAnchor);
-    if (!card) return;
-    // jsdom has no scrollIntoView.
-    card.scrollIntoView?.({ block: "start" });
-    setCardAnchor("");
-  }, [cardAnchor, settingsLoaded, tab]);
+    if (!settingsLoaded) return;
+    const jump = (location.state as { jump?: SearchJump } | null)?.jump;
+    const anchor = hash.replace(/^#/, "");
+    if (jump && handledJump.current !== location.key) {
+      handledJump.current = location.key;
+      const content = document.querySelector<HTMLElement>("[data-settings-content]");
+      const target = content && (jump.card || jump.row) ? jumpTarget(content, jump) : null;
+      if (target) {
+        // jsdom has no scrollIntoView.
+        target.scrollIntoView?.({ block: "center" });
+        markHit(target);
+      } else if (jump.card) {
+        push(t("settings.search.notShown").replace("{name}", jump.row ?? jump.card), "warn");
+      }
+      if (target || jump.card) return;
+    }
+    if (anchor) {
+      document.getElementById(anchor)?.scrollIntoView?.({ block: "start" });
+      return;
+    }
+    document.getElementById("bv-main")?.scrollTo?.({ top: 0 });
+  }, [location, hash, settingsLoaded, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // While "sync" is on, mirror the Containers cadence onto VMs + Flash +
   // Folders (Task 2 — "der toggle soll auch ordner einschließen") in live
@@ -2412,142 +2271,77 @@ export function SettingsPage() {
     (settings.filesOffsite !== "" && settings.filesOffsiteImmutable) ||
     (settings.zfsOffsite !== "" && settings.zfsOffsiteImmutable);
 
-  // hueSeq/nextHue (GlimStone follow-up pass, jdp's second live-review round
-  // — "Die ganzen... Abschnittsbadges sind nicht in der Farbengine!!"):
-  // every Card/section-title notch below now takes an optional `hueIndex`,
-  // by its own LIST INDEX among the notches visible on the CURRENTLY ACTIVE
-  // tab (see Card's own doc comment and Badge.tsx's tone="heading" section
-  // for the full history/reasoning). A hand-counted literal per tab would
-  // silently drift the moment a Card is added/removed/reordered — this
-  // plain, freshly-reset-every-render counter instead assigns 0,1,2,... in
-  // exactly the order the JSX below actually evaluates each call, which for
-  // a `{tab === "x" && (<Card hueIndex={nextHue()} .../>)}` gate is ALSO
-  // exactly the order those Cards are, or would be, painted: `&&`
-  // short-circuits, so an inactive tab's own `nextHue()` calls never run at
-  // all (the counter is never incremented for cards that aren't on screen),
-  // and a re-render always starts back at 0 (a plain local `let`, not a
-  // ref/state — nothing here needs to survive between renders). One
-  // exception, documented at its own two call sites below: the four
-  // Domain-schedule sections (ContainersSection/VMsSection/FlashSection/
-  // FilesSection) and RestoreChecksSection are each passed their OWN
-  // `nextHue()` result the same way every inline `<Card>` is — the counter
-  // does not care whether the notch it is numbering renders directly here or
-  // one function-call away inside a child component.
+  // Each card's heading takes the next palette position in render order.
+  // Only the current page's gates run, so the count starts at 0 on every page.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
   const pairingUsed = settings.receiverEnabled || settings.fleetEnabled || settings.pullEnabled;
 
-  return (
-    // The root's gap is the card rhythm between the tab strip and the first
-    // card. The page's h1 is sr-only and takes no space of its own, so the
-    // tab strip is the first thing anyone sees, at the page's own full width
-    // like every other tab's heading area.
-    <div className={PAGE_SHELL_RESPONSIVE}>
-      <PageTitle>{t("settings.title")}</PageTitle>
-
-      {/* The tab strip. Each tab owns the rainbow position of its list index. */}
-      <Selector
-        items={([
-          ["general", t("settings.tab.general")],
-          ["look", t("settings.tab.look")],
-          ["storage", t("settings.tab.storage")],
-          ["schedules", t("settings.tab.schedules")],
-          ["offsite", t("settings.tab.offsite")],
-          ["notifications", t("settings.tab.notifications")],
-          ["integrity", t("settings.tab.integrity")],
-          ["system", t("settings.tab.system")],
-        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key], title: label }))}
-        label={t("settings.title")}
-        // 0, which is also the default - stated anyway, because it is the one
-        // start every other selector in the tree has to avoid.
-        hueOffset={HUE_OFFSET.tabs}
-        select="one"
-        active={tab}
-        onChange={(key) => {
-          // Settings tab slide (GlimStone motion-engine animation 7) —
-          // computed HERE, in the same synchronous event handler that also
-          // calls setTab() below, because this is the one place that still
-          // has BOTH the old tab (the `tab` closure variable, not yet
-          // updated) and the new one (`key`) at once. React batches this
-          // setTabDir alongside the setTab() call into the same commit, so
-          // the tab-content wrapper's very first render with the new `tab`
-          // already carries the correct --tab-dir (see that wrapper's own
-          // comment further down for why keying it on `tab` is what makes
-          // the slide replay on every click).
-          const from = TAB_ORDER.indexOf(tab);
-          const to = TAB_ORDER.indexOf(key as TabKey);
-          if (from !== -1 && to !== -1) setTabDir(to > from ? 1 : -1);
-          setTab(key as TabKey);
-          // Keep the URL hash in sync so reload/bookmark restores the tab
-          // (replaceState avoids polluting history and won't re-fire applyHash).
-          try {
-            window.history.replaceState(null, "", `#${key}`);
-          } catch {
-            /* history unavailable — tab state still switches */
-          }
-        }}
-        size="lg"
-        // Tabs are pages rather than one choice, so each stands on its own
-        // instead of sharing a groove, as wide as the widest name.
-        variant="chip"
-        // Eight tabs never wrap to a second row: they share the row evenly
-        // and drop to their glyph, tab name as tooltip, once German's longest
-        // label no longer fits its share.
-        fit
+  // Receiver, Instances and Pull are the domains that work through pairing, so
+  // their switches stand on General with the others and again on Pairing.
+  const instanceToggles = (firstHue: number) => (
+    <>
+      <ToggleRow
+        label={t("receiver.title")}
+        hint={t("settings.receiverEnabledHint")}
+        checked={settings.receiverEnabled}
+        onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
+        disabled={domainToggleBusy.receiverEnabled}
+        shakeNonce={domainToggleShake.receiverEnabled}
+        pulseNonce={fieldPulse.receiverEnabled}
+        hueIndex={firstHue}
       />
+      {/* Named after Instances, not the Fleet tab it shows: "Flotte" alone
+          does not say what this domain is. */}
+      <ToggleRow
+        label={t("instances.title")}
+        hint={t("settings.fleetEnabledHint")}
+        checked={settings.fleetEnabled}
+        onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
+        disabled={domainToggleBusy.fleetEnabled}
+        shakeNonce={domainToggleShake.fleetEnabled}
+        pulseNonce={fieldPulse.fleetEnabled}
+        hueIndex={firstHue + 1}
+      />
+      {/* Pull (#227) is the only one of the three that writes: it fetches
+          another instance's backups into this box's own repository. */}
+      <ToggleRow
+        label={t("pull.title")}
+        hint={t("settings.pullEnabledHint")}
+        checked={settings.pullEnabled}
+        onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}
+        disabled={domainToggleBusy.pullEnabled}
+        shakeNonce={domainToggleShake.pullEnabled}
+        pulseNonce={fieldPulse.pullEnabled}
+        hueIndex={firstHue + 2}
+      />
+    </>
+  );
 
-      {/* Tab panels, at the page's own full width, un-capped. Every direct
-          child of this wrapper is either a whole Card (own bg-carbon-surface
-          + p-5 box) or an equivalent top-level section, so the root's gap-10
-          is the vertical rhythm between Settings' Domains/Language/Theme/
-          Accent/Shape/Rainbow/Quiet-toasts blocks. */}
-      {/* key={tab} (GlimStone motion-engine animation 7, Settings tab slide):
-          this ONE div wraps every `{tab === "x" && ...}` panel below — every
-          Card inside it ALREADY fully unmounts/remounts on a tab switch via
-          those conditionals alone, key or no key; keying the WRAPPER too
-          changes nothing about which children exist, it only makes the
-          wrapper itself a fresh DOM node each click, which is what lets
-          `.glim-tab-slide`'s own entrance animation (index.css) replay every
-          time instead of only once at Settings' own first mount (a
-          persistent class on a node that never gets recreated never
-          replays its animation, the same reasoning glim-stagger-row's own
-          comment gives for why a list re-render does NOT replay). --tab-dir
-          is set from `tabDir` state, computed by whichever caller last
-          changed `tab` (the Selector's onChange below, or the hashchange
-          effect above) in the SAME synchronous handler that called setTab —
-          see either call site's own comment for the exact "old index vs new
-          index" math.
-            `flex-1` (sticky-footer round, jdp live review — see AboutFooter's
-          own header comment for the full before/after): this is the ONE
-          child of the page root (above) that should absorb whatever extra
-          height that root has beyond its own natural content size — the
-          heading+tab-strip block above it is a fixed-content block that
-          should never stretch, and AboutFooter below it is the thing being
-          pushed down, not the thing doing the pushing. flex-basis 0 + grow 1
-          (Tailwind's `flex-1`) means this wrapper fills the ROOT's leftover
-          vertical space when its own Cards don't need all of it (short tabs
-          like General), while its automatic minimum height still floors at
-          whatever its own content actually needs — so on a long tab
-          (Storage, Schedules) it simply renders at full content height
-          exactly as before, growing `main` past the viewport and letting it
-          scroll normally, with AboutFooter still following right after it
-          rather than sitting fixed over top of it. */}
+  return (
+    <div className="flex flex-1 gap-3 md:gap-6">
+      {redirect && <Navigate to={`/settings/${redirect}`} replace />}
+      <SettingsRail
+        items={pages.map((p) => ({ id: p.id, label: t(p.label), icon: p.icon, to: `/settings/${p.id}` }))}
+        active={page}
+        label={t("settings.railLabel")}
+        onReorder={(ids) => {
+          setOrder(ids);
+          writeOrder(ids);
+        }}
+      />
+      <div data-settings-content className={`${PAGE_SHELL_RESPONSIVE} min-w-0 flex-1`}>
+      <PageTitle>{t("settings.title")}</PageTitle>
+      <SettingsSearch pages={pages} />
+      {/* Keyed on the page, so the slide replays on every change of page. */}
       <div
-        key={tab}
+        key={page}
         className="flex flex-col gap-6 md:gap-10 glim-tab-slide flex-1"
-        style={{ "--tab-dir": tabDir } as CSSProperties}
+        style={{ "--tab-dir": pageDir.current } as CSSProperties}
       >
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
-      {/* Backup schedules reuse the proven per-domain sections + sync toggle;  */}
-      {/* off-site / self-backup / restore-check cadences are edited here too.   */}
-      {/* Task 5 (live-review — "Speichern-Buttons können weg, es soll immer    */}
-      {/* alles live gespeichert werden"): every field on this tab auto-saves   */}
-      {/* itself now (scheduleField/autoSaveScheduleField/handleSyncSchedules-  */}
-      {/* Toggle above) — there is no tab-wide SaveBar left to persist them.    */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "schedules" && (
+      {/* Every cadence lives here, and every field saves as it changes. */}
+      {page === "schedules" && (
         <>
           {/* Schedule options (jdp, live-review — "Die beiden Toggle sollen in
               eine eigene Card"): perItemSchedules (#121) and the Containers-
@@ -2753,17 +2547,6 @@ export function SettingsPage() {
             );
           })()}
 
-          {/* Restore-check drills (RestoreChecksSection) moved to the Integrity
-              tab (jdp, live-review: "Gehört die 'Automatische Restore-
-              Prüfungen' Card nicht in den Integritäts-Tab?") — it configures
-              WHAT gets verified and how often, which fits that tab's existing
-              verify/unlock/prune/drill actions better than this tab's own
-              "when do backup jobs run" focus. See the `tab === "integrity"`
-              block below for its new call site; removing it here also frees
-              up one `nextHue()` notch, automatically renumbering every Card
-              still below on this tab (see that counter's own doc comment for
-              why no manual re-numbering is needed). */}
-
           {/* Missed schedules: anacron-style catch-up after start. Backend runs
               the missed domain job ~2 minutes after boot (see internal/schedule
               CatchUpMissed). */}
@@ -2779,79 +2562,11 @@ export function SettingsPage() {
             />
           </Card>
 
-          {/* Health-gated ordered restart (#119): after a backup that stopped
-              other containers ("Stop other containers during backup"), they
-              restart in compose depends_on order and each must report
-              healthy/running before its dependents start. The wait also holds
-              through the post-backup update recreate (see internal/backup
-              orchestrator WhileDependentsStopped). */}
-          <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
-            {/* Full-page Speichern-Button sweep (jdp, live review, emphatic:
-                "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll
-                es automatisch speichern."): this was the one Card left on
-                the Schedules tab still batched into its own manual SaveBar
-                after Task 5 converted every other field here — that task's
-                own comment named it as a deliberate exception at the time;
-                this pass closes it out with the exact same shapes Task 5
-                already established one Card up (autoSaveScheduleField for
-                the discrete toggle, scheduleField's debounce for the
-                continuously-typed number). */}
-            <ToggleRow
-              label={t("settings.restartHealthWait")}
-              hint={t("settings.restartHealthWaitHint")}
-              checked={settings.restartHealthWait}
-              onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
-              disabled={schedFieldBusy.restartHealthWait}
-              shakeNonce={schedFieldShake.restartHealthWait}
-              pulseNonce={fieldPulse.restartHealthWait}
-            />
-            {settings.restartHealthWait && (
-              <label className="flex flex-col gap-1 sm:w-1/2">
-                {/* Live-review round 3 sweep: the range explainer used to sit
-                    as a permanent caption below the field. Moved beside the
-                    field's own label as an InfoBubble, the exact pattern the
-                    retention grid further down already uses for a field-
-                    level "what does this number mean" note. */}
-                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                  {t("settings.restartHealthTimeoutLabel")}
-                  <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
-                </span>
-                <NumberField
-                  min={5}
-                  max={3600}
-                  value={settings.restartHealthTimeoutSec}
-                  onChange={(e) => {
-                    const raw = (e.target as unknown as { value: string }).value;
-                    // Clamp to the field minimum (5): never let a transient sub-5
-                    // value sit in component state. The server clamps to 5..3600.
-                    const n = Math.max(5, parseInt(raw, 10) || 0);
-                    scheduleField("restartHealthTimeoutSec", n);
-                  }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-                />
-              </label>
-            )}
-          </Card>
 
-          {/* Restore-check schedule (schedulesChecks) moved to the Integrity
-              tab alongside RestoreChecksSection above (jdp, live-review —
-              same "belongs with WHAT/how-often gets verified, not WHEN
-              backup jobs run" reasoning). See the `tab === "integrity"`
-              block below for its new call site. */}
-
-          {/* Backup Everything used to be here, as the last card on the tab.
-              It now renders SECOND, right after Schedule options — see its call
-              site up there for why ([413]). */}
-
-          {/* No SaveBar: every field in this tab auto-saves — see scheduleField
-              / autoSaveScheduleField. main's buildSchedulePatch() is gone. */}
         </>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* GENERAL — Domains                                                   */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "general" && (
+      {page === "general" && (
       <Card title={t("settings.domains")} hint={t("settings.domainsHint")} hueIndex={nextHue()}>
         {/* Live-review round 3, point 4: all 7 rows here used to show a
             permanent visible caption under the label (rule 8 violation — the
@@ -2948,58 +2663,19 @@ export function SettingsPage() {
           pulseNonce={fieldPulse.configEnabled}
           hueIndex={5}
         />
-        <ToggleRow
-          label={t("receiver.title")}
-          hint={t("settings.receiverEnabledHint")}
-          checked={settings.receiverEnabled}
-          onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
-          disabled={domainToggleBusy.receiverEnabled}
-          shakeNonce={domainToggleShake.receiverEnabled}
-          pulseNonce={fieldPulse.receiverEnabled}
-          hueIndex={6}
-        />
-        {/* Named after Instances, not the Fleet tab it shows: unlike
-            Receiver and Pull below, "Flotte" alone does not say what this
-            domain is. */}
-        <ToggleRow
-          label={t("instances.title")}
-          hint={t("settings.fleetEnabledHint")}
-          checked={settings.fleetEnabled}
-          onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
-          disabled={domainToggleBusy.fleetEnabled}
-          shakeNonce={domainToggleShake.fleetEnabled}
-          pulseNonce={fieldPulse.fleetEnabled}
-          hueIndex={7}
-        />
-        {/* Pull (#227). Last of the three and the only one that WRITES: the two
-            above watch, this one fetches another instance's backups into this
-            box's own repository. Its hint says so rather than leaving it to be
-            discovered. */}
-        <ToggleRow
-          label={t("pull.title")}
-          hint={t("settings.pullEnabledHint")}
-          checked={settings.pullEnabled}
-          onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}
-          disabled={domainToggleBusy.pullEnabled}
-          shakeNonce={domainToggleShake.pullEnabled}
-          pulseNonce={fieldPulse.pullEnabled}
-          hueIndex={8}
-        />
+        {instanceToggles(6)}
+        <Link to="/settings/pairing" className="self-start py-1 text-xs text-accentText hover:underline">
+          {t("settings.openPairing")}
+        </Link>
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Named repositories (#204)                                */}
-      {/* ------------------------------------------------------------------ */}
       {/* Above the domain paths on purpose: these are the places an INDIVIDUAL
           container, VM or folder set can be pointed at instead of the domain
           path below, so the more specific answer is read first. */}
-      {tab === "storage" && <ReposCard hueIndex={nextHue()} />}
+      {page === "storage" && <ReposCard hueIndex={nextHue()} />}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Backup paths                                             */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
+      {page === "storage" && (
       <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
         {/* Each field saves itself, debounced per field name like the
             Schedules tab's cadence fields. The six PathModeSwitch rows are
@@ -3116,11 +2792,7 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Local snapshot retention (#51 — moved here from Off-site,  */}
-      {/* so it sits with the local backup paths it prunes).                   */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
+      {page === "retention" && (
       <Card
         title={t("settings.retentionTitle")}
         // Live-review round 3, point 4 sweep: this Card's own intro used to
@@ -3184,27 +2856,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Image cleanup and Unraid's own update-status               */}
-      {/* reconciliation (GlimStone follow-up round, merge A): both feed the   */}
-      {/* SAME post-backup container-update pipeline (#56, #116). Every field  */}
-      {/* here auto-saves instead of batching into a Speichern button —        */}
-      {/* mirrors the Domains card's own auto-save mechanism (#142): both      */}
-      {/* toggles use the exact optimistic-flip + persist + revert-on-failure  */}
-      {/* shape toggleDomainEnabled established (see autoSaveField below).     */}
-      {/*   Private container registries (#106) USED to be a third             */}
-      {/* sub-section merged into this same card. SPLIT BACK OUT into its own  */}
-      {/* standalone Card below (jdp, live-review: "Registries: wir machen     */}
-      {/* eine eigene Card daraus") — a registry credential is consulted BY    */}
-      {/* the update-pull, but isn't itself image cleanup or Unraid's own      */}
-      {/* status reconciliation, so the merge was really "three things on the  */}
-      {/* same Storage tab," not three parts of one coherent decision; this    */}
-      {/* undoes exactly that, not a mechanical revert of merge A as a whole.  */}
-      {/* This card's own title/hint (settings.imageMaintenanceTitle/-Hint,    */}
-      {/* same keys, retitled values) dropped every registries mention         */}
-      {/* accordingly.                                                        */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
+      {/* Image cleanup and Unraid's update status both feed the post-backup */}
+      {/* update (#56, #116), so they share a card. */}
+      {page === "containers" && (
       <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.pruneImageAfterUpdate")}
@@ -3227,21 +2881,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — private container registries (#106), its own standalone    */}
-      {/* Card again — see the Image Cleanup card's own comment above for why  */}
-      {/* it split out. `hint` now carries what used to be a separate          */}
-      {/* <h3>+InfoBubble pair right inside the merged card                    */}
-      {/* (settings.registriesTitle/-Hint, unchanged keys/values, just         */}
-      {/* promoted to the Card's own title/hint slot) — the exact same         */}
-      {/* content, through the ONE heading+bubble mechanism every other Card   */}
-      {/* on this page already uses instead of a second, bespoke one. No       */}
-      {/* `border-t` divider carried over either — that only ever separated    */}
-      {/* this sub-section from its two former siblings; a standalone Card     */}
-      {/* already has its own surface/edge doing that job, same as every       */}
-      {/* other single-purpose Card in this file.                              */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
+      {/* Registry logins (#106). The update pull reads them, but they are not */}
+      {/* image cleanup, so they have a card of their own. */}
+      {page === "containers" && (
       <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-3">
           {settings.registryAuths.length === 0 && (
@@ -3456,11 +3098,47 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — restic cache size limit. The persistent cache under        */}
-      {/* /config (RESTIC_CACHE_DIR) survives restarts and would otherwise     */}
-      {/* grow unbounded; LRU per-repo caches are evicted after scheduled runs.*/}
-      {/* ------------------------------------------------------------------ */}
+      {/* Health-gated ordered restart (#119): containers stopped for a backup
+          restart in compose depends_on order, each healthy before its
+          dependents start. The wait also covers the post-backup update
+          recreate (internal/backup WhileDependentsStopped). */}
+      {page === "containers" && (
+      <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
+        <ToggleRow
+          label={t("settings.restartHealthWait")}
+          hint={t("settings.restartHealthWaitHint")}
+          checked={settings.restartHealthWait}
+          onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
+          disabled={schedFieldBusy.restartHealthWait}
+          shakeNonce={schedFieldShake.restartHealthWait}
+          pulseNonce={fieldPulse.restartHealthWait}
+        />
+        {settings.restartHealthWait && (
+          <label className="flex flex-col gap-1 sm:w-1/2">
+            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("settings.restartHealthTimeoutLabel")}
+              <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
+            </span>
+            <NumberField
+              min={5}
+              max={3600}
+              value={settings.restartHealthTimeoutSec}
+              onChange={(e) => {
+                const raw = (e.target as unknown as { value: string }).value;
+                // Clamp to the field minimum (5): never let a transient sub-5
+                // value sit in component state. The server clamps to 5..3600.
+                const n = Math.max(5, parseInt(raw, 10) || 0);
+                scheduleField("restartHealthTimeoutSec", n);
+              }}
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
+            />
+          </label>
+        )}
+      </Card>
+      )}
+
+      {/* The restic cache under /config survives restarts and would grow without */}
+      {/* bound; per-repository caches are evicted after scheduled runs. */}
       {/* `advanced &&` inline (not the <Advanced> wrapper component): the
           wrapper takes children as an ALREADY-BUILT prop, so this Card's own
           hueIndex={nextHue()} would fire every render regardless of whether
@@ -3469,7 +3147,7 @@ export function SettingsPage() {
           painted, shifting every later Storage-tab heading by one position
           while Advanced was off. Plain `&&` short-circuits properly, exactly
           like every other conditional Card on this page. */}
-      {tab === "storage" && advanced && (
+      {page === "storage" && advanced && (
       <Card title={t("settings.cacheTitle")} hint={tLtr(t, "settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
@@ -3493,9 +3171,7 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — How much CPU a backup may take ([558], issue #189)        */}
-      {/* ------------------------------------------------------------------ */}
+      {/* How much CPU a backup may take (#189). */}
       {/* Sits beside the cache card because both answer the same question:
           how much of this machine BombVault is allowed to use. The cap is
           handed to each restic child as GOMAXPROCS; restic is a Go program and
@@ -3507,7 +3183,7 @@ export function SettingsPage() {
           reason is in the cache card's comment above: the wrapper builds its
           children before deciding to render them, so a hueIndex={nextHue()}
           inside it spends a hue slot on a card that never paints. */}
-      {tab === "storage" && advanced && (
+      {page === "storage" && advanced && (
       <Card title={t("settings.coresTitle")} hint={t("settings.coresHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.coresLabel")}</span>
@@ -3527,31 +3203,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Plain-export encryption (age) and the restic repositories'  */}
-      {/* own encryption, merged into one card (GlimStone follow-up round,      */}
-      {/* merge B). Every field auto-saves instead of batching into a           */}
-      {/* Speichern button (#142's own mechanism) — the two toggles use         */}
-      {/* autoSaveField (optimistic + revert-on-failure); the recipients field  */}
-      {/* debounces instead, same reasoning as the registries fields in the     */}
-      {/* Image Cleanup card above.                                            */}
-      {/*   Flash-ZIP-Export (#28) used to be a third sub-section in THIS same  */}
-      {/* card. Moved out in TWO steps, live-review (jdp): first "trenn bitte   */}
-      {/* flash zip export und den rest wieder in zwei separate cards", then    */}
-      {/* — superseding that — "soll die flash zip export toggle nicht einfach  */}
-      {/* in den flash tab? macht doch mehr sinn." It now lives on the Flash    */}
-      {/* page itself (pages/Flash.tsx's own FlashZipExportCard, exported from  */}
-      {/* this file the same way AccentCard/ThemeCard/RcloneCard/CloudCard      */}
-      {/* already are for cross-page reuse — see that component's own header    */}
-      {/* comment for the full move and why it's self-contained rather than     */}
-      {/* threaded through SettingsPage's own save()/autoSaveField()). This     */}
-      {/* card's own title/hint dropped every flash-zip-export mention          */}
-      {/* accordingly — it now only covers what's actually left: plain-export   */}
-      {/* encryption and repository encryption, both real "encrypt SOMETHING"   */}
-      {/* settings, so `settings.exportsEncryptionTitle`/`Hint` keep their OLD   */}
-      {/* key names (an internal identifier, not user-facing) with NEW values.  */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
+      {/* Plain-export encryption (age) and the repositories' own encryption. The */}
+      {/* switches save at once; the recipients field is debounced. */}
+      {page === "storage" && (
       <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
         {/* Plain-export encryption (age) -------------------------------------- */}
         {/* No `border-t` divider against Repository encryption below it (jdp,
@@ -3779,13 +3433,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* OFFSITE — Off-site copy (restic copy replication)                  */}
-      {/* Default-mode feature (v4): off-site + ransomware protection is a      */}
-      {/* first-class flow, not advanced-only. Deep-linked via /settings#offsite */}
-      {/* selects this tab (id kept for back-compat).                          */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "offsite" && (
+      {/* Off-site copies are part of the default view, since ransomware */}
+      {/* protection depends on them. The id is the target of /settings/offsite. */}
+      {page === "offsite" && (
       <div id="offsite" className="flex flex-col gap-6">
       {/* Live-review round ("Bei der ersten Card überlappen sich zwei
           Cardtitelbadges. Können wir für Container, VMs, Flash, Ordner
@@ -3925,11 +3575,7 @@ export function SettingsPage() {
       </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* OFFSITE — Retention (off-site repo only; local retention now lives   */}
-      {/* in the Storage tab, #51).                                            */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "offsite" && (
+      {page === "retention" && (
       <Card
         title={t("settings.retentionOffsiteTitle")}
         // Same fix as the local-retention Card above, folding all three
@@ -3980,14 +3626,11 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* OFFSITE — Off-site bandwidth                                        */}
-      {/* ------------------------------------------------------------------ */}
       {/* `advanced &&` inline, not the <Advanced> wrapper — see the Storage
           tab's cacheTitle Card (above) for why: the wrapper's children are
           already built before it decides whether to render them, so a
           hueIndex={nextHue()} inside it fires every render regardless. */}
-      {tab === "offsite" && advanced && (
+      {page === "offsite" && advanced && (
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
         <div className="grid grid-cols-2 gap-3">
           {([
@@ -4012,12 +3655,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — Monitoring (Prometheus)                                   */}
-      {/* ------------------------------------------------------------------ */}
       {/* `advanced &&` inline, not the <Advanced> wrapper — same reason as
           the Storage tab's cacheTitle Card above. */}
-      {tab === "system" && advanced && (
+      {page === "integrations" && advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
         {/* GlimStone follow-up round (jdp, live review: "Prometheus-Metriken
             unter /metrics ... in eine InfoBubble" — design-language.md rule 8,
@@ -4079,11 +3719,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — Dashboard widget (embeddable activity log). Not behind      */}
-      {/* Advanced: it is an end-user feature, unlike the ops-y metrics card.  */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
+      {/* The dashboard widget is an end-user feature, so it is outside the */}
+      {/* advanced view, unlike the metrics. */}
+      {page === "integrations" && (
         <>
         <DashboardWidgetCard
           t={t}
@@ -4103,48 +3741,22 @@ export function SettingsPage() {
         </>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — VM Backup over SSH                                        */}
-      {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you    */}
-      {/* need to make VM backups work is never hidden behind Advanced.       */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (advanced || settings.vmsEnabled || settings.zfsEnabled) && (
+      {/* Host SSH shows whenever VMs or ZFS are on, since their backups need it. */}
+      {page === "integrations" && (advanced || settings.vmsEnabled || settings.zfsEnabled) && (
         <VMSSHCard t={t} hueIndex={nextHue()} />
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* OFFSITE — Off-site backends (rclone + cloud credentials). Same     */}
-      {/* "not advanced-only" rule as the off-site repo-path Card above: a   */}
-      {/* user can't actually USE an rclone:/s3:/rest: off-site URL without  */}
-      {/* these credentials, so hiding them behind Advanced silently broke   */}
-      {/* off-site setup for Simple-mode users (they'd only find these two   */}
-      {/* cards by way of the Recovery page, which never gated them either). */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "offsite" && <RcloneCard t={t} hueIndex={nextHue()} />}
+      {/* An rclone:, s3: or rest: target cannot work without these credentials, */}
+      {/* so they are not limited to the advanced view. */}
+      {page === "cloud" && <RcloneCard t={t} hueIndex={nextHue()} />}
 
-      {tab === "offsite" && <CloudCard t={t} hueIndex={nextHue()} />}
-      {tab === "offsite" && <CloudCredSetsCard t={t} hueIndex={nextHue()} />}
+      {page === "cloud" && <CloudCard t={t} hueIndex={nextHue()} />}
+      {page === "cloud" && <CloudCredSetsCard t={t} hueIndex={nextHue()} />}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* NOTIFICATIONS — NotifyCard now renders THREE Cards internally: its  */}
-      {/* settings Card (always), its channels Card (advanced only), and its  */}
-      {/* Healthchecks Card (advanced only, card-split follow-up) — see       */}
-      {/* NotifyCard's own header comment. `channelsHueIndex`/                */}
-      {/* `healthchecksHueIndex` MUST each be their own `nextHue()` call made  */}
-      {/* INSIDE `tab === "notifications" && advanced &&`, not an eager call   */}
-      {/* at the unconditional site above: both Cards only paint while         */}
-      {/* Advanced is on, and this file already has one documented            */}
-      {/* live-Playwright-caught bug from doing it the eager way — see the     */}
-      {/* SYSTEM tab's Spike Card comment ("fires every render regardless")    */}
-      {/* for the exact silent-hue-shift failure mode this avoids: a slot      */}
-      {/* burned on a Card that never painted, shifting every later heading    */}
-      {/* on this tab by one position while Advanced was off. Plain `&&`       */}
-      {/* short-circuits correctly, so with Advanced off both values are       */}
-      {/* simply never computed and the props below evaluate to `undefined` —  */}
-      {/* NotifyCard never renders either Card in that case anyway, so the     */}
-      {/* unused values never matter, and no hue slot is spent.                */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "notifications" && (() => {
+      {/* The channel and Healthchecks cards only paint in the advanced view, so */}
+      {/* their hue positions are counted inside that condition and none is spent */}
+      {/* while it is off. */}
+      {page === "notifications" && (() => {
         const settingsHue = nextHue();
         const channelsHue = advanced ? nextHue() : undefined;
         const healthchecksHue = advanced ? nextHue() : undefined;
@@ -4168,7 +3780,7 @@ export function SettingsPage() {
           own heading notch and the CadenceBuilder's TimePicker inside it,
           instead of two independent `nextHue()` calls landing on different
           colours for one visually-grouped Card. */}
-      {tab === "notifications" && (() => {
+      {page === "notifications" && (() => {
         const hueIdx = nextHue();
         return (
           <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={hueIdx}>
@@ -4228,7 +3840,7 @@ export function SettingsPage() {
       {/* NOTIFICATIONS — Overdue-backup watchdog: a fixed daily check (09:00)
           that pushes ONE notification per overdue episode through the channels
           configured above; a new successful backup re-arms it. */}
-      {tab === "notifications" && (
+      {page === "notifications" && (
         <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")} hueIndex={nextHue()}>
           {/* Full-page Speichern-Button sweep: was this Card's own bottom
               SaveBar — a single toggle, so it now just auto-saves itself. */}
@@ -4243,9 +3855,6 @@ export function SettingsPage() {
         </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — Spike (host-integration check; KEEP — it is LIVE).         */}
-      {/* ------------------------------------------------------------------ */}
       {/* `advanced &&` inline, not the <Advanced> wrapper component: the
           wrapper takes `children` as an ALREADY-BUILT prop, so a
           hueIndex={nextHue()} inside it would fire every render regardless
@@ -4257,7 +3866,7 @@ export function SettingsPage() {
           while Advanced was off). Plain `&&` short-circuits correctly,
           exactly like every other conditional Card on this page — this was
           the one call site that still used the wrapper component instead. */}
-      {tab === "system" && advanced && (() => {
+      {page === "integrations" && advanced && (() => {
         // Button-size/colour-engine sweep (jdp, live review — "Die vielen
         // Buttons sind unterschiedlich groß und nicht alle im
         // Regenbogenmodus"): the Check Now button inside SpikePanel had no
@@ -4275,13 +3884,9 @@ export function SettingsPage() {
         );
       })()}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* INTEGRITY — Integrity, maintenance & restore drills                 */}
-      {/* Default-visible (v4): manual restore drills — including the real     */}
-      {/* off-site DR restore — are part of the core ransomware-protection     */}
-      {/* flow, alongside the un-gated off-site + retention cards above.       */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "integrity" && (
+      {/* Restore drills, the off-site DR restore among them, are part of the */}
+      {/* default view. */}
+      {page === "integrity" && (
       <>
         {/* IntegrityCard used to be documented here as the ONLY Card this tab
             ever rendered — a genuine singleton per design-language's own
@@ -4383,9 +3988,6 @@ export function SettingsPage() {
       </>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — Security                                                  */}
-      {/* ------------------------------------------------------------------ */}
       {/* Button-size/colour-engine sweep (jdp, live review — "Die vielen
           Buttons sind unterschiedlich groß und nicht alle im
           Regenbogenmodus"): the buttons below had no tie to this Card's own
@@ -4396,7 +3998,7 @@ export function SettingsPage() {
           button inside it — the same "one Card, several hue-aware children
           share ONE position" shape the schedulesChecks/Spike Cards above
           already use, not several independent `nextHue()` calls. */}
-      {tab === "system" && (() => {
+      {page === "security" && (() => {
         const hueIdx = nextHue();
         return (
       <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={hueIdx}>
@@ -4485,14 +4087,10 @@ export function SettingsPage() {
         );
       })()}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — the second login factor (v8.6.0). Its own Card rather than */}
-      {/* another section inside Security: enrolment is a three-step sequence */}
-      {/* with a QR code and a one-time list of recovery codes, which is more  */}
-      {/* than the password form's register, and it reads as a separate        */}
-      {/* decision from "is there a password at all".                          */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
+      {/* The second factor has its own card: enrolment takes three steps with a */}
+      {/* QR code and recovery codes, and it is a separate decision from having a */}
+      {/* password at all. */}
+      {page === "security" && (
         <TwoFactorCard
           passwordSet={authEnabled}
           enabled={totpEnabled}
@@ -4509,18 +4107,20 @@ export function SettingsPage() {
         />
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — passkeys. Its own Card beside the second factor because it  */}
-      {/* is a different decision: the factor makes the password stronger,     */}
-      {/* a passkey replaces typing it. And unlike the factor it is not always */}
-      {/* available, so the card's first job is explaining when it is not.     */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "system" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
+      {/* A passkey replaces typing the password rather than strengthening it, */}
+      {/* and it is not always available, so the card first explains when it is not. */}
+      {page === "security" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
 
       {/* Pairing sits with the password it warns about. It only matters to
           the domains that work over the group, the same ones that bring up
           the Instances page, whose Pairing button lands here by #pairing. */}
-      {tab === "system" && pairingUsed && (
+      {page === "pairing" && (
+        <Card title={t("settings.domains")} hint={t("settings.pairingDomainsHint")} hueIndex={nextHue()}>
+          {instanceToggles(0)}
+          {!pairingUsed && <p className="text-sm text-carbon-textSub">{t("settings.pairingNeedsDomain")}</p>}
+        </Card>
+      )}
+      {page === "pairing" && pairingUsed && (
         <div id="pairing" className="flex scroll-mt-6 flex-col gap-10">
           <PairingSection t={t} nextHue={nextHue} />
           <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
@@ -4529,15 +4129,15 @@ export function SettingsPage() {
 
       {/* The Look tab: language first, at a field's height, then the other
           axes the person owns. None of them waits for a Save. */}
-      {tab === "look" && <LanguageCard t={t} hueIndex={nextHue()} />}
+      {page === "general" && <LanguageCard t={t} hueIndex={nextHue()} />}
 
-      {tab === "look" && <ThemeCard t={t} hueIndex={nextHue()} />}
+      {page === "look" && <ThemeCard t={t} hueIndex={nextHue()} />}
 
       {/* Shape, the corner axis (lib/shape.ts). The segments carry no glyph:
           each segment is drawn at the real radius, so the strip itself is the
           preview, and a scaled-down stand-in beside it read as a weaker shape
           than the one it named. */}
-      {tab === "look" && (
+      {page === "look" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
         <Selector
           items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
@@ -4585,7 +4185,7 @@ export function SettingsPage() {
           right above, and the Card's own heading badge gets a real
           `hueIndex={nextHue()}` the same way every other Card on this tab
           does. */}
-      {tab === "look" && (
+      {page === "look" && (
       <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
         {/* THE FOURTH SEGMENT IS NOT ALWAYS THERE, GSS 1.17.0's hidden level.
             It is offered while it is CHOSEN - a picker that hid the value it
@@ -4619,7 +4219,7 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {tab === "look" && (
+      {page === "look" && (
       <>
       {/* Control labels (#178), how much of a control's identity is shown.
           One selector per chrome surface rather than one switch, because the
@@ -4725,7 +4325,7 @@ export function SettingsPage() {
           not hue-tinted, on purpose (see each Badge's own call-site comment
           for the full "a reset control must not blend into the very colours
           it resets" reasoning), so neither reads `hueIdx` at all. */}
-      {tab === "look" && (() => {
+      {page === "look" && (() => {
       const hueIdx = nextHue();
       // "Is there anything left to reset?" for the palette row below — the
       // mirror of AccentCard's own `presetsAreDefault`, same case-insensitive
@@ -5007,7 +4607,7 @@ export function SettingsPage() {
           the display mechanism moved, not the copy. Only this call site's
           own prop changed; the shared `settings.quietToastsHint` key and its
           text are untouched in i18n.ts and all 40 satellite locale files. */}
-      {tab === "general" && (
+      {page === "general" && (
       <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.quietToasts")}
@@ -5018,40 +4618,19 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — Export / import settings                                   */}
-      {/* Portable config file: move this instance's settings + off-site      */}
-      {/* destinations (and, opt-in, credentials) to another install. Backups, */}
-      {/* snapshots and history are never touched.                            */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
+      {/* Moves this instance's settings and off-site targets, credentials only */}
+      {/* when asked, to another install. Backups and history are never touched. */}
+      {page === "system" && (
         <SettingsPortabilityCard t={t} hueIndex={nextHue()} applyImport={applyImportedSettings} />
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* GENERAL — About                                                     */}
-      {/* Both versions, each linking to its own release, the ways to give,   */}
-      {/* and the two routes for saying something. Replaces the old version   */}
-      {/* footer rather than joining it ([363]) — shipping both is the        */}
-      {/* failure the design language names by name: one number in two type   */}
-      {/* sizes twelve pixels apart.                                          */}
-      {/*                                                                     */}
-      {/* It stood on SYSTEM until [3559], which was a defensible reading of  */}
-      {/* the language's "end of Settings" and the wrong one on a tabbed      */}
-      {/* page. System is where the host integration and the export live —    */}
-      {/* things somebody comes here to operate. General is the first tab in  */}
-      {/* the strip, so this is the last card of the first thing anybody      */}
-      {/* opens, which is where a version number and an invitation to give    */}
-      {/* are actually found. The sibling apps already had it there, so this  */}
-      {/* also ends a three-way disagreement about one standard card.         */}
-      {/* Stays LAST in its tab either way: the card is a footer.             */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "general" && (
+      {/* About stays last on System: the card is a footer. */}
+      {page === "system" && (
         <AboutCard hueIndex={nextHue()} />
       )}
       </div>
       {confirmDialog}
-
+      </div>
     </div>
   );
 }
