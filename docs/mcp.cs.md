@@ -40,7 +40,7 @@ Spuštění domény nebo Backup Everything vynechá položky, které nějaký li
 
 ## Zapnutí {#switch-on}
 
-1. Otevři **Nastavení, Systém, Server MCP** a klikni na tlačítko svého klienta. Klient, který v seznamu není, se připojí přes **Jiný klient**.
+1. Otevři **Nastavení, Integrace, Server MCP** a klikni na tlačítko svého klienta. Klient, který v seznamu není, se připojí přes **Jiný klient**.
 2. V části **Klíč** nech **Nový klíč** a navržený název, tedy název klienta, nebo napiš takový, který říká, kde se klíč používá, například „Claude Code na notebooku“. Jeden klíč na klienta ti dovolí jeden odvolat, aniž bys sahal na ostatní. **Existující klíč** dá klientovi klíč, který jsi vytvořil dřív.
 3. Zapni **Povolit spouštění záloh** u klíče, který má moci spouštět zálohy; bez toho může jen číst. Později to můžeš změnit na dlaždici klíče a změna platí od dalšího požadavku asistenta, bez nového připojení.
 4. Klikni na **Vytvořit klíč**. Klíč se zobrazí jen jednou. BombVault si nechává jen jeho otisk a znovu ho ukázat nedokáže, takže si ho hned zkopíruj. Když zavřeš okno dřív, než klient klíč použije, karta ho dál ukazuje, dokud nepotvrdíš, že sis ho zkopíroval.
@@ -173,7 +173,7 @@ ChatGPT, Claude na claude.ai, Grok a Le Chat volají BombVault ze serverů svéh
 
 Pro klienta, který neumí převzít klíč, je BombVault jeho vlastním autorizačním serverem OAuth. Klient se sám zaregistruje, pošle tě na stránku BombVault a tam se přihlásíš svým přihlašovacím heslem (a druhým faktorem, pokud ho máš nastavený) a povolíš ho. Klient pak dostane token, který platí jen pro koncový bod MCP tohoto BombVault, a sám si ho obnovuje.
 
-1. Nastav přihlašovací heslo v **Nastavení, Systém**. Bez něj BombVault žádné přihlášení nenabízí, protože by nebylo koho požádat o souhlas.
+1. Nastav přihlašovací heslo v **Nastavení, Zabezpečení**. Bez něj BombVault žádné přihlášení nenabízí, protože by nebylo koho požádat o souhlas.
 2. Zpřístupni BombVault z internetu přes https s certifikátem, kterému prohlížeče věří, obvykle přes reverzní proxy. Klient volá `/mcp`, `/oauth/` a `/.well-known/` ze svých vlastních serverů, takže proxy s vlastním přihlášením musí tyto tři cesty pustit až k BombVault. Stránka se souhlasem na `/oauth/authorize` se otevírá ve tvém vlastním prohlížeči a smí zůstat za přihlášením proxy. Uveď proxy také v `TRUSTED_PROXY` (viz [Konfigurace](configuration.md)). BombVault omezuje registrace klientů podle adresy a bez toho se zdá, že každý klient přichází z proxy.
 3. Na kartě MCP zapni **Přihlášení přes OAuth** a zadej **Veřejná adresa**: adresu https bez cesty, například `https://backup.example.com`. Každý token je na tuto adresu vázaný, takže po změně se musí každý klient přihlásit znovu.
 4. Klikni na tlačítko ChatGPT nebo Claude. Dialog ukáže **URL konektoru**, tedy veřejnou adresu s `/mcp` na konci, a kam v daném klientovi patří. V ChatGPT zapneš vývojářský režim v **Nastavení, Aplikace a konektory, Pokročilé nastavení**, zvolíš **Vytvořit**, vložíš URL konektoru jako URL MCP serveru a jako ověřování zvolíš OAuth. Na claude.ai otevřeš **Nastavení, Konektory, Přidat vlastní konektor**, vložíš URL konektoru, ID klienta a tajný klíč OAuth necháš prázdné a zvolíš **Připojit**.

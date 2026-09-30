@@ -1,6 +1,6 @@
 # Konfigurasjon
 
-Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-sikkerhetskopiering over SSH og oppsettet for ekstern lagring. Sikkerhetskopi-**repository-stier** konfigureres inne i appen (Innstillinger, Sikkerhetskopistier), ikke via miljøvariabler.
+Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-sikkerhetskopiering over SSH og oppsettet for ekstern lagring. Sikkerhetskopi-**repository-stier** konfigureres inne i appen (Innstillinger, Lagring, Sikkerhetskopistier), ikke via miljøvariabler.
 
 ## Miljøvariabler
 
@@ -30,7 +30,7 @@ Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vi
 
 Sikkerhetskopi av ZFS-datasett trenger også denne modusen: verten monterer øyeblikksbildet av et datasett først etter at containeren har startet. Se [ZFS-datasett](zfs-datasets.md).
 
-Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Sikkerhetskopistier**.
+Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Lagring, Sikkerhetskopistier**.
 
 !!! note "Sjekk av host-integrasjon"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.
@@ -62,7 +62,7 @@ For hver container velger BombVault selv hvilke bind-monteringer og navngitte vo
 
 ## MCP-server {#mcp-server}
 
-MCP-serveren trenger ingen miljøvariabel. Du slår den på ved å lage en nøkkel under **Innstillinger, System, MCP-server**, og den svarer på `/mcp` på samme port som webgrensesnittet (for eksempel `https://192.168.1.10:3443/mcp`). Uten en aktiv nøkkel svarer den stien med `404`. Klienter, sertifikater og grenser er beskrevet på [MCP-server](mcp.md).
+MCP-serveren trenger ingen miljøvariabel. Du slår den på ved å lage en nøkkel under **Innstillinger, Integrasjoner, MCP-server**, og den svarer på `/mcp` på samme port som webgrensesnittet (for eksempel `https://192.168.1.10:3443/mcp`). Uten en aktiv nøkkel svarer den stien med `404`. Klienter, sertifikater og grenser er beskrevet på [MCP-server](mcp.md).
 
 ## VM-sikkerhetskopiering over SSH
 
@@ -70,7 +70,7 @@ BombVault sikkerhetskopierer KVM/libvirt-VM-er **uten å montere noen libvirt-st
 
 Rask oppsett:
 
-1. **Innstillinger, System, Verts-SSH:** kopier den viste offentlige nøkkelen.
+1. **Innstillinger, Integrasjoner, Verts-SSH:** kopier den viste offentlige nøkkelen.
 2. Legg den til i Unraids `/root/.ssh/authorized_keys` (også lagret til flashen så den overlever omstarter).
 3. Klikk **Test tilkobling**.
 
@@ -81,15 +81,15 @@ Malen legger til `--add-host=host.docker.internal:host-gateway` så containeren 
 
 ## Oppsett for ekstern lagring
 
-Sett opp en ekstern replika på **Innstillinger, Ekstern**-fanen. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
+Sett opp en ekstern replika på **Innstillinger, Off-site**-siden. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
 
 - **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
-- **Sky-legitimasjon** lagres kryptert under Innstillinger, Ekstern, Sky-legitimasjon.
-- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, System, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
+- **Delt skylegitimasjon** lagres kryptert under Innstillinger, Skytilgang, Delt skylegitimasjon.
+- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
 - **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis. Det lokale repoet forblir primært. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.
-- **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
-- **Oppbevaring per kilde:** den lokale policyen ligger på Innstillinger, Stier og lagring; den eksterne policyen på Innstillinger, Ekstern (la den stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).
-- **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Ekstern.
+- **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Off-site, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
+- **Oppbevaring per kilde:** både den lokale og den eksterne policyen ligger på Innstillinger, Oppbevaring (la den eksterne policyen stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).
+- **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Off-site.
 - **Kald og arkiv-lagringsklasse (S3):** for et native S3-eksternt repo, velg et gjenopprettingslesbart nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remoter setter klassen sin i rclone-konfigurasjonen.
 
 ## Avvik {#anomalies}
@@ -107,7 +107,7 @@ Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still de
 
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 
-Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
+Kortet **Eksporter og importer innstillinger** på siden Innstillinger, System skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
 
 !!! warning "Eksporten kan inneholde legitimasjon"
     Du velger om du vil inkludere ekstern- og varslingslegitimasjonen i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.

@@ -4,11 +4,11 @@ I backup locali ti proteggono da un container perso o da un aggiornamento andato
 
 ## Replica off-site
 
-Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Imposta un repo per dominio nella scheda **Impostazioni, Off-site**. BombVault vi replica i nuovi snapshot con `restic copy` su base best-effort, così un intoppo off-site non fa mai fallire il backup locale. Il repo locale resta primario.
+Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Imposta un repo per dominio nella pagina **Impostazioni, Off-site**. BombVault vi replica i nuovi snapshot con `restic copy` su base best-effort, così un intoppo off-site non fa mai fallire il backup locale. Il repo locale resta primario.
 
 - **Più destinazioni off-site per dominio.** Ogni dominio (container, VM, flash, config, set di file e dataset ZFS) può replicare verso più destinazioni off-site contemporaneamente, non solo una, così puoi tenere, per esempio, un rest-server sulla macchina di un amico e un bucket S3 in parallelo. Aggiungi destinazioni extra in Impostazioni, Off-site, ciascuna con il proprio repository, classe di archiviazione S3, flag append-only, conservazione e budget di crescita. Una configurazione off-site singola esistente viene riportata intatta come prima destinazione, e ogni destinazione di un dominio replica secondo il calendario off-site di quel dominio.
-- **Calendario off-site per dominio** (modificato insieme a ogni altro calendario su Impostazioni, Calendari): lascialo vuoto per replicare dopo ogni backup locale, oppure imposta una cadenza (per esempio `weekly Sun 03:00`) per spedire off-site meno spesso di quanto esegui il backup localmente. Un pulsante **Replica ora** copre le esecuzioni su richiesta.
-- **La conservazione off-site** risiede su Impostazioni, Off-site così puoi tenere le copie off-site più a lungo come archivio. Lascia la policy tutta a zero per non tagliare mai automaticamente gli snapshot off-site.
+- **Calendario off-site per dominio** (modificato insieme a ogni altro calendario su Impostazioni, Pianificazioni): lascialo vuoto per replicare dopo ogni backup locale, oppure imposta una cadenza (per esempio `weekly Sun 03:00`) per spedire off-site meno spesso di quanto esegui il backup localmente. Un pulsante **Replica ora** copre le esecuzioni su richiesta.
+- **La conservazione off-site** risiede su Impostazioni, Conservazione così puoi tenere le copie off-site più a lungo come archivio. Lascia la policy tutta a zero per non tagliare mai automaticamente gli snapshot off-site.
 - **I limiti di banda** (Impostazioni, Off-site) limitano la velocità di upload/download di restic così la replica non satura la tua WAN.
 - Un **indicatore di replica** mostra quale dominio sta replicando mentre è in corso (sulla sua pagina e sulla Dashboard). È un indicatore attivo, non una barra di percentuale, perché `restic copy` non espone alcun progresso leggibile da una macchina.
 
@@ -17,7 +17,7 @@ Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Impost
 
 ## Repository primari remoti {#remote-primary-repositories}
 
-Il percorso di backup di un dominio (Impostazioni, Percorsi e archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
+Il percorso di backup di un dominio (Impostazioni, Archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
 
 Ognuno dei sei campi di percorso (Contenitori, Macchine virtuali, Flash, Configurazione, File, Dataset ZFS) ha subito accanto un interruttore **Locale / Remoto**:
 
@@ -31,7 +31,7 @@ Ognuno dei sei campi di percorso (Contenitori, Macchine virtuali, Flash, Configu
 Niente di tutto questo è obbligatorio: un percorso remoto scritto a mano senza impostazioni di sicurezza salvate esegue il backup esattamente come sempre (banda illimitata, potabile, nessun allarme di budget). La finestra di sicurezza serve per quando vuoi le stesse protezioni che ottiene una copia off-site, senza dover creare una destinazione off-site solo per quello.
 
 !!! note "Le credenziali cloud e REST sono condivise"
-    Un primario remoto si autentica con le stesse credenziali S3/REST configurate in Impostazioni, Off-site, Credenziali cloud: non esiste un archivio di credenziali separato per i repository primari.
+    Un primario remoto si autentica con le stesse credenziali S3/REST configurate in Impostazioni, Accesso cloud, Credenziali cloud condivise: non esiste un archivio di credenziali separato per i repository primari.
 
 ## Off-site immutabile (append-only)
 
@@ -59,7 +59,7 @@ Un reale passaggio da protetto a non protetto fa scattare un unico avviso.
 
 BombVault offre due livelli di prova che i tuoi backup siano effettivamente ripristinabili, non solo presenti.
 
-- **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco) e mostra un badge *ultima ripristinabilità verificata* per dominio. La cadenza risiede su Impostazioni, Calendari; il badge su Impostazioni, Integrità.
+- **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco) e mostra un badge *ultima ripristinabilità verificata* per dominio. La cadenza risiede su Impostazioni, Pianificazioni; il badge su Impostazioni, Integrità.
 - **Esercitazioni DR (off-site).** BombVault ripristina una destinazione reale dal repo off-site in una sandbox usa e getta, la verifica file per file e byte per byte, poi ripulisce. Questo dimostra che puoi recuperare da off-site, non solo che il repo risponde.
 
 La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto questo in una postura verde / ambra / rossa per dominio, con una checklist con marca temporale (off-site configurato, append-only verificato, replica aggiornata, esercitazione di ripristino superata, cifratura attiva, strategia di pota impostata). Ogni riga rossa collega direttamente alla soluzione, e la scheda diventa verde solo su fatti verificati.
@@ -68,7 +68,7 @@ La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto 
 
 I Riceventi, le fonti di Prelievo, la pagina Istanze e il Mesh fuori sede parlano tutti con un altro BombVault. Lo fanno come membri di un unico gruppo di associazione, e un'istanza si unisce al gruppo con dodici parole.
 
-Sulla prima istanza apri **Impostazioni → Sistema** e premi **Genera frase** nelle schede di associazione. Appaiono dodici parole in una finestra con un pulsante **Copia**. Su ogni altra istanza apri lo stesso posto, premi **Inserisci frase** e incollale o digitale, oppure premi **Incolla** in quella finestra. Una parola che non è nell'elenco viene indicata con la sua posizione già mentre la digiti, e l'ultima parola porta un checksum, così una parola digitata male o scambiata viene rilevata prima che avvenga l'associazione. Genera la frase su una sola istanza: due istanze che creano entrambe una frase formano due gruppi separati. Se per un minuto non si presenta nessuno, la scheda offre due vie d'uscita: mostrare di nuovo le parole per inserirle dall'altra parte, oppure inserire le parole dell'altra istanza e unirsi al suo gruppo in un solo passaggio. L'associazione funziona anche senza una password di accesso, ma impostane una: senza, chiunque possa aprire questa interfaccia web può leggere le parole e ottenere, tramite il gruppo, la password restic di ogni istanza al suo interno. La scheda di associazione lo segnala finché non viene impostata una password. Con una password, mostrare di nuovo la frase la richiede. **Esci dal gruppo** fa uscire di nuovo un'istanza.
+Sulla prima istanza apri **Impostazioni → Associazione** e premi **Genera frase** nelle schede di associazione. Appaiono dodici parole in una finestra con un pulsante **Copia**. Su ogni altra istanza apri lo stesso posto, premi **Inserisci frase** e incollale o digitale, oppure premi **Incolla** in quella finestra. Una parola che non è nell'elenco viene indicata con la sua posizione già mentre la digiti, e l'ultima parola porta un checksum, così una parola digitata male o scambiata viene rilevata prima che avvenga l'associazione. Genera la frase su una sola istanza: due istanze che creano entrambe una frase formano due gruppi separati. Se per un minuto non si presenta nessuno, la scheda offre due vie d'uscita: mostrare di nuovo le parole per inserirle dall'altra parte, oppure inserire le parole dell'altra istanza e unirsi al suo gruppo in un solo passaggio. L'associazione funziona anche senza una password di accesso, ma impostane una: senza, chiunque possa aprire questa interfaccia web può leggere le parole e ottenere, tramite il gruppo, la password restic di ogni istanza al suo interno. La scheda di associazione lo segnala finché non viene impostata una password. Con una password, mostrare di nuovo la frase la richiede. **Esci dal gruppo** fa uscire di nuovo un'istanza.
 
 Chiunque conosca le parole può unirsi al gruppo, trattale quindi come una password.
 
@@ -128,7 +128,7 @@ Il primo segmento del percorso è l'utente htpasswd, il secondo il repository. I
 | **NON protetto** | VAULT ha accettato una cancellazione. Manca `--append-only` oppure è stato rimosso. |
 | **non conclusivo** | Né l'uno né l'altro. Di solito l'URL non è quello che usa restic, oppure le credenziali sono cambiate. Non viene registrato nulla e non scatta alcun avviso. |
 
-**4. Su VAULT, guarda cosa arriva.** Associa le due macchine ([Associazione delle istanze](#pairing)), attiva *Impostazioni → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura con TOWER come istanza mittente.
+**4. Su VAULT, guarda cosa arriva.** Associa le due macchine ([Associazione delle istanze](#pairing)), attiva *Impostazioni → Associazione → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura con TOWER come istanza mittente.
 
 !!! warning "La posizione è un percorso **dentro** il container, scritto relativo al mount dell'host"
     Inserisci `user/appdata/rest-server/bombvault-containers/containers`, **non** `/mnt/user/appdata/…`. BombVault gira in un container in cui il `/mnt` dell'host è montato altrove; un percorso host assoluto lì non esiste. Se ne incolli uno, BombVault ora ti indica il percorso relativo da usare.

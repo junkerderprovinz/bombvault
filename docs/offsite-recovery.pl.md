@@ -4,11 +4,11 @@ Kopie lokalne chronią Cię przed utraconym kontenerem lub złą aktualizacją. 
 
 ## Replikacja poza siedzibą
 
-Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzibą. Ustaw repozytorium per domena w zakładce **Ustawienia, Poza siedzibą**. BombVault replikuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Repozytorium lokalne pozostaje główne.
+Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzibą. Ustaw repozytorium per domena na stronie **Ustawienia, Poza siedzibą**. BombVault replikuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Repozytorium lokalne pozostaje główne.
 
 - **Wiele celów poza siedzibą na domenę.** Każda domena (kontenery, VM, flash, config, zestawy plików i zbiory danych ZFS) może replikować do kilku celów poza siedzibą naraz, nie tylko jednego, więc możesz utrzymywać na przykład rest-server na maszynie znajomego oraz bucket S3 równolegle. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona nietknięta jako pierwszy cel, a każdy cel domeny replikuje zgodnie z harmonogramem poza siedzibą tej domeny.
 - **Harmonogram poza siedzibą per domena** (edytowany obok każdego innego harmonogramu w Ustawienia, Harmonogramy): pozostaw pusty, aby replikować po każdej kopii lokalnej, lub ustaw kadencję (na przykład `weekly Sun 03:00`), aby wysyłać poza siedzibę rzadziej, niż tworzysz kopie lokalne. Przycisk **Replikuj teraz** obsługuje uruchomienia na żądanie.
-- **Przechowywanie poza siedzibą** znajduje się w Ustawienia, Poza siedzibą, więc możesz trzymać kopie poza siedzibą dłużej jako archiwum. Pozostaw politykę całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą.
+- **Przechowywanie poza siedzibą** znajduje się w Ustawienia, Przechowywanie, więc możesz trzymać kopie poza siedzibą dłużej jako archiwum. Pozostaw politykę całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą.
 - **Limity przepustowości** (Ustawienia, Poza siedzibą) ograniczają tempo wysyłania/pobierania restic, aby replikacja nie nasycała Twojego łącza WAN.
 - **Wskaźnik replikacji** pokazuje, która domena jest replikowana w trakcie działania (na jej stronie i na panelu). To wskaźnik aktywności, a nie pasek procentowy, ponieważ `restic copy` nie udostępnia postępu czytelnego maszynowo.
 
@@ -17,7 +17,7 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 
 ## Zdalne repozytoria podstawowe {#remote-primary-repositories}
 
-Ścieżka kopii domeny (Ustawienia, Ścieżki i magazyn) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
+Ścieżka kopii domeny (Ustawienia, Pamięć) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
 
 Każde z sześciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfiguracja, Pliki, Zbiory danych ZFS) ma tuż obok przełącznik **Lokalne / Zdalne**:
 
@@ -31,7 +31,7 @@ Każde z sześciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfigura
 Nic z tego nie jest obowiązkowe: wpisana ręcznie ścieżka zdalna bez zapisanych ustawień bezpieczeństwa archiwizuje dokładnie tak jak dotąd (nieograniczone pasmo, możliwe przycinanie, brak alarmu budżetu). Okno bezpieczeństwa jest na wypadek, gdy chcesz te same zabezpieczenia, jakie dostaje kopia poza siedzibą, bez zakładania osobnego celu zewnętrznego tylko po to.
 
 !!! note "Dane logowania do chmury i REST są wspólne"
-    Zdalne repozytorium podstawowe uwierzytelnia się tymi samymi danymi S3/REST, które są ustawione w Ustawienia, Poza siedzibą, Dane logowania do chmury. Osobnego magazynu danych logowania dla repozytoriów podstawowych nie ma.
+    Zdalne repozytorium podstawowe uwierzytelnia się tymi samymi danymi S3/REST, które są ustawione w Ustawienia, Dostęp do chmury, Współdzielone dane logowania do chmury. Osobnego magazynu danych logowania dla repozytoriów podstawowych nie ma.
 
 ## Niezmienna (append-only) kopia poza siedzibą
 
@@ -68,7 +68,7 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracaln
 
 Odbiorcy, źródła pobierania, strona Instancje i Mesh poza siedzibą, wszystkie rozmawiają z inną instancją BombVault. Robią to jako członkowie jednej grupy parowania, a instancja dołącza do grupy dwunastoma słowami.
 
-Na pierwszej instancji otwórz **Ustawienia → System** i na kartach parowania kliknij **Wygeneruj frazę**. Pojawi się dwanaście słów w oknie z przyciskiem **Kopiuj**. Na każdej kolejnej instancji otwórz to samo miejsce, kliknij **Wpisz frazę** i wklej słowa albo je wpisz, albo kliknij **Wklej** w tym oknie. Słowo, którego nie ma na liście, strona nazywa razem z jego miejscem już podczas wpisywania, a ostatnie słowo niesie sumę kontrolną, więc źle wpisane albo zamienione miejscami słowo zostaje wychwycone, zanim dojdzie do sparowania. Wygeneruj frazę tylko na jednej instancji: dwie instancje, z których każda tworzy frazę, tworzą dwie osobne grupy. Jeśli przez minutę nikt się nie zgłosi, zakładka oferuje dwa sposoby wyjścia: pokazać słowa ponownie, aby wpisać je po drugiej stronie, albo wpisać słowa drugiej instancji i dołączyć do jej grupy w jednym kroku. Parowanie działa też bez hasła logowania, ale je ustaw: bez niego każdy, kto może otworzyć ten interfejs, może odczytać słowa i przez grupę uzyskać hasło restic każdej instancji w niej. Karta parowania informuje o tym, dopóki hasło nie zostanie ustawione. Z hasłem ponowne wyświetlenie frazy o nie poprosi. **Opuść grupę** wyprowadza instancję z powrotem.
+Na pierwszej instancji otwórz **Ustawienia → Parowanie** i na kartach parowania kliknij **Wygeneruj frazę**. Pojawi się dwanaście słów w oknie z przyciskiem **Kopiuj**. Na każdej kolejnej instancji otwórz to samo miejsce, kliknij **Wpisz frazę** i wklej słowa albo je wpisz, albo kliknij **Wklej** w tym oknie. Słowo, którego nie ma na liście, strona nazywa razem z jego miejscem już podczas wpisywania, a ostatnie słowo niesie sumę kontrolną, więc źle wpisane albo zamienione miejscami słowo zostaje wychwycone, zanim dojdzie do sparowania. Wygeneruj frazę tylko na jednej instancji: dwie instancje, z których każda tworzy frazę, tworzą dwie osobne grupy. Jeśli przez minutę nikt się nie zgłosi, zakładka oferuje dwa sposoby wyjścia: pokazać słowa ponownie, aby wpisać je po drugiej stronie, albo wpisać słowa drugiej instancji i dołączyć do jej grupy w jednym kroku. Parowanie działa też bez hasła logowania, ale je ustaw: bez niego każdy, kto może otworzyć ten interfejs, może odczytać słowa i przez grupę uzyskać hasło restic każdej instancji w niej. Karta parowania informuje o tym, dopóki hasło nie zostanie ustawione. Z hasłem ponowne wyświetlenie frazy o nie poprosi. **Opuść grupę** wyprowadza instancję z powrotem.
 
 Każdy, kto zna słowa, może dołączyć do grupy, więc traktuj je jak hasło.
 
@@ -128,7 +128,7 @@ Pierwszy segment ścieżki to użytkownik htpasswd, drugi to repozytorium. Wpisz
 | **NIE chronione** | VAULT przyjął usunięcie. Brakuje `--append-only` albo je usunięto. |
 | **nierozstrzygnięte** | Ani jedno, ani drugie. Zwykle adres nie jest tym, którego używa sam restic, albo zmieniły się dane logowania. Nic nie jest zapisywane i nie uruchamia się alarm. |
 
-**4. Na VAULT patrz, co przychodzi.** Sparuj obie maszyny ([Parowanie instancji](#pairing)), włącz *Ustawienia → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu, wskazując TOWER jako instancję wysyłającą.
+**4. Na VAULT patrz, co przychodzi.** Sparuj obie maszyny ([Parowanie instancji](#pairing)), włącz *Ustawienia → Parowanie → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu, wskazując TOWER jako instancję wysyłającą.
 
 !!! warning "Lokalizacja to ścieżka **wewnątrz** kontenera, zapisana względem montowania hosta"
     Wpisz `user/appdata/rest-server/bombvault-containers/containers`, a **nie** `/mnt/user/appdata/…`. BombVault działa w kontenerze, w którym `/mnt` hosta jest zamontowane gdzie indziej; bezwzględna ścieżka hosta tam nie istnieje. Jeśli ją wkleisz, BombVault poda ci teraz ścieżkę względną, której należy użyć.

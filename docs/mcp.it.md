@@ -40,7 +40,7 @@ Un avvio di dominio o di Backup Everything lascia fuori gli elementi trattenuti 
 
 ## Attivarlo {#switch-on}
 
-1. Apri **Impostazioni, Sistema, Server MCP** e fai clic sul pulsante del tuo client. Un client che non è nell'elenco si collega tramite **Altro client**.
+1. Apri **Impostazioni, Integrazioni, Server MCP** e fai clic sul pulsante del tuo client. Un client che non è nell'elenco si collega tramite **Altro client**.
 2. In **Chiave** lascia **Nuova chiave** e il nome proposto, cioè quello del client, oppure scrivine uno che dica dove si usa la chiave, per esempio «Claude Code sul portatile». Una chiave per client ti permette di revocarne una senza toccare le altre. **Chiave esistente** dà al client una chiave che hai creato prima.
 3. Attiva **Consenti di avviare backup** per una chiave che deve poter avviare backup; senza, può solo leggere. Puoi cambiarlo più tardi sul riquadro della chiave, e la modifica vale dalla richiesta successiva dell'assistente, senza riconnessione.
 4. Fai clic su **Crea chiave**. La chiave viene mostrata una volta sola. BombVault ne conserva solo un'impronta e non può mostrarla di nuovo, quindi copiala adesso. Se chiudi la finestra prima che il client abbia usato la chiave, la scheda continua a mostrarla finché non confermi di averla copiata.
@@ -173,7 +173,7 @@ ChatGPT, Claude su claude.ai, Grok e Le Chat chiamano BombVault dai server del l
 
 Per un client che non accetta una chiave, BombVault è il suo server di autorizzazione OAuth. Il client si registra da solo, ti manda su una pagina di BombVault, e lì accedi con la tua password di accesso (e il secondo fattore, se l'hai configurato) e gli dai il consenso. Il client riceve poi un token che vale solo per l'endpoint MCP di questo BombVault, e lo rinnova da solo.
 
-1. Imposta una password di accesso in **Impostazioni, Sistema**. Senza, BombVault non offre alcun accesso, perché non ci sarebbe nessuno a cui chiedere il consenso.
+1. Imposta una password di accesso in **Impostazioni, Sicurezza**. Senza, BombVault non offre alcun accesso, perché non ci sarebbe nessuno a cui chiedere il consenso.
 2. Rendi BombVault raggiungibile da Internet in https con un certificato di cui i browser si fidano, di solito tramite un reverse proxy. Il client chiama `/mcp`, `/oauth/` e `/.well-known/` dai propri server, quindi un proxy con un proprio accesso deve lasciar passare questi tre percorsi fino a BombVault. La pagina di consenso in `/oauth/authorize` si apre nel tuo browser e può restare dietro l'accesso del proxy. Indica anche il proxy in `TRUSTED_PROXY` (vedi [Configurazione](configuration.md)). BombVault limita le registrazioni dei client per indirizzo e, senza questo, ogni client sembra arrivare dal proxy.
 3. Nella scheda MCP attiva **Accesso tramite OAuth** e inserisci l'**Indirizzo pubblico**: l'indirizzo https senza percorso, per esempio `https://backup.example.com`. Ogni token è legato a questo indirizzo, quindi dopo una modifica ogni client deve accedere di nuovo.
 4. Fai clic sul pulsante di ChatGPT o di Claude. La finestra mostra l'**URL del connettore**, cioè l'indirizzo pubblico seguito da `/mcp`, e dove va inserito in quel client. In ChatGPT attiva la modalità sviluppatore in **Impostazioni, App e connettori, Impostazioni avanzate**, scegli **Crea**, incolla l'URL del connettore come URL del server MCP e scegli OAuth come autenticazione. Su claude.ai apri **Impostazioni, Connettori, Aggiungi connettore personalizzato**, incolla l'URL del connettore, lascia vuoti ID client e secret OAuth e scegli **Connetti**.

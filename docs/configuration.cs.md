@@ -1,6 +1,6 @@
 # Konfigurace
 
-Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která šablona poskytuje, zálohu VM přes SSH a nastavení mimo lokalitu. **Cesty repozitářů** záloh se konfigurují uvnitř aplikace (Nastavení, Zálohovací cesty), nikoli přes proměnné prostředí.
+Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která šablona poskytuje, zálohu VM přes SSH a nastavení mimo lokalitu. **Cesty repozitářů** záloh se konfigurují uvnitř aplikace (Nastavení, Úložiště, Zálohovací cesty), nikoli přes proměnné prostředí.
 
 ## Proměnné prostředí
 
@@ -30,7 +30,7 @@ Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je
 
 Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
-Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Zálohovací cesty**.
+Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Úložiště, Zálohovací cesty**.
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.
@@ -62,7 +62,7 @@ Pro každý kontejner si BombVault sám vybírá, která připojení bind a pojm
 
 ## Server MCP {#mcp-server}
 
-Server MCP nepotřebuje žádnou proměnnou prostředí. Zapnete ho vytvořením klíče v **Nastavení, Systém, Server MCP** a odpovídá na `/mcp` na stejném portu jako webové rozhraní (například `https://192.168.1.10:3443/mcp`). Bez aktivního klíče tato cesta odpovídá `404`. Klienty, certifikáty a limity popisuje stránka [Server MCP](mcp.md).
+Server MCP nepotřebuje žádnou proměnnou prostředí. Zapnete ho vytvořením klíče v **Nastavení, Integrace, Server MCP** a odpovídá na `/mcp` na stejném portu jako webové rozhraní (například `https://192.168.1.10:3443/mcp`). Bez aktivního klíče tato cesta odpovídá `404`. Klienty, certifikáty a limity popisuje stránka [Server MCP](mcp.md).
 
 ## Záloha VM přes SSH
 
@@ -70,7 +70,7 @@ BombVault zálohuje KVM/libvirt VM **bez připojení jakékoli libvirt cesty**. 
 
 Rychlé nastavení:
 
-1. **Nastavení, Systém, SSH k hostiteli:** zkopírujte zobrazený veřejný klíč.
+1. **Nastavení, Integrace, SSH k hostiteli:** zkopírujte zobrazený veřejný klíč.
 2. Připojte jej do `/root/.ssh/authorized_keys` Unraidu (také persistováno na flash, aby přežilo restarty).
 3. Klikněte na **Otestovat připojení**.
 
@@ -81,14 +81,14 @@ Rychlé nastavení:
 
 ## Nastavení mimo lokalitu
 
-Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
+Nastavte repliku mimo lokalitu na stránce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
 
 - **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
-- **Přihlašovací údaje cloudu** se ukládají šifrovaně pod Nastavení, Mimo lokalitu, Přihlašovací údaje cloudu.
-- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Systém, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
+- **Sdílené cloudové přihlašovací údaje** se ukládají šifrovaně pod Nastavení, Cloudový přístup, Sdílené cloudové přihlašovací údaje.
+- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
 - **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy. Místní repozitář zůstává primární. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
 - **Více cílů mimo lokalitu na doménu:** každá doména může replikovat na několik cílů mimo lokalitu najednou. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu; všechny replikují podle plánu mimo lokalitu dané domény. Stávající jednotlivé nastavení mimo lokalitu se přenese jako první cíl.
-- **Uchovávání na zdroj:** místní zásada žije v Nastavení, Cesty a úložiště; zásada mimo lokalitu v Nastavení, Mimo lokalitu (ponechte vše na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).
+- **Uchovávání na zdroj:** místní i zásada mimo lokalitu žijí obě v Nastavení, Uchovávání (ponechte zásadu mimo lokalitu na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).
 - **Limity šířky pásma:** omezte rychlost nahrávání/stahování restic pod Nastavení, Mimo lokalitu.
 - **Studená a archivní třída úložiště (S3):** pro nativní S3 repozitář mimo lokalitu vyberte úroveň čitelnou pro obnovu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes nastavují svou třídu v konfiguraci rclone.
 
@@ -107,7 +107,7 @@ Každá položka může mít vlastní citlivost a vlastní minimum oznámení. N
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 
-Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
+Karta **Export a import nastavení** na stránce **Nastavení, Systém** zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
     Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu a oznámení. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

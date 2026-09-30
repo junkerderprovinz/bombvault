@@ -1,6 +1,6 @@
 # Configurazione
 
-Questa pagina copre le variabili d'ambiente del container, i mount forniti dal template, il backup delle VM via SSH e la configurazione off-site. I **percorsi dei repository** di backup si configurano dentro l'app (Impostazioni, Percorsi di backup), non tramite variabili d'ambiente.
+Questa pagina copre le variabili d'ambiente del container, i mount forniti dal template, il backup delle VM via SSH e la configurazione off-site. I **percorsi dei repository** di backup si configurano dentro l'app (Impostazioni, Archiviazione, Percorsi di backup), non tramite variabili d'ambiente.
 
 ## Variabili d'ambiente
 
@@ -30,7 +30,7 @@ Monta il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) co
 
 Anche i backup dei dataset ZFS hanno bisogno di questa modalità: l'host monta lo snapshot di un dataset solo dopo l'avvio del container. Vedi [Dataset ZFS](zfs-datasets.md).
 
-I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Percorsi di backup**.
+I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Archiviazione, Percorsi di backup**.
 
 !!! note "Verifica dell'integrazione host"
     Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti.
@@ -62,7 +62,7 @@ Per ogni contenitore, BombVault sceglie da sé quali bind mount e volumi con nom
 
 ## Server MCP {#mcp-server}
 
-Il server MCP non richiede alcuna variabile d'ambiente. Lo attivi creando una chiave in **Impostazioni, Sistema, Server MCP**, e risponde su `/mcp` sulla stessa porta dell'interfaccia web (per esempio `https://192.168.1.10:3443/mcp`). Senza una chiave attiva quel percorso risponde `404`. Client, certificati e limiti sono descritti in [Server MCP](mcp.md).
+Il server MCP non richiede alcuna variabile d'ambiente. Lo attivi creando una chiave in **Impostazioni, Integrazioni, Server MCP**, e risponde su `/mcp` sulla stessa porta dell'interfaccia web (per esempio `https://192.168.1.10:3443/mcp`). Senza una chiave attiva quel percorso risponde `404`. Client, certificati e limiti sono descritti in [Server MCP](mcp.md).
 
 ## Backup delle VM via SSH
 
@@ -70,7 +70,7 @@ BombVault esegue il backup delle VM KVM/libvirt **senza montare alcun percorso l
 
 Configurazione rapida:
 
-1. **Impostazioni, Sistema, SSH dell'host:** copia la chiave pubblica mostrata.
+1. **Impostazioni, Integrazioni, SSH dell'host:** copia la chiave pubblica mostrata.
 2. Aggiungila a `/root/.ssh/authorized_keys` di Unraid (anche persistita sul flash così sopravvive ai riavvii).
 3. Clicca **Prova connessione**.
 
@@ -81,14 +81,14 @@ Il template aggiunge `--add-host=host.docker.internal:host-gateway` così il con
 
 ## Configurazione off-site
 
-Configura una replica off-site nella scheda **Impostazioni, Off-site**. Vedi [Off-site e ripristino](offsite-recovery.md) per il flusso di lavoro completo (immutabile/append-only, tamper testing ed esercitazioni DR). In breve:
+Configura una replica off-site nella pagina **Impostazioni, Off-site**. Vedi [Off-site e ripristino](offsite-recovery.md) per il flusso di lavoro completo (immutabile/append-only, tamper testing ed esercitazioni DR). In breve:
 
 - **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Le credenziali cloud** vengono memorizzate cifrate sotto Impostazioni, Off-site, Credenziali cloud.
-- **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Sistema, SSH dell'host** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
+- **Le credenziali cloud condivise** vengono memorizzate cifrate sotto Impostazioni, Accesso cloud, Credenziali cloud condivise.
+- **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Integrazioni, SSH dell'host** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
 - **Copia off-site:** BombVault replica i nuovi snapshot con `restic copy` su base best-effort. Il repo locale resta primario. Ogni dominio ha il proprio calendario off-site, più un pulsante **Replica ora**.
 - **Più destinazioni off-site per dominio:** ogni dominio può replicare verso più destinazioni off-site contemporaneamente. Aggiungi destinazioni extra in Impostazioni, Off-site, ciascuna con il proprio repository, classe di archiviazione S3, flag append-only, conservazione e budget di crescita; replicano tutte secondo il calendario off-site di quel dominio. Una configurazione off-site singola esistente viene riportata come prima destinazione.
-- **Conservazione per sorgente:** la policy locale risiede su Impostazioni, Percorsi e Archiviazione; la policy off-site su Impostazioni, Off-site (lasciala tutta a zero per non tagliare mai automaticamente gli snapshot off-site).
+- **Conservazione per sorgente:** le policy locale e off-site risiedono entrambe su Impostazioni, Conservazione (lascia quella off-site tutta a zero per non tagliare mai automaticamente gli snapshot off-site).
 - **Limiti di banda:** limita la velocità di upload/download di restic sotto Impostazioni, Off-site.
 - **Classe di archiviazione fredda e d'archivio (S3):** per un repo off-site S3 nativo, scegli un livello leggibile in ripristino (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). I remote rclone impostano la loro classe nella configurazione rclone.
 
@@ -107,7 +107,7 @@ Ogni elemento può avere una propria sensibilità e un proprio minimo di notific
 
 ## Impostazioni portatili (esporta e importa) {#portable-settings-export-and-import}
 
-La scheda **Esporta e importa impostazioni** nella pagina Impostazioni scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
+La scheda **Esporta e importa impostazioni** nella pagina Impostazioni, Sistema scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
 
 !!! warning "L'esportazione può contenere credenziali"
     Scegli tu se includere le credenziali off-site e di notifica nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.

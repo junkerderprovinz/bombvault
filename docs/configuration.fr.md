@@ -1,6 +1,6 @@
 # Configuration
 
-Cette page couvre les variables d'environnement du conteneur, les montages fournis par le modèle, la sauvegarde de VM via SSH et la configuration hors site. Les **chemins de dépôt** de sauvegarde se configurent dans l'application (Paramètres, Chemins de sauvegarde), pas via des variables d'environnement.
+Cette page couvre les variables d'environnement du conteneur, les montages fournis par le modèle, la sauvegarde de VM via SSH et la configuration hors site. Les **chemins de dépôt** de sauvegarde se configurent dans l'application (Paramètres, Stockage, Chemins de sauvegarde), pas via des variables d'environnement.
 
 ## Variables d'environnement
 
@@ -30,7 +30,7 @@ Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) 
 
 Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
 
-Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
+Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Stockage, Chemins de sauvegarde**.
 
 !!! note "Vérification de l'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
@@ -62,7 +62,7 @@ Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volu
 
 ## Serveur MCP {#mcp-server}
 
-Le serveur MCP n'a besoin d'aucune variable d'environnement. Vous l'activez en créant une clé sous **Paramètres, Système, Serveur MCP**, et il répond sur `/mcp` sur le même port que l'interface web (par exemple `https://192.168.1.10:3443/mcp`). Sans clé active, ce chemin répond `404`. Les clients, les certificats et les limites sont décrits sur la page [Serveur MCP](mcp.md).
+Le serveur MCP n'a besoin d'aucune variable d'environnement. Vous l'activez en créant une clé sous **Paramètres, Intégrations, Serveur MCP**, et il répond sur `/mcp` sur le même port que l'interface web (par exemple `https://192.168.1.10:3443/mcp`). Sans clé active, ce chemin répond `404`. Les clients, les certificats et les limites sont décrits sur la page [Serveur MCP](mcp.md).
 
 ## Sauvegarde de VM via SSH
 
@@ -70,7 +70,7 @@ BombVault sauvegarde les VMs KVM/libvirt **sans monter aucun chemin libvirt**. I
 
 Configuration rapide :
 
-1. **Paramètres, Système, SSH de l'hôte :** copiez la clé publique affichée.
+1. **Paramètres, Intégrations, SSH de l'hôte :** copiez la clé publique affichée.
 2. Ajoutez-la à l'`/root/.ssh/authorized_keys` d'Unraid (également persistée sur la flash afin qu'elle survive aux redémarrages).
 3. Cliquez sur **Tester la connexion**.
 
@@ -81,14 +81,14 @@ Le modèle ajoute `--add-host=host.docker.internal:host-gateway` afin que le con
 
 ## Configuration hors site
 
-Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
+Configurez un réplica hors site dans la page **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
 
 - **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Les identifiants cloud** sont stockés chiffrés sous Paramètres, Hors site, Identifiants cloud.
-- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
+- Les **identifiants cloud partagés** sont stockés chiffrés sous Paramètres, Accès cloud, Identifiants cloud partagés.
+- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Intégrations, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
 - **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux. Le dépôt local reste principal. Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
 - **Plusieurs cibles hors site par domaine :** chaque domaine peut répliquer vers plusieurs destinations hors site à la fois. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance ; elles répliquent toutes selon le planning hors site de ce domaine. Une configuration hors site unique existante est reprise comme première cible.
-- **Rétention par source :** la politique locale vit dans Paramètres, Chemins et stockage ; la politique hors site dans Paramètres, Hors site (laissez-la entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
+- **Rétention par source :** les politiques locale et hors site vivent toutes deux dans Paramètres, Rétention (laissez celle hors site entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
 - **Limites de bande passante :** plafonnez le débit d'envoi/de téléchargement de restic sous Paramètres, Hors site.
 - **Classe de stockage froid et archivage (S3) :** pour un dépôt hors site S3 natif, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
 
@@ -107,7 +107,7 @@ Chaque élément peut avoir sa propre sensibilité et son propre minimum de noti
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 
-La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
+La carte **Exporter et importer les réglages** sur la page Paramètres, Système écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
 
 !!! warning "L'export peut contenir des identifiants"
     Vous choisissez d'inclure ou non les identifiants hors site et de notification dans le fichier. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.

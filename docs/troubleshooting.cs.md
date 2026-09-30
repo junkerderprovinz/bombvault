@@ -18,7 +18,7 @@ BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certi
 
 Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
-- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Systém, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
+- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Integrace, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
 - Na vlastní síti `br0.x` nastavte `LIBVIRT_HOST` na svou LAN IP Unraidu (kontejner tam nemůže dosáhnout na hostitele přes `host.docker.internal`). Povolte **Nastavení, Docker, Host access to custom networks**.
 - Pokud jste změnili SSH port Unraidu, nastavte `LIBVIRT_SSH_PORT`, aby odpovídal.
 - Kompletní krok za krokem diagnóza (test dosažitelnosti, směrování VLAN, `Permission denied (publickey)`, `Host key verification failed`) je v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
 ## Záloha selhala s "repository is already locked"
 
-Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualizován nebo restartován uprostřed operace. BombVault detekuje prokazatelně osiřelý zámek, násilně jej vyčistí a jednou zopakuje, automaticky. Pokud přetrvává, použijte **Nastavení, Integrita a údržba, Odemknout** pro postiženou doménu k ručnímu vyčištění zaseklého zámku. Skutečný problém se stále objeví, místo aby byl skryt. Po restartu BombVault čeká, dokud takový zámek nebude deset minut bez obnovení. Restic, který ještě běží, třeba v druhém BombVaultu nad stejným repozitářem, svůj zámek obnovuje každých pět minut.
+Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualizován nebo restartován uprostřed operace. BombVault detekuje prokazatelně osiřelý zámek, násilně jej vyčistí a jednou zopakuje, automaticky. Pokud přetrvává, použijte **Nastavení, Integrita, Odemknout** pro postiženou doménu k ručnímu vyčištění zaseklého zámku. Skutečný problém se stále objeví, místo aby byl skryt. Po restartu BombVault čeká, dokud takový zámek nebude deset minut bez obnovení. Restic, který ještě běží, třeba v druhém BombVaultu nad stejným repozitářem, svůj zámek obnovuje každých pět minut.
 
 ## Moje kopie mimo lokalitu neproběhla po záloze
 
-Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontrolujte plán mimo lokalitu pro danou doménu (Nastavení, Plány): prázdný plán replikuje po každé místní záloze, zatímco kadence odesílá méně často. Použijte **Replikovat nyní** v záložce Mimo lokalitu pro běh na vyžádání a sledujte indikátor replikace na Přehledu.
+Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontrolujte plán mimo lokalitu pro danou doménu (Nastavení, Plány): prázdný plán replikuje po každé místní záloze, zatímco kadence odesílá méně často. Použijte **Replikovat nyní** na stránce Mimo lokalitu pro běh na vyžádání a sledujte indikátor replikace na Přehledu.
 
 ## Obnova se přerušila dříve, než začala
 

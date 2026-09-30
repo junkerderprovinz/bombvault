@@ -18,7 +18,7 @@ BombVault serves HTTPS out of the box on port `3443` (self-signed certificate), 
 
 VM backup talks to libvirt over SSH, never a mount.
 
-- Confirm SSH is enabled on the host and BombVault's public key is authorized in `/root/.ssh/authorized_keys` (Settings, System, Host SSH shows the key and a **Test connection** button).
+- Confirm SSH is enabled on the host and BombVault's public key is authorized in `/root/.ssh/authorized_keys` (Settings, Integrations, Host SSH shows the key and a **Test connection** button).
 - On a custom `br0.x` network, set `LIBVIRT_HOST` to your Unraid LAN IP (the container cannot reach the host via `host.docker.internal` there). Enable **Settings, Docker, Host access to custom networks**.
 - If you changed Unraid's SSH port, set `LIBVIRT_SSH_PORT` to match.
 - Full step-by-step diagnosis (reachability test, VLAN routing, `Permission denied (publickey)`, `Host key verification failed`) is in the [VM backup over SSH guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Live snapshots need the qemu guest agent installed in the VM and the disk on `/m
 
 ## A backup failed with "repository is already locked"
 
-This is usually an orphaned restic lock left behind when the container was updated or restarted mid-operation. BombVault detects a provably orphaned lock, force-clears it and retries once, automatically. If it persists, use **Settings, Integrity & maintenance, Unlock** for the affected domain to clear a stale lock by hand. A genuine problem still surfaces rather than being hidden. After a restart BombVault waits until such a lock has gone ten minutes without a refresh. A restic that is still running, for example in a second BombVault on the same repository, refreshes its lock every five minutes.
+This is usually an orphaned restic lock left behind when the container was updated or restarted mid-operation. BombVault detects a provably orphaned lock, force-clears it and retries once, automatically. If it persists, use **Settings, Integrity, Unlock** for the affected domain to clear a stale lock by hand. A genuine problem still surfaces rather than being hidden. After a restart BombVault waits until such a lock has gone ten minutes without a refresh. A restic that is still running, for example in a second BombVault on the same repository, refreshes its lock every five minutes.
 
 ## My off-site copy did not happen after a backup
 
-Off-site replication is best-effort by design, so an off-site hiccup never fails the local backup. Check the off-site schedule for that domain (Settings, Schedules): a blank schedule replicates after every local backup, while a cadence ships less often. Use **Replicate now** on the Off-site tab for an on-demand run, and watch the replication indicator on the Dashboard.
+Off-site replication is best-effort by design, so an off-site hiccup never fails the local backup. Check the off-site schedule for that domain (Settings, Schedules): a blank schedule replicates after every local backup, while a cadence ships less often. Use **Replicate now** on the Off-site page for an on-demand run, and watch the replication indicator on the Dashboard.
 
 ## A restore aborted before it started
 

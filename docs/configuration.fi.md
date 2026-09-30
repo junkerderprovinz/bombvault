@@ -1,6 +1,6 @@
 # Asetukset
 
-Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset, VM-varmuuskopioinnin SSH:n yli ja etäsijainnin määrityksen. Varmuuskopioinnin **repopolut** määritetään sovelluksen sisällä (Asetukset, Varmuuskopiopolut), ei ympäristömuuttujilla.
+Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset, VM-varmuuskopioinnin SSH:n yli ja etäsijainnin määrityksen. Varmuuskopioinnin **repopolut** määritetään sovelluksen sisällä (Asetukset, Tallennus, Varmuuskopiopolut), ei ympäristömuuttujilla.
 
 ## Ympäristömuuttujat
 
@@ -30,7 +30,7 @@ Liitä Docker-soketti, flash (`/boot`) ja **Host Data** -juuri (`/mnt`) kuten CA
 
 ZFS-tietojoukkojen varmuuskopiot tarvitsevat myös tämän tilan: isäntä liittää tietojoukon tilannevedoksen vasta sen jälkeen, kun kontti on käynnistynyt. Katso [ZFS-tietojoukot](zfs-datasets.md).
 
-Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Varmuuskopiopolut**.
+Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Tallennus, Varmuuskopiopolut**.
 
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset.
@@ -62,7 +62,7 @@ Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt
 
 ## MCP-palvelin {#mcp-server}
 
-MCP-palvelin ei tarvitse ympäristömuuttujaa. Otat sen käyttöön luomalla avaimen kohdassa **Asetukset, Järjestelmä, MCP-palvelin**, ja se vastaa polussa `/mcp` samassa portissa kuin verkkokäyttöliittymä (esimerkiksi `https://192.168.1.10:3443/mcp`). Ilman aktiivista avainta se polku vastaa `404`. Asiakasohjelmat, varmenteet ja rajat kuvataan sivulla [MCP-palvelin](mcp.md).
+MCP-palvelin ei tarvitse ympäristömuuttujaa. Otat sen käyttöön luomalla avaimen kohdassa **Asetukset, Integraatiot, MCP-palvelin**, ja se vastaa polussa `/mcp` samassa portissa kuin verkkokäyttöliittymä (esimerkiksi `https://192.168.1.10:3443/mcp`). Ilman aktiivista avainta se polku vastaa `404`. Asiakasohjelmat, varmenteet ja rajat kuvataan sivulla [MCP-palvelin](mcp.md).
 
 ## VM-varmuuskopiointi SSH:n yli
 
@@ -70,7 +70,7 @@ BombVault varmuuskopioi KVM/libvirt-virtuaalikoneet **liittämättä yhtäkään
 
 Pikamääritys:
 
-1. **Asetukset, Järjestelmä, Palvelimen SSH:** kopioi näytetty julkinen avain.
+1. **Asetukset, Integraatiot, Palvelimen SSH:** kopioi näytetty julkinen avain.
 2. Lisää se Unraidin tiedostoon `/root/.ssh/authorized_keys` (myös flashiin tallennettuna, jotta se säilyy uudelleenkäynnistysten yli).
 3. Napsauta **Test connection**.
 
@@ -81,14 +81,14 @@ Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoi
 
 ## Etäsijainnin määritys
 
-Määritä etäreplika **Asetukset, Etä** -välilehdellä. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
+Määritä etäreplika **Asetukset, Etä** -sivulla. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
 
 - **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
-- **Pilvitunnukset** tallennetaan salattuina kohdassa Asetukset, Etä, Pilvitunnukset.
-- **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Järjestelmä, Palvelimen SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
+- **Jaetut pilvitunnistetiedot** tallennetaan salattuina kohdassa Asetukset, Pilviyhteys, Jaetut pilvitunnistetiedot.
+- **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
 - **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella. Paikallinen repo pysyy ensisijaisena. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.
 - **Useita etäkohteita per toimialue:** jokainen toimialue voi replikoitua useaan etäkohteeseen kerralla. Lisää lisäkohteita kohtaan Asetukset, Etä, kukin omalla repositoriollaan, S3-tallennusluokallaan, append-only-lipullaan, säilytyksellään ja kasvubudjetillaan; ne kaikki replikoituvat kyseisen toimialueen etäaikataulun mukaan. Olemassa oleva yksittäinen etämääritys siirretään ensimmäiseksi kohteeksi.
-- **Säilytys lähdekohtaisesti:** paikallinen käytäntö asuu kohdassa Asetukset, Polut ja tallennus; etäkäytäntö kohdassa Asetukset, Etä (jätä se pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti).
+- **Säilytys lähdekohtaisesti:** sekä paikallinen että etäkäytäntö asuvat kohdassa Asetukset, Säilytys (jätä etäkäytäntö pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti).
 - **Kaistanleveyden rajat:** rajoita resticin lähetys-/latausnopeutta kohdassa Asetukset, Etä.
 - **Kylmä- ja arkistotallennusluokka (S3):** natiiville S3-etärepolle valitse palautuksesta luettava taso (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-etäsijainnit asettavat luokkansa rclone-määrityksessä.
 
@@ -107,7 +107,7 @@ Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 
-**Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
+**Vie ja tuo asetukset** -kortti Asetukset, Järjestelmä -sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
 
 !!! warning "Vienti voi sisältää tunnuksia"
     Valitset itse, sisällytetäänkö etä- ja ilmoitustunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

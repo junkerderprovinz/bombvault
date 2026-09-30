@@ -4,11 +4,11 @@ Các bản sao lưu cục bộ bảo vệ bạn khỏi một container bị mấ
 
 ## Nhân bản off-site
 
-Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên tab **Settings, Off-site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kho cục bộ vẫn là chính.
+Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên trang **Settings, Off-site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kho cục bộ vẫn là chính.
 
 - **Nhiều đích off-site cho mỗi miền.** Mỗi miền (container, VM, flash, config, bộ tập tin và tập dữ liệu ZFS) có thể nhân bản tới nhiều đích off-site cùng lúc, không chỉ một, nên bạn có thể giữ, ví dụ, một rest-server trên máy của một người bạn và một S3 bucket song song. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng. Một thiết lập off-site đơn hiện có được chuyển sang nguyên vẹn làm đích đầu tiên, và mọi đích của một miền đều nhân bản theo lịch trình off-site của miền đó.
 - **Lịch trình off-site theo từng miền** (được chỉnh cùng với mọi lịch trình khác trên Settings, Schedules): để trống để nhân bản sau mỗi lần sao lưu cục bộ, hoặc đặt một nhịp độ (ví dụ `weekly Sun 03:00`) để gửi off-site ít thường xuyên hơn tần suất bạn sao lưu cục bộ. Một nút **Replicate now** lo các lần chạy theo yêu cầu.
-- **Lưu giữ off-site** nằm trên Settings, Off-site để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
+- **Lưu giữ off-site** nằm trên Settings, Retention để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
 - **Giới hạn băng thông** (Settings, Off-site) giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
 - Một **chỉ báo nhân bản** hiển thị miền nào đang nhân bản trong khi nó chạy (trên trang của nó và bảng điều khiển). Đó là một chỉ báo hoạt động, không phải một thanh phần trăm, vì `restic copy` không phơi bày tiến độ đọc được bằng máy.
 
@@ -17,7 +17,7 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 
 ## Kho chính từ xa {#remote-primary-repositories}
 
-Đường dẫn sao lưu của một miền (Cài đặt, Đường dẫn và lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
+Đường dẫn sao lưu của một miền (Cài đặt, Lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
 
 Mỗi trong sáu ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, Tệp, Tập dữ liệu ZFS) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
 
@@ -31,7 +31,7 @@ Mỗi trong sáu ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, T
 Không điều nào trong số này là bắt buộc: một đường dẫn từ xa gõ tay, không lưu thiết lập an toàn nào, vẫn sao lưu y như trước (băng thông không giới hạn, cắt tỉa được, không cảnh báo ngân sách). Hộp thoại an toàn có ở đó cho lúc bạn muốn đúng những lớp bảo vệ mà một bản sao ngoại vi nhận được, mà không phải tạo riêng một đích ngoại vi chỉ để có chúng.
 
 !!! note "Thông tin đăng nhập đám mây và REST dùng chung"
-    Kho chính từ xa xác thực bằng đúng thông tin đăng nhập S3/REST đã cấu hình ở Cài đặt, Ngoại vi, Thông tin đăng nhập đám mây. Không có kho thông tin đăng nhập riêng cho các kho chính.
+    Kho chính từ xa xác thực bằng đúng thông tin đăng nhập S3/REST đã cấu hình ở Cài đặt, Truy cập đám mây, Thông tin đăng nhập đám mây dùng chung. Không có kho thông tin đăng nhập riêng cho các kho chính.
 
 ## Off-site bất biến (append-only)
 
@@ -68,7 +68,7 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 
 Bộ nhận, nguồn Kéo về, trang Phiên bản và Mesh off-site đều nói chuyện với một BombVault khác. Chúng làm vậy với tư cách thành viên của một nhóm ghép nối, và một phiên bản gia nhập nhóm bằng mười hai từ.
 
-Trên phiên bản đầu tiên, mở **Cài đặt → Hệ thống** rồi nhấn **Tạo cụm từ** trong các thẻ ghép nối. Mười hai từ hiện ra trong một cửa sổ có nút **Sao chép**. Trên mọi phiên bản khác, mở cùng chỗ đó, nhấn **Nhập cụm từ** rồi dán hoặc gõ các từ vào, hoặc nhấn **Dán** trong cửa sổ đó. Một từ không có trong danh sách sẽ được nêu tên cùng vị trí của nó ngay khi bạn gõ, và từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện trước khi việc ghép nối xảy ra. Chỉ tạo cụm từ trên một phiên bản duy nhất: hai phiên bản mà cả hai đều tạo cụm từ sẽ tạo thành hai nhóm riêng biệt. Nếu không ai xuất hiện trong một phút, tab sẽ đưa ra hai cách thoát: hiện lại các từ để nhập chúng ở phía bên kia, hoặc nhập các từ của phiên bản kia và tham gia nhóm của nó trong một bước. Việc ghép nối vẫn hoạt động khi không có mật khẩu đăng nhập, nhưng hãy đặt một mật khẩu: nếu không, bất kỳ ai mở được giao diện web này đều có thể đọc các từ đó và, thông qua nhóm, lấy được mật khẩu restic của mọi phiên bản trong nhóm. Thẻ ghép nối sẽ nhắc điều này cho đến khi mật khẩu được đặt. Khi đã có mật khẩu, việc hiện lại cụm từ sẽ hỏi mật khẩu đó. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
+Trên phiên bản đầu tiên, mở **Cài đặt → Ghép nối** rồi nhấn **Tạo cụm từ** trong các thẻ ghép nối. Mười hai từ hiện ra trong một cửa sổ có nút **Sao chép**. Trên mọi phiên bản khác, mở cùng chỗ đó, nhấn **Nhập cụm từ** rồi dán hoặc gõ các từ vào, hoặc nhấn **Dán** trong cửa sổ đó. Một từ không có trong danh sách sẽ được nêu tên cùng vị trí của nó ngay khi bạn gõ, và từ cuối cùng mang một checksum, nên một từ gõ sai hay bị đảo chỗ sẽ bị phát hiện trước khi việc ghép nối xảy ra. Chỉ tạo cụm từ trên một phiên bản duy nhất: hai phiên bản mà cả hai đều tạo cụm từ sẽ tạo thành hai nhóm riêng biệt. Nếu không ai xuất hiện trong một phút, tab sẽ đưa ra hai cách thoát: hiện lại các từ để nhập chúng ở phía bên kia, hoặc nhập các từ của phiên bản kia và tham gia nhóm của nó trong một bước. Việc ghép nối vẫn hoạt động khi không có mật khẩu đăng nhập, nhưng hãy đặt một mật khẩu: nếu không, bất kỳ ai mở được giao diện web này đều có thể đọc các từ đó và, thông qua nhóm, lấy được mật khẩu restic của mọi phiên bản trong nhóm. Thẻ ghép nối sẽ nhắc điều này cho đến khi mật khẩu được đặt. Khi đã có mật khẩu, việc hiện lại cụm từ sẽ hỏi mật khẩu đó. **Rời nhóm** đưa một phiên bản ra khỏi nhóm trở lại.
 
 Bất kỳ ai biết các từ đó đều có thể gia nhập nhóm, nên hãy coi chúng như một mật khẩu.
 
@@ -128,7 +128,7 @@ Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nh
 | **KHÔNG được bảo vệ** | VAULT đã chấp nhận một lệnh xóa. Thiếu `--append-only` hoặc nó đã bị bỏ đi. |
 | **không kết luận được** | Không thuộc trường hợp nào. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
 
-**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
+**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Ghép nối → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
 
 !!! warning "Vị trí là đường dẫn **bên trong** container, viết tương đối so với điểm gắn của máy chủ"
     Nhập `user/appdata/rest-server/bombvault-containers/containers`, **không phải** `/mnt/user/appdata/…`. BombVault chạy trong container, nơi `/mnt` của máy chủ được gắn ở chỗ khác; đường dẫn tuyệt đối của máy chủ không tồn tại bên trong. Nếu bạn dán vào, BombVault nay sẽ cho biết đường dẫn tương đối cần dùng.

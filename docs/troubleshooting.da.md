@@ -18,7 +18,7 @@ BombVault serverer HTTPS fra start på port `3443` (selvsigneret certifikat), s�
 
 VM-sikkerhedskopiering taler med libvirt over SSH, aldrig en montering.
 
-- Bekræft, at SSH er aktiveret på værten, og at BombVaults offentlige nøgle er autoriseret i `/root/.ssh/authorized_keys` (Indstillinger, System, Værts-SSH viser nøglen og en **Test connection**-knap).
+- Bekræft, at SSH er aktiveret på værten, og at BombVaults offentlige nøgle er autoriseret i `/root/.ssh/authorized_keys` (Indstillinger, Integrationer, Værts-SSH viser nøglen og en **Test connection**-knap).
 - På et brugerdefineret `br0.x`-netværk, sæt `LIBVIRT_HOST` til din Unraid LAN-IP (containeren kan ikke nå værten via `host.docker.internal` der). Aktivér **Settings, Docker, Host access to custom networks**.
 - Hvis du ændrede Unraids SSH-port, så sæt `LIBVIRT_SSH_PORT` til at matche.
 - Fuld trin-for-trin-diagnose (opnåelighedstest, VLAN-routing, `Permission denied (publickey)`, `Host key verification failed`) findes i [VM backup over SSH-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Live-øjebliksbilleder kræver qemu guest agent installeret i VM'en og disken p�
 
 ## En sikkerhedskopi fejlede med "repository is already locked"
 
-Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, brug **Settings, Integrity & maintenance, Unlock** for det berørte domæne for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult. Efter en genstart venter BombVault, til sådan en lås har været ti minutter uden fornyelse. En restic, der stadig kører, for eksempel i en anden BombVault på samme repository, fornyer sin lås hvert femte minut.
+Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, brug **Settings, Integrity, Unlock** for det berørte domæne for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult. Efter en genstart venter BombVault, til sådan en lås har været ti minutter uden fornyelse. En restic, der stadig kører, for eksempel i en anden BombVault på samme repository, fornyer sin lås hvert femte minut.
 
 ## Min off-site-kopi skete ikke efter en sikkerhedskopi
 
-Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek off-site-tidsplanen for det domæne (Indstillinger, Tidsplaner): en tom tidsplan replikerer efter hver lokal sikkerhedskopi, mens en kadence sender sjældnere. Brug **Replikér nu** på Off-site-fanen for en on-demand-kørsel, og hold øje med replikeringsindikatoren på Oversigten.
+Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek off-site-tidsplanen for det domæne (Indstillinger, Tidsplaner): en tom tidsplan replikerer efter hver lokal sikkerhedskopi, mens en kadence sender sjældnere. Brug **Replikér nu** på Off-site-siden for en on-demand-kørsel, og hold øje med replikeringsindikatoren på Oversigten.
 
 ## En gendannelse blev afbrudt, før den startede
 

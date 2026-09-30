@@ -18,7 +18,7 @@ BombVault sirve HTTPS de fábrica en el puerto `3443` (certificado autofirmado),
 
 La copia de VM habla con libvirt por SSH, nunca con un montaje.
 
-- Confirma que SSH está habilitado en el host y que la clave pública de BombVault está autorizada en `/root/.ssh/authorized_keys` (Ajustes, Sistema, SSH del host muestra la clave y un botón **Probar conexión**).
+- Confirma que SSH está habilitado en el host y que la clave pública de BombVault está autorizada en `/root/.ssh/authorized_keys` (Ajustes, Integraciones, SSH del host muestra la clave y un botón **Probar conexión**).
 - En una red `br0.x` personalizada, establece `LIBVIRT_HOST` a la IP LAN de tu Unraid (el contenedor no puede alcanzar el host mediante `host.docker.internal` ahí). Habilita **Ajustes, Docker, Host access to custom networks**.
 - Si cambiaste el puerto SSH de Unraid, establece `LIBVIRT_SSH_PORT` para que coincida.
 - El diagnóstico paso a paso completo (prueba de accesibilidad, enrutamiento VLAN, `Permission denied (publickey)`, `Host key verification failed`) está en la [guía de copia de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Las instantáneas en vivo necesitan el agente invitado de qemu instalado en la V
 
 ## Una copia falló con "repository is already locked"
 
-Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contenedor se actualizó o reinició a mitad de operación. BombVault detecta un bloqueo huérfano de forma demostrable, lo fuerza a limpiar y lo reintenta una vez, automáticamente. Si persiste, usa **Ajustes, Integridad y mantenimiento, Desbloquear** para el dominio afectado con el fin de limpiar un bloqueo obsoleto a mano. Un problema genuino sigue saliendo a la superficie en lugar de quedar oculto. Tras un reinicio, BombVault espera a que ese bloqueo lleve diez minutos sin renovarse. Un restic que sigue en marcha, por ejemplo en un segundo BombVault sobre el mismo repositorio, renueva su bloqueo cada cinco minutos.
+Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contenedor se actualizó o reinició a mitad de operación. BombVault detecta un bloqueo huérfano de forma demostrable, lo fuerza a limpiar y lo reintenta una vez, automáticamente. Si persiste, usa **Ajustes, Integridad, Desbloquear** para el dominio afectado con el fin de limpiar un bloqueo obsoleto a mano. Un problema genuino sigue saliendo a la superficie en lugar de quedar oculto. Tras un reinicio, BombVault espera a que ese bloqueo lleve diez minutos sin renovarse. Un restic que sigue en marcha, por ejemplo en un segundo BombVault sobre el mismo repositorio, renueva su bloqueo cada cinco minutos.
 
 ## Mi copia externa no ocurrió tras una copia
 
-La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba el calendario externo de ese dominio (Ajustes, Calendarios): un calendario en blanco replica tras cada copia local, mientras que una cadencia envía con menos frecuencia. Usa **Replicar ahora** en la pestaña Externo para una ejecución bajo demanda, y observa el indicador de replicación en el Panel.
+La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba el calendario externo de ese dominio (Ajustes, Calendarios): un calendario en blanco replica tras cada copia local, mientras que una cadencia envía con menos frecuencia. Usa **Replicar ahora** en la página Externo para una ejecución bajo demanda, y observa el indicador de replicación en el Panel.
 
 ## Una restauración se abortó antes de empezar
 

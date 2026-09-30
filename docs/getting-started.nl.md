@@ -70,7 +70,7 @@ De template mount ook de Docker-socket, de flash (`/boot`) en de root **Host Dat
 1. Open de web-UI op `https://<jouw-unraid-ip>:3443` (out-of-the-box een zelfondertekend certificaat).
 2. Schakel bij **Instellingen** de back-updomeinen in die je wilt (Containers, VM's, Flash, Config, Bestanden, ZFS-datasets) en kies een accentkleur.
 3. Kies op het tabblad **Containers** een container en klik op **Back-up maken** om je eerste herstelpunt te maken. Repository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` en worden bij de eerste back-up aangemaakt.
-4. Stel de planning in via **Instellingen, Planningen**. Er is een *alles opnemen in planning*-optie met één klik voor containers en VM's.
+4. Stel de planning in via **Instellingen, Schema's**. Er is een *alles opnemen in planning*-optie met één klik voor containers en VM's.
 
 !!! tip "Optioneel: kies een back-upvolgorde"
     Als sommige containers altijd vóór andere geback-upt moeten worden (bijvoorbeeld een database vóór de app die hem gebruikt), open dan het paneel **back-upvolgorde** op de Containers-pagina en sleep ze in de gewenste volgorde. Geplande en meervoudige selecties volgen die volgorde daarna; alles wat je ongeordend laat, wordt geback-upt met het meest-achterstallige eerst, zoals voorheen.

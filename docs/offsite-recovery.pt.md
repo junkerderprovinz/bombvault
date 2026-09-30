@@ -4,11 +4,11 @@ Os backups locais protegem-no de um container perdido ou de uma atualização m�
 
 ## Replicação externa
 
-Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defina um repo por domínio no separador **Definições, Externo**. O BombVault replica novos instantâneos para lá com `restic copy` numa base de melhor esforço, por isso um percalço externo nunca faz o backup local falhar. O repo local mantém-se primário.
+Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defina um repo por domínio na página **Definições, Externo**. O BombVault replica novos instantâneos para lá com `restic copy` numa base de melhor esforço, por isso um percalço externo nunca faz o backup local falhar. O repo local mantém-se primário.
 
 - **Vários destinos externos por domínio.** Cada domínio (containers, VMs, flash, config, conjuntos de ficheiros e conjuntos de dados ZFS) pode replicar para vários destinos externos de uma só vez, não apenas um, para que possa manter, por exemplo, um rest-server na máquina de um amigo e um bucket S3 em paralelo. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento. Uma configuração externa única existente é transferida intacta como o primeiro destino, e cada destino de um domínio replica no agendamento externo desse domínio.
 - **Agendamento externo por domínio** (editado ao lado de todos os outros agendamentos em Definições, Agendamentos): deixe-o em branco para replicar após cada backup local, ou defina uma cadência (por exemplo `weekly Sun 03:00`) para enviar para o externo com menos frequência do que faz backup localmente. Um botão **Replicar agora** cobre as execuções a pedido.
-- **A retenção externa** vive em Definições, Externo para que possa manter as cópias externas por mais tempo como arquivo. Deixe a política toda a zero para nunca aparar automaticamente os instantâneos externos.
+- **A retenção externa** vive em Definições, Retenção para que possa manter as cópias externas por mais tempo como arquivo. Deixe a política toda a zero para nunca aparar automaticamente os instantâneos externos.
 - **Os limites de largura de banda** (Definições, Externo) limitam a taxa de envio/receção do restic para que a replicação não sature a sua WAN.
 - Um **indicador de replicação** mostra qual o domínio que está a replicar enquanto corre (na sua página e no Painel). É um indicador ativo, não uma barra de percentagem, porque o `restic copy` não expõe nenhum progresso legível por máquina.
 
@@ -17,7 +17,7 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 
 ## Repositórios primários remotos {#remote-primary-repositories}
 
-O caminho de cópia de um domínio (Definições, Caminhos e armazenamento) não se limita a uma pasta local: aponta-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurares também uma replicação fora do local (ou um segundo remoto) para esse domínio.
+O caminho de cópia de um domínio (Definições, Armazenamento) não se limita a uma pasta local: aponta-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurares também uma replicação fora do local (ou um segundo remoto) para esse domínio.
 
 Cada um dos seis campos de caminho (Contentores, Máquinas virtuais, Flash, Configuração, Ficheiros, Conjuntos de dados ZFS) tem mesmo ao lado um interruptor **Local / Remoto**:
 
@@ -31,7 +31,7 @@ Cada um dos seis campos de caminho (Contentores, Máquinas virtuais, Flash, Conf
 Nada disto é obrigatório: um caminho remoto escrito à mão e sem definições de segurança guardadas copia exatamente como sempre (largura de banda ilimitada, podável, sem alarme de orçamento). A janela de segurança existe para quando quiseres as mesmas proteções que uma cópia fora do local recebe, sem teres de criar um destino fora do local só para isso.
 
 !!! note "As credenciais de nuvem e REST são partilhadas"
-    Um primário remoto autentica-se com as mesmas credenciais S3/REST configuradas em Definições, Fora do local, Credenciais de nuvem. Não há um cofre de credenciais separado para repositórios primários.
+    Um primário remoto autentica-se com as mesmas credenciais S3/REST configuradas em Definições, Acesso à nuvem, Credenciais de nuvem partilhadas. Não há um cofre de credenciais separado para repositórios primários.
 
 ## Externo imutável (append-only)
 
@@ -68,7 +68,7 @@ O **scorecard de proteção contra ransomware** no Painel resume isto numa postu
 
 Recetores, origens de recolha, a página Instâncias e o Mesh externo falam todos com outro BombVault. Fazem-no como membros de um único grupo de emparelhamento, e uma instância entra no grupo com doze palavras.
 
-Na primeira instância, abra **Definições → Sistema** e clique em **Gerar frase** nos cartões de emparelhamento. Aparecem doze palavras numa janela com um botão **Copiar**. Em cada uma das outras instâncias, abra o mesmo local, clique em **Introduzir frase** e cole-as ou escreva-as, ou clique em **Colar** nessa janela. Uma palavra que não está na lista é indicada com a sua posição logo que a escreve, e a última palavra traz uma soma de verificação, por isso uma palavra escrita incorretamente ou trocada é detetada antes de qualquer emparelhamento. Gere a frase apenas numa instância: duas instâncias que criem cada uma uma frase formam dois grupos separados. Se ninguém aparecer num minuto, o separador oferece duas saídas: mostrar as palavras outra vez para as introduzir do outro lado, ou introduzir as palavras da outra instância e juntar-se ao seu grupo num só passo. O emparelhamento funciona sem palavra-passe de acesso, mas defina uma: sem ela, quem conseguir abrir esta interface web pode ler as palavras e obter, através do grupo, a palavra-passe restic de cada instância nele. O cartão de emparelhamento avisa disso até ser definida uma palavra-passe. Com uma palavra-passe, mostrar a frase de novo pede-a. **Sair do grupo** retira uma instância outra vez.
+Na primeira instância, abra **Definições → Emparelhamento** e clique em **Gerar frase** nos cartões de emparelhamento. Aparecem doze palavras numa janela com um botão **Copiar**. Em cada uma das outras instâncias, abra o mesmo local, clique em **Introduzir frase** e cole-as ou escreva-as, ou clique em **Colar** nessa janela. Uma palavra que não está na lista é indicada com a sua posição logo que a escreve, e a última palavra traz uma soma de verificação, por isso uma palavra escrita incorretamente ou trocada é detetada antes de qualquer emparelhamento. Gere a frase apenas numa instância: duas instâncias que criem cada uma uma frase formam dois grupos separados. Se ninguém aparecer num minuto, o separador oferece duas saídas: mostrar as palavras outra vez para as introduzir do outro lado, ou introduzir as palavras da outra instância e juntar-se ao seu grupo num só passo. O emparelhamento funciona sem palavra-passe de acesso, mas defina uma: sem ela, quem conseguir abrir esta interface web pode ler as palavras e obter, através do grupo, a palavra-passe restic de cada instância nele. O cartão de emparelhamento avisa disso até ser definida uma palavra-passe. Com uma palavra-passe, mostrar a frase de novo pede-a. **Sair do grupo** retira uma instância outra vez.
 
 Quem quer que conheça as palavras pode entrar no grupo, por isso trate-as como uma palavra-passe.
 
@@ -128,7 +128,7 @@ O primeiro segmento do caminho é o utilizador htpasswd, o segundo é o reposit�
 | **NÃO protegido** | O VAULT aceitou uma eliminação. Falta `--append-only` ou foi retirado. |
 | **inconclusivo** | Nem uma coisa nem outra. Normalmente o URL não é o que o restic usa, ou as credenciais mudaram. Nada é registado e nenhum alerta é disparado. |
 
-**4. No VAULT, veja o que chega.** Emparelhe as duas máquinas ([Emparelhamento de instâncias](#pairing)), ative *Definições → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura com o TOWER como instância emissora.
+**4. No VAULT, veja o que chega.** Emparelhe as duas máquinas ([Emparelhamento de instâncias](#pairing)), ative *Definições → Emparelhamento → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura com o TOWER como instância emissora.
 
 !!! warning "A localização é um caminho **dentro** do contentor, escrito relativamente à montagem do anfitrião"
     Introduza `user/appdata/rest-server/bombvault-containers/containers`, e **não** `/mnt/user/appdata/…`. O BombVault corre num contentor onde o `/mnt` do anfitrião está montado noutro sítio; um caminho absoluto do anfitrião não existe lá. Se colar um, o BombVault indica-lhe agora o caminho relativo a usar.

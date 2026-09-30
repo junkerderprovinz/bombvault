@@ -1,6 +1,6 @@
 # Configuratie
 
-Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de template levert, VM-back-up via SSH en de off-site setup. Back-up**repository-paden** worden binnen de app geconfigureerd (Instellingen, Back-uppaden), niet via omgevingsvariabelen.
+Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de template levert, VM-back-up via SSH en de off-site setup. Back-up**repository-paden** worden binnen de app geconfigureerd (Instellingen, Opslag, Back-uppaden), niet via omgevingsvariabelen.
 
 ## Omgevingsvariabelen
 
@@ -30,7 +30,7 @@ Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoa
 
 Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapshot van een dataset pas aan nadat de container is gestart. Zie [ZFS-datasets](zfs-datasets.md).
 
-Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Back-uppaden**.
+Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Opslag, Back-uppaden**.
 
 !!! note "Controle van hostintegratie"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
@@ -62,7 +62,7 @@ Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes w
 
 ## MCP-server {#mcp-server}
 
-De MCP-server heeft geen omgevingsvariabele nodig. Je schakelt hem in door een sleutel aan te maken onder **Instellingen, Systeem, MCP-server**, en hij antwoordt op `/mcp` op dezelfde poort als de webinterface (bijvoorbeeld `https://192.168.1.10:3443/mcp`). Zonder actieve sleutel antwoordt dat pad met `404`. Clients, certificaten en grenzen staan op [MCP-server](mcp.md).
+De MCP-server heeft geen omgevingsvariabele nodig. Je schakelt hem in door een sleutel aan te maken onder **Instellingen, Integraties, MCP-server**, en hij antwoordt op `/mcp` op dezelfde poort als de webinterface (bijvoorbeeld `https://192.168.1.10:3443/mcp`). Zonder actieve sleutel antwoordt dat pad met `404`. Clients, certificaten en grenzen staan op [MCP-server](mcp.md).
 
 ## VM-back-up via SSH
 
@@ -70,7 +70,7 @@ BombVault maakt back-ups van KVM/libvirt-VM's **zonder enig libvirt-pad te mount
 
 Snelle setup:
 
-1. **Instellingen, Systeem, Host-SSH:** kopieer de getoonde publieke sleutel.
+1. **Instellingen, Integraties, Host-SSH:** kopieer de getoonde publieke sleutel.
 2. Voeg hem toe aan Unraids `/root/.ssh/authorized_keys` (ook op de flash bewaard zodat hij herstarts overleeft).
 3. Klik op **Verbinding testen**.
 
@@ -81,14 +81,14 @@ De template voegt `--add-host=host.docker.internal:host-gateway` toe zodat de co
 
 ## Off-site setup
 
-Stel een off-site replica in op het tabblad **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
+Stel een off-site replica in op de pagina **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
 
 - **Backends:** SMB/CIFS en NFS (mount de share en wijs er een Backup Path naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
-- **Cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Off-site, Cloud-inloggegevens.
-- **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Systeem, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
+- **Gedeelde cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Cloudtoegang, Gedeelde cloud-inloggegevens.
+- **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Integraties, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
 - **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis. De lokale repo blijft primair. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.
 - **Meerdere off-site doelen per domein:** elk domein kan tegelijk naar meerdere off-site bestemmingen repliceren. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget; ze repliceren allemaal op de off-site planning van dat domein. Een bestaande enkele off-site setup wordt overgenomen als het eerste doel.
-- **Retentie per bron:** het lokale beleid staat op Instellingen, Paden en Opslag; het off-site beleid op Instellingen, Off-site (laat het geheel op nul om off-site snapshots nooit automatisch te trimmen).
+- **Retentie per bron:** het lokale en het off-site beleid staan beide op Instellingen, Bewaarbeleid (laat het off-site beleid geheel op nul om off-site snapshots nooit automatisch te trimmen).
 - **Bandbreedtelimieten:** begrens de restic-upload/downloadsnelheid onder Instellingen, Off-site.
 - **Koude en archiefopslagklasse (S3):** kies voor een native S3 off-site repo een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
 
@@ -107,7 +107,7 @@ Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 
-De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
+De kaart **Instellingen exporteren en importeren** op de pagina Instellingen, Systeem schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
 
 !!! warning "De export kan inloggegevens bevatten"
     Je kiest of je de off-site en meldingsinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

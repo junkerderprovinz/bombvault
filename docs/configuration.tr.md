@@ -1,6 +1,6 @@
 # Yapılandırma
 
-Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamaları, SSH üzerinden VM yedeklemesini ve site dışı kurulumu kapsar. Yedekleme **depo yolları** ortam değişkenleriyle değil, uygulamanın içinde yapılandırılır (Ayarlar, Yedekleme yolları).
+Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamaları, SSH üzerinden VM yedeklemesini ve site dışı kurulumu kapsar. Yedekleme **depo yolları** ortam değişkenleriyle değil, uygulamanın içinde yapılandırılır (Ayarlar, Depolama, Yedekleme yolları).
 
 ## Ortam değişkenleri
 
@@ -30,7 +30,7 @@ Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şabl
 
 ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
 
-Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Yedekleme yolları**'nda değiştirin.
+Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Depolama, Yedekleme yolları**'nda değiştirin.
 
 !!! note "Host entegrasyon denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
@@ -62,7 +62,7 @@ Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin y
 
 ## MCP sunucusu {#mcp-server}
 
-MCP sunucusu hiçbir ortam değişkeni gerektirmez. **Ayarlar, Sistem, MCP sunucusu** altında bir anahtar oluşturarak açarsınız ve web arayüzüyle aynı bağlantı noktasında `/mcp` yolunda yanıt verir (örneğin `https://192.168.1.10:3443/mcp`). Etkin anahtar yokken bu yol `404` ile yanıt verir. İstemciler, sertifikalar ve sınırlar [MCP sunucusu](mcp.md) sayfasında anlatılır.
+MCP sunucusu hiçbir ortam değişkeni gerektirmez. **Ayarlar, Entegrasyonlar, MCP sunucusu** altında bir anahtar oluşturarak açarsınız ve web arayüzüyle aynı bağlantı noktasında `/mcp` yolunda yanıt verir (örneğin `https://192.168.1.10:3443/mcp`). Etkin anahtar yokken bu yol `404` ile yanıt verir. İstemciler, sertifikalar ve sınırlar [MCP sunucusu](mcp.md) sayfasında anlatılır.
 
 ## SSH üzerinden VM yedeklemesi
 
@@ -70,7 +70,7 @@ BombVault, KVM/libvirt VM'lerini **herhangi bir libvirt yolunu bağlamadan** yed
 
 Hızlı kurulum:
 
-1. **Ayarlar, Sistem, Ana makine SSH:** gösterilen genel anahtarı kopyalayın.
+1. **Ayarlar, Entegrasyonlar, Ana makine SSH:** gösterilen genel anahtarı kopyalayın.
 2. Onu Unraid'in `/root/.ssh/authorized_keys` dosyasına ekleyin (yeniden başlatmalarda kalıcı olması için flash'a da yazılır).
 3. **Bağlantıyı test et**'e tıklayın.
 
@@ -81,14 +81,14 @@ Hızlı kurulum:
 
 ## Site dışı kurulum
 
-**Ayarlar, Site dışı** sekmesinde bir site dışı kopya kurun. Tam iş akışı için (değiştirilemez/yalnızca ekleme, kurcalama testi ve DR tatbikatları) bkz. [Site dışı ve kurtarma](offsite-recovery.md). Kısaca:
+**Ayarlar, Site dışı** sayfasında bir site dışı kopya kurun. Tam iş akışı için (değiştirilemez/yalnızca ekleme, kurcalama testi ve DR tatbikatları) bkz. [Site dışı ve kurtarma](offsite-recovery.md). Kısaca:
 
 - **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
-- **Bulut kimlik bilgileri** Ayarlar, Site dışı, Bulut kimlik bilgileri altında şifreli saklanır.
-- **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Sistem, Ana makine SSH** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
+- **Paylaşılan bulut kimlik bilgileri** Ayarlar, Bulut erişimi, Paylaşılan bulut kimlik bilgileri altında şifreli saklanır.
+- **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Entegrasyonlar, Ana makine SSH** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
 - **Site dışı kopya:** BombVault yeni anlık görüntüleri en iyi çaba temelinde `restic copy` ile çoğaltır. Yerel depo birincil kalır. Her etki alanının kendi site dışı zamanlaması ve ayrıca bir **Şimdi çoğalt** düğmesi vardır.
 - **Etki alanı başına birden fazla site dışı hedef:** her etki alanı aynı anda birkaç site dışı hedefe çoğaltabilir. Ayarlar, Site dışı'nda her biri kendi deposu, S3 depolama sınıfı, yalnızca ekleme bayrağı, saklama ve büyüme bütçesiyle ek hedefler ekleyin; hepsi o etki alanının site dışı zamanlamasında çoğaltılır. Mevcut tek bir site dışı kurulum ilk hedef olarak taşınır.
-- **Kaynak başına saklama:** yerel ilke Ayarlar, Yollar ve Depolama'da yer alır; site dışı ilke Ayarlar, Site dışı'nda (site dışı anlık görüntüleri asla otomatik kırpmamak için tümünü sıfır bırakın).
+- **Kaynak başına saklama:** yerel ve site dışı ilkelerin ikisi de Ayarlar, Saklama'da yer alır (site dışı olanı asla otomatik kırpmamak için tümüyle sıfır bırakın).
 - **Bant genişliği sınırları:** Ayarlar, Site dışı altında restic yükleme/indirme hızını sınırlayın.
 - **Soğuk ve arşiv depolama sınıfı (S3):** yerel bir S3 site dışı deposu için geri yüklenebilir bir katman seçin (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone uzak konumları sınıflarını rclone yapılandırmasında ayarlar.
 
@@ -107,7 +107,7 @@ Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunlar�
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 
-Ayarlar sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
+Ayarlar, Sistem sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
 
 !!! warning "Dışa aktarma kimlik bilgileri içerebilir"
     Site dışı ve bildirim kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.

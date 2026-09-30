@@ -4,12 +4,12 @@ Lokale sikkerhetskopier beskytter deg mot en tapt container eller en dårlig opp
 
 ## Ekstern replikering
 
-Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne replikaer. Sett et repo per domene på **Innstillinger, Ekstern**-fanen. BombVault replikerer nye øyeblikksbilder dit med `restic copy` på best-effort-basis, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. Det lokale repoet forblir primært.
+Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne replikaer. Sett et repo per domene på **Innstillinger, Off-site**-siden. BombVault replikerer nye øyeblikksbilder dit med `restic copy` på best-effort-basis, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. Det lokale repoet forblir primært.
 
-- **Flere eksterne mål per domene.** Hvert domene (containere, VM-er, flash, config, filsett og ZFS-datasett) kan replikere til flere eksterne destinasjoner samtidig, ikke bare én, så du kan for eksempel beholde en rest-server på en venns boks og en S3-bucket parallelt. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett. Et eksisterende enkelt ekstern-oppsett overføres urørt som det første målet, og hvert mål i et domene replikeres på det domenets eksterne tidsplan.
+- **Flere eksterne mål per domene.** Hvert domene (containere, VM-er, flash, config, filsett og ZFS-datasett) kan replikere til flere eksterne destinasjoner samtidig, ikke bare én, så du kan for eksempel beholde en rest-server på en venns boks og en S3-bucket parallelt. Legg til ekstra mål på Innstillinger, Off-site, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett. Et eksisterende enkelt ekstern-oppsett overføres urørt som det første målet, og hvert mål i et domene replikeres på det domenets eksterne tidsplan.
 - **Ekstern tidsplan per domene** (redigert sammen med hver annen tidsplan på Innstillinger, Tidsplaner): la den stå tom for å replikere etter hver lokale sikkerhetskopi, eller sett en kadens (for eksempel `weekly Sun 03:00`) for å sende eksternt sjeldnere enn du sikkerhetskopierer lokalt. En **Replikér nå**-knapp dekker på-forespørsel-kjøringer.
-- **Ekstern oppbevaring** ligger på Innstillinger, Ekstern så du kan beholde eksterne kopier lenger som et arkiv. La policyen stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder.
-- **Båndbreddegrenser** (Innstillinger, Ekstern) begrenser resticts opplastings-/nedlastingshastighet så replikering ikke metter WAN-et ditt.
+- **Ekstern oppbevaring** ligger på Innstillinger, Oppbevaring så du kan beholde eksterne kopier lenger som et arkiv. La policyen stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder.
+- **Båndbreddegrenser** (Innstillinger, Off-site) begrenser resticts opplastings-/nedlastingshastighet så replikering ikke metter WAN-et ditt.
 - En **replikeringsindikator** viser hvilket domene som replikerer mens det pågår (på siden sin og på Dashboardet). Det er en aktiv indikator, ikke en prosentbjelke, fordi `restic copy` ikke eksponerer noen maskinlesbar fremdrift.
 
 !!! note "Gjenopprett rett fra ekstern"
@@ -17,7 +17,7 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 
 ## Eksterne primære arkiver {#remote-primary-repositories}
 
-Et domenes sti for sikkerhetskopi (Innstillinger, Stier og lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `b2:...`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
+Et domenes sti for sikkerhetskopi (Innstillinger, Lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `b2:...`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
 
 Hvert av de seks stifeltene (Containere, Virtuelle maskiner, Flash, Konfigurasjon, Filer, ZFS-datasett) har en bryter **Lokal / Ekstern** rett ved siden av:
 
@@ -31,7 +31,7 @@ Hvert av de seks stifeltene (Containere, Virtuelle maskiner, Flash, Konfigurasjo
 Ingenting av dette er påkrevd: en håndskrevet ekstern sti uten lagrede sikkerhetsinnstillinger sikkerhetskopierer nøyaktig som før (ubegrenset båndbredde, kan beskjæres, ingen budsjettalarm). Sikkerhetsdialogen finnes for når du vil ha den samme beskyttelsen som en off-site-kopi får, uten å måtte opprette en off-site-destinasjon bare for det.
 
 !!! note "Sky- og REST-påloggingsdetaljer deles"
-    Et eksternt primærarkiv godkjennes med de samme S3-/REST-detaljene som er satt opp under Innstillinger, Off-site, Skypåloggingsdetaljer. Det finnes ikke et eget lager for påloggingsdetaljer til primære arkiver.
+    Et eksternt primærarkiv godkjennes med de samme S3-/REST-detaljene som er satt opp under Innstillinger, Skytilgang, Delt skylegitimasjon. Det finnes ikke et eget lager for påloggingsdetaljer til primære arkiver.
 
 ## Uforanderlig (append-only) ekstern
 
@@ -68,7 +68,7 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 
 Mottakere, hentekilder, Instanser-siden og Mesh-ekstern snakker alle med en annen BombVault. De gjør det som medlemmer av én paringsgruppe, og en instans blir med i gruppen med tolv ord.
 
-Åpne **Innstillinger → System** på den første instansen og trykk på **Generer frase** i paringskortene. Tolv ord dukker opp i et vindu med en **Kopier**-knapp. Åpne det samme stedet på hver av de andre instansene, trykk på **Angi frase** og lim inn eller tast dem inn, eller trykk på **Lim inn** i det vinduet. Et ord som ikke finnes på listen, blir navngitt med plasseringen sin mens du taster, og det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp før noe blir paret. Generer frasen på bare én instans: to instanser som begge genererer en frase, danner to atskilte grupper. Melder ingen seg i løpet av et minutt, tilbyr fanen to veier ut: vis ordene på nytt for å skrive dem inn der borte, eller skriv inn ordene til den andre instansen og bli med i gruppen dens i ett steg. Paring fungerer uten innloggingspassord, men sett et: uten det kan alle som kan åpne dette webgrensesnittet, lese ordene og via gruppen få tak i restic-passordet til hver instans i gruppen. Paringskortet sier fra om dette til et passord er satt. Med passord ber en ny visning av frasen om det. **Forlat gruppen** tar en instans ut igjen.
+Åpne **Innstillinger → Paring** på den første instansen og trykk på **Generer frase** i paringskortene. Tolv ord dukker opp i et vindu med en **Kopier**-knapp. Åpne det samme stedet på hver av de andre instansene, trykk på **Angi frase** og lim inn eller tast dem inn, eller trykk på **Lim inn** i det vinduet. Et ord som ikke finnes på listen, blir navngitt med plasseringen sin mens du taster, og det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp før noe blir paret. Generer frasen på bare én instans: to instanser som begge genererer en frase, danner to atskilte grupper. Melder ingen seg i løpet av et minutt, tilbyr fanen to veier ut: vis ordene på nytt for å skrive dem inn der borte, eller skriv inn ordene til den andre instansen og bli med i gruppen dens i ett steg. Paring fungerer uten innloggingspassord, men sett et: uten det kan alle som kan åpne dette webgrensesnittet, lese ordene og via gruppen få tak i restic-passordet til hver instans i gruppen. Paringskortet sier fra om dette til et passord er satt. Med passord ber en ny visning av frasen om det. **Forlat gruppen** tar en instans ut igjen.
 
 Alle som kjenner ordene kan bli med i gruppen, så behandle dem som et passord.
 
@@ -110,7 +110,7 @@ Over beskrives delene. Her er ett komplett oppsett med ekte verdier, for deler e
 
 To maskiner: **TOWER** kjører containerne og sender sikkerhetskopiene, **VAULT** tar imot dem og håndhever uforanderligheten. Bytt ut med dine egne navn, adresser og delingsstier.
 
-**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Eksternt → veiledet oppsett*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
+**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Off-site → veiledet oppsett*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
 
     La `--append-only` bli stående i OPTIONS-feltet. Det er hele poenget: uten det er VAULT en vanlig deling igjen.
 
@@ -128,7 +128,7 @@ Første ledd i stien er htpasswd-brukeren, det andre er arkivet. Skriv inn den g
 | **IKKE beskyttet** | VAULT godtok en sletting. `--append-only` mangler eller er fjernet. |
 | **uavklart** | Verken eller. Som regel er adressen ikke den restic selv bruker, eller legitimasjonen er endret. Ingenting registreres, og ingen varsling utløses. |
 
-**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
+**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Paring → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
 
 !!! warning "Plasseringen er en sti **inne i** containeren, skrevet relativt til vertsmonteringen"
     Skriv inn `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kjører i en container der vertens `/mnt` er montert et annet sted; en absolutt vertssti finnes ikke der. Limer du inn en, forteller BombVault deg nå den relative stien du skal bruke i stedet.

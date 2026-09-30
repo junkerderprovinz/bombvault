@@ -1,6 +1,6 @@
 # Configurare
 
-Această pagină acoperă variabilele de mediu ale containerului, montările pe care le oferă șablonul, backupul VM prin SSH și configurarea off-site. **Căile depozitelor** de backup sunt configurate în interiorul aplicației (Setări, Căi de backup), nu prin variabile de mediu.
+Această pagină acoperă variabilele de mediu ale containerului, montările pe care le oferă șablonul, backupul VM prin SSH și configurarea off-site. **Căile depozitelor** de backup sunt configurate în interiorul aplicației (Setări, Stocare, Căi de backup), nu prin variabile de mediu.
 
 ## Variabile de mediu
 
@@ -30,7 +30,7 @@ Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/m
 
 Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
-Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Căi de backup**.
+Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**.
 
 !!! note "Verificarea integrării cu gazda"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
@@ -62,7 +62,7 @@ Pentru fiecare container, BombVault alege singur ce montări bind și ce volume 
 
 ## Server MCP {#mcp-server}
 
-Serverul MCP nu are nevoie de nicio variabilă de mediu. Îl pornești creând o cheie în **Setări, Sistem, Server MCP**, iar el răspunde la `/mcp` pe același port ca interfața web (de exemplu `https://192.168.1.10:3443/mcp`). Fără o cheie activă, calea răspunde `404`. Clienții, certificatele și limitele sunt descrise în [Server MCP](mcp.md).
+Serverul MCP nu are nevoie de nicio variabilă de mediu. Îl pornești creând o cheie în **Setări, Integrări, Server MCP**, iar el răspunde la `/mcp` pe același port ca interfața web (de exemplu `https://192.168.1.10:3443/mcp`). Fără o cheie activă, calea răspunde `404`. Clienții, certificatele și limitele sunt descrise în [Server MCP](mcp.md).
 
 ## Backup VM prin SSH
 
@@ -70,7 +70,7 @@ BombVault face backup VM-urilor KVM/libvirt **fără a monta vreo cale libvirt**
 
 Configurare rapidă:
 
-1. **Setări, Sistem, SSH al gazdei:** copiază cheia publică afișată.
+1. **Setări, Integrări, SSH al gazdei:** copiază cheia publică afișată.
 2. Adaug-o la `/root/.ssh/authorized_keys` al Unraid (persistată de asemenea în flash astfel încât să supraviețuiască reporniri).
 3. Apasă **Test connection**.
 
@@ -81,15 +81,15 @@ Configurare rapidă:
 
 ## Configurare off-site
 
-Configurează o replică off-site în fila **Setări, Off-site**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
+Configurează o replică off-site în pagina **Setări, Extern**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
 
 - **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Credențialele cloud** sunt stocate criptat sub Setări, Off-site, Credențiale cloud.
-- **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Sistem, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
+- **Credențialele cloud partajate** sunt stocate criptat sub Setări, Acces cloud, Credențiale cloud partajate.
+- **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Integrări, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
 - **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort. Depozitul local rămâne principal. Fiecare domeniu are propria programare off-site, plus un buton **Replicate now**.
-- **Mai multe ținte off-site per domeniu:** fiecare domeniu poate replica către mai multe destinații off-site simultan. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere; toate replică conform programării off-site a acelui domeniu. O configurare off-site unică existentă este preluată ca prima țintă.
-- **Retenție per sursă:** politica locală se află în Setări, Căi și Stocare; politica off-site în Setări, Off-site (las-o toată zero pentru a nu tăia niciodată automat instantaneele off-site).
-- **Limite de lățime de bandă:** limitează rata de upload/download restic sub Setări, Off-site.
+- **Mai multe ținte off-site per domeniu:** fiecare domeniu poate replica către mai multe destinații off-site simultan. Adaugă ținte suplimentare în Setări, Extern, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere; toate replică conform programării off-site a acelui domeniu. O configurare off-site unică existentă este preluată ca prima țintă.
+- **Retenție per sursă:** politicile locală și off-site se află ambele în Setări, Retenție (las-o pe cea off-site toată zero pentru a nu tăia niciodată automat instantaneele off-site).
+- **Limite de lățime de bandă:** limitează rata de upload/download restic sub Setări, Extern.
 - **Clasă de stocare la rece și de arhivă (S3):** pentru un depozit off-site S3 nativ, alege un nivel care permite restaurarea (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Remote-urile rclone își setează clasa în configurația rclone.
 
 ## Anomalii {#anomalies}
@@ -107,7 +107,7 @@ Fiecare element poate avea propria sensibilitate și propriul minim de notificar
 
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 
-Cardul **Export și import setări** de pe pagina Setări scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
+Cardul **Export și import setări** de pe pagina Setări, Sistem scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
 
 !!! warning "Exportul poate conține credențiale"
     Alegi dacă incluzi credențialele off-site și de notificare în fișier. Cu credențialele incluse, exportul este la fel de sensibil ca kitul tău de recuperare, deci păstrează-l undeva în siguranță. Fără ele, fișierul conține doar setări nesecrete.

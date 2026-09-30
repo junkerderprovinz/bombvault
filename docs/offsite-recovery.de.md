@@ -4,11 +4,11 @@ Lokale Backups schützen dich vor einem verlorenen Container oder einem schlecht
 
 ## Off-site-Replikation
 
-Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken hinzu. Setze ein Repo pro Bereich im Tab **Einstellungen, Off-site**. BombVault repliziert neue Snapshots dorthin mit `restic copy` auf Best-Effort-Basis, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. Das lokale Repo bleibt primär.
+Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken hinzu. Setze ein Repo pro Bereich auf der Seite **Einstellungen, Off-site**. BombVault repliziert neue Snapshots dorthin mit `restic copy` auf Best-Effort-Basis, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. Das lokale Repo bleibt primär.
 
 - **Mehrere Off-site-Ziele pro Bereich.** Jeder Bereich (Container, VMs, Flash, Config, Dateisätze und ZFS-Datasets) kann gleichzeitig an mehrere Off-site-Ziele replizieren, nicht nur eines, sodass du zum Beispiel einen rest-server auf der Box eines Freundes und einen S3-Bucket parallel behalten kannst. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget. Eine bestehende einzelne Off-site-Einrichtung wird unangetastet als erstes Ziel übernommen, und jedes Ziel eines Bereichs repliziert nach dem Off-site-Zeitplan dieses Bereichs.
 - **Off-site-Zeitplan pro Bereich** (neben jedem anderen Zeitplan unter Einstellungen, Zeitpläne bearbeitet): lasse ihn leer, um nach jedem lokalen Backup zu replizieren, oder setze eine Taktung (zum Beispiel `weekly Sun 03:00`), um seltener ins Off-site zu liefern, als du lokal sicherst. Ein Button **Jetzt replizieren** deckt Läufe auf Abruf ab.
-- **Off-site-Aufbewahrung** liegt unter Einstellungen, Off-site, sodass du Off-site-Kopien länger als Archiv behalten kannst. Lasse die Richtlinie ganz auf null, um Off-site-Snapshots nie automatisch zu kürzen.
+- **Off-site-Aufbewahrung** liegt unter Einstellungen, Aufbewahrung, sodass du Off-site-Kopien länger als Archiv behalten kannst. Lasse die Richtlinie ganz auf null, um Off-site-Snapshots nie automatisch zu kürzen.
 - **Bandbreitenlimits** (Einstellungen, Off-site) begrenzen die restic-Upload-/Download-Rate, sodass die Replikation dein WAN nicht auslastet.
 - Eine **Replikationsanzeige** zeigt, welcher Bereich gerade repliziert, während es läuft (auf seiner Seite und im Dashboard). Es ist eine aktive Anzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt bereitstellt.
 
@@ -17,7 +17,7 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 
 ## Entfernte primäre Repositories {#remote-primary-repositories}
 
-Der Sicherungspfad einer Domäne (Einstellungen, Pfade & Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
+Der Sicherungspfad einer Domäne (Einstellungen, Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
 
 Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Entfernt**:
 
@@ -31,7 +31,7 @@ Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-D
 Nichts davon ist Pflicht: ein von Hand eingetragener entfernter Pfad ohne gespeicherte Sicherheitseinstellungen sichert genau so wie bisher (unbegrenzte Bandbreite, bereinigbar, kein Budgetalarm). Der Sicherheitsdialog ist für den Fall da, dass du dieselben Schutzmaßnahmen willst, die eine Off-site-Kopie bekommt, ohne dafür extra ein Off-site-Ziel einrichten zu müssen.
 
 !!! note "Cloud- und REST-Zugangsdaten werden geteilt"
-    Ein entferntes primäres Repo meldet sich mit denselben S3-/REST-Zugangsdaten an, die unter Einstellungen, Off-site, Cloud-Zugangsdaten hinterlegt sind. Einen getrennten Speicher für Zugangsdaten primärer Repos gibt es nicht.
+    Ein entferntes primäres Repo meldet sich mit denselben S3-/REST-Zugangsdaten an, die unter Einstellungen, Cloud-Zugänge, Geteilte Cloud-Zugangsdaten hinterlegt sind. Einen getrennten Speicher für Zugangsdaten primärer Repos gibt es nicht.
 
 ## Unveränderliches (Append-only) Off-site
 
@@ -68,7 +68,7 @@ Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gel
 
 Empfänger, Holen, die Instanzen-Seite und Mesh-Off-site sprechen alle mit einem anderen BombVault. Das tun sie als Mitglieder einer Kopplungsgruppe, und in die Gruppe kommt eine Instanz mit zwölf Wörtern.
 
-Öffne auf der ersten Instanz **Einstellungen → System** und klick in den Kopplungskarten auf **Phrase generieren**. Es erscheinen zwölf Wörter in einem Fenster mit einer **Kopieren**-Schaltfläche. Öffne auf jeder weiteren Instanz dieselbe Stelle, klick auf **Phrase eingeben** und füg die Wörter ein oder tipp sie ab, oder klick in diesem Fenster auf **Einfügen**. Ein Wort, das nicht auf der Liste steht, nennt die Seite schon beim Tippen mit seiner Stelle, und das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt auf, bevor etwas gekoppelt wird. Erstell die Phrase nur auf einer Instanz, denn zwei Instanzen, die beide eine Phrase erstellen, bilden zwei getrennte Gruppen. Meldet sich eine Minute lang niemand, bietet der Reiter zwei Wege heraus: die Wörter erneut anzeigen, um sie drüben einzugeben, oder die Wörter der anderen Instanz eingeben und ihrer Gruppe in einem Schritt beitreten. Koppeln geht auch ohne Anmeldepasswort, aber leg eins fest: ohne Passwort kann jeder, der diese Weboberfläche öffnen kann, die Wörter lesen und sich über die Gruppe das restic-Passwort jeder Instanz darin holen. Die Kopplungskarte weist darauf hin, solange kein Passwort gesetzt ist. Mit Passwort verlangt das erneute Anzeigen der Phrase danach. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
+Öffne auf der ersten Instanz **Einstellungen → Kopplung** und klick in den Kopplungskarten auf **Phrase generieren**. Es erscheinen zwölf Wörter in einem Fenster mit einer **Kopieren**-Schaltfläche. Öffne auf jeder weiteren Instanz dieselbe Stelle, klick auf **Phrase eingeben** und füg die Wörter ein oder tipp sie ab, oder klick in diesem Fenster auf **Einfügen**. Ein Wort, das nicht auf der Liste steht, nennt die Seite schon beim Tippen mit seiner Stelle, und das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt auf, bevor etwas gekoppelt wird. Erstell die Phrase nur auf einer Instanz, denn zwei Instanzen, die beide eine Phrase erstellen, bilden zwei getrennte Gruppen. Meldet sich eine Minute lang niemand, bietet der Reiter zwei Wege heraus: die Wörter erneut anzeigen, um sie drüben einzugeben, oder die Wörter der anderen Instanz eingeben und ihrer Gruppe in einem Schritt beitreten. Koppeln geht auch ohne Anmeldepasswort, aber leg eins fest: ohne Passwort kann jeder, der diese Weboberfläche öffnen kann, die Wörter lesen und sich über die Gruppe das restic-Passwort jeder Instanz darin holen. Die Kopplungskarte weist darauf hin, solange kein Passwort gesetzt ist. Mit Passwort verlangt das erneute Anzeigen der Phrase danach. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
 
 Wer die Wörter kennt, kommt in die Gruppe. Behandle sie also wie ein Passwort.
 
@@ -128,7 +128,7 @@ Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trag
 | **NICHT geschützt** | VAULT hat ein Löschen angenommen. `--append-only` fehlt oder wurde entfernt. |
 | **unentschieden** | Weder noch. Meist ist die URL nicht die, die restic selbst benutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
 
-**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
+**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Kopplung → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
 
 !!! warning "Der Ort ist ein Pfad **innerhalb** des Containers, relativ zum Host-Mount geschrieben"
     Trage `user/appdata/rest-server/bombvault-containers/containers` ein, **nicht** `/mnt/user/appdata/…`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts an anderer Stelle eingehängt ist; ein absoluter Host-Pfad existiert dort nicht. Fügst du trotzdem einen ein, nennt BombVault dir jetzt den relativen Pfad, den du stattdessen brauchst.

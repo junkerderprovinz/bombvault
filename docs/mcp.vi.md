@@ -40,7 +40,7 @@ Khi bắt đầu một miền hoặc Backup Everything, các mục bị một gi
 
 ## Bật tính năng {#switch-on}
 
-1. Mở **Cài đặt, Hệ thống, Máy chủ MCP** và bấm nút của máy khách bạn dùng. Máy khách không có trong danh sách kết nối qua **Máy khách khác**.
+1. Mở **Cài đặt, Tích hợp, Máy chủ MCP** và bấm nút của máy khách bạn dùng. Máy khách không có trong danh sách kết nối qua **Máy khách khác**.
 2. Trong **Khóa**, giữ **Khóa mới** và tên được đề xuất, tức tên của máy khách, hoặc gõ một tên cho biết khóa dùng ở đâu, ví dụ "Claude Code trên laptop". Mỗi máy khách một khóa giúp bạn thu hồi một khóa mà không động đến các khóa khác. **Khóa hiện có** cấp cho máy khách một khóa bạn đã tạo trước đó.
 3. Bật **Cho phép bắt đầu sao lưu** cho khóa cần bắt đầu được bản sao lưu; nếu không, khóa chỉ đọc được. Bạn có thể đổi sau trên ô của khóa, và thay đổi có hiệu lực từ yêu cầu tiếp theo của trợ lý mà không cần kết nối lại.
 4. Bấm **Tạo khóa**. Khóa chỉ hiện một lần. BombVault chỉ giữ dấu vân của khóa và không thể hiện lại nó, nên hãy sao chép ngay. Nếu bạn đóng hộp thoại trước khi máy khách dùng khóa, thẻ vẫn tiếp tục hiện khóa cho đến khi bạn xác nhận đã sao chép.
@@ -173,7 +173,7 @@ ChatGPT, Claude trên claude.ai, Grok và Le Chat gọi BombVault từ máy ch�
 
 Với một máy khách không nhận được khóa, BombVault là máy chủ ủy quyền OAuth của chính nó. Máy khách tự đăng ký, đưa bạn tới một trang BombVault, và ở đó bạn đăng nhập bằng mật khẩu đăng nhập (và yếu tố thứ hai, nếu bạn đã thiết lập) rồi cho phép nó. Sau đó máy khách nhận một token chỉ dùng được cho endpoint MCP của BombVault này, và tự gia hạn token đó.
 
-1. Đặt mật khẩu đăng nhập trong **Cài đặt, Hệ thống**. Không có mật khẩu thì BombVault không cung cấp đăng nhập nào, vì không có ai để hỏi sự đồng ý.
+1. Đặt mật khẩu đăng nhập trong **Cài đặt, Bảo mật**. Không có mật khẩu thì BombVault không cung cấp đăng nhập nào, vì không có ai để hỏi sự đồng ý.
 2. Làm cho BombVault truy cập được từ internet qua https với chứng chỉ mà trình duyệt tin cậy, thường là qua một reverse proxy. Máy khách gọi `/mcp`, `/oauth/` và `/.well-known/` từ máy chủ riêng, nên một proxy có đăng nhập riêng phải cho ba đường dẫn này đi qua tới BombVault. Trang đồng ý ở `/oauth/authorize` mở trong trình duyệt của chính bạn và có thể nằm sau đăng nhập của proxy. Hãy khai báo proxy cả trong `TRUSTED_PROXY` (xem [Cấu hình](configuration.md)). BombVault giới hạn số lần đăng ký máy khách theo từng địa chỉ, và nếu không khai báo, mọi máy khách đều có vẻ đến từ proxy.
 3. Trên thẻ MCP, bật **Đăng nhập qua OAuth** và nhập **Địa chỉ công khai**: địa chỉ https không có đường dẫn, ví dụ `https://backup.example.com`. Mọi token đều gắn với địa chỉ này, nên sau khi đổi, mọi máy khách phải đăng nhập lại.
 4. Bấm nút ChatGPT hoặc Claude. Hộp thoại hiển thị **URL trình kết nối**, tức địa chỉ công khai kèm `/mcp` phía sau, và chỗ nhập nó trong máy khách đó. Trong ChatGPT, bật chế độ nhà phát triển trong **Cài đặt, Ứng dụng và trình kết nối, Cài đặt nâng cao**, chọn **Tạo**, dán URL trình kết nối làm URL máy chủ MCP và chọn OAuth làm phương thức xác thực. Trên claude.ai, mở **Cài đặt, Trình kết nối, Thêm trình kết nối tùy chỉnh**, dán URL trình kết nối, để trống ID ứng dụng khách và bí mật OAuth rồi chọn **Kết nối**.

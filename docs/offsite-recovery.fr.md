@@ -4,11 +4,11 @@ Les sauvegardes locales vous protègent d'un conteneur perdu ou d'une mauvaise m
 
 ## Réplication hors site
 
-Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans l'onglet **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Le dépôt local reste principal.
+Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans la page **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Le dépôt local reste principal.
 
 - **Plusieurs cibles hors site par domaine.** Chaque domaine (conteneurs, VMs, flash, config, jeux de fichiers et jeux de données ZFS) peut répliquer vers plusieurs destinations hors site à la fois, pas seulement une, de sorte que vous pouvez garder, par exemple, un rest-server sur la machine d'un ami et un bucket S3 en parallèle. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance. Une configuration hors site unique existante est reprise intacte comme première cible, et chaque cible d'un domaine réplique selon le planning hors site de ce domaine.
 - **Planning hors site par domaine** (édité aux côtés de tous les autres plannings dans Paramètres, Plannings) : laissez-le vide pour répliquer après chaque sauvegarde locale, ou définissez une cadence (par exemple `weekly Sun 03:00`) pour expédier hors site moins souvent que vous ne sauvegardez localement. Un bouton **Répliquer maintenant** couvre les exécutions à la demande.
-- **La rétention hors site** vit dans Paramètres, Hors site afin que vous puissiez garder les copies hors site plus longtemps comme archive. Laissez la politique entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site.
+- **La rétention hors site** vit dans Paramètres, Rétention afin que vous puissiez garder les copies hors site plus longtemps comme archive. Laissez la politique entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site.
 - **Les limites de bande passante** (Paramètres, Hors site) plafonnent le débit d'envoi/de téléchargement de restic afin que la réplication ne sature pas votre WAN.
 - Un **indicateur de réplication** montre quel domaine réplique pendant qu'elle s'exécute (sur sa page et le tableau de bord). C'est un indicateur d'activité, pas une barre de pourcentage, car `restic copy` n'expose aucune progression lisible par machine.
 
@@ -17,7 +17,7 @@ Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors 
 
 ## Dépôts primaires distants {#remote-primary-repositories}
 
-Le chemin de sauvegarde d'un domaine (Paramètres, Chemins et stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `b2:...`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
+Le chemin de sauvegarde d'un domaine (Paramètres, Stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `b2:...`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
 
 Chacun des six champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers, Jeux de données ZFS) porte juste à côté un commutateur **Local / Distant** :
 
@@ -31,7 +31,7 @@ Chacun des six champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers,
 Rien de tout cela n'est obligatoire : un chemin distant saisi à la main, sans réglages de sécurité enregistrés, sauvegarde exactement comme avant (bande passante illimitée, élagage possible, pas d'alerte de budget). La boîte de dialogue de sécurité est là pour le jour où vous voulez les mêmes protections qu'une copie hors site, sans devoir créer une destination hors site rien que pour cela.
 
 !!! note "Les identifiants cloud et REST sont partagés"
-    Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Hors site, Identifiants cloud. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
+    Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Accès cloud, Identifiants cloud partagés. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
 
 ## Hors site immuable (append-only)
 
@@ -68,7 +68,7 @@ Le **tableau de bord de protection contre les rançongiciels** du tableau de bor
 
 Les Récepteurs, les sources de Rapatriement, la page Instances et le Mesh hors site parlent tous à un autre BombVault. Ils le font en tant que membres d'un même groupe d'appairage, et une instance rejoint le groupe avec douze mots.
 
-Sur la première instance, ouvrez **Paramètres → Système** et cliquez sur **Générer une phrase** dans les cartes d'appairage. Douze mots apparaissent dans une fenêtre avec un bouton **Copier**. Sur chaque autre instance, ouvrez le même endroit, cliquez sur **Saisir une phrase** et collez-les ou tapez-les, ou cliquez sur **Coller** dans cette fenêtre. Un mot absent de la liste est signalé avec sa position dès la saisie, et le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté avant qu'un appairage n'ait lieu. Générez la phrase sur une seule instance : deux instances qui créent chacune une phrase forment deux groupes distincts. Si personne ne se présente au bout d'une minute, l'onglet propose deux façons de s'en sortir : réafficher les mots pour les saisir là-bas, ou saisir les mots de l'autre instance et rejoindre son groupe en une seule étape. L'appairage fonctionne sans mot de passe de connexion, mais définissez-en un : sans lui, quiconque peut ouvrir cette interface web peut lire les mots et obtenir, via le groupe, le mot de passe restic de chaque instance qui s'y trouve. La carte d'appairage le signale tant qu'aucun mot de passe n'est défini. Avec un mot de passe, réafficher la phrase le demande. **Quitter le groupe** fait ressortir une instance.
+Sur la première instance, ouvrez **Paramètres → Appairage** et cliquez sur **Générer une phrase** dans les cartes d'appairage. Douze mots apparaissent dans une fenêtre avec un bouton **Copier**. Sur chaque autre instance, ouvrez le même endroit, cliquez sur **Saisir une phrase** et collez-les ou tapez-les, ou cliquez sur **Coller** dans cette fenêtre. Un mot absent de la liste est signalé avec sa position dès la saisie, et le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté avant qu'un appairage n'ait lieu. Générez la phrase sur une seule instance : deux instances qui créent chacune une phrase forment deux groupes distincts. Si personne ne se présente au bout d'une minute, l'onglet propose deux façons de s'en sortir : réafficher les mots pour les saisir là-bas, ou saisir les mots de l'autre instance et rejoindre son groupe en une seule étape. L'appairage fonctionne sans mot de passe de connexion, mais définissez-en un : sans lui, quiconque peut ouvrir cette interface web peut lire les mots et obtenir, via le groupe, le mot de passe restic de chaque instance qui s'y trouve. La carte d'appairage le signale tant qu'aucun mot de passe n'est défini. Avec un mot de passe, réafficher la phrase le demande. **Quitter le groupe** fait ressortir une instance.
 
 Quiconque connaît les mots peut rejoindre le groupe, traitez-les donc comme un mot de passe.
 
@@ -128,7 +128,7 @@ Le premier segment du chemin est l'utilisateur htpasswd, le second le dépôt. S
 | **NON protégé** | VAULT a accepté une suppression. `--append-only` manque ou a été retiré. |
 | **non concluant** | Ni l'un ni l'autre. En général, l'URL n'est pas celle qu'utilise restic lui-même, ou les identifiants ont changé. Rien n'est enregistré et aucune alerte n'est déclenchée. |
 
-**4. Sur VAULT, regardez ce qui arrive.** Appairez les deux machines ([Appairage des instances](#pairing)), activez *Paramètres → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule avec TOWER comme instance émettrice.
+**4. Sur VAULT, regardez ce qui arrive.** Appairez les deux machines ([Appairage des instances](#pairing)), activez *Paramètres → Appairage → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule avec TOWER comme instance émettrice.
 
 !!! warning "L'emplacement est un chemin **à l'intérieur** du conteneur, écrit relativement au montage hôte"
     Saisissez `user/appdata/rest-server/bombvault-containers/containers`, et **non** `/mnt/user/appdata/…`. BombVault s'exécute dans un conteneur où le `/mnt` de l'hôte est monté ailleurs ; un chemin hôte absolu n'y existe pas. Si vous en collez un, BombVault vous indique désormais le chemin relatif à utiliser.

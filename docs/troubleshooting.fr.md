@@ -18,7 +18,7 @@ BombVault sert du HTTPS par défaut sur le port `3443` (certificat auto-signé),
 
 La sauvegarde de VM dialogue avec libvirt via SSH, jamais un montage.
 
-- Confirmez que SSH est activé sur l'hôte et que la clé publique de BombVault est autorisée dans `/root/.ssh/authorized_keys` (Paramètres, Système, SSH de l'hôte affiche la clé et un bouton **Tester la connexion**).
+- Confirmez que SSH est activé sur l'hôte et que la clé publique de BombVault est autorisée dans `/root/.ssh/authorized_keys` (Paramètres, Intégrations, SSH de l'hôte affiche la clé et un bouton **Tester la connexion**).
 - Sur un réseau `br0.x` personnalisé, réglez `LIBVIRT_HOST` sur l'IP LAN de votre Unraid (le conteneur ne peut pas y atteindre l'hôte via `host.docker.internal`). Activez **Paramètres, Docker, Accès de l'hôte aux réseaux personnalisés**.
 - Si vous avez changé le port SSH d'Unraid, réglez `LIBVIRT_SSH_PORT` en conséquence.
 - Le diagnostic complet pas à pas (test d'accessibilité, routage VLAN, `Permission denied (publickey)`, `Host key verification failed`) se trouve dans le [guide de sauvegarde de VM via SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Les instantanés à chaud nécessitent l'agent invité qemu installé dans la VM
 
 ## Une sauvegarde a échoué avec « repository is already locked »
 
-C'est généralement un verrou restic orphelin laissé lorsque le conteneur a été mis à jour ou redémarré en pleine opération. BombVault détecte un verrou prouvé orphelin, le force à se libérer et réessaie une fois, automatiquement. S'il persiste, utilisez **Paramètres, Intégrité et maintenance, Déverrouiller** pour le domaine concerné afin de libérer un verrou bloqué à la main. Un vrai problème remonte tout de même au lieu d'être caché. Après un redémarrage, BombVault attend qu'un tel verrou soit resté dix minutes sans être rafraîchi. Un restic encore en marche, par exemple dans un second BombVault sur le même dépôt, rafraîchit son verrou toutes les cinq minutes.
+C'est généralement un verrou restic orphelin laissé lorsque le conteneur a été mis à jour ou redémarré en pleine opération. BombVault détecte un verrou prouvé orphelin, le force à se libérer et réessaie une fois, automatiquement. S'il persiste, utilisez **Paramètres, Intégrité, Déverrouiller** pour le domaine concerné afin de libérer un verrou bloqué à la main. Un vrai problème remonte tout de même au lieu d'être caché. Après un redémarrage, BombVault attend qu'un tel verrou soit resté dix minutes sans être rafraîchi. Un restic encore en marche, par exemple dans un second BombVault sur le même dépôt, rafraîchit son verrou toutes les cinq minutes.
 
 ## Ma copie hors site n'a pas eu lieu après une sauvegarde
 
-La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez le planning hors site de ce domaine (Paramètres, Plannings) : un planning vide réplique après chaque sauvegarde locale, tandis qu'une cadence expédie moins souvent. Utilisez **Répliquer maintenant** dans l'onglet Hors site pour une exécution à la demande, et surveillez l'indicateur de réplication sur le tableau de bord.
+La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez le planning hors site de ce domaine (Paramètres, Plannings) : un planning vide réplique après chaque sauvegarde locale, tandis qu'une cadence expédie moins souvent. Utilisez **Répliquer maintenant** dans la page Hors site pour une exécution à la demande, et surveillez l'indicateur de réplication sur le tableau de bord.
 
 ## Une restauration s'est interrompue avant de démarrer
 

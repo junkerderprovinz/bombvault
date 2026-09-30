@@ -4,11 +4,11 @@ Las copias locales te protegen de un contenedor perdido o de una mala actualizac
 
 ## Replicación externa
 
-Conserva la copia local rápida y añade una o varias réplicas externas. Define un repo por dominio en la pestaña **Ajustes, Externo**. BombVault replica ahí las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, de modo que un contratiempo externo nunca hace fallar la copia local. El repo local sigue siendo el principal.
+Conserva la copia local rápida y añade una o varias réplicas externas. Define un repo por dominio en la página **Ajustes, Externo**. BombVault replica ahí las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, de modo que un contratiempo externo nunca hace fallar la copia local. El repo local sigue siendo el principal.
 
 - **Varios destinos externos por dominio.** Cada dominio (contenedores, VMs, flash, config, conjuntos de archivos y conjuntos de datos ZFS) puede replicarse a varios destinos externos a la vez, no solo a uno, de modo que puedes mantener, por ejemplo, un rest-server en la máquina de un amigo y un bucket S3 en paralelo. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento. Una configuración externa única existente se traslada intacta como el primer destino, y cada destino de un dominio se replica según el calendario externo de ese dominio.
 - **Calendario externo por dominio** (editado junto a todos los demás calendarios en Ajustes, Calendarios): déjalo en blanco para replicar tras cada copia local, o establece una cadencia (por ejemplo `weekly Sun 03:00`) para enviar fuera del sitio con menos frecuencia de la que copias localmente. Un botón **Replicar ahora** cubre las ejecuciones bajo demanda.
-- La **retención externa** vive en Ajustes, Externo para que puedas conservar las copias externas más tiempo como archivo. Deja la política toda a cero para no recortar nunca automáticamente las instantáneas externas.
+- La **retención externa** vive en Ajustes, Retención para que puedas conservar las copias externas más tiempo como archivo. Deja la política toda a cero para no recortar nunca automáticamente las instantáneas externas.
 - Los **límites de ancho de banda** (Ajustes, Externo) limitan la velocidad de subida/bajada de restic para que la replicación no sature tu WAN.
 - Un **indicador de replicación** muestra qué dominio se está replicando mientras se ejecuta (en su página y en el Panel). Es un indicador activo, no una barra de porcentaje, porque `restic copy` no expone ningún progreso legible por máquina.
 
@@ -17,7 +17,7 @@ Conserva la copia local rápida y añade una o varias réplicas externas. Define
 
 ## Repositorios primarios remotos {#remote-primary-repositories}
 
-La ruta de copia de un dominio (Ajustes, Rutas y almacenamiento) no se limita a una carpeta local: apúntala directamente a un remoto de restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:usuario@host:/repo`, `rclone:remoto:bucket/ruta`) y BombVault copia allí directamente, sin copia local aparte y sin paso de replicación. Es una forma realmente distinta de la replicación fuera de sede de más arriba: allí el repositorio local es el primario y el de fuera de sede es un archivo suyo en la medida de lo posible; aquí el repositorio remoto **es** el primario, y es la única copia mientras no configures además una replicación fuera de sede (o un segundo remoto) para ese dominio.
+La ruta de copia de un dominio (Ajustes, Almacenamiento) no se limita a una carpeta local: apúntala directamente a un remoto de restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:usuario@host:/repo`, `rclone:remoto:bucket/ruta`) y BombVault copia allí directamente, sin copia local aparte y sin paso de replicación. Es una forma realmente distinta de la replicación fuera de sede de más arriba: allí el repositorio local es el primario y el de fuera de sede es un archivo suyo en la medida de lo posible; aquí el repositorio remoto **es** el primario, y es la única copia mientras no configures además una replicación fuera de sede (o un segundo remoto) para ese dominio.
 
 Cada uno de los seis campos de ruta (Contenedores, Máquinas virtuales, Flash, Configuración, Ficheros, Conjuntos de datos ZFS) lleva justo al lado un conmutador **Local / Remoto**:
 
@@ -31,7 +31,7 @@ Cada uno de los seis campos de ruta (Contenedores, Máquinas virtuales, Flash, C
 Nada de esto es obligatorio: una ruta remota escrita a mano y sin ajustes de seguridad guardados copia exactamente como siempre (ancho de banda ilimitado, podable, sin alarma de presupuesto). El diálogo de seguridad está ahí para cuando quieras las mismas protecciones que recibe una copia fuera de sede, sin tener que crear un destino fuera de sede solo para eso.
 
 !!! note "Las credenciales de nube y REST se comparten"
-    Un primario remoto se autentica con las mismas credenciales S3/REST configuradas en Ajustes, Fuera de sede, Credenciales de nube. No hay un almacén de credenciales aparte para los repositorios primarios.
+    Un primario remoto se autentica con las mismas credenciales S3/REST configuradas en Ajustes, Acceso a la nube, Credenciales de nube compartidas. No hay un almacén de credenciales aparte para los repositorios primarios.
 
 ## Externo inmutable (append-only)
 
@@ -68,7 +68,7 @@ El **cuadro de mando de protección contra ransomware** en el Panel lo resume en
 
 Los receptores, las fuentes de recogida, la página de Instancias y Mesh externo hablan todos con otro BombVault. Lo hacen como miembros de un grupo de emparejamiento, y una instancia se une al grupo con doce palabras.
 
-En la primera instancia, abre **Ajustes → Sistema** y pulsa **Generar frase** en las tarjetas de emparejamiento. Aparecen doce palabras en una ventana con un botón **Copiar**. En cada una de las demás instancias, abre el mismo lugar, pulsa **Introducir frase** y pégalas o escríbelas, o pulsa **Pegar** en esa ventana. Una palabra que no está en la lista se indica con su posición mientras escribes, y la última palabra lleva una suma de comprobación, así que una palabra mal escrita o intercambiada se detecta antes de que se complete el emparejamiento. Genera la frase en una sola instancia: dos instancias que crean cada una una frase forman dos grupos separados. Si nadie aparece en un minuto, la pestaña ofrece dos salidas: volver a mostrar las palabras para introducirlas allí, o introducir las palabras de la otra instancia y unirte a su grupo en un solo paso. Emparejar funciona sin contraseña de acceso, pero configura una: sin ella, cualquiera que pueda abrir esta interfaz web puede leer las palabras y conseguir, a través del grupo, la contraseña de restic de cada instancia que hay en él. La tarjeta de emparejamiento lo indica hasta que se configura una contraseña. Con una contraseña, volver a mostrar la frase la pide. **Salir del grupo** saca de nuevo a una instancia.
+En la primera instancia, abre **Ajustes → Emparejamiento** y pulsa **Generar frase** en las tarjetas de emparejamiento. Aparecen doce palabras en una ventana con un botón **Copiar**. En cada una de las demás instancias, abre el mismo lugar, pulsa **Introducir frase** y pégalas o escríbelas, o pulsa **Pegar** en esa ventana. Una palabra que no está en la lista se indica con su posición mientras escribes, y la última palabra lleva una suma de comprobación, así que una palabra mal escrita o intercambiada se detecta antes de que se complete el emparejamiento. Genera la frase en una sola instancia: dos instancias que crean cada una una frase forman dos grupos separados. Si nadie aparece en un minuto, la pestaña ofrece dos salidas: volver a mostrar las palabras para introducirlas allí, o introducir las palabras de la otra instancia y unirte a su grupo en un solo paso. Emparejar funciona sin contraseña de acceso, pero configura una: sin ella, cualquiera que pueda abrir esta interfaz web puede leer las palabras y conseguir, a través del grupo, la contraseña de restic de cada instancia que hay en él. La tarjeta de emparejamiento lo indica hasta que se configura una contraseña. Con una contraseña, volver a mostrar la frase la pide. **Salir del grupo** saca de nuevo a una instancia.
 
 Cualquiera que conozca las palabras puede unirse al grupo, así que trátalas como una contraseña.
 
@@ -128,7 +128,7 @@ El primer segmento de la ruta es el usuario htpasswd, el segundo el repositorio.
 | **NO protegido** | VAULT aceptó un borrado. Falta `--append-only` o se ha quitado. |
 | **no concluyente** | Ninguna de las dos. Normalmente la URL no es la que usa restic, o las credenciales han cambiado. No se registra nada ni se dispara ninguna alerta. |
 
-**4. En VAULT, observa lo que llega.** Empareja los dos equipos ([Emparejamiento de instancias](#pairing)), activa *Ajustes → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura con TOWER como instancia emisora.
+**4. En VAULT, observa lo que llega.** Empareja los dos equipos ([Emparejamiento de instancias](#pairing)), activa *Ajustes → Emparejamiento → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura con TOWER como instancia emisora.
 
 !!! warning "La ubicación es una ruta **dentro** del contenedor, escrita relativa al montaje del host"
     Introduce `user/appdata/rest-server/bombvault-containers/containers`, **no** `/mnt/user/appdata/…`. BombVault se ejecuta en un contenedor donde el `/mnt` del host está montado en otro sitio; una ruta absoluta del host no existe ahí. Si pegas una, BombVault ahora te indica la ruta relativa que debes usar.

@@ -73,7 +73,7 @@ Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (
 4. Sett opp planlegging fra **Innstillinger, Tidsplaner**. Det finnes en ett-klikks *inkluder alle i tidsplan* for containere og VM-er.
 
 !!! tip "Valgfritt: velg en sikkerhetskopieringsrekkefølge"
-    Hvis noen containere alltid skal sikkerhetskopieres før andre (for eksempel en database før appen som bruker den), åpne **backup-order**-panelet på Containere-siden og dra dem inn i rekkefølgen du ønsker. Planlagte og flervalgs-kjøringer følger den deretter; alt du lar stå urangert, sikkerhetskopieres mest-forfalt-først, som før.
+    Hvis noen containere alltid skal sikkerhetskopieres før andre (for eksempel en database før appen som bruker den), åpne **backup-order**-panelet på Kontainere-siden og dra dem inn i rekkefølgen du ønsker. Planlagte og flervalgs-kjøringer følger den deretter; alt du lar stå urangert, sikkerhetskopieres mest-forfalt-først, som før.
 
 !!! note "Sjekk av host-integrasjon"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler, slik at du kan bekrefte at containeren er riktig koblet opp før du stoler på den.

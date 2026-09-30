@@ -40,7 +40,7 @@ En start av en domän eller av Backup Everything hoppar över de objekt som en g
 
 ## Slå på det {#switch-on}
 
-1. Öppna **Inställningar, System, MCP-server** och klicka på knappen för din klient. En klient som inte finns i listan ansluter via **Annan klient**.
+1. Öppna **Inställningar, Integrationer, MCP-server** och klicka på knappen för din klient. En klient som inte finns i listan ansluter via **Annan klient**.
 2. Behåll under **Nyckel** valet **Ny nyckel** och det föreslagna namnet, klientens, eller skriv ett som säger var nyckeln används, till exempel ”Claude Code på laptopen”. En nyckel per klient låter dig återkalla en utan att röra de andra. **Befintlig nyckel** ger klienten en nyckel som du skapat tidigare.
 3. Slå på **Tillåt att starta säkerhetskopior** för en nyckel som ska kunna starta säkerhetskopior; utan det kan den bara läsa. Du kan ändra det senare på nyckelns ruta, och ändringen gäller från assistentens nästa förfrågan utan ny anslutning.
 4. Klicka på **Skapa nyckel**. Nyckeln visas en gång. BombVault behåller bara ett fingeravtryck av den och kan inte visa den igen, så kopiera den nu. Stänger du dialogen innan klienten har använt nyckeln fortsätter kortet att visa den tills du bekräftar att du har kopierat den.
@@ -173,7 +173,7 @@ ChatGPT, Claude på claude.ai, Grok och Le Chat anropar BombVault från sin leve
 
 För en klient som inte kan ta en nyckel är BombVault sin egen OAuth-auktoriseringsserver. Klienten registrerar sig själv, skickar dig till en BombVault-sida, och där loggar du in med ditt inloggningslösenord (och den andra faktorn, om du har ställt in en) och tillåter den. Klienten får sedan ett token som bara gäller MCP-slutpunkten i denna BombVault, och förnyar det själv.
 
-1. Sätt ett inloggningslösenord under **Inställningar, System**. Utan lösenord erbjuder BombVault ingen inloggning alls, eftersom det inte skulle finnas någon att fråga om samtycke.
+1. Sätt ett inloggningslösenord under **Inställningar, Säkerhet**. Utan lösenord erbjuder BombVault ingen inloggning alls, eftersom det inte skulle finnas någon att fråga om samtycke.
 2. Gör BombVault nåbar från internet över https med ett certifikat som webbläsare litar på, oftast via en omvänd proxy. Klienten anropar `/mcp`, `/oauth/` och `/.well-known/` från sina egna servrar, så en proxy med egen inloggning måste släppa igenom de tre sökvägarna till BombVault. Samtyckessidan på `/oauth/authorize` öppnas i din egen webbläsare och får ligga bakom proxyns inloggning. Ange också proxyn i `TRUSTED_PROXY` (se [Konfiguration](configuration.md)). BombVault begränsar klientregistreringar per adress, och utan den ser varje klient ut att komma från proxyn.
 3. Slå på **Inloggning via OAuth** på MCP-kortet och ange **Offentlig adress**: https-adressen utan sökväg, till exempel `https://backup.example.com`. Varje token är bundet till den här adressen, så efter en ändring måste varje klient logga in igen.
 4. Klicka på knappen för ChatGPT eller Claude. Dialogen visar **Connector-URL**, alltså den offentliga adressen med `/mcp` efter, och var den hör hemma i den klienten. I ChatGPT slår du på utvecklarläge under **Inställningar, Appar och connectors, Avancerade inställningar**, väljer **Skapa**, klistrar in connector-URL:en som MCP-server-URL och väljer OAuth som autentisering. På claude.ai öppnar du **Inställningar, Connectors, Lägg till anpassad connector**, klistrar in connector-URL:en, lämnar OAuth-klient-ID och hemlighet tomma och väljer **Anslut**.

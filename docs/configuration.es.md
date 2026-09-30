@@ -1,6 +1,6 @@
 # Configuración
 
-Esta página cubre las variables de entorno del contenedor, los montajes que provee la plantilla, la copia de VMs por SSH y la configuración externa. Las **rutas de repositorio** de copia se configuran dentro de la app (Ajustes, Rutas de copia), no mediante variables de entorno.
+Esta página cubre las variables de entorno del contenedor, los montajes que provee la plantilla, la copia de VMs por SSH y la configuración externa. Las **rutas de repositorio** de copia se configuran dentro de la app (Ajustes, Almacenamiento, Rutas de copia), no mediante variables de entorno.
 
 ## Variables de entorno
 
@@ -30,7 +30,7 @@ Monta el socket de Docker, el flash (`/boot`) y la raíz de **Host Data** (`/mnt
 
 Las copias de conjuntos de datos ZFS también necesitan este modo: el host monta la instantánea de un conjunto solo después de que el contenedor haya arrancado. Consulta [Conjuntos de datos ZFS](zfs-datasets.md).
 
-Las rutas de repositorio de copia son por defecto `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creadas en la primera copia. Cambia la ubicación en cualquier momento en **Ajustes, Rutas de copia**.
+Las rutas de repositorio de copia son por defecto `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creadas en la primera copia. Cambia la ubicación en cualquier momento en **Ajustes, Almacenamiento, Rutas de copia**.
 
 !!! note "Comprobación de integración con el host"
     Abre `/spike` en la interfaz web después de que arranque el contenedor. Sondea cada montaje y CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de cualquier pieza que falte.
@@ -62,7 +62,7 @@ Para cada contenedor, BombVault elige por sí mismo qué montajes bind y volúme
 
 ## Servidor MCP {#mcp-server}
 
-El servidor MCP no necesita ninguna variable de entorno. Lo activas creando una clave en **Ajustes, Sistema, Servidor MCP**, y responde en `/mcp` en el mismo puerto que la interfaz web (por ejemplo `https://192.168.1.10:3443/mcp`). Sin una clave activa, esa ruta responde `404`. Los clientes, los certificados y los límites se describen en [Servidor MCP](mcp.md).
+El servidor MCP no necesita ninguna variable de entorno. Lo activas creando una clave en **Ajustes, Integraciones, Servidor MCP**, y responde en `/mcp` en el mismo puerto que la interfaz web (por ejemplo `https://192.168.1.10:3443/mcp`). Sin una clave activa, esa ruta responde `404`. Los clientes, los certificados y los límites se describen en [Servidor MCP](mcp.md).
 
 ## Copia de VMs por SSH
 
@@ -70,7 +70,7 @@ BombVault copia las VMs KVM/libvirt **sin montar ninguna ruta de libvirt**. Ejec
 
 Configuración rápida:
 
-1. **Ajustes, Sistema, SSH del host:** copia la clave pública mostrada.
+1. **Ajustes, Integraciones, SSH del host:** copia la clave pública mostrada.
 2. Añádela al `/root/.ssh/authorized_keys` de Unraid (también persistido al flash para que sobreviva a los reinicios).
 3. Haz clic en **Probar conexión**.
 
@@ -81,14 +81,14 @@ La plantilla añade `--add-host=host.docker.internal:host-gateway` para que el c
 
 ## Configuración externa
 
-Configura una réplica externa en la pestaña **Ajustes, Externo**. Consulta [Copia externa y recuperación](offsite-recovery.md) para el flujo completo (inmutable/append-only, prueba de manipulación y ensayos de DR). En resumen:
+Configura una réplica externa en la página **Ajustes, Externo**. Consulta [Copia externa y recuperación](offsite-recovery.md) para el flujo completo (inmutable/append-only, prueba de manipulación y ensayos de DR). En resumen:
 
 - **Backends:** SMB/CIFS y NFS (monta el recurso compartido y apunta una Ruta de copia a él), backends nativos de restic sin rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), o cualquier remoto de rclone (`rclone:<remote>:<bucket>/path`).
-- Las **credenciales de la nube** se almacenan cifradas en Ajustes, Externo, Credenciales de la nube.
-- **Los destinos SSH no requieren nada instalado en el otro extremo.** `sftp:` solo necesita un servidor SSH. Añade la clave pública de **Ajustes, Sistema, SSH del host** (también en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
+- Las **credenciales de nube compartidas** se almacenan cifradas en Ajustes, Acceso a la nube, Credenciales de nube compartidas.
+- **Los destinos SSH no requieren nada instalado en el otro extremo.** `sftp:` solo necesita un servidor SSH. Añade la clave pública de **Ajustes, Integraciones, SSH del host** (también en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
 - **Copia externa:** BombVault replica las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo. El repo local sigue siendo el principal. Cada dominio tiene su propio calendario externo, más un botón **Replicar ahora**.
 - **Varios destinos externos por dominio:** cada dominio puede replicarse a varios destinos externos a la vez. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento; todos se replican según el calendario externo de ese dominio. Una configuración externa única existente se traslada como el primer destino.
-- **Retención por fuente:** la política local vive en Ajustes, Rutas y Almacenamiento; la política externa en Ajustes, Externo (déjala toda a cero para no recortar nunca automáticamente las instantáneas externas).
+- **Retención por fuente:** las políticas local y externa viven ambas en Ajustes, Retención (deja la externa toda a cero para no recortar nunca automáticamente las instantáneas externas).
 - **Límites de ancho de banda:** limita la velocidad de subida/bajada de restic en Ajustes, Externo.
 - **Clase de almacenamiento en frío y de archivo (S3):** para un repo externo S3 nativo, elige un nivel legible para restauración (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Los remotos de rclone establecen su clase en la configuración de rclone.
 
@@ -107,7 +107,7 @@ Cada elemento puede tener su propia sensibilidad y su propio mínimo de notifica
 
 ## Ajustes portátiles (exportar e importar) {#portable-settings-export-and-import}
 
-La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
+La tarjeta **Exportar e importar ajustes** en la página de Ajustes, Sistema escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
 
 !!! warning "La exportación puede contener credenciales"
     Tú eliges si incluir las credenciales externas y de notificación en el archivo. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.

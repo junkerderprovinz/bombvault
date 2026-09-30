@@ -1,6 +1,6 @@
 # Konfiguracja
 
-Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez szablon, kopię VM przez SSH oraz konfigurację poza siedzibą. **Ścieżki repozytoriów** kopii są konfigurowane wewnątrz aplikacji (Ustawienia, Ścieżki kopii), a nie przez zmienne środowiskowe.
+Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez szablon, kopię VM przez SSH oraz konfigurację poza siedzibą. **Ścieżki repozytoriów** kopii są konfigurowane wewnątrz aplikacji (Ustawienia, Pamięć, Ścieżki kopii), a nie przez zmienne środowiskowe.
 
 ## Zmienne środowiskowe
 
@@ -30,7 +30,7 @@ Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/
 
 Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbioru dopiero po starcie kontenera. Zobacz [Zbiory danych ZFS](zfs-datasets.md).
 
-Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Ścieżki kopii**.
+Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Pamięć, Ścieżki kopii**.
 
 !!! note "Kontrola integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.
@@ -62,7 +62,7 @@ Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny 
 
 ## Serwer MCP {#mcp-server}
 
-Serwer MCP nie potrzebuje żadnej zmiennej środowiskowej. Włączasz go, tworząc klucz w **Ustawienia, System, Serwer MCP**, a odpowiada pod `/mcp` na tym samym porcie co interfejs WWW (na przykład `https://192.168.1.10:3443/mcp`). Bez aktywnego klucza ta ścieżka odpowiada `404`. Klientów, certyfikaty i limity opisuje strona [Serwer MCP](mcp.md).
+Serwer MCP nie potrzebuje żadnej zmiennej środowiskowej. Włączasz go, tworząc klucz w **Ustawienia, Integracje, Serwer MCP**, a odpowiada pod `/mcp` na tym samym porcie co interfejs WWW (na przykład `https://192.168.1.10:3443/mcp`). Bez aktywnego klucza ta ścieżka odpowiada `404`. Klientów, certyfikaty i limity opisuje strona [Serwer MCP](mcp.md).
 
 ## Kopia VM przez SSH
 
@@ -70,7 +70,7 @@ BombVault tworzy kopie maszyn wirtualnych KVM/libvirt **bez montowania jakiejkol
 
 Szybka konfiguracja:
 
-1. **Ustawienia, System, SSH hosta:** skopiuj pokazany klucz publiczny.
+1. **Ustawienia, Integracje, SSH hosta:** skopiuj pokazany klucz publiczny.
 2. Dopisz go do pliku Unraid `/root/.ssh/authorized_keys` (utrwalanego też na flash, aby przetrwał restarty).
 3. Kliknij **Test połączenia**.
 
@@ -81,14 +81,14 @@ Szablon dodaje `--add-host=host.docker.internal:host-gateway`, aby kontener móg
 
 ## Konfiguracja poza siedzibą
 
-Skonfiguruj replikę poza siedzibą w zakładce **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
+Skonfiguruj replikę poza siedzibą na stronie **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
 
 - **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
-- **Poświadczenia chmurowe** są przechowywane zaszyfrowane w Ustawienia, Poza siedzibą, Poświadczenia chmurowe.
-- **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, System, SSH hosta** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
+- **Współdzielone dane logowania do chmury** są przechowywane zaszyfrowane w Ustawienia, Dostęp do chmury, Współdzielone dane logowania do chmury.
+- **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
 - **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort. Repozytorium lokalne pozostaje główne. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.
 - **Wiele celów poza siedzibą na domenę:** każda domena może replikować do kilku celów poza siedzibą naraz. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu; wszystkie replikują zgodnie z harmonogramem poza siedzibą tej domeny. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona jako pierwszy cel.
-- **Przechowywanie per źródło:** polityka lokalna znajduje się w Ustawienia, Ścieżki i Magazyn; polityka poza siedzibą w Ustawienia, Poza siedzibą (pozostaw ją całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą).
+- **Przechowywanie per źródło:** zarówno polityka lokalna, jak i polityka poza siedzibą znajdują się w Ustawienia, Przechowywanie (pozostaw politykę poza siedzibą całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą).
 - **Limity przepustowości:** ogranicz tempo wysyłania/pobierania restic w Ustawienia, Poza siedzibą.
 - **Zimna i archiwalna klasa pamięci (S3):** dla natywnego repozytorium S3 poza siedzibą wybierz warstwę czytelną przy przywracaniu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Zdalne rclone ustawiają swoją klasę w konfiguracji rclone.
 
@@ -107,7 +107,7 @@ Każdy element może mieć własną czułość i własne minimum powiadomień. U
 
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
-Karta **Eksport i import ustawień** na stronie Ustawienia zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
+Karta **Eksport i import ustawień** na stronie Ustawienia, System zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
 
 !!! warning "Eksport może zawierać poświadczenia"
     Sam decydujesz, czy dołączyć do pliku poświadczenia poza siedzibą i powiadomień. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.

@@ -1,6 +1,6 @@
 # Konfiguration
 
-Den här sidan täcker containerns miljövariabler, monteringarna som mallen tillhandahåller, VM-säkerhetskopiering över SSH och off-site-uppsättningen. Säkerhetskopieringens **repository-sökvägar** konfigureras inuti appen (Inställningar, Säkerhetskopiesökvägar), inte via miljövariabler.
+Den här sidan täcker containerns miljövariabler, monteringarna som mallen tillhandahåller, VM-säkerhetskopiering över SSH och off-site-uppsättningen. Säkerhetskopieringens **repository-sökvägar** konfigureras inuti appen (Inställningar, Lagring, Säkerhetskopiesökvägar), inte via miljövariabler.
 
 ## Miljövariabler
 
@@ -30,7 +30,7 @@ Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som 
 
 Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
 
-Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Säkerhetskopiesökvägar**.
+Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Lagring, Säkerhetskopiesökvägar**.
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.
@@ -62,7 +62,7 @@ För varje container väljer BombVault själv vilka bind-monteringar och namngiv
 
 ## MCP-server {#mcp-server}
 
-MCP-servern behöver ingen miljövariabel. Du slår på den genom att skapa en nyckel under **Inställningar, System, MCP-server**, och den svarar på `/mcp` på samma port som webbgränssnittet (till exempel `https://192.168.1.10:3443/mcp`). Utan en aktiv nyckel svarar den sökvägen med `404`. Klienter, certifikat och gränser beskrivs på [MCP-server](mcp.md).
+MCP-servern behöver ingen miljövariabel. Du slår på den genom att skapa en nyckel under **Inställningar, Integrationer, MCP-server**, och den svarar på `/mcp` på samma port som webbgränssnittet (till exempel `https://192.168.1.10:3443/mcp`). Utan en aktiv nyckel svarar den sökvägen med `404`. Klienter, certifikat och gränser beskrivs på [MCP-server](mcp.md).
 
 ## VM-säkerhetskopiering över SSH
 
@@ -70,7 +70,7 @@ BombVault säkerhetskopierar KVM/libvirt-VM:ar **utan att montera någon libvirt
 
 Snabbuppsättning:
 
-1. **Inställningar, System, Värd-SSH:** kopiera den visade publika nyckeln.
+1. **Inställningar, Integrationer, Värd-SSH:** kopiera den visade publika nyckeln.
 2. Lägg till den i Unraids `/root/.ssh/authorized_keys` (även bevarad till flashen så att den överlever omstarter).
 3. Klicka på **Testa anslutning**.
 
@@ -81,14 +81,14 @@ Mallen lägger till `--add-host=host.docker.internal:host-gateway` så att conta
 
 ## Off-site-uppsättning
 
-Sätt upp en off-site-replik på fliken **Inställningar, Off-site**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
+Sätt upp en off-site-replik på sidan **Inställningar, Off-site**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
 
 - **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
-- **Molnuppgifter** lagras krypterade under Inställningar, Off-site, Molnuppgifter.
-- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, System, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
+- **Delade molnautentiseringsuppgifter** lagras krypterade under Inställningar, Molnåtkomst, Delade molnautentiseringsuppgifter.
+- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, Integrationer, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
 - **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis. Det lokala repot förblir primärt. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
 - **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
-- **Retention per källa:** den lokala policyn finns under Inställningar, Sökvägar och lagring; off-site-policyn under Inställningar, Off-site (lämna den helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
+- **Retention per källa:** både den lokala och off-site-policyn finns under Inställningar, Bevarande (lämna off-site-policyn helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
 - **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Off-site.
 - **Kall och arkivlagringsklass (S3):** för ett native S3-off-site-repo, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
 
@@ -107,7 +107,7 @@ Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ i
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 
-Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
+Kortet **Exportera och importera inställningar** på sidan Inställningar, System skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
 
 !!! warning "Exporten kan innehålla uppgifter"
     Du väljer om off-site- och aviseringsuppgifterna ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.

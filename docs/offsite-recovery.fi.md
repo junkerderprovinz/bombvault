@@ -4,11 +4,11 @@ Paikalliset varmuuskopiot suojaavat sinua kadonneelta kontilta tai huonolta päi
 
 ## Etäreplikointi
 
-Säilytä nopea paikallinen varmuuskopio ja lisää yksi tai useampi etäreplika. Aseta repo per toimialue **Asetukset, Etä** -välilehdellä. BombVault replikoi uudet tilannevedokset sinne `restic copy` -komennolla parhaan yrityksen periaatteella, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Paikallinen repo pysyy ensisijaisena.
+Säilytä nopea paikallinen varmuuskopio ja lisää yksi tai useampi etäreplika. Aseta repo per toimialue **Asetukset, Etä** -sivulla. BombVault replikoi uudet tilannevedokset sinne `restic copy` -komennolla parhaan yrityksen periaatteella, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Paikallinen repo pysyy ensisijaisena.
 
 - **Useita etäkohteita per toimialue.** Jokainen toimialue (kontit, virtuaalikoneet, flash, config, tiedostojoukot ja ZFS-tietojoukot) voi replikoitua useaan etäkohteeseen kerralla, ei vain yhteen, joten voit pitää esimerkiksi rest-serverin ystävän laatikossa ja S3-ämpärin rinnakkain. Lisää lisäkohteita kohtaan Asetukset, Etä, kukin omalla repositoriollaan, S3-tallennusluokallaan, append-only-lipullaan, säilytyksellään ja kasvubudjetillaan. Olemassa oleva yksittäinen etämääritys siirretään koskemattomana ensimmäiseksi kohteeksi, ja toimialueen jokainen kohde replikoituu kyseisen toimialueen etäaikataulun mukaan.
 - **Toimialuekohtainen etäaikataulu** (muokattuna jokaisen muun aikataulun rinnalla kohdassa Asetukset, Aikataulut): jätä se tyhjäksi replikoidaksesi jokaisen paikallisen varmuuskopion jälkeen, tai aseta tahti (esimerkiksi `weekly Sun 03:00`) lähettääksesi etäsijaintiin harvemmin kuin varmuuskopioit paikallisesti. **Replikoi nyt** -painike kattaa pyydettäessä tehtävät ajot.
-- **Etäsäilytys** asuu kohdassa Asetukset, Etä, jotta voit säilyttää etäkopioita pidempään arkistona. Jätä käytäntö pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti.
+- **Etäsäilytys** asuu kohdassa Asetukset, Säilytys, jotta voit säilyttää etäkopioita pidempään arkistona. Jätä käytäntö pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti.
 - **Kaistanleveyden rajat** (Asetukset, Etä) rajoittavat resticin lähetys-/latausnopeutta, jotta replikointi ei tuki WAN-yhteyttäsi.
 - **Replikointiosoitin** näyttää, mikä toimialue replikoituu sen ollessa käynnissä (sen sivulla ja Kojelaudalla). Se on aktiivisuusosoitin, ei prosenttipalkki, koska `restic copy` ei paljasta koneluettavaa edistymistä.
 
@@ -17,7 +17,7 @@ Säilytä nopea paikallinen varmuuskopio ja lisää yksi tai useampi etäreplika
 
 ## Etäsijaintiset ensisijaiset arkistot {#remote-primary-repositories}
 
-Alueen varmuuskopiopolku (Asetukset, Polut ja tallennus) ei rajoitu paikalliseen kansioon: osoita se suoraan restic-etäarkistoon (`s3:...`, `rest:http://isanta:8000/arkisto`, `b2:...`, `sftp:kayttaja@isanta:/arkisto`, `rclone:etä:bucket/polku`), niin BombVault varmuuskopioi suoraan sinne, ilman erillistä paikallista kopiota ja ilman replikointivaihetta. Tämä on aidosti eri muoto kuin yllä kuvattu off-site-replikointi: siellä paikallinen arkisto on ensisijainen ja off-site-arkisto sen paras mahdollinen arkistokopio; täällä etäarkisto **on** ensisijainen ja ainoa kopio, ellet määritä kyseiselle alueelle lisäksi off-site-replikointia (tai toista etäarkistoa).
+Alueen varmuuskopiopolku (Asetukset, Tallennus) ei rajoitu paikalliseen kansioon: osoita se suoraan restic-etäarkistoon (`s3:...`, `rest:http://isanta:8000/arkisto`, `b2:...`, `sftp:kayttaja@isanta:/arkisto`, `rclone:etä:bucket/polku`), niin BombVault varmuuskopioi suoraan sinne, ilman erillistä paikallista kopiota ja ilman replikointivaihetta. Tämä on aidosti eri muoto kuin yllä kuvattu off-site-replikointi: siellä paikallinen arkisto on ensisijainen ja off-site-arkisto sen paras mahdollinen arkistokopio; täällä etäarkisto **on** ensisijainen ja ainoa kopio, ellet määritä kyseiselle alueelle lisäksi off-site-replikointia (tai toista etäarkistoa).
 
 Kussakin kuudesta polkukentästä (Kontit, Virtuaalikoneet, Flash, Kokoonpano, Tiedostot, ZFS-tietojoukot) on aivan vieressä kytkin **Paikallinen / Etä**:
 
@@ -31,7 +31,7 @@ Kussakin kuudesta polkukentästä (Kontit, Virtuaalikoneet, Flash, Kokoonpano, T
 Mikään tästä ei ole pakollista: käsin kirjoitettu etäpolku ilman tallennettuja turva-asetuksia varmuuskopioi täsmälleen kuten ennenkin (rajaton kaista, karsittavissa, ei budjettihälytystä). Turvavalintaikkuna on siltä varalta, että haluat samat suojaukset kuin off-site-kopio saa, ilman että sinun tarvitsee luoda erillistä off-site-kohdetta vain sitä varten.
 
 !!! note "Pilvi- ja REST-tunnukset ovat yhteiset"
-    Etäensisijainen arkisto tunnistautuu samoilla S3-/REST-tunnuksilla, jotka on määritetty kohdassa Asetukset, Off-site, Pilvitunnukset. Ensisijaisille arkistoille ei ole erillistä tunnusvarastoa.
+    Etäensisijainen arkisto tunnistautuu samoilla S3-/REST-tunnuksilla, jotka on määritetty kohdassa Asetukset, Pilviyhteys, Jaetut pilvitunnistetiedot. Ensisijaisille arkistoille ei ole erillistä tunnusvarastoa.
 
 ## Muuttumaton (append-only) etäsijainti
 
@@ -68,7 +68,7 @@ BombVault tarjoaa kaksi tasoa todisteita siitä, että varmuuskopiosi ovat tosia
 
 Vastaanottajat, noutolähteet, Ilmentymät-sivu ja Mesh-etäsijainti kaikki puhuvat toiselle BombVaultille. Ne tekevät sen yhden pariliitosryhmän jäseninä, ja instanssi liittyy ryhmään kahdellatoista sanalla.
 
-Avaa ensimmäisessä instanssissa **Asetukset → Järjestelmä** ja valitse pariliitoskorteista **Luo lause**. Näkyviin tulee kaksitoista sanaa ikkunassa, jossa on **Kopioi**-painike. Avaa jokaisessa muussa instanssissa sama paikka, valitse **Syötä lause** ja liitä tai kirjoita ne, tai valitse kyseisessä ikkunassa **Liitä**. Sanan, joka ei ole listalla, sivu nimeää sijainteineen heti kirjoitettaessa, ja viimeinen sana sisältää tarkistussumman, joten väärin kirjoitettu tai vaihtunut sana huomataan ennen kuin mikään pariutuu. Luo lause vain yhdessä instanssissa: kaksi instanssia, jotka molemmat luovat lauseen, muodostavat kaksi erillistä ryhmää. Jos kukaan ei ilmesty minuutin kuluessa, välilehti tarjoaa kaksi keinoa: näytä sanat uudelleen syöttääksesi ne toisella instanssilla, tai syötä toisen instanssin sanat ja liity sen ryhmään yhdellä askeleella. Pariliitos toimii ilman kirjautumissalasanaakin, mutta aseta sellainen: ilman sitä kuka tahansa, joka pystyy avaamaan tämän käyttöliittymän, voi lukea sanat ja saada ryhmän kautta jokaisen siihen kuuluvan instanssin restic-salasanan. Pariliitoskortti kertoo tämän, kunnes salasana on asetettu. Salasanan kanssa lauseen näyttäminen uudelleen kysyy sitä. **Poistu ryhmästä** ottaa instanssin taas pois.
+Avaa ensimmäisessä instanssissa **Asetukset → Pariliitos** ja valitse pariliitoskorteista **Luo lause**. Näkyviin tulee kaksitoista sanaa ikkunassa, jossa on **Kopioi**-painike. Avaa jokaisessa muussa instanssissa sama paikka, valitse **Syötä lause** ja liitä tai kirjoita ne, tai valitse kyseisessä ikkunassa **Liitä**. Sanan, joka ei ole listalla, sivu nimeää sijainteineen heti kirjoitettaessa, ja viimeinen sana sisältää tarkistussumman, joten väärin kirjoitettu tai vaihtunut sana huomataan ennen kuin mikään pariutuu. Luo lause vain yhdessä instanssissa: kaksi instanssia, jotka molemmat luovat lauseen, muodostavat kaksi erillistä ryhmää. Jos kukaan ei ilmesty minuutin kuluessa, välilehti tarjoaa kaksi keinoa: näytä sanat uudelleen syöttääksesi ne toisella instanssilla, tai syötä toisen instanssin sanat ja liity sen ryhmään yhdellä askeleella. Pariliitos toimii ilman kirjautumissalasanaakin, mutta aseta sellainen: ilman sitä kuka tahansa, joka pystyy avaamaan tämän käyttöliittymän, voi lukea sanat ja saada ryhmän kautta jokaisen siihen kuuluvan instanssin restic-salasanan. Pariliitoskortti kertoo tämän, kunnes salasana on asetettu. Salasanan kanssa lauseen näyttäminen uudelleen kysyy sitä. **Poistu ryhmästä** ottaa instanssin taas pois.
 
 Kuka tahansa sanat tietävä voi liittyä ryhmään, joten kohtele niitä kuin salasanaa.
 
@@ -110,7 +110,7 @@ Yllä kuvataan osat. Tässä on yksi kokonainen kokoonpano oikeilla arvoilla, si
 
 Kaksi konetta: **TOWER** ajaa kontit ja lähettää varmuuskopiot, **VAULT** ottaa ne vastaan ja pakottaa muuttumattomuuden. Korvaa omilla nimillä, osoitteilla ja jakopoluilla.
 
-**1. Pystytä append-only-palvelin VAULTiin.** Mene TOWERin BombVaultissa kohtaan *Asetukset → Etäkohde → ohjattu asennus*, valitse **rest-server** ja luo resepti. Kopioi välilehti **Unraid-malli (XML)**, tallenna se VAULTiin nimellä `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, valitse sitten *Docker → Add Container* ja mallilistasta **rest-server**. Kirjoita näytetty `htpasswd`-rivi VAULTissa tiedostoon `/mnt/user/appdata/rest-server/.htpasswd` ennen käynnistystä. Kertakäyttösalasana näytetään kerran eikä sitä tallenneta, joten kopioi se nyt. Se rivi sisältää saman salasanan, jo bcrypt-tiivistettynä: selkoteksti menee TOWERin REST-tunnuksiin, tiivistetty rivi VAULTin `.htpasswd`-tiedostoon. Sinun ei tarvitse tiivistää mitään itse.
+**1. Pystytä append-only-palvelin VAULTiin.** Mene TOWERin BombVaultissa kohtaan *Asetukset → Etä → ohjattu asennus*, valitse **rest-server** ja luo resepti. Kopioi välilehti **Unraid-malli (XML)**, tallenna se VAULTiin nimellä `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, valitse sitten *Docker → Add Container* ja mallilistasta **rest-server**. Kirjoita näytetty `htpasswd`-rivi VAULTissa tiedostoon `/mnt/user/appdata/rest-server/.htpasswd` ennen käynnistystä. Kertakäyttösalasana näytetään kerran eikä sitä tallenneta, joten kopioi se nyt. Se rivi sisältää saman salasanan, jo bcrypt-tiivistettynä: selkoteksti menee TOWERin REST-tunnuksiin, tiivistetty rivi VAULTin `.htpasswd`-tiedostoon. Sinun ei tarvitse tiivistää mitään itse.
 
     Jätä `--append-only` OPTIONS-kenttään. Se on koko juju: ilman sitä VAULT on taas tavallinen jako.
 
@@ -128,7 +128,7 @@ Polun ensimmäinen osa on htpasswd-käyttäjä, toinen on varasto. Syötä luotu
 | **EI suojattu** | VAULT hyväksyi poiston. `--append-only` puuttuu tai se on poistettu. |
 | **ei ratkaiseva** | Ei kumpikaan. Yleensä osoite ei ole se, jota restic itse käyttää, tai tunnukset ovat muuttuneet. Mitään ei kirjata eikä hälytystä laukaista. |
 
-**4. Katso VAULTissa, mitä saapuu.** Pariuta molemmat laatikot ([Instanssien pariliitos](#pairing)), kytke päälle *Asetukset → Vastaanotin*, avaa **Vastaanotin**-välilehti ja rekisteröi varasto vain luku -tilassa TOWER lähettävänä instanssina.
+**4. Katso VAULTissa, mitä saapuu.** Pariuta molemmat laatikot ([Instanssien pariliitos](#pairing)), kytke päälle *Asetukset → Pariliitos → Vastaanotin*, avaa **Vastaanotin**-välilehti ja rekisteröi varasto vain luku -tilassa TOWER lähettävänä instanssina.
 
 !!! warning "Sijainti on polku kontin **sisällä**, kirjoitettuna suhteessa isäntäliitokseen"
     Syötä `user/appdata/rest-server/bombvault-containers/containers`, **ei** `/mnt/user/appdata/…`. BombVault ajetaan kontissa, jossa isännän `/mnt` on liitetty muualle; isännän absoluuttista polkua ei siellä ole. Jos liität sellaisen, BombVault kertoo nyt käytettävän suhteellisen polun.

@@ -18,7 +18,7 @@ Az `APP_KEY` származtatja a restic tároló jelszavát. Nélküle (és a titkos
 
 A VM-mentés SSH-n keresztül kommunikál a libvirttel, soha nem egy csatoláson.
 
-- Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Rendszer, Gazdagép SSH mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
+- Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Integrációk, Gazdagép SSH mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
 - Egy egyéni `br0.x` hálózaton állítsd a `LIBVIRT_HOST`-ot az Unraid LAN IP-jére (a konténer ott nem éri el a hosztot a `host.docker.internal`-on keresztül). Engedélyezd a **Beállítások, Docker, Host access to custom networks** opciót.
 - Ha megváltoztattad az Unraid SSH-portját, állítsd be a `LIBVIRT_SSH_PORT`-ot, hogy egyezzen.
 - A teljes, lépésről lépésre diagnózis (elérhetőségi teszt, VLAN-útválasztás, `Permission denied (publickey)`, `Host key verification failed`) a [VM-mentés SSH-n keresztül útmutatóban](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) található.
@@ -29,11 +29,11 @@ Az élő pillanatképekhez szükség van a qemu guest agent telepítésére a VM
 
 ## Egy mentés a "repository is already locked" hibával hiúsult meg
 
-Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a konténert egy művelet közben frissítették vagy újraindították. A BombVault észlel egy bizonyíthatóan árva zárolást, kényszerítve törli és egyszer újrapróbálja, automatikusan. Ha továbbra is fennáll, használd a **Beállítások, Integritás és karbantartás, Feloldás** funkciót az érintett tartományhoz, hogy kézzel törölj egy elavult zárolást. Egy valódi probléma továbbra is felszínre kerül, ahelyett hogy elrejtenék. Újraindítás után a BombVault megvárja, hogy egy ilyen zárolás tíz percig ne frissüljön. A még futó restic, például egy második BombVaultban ugyanazon a tárolón, ötpercenként frissíti a zárolását.
+Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a konténert egy művelet közben frissítették vagy újraindították. A BombVault észlel egy bizonyíthatóan árva zárolást, kényszerítve törli és egyszer újrapróbálja, automatikusan. Ha továbbra is fennáll, használd a **Beállítások, Integritás, Feloldás** funkciót az érintett tartományhoz, hogy kézzel törölj egy elavult zárolást. Egy valódi probléma továbbra is felszínre kerül, ahelyett hogy elrejtenék. Újraindítás után a BombVault megvárja, hogy egy ilyen zárolás tíz percig ne frissüljön. A még futó restic, például egy második BombVaultban ugyanazon a tárolón, ötpercenként frissíti a zárolását.
 
 ## A telephelyen kívüli másolatom nem történt meg egy mentés után
 
-A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd az adott tartomány telephelyen kívüli ütemezését (Beállítások, Ütemezések): egy üres ütemezés minden helyi mentés után replikál, míg egy ütem ritkábban szállít. Használd a **Replikálás most** gombot a Telephelyen kívüli fülön egy igény szerinti futáshoz, és figyeld a replikációs jelzőt az irányítópulton.
+A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd az adott tartomány telephelyen kívüli ütemezését (Beállítások, Ütemezések): egy üres ütemezés minden helyi mentés után replikál, míg egy ütem ritkábban szállít. Használd a **Replikálás most** gombot a Telephelyen kívüli oldalon egy igény szerinti futáshoz, és figyeld a replikációs jelzőt az irányítópulton.
 
 ## Egy visszaállítás megszakadt, mielőtt elindult volna
 

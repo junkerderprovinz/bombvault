@@ -4,11 +4,11 @@ Místní zálohy vás chrání před ztraceným kontejnerem nebo špatnou aktual
 
 ## Replikace mimo lokalitu
 
-Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokalitu. Nastavte repozitář na doménu v záložce **Nastavení, Mimo lokalitu**. BombVault tam replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Místní repozitář zůstává primární.
+Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokalitu. Nastavte repozitář na doménu na stránce **Nastavení, Mimo lokalitu**. BombVault tam replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Místní repozitář zůstává primární.
 
 - **Více cílů mimo lokalitu na doménu.** Každá doména (kontejnery, VM, flash, config, sady souborů a datové sady ZFS) může replikovat na několik cílů mimo lokalitu najednou, ne jen na jeden, takže můžete držet například rest-server na stroji kamaráda a S3 bucket paralelně. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu. Stávající jednotlivé nastavení mimo lokalitu se nedotčeno přenese jako první cíl a každý cíl domény replikuje podle plánu mimo lokalitu dané domény.
 - **Plán mimo lokalitu na doménu** (upravovaný spolu s každým dalším plánem v Nastavení, Plány): ponechte prázdný pro replikaci po každé místní záloze, nebo nastavte kadenci (například `weekly Sun 03:00`) pro odesílání mimo lokalitu méně často, než zálohujete místně. Tlačítko **Replikovat nyní** pokrývá běhy na vyžádání.
-- **Uchovávání mimo lokalitu** žije v Nastavení, Mimo lokalitu, takže můžete kopie mimo lokalitu držet déle jako archiv. Ponechte zásadu celou na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly.
+- **Uchovávání mimo lokalitu** žije v Nastavení, Uchovávání, takže můžete kopie mimo lokalitu držet déle jako archiv. Ponechte zásadu celou na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly.
 - **Limity šířky pásma** (Nastavení, Mimo lokalitu) omezují rychlost nahrávání/stahování restic, aby replikace nezasytila vaše WAN.
 - **Indikátor replikace** zobrazuje, která doména právě replikuje, zatímco běží (na její stránce a na Přehledu). Je to aktivní indikátor, nikoli procentuální panel, protože `restic copy` nezpřístupňuje žádný strojově čitelný průběh.
 
@@ -17,7 +17,7 @@ Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokal
 
 ## Vzdálené primární repozitáře {#remote-primary-repositories}
 
-Cesta zálohy domény (Nastavení, Cesty a úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
+Cesta zálohy domény (Nastavení, Úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
 
 Každé ze šesti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory, Datové sady ZFS) má hned vedle přepínač **Místní / Vzdálené**:
 
@@ -31,7 +31,7 @@ Každé ze šesti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurac
 Nic z toho není povinné: ručně zadaná vzdálená cesta bez uložených bezpečnostních nastavení zálohuje přesně jako dosud (neomezená šířka pásma, lze prořezávat, žádná výstraha rozpočtu). Bezpečnostní okno je tu pro chvíli, kdy chcete stejnou ochranu, jakou dostává kopie mimo lokalitu, aniž byste kvůli tomu museli zakládat samostatný cíl mimo lokalitu.
 
 !!! note "Přihlašovací údaje ke cloudu a REST jsou sdílené"
-    Vzdálený primární repozitář se ověřuje stejnými údaji S3/REST, které jsou nastavené v Nastavení, Mimo lokalitu, Přihlašovací údaje ke cloudu. Samostatné úložiště údajů pro primární repozitáře neexistuje.
+    Vzdálený primární repozitář se ověřuje stejnými údaji S3/REST, které jsou nastavené v Nastavení, Cloudový přístup, Sdílené cloudové přihlašovací údaje. Samostatné úložiště údajů pro primární repozitáře neexistuje.
 
 ## Neměnné (append-only) mimo lokalitu
 
@@ -68,7 +68,7 @@ BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obno
 
 Příjemci, zdroje stahování, stránka Instance i Mesh mimo lokalitu, to všechno mluví s jiným BombVaultem. Dělají to jako členové jedné párovací skupiny a instance do skupiny vstupuje dvanácti slovy.
 
-Na první instanci otevřete **Nastavení → Systém** a klikněte na **Vygenerovat frázi** v kartách párování. Objeví se dvanáct slov v okně s tlačítkem **Kopírovat**. Na každé další instanci otevřete stejné místo, klikněte na **Zadat frázi** a vložte je nebo je napište, nebo klikněte v tomto okně na **Vložit**. Slovo, které není na seznamu, stránka pojmenuje i s jeho pozicí hned při psaní, a poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo odhalí dřív, než se cokoli spáruje. Vygenerujte frázi jen na jedné instanci: dvě instance, které obě vytvoří frázi, vytvoří dvě oddělené skupiny. Pokud se minutu nikdo neohlásí, záložka nabídne dvě cesty ven: znovu zobrazit slova, abyste je zadali tam, nebo zadat slova druhé instance a připojit se k její skupině najednou. Párování funguje i bez přihlašovacího hesla, ale nastavte si ho: bez něj si může slova přečíst kdokoli, kdo dokáže otevřít toto webové rozhraní, a přes skupinu získat heslo restic každé instance v ní. Karta párování na to upozorňuje, dokud heslo nenastavíte. S heslem si o něj opětovné zobrazení fráze řekne. **Opustit skupinu** instanci ze skupiny zase vyřadí.
+Na první instanci otevřete **Nastavení → Párování** a klikněte na **Vygenerovat frázi** v kartách párování. Objeví se dvanáct slov v okně s tlačítkem **Kopírovat**. Na každé další instanci otevřete stejné místo, klikněte na **Zadat frázi** a vložte je nebo je napište, nebo klikněte v tomto okně na **Vložit**. Slovo, které není na seznamu, stránka pojmenuje i s jeho pozicí hned při psaní, a poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo odhalí dřív, než se cokoli spáruje. Vygenerujte frázi jen na jedné instanci: dvě instance, které obě vytvoří frázi, vytvoří dvě oddělené skupiny. Pokud se minutu nikdo neohlásí, záložka nabídne dvě cesty ven: znovu zobrazit slova, abyste je zadali tam, nebo zadat slova druhé instance a připojit se k její skupině najednou. Párování funguje i bez přihlašovacího hesla, ale nastavte si ho: bez něj si může slova přečíst kdokoli, kdo dokáže otevřít toto webové rozhraní, a přes skupinu získat heslo restic každé instance v ní. Karta párování na to upozorňuje, dokud heslo nenastavíte. S heslem si o něj opětovné zobrazení fráze řekne. **Opustit skupinu** instanci ze skupiny zase vyřadí.
 
 Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte jako s heslem.
 
@@ -110,7 +110,7 @@ Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se sku
 
 Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je přijímá a vynucuje neměnnost. Dosaďte vlastní názvy, adresy a cesty ke sdílení.
 
-**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo pracoviště → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sám nic hašovat nemusíš.
+**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo lokalitu → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sám nic hašovat nemusíš.
 
     Nechte `--append-only` v poli OPTIONS. O to tu celou dobu jde: bez toho je VAULT zase obyčejné sdílení.
 
@@ -128,7 +128,7 @@ První část cesty je uživatel htpasswd, druhá je repozitář. Zadejte vygene
 | **NENÍ chráněno** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
 | **neprůkazné** | Ani jedno. Obvykle URL není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
 
-**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
+**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Párování → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
 
 !!! warning "Umístění je cesta **uvnitř** kontejneru, zapsaná relativně k připojení hostitele"
     Zadejte `user/appdata/rest-server/bombvault-containers/containers`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám nyní sdělí relativní cestu, kterou máte použít.
