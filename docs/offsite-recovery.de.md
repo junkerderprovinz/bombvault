@@ -4,7 +4,7 @@ Lokale Backups schützen dich vor einem verlorenen Container oder einem schlecht
 
 ## Off-site-Replikation
 
-Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken hinzu. Setze ein Repo pro Bereich auf der Seite **Einstellungen, Off-site**. BombVault repliziert neue Snapshots dorthin mit `restic copy` auf Best-Effort-Basis, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. Das lokale Repo bleibt primär.
+Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken hinzu. Setze ein Repo pro Bereich auf der Seite **Einstellungen, Off-site**. BombVault repliziert neue Snapshots dorthin mit `restic copy` auf Best-Effort-Basis, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. In dieser Form bleibt das lokale Repo primär und das Off-site-Repo ist eine Replik, aber das primäre Repo eines Bereichs muss gar nicht lokal sein; wie du direkt nach S3, auf einen rest-server usw. sicherst, statt dorthin zu replizieren, steht unten unter [Entfernte primäre Repositories](#remote-primary-repositories).
 
 - **Mehrere Off-site-Ziele pro Bereich.** Jeder Bereich (Container, VMs, Flash, Config, Dateisätze und ZFS-Datasets) kann gleichzeitig an mehrere Off-site-Ziele replizieren, nicht nur eines, sodass du zum Beispiel einen rest-server auf der Box eines Freundes und einen S3-Bucket parallel behalten kannst. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget. Eine bestehende einzelne Off-site-Einrichtung wird unangetastet als erstes Ziel übernommen, und jedes Ziel eines Bereichs repliziert nach dem Off-site-Zeitplan dieses Bereichs.
 - **Off-site-Zeitplan pro Bereich** (neben jedem anderen Zeitplan unter Einstellungen, Zeitpläne bearbeitet): lasse ihn leer, um nach jedem lokalen Backup zu replizieren, oder setze eine Taktung (zum Beispiel `weekly Sun 03:00`), um seltener ins Off-site zu liefern, als du lokal sicherst. Ein Button **Jetzt replizieren** deckt Läufe auf Abruf ab.
@@ -13,16 +13,16 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 - Eine **Replikationsanzeige** zeigt, welcher Bereich gerade repliziert, während es läuft (auf seiner Seite und im Dashboard). Es ist eine aktive Anzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt bereitstellt.
 
 !!! note "Direkt aus dem Off-site wiederherstellen"
-    Jeder Backup-Browser hat einen Schalter **Lokal / Off-site**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
+    Jeder Backup-Browser hat einen Schalter **Lokal / Offsite**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
 
 ## Entfernte primäre Repositories {#remote-primary-repositories}
 
 Der Sicherungspfad einer Domäne (Einstellungen, Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
 
-Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Entfernt**:
+Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Remote**:
 
 - **Lokal** zeigt den gewohnten Ordner-Browser.
-- **Entfernt** tauscht ihn gegen ein einfaches URL-Feld, dazu eine Schaltfläche, die denselben Dialog für Verbindungstest und Zugangsdaten öffnet, den auch Off-site-Ziele verwenden, nur eben für dieses primäre Repo. Von dort bekommst du:
+- **Remote** tauscht ihn gegen ein einfaches URL-Feld, dazu eine Schaltfläche, die denselben Dialog für Verbindungstest und Zugangsdaten öffnet, den auch Off-site-Ziele verwenden, nur eben für dieses primäre Repo. Von dort bekommst du:
     - **Einen Verbindungstest** gegen den echten Pfad, bevor du dich darauf verlässt.
     - **Bandbreitengrenzen** (Hoch- und Herunterladen), damit eine geplante Sicherung auf ein entferntes primäres Repo nicht deine WAN-Leitung auslastet: dieselben restic-Schalter `--limit-upload` und `--limit-download`, die die Off-site-Replikation nutzt, angewandt auf die Sicherung selbst.
     - **Append-only-Schutz (Unveränderlichkeit)**, geprüft mit demselben aktiven Manipulationstest (eine echte DELETE-Probe gegen die Gegenseite), den auch Off-site-Ziele bekommen. Ist er an, weigert sich BombVault, das Repo selbst zu bereinigen: weil dahinter keine getrennte lokale Kopie steht, dürfen die Zugangsdaten auf dieser Kiste nicht in der Lage sein, die einzige Kopie der Sicherung zu löschen.
@@ -32,6 +32,14 @@ Nichts davon ist Pflicht: ein von Hand eingetragener entfernter Pfad ohne gespei
 
 !!! note "Cloud- und REST-Zugangsdaten werden geteilt"
     Ein entferntes primäres Repo meldet sich mit denselben S3-/REST-Zugangsdaten an, die unter Einstellungen, Cloud-Zugänge, Geteilte Cloud-Zugangsdaten hinterlegt sind. Einen getrennten Speicher für Zugangsdaten primärer Repos gibt es nicht.
+
+### SMB und WebDAV ohne Host-Mount {#smb-webdav}
+
+Unter Einstellungen, Cloud-Zugänge, rclone gibt es ein Formular für eine Windows- oder Samba-Freigabe und für einen WebDAV-Server (Nextcloud, ownCloud, SharePoint oder einen anderen). Trag einen kurzen Namen ein, dazu Host und Freigabe (SMB) oder URL und Servertyp (WebDAV), Benutzer und Passwort, und BombVault schreibt den rclone-Abschnitt für dich. rclone verschleiert das Passwort selbst, bevor es gespeichert wird; ein Ziel mit einem Namen, den es schon gibt, ersetzt diesen Abschnitt, statt einen zweiten anzulegen.
+
+Das Formular antwortet mit dem fertigen Ort, zum Beispiel `rclone:nas:backups`. Trag ihn in einen Backup-Pfad oder ein Off-site-Ziel ein und häng einen Unterordner an, wenn du einen willst (`rclone:nas:backups/bombvault`). Die Freigabe ist das erste Pfadsegment, nicht Teil des Namens.
+
+Das ist der bessere Weg, als die Freigabe auf Unraid einzuhängen: restic rät davon ab, ein Repository auf einer eingehängten CIFS-Freigabe zu halten, und hier wird nichts eingehängt. NFS fehlt im Formular, weil weder restic noch rclone ein NFS-Backend hat; für NFS hängst du den Export auf dem Host ein und richtest einen Backup-Pfad darauf.
 
 ## Unveränderliches (Append-only) Off-site
 
@@ -120,7 +128,7 @@ Zwei Kisten: **TOWER** betreibt die Container und schiebt die Backups, **VAULT**
 
 Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trage den erzeugten Benutzer und das Passwort als REST-Zugangsdaten des Ziels ein und führe den **Verbindungstest** aus.
 
-**3. Auf TOWER „“ einschalten.** Der Manipulationstest läuft sofort und muss *geschützt* melden. Was die Antworten bedeuten:
+**3. Auf TOWER „Unveränderlich“ einschalten.** Der Manipulationstest läuft sofort und muss *geschützt* melden. Was die Antworten bedeuten:
 
 | Ergebnis | Was passiert ist |
 | --- | --- |
@@ -139,7 +147,7 @@ Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trag
 
 ## Geführte Wiederherstellung
 
-Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installation durch den Katastrophenfall, an einem Ort:
+Ein eigener Reiter **Wiederherstellung** führt eine frische oder neu aufgebaute Installation durch den Katastrophenfall, an einem Ort:
 
 1. **Stellt zuerst BombVaults eigene Einstellungen wieder her**, sodass die Backup-Pfade, Off-site-Ziele und Zugangsdaten, die der Rest des Ablaufs braucht, vorausgefüllt sind (angewendet per Selbst-Neustart über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird).
 2. **Prüft, dass BombVault deine Backups lesen kann** (der Verschlüsselungsschlüssel-Fallstrick vorab).
@@ -152,7 +160,7 @@ Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installatio
 
 ### Wiederherstellung aus einem anderen BombVault-Repo {#restore-from-another-bombvault-repo}
 
-Eine separate Karte im **Recovery**-Tab öffnet das Repo einer *anderen* BombVault-Instanz (eine unter `/mnt` eingehängte Freigabe oder eine Remote-URL) mit **dem `APP_KEY` dieser Instanz**, in einer einmaligen, schreibgeschützten Sitzung. Durchstöbere die dort gespeicherten Container, VMs und Dateisätze, wähle einen Snapshot und stelle ihn wieder her, und das wiederhergestellte Objekt wird ein normaler lokaler Container, eine VM oder ein Dateisatz. Es wird niemals etwas in das andere Repo geschrieben, und deine eigenen Backup-Einstellungen bleiben unangetastet (die Sitzung lebt im Speicher und läuft von selbst ab). Einen Container von Server A auf Server B zu verschieben bedeutet nicht mehr, deine Repo-Einstellungen umzustellen und danach zurückzudrehen. Live-Server-zu-Server-Föderation ist ausdrücklich außerhalb des Umfangs; dies ist ein bewusster Einmal-Pull.
+Eine separate Karte im Reiter **Wiederherstellung** öffnet das Repo einer *anderen* BombVault-Instanz (eine unter `/mnt` eingehängte Freigabe oder eine Remote-URL) mit **dem `APP_KEY` dieser Instanz**, in einer einmaligen, schreibgeschützten Sitzung. Durchstöbere die dort gespeicherten Container, VMs und Dateisätze, wähle einen Snapshot und stelle ihn wieder her, und das wiederhergestellte Objekt wird ein normaler lokaler Container, eine VM oder ein Dateisatz. Es wird niemals etwas in das andere Repo geschrieben, und deine eigenen Backup-Einstellungen bleiben unangetastet (die Sitzung lebt im Speicher und läuft von selbst ab). Einen Container von Server A auf Server B zu verschieben bedeutet nicht mehr, deine Repo-Einstellungen umzustellen und danach zurückzudrehen. Diese Karte ist für einen einzelnen Vorgang: Sie öffnet eine Sitzung, stellt wieder her, was du auswählst, und vergisst die andere Instanz. Willst du stattdessen eine dauerhafte Einrichtung, bei der diese Box die Snapshots einer anderen Instanz nach Zeitplan in ihr eigenes Repository holt, ist das der Reiter **Holen** der Seite **Instanzen**.
 
 ## Wiederherstellungspaket für den Verschlüsselungsschlüssel
 
@@ -165,6 +173,15 @@ Ein Klick lädt den **Master-Key**, das **abgeleitete restic-Passwort** und die 
 
 !!! warning "Der neueste Snapshot ist nicht immer der richtige"
     Seit restic 0.17 zeigt `restic snapshots` die Größe jedes Snapshots. Nach einem Datenverlust kann der neueste Snapshot der geleerte sein, stelle also keinen Snapshot wieder her, der viel kleiner ist als die davor. Nach Ransomware kann es der verschlüsselte in der üblichen Größe sein. Wenn BombVault noch läuft, sieh zuerst auf der Seite **Anomalien** nach: Sie nennt das letzte gute Backup. Für eine Wiederherstellung braucht es keine Anomalie-Daten von BombVault, und die Aufbewahrungspause behält immer nur mehr Snapshots.
+
+### Das Kit versiegeln
+
+Hast du die age-Verschlüsselung für die schlichten Exporte eingeschaltet (Einstellungen), wird das Kit ebenfalls damit versiegelt und als `bombvault-recovery-kit.md.age` heruntergeladen. Es ist ASCII-armored statt binär und bleibt damit Klartext: Einfügen in einen Passwortmanager oder Ausdrucken funktioniert genau wie vorher, nur ist der Inhalt ohne deinen Schlüssel nicht lesbar.
+
+!!! warning "Den age-Schlüssel nicht im Kit aufbewahren"
+    Zum Öffnen eines versiegelten Kits brauchst du deinen **privaten** age-Schlüssel. Bewahre ihn an einem Ort auf, der nicht vom Kit selbst abhängt, sonst hast du zwei Dinge wiederherzustellen statt einem. Das Versiegeln lohnt sich, wenn das Kit an einem Ort liegt, den du nicht ganz im Griff hast (ein geteilter Passwortmanager, Cloud-Notizen, ein Ausdruck im Büro); ein Kit in deinem eigenen Safe schützt schon der Safe.
+
+    Mit eingeschalteter Verschlüsselung und ohne brauchbaren Empfänger wird der Download rundweg verweigert. BombVault gibt den Master-Key nie ersatzweise im Klartext heraus.
 
 ### Wenn das Kit gerade nicht zur Hand ist
 

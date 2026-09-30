@@ -54,7 +54,7 @@ Generálj egyet bármely gépen:
 openssl rand -hex 32
 ```
 
-Illeszd be az eredményt a sablon `APP_KEY` mezőjébe.
+Illeszd be az eredményt a sablon `APP_KEY` mezőjébe (Unraid), vagy a `docker-compose.yml` `APP_KEY` környezeti változójába (általános Docker-gép).
 
 !!! danger "Ne veszítsd el az APP_KEY-t"
     Az `APP_KEY` elvesztése visszaállíthatatlanná teszi a titkosított mentéseidet. Tárold biztonságos helyen, a szervertől elkülönítve. Amint a BombVault fut, használd az egykattintásos **titkosításikulcs-helyreállító csomagját** (lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)) a teljes helyreállítási csomag elmentéséhez.

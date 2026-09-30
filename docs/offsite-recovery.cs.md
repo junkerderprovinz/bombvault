@@ -4,7 +4,7 @@ Místní zálohy vás chrání před ztraceným kontejnerem nebo špatnou aktual
 
 ## Replikace mimo lokalitu
 
-Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokalitu. Nastavte repozitář na doménu na stránce **Nastavení, Mimo lokalitu**. BombVault tam replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Místní repozitář zůstává primární.
+Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokalitu. Nastavte repozitář na doménu na stránce **Nastavení, Mimo lokalitu**. BombVault tam replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. V tomto uspořádání zůstává místní repozitář primární a repozitář mimo lokalitu je replika, primární repozitář domény ale vůbec nemusí být místní; viz [Vzdálené primární repozitáře](#remote-primary-repositories) níže, jak zálohovat přímo do S3, rest-serveru atd. místo replikace do nich.
 
 - **Více cílů mimo lokalitu na doménu.** Každá doména (kontejnery, VM, flash, config, sady souborů a datové sady ZFS) může replikovat na několik cílů mimo lokalitu najednou, ne jen na jeden, takže můžete držet například rest-server na stroji kamaráda a S3 bucket paralelně. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu. Stávající jednotlivé nastavení mimo lokalitu se nedotčeno přenese jako první cíl a každý cíl domény replikuje podle plánu mimo lokalitu dané domény.
 - **Plán mimo lokalitu na doménu** (upravovaný spolu s každým dalším plánem v Nastavení, Plány): ponechte prázdný pro replikaci po každé místní záloze, nebo nastavte kadenci (například `weekly Sun 03:00`) pro odesílání mimo lokalitu méně často, než zálohujete místně. Tlačítko **Replikovat nyní** pokrývá běhy na vyžádání.
@@ -32,6 +32,14 @@ Nic z toho není povinné: ručně zadaná vzdálená cesta bez uložených bezp
 
 !!! note "Přihlašovací údaje ke cloudu a REST jsou sdílené"
     Vzdálený primární repozitář se ověřuje stejnými údaji S3/REST, které jsou nastavené v Nastavení, Cloudový přístup, Sdílené cloudové přihlašovací údaje. Samostatné úložiště údajů pro primární repozitáře neexistuje.
+
+### SMB a WebDAV bez připojení na hostiteli {#smb-webdav}
+
+V Nastavení, Cloudový přístup, rclone je formulář pro sdílenou složku Windows nebo Samba a pro server WebDAV (Nextcloud, ownCloud, SharePoint nebo jakýkoli jiný). Vyplňte krátký název, hostitele a sdílenou složku (SMB) nebo URL a typ serveru (WebDAV), uživatele a heslo a BombVault za vás zapíše sekci rclone. rclone heslo před uložením sám zamaskuje; přidání cíle s názvem, který už existuje, tuto sekci nahradí, místo aby přidalo druhou.
+
+Formulář odpoví hotovým umístěním, například `rclone:nas:backups`. Vložte ho do Zálohovací cesty nebo do cíle mimo lokalitu a pokud chcete, přidejte podsložku (`rclone:nas:backups/bombvault`). Sdílená složka je první segment cesty, ne součást názvu.
+
+To je lepší cesta než připojit sdílenou složku v Unraidu: restic nedoporučuje držet repozitář na připojené sdílené složce CIFS a tady se nic nepřipojuje. NFS ve formuláři není, protože restic ani rclone nemají backend NFS; pro NFS připojte export na hostiteli a nasměrujte na něj Zálohovací cestu.
 
 ## Neměnné (append-only) mimo lokalitu
 
@@ -66,7 +74,7 @@ BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obno
 
 ## Párování instancí {#pairing}
 
-Příjemci, zdroje stahování, stránka Instance i Mesh mimo lokalitu, to všechno mluví s jiným BombVaultem. Dělají to jako členové jedné párovací skupiny a instance do skupiny vstupuje dvanácti slovy.
+Přijímače, zdroje stahování, stránka Instance i Mesh mimo lokalitu, to všechno mluví s jiným BombVaultem. Dělají to jako členové jedné párovací skupiny a instance do skupiny vstupuje dvanácti slovy.
 
 Na první instanci otevřete **Nastavení → Párování** a klikněte na **Vygenerovat frázi** v kartách párování. Objeví se dvanáct slov v okně s tlačítkem **Kopírovat**. Na každé další instanci otevřete stejné místo, klikněte na **Zadat frázi** a vložte je nebo je napište, nebo klikněte v tomto okně na **Vložit**. Slovo, které není na seznamu, stránka pojmenuje i s jeho pozicí hned při psaní, a poslední slovo nese kontrolní součet, takže se překlep nebo prohozené slovo odhalí dřív, než se cokoli spáruje. Vygenerujte frázi jen na jedné instanci: dvě instance, které obě vytvoří frázi, vytvoří dvě oddělené skupiny. Pokud se minutu nikdo neohlásí, záložka nabídne dvě cesty ven: znovu zobrazit slova, abyste je zadali tam, nebo zadat slova druhé instance a připojit se k její skupině najednou. Párování funguje i bez přihlašovacího hesla, ale nastavte si ho: bez něj si může slova přečíst kdokoli, kdo dokáže otevřít toto webové rozhraní, a přes skupinu získat heslo restic každé instance v ní. Karta párování na to upozorňuje, dokud heslo nenastavíte. S heslem si o něj opětovné zobrazení fráze řekne. **Opustit skupinu** instanci ze skupiny zase vyřadí.
 
@@ -80,21 +88,21 @@ Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte j
 
 **Co vidí relay.** Každé volání mezi členy je zapečetěné pomocí AES-256-GCM klíčem odvozeným z dvanácti slov, a ten klíč nikdy neopustí vaše instance. Relay se dozví hash, který sdružuje spojení, dále pro kterou instanci je zpráva určená, jak je velká a kdy prochází. Přímé volání v lokální síti je zapečetěné stejným způsobem a navíc podepsané, takže nic nezávisí na self-signed certifikátu, který instance nabízí.
 
-**Co prochází skupinou.** Vysvědčení na stránce Instance, žádost o okamžitou kontrolu jedné domény, nabídky Mesh mimo lokalitu a to, co potřebuje příjemce nebo zdroj stahování: umístění repozitářů druhé instance a její heslo restic. Data záloh po ní nikdy neprochází, ta jdou pořád přímo do backendů restic. Ani APP_KEY ne: heslo restic otevírá repozitáře té instance a nic jiného, ne její uložená tajemství, relace ani obnovovací kódy.
+**Co prochází skupinou.** Vysvědčení na stránce Instance, žádost o okamžitou kontrolu jedné domény, nabídky Mesh mimo lokalitu a to, co potřebuje přijímač nebo zdroj stahování: umístění repozitářů druhé instance a její heslo restic. Data záloh po ní nikdy neprochází, ta jdou pořád přímo do backendů restic. Ani APP_KEY ne: heslo restic otevírá repozitáře té instance a nic jiného, ne její uložená tajemství, relace ani obnovovací kódy.
 
-**Záznamy z doby před párováním.** Instance přidané fleet tokenem a příjemci i zdroje stahování nastavené pomocí APP_KEY druhé instance zůstávají po aktualizaci zachované a jsou označené jako **Spárovat znovu**. Příjemci a zdroje stahování dál fungují: při prvním spuštění BombVault nahradí každý uložený APP_KEY heslem restic z něj odvozeným. Spárujte obě instance, pak upravte záznam a vyberte jeho instanci. Taková instance převezme svou starou kartu, jakmile se ve skupině objeví instance se stejným jménem.
+**Záznamy z doby před párováním.** Instance přidané fleet tokenem a přijímače i zdroje stahování nastavené pomocí APP_KEY druhé instance zůstávají po aktualizaci zachované a jsou označené jako **Spárovat znovu**. Přijímače a zdroje stahování dál fungují: při prvním spuštění BombVault nahradí každý uložený APP_KEY heslem restic z něj odvozeným. Spárujte obě instance, pak upravte záznam a vyberte jeho instanci. Taková instance převezme svou starou kartu, jakmile se ve skupině objeví instance se stejným jménem.
 
 Jediné místo, které pořád bere APP_KEY ručně, je [Obnova z jiného BombVault repozitáře](#restore-from-another-bombvault-repo), pro případ, že druhá instance zmizela a nemůže odpovídat ve skupině.
 
-## Řídicí panel příjemce (přijímací strana)
+## Řídicí panel přijímače (přijímací strana)
 
 ![Přijímající strana, sledovaná jen pro čtení, s kontrolou integrity na tomto stroji.](assets/screenshots/receiver.png)
 
 *Přijímající strana, sledovaná jen pro čtení, s kontrolou integrity na tomto stroji.*
 
-Vše výše je *odesílající* strana. Na stroji, který **přijímá** neměnné kopie mimo lokalitu z jiného BombVaultu, vám řídicí panel příjemce dává nezávislé monitorování těchto repozitářů jen pro čtení na přijímacím hardwaru, takže tiché selhání na druhém konci nezůstane bez povšimnutí.
+Vše výše je *odesílající* strana. Na stroji, který **přijímá** neměnné kopie mimo lokalitu z jiného BombVaultu, vám řídicí panel přijímače dává nezávislé monitorování těchto repozitářů jen pro čtení na přijímacím hardwaru, takže tiché selhání na druhém konci nezůstane bez povšimnutí.
 
-Zapněte přepínač **Příjemce** v Nastavení k odhalení záložky **Příjemce**. Ve výchozím stavu je vypnuto; zapněte jej jen na stroji, který skutečně přijímá neměnné zálohy mimo lokalitu. Poté zaregistrujte přijatý repozitář (jen pro čtení, otevřený heslem restic odesílající instance, které přichází přes [párovací skupinu](#pairing)) pro získání:
+Zapněte přepínač **Přijímač** v Nastavení k odhalení záložky **Přijímač**. Ve výchozím stavu je vypnuto; zapněte jej jen na stroji, který skutečně přijímá neměnné zálohy mimo lokalitu. Poté zaregistrujte přijatý repozitář (jen pro čtení, otevřený heslem restic odesílající instance, které přichází přes [párovací skupinu](#pairing)) pro získání:
 
 - **Inventáře snímků seskupeného podle zdroje**, takže vidíte přesně, které kontejnery, VM a sady souborů dorazily.
 - **Naposledy přijato** na zdroj, takže víte, jak čerstvý každý je.
@@ -102,7 +110,7 @@ Zapněte přepínač **Příjemce** v Nastavení k odhalení záložky **Příje
 - **Pojistky mrtvého muže:** upozornění, když zdroj přestane odesílat v okně, které nastavíte.
 - **Upozornění na integritu:** upozornění, když kontrola na přijímací straně selže.
 
-Příjemce je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na kterou se odesílatel spoléhá.
+Přijímač je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na kterou se odesílatel spoléhá.
 
 ## Kompletní příklad: dva stroje Unraid, od začátku do konce
 
@@ -110,7 +118,7 @@ Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se sku
 
 Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je přijímá a vynucuje neměnnost. Dosaďte vlastní názvy, adresy a cesty ke sdílení.
 
-**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo lokalitu → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sám nic hašovat nemusíš.
+**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo lokalitu → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sami nic hašovat nemusíte.
 
     Nechte `--append-only` v poli OPTIONS. O to tu celou dobu jde: bez toho je VAULT zase obyčejné sdílení.
 
@@ -128,7 +136,7 @@ První část cesty je uživatel htpasswd, druhá je repozitář. Zadejte vygene
 | **NENÍ chráněno** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
 | **neprůkazné** | Ani jedno. Obvykle URL není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
 
-**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Párování → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
+**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Párování → Přijímač*, otevřete kartu **Přijímač** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
 
 !!! warning "Umístění je cesta **uvnitř** kontejneru, zapsaná relativně k připojení hostitele"
     Zadejte `user/appdata/rest-server/bombvault-containers/containers`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám nyní sdělí relativní cestu, kterou máte použít.
@@ -152,7 +160,7 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 
 ### Obnova z jiného BombVault repozitáře {#restore-from-another-bombvault-repo}
 
-Samostatná karta v záložce **Obnova** otevře repozitář *jiné* instance BombVaultu (sdílená složka připojená pod `/mnt`, nebo vzdálená URL) s **`APP_KEY` dané instance**, v jednorázové relaci jen pro čtení. Procházejte kontejnery, VM a sady souborů tam uložené, vyberte snímek a obnovte jej, a obnovený objekt se stane běžným místním kontejnerem, VM nebo sadou souborů. Do druhého repozitáře se nikdy nic nezapíše a vaše vlastní nastavení záloh zůstane nedotčeno (relace žije v paměti a sama vyprší). Přesun kontejneru ze serveru A na server B už neznamená přesměrovávat nastavení repozitáře a poté je vracet zpět. Živá federace server-server je explicitně mimo rozsah; toto je záměrné jednorázové stažení.
+Samostatná karta v záložce **Obnova** otevře repozitář *jiné* instance BombVaultu (sdílená složka připojená pod `/mnt`, nebo vzdálená URL) s **`APP_KEY` dané instance**, v jednorázové relaci jen pro čtení. Procházejte kontejnery, VM a sady souborů tam uložené, vyberte snímek a obnovte jej, a obnovený objekt se stane běžným místním kontejnerem, VM nebo sadou souborů. Do druhého repozitáře se nikdy nic nezapíše a vaše vlastní nastavení záloh zůstane nedotčeno (relace žije v paměti a sama vyprší). Přesun kontejneru ze serveru A na server B neznamená přesměrovávat nastavení repozitáře a poté je vracet zpět. Tato karta je jednorázová: otevře relaci, obnoví, co vyberete, a na druhou instanci zapomene. Pokud místo toho chcete trvalé uspořádání, kde tento stroj podle plánu stahuje snímky jiné instance do vlastního repozitáře, slouží k tomu záložka **Stažení** na stránce **Instance**.
 
 ## Sada pro obnovu šifrovacího klíče
 
@@ -165,6 +173,15 @@ Jedno kliknutí stáhne **hlavní klíč**, **odvozené heslo restic** a **přes
 
 !!! warning "Nejnovější snímek není vždy ten, který obnovit"
     Od restic 0.17 ukazuje `restic snapshots` velikost každého snímku. Po ztrátě dat může být nejnovější snímek ten vyprázdněný, proto neobnovujte snímek, který je mnohem menší než ty před ním. Po ransomwaru to může být ten zašifrovaný v obvyklé velikosti. Pokud BombVault ještě běží, podívejte se nejdřív na jeho stránku **Anomálie**: uvádí poslední dobrou zálohu. Obnova nepotřebuje žádná data o anomáliích z BombVault a pozastavení uchovávání vždy jen ponechá více snímků.
+
+### Zapečetění sady
+
+Pokud jste pro prosté exporty zapnuli šifrování age (Nastavení), zapečetí se jím i sada a stáhne se jako `bombvault-recovery-kit.md.age`. Je v ASCII-armored podobě, ne binární, takže je to pořád prostý text: vložení do správce hesel nebo tisk funguje přesně jako dřív, jen je obsah bez vašeho klíče nečitelný.
+
+!!! warning "Klíč age neukládejte do sady"
+    K otevření zapečetěné sady potřebujete svůj **soukromý** klíč age. Uložte ho někde, kde nezávisí na sadě samotné, jinak budete obnovovat dvě věci místo jedné. Zapečetění se vyplatí, když sada leží na místě, které plně nemáte pod kontrolou (sdílený správce hesel, poznámky v cloudu, výtisk v kanceláři); sada ve vlastním trezoru je už chráněná trezorem.
+
+    Se zapnutým šifrováním a bez nastaveného použitelného příjemce se stažení rovnou odmítne. BombVault se nikdy neuchýlí k vydání hlavního klíče v otevřené podobě.
 
 ### Když sada není po ruce
 

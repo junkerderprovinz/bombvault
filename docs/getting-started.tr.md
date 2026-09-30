@@ -54,7 +54,7 @@ Herhangi bir makinede bir tane oluşturun:
 openssl rand -hex 32
 ```
 
-Sonucu şablonun `APP_KEY` alanına yapıştırın.
+Sonucu şablonun `APP_KEY` alanına (Unraid) veya `docker-compose.yml` içindeki `APP_KEY` ortam değişkenine (genel Docker ana makinesi) yapıştırın.
 
 !!! danger "APP_KEY'inizi kaybetmeyin"
     `APP_KEY`'i kaybetmek, şifreli yedeklerinizi kurtarılamaz hale getirir. Onu güvenli ve sunucudan ayrı bir yerde saklayın. BombVault çalışmaya başladıktan sonra, tam kurtarma paketini kaydetmek için tek tıklamayla çalışan **şifreleme anahtarı kurtarma kitini** (bkz. [Site dışı ve kurtarma](offsite-recovery.md)) kullanın.

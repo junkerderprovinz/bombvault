@@ -4,7 +4,7 @@ A helyi mentések megvédenek egy elveszett konténertől vagy egy rossz frissí
 
 ## Telephelyen kívüli replikáció
 
-Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** oldalán. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. A helyi tároló marad az elsődleges.
+Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** oldalán. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ebben a felállásban a helyi tároló marad az elsődleges, a telephelyen kívüli pedig egy replika, de egy tartomány elsődleges tárolójának egyáltalán nem kell helyinek lennie; lásd lejjebb a [Távoli elsődleges tárolók](#remote-primary-repositories) szakaszt arról, hogyan menthetsz közvetlenül S3-ra, rest-serverre stb., ahelyett hogy oda replikálnál.
 
 - **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config, fájlkészletek és ZFS-adatkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
 - **Tartományonkénti telephelyen kívüli ütemezés** (minden más ütemezés mellett a Beállítások, Ütemezések alatt szerkesztve): hagyd üresen, hogy minden helyi mentés után replikáljon, vagy állíts be egy ütemet (például `weekly Sun 03:00`), hogy ritkábban szállítson telephelyen kívülre, mint amilyen gyakran helyben mentesz. Egy **Replikálás most** gomb fedi le az igény szerinti futásokat.
@@ -32,6 +32,14 @@ Ezek közül semmi sem kötelező: egy kézzel beírt távoli útvonal mentett b
 
 !!! note "A felhő- és REST-hitelesítő adatok közösek"
     Egy távoli elsődleges tároló ugyanazokkal az S3/REST hitelesítő adatokkal azonosít, amelyek a Beállítások, Felhőhozzáférés, Megosztott felhőbeli hitelesítő adatok alatt vannak beállítva. Az elsődleges tárolóknak nincs külön hitelesítőadat-tárolójuk.
+
+### SMB és WebDAV hoszt-csatolás nélkül {#smb-webdav}
+
+A Beállítások, Felhőhozzáférés, rclone alatt van egy űrlap Windows- vagy Samba-megosztáshoz és WebDAV-szerverhez (Nextcloud, ownCloud, SharePoint vagy bármely más). Add meg a rövid nevet, a hosztot és a megosztást (SMB) vagy az URL-t és a szervertípust (WebDAV), a felhasználót és a jelszót, és a BombVault megírja helyetted az rclone szakaszt. A jelszót tárolás előtt maga az rclone homályosítja el; ha már létező névvel adsz hozzá célt, az lecseréli azt a szakaszt, ahelyett hogy egy másodikat adna hozzá.
+
+Az űrlap a kész hellyel válaszol, például `rclone:nas:backups`. Írd ezt egy Mentési útvonalba vagy egy telephelyen kívüli célba, és ha szeretnél, adj hozzá egy almappát (`rclone:nas:backups/bombvault`). A megosztás az útvonal első szakasza, nem a név része.
+
+Ez jobb út, mint a megosztást az Unraidben csatolni: a restic nem javasolja, hogy egy tároló csatolt CIFS-megosztáson legyen, itt pedig semmi sincs csatolva. Az NFS azért nincs az űrlapon, mert sem a resticnek, sem az rclone-nak nincs NFS-backendje; NFS-hez csatold az exportot a hoszton, és irányíts rá egy Mentési útvonalat.
 
 ## Módosíthatatlan (append-only) telephelyen kívüli
 
@@ -152,7 +160,7 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 
 ### Visszaállítás egy másik BombVault tárolóból {#restore-from-another-bombvault-repo}
 
-Egy külön kártya a **Helyreállítás** fülön megnyit egy *másik* BombVault-példány tárolóját (egy a `/mnt` alá csatolt megosztás vagy egy távoli URL) **annak a példánynak az `APP_KEY`-ével**, egy egyszeri, csak olvasható munkamenetben. Böngészd az ott tárolt konténereket, VM-eket és fájlkészleteket, válassz egy pillanatképet és állítsd vissza, és a visszaállított objektum normál helyi konténerré, VM-mé vagy fájlkészletté válik. Semmi sem íródik soha a másik tárolóba, és a saját mentési beállításaid érintetlenek maradnak (a munkamenet a memóriában él és magától lejár). Egy konténer áthelyezése az A szerverről a B szerverre többé nem jelenti a tárolóbeállításaid átirányítását és utólagos visszaállítását. Az élő szerver-szerver federáció kifejezetten hatókörön kívüli; ez egy szándékos, egyszeri áthúzás.
+Egy külön kártya a **Helyreállítás** fülön megnyit egy *másik* BombVault-példány tárolóját (egy a `/mnt` alá csatolt megosztás vagy egy távoli URL) **annak a példánynak az `APP_KEY`-ével**, egy egyszeri, csak olvasható munkamenetben. Böngészd az ott tárolt konténereket, VM-eket és fájlkészleteket, válassz egy pillanatképet és állítsd vissza, és a visszaállított objektum normál helyi konténerré, VM-mé vagy fájlkészletté válik. Semmi sem íródik soha a másik tárolóba, és a saját mentési beállításaid érintetlenek maradnak (a munkamenet a memóriában él és magától lejár). Egy konténer áthelyezése az A szerverről a B szerverre nem jelenti a tárolóbeállításaid átirányítását és utólagos visszaállítását. Ez a kártya egyszeri: megnyit egy munkamenetet, visszaállítja, amit kiválasztasz, és elfelejti a másik példányt. Ha ehelyett állandó elrendezést szeretnél, amelyben ez a gép ütemezetten lehívja egy másik példány pillanatképeit a saját tárolójába, arra a **Példányok** oldal **Lehívás** füle való.
 
 ## Titkosításikulcs-helyreállító csomag
 
@@ -165,6 +173,15 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 
 !!! warning "Nem mindig a legújabb pillanatképet kell visszaállítani"
     A restic 0.17 óta a `restic snapshots` minden pillanatkép méretét mutatja. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely sokkal kisebb az előzőeknél. Zsarolóvírus után lehet a titkosított, szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzés szüneteltetése mindig csak több pillanatképet tart meg.
+
+### A csomag lezárása
+
+Ha bekapcsoltad az age-titkosítást az egyszerű exportokhoz (Beállítások), a csomag is le lesz vele zárva, és `bombvault-recovery-kit.md.age` néven töltődik le. Bináris helyett ASCII-armored formátumú, így továbbra is sima szöveg: jelszókezelőbe illesztése vagy kinyomtatása pontosan úgy működik, mint eddig, csak a tartalma olvashatatlan a kulcsod nélkül.
+
+!!! warning "Ne tárold az age-kulcsot a csomagban"
+    Egy lezárt csomag megnyitásához szükséged van az age **privát** kulcsodra. Olyan helyen tartsd, amely nem magától a csomagtól függ, különben egy helyett két dolgot kell majd helyreállítanod. A lezárás akkor éri meg, ha a csomag olyan helyen van, amely felett nincs teljes ellenőrzésed (megosztott jelszókezelő, felhős jegyzetek, egy kinyomtatott példány egy irodában); a saját széfedben lévő csomagot már a széf védi.
+
+    Bekapcsolt titkosítás és beállított, használható címzett nélkül a letöltést a BombVault eleve elutasítja. Soha nem tér át arra, hogy a mesterkulcsot nyílt szövegként adja ki.
 
 ### Ha a csomag épp nincs kéznél
 

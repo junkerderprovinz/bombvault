@@ -4,7 +4,7 @@ Kopie lokalne chronią Cię przed utraconym kontenerem lub złą aktualizacją. 
 
 ## Replikacja poza siedzibą
 
-Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzibą. Ustaw repozytorium per domena na stronie **Ustawienia, Poza siedzibą**. BombVault replikuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Repozytorium lokalne pozostaje główne.
+Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzibą. Ustaw repozytorium per domena na stronie **Ustawienia, Poza siedzibą**. BombVault replikuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. W tym układzie repozytorium lokalne pozostaje podstawowe, a repozytorium poza siedzibą jest repliką, ale repozytorium podstawowe domeny wcale nie musi być lokalne; zobacz [Zdalne repozytoria podstawowe](#remote-primary-repositories) poniżej, aby tworzyć kopie prosto do S3, rest-server itd., zamiast do nich replikować.
 
 - **Wiele celów poza siedzibą na domenę.** Każda domena (kontenery, VM, flash, config, zestawy plików i zbiory danych ZFS) może replikować do kilku celów poza siedzibą naraz, nie tylko jednego, więc możesz utrzymywać na przykład rest-server na maszynie znajomego oraz bucket S3 równolegle. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona nietknięta jako pierwszy cel, a każdy cel domeny replikuje zgodnie z harmonogramem poza siedzibą tej domeny.
 - **Harmonogram poza siedzibą per domena** (edytowany obok każdego innego harmonogramu w Ustawienia, Harmonogramy): pozostaw pusty, aby replikować po każdej kopii lokalnej, lub ustaw kadencję (na przykład `weekly Sun 03:00`), aby wysyłać poza siedzibę rzadziej, niż tworzysz kopie lokalne. Przycisk **Replikuj teraz** obsługuje uruchomienia na żądanie.
@@ -32,6 +32,14 @@ Nic z tego nie jest obowiązkowe: wpisana ręcznie ścieżka zdalna bez zapisany
 
 !!! note "Dane logowania do chmury i REST są wspólne"
     Zdalne repozytorium podstawowe uwierzytelnia się tymi samymi danymi S3/REST, które są ustawione w Ustawienia, Dostęp do chmury, Współdzielone dane logowania do chmury. Osobnego magazynu danych logowania dla repozytoriów podstawowych nie ma.
+
+### SMB i WebDAV bez montowania na hoście {#smb-webdav}
+
+W Ustawienia, Dostęp do chmury, rclone jest formularz dla udziału Windows lub Samba oraz dla serwera WebDAV (Nextcloud, ownCloud, SharePoint albo dowolnego innego). Wpisz krótką nazwę, host i udział (SMB) albo URL i typ serwera (WebDAV), użytkownika i hasło, a BombVault sam zapisze sekcję rclone. rclone sam zaciemnia hasło, zanim zostanie zapisane; dodanie celu o nazwie, która już istnieje, zastępuje tę sekcję, zamiast dodawać drugą.
+
+Formularz odpowiada gotową lokalizacją, na przykład `rclone:nas:backups`. Wpisz ją do Ścieżki kopii albo celu poza siedzibą i dodaj podfolder, jeśli chcesz (`rclone:nas:backups/bombvault`). Udział jest pierwszym segmentem ścieżki, a nie częścią nazwy.
+
+To lepsza droga niż montowanie udziału na Unraid: restic odradza trzymanie repozytorium na zamontowanym udziale CIFS, a tutaj nic nie jest montowane. NFS nie ma w formularzu, bo ani restic, ani rclone nie mają backendu NFS; dla NFS zamontuj eksport na hoście i skieruj na niego Ścieżkę kopii.
 
 ## Niezmienna (append-only) kopia poza siedzibą
 
@@ -66,7 +74,7 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracaln
 
 ## Parowanie instancji {#pairing}
 
-Odbiorcy, źródła pobierania, strona Instancje i Mesh poza siedzibą, wszystkie rozmawiają z inną instancją BombVault. Robią to jako członkowie jednej grupy parowania, a instancja dołącza do grupy dwunastoma słowami.
+Odbiorniki, źródła pobierania, strona Instancje i Mesh poza siedzibą, wszystkie rozmawiają z inną instancją BombVault. Robią to jako członkowie jednej grupy parowania, a instancja dołącza do grupy dwunastoma słowami.
 
 Na pierwszej instancji otwórz **Ustawienia → Parowanie** i na kartach parowania kliknij **Wygeneruj frazę**. Pojawi się dwanaście słów w oknie z przyciskiem **Kopiuj**. Na każdej kolejnej instancji otwórz to samo miejsce, kliknij **Wpisz frazę** i wklej słowa albo je wpisz, albo kliknij **Wklej** w tym oknie. Słowo, którego nie ma na liście, strona nazywa razem z jego miejscem już podczas wpisywania, a ostatnie słowo niesie sumę kontrolną, więc źle wpisane albo zamienione miejscami słowo zostaje wychwycone, zanim dojdzie do sparowania. Wygeneruj frazę tylko na jednej instancji: dwie instancje, z których każda tworzy frazę, tworzą dwie osobne grupy. Jeśli przez minutę nikt się nie zgłosi, zakładka oferuje dwa sposoby wyjścia: pokazać słowa ponownie, aby wpisać je po drugiej stronie, albo wpisać słowa drugiej instancji i dołączyć do jej grupy w jednym kroku. Parowanie działa też bez hasła logowania, ale je ustaw: bez niego każdy, kto może otworzyć ten interfejs, może odczytać słowa i przez grupę uzyskać hasło restic każdej instancji w niej. Karta parowania informuje o tym, dopóki hasło nie zostanie ustawione. Z hasłem ponowne wyświetlenie frazy o nie poprosi. **Opuść grupę** wyprowadza instancję z powrotem.
 
@@ -80,21 +88,21 @@ Każdy, kto zna słowa, może dołączyć do grupy, więc traktuj je jak hasło.
 
 **Co widzi przekaźnik.** Każde połączenie między członkami jest zapieczętowane AES-256-GCM kluczem wyprowadzonym z dwunastu słów, a ten klucz nigdy nie opuszcza twoich instancji. Przekaźnik poznaje skrót grupujący połączenia, dla której instancji jest wiadomość, jak duża jest i kiedy przechodzi. Bezpośrednie połączenie w sieci lokalnej jest zapieczętowane tak samo i dodatkowo podpisane, więc nic nie zależy od certyfikatu samopodpisanego, który serwuje instancja.
 
-**Co przechodzi przez grupę.** Karty wyników na stronie Instancje, prośba o sprawdzenie jednej domeny teraz, oferty Mesh dotyczące kopii poza siedzibą oraz to, czego potrzebuje odbiorca lub źródło pobierania: adresy repozytoriów drugiej instancji i jej hasło restic. Dane kopii zapasowej nigdy tamtędy nie idą, nadal trafiają prosto do backendów restic. APP_KEY też nie: hasło restic otwiera tylko repozytoria tej instancji i nic więcej, ani jej zapisanych sekretów, sesji, ani kodów odzyskiwania.
+**Co przechodzi przez grupę.** Karty wyników na stronie Instancje, prośba o sprawdzenie jednej domeny teraz, oferty Mesh dotyczące kopii poza siedzibą oraz to, czego potrzebuje odbiornik lub źródło pobierania: adresy repozytoriów drugiej instancji i jej hasło restic. Dane kopii zapasowej nigdy tamtędy nie idą, nadal trafiają prosto do backendów restic. APP_KEY też nie: hasło restic otwiera tylko repozytoria tej instancji i nic więcej, ani jej zapisanych sekretów, sesji, ani kodów odzyskiwania.
 
-**Wpisy sprzed parowania.** Instancje dodane tokenem fleet oraz odbiorcy i źródła pobierania skonfigurowane APP_KEY-em drugiej instancji zostają po aktualizacji i są oznaczone **Sparuj ponownie**. Odbiorcy i źródła pobierania nadal działają: przy pierwszym uruchomieniu BombVault zastępuje każdy zapisany APP_KEY wyprowadzonym z niego hasłem restic. Sparuj obie instancje, potem edytuj wpis i wybierz jego instancję. Taka instancja przejmuje swoją starą kartę, gdy tylko w grupie pojawi się instancja o tej samej nazwie.
+**Wpisy sprzed parowania.** Instancje dodane tokenem fleet oraz odbiorniki i źródła pobierania skonfigurowane APP_KEY-em drugiej instancji zostają po aktualizacji i są oznaczone **Sparuj ponownie**. Odbiorniki i źródła pobierania nadal działają: przy pierwszym uruchomieniu BombVault zastępuje każdy zapisany APP_KEY wyprowadzonym z niego hasłem restic. Sparuj obie instancje, potem edytuj wpis i wybierz jego instancję. Taka instancja przejmuje swoją starą kartę, gdy tylko w grupie pojawi się instancja o tej samej nazwie.
 
 Jedynym miejscem, które nadal wymaga ręcznego podania APP_KEY, jest [Przywracanie z innego repozytorium BombVault](#restore-from-another-bombvault-repo), na wypadek gdy druga instancja zniknęła i nie może już odpowiedzieć w żadnej grupie.
 
-## Panel odbiorcy (strona odbierająca)
+## Panel odbiornika (strona odbierająca)
 
 ![Strona odbierająca, obserwowana tylko do odczytu, z kontrolą spójności na tej maszynie.](assets/screenshots/receiver.png)
 
 *Strona odbierająca, obserwowana tylko do odczytu, z kontrolą spójności na tej maszynie.*
 
-Wszystko powyżej to strona *wysyłająca*. Na maszynie, która **odbiera** niezmienne kopie poza siedzibą od innego BombVault, panel odbiorcy daje Ci niezależne, tylko do odczytu monitorowanie tych repozytoriów na sprzęcie odbierającym, więc ciche niepowodzenie po drugiej stronie nie pozostaje niezauważone.
+Wszystko powyżej to strona *wysyłająca*. Na maszynie, która **odbiera** niezmienne kopie poza siedzibą od innego BombVault, panel odbiornika daje Ci niezależne, tylko do odczytu monitorowanie tych repozytoriów na sprzęcie odbierającym, więc ciche niepowodzenie po drugiej stronie nie pozostaje niezauważone.
 
-Włącz przełącznik **Odbiorca** w Ustawieniach, aby odsłonić zakładkę **Odbiorca**. Jest domyślnie wyłączony; włącz go tylko na maszynie, która faktycznie odbiera niezmienne kopie poza siedzibą. Następnie zarejestruj otrzymane repozytorium (tylko do odczytu, otwarte hasłem restic instancji wysyłającej, które dociera przez [grupę parowania](#pairing)), aby uzyskać:
+Włącz przełącznik **Odbiornik** w Ustawieniach, aby odsłonić zakładkę **Odbiornik**. Jest domyślnie wyłączony; włącz go tylko na maszynie, która faktycznie odbiera niezmienne kopie poza siedzibą. Następnie zarejestruj otrzymane repozytorium (tylko do odczytu, otwarte hasłem restic instancji wysyłającej, które dociera przez [grupę parowania](#pairing)), aby uzyskać:
 
 - **Inwentarz migawek pogrupowany według źródła**, więc widzisz dokładnie, które kontenery, VM i zestawy plików dotarły.
 - **Ostatnio otrzymane** per źródło, więc wiesz, jak świeże jest każde z nich.
@@ -102,7 +110,7 @@ Włącz przełącznik **Odbiorca** w Ustawieniach, aby odsłonić zakładkę **O
 - **Wyłącznik bezpieczeństwa:** alert, gdy źródło przestaje wysyłać w ustawionym przez Ciebie oknie.
 - **Alerty integralności:** alert, gdy kontrola po stronie odbierającej zawiedzie.
 
-Odbiorca jest ściśle tylko do odczytu. Nigdy nie zapisuje do otrzymanego repozytorium, więc nigdy nie może naruszyć gwarancji append-only, na której polega nadawca.
+Odbiornik jest ściśle tylko do odczytu. Nigdy nie zapisuje do otrzymanego repozytorium, więc nigdy nie może naruszyć gwarancji append-only, na której polega nadawca.
 
 ## Pełny przykład: dwie maszyny Unraid, od początku do końca
 
@@ -152,7 +160,7 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 
 ### Przywracanie z innego repozytorium BombVault {#restore-from-another-bombvault-repo}
 
-Osobna karta w zakładce **Odzyskiwanie** otwiera repozytorium *innej* instancji BombVault (udział zamontowany pod `/mnt` lub zdalny URL) za pomocą **`APP_KEY` tej instancji**, w jednorazowej sesji tylko do odczytu. Przeglądaj przechowywane tam kontenery, VM i zestawy plików, wybierz migawkę i przywróć ją, a przywrócony obiekt staje się normalnym lokalnym kontenerem, VM lub zestawem plików. Nic nigdy nie jest zapisywane do drugiego repozytorium, a Twoje własne ustawienia kopii pozostają nietknięte (sesja żyje w pamięci i wygasa sama). Przeniesienie kontenera z serwera A na serwer B nie oznacza już przekierowywania ustawień repozytorium i cofania ich potem. Federacja serwer-do-serwera na żywo jest wyraźnie poza zakresem; to celowe jednorazowe pobranie.
+Osobna karta w zakładce **Odzyskiwanie** otwiera repozytorium *innej* instancji BombVault (udział zamontowany pod `/mnt` lub zdalny URL) za pomocą **`APP_KEY` tej instancji**, w jednorazowej sesji tylko do odczytu. Przeglądaj przechowywane tam kontenery, VM i zestawy plików, wybierz migawkę i przywróć ją, a przywrócony obiekt staje się normalnym lokalnym kontenerem, VM lub zestawem plików. Nic nigdy nie jest zapisywane do drugiego repozytorium, a Twoje własne ustawienia kopii pozostają nietknięte (sesja żyje w pamięci i wygasa sama). Przeniesienie kontenera z serwera A na serwer B nie oznacza przekierowywania ustawień repozytorium i cofania ich potem. Ta karta działa jednorazowo: otwiera sesję, przywraca to, co wybierzesz, i zapomina o drugiej instancji. Jeśli zamiast tego chcesz stałego układu, w którym ta maszyna według harmonogramu pobiera migawki innej instancji do własnego repozytorium, służy do tego zakładka **Pobieranie** na stronie **Instancje**.
 
 ## Zestaw odzyskiwania klucza szyfrowania
 
@@ -165,6 +173,15 @@ Jedno kliknięcie pobiera **klucz główny**, **wyprowadzone hasło restic** ora
 
 !!! warning "Najnowsza migawka nie zawsze jest tą do przywrócenia"
     Od restic 0.17 polecenie `restic snapshots` pokazuje rozmiar każdej migawki. Po utracie danych najnowsza migawka może być tą opróżnioną, więc nie przywracaj migawki dużo mniejszej niż poprzednie. Po ataku ransomware może to być migawka zaszyfrowana o zwykłym rozmiarze. Jeśli BombVault nadal działa, najpierw zajrzyj na jego stronę **Anomalie**: wskazuje ostatnią dobrą kopię. Przywracanie nie potrzebuje żadnych danych o anomaliach z BombVault, a wstrzymanie retencji zawsze tylko zachowuje więcej migawek.
+
+### Pieczętowanie zestawu
+
+Jeśli włączyłeś szyfrowanie age dla eksportów jawnych (Ustawienia), zestaw też jest nim pieczętowany i pobiera się jako `bombvault-recovery-kit.md.age`. Ma postać ASCII-armored, a nie binarną, więc nadal jest zwykłym tekstem: wklejenie go do menedżera haseł albo wydruk działa dokładnie jak wcześniej, tylko treść bez Twojego klucza jest nieczytelna.
+
+!!! warning "Nie trzymaj klucza age w zestawie"
+    Do otwarcia zapieczętowanego zestawu potrzebujesz swojego **prywatnego** klucza age. Trzymaj go w miejscu, które nie zależy od samego zestawu, inaczej będziesz mieć do odzyskania dwie rzeczy zamiast jednej. Pieczętowanie się opłaca, gdy zestaw leży w miejscu, którego w pełni nie kontrolujesz (współdzielony menedżer haseł, notatki w chmurze, wydruk w biurze); zestaw we własnym sejfie jest już chroniony przez sejf.
+
+    Przy włączonym szyfrowaniu i braku skonfigurowanego użytecznego odbiorcy pobranie jest od razu odrzucane. BombVault nigdy nie wraca do wydania klucza głównego tekstem jawnym.
 
 ### Gdy zestawu nie ma pod ręką
 

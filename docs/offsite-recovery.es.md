@@ -4,10 +4,10 @@ Las copias locales te protegen de un contenedor perdido o de una mala actualizac
 
 ## Replicación externa
 
-Conserva la copia local rápida y añade una o varias réplicas externas. Define un repo por dominio en la página **Ajustes, Externo**. BombVault replica ahí las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, de modo que un contratiempo externo nunca hace fallar la copia local. El repo local sigue siendo el principal.
+Conserva la copia local rápida y añade una o varias réplicas externas. Define un repo por dominio en la página **Ajustes, Externo**. BombVault replica ahí las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, de modo que un contratiempo externo nunca hace fallar la copia local. En esta forma el repo local sigue siendo el primario y el repo externo es una réplica, pero el repo primario de un dominio no tiene por qué ser local; consulta [Repositorios primarios remotos](#remote-primary-repositories) más abajo para copiar directamente a S3, rest-server, etc. en lugar de replicar hacia allí.
 
 - **Varios destinos externos por dominio.** Cada dominio (contenedores, VMs, flash, config, conjuntos de archivos y conjuntos de datos ZFS) puede replicarse a varios destinos externos a la vez, no solo a uno, de modo que puedes mantener, por ejemplo, un rest-server en la máquina de un amigo y un bucket S3 en paralelo. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento. Una configuración externa única existente se traslada intacta como el primer destino, y cada destino de un dominio se replica según el calendario externo de ese dominio.
-- **Calendario externo por dominio** (editado junto a todos los demás calendarios en Ajustes, Calendarios): déjalo en blanco para replicar tras cada copia local, o establece una cadencia (por ejemplo `weekly Sun 03:00`) para enviar fuera del sitio con menos frecuencia de la que copias localmente. Un botón **Replicar ahora** cubre las ejecuciones bajo demanda.
+- **Calendario externo por dominio** (editado junto a todos los demás calendarios en Ajustes, Programaciones): déjalo en blanco para replicar tras cada copia local, o establece una cadencia (por ejemplo `weekly Sun 03:00`) para enviar fuera del sitio con menos frecuencia de la que copias localmente. Un botón **Replicar ahora** cubre las ejecuciones bajo demanda.
 - La **retención externa** vive en Ajustes, Retención para que puedas conservar las copias externas más tiempo como archivo. Deja la política toda a cero para no recortar nunca automáticamente las instantáneas externas.
 - Los **límites de ancho de banda** (Ajustes, Externo) limitan la velocidad de subida/bajada de restic para que la replicación no sature tu WAN.
 - Un **indicador de replicación** muestra qué dominio se está replicando mientras se ejecuta (en su página y en el Panel). Es un indicador activo, no una barra de porcentaje, porque `restic copy` no expone ningún progreso legible por máquina.
@@ -32,6 +32,14 @@ Nada de esto es obligatorio: una ruta remota escrita a mano y sin ajustes de seg
 
 !!! note "Las credenciales de nube y REST se comparten"
     Un primario remoto se autentica con las mismas credenciales S3/REST configuradas en Ajustes, Acceso a la nube, Credenciales de nube compartidas. No hay un almacén de credenciales aparte para los repositorios primarios.
+
+### SMB y WebDAV sin montaje en el host {#smb-webdav}
+
+Ajustes, Acceso a la nube, rclone tiene un formulario para un recurso compartido de Windows o Samba y para un servidor WebDAV (Nextcloud, ownCloud, SharePoint o cualquier otro). Rellena un nombre corto, el host y el recurso compartido (SMB) o la URL y el tipo de servidor (WebDAV), el usuario y la contraseña, y BombVault escribe la sección de rclone por ti. rclone ofusca la contraseña por su cuenta antes de guardarla; añadir un destino con un nombre que ya existe sustituye esa sección en lugar de añadir una segunda.
+
+El formulario responde con la ubicación final, por ejemplo `rclone:nas:backups`. Ponla en una Ruta de copia o en un destino externo y añade una subcarpeta si quieres (`rclone:nas:backups/bombvault`). El recurso compartido es el primer segmento de la ruta, no parte del nombre.
+
+Esta es mejor vía que montar el recurso compartido en Unraid: restic desaconseja tener un repositorio en un recurso CIFS montado, y aquí no se monta nada. NFS no está en el formulario porque ni restic ni rclone tienen un backend NFS; para NFS, monta la exportación en el host y apunta una Ruta de copia a ella.
 
 ## Externo inmutable (append-only)
 
@@ -59,7 +67,7 @@ Un cambio real de protegido a no protegido dispara una única alerta.
 
 BombVault ofrece dos niveles de prueba de que tus copias son realmente restaurables, no solo de que están presentes.
 
-- **Ensayos de verificación de restauración (local).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco) y muestra una insignia de *restaurable verificado por última vez* por dominio. La cadencia vive en Ajustes, Calendarios; la insignia en Ajustes, Integridad.
+- **Ensayos de verificación de restauración (local).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco) y muestra una insignia de *restaurable verificado por última vez* por dominio. La cadencia vive en Ajustes, Programaciones; la insignia en Ajustes, Integridad.
 - **Ensayos de DR (externo).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas desechable, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde.
 
 El **cuadro de mando de protección contra ransomware** en el Panel lo resume en una postura verde / ámbar / rojo por dominio, con una lista de comprobación con marca de antigüedad (externo configurado, append-only verificado, replicación al día, ensayo de restauración superado, cifrado activado, estrategia de poda definida). Cada fila roja enlaza directamente con la solución, y la tarjeta solo se pone verde con hechos verificados.
@@ -152,7 +160,7 @@ Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstru
 
 ### Restaurar desde otro repo de BombVault {#restore-from-another-bombvault-repo}
 
-Una tarjeta aparte en la pestaña **Recuperación** abre el repo de una instancia *distinta* de BombVault (un recurso compartido montado bajo `/mnt`, o una URL remota) con **la `APP_KEY` de esa instancia**, en una sesión única y de solo lectura. Explora los contenedores, VMs y conjuntos de archivos almacenados ahí, elige una instantánea y restáurala, y el objeto restaurado se convierte en un contenedor, VM o conjunto de archivos local normal. Nunca se escribe nada en el otro repo, y tus propios ajustes de copia quedan intactos (la sesión vive en memoria y expira por sí sola). Mover un contenedor del servidor A al servidor B ya no significa reapuntar los ajustes de tu repo y revertirlos después. La federación en vivo servidor a servidor queda explícitamente fuera de alcance; esto es una extracción única y deliberada.
+Una tarjeta aparte en la pestaña **Recuperación** abre el repo de una instancia *distinta* de BombVault (un recurso compartido montado bajo `/mnt`, o una URL remota) con **la `APP_KEY` de esa instancia**, en una sesión única y de solo lectura. Explora los contenedores, VMs y conjuntos de archivos almacenados ahí, elige una instantánea y restáurala, y el objeto restaurado se convierte en un contenedor, VM o conjunto de archivos local normal. Nunca se escribe nada en el otro repo, y tus propios ajustes de copia quedan intactos (la sesión vive en memoria y expira por sí sola). Mover un contenedor del servidor A al servidor B ya no significa reapuntar los ajustes de tu repo y revertirlos después. Esta tarjeta es de un solo uso: abre una sesión, restaura lo que eliges y se olvida de la otra instancia. Si en cambio quieres un arreglo permanente, en el que esta máquina trae según una programación las instantáneas de otra instancia a su propio repositorio, eso es la pestaña **Recogida** de la página **Instancias**.
 
 ## Kit de recuperación de la clave de cifrado
 
@@ -165,6 +173,15 @@ Un clic descarga la **clave maestra**, la **contraseña restic derivada** y las 
 
 !!! warning "La instantánea más reciente no siempre es la que hay que restaurar"
     Desde restic 0.17, `restic snapshots` muestra el tamaño de cada instantánea. Tras una pérdida de datos, la instantánea más reciente puede ser la vaciada, así que no restaures una instantánea mucho más pequeña que las anteriores. Tras un ransomware puede ser la cifrada, con el tamaño habitual. Si BombVault sigue funcionando, mira antes su página **Anomalías**: indica la última copia buena. Una restauración no necesita ningún dato de anomalías de BombVault, y la pausa de retención solo conserva más instantáneas, nunca menos.
+
+### Sellar el kit
+
+Si has activado el cifrado age para las exportaciones sencillas (Ajustes), el kit también se sella con él y se descarga como `bombvault-recovery-kit.md.age`. Está en ASCII armor y no en binario, así que sigue siendo texto: pegarlo en un gestor de contraseñas o imprimirlo funciona exactamente igual que antes, solo que el contenido es ilegible sin tu clave.
+
+!!! warning "No guardes la clave age dentro del kit"
+    Necesitas tu clave age **privada** para abrir un kit sellado. Guárdala en un sitio que no dependa del propio kit, o tendrás dos cosas que recuperar en lugar de una. Sellar compensa cuando el kit se guarda en un sitio que no controlas del todo (un gestor de contraseñas compartido, notas en la nube, una copia impresa en una oficina); un kit en tu propia caja fuerte ya está protegido por la caja fuerte.
+
+    Con el cifrado activado y sin ningún destinatario utilizable configurado, la descarga se rechaza sin más. BombVault nunca recurre a entregar la clave maestra en claro.
 
 ### Si no tienes el kit a mano
 

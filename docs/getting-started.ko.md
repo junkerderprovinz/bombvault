@@ -54,7 +54,7 @@ Unraid와 다른 점:
 openssl rand -hex 32
 ```
 
-결과를 템플릿의 `APP_KEY` 필드에 붙여넣으세요.
+결과를 템플릿의 `APP_KEY` 필드(Unraid) 또는 `docker-compose.yml`의 `APP_KEY` 환경 변수(일반 Docker 호스트)에 붙여넣으세요.
 
 !!! danger "APP_KEY를 잃어버리지 마세요"
     `APP_KEY`를 잃어버리면 암호화된 백업을 복구할 수 없게 됩니다. 서버와 분리된 안전한 곳에 보관하세요. BombVault가 실행되면, 원클릭 **암호화 키 복구 키트**([오프사이트 및 복구](offsite-recovery.md) 참고)를 사용하여 전체 복구 번들을 저장하세요.

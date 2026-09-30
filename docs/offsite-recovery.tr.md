@@ -4,7 +4,7 @@ Yerel yedekler sizi kaybolmuş bir konteynerden ya da hatalı bir güncellemeden
 
 ## Site dışı çoğaltma
 
-Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. **Ayarlar, Site dışı** sayfasında etki alanı başına bir depo ayarlayın. BombVault yeni anlık görüntüleri oraya en iyi çaba temelinde `restic copy` ile çoğaltır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. Yerel depo birincil kalır.
+Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. **Ayarlar, Site dışı** sayfasında etki alanı başına bir depo ayarlayın. BombVault yeni anlık görüntüleri oraya en iyi çaba temelinde `restic copy` ile çoğaltır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. Bu düzende yerel depo birincil kalır ve site dışı depo bir kopyadır, ama bir etki alanının birincil deposunun yerel olması hiç gerekmez; S3'e, rest-server'a vb. çoğaltmak yerine doğrudan oraya yedeklemek için aşağıdaki [Uzak birincil depolar](#remote-primary-repositories) bölümüne bakın.
 
 - **Etki alanı başına birden fazla site dışı hedef.** Her etki alanı (konteynerler, VM'ler, flash, config, dosya kümeleri ve ZFS veri kümeleri) yalnızca birine değil, aynı anda birkaç site dışı hedefe çoğaltabilir, böylece örneğin bir arkadaşınızın makinesinde bir rest-server ve paralel olarak bir S3 kovası tutabilirsiniz. Ayarlar, Site dışı'nda her biri kendi deposu, S3 depolama sınıfı, yalnızca ekleme bayrağı, saklama ve büyüme bütçesiyle ek hedefler ekleyin. Mevcut tek bir site dışı kurulum, ilk hedef olarak dokunulmadan taşınır ve bir etki alanının her hedefi o etki alanının site dışı zamanlamasında çoğaltılır.
 - **Etki alanı başına site dışı zamanlama** (Ayarlar, Zamanlamalar'da diğer her zamanlamanın yanında düzenlenir): her yerel yedeklemeden sonra çoğaltmak için boş bırakın ya da yerelde yedeklediğinizden daha seyrek site dışına göndermek için bir sıklık ayarlayın (örneğin `weekly Sun 03:00`). Bir **Şimdi çoğalt** düğmesi istek üzerine çalışmaları kapsar.
@@ -33,6 +33,14 @@ Bunların hiçbiri zorunlu değildir: elle yazılmış, kayıtlı güvenlik ayar
 !!! note "Bulut ve REST kimlik bilgileri ortaktır"
     Uzak bir birincil depo, Ayarlar, Bulut erişimi, Paylaşılan bulut kimlik bilgileri altında yapılandırılan S3/REST kimlik bilgilerinin aynısıyla kimlik doğrular. Birincil depolar için ayrı bir kimlik bilgisi deposu yoktur.
 
+### Host'ta bağlama olmadan SMB ve WebDAV {#smb-webdav}
+
+Ayarlar, Bulut erişimi, rclone altında bir Windows ya da Samba paylaşımı ve bir WebDAV sunucusu (Nextcloud, ownCloud, SharePoint ya da herhangi bir başkası) için bir form vardır. Kısa bir ad, host ve paylaşım (SMB) ya da URL ve sunucu türü (WebDAV), kullanıcı ve parolayı doldurun; BombVault rclone bölümünü sizin için yazar. rclone parolayı saklanmadan önce kendisi gizler; zaten var olan bir adla bir hedef eklemek ikinci bir bölüm eklemek yerine o bölümü değiştirir.
+
+Form, tamamlanmış konumla yanıt verir, örneğin `rclone:nas:backups`. Bunu bir Yedekleme Yolu'na ya da bir site dışı hedefe girin ve isterseniz bir alt klasör ekleyin (`rclone:nas:backups/bombvault`). Paylaşım adın bir parçası değil, yolun ilk bölümüdür.
+
+Bu, paylaşımı Unraid'e bağlamaktan daha iyi bir yoldur: restic bir depoyu bağlanmış bir CIFS paylaşımında tutmamayı önerir ve burada hiçbir şey bağlanmaz. NFS formda yoktur, çünkü ne restic'in ne de rclone'un bir NFS arka ucu vardır; NFS için dışa aktarımı host'a bağlayın ve bir Yedekleme Yolu'nu ona yönlendirin.
+
 ## Değiştirilemez (yalnızca ekleme) site dışı
 
 Fidye yazılımı ya da ele geçirilmiş bir host yedeklerinizi silemesin veya yeniden yazamasın diye bir site dışı depoyu yalnızca ekleme olarak işaretleyin. Karşı taraf (`--append-only` modunda çalışan bir `restic/rest-server`) bunu **uygular**. BombVault yalnızca bunu **doğrular** ve asla yalnızca bir yapılandırma iddiası üzerine yeşil göstermez.
@@ -40,7 +48,7 @@ Fidye yazılımı ya da ele geçirilmiş bir host yedeklerinizi silemesin veya y
 **Rehberli site dışı kurulum** sihirbazı sizi arka uç seçiminden (rest-server / rclone / S3), yapıştırmaya hazır bir rest-server dağıtım parçacığı, bir bağlantı testi, değiştirilemez geçişi (bu, kurcalama testini hemen çalıştırır) ve bir saklama stratejisinden geçirir, böylece yalnızca ekleme site dışına yapılandırmaları elle düzenlemeden ulaşılabilir.
 
 !!! note "`/locks/` altında başarılı bir silme beklenen davranıştır"
-    Append-only, artık hiçbir şeyin silinemeyeceği anlamına gelmez. restic kendi kilitlerini alıp bırakmak zorundadır, bu yüzden `/locks/` bilerek yazılabilir ve silinebilir kalır. Anlık görüntüler ve arkasındaki veriler, yani fidye yazılımının hedefi tam olarak budur, kaldırılamaz. Uzak tarafı kendin denersen, `/locks/` altında başarılı olan bir silme doğru davranıştır ve korumada bir delik değildir.
+    Append-only, artık hiçbir şeyin silinemeyeceği anlamına gelmez. restic kendi kilitlerini alıp bırakmak zorundadır, bu yüzden `/locks/` bilerek yazılabilir ve silinebilir kalır. Anlık görüntüler ve arkasındaki veriler, yani fidye yazılımının hedefi tam olarak budur, kaldırılamaz. Uzak tarafı kendiniz denerseniz, `/locks/` altında başarılı olan bir silme doğru davranıştır ve korumada bir delik değildir.
 
 !!! warning "Değiştirilemez depolar bu makineden asla budanmaz"
     Değiştirilemez bir site dışı, eski anlık görüntüleri kasıtlı olarak asla budamaz. Depo boyutu kontrolden çıkmadan önce uyarılmanız için ona bir **büyüme bütçesi alarmı** ayarlayın.
@@ -152,7 +160,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 
 ### Başka bir BombVault deposundan geri yükleme {#restore-from-another-bombvault-repo}
 
-**Kurtarma** sekmesindeki ayrı bir kart, *farklı* bir BombVault örneğinin deposunu (`/mnt` altında bağlanmış bir paylaşım ya da bir uzak URL) **o örneğin `APP_KEY`'iyle**, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere ve dosya kümelerine göz atın, bir anlık görüntü seçip geri yükleyin; geri yüklenen nesne normal bir yerel konteyner, VM ya da dosya kümesi olur. Diğer depoya asla hiçbir şey yazılmaz ve kendi yedekleme ayarlarınız dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak artık depo ayarlarınızı yeniden yönlendirmek ve sonrasında geri almak anlamına gelmez. Canlı sunucudan sunucuya federasyon açıkça kapsam dışıdır; bu kasıtlı bir tek atışlık çekmedir.
+**Kurtarma** sekmesindeki ayrı bir kart, *farklı* bir BombVault örneğinin deposunu (`/mnt` altında bağlanmış bir paylaşım ya da bir uzak URL) **o örneğin `APP_KEY`'iyle**, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere ve dosya kümelerine göz atın, bir anlık görüntü seçip geri yükleyin; geri yüklenen nesne normal bir yerel konteyner, VM ya da dosya kümesi olur. Diğer depoya asla hiçbir şey yazılmaz ve kendi yedekleme ayarlarınız dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak, depo ayarlarınızı yeniden yönlendirmek ve sonrasında geri almak anlamına gelmez. Bu kart tek seferliktir: bir oturum açar, seçtiğinizi geri yükler ve diğer örneği unutur. Bunun yerine bu makinenin başka bir örneğin anlık görüntülerini bir zamanlamaya göre kendi deposuna çektiği kalıcı bir düzen istiyorsanız, bu **Örnekler** sayfasının **Çekme** sekmesidir.
 
 ## Şifreleme anahtarı kurtarma kiti
 
@@ -165,6 +173,15 @@ Tek tık, **ana anahtarı**, **türetilen restic parolasını** ve **tam depo ko
 
 !!! warning "En yeni anlık görüntü her zaman geri yüklenecek olan değildir"
     restic 0.17'den beri `restic snapshots` her anlık görüntünün boyutunu gösterir. Veri kaybından sonra en yeni anlık görüntü boşaltılmış olan olabilir, bu yüzden öncekilerden çok daha küçük bir anlık görüntüyü geri yüklemeyin. Fidye yazılımından sonra olağan boyutta şifrelenmiş olan olabilir. BombVault hâlâ çalışıyorsa önce **Anormallikler** sayfasına bakın: son iyi yedeği gösterir. Geri yükleme için BombVault'un anomali verilerine gerek yoktur ve saklama duraklatması yalnızca daha fazla anlık görüntü tutar.
+
+### Kitin mühürlenmesi
+
+Düz dışa aktarmalar için age şifrelemesini açtıysanız (Ayarlar), kit de onunla mühürlenir ve `bombvault-recovery-kit.md.age` olarak iner. İkili değil ASCII zırhlı olduğu için yine düz metindir: bir parola yöneticisine yapıştırmak ya da yazdırmak tam olarak önceki gibi çalışır, yalnızca içerik anahtarınız olmadan okunamaz.
+
+!!! warning "age anahtarını kitin içinde saklamayın"
+    Mühürlü bir kiti açmak için age **özel** anahtarınıza ihtiyacınız vardır. Onu kitin kendisine bağlı olmayan bir yerde saklayın, yoksa kurtarmanız gereken bir değil iki şey olur. Mühürleme, kit tam olarak denetlemediğiniz bir yerde saklandığında (paylaşılan bir parola yöneticisi, bulut notları, bir ofisteki çıktı) buna değer; kendi kasanızdaki bir kit zaten kasa tarafından korunur.
+
+    Şifreleme açıkken ve yapılandırılmış kullanılabilir bir alıcı yokken indirme doğrudan reddedilir. BombVault ana anahtarı açık metin olarak vermeye asla geri dönmez.
 
 ### Kurtarma seti elinizin altında değilse
 

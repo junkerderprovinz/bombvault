@@ -54,7 +54,7 @@ Genereer er een op een willekeurige machine:
 openssl rand -hex 32
 ```
 
-Plak het resultaat in het `APP_KEY`-veld van de template.
+Plak het resultaat in het `APP_KEY`-veld van de template (Unraid), of in de omgevingsvariabele `APP_KEY` in `docker-compose.yml` (generieke Docker-host).
 
 !!! danger "Raak je APP_KEY niet kwijt"
     Als je `APP_KEY` kwijtraakt, zijn je versleutelde back-ups onherstelbaar. Bewaar het ergens veilig en gescheiden van de server. Zodra BombVault draait, gebruik je de **herstelkit voor de encryptiesleutel** met één klik (zie [Off-site en herstel](offsite-recovery.md)) om de volledige herstelbundel op te slaan.

@@ -49,7 +49,7 @@ BombVault jest warstwą orkiestracji i interfejsu, a nie silnikiem magazynu. Ca�
 
 Jesteś tu nowy? Przejdź do **[Pierwsze kroki](getting-started.md)**, aby zainstalować BombVault na Unraid przez Community Applications i uruchomić swoją pierwszą kopię zapasową. Następnie poznaj pełne **[Funkcje](features.md)**, dostrój swoją **[Konfigurację](configuration.md)** i skonfiguruj **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)**.
 
-Kopie poza siedzibą mogą rozgałęziać się na kilka celów per domena naraz, tylko do odczytu **panel odbiorcy** monitoruje te kopie na maszynie, która je otrzymuje, a całą swoją konfigurację możesz przenieść na nową maszynę za pomocą karty **Eksport i import ustawień**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md) oraz [Konfiguracja](configuration.md#portable-settings-export-and-import).
+Kopie poza siedzibą mogą rozgałęziać się na kilka celów per domena naraz, tylko do odczytu **panel odbiornika** monitoruje te kopie na maszynie, która je otrzymuje, a całą swoją konfigurację możesz przenieść na nową maszynę za pomocą karty **Eksport i import ustawień**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md) oraz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 
 ## Odnośniki
 

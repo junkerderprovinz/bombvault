@@ -54,7 +54,7 @@ Wygeneruj go na dowolnej maszynie:
 openssl rand -hex 32
 ```
 
-Wklej wynik do pola `APP_KEY` w szablonie.
+Wklej wynik do pola `APP_KEY` w szablonie (Unraid) albo do zmiennej środowiskowej `APP_KEY` w `docker-compose.yml` (zwykły host Docker).
 
 !!! danger "Nie zgub swojego APP_KEY"
     Utrata `APP_KEY` sprawia, że zaszyfrowane kopie zapasowe stają się nieodzyskiwalne. Przechowuj go w bezpiecznym miejscu, oddzielnie od serwera. Gdy BombVault już działa, użyj jego funkcji **zestaw odzyskiwania klucza szyfrowania** dostępnej za jednym kliknięciem (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)), aby zapisać pełny pakiet odzyskiwania.

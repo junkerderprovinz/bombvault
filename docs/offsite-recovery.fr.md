@@ -4,7 +4,7 @@ Les sauvegardes locales vous protègent d'un conteneur perdu ou d'une mauvaise m
 
 ## Réplication hors site
 
-Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans la page **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Le dépôt local reste principal.
+Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans la page **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Sous cette forme, le dépôt local reste primaire et le dépôt hors site en est un réplica, mais le dépôt primaire d'un domaine n'a pas du tout besoin d'être local ; voir [Dépôts primaires distants](#remote-primary-repositories) ci-dessous pour sauvegarder directement vers S3, rest-server, etc. au lieu d'y répliquer.
 
 - **Plusieurs cibles hors site par domaine.** Chaque domaine (conteneurs, VMs, flash, config, jeux de fichiers et jeux de données ZFS) peut répliquer vers plusieurs destinations hors site à la fois, pas seulement une, de sorte que vous pouvez garder, par exemple, un rest-server sur la machine d'un ami et un bucket S3 en parallèle. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance. Une configuration hors site unique existante est reprise intacte comme première cible, et chaque cible d'un domaine réplique selon le planning hors site de ce domaine.
 - **Planning hors site par domaine** (édité aux côtés de tous les autres plannings dans Paramètres, Plannings) : laissez-le vide pour répliquer après chaque sauvegarde locale, ou définissez une cadence (par exemple `weekly Sun 03:00`) pour expédier hors site moins souvent que vous ne sauvegardez localement. Un bouton **Répliquer maintenant** couvre les exécutions à la demande.
@@ -32,6 +32,14 @@ Rien de tout cela n'est obligatoire : un chemin distant saisi à la main, sans r
 
 !!! note "Les identifiants cloud et REST sont partagés"
     Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Accès cloud, Identifiants cloud partagés. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
+
+### SMB et WebDAV sans montage sur l'hôte {#smb-webdav}
+
+Paramètres, Accès cloud, rclone propose un formulaire pour un partage Windows ou Samba et pour un serveur WebDAV (Nextcloud, ownCloud, SharePoint ou tout autre). Renseignez un nom court, l'hôte et le partage (SMB) ou l'URL et le type de serveur (WebDAV), l'utilisateur et le mot de passe, et BombVault écrit la section rclone pour vous. rclone masque lui-même le mot de passe avant qu'il soit enregistré ; ajouter une destination avec un nom qui existe déjà remplace cette section au lieu d'en ajouter une seconde.
+
+Le formulaire répond avec l'emplacement final, par exemple `rclone:nas:backups`. Mettez-le dans un Chemin de sauvegarde ou une destination hors site et ajoutez un sous-dossier si vous le souhaitez (`rclone:nas:backups/bombvault`). Le partage est le premier segment du chemin, il ne fait pas partie du nom.
+
+C'est une meilleure voie que de monter le partage sur Unraid : restic déconseille de garder un dépôt sur un partage CIFS monté, et ici rien n'est monté. NFS ne figure pas dans le formulaire, car ni restic ni rclone n'a de backend NFS ; pour NFS, montez l'export sur l'hôte et pointez-y un Chemin de sauvegarde.
 
 ## Hors site immuable (append-only)
 
@@ -152,7 +160,7 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 
 ### Restauration depuis un autre dépôt BombVault {#restore-from-another-bombvault-repo}
 
-Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. La fédération serveur-à-serveur en direct est explicitement hors du périmètre ; c'est un tirage ponctuel délibéré.
+Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. Cette carte ne sert qu'une fois : elle ouvre une session, restaure ce que vous choisissez et oublie l'autre instance. Si vous voulez plutôt un arrangement permanent, où cette machine récupère selon un planning les instantanés d'une autre instance dans son propre dépôt, c'est l'onglet **Rapatriement** de la page **Instances**.
 
 ## Kit de récupération de clé de chiffrement
 
@@ -165,6 +173,15 @@ Un clic télécharge la **clé maîtresse**, le **mot de passe restic dérivé**
 
 !!! warning "Le snapshot le plus récent n'est pas toujours celui à restaurer"
     Depuis restic 0.17, `restic snapshots` affiche la taille de chaque snapshot. Après une perte de données, le snapshot le plus récent peut être celui qui a été vidé : ne restaurez donc pas un snapshot beaucoup plus petit que les précédents. Après un rançongiciel, ce peut être le snapshot chiffré, de taille habituelle. Si BombVault tourne encore, consultez d'abord sa page **Anomalies** : elle indique la dernière bonne sauvegarde. Une restauration n'a besoin d'aucune donnée d'anomalie de BombVault, et la pause de rétention ne fait jamais que garder plus de snapshots.
+
+### Sceller le kit
+
+Si vous avez activé le chiffrement age pour les exports en clair (Paramètres), le kit est scellé lui aussi et se télécharge sous `bombvault-recovery-kit.md.age`. Il est en armure ASCII plutôt que binaire, c'est donc toujours du texte : le coller dans un gestionnaire de mots de passe ou l'imprimer fonctionne exactement comme avant, simplement son contenu est illisible sans votre clé.
+
+!!! warning "Ne rangez pas la clé age dans le kit"
+    Il vous faut votre clé age **privée** pour ouvrir un kit scellé. Gardez-la à un endroit qui ne dépend pas du kit lui-même, sinon vous aurez deux choses à récupérer au lieu d'une. Sceller le kit vaut la peine quand il est stocké à un endroit que vous ne contrôlez pas entièrement (un gestionnaire de mots de passe partagé, des notes dans le cloud, une impression au bureau) ; un kit dans votre propre coffre est déjà protégé par le coffre.
+
+    Avec le chiffrement activé et aucun destinataire utilisable configuré, le téléchargement est refusé d'emblée. BombVault ne se rabat jamais sur la remise de la clé maîtresse en clair.
 
 ### Si le kit n'est pas sous la main
 

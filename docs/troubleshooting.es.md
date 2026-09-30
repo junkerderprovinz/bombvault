@@ -33,7 +33,7 @@ Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contene
 
 ## Mi copia externa no ocurrió tras una copia
 
-La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba el calendario externo de ese dominio (Ajustes, Calendarios): un calendario en blanco replica tras cada copia local, mientras que una cadencia envía con menos frecuencia. Usa **Replicar ahora** en la página Externo para una ejecución bajo demanda, y observa el indicador de replicación en el Panel.
+La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba el calendario externo de ese dominio (Ajustes, Programaciones): un calendario en blanco replica tras cada copia local, mientras que una cadencia envía con menos frecuencia. Usa **Replicar ahora** en la página Externo para una ejecución bajo demanda, y observa el indicador de replicación en el Panel.
 
 ## Una restauración se abortó antes de empezar
 

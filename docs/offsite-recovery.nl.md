@@ -4,7 +4,7 @@ Lokale back-ups beschermen je tegen een verloren container of een slechte update
 
 ## Off-site replicatie
 
-Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel een repo per domein in op de pagina **Instellingen, Off-site**. BombVault repliceert nieuwe snapshots daarheen met `restic copy` op best-effort-basis, zodat een off-site hapering de lokale back-up nooit laat mislukken. De lokale repo blijft primair.
+Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel een repo per domein in op de pagina **Instellingen, Off-site**. BombVault repliceert nieuwe snapshots daarheen met `restic copy` op best-effort-basis, zodat een off-site hapering de lokale back-up nooit laat mislukken. In deze vorm blijft de lokale repo primair en is de off-site repo een replica, maar de primaire repo van een domein hoeft helemaal niet lokaal te zijn; zie [Externe primaire repositories](#remote-primary-repositories) hieronder om rechtstreeks naar S3, een rest-server enzovoort te back-uppen in plaats van ernaar te repliceren.
 
 - **Meerdere off-site doelen per domein.** Elk domein (containers, VM's, flash, config, bestandssets en ZFS-datasets) kan tegelijk naar meerdere off-site bestemmingen repliceren, niet slechts één, zodat je bijvoorbeeld een rest-server op de machine van een vriend en een S3-bucket parallel kunt houden. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget. Een bestaande enkele off-site setup wordt onaangeroerd overgenomen als het eerste doel, en elk doel van een domein repliceert op de off-site planning van dat domein.
 - **Off-site planning per domein** (bewerkt naast elke andere planning op Instellingen, Schema's): laat het leeg om na elke lokale back-up te repliceren, of stel een cadans in (bijvoorbeeld `weekly Sun 03:00`) om minder vaak off-site te sturen dan je lokaal back-upt. Een knop **Nu repliceren** dekt runs op aanvraag.
@@ -32,6 +32,14 @@ Niets hiervan is verplicht: een met de hand ingetypt extern pad zonder opgeslage
 
 !!! note "Cloud- en REST-inloggegevens worden gedeeld"
     Een extern primair repository meldt zich aan met dezelfde S3-/REST-inloggegevens die onder Instellingen, Cloudtoegang, Gedeelde cloud-inloggegevens staan. Een aparte opslag voor inloggegevens van primaire repositories bestaat niet.
+
+### SMB en WebDAV zonder host-mount {#smb-webdav}
+
+Instellingen, Cloudtoegang, rclone heeft een formulier voor een Windows- of Samba-share en voor een WebDAV-server (Nextcloud, ownCloud, SharePoint of een andere). Vul een korte naam in, de host en share (SMB) of de URL en het servertype (WebDAV), de gebruiker en het wachtwoord, en BombVault schrijft de rclone-sectie voor je. rclone versluiert het wachtwoord zelf voordat het wordt opgeslagen; een bestemming toevoegen met een naam die al bestaat, vervangt die sectie in plaats van een tweede toe te voegen.
+
+Het formulier antwoordt met de kant-en-klare locatie, bijvoorbeeld `rclone:nas:backups`. Zet die in een back-uppad of een off-sitebestemming en voeg een submap toe als je die wilt (`rclone:nas:backups/bombvault`). De share is het eerste padsegment, geen deel van de naam.
+
+Dit is een betere route dan de share op Unraid te mounten: restic raadt af een repository op een gemounte CIFS-share te houden, en hier wordt niets gemount. NFS staat niet in het formulier, omdat restic noch rclone een NFS-backend heeft; mount voor NFS de export op de host en wijs er een back-uppad naar.
 
 ## Onveranderlijk (append-only) off-site
 
@@ -152,7 +160,7 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 
 ### Herstellen vanuit een andere BombVault-repo {#restore-from-another-bombvault-repo}
 
-Een aparte kaart op het tabblad **Herstel** opent de repo van een *andere* BombVault-instantie (een share gemount onder `/mnt`, of een remote URL) met **de `APP_KEY` van die instantie**, in een eenmalige, alleen-lezen sessie. Blader door de containers, VM's en bestandssets die daar zijn opgeslagen, kies een snapshot en herstel hem, en het herstelde object wordt een normale lokale container, VM of bestandsset. Er wordt nooit iets naar de andere repo geschreven, en je eigen back-upinstellingen blijven onaangeroerd (de sessie leeft in het geheugen en verloopt vanzelf). Een container van server A naar server B verplaatsen betekent niet langer je repo-instellingen omleiden en die achteraf terugdraaien. Live server-naar-server-federatie valt uitdrukkelijk buiten het bereik; dit is een bewuste eenmalige pull.
+Een aparte kaart op het tabblad **Herstel** opent de repo van een *andere* BombVault-instantie (een share gemount onder `/mnt`, of een remote URL) met **de `APP_KEY` van die instantie**, in een eenmalige, alleen-lezen sessie. Blader door de containers, VM's en bestandssets die daar zijn opgeslagen, kies een snapshot en herstel hem, en het herstelde object wordt een normale lokale container, VM of bestandsset. Er wordt nooit iets naar de andere repo geschreven, en je eigen back-upinstellingen blijven onaangeroerd (de sessie leeft in het geheugen en verloopt vanzelf). Een container van server A naar server B verplaatsen betekent niet langer je repo-instellingen omleiden en die achteraf terugdraaien. Deze kaart is eenmalig: ze opent een sessie, herstelt wat je kiest en vergeet de andere instantie. Wil je in plaats daarvan een vaste regeling, waarbij deze machine volgens een planning de snapshots van een andere instantie in haar eigen repository ophaalt, dan is dat het tabblad **Ophalen** van de pagina **Instanties**.
 
 ## Herstelkit voor de encryptiesleutel
 
@@ -165,6 +173,15 @@ Eén klik downloadt de **hoofdsleutel**, het **afgeleide restic-wachtwoord** en 
 
 !!! warning "De nieuwste snapshot is niet altijd de juiste om te herstellen"
     Sinds restic 0.17 toont `restic snapshots` de grootte van elke snapshot. Na dataverlies kan de nieuwste snapshot de leeggemaakte zijn, dus herstel geen snapshot die veel kleiner is dan de vorige. Na ransomware kan het de versleutelde zijn, met de gebruikelijke grootte. Draait BombVault nog, kijk dan eerst op de pagina **Anomalieën**: die noemt de laatste goede back-up. Een herstel heeft geen anomaliegegevens van BombVault nodig, en de retentiepauze bewaart alleen maar meer snapshots.
+
+### De kit verzegelen
+
+Als je age-versleuteling voor de platte exports hebt aangezet (Instellingen), wordt de kit daar ook mee verzegeld en gedownload als `bombvault-recovery-kit.md.age`. Hij is ASCII-armored in plaats van binair, dus het blijft platte tekst: in een wachtwoordmanager plakken of afdrukken werkt precies als voorheen, alleen is de inhoud zonder je sleutel onleesbaar.
+
+!!! warning "Bewaar de age-sleutel niet in de kit"
+    Je hebt je **privé**-age-sleutel nodig om een verzegelde kit te openen. Bewaar die ergens waar hij niet van de kit zelf afhangt, anders heb je twee dingen te herstellen in plaats van één. Verzegelen loont als de kit ergens ligt waar je niet volledig zelf over gaat (een gedeelde wachtwoordmanager, notities in de cloud, een afdruk op kantoor); een kit in je eigen kluis wordt al door de kluis beschermd.
+
+    Met versleuteling aan en geen bruikbare ontvanger ingesteld wordt de download volledig geweigerd. BombVault geeft de hoofdsleutel nooit alsnog onversleuteld af.
 
 ### Als het pakket niet bij de hand is
 
