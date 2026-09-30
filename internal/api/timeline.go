@@ -559,8 +559,8 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 		if len(ids) == 0 {
 			continue
 		}
-		s.unlockStale(ctx, p.repo, p.mode)
-		if err := s.engine.Forget(ctx, p.repo, ids, false, p.mode); err != nil {
+		forget := func() error { return s.engine.Forget(ctx, p.repo, ids, false, p.mode) }
+		if err := s.retryAfterUnlock(ctx, p.repo, p.mode, forget); err != nil {
 			return deleted, skipped, fmt.Errorf("delete at %s: %w", cmp.Or(p.Label, "the item's location"), err)
 		}
 		deleted = append(deleted, placeDelete{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf, SnapshotIDs: ids})

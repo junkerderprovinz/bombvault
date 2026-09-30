@@ -255,3 +255,38 @@ func TestAStreamIntoARemoteRepositoryClearsStaleLocksFirst(t *testing.T) {
 		t.Fatalf("calls at the direct repository = %v, want the unlock before the one backup", got)
 	}
 }
+
+func TestDeletingARowAtATargetUnlocksOnlyWhenALockIsInTheWay(t *testing.T) {
+	for _, want := range []struct {
+		locked           bool
+		forgets, unlocks int
+	}{{false, 1, 0}, {true, 2, 1}} {
+		f, b2 := nginxAtHomeAndB2(t)
+		c := countCalls(f)
+		c.lockedOnce["forget"] = want.locked
+		place := []placeDelete{{Place: offsiteSourcePrefix + b2.ID, SnapshotIDs: []string{"b1b1b1b1"}}}
+		if _, _, err := f.svc.timelineDelete(context.Background(), "containers", "nginx", "a1a1a1a1", place); err != nil {
+			t.Fatal(err)
+		}
+		if got := c.at(b2.Repo); got["forget"] != want.forgets || got["unlock"] != want.unlocks {
+			t.Fatalf("locked=%v: calls at B2 = %v, want %d forget and %d unlock", want.locked, got, want.forgets, want.unlocks)
+		}
+	}
+}
+
+func TestDeletingASnapshotAtATargetUnlocksOnlyWhenALockIsInTheWay(t *testing.T) {
+	for _, want := range []struct {
+		locked           bool
+		forgets, unlocks int
+	}{{false, 1, 0}, {true, 2, 1}} {
+		f, b2 := nginxAtHomeAndB2(t)
+		c := countCalls(f)
+		c.lockedOnce["forget"] = want.locked
+		if err := f.svc.DeleteSnapshot(context.Background(), "containers", "b1b1b1b1", offsiteSourcePrefix+b2.ID); err != nil {
+			t.Fatal(err)
+		}
+		if got := c.at(b2.Repo); got["forget"] != want.forgets || got["unlock"] != want.unlocks {
+			t.Fatalf("locked=%v: calls at B2 = %v, want %d forget and %d unlock", want.locked, got, want.forgets, want.unlocks)
+		}
+	}
+}

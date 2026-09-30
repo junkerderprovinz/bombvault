@@ -16719,10 +16719,10 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic
-// forget, no prune — fast). The space is reclaimed later by PruneDomain, so
+// forget without prune, which is fast). The space is reclaimed later by PruneDomain, so
 // deleting several snapshots then pruning once is far cheaper than pruning per
-// delete. The snapshot id is validated (arg-injection guard) and stale locks are
-// cleared first.
+// delete. The snapshot id is validated (arg-injection guard), and stale locks are
+// cleared when one is in the way.
 func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source string) error {
 	if !backup.ValidSnapshotID(snapshotID) {
 		return backup.ErrInvalidSnapshotID
@@ -16778,8 +16778,9 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	if f := s.primaryAppendOnly(domain, repo); !isOffsiteSource(source) && f != appendOnlyNone {
 		return appendOnlyRefusal(f)
 	}
-	s.unlockStale(ctx, repo, mode)
-	return s.engine.Forget(ctx, repo, []string{snapshotID}, false, mode)
+	return s.retryAfterUnlock(ctx, repo, mode, func() error {
+		return s.engine.Forget(ctx, repo, []string{snapshotID}, false, mode)
+	})
 }
 
 // repoHoldingSnapshot finds which of a domain's repositories a snapshot id lives
