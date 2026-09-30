@@ -98,7 +98,7 @@ export function SaveBar({
   disabled = false,
 }: {
   state: SaveState;
-  /** Always null post-migration — see this component's header comment. */
+  /** Unused: save errors are reported as toasts. */
   error?: string | null;
   onSave: () => void;
   t: ReturnType<typeof useT>["t"];
@@ -119,40 +119,10 @@ export function SaveBar({
   );
 }
 
-// Accent preset swatches: DEFAULT_ACCENT_PRESETS (lib/accent.ts) now owns
-// both the hex values AND the persistence/reset shape — see that module's
-// own header comment. AccentCard/AccentPresetSwatch further down are the UI
-// half.
-
-// ---------------------------------------------------------------------------
-// Palette swatch — one editable colour in the rainbow palette editor
-// (GlimStone form-engine Phase 2, Task 1). Deliberately matches the existing
-// accent-preset swatches' own visual language above (a rounded-pill circle
-// showing the colour, a border) rather than introducing a new component
-// family: ColorPickerSwatch (the shared GlimStone-picker trigger — see its
-// own header comment) opens the same floating popover the Accent Card's
-// custom swatch below uses, pre-synced to this position's own value, instead
-// of a native <input type="color"> (a genuinely separate browser/OS window —
-// jdp: "kein eigenes Fenster welches sich öffnet"). `disabled` dims the
-// control on its OWN element (native `disabled` + `disabled:opacity-50`),
-// never via a wrapping container's opacity (rule 15 / this branch's own
-// established "dimmed via disabled, not opacity-on-container" fix from Phase
-// 1 Task 4) — ColorPickerSwatch's own `disabled` prop follows that same
-// contract.
-//
-// `rounded-pill`, not a hardcoded `rounded-full` (GlimStone follow-up pass,
-// live-review point 4): a literal `rounded-full` is a fixed 50% radius that
-// never moves, so this swatch (and the accent-preset swatches below) used to
-// stay a perfect circle no matter what shape the user picked in Settings —
-// the one pair of controls on this page that silently ignored the shape
-// engine. `rounded-pill` is the SAME token every pill-shaped Badge already
-// reads (Badge.tsx's shape="pill"/"circle" -> RADIUS_CLASSES.pill/circle),
-// and both swatches here are already fixed equal-width/-height boxes, so no
-// `aspect-square` is needed the way Badge's circle shape needs one — points
-// at var(--radius-pill), which index.css already varies per data-shape:
-// 9999px (round, a true circle), 0.3125rem (soft, a lightly rounded square),
-// 0 (square, a hard corner) — reactive with zero new CSS.
-// ---------------------------------------------------------------------------
+// PaletteSwatch is one editable colour in the rainbow palette editor. It opens
+// the shared colour popover instead of a native colour input, which would open
+// a separate OS window, and uses `rounded-pill` rather than `rounded-full` so
+// it follows the shape setting through var(--radius-pill).
 function PaletteSwatch({
   hex,
   index,
@@ -167,13 +137,8 @@ function PaletteSwatch({
   t: ReturnType<typeof useT>["t"];
 }) {
   const label = `${t("settings.rainbowPalette")} ${index + 1}`;
-  // h-8 w-8 (32px outer, 28px visible disc inside the 2px ring), not the
-  // h-7 w-7 this swatch used to be: the reset badge sharing this row is a
-  // square icon badge, and every square icon badge in the app is 32px
-  // (Badge.tsx, "ONE SIZE FOR SQUARE ICON BADGES"). The swatch follows the
-  // badge, not the other way round — jdp has twice reported this row when the
-  // two disagreed ("der Reset-Badge ist größer als die Farbfelder"), so they
-  // are kept equal by moving whichever side is NOT bound by the app-wide rule.
+  // h-8 w-8 matches the reset badge in the same row: every square icon badge
+  // in the app is 32px, so the swatch follows the badge.
   return (
     <ColorPickerSwatch
       value={hex}
@@ -192,18 +157,7 @@ function ReplicateNowButton({
 }: {
   domain: OffsiteDomain;
   t: ReturnType<typeof useT>["t"];
-  /** Offsite-tab card-split follow-up (jdp: "Die Buttons Verbindung testen,
-   *  Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
-   *  aufnehmen"): this button's own enclosing per-domain offsite Card's hue
-   *  position, the SAME value that Card's own `hueIndex` already got — not a
-   *  second independent value, matching every other "thread the enclosing
-   *  Card's own hueIndex straight through" call site in this file (e.g.
-   *  ContainersSection's CadenceBuilder). `tone="active"` below (not
-   *  "neutral", this button's old plain-grey identity) is what makes a
-   *  passed hueIndex actually visible — see Badge.tsx's own `hueOn` comment
-   *  for why "active" is the one non-heading tone `hueIndex` drives. Still
-   *  true after the icon-badge conversion above: `tone` only ever governed
-   *  the background wash, never the (now-neutral) glyph ink. */
+  /** Hue position of the enclosing domain card, so the button takes its colour. */
   hueIndex?: number;
 }) {
   const { push } = useToast();
@@ -224,7 +178,7 @@ function ReplicateNowButton({
     }
   }
   return (
-    // The label is the STABLE name; the running state rides in `title` and in
+    // The label is the stable name; the running state rides in `title` and in
     // the spinner. A label that changed to "Replicating…" mid-action would
     // resize the button while you look at it, which is what the width stages
     // exist to prevent (#178).
@@ -330,24 +284,11 @@ function ContainersSection({
   const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
 
   return (
-    // Live-review round 5 REVERSES the previous round's "Bei allen
-    // Zeitplanpicker Cards soll der Name raus... das ist redundant" removal
-    // (jdp: "Den Text in die Cardtitelbadges wieder einfügen, den habe ich
-    // nicht gemeint. Den 'Titeltext' aus der Zeitplancard entfernen" — put
-    // the heading BADGE text back; the duplicate jdp actually meant was the
-    // plain-text <legend> INSIDE CadenceBuilder, fixed there instead — see
-    // CadenceBuilder.tsx's own header comment for that half of this
-    // correction). `title` restored; `hint` stays alongside it exactly as
-    // every other title+hint Card in this file already composes both.
     <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
-      {/* Cadence row */}
       <ScheduleRow schedule={schedule} />
 
-      {/* Editable cadence builder. `hueIndex` passed straight through — the
-          SAME position this Card's own heading notch already got above, not
-          a second independent value — so the TimePicker inside picks up this
-          Card's own stable rainbow colour (Task 3, jdp: "Der Zeitpicker ist
-          nicht im Regenbogenmodus"; see CadenceBuilder's own hueIndex doc). */}
+      {/* The card's own hueIndex, so the time picker takes the card's colour
+          in rainbow mode. */}
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.containersSection")}
@@ -357,7 +298,6 @@ function ContainersSection({
         />
       </div>
 
-      {/* Member list */}
       {included.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("jobs.noContainersIncluded")}</p>
       ) : (
@@ -396,7 +336,6 @@ function ContainersSection({
   );
 }
 
-// Domain section — VMs (editable schedule)
 function VMsSection({
   settings,
   syncSchedules,
@@ -420,12 +359,10 @@ function VMsSection({
   const included = vms.filter((v) => v.includeInSchedule);
 
   return (
-    // See ContainersSection's own comment above — `title` restored, same
-    // Task 3 `hueIndex` threaded into CadenceBuilder below.
     <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
-      {/* The editor below stays visible and dimmed while the Containers
-          schedule owns this domain, because the cadence it shows still runs -
-          so the row says who owns it (see ScheduleRow's own `hint` doc). */}
+      {/* The editor stays visible and dimmed while the Containers schedule
+          owns this domain, because the cadence it shows still runs, so the row
+          says who owns it. */}
       <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
@@ -471,7 +408,6 @@ function VMsSection({
   );
 }
 
-// Domain section — Flash (editable schedule)
 function FlashSection({
   settings,
   syncSchedules,
@@ -491,7 +427,6 @@ function FlashSection({
     // jobs.flashScheduleHint says what a Flash backup covers: unlike
     // Containers, VMs, Folders and ZFS, Flash has no per-item list to show it.
     <Card title={t("jobs.flashSection")} hint={tLtr(t, "jobs.flashScheduleHint")} hueIndex={hueIndex}>
-      {/* Same synced-owner bubble as VMsSection above. */}
       <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
@@ -501,43 +436,14 @@ function FlashSection({
           onChange={onChange}
           hueIndex={hueIndex}
         />
-        {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — a
-            behavioural caveat ("this control looks live but silently does
-            nothing yet") someone hits while confused about why a saved
-            Flash schedule never runs, not a one-time "what does this do"
-            explainer. Same carve-out category as notify.healthchecksLifecycle
-            above (NotifyCard's own header comment).
-              Live-review round (jdp, Task 7 — "Wieso steht in der Flash
-            Zeitplan Card die Zeile mit dem Text 'Unraid Flash-
-            Konfiguration'? Kann das nicht weg?"): that was a SEPARATE
-            trailing "member row" below this paragraph (dot + name +
-            "planned" status, styled like a ContainersSection/VMsSection
-            member-list row) — removed outright, along with its now-orphaned
-            jobs.flashRow/jobs.flashPlanned keys, since Flash has no actual
-            per-item collection to list and the row conveyed nothing this
-            paragraph doesn't already say. The paragraph that stood here is
-            gone as well, and so is the carve-out that kept it. It read "the
-            Flash backup executor is not yet implemented in Phase 1, the
-            schedule is stored but not executed", and it had been false for
-            some time: main.go calls SetFlashJob at startup, the scheduler
-            runs it on the flash cadence, and the service does the work. It
-            told a user their boot drive was unprotected while it was being
-            backed up every night.
-            Worth keeping the reason it survived: this very comment argued
-            for it, citing a task description from back when it was true. A
-            caveat that outlives the thing it warned about is a lie with an
-            alibi - correct once, and nobody re-reads a sentence that already
-            has a justification written next to it. When a caveat's condition
-            is fixed, the caveat is part of the fix. */}
       </div>
     </Card>
   );
 }
 
-// Domain section — Files (editable schedule + per-set include list). Mirrors
-// VMsSection for the cadence and ContainersSection for the member list, except
-// the per-set "include in schedule" toggles PATCH each file set directly (the
-// same {enabled} flag the Files tab edits) — they are not part of the SaveBar.
+// FilesSection mirrors VMsSection for the cadence and ContainersSection for the
+// member list, except that each set's "include in schedule" toggle PATCHes the
+// set directly (the same {enabled} flag the Files page edits).
 function FilesSection({
   settings,
   syncSchedules,
@@ -549,32 +455,24 @@ function FilesSection({
   hueIndex,
 }: {
   settings: Settings;
-  /** #? — "Container-Zeitplan auch für VMs, Flash und Ordner verwenden"
-   *  (jdp, live-review): Folders now follows the same sync toggle VMs/Flash
-   *  already had, mirroring their exact pattern below (schedule resolves to
-   *  the Containers cadence while synced, its own CadenceBuilder disabled
-   *  meanwhile). Previously this section had no syncSchedules concept at
-   *  all and always used its own independent settings.filesSchedule. */
+  /** While synced, the section follows the Containers cadence and its own
+   *  editor is disabled, as for VMs and Flash. */
   syncSchedules: boolean;
   fileSets: FileSetView[];
   /** Whether per-item schedules are switched on (#199): the row's cadence
-   *  editor is hidden entirely while off, exactly as the container rows do it,
-   *  so nobody can set a cadence that the scheduler would then ignore. */
+   *  editor is hidden while off, as the container rows do it, so nobody can
+   *  set a cadence that the scheduler would then ignore. */
   perItem: boolean;
   onChange: (schedule: string) => void;
-  /** A toggle PATCHed a set — reload the list so the rows reflect the server. */
+  /** A toggle PATCHed a set; reload the list so the rows reflect the server. */
   onSetsChanged: () => void;
   t: ReturnType<typeof useT>["t"];
   hueIndex?: number;
 }) {
   const { push } = useToast();
   const schedule = syncSchedules ? settings.containersSchedule : settings.filesSchedule;
-  // Per-set toggle busy state, keyed by set id.
   const [busy, setBusy] = useState<Record<string, boolean>>({});
 
-  // GlimStone follow-up pass (v8.0.0): the persistent (never auto-cleared)
-  // error paragraph below is now a toast — a toggle failure is a one-shot
-  // completion notice like every other migrated site here.
   // Mirrors ContainersSection's setScheduleCadence: the PATCH carries only the
   // cadence, so an edit here cannot disturb the set's name, path or excludes,
   // and the list is reloaded because the server may have reloaded the scheduler.
@@ -598,10 +496,7 @@ function FilesSection({
   }
 
   return (
-    // See ContainersSection's own comment above — `title` restored, same
-    // Task 3 `hueIndex` threaded into CadenceBuilder below.
     <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
-      {/* Same synced-owner bubble as VMsSection above. */}
       <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
@@ -613,17 +508,14 @@ function FilesSection({
         />
       </div>
 
-      {/* Member list — every file set with its live include-in-schedule toggle. */}
       {fileSets.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("jobs.noFileSetsIncluded")}</p>
       ) : (
         <div className="flex flex-col gap-1 divide-y divide-carbon-border">
           {fileSets.map((s) => (
-            // #199 gave a folder set its own cadence, so the row grew a second
-            // line the way the container rows already had one. The layout
-            // follows ContainersSection exactly: the identifying row stays a
-            // single flex line, the override sits under it, and it appears only
-            // while the per-item-schedules toggle is on.
+            // Same layout as ContainersSection: the identifying row stays one
+            // flex line and the override (#199) sits under it while per-item
+            // schedules are on.
             <div key={s.id} className="flex flex-col gap-2 py-2 text-sm">
             <div className="flex items-center gap-3">
               <div
@@ -637,17 +529,8 @@ function FilesSection({
                   {s.path}
                 </span>
               )}
-              {/* No-empty-toggles audit (jdp): this row used to `hideLabel`
-                  with no visible caption anywhere in the row at all — worse
-                  than the Card-title-redundant pattern found elsewhere, since
-                  there wasn't even a duplicate label to point to, only the
-                  set's own NAME (which identifies the row, not what the
-                  switch does). Wrapped in the same `<label>` + sibling
-                  `<span>` shape FileSetEnabledToggle then
-                  used for a per-row switch: `hideLabel` stays on the bare
-                  Toggle (legitimate here — the caller right beside it now
-                  draws the same text), but the text is genuinely visible in
-                  the row, always, not just conveyed via aria-label. */}
+              {/* The set name identifies the row, not what the switch does,
+                  so the switch gets a visible caption beside it. */}
               <label className="flex items-center gap-2 shrink-0 cursor-pointer">
                 <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
                 <Toggle
@@ -659,13 +542,10 @@ function FilesSection({
                 />
               </label>
             </div>
-            {/* #199: the one line that says what actually happens to this set.
-                Rendered ALWAYS, not only under `perItem`, because the worst
-                outcome ("not backed up automatically") is reachable with the
-                per-item toggle off — that is what "Include in schedule" does
-                on its own, and it is exactly the state manilx put three of his
-                four folders into while believing Backup Everything still
-                covered them. */}
+            {/* Says what actually happens to this set (#199). Rendered even
+                with per-item schedules off, because "Include in schedule" on
+                its own can leave a set not backed up automatically while
+                users believe Backup Everything still covers it. */}
             <EffectiveScheduleLine effective={s.effectiveSchedule} />
             {perItem && (
               <ItemScheduleOverride
@@ -684,7 +564,7 @@ function FilesSection({
 
 // Domain section for ZFS, in the same shape as FilesSection: the cadence card
 // plus one row per item whose "include in schedule" toggle PATCHes the item
-// directly rather than going through a save bar.
+// directly.
 function ZFSSection({
   settings,
   syncSchedules,
@@ -800,9 +680,8 @@ export function EverythingSection({
 }) {
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed action toasts AND shakes its button. `key={shake}` remounts the
-  // badge so the CSS animation restarts on a repeat failure.
+  // A failed action toasts and shakes its button. `key={shake}` remounts the
+  // button so the CSS animation restarts on a repeat failure.
   const [shake, setShake] = useState(0);
 
   // The overlap this card warns about is only real when this cadence is on
@@ -820,7 +699,7 @@ export function EverythingSection({
   const overlapWarning = everythingOn && anyDomainOn;
 
   async function runNow() {
-    if (busy) return; // guard the in-flight window (badge also disables)
+    if (busy) return; // guard the in-flight window (the button also disables)
     setBusy(true);
     try {
       const res = await backupEverythingNow();
@@ -852,11 +731,8 @@ export function EverythingSection({
           onChange={(v) => update({ everythingSchedule: v })}
           hueIndex={hueIndex}
         />
-        {/* Conditional overlap warning — see this component's header for why
-            it is no longer permanent. Same markup as the tamper-schedule-
-            inactive warning further down: status amber on a plain readout
-            surface, which rule 5 keeps OUT of the accent/rainbow engine on
-            purpose (a status colour, not control chrome). */}
+        {/* Status amber on a plain surface, outside the accent and rainbow
+            engine: it is a status colour, not control chrome. */}
         {overlapWarning && (
           <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
             {t("settings.everythingDuplicateWarning")}
@@ -864,20 +740,14 @@ export function EverythingSection({
         )}
       </div>
       <div className="flex flex-col gap-2">
-        {/* The group label these two fields never had, carrying the
-            what-do-these-do explanation as an InfoBubble instead of the
-            permanent paragraph that used to sit here. `hooks.title`
-            ("Backup hooks") is an EXISTING key, already translated in all 42
-            locales, so this adds no new i18n surface. */}
         <span className="flex items-center gap-1 text-xs text-carbon-textSub">
           {t("hooks.title")}
           <InfoBubble tip={t("settings.everythingHooksHint")} />
         </span>
         {/* A stored hook is never echoed back, so the field arrives blank with
-            ...Set true. It then shows the same "already set" placeholder every
-            write-only secret field on this page uses, and a Remove badge, which
-            is the only way to actually delete one — a blank field means "keep"
-            on save. Both labels are existing keys, so this adds no new i18n. */}
+            ...Set true and shows the "already set" placeholder. A blank field
+            means "keep" on save, so the Remove badge is the only way to delete
+            a hook. */}
         <label className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
           <div className="flex items-center gap-2">
@@ -929,11 +799,6 @@ export function EverythingSection({
           </div>
         </label>
       </div>
-      {/* `justify-end` on the row rather than `ms-auto` on the badge: this
-          app's flush-right idiom is ms-auto only when the badge has a leading
-          sibling to push away from (Containers' BackupButton/ExportButton
-          pair), and there is none here — byte-identical to how Flash's and
-          Config's own backup-now cards do it. */}
       <div className="flex justify-end">
         <Button
           key={shake}
@@ -953,6 +818,12 @@ export function EverythingSection({
 }
 
 
+// keepRegistryAuths is what the server should store for the registries card:
+// untouched blank rows dropped, and a freshly typed token marked stored so the
+// field shows the kept placeholder once the save lands. `auths` and `rowIds`
+// are index-aligned. It answers for the payload only: applied to the visible
+// list, it would delete a row the user has just added whenever a save from
+// another field lands.
 export function keepRegistryAuths(
   auths: RegistryAuthEntry[],
   rowIds: string[]
@@ -974,17 +845,12 @@ export function keepRegistryAuths(
   };
 }
 
-// markRegistryTokensStored — what the SCREEN should show once a registry save
-// lands: EVERY row the user has, including the blank one they have only just
-// added, with a freshly typed token marked "stored" so that field switches to
-// its kept-placeholder. It is keepRegistryAuths' tokenSet half without the
-// filter, and the two are deliberately separate functions rather than one with
-// a flag: "what gets persisted" and "what stays under the cursor" are different
-// questions, and merging them is what made a save delete a row.
-//
-// A blank row leaves the screen when the user removes it or reloads the page —
-// nothing persisted it, so it does not come back. That is exactly what the
-// add-row badge's own comment already promised.
+// markRegistryTokensStored is what the screen shows once a registry save lands:
+// every row, including a blank one just added, with a freshly typed token
+// marked stored. It is keepRegistryAuths without the filter, kept as a separate
+// function because what gets persisted and what stays under the cursor are
+// different questions. A blank row leaves the screen when the user removes it
+// or reloads, since nothing persisted it.
 export function markRegistryTokensStored(
   auths: RegistryAuthEntry[]
 ): RegistryAuthEntry[] {
@@ -993,27 +859,6 @@ export function markRegistryTokensStored(
     tokenSet: a.tokenSet || a.token.trim() !== "",
   }));
 }
-// keepRegistryAuths — what the SERVER should store for the Image Cleanup &
-// Registries card: untouched blank rows dropped, and a freshly typed token
-// marked "stored" so the field shows the kept-placeholder once the save lands.
-// Pulled out as a standalone, exported function (no React, no `save()` side
-// effect) so it's directly unit-testable without mounting SettingsPage — same
-// "extract the pure decision, test it without a renderer" shape as isRemotePath
-// (PathModeSwitch.tsx) and Selector.tsx's own nextFocusIndex/rovedIndex.
-// `auths`/`rowIds` are always the SAME length and index-aligned by
-// construction (every mutation site keeps them in lockstep) — the caller
-// (saveRegistries below) passes the freshly computed pair rather than
-// letting this function read component state directly.
-//
-// It answers for the PAYLOAD only. What stays on SCREEN is
-// markRegistryTokensStored below, and keeping the two apart is the whole point:
-// this filter used to run only when the user clicked the card's Save button,
-// where "drop the blank rows" and "I am finished" meant the same thing. It now
-// runs from every keystroke-triggered save, and applying it to the visible list
-// deleted the row the user had just added and was about to fill in — a row
-// vanishing from under the cursor because a typo was being corrected two rows
-// up. A blank row is worth nothing to the server and everything to the person
-// typing into it.
 
 // bv-convention-exception: page-uses-page-shell: the rail stands beside the
 // page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
@@ -1028,8 +873,8 @@ export function SettingsPage() {
   const page: SettingsPageId = isSettingsPage(param) ? param : FALLBACK_PAGE;
   const location = useLocation();
   const { hash } = location;
-  // /settings alone names no page: a hash from the tabbed Settings page leads
-  // to the page holding that tab or card, otherwise the page opened last.
+  // /settings alone names no page: a legacy hash from an old link leads to the
+  // page holding that card, otherwise the page opened last.
   const redirect = isSettingsPage(param)
     ? null
     : param === undefined
@@ -1047,27 +892,22 @@ export function SettingsPage() {
   }
   useEffect(() => writeLastPage(page), [page]);
   const [settings, setSettings] = useState<Settings | null>(null);
-  // savedBaseline is the server's last-confirmed state. Every save persists its
-  // own fields merged onto THIS baseline (not the live, possibly-edited
-  // `settings`), so saving one field never silently commits another card's
-  // unsaved edits.
+  // savedBaseline is the server's last-confirmed state. Every save merges its
+  // own fields onto this baseline rather than the live `settings`, so saving
+  // one field never commits another card's unsaved edits.
   //
-  // A REF, not state, and that is load-bearing rather than an optimisation. The
-  // PUT is a FULL settings object, so a save's correctness depends on reading
-  // the newest confirmed baseline at the moment the request is built. A state
-  // value is frozen into the render that called save(), so two saves issued
-  // inside one request round-trip both built their object from the pre-first
-  // baseline and each overwrote the other's field with a stale value — the
-  // later response winning the whole object. The ref is read at send time, and
-  // queueSettingsWrite below makes sure "send time" is after the previous
+  // It is a ref, not state. The PUT carries the full settings object, so a save
+  // has to read the newest confirmed baseline when the request is built. A state
+  // value is frozen into the render that called save(), and two saves inside
+  // one round trip would each overwrite the other's field with a stale value.
+  // queueSettingsWrite below makes sure the ref is read after the previous
   // write has landed and moved it.
   const savedBaseline = useRef<Settings | null>(null);
-  // settingsWrites serializes every settings write this page makes: each save
-  // (and the settings import) runs after the previous one has finished, so a
-  // full-object PUT can never be built from a baseline another in-flight PUT is
-  // about to invalidate. It is a promise chain rather than a busy flag because
-  // nothing may be DROPPED — a debounced edit that arrives mid-flight has to
-  // land, just afterwards.
+  // settingsWrites serializes every settings write on this page (saves and the
+  // settings import), so a full-object PUT is never built from a baseline that
+  // another in-flight PUT is about to replace. It is a promise chain rather than
+  // a busy flag because no write may be dropped: a debounced edit that arrives
+  // mid-flight still has to land afterwards.
   const settingsWrites = useRef<Promise<unknown>>(Promise.resolve());
 
   function queueSettingsWrite<T>(run: () => Promise<T>): Promise<T> {
@@ -1081,17 +921,16 @@ export function SettingsPage() {
     return next;
   }
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
-  // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas",
-  // see internal/platform) — read-only host-environment info from GET
-  // /api/settings' sibling "platform" field. Defaults to "unraid" (matching
-  // the Go side's own nil-Platform default, platformFn()) so NotifyCard's
-  // mismatch banner (below) never flashes on before this loads.
+  // The detected or overridden platform.Kind ("unraid" | "generic" | "truenas")
+  // from the "platform" field next to the settings in GET /api/settings. It
+  // defaults to "unraid" like the Go side's platformFn(), so NotifyCard's
+  // mismatch banner does not flash on before this loads.
   const [platformKind, setPlatformKind] = useState<string>("unraid");
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Auth state for the Security card.
   const [authEnabled, setAuthEnabled] = useState(false);
-  // The second factor's state, and the minimum the SERVER enforces. The
+  // The second factor's state, and the minimum the server enforces. The
   // minimum is read rather than hard-coded so the field and the server can
   // never disagree about the number they both quote to the user.
   const [totpEnabled, setTotpEnabled] = useState(false);
@@ -1101,53 +940,24 @@ export function SettingsPage() {
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
   const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
-  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
-  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"), found by
-  // this same pass's own proactive sweep (not on the original finding list):
-  // handleSetPassword is one of the FOUR documented genuine hold-outs on
-  // manual Save (this function's own header comment) — its post-save failure
-  // already pushes a toast, but nothing ever bumped a shake nonce for the
-  // Save button. Same per-nonce mechanism as every other shake state on this
-  // page (see ToggleRow's own shakeNonce doc comment).
   const [pwSaveShake, setPwSaveShake] = useState(0);
   const revealPwNew = useReveal();
   const revealPwConfirm = useReveal();
   const revealMetricsToken = useReveal();
-  // Registry credentials are a per-row list (settings.registryAuths), and a
-  // hook can't be called inside that row's own .map() callback (Rules of
-  // Hooks — the call count would vary with the list length), so this is a
-  // plain record here at the top level instead of a useReveal() per row.
-  //
-  // Keyed by a STABLE per-row id (registryRowIds below), NOT by array index.
-  // Rows are removed/added by splicing settings.registryAuths, which shifts
-  // every later row's index — an index-keyed record would then misattribute
-  // a shifted-in row's slot to whatever reveal state the OLD occupant of that
-  // index left behind (reveal row 0, remove row 0 → the row that slides into
-  // index 0 renders already-revealed), and a freshly added row would inherit
-  // whatever stale flag already lived at its new index. That's a real
-  // secret-becomes-visible-without-being-asked-for bug, not just a cosmetic
-  // one, so this is worth the extra bookkeeping below to get right.
+  // Reveal state for the registry token rows. A hook cannot be called inside
+  // the rows' .map(), so this is one record at the top level, keyed by a stable
+  // row id rather than the array index: after a removal, an index key would
+  // show the row that slides into the slot already revealed, exposing a token
+  // nobody asked to see.
   const [registryTokenVisible, setRegistryTokenVisible] = useState<Record<string, boolean>>({});
-  // registryRowIds pairs 1:1 by index with settings.registryAuths, giving
-  // each row a client-only stable identity to key registryTokenVisible (and
-  // the row's React `key`) by — kept in lockstep at every place that changes
-  // the array's length/order (load, add, remove, and the Save handler's
-  // untouched-blank-row filter below). Deliberately NOT a field on the row
-  // objects themselves: Settings PUT uses a strict decoder
-  // (DisallowUnknownFields — internal/api/handlers.go) that must accept a
-  // round-tripped GET body, so an extra client-only field riding along on a
-  // spread entry would break every settings save, not just this card.
+  // registryRowIds pairs by index with settings.registryAuths and gives each
+  // row a client-only stable id for registryTokenVisible and the React key.
+  // Every change to the array's length or order updates both. It is not a
+  // field on the rows because the settings PUT decoder rejects unknown fields
+  // (DisallowUnknownFields in internal/api/handlers.go), which would break
+  // every settings save.
   const [registryRowIds, setRegistryRowIds] = useState<string[]>([]);
 
-  // Accent colour state now lives entirely inside the exported AccentCard
-  // component above (GlimStone follow-up pass, live-review round 6) — it
-  // was never read anywhere else in this function, so nothing here needs to
-  // track it any more.
-
-  // Shape state (GlimStone form-engine — shape engine, the one axis both
-  // prior GlimStone integration phases in this app deferred) — synced
-  // to/from localStorage via shape.ts, the same pattern the old accentHex
-  // state used before its move.
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
   // The hidden leaf follows the storm below: found and counted in this
   // screen's state, never in storage, so it is offered only while chosen or
@@ -1155,13 +965,8 @@ export function SettingsPage() {
   const [leafFound, setLeafFound] = useState(false);
   const leafClicks = useRef({ taps: 0 });
 
-  // Motion-intensity state (GlimStone motion-engine — the deliberate
-  // reversal of design-language.md's own prior "kein fünfter Nutzer-
-  // Schalter" decision, see lib/motion.ts's own header) — synced to/from
-  // localStorage via motion.ts, the identical pattern shape state above
-  // already uses.
   const [motion, setMotionLocal] = useState<MotionIntensity>(() => getMotionIntensity());
-  // GSS 1.17.0's hidden fourth level. Both of these are deliberately COMPONENT
+  // The storm is the hidden fourth motion level. Both of these are component
   // state: `stormFound` must not survive leaving this page (an egg that
   // changes behaviour has to be switchable back off, never a permanent picker
   // entry), and the click counter has nothing to remember past the gesture.
@@ -1171,16 +976,14 @@ export function SettingsPage() {
   // the storm above uses: `discoFound` is component state so a found egg is
   // not a permanent row, and the counter has nothing to remember once the
   // gesture completes. Unlike the storm's, this counter carries a timestamp,
-  // because its gesture is five turn-ONs of Rainbow Mode and somebody merely
+  // because its gesture is five turn-ons of Rainbow Mode and somebody merely
   // comparing the mode on and off would otherwise unlock it by accident.
   const [discoFound, setDiscoFound] = useState(false);
   const [disco, setDiscoLocal] = useState<boolean>(() => getDisco());
   const discoClicks = useRef({ taps: 0, last: 0 });
-  // #178: the three label modes, mirrored into local state so the selectors
-  // show the current choice; the controls themselves read through
-  // useLabelMode, which the labelModeChanged() call below wakes.
-  // renders one selector per CONTROL_AXES entry, so the mobile bottom bar's
-  // axis appears here the same way the other three do.
+  // The label modes (#178), mirrored into local state so the selectors show
+  // the current choice. The controls read through useLabelMode, which the
+  // labelModeChanged() call below wakes.
   const [labelModes, setLabelModes] = useState<Record<ControlAxis, LabelMode>>(() => ({
     buttons: getLabelMode("buttons"),
     sidebar: getLabelMode("sidebar"),
@@ -1188,11 +991,8 @@ export function SettingsPage() {
     bottombar: getLabelMode("bottombar"),
   }));
 
-  // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
-  // localStorage via appearance.ts, the same pattern as accentHex above.
-  // setRainbow() persists + applies + returns the new (validated) state in
-  // one call, so this only ever needs updating from that return value, never
-  // a second localStorage read.
+  // setRainbow() persists, applies and returns the validated state, so local
+  // state is updated from that return value rather than a second read.
   const [rainbow, setRainbowLocal] = useState<RainbowState>(() => getRainbow());
   function updateRainbow(patch: Partial<RainbowState>) {
     setRainbowLocal(setRainbow(patch));
@@ -1211,26 +1011,14 @@ export function SettingsPage() {
     if (discoTap(discoClicks.current, on, { now: Date.now() })) setDiscoFound(true);
   }
 
-  // Per-section save state
-  // Plain-export encryption / repository encryption (#28) — merged into one
-  // auto-save card (GlimStone follow-up round, merge B): no SaveBar reads
-  // these anymore, so only the setters survive, as the callback params
-  // autoSaveField/debouncedSave still require — same "only the setters are
-  // needed" shape as setDomSaveState/setDomSaveError above. Flash-zip-export's
-  // own save state moved out along with the feature itself — see
-  // FlashZipExportCard's own header comment for where it lives now.
+  // Save state per card. Only the setters are used, as the callbacks that
+  // autoSaveField and debouncedSave take.
   const [, setEncSaveState] = useState<SaveState>("idle");
   const [, setEncSaveError] = useState<string | null>(null);
-  // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
-  // answer when auth is off) — surfaced next to the download button.
+  // Recovery-kit download refusal (such as the fail-closed 403 "set a login
+  // password" answer when auth is off), shown next to the download button.
   const [kitError, setKitError] = useState<string | null>(null);
 
-  // Paths & off-site repo URLs — full-page Speichern-Button sweep: each field
-  // now debounce-auto-saves itself (see the Paths/Off-site copy Cards' own
-  // onChange handlers), so no SaveBar reads these anymore — only the setters
-  // survive, as debouncedSave/save's own callback params still require. Same
-  // "only the setters are needed" shape as setDomSaveState/setDomSaveError
-  // above.
   const [, setPathSaveState] = useState<SaveState>("idle");
   const [, setPathSaveError] = useState<string | null>(null);
   const [, setExportEncSaveState] = useState<SaveState>("idle");
@@ -1240,23 +1028,11 @@ export function SettingsPage() {
   // Which domain's guided off-site setup wizard is expanded (null = none).
   const [offsiteWizard, setOffsiteWizard] = useState<OffsiteDomain | null>(null);
 
-  // Domains card (#142 — auto-save, no Speichern button): each row now saves
-  // itself the instant it's clicked instead of batching into one SaveBar, so
-  // there is no single "is the card saving" state left to show — only
-  // setDomSaveState/setDomSaveError survive, as the two callback params the
-  // shared save() helper still requires; nothing reads the values back
-  // anymore. Same "only the setters are needed" shape as setTgtState/
-  // setTgtError above (see that comment for the full reasoning) — save()'s
-  // own toast already reports the outcome.
   const [, setDomSaveState] = useState<SaveState>("idle");
   const [, setDomSaveError] = useState<string | null>(null);
-  // Per-row busy flag (disables that ONE toggle while its own request is in
-  // flight) and shake-replay nonce (bumped on a rejected save so ToggleRow's
-  // `.glim-shake` plays once more even on a second consecutive failure of the
-  // SAME domain — see ToggleRow's shakeNonce doc comment). Both keyed by the
-  // Settings field name, mirroring IncludeToggle.tsx's own per-row `busy`
-  // state, adapted to a map since all 7 rows live inline in this one
-  // component rather than as separate IncludeToggle instances.
+  // Per-row busy flag and shake nonce for the domain toggles, keyed by Settings
+  // field name. The nonce is bumped on a rejected save so the shake plays again
+  // on a second consecutive failure of the same row.
   type DomainToggleKey =
     | "containersEnabled"
     | "vmsEnabled"
@@ -1271,17 +1047,11 @@ export function SettingsPage() {
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
 
-  // Same "only the setters are needed" shape as pathSaveState above — this
-  // retention grid's own SaveBar is gone too (each cell debounce-auto-saves).
   const [, setRetSaveState] = useState<SaveState>("idle");
   const [, setRetSaveError] = useState<string | null>(null);
 
-  // Image cleanup / Unraid update-status reconciliation / registries (#56,
-  // #116, #106) — merged into one auto-save card (GlimStone follow-up round,
-  // merge A): no SaveBar reads these anymore, so only the setters survive, as
-  // the callback params autoSaveField/saveRegistries still require — same
-  // "only the setters are needed" shape as setDomSaveState/setDomSaveError
-  // above (see that comment for the full reasoning).
+  // Image cleanup, Unraid update-status reconciliation and registries (#56,
+  // #116, #106).
   const [, setPruneSaveState] = useState<SaveState>("idle");
   const [, setPruneSaveError] = useState<string | null>(null);
   const [, setReconcileSaveState] = useState<SaveState>("idle");
@@ -1289,9 +1059,6 @@ export function SettingsPage() {
   const [, setRegistrySaveState] = useState<SaveState>("idle");
   const [, setRegistrySaveError] = useState<string | null>(null);
 
-  // Same "only the setters are needed" shape as pathSaveState above — every
-  // field below debounce/toggle-auto-saves itself now, so nothing reads
-  // these values back; save()'s own toast already reports the outcome.
   const [, setCacheSaveState] = useState<SaveState>("idle");
   const [, setCacheSaveError] = useState<string | null>(null);
   const [, setCoresSaveState] = useState<SaveState>("idle");
@@ -1306,25 +1073,21 @@ export function SettingsPage() {
   const [, setMetricsSaveState] = useState<SaveState>("idle");
   const [, setMetricsSaveError] = useState<string | null>(null);
 
-  // Weekly digest (notifications tab) — persisted via the shared
-  // baseline-merging save() (autoSaveToggle for the toggle, debouncedSave
-  // for the cadence).
+  // Weekly digest and overdue-backup watchdog on the notifications page.
   const [, setDigestSaveState] = useState<SaveState>("idle");
   const [, setDigestSaveError] = useState<string | null>(null);
 
-  // Overdue-backup watchdog (notifications tab) — same baseline-merging
-  // save() as the digest card above it (autoSaveToggle).
   const [, setWatchdogSaveState] = useState<SaveState>("idle");
   const [, setWatchdogSaveError] = useState<string | null>(null);
 
-  // Anomalies card (integrity tab): every field saves on its own through
+  // Anomalies card (integrity page): every field saves on its own through
   // autoSaveToggle, which puts the old value back when the save is refused.
   const [, setAnomalySaveState] = useState<SaveState>("idle");
   const [, setAnomalySaveError] = useState<string | null>(null);
 
-  // Schedules tab (migrated from the retired Plans page). The container list
-  // feeds the Containers schedule section's included-members list; syncSchedules
-  // applies the Containers cadence to VMs + Flash + Folders.
+  // Schedules page. The container list feeds the Containers section's member
+  // list; syncSchedules applies the Containers cadence to VMs, Flash, Folders
+  // and ZFS.
   const [containers, setContainers] = useState<Container[]>([]);
   // VMs feed the VMs schedule section's per-item override list (#121).
   const [vms, setVMs] = useState<VM[]>([]);
@@ -1333,34 +1096,10 @@ export function SettingsPage() {
   // ZFS items do the same for the ZFS schedule section.
   const [zfsItems, setZFSItems] = useState<ZFSDatasetView[]>([]);
   const [syncSchedules, setSyncSchedules] = useState(false);
-  // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
-  // live gespeichert werden"): this whole tab used to funnel every field
-  // (buildSchedulePatch, now gone — see scheduleField/autoSaveScheduleField
-  // below) into ONE bottom SaveBar keyed on this pair. No SaveBar reads them
-  // anymore — only the setters survive, as the callback params save()/
-  // debouncedSave still require. Same "only the setters are needed" shape as
-  // setDomSaveState/setDomSaveError above (see that comment for the full
-  // reasoning) — save()'s own toast already reports every outcome.
   const [, setSchedSaveState] = useState<SaveState>("idle");
   const [, setSchedSaveError] = useState<string | null>(null);
-  // Task 5's plain-boolean half of the schedules-tab auto-save conversion:
-  // perItemSchedules (Task 1's new ToggleRow), catchUpMissed (Missed
-  // schedules Card) and RestoreChecksSection's own drillsEnabled/
-  // offsiteDrillsEnabled — a dedicated key/map pair rather than widening
-  // MergedAutoSaveKey/mergedFieldBusy/mergedFieldShake above: that type and
-  // its two maps are named for, and documented against, the Paths & Storage
-  // merge specifically, and folding an unrelated tab's fields into it would
-  // make the name lie about what it covers. See autoSaveScheduleField below
-  // for the actual save function (same optimistic-flip + revert + shake
-  // shape as autoSaveField/toggleDomainEnabled).
-  //   restartHealthWait joined this union in the full-page Speichern-Button
-  // sweep (jdp, live review: "Die Speicher-Buttons sollen in allen Tabs weg.
-  // Überall soll es automatisch speichern.") — it was the one field left on
-  // this tab still batched into its own manual SaveBar (see the comment that
-  // used to sit on restartSaveState/-Error below, now removed along with
-  // that dead state). It genuinely belongs in THIS union, not a new one of
-  // its own: same tab, same "single discrete boolean" shape as the other
-  // four.
+  // The plain boolean fields of the schedules page, saved by
+  // autoSaveScheduleField below with their own busy and shake maps.
   type ScheduleBoolKey =
     | "perItemSchedules"
     | "catchUpMissed"
@@ -1372,47 +1111,35 @@ export function SettingsPage() {
   const [schedFieldShake, setSchedFieldShake] = useState<Partial<Record<ScheduleBoolKey, number>>>({});
   // The "sync" toggle itself isn't a Settings field (syncSchedules above is
   // local UI state derived from whether the domain schedules already match),
-  // so it can't go through autoSaveScheduleField's Settings-keyed generic —
-  // see handleSyncSchedulesToggle below for its own dedicated busy/shake pair.
+  // so it cannot go through autoSaveScheduleField; handleSyncSchedulesToggle
+  // below uses this busy/shake pair.
   const [syncToggleBusy, setSyncToggleBusy] = useState(false);
   const [syncToggleShake, setSyncToggleShake] = useState(0);
-  // The Self-Backup Card's own on/off ToggleRow (jdp, live-review: "Selbst-
-  // Backup-Zeitplan bitte mit Toggle für an/aus"). configSchedule is a
-  // cadence STRING, same as containersSchedule/vmsSchedule/etc — not one of
-  // autoSaveScheduleField's four plain ScheduleBoolKey booleans — so, like
-  // the sync toggle above, it gets its own dedicated busy/shake pair rather
-  // than widening that generic. See toggleConfigSchedule below.
+  // The self-backup card's on/off toggle. configSchedule is a cadence string,
+  // not a boolean, so like the sync toggle it gets its own busy/shake pair.
   const [configScheduleToggleBusy, setConfigScheduleToggleBusy] = useState(false);
   const [configScheduleToggleShake, setConfigScheduleToggleShake] = useState(0);
   // Remembers the cadence in force before the self-backup schedule was switched
-  // off, so switching it back on restores THAT instead of the shipped
-  // daily-at-02:00 default. Same shape and same reason as the
-  // FlashZipExportCard's rememberedKeep, which this toggle was missing: OFF
-  // writes the literal "off" over the stored string, so a "weekly Sun 04:00" the
-  // user had chosen existed nowhere afterwards and came back as a daily.
+  // off, so switching it back on restores that instead of the shipped daily
+  // 02:00 default: off writes the literal "off" over the stored string.
   //
-  // Its reach is this page's lifetime, exactly like rememberedKeep's. The server
-  // stores one cadence string per domain, so once "off" is saved the previous
-  // value is genuinely gone and a reload cannot bring it back. Covering that
-  // would take a second persisted field, i.e. a second source of truth for the
-  // same fact, which is what toggleConfigSchedule's own comment rules out.
+  // Like FlashZipExportCard's rememberedKeep, it lasts for this page's
+  // lifetime. The server stores one cadence string per domain, so a reload
+  // cannot bring the old value back, and covering that would take a second
+  // persisted field, a second source of truth for the same fact.
   const [rememberedConfigSchedule, setRememberedConfigSchedule] = useState("daily 02:00");
 
-  // installSettings adopts a settings object the server just handed us as BOTH
-  // the live state and the confirmed baseline, and re-derives the page state
-  // that is computed from it. It is used by the mount load AND by the reload
-  // after a settings import — the import replaces the whole configuration, so
-  // the page has to adopt it exactly the way a fresh load would.
+  // installSettings adopts a settings object from the server as both the live
+  // state and the confirmed baseline, and re-derives the page state computed
+  // from it. The mount load and the reload after a settings import both use
+  // it, since an import replaces the whole configuration.
   function installSettings(s: Settings) {
     setSettings(s);
     savedBaseline.current = s;
-    // Give every loaded registry row a stable client-only id (see
-    // registryRowIds' declaration above) — a fresh GET never carries one of
-    // its own, so one is minted here, once, per row. randomId() rather than
-    // crypto.randomUUID(): the latter is secure-context-only and would throw
-    // on BombVault's documented plain-HTTP origin, and a throw inside the
-    // mount load lands in that promise's .catch — killing the whole Settings
-    // page, not just this card (see lib/uuid.ts).
+    // A fresh GET carries no row ids, so one is minted per registry row here.
+    // randomId() rather than crypto.randomUUID(): the latter needs a secure
+    // context and would throw on a plain-HTTP origin, and a throw inside the
+    // mount load would take down the whole page (see lib/uuid.ts).
     setRegistryRowIds(s.registryAuths.map(() => randomId()));
     // The sync toggle reads as on only when Containers, VMs, Flash, Folders
     // and ZFS already share one cadence that is not off. A domain that differs
@@ -1441,7 +1168,6 @@ export function SettingsPage() {
       })
       .catch(() => setLoadError("Failed to load settings"));
 
-    // Load auth status for the Security card.
     getAuth()
       .then((res) => {
         setAuthEnabled(res.enabled);
@@ -1453,8 +1179,6 @@ export function SettingsPage() {
         // Non-fatal: Security card shows auth as off.
       });
 
-    // Load the container list for the Schedules tab's Containers section (its
-    // included-members list). Non-fatal: an empty list just shows no members.
     listContainers()
       .then((r) => {
         if (r.ok) setContainers(r.containers ?? []);
@@ -1463,7 +1187,7 @@ export function SettingsPage() {
         // Non-fatal: the Containers schedule section shows an empty member list.
       });
 
-    // Load the VM list for the Schedules tab's VMs section per-item overrides (#121).
+    // The VM list for the per-item overrides (#121).
     listVMs()
       .then((r) => {
         if (r.ok) setVMs(r.vms ?? []);
@@ -1472,13 +1196,12 @@ export function SettingsPage() {
         // Non-fatal: the VMs schedule section shows an empty per-item list.
       });
 
-    // Load the file sets for the Schedules tab's Files section. Non-fatal too.
     loadFileSets();
     loadZFSItems();
   }, []);
 
-  // loadFileSets (re)fetches the file-set list — on mount and after a Files
-  // section toggle PATCHes a set, so the member rows track the server state.
+  // loadFileSets runs on mount and after a Files section toggle PATCHes a set,
+  // so the member rows track the server state.
   function loadFileSets() {
     listFileSets()
       .then((r) => {
@@ -1529,18 +1252,12 @@ export function SettingsPage() {
     document.getElementById("bv-main")?.scrollTo?.({ top: 0 });
   }, [location, hash, settingsLoaded, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // While "sync" is on, mirror the Containers cadence onto VMs + Flash +
-  // Folders (Task 2 — "der toggle soll auch ordner einschließen") in live
-  // state (not just in the save patch), so unchecking sync doesn't snap
-  // those editors back to stale pre-sync values. The equality guard stops
-  // re-renders from looping. Reproduced from the retired Plans page, with
-  // filesSchedule folded in alongside the original vms/flash pair, and a
-  // Task 5 auto-save persist: editing the Containers cadence WHILE synced
-  // (e.g. typing in its cron field) used to only ever update local state,
-  // relying on the bottom SaveBar to persist the mirrored fields later — now
-  // debouncedSave (keyed "schedSync", independent of containersSchedule's
-  // own "containersSchedule" debounce key below) coalesces rapid edits into
-  // one PATCH of the three mirrored fields, 800ms after the last change.
+  // While sync is on, mirror the Containers cadence onto VMs, Flash, Folders
+  // and ZFS in live state, not only in the saved patch, so turning sync off
+  // does not snap those editors back to stale values. The equality guard stops
+  // the effect from looping. debouncedSave (keyed "schedSync", separate from
+  // the containersSchedule key) coalesces rapid edits into one PATCH of the
+  // mirrored fields.
   useEffect(() => {
     if (!syncSchedules || !settings) return;
     const merged = settings.containersSchedule;
@@ -1567,60 +1284,31 @@ export function SettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncSchedules, settings?.containersSchedule]);
 
-  // ---------------------------------------------------------------------------
-  // Generic save helper
-  // ---------------------------------------------------------------------------
-
-  // fieldPulse — GlimStone motion-engine, animation 2 (confirmation-pulse).
-  // ONE shared map, keyed by Settings field name, covering every save() call
-  // site at once (the same leverage this function's own header comment below
-  // already describes for the toast/state-reset migration) — a ToggleRow
-  // call site simply reads `fieldPulse.someKey` and passes it straight
-  // through as `pulseNonce`, the exact same shape `domainToggleShake`/
-  // `mergedFieldShake`/`fieldShake`/`schedFieldShake` already use for
-  // `shakeNonce`, just bumped on the OPPOSITE outcome. Bumped for every key
-  // in a successful patch, not just boolean/ToggleRow ones — a text/number
-  // field's own entry here is simply never read by anything today, which is
-  // harmless (this map costs nothing per unread key) and means a FUTURE
-  // ToggleRow-backed field needs no new plumbing here to get the pulse, only
-  // its own call site threading `pulseNonce={fieldPulse.thatKey}` through —
-  // exactly the "wired once, works everywhere" outcome the standing
-  // colour-engine rule asks for, applied to motion instead of colour.
+  // fieldPulse holds a confirmation-pulse nonce per Settings field, bumped for
+  // every key of a successful patch: a ToggleRow passes `fieldPulse.someKey`
+  // as `pulseNonce`, the success counterpart of the shake nonces. Keys nobody
+  // reads cost nothing, so a new toggle gets the pulse without new plumbing.
   const [fieldPulse, setFieldPulse] = useState<Partial<Record<keyof Settings, number>>>({});
 
-  // save persists one card's fields and returns true ONLY when the server confirmed
-  // the write. Callers that gate a follow-up action on a confirmed save (e.g. the
-  // off-site immutable toggle, which must not run a tamper test on a failed save)
-  // await the boolean; fire-and-forget callers can still ignore it via `void`.
+  // save persists one card's fields and returns true only when the server
+  // confirmed the write. Callers that gate a follow-up on a confirmed save
+  // (such as the off-site immutable toggle, which must not run a tamper test on
+  // a failed save) await the boolean; others ignore it with `void`. Both
+  // outcomes are reported as toasts, and setSaveError is always cleared.
   //
-  // GlimStone follow-up pass (v8.0.0): this is the ~21-site "SaveBar" chokepoint
-  // Task 9 deliberately left alone (see lib/toast.tsx's own header comment) —
-  // every card's Save button funnels through this ONE function (directly, or via
-  // the `save` prop threaded into FleetSettingsCard/IntegrityCard/etc.), so
-  // migrating it here migrates every one of those call sites at once, the same
-  // way handleSetPassword/ConfigSettingsCard already did for their own single
-  // completion notice. The 3000ms "saved"/"error" inline flash is gone — both
-  // outcomes go through push() instead, and the state resets straight back to
-  // "idle" (mirrors handleSetPassword's own pattern above). `setSaveError` is
-  // still threaded through and always cleared to null: removing the parameter
-  // would touch all ~21 call sites' signatures for zero behavioural gain (it was
-  // only ever read by the now-deleted flash), so it stays as a harmless, always-
-  // null vestige rather than a wide, risk-for-no-reason signature change.
-  // Every save goes through queueSettingsWrite, so the object below is built
-  // from a baseline no other in-flight write is about to change. Without that,
-  // two saves issued inside one round-trip — which is the NORMAL case now that
-  // every field auto-saves, e.g. editing the Containers cadence while "sync" is
-  // on arms two 800ms debounces one render apart — each sent the other's field
-  // at its pre-edit value, and whichever response landed last won the whole
-  // object. The UI showed both edits; the server kept one.
+  // Every save goes through queueSettingsWrite, so the object is built from a
+  // baseline no other in-flight write is about to change. With auto-save, two
+  // saves inside one round trip are the normal case (editing the Containers
+  // cadence while sync is on arms two debounces one render apart), and without
+  // the queue each would send the other's field at its old value, so the
+  // server would keep only one of two edits the screen shows.
   //
-  // `echo` is for the one case where what the SERVER stores and what the SCREEN
-  // shows are deliberately different objects: the caller passes a function that
-  // is handed the LIVE settings at the moment the response lands and returns
-  // what the screen should keep instead of the patch's own value. It has to be
-  // a function, not a second object, because the round-trip is a window the user
-  // keeps typing in — anything computed at send time is already stale by the
-  // time it would be applied. Only saveRegistries needs it (see there).
+  // `echo` is for the case where what the server stores and what the screen
+  // shows differ: it is handed the live settings when the response lands and
+  // returns what the screen keeps instead of the patch's value. It is a
+  // function rather than a second object because the user keeps typing during
+  // the round trip, so anything computed at send time would be stale. Only
+  // saveRegistries uses it.
   async function save(
     patch: Partial<Settings>,
     setSaveState: (s: SaveState) => void,
@@ -1636,14 +1324,14 @@ export function SettingsPage() {
     setSaveError: (e: string | null) => void,
     echo?: (live: Settings) => Partial<Settings>
   ): Promise<boolean> {
-    // Read at SEND time, not at call time: the previous write in the queue has
+    // Read at send time, not at call time: the previous write in the queue has
     // already advanced this ref by the time we get here.
     const base = savedBaseline.current ?? settings;
     if (!base) return false;
     setSaveState("saving");
     setSaveError(null);
-    // Persist ONLY this card's fields, merged onto the server baseline — never the
-    // live `settings`, which may hold unsaved edits from other cards.
+    // Persist only this card's fields, merged onto the server baseline rather
+    // than the live `settings`, which may hold unsaved edits from other cards.
     const updated: Settings = { ...base, ...patch };
     try {
       const res = await putSettings(updated);
@@ -1655,10 +1343,6 @@ export function SettingsPage() {
           prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : updated
         );
         setSaveState("idle");
-        // Confirmation-pulse (GlimStone motion-engine animation 2) — bump
-        // every key in THIS patch, not just the ones a ToggleRow happens to
-        // read; see fieldPulse's own declaration comment above for why that
-        // is deliberate rather than wasteful.
         setFieldPulse((p) => {
           const next = { ...p };
           for (const key of Object.keys(patch) as (keyof Settings)[]) {
@@ -1666,8 +1350,8 @@ export function SettingsPage() {
           }
           return next;
         });
-        // Tell the Layout/Sidebar to refetch so a newly enabled/disabled domain
-        // tab appears or vanishes immediately — no page reload needed.
+        // Layout and Sidebar refetch, so a domain that was just enabled or
+        // disabled appears or vanishes without a reload.
         window.dispatchEvent(new Event("bv:settings-changed"));
         push(t("settings.saved"), "success");
         return true;
@@ -1682,23 +1366,11 @@ export function SettingsPage() {
     }
   }
 
-  // toggleDomainEnabled (#142 — "Bei Domänen der Speichern-Button entfernen, es
-  // soll automatisch speichern"): each Domains-card row saves ITSELF the instant
-  // it's clicked, mirroring OffsiteWizard.tsx's toggleImmutable — the one other
-  // place in this app already does "flip a single boolean settings field the
-  // moment its switch is touched, no batching Save button": optimistic
-  // setSettings flip, then the shared save() helper above (which already
-  // merges onto the confirmed baseline, persists, dispatches
-  // "bv:settings-changed" so Layout/Sidebar re-fetch and the tab appears/
-  // disappears live, and pushes the toast) — never a new persistence path.
-  //
-  // A rejected save (e.g. enabling VMs with no working SSH connection to the
-  // libvirt host — internal/api/handlers.go's handlePutSettings checks that
-  // OFF→ON transition specifically) rolls the optimistic flip back to
-  // whatever it was before this click and bumps this row's shake nonce so
-  // ToggleRow replays `.glim-shake` — generic by construction: it keys off
-  // `!ok`, not off which domain or why the backend refused, so ANY domain's
-  // enable failing for ANY reason gets the same revert + shake + toast.
+  // toggleDomainEnabled saves a domain row the moment it is clicked (#142): an
+  // optimistic flip, then the shared save(). A rejected save (such as enabling
+  // VMs without a working SSH connection to the libvirt host, which
+  // handlePutSettings checks on the off-to-on transition) rolls the flip back
+  // and bumps the row's shake nonce, whatever the domain or the reason.
   async function toggleDomainEnabled(key: DomainToggleKey, next: boolean) {
     const prev = settings?.[key];
     setSettings((s) => (s ? { ...s, [key]: next } : s));
@@ -1737,17 +1409,9 @@ export function SettingsPage() {
     await toggleDomainEnabled("dbDumpsEnabled", next);
   }
 
-  // autoSaveField (GlimStone follow-up round, Paths & Storage tab rework,
-  // merge A/B — "no Speichern button, every field auto-saves"): the SAME
-  // optimistic-flip + persist + revert-on-failure shape toggleDomainEnabled
-  // above already established, generalized from "one of 7 domain booleans"
-  // to any single Settings field the two merged cards' own toggles need.
-  // Busy/shake are keyed by field name, same map shape as
-  // domainToggleBusy/domainToggleShake above, just covering a different,
-  // smaller set of keys (the merged cards' own toggles, not the 7 domains).
-  // "flashZipExportEnabled"/"flashZipExportKeep" moved out of this union along
-  // with the feature itself — FlashZipExportCard now owns its own busy/shake
-  // state independently (see that component's own header comment).
+  // autoSaveField is toggleDomainEnabled's optimistic flip, save and revert for
+  // the toggles of the encryption and image-cleanup cards, with busy and shake
+  // keyed by field name.
   type MergedAutoSaveKey =
     | "pruneImageAfterUpdate"
     | "reconcileUnraidUpdateStatus"
@@ -1768,36 +1432,18 @@ export function SettingsPage() {
     const ok = await save({ [key]: next } as Partial<Settings>, setSaveState, setSaveError);
     setMergedFieldBusy((b) => ({ ...b, [key]: false }));
     if (!ok) {
-      // Roll back to the pre-click state; save() already pushed the reason —
-      // meaningful for a toggle (a boolean has an obvious "before" to revert
-      // to); the merged cards' free-text/number fields below use
-      // debouncedSave instead, which intentionally has no revert (see that
-      // function's own comment).
+      // Roll back to the pre-click state; save() already pushed the reason.
+      // Text and number fields use debouncedSave instead, which has no revert.
       setSettings((s) => (s ? { ...s, [key]: prev as Settings[K] } : s));
       setMergedFieldShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
     }
     return ok;
   }
 
-  // autoSaveToggle (full-page Speichern-Button sweep, jdp, live review,
-  // emphatic: "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll
-  // es automatisch speichern."): the SAME optimistic-flip + persist +
-  // revert-on-failure + shake shape as autoSaveField/toggleDomainEnabled/
-  // autoSaveScheduleField above, generalized ONE step further — those three
-  // each own a small, closed key union (MergedAutoSaveKey/DomainToggleKey/
-  // ScheduleBoolKey) because each covers a specific GROUP of related toggles
-  // on one shared Card/tab, worth naming as a set. This sweep's remaining
-  // holdouts (Monitoring's metricsEnabled, the Weekly-digest Card's
-  // digestEnabled, the Overdue-watchdog Card's watchdogEnabled) are three
-  // unrelated, standalone toggles on three different Cards across two
-  // different tabs — inventing a same-shaped one-member union per Card would
-  // just be MergedAutoSaveKey's own pattern copy-pasted three times for zero
-  // benefit, so this widens the generic to any boolean Settings key instead,
-  // with its own single shared busy/shake map keyed by field name (same
-  // "keyed by field name in one map" shape every other per-field map on this
-  // page already uses). Reach for one of the narrower, named unions above
-  // instead when a NEW group of related toggles arrives together; reach for
-  // this one for a standalone toggle that doesn't belong to any such group.
+  // autoSaveToggle is the same flip, save, revert and shake for any boolean
+  // Settings key, with one busy/shake map keyed by field name. The narrower
+  // unions above name a group of related toggles on one card; this one is for
+  // standalone toggles that belong to no such group.
   const [fieldBusy, setFieldBusy] = useState<Partial<Record<keyof Settings, boolean>>>({});
   const [fieldShake, setFieldShake] = useState<Partial<Record<keyof Settings, number>>>({});
 
@@ -1819,31 +1465,21 @@ export function SettingsPage() {
     return ok;
   }
 
-  // debouncedSave/cancelDebounce — the free-text/number half of the same
-  // merge A/B auto-save requirement: a registry host/username/token, a flash
-  // zip export path/keep-count, or the age recipients list would be wasteful
-  // (or outright annoying, mid-keystroke) to persist on every single change,
-  // so these fire `run` DELAY_MS after the last edit to the same `key`
-  // instead of immediately. Deliberately NO revert-on-failure here (unlike
-  // autoSaveField above) — save()'s own toast already reports a failure, and
-  // reverting a text field the user might still be actively typing into
-  // would be jarring rather than helpful; the value simply stays as typed
-  // and the next edit (or a page reload) gets another chance to save it.
-  // Keyed by a caller-chosen string (not a Settings field name) so ONE
-  // debounce line can cover several fields that only make sense saved
-  // together (e.g. every registry-row edit shares the "registryAuths" key,
-  // since they all resolve to the SAME registryAuths patch).
-  // Each entry keeps the pending WRITE next to its timer, not just the timer
-  // handle. That is what makes the edit recoverable: a debounce can then be
-  // completed early (flushDebounces) instead of only being cancelled, which is
-  // the difference between "the user's last edit is sent" and "it is gone".
+  // debouncedSave runs `run` DEBOUNCE_MS after the last edit to the same `key`,
+  // for text and number fields that should not be persisted on every
+  // keystroke. There is no revert on failure: save() toasts it, and reverting a
+  // field the user may still be typing into would fight them. The key is chosen
+  // by the caller, so one debounce can cover fields saved together (every
+  // registry row shares "registryAuths").
+  //
+  // Each entry keeps the pending write next to its timer, so a debounce can be
+  // completed early (flushDebounces) instead of only cancelled.
   type PendingWrite = { timer: ReturnType<typeof setTimeout>; run: () => void };
   const debounceTimers = useRef<Record<string, PendingWrite>>({});
   const DEBOUNCE_MS = 800;
-  // importing is true for the WHOLE import window — from the click that starts
-  // an import until its re-loaded configuration has been installed — not only
-  // for the stretch the import spends at the head of the write queue. See
-  // applyImportedSettings for what it protects.
+  // importing is true for the whole import window, from the click until the
+  // reloaded configuration is installed, not only while the import is at the
+  // head of the write queue. See applyImportedSettings for what it protects.
   const importing = useRef(false);
 
   function debouncedSave(key: string, run: () => void) {
@@ -1871,16 +1507,16 @@ export function SettingsPage() {
     }
   }
 
-  // flushDebounces sends every pending edit NOW instead of waiting out its
-  // remaining delay. Cancelling and flushing are opposites and the page needs
-  // both: an import replaces the configuration a pending edit was typed against,
-  // so that edit must be dropped (cancelAllDebounces); leaving the page does not
-  // invalidate anything, so those edits must be sent.
+  // flushDebounces sends every pending edit now instead of waiting out its
+  // delay. The page needs both this and cancelling: an import replaces the
+  // configuration a pending edit was typed against, so that edit is dropped
+  // (cancelAllDebounces); leaving the page invalidates nothing, so those edits
+  // are sent.
   //
-  // Entries are removed from the map before their write runs, so a flush can
-  // never double-send and a write that queues another edit is not re-collected.
-  // The map object itself is mutated in place, never replaced — see the unmount
-  // effect, which captures it.
+  // Entries are removed from the map before their write runs, so a flush never
+  // double-sends and a write that queues another edit is not re-collected. The
+  // map object is mutated in place, never replaced, because the unmount effect
+  // captures it.
   function flushDebounces() {
     for (const key of Object.keys(debounceTimers.current)) {
       const pending = debounceTimers.current[key];
@@ -1890,45 +1526,29 @@ export function SettingsPage() {
     }
   }
 
-  // cancelAllDebounces drops every pending edit that has not been sent yet.
-  // The one caller is the settings import: it replaces the whole configuration,
-  // so a debounce armed seconds earlier would land on top of the imported
-  // config with a value the user typed against the OLD one. It closes the first
-  // half of that window only — the `importing` guard above closes the rest.
+  // cancelAllDebounces drops every pending edit that has not been sent yet. Its
+  // only caller is the settings import: a debounce armed seconds earlier would
+  // land on top of the imported configuration with a value typed against the
+  // old one. The `importing` guard above covers the rest of that window.
   function cancelAllDebounces() {
     for (const key of Object.keys(debounceTimers.current)) cancelDebounce(key);
   }
 
-  // applyImportedSettings is the Import button's actual write. An import is a
-  // settings write like any other, so it joins the SAME queue every save uses
-  // and then re-loads the page from the server.
+  // applyImportedSettings is the Import button's write. It joins the same queue
+  // every save uses, so a save already in flight cannot land on the fresh
+  // configuration, and then reloads the page state from the server. Keeping the
+  // pre-import baseline would let the next click on any toggle PUT the whole
+  // pre-import object back and undo the import.
   //
-  // Both halves matter. The card used to call the client directly and report
-  // "Settings imported." — while the page kept its pre-import baseline, which
-  // every field on the page merges its own value onto. One click on any toggle
-  // afterwards therefore PUT the whole PRE-import object back and silently
-  // undid the entire import, with the UI reporting a successful save. (On main
-  // that needed a Save-button click; once every field auto-saves, it is one
-  // stray click.) Queueing it stops a save that was already in flight from
-  // landing on top of the fresh configuration, and cancelling the pending
-  // debounces drops edits typed against the configuration that has just been
-  // replaced.
+  // If the reload fails, the page shows the load error rather than work from a
+  // baseline it knows is stale; that unmounts every card, so no stale save can
+  // happen. The import itself has already been applied.
   //
-  // If the re-load fails, the page refuses to keep working from a baseline it
-  // knows is stale: it shows the load error instead, which unmounts every card
-  // and makes a stale-baseline save impossible. Reloading the browser is then
-  // the honest recovery, and the import itself has already been applied.
-  //
-  // The debounces are dropped HERE, at the click, and not inside the queued
-  // body below. Queued, the drop happens whenever the import reaches the head
-  // of the write queue, which can be a whole round-trip later: a save already
-  // in flight holds the import back, the 800ms debounce armed just before the
-  // click elapses in the meantime, and its write is appended to the queue
-  // BEHIND the import. It then lands on the freshly imported configuration
-  // carrying the value the user typed against the one that was just replaced.
-  // Cancelling at the click empties the map before anything can queue itself,
-  // and `importing` keeps it empty for the rest of the window — otherwise a
-  // keystroke during the apply would simply re-open the same hole.
+  // Pending debounces are dropped here at the click, not inside the queued
+  // body: a save in flight can hold the import back for a round trip, and a
+  // debounce armed just before the click would elapse meanwhile and queue its
+  // write behind the import, landing a value typed against the replaced
+  // configuration. `importing` keeps the map empty for the rest of the window.
   async function applyImportedSettings(fileText: string) {
     importing.current = true;
     cancelAllDebounces();
@@ -1945,7 +1565,7 @@ export function SettingsPage() {
           setLoadError("Settings were imported, but reloading them failed — reload the page.");
         }
         // Domains may have been switched on or off by the import: the sidebar and
-        // layout listen for this and refetch, exactly as they do after a save.
+        // layout listen for this and refetch, as they do after a save.
         window.dispatchEvent(new Event("bv:settings-changed"));
         return res;
       } finally {
@@ -1954,30 +1574,17 @@ export function SettingsPage() {
     });
   }
 
-  // Leaving the page COMMITS the pending edits; it does not discard them.
+  // Leaving the page commits pending edits rather than discarding them. The
+  // debounce is the only thing that writes a text field, so clearing it would
+  // silently lose an edit made within 800ms of navigating away. scheduleField
+  // and debouncedSave capture their values explicitly, and a setState after
+  // unmount is a no-op, so flushing is safe. The card-level debounce maps
+  // (FlashZipExportCard, FleetSettingsCard, CloudCard, NotifyCard) also
+  // complete their pending writes on unmount.
   //
-  // This cleanup used to clear every timer. With the Save buttons gone, the
-  // debounce is the only thing that ever writes a text field, so clearing it
-  // threw the user's last edit away: type a new cron expression into the
-  // off-site cadence field (or a registry host, or the flash-zip export path),
-  // click "Dashboard" within 800ms, and the PATCH never happened — no toast, no
-  // error, and the value the field had shown as accepted was gone on return.
-  // The old justification, "must not call setSettings/save with stale
-  // closures", does not hold: scheduleField/debouncedSave capture their value
-  // explicitly, and a setState after unmount is a no-op in React 18. Nothing was
-  // being protected, and an edit was being lost.
-  //
-  // Flushing also matches the four card-level debounce maps in this file
-  // (FlashZipExportCard, FleetSettingsCard, CloudCard, NotifyCard), none of
-  // which cancel on unmount — so those already complete their pending write.
-  // This page was the one place that did not.
-  //
-  // The flush itself is flushDebounces, captured into a local so the cleanup
-  // closes over the function it had at mount — the plain, lint-satisfying
-  // version of the same "don't reach for a fresh binding inside a cleanup" rule.
-  // It reads debounceTimers.current, whose object identity never changes (only
-  // its properties are mutated in place by debouncedSave/cancelDebounce/
-  // flushDebounces above), so the entries it finds are the live ones.
+  // The cleanup closes over the flushDebounces it had at mount. That reads
+  // debounceTimers.current, whose identity never changes, so it finds the live
+  // entries.
   const flushOnUnmount = flushDebounces;
   useEffect(() => {
     return () => {
@@ -1986,33 +1593,18 @@ export function SettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount/unmount only: this must flush when the page GOES AWAY, not on every render that redefines the closure.
   }, []);
 
-  // saveRegistries — the merge A registries sub-section's own save, shared by
-  // both the debounced per-field edit path and the immediate Remove-row path
-  // (see the Card below). It works against an EXPLICIT (auths, rowIds) pair
-  // rather than reading `settings`/`registryRowIds` directly — both callers
-  // already have the freshly computed arrays in hand (the state update and this
-  // save race the same render otherwise), so passing them in avoids acting on a
-  // one-render-stale snapshot.
+  // saveRegistries is the registries' save, shared by the debounced field edit
+  // and the immediate row removal. It takes the (auths, rowIds) pair its callers
+  // have just computed rather than reading state, which would be one render
+  // stale.
   //
-  // The payload and the screen are answered separately, and that separation is
-  // the fix for a row disappearing mid-edit. The PUT carries the trimmed list
-  // (keepRegistryAuths — a blank row is nothing the server should store); the
-  // visible list keeps every row (markRegistryTokensStored), so a blank row the
-  // user just added survives a save triggered by a keystroke in a DIFFERENT row.
-  // Under the old batched Save button the two coincided, because clicking Save
-  // meant "I am finished"; a debounce firing 800ms after a keystroke does not.
-  //
-  // The screen's half is handed to save() as its `echo` (see there) instead of
-  // being computed here and applied afterwards, and that is the difference
-  // between the two lists staying apart and the round-trip eating an edit. The
-  // PUT takes a whole response to come back, and the user keeps typing in that
-  // window: a list frozen at send time no longer describes the card by the time
-  // it lands, so writing it back deleted a row added mid-flight and reverted
-  // characters typed mid-flight — while registryRowIds, which nothing here
-  // touches, kept the entry for the row that had just been erased and stopped
-  // being index-aligned with the rows on screen. Marking the LIVE list keeps
-  // both invariants: rows only ever leave the screen when the user removes
-  // them, so the ids stay aligned by construction.
+  // The PUT carries the trimmed list (keepRegistryAuths) while the screen keeps
+  // every row (markRegistryTokensStored), so a blank row just added survives a
+  // save triggered by typing in another row. The screen's half goes to save()
+  // as `echo` and is applied to the live list when the response lands: a list
+  // frozen at send time would delete rows added and revert characters typed
+  // during the round trip, and leave registryRowIds out of step with the rows
+  // on screen.
   function saveRegistries(nextAuths: RegistryAuthEntry[], nextRowIds: string[]) {
     const { auths } = keepRegistryAuths(nextAuths, nextRowIds);
     void save(
@@ -2023,28 +1615,9 @@ export function SettingsPage() {
     );
   }
 
-  // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
-  // live gespeichert werden"): replaces buildSchedulePatch + the Schedules
-  // tab's one bottom SaveBar that used to persist every field in this comment's
-  // old list (Containers/VMs/Flash/Folders cadences, the drills Card, every
-  // offsite cadence, the self-backup cadence, tamperTestSchedule,
-  // catchUpMissed, perItemSchedules) in a single manually-triggered PATCH.
-  // Every one of those fields now saves itself the instant it changes, via
-  // one of the three helpers below — the exact same "optimistic update,
-  // immediate PATCH, revert + `.glim-shake` on failure" shape already proven
-  // by toggleDomainEnabled (Domains card) and autoSaveField (Paths & Storage
-  // merge cards), applied to a click/selection; or, for anything that fires
-  // onChange on every keystroke (a raw cron `<input>`, CadenceBuilder's own
-  // time/number/cron sub-fields), the debounced-no-revert shape those same
-  // merge cards already established for free text.
-  //
-  // scheduleField — every CadenceBuilder-driven cadence AND every plain
-  // offsite/self-backup cron <input> in this tab: optimistic setSettings +
-  // a debouncedSave keyed by the field name, so rapid changes to the SAME
-  // field (typing a cron expression, dragging through time-picker values)
-  // coalesce into one PATCH 800ms after the last one, matching
-  // debouncedSave's own "no revert — a user may still be typing, and save()'s
-  // toast already reports a failure" reasoning above.
+  // scheduleField saves a cadence or cron field: an optimistic update plus a
+  // debouncedSave keyed by field name, so rapid changes to one field (typing a
+  // cron expression, stepping through time values) coalesce into one PATCH.
   function scheduleField<K extends keyof Settings>(key: K, value: Settings[K]) {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
     debouncedSave(String(key), () => {
@@ -2052,12 +1625,9 @@ export function SettingsPage() {
     });
   }
 
-  // autoSaveScheduleField — the four plain booleans left in this tab
-  // (perItemSchedules, catchUpMissed, drillsEnabled, offsiteDrillsEnabled):
-  // a single discrete click, not continuous typing, so it gets the immediate
-  // save + revert-on-failure + shake treatment instead, identical in shape to
-  // autoSaveField above (see schedFieldBusy/schedFieldShake's own doc for why
-  // this is a dedicated map rather than widening MergedAutoSaveKey).
+  // autoSaveScheduleField saves a plain boolean of the schedules page. A click
+  // is not continuous typing, so it saves at once and reverts and shakes on
+  // failure, like autoSaveField.
   async function autoSaveScheduleField<K extends ScheduleBoolKey>(key: K, next: Settings[K]): Promise<boolean> {
     const prev = settings?.[key];
     setSettings((s) => (s ? { ...s, [key]: next } : s));
@@ -2071,13 +1641,9 @@ export function SettingsPage() {
     return ok;
   }
 
-  // scheduleUpdate — RestoreChecksSection's own `update` prop, unchanged in
-  // shape (a Partial<Settings> patch, always exactly one key from that
-  // component's own four call sites) but now dispatching each key through
-  // the right one of the two helpers above instead of a bare setSettings
-  // merge: its two ToggleRows (drillsEnabled/offsiteDrillsEnabled) auto-save
-  // immediately with revert+shake, its CadenceBuilder and % number field
-  // debounce like every other cadence/text field in this tab.
+  // scheduleUpdate is RestoreChecksSection's `update` prop: its toggles save at
+  // once through autoSaveScheduleField, its cadence and number fields debounce
+  // through scheduleField.
   function scheduleUpdate(patch: Partial<Settings>) {
     for (const [key, value] of Object.entries(patch) as [keyof Settings, Settings[keyof Settings]][]) {
       if (key === "drillsEnabled" || key === "offsiteDrillsEnabled" || key === "startTestEnabled") {
@@ -2088,19 +1654,11 @@ export function SettingsPage() {
     }
   }
 
-  // handleSyncSchedulesToggle — the "sync" toggle's own save. Unlike the
-  // Settings fields above, `syncSchedules` is local UI state (derived on
-  // load from whether the domain schedules already matched, see the load
-  // effect's own comment), not a field the backend stores directly, so it
-  // cannot go through autoSaveScheduleField's Settings-keyed generic.
-  // Flipping it ON is the one case with real, immediate side effects worth
-  // persisting right away: VMs/Flash/Folders adopt the Containers cadence
-  // this instant, mirroring toggleDomainEnabled's optimistic-flip +
-  // save + revert-on-failure + shake shape, just against three fields at
-  // once instead of one. Flipping it OFF persists nothing new — every field
-  // already holds its own last-saved value, so there is nothing to PATCH;
-  // subsequent edits to VMs/Flash/Folders individually go through
-  // scheduleField again on their own, same as before sync was ever turned on.
+  // handleSyncSchedulesToggle saves the sync toggle. syncSchedules is local
+  // state derived on load, not a stored field. Turning it on writes the
+  // Containers cadence to VMs, Flash, Folders and ZFS at once, with the usual
+  // revert and shake on failure. Turning it off writes nothing, since every
+  // field already holds its last-saved value.
   async function handleSyncSchedulesToggle(next: boolean) {
     setSyncSchedules(next);
     if (!next || !settings) return;
@@ -2132,26 +1690,17 @@ export function SettingsPage() {
     }
   }
 
-  // toggleConfigSchedule — the Self-Backup Card's own on/off ToggleRow. Same
-  // immediate optimistic-flip + save + revert-on-failure + shake shape as
-  // handleSyncSchedulesToggle above, applied to configSchedule's cadence
-  // string instead of the three VMs/Flash/Folders fields that one touches.
-  // OFF writes the literal "off" cadence string; ON restores the cadence that
-  // was in force before the last OFF (rememberedConfigSchedule above), falling
-  // back to "daily 02:00" when there is none to restore — the same
-  // daily-at-02:00 baseline this grammar already uses elsewhere, e.g.
-  // ContainersSchedule's own portable-settings test fixture. This
-  // does NOT introduce a new configScheduleEnabled field: parseCadenceString/
-  // buildCadenceString (CadenceBuilder.tsx) already round-trip "off"/""
-  // through CadenceMode "off" cleanly, so a second boolean would just be a
-  // second source of truth for the exact same fact. (BombVault's separate
-  // `configEnabled` field, toggled in the Domains card above, is a different
-  // concept — whether the self-backup domain exists at all — left untouched.)
+  // toggleConfigSchedule is the self-backup card's on/off toggle. Off writes
+  // the literal "off" cadence; on restores the cadence in force before the
+  // last off (rememberedConfigSchedule), or "daily 02:00" when there is none.
+  // There is no separate configScheduleEnabled field: parseCadenceString and
+  // buildCadenceString already round-trip "off", so a boolean would be a second
+  // source of truth. `configEnabled` in the Domains card is a different thing,
+  // whether the self-backup domain exists at all.
   async function toggleConfigSchedule(next: boolean) {
     const prev = settings?.configSchedule ?? "off";
-    // Switching OFF is the only moment the cadence is lost, and `prev` is
-    // exactly the value being overwritten — whether it came from the server, the
-    // CadenceBuilder below, or an earlier flip of this toggle.
+    // Switching off is the only moment the cadence is lost, and `prev` is the
+    // value being overwritten, wherever it came from.
     if (!next && prev && prev !== "off") setRememberedConfigSchedule(prev);
     const value = next ? rememberedConfigSchedule : "off";
     setSettings((s) => (s ? { ...s, configSchedule: value } : s));
@@ -2180,39 +1729,11 @@ export function SettingsPage() {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Auth / Security helpers
-  // ---------------------------------------------------------------------------
-
-  // GlimStone form-engine Task 9 (toasts): the SaveBar success/error pattern
-  // here used to hold "saved"/"error" in pwSaveState for a 3000ms inline-text
-  // flash. The two ASYNC completion notices (did setAuthPassword succeed)
-  // now go through a toast instead — but the pre-flight mismatch check below
-  // deliberately stays exactly as it was: it's a field-validation error the
-  // user is actively looking at (both password fields, mid-edit), not a
-  // "did the save finish" notice, so it keeps its own persistent inline
-  // surface rather than a 4-second toast that could vanish while they're
-  // still typing (design-language.md: a toast duplicating a surface that
-  // already exists and is meant to persist is the wrong tool here).
-  //
-  // GENUINE EXCEPTION to the full-page Speichern-Button sweep (jdp, live
-  // review, emphatic: "Die Speicher-Buttons sollen in allen Tabs weg...
-  // Nur dort sollen Speicher-Buttons bleiben, wo es unbedingt sein muss."):
-  // this Save button stays. Two independent hard reasons, either one alone
-  // would qualify: (1) it requires TWO fields (new + confirm) to agree
-  // before the write is even safe to attempt — exactly the "requires
-  // explicit two-step confirmation for safety" exception named in the
-  // sweep's own criteria, and there is no sane per-keystroke auto-save
-  // trigger for a two-field agreement check (auto-saving on the FIRST
-  // field alone, before the second is even filled in, would either save a
-  // password the user never finished typing or spam a mismatch failure on
-  // every keystroke of the second field). (2) setAuthPassword takes effect
-  // IMMEDIATELY and controls access to the whole instance — a blank save
-  // disables auth entirely — the closest thing on this page to "immediately
-  // rotating a live credential," the sweep's own worked example of a
-  // legitimate hold-out. Not kept because it's "security-related" in a
-  // vague sense; kept because auto-saving would either be unsafe or simply
-  // impossible to trigger correctly.
+  // The password keeps a manual Save button. Two fields must agree before a
+  // write is safe, so there is no keystroke to auto-save on, and
+  // setAuthPassword takes effect at once for the whole instance (a blank
+  // password switches login off). A mismatch stays inline next to the fields
+  // rather than in a toast that could vanish while the user is still typing.
   async function handleSetPassword() {
     if (pwNew !== pwConfirm) {
       setPwSaveMsg(t("auth.passwordMismatch"));
@@ -2221,7 +1742,7 @@ export function SettingsPage() {
     }
     // The server refuses a short password too, and its answer is what the
     // user would eventually see. Checking here as well saves a round trip and
-    // puts the message next to the field instead of in a toast. An EMPTY
+    // puts the message next to the field instead of in a toast. An empty
     // password is not "too short": it means "switch authentication off".
     if (pwNew !== "" && [...pwNew].length < minPasswordLen) {
       setPwSaveMsg(t("auth.passwordMinHint", minPasswordLen));
@@ -2236,10 +1757,8 @@ export function SettingsPage() {
       if (res.ok) {
         setAuthEnabled(res.enabled ?? false);
         // The same response carries the session, so the card can go straight to
-        // its signed-in state. Without this the second factor sat one reload
-        // away: the enable button was there, and the request behind it answered
-        // 401 because the login it had just switched on had issued nobody a
-        // session yet.
+        // its signed-in state; otherwise enabling the second factor would answer
+        // 401 until a reload, because the new login had issued no session yet.
         setPwSaveState("idle");
         push(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"), "success");
         setPwNew("");
@@ -2257,12 +1776,10 @@ export function SettingsPage() {
   }
 
 
-  // Tamper-test schedule eligibility (#109): mirrors immutableOffsiteDomains in
-  // internal/schedule/schedule.go — the scheduler only wires the scheduled
-  // tamper-test job when at least one domain's off-site repo is set AND
-  // flagged immutable. Without that, the cadence editor below silently never
-  // runs (the same per-domain predicate as appendOnlyEligible in IntegrityCard,
-  // widened to "any domain including config").
+  // Tamper-test schedule eligibility (#109) mirrors immutableOffsiteDomains in
+  // internal/schedule/schedule.go: the scheduler only wires the tamper-test job
+  // when at least one domain's off-site repo is set and flagged immutable.
+  // Otherwise the cadence editor below would silently never run.
   const tamperScheduleActive =
     (settings.containersOffsite !== "" && settings.containersOffsiteImmutable) ||
     (settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable) ||
@@ -2291,7 +1808,7 @@ export function SettingsPage() {
         pulseNonce={fieldPulse.receiverEnabled}
         hueIndex={firstHue}
       />
-      {/* Named after Instances, not the Fleet tab it shows: "Flotte" alone
+      {/* Named after Instances, not the Fleet page it shows: "Flotte" alone
           does not say what this domain is. */}
       <ToggleRow
         label={t("instances.title")}
@@ -2343,23 +1860,8 @@ export function SettingsPage() {
       {/* Every cadence lives here, and every field saves as it changes. */}
       {page === "schedules" && (
         <>
-          {/* Schedule options (jdp, live-review — "Die beiden Toggle sollen in
-              eine eigene Card"): perItemSchedules (#121) and the Containers-
-              sync toggle used to be two raw <input type="checkbox"> rows
-              sitting directly in this tab, outside any Card. Both are now the
-              shared ToggleRow component, grouped in their own Card, first on
-              this tab, directly above ContainersSection — perItem first, sync
-              directly below it, per jdp's own ordering. (The group-level
-              "Backup-Zeitpläne" Badge heading that used to sit above this
-              Card was removed on jdp's live-review ask — the four domain
-              schedule Cards below already carry their own clear headings, so
-              the group label was redundant; nextHue()'s sequence starts
-              directly with this Card now, one call short of before.) A
-              genuine two-member list, so each ToggleRow gets its own LOCAL
-              hueIndex (0/1, independent of this Card's own nextHue() notch),
-              the same "own local 0-based index per group" rule the Domains
-              card's seven rows and the merged Colors Card's three rainbow
-              toggles already follow. */}
+          {/* A two-member list, so each toggle takes a local hueIndex (0, 1)
+              independent of the card's own position. */}
           <Card title={t("settings.schedulesOptions")} hueIndex={nextHue()}>
             <ToggleRow
               label={t("settings.perItemSchedules")}
@@ -2371,9 +1873,6 @@ export function SettingsPage() {
               pulseNonce={fieldPulse.perItemSchedules}
               hueIndex={0}
             />
-            {/* Sync toggle — applies the Containers cadence to VMs, Flash AND
-                Folders (Task 2 extended this from "VMs + Flash" to also cover
-                Folders — see FilesSection's own new syncSchedules prop). */}
             <ToggleRow
               label={t("jobs.syncSchedules")}
               hint={t("jobs.syncSchedulesHint")}
@@ -2381,43 +1880,17 @@ export function SettingsPage() {
               onChange={(v) => void handleSyncSchedulesToggle(v)}
               disabled={syncToggleBusy}
               shakeNonce={syncToggleShake || undefined}
-              // handleSyncSchedulesToggle's own save() patch touches vms/
-              // flash/filesSchedule together (see that function) — any one
-              // of the three is bumped by save()'s success branch, so
-              // vmsSchedule works as well as either of the others here.
+              // The sync save writes all mirrored cadences together, so any of
+              // them carries the pulse.
               pulseNonce={fieldPulse.vmsSchedule}
               hueIndex={1}
             />
           </Card>
-          {/* Backup Everything (schedulesEverything): a 6th, independent pass over
-              all five domains BELOW + a manual trigger. See EverythingSection's
-              own doc comment for the convention pass this card needed after the
-              merge, the conditional overlap warning included.
-                `update={scheduleUpdate}` rather than the bare setSettings merge
-              this shipped with on main: the Schedules tab has no Save button any
-              more (jdp: cadences "sollen live gespeichert werden"), so a patch
-              that only touched local state here would look saved and be lost on
-              reload. scheduleUpdate keeps the same Partial<Settings> shape and
-              debounces each key through the shared save(), which is what the
-              cadence editor and the two hook text inputs want.
-
-              SECOND on the tab, not last ([413]). It shipped at the bottom,
-              below five per-domain cadences, the off-site and self-backup
-              schedules and two detail cards, and a forum user could not find it
-              at all after being told it was "in Settings" — with seven tabs, the
-              bottom of the third is not somewhere anybody lands by accident.
-              Someone who wants "back the whole server up on one schedule" now
-              meets that before the parts it is made of.
-
-              A parallel session made this same move on feature/accent-ink-
-              whatsnew (f23cc8e1). It is repeated here because this branch has
-              been beside main since 2026-07-18, and its version of this file
-              wins for this region on merge: leaving it would have silently
-              undone their fix.
-
-                `hueIndex={nextHue()}` — the counter runs in RENDER order, so
-              moving the call shifts every rainbow position after it by one and
-              needs no renumbering anywhere. That is what the counter is for. */}
+          {/* Backup Everything, an independent pass over all domains plus a
+              manual trigger. It sits second rather than last, so someone who
+              wants one schedule for the whole server finds it before the parts
+              it is made of. scheduleUpdate saves each key through the shared
+              save(), since nothing on this page has a Save button. */}
           <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
           <ContainersSection
             settings={settings}
@@ -2464,9 +1937,8 @@ export function SettingsPage() {
             hueIndex={nextHue()}
           />
 
-          {/* Off-site replication schedules (schedulesOffsite): one cadence per
-              domain (+ config + files). Editors here are the sole owner of these
-              fields. */}
+          {/* Off-site replication schedules, one cadence per domain. These
+              editors are the only owner of these fields. */}
           <Card title={t("settings.schedulesOffsite")} hueIndex={nextHue()}>
             {([
               ["containersOffsiteSchedule", "nav.containers"],
@@ -2490,36 +1962,11 @@ export function SettingsPage() {
             ))}
           </Card>
 
-          {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config.
-              Live-review (jdp: "Selbst-Backup-Zeitplan bitte mit Toggle für
-              an/aus, und Zeitplancard wie bei Container, VMs usw."): this was
-              the one schedule editor left in this tab as a bare hand-typed
-              cadence <input> (had to type e.g. "daily 02:00" yourself, and
-              "off" was only reachable by typing the word), no on/off control
-              of its own. Rebuilt to match ContainersSection/VMsSection/
-              FlashSection/FilesSection's own shape: the same status row +
-              CadenceBuilder-in-a-well, one IIFE-captured `hueIdx` feeding
-              both this Card's heading notch and the CadenceBuilder's
-              TimePicker inside it — identical to the schedulesChecks Card
-              just below (see that IIFE's own comment for why a bare inline
-              `hueIndex={nextHue()}` can't feed two hue-aware children from
-              one call).
-                The toggle's label is not hidden behind this Card's own
-              title, the way RestoreChecksSection's `verify.auto` ToggleRow right below
-              this one used to hide its own caption the same way (reasoning:
-              "the Card's title already says the same thing"), and jdp
-              explicitly reversed that exact pattern there ("Bei erstem
-              Toggle bitte 'Automatische Restore-Prüfungen' hinschreiben") —
-              so this toggle reuses that Card's own corrected shape instead:
-              the SAME string as both the Card's `title` and the ToggleRow's
-              visible `label`, no `hideLabel`. No `hueIndex` on the toggle
-              itself either, matching that same corrected ToggleRow (and
-              FlashZipExportCard's lone ToggleRow) — a single stand-alone
-              switch with no sibling toggles of its own kind in this Card is
-              the one case ToggleRow's own hueIndex doc carves out as having
-              no list to walk. See toggleConfigSchedule's own comment above
-              for why this reuses the cadence string's existing "off" mode
-              instead of a new configScheduleEnabled field. */}
+          {/* BombVault's own config backup, in the same shape as the domain
+              sections. One hueIdx feeds both the heading and the time picker,
+              which a nextHue() call per prop could not. The toggle shows the
+              card title as its visible label and has no hueIndex, being a lone
+              switch with no list to walk. */}
           {(() => {
             const hueIdx = nextHue();
             const schedule = settings.configSchedule;
@@ -2568,28 +2015,9 @@ export function SettingsPage() {
 
       {page === "general" && (
       <Card title={t("settings.domains")} hint={t("settings.domainsHint")} hueIndex={nextHue()}>
-        {/* Live-review round 3, point 4: all 7 rows here used to show a
-            permanent visible caption under the label (rule 8 violation — the
-            first 5 were even raw hardcoded English strings, never localized
-            at all). Every row now carries its explanation via ToggleRow's
-            `hint` prop (an InfoBubble beside the label) instead — receiver/
-            fleet already had a real i18n key for their caption and just
-            needed the prop swapped; containers/vms/flash/files/config
-            needed a NEW *Hint key added (and translated into all 26
-            locales) since their old text was never a translation key.
-
-            #142 (jdp, live review): "Bei Domänen der Speichern-Button
-            entfernen, es soll automatisch speichern und den Tab live
-            einblenden/ausblenden" — no more batched SaveBar. Each row now
-            calls toggleDomainEnabled directly: optimistic flip, persist via
-            the shared save() (which already broadcasts
-            "bv:settings-changed" so Layout/Sidebar re-fetch and the domain's
-            nav tab appears/disappears live, no reload), and on a rejected
-            save — e.g. enabling VMs with no working SSH connection to the
-            libvirt host — revert to the pre-click state and shake. `disabled`
-            covers this row's own request still being in flight
-            (domainToggleBusy), so a user can't fire a second click at the
-            same toggle before the first one resolves. */}
+        {/* Each row saves on click through toggleDomainEnabled. `disabled`
+            covers the row's own request in flight, so a second click cannot
+            race the first. */}
         <ToggleRow
           label={t("settings.containersEnabled")}
           hint={t("settings.containersEnabledHint")}
@@ -2670,7 +2098,7 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* Above the domain paths on purpose: these are the places an INDIVIDUAL
+      {/* Above the domain paths: these are the places an individual
           container, VM or folder set can be pointed at instead of the domain
           path below, so the more specific answer is read first. */}
       {page === "storage" && <ReposCard hueIndex={nextHue()} />}
@@ -2678,7 +2106,7 @@ export function SettingsPage() {
       {page === "storage" && (
       <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
         {/* Each field saves itself, debounced per field name like the
-            Schedules tab's cadence fields. The six PathModeSwitch rows are
+            schedules page's cadence fields. The six PathModeSwitch rows are
             one group with their own 0-based hueIndex, separate from this
             card's heading. */}
         <PathModeSwitch
@@ -2795,17 +2223,7 @@ export function SettingsPage() {
       {page === "retention" && (
       <Card
         title={t("settings.retentionTitle")}
-        // Live-review round 3, point 4 sweep: this Card's own intro used to
-        // sit as a permanent visible <p> below the title instead of going
-        // through the Card `hint` mechanism every OTHER Card-level intro in
-        // this file already uses — a plain miss, not a documented exception
-        // (compare settings.offsiteHint further down, which stayed visible
-        // on purpose with its own comment explaining why). retentionHint
-        // (what this Card does) and retentionCombineInfo (the OR-combination
-        // rule — a "why wasn't this pruned" answer someone re-checks, same
-        // category as notify.healthchecksLifecycle's carve-out) both fold
-        // into the one title-level bubble rather than leaving the second as
-        // an orphaned bare icon once the wrapping <p> it lived in is gone.
+        // The intro and the OR-combination rule share the title bubble.
         hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
         hueIndex={nextHue()}
       >
@@ -2827,10 +2245,8 @@ export function SettingsPage() {
                 onChange={(e) => {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  // Full-page Speichern-Button sweep: this whole grid used to
-                  // batch into one bottom SaveBar — each cell now debounce-
-                  // auto-saves itself, keyed by its own field name so typing
-                  // in one cell never resets another cell's pending timer.
+                  // Keyed by field name, so typing in one cell never resets
+                  // another cell's pending save.
                   debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setRetSaveState, setRetSaveError));
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
@@ -2840,8 +2256,8 @@ export function SettingsPage() {
         </div>
         {/* The answer the numbers above never give: which restore points the
             next run is about to delete. Advanced-only, because it costs one
-            restic call per item per repository and is a question you ask
-            deliberately rather than one a page should poll. */}
+            restic call per item per repository and is a question you ask on
+            purpose rather than one a page should poll. */}
         {advanced && (
           <div className="mt-4 border-t border-carbon-border pt-3">
             <div className="flex items-center gap-1 text-sm text-carbon-text">
@@ -2892,9 +2308,8 @@ export function SettingsPage() {
             </p>
           )}
           {settings.registryAuths.map((entry, i) => {
-            // Fallback only guards a transient/impossible index mismatch (see
-            // registryRowIds' declaration) — every mutation site below keeps
-            // the two arrays in lockstep, so this should never actually miss.
+            // The fallback only guards an index mismatch that every mutation
+            // site below prevents by keeping the two arrays in step.
             const rowId = registryRowIds[i] ?? `registry-row-fallback-${i}`;
             return (
             <div
@@ -2969,63 +2384,18 @@ export function SettingsPage() {
                   className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
                 />
               </label>
-              {/* Square icon-only remove button with a trash-can glyph (jdp,
-                  live-review: "Wenn man eine Registry hinzufügt, soll der
-                  Entfernen-Button quadratisch sein mit Mülleimer-Icon") — was
-                  a bare text `<button>` ("Entfernen"/"Remove"). IconTipButton
-                  (components/IconTipButton.tsx) for the same real
-                  `.glim-bubble` hover tooltip every other icon-only control on
-                  this page already gets, not a native `title=`;
-                  `settings.registryRemove`'s existing value moves from
-                  visible button text to this tooltip's own content
-                  unchanged, the same "text moves onto the tip, key stays" move the
-                  Registry-add button below already made.
-                    COLOUR-ENGINE ROUND (jdp's standing rule, five escalations
-                  deep): this badge and the Registry-add one below were still
-                  flat `bg-carbon-surface3` grey with no tie to this Card's own
-                  hue at all, the same gap that got the delete badge's grey
-                  special-casing removed a round earlier. Both are real
-                  `Badge`s now (`as="button" tone="active" shape="square"
-                  size="icon"`), which for an icon-only badge resolves to the
-                  full solid `bg-accent`/`text-accentContrast` fill, NOT the
-                  pale wash jdp rejected as "halb abgedunkelt" (see Badge.tsx's
-                  own `toneClasses` ROUND 2 comment).
-                    No `hueIndex` prop, and none needed: this Card is
-                  `<Card ... hueIndex={nextHue()}>` with no local variable to
-                  hand down, but Card's own wrapper carries `.glim-hue`, and
-                  `[data-rainbow] .glim-hue` (index.css) redefines
-                  `--color-accent` for its whole subtree, so `bg-accent` here
-                  already computes to THIS Card's rainbow position by ordinary
-                  custom-property inheritance. Same mechanism Containers.tsx's
-                  own folder-add badge documents; wrapping this Card in an IIFE
-                  purely to capture `nextHue()` would add a second source of
-                  truth for a colour that already resolves correctly. Verified
-                  live with getComputedStyle against the Card's own
-                  `--item-hue`.
-                    `size="icon"` is the app's ONE square-icon-badge size and
-                  is the same 32px this call site already had, so the footprint
-                  is unchanged; `shrink-0` survives as `className` because it
-                  is layout, not appearance. Not a fresh guess either: this
-                  row's own three text fields
-                  are `text-sm px-3 py-1.5` — the SAME classes already
-                  measured live to render at 32px for those other controls
-                  (see Selector.tsx's own `iconOnly` doc for that
-                  measurement's full writeup) — so 32px is this row's real
-                  control height too, confirmed, not assumed from a token
-                  used elsewhere. IconTrash (components/Sidebar.tsx) drawn
-                  fresh for this — no trash glyph existed in this codebase
-                  yet — filled/`currentColor`-only, no `stroke`, matching
-                  every other icon in that file's icon-only-badge set. */}
+              {/* No hueIndex needed: the card's wrapper carries `.glim-hue`,
+                  which redefines --color-accent for its subtree in rainbow
+                  mode, so the accent here is already the card's colour. */}
               <Button
                 label={t("settings.registryRemove")}
                 labelKey="settings.registryRemove"
                 glyph={<IconTrash />}
                 tone="accent"
                 onClick={() => {
-                  // Removing a row is a discrete action, not a text edit — it
-                  // saves IMMEDIATELY (no debounce), and cancels any pending
-                  // debounced save from an edit elsewhere in this section so
-                  // a stale pre-removal snapshot can't land after this one.
+                  // Removing a row is a discrete action, so it saves at once
+                  // and cancels any pending debounced save from this section,
+                  // so a stale pre-removal snapshot cannot land after it.
                   const nextAuths = settings.registryAuths.filter((_, j) => j !== i);
                   const nextRowIds = registryRowIds.filter((_, j) => j !== i);
                   setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
@@ -3047,24 +2417,6 @@ export function SettingsPage() {
             </div>
             );
           })}
-          {/* Icon-only + right-aligned (GlimStone follow-up round, live-review:
-              "Registry hinzufügen button soll bündig nach rechts... einen
-              Glyph statt Text bekommen, mit Hover-Infobubble") — `flex
-              justify-end` is this file's own established idiom for a single
-              trailing action in an otherwise block-level row (see e.g.
-              Dashboard.tsx's/VMs.tsx's identical `<div className="flex
-              justify-end">` wrapper for a lone action). The row's own text
-              label moves onto the button's `IconTipButton` tip instead of
-              disappearing — an icon-only trigger has no other way to say
-              what it does. Same 32px square-icon-badge footprint as
-              FolderBrowser's own "Durchsuchen" badge (the one real field/
-              control height already established on this page), expressed as
-              Badge's `size="icon"` stage now rather than a hand-written
-              `h-8 w-8`. Converted from flat `bg-carbon-surface3` grey to a
-              hue-carrying Badge in the same colour-engine round as the
-              Registry-remove badge above: see that call site's own comment
-              for the full reasoning, including why neither needs an explicit
-              `hueIndex`. */}
           <div className="flex justify-end">
             <Button
               label={t("settings.registryAdd")}
@@ -3082,13 +2434,9 @@ export function SettingsPage() {
                   };
                   return { ...prev, registryAuths: [...prev.registryAuths, blank] };
                 });
-                // A brand-new row always starts with its OWN fresh id — never
-                // reusing one, so it can't inherit a stale "revealed" flag left
-                // behind by a since-removed row that used to sit at this index.
-                // Not saved yet — a blank row has nothing worth persisting
-                // until a field in it is actually filled in (debouncedSave
-                // above then fires, and its own "kept" filter would drop it
-                // again anyway if it's abandoned blank).
+                // A new row gets a fresh id, so it cannot inherit a stale
+                // "revealed" flag from a removed row. It is not saved until a
+                // field in it is filled in; keepRegistryAuths drops it blank.
                 setRegistryRowIds((prev) => [...prev, randomId()]);
               }}
               className={"shrink-0"}
@@ -3139,14 +2487,9 @@ export function SettingsPage() {
 
       {/* The restic cache under /config survives restarts and would grow without */}
       {/* bound; per-repository caches are evicted after scheduled runs. */}
-      {/* `advanced &&` inline (not the <Advanced> wrapper component): the
-          wrapper takes children as an ALREADY-BUILT prop, so this Card's own
-          hueIndex={nextHue()} would fire every render regardless of whether
-          Advanced end up showing it — caught live (Playwright against the
-          real container) as a hue slot silently "spent" on a Card that never
-          painted, shifting every later Storage-tab heading by one position
-          while Advanced was off. Plain `&&` short-circuits properly, exactly
-          like every other conditional Card on this page. */}
+      {/* `advanced &&` inline rather than the <Advanced> wrapper: the wrapper
+          takes its children already built, so nextHue() would spend a hue slot
+          on a hidden card and shift every later heading on the page. */}
       {page === "storage" && advanced && (
       <Card title={t("settings.cacheTitle")} hint={tLtr(t, "settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
@@ -3160,7 +2503,6 @@ export function SettingsPage() {
               const raw = (e.target as unknown as { value: string }).value;
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
-              // Full-page Speichern-Button sweep: was its own bottom SaveBar.
               debouncedSave("resticCacheMaxMB", () =>
                 void save({ resticCacheMaxMB: n }, setCacheSaveState, setCacheSaveError)
               );
@@ -3171,18 +2513,10 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* How much CPU a backup may take (#189). */}
-      {/* Sits beside the cache card because both answer the same question:
-          how much of this machine BombVault is allowed to use. The cap is
-          handed to each restic child as GOMAXPROCS; restic is a Go program and
-          without it takes every core there is. Reported from a 12-thread box
-          that sat at 99% on every core and 100 °C for a whole backup, with the
-          reporter's own summary: "Makes backups slow."
-
-          `advanced &&` inline rather than the <Advanced> wrapper, and the
-          reason is in the cache card's comment above: the wrapper builds its
-          children before deciding to render them, so a hueIndex={nextHue()}
-          inside it spends a hue slot on a card that never paints. */}
+      {/* How much CPU a backup may take (#189), beside the cache card because
+          both say how much of this machine BombVault may use. The cap reaches
+          each restic child as GOMAXPROCS; without it restic takes every core.
+          `advanced &&` inline for the same reason as the cache card. */}
       {page === "storage" && advanced && (
       <Card title={t("settings.coresTitle")} hint={t("settings.coresHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
@@ -3207,39 +2541,7 @@ export function SettingsPage() {
       {/* switches save at once; the recipients field is debounced. */}
       {page === "storage" && (
       <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
-        {/* Plain-export encryption (age) -------------------------------------- */}
-        {/* No `border-t` divider against Repository encryption below it (jdp,
-            live review: "die Linien dazwischen weg") — the Card's own `gap-4`
-            between direct children already separates the two sub-sections,
-            same spacing-only convention as the Colors Card's own accent/
-            rainbow halves and its own rainbow ToggleRow trio
-            (settings.rainbow/-Reactive/-Rotate) elsewhere in this file, none
-            of which ever had a rule line between their parts either. (A
-            THIRD sub-section, Flash-ZIP-Export, used to sit above this one —
-            see this Card's own header comment for where it moved.) */}
         <div className="flex flex-col gap-3">
-          {/* No more standalone <h3> sub-heading (jdp, live-review: "Export
-              und Verschlüsselung: Texte normal formatieren, es sind keine
-              Überschriften mehr") — this sub-section is now JUST a single
-              ToggleRow with an optional conditional block beneath it, not a
-              heading introducing its own block of content, so it shouldn't
-              LOOK like one either. `hideLabel` is gone below: the row's own
-              native `label` (ToggleRow's plain `text-sm text-carbon-text`
-              span, the same normal weight every other row's own caption in
-              this app already uses, not the bold/uppercase/tracking-widest
-              heading treatment the removed `<h3>` had) is now this
-              sub-section's only visible caption. `export.encrypt.title` (the
-              old heading's own text, "Encrypt plain exports"/"Plain-Exporte
-              verschlüsseln") is retired — the ToggleRow's own
-              `export.encrypt.enable` label already names the same action
-              ("Encrypt exports with age"/"Exporte mit age verschlüsseln")
-              and is the one text a screen reader announces for this switch
-              either way, so keeping both would be two competing captions for
-              one control. The old heading's own three-sentence InfoBubble
-              tip (what age is, what enabling it does) moves onto the
-              ToggleRow's own `hint` unchanged — the same content, now
-              anchored to the control it actually describes instead of a
-              heading standing in front of it. */}
           <ToggleRow
             label={t("export.encrypt.enable")}
             hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")} ${t("export.encrypt.kitSealed")}`}
@@ -3252,17 +2554,9 @@ export function SettingsPage() {
           {settings.exportEncryptEnabled && (
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
-              {/* Live-review round 3 sweep: export.encrypt.recipientsHint below
-                  (the "one per line, age1.../SSH key format" caption on the
-                  textarea) is left as permanent text on purpose, the same
-                  "genuine toss-up" carve-out settings.offsiteHint documents
-                  further up this file — it names the exact accepted KEY
-                  SYNTAX for a multi-line field someone fills in by pasting one
-                  key per line, which reads as reference to consult while
-                  composing the list rather than a one-time "what does this
-                  toggle do" explainer (that half is already covered by
-                  export.encrypt.enableHint, now folded into the sub-heading's
-                  own InfoBubble above). Flagged, not force-converted. */}
+              {/* The recipients hint stays visible text: it names the accepted
+                  key syntax, a reference to consult while pasting keys rather
+                  than a one-time explainer. */}
               <textarea
                 value={settings.exportAgeRecipients}
                 spellCheck={false}
@@ -3286,71 +2580,17 @@ export function SettingsPage() {
           )}
         </div>
 
-        {/* Repository encryption ---------------------------------------------- */}
-        {/* jdp, live review: "keine Überschrift und nochmal darunter der
-            Text. Nur die Überschrift als Text, alles andere in die
-            Infobubble." This sub-heading was the one holdout in this card
-            still pairing a bare <h3> with a permanent paragraph underneath
-            it (settings.encryptionWarning, now settings.encryptionHint) —
-            its two siblings above already fold that same kind of one-time
-            "here's what this does" text into the heading's own InfoBubble
-            (flash.zipExport.hint, export.encrypt.hint+ageInfo). Renamed
-            .../Warning -> .../Hint on the move: it's no longer a
-            statusWarnBg banner, so it no longer earns the "Warning" name —
-            see the still-conditional flash.zipExport.plaintextWarn a few
-            lines up for the genuine, actively-risky warning case (only
-            rendered while the risk applies) this text never was: it's an
-            unconditional, one-time explainer of how the toggle behaves, the
-            exact content InfoBubble exists for. No `border-t` here either,
-            same reasoning as the Plain-export block above.
-              FOLLOW-UP (jdp, live-review, fresh screenshot proved a prior
-            round's claim wrong): that earlier pass only bubbled the STATIC
-            explainer above — it left the master ToggleRow's own DYNAMIC
-            status label ("Aktiviert (Passwort aus APP_KEY)" /
-            "Deaktiviert (kein Passwort)") sitting directly under this same
-            heading in plain view, which is exactly the line the fresh
-            screenshot still showed. `hideLabel` below hides it now, same as
-            its two siblings above; the state it used to carry moves into the
-            bubble's own tip — computed per render off the live
-            `settings.encryptionEnabled` value (the same values
-            settings.encryptionOn/Off already translate in every locale, just
-            read here instead of handed to the ToggleRow as visible text) —
-            rather than a static string, so the bubble still answers "is this
-            actually on right now" concretely instead of only explaining the
-            feature in the abstract. The switch's own filled/unfilled track
-            still shows on/off at a glance without hovering anything. */}
         <div className="flex flex-col gap-3">
-          {/* No more standalone <h3> sub-heading here either — same fix, same
-              reasoning, as the Plain-export block above (jdp, live-review:
-              "Export und Verschlüsselung: Texte normal formatieren, es sind
-              keine Überschriften mehr"). `hideLabel` is gone: the ToggleRow's
-              own DYNAMIC on/off label ("Enabled (password derived from
-              APP_KEY)"/"Disabled (no password)") is now this sub-section's
-              only visible caption, at ToggleRow's normal `text-sm
-              text-carbon-text` weight, not the retired heading's bold/
-              uppercase/tracking-widest treatment. `settings.encryption` (the
-              old heading's own generic "Encryption"/"Verschlüsselung" text)
-              is retired — the row's own live on/off label already says more
-              than that static word did. The bubble's own tip drops the
-              on/off-state PREFIX it used to carry (`settings.encryptionOn`/
-              `Off` concatenated in front of `settings.encryptionHint`): that
-              existed only because the label sitting above it was hidden and
-              had nowhere else to show the current state — now that the
-              state IS the visible label, repeating it inside the bubble too
-              would just be the same sentence twice. */}
+          {/* The live on/off state is the visible label, so the bubble only
+              explains the feature. */}
           <ToggleRow
             label={
               settings.encryptionEnabled
                 ? t("settings.encryptionOn")
                 : t("settings.encryptionOff")
             }
-            // The label says "password derived from APP_KEY" and used to stop
-            // there, which reads as an explanation and lands as a riddle: a
-            // reporter on the support forum went looking for that password to
-            // run restic by hand, could not find it, and only worked out that
-            // it sits in the recovery kit after a detour through a container
-            // shell. The kit is named here now, at the one place that raises
-            // the question.
+            // "Password derived from APP_KEY" raises the question of where that
+            // password is, so the hint names the recovery kit.
             hint={`${t("settings.encryptionHint")} ${t("settings.encryptionPasswordWhere")}`}
             checked={settings.encryptionEnabled}
             onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
@@ -3360,56 +2600,13 @@ export function SettingsPage() {
           />
           {settings.encryptionEnabled && (
             <div className="flex flex-col gap-2">
-              {/* recovery.why is bubbled, not kept as permanent text, even though
-                  it explains a real data-loss risk: the RECURRING "you still
-                  haven't saved this" job is already owned by Dashboard.tsx's own
-                  separate, more prominent recovery.nagTitle/nagBody banner
-                  (dismissed only by recovery.stored) — this paragraph is purely
-                  the one-time "here's why, if you're curious" context for the
-                  button below it, not the app's only safeguard against
-                  forgetting. */}
-              {/* No more heading-styled <h4> here either (jdp, live-review:
-                  "Wiederherstellungs-Kit bitte auch normal formatieren") — same
-                  fix, same reasoning, as the Plain-export/Encryption blocks
-                  above: this sub-section is just a caption plus a single
-                  icon-only download button beneath it, not a heading
-                  introducing its own block of content, so it shouldn't LOOK
-                  like a section heading either. Swapped the semantic `<h4>`
-                  for a plain `<span>` carrying ToggleRow's own exact label
-                  classes (`flex items-center gap-1.5 text-sm text-carbon-text`,
-                  see ToggleRow's own label span above) instead of the retired
-                  bold/uppercase/tracking-widest heading treatment — the ONE
-                  normal-caption style this page already uses everywhere else,
-                  reused verbatim rather than inventing a second one for this
-                  call site. The InfoBubble stays put unchanged; there's no
-                  ToggleRow here to fold it onto (this row is a caption + a
-                  bare download button, not a toggle). */}
+              {/* recovery.why can sit in a bubble despite the data-loss risk it
+                  explains: the Dashboard's recovery banner does the reminding,
+                  and this is only context for the button. */}
               <span className="flex items-center gap-1.5 text-sm text-carbon-text">
                 {t("recovery.title")}
                 <InfoBubble tip={t("recovery.why")} />
               </span>
-              {/* Icon-only + right-aligned (GlimStone follow-up round,
-                  live-review: "...ebenso der Recovery Kit herunterladen
-                  button. Beide sollen einen Glyph statt Text bekommen, mit
-                  Hover-Infobubble") — the visible "Recovery-Kit
-                  herunterladen" label moves onto the IconTipButton's own
-                  tip, the only remaining visible text in this sub-section is
-                  its heading, same "only heading + a bare bubbled/tooltipped
-                  control" shape the encryption toggle right above it now
-                  has. `self-end` (not a `flex justify-end` wrapper — this
-                  button is already a direct child of the section's own
-                  `flex flex-col` above) flips this from the row's start edge
-                  to its end edge, RTL-safe, same as every other logical
-                  start/end pairing on this page. `size="icon"` is the app's
-                  ONE square-icon-badge size (32px), the same footprint
-                  FolderBrowser's own Browse badge and the Registry-add badge
-                  above use, expressed as Badge's own size stage rather than a
-                  hand-written `h-8 w-8`. Converted from flat
-                  `bg-carbon-surface3` grey to a hue-carrying Badge in the same
-                  colour-engine round as those two: see the Registry-remove
-                  badge's own comment for the full reasoning, including why the
-                  enclosing Card's `.glim-hue` makes an explicit `hueIndex`
-                  unnecessary here. */}
               <Button
                 label={t("recovery.download")}
                 labelKey="recovery.download"
@@ -3422,9 +2619,9 @@ export function SettingsPage() {
                 className={"self-end shrink-0"}
               />
               {kitError && (
-                // Backend-provided error text shown verbatim BY DESIGN (e.g. the
-                // fail-closed "set a login password" refusal when auth is off) —
-                // the API answers English and is not translated client-side.
+                // Backend error text shown verbatim (such as the fail-closed
+                // "set a login password" refusal when auth is off); the API
+                // answers in English and is not translated client-side.
                 <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
               )}
             </div>
@@ -3437,47 +2634,10 @@ export function SettingsPage() {
       {/* protection depends on them. The id is the target of /settings/offsite. */}
       {page === "offsite" && (
       <div id="offsite" className="flex flex-col gap-6">
-      {/* Live-review round ("Bei der ersten Card überlappen sich zwei
-          Cardtitelbadges. Können wir für Container, VMs, Flash, Ordner
-          jeweils eine eigene Card machen?"): this used to be a group-heading
-          `<h2>` badge (offsite.sectionTitle) immediately followed by ONE
-          shared Card whose body looped over all four domains — the group
-          badge's own `-top-[11px]` notch and the Card's own `-top-[11px]`
-          notch, only `gap-6` (24px) apart with the group heading rendering
-          at ZERO height (its only child is `position: absolute`, so it
-          contributes nothing to flow height — see Card's own comment on why
-          the badge straddles the card's top edge this way), landed the two
-          22px-tall badges overlapping by several px. Splitting into four
-          per-domain Cards does NOT fix that geometry on its own — the FIRST
-          new Card would sit exactly `gap-6` below the same zero-height group
-          heading, reproducing the identical overlap (verified against the
-          live math before shipping this, not just assumed). The actual fix
-          is the one this file's own Schedules tab already took this same
-          round for the identical shape (see that tab's own history: its
-          "Backup-Zeitpläne" group heading was removed because "these Cards
-          already carry their own clear headings, so the group label was
-          redundant") — dropping the group heading entirely, now that each
-          of the four Cards below carries an unambiguous
-          "OFFSITE-KOPIE <DOMAIN>" title of its own. offsite.sectionTitle
-          had no other call site, so it's gone from i18n.ts (en/de) and all
-          24 locale files, the same mechanical removal as
-          settings.schedulesBackup got.
-          `gap-6` on this wrapper: Card's own outer `<div>` no longer needs
-          `relative` here (there is no sibling group-heading badge left to
-          coexist with), and the four per-domain Cards need the SAME
-          vertical rhythm every other multi-Card tab in this file already
-          gets from the shared `<div className="flex flex-col gap-6">`
-          wrapping the whole tab body two levels up — this nested wrapper
-          exists only because `id="offsite"` (the deep-link anchor,
-          `/settings#offsite`) needs a real element to attach to, not a
-          Fragment. */}
-      {/* Self-backup ("config") sits here with the rest since #176 (kramttocs:
-          "Self-Backup should probably be more closely related to the other
-          Off-site sections"). It was never a lesser domain in the backend — it
-          has had configOffsite, its own targets and its own primary-remote row
-          all along. It was simply missing from this list, so it alone got a
-          bare URL field on its own page instead of a wizard, a connection test
-          and per-destination credentials. */}
+      {/* Self-backup ("config") is listed with the other domains (#176): the
+          backend gives it its own off-site repo and targets like any other,
+          so it gets the wizard, the connection test and per-destination
+          credentials too. */}
       {([
         ["containersOffsite", "nav.containers", "containers"],
         ["vmsOffsite", "nav.vms", "vms"],
@@ -3487,32 +2647,14 @@ export function SettingsPage() {
         ["configOffsite", "nav.config", "config"],
       ] as const).map(([repoKey, label, domain]) => {
         const wizardOpen = offsiteWizard === domain;
-        // This domain's OWN rainbow position — the SAME value fed to this
-        // Card's own heading notch below AND to every clickable control
-        // inside it (TestConnectionButton/ReplicateNowButton/the Einrichten
-        // toggle/OffsiteTargetsSection's own "Ziel hinzufügen" button), per
-        // jdp's explicit ask ("Die Buttons ... in die Farbengine
-        // aufnehmen") — not four independent nextHue() calls, which would
-        // desync a domain's own action buttons from its own Card's colour.
+        // One hue position per domain, shared by the card heading and every
+        // control inside it, so a domain's buttons match its card.
         const hueIdx = nextHue();
         return (
         <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
-          {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
-              left as permanent text rather than force a call. It names three
-              backend URL prefixes (rest:/s3:/b2:), but that's only PARTIALLY
-              unique reference: the field's own placeholder already shows a
-              rest: example, and offsite.repoLocalHint right below each field
-              already documents the relative-path option. What it adds beyond
-              those is s3: and b2: as valid prefixes here specifically — real
-              but thinner value than RcloneCard's/CloudCard's own hints above
-              (the sole documentation of their syntax anywhere). Whether that
-              remainder is enough to justify a permanent paragraph, or should
-              fold into the placeholder/caption instead, is a real design call,
-              not a mechanical one — flagged rather than decided here.
-              CARD-SPLIT FOLLOW-UP: this text applies identically to all four
-              domains (it's about repo URL syntax, not domain-specific), so it
-              stays a one-time read rather than repeating verbatim in every
-              new Card — shown once, in the first (Containers) Card only. */}
+          {/* The repo URL prefixes (rest:, s3:, b2:) are visible reference
+              text. They apply to every domain, so they are shown once, in the
+              first card. */}
           {domain === "containers" && (
             <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
           )}
@@ -3543,10 +2685,6 @@ export function SettingsPage() {
                   onChange={(e) => {
                     const v = e.target.value;
                     setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-                    // Full-page Speichern-Button sweep: this Card's own bottom
-                    // SaveBar is gone — each repo URL debounce-auto-saves
-                    // itself, keyed by its own field name (the off-site
-                    // *cadences* stay owned by the Schedules tab, unaffected).
                     debouncedSave(repoKey, () =>
                       void save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)
                     );
@@ -3555,18 +2693,16 @@ export function SettingsPage() {
                   dir="ltr"
                   className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
                 />
-                {/* A mounted share is a perfectly valid off-site target, but the
-                    placeholder only ever showed a REST URL — so nothing told the
-                    operator a bare relative path works here (issue #138). */}
+                {/* A mounted share is a valid off-site target, but the
+                    placeholder shows a REST URL, so this says a bare relative
+                    path works too (#138). */}
                 <span className="text-xs text-carbon-textMuted">
                   {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
                 </span>
               </>
             )}
-            {/* Additional off-site targets (multi-off-site): extra copies of this
-                domain beyond the primary editor above, managed via the CRUD API.
-                hueIndex threaded through for the same "Ziel hinzufügen" button —
-                see that component's own comment. */}
+            {/* Extra copies of this domain beyond the primary above, managed
+                through the CRUD API. */}
             <OffsiteTargetsSection domain={domain} t={t} hueIndex={hueIdx} />
           </div>
         </Card>
@@ -3578,9 +2714,8 @@ export function SettingsPage() {
       {page === "retention" && (
       <Card
         title={t("settings.retentionOffsiteTitle")}
-        // Same fix as the local-retention Card above, folding all three
-        // sentences (what this Card does, the OR-combination rule, and the
-        // immutable-destination override) into the one title-level bubble.
+        // The intro, the OR-combination rule and the immutable-destination
+        // override share the title bubble.
         hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionImmutableNotPruned")}`}
         hueIndex={nextHue()}
       >
@@ -3610,7 +2745,7 @@ export function SettingsPage() {
           ))}
         </div>
         {/* The off-site twin. Its own source, because the off-site policy is a
-            SEPARATE policy: an archive kept longer off-site than locally would
+            separate policy: an archive kept longer off-site than locally would
             otherwise be previewed against the wrong rule. */}
         {advanced && (
           <div className="mt-4 border-t border-carbon-border pt-3">
@@ -3626,10 +2761,7 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* `advanced &&` inline, not the <Advanced> wrapper — see the Storage
-          tab's cacheTitle Card (above) for why: the wrapper's children are
-          already built before it decides whether to render them, so a
-          hueIndex={nextHue()} inside it fires every render regardless. */}
+      {/* `advanced &&` inline for the same reason as the cache card. */}
       {page === "offsite" && advanced && (
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
         <div className="grid grid-cols-2 gap-3">
@@ -3655,28 +2787,11 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* `advanced &&` inline, not the <Advanced> wrapper — same reason as
-          the Storage tab's cacheTitle Card above. */}
+      {/* `advanced &&` inline for the same reason as the cache card. */}
       {page === "integrations" && advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
-        {/* GlimStone follow-up round (jdp, live review: "Prometheus-Metriken
-            unter /metrics ... in eine InfoBubble" — design-language.md rule 8,
-            "explanations live in a bubble, not on the page"): this used to be
-            a permanent `<p>` under the Card title, reasoned at the time as an
-            "exact syntax to copy correctly" carve-out (the same one RcloneCard's/
-            CloudCard's own hints still use). jdp's live review overruled that
-            specifically for this text — unlike rclone.pathHint's own
-            "rclone:<remote>:<bucket>/path" syntax (which someone fills into a
-            DIFFERENT tab's Backup Path field from memory, so it needs to stay
-            findable without already hovering an icon here), this hint is
-            self-contained: /metrics and the Bearer-token syntax are both used
-            right here, on the same toggle, so a hover bubble is not hiding
-            anything a reader would need on a different screen. Moved onto the
-            ToggleRow's own `hint` prop below (the same "(i) beside the label"
-            mechanism as every other bubbled explanation in this file) — no
-            `description` here for the same "the Card's own hint already
-            covers it" reasoning this row's OLD comment gave, just now living
-            on the toggle's `hint` instead of a Card-level paragraph. */}
+        {/* The /metrics and bearer-token syntax can sit in a bubble: it is
+            used right here, not typed into another page from memory. */}
         <ToggleRow
           label={tLtr(t, "settings.metricsEnable")}
           hint={tLtr(t, "settings.metricsHint")}
@@ -3686,9 +2801,9 @@ export function SettingsPage() {
           shakeNonce={fieldShake.metricsEnabled}
           pulseNonce={fieldPulse.metricsEnabled}
         />
-        {/* Write-only secret (the GET never echoes it): blank-on-save keeps the
-            stored token, so a stored one shows as the same "saved — leave blank
-            to keep" placeholder the cloud-credential secrets use. */}
+        {/* Write-only secret (the GET never echoes it): a blank save keeps the
+            stored token, so a stored one shows the same "already set"
+            placeholder the cloud-credential secrets use. */}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.metricsToken")}</span>
           <RevealInput
@@ -3699,10 +2814,8 @@ export function SettingsPage() {
             onChange={(e) => {
               const v = e.target.value;
               setSettings((prev) => prev ? { ...prev, metricsToken: v } : prev);
-              // Full-page Speichern-Button sweep: was this Card's own bottom
-              // SaveBar. Keeps the SAME "is-set flag honest locally" patch
-              // shape the old onSave sent — a non-blank token being saved
-              // marks itself set; a blank save keeps whatever was stored.
+              // A non-blank token marks itself set; a blank save keeps
+              // whatever was stored.
               debouncedSave("metricsToken", () =>
                 void save(
                   { metricsToken: v, metricsTokenSet: v.trim() !== "" || settings.metricsTokenSet },
@@ -3727,7 +2840,7 @@ export function SettingsPage() {
           t={t}
           tokenSet={settings.widgetTokenSet}
           onTokenSet={(set) => {
-            // Keep BOTH the live state and the saved baseline in sync: the token
+            // Keep both the live state and the saved baseline in sync: the token
             // is managed by its own endpoints, so a later save (which merges onto
             // the baseline) must not carry a stale widgetTokenSet.
             setSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
@@ -3771,32 +2884,12 @@ export function SettingsPage() {
         );
       })()}
 
-      {/* NOTIFICATIONS — Weekly digest: one summary message per week through
-          the channels configured above. Schedule input mirrors the drills/
-          tamper cadence editors (CadenceBuilder's own <fieldset disabled>
-          handles the dimming — no opacity gate on the wrapping container).
-            IIFE for the same reason as the tamper-test schedule Card above
-          (Task 3): `hueIdx` is captured once and handed to BOTH this Card's
-          own heading notch and the CadenceBuilder's TimePicker inside it,
-          instead of two independent `nextHue()` calls landing on different
-          colours for one visually-grouped Card. */}
+      {/* Weekly digest: one summary message per week through the channels
+          above. One hueIdx feeds both the heading and the time picker. */}
       {page === "notifications" && (() => {
         const hueIdx = nextHue();
         return (
           <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={hueIdx}>
-            {/* Full-page Speichern-Button sweep: this Card's own bottom
-                SaveBar is gone — the toggle auto-saves immediately (revert +
-                shake on failure, via the page-wide autoSaveToggle), the
-                cadence debounces (via debouncedSave), same split every other
-                toggle+cadence pairing on this page already uses.
-                  No-empty-toggles audit (jdp: "Wochenbericht-Toggle mit Text
-                'Wochenbericht' hinschreiben. Es soll nie 'leere' Toggles
-                geben."): this row used to `hideLabel` on the Card-title-
-                already-says-it reasoning, the third time that exact pattern
-                got built in this file after jdp reversed it twice before
-                (Rainbow master toggle, Restore-Prüfungen toggle). `hideLabel`
-                is gone from ToggleRow entirely now (see its own header
-                comment) — the row's own label is always visible. */}
             <ToggleRow
               label={t("settings.digestToggle")}
               checked={settings.digestEnabled}
@@ -3805,19 +2898,14 @@ export function SettingsPage() {
               shakeNonce={fieldShake.digestEnabled}
               pulseNonce={fieldPulse.digestEnabled}
             />
-            {/* Resolved-schedule badge — NEW this round, same reason as
-                RestoreChecksSection's (see that call site's own comment):
-                this was the second of the three cadence editors that had no
-                badge above them and relied on CadenceBuilder's own inline
-                preview, now removed. `enabled` wired to `digestEnabled` for
-                the same reason — the on/off is a separate toggle here, not
-                the cadence string's own "off" mode. */}
+            {/* `enabled` follows digestEnabled: the on/off is a separate
+                toggle here, not the cadence string's own "off" mode. */}
             <ScheduleRow schedule={settings.digestSchedule} enabled={settings.digestEnabled} />
-            {/* The editor goes with the toggle above, exactly as in
-                RestoreChecksSection (GlimStone 1.10.0): an editor greyed
-                because a switch ELSEWHERE is off offers an edit nobody can
-                make. The badge above stays either way, so switching the
-                report off still shows what would have run. */}
+            {/* The editor goes with the toggle above, as in
+                RestoreChecksSection: an editor greyed because a switch
+                elsewhere is off offers an edit nobody can make. The badge
+                stays either way, so switching the report off still shows what
+                would have run. */}
             {settings.digestEnabled && (
             <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
@@ -3837,13 +2925,11 @@ export function SettingsPage() {
         );
       })()}
 
-      {/* NOTIFICATIONS — Overdue-backup watchdog: a fixed daily check (09:00)
-          that pushes ONE notification per overdue episode through the channels
-          configured above; a new successful backup re-arms it. */}
+      {/* Overdue-backup watchdog: a fixed daily check at 09:00 that sends one
+          notification per overdue episode through the channels above; a new
+          successful backup re-arms it. */}
       {page === "notifications" && (
         <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")} hueIndex={nextHue()}>
-          {/* Full-page Speichern-Button sweep: was this Card's own bottom
-              SaveBar — a single toggle, so it now just auto-saves itself. */}
           <ToggleRow
             label={t("settings.watchdogToggle")}
             checked={settings.watchdogEnabled}
@@ -3855,27 +2941,9 @@ export function SettingsPage() {
         </Card>
       )}
 
-      {/* `advanced &&` inline, not the <Advanced> wrapper component: the
-          wrapper takes `children` as an ALREADY-BUILT prop, so a
-          hueIndex={nextHue()} inside it would fire every render regardless
-          of whether Advanced ends up showing it — caught live (Playwright
-          against the real deployed container: this exact site, plus three
-          more of the same shape — cacheTitle/offsiteLimits/metrics above —
-          were each silently "spending" a hue slot on a Card that never
-          painted, shifting every later heading on that tab by one position
-          while Advanced was off). Plain `&&` short-circuits correctly,
-          exactly like every other conditional Card on this page — this was
-          the one call site that still used the wrapper component instead. */}
+      {/* `advanced &&` inline for the same reason as the cache card. */}
       {page === "integrations" && advanced && (() => {
-        // Button-size/colour-engine sweep (jdp, live review — "Die vielen
-        // Buttons sind unterschiedlich groß und nicht alle im
-        // Regenbogenmodus"): the Check Now button inside SpikePanel had no
-        // tie to this Card's own hueIndex at all. `hueIdx` captured once in
-        // this IIFE and threaded into BOTH the Card's own heading notch and
-        // SpikePanel's new `hueIndex` prop — the same "one Card, two
-        // hue-aware children share ONE position" shape the schedulesChecks
-        // Card's own IIFE below already uses for its Card+CadenceBuilder
-        // pair, not a second independent `nextHue()` call.
+        // One hueIdx for the heading and SpikePanel's button.
         const hueIdx = nextHue();
         return (
           <Card title={t("spike.title")} hueIndex={hueIdx}>
@@ -3888,24 +2956,8 @@ export function SettingsPage() {
       {/* default view. */}
       {page === "integrity" && (
       <>
-        {/* IntegrityCard used to be documented here as the ONLY Card this tab
-            ever rendered — a genuine singleton per design-language's own
-            exclusion ("the only one of its kind on the page keeps the single
-            accent"), so it deliberately took no `hueIndex` at all. That
-            exemption no longer applies (jdp, live-review — "Gehört die
-            'Automatische Restore-Prüfungen' Card nicht in den
-            Integritäts-Tab?"): RestoreChecksSection and the schedulesChecks
-            Card below moved here from the Schedules tab, both configuring
-            WHAT gets verified and how often — a natural fit next to this
-            Card's own verify/unlock/prune/drill actions. With three Cards
-            now genuinely on this tab, IntegrityCard gets a real `nextHue()`
-            call like everything else, first in visual order since it's the
-            tab's primary/pre-existing content. */}
         <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
 
-        {/* Restore-check drills (RestoreChecksSection renders its own Card) —
-            moved from the Schedules tab (see that tab's own comment at its
-            old call site). */}
         <RestoreChecksSection
           settings={settings}
           update={scheduleUpdate}
@@ -3916,40 +2968,18 @@ export function SettingsPage() {
           hueIndex={nextHue()}
         />
 
-        {/* Restore-check schedule (schedulesChecks): the scheduled off-site
-            append-only tamper test — moved from the Schedules tab (see that
-            tab's own comment at its old call site).
-              `hueIdx` captured once in this IIFE and reused for both the
-            Card's own heading notch and the CadenceBuilder's TimePicker
-            inside it (Task 3, jdp: "Der Zeitpicker ist nicht im
-            Regenbogenmodus") — a bare inline `<Card hueIndex={nextHue()}>`
-            here has no local variable to also hand the CadenceBuilder below,
-            and calling `nextHue()` a second time would consume a SECOND,
-            different position for one visually-grouped Card (exactly the
-            trap SaveBar's own header comment already warns about for the
-            identical "one Card, two hue-aware children" shape). The IIFE is
-            the smallest change that captures the single call's result
-            without lifting this ad-hoc Card block into its own named
-            component purely to receive a prop. */}
+        {/* The scheduled off-site append-only tamper test. One hueIdx feeds
+            both the heading and the time picker; a second nextHue() call
+            would give the one card two colours. */}
         {(() => {
           const hueIdx = nextHue();
           return (
             <Card title={t("settings.schedulesChecks")} hueIndex={hueIdx}>
-              {/* Resolved-schedule badge — NEW this round, the third and last
-                  cadence editor that had none (see RestoreChecksSection's own
-                  comment for why CadenceBuilder's inline preview could only be
-                  deleted once all three had one). NO `enabled` prop here,
-                  unlike the other two: this Card has no on/off toggle of its
-                  own — the cadence string's own "off" mode IS the control, the
-                  same shape the four domain Cards use. The separate
-                  `tamperScheduleActive` precondition below is deliberately NOT
-                  folded into the badge: it isn't this card's own on/off but a
-                  cross-cutting "no qualifying domain configured" state, and it
-                  already has its own explicit amber explanation right beneath
-                  (#109 — the one place that told manilx why Sun 08:00 never
-                  ran). Restating it as a grey "Kein Zeitplan" badge would
-                  contradict the cadence the user can plainly see set in the
-                  editor. */}
+              {/* No `enabled` here: the cadence string's own "off" mode is the
+                  control, as in the domain cards. tamperScheduleActive stays
+                  out of the badge: it is not this card's on/off, it has its
+                  own warning below, and a "no schedule" badge would contradict
+                  the cadence visible in the editor. */}
               <ScheduleRow schedule={settings.tamperTestSchedule} />
               <div className="rounded-card bg-carbon-surface2 p-4">
                 <CadenceBuilder
@@ -3958,8 +2988,9 @@ export function SettingsPage() {
                   onChange={(v) => scheduleField("tamperTestSchedule", v)}
                   hueIndex={hueIdx}
                 />
-                {/* #109: the scheduler stays inert without a qualifying domain — this
-                    is the only place that told manilx why Sun 08:00 never ran. */}
+                {/* The scheduler stays inert without a qualifying domain, and
+                    this is the only place that says why the test never runs
+                    (#109). */}
                 {!tamperScheduleActive && (
                   <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                     {t("settings.tamperScheduleInactive")}
@@ -3971,7 +3002,7 @@ export function SettingsPage() {
         })()}
 
         {/* Last, so the restore checks and their schedule stay next to each
-            other. The target of /settings#anomalies; the margin keeps the
+            other. The target of /settings/integrity#anomalies; the margin keeps the
             heading badge, which straddles the card's top edge, in view. */}
         <div id="anomalies" className="scroll-mt-6">
           <AnomalyCard
@@ -3988,21 +3019,11 @@ export function SettingsPage() {
       </>
       )}
 
-      {/* Button-size/colour-engine sweep (jdp, live review — "Die vielen
-          Buttons sind unterschiedlich groß und nicht alle im
-          Regenbogenmodus"): the buttons below had no tie to this Card's own
-          hue at all. (It used to name three - Save, Logout and
-          Logout-everywhere; the two sign-out buttons are gone, see the note
-          where they stood.) IIFE captures `hueIdx`
-          once and reuses it for both the Card's own heading notch and every
-          button inside it — the same "one Card, several hue-aware children
-          share ONE position" shape the schedulesChecks/Spike Cards above
-          already use, not several independent `nextHue()` calls. */}
+      {/* One hueIdx for the heading and the button inside. */}
       {page === "security" && (() => {
         const hueIdx = nextHue();
         return (
       <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={hueIdx}>
-        {/* Status badge */}
         <div className="flex items-center gap-2">
           <span
             className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
@@ -4012,7 +3033,6 @@ export function SettingsPage() {
           </span>
         </div>
 
-        {/* Set / Change password form */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">
@@ -4042,14 +3062,12 @@ export function SettingsPage() {
               wrapperClassName="w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
-            {/* The rule, stated before it is broken rather than after. There
-                was no minimum at all before v8.6.0, and "1234" was accepted. */}
+            {/* The rule, stated before it is broken rather than after. */}
             <span className="text-xs text-carbon-textSub">
               {t("auth.passwordMinHint", minPasswordLen)}
             </span>
           </div>
 
-          {/* Save / status row */}
           <div className="flex items-center gap-3 pt-1">
             <Button
               key={pwSaveShake || 0}
@@ -4063,26 +3081,18 @@ export function SettingsPage() {
               className={pwSaveShake ? "glim-shake" : ""}
               hueIndex={hueIdx}
             />
-            {/* Only the pre-flight mismatch validation error renders here now
-                (GlimStone form-engine Task 9) — the post-save success/failure
-                notice is a toast instead; see handleSetPassword's own comment. */}
+            {/* Only the pre-flight validation errors render here; the save
+                outcome is a toast. */}
             {pwSaveState === "error" && pwSaveMsg && (
               <span className="text-sm text-statusFail">{pwSaveMsg}</span>
             )}
           </div>
         </div>
 
-        {/* No sign-out here, and no "sign out everywhere" either (GlimStone
-            2.1.0, rule 22: a settings card CONFIGURES, the shell OPERATES).
-            Both used to sit along this card's bottom edge, which put the two
-            controls that throw a half-filled password form away directly under
-            the field somebody was typing in - and the plain one duplicated the
-            sidebar's own sign-out, where everybody looks for it anyway.
-              Removing a button must not remove what it could do, so the
-            "everywhere" half moved into the action that already implies it:
-            handleSetPassword rotates the session epoch now, which ends every
-            other session exactly when somebody changes a password because they
-            fear it leaked. See its comment in internal/api/handlers.go. */}
+        {/* No sign-out buttons here: a settings card configures and the shell
+            operates, and sign-out lives in the sidebar. Changing the password
+            rotates the session epoch, which ends every other session (see
+            handleSetPassword in internal/api/handlers.go). */}
       </Card>
         );
       })()}
@@ -4127,8 +3137,8 @@ export function SettingsPage() {
         </div>
       )}
 
-      {/* The Look tab: language first, at a field's height, then the other
-          axes the person owns. None of them waits for a Save. */}
+      {/* Language and the look page's appearance axes belong to the person
+          and apply at once, without a Save. */}
       {page === "general" && <LanguageCard t={t} hueIndex={nextHue()} />}
 
       {page === "look" && <ThemeCard t={t} hueIndex={nextHue()} />}
@@ -4161,38 +3171,14 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {/* Motion intensity (GlimStone motion-engine — jdp, live-review:
-          "Wäre eine Animationsengine gut?" -> "Echte Engine mit eigenem
-          Nutzer-Schalter"). A DELIBERATE reversal of design-language.md's
-          own prior Motion-Engine section (2026-08-18: "kein In-App-Schalter
-          dafür ... kein fünfter Nutzer-Schalter, rein OS-gesteuert für
-          jetzt") — see that doc's updated Motion Intensity write-up for the
-          full course-correction note, quoting the old text rather than
-          silently dropping it.
-            Same architecture as the Shape Card right above (lib/motion.ts
-          mirrors lib/shape.ts's getShape/setShape/applyShape/
-          applyStoredShape exactly; index.css's `[data-motion="..."]` token
-          blocks mirror `[data-shape="..."]`'s own), so this Card sits
-          directly below Shape: same kind of setting (client-only, applied
-          at the app root), same "one Selector, no Save step" shape, same
-          `variant="well" equalWidth`/`size="lg"` treatment already proven
-          live on Theme's and Shape's own pickers right above.
-            `hue` stays on its plain `true` default (Selector's own
-          default) — this repo's standing colour-engine rule is explicit
-          that "it's a settings control, not content" is exactly the kind
-          of self-authored exception that rule forbids; this Selector's
-          three segments read RAINBOW[0]/[1]/[2] like Shape's own segments
-          right above, and the Card's own heading badge gets a real
-          `hueIndex={nextHue()}` the same way every other Card on this tab
-          does. */}
+      {/* Motion intensity, built like the shape card: lib/motion.ts mirrors
+          lib/shape.ts, and the level applies at the app root without a Save. */}
       {page === "look" && (
       <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
-        {/* THE FOURTH SEGMENT IS NOT ALWAYS THERE, GSS 1.17.0's hidden level.
-            It is offered while it is CHOSEN - a picker that hid the value it
-            is currently showing would be lying about the interface - and
-            otherwise only for as long as this screen stays open, which is why
-            `stormFound` is component state and never storage. Pick something
-            else and leave, and it is gone until the gesture is made again. */}
+        {/* The fourth level, storm, is hidden. It is offered while it is
+            chosen, since a picker that hid its current value would misstate
+            the interface, and otherwise only while this screen stays open,
+            which is why `stormFound` is component state and not storage. */}
         <Selector
           items={[...MOTION_INTENSITIES, ...(stormFound || motion === "storm" ? (["storm"] as const) : [])].map(
             (m) => ({
@@ -4204,7 +3190,7 @@ export function SettingsPage() {
           select="one"
           active={motion}
           onChange={(id) => {
-            // The gesture first, because it fires on the level ALREADY chosen
+            // The gesture first, because it fires on the level already chosen
             // and therefore on a click that changes nothing else.
             const storm = stormTap(stormClicks.current, id, motion);
             if (storm) setStormFound(true);
@@ -4272,65 +3258,17 @@ export function SettingsPage() {
       </>
       )}
 
-      {/* Colors (GlimStone form-engine Phase 2, Task 1; the accent Card and
-          the Rainbow Card, MERGED — jdp, live-review: "Die card von
-          Akzentfarbe und Regenbogenmodus in eine mergen. Gehört ja
-          zusammen"). AccentCard above now returns just its own body (no
-          Card wrapper of its own — see its header comment), composed here
-          alongside the Rainbow controls this Card used to hold on its own.
-          One heading, `settings.colors` ("Colours"/"Farben") — new key, not
-          a repurposed `settings.accentColor`/`settings.rainbow`: those two
-          stay in use as the sub-topics' own row labels below, so the Card's
-          own title needed a THIRD string that reads as "colour, broadly"
-          without clashing with either. No `hint` on the Card itself any
-          more (see the master toggle below for where Rainbow's own hint
-          moved). No divider between the two halves — spacing only, this
-          app's established "cards separate sections, never a rule line"
-          convention (see the Shape/Rainbow split's own comment above for
-          the fuller house-rule writeup); AccentCard's body and the rainbow
-          `<div>` below it are simply two direct children of this Card's own
-          `flex flex-col gap-4`, the same "adjacent flex children, no divider"
-          shape the (now-relocated) Flash-zip-export/Plain-export/Repository
-          trio in the Storage tab's encryption Card already established.
-            hueIndex: merging two Cards into one Card means one FEWER
-          `nextHue()` call in the sequence than before — removed here rather
-          than left as a dead call, since `hueSeq++` would otherwise burn a
-          position nothing renders. Every Card below this one (Quiet toasts,
-          the "system"/"storage"/etc. tabs' own Cards) is still numbered
-          correctly with no manual re-numbering: `nextHue()` is a plain
-          `hueSeq++` evaluated in JSX order at render time (see this
-          function's own `hueSeq`/`nextHue` comment above), so removing one
-          call site automatically shifts every LATER one down by one — the
-          exact self-correcting behaviour that comment already documents.
-            This switch genuinely repaints the app: every hue-enabled
-          Selector segment (components/Selector.tsx, its own default —
-          twelve call sites across seven files, including the Settings tab
-          strip above and the drill-type toggle further down) and the
-          container/VM/file-set list rows all read a rainbow position, so
-          turning this on sets data-rainbow + --rb-0..--rb-7 on <html> AND
-          immediately recolours those real call sites. The sidebar nav is
-          deliberately NOT a consumer (Sidebar.tsx carries the reasoning), so
-          flipping this switch never changes the rail's own colours.
-            The master toggle's own hueIndex/hint fixes are documented right
-          on that ToggleRow below — see its own comment for both.
-            IIFE-captured `hueIdx` feeds this Card's own heading notch plus
-          the three rainbow ToggleRows below (hueIndex 0/1/2) — the same
-          one-call-feeds-several-children shape the schedulesSelfBackup Card
-          (Card+CadenceBuilder) and every offsite per-domain Card above
-          already use, so a bare inline `hueIndex={nextHue()}` on the Card
-          alone doesn't also have to be re-derived at each child call site.
-            This Card's own two reset Badges (the accent-preset reset inside
-          AccentCard below, and the rainbow-palette reset further down) are
-          DELIBERATELY NOT among hueIdx's consumers — both are `tone="neutral"`,
-          not hue-tinted, on purpose (see each Badge's own call-site comment
-          for the full "a reset control must not blend into the very colours
-          it resets" reasoning), so neither reads `hueIdx` at all. */}
+      {/* Accent colour and rainbow mode share one card. Turning the rainbow
+          on sets data-rainbow and --rb-0..--rb-7 on <html>, which recolours
+          every hue-enabled control; the sidebar is not one of them
+          (Sidebar.tsx says why). The two reset badges stay neutral, so a
+          reset does not blend into the colours it resets. */}
       {page === "look" && (() => {
       const hueIdx = nextHue();
-      // "Is there anything left to reset?" for the palette row below — the
-      // mirror of AccentCard's own `presetsAreDefault`, same case-insensitive
-      // comparison (setRainbow()/isValidPalette() accept either case, so a
-      // palette restored by hand as "#ff8389" must still count as default).
+      // Whether the palette row has anything left to reset, compared
+      // case-insensitively like AccentCard's presetsAreDefault: setRainbow()
+      // accepts either case, so "#ff8389" typed by hand still counts as the
+      // default.
       const paletteIsDefault =
         rainbow.palette.length === RAINBOW.length &&
         rainbow.palette.every((hex, i) => hex.toLowerCase() === RAINBOW[i]?.toLowerCase());
@@ -4343,38 +3281,20 @@ export function SettingsPage() {
               card's rows. */}
           <ToggleRow
             label={t("settings.rainbow")}
-            // Moved DOWN from the Card's own `hint` (jdp, live-review: "die
-            // infobubble des regenbogenmodus ist unverständlich und sie soll
-            // von titelbadge runterwandern in die toggle zeile") — same
-            // `hint` prop mechanism the Reactive/Rotation rows below already
-            // use for their own explanations. Text rewritten for this same
-            // move: see settings.rainbowHint's own value for the rewrite
-            // rationale (a fresh, concrete one-pass explanation, not the old
-            // abstract "handed out by position" phrasing jdp found unclear).
             hint={t("settings.rainbowHint")}
             checked={rainbow.on}
             onChange={rainbowToggled}
             hueIndex={0}
           />
 
-          {/* Everything below hangs off the rainbow being ON, so while it is
-              off none of it is here at all (GlimStone 1.10.0). It used to be
-              dimmed, under the reasoning "switched off, not hidden": leave it
-              visible so nobody has to guess what the mode does. The language
-              answers that directly - a palette editor under a rainbow that is
-              not running is eight swatches nobody can open beside a reset
-              nobody can press, and the switch above already says what the mode
-              is. The "not hidden" rule protects the switch for the MODE, not
-              its sub-controls.
-
-              The accent row two cards up is deliberately NOT this case and
-              keeps its dimming: its value still paints every control the
-              rainbow does not reach, so it is a setting that is partly
-              overridden rather than one with nothing behind it. GlimStone
-              1.16.0 states the test - does the control still do anything. */}
+          {/* Everything below depends on the rainbow being on, so while it is
+              off none of it is shown: a palette editor under a rainbow that is
+              not running offers edits with no effect. The accent row keeps its
+              dimming instead, because its value still paints every control
+              the rainbow does not reach. */}
           {rainbow.on && (
           <>
-          {/* Disco, once found. Shown while it is ON as well as while found,
+          {/* Disco, once found. Shown while it is on as well as while found,
               for the reason the storm's own picker entry is: a switch that
               hid the value it is currently showing would be lying, and
               somebody who reloads with disco running needs a way to stop it.
@@ -4416,39 +3336,9 @@ export function SettingsPage() {
             hueIndex={2}
           />
 
-          {/* The very same row shape as the accent swatches in the Accent
-              Card above, because it is the very same job: pick colours. Each
-              of the 8 is independently editable; setRainbow()/
-              isValidPalette() enforce all-or-nothing validation on the
-              resulting palette before it ever reaches
-              document.documentElement.style — see lib/appearance.ts.
-                Live-review round 3, point 2: the "Palettenfarbe:"/"Palette
-              colour" caption in front of the swatches read as noise once you
-              can already see eight colour swatches sitting there — removed.
-              settings.rainbowPalette itself is NOT orphaned: PaletteSwatch
-              still reads it (see that component's own `label` line above)
-              for each swatch's title/aria-label ("Palette colour 1", "...2",
-              …), so the key stays in every locale unchanged.
-                Live-review round 4 REVERSES the point above (jdp: "Bei der
-              Rainbow-Farbpalette soll 'Farbpalette' stehen und dann die
-              Farbfelder kommen") — a caption is back after all, just a
-              different string than the one removed: settings.rainbowPalette
-              ("Palette colour") stays a per-swatch aria-label only, unchanged;
-              this new settings.rainbowPaletteLabel ("Colour palette") is a
-              standalone row-opening label, matching how the Accent row right
-              above it now opens with its own "Akzentfarbe" caption before
-              its controls — same "label first" ordering, so the two rows in
-              this merged Card read as one consistent pair rather than the
-              swatch row being the odd one out again.
-                Label now bare, no trailing colon (jdp, live-review: "Der
-              Doppelpunkt nach Akzentfarbe und Farbpalette weg") — the colon
-              was appended in JSX only, never in the translated string (all
-              42 locales checked), so removing it here is the whole fix.
-                Swatches+reset now right-aligned as their own `ms-auto` group
-              (jdp, live-review: "Die Farbfelder der Farbpalette auch ganz
-              nach rechts verschieben"), matching the Accent row's own
-              identical right-alignment right above — the label stays at the
-              row's start, everything clickable moves to the row's end. */}
+          {/* The same row shape as the accent swatches, because it is the
+              same job. setRainbow() and isValidPalette() validate the whole
+              palette before it reaches the document (lib/appearance.ts). */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-carbon-text">{t("settings.rainbowPaletteLabel")}</span>
             <div className="flex items-center gap-2 flex-wrap ms-auto">
@@ -4465,97 +3355,12 @@ export function SettingsPage() {
                 }}
               />
             ))}
-            {/* Live-review round 3, point 3: was a plain text "Reset" button.
-                Now a Badge, matching this row's own established "everything
-                clickable is a badge" convention (Task 5 rule 13), sized via
-                the `icon` stage to land on the exact same 28px (h-7 w-7)
-                footprint as the PaletteSwatch circles it sits beside, so it
-                reads as part of the same row of controls rather than a
-                mismatched afterthought.
-                  SQUARE (jdp, live-review: "Die Zurücksetzen-Option soll ein
-                quadratischer Badge mit Glyph sein") — `shape="square"` still
-                resolves through `rounded-pill`, the shape engine's own
-                live token, so this tracks every shape (under
-                "Rund" it renders as a full circle, same as every other
-                square badge in the app).
-                  NEUTRAL now, not hue-tinted (jdp, re-reporting: "Der
-                Reset-Badge soll ... nicht farbig sein, damit er sich besser
-                von den Farbflächen abhebt" — measured live, this Badge's
-                `tone="active"` fill was rendering the literal flat accent
-                gold, `rgb(252,196,25)` — the EXACT SAME value as one of the
-                eight palette swatches sitting right beside it, making the
-                reset control indistinguishable from an actual colour choice
-                at a glance). DELIBERATE EXCEPTION to this app's standing
-                "every icon-only badge gets real colour-engine integration"
-                rule — see AccentCard's mirror reset Badge (Settings.tsx,
-                same file, a few hundred lines up) for the full "a reset
-                control sitting beside the very colours it resets must not
-                itself be one of those colours" reasoning, which applies
-                here identically. `border-2 border-carbon-border` (NEW)
-                matches PaletteSwatch's own border exactly (`h-7 w-7 ...
-                border-2 border-carbon-border` a few dozen lines up) — without
-                it this Badge's solid fill filled the full 28×28 box edge to
-                edge while each PaletteSwatch's own visible colour disc is
-                actually only 24×24 (28px border-box minus its own 2px
-                ring), which is what actually made this control read as
-                BIGGER than its neighbours (jdp: "der Reset-Badge ist größer
-                als die Farbfelder") despite an IDENTICAL measured 28×28
-                bounding box — a real optical-weight defect a bounding-box
-                check alone never catches, now closed by giving this Badge
-                the exact same border every swatch beside it already has.
-                  IconResetArrow (redesigned — see that icon's own header
-                comment) — the established counter-clockwise "reset" arrow
-                convention, redrawn bolder for legibility at this small
-                badge-in-a-busy-row size.
-                  DISABLED ONLY WHEN THERE IS NOTHING TO RESET — the same
-                dead-control audit that unified AccentCard's two resets above
-                was run against this badge, and it had a milder version of the
-                same defect from the other direction: gated on `!rainbow.on`
-                alone, it sat ENABLED whenever rainbow mode was on even with
-                the palette already byte-identical to RAINBOW, so a click was
-                a silent no-op — a control that looks live and does nothing is
-                the same broken promise as one that is permanently greyed out,
-                just harder to notice. `paletteIsDefault` (computed beside
-                `hueIdx` at this Card's own IIFE head) closes that: the badge
-                is now live exactly when a click would actually change
-                something. The `!rainbow.on` half of the gate STAYS — the
-                eight PaletteSwatches next to it carry the identical
-                `disabled={!rainbow.on}`, so the whole row switches off
-                together, which reads as "this section is off" rather than as
-                one arbitrarily dead control among live ones (the very
-                confusion that made AccentCard's badge unreadable).
-                  size="icon" — the app's ONE square-icon-badge size (32px),
-                never re-derived from the swatch box model. It was 28px, sized
-                to this row's swatches; the app-wide unification moved the
-                swatches instead (PaletteSwatch h-7 w-7 → h-8 w-8), so this
-                badge and its eight neighbours still share one measured
-                footprint and one 28px inner disc inside their `border-2`.
-                  tip (not title/ariaLabel) — IconTipButton's real hover/focus
-                bubble. Now settings.rainbowPaletteReset ("Reset color
-                palette"), not the generic common.reset it carried before:
-                after the merge above, this Card holds TWO neutral square
-                reset badges a few rows apart, and two identical "Reset"
-                bubbles on two controls with different targets is exactly the
-                ambiguity the accentPresetsReset key was originally introduced
-                to avoid. Each bubble now names its own target. (common.reset
-                itself had no other reader left once the accent row's text
-                button was deleted, and was dropped from all 42 locales.)
-                Kept shape/tone/size/glyph/border identical to the AccentCard
-                mirror above — the established "these two mirror each
-                other" pairing.
-                  tone="neutral" IS A DELIBERATE EXCEPTION to "every icon
-                badge goes in the colour engine" — see the AccentCard mirror
-                above for the full reasoning, which applies here even more
-                literally: this badge is the ninth 32px `border-2` tile in a
-                row whose other eight ARE the rainbow palette's own colours
-                (measured live: #FF8389 #FF832B #FCC419 #6FDC8C #3DDBD9
-                #1D99F3 #BE95FF #FF7EB6). Giving it a rainbow fill would make
-                the control that RESETS the palette look like a ninth entry
-                IN the palette. Do not "fix" this to tone="active". */}
-            {/* Same deliberate exception as the accent reset above (jdp,
-                2026-08-29), and for a reason that is even more literal here:
-                a row of eight palette swatches, with a ninth control that
-                empties it. */}
+            {/* Neutral rather than hue-tinted: beside eight palette swatches, a
+                coloured reset would look like a ninth entry in the palette.
+                The border matches the swatches' ring so it does not read
+                bigger than they do, and it is disabled only when there is
+                nothing to reset. The tip names its target, since the card
+                holds two reset badges. */}
             <Badge
               as="button"
               shape="square"
@@ -4577,36 +3382,9 @@ export function SettingsPage() {
       );
       })()}
 
-      {/* Quiet toasts (GlimStone form-engine Task 9) — the toast system's
-          severity-based quiet mode. Its own Card now (previously the last,
-          divider-less sub-topic tacked onto the shared Appearance Card), next
-          to the other purely client-side display preferences, rather than
-          being bolted onto NotifyConfig's server-side "on" field above (that
-          one gates external webhook/Matrix/email notifications — a different
-          axis entirely; muting a toast in THIS browser must never silently
-          change what a webhook receives elsewhere).
-            No-empty-toggles audit (jdp): this row used to `hideLabel`
-          because the Card's own title already says "Quiet toasts" — the
-          exact single-purpose-Card pattern the merged Colors Card's master
-          "Regenbogen-Modus" toggle and RestoreChecksSection's "Automatische
-          Restore-Prüfungen" toggle already had reversed, and this one was
-          the leftover fourth instance the full-app grep in this pass caught.
-          `hideLabel` is gone from ToggleRow entirely now (see its own header
-          comment) — the label is visible again.
-            "Explanations belong in a bubble" pass (jdp): what explains this
-          toggle was a permanent `description` caption printed under the row
-          on every load, not an explanation gated behind the (i) affordance
-          the rest of this page already uses — the exact anti-pattern
-          Apprise's own ToggleRow comment above documents fixing the same way.
-          Moved verbatim into `hint` instead (ToggleRow's own InfoBubble prop,
-          same content contract as Card's `title`/`hint` pair): no wording
-          change needed on either the EN source string or its DE
-          translation: both were already a single compact two-sentence explanation, well
-          within the register settings.offsiteDrillsHelp's own much longer
-          hint text already establishes as normal for this bubble, so only
-          the display mechanism moved, not the copy. Only this call site's
-          own prop changed; the shared `settings.quietToastsHint` key and its
-          text are untouched in i18n.ts and all 40 satellite locale files. */}
+      {/* Quiet toasts is a client-side display preference, separate from the
+          server-side notification switch: muting a toast in this browser must
+          never change what a webhook receives. */}
       {page === "general" && (
       <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
         <ToggleRow
