@@ -17,18 +17,18 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 
 ## Repositórios primários remotos {#remote-primary-repositories}
 
-O caminho de cópia de um domínio (Definições, Armazenamento) não se limita a uma pasta local: aponta-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurares também uma replicação fora do local (ou um segundo remoto) para esse domínio.
+O caminho de cópia de um domínio (Definições, Armazenamento) não se limita a uma pasta local: aponte-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurar também uma replicação fora do local (ou um segundo remoto) para esse domínio.
 
 Cada um dos seis campos de caminho (Contentores, Máquinas virtuais, Flash, Configuração, Ficheiros, Conjuntos de dados ZFS) tem mesmo ao lado um interruptor **Local / Remoto**:
 
 - **Local** mostra o explorador de pastas do costume.
-- **Remoto** troca-o por um simples campo de URL, mais um botão que abre a mesma janela de teste de ligação e credenciais que os destinos fora do local usam, configurada para este primário. A partir daí obténs:
-    - **Um teste de ligação** contra o caminho real, antes de dependeres dele.
-    - **Limites de largura de banda** (envio e receção), para que uma cópia agendada para um primário remoto não sature a tua ligação WAN: os mesmos parâmetros restic `--limit-upload` e `--limit-download` que a replicação fora do local usa, aplicados à própria cópia.
+- **Remoto** troca-o por um simples campo de URL, mais um botão que abre a mesma janela de teste de ligação e credenciais que os destinos fora do local usam, configurada para este primário. A partir daí obtém:
+    - **Um teste de ligação** contra o caminho real, antes de depender dele.
+    - **Limites de largura de banda** (envio e receção), para que uma cópia agendada para um primário remoto não sature a sua ligação WAN: os mesmos parâmetros restic `--limit-upload` e `--limit-download` que a replicação fora do local usa, aplicados à própria cópia.
     - **Proteção append-only (imutabilidade)**, verificada com o mesmo teste ativo de adulteração (uma sonda DELETE real contra o outro lado) que os destinos fora do local recebem. Com ela ligada, o BombVault recusa-se a podar o repositório: como atrás dele não há cópia local separada, as credenciais nesta máquina não podem ser capazes de apagar a única cópia da salvaguarda.
     - **Um alarme de orçamento de crescimento**, tirado da mesma tendência de tamanho do repositório que o cartão Armazenamento já acompanha.
 
-Nada disto é obrigatório: um caminho remoto escrito à mão e sem definições de segurança guardadas copia exatamente como sempre (largura de banda ilimitada, podável, sem alarme de orçamento). A janela de segurança existe para quando quiseres as mesmas proteções que uma cópia fora do local recebe, sem teres de criar um destino fora do local só para isso.
+Nada disto é obrigatório: um caminho remoto escrito à mão e sem definições de segurança guardadas copia exatamente como sempre (largura de banda ilimitada, podável, sem alarme de orçamento). A janela de segurança existe para quando quiser as mesmas proteções que uma cópia fora do local recebe, sem ter de criar um destino fora do local só para isso.
 
 !!! note "As credenciais de nuvem e REST são partilhadas"
     Um primário remoto autentica-se com as mesmas credenciais S3/REST configuradas em Definições, Acesso à nuvem, Credenciais de nuvem partilhadas. Não há um cofre de credenciais separado para repositórios primários.
@@ -118,7 +118,7 @@ Acima estão as peças. Isto é uma instalação completa com valores reais, por
 
 Duas máquinas: **TOWER** executa os contentores e envia as cópias, **VAULT** recebe-as e impõe a imutabilidade. Substitua pelos seus próprios nomes, endereços e caminhos de partilha.
 
-**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora. Essa linha leva a mesma palavra-passe, já cifrada com bcrypt para ti: o texto em claro vai nas credenciais REST em TOWER, a linha cifrada no `.htpasswd` em VAULT. Não tens de cifrar nada.
+**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora. Essa linha leva a mesma palavra-passe, já cifrada com bcrypt para si: o texto em claro vai nas credenciais REST em TOWER, a linha cifrada no `.htpasswd` em VAULT. Não tem de cifrar nada.
 
     Deixe `--append-only` no campo OPTIONS. É esse o objetivo: sem ele, o VAULT volta a ser uma partilha comum.
 
@@ -183,9 +183,9 @@ Se ligou a encriptação age para as exportações simples (Definições), o kit
 
     Com a encriptação ligada e nenhum destinatário utilizável configurado, a transferência é simplesmente recusada. O BombVault nunca recorre a entregar a chave mestra em claro.
 
-### Se não tiveres o kit à mão
+### Se não tiver o kit à mão
 
-A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell podes reproduzi-la tu próprio:
+A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell pode reproduzi-la por si próprio:
 
 ```sh
 printf 'bombvault:restic-repo' \
@@ -193,9 +193,9 @@ printf 'bombvault:restic-repo' \
   | cut -d' ' -f1
 ```
 
-É um HMAC-SHA256 sobre a cadeia fixa `bombvault:restic-repo`, com os bytes crus da `APP_KEY` hexadecimal como chave, impresso como 64 caracteres hexadecimais minúsculos. O mesmo valor está no kit, como palavra-passe restic derivada; isto serve para o dia em que o kit esteja noutro sítio que não contigo.
+É um HMAC-SHA256 sobre a cadeia fixa `bombvault:restic-repo`, com os bytes crus da `APP_KEY` hexadecimal como chave, impresso como 64 caracteres hexadecimais minúsculos. O mesmo valor está no kit, como palavra-passe restic derivada; isto serve para o dia em que o kit esteja noutro sítio que não junto de si.
 
-!!! warning "Para um repositório recebido, usa a chave da instância REMETENTE"
+!!! warning "Para um repositório recebido, use a chave da instância REMETENTE"
     Um repositório que chegou aqui por replicação fora do local foi criado pela máquina que o enviou, com a **sua** `APP_KEY`. Derivar a partir da chave da máquina recetora dá uma palavra-passe que o restic recusa, o que se lê exatamente como um repositório corrompido sem o ser. É a razão habitual para o `restic check` num repositório recebido pedir a palavra-passe vezes sem conta.
 
 Como as definições de recuperação vivem **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), uma pasta de repo copiada é totalmente autossuficiente, por isso o kit mais o repo é tudo o que um restauro em bare-metal precisa.
@@ -211,7 +211,7 @@ restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > 
 
 As etiquetas `dbversion:` e `dbname:` de cada dump dizem de que versão de servidor veio e que bases contém. Um ficheiro completo termina com `-- PostgreSQL database cluster dump complete` ou `-- Dump completed`.
 
-Importa-o para um container da mesma versão ou de uma mais recente (PostgreSQL), ou da mesma versão principal (MySQL e MariaDB), arrancado uma vez com a pasta de dados vazia para que se inicialize. O anfitrião não precisa de cliente de base de dados, o container tem um:
+Importe-o para um container da mesma versão ou de uma mais recente (PostgreSQL), ou da mesma versão principal (MySQL e MariaDB), arrancado uma vez com a pasta de dados vazia para que se inicialize. O anfitrião não precisa de cliente de base de dados, o container tem um:
 
 ```sh
 docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
@@ -219,7 +219,7 @@ docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
 docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
 ```
 
-Para uma só base dentro de um dump completo, o MySQL e o MariaDB aceitam `--one-database <name>` no comando do cliente. Um dump de PostgreSQL tem uma secção por base, cada uma a começar numa linha `\connect <name>`: copia essa secção para um ficheiro próprio e importa-o com `-d <name>` depois de criares a base.
+Para uma só base dentro de um dump completo, o MySQL e o MariaDB aceitam `--one-database <name>` no comando do cliente. Um dump de PostgreSQL tem uma secção por base, cada uma a começar numa linha `\connect <name>`: copie essa secção para um ficheiro próprio e importe-o com `-d <name>` depois de criar a base.
 
 !!! warning "Um dump feito como root traz as contas do servidor"
     Um dump completo de MySQL ou MariaDB feito como root contém a base de sistema `mysql`, pelo que importá-lo substitui as contas do servidor novo, palavra-passe de root incluída, pelas do dump. No PostgreSQL, `role ... already exists` para o utilizador criado pelo container é esperado e inofensivo.

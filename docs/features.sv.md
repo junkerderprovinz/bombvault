@@ -24,7 +24,7 @@ BombVault är enkel som standard och djup när du behöver det. Gränssnittet vi
 *Den guidade återställningen tar en färsk installation genom katastroffallet, på ett ställe.*
 
 - **Fullständig återställning med ett klick.** Välj en ögonblicksbild, klicka på Återställ. Klart.
-- **Återställ från lokalt eller off-site.** Varje säkerhetskopieringsläsare har en omkopplare **Lokal / Utanför platsen**, så om ett lokalt repo förloras eller skadas kan du lista och återställa direkt från off-site-repliken. Radering sker per källa: att ta bort en säkerhetskopia påverkar bara den kopia du tittar på.
+- **Återställ från lokalt eller off-site.** Varje säkerhetskopieringsläsare har en omkopplare **Lokal / Extern**, så om ett lokalt repo förloras eller skadas kan du lista och återställa direkt från off-site-repliken. Radering sker per källa: att ta bort en säkerhetskopia påverkar bara den kopia du tittar på.
 - **Containrar ominstalleras automatiskt.** Containerdefinitionen spelas upp mot Docker-API:et, så containern dyker upp igen i Unraids Docker-flik precis som den var.
 - **VM:ar återskapas automatiskt.** XML:en återimporteras över SSH så att VM:en dyker upp igen i VM Manager med sin disk och UEFI NVRAM återkopplade, även efter att VM:en har raderats. **Identifiera säkerhetskopior** återbygger en post som är helt borta (till exempel efter en nyinstallation).
 - **Individuell återställning.** Återställ en container, en VM eller en filuppsättning utan att röra de andra.

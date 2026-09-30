@@ -395,7 +395,7 @@ export const en = {
   "update.afterBackup": "Update after successful backup",
   "update.afterBackupHint": "Pull the image and recreate this container right after a successful backup, so you always have a fresh restore point first. It runs at the backup's time (backups run one after another), not a fixed clock time. For updates on a set schedule instead, version-gated, see ShipLog.",
   "update.afterBackupOrphans":
-    "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a SUCCESSFUL update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. If you would rather not keep it, Settings → Paths & Storage → Image Cleanup & Update Status has a switch that deletes the superseded image right after the update.",
+    "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a SUCCESSFUL update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. If you would rather not keep it, Settings, Containers, Image Cleanup & Update Status has a switch that deletes the superseded image right after the update.",
   "run.statusRunning": "Running",
   "run.statusSuccess": "Success",
   "run.statusFailed": "Failed",
@@ -569,12 +569,12 @@ export const en = {
   "offsite.tamperError": "Tamper test inconclusive (server unreachable)",
   "offsite.retention.budget": "Growth budget (GB, 0 = off)",
   "offsite.prune.title": "5 · Off-site pruning",
-  "offsite.prune.info": "This step reports what happens, it does not set anything. Whether this copy is pruned is decided by append-only in step 4 and by the keep values in Settings, Off-site retention. To prune an append-only copy anyway, run restic forget --prune on the storage side, either on a schedule of its own or by briefly standing up a second, non-append-only REST server, pruning through it and shutting it down again.",
+  "offsite.prune.info": "This step reports what happens, it does not set anything. Whether this copy is pruned is decided by append-only in step 4 and by the keep values in Settings, Retention. To prune an append-only copy anyway, run restic forget --prune on the storage side, either on a schedule of its own or by briefly standing up a second, non-append-only REST server, pruning through it and shutting it down again.",
   "offsite.prune.stateFarSide": "Nothing here prunes this copy. Append-only is on, so BombVault only ever adds to it, and pruning is the storage side's job.",
   "offsite.prune.statePolicy": "BombVault prunes this copy after each replication, following the off-site retention policy.",
   "offsite.prune.stateNone": "Nothing prunes this copy. Append-only is off and every off-site keep value is 0, so it grows until the disk does.",
   "offsite.prune.effective": "Keeping {last} latest, {daily} daily, {weekly} weekly, {monthly} monthly.",
-  "offsite.prune.editedElsewhere": "Set in Settings, Off-site retention. The values are shared by every domain.",
+  "offsite.prune.editedElsewhere": "Set in Settings, Retention. The values are shared by every domain.",
   "offsite.prune.budgetInfo": "Raises an alarm once the off-site repository grows past this many gigabytes. It never deletes anything, so it is the safety net for a copy nothing prunes.",
   "settings.retentionImmutableNotPruned": "An append-only off-site destination is never pruned from here, whatever these values say. Its own step in the off-site assistant explains how to prune it from the storage side.",
 
@@ -677,10 +677,8 @@ export const en = {
   "retentionPreview.skipped": "These repositories were not covered:",
   "retentionPreview.failed": "The preview could not be produced.",
   "retentionPreview.paused": "Kept: this item has an open anomaly",
-  // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
-  // A) — image cleanup, Unraid's own update-status reconciliation, and
-  // private registry credentials all sit under one roof: everything the
-  // post-backup container update pull touches.
+  // Image cleanup, Unraid's update-status refresh and registry credentials
+  // share the Containers page: all of them serve the post-backup update pull.
   "settings.imageMaintenanceTitle": "Image Cleanup & Update Status",
   "settings.imageMaintenanceHint": "Housekeeping for the post-backup container update: prune the superseded image and refresh Unraid's own cached update status.",
   "settings.pruneImageAfterUpdate": "Remove the old image after an update",
@@ -738,7 +736,7 @@ export const en = {
   "settings.dashTile": "Unraid dashboard widget",
   "settings.dashTileHint": "Put a BombVault status widget right on the Unraid Dashboard. A small companion plugin adds the widget; BombVault can install it for you over its existing host SSH connection.",
   "settings.dashTileChecking": "Checking plugin status…",
-  "settings.dashTileNoSsh": "The host SSH connection is not set up (Settings → VM Backup over SSH), so BombVault cannot install the plugin for you. Install it manually on Unraid under Plugins → Install Plugin with this URL:",
+  "settings.dashTileNoSsh": "The host SSH connection is not set up (Settings, Integrations, Host SSH), so BombVault cannot install the plugin for you. Install it manually on Unraid under Plugins → Install Plugin with this URL:",
   "settings.dashTileCa": "It may also be available in Community Applications. Search for BombVault Widget.",
   "settings.dashTileNotInstalled": "The dashboard widget plugin is not installed.",
   "settings.dashTileConfirm": "Install installs the bombvault-widget plugin on your Unraid host via the regular Unraid plugin mechanism. It shows up under Plugins like any other plugin and can be removed there (or here) anytime.",
@@ -799,7 +797,7 @@ export const en = {
   "notify.notifyOnUpdate": "Notify on container update",
   "notify.notifyOnUpdateHint": "When \"update after backup\" upgrades a container to a newer image, send a message so you can verify it still works. Fires per updated container (updates are rare).",
   "notify.unraid": "Unraid notifications",
-  "notify.unraidHint": "Send to Unraid's own notification system (which can forward to Pushover, email, Discord, …). It runs over the SSH connection from Settings → VM Backup over SSH, so the key must be authorised there, but libvirt/VMs are NOT required (ignore a \"libvirt not reachable\" result if you don't back up VMs). Use Send test below to check it.",
+  "notify.unraidHint": "Send to Unraid's own notification system (which can forward to Pushover, email, Discord, …). It runs over the SSH connection from Settings, Integrations, Host SSH, so the key must be authorised there, but libvirt/VMs are NOT required (ignore a \"libvirt not reachable\" result if you don't back up VMs). Use Send test below to check it.",
   "notify.unraidPlatformMismatch": "BombVault detected this host as \"{platform}\", not Unraid. Unraid notifications stay off even with this switched on. If this IS an Unraid host, check that the host's /boot is bind-mounted to /host/boot inside the container (see the BombVault Unraid template) and restart the container.",
   "notify.smtp": "Email (SMTP)",
   "notify.smtpHost": "SMTP host",
@@ -1221,7 +1219,7 @@ export const en = {
   "dbdump.fixStalled": "The dump stopped making progress, usually because the application held a lock. It is tried again with the next backup.",
   "dbdump.fixDumpData": "The dump tool stopped with the message shown. It is tried again with the next backup; if it keeps failing, the message names the cause.",
   "dbdump.fixDocker": "Docker did not run the dump command. Usually the container was stopped, paused or recreated while the backup was starting. It is tried again with the next backup; if it keeps happening, check the Docker service and BombVault's access to it.",
-  "dbdump.fixRepository": "The backup repository did not take the dump, or stored fewer bytes than were dumped. Check the repository in Settings, Paths & Storage; the dump is tried again with the next backup.",
+  "dbdump.fixRepository": "The backup repository did not take the dump, or stored fewer bytes than were dumped. Check the repository in Settings, Storage; the dump is tried again with the next backup.",
   "dbdump.fixLeftover": "A damaged dump could not be removed from the repository. Delete it from the dump list in the Backups panel.",
   "dbdump.fixHelper": "BombVault's dump helper ended without a result. If this repeats, open an issue and attach the diagnostics bundle.",
   "dbdump.listTitle": "Database dumps",
@@ -1585,10 +1583,8 @@ export const en = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore downloads a ZIP of the snapshot. The running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
   "flash.none": "No flash backups yet. Run a backup above.",
-  // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
-  // B) — the flash zip export, plain-export encryption, and the restic
-  // repositories' own encryption all sit under one roof: how backup exports
-  // and repositories are protected.
+  // One card for the flash zip export, plain-export encryption and the
+  // repositories' own encryption: how exports and repositories are protected.
   "settings.exportsEncryptionTitle": "Export & Repository Encryption",
   "settings.exportsEncryptionHint": "Controls for encrypting plain export artifacts and the restic repositories' own encryption.",
   // Scheduled flash zip export (#28): a plain .zip written to a folder after each flash backup.
@@ -1605,19 +1601,8 @@ export const en = {
   "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
   "flash.zipExport.plaintextWarn": "The exported .zip is not encrypted, even if your flash repository is. Only sync it somewhere you trust.",
   "flash.zipExport.pathRequired": "Choose an export folder to turn this on.",
-  // GlimStone follow-up round, Paths & Storage tab rework, merge B: "(age)"
-  // dropped from the visible title — design-language.md's own "explanations
-  // live in a bubble" rule, same as every other Card title in this file. What
-  // age IS moved to export.encrypt.ageInfo below, an InfoBubble on the
-  // merged card's sub-heading, so the information wasn't lost, just relocated.
-  //   `export.encrypt.title` itself ("Encrypt plain exports"/"Plain-Exporte
-  // verschlüsseln") is RETIRED (jdp, live-review, GlimStone follow-up round:
-  // "Export und Verschlüsselung: Texte normal formatieren, es sind keine
-  // Überschriften mehr") — the standalone <h3> it used to head is gone;
-  // ToggleRow's own `export.encrypt.enable` label is now this sub-section's
-  // only visible caption (Settings.tsx's own comment on that ToggleRow has
-  // the full writeup), so a second, now-unused heading string would just be
-  // dead weight.
+  // What age is lives in export.encrypt.ageInfo, an InfoBubble, so the toggle
+  // label can stay short.
   "export.encrypt.hint": "The restic repositories are already encrypted. This optionally seals the plain export artifacts (container and VM tar.gz plus their xml sidecars, and the flash zip) with age, so they are safe to store or move off the box.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is a small, modern file-encryption tool, a simpler alternative to GPG for sealing a file to one or more recipients.",
   "export.encrypt.enable": "Encrypt exports with age",
@@ -1639,7 +1624,7 @@ export const en = {
   "config.scheduleHint": "Backs up BombVault's own settings, targets and credentials at the scheduled time.",
   "config.offsiteSchedule": "Off-site schedule",
   "config.offsiteMoved": "The off-site copy of the self-backup is set up under Settings, Off-site, in the same card every other domain has.",
-  "config.pathMoved": "The backup location is set under Settings, Paths and storage, where it can be a local folder or a remote repository with its own credentials.",
+  "config.pathMoved": "The backup location is set under Settings, Storage, where it can be a local folder or a remote repository with its own credentials.",
   "config.backupTitle": "Back up settings now",
   "config.backupHint": "Captures BombVault's own /config: the settings database, off-site credentials (rclone.conf) and SSH keypair.",
   "config.backupNow": "Back up settings now",
@@ -1697,7 +1682,7 @@ export const en = {
   "pairing.pairAgainTip": "This entry was set up before pairing. It keeps working. Edit it and choose its instance once both are in one group.",
   "pairing.memberChoose": "Choose an instance",
   "pairing.memberKeep": "Keep the current pairing",
-  "pairing.memberNone": "No other instance of the group is reachable. Pair this instance under Settings, System first.",
+  "pairing.memberNone": "No other instance of the group is reachable. Pair this instance under Settings, Pairing first.",
   "pairing.memberHint": "Its restic password comes over the group when you save. Its APP_KEY never leaves it.",
   "pairing.memberRepos": "Locations that instance reports",
   "pairing.createSub": "This instance starts the group and shows you twelve words.",
@@ -2024,7 +2009,7 @@ export const en = {
   "recovery.step4": "Review and restore",
   "recovery.restoreAll": "Restore all (left stopped)",
   "recovery.restoreAllResult": "Restored {ok}, failed {fail}. Start them from the Containers/VMs tabs when ready.",
-  "recovery.vmSshNote": "VM restore needs the libvirt SSH link. Set it up under Settings → VM Backup over SSH.",
+  "recovery.vmSshNote": "VM restore needs the libvirt SSH link. Set it up under Settings, Integrations, Host SSH.",
   "recovery.noneDiscovered": "Run Discover above first.",
   // Step 5 — recovery kit (safety net for next time)
   "recovery.step5": "Your recovery kit",
@@ -2670,14 +2655,14 @@ export const en = {
   "oauth.unverified": "BombVault does not know this client, and it chose the name above itself. Allow it only if you started this sign-in a moment ago.",
   "oauth.startedHere": "Allow it only if you started this sign-in a moment ago. A link someone else sent you could connect their {name} account to your BombVault.",
   "oauth.loopback": "This client returns to a program on your own computer, and any program there could claim to be it. Allow it only if you started this sign-in yourself a moment ago.",
-  "oauth.allowStartHint": "With this on, the client can also start backups and cancel the ones it started, within the same limits as a key. A backup stops running containers until it finishes. You can change this later on its tile under Settings, MCP server.",
+  "oauth.allowStartHint": "With this on, the client can also start backups and cancel the ones it started, within the same limits as a key. A backup stops running containers until it finishes. You can change this later on its tile under Settings, Integrations, MCP server.",
   "oauth.accept": "Allow",
   "oauth.decline": "Deny",
   "oauth.returnsTo": "Your answer takes you back to {host}.",
   "oauth.returning": "Returning to {host}",
-  "oauth.limitReached": "BombVault already has as many signed-in clients as it allows. Revoke one under Settings, MCP server, then start the sign-in again.",
+  "oauth.limitReached": "BombVault already has as many signed-in clients as it allows. Revoke one under Settings, Integrations, MCP server, then start the sign-in again.",
   "oauth.unnamedClient": "An unnamed client",
-  "oauth.errorOff": "Sign-in through OAuth is not switched on for this BombVault. It can be switched on under Settings, MCP server.",
+  "oauth.errorOff": "Sign-in through OAuth is not switched on for this BombVault. It can be switched on under Settings, Integrations, MCP server.",
   "oauth.errorUnknownClient": "This client is not registered here, or its registration has expired. Remove BombVault from the client and add it again.",
   "oauth.errorBadRedirect": "This request names a return address the client never registered, so BombVault will not send you there.",
   "oauth.errorInvalid": "The client asked for something BombVault does not support, so the sign-in stops here.",
@@ -2851,9 +2836,8 @@ export const en = {
   "settings.restartHealthTimeoutLabel": "Per-container health timeout (seconds)",
   "settings.restartHealthTimeoutHint": "How long to wait for one container to become healthy before its dependents start anyway. Range 5 to 3600.",
 
-  // Reconcile Unraid update status (#116) — Settings, Storage tab. After the
-  // post-backup container update recreates a container, ask Unraid to refresh
-  // its own cached update status so the Docker tab's stale banner clears.
+  // After the post-backup update recreates a container, Unraid still shows its
+  // cached "update available" banner until it is asked to refresh (#116).
   "settings.reconcileUnraidStatus": "Refresh Unraid's update status after updating a container",
   "settings.reconcileUnraidStatusHint": "Clear Unraid's update banner after BombVault updates a container in the post-backup update step.",
 
@@ -3418,7 +3402,7 @@ export const de: Translations = {
   "update.afterBackup": "Nach erfolgreichem Backup updaten",
   "update.afterBackupHint": "Zieht das Image und baut diesen Container direkt nach einem erfolgreichen Backup neu, du hast also immer zuerst einen frischen Wiederherstellungspunkt. Läuft zur Backup-Zeit (Backups laufen nacheinander), nicht zu einer festen Uhrzeit. Für Updates nach festem Zeitplan (nach Version gestaffelt) gibt es ShipLog.",
   "update.afterBackupOrphans":
-    "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines ERFOLGREICHEN Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Wenn du es nicht behalten willst: Einstellungen → Pfade & Speicher → Image-Bereinigung & Update-Status hat einen Schalter, der das abgelöste Image direkt nach dem Update löscht.",
+    "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines ERFOLGREICHEN Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Wenn du es nicht behalten willst: Einstellungen, Container, Image-Bereinigung & Update-Status hat einen Schalter, der das abgelöste Image direkt nach dem Update löscht.",
   "run.statusRunning": "Läuft",
   "run.statusSuccess": "Erfolgreich",
   "run.statusFailed": "Fehlgeschlagen",
@@ -3543,12 +3527,12 @@ export const de: Translations = {
   "offsite.tamperError": "Tamper-Test nicht eindeutig (Server nicht erreichbar)",
   "offsite.retention.budget": "Wachstumsbudget (GB, 0 = aus)",
   "offsite.prune.title": "5 · Off-site-Pruning",
-  "offsite.prune.info": "Dieser Schritt zeigt an, was passiert, er stellt nichts ein. Ob diese Kopie geprunt wird, entscheiden Append-only aus Schritt 4 und die Keep-Werte unter Einstellungen, Off-site-Aufbewahrung. Wer eine Append-only-Kopie trotzdem prunen will, führt restic forget --prune auf der Gegenseite aus, entweder nach eigenem Zeitplan oder indem er kurz einen zweiten, nicht-append-only REST-Server hochzieht, darüber prunt und ihn wieder abschaltet.",
+  "offsite.prune.info": "Dieser Schritt zeigt an, was passiert, er stellt nichts ein. Ob diese Kopie geprunt wird, entscheiden Append-only aus Schritt 4 und die Keep-Werte unter Einstellungen, Aufbewahrung. Wer eine Append-only-Kopie trotzdem prunen will, führt restic forget --prune auf der Gegenseite aus, entweder nach eigenem Zeitplan oder indem er kurz einen zweiten, nicht-append-only REST-Server hochzieht, darüber prunt und ihn wieder abschaltet.",
   "offsite.prune.stateFarSide": "Von hier prunt nichts diese Kopie. Append-only ist an, BombVault legt also nur dazu, und das Prunen ist Sache der Gegenseite.",
   "offsite.prune.statePolicy": "BombVault prunt diese Kopie nach jeder Replikation nach der Off-site-Aufbewahrungsrichtlinie.",
   "offsite.prune.stateNone": "Nichts prunt diese Kopie. Append-only ist aus und alle Off-site-Keep-Werte stehen auf 0, sie wächst also, bis die Platte nicht mehr mitmacht.",
   "offsite.prune.effective": "Behält {last} neueste, {daily} täglich, {weekly} wöchentlich, {monthly} monatlich.",
-  "offsite.prune.editedElsewhere": "Eingestellt unter Einstellungen, Off-site-Aufbewahrung. Die Werte gelten für alle Bereiche gemeinsam.",
+  "offsite.prune.editedElsewhere": "Eingestellt unter Einstellungen, Aufbewahrung. Die Werte gelten für alle Bereiche gemeinsam.",
   "offsite.prune.budgetInfo": "Schlägt Alarm, sobald das Off-site-Repository über so viele Gigabyte wächst. Es löscht nie etwas, ist also das Sicherheitsnetz für eine Kopie, die niemand prunt.",
   "settings.retentionImmutableNotPruned": "Ein Append-only-Off-site-Ziel wird von hier nie geprunt, egal was hier steht. Der zugehörige Schritt im Off-site-Assistenten erklärt, wie man es von der Gegenseite aus prunt.",
 
@@ -3706,7 +3690,7 @@ export const de: Translations = {
   "settings.dashTile": "Unraid-Dashboard-Widget",
   "settings.dashTileHint": "Bringt ein BombVault-Status-Widget direkt aufs Unraid-Dashboard. Ein kleines Begleit-Plugin fügt das Widget hinzu; BombVault kann es über die bestehende Host-SSH-Verbindung für dich installieren.",
   "settings.dashTileChecking": "Plugin-Status wird geprüft…",
-  "settings.dashTileNoSsh": "Die Host-SSH-Verbindung ist nicht eingerichtet (Einstellungen → VM-Backup über SSH), daher kann BombVault das Plugin nicht für dich installieren. Installiere es manuell in Unraid unter Plugins → Install Plugin mit dieser URL:",
+  "settings.dashTileNoSsh": "Die Host-SSH-Verbindung ist nicht eingerichtet (Einstellungen, Anbindungen, Host-SSH), daher kann BombVault das Plugin nicht für dich installieren. Installiere es manuell in Unraid unter Plugins → Install Plugin mit dieser URL:",
   "settings.dashTileCa": "Eventuell ist es auch in den Community Applications verfügbar. Nach BombVault Widget suchen.",
   "settings.dashTileNotInstalled": "Das Dashboard-Widget-Plugin ist nicht installiert.",
   "settings.dashTileConfirm": "Installieren installiert das bombvault-widget-Plugin über den regulären Unraid-Plugin-Mechanismus auf deinem Unraid-Host. Es erscheint wie jedes andere Plugin unter Plugins und kann dort (oder hier) jederzeit entfernt werden.",
@@ -3767,7 +3751,7 @@ export const de: Translations = {
   "notify.notifyOnUpdate": "Bei Container-Update benachrichtigen",
   "notify.notifyOnUpdateHint": "Wenn Update nach Backup einen Container auf ein neueres Image hebt, eine Nachricht senden, damit du prüfen kannst, ob er noch läuft. Feuert pro aktualisiertem Container (Updates sind selten).",
   "notify.unraid": "Unraid-Benachrichtigungen",
-  "notify.unraidHint": "An Unraids eigenes Benachrichtigungssystem senden (das an Pushover, E-Mail, Discord, … weiterleiten kann). Läuft über die SSH-Verbindung aus Einstellungen → VM Backup over SSH, der Schlüssel muss dort also autorisiert sein; libvirt/VMs sind aber NICHT nötig (ein \"libvirt not reachable\"-Ergebnis ignorieren, wenn du keine VMs sicherst). Zum Prüfen unten \"Test senden\".",
+  "notify.unraidHint": "An Unraids eigenes Benachrichtigungssystem senden (das an Pushover, E-Mail, Discord, … weiterleiten kann). Läuft über die SSH-Verbindung aus Einstellungen, Anbindungen, Host-SSH, der Schlüssel muss dort also autorisiert sein; libvirt/VMs sind aber NICHT nötig (ein \"libvirt not reachable\"-Ergebnis ignorieren, wenn du keine VMs sicherst). Zum Prüfen unten \"Test senden\".",
   "notify.unraidPlatformMismatch": "BombVault hat diesen Host als \"{platform}\" erkannt, nicht als Unraid. Unraid-Benachrichtigungen bleiben deaktiviert, obwohl diese Option aktiviert ist. Falls dies wirklich ein Unraid-Host ist, prüfe, ob das /boot des Hosts nach /host/boot im Container gemountet ist (siehe die BombVault-Unraid-Vorlage), und starte den Container neu.",
   "notify.smtp": "E-Mail (SMTP)",
   "notify.smtpHost": "SMTP-Host",
@@ -4077,7 +4061,7 @@ export const de: Translations = {
   "dbdump.fixStalled": "Der Dump kam nicht mehr voran, meist weil die Anwendung eine Sperre hielt. Er wird mit dem nächsten Backup erneut versucht.",
   "dbdump.fixDumpData": "Das Dump-Werkzeug hat mit der gezeigten Meldung abgebrochen. Es wird mit dem nächsten Backup erneut versucht; schlägt es weiter fehl, nennt die Meldung die Ursache.",
   "dbdump.fixDocker": "Docker hat den Dump-Befehl nicht ausgeführt. Meist wurde der Container angehalten, pausiert oder neu gebaut, während das Backup startete. Es wird mit dem nächsten Backup erneut versucht; passiert es weiter, prüfe den Docker-Dienst und BombVaults Zugriff darauf.",
-  "dbdump.fixRepository": "Das Backup-Repository hat den Dump nicht angenommen oder weniger Bytes gespeichert, als gedumpt wurden. Prüfe das Repository in den Einstellungen unter Pfade & Speicher; der Dump wird mit dem nächsten Backup erneut versucht.",
+  "dbdump.fixRepository": "Das Backup-Repository hat den Dump nicht angenommen oder weniger Bytes gespeichert, als gedumpt wurden. Prüfe das Repository unter Einstellungen, Speicher; der Dump wird mit dem nächsten Backup erneut versucht.",
   "dbdump.fixLeftover": "Ein beschädigter Dump konnte nicht aus dem Repository entfernt werden. Lösche ihn in der Dump-Liste im Backups-Bereich.",
   "dbdump.fixHelper": "BombVaults Dump-Helfer endete ohne Ergebnis. Wiederholt sich das, öffne ein Issue und hänge das Diagnosepaket an.",
   "dbdump.listTitle": "Datenbank-Dumps",
@@ -4438,7 +4422,7 @@ export const de: Translations = {
   "config.scheduleHint": "Sichert BombVaults eigene Einstellungen, Ziele und Zugangsdaten zur geplanten Zeit.",
   "config.offsiteSchedule": "Offsite-Zeitplan",
   "config.offsiteMoved": "Die Off-site-Kopie des Selbst-Backups richtest du unter Einstellungen, Off-site ein, in derselben Karte wie jede andere Domäne.",
-  "config.pathMoved": "Den Backup-Ort stellst du unter Einstellungen, Pfade und Speicher ein, dort kann er ein lokaler Ordner oder ein Remote-Repository mit eigenen Zugangsdaten sein.",
+  "config.pathMoved": "Den Backup-Ort stellst du unter Einstellungen, Speicher ein, dort kann er ein lokaler Ordner oder ein Remote-Repository mit eigenen Zugangsdaten sein.",
   "config.backupTitle": "Einstellungen jetzt sichern",
   "config.backupHint": "Erfasst BombVaults eigenes /config: die Einstellungsdatenbank, Offsite-Zugangsdaten (rclone.conf) und das SSH-Schlüsselpaar.",
   "config.backupNow": "Einstellungen jetzt sichern",
@@ -4494,7 +4478,7 @@ export const de: Translations = {
   "pairing.pairAgainTip": "Dieser Eintrag wurde vor der Kopplung angelegt. Er läuft weiter. Bearbeite ihn und wähl seine Instanz, sobald beide in einer Gruppe sind.",
   "pairing.memberChoose": "Instanz wählen",
   "pairing.memberKeep": "Bisherige Kopplung behalten",
-  "pairing.memberNone": "Keine andere Instanz der Gruppe ist erreichbar. Kopple diese Instanz zuerst unter Einstellungen, System.",
+  "pairing.memberNone": "Keine andere Instanz der Gruppe ist erreichbar. Kopple diese Instanz zuerst unter Einstellungen, Kopplung.",
   "pairing.memberHint": "Ihr Restic-Passwort kommt beim Speichern über die Gruppe. Ihr APP_KEY verlässt sie nie.",
   "pairing.memberRepos": "Speicherorte, die diese Instanz meldet",
   "pairing.createSub": "Diese Instanz startet die Gruppe und zeigt dir zwölf Wörter.",
@@ -4808,7 +4792,7 @@ export const de: Translations = {
   "recovery.step4": "Prüfen und wiederherstellen",
   "recovery.restoreAll": "Alle wiederherstellen (gestoppt lassen)",
   "recovery.restoreAllResult": "{ok} wiederhergestellt, {fail} fehlgeschlagen. Starte sie bei Bedarf über die Tabs Container/VMs.",
-  "recovery.vmSshNote": "Für die VM-Wiederherstellung wird die libvirt-SSH-Verbindung benötigt. Richte sie unter Einstellungen → VM-Backup über SSH ein.",
+  "recovery.vmSshNote": "Für die VM-Wiederherstellung wird die libvirt-SSH-Verbindung benötigt. Richte sie unter Einstellungen, Anbindungen, Host-SSH ein.",
   "recovery.noneDiscovered": "Führe zuerst oben „Entdecken“ aus.",
   // Schritt 5 — Recovery-Kit (Sicherheitsnetz fürs nächste Mal)
   "recovery.step5": "Dein Recovery-Kit",
@@ -5424,14 +5408,14 @@ export const de: Translations = {
   "oauth.unverified": "BombVault kennt diesen Client nicht, und den Namen oben hat er sich selbst gegeben. Erlaube ihn nur, wenn du diese Anmeldung gerade eben selbst gestartet hast.",
   "oauth.startedHere": "Erlaube ihn nur, wenn du diese Anmeldung gerade eben selbst gestartet hast. Ein Link, den dir jemand anderes schickt, könnte sein eigenes {name}-Konto mit deinem BombVault verbinden.",
   "oauth.loopback": "Dieser Client kehrt zu einem Programm auf deinem eigenen Rechner zurück, und jedes Programm dort könnte sich als er ausgeben. Erlaube ihn nur, wenn du diese Anmeldung gerade eben selbst gestartet hast.",
-  "oauth.allowStartHint": "Ist das an, kann der Client auch Backups starten und die von ihm gestarteten abbrechen, mit denselben Grenzen wie ein Schlüssel. Ein Backup hält laufende Container an, bis es fertig ist. Du kannst das später auf seiner Kachel unter Einstellungen, MCP-Server ändern.",
+  "oauth.allowStartHint": "Ist das an, kann der Client auch Backups starten und die von ihm gestarteten abbrechen, mit denselben Grenzen wie ein Schlüssel. Ein Backup hält laufende Container an, bis es fertig ist. Du kannst das später auf seiner Kachel unter Einstellungen, Anbindungen, MCP-Server ändern.",
   "oauth.accept": "Erlauben",
   "oauth.decline": "Ablehnen",
   "oauth.returnsTo": "Deine Antwort bringt dich zurück zu {host}.",
   "oauth.returning": "Zurück zu {host}",
-  "oauth.limitReached": "BombVault hat schon so viele angemeldete Clients, wie es zulässt. Widerrufe einen unter Einstellungen, MCP-Server und starte die Anmeldung dann neu.",
+  "oauth.limitReached": "BombVault hat schon so viele angemeldete Clients, wie es zulässt. Widerrufe einen unter Einstellungen, Anbindungen, MCP-Server und starte die Anmeldung dann neu.",
   "oauth.unnamedClient": "Ein Client ohne Namen",
-  "oauth.errorOff": "Die Anmeldung über OAuth ist bei diesem BombVault nicht eingeschaltet. Einschalten lässt sie sich unter Einstellungen, MCP-Server.",
+  "oauth.errorOff": "Die Anmeldung über OAuth ist bei diesem BombVault nicht eingeschaltet. Einschalten lässt sie sich unter Einstellungen, Anbindungen, MCP-Server.",
   "oauth.errorUnknownClient": "Dieser Client ist hier nicht registriert, oder seine Registrierung ist abgelaufen. Entferne BombVault im Client und füge es neu hinzu.",
   "oauth.errorBadRedirect": "Diese Anfrage nennt eine Rücksprungadresse, die der Client nie registriert hat. BombVault schickt dich deshalb nicht dorthin.",
   "oauth.errorInvalid": "Der Client hat etwas verlangt, das BombVault nicht unterstützt, deshalb endet die Anmeldung hier.",
