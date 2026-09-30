@@ -1015,7 +1015,7 @@ export function markRegistryTokensStored(
 // up. A blank row is worth nothing to the server and everything to the person
 // typing into it.
 
-// bv-convention-exception: page-uses-page-shell -- the rail stands beside the
+// bv-convention-exception: page-uses-page-shell: the rail stands beside the
 // page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
 export function SettingsPage() {
   const { t } = useT();
