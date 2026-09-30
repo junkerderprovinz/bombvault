@@ -5560,7 +5560,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	var dumpOutcome backup.DBDumpOutcome
 	if dumpPlan != nil {
 		dumper = &dbDumpAdapter{
-			svc: s, engine: s.engine, docker: s.docker, mode: mode,
+			svc: s, engine: step.engine, docker: s.docker, mode: mode,
 			container: name, containerID: in.ID, progressKey: pkey, startedAt: startedAt,
 			extraTags: s.directTags(settings, "containers", repo),
 		}
@@ -5605,7 +5605,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// --, positionals after) — never through a shell.
 		Excludes:     excludes,
 		Docker:       s.docker,
-		Restic:       &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "containers", repo)},
+		Restic:       &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "containers", repo)},
 		Templates:    templatesAdapter{},
 		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
 		DBDump:       dumpPlan,
@@ -12093,10 +12093,10 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		TargetID:         tg.ID,
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
-		Restic:           &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "vms", repo)},
+		Restic:           &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "vms", repo)},
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
-		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
+		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
 	}
 	live := false
 	if method == "live" {
@@ -13444,7 +13444,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "files", repo)},
+		Restic: &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "files", repo)},
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)

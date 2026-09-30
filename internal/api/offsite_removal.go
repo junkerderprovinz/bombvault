@@ -139,8 +139,8 @@ func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source s
 		for _, snap := range at.Snaps {
 			ids = append(ids, snap.ID)
 		}
-		s.unlockStale(ctx, at.Repo, at.Mode)
-		if err := s.engine.Forget(ctx, at.Repo, ids, true, at.Mode); err != nil {
+		forget := func() error { return s.engine.Forget(ctx, at.Repo, ids, true, at.Mode) }
+		if err := s.retryAfterUnlock(ctx, at.Repo, at.Mode, forget); err != nil {
 			return 0, fmt.Errorf("forget snapshots: %w", err)
 		}
 	}

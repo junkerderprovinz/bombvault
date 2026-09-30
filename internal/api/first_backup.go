@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -127,11 +128,14 @@ func (s *Service) settleHome(ctx context.Context, settings store.Settings, item 
 type homeStep struct {
 	repo   string
 	mode   restic.Mode
+	engine ResticEngine // what the backup writes through
 	commit func() (bool, error)
 }
 
 // prepareHome settles the item's location and makes sure a repository exists
 // there. The location is written by recordHome, once the item is known to exist.
+// A remote repository bills every call, so its stale locks are cleared only
+// when one stops the backup.
 func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item store.ItemRef) (homeStep, error) {
 	repoID, commit, err := s.settleHome(ctx, settings, item)
 	if err != nil {
@@ -145,8 +149,50 @@ func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return homeStep{}, err
 	}
+	if restic.IsRemoteRepo(repo) {
+		return homeStep{repo: repo, mode: mode, engine: unlockOnLockErr{ResticEngine: s.engine, s: s}, commit: commit}, nil
+	}
 	s.unlockStale(ctx, repo, mode)
-	return homeStep{repo: repo, mode: mode, commit: commit}, nil
+	return homeStep{repo: repo, mode: mode, engine: s.engine, commit: commit}, nil
+}
+
+// unlockOnLockErr runs a backup once more after clearing stale locks when a
+// lock stopped it. A stream cannot be read twice, so a backup from stdin
+// clears them first instead.
+type unlockOnLockErr struct {
+	ResticEngine
+	s *Service
+}
+
+func (e unlockOnLockErr) Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (sum restic.Summary, err error) {
+	err = e.s.retryAfterUnlock(ctx, repo, mode, func() error {
+		sum, err = e.ResticEngine.Backup(ctx, repo, paths, tags, mode, excludes...)
+		return err
+	})
+	return sum, err
+}
+
+func (e unlockOnLockErr) BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (sum restic.Summary, err error) {
+	err = e.s.retryAfterUnlock(ctx, repo, mode, func() error {
+		sum, err = e.ResticEngine.BackupDir(ctx, repo, dir, tags, mode, excludes...)
+		return err
+	})
+	return sum, err
+}
+
+// BackupFromCommand may run the command twice: restic takes its lock before it
+// starts the command.
+func (e unlockOnLockErr) BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, mode restic.Mode) (sum restic.Summary, lines []string, err error) {
+	err = e.s.retryAfterUnlock(ctx, repo, mode, func() error {
+		sum, lines, err = e.ResticEngine.BackupFromCommand(ctx, repo, stdinPath, tags, command, mode)
+		return err
+	})
+	return sum, lines, err
+}
+
+func (e unlockOnLockErr) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error) {
+	e.s.unlockStale(ctx, repo, mode)
+	return e.ResticEngine.BackupStdin(ctx, repo, rd, path, tags, mode)
 }
 
 // homeSettleAttempts caps recordHome's retry loop. Each retry re-derives the

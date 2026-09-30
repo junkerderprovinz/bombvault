@@ -3,7 +3,10 @@ package api
 import (
 	"context"
 	"errors"
+	"io"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -158,5 +161,97 @@ func TestALockInTheWayIsClearedOnceAndTheCallRetried(t *testing.T) {
 				t.Fatalf("calls at B2 = %v, want one unlock and %s run again", got, cmd)
 			}
 		})
+	}
+}
+
+func (c *countingEngine) Backup(_ context.Context, repo string, _, _ []string, _ restic.Mode, _ ...string) (restic.Summary, error) {
+	if err := c.count(repo, "backup"); err != nil {
+		return restic.Summary{}, err
+	}
+	return restic.Summary{SnapshotID: "n1"}, nil
+}
+
+func (c *countingEngine) BackupStdin(_ context.Context, repo string, _ io.Reader, _ string, _ []string, _ restic.Mode) (restic.Summary, error) {
+	if err := c.count(repo, "backup"); err != nil {
+		return restic.Summary{}, err
+	}
+	return restic.Summary{SnapshotID: "n1"}, nil
+}
+
+func (c *countingEngine) Forget(ctx context.Context, repo string, ids []string, prune bool, m restic.Mode) error {
+	if err := c.count(repo, "forget"); err != nil {
+		return err
+	}
+	return c.ResticEngine.Forget(ctx, repo, ids, prune, m)
+}
+
+// directFiles is the file set docs, with one file, on the direct repository of
+// a B2 target.
+func directFiles(t *testing.T) (*placementFixture, store.FileSet, string) {
+	t.Helper()
+	f := newPlacementFixture(t)
+	d := f.direct(f.target("files", "B2", "b2:bucket:files"))
+	set := f.fileSet("docs", d.ID)
+	if err := os.WriteFile(filepath.Join(filepath.FromSlash(f.root), "files", "docs", "a.txt"), []byte("a"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return f, set, d.Repo
+}
+
+func TestABackupIntoADirectRepositoryUnlocksNothingWithoutALock(t *testing.T) {
+	f, set, loc := directFiles(t)
+	c := countCalls(f)
+	if _, err := f.svc.BackupFileSet(context.Background(), set.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.at(loc); got["backup"] != 1 || got["unlock"] != 0 {
+		t.Fatalf("calls at the direct repository = %v, want one backup and no unlock", got)
+	}
+}
+
+func TestALockInTheWayOfADirectBackupIsClearedOnceAndTheBackupRetried(t *testing.T) {
+	f, set, loc := directFiles(t)
+	c := countCalls(f)
+	c.lockedOnce["backup"] = true
+	if _, err := f.svc.BackupFileSet(context.Background(), set.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.at(loc); got["backup"] != 2 || got["unlock"] != 1 {
+		t.Fatalf("calls at the direct repository = %v, want one unlock and the backup run again", got)
+	}
+}
+
+func TestADeleteAtATargetUnlocksNothingWithoutALock(t *testing.T) {
+	f, b2 := b2Scene(t)
+	c := countCalls(f)
+	if err := f.svc.DeleteBackups(context.Background(), "plex", offsiteSourcePrefix+b2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.at(b2Containers); got["forget"] != 1 || got["unlock"] != 0 {
+		t.Fatalf("calls at B2 = %v, want one forget and no unlock", got)
+	}
+}
+
+func TestALockInTheWayOfADeleteAtATargetIsClearedOnceAndTheDeleteRetried(t *testing.T) {
+	f, b2 := b2Scene(t)
+	c := countCalls(f)
+	c.lockedOnce["forget"] = true
+	if err := f.svc.DeleteBackups(context.Background(), "plex", offsiteSourcePrefix+b2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.at(b2Containers); got["forget"] != 2 || got["unlock"] != 1 {
+		t.Fatalf("calls at B2 = %v, want one unlock and the forget run again", got)
+	}
+}
+
+func TestAStreamIntoARemoteRepositoryClearsStaleLocksFirst(t *testing.T) {
+	f, _, loc := directFiles(t)
+	c := countCalls(f)
+	e := unlockOnLockErr{ResticEngine: c, s: f.svc}
+	if _, err := e.BackupStdin(context.Background(), loc, strings.NewReader("disk"), "/sda", nil, restic.Mode{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.at(loc); got["unlock"] != 1 || got["backup"] != 1 {
+		t.Fatalf("calls at the direct repository = %v, want the unlock before the one backup", got)
 	}
 }
