@@ -478,6 +478,13 @@
   }
 }
 
+/* A card's title badge stands half its height above the card. Settings has no
+   padding above its first row, so while the search bar is hidden the first
+   card moves down by that half, or the scroller's edge would cut the badge. */
+[data-settings-content]:not(:has(> [data-settings-search])) > [data-settings-page] > :first-child {
+  margin-top: 0.75rem;
+}
+
 /* A settings rail tile with names on hover keeps its glyph centred and opens
    the name as a caption under it, so the tile never changes size. The current
    page keeps its name, as every reactive strip does, and a coarse pointer

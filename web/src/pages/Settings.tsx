@@ -1812,6 +1812,7 @@ export function SettingsPage() {
       {/* Keyed on the page, so the slide replays on every change of page. */}
       <div
         key={page}
+        data-settings-page
         className="flex flex-col gap-6 md:gap-10 glim-tab-slide flex-1"
         style={{ "--tab-dir": pageDir.current } as CSSProperties}
       >

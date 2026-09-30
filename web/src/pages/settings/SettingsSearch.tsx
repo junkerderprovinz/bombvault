@@ -164,7 +164,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   if (!revealed) return null;
 
   return (
-    <div ref={barRef} className="relative">
+    <div ref={barRef} data-settings-search className="relative">
       <div className="flex h-(--btn-h) items-center gap-2 rounded-control bg-carbon-surface2 ps-3 pe-1 glim-field-focus-within">
         <span className="shrink-0 text-carbon-textMuted [&_svg]:h-4 [&_svg]:w-4">
           <IconSearch />
