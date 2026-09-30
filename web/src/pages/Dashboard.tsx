@@ -823,7 +823,7 @@ export function ProtectionCard({
         // badge column is as wide as its longest badge on any row and the
         // badges stay on one line while the columns still line up.
         <div className="@container glim-content-fade">
-        <div className="flex flex-col gap-1 @[44rem]:grid @[44rem]:grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto_auto] @[44rem]:gap-x-3">
+        <div className="flex flex-col gap-1 @[60rem]:grid @[60rem]:grid-cols-[7rem_auto_minmax(6rem,1fr)_auto_auto_auto] @[60rem]:gap-x-3">
           {domains.map((d) => {
             const off = d.status === "off";
             // Only containers, flash, files and ZFS run an off-site DR drill
@@ -843,18 +843,18 @@ export function ProtectionCard({
             return (
               <div
                 key={d.domain}
-                className="flex flex-col gap-1 rounded-control bg-carbon-surface2 px-2 py-2.5 text-sm @[44rem]:col-span-full @[44rem]:grid @[44rem]:grid-cols-subgrid @[44rem]:items-center"
+                className="flex flex-col gap-1 rounded-control bg-carbon-surface2 px-2 py-2.5 text-sm @[60rem]:col-span-full @[60rem]:grid @[60rem]:grid-cols-subgrid @[60rem]:items-center"
               >
                 {/* In a wide card the cells sit in the shared columns [domain]
                     [status] [schedule] [last run] [verified] [off-site verified]
                     [off-site DR], so the same kind of fact lines up down the card
-                    and an absent badge leaves its column blank. The badge columns
-                    take their longest badge, and status and schedule truncate
-                    instead. In a narrow card the row wraps as a flex stack under
+                    and an absent badge leaves its column blank. The status and
+                    badge columns take their longest entry, and the schedule
+                    truncates instead. In a narrow card the row wraps as a flex stack under
                     the domain name, so it never scrolls sideways. */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-0.5 @[44rem]:col-span-full @[44rem]:grid @[44rem]:grid-cols-subgrid">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-0.5 @[60rem]:col-span-full @[60rem]:grid @[60rem]:grid-cols-subgrid">
                   <span
-                    className={`col-start-1 basis-full @[44rem]:basis-auto min-w-0 truncate font-medium ${
+                    className={`col-start-1 basis-full @[60rem]:basis-auto min-w-0 truncate font-medium ${
                       off ? "text-carbon-textMuted" : "text-carbon-text"
                     }`}
                   >
@@ -889,7 +889,7 @@ export function ProtectionCard({
                       </span>
                       {/* Col 4 — last successful run. */}
                       <span
-                        className="col-start-4 text-start @[44rem]:text-end text-carbon-textMuted text-xs"
+                        className="col-start-4 text-start @[60rem]:text-end text-carbon-textMuted text-xs"
                         title={formatTs(d.lastSuccess)}
                       >
                         {d.lastSuccess ? relativeTime(t, d.lastSuccess) : t("containers.never")}
@@ -906,24 +906,14 @@ export function ProtectionCard({
                           </Badge>
                         </div>
                       ) : null}
-                      {/* Cols 6+7 — NO off-site repo at all ([376]).
-                          Both off-site columns below are driven by a RECORDED
-                          run, so a domain that has no second copy anywhere
-                          renders neither, and the row goes quiet at exactly the
-                          point where it has the most to say. Measured on jdp's
-                          box: protectionLevel returned "red" for all five
-                          domains ("enabled but no off-site copy — unprotected by
-                          design") while the page never printed the words
-                          off-site, append-only or 3-2-1 once.
-
-                          The detailed scorecard lives in RansomwareCard, which
-                          is advancedOnly and therefore right to be hidden here.
-                          This is not that. "There is no second copy" is not an
-                          advanced detail about a backup, it is the first fact
-                          about one, so it belongs in the view most people
-                          actually run. */}
+                      {/* The off-site badges come from recorded runs, so a domain
+                          with no second copy anywhere would show none of them
+                          and say nothing at the point where it matters most.
+                          That there is no second copy is the first fact about a
+                          backup, not an advanced one, so it shows here and not
+                          only in the advanced ransomware card. */}
                       {!d.offsiteConfigured ? (
-                        <div className="col-start-6 @[44rem]:col-span-2 min-w-0">
+                        <div className="col-start-6 min-w-0">
                           <Badge tone="fail" className="whitespace-nowrap" title={t("dashboard.noOffsiteTitle")}>
                             ✗ {t("dashboard.noOffsite")}
                           </Badge>
@@ -947,54 +937,13 @@ export function ProtectionCard({
                           </Badge>
                         </div>
                       ) : null}
-                      {/* Col 7 — Off-site restorability (DR) badge — mirrors the
-                          local-verify shield above (same pills), but proves the backup
-                          is recoverable from the OFF-SITE repo (a real DR sandbox
-                          restore). Only containers + flash + files ever run a DR drill,
-                          so VMs/config never show this pill (empty column). On a
-                          failure the tooltip names WHICH check + the reason. */}
-                      <div className="col-start-7 min-w-0">
-                        {drCapable && d.lastDrDrillAt && d.lastDrDrillOK ? (
-                          // GREEN — proven restorable off-site. A real passed run (even
-                          // a MANUAL one) is honest proof, so it's kept even when the
-                          // scheduled DR drill is opted out.
-                          <Badge
-                            tone="ok"
-                            className="whitespace-nowrap"
-                            title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
-                          >
-                            ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
-                          </Badge>
-                        ) : drFailed ? (
-                          // RED — a recorded off-site DR drill FAILED (scheduled or a
-                          // manual run). Always shown; the opt-out never masks a real
-                          // failure — only "never drilled" goes neutral below.
-                          <Badge
-                            tone="fail"
-                            className="whitespace-nowrap"
-                            title={
-                              d.drillDetail
-                                ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
-                                : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
-                            }
-                          >
-                            ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
-                          </Badge>
-                        ) : drUnscheduled ? (
-                          // NEUTRAL — off-site DR not scheduled (manual only) and nothing
-                          // failing to show: muted, never red. File's no-claim styling.
-                          <Badge tone="neutral" className="whitespace-nowrap" title={t("drill.manualOnlyTitle")}>
-                            {t("drill.manualOnly")}
-                          </Badge>
-                        ) : null}
-                      </div>
                     </>
                   )}
                 </div>
                 {/* The newest start test of any container, beside the
                     verification row it belongs with. */}
                 {!off && d.lastStartTest && (
-                  <div className="flex flex-wrap items-center gap-2 ps-1 @[44rem]:col-span-full">
+                  <div className="flex flex-wrap items-center gap-2 ps-1 @[60rem]:col-span-full">
                     <Badge
                       tone={d.lastStartTest.ok ? "ok" : "fail"}
                       wrap
@@ -1016,8 +965,43 @@ export function ProtectionCard({
                     WHY reason stays gated to an actual scheduled failure (drFailed).
                     Only the off-site DR row drives that red — a local subset pass
                     can't clear it, so we run {offsite,dr} explicitly. */}
-                {!off && drCapable && (drFailed || d.offsiteConfigured) && (
-                  <div className="flex flex-wrap items-center gap-2 ps-1">
+                {/* The off-site DR result sits here rather than in its own
+                    column: it is the longest badge by far and would squeeze the
+                    schedule out of every row. Only containers, flash, folders and
+                    ZFS run a DR drill; on a failure the tooltip names the check
+                    and the reason. */}
+                {!off && drCapable && (drFailed || d.offsiteConfigured || d.lastDrDrillAt > 0) && (
+                  <div className="flex flex-wrap items-center gap-2 ps-1 @[60rem]:col-span-full">
+                    {/* A passed run counts even when it was manual and the
+                        scheduled drill is off; a failure always shows, and only
+                        a domain never drilled goes neutral. */}
+                    {d.lastDrDrillAt > 0 && d.lastDrDrillOK ? (
+                      <Badge
+                        tone="ok"
+                        wrap
+                        className="max-w-full @[60rem]:whitespace-nowrap"
+                        title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
+                      >
+                        ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                      </Badge>
+                    ) : drFailed ? (
+                      <Badge
+                        tone="fail"
+                        wrap
+                        className="max-w-full @[60rem]:whitespace-nowrap"
+                        title={
+                          d.drillDetail
+                            ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
+                            : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
+                        }
+                      >
+                        ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
+                      </Badge>
+                    ) : drUnscheduled ? (
+                      <Badge tone="neutral" wrap className="max-w-full @[60rem]:whitespace-nowrap" title={t("drill.manualOnlyTitle")}>
+                        {t("drill.manualOnly")}
+                      </Badge>
+                    ) : null}
                     {drFailed && d.drillDetail && (
                       <span className="text-xs text-statusFail wrap-break-word" title={d.drillDetail}>
                         {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
