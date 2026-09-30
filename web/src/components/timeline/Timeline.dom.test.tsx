@@ -85,6 +85,16 @@ describe("Timeline", () => {
     expect(fake.callsTo("getTimelinePlace")).toEqual([]);
   });
 
+  it("names a direct home without a name of its own after its target", async () => {
+    fake.reply("getTimeline", {
+      ok: true,
+      places: [{ ...home, label: "", directOf: "Primary", remote: true, state: "unchecked" }],
+      rows: [],
+    });
+    open();
+    expect(await screen.findByText("Primary · direct: not checked")).toBeTruthy();
+  });
+
   // jsdom lays nothing out, so this pins the class the phone layout rests on.
   it("moves Check under a long place name on a phone instead of squeezing it", async () => {
     fake.reply("getTimeline", { ok: true, places: [home, { ...b2, state: "unchecked" }], rows: [] });

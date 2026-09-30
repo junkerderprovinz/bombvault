@@ -776,17 +776,20 @@ func (r *Repo) GetOffsiteTarget(id string) (OffsiteTarget, bool, error) {
 // premises.
 func (r *Repo) DeleteOffsiteTarget(id string) error {
 	err := r.inTx(func(tx *sql.Tx) error {
+		// A direct repository without a name of its own went by its target, so
+		// it keeps that name, or its location when the target had none.
+		//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
+		if _, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
+			  off_premises = (`+remoteLocation("repo")+`),
+			  name = CASE WHEN name <> '' THEN name
+			              ELSE COALESCE(NULLIF((SELECT t.name FROM offsite_targets t WHERE t.id = ? AND t.role = ?), ''), repo) END
+			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 			return err
 		}
-		if err := deleteTargetObservationsTx(tx, id); err != nil {
-			return err
-		}
-		//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
-		_, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
-			  off_premises = (`+remoteLocation("repo")+`)
-			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, RoleRepo, id)
-		return err
+		return deleteTargetObservationsTx(tx, id)
 	})
 	if err != nil {
 		return fmt.Errorf("DeleteOffsiteTarget: %w", err)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { listRepos, type NamedRepo } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { repoDisplayName } from "../lib/directRepo";
 import { offQualifier } from "../lib/placement";
 import { InfoBubble } from "./InfoBubble";
 import { SelectField } from "./SelectField";
@@ -55,7 +56,7 @@ export function RepoPicker({
       .map((r) => ({
         value: r.id,
         // "off", not "not in use": this item may well be on it.
-        label: r.enabled ? r.name : `${r.name} (${offQualifier(t)})`,
+        label: r.enabled ? repoDisplayName(t, r.name, r.directOf) : `${repoDisplayName(t, r.name, r.directOf)} (${offQualifier(t)})`,
         disabled: !r.enabled && r.id !== value,
       })),
   ];

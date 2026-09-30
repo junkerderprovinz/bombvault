@@ -164,6 +164,7 @@ type removalPreview struct {
 	OnlyThere      []restic.Snapshot // their restic.Identity is missing at the home
 	HomeUnreadable bool
 	HomeLabel      string // name of the home repository, "" for the domain path
+	HomeDirectOf   string // the target a direct home without a name of its own goes by
 }
 
 // removalChanged is a refusal decided on a fresh preview; the answer carries that
@@ -240,7 +241,7 @@ func (s *Service) removalPreviewOf(ctx context.Context, settings store.Settings,
 	p := removalPreview{Target: at.Target, Name: name, Snapshots: at.Snaps}
 	if repoID != "" {
 		if named, nErr := s.store.GetNamedRepo(repoID); nErr == nil {
-			p.HomeLabel = named.Name
+			p.HomeLabel, p.HomeDirectOf = named.Name, s.directOf(named)
 		}
 	}
 	held, err := s.homeIdentities(ctx, settings, item.Domain, repoID)
@@ -287,6 +288,7 @@ func removalJSON(p removalPreview) map[string]any {
 		"onlyThere":      only,
 		"homeUnreadable": p.HomeUnreadable,
 		"homeLabel":      p.HomeLabel,
+		"homeDirectOf":   p.HomeDirectOf,
 	}
 }
 

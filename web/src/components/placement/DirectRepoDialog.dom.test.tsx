@@ -46,6 +46,12 @@ describe("DirectRepoDialog", () => {
     await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 
+  it("shows the name an empty name field stands for", async () => {
+    renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    expect(screen.getByPlaceholderText("B2 · direct")).toBeTruthy();
+  });
+
   it("closes on Escape once on the desktop", async () => {
     const { onClose } = renderDialog();
     await screen.findByDisplayValue("b2:bucket:containers-direct");

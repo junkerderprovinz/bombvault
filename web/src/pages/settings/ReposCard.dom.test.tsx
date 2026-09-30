@@ -103,6 +103,12 @@ describe("the Repositories card", () => {
     expect(screen.queryByLabelText(en["repos.locationLocked"])).toBeNull();
   });
 
+  it("names a direct repository without a name of its own after its target", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ id: "d1", name: "", directOf: "B2", companionOf: "t-b2" })] });
+    render(<ReposCard />);
+    await screen.findByText("B2 · direct");
+  });
+
   it("labels a repository whose target an import removed", async () => {
     api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ companionLost: true })] });
     render(<ReposCard />);

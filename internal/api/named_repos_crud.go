@@ -60,6 +60,8 @@ type namedRepoView struct {
 	// CompanionOf is the off-site target this repository is the direct
 	// repository of, "" for a plain named repository.
 	CompanionOf string `json:"companionOf"`
+	// DirectOf is the target a direct repository without a name of its own goes by.
+	DirectOf string `json:"directOf,omitempty"`
 	// CompanionLost marks a direct repository whose target an import deleted:
 	// it still holds backups, but nothing on this box links to it anymore.
 	CompanionLost bool `json:"companionLost"`
@@ -83,7 +85,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
 			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
 			OffPremises: t.OffPremises, InUse: n,
-			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost,
+			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost, DirectOf: h.svc.directOf(t),
 		})
 	}
 	return out
@@ -210,7 +212,7 @@ func staticNamedRepoRefusals(loc, mountRoot string) string {
 // inside another place, which an import can install, would otherwise be refused
 // every edit over a field the request does not touch, down to switching it off.
 func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass, checkLocation bool) error {
-	if t.Name == "" {
+	if t.Name == "" && t.CompanionOf == "" {
 		return errors.New("a repository needs a name, so it can be told apart in the picker")
 	}
 	// The location refusals that need nothing but the string and the mount root,

@@ -11,6 +11,11 @@ describe("credSetLabel", () => {
     expect(credSetLabel((k: TranslationKey) => de[k], kept)).toBe("NAS direct (behaltene Zugangsdaten)");
   });
 
+  it("names a set kept for a direct repository without a name after its target", () => {
+    const kept = { ...set, name: "NAS", keptFor: "r1", directOf: "NAS" };
+    expect(credSetLabel((k: TranslationKey) => de[k], kept)).toBe("NAS · direkt (behaltene Zugangsdaten)");
+  });
+
   it("leaves a set someone named under that name", () => {
     expect(credSetLabel((k: TranslationKey) => en[k], set)).toBe("NAS direct");
   });

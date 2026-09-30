@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { deleteTimelineRow, getTimelineDeletePreview, type TimelineDomain, type TimelineRow } from "../../lib/api";
+import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
@@ -44,7 +45,8 @@ export function TimelineDeleteDialog({
         hostLabelSettled().then((label) => label || t("placement.hostGeneric")),
       ]);
       if (!live) return;
-      const names = (list: { label: string }[]) => formatList(lang, list.map((p) => p.label || host));
+      const names = (list: { label: string; directOf?: string }[]) =>
+        formatList(lang, list.map((p) => repoDisplayName(t, p.label, p.directOf) || host));
       const del = res.delete ?? [];
       const others = res.others ?? [];
       if (!res.ok) {

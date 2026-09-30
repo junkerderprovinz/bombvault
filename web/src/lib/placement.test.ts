@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlacementView } from "./api";
-import { en } from "./i18n";
+import { de, en } from "./i18n";
 import {
   addsTargets,
   chipTicked,
@@ -76,6 +76,11 @@ describe("labels", () => {
   it("names a direct repository whose target the lists leave out by its own name", () => {
     const direct = placementView({ segment: "offsite-only", repo: "repo-b2-direct", repoLabel: "B2 direct", repoKind: "direct", skip: ["*"] });
     expect(viewHomeLabel(t, "Unraid", direct, placementOptions({ sendTo: [] }))).toBe("B2 direct");
+  });
+
+  it("names a direct repository without a name of its own after its target", () => {
+    const direct = placementView({ segment: "offsite-only", repo: "repo-b2-direct", repoLabel: "", repoDirectOf: "B2", repoKind: "direct", skip: ["*"] });
+    expect(viewHomeLabel(t, "Unraid", direct, placementOptions({ sendTo: [] }))).toBe("B2 · direct");
   });
 
   it("gives each locked segment its reason", () => {
@@ -272,6 +277,13 @@ describe("planLines", () => {
       { text: "On NAS Keller.", tone: "normal" },
       { text: "Copied to B2 and Hetzner.", tone: "normal" },
     ]);
+  });
+
+  it("names a direct home without a name of its own in the reader's language", () => {
+    const plan = placementPlan({ home: "", homeDirectOf: "Primary", targets: [] });
+    const tDe = ((k: string) => de[k as keyof typeof de] ?? k) as never;
+    expect(planLines(tEn, "en", "Unraid", "files", plan, false)[0].text).toBe("On Primary · direct.");
+    expect(planLines(tDe, "de", "Unraid", "files", plan, false)[0].text).toBe("Auf Primary · direkt.");
   });
 
   it("puts the server's name in for the domain path and warns when nothing leaves", () => {

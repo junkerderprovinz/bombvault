@@ -439,8 +439,8 @@ func TestCreatingADirectRepositoryEnsuresItOnlyThen(t *testing.T) {
 		t.Fatalf("the repository was not set up: %v", err)
 	}
 	repo := res["repo"].(map[string]any)
-	if repo["name"] != "NAS direct" || repo["companionOf"] != target.ID || repo["companionLost"] != false {
-		t.Fatalf("repo = %v", repo)
+	if repo["name"] != "" || repo["directOf"] != "NAS" || repo["companionOf"] != target.ID || repo["companionLost"] != false {
+		t.Fatalf("repo = %v, want no name of its own and the target to go by", repo)
 	}
 	res = f.do("POST", "/api/repos", map[string]any{"name": "again", "repo": "backups/nas-offsite-direct2", "companionOf": target.ID})
 	if res["code"] != "companion-taken" {
@@ -1631,5 +1631,104 @@ func TestADirectRepositoryOnItsOwnSelectorIsProbedWithItsNewValues(t *testing.T)
 	kept := f.keptFor(d.ID)
 	if len(kept) != 1 || kept[0].RESTPassword != "rotated" {
 		t.Fatalf("kept sets = %+v, want one holding rotated", kept)
+	}
+}
+
+// unnamedDirect is the target's direct repository as the create dialog leaves
+// it when its name field stays empty.
+func (f *placementFixture) unnamedDirect(target store.OffsiteTarget) store.OffsiteTarget {
+	f.t.Helper()
+	row, err := f.st.CreateCompanionRepo(target.ID, "", directLocationFor(target).Location)
+	if err != nil {
+		f.t.Fatalf("CreateCompanionRepo: %v", err)
+	}
+	return row
+}
+
+func TestADirectRepositoryWithoutANameGoesByItsTargetEverywhere(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "b2:bucket:nas")
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	d := f.unnamedDirect(nas)
+	f.container("web", d.ID)
+	f.hold(b2.Repo, copied("b1", "a1", 1_758_000_000, "container:web"))
+
+	repos, _ := f.do("GET", "/api/repos", nil)["repos"].([]any)
+	if len(repos) != 1 || repos[0].(map[string]any)["name"] != "" || repos[0].(map[string]any)["directOf"] != "NAS" {
+		t.Fatalf("repos = %v, want the direct repository to go by NAS", repos)
+	}
+	v := f.cardOf("containers", "web", 0)
+	if v.RepoLabel != "" || v.RepoDirectOf != "NAS" {
+		t.Fatalf("card = %+v, want it to go by NAS", v)
+	}
+	if v.Plan == nil || v.Plan.Home != "" || v.Plan.HomeDirectOf != "NAS" {
+		t.Fatalf("plan = %+v, want it to go by NAS", v.Plan)
+	}
+	tl, err := f.svc.Timeline(context.Background(), "containers", "web")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p := tl.Places[0]; p.Label != "" || p.DirectOf != "NAS" {
+		t.Fatalf("timeline home = %+v, want it to go by NAS", p)
+	}
+	if m := f.do("GET", "/api/items/containers/web/offsite/"+b2.ID+"/removal", nil); m["homeLabel"] != "" || m["homeDirectOf"] != "NAS" {
+		t.Fatalf("removal preview = %v, want the home to go by NAS", m)
+	}
+}
+
+func TestADirectRepositoryWithANameKeepsIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	d := f.direct(f.target("containers", "NAS", "b2:bucket:nas"))
+	f.container("web", d.ID)
+	if v := f.cardOf("containers", "web", 0); v.RepoLabel != "NAS direct" || v.RepoDirectOf != "" || v.Plan.Home != "NAS direct" || v.Plan.HomeDirectOf != "" {
+		t.Fatalf("card = %+v, plan = %+v; want the stored name", v, v.Plan)
+	}
+}
+
+func TestAKeptSetOfAnUnnamedDirectRepositoryGoesByItsTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "rest-creds", Name: "Rest server", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "old"}}}); err != nil {
+		t.Fatal(err)
+	}
+	target := f.target("containers", "NAS", "rest:http://nas:8000/bv/containers")
+	target.CredsRef = "rest-creds"
+	target, err := f.st.UpsertOffsiteTarget(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := f.unnamedDirect(target)
+	f.container("web", d.ID)
+	f.opensOnlyWith(d.Repo, "old")
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "wrong")})
+	listed, _ := f.do("GET", "/api/cloud/creds-sets", nil)["sets"].([]any)
+	if !slices.ContainsFunc(listed, func(s any) bool {
+		m, _ := s.(map[string]any)
+		return m["keptFor"] == d.ID && m["name"] == "NAS" && m["directOf"] == "NAS"
+	}) {
+		t.Fatalf("listed sets = %v, want the kept one going by NAS", listed)
+	}
+}
+
+func TestAnUnnamedDirectRepositoryThatLosesItsTargetInAnImportIsNamedAfterIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	d := f.unnamedDirect(f.target("containers", "B2", "b2:bkt:containers"))
+	file := f.do("GET", "/api/settings/export", nil)
+	delete(file, "offsiteTargets")
+	if res := f.do("POST", "/api/settings/import?apply=true", file); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || !got.CompanionLost || got.Name != "B2" {
+		t.Fatalf("row = %+v, %v; want a plain repository named after its target", got, err)
+	}
+}
+
+func TestAnImportedUnnamedDirectRepositoryWithoutItsTargetIsNamedByItsLocation(t *testing.T) {
+	f := newPlacementFixture(t)
+	views := []offsiteTargetView{{ID: "22222222222222222222222222222222", Repo: "b2:bkt:gone-direct", Enabled: true, CompanionOf: "0123456789abcdef0123456789abcdef"}}
+	if err := f.h.replaceNamedRepos(views); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := f.st.GetNamedRepo(views[0].ID); err != nil || !got.CompanionLost || got.Name != "b2:bkt:gone-direct" {
+		t.Fatalf("row = %+v, %v; want a plain repository named by its location", got, err)
 	}
 }

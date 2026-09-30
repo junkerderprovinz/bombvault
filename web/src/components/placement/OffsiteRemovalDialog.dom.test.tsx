@@ -97,6 +97,15 @@ describe("OffsiteRemovalDialog", () => {
     expect(await screen.findByText("Whether NAS Keller still has them could not be checked.")).toBeTruthy();
   });
 
+  it("names a direct home without a name of its own after its target", async () => {
+    fake.reply("getOffsiteRemoval", {
+      ok: true,
+      ...removalPreview({ homeUnreadable: true, homeLabel: "", homeDirectOf: "Primary", onlyThere: [{ id: "b1aa", time: "2026-09-01T03:00:00Z" }] }),
+    });
+    open();
+    expect(await screen.findByText("Whether Primary · direct still has them could not be checked.")).toBeTruthy();
+  });
+
   it("shows the grown list in the same window and asks again", async () => {
     const first = [{ id: "b9aa", time: "2026-09-01T03:00:00Z" }];
     const grown = [...first, { id: "c7bb", time: "2026-09-02T03:00:00Z" }];

@@ -19,6 +19,7 @@ import {
   type SendToOption,
   type StackNote,
 } from "./api";
+import { repoDisplayName } from "./directRepo";
 import type { TranslationKey, useT } from "./i18n";
 import { withLtrIsolates } from "./ltrFragments";
 import { formatTs } from "./reltime";
@@ -89,7 +90,7 @@ export function viewHomeLabel(t: T, host: string, view: PlacementView, options: 
   const listed = homeLabel(t, host, view.repo, options);
   if (listed !== null) return listed;
   if (view.repo === "") return host;
-  const name = view.repoLabel || view.repo;
+  const name = repoDisplayName(t, view.repoLabel, view.repoDirectOf) || view.repo;
   if (view.repoOff) return t("placement.off").replace("{name}", () => name);
   if (view.repoKind === "direct") return name;
   return t("placement.unknown").replace("{name}", () => name);
@@ -341,7 +342,7 @@ export function planLines(
   plan: PlacementPlan,
   noTargets: boolean
 ): StatusLine[] {
-  const home = plan.home || host;
+  const home = repoDisplayName(t, plan.home, plan.homeDirectOf) || host;
   const kind = plan.kind;
   if (kind === "paused") return [{ text: t("placement.paused"), tone: "warn" }];
   if (kind === "not-backed-up") {

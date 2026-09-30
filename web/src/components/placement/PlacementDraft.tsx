@@ -44,6 +44,7 @@ function valueView(value: PlacementDraftValue, options: PlacementOptions): Place
     view.repo = `direct:${home.direct.targetId}`;
     view.repoKind = "direct";
     view.repoLabel = home.direct.name;
+    view.repoDirectOf = home.direct.name ? undefined : options.sendTo.find((s) => s.targetId === home.direct.targetId)?.name;
     view.homeFollows = false;
   } else if (home) {
     const listed = options.homes.find((h) => h.id === home.repo);

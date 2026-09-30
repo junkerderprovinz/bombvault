@@ -146,9 +146,12 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
   const domain = domainLabel(t, row.domain);
-  const repoName = (id: string) => repos.find((r) => r.id === id)?.name ?? id;
-  const view = { ...defaultView(row, options), repoLabel: repoName(row.home) };
-  const homeName = (id: string) => viewHomeLabel(t, host, { ...view, repo: id, repoLabel: repoName(id), repoOff: false }, options);
+  const labelOf = (id: string) => {
+    const r = repos.find((x) => x.id === id);
+    return { repoLabel: r?.name ?? id, repoDirectOf: r?.directOf };
+  };
+  const view = { ...defaultView(row, options), ...labelOf(row.home) };
+  const homeName = (id: string) => viewHomeLabel(t, host, { ...view, repo: id, ...labelOf(id), repoOff: false }, options);
 
   function fail(res: OkEnvelope) {
     push(placementErrorText(t, lang, res, "settings.error"), "fail");

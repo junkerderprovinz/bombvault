@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -194,7 +195,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		if slices.Contains(self.ids, r.ID) {
 			continue
 		}
-		if other, ok := s.clashCandidate("repository", r.Name, r.Repo); ok && repoLocationsOverlap(other, loc) {
+		if other, ok := s.clashCandidate("repository", s.repoName(r), r.Repo); ok && repoLocationsOverlap(other, loc) {
 			return fmt.Errorf("%w: another repository", errNestedLocation)
 		}
 	}
@@ -387,10 +388,29 @@ func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location
 	if !opened {
 		return store.OffsiteTarget{}, errRepoUnopened
 	}
-	if strings.TrimSpace(name) == "" {
-		name = placementTargetName(target) + " direct"
-	}
 	return s.store.CreateCompanionRepo(targetID, name, location)
+}
+
+// directOf is the target a direct repository without a name of its own goes by;
+// the interface adds the word for "direct" in the reader's language. It is ""
+// for every other repository.
+func (s *Service) directOf(r store.OffsiteTarget) string {
+	if r.Name != "" || r.CompanionOf == "" {
+		return ""
+	}
+	t, ok, err := s.store.GetOffsiteTarget(r.CompanionOf)
+	if err != nil || !ok {
+		return scrubRepoLocation(r.Repo)
+	}
+	return placementTargetName(t)
+}
+
+// repoName names a named repository in a server message, which is English.
+func (s *Service) repoName(r store.OffsiteTarget) string {
+	if target := s.directOf(r); target != "" {
+		return target + " direct"
+	}
+	return r.Name
 }
 
 // repoInUseErr is a repo-in-use refusal carrying what still points at the
@@ -708,7 +728,7 @@ func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, di
 	if !s.opensWith(ctx, loc, mode) {
 		return false, nil
 	}
-	kept := CloudCredSet{ID: newCredSetID(), Name: direct.Name, KeptFor: direct.ID, CloudCreds: old}
+	kept := CloudCredSet{ID: newCredSetID(), Name: cmp.Or(direct.Name, s.directOf(direct)), KeptFor: direct.ID, CloudCreds: old}
 	if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet { return append(sets, kept) }); err != nil {
 		return false, err
 	}

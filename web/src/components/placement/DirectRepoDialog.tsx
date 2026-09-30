@@ -131,7 +131,14 @@ export function DirectRepoDialog({
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
           {t("repos.name")}
-          <input value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} autoComplete="off" className={FIELD} />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={withTarget(t("placement.homeDirect"))}
+            spellCheck={false}
+            autoComplete="off"
+            className={FIELD}
+          />
         </label>
         <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
           {t("repos.location")}

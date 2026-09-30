@@ -1,5 +1,6 @@
 import { Fragment, useState, type ReactNode } from "react";
 import type { TimelineDomain, TimelineMark, TimelinePlace, TimelineRow } from "../../lib/api";
+import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
 import { placementChanged } from "../../lib/placementEvents";
 import { autoMark, newestId, sourceOfPlace } from "../../lib/timeline";
@@ -65,7 +66,10 @@ export function Timeline({
 
   if (!open) return null;
 
-  const labelOf = (place: string) => places.find((p) => p.place === place)?.label || host;
+  const labelOf = (place: string) => {
+    const p = places.find((x) => x.place === place);
+    return (p && repoDisplayName(t, p.label, p.directOf)) || host;
+  };
   const orderOf = (place: string) => places.findIndex((p) => p.place === place);
   const pending = places.filter((p) => p.state !== "read");
   const unchecked = pending.filter((p) => p.state === "unchecked");

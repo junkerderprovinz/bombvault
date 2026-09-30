@@ -2636,7 +2636,7 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 			if oErr != nil || !repoLocationsOverlap(other, loc) {
 				continue
 			}
-			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, r.Name)
+			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, h.svc.repoName(r))
 		}
 	}
 	return ""
@@ -3748,8 +3748,14 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 			"restPasswordSet": c.RESTPassword != "",
 		}
 		// The interface names a kept set in the reader's language from this.
-		if c.KeptFor != "" {
-			out[i]["keptFor"] = c.KeptFor
+		if c.KeptFor == "" {
+			continue
+		}
+		out[i]["keptFor"] = c.KeptFor
+		if direct, err := h.store.GetNamedRepo(c.KeptFor); err == nil {
+			if target := h.svc.directOf(direct); target != "" {
+				out[i]["directOf"] = target
+			}
 		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"sets": out}))

@@ -1,5 +1,5 @@
 import type { NamedRepo, OffsiteTarget } from "./api";
-import type { useT } from "./i18n";
+import type { TranslationKey, useT } from "./i18n";
 import { offsiteTargetLabel } from "./useOffsiteTargets";
 
 type T = ReturnType<typeof useT>["t"];
@@ -59,4 +59,10 @@ export function primaryDirects(targets: OffsiteTarget[], repos: NamedRepo[]): Di
     const use = target.sortOrder === 0 ? directUse(target, repos) : undefined;
     return use ? [use] : [];
   });
+}
+
+/** repoDisplayName is a repository's name on screen: its own, or for a direct
+ *  repository without one its target's, with "direct" in the reader's language. */
+export function repoDisplayName(t: (key: TranslationKey) => string, name: string, directOf?: string): string {
+  return directOf ? t("placement.homeDirect").replace("{target}", () => directOf) : name;
 }

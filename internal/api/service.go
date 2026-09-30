@@ -1182,7 +1182,7 @@ func (s *Service) itemRepoPath(repoID string, domainFallback func() (string, err
 		return "", fmt.Errorf("this item points at a repository that no longer exists; pick one again in Settings or clear the field")
 	}
 	if !named.Enabled {
-		return "", fmt.Errorf("the repository %q is switched off, so nothing can be backed up to it", named.Name)
+		return "", fmt.Errorf("the repository %q is switched off, so nothing can be backed up to it", s.repoName(named))
 	}
 	return s.resolveRepo(named.Repo)
 }
@@ -1215,19 +1215,19 @@ func (s *Service) validateItemRepoID(domain, id string) error {
 		return errors.New("no such repository; pick one from the list in Settings")
 	}
 	if !named.Enabled {
-		return fmt.Errorf("the repository %q is switched off", named.Name)
+		return fmt.Errorf("the repository %q is switched off", s.repoName(named))
 	}
 	if named.CompanionOf != "" {
 		target, _, err := s.store.GetOffsiteTarget(named.CompanionOf)
 		if err != nil {
-			return fmt.Errorf("read the target of %q: %w", named.Name, err)
+			return fmt.Errorf("read the target of %q: %w", s.repoName(named), err)
 		}
 		if target.Domain != domain {
 			return errForeignDomain
 		}
 	}
 	if _, err := s.resolveRepo(named.Repo); err != nil {
-		return fmt.Errorf("the repository %q does not resolve to a usable location: %w", named.Name, err)
+		return fmt.Errorf("the repository %q does not resolve to a usable location: %w", s.repoName(named), err)
 	}
 	return nil
 }

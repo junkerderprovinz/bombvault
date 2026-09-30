@@ -21,9 +21,10 @@ import (
 
 // timelinePlace is one place an item's backups can lie at.
 type timelinePlace struct {
-	Place      string `json:"place"` // "local" | "offsite:<id>"
-	Label      string `json:"label"` // "" for the domain path
-	Kind       string `json:"kind"`  // "home" | "target"
+	Place      string `json:"place"`              // "local" | "offsite:<id>"
+	Label      string `json:"label"`              // "" for the domain path
+	DirectOf   string `json:"directOf,omitempty"` // the target a direct home without a name of its own goes by
+	Kind       string `json:"kind"`               // "home" | "target"
 	Remote     bool   `json:"remote"`
 	Enabled    bool   `json:"enabled"`
 	AppendOnly bool   `json:"appendOnly"`
@@ -171,7 +172,7 @@ func (s *Service) homePlace(settings store.Settings, it timelineItem) placeRef {
 	p := placeRef{timelinePlace: timelinePlace{Place: "local", Kind: "home", Enabled: true}}
 	if it.homeID != "" {
 		if named, err := s.store.GetNamedRepo(it.homeID); err == nil {
-			p.Label, p.Enabled = named.Name, named.Enabled
+			p.Label, p.DirectOf, p.Enabled = named.Name, s.directOf(named), named.Enabled
 		}
 	}
 	p.repo, p.openErr = s.itemRepoPath(it.homeID, func() (string, error) { return s.repoFor(settings, it.domain, "local") })
@@ -435,14 +436,16 @@ func (h *Handler) handleStackDir(w http.ResponseWriter, r *http.Request) {
 type placeDelete struct {
 	Place       string   `json:"place"`
 	Label       string   `json:"label"`
+	DirectOf    string   `json:"directOf,omitempty"`
 	SnapshotIDs []string `json:"snapshotIds"`
 }
 
 // otherPlace is a place a delete leaves alone, and why.
 type otherPlace struct {
-	Place string `json:"place"`
-	Label string `json:"label"`
-	State string `json:"state"` // "holds" | "missing" | "unreadable" | "append-only"
+	Place    string `json:"place"`
+	Label    string `json:"label"`
+	DirectOf string `json:"directOf,omitempty"`
+	State    string `json:"state"` // "holds" | "missing" | "unreadable" | "append-only"
 }
 
 // rowIDs is what one place holds of a row: its snapshots and, for a VM, the
@@ -498,7 +501,7 @@ func (s *Service) timelineDeletePreview(ctx context.Context, domain, key, rowKey
 	for _, p := range refs {
 		own, err := s.ownedAt(ctx, it, p)
 		ids := it.rowIDs(own, rowKey)
-		other := otherPlace{Place: p.Place, Label: p.Label}
+		other := otherPlace{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf}
 		switch {
 		case err != nil:
 			other.State = "unreadable"
@@ -509,7 +512,7 @@ func (s *Service) timelineDeletePreview(ctx context.Context, domain, key, rowKey
 		case p.AppendOnly:
 			other.State = "append-only"
 		default:
-			del = append(del, placeDelete{Place: p.Place, Label: p.Label, SnapshotIDs: ids})
+			del = append(del, placeDelete{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf, SnapshotIDs: ids})
 			continue
 		}
 		others = append(others, other)
@@ -544,7 +547,7 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 		// index below is never -1.
 		p := refs[slices.IndexFunc(refs, func(r placeRef) bool { return r.Place == d.Place })]
 		if p.AppendOnly {
-			skipped = append(skipped, otherPlace{Place: p.Place, Label: p.Label, State: "append-only"})
+			skipped = append(skipped, otherPlace{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf, State: "append-only"})
 			continue
 		}
 		own, err := s.ownedAt(ctx, it, p)
@@ -560,7 +563,7 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 		if err := s.engine.Forget(ctx, p.repo, ids, false, p.mode); err != nil {
 			return deleted, skipped, fmt.Errorf("delete at %s: %w", cmp.Or(p.Label, "the item's location"), err)
 		}
-		deleted = append(deleted, placeDelete{Place: p.Place, Label: p.Label, SnapshotIDs: ids})
+		deleted = append(deleted, placeDelete{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf, SnapshotIDs: ids})
 		s.adjustObservedCopies(it, p, own, ids)
 	}
 	return deleted, skipped, nil

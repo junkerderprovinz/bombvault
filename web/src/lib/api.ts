@@ -1172,6 +1172,8 @@ export interface CloudCredSetInfo {
   /** The direct repository this set keeps the old values for, when a save
    *  changed them to ones that do not open it. */
   keptFor?: string;
+  /** The target the repository it was kept for goes by, when it has no name of its own. */
+  directOf?: string;
 }
 
 /** GET /api/cloud/creds-sets — additional named credential sets (no secrets returned). */
@@ -2305,6 +2307,8 @@ export interface NamedRepo {
   inUse: number;
   /** The off-site target this is the direct repository of, "" for a plain one. */
   companionOf: string;
+  /** The target a direct repository without a name of its own goes by. */
+  directOf?: string;
   /** An import deleted its target, which leaves it a plain repository. */
   companionLost: boolean;
 }
@@ -2453,6 +2457,8 @@ export type PlanKind =
 export interface PlacementPlan {
   kind: PlanKind;
   home: string;
+  /** The target a direct home without a name of its own goes by. */
+  homeDirectOf?: string;
   targets: string[];
   warn: boolean;
   reason: "" | "default-off" | "default-missing";
@@ -2501,6 +2507,8 @@ export interface PlacementView {
   segment: SegmentId | "";
   repo: string;
   repoLabel: string;
+  /** The target a direct repository without a name of its own goes by. */
+  repoDirectOf?: string;
   repoKind: HomeKind | "";
   repoOff: boolean;
   homeFollows: boolean;
@@ -2557,6 +2565,8 @@ export interface RemovalPreview {
   onlyThere: { id: string; time: string }[];
   homeUnreadable: boolean;
   homeLabel: string;
+  /** The target a direct home without a name of its own goes by. */
+  homeDirectOf?: string;
 }
 
 function removalPath(item: ItemRef, targetId: string): string {
@@ -2853,6 +2863,8 @@ export type TimelineDomain = PlacementDomain | "flash" | "config";
 export interface TimelinePlace {
   place: string;
   label: string;
+  /** The target a direct home without a name of its own goes by. */
+  directOf?: string;
   kind: "home" | "target";
   remote: boolean;
   enabled: boolean;
@@ -2877,12 +2889,14 @@ export interface TimelineRow {
 export interface PlaceDelete {
   place: string;
   label: string;
+  directOf?: string;
   snapshotIds: string[];
 }
 
 export interface OtherPlace {
   place: string;
   label: string;
+  directOf?: string;
   state: "holds" | "missing" | "unreadable" | "append-only";
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -483,7 +484,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	switch {
 	case len(exp.NamedRepos) == 0:
 		for _, r := range stored {
-			rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(r.Name)), r.Repo})
+			rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), r.Repo})
 		}
 	default:
 		inFile := make(map[string]bool, len(exp.NamedRepos))
@@ -529,7 +530,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 				return "could not check this file against the repositories already set up; try again"
 			}
 			if n != 0 {
-				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(r.Name)), r.Repo})
+				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), r.Repo})
 			}
 		}
 	}
@@ -661,7 +662,7 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// request. They are separate because this function is pure over the file and
 	// those are not, not because the import is allowed to skip them.
 	for i, tv := range exp.NamedRepos {
-		if strings.TrimSpace(tv.Name) == "" {
+		if strings.TrimSpace(tv.Name) == "" && strings.TrimSpace(tv.CompanionOf) == "" {
 			return fmt.Sprintf("repository #%d: needs a name", i+1)
 		}
 		loc := strings.TrimSpace(tv.Repo)
@@ -1034,7 +1035,7 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		// import cannot become the way around its refusal.
 		use, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
 		if errors.Is(dErr, store.ErrDirectRepo) {
-			log.Printf("api: settings import: repository %q is the direct repository of a target here, so it stays", t.Name) //nolint:gosec // G706: the name is %q-quoted
+			log.Printf("api: settings import: repository %q is the direct repository of a target here, so it stays", h.svc.repoName(t)) //nolint:gosec // G706: the name is %q-quoted
 			continue
 		}
 		if dErr != nil {
@@ -1082,6 +1083,11 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 				log.Printf("api: settings import: repository %q belonged to a target that is not here; imported as a plain repository", t.Name) //nolint:gosec // G706: the name is %q-quoted
 			}
 		}
+		if t.Name == "" && t.CompanionOf == "" && stored[t.ID].CompanionOf == "" {
+			// A plain repository needs a name to be told apart. A direct one whose
+			// target the import removed took the target's name then.
+			t.Name = cmp.Or(stored[t.ID].Name, scrubRepoLocation(t.Repo))
+		}
 		saved, err := h.store.UpsertOffsiteTarget(t)
 		if err != nil {
 			return err
@@ -1096,7 +1102,7 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		// mirrored fields: its target writes there, and the PATCH refuses the
 		// same move.
 		if stored[t.ID].CompanionOf != "" {
-			log.Printf("api: settings import: repository %q takes its location from its target, so the file's %s was not applied", t.Name, shortRepoName(wanted)) //nolint:gosec // G706: the name is %q-quoted and the location is shortened
+			log.Printf("api: settings import: repository %q takes its location from its target, so the file's %s was not applied", h.svc.repoName(stored[t.ID]), shortRepoName(wanted)) //nolint:gosec // G706: the name is %q-quoted and the location is shortened
 			continue
 		}
 		// The mark describes the location and moves with it; a file that carries

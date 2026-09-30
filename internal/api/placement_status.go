@@ -10,12 +10,13 @@ import (
 )
 
 type placementPlan struct {
-	Kind    string   `json:"kind"`    // "home" | "stays-domain" | "default-home" | "decides-at-first-backup" | "paused" | "not-backed-up"
-	Home    string   `json:"home"`    // label of the home, "" for the domain path
-	Targets []string `json:"targets"` // names of the targets it is copied to
-	Warn    bool     `json:"warn"`
-	Reason  string   `json:"reason"` // not-backed-up: "default-off" | "default-missing"
-	NoCopy  bool     `json:"noCopy"`
+	Kind         string   `json:"kind"`                   // "home" | "stays-domain" | "default-home" | "decides-at-first-backup" | "paused" | "not-backed-up"
+	Home         string   `json:"home"`                   // label of the home, "" for the domain path
+	HomeDirectOf string   `json:"homeDirectOf,omitempty"` // the target a direct home without a name of its own goes by
+	Targets      []string `json:"targets"`                // names of the targets it is copied to
+	Warn         bool     `json:"warn"`
+	Reason       string   `json:"reason"` // not-backed-up: "default-off" | "default-missing"
+	NoCopy       bool     `json:"noCopy"`
 }
 
 type observedPlace struct {
@@ -59,6 +60,7 @@ type statusFacts struct {
 	now        int64
 	grace      int64 // how far a listing or a copy may lag before a target stops counting, 0 for the strict reading
 	named      map[string]store.OffsiteTarget
+	directOf   func(store.OffsiteTarget) string
 	copies     map[string][]store.ItemCopies      // by identity
 	observed   map[string]store.TargetObservation // by target id
 	failedAt   map[string]int64                   // first failed run after the last listing, by target id
@@ -73,6 +75,7 @@ func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p
 		now:      time.Now().Unix(),
 		grace:    s.statusGrace(settings, p.Domain),
 		named:    named,
+		directOf: s.directOf,
 		copies:   map[string][]store.ItemCopies{},
 		failedAt: map[string]int64{},
 		domainTags: sync.OnceValues(func() (map[string]bool, error) {
@@ -110,14 +113,14 @@ func (s *Service) statusGrace(settings store.Settings, domain string) int64 {
 	return 2 * period
 }
 
-func (f *statusFacts) label(repoID string) string {
+func (f *statusFacts) label(repoID string) (label, directOf string) {
 	if repoID == "" {
-		return ""
+		return "", ""
 	}
 	if r, ok := f.named[repoID]; ok {
-		return r.Name
+		return r.Name, f.directOf(r)
 	}
-	return repoID
+	return repoID, ""
 }
 
 // domainPathTags lists the local domain path and returns every tag found
@@ -284,13 +287,15 @@ func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID s
 		case home == homeMissing:
 			return &placementPlan{Kind: "not-backed-up", Targets: []string{}, Warn: true, Reason: "default-missing"}
 		case !f.named[repoID].Enabled:
-			return &placementPlan{Kind: "not-backed-up", Home: f.label(repoID), Targets: []string{}, Warn: true, Reason: "default-off"}
+			name, directOf := f.label(repoID)
+			return &placementPlan{Kind: "not-backed-up", Home: name, HomeDirectOf: directOf, Targets: []string{}, Warn: true, Reason: "default-off"}
 		}
 	}
-	plan := &placementPlan{Kind: kind, Home: f.label(repoID), Targets: []string{}}
+	name, directOf := f.label(repoID)
+	plan := &placementPlan{Kind: kind, Home: name, HomeDirectOf: directOf, Targets: []string{}}
 	if home.copySource() {
 		if p.State.Paused() {
-			return &placementPlan{Kind: "paused", Home: plan.Home, Targets: []string{}, Warn: true}
+			return &placementPlan{Kind: "paused", Home: plan.Home, HomeDirectOf: plan.HomeDirectOf, Targets: []string{}, Warn: true}
 		}
 		for _, t := range p.effectiveTargets(item.Identity) {
 			plan.Targets = append(plan.Targets, placementTargetName(t))
@@ -327,7 +332,8 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 	}
 	o := &placementObserved{Places: []observedPlace{}, Older: []olderCopies{}}
 
-	local := observedPlace{Place: "local", Label: f.label(repoID), Count: item.HomeBackups, Latest: item.LastSuccess, SeenAt: item.LastSuccess, State: "unknown"}
+	name, _ := f.label(repoID)
+	local := observedPlace{Place: "local", Label: name, Count: item.HomeBackups, Latest: item.LastSuccess, SeenAt: item.LastSuccess, State: "unknown"}
 	if item.LastSuccess > 0 {
 		local.State, local.Counts = "counts", true
 	}

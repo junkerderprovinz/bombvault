@@ -10,6 +10,7 @@ import { createRepo, deleteRepo, listOffsiteTargets, listRepos, updateRepo, type
 import { useT } from "../../lib/i18n";
 import { reposChanged } from "../../lib/useNamedRepos";
 import { placementErrorText } from "../../lib/placementCodes";
+import { repoDisplayName } from "../../lib/directRepo";
 import { offsiteTargetLabel } from "../../lib/useOffsiteTargets";
 
 // ReposCard — where the named repositories of #204 are written down.
@@ -146,7 +147,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(t("repos.deleteBlocked"), "fail");
       return;
     }
-    if (!(await confirm(`${row.name} - ${row.repo}`, { confirmKey: "offsite.targets.remove" }))) return;
+    if (!(await confirm(`${repoDisplayName(t, row.name, row.directOf)} - ${row.repo}`, { confirmKey: "offsite.targets.remove" }))) return;
     const r = await deleteRepo(row.id);
     if (!r.ok) {
       push(placementErrorText(t, lang, r, "settings.error"), "fail");
@@ -172,7 +173,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             <div className="flex-1 min-w-0 max-md:basis-full">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-carbon-text font-semibold truncate max-md:whitespace-normal max-md:wrap-anywhere">
-                  {r.name}
+                  {repoDisplayName(t, r.name, r.directOf)}
                 </span>
                 {/* A negative count means the server could not read it. That is
                     treated as IN USE everywhere below: an unknown answer must

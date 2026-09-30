@@ -27,8 +27,9 @@ const (
 // must show as locked.
 type placementView struct {
 	Segment      string             `json:"segment"`
-	Repo         string             `json:"repo"`      // effectiveHome
-	RepoLabel    string             `json:"repoLabel"` // name of the repository, "" for the domain path
+	Repo         string             `json:"repo"`                   // effectiveHome
+	RepoLabel    string             `json:"repoLabel"`              // name of the repository, "" for the domain path
+	RepoDirectOf string             `json:"repoDirectOf,omitempty"` // the target a direct repository without a name of its own goes by
 	RepoKind     homeKind           `json:"repoKind"`
 	RepoOff      bool               `json:"repoOff"`
 	HomeFollows  bool               `json:"homeFollows"`  // repo_chosen = 0
@@ -104,7 +105,7 @@ func (s *Service) itemPlacementView(settings store.Settings, p placementRead, na
 		Paused:       p.State.Paused(),
 	}
 	if r, ok := named[repo]; ok {
-		v.RepoLabel, v.RepoOff = r.Name, !r.Enabled
+		v.RepoLabel, v.RepoDirectOf, v.RepoOff = r.Name, s.directOf(r), !r.Enabled
 	}
 	switch kind {
 	case homeRemote:

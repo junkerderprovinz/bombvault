@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { deleteAtTarget, getOffsiteRemoval, type ItemRef, type RemovalPreview } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { repoDisplayName } from "../../lib/directRepo";
 import { placementErrorText } from "../../lib/placementCodes";
 import { formatTs } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
@@ -19,7 +20,7 @@ function OnlyThere({ preview }: { preview: RemovalPreview }) {
         ))}
       </ul>
       {preview.homeUnreadable && (
-        <p>{t("offsiteRemoval.homeUnreadable").replace("{home}", () => preview.homeLabel || host)}</p>
+        <p>{t("offsiteRemoval.homeUnreadable").replace("{home}", () => repoDisplayName(t, preview.homeLabel, preview.homeDirectOf) || host)}</p>
       )}
     </div>
   );
@@ -64,6 +65,7 @@ export function OffsiteRemovalDialog({
           onlyThere: res.onlyThere ?? [],
           homeUnreadable: res.homeUnreadable ?? false,
           homeLabel: res.homeLabel ?? "",
+          homeDirectOf: res.homeDirectOf,
         };
         const only = preview.onlyThere.length > 0;
         const yes = await confirm(
