@@ -272,5 +272,11 @@ export function markHit(el: HTMLElement): void {
   // A second jump to the same element restarts the animation.
   void el.offsetWidth;
   el.classList.add("glim-search-hit");
-  el.addEventListener("animationend", () => el.classList.remove("glim-search-hit"), { once: true });
+  // A card's own entrance animation ends inside it too, so only this one counts.
+  const done = (e: AnimationEvent) => {
+    if (e.animationName !== "glim-search-hit") return;
+    el.classList.remove("glim-search-hit");
+    el.removeEventListener("animationend", done);
+  };
+  el.addEventListener("animationend", done);
 }

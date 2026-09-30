@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { TranslationKey } from "../../lib/i18n";
 import {
-  IconCloud,
   IconContainers,
   IconLive,
   IconTabGeneral,
@@ -11,7 +10,7 @@ import {
   IconTabStorage,
   IconTabSystem,
 } from "../../components/navGlyphs";
-import { IconKey, IconLink, IconPrune } from "../../components/glyphs";
+import { IconKey, IconLink, IconPrune, IconSignIn } from "../../components/glyphs";
 import { save as saveDisplayPrefs } from "../../lib/displayPrefs";
 
 // Each Settings page lives at /settings/<id>. The ids are part of bookmarks
@@ -68,10 +67,10 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "schedules", label: "settings.tab.schedules", icon: <IconSchedules /> },
   { id: "containers", label: "nav.containers", icon: <IconContainers /> },
   { id: "offsite", label: "settings.tab.offsite", icon: <IconTabOffsite /> },
-  { id: "cloud", label: "settings.tab.cloud", icon: <IconCloud /> },
+  { id: "cloud", label: "settings.tab.cloud", icon: <IconKey /> },
   { id: "notifications", label: "settings.tab.notifications", icon: <IconNotifications /> },
   { id: "integrity", label: "settings.tab.integrity", icon: <IconTabIntegrity /> },
-  { id: "security", label: "settings.tab.security", icon: <IconKey /> },
+  { id: "security", label: "settings.tab.security", icon: <IconSignIn /> },
   { id: "pairing", label: "pairing.title", icon: <IconLink /> },
   { id: "integrations", label: "settings.tab.integrations", icon: <IconLive /> },
   { id: "system", label: "settings.tab.system", icon: <IconTabSystem /> },

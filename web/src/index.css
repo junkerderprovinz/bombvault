@@ -1172,6 +1172,9 @@ body {
   outline: 1px solid var(--field-focus-ring);
   outline-offset: -1px;
 }
+.glim-field-focus-within input:focus-visible {
+  outline: none;
+}
 
 /* The card or row a settings search result leads to, ringed for a moment so
    the eye finds it after the scroll. */
