@@ -61,7 +61,7 @@ import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { HUE_OFFSET, Selector } from "../components/Selector";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { Navigate, useLocation, useParams } from "react-router-dom";
 import { SettingsRail } from "../components/SettingsRail";
 import { SettingsSearch, jumpTarget, markHit, type SearchJump } from "./settings/SettingsSearch";
 import {
@@ -1794,49 +1794,8 @@ export function SettingsPage() {
   const nextHue = () => hueSeq++;
   const pairingUsed = settings.receiverEnabled || settings.fleetEnabled || settings.pullEnabled;
 
-  // Receiver, Instances and Pull are the domains that work through pairing, so
-  // their switches stand on General with the others and again on Pairing.
-  const instanceToggles = (firstHue: number) => (
-    <>
-      <ToggleRow
-        label={t("receiver.title")}
-        hint={t("settings.receiverEnabledHint")}
-        checked={settings.receiverEnabled}
-        onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
-        disabled={domainToggleBusy.receiverEnabled}
-        shakeNonce={domainToggleShake.receiverEnabled}
-        pulseNonce={fieldPulse.receiverEnabled}
-        hueIndex={firstHue}
-      />
-      {/* Named after Instances, not the Fleet page it shows: "Flotte" alone
-          does not say what this domain is. */}
-      <ToggleRow
-        label={t("instances.title")}
-        hint={t("settings.fleetEnabledHint")}
-        checked={settings.fleetEnabled}
-        onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
-        disabled={domainToggleBusy.fleetEnabled}
-        shakeNonce={domainToggleShake.fleetEnabled}
-        pulseNonce={fieldPulse.fleetEnabled}
-        hueIndex={firstHue + 1}
-      />
-      {/* Pull (#227) is the only one of the three that writes: it fetches
-          another instance's backups into this box's own repository. */}
-      <ToggleRow
-        label={t("pull.title")}
-        hint={t("settings.pullEnabledHint")}
-        checked={settings.pullEnabled}
-        onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}
-        disabled={domainToggleBusy.pullEnabled}
-        shakeNonce={domainToggleShake.pullEnabled}
-        pulseNonce={fieldPulse.pullEnabled}
-        hueIndex={firstHue + 2}
-      />
-    </>
-  );
-
   return (
-    <div className="flex flex-1 gap-3 md:gap-6">
+    <div className="flex flex-1 gap-3 md:gap-10">
       {redirect && <Navigate to={`/settings/${redirect}`} replace />}
       <SettingsRail
         items={pages.map((p) => ({ id: p.id, label: t(p.label), icon: p.icon, to: `/settings/${p.id}` }))}
@@ -2091,10 +2050,40 @@ export function SettingsPage() {
           pulseNonce={fieldPulse.configEnabled}
           hueIndex={5}
         />
-        {instanceToggles(6)}
-        <Link to="/settings/pairing" className="self-start py-1 text-xs text-accentText hover:underline">
-          {t("settings.openPairing")}
-        </Link>
+        <ToggleRow
+          label={t("receiver.title")}
+          hint={t("settings.receiverEnabledHint")}
+          checked={settings.receiverEnabled}
+          onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
+          disabled={domainToggleBusy.receiverEnabled}
+          shakeNonce={domainToggleShake.receiverEnabled}
+          pulseNonce={fieldPulse.receiverEnabled}
+          hueIndex={6}
+        />
+        {/* Named after Instances, not the Fleet page it shows: "Flotte" alone
+            does not say what this domain is. */}
+        <ToggleRow
+          label={t("instances.title")}
+          hint={t("settings.fleetEnabledHint")}
+          checked={settings.fleetEnabled}
+          onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
+          disabled={domainToggleBusy.fleetEnabled}
+          shakeNonce={domainToggleShake.fleetEnabled}
+          pulseNonce={fieldPulse.fleetEnabled}
+          hueIndex={7}
+        />
+        {/* Pull (#227) is the only one of the three that writes: it fetches
+            another instance's backups into this box's own repository. */}
+        <ToggleRow
+          label={t("pull.title")}
+          hint={t("settings.pullEnabledHint")}
+          checked={settings.pullEnabled}
+          onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}
+          disabled={domainToggleBusy.pullEnabled}
+          shakeNonce={domainToggleShake.pullEnabled}
+          pulseNonce={fieldPulse.pullEnabled}
+          hueIndex={8}
+        />
       </Card>
       )}
 
@@ -2210,6 +2199,7 @@ export function SettingsPage() {
           value={settings.restoreFolder}
           hostMountRoot={hostMountRoot}
           hint={t("settings.restoreFolderHint")}
+          hueIndex={6}
           onChange={(v) => {
             setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev);
             debouncedSave("restoreFolder", () =>
@@ -3121,13 +3111,11 @@ export function SettingsPage() {
       {/* and it is not always available, so the card first explains when it is not. */}
       {page === "security" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
 
-      {/* Pairing sits with the password it warns about. It only matters to
-          the domains that work over the group, the same ones that bring up
-          the Instances page, whose Pairing button lands here by #pairing. */}
-      {page === "pairing" && (
-        <Card title={t("settings.domains")} hint={t("settings.pairingDomainsHint")} hueIndex={nextHue()}>
-          {instanceToggles(0)}
-          {!pairingUsed && <p className="text-sm text-carbon-textSub">{t("settings.pairingNeedsDomain")}</p>}
+      {/* Pairing only serves the domains that work over the group, so until
+          one of them is on the page says where to turn it on. */}
+      {page === "pairing" && !pairingUsed && (
+        <Card title={t("pairing.title")} hueIndex={nextHue()}>
+          <p className="text-sm text-carbon-textSub">{t("settings.pairingNeedsDomain")}</p>
         </Card>
       )}
       {page === "pairing" && pairingUsed && (
@@ -3402,8 +3390,8 @@ export function SettingsPage() {
         <SettingsPortabilityCard t={t} hueIndex={nextHue()} applyImport={applyImportedSettings} />
       )}
 
-      {/* About stays last on System: the card is a footer. */}
-      {page === "system" && (
+      {/* About stays last on General: the card is a footer. */}
+      {page === "general" && (
         <AboutCard hueIndex={nextHue()} />
       )}
       </div>

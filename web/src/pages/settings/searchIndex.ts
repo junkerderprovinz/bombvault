@@ -69,6 +69,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "settings.quietToasts",
       rows: [{ key: "settings.quietToasts", hint: "settings.quietToastsHint" }],
     },
+    { title: "about.title", rows: [] },
   ],
 
   look: [
@@ -443,15 +444,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   ],
 
   pairing: [
-    {
-      title: "settings.domains",
-      hint: "settings.pairingDomainsHint",
-      rows: [
-        { key: "receiver.title", hint: "settings.receiverEnabledHint" },
-        { key: "instances.title", hint: "settings.fleetEnabledHint" },
-        { key: "pull.title", hint: "settings.pullEnabledHint" },
-      ],
-    },
+    { title: "pairing.title", rows: [], body: ["settings.pairingNeedsDomain"] },
     { title: "pairing.step1Title", rows: [], body: ["pairing.step1Body"] },
     { title: "pairing.step2Title", rows: [], body: ["pairing.step2Body"] },
     { title: "pairing.step3Title", rows: [], body: ["pairing.step3Body"] },
@@ -534,6 +527,5 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "diagnostics.heading", hint: "diagnostics.hint" },
       ],
     },
-    { title: "about.title", rows: [] },
   ],
 };
