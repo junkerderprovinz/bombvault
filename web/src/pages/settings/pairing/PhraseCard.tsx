@@ -3,7 +3,7 @@
 // window. Inside one it shows who is there, and when nobody has come after a
 // minute it offers the two ways out, in the same two windows.
 import { useEffect, useState, type ReactNode } from "react";
-import { Card } from "../shared";
+import { Card, LOGIN_PASSWORD_FIELD } from "../shared";
 import { Badge, type BadgeTone } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -12,7 +12,6 @@ import { IconDisclosure } from "../../../components/IconDisclosure";
 import { IconEye, IconRefresh, IconSignOut } from "../../../components/glyphs";
 import { IconCheckCircle, IconClose, IconCopy, IconFleet } from "../../../components/navGlyphs";
 import {
-  ApiError,
   createPhrase,
   joinGroup,
   leaveGroup,
@@ -231,7 +230,6 @@ function JoinWindow({
   label,
   tip,
   busy,
-  disabled,
   hueIndex,
   onPair,
   onClose,
@@ -243,13 +241,12 @@ function JoinWindow({
   label: string;
   tip: string;
   busy: boolean;
-  disabled: boolean;
   hueIndex?: number;
   onPair: (phrase: string) => Promise<string | null>;
   onClose: () => void;
   t: T;
 }) {
-  const { field, paste, pair } = usePhraseEntry({ id, label, tip, bare: true, busy, disabled, onPair, t });
+  const { field, paste, pair } = usePhraseEntry({ id, label, tip, bare: true, busy, onPair, t });
   return (
     <PairingWindow
       title={title}
@@ -302,7 +299,6 @@ export function PhraseCard({
   const joinedAgo = useJoinedAgo(group);
 
   const stage = pairStage(group, joinedAgo, createdHere);
-  const locked = !group.passwordSet;
   const shakeCls = shake ? "glim-shake" : "";
 
   async function run(action: () => Promise<void>) {
@@ -310,10 +306,7 @@ export function PhraseCard({
     try {
       await action();
     } catch (err) {
-      // Every route that makes, shows or takes the phrase answers 403 while no
-      // login password is set.
-      if (err instanceof ApiError && err.status === 403) push(t("pairing.needsPassword"), "fail");
-      else push(err instanceof Error ? err.message : t("pairing.actionError"), "fail");
+      push(err instanceof Error ? err.message : t("pairing.actionError"), "fail");
       setShake((n) => n + 1);
     } finally {
       setBusy(false);
@@ -356,7 +349,6 @@ export function PhraseCard({
       push(t("pairing.joined"), "success");
       return null;
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) return t("pairing.needsPassword");
       return err instanceof Error ? err.message : t("pairing.actionError");
     } finally {
       setBusy(false);
@@ -407,19 +399,29 @@ export function PhraseCard({
     else push(t("vm.ssh.copyFailed"), "fail");
   }
 
-  // The password lives on the System tab, which this link opens.
-  const lockedNote = locked && (
-    <div className="flex flex-wrap items-center gap-3 rounded-control bg-statusWarnBgSoft px-3 py-2.5">
-      <p className="min-w-0 flex-[1_1_16rem] text-sm leading-relaxed text-carbon-text">{t("pairing.needsPassword")}</p>
+  // Pairing works without a login password, but then whoever opens this page
+  // holds the words and, through the group, every member's restic password.
+  // The warning stays until a password is set; the field is on this same tab.
+  const noPasswordNote = !group.passwordSet && (
+    <section className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-control bg-statusWarnBgSoft p-4" data-testid="no-password">
+      <span className="shrink-0 text-statusWarn">
+        <PhraseGlyph kind="warn" size={22} />
+      </span>
+      <div className="min-w-0 flex-[1_1_18rem]">
+        <p className="text-[15px] font-semibold text-carbon-text">{t("pairing.noPasswordTitle")}</p>
+        <p className="mt-0.5 text-sm leading-relaxed text-carbon-text">{t("pairing.noPasswordHint")}</p>
+      </div>
       <Button
         label={t("auth.setPassword")}
         labelKey="auth.setPassword"
-        tone="neutral"
+        tone="accent"
         onClick={() => {
-          window.location.hash = "#system";
+          const field = document.getElementById(LOGIN_PASSWORD_FIELD);
+          field?.scrollIntoView?.({ block: "center" });
+          field?.focus();
         }}
       />
-    </div>
+    </section>
   );
 
   const passwordPrompt = (
@@ -441,6 +443,12 @@ export function PhraseCard({
       />
     </div>
   );
+
+  const openWords = () => {
+    setShown("words");
+    // Without a password there is nothing to enter before the words show.
+    if (!phrase && !group.passwordSet) void show();
+  };
 
   const closeShown = () => {
     setShown(null);
@@ -474,7 +482,10 @@ export function PhraseCard({
     </div>
   );
 
-  const enterTip = t("pairing.enterTip").replace("{path}", [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "));
+  const enterTip = t("pairing.enterTip").replace(
+    "{path}",
+    [t("settings.title"), t("settings.tab.system"), t("pairing.title"), t("pairing.show")].join(", "),
+  );
 
   const foot = (
     <div className="flex flex-wrap items-center justify-end gap-2">
@@ -483,8 +494,8 @@ export function PhraseCard({
         labelKey="pairing.show"
         glyph={<IconEye />}
         tone="neutral"
-        onClick={() => setShown("words")}
-        disabled={busy || locked}
+        onClick={openWords}
+        disabled={busy}
       />
       {leaveButton}
     </div>
@@ -544,7 +555,6 @@ export function PhraseCard({
         label={t("pairing.enterLabel")}
         tip={enterTip}
         busy={busy}
-        disabled={locked}
         hueIndex={hueIndex}
         onPair={join}
         onClose={closeShown}
@@ -558,7 +568,6 @@ export function PhraseCard({
         label={t("pairing.enterLabelOther")}
         tip={enterTip}
         busy={busy}
-        disabled={locked}
         hueIndex={hueIndex}
         onPair={join}
         onClose={closeShown}
@@ -570,14 +579,14 @@ export function PhraseCard({
   if (stage === "unpaired") {
     body = (
       <>
-        {lockedNote}
+        {noPasswordNote}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Choice
             key={`create-${shake}`}
             glyph={<PhraseGlyph kind="create" size={22} />}
             title={t("pairing.create")}
             sub={t("pairing.createSub")}
-            disabled={busy || locked}
+            disabled={busy}
             shaking={shake > 0}
             onClick={() => void create()}
           />
@@ -585,7 +594,6 @@ export function PhraseCard({
             glyph={<PhraseGlyph kind="enter" size={22} />}
             title={t("pairing.enter")}
             sub={t("pairing.enterSub")}
-            disabled={locked}
             onClick={() => setShown("enter")}
           />
         </div>
@@ -595,20 +603,18 @@ export function PhraseCard({
     body = (
       <>
         {stateRow(STAGE_BADGE.alone.tone, t(STAGE_BADGE.alone.key), t("pairing.aloneLead"))}
-        {lockedNote}
+        {noPasswordNote}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Choice
             glyph={<IconEye />}
             title={t("pairing.notYetTitle")}
             sub={t("pairing.notYetBody")}
-            disabled={locked}
-            onClick={() => setShown("words")}
+            onClick={openWords}
           />
           <Choice
             glyph={<PhraseGlyph kind="enter" size={22} />}
             title={t("pairing.twoTitle")}
             sub={t("pairing.twoBody")}
-            disabled={locked}
             onClick={() => setShown("join")}
           />
         </div>
@@ -626,7 +632,7 @@ export function PhraseCard({
     body = (
       <>
         {stateRow(badge.tone, t(badge.key))}
-        {lockedNote}
+        {noPasswordNote}
         {relayHint}
         {stage === "new" && (
           <>
@@ -713,7 +719,7 @@ function Choice({
 /** NextStep points at the button to press on the other instance, along the
  *  path to it. */
 function NextStep({ t }: { t: T }) {
-  const path = [t("settings.title"), t("pairing.title"), t("pairing.enter")];
+  const path = [t("settings.title"), t("settings.tab.system"), t("pairing.enter")];
   return (
     <div className="grid grid-cols-[28px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 rounded-control bg-accentSoft px-4 py-3.5">
       <span className="row-span-2 grid h-7 w-7 place-items-center rounded-full bg-accent text-accentContrast">

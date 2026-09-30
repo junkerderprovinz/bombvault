@@ -870,7 +870,7 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
           ))}
         </div>
         <div>
-          <Button label={t("pairing.title")} labelKey="pairing.title" glyph={<IconLink />} tone="neutral" onClick={openPairing} />
+          <Button label={t("pairing.title")} labelKey="pairing.title" glyph={<IconLink />} tone="accent" onClick={openPairing} />
         </div>
         </>
       )}

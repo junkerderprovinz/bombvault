@@ -9,6 +9,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { I18nProvider, en, useT } from "../../../lib/i18n";
 import type { GroupState, RelayMode } from "../../../lib/api";
 import { checkPhrase, splitPhrase } from "../../../lib/phraseWords";
+import { LOGIN_PASSWORD_FIELD } from "../shared";
 
 let group: GroupState;
 const relayCalls: Array<Record<string, unknown>> = [];
@@ -65,7 +66,9 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       return Promise.resolve({ ok: true, phrase: PHRASE, group });
     },
     showPhrase: (password: string) =>
-      Promise.resolve(password === "secret" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" }),
+      Promise.resolve(
+        !group.passwordSet || password === "secret" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" },
+      ),
     joinGroup: (phrase: string) => {
       joined.push(phrase);
       return Promise.resolve(joinAnswer.ok === false ? joinAnswer : (group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0 })));
@@ -551,20 +554,37 @@ describe("relay card", () => {
 });
 
 describe("phrase card without a login password", () => {
-  it("says to set one, links to it and offers nothing that makes or takes a phrase", async () => {
+  it("warns plainly, focuses the password field and still pairs", async () => {
     group = outside({ passwordSet: false });
+    const field = document.createElement("input");
+    field.id = LOGIN_PASSWORD_FIELD;
+    document.body.append(field);
     await renderTab();
-    expect(screen.getByText(en["pairing.needsPassword"])).not.toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: en["auth.setPassword"] }));
-    expect(window.location.hash).toBe("#system");
-    expect(tile("pairing.create").disabled).toBe(true);
-    expect(tile("pairing.enter").disabled).toBe(true);
+    const note = screen.getByTestId("no-password");
+    expect(note.textContent).toContain(en["pairing.noPasswordTitle"]);
+    expect(note.textContent).toContain(en["pairing.noPasswordHint"]);
+    fireEvent.click(within(note).getByRole("button", { name: en["auth.setPassword"] }));
+    expect(document.activeElement).toBe(field);
+    field.remove();
+    expect(tile("pairing.enter").disabled).toBe(false);
+    await act(async () => {
+      fireEvent.click(tile("pairing.create"));
+    });
+    expect(within(dialog()).getAllByRole("listitem")).toHaveLength(12);
   });
 
-  it("does not show the phrase of a paired instance whose password was removed", async () => {
+  it("shows the words without asking for a password there is none of", async () => {
     group = makeGroup({ passwordSet: false });
     await renderTab();
-    expect(screen.getByText(en["pairing.needsPassword"])).not.toBeNull();
-    expect((screen.getByRole("button", { name: en["pairing.show"] }) as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["pairing.show"] }));
+    });
+    expect(within(dialog()).queryByLabelText(en["pairing.passwordLabel"])).toBeNull();
+    expect(within(dialog()).getAllByRole("listitem")).toHaveLength(12);
+  });
+
+  it("keeps the warning out of the way once a password is set", async () => {
+    await renderTab();
+    expect(screen.queryByTestId("no-password")).toBeNull();
   });
 });

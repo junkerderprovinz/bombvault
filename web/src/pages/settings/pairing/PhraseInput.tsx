@@ -21,7 +21,6 @@ interface PhraseEntryOptions {
   /** Where a title already says what goes here, the label is only read out,
    *  not shown. */
   bare?: boolean;
-  disabled?: boolean;
   busy: boolean;
   /** Sends the words, one space apart, and resolves to the refusal to show,
    *  or null once paired. */
@@ -33,7 +32,7 @@ interface PhraseEntryOptions {
  * usePhraseEntry is the word field and its Paste and Pair buttons apart, for
  * a window that puts the buttons in its footer.
  */
-export function usePhraseEntry({ id, label, tip, bare = false, disabled = false, busy, onPair, t }: PhraseEntryOptions): {
+export function usePhraseEntry({ id, label, tip, bare = false, busy, onPair, t }: PhraseEntryOptions): {
   field: ReactNode;
   paste: ReactNode;
   pair: ReactNode;
@@ -79,7 +78,7 @@ export function usePhraseEntry({ id, label, tip, bare = false, disabled = false,
   }
 
   const field = (
-    <div className={`flex flex-col gap-2 ${disabled ? "opacity-50" : ""}`} data-testid={id}>
+    <div className="flex flex-col gap-2" data-testid={id}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {!bare && (
           <label htmlFor={id} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-carbon-text">
@@ -103,7 +102,6 @@ export function usePhraseEntry({ id, label, tip, bare = false, disabled = false,
         autoComplete="off"
         autoCapitalize="none"
         dir="ltr"
-        disabled={disabled}
         aria-label={bare ? label : undefined}
         aria-invalid={problem ? true : undefined}
         placeholder={t("pairing.enterPlaceholder")}
@@ -123,7 +121,7 @@ export function usePhraseEntry({ id, label, tip, bare = false, disabled = false,
       glyph={<IconLink />}
       tone="accent"
       onClick={() => void pair()}
-      disabled={disabled || busy || !complete}
+      disabled={busy || !complete}
       busy={busy}
       className={shake ? "glim-shake" : ""}
     />
@@ -136,7 +134,7 @@ export function usePhraseEntry({ id, label, tip, bare = false, disabled = false,
       glyph={<IconCopy />}
       tone="neutral"
       onClick={() => void pasteClipboard()}
-      disabled={disabled || busy}
+      disabled={busy}
     />
   );
   return { field, paste: pasteButton, pair: pairButton };

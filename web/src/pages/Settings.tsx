@@ -85,7 +85,6 @@ import { IntegrityCard } from "./settings/IntegrityCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
 import { PairingSection } from "./settings/pairing/PairingSection";
-import { IconLink } from "../components/glyphs";
 import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
 import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
 import { AboutCard } from "./settings/AboutCard";
@@ -970,7 +969,6 @@ type TabKey =
   | "offsite"
   | "notifications"
   | "integrity"
-  | "pairing"
   | "system";
 
 /** The tab strip's left-to-right order, which both the deep-link hashchange
@@ -984,7 +982,6 @@ const TAB_ORDER: TabKey[] = [
   "offsite",
   "notifications",
   "integrity",
-  "pairing",
   "system",
 ];
 
@@ -992,6 +989,7 @@ const TAB_ORDER: TabKey[] = [
  *  and the card scrolls into view, since it sits below the fold. */
 const CARD_TAB: Record<string, TabKey> = {
   anomalies: "integrity",
+  pairing: "system",
 };
 
 // The Settings tab glyphs. General and Look wear the glyphs GlimStone gives
@@ -1110,7 +1108,6 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
   offsite: <IconTabOffsite />,
   notifications: <IconTabNotifications />,
   integrity: <IconTabIntegrity />,
-  pairing: <IconLink />,
   system: <IconTabSystem />,
 };
 
@@ -2458,13 +2455,8 @@ export function SettingsPage() {
           ["offsite", t("settings.tab.offsite")],
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
-          ["pairing", t("pairing.title")],
           ["system", t("settings.tab.system")],
-        ] as const)
-          // Pairing only matters to the domains that work over the group,
-          // the same ones that bring up the Instances page.
-          .filter(([key]) => key !== "pairing" || pairingUsed)
-          .map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key], title: label }))}
+        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key], title: label }))}
         label={t("settings.title")}
         // 0, which is also the default - stated anyway, because it is the one
         // start every other selector in the tree has to avoid.
@@ -4289,13 +4281,6 @@ export function SettingsPage() {
       {/* off-site DR restore — are part of the core ransomware-protection     */}
       {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "pairing" && (
-        <>
-          <PairingSection t={t} nextHue={nextHue} />
-          <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
-        </>
-      )}
-
       {tab === "integrity" && (
       <>
         {/* IntegrityCard used to be documented here as the ONLY Card this tab
@@ -4531,6 +4516,16 @@ export function SettingsPage() {
       {/* available, so the card's first job is explaining when it is not.     */}
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
+
+      {/* Pairing sits with the password it warns about. It only matters to
+          the domains that work over the group, the same ones that bring up
+          the Instances page, whose Pairing button lands here by #pairing. */}
+      {tab === "system" && pairingUsed && (
+        <div id="pairing" className="flex scroll-mt-6 flex-col gap-10">
+          <PairingSection t={t} nextHue={nextHue} />
+          <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+        </div>
+      )}
 
       {/* The Look tab: language first, at a field's height, then the other
           axes the person owns. None of them waits for a Save. */}
