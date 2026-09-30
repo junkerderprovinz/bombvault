@@ -83,6 +83,9 @@ type Member struct {
 	Direct bool `json:"direct"`
 	// Relay is true when the member is connected to the same relay.
 	Relay bool `json:"relay"`
+	// Address is where the member takes direct calls, as it announced it on
+	// this network or passed it over the relay; empty when none is known.
+	Address string `json:"address"`
 }
 
 // ErrNotMember is returned for a call to an instance that is not reachable
@@ -376,7 +379,7 @@ func (m *Manager) Members() []Member {
 	}
 	byID := map[string]*Member{}
 	for _, p := range m.disc.Peers() {
-		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: true}
+		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: true, Address: p.URL}
 	}
 	if c != nil {
 		for _, s := range c.Siblings() {
@@ -394,10 +397,13 @@ func (m *Manager) Members() []Member {
 		if _, ok := byID[id]; ok {
 			continue
 		}
-		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true}
+		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true, Address: a.url}
 	}
 	out := make([]Member, 0, len(byID))
-	for _, mem := range byID {
+	for id, mem := range byID {
+		if mem.Address == "" {
+			mem.Address, _ = m.knownAddress(id)
+		}
 		out = append(out, *mem)
 	}
 	sort.Slice(out, func(i, j int) bool {

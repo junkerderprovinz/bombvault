@@ -80,6 +80,22 @@ func TestMembersOnOneNetworkCallEachOtherDirectly(t *testing.T) {
 	}
 }
 
+func TestMembersCarryTheAddressTheyAnswerOn(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	a.disc.Observe(pb)
+	a.ConfirmAddress("id-c", "https://192.168.1.10:3443", "Garage", "9.9.9")
+
+	got := map[string]string{}
+	for _, m := range a.Members() {
+		got[m.ID] = m.Address
+	}
+	want := map[string]string{"id-b": pb.URL, "id-c": "https://192.168.1.10:3443"}
+	if len(got) != len(want) || got["id-b"] != want["id-b"] || got["id-c"] != want["id-c"] {
+		t.Fatalf("member addresses = %v, want %v", got, want)
+	}
+}
+
 func TestAnnounceFromAnotherGroupIsNotAMember(t *testing.T) {
 	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
 	_, stranger := member(t, "id-x", "Stranger", []byte("fedcba9876543210"), echo)
