@@ -3,7 +3,7 @@
 // window. Inside one it shows who is there, and when nobody has come after a
 // minute it offers the two ways out, in the same two windows.
 import { useEffect, useState, type ReactNode } from "react";
-import { Card, LOGIN_PASSWORD_FIELD } from "../shared";
+import { Card, useOpenPasswordField } from "../shared";
 import { Badge, type BadgeTone } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -285,6 +285,7 @@ export function PhraseCard({
   hueIndex?: number;
 }) {
   const { push } = useToast();
+  const openPasswordField = useOpenPasswordField();
   const [phrase, setPhrase] = useState<string | null>(null);
   const [createdHere, setCreatedHere] = useState(false);
   // The window over the card: the words to read out, the field for the words
@@ -401,7 +402,7 @@ export function PhraseCard({
 
   // Pairing works without a login password, but then whoever opens this page
   // holds the words and, through the group, every member's restic password.
-  // The warning stays until a password is set; the field is on this same tab.
+  // The warning stays until a password is set.
   const noPasswordNote = !group.passwordSet && (
     <section className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-control bg-statusWarnBgSoft p-4" data-testid="no-password">
       <span className="shrink-0 text-statusWarn">
@@ -415,11 +416,7 @@ export function PhraseCard({
         label={t("auth.setPassword")}
         labelKey="auth.setPassword"
         tone="accent"
-        onClick={() => {
-          const field = document.getElementById(LOGIN_PASSWORD_FIELD);
-          field?.scrollIntoView?.({ block: "center" });
-          field?.focus();
-        }}
+        onClick={openPasswordField}
       />
     </section>
   );

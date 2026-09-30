@@ -6,6 +6,7 @@
 // after a minute alone the card offers the same two windows as the way out.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import { I18nProvider, en, useT } from "../../../lib/i18n";
 import type { GroupState, RelayMode } from "../../../lib/api";
 import { checkPhrase, splitPhrase } from "../../../lib/phraseWords";
@@ -100,13 +101,24 @@ function Tab() {
   return <PairingSection t={t} nextHue={() => hue++} />;
 }
 
+let router: ReturnType<typeof createMemoryRouter>;
+
 async function renderTab() {
+  router = createMemoryRouter(
+    [
+      {
+        path: "/settings/:page",
+        element: (
+          <I18nProvider>
+            <Tab />
+          </I18nProvider>
+        ),
+      },
+    ],
+    { initialEntries: ["/settings/pairing"] },
+  );
   await act(async () => {
-    render(
-      <I18nProvider>
-        <Tab />
-      </I18nProvider>,
-    );
+    render(<RouterProvider router={router} />);
   });
 }
 
@@ -554,18 +566,17 @@ describe("relay card", () => {
 });
 
 describe("phrase card without a login password", () => {
-  it("warns plainly, focuses the password field and still pairs", async () => {
+  it("warns plainly, leads to the password field on the Security page and still pairs", async () => {
     group = outside({ passwordSet: false });
-    const field = document.createElement("input");
-    field.id = LOGIN_PASSWORD_FIELD;
-    document.body.append(field);
     await renderTab();
     const note = screen.getByTestId("no-password");
     expect(note.textContent).toContain(en["pairing.noPasswordTitle"]);
     expect(note.textContent).toContain(en["pairing.noPasswordHint"]);
-    fireEvent.click(within(note).getByRole("button", { name: en["auth.setPassword"] }));
-    expect(document.activeElement).toBe(field);
-    field.remove();
+    await act(async () => {
+      fireEvent.click(within(note).getByRole("button", { name: en["auth.setPassword"] }));
+    });
+    expect(router.state.location.pathname).toBe("/settings/security");
+    expect(router.state.location.hash).toBe(`#${LOGIN_PASSWORD_FIELD}`);
     expect(tile("pairing.enter").disabled).toBe(false);
     await act(async () => {
       fireEvent.click(tile("pairing.create"));

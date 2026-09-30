@@ -3,13 +3,15 @@
 // page through /settings/integrity#anomalies, and it is the last card on the
 // Integrity page, so the link has to bring it into view. Each control saves
 // on its own, and a refused save must leave the control showing what the
-// server still holds.
+// server still holds. A link to a field, such as the login password that the
+// pairing and MCP cards send the operator to, also puts the cursor in it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
+import { LOGIN_PASSWORD_FIELD } from "./settings/shared";
 
 // The card follows live progress, and jsdom has no EventSource.
 class FakeEventSource {
@@ -96,7 +98,10 @@ function stubBrowser() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderAt(path: string) {
+async function renderAt(
+  path: string,
+  ready: () => Promise<unknown> = () => screen.findByRole("switch", { name: en["anomaly.settings.toggle"] })
+) {
   await act(async () => {
     render(
       <MemoryRouter initialEntries={[path]}>
@@ -115,7 +120,7 @@ async function renderAt(path: string) {
       </MemoryRouter>
     );
   });
-  await screen.findByRole("switch", { name: en["anomaly.settings.toggle"] });
+  await ready();
 }
 
 function stubSummary(over: Record<string, unknown>) {
@@ -260,5 +265,16 @@ describe("the Anomalies card on the Integrity page", () => {
         screen.getByRole("combobox", { name: en["anomaly.settings.sensitivity"] }).textContent
       ).toContain(en["anomaly.sensitivity.balanced"])
     );
+  });
+});
+
+describe("a link to the login password field", () => {
+  it("opens the Security page with the cursor in the field", async () => {
+    await renderAt(`/settings/security#${LOGIN_PASSWORD_FIELD}`, () =>
+      waitFor(() => expect(document.getElementById(LOGIN_PASSWORD_FIELD)).not.toBeNull())
+    );
+    const field = document.getElementById(LOGIN_PASSWORD_FIELD);
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect(scrolled).toContain(field);
   });
 });

@@ -1225,8 +1225,9 @@ export function SettingsPage() {
   }
 
   // A hash such as /settings/integrity#anomalies names a card below the fold,
-  // and a search result names a card and row to mark. Anything else opens a
-  // page at its top, since the scroller is shared by every page.
+  // or a field that should take the cursor, and a search result names a card
+  // and row to mark. Anything else opens a page at its top, since the scroller
+  // is shared by every page.
   const settingsLoaded = settings !== null;
   const handledJump = useRef("");
   useEffect(() => {
@@ -1247,7 +1248,13 @@ export function SettingsPage() {
       if (target || jump.card) return;
     }
     if (anchor) {
-      document.getElementById(anchor)?.scrollIntoView?.({ block: "start" });
+      const target = document.getElementById(anchor);
+      if (target instanceof HTMLInputElement) {
+        target.scrollIntoView?.({ block: "center" });
+        target.focus();
+      } else {
+        target?.scrollIntoView?.({ block: "start" });
+      }
       return;
     }
     document.getElementById("bv-main")?.scrollTo?.({ top: 0 });
