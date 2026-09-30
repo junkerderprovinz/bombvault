@@ -52,7 +52,7 @@ export function cardName(t: (k: TranslationKey) => string, card: SearchCard): st
   return name;
 }
 
-function buildItems(t: (k: TranslationKey) => string, pages: SettingsPageDef[]): Item[] {
+export function buildItems(t: (k: TranslationKey) => string, pages: SettingsPageDef[]): Item[] {
   const items: Item[] = [];
   for (const p of pages) {
     const pageName = t(p.label);

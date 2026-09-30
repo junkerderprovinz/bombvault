@@ -57,6 +57,35 @@ describe("the settings search index", () => {
     expect(missing).toEqual([]);
   });
 
+  it("knows every keep rule of the retention grids with its (i)", () => {
+    const grid = /\["\w+", "(settings\.retention\w+)", "(settings\.retention\w+Info)"\]/g;
+    const pageRules = [...region("retention").matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
+    const targetSource = readFileSync(join(HERE, "..", "..", "components", "OffsiteTargetsSection.tsx"), "utf8");
+    const targetRules = [...targetSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
+    expect(pageRules.map((r) => r.key)).toContain("settings.retentionYearly");
+    expect(targetRules.map((r) => r.key)).toContain("settings.retentionYearly");
+
+    for (const card of SETTINGS_INDEX.retention) {
+      for (const rule of pageRules) expect(card.rows).toContainEqual(rule);
+    }
+    for (const card of SETTINGS_INDEX.offsite.filter((c) => c.title === "offsite.copyDomainTitle")) {
+      for (const rule of targetRules) expect(card.rows).toContainEqual(rule);
+    }
+  });
+
+  it("has the compression choice on every card that draws one", () => {
+    const row = { key: "settings.compression", hint: "settings.compressionInfo" };
+    const storage = region("storage");
+    expect(storage).toContain("<PathModeSwitch");
+    expect(storage).toContain("<ReposCard");
+    const cards = [
+      ...SETTINGS_INDEX.storage.filter((c) => c.title === "settings.paths" || c.title === "repos.title"),
+      ...SETTINGS_INDEX.offsite.filter((c) => c.title === "offsite.copyDomainTitle"),
+    ];
+    expect(cards).toHaveLength(8);
+    for (const card of cards) expect(card.rows).toContainEqual(row);
+  });
+
   it("lists no card twice on one page", () => {
     for (const [page, cards] of Object.entries(SETTINGS_INDEX)) {
       const names = cards.map((c) => `${c.title}${JSON.stringify(c.vars ?? {})}`);
