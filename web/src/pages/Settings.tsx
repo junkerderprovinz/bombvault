@@ -896,7 +896,11 @@ export function SettingsPage() {
     pageDir.current = ids.indexOf(page) > ids.indexOf(shownPage.current) ? 1 : -1;
     shownPage.current = page;
   }
-  useEffect(() => writeLastPage(page), [page]);
+  // Only a page named in the address counts: /settings alone renders the
+  // fallback for a moment before its redirect, and must not overwrite it.
+  useEffect(() => {
+    if (isSettingsPage(param)) writeLastPage(param);
+  }, [param]);
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedBaseline is the server's last-confirmed state. Every save merges its
   // own fields onto this baseline rather than the live `settings`, so saving

@@ -435,6 +435,9 @@ test("mobile /vms: gate-off shows the honest outline card and nothing else", asy
     "mobile-only: the destinations-gate mobile face",
   );
   await stageVmsDomain(page, [vmPayload(0)], { settings: { vmsEnabled: false } });
+  // Settings reopens the page seen last, and the link must not follow it.
+  await page.goto("/settings/notifications");
+  await expect(page).toHaveURL(/\/settings\/notifications$/);
   await page.goto("/vms");
 
   // The block shows the domain's hint and the settings row that turns it
@@ -460,7 +463,7 @@ test("mobile /vms: gate-off shows the honest outline card and nothing else", asy
     .filter({ visible: true });
   await expect(settingsLink).toBeVisible();
   await settingsLink.tap();
-  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page).toHaveURL(/\/settings\/general$/);
 });
 
 test("desktop /vms: no mobile chrome on either desktop project", async ({
