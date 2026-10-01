@@ -84,7 +84,7 @@ Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoi
 
 Määritä etäreplika **Asetukset, Etä** -sivulla. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
 
-- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
+- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`). Backblaze B2:lla ei ole tässä omaa taustajärjestelmää: siihen päästään sen S3-päätepisteen kautta (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), ja avaintunnus ja sovellusavain syötetään S3-tunnuksina.
 - **Jaetut pilvitunnistetiedot** tallennetaan salattuina kohdassa Asetukset, Pilvipääsy, Jaetut pilvitunnistetiedot.
 - **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
 - **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella (yleensä paikallisen) ensisijaisen repon lisäksi. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.

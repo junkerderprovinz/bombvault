@@ -84,7 +84,7 @@ Configurare rapidă:
 
 Configurează o replică off-site în pagina **Setări, Extern**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
 
-- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 nu are aici un backend nativ: se accesează prin punctul său final S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), cu ID-ul cheii și cheia aplicației ca acreditări S3.
 - **Credențialele cloud partajate** sunt stocate criptat sub Setări, Acces cloud, Credențiale cloud partajate.
 - **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Integrări, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
 - **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort, pe lângă un depozit primar (de obicei local). Fiecare domeniu are propria programare off-site, plus un buton **Replică acum**.

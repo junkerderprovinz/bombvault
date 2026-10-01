@@ -84,7 +84,7 @@ Le modèle ajoute `--add-host=host.docker.internal:host-gateway` afin que le con
 
 Configurez un réplica hors site dans la page **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
 
-- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 n'a pas de backend natif ici : on le joint via son point de terminaison S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), avec l'ID de clé et la clé d'application comme identifiants S3.
 - Les **identifiants cloud partagés** sont stockés chiffrés sous Paramètres, Accès cloud, Identifiants cloud partagés.
 - **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Intégrations, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
 - **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux, en plus d'un dépôt primaire (généralement local). Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.

@@ -84,7 +84,7 @@ BombVault מגבה מכונות KVM/libvirt **מבלי לעגן שום נתיב 
 
 הגדר רפליקה מחוץ לאתר בעמוד **הגדרות, מחוץ לאתר**. ראה [מחוץ לאתר והתאוששות](offsite-recovery.md) לזרימת העבודה המלאה (בלתי-ניתן-לשינוי/append-only, בדיקת חבלה ותרגולי DR). בקצרה:
 
-- **Backends:** SMB/CIFS ו-NFS (עגן את השיתוף והפנה אליו נתיב גיבוי), backends מקוריים של restic ללא rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), או כל remote של rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS ו-NFS (עגן את השיתוף והפנה אליו נתיב גיבוי), backends מקוריים של restic ללא rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), או כל remote של rclone (`rclone:<remote>:<bucket>/path`). ל-Backblaze B2 אין כאן backend מקורי: מגיעים אליה דרך נקודת הקצה שלה ב-S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), כאשר מזהה המפתח ומפתח היישום משמשים כפרטי ההתחברות ל-S3.
 - **פרטי גישה משותפים לענן** נשמרים מוצפנים תחת הגדרות, גישה לענן, פרטי גישה משותפים לענן.
 - **יעדי SSH אינם דורשים דבר מותקן בצד השני.** `sftp:` דורש רק שרת SSH. הוסף את המפתח הציבורי מ-**הגדרות, אינטגרציות, SSH למארח** (גם ב-`/config/ssh/id_ed25519.pub`) אל ה-`~/.ssh/authorized_keys` של משתמש היעד.
 - **עותק מחוץ לאתר:** BombVault משכפלת תמונות מצב חדשות עם `restic copy` על בסיס מאמץ-מיטבי, בנוסף למאגר ראשי (בדרך כלל מקומי). לכל דומיין יש לוח זמנים משלו מחוץ לאתר, בתוספת כפתור **שכפל עכשיו**.

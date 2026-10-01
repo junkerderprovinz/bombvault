@@ -84,7 +84,7 @@ Malen legger til `--add-host=host.docker.internal:host-gateway` så containeren 
 
 Sett opp en ekstern replika på **Innstillinger, Off-site**-siden. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
 
-- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 har ingen innebygd backend her: nå den via S3-endepunktet (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), med nøkkel-ID-en og applikasjonsnøkkelen som S3-legitimasjon.
 - **Delt skylegitimasjon** lagres kryptert under Innstillinger, Skytilgang, Delt skylegitimasjon.
 - **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
 - **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis, i tillegg til et (vanligvis lokalt) primært repo. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.

@@ -84,7 +84,7 @@ Szablon dodaje `--add-host=host.docker.internal:host-gateway`, aby kontener móg
 
 Skonfiguruj replikę poza siedzibą na stronie **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
 
-- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 nie ma tu natywnego backendu: dostęp uzyskuje się przez jego punkt końcowy S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), podając identyfikator klucza i klucz aplikacji jako dane uwierzytelniające S3.
 - **Współdzielone dane logowania do chmury** są przechowywane zaszyfrowane w Ustawienia, Dostęp do chmury, Współdzielone dane logowania do chmury.
 - **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
 - **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort, jako uzupełnienie (zwykle lokalnego) repozytorium podstawowego. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.

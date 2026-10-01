@@ -84,7 +84,7 @@ O template adiciona `--add-host=host.docker.internal:host-gateway` para que o co
 
 Configure uma réplica externa na página **Definições, Externo**. Consulte [Externo e recuperação](offsite-recovery.md) para o fluxo de trabalho completo (imutável/append-only, teste de adulteração e ensaios de DR). Em resumo:
 
-- **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`). O Backblaze B2 não tem aqui um backend nativo: acede-se através do seu endpoint S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), com o ID da chave e a chave de aplicação como credenciais S3.
 - **Credenciais de nuvem partilhadas** são guardadas encriptadas em Definições, Acesso à nuvem, Credenciais de nuvem partilhadas.
 - **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Integrações, SSH do anfitrião** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
 - **Cópia externa:** o BombVault replica novos instantâneos com `restic copy` numa base de melhor esforço, além de um repositório primário (normalmente local). Cada domínio tem o seu próprio agendamento externo, mais um botão **Replicar agora**.

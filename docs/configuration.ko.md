@@ -84,7 +84,7 @@ BombVault는 **어떤 libvirt 경로도 마운트하지 않고** KVM/libvirt VM�
 
 **설정, 오프사이트** 페이지에서 오프사이트 복제본을 구성하세요. 전체 워크플로(불변/append-only, 변조 테스트, DR 리허설)는 [오프사이트 및 복구](offsite-recovery.md)를 참고하세요. 요약하면:
 
-- **백엔드:** SMB/CIFS와 NFS(공유를 마운트하고 백업 경로를 그곳으로 지정), rclone 없는 네이티브 restic 백엔드(`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), 또는 모든 rclone 원격(`rclone:<remote>:<bucket>/path`).
+- **백엔드:** SMB/CIFS와 NFS(공유를 마운트하고 백업 경로를 그곳으로 지정), rclone 없는 네이티브 restic 백엔드(`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), 또는 모든 rclone 원격(`rclone:<remote>:<bucket>/path`). Backblaze B2는 여기서 네이티브 백엔드가 없습니다. S3 엔드포인트(`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`)를 통해 접근하며, 키 ID와 애플리케이션 키를 S3 자격 증명으로 입력합니다.
 - **공유 클라우드 자격 증명**은 설정, 클라우드 액세스, 공유 클라우드 자격 증명 아래에 암호화되어 저장됩니다.
 - **SSH 대상은 상대편에 아무것도 설치할 필요가 없습니다.** `sftp:`는 SSH 서버만 필요합니다. **설정, 연동, 호스트 SSH**의 공개 키(`/config/ssh/id_ed25519.pub`에도 있음)를 대상 사용자의 `~/.ssh/authorized_keys`에 추가하세요.
 - **오프사이트 복사:** BombVault는 (보통 로컬인) 주 저장소에 더해 새 스냅샷을 `restic copy`로 최선 노력 방식으로 복제합니다. 각 도메인은 자체 오프사이트 일정을 가지며, **지금 복제** 버튼도 있습니다.

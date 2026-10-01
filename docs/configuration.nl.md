@@ -84,7 +84,7 @@ De template voegt `--add-host=host.docker.internal:host-gateway` toe zodat de co
 
 Stel een off-site replica in op de pagina **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
 
-- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een back-uppad naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een back-uppad naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 heeft hier geen eigen backend: je bereikt het via zijn S3-eindpunt (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), met de sleutel-ID en de toepassingssleutel als S3-inloggegevens.
 - **Gedeelde cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Cloudtoegang, Gedeelde cloud-inloggegevens.
 - **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Integraties, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
 - **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis, bovenop een (meestal lokale) primaire repo. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.

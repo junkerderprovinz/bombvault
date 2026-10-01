@@ -84,7 +84,7 @@ Il template aggiunge `--add-host=host.docker.internal:host-gateway` così il con
 
 Configura una replica off-site nella pagina **Impostazioni, Off-site**. Vedi [Off-site e ripristino](offsite-recovery.md) per il flusso di lavoro completo (immutabile/append-only, tamper testing ed esercitazioni DR). In breve:
 
-- **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 qui non ha un backend nativo: si raggiunge tramite il suo endpoint S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), con l'ID chiave e la chiave applicativa come credenziali S3.
 - **Le credenziali cloud condivise** vengono memorizzate cifrate sotto Impostazioni, Accesso cloud, Credenziali cloud condivise.
 - **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Integrazioni, SSH dell'host** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
 - **Copia off-site:** BombVault replica i nuovi snapshot con `restic copy` su base best-effort, in aggiunta a un repository primario (di solito locale). Ogni dominio ha il proprio calendario off-site, più un pulsante **Replica ora**.

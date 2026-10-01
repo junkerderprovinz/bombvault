@@ -84,7 +84,7 @@ Mallen lägger till `--add-host=host.docker.internal:host-gateway` så att conta
 
 Sätt upp en off-site-replik på sidan **Inställningar, Extern**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
 
-- **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
+- **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`). Backblaze B2 har ingen inbyggd backend här: nå den via dess S3-slutpunkt (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), med nyckel-ID och programnyckel som S3-uppgifter.
 - **Delade molnautentiseringsuppgifter** lagras krypterade under Inställningar, Molnåtkomst, Delade molnautentiseringsuppgifter.
 - **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, Integrationer, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
 - **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis, ovanpå ett (oftast lokalt) primärt repo. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
