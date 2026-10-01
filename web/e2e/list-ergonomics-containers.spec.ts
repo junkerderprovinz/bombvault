@@ -386,3 +386,33 @@ test("a restore link from the anomalies page opens that container with its backu
   await expect(page.getByRole("button", { name: /^svc-00/ })).toHaveCount(0);
   await snapshots;
 });
+
+// 480px leaves a backup row too little room for the time beside both actions.
+// The first backup falls on 2 January, the shortest date a locale prints.
+test("a container's backups keep each time on one line above their actions", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile presentation only");
+  await page.setViewportSize({ width: 480, height: 900 });
+  await stageContainersDomain(page, containerList(3));
+  const snap = (seed: string, time: Date) => ({
+    id: seed.repeat(32),
+    time: time.toISOString(),
+    paths: ["/config"],
+    tags: ["svc-01"],
+    hostname: "tower",
+  });
+  const snapshots = [snap("a1", new Date(2026, 0, 2, 12)), snap("b2", new Date(2026, 9, 28, 23, 59, 59))];
+  await page.route("**/api/containers/*/snapshots*", (route) => route.fulfill({ json: { ok: true, snapshots } }));
+  await page.goto(`/containers?restore=${"f9".repeat(32)}&item=svc-01`);
+
+  const rows = page.locator("#bv-main div.border-b").filter({ has: page.getByRole("button", { name: "Delete" }) });
+  await expect(rows).toHaveCount(snapshots.length);
+  for (const row of await rows.all()) {
+    const rowBox = (await row.boundingBox())!;
+    const idBox = (await row.getByText(/^(a1|b2){4}$/).boundingBox())!;
+    const timeBox = (await row.locator("span.flex-1").boundingBox())!;
+    const deleteBox = (await row.getByRole("button", { name: "Delete" }).boundingBox())!;
+    expect(timeBox.height, "the time wrapped").toBeLessThanOrEqual(idBox.height + 1);
+    expect(deleteBox.y, "the delete action shares the time's row").toBeGreaterThanOrEqual(timeBox.y + timeBox.height);
+    expect(Math.abs(deleteBox.x + deleteBox.width - (rowBox.x + rowBox.width)), "the delete action left the row's end").toBeLessThanOrEqual(1);
+  }
+});
