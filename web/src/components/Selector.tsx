@@ -632,7 +632,9 @@ export function Selector(props: SelectorProps) {
       // one laid out by content, whose fit already allows for a pixel of
       // rounding that would otherwise push its last segment onto a row alone.
       className={[
-        "flex flex-wrap items-center",
+        // Paired segments stretch, so a label that wraps to two lines keeps its
+        // neighbour on the same top and the same height.
+        pairsOnPhone ? "flex flex-wrap items-stretch" : "flex flex-wrap items-center",
         inline && !fit ? "w-fit max-w-full" : "w-full",
         // The larger of the two gaps, so two segments always fit a row.
         pairsOnPhone ? "max-[600px]:[--seg-basis:calc(50%_-_0.25rem)]" : "",
