@@ -428,69 +428,21 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
   await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
 });
 
-// The Settings tab strip at phone widths. It never wraps to a second row,
-// however many tabs there are: the eight share the row evenly up to a width
-// cap each (Selector's `fit`), and once a label no longer fits its share
-// every tab drops to its glyph alone, the name staying its accessible name
-// and tooltip. Geometry, not screenshots, per this file's contracts: one row,
-// no tab under the 24px tap-target floor, and a strip that spans the column.
-// English on purpose: with the labels hidden the strip behaves the same in
-// every locale, and en keeps the assertion on that mechanism rather than on
-// a locale's typography.
-
-async function assertStrip(page: Page, width: number): Promise<void> {
-  const strip = page.getByRole("tablist", { name: "Settings" });
-  await expect(strip).toBeVisible();
-  await settle(page);
-
-  const geometry = await strip.evaluate((el) => {
-    // The page column scrolls, not the document, so the width the row may
-    // take is that column's content box.
-    let column = el.parentElement;
-    while (column && getComputedStyle(column).overflowY === "visible") column = column.parentElement;
-    column ??= document.documentElement;
-    const style = getComputedStyle(column);
-    return {
-      tabs: [...el.querySelectorAll('[role="tab"]')].map((tab) => {
-        const box = tab.getBoundingClientRect();
-        return { top: Math.round(box.top), left: box.left, right: box.right, width: box.width };
-      }),
-      strip: el.getBoundingClientRect().width,
-      available:
-        column.clientWidth - parseFloat(style.paddingInlineStart) - parseFloat(style.paddingInlineEnd),
-    };
-  });
-  expect(geometry.tabs, "the Settings strip owns exactly the eight page tabs").toHaveLength(8);
-
-  const tops = new Set(geometry.tabs.map((t) => t.top));
-  expect(tops.size, `the tabs stay on one row at ${width}px`).toBe(1);
-
-  for (const { width: w } of geometry.tabs) {
-    expect(w, `a Settings tab shrunk to ${w}px, under the 24px tap-target floor`).toBeGreaterThanOrEqual(23.5);
-  }
-
-  // The strip spans the column, as the cards below do.
-  expect(
-    Math.abs(geometry.strip - geometry.available),
-    `the strip spans ${geometry.strip.toFixed(1)}px of ${geometry.available}px`,
-  ).toBeLessThanOrEqual(1);
-}
-
-for (const width of [390, 360, 320]) {
-  test(`settings tab strip @ ${width}px: the eight tabs stay on one row`, async ({ page }, testInfo) => {
-    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the glyph-only strip lives below 48rem");
-    await bootSeededPage(page, "en", width, "/settings");
-    await assertStrip(page, width);
-  });
-}
-
-// The same strip in a desktop browser narrowed to a phone width. The shell
-// switches on width alone, so this is a state anyone reaches by dragging a
-// window edge, and it is where a real scrollbar shows up.
-test("settings tab strip @ 390px in a desktop window: one row with a scrollbar too", async ({ page }, testInfo) => {
+// The Settings rail in a desktop browser narrowed to a phone width. The shell
+// switches on width alone, so anyone reaches this by dragging a window edge,
+// and it is where a real scrollbar shows up. The phone projects cover the same
+// widths in settings-phone.spec.ts.
+test("settings rail @ 390px in a desktop window: glyphs beside the content, nothing pans", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
-  await bootSeededPage(page, "en", 390, "/settings");
-  await assertStrip(page, 390);
+  await bootSeededPage(page, "en", 390, "/settings/general");
+  const rail = page.getByRole("navigation", { name: "Settings pages" });
+  await expect(rail.getByRole("link", { name: "General", exact: true })).toHaveAttribute("aria-current", "page");
+  expect((await rail.boundingBox())!.width, "the rail keeps to its glyphs").toBeLessThanOrEqual(56);
+  const pan = await page.evaluate(() => {
+    const main = document.querySelector("#bv-main")!;
+    return main.scrollWidth - main.clientWidth;
+  });
+  expect(pan, "#bv-main scrolls horizontally").toBeLessThanOrEqual(1);
 });
 
 // The appearance card's pinned wells, which spread over the row they get once
@@ -501,7 +453,7 @@ test("settings tab strip @ 390px in a desktop window: one row with a scrollbar t
 for (const width of [390, 360, 320]) {
   test(`appearance wells @ ${width}px: every groove row is filled`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the wells only wrap below 48rem");
-    await bootSeededPage(page, "de", width, "/settings#look");
+    await bootSeededPage(page, "de", width, "/settings/look");
 
     const wells = page.locator('[role="tablist"].bg-carbon-surface3, [role="group"].bg-carbon-surface3');
     await expect(wells.first()).toBeVisible();

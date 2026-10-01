@@ -114,9 +114,13 @@ function badgeClassName({
 }: BadgeStyleOptions = {}): string {
   const { height, minHeight, text, padding } = SIZE_TOKENS[size];
   const isIconOnly = shape === "circle" || iconOnly === true;
+  const isHeadingNotch = tone === "heading" && size === "heading";
+  // A notch shrinks to fit its card, which `break-word` stops at the longest
+  // word, so a long one-word title would run past a narrow card.
+  const wordWrap = isHeadingNotch ? "wrap-anywhere" : "wrap-break-word";
   // Never both height and minHeight: same property, same specificity.
   const sizing = wrap
-    ? `${minHeight} py-0.5 leading-tight wrap-break-word`
+    ? `${minHeight} py-0.5 leading-tight ${wordWrap}`
     : `${height} min-h-0 leading-none`;
 
   // The notch sits on its card's top edge. top-0 plus -translate-y-1/2
@@ -134,7 +138,6 @@ function badgeClassName({
   //
   // z-10 only has to clear the card's own content. The radius is a fixed pill
   // whatever the shape engine says: a notch is card chrome, not a control.
-  const isHeadingNotch = tone === "heading" && size === "heading";
   const notchChrome = isHeadingNotch ? "shadow-[var(--elevation)]" : "";
   // An in-flow notch is positioned by its caller, so insetStart is ignored.
   const notchPositioning =

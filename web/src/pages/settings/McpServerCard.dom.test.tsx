@@ -5,12 +5,13 @@
 // certificate that does not cover this address) and the ones where a wrong
 // sentence would send the operator to the wrong fix.
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { countText, en } from "../../lib/i18n";
 import type { McpKeyView, McpKeysResponse } from "../../lib/api";
 import { CLIENT_MARKS } from "../../lib/mcpClientMarks";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
+import { LOGIN_PASSWORD_FIELD } from "./shared";
 
 const listMcpKeys = vi.fn();
 const createMcpKey = vi.fn();
@@ -153,6 +154,23 @@ describe("the MCP card without a key", () => {
     expect(screen.getByRole("button", { name: en["mcp.setPassword"] })).toBeTruthy();
     expect(await clientButton("Claude Code", en["mcp.kindTerminal"])).toBeTruthy();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("leads Set password to the field on the Security page", async () => {
+    listMcpKeys.mockReset();
+    listMcpKeys.mockResolvedValue(payload({ authEnabled: false }));
+    function Where() {
+      const at = useLocation();
+      return <output data-testid="where">{at.pathname + at.hash}</output>;
+    }
+    render(
+      <MemoryRouter initialEntries={["/settings/integrations"]}>
+        <McpServerCard hueIndex={0} />
+        <Where />
+      </MemoryRouter>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: en["mcp.setPassword"] }));
+    expect(screen.getByTestId("where").textContent).toBe(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
   });
 
   it("hides key creation for a public host without a password", async () => {

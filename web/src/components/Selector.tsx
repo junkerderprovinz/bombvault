@@ -109,13 +109,14 @@ interface SelectorCommon {
  *
  * There are more selectors than the palette has colours, so some share a
  * start: `drillKind` with the first label row, and `theme`, `notifyOn` and
- * `mcpClient` the last colour. `theme` sits in General, `notifyOn` in
- * Notifications and the client picker in a dialog from System, so none of
- * them is on screen with another. General spends all eight positions, so a
+ * `mcpClient` the last colour. `theme` sits on Look, `notifyOn` on
+ * Notifications and the client picker in a dialog from Integrations, so none
+ * of them is on screen with another. Look spends all eight positions, so a
  * selector added there has no free start and the table needs rethinking
  * rather than another entry.
  */
 export const HUE_OFFSET = {
+  /** The settings rail. */
   tabs: 0,
   /** One row per control axis, each a colour further along, so the block reads
    *  as one group. */

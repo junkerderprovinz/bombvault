@@ -43,7 +43,7 @@ Bir alanın ya da Backup Everything'in başlatılması, bir sınırın geri tutt
 
 ## Açmak {#switch-on}
 
-1. **Ayarlar, Sistem, MCP sunucusu** bölümünü aç ve istemcinin düğmesine tıkla. Listede olmayan bir istemci **Başka istemci** üzerinden bağlanır.
+1. **Ayarlar, Entegrasyonlar, MCP sunucusu** bölümünü aç ve istemcinin düğmesine tıkla. Listede olmayan bir istemci **Başka istemci** üzerinden bağlanır.
 2. **Anahtar** altında **Yeni anahtar** seçimini ve önerilen adı, yani istemcinin adını bırak ya da anahtarın nerede kullanıldığını söyleyen bir ad yaz, örneğin "Dizüstündeki Claude Code". İstemci başına bir anahtar, diğerlerine dokunmadan birini iptal etmeni sağlar. **Mevcut anahtar** istemciye daha önce oluşturduğun bir anahtarı verir.
 3. Yedekleme başlatabilmesi gereken bir anahtar için **Yedekleme başlatmaya izin ver** seçeneğini aç; açmazsan anahtar yalnızca okuyabilir. Bunu daha sonra anahtarın kutucuğunda değiştirebilirsin; değişiklik asistanın bir sonraki isteğinden itibaren, yeniden bağlanmadan geçerli olur.
 4. **Anahtar oluştur** düğmesine tıkla. Anahtar bir kez gösterilir. BombVault yalnızca parmak izini saklar ve anahtarı bir daha gösteremez, bu yüzden şimdi kopyala. İstemci anahtarı kullanmadan pencereyi kapatırsan kart, kopyaladığını onaylayana kadar anahtarı göstermeye devam eder.
@@ -176,7 +176,7 @@ ChatGPT, claude.ai üzerindeki Claude, Grok ve Le Chat, BombVault'u sağlayıcı
 
 Anahtar alamayan bir istemci için BombVault kendi OAuth yetkilendirme sunucusudur. İstemci kendini kaydeder, seni bir BombVault sayfasına gönderir; orada giriş parolanla (ve kurduysan ikinci faktörle) oturum açar ve ona izin verirsin. İstemci ardından yalnızca bu BombVault'un MCP uç noktası için geçerli bir belirteç alır ve bunu kendisi yeniler.
 
-1. **Ayarlar, Sistem** altında bir giriş parolası belirle. Parola yoksa BombVault hiç oturum açma sunmaz, çünkü onay istenecek kimse olmaz.
+1. **Ayarlar, Güvenlik** altında bir giriş parolası belirle. Parola yoksa BombVault hiç oturum açma sunmaz, çünkü onay istenecek kimse olmaz.
 2. BombVault'a internetten https üzerinden, tarayıcıların güvendiği bir sertifikayla erişilebilmesini sağla; genellikle bir ters vekil sunucu üzerinden. İstemci `/mcp`, `/oauth/` ve `/.well-known/` yollarını kendi sunucularından çağırır; bu yüzden kendi oturum açması olan bir vekil sunucu bu üç yolu BombVault'a geçirmelidir. `/oauth/authorize` adresindeki onay sayfası kendi tarayıcında açılır ve vekil sunucunun oturum açmasının arkasında kalabilir. Vekil sunucuyu `TRUSTED_PROXY` içinde de belirt (bkz. [Yapılandırma](configuration.md)). BombVault istemci kayıtlarını adres başına sınırlar; bu ayar olmadan her istemci vekil sunucudan geliyormuş gibi görünür.
 3. MCP kartında **OAuth ile oturum açma** seçeneğini aç ve **Genel adres** alanına yolu olmayan https adresini gir, örneğin `https://backup.example.com`. Her belirteç bu adrese bağlıdır; bu yüzden değişiklikten sonra her istemcinin yeniden oturum açması gerekir.
 4. ChatGPT ya da Claude düğmesine tıkla. İletişim kutusu **Bağlayıcı URL'si** değerini, yani sonuna `/mcp` eklenmiş genel adresi, ve bunun o istemcide nereye yazılacağını gösterir. ChatGPT'de **Ayarlar, Uygulamalar ve bağlayıcılar, Gelişmiş ayarlar** altında geliştirici modunu açarsın, **Oluştur**'u seçer, bağlayıcı URL'sini MCP sunucusu URL'si olarak yapıştırır ve kimlik doğrulama olarak OAuth'u seçersin. claude.ai'de **Ayarlar, Bağlayıcılar, Özel bağlayıcı ekle**'yi açar, bağlayıcı URL'sini yapıştırır, OAuth istemci kimliğini ve sırrını boş bırakır ve **Bağlan**'ı seçersin.

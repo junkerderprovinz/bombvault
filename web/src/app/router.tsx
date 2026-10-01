@@ -46,9 +46,9 @@ export function AppRouter() {
               <Route path="/pull" element={<Navigate to="/instances#pull" replace />} />
               <Route path="/fleet" element={<Navigate to="/instances#fleet" replace />} />
               <Route path="/recovery" element={<Recovery />} />
-              {/* Schedules are a Settings tab; /jobs stays for existing links. */}
-              <Route path="/jobs" element={<Navigate to="/settings#schedules" replace />} />
-              <Route path="/settings" element={<SettingsPage />} />
+              {/* Schedules are a Settings page; /jobs stays for existing links. */}
+              <Route path="/jobs" element={<Navigate to="/settings/schedules" replace />} />
+              <Route path="/settings/:page?" element={<SettingsPage />} />
               {/* Every glyph at its real size with its measured fill, so a
                   mis-sized icon shows up before it reaches a card. Unlisted:
                   no nav entry and no translation. */}

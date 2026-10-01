@@ -54,7 +54,7 @@ Generera en på valfri maskin:
 openssl rand -hex 32
 ```
 
-Klistra in resultatet i `APP_KEY`-fältet i mallen.
+Klistra in resultatet i `APP_KEY`-fältet i mallen (Unraid) eller i miljövariabeln `APP_KEY` i `docker-compose.yml` (generisk Docker-värd).
 
 !!! danger "Förlora inte din APP_KEY"
     Att förlora `APP_KEY` gör dina krypterade säkerhetskopior oåterställbara. Förvara den på en säker plats åtskild från servern. När BombVault väl körs, använd dess **återställningskit för krypteringsnyckeln** med ett klick (se [Off-site och återställning](offsite-recovery.md)) för att spara hela återställningspaketet.

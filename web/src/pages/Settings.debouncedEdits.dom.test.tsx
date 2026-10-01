@@ -7,6 +7,7 @@
 // mocked client, and the tests decide when each PUT resolves.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { RegistryAuthEntry, Settings } from "../lib/api";
@@ -116,24 +117,34 @@ vi.mock("../lib/api", async (importOriginal) => {
 // Imported after vi.mock so the page picks up the mocked client.
 const { SettingsPage } = await import("./Settings");
 
+let router: ReturnType<typeof createMemoryRouter>;
+
 async function renderPage() {
+  router = createMemoryRouter(
+    [
+      {
+        path: "/settings/:page",
+        element: (
+          <I18nProvider>
+            <ToastProvider>
+              <SettingsPage />
+            </ToastProvider>
+          </I18nProvider>
+        ),
+      },
+    ],
+    { initialEntries: ["/settings/general"] }
+  );
   await act(async () => {
-    render(
-      <I18nProvider>
-        <ToastProvider>
-          <SettingsPage />
-        </ToastProvider>
-      </I18nProvider>
-    );
+    render(<RouterProvider router={router} />);
   });
 }
 
-/** Selects a tab through the deep link, because the strip measures itself in
- *  two passes and a label query there matches more than one node. */
-async function gotoTab(tab: string) {
+/** Navigates to another settings page in place, the way the rail's own links
+ *  do, without remounting the page underneath. */
+async function gotoPage(page: string) {
   await act(async () => {
-    window.location.hash = "#" + tab;
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    await router.navigate(`/settings/${page}`);
   });
 }
 
@@ -186,7 +197,7 @@ describe("leaving the page with an edit still inside its debounce", () => {
   it("sends the edit instead of discarding it", async () => {
     settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("containers");
 
     const host = hostInputs()[0];
     await act(async () => {
@@ -209,7 +220,7 @@ describe("leaving the page with an edit still inside its debounce", () => {
   it("still sends it normally when the debounce is allowed to elapse", async () => {
     settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("containers");
 
     await act(async () => {
       fireEvent.change(hostInputs()[0], { target: { value: "quay.io" } });
@@ -230,7 +241,7 @@ describe("a blank registry row while another row is being edited", () => {
       registryAuths: [registry({ host: "ghcr.io", username: "old" })],
     });
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("containers");
 
     // Add a row: a blank one appears at the end and is not saved.
     await act(async () => {
@@ -268,7 +279,7 @@ describe("a blank registry row while another row is being edited", () => {
       registryAuths: [registry({ host: "ghcr.io", username: "old" })],
     });
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("containers");
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
@@ -300,7 +311,7 @@ describe("editing the registry list while its save is in flight", () => {
       registryAuths: [registry({ host: "ghcr.io", username: "old" })],
     });
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("containers");
 
     // Let the debounce elapse, so the PUT is in flight with its payload fixed.
     await act(async () => {
@@ -339,7 +350,7 @@ describe("editing the registry list while its save is in flight", () => {
       registryAuths: [registry({ host: "ghcr.io" }), registry({ host: "quay.io" })],
     });
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("containers");
 
     await act(async () => {
       fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
@@ -363,9 +374,9 @@ describe("editing the registry list while its save is in flight", () => {
 });
 
 describe("importing settings while an edit is still inside its debounce", () => {
-  /** Pick a file on the System tab and confirm the import. */
+  /** Pick a file on the System page and confirm the import. */
   async function confirmImport() {
-    await gotoTab("system");
+    await gotoPage("system");
     const file = new File(['{"schemaVersion":1}'], "settings.json", { type: "application/json" });
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await act(async () => {
@@ -379,7 +390,7 @@ describe("importing settings while an edit is still inside its debounce", () => 
   it("drops the pending edit even when an earlier save is holding the write queue", async () => {
     settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
     await renderPage();
-    await gotoTab("general");
+    await gotoPage("general");
 
     // A save stays in flight, so everything queued after it waits, the import
     // included.
@@ -389,7 +400,7 @@ describe("importing settings while an edit is still inside its debounce", () => 
     await waitFor(() => expect(putCalls).toHaveLength(1));
 
     // The user edits a registry host, arming the 800ms debounce...
-    await gotoTab("storage");
+    await gotoPage("containers");
     await act(async () => {
       fireEvent.change(hostInputs()[0], { target: { value: "typed-before-import.example.com" } });
     });
@@ -423,7 +434,7 @@ describe("importing settings while an edit is still inside its debounce", () => 
     expect(putCalls).toHaveLength(1);
 
     // ...and the imported value is what the page now shows and holds.
-    await gotoTab("storage");
+    await gotoPage("containers");
     await waitFor(() => expect(hostInputs()[0].value).toBe("imported.example.com"));
   });
 
@@ -440,7 +451,7 @@ describe("importing settings while an edit is still inside its debounce", () => 
     });
 
     // The user keeps typing while the apply is still open.
-    await gotoTab("storage");
+    await gotoPage("containers");
     await act(async () => {
       fireEvent.change(hostInputs()[0], { target: { value: "typed-during-import.example.com" } });
     });
@@ -462,9 +473,10 @@ describe("importing settings while an edit is still inside its debounce", () => 
 describe("the yearly retention rule", () => {
   it("saves its count next to the other keep rules", async () => {
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("retention");
 
-    const label = screen.getByText(en["settings.retentionYearly"]).closest("label");
+    // The local policy is the first card on the page, the off-site one follows.
+    const label = screen.getAllByText(en["settings.retentionYearly"])[0].closest("label");
     const input = label?.querySelector("input") as HTMLInputElement;
     expect(input.value).toBe("0");
     await act(async () => {
@@ -484,7 +496,7 @@ describe("the yearly retention rule", () => {
 describe("a repository's compression", () => {
   it("saves the choice at once, for that repository only", async () => {
     await renderPage();
-    await gotoTab("storage");
+    await gotoPage("storage");
 
     const max = screen.getAllByText(en["settings.compression.max"])[0].closest("button") as HTMLButtonElement;
     await act(async () => {

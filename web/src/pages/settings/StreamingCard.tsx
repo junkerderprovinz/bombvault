@@ -27,6 +27,7 @@ const NUMBER_FIELDS: { key: NumberKey; label: "streaming.threshold" | "streaming
 export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [cfg, setCfg] = useState<StreamingSettings | null>(null);
+  const [failed, setFailed] = useState(false);
   const [candidates, setCandidates] = useState<MediaCandidate[]>([]);
   const [streaming, setStreamingNow] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,7 +44,11 @@ export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
     const load = (first: boolean) => {
       getStreaming()
         .then((res) => {
-          if (!alive || !res.ok || !res.settings) return;
+          if (!alive) return;
+          if (!res.ok || !res.settings) {
+            if (first) setFailed(true);
+            return;
+          }
           if (first) {
             cfgRef.current = res.settings;
             setCfg(res.settings);
@@ -51,7 +56,9 @@ export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
           }
           setStreamingNow(res.streaming ?? "");
         })
-        .catch(() => undefined);
+        .catch(() => {
+          if (alive && first) setFailed(true);
+        });
     };
     load(true);
     const id = setInterval(() => load(false), POLL_MS);
@@ -125,7 +132,10 @@ export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
     void save({ mediaServers: servers, mediaServersAuto: false });
   }
 
-  if (!cfg) return null;
+  if (failed) return null;
+  // Drawn before its settings arrive, so a search result that opens this page
+  // finds the card to mark.
+  if (!cfg) return <Card title={t("streaming.title")} hint={t("streaming.hint")} hueIndex={hueIndex}>{null}</Card>;
 
   const byName = new Map(candidates.map((c) => [c.name, c]));
   const chosen = cfg.mediaServers;

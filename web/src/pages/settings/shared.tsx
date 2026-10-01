@@ -6,14 +6,22 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { Toggle } from "../../components/Toggle";
 import { hueVars } from "../../lib/appearance";
 import { type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { useT } from "../../lib/i18n";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
-/** The new-password field on the System tab. The MCP card sends the operator
- *  there, because a key created while the web interface has no password is
- *  handed to whoever can reach the page. */
+/** The new-password field on the Security page. The MCP and pairing cards
+ *  send the operator there, because a key or a phrase made while the web
+ *  interface has no password is handed to whoever can reach the page. */
 export const LOGIN_PASSWORD_FIELD = "bv-login-password";
+
+/** useOpenPasswordField opens the Security page with the cursor in the login
+ *  password field. */
+export function useOpenPasswordField(): () => void {
+  const navigate = useNavigate();
+  return () => navigate(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
+}
 
 export function Card({
   title,
@@ -46,6 +54,7 @@ export function Card({
     // in index.css. `.glim-hue` sets --accent and --focus-ring once for the
     // whole card, so no control inside has to repeat its card's hue.
     <div
+      data-search-card={title}
       className={`relative glim-notch-card flex flex-col gap-4 ${
         nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
       }${hueIndex !== undefined ? " glim-hue" : ""}`}
@@ -164,15 +173,16 @@ export function ToggleRow({
   const feedbackKey = shakeNonce || pulseNonce ? `${shakeNonce ?? 0}:${pulseNonce ?? 0}` : undefined;
   return (
     <div
+      data-search-row={label}
       className={`flex items-start justify-between gap-4${hueOn ? " glim-hue" : ""}`}
       style={hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
-      <div className="flex flex-col gap-0.5">
+      <div className="flex min-w-0 flex-col gap-0.5">
         {/* The dimming goes on the label, not on the span that holds the
             bubble: a child cannot be less transparent than its parent, and
             on a disabled row the bubble is what explains why. */}
         <span className="flex items-center gap-1.5 text-sm">
-          <span className={`text-carbon-text${dim}`}>{label}</span>
+          <span className={`min-w-0 wrap-break-word text-carbon-text${dim}`}>{label}</span>
           {hint && <InfoBubble tip={hint} />}
         </span>
       </div>

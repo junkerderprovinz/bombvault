@@ -1,13 +1,13 @@
 # Konfigurace
 
-Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která šablona poskytuje, zálohu VM přes SSH a nastavení mimo lokalitu. **Cesty repozitářů** záloh se konfigurují uvnitř aplikace (Nastavení, Zálohovací cesty), nikoli přes proměnné prostředí.
+Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která šablona poskytuje, zálohu VM přes SSH a nastavení mimo lokalitu. **Cesty repozitářů** záloh se konfigurují uvnitř aplikace (Nastavení, Úložiště, Zálohovací cesty), nikoli přes proměnné prostředí.
 
 ## Proměnné prostředí
 
 | Proměnná | Povinná | Popis |
 |---|---|---|
 | `APP_KEY` | **Ano** | 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři. Vygenerujte pomocí `openssl rand -hex 32`. Uchovejte v bezpečí: jeho ztráta učiní šifrované zálohy neobnovitelnými. |
-| `LIBVIRT_HOST` | Pro VM | Hostitel Unraidu dosažený přes SSH pro zálohu VM (výchozí `host.docker.internal`; šablona předvyplní zástupný symbol LAN IP). Použijte svou LAN IP Unraidu, povinné na vlastní síti `br0.x`. Používá se i pro zálohy datových sad ZFS (pole šablony **Host SSH: Address**); zástupná hodnota `192.168.x.x` se bere jako nenastavená. |
+| `LIBVIRT_HOST` | Pro VM a datové sady ZFS | Hostitel Unraidu dosažený přes SSH pro zálohu VM (výchozí `host.docker.internal`; šablona předvyplní zástupný symbol LAN IP). Použijte svou LAN IP Unraidu, povinné na vlastní síti `br0.x`. Používá se i pro zálohy datových sad ZFS (pole šablony **Host SSH: Address**); zástupná hodnota `192.168.x.x` se bere jako nenastavená. |
 | `LIBVIRT_SSH_PORT` | Ne | SSH port hostitele pro zálohu VM (výchozí `22`). Pole šablony **Host SSH: Port**, platí i pro datové sady ZFS. |
 | `LIBVIRT_SSH_USER` | Ne | SSH uživatel na hostiteli pro zálohu VM (výchozí `root`). Pole šablony **Host SSH: User**, platí i pro datové sady ZFS. |
 | `LIBVIRT_URI` | Ne | Úplné URI připojení k libvirt, použité **doslovně** místo sestavení ze tří výše uvedených proměnných `LIBVIRT_*` (ty se pak pro sestavení URI ignorují). Ve výchozím stavu nenastaveno. Potřebné na TrueNAS Scale, jehož libvirtd naslouchá na nestandardním socketu, který sestavená podoba nedokáže vyjádřit: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Viz sekce TrueNAS Scale v [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Je-li to URI `qemu+ssh://`, převezme se z něj každá z proměnných `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` a `LIBVIRT_SSH_PORT`, která není nastavená, i pro vlastní SSH příkazy BombVaultu (přenos NVRAM, datové sady ZFS). |
@@ -21,6 +21,7 @@ Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která �
 | `PLATFORM` | Ne | Vynutí platformu, na které BombVault předpokládá, že běží, místo automatické detekce: `unraid`, `generic` nebo `truenas` (výchozí nenastaveno; automaticky detekuje Unraid hledáním jeho značky `dockerMan` pod připojením flash, jinak `generic`; nerozpoznaná hodnota se rovněž vrátí na `generic`, což se zaznamená do logu). Nastavte ji explicitně na obecném Docker hostiteli nebo na TrueNAS Scale, místo spoléhání na automatickou detekci dostupnou jen pro Unraid; obecný compose soubor to tak dělá. Mění konvenci náhradního umístění appdata, výchozí cíle obnovy mezi instancemi a to, zda se vůbec zkouší kroky oznámení/doprovodného pluginu dostupné jen pro Unraid (viz `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Ne | Název samotného kontejneru BombVault, takže nikdy nezálohuje (a tedy nezastaví) sám sebe. |
 | `BACKUP_MAX_HOURS` | Ne | Maximální počet hodin reálného času, po které jeden zálohovací běh smí držet zámek své domény, než je násilně zrušen (pojistka, aby zaseknutý běh nemohl navždy blokovat doménu). Prázdné (výchozí) použije `48`. Zvyšte pro velmi velké nebo pomalé cloudové zálohy (běh zrušený na stropu selže s `context deadline exceeded`). Nastavte `0` pro úplné vypnutí stropu. |
+| `BACKUP_STALL_HOURS` | Ne | Počet hodin, po které záloha smí **vůbec nepostupovat**, než je zrušena. Prázdné (výchozí) použije `2`; nastavte `0`, aby se kvůli zastavení nikdy nerušila. Je to jemnější z obou pojistek a obvykle ta, která zasáhne: sleduje, zda se ještě něco děje, a ne jak dlouho běh trvá, takže pomalá, ale zdravá záloha mnoha terabajtů zůstane nedotčena, zatímco záloha zaseknutá na nereagující sdílené složce se zastaví za hodiny místo za dny. Po 30 minutách ticha, ještě než se cokoli zruší, se do logu zapíše varování. Procházení se počítá jako postup: restic při procházení velkého stromu nezapisuje žádné bajty a tato fáze se sleduje přes jeho součty souborů a bajtů, ne přes zapsané bajty. Obě proměnné jsou nezávislé a `BACKUP_MAX_HOURS` dál ohraničuje fáze po samotné záloze (uchovávání, statistiky, kopie mimo lokalitu), kde nejsou žádné čítače ke sledování. |
 | `DB_DUMP_MAX_HOURS` | Ne | Hodiny, po které smí jeden automatický dump databáze běžet, než je zastaven. Prázdné (výchozí) použije `6`; povolené jsou hodnoty `1` až `48` a limit zůstává hodinu pod `BACKUP_MAX_HOURS` (je-li kratší než dvě hodiny, na jeho polovině), aby dlouhý dump utnul jeho vlastní limit a byl tak i nahlášen, místo aby strhl zálohu s sebou. Dump, který přestane postupovat, se zastaví dřív, po `BACKUP_STALL_HOURS`. Zastavený dump selže sám za sebe a záloha kontejneru pokračuje. Na Unraidu přidejte proměnnou ke kontejneru BombVault přes **Add another Path, Port, Variable**. |
 | `TZ` | Ne | Časové pásmo pro plánovač (například `Europe/Berlin`). **Pokud ji nenastavíte, běží všechny plány v UTC**: plán nastavený na 02:30 se pak spustí ve 02:30 UTC, nikoli podle místního času. Na Unraidu to nikdy nenastavujete sami: systém předává vlastní časové pásmo do každého kontejneru. |
 
@@ -30,7 +31,7 @@ Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je
 
 Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
-Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Zálohovací cesty**.
+Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Úložiště, Zálohovací cesty**. Každé pole cesty má také vestavěný přepínač **Místní / Vzdálené**: cesta může být místo místní složky vzdálený restic repozitář (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) a záloha pak jde přímo do něj, bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.
@@ -62,7 +63,7 @@ Pro každý kontejner si BombVault sám vybírá, která připojení bind a pojm
 
 ## Server MCP {#mcp-server}
 
-Server MCP nepotřebuje žádnou proměnnou prostředí. Zapnete ho vytvořením klíče v **Nastavení, Systém, Server MCP** a odpovídá na `/mcp` na stejném portu jako webové rozhraní (například `https://192.168.1.10:3443/mcp`). Bez aktivního klíče tato cesta odpovídá `404`. Klienty, certifikáty a limity popisuje stránka [Server MCP](mcp.md).
+Server MCP nepotřebuje žádnou proměnnou prostředí. Zapnete ho vytvořením klíče v **Nastavení, Integrace, Server MCP** a odpovídá na `/mcp` na stejném portu jako webové rozhraní (například `https://192.168.1.10:3443/mcp`). Bez aktivního klíče tato cesta odpovídá `404`. Klienty, certifikáty a limity popisuje stránka [Server MCP](mcp.md).
 
 ## Záloha VM přes SSH
 
@@ -70,7 +71,7 @@ BombVault zálohuje KVM/libvirt VM **bez připojení jakékoli libvirt cesty**. 
 
 Rychlé nastavení:
 
-1. **Nastavení, Systém, SSH k hostiteli:** zkopírujte zobrazený veřejný klíč.
+1. **Nastavení, Integrace, SSH k hostiteli:** zkopírujte zobrazený veřejný klíč.
 2. Připojte jej do `/root/.ssh/authorized_keys` Unraidu (také persistováno na flash, aby přežilo restarty).
 3. Klikněte na **Otestovat připojení**.
 
@@ -81,17 +82,18 @@ Rychlé nastavení:
 
 ## Nastavení mimo lokalitu
 
-Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
+Nastavte repliku mimo lokalitu na stránce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
 
 - **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
-- **Přihlašovací údaje cloudu** se ukládají šifrovaně pod Nastavení, Mimo lokalitu, Přihlašovací údaje cloudu.
-- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Systém, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
-- **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy. Místní repozitář zůstává primární. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
+- **Sdílené cloudové přihlašovací údaje** se ukládají šifrovaně pod Nastavení, Cloudový přístup, Sdílené cloudové přihlašovací údaje.
+- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
+- **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, navíc k (obvykle místnímu) primárnímu repozitáři. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
 - **Více cílů mimo lokalitu na doménu:** každá doména může replikovat na několik cílů mimo lokalitu najednou. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu; všechny replikují podle plánu mimo lokalitu dané domény. Stávající jednotlivé nastavení mimo lokalitu se přenese jako první cíl.
-- **Uchovávání na zdroj:** místní zásada žije v Nastavení, Cesty a úložiště; zásada mimo lokalitu v Nastavení, Mimo lokalitu (ponechte vše na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).
+- **Uchovávání na zdroj:** místní i zásada mimo lokalitu žijí obě v Nastavení, Uchovávání (ponechte zásadu mimo lokalitu na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).
 - **Limity šířky pásma:** omezte rychlost nahrávání/stahování restic pod Nastavení, Mimo lokalitu.
 - **Nejdřív streamování:** v Nastavení, Mimo lokalitu vyber mediální servery (Plex, Jellyfin a Emby jsou předvybrány podle názvu obrazu), rychlost odesílání, od které se server počítá jako streamující, limit nahrávání během streamu a jak dlouho po streamu se vrátí běžný limit.
 - **Studená a archivní třída úložiště (S3):** pro nativní S3 repozitář mimo lokalitu vyberte úroveň čitelnou pro obnovu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes nastavují svou třídu v konfiguraci rclone.
+- **Vzdálený primární repozitář místo místního:** samotná Zálohovací cesta domény může být jedním z výše uvedených backendů, bez místní kopie a bez kroku replikace. Vestavěný přepínač Místní/Vzdálené a jeho bezpečnostní nastavení (šířka pásma, append-only, rozpočet růstu) popisuje [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
 
 ## Anomálie {#anomalies}
 
@@ -108,7 +110,7 @@ Každá položka může mít vlastní citlivost a vlastní minimum oznámení. N
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 
-Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
+Karta **Export a import nastavení** na stránce **Nastavení, Systém** zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
     Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu, oznámení a brokeru MQTT. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

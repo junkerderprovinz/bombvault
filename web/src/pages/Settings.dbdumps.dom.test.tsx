@@ -4,6 +4,7 @@
 // copy there is, by name, before it is too late to notice.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Container, Settings } from "../lib/api";
@@ -132,19 +133,24 @@ function stubResizeObserver() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderGeneralTab() {
+async function renderGeneralPage() {
   await act(async () => {
-    window.location.hash = "#general";
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <SettingsPage />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter initialEntries={["/settings/general"]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <SettingsPage />
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
     );
-  });
-  await act(async () => {
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
   });
 }
 
@@ -164,7 +170,7 @@ afterEach(cleanup);
 
 describe("the switch for every database dump", () => {
   it("sits with the domain switches", async () => {
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     const card = dumpsToggle().closest("div.rounded-card");
     expect(card).toBeTruthy();
@@ -177,7 +183,7 @@ describe("the switch for every database dump", () => {
       container({ name: "nextcloud_db", dbDataCoverage: "none" }),
       container({ name: "paperless_db", dbDataCoverage: "stopped" }),
     ];
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     fireEvent.click(dumpsToggle());
     const question = await screen.findByText(/immich_postgres/);
@@ -209,7 +215,7 @@ describe("the switch for every database dump", () => {
       container({ name: "unknown_db", dbDataCoverage: "unknown" }),
       container({ name: "by_label_db", dbTier: "label", dbDumpOff: true, dbDataCoverage: "live" }),
     ];
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     fireEvent.click(dumpsToggle());
     const question = await screen.findByText(/immich_postgres/);
@@ -222,14 +228,14 @@ describe("the switch for every database dump", () => {
 
   it("asks plainly when no database depends on its dump", async () => {
     containersOnServer = [container({ dbDataCoverage: "stopped" })];
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     fireEvent.click(dumpsToggle());
     expect(await screen.findByText(en["settings.dbDumpsOffConfirmPlain"])).toBeTruthy();
   });
 
   it("saves the setting once the question is answered", async () => {
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     fireEvent.click(dumpsToggle());
     const dialog = await screen.findByRole("dialog");
@@ -240,7 +246,7 @@ describe("the switch for every database dump", () => {
   });
 
   it("leaves the switch on when the question is declined", async () => {
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     fireEvent.click(dumpsToggle());
     const dialog = await screen.findByRole("dialog");
@@ -252,7 +258,7 @@ describe("the switch for every database dump", () => {
 
   it("switches back on without asking", async () => {
     settingsOnServer = baseSettings({ dbDumpsEnabled: false });
-    await renderGeneralTab();
+    await renderGeneralPage();
 
     fireEvent.click(dumpsToggle());
     await waitFor(() => expect(putBodies).toHaveLength(1));

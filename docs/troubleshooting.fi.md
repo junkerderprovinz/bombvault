@@ -18,7 +18,7 @@ BombVault tarjoaa HTTPS:ää valmiiksi portissa `3443` (itse allekirjoitettu var
 
 VM-varmuuskopiointi keskustelee libvirtin kanssa SSH:n yli, ei koskaan liitoksen kautta.
 
-- Vahvista, että SSH on käytössä isännällä ja BombVaultin julkinen avain on valtuutettu tiedostossa `/root/.ssh/authorized_keys` (Asetukset, Järjestelmä, Palvelimen SSH näyttää avaimen ja **Test connection** -painikkeen).
+- Vahvista, että SSH on käytössä isännällä ja BombVaultin julkinen avain on valtuutettu tiedostossa `/root/.ssh/authorized_keys` (Asetukset, Integraatiot, Palvelimen SSH näyttää avaimen ja **Test connection** -painikkeen).
 - Mukautetussa `br0.x`-verkossa aseta `LIBVIRT_HOST` Unraidin LAN-IP-osoitteeseesi (kontti ei voi tavoittaa isäntää `host.docker.internal`-nimellä siellä). Ota käyttöön **Settings, Docker, Host access to custom networks**.
 - Jos vaihdoit Unraidin SSH-porttia, aseta `LIBVIRT_SSH_PORT` vastaamaan.
 - Täydellinen vaihe vaiheelta -diagnoosi (tavoitettavuustesti, VLAN-reititys, `Permission denied (publickey)`, `Host key verification failed`) on [VM-varmuuskopiointi SSH:n yli -oppaassa](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Live-tilannevedokset tarvitsevat qemu guest agentin asennettuna VM:ään ja levy
 
 ## Varmuuskopio epäonnistui virheeseen "repository is already locked"
 
-Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettiin tai käynnistettiin uudelleen kesken toiminnan. BombVault havaitsee todistettavasti orvon lukon, pakottaa sen auki ja yrittää uudelleen kerran, automaattisesti. Jos se jää pysyväksi, käytä **Asetukset, Eheys ja ylläpito, Avaa lukitus** kyseiselle toimialueelle poistaaksesi jumittuneen lukon käsin. Todellinen ongelma nousee silti pintaan sen sijaan että piiloutuisi. Uudelleenkäynnistyksen jälkeen BombVault odottaa, kunnes tällaista lukkoa ei ole uusittu kymmeneen minuuttiin. Yhä käynnissä oleva restic, esimerkiksi toisessa samaa tietovarastoa käyttävässä BombVaultissa, uusii lukkonsa viiden minuutin välein.
+Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettiin tai käynnistettiin uudelleen kesken toiminnan. BombVault havaitsee todistettavasti orvon lukon, pakottaa sen auki ja yrittää uudelleen kerran, automaattisesti. Jos se jää pysyväksi, käytä **Asetukset, Eheys, Avaa lukitus** kyseiselle toimialueelle poistaaksesi jumittuneen lukon käsin. Todellinen ongelma nousee silti pintaan sen sijaan että piiloutuisi. Uudelleenkäynnistyksen jälkeen BombVault odottaa, kunnes tällaista lukkoa ei ole uusittu kymmeneen minuuttiin. Yhä käynnissä oleva restic, esimerkiksi toisessa samaa tietovarastoa käyttävässä BombVaultissa, uusii lukkonsa viiden minuutin välein.
 
 ## Etäkopiotani ei tapahtunut varmuuskopion jälkeen
 
-Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista kyseisen toimialueen etäaikataulu (Asetukset, Aikataulut): tyhjä aikataulu replikoi jokaisen paikallisen varmuuskopion jälkeen, kun taas tahti lähettää harvemmin. Käytä **Replikoi nyt** Etä-välilehdellä pyydettäessä tehtävään ajoon, ja tarkkaile replikointiosoitinta Kojelaudalla.
+Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista kyseisen toimialueen etäaikataulu (Asetukset, Aikataulut): tyhjä aikataulu replikoi jokaisen paikallisen varmuuskopion jälkeen, kun taas tahti lähettää harvemmin. Käytä **Replikoi nyt** Etä-sivulla pyydettäessä tehtävään ajoon, ja tarkkaile replikointiosoitinta Kojelaudalla.
 
 ## Palautus keskeytyi ennen kuin se alkoi
 

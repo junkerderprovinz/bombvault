@@ -18,7 +18,7 @@ BombVault servește HTTPS din start pe portul `3443` (certificat auto-semnat), d
 
 Backupul VM comunică cu libvirt prin SSH, niciodată o montare.
 
-- Confirmă că SSH este activat pe gazdă și că cheia publică a BombVault este autorizată în `/root/.ssh/authorized_keys` (Setări, Sistem, SSH al gazdei arată cheia și un buton **Test connection**).
+- Confirmă că SSH este activat pe gazdă și că cheia publică a BombVault este autorizată în `/root/.ssh/authorized_keys` (Setări, Integrări, SSH al gazdei arată cheia și un buton **Test connection**).
 - Pe o rețea `br0.x` personalizată, setează `LIBVIRT_HOST` la IP-ul LAN al Unraid (containerul nu poate ajunge acolo la gazdă prin `host.docker.internal`). Activează **Setări, Docker, Host access to custom networks**.
 - Dacă ai schimbat portul SSH al Unraid, setează `LIBVIRT_SSH_PORT` să corespundă.
 - Diagnosticul complet pas cu pas (test de accesibilitate, rutare VLAN, `Permission denied (publickey)`, `Host key verification failed`) este în [ghidul de backup VM prin SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Instantaneele live au nevoie de qemu guest agent instalat în VM și de discul p
 
 ## Un backup a eșuat cu "repository is already locked"
 
-Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul a fost actualizat sau repornit în mijlocul unei operațiuni. BombVault detectează un blocaj dovedibil orfan, îl forțează să se elibereze și reîncearcă o dată, automat. Dacă persistă, folosește **Setări, Integritate și mentenanță, Unlock** pentru domeniul afectat pentru a elibera manual un blocaj rămas. O problemă reală tot iese la suprafață în loc să fie ascunsă. După o repornire, BombVault așteaptă până când o astfel de blocare a stat zece minute fără reîmprospătare. Un restic care încă rulează, de exemplu într-un al doilea BombVault pe același depozit, își reîmprospătează blocarea la fiecare cinci minute.
+Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul a fost actualizat sau repornit în mijlocul unei operațiuni. BombVault detectează un blocaj dovedibil orfan, îl forțează să se elibereze și reîncearcă o dată, automat. Dacă persistă, folosește **Setări, Integritate, Unlock** pentru domeniul afectat pentru a elibera manual un blocaj rămas. O problemă reală tot iese la suprafață în loc să fie ascunsă. După o repornire, BombVault așteaptă până când o astfel de blocare a stat zece minute fără reîmprospătare. Un restic care încă rulează, de exemplu într-un al doilea BombVault pe același depozit, își reîmprospătează blocarea la fiecare cinci minute.
 
 ## Copia mea off-site nu s-a întâmplat după un backup
 
-Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Replicate now** în fila Off-site pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
+Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Replicate now** pe pagina Extern pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
 
 ## O restaurare s-a oprit înainte de a începe
 

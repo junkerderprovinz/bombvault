@@ -4,11 +4,11 @@ Les sauvegardes locales vous protègent d'un conteneur perdu ou d'une mauvaise m
 
 ## Réplication hors site
 
-Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans l'onglet **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Le dépôt local reste principal.
+Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans la page **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Sous cette forme, le dépôt local reste primaire et le dépôt hors site en est un réplica, mais le dépôt primaire d'un domaine n'a pas du tout besoin d'être local ; voir [Dépôts primaires distants](#remote-primary-repositories) ci-dessous pour sauvegarder directement vers S3, rest-server, etc. au lieu d'y répliquer.
 
 - **Plusieurs cibles hors site par domaine.** Chaque domaine (conteneurs, VMs, flash, config, jeux de fichiers et jeux de données ZFS) peut répliquer vers plusieurs destinations hors site à la fois, pas seulement une, de sorte que vous pouvez garder, par exemple, un rest-server sur la machine d'un ami et un bucket S3 en parallèle. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance. Une configuration hors site unique existante est reprise intacte comme première cible, et chaque cible d'un domaine réplique selon le planning hors site de ce domaine.
 - **Planning hors site par domaine** (édité aux côtés de tous les autres plannings dans Paramètres, Plannings) : laissez-le vide pour répliquer après chaque sauvegarde locale, ou définissez une cadence (par exemple `weekly Sun 03:00`) pour expédier hors site moins souvent que vous ne sauvegardez localement. Un bouton **Répliquer maintenant** couvre les exécutions à la demande.
-- **La rétention hors site** vit dans Paramètres, Hors site afin que vous puissiez garder les copies hors site plus longtemps comme archive. Laissez la politique entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site.
+- **La rétention hors site** vit dans Paramètres, Rétention afin que vous puissiez garder les copies hors site plus longtemps comme archive. Laissez la politique entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site.
 - **Les limites de bande passante** (Paramètres, Hors site) plafonnent le débit d'envoi/de téléchargement de restic afin que la réplication ne sature pas votre WAN.
 - Un **indicateur de réplication** montre quel domaine réplique pendant qu'elle s'exécute (sur sa page et le tableau de bord). C'est un indicateur d'activité, pas une barre de pourcentage, car `restic copy` n'expose aucune progression lisible par machine.
 
@@ -17,7 +17,7 @@ Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors 
 
 ## Dépôts primaires distants {#remote-primary-repositories}
 
-Le chemin de sauvegarde d'un domaine (Paramètres, Chemins et stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `b2:...`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
+Le chemin de sauvegarde d'un domaine (Paramètres, Stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `b2:...`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
 
 Chacun des six champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers, Jeux de données ZFS) porte juste à côté un commutateur **Local / Distant** :
 
@@ -31,7 +31,15 @@ Chacun des six champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers,
 Rien de tout cela n'est obligatoire : un chemin distant saisi à la main, sans réglages de sécurité enregistrés, sauvegarde exactement comme avant (bande passante illimitée, élagage possible, pas d'alerte de budget). La boîte de dialogue de sécurité est là pour le jour où vous voulez les mêmes protections qu'une copie hors site, sans devoir créer une destination hors site rien que pour cela.
 
 !!! note "Les identifiants cloud et REST sont partagés"
-    Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Hors site, Identifiants cloud. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
+    Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Accès cloud, Identifiants cloud partagés. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
+
+### SMB et WebDAV sans montage sur l'hôte {#smb-webdav}
+
+Paramètres, Accès cloud, rclone propose un formulaire pour un partage Windows ou Samba et pour un serveur WebDAV (Nextcloud, ownCloud, SharePoint ou tout autre). Renseignez un nom court, l'hôte et le partage (SMB) ou l'URL et le type de serveur (WebDAV), l'utilisateur et le mot de passe, et BombVault écrit la section rclone pour vous. rclone masque lui-même le mot de passe avant qu'il soit enregistré ; ajouter une destination avec un nom qui existe déjà remplace cette section au lieu d'en ajouter une seconde.
+
+Le formulaire répond avec l'emplacement final, par exemple `rclone:nas:backups`. Mettez-le dans un Chemin de sauvegarde ou une destination hors site et ajoutez un sous-dossier si vous le souhaitez (`rclone:nas:backups/bombvault`). Le partage est le premier segment du chemin, il ne fait pas partie du nom.
+
+C'est une meilleure voie que de monter le partage sur Unraid : restic déconseille de garder un dépôt sur un partage CIFS monté, et ici rien n'est monté. NFS ne figure pas dans le formulaire, car ni restic ni rclone n'a de backend NFS ; pour NFS, montez l'export sur l'hôte et pointez-y un Chemin de sauvegarde.
 
 ## Hors site immuable (append-only)
 
@@ -66,23 +74,23 @@ Le **tableau de bord de protection contre les rançongiciels** du tableau de bor
 
 ## Appairage des instances {#pairing}
 
-Les Récepteurs, les sources de Rapatriement, la vue Flotte et le Mesh hors site parlent tous à un autre BombVault. Ils le font en tant que membres d'un même groupe d'appairage, et une instance rejoint le groupe avec douze mots.
+Les Récepteurs, les sources de Rapatriement, la page Instances et le Mesh hors site parlent tous à un autre BombVault. Ils le font en tant que membres d'un même groupe d'appairage, et une instance rejoint le groupe avec douze mots.
 
-Sur la première instance, ouvrez **Instances → Appairage** et cliquez sur **Générer une phrase**. Douze mots apparaissent. Sur chaque autre instance, ouvrez le même onglet, cliquez sur **Saisir une phrase** et collez-les ou tapez-les. Un mot absent de la liste est signalé avec sa position dès la saisie, et le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté avant qu'un appairage n'ait lieu. Générez la phrase sur une seule instance : deux instances qui créent chacune une phrase forment deux groupes distincts. Si personne ne se présente au bout d'une minute, l'onglet indique comment quitter le groupe en trop et rejoindre l'autre. L'appairage exige un mot de passe de connexion sur chaque instance, car les mots ouvrent les sauvegardes de toutes les instances du groupe. La phrase peut être réaffichée plus tard, une fois ce mot de passe saisi. **Quitter le groupe** fait ressortir une instance.
+Sur la première instance, ouvrez **Paramètres → Appairage** et cliquez sur **Générer une phrase** dans les cartes d'appairage. Douze mots apparaissent dans une fenêtre avec un bouton **Copier**. Sur chaque autre instance, ouvrez le même endroit, cliquez sur **Saisir une phrase** et collez-les ou tapez-les, ou cliquez sur **Coller** dans cette fenêtre. Un mot absent de la liste est signalé avec sa position dès la saisie, et le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté avant qu'un appairage n'ait lieu. Générez la phrase sur une seule instance : deux instances qui créent chacune une phrase forment deux groupes distincts. Si personne ne se présente au bout d'une minute, l'onglet propose deux façons de s'en sortir : réafficher les mots pour les saisir là-bas, ou saisir les mots de l'autre instance et rejoindre son groupe en une seule étape. L'appairage fonctionne sans mot de passe de connexion, mais définissez-en un : sans lui, quiconque peut ouvrir cette interface web peut lire les mots et obtenir, via le groupe, le mot de passe restic de chaque instance qui s'y trouve. La carte d'appairage le signale tant qu'aucun mot de passe n'est défini. Avec un mot de passe, réafficher la phrase le demande. **Quitter le groupe** fait ressortir une instance.
 
 Quiconque connaît les mots peut rejoindre le groupe, traitez-les donc comme un mot de passe.
 
-**Comment les membres se joignent.** Sur le même réseau, ils se trouvent par multicast et se parlent directement. Les instances sur des réseaux différents passent par un relais, choisi sur le même onglet :
+**Comment les membres se joignent.** Chaque instance apprend sa propre adresse sur le réseau depuis votre navigateur dès que vous vous connectez, affichée dans la carte du relais comme **Cette instance sur votre réseau** ; corrigez-la là si un reverse proxy ou un port inhabituel se trouve devant. Sur le même réseau, les membres annoncent cette adresse par multicast et se parlent directement, et là où le multicast ne peut pas traverser un réseau de conteneurs, comme le réseau bridge par défaut de Docker, une instance recherche plutôt les autres dans son propre sous-réseau avec un appel signé auquel seul un membre du groupe peut répondre, si bien que l'appairage se termine quand même en quelques secondes sans relais. Si rien n'apparaît, **Vous ne la trouvez pas ?**, sous la carte d'appairage, accepte une adresse saisie à la main, pour un autre sous-réseau ou un port non standard. Les instances sur des réseaux différents passent par un relais, choisi sur le même onglet :
 
 - **Relais du projet** (par défaut) : `relay.halleluja.design`, le relais qu'utilise aussi KnightLoader. Rien à configurer.
 - **Relais personnel** : le conteneur **BombVault Relay** des Unraid Community Apps, ou l'une de vos instances déjà joignable depuis l'extérieur avec **Servir de relais** activé. Cette instance répond alors sur `/relay/connect` à sa propre adresse, derrière le reverse proxy et le certificat qu'elle possède déjà, et n'y laisse entrer que votre groupe. Saisissez l'adresse du relais sur chaque instance qui doit l'utiliser.
-- **Aucun relais** : les membres ne se trouvent que sur le même réseau.
+- **Aucun relais** : les membres se trouvent automatiquement uniquement sur le même réseau, et nulle part ailleurs.
 
 **Ce que voit le relais.** Chaque appel entre membres est scellé avec AES-256-GCM sous une clé dérivée des douze mots, et cette clé ne quitte jamais vos instances. Le relais apprend un hash qui regroupe les connexions, pour quelle instance un message est destiné, sa taille et son horodatage. Un appel direct sur le réseau local est scellé de la même façon et signé également, si bien que rien ne dépend du certificat auto-signé que sert une instance.
 
-**Ce qui transite par le groupe.** La Fiche de protection de la Flotte, une demande de vérification immédiate d'un domaine, les offres de stockage hors site du Mesh, et ce dont un Récepteur ou une source de Rapatriement a besoin : les emplacements de dépôt de l'autre instance et son mot de passe restic. Les données de sauvegarde, elles, n'y passent jamais : elles vont toujours directement aux backends restic. L'`APP_KEY` non plus : le mot de passe restic ouvre les dépôts de cette instance et rien d'autre, ni ses secrets stockés, ni ses sessions, ni ses codes de récupération.
+**Ce qui transite par le groupe.** Les fiches de protection de la page Instances, une demande de vérification immédiate d'un domaine, les offres de stockage hors site du Mesh, et ce dont un Récepteur ou une source de Rapatriement a besoin : les emplacements de dépôt de l'autre instance et son mot de passe restic. Les données de sauvegarde, elles, n'y passent jamais : elles vont toujours directement aux backends restic. L'`APP_KEY` non plus : le mot de passe restic ouvre les dépôts de cette instance et rien d'autre, ni ses secrets stockés, ni ses sessions, ni ses codes de récupération.
 
-**Entrées antérieures à l'appairage.** Les pairs de la Flotte ajoutés avec un jeton de flotte, ainsi que les Récepteurs et sources de Rapatriement configurés avec l'`APP_KEY` de l'autre instance, restent après la mise à jour et sont marqués **Appairer à nouveau**. Les Récepteurs et sources de Rapatriement continuent de fonctionner : à son premier démarrage, BombVault remplace chaque `APP_KEY` stocké par le mot de passe restic qui en est dérivé. Appairez les deux instances, puis modifiez l'entrée et choisissez son instance. Un pair de la Flotte reprend son ancienne ligne dès qu'une instance du même nom apparaît dans le groupe.
+**Entrées antérieures à l'appairage.** Les instances ajoutées avec un jeton de flotte, ainsi que les Récepteurs et sources de Rapatriement configurés avec l'`APP_KEY` de l'autre instance, restent après la mise à jour et sont marqués **Appairer à nouveau**. Les Récepteurs et sources de Rapatriement continuent de fonctionner : à son premier démarrage, BombVault remplace chaque `APP_KEY` stocké par le mot de passe restic qui en est dérivé. Appairez les deux instances, puis modifiez l'entrée et choisissez son instance. Une telle instance reprend son ancienne carte dès qu'une instance du même nom apparaît dans le groupe.
 
 Le seul endroit qui prend encore un `APP_KEY` à la main est [Restauration depuis un autre dépôt BombVault](#restore-from-another-bombvault-repo), pour le cas où l'autre instance a disparu et ne peut pas répondre dans un groupe.
 
@@ -128,7 +136,7 @@ Le premier segment du chemin est l'utilisateur htpasswd, le second le dépôt. S
 | **NON protégé** | VAULT a accepté une suppression. `--append-only` manque ou a été retiré. |
 | **non concluant** | Ni l'un ni l'autre. En général, l'URL n'est pas celle qu'utilise restic lui-même, ou les identifiants ont changé. Rien n'est enregistré et aucune alerte n'est déclenchée. |
 
-**4. Sur VAULT, regardez ce qui arrive.** Appairez les deux machines ([Appairage des instances](#pairing)), activez *Paramètres → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule avec TOWER comme instance émettrice.
+**4. Sur VAULT, regardez ce qui arrive.** Appairez les deux machines ([Appairage des instances](#pairing)), activez *Paramètres → Appairage → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule avec TOWER comme instance émettrice.
 
 !!! warning "L'emplacement est un chemin **à l'intérieur** du conteneur, écrit relativement au montage hôte"
     Saisissez `user/appdata/rest-server/bombvault-containers/containers`, et **non** `/mnt/user/appdata/…`. BombVault s'exécute dans un conteneur où le `/mnt` de l'hôte est monté ailleurs ; un chemin hôte absolu n'y existe pas. Si vous en collez un, BombVault vous indique désormais le chemin relatif à utiliser.
@@ -152,7 +160,7 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 
 ### Restauration depuis un autre dépôt BombVault {#restore-from-another-bombvault-repo}
 
-Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. La fédération serveur-à-serveur en direct est explicitement hors du périmètre ; c'est un tirage ponctuel délibéré.
+Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. Cette carte ne sert qu'une fois : elle ouvre une session, restaure ce que vous choisissez et oublie l'autre instance. Si vous voulez plutôt un arrangement permanent, où cette machine récupère selon un planning les instantanés d'une autre instance dans son propre dépôt, c'est l'onglet **Rapatriement** de la page **Instances**.
 
 ## Kit de récupération de clé de chiffrement
 
@@ -165,6 +173,15 @@ Un clic télécharge la **clé maîtresse**, le **mot de passe restic dérivé**
 
 !!! warning "Le snapshot le plus récent n'est pas toujours celui à restaurer"
     Depuis restic 0.17, `restic snapshots` affiche la taille de chaque snapshot. Après une perte de données, le snapshot le plus récent peut être celui qui a été vidé : ne restaurez donc pas un snapshot beaucoup plus petit que les précédents. Après un rançongiciel, ce peut être le snapshot chiffré, de taille habituelle. Si BombVault tourne encore, consultez d'abord sa page **Anomalies** : elle indique la dernière bonne sauvegarde. Une restauration n'a besoin d'aucune donnée d'anomalie de BombVault, et la pause de rétention ne fait jamais que garder plus de snapshots.
+
+### Sceller le kit
+
+Si vous avez activé le chiffrement age pour les exports en clair (Paramètres), le kit est scellé lui aussi et se télécharge sous `bombvault-recovery-kit.md.age`. Il est en armure ASCII plutôt que binaire, c'est donc toujours du texte : le coller dans un gestionnaire de mots de passe ou l'imprimer fonctionne exactement comme avant, simplement son contenu est illisible sans votre clé.
+
+!!! warning "Ne rangez pas la clé age dans le kit"
+    Il vous faut votre clé age **privée** pour ouvrir un kit scellé. Gardez-la à un endroit qui ne dépend pas du kit lui-même, sinon vous aurez deux choses à récupérer au lieu d'une. Sceller le kit vaut la peine quand il est stocké à un endroit que vous ne contrôlez pas entièrement (un gestionnaire de mots de passe partagé, des notes dans le cloud, une impression au bureau) ; un kit dans votre propre coffre est déjà protégé par le coffre.
+
+    Avec le chiffrement activé et aucun destinataire utilisable configuré, le téléchargement est refusé d'emblée. BombVault ne se rabat jamais sur la remise de la clé maîtresse en clair.
 
 ### Si le kit n'est pas sous la main
 

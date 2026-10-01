@@ -54,7 +54,7 @@ Generează unul pe orice mașină:
 openssl rand -hex 32
 ```
 
-Lipește rezultatul în câmpul `APP_KEY` al șablonului.
+Lipește rezultatul în câmpul `APP_KEY` al șablonului (Unraid) sau în variabila de mediu `APP_KEY` din `docker-compose.yml` (gazdă Docker generică).
 
 !!! danger "Nu-ți pierde APP_KEY"
     Pierderea `APP_KEY` face ca backupurile tale criptate să nu mai poată fi recuperate. Păstrează-l undeva în siguranță și separat de server. Odată ce BombVault rulează, folosește **kitul de recuperare a cheii de criptare** cu un singur clic (vezi [Off-site și recuperare](offsite-recovery.md)) pentru a salva pachetul complet de recuperare.

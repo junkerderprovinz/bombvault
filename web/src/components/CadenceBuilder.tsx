@@ -305,20 +305,24 @@ export function CadenceBuilder({
       )}
 
       {state.mode === "everyN" && (
-        <div className="flex items-center gap-3">
+        // In a column too narrow for the label beside them, the field and its
+        // unit go under the label together.
+        <div className="flex flex-wrap items-center gap-3">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.every")}</label>
-          <NumberField
-            min={1}
-            value={state.intervalDays}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!isNaN(n) && n >= 1) update({ intervalDays: n });
-            }}
-            // A coarse pointer puts the steppers side by side, 64px of the
-            // field, so it widens to keep three digits in view.
-            className={`${inputCls} w-20 pointer-coarse:w-32`}
-          />
-          <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.daysUnit")}</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <NumberField
+              min={1}
+              value={state.intervalDays}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (!isNaN(n) && n >= 1) update({ intervalDays: n });
+              }}
+              // A coarse pointer puts the steppers side by side, 64px of the
+              // field, so it widens to keep three digits in view.
+              className={`${inputCls} w-20 pointer-coarse:w-28`}
+            />
+            <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.daysUnit")}</span>
+          </span>
         </div>
       )}
 

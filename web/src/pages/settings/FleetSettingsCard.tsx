@@ -1,5 +1,5 @@
 // FleetSettingsCard holds this instance's name as the other members of its
-// pairing group show it. Pairing itself lives on the Instances page.
+// pairing group show it, below the pairing cards on the same tab.
 import { Settings } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { Card, type SaveState } from "./shared";
@@ -48,7 +48,6 @@ export function FleetSettingsCard({
           className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
         />
       </div>
-      <p className="text-xs text-carbon-textSub">{t("settings.fleetHow")}</p>
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 # Configuratie
 
-Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de template levert, VM-back-up via SSH en de off-site setup. Back-up**repository-paden** worden binnen de app geconfigureerd (Instellingen, Back-uppaden), niet via omgevingsvariabelen.
+Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de template levert, VM-back-up via SSH en de off-site setup. Back-up**repository-paden** worden binnen de app geconfigureerd (Instellingen, Opslag, Back-uppaden), niet via omgevingsvariabelen.
 
 ## Omgevingsvariabelen
 
@@ -21,6 +21,7 @@ Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de 
 | `PLATFORM` | Nee | Forceert welk platform BombVault denkt te draaien, in plaats van automatisch te detecteren: `unraid`, `generic` of `truenas` (standaard niet ingesteld: detecteert Unraid automatisch door te zoeken naar diens `dockerMan`-marker onder de flash-mount, anders `generic`; een onherkende waarde valt ook terug op `generic`, gelogd). Stel het expliciet in op een generieke Docker-host of TrueNAS Scale, in plaats van te vertrouwen op de automatische Unraid-detectie; het generieke compose-bestand doet dit. Verandert de appdata-fallbackconventie, de standaardbestemmingen voor herstel tussen instanties, en of de Unraid-only meldings-/companion-plugin-stappen wel worden geprobeerd (zie `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nee | De naam van de BombVault-container zelf, zodat het nooit een back-up maakt van (en dus stopt) zichzelf. |
 | `BACKUP_MAX_HOURS` | Nee | Maximaal aantal klok-uren dat een enkele back-uprun zijn domeinlock mag vasthouden voordat hij geforceerd wordt geannuleerd (een beveiliging zodat een vastgelopen run het domein niet eeuwig kan blokkeren). Leeg (de standaard) gebruikt `48`. Verhoog het voor zeer grote of trage cloud-back-ups (een run die bij de limiet wordt geannuleerd mislukt met `context deadline exceeded`). Zet `0` om de limiet helemaal uit te schakelen. |
+| `BACKUP_STALL_HOURS` | Nee | Aantal uren dat een back-up **helemaal geen voortgang** mag maken voordat hij wordt geannuleerd. Leeg (de standaard) gebruikt `2`; zet `0` om nooit bij stilstand te annuleren. Dit is de fijnere van de twee beveiligingen en meestal degene die ingrijpt: hij kijkt of er nog iets gebeurt, niet hoe lang de run al duurt, dus een trage maar gezonde back-up van meerdere terabytes blijft met rust gelaten, terwijl een run die vastzit op een share die niet reageert na uren wordt gestopt in plaats van na dagen. Na 30 minuten stilte wordt een waarschuwing gelogd, voordat er iets wordt geannuleerd. Scannen telt als voortgang: restic schrijft geen bytes terwijl het een grote boom doorloopt, en die fase wordt bewaakt via de totalen aan bestanden en bytes in plaats van via de geschreven bytes. De twee variabelen zijn onafhankelijk, en `BACKUP_MAX_HOURS` begrenst nog steeds de fasen na de back-up zelf (retentie, statistieken, off-site kopie), waar geen tellers zijn om te bewaken. |
 | `DB_DUMP_MAX_HOURS` | Nee | Uren die één automatische databasedump mag draaien voordat hij wordt gestopt. Leeg (de standaard) gebruikt `6`; toegestaan zijn `1` tot `48`, en de limiet blijft een uur onder `BACKUP_MAX_HOURS` (op de helft ervan als die onder twee uur ligt), zodat een lange dump door zijn eigen limiet wordt afgekapt en als zodanig wordt gemeld in plaats van de back-up mee te sleuren. Een dump die niet meer vordert, wordt eerder gestopt, na `BACKUP_STALL_HOURS`. Een gestopte dump mislukt op zichzelf en de back-up van de container gaat door. Voeg de variabele op Unraid toe aan de BombVault-container met **Add another Path, Port, Variable**. |
 | `TZ` | Nee | Tijdzone voor de planner (bijvoorbeeld `Europe/Berlin`). **Niet ingesteld betekent dat alle planningen in UTC draaien**: een planning op 02:30 start dan om 02:30 UTC en niet op de lokale klok. Op Unraid stel je dit nooit zelf in: het systeem geeft zijn eigen tijdzone door aan elke container. |
 
@@ -30,7 +31,7 @@ Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoa
 
 Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapshot van een dataset pas aan nadat de container is gestart. Zie [ZFS-datasets](zfs-datasets.md).
 
-Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Back-uppaden**.
+Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Opslag, Back-uppaden**. Elk padveld heeft ook een schakelaar **Lokaal / Extern** ernaast: een pad kan een restic-remote zijn (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) in plaats van een lokale map, en dan wordt er rechtstreeks naartoe geback-upt zonder aparte lokale kopie; zie [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Controle van hostintegratie"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
@@ -62,7 +63,7 @@ Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes w
 
 ## MCP-server {#mcp-server}
 
-De MCP-server heeft geen omgevingsvariabele nodig. Je schakelt hem in door een sleutel aan te maken onder **Instellingen, Systeem, MCP-server**, en hij antwoordt op `/mcp` op dezelfde poort als de webinterface (bijvoorbeeld `https://192.168.1.10:3443/mcp`). Zonder actieve sleutel antwoordt dat pad met `404`. Clients, certificaten en grenzen staan op [MCP-server](mcp.md).
+De MCP-server heeft geen omgevingsvariabele nodig. Je schakelt hem in door een sleutel aan te maken onder **Instellingen, Integraties, MCP-server**, en hij antwoordt op `/mcp` op dezelfde poort als de webinterface (bijvoorbeeld `https://192.168.1.10:3443/mcp`). Zonder actieve sleutel antwoordt dat pad met `404`. Clients, certificaten en grenzen staan op [MCP-server](mcp.md).
 
 ## VM-back-up via SSH
 
@@ -70,7 +71,7 @@ BombVault maakt back-ups van KVM/libvirt-VM's **zonder enig libvirt-pad te mount
 
 Snelle setup:
 
-1. **Instellingen, Systeem, Host-SSH:** kopieer de getoonde publieke sleutel.
+1. **Instellingen, Integraties, Host-SSH:** kopieer de getoonde publieke sleutel.
 2. Voeg hem toe aan Unraids `/root/.ssh/authorized_keys` (ook op de flash bewaard zodat hij herstarts overleeft).
 3. Klik op **Verbinding testen**.
 
@@ -81,17 +82,18 @@ De template voegt `--add-host=host.docker.internal:host-gateway` toe zodat de co
 
 ## Off-site setup
 
-Stel een off-site replica in op het tabblad **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
+Stel een off-site replica in op de pagina **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
 
 - **Backends:** SMB/CIFS en NFS (mount de share en wijs er een Backup Path naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
-- **Cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Off-site, Cloud-inloggegevens.
-- **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Systeem, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
-- **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis. De lokale repo blijft primair. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.
+- **Gedeelde cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Cloudtoegang, Gedeelde cloud-inloggegevens.
+- **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Integraties, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
+- **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis, bovenop een (meestal lokale) primaire repo. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.
 - **Meerdere off-site doelen per domein:** elk domein kan tegelijk naar meerdere off-site bestemmingen repliceren. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget; ze repliceren allemaal op de off-site planning van dat domein. Een bestaande enkele off-site setup wordt overgenomen als het eerste doel.
-- **Retentie per bron:** het lokale beleid staat op Instellingen, Paden en Opslag; het off-site beleid op Instellingen, Off-site (laat het geheel op nul om off-site snapshots nooit automatisch te trimmen).
+- **Retentie per bron:** het lokale en het off-site beleid staan beide op Instellingen, Bewaarbeleid (laat het off-site beleid geheel op nul om off-site snapshots nooit automatisch te trimmen).
 - **Bandbreedtelimieten:** begrens de restic-upload/downloadsnelheid onder Instellingen, Off-site.
 - **Streaming eerst:** kies onder Instellingen, Off-site de mediaservers (Plex, Jellyfin en Emby zijn voorgeselecteerd op imagenaam), de verzendsnelheid vanaf waar er een als streamend telt, de uploadlimiet tijdens het streamen en hoe lang na een stream de normale limiet terugkomt.
 - **Koude en archiefopslagklasse (S3):** kies voor een native S3 off-site repo een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
+- **Externe primaire repo in plaats van lokaal:** het Backup Path van een domein kan zelf een van de backends hierboven zijn, zonder lokale kopie en zonder replicatiestap. De schakelaar Lokaal/Extern naast het veld en de veiligheidsinstellingen voor bandbreedte, append-only en groeibudget staan bij [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
 
 ## Anomalieën {#anomalies}
 
@@ -108,7 +110,7 @@ Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 
-De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
+De kaart **Instellingen exporteren en importeren** op de pagina Instellingen, Systeem schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
 
 !!! warning "De export kan inloggegevens bevatten"
     Je kiest of je de off-site-, meldings- en MQTT-brokerinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

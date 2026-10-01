@@ -112,6 +112,54 @@ func TestListContainersShowsNoDateWhenTheBackupsAreGone(t *testing.T) {
 	}
 }
 
+// A container with no data folders is backed up as its saved definition alone,
+// which writes no snapshot, so its run dates the entry, installed or not.
+func TestListContainersDatesAConfigOnlyBackupFromItsRun(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{liveContainer("tika")}}
+	h, st := containersRouter(t, d, &fakeResticEngine{})
+	runs := map[string]store.Run{}
+	for _, name := range []string{"tika", "metube"} {
+		tg, err := st.UpsertTarget(store.Target{ContainerName: name})
+		if err != nil {
+			t.Fatal(err)
+		}
+		runs[name] = configOnlyRun(t, st, tg.ID)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	rows := m["containers"].([]any)
+	for name, run := range runs {
+		row := containerRow(t, rows, name)
+		if got, ok := lastBackupOfRow(t, row); !ok || got != *run.FinishedAt {
+			t.Fatalf("%s lastBackup = %v, want the run's %d", name, row["lastBackup"], *run.FinishedAt)
+		}
+		if started, ok := row["lastBackupStarted"].(float64); !ok || int64(started) != run.StartedAt {
+			t.Fatalf("%s lastBackupStarted = %v, want the run's %d", name, row["lastBackupStarted"], run.StartedAt)
+		}
+	}
+}
+
+// A config-only run after the last data backup is the newer backup, since the
+// definition it saved is what a recreate uses.
+func TestListContainersPrefersAConfigOnlyRunNewerThanTheLastSnapshot(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{liveContainer("tika")}}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:tika", "p1"}},
+	}}
+	h, st := containersRouter(t, d, eng)
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "tika"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := configOnlyRun(t, st, tg.ID)
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	row := containerRow(t, m["containers"].([]any), "tika")
+	if got, ok := lastBackupOfRow(t, row); !ok || got != *run.FinishedAt {
+		t.Fatalf("lastBackup = %v, want the config-only run's %d", row["lastBackup"], *run.FinishedAt)
+	}
+}
+
 // A repository that cannot be listed must not read as "never backed up", so
 // the run's own date stands in.
 func TestListContainersKeepsTheRunsDateWhileTheRepositoryIsUnreadable(t *testing.T) {
@@ -183,6 +231,24 @@ func finishedRun(t *testing.T, st *store.Repo, targetID string) store.Run {
 		t.Fatal(err)
 	}
 	if err := st.FinishRun(id, "success", "snap-"+targetID, 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	run, err := st.LastSuccessfulBackup(targetID)
+	if err != nil || run == nil {
+		t.Fatalf("LastSuccessfulBackup: %v %v", run, err)
+	}
+	return *run
+}
+
+// configOnlyRun records a successful backup run that wrote no snapshot, the
+// run a container with no data folders gets, and returns it.
+func configOnlyRun(t *testing.T, st *store.Repo, targetID string) store.Run {
+	t.Helper()
+	id, err := st.StartRun(targetID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(id, "success", "", 0, ""); err != nil {
 		t.Fatal(err)
 	}
 	run, err := st.LastSuccessfulBackup(targetID)

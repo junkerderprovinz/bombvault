@@ -52,8 +52,9 @@ export function PathModeSwitch({
     setState: (s: "idle" | "saving" | "saved" | "error") => void,
     setError: (e: string | null) => void
   ) => Promise<boolean>;
-  /** This row's position among the Storage tab's path rows, for the primary
-   *  remote button and the OffsiteWizard it opens. */
+  /** This row's position among the Storage page's path rows. The switch, the
+   *  Browse button, the primary remote button and the OffsiteWizard it opens
+   *  take it, so rows stacked in one card do not repeat one colour. */
   hueIndex?: number;
 }) {
   const { t } = useT();
@@ -92,6 +93,7 @@ export function PathModeSwitch({
         size="sm"
         select="one"
         equalWidth
+        hueOffset={hueIndex}
         active={remoteMode ? "remote" : "local"}
         onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
       />
@@ -136,6 +138,7 @@ export function PathModeSwitch({
           hostMountRoot={hostMountRoot}
           onChange={onChange}
           placeholder={placeholder}
+          hueIndex={hueIndex}
         />
       )}
       <CompressionSelector

@@ -4,12 +4,12 @@ Lokale sikkerhetskopier beskytter deg mot en tapt container eller en dårlig opp
 
 ## Ekstern replikering
 
-Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne replikaer. Sett et repo per domene på **Innstillinger, Ekstern**-fanen. BombVault replikerer nye øyeblikksbilder dit med `restic copy` på best-effort-basis, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. Det lokale repoet forblir primært.
+Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne replikaer. Sett et repo per domene på **Innstillinger, Off-site**-siden. BombVault replikerer nye øyeblikksbilder dit med `restic copy` på best-effort-basis, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. I denne formen forblir det lokale repoet primært og det eksterne repoet er en replika, men et domenes primære repo trenger slett ikke være lokalt; se [Eksterne primære arkiver](#remote-primary-repositories) nedenfor for å sikkerhetskopiere rett til S3, en rest-server osv. i stedet for å replikere dit.
 
-- **Flere eksterne mål per domene.** Hvert domene (containere, VM-er, flash, config, filsett og ZFS-datasett) kan replikere til flere eksterne destinasjoner samtidig, ikke bare én, så du kan for eksempel beholde en rest-server på en venns boks og en S3-bucket parallelt. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett. Et eksisterende enkelt ekstern-oppsett overføres urørt som det første målet, og hvert mål i et domene replikeres på det domenets eksterne tidsplan.
+- **Flere eksterne mål per domene.** Hvert domene (containere, VM-er, flash, config, filsett og ZFS-datasett) kan replikere til flere eksterne destinasjoner samtidig, ikke bare én, så du kan for eksempel beholde en rest-server på en venns boks og en S3-bucket parallelt. Legg til ekstra mål på Innstillinger, Off-site, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett. Et eksisterende enkelt ekstern-oppsett overføres urørt som det første målet, og hvert mål i et domene replikeres på det domenets eksterne tidsplan.
 - **Ekstern tidsplan per domene** (redigert sammen med hver annen tidsplan på Innstillinger, Tidsplaner): la den stå tom for å replikere etter hver lokale sikkerhetskopi, eller sett en kadens (for eksempel `weekly Sun 03:00`) for å sende eksternt sjeldnere enn du sikkerhetskopierer lokalt. En **Replikér nå**-knapp dekker på-forespørsel-kjøringer.
-- **Ekstern oppbevaring** ligger på Innstillinger, Ekstern så du kan beholde eksterne kopier lenger som et arkiv. La policyen stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder.
-- **Båndbreddegrenser** (Innstillinger, Ekstern) begrenser resticts opplastings-/nedlastingshastighet så replikering ikke metter WAN-et ditt.
+- **Ekstern oppbevaring** ligger på Innstillinger, Oppbevaring så du kan beholde eksterne kopier lenger som et arkiv. La policyen stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder.
+- **Båndbreddegrenser** (Innstillinger, Off-site) begrenser resticts opplastings-/nedlastingshastighet så replikering ikke metter WAN-et ditt.
 - En **replikeringsindikator** viser hvilket domene som replikerer mens det pågår (på siden sin og på Dashboardet). Det er en aktiv indikator, ikke en prosentbjelke, fordi `restic copy` ikke eksponerer noen maskinlesbar fremdrift.
 
 !!! note "Gjenopprett rett fra ekstern"
@@ -17,7 +17,7 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 
 ## Eksterne primære arkiver {#remote-primary-repositories}
 
-Et domenes sti for sikkerhetskopi (Innstillinger, Stier og lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `b2:...`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
+Et domenes sti for sikkerhetskopi (Innstillinger, Lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `b2:...`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
 
 Hvert av de seks stifeltene (Containere, Virtuelle maskiner, Flash, Konfigurasjon, Filer, ZFS-datasett) har en bryter **Lokal / Ekstern** rett ved siden av:
 
@@ -31,7 +31,15 @@ Hvert av de seks stifeltene (Containere, Virtuelle maskiner, Flash, Konfigurasjo
 Ingenting av dette er påkrevd: en håndskrevet ekstern sti uten lagrede sikkerhetsinnstillinger sikkerhetskopierer nøyaktig som før (ubegrenset båndbredde, kan beskjæres, ingen budsjettalarm). Sikkerhetsdialogen finnes for når du vil ha den samme beskyttelsen som en off-site-kopi får, uten å måtte opprette en off-site-destinasjon bare for det.
 
 !!! note "Sky- og REST-påloggingsdetaljer deles"
-    Et eksternt primærarkiv godkjennes med de samme S3-/REST-detaljene som er satt opp under Innstillinger, Off-site, Skypåloggingsdetaljer. Det finnes ikke et eget lager for påloggingsdetaljer til primære arkiver.
+    Et eksternt primærarkiv godkjennes med de samme S3-/REST-detaljene som er satt opp under Innstillinger, Skytilgang, Delt skylegitimasjon. Det finnes ikke et eget lager for påloggingsdetaljer til primære arkiver.
+
+### SMB og WebDAV uten vertsmontering {#smb-webdav}
+
+Innstillinger, Skytilgang, rclone har et skjema for en Windows- eller Samba-deling og for en WebDAV-server (Nextcloud, ownCloud, SharePoint eller en annen). Fyll inn et kort navn, verten og delingen (SMB) eller URL-en og servertypen (WebDAV), brukeren og passordet, så skriver BombVault rclone-seksjonen for deg. rclone tilslører selv passordet før det lagres; legger du til en destinasjon med et navn som finnes fra før, erstatter den den seksjonen i stedet for å legge til en ny.
+
+Skjemaet svarer med den ferdige plasseringen, for eksempel `rclone:nas:backups`. Sett den inn i en sikkerhetskopisti eller et eksternt mål og legg til en undermappe om du vil ha en (`rclone:nas:backups/bombvault`). Delingen er det første leddet i stien, ikke en del av navnet.
+
+Dette er en bedre vei enn å montere delingen på Unraid: restic fraråder å ha et repository på en montert CIFS-deling, og her monteres ingenting. NFS er ikke med i skjemaet fordi verken restic eller rclone har en NFS-backend; for NFS monterer du eksporten på verten og peker en sikkerhetskopisti mot den.
 
 ## Uforanderlig (append-only) ekstern
 
@@ -66,23 +74,23 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 
 ## Koble instanser sammen {#pairing}
 
-Mottakere, hentekilder, Fleet-visningen og Mesh-ekstern snakker alle med en annen BombVault. De gjør det som medlemmer av én paringsgruppe, og en instans blir med i gruppen med tolv ord.
+Mottakere, hentekilder, Instanser-siden og Mesh-ekstern snakker alle med en annen BombVault. De gjør det som medlemmer av én paringsgruppe, og en instans blir med i gruppen med tolv ord.
 
-Åpne **Instanser → Paring** på den første instansen og trykk på **Generer frase**. Tolv ord dukker opp. Åpne den samme fanen på hver av de andre instansene, trykk på **Angi frase** og lim inn eller tast dem inn. Et ord som ikke finnes på listen, blir navngitt med plasseringen sin mens du taster, og det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp før noe blir paret. Generer frasen på bare én instans: to instanser som begge genererer en frase, danner to atskilte grupper. Melder ingen seg i løpet av et minutt, viser fanen hvordan du forlater den overflødige gruppen og blir med i den andre. Paring krever et innloggingspassord på hver instans, fordi ordene åpner sikkerhetskopiene til alle instansene i gruppen. Frasen kan vises igjen senere når du har skrevet inn det passordet. **Forlat gruppen** tar en instans ut igjen.
+Åpne **Innstillinger → Paring** på den første instansen og trykk på **Generer frase** i paringskortene. Tolv ord dukker opp i et vindu med en **Kopier**-knapp. Åpne det samme stedet på hver av de andre instansene, trykk på **Angi frase** og lim inn eller tast dem inn, eller trykk på **Lim inn** i det vinduet. Et ord som ikke finnes på listen, blir navngitt med plasseringen sin mens du taster, og det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp før noe blir paret. Generer frasen på bare én instans: to instanser som begge genererer en frase, danner to atskilte grupper. Melder ingen seg i løpet av et minutt, tilbyr fanen to veier ut: vis ordene på nytt for å skrive dem inn der borte, eller skriv inn ordene til den andre instansen og bli med i gruppen dens i ett steg. Paring fungerer uten innloggingspassord, men sett et: uten det kan alle som kan åpne dette webgrensesnittet, lese ordene og via gruppen få tak i restic-passordet til hver instans i gruppen. Paringskortet sier fra om dette til et passord er satt. Med passord ber en ny visning av frasen om det. **Forlat gruppen** tar en instans ut igjen.
 
 Alle som kjenner ordene kan bli med i gruppen, så behandle dem som et passord.
 
-**Hvordan medlemmene når hverandre.** På samme nettverk finner de hverandre via multicast og snakker direkte sammen. Instanser på ulike nettverk går gjennom et relé, valgt på samme fane:
+**Hvordan medlemmene når hverandre.** Hver instans lærer sin egen adresse på nettverket fra nettleseren din i det du logger inn, vist i relaykortet som **Denne instansen i nettverket ditt**; rett den der hvis en revers-proxy eller en uvanlig port ligger foran. På samme nettverk kunngjør medlemmene den adressen via multicast og snakker direkte sammen, og der multicast ikke kommer gjennom et containernettverk, som Dockers standard bridge-nettverk, søker en instans i stedet gjennom sitt eget subnett etter de andre med et signert kall bare et gruppemedlem kan svare på, så paringen likevel er ferdig på sekunder uten relay. Dukker det ikke opp noe, tar **Finner du den ikke?** under paringskortet imot en adresse for hånd, for et annet subnett eller en uvanlig port. Instanser på ulike nettverk går gjennom et relay, valgt på samme fane:
 
-- **Prosjektrelé** (standarden): `relay.halleluja.design`, det samme reléet som KnightLoader også bruker. Ingenting å sette opp.
-- **Eget relé**: containeren **BombVault Relay** fra Unraid Community Apps, eller en av instansene dine som allerede er tilgjengelig utenfra med **Fungere som relé** slått på. Den instansen svarer da på `/relay/connect` på sin egen adresse, bak revers-proxyen og sertifikatet den allerede har, og slipper bare inn din gruppe. Skriv inn reléets adresse på hver instans som skal bruke det.
-- **Ingen relé**: medlemmer finner bare hverandre på samme nettverk.
+- **Prosjektrelay** (standarden): `relay.halleluja.design`, det samme relayet som KnightLoader også bruker. Ingenting å sette opp.
+- **Eget relay**: containeren **BombVault Relay** fra Unraid Community Apps, eller en av instansene dine som allerede er tilgjengelig utenfra med **Fungere som relay** slått på. Den instansen svarer da på `/relay/connect` på sin egen adresse, bak revers-proxyen og sertifikatet den allerede har, og slipper bare inn din gruppe. Skriv inn relayets adresse på hver instans som skal bruke det.
+- **Ingen relay**: medlemmer finner hverandre automatisk på samme nettverk, og ingen andre steder.
 
-**Hva reléet ser.** Hvert kall mellom medlemmer er forseglet med AES-256-GCM under en nøkkel utledet fra de tolv ordene, og den nøkkelen forlater aldri instansene dine. Reléet får vite en hash som grupperer forbindelsene, hvilken instans en melding er til, hvor stor den er og når den passerer. Et direkte kall på det lokale nettverket er forseglet på samme måte og signert i tillegg, så ingenting avhenger av det selvsignerte sertifikatet en instans tilbyr.
+**Hva relayet ser.** Hvert kall mellom medlemmer er forseglet med AES-256-GCM under en nøkkel utledet fra de tolv ordene, og den nøkkelen forlater aldri instansene dine. Relayet får vite en hash som grupperer forbindelsene, hvilken instans en melding er til, hvor stor den er og når den passerer. Et direkte kall på det lokale nettverket er forseglet på samme måte og signert i tillegg, så ingenting avhenger av det selvsignerte sertifikatet en instans tilbyr.
 
-**Hva som går over gruppen.** Fleet-poengkortet, en forespørsel om å sjekke ett domene nå, Mesh-tilbud om ekstern kopiering, og det en mottaker eller hentekilde trenger: den andre instansens repository-adresser og dens restic-passord. Sikkerhetskopidata går aldri denne veien, det går fortsatt rett til restic-backendene. Heller ikke APP_KEY: restic-passordet åpner bare den instansens repositorier og ingenting annet, verken lagrede hemmeligheter, økter eller gjenopprettingskoder.
+**Hva som går over gruppen.** Poengkortene på Instanser-siden, en forespørsel om å sjekke ett domene nå, Mesh-tilbud om ekstern kopiering, og det en mottaker eller hentekilde trenger: den andre instansens repository-adresser og dens restic-passord. Sikkerhetskopidata går aldri denne veien, det går fortsatt rett til restic-backendene. Heller ikke APP_KEY: restic-passordet åpner bare den instansens repositorier og ingenting annet, verken lagrede hemmeligheter, økter eller gjenopprettingskoder.
 
-**Oppføringer fra før paringen.** Fleet-motparter lagt til med et fleet-token, og mottakere og hentekilder satt opp med den andre instansens APP_KEY, blir stående etter oppdateringen og merkes **Par på nytt**. Mottakere og hentekilder fortsetter å virke: ved første oppstart erstatter BombVault hver lagrede APP_KEY med restic-passordet utledet fra den. Par begge instansene, rediger så oppføringen og velg instansen dens. En Fleet-motpart tar over sin gamle rad så snart en instans med samme navn dukker opp i gruppen.
+**Oppføringer fra før paringen.** Instanser lagt til med et fleet-token, og mottakere og hentekilder satt opp med den andre instansens APP_KEY, blir stående etter oppdateringen og merkes **Par på nytt**. Mottakere og hentekilder fortsetter å virke: ved første oppstart erstatter BombVault hver lagrede APP_KEY med restic-passordet utledet fra den. Par begge instansene, rediger så oppføringen og velg instansen dens. En slik instans tar over sitt gamle kort så snart en instans med samme navn dukker opp i gruppen.
 
 Det eneste stedet som fortsatt tar imot en APP_KEY for hånd, er [Gjenopprett fra et annet BombVault-repo](#restore-from-another-bombvault-repo), for tilfellet der den andre instansen er borte og ikke lenger kan svare i noen gruppe.
 
@@ -110,7 +118,7 @@ Over beskrives delene. Her er ett komplett oppsett med ekte verdier, for deler e
 
 To maskiner: **TOWER** kjører containerne og sender sikkerhetskopiene, **VAULT** tar imot dem og håndhever uforanderligheten. Bytt ut med dine egne navn, adresser og delingsstier.
 
-**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Eksternt → veiledet oppsett*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
+**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Off-site → veiledet oppsett*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
 
     La `--append-only` bli stående i OPTIONS-feltet. Det er hele poenget: uten det er VAULT en vanlig deling igjen.
 
@@ -128,7 +136,7 @@ Første ledd i stien er htpasswd-brukeren, det andre er arkivet. Skriv inn den g
 | **IKKE beskyttet** | VAULT godtok en sletting. `--append-only` mangler eller er fjernet. |
 | **uavklart** | Verken eller. Som regel er adressen ikke den restic selv bruker, eller legitimasjonen er endret. Ingenting registreres, og ingen varsling utløses. |
 
-**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
+**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Paring → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
 
 !!! warning "Plasseringen er en sti **inne i** containeren, skrevet relativt til vertsmonteringen"
     Skriv inn `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kjører i en container der vertens `/mnt` er montert et annet sted; en absolutt vertssti finnes ikke der. Limer du inn en, forteller BombVault deg nå den relative stien du skal bruke i stedet.
@@ -152,7 +160,7 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 
 ### Gjenopprett fra et annet BombVault-repo {#restore-from-another-bombvault-repo}
 
-Et separat kort på **Gjenoppretting**-fanen åpner et *annet* BombVault-instans' repo (en deling montert under `/mnt`, eller en fjern-URL) med **den instansens `APP_KEY`**, i en engangs, skrivebeskyttet økt. Bla gjennom containerne, VM-ene og filsettene lagret der, velg et øyeblikksbilde og gjenopprett det, og det gjenopprettede objektet blir en normal lokal container, VM eller filsett. Ingenting skrives noensinne til det andre repoet, og dine egne sikkerhetskopiinnstillinger forblir urørte (økten lever i minnet og utløper av seg selv). Å flytte en container fra server A til server B betyr ikke lenger å peke om repo-innstillingene dine og reversere dem etterpå. Live server-til-server-føderasjon er eksplisitt utenfor omfang; dette er en bevisst engangs-henting.
+Et separat kort på **Gjenoppretting**-fanen åpner et *annet* BombVault-instans' repo (en deling montert under `/mnt`, eller en fjern-URL) med **den instansens `APP_KEY`**, i en engangs, skrivebeskyttet økt. Bla gjennom containerne, VM-ene og filsettene lagret der, velg et øyeblikksbilde og gjenopprett det, og det gjenopprettede objektet blir en normal lokal container, VM eller filsett. Ingenting skrives noensinne til det andre repoet, og dine egne sikkerhetskopiinnstillinger forblir urørte (økten lever i minnet og utløper av seg selv). Å flytte en container fra server A til server B betyr ikke lenger å peke om repo-innstillingene dine og reversere dem etterpå. Dette kortet er for én gang: det åpner en økt, gjenoppretter det du velger, og glemmer den andre instansen. Vil du heller ha en fast ordning, der denne boksen etter en tidsplan henter en annen instans' øyeblikksbilder inn i sitt eget repository, er det fanen **Henting** på siden **Instanser**.
 
 ## Gjenopprettingssett for krypteringsnøkkel
 
@@ -165,6 +173,15 @@ Ett klikk laster ned **hovednøkkelen**, det **utledede restic-passordet** og de
 
 !!! warning "Det nyeste snapshotet er ikke alltid det som skal gjenopprettes"
     Siden restic 0.17 viser `restic snapshots` størrelsen på hvert snapshot. Etter datatap kan det nyeste snapshotet være det tømte, så ikke gjenopprett et snapshot som er mye mindre enn de før det. Etter løsepengevirus kan det være det krypterte i vanlig størrelse. Kjører BombVault fortsatt, se først på siden **Avvik**: den nevner den siste gode sikkerhetskopien. En gjenoppretting trenger ingen avviksdata fra BombVault, og oppbevaringspausen beholder bare flere snapshots.
+
+### Forsegle settet
+
+Har du slått på age-kryptering for de vanlige eksportene (Innstillinger), forsegles settet også med den og lastes ned som `bombvault-recovery-kit.md.age`. Det er ASCII-armored i stedet for binært, så det er fortsatt vanlig tekst: å lime det inn i en passordbehandler eller skrive det ut fungerer akkurat som før, innholdet kan bare ikke leses uten nøkkelen din.
+
+!!! warning "Ikke oppbevar age-nøkkelen i settet"
+    Du trenger den **private** age-nøkkelen din for å åpne et forseglet sett. Oppbevar den et sted som ikke er avhengig av selve settet, ellers har du to ting å gjenopprette i stedet for én. Forsegling lønner seg når settet ligger et sted du ikke har full kontroll over (en delt passordbehandler, notater i skyen, en utskrift på et kontor); et sett i ditt eget safe er allerede beskyttet av safet.
+
+    Med kryptering på og ingen brukbar mottaker satt opp nektes nedlastingen helt. BombVault faller aldri tilbake på å gi ut hovednøkkelen i klartekst.
 
 ### Når settet ikke er for hånden
 

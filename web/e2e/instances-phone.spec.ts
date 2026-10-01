@@ -297,7 +297,7 @@ const ADD_LABEL: Record<Lane, string> = {
   pull: "Quelle hinzufügen",
 };
 
-const EMPTY_LABEL: Record<Lane, string> = { ...ADD_LABEL, fleet: "Zur Kopplung" };
+const EMPTY_LABEL: Record<Lane, string> = { ...ADD_LABEL, fleet: "Kopplung" };
 
 async function openLane(page: Page, width: number, lane: Lane, staged: Staged = {}): Promise<void> {
   await stage(page, staged);
@@ -459,7 +459,7 @@ for (const width of [320, 360]) {
   test(`empty lanes @ ${width}px: nothing pans or clips`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openLane(page, width, "receiver", { empty: true });
-    for (const [lane, tab] of [["receiver", "Empfänger"], ["fleet", "Flotte"], ["pull", "Holen"]] as const) {
+    for (const [lane, tab] of [["receiver", "Empfänger"], ["fleet", "Instanzen"], ["pull", "Holen"]] as const) {
       await page.getByRole("tab", { name: tab }).click();
       await expect(page.getByRole("button", { name: EMPTY_LABEL[lane] })).toBeVisible();
       await settle(page);

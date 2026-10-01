@@ -198,7 +198,7 @@ export function SettingsPortabilityCard({
           disabled={busy}
           busy={exporting}
           title={exporting ? t("settingsIO.exporting") : undefined}
-          className={`self-start${shake.export ? " glim-shake" : ""}`}
+          className={`glim-btn-wrap self-start${shake.export ? " glim-shake" : ""}`}
         />
       </div>
 
@@ -227,7 +227,7 @@ export function SettingsPortabilityCard({
           hueIndex={hueIndex}
           busy={importBusy === "reading"}
           title={importBusy === "reading" ? t("settingsIO.reading") : undefined}
-          className={`self-start${shake.chooseFile ? " glim-shake" : ""}`}
+          className={`glim-btn-wrap self-start${shake.chooseFile ? " glim-shake" : ""}`}
         />
 
         {/* Preview + confirmation before anything is written. */}
@@ -275,7 +275,7 @@ export function SettingsPortabilityCard({
             <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("settingsIO.confirmWarning")}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 label={t("settingsIO.cancel")}
           labelKey="settingsIO.cancel"
@@ -328,7 +328,7 @@ export function SettingsPortabilityCard({
           disabled={busy}
           busy={diagBusy}
           title={diagBusy ? t("diagnostics.busy") : undefined}
-          className={`self-start${shake.diagnostics ? " glim-shake" : ""}`}
+          className={`glim-btn-wrap self-start${shake.diagnostics ? " glim-shake" : ""}`}
         />
       </div>
     </Card>

@@ -4,11 +4,11 @@ Local backups protect you from a lost container or a bad update. Off-site replic
 
 ## Off-site replication
 
-Keep the fast local backup and add one or more off-site replicas. Set a repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. In this shape the local repo stays primary and the off-site repo is a replica — but a domain's primary repo does not have to be local at all; see [Remote primary repositories](#remote-primary-repositories) below for backing up straight to S3/rest-server/etc. instead of replicating to it.
+Keep the fast local backup and add one or more off-site replicas. Set a repo per domain on the **Settings, Off-site** page. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. In this shape the local repo stays primary and the off-site repo is a replica, but a domain's primary repo does not have to be local at all; see [Remote primary repositories](#remote-primary-repositories) below for backing up straight to S3/rest-server/etc. instead of replicating to it.
 
 - **Multiple off-site targets per domain.** Each domain (containers, VMs, flash, config, file sets and ZFS datasets) can replicate to several off-site destinations at once, not just one, so you can keep, for example, a rest-server on a friend's box and an S3 bucket in parallel. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget. An existing single off-site setup is carried over untouched as the first target, and every target of a domain replicates on that domain's off-site schedule.
 - **Per-domain off-site schedule** (edited alongside every other schedule on Settings, Schedules): leave it blank to replicate after every local backup, or set a cadence (for example `weekly Sun 03:00`) to ship off-site less often than you back up locally. A **Replicate now** button covers on-demand runs.
-- **Off-site retention** lives on Settings, Off-site so you can keep off-site copies longer as an archive. Leave the policy all-zero to never auto-trim off-site snapshots.
+- **Off-site retention** lives on Settings, Retention so you can keep off-site copies longer as an archive. Leave the policy all-zero to never auto-trim off-site snapshots.
 - **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
 - A **replication indicator** shows which domain is replicating while it runs (on its page and the Dashboard). It is an active indicator, not a percentage bar, because `restic copy` exposes no machine-readable progress.
 
@@ -17,7 +17,7 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 
 ## Remote primary repositories {#remote-primary-repositories}
 
-A domain's Backup Path (Settings, Paths & Storage) is not limited to a local folder — point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
+A domain's Backup Path (Settings, Storage) is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
 
 Each of the six path fields (Containers, VMs, Flash, Config, Files, ZFS datasets) has an inline **Local / Remote** switch right next to it:
 
@@ -31,11 +31,11 @@ Each of the six path fields (Containers, VMs, Flash, Config, Files, ZFS datasets
 None of this is required: a hand-typed remote path with no saved safety settings backs up exactly as it always has (unlimited bandwidth, prunable, no budget alarm) — the safety dialog is there for when you want the same protections an off-site copy gets, without needing a separate off-site destination just to get them.
 
 !!! note "Cloud/REST credentials are shared"
-    A remote primary authenticates with the same S3/REST credentials configured under Settings, Off-site, Cloud credentials — there is no separate credential store for primary repos.
+    A remote primary authenticates with the same S3/REST credentials configured under Settings, Cloud access, Shared cloud credentials; there is no separate credential store for primary repos.
 
 ### SMB and WebDAV without a host mount {#smb-webdav}
 
-Settings, Off-site, rclone has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding a destination with a name that already exists replaces that section instead of adding a second one.
+Settings, Cloud access, rclone has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding a destination with a name that already exists replaces that section instead of adding a second one.
 
 The form answers with the finished location, for example `rclone:nas:backups`. Put that into a Backup Path or an off-site destination and add a sub-folder if you want one (`rclone:nas:backups/bombvault`). The share is the first path segment, not part of the name.
 
@@ -74,23 +74,23 @@ The **ransomware-protection scorecard** on the Dashboard rolls this up into a gr
 
 ## Pairing instances {#pairing}
 
-Receivers, pull sources, the Fleet tab and Mesh off-site all talk to another BombVault. They do it as members of one pairing group, and an instance joins the group with twelve words.
+Receivers, pull sources, the Instances page and Mesh off-site all talk to another BombVault. They do it as members of one pairing group, and an instance joins the group with twelve words.
 
-On the first instance open **Instances → Pairing** and press **Generate phrase**. Twelve words appear. On every other instance open the same tab, press **Enter phrase** and paste or type them. A word that is not on the list is named with its position as you type, and the last word carries a checksum, so a mistyped or swapped word is caught before anything pairs. Generate the phrase on one instance only: two instances that both generate one form two separate groups. If nobody shows up for a minute, the tab says how to leave the extra group and join the other one. Pairing needs a login password on each instance, because the words open the backups of every instance in the group. The phrase can be shown again later once you enter that password. **Leave group** takes an instance out again.
+On the first instance open **Settings → Pairing** and press **Generate phrase** in the pairing cards. Twelve words appear in a window with a **Copy** button. On every other instance open the same place, press **Enter phrase** and paste or type them, or press **Paste** in that window. A word that is not on the list is named with its position as you type, and the last word carries a checksum, so a mistyped or swapped word is caught before anything pairs. Generate the phrase on one instance only: two instances that both generate one form two separate groups. If nobody shows up for a minute, the tab offers two ways out: show the words again to enter them over there, or enter the other instance's words and join its group in one step. Pairing works without a login password, but set one: without it anyone who can open the web interface can read the words and, through the group, get the restic password of every instance in it. The pairing card says so until a password is set. With a password, showing the phrase again asks for it. **Leave group** takes an instance out again.
 
 Anyone who knows the words can join the group, so treat them like a password.
 
-**How members reach each other.** On the same network they find each other by multicast and talk directly. Instances on different networks go through a relay, picked on the same tab:
+**How members reach each other.** Each instance learns its own address on the network from your browser the moment you sign in, shown in the relay card as **This instance on your network**; correct it there if a reverse proxy or an unusual port sits in front. On the same network members announce that address by multicast and talk directly, and where multicast cannot cross a container network, such as Docker's default bridge, an instance instead searches its own subnet for the others with a signed call only a group member can answer, so pairing still finishes in seconds without a relay. If nothing turns up, **Can't find it?** under the pairing card takes one address by hand, for another subnet or a non-standard port. Instances on different networks go through a relay, picked on the same tab:
 
 - **Project relay** (the default): `relay.halleluja.design`, the relay KnightLoader uses as well. Nothing to set up.
 - **Own relay**: the **BombVault Relay** container from the Unraid Community Apps, or one of your instances that is already reachable from outside with **Serve as relay** switched on. That instance then answers at `/relay/connect` on its own address, behind the reverse proxy and certificate it already has, and lets in your group only. Enter the relay's address on every instance that should use it.
-- **No relay**: members find each other on the same network only.
+- **No relay**: members find each other automatically on the same network, and nowhere else.
 
 **What the relay sees.** Every call between members is sealed with AES-256-GCM under a key derived from the twelve words, and that key never leaves your instances. The relay learns a hash that groups the connections, which instance a message is for, how big it is and when it passes. A direct call on the local network is sealed the same way and signed as well, so nothing depends on the self-signed certificate an instance serves.
 
-**What travels over the group.** The Fleet scorecard, a request to check one domain now, Mesh off-site offers, and what a receiver or pull source needs: the other instance's repository locations and its restic password. Backup data never does; it still goes straight to the restic backends. Nor does the APP_KEY: the restic password opens that instance's repositories and nothing else, not its stored secrets, sessions or recovery codes.
+**What travels over the group.** The scorecards on the Instances page, a request to check one domain now, Mesh off-site offers, and what a receiver or pull source needs: the other instance's repository locations and its restic password. Backup data never does; it still goes straight to the restic backends. Nor does the APP_KEY: the restic password opens that instance's repositories and nothing else, not its stored secrets, sessions or recovery codes.
 
-**Entries from before pairing.** Fleet peers added with a fleet token, and receivers and pull sources set up with the other instance's APP_KEY, stay after the update and are marked **Pair again**. Receivers and pull sources keep working: at its first start BombVault replaces each stored APP_KEY with the restic password derived from it. Pair both instances, then edit the entry and choose its instance. A Fleet peer takes its old row over as soon as an instance with the same name shows up in the group.
+**Entries from before pairing.** Instances added with a fleet token, and receivers and pull sources set up with the other instance's APP_KEY, stay after the update and are marked **Pair again**. Receivers and pull sources keep working: at its first start BombVault replaces each stored APP_KEY with the restic password derived from it. Pair both instances, then edit the entry and choose its instance. When an instance with the same name shows up in the group, it takes that old card over.
 
 The one place that still takes an APP_KEY by hand is [Restore from another BombVault repo](#restore-from-another-bombvault-repo), for the case where the other instance is gone and cannot answer in a group.
 
@@ -136,7 +136,7 @@ The first path segment is the htpasswd user, the second is the repository. Enter
 | **NOT protected** | VAULT accepted a delete. `--append-only` is missing or was removed. |
 | **inconclusive** | Neither. Usually the URL is not the one restic itself uses, or the credentials changed. Nothing is recorded and no alert fires. |
 
-**4. On VAULT, watch what arrives.** Pair the two boxes ([Pairing instances](#pairing)), turn on *Settings → Receiver*, open the **Receiver** tab and register the repository read-only with TOWER as the sending instance.
+**4. On VAULT, watch what arrives.** Pair the two boxes ([Pairing instances](#pairing)), turn on *Settings → Pairing → Receiver*, open the **Receiver** tab and register the repository read-only with TOWER as the sending instance.
 
 !!! warning "The location is a path **inside** the container, written relative to the host mount"
     Enter `user/appdata/rest-server/bombvault-containers/containers`, **not** `/mnt/user/appdata/...`. BombVault runs in a container, where the host's `/mnt` is mounted elsewhere; an absolute host path does not exist inside it. If you paste one, BombVault now tells you the relative path to use instead.

@@ -20,17 +20,21 @@ const FIELDS: { key: keyof IdleSettings; label: TranslationKey; hint?: Translati
 export function IdleCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [cfg, setCfg] = useState<IdleSettings | null>(null);
+  const [failed, setFailed] = useState(false);
   const cfgRef = useRef<IdleSettings | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     getIdle()
       .then((res) => {
-        if (!res.ok || !res.settings) return;
+        if (!res.ok || !res.settings) {
+          setFailed(true);
+          return;
+        }
         cfgRef.current = res.settings;
         setCfg(res.settings);
       })
-      .catch(() => undefined);
+      .catch(() => setFailed(true));
   }, []);
 
   async function save() {
@@ -66,7 +70,10 @@ export function IdleCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
     }, DEBOUNCE_MS);
   }
 
-  if (!cfg) return null;
+  if (failed) return null;
+  // Drawn before its numbers arrive, so a search result that opens this page
+  // finds the card to mark.
+  if (!cfg) return <Card title={t("idle.title")} hint={t("idle.hint")} hueIndex={hueIndex}>{null}</Card>;
 
   return (
     <Card title={t("idle.title")} hint={t("idle.hint")} hueIndex={hueIndex}>

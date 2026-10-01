@@ -330,7 +330,6 @@ export function Config() {
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("config.title")}</PageTitle>
-      <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
 
       {settings && (
         <ConfigSettingsCard t={t} settings={settings} setSettings={(u) => setSettings((prev) => (prev ? u(prev) : prev))} hueIndex={0} />
@@ -347,7 +346,12 @@ export function Config() {
           </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-          <div className="flex justify-end">
+          {/* The page's heading is only read out, so the learning caption sits
+              with the backups it counts. */}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <span className="me-auto">
+              <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+            </span>
             <ConfigBackupButton
               t={t}
               onBackedUp={reload}

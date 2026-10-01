@@ -22,6 +22,10 @@ type fleetStatusResponse struct {
 	InstanceName string              `json:"instanceName"`
 	Version      string              `json:"version"`
 	Domains      []DomainStatusEntry `json:"domains"`
+	// DirectURL is where the answering instance takes direct calls, so a
+	// poll over the relay doubles as the address exchange: whichever side
+	// calls the other first hands its own address along for free.
+	DirectURL string `json:"directUrl,omitempty"`
 }
 
 // syncFleetPeers gives every reachable member a Fleet row. A row from before

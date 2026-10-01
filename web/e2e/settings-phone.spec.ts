@@ -1,14 +1,15 @@
 // Settings at phone width, with a filled instance staged at the route layer: a
 // fresh harness database has every domain off and nothing configured, which
-// hides most of the page. On the phones, per tab: the 24px card rhythm, the
-// eight tabs four over four, nothing panning or reaching past the viewport or
-// its card, no stray backtick, and every control big enough to hit. Then the
-// arrangements that change on a phone: target and credential rows put their
-// actions under the name, repository and passkey rows wrap instead of cutting,
-// the every-N-days field keeps three digits clear of its steppers, and the MCP
-// card's confirmations come up as a sheet. On the desktop: the 40px rhythm and
-// separate tabs of one width in even rows, hugging them. German, because its
-// labels run longest; advanced mode on, so every expert control is there too.
+// hides most of the page. On the phones, per page: the 24px card rhythm, the
+// rail of pages as glyphs beside the content, nothing panning or reaching past
+// the viewport or its card, no stray backtick, and every control big enough to
+// hit. Then the arrangements that change on a phone: target and credential
+// rows put their actions under the name, repository and passkey rows wrap
+// instead of cutting, the every-N-days field keeps three digits clear of its
+// steppers, and the MCP card's confirmations come up as a sheet. On the
+// desktop: the 40px rhythm and the rail with its names once there is room.
+// German, because its labels run longest; advanced mode on, so every expert
+// control is there too.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -301,14 +302,20 @@ const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
   scheduleCadence,
 });
 
-const TABS = [
+const PAGES = [
   ["general", "Allgemein"],
   ["look", "Aussehen"],
-  ["storage", "Pfade & Speicher"],
+  ["storage", "Speicher"],
+  ["retention", "Aufbewahrung"],
   ["schedules", "Zeitpläne"],
+  ["containers", "Container"],
   ["offsite", "Off-site"],
+  ["cloud", "Cloud-Zugänge"],
   ["notifications", "Benachrichtigungen"],
   ["integrity", "Integrität"],
+  ["security", "Sicherheit"],
+  ["pairing", "Kopplung"],
+  ["integrations", "Anbindungen"],
   ["system", "System"],
 ] as const;
 
@@ -372,58 +379,70 @@ async function settle(page: Page): Promise<void> {
   );
 }
 
-async function openTab(page: Page, width: number, tab: string, name: string): Promise<void> {
+function rail(page: Page) {
+  return page.getByRole("navigation", { name: "Einstellungsseiten" });
+}
+
+async function openPage(page: Page, width: number, id: string, name: string): Promise<void> {
   await stage(page);
   await page.setViewportSize({ width, height: 800 });
-  await page.goto(`/settings#${tab}`);
-  await expect(page.getByRole("tab", { name, exact: true, selected: true })).toBeVisible();
-  // Each tab loads its cards' data on mount; the last staged answer to land
-  // differs per tab, so the page is given its requests and its animations.
+  await page.goto(`/settings/${id}`);
+  await expect(rail(page).getByRole("link", { name, exact: true })).toHaveAttribute("aria-current", "page");
+  // Each page loads its cards' data on mount; the last staged answer to land
+  // differs per page, so the page is given its requests and its animations.
   await page.waitForLoadState("networkidle");
   await settle(page);
 }
 
-// The page root holds the sr-only heading, the tab strip and the tab panels;
-// the panels hold the cards. Root and panels both carry the rhythm.
+// The content column holds the sr-only heading, the search and the page
+// panel, which holds the cards. Column and panel both carry the rhythm.
 async function gaps(page: Page): Promise<string[]> {
   return page
     .getByRole("heading", { level: 1 })
     .locator("xpath=..")
-    .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[2]).rowGap]);
+    .evaluate((root) => [
+      getComputedStyle(root).rowGap,
+      getComputedStyle(root.querySelector(":scope > [data-settings-page]")!).rowGap,
+    ]);
 }
 
-async function tabRows(page: Page): Promise<{ perRow: number[] }> {
-  return page.getByRole("tablist", { name: "Einstellungen" }).evaluate((strip) => {
-    const boxes = [...strip.querySelectorAll('[role="tab"]')].map((tab) => tab.getBoundingClientRect());
-    const tops = [...new Set(boxes.map((b) => Math.round(b.top)))];
+/** The rail's tiles: how many, how many end below the window, the smallest side. */
+async function railTiles(page: Page): Promise<{ tiles: number; belowWindow: number; smallest: number }> {
+  return rail(page).evaluate((nav) => {
+    const boxes = [...nav.querySelectorAll("a")].map((a) => a.getBoundingClientRect());
     return {
-      perRow: tops.map((top) => boxes.filter((b) => Math.round(b.top) === top).length),
+      tiles: boxes.length,
+      belowWindow: boxes.filter((b) => b.bottom > window.innerHeight + 1).length,
+      smallest: Math.round(Math.min(...boxes.flatMap((b) => [b.width, b.height]))),
     };
   });
 }
 
-async function tabFills(page: Page): Promise<{ strip: string; tabsWithoutFill: number }> {
-  return page.getByRole("tablist", { name: "Einstellungen" }).evaluate((strip) => ({
-    strip: getComputedStyle(strip).backgroundColor,
-    tabsWithoutFill: [...strip.querySelectorAll('[role="tab"]')].filter(
-      (tab) => getComputedStyle(tab).backgroundColor === "rgba(0, 0, 0, 0)",
-    ).length,
-  }));
+/** How many tiles show their name, and which shown names do not fit. */
+async function railNames(page: Page): Promise<{ shown: number; cut: string[] }> {
+  return rail(page).evaluate((nav) => {
+    const labels = [...nav.querySelectorAll("a > span")] as HTMLElement[];
+    const shown = labels.filter((l) => l.getBoundingClientRect().width > 1);
+    return {
+      shown: shown.length,
+      cut: shown
+        .filter((l) => l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1)
+        .map((l) => l.textContent ?? ""),
+    };
+  });
 }
 
 for (const width of [320, 360]) {
-  for (const [tab, name] of TABS) {
-    test(`settings ${tab} @ ${width}px: nothing pans, clips or is too small to tap`, async ({ page }, testInfo) => {
+  for (const [id, name] of PAGES) {
+    test(`settings ${id} @ ${width}px: nothing pans, clips or is too small to tap`, async ({ page }, testInfo) => {
       test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
-      await openTab(page, width, tab, name);
+      await openPage(page, width, id, name);
 
-      // Soft, so one run reports every check a tab fails rather than the first.
+      // Soft, so one run reports every check a page fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
-      expect.soft((await tabRows(page)).perRow, "the eight tabs stay on one row").toEqual([8]);
-      expect.soft(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
-        strip: "rgba(0, 0, 0, 0)",
-        tabsWithoutFill: 0,
-      });
+      const tiles = await railTiles(page);
+      expect.soft(tiles.tiles, "a tile for every page").toBe(PAGES.length);
+      expect.soft(tiles.smallest, "the smallest side of a tile").toBeGreaterThanOrEqual(24);
 
       const layout = await page.evaluate(() => {
         const main = document.querySelector("#bv-main");
@@ -484,41 +503,37 @@ for (const width of [320, 360]) {
   }
 }
 
-test("settings on a phone: each tab shows its glyph alone and keeps its name", async ({ page }, testInfo) => {
+test("settings on a phone: the rail shows its glyphs alone and keeps their names", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openTab(page, 360, "general", "Allgemein");
-  for (const [, name] of TABS) {
-    const tab = page.getByRole("tab", { name, exact: true });
-    await expect(tab).toBeVisible();
-    const box = (await tab.boundingBox())!;
-    expect(box.width, `the ${name} tab is under the 24px tap-target floor`).toBeGreaterThanOrEqual(23.5);
-    // The label is there for the accessible name only; shown, it would be a
-    // letter and an ellipsis.
-    const label = tab.locator("[data-sel-label]");
-    expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-  }
+  await openPage(page, 360, "general", "Allgemein");
+  // The names stay the links' accessible names; shown, they would squeeze the
+  // content column.
+  expect((await railNames(page)).shown).toBe(0);
+  for (const [, name] of PAGES) await expect(rail(page).getByRole("link", { name, exact: true })).toBeVisible();
+  expect((await railTiles(page)).belowWindow, "tiles below the window").toBe(0);
 });
 
-test("settings offsite on a phone: target and credential rows put their actions under the name", async ({ page }, testInfo) => {
-  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openTab(page, 320, "offsite", "Off-site");
-
-  const names = [
-    ...targets("containers").map((t) => ({ name: t.name, action: "Bearbeiten" })),
-    ...CRED_SETS.map((s) => ({ name: s.name, action: "Bearbeiten" })),
-  ];
-  for (const { name, action } of names) {
-    const row = page.locator(".rounded-card").filter({ hasText: name }).filter({ has: page.getByRole("button", { name: action }) }).last();
-    const nameBox = (await row.getByText(name, { exact: true }).first().boundingBox())!;
-    const actionBox = (await row.getByRole("button", { name: action }).first().boundingBox())!;
-    expect(actionBox.y, `the actions of "${name}" share the name's row`).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
-    expect(nameBox.width, `"${name}" is squeezed beside its actions`).toBeGreaterThan(100);
-  }
-});
+for (const [id, name, rows] of [
+  ["offsite", "Off-site", () => targets("containers").map((t) => t.name)],
+  ["cloud", "Cloud-Zugänge", () => CRED_SETS.map((c) => c.name)],
+] as const) {
+  test(`settings ${id} on a phone: each row puts its actions under the name`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
+    await openPage(page, 320, id, name);
+    for (const rowName of rows()) {
+      const edit = page.getByRole("button", { name: "Bearbeiten" });
+      const row = page.locator(".rounded-card").filter({ hasText: rowName }).filter({ has: edit }).last();
+      const nameBox = (await row.getByText(rowName, { exact: true }).first().boundingBox())!;
+      const actionBox = (await row.getByRole("button", { name: "Bearbeiten" }).first().boundingBox())!;
+      expect(actionBox.y, `the actions of "${rowName}" share the name's row`).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
+      expect(nameBox.width, `"${rowName}" is squeezed beside its actions`).toBeGreaterThan(100);
+    }
+  });
+}
 
 test("settings storage on a phone: a repository shows its whole name and address, each switch labelled once", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openTab(page, 320, "storage", "Pfade & Speicher");
+  await openPage(page, 320, "storage", "Speicher");
 
   for (const r of REPOS) {
     for (const text of [r.name, r.repo]) {
@@ -534,7 +549,7 @@ test("settings storage on a phone: a repository shows its whole name and address
 
 test("settings schedules on a phone: the every-N-days field shows three digits beside its steppers", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the steppers sit side by side under a coarse pointer");
-  await openTab(page, 320, "schedules", "Zeitpläne");
+  await openPage(page, 320, "schedules", "Zeitpläne");
 
   const room = await page.locator("input.glim-num").evaluateAll((inputs) => {
     const input = inputs.find((el) => (el as HTMLInputElement).value === "120") as HTMLInputElement | undefined;
@@ -551,15 +566,20 @@ test("settings schedules on a phone: the every-N-days field shows three digits b
   expect(room!.content, "the digits' room beside the steppers").toBeGreaterThanOrEqual(room!.digits);
 });
 
-test("settings system on a phone: passkeys wrap and the MCP confirmations come up as a sheet", async ({ page }, testInfo) => {
+test("settings security on a phone: passkeys wrap", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openTab(page, 320, "system", "System");
+  await openPage(page, 320, "security", "Sicherheit");
 
   for (const key of PASSKEYS.passkeys) {
     const name = page.getByText(key.name, { exact: true });
     const cut = await name.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
     expect(cut, `"${key.name}" is cut off`).toBe(false);
   }
+});
+
+test("settings integrations on a phone: the MCP confirmations come up as a sheet", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
+  await openPage(page, 320, "integrations", "Anbindungen");
 
   await page.getByRole("button", { name: "Schlüssel ersetzen" }).first().click();
   const sheet = page.getByRole("dialog");
@@ -584,36 +604,26 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and one row of tabs", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm, with the rail's names once there is room", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
-  await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
+  const width = testInfo.project.use.viewport!.width;
+  await openPage(page, width, "general", "Allgemein");
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
-  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
-  expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
-    strip: "rgba(0, 0, 0, 0)",
-    tabsWithoutFill: 0,
-  });
-  // The eight German names do not fit this column together, so every tab
-  // drops to its glyph at once rather than some keeping their words.
-  for (const [, name] of TABS) {
-    const tab = page.getByRole("tab", { name, exact: true });
-    await expect(tab).toBeVisible();
-    const label = tab.locator("[data-sel-label]");
-    expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-  }
+  const tiles = await railTiles(page);
+  expect(tiles.tiles).toBe(PAGES.length);
+  expect(tiles.belowWindow, "tiles below the window").toBe(0);
+  // Below 64rem the content column needs the room, so the rail keeps its glyphs.
+  const names = await railNames(page);
+  expect(names.shown).toBe(width >= 1024 ? PAGES.length : 0);
+  expect(names.cut, "names cut off").toEqual([]);
 });
 
-test("settings on a wide screen shows every tab with its name in one row", async ({ page }, testInfo) => {
+test("settings on a wide screen shows every page's name whole", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
-  await openTab(page, 1920, "general", "Allgemein");
+  await openPage(page, 1920, "general", "Allgemein");
 
-  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
-  // Benachrichtigungen is wider than an even eighth of the row; each tab is
-  // as wide as its own name, so it still fits whole.
-  for (const [, name] of TABS) {
-    const label = page.getByRole("tab", { name, exact: true }).locator("[data-sel-label]");
-    await expect(label).toBeVisible();
-    expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `"${name}" is cut off`).toBe(true);
-  }
+  const names = await railNames(page);
+  expect(names.shown).toBe(PAGES.length);
+  expect(names.cut, "names cut off").toEqual([]);
 });

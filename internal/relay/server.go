@@ -99,7 +99,7 @@ type Server struct {
 	// so the proxy's address is not one bucket shared by every client.
 	ClientAddr func(*http.Request) string
 
-	limiter *limiter
+	limiter *Limiter
 }
 
 // NewServer returns an empty relay that admits every key.
@@ -108,7 +108,7 @@ func NewServer() *Server {
 		clients: map[Conn]*client{},
 		keys:    map[string]map[Conn]*client{},
 		pending: map[string]map[string]pending{},
-		limiter: newLimiter(),
+		limiter: NewLimiter(),
 	}
 }
 
@@ -428,7 +428,7 @@ func frameOf(typ string, data any) []byte {
 // ServeHTTP is the relay endpoint: one long-lived WebSocket per instance.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	addr := s.clientAddrOf(r)
-	if s.limiter.blocked(addr) {
+	if s.limiter.Blocked(addr) {
 		http.Error(w, "too many failed handshakes from this address", http.StatusTooManyRequests)
 		return
 	}
@@ -443,16 +443,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	hello, err := readHello(r.Context(), c)
 	if err != nil {
-		s.limiter.fail(addr)
+		s.limiter.Fail(addr)
 		_ = c.Close(websocket.StatusPolicyViolation, "the first frame must be a hello with a relay key and an instance id")
 		return
 	}
 	if !s.admits(hello.Key) {
-		s.limiter.fail(addr)
+		s.limiter.Fail(addr)
 		_ = c.Close(websocket.StatusPolicyViolation, "this relay does not serve that relay key")
 		return
 	}
-	s.limiter.succeed(addr)
+	s.limiter.Succeed(addr)
 	if !s.Join(hello.Key, c, hello.Announce) {
 		_ = c.Close(websocket.StatusPolicyViolation, "this relay cannot take the connection: the key is no longer served or too many instances use it")
 		return

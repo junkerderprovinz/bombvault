@@ -126,7 +126,6 @@ export default [
             "Receiver.tsx": "PAGE_SHELL_RESPONSIVE",
             "Fleet.tsx": "PAGE_SHELL_RESPONSIVE",
             "Pull.tsx": "PAGE_SHELL_RESPONSIVE",
-            "Pairing.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,
