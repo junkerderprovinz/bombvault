@@ -5,6 +5,13 @@
 // action they can.
 import { expect, test, type Page } from "@playwright/test";
 
+// A test can end while a route handler still waits on the real server. Closing
+// the context then disposes the response it is about to read, and Playwright
+// fails a test that already passed, so what the handler throws is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const WIDTHS = [780, 900, 1024, 1400];
 
 const PAGES = ["/dashboard", "/anomalies", "/containers", "/vms", "/flash", "/config", "/files", "/zfs", "/instances", "/recovery", "/settings"];
