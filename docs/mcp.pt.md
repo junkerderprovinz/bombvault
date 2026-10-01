@@ -19,7 +19,7 @@ O BombVault tem um servidor integrado para o Model Context Protocol (MCP), o pro
 | `get_anomaly` | Uma dessas ocorrências, com a nota deixada quando foi reconhecida | leitura |
 | `start_backup` | Faz já a cópia de um elemento | início |
 | `start_domain_backup` | Faz a cópia de cada elemento protegido de um domínio | início |
-| `start_backup_everything` | Corre a passagem Backup Everything | início |
+| `start_backup_everything` | Corre a passagem Backup total | início |
 | `cancel_backup` | Cancela uma cópia em curso que esta chave iniciou | cancelamento |
 
 Fica na interface web: os restauros de qualquer tipo (incluindo descarregar, guardar ou importar um dump de base de dados), apagar cópias, prune, unlock, as verificações e os exercícios, a replicação externa, as definições, as credenciais e as chaves MCP, e cancelar uma cópia iniciada pelo agendamento, pela interface web ou por outra chave. O mesmo vale para reconhecer uma anomalia ou marcá-la como esperada, o que se faz na página **Anomalias**. O motivo: as respostas das ferramentas contêm nomes e mensagens de erro do seu servidor, e qualquer um deles pode trazer texto escrito para manipular o assistente. Um assistente que caia nesse texto pode, no pior caso, iniciar uma cópia dentro dos limites abaixo ou cancelar uma que ele próprio iniciou.
@@ -33,11 +33,11 @@ A cópia de um assistente é a mesma que a interface web inicia. Um contentor em
 Como uma cópia para serviços e faz sair pontos de restauro antigos, os inícios por MCP são limitados:
 
 - 12 cópias iniciadas por hora e por chave.
-- 15 minutos entre dois inícios MCP do mesmo elemento, do mesmo domínio ou de Backup Everything.
+- 15 minutos entre dois inícios MCP do mesmo elemento, do mesmo domínio ou do Backup total.
 - No máximo 4 inícios MCP do mesmo elemento em 24 horas.
 - **Proteção da retenção.** Quando um domínio mantém um número fixo de pontos de restauro (só "manter os últimos N", sem regra diária, semanal ou mensal, localmente ou num destino externo), cada cópia nova faz sair a mais antiga. O BombVault recusa então um início MCP de um elemento cujas N-1 cópias bem-sucedidas mais recentes foram todas iniciadas por MCP. Assim fica sempre no conjunto mantido pelo menos um ponto de restauro criado pelo agendamento ou por si. Com "manter o último" (N = 1), um assistente não consegue fazer cópia desse elemento. A próxima cópia agendada volta a abrir espaço. Uma regra anual sozinha conta como "manter o último" (N = 1), porque mantém um único ponto de restauro do ano corrente.
 
-Um início de domínio ou de Backup Everything deixa de fora os elementos que um limite retém e indica-os na resposta. A interface web e o agendamento não são afetados por nada disto. A quota horária vive em memória, por isso um reinício do BombVault repõe-na a zero.
+Um início de domínio ou do Backup total deixa de fora os elementos que um limite retém e indica-os na resposta. A interface web e o agendamento não são afetados por nada disto. A quota horária vive em memória, por isso um reinício do BombVault repõe-na a zero.
 
 ## Ativar {#switch-on}
 
@@ -256,7 +256,7 @@ Tudo o que um assistente lê vai para o fornecedor de IA por trás dele: nomes d
 | `429` | Demasiadas chaves erradas deste endereço, ou mais de 120 pedidos por minuto com uma chave. Espere um minuto e verifique se o assistente está preso num ciclo. |
 | Erros com "certificate", "self-signed" ou "unable to verify" | O cliente não confia no certificado do BombVault. Ver [TLS e certificados](#tls). |
 | `busy` | Outra cópia ou uma tarefa de manutenção ocupa esse domínio. Tente de novo quando terminar. |
-| `cooldown` | Este elemento, este domínio ou Backup Everything foi iniciado por MCP há menos de 15 minutos. |
+| `cooldown` | Este elemento, este domínio ou o Backup total foi iniciado por MCP há menos de 15 minutos. |
 | `retention_guard` | Mais uma cópia MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N", ou o elemento já recebeu 4 cópias por MCP nas últimas 24 horas, contando as que falharam e as canceladas. No primeiro caso a próxima cópia agendada abre espaço; no segundo o elemento fica livre outra vez 24 horas depois da mais antiga dessas cópias. Em qualquer dos casos pode iniciá-la na interface web. |
 | `rate_limited` | A chave gastou os seus 12 inícios desta hora. |
 | `not_permitted` num início | A chave é só de leitura. Ligue **Permitir iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |

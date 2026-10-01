@@ -84,7 +84,7 @@ Template thêm `--add-host=host.docker.internal:host-gateway` để container c�
 
 Thiết lập một bản sao off-site trên trang **Cài đặt, Ngoài site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
 
-- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một Backup Path tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
+- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một đường dẫn sao lưu tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
 - **Thông tin đăng nhập đám mây dùng chung** được lưu mã hóa dưới Cài đặt, Truy cập đám mây, Thông tin đăng nhập đám mây dùng chung.
 - **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Cài đặt, Tích hợp, SSH máy chủ** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
 - **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa, bổ sung cho một kho chính (thường là cục bộ). Mỗi miền có lịch trình off-site riêng, cùng với một nút **Sao chép ngay**.
@@ -93,7 +93,7 @@ Thiết lập một bản sao off-site trên trang **Cài đặt, Ngoài site**.
 - **Giới hạn băng thông:** giới hạn tốc độ tải lên/tải xuống của restic dưới Cài đặt, Ngoài site.
 - **Ưu tiên phát trực tuyến:** trong Cài đặt, Ngoài site, chọn máy chủ media (Plex, Jellyfin và Emby được chọn sẵn theo tên image), tốc độ gửi mà từ đó một máy được coi là đang phát, giới hạn tải lên khi đang phát và bao lâu sau một luồng thì giới hạn thường quay lại.
 - **Lớp lưu trữ nguội và lưu trữ dài hạn (S3):** với một kho off-site S3 gốc, chọn một tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Các remote rclone đặt lớp của chúng trong cấu hình rclone.
-- **Kho chính từ xa thay vì cục bộ:** bản thân Backup Path của một miền có thể là một trong các backend ở trên, không có bản sao cục bộ và không có bước nhân bản; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories) về công tắc Cục bộ/Từ xa ngay trong dòng và các cài đặt an toàn về băng thông, append-only và ngân sách tăng trưởng của nó.
+- **Kho chính từ xa thay vì cục bộ:** bản thân đường dẫn sao lưu của một miền có thể là một trong các backend ở trên, không có bản sao cục bộ và không có bước nhân bản; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories) về công tắc Cục bộ/Từ xa ngay trong dòng và các cài đặt an toàn về băng thông, append-only và ngân sách tăng trưởng của nó.
 
 ## Bất thường {#anomalies}
 

@@ -19,7 +19,7 @@ BombVault servește HTTPS din start pe portul `3443` (certificat auto-semnat), d
 Backupul VM comunică cu libvirt prin SSH, niciodată o montare.
 
 - Confirmă că SSH este activat pe gazdă și că cheia publică a BombVault este autorizată în `/root/.ssh/authorized_keys` (Setări, Integrări, SSH al gazdei arată cheia și un buton **Testează conexiunea**).
-- Pe o rețea `br0.x` personalizată, setează `LIBVIRT_HOST` la IP-ul LAN al Unraid (containerul nu poate ajunge acolo la gazdă prin `host.docker.internal`). Activează **Setări, Docker, Host access to custom networks**.
+- Pe o rețea `br0.x` personalizată, setează `LIBVIRT_HOST` la IP-ul LAN al Unraid (containerul nu poate ajunge acolo la gazdă prin `host.docker.internal`). Activează **Settings, Docker, Host access to custom networks**.
 - Dacă ai schimbat portul SSH al Unraid, setează `LIBVIRT_SSH_PORT` să corespundă.
 - Diagnosticul complet pas cu pas (test de accesibilitate, rutare VLAN, `Permission denied (publickey)`, `Host key verification failed`) este în [ghidul de backup VM prin SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
@@ -33,7 +33,7 @@ Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul 
 
 ## Copia mea off-site nu s-a întâmplat după un backup
 
-Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Replicate now** pe pagina Extern pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
+Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Replică acum** pe pagina Extern pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
 
 ## O restaurare s-a oprit înainte de a începe
 

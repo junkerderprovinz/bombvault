@@ -19,7 +19,7 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 | `get_anomaly` | Yksi näistä havainnoista sekä muistiinpano, joka jätettiin sitä kuitatessa | luku |
 | `start_backup` | Varmuuskopioi yhden kohteen heti | käynnistys |
 | `start_domain_backup` | Varmuuskopioi toimialueen jokaisen suojatun kohteen | käynnistys |
-| `start_backup_everything` | Ajaa Backup Everything -kierroksen | käynnistys |
+| `start_backup_everything` | Ajaa Täysvarmuuskopio-kierroksen | käynnistys |
 | `cancel_backup` | Peruu käynnissä olevan varmuuskopion, jonka tämä avain käynnisti | peruutus |
 
 Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Sama koskee poikkeaman kuittaamista tai sen merkitsemistä odotetuksi, mikä tehdään **Poikkeamat**-sivulla. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
@@ -33,11 +33,11 @@ Avustajan varmuuskopio on sama varmuuskopio, jonka verkkokäyttöliittymä käyn
 Koska varmuuskopio pysäyttää asioita ja työntää vanhoja palautuspisteitä ulos, MCP:n kautta tehtyjä käynnistyksiä on rajoitettu:
 
 - 12 käynnistettyä varmuuskopiota tunnissa avainta kohden.
-- 15 minuuttia saman kohteen, saman toimialueen tai Backup Everythingin kahden MCP-käynnistyksen välillä.
+- 15 minuuttia saman kohteen, saman toimialueen tai Täysvarmuuskopion kahden MCP-käynnistyksen välillä.
 - Enintään 4 saman kohteen MCP-käynnistystä 24 tunnissa.
 - **Säilytyssuoja.** Kun toimialue säilyttää kiinteän määrän palautuspisteitä (vain "säilytä viimeiset N" ilman päivittäistä, viikoittaista tai kuukausittaista sääntöä, paikallisesti tai off-site-kohteessa), jokainen uusi varmuuskopio työntää vanhimman ulos. BombVault hylkää silloin kohteen MCP-käynnistyksen, jos sen uusimmat N-1 onnistunutta varmuuskopiota on kaikki käynnistetty MCP:n kautta. Säilytettävään joukkoon jää siksi aina vähintään yksi palautuspiste, jonka ajastus tai sinä olet tehnyt. Asetuksella "säilytä viimeinen 1" avustaja ei voi varmuuskopioida kohdetta lainkaan. Seuraava ajastettu varmuuskopio tekee taas tilaa. Pelkkä vuosisääntö lasketaan kuin "säilytä viimeinen 1", koska se säilyttää kuluvalta vuodelta vain yhden palautuspisteen.
 
-Toimialueen tai Backup Everythingin käynnistys jättää pois kohteet, jotka jokin raja pidättää, ja nimeää ne vastauksessaan. Mikään näistä ei koske verkkokäyttöliittymää eikä ajastusta. Tuntikiintiö on muistissa, joten BombVaultin uudelleenkäynnistys nollaa sen.
+Toimialueen tai Täysvarmuuskopion käynnistys jättää pois kohteet, jotka jokin raja pidättää, ja nimeää ne vastauksessaan. Mikään näistä ei koske verkkokäyttöliittymää eikä ajastusta. Tuntikiintiö on muistissa, joten BombVaultin uudelleenkäynnistys nollaa sen.
 
 ## Ota käyttöön {#switch-on}
 
@@ -256,7 +256,7 @@ Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoaj
 | `429` | Liian monta väärää avainta tästä osoitteesta, tai yli 120 pyyntöä minuutissa yhdellä avaimella. Odota minuutti ja tarkista, onko avustaja jumissa silmukassa. |
 | Virheet, joissa lukee "certificate", "self-signed" tai "unable to verify" | Asiakasohjelma ei luota BombVaultin varmenteeseen. Katso [TLS ja varmenteet](#tls). |
 | `busy` | Toinen varmuuskopio tai ylläpitotehtävä varaa toimialueen. Yritä uudelleen, kun se on valmis. |
-| `cooldown` | Tämä kohde, tämä toimialue tai Backup Everything käynnistettiin MCP:n kautta alle 15 minuuttia sitten. |
+| `cooldown` | Tämä kohde, tämä toimialue tai Täysvarmuuskopio käynnistettiin MCP:n kautta alle 15 minuuttia sitten. |
 | `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä, tai kohde on jo saanut 4 varmuuskopiota MCP:n kautta viimeisten 24 tunnin aikana, epäonnistuneet ja perutut mukaan lukien. Ensimmäisessä tapauksessa seuraava ajastettu varmuuskopio tekee tilaa, toisessa kohde vapautuu 24 tuntia vanhimman niistä jälkeen. Verkkokäyttöliittymästä voit käynnistää sen milloin tahansa. |
 | `rate_limited` | Avain on käyttänyt tämän tunnin 12 käynnistystään. |
 | `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |

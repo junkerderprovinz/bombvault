@@ -13,7 +13,7 @@ Păstrează backupul local rapid și adaugă una sau mai multe replici off-site.
 - Un **indicator de replicare** arată care domeniu se replică în timp ce rulează (pe pagina sa și pe panoul principal). Este un indicator activ, nu o bară de procente, deoarece `restic copy` nu expune niciun progres citibil de mașină.
 
 !!! note "Restaurează direct din off-site"
-    Fiecare browser de backup are un comutator **Local / Off-site**, așa că dacă un depozit local este pierdut sau corupt poți lista și restaura direct din replica off-site. Ștergerea este per sursă: eliminarea unui backup afectează doar copia pe care o vizualizezi.
+    Fiecare browser de backup are un comutator **Local / Extern**, așa că dacă un depozit local este pierdut sau corupt poți lista și restaura direct din replica off-site. Ștergerea este per sursă: eliminarea unui backup afectează doar copia pe care o vizualizezi.
 
 ## Depozite primare la distanță {#remote-primary-repositories}
 

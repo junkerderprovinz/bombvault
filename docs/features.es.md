@@ -66,7 +66,7 @@ BombVault es simple por defecto y profundo cuando lo necesitas. La interfaz mues
 ## Análisis, verificación y monitorización
 
 - **Estado de protección (RPO).** El Panel muestra un indicador verde / ámbar / rojo por dominio, comparando la última copia correcta con su calendario, de modo que una copia atrasada se pone en rojo en lugar de esconderse en un registro.
-- **Mapa de calor de salud de las copias.** Un calendario al estilo de las contribuciones de GitHub con los resultados de copia por día y por dominio, con un conmutador Contenedores / VMs / Flash / Config / Archivos.
+- **Mapa de calor de salud de las copias.** Un calendario al estilo de las contribuciones de GitHub con los resultados de copia por día y por dominio, con un conmutador Contenedores / VMs / Flash / Autocopia / Carpetas.
 - **Cronometraje de ejecuciones en todas partes.** Cada entrada del historial de ejecuciones muestra `inicio, fin (duración)`, y cada contenedor y VM lleva su propia lista de **Ejecuciones recientes** en su página.
 - **Un panel que puedes reorganizar.** Activa el modo personalizar para arrastrar las tarjetas al orden que quieras y ocultar las que no necesites. La disposición se guarda por navegador.
 - **Tendencia de tamaño y deduplicación del repositorio.** Tamaño actual del repo, ratio de deduplicación y recuento de instantáneas por dominio, con un minigráfico del crecimiento del almacenamiento.

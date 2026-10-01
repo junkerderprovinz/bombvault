@@ -84,7 +84,7 @@ De template voegt `--add-host=host.docker.internal:host-gateway` toe zodat de co
 
 Stel een off-site replica in op de pagina **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
 
-- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een Backup Path naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een back-uppad naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Gedeelde cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Cloudtoegang, Gedeelde cloud-inloggegevens.
 - **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Integraties, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
 - **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis, bovenop een (meestal lokale) primaire repo. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.
@@ -93,7 +93,7 @@ Stel een off-site replica in op de pagina **Instellingen, Off-site**. Zie [Off-s
 - **Bandbreedtelimieten:** begrens de restic-upload/downloadsnelheid onder Instellingen, Off-site.
 - **Streaming eerst:** kies onder Instellingen, Off-site de mediaservers (Plex, Jellyfin en Emby zijn voorgeselecteerd op imagenaam), de verzendsnelheid vanaf waar er een als streamend telt, de uploadlimiet tijdens het streamen en hoe lang na een stream de normale limiet terugkomt.
 - **Koude en archiefopslagklasse (S3):** kies voor een native S3 off-site repo een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
-- **Externe primaire repo in plaats van lokaal:** het Backup Path van een domein kan zelf een van de backends hierboven zijn, zonder lokale kopie en zonder replicatiestap. De schakelaar Lokaal/Extern naast het veld en de veiligheidsinstellingen voor bandbreedte, append-only en groeibudget staan bij [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
+- **Externe primaire repo in plaats van lokaal:** het back-uppad van een domein kan zelf een van de backends hierboven zijn, zonder lokale kopie en zonder replicatiestap. De schakelaar Lokaal/Extern naast het veld en de veiligheidsinstellingen voor bandbreedte, append-only en groeibudget staan bij [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
 
 ## Anomalieën {#anomalies}
 

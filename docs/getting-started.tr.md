@@ -68,7 +68,7 @@ Sonucu şablonun `APP_KEY` alanına (Unraid) veya `docker-compose.yml` içindeki
 *İlk yedekten sonraki panel: neyin korunduğu, sırada ne olduğu ve canlı bir günlük.*
 
 1. Web arayüzünü `https://<your-unraid-ip>:3443` adresinde açın (kutudan çıktığı gibi kendinden imzalı sertifika).
-2. **Ayarlar**'da istediğiniz yedekleme etki alanlarını etkinleştirin (Konteynerler, VM'ler, Flash, Config, Dosyalar, ZFS veri kümeleri) ve bir vurgu rengi seçin.
+2. **Ayarlar**'da istediğiniz yedekleme etki alanlarını etkinleştirin (Konteynerler, VM'ler, Flash, Öz yedek, Klasörler, ZFS veri kümeleri) ve bir vurgu rengi seçin.
 3. **Konteynerler** sekmesinde bir konteyner seçin ve ilk geri yükleme noktanızı oluşturmak için **Yedekle**'ye tıklayın. Depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir ve ilk yedeklemede oluşturulur.
 4. Zamanlamayı **Ayarlar, Zamanlamalar** bölümünden kurun. Konteynerler ve VM'ler için tek tıklamalık bir *tümünü zamanlamaya ekle* seçeneği vardır.
 

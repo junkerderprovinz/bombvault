@@ -66,7 +66,7 @@ BombVault varsayılan olarak basit, ihtiyaç duyduğunuzda ise derindir. **Basit
 ## Öngörü, doğrulama ve izleme
 
 - **Koruma durumu (RPO).** Kontrol Paneli, son başarılı yedeklemeyi zamanlamasıyla karşılaştırarak etki alanı başına yeşil / sarı / kırmızı bir gösterge gösterir, böylece geciken bir yedekleme bir günlükte saklanmak yerine kırmızıya döner.
-- **Yedekleme sağlığı ısı haritası.** Etki alanı başına günlük yedekleme sonuçlarının GitHub katkıları tarzında bir takvimi, bir Konteynerler / VM'ler / Flash / Config / Dosyalar geçişiyle.
+- **Yedekleme sağlığı ısı haritası.** Etki alanı başına günlük yedekleme sonuçlarının GitHub katkıları tarzında bir takvimi, bir Konteynerler / VM'ler / Flash / Öz yedek / Klasörler geçişiyle.
 - **Her yerde çalışma zamanlaması.** Her çalışma geçmişi girişi `başlangıç, bitiş (süre)` okur ve her konteyner ile VM kendi sayfasında kendi **Son çalışmalar** listesini taşır.
 - **Yeniden düzenleyebileceğiniz bir kontrol paneli.** Kartları istediğiniz sıraya sürüklemek ve ihtiyaç duymadıklarınızı gizlemek için özelleştirme modunu açın. Düzen tarayıcı başına kaydedilir.
 - **Depo boyutu ve yineleme arındırma eğilimi.** Etki alanı başına geçerli depo boyutu, yinelenenlerden arındırma oranı ve anlık görüntü sayısı, depolama büyümesinin bir sparkline'ıyla.

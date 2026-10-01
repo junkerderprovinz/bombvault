@@ -19,7 +19,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | `get_anomaly` | Una dintre aceste constatări, cu nota lăsată la confirmarea ei | citire |
 | `start_backup` | Face imediat copia unui element | pornire |
 | `start_domain_backup` | Face copia fiecărui element protejat dintr-un domeniu | pornire |
-| `start_backup_everything` | Rulează trecerea Backup Everything | pornire |
+| `start_backup_everything` | Rulează trecerea Backup total | pornire |
 | `cancel_backup` | Anulează o copie în curs pornită de această cheie | anulare |
 
 Rămân în interfața web: restaurările de orice fel (inclusiv descărcarea, salvarea sau importul unui dump de bază de date), ștergerea copiilor, prune, unlock, verificările și exercițiile, replicarea off-site, setările, datele de autentificare și cheile MCP, precum și anularea unei copii pornite de programare, de interfața web sau de altă cheie. La fel și confirmarea unei anomalii sau marcarea ei ca așteptată, care se face pe pagina **Anomalii**. Motivul: răspunsurile uneltelor conțin nume și mesaje de eroare de pe serverul tău, iar oricare dintre ele poate conține un text scris ca să manipuleze asistentul. Un asistent care se lasă păcălit de un asemenea text poate cel mult să pornească o copie în limitele de mai jos sau să anuleze una pe care a pornit-o el.
@@ -33,11 +33,11 @@ Copia unui asistent e aceeași copie pe care o pornește interfața web. Un cont
 Pentru că o copie oprește servicii și scoate afară puncte de restaurare vechi, pornirile prin MCP sunt limitate:
 
 - 12 copii pornite pe oră pentru fiecare cheie.
-- 15 minute între două porniri MCP ale aceluiași element, aceluiași domeniu sau Backup Everything.
+- 15 minute între două porniri MCP ale aceluiași element, aceluiași domeniu sau ale Backupului total.
 - Cel mult 4 porniri MCP ale aceluiași element în 24 de ore.
 - **Protecția păstrării.** Când un domeniu păstrează un număr fix de puncte de restaurare (doar "păstrează ultimele N", fără regulă zilnică, săptămânală sau lunară, local sau pe o destinație off-site), fiecare copie nouă scoate afară cea mai veche. BombVault refuză atunci o pornire MCP a unui element ale cărui cele mai noi N-1 copii reușite au fost pornite toate prin MCP. Astfel, în setul păstrat rămâne mereu cel puțin un punct de restaurare făcut de programare sau de tine. Cu "păstrează ultima 1", un asistent nu poate face deloc copia acelui element. Următoarea copie programată face din nou loc. O regulă anuală singură contează ca "păstrează ultima 1", pentru că păstrează un singur punct de restaurare pentru anul curent.
 
-O pornire de domeniu sau de Backup Everything lasă pe dinafară elementele reținute de o limită și le numește în răspuns. Interfața web și programarea nu sunt atinse de niciuna dintre aceste limite. Bugetul orar stă în memorie, așa că o repornire a BombVault îl readuce la zero.
+O pornire de domeniu sau de Backup total lasă pe dinafară elementele reținute de o limită și le numește în răspuns. Interfața web și programarea nu sunt atinse de niciuna dintre aceste limite. Bugetul orar stă în memorie, așa că o repornire a BombVault îl readuce la zero.
 
 ## Pornire {#switch-on}
 
@@ -256,7 +256,7 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | `429` | Prea multe chei greșite de la această adresă, sau mai mult de 120 de cereri pe minut cu o cheie. Așteaptă un minut și verifică dacă asistentul nu s-a blocat într-o buclă. |
 | Erori cu "certificate", "self-signed" sau "unable to verify" | Clientul nu are încredere în certificatul BombVault. Vezi [TLS și certificate](#tls). |
 | `busy` | Altă copie sau o sarcină de întreținere ocupă acel domeniu. Încearcă din nou după ce se termină. |
-| `cooldown` | Acest element, acest domeniu sau Backup Everything a fost pornit prin MCP acum mai puțin de 15 minute. |
+| `cooldown` | Acest element, acest domeniu sau Backupul total a fost pornit prin MCP acum mai puțin de 15 minute. |
 | `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N", sau elementul a primit deja 4 copii prin MCP în ultimele 24 de ore, inclusiv cele eșuate și anulate. În primul caz următoarea copie programată face loc, în al doilea elementul e liber din nou la 24 de ore după cea mai veche dintre aceste copii. Din interfața web o poți porni oricând. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
 | `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |

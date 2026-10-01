@@ -19,7 +19,7 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 | `get_anomaly` | Egy ilyen észlelés, a nyugtázáskor hagyott megjegyzéssel | olvasás |
 | `start_backup` | Azonnal elmenti egy elem adatait | indítás |
 | `start_domain_backup` | Egy tartomány minden védett elemét menti | indítás |
-| `start_backup_everything` | Lefuttatja a Backup Everything menetet | indítás |
+| `start_backup_everything` | Lefuttatja a Teljes mentés menetet | indítás |
 | `cancel_backup` | Megszakít egy futó mentést, amelyet ez a kulcs indított | megszakítás |
 
 Ezek a webes felületen maradnak: bármilyen visszaállítás (beleértve egy adatbázis-dump letöltését, mentését vagy importálását is), mentések törlése, prune, unlock, ellenőrzések és gyakorlatok, off-site replikáció, beállítások, hitelesítő adatok és MCP-kulcsok, valamint olyan mentés megszakítása, amelyet az ütemezés, a webes felület vagy egy másik kulcs indított. Ugyanez vonatkozik egy anomália nyugtázására vagy vártként megjelölésére, ami az **Anomáliák** oldalon történik. Az ok: az eszközök válaszai a kiszolgálódról származó neveket és hibaüzeneteket tartalmaznak, és bármelyikükben lehet olyan szöveg, amelyet az asszisztens irányítására írtak. Egy asszisztens, amely bedől ennek, legrosszabb esetben elindít egy mentést az alábbi korlátokon belül, vagy megszakít egyet, amelyet maga indított.
@@ -33,11 +33,11 @@ Az asszisztens mentése ugyanaz, mint amit a webes felület indít. Egy futó ko
 Mivel egy mentés leállít dolgokat és kiszorítja a régi visszaállítási pontokat, az MCP-n keresztüli indítások korlátozottak:
 
 - Óránként és kulcsonként 12 elindított mentés.
-- 15 perc ugyanannak az elemnek, ugyanannak a tartománynak vagy a Backup Everythingnek két MCP-indítása között.
+- 15 perc ugyanannak az elemnek, ugyanannak a tartománynak vagy a Teljes mentésnek két MCP-indítása között.
 - Legfeljebb 4 MCP-indítás ugyanarra az elemre 24 óra alatt.
 - **Megőrzésvédelem.** Ha egy tartomány rögzített számú visszaállítási pontot tart meg (csak "az utolsó N megtartása", napi, heti vagy havi szabály nélkül, helyben vagy egy off-site célon), minden új mentés kiszorítja a legrégebbit. A BombVault ilyenkor elutasítja egy elem MCP-indítását, ha a legutóbbi N-1 sikeres mentését mind MCP-n keresztül indították. Így a megtartott halmazban mindig marad legalább egy visszaállítási pont, amelyet az ütemezés vagy te hoztál létre. "Az utolsó 1 megtartása" beállításnál egy asszisztens egyáltalán nem mentheti azt az elemet. A következő ütemezett mentés újra helyet csinál. Egy önmagában álló éves szabály "Az utolsó 1 megtartása" beállításnak számít, mert az aktuális évből csak egy visszaállítási pontot tart meg.
 
-Egy tartomány vagy a Backup Everything indítása kihagyja azokat az elemeket, amelyeket valamelyik korlát visszatart, és megnevezi őket a válaszában. Egyik korlát sem vonatkozik a webes felületre és az ütemezésre. Az óránkénti keret a memóriában van, így a BombVault újraindítása lenullázza.
+Egy tartomány vagy a Teljes mentés indítása kihagyja azokat az elemeket, amelyeket valamelyik korlát visszatart, és megnevezi őket a válaszában. Egyik korlát sem vonatkozik a webes felületre és az ütemezésre. Az óránkénti keret a memóriában van, így a BombVault újraindítása lenullázza.
 
 ## Bekapcsolás {#switch-on}
 
@@ -256,7 +256,7 @@ Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz ker
 | `429` | Túl sok hibás kulcs erről a címről, vagy egy kulccsal több mint 120 kérés percenként. Várj egy percet, és nézd meg, nem ragadt-e az asszisztens egy ciklusba. |
 | "certificate", "self-signed" vagy "unable to verify" szövegű hibák | A kliens nem bízik a BombVault tanúsítványában. Lásd [TLS és tanúsítványok](#tls). |
 | `busy` | Egy másik mentés vagy karbantartási feladat foglalja a tartományt. Próbáld újra, ha végzett. |
-| `cooldown` | Ezt az elemet, ezt a tartományt vagy a Backup Everythinget kevesebb mint 15 perce indították MCP-n keresztül. |
+| `cooldown` | Ezt az elemet, ezt a tartományt vagy a Teljes mentést kevesebb mint 15 perce indították MCP-n keresztül. |
 | `retention_guard` | Még egy MCP-mentés után "az utolsó N megtartása" ablakban csak MCP-ből származó visszaállítási pontok maradnának, vagy az elem az elmúlt 24 órában már 4 mentést kapott MCP-n keresztül, a sikertelenekkel és a megszakítottakkal együtt. Az első esetben a következő ütemezett mentés helyet csinál, a másodikban az elem a legrégebbi ilyen mentés után 24 órával lesz újra szabad. A webes felületen bármikor elindíthatod. |
 | `rate_limited` | A kulcs elhasználta az erre az órára jutó 12 indítását. |
 | `not_permitted` indításnál | A kulcs csak olvashat. Kapcsold be az **Mentések indításának engedélyezése** kapcsolót a kártyán; újracsatlakozás nem kell. Megszakításnál azt jelenti, hogy a futást nem ez a kulcs indította. |

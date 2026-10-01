@@ -19,7 +19,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | `get_anomaly` | Một trong các phát hiện đó, kèm ghi chú để lại khi xác nhận | đọc |
 | `start_backup` | Sao lưu ngay một mục | bắt đầu |
 | `start_domain_backup` | Sao lưu mọi mục được bảo vệ trong một miền | bắt đầu |
-| `start_backup_everything` | Chạy lượt Backup Everything | bắt đầu |
+| `start_backup_everything` | Chạy lượt Sao lưu toàn bộ | bắt đầu |
 | `cancel_backup` | Hủy một lần sao lưu đang chạy do khóa này bắt đầu | hủy |
 
 Những việc sau vẫn nằm trong giao diện web: mọi kiểu khôi phục (kể cả tải xuống, lưu hoặc nhập một bản dump cơ sở dữ liệu), xóa bản sao lưu, prune, unlock, kiểm tra và diễn tập, sao chép off-site, cài đặt, thông tin đăng nhập và khóa MCP, cùng việc hủy một lần sao lưu do lịch, giao diện web hoặc khóa khác bắt đầu. Việc xác nhận một bất thường hoặc đánh dấu nó là dự kiến cũng vậy, và được thực hiện trên trang **Bất thường**. Lý do: câu trả lời của công cụ chứa tên và thông báo lỗi từ máy chủ của bạn, và bất kỳ mục nào trong đó cũng có thể chứa văn bản viết ra để điều khiển trợ lý. Một trợ lý mắc bẫy văn bản như vậy, trong trường hợp xấu nhất, chỉ có thể bắt đầu một lần sao lưu trong các giới hạn bên dưới hoặc hủy một lần sao lưu do chính nó bắt đầu.
@@ -33,11 +33,11 @@ Lần sao lưu do trợ lý bắt đầu giống hệt lần sao lưu do giao di
 Vì sao lưu làm dừng dịch vụ và đẩy các điểm khôi phục cũ ra ngoài, việc bắt đầu qua MCP có giới hạn:
 
 - 12 lần sao lưu được bắt đầu mỗi giờ cho mỗi khóa.
-- 15 phút giữa hai lần bắt đầu qua MCP của cùng một mục, cùng một miền hoặc Backup Everything.
+- 15 phút giữa hai lần bắt đầu qua MCP của cùng một mục, cùng một miền hoặc Sao lưu toàn bộ.
 - Tối đa 4 lần bắt đầu qua MCP cho cùng một mục trong 24 giờ.
 - **Bảo vệ lưu giữ.** Khi một miền giữ một số lượng điểm khôi phục cố định (chỉ "giữ N bản gần nhất", không có quy tắc theo ngày, tuần hay tháng, ở máy cục bộ hay ở đích off-site), mỗi lần sao lưu mới sẽ đẩy bản cũ nhất ra ngoài. Khi đó BombVault từ chối việc bắt đầu qua MCP cho một mục mà N-1 lần sao lưu thành công gần nhất đều được bắt đầu qua MCP. Nhờ vậy, trong tập được giữ luôn còn ít nhất một điểm khôi phục do lịch hoặc do bạn tạo. Với "giữ 1 bản gần nhất", trợ lý hoàn toàn không thể sao lưu mục đó. Lần sao lưu theo lịch tiếp theo sẽ lại tạo chỗ trống. Chỉ riêng một quy tắc theo năm được tính như "giữ 1 bản gần nhất", vì nó chỉ giữ một điểm khôi phục cho năm hiện tại.
 
-Khi bắt đầu một miền hoặc Backup Everything, các mục bị một giới hạn giữ lại sẽ bị bỏ qua và được nêu tên trong câu trả lời. Không giới hạn nào trong số này áp dụng cho giao diện web và lịch. Hạn mức mỗi giờ nằm trong bộ nhớ, nên khởi động lại BombVault sẽ đặt nó về không.
+Khi bắt đầu một miền hoặc Sao lưu toàn bộ, các mục bị một giới hạn giữ lại sẽ bị bỏ qua và được nêu tên trong câu trả lời. Không giới hạn nào trong số này áp dụng cho giao diện web và lịch. Hạn mức mỗi giờ nằm trong bộ nhớ, nên khởi động lại BombVault sẽ đặt nó về không.
 
 ## Bật tính năng {#switch-on}
 
@@ -256,7 +256,7 @@ Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đ�
 | `429` | Quá nhiều khóa sai từ địa chỉ này, hoặc hơn 120 yêu cầu mỗi phút với một khóa. Đợi một phút và kiểm tra xem trợ lý có bị kẹt trong vòng lặp không. |
 | Lỗi có "certificate", "self-signed" hoặc "unable to verify" | Máy khách không tin cậy chứng chỉ của BombVault. Xem [TLS và chứng chỉ](#tls). |
 | `busy` | Một lần sao lưu khác hoặc tác vụ bảo trì đang chiếm miền đó. Thử lại khi nó xong. |
-| `cooldown` | Mục này, miền này hoặc Backup Everything đã được bắt đầu qua MCP chưa đầy 15 phút trước. |
+| `cooldown` | Mục này, miền này hoặc Sao lưu toàn bộ đã được bắt đầu qua MCP chưa đầy 15 phút trước. |
 | `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP, hoặc mục đó đã được sao lưu qua MCP 4 lần trong 24 giờ qua, tính cả các lần thất bại và bị hủy. Ở trường hợp đầu, lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống; ở trường hợp sau, mục đó được bắt đầu lại sau 24 giờ kể từ lần sao lưu cũ nhất trong số đó. Trong giao diện web, bạn có thể bắt đầu nó bất cứ lúc nào. |
 | `rate_limited` | Khóa đã dùng hết 12 lần bắt đầu của giờ này. |
 | `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |

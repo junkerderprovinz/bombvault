@@ -68,9 +68,9 @@ Lipește rezultatul în câmpul `APP_KEY` al șablonului (Unraid) sau în variab
 *Tabloul după prima copie: ce e protejat, ce rulează în continuare și un jurnal viu.*
 
 1. Deschide interfața web la `https://<your-unraid-ip>:3443` (certificat auto-semnat implicit).
-2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Config, Fișiere, Seturi de date ZFS) și alege o culoare de accent.
-3. În fila **Containere**, alege un container și apasă **Back up** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` și sunt create la primul backup.
-4. Configurează programarea din **Setări, Programări**. Există un *include all in schedule* cu un singur clic pentru containere și VM-uri.
+2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Auto-backup, Foldere, Seturi de date ZFS) și alege o culoare de accent.
+3. În fila **Containere**, alege un container și apasă **Copiază acum** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` și sunt create la primul backup.
+4. Configurează programarea din **Setări, Programări**. Există un *Include toate în programare* cu un singur clic pentru containere și VM-uri.
 
 !!! tip "Opțional: alege o ordine de backup"
     Dacă unele containere ar trebui să fie mereu salvate înaintea altora (de exemplu o bază de date înaintea aplicației care o folosește), deschide panoul **backup-order** din pagina Containere și trage-le în ordinea dorită. Rulările programate și cele cu selecție multiplă o urmează apoi; orice lași neordonat este salvat în ordinea celor mai restante mai întâi, ca înainte.

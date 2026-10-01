@@ -66,7 +66,7 @@ BombVault ist standardmäßig einfach und tiefgehend, wenn du es brauchst. Die O
 ## Einblick, Prüfung & Überwachung
 
 - **Schutzstatus (RPO).** Das Dashboard zeigt pro Bereich eine grün / gelb / rot-Anzeige, die das letzte erfolgreiche Backup mit seinem Zeitplan vergleicht, sodass ein überfälliges Backup rot wird, statt sich in einem Log zu verstecken.
-- **Backup-Gesundheits-Heatmap.** Ein Kalender im Stil der GitHub-Contributions mit Backup-Ergebnissen pro Tag und Bereich, mit einem Umschalter für Container / VMs / Flash / Config / Dateien.
+- **Backup-Gesundheits-Heatmap.** Ein Kalender im Stil der GitHub-Contributions mit Backup-Ergebnissen pro Tag und Bereich, mit einem Umschalter für Container / VMs / Flash / Selbst-Backup / Ordner.
 - **Laufzeiten überall.** Jeder Eintrag der Laufhistorie liest `Start, Ende (Dauer)`, und jeder Container und jede VM trägt auf ihrer Seite eine eigene Liste **Letzte Läufe**.
 - **Ein Dashboard, das du umordnen kannst.** Schalte den Anpassungsmodus ein, um Karten in deine Reihenfolge zu ziehen und die auszublenden, die du nicht brauchst. Das Layout wird pro Browser gespeichert.
 - **Repository-Größe & Dedup-Trend.** Aktuelle Repo-Größe, Deduplizierungsverhältnis und Snapshot-Anzahl pro Bereich, mit einer Sparkline des Speicherwachstums.
