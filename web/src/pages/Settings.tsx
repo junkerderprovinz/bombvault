@@ -1244,6 +1244,13 @@ export function SettingsPage() {
         // jsdom has no scrollIntoView.
         target.scrollIntoView?.({ block: "center" });
         markHit(target);
+        // Cards that load their own settings grow after the jump, this one or
+        // those above it, so the target is centred again while they settle.
+        if (content && typeof ResizeObserver !== "undefined") {
+          const settle = new ResizeObserver(() => target.scrollIntoView({ block: "center" }));
+          settle.observe(content);
+          window.setTimeout(() => settle.disconnect(), 1200);
+        }
       } else if (jump.card) {
         push(t("settings.search.notShown").replace("{name}", jump.row ?? jump.card), "warn");
       }
