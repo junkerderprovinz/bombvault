@@ -436,6 +436,7 @@ type Service struct {
 	load *hostload.Sampler
 
 	breakdowns breakdowns
+	changes    changeComparisons
 	// trafficSt watches media servers and busy apps; see traffic.go.
 	trafficOnce sync.Once
 	trafficSt   *trafficState

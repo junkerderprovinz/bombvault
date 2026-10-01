@@ -499,7 +499,12 @@ export function anomalyFigures(
       count(a.samples),
     ]);
   }
-  main.push([t("anomaly.detail.firstSeen"), formatTime(a.firstSeenAt)]);
+  if (a.firstRunAt) {
+    main.push([t("anomaly.detail.firstBackup"), formatTime(a.firstRunAt)]);
+    more.push([t("anomaly.detail.firstSeen"), formatTime(a.firstSeenAt)]);
+  } else {
+    main.push([t("anomaly.detail.firstSeen"), formatTime(a.firstSeenAt)]);
+  }
   const sensitivity = ANOMALY_SENSITIVITY_LABEL[a.sensitivity];
   if (sensitivity) more.push([t("anomaly.detail.sensitivity"), t(sensitivity)]);
   more.push([t("anomaly.detail.lastSeen"), formatTime(a.lastSeenAt)]);

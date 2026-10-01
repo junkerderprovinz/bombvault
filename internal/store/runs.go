@@ -1088,6 +1088,37 @@ func (r *Repo) restorePointsOfChunk(ids []string, out map[string]RestorePoint) e
 	return rows.Err()
 }
 
+// RunStarts maps run ids to when each run started. An id no run has is absent.
+func (r *Repo) RunStarts(ids []string) (map[string]int64, error) {
+	out := make(map[string]int64, len(ids))
+	for start := 0; start < len(ids); start += lastBackupAmongChunk {
+		if err := r.runStartsOfChunk(ids[start:min(start+lastBackupAmongChunk, len(ids))], out); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func (r *Repo) runStartsOfChunk(ids []string, out map[string]int64) error {
+	in, args := inClause("id", ids)
+	//nolint:gosec // G202: inClause writes placeholders only; the ids travel as bound parameters.
+	rows, err := r.db.Query(`SELECT id, started_at FROM runs WHERE `+in, args...)
+	if err != nil {
+		return fmt.Errorf("RunStarts: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for rows.Next() {
+		var id string
+		var at int64
+		if err := rows.Scan(&id, &at); err != nil {
+			return fmt.Errorf("RunStarts: %w", err)
+		}
+		out[id] = at
+	}
+	return rows.Err()
+}
+
 // UnmeasuredSnapshotRuns lists the successful backup and dump runs that left a
 // snapshot but no measurement, and the datasets of ZFS runs that did, oldest
 // first. A ZFS run's own row is left out: its snapshot is only its root
