@@ -918,6 +918,51 @@ func TestFilesCollapseAndShrink(t *testing.T) {
 	}
 }
 
+func TestConditionReadBackFromHistoryIsDatedToItsFirstBackup(t *testing.T) {
+	// Thirty days of 1,051 files, then three backups with 39: the history is
+	// first judged after the third, as it is after an upgrade fills it in.
+	series := fileRuns(33, anomalyNow-33*anomalyDay, func(i int) int64 {
+		if i >= 30 {
+			return 39
+		}
+		return 1051
+	})
+	found, _ := runSource(sourceInput(series))
+	got := findingFor(t, found, metricSourceFilesShrink)
+	if got.RunID != "r32" || got.OnsetRunID != "r30" || got.LastGoodRunID != "r29" {
+		t.Fatalf("judged %s, onset %s, last good %s; want r32, r30, r29", got.RunID, got.OnsetRunID, got.LastGoodRunID)
+	}
+	if got.Details["since"] != float64(series[2].StartedAt) || got.Details["lastGoodAt"] != float64(series[3].StartedAt) {
+		t.Fatalf("details = %v", got.Details)
+	}
+
+	row := newRow(scopeRef{Kind: anomalyScopeItem, ID: "item"}, "fp", got, 1, anomalyNow)
+	if row.RunID != "r30" || row.LastRunID != "r32" {
+		t.Fatalf("row runs %s to %s, want r30 to r32", row.RunID, row.LastRunID)
+	}
+
+	// The same rule run on each backup as it arrives names the run before.
+	live, _ := runSource(sourceInput(series[2:]))
+	got = findingFor(t, live, metricSourceFilesShrink)
+	if got.OnsetRunID != "" || got.LastGoodRunID != "r29" {
+		t.Fatalf("onset %q, last good %s; want none and r29", got.OnsetRunID, got.LastGoodRunID)
+	}
+}
+
+func TestShrinkReadBackFromHistoryNamesTheBackupBeforeIt(t *testing.T) {
+	series := byteRuns(32, anomalyNow-32*anomalyDay, func(i int) int64 {
+		if i >= 30 {
+			return 40 << 30
+		}
+		return 100<<30 + int64(i%3-1)*(1<<30)
+	})
+	found, _ := runSource(sourceInput(series))
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.OnsetRunID != "r30" || got.LastGoodRunID != "r29" {
+		t.Fatalf("onset %s, last good %s; want r30 and r29", got.OnsetRunID, got.LastGoodRunID)
+	}
+}
+
 func TestDumpSeriesUsesDumpFloorsAndNoFileRule(t *testing.T) {
 	dumps := func(rows []store.SeriesRun) itemInput {
 		in := sourceInput(rows)

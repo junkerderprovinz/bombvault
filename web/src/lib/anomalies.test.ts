@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   anomalyDomainsLabel,
   anomalyErrorText,
+  anomalyFigures,
   anomalyItemLabel,
   anomalySentence,
   anomalyShortLine,
@@ -540,5 +541,20 @@ describe("groupAnomalies", () => {
       ["new", "warning"],
       ["old", "warning"],
     ]);
+  });
+});
+
+describe("anomalyFigures", () => {
+  const stamp = (unix: number) => `@${unix}`;
+
+  it("dates a finding to the backup it began on and keeps the moment it was noticed", () => {
+    const { main, more } = anomalyFigures(view({ firstRunAt: 100, firstSeenAt: 900 }), t, "en", stamp);
+    expect(main).toContainEqual([en["anomaly.detail.firstBackup"], "@100"]);
+    expect(more).toContainEqual([en["anomaly.detail.firstSeen"], "@900"]);
+  });
+
+  it("falls back to the moment it was noticed when the run is gone", () => {
+    const { main } = anomalyFigures(view({ firstSeenAt: 900 }), t, "en", stamp);
+    expect(main).toContainEqual([en["anomaly.detail.firstSeen"], "@900"]);
   });
 });

@@ -52,7 +52,7 @@ func TestItemsTabWithNothingWatchedServesAnEmptyList(t *testing.T) {
 }
 
 func TestFindingWithoutDetailsServesAnEmptyObject(t *testing.T) {
-	view := anomalyViewOf(store.Anomaly{ID: "a1", Metric: "failure_streak"}, nil, nil, nil, store.Settings{})
+	view := anomalyViewOf(store.Anomaly{ID: "a1", Metric: "failure_streak"}, nil, nil, nil, nil, store.Settings{})
 	wantInJSON(t, marshalled(t, view), `"details":{}`)
 }
 

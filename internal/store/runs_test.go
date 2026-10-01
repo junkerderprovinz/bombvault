@@ -1713,3 +1713,19 @@ func TestLastRunsOfKind(t *testing.T) {
 		t.Fatalf("target b got %+v, want b-dump with its origin", got["b"])
 	}
 }
+
+func TestRunStartsNamesKnownRunsOnly(t *testing.T) {
+	r := newRepo(t)
+	before := time.Now().Unix()
+	id, err := r.StartRun("t1", "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	starts, err := r.RunStarts([]string{id, "no-such-run"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(starts) != 1 || starts[id] < before || starts[id] > time.Now().Unix() {
+		t.Fatalf("starts = %v", starts)
+	}
+}
