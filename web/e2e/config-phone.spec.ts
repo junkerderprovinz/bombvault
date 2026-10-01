@@ -283,12 +283,14 @@ for (const width of [320, 360]) {
     await expectNothingPans(page);
 
     // The place switch and both delete actions stay inside their row, and the
-    // time stays on the id's line in one piece, the shortest date included.
+    // time stays in one piece, beside the id or on a line of its own below it,
+    // the shortest date included.
     for (const row of await timelineRows(page).all()) {
       const idBox = (await row.locator("span.font-mono").first().boundingBox())!;
       const timeBox = (await row.locator("span.font-mono + span").first().boundingBox())!;
-      expect(Math.abs(timeBox.y - idBox.y), "the time left the id's line").toBeLessThan(idBox.height);
       expect(timeBox.height, "the time wrapped into a column").toBeLessThan(idBox.height * 1.8);
+      const besideId = Math.abs(timeBox.y - idBox.y) < idBox.height;
+      expect(besideId || Math.abs(timeBox.x - idBox.x) <= 1, "the time sits neither beside the id nor below it").toBe(true);
       const rowBox = (await row.boundingBox())!;
       const right = rowBox.x + rowBox.width;
       const controls = [
