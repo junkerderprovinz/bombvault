@@ -133,3 +133,43 @@ describe("German keeps one name for each thing", () => {
     expect(odd).toEqual([]);
   });
 });
+
+describe("a hint names a settings page as the column does", () => {
+  const pageKeys: Record<string, keyof typeof en> = {
+    General: "settings.tab.general",
+    Look: "settings.tab.look",
+    Storage: "settings.tab.storage",
+    Retention: "settings.tab.retention",
+    Schedules: "settings.tab.schedules",
+    Containers: "nav.containers",
+    "Off-site": "settings.tab.offsite",
+    "Cloud access": "settings.tab.cloud",
+    Notifications: "settings.tab.notifications",
+    Integrity: "settings.tab.integrity",
+    Security: "settings.tab.security",
+    Pairing: "pairing.title",
+    Integrations: "settings.tab.integrations",
+    System: "settings.tab.system",
+  };
+  // Windows has a Settings app with a System page of its own.
+  const notBombVault = new Set(["mcp.keyEnvTip", "mcp.certEnvTip"]);
+
+  it("uses each language's own page name wherever English says Settings, Page", () => {
+    const wrong: string[] = [];
+    for (const [key, value] of Object.entries(en)) {
+      if (notBombVault.has(key)) continue;
+      const pages = [...value.matchAll(/Settings, (Cloud access|[A-Z][A-Za-z-]+)/g)]
+        .map((m) => m[1])
+        .filter((p) => p in pageKeys);
+      for (const [code, table] of Object.entries(locales)) {
+        const local = table[key as keyof typeof en];
+        if (!local) continue;
+        for (const page of pages) {
+          const name = table[pageKeys[page]] ?? en[pageKeys[page]];
+          if (!local.includes(name)) wrong.push(`${code} ${key}: names ${page} without "${name}"`);
+        }
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+});

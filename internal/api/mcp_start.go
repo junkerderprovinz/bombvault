@@ -36,7 +36,7 @@ type mcpSkipped struct {
 }
 
 const (
-	mcpReadOnlyKeyMessage = "this key may only read; allow backups for it under Settings > System > MCP server"
+	mcpReadOnlyKeyMessage = "this key may only read; allow backups for it under Settings, Integrations, MCP server"
 	mcpNotRunningMessage  = "this run is not running any more"
 	mcpItemFollowUp       = "Call get_activity for progress and list_runs with this domain and item for the result."
 	mcpEverythingFollowUp = "Call get_activity for progress and list_runs with domain everything for the result."

@@ -145,7 +145,7 @@ func TestRecoveryKitMentionsMCPKeysOnConfigRestore(t *testing.T) {
 		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
 	}
 	body := w.Body.String()
-	for _, want := range []string{"revokes every MCP key", "every OAuth sign-in", "Settings > System > MCP server"} {
+	for _, want := range []string{"revokes every MCP key", "every OAuth sign-in", "Settings, Integrations, MCP server"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the kit does not say %q", want)
 		}
