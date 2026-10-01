@@ -33,12 +33,12 @@ A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatk�
 
 A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Tárolás, Mentési útvonalak** alatt. Minden útvonalmező mellett van egy beépített **Helyi / Távoli** kapcsoló is: egy útvonal helyi mappa helyett lehet távoli restic tároló is (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), ilyenkor a mentés közvetlenül oda megy, külön helyi másolat nélkül; lásd: [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Hosztintegráció-ellenőrzés"
+!!! note "Hosztellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.
 
 ## A mentési források felismerése {#backup-source-detection}
 
-Minden konténernél a BombVault maga választja ki, mely bind csatolások és nevesített kötetek kerülnek mentésre. Egy útvonal akkor kerül be, ha az alábbiak bármelyike teljesül (az eredményt konténerenként bármikor felülírhatod a **Mentési útvonalak** alatt):
+Minden konténernél a BombVault maga választja ki, mely bind csatolások és nevesített kötetek kerülnek mentésre. Egy útvonal akkor kerül be, ha az alábbiak bármelyike teljesül (az eredményt konténerenként bármikor felülírhatod a **Mentett mappák** alatt):
 
 - **Találat egy adatgyökér-szakaszra:** a bind gazdagép oldali forrása a `DATA_ROOT_SEGMENTS` valamelyik szakaszát teljes útvonalelemként tartalmazza (alapértelmezés szerint csak `appdata`).
 - **A nevesített Docker-kötetek** mindig bekerülnek, mert nincs eldobható megfelelőjük, így nincs mit kiszűrni, **de csak akkor, ha a kötet valódi tárolási útvonala a gazdagépen maga is elérhető a Host Data csatoláson át**, pontosan úgy, mint bármely más gazdagép-útvonal, amit a BombVault ment. A helyi kötetek alapértelmezett meghajtója a kötetet a démon saját adatgyökere alá teszi, vagyis a `/var/lib/docker/volumes/<név>/_data` helyre, hacsak nem módosítottad (ellenőrizd a `docker info -f '{{.DockerRootDir}}'` paranccsal). Ezt a helyet NEM fedi le az az egyetlen könyvtárból álló szűk Host Data csatolás, amit az általános `docker-compose.yml` alapból használ. Az elérhetetlen kötet csendben kimarad, ez nem hiba. Ahhoz, hogy általános gazdagépen a nevesített kötetek tényleg mentésre kerüljenek, irányítsd a Host Data csatolást (és a `HOST_SOURCE_ROOT` értéket) egy olyan közös szülőkönyvtárra, amely a Docker adatgyökerét is lefedi: a mérlegelést a compose fájl Host Data megjegyzése írja le (az Unraid ezt úgy kerüli meg, hogy ugyanezért az egész `/mnt` könyvtárat csatolja, a saját, legfelső szintű általános szokása szerint).
@@ -110,7 +110,7 @@ Minden elemnek lehet saját érzékenysége és saját értesítési minimuma. E
 
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 
-Az **Exportálás és importálás beállítások** kártya a Beállítások, Rendszer oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, telephelyen kívüli célok, ütemezések, megőrzés, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
+Az **Beállítások exportálása / importálása** kártya a Beállítások, Rendszer oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, telephelyen kívüli célok, ütemezések, megőrzés, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
 
 !!! warning "Az export hitelesítő adatokat tartalmazhat"
     Te választod meg, hogy belefoglalod-e a telephelyen kívüli és értesítési hitelesítő adatokat a fájlba. A hitelesítő adatokkal együtt az export olyan érzékeny, mint a helyreállítási csomagod, ezért tárold biztonságos helyen. Nélkülük a fájl csak nem-titkos beállításokat tartalmaz.

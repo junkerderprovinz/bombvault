@@ -40,7 +40,7 @@ Ikke Unraid? BombVault kjører også som en vanlig container på hvilken som hel
 
 Hva som er annerledes enn på Unraid:
 
-- **Ingen flash-/USB-domene.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-domenet i innstillingene har ingenting å gjøre her. I stedet tilbyr Fil-domenet ettklikksforslaget **Legg til forhåndsinnstilling: vertssystemets konfigurasjon** (et sett `/etc`-filer å begynne med, som du går gjennom og redigerer før du lagrer) som praktisk generisk motstykke.
+- **Ingen flash-/USB-domene.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-domenet i innstillingene har ingenting å gjøre her. I stedet tilbyr Mapper-domenet ettklikksforslaget **Legg til forhåndsinnstilling: vertssystemets konfigurasjon** (et sett `/etc`-filer å begynne med, som du går gjennom og redigerer før du lagrer) som praktisk generisk motstykke.
 - **Ingen Unraid-egne varsler.** BombVaults egne varselkanaler (webhook, varsler om mislykket off-site og lignende) virker som vanlig; bare den Unraid-spesifikke meldingen til dens eget varselsystem utelates, siden et slikt system ikke finnes her.
 - **Sikkerhetskopiering av virtuelle maskiner er valgfri og trenger en egen libvirtd-vert som er nåbar over SSH.** Se den utkommenterte blokken i compose-filen. En generisk Docker-vert har ingen innebygd VM-håndtering.
 
@@ -69,13 +69,13 @@ Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (
 
 1. Åpne webgrensesnittet på `https://<your-unraid-ip>:3443` (selvsignert sertifikat rett ut av boksen).
 2. I **Innstillinger**, aktiver sikkerhetskopidomenene du vil ha (Kontainere, VM-er, Flash, Auto-sikkerhetskopi, Mapper, ZFS-datasett) og velg en aksentfarge.
-3. På **Containere**-fanen, velg en container og klikk **Sikkerhetskopier** for å lage ditt første gjenopprettingspunkt. Repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og opprettes ved den første sikkerhetskopieringen.
-4. Sett opp planlegging fra **Innstillinger, Tidsplaner**. Det finnes en ett-klikks *inkluder alle i tidsplan* for containere og VM-er.
+3. På **Containere**-fanen, velg en container og klikk **Sikkerhetskopier nå** for å lage ditt første gjenopprettingspunkt. Repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og opprettes ved den første sikkerhetskopieringen.
+4. Sett opp planlegging fra **Innstillinger, Tidsplaner**. Det finnes en ett-klikks *Inkluder alle i tidsplan* for containere og VM-er.
 
 !!! tip "Valgfritt: velg en sikkerhetskopieringsrekkefølge"
-    Hvis noen containere alltid skal sikkerhetskopieres før andre (for eksempel en database før appen som bruker den), åpne **backup-order**-panelet på Kontainere-siden og dra dem inn i rekkefølgen du ønsker. Planlagte og flervalgs-kjøringer følger den deretter; alt du lar stå urangert, sikkerhetskopieres mest-forfalt-først, som før.
+    Hvis noen containere alltid skal sikkerhetskopieres før andre (for eksempel en database før appen som bruker den), åpne **Rekkefølge for sikkerhetskopiering**-panelet på Kontainere-siden og dra dem inn i rekkefølgen du ønsker. Planlagte og flervalgs-kjøringer følger den deretter; alt du lar stå urangert, sikkerhetskopieres mest-forfalt-først, som før.
 
-!!! note "Sjekk av host-integrasjon"
+!!! note "Host-integrasjonssjekk"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler, slik at du kan bekrefte at containeren er riktig koblet opp før du stoler på den.
 
 ## Enkel vs. Avansert
@@ -84,11 +84,11 @@ Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (
 
 *Innstillingene har ingen Lagre-knapp: hver endring skrives mens du gjør den.*
 
-Som standard viser grensesnittet bare det essensielle (sikkerhetskopier, gjenopprett, planlegg). Bruk **Enkel / Avansert**-bryteren i sidefeltet for å avdekke ekspertkontrollene: oppbevaring, ekstern kopi, pre/post-hooks, gjenoppretting på filnivå, varsler, Prometheus-metrikker og integritets-/vedlikeholdsverktøyene. Det er en innstilling per nettleser og av som standard, så nykommere får et rent grensesnitt og erfarne brukere får alt.
+Som standard viser grensesnittet bare det essensielle (sikkerhetskopier, gjenopprett, planlegg). Bruk **Enkel visning / Avansert visning**-bryteren i sidefeltet for å avdekke ekspertkontrollene: oppbevaring, ekstern kopi, pre/post-hooks, gjenoppretting på filnivå, varsler, Prometheus-metrikker og integritets-/vedlikeholdsverktøyene. Det er en innstilling per nettleser og av som standard, så nykommere får et rent grensesnitt og erfarne brukere får alt.
 
 ## Neste steg
 
 - Bla gjennom alle **[Funksjoner](features.md)**.
 - Legg til én eller flere **[Ekstern lagring og gjenoppretting](offsite-recovery.md)**-replikaer (hvert domene kan sende til flere destinasjoner samtidig) og lagre gjenopprettingssettet ditt.
-- Kloner du et oppsett eller flytter til en ny boks? Ta med hele konfigurasjonen din via kortet **Eksporter og importer innstillinger**. Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
+- Kloner du et oppsett eller flytter til en ny boks? Ta med hele konfigurasjonen din via kortet **Eksporter / importer innstillinger**. Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 - Støtt på et problem? Se **[Feilsøking](troubleshooting.md)**.

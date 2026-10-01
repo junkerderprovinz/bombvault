@@ -40,7 +40,7 @@ Ei Unraidia? BombVault toimii myös tavallisena konttina millä tahansa Docker-i
 
 Mikä poikkeaa Unraidista:
 
-- **Ei flash/USB-aluetta.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten asetusten Flash-alueella ei ole täällä tehtävää. Sen sijaan Tiedostot-alue tarjoaa yhden napsautuksen ehdotuksen **Lisää esiasetus: isäntäjärjestelmän kokoonpano** (aloittava `/etc`-tiedostojoukko, jonka käyt läpi ja muokkaat ennen tallennusta) käytännöllisenä yleisenä vastineena.
+- **Ei flash/USB-aluetta.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten asetusten Flash-alueella ei ole täällä tehtävää. Sen sijaan Kansiot-alue tarjoaa yhden napsautuksen ehdotuksen **Lisää esiasetus: isäntäjärjestelmän kokoonpano** (aloittava `/etc`-tiedostojoukko, jonka käyt läpi ja muokkaat ennen tallennusta) käytännöllisenä yleisenä vastineena.
 - **Ei Unraidin omia ilmoituksia.** BombVaultin omat ilmoituskanavat (webhook, off-site-epäonnistumisen varoitukset ja niin edelleen) toimivat tavalliseen tapaan; pois jää vain Unraid-kohtainen lähetys sen omaan ilmoitusjärjestelmään, koska sellaista järjestelmää ei täällä ole.
 - **Virtuaalikoneiden varmuuskopiointi on valinnaista ja vaatii erillisen, SSH:n yli tavoitettavan libvirtd-isännän.** Katso compose-tiedoston kommentoitu lohko. Yleisessä Docker-isännässä ei ole omaa virtuaalikoneiden hallintaa.
 
@@ -69,11 +69,11 @@ Malli liittää myös Docker-soketin, flashin (`/boot`) ja **Host Data** -juuren
 
 1. Avaa verkkokäyttöliittymä osoitteessa `https://<your-unraid-ip>:3443` (itse allekirjoitettu varmenne valmiiksi).
 2. Ota **Asetuksissa** käyttöön haluamasi varmuuskopioinnin toimialueet (Kontit, VMs, Flash, Itsevarmuuskopio, Kansiot, ZFS-tietojoukot) ja valitse korostusväri.
-3. Valitse **Kontit**-välilehdellä kontti ja napsauta **Varmuuskopioi** tehdäksesi ensimmäisen palautuspisteesi. Repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` ja ne luodaan ensimmäisen varmuuskopion yhteydessä.
-4. Määritä ajastus kohdasta **Asetukset, Aikataulut**. Konteille ja virtuaalikoneille on yhden napsautuksen *sisällytä kaikki aikatauluun*.
+3. Valitse **Kontit**-välilehdellä kontti ja napsauta **Varmuuskopioi nyt** tehdäksesi ensimmäisen palautuspisteesi. Repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` ja ne luodaan ensimmäisen varmuuskopion yhteydessä.
+4. Määritä ajastus kohdasta **Asetukset, Aikataulut**. Konteille ja virtuaalikoneille on yhden napsautuksen *Sisällytä kaikki aikatauluun*.
 
 !!! tip "Valinnaista: valitse varmuuskopiojärjestys"
-    Jos jotkin kontit tulisi aina varmuuskopioida ennen muita (esimerkiksi tietokanta ennen sitä käyttävää sovellusta), avaa **varmuuskopiojärjestys**-paneeli Kontit-sivulla ja vedä ne haluamaasi järjestykseen. Ajoitetut ja monivalinnalla käynnistetyt ajot noudattavat sitä; kaikki järjestämättä jättämäsi varmuuskopioidaan erääntyneimmät ensin, kuten ennenkin.
+    Jos jotkin kontit tulisi aina varmuuskopioida ennen muita (esimerkiksi tietokanta ennen sitä käyttävää sovellusta), avaa **Varmuuskopioiden järjestys**-paneeli Kontit-sivulla ja vedä ne haluamaasi järjestykseen. Ajoitetut ja monivalinnalla käynnistetyt ajot noudattavat sitä; kaikki järjestämättä jättämäsi varmuuskopioidaan erääntyneimmät ensin, kuten ennenkin.
 
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset, joten voit vahvistaa, että kontti on kytketty oikein ennen kuin luotat siihen.
@@ -84,11 +84,11 @@ Malli liittää myös Docker-soketin, flashin (`/boot`) ja **Host Data** -juuren
 
 *Asetuksissa ei ole Tallenna-painiketta: jokainen muutos kirjoitetaan heti.*
 
-Oletuksena käyttöliittymä näyttää vain olennaiset (varmuuskopiointi, palautus, ajastus). Käytä sivupalkin **Yksinkertainen / Edistynyt** -kytkintä paljastaaksesi asiantuntijasäätimet: säilytys, etäkopio, ennen/jälkeen-koukut, tiedostotason palautus, ilmoitukset, Prometheus-mittarit sekä eheys- ja ylläpitotyökalut. Se on selainkohtainen asetus ja oletuksena pois päältä, joten uudet käyttäjät saavat siistin käyttöliittymän ja tehokäyttäjät kaiken.
+Oletuksena käyttöliittymä näyttää vain olennaiset (varmuuskopiointi, palautus, ajastus). Käytä sivupalkin **Yksinkertainen näkymä / Edistynyt näkymä** -kytkintä paljastaaksesi asiantuntijasäätimet: säilytys, etäkopio, ennen/jälkeen-koukut, tiedostotason palautus, ilmoitukset, Prometheus-mittarit sekä eheys- ja ylläpitotyökalut. Se on selainkohtainen asetus ja oletuksena pois päältä, joten uudet käyttäjät saavat siistin käyttöliittymän ja tehokäyttäjät kaiken.
 
 ## Seuraavat vaiheet
 
 - Selaa täyttä **[Ominaisuudet](features.md)**-listaa.
 - Lisää yksi tai useampi **[Etäsijainti ja palautus](offsite-recovery.md)** -replika (kukin toimialue voi lähettää useaan kohteeseen kerralla) ja tallenna palautuspakettisi.
-- Kloonaatko kokoonpanoa tai siirrytkö uuteen laatikkoon? Kanna koko kokoonpanosi mukanasi **Vie ja tuo asetukset** -kortilla. Katso [Asetukset](configuration.md#portable-settings-export-and-import).
+- Kloonaatko kokoonpanoa tai siirrytkö uuteen laatikkoon? Kanna koko kokoonpanosi mukanasi **Vie / tuo asetukset** -kortilla. Katso [Asetukset](configuration.md#portable-settings-export-and-import).
 - Törmäsitkö esteeseen? Katso **[Vianmääritys](troubleshooting.md)**.

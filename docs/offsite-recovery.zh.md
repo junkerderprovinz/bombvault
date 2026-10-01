@@ -19,7 +19,7 @@
 
 域的备份路径（设置、存储）并不限于本地文件夹：直接把它指向一个 restic 远端（`s3:...`、`rest:http://host:8000/repo`、`b2:...`、`sftp:user@host:/repo`、`rclone:remote:bucket/path`），BombVault 就会直接备份到那里，既没有另一份本地副本，也没有复制步骤。这与上面的异地复制是真正不同的形态：那里本地仓库是主，异地仓库是它的尽力而为的存档；这里远程仓库 **本身就是** 主，而且在你没有为该域另行配置异地复制（或第二个远端）之前，它就是唯一的一份。
 
-六个路径字段（容器、虚拟机、闪存、配置、文件、ZFS 数据集）旁边各有一个 **本地 / 远程** 开关：
+六个路径字段（容器、虚拟机、闪存、自我备份、文件夹、ZFS 数据集）旁边各有一个 **本地 / 远程** 开关：
 
 - **本地** 显示熟悉的文件夹浏览器。
 - **远程** 把它换成一个朴素的 URL 输入框，外加一个按钮，打开异地目标所用的同一个连接测试与凭据对话框，只是配置成面向这个主仓库。从那里你能得到：
@@ -67,7 +67,7 @@ BombVault 定期通过实际尝试对异地仓库执行删除（瞄准一个不�
 
 BombVault 提供两个层级的证明，证明您的备份确实可还原，而不仅仅是存在。
 
-- **还原验证演练（本地）。** BombVault 定期运行 `restic check --read-data-subset`（有界，绝不是填满磁盘的完整还原），并为每个域显示一个*上次验证可还原*徽章。周期位于设置，计划；徽章位于设置，完整性。
+- **还原验证演练（本地）。** BombVault 定期运行 `restic check --read-data-subset`（有界，绝不是填满磁盘的完整还原），并为每个域显示一个*已验证可还原*徽章。周期位于设置，计划；徽章位于设置，完整性。
 - **DR 演练（异地）。** BombVault 将一个真实目标从异地仓库还原到一次性沙盒，逐文件、逐字节地验证它，然后清理。这证明您能够从异地恢复，而不仅仅是仓库能应答。
 
 仪表板上的**勒索软件防护评分卡**将这些汇总为每个域的绿 / 黄 / 红态势，带有一份带时间戳的清单（异地已配置、append-only 已验证、复制为最新、还原演练通过、加密开启、清理策略已设置）。每一行红色都深链到对应的修复，而该卡片只在经过验证的事实上变绿。
@@ -118,7 +118,7 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 
 两台机器：**TOWER** 运行容器并推送备份，**VAULT** 接收备份并强制不可变。请把名称、地址和共享路径换成你自己的。
 
-**1. 在 VAULT 上架设仅追加服务器。** 在 TOWER 的 BombVault 中进入 *设置 → 异地 → 引导式设置*，选择 **rest-server** 并生成配方。复制 **Unraid 模板 (XML)** 标签页，在 VAULT 上保存为 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`，然后 *Docker → Add Container*，从模板下拉列表中选择 **rest-server**。启动之前，把显示的 `htpasswd` 行写入 VAULT 的 `/mnt/user/appdata/rest-server/.htpasswd`。一次性密码只显示一次且从不保存，请现在复制。 那一行带着同一个密码，已经用 bcrypt 哈希过：明文填进 TOWER 的 REST 凭据，哈希过的那行放进 VAULT 的 `.htpasswd`。你不需要自己做哈希。
+**1. 在 VAULT 上架设仅追加服务器。** 在 TOWER 的 BombVault 中进入 *设置 → 异地 → 设置*，选择 **rest-server** 并生成配方。复制 **Unraid 模板 (XML)** 标签页，在 VAULT 上保存为 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`，然后 *Docker → Add Container*，从模板下拉列表中选择 **rest-server**。启动之前，把显示的 `htpasswd` 行写入 VAULT 的 `/mnt/user/appdata/rest-server/.htpasswd`。一次性密码只显示一次且从不保存，请现在复制。 那一行带着同一个密码，已经用 bcrypt 哈希过：明文填进 TOWER 的 REST 凭据，哈希过的那行放进 VAULT 的 `.htpasswd`。你不需要自己做哈希。
 
     请保留 OPTIONS 字段中的 `--append-only`。这正是关键所在：去掉它，VAULT 就又变回普通共享了。
 
@@ -136,7 +136,7 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 | **未受保护** | VAULT 接受了删除。`--append-only` 缺失或已被移除。 |
 | **无法判定** | 两者都不是。通常是 URL 与 restic 自己使用的不一致，或者凭据已更改。不会记录任何结果，也不会触发告警。 |
 
-**4. 在 VAULT 上查看收到了什么。** 先给两台机器配对（[配对实例](#pairing)），打开 *设置 → 配对 → 接收端*，进入**接收端**标签页，以 TOWER 作为发送实例，以只读方式注册该仓库。
+**4. 在 VAULT 上查看收到了什么。** 先给两台机器配对（[配对实例](#pairing)），打开 *设置 → 常规 → 接收端*，进入**接收端**标签页，以 TOWER 作为发送实例，以只读方式注册该仓库。
 
 !!! warning "位置是容器**内部**的路径，相对于主机挂载点书写"
     请输入 `user/appdata/rest-server/bombvault-containers/containers`，而**不是** `/mnt/user/appdata/…`。BombVault 运行在容器中，主机的 `/mnt` 挂载在别处，主机绝对路径在容器里并不存在。若你粘贴了绝对路径，BombVault 现在会告诉你应改用的相对路径。
@@ -156,7 +156,7 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 5. **一次还原容器和虚拟机**（保持停止，以便您有意地启动它们），并列出文件集和 ZFS 项目供您逐个还原；ZFS 项目还原后处于关闭状态。您的恢复工具包一键即达。
 
 !!! tip "计划性迁移与灾难"
-    引导式恢复从备份还原 BombVault 自身的设置。对于*计划性*的迁移到新机器，您可以改用**导出与导入设置**卡片直接迁移您的配置（一个可移植的 JSON 文件）。参见[配置](configuration.md#portable-settings-export-and-import)。
+    引导式恢复从备份还原 BombVault 自身的设置。对于*计划性*的迁移到新机器，您可以改用**导出 / 导入设置**卡片直接迁移您的配置（一个可移植的 JSON 文件）。参见[配置](configuration.md#portable-settings-export-and-import)。
 
 ### 从另一个 BombVault 仓库还原 {#restore-from-another-bombvault-repo}
 

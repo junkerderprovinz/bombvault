@@ -40,7 +40,7 @@ Non sei su Unraid? BombVault gira anche come semplice contenitore su qualsiasi h
 
 Cosa cambia rispetto a Unraid:
 
-- **Nessun dominio flash/USB.** Non c'è una chiavetta di avvio da catturare o ripristinare, quindi il dominio Flash nelle impostazioni qui non ha nulla da fare. Al suo posto il dominio File propone il suggerimento in un clic **Aggiungi preimpostazione: configurazione di sistema dell'host** (un insieme iniziale di file `/etc` che rivedi e modifichi prima di salvare), come equivalente generico pratico.
+- **Nessun dominio flash/USB.** Non c'è una chiavetta di avvio da catturare o ripristinare, quindi il dominio Flash nelle impostazioni qui non ha nulla da fare. Al suo posto il dominio Cartelle propone il suggerimento in un clic **Aggiungi preimpostazione: configurazione di sistema dell'host** (un insieme iniziale di file `/etc` che rivedi e modifichi prima di salvare), come equivalente generico pratico.
 - **Nessuna notifica nativa di Unraid.** I canali di notifica propri di BombVault (webhook, avvisi di fallimento off-site e così via) funzionano normalmente; viene saltato soltanto l'inoltro specifico al sistema di notifiche di Unraid, dato che qui non esiste.
 - **Il backup delle macchine virtuali è opzionale e richiede un host libvirtd separato raggiungibile via SSH.** Vedi il blocco commentato nel file compose. Un host Docker generico non porta con sé alcun gestore di macchine virtuali.
 
@@ -69,13 +69,13 @@ Il template monta anche il socket Docker, il flash (`/boot`) e la radice **Host 
 
 1. Apri l'interfaccia web all'indirizzo `https://<your-unraid-ip>:3443` (certificato autofirmato pronto all'uso).
 2. In **Impostazioni**, abilita i domini di backup che vuoi (Container, VM, Flash, Auto-backup, Cartelle, Dataset ZFS) e scegli un colore di accento.
-3. Nella scheda **Container**, scegli un container e clicca **Backup** per creare il tuo primo punto di ripristino. I percorsi dei repository hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` e vengono creati al primo backup.
-4. Imposta la pianificazione da **Impostazioni, Pianificazioni**. C'è un *includi tutto nel calendario* con un clic per container e VM.
+3. Nella scheda **Container**, scegli un container e clicca **Esegui backup ora** per creare il tuo primo punto di ripristino. I percorsi dei repository hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` e vengono creati al primo backup.
+4. Imposta la pianificazione da **Impostazioni, Pianificazioni**. C'è un *Includi tutto nel calendario* con un clic per container e VM.
 
 !!! tip "Facoltativo: scegli un ordine di backup"
-    Se alcuni container dovrebbero sempre essere sottoposti a backup prima di altri (per esempio un database prima dell'app che lo usa), apri il pannello **ordine di backup** nella pagina Container e trascinali nella sequenza che vuoi. Le esecuzioni pianificate e a selezione multipla la seguono quindi; tutto ciò che lasci non ordinato viene sottoposto a backup dal più in ritardo per primo, come prima.
+    Se alcuni container dovrebbero sempre essere sottoposti a backup prima di altri (per esempio un database prima dell'app che lo usa), apri il pannello **Ordine dei backup** nella pagina Container e trascinali nella sequenza che vuoi. Le esecuzioni pianificate e a selezione multipla la seguono quindi; tutto ciò che lasci non ordinato viene sottoposto a backup dal più in ritardo per primo, come prima.
 
-!!! note "Verifica dell'integrazione host"
+!!! note "Verifica integrazione host"
     Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti, così puoi confermare che il container sia collegato correttamente prima di affidartici.
 
 ## Semplice vs Avanzata
@@ -84,11 +84,11 @@ Il template monta anche il socket Docker, il flash (`/boot`) e la radice **Host 
 
 *Le impostazioni non hanno un pulsante Salva: ogni modifica viene scritta mentre la fai.*
 
-Per impostazione predefinita l'interfaccia mostra solo l'essenziale (backup, ripristino, pianificazione). Usa l'interruttore **Semplice / Avanzata** nella barra laterale per rivelare i controlli esperti: conservazione, copia off-site, hook pre/post, ripristino a livello di file, notifiche, metriche Prometheus e gli strumenti di integrità/manutenzione. È una preferenza per browser e disattivata di default, così i nuovi arrivati ottengono un'interfaccia pulita e gli utenti esperti ottengono tutto.
+Per impostazione predefinita l'interfaccia mostra solo l'essenziale (backup, ripristino, pianificazione). Usa l'interruttore **Vista semplice / Vista avanzata** nella barra laterale per rivelare i controlli esperti: conservazione, copia off-site, hook pre/post, ripristino a livello di file, notifiche, metriche Prometheus e gli strumenti di integrità/manutenzione. È una preferenza per browser e disattivata di default, così i nuovi arrivati ottengono un'interfaccia pulita e gli utenti esperti ottengono tutto.
 
 ## Prossimi passi
 
 - Sfoglia l'insieme completo delle **[Funzionalità](features.md)**.
 - Aggiungi una o più repliche **[Off-site e ripristino](offsite-recovery.md)** (ogni dominio può spedire a più destinazioni contemporaneamente) e salva il tuo kit di ripristino.
-- Stai clonando una configurazione o passando a una nuova macchina? Porta con te l'intera configurazione con la scheda **Esporta e importa impostazioni**. Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
+- Stai clonando una configurazione o passando a una nuova macchina? Porta con te l'intera configurazione con la scheda **Esporta / importa impostazioni**. Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
 - Hai incontrato un intoppo? Vedi **[Risoluzione dei problemi](troubleshooting.md)**.

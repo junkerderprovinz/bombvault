@@ -33,12 +33,12 @@ ZFS-Dataset-Backups brauchen diesen Modus ebenfalls: Den Snapshot eines Datasets
 
 Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Speicher, Backup-Pfade**. Jedes Pfadfeld hat außerdem einen Schalter **Lokal / Remote** direkt daneben: Ein Pfad kann statt eines lokalen Ordners ein restic-Remote sein (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), und BombVault sichert dann direkt dorthin, ohne getrennte lokale Kopie; siehe [Entfernte primäre Repositories](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Prüfung der Host-Integration"
+!!! note "Host-Integration-Check"
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile.
 
 ## Erkennung der Sicherungsquellen {#backup-source-detection}
 
-Für jeden Container wählt BombVault selbst aus, welche Bind-Mounts und benannten Volumes gesichert werden. Ein Pfad wird übernommen, sobald einer der folgenden Punkte zutrifft (das Ergebnis lässt sich pro Container jederzeit unter **Sicherungspfade** überschreiben):
+Für jeden Container wählt BombVault selbst aus, welche Bind-Mounts und benannten Volumes gesichert werden. Ein Pfad wird übernommen, sobald einer der folgenden Punkte zutrifft (das Ergebnis lässt sich pro Container jederzeit unter **Gesicherte Ordner** überschreiben):
 
 - **Treffer auf ein Datenwurzel-Segment:** die Host-Quelle des Binds enthält eines der Segmente aus `DATA_ROOT_SEGMENTS` als vollständige Pfadkomponente (voreingestellt nur `appdata`).
 - **Benannte Docker-Volumes** werden immer eingeschlossen, denn zu ihnen gibt es kein wegwerfbares Gegenstück und damit nichts zu filtern, **aber nur, wenn der echte Host-Speicherpfad des Volumes selbst über den Host-Data-Mount erreichbar ist**, genau wie jeder andere Host-Pfad, den BombVault sichert. Der Standardtreiber für lokale Volumes legt ein Volume unterhalb der Datenwurzel des Docker-Daemons ab, also `/var/lib/docker/volumes/<name>/_data`, sofern das nicht angepasst wurde (nachsehen mit `docker info -f '{{.DockerRootDir}}'`). Dieser Ort liegt NICHT im schmalen Ein-Verzeichnis-Host-Data-Mount, den die generische `docker-compose.yml` standardmäßig verwendet. Ein nicht erreichbares Volume wird stillschweigend übersprungen und nicht als Fehler gemeldet. Damit benannte Volumes auf einem generischen Host wirklich gesichert werden, richte Host Data (und `HOST_SOURCE_ROOT`) auf einen gemeinsamen übergeordneten Ordner, der auch die Docker-Datenwurzel abdeckt. Die Abwägung dazu steht im Host-Data-Kommentar der Compose-Datei (Unraid umgeht das, indem es aus demselben Grund gleich ganz `/mnt` einhängt, seine eigene allgemeingültige Konvention auf oberster Ebene).
@@ -110,7 +110,7 @@ Jedes Element kann eine eigene Empfindlichkeit und ein eigenes Benachrichtigungs
 
 ## Portable Einstellungen (Export und Import) {#portable-settings-export-and-import}
 
-Die Karte **Einstellungen exportieren und importieren** auf der Seite **Einstellungen, System** schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Off-site-Ziele, Zeitpläne, Aufbewahrung, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.
+Die Karte **Einstellungen exportieren / importieren** auf der Seite **Einstellungen, System** schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Off-site-Ziele, Zeitpläne, Aufbewahrung, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.
 
 !!! warning "Der Export kann Zugangsdaten enthalten"
     Du wählst, ob die Off-site- und Benachrichtigungs-Zugangsdaten in der Datei enthalten sein sollen. Mit enthaltenen Zugangsdaten ist der Export so sensibel wie dein Recovery-Kit, also bewahre ihn an einem sicheren Ort auf. Ohne sie hält die Datei nur nicht-geheime Einstellungen.

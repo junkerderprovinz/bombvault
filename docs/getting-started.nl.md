@@ -40,7 +40,7 @@ Geen Unraid? BombVault draait ook als gewone container op elke Docker-host (dat 
 
 Wat er anders is dan bij Unraid:
 
-- **Geen flash-/USB-domein.** Er is geen opstart-USB om vast te leggen of terug te zetten, dus het Flash-domein in de instellingen heeft hier niets te doen. In plaats daarvan biedt het Bestanden-domein de suggestie met één klik **Voorinstelling toevoegen: hostsysteemconfiguratie** (een eerste set `/etc`-bestanden die je nakijkt en aanpast voor je opslaat), als praktisch generiek equivalent.
+- **Geen flash-/USB-domein.** Er is geen opstart-USB om vast te leggen of terug te zetten, dus het Flash-domein in de instellingen heeft hier niets te doen. In plaats daarvan biedt het Mappen-domein de suggestie met één klik **Voorinstelling toevoegen: hostsysteemconfiguratie** (een eerste set `/etc`-bestanden die je nakijkt en aanpast voor je opslaat), als praktisch generiek equivalent.
 - **Geen Unraid-eigen meldingen.** BombVaults eigen meldingskanalen (webhook, waarschuwingen bij mislukte off-site en dergelijke) werken gewoon; alleen de Unraid-specifieke melding aan diens eigen meldingssysteem blijft achterwege, omdat zo'n systeem hier niet bestaat.
 - **Back-up van virtuele machines is optioneel en vraagt een aparte libvirtd-host die via SSH bereikbaar is.** Zie het uitgecommentarieerde blok in het compose-bestand. Een generieke Docker-host heeft zelf geen VM-beheer.
 
@@ -69,13 +69,13 @@ De template mount ook de Docker-socket, de flash (`/boot`) en de root **Host Dat
 
 1. Open de web-UI op `https://<jouw-unraid-ip>:3443` (out-of-the-box een zelfondertekend certificaat).
 2. Schakel bij **Instellingen** de back-updomeinen in die je wilt (Containers, VM's, Flash, Zelf-back-up, Mappen, ZFS-datasets) en kies een accentkleur.
-3. Kies op het tabblad **Containers** een container en klik op **Back-up maken** om je eerste herstelpunt te maken. Repository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` en worden bij de eerste back-up aangemaakt.
-4. Stel de planning in via **Instellingen, Schema's**. Er is een *alles opnemen in planning*-optie met één klik voor containers en VM's.
+3. Kies op het tabblad **Containers** een container en klik op **Nu back-up maken** om je eerste herstelpunt te maken. Repository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` en worden bij de eerste back-up aangemaakt.
+4. Stel de planning in via **Instellingen, Schema's**. Er is een *Alles in planning opnemen*-optie met één klik voor containers en VM's.
 
 !!! tip "Optioneel: kies een back-upvolgorde"
-    Als sommige containers altijd vóór andere geback-upt moeten worden (bijvoorbeeld een database vóór de app die hem gebruikt), open dan het paneel **back-upvolgorde** op de Containers-pagina en sleep ze in de gewenste volgorde. Geplande en meervoudige selecties volgen die volgorde daarna; alles wat je ongeordend laat, wordt geback-upt met het meest-achterstallige eerst, zoals voorheen.
+    Als sommige containers altijd vóór andere geback-upt moeten worden (bijvoorbeeld een database vóór de app die hem gebruikt), open dan het paneel **Back-upvolgorde** op de Containers-pagina en sleep ze in de gewenste volgorde. Geplande en meervoudige selecties volgen die volgorde daarna; alles wat je ongeordend laat, wordt geback-upt met het meest-achterstallige eerst, zoals voorheen.
 
-!!! note "Controle van hostintegratie"
+!!! note "Host-integratiecontrole"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen, zodat je kunt bevestigen dat de container correct is aangesloten voordat je erop vertrouwt.
 
 ## Simpel vs Geavanceerd
@@ -84,11 +84,11 @@ De template mount ook de Docker-socket, de flash (`/boot`) en de root **Host Dat
 
 *Instellingen hebben geen Opslaan-knop: elke wijziging wordt meteen weggeschreven.*
 
-Standaard toont de interface alleen de essentie (back-uppen, herstellen, plannen). Gebruik de schakelaar **Simpel / Geavanceerd** in de zijbalk om de expertbediening te onthullen: retentie, off-site kopie, pre/post-hooks, herstel op bestandsniveau, meldingen, Prometheus-metrics en de integriteits-/onderhoudstools. Het is een voorkeur per browser en standaard uit, zodat nieuwkomers een schone UI krijgen en poweruser alles.
+Standaard toont de interface alleen de essentie (back-uppen, herstellen, plannen). Gebruik de schakelaar **Eenvoudige weergave / Geavanceerde weergave** in de zijbalk om de expertbediening te onthullen: retentie, off-site kopie, pre/post-hooks, herstel op bestandsniveau, meldingen, Prometheus-metrics en de integriteits-/onderhoudstools. Het is een voorkeur per browser en standaard uit, zodat nieuwkomers een schone UI krijgen en poweruser alles.
 
 ## Volgende stappen
 
 - Blader door de volledige **[Functies](features.md)**.
 - Voeg een of meer **[Off-site en herstel](offsite-recovery.md)**-replica's toe (elk domein kan tegelijk naar meerdere bestemmingen sturen) en bewaar je herstelkit.
-- Een setup klonen of naar een nieuwe machine verhuizen? Neem je hele configuratie mee met de kaart **Instellingen exporteren en importeren**. Zie [Configuratie](configuration.md#portable-settings-export-and-import).
+- Een setup klonen of naar een nieuwe machine verhuizen? Neem je hele configuratie mee met de kaart **Instellingen exporteren / importeren**. Zie [Configuratie](configuration.md#portable-settings-export-and-import).
 - Loop je vast? Zie **[Probleemoplossing](troubleshooting.md)**.

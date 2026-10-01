@@ -38,7 +38,7 @@ Las rutas de repositorio de copia son por defecto `/mnt/user/bombvault/{containe
 
 ## Detección de las fuentes de copia {#backup-source-detection}
 
-Para cada contenedor, BombVault elige por sí mismo qué montajes bind y volúmenes con nombre se copian. Una ruta se toma en cuanto se cumple alguno de estos puntos (el resultado siempre se puede corregir por contenedor en sus **Rutas de copia**):
+Para cada contenedor, BombVault elige por sí mismo qué montajes bind y volúmenes con nombre se copian. Una ruta se toma en cuanto se cumple alguno de estos puntos (el resultado siempre se puede corregir por contenedor en sus **Carpetas a copiar**):
 
 - **Coincidencia de un segmento de raíz de datos:** el origen en el host del bind contiene uno de los segmentos de `DATA_ROOT_SEGMENTS` como componente completo de ruta (por omisión solo `appdata`).
 - **Los volúmenes Docker con nombre** se incluyen siempre, porque no tienen equivalente desechable y por tanto no hay nada que filtrar, **pero solo cuando la ruta real de almacenamiento del volumen en el host es accesible a través del montaje Host Data**, igual que cualquier otra ruta de host que copia BombVault. El controlador local por omisión guarda un volumen bajo la raíz de datos del propio demonio, es decir `/var/lib/docker/volumes/<nombre>/_data` salvo que se haya personalizado (compruébalo con `docker info -f '{{.DockerRootDir}}'`). Ese lugar NO queda cubierto por el montaje Host Data estrecho, de un solo directorio, que el `docker-compose.yml` genérico usa por omisión. Un volumen inaccesible se omite en silencio, no es un error. Para copiar de verdad los volúmenes con nombre en un host genérico, apunta Host Data (y `HOST_SOURCE_ROOT`) a un ancestro común que cubra también la raíz de datos de Docker: mira el comentario Host Data del fichero compose para ver la contrapartida (Unraid lo evita montando todo `/mnt`, su propia convención universal de primer nivel, por la misma razón).
@@ -110,7 +110,7 @@ Cada elemento puede tener su propia sensibilidad y su propio mínimo de notifica
 
 ## Ajustes portátiles (exportar e importar) {#portable-settings-export-and-import}
 
-La tarjeta **Exportar e importar ajustes** en la página de Ajustes, Sistema escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
+La tarjeta **Exportar / importar ajustes** en la página de Ajustes, Sistema escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
 
 !!! warning "La exportación puede contener credenciales"
     Tú eliges si incluir las credenciales externas y de notificación en el archivo. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.

@@ -49,7 +49,7 @@ O BombVault é a camada de orquestração e de interface, não o motor de armaze
 
 Novo por aqui? Vá a **[Introdução](getting-started.md)** para instalar o BombVault no Unraid através das Community Applications e correr o seu primeiro backup. Depois explore as **[Funcionalidades](features.md)** completas, afine a sua **[Configuração](configuration.md)** e configure o **[Externo e recuperação](offsite-recovery.md)**.
 
-O externo pode espalhar-se por vários destinos por domínio de uma só vez, um **painel recetor** só de leitura monitoriza essas cópias na máquina que as recebe, e pode levar toda a sua configuração para uma máquina nova com o cartão **Exportar e importar definições**. Consulte [Externo e recuperação](offsite-recovery.md) e [Configuração](configuration.md#portable-settings-export-and-import).
+O externo pode espalhar-se por vários destinos por domínio de uma só vez, um **painel recetor** só de leitura monitoriza essas cópias na máquina que as recebe, e pode levar toda a sua configuração para uma máquina nova com o cartão **Exportar / importar configurações**. Consulte [Externo e recuperação](offsite-recovery.md) e [Configuração](configuration.md#portable-settings-export-and-import).
 
 ## Ligações
 

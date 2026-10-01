@@ -40,7 +40,7 @@ Kein Unraid? BombVault läuft auch als schlichter Container auf jedem Docker-Hos
 
 Was gegenüber Unraid anders ist:
 
-- **Keine Flash-/USB-Domäne.** Es gibt keinen Boot-Stick zu erfassen oder wiederherzustellen, die Flash-Domäne in den Einstellungen hat hier also nichts zu tun. Stattdessen bietet die Datei-Domäne den Ein-Klick-Vorschlag **Voreinstellung hinzufügen: Host-Systemkonfiguration** an (ein `/etc`-Dateisatz als Anfang, den du vor dem Speichern prüfst und anpasst), als praktisches allgemeines Gegenstück.
+- **Keine Flash-/USB-Domäne.** Es gibt keinen Boot-Stick zu erfassen oder wiederherzustellen, die Flash-Domäne in den Einstellungen hat hier also nichts zu tun. Stattdessen bietet die Ordner-Domäne den Ein-Klick-Vorschlag **Voreinstellung hinzufügen: Host-Systemkonfiguration** an (ein `/etc`-Dateisatz als Anfang, den du vor dem Speichern prüfst und anpasst), als praktisches allgemeines Gegenstück.
 - **Keine Unraid-eigenen Benachrichtigungen.** BombVaults eigene Benachrichtigungskanäle (Webhook, Alarme bei fehlgeschlagenem Off-site und so weiter) arbeiten wie gewohnt; ausgelassen wird nur die Unraid-spezifische Meldung an dessen eigenes Benachrichtigungssystem, weil es ein solches hier nicht gibt.
 - **VM-Sicherung ist optional und braucht einen separaten, per SSH erreichbaren libvirtd-Host.** Siehe den auskommentierten Block in der Compose-Datei. Ein generischer Docker-Host bringt selbst keine VM-Verwaltung mit.
 
@@ -70,12 +70,12 @@ Das Template hängt außerdem den Docker-Socket, den Flash (`/boot`) und das Wur
 1. Öffne die Web-Oberfläche unter `https://<your-unraid-ip>:3443` (selbstsigniertes Zertifikat von Haus aus).
 2. Aktiviere in den **Einstellungen** die gewünschten Backup-Bereiche (Container, VMs, Flash, Selbst-Backup, Ordner, ZFS-Datasets) und wähle eine Akzentfarbe.
 3. Wähle im **Container**-Tab einen Container und klicke auf **Jetzt sichern**, um deinen ersten Wiederherstellungspunkt zu erstellen. Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` und werden beim ersten Backup angelegt.
-4. Richte die Planung unter **Einstellungen, Zeitpläne** ein. Es gibt ein Ein-Klick-*alle in Zeitplan aufnehmen* für Container und VMs.
+4. Richte die Planung unter **Einstellungen, Zeitpläne** ein. Es gibt ein Ein-Klick-*Alle in den Zeitplan* für Container und VMs.
 
 !!! tip "Optional: eine Backup-Reihenfolge festlegen"
-    Wenn manche Container immer vor anderen gesichert werden sollen (zum Beispiel eine Datenbank vor der App, die sie nutzt), öffne das Panel **backup-order** auf der Container-Seite und ziehe sie in die gewünschte Reihenfolge. Geplante und Mehrfachauswahl-Läufe folgen ihr dann; alles, was du unsortiert lässt, wird wie bisher zuerst nach höchster Überfälligkeit gesichert.
+    Wenn manche Container immer vor anderen gesichert werden sollen (zum Beispiel eine Datenbank vor der App, die sie nutzt), öffne das Panel **Backup-Reihenfolge** auf der Container-Seite und ziehe sie in die gewünschte Reihenfolge. Geplante und Mehrfachauswahl-Läufe folgen ihr dann; alles, was du unsortiert lässt, wird wie bisher zuerst nach höchster Überfälligkeit gesichert.
 
-!!! note "Prüfung der Host-Integration"
+!!! note "Host-Integration-Check"
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile, sodass du bestätigen kannst, dass der Container korrekt verdrahtet ist, bevor du dich darauf verlässt.
 
 ## Einfach vs. Erweitert
@@ -84,11 +84,11 @@ Das Template hängt außerdem den Docker-Socket, den Flash (`/boot`) und das Wur
 
 *Die Einstellungen haben keinen Speichern-Knopf: jede Änderung wird sofort geschrieben.*
 
-Standardmäßig zeigt die Oberfläche nur das Wesentliche (sichern, wiederherstellen, planen). Nutze den Schalter **Einfach / Erweitert** in der Seitenleiste, um die Expertensteuerung freizuschalten: Aufbewahrung, Off-site-Kopie, Pre/Post-Hooks, Wiederherstellung auf Dateiebene, Benachrichtigungen, Prometheus-Metriken und die Integritäts-/Wartungswerkzeuge. Es ist eine Einstellung pro Browser und standardmäßig aus, sodass Einsteiger eine aufgeräumte Oberfläche bekommen und Power-User alles.
+Standardmäßig zeigt die Oberfläche nur das Wesentliche (sichern, wiederherstellen, planen). Nutze den Schalter **Einfache Ansicht / Erweiterte Ansicht** in der Seitenleiste, um die Expertensteuerung freizuschalten: Aufbewahrung, Off-site-Kopie, Pre/Post-Hooks, Wiederherstellung auf Dateiebene, Benachrichtigungen, Prometheus-Metriken und die Integritäts-/Wartungswerkzeuge. Es ist eine Einstellung pro Browser und standardmäßig aus, sodass Einsteiger eine aufgeräumte Oberfläche bekommen und Power-User alles.
 
 ## Nächste Schritte
 
 - Durchstöbere die vollständigen **[Funktionen](features.md)**.
 - Füge eine oder mehrere **[Off-site & Wiederherstellung](offsite-recovery.md)**-Repliken hinzu (jeder Bereich kann gleichzeitig an mehrere Ziele liefern) und speichere dein Recovery-Kit.
-- Klonst du ein Setup oder wechselst auf eine neue Box? Nimm deine gesamte Konfiguration mit der Karte **Einstellungen exportieren und importieren** mit. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
+- Klonst du ein Setup oder wechselst auf eine neue Box? Nimm deine gesamte Konfiguration mit der Karte **Einstellungen exportieren / importieren** mit. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
 - Auf ein Problem gestoßen? Siehe **[Fehlerbehebung](troubleshooting.md)**.

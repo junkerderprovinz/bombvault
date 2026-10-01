@@ -33,12 +33,12 @@ ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri 
 
 Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Depolama, Yedekleme yolları**'nda değiştirin. Her yol alanında ayrıca satır içi bir **Yerel / Uzak** anahtarı vardır: bir yol, yerel bir klasör yerine bir restic uzak konumu (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) olabilir ve yedekleme ayrı bir yerel kopya olmadan doğrudan oraya yapılır; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Host entegrasyon denetimi"
+!!! note "Host Entegrasyon Denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
 
 ## Yedekleme kaynaklarının belirlenmesi {#backup-source-detection}
 
-Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin yedekleneceğini BombVault kendisi seçer. Aşağıdakilerden herhangi biri geçerli olur olmaz bir yol alınır (sonucu kapsayıcı bazında her zaman **Yedekleme yolları** altından değiştirebilirsiniz):
+Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin yedekleneceğini BombVault kendisi seçer. Aşağıdakilerden herhangi biri geçerli olur olmaz bir yol alınır (sonucu kapsayıcı bazında her zaman **Yedeklenecek klasörler** altından değiştirebilirsiniz):
 
 - **Veri kökü parçası eşleşmesi:** bind bağının ana makinedeki kaynağı, `DATA_ROOT_SEGMENTS` parçalarından birini tam bir yol bileşeni olarak içeriyor (varsayılan olarak yalnızca `appdata`).
 - **Adlandırılmış Docker birimleri** her zaman dahil edilir, çünkü atılabilir bir karşılıkları yoktur ve süzülecek bir şey kalmaz, **ama yalnızca birimin ana makinedeki gerçek depolama yolunun kendisi Host Data bağı üzerinden erişilebilir olduğunda**, tıpkı BombVault'un yedeklediği diğer her ana makine yolu gibi. Varsayılan yerel birim sürücüsü bir birimi arka planın kendi veri kökünün altına, yani değiştirilmediyse `/var/lib/docker/volumes/<ad>/_data` yoluna koyar (`docker info -f '{{.DockerRootDir}}'` ile bakabilirsiniz). Bu konum, genel `docker-compose.yml` dosyasının varsayılan olarak kullandığı tek dizinlik dar Host Data bağının kapsamında DEĞİLDİR. Erişilemeyen birim sessizce atlanır, bu bir hata değildir. Genel bir ana makinede adlandırılmış birimlerin gerçekten yedeklenmesi için Host Data'yı (ve `HOST_SOURCE_ROOT` değerini) Docker'ın veri kökünü de kapsayan ortak bir üst dizine yöneltin: ödünleşim compose dosyasının Host Data yorumunda anlatılıyor (Unraid, aynı nedenle kendi en üst düzey genel geleneği olan `/mnt` dizininin tamamını bağlayarak bunu aşar).
@@ -110,7 +110,7 @@ Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunlar�
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 
-Ayarlar, Sistem sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
+Ayarlar, Sistem sayfasındaki **Ayarları dışa / içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
 
 !!! warning "Dışa aktarma kimlik bilgileri içerebilir"
     Site dışı ve bildirim kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.

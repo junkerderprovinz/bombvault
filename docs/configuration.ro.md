@@ -33,12 +33,12 @@ Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda monteaz
 
 Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**. Fiecare câmp de cale are și un comutator **Local / La distanță** integrat: o cale poate fi un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Verificarea integrării cu gazda"
+!!! note "Verificare integrare gazdă"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
 
 ## Detectarea surselor de copie de rezervă {#backup-source-detection}
 
-Pentru fiecare container, BombVault alege singur ce montări bind și ce volume denumite intră în copie. O cale este preluată de îndată ce se aplică oricare dintre punctele următoare (rezultatul poate fi oricând suprascris per container, în **Căile de copiere** ale acestuia):
+Pentru fiecare container, BombVault alege singur ce montări bind și ce volume denumite intră în copie. O cale este preluată de îndată ce se aplică oricare dintre punctele următoare (rezultatul poate fi oricând suprascris per container, în secțiunea **Foldere de salvat** a acestuia):
 
 - **Potrivire cu un segment al rădăcinii de date:** sursa de pe gazdă a montării bind conține unul dintre segmentele din `DATA_ROOT_SEGMENTS` ca element complet de cale (implicit doar `appdata`).
 - **Volumele Docker denumite** sunt incluse întotdeauna, pentru că nu au un echivalent de unică folosință și deci nu e nimic de filtrat, **dar numai atunci când calea reală de stocare a volumului pe gazdă este ea însăși accesibilă prin montarea Host Data**, exact ca orice altă cale de gazdă pe care BombVault o salvează. Driverul implicit pentru volume locale așază un volum sub rădăcina de date a demonului însuși, adică `/var/lib/docker/volumes/<nume>/_data` dacă nu ai schimbat nimic (verifică cu `docker info -f '{{.DockerRootDir}}'`). Acel loc NU este acoperit de montarea Host Data îngustă, cu un singur director, pe care fișierul `docker-compose.yml` generic o folosește implicit. Un volum inaccesibil este sărit în tăcere, nu este o eroare. Ca volumele denumite să fie salvate cu adevărat pe o gazdă generică, îndreaptă Host Data (și `HOST_SOURCE_ROOT`) către un director părinte comun care acoperă și rădăcina de date a Docker: compromisul este descris în comentariul Host Data din fișierul compose (Unraid ocolește asta montând, din același motiv, întregul `/mnt`, propria sa convenție universală de nivel superior).
@@ -110,7 +110,7 @@ Fiecare element poate avea propria sensibilitate și propriul minim de notificar
 
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 
-Cardul **Export și import setări** de pe pagina Setări, Sistem scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
+Cardul **Exportă / importă setările** de pe pagina Setări, Sistem scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
 
 !!! warning "Exportul poate conține credențiale"
     Alegi dacă incluzi credențialele off-site și de notificare în fișier. Cu credențialele incluse, exportul este la fel de sensibil ca kitul tău de recuperare, deci păstrează-l undeva în siguranță. Fără ele, fișierul conține doar setări nesecrete.

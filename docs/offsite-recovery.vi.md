@@ -19,7 +19,7 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 
 Đường dẫn sao lưu của một miền (Cài đặt, Lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
 
-Mỗi trong sáu ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, Tệp, Tập dữ liệu ZFS) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
+Mỗi trong sáu ô đường dẫn (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
 
 - **Cục bộ** hiển thị trình duyệt thư mục quen thuộc.
 - **Từ xa** đổi nó thành một ô URL đơn giản, kèm một nút mở đúng hộp thoại kiểm tra kết nối và thông tin đăng nhập mà các đích ngoại vi vẫn dùng, chỉ khác là được cấu hình cho kho chính này. Từ đó bạn có:
@@ -67,7 +67,7 @@ Một lần lật thực sự từ được-bảo-vệ sang không-được-bả
 
 BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu của bạn thực sự khôi phục được, không chỉ hiện diện.
 
-- **Diễn tập xác minh khôi phục (cục bộ).** BombVault định kỳ chạy `restic check --read-data-subset` (có giới hạn, không bao giờ là một lần khôi phục toàn bộ làm đầy đĩa) và hiển thị một huy hiệu *xác minh khôi phục được lần cuối* cho mỗi miền. Nhịp độ nằm trên Cài đặt, Lịch trình; huy hiệu trên Cài đặt, Toàn vẹn.
+- **Diễn tập xác minh khôi phục (cục bộ).** BombVault định kỳ chạy `restic check --read-data-subset` (có giới hạn, không bao giờ là một lần khôi phục toàn bộ làm đầy đĩa) và hiển thị một huy hiệu *Đã xác minh khôi phục được* cho mỗi miền. Nhịp độ nằm trên Cài đặt, Lịch trình; huy hiệu trên Cài đặt, Toàn vẹn.
 - **Diễn tập DR (off-site).** BombVault khôi phục một đích thực từ kho off-site vào một hộp cát dùng một lần, xác minh nó từng tập tin và từng byte, rồi dọn dẹp. Điều này chứng minh bạn có thể khôi phục từ off-site, không chỉ là kho phản hồi.
 
 **Bảng điểm bảo vệ chống ransomware** trên bảng điều khiển gom điều này thành một thế phòng thủ xanh / hổ phách / đỏ cho mỗi miền, với một danh sách kiểm tra có đóng dấu tuổi (off-site đã cấu hình, append-only đã xác minh, nhân bản hiện thời, diễn tập khôi phục đã qua, mã hóa đã bật, chiến lược dọn bớt đã đặt). Mỗi hàng đỏ liên kết sâu tới bản sửa, và thẻ chỉ bao giờ chuyển xanh dựa trên các sự thật đã xác minh.
@@ -118,7 +118,7 @@ Phần trên mô tả các bộ phận. Đây là một thiết lập hoàn ch�
 
 Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nhận chúng và cưỡng chế tính bất biến. Hãy thay bằng tên, địa chỉ và đường dẫn chia sẻ của bạn.
 
-**1. Trên VAULT, dựng máy chủ chỉ-ghi-thêm.** Trong BombVault trên TOWER, vào *Cài đặt → Ngoài site → thiết lập có hướng dẫn*, chọn **rest-server** và tạo công thức. Sao chép thẻ **Mẫu Unraid (XML)**, lưu trên VAULT thành `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, rồi *Docker → Add Container* và chọn **rest-server** trong danh sách mẫu. Trước khi khởi động, ghi dòng `htpasswd` hiển thị vào `/mnt/user/appdata/rest-server/.htpasswd` trên VAULT. Mật khẩu dùng một lần chỉ hiện một lần và không bao giờ được lưu, hãy sao chép ngay. Dòng đó mang chính mật khẩu ấy, đã được băm bằng bcrypt sẵn cho bạn: văn bản rõ đi vào thông tin đăng nhập REST trên TOWER, dòng đã băm đi vào `.htpasswd` trên VAULT. Bạn không phải tự băm gì cả.
+**1. Trên VAULT, dựng máy chủ chỉ-ghi-thêm.** Trong BombVault trên TOWER, vào *Cài đặt → Ngoài site → Thiết lập*, chọn **rest-server** và tạo công thức. Sao chép thẻ **Mẫu Unraid (XML)**, lưu trên VAULT thành `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, rồi *Docker → Add Container* và chọn **rest-server** trong danh sách mẫu. Trước khi khởi động, ghi dòng `htpasswd` hiển thị vào `/mnt/user/appdata/rest-server/.htpasswd` trên VAULT. Mật khẩu dùng một lần chỉ hiện một lần và không bao giờ được lưu, hãy sao chép ngay. Dòng đó mang chính mật khẩu ấy, đã được băm bằng bcrypt sẵn cho bạn: văn bản rõ đi vào thông tin đăng nhập REST trên TOWER, dòng đã băm đi vào `.htpasswd` trên VAULT. Bạn không phải tự băm gì cả.
 
     Giữ nguyên `--append-only` trong ô OPTIONS. Đó chính là điểm mấu chốt: thiếu nó, VAULT lại chỉ là một thư mục chia sẻ thông thường.
 
@@ -136,7 +136,7 @@ Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nh
 | **KHÔNG được bảo vệ** | VAULT đã chấp nhận một lệnh xóa. Thiếu `--append-only` hoặc nó đã bị bỏ đi. |
 | **không kết luận được** | Không thuộc trường hợp nào. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
 
-**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Ghép nối → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
+**4. Trên VAULT, xem những gì tới nơi.** Ghép nối hai máy ([Ghép nối các phiên bản](#pairing)), bật *Cài đặt → Chung → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc với TOWER là phiên bản gửi.
 
 !!! warning "Vị trí là đường dẫn **bên trong** container, viết tương đối so với điểm gắn của máy chủ"
     Nhập `user/appdata/rest-server/bombvault-containers/containers`, **không phải** `/mnt/user/appdata/…`. BombVault chạy trong container, nơi `/mnt` của máy chủ được gắn ở chỗ khác; đường dẫn tuyệt đối của máy chủ không tồn tại bên trong. Nếu bạn dán vào, BombVault nay sẽ cho biết đường dẫn tương đối cần dùng.

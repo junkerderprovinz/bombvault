@@ -33,12 +33,12 @@ Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbi
 
 Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Pamięć, Ścieżki kopii**. Każde pole ścieżki ma też wbudowany przełącznik **Lokalne / Zdalne**: ścieżka może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Kontrola integracji z hostem"
+!!! note "Sprawdzenie integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.
 
 ## Wykrywanie źródeł kopii zapasowej {#backup-source-detection}
 
-Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny nazwane trafiają do kopii. Ścieżka zostaje przyjęta, gdy zachodzi którykolwiek z poniższych warunków (wynik zawsze można nadpisać dla danego kontenera w jego **Ścieżkach kopii**):
+Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny nazwane trafiają do kopii. Ścieżka zostaje przyjęta, gdy zachodzi którykolwiek z poniższych warunków (wynik zawsze można nadpisać dla danego kontenera w jego sekcji **Foldery do kopii**):
 
 - **Trafienie na segment katalogu danych:** źródło bindu na hoście zawiera jeden z segmentów `DATA_ROOT_SEGMENTS` jako pełny człon ścieżki (domyślnie tylko `appdata`).
 - **Nazwane wolumeny Dockera** są dołączane zawsze, bo nie mają jednorazowego odpowiednika, więc nie ma czego filtrować, **ale tylko wtedy, gdy rzeczywista ścieżka wolumenu na hoście jest osiągalna przez montowanie Host Data**, dokładnie tak jak każda inna ścieżka hosta, którą BombVault archiwizuje. Domyślny sterownik wolumenów lokalnych umieszcza wolumen pod katalogiem danych samego demona, czyli `/var/lib/docker/volumes/<nazwa>/_data`, o ile nie zostało to zmienione (sprawdź poleceniem `docker info -f '{{.DockerRootDir}}'`). To miejsce NIE jest objęte wąskim, jednokatalogowym montowaniem Host Data, którego domyślnie używa ogólny `docker-compose.yml`. Nieosiągalny wolumen jest po cichu pomijany, to nie jest błąd. Aby naprawdę archiwizować nazwane wolumeny na zwykłym hoście, skieruj Host Data (oraz `HOST_SOURCE_ROOT`) na wspólny katalog nadrzędny obejmujący także katalog danych Dockera: kompromis opisuje komentarz Host Data w pliku compose (Unraid omija to, montując z tego samego powodu całe `/mnt`, własną uniwersalną konwencję najwyższego poziomu).
@@ -110,7 +110,7 @@ Każdy element może mieć własną czułość i własne minimum powiadomień. U
 
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
-Karta **Eksport i import ustawień** na stronie Ustawienia, System zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
+Karta **Eksport / import ustawień** na stronie Ustawienia, System zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
 
 !!! warning "Eksport może zawierać poświadczenia"
     Sam decydujesz, czy dołączyć do pliku poświadczenia poza siedzibą i powiadomień. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.

@@ -19,7 +19,7 @@ Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokal
 
 Cesta zálohy domény (Nastavení, Úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
 
-Každé ze šesti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory, Datové sady ZFS) má hned vedle přepínač **Místní / Vzdálené**:
+Každé ze šesti polí cesty (Kontejnery, VMs, Flash, Autozáloha, Složky, Datové sady ZFS) má hned vedle přepínač **Místní / Vzdálené**:
 
 - **Místní** zobrazí známý prohlížeč složek.
 - **Vzdálené** jej vymění za prosté pole URL a tlačítko, které otevře stejné okno testu připojení a přihlašovacích údajů, jaké používají cíle mimo lokalitu, jen nastavené pro tento primární repozitář. Odtud získáte:
@@ -67,7 +67,7 @@ Skutečný přechod z chráněno na nechráněno spustí jediné upozornění.
 
 BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obnovitelné, nejen přítomné.
 
-- **Cvičné obnovy s ověřením (místní).** BombVault pravidelně spouští `restic check --read-data-subset` (omezené, nikdy plná obnova zaplňující disk) a zobrazuje odznak *naposledy ověřeno jako obnovitelné* na doménu. Kadence žije v Nastavení, Plány; odznak v Nastavení, Integrita.
+- **Cvičné obnovy s ověřením (místní).** BombVault pravidelně spouští `restic check --read-data-subset` (omezené, nikdy plná obnova zaplňující disk) a zobrazuje odznak *Ověřeno jako obnovitelné* na doménu. Kadence žije v Nastavení, Plány; odznak v Nastavení, Integrita.
 - **Cvičné obnovy po havárii (mimo lokalitu).** BombVault obnoví skutečný cíl z repozitáře mimo lokalitu do jednorázového sandboxu, ověří jej soubor po souboru a bajt po bajtu, poté ukliďte. To dokazuje, že umíte obnovit z mimo lokalitu, nejen že repozitář odpovídá.
 
 **Vysvědčení ochrany proti ransomwaru** na Přehledu to shrne do zeleného / oranžového / červeného postoje na doménu, s kontrolním seznamem s věkovou značkou (mimo lokalitu nakonfigurováno, append-only ověřeno, replikace aktuální, cvičná obnova prošla, šifrování zapnuto, strategie prořezávání nastavena). Každý červený řádek odkazuje přímo na opravu a karta se rozsvítí zeleně jen na ověřených faktech.
@@ -118,7 +118,7 @@ Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se sku
 
 Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je přijímá a vynucuje neměnnost. Dosaďte vlastní názvy, adresy a cesty ke sdílení.
 
-**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo lokalitu → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sami nic hašovat nemusíte.
+**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo lokalitu → Nastavit*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sami nic hašovat nemusíte.
 
     Nechte `--append-only` v poli OPTIONS. O to tu celou dobu jde: bez toho je VAULT zase obyčejné sdílení.
 
@@ -136,7 +136,7 @@ První část cesty je uživatel htpasswd, druhá je repozitář. Zadejte vygene
 | **NENÍ chráněno** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
 | **neprůkazné** | Ani jedno. Obvykle URL není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
 
-**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Párování → Přijímač*, otevřete kartu **Přijímač** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
+**4. Na VAULT sledujte, co přichází.** Spárujte obě krabice ([Párování instancí](#pairing)), zapněte *Nastavení → Obecné → Přijímač*, otevřete kartu **Přijímač** a zaregistrujte repozitář jen pro čtení s TOWER jako odesílající instancí.
 
 !!! warning "Umístění je cesta **uvnitř** kontejneru, zapsaná relativně k připojení hostitele"
     Zadejte `user/appdata/rest-server/bombvault-containers/containers`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám nyní sdělí relativní cestu, kterou máte použít.
@@ -156,7 +156,7 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 5. **Obnoví najednou kontejnery a VM** (ponechané zastavené, takže je spustíte záměrně) a vypíše sady souborů a položky ZFS k obnovení jednu po druhé; položky ZFS se vrátí vypnuté. Sada pro obnovu je na jedno kliknutí.
 
 !!! tip "Plánovaná migrace versus havárie"
-    Řízená obnova obnovuje vlastní nastavení BombVaultu ze zálohy. Pro *plánovaný* přesun na nový stroj můžete místo toho přenést konfiguraci přímo pomocí karty **Export a import nastavení** (přenosný soubor JSON). Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
+    Řízená obnova obnovuje vlastní nastavení BombVaultu ze zálohy. Pro *plánovaný* přesun na nový stroj můžete místo toho přenést konfiguraci přímo pomocí karty **Export / import nastavení** (přenosný soubor JSON). Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
 
 ### Obnova z jiného BombVault repozitáře {#restore-from-another-bombvault-repo}
 

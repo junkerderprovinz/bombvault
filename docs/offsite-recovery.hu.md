@@ -19,7 +19,7 @@ Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kí
 
 Egy tartomány mentési útvonala (Beállítások, Tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
 
-A hat útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok, ZFS-adatkészletek) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
+A hat útvonalmező (Konténerek, VM-ek, Flash, Önmentés, Mappák, ZFS-adatkészletek) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
 
 - **Helyi** a megszokott mappaböngészőt mutatja.
 - **Távoli** ezt egy egyszerű URL-mezőre cseréli, plusz egy gombra, amely ugyanazt a kapcsolatteszt és hitelesítőadat párbeszédet nyitja meg, amit a külső telephelyi célok használnak, csak épp ehhez az elsődleges tárolóhoz beállítva. Onnan a következőket kapod:
@@ -67,7 +67,7 @@ Egy valódi védett-védtelen átbillenés egyetlen riasztást indít.
 
 A BombVault kétféle szintű bizonyítékot kínál arra, hogy a mentéseid ténylegesen visszaállíthatók, nem csak jelen vannak.
 
-- **Visszaállítás-ellenőrző próbák (helyi).** A BombVault időnként lefuttatja a `restic check --read-data-subset` parancsot (korlátozva, soha nem egy lemezt megtöltő teljes visszaállítás), és tartományonként *utoljára visszaállíthatónak igazolva* jelvényt mutat. Az ütem a Beállítások, Ütemezések alatt él; a jelvény a Beállítások, Integritás alatt.
+- **Visszaállítás-ellenőrző próbák (helyi).** A BombVault időnként lefuttatja a `restic check --read-data-subset` parancsot (korlátozva, soha nem egy lemezt megtöltő teljes visszaállítás), és tartományonként *Visszaállíthatóság igazolva* jelvényt mutat. Az ütem a Beállítások, Ütemezések alatt él; a jelvény a Beállítások, Integritás alatt.
 - **DR-próbák (telephelyen kívüli).** A BombVault visszaállít egy valódi célt a telephelyen kívüli tárolóból egy eldobható homokozóba, ellenőrzi fájlról fájlra és bájtról bájtra, majd feltakarít. Ez bizonyítja, hogy telephelyen kívülről helyre tudsz állni, nem csak azt, hogy a tároló válaszol.
 
 A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tartományonkénti zöld / sárga / piros helyzetté gyűjti össze, egy korral bélyegzett ellenőrzőlistával (telephelyen kívüli beállítva, append-only igazolva, replikáció naprakész, visszaállítási próba sikeres, titkosítás be, nyesési stratégia beállítva). Minden piros sor mélyhivatkozással a javításra mutat, és a kártya csak igazolt tényeken vált valaha is zöldre.
@@ -118,7 +118,7 @@ Fent az alkatrészek szerepelnek. Itt egy teljes összeállítás valódi érté
 
 Két gép: a **TOWER** futtatja a konténereket és küldi a mentéseket, a **VAULT** fogadja őket és kikényszeríti a változtathatatlanságot. Cseréld a saját neveidre, címeidre és megosztási útvonalaidra.
 
-**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában menj a *Beállítások → Telephelyen kívüli → vezetett beállítás* pontra, válaszd a **rest-server** lehetőséget, és készítsd el a receptet. Másold ki az **Unraid sablon (XML)** fület, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. Az egyszer használatos jelszó egyszer jelenik meg és sosem kerül tárolásra, másold ki most. Az a sor ugyanazt a jelszót hordozza, már bcrypttel kivonatolva: a nyílt szöveg a TOWER REST-hitelesítő adataiba kerül, a kivonatolt sor a VAULT `.htpasswd` fájljába. Neked semmit sem kell kivonatolnod.
+**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában menj a *Beállítások → Telephelyen kívüli → Beállítás* pontra, válaszd a **rest-server** lehetőséget, és készítsd el a receptet. Másold ki az **Unraid sablon (XML)** fület, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. Az egyszer használatos jelszó egyszer jelenik meg és sosem kerül tárolásra, másold ki most. Az a sor ugyanazt a jelszót hordozza, már bcrypttel kivonatolva: a nyílt szöveg a TOWER REST-hitelesítő adataiba kerül, a kivonatolt sor a VAULT `.htpasswd` fájljába. Neked semmit sem kell kivonatolnod.
 
     Hagyd bent a `--append-only` kapcsolót az OPTIONS mezőben. Ez az egésznek a lényege: nélküle a VAULT megint csak egy hétköznapi megosztás.
 
@@ -136,7 +136,7 @@ Az útvonal első szakasza a htpasswd felhasználó, a második a tároló. Add 
 | **NEM védett** | A VAULT elfogadott egy törlést. Hiányzik a `--append-only`, vagy eltávolították. |
 | **nem egyértelmű** | Egyik sem. Általában a cím nem az, amit maga a restic használ, vagy megváltoztak a hitelesítő adatok. Semmi nem kerül rögzítésre, és nem indul riasztás. |
 
-**4. A VAULT gépen nézd meg, mi érkezik.** Párosítsd a két gépet ([Példányok párosítása](#pairing)), kapcsold be a *Beállítások → Párosítás → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon, a TOWER-t megadva küldő példányként.
+**4. A VAULT gépen nézd meg, mi érkezik.** Párosítsd a két gépet ([Példányok párosítása](#pairing)), kapcsold be a *Beállítások → Általános → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon, a TOWER-t megadva küldő példányként.
 
 !!! warning "A hely a konténeren **belüli** útvonal, a gazdagép csatolási pontjához képest megadva"
     Ezt add meg: `user/appdata/rest-server/bombvault-containers/containers`, és **ne** ezt: `/mnt/user/appdata/…`. A BombVault konténerben fut, ahol a gazdagép `/mnt` könyvtára máshová van csatolva; abszolút gazdagép-útvonal ott nem létezik. Ha mégis beilleszted, a BombVault mostantól megmondja a helyette használandó relatív útvonalat.
@@ -156,7 +156,7 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 5. **A konténereket és a VM-eket egyszerre visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a fájlkészleteket és a ZFS-elemeket pedig felsorolja, hogy egyenként állítsd vissza őket; a ZFS-elemek kikapcsolva térnek vissza. A helyreállítási csomagod egy kattintásnyira van.
 
 !!! tip "Tervezett migráció versus katasztrófa"
-    A vezetett helyreállítás egy mentésből állítja vissza a BombVault saját beállításait. Egy *tervezett* átköltözéshez egy új gépre ehelyett közvetlenül átviheted a konfigurációdat az **Exportálás és importálás beállítások** kártyával (egy hordozható JSON-fájl). Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
+    A vezetett helyreállítás egy mentésből állítja vissza a BombVault saját beállításait. Egy *tervezett* átköltözéshez egy új gépre ehelyett közvetlenül átviheted a konfigurációdat az **Beállítások exportálása / importálása** kártyával (egy hordozható JSON-fájl). Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
 
 ### Visszaállítás egy másik BombVault tárolóból {#restore-from-another-bombvault-repo}
 

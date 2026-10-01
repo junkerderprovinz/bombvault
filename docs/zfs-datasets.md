@@ -61,8 +61,8 @@ A container can be on this list and on the **Containers** page at the same time.
 
 Open **Backups** on the item, pick the backup, then the dataset. By default that is the item's top dataset.
 
-- **Into the dataset.** Files from the backup are written into the dataset's mountpoint. Files with the same name are overwritten, other files stay. The dataset is never rolled back or replaced. BombVault checks that the dataset is mounted, visible and writable, once before it starts and again right before it writes. Where a child dataset is mounted inside it, nothing is written: the child keeps its files, owner and permissions, and is restored from its own backup.
-- **To a folder.** Pick a folder below `/mnt`. BombVault checks that the folder is on a mounted pool or share and that there is enough free space. This works without the SSH link and for datasets that no longer exist.
+- **Restore into the dataset.** Files from the backup are written into the dataset's mountpoint. Files with the same name are overwritten, other files stay. The dataset is never rolled back or replaced. BombVault checks that the dataset is mounted, visible and writable, once before it starts and again right before it writes. Where a child dataset is mounted inside it, nothing is written: the child keeps its files, owner and permissions, and is restored from its own backup.
+- **Restore to a folder.** Pick a folder below `/mnt`. BombVault checks that the folder is on a mounted pool or share and that there is enough free space. This works without the SSH link and for datasets that no longer exist.
 - **Into a new dataset.** Name a dataset that does not exist yet. BombVault creates it with the ZFS properties stored in the backup and restores into it, see [Restoring as a new dataset](#new-dataset).
 - **Select files** (Advanced): write only the files and folders you pick back into the dataset.
 - **All datasets of this backup** (Advanced): every dataset of the tree into its own subfolder of the folder you pick. Datasets that were skipped in that backup are named.
@@ -83,7 +83,7 @@ To go back after a restore, copy single files from `.zfs/snapshot/bombvault-prer
 BombVault stores the locally set ZFS properties of every dataset with each backup: compression, record size, quota, reservation, atime, xattr, acltype, case sensitivity and your own user properties. Inherited and read-only values are left out, because they come back on their own. Backups from before BombVault stored them have none.
 
 - **Into a new dataset** runs `zfs create` with every stored property. Case sensitivity, normalization and utf8only can only be set this way. The mountpoint is left out, so the copy does not collide with the original, and so are `canmount`, `readonly` and the encryption settings, so the restore can write. A new dataset below an encrypted one takes over its encryption. The dataset above the new one has to exist. If something fails after the new dataset was created, it stays on the server, because BombVault never destroys a dataset.
-- **Into the dataset** lists the stored properties next to the restore. **Also set these properties** sets the ones an existing dataset can still take, before any file is written. Quotas and reservations are set after the files, so they cannot refuse them. Without that switch the dataset keeps its settings.
+- **Restore into the dataset** lists the stored properties next to the restore. **Also set these properties** sets the ones an existing dataset can still take, before any file is written. Quotas and reservations are set after the files, so they cannot refuse them. Without that switch the dataset keeps its settings.
 
 ## What is in the backup {#contents}
 

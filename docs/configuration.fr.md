@@ -33,12 +33,12 @@ Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne
 
 Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Stockage, Chemins de sauvegarde**. Chaque champ de chemin a aussi un commutateur **Local / Distant** intégré : un chemin peut être un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) au lieu d'un dossier local, et la sauvegarde y va alors directement, sans copie locale séparée ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Vérification de l'intégration hôte"
+!!! note "Vérification d'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
 
 ## Détection des sources de sauvegarde {#backup-source-detection}
 
-Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volumes nommés à sauvegarder. Un chemin est retenu dès que l'un des points suivants s'applique (vous pouvez toujours corriger le résultat par conteneur dans ses **Chemins de sauvegarde**) :
+Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volumes nommés à sauvegarder. Un chemin est retenu dès que l'un des points suivants s'applique (vous pouvez toujours corriger le résultat par conteneur dans ses **Dossiers à sauvegarder**) :
 
 - **Correspondance d'un segment de racine de données :** la source hôte du bind contient l'un des segments de `DATA_ROOT_SEGMENTS` comme composant de chemin complet (par défaut `appdata` uniquement).
 - **Les volumes Docker nommés** sont toujours inclus, car ils n'ont pas d'équivalent jetable et il n'y a donc rien à filtrer, **mais seulement si le chemin de stockage hôte réel du volume est lui-même accessible via le montage Host Data**, exactement comme tout autre chemin hôte sauvegardé par BombVault. Le pilote de volumes locaux par défaut range un volume sous la racine de données du démon, soit `/var/lib/docker/volumes/<nom>/_data` sauf personnalisation (à vérifier avec `docker info -f '{{.DockerRootDir}}'`). Cet emplacement n'est PAS couvert par le montage Host Data étroit, à répertoire unique, que le `docker-compose.yml` générique utilise par défaut. Un volume inaccessible est ignoré en silence, ce n'est pas une erreur. Pour réellement sauvegarder les volumes nommés sur un hôte générique, pointez Host Data (et `HOST_SOURCE_ROOT`) vers un ancêtre commun qui couvre aussi la racine de données de Docker : voyez le commentaire Host Data du fichier compose pour le compromis (Unraid contourne le problème en montant tout `/mnt`, sa propre convention universelle de premier niveau, pour la même raison).
@@ -110,7 +110,7 @@ Chaque élément peut avoir sa propre sensibilité et son propre minimum de noti
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 
-La carte **Exporter et importer les réglages** sur la page Paramètres, Système écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
+La carte **Exporter / importer les paramètres** sur la page Paramètres, Système écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
 
 !!! warning "L'export peut contenir des identifiants"
     Vous choisissez d'inclure ou non les identifiants hors site et de notification dans le fichier. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.

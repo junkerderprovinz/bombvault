@@ -40,7 +40,7 @@ Não estás no Unraid? O BombVault também corre como contentor simples em qualq
 
 O que muda face ao Unraid:
 
-- **Não há domínio flash/USB.** Não existe pen de arranque para capturar ou repor, por isso o domínio Flash nas definições não tem aqui nada que fazer. Em vez disso, o domínio Ficheiros oferece a sugestão de um clique **Adicionar predefinição: configuração do sistema anfitrião** (um conjunto inicial de ficheiros `/etc` que revês e editas antes de guardar), como equivalente genérico prático.
+- **Não há domínio flash/USB.** Não existe pen de arranque para capturar ou repor, por isso o domínio Flash nas definições não tem aqui nada que fazer. Em vez disso, o domínio Pastas oferece a sugestão de um clique **Adicionar predefinição: configuração do sistema anfitrião** (um conjunto inicial de ficheiros `/etc` que revês e editas antes de guardar), como equivalente genérico prático.
 - **Não há notificações nativas do Unraid.** Os canais de notificação próprios do BombVault (webhook, alertas de falha fora do local, etc.) funcionam normalmente; só é omitido o envio específico para o sistema de notificações do Unraid, já que aqui esse sistema não existe.
 - **A cópia de máquinas virtuais é opcional e precisa de um anfitrião libvirtd separado, alcançável por SSH.** Vê o bloco comentado no ficheiro compose. Um anfitrião Docker genérico não traz gestor de máquinas virtuais.
 
@@ -69,11 +69,11 @@ O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data
 
 1. Abra a interface web em `https://<your-unraid-ip>:3443` (certificado autoassinado logo de início).
 2. Em **Definições**, ative os domínios de backup que pretende (Containers, VMs, Flash, Auto-backup, Pastas, Conjuntos de dados ZFS) e escolha uma cor de destaque.
-3. No separador **Containers**, escolha um container e clique em **Fazer backup** para criar o seu primeiro ponto de restauro. Os caminhos do repositório assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` e são criados no primeiro backup.
-4. Configure o agendamento em **Definições, Agendamentos**. Existe um *incluir tudo no agendamento* com um clique para containers e VMs.
+3. No separador **Containers**, escolha um container e clique em **Fazer backup agora** para criar o seu primeiro ponto de restauro. Os caminhos do repositório assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` e são criados no primeiro backup.
+4. Configure o agendamento em **Definições, Agendamentos**. Existe um *Incluir tudo no agendamento* com um clique para containers e VMs.
 
 !!! tip "Opcional: escolha uma ordem de backup"
-    Se alguns containers devem ser sempre copiados antes de outros (por exemplo, uma base de dados antes da aplicação que a usa), abra o painel **ordem de backup** na página Containers e arraste-os para a sequência que quiser. As execuções agendadas e de seleção múltipla passam a segui-la; tudo o que deixar sem ordem é copiado pelo mais-em-atraso-primeiro, como antes.
+    Se alguns containers devem ser sempre copiados antes de outros (por exemplo, uma base de dados antes da aplicação que a usa), abra o painel **Ordem dos backups** na página Containers e arraste-os para a sequência que quiser. As execuções agendadas e de seleção múltipla passam a segui-la; tudo o que deixar sem ordem é copiado pelo mais-em-atraso-primeiro, como antes.
 
 !!! note "Verificação de integração com o host"
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta, para que possa confirmar que o container está corretamente ligado antes de depender dele.
@@ -84,11 +84,11 @@ O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data
 
 *As definições não têm botão Guardar: cada alteração é escrita no momento.*
 
-Por predefinição, a interface mostra apenas o essencial (fazer backup, restaurar, agendar). Use o interruptor **Simples / Avançado** na barra lateral para revelar os controlos de especialista: retenção, cópia externa, hooks pré/pós, restauro ao nível do ficheiro, notificações, métricas Prometheus e as ferramentas de integridade/manutenção. É uma preferência por navegador e está desligada por predefinição, para que os recém-chegados tenham uma interface limpa e os utilizadores avançados tenham tudo.
+Por predefinição, a interface mostra apenas o essencial (fazer backup, restaurar, agendar). Use o interruptor **Vista simples / Vista avançada** na barra lateral para revelar os controlos de especialista: retenção, cópia externa, hooks pré/pós, restauro ao nível do ficheiro, notificações, métricas Prometheus e as ferramentas de integridade/manutenção. É uma preferência por navegador e está desligada por predefinição, para que os recém-chegados tenham uma interface limpa e os utilizadores avançados tenham tudo.
 
 ## Passos seguintes
 
 - Percorra as **[Funcionalidades](features.md)** completas.
 - Adicione uma ou mais réplicas **[Externo e recuperação](offsite-recovery.md)** (cada domínio pode enviar para vários destinos de uma só vez) e guarde o seu kit de recuperação.
-- A clonar uma configuração ou a mudar para uma máquina nova? Leve toda a sua configuração consigo com o cartão **Exportar e importar definições**. Consulte [Configuração](configuration.md#portable-settings-export-and-import).
+- A clonar uma configuração ou a mudar para uma máquina nova? Leve toda a sua configuração consigo com o cartão **Exportar / importar configurações**. Consulte [Configuração](configuration.md#portable-settings-export-and-import).
 - Encontrou um obstáculo? Consulte **[Resolução de problemas](troubleshooting.md)**.

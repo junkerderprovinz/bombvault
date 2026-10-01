@@ -49,7 +49,7 @@ BombVault is the orchestration and UI layer, not the storage engine. All actual 
 
 New here? Head to **[Getting started](getting-started.md)** to install BombVault on Unraid via Community Applications and run your first backup. Then explore the full **[Features](features.md)**, tune your **[Configuration](configuration.md)**, and set up **[Off-site & recovery](offsite-recovery.md)**.
 
-Off-site can fan out to several targets per domain at once, a read-only **receiver dashboard** monitors those copies on the box that receives them, and you can carry your whole configuration to a new box with the **Export and import settings** card. See [Off-site & recovery](offsite-recovery.md) and [Configuration](configuration.md#portable-settings-export-and-import).
+Off-site can fan out to several targets per domain at once, a read-only **receiver dashboard** monitors those copies on the box that receives them, and you can carry your whole configuration to a new box with the **Export / import settings** card. See [Off-site & recovery](offsite-recovery.md) and [Configuration](configuration.md#portable-settings-export-and-import).
 
 ## Links
 
