@@ -104,6 +104,29 @@ describe("the settings search index", () => {
     for (const row of rows) expect(card?.rows).toContainEqual(row);
   });
 
+  it.each(["ApiTokensCard", "HomeAssistantCard", "NetworkCard"])(
+    "has every caption and (i) of the card the integrations page mounts as %s",
+    (file) => {
+      expect(region("integrations")).toContain(`<${file}`);
+      const source = readFileSync(join(HERE, `${file}.tsx`), "utf8");
+      const [title] = cardTitles(source);
+      const card = SETTINGS_INDEX.integrations.find((c) => c.title === title);
+      expect(card, `${title} on integrations`).toBeDefined();
+      // A bubble whose text is built in a variable leaves only its caption to compare.
+      const rows = [
+        ...source.matchAll(/<(?:ToggleRow|Toggle)\s+label=\{t\("([\w.]+)"\)\}(?:\s*hint=\{t\("([\w.]+)"\))?/g),
+        ...source.matchAll(/\{t\("([\w.]+)"\)\}\s*(?:<\/label>\s*)?<InfoBubble tip=\{(?:t\(|tLtr\(t, )"([\w.]+)"\)/g),
+        ...source.matchAll(/<label\b[^>]*>\s*\{t\("([\w.]+)"\)\}/g),
+      ].map(([, key, hint]) => ({ key, hint }));
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+      for (const { key, hint } of rows) {
+        const row = card?.rows.find((r) => r.key === key);
+        expect(row, `${key} on ${title}`).toBeDefined();
+        if (hint) expect(row?.hint, `the (i) of ${key}`).toBe(hint);
+      }
+    }
+  );
+
   it("lists no card twice on one page", () => {
     for (const [page, cards] of Object.entries(SETTINGS_INDEX)) {
       const names = cards.map((c) => `${c.title}${JSON.stringify(c.vars ?? {})}`);
