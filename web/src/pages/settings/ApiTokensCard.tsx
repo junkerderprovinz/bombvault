@@ -24,7 +24,7 @@ import { tLtr } from "../../lib/ltrFragments";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { keyLogId, McpKeyLog, type KeyLogWording } from "./McpKeyLog";
-import { Card, LOGIN_PASSWORD_FIELD } from "./shared";
+import { Card, useOpenPasswordField } from "./shared";
 
 // ApiTokensCard hands out the tokens scripts and home automation use for the
 // API under /api/v1. A token is stored like an MCP key, so its tile and its log
@@ -71,6 +71,7 @@ type Fresh = { key: string; id: string; hint: string };
 export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; passwordSet?: boolean }) {
   const { t } = useT();
   const { push } = useToast();
+  const openPasswordField = useOpenPasswordField();
   const [data, setData] = useState<ApiTokensResponse | null>(null);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -238,11 +239,8 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 label={t("mcp.setPassword")}
                 labelKey="mcp.setPassword"
                 tone="subtle"
-                onClick={() => {
-                  const field = document.getElementById(LOGIN_PASSWORD_FIELD);
-                  field?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-                  field?.focus();
-                }}
+                onClick={openPasswordField}
+                className="glim-btn-wrap"
                 hueIndex={hueIndex}
               />
             </div>

@@ -3,10 +3,11 @@
 // the cases worth pinning are the ones where it must refuse to mint, the one
 // place the token shows, and the log naming routes rather than MCP tools.
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { en } from "../../lib/i18n";
 import type { ApiTokensResponse, McpKeyView } from "../../lib/api";
+import { LOGIN_PASSWORD_FIELD } from "./shared";
 
 const listApiTokens = vi.fn();
 const createApiToken = vi.fn();
@@ -100,6 +101,23 @@ describe("ApiTokensCard", () => {
     await renderCard(payload({ authEnabled: false, hostAllowsKeys: false }));
     await screen.findByText(en["api.noPasswordWarning"]);
     expect(screen.queryByRole("button", { name: new RegExp(en["api.createToken"]) })).toBeNull();
+  });
+
+  it("leads Set password to the field on the Security page", async () => {
+    listApiTokens.mockReset();
+    listApiTokens.mockResolvedValue(payload({ authEnabled: false }));
+    function Where() {
+      const at = useLocation();
+      return <output data-testid="where">{at.pathname + at.hash}</output>;
+    }
+    render(
+      <MemoryRouter initialEntries={["/settings/integrations"]}>
+        <ApiTokensCard hueIndex={0} />
+        <Where />
+      </MemoryRouter>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: en["mcp.setPassword"] }));
+    expect(screen.getByTestId("where").textContent).toBe(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
   });
 
   it("names the route a logged call reached", async () => {

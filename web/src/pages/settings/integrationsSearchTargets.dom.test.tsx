@@ -4,6 +4,7 @@
 // settings arrive, and their switches have to be found by name once they have.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, render } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import { jumpTarget } from "./SettingsSearch";
@@ -49,13 +50,15 @@ async function renderCards() {
   let container!: HTMLElement;
   await act(async () => {
     ({ container } = render(
-      <I18nProvider>
-        <ToastProvider>
-          <ApiTokensCard passwordSet={false} />
-          <HomeAssistantCard />
-          <NetworkCard />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter>
+        <I18nProvider>
+          <ToastProvider>
+            <ApiTokensCard passwordSet={false} />
+            <HomeAssistantCard />
+            <NetworkCard />
+          </ToastProvider>
+        </I18nProvider>
+      </MemoryRouter>
     ));
   });
   return container;
