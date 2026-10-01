@@ -2220,7 +2220,7 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 			k.Label, event, addr)
 	case store.MCPKindAPI:
 		title = "BombVault: API token " + event
-		msg = fmt.Sprintf("The API token %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > Integrations > API tokens.",
+		msg = fmt.Sprintf("The API token %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings, Integrations, API tokens.",
 			k.Label, k.Hint, event, addr)
 	}
 	go func() {
