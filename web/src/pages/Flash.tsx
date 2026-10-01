@@ -135,19 +135,6 @@ function FlashActions({ pick, t }: { pick: TimelinePick; t: T }) {
   return (
     <>
       <Button
-        label={t("flash.plugins")}
-        labelKey="flash.plugins"
-        tone="neutral"
-        onClick={() => setShowPlugins((v) => !v)}
-        ariaExpanded={showPlugins}
-        glyph={
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${showPlugins ? "rotate-90" : "rtl:rotate-180"}`}>
-            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-          </svg>
-        }
-        className="shrink-0"
-      />
-      <Button
         label={t("flash.download")}
         labelKey="flash.download"
         glyph={<IconDownload />}
@@ -157,13 +144,24 @@ function FlashActions({ pick, t }: { pick: TimelinePick; t: T }) {
         busy={preparing}
         className="shrink-0"
       />
-      {/* order-last puts the list under the whole row of actions, the
-          timeline's own delete buttons included. */}
-      {showPlugins && (
-        <div className="order-last basis-full">
-          <FlashPluginList snapshotId={pick.snapshotId} source={pick.source} t={t} />
-        </div>
-      )}
+      {/* order-last puts the plugins under the whole row of actions, the
+          timeline's own delete buttons included, so the row keeps one line. */}
+      <div className="order-last basis-full flex flex-col gap-1">
+        <Button
+          label={t("flash.plugins")}
+          labelKey="flash.plugins"
+          tone="neutral"
+          onClick={() => setShowPlugins((v) => !v)}
+          ariaExpanded={showPlugins}
+          glyph={
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${showPlugins ? "rotate-90" : "rtl:rotate-180"}`}>
+              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+            </svg>
+          }
+          className="self-start"
+        />
+        {showPlugins && <FlashPluginList snapshotId={pick.snapshotId} source={pick.source} t={t} />}
+      </div>
       {confirmDialog}
     </>
   );
