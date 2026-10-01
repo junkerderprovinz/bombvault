@@ -12352,7 +12352,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	classic := true
 	if blockPlan.host != nil {
 		var res backup.VMBlocksResult
-		res, err = s.backupVMBlocks(bctx, name, tg, blockPlan, repo, mode, deps.FormerNames, deps.Runs)
+		res, err = s.backupVMBlocks(bctx, name, tg, blockPlan, repo, mode, s.directTags(settings, "vms", repo), deps.FormerNames, deps.Runs)
 		var unavailable *backup.BlocksUnavailableError
 		if errors.As(err, &unavailable) {
 			log.Printf("api: backup vm: %q: %v; backing it up the classic way", name, err) //nolint:gosec // G706: %q-quoted
