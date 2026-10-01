@@ -79,3 +79,14 @@ func TestFilesBesideTheFoldersCountAsTheRest(t *testing.T) {
 		t.Fatalf("other = %+v", got.Other)
 	}
 }
+
+func TestChurnInOneFolderListsThatFolder(t *testing.T) {
+	changes := map[string]fileChange{}
+	for i := range 30 {
+		changes[fmt.Sprintf("data/index/seg-%d", i)] = fileChange{kind: fileRemoved, size: 40 << 10}
+	}
+	got := summarizeChanges(changes)
+	if len(got.Folders) != 1 || got.Folders[0].Path != "data/index" || got.Other != nil {
+		t.Fatalf("folders = %+v, other = %+v", got.Folders, got.Other)
+	}
+}

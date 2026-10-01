@@ -171,9 +171,11 @@ func summarizeChanges(changes map[string]fileChange) ChangeSummary {
 	out := ChangeSummary{Total: top.sum}
 
 	level := top
+	// A chain of single folders is skipped, but not the last one: a level
+	// with no subfolders would list nothing.
 	for len(level.children) == 1 {
 		only := busiest(level)
-		if weight(&only.sum) != weight(&level.sum) {
+		if weight(&only.sum) != weight(&level.sum) || len(only.children) == 0 {
 			break
 		}
 		level = only
