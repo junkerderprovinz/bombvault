@@ -3135,7 +3135,7 @@ const ja: Partial<Translations> = {
   "progress.count.files": "{n} ファイル中 {done}",
   "progress.count.items": "{n} 中 {done}",
   "progress.remaining": "残り {time}",
-  "launcher.empty": "サーバーはまだありません。アドレスを指定して追加するか、この端末がネットワークで見つけたものを選んでください。",
+  "launcher.empty": "サーバーはまだありません。アプリをグループとペアリングするか、アドレスを指定してサーバーを追加してください。",
   "launcher.signIn": "サインインが必要です",
   "launcher.checkCertificate": "証明書を確認",
   "launcher.activityEmpty": "サーバーが応答すると、ここにその上で動いているものが表示されます。",
@@ -3161,6 +3161,17 @@ const ja: Partial<Translations> = {
   "launcher.changedBody": "{host} は、以前信頼した証明書とは違う証明書を示しています。これは証明書が更新または交換されたとき、あるいは誰かがこの端末とサーバーの間に入り込んだときに起こります。なぜ変わったか分かる場合だけ信頼してください。",
   "launcher.trustChanged": "新しい証明書を信頼する",
   "launcher.fingerprint": "SHA-256 フィンガープリント",
+  "launcher.pairTitle": "グループとペアリング",
+  "launcher.pairHint": "BombVault サーバーのひとつで設定 > ペアリングを開き、単語を表示してください。アプリがグループの各サーバーを見つけ、外出先でもそこで動いているものを表示します。",
+  "launcher.scan": "QRコードを読み取る",
+  "launcher.enterWords": "単語を入力",
+  "launcher.paired": "ペアリング済み",
+  "launcher.relayConnected": "リレー経由で接続済み",
+  "launcher.relayOffline": "リレーに接続できません",
+  "launcher.leaveConfirm": "グループを抜けますか？ サーバーはリストに残り、これまでどおりアドレスで開けます。",
+  "launcher.viaGroup": "アドレスはまだ不明です",
+  "fleet.kindAndroid": "Android アプリ",
+  "pairing.qrCaption": "このコードを BombVault アプリで読み取って、端末をペアリングしてください。",
 };
 
 export default ja;

@@ -3141,7 +3141,7 @@ const es: Partial<Translations> = {
   "progress.count.files": "one={done} de {n} archivo|other={done} de {n} archivos",
   "progress.count.items": "{done} de {n}",
   "progress.remaining": "quedan {time}",
-  "launcher.empty": "Aún no hay servidores. Añade uno por su dirección o elige uno que este teléfono encuentre en la red.",
+  "launcher.empty": "Aún no hay servidores. Empareja la app con tu grupo o añade un servidor por su dirección.",
   "launcher.signIn": "Inicio de sesión necesario",
   "launcher.checkCertificate": "Comprobar certificado",
   "launcher.activityEmpty": "En cuanto un servidor responda, aquí aparecerá lo que se ejecuta en él.",
@@ -3167,6 +3167,17 @@ const es: Partial<Translations> = {
   "launcher.changedBody": "{host} muestra un certificado distinto del que confiaste. Esto ocurre cuando el certificado se renueva o se reemplaza, o cuando alguien se interpone entre este teléfono y el servidor. Confía en él solo si sabes por qué cambió.",
   "launcher.trustChanged": "Confiar en el nuevo certificado",
   "launcher.fingerprint": "Huella SHA-256",
+  "launcher.pairTitle": "Emparejar con tu grupo",
+  "launcher.pairHint": "En uno de tus servidores BombVault, abre Ajustes > Emparejamiento y muestra las palabras. La app encuentra entonces todos los servidores del grupo y muestra qué se ejecuta en ellos, también fuera de casa.",
+  "launcher.scan": "Escanear código QR",
+  "launcher.enterWords": "Introducir las palabras",
+  "launcher.paired": "Emparejada",
+  "launcher.relayConnected": "Conectado vía repetidor",
+  "launcher.relayOffline": "No se puede alcanzar el repetidor.",
+  "launcher.leaveConfirm": "¿Salir del grupo? Los servidores siguen en la lista y se abren por su dirección como antes.",
+  "launcher.viaGroup": "Dirección aún desconocida",
+  "fleet.kindAndroid": "App de Android",
+  "pairing.qrCaption": "Escanea este código con la app de BombVault para emparejar un teléfono.",
 };
 
 export default es;

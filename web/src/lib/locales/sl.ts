@@ -3138,7 +3138,7 @@ const sl: Partial<Translations> = {
   "progress.count.files": "one={done} od {n} datoteke|two={done} od {n} datotek|few={done} od {n} datotek|other={done} od {n} datotek",
   "progress.count.items": "{done} od {n}",
   "progress.remaining": "še {time}",
-  "launcher.empty": "Še ni strežnikov. Dodaj enega po naslovu ali izberi takega, ki ga ta telefon najde v omrežju.",
+  "launcher.empty": "Še ni strežnikov. Seznani aplikacijo s svojo skupino ali dodaj strežnik po naslovu.",
   "launcher.signIn": "Potrebna je prijava",
   "launcher.checkCertificate": "Preveri certifikat",
   "launcher.activityEmpty": "Takoj ko strežnik odgovori, se tu prikaže, kaj teče na njem.",
@@ -3164,6 +3164,17 @@ const sl: Partial<Translations> = {
   "launcher.changedBody": "{host} prikazuje drugačen certifikat od prej zaupanega. To se zgodi, kadar je certifikat obnovljen ali zamenjan, ali kadar se nekdo postavi med telefon in strežnik. Zaupaj mu le, če veš, zakaj se je spremenil.",
   "launcher.trustChanged": "Zaupaj novemu certifikatu",
   "launcher.fingerprint": "Prstni odtis SHA-256",
+  "launcher.pairTitle": "Seznani s svojo skupino",
+  "launcher.pairHint": "Na enem od svojih strežnikov BombVault odpri Nastavitve > Seznanjanje in pokaži besede. Aplikacija nato najde vsak strežnik skupine in pokaže, kaj teče na njem, tudi ko si zdoma.",
+  "launcher.scan": "Skeniraj kodo QR",
+  "launcher.enterWords": "Vnesi besede",
+  "launcher.paired": "Seznanjeno",
+  "launcher.relayConnected": "Povezano prek relaya",
+  "launcher.relayOffline": "Relay nedosegljiv",
+  "launcher.leaveConfirm": "Zapustiti skupino? Strežniki ostanejo na seznamu in se odprejo po svojem naslovu kot prej.",
+  "launcher.viaGroup": "Naslov še neznan",
+  "fleet.kindAndroid": "Aplikacija za Android",
+  "pairing.qrCaption": "Skeniraj to kodo z aplikacijo BombVault, da seznaniš telefon.",
 };
 
 export default sl;

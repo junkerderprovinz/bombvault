@@ -3154,7 +3154,7 @@ const lt: Partial<Translations> = {
   "progress.count.files": "one={done} iš {n} failo|few={done} iš {n} failų|many={done} iš {n} failo|other={done} iš {n} failų",
   "progress.count.items": "{done} iš {n}",
   "progress.remaining": "liko {time}",
-  "launcher.empty": "Serverių dar nėra. Pridėkite vieną pagal adresą arba pasirinkite tokį, kurį šis telefonas randa tinkle.",
+  "launcher.empty": "Serverių dar nėra. Susiekite programą su savo grupe arba pridėkite serverį pagal adresą.",
   "launcher.signIn": "Reikia prisijungti",
   "launcher.checkCertificate": "Patikrinti sertifikatą",
   "launcher.activityEmpty": "Kai tik serveris atsakys, čia bus matyti, kas jame veikia.",
@@ -3180,6 +3180,17 @@ const lt: Partial<Translations> = {
   "launcher.changedBody": "{host} rodo kitokį sertifikatą nei tas, kuriuo pasitikėjote anksčiau. Taip nutinka, kai sertifikatas atnaujinamas ar pakeičiamas, arba kai kažkas atsiduria tarp telefono ir serverio. Pasitikėkite juo tik jei žinote, kodėl jis pasikeitė.",
   "launcher.trustChanged": "Pasitikėti nauju sertifikatu",
   "launcher.fingerprint": "SHA-256 atspaudas",
+  "launcher.pairTitle": "Susieti su savo grupe",
+  "launcher.pairHint": "Viename iš savo BombVault serverių atidarykite Nustatymai > Susiejimas ir parodykite žodžius. Programa tuomet suranda kiekvieną grupės serverį ir parodo, kas juose veikia, net ir ne namie.",
+  "launcher.scan": "Nuskaityti QR kodą",
+  "launcher.enterWords": "Įvesti žodžius",
+  "launcher.paired": "Susieta",
+  "launcher.relayConnected": "Prijungta per relay",
+  "launcher.relayOffline": "Relay nepasiekiamas",
+  "launcher.leaveConfirm": "Palikti grupę? Serveriai liks sąraše ir atsivers pagal savo adresą kaip anksčiau.",
+  "launcher.viaGroup": "Adresas dar nežinomas",
+  "fleet.kindAndroid": "Android programa",
+  "pairing.qrCaption": "Nuskaitykite šį kodą BombVault programa, kad susietumėte telefoną.",
 };
 
 export default lt;

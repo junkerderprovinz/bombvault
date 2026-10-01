@@ -3154,7 +3154,7 @@ const id: Partial<Translations> = {
   "progress.count.files": "{done} dari {n} berkas",
   "progress.count.items": "{done} dari {n}",
   "progress.remaining": "sisa {time}",
-  "launcher.empty": "Belum ada server. Tambahkan satu lewat alamatnya atau pilih satu yang ditemukan ponsel ini di jaringan.",
+  "launcher.empty": "Belum ada server. Pasangkan aplikasi dengan grup Anda atau tambahkan server lewat alamatnya.",
   "launcher.signIn": "Perlu masuk",
   "launcher.checkCertificate": "Periksa sertifikat",
   "launcher.activityEmpty": "Begitu server merespons, di sini akan muncul apa yang berjalan di server itu.",
@@ -3180,6 +3180,17 @@ const id: Partial<Translations> = {
   "launcher.changedBody": "{host} menampilkan sertifikat yang berbeda dari yang Anda percayai sebelumnya. Ini terjadi saat sertifikat diperbarui atau diganti, atau saat seseorang menyusup di antara ponsel ini dan server. Percayai sertifikat ini hanya jika Anda tahu alasan perubahannya.",
   "launcher.trustChanged": "Percayai sertifikat baru",
   "launcher.fingerprint": "Sidik jari SHA-256",
+  "launcher.pairTitle": "Pasangkan dengan grup Anda",
+  "launcher.pairHint": "Di salah satu server BombVault Anda, buka Pengaturan > Pemasangan dan tampilkan kata-katanya. Aplikasi kemudian menemukan setiap server di grup dan menampilkan apa yang berjalan di sana, bahkan saat jauh dari rumah.",
+  "launcher.scan": "Pindai kode QR",
+  "launcher.enterWords": "Masukkan kata-kata",
+  "launcher.paired": "Dipasangkan",
+  "launcher.relayConnected": "Terhubung melalui relay",
+  "launcher.relayOffline": "Relay tidak bisa dijangkau",
+  "launcher.leaveConfirm": "Tinggalkan grup? Server tetap ada di daftar dan terbuka lewat alamatnya seperti sebelumnya.",
+  "launcher.viaGroup": "Alamat belum diketahui",
+  "fleet.kindAndroid": "Aplikasi Android",
+  "pairing.qrCaption": "Pindai kode ini dengan aplikasi BombVault untuk memasangkan ponsel.",
 };
 
 export default id;

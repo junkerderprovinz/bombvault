@@ -3138,7 +3138,7 @@ const sr: Partial<Translations> = {
   "progress.count.files": "one={done} од {n} датотеке|few={done} од {n} датотеке|other={done} од {n} датотека",
   "progress.count.items": "{done} од {n}",
   "progress.remaining": "још {time}",
-  "launcher.empty": "Још нема сервера. Додај један преко адресе или изабери онај који овај телефон пронађе на мрежи.",
+  "launcher.empty": "Још нема сервера. Упари апликацију са својом групом или додај сервер преко адресе.",
   "launcher.signIn": "Потребна је пријава",
   "launcher.checkCertificate": "Провери сертификат",
   "launcher.activityEmpty": "Чим сервер одговори, овде ће писати шта ради на њему.",
@@ -3164,6 +3164,17 @@ const sr: Partial<Translations> = {
   "launcher.changedBody": "{host} приказује сертификат различит од претходно повереног. До тога долази када је сертификат обновљен или замењен, или када се неко убаци између телефона и сервера. Веруј му само ако знаш зашто се променио.",
   "launcher.trustChanged": "Веруј новом сертификату",
   "launcher.fingerprint": "SHA-256 отисак",
+  "launcher.pairTitle": "Упари са својом групом",
+  "launcher.pairHint": "На једном од својих BombVault сервера отвори Подешавања > Упаривање и прикажи речи. Апликација затим проналази сваки сервер групе и приказује шта на њему ради, и ван куће.",
+  "launcher.scan": "Скенирај QR код",
+  "launcher.enterWords": "Унеси речи",
+  "launcher.paired": "Упарено",
+  "launcher.relayConnected": "Повезано преко релеја",
+  "launcher.relayOffline": "Релеј недоступан",
+  "launcher.leaveConfirm": "Напустити групу? Сервери остају на листи и отварају се преко своје адресе као и раније.",
+  "launcher.viaGroup": "Адреса још непозната",
+  "fleet.kindAndroid": "Android апликација",
+  "pairing.qrCaption": "Скенирај овај код апликацијом BombVault да упариш телефон.",
 };
 
 export default sr;

@@ -4861,6 +4861,8 @@ export interface GroupMember {
   relay: boolean;
   /** Where it takes direct calls; "" when none is known. */
   address: string;
+  /** "android" for the app; absent for an instance. */
+  kind?: string;
 }
 
 export type RelayMode = "project" | "own" | "off";
@@ -4984,6 +4986,8 @@ export interface FleetPeer {
   /** null = never polled, else whether the last poll succeeded. */
   lastPollOk: boolean | null;
   lastPollError: string;
+  /** "android" for the app, which has no scorecard; absent for an instance. */
+  kind?: string;
   /** The name/version the peer reported about itself on the last successful poll. */
   lastPollInstanceName: string;
   lastPollVersion: string;

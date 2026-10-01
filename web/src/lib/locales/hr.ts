@@ -3154,7 +3154,7 @@ const hr: Partial<Translations> = {
   "progress.count.files": "one={done} od {n} datoteke|few={done} od {n} datoteke|other={done} od {n} datoteka",
   "progress.count.items": "{done} od {n}",
   "progress.remaining": "još {time}",
-  "launcher.empty": "Još nema poslužitelja. Dodajte jedan prema adresi ili odaberite onaj koji ovaj telefon pronađe na mreži.",
+  "launcher.empty": "Još nema poslužitelja. Uparite aplikaciju sa svojom skupinom ili dodajte poslužitelj prema adresi.",
   "launcher.signIn": "Potrebna je prijava",
   "launcher.checkCertificate": "Provjeri certifikat",
   "launcher.activityEmpty": "Čim poslužitelj odgovori, ovdje se prikazuje što se na njemu izvodi.",
@@ -3180,6 +3180,17 @@ const hr: Partial<Translations> = {
   "launcher.changedBody": "{host} prikazuje certifikat koji se razlikuje od onoga kojem ste vjerovali. To se događa kad se certifikat obnovi ili zamijeni, ili kad se netko postavi između telefona i poslužitelja. Vjerujte mu samo ako znate zašto se promijenio.",
   "launcher.trustChanged": "Vjeruj novom certifikatu",
   "launcher.fingerprint": "SHA-256 otisak",
+  "launcher.pairTitle": "Upari se sa svojom skupinom",
+  "launcher.pairHint": "Na jednom od svojih BombVault poslužitelja otvorite Postavke > Uparivanje i prikažite riječi. Aplikacija zatim pronalazi svaki poslužitelj skupine i prikazuje što na njima radi, i izvan doma.",
+  "launcher.scan": "Skeniraj QR kod",
+  "launcher.enterWords": "Unesi riječi",
+  "launcher.paired": "Upareno",
+  "launcher.relayConnected": "Povezano preko releja",
+  "launcher.relayOffline": "Relej nedostupan",
+  "launcher.leaveConfirm": "Napustiti skupinu? Poslužitelji ostaju na popisu i otvaraju se prema svojoj adresi kao prije.",
+  "launcher.viaGroup": "Adresa još nepoznata",
+  "fleet.kindAndroid": "Android aplikacija",
+  "pairing.qrCaption": "Skeniraj ovaj kod aplikacijom BombVault da upariš telefon.",
 };
 
 export default hr;

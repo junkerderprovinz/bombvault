@@ -3143,7 +3143,7 @@ const da: Partial<Translations> = {
   "progress.count.files": "one={done} af {n} fil|other={done} af {n} filer",
   "progress.count.items": "{done} af {n}",
   "progress.remaining": "{time} tilbage",
-  "launcher.empty": "Ingen servere endnu. Tilføj en via dens adresse, eller vælg en, som denne telefon finder på netværket.",
+  "launcher.empty": "Ingen servere endnu. Par appen med din gruppe, eller tilføj en server via dens adresse.",
   "launcher.signIn": "Login påkrævet",
   "launcher.checkCertificate": "Tjek certifikat",
   "launcher.activityEmpty": "Så snart en server svarer, vises her, hvad der kører på den.",
@@ -3169,6 +3169,17 @@ const da: Partial<Translations> = {
   "launcher.changedBody": "{host} viser et andet certifikat end det, du stolede på. Det sker, når certifikatet er fornyet eller udskiftet, eller når nogen sidder mellem telefonen og serveren. Stol kun på det, hvis du ved hvorfor det ændrede sig.",
   "launcher.trustChanged": "Stol på nyt certifikat",
   "launcher.fingerprint": "SHA-256-fingeraftryk",
+  "launcher.pairTitle": "Par med din gruppe",
+  "launcher.pairHint": "Åbn Indstillinger > Parring på en af dine BombVault-servere, og vis ordene. Appen finder derefter hver server i gruppen og viser, hvad der kører på dem, også langt hjemmefra.",
+  "launcher.scan": "Scan QR-kode",
+  "launcher.enterWords": "Indtast ordene",
+  "launcher.paired": "Parret",
+  "launcher.relayConnected": "Forbundet via videresenderen",
+  "launcher.relayOffline": "Videresenderen kan ikke nås.",
+  "launcher.leaveConfirm": "Forlad gruppen? Serverne bliver i listen og åbner via deres adresse som før.",
+  "launcher.viaGroup": "Adresse endnu ukendt",
+  "fleet.kindAndroid": "Android-app",
+  "pairing.qrCaption": "Scan denne kode med BombVault-appen for at parre en telefon.",
 };
 
 export default da;

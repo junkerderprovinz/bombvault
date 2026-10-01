@@ -3138,7 +3138,7 @@ const ru: Partial<Translations> = {
   "progress.count.files": "one={done} из {n} файла|few={done} из {n} файлов|many={done} из {n} файлов|other={done} из {n} файла",
   "progress.count.items": "{done} из {n}",
   "progress.remaining": "осталось {time}",
-  "launcher.empty": "Пока нет серверов. Добавьте сервер по адресу или выберите тот, что телефон найдёт в сети.",
+  "launcher.empty": "Пока нет серверов. Сопрягите приложение со своей группой или добавьте сервер по адресу.",
   "launcher.signIn": "Нужен вход",
   "launcher.checkCertificate": "Проверить сертификат",
   "launcher.activityEmpty": "Как только сервер ответит, здесь будет видно, что на нём выполняется.",
@@ -3164,6 +3164,17 @@ const ru: Partial<Translations> = {
   "launcher.changedBody": "{host} показывает сертификат, отличный от того, которому вы доверяли. Это происходит, если сертификат обновили или заменили, либо если кто-то оказался между телефоном и сервером. Доверяйте ему, только если знаете, почему он изменился.",
   "launcher.trustChanged": "Довериться новому сертификату",
   "launcher.fingerprint": "Отпечаток SHA-256",
+  "launcher.pairTitle": "Сопряжение с группой",
+  "launcher.pairHint": "На одном из серверов BombVault откройте Настройки > Сопряжение и покажите слова. Приложение затем найдёт каждый сервер группы и покажет, что на нём работает, даже вдали от дома.",
+  "launcher.scan": "Сканировать QR-код",
+  "launcher.enterWords": "Ввести слова",
+  "launcher.paired": "Сопряжено",
+  "launcher.relayConnected": "Подключено через Relay",
+  "launcher.relayOffline": "Relay недоступен",
+  "launcher.leaveConfirm": "Покинуть группу? Серверы останутся в списке и будут открываться по адресу, как прежде.",
+  "launcher.viaGroup": "Адрес пока неизвестен",
+  "fleet.kindAndroid": "Приложение для Android",
+  "pairing.qrCaption": "Отсканируйте этот код приложением BombVault, чтобы сопрячь телефон.",
 };
 
 export default ru;

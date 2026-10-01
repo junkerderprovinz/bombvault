@@ -3143,7 +3143,7 @@ const no: Partial<Translations> = {
   "progress.count.files": "one={done} av {n} fil|other={done} av {n} filer",
   "progress.count.items": "{done} av {n}",
   "progress.remaining": "{time} igjen",
-  "launcher.empty": "Ingen servere ennå. Legg til en via adressen, eller velg en som denne telefonen finner på nettverket.",
+  "launcher.empty": "Ingen servere ennå. Par appen med gruppen din, eller legg til en server via adressen.",
   "launcher.signIn": "Innlogging kreves",
   "launcher.checkCertificate": "Sjekk sertifikat",
   "launcher.activityEmpty": "Så snart en server svarer, vises det som kjører på den her.",
@@ -3169,6 +3169,17 @@ const no: Partial<Translations> = {
   "launcher.changedBody": "{host} viser et annet sertifikat enn det du stolte på. Det skjer når sertifikatet er fornyet eller erstattet, eller når noen plasserer seg mellom telefonen og serveren. Stol bare på det hvis du vet hvorfor det endret seg.",
   "launcher.trustChanged": "Stol på nytt sertifikat",
   "launcher.fingerprint": "SHA-256-fingeravtrykk",
+  "launcher.pairTitle": "Par med gruppen din",
+  "launcher.pairHint": "Åpne Innstillinger > Paring på en av BombVault-serverne dine, og vis ordene. Appen finner deretter hver server i gruppen og viser hva som kjører på dem, også når du er borte fra hjemmet.",
+  "launcher.scan": "Skann QR-kode",
+  "launcher.enterWords": "Angi ordene",
+  "launcher.paired": "Paret",
+  "launcher.relayConnected": "Tilkoblet via relay",
+  "launcher.relayOffline": "Relay kan ikke nås",
+  "launcher.leaveConfirm": "Forlate gruppen? Serverne blir værende i listen og åpnes via adressen som før.",
+  "launcher.viaGroup": "Adresse ikke kjent ennå",
+  "fleet.kindAndroid": "Android-app",
+  "pairing.qrCaption": "Skann denne koden med BombVault-appen for å pare en telefon.",
 };
 
 export default no;

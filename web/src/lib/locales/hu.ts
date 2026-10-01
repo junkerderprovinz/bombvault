@@ -3146,7 +3146,7 @@ const hu: Partial<Translations> = {
   "progress.count.files": "{done} / {n} fájl",
   "progress.count.items": "{done} / {n}",
   "progress.remaining": "még {time}",
-  "launcher.empty": "Még nincs szerver. Adj hozzá egyet a címe alapján, vagy válassz egyet, amit ez a telefon talál a hálózaton.",
+  "launcher.empty": "Még nincs szerver. Párosítsd az appot a csoportoddal, vagy adj hozzá egy szervert a címe alapján.",
   "launcher.signIn": "Bejelentkezés szükséges",
   "launcher.checkCertificate": "Tanúsítvány ellenőrzése",
   "launcher.activityEmpty": "Amint egy szerver válaszol, itt látszik, mi fut rajta.",
@@ -3172,6 +3172,17 @@ const hu: Partial<Translations> = {
   "launcher.changedBody": "A(z) {host} más tanúsítványt mutat, mint amelyben korábban megbíztál. Ez akkor fordul elő, ha a tanúsítványt megújították vagy lecserélték, vagy ha valaki beékelődik a telefon és a szerver közé. Csak akkor bízz meg benne, ha tudod, miért változott.",
   "launcher.trustChanged": "Megbízom az új tanúsítványban",
   "launcher.fingerprint": "SHA-256 ujjlenyomat",
+  "launcher.pairTitle": "Párosítás a csoportoddal",
+  "launcher.pairHint": "Az egyik BombVault szervereden nyisd meg a Beállítások > Párosítás menüt, és mutasd meg a szavakat. Az app ezután megtalálja a csoport minden szerverét, és megmutatja, mi fut rajtuk, otthonról távol is.",
+  "launcher.scan": "QR-kód beolvasása",
+  "launcher.enterWords": "Szavak megadása",
+  "launcher.paired": "Párosítva",
+  "launcher.relayConnected": "Csatlakozva a Relayen keresztül",
+  "launcher.relayOffline": "A Relay nem érhető el.",
+  "launcher.leaveConfirm": "Elhagyod a csoportot? A szerverek megmaradnak a listán, és a címük alapján nyílnak meg, mint eddig.",
+  "launcher.viaGroup": "A cím még ismeretlen",
+  "fleet.kindAndroid": "Android-alkalmazás",
+  "pairing.qrCaption": "Olvasd be ezt a kódot a BombVault alkalmazással egy telefon párosításához.",
 };
 
 export default hu;

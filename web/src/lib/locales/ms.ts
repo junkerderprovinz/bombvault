@@ -3154,7 +3154,7 @@ const ms: Partial<Translations> = {
   "progress.count.files": "{done} daripada {n} fail",
   "progress.count.items": "{done} daripada {n}",
   "progress.remaining": "baki {time}",
-  "launcher.empty": "Belum ada pelayan lagi. Tambah satu mengikut alamatnya atau pilih satu yang ditemui telefon ini dalam rangkaian.",
+  "launcher.empty": "Belum ada pelayan lagi. Gandingkan aplikasi dengan kumpulan anda atau tambah pelayan mengikut alamatnya.",
   "launcher.signIn": "Log masuk diperlukan",
   "launcher.checkCertificate": "Semak sijil",
   "launcher.activityEmpty": "Sebaik sahaja pelayan bertindak balas, di sini akan dipaparkan apa yang berjalan padanya.",
@@ -3180,6 +3180,17 @@ const ms: Partial<Translations> = {
   "launcher.changedBody": "{host} menunjukkan sijil yang berbeza daripada yang anda percayai sebelum ini. Ini berlaku apabila sijil diperbaharui atau digantikan, atau apabila seseorang menyusup antara telefon ini dengan pelayan. Percayai sijil ini hanya jika anda tahu sebabnya ia berubah.",
   "launcher.trustChanged": "Percayai sijil baharu",
   "launcher.fingerprint": "Cap jari SHA-256",
+  "launcher.pairTitle": "Gandingkan dengan kumpulan anda",
+  "launcher.pairHint": "Pada salah satu pelayan BombVault anda, buka Tetapan > Gandingan dan tunjukkan perkataan itu. Aplikasi kemudian akan mencari setiap pelayan dalam kumpulan dan menunjukkan apa yang berjalan padanya, walaupun jauh dari rumah.",
+  "launcher.scan": "Imbas kod QR",
+  "launcher.enterWords": "Masukkan perkataan",
+  "launcher.paired": "Digandingkan",
+  "launcher.relayConnected": "Bersambung melalui relay",
+  "launcher.relayOffline": "Relay tidak dapat dihubungi",
+  "launcher.leaveConfirm": "Tinggalkan kumpulan? Pelayan kekal dalam senarai dan dibuka mengikut alamatnya seperti sebelum ini.",
+  "launcher.viaGroup": "Alamat belum diketahui",
+  "fleet.kindAndroid": "Aplikasi Android",
+  "pairing.qrCaption": "Imbas kod ini dengan aplikasi BombVault untuk menggandingkan telefon.",
 };
 
 export default ms;

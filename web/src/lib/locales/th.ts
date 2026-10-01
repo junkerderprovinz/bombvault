@@ -3146,7 +3146,7 @@ const th: Partial<Translations> = {
   "progress.count.files": "{done} จาก {n} ไฟล์",
   "progress.count.items": "{done} จาก {n}",
   "progress.remaining": "เหลือ {time}",
-  "launcher.empty": "ยังไม่มีเซิร์ฟเวอร์ เพิ่มเซิร์ฟเวอร์ตามที่อยู่ หรือเลือกเซิร์ฟเวอร์ที่โทรศัพท์เครื่องนี้พบในเครือข่าย",
+  "launcher.empty": "ยังไม่มีเซิร์ฟเวอร์ จับคู่แอปกับกลุ่มของคุณ หรือเพิ่มเซิร์ฟเวอร์ตามที่อยู่",
   "launcher.signIn": "ต้องลงชื่อเข้าใช้",
   "launcher.checkCertificate": "ตรวจสอบใบรับรอง",
   "launcher.activityEmpty": "ทันทีที่เซิร์ฟเวอร์ตอบกลับ ที่นี่จะแสดงสิ่งที่กำลังทำงานอยู่บนเซิร์ฟเวอร์นั้น",
@@ -3172,6 +3172,17 @@ const th: Partial<Translations> = {
   "launcher.changedBody": "{host} แสดงใบรับรองที่ต่างจากใบรับรองที่คุณเคยเชื่อถือ สิ่งนี้เกิดขึ้นเมื่อใบรับรองได้รับการต่ออายุหรือถูกแทนที่ หรือเมื่อมีใครอยู่ระหว่างโทรศัพท์เครื่องนี้กับเซิร์ฟเวอร์ เชื่อถือมันก็ต่อเมื่อคุณรู้ว่าทำไมมันถึงเปลี่ยน",
   "launcher.trustChanged": "เชื่อถือใบรับรองใหม่",
   "launcher.fingerprint": "ลายนิ้วมือ SHA-256",
+  "launcher.pairTitle": "จับคู่กับกลุ่มของคุณ",
+  "launcher.pairHint": "เปิดการตั้งค่า > การจับคู่ บนเซิร์ฟเวอร์ BombVault เครื่องหนึ่งของคุณ แล้วแสดงคำ จากนั้นแอปจะค้นหาเซิร์ฟเวอร์ทุกเครื่องในกลุ่มและแสดงสิ่งที่ทำงานอยู่บนเครื่องเหล่านั้น แม้อยู่ไกลจากบ้าน",
+  "launcher.scan": "สแกนรหัส QR",
+  "launcher.enterWords": "ป้อนคำ",
+  "launcher.paired": "จับคู่แล้ว",
+  "launcher.relayConnected": "เชื่อมต่อผ่านรีเลย์แล้ว",
+  "launcher.relayOffline": "รีเลย์ติดต่อไม่ได้",
+  "launcher.leaveConfirm": "ออกจากกลุ่มหรือไม่? เซิร์ฟเวอร์จะยังอยู่ในรายการและเปิดตามที่อยู่เหมือนเดิม",
+  "launcher.viaGroup": "ยังไม่ทราบที่อยู่",
+  "fleet.kindAndroid": "แอป Android",
+  "pairing.qrCaption": "สแกนรหัสนี้ด้วยแอป BombVault เพื่อจับคู่โทรศัพท์",
 };
 
 export default th;

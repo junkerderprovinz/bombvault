@@ -3135,7 +3135,7 @@ const vi: Partial<Translations> = {
   "progress.count.files": "{done}/{n} tệp",
   "progress.count.items": "{done}/{n}",
   "progress.remaining": "còn {time}",
-  "launcher.empty": "Chưa có máy chủ nào. Thêm một máy theo địa chỉ, hoặc chọn một máy mà điện thoại này tìm thấy trên mạng.",
+  "launcher.empty": "Chưa có máy chủ nào. Ghép nối ứng dụng với nhóm của bạn, hoặc thêm máy chủ theo địa chỉ.",
   "launcher.signIn": "Cần đăng nhập",
   "launcher.checkCertificate": "Kiểm tra chứng chỉ",
   "launcher.activityEmpty": "Ngay khi máy chủ phản hồi, đây sẽ hiện những gì đang chạy trên đó.",
@@ -3161,6 +3161,17 @@ const vi: Partial<Translations> = {
   "launcher.changedBody": "{host} hiện một chứng chỉ khác với chứng chỉ bạn đã tin tưởng trước đó. Điều này xảy ra khi chứng chỉ được gia hạn hoặc thay thế, hoặc khi ai đó chen vào giữa điện thoại này và máy chủ. Chỉ tin tưởng nó nếu bạn biết vì sao nó thay đổi.",
   "launcher.trustChanged": "Tin tưởng chứng chỉ mới",
   "launcher.fingerprint": "Vân tay SHA-256",
+  "launcher.pairTitle": "Ghép nối với nhóm của bạn",
+  "launcher.pairHint": "Trên một trong các máy chủ BombVault của bạn, mở Cài đặt > Ghép nối và hiện các từ. Ứng dụng sau đó sẽ tìm từng máy chủ trong nhóm và hiện những gì đang chạy trên đó, kể cả khi ở xa nhà.",
+  "launcher.scan": "Quét mã QR",
+  "launcher.enterWords": "Nhập các từ",
+  "launcher.paired": "Đã ghép nối",
+  "launcher.relayConnected": "Đã kết nối qua relay",
+  "launcher.relayOffline": "Không thể kết nối tới relay",
+  "launcher.leaveConfirm": "Rời nhóm? Các máy chủ vẫn còn trong danh sách và mở theo địa chỉ như trước.",
+  "launcher.viaGroup": "Chưa biết địa chỉ",
+  "fleet.kindAndroid": "Ứng dụng Android",
+  "pairing.qrCaption": "Quét mã này bằng ứng dụng BombVault để ghép nối điện thoại.",
 };
 
 export default vi;

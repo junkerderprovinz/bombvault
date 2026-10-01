@@ -3143,7 +3143,7 @@ const sv: Partial<Translations> = {
   "progress.count.files": "one={done} av {n} fil|other={done} av {n} filer",
   "progress.count.items": "{done} av {n}",
   "progress.remaining": "{time} kvar",
-  "launcher.empty": "Inga servrar än. Lägg till en via dess adress eller välj en som den här telefonen hittar i nätverket.",
+  "launcher.empty": "Inga servrar än. Parkoppla appen med din grupp eller lägg till en server via dess adress.",
   "launcher.signIn": "Inloggning behövs",
   "launcher.checkCertificate": "Kontrollera certifikat",
   "launcher.activityEmpty": "Så snart en server svarar visas här vad som körs på den.",
@@ -3169,6 +3169,17 @@ const sv: Partial<Translations> = {
   "launcher.changedBody": "{host} visar ett annat certifikat än det du litade på. Det händer när certifikatet har förnyats eller bytts ut, eller när någon sitter mellan telefonen och servern. Lita bara på det om du vet varför det ändrades.",
   "launcher.trustChanged": "Lita på nytt certifikat",
   "launcher.fingerprint": "SHA-256-fingeravtryck",
+  "launcher.pairTitle": "Parkoppla med din grupp",
+  "launcher.pairHint": "Öppna Inställningar > Parkoppling på en av dina BombVault-servrar och visa orden. Appen hittar då varje server i gruppen och visar vad som körs på dem, även utanför hemmet.",
+  "launcher.scan": "Skanna QR-kod",
+  "launcher.enterWords": "Ange orden",
+  "launcher.paired": "Parkopplad",
+  "launcher.relayConnected": "Ansluten via relä",
+  "launcher.relayOffline": "Relä går inte att nå",
+  "launcher.leaveConfirm": "Lämna gruppen? Servrarna finns kvar i listan och öppnas via sin adress som förut.",
+  "launcher.viaGroup": "Adress inte känd än",
+  "fleet.kindAndroid": "Android-app",
+  "pairing.qrCaption": "Skanna den här koden med BombVault-appen för att parkoppla en telefon.",
 };
 
 export default sv;

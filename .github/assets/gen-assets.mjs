@@ -83,3 +83,26 @@ const placeLogo = (x, y, w, h) =>
   }
   console.log("android launcher foregrounds written (108dp, five densities)");
 }
+
+// The web app manifest's icons: the logo alone for launchers that show it as
+// is, and a maskable one on white whose logo stays inside the 80 percent
+// circle every mask keeps.
+{
+  const PUB = join(__dir, "../../web/public");
+  const half = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
+  const icon = (side, fill, bg) => {
+    const s = (side * fill) / 2 / half;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${side}" height="${side}" viewBox="0 0 ${side} ${side}">
+  ${bg ? `<rect width="${side}" height="${side}" fill="${bg}"/>` : ""}
+  ${placeLogo(side / 2 - OPT_CX * s, side / 2 - OPT_CY * s, LOGO_W * s, LOGO_H * s)}
+</svg>`;
+  };
+  for (const [name, side, fill, bg] of [
+    ["icon-192.png", 192, 0.92, null],
+    ["icon-512.png", 512, 0.92, null],
+    ["icon-maskable-512.png", 512, 0.62, "#ffffff"],
+  ]) {
+    writeFileSync(join(PUB, name), new Resvg(icon(side, fill, bg), { fitTo: { mode: "width", value: side } }).render().asPng());
+  }
+  console.log("web app manifest icons written (192, 512, maskable 512)");
+}

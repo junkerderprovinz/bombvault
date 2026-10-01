@@ -3140,7 +3140,7 @@ const nl: Partial<Translations> = {
   "progress.count.files": "one={done} van {n} bestand|other={done} van {n} bestanden",
   "progress.count.items": "{done} van {n}",
   "progress.remaining": "nog {time}",
-  "launcher.empty": "Nog geen servers. Voeg er een toe via het adres of kies er een die deze telefoon in het netwerk vindt.",
+  "launcher.empty": "Nog geen servers. Koppel de app aan je groep of voeg een server toe via het adres.",
   "launcher.signIn": "Aanmelden nodig",
   "launcher.checkCertificate": "Certificaat controleren",
   "launcher.activityEmpty": "Zodra een server reageert, staat hier wat erop draait.",
@@ -3166,6 +3166,17 @@ const nl: Partial<Translations> = {
   "launcher.changedBody": "{host} toont een ander certificaat dan het certificaat dat je vertrouwde. Dat gebeurt als het certificaat is vernieuwd of vervangen, of als iemand zich tussen deze telefoon en de server plaatst. Vertrouw het alleen als je weet waarom het is veranderd.",
   "launcher.trustChanged": "Nieuw certificaat vertrouwen",
   "launcher.fingerprint": "SHA-256-vingerafdruk",
+  "launcher.pairTitle": "Koppelen aan je groep",
+  "launcher.pairHint": "Open op een van je BombVault-servers Instellingen > Koppeling en toon de woorden. De app vindt dan elke server van de groep en laat zien wat daarop draait, ook buitenshuis.",
+  "launcher.scan": "QR-code scannen",
+  "launcher.enterWords": "Woorden invoeren",
+  "launcher.paired": "Gekoppeld",
+  "launcher.relayConnected": "Verbonden via relay",
+  "launcher.relayOffline": "Relay niet bereikbaar",
+  "launcher.leaveConfirm": "Groep verlaten? De servers blijven in de lijst en openen via hun adres zoals voorheen.",
+  "launcher.viaGroup": "Adres nog niet bekend",
+  "fleet.kindAndroid": "Android-app",
+  "pairing.qrCaption": "Scan deze code met de BombVault-app om een telefoon te koppelen.",
 };
 
 export default nl;

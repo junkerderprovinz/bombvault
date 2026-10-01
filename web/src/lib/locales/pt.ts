@@ -3143,7 +3143,7 @@ const pt: Partial<Translations> = {
   "progress.count.files": "one={done} de {n} ficheiro|other={done} de {n} ficheiros",
   "progress.count.items": "{done} de {n}",
   "progress.remaining": "faltam {time}",
-  "launcher.empty": "Ainda sem servidores. Adicione um pelo endereço ou escolha um que este telemóvel encontre na rede.",
+  "launcher.empty": "Ainda sem servidores. Emparelhe a app com o seu grupo ou adicione um servidor pelo endereço.",
   "launcher.signIn": "Início de sessão necessário",
   "launcher.checkCertificate": "Verificar certificado",
   "launcher.activityEmpty": "Assim que um servidor responder, isto mostra o que está a correr nele.",
@@ -3169,6 +3169,17 @@ const pt: Partial<Translations> = {
   "launcher.changedBody": "{host} mostra um certificado diferente daquele em que confiou. Isso acontece quando o certificado é renovado ou substituído, ou quando alguém se interpõe entre este telemóvel e o servidor. Só confie nele se souber porque mudou.",
   "launcher.trustChanged": "Confiar no novo certificado",
   "launcher.fingerprint": "Impressão digital SHA-256",
+  "launcher.pairTitle": "Emparelhar com o seu grupo",
+  "launcher.pairHint": "Num dos seus servidores BombVault, abra Definições > Emparelhamento e mostre as palavras. A app encontra depois cada servidor do grupo e mostra o que está a correr neles, mesmo fora de casa.",
+  "launcher.scan": "Digitalizar código QR",
+  "launcher.enterWords": "Introduzir as palavras",
+  "launcher.paired": "Emparelhado",
+  "launcher.relayConnected": "Ligado via relay",
+  "launcher.relayOffline": "Não é possível alcançar o relay",
+  "launcher.leaveConfirm": "Sair do grupo? Os servidores ficam na lista e abrem pelo endereço como antes.",
+  "launcher.viaGroup": "Endereço ainda desconhecido",
+  "fleet.kindAndroid": "App para Android",
+  "pairing.qrCaption": "Digitalize este código com a app BombVault para emparelhar um telemóvel.",
 };
 
 export default pt;

@@ -3154,7 +3154,7 @@ const gl: Partial<Translations> = {
   "progress.count.files": "one={done} de {n} ficheiro|other={done} de {n} ficheiros",
   "progress.count.items": "{done} de {n}",
   "progress.remaining": "quedan {time}",
-  "launcher.empty": "Aínda non hai servidores. Engade un pola súa dirección ou escolle un que este teléfono atope na rede.",
+  "launcher.empty": "Aínda non hai servidores. Emparella a app co teu grupo ou engade un servidor pola súa dirección.",
   "launcher.signIn": "Precísase iniciar sesión",
   "launcher.checkCertificate": "Comprobar certificado",
   "launcher.activityEmpty": "En canto un servidor responda, aquí aparece o que se executa nel.",
@@ -3180,6 +3180,17 @@ const gl: Partial<Translations> = {
   "launcher.changedBody": "{host} amosa un certificado diferente do que confiaches. Iso ocorre cando o certificado foi renovado ou substituído, ou cando alguén se interpón entre este teléfono e o servidor. Confía nel só se sabes por que cambiou.",
   "launcher.trustChanged": "Confiar no novo certificado",
   "launcher.fingerprint": "Pegada dixital SHA-256",
+  "launcher.pairTitle": "Emparellar co teu grupo",
+  "launcher.pairHint": "Nun dos teus servidores BombVault, abre Configuración > Emparellamento e amosa as palabras. A app atopa entón cada servidor do grupo e amosa o que funciona neles, tamén lonxe da casa.",
+  "launcher.scan": "Escanear código QR",
+  "launcher.enterWords": "Introducir as palabras",
+  "launcher.paired": "Emparellado",
+  "launcher.relayConnected": "Conectado vía relé",
+  "launcher.relayOffline": "Non se pode acadar o relé.",
+  "launcher.leaveConfirm": "Deixar o grupo? Os servidores quedan na lista e ábrense pola súa dirección coma antes.",
+  "launcher.viaGroup": "Enderezo aínda descoñecido",
+  "fleet.kindAndroid": "App de Android",
+  "pairing.qrCaption": "Escanea este código coa app de BombVault para emparellar un teléfono.",
 };
 
 export default gl;

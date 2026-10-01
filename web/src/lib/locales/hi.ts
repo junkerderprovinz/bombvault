@@ -3154,7 +3154,7 @@ const hi: Partial<Translations> = {
   "progress.count.files": "one={n} में से {done} फ़ाइल|other={n} में से {done} फ़ाइलें",
   "progress.count.items": "{n} में से {done}",
   "progress.remaining": "{time} बाकी",
-  "launcher.empty": "अभी कोई सर्वर नहीं है। इसका पता डालकर एक जोड़ें, या वह चुनें जो यह फ़ोन नेटवर्क पर ढूँढे।",
+  "launcher.empty": "अभी कोई सर्वर नहीं है। ऐप को अपने समूह से पेयर करें या पता डालकर एक सर्वर जोड़ें।",
   "launcher.signIn": "साइन इन ज़रूरी है",
   "launcher.checkCertificate": "प्रमाणपत्र जाँचें",
   "launcher.activityEmpty": "जैसे ही कोई सर्वर जवाब दे, यहाँ दिखेगा कि उस पर क्या चल रहा है।",
@@ -3180,6 +3180,17 @@ const hi: Partial<Translations> = {
   "launcher.changedBody": "{host} उस प्रमाणपत्र से अलग प्रमाणपत्र दिखा रहा है जिस पर आपने भरोसा किया था। ऐसा तब होता है जब प्रमाणपत्र नया किया गया हो या बदला गया हो, या जब कोई इस फ़ोन और सर्वर के बीच आ जाए। इस पर तभी भरोसा करें जब आपको पता हो कि यह क्यों बदला।",
   "launcher.trustChanged": "नए प्रमाणपत्र पर भरोसा करें",
   "launcher.fingerprint": "SHA-256 फ़िंगरप्रिंट",
+  "launcher.pairTitle": "अपने समूह से पेयर करें",
+  "launcher.pairHint": "अपने किसी एक BombVault सर्वर पर सेटिंग्स > पेयरिंग खोलें और शब्द दिखाएँ। इसके बाद ऐप समूह के हर सर्वर को ढूँढ लेता है और दिखाता है कि उन पर क्या चल रहा है, घर से दूर भी।",
+  "launcher.scan": "QR कोड स्कैन करें",
+  "launcher.enterWords": "शब्द डालें",
+  "launcher.paired": "पेयर हो गया",
+  "launcher.relayConnected": "रिले के ज़रिए जुड़ा हुआ",
+  "launcher.relayOffline": "रिले तक पहुँचा नहीं जा सकता",
+  "launcher.leaveConfirm": "समूह छोड़ें? सर्वर सूची में बने रहेंगे और पहले की तरह अपने पते से खुलेंगे।",
+  "launcher.viaGroup": "पता अभी मालूम नहीं",
+  "fleet.kindAndroid": "Android ऐप",
+  "pairing.qrCaption": "फ़ोन पेयर करने के लिए इस कोड को BombVault ऐप से स्कैन करें।",
 };
 
 export default hi;

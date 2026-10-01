@@ -3143,7 +3143,7 @@ const fr: Partial<Translations> = {
   "progress.count.files": "one={done} sur {n} fichier|other={done} sur {n} fichiers",
   "progress.count.items": "{done} sur {n}",
   "progress.remaining": "encore {time}",
-  "launcher.empty": "Pas encore de serveur. Ajoutez-en un par son adresse ou choisissez-en un que ce téléphone trouve sur le réseau.",
+  "launcher.empty": "Pas encore de serveur. Appairez l'app avec votre groupe ou ajoutez un serveur par son adresse.",
   "launcher.signIn": "Connexion nécessaire",
   "launcher.checkCertificate": "Vérifier le certificat",
   "launcher.activityEmpty": "Dès qu'un serveur répond, ceci affiche ce qui tourne dessus.",
@@ -3169,6 +3169,17 @@ const fr: Partial<Translations> = {
   "launcher.changedBody": "{host} présente un certificat différent de celui auquel vous avez fait confiance. Cela arrive quand le certificat a été renouvelé ou remplacé, ou quand quelqu'un s'interpose entre ce téléphone et le serveur. Ne lui faites confiance que si vous savez pourquoi il a changé.",
   "launcher.trustChanged": "Faire confiance au nouveau certificat",
   "launcher.fingerprint": "Empreinte SHA-256",
+  "launcher.pairTitle": "Appairer avec votre groupe",
+  "launcher.pairHint": "Sur l'un de vos serveurs BombVault, ouvrez Paramètres > Appairage et affichez les mots. L'app trouve alors chaque serveur du groupe et montre ce qui tourne dessus, même loin de chez vous.",
+  "launcher.scan": "Scanner un code QR",
+  "launcher.enterWords": "Saisir les mots",
+  "launcher.paired": "Appairé",
+  "launcher.relayConnected": "Connecté via le relais",
+  "launcher.relayOffline": "Relais injoignable",
+  "launcher.leaveConfirm": "Quitter le groupe ? Les serveurs restent dans la liste et s'ouvrent par leur adresse comme avant.",
+  "launcher.viaGroup": "Adresse pas encore connue",
+  "fleet.kindAndroid": "App Android",
+  "pairing.qrCaption": "Scannez ce code avec l'app BombVault pour appairer un téléphone.",
 };
 
 export default fr;

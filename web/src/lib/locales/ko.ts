@@ -3135,7 +3135,7 @@ const ko: Partial<Translations> = {
   "progress.count.files": "파일 {n}개 중 {done}개",
   "progress.count.items": "{n}개 중 {done}개",
   "progress.remaining": "{time} 남음",
-  "launcher.empty": "서버가 아직 없습니다. 주소로 추가하거나 이 휴대폰이 네트워크에서 찾은 서버를 선택하세요.",
+  "launcher.empty": "서버가 아직 없습니다. 앱을 그룹과 페어링하거나 주소로 서버를 추가하세요.",
   "launcher.signIn": "로그인이 필요합니다",
   "launcher.checkCertificate": "인증서 확인",
   "launcher.activityEmpty": "서버가 응답하면 여기에 그 위에서 실행 중인 것이 표시됩니다.",
@@ -3161,6 +3161,17 @@ const ko: Partial<Translations> = {
   "launcher.changedBody": "{host}이(가) 이전에 신뢰했던 인증서와 다른 인증서를 보여 줍니다. 이는 인증서가 갱신되거나 교체되었을 때, 또는 누군가 이 휴대폰과 서버 사이에 끼어들었을 때 일어납니다. 왜 바뀌었는지 아는 경우에만 신뢰하세요.",
   "launcher.trustChanged": "새 인증서 신뢰",
   "launcher.fingerprint": "SHA-256 지문",
+  "launcher.pairTitle": "그룹과 페어링",
+  "launcher.pairHint": "BombVault 서버 중 하나에서 설정 > 페어링을 열고 단어를 표시하세요. 그러면 앱이 그룹의 모든 서버를 찾아서 집 밖에서도 그 서버에서 실행 중인 것을 보여줍니다.",
+  "launcher.scan": "QR 코드 스캔",
+  "launcher.enterWords": "단어 입력",
+  "launcher.paired": "페어링됨",
+  "launcher.relayConnected": "릴레이로 연결됨",
+  "launcher.relayOffline": "릴레이에 연결할 수 없음",
+  "launcher.leaveConfirm": "그룹을 나갈까요? 서버는 목록에 남아 있고 이전처럼 주소로 열립니다.",
+  "launcher.viaGroup": "아직 주소를 알 수 없음",
+  "fleet.kindAndroid": "Android 앱",
+  "pairing.qrCaption": "휴대폰을 페어링하려면 BombVault 앱으로 이 코드를 스캔하세요.",
 };
 
 export default ko;

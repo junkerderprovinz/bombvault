@@ -3154,7 +3154,7 @@ const ca: Partial<Translations> = {
   "progress.count.files": "one={done} de {n} fitxer|other={done} de {n} fitxers",
   "progress.count.items": "{done} de {n}",
   "progress.remaining": "queden {time}",
-  "launcher.empty": "Encara no hi ha servidors. Afegeix-ne un per la seva adreça o tria'n un que aquest telèfon trobi a la xarxa.",
+  "launcher.empty": "Encara no hi ha servidors. Aparella l'app amb el teu grup o afegeix un servidor per la seva adreça.",
   "launcher.signIn": "Cal iniciar sessió",
   "launcher.checkCertificate": "Comprova el certificat",
   "launcher.activityEmpty": "Tan bon punt un servidor respongui, aquí es mostra què s'hi executa.",
@@ -3180,6 +3180,17 @@ const ca: Partial<Translations> = {
   "launcher.changedBody": "{host} mostra un certificat diferent del que vas confiar. Això passa quan el certificat s'ha renovat o substituït, o quan algú s'interposa entre aquest telèfon i el servidor. Confia-hi només si saps per què ha canviat.",
   "launcher.trustChanged": "Confia en el certificat nou",
   "launcher.fingerprint": "Empremta SHA-256",
+  "launcher.pairTitle": "Aparella amb el teu grup",
+  "launcher.pairHint": "En un dels teus servidors BombVault, obre Configuració > Aparellament i mostra les paraules. L'app llavors troba tots els servidors del grup i mostra què hi funciona, també fora de casa.",
+  "launcher.scan": "Escaneja el codi QR",
+  "launcher.enterWords": "Introdueix les paraules",
+  "launcher.paired": "Aparellada",
+  "launcher.relayConnected": "Connectat via repetidor",
+  "launcher.relayOffline": "No es pot arribar al repetidor.",
+  "launcher.leaveConfirm": "Vols sortir del grup? Els servidors es mantenen a la llista i s'obren per la seva adreça com fins ara.",
+  "launcher.viaGroup": "Adreça encara desconeguda",
+  "fleet.kindAndroid": "App d'Android",
+  "pairing.qrCaption": "Escaneja aquest codi amb l'app de BombVault per aparellar un telèfon.",
 };
 
 export default ca;

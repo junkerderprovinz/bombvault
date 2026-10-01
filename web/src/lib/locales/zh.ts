@@ -3135,7 +3135,7 @@ const zh: Partial<Translations> = {
   "progress.count.files": "{done}/{n} 个文件",
   "progress.count.items": "{done}/{n}",
   "progress.remaining": "剩余 {time}",
-  "launcher.empty": "还没有服务器。按地址添加一个，或者选择一个此手机在网络中找到的服务器。",
+  "launcher.empty": "还没有服务器。将应用与你的组配对，或按地址添加一个服务器。",
   "launcher.signIn": "需要登录",
   "launcher.checkCertificate": "检查证书",
   "launcher.activityEmpty": "服务器一响应，这里就会显示它上面运行的内容。",
@@ -3161,6 +3161,17 @@ const zh: Partial<Translations> = {
   "launcher.changedBody": "{host} 显示的证书与你之前信任的不同。这会在证书续期或更换时发生，也会在有人介入此手机与服务器之间时发生。只有在你知道它为什么变化时才信任它。",
   "launcher.trustChanged": "信任新证书",
   "launcher.fingerprint": "SHA-256 指纹",
+  "launcher.pairTitle": "与你的组配对",
+  "launcher.pairHint": "在你的某台 BombVault 服务器上，打开设置 > 配对并显示这些词。应用随后会找到组里的每台服务器，并显示它们上面运行的内容，即使不在家也一样。",
+  "launcher.scan": "扫描 QR 码",
+  "launcher.enterWords": "输入这些词",
+  "launcher.paired": "已配对",
+  "launcher.relayConnected": "已通过中继连接",
+  "launcher.relayOffline": "无法连接中继",
+  "launcher.leaveConfirm": "要退出这个组吗？服务器仍保留在列表中，并像以前一样按地址打开。",
+  "launcher.viaGroup": "地址还不知道",
+  "fleet.kindAndroid": "Android 应用",
+  "pairing.qrCaption": "用 BombVault 应用扫描这个码来配对手机。",
 };
 
 export default zh;

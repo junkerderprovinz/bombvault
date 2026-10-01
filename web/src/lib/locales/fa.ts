@@ -3154,7 +3154,7 @@ const fa: Partial<Translations> = {
   "progress.count.files": "{done} از {n} فایل",
   "progress.count.items": "{done} از {n}",
   "progress.remaining": "{time} مانده",
-  "launcher.empty": "هنوز سروری وجود ندارد. یکی را با آدرسش اضافه کنید یا یکی را انتخاب کنید که این گوشی در شبکه پیدا می‌کند.",
+  "launcher.empty": "هنوز سروری وجود ندارد. برنامه را با گروهتان جفت کنید یا سروری را با آدرسش اضافه کنید.",
   "launcher.signIn": "ورود لازم است",
   "launcher.checkCertificate": "بررسی گواهی",
   "launcher.activityEmpty": "به محض اینکه سرور پاسخ دهد، اینجا نشان می‌دهد چه چیزی روی آن اجرا می‌شود.",
@@ -3180,6 +3180,17 @@ const fa: Partial<Translations> = {
   "launcher.changedBody": "{host} گواهی‌ای متفاوت از گواهی‌ای که به آن اعتماد کرده بودید نشان می‌دهد. این زمانی رخ می‌دهد که گواهی تمدید یا جایگزین شده باشد، یا وقتی کسی بین این گوشی و سرور قرار گرفته باشد. فقط در صورتی به آن اعتماد کنید که بدانید چرا تغییر کرده است.",
   "launcher.trustChanged": "اعتماد به گواهی جدید",
   "launcher.fingerprint": "اثر انگشت SHA-256",
+  "launcher.pairTitle": "جفت‌سازی با گروهتان",
+  "launcher.pairHint": "روی یکی از سرورهای BombVault خود، تنظیمات > جفت‌سازی را باز کنید و کلمات را نشان دهید. سپس برنامه هر سرور گروه را پیدا می‌کند و نشان می‌دهد روی آن‌ها چه چیزی اجرا می‌شود، حتی دور از خانه.",
+  "launcher.scan": "اسکن کد QR",
+  "launcher.enterWords": "وارد کردن کلمات",
+  "launcher.paired": "جفت شد",
+  "launcher.relayConnected": "متصل از طریق رله",
+  "launcher.relayOffline": "رله در دسترس نیست",
+  "launcher.leaveConfirm": "گروه ترک شود؟ سرورها در فهرست باقی می‌مانند و مثل قبل با آدرس خودشان باز می‌شوند.",
+  "launcher.viaGroup": "آدرس هنوز مشخص نیست",
+  "fleet.kindAndroid": "برنامه اندروید",
+  "pairing.qrCaption": "این کد را با برنامه BombVault اسکن کنید تا گوشی‌ای جفت شود.",
 };
 
 export default fa;

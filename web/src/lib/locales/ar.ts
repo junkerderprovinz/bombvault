@@ -3146,7 +3146,7 @@ const ar: Partial<Translations> = {
   "progress.count.files": "zero={done} من {n} ملف|one={done} من ملف واحد|two={done} من ملفين|few={done} من {n} ملفات|many={done} من {n} ملفًا|other={done} من {n} ملف",
   "progress.count.items": "{done} من {n}",
   "progress.remaining": "متبقٍّ {time}",
-  "launcher.empty": "لا توجد خوادم بعد. أضف واحدًا عبر عنوانه، أو اختر واحدًا يجده هذا الهاتف في الشبكة.",
+  "launcher.empty": "لا توجد خوادم بعد. اقرن التطبيق بمجموعتك أو أضف خادمًا عبر عنوانه.",
   "launcher.signIn": "يلزم تسجيل الدخول",
   "launcher.checkCertificate": "التحقق من الشهادة",
   "launcher.activityEmpty": "بمجرد أن يستجيب الخادم، يظهر هنا ما يعمل عليه.",
@@ -3172,6 +3172,17 @@ const ar: Partial<Translations> = {
   "launcher.changedBody": "{host} يُظهر شهادة مختلفة عن التي وثقت بها. يحدث هذا عند تجديد الشهادة أو استبدالها، أو عندما يتوسط أحدهم بين هذا الهاتف والخادم. لا تثق بها إلا إذا كنت تعرف سبب تغيّرها.",
   "launcher.trustChanged": "الثقة بالشهادة الجديدة",
   "launcher.fingerprint": "بصمة SHA-256",
+  "launcher.pairTitle": "الاقتران مع مجموعتك",
+  "launcher.pairHint": "على أحد خوادم BombVault لديك، افتح الإعدادات > الاقتران وأظهر الكلمات. يجد التطبيق بعدها كل خادم في المجموعة ويعرض ما يعمل عليه، حتى بعيدًا عن المنزل.",
+  "launcher.scan": "مسح رمز QR",
+  "launcher.enterWords": "إدخال الكلمات",
+  "launcher.paired": "مقترن",
+  "launcher.relayConnected": "متصل عبر المُرحِّل",
+  "launcher.relayOffline": "يتعذر الوصول إلى المُرحِّل.",
+  "launcher.leaveConfirm": "مغادرة المجموعة؟ تبقى الخوادم في القائمة وتُفتح بعناوينها كما كانت من قبل.",
+  "launcher.viaGroup": "العنوان غير معروف بعد",
+  "fleet.kindAndroid": "تطبيق Android",
+  "pairing.qrCaption": "امسح هذا الرمز بتطبيق BombVault لإقران هاتف.",
 };
 
 export default ar;

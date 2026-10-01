@@ -3154,7 +3154,7 @@ const is: Partial<Translations> = {
   "progress.count.files": "one={done} af {n} skrá|other={done} af {n} skrám",
   "progress.count.items": "{done} af {n}",
   "progress.remaining": "{time} eftir",
-  "launcher.empty": "Engir netþjónar ennþá. Bættu einum við eftir vistfangi hans eða veldu einn sem þessi sími finnur á netkerfinu.",
+  "launcher.empty": "Engir netþjónar ennþá. Paraðu appið við hópinn þinn eða bættu netþjóni við eftir vistfangi hans.",
   "launcher.signIn": "Innskráning nauðsynleg",
   "launcher.checkCertificate": "Skoða skírteini",
   "launcher.activityEmpty": "Um leið og netþjónn svarar sýnir þetta hvað keyrir á honum.",
@@ -3180,6 +3180,17 @@ const is: Partial<Translations> = {
   "launcher.changedBody": "{host} sýnir annað skírteini en það sem þú treystir. Það gerist þegar skírteinið hefur verið endurnýjað eða því skipt út, eða þegar einhver kemur sér fyrir milli símans og netþjónsins. Treystu því aðeins ef þú veist hvers vegna það breyttist.",
   "launcher.trustChanged": "Treysta nýju skírteini",
   "launcher.fingerprint": "SHA-256 fingrafar",
+  "launcher.pairTitle": "Para við hópinn þinn",
+  "launcher.pairHint": "Á einum af BombVault netþjónunum þínum skaltu opna Stillingar > Pörun og sýna orðin. Appið finnur þá hvern netþjón í hópnum og sýnir hvað er í gangi á þeim, líka að heiman.",
+  "launcher.scan": "Skanna QR kóða",
+  "launcher.enterWords": "Slá inn orðin",
+  "launcher.paired": "Parað",
+  "launcher.relayConnected": "Tengt um relay",
+  "launcher.relayOffline": "Næst ekki í relay",
+  "launcher.leaveConfirm": "Yfirgefa hópinn? Netþjónarnir haldast á listanum og opnast eftir vistfangi sínu eins og áður.",
+  "launcher.viaGroup": "Vistfang ekki þekkt ennþá",
+  "fleet.kindAndroid": "Android app",
+  "pairing.qrCaption": "Skannaðu þennan kóða með BombVault appinu til að para síma.",
 };
 
 export default is;

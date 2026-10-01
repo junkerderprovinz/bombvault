@@ -3154,7 +3154,7 @@ const lv: Partial<Translations> = {
   "progress.count.files": "zero={done} no {n} failiem|one={done} no {n} faila|other={done} no {n} failiem",
   "progress.count.items": "{done} no {n}",
   "progress.remaining": "atlikušas {time}",
-  "launcher.empty": "Serveru vēl nav. Pievienojiet vienu pēc tā adreses vai izvēlieties tādu, ko šis tālrunis atrod tīklā.",
+  "launcher.empty": "Serveru vēl nav. Sapārojiet lietotni ar savu grupu vai pievienojiet serveri pēc tā adreses.",
   "launcher.signIn": "Nepieciešama pierakstīšanās",
   "launcher.checkCertificate": "Pārbaudīt sertifikātu",
   "launcher.activityEmpty": "Tiklīdz serveris atbild, šeit redzams, kas uz tā darbojas.",
@@ -3180,6 +3180,17 @@ const lv: Partial<Translations> = {
   "launcher.changedBody": "{host} rāda citu sertifikātu nekā to, kuram uzticējāties iepriekš. Tas notiek, ja sertifikāts tiek atjaunots vai nomainīts, vai kad kāds nostājas starp tālruni un serveri. Uzticieties tam tikai tad, ja zināt, kāpēc tas mainījies.",
   "launcher.trustChanged": "Uzticēties jaunajam sertifikātam",
   "launcher.fingerprint": "SHA-256 nospiedums",
+  "launcher.pairTitle": "Sapārot ar savu grupu",
+  "launcher.pairHint": "Vienā no saviem BombVault serveriem atveriet Iestatījumi > Pārošana un parādiet vārdus. Lietotne pēc tam atrod katru grupas serveri un parāda, kas uz tiem darbojas, arī tālumā no mājām.",
+  "launcher.scan": "Skenēt QR kodu",
+  "launcher.enterWords": "Ievadīt vārdus",
+  "launcher.paired": "Sapārota",
+  "launcher.relayConnected": "Savienots caur relay",
+  "launcher.relayOffline": "Relay nav sasniedzams",
+  "launcher.leaveConfirm": "Pamest grupu? Serveri paliks sarakstā un atvērsies pēc savas adreses kā iepriekš.",
+  "launcher.viaGroup": "Adrese vēl nezināma",
+  "fleet.kindAndroid": "Android lietotne",
+  "pairing.qrCaption": "Noskenējiet šo kodu ar BombVault lietotni, lai sapārotu tālruni.",
 };
 
 export default lv;

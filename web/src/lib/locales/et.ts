@@ -3154,7 +3154,7 @@ const et: Partial<Translations> = {
   "progress.count.files": "one={done} / {n} failist|other={done} / {n} failist",
   "progress.count.items": "{done} / {n}",
   "progress.remaining": "jäänud {time}",
-  "launcher.empty": "Servereid veel pole. Lisa üks aadressi järgi või vali selline, mille see telefon võrgust leiab.",
+  "launcher.empty": "Servereid veel pole. Seo rakendus oma grupiga või lisa server aadressi järgi.",
   "launcher.signIn": "Sisselogimine on vajalik",
   "launcher.checkCertificate": "Kontrolli sertifikaati",
   "launcher.activityEmpty": "Niipea kui server vastab, näed siin, mis sellel töötab.",
@@ -3180,6 +3180,17 @@ const et: Partial<Translations> = {
   "launcher.changedBody": "{host} näitab teistsugust sertifikaati kui see, mida varem usaldasid. See juhtub, kui sertifikaat uuendatakse või asendatakse, või kui keegi asetub telefoni ja serveri vahele. Usalda seda ainult siis, kui tead, miks see muutus.",
   "launcher.trustChanged": "Usalda uut sertifikaati",
   "launcher.fingerprint": "SHA-256 sõrmejälg",
+  "launcher.pairTitle": "Seo oma grupiga",
+  "launcher.pairHint": "Ava ühes oma BombVault serveris Seaded > Sidumine ja näita sõnu. Rakendus leiab siis grupi iga serveri ja näitab, mis neil töötab, ka kodunt eemal.",
+  "launcher.scan": "Skanni QR-koodi",
+  "launcher.enterWords": "Sisesta sõnad",
+  "launcher.paired": "Seotud",
+  "launcher.relayConnected": "Ühendatud edastaja kaudu",
+  "launcher.relayOffline": "Edastaja ei ole saavutatav.",
+  "launcher.leaveConfirm": "Kas lahkuda grupist? Serverid jäävad loendisse ja avanevad oma aadressi järgi nagu varem.",
+  "launcher.viaGroup": "Aadress veel teadmata",
+  "fleet.kindAndroid": "Androidi rakendus",
+  "pairing.qrCaption": "Skanni seda koodi BombVault rakendusega, et siduda telefon.",
 };
 
 export default et;

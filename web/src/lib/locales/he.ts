@@ -3143,7 +3143,7 @@ const he: Partial<Translations> = {
   "progress.count.files": "one={done} מתוך קובץ אחד|two={done} מתוך שני קבצים|other={done} מתוך {n} קבצים",
   "progress.count.items": "{done} מתוך {n}",
   "progress.remaining": "נותרו {time}",
-  "launcher.empty": "אין עדיין שרתים. הוסף אחד לפי הכתובת שלו או בחר אחד שהטלפון הזה מוצא ברשת.",
+  "launcher.empty": "אין עדיין שרתים. צמד את האפליקציה עם הקבוצה שלך או הוסף שרת לפי הכתובת שלו.",
   "launcher.signIn": "נדרשת התחברות",
   "launcher.checkCertificate": "בדיקת התעודה",
   "launcher.activityEmpty": "ברגע ששרת מגיב, כאן יוצג מה רץ עליו.",
@@ -3169,6 +3169,17 @@ const he: Partial<Translations> = {
   "launcher.changedBody": "{host} מציג תעודה שונה מזו שסמכת עליה. זה קורה כשהתעודה מתחדשת או מוחלפת, או כשמישהו יושב בין הטלפון הזה לשרת. לבטוח בה רק אם ידוע למה היא השתנתה.",
   "launcher.trustChanged": "לבטוח בתעודה החדשה",
   "launcher.fingerprint": "טביעת אצבע SHA-256",
+  "launcher.pairTitle": "צימוד עם הקבוצה שלך",
+  "launcher.pairHint": "באחד משרתי ה-BombVault שלך, פתח הגדרות > צימוד והצג את המילים. האפליקציה תמצא אז כל שרת בקבוצה ותציג מה פועל עליו, גם הרחק מהבית.",
+  "launcher.scan": "סרוק קוד QR",
+  "launcher.enterWords": "הזנת המילים",
+  "launcher.paired": "צומד",
+  "launcher.relayConnected": "מחובר דרך הממסר",
+  "launcher.relayOffline": "לא ניתן להגיע לממסר.",
+  "launcher.leaveConfirm": "לעזוב את הקבוצה? השרתים נשארים ברשימה ונפתחים לפי הכתובת שלהם כמו קודם.",
+  "launcher.viaGroup": "הכתובת עדיין לא ידועה",
+  "fleet.kindAndroid": "אפליקציית Android",
+  "pairing.qrCaption": "סרוק את הקוד הזה עם אפליקציית BombVault כדי לצמד טלפון.",
 };
 
 export default he;

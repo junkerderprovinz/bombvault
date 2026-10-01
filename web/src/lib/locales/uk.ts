@@ -3138,7 +3138,7 @@ const uk: Partial<Translations> = {
   "progress.count.files": "one={done} з {n} файлу|few={done} з {n} файлів|many={done} з {n} файлів|other={done} з {n} файлу",
   "progress.count.items": "{done} з {n}",
   "progress.remaining": "залишилося {time}",
-  "launcher.empty": "Серверів поки немає. Додайте один за адресою або виберіть той, який цей телефон знайде в мережі.",
+  "launcher.empty": "Серверів поки немає. Спаруйте застосунок зі своєю групою або додайте сервер за адресою.",
   "launcher.signIn": "Потрібен вхід",
   "launcher.checkCertificate": "Перевірити сертифікат",
   "launcher.activityEmpty": "Щойно сервер відповість, тут буде видно, що на ньому працює.",
@@ -3164,6 +3164,17 @@ const uk: Partial<Translations> = {
   "launcher.changedBody": "{host} показує сертифікат, відмінний від того, якому ви довіряли. Це трапляється, якщо сертифікат оновили або замінили, або якщо хтось опинився між телефоном і сервером. Довіряйте йому, тільки якщо знаєте, чому він змінився.",
   "launcher.trustChanged": "Довіритися новому сертифікату",
   "launcher.fingerprint": "Відбиток SHA-256",
+  "launcher.pairTitle": "Спарювання з групою",
+  "launcher.pairHint": "На одному зі своїх серверів BombVault відкрийте Налаштування > Спарювання і покажіть слова. Застосунок тоді знайде кожен сервер групи і покаже, що на ньому працює, навіть поза домом.",
+  "launcher.scan": "Сканувати QR-код",
+  "launcher.enterWords": "Ввести слова",
+  "launcher.paired": "Спаровано",
+  "launcher.relayConnected": "Підключено через реле",
+  "launcher.relayOffline": "Реле недоступне",
+  "launcher.leaveConfirm": "Покинути групу? Сервери залишаться в списку і відкриватимуться за адресою, як і раніше.",
+  "launcher.viaGroup": "Адреса поки невідома",
+  "fleet.kindAndroid": "Застосунок для Android",
+  "pairing.qrCaption": "Відскануйте цей код застосунком BombVault, щоб спарувати телефон.",
 };
 
 export default uk;

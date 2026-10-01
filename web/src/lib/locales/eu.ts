@@ -3154,7 +3154,7 @@ const eu: Partial<Translations> = {
   "progress.count.files": "one={done} / fitxategi {n}|other={done} / {n} fitxategi",
   "progress.count.items": "{done} / {n}",
   "progress.remaining": "{time} falta dira",
-  "launcher.empty": "Oraindik ez dago zerbitzaririk. Gehitu bat helbidearen bidez edo aukeratu telefono honek sarean aurkitzen duen bat.",
+  "launcher.empty": "Oraindik ez dago zerbitzaririk. Parekatu aplikazioa zure taldearekin edo gehitu zerbitzari bat helbidearen bidez.",
   "launcher.signIn": "Saioa hastea beharrezkoa da",
   "launcher.checkCertificate": "Egiaztatu ziurtagiria",
   "launcher.activityEmpty": "Zerbitzari batek erantzun bezain laster, honek erakutsiko du zer ari den exekutatzen bertan.",
@@ -3180,6 +3180,17 @@ const eu: Partial<Translations> = {
   "launcher.changedBody": "{host}(e)k lehen konfiantza izan zenuen ziurtagiritik desberdina den bat erakusten du. Hori gertatzen da ziurtagiria berritu edo ordezkatu denean, edo norbait telefono honen eta zerbitzariaren artean jarri denean. Konfiantza izan ezazu bakarrik zergatik aldatu den badakizu.",
   "launcher.trustChanged": "Konfiantza izan ziurtagiri berrian",
   "launcher.fingerprint": "SHA-256 hatz-marka",
+  "launcher.pairTitle": "Parekatu zure taldearekin",
+  "launcher.pairHint": "Zure BombVault zerbitzarietako batean, ireki Ezarpenak > Parekatzea eta erakutsi hitzak. Aplikazioak taldeko zerbitzari guztiak aurkituko ditu orduan eta haietan zer dabilen erakutsiko du, etxetik kanpo ere.",
+  "launcher.scan": "Eskaneatu QR kodea",
+  "launcher.enterWords": "Sartu hitzak",
+  "launcher.paired": "Parekatuta",
+  "launcher.relayConnected": "Bitartekariaren bidez konektatuta",
+  "launcher.relayOffline": "Bitartekaria ez dago eskuragarri.",
+  "launcher.leaveConfirm": "Taldea utzi? Zerbitzariak zerrendan geratuko dira eta lehen bezala irekiko dira beren helbidearen bidez.",
+  "launcher.viaGroup": "Helbidea oraindik ezezaguna",
+  "fleet.kindAndroid": "Android aplikazioa",
+  "pairing.qrCaption": "Eskaneatu kode hau BombVault aplikazioarekin telefono bat parekatzeko.",
 };
 
 export default eu;

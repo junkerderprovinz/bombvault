@@ -3154,7 +3154,7 @@ const bg: Partial<Translations> = {
   "progress.count.files": "one={done} от {n} файл|other={done} от {n} файла",
   "progress.count.items": "{done} от {n}",
   "progress.remaining": "остават {time}",
-  "launcher.empty": "Все още няма сървъри. Добави един по адреса му или избери такъв, който този телефон намира в мрежата.",
+  "launcher.empty": "Все още няма сървъри. Сдвои приложението с групата си или добави сървър по адреса му.",
   "launcher.signIn": "Необходим е вход",
   "launcher.checkCertificate": "Провери сертификата",
   "launcher.activityEmpty": "Щом сървър отговори, тук ще се покаже какво работи на него.",
@@ -3180,6 +3180,17 @@ const bg: Partial<Translations> = {
   "launcher.changedBody": "{host} показва сертификат, различен от предишния. Това се случва, когато сертификатът е подновен или заменен, или когато някой застане между телефона и сървъра. Доверявай му се само ако знаеш защо се е променил.",
   "launcher.trustChanged": "Довери се на новия сертификат",
   "launcher.fingerprint": "SHA-256 отпечатък",
+  "launcher.pairTitle": "Сдвояване с групата ти",
+  "launcher.pairHint": "На един от твоите BombVault сървъри отвори Настройки > Сдвояване и покажи думите. Приложението след това намира всеки сървър от групата и показва какво работи на него, дори извън дома.",
+  "launcher.scan": "Сканирай QR код",
+  "launcher.enterWords": "Въведи думите",
+  "launcher.paired": "Сдвоена",
+  "launcher.relayConnected": "Свързано през препредавателя",
+  "launcher.relayOffline": "Препредавателят е недостижим.",
+  "launcher.leaveConfirm": "Да напусна ли групата? Сървърите остават в списъка и се отварят по адреса си както преди.",
+  "launcher.viaGroup": "Адресът още не е известен",
+  "fleet.kindAndroid": "Приложение за Android",
+  "pairing.qrCaption": "Сканирай този код с приложението BombVault, за да сдвоиш телефон.",
 };
 
 export default bg;

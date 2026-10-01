@@ -3154,7 +3154,7 @@ const sk: Partial<Translations> = {
   "progress.count.files": "one={done} z {n} súboru|few={done} z {n} súborov|many={done} z {n} súboru|other={done} z {n} súborov",
   "progress.count.items": "{done} z {n}",
   "progress.remaining": "zostáva {time}",
-  "launcher.empty": "Zatiaľ žiadne servery. Pridajte jeden podľa adresy, alebo vyberte taký, ktorý tento telefón nájde v sieti.",
+  "launcher.empty": "Zatiaľ žiadne servery. Spárujte aplikáciu so svojou skupinou, alebo pridajte server podľa adresy.",
   "launcher.signIn": "Je potrebné prihlásenie",
   "launcher.checkCertificate": "Skontrolovať certifikát",
   "launcher.activityEmpty": "Hneď ako server odpovie, zobrazí sa tu, čo na ňom beží.",
@@ -3180,6 +3180,17 @@ const sk: Partial<Translations> = {
   "launcher.changedBody": "{host} zobrazuje iný certifikát, než ktorému ste dôverovali. To sa stane, keď je certifikát obnovený alebo nahradený, alebo keď sa medzi telefón a server niekto vloží. Dôverujte mu len vtedy, ak viete, prečo sa zmenil.",
   "launcher.trustChanged": "Dôverovať novému certifikátu",
   "launcher.fingerprint": "Odtlačok SHA-256",
+  "launcher.pairTitle": "Spárovať so svojou skupinou",
+  "launcher.pairHint": "Na jednom zo svojich serverov BombVault otvorte Nastavenia > Párovanie a zobrazte slová. Aplikácia potom nájde každý server skupiny a ukáže, čo na ňom beží, aj mimo domova.",
+  "launcher.scan": "Naskenovať QR kód",
+  "launcher.enterWords": "Zadať slová",
+  "launcher.paired": "Spárované",
+  "launcher.relayConnected": "Pripojené cez relay",
+  "launcher.relayOffline": "Relay nedostupný",
+  "launcher.leaveConfirm": "Opustiť skupinu? Servery zostanú v zozname a budú sa otvárať podľa adresy ako predtým.",
+  "launcher.viaGroup": "Adresa zatiaľ neznáma",
+  "fleet.kindAndroid": "Aplikácia pre Android",
+  "pairing.qrCaption": "Naskenujte tento kód aplikáciou BombVault a spárujte telefón.",
 };
 
 export default sk;

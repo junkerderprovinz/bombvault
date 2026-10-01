@@ -3143,7 +3143,7 @@ const tr: Partial<Translations> = {
   "progress.count.files": "{n} dosyanın {done} kadarı",
   "progress.count.items": "{n} içinden {done}",
   "progress.remaining": "{time} kaldı",
-  "launcher.empty": "Henüz sunucu yok. Birini adresine göre ekleyin veya bu telefonun ağda bulduğu bir sunucuyu seçin.",
+  "launcher.empty": "Henüz sunucu yok. Uygulamayı grubunuzla eşleştirin veya adresine göre bir sunucu ekleyin.",
   "launcher.signIn": "Oturum açma gerekiyor",
   "launcher.checkCertificate": "Sertifikayı kontrol et",
   "launcher.activityEmpty": "Bir sunucu yanıt verir vermez, burada üzerinde ne çalıştığı görünür.",
@@ -3169,6 +3169,17 @@ const tr: Partial<Translations> = {
   "launcher.changedBody": "{host}, güvendiğiniz sertifikadan farklı bir sertifika gösteriyor. Bu, sertifika yenilendiğinde veya değiştirildiğinde, ya da biri telefon ile sunucu arasına girdiğinde olur. Yalnızca neden değiştiğini biliyorsanız ona güvenin.",
   "launcher.trustChanged": "Yeni sertifikaya güven",
   "launcher.fingerprint": "SHA-256 parmak izi",
+  "launcher.pairTitle": "Grubunuzla eşleştirin",
+  "launcher.pairHint": "BombVault sunucularınızdan birinde Ayarlar > Eşleştirme bölümünü açın ve kelimeleri gösterin. Uygulama daha sonra grubun her sunucusunu bulur ve evden uzaktayken bile üzerlerinde ne çalıştığını gösterir.",
+  "launcher.scan": "QR kodu tara",
+  "launcher.enterWords": "Kelimeleri girin",
+  "launcher.paired": "Eşleştirildi",
+  "launcher.relayConnected": "Röle üzerinden bağlandı",
+  "launcher.relayOffline": "Röleye ulaşılamıyor",
+  "launcher.leaveConfirm": "Grup terk edilsin mi? Sunucular listede kalır ve eskisi gibi adresleriyle açılır.",
+  "launcher.viaGroup": "Adres henüz bilinmiyor",
+  "fleet.kindAndroid": "Android uygulaması",
+  "pairing.qrCaption": "Bir telefonu eşleştirmek için bu kodu BombVault uygulamasıyla tarayın.",
 };
 
 export default tr;

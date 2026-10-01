@@ -3143,7 +3143,7 @@ const fi: Partial<Translations> = {
   "progress.count.files": "one={done}/{n} tiedostosta|other={done}/{n} tiedostosta",
   "progress.count.items": "{done}/{n}",
   "progress.remaining": "{time} jäljellä",
-  "launcher.empty": "Ei vielä palvelimia. Lisää yksi sen osoitteella tai valitse sellainen, jonka tämä puhelin löytää verkosta.",
+  "launcher.empty": "Ei vielä palvelimia. Pariuta sovellus ryhmääsi tai lisää palvelin sen osoitteella.",
   "launcher.signIn": "Kirjautuminen tarvitaan",
   "launcher.checkCertificate": "Tarkista varmenne",
   "launcher.activityEmpty": "Heti kun palvelin vastaa, tässä näkyy mitä siinä on käynnissä.",
@@ -3169,6 +3169,17 @@ const fi: Partial<Translations> = {
   "launcher.changedBody": "{host} näyttää eri varmenteen kuin sen, johon aiemmin luotit. Näin käy, kun varmenne uusitaan tai vaihdetaan, tai kun joku asettuu puhelimen ja palvelimen väliin. Luota siihen vain, jos tiedät miksi se muuttui.",
   "launcher.trustChanged": "Luota uuteen varmenteeseen",
   "launcher.fingerprint": "SHA-256-sormenjälki",
+  "launcher.pairTitle": "Pariuta ryhmääsi",
+  "launcher.pairHint": "Avaa yhdellä BombVault-palvelimellasi Asetukset > Pariliitos ja näytä sanat. Sovellus löytää sitten ryhmän jokaisen palvelimen ja näyttää, mitä niillä on käynnissä, myös kotoa poissa ollessa.",
+  "launcher.scan": "Skannaa QR-koodi",
+  "launcher.enterWords": "Syötä sanat",
+  "launcher.paired": "Pariutettu",
+  "launcher.relayConnected": "Yhdistetty releen kautta",
+  "launcher.relayOffline": "Rele ei ole tavoitettavissa.",
+  "launcher.leaveConfirm": "Poistutaanko ryhmästä? Palvelimet säilyvät luettelossa ja avautuvat osoitteellaan kuten ennenkin.",
+  "launcher.viaGroup": "Osoite ei vielä tiedossa",
+  "fleet.kindAndroid": "Android-sovellus",
+  "pairing.qrCaption": "Skannaa tämä koodi BombVault-sovelluksella pariuttaaksesi puhelimen.",
 };
 
 export default fi;

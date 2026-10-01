@@ -3138,7 +3138,7 @@ const pl: Partial<Translations> = {
   "progress.count.files": "one={done} z {n} pliku|few={done} z {n} plików|many={done} z {n} plików|other={done} z {n} pliku",
   "progress.count.items": "{done} z {n}",
   "progress.remaining": "zostało {time}",
-  "launcher.empty": "Jeszcze nie ma serwerów. Dodaj jeden po adresie albo wybierz taki, który ten telefon znajdzie w sieci.",
+  "launcher.empty": "Jeszcze nie ma serwerów. Sparuj aplikację ze swoją grupą albo dodaj serwer po adresie.",
   "launcher.signIn": "Wymagane logowanie",
   "launcher.checkCertificate": "Sprawdź certyfikat",
   "launcher.activityEmpty": "Gdy tylko serwer odpowie, zobaczysz tu, co na nim działa.",
@@ -3164,6 +3164,17 @@ const pl: Partial<Translations> = {
   "launcher.changedBody": "{host} pokazuje certyfikat różny od poprzednio zaufanego. Dzieje się tak, gdy certyfikat zostanie odnowiony albo zastąpiony, albo gdy ktoś wejdzie między telefon a serwer. Zaufaj mu tylko, jeśli wiesz, dlaczego się zmienił.",
   "launcher.trustChanged": "Zaufaj nowemu certyfikatowi",
   "launcher.fingerprint": "Odcisk SHA-256",
+  "launcher.pairTitle": "Sparuj ze swoją grupą",
+  "launcher.pairHint": "Na jednym ze swoich serwerów BombVault otwórz Ustawienia > Parowanie i pokaż słowa. Aplikacja znajdzie wtedy każdy serwer grupy i pokaże, co na nich działa, także poza domem.",
+  "launcher.scan": "Zeskanuj kod QR",
+  "launcher.enterWords": "Wpisz słowa",
+  "launcher.paired": "Sparowano",
+  "launcher.relayConnected": "Połączono przez relay",
+  "launcher.relayOffline": "Relay niedostępny",
+  "launcher.leaveConfirm": "Opuścić grupę? Serwery zostaną na liście i będą się otwierać po adresie jak dotychczas.",
+  "launcher.viaGroup": "Adres jeszcze nieznany",
+  "fleet.kindAndroid": "Aplikacja na Androida",
+  "pairing.qrCaption": "Zeskanuj ten kod aplikacją BombVault, aby sparować telefon.",
 };
 
 export default pl;

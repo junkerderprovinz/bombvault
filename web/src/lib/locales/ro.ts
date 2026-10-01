@@ -3146,7 +3146,7 @@ const ro: Partial<Translations> = {
   "progress.count.files": "one={done} din {n} fișier|few={done} din {n} fișiere|other={done} din {n} de fișiere",
   "progress.count.items": "{done} din {n}",
   "progress.remaining": "mai sunt {time}",
-  "launcher.empty": "Încă niciun server. Adaugă unul după adresă sau alege unul pe care acest telefon îl găsește în rețea.",
+  "launcher.empty": "Încă niciun server. Împerechează aplicația cu grupul tău sau adaugă un server după adresă.",
   "launcher.signIn": "Este nevoie de autentificare",
   "launcher.checkCertificate": "Verifică certificatul",
   "launcher.activityEmpty": "De îndată ce un server răspunde, aici apare ce rulează pe el.",
@@ -3172,6 +3172,17 @@ const ro: Partial<Translations> = {
   "launcher.changedBody": "{host} arată un certificat diferit de cel în care ai avut încredere. Asta se întâmplă când certificatul a fost reînnoit sau înlocuit, sau când cineva se interpune între acest telefon și server. Ai încredere în el doar dacă știi de ce s-a schimbat.",
   "launcher.trustChanged": "Ai încredere în noul certificat",
   "launcher.fingerprint": "Amprentă SHA-256",
+  "launcher.pairTitle": "Împerechează-te cu grupul tău",
+  "launcher.pairHint": "Pe unul dintre serverele tale BombVault, deschide Setări > Împerechere și arată cuvintele. Aplicația găsește apoi fiecare server din grup și arată ce rulează pe el, chiar și departe de casă.",
+  "launcher.scan": "Scanează cod QR",
+  "launcher.enterWords": "Introdu cuvintele",
+  "launcher.paired": "Împerecheat",
+  "launcher.relayConnected": "Conectat prin relay",
+  "launcher.relayOffline": "Relay nu poate fi contactat",
+  "launcher.leaveConfirm": "Părăsești grupul? Serverele rămân în listă și se deschid după adresa lor ca înainte.",
+  "launcher.viaGroup": "Adresă încă necunoscută",
+  "fleet.kindAndroid": "Aplicație Android",
+  "pairing.qrCaption": "Scanează acest cod cu aplicația BombVault pentru a împerechea un telefon.",
 };
 
 export default ro;
