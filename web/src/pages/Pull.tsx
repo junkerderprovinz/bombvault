@@ -25,7 +25,7 @@ import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { MemberField } from "./instances/MemberField";
 import { SelectField } from "../components/SelectField";
-import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
@@ -331,7 +331,7 @@ function PullDialog({
                 // Unlike on an off-site target, "" is not the shared default: a
                 // pull never falls back to this box's credentials.
                 { value: "", label: t("pull.credsNone") },
-                ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
               ]}
               className={inputCls}
             />

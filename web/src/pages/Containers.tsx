@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
-import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
+import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, getStackDir, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
+import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, PlacementView, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
 import { PageTitle } from "../components/PageTitle";
@@ -10,7 +10,9 @@ import { MobileListCard } from "../components/mobile/MobileListCard";
 import { MobileDetailShell } from "../components/mobile/MobileDetailShell";
 import { ListToolbar } from "../components/mobile/ListToolbar";
 import { useLoadMore } from "../lib/useLoadMore";
-import { RepoPicker } from "../components/RepoPicker";
+import { PlacementRow } from "../components/placement/PlacementRow";
+import { subscribePlacement } from "../lib/placementEvents";
+import { subscribeRepos } from "../lib/useNamedRepos";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
@@ -35,7 +37,7 @@ import { IdleWaitLine, IdleWaitRow } from "../components/IdleWaitRow";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
@@ -58,6 +60,9 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useReorder } from "../lib/dragLift";
 import { useConfirm } from "../lib/useConfirm";
+import { offsiteTargetLabel, useOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useHostLabel } from "../lib/useHostLabel";
+import { placementErrorText } from "../lib/placementCodes";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
@@ -689,7 +694,6 @@ export function FoldersEditor({
   t,
   lastBackup = null,
   treeViewportClassName,
-  repo = "",
   anomaly,
   anomalyEnabled = false,
 }: {
@@ -698,14 +702,9 @@ export function FoldersEditor({
   open: boolean;
   t: T;
   /** What anomaly detection knows about this container, for its own
-   *  sensitivity and notification setting beside the repository. */
+   *  sensitivity and notification setting. */
   anomaly?: AnomalyItem;
   anomalyEnabled?: boolean;
-  /** This container's own repository (#204), "" for the Containers domain
-   *  repository. It lives in this section because "where do the backups go" is
-   *  the same question as "which folders go into them", and the two answers
-   *  belong beside each other. */
-  repo?: string;
   /** Unix seconds of the container's last successful backup, null when none
    *  exists (Container.lastBackup verbatim). The D-02 narrowing gate: a
    *  narrowing selection only warns when there is at least one prior
@@ -733,13 +732,6 @@ export function FoldersEditor({
   // The folder picker works in paths relative to the host mount (like File Sets);
   // browseValue stages one pick before it is translated to a host path and added.
   const [browseValue, setBrowseValue] = useState("");
-  // The picker's own optimistic state (#204). Seeded from the prop and put back
-  // on a failed save, so the control never shows a destination the server did
-  // not accept - the one thing a repository field must not do.
-  const [repoChoice, setRepoChoice] = useState(repo);
-  useEffect(() => {
-    setRepoChoice(repo);
-  }, [repo]);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
   const { push } = useToast();
@@ -1408,30 +1400,6 @@ export function FoldersEditor({
       {!loading && mounts.length === 0 && custom.length === 0 && (
         <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
       )}
-      {/* Where this container's backups go (#204). Above the tree, because a
-          reader who has not decided the destination cannot judge the selection
-          under it. Locked once the container has backups: they stay in the
-          repository they were written to and nothing re-homes them. */}
-      {!loading && (
-        <RepoPicker
-          value={repoChoice}
-          onChange={(next) => {
-            const before = repoChoice;
-            setRepoChoice(next);
-            void setContainerRepo(name, next).then((r) => {
-              if (r.ok) {
-                push(t("folders.saved"), "success");
-                return;
-              }
-              // Same discipline as every other save on this panel: the server's
-              // own words, and the control goes back to what is actually stored.
-              push(r.error ?? t("settings.error"), "fail");
-              setRepoChoice(before);
-            });
-          }}
-          locked={lastBackup !== null}
-        />
-      )}
       {!loading && <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />}
 
       {/* D-02: the mount rows and custom rows ARE the tree's level-1 items —
@@ -1717,6 +1685,7 @@ function MobileContainerDetail({
   nonce,
   onBack,
   onDeleted,
+  onPlacement,
   installedContainers,
   linkCandidates,
   anomaly,
@@ -1732,6 +1701,8 @@ function MobileContainerDetail({
   /** A remove or delete-backups from this detail took the entry off the
    *  list: the parent closes the detail and refreshes. */
   onDeleted: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   /** The full installed set, straight through to StopContainersEditor's
    *  picker: the same array the desktop row gets. */
   installedContainers: Container[];
@@ -1895,6 +1866,14 @@ function MobileContainerDetail({
           <IdleWaitLine name={container.name} />
         </div>
       )}
+      {!self && (
+        <PlacementRow
+          item={{ domain: "containers", key: container.name }}
+          name={container.name}
+          view={container.placement}
+          onView={onPlacement}
+        />
+      )}
       {/* The same editor the desktop row expands: one tree, one queue, zero
           forks. Keyed by container identity: switching targets can
           never inherit the previous container's mirror, browse cache or save
@@ -1908,7 +1887,6 @@ function MobileContainerDetail({
           open
           t={t}
           lastBackup={container.lastBackup}
-          repo={container.repo ?? ""}
           anomaly={anomaly}
           anomalyEnabled={anomalyEnabled}
           treeViewportClassName="h-auto"
@@ -2784,6 +2762,7 @@ export function ContainerRow({
   installedContainers,
   t,
   onDeleted,
+  onPlacement,
   selected,
   onToggleSelect,
   linkCandidates = [],
@@ -2805,6 +2784,8 @@ export function ContainerRow({
   installedContainers: Container[];
   t: T;
   onDeleted: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   selected?: boolean;
   onToggleSelect?: () => void;
   /** The not-installed entries this card can take over by hand. */
@@ -3004,7 +2985,15 @@ export function ContainerRow({
       </div>
 
       {!container.self && (
-        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
+        <>
+          <PlacementRow
+            item={{ domain: "containers", key: container.name }}
+            name={container.name}
+            view={container.placement}
+            onView={onPlacement}
+          />
+          <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
+        </>
       )}
 
       {/* Disclosure sections through the shared chips block (the phone
@@ -3035,7 +3024,6 @@ export function ContainerRow({
             open={openSections.has("folders")}
             t={t}
             lastBackup={container.lastBackup}
-            repo={container.repo ?? ""}
             anomaly={anomaly}
             anomalyEnabled={anomalyEnabled}
           />
@@ -3236,6 +3224,16 @@ export function StackCard({
   const [busy, setBusy] = useState(false);
   const { lang } = useT();
   const { push } = useToast();
+  // Read through a ref rather than the hook value directly: run() reads this
+  // after its own await (the restore confirm, then getStackDir), by which
+  // point a slow-to-load target list may have caught up. Closing over the
+  // hook value itself would freeze it at the render that owned the click.
+  const host = useHostLabel();
+  const hostRef = useRef(host);
+  hostRef.current = host;
+  const targets = useOffsiteTargets("containers");
+  const targetsRef = useRef(targets);
+  targetsRef.current = targets;
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Restore button when the restore fails to even START (see run()'s own
   // comment for why a started-then-running restore stays a durable inline
@@ -3296,7 +3294,26 @@ export function StackCard({
     setFinished(false);
     sawActive.current = false;
     try {
-      const res = await restoreStack(group.project, startInOrder, true, source);
+      let stackDirSource: string | undefined;
+      if (isOffsiteSource(source)) {
+        const dir = await getStackDir(group.project, source);
+        if (!dir.ok) {
+          push(placementErrorText(t, lang, dir, "settings.error"), "fail");
+          setShake((n) => n + 1);
+          return;
+        }
+        const ts = targetsRef.current;
+        const picked = source === "offsite" ? ts[0] : ts.find((x) => `offsite:${x.id}` === source);
+        const placeName = picked ? offsiteTargetLabel(picked) : t("source.offsite");
+        const ask = t("timeline.stackDirMissing")
+          .replace("{place}", () => placeName)
+          .replace("{home}", () => hostRef.current);
+        if (!dir.found) {
+          if (!(await confirm(ask))) return;
+          stackDirSource = "local";
+        }
+      }
+      const res = await restoreStack(group.project, startInOrder, true, source, stackDirSource);
       if (res.ok) {
         setStarted(true);
         onRestored(); // refresh the main list so run-state/orphan rows update
@@ -3903,9 +3920,15 @@ export function Containers() {
   // untouched: isDesktop is always true there, so this is permanently false.
   const listChromeHidden = !isDesktop && openContainer !== null;
 
+  // Only the newest read may land; an older answer arriving late would undo the
+  // placement a card wrote while it was in flight.
+  const read = useRef(0);
+
   function loadContainers() {
+    const n = ++read.current;
     return listContainers()
       .then((res) => {
+        if (n !== read.current) return;
         if (res.ok) {
           setContainers(res.containers ?? []);
           // Clear on success, which nothing in this file did. A red banner set by
@@ -3917,12 +3940,25 @@ export function Containers() {
           setError(null);
         } else setError(t("containers.loadFailed"));
       })
-      .catch(() => setError(t("containers.loadFailed")));
+      .catch(() => {
+        if (n === read.current) setError(t("containers.loadFailed"));
+      });
   }
 
   useEffect(() => {
     void loadContainers().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
+
+  // loadContainers is stable for this page's lifetime; as a dependency it would
+  // subscribe again on every render.
+  useEffect(() => {
+    const offs = [subscribeRepos(() => void loadContainers()), subscribePlacement(() => void loadContainers())];
+    return () => offs.forEach((off) => off());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function placeContainer(name: string, next: PlacementView) {
+    setContainers((prev) => prev.map((c) => (c.name === name ? { ...c, placement: next } : c)));
+  }
 
   // Reload when the last operation finishes.
   // The fetch above ran once, on mount, and nothing refreshed it afterwards. So
@@ -4321,6 +4357,7 @@ export function Containers() {
             closeDetail();
             void loadContainers();
           }}
+          onPlacement={(next) => placeContainer(openContainer.name, next)}
           installedContainers={installedContainers}
           linkCandidates={notInstalledNames}
           anomaly={anomalies.find("container", openContainer.name)}
@@ -4519,6 +4556,7 @@ export function Containers() {
               installedContainers={installedContainers}
               t={t}
               onDeleted={() => void loadContainers()}
+              onPlacement={(next) => placeContainer(c.name, next)}
               selected={selected.has(c.name)}
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
               linkCandidates={notInstalledNames}
@@ -4665,6 +4703,7 @@ export function Containers() {
               installedContainers={installedContainers}
               t={t}
               onDeleted={() => void loadContainers()}
+              onPlacement={(next) => placeContainer(c.name, next)}
               index={live.length + i}
               anomaly={anomalies.find("container", c.name)}
               anomalyEnabled={anomalyEnabled}

@@ -379,6 +379,9 @@ type dbDumpAdapter struct {
 	containerID string
 	progressKey string
 	startedAt   int64
+	// extraTags go on the dump's snapshot after its own, as on the volume
+	// backup it belongs to.
+	extraTags []string
 	// guard arms the dump-scoped stall guard; nil means armStallGuard. A field
 	// so a test can trip it in milliseconds, where the real one counts hours.
 	guard func(ctx context.Context, cancel context.CancelCauseFunc, label string) context.Context
@@ -388,7 +391,7 @@ var _ backup.DBDumper = (*dbDumpAdapter)(nil)
 
 func (a *dbDumpAdapter) Dump(ctx context.Context, req backup.DBDumpRequest) (backup.DBDumpResult, error) {
 	engine, _ := dbdump.ParseEngine(req.Plan.Engine)
-	tags := append(req.Tags, a.probeTags(ctx, engine)...)
+	tags := withTags(append(req.Tags, a.probeTags(ctx, engine)...), a.extraTags)
 
 	dumpCtx, cancel := context.WithTimeout(ctx, req.Plan.MaxRuntime+dbDumpContextGrace)
 	defer cancel()
@@ -670,7 +673,7 @@ func dbDumpReasonText(reasonID, detail string) string {
 // it reclaims the space of both in one go. A renamed container's dumps age
 // with it, by the same alias rule that decides which volume snapshots it owns.
 func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name, targetID string) {
-	p := s.retentionPolicy(settings)
+	p := s.retentionPolicyForRef(settings, s.refFor(settings, "containers", repo))
 	if !p.Any() || s.primaryIsImmutable("containers", repo) {
 		return
 	}

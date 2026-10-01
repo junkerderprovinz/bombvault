@@ -1,6 +1,6 @@
 # Cấu hình
 
-Trang này bao quát các biến môi trường của container, các điểm gắn kết mà template cung cấp, sao lưu VM qua SSH, và thiết lập off-site. Các **đường dẫn kho** sao lưu được cấu hình bên trong ứng dụng (Settings, Storage, Backup paths), không phải qua biến môi trường.
+Trang này bao quát các biến môi trường của container, các điểm gắn kết mà template cung cấp, sao lưu VM qua SSH, và thiết lập off-site. Các **đường dẫn kho** sao lưu được cấu hình bên trong ứng dụng (Cài đặt, Lưu trữ, Đường dẫn sao lưu), không phải qua biến môi trường.
 
 ## Biến môi trường
 
@@ -31,14 +31,14 @@ Gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) như
 
 Sao lưu tập dữ liệu ZFS cũng cần chế độ này: máy chủ chỉ gắn ảnh chụp của một tập dữ liệu sau khi container đã khởi động. Xem [Tập dữ liệu ZFS](zfs-datasets.md).
 
-Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Settings, Storage, Backup paths**. Mỗi trường đường dẫn còn có một công tắc **Cục bộ / Từ xa** ngay trong dòng: một đường dẫn có thể là một remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) thay vì một thư mục cục bộ, sao lưu thẳng tới đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
+Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Cài đặt, Lưu trữ, Đường dẫn sao lưu**. Mỗi trường đường dẫn còn có một công tắc **Cục bộ / Từ xa** ngay trong dòng: một đường dẫn có thể là một remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) thay vì một thư mục cục bộ, sao lưu thẳng tới đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kiểm tra tích hợp máy chủ"
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu.
 
 ## Nhận diện nguồn sao lưu {#backup-source-detection}
 
-Với mỗi container, BombVault tự chọn những bind mount và volume có tên nào sẽ được sao lưu. Một đường dẫn được nhận ngay khi một trong các điểm sau đúng (bạn luôn có thể ghi đè kết quả cho từng container trong mục **Đường dẫn sao lưu** của nó):
+Với mỗi container, BombVault tự chọn những bind mount và volume có tên nào sẽ được sao lưu. Một đường dẫn được nhận ngay khi một trong các điểm sau đúng (bạn luôn có thể ghi đè kết quả cho từng container trong mục **Thư mục sao lưu** của nó):
 
 - **Khớp một đoạn gốc dữ liệu:** nguồn trên máy chủ của bind chứa một trong các đoạn của `DATA_ROOT_SEGMENTS` như một thành phần đường dẫn trọn vẹn (mặc định chỉ `appdata`).
 - **Volume Docker có tên** luôn được đưa vào, vì chúng không có bản tương đương dùng một lần nên chẳng có gì để lọc bỏ, **nhưng chỉ khi đường dẫn lưu trữ thật của volume trên máy chủ tự nó tới được qua điểm gắn Host Data**, đúng như mọi đường dẫn máy chủ khác mà BombVault sao lưu. Trình điều khiển volume cục bộ mặc định đặt volume dưới gốc dữ liệu của chính daemon, tức `/var/lib/docker/volumes/<tên>/_data` nếu bạn chưa đổi (kiểm tra bằng `docker info -f '{{.DockerRootDir}}'`). Vị trí đó KHÔNG nằm trong điểm gắn Host Data hẹp, chỉ một thư mục, mà tệp `docker-compose.yml` chung dùng theo mặc định. Volume không tới được sẽ bị bỏ qua lặng lẽ, đó không phải lỗi. Để thật sự sao lưu volume có tên trên một máy chủ thông thường, hãy trỏ Host Data (và `HOST_SOURCE_ROOT`) tới một thư mục cha chung bao trùm cả gốc dữ liệu của Docker: đánh đổi được nêu trong ghi chú Host Data của tệp compose (Unraid né chuyện này bằng cách gắn toàn bộ `/mnt`, quy ước cấp cao nhất của riêng nó, cũng vì cùng lý do).
@@ -59,7 +59,7 @@ Với mỗi container, BombVault tự chọn những bind mount và volume có t
 - Reverse proxy đặt trước BombVault phải chuyển tiếp header `Authorization` hoặc `X-API-Key` tới `/mcp` và không được đệm câu trả lời, nếu không trợ lý sẽ không kết nối được. Xem [Máy chủ MCP](mcp.md#tls).
 - Với `HTTP_ONLY=true` cookie phiên mất cờ `Secure` của nó (bắt buộc phải vậy, để hoạt động qua HTTP thuần), nên chỉ bật mật khẩu phía sau một proxy kết thúc TLS nếu tính bảo mật là quan trọng.
 - Kết nối SSH sao lưu VM tin cậy host key ở lần kết nối đầu tiên (TOFU) và ghim nó sau đó. Xác minh khóa của máy chủ ngoài luồng nếu đường dẫn container-tới-máy-chủ của bạn không tin cậy.
-- Các bản sao lưu được mã hóa bởi restic khi bật mã hóa (Settings; mặc định bật), với khóa dẫn xuất từ `APP_KEY`.
+- Các bản sao lưu được mã hóa bởi restic khi bật mã hóa (Cài đặt; mặc định bật), với khóa dẫn xuất từ `APP_KEY`.
 
 ## Máy chủ MCP {#mcp-server}
 
@@ -71,9 +71,9 @@ BombVault sao lưu các KVM/libvirt VM **mà không gắn kết bất kỳ đư�
 
 Thiết lập nhanh:
 
-1. **Settings, Integrations, Host SSH:** sao chép khóa công khai được hiển thị.
+1. **Cài đặt, Tích hợp, SSH máy chủ:** sao chép khóa công khai được hiển thị.
 2. Thêm nó vào `/root/.ssh/authorized_keys` của Unraid (cũng được lưu vào flash để nó tồn tại qua các lần khởi động lại).
-3. Nhấp **Test connection**.
+3. Nhấp **Kiểm tra kết nối**.
 
 Template thêm `--add-host=host.docker.internal:host-gateway` để container có thể tiếp cận máy chủ. Đặt `LIBVIRT_HOST` thành IP LAN Unraid của bạn nếu tên đó không phân giải được (ví dụ khi container chạy trên một mạng `br0.x` tùy chỉnh). Nếu bạn đã đổi cổng SSH của Unraid, đặt `LIBVIRT_SSH_PORT` cho khớp. **Snapshot trực tiếp** ngoài ra cần qemu guest agent trong VM và đĩa nằm trên `/mnt/cache` (không phải `/mnt/user`).
 
@@ -82,18 +82,18 @@ Template thêm `--add-host=host.docker.internal:host-gateway` để container c�
 
 ## Thiết lập off-site
 
-Thiết lập một bản sao off-site trên trang **Settings, Off-site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
+Thiết lập một bản sao off-site trên trang **Cài đặt, Ngoài site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
 
-- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một Backup Path tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
-- **Thông tin đăng nhập đám mây dùng chung** được lưu mã hóa dưới Settings, Cloud access, Shared cloud credentials.
-- **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Settings, Integrations, Host SSH** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
-- **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa, bổ sung cho một kho chính (thường là cục bộ). Mỗi miền có lịch trình off-site riêng, cùng với một nút **Replicate now**.
-- **Nhiều đích off-site cho mỗi miền:** mỗi miền có thể nhân bản tới nhiều đích off-site cùng lúc. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng; tất cả chúng nhân bản theo lịch trình off-site của miền đó. Một thiết lập off-site đơn hiện có được chuyển sang làm đích đầu tiên.
-- **Lưu giữ theo từng nguồn:** cả chính sách cục bộ và off-site đều nằm trên Settings, Retention (để chính sách off-site bằng 0 toàn bộ để không bao giờ tự động dọn bớt các snapshot off-site).
-- **Giới hạn băng thông:** giới hạn tốc độ tải lên/tải xuống của restic dưới Settings, Off-site.
+- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một đường dẫn sao lưu tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
+- **Thông tin đăng nhập đám mây dùng chung** được lưu mã hóa dưới Cài đặt, Truy cập đám mây, Thông tin đăng nhập đám mây dùng chung.
+- **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Cài đặt, Tích hợp, SSH máy chủ** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
+- **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa, bổ sung cho một kho chính (thường là cục bộ). Mỗi miền có lịch trình off-site riêng, cùng với một nút **Sao chép ngay**.
+- **Nhiều đích off-site cho mỗi miền:** mỗi miền có thể nhân bản tới nhiều đích off-site cùng lúc. Thêm các đích bổ sung trên Cài đặt, Ngoài site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng; tất cả chúng nhân bản theo lịch trình off-site của miền đó. Một thiết lập off-site đơn hiện có được chuyển sang làm đích đầu tiên.
+- **Lưu giữ theo từng nguồn:** cả chính sách cục bộ và off-site đều nằm trên Cài đặt, Lưu giữ (để chính sách off-site bằng 0 toàn bộ để không bao giờ tự động dọn bớt các snapshot off-site).
+- **Giới hạn băng thông:** giới hạn tốc độ tải lên/tải xuống của restic dưới Cài đặt, Ngoài site.
 - **Ưu tiên phát trực tuyến:** trong Cài đặt, Ngoài site, chọn máy chủ media (Plex, Jellyfin và Emby được chọn sẵn theo tên image), tốc độ gửi mà từ đó một máy được coi là đang phát, giới hạn tải lên khi đang phát và bao lâu sau một luồng thì giới hạn thường quay lại.
 - **Lớp lưu trữ nguội và lưu trữ dài hạn (S3):** với một kho off-site S3 gốc, chọn một tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Các remote rclone đặt lớp của chúng trong cấu hình rclone.
-- **Kho chính từ xa thay vì cục bộ:** bản thân Backup Path của một miền có thể là một trong các backend ở trên, không có bản sao cục bộ và không có bước nhân bản; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories) về công tắc Cục bộ/Từ xa ngay trong dòng và các cài đặt an toàn về băng thông, append-only và ngân sách tăng trưởng của nó.
+- **Kho chính từ xa thay vì cục bộ:** bản thân đường dẫn sao lưu của một miền có thể là một trong các backend ở trên, không có bản sao cục bộ và không có bước nhân bản; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories) về công tắc Cục bộ/Từ xa ngay trong dòng và các cài đặt an toàn về băng thông, append-only và ngân sách tăng trưởng của nó.
 
 ## Bất thường {#anomalies}
 
@@ -106,11 +106,11 @@ Phát hiện bất thường được thiết lập trong thẻ **Bất thườn
 | **Gửi thông báo cho** | Chỉ các phát hiện nghiêm trọng | Mức nghiêm trọng thấp nhất gửi tin nhắn qua các kênh đã thiết lập tại Thông báo. Các lần sao lưu và dump thất bại lặp lại và các kiểm tra khôi phục theo lịch thất bại vốn đã gửi tin nhắn riêng và không bị gửi hai lần. |
 | **Giữ bản sao lưu cũ khi nguồn co lại mạnh hoặc bị ghi lại** | Bật | Chừng nào một mục còn một phát hiện đang mở về nguồn gần như trống, co lại mạnh hoặc phần lớn dữ liệu được lưu lại, việc lưu giữ và dọn dẹp sẽ không động đến các bản sao lưu cũ của mục đó. Xác nhận phát hiện hoặc đánh dấu là đã lường trước để giải phóng chúng. |
 
-Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riêng. Đặt chúng ở thẻ **Mục** của trang **Bất thường**, hoặc trong bảng của chính mục đó: phần thư mục của một container và thiết lập của một VM (cả hai ở chế độ nâng cao), trình sửa thư mục của một bộ thư mục, và các trang **Flash** và **Tự sao lưu**. Với một mục ZFS, chúng nằm trong trình chỉnh sửa của mục trên trang **ZFS** và áp dụng cho mọi tập dữ liệu trong cây của mục.
+Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riêng. Đặt chúng ở trang **Bất thường**, nơi một mục có phát hiện đang mở có chúng dưới **Giám sát** trên thẻ của mục, còn mọi mục khác mở chúng từ thẻ **Không có gì đang mở**, hoặc trong bảng của chính mục đó: phần thư mục của một container và thiết lập của một VM (cả hai ở chế độ nâng cao), trình sửa thư mục của một bộ thư mục, và các trang **Flash** và **Tự sao lưu**. Với một mục ZFS, chúng nằm trong trình chỉnh sửa của mục trên trang **ZFS** và áp dụng cho mọi tập dữ liệu trong cây của mục.
 
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 
-Thẻ **Xuất và nhập cài đặt** trên trang Settings, System ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
+Thẻ **Xuất / nhập cài đặt** trên trang Cài đặt, Hệ thống ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
 
 !!! warning "Bản xuất có thể chứa thông tin đăng nhập"
     Bạn chọn có bao gồm thông tin đăng nhập off-site, thông báo và broker MQTT trong tệp hay không. Khi có kèm thông tin đăng nhập, bản xuất nhạy cảm như bộ khôi phục của bạn, nên hãy cất giữ nó ở nơi an toàn. Không có chúng, tệp chỉ chứa các cài đặt không bí mật.

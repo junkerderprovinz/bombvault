@@ -31,14 +31,14 @@ Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/
 
 Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbioru dopiero po starcie kontenera. Zobacz [Zbiory danych ZFS](zfs-datasets.md).
 
-Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Pamięć, Ścieżki kopii**. Każde pole ścieżki ma też wbudowany przełącznik **Lokalne / Zdalne**: ścieżka może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
+Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Pamięć, Ścieżki kopii**. Każde pole ścieżki ma też wbudowany przełącznik **Lokalne / Zdalne**: ścieżka może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Kontrola integracji z hostem"
+!!! note "Sprawdzenie integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.
 
 ## Wykrywanie źródeł kopii zapasowej {#backup-source-detection}
 
-Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny nazwane trafiają do kopii. Ścieżka zostaje przyjęta, gdy zachodzi którykolwiek z poniższych warunków (wynik zawsze można nadpisać dla danego kontenera w jego **Ścieżkach kopii**):
+Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny nazwane trafiają do kopii. Ścieżka zostaje przyjęta, gdy zachodzi którykolwiek z poniższych warunków (wynik zawsze można nadpisać dla danego kontenera w jego sekcji **Foldery do kopii**):
 
 - **Trafienie na segment katalogu danych:** źródło bindu na hoście zawiera jeden z segmentów `DATA_ROOT_SEGMENTS` jako pełny człon ścieżki (domyślnie tylko `appdata`).
 - **Nazwane wolumeny Dockera** są dołączane zawsze, bo nie mają jednorazowego odpowiednika, więc nie ma czego filtrować, **ale tylko wtedy, gdy rzeczywista ścieżka wolumenu na hoście jest osiągalna przez montowanie Host Data**, dokładnie tak jak każda inna ścieżka hosta, którą BombVault archiwizuje. Domyślny sterownik wolumenów lokalnych umieszcza wolumen pod katalogiem danych samego demona, czyli `/var/lib/docker/volumes/<nazwa>/_data`, o ile nie zostało to zmienione (sprawdź poleceniem `docker info -f '{{.DockerRootDir}}'`). To miejsce NIE jest objęte wąskim, jednokatalogowym montowaniem Host Data, którego domyślnie używa ogólny `docker-compose.yml`. Nieosiągalny wolumen jest po cichu pomijany, to nie jest błąd. Aby naprawdę archiwizować nazwane wolumeny na zwykłym hoście, skieruj Host Data (oraz `HOST_SOURCE_ROOT`) na wspólny katalog nadrzędny obejmujący także katalog danych Dockera: kompromis opisuje komentarz Host Data w pliku compose (Unraid omija to, montując z tego samego powodu całe `/mnt`, własną uniwersalną konwencję najwyższego poziomu).
@@ -84,7 +84,7 @@ Szablon dodaje `--add-host=host.docker.internal:host-gateway`, aby kontener móg
 
 Skonfiguruj replikę poza siedzibą na stronie **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
 
-- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
 - **Współdzielone dane logowania do chmury** są przechowywane zaszyfrowane w Ustawienia, Dostęp do chmury, Współdzielone dane logowania do chmury.
 - **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
 - **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort, jako uzupełnienie (zwykle lokalnego) repozytorium podstawowego. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.
@@ -106,11 +106,11 @@ Wykrywanie anomalii ustawiasz na karcie **Anomalie** w **Ustawienia, Integralno�
 | **Wysyłaj powiadomienie dla** | Tylko krytyczne znaleziska | Najniższa waga, która wysyła wiadomość przez kanały skonfigurowane w Powiadomienia. Powtarzające się nieudane kopie i zrzuty oraz nieudane zaplanowane kontrole przywracania wysyłają już własną wiadomość i nie są wysyłane podwójnie. |
 | **Zachowuj stare kopie, gdy źródło mocno się kurczy lub zostaje nadpisane** | Włączone | Dopóki element ma otwarte wykrycie prawie pustego źródła, silnego skurczenia lub ponownego zapisania większości danych, retencja i czyszczenie nie ruszają jego starych kopii. Potwierdź wykrycie lub oznacz je jako oczekiwane, aby je zwolnić. |
 
-Każdy element może mieć własną czułość i własne minimum powiadomień. Ustawisz je na karcie **Elementy** strony **Anomalie** albo w panelu samego elementu: w sekcji folderów kontenera i w ustawieniach maszyny wirtualnej (obie w trybie zaawansowanym), w edytorze folderów zestawu folderów oraz na stronach **Flash** i **Autokopia**. W przypadku elementu ZFS są w jego edytorze na stronie **ZFS** i obowiązują każdy zbiór danych jego drzewa.
+Każdy element może mieć własną czułość i własne minimum powiadomień. Ustawisz je na stronie **Anomalie**, gdzie element z otwartymi ustaleniami ma je pod **Monitorowanie** na swojej karcie, a każdy inny element otwiera je z karty **Nic otwartego**, albo w panelu samego elementu: w sekcji folderów kontenera i w ustawieniach maszyny wirtualnej (obie w trybie zaawansowanym), w edytorze folderów zestawu folderów oraz na stronach **Flash** i **Autokopia**. W przypadku elementu ZFS są w jego edytorze na stronie **ZFS** i obowiązują każdy zbiór danych jego drzewa.
 
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
-Karta **Eksport i import ustawień** na stronie Ustawienia, System zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
+Karta **Eksport / import ustawień** na stronie Ustawienia, System zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
 
 !!! warning "Eksport może zawierać poświadczenia"
     Sam decydujesz, czy dołączyć do pliku poświadczenia poza siedzibą, powiadomień i brokera MQTT. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.

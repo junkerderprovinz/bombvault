@@ -36,7 +36,7 @@ func TestVMBlockBackupKeepsSwitchAndLastRunApart(t *testing.T) {
 	if all[tg.ID] != want {
 		t.Fatalf("row = %+v, want %+v", all[tg.ID], want)
 	}
-	if err := r.DeleteVMTarget("win"); err != nil {
+	if err := r.DeleteVMTarget("win", nil); err != nil {
 		t.Fatal(err)
 	}
 	if b, _ := r.GetVMBlockBackup(tg.ID); b.Enabled {

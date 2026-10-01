@@ -125,7 +125,7 @@ func (f *containerLinks) afterConfigLoss(t *testing.T) (*api.Service, *store.Rep
 	st := newMemStore(t)
 	useContainerRepo(t, st)
 	svc := api.NewService(f.cfg, st, &fakeServiceDocker{}, fakeVirsh{}, f.eng)
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	return svc, st
@@ -543,6 +543,39 @@ func TestTakeOverContainerRefusesWhileTheLeftNamesLinkRecordsCannotBeRemoved(t *
 	}
 }
 
+func TestATakeoverRefusedOverACopyRuleKeepsTheContainersLinkRecords(t *testing.T) {
+	f := newContainerLinks(t)
+	f.backUp(t, "radarr-movies", "pre1", linkBase.Add(-30*24*time.Hour))
+	link := f.takeOver(t, "radarr-movies", "radarr")
+	f.backUp(t, "radarr", "post1", linkBase.Add(time.Hour))
+	if err := f.st.SetCopyRule("containers", "container:radarr-hd", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	f.live(t, "radarr-hd")
+
+	if err := f.svc.TakeOverContainer(context.Background(), "radarr", "radarr-hd"); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("TakeOverContainer = %v, want ErrCopyRuleTaken", err)
+	}
+	_, st := f.afterConfigLoss(t)
+	wantContainerAlias(t, st, "radarr-movies", "radarr", link.LinkedAt)
+}
+
+func TestAnUnlinkRefusedOverACopyRuleKeepsTheContainersLinkRecord(t *testing.T) {
+	f := newContainerLinks(t)
+	f.backUp(t, "radarr-movies", "pre1", linkBase.Add(-30*24*time.Hour))
+	link := f.takeOver(t, "radarr-movies", "radarr")
+	f.backUp(t, "radarr", "post1", linkBase.Add(time.Hour))
+	if err := f.st.SetCopyRule("containers", "container:radarr-movies", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.svc.UnlinkContainerAlias(context.Background(), "radarr-movies"); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("UnlinkContainerAlias = %v, want ErrCopyRuleTaken", err)
+	}
+	_, st := f.afterConfigLoss(t)
+	wantContainerAlias(t, st, "radarr-movies", "radarr", link.LinkedAt)
+}
+
 // Without the aliases a backup would write the mirror without its link
 // records, so it leaves the mirror as the last write left it.
 func TestAContainerBackupKeepsTheLinkRecordWhenItCannotReadTheAliases(t *testing.T) {
@@ -609,7 +642,7 @@ func (f *vmTakeover) afterConfigLoss(t *testing.T) (*api.Service, *store.Repo) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(f.cfg, st, &fakeServiceDocker{}, fakeVirsh{}, f.eng)
-	if _, _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
 	return svc, st
@@ -884,7 +917,7 @@ func TestAVMDefinitionWithoutLinkRecordsStillDecodes(t *testing.T) {
 	const def = `{"domain_xml":"<domain><name>ubuntu</name></domain>","disk_paths":["/x/vdisk1.img"],"nvram_host_path":"","method":"live","was_autostart":true}`
 	svc, st, _ := vmsAfterConfigLoss(t, []restic.Snapshot{{ID: "u1", Time: "2024-01-01T00:00:00Z", Tags: []string{"vm:ubuntu", "p2"}}}, map[string]string{"ubuntu": def})
 
-	if _, _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
 	tg, err := st.GetVMTargetByName("ubuntu")
@@ -923,6 +956,38 @@ func TestTakeOverVMRefusesWhileTheLeftNamesLinkRecordsCannotBeRemoved(t *testing
 	if after := vmState(t, f.st); after != before {
 		t.Fatalf("a refused takeover changed the store:\nbefore\n%s\nafter\n%s", before, after)
 	}
+}
+
+func TestATakeoverRefusedOverACopyRuleKeepsTheVMsLinkRecords(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	link := f.takeOver(t, "windows-11", "win11")
+	f.backUp(t, "win11", "post1", linkBase.Add(time.Hour))
+	if err := f.st.SetCopyRule("vms", "vm:win11-pro", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	f.virsh.vms = []virshcli.VMInfo{{Name: "win11-pro", State: "shut off"}}
+	f.virsh.xmlByName["win11-pro"] = unraidVMXML("win11-pro")
+
+	if err := f.svc.TakeOverVM(context.Background(), "win11", "win11-pro"); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("TakeOverVM = %v, want ErrCopyRuleTaken", err)
+	}
+	_, st := f.afterConfigLoss(t)
+	wantVMAlias(t, st, "windows-11", "win11", link.LinkedAt)
+}
+
+func TestAnUnlinkRefusedOverACopyRuleKeepsTheVMsLinkRecord(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	link := f.takeOver(t, "windows-11", "win11")
+	f.backUp(t, "win11", "post1", linkBase.Add(time.Hour))
+	if err := f.st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.svc.UnlinkVMAlias(context.Background(), "windows-11"); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("UnlinkVMAlias = %v, want ErrCopyRuleTaken", err)
+	}
+	_, st := f.afterConfigLoss(t)
+	wantVMAlias(t, st, "windows-11", "win11", link.LinkedAt)
 }
 
 func TestAVMBackupKeepsTheLinkRecordWhenItCannotReadTheAliases(t *testing.T) {

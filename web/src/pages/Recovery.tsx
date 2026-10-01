@@ -73,6 +73,8 @@ import { useConfirm } from "../lib/useConfirm";
 import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
 import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 import { useToast } from "../lib/toast";
+import { DiscoverFindings } from "../components/placement/DiscoverFindings";
+import { placementChanged } from "../lib/placementEvents";
 import { Toggle } from "../components/Toggle";
 
 type DiscoverResult = Awaited<ReturnType<typeof discover>>;
@@ -1728,14 +1730,7 @@ export default function Recovery() {
   // step. The result stays inline instead of becoming a toast, because the
   // step's pill and step 5 both read it.
   const [discovering, setDiscovering] = useState(false);
-  const [discovered, setDiscovered] = useState<{
-    containers: number;
-    vms: number;
-    files: number;
-    zfs: number;
-    skipped: string[];
-    skippedNeedsAction: boolean;
-  } | null>(null);
+  const [discovered, setDiscovered] = useState<Awaited<ReturnType<typeof discoverAll>> | null>(null);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
   // Filled by Discover, read by the restore step.
   const [containers, setContainers] = useState<Container[]>([]);
@@ -1768,6 +1763,7 @@ export default function Recovery() {
       setFileSets(fs.ok ? fs.fileSets ?? [] : []);
       setZFSItems(zs.ok ? zs.datasets ?? [] : []);
       setDiscovered(counts);
+      if (counts.paused.length > 0 || counts.leftOpen.length > 0) placementChanged();
     } catch (err) {
       setDiscoverError(err instanceof Error ? err.message : String(err));
       setDiscovered(null);
@@ -2172,6 +2168,9 @@ export default function Recovery() {
           <p className="text-sm text-statusWarn">
             {t("common.discoverSkipped").replace("{list}", discovered.skipped.join(", "))}
           </p>
+        )}
+        {discovered && (
+          <DiscoverFindings paused={discovered.paused} leftOpen={discovered.leftOpen} directRepos={discovered.directRepos} />
         )}
         {discoverError && (
           <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">

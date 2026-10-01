@@ -1059,17 +1059,16 @@ func TestSettingsGetPut(t *testing.T) {
 	}
 }
 
-// TestSettingsPutImmutableRetentionWarning pins the warnings extension of the
+// TestSettingsPutImmutableRetentionWarning pins the notes extension of the
 // PUT /api/settings envelope: saving an immutable off-site flag together with
-// an off-site retention policy succeeds (ok:true, backward compatible) but
-// carries a "warnings" array — BombVault will not prune an append-only repo,
-// so the policy is inert until enforced far-side. Without the conflict the
-// response has no warnings.
+// an off-site retention policy succeeds (ok:true) but carries a "notes" entry,
+// since BombVault will not prune an append-only repo and the policy is inert
+// until enforced far-side. Without the conflict the notes list is empty.
 func TestSettingsPutImmutableRetentionWarning(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})
 
-	// Immutable flag + off-site retention set → ok with a warning.
+	// Immutable flag + off-site retention set → ok with a note.
 	body := `{
 		"containersPath": "backups/c",
 		"vmsPath": "backups/v",
@@ -1088,15 +1087,15 @@ func TestSettingsPutImmutableRetentionWarning(t *testing.T) {
 	if m["ok"] != true {
 		t.Fatalf("immutable + retention must still save (warn, not fail), got %v", m)
 	}
-	warnings, ok := m["warnings"].([]any)
-	if !ok || len(warnings) == 0 {
-		t.Fatalf("expected a non-empty warnings array, got %v", m)
+	notes, ok := m["notes"].([]any)
+	if !ok || len(notes) == 0 {
+		t.Fatalf("expected a non-empty notes array, got %v", m)
 	}
-	if s, _ := warnings[0].(string); !strings.Contains(s, "append-only") {
-		t.Fatalf("warning must explain the append-only conflict, got %q", warnings[0])
+	if s, _ := notes[0].(string); !strings.Contains(s, "append-only") {
+		t.Fatalf("note must explain the append-only conflict, got %q", notes[0])
 	}
 
-	// Immutable without off-site retention → plain ok, no warnings key.
+	// Immutable without off-site retention → ok, no note.
 	body = `{
 		"containersPath": "backups/c",
 		"vmsPath": "backups/v",
@@ -1111,8 +1110,8 @@ func TestSettingsPutImmutableRetentionWarning(t *testing.T) {
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("put status = %d body=%s", w.Code, w.Body.String())
 	}
-	if _, present := m["warnings"]; present {
-		t.Fatalf("no warnings expected without an off-site retention policy, got %v", m)
+	if notes, ok := m["notes"].([]any); !ok || len(notes) != 0 {
+		t.Fatalf("no notes expected without an off-site retention policy, got %v", m)
 	}
 }
 
@@ -1303,8 +1302,8 @@ func TestSettingsFilesFieldsRoundTrip(t *testing.T) {
 }
 
 // TestSettingsFilesImmutableRetentionWarning pins that the immutable-vs-offsite-
-// retention warning also fires when ONLY the files domain is flagged append-only
-// (the warning condition must include FilesOffsiteImmutable).
+// retention note also fires when only the files domain is flagged append-only
+// (the condition must include FilesOffsiteImmutable).
 func TestSettingsFilesImmutableRetentionWarning(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})
@@ -1324,9 +1323,9 @@ func TestSettingsFilesImmutableRetentionWarning(t *testing.T) {
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
 	}
-	warnings, ok := m["warnings"].([]any)
-	if !ok || len(warnings) == 0 {
-		t.Fatalf("expected the append-only warning for a files-only immutable flag, got %v", m)
+	notes, ok := m["notes"].([]any)
+	if !ok || len(notes) == 0 {
+		t.Fatalf("expected the append-only note for a files-only immutable flag, got %v", m)
 	}
 }
 
@@ -2522,7 +2521,7 @@ func TestFileSetRenameRefusedWhenBackedUp(t *testing.T) {
 // TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns pins the completeness
 // of the rename guard: a Discover-rebuilt set has real fileset:<Name> snapshots
 // in the repo but no run rows, so a runs-only check would wrongly allow the
-// rename and strand the snapshots. fileSetHasBackups must also see the tags.
+// rename and strand the snapshots. itemBackups must also see the tags.
 func TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns(t *testing.T) {
 	eng := &fakeResticEngine{}
 	h, _, _, dir := newFilesTestRouter(t, eng)
@@ -2666,10 +2665,10 @@ func TestFileSetRepoChangeRefusedWhileBackupRunning(t *testing.T) {
 	}
 }
 
-// TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns: the repair that
-// puts a set back on the repository its snapshots were found in takes the
-// files lock a backup holds, so a set never moves under a running backup and
-// is repaired by the next discovery instead.
+// TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns: a set never
+// moves under a running backup. The backup settles the set's location before
+// it writes, and a discovery that finds snapshots elsewhere leaves a settled
+// location alone.
 func TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns(t *testing.T) {
 	eng := &fakeResticEngine{block: make(chan struct{}), backupEntered: make(chan struct{}, 1), backupErr: errors.New("simulated failure")}
 	h, st, svc, dir := newFilesTestRouter(t, eng)
@@ -2679,8 +2678,7 @@ func TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns(t *testing.T) 
 		t.Fatalf("create: %d %v", w.Code, m)
 	}
 	id, _ := m["id"].(string)
-	alt, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true})
-	if err != nil {
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true}); err != nil {
 		t.Fatalf("seed named repo: %v", err)
 	}
 	eng.snapsByRepo = map[string][]restic.Snapshot{
@@ -2696,26 +2694,21 @@ func TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns(t *testing.T) 
 		t.Fatal("backup never reached the engine")
 	}
 
-	out := captureLog(func() {
-		if _, _, err := svc.DiscoverFileSets(context.Background(), false); err != nil {
-			t.Errorf("DiscoverFileSets: %v", err)
-		}
-	})
+	if _, err := svc.DiscoverFileSets(context.Background(), false); err != nil {
+		t.Fatalf("DiscoverFileSets: %v", err)
+	}
 	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != "" {
 		t.Fatalf("repo = %q, %v; want it unchanged while the backup is in flight", got.Repo, gErr)
-	}
-	if !strings.Contains(out, `"docs"`) || !strings.Contains(out, "next discovery") {
-		t.Fatalf("log = %s\nwant a line saying the repair of docs waits for the next discovery", out)
 	}
 
 	close(eng.block)
 	waitForBackupDone(t, svc)
 
-	if _, _, err := svc.DiscoverFileSets(context.Background(), false); err != nil {
+	if _, err := svc.DiscoverFileSets(context.Background(), false); err != nil {
 		t.Fatalf("DiscoverFileSets: %v", err)
 	}
-	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != alt.ID {
-		t.Fatalf("repo = %q, %v; want %q once the lock is free", got.Repo, gErr, alt.ID)
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != "" {
+		t.Fatalf("repo = %q, %v; want the location the backup settled", got.Repo, gErr)
 	}
 }
 

@@ -31,14 +31,14 @@ Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vi
 
 Sikkerhetskopi av ZFS-datasett trenger også denne modusen: verten monterer øyeblikksbildet av et datasett først etter at containeren har startet. Se [ZFS-datasett](zfs-datasets.md).
 
-Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Lagring, Sikkerhetskopistier**. Hvert stifelt har også en **Lokal / Ekstern**-bryter rett ved siden av: en sti kan være en restic-remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
+Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Lagring, Sikkerhetskopistier**. Hvert stifelt har også en **Lokal / Ekstern**-bryter rett ved siden av: en sti kan være en restic-remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Sjekk av host-integrasjon"
+!!! note "Host-integrasjonssjekk"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.
 
 ## Gjenkjenning av sikkerhetskopiens kilder {#backup-source-detection}
 
-For hver container velger BombVault selv hvilke bind-monteringer og navngitte volumer som sikkerhetskopieres. En sti tas med så snart ett av punktene nedenfor gjelder (resultatet kan alltid overstyres per container under dens **Stier for sikkerhetskopi**):
+For hver container velger BombVault selv hvilke bind-monteringer og navngitte volumer som sikkerhetskopieres. En sti tas med så snart ett av punktene nedenfor gjelder (resultatet kan alltid overstyres per container under dens **Sikkerhetskopierte mapper**):
 
 - **Treff på et datarot-segment:** bindens vertskilde inneholder ett av segmentene i `DATA_ROOT_SEGMENTS` som en hel stikomponent (som standard bare `appdata`).
 - **Navngitte Docker-volumer** tas alltid med, fordi de ikke har noen engangsutgave og det dermed ikke er noe å filtrere bort, **men bare når volumets virkelige lagringssti på verten selv er nåbar gjennom Host Data-monteringen**, akkurat som enhver annen vertssti BombVault sikkerhetskopierer. Standarddriveren for lokale volumer legger et volum under selve demonens datarot, altså `/var/lib/docker/volumes/<navn>/_data` med mindre det er endret (sjekk med `docker info -f '{{.DockerRootDir}}'`). Det stedet er IKKE dekket av den smale Host Data-monteringen med én enkelt katalog som den generiske `docker-compose.yml` bruker som standard. Et volum som ikke kan nås, hoppes stille over, det er ingen feil. For faktisk å sikkerhetskopiere navngitte volumer på en generisk vert må du peke Host Data (og `HOST_SOURCE_ROOT`) mot en felles overordnet katalog som også dekker Dockers datarot: avveiningen står i Host Data-kommentaren i compose-filen (Unraid går utenom dette ved av samme grunn å montere hele `/mnt`, sin egen allmenngyldige konvensjon på øverste nivå).
@@ -84,7 +84,7 @@ Malen legger til `--add-host=host.docker.internal:host-gateway` så containeren 
 
 Sett opp en ekstern replika på **Innstillinger, Off-site**-siden. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
 
-- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Delt skylegitimasjon** lagres kryptert under Innstillinger, Skytilgang, Delt skylegitimasjon.
 - **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
 - **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis, i tillegg til et (vanligvis lokalt) primært repo. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.
@@ -106,11 +106,11 @@ Avviksoppdagelsen stilles inn i kortet **Avvik** under **Innstillinger, Integrit
 | **Send varsel for** | Bare kritiske funn | Den laveste alvorlighetsgraden som sender en melding via kanalene som er satt opp under Varsler. Gjentatte mislykkede sikkerhetskopier og dumper og mislykkede planlagte gjenopprettingskontroller sender allerede en egen melding og sendes ikke to ganger. |
 | **Behold gamle sikkerhetskopier når en kilde krymper kraftig eller skrives om** | På | Så lenge et element har et åpent funn for en nesten tom kilde, en kraftig krymping eller det meste av dataene lagret på nytt, lar oppbevaring og opprydding elementets gamle sikkerhetskopier være. Kvitter for funnet eller merk det som forventet for å slippe dem. |
 
-Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still dem inn på fanen **Elementer** på siden **Avvik**, eller i elementets eget panel: mappedelen for en container og innstillingene for en VM (begge i avansert modus), mappeeditoren for et mappesett og sidene **Flash** og **Auto-sikkerhetskopi**. For et ZFS-element ligger de i elementets redigering på siden **ZFS** og gjelder for hvert datasett i treet.
+Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still dem inn på siden **Avvik**, der et element med åpne funn har dem under **Overvåking** på kortet sitt, og alle andre elementer åpner dem fra kortet **Ingenting åpent**, eller i elementets eget panel: mappedelen for en container og innstillingene for en VM (begge i avansert modus), mappeeditoren for et mappesett og sidene **Flash** og **Auto-sikkerhetskopi**. For et ZFS-element ligger de i elementets redigering på siden **ZFS** og gjelder for hvert datasett i treet.
 
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 
-Kortet **Eksporter og importer innstillinger** på siden Innstillinger, System skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
+Kortet **Eksporter / importer innstillinger** på siden Innstillinger, System skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
 
 !!! warning "Eksporten kan inneholde legitimasjon"
     Du velger om du vil inkludere ekstern-, varslings- og MQTT-megler-legitimasjonen i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.

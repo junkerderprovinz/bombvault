@@ -31,14 +31,14 @@ Liitä Docker-soketti, flash (`/boot`) ja **Host Data** -juuri (`/mnt`) kuten CA
 
 ZFS-tietojoukkojen varmuuskopiot tarvitsevat myös tämän tilan: isäntä liittää tietojoukon tilannevedoksen vasta sen jälkeen, kun kontti on käynnistynyt. Katso [ZFS-tietojoukot](zfs-datasets.md).
 
-Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Tallennus, Varmuuskopiopolut**. Jokaisessa polkukentässä on myös sisäinen **Paikallinen / Etä** -kytkin: polku voi olla paikallisen kansion sijaan restic-etärepositorio (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), jolloin varmuuskopio menee suoraan sinne ilman erillistä paikallista kopiota; katso [Etäsijaintiset ensisijaiset arkistot](offsite-recovery.md#remote-primary-repositories).
+Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Tallennus, Varmuuskopiopolut**. Jokaisessa polkukentässä on myös sisäinen **Paikallinen / Etä** -kytkin: polku voi olla paikallisen kansion sijaan restic-etärepositorio (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`), jolloin varmuuskopio menee suoraan sinne ilman erillistä paikallista kopiota; katso [Etäsijaintiset ensisijaiset arkistot](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset.
 
 ## Varmuuskopion lähteiden tunnistus {#backup-source-detection}
 
-Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt taltiot varmuuskopioidaan. Polku otetaan mukaan heti, kun jokin seuraavista pätee (tuloksen voi aina ohittaa konttikohtaisesti sen **Varmuuskopiopoluissa**):
+Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt taltiot varmuuskopioidaan. Polku otetaan mukaan heti, kun jokin seuraavista pätee (tuloksen voi aina ohittaa konttikohtaisesti sen **Varmuuskopioitavat kansiot** -osiossa):
 
 - **Osuma datajuuren osaan:** liitoksen isäntälähde sisältää jonkin `DATA_ROOT_SEGMENTS`-osista täytenä polun osana (oletuksena vain `appdata`).
 - **Nimetyt Docker-taltiot** otetaan aina mukaan, koska niillä ei ole kertakäyttöistä vastinetta eikä siten mitään suodatettavaa, **mutta vain silloin, kun taltion todellinen tallennuspolku isännässä on itse tavoitettavissa Host Data -liitoksen kautta**, aivan kuten mikä tahansa muu isäntäpolku, jonka BombVault varmuuskopioi. Paikallisten taltioiden oletusajuri sijoittaa taltion demonin oman datajuuren alle, siis polkuun `/var/lib/docker/volumes/<nimi>/_data`, ellei sitä ole muutettu (tarkista komennolla `docker info -f '{{.DockerRootDir}}'`). Tuo paikka EI kuulu siihen kapeaan, yhden hakemiston Host Data -liitokseen, jota yleinen `docker-compose.yml` oletuksena käyttää. Tavoittamaton taltio ohitetaan äänettömästi, se ei ole virhe. Jotta nimetyt taltiot todella varmuuskopioituvat yleisessä isännässä, osoita Host Data (ja `HOST_SOURCE_ROOT`) yhteiseen ylempään hakemistoon, joka kattaa myös Dockerin datajuuren: kompromissi on kuvattu compose-tiedoston Host Data -kommentissa (Unraid kiertää tämän liittämällä samasta syystä koko `/mnt`-hakemiston, oman ylimmän tason yleiskäytäntönsä).
@@ -73,7 +73,7 @@ Pikamääritys:
 
 1. **Asetukset, Integraatiot, Palvelimen SSH:** kopioi näytetty julkinen avain.
 2. Lisää se Unraidin tiedostoon `/root/.ssh/authorized_keys` (myös flashiin tallennettuna, jotta se säilyy uudelleenkäynnistysten yli).
-3. Napsauta **Test connection**.
+3. Napsauta **Testaa yhteys**.
 
 Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoittaa isännän. Aseta `LIBVIRT_HOST` Unraidin LAN-IP-osoitteeseesi, jos tuo nimi ei ratkea (esimerkiksi kun kontti pyörii mukautetussa `br0.x`-verkossa). Jos vaihdoit Unraidin SSH-porttia, aseta `LIBVIRT_SSH_PORT` vastaamaan. **Live-tilannevedokset** tarvitsevat lisäksi qemu guest agentin VM:ssä ja levyn sijainniksi `/mnt/cache` (ei `/mnt/user`).
 
@@ -84,7 +84,7 @@ Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoi
 
 Määritä etäreplika **Asetukset, Etä** -sivulla. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
 
-- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
+- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
 - **Jaetut pilvitunnistetiedot** tallennetaan salattuina kohdassa Asetukset, Pilvipääsy, Jaetut pilvitunnistetiedot.
 - **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
 - **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella (yleensä paikallisen) ensisijaisen repon lisäksi. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.
@@ -106,11 +106,11 @@ Poikkeamien tunnistus asetetaan kortissa **Poikkeamat** kohdassa **Asetukset, Eh
 | **Lähetä ilmoitus, kun kyseessä on** | Vain kriittiset havainnot | Alin vakavuus, joka lähettää viestin kohdassa Ilmoitukset määritettyjen kanavien kautta. Toistuvasti epäonnistuneet varmuuskopiot ja vedokset sekä epäonnistuneet ajastetut palautustarkistukset lähettävät jo oman viestinsä, eikä niitä lähetetä kahdesti. |
 | **Säilytä vanhat varmuuskopiot, kun lähde kutistuu jyrkästi tai kirjoitetaan uudelleen** | Päällä | Niin kauan kuin kohteella on avoin havainto lähes tyhjästä lähteestä, voimakkaasta kutistumisesta tai suurimman osan datasta uudelleentallennuksesta, säilytys ja siivous jättävät kohteen vanhat varmuuskopiot rauhaan. Kuittaa havainto tai merkitse se odotetuksi vapauttaaksesi ne. |
 
-Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun **Poikkeamat** välilehdellä **Kohteet** tai kohteen omassa paneelissa: kontin kansio-osiossa ja virtuaalikoneen asetuksissa (molemmat lisätilassa), kansiojoukon kansioeditorissa sekä sivuilla **Flash** ja **Itsevarmuuskopio**. ZFS-kohteella ne ovat kohteen muokkaimessa **ZFS**-sivulla ja koskevat puun jokaista tietojoukkoa.
+Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne **Poikkeamat**-sivulla, jossa kohteella, jolla on avoimia löydöksiä, ne ovat kortin kohdassa **Valvonta**, ja muut kohteet avaavat ne kortilta **Ei mitään avoinna**, tai kohteen omassa paneelissa: kontin kansio-osiossa ja virtuaalikoneen asetuksissa (molemmat lisätilassa), kansiojoukon kansioeditorissa sekä sivuilla **Flash** ja **Itsevarmuuskopio**. ZFS-kohteella ne ovat kohteen muokkaimessa **ZFS**-sivulla ja koskevat puun jokaista tietojoukkoa.
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 
-**Vie ja tuo asetukset** -kortti Asetukset, Järjestelmä -sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
+**Vie / tuo asetukset** -kortti Asetukset, Järjestelmä -sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
 
 !!! warning "Vienti voi sisältää tunnuksia"
     Valitset itse, sisällytetäänkö etä-, ilmoitus- ja MQTT-välittäjän tunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

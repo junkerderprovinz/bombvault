@@ -67,9 +67,14 @@ export function useOffsiteTargets(domain?: OffsiteDomain): OffsiteTarget[] {
   return targets;
 }
 
-/** A target's display name: its label, else the repo location it points at. */
+// A location carries a password only as a URL's user:pass@, as in
+// rest:https://user:pass@host/repo; sftp:user@host:/path has none.
+const URL_CREDENTIAL = /\/\/[^\s/@"':]+:[^\s/@"']+@/g;
+
+/** A target's display name: its label, else the repo location it points at
+ *  without the password a location can carry. */
 export function offsiteTargetLabel(target: OffsiteTarget): string {
-  return target.name.trim() || target.repo;
+  return target.name.trim() || target.repo.replace(URL_CREDENTIAL, "//[redacted]@");
 }
 
 /**

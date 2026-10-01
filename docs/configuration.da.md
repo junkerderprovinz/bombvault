@@ -31,14 +31,14 @@ Montér Docker-socket'en, flashen (`/boot`) og **Host Data**-roden (`/mnt`) som 
 
 Sikkerhedskopi af ZFS-datasæt kræver også denne tilstand: værten monterer et datasæts snapshot først, efter at containeren er startet. Se [ZFS-datasæt](zfs-datasets.md).
 
-Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, oprettet ved den første sikkerhedskopi. Skift placeringen når som helst i **Indstillinger, Lagring, Sikkerhedskopistier**. Hvert stifelt har også en **Lokal / Fjern**-kontakt lige ved siden af: en sti kan være en restic-remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og så sikkerhedskopieres der direkte dertil uden separat lokal kopi; se [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
+Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, oprettet ved den første sikkerhedskopi. Skift placeringen når som helst i **Indstillinger, Lagring, Sikkerhedskopistier**. Hvert stifelt har også en **Lokal / Fjern**-kontakt lige ved siden af: en sti kan være en restic-remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og så sikkerhedskopieres der direkte dertil uden separat lokal kopi; se [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Vært-integrationstjek"
     Åbn `/spike` i web-UI'en, når containeren er startet. Den prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele.
 
 ## Genkendelse af sikkerhedskopiernes kilder {#backup-source-detection}
 
-For hver container vælger BombVault selv, hvilke bind-monteringer og navngivne diskenheder der sikkerhedskopieres. En sti tages med, så snart et af følgende punkter gælder (resultatet kan altid tilsidesættes for den enkelte container under dens **Stier til sikkerhedskopi**):
+For hver container vælger BombVault selv, hvilke bind-monteringer og navngivne diskenheder der sikkerhedskopieres. En sti tages med, så snart et af følgende punkter gælder (resultatet kan altid tilsidesættes for den enkelte container under dens **Sikkerhedskopierede mapper**):
 
 - **Match på et datarod-segment:** bindets værtskilde indeholder et af segmenterne i `DATA_ROOT_SEGMENTS` som en hel stikomponent (som standard kun `appdata`).
 - **Navngivne Docker-diskenheder** tages altid med, fordi de ikke har nogen engangsudgave, og der derfor ikke er noget at filtrere fra, **men kun når diskenhedens rigtige lagersti på værten selv kan nås gennem Host Data-monteringen**, nøjagtig som enhver anden værtssti, BombVault sikkerhedskopierer. Standarddriveren til lokale diskenheder lægger en diskenhed under dæmonens egen datarod, altså `/var/lib/docker/volumes/<navn>/_data`, medmindre det er ændret (tjek med `docker info -f '{{.DockerRootDir}}'`). Det sted er IKKE dækket af den smalle Host Data-montering med én enkelt mappe, som den generiske `docker-compose.yml` bruger som standard. En diskenhed, der ikke kan nås, springes stiltiende over, det er ikke en fejl. For rent faktisk at sikkerhedskopiere navngivne diskenheder på en generisk vært skal du pege Host Data (og `HOST_SOURCE_ROOT`) på en fælles overordnet mappe, der også dækker Dockers datarod: afvejningen står i Host Data-kommentaren i compose-filen (Unraid går uden om det ved af samme grund at montere hele `/mnt`, sin egen almengyldige konvention på øverste niveau).
@@ -73,7 +73,7 @@ Hurtig opsætning:
 
 1. **Indstillinger, Integrationer, Værts-SSH:** kopiér den viste offentlige nøgle.
 2. Tilføj den til Unraids `/root/.ssh/authorized_keys` (også persisteret til flashen, så den overlever genstarter).
-3. Klik på **Test connection**.
+3. Klik på **Test forbindelse**.
 
 Skabelonen tilføjer `--add-host=host.docker.internal:host-gateway`, så containeren kan nå værten. Sæt `LIBVIRT_HOST` til din Unraid LAN-IP, hvis det navn ikke resolverer (for eksempel når containeren kører på et brugerdefineret `br0.x`-netværk). Hvis du ændrede Unraids SSH-port, så sæt `LIBVIRT_SSH_PORT` til at matche. **Live-øjebliksbilleder** kræver derudover qemu guest agent i VM'en og disken på `/mnt/cache` (ikke `/mnt/user`).
 
@@ -84,7 +84,7 @@ Skabelonen tilføjer `--add-host=host.docker.internal:host-gateway`, så contain
 
 Opsæt en off-site-replika på siden **Indstillinger, Off-site**. Se [Off-site og gendannelse](offsite-recovery.md) for det fulde arbejdsforløb (uforanderlig/append-only, manipulationstest og DR-øvelser). Kort sagt:
 
-- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en Backup Path mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en sikkerhedskopisti mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Delte cloud-legitimationsoplysninger** gemmes krypteret under Indstillinger, Cloud-adgang, Delte cloud-legitimationsoplysninger.
 - **SSH-destinationer kræver intet installeret på den anden side.** `sftp:` kræver kun en SSH-server. Tilføj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** (også på `/config/ssh/id_ed25519.pub`) til destinationsbrugerens `~/.ssh/authorized_keys`.
 - **Off-site-kopi:** BombVault replikerer nye øjebliksbilleder med `restic copy` på et best-effort-grundlag oven på et (som regel lokalt) primært repo. Hvert domæne har sin egen off-site-tidsplan plus en **Replikér nu**-knap.
@@ -93,7 +93,7 @@ Opsæt en off-site-replika på siden **Indstillinger, Off-site**. Se [Off-site o
 - **Båndbreddegrænser:** begræns restic-upload/download-hastigheden under Indstillinger, Off-site.
 - **Streaming først:** under Indstillinger, Off-site vælger du medieserverne (Plex, Jellyfin og Emby er forvalgt ud fra image-navnet), den sendehastighed hvorfra en server tæller som streamende, upload-grænsen under streaming og hvor længe efter en stream den normale grænse kommer tilbage.
 - **Kold- og arkivlagringsklasse (S3):** for et native S3 off-site-repo, vælg et gendannelses-læsbart niveau (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes sætter deres klasse i rclone-konfigurationen.
-- **Fjernprimært i stedet for lokalt:** et domænes Backup Path kan selv være en af backends ovenfor, uden lokal kopi og uden replikeringstrin. Kontakten Lokal/Fjern ved feltet og dens sikkerhedsindstillinger for båndbredde, append-only og vækstbudget er beskrevet under [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
+- **Fjernprimært i stedet for lokalt:** et domænes sikkerhedskopisti kan selv være en af backends ovenfor, uden lokal kopi og uden replikeringstrin. Kontakten Lokal/Fjern ved feltet og dens sikkerhedsindstillinger for båndbredde, append-only og vækstbudget er beskrevet under [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 ## Afvigelser {#anomalies}
 
@@ -106,11 +106,11 @@ Anomaliregistreringen indstilles i kortet **Afvigelser** under **Indstillinger, 
 | **Send en notifikation for** | Kun kritiske fund | Den laveste alvorlighed, der sender en besked via de kanaler, der er sat op under Notifikationer. Gentagne fejlede sikkerhedskopier og dumps og fejlede planlagte gendannelsestjek sender allerede deres egen besked og sendes ikke to gange. |
 | **Behold gamle sikkerhedskopier, når en kilde skrumper kraftigt eller omskrives** | Til | Så længe et element har et åbent fund for en næsten tom kilde, en kraftig skrumpning eller det meste af dataene gemt igen, lader opbevaring og oprydning elementets gamle sikkerhedskopier være. Kvittér for fundet eller markér det som forventet for at frigive dem. |
 
-Hvert element kan have sin egen følsomhed og sit eget notifikationsminimum. Indstil dem på fanen **Elementer** på siden **Afvigelser** eller i elementets eget panel: mappeafsnittet for en container og indstillingerne for en VM (begge i avanceret tilstand), mappeeditoren for et mappesæt og siderne **Flash** og **Auto-sikkerhedskopi**. For et ZFS-element findes de i elementets editor på siden **ZFS** og gælder for hvert datasæt i dets træ.
+Hvert element kan have sin egen følsomhed og sit eget notifikationsminimum. Indstil dem på siden **Afvigelser**, hvor et element med åbne fund har dem under **Overvågning** på sit kort, og hvert andet element åbner dem fra kortet **Intet åbent**, eller i elementets eget panel: mappeafsnittet for en container og indstillingerne for en VM (begge i avanceret tilstand), mappeeditoren for et mappesæt og siderne **Flash** og **Auto-sikkerhedskopi**. For et ZFS-element findes de i elementets editor på siden **ZFS** og gælder for hvert datasæt i dets træ.
 
 ## Bærbare indstillinger (eksportér og importér) {#portable-settings-export-and-import}
 
-Kortet **Eksportér og importér indstillinger** på siden **Indstillinger, System** skriver hele din BombVault-konfiguration (domæneindstillinger, off-site-destinationer, tidsplaner, opbevaring, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik.
+Kortet **Eksportér / importér indstillinger** på siden **Indstillinger, System** skriver hele din BombVault-konfiguration (domæneindstillinger, off-site-destinationer, tidsplaner, opbevaring, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik.
 
 !!! warning "Eksporten kan indeholde legitimationsoplysninger"
     Du vælger, om off-site-, notifikations- og MQTT-broker-legitimationsoplysninger skal medtages i filen. Med legitimationsoplysninger medtaget er eksporten lige så følsom som dit gendannelseskit, så opbevar den et sikkert sted. Uden dem indeholder filen kun ikke-hemmelige indstillinger.

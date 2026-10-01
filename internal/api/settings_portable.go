@@ -1,7 +1,10 @@
 package api
 
 import (
+	"cmp"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -59,7 +62,13 @@ type settingsExport struct {
 	Settings       settingsView        `json:"settings"`
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
-	Credentials    *exportCredentials  `json:"credentials,omitempty"`
+	// PlacementDefaults and CopyRules carry each domain's placement default and
+	// its copy rules. Always present, even empty, so the import can tell a
+	// missing block (an older file, leave the table alone) from an empty one
+	// (replace it with nothing); see importedPlacement.
+	PlacementDefaults []placementDefaultExport `json:"placementDefaults"`
+	CopyRules         []copyRuleExport         `json:"copyRules"`
+	Credentials       *exportCredentials       `json:"credentials,omitempty"`
 	// Streaming and Idle are the "Streaming first" and "Idle before backup"
 	// cards, absent from files written before they existed.
 	Streaming *streamingView `json:"streaming,omitempty"`
@@ -280,16 +289,28 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	defaults, err := h.store.ListPlacementDefaults()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	rules, err := h.store.ListCopyRules()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	exp := settingsExport{
-		SchemaVersion:  settingsExportSchema,
-		ExportedAt:     time.Now().UTC().Format(time.RFC3339),
-		AppVersion:     Version,
-		Settings:       buildSettingsView(s),
-		OffsiteTargets: offsiteTargetsToViews(targets),
-		NamedRepos:     offsiteTargetsToViews(namedRepos),
-		Streaming:      streamingToView(traffic),
-		Idle:           idleToView(traffic),
+		SchemaVersion:     settingsExportSchema,
+		ExportedAt:        time.Now().UTC().Format(time.RFC3339),
+		AppVersion:        Version,
+		Settings:          buildSettingsView(s),
+		OffsiteTargets:    offsiteTargetsToViews(targets),
+		NamedRepos:        offsiteTargetsToViews(namedRepos),
+		PlacementDefaults: placementDefaultsToExport(defaults),
+		CopyRules:         copyRulesToExport(rules),
+		Streaming:         streamingToView(traffic),
+		Idle:              idleToView(traffic),
 	}
 	if err := h.exportIntegrations(&exp); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -350,13 +371,16 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 
 // importSummary is the preview payload: what an apply WOULD change, without writing.
 type importSummary struct {
-	SchemaVersion  int                 `json:"schemaVersion"`
-	ExportedAt     string              `json:"exportedAt"`
-	AppVersion     string              `json:"appVersion"`
-	OffsiteTargets int                 `json:"offsiteTargets"`
-	NamedRepos     int                 `json:"namedRepos"`
-	Credentials    importCredsPresence `json:"credentials"`
-	SettingsGroups []string            `json:"settingsGroups"`
+	SchemaVersion     int                 `json:"schemaVersion"`
+	ExportedAt        string              `json:"exportedAt"`
+	AppVersion        string              `json:"appVersion"`
+	OffsiteTargets    int                 `json:"offsiteTargets"`
+	NamedRepos        int                 `json:"namedRepos"`
+	PlacementDefaults *int                `json:"placementDefaults"`
+	CopyRules         *int                `json:"copyRules"`
+	NewTargets        []newTargetRow      `json:"newTargets"`
+	Credentials       importCredsPresence `json:"credentials"`
+	SettingsGroups    []string            `json:"settingsGroups"`
 }
 
 // importCredsPresence reports which credential kinds the file carries (never the
@@ -394,17 +418,23 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	if err := h.checkImportedPlacement(exp); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
 
 	apply := truthy(r.URL.Query().Get("apply"))
 	if !apply {
+		summary := summarizeExport(exp)
+		summary.NewTargets = h.svc.importNewTargets(r.Context(), exp)
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 			"preview": true,
-			"summary": summarizeExport(exp),
+			"summary": summary,
 		}))
 		return
 	}
 
-	if err := h.applyImport(r, exp); err != nil {
+	if err := h.applyImport(r.Context(), exp); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -496,7 +526,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	switch {
 	case len(exp.NamedRepos) == 0:
 		for _, r := range stored {
-			rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(r.Name)), r.Repo})
+			rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), r.Repo})
 		}
 	default:
 		inFile := make(map[string]bool, len(exp.NamedRepos))
@@ -542,12 +572,9 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 				return "could not check this file against the repositories already set up; try again"
 			}
 			if n != 0 {
-				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(r.Name)), r.Repo})
+				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), r.Repo})
 			}
 		}
-	}
-	if len(rows) == 0 {
-		return ""
 	}
 	resolve := func(loc string) (string, bool) {
 		loc = strings.TrimSpace(loc)
@@ -603,6 +630,16 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 			occupied = append(occupied, place{"an off-site destination", loc})
 		}
 	}
+	for i, a := range occupied {
+		for _, b := range occupied[i+1:] {
+			if repoLocationsOverlap(a.loc, b.loc) && !sameRepoLocation(a.loc, b.loc) {
+				log.Printf("api: settings import: %s lies inside or around %s; imported anyway so older files still load", a.label, b.label) //nolint:gosec // G706: the labels are fixed text
+			}
+		}
+	}
+	if len(rows) == 0 {
+		return ""
+	}
 	seen := make([]string, 0, len(rows))
 	for _, row := range rows {
 		loc, ok := resolve(row.loc)
@@ -613,10 +650,16 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 			if sameRepoLocation(p.loc, loc) {
 				return fmt.Sprintf("%s is at %s; a repository has to be a different place", row.label, p.label)
 			}
+			if repoLocationsOverlap(p.loc, loc) {
+				log.Printf("api: settings import: %s lies inside or around %s; imported anyway so older files still load", row.label, p.label) //nolint:gosec // G706: the labels are fixed text around %q-quoted names
+			}
 		}
 		for _, other := range seen {
 			if sameRepoLocation(other, loc) {
 				return fmt.Sprintf("%s names the same place as an earlier one; two rows over one repository would give every question about it two answers", row.label)
+			}
+			if repoLocationsOverlap(other, loc) {
+				log.Printf("api: settings import: %s lies inside or around an earlier repository; imported anyway so older files still load", row.label) //nolint:gosec // G706: the label is fixed text around a %q-quoted name
 			}
 		}
 		seen = append(seen, loc)
@@ -661,7 +704,7 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// request. They are separate because this function is pure over the file and
 	// those are not, not because the import is allowed to skip them.
 	for i, tv := range exp.NamedRepos {
-		if strings.TrimSpace(tv.Name) == "" {
+		if strings.TrimSpace(tv.Name) == "" && strings.TrimSpace(tv.CompanionOf) == "" {
 			return fmt.Sprintf("repository #%d: needs a name", i+1)
 		}
 		loc := strings.TrimSpace(tv.Repo)
@@ -748,13 +791,16 @@ func exportCadences(v settingsView) []string {
 // summarizeExport builds the preview/summary payload for a validated export.
 func summarizeExport(exp settingsExport) importSummary {
 	return importSummary{
-		SchemaVersion:  exp.SchemaVersion,
-		ExportedAt:     exp.ExportedAt,
-		AppVersion:     exp.AppVersion,
-		OffsiteTargets: len(exp.OffsiteTargets),
-		NamedRepos:     len(exp.NamedRepos),
-		Credentials:    credsPresence(exp.Credentials),
-		SettingsGroups: exportGroups(exp),
+		SchemaVersion:     exp.SchemaVersion,
+		ExportedAt:        exp.ExportedAt,
+		AppVersion:        exp.AppVersion,
+		OffsiteTargets:    len(exp.OffsiteTargets),
+		NamedRepos:        len(exp.NamedRepos),
+		PlacementDefaults: countIfPresent(exp.PlacementDefaults),
+		CopyRules:         countIfPresent(exp.CopyRules),
+		NewTargets:        []newTargetRow{},
+		Credentials:       credsPresence(exp.Credentials),
+		SettingsGroups:    exportGroups(exp),
 	}
 }
 
@@ -835,7 +881,12 @@ func settingsGroups(v settingsView) []string {
 // applyImport writes a validated export: the settings row, a full replace of the
 // off-site targets, and any credentials (re-encrypted with the local APP_KEY). It
 // never touches repos, snapshots or run history.
-func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
+func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
+	installed, err := h.installedForImport(ctx, exp)
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+
 	// Map the imported view onto the CURRENT row, PRESERVING the per-instance
 	// fields the file intentionally omits (auth password, session epoch,
 	// recovery-kit ack, registry-auth blob) and the encrypted credential blobs
@@ -886,7 +937,17 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// Replace the off-site targets with the imported set (a clean, deterministic
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
-	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.predatesZFS, exp.targetsPredate); err != nil {
+	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.Settings, exp.predatesZFS, exp.targetsPredate); err != nil {
+		return err
+	}
+
+	// The placement defaults and copy rules, written here so an imported default
+	// already protects the named repository it points at before the delete loop
+	// below runs.
+	h.svc.placementMu.Lock()
+	err = h.store.ImportPlacement(importedPlacement(exp), installed)
+	h.svc.placementMu.Unlock()
+	if err != nil {
 		return err
 	}
 
@@ -944,28 +1005,76 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 			return err
 		}
 	}
-	_ = r
 	return nil
 }
 
-// replaceOffsiteTargets drops all current off-site targets and re-inserts the
-// imported set, preserving each id + created_at for an exact round-trip. With
-// keepZFS the ZFS destinations stay, because the file cannot describe them,
+// installedForImport reads the containers and VMs installed on the host when
+// the file carries copy rules: a rule on an entry's former name moves to the
+// entry only while nothing installed answers to that name.
+func (h *Handler) installedForImport(ctx context.Context, exp settingsExport) (store.Installed, error) {
+	if exp.CopyRules == nil {
+		return store.Installed{}, nil
+	}
+	containers, err := h.svc.heldContainerNames(ctx)
+	if err != nil {
+		return store.Installed{}, err
+	}
+	vms, err := h.svc.heldVMNames(ctx)
+	if err != nil {
+		return store.Installed{}, err
+	}
+	return store.Installed{Containers: containers, VMs: vms}, nil
+}
+
+// offsiteRepoFromView reads a domain's off-site location straight off the
+// export's own settings block, the view-typed twin of offsiteRepoFromSettings.
+func offsiteRepoFromView(domain string, v settingsView) string {
+	switch domain {
+	case "containers":
+		return v.ContainersOffsite
+	case "vms":
+		return v.VMsOffsite
+	case "flash":
+		return v.FlashOffsite
+	case "config":
+		return v.ConfigOffsite
+	case "files":
+		return v.FilesOffsite
+	case "zfs":
+		return v.ZFSOffsite
+	}
+	return ""
+}
+
+// replaceOffsiteTargets makes the off-site targets the file's set: a target
+// the file carries is updated in place and keeps its id, created_at,
+// observations and direct repository, one it lacks is deleted. The file's
+// sort orders are then settled the way the offsite_targets_primary_slot
+// migration settles them, against fileSettings, the file's own off-site fields,
+// rather than the merged settings just written: a redacted field can be kept at
+// this instance's working location by importedLocation while the row for it
+// lands under a fresh id with nothing to keep, so the row's redacted repo would
+// never match the merged field and the domain would end up with no row on
+// sort_order 0. The file's field and its row were redacted the same way on
+// export, so comparing the file against itself always matches. With keepZFS
+// the ZFS destinations stay as they are, because the file cannot describe them,
 // and a setting the file does not carry keeps the value stored under that id.
-func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool, missing targetKeysMissing) error {
+func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings settingsView, keepZFS bool, missing targetKeysMissing) error {
 	current, err := h.store.ListOffsiteTargets()
 	if err != nil {
 		return err
 	}
-	// Remember each row before the rows are dropped: a location the
-	// file carries redacted must not overwrite the working one this instance
-	// already has for that id (see importedLocation).
+	inFile := make(map[string]bool, len(views))
+	for _, tv := range views {
+		inFile[strings.TrimSpace(tv.ID)] = true
+	}
+	// Remember each row before any row changes: a location the file carries
+	// redacted must not overwrite the working one this instance already has
+	// for that id (see importedLocation).
 	stored := make(map[string]store.OffsiteTarget, len(current))
 	for _, t := range current {
 		stored[t.ID] = t
-	}
-	for _, t := range current {
-		if keepZFS && t.Domain == zfsDomain {
+		if inFile[t.ID] || (keepZFS && t.Domain == zfsDomain) {
 			continue
 		}
 		if err := h.store.DeleteOffsiteTarget(t.ID); err != nil {
@@ -984,7 +1093,19 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool,
 		if known && missing.compression {
 			t.Compression = old.Compression
 		}
-		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
+		saved, err := h.store.UpsertOffsiteTarget(t)
+		if err != nil {
+			return err
+		}
+		if saved.Role != store.RoleOffsite {
+			log.Printf("api: settings import: off-site target %q has the id of a named repository here, so the file's copy was left unapplied", t.Name) //nolint:gosec // G706: the name is %q-quoted
+		}
+	}
+	for _, d := range offsiteConfigDomains {
+		if keepZFS && d == zfsDomain {
+			continue
+		}
+		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
 			return err
 		}
 	}
@@ -1000,29 +1121,38 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool,
 // would put those items silently back on their domain repository and send their
 // next backup somewhere else, which is exactly the failure the delete endpoint
 // refuses outright; an import must not be the way around that refusal.
+//
+// A row the file introduces may become a target's direct repository again,
+// through importedLink; an existing row keeps its own link no matter what
+// the file says, since the upsert below never rewrites companion_of for an
+// id that is already stored.
 func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 	current, err := h.store.ListNamedRepos()
 	if err != nil {
 		return err
 	}
-	currentRepo := make(map[string]string, len(current))
+	stored := make(map[string]store.OffsiteTarget, len(current))
 	imported := make(map[string]bool, len(views))
 	for _, tv := range views {
 		imported[strings.TrimSpace(tv.ID)] = true
 	}
 	for _, t := range current {
-		currentRepo[t.ID] = t.Repo
+		stored[t.ID] = t
 		if imported[t.ID] {
 			continue // replaced below, id and all
 		}
 		// The same count-and-delete transaction the DELETE endpoint uses, so the
 		// import cannot become the way around its refusal.
-		n, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
+		use, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
+		if errors.Is(dErr, store.ErrDirectRepo) {
+			log.Printf("api: settings import: repository %q is the direct repository of a target here, so it stays", h.svc.repoName(t)) //nolint:gosec // G706: the name is %q-quoted
+			continue
+		}
 		if dErr != nil {
 			return dErr
 		}
-		if n > 0 {
-			log.Printf("api: settings import: repository %q is still in use by %d item(s) and is NOT in the imported file — kept", t.Name, n) //nolint:gosec // G706: the name is %q-quoted
+		if use.InUse() {
+			log.Printf("api: settings import: repository %q is not in the imported file but still in use here (items: %d, defaults: %s), so it stays", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
 		}
 	}
 	for _, tv := range views {
@@ -1031,28 +1161,72 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		t.Domain = ""           // a named repository belongs to no single domain
 		t.ID = strings.TrimSpace(tv.ID)
 		t.CreatedAt = tv.CreatedAt
-		wanted := importedLocation(currentRepo[t.ID], t.Repo)
+		wanted := importedLocation(stored[t.ID].Repo, t.Repo)
+		if tv.OffPremises == nil {
+			// The file carries no opinion: an id this instance already has keeps
+			// its stored mark, a brand new row takes the same default a plain
+			// POST would.
+			if _, known := stored[t.ID]; known {
+				t.OffPremises = stored[t.ID].OffPremises
+			} else {
+				t.OffPremises = restic.IsRemoteRepo(wanted)
+			}
+		}
 		// The LOCATION is written through the guarded transaction, exactly as the
 		// delete half is. Writing it straight through the upsert made an import the
 		// way around the refusal the PATCH endpoint exists to enforce: everything
 		// already written stays where it is, so a moved location makes the next
 		// backup succeed into an empty repository. The rest of the row - name,
 		// limits, flags - moves no data and takes the ordinary upsert.
-		t.Repo = currentRepo[t.ID]
+		t.Repo = stored[t.ID].Repo
 		if t.Repo == "" {
 			t.Repo = wanted // a row this instance does not have yet: nothing to move
 		}
-		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
+		if stored[t.ID].Repo == "" {
+			// Only a row this instance does not have yet may claim the target
+			// named in its file entry.
+			var err error
+			if t.CompanionOf, t.CompanionLost, err = h.importedLink(tv.CompanionOf); err != nil {
+				return err
+			}
+			if t.CompanionLost {
+				log.Printf("api: settings import: repository %q belonged to a target that is not here; imported as a plain repository", t.Name) //nolint:gosec // G706: the name is %q-quoted
+			}
+		}
+		if t.Name == "" && t.CompanionOf == "" && stored[t.ID].CompanionOf == "" {
+			// A plain repository needs a name to be told apart. A direct one whose
+			// target the import removed took the target's name then.
+			t.Name = cmp.Or(stored[t.ID].Name, scrubRepoLocation(t.Repo))
+		}
+		saved, err := h.store.UpsertOffsiteTarget(t)
+		if err != nil {
 			return err
 		}
-		if t.Repo != wanted {
-			n, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted)
-			if mErr != nil {
-				return mErr
-			}
-			if n != 0 {
-				log.Printf("api: settings import: repository %q is in use here, so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name) //nolint:gosec // G706: the name is %q-quoted
-			}
+		if saved.Role != store.RoleRepo {
+			log.Printf("api: settings import: repository %q has the id of an off-site target here, so the file's copy was left unapplied", t.Name) //nolint:gosec // G706: the name is %q-quoted
+		}
+		if t.Repo == wanted {
+			continue
+		}
+		// A direct repository keeps its location the way it keeps its other
+		// mirrored fields: its target writes there, and the PATCH refuses the
+		// same move.
+		if stored[t.ID].CompanionOf != "" {
+			log.Printf("api: settings import: repository %q takes its location from its target, so the file's %s was not applied", h.svc.repoName(stored[t.ID]), shortRepoName(wanted)) //nolint:gosec // G706: the name is %q-quoted and the location is shortened
+			continue
+		}
+		// The mark describes the location and moves with it; a file that carries
+		// one is taken at its word.
+		mark := restic.IsRemoteRepo(wanted)
+		if tv.OffPremises != nil {
+			mark = *tv.OffPremises
+		}
+		use, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted, mark)
+		if mErr != nil {
+			return mErr
+		}
+		if use.InUse() {
+			log.Printf("api: settings import: repository %q is in use here (items: %d, defaults: %s), so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
 		}
 	}
 	return nil

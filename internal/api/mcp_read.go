@@ -257,6 +257,7 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		repositories = append(repositories, map[string]any{
 			"name":                c.Name,
 			"primary":             c.Primary,
+			"offsite":             c.Offsite,
 			"remote":              c.Remote,
 			"at":                  c.At,
 			"usedBytes":           c.Used,

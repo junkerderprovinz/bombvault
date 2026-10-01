@@ -1,5 +1,8 @@
 # Off-site & Wiederherstellung
 
+!!! note "Off-site-Kopien warten nach einem Neuaufbau"
+    Wenn Schritt 4 Einträge ohne die alten Einstellungen neu aufbaut, pausiert die Off-site-Replikation dieser Bereiche, bis die Ablage-Vorgabe bestätigt ist. Siehe [Ablage pro Element](#placement).
+
 Lokale Backups schützen dich vor einem verlorenen Container oder einem schlechten Update. Off-site-Replikation und ein getestetes Recovery-Kit schützen dich vor der ganzen Box, Ransomware oder einem Brand. Diese Seite behandelt das Replizieren ins Off-site, das Manipulationssicher-Machen dieser Kopie, den Nachweis der Wiederherstellbarkeit und die Wiederherstellung, wenn BombVault selbst verschwunden ist.
 
 ## Off-site-Replikation
@@ -12,14 +15,44 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 - **Bandbreitenlimits** (Einstellungen, Off-site) begrenzen die restic-Upload-/Download-Rate, sodass die Replikation dein WAN nicht auslastet.
 - Eine **Replikationsanzeige** zeigt, welcher Bereich gerade repliziert, während es läuft (auf seiner Seite und im Dashboard). Es ist eine aktive Anzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt bereitstellt.
 
-!!! note "Direkt aus dem Off-site wiederherstellen"
-    Jeder Backup-Browser hat einen Schalter **Lokal / Offsite**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
+!!! note "Von jedem Ort wiederherstellen"
+    Jeder Container, jede VM, jedes Ordner-Set, der Flash und die App-Konfiguration listen ihre Backups als eine Zeitleiste über alle Orte, an denen ein Backup liegt. Ein nach B2 kopiertes Backup erscheint einmal, markiert mit jedem Ort, der es hält. Eine Wiederherstellung nimmt den ersten erreichbaren Ort, beginnend mit dem Repository, in das das Element geschrieben wird, und du kannst pro Zeile einen anderen Ort wählen. Off-site-Orte werden erst gelesen, wenn du sie öffnest. Das Löschen an einem Ort prüft zuerst die anderen und sagt, ob es die letzte Kopie war.
+
+## Ablage pro Element {#placement}
+
+Jede Container-, VM- und Ordner-Set-Karte hat eine Zeile **Ablage** mit drei Segmenten:
+
+- **Lokal** schreibt das Element in das unter **Gespeichert auf** gezeigte Repository und kopiert es nirgendwohin. Nutze es für Daten, die schon eine zweite Kopie haben, zum Beispiel eine Freigabe, die auf einem NAS liegt.
+- **Lokal + Off-site** schreibt es zusätzlich dorthin und kopiert es zu den unter **Kopie nach** angehakten Zielen, ein Chip pro Off-site-Ziel des Bereichs. Ein Häkchen entfernen, und das Ziel bekommt von diesem Element nichts Neues mehr.
+- **Nur Off-site** schreibt das Element direkt an den Ort unter **Senden an**: ein direktes Repository neben einem Off-site-Ziel, oder ein entferntes Repository, das du unter Einstellungen, Speicher, Repositories einrichtest.
+
+Der Ort ist ab dem ersten Backup des Elements fest, weil BombVault Backups nie zwischen Repositories verschiebt. Die Kopien können sich jederzeit ändern. Ein Ziel, das ein Element nicht mehr bekommt, behält seine vorhandenen Kopien und kürzt sie beim nächsten Off-site-Lauf des Bereichs auf seine eigene Aufbewahrung; **In B2 löschen** auf der Karte entfernt sie sofort. Existieren manche dieser Kopien nirgendwo sonst, listet die Bestätigung sie nach Datum auf und fragt nach dem Namen des Elements. Bei Append-only-Zielen lässt sich nicht löschen.
+
+Unter der Zeile zeigt die Karte, wohin das Element geht und was tatsächlich da ist: an wie vielen Standorten es liegt, wann jedes Ziel zuletzt gesehen wurde, und ob 3-2-1 erfüllt ist. Ein Standort ist der Server mit den Originaldaten, jedes Off-site-Ziel und jedes als **Außer Haus** markierte Repository. BombVault prüft Kopien und Standorte; den Teil "zwei Medien" von 3-2-1 prüft es nicht.
+
+### Ablage-Vorgaben
+
+Einstellungen, Speicher, **Ablage-Vorgaben** haben eine Zeile pro Bereich mit denselben drei Segmenten. Die Kopien gelten sofort für jedes Element ohne eigene Wahl, sowie für die Projektordner von Compose-Stacks. Der Ort gilt für ein neues Element bei seinem ersten Backup; ihn zu ändern verschiebt keine Backups. Vor dem Speichern nennt die Zeile jedes Ziel, das Elemente gewinnt oder verliert, und wie viele Snapshots das bedeutet. **Auf Einträge ohne Backups anwenden** setzt jedes Element ohne bisheriges Backup auf die Vorgabe zurück.
+
+Ein neues Off-site-Ziel bekommt jedes Element, das nicht auf Lokal steht. Der Dialog, der es hinzufügt, nennt die Anzahl der Elemente und, wo bekannt, wie viel Verlauf das ist, und bietet an, die Elemente auszulassen, die schon bei anderen Zielen ausgeschlossen sind.
+
+### Direkte Repositories
+
+Wählst du das direkte Repository eines Ziels unter Nur Off-site, öffnet sich ein Dialog mit einem vorgeschlagenen Ort neben dem Ziel, zum Beispiel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, und ein Verbindungstest, der nichts anlegt. **Anlegen und nutzen** erstellt das Repository und richtet das Element darauf aus. Ein direktes Repository übernimmt Schlüssel, Speicherklasse, Limits, Append-only-Einstellung und Aufbewahrung des Ziels und ändert sich mit ihnen; die Repositories-Karte zeigt es schreibgeschützt. Kann ein neuer Schlüssel für das Ziel es nicht öffnen, behält das direkte Repository seinen bisherigen Schlüssel, und das Speichern sagt das. Seine Snapshots tragen das Tag `bv:direct`, und jeder andere Aufbewahrungslauf lässt sie stehen, sodass ein direktes Repository, das die Verbindung zu seinem Ziel verloren hat, nie nach den lokalen Regeln altert. B2 wird über seinen S3-Endpunkt angesprochen, mit der Schlüssel-ID und dem Anwendungsschlüssel als S3-Zugangsdaten; ein Schlüssel, der auf den eigenen Ordner des Ziels beschränkt ist, erreicht den Ordner daneben nicht, beschränke ihn deshalb stattdessen auf den Ordner über dem Ziel.
+
+### Außer Haus
+
+Ein benanntes Repository lässt sich auf der Repositories-Karte als **Außer Haus** markieren. Entfernte Repositories starten markiert; schalte es für einen rest-server im selben Gebäude aus. Die Markierung zählt nur bei Standorten und 3-2-1 auf den Karten. Sie ändert keine Kopie.
+
+### Nach einem Neuaufbau
+
+Kopier-Entscheidungen leben in BombVaults eigenen Einstellungen. Nach einem Neuaufbau über Backups entdecken ohne wiederhergestelltes `/config` sind sie weg, und alles zu kopieren würde die Elemente, die du ausgelassen hattest, wieder nach B2 schicken. Die Off-site-Replikation jedes neu aufgebauten Bereichs pausiert deshalb. Das Dashboard zeigt es in Gelb, und Ablage-Vorgaben bieten **Vorgabe bestätigen** mit einer Vorschau, was der nächste Lauf kopiert, und den Namen in den Backups, die keinen Eintrag haben, die du dort auslassen kannst. Nur die Bestätigung beendet die Pause; eine Einstellungsdatei zu importieren bringt Regeln und Vorgaben zurück, beendet die Pause aber nicht.
 
 ## Entfernte primäre Repositories {#remote-primary-repositories}
 
-Der Sicherungspfad einer Domäne (Einstellungen, Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
+Der Sicherungspfad einer Domäne (Einstellungen, Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
 
-Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Remote**:
+Jedes der sechs Pfadfelder (Container, VMs, Flash, Selbst-Backup, Ordner, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Remote**:
 
 - **Lokal** zeigt den gewohnten Ordner-Browser.
 - **Remote** tauscht ihn gegen ein einfaches URL-Feld, dazu eine Schaltfläche, die denselben Dialog für Verbindungstest und Zugangsdaten öffnet, den auch Off-site-Ziele verwenden, nur eben für dieses primäre Repo. Von dort bekommst du:
@@ -67,7 +100,7 @@ Ein echtes Kippen von geschützt zu ungeschützt löst einen einzelnen Alarm aus
 
 BombVault bietet zwei Stufen des Nachweises, dass deine Backups tatsächlich wiederherstellbar und nicht nur vorhanden sind.
 
-- **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung) und zeigt pro Bereich ein Abzeichen *zuletzt als wiederherstellbar geprüft*. Die Taktung liegt unter Einstellungen, Zeitpläne; das Abzeichen unter Einstellungen, Integrität.
+- **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung) und zeigt pro Bereich ein Abzeichen *Wiederherstellbar verifiziert*. Die Taktung liegt unter Einstellungen, Zeitpläne; das Abzeichen unter Einstellungen, Integrität.
 - **DR-Übungen (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in eine Wegwerf-Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Dies beweist, dass du aus dem Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet.
 
 Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gelb / rot-Haltung pro Bereich zusammen, mit einer altersgestempelten Checkliste (Off-site konfiguriert, Append-only verifiziert, Replikation aktuell, Wiederherstellungsübung bestanden, Verschlüsselung an, Kürzungsstrategie gesetzt). Jede rote Zeile verlinkt tief zur Behebung, und die Karte wird nur bei verifizierten Fakten grün.
@@ -118,7 +151,7 @@ Oben stehen die Einzelteile. Hier ist ein vollständiger Aufbau mit echten Werte
 
 Zwei Kisten: **TOWER** betreibt die Container und schiebt die Backups, **VAULT** nimmt sie an und erzwingt die Unveränderlichkeit. Setze deine eigenen Namen, Adressen und Freigabepfade ein.
 
-**1. Auf VAULT den Append-only-Server aufsetzen.** In BombVault auf TOWER unter *Einstellungen → Off-site → geführte Einrichtung* **rest-server** wählen und das Rezept erzeugen. Den Reiter **Unraid-Vorlage (XML)** kopieren, auf VAULT als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` speichern, dann *Docker → Add Container* und **rest-server** aus der Vorlagenliste wählen. Vor dem Start die angezeigte `htpasswd`-Zeile auf VAULT in `/mnt/user/appdata/rest-server/.htpasswd` schreiben. Das Einmal-Passwort wird nur einmal angezeigt und nie gespeichert, kopiere es jetzt. Diese Zeile trägt dasselbe Passwort, für dich schon bcrypt-gehasht: der Klartext gehört in die REST-Zugangsdaten auf TOWER, die gehashte Zeile in die `.htpasswd` auf VAULT. Du musst selbst nichts hashen.
+**1. Auf VAULT den Append-only-Server aufsetzen.** In BombVault auf TOWER unter *Einstellungen → Off-site → Einrichten* **rest-server** wählen und das Rezept erzeugen. Den Reiter **Unraid-Vorlage (XML)** kopieren, auf VAULT als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` speichern, dann *Docker → Add Container* und **rest-server** aus der Vorlagenliste wählen. Vor dem Start die angezeigte `htpasswd`-Zeile auf VAULT in `/mnt/user/appdata/rest-server/.htpasswd` schreiben. Das Einmal-Passwort wird nur einmal angezeigt und nie gespeichert, kopiere es jetzt. Diese Zeile trägt dasselbe Passwort, für dich schon bcrypt-gehasht: der Klartext gehört in die REST-Zugangsdaten auf TOWER, die gehashte Zeile in die `.htpasswd` auf VAULT. Du musst selbst nichts hashen.
 
     `--append-only` im OPTIONS-Feld stehen lassen. Es ist der ganze Sinn der Sache: ohne das ist VAULT wieder eine gewöhnliche Freigabe.
 
@@ -136,7 +169,7 @@ Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trag
 | **NICHT geschützt** | VAULT hat ein Löschen angenommen. `--append-only` fehlt oder wurde entfernt. |
 | **unentschieden** | Weder noch. Meist ist die URL nicht die, die restic selbst benutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
 
-**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Kopplung → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
+**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Allgemein → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
 
 !!! warning "Der Ort ist ein Pfad **innerhalb** des Containers, relativ zum Host-Mount geschrieben"
     Trage `user/appdata/rest-server/bombvault-containers/containers` ein, **nicht** `/mnt/user/appdata/…`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts an anderer Stelle eingehängt ist; ein absoluter Host-Pfad existiert dort nicht. Fügst du trotzdem einen ein, nennt BombVault dir jetzt den relativen Pfad, den du stattdessen brauchst.
@@ -156,7 +189,7 @@ Ein eigener Reiter **Wiederherstellung** führt eine frische oder neu aufgebaute
 5. **Stellt Container und VMs in einem Rutsch wieder her** (gestoppt belassen, sodass du sie bewusst startest) und listet Dateisätze und ZFS-Elemente auf, die du einzeln wiederherstellst; ZFS-Elemente kommen ausgeschaltet zurück. Dein Recovery-Kit ist einen Klick entfernt.
 
 !!! tip "Geplante Migration versus Katastrophe"
-    Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren und importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
+    Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren / importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
 
 ### Wiederherstellung aus einem anderen BombVault-Repo {#restore-from-another-bombvault-repo}
 

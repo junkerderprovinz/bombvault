@@ -31,14 +31,14 @@ Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/m
 
 Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
-Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**. Fiecare câmp de cale are și un comutator **Local / La distanță** integrat: o cale poate fi un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
+Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**. Fiecare câmp de cale are și un comutator **Local / La distanță** integrat: o cale poate fi un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Verificarea integrării cu gazda"
+!!! note "Verificare integrare gazdă"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
 
 ## Detectarea surselor de copie de rezervă {#backup-source-detection}
 
-Pentru fiecare container, BombVault alege singur ce montări bind și ce volume denumite intră în copie. O cale este preluată de îndată ce se aplică oricare dintre punctele următoare (rezultatul poate fi oricând suprascris per container, în **Căile de copiere** ale acestuia):
+Pentru fiecare container, BombVault alege singur ce montări bind și ce volume denumite intră în copie. O cale este preluată de îndată ce se aplică oricare dintre punctele următoare (rezultatul poate fi oricând suprascris per container, în secțiunea **Foldere de salvat** a acestuia):
 
 - **Potrivire cu un segment al rădăcinii de date:** sursa de pe gazdă a montării bind conține unul dintre segmentele din `DATA_ROOT_SEGMENTS` ca element complet de cale (implicit doar `appdata`).
 - **Volumele Docker denumite** sunt incluse întotdeauna, pentru că nu au un echivalent de unică folosință și deci nu e nimic de filtrat, **dar numai atunci când calea reală de stocare a volumului pe gazdă este ea însăși accesibilă prin montarea Host Data**, exact ca orice altă cale de gazdă pe care BombVault o salvează. Driverul implicit pentru volume locale așază un volum sub rădăcina de date a demonului însuși, adică `/var/lib/docker/volumes/<nume>/_data` dacă nu ai schimbat nimic (verifică cu `docker info -f '{{.DockerRootDir}}'`). Acel loc NU este acoperit de montarea Host Data îngustă, cu un singur director, pe care fișierul `docker-compose.yml` generic o folosește implicit. Un volum inaccesibil este sărit în tăcere, nu este o eroare. Ca volumele denumite să fie salvate cu adevărat pe o gazdă generică, îndreaptă Host Data (și `HOST_SOURCE_ROOT`) către un director părinte comun care acoperă și rădăcina de date a Docker: compromisul este descris în comentariul Host Data din fișierul compose (Unraid ocolește asta montând, din același motiv, întregul `/mnt`, propria sa convenție universală de nivel superior).
@@ -73,7 +73,7 @@ Configurare rapidă:
 
 1. **Setări, Integrări, SSH al gazdei:** copiază cheia publică afișată.
 2. Adaug-o la `/root/.ssh/authorized_keys` al Unraid (persistată de asemenea în flash astfel încât să supraviețuiască reporniri).
-3. Apasă **Test connection**.
+3. Apasă **Testează conexiunea**.
 
 Șablonul adaugă `--add-host=host.docker.internal:host-gateway` astfel încât containerul să poată ajunge la gazdă. Setează `LIBVIRT_HOST` la IP-ul LAN al Unraid dacă acel nume nu se rezolvă (de exemplu când containerul rulează pe o rețea `br0.x` personalizată). Dacă ai schimbat portul SSH al Unraid, setează `LIBVIRT_SSH_PORT` să corespundă. **Instantaneele live** au nevoie suplimentar de qemu guest agent în VM și de discul pe `/mnt/cache` (nu `/mnt/user`).
 
@@ -84,7 +84,7 @@ Configurare rapidă:
 
 Configurează o replică off-site în pagina **Setări, Extern**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
 
-- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Credențialele cloud partajate** sunt stocate criptat sub Setări, Acces cloud, Credențiale cloud partajate.
 - **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Integrări, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
 - **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort, pe lângă un depozit primar (de obicei local). Fiecare domeniu are propria programare off-site, plus un buton **Replică acum**.
@@ -106,11 +106,11 @@ Detecția anomaliilor se configurează în cardul **Anomalii** din **Setări, In
 | **Trimite o notificare pentru** | Doar constatări critice | Gravitatea minimă care trimite un mesaj prin canalele configurate în Notificări. Eșecurile repetate ale backupurilor și dumpurilor și verificările de restaurare programate eșuate trimit deja propriul mesaj și nu sunt trimise de două ori. |
 | **Păstrează copiile vechi când o sursă se micșorează brusc sau este rescrisă** | Pornit | Cât timp un element are o constatare deschisă pentru o sursă aproape goală, o micșorare puternică sau cea mai mare parte a datelor salvată din nou, retenția și curățarea lasă în pace backupurile lui vechi. Confirmă constatarea sau marcheaz-o ca așteptată ca să le eliberezi. |
 
-Fiecare element poate avea propria sensibilitate și propriul minim de notificare. Setează-le în fila **Elemente** a paginii **Anomalii** sau în panoul elementului: secțiunea de foldere a unui container și setările unei VM (ambele în modul avansat), editorul de foldere al unui set de foldere și paginile **Flash** și **Auto-backup**. Pentru un element ZFS se află în editorul lui de pe pagina **ZFS** și se aplică fiecărui set de date din arborele lui.
+Fiecare element poate avea propria sensibilitate și propriul minim de notificare. Setează-le pe pagina **Anomalii**, unde un element cu constatări deschise le are la **Monitorizare** pe cardul lui, iar orice alt element le deschide din cardul **Nimic deschis**, sau în panoul elementului: secțiunea de foldere a unui container și setările unei VM (ambele în modul avansat), editorul de foldere al unui set de foldere și paginile **Flash** și **Auto-backup**. Pentru un element ZFS se află în editorul lui de pe pagina **ZFS** și se aplică fiecărui set de date din arborele lui.
 
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 
-Cardul **Export și import setări** de pe pagina Setări, Sistem scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
+Cardul **Exportă / importă setările** de pe pagina Setări, Sistem scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
 
 !!! warning "Exportul poate conține credențiale"
     Alegi dacă incluzi credențialele off-site, de notificare și ale brokerului MQTT în fișier. Cu credențialele incluse, exportul este la fel de sensibil ca kitul tău de recuperare, deci păstrează-l undeva în siguranță. Fără ele, fișierul conține doar setări nesecrete.

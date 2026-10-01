@@ -1,5 +1,8 @@
 # Ekstern lagring og gjenoppretting
 
+!!! note "Eksterne kopier venter etter en ombygging"
+    Når steg 4 bygger opp igjen oppføringer uten de gamle innstillingene, settes ekstern replikering av de domenene på pause til standardplasseringen er bekreftet. Se [Plassering per element](#placement).
+
 Lokale sikkerhetskopier beskytter deg mot en tapt container eller en dårlig oppdatering. Ekstern replikering og et testet gjenopprettingssett beskytter deg mot hele boksen, løsepengevirus eller en brann. Denne siden dekker å replikere eksternt, å gjøre den kopien manipuleringssikker, å bevise at du kan gjenopprette, og å komme deg tilbake når selve BombVault er borte.
 
 ## Ekstern replikering
@@ -12,14 +15,44 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 - **Båndbreddegrenser** (Innstillinger, Off-site) begrenser resticts opplastings-/nedlastingshastighet så replikering ikke metter WAN-et ditt.
 - En **replikeringsindikator** viser hvilket domene som replikerer mens det pågår (på siden sin og på Dashboardet). Det er en aktiv indikator, ikke en prosentbjelke, fordi `restic copy` ikke eksponerer noen maskinlesbar fremdrift.
 
-!!! note "Gjenopprett rett fra ekstern"
-    Hver sikkerhetskopileser har en **Lokal / Ekstern**-bryter, så hvis et lokalt repo går tapt eller blir korrupt, kan du liste og gjenopprette direkte fra den eksterne replikaen. Sletting er per kilde: å fjerne en sikkerhetskopi påvirker bare kopien du ser på.
+!!! note "Gjenopprett fra hvilket som helst sted"
+    Hver container, VM, filsett, flashen og appkonfigurasjonen lister sikkerhetskopiene sine som én tidslinje på tvers av alle stedene en sikkerhetskopi finnes. En sikkerhetskopi kopiert til B2 vises én gang, merket med hvert sted som har den. En gjenoppretting bruker det første stedet den kan nå, med utgangspunkt i depotet elementet er skrevet til, og du kan velge et annet sted per rad. Eksterne steder leses bare når du åpner dem. Sletting på ett sted sjekker de andre først og sier om det var siste kopi.
+
+## Plassering per element {#placement}
+
+Hvert kort for container, VM og filsett har en **Plassering**-rad med tre segmenter:
+
+- **Lokal** skriver elementet til depotet vist under **Lagret på** og kopierer det ingen steder. Bruk det for data som allerede har en ekstra kopi, for eksempel en deling som ligger på en NAS.
+- **Lokal + ekstern** skriver det dit også og kopierer det til målene som er huket av under **Kopier til**, én chip per eksternt mål i domenet. Fjern haken fra en chip, og det målet får ingenting nytt fra dette elementet.
+- **Kun ekstern** skriver elementet rett til stedet under **Send til**: et direkte depot ved siden av et eksternt mål, eller et fjernt depot du har satt opp under Innstillinger, Lagring, Depoter.
+
+Plasseringen er fast fra elementets første sikkerhetskopi, fordi BombVault aldri flytter sikkerhetskopier mellom depoter. Kopiene kan endres når som helst. Et mål som ikke lenger får et element, beholder kopiene det har og trimmer dem til sin egen oppbevaring ved domenets neste eksterne kjøring; **Slett hos B2** på kortet fjerner dem med det samme. Når noen av de kopiene ikke finnes noe annet sted, viser bekreftelsen dem etter dato og ber om elementets navn. Append-only-mål kan det ikke slettes fra.
+
+Under raden sier kortet hvor elementet går og hva som faktisk finnes: hvor mange steder som har det, når hvert mål sist ble sett, og om 3-2-1 er oppfylt. Et sted er serveren med originaldataene, hvert eksternt mål og hvert depot merket **Utenfor bygningen**. BombVault sjekker kopier og steder; det sjekker ikke «to medier»-delen av 3-2-1.
+
+### Standardplasseringer
+
+Innstillinger, Lagring, **Standardplasseringer** har én rad per domene med de samme tre segmentene. Kopiene gjelder med det samme for hvert element uten eget valg, og for prosjektmappene til Compose-stabler. Plasseringen gjelder for et nytt element ved dets første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring lister raden opp hvert mål som får eller mister elementer, og hvor mange øyeblikksbilder det betyr. **Bruk på elementer uten sikkerhetskopier** setter hvert element som ennå ikke har en sikkerhetskopi, tilbake på standarden.
+
+Et nytt eksternt mål mottar hvert element som ikke er satt til Lokal. Dialogen som legger det til, sier hvor mange elementer og, der det er kjent, hvor mye historikk det er, og tilbyr å utelate elementene som allerede er utelatt fra andre mål.
+
+### Direkte depoter
+
+Å velge et måls direkte depot under Kun ekstern åpner en dialog med en foreslått plassering ved siden av målet, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter depotet og peker elementet dit. Et direkte depot overtar målets nøkkel, lagringsklasse, grenser, append-only-innstilling og oppbevaring, og endres med dem; Depoter-kortet viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte depotet nøkkelen det har, og lagringen sier fra om det. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde lar dem være, så et direkte depot som har mistet lenken til målet sitt, aldri eldes etter de lokale reglene. B2 nås via S3-endepunktet, med nøkkel-ID-en og applikasjonsnøkkelen angitt som S3-legitimasjon; en nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av, så begrens i stedet nøkkelen til mappen over målet.
+
+### Utenfor bygningen
+
+Et navngitt depot kan merkes **Utenfor bygningen** på Depoter-kortet. Fjerndepoter starter merket; slå det av for en rest-server i samme bygning. Merket teller bare med i steder og 3-2-1 på kortene. Det endrer ingen kopi.
+
+### Etter en ombygging
+
+Kopivalgene lever i BombVaults egne innstillinger. Etter en ombygging via Oppdag uten et gjenopprettet `/config` er de borte, og å kopiere alt ville sendt elementene du hadde utelatt, til B2 igjen. Ekstern replikering av hvert ombygde domene settes derfor på pause. Dashboardet viser det i rav, og Standardplasseringer tilbyr **Bekreft standard** med en forhåndsvisning av hva neste kjøring kopierer, og navnene i sikkerhetskopiene som mangler en oppføring, som du kan utelate der. Bare bekreftelsen avslutter pausen; å importere en innstillingsfil bringer tilbake regler og standarder, men avslutter den ikke.
 
 ## Eksterne primære arkiver {#remote-primary-repositories}
 
-Et domenes sti for sikkerhetskopi (Innstillinger, Lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `b2:...`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
+Et domenes sti for sikkerhetskopi (Innstillinger, Lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
 
-Hvert av de seks stifeltene (Containere, Virtuelle maskiner, Flash, Konfigurasjon, Filer, ZFS-datasett) har en bryter **Lokal / Ekstern** rett ved siden av:
+Hvert av de seks stifeltene (Kontainere, VM-er, Flash, Auto-sikkerhetskopi, Mapper, ZFS-datasett) har en bryter **Lokal / Ekstern** rett ved siden av:
 
 - **Lokal** viser den kjente mappeutforskeren.
 - **Ekstern** bytter den ut med et enkelt URL-felt, pluss en knapp som åpner den samme dialogen for tilkoblingstest og påloggingsdetaljer som off-site-destinasjoner bruker, bare stilt inn for dette primære arkivet. Derfra får du:
@@ -67,7 +100,7 @@ En ekte beskyttet-til-ubeskyttet-vending utløser et enkelt varsel.
 
 BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gjenopprettbare, ikke bare til stede.
 
-- **Gjenopprettingsverifiseringsøvelser (lokale).** BombVault kjører jevnlig `restic check --read-data-subset` (avgrenset, aldri en disk-fyllende full gjenoppretting) og viser et *sist verifisert gjenopprettbar*-merke per domene. Kadensen ligger på Innstillinger, Tidsplaner; merket på Innstillinger, Integritet.
+- **Gjenopprettingsverifiseringsøvelser (lokale).** BombVault kjører jevnlig `restic check --read-data-subset` (avgrenset, aldri en disk-fyllende full gjenoppretting) og viser et *Verifisert gjenopprettbar*-merke per domene. Kadensen ligger på Innstillinger, Tidsplaner; merket på Innstillinger, Integritet.
 - **DR-øvelser (ekstern).** BombVault gjenoppretter et ekte mål fra det eksterne repoet inn i en engangs-sandkasse, verifiserer det fil-for-fil og byte-for-byte, og rydder deretter opp. Dette beviser at du kan komme deg tilbake fra ekstern, ikke bare at repoet svarer.
 
 **Poengkortet for løsepengevirusbeskyttelse** på Dashboardet ruller dette opp i en grønn / gul / rød holdning per domene, med en aldersstemplet sjekkliste (ekstern konfigurert, append-only verifisert, replikering oppdatert, gjenopprettingsøvelse bestått, kryptering på, beskjæringsstrategi satt). Hver rød rad dyplenker til fiksen, og kortet blir bare grønt på verifiserte fakta.
@@ -118,7 +151,7 @@ Over beskrives delene. Her er ett komplett oppsett med ekte verdier, for deler e
 
 To maskiner: **TOWER** kjører containerne og sender sikkerhetskopiene, **VAULT** tar imot dem og håndhever uforanderligheten. Bytt ut med dine egne navn, adresser og delingsstier.
 
-**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Off-site → veiledet oppsett*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
+**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Off-site → Sett opp*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
 
     La `--append-only` bli stående i OPTIONS-feltet. Det er hele poenget: uten det er VAULT en vanlig deling igjen.
 
@@ -136,7 +169,7 @@ Første ledd i stien er htpasswd-brukeren, det andre er arkivet. Skriv inn den g
 | **IKKE beskyttet** | VAULT godtok en sletting. `--append-only` mangler eller er fjernet. |
 | **uavklart** | Verken eller. Som regel er adressen ikke den restic selv bruker, eller legitimasjonen er endret. Ingenting registreres, og ingen varsling utløses. |
 
-**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Paring → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
+**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Generelt → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
 
 !!! warning "Plasseringen er en sti **inne i** containeren, skrevet relativt til vertsmonteringen"
     Skriv inn `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kjører i en container der vertens `/mnt` er montert et annet sted; en absolutt vertssti finnes ikke der. Limer du inn en, forteller BombVault deg nå den relative stien du skal bruke i stedet.
@@ -156,7 +189,7 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 5. **Gjenoppretter containerne og VM-ene på én gang** (la stå stoppet, så du starter dem bevisst) og viser filsettene og ZFS-elementene som du gjenoppretter ett om gangen; ZFS-elementer kommer tilbake slått av. Gjenopprettingssettet ditt er ett klikk unna.
 
 !!! tip "Planlagt migrering versus katastrofe"
-    Veiledet gjenoppretting gjenoppretter BombVaults egne innstillinger fra en sikkerhetskopi. For en *planlagt* flytting til en ny boks kan du i stedet ta med konfigurasjonen din direkte via kortet **Eksporter og importer innstillinger** (en portabel JSON-fil). Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
+    Veiledet gjenoppretting gjenoppretter BombVaults egne innstillinger fra en sikkerhetskopi. For en *planlagt* flytting til en ny boks kan du i stedet ta med konfigurasjonen din direkte via kortet **Eksporter / importer innstillinger** (en portabel JSON-fil). Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 
 ### Gjenopprett fra et annet BombVault-repo {#restore-from-another-bombvault-repo}
 

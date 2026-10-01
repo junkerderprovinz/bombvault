@@ -11,26 +11,38 @@ import { createPortal } from "react-dom";
 import {
   listFileSets,
   createFileSet,
+  createDirectRepo,
   patchFileSet,
   deleteFileSet,
   deleteFileSetBackups,
   backupFileSet,
   backupFilesAll,
-  fileSetSnapshots,
   restoreFileSet,
   listSnapshotFilesFileSet,
   restoreFileSetFiles,
   discoverFiles,
-  deleteSnapshot,
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { AnomalyItem, BrowseResponse, ItemChecks, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type {
+  AnomalyItem,
+  BrowseResponse,
+  ItemChecks,
+  FileSetView,
+  OkEnvelope,
+  PlacementView,
+  FileEntry,
+  FileSetPresetResponse,
+} from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { PageTitle } from "../components/PageTitle";
 import { SelectionTree } from "../components/SelectionTree";
-import { RepoPicker } from "../components/RepoPicker";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { PlacementDraft, type PlacementDraftValue } from "../components/placement/PlacementDraft";
+import { PlacementRow } from "../components/placement/PlacementRow";
+import { placementErrorText } from "../lib/placementCodes";
+import { subscribePlacement } from "../lib/placementEvents";
+import { reposChanged, subscribeRepos } from "../lib/useNamedRepos";
+import type { RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
@@ -41,13 +53,12 @@ import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { SizeBreakdown } from "../components/SizeBreakdown";
-import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
-import { Advanced, useAdvanced } from "../lib/advanced";
+import { useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
@@ -62,11 +73,12 @@ import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
 import { IconRestore } from "../components/Sidebar";
 import { IconDisclosure } from "../components/IconDisclosure";
+import { SNAPSHOT_MISSING } from "../lib/timeline";
+import { Timeline } from "../components/timeline/Timeline";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
-import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 
@@ -200,6 +212,7 @@ function FileSetFileBrowser({
   hostMountRoot,
   restoreFolder,
   otherActive,
+  onMissing,
   t,
 }: {
   set: FileSetView;
@@ -208,6 +221,7 @@ function FileSetFileBrowser({
   hostMountRoot: string;
   restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
+  onMissing: () => void;
   t: T;
 }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -228,6 +242,7 @@ function FileSetFileBrowser({
     cancelledRef,
     start: async () => {
       const res = await restoreFileSetFiles(set.id, snapshotId, [...selected], folder.trim(), true, source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
       if (res.ok) setRestoredTarget(res.target ?? "");
       return res;
     },
@@ -347,8 +362,9 @@ function FileSetRestoreControl({
   hostMountRoot,
   restoreFolder,
   otherActive,
+  onMissing,
+  lead,
   t,
-  trailing,
 }: {
   set: FileSetView;
   snapshotId: string;
@@ -356,10 +372,10 @@ function FileSetRestoreControl({
   hostMountRoot: string;
   restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
+  onMissing: () => void;
+  /** The view's one accent restore goes to the timeline's lead row. */
+  lead: boolean;
   t: T;
-  /** Rendered at the end of the destination row, after the Restore button. It
-   *  is a prop because it has to join this component's own flex row. */
-  trailing?: ReactNode;
 }) {
   // Without a path the server cannot restore in place, so only a folder works.
   const noPath = set.path === "";
@@ -378,8 +394,11 @@ function FileSetRestoreControl({
     kind: "restore",
     matchRun: (r) => r.domain === "files" && r.target === set.name,
     cancelledRef,
-    start: () =>
-      restoreFileSet(set.id, snapshotId, true, dest === "folder" ? targetPath : "", source),
+    start: async () => {
+      const res = await restoreFileSet(set.id, snapshotId, true, dest === "folder" ? targetPath : "", source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
+      return res;
+    },
   });
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
@@ -440,7 +459,7 @@ function FileSetRestoreControl({
           <Button
             label={t("snapshots.restore")}
             labelKey="snapshots.restore"
-            tone="accent"
+            tone={lead ? "accent" : "neutral"}
             onClick={() => void handleRestore()}
             disabled={isPending || checking || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
             busy={isPending || checking}
@@ -453,9 +472,6 @@ function FileSetRestoreControl({
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
-        {/* Pushed to the far end, so the delete badge does not read as a
-            further restore step. */}
-        {trailing && <span className="ms-auto flex items-center">{trailing}</span>}
       </div>
       {/* Target folder picker for the non-destructive whole-set extract */}
       {dest === "folder" && (
@@ -488,120 +504,10 @@ function FileSetRestoreControl({
           hostMountRoot={hostMountRoot}
           restoreFolder={restoreFolder}
           otherActive={otherActive}
+          onMissing={onMissing}
           t={t}
         />
       )}
-      {confirmDialog}
-    </div>
-  );
-}
-
-// FileSetSnapshotRow and FileSetRestorePanel follow VMSnapshotRow and
-// VMRestorePanel.
-function FileSetSnapshotRow({
-  snap,
-  set,
-  source,
-  hostMountRoot,
-  restoreFolder,
-  flagged,
-  preselected,
-  onDeleted,
-  t,
-}: {
-  snap: Snapshot;
-  set: FileSetView;
-  source: RepoSource;
-  hostMountRoot: string;
-  restoreFolder: string;
-  /** An open data-loss finding was raised on this snapshot. */
-  flagged: boolean;
-  /** A finding's restore link asked for this snapshot, so the row stands out
-   *  from its neighbours. */
-  preselected: boolean;
-  onDeleted: () => void;
-  t: T;
-}) {
-  const progressMap = useProgress();
-  const running = anyActive(progressMap);
-  // Delete only waits for this set's own backup or restore, as in the VM panel.
-  const busy = progressMap[`files:${set.name}`]?.active ?? false;
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("files", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  return (
-    // py-1.5 keeps the row at 44px around the 32px icon badge, as in
-    // RestorePanel.tsx and Config.tsx.
-    <div
-      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
-        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
-      }`}
-    >
-      {/* The date sits under the id, so it reads as a property of it. */}
-      <div className="flex flex-col items-start">
-        <span className="flex items-center gap-2">
-          <span dir="ltr" className="font-mono text-start text-carbon-text text-xs">
-            {snap.id.slice(0, 8)}
-          </span>
-          {flagged && (
-            <Badge tone="fail" size="small">
-              {t("anomaly.snapshotFlagged")}
-            </Badge>
-          )}
-        </span>
-        <span className="text-carbon-textMuted text-xs">
-          {new Date(snap.time).toLocaleString()}
-          {snap.tags && snap.tags.length > 0 && (
-            <span className="hidden sm:inline">{` · ${snap.tags.join(", ")}`}</span>
-          )}
-        </span>
-      </div>
-      {/* Everything a snapshot does sits in one row, delete last. The badge
-          takes the hue of FileSetRow's card and no red of its own; the glyph,
-          the tip and the confirm dialog carry its meaning. */}
-      <div>
-        <FileSetRestoreControl
-          set={set}
-          snapshotId={snap.id}
-          source={source}
-          hostMountRoot={hostMountRoot}
-          restoreFolder={restoreFolder}
-          otherActive={running}
-          t={t}
-          trailing={
-            <Button
-              key={shake}
-              label={t("snapshots.delete")}
-              labelKey="snapshots.delete"
-              glyph={<IconTrash />}
-              tone="accent"
-              onClick={() => void handleDelete()}
-              disabled={deleting || busy}
-              className={`shrink-0${shake ? " glim-shake" : ""}`}
-            />
-          }
-        />
-      </div>
       {confirmDialog}
     </div>
   );
@@ -632,49 +538,19 @@ function FileSetRestorePanel({
   trailing?: ReactNode;
 }) {
   const [open, setOpen] = useState(preselect !== "");
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const { flagged } = useOpenAnomalies();
-  // Before the first answer an empty list would report a linked backup as gone.
-  const [loading, setLoading] = useState(true);
-  // A failed list load replaces the whole list, so it stays inline rather
-  // than going into a toast.
-  const [error, setError] = useState<string | null>(null);
-
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
+  const running = anyActive(useProgress());
 
-  useEffect(() => {
-    if (!open) return;
-    // An answer that arrives after the next switch is dropped, and a failure
-    // empties the list, whose rows belong to the source just left.
-    let current = true;
-    const fail = (message: string) => {
-      if (!current) return;
-      setSnapshots([]);
-      setError(message);
-    };
-    setLoading(true);
-    setError(null);
-    fileSetSnapshots(set.id, source)
-      .then((res) => {
-        if (!res.ok) return fail(res.error ?? t("common.loadBackupsFailed"));
-        if (current) setSnapshots(res.snapshots ?? []);
-      })
-      .catch(() => fail(t("common.loadBackupsFailed")))
-      .finally(() => {
-        if (current) setLoading(false);
-      });
-    return () => {
-      current = false;
-    };
-  }, [open, set.id, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
-
-  // A failure goes to a toast: the reload that follows it would clear an
-  // inline error straight away.
+  // "Delete all" empties the local place and forgets the set, which is what
+  // the question it asks says; a copy at a target stays behind and no set
+  // knows it any more. It fails as a toast, not inline. Bumping reloadTick
+  // remounts the timeline below under a fresh key, so it reads the place
+  // again instead of keeping the rows the delete just emptied.
   async function handleDeleteAll() {
     // TODO: name the stake in the confirm ("N snapshots, X GB"); this one
     // deletes every backup the set has. OrphanRemoveButton.tsx and VMs.tsx
@@ -717,68 +593,47 @@ function FileSetRestorePanel({
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          <div className="flex flex-wrap items-center gap-2 py-2 border-b border-carbon-border">
-              {/* The source toggle and its hint are advanced; basic mode uses local. */}
-              <Advanced>
-                <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-                  {t("source.label")}
-                  <InfoBubble tip={t("source.hint")} />
-                </span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" inline />
-              </Advanced>
-              {/* Delete-all acts on the local repository and forgets the set,
-                  so it only shows with the local source. */}
-              {source === "local" && snapshots.length > 0 && (
-                // A neutral full-size Button like the container card's
-                // delete-all; bombvault/no-status-color-on-control keeps red
-                // off it. glyphFor gives snapshots.deleteAll its trash glyph.
-                // The in-flight wording goes in the title, so the label does
-                // not resize the button mid-action.
+          <RecentRunsList name={set.name} domain="files" t={t} />
+          <SizeBreakdown domain="files" item={set.id} t={t} />
+          <Timeline
+            key={reloadTick}
+            domain="files"
+            itemKey={set.id}
+            itemName={set.name}
+            open={open}
+            header={(rows) =>
+              rows.some((r) => r.places.some((m) => m.place === "local")) && (
                 <Button
                   key={shakeDeleteAll}
                   label={t("snapshots.deleteAll")}
                   labelKey="snapshots.deleteAll"
                   tone="neutral"
                   onClick={() => void handleDeleteAll()}
-                  disabled={deletingAll || loading}
+                  disabled={deletingAll}
                   busy={deletingAll}
                   title={deletingAll ? t("snapshots.deletingAll") : undefined}
-                  className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
+                  className={`self-end my-1${shakeDeleteAll ? " glim-shake" : ""}`}
                 />
-              )}
-          </div>
-          <RecentRunsList name={set.name} domain="files" t={t} />
-          <SizeBreakdown domain="files" item={set.id} t={t} />
-          {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
-          )}
-          {error && <p className="py-3 text-xs text-statusFail">{error}</p>}
-          {!loading && !error && (
-            <MissingRestorePoint
-              requested={preselect}
-              requestedAt={preselectAt}
-              points={snapshots.map(restorePointOf)}
-              t={t}
-            />
-          )}
-          {!loading && !error && snapshots.length === 0 && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-          )}
-          {!loading &&
-            snapshots.map((snap) => (
-              <FileSetSnapshotRow
-                key={snap.id}
-                snap={snap}
-                set={set}
-                source={source}
-                hostMountRoot={hostMountRoot}
-                restoreFolder={restoreFolder}
-                flagged={flagged.has(findingSnapshotId(snap))}
-                preselected={findingSnapshotId(snap) === preselect}
-                onDeleted={() => setReloadTick((n) => n + 1)}
-                t={t}
-              />
-            ))}
+              )
+            }
+            flagged={flagged}
+            request={preselect ? { snapshot: preselect, at: preselectAt } : undefined}
+            renderActions={(pick) => (
+              <div className="basis-full">
+                <FileSetRestoreControl
+                  set={set}
+                  snapshotId={pick.snapshotId}
+                  source={pick.source}
+                  hostMountRoot={hostMountRoot}
+                  restoreFolder={restoreFolder}
+                  otherActive={running}
+                  onMissing={pick.onMissing}
+                  lead={pick.lead}
+                  t={t}
+                />
+              </div>
+            )}
+          />
         </div>
       )}
       {confirmDialog}
@@ -807,22 +662,44 @@ export function FileSetDialog({
   onSaved: () => void;
 }) {
   const { push } = useToast();
+  const { lang } = useT();
   const [name, setName] = useState(initial?.name ?? presetSeed?.name ?? "");
   const [path, setPath] = useState(initial?.path ?? presetSeed?.path ?? "");
   const [excludesText, setExcludesText] = useState(
     (initial?.excludes ?? presetSeed?.excludes ?? []).join("\n")
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
-  // Empty means the Folders repository, which is where a new set starts.
-  const [repo, setRepo] = useState(initial?.repo ?? "");
-  // A set with backups keeps its repository and its name, since nothing moves
-  // or re-tags its snapshots. Locked here as well as refused by the server, so
-  // the reason shows before the attempt.
+  const [placement, setPlacement] = useState<PlacementDraftValue>({});
+  // A set with backups keeps its name, since nothing re-tags its snapshots.
+  // Locked here as well as refused by the server, so the reason shows before
+  // the attempt.
   const hasBackups = Boolean(initial) && (initial?.lastBackup ?? 0) > 0;
   const [saving, setSaving] = useState(false);
   const [shake, setShake] = useState(0);
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
+
+  // A remembered direct repository is made before the set. If the set then
+  // fails, the draft keeps the new id so a second try does not make another.
+  async function createSet(excludes: string[]): Promise<OkEnvelope & { id?: string }> {
+    let home = placement.home;
+    if (home && "direct" in home) {
+      const made = await createDirectRepo(home.direct.targetId, home.direct.name, home.direct.location);
+      if (!made.ok || !made.repo) return { ok: false, error: placementErrorText(t, lang, made, "settings.error") };
+      reposChanged();
+      const created = { repo: made.repo.id };
+      setPlacement((prev) => ({ ...prev, home: created }));
+      home = created;
+    }
+    return createFileSet({
+      name: name.trim(),
+      path: path.trim(),
+      excludes,
+      enabled,
+      ...(home ? { repo: home.repo } : {}),
+      ...(placement.copies ? { copies: placement.copies } : {}),
+    });
+  }
 
   // The dialog closes on success, so every outcome is reported as a toast.
   async function handleSave() {
@@ -834,24 +711,8 @@ export function FileSetDialog({
       .filter((line) => line !== "");
     try {
       const res = initial
-        ? await patchFileSet(initial.id, {
-            name: name.trim(),
-            path: path.trim(),
-            excludes,
-            enabled,
-            // Sent only when it differs: once the set has backups the server
-            // refuses the field, and an ordinary save must still go through.
-            ...(repo.trim() !== (initial.repo ?? "").trim() ? { repo: repo.trim() } : {}),
-          })
-        : await createFileSet({
-            name: name.trim(),
-            path: path.trim(),
-            excludes,
-            enabled,
-            // A new set has no backups, so the picker is live here and its
-            // answer travels with the create.
-            repo: repo.trim(),
-          });
+        ? await patchFileSet(initial.id, { name: name.trim(), path: path.trim(), excludes, enabled })
+        : await createSet(excludes);
       if (res.ok) {
         push(t("settings.saved"), "success");
         onSaved();
@@ -940,19 +801,12 @@ export function FileSetDialog({
           <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
 
-        {/* The set's own repository, empty for the Folders repository. The
-            locations are defined in Settings and picked here, so a bucket
-            path is typed once and corrected in one place. */}
-        <RepoPicker
-          value={repo}
-          onChange={setRepo}
-          locked={hasBackups}
-          labelKey="files.repo"
-          hintKey="files.repoHint"
-          defaultLabelKey="files.repoPlaceholder"
-          lockedKey="files.repoLocked"
-        />
+        {/* A new set has no card yet, so its placement is chosen here; an
+            existing set changes it on its card. */}
+        {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
 
+        {/* ToggleRow, not a bare Toggle: every setting row in this app puts
+            the words at the start and the switch at the end. */}
         <ToggleRow checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">
@@ -1231,6 +1085,7 @@ export function FileSetRow({
   t,
   onRefresh,
   onEdit,
+  onPlacement,
   index,
   anomaly,
   anomalyEnabled = false,
@@ -1244,6 +1099,8 @@ export function FileSetRow({
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   /** Rainbow position by list index, not a hash of the id or name. */
   index: number;
   anomaly?: AnomalyItem;
@@ -1376,6 +1233,13 @@ export function FileSetRow({
           server-computed sentence as the Schedules card. */}
       <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
+      <PlacementRow
+        item={{ domain: "files", key: set.id }}
+        name={set.name}
+        view={set.placement}
+        onView={onPlacement}
+      />
+
       <ItemChecksLine checks={checks} hasBackup={!!set.lastBackup} onChanged={onChecksChanged} />
 
       {/* Backups disclosure with the last-backup date on its row, as on the
@@ -1469,16 +1333,24 @@ export function Files() {
   const [backupAllBusy, setBackupAllBusy] = useState(false);
   const [shakeBackupAll, setShakeBackupAll] = useState(0);
 
+  // Only the newest read may land; an older answer arriving late would undo the
+  // placement a card wrote while it was in flight.
+  const read = useRef(0);
+
   function loadSets() {
+    const n = ++read.current;
     return listFileSets()
       .then((res) => {
+        if (n !== read.current) return;
         if (res.ok) {
           setSets(res.fileSets ?? []);
           // Clear the message of an earlier failed load.
           setError(null);
         } else setError(res.error ?? t("files.loadSetsFailed"));
       })
-      .catch(() => setError(t("files.loadSetsFailed")));
+      .catch(() => {
+        if (n === read.current) setError(t("files.loadSetsFailed"));
+      });
   }
 
   useEffect(() => {
@@ -1501,6 +1373,17 @@ export function Files() {
       .catch(() => undefined);
     void Promise.all([sets, settings]).finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
+
+  // loadSets is stable for this page's lifetime; as a dependency it would
+  // subscribe again on every render.
+  useEffect(() => {
+    const offs = [subscribeRepos(() => void loadSets()), subscribePlacement(() => void loadSets())];
+    return () => offs.forEach((off) => off());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function placeSet(id: string, next: PlacementView) {
+    setSets((prev) => prev.map((s) => (s.id === id ? { ...s, placement: next } : s)));
+  }
 
   /** Opens the create dialog pre-filled with the "Host system config" preset,
    *  once it has loaded and is offered for this platform. */
@@ -1685,6 +1568,7 @@ export function Files() {
               t={t}
               onRefresh={() => void loadSets()}
               onEdit={() => setDialog(s)}
+              onPlacement={(next) => placeSet(s.id, next)}
               index={i}
               anomaly={anomalies.find("files", s.id)}
               anomalyEnabled={anomalyEnabled}

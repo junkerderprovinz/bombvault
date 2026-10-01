@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, setVMRepo, getSettings } from "../lib/api";
-import type { AnomalyItem, ItemChecks, VM, Snapshot, VmOrder, Run } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, setVMInclude, setVMIncludeAll, setVMMethod, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, getSettings } from "../lib/api";
+import type { AnomalyItem, ItemChecks, VM, VmOrder, PlacementView, Run } from "../lib/api";
 import { PageTitle } from "../components/PageTitle";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { ChipFilter, loadStoredFilterKey } from "../components/ChipFilter";
 import { IconTipButton } from "../components/IconTipButton";
@@ -18,9 +17,8 @@ import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { SizeBreakdown } from "../components/SizeBreakdown";
-import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
+import { IconVM, IconRestore, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
@@ -40,7 +38,10 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
 import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
-import { RepoPicker } from "../components/RepoPicker";
+import { PlacementRow } from "../components/placement/PlacementRow";
+import { subscribePlacement } from "../lib/placementEvents";
+import { subscribeRepos } from "../lib/useNamedRepos";
+import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
 // The phone face's building blocks: the breakpoint hook, the ONE pagination
 // primitive, the shared mobile list chrome and the card block's surfaces.
 import { useIsDesktop } from "../lib/useMediaQuery";
@@ -54,7 +55,6 @@ import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
-import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 
@@ -364,122 +364,52 @@ function VMBackupButton({
   );
 }
 
-function VMSnapshotRow({
-  snap,
+function VMSnapshotActions({
+  pick,
   vmName,
   vmDisplayName,
-  source,
-  flagged,
   preselected,
-  onDeleted,
   t,
 }: {
-  snap: Snapshot;
-  /** Raw libvirt name, used for the progress key and the restore action. */
+  pick: TimelinePick;
+  /** Raw libvirt name: drives the progress key and the restore action. */
   vmName: string;
-  /** Display name for the cancel-confirm text; falls back to vmName. */
   vmDisplayName?: string;
-  source: RepoSource;
-  /** An open data-loss finding was raised on this snapshot. */
-  flagged: boolean;
-  /** A finding's restore link asked for this snapshot. */
+  /** A finding's restore link asked for this backup, so its restore starts open. */
   preselected: boolean;
-  onDeleted: () => void;
   t: T;
 }) {
-  const progressMap = useProgress();
-  // RestoreAction blocks a new restore while any other operation runs; this
-  // VM's own restore is handled there through isPending.
-  const running = anyActive(progressMap);
-  // Delete is blocked only by this VM's own backup or restore: deleting one
-  // VM's snapshot has to stay possible while another VM is backing up.
-  const busy = progressMap[`vm:${vmName}`]?.active ?? false;
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  const [shake, setShake] = useState(0);
-  // Collapsed by default so the list stays compact.
+  const running = anyActive(useProgress());
   const [showRestore, setShowRestore] = useState(preselected);
-  const { confirm, confirmDialog } = useConfirm();
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("vms", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
-    // py-1.5 keeps the row at 44px with 32px buttons, like the snapshot rows
-    // of the other pages.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
-          {snap.id.slice(0, 8)}
-        </span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
-        {flagged && (
-          <Badge tone="fail" size="small">
-            {t("anomaly.snapshotFlagged")}
-          </Badge>
-        )}
-        {snap.tags && snap.tags.length > 0 && (
-          <span className="text-carbon-textMuted text-xs hidden sm:block">
-            {snap.tags.join(", ")}
-          </span>
-        )}
-        {/* No hueIndex: the VMRow card carries this VM's hue. Delete gets no
-            colour of its own; the glyph and the confirm dialog carry its
-            meaning. */}
-        <Button
-          label={t("restore.open")}
-          labelKey="restore.open"
-          glyph={<IconRestore />}
-          tone="accent"
-          onClick={() => setShowRestore((p) => !p)}
-          className={"shrink-0"}
-        />
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
-      </div>
-      {/* Indented past the id column; ps-24 is logical, so it follows the
-          reading direction. */}
+    <>
+      {pick.mark.tags.length > 0 && (
+        <span className="text-carbon-textMuted text-xs hidden sm:block">{pick.mark.tags.join(", ")}</span>
+      )}
+      <Button
+        label={t("restore.open")}
+        labelKey="restore.open"
+        glyph={<IconRestore />}
+        tone={pick.lead ? "accent" : "neutral"}
+        onClick={() => setShowRestore((p) => !p)}
+        className="shrink-0"
+      />
       {showRestore && (
-        <div className="ps-24">
+        <div className="basis-full ps-24">
           <RestoreAction
             domain="vm"
             name={vmName}
             displayName={vmDisplayName}
-            snapshotId={snap.id}
-            source={source}
+            snapshotId={pick.snapshotId}
+            source={pick.source}
             otherActive={running}
             successMessage={t("restore.completeVM")}
+            onMissing={pick.onMissing}
             t={t}
           />
         </div>
       )}
-      {confirmDialog}
-    </div>
+    </>
   );
 }
 
@@ -505,14 +435,6 @@ function VMRestorePanel({
   /** When that snapshot was taken, in Unix seconds. */
   preselectAt?: number;
 }) {
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  // Before the first answer an empty list would report a linked backup as gone.
-  const [loading, setLoading] = useState(true);
-  // A failed list load replaces the list, so it stays inline rather than in a
-  // toast.
-  const [error, setError] = useState<string | null>(null);
-
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
@@ -520,39 +442,16 @@ function VMRestorePanel({
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
   const { flagged } = useOpenAnomalies();
 
-  useEffect(() => {
-    if (!open) return;
-    // An answer that arrives after the next switch is dropped, and a failure
-    // empties the list, whose rows belong to the source just left.
-    let current = true;
-    const fail = (message: string) => {
-      if (!current) return;
-      setSnapshots([]);
-      setError(message);
-    };
-    setLoading(true);
-    setError(null);
-    listVMSnapshots(name, source)
-      .then((res) => {
-        if (!res.ok) return fail(res.error ?? t("common.loadBackupsFailed"));
-        if (current) setSnapshots(res.snapshots ?? []);
-      })
-      .catch(() => fail(t("common.loadBackupsFailed")))
-      .finally(() => {
-        if (current) setLoading(false);
-      });
-    return () => {
-      current = false;
-    };
-  }, [open, name, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
-
-  // A failure is toasted rather than set as `error`: the reload in .finally()
-  // clears `error` again straight away.
+  // "Delete all" empties the local place, which is what the question it asks
+  // says; a copy at a target goes through its own row in the timeline. It
+  // fails as a toast, not inline. Bumping reloadTick remounts the timeline
+  // below under a fresh key, so it reads the place again instead of keeping
+  // the rows the delete just emptied.
   async function handleDeleteAll() {
     // TODO: name the stake in the confirmation ("N snapshots, X GB").
     if (!(await confirm(t("snapshots.deleteAllConfirm"), { confirmKey: "snapshots.deleteAll" }))) return;
     setDeletingAll(true);
-    deleteBackupsVM(name, source)
+    deleteBackupsVM(name, "local")
       .then((res) => {
         if (!res.ok) {
           push(res.error ?? t("common.deleteBackupsFailed"), "fail");
@@ -569,75 +468,49 @@ function VMRestorePanel({
       });
   }
 
-  // The trigger lives in VMRow, so a closed panel renders nothing. The hooks
-  // above still run, so the list refetches on the render that opens it.
+  // Closed renders nothing at all: the trigger lives in VMRow, as it does for
+  // components/RestorePanel.tsx.
   if (!open) return null;
 
   return (
     <>
-        <div className="rounded-card bg-carbon-background px-3 py-1">
-          {/* The source hint sits on the label, so it shows only when the
-              toggle does. */}
-          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
-              {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-              <Advanced>
-                <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-                  {t("source.label")}
-                  <InfoBubble tip={t("source.hint")} />
-                </span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" inline />
-              </Advanced>
-              {snapshots.length > 0 && (
-                // Neutral, with no red of its own, like the same control in
-                // Files.tsx; the label and the confirm dialog carry the
-                // meaning.
-                <Button
-                  key={shakeDeleteAll}
-                  label={t("snapshots.deleteAll")}
-                  labelKey="snapshots.deleteAll"
-                  tone="neutral"
-                  onClick={() => void handleDeleteAll()}
-                  disabled={deletingAll || loading}
-                  busy={deletingAll}
-                  title={deletingAll ? t("snapshots.deletingAll") : undefined}
-                  className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
-                />
-              )}
-          </div>
-          <RecentRunsList name={name} domain="vm" t={t} />
-          <SizeBreakdown domain="vms" item={name} t={t} />
-          {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
-          )}
-          {error && (
-            <p className="py-3 text-xs text-statusFail">{error}</p>
-          )}
-          {!loading && !error && (
-            <MissingRestorePoint
-              requested={preselect}
-              requestedAt={preselectAt}
-              points={snapshots.map(restorePointOf)}
+      <div className="rounded-card bg-carbon-background px-3 py-1">
+        <RecentRunsList name={name} domain="vm" t={t} />
+        <SizeBreakdown domain="vms" item={name} t={t} />
+        <Timeline
+          key={reloadTick}
+          domain="vms"
+          itemKey={name}
+          itemName={displayName ?? name}
+          open={open}
+          flagged={flagged}
+          request={preselect ? { snapshot: preselect, at: preselectAt } : undefined}
+          header={(rows) =>
+            rows.some((r) => r.places.some((m) => m.place === "local")) && (
+              <Button
+                key={shakeDeleteAll}
+                label={t("snapshots.deleteAll")}
+                labelKey="snapshots.deleteAll"
+                tone="neutral"
+                onClick={() => void handleDeleteAll()}
+                disabled={deletingAll}
+                busy={deletingAll}
+                title={deletingAll ? t("snapshots.deletingAll") : undefined}
+                className={`self-end my-1${shakeDeleteAll ? " glim-shake" : ""}`}
+              />
+            )
+          }
+          renderActions={(pick) => (
+            <VMSnapshotActions
+              pick={pick}
+              vmName={name}
+              vmDisplayName={displayName}
+              preselected={pick.row.key === preselect}
               t={t}
             />
           )}
-          {!loading && !error && snapshots.length === 0 && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-          )}
-          {!loading &&
-            snapshots.map((snap) => (
-              <VMSnapshotRow
-                key={snap.id}
-                snap={snap}
-                vmName={name}
-                vmDisplayName={displayName}
-                source={source}
-                flagged={flagged.has(findingSnapshotId(snap))}
-                preselected={findingSnapshotId(snap) === preselect}
-                onDeleted={() => setReloadTick((n) => n + 1)}
-                t={t}
-              />
-            ))}
-        </div>
+        />
+      </div>
       {confirmDialog}
     </>
   );
@@ -649,6 +522,7 @@ export function VMRow({
   vm,
   t,
   onRefresh,
+  onPlacement,
   selected,
   onToggleSelect,
   linkCandidates = [],
@@ -662,6 +536,8 @@ export function VMRow({
   vm: VM;
   t: T;
   onRefresh: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   selected?: boolean;
   onToggleSelect?: () => void;
   /** The libvirt names of the not-installed entries this card can take over by hand. */
@@ -695,13 +571,6 @@ export function VMRow({
     // jsdom has no scrollIntoView.
     if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
   }, [restoreRequest]);
-  const { push } = useToast();
-  // Reverted on a failed save, so the picker never shows a destination the
-  // server did not accept.
-  const [repoChoice, setRepoChoice] = useState(vm.repo ?? "");
-  useEffect(() => {
-    setRepoChoice(vm.repo ?? "");
-  }, [vm.repo]);
   function toggleSection(id: string) {
     setOpenSections((prev) => {
       const next = new Set(prev);
@@ -832,6 +701,13 @@ export function VMRow({
         </div>
       </div>
 
+      <PlacementRow
+        item={{ domain: "vms", key: vm.libvirtName }}
+        name={vm.name}
+        view={vm.placement}
+        onView={onPlacement}
+      />
+
       <ItemChecksLine checks={checks} hasBackup={vm.lastBackup != null} onChanged={onChecksChanged} />
 
       {/* ContainerRow's disclosure block with a single section. */}
@@ -853,25 +729,7 @@ export function VMRow({
           </span>
         </div>
 
-        {/* Where this VM's backups go. Locked once the VM has backups: they
-            stay in the repository they were written to. */}
         <Advanced>
-          <RepoPicker
-            value={repoChoice}
-            onChange={(next) => {
-              const before = repoChoice;
-              setRepoChoice(next);
-              void setVMRepo(vm.libvirtName, next).then((r) => {
-                if (r.ok) {
-                  push(t("folders.saved"), "success");
-                  return;
-                }
-                push(r.error ?? t("settings.error"), "fail");
-                setRepoChoice(before);
-              });
-            }}
-            locked={vm.lastBackup != null}
-          />
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
         </Advanced>
 
@@ -1391,9 +1249,15 @@ export function VMs() {
     }
   }
 
+  // Only the newest read may land; an older answer arriving late would undo the
+  // placement a card wrote while it was in flight.
+  const read = useRef(0);
+
   function loadVMs() {
+    const n = ++read.current;
     return listVMs()
       .then((res) => {
+        if (n !== read.current) return;
         if (res.ok) {
           setVMs(res.vms ?? []);
           // A transient failure (a daemon restart, a proxy 502) must not leave
@@ -1401,12 +1265,25 @@ export function VMs() {
           setError(null);
         } else setError(t("vms.loadFailed"));
       })
-      .catch(() => setError(t("vms.loadFailed")));
+      .catch(() => {
+        if (n === read.current) setError(t("vms.loadFailed"));
+      });
   }
 
   useEffect(() => {
     void loadVMs().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
+
+  // loadVMs is stable for this page's lifetime; as a dependency it would
+  // subscribe again on every render.
+  useEffect(() => {
+    const offs = [subscribeRepos(() => void loadVMs()), subscribePlacement(() => void loadVMs())];
+    return () => offs.forEach((off) => off());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function placeVM(libvirtName: string, next: PlacementView) {
+    setVMs((prev) => prev.map((v) => (v.libvirtName === libvirtName ? { ...v, placement: next } : v)));
+  }
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);
@@ -1689,6 +1566,7 @@ export function VMs() {
               vm={v}
               t={t}
               onRefresh={() => void loadVMs()}
+              onPlacement={(next) => placeVM(v.libvirtName, next)}
               selected={selected.has(v.libvirtName)}
               onToggleSelect={() => toggleSelect(v.libvirtName)}
               linkCandidates={notInstalledNames}
@@ -1717,6 +1595,7 @@ export function VMs() {
               vm={v}
               t={t}
               onRefresh={() => void loadVMs()}
+              onPlacement={(next) => placeVM(v.libvirtName, next)}
               index={live.length + i}
               anomaly={anomalies.find("vm", v.libvirtName)}
               anomalyEnabled={anomalyEnabled}
@@ -1747,6 +1626,7 @@ export function VMs() {
           onSortChange={handleSortChange}
           running={running}
           onRefresh={() => void loadVMs()}
+          onPlacement={placeVM}
           linkCandidates={notInstalledNames}
           selected={selected}
           onToggleSelect={toggleSelect}
@@ -1801,6 +1681,7 @@ function MobileVMsBlock({
   onSortChange,
   running,
   onRefresh,
+  onPlacement,
   linkCandidates,
   selected,
   onToggleSelect,
@@ -1840,6 +1721,7 @@ function MobileVMsBlock({
   onSortChange: (k: SortKey) => void;
   running: { active: boolean; phase?: string };
   onRefresh: () => void;
+  onPlacement: (libvirtName: string, next: PlacementView) => void;
   /** The not-installed names the detail's link picker offers. */
   linkCandidates: string[];
   /** Bulk-selection state over libvirt names, shared with the desktop face. */
@@ -1944,6 +1826,7 @@ function MobileVMsBlock({
           t={t}
           running={running}
           onRefresh={onRefresh}
+          onPlacement={(next) => onPlacement(openVm.libvirtName, next)}
           onBack={closeDetail}
           linkCandidates={linkCandidates}
           anomaly={anomalyOf(openVm.libvirtName)}
@@ -2154,6 +2037,7 @@ function MobileVMDetail({
   t,
   running,
   onRefresh,
+  onPlacement,
   onBack,
   linkCandidates,
   anomaly,
@@ -2166,6 +2050,8 @@ function MobileVMDetail({
   t: T;
   running: { active: boolean; phase?: string };
   onRefresh: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   onBack: () => void;
   /** The not-installed entries this detail can take over by hand. */
   linkCandidates: string[];
@@ -2175,13 +2061,6 @@ function MobileVMDetail({
   onChecksChanged?: () => void;
   restoreRequest?: RestoreRequest;
 }) {
-  const { push } = useToast();
-  // Reverted on a failed save, so the picker never shows a destination the
-  // server did not accept.
-  const [repoChoice, setRepoChoice] = useState(vm.repo ?? "");
-  useEffect(() => {
-    setRepoChoice(vm.repo ?? "");
-  }, [vm.repo]);
   const progressMap = useProgress();
   const progress = progressMap[`vm:${vm.libvirtName}`];
   const installed = vm.state !== "not-installed";
@@ -2297,6 +2176,13 @@ function MobileVMDetail({
       <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />
       {installed && <VMBlockToggle vm={vm} />}
 
+      <PlacementRow
+        item={{ domain: "vms", key: vm.libvirtName }}
+        name={vm.name}
+        view={vm.placement}
+        onView={onPlacement}
+      />
+
       <ItemChecksLine checks={checks} hasBackup={vm.lastBackup != null} onChanged={onChecksChanged} />
 
       {/* ContainerRow's disclosure block with a single section. */}
@@ -2316,25 +2202,7 @@ function MobileVMDetail({
             {`${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`}
           </span>
         </div>
-        {/* Where this VM's backups go. Locked once the VM has backups: they
-            stay in the repository they were written to. */}
         <Advanced>
-          <RepoPicker
-            value={repoChoice}
-            onChange={(next) => {
-              const before = repoChoice;
-              setRepoChoice(next);
-              void setVMRepo(vm.libvirtName, next).then((r) => {
-                if (r.ok) {
-                  push(t("folders.saved"), "success");
-                  return;
-                }
-                push(r.error ?? t("settings.error"), "fail");
-                setRepoChoice(before);
-              });
-            }}
-            locked={vm.lastBackup != null}
-          />
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
         </Advanced>
 

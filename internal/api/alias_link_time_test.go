@@ -81,7 +81,8 @@ func TestSnapshotsAliasClaimsOnlyPreLinkHistory(t *testing.T) {
 		t.Fatal(err)
 	}
 	establishLocalRepo(t, dir, s.ContainersPath)
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	// Settled on the domain path, as an entry with history is.
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr", RepoChosen: store.RepoChosen})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +185,7 @@ func TestDeleteBackupsSparesPostLinkAliasSnapshot(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.DeleteBackups(context.Background(), "radarr"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "radarr", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
 	}
 	if got, want := sortedCopy(eng.forgotten), []string{"own1", "pre1"}; strings.Join(got, ",") != strings.Join(want, ",") {
@@ -240,7 +241,8 @@ func containerRetentionService(t *testing.T, snaps []restic.Snapshot) (*api.Serv
 		t.Fatal(err)
 	}
 	repo := establishLocalRepo(t, root, s.ContainersPath)
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	// Settled on the domain path, as an entry with history is.
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr", RepoChosen: store.RepoChosen})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +326,8 @@ func TestBackupVMRetentionTakesAliasOnlyWhileAllItsSnapshotsPredateLink(t *testi
 		if listErr != nil {
 			eng.snapsErrFor = map[string]error{repo: listErr}
 		}
-		tg, err := st.UpsertVMTarget(store.VMTarget{Name: "plainvm"})
+		// Settled on the domain path, as an entry with history is.
+		tg, err := st.UpsertVMTarget(store.VMTarget{Name: "plainvm", RepoChosen: store.RepoChosen})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -360,7 +363,8 @@ func TestLatestContainerBackupTimesKeepsPostLinkSnapshotUnderOldName(t *testing.
 		t.Fatal(err)
 	}
 	establishLocalRepo(t, dir, s.ContainersPath)
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	// Settled on the domain path, as an entry with history is.
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr", RepoChosen: store.RepoChosen})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +378,7 @@ func TestLatestContainerBackupTimesKeepsPostLinkSnapshotUnderOldName(t *testing.
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	times, err := svc.LatestContainerBackupTimes(context.Background())
+	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}
@@ -402,7 +406,8 @@ func TestPruneDomainFoldsAliasOnlyWhileAllItsSnapshotsPredateLink(t *testing.T) 
 			t.Fatal(err)
 		}
 		establishLocalRepo(t, dir, s.ContainersPath)
-		tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+		// Settled on the domain path, as an entry with history is.
+		tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr", RepoChosen: store.RepoChosen})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -453,7 +458,7 @@ func TestDiscoverLinksAFoldedAliasAtItsRecordedTime(t *testing.T) {
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	a, err := st.AliasByOldName("container", "radarr-movies")
@@ -483,7 +488,7 @@ func TestDiscoverLinksARecordedFormerNameWithoutSnapshotsOfItsOwn(t *testing.T) 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	a, err := st.AliasByOldName("container", "radarr-movies")

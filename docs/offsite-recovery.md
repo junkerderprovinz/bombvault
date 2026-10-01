@@ -1,5 +1,8 @@
 # Off-site & recovery
 
+!!! note "Off-site copies wait after a rebuild"
+    When step 4 rebuilds entries without the old settings, off-site replication of those domains pauses until the placement default is confirmed. See [Placement per item](#placement).
+
 Local backups protect you from a lost container or a bad update. Off-site replication and a tested recovery kit protect you from the whole box, ransomware, or a fire. This page covers replicating off-site, making that copy tamper-proof, proving you can restore, and recovering when BombVault itself is gone.
 
 ## Off-site replication
@@ -12,14 +15,44 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 - **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
 - A **replication indicator** shows which domain is replicating while it runs (on its page and the Dashboard). It is an active indicator, not a percentage bar, because `restic copy` exposes no machine-readable progress.
 
-!!! note "Restore straight from off-site"
-    Every backup browser has a **Local / Off-site** switch, so if a local repo is lost or corrupt you can list and restore directly from the off-site replica. Delete is per-source: removing a backup only affects the copy you are viewing.
+!!! note "Restore from any place"
+    Every container, VM, folder set, the flash and the app configuration list their backups as one timeline across all places a backup lies. A backup copied to B2 appears once, marked with each place that holds it. A restore takes the first place it can reach, starting with the repository the item is written to, and you can pick another place per row. Off-site places are read only when you open them. Deleting at one place first checks the others and says whether it was the last copy.
+
+## Placement per item {#placement}
+
+Each container, VM and folder set card has a **Placement** row with three segments:
+
+- **Local** writes the item to the repository shown under **Stored on** and copies it nowhere. Use it for data that already has a second copy, for example a share that lives on a NAS.
+- **Local + off-site** writes it there as well and copies it to the targets ticked under **Copy to**, one chip per off-site target of the domain. Untick a chip and that target gets nothing new from this item.
+- **Off-site only** writes the item straight to the place under **Send to**: a direct repository beside an off-site target, or a remote repository you set up under Settings, Storage, Repositories.
+
+The location is fixed from the item's first backup on, because BombVault never moves backups between repositories. The copies can change at any time. A target that no longer gets an item keeps the copies it has and trims them to its own retention at the next off-site run of the domain; **Delete in B2** on the card removes them at once. When some of those copies exist nowhere else, the confirmation lists them by date and asks for the item's name. Append-only targets cannot be deleted from.
+
+Under the row the card says where the item goes and what is actually there: how many sites hold it, when each target was last seen, and whether 3-2-1 is met. A site is the server with the original data, each off-site target and each repository marked **Off the premises**. BombVault checks copies and sites; it does not check the "two media" part of 3-2-1.
+
+### Placement defaults
+
+Settings, Storage, **Placement defaults** has one row per domain with the same three segments. The copies apply at once to every item without a choice of its own, and to the project folders of Compose stacks. The location applies to a new item at its first backup; changing it moves no backups. Before saving, the row names every target that gains or loses items and how many snapshots that means. **Apply to items without backups** puts every item that has no backup yet back on the default.
+
+A new off-site target receives every item that is not set to Local. The dialog that adds it says how many items and, where known, how much history that is, and offers to leave out the items already excluded from other targets.
+
+### Direct repositories
+
+Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the target's own folder cannot reach the folder next to it, so limit the key to the folder above the target instead.
+
+### Off the premises
+
+A named repository can be marked **Off the premises** on the Repositories card. Remote repositories start marked; switch it off for a rest-server in the same building. The mark only counts sites and 3-2-1 on the cards. It changes no copy.
+
+### After a rebuild
+
+Copy choices live in BombVault's own settings. After a rebuild through Discover without a restored `/config` they are gone, and copying everything would send the items you had left out to B2 again. Off-site replication of every rebuilt domain therefore pauses. The Dashboard shows it in amber, and Placement defaults offers **Confirm default** with a preview of what the next run copies and the names in the backups that have no entry, which you can leave out there. Only the confirmation ends the pause; importing a settings file brings back rules and defaults but does not end it.
 
 ## Remote primary repositories {#remote-primary-repositories}
 
-A domain's Backup Path (Settings, Storage) is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
+A domain's Backup Path (Settings, Storage) is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
 
-Each of the six path fields (Containers, VMs, Flash, Config, Files, ZFS datasets) has an inline **Local / Remote** switch right next to it:
+Each of the six path fields (Containers, VMs, Flash, Self-Backup, Folders, ZFS datasets) has an inline **Local / Remote** switch right next to it:
 
 - **Local** shows the familiar folder browser.
 - **Remote** swaps it for a plain URL field, plus a button that opens the same connection-test/credentials dialog off-site destinations use, configured for this primary instead. From there you get:
@@ -67,7 +100,7 @@ A real protected-to-unprotected flip fires a single alert.
 
 BombVault offers two levels of proof that your backups are actually restorable, not just present.
 
-- **Restore-verification drills (local).** BombVault periodically runs `restic check --read-data-subset` (bounded, never a disk-filling full restore) and shows a *last verified restorable* badge per domain. The cadence lives on Settings, Schedules; the badge on Settings, Integrity.
+- **Restore-verification drills (local).** BombVault periodically runs `restic check --read-data-subset` (bounded, never a disk-filling full restore) and shows a *Verified restorable* badge per domain. The cadence lives on Settings, Schedules; the badge on Settings, Integrity.
 - **DR drills (off-site).** BombVault restores a real target from the off-site repo into a throwaway sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers.
 
 The **ransomware-protection scorecard** on the Dashboard rolls this up into a green / amber / red posture per domain, with an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set). Every red row deep-links to the fix, and the card only ever goes green on verified facts.
@@ -118,7 +151,7 @@ Everything above describes the parts. This is one complete setup with real value
 
 Two boxes: **TOWER** runs the containers and pushes backups; **VAULT** receives them and enforces immutability. Substitute your own names, addresses and share paths.
 
-**1. On VAULT, stand up the append-only server.** In BombVault on TOWER, go to *Settings → Off-site → guided setup*, pick **rest-server**, and generate the deploy recipe. Copy the **Unraid template (XML)** tab, save it on VAULT as `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, then *Docker → Add Container* and pick **rest-server** from the template dropdown. Before starting it, write the shown `htpasswd` line into `/mnt/user/appdata/rest-server/.htpasswd` on VAULT. The one-time password is displayed once and never stored, so copy it now. That line carries the same password, bcrypt-hashed for you: the plaintext goes into TOWER's REST credentials, the hashed line goes into VAULT's `.htpasswd`. There is nothing for you to hash yourself.
+**1. On VAULT, stand up the append-only server.** In BombVault on TOWER, go to *Settings → Off-site → Set up*, pick **rest-server**, and generate the deploy recipe. Copy the **Unraid template (XML)** tab, save it on VAULT as `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, then *Docker → Add Container* and pick **rest-server** from the template dropdown. Before starting it, write the shown `htpasswd` line into `/mnt/user/appdata/rest-server/.htpasswd` on VAULT. The one-time password is displayed once and never stored, so copy it now. That line carries the same password, bcrypt-hashed for you: the plaintext goes into TOWER's REST credentials, the hashed line goes into VAULT's `.htpasswd`. There is nothing for you to hash yourself.
 
     Leave `--append-only` in the OPTIONS field. It is the whole point: without it VAULT is an ordinary share again.
 
@@ -136,7 +169,7 @@ The first path segment is the htpasswd user, the second is the repository. Enter
 | **NOT protected** | VAULT accepted a delete. `--append-only` is missing or was removed. |
 | **inconclusive** | Neither. Usually the URL is not the one restic itself uses, or the credentials changed. Nothing is recorded and no alert fires. |
 
-**4. On VAULT, watch what arrives.** Pair the two boxes ([Pairing instances](#pairing)), turn on *Settings → Pairing → Receiver*, open the **Receiver** tab and register the repository read-only with TOWER as the sending instance.
+**4. On VAULT, watch what arrives.** Pair the two boxes ([Pairing instances](#pairing)), turn on *Settings → General → Receiver*, open the **Receiver** tab and register the repository read-only with TOWER as the sending instance.
 
 !!! warning "The location is a path **inside** the container, written relative to the host mount"
     Enter `user/appdata/rest-server/bombvault-containers/containers`, **not** `/mnt/user/appdata/...`. BombVault runs in a container, where the host's `/mnt` is mounted elsewhere; an absolute host path does not exist inside it. If you paste one, BombVault now tells you the relative path to use instead.
@@ -156,7 +189,7 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 5. **Restores the containers and VMs in one go** (left stopped, so you start them deliberately) and lists the file sets and ZFS items to restore one by one; ZFS items come back switched off. Your recovery kit is one click away.
 
 !!! tip "Planned migration versus disaster"
-    Guided recovery restores BombVault's own settings from a backup. For a *planned* move to a new box, you can instead carry your configuration over directly with the **Export and import settings** card (a portable JSON file). See [Configuration](configuration.md#portable-settings-export-and-import).
+    Guided recovery restores BombVault's own settings from a backup. For a *planned* move to a new box, you can instead carry your configuration over directly with the **Export / import settings** card (a portable JSON file). See [Configuration](configuration.md#portable-settings-export-and-import).
 
 ### Restore from another BombVault repo {#restore-from-another-bombvault-repo}
 

@@ -1,31 +1,29 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { hueVars } from "../lib/appearance";
-import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
-import type { Snapshot } from "../lib/api";
+import { backupFlashNow, flashDownloadURL, type TimelineRow } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import { useConfirm } from "../lib/useConfirm";
+import { PlacementFlow } from "../components/placement/PlacementFlow";
+import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { useToast } from "../lib/toast";
+import { useConfirm } from "../lib/useConfirm";
 import { FlashPluginList } from "../components/FlashPluginList";
 import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
+import { IconBackupNow, IconDownload } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { PageTitle } from "../components/PageTitle";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
-import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
-import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest } from "../lib/restoreRequest";
 import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
@@ -106,48 +104,10 @@ function FlashBackupButton({
 // and the browser has no event to wait for, so this is a fixed guess.
 const DOWNLOAD_PREPARING_MS = 20_000;
 
-function FlashSnapshotRow({
-  snap,
-  source,
-  flagged,
-  preselected,
-  onDeleted,
-  t,
-}: {
-  snap: Snapshot;
-  source: RepoSource;
-  /** An open data-loss finding was raised on this snapshot. */
-  flagged: boolean;
-  /** A finding's restore link asked for this snapshot, so the row stands out
-   *  from its neighbours. */
-  preselected: boolean;
-  onDeleted: () => void;
-  t: T;
-}) {
-  const [deleting, setDeleting] = useState(false);
+function FlashActions({ pick, t }: { pick: TimelinePick; t: T }) {
   const [preparing, setPreparing] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
-  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("flash", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   // A native <a download> leaves progress to the browser's download manager,
   // which survives this row unmounting on a tab switch. It gives up the JSON
@@ -156,7 +116,7 @@ function FlashSnapshotRow({
   // the download cannot work.
   async function handleDownload() {
     setPreparing(true);
-    const check = await checkRestoreOnce({ kind: "flash", snapshotId: snap.id, source });
+    const check = await checkRestoreOnce({ kind: "flash", snapshotId: pick.snapshotId, source: pick.source });
     const blocked = restoreBlockReason(check, t);
     if (blocked !== undefined) {
       setPreparing(false);
@@ -165,72 +125,47 @@ function FlashSnapshotRow({
     }
     setTimeout(() => setPreparing(false), DOWNLOAD_PREPARING_MS);
     const a = document.createElement("a");
-    a.href = flashDownloadURL(snap.id, source);
-    a.download = `flash-${snap.id.slice(0, 8)}.zip`;
+    a.href = flashDownloadURL(pick.snapshotId, pick.source);
+    a.download = `flash-${pick.snapshotId.slice(0, 8)}.zip`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   }
 
   return (
-    // py-1.5 keeps the row at 44px around the 32px icon badges, as in
-    // RestorePanel's SnapshotRow.
-    <div
-      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
-        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
-      }`}
-    >
-      <div className="flex items-center gap-3 text-sm max-md:flex-wrap max-md:justify-end">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
-        {flagged && (
-          <Badge tone="fail" size="small">
-            {t("anomaly.snapshotFlagged")}
-          </Badge>
-        )}
-        {/* No hueIndex: both badges take the Restore card's hue through the
-            cascade. Delete gets no colour of its own, since a neutral badge
-            would sit flat grey beside a hued one; the glyph, the tip and the
-            confirm dialog carry its meaning. */}
-        <Button
-          label={t("flash.plugins")}
-          labelKey="flash.plugins"
-          tone="neutral"
-          onClick={() => setShowPlugins((v) => !v)}
-          ariaExpanded={showPlugins}
-          glyph={
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${showPlugins ? "rotate-90" : "rtl:rotate-180"}`}>
-              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-            </svg>
-          }
-          className={"shrink-0"}
-        />
-        <Button
-          label={t("flash.download")}
-          labelKey="flash.download"
-          glyph={<IconDownload />}
-          tone="accent"
-          onClick={() => void handleDownload()}
-          disabled={preparing}
-          busy={preparing}
-          className={"shrink-0"}
-        />
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || preparing}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
-      </div>
-      {showPlugins && <FlashPluginList snapshotId={snap.id} source={source} t={t} />}
+    <>
+      <Button
+        label={t("flash.plugins")}
+        labelKey="flash.plugins"
+        tone="neutral"
+        onClick={() => setShowPlugins((v) => !v)}
+        ariaExpanded={showPlugins}
+        glyph={
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${showPlugins ? "rotate-90" : "rtl:rotate-180"}`}>
+            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+          </svg>
+        }
+        className="shrink-0"
+      />
+      <Button
+        label={t("flash.download")}
+        labelKey="flash.download"
+        glyph={<IconDownload />}
+        tone={pick.lead ? "accent" : "neutral"}
+        onClick={() => void handleDownload()}
+        disabled={preparing}
+        busy={preparing}
+        className="shrink-0"
+      />
+      {/* order-last puts the list under the whole row of actions, the
+          timeline's own delete buttons included. */}
+      {showPlugins && (
+        <div className="order-last basis-full">
+          <FlashPluginList snapshotId={pick.snapshotId} source={pick.source} t={t} />
+        </div>
+      )}
       {confirmDialog}
-    </div>
+    </>
   );
 }
 
@@ -241,10 +176,6 @@ export function Flash() {
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const { flagged } = useOpenAnomalies();
   const restoreRequest = useRestoreRequest();
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const progressMap = useProgress();
   const progress = progressMap["flash"];
   // Any backup, restore or replication in flight disables the backup button
@@ -252,34 +183,8 @@ export function Flash() {
   const running = anyActive(progressMap);
   const [reloadTick, setReloadTick] = useState(0);
   const reload = () => setReloadTick((n) => n + 1);
-
-  // A switch of source hides the list until the new one is in (the toggle sets
-  // `loading`); a reload after a backup or a delete swaps it in place. An
-  // answer that arrives after the next switch is dropped, and a failure
-  // empties the list, whose rows belong to the source just left. t() only
-  // builds the failure message, so a language switch fetches nothing.
-  useEffect(() => {
-    let current = true;
-    const fail = (message: string) => {
-      if (!current) return;
-      setSnapshots([]);
-      setError(message);
-    };
-    setError(null);
-    listFlashSnapshots(source)
-      .then((res) => {
-        if (!res.ok) return fail(res.error ?? t("flash.loadBackupsFailed"));
-        if (current) setSnapshots(res.snapshots ?? []);
-      })
-      .catch((err: unknown) => fail(err instanceof Error ? err.message : t("flash.loadBackupsFailed")))
-      .finally(() => {
-        if (current) setLoading(false);
-      });
-    return () => {
-      current = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, reloadTick]);
+  const [hasBackup, setHasBackup] = useState(false);
+  const onRows = useCallback((rows: TimelineRow[]) => setHasBackup(rows.length > 0), []);
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
@@ -312,8 +217,9 @@ export function Flash() {
               busyPhase={running.phase}
             />
           </div>
+          <PlacementFlow domain="flash" />
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-          <ItemChecksLine checks={itemChecks.find("flash", "flash")} hasBackup={snapshots.length > 0} onChanged={itemChecks.reload} />
+          <ItemChecksLine checks={itemChecks.find("flash", "flash")} hasBackup={hasBackup} onChanged={itemChecks.reload} />
 
           {/* As on the Folders page: a restore has its own control with its
               own warning. */}
@@ -342,53 +248,19 @@ export function Flash() {
           </Badge>
         </h2>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-            {t("source.label")}
-            <InfoBubble tip={t("source.hint")} />
-          </span>
-          <SourceToggle
-            source={source}
-            onChange={(next) => {
-              // The selector reports a click on the active source too, and
-              // no load would follow to clear `loading`.
-              if (next === source) return;
-              setLoading(true);
-              setSource(next);
-            }}
-            disabled={loading}
+        <div className="rounded-card bg-carbon-background px-3 py-1">
+          <Timeline
+            key={reloadTick}
             domain="flash"
+            itemKey="flash"
+            itemName={t("flash.title")}
+            open
+            renderActions={(pick) => <FlashActions pick={pick} t={t} />}
+            onRows={onRows}
+            flagged={flagged}
+            request={restoreRequest}
           />
         </div>
-
-        {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
-        {error && <p className="text-xs text-statusFail">{error}</p>}
-        {!loading && !error && (
-          <MissingRestorePoint
-            requested={restoreRequest.snapshot}
-            requestedAt={restoreRequest.at}
-            points={snapshots.map(restorePointOf)}
-            t={t}
-          />
-        )}
-        {!loading && !error && snapshots.length === 0 && (
-          <p className="text-xs text-carbon-textMuted">{t("flash.none")}</p>
-        )}
-        {!loading && snapshots.length > 0 && (
-          <div className="rounded-card bg-carbon-background px-3 py-1">
-            {snapshots.map((snap) => (
-              <FlashSnapshotRow
-                key={snap.id}
-                snap={snap}
-                source={source}
-                flagged={flagged.has(findingSnapshotId(snap))}
-                preselected={findingSnapshotId(snap) === restoreRequest.snapshot}
-                onDeleted={reload}
-                t={t}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* This page numbers its notches by hand: backup 0, restore 1, this 2. */}

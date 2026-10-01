@@ -1,5 +1,8 @@
 # Off-site e ripristino
 
+!!! note "Le copie off-site attendono dopo una ricostruzione"
+    Quando il passo 4 ricostruisce voci senza le vecchie impostazioni, la replica off-site di quei domini si mette in pausa finché la collocazione predefinita non viene confermata. Vedi [Collocazione per elemento](#placement).
+
 I backup locali ti proteggono da un container perso o da un aggiornamento andato male. La replica off-site e un kit di ripristino testato ti proteggono dall'intera macchina, dal ransomware o da un incendio. Questa pagina copre la replica off-site, il rendere quella copia a prova di manomissione, il dimostrare di poter ripristinare e il recuperare quando BombVault stesso non c'è più.
 
 ## Replica off-site
@@ -12,14 +15,44 @@ Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Impost
 - **I limiti di banda** (Impostazioni, Off-site) limitano la velocità di upload/download di restic così la replica non satura la tua WAN.
 - Un **indicatore di replica** mostra quale dominio sta replicando mentre è in corso (sulla sua pagina e sulla Dashboard). È un indicatore attivo, non una barra di percentuale, perché `restic copy` non espone alcun progresso leggibile da una macchina.
 
-!!! note "Ripristina direttamente da off-site"
-    Ogni browser dei backup ha un interruttore **Locale / Off-site**, così se un repo locale è perso o corrotto puoi elencare e ripristinare direttamente dalla replica off-site. L'eliminazione è per sorgente: rimuovere un backup interessa solo la copia che stai visualizzando.
+!!! note "Ripristina da qualsiasi luogo"
+    Ogni container, VM, set di file, la flash e la configurazione dell'app elencano i propri backup come un'unica cronologia su tutti i luoghi in cui si trova un backup. Un backup copiato su B2 compare una sola volta, contrassegnato con ogni luogo che lo contiene. Un ripristino usa il primo luogo che riesce a raggiungere, a partire dal repository su cui l'elemento viene scritto, e puoi scegliere un altro luogo per ogni riga. I luoghi off-site vengono letti solo quando li apri. L'eliminazione in un luogo controlla prima gli altri e dice se era l'ultima copia.
+
+## Collocazione per elemento {#placement}
+
+Ogni scheda di container, VM e set di file ha una riga **Collocazione** con tre segmenti:
+
+- **Locale** scrive l'elemento sul repository mostrato sotto **Salvato su** e non lo copia da nessuna parte. Usalo per dati che hanno già una seconda copia, per esempio una condivisione che vive su un NAS.
+- **Locale + off-site** lo scrive anche lì e lo copia sulle destinazioni spuntate sotto **Copia su**, un chip per ogni destinazione off-site del dominio. Togli la spunta a un chip e quella destinazione non riceve più nulla di nuovo da questo elemento.
+- **Solo off-site** scrive l'elemento direttamente nel luogo sotto **Invia a**: un repository diretto accanto a una destinazione off-site, oppure un repository remoto che hai impostato in Impostazioni, Archiviazione, Repository.
+
+La posizione è fissa dal primo backup dell'elemento in poi, perché BombVault non sposta mai i backup tra repository. Le copie possono cambiare in qualsiasi momento. Una destinazione che non riceve più un elemento mantiene le copie che ha e le pota secondo la propria conservazione alla prossima esecuzione off-site del dominio; **Elimina in B2** sulla scheda le rimuove subito. Quando alcune di quelle copie non esistono da nessun'altra parte, la conferma le elenca per data e chiede il nome dell'elemento. Dalle destinazioni append-only non si può eliminare.
+
+Sotto la riga la scheda indica dove va l'elemento e cosa c'è realmente: quante sedi lo custodiscono, quando ogni destinazione è stata vista l'ultima volta, e se il 3-2-1 è rispettato. Una sede è il server con i dati originali, ogni destinazione off-site e ogni repository contrassegnato **Fuori sede**. BombVault controlla le copie e le sedi; non controlla la parte «due supporti» del 3-2-1.
+
+### Collocazioni predefinite
+
+Impostazioni, Archiviazione, **Collocazioni predefinite** ha una riga per dominio con gli stessi tre segmenti. Le copie si applicano subito a ogni elemento senza una scelta propria, e alle cartelle di progetto degli stack Compose. La posizione si applica a un nuovo elemento al suo primo backup; cambiarla non sposta nessun backup. Prima di salvare, la riga elenca ogni destinazione che guadagna o perde elementi e quanti snapshot significa. **Applica agli elementi senza backup** riporta al valore predefinito ogni elemento che non ha ancora un backup.
+
+Una nuova destinazione off-site riceve ogni elemento non impostato su Locale. La finestra che la aggiunge indica quanti elementi e, dove noto, quanta cronologia significa, e offre di escludere gli elementi già esclusi dalle altre destinazioni.
+
+### Repository diretti
+
+Scegliere il repository diretto di una destinazione sotto Solo off-site apre una finestra con una posizione suggerita accanto alla destinazione, per esempio `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, e un test di connessione che non crea nulla. **Crea e usa** crea il repository e vi punta l'elemento. Un repository diretto prende la chiave, la classe di archiviazione, i limiti, l'impostazione append-only e la conservazione della destinazione, e cambia insieme a essi; la scheda Repository lo mostra in sola lettura. Quando una nuova chiave della destinazione non riesce ad aprirlo, il repository diretto mantiene la chiave che ha e il salvataggio lo segnala. I suoi snapshot portano il tag `bv:direct`, e ogni altro passaggio di conservazione li risparmia, così un repository diretto che ha perso il collegamento con la sua destinazione non invecchia mai secondo le regole locali. Si accede a B2 tramite il suo endpoint S3, inserendo l'ID chiave e la chiave applicativa come credenziali S3; una chiave limitata alla cartella propria della destinazione non riesce a raggiungere la cartella accanto, quindi limita invece la chiave alla cartella sopra la destinazione.
+
+### Fuori sede
+
+Un repository con nome può essere contrassegnato **Fuori sede** sulla scheda Repository. I repository remoti partono contrassegnati; disattivalo per un rest-server nello stesso edificio. Il contrassegno conta solo le sedi e il 3-2-1 sulle schede. Non cambia nessuna copia.
+
+### Dopo una ricostruzione
+
+Le scelte di copia vivono nelle impostazioni di BombVault stesso. Dopo una ricostruzione tramite Scopri senza un `/config` ripristinato sono perse, e copiare tutto rimanderebbe su B2 gli elementi che avevi escluso. La replica off-site di ogni dominio ricostruito quindi si mette in pausa. La Dashboard lo mostra in ambra, e Collocazioni predefinite offre **Conferma valore predefinito** con un'anteprima di cosa copia la prossima esecuzione e i nomi nei backup che non hanno una voce, che puoi escludere lì. Solo la conferma termina la pausa; importare un file di impostazioni riporta regole e valori predefiniti ma non la termina.
 
 ## Repository primari remoti {#remote-primary-repositories}
 
-Il percorso di backup di un dominio (Impostazioni, Archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
+Il percorso di backup di un dominio (Impostazioni, Archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
 
-Ognuno dei sei campi di percorso (Contenitori, Macchine virtuali, Flash, Configurazione, File, Dataset ZFS) ha subito accanto un interruttore **Locale / Remoto**:
+Ognuno dei sei campi di percorso (Container, VM, Flash, Auto-backup, Cartelle, Dataset ZFS) ha subito accanto un interruttore **Locale / Remoto**:
 
 - **Locale** mostra il consueto sfoglia-cartelle.
 - **Remoto** lo sostituisce con un semplice campo URL, più un pulsante che apre la stessa finestra di test connessione e credenziali usata dalle destinazioni off-site, configurata però per questo primario. Da lì ottieni:
@@ -67,7 +100,7 @@ Un reale passaggio da protetto a non protetto fa scattare un unico avviso.
 
 BombVault offre due livelli di prova che i tuoi backup siano effettivamente ripristinabili, non solo presenti.
 
-- **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco) e mostra un badge *ultima ripristinabilità verificata* per dominio. La cadenza risiede su Impostazioni, Pianificazioni; il badge su Impostazioni, Integrità.
+- **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco) e mostra un badge *Ripristinabilità verificata* per dominio. La cadenza risiede su Impostazioni, Pianificazioni; il badge su Impostazioni, Integrità.
 - **Esercitazioni DR (off-site).** BombVault ripristina una destinazione reale dal repo off-site in una sandbox usa e getta, la verifica file per file e byte per byte, poi ripulisce. Questo dimostra che puoi recuperare da off-site, non solo che il repo risponde.
 
 La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto questo in una postura verde / ambra / rossa per dominio, con una checklist con marca temporale (off-site configurato, append-only verificato, replica aggiornata, esercitazione di ripristino superata, cifratura attiva, strategia di pota impostata). Ogni riga rossa collega direttamente alla soluzione, e la scheda diventa verde solo su fatti verificati.
@@ -118,7 +151,7 @@ Sopra sono descritti i pezzi. Questa è un'installazione completa con valori rea
 
 Due macchine: **TOWER** esegue i container e invia i backup, **VAULT** li riceve e impone l'immutabilità. Sostituisci con i tuoi nomi, indirizzi e percorsi di condivisione.
 
-**1. Su VAULT, avvia il server append-only.** In BombVault su TOWER vai su *Impostazioni → Off-site → configurazione guidata*, scegli **rest-server** e genera la ricetta. Copia la scheda **Modello Unraid (XML)**, salvala su VAULT come `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, poi *Docker → Add Container* e scegli **rest-server** dall'elenco dei modelli. Prima di avviarlo, scrivi la riga `htpasswd` mostrata in `/mnt/user/appdata/rest-server/.htpasswd` su VAULT. La password monouso viene mostrata una sola volta e non viene mai conservata: copiala ora. Quella riga porta la stessa password, già cifrata con bcrypt per te: il testo in chiaro va nelle credenziali REST su TOWER, la riga cifrata nel `.htpasswd` su VAULT. Non devi cifrare nulla tu.
+**1. Su VAULT, avvia il server append-only.** In BombVault su TOWER vai su *Impostazioni → Off-site → Configura*, scegli **rest-server** e genera la ricetta. Copia la scheda **Modello Unraid (XML)**, salvala su VAULT come `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, poi *Docker → Add Container* e scegli **rest-server** dall'elenco dei modelli. Prima di avviarlo, scrivi la riga `htpasswd` mostrata in `/mnt/user/appdata/rest-server/.htpasswd` su VAULT. La password monouso viene mostrata una sola volta e non viene mai conservata: copiala ora. Quella riga porta la stessa password, già cifrata con bcrypt per te: il testo in chiaro va nelle credenziali REST su TOWER, la riga cifrata nel `.htpasswd` su VAULT. Non devi cifrare nulla tu.
 
     Lascia `--append-only` nel campo OPTIONS. È tutto il senso della cosa: senza, VAULT torna a essere una normale condivisione.
 
@@ -136,7 +169,7 @@ Il primo segmento del percorso è l'utente htpasswd, il secondo il repository. I
 | **NON protetto** | VAULT ha accettato una cancellazione. Manca `--append-only` oppure è stato rimosso. |
 | **non conclusivo** | Né l'uno né l'altro. Di solito l'URL non è quello che usa restic, oppure le credenziali sono cambiate. Non viene registrato nulla e non scatta alcun avviso. |
 
-**4. Su VAULT, guarda cosa arriva.** Associa le due macchine ([Associazione delle istanze](#pairing)), attiva *Impostazioni → Associazione → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura con TOWER come istanza mittente.
+**4. Su VAULT, guarda cosa arriva.** Associa le due macchine ([Associazione delle istanze](#pairing)), attiva *Impostazioni → Generale → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura con TOWER come istanza mittente.
 
 !!! warning "La posizione è un percorso **dentro** il container, scritto relativo al mount dell'host"
     Inserisci `user/appdata/rest-server/bombvault-containers/containers`, **non** `/mnt/user/appdata/…`. BombVault gira in un container in cui il `/mnt` dell'host è montato altrove; un percorso host assoluto lì non esiste. Se ne incolli uno, BombVault ora ti indica il percorso relativo da usare.
@@ -156,7 +189,7 @@ Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostru
 5. **Ripristina container e VM in un colpo solo** (lasciati fermi, così li avvii deliberatamente) ed elenca i set di file e gli elementi ZFS da ripristinare uno alla volta; gli elementi ZFS tornano disattivati. Il tuo kit di ripristino è a un clic di distanza.
 
 !!! tip "Migrazione pianificata contro disastro"
-    Il ripristino guidato ripristina le impostazioni di BombVault stesso da un backup. Per uno spostamento *pianificato* su una nuova macchina, puoi invece portare la tua configurazione direttamente con la scheda **Esporta e importa impostazioni** (un file JSON portatile). Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
+    Il ripristino guidato ripristina le impostazioni di BombVault stesso da un backup. Per uno spostamento *pianificato* su una nuova macchina, puoi invece portare la tua configurazione direttamente con la scheda **Esporta / importa impostazioni** (un file JSON portatile). Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
 
 ### Ripristino da un altro repo BombVault {#restore-from-another-bombvault-repo}
 

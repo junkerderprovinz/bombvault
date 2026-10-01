@@ -1,5 +1,8 @@
 # Off-site en herstel
 
+!!! note "Off-site kopieën wachten na een rebuild"
+    Als stap 4 items herbouwt zonder de oude instellingen, pauzeert de off-site replicatie van die domeinen tot de standaardplaatsing is bevestigd. Zie [Plaatsing per item](#placement).
+
 Lokale back-ups beschermen je tegen een verloren container of een slechte update. Off-site replicatie en een geteste herstelkit beschermen je tegen de hele machine, ransomware of een brand. Deze pagina behandelt off-site repliceren, die kopie manipulatiebestendig maken, bewijzen dat je kunt herstellen, en herstellen wanneer BombVault zelf weg is.
 
 ## Off-site replicatie
@@ -12,14 +15,44 @@ Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel e
 - **Bandbreedtelimieten** (Instellingen, Off-site) begrenzen de restic-upload/downloadsnelheid zodat replicatie je WAN niet verzadigt.
 - Een **replicatie-indicator** toont welk domein aan het repliceren is terwijl het draait (op zijn pagina en het Dashboard). Het is een actieve indicator, geen percentagebalk, omdat `restic copy` geen machine-leesbare voortgang blootgeeft.
 
-!!! note "Herstel rechtstreeks vanaf off-site"
-    Elke back-upbrowser heeft een schakelaar **Lokaal / Off-site**, zodat je bij een verloren of corrupte lokale repo direct vanaf de off-site replica kunt lijsten en herstellen. Verwijderen gaat per bron: een back-up verwijderen raakt alleen de kopie die je bekijkt.
+!!! note "Herstel vanaf elke plek"
+    Elke container, VM, bestandsset, de flash en de app-configuratie tonen hun back-ups als één tijdlijn over alle plekken waar een back-up ligt. Een back-up die naar B2 is gekopieerd, verschijnt één keer, gemarkeerd met elke plek die hem bevat. Een herstel neemt de eerste plek die het kan bereiken, te beginnen bij de repository waarnaar het item wordt geschreven, en je kunt per rij een andere plek kiezen. Off-site plekken worden alleen gelezen als je ze opent. Verwijderen op één plek controleert eerst de andere en zegt of het de laatste kopie was.
+
+## Plaatsing per item {#placement}
+
+Elke kaart van een container, VM en bestandsset heeft een rij **Plaatsing** met drie segmenten:
+
+- **Lokaal** schrijft het item naar de repository die onder **Opgeslagen op** staat en kopieert het nergens naartoe. Gebruik dit voor data die al een tweede kopie heeft, bijvoorbeeld een share die op een NAS leeft.
+- **Lokaal + off-site** schrijft het ook daar en kopieert het naar de doelen die onder **Kopieer naar** zijn aangevinkt, één chip per off-site doel van het domein. Vink een chip uit en dat doel krijgt niets nieuws meer van dit item.
+- **Alleen off-site** schrijft het item rechtstreeks naar de plek onder **Verstuur naar**: een directe repository naast een off-site doel, of een remote repository die je hebt ingesteld onder Instellingen, Opslag, Repository's.
+
+De locatie ligt vast vanaf de eerste back-up van het item, omdat BombVault back-ups nooit tussen repositories verplaatst. De kopieën kunnen op elk moment veranderen. Een doel dat een item niet meer krijgt, houdt de kopieën die het heeft en trimt ze naar zijn eigen retentie bij de volgende off-site run van het domein; **Verwijderen bij B2** op de kaart verwijdert ze meteen. Als sommige van die kopieën nergens anders bestaan, toont de bevestiging ze op datum en vraagt om de naam van het item. Bij append-only doelen kan niet worden verwijderd.
+
+Onder de rij zegt de kaart waar het item naartoe gaat en wat er werkelijk is: hoeveel locaties het bevatten, wanneer elk doel voor het laatst is gezien, en of aan 3-2-1 wordt voldaan. Een locatie is de server met de oorspronkelijke data, elk off-site doel en elke repository die als **Buiten het pand** is gemarkeerd. BombVault controleert kopieën en locaties; het controleert niet het «twee media» deel van 3-2-1.
+
+### Standaardplaatsing
+
+Instellingen, Opslag, **Standaardplaatsing** heeft één rij per domein met dezelfde drie segmenten. De kopieën gelden meteen voor elk item zonder eigen keuze, en voor de projectmappen van Compose-stacks. De locatie geldt voor een nieuw item bij zijn eerste back-up; wijzigen verplaatst geen back-ups. Voor het opslaan noemt de rij elk doel dat items wint of verliest en hoeveel snapshots dat betekent. **Toepassen op items zonder back-ups** zet elk item dat nog geen back-up heeft terug op de standaard.
+
+Een nieuw off-site doel ontvangt elk item dat niet op Lokaal staat. Het venster dat het toevoegt, zegt hoeveel items en, waar bekend, hoeveel geschiedenis dat is, en biedt aan om de items over te slaan die al bij andere doelen zijn uitgesloten.
+
+### Directe repository's
+
+Het kiezen van de directe repository van een doel onder Alleen off-site opent een venster met een voorgestelde locatie naast het doel, bijvoorbeeld `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, en een verbindingstest die niets aanmaakt. **Aanmaken en gebruiken** maakt de repository aan en wijst het item ernaartoe. Een directe repository neemt de sleutel, opslagklasse, limieten, append-only-instelling en retentie van het doel over, en verandert daarmee mee; de kaart Repository's toont hem alleen-lezen. Als een nieuwe sleutel van het doel hem niet kan openen, houdt de directe repository de sleutel die hij heeft, en het opslaan meldt dat. Zijn snapshots dragen de tag `bv:direct`, en elke andere retentieronde spaart ze, zodat een directe repository die zijn link met zijn doel kwijt is, nooit veroudert volgens de lokale regels. B2 wordt bereikt via zijn S3-eindpunt, met de sleutel-ID en de toepassingssleutel als S3-inloggegevens; een sleutel die beperkt is tot de eigen map van het doel, kan niet bij de map ernaast, beperk de sleutel dus in plaats daarvan tot de map boven het doel.
+
+### Buiten het pand
+
+Een benoemde repository kan op de kaart Repository's worden gemarkeerd als **Buiten het pand**. Remote repository's beginnen gemarkeerd; zet het uit voor een rest-server in hetzelfde gebouw. De markering telt alleen mee voor locaties en 3-2-1 op de kaarten. Er verandert geen kopie door.
+
+### Na een rebuild
+
+Kopieerkeuzes leven in BombVaults eigen instellingen. Na een rebuild via Ontdekken zonder hersteld `/config` zijn ze weg, en alles kopiëren zou de items die je had uitgesloten opnieuw naar B2 sturen. De off-site replicatie van elk herbouwd domein pauzeert daarom. Het Dashboard toont dit in oranje, en Standaardplaatsing biedt **Standaard bevestigen** met een voorbeeld van wat de volgende run kopieert en de namen in de back-ups zonder item, die je daar kunt uitsluiten. Alleen de bevestiging beëindigt de pauze; het importeren van een instellingenbestand brengt regels en standaarden terug maar beëindigt de pauze niet.
 
 ## Externe primaire repositories {#remote-primary-repositories}
 
-Het back-uppad van een domein (Instellingen, Opslag) is niet beperkt tot een lokale map: richt het rechtstreeks op een restic-remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:gebruiker@host:/repo`, `rclone:remote:bucket/pad`) en BombVault back-upt daar direct naartoe, zonder aparte lokale kopie en zonder replicatiestap. Dat is een werkelijk andere vorm dan de off-sitereplicatie hierboven: daar is het lokale repository primair en is het off-site-repository er een archief van naar beste vermogen; hier **is** het externe repository het primaire, en is het de enige kopie zolang je voor dat domein niet ook off-sitereplicatie (of een tweede remote) instelt.
+Het back-uppad van een domein (Instellingen, Opslag) is niet beperkt tot een lokale map: richt het rechtstreeks op een restic-remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:gebruiker@host:/repo`, `rclone:remote:bucket/pad`) en BombVault back-upt daar direct naartoe, zonder aparte lokale kopie en zonder replicatiestap. Dat is een werkelijk andere vorm dan de off-sitereplicatie hierboven: daar is het lokale repository primair en is het off-site-repository er een archief van naar beste vermogen; hier **is** het externe repository het primaire, en is het de enige kopie zolang je voor dat domein niet ook off-sitereplicatie (of een tweede remote) instelt.
 
-Elk van de zes padvelden (Containers, Virtuele machines, Flash, Configuratie, Bestanden, ZFS-datasets) heeft er direct naast een schakelaar **Lokaal / Extern**:
+Elk van de zes padvelden (Containers, VM's, Flash, Zelf-back-up, Mappen, ZFS-datasets) heeft er direct naast een schakelaar **Lokaal / Extern**:
 
 - **Lokaal** toont de vertrouwde mappenbrowser.
 - **Extern** vervangt hem door een eenvoudig URL-veld, plus een knop die hetzelfde venster voor verbindingstest en inloggegevens opent dat off-sitebestemmingen gebruiken, maar dan ingesteld voor dit primaire repository. Daar krijg je:
@@ -67,7 +100,7 @@ Een echte omslag van beschermd naar onbeschermd vuurt één enkele waarschuwing 
 
 BombVault biedt twee niveaus van bewijs dat je back-ups daadwerkelijk herstelbaar zijn, niet alleen aanwezig.
 
-- **Herstelverificatie-oefeningen (lokaal).** BombVault draait periodiek `restic check --read-data-subset` (begrensd, nooit een schijfvullend volledig herstel) en toont een badge *laatst geverifieerd herstelbaar* per domein. De cadans staat op Instellingen, Schema's; de badge op Instellingen, Integriteit.
+- **Herstelverificatie-oefeningen (lokaal).** BombVault draait periodiek `restic check --read-data-subset` (begrensd, nooit een schijfvullend volledig herstel) en toont een badge *Herstelbaarheid geverifieerd* per domein. De cadans staat op Instellingen, Schema's; de badge op Instellingen, Integriteit.
 - **DR-oefeningen (off-site).** BombVault herstelt een echt doel vanuit de off-site repo in een wegwerp-sandbox, verifieert het bestand-voor-bestand en byte-voor-byte, en ruimt daarna op. Dit bewijst dat je vanaf off-site kunt herstellen, niet alleen dat de repo antwoordt.
 
 De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een groene / oranje / rode houding per domein, met een van datum voorziene checklist (off-site geconfigureerd, append-only geverifieerd, replicatie actueel, hersteloefening geslaagd, versleuteling aan, prune-strategie ingesteld). Elke rode rij linkt diep door naar de fix, en de kaart wordt alleen groen op geverifieerde feiten.
@@ -118,7 +151,7 @@ Hierboven staan de onderdelen. Dit is één volledige opstelling met echte waard
 
 Twee machines: **TOWER** draait de containers en stuurt de back-ups, **VAULT** ontvangt ze en dwingt onveranderlijkheid af. Vul je eigen namen, adressen en sharepaden in.
 
-**1. Zet op VAULT de append-only-server op.** Ga in BombVault op TOWER naar *Instellingen → Off-site → begeleide installatie*, kies **rest-server** en genereer het recept. Kopieer het tabblad **Unraid-sjabloon (XML)**, sla het op VAULT op als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, dan *Docker → Add Container* en kies **rest-server** uit de sjabloonlijst. Schrijf vóór het starten de getoonde `htpasswd`-regel op VAULT in `/mnt/user/appdata/rest-server/.htpasswd`. Het eenmalige wachtwoord wordt één keer getoond en nooit bewaard: kopieer het nu. Die regel bevat hetzelfde wachtwoord, al voor je gehasht met bcrypt: de platte tekst hoort in de REST-inloggegevens op TOWER, de gehashte regel in de `.htpasswd` op VAULT. Je hoeft zelf niets te hashen.
+**1. Zet op VAULT de append-only-server op.** Ga in BombVault op TOWER naar *Instellingen → Off-site → Instellen*, kies **rest-server** en genereer het recept. Kopieer het tabblad **Unraid-sjabloon (XML)**, sla het op VAULT op als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, dan *Docker → Add Container* en kies **rest-server** uit de sjabloonlijst. Schrijf vóór het starten de getoonde `htpasswd`-regel op VAULT in `/mnt/user/appdata/rest-server/.htpasswd`. Het eenmalige wachtwoord wordt één keer getoond en nooit bewaard: kopieer het nu. Die regel bevat hetzelfde wachtwoord, al voor je gehasht met bcrypt: de platte tekst hoort in de REST-inloggegevens op TOWER, de gehashte regel in de `.htpasswd` op VAULT. Je hoeft zelf niets te hashen.
 
     Laat `--append-only` in het OPTIONS-veld staan. Daar draait alles om: zonder dat is VAULT weer een gewone share.
 
@@ -136,7 +169,7 @@ Het eerste padsegment is de htpasswd-gebruiker, het tweede de repository. Vul de
 | **NIET beschermd** | VAULT accepteerde een verwijdering. `--append-only` ontbreekt of is verwijderd. |
 | **niet doorslaggevend** | Geen van beide. Meestal is de URL niet die welke restic zelf gebruikt, of de inloggegevens zijn gewijzigd. Er wordt niets vastgelegd en geen waarschuwing gegeven. |
 
-**4. Kijk op VAULT wat er binnenkomt.** Koppel de twee machines ([Koppeling van instanties](#pairing)), zet *Instellingen → Koppeling → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen met TOWER als de zendende instantie.
+**4. Kijk op VAULT wat er binnenkomt.** Koppel de twee machines ([Koppeling van instanties](#pairing)), zet *Instellingen → Algemeen → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen met TOWER als de zendende instantie.
 
 !!! warning "De locatie is een pad **binnen** de container, geschreven ten opzichte van de host-mount"
     Vul `user/appdata/rest-server/bombvault-containers/containers` in, **niet** `/mnt/user/appdata/…`. BombVault draait in een container waar de `/mnt` van de host elders is gemount; een absoluut hostpad bestaat daar niet. Plak je er toch een, dan noemt BombVault nu het relatieve pad dat je nodig hebt.
@@ -156,7 +189,7 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 5. **Herstelt de containers en VM's in één keer** (gestopt gelaten, zodat je ze bewust start) en toont de bestandssets en ZFS-items om een voor een te herstellen; ZFS-items komen uitgeschakeld terug. Je herstelkit is één klik weg.
 
 !!! tip "Geplande migratie versus noodgeval"
-    Begeleid herstel herstelt BombVaults eigen instellingen vanuit een back-up. Voor een *geplande* verhuizing naar een nieuwe machine kun je in plaats daarvan je configuratie rechtstreeks meenemen met de kaart **Instellingen exporteren en importeren** (een portable JSON-bestand). Zie [Configuratie](configuration.md#portable-settings-export-and-import).
+    Begeleid herstel herstelt BombVaults eigen instellingen vanuit een back-up. Voor een *geplande* verhuizing naar een nieuwe machine kun je in plaats daarvan je configuratie rechtstreeks meenemen met de kaart **Instellingen exporteren / importeren** (een portable JSON-bestand). Zie [Configuratie](configuration.md#portable-settings-export-and-import).
 
 ### Herstellen vanuit een andere BombVault-repo {#restore-from-another-bombvault-repo}
 

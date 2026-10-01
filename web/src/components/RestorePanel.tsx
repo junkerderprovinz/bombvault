@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff, DBDumpView, DbDataCoverage } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
+import { SNAPSHOT_MISSING } from "../lib/timeline";
 import { RestoreProgress } from "./restore/RestoreProgress";
 import { RestoreAction } from "./restore/RestoreAction";
 import { DatabaseDumpList } from "./restore/DatabaseDumpList";
-import { MissingRestorePoint, restorePointOf } from "./restore/MissingRestorePoint";
 import { pairsWith } from "../lib/dbdump";
 import { Badge } from "./Badge";
+import { InfoBubble } from "./InfoBubble";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
@@ -21,10 +22,9 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
-import { InfoBubble } from "./InfoBubble";
-import { IconRestore, IconTrash } from "./Sidebar";
+import { IconRestore } from "./Sidebar";
 import { IconDisclosure } from "./IconDisclosure";
-import { findingSnapshotId } from "../lib/anomalies";
+import { Timeline, type TimelinePick } from "./timeline/Timeline";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
 import { RestoreCheckPanel } from "./restore/RestoreCheckPanel";
@@ -46,14 +46,16 @@ function humanBytes(n: number): string {
 }
 
 // displayTags hides the ownership tags under the entry's own or a former name,
-// the formerly: takeover marker, the orchestrator's internal marker tags and
-// the machine-readable prefixes that pair a backup with its database dump and
-// describe the dumped server.
-const INTERNAL_TAGS = new Set(["p1"]);
+// the formerly: takeover marker, the internal marker tags and the
+// machine-readable prefixes that pair a backup with its database dump and
+// describe the dumped server. "p1" is an orchestrator marker and "bv:direct"
+// marks a snapshot written straight into a direct repository. All of them stay
+// in restic's metadata untouched.
+const INTERNAL_TAGS = new Set(["p1", "bv:direct"]);
 const INTERNAL_PREFIXES = ["bvrun:", "dbengine:", "dbimage:", "dbversion:", "dbname:"];
-function displayTags(snap: Snapshot, containerName: string, aliases: string[]): string[] {
+export function displayTags(tags: string[], containerName: string, aliases: string[] = []): string[] {
   const owners = new Set([containerName, ...aliases].map((n) => `container:${n}`));
-  return (snap.tags ?? []).filter(
+  return tags.filter(
     (tg) =>
       !owners.has(tg) &&
       !INTERNAL_TAGS.has(tg) &&
@@ -70,6 +72,7 @@ function SnapshotFileBrowser({
   source,
   hostMountRoot,
   defaultFolder,
+  onMissing,
   t,
 }: {
   containerName: string;
@@ -77,6 +80,7 @@ function SnapshotFileBrowser({
   source: string;
   hostMountRoot: string;
   defaultFolder: string;
+  onMissing: () => void;
   t: T;
 }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -99,6 +103,7 @@ function SnapshotFileBrowser({
       const paths = [...selected];
       const targetPath = dest === "toFolder" ? folder.trim() : "";
       const res = await restoreContainerFiles(containerName, snapshotId, paths, targetPath, true, source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
       if (res.ok) setRestoredTarget(res.target ?? "");
       return res;
     },
@@ -340,6 +345,7 @@ function RestoreToFolder({
   source,
   hostMountRoot,
   defaultFolder,
+  onMissing,
   t,
 }: {
   containerName: string;
@@ -347,6 +353,7 @@ function RestoreToFolder({
   source: string;
   hostMountRoot: string;
   defaultFolder: string;
+  onMissing: () => void;
   t: T;
 }) {
   const [path, setPath] = useState(defaultFolder);
@@ -361,6 +368,7 @@ function RestoreToFolder({
     start: async () => {
       const p = path.trim();
       const res = await restoreContainerToPath(containerName, snapshotId, p, source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
       if (res.ok) setTarget(res.target ?? p);
       return res;
     },
@@ -429,45 +437,47 @@ function snapLabel(snap: Snapshot): string {
 
 // CompareSnapshots shows what changed between two snapshots (restic diff),
 // starting with the newest pair.
-function CompareSnapshots({
-  snapshots,
-  containerName,
-  source,
-  t,
-}: {
-  snapshots: Snapshot[];
-  containerName: string;
-  source: string;
-  t: T;
-}) {
+function CompareSnapshots({ containerName, t }: { containerName: string; t: T }) {
   const [open, setOpen] = useState(false);
-  const [from, setFrom] = useState(snapshots[1]?.id ?? "");
-  const [to, setTo] = useState(snapshots[0]?.id ?? "");
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [diff, setDiff] = useState<SnapshotDiff | null>(null);
   const { push } = useToast();
-  // Bumping shake remounts the button, which replays .glim-shake.
+  // A failed compare toasts and shakes the button; the inline error below
+  // stays as well, for the reason the comment above run() gives.
   const [shake, setShake] = useState(0);
 
-  // Switching between the local and off-site repo loads a different snapshot
-  // list, and the server rejects IDs left over from the other one.
+  // renderActions only ever gets one picked mark at a time, so compare reads
+  // its own snapshot list at the container's own location once it opens, and
+  // seeds the default pair (older "from" → newer "to") from what comes back.
   useEffect(() => {
-    setFrom(snapshots[1]?.id ?? "");
-    setTo(snapshots[0]?.id ?? "");
-    setDiff(null);
-    setError(null);
-  }, [snapshots]);
+    if (!open) return;
+    listSnapshots(containerName, "local")
+      .then((res) => {
+        const list = res.ok ? (res.snapshots ?? []) : [];
+        setSnapshots(list);
+        setFrom(list[1]?.id ?? "");
+        setTo(list[0]?.id ?? "");
+        setDiff(null);
+        setError(null);
+      })
+      .catch(() => setSnapshots([]));
+  }, [open, containerName]);
 
-  // The diff stays inline because it is read at leisure, and a failed compare
-  // shows its error in the same spot as well as in a toast.
+  // A compare result is a value the reader works through at their own pace,
+  // not a completion ping, so `diff` stays inline where ExportButton and the
+  // restored-to path keep theirs. `error` shares the slot: the two are the
+  // same last-compare outcome, and the next run clears whichever is showing.
   async function run() {
     if (!from || !to || from === to) return;
     setLoading(true);
     setError(null);
     setDiff(null);
     try {
-      const res = await diffSnapshots(containerName, from, to, source);
+      const res = await diffSnapshots(containerName, from, to, "local");
       if (res.ok && res.diff) {
         setDiff(res.diff);
       } else {
@@ -559,14 +569,16 @@ function CompareSnapshots({
 // SnapshotTags shows a snapshot's user tags as chips, with an inline input to
 // add one.
 function SnapshotTags({
-  snap,
+  tags,
+  snapshotId,
   containerName,
   aliases,
   source,
   onTagged,
   t,
 }: {
-  snap: Snapshot;
+  tags: string[];
+  snapshotId: string;
   containerName: string;
   aliases: string[];
   source: string;
@@ -577,11 +589,11 @@ function SnapshotTags({
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  const tags = displayTags(snap, containerName, aliases);
+  const shown = displayTags(tags, containerName, aliases);
 
-  // A failed tag only toasts. The shake replays by remounting the element,
-  // and remounting this focused input fires blur, which would submit the same
-  // bad value again in a loop.
+  // A failed tag toasts but does not shake: the shake replays by remounting
+  // the element under a fresh key, and remounting this still focused input
+  // fires a blur that submits the same rejected value again.
   async function submit() {
     const tag = value.trim();
     if (!tag) {
@@ -590,7 +602,7 @@ function SnapshotTags({
     }
     setBusy(true);
     try {
-      const res = await tagSnapshot(containerName, snap.id, [tag], source);
+      const res = await tagSnapshot(containerName, snapshotId, [tag], source);
       if (res.ok) {
         setValue("");
         setAdding(false);
@@ -607,7 +619,7 @@ function SnapshotTags({
 
   return (
     <div className="flex items-center gap-1 flex-wrap">
-      {tags.map((tg) => (
+      {shown.map((tg) => (
         <span
           key={tg}
           className="inline-flex items-center rounded-pill bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
@@ -650,141 +662,78 @@ function SnapshotTags({
 // RestoreMode selects which of the three restore flows the inline panel shows.
 type RestoreMode = "inPlace" | "files" | "toFolder";
 
-function SnapshotRow({
-  snap,
+function SnapshotActions({
+  pick,
   containerName,
   aliases,
-  source,
   hostMountRoot,
   defaultFolder,
   paired,
   coverage,
-  flagged,
   preselected,
-  onDeleted,
-  onTagged,
   t,
 }: {
-  snap: Snapshot;
+  pick: TimelinePick;
   containerName: string;
   aliases: string[];
-  source: RepoSource;
   hostMountRoot: string;
   defaultFolder: string;
   /** A database dump was taken in the same backup as this snapshot. */
   paired: boolean;
   /** What the files in this snapshot are worth, for the restore warning. */
   coverage: DbDataCoverage;
-  /** An open data-loss finding was raised on this snapshot. */
-  flagged: boolean;
   /** A finding's restore link asked for this snapshot, so its restore
    *  choices start open. */
   preselected: boolean;
-  onDeleted: () => void;
-  onTagged: () => void;
   t: T;
 }) {
   const { advanced } = useAdvanced();
-  const progressMap = useProgress();
-  const running = anyActive(progressMap);
-  // Delete waits only for this container's own backup or restore, not for
-  // unrelated activity.
-  const busy = progressMap[`container:${containerName}`]?.active ?? false;
+  const running = anyActive(useProgress());
   const [showRestore, setShowRestore] = useState(preselected);
   // Basic mode offers only the in-place restore.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  // Bumping shake remounts the delete button, which replays .glim-shake.
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm"), { confirmKey: "snapshots.delete" }))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("containers", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  // One radio group per snapshot.
-  const radioName = `restore-mode-${snap.id}`;
+  // One radio group per row.
+  const radioName = `restore-mode-${pick.row.key}`;
 
   return (
-    // With the 32px icon badges, py-1.5 keeps the collapsed row at 44px, the
-    // same as Config.tsx's ConfigSnapshotRow.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm max-md:flex-wrap">
-        {/* On a phone the id and time take the whole first line, so the
-            actions cannot squeeze the time into a column beside them. */}
-        <div className="flex items-center gap-3 flex-1 min-w-0 max-md:basis-full">
-          <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
-            {snap.id.slice(0, 8)}
-          </span>
-          <span className="text-carbon-textMuted text-xs flex-1">
-            {new Date(snap.time).toLocaleString()}
-          </span>
+    <>
+      <Advanced>
+        <div className="hidden sm:flex">
+          <SnapshotTags
+            tags={pick.mark.tags}
+            snapshotId={pick.snapshotId}
+            containerName={containerName}
+            aliases={aliases}
+            source={pick.source}
+            onTagged={pick.refresh}
+            t={t}
+          />
         </div>
-        {flagged && (
-          <Badge tone="fail" size="small">
-            {t("anomaly.snapshotFlagged")}
+      </Advanced>
+      {/* The tip repeats in a bubble: a title alone is out of reach for touch
+          and keyboard. */}
+      {paired && (
+        <span className="flex items-center gap-1">
+          <Badge tone="neutral" size="small" title={t("dbdump.pairedTip")}>
+            {t("dbdump.pairedBadge")}
           </Badge>
-        )}
-        {/* The tip repeats in a bubble: a title alone is out of reach for
-            touch and keyboard. */}
-        {paired && (
-          <span className="flex items-center gap-1">
-            <Badge tone="neutral" size="small" title={t("dbdump.pairedTip")}>
-              {t("dbdump.pairedBadge")}
-            </Badge>
-            <InfoBubble tip={t("dbdump.pairedTip")} />
-          </span>
-        )}
-        <Advanced>
-          <div className="hidden sm:flex">
-            <SnapshotTags snap={snap} containerName={containerName} aliases={aliases} source={source} onTagged={onTagged} t={t} />
-          </div>
-        </Advanced>
-
-        {/* No hueIndex on these buttons: the row sits inside ContainerRow's
-            .glim-hue element, so the accent already resolves to the row's
-            colour. */}
-        <Button
-          label={t("restore.open")}
-          labelKey="restore.open"
-          glyph={<IconRestore />}
-          tone="accent"
-          onClick={() => setShowRestore((p) => !p)}
-          className="max-md:ms-auto"
-        />
-
-        {/* Not red: the trash glyph, the tooltip and the confirm dialog carry
-            the destructive meaning. */}
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={shake ? "glim-shake" : ""}
-        />
-      </div>
-
+          <InfoBubble tip={t("dbdump.pairedTip")} />
+        </span>
+      )}
+      {/* Square icon badge, no hueIndex needed: this row sits inside
+          ContainerRow's own `.glim-hue` element, so the ambient rainbow
+          position already applies. The timeline row itself carries id, time
+          and delete; this toggle only opens the inline restore panel. */}
+      <Button
+        label={t("restore.open")}
+        labelKey="restore.open"
+        glyph={<IconRestore />}
+        tone={pick.lead ? "accent" : "neutral"}
+        onClick={() => setShowRestore((p) => !p)}
+      />
       {showRestore && (
-        <div className="mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
+        <div className="basis-full mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
           <Advanced>
             <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
@@ -831,10 +780,11 @@ function SnapshotRow({
               <RestoreAction
                 domain="container"
                 name={containerName}
-                snapshotId={snap.id}
-                source={source}
+                snapshotId={pick.snapshotId}
+                source={pick.source}
                 otherActive={running}
                 successMessage={t("restore.completeContainer")}
+                onMissing={pick.onMissing}
                 t={t}
               />
             </div>
@@ -844,10 +794,11 @@ function SnapshotRow({
             <div className="border-t border-carbon-border pt-2">
               <SnapshotFileBrowser
                 containerName={containerName}
-                snapshotId={snap.id}
-                source={source}
+                snapshotId={pick.snapshotId}
+                source={pick.source}
                 hostMountRoot={hostMountRoot}
                 defaultFolder={defaultFolder}
+                onMissing={pick.onMissing}
                 t={t}
               />
             </div>
@@ -857,18 +808,18 @@ function SnapshotRow({
             <div className="border-t border-carbon-border pt-2">
               <RestoreToFolder
                 containerName={containerName}
-                snapshotId={snap.id}
-                source={source}
+                snapshotId={pick.snapshotId}
+                source={pick.source}
                 hostMountRoot={hostMountRoot}
                 defaultFolder={defaultFolder}
+                onMissing={pick.onMissing}
                 t={t}
               />
             </div>
           )}
         </div>
       )}
-      {confirmDialog}
-    </div>
+    </>
   );
 }
 
@@ -890,19 +841,11 @@ export function RestorePanel({
   containerRunning = false,
   importStops,
 }: RestorePanelProps) {
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  // Before the first answer an empty list would report a linked backup as gone.
-  const [loading, setLoading] = useState(true);
-  // A failed load stays inline rather than in a toast: it describes the
-  // section, not a one-off action.
-  const [error, setError] = useState<string | null>(null);
   const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
-
-  const [reloadTick, setReloadTick] = useState(0);
-  // Held here as well as in the list, because the pairing badge sits on the
-  // snapshot rows above it.
+  // The dumps are listed from one source at a time, and held here as well as
+  // in their list because the pairing badge sits on the timeline rows.
+  const [dumpSource, setDumpSource] = useState<RepoSource>("local");
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
   const { flagged } = useOpenAnomalies();
 
@@ -919,104 +862,60 @@ export function RestorePanel({
       .catch(() => undefined);
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    // An answer that arrives after the next switch is dropped, and a failure
-    // empties the list, whose rows belong to the source just left.
-    let current = true;
-    const fail = (message: string) => {
-      if (!current) return;
-      setSnapshots([]);
-      setError(message);
-    };
-    setLoading(true);
-    setError(null);
-    listSnapshots(name, source)
-      .then((res) => {
-        if (!res.ok) return fail(res.error ?? t("common.loadBackupsFailed"));
-        if (current) setSnapshots(res.snapshots ?? []);
-      })
-      .catch(() => fail(t("common.loadBackupsFailed")))
-      .finally(() => {
-        if (current) setLoading(false);
-      });
-    return () => {
-      current = false;
-    };
-  }, [open, name, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
-
   if (!open) return null;
 
   return (
     <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-      {/* Basic mode always reads the local repo. */}
-      <Advanced>
-        <div className="flex flex-wrap items-center gap-2 py-2 border-b border-carbon-border">
-          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-            {t("source.label")}
-            <InfoBubble tip={t("source.hint")} />
-          </span>
-          <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
-        </div>
-      </Advanced>
       <RecentRunsList name={name} domain="container" t={t} />
       <SizeBreakdown domain="containers" item={name} t={t} />
-      {loading && (
-        <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
-      )}
-      {error && (
-        <p className="py-3 text-xs text-statusFail">{error}</p>
-      )}
-      {!loading && !error && snapshots.length === 0 && (
-        <div className="py-3 flex flex-col gap-1">
-          <p className="text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-          {/* A config-only backup has no snapshot. A removed container can be
-              recreated from it; an installed one only gets the explanation. */}
-          {installed ? (
-            <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
-          ) : (
-            <RecreateButton name={name} source={source} t={t} />
-          )}
-        </div>
-      )}
-      {!loading && !error && (
-        <MissingRestorePoint
-          requested={preselect}
-          requestedAt={preselectAt}
-          points={snapshots.map(restorePointOf)}
-          t={t}
-        />
-      )}
-      <Advanced when={!loading && !error && snapshots.length >= 2}>
-        <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
+      <Advanced>
+        <CompareSnapshots containerName={name} t={t} />
       </Advanced>
-      {!loading && snapshots.map((snap) => (
-        <SnapshotRow
-          key={snap.id}
-          snap={snap}
-          containerName={name}
-          aliases={aliases}
-          source={source}
-          hostMountRoot={hostMountRoot}
-          defaultFolder={restoreFolder}
-          paired={dumps.some((dump) => pairsWith(dump, snap))}
-          coverage={dbCoverage}
-          flagged={flagged.has(findingSnapshotId(snap))}
-          preselected={findingSnapshotId(snap) === preselect}
-          onDeleted={() => setReloadTick((n) => n + 1)}
-          onTagged={() => setReloadTick((n) => n + 1)}
-          t={t}
-        />
-      ))}
+      <Timeline
+        domain="containers"
+        itemKey={name}
+        itemName={name}
+        open={open}
+        flagged={flagged}
+        request={preselect ? { snapshot: preselect, at: preselectAt } : undefined}
+        header={(rows, places) => {
+          // A place nobody has read may hold every backup this container has,
+          // so neither sentence below is true yet: the container would be
+          // called config-only, or offered a recreate from an empty local place.
+          const answered = places.length > 0 && places.every((p) => p.state === "read");
+          if (rows.length > 0 || !answered) return null;
+          if (installed) return <p className="py-2 text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>;
+          return <RecreateButton name={name} source="local" t={t} />;
+        }}
+        renderActions={(pick) => (
+          <SnapshotActions
+            pick={pick}
+            containerName={name}
+            aliases={aliases}
+            hostMountRoot={hostMountRoot}
+            defaultFolder={restoreFolder}
+            paired={dumps.some((dump) => pairsWith(dump, { id: pick.snapshotId, original: pick.row.key }))}
+            coverage={dbCoverage}
+            preselected={pick.row.key === preselect}
+            t={t}
+          />
+        )}
+      />
+      <Advanced>
+        <div className="flex flex-wrap items-center gap-2 py-2 border-t border-carbon-border">
+          <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+          <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" />
+        </div>
+      </Advanced>
       <DatabaseDumpList
         containerName={name}
-        source={source}
+        source={dumpSource}
         recognised={isDatabase}
         canImport={installed && containerRunning}
         importStops={importStops}
         hostMountRoot={hostMountRoot}
         defaultFolder={restoreFolder}
-        reloadTick={reloadTick}
+        reloadTick={0}
         onDumps={setDumps}
         preselect={preselectDump}
         preselectAt={preselectAt}

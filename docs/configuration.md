@@ -1,6 +1,6 @@
 # Configuration
 
-This page covers the container's environment variables, the mounts the template provides, VM backup over SSH, and the off-site setup. Backup **repository paths** are configured inside the app (Settings, Storage, Backup paths), not via environment variables.
+This page covers the container's environment variables, the mounts the template provides, VM backup over SSH, and the off-site setup. Backup **repository paths** are configured inside the app (Settings, Storage, Backup Paths), not via environment variables.
 
 ## Environment variables
 
@@ -31,14 +31,14 @@ Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`)
 
 ZFS dataset backups need this mode too: the host mounts a dataset's snapshot only after the container has started. See [ZFS datasets](zfs-datasets.md).
 
-Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. Change the location any time in **Settings, Storage, Backup paths**. Each path field also has an inline **Local / Remote** switch: a path can be a restic remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
+Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. Change the location any time in **Settings, Storage, Backup Paths**. Each path field also has an inline **Local / Remote** switch: a path can be a restic remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Host integration check"
+!!! note "Host Integration Check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
 
 ## Backup source detection {#backup-source-detection}
 
-For each container, BombVault auto-selects which bind mounts and named volumes to back up. A path is picked up when any of the following applies (you can always override the result per container in the container's **Backup paths**):
+For each container, BombVault auto-selects which bind mounts and named volumes to back up. A path is picked up when any of the following applies (you can always override the result per container in the container's **Backup folders**):
 
 - **Data-root segment match:** the bind's host source contains one of the `DATA_ROOT_SEGMENTS` segments as a full path component (default `appdata` only).
 - **Docker named volumes** are always included — they have no throwaway equivalent, so there is nothing to filter — **but only when the volume's real host storage path is itself reachable through the Host Data mount**, exactly like any other host path BombVault backs up. Docker's default local-volume driver stores a volume under the daemon's own data root — `/var/lib/docker/volumes/<name>/_data` unless you've customized it (check with `docker info -f '{{.DockerRootDir}}'`) — which is NOT covered by the narrow, single-directory Host Data mount the generic `docker-compose.yml` uses by default. An unreachable volume is silently skipped, not an error. To actually back up named volumes on a generic host, point Host Data (and `HOST_SOURCE_ROOT`) at a common ancestor that also covers the Docker data root — see the compose file's Host Data comment for the tradeoff (Unraid sidesteps this by mounting all of `/mnt`, its own universal top-level convention, for the same reason).
@@ -84,7 +84,7 @@ The template adds `--add-host=host.docker.internal:host-gateway` so the containe
 
 Set up an off-site replica on the **Settings, Off-site** page. See [Off-site & recovery](offsite-recovery.md) for the full workflow (immutable/append-only, tamper testing and DR drills). In short:
 
-- **Backends:** SMB/CIFS and NFS (mount the share and point a Backup Path at it), native restic backends without rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), or any rclone remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS and NFS (mount the share and point a Backup Path at it), native restic backends without rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), or any rclone remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 has no native backend here: reach it through its S3 endpoint (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`) with the key ID and application key as the S3 credentials.
 - **Shared cloud credentials** are stored encrypted under Settings, Cloud access, Shared cloud credentials.
 - **SSH targets need nothing installed on the far side.** `sftp:` only needs an SSH server. Add the public key from **Settings, Integrations, Host SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`.
 - **Off-site copy:** BombVault replicates new snapshots with `restic copy` on a best-effort basis, on top of a (usually local) primary. Each domain has its own off-site schedule, plus a **Replicate now** button.
@@ -106,11 +106,11 @@ Anomaly detection is set up in the **Anomalies** card on **Settings, Integrity**
 | **Send a notification for** | Critical findings only | The lowest severity that sends a message through the channels set up under Notifications. Repeated backup and dump failures and failed scheduled restore checks already send their own message and are not sent twice. |
 | **Keep old backups when a source shrinks sharply or is rewritten** | On | While an item has an open finding for an almost empty source, a sharp shrink or most of its data stored again, retention and prune leave that item's old backups alone. Acknowledge the finding or mark it as expected to let them go. |
 
-Each item can use its own sensitivity and notification minimum. Set them on the **Items** tab of the **Anomalies** page, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages. For a ZFS item they are in its editor on the **ZFS** page and apply to every dataset of its tree.
+Each item can use its own sensitivity and notification minimum. Set them on the **Anomalies** page, where an item with open findings has them under **Monitoring** on its card and every other item opens them from the **Nothing open** card, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages. For a ZFS item they are in its editor on the **ZFS** page and apply to every dataset of its tree.
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 
-The **Export and import settings** card on the Settings, System page writes your whole BombVault configuration (domain settings, off-site targets, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
+The **Export / import settings** card on the Settings, System page writes your whole BombVault configuration (domain settings, off-site targets, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
 
 !!! warning "The export can contain credentials"
     You choose whether to include the off-site, notification and MQTT broker credentials in the file. With credentials included, the export is as sensitive as your recovery kit, so store it somewhere safe. Without them, the file holds only non-secret settings.

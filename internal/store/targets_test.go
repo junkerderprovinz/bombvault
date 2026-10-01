@@ -410,7 +410,7 @@ func TestDeleteTargetRemovesAnomalyState(t *testing.T) {
 	seedAnomalyState(t, r, keep.ID, "container")
 	seedDomainAnomaly(t, r)
 
-	if err := r.DeleteTarget("deleteme"); err != nil {
+	if err := r.DeleteTarget("deleteme", nil); err != nil {
 		t.Fatalf("DeleteTarget: %v", err)
 	}
 	assertAnomalyStateGone(t, r, tg.ID)

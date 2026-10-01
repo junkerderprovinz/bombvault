@@ -143,7 +143,7 @@ func TestDeleteBackupsOfAReusedNameSparesTheAliasOwnersHistory(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.DeleteBackups(context.Background(), "radarr-movies"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "radarr-movies", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
 	}
 	if got := sortedCopy(eng.forgotten); joined(got) != "post1" {
@@ -310,6 +310,11 @@ func TestBackupRetentionOfAReusedNamePausesWhileItHoldsTheAliasOwnersHistory(t *
 	rows := func(st *store.Repo) {
 		a, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
 		if err != nil {
+			t.Fatal(err)
+		}
+		// The reusing machine is settled on the domain path, so its backup runs
+		// even when the listing that would settle it fails.
+		if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", RepoChosen: store.RepoChosen}); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := st.AddAliasAt("container", "radarr-movies", a.ID, unixOf(t, linkTime)); err != nil {

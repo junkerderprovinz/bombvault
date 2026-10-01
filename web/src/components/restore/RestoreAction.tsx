@@ -17,6 +17,7 @@ import { restore, restoreVM, type RestoreCheckRequest } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { useProgress, busyPhraseKey } from "../../lib/progress";
+import { SNAPSHOT_MISSING } from "../../lib/timeline";
 import { RestoreProgress } from "./RestoreProgress";
 import type { RepoSource } from "../SourceToggle";
 import { Button } from "../Button";
@@ -69,6 +70,8 @@ interface RestoreActionProps {
   /** Content placed before the trigger in the same row, so a list row can put
    *  its name and time on the badge's line. */
   leading?: ReactNode;
+  /** Called when the place answered snapshot-missing, so the timeline can offer the next one. */
+  onMissing?: () => void;
   t: T;
 }
 
@@ -89,6 +92,7 @@ export function RestoreAction({
   label,
   iconBadge = false,
   leading,
+  onMissing,
   t,
 }: RestoreActionProps) {
   const [confirmed, setConfirmed] = useState(false);
@@ -110,10 +114,13 @@ export function RestoreAction({
     kind: "restore",
     matchRun: (r) => r.domain === domain && r.target === name,
     cancelledRef,
-    start: () =>
-      domain === "container"
+    start: async () => {
+      const res = await (domain === "container"
         ? restore(name, snapshotId, true, source, forceLeaveStopped || leaveStopped)
-        : restoreVM(name, snapshotId, true, source, forceLeaveStopped || leaveStopped),
+        : restoreVM(name, snapshotId, true, source, forceLeaveStopped || leaveStopped));
+      if (res.code === SNAPSHOT_MISSING) onMissing?.();
+      return res;
+    },
   });
   const prog = useProgress()[progressKey];
   // otherActive also counts this target's own restore, which isPending covers.

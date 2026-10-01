@@ -1,0 +1,174 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { NamedRepo, OffsiteTarget } from "../../lib/api";
+import { en } from "../../lib/i18n";
+
+const api = vi.hoisted(() => ({
+  listRepos: vi.fn(),
+  listOffsiteTargets: vi.fn(),
+  createRepo: vi.fn(),
+  updateRepo: vi.fn(),
+  deleteRepo: vi.fn(),
+}));
+const pushed = vi.hoisted(() => [] as { message: string; severity?: string }[]);
+
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
+  ...api,
+}));
+vi.mock("../../lib/toast", () => ({
+  useToast: () => ({
+    push: (message: string, severity?: string) => pushed.push({ message, severity }),
+    quiet: false,
+    setQuiet: () => {},
+  }),
+}));
+
+const { ReposCard } = await import("./ReposCard");
+
+const b2 = { id: "t-b2", domain: "containers", name: "B2", repo: "b2:bkt:containers" } as OffsiteTarget;
+
+function repo(over: Partial<NamedRepo>): NamedRepo {
+  return {
+    id: "n1", name: "NAS", repo: "backups/nas", credsRef: "", storageClass: "", limitUpload: 0, limitDownload: 0,
+    immutable: false, enabled: true, offPremises: false, inUse: 0, companionOf: "", companionLost: false, ...over,
+  };
+}
+
+beforeEach(() => {
+  pushed.length = 0;
+  for (const fn of Object.values(api)) fn.mockReset();
+  api.listRepos.mockResolvedValue({ ok: true, repos: [] });
+  api.listOffsiteTargets.mockResolvedValue({ ok: true, targets: [b2] });
+});
+afterEach(cleanup);
+
+describe("the Repositories card", () => {
+  it("shows each switch caption once and keeps it as the switch's name", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "r1", name: "NAS Keller", repo: "/mnt/remotes/nas/bv" })],
+    });
+    render(<ReposCard />);
+    await screen.findByText("NAS Keller");
+    for (const caption of ["Append-only", "Available"]) {
+      expect(screen.getAllByText(caption)).toHaveLength(1);
+      expect(screen.getByRole("switch", { name: caption })).toBeTruthy();
+    }
+  });
+
+  it("shows a direct repository as its target's and locks what it takes from it", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "B2 direct", repo: "b2:bkt:containers-direct", companionOf: "t-b2", inUse: 3 }), repo({})],
+    });
+    render(<ReposCard />);
+    await screen.findByText("belongs to B2 · items: 3");
+    // Plain DOM property access, not toBeDisabled(); this repo carries no
+    // @testing-library/jest-dom, see ColorPickerPopover.dom.test.tsx.
+    const appendOnly = screen.getAllByRole("switch", { name: en["repos.immutable"] }) as HTMLButtonElement[];
+    expect(appendOnly[0].disabled).toBe(true);
+    expect(appendOnly[1].disabled).toBe(false);
+    for (const available of screen.getAllByRole("switch", { name: en["repos.enabled"] }) as HTMLButtonElement[]) {
+      expect(available.disabled).toBe(false);
+    }
+  });
+
+  it("offers no way to remove a direct repository", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "B2 direct", companionOf: "t-b2" }), repo({})],
+    });
+    render(<ReposCard />);
+    await screen.findByText("B2 direct");
+    const remove = screen.getAllByRole("button", { name: en["offsite.targets.remove"] }) as HTMLButtonElement[];
+    expect(remove[0].disabled).toBe(true);
+    expect(remove[1].disabled).toBe(false);
+    expect(screen.getByLabelText("Goes with B2. Remove that target to remove this repository.")).toBeTruthy();
+  });
+
+  it("says why a direct repository in use cannot be removed with one (i), inside the button", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "B2 direct", companionOf: "t-b2", inUse: 2 })],
+    });
+    render(<ReposCard />);
+    await screen.findByText("B2 direct");
+    const remove = screen.getByRole("button", { name: en["offsite.targets.remove"] });
+    const info = screen.getByLabelText("Goes with B2. Remove that target to remove this repository.");
+    const slot = remove.parentElement;
+    expect(slot?.contains(info)).toBe(true);
+    expect(slot?.contains(screen.getByText("B2 direct"))).toBe(false);
+    expect(screen.queryByLabelText(en["repos.locationLocked"])).toBeNull();
+  });
+
+  it("names a direct repository without a name of its own after its target", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ id: "d1", name: "", directOf: "B2", companionOf: "t-b2" })] });
+    render(<ReposCard />);
+    await screen.findByText("B2 · direct");
+  });
+
+  it("labels a repository whose target an import removed", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ companionLost: true })] });
+    render(<ReposCard />);
+    await screen.findByText(en["repos.companionLost"]);
+  });
+
+  it("names the defaults when a delete is refused", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({})] });
+    api.deleteRepo.mockResolvedValue({ ok: false, error: "in use", code: "repo-in-use", items: 0, defaultDomains: ["containers"] });
+    render(<ReposCard />);
+    fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.remove"] }));
+    await act(async () => {
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["offsite.targets.remove"] }));
+    });
+    await waitFor(() =>
+      expect(pushed).toContainEqual({
+        message: "The default for Containers points at this repository. Change the default first.",
+        severity: "fail",
+      })
+    );
+  });
+
+  it("announces a repository change to the rest of the page", async () => {
+    const { subscribeRepos } = await import("../../lib/useNamedRepos");
+    const seen = vi.fn();
+    const off = subscribeRepos(seen);
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({})] });
+    api.deleteRepo.mockResolvedValue({ ok: true });
+    render(<ReposCard />);
+    fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.remove"] }));
+    await act(async () => {
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["offsite.targets.remove"] }));
+    });
+    await waitFor(() => expect(seen).toHaveBeenCalledTimes(1));
+    off();
+  });
+});
+
+describe("the off-premises switch", () => {
+  beforeEach(() => {
+    api.updateRepo.mockReset();
+    api.updateRepo.mockResolvedValue({ ok: true });
+  });
+
+  it("shows its caption once and sends only the mark", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ name: "NAS Keller" })] });
+    render(<ReposCard />);
+    const toggle = await screen.findByRole("switch", { name: "Off the premises" });
+    expect(screen.getAllByText("Off the premises")).toHaveLength(1);
+    fireEvent.click(toggle);
+    await waitFor(() => expect(api.updateRepo.mock.calls).toEqual([["n1", { offPremises: true }]]));
+  });
+
+  it("offers no such switch on a direct repository", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "B2 direct", repo: "b2:bkt:containers-direct", companionOf: "t-b2" })],
+    });
+    render(<ReposCard />);
+    await screen.findByText("B2 direct");
+    expect(screen.queryByRole("switch", { name: "Off the premises" })).toBeNull();
+  });
+});

@@ -5,6 +5,7 @@
 // in the phone's list toolbar stands for the toolbar ones: it stays as wide as
 // its own segments, well short of the toolbar.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -37,6 +38,7 @@ async function stage(page: Page): Promise<void> {
           lastBackup: null,
           lastBackupStarted: null,
           scheduleCadence: "",
+          placement: PLACEMENT,
         })),
       },
     }),

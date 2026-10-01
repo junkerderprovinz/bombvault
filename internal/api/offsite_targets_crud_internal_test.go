@@ -84,6 +84,36 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 	}
 }
 
+func TestTheServerDecidesWhereANewTargetGoes(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	field, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:b2", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body := []byte(`{"domain":"containers","name":"Hetzner","repo":"sftp:u1@hetzner:/c","enabled":true}`)
+	rec := httptest.NewRecorder()
+	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+	env := decodeEnvelope(t, rec)
+	created, _ := env["target"].(map[string]any)
+	if env["ok"] != true || created["sortOrder"] != float64(1) {
+		t.Fatalf("create = %v, want ok and sortOrder 1", env)
+	}
+	id, _ := created["id"].(string)
+
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader(body))
+	req.SetPathValue("id", id)
+	rec = httptest.NewRecorder()
+	h.handleUpdateOffsiteTarget(rec, req)
+	env = decodeEnvelope(t, rec)
+	if upd, _ := env["target"].(map[string]any); env["ok"] != true || upd["sortOrder"] != float64(1) {
+		t.Fatalf("update = %v, want ok and sortOrder still 1", env)
+	}
+	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
+		t.Fatalf("field target = %s, want %s", got.ID, field.ID)
+	}
+}
+
 func TestOffsiteTargetCreateValidation(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 
@@ -104,6 +134,32 @@ func TestOffsiteTargetCreateValidation(t *testing.T) {
 				t.Fatalf("%s: expected rejection, got %v", tc.name, env)
 			}
 		})
+	}
+}
+
+// TestUpdateOffsiteTargetRefusesADomainChange: a target's copy rules and its
+// direct repository belong to its domain. The UI never sends a domain change,
+// but the API must refuse one rather than trust the body.
+func TestUpdateOffsiteTargetRefusesADomainChange(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	tg, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c1", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := json.Marshal(offsiteTargetView{Domain: "vms", Name: "Primary", Repo: "s3:c1", Enabled: true})
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+tg.ID, bytes.NewReader(body))
+	req.SetPathValue("id", tg.ID)
+	rec := httptest.NewRecorder()
+	h.handleUpdateOffsiteTarget(rec, req)
+	env := decodeEnvelope(t, rec)
+	if env["ok"] != false {
+		t.Fatalf("update = %v, want a domain change refused", env)
+	}
+
+	got, ok, err := st.GetOffsiteTarget(tg.ID)
+	if err != nil || !ok || got.Domain != "containers" {
+		t.Fatalf("GetOffsiteTarget: %+v (ok=%v err=%v), want it still on containers", got, ok, err)
 	}
 }
 

@@ -161,6 +161,30 @@ func (r *Repo) FinishOffsiteRun(id int64, ok bool, errText string) error {
 	return nil
 }
 
+// ReasonCopyRulesUnreadable is the error of a run that copied nothing because the
+// placement rules could not be read. It says nothing about the target.
+const ReasonCopyRulesUnreadable = "copy rules could not be read"
+
+// MarkOffsiteRunAgingOnly marks the newest run of a domain to a target that
+// started at startedAt as one that only listed and aged it. The domain is
+// part of the match because the settings-synthesized N=1 target shares the
+// empty target id across every domain, and two of them can start in the
+// same second.
+func (r *Repo) MarkOffsiteRunAgingOnly(domain, targetID string, startedAt int64) error {
+	res, err := r.db.Exec(`
+		UPDATE offsite_runs SET aging_only = 1
+		 WHERE rowid = (SELECT rowid FROM offsite_runs
+		                 WHERE domain = ? AND offsite_target_id = ? AND started_at = ?
+		                 ORDER BY rowid DESC LIMIT 1)`, domain, targetID, startedAt)
+	if err != nil {
+		return fmt.Errorf("MarkOffsiteRunAgingOnly: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("MarkOffsiteRunAgingOnly: no run to %s in %s started at %d", targetID, domain, startedAt)
+	}
+	return nil
+}
+
 // LatestOffsiteRun returns the most recently started replication run for a
 // domain, running or not, or false when none exists.
 func (r *Repo) LatestOffsiteRun(domain string) (OffsiteRun, bool, error) {
@@ -192,7 +216,7 @@ func (r *Repo) LatestSuccessfulOffsiteRun(domain string) (OffsiteRun, bool, erro
 	row := r.db.QueryRow(`
 		SELECT domain, started_at, finished_at, ok, error
 		FROM offsite_runs
-		WHERE domain = ? AND ok = 1
+		WHERE domain = ? AND ok = 1 AND aging_only = 0
 		ORDER BY started_at DESC, rowid DESC
 		LIMIT 1`, domain)
 	var run OffsiteRun
@@ -219,7 +243,7 @@ func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (Off
 	row := r.db.QueryRow(`
 		SELECT domain, started_at, finished_at, ok, error
 		FROM offsite_runs
-		WHERE domain = ? AND ok = 1 AND offsite_target_id = ?
+		WHERE domain = ? AND ok = 1 AND aging_only = 0 AND offsite_target_id = ?
 		ORDER BY started_at DESC, rowid DESC
 		LIMIT 1`, domain, targetID)
 	var run OffsiteRun
@@ -235,4 +259,20 @@ func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (Off
 	run.FinishedAt = finished.Int64
 	run.OK = ok != 0
 	return run, true, nil
+}
+
+// FirstOffsiteFailureAfter returns when the earliest finished, failed run to the
+// target began after since, or 0 when there is none. A run that failed because the
+// copy rules could not be read says nothing about the target and is left out.
+func (r *Repo) FirstOffsiteFailureAfter(targetID string, since int64) (int64, error) {
+	var at sql.NullInt64
+	err := r.db.QueryRow(`
+		SELECT MIN(started_at) FROM offsite_runs
+		 WHERE offsite_target_id = ? AND started_at > ?
+		   AND finished_at IS NOT NULL AND ok = 0 AND error <> ?`,
+		targetID, since, ReasonCopyRulesUnreadable).Scan(&at)
+	if err != nil {
+		return 0, fmt.Errorf("FirstOffsiteFailureAfter: %w", err)
+	}
+	return at.Int64, nil
 }

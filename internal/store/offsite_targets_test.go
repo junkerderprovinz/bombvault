@@ -30,6 +30,41 @@ func TestUpsertOffsiteTargetEmptyRepoRejected(t *testing.T) {
 	}
 }
 
+// TestOffsiteTargetOrderBreaksTiesById: rows sharing a domain's sort_order and
+// created_at must still come back in a fixed order rather than whatever
+// SQLite happens to return.
+func TestOffsiteTargetOrderBreaksTiesById(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	for _, id := range []string{"z", "a", "m"} {
+		if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{
+			ID: id, Domain: "containers", Repo: "s3:" + id, CreatedAt: 1000, SortOrder: 0, Enabled: true,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	all, err := r.ListOffsiteTargets()
+	if err != nil {
+		t.Fatalf("ListOffsiteTargets: %v", err)
+	}
+	if len(all) != 3 || all[0].ID != "a" || all[1].ID != "m" || all[2].ID != "z" {
+		t.Fatalf("ListOffsiteTargets order = [%s, %s, %s], want [a, m, z]", all[0].ID, all[1].ID, all[2].ID)
+	}
+
+	dom, err := r.OffsiteTargetsForDomain("containers")
+	if err != nil {
+		t.Fatalf("OffsiteTargetsForDomain: %v", err)
+	}
+	if len(dom) != 3 || dom[0].ID != "a" || dom[1].ID != "m" || dom[2].ID != "z" {
+		t.Fatalf("OffsiteTargetsForDomain order = [%s, %s, %s], want [a, m, z]", dom[0].ID, dom[1].ID, dom[2].ID)
+	}
+}
+
 func TestOffsiteTargetCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -170,21 +205,21 @@ func TestNamedRepoInUseCountsZFSDatasets(t *testing.T) {
 	if n != 1 {
 		t.Fatalf("in-use count = %d, want the dataset counted", n)
 	}
-	n, err = r.DeleteNamedRepoIfUnused(repo.ID)
+	use, err := r.DeleteNamedRepoIfUnused(repo.ID)
 	if err != nil {
 		t.Fatalf("DeleteNamedRepoIfUnused: %v", err)
 	}
-	if n != 1 {
-		t.Fatalf("delete saw %d items, want the refusal", n)
+	if use.Items != 1 {
+		t.Fatalf("delete saw %d items, want the refusal", use.Items)
 	}
 	if _, err := r.GetNamedRepo(repo.ID); err != nil {
 		t.Fatalf("a refused delete must leave the row in place: %v", err)
 	}
-	n, err = r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	use, err = r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere", false)
 	if err != nil {
 		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
 	}
-	if n != 1 {
-		t.Fatalf("move saw %d items, want the refusal", n)
+	if use.Items != 1 {
+		t.Fatalf("move saw %d items, want the refusal", use.Items)
 	}
 }

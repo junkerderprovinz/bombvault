@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
-import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
+import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listOffsiteTargets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite, type OffsiteTarget } from "../lib/api";
+import { subscribeOffsiteTargets, useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { useConfirm } from "../lib/useConfirm";
+import { pushSaveWarnings } from "../lib/placementCodes";
+import { alsoDirectText, directAsk, primaryDirects, retentionLowered } from "../lib/directRepo";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { AccentCard, IconResetArrow } from "./settings/AccentCard";
 import { PasskeyCard } from "./settings/PasskeyCard";
 import { TwoFactorCard } from "./settings/TwoFactorCard";
 import { LanguageCard } from "./settings/LanguageCard";
 import { ReposCard } from "./settings/ReposCard";
+import { PlacementDefaultsCard } from "./settings/PlacementDefaultsCard";
 import { ThemeCard } from "./settings/ThemeCard";
 import { RestoreChecksSection } from "./settings/RestoreChecksSection";
 import { AnomalyCard } from "./settings/AnomalyCard";
@@ -15,6 +20,7 @@ import { RcloneCard } from "./settings/RcloneCard";
 import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { OffsiteLocationInput } from "../components/placement/OffsiteLocationInput";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
 import {
@@ -53,7 +59,6 @@ import { useReveal } from "../lib/useReveal";
 import type { Settings, Container, VM, FileSetView, RegistryAuthEntry, ZFSDatasetView } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useToast } from "../lib/toast";
-import { useConfirm } from "../lib/useConfirm";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, tLtr, withLtrFragments } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
@@ -866,14 +871,45 @@ export function markRegistryTokensStored(
   }));
 }
 
+type OffsiteRetentionKey =
+  | "offsiteRetentionKeepLast"
+  | "offsiteRetentionKeepDaily"
+  | "offsiteRetentionKeepWeekly"
+  | "offsiteRetentionKeepMonthly"
+  | "offsiteRetentionKeepYearly";
+
+function offsiteRetentionOf(s: Settings) {
+  return {
+    retentionKeepLast: s.offsiteRetentionKeepLast,
+    retentionKeepDaily: s.offsiteRetentionKeepDaily,
+    retentionKeepWeekly: s.offsiteRetentionKeepWeekly,
+    retentionKeepMonthly: s.offsiteRetentionKeepMonthly,
+    retentionKeepYearly: s.offsiteRetentionKeepYearly,
+  };
+}
+
 // bv-convention-exception: page-uses-page-shell: the rail stands beside the
 // page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
 export function SettingsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { summary: anomalySummary } = useAnomalySummary();
-  const { confirm, confirmDialog } = useConfirm();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
+  const namedRepos = useNamedRepos();
+  const [allTargets, setAllTargets] = useState<OffsiteTarget[]>([]);
+  useEffect(() => {
+    const load = () => {
+      listOffsiteTargets()
+        .then((r) => {
+          if (r.ok) setAllTargets(r.targets ?? []);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    return subscribeOffsiteTargets(load);
+  }, []);
+  const fieldDirects = primaryDirects(allTargets, namedRepos);
 
   const { page: param } = useParams();
   const page: SettingsPageId = isSettingsPage(param) ? param : FALLBACK_PAGE;
@@ -1378,6 +1414,7 @@ export function SettingsPage() {
         // disabled appears or vanishes without a reload.
         window.dispatchEvent(new Event("bv:settings-changed"));
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, res.warnings);
         return true;
       }
       setSaveState("idle");
@@ -1388,6 +1425,22 @@ export function SettingsPage() {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
     }
+  }
+
+  // The global off-site retention is copied onto every domain's field target, so
+  // a lowered value reaches each of their direct repositories at once.
+  async function saveOffsiteRetention(key: OffsiteRetentionKey, n: number) {
+    const before = savedBaseline.current;
+    if (
+      before &&
+      fieldDirects.length > 0 &&
+      retentionLowered(offsiteRetentionOf(before), offsiteRetentionOf({ ...before, [key]: n } as Settings)) &&
+      !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", fieldDirects)))
+    ) {
+      setSettings((prev) => (prev ? { ...prev, [key]: before[key] } : prev));
+      return;
+    }
+    await save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError);
   }
 
   // toggleDomainEnabled saves a domain row the moment it is clicked (#142): an
@@ -2117,6 +2170,7 @@ export function SettingsPage() {
           container, VM or folder set can be pointed at instead of the domain
           path below, so the more specific answer is read first. */}
       {page === "storage" && <ReposCard hueIndex={nextHue()} />}
+      {page === "storage" && <PlacementDefaultsCard hueIndex={nextHue()} />}
 
       {page === "storage" && (
       <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
@@ -2667,6 +2721,7 @@ export function SettingsPage() {
         // One hue position per domain, shared by the card heading and every
         // control inside it, so a domain's buttons match its card.
         const hueIdx = nextHue();
+        const fieldTarget = allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
         return (
         <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
           {/* The repo URL prefixes (rest:, s3:, b2:) are visible reference
@@ -2696,19 +2751,14 @@ export function SettingsPage() {
               />
             ) : (
               <>
-                <input
+                <OffsiteLocationInput
+                  domain={domain}
                   value={settings[repoKey]}
-                  spellCheck={false}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-                    debouncedSave(repoKey, () =>
-                      void save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)
-                    );
-                  }}
+                  targetId={fieldTarget?.id}
+                  targetName={fieldTarget?.name}
                   placeholder="rest:http://host:8000/repo"
-                  dir="ltr"
                   className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
+                  onSave={(v) => save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)}
                 />
                 {/* A mounted share is a valid off-site target, but the
                     placeholder shows a REST URL, so this says a bare relative
@@ -2761,13 +2811,18 @@ export function SettingsPage() {
                 onChange={(e) => {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError));
+                  debouncedSave(key, () => void saveOffsiteRetention(key, n));
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
             </label>
           ))}
         </div>
+        {fieldDirects.map((u) => (
+          <p key={u.target.id} className="mt-2 text-xs text-carbon-textMuted">
+            {alsoDirectText(t, u)}
+          </p>
+        ))}
         {/* The off-site twin. Its own source, because the off-site policy is a
             separate policy: an archive kept longer off-site than locally would
             otherwise be previewed against the wrong rule. */}

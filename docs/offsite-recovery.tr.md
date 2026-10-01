@@ -1,5 +1,8 @@
 # Site dışı ve kurtarma
 
+!!! note "Site dışı kopyalar bir yeniden kurulumdan sonra bekler"
+    4. adım eski ayarlar olmadan girişleri yeniden kurduğunda, o etki alanlarının site dışı çoğaltması, yerleşim varsayılanı onaylanana kadar duraklar. Bkz. [Öge başına yerleşim](#placement).
+
 Yerel yedekler sizi kaybolmuş bir konteynerden ya da hatalı bir güncellemeden korur. Site dışı çoğaltma ve test edilmiş bir kurtarma kiti sizi tüm makineden, fidye yazılımından ya da bir yangından korur. Bu sayfa site dışına çoğaltmayı, o kopyayı kurcalamaya dayanıklı yapmayı, geri yükleyebildiğinizi kanıtlamayı ve BombVault'un kendisi kaybolduğunda kurtarmayı kapsar.
 
 ## Site dışı çoğaltma
@@ -12,14 +15,44 @@ Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. *
 - **Bant genişliği sınırları** (Ayarlar, Site dışı) restic yükleme/indirme hızını sınırlar, böylece çoğaltma WAN'ınızı doyurmaz.
 - Bir **çoğaltma göstergesi**, çalışırken hangi etki alanının çoğaltıldığını gösterir (kendi sayfasında ve Kontrol Paneli'nde). Bu bir etkin göstergedir, bir yüzde çubuğu değil, çünkü `restic copy` makine tarafından okunabilir bir ilerleme sunmaz.
 
-!!! note "Doğrudan site dışından geri yükleyin"
-    Her yedekleme tarayıcısında bir **Yerel / Site dışı** anahtarı vardır, böylece bir yerel depo kaybolur ya da bozulursa doğrudan site dışı kopyadan listeleyip geri yükleyebilirsiniz. Silme kaynağa özeldir: bir yedeği kaldırmak yalnızca görüntülediğiniz kopyayı etkiler.
+!!! note "Herhangi bir yerden geri yükleyin"
+    Her konteyner, VM, dosya kümesi, flash ve uygulama yapılandırması, yedeklerini bir yedeğin bulunduğu tüm yerler boyunca tek bir zaman çizelgesi olarak listeler. B2'ye kopyalanan bir yedek yalnızca bir kez görünür, onu tutan her yerle işaretlenmiş olarak. Bir geri yükleme, ulaşabildiği ilk yeri alır, ögenin yazıldığı depoyla başlayarak, ve her satır için başka bir yer seçebilirsin. Site dışı yerler yalnızca onları açtığında okunur. Bir yerde silme, önce diğerlerini kontrol eder ve bunun son kopya olup olmadığını söyler.
+
+## Öge başına yerleşim {#placement}
+
+Her konteyner, VM ve dosya kümesi kartında üç segmentli bir **Yerleşim** satırı vardır:
+
+- **Yerel**, ögeyi **Depolama konumu** altında gösterilen depoya yazar ve hiçbir yere kopyalamaz. Zaten bir ikinci kopyası olan veriler için kullan, örneğin bir NAS üzerinde yaşayan bir paylaşım.
+- **Yerel + site dışı**, oraya da yazar ve **Kopyalama hedefi** altında işaretlenen hedeflere kopyalar, etki alanının her site dışı hedefi için bir çip. Bir çipin işaretini kaldır, o hedef bu ögeden artık yeni bir şey almaz.
+- **Yalnızca site dışı**, ögeyi doğrudan **Gönderim hedefi** altındaki yere yazar: bir site dışı hedefin yanındaki doğrudan bir depo, ya da Ayarlar, Depolama, Depolar altında kurduğun bir uzak depo.
+
+Konum, ögenin ilk yedeklemesinden itibaren sabittir, çünkü BombVault yedekleri depolar arasında asla taşımaz. Kopyalar ise her zaman değişebilir. Bir ögeyi artık almayan bir hedef, sahip olduğu kopyaları tutar ve etki alanının bir sonraki site dışı çalıştırmasında kendi saklama kuralına göre kırpar; karttaki **B2 içinde sil**, onları hemen kaldırır. Bu kopyalardan bazıları başka hiçbir yerde yoksa, onay ekranı bunları tarihe göre listeler ve ögenin adını sorar. Yalnızca ekleme hedeflerden hiçbir şey silinemez.
+
+Satırın altında kart, ögenin nereye gittiğini ve gerçekte nerede olduğunu söyler: kaç sitenin onu tuttuğunu, her hedefin en son ne zaman görüldüğünü ve 3-2-1'in karşılanıp karşılanmadığını. Bir site, orijinal verinin bulunduğu sunucu, her site dışı hedef ve **Bina dışında** olarak işaretlenmiş her depodur. BombVault kopyaları ve siteleri kontrol eder; 3-2-1'in "iki ortam" kısmını kontrol etmez.
+
+### Varsayılan yerleşimler
+
+Ayarlar, Depolama, **Varsayılan yerleşimler**'de aynı üç segmentle etki alanı başına bir satır vardır. Kopyalar, kendi seçimi olmayan her ögeye ve Compose yığınlarının proje klasörlerine hemen uygulanır. Konum, yeni bir ögeye ilk yedeklemesinde uygulanır; onu değiştirmek hiçbir yedeği taşımaz. Kaydetmeden önce satır, öge kazanan ya da kaybeden her hedefi ve bunun kaç anlık görüntü anlamına geldiğini adlandırır. **Yedeksiz ögelere uygula**, henüz yedeği olmayan her ögeyi varsayılana geri döndürür.
+
+Yeni bir site dışı hedef, Yerel'e ayarlanmamış her ögeyi alır. Onu ekleyen iletişim kutusu kaç öge olduğunu ve, biliniyorsa, bunun ne kadar geçmiş anlamına geldiğini söyler, ve diğer hedeflerden zaten hariç tutulan ögeleri dışarıda bırakmayı önerir.
+
+### Doğrudan depolar
+
+Yalnızca site dışı altında bir hedefin doğrudan deposunu seçmek, hedefin yanında önerilen bir konumla, örneğin `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testiyle bir iletişim kutusu açar. **Oluştur ve kullan**, depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo, hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamadığında, doğrudan depo sahip olduğu anahtarı tutar ve kayıt bunu belirtir. Anlık görüntüleri `bv:direct` etiketini taşır ve diğer her budama bunları tutar, böylece hedefiyle bağlantısını kaybetmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz. B2'ye S3 uç noktası üzerinden erişilir; anahtar kimliği ve uygulama anahtarı S3 kimlik bilgileri olarak girilir. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez, bu yüzden anahtarı bunun yerine hedefin üstündeki klasörle sınırla.
+
+### Bina dışında
+
+Adlandırılmış bir depo, Depolar kartında **Bina dışında** olarak işaretlenebilir. Uzak depolar işaretli başlar; aynı binadaki bir rest-server için bunu kapat. İşaret, kartlardaki siteleri ve 3-2-1'i yalnızca sayar. Hiçbir kopyayı değiştirmez.
+
+### Bir yeniden kurulumdan sonra
+
+Kopyalama seçimleri BombVault'un kendi ayarlarında yaşar. Geri yüklenmiş bir `/config` olmadan Discover üzerinden bir yeniden kurulumdan sonra bunlar kaybolur ve her şeyi kopyalamak, dışarıda bıraktığın ögeleri tekrar B2'ye gönderir. Bu yüzden yeniden kurulan her etki alanının site dışı çoğaltması duraklar. Kontrol Paneli bunu kehribar renginde gösterir ve Varsayılan yerleşimler, bir sonraki çalıştırmanın neyi kopyalayacağının ve burada karşılığı olmayan yedeklerdeki adların bir önizlemesiyle **Varsayılanı onayla** sunar; bunları orada dışarıda bırakabilirsin. Yalnızca onay duraklamayı bitirir; bir ayar dosyası içe aktarmak kuralları ve varsayılanları geri getirir ama duraklamayı bitirmez.
 
 ## Uzak birincil depolar {#remote-primary-repositories}
 
-Bir alanın yedekleme yolu (Ayarlar, Depolama) yerel bir klasörle sınırlı değildir: doğrudan bir restic uzak deposuna yöneltin (`s3:...`, `rest:http://host:8000/depo`, `b2:...`, `sftp:kullanici@host:/depo`, `rclone:remote:bucket/yol`), BombVault ayrı bir yerel kopya ve çoğaltma adımı olmadan doğrudan oraya yedekler. Bu, yukarıdaki saha dışı çoğaltmadan gerçekten farklı bir biçimdir: orada yerel depo birincildir ve saha dışı depo onun elden geldiğince tutulan arşividir; burada uzak depo birincilin **kendisidir** ve o alan için ayrıca bir saha dışı çoğaltma (ya da ikinci bir uzak depo) kurmadığınız sürece tek kopyadır.
+Bir alanın yedekleme yolu (Ayarlar, Depolama) yerel bir klasörle sınırlı değildir: doğrudan bir restic uzak deposuna yöneltin (`s3:...`, `rest:http://host:8000/depo`, `sftp:kullanici@host:/depo`, `rclone:remote:bucket/yol`), BombVault ayrı bir yerel kopya ve çoğaltma adımı olmadan doğrudan oraya yedekler. Bu, yukarıdaki saha dışı çoğaltmadan gerçekten farklı bir biçimdir: orada yerel depo birincildir ve saha dışı depo onun elden geldiğince tutulan arşividir; burada uzak depo birincilin **kendisidir** ve o alan için ayrıca bir saha dışı çoğaltma (ya da ikinci bir uzak depo) kurmadığınız sürece tek kopyadır.
 
-Altı yol alanının her birinin (Kapsayıcılar, Sanal makineler, Flash, Yapılandırma, Dosyalar, ZFS veri kümeleri) hemen yanında bir **Yerel / Uzak** anahtarı vardır:
+Altı yol alanının her birinin (Konteynerler, VM'ler, Flash, Öz yedek, Klasörler, ZFS veri kümeleri) hemen yanında bir **Yerel / Uzak** anahtarı vardır:
 
 - **Yerel** alışılmış klasör tarayıcısını gösterir.
 - **Uzak** onu yalın bir URL alanıyla değiştirir; yanına da, saha dışı hedeflerin kullandığı bağlantı testi ve kimlik bilgileri penceresinin aynısını bu birincil depo için ayarlanmış olarak açan bir düğme koyar. Oradan şunları elde edersiniz:
@@ -67,7 +100,7 @@ Gerçek bir korunuyordan-korunmuyora dönüş tek bir uyarı tetikler.
 
 BombVault, yedeklerinizin yalnızca mevcut değil, gerçekten geri yüklenebilir olduğuna dair iki düzeyde kanıt sunar.
 
-- **Geri yükleme doğrulama tatbikatları (yerel).** BombVault periyodik olarak `restic check --read-data-subset` çalıştırır (sınırlı, asla diski dolduran tam bir geri yükleme değil) ve etki alanı başına bir *son doğrulanan geri yüklenebilir* rozeti gösterir. Sıklık Ayarlar, Zamanlamalar'da; rozet Ayarlar, Bütünlük'te yer alır.
+- **Geri yükleme doğrulama tatbikatları (yerel).** BombVault periyodik olarak `restic check --read-data-subset` çalıştırır (sınırlı, asla diski dolduran tam bir geri yükleme değil) ve etki alanı başına bir *Geri yüklenebilir olduğu doğrulandı* rozeti gösterir. Sıklık Ayarlar, Zamanlamalar'da; rozet Ayarlar, Bütünlük'te yer alır.
 - **DR tatbikatları (site dışı).** BombVault gerçek bir hedefi site dışı depodan tek kullanımlık bir korumalı alana geri yükler, onu dosya-dosya ve bayt-bayt doğrular, ardından temizler. Bu, deponun yalnızca yanıt verdiğini değil, site dışından kurtarabildiğinizi kanıtlar.
 
 Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı başına yeşil / sarı / kırmızı bir duruşa, yaş damgalı bir kontrol listesiyle (site dışı yapılandırıldı, yalnızca ekleme doğrulandı, çoğaltma güncel, geri yükleme tatbikatı geçti, şifreleme açık, budama stratejisi ayarlandı) toplar. Her kırmızı satır düzeltmeye derin bağlantı verir ve kart yalnızca doğrulanmış gerçekler üzerine yeşile döner.
@@ -118,7 +151,7 @@ Yukarıda parçalar anlatılıyor. Burada gerçek değerlerle tek bir eksiksiz k
 
 İki makine: **TOWER** kapsayıcıları çalıştırır ve yedekleri gönderir, **VAULT** onları alır ve değiştirilemezliği dayatır. Kendi adlarınızı, adreslerinizi ve paylaşım yollarınızı koyun.
 
-**1. VAULT üzerinde append-only sunucusunu kurun.** TOWER üzerindeki BombVault'ta *Ayarlar → Site dışı → rehberli kurulum* bölümüne gidin, **rest-server** seçin ve tarifi oluşturun. **Unraid şablonu (XML)** sekmesini kopyalayın, VAULT üzerinde `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` olarak kaydedin, sonra *Docker → Add Container* deyip şablon listesinden **rest-server** seçin. Başlatmadan önce gösterilen `htpasswd` satırını VAULT üzerinde `/mnt/user/appdata/rest-server/.htpasswd` dosyasına yazın. Tek kullanımlık parola bir kez gösterilir ve hiç saklanmaz, şimdi kopyalayın. O satır aynı parolayı taşır, senin için bcrypt ile özetlenmiş olarak: düz metin TOWER üzerindeki REST kimlik bilgilerine, özetlenmiş satır VAULT üzerindeki `.htpasswd` dosyasına gider. Kendin bir şey özetlemek zorunda değilsin.
+**1. VAULT üzerinde append-only sunucusunu kurun.** TOWER üzerindeki BombVault'ta *Ayarlar → Site dışı → Kur* bölümüne gidin, **rest-server** seçin ve tarifi oluşturun. **Unraid şablonu (XML)** sekmesini kopyalayın, VAULT üzerinde `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` olarak kaydedin, sonra *Docker → Add Container* deyip şablon listesinden **rest-server** seçin. Başlatmadan önce gösterilen `htpasswd` satırını VAULT üzerinde `/mnt/user/appdata/rest-server/.htpasswd` dosyasına yazın. Tek kullanımlık parola bir kez gösterilir ve hiç saklanmaz, şimdi kopyalayın. O satır aynı parolayı taşır, senin için bcrypt ile özetlenmiş olarak: düz metin TOWER üzerindeki REST kimlik bilgilerine, özetlenmiş satır VAULT üzerindeki `.htpasswd` dosyasına gider. Kendin bir şey özetlemek zorunda değilsin.
 
     OPTIONS alanındaki `--append-only` kalsın. Bütün mesele bu: onsuz VAULT yine sıradan bir paylaşıma döner.
 
@@ -136,7 +169,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 | **KORUNMUYOR** | VAULT bir silmeyi kabul etti. `--append-only` yok ya da kaldırılmış. |
 | **belirsiz** | İkisi de değil. Genelde adres restic'in kendi kullandığı adres değildir ya da kimlik bilgileri değişmiştir. Hiçbir şey kaydedilmez ve uyarı verilmez. |
 
-**4. VAULT üzerinde neyin geldiğini izleyin.** İki makineyi eşleştirin ([Örnekleri eşleştirme](#pairing)), *Ayarlar → Eşleştirme → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu gönderen örnek olarak TOWER ile salt okunur olarak kaydedin.
+**4. VAULT üzerinde neyin geldiğini izleyin.** İki makineyi eşleştirin ([Örnekleri eşleştirme](#pairing)), *Ayarlar → Genel → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu gönderen örnek olarak TOWER ile salt okunur olarak kaydedin.
 
 !!! warning "Konum, kapsayıcının **içindeki** bir yoldur ve ana makine bağlama noktasına göre yazılır"
     `user/appdata/rest-server/bombvault-containers/containers` girin, `/mnt/user/appdata/…` **değil**. BombVault, ana makinenin `/mnt` dizininin başka yere bağlandığı bir kapsayıcıda çalışır; mutlak ana makine yolu orada yoktur. Yapıştırırsanız BombVault artık kullanmanız gereken göreli yolu söyler.
@@ -156,7 +189,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 5. **Konteynerleri ve VM'leri tek seferde geri yükler** (durdurulmuş bırakılır, böylece onları kasıtlı olarak başlatırsınız), dosya kümelerini ve ZFS öğelerini tek tek geri yüklemeniz için listeler; ZFS öğeleri kapalı olarak geri gelir. Kurtarma kitiniz bir tık ötede.
 
 !!! tip "Planlı geçiş ve felaket karşılaştırması"
-    Rehberli kurtarma, BombVault'un kendi ayarlarını bir yedekten geri yükler. Yeni bir makineye *planlı* bir taşınma için, bunun yerine yapılandırmanızı **Ayarları dışa ve içe aktar** kartıyla (taşınabilir bir JSON dosyası) doğrudan taşıyabilirsiniz. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
+    Rehberli kurtarma, BombVault'un kendi ayarlarını bir yedekten geri yükler. Yeni bir makineye *planlı* bir taşınma için, bunun yerine yapılandırmanızı **Ayarları dışa / içe aktar** kartıyla (taşınabilir bir JSON dosyası) doğrudan taşıyabilirsiniz. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
 
 ### Başka bir BombVault deposundan geri yükleme {#restore-from-another-bombvault-repo}
 

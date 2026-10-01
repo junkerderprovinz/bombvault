@@ -509,7 +509,8 @@ describe("FoldersEditor tree", () => {
 
   it("persists only the 64 most recent expansions", async () => {
     // 66 mounts expanded by real clicks; every browse reply defaults to an
-    // empty listing.
+    // empty listing. That many clicks outlast the default budget while the
+    // rest of the suite runs alongside, hence the raised timeout below.
     const mounts: MountInfo[] = Array.from({ length: 66 }, (_, i) => ({
       source: `${HOST_ROOT}/user/appdata/d${String(i).padStart(2, "0")}`,
       dest: `/d${i}`,
@@ -550,7 +551,7 @@ describe("FoldersEditor tree", () => {
     expect(stored).toContain(mounts[2].source);
     expect(stored[63]).toBe(mounts[65].source); // newest last (recency order)
     expect(browseCalls).toHaveLength(66);
-  });
+  }, 15000);
 });
 
 // Each root row shows a muted "{n} paths" line computed from the stored

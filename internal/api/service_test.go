@@ -914,6 +914,13 @@ func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+	flashRepo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
@@ -947,6 +954,13 @@ func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
 
 	// First: NO off-site policy → copy only, no off-site prune.
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	flashRepo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	eng := &fakeResticEngine{}
@@ -1018,6 +1032,15 @@ func offsiteReplTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, 
 	s.FlashPath = "backups/flash"
 	s.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Flash's own repo, as an earlier backup would have left it: a domain
+	// whose local repo was never created has nothing to replicate off site.
+	repo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
@@ -1686,10 +1709,7 @@ func TestDeleteBackupsVMPrimaryImmutableRefused(t *testing.T) {
 // TestDeleteBackupsPrimaryImmutableRefused pins issue #152's SECOND gate for
 // DeleteBackups (the containers bulk delete), mirroring
 // TestDeleteSnapshotPrimaryImmutableRefused above: a remote PRIMARY flagged
-// immutable must refuse the bulk purge too. Unlike DeleteSnapshot/
-// DeleteBackupsVM, DeleteBackups has no source parameter — it always targets
-// the primary/local repo — so only the primary half of the gate applies here;
-// there is no offsite half to check. This path is especially severe left
+// immutable must refuse the bulk purge too. This path is especially severe left
 // unguarded: it runs Forget with prune=true (irreversible, immediate space
 // reclaim) against a repo the operator explicitly flagged append-only.
 func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
@@ -1711,7 +1731,7 @@ func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	err := svc.DeleteBackups(context.Background(), "plex")
+	err := svc.DeleteBackups(context.Background(), "plex", "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
 	}
@@ -1728,7 +1748,7 @@ func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
 	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "plex", ""); err != nil {
 		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
 	}
 	if len(eng.forgotten) != 1 {
@@ -1762,7 +1782,7 @@ func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"fileset:docs"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	err = svc.DeleteBackupsFileSet(context.Background(), set.ID)
+	err = svc.DeleteBackupsFileSet(context.Background(), set.ID, "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
 	}
@@ -1779,7 +1799,7 @@ func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
 	if _, err := st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.DeleteBackupsFileSet(context.Background(), set.ID); err != nil {
+	if err := svc.DeleteBackupsFileSet(context.Background(), set.ID, ""); err != nil {
 		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
 	}
 	if len(eng.forgotten) != 1 {
@@ -4213,7 +4233,7 @@ func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
 	// domain lock — proving the lock is genuinely checked (before the fix this
 	// call went straight through to Forget with zero serialization).
 	deleteErr := make(chan error, 1)
-	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex") }()
+	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex", "") }()
 	select {
 	case err := <-deleteErr:
 		if err == nil || !strings.Contains(err.Error(), "currently running") {
@@ -4230,7 +4250,7 @@ func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
 	// normally — the fix serializes, it does not permanently wedge the domain.
 	close(eng.blockRestore)
 	waitForBackupDone(t, svc)
-	if err := svc.DeleteBackups(ctx, "plex"); err != nil {
+	if err := svc.DeleteBackups(ctx, "plex", ""); err != nil {
 		t.Fatalf("DeleteBackups after the lock was released: %v", err)
 	}
 	if len(eng.forgotten) != 1 {
@@ -4467,7 +4487,7 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "plex", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
 	}
 
@@ -4849,16 +4869,17 @@ func TestDiscoverRebuildsTargetsFromStorage(t *testing.T) {
 	// dryRun=true first: a readability probe must report the same count WITHOUT
 	// writing any target (#44 — the Recovery readiness check must not resurrect
 	// orphan entries).
-	if pn, _, pErr := svc.Discover(context.Background(), true); pErr != nil {
+	if probe, pErr := svc.Discover(context.Background(), true); pErr != nil {
 		t.Fatalf("discover probe: %v", pErr)
-	} else if pn != 1 {
-		t.Fatalf("probe discovered = %d, want 1", pn)
+	} else if probe.Found != 1 {
+		t.Fatalf("probe discovered = %d, want 1", probe.Found)
 	}
 	if _, err := st.GetTargetByContainer("plex"); err == nil {
 		t.Fatalf("probe (dryRun) must NOT create the plex target, but it exists")
 	}
 
-	n, _, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
+	n := res.Found
 	if err != nil {
 		t.Fatalf("discover: %v", err)
 	}
@@ -4982,7 +5003,7 @@ func TestDiscoverFoldsFormerNames(t *testing.T) {
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies") // the current name records the link
 	writeStoredDef(t, svc, repo, "radarr-movies")           // the old name has a definition too
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	if _, err := st.GetTargetByContainer("radarr-movies"); err == nil {
@@ -5033,7 +5054,7 @@ func TestDiscoverRebuildsFormerNameStandaloneWhenCurrentCannotBeRebuilt(t *testi
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
 	// A dry run writes nothing, aliases included.
-	if _, _, err := svc.Discover(context.Background(), true); err != nil {
+	if _, err := svc.Discover(context.Background(), true); err != nil {
 		t.Fatalf("Discover (dry run): %v", err)
 	}
 	if _, err := st.GetTargetByContainer("radarr"); err == nil {
@@ -5046,7 +5067,7 @@ func TestDiscoverRebuildsFormerNameStandaloneWhenCurrentCannotBeRebuilt(t *testi
 		t.Fatal("dry run must not write an alias")
 	}
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	if _, err := st.GetTargetByContainer("radarr"); err == nil {
@@ -5106,7 +5127,7 @@ func TestDiscoverHalfMigratedFormerNameLeavesBothEntriesUntouched(t *testing.T) 
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 
@@ -5177,7 +5198,8 @@ func TestDiscoverSharedFormerNameRebuiltOnceWhenNoOwnerCanBeRebuilt(t *testing.T
 	// Only the shared former name has a stored definition.
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
-	n, _, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
+	n := res.Found
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
@@ -5232,7 +5254,7 @@ func TestDiscoverSharedFormerNameFoldsOnlyWhenOneOwnerRebuilds(t *testing.T) {
 	writeStoredDef(t, svc, repo, "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	tg, err := st.GetTargetByContainer("radarr")
@@ -5285,7 +5307,7 @@ func TestDiscoverFoldsOrdinaryPreRenameHistory(t *testing.T) {
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	if _, err := st.GetTargetByContainer("radarr-movies"); err == nil {
@@ -5337,7 +5359,7 @@ func TestDiscoverDoesNotFoldAFormerNameOnItsTagAlone(t *testing.T) {
 	writeStoredDef(t, svc, repo, "radarr")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 
@@ -5390,7 +5412,7 @@ func TestDiscoverSkipsUnsafeFormerNameAlias(t *testing.T) {
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 	writeStoredDef(t, svc, repo, "radarr", "radarr,bad")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 
@@ -7292,16 +7314,17 @@ func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
 
 	// dryRun=true first: the readability probe reports the count but must not
 	// recreate the VM target.
-	if pn, _, pErr := svc.DiscoverVMs(context.Background(), true); pErr != nil {
+	if probe, pErr := svc.DiscoverVMs(context.Background(), true); pErr != nil {
 		t.Fatalf("DiscoverVMs probe: %v", pErr)
-	} else if pn != 1 {
-		t.Fatalf("probe discovered = %d, want 1", pn)
+	} else if probe.Found != 1 {
+		t.Fatalf("probe discovered = %d, want 1", probe.Found)
 	}
 	if _, err := st.GetVMTargetByName("Tailscale"); err == nil {
 		t.Fatalf("probe (dryRun) must NOT create the Tailscale VM target, but it exists")
 	}
 
-	n, _, err := svc.DiscoverVMs(context.Background(), false)
+	res, err := svc.DiscoverVMs(context.Background(), false)
+	n := res.Found
 	if err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
@@ -8019,7 +8042,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	times, err := svc.LatestContainerBackupTimes(context.Background())
+	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}
@@ -8065,7 +8088,7 @@ func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{snaps: snaps})
-		times, err := svc.LatestContainerBackupTimes(context.Background())
+		times, _, err := svc.LatestContainerBackupTimes(context.Background())
 		if err != nil {
 			t.Fatalf("LatestContainerBackupTimes: %v", err)
 		}
@@ -8609,7 +8632,7 @@ func TestTakeOverContainerChecksTheEntrysOwnRepositoryToo(t *testing.T) {
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("radarr-movies", named.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "radarr-movies"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	// The stranger's snapshot is only in radarr-movies's cold repository, not
@@ -9102,12 +9125,12 @@ func TestDiscoverFindsDumpOnlyContainer(t *testing.T) {
 	}
 	writeDiscoverableDef(t, filepath.Join(own, "def"), "immich_pg")
 
-	n, _, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
-	if n != 1 {
-		t.Fatalf("Discover found %d items, want the dump-only container", n)
+	if res.Found != 1 {
+		t.Fatalf("Discover found %d items, want the dump-only container", res.Found)
 	}
 	if _, err := st.GetTargetByContainer("immich_pg"); err != nil {
 		t.Fatalf("the rebuilt target is missing: %v", err)
@@ -9128,7 +9151,7 @@ func TestDiscoverNewestWinsAcrossPrefixes(t *testing.T) {
 	}
 	writeDiscoverableDef(t, filepath.Join(own, "def"), "sonarr")
 
-	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
 	tg, err := st.GetTargetByContainer("sonarr")
@@ -9200,7 +9223,7 @@ func TestDeleteBackupsForgetsDumps(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.DeleteBackups(context.Background(), "pg"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "pg", "local"); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
 	}
 	if len(eng.forgotten) != 2 || !contains(eng.forgotten, "aaaa1111") || !contains(eng.forgotten, "bbbb2222") {
@@ -9233,7 +9256,7 @@ func TestDeleteBackupsDumpOnlyRefusedBeforeAnyLock(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	err := svc.DeleteBackups(context.Background(), "pg")
+	err := svc.DeleteBackups(context.Background(), "pg", "local")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("delete = %v, want an append-only refusal", err)
 	}

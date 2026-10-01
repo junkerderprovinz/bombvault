@@ -47,6 +47,22 @@ func columnPresent(table, column string) func(*sql.Tx) (bool, error) {
 	}
 }
 
+// columnPresentOnAll reports whether every one of tables already has column. It
+// backs an alreadySatisfied guard whose body alters more than one table: the
+// guard can only call the body's intent as met once none of those tables is
+// still missing what the body would add.
+func columnPresentOnAll(column string, tables ...string) func(*sql.Tx) (bool, error) {
+	return func(tx *sql.Tx) (bool, error) {
+		for _, table := range tables {
+			ok, err := columnPresent(table, column)(tx)
+			if err != nil || !ok {
+				return ok, err
+			}
+		}
+		return true, nil
+	}
+}
+
 // tablePresent reports whether a table exists. The CREATE TABLE bodies already
 // carry IF NOT EXISTS, so this guard is not what keeps them safe to re-run; it
 // is what lets such a migration be RECORDED as satisfied on a database that got
@@ -1573,15 +1589,224 @@ ALTER TABLE settings ADD COLUMN pull_enabled INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("settings", "pull_enabled"),
 	},
 	{
+		// A domain's off-site field edits the target on sort_order 0, so that
+		// slot holds one row: the oldest whose location is the field. Every other
+		// row on 0, an accepted mesh offer included, moves behind the domain's
+		// last target in the order the rows were created. With the field empty,
+		// the oldest switched-off row already on 0 keeps it instead: that is the
+		// row a cleared field leaves behind, and it must still be there for the
+		// next fill to find. The ZFS domain is left alone: its field comes with a
+		// later migration, and MoveTargetsOffPrimarySlot settles it at startup.
+		// The body only changes data, so migrationRecorded is what keeps a
+		// renumbered copy from running a second time.
+		version: 109,
+		name:    "offsite_targets_primary_slot",
+		sql: `
+CREATE TEMP TABLE slot_field AS
+  SELECT 'containers' AS domain, containers_offsite AS field FROM settings WHERE id = 1
+  UNION ALL SELECT 'vms',    vms_offsite    FROM settings WHERE id = 1
+  UNION ALL SELECT 'flash',  flash_offsite  FROM settings WHERE id = 1
+  UNION ALL SELECT 'config', config_offsite FROM settings WHERE id = 1
+  UNION ALL SELECT 'files',  files_offsite  FROM settings WHERE id = 1;
+
+CREATE TEMP TABLE slot_primary AS
+  SELECT (SELECT ot.id FROM offsite_targets ot
+           WHERE ot.role = 'offsite' AND ot.domain = f.domain AND ot.repo = f.field
+           ORDER BY ot.created_at, ot.id LIMIT 1) AS id
+    FROM slot_field f
+   WHERE f.field <> ''
+  UNION ALL
+  SELECT (SELECT ot.id FROM offsite_targets ot
+           WHERE ot.role = 'offsite' AND ot.domain = f.domain AND ot.sort_order = 0 AND ot.enabled = 0
+           ORDER BY ot.created_at, ot.id LIMIT 1) AS id
+    FROM slot_field f
+   WHERE f.field = '';
+DELETE FROM slot_primary WHERE id IS NULL;
+
+CREATE TEMP TABLE slot_moves AS
+  SELECT ot.id AS id,
+         (SELECT MAX(o2.sort_order) FROM offsite_targets o2
+           WHERE o2.role = 'offsite' AND o2.domain = ot.domain) + 1
+         + (SELECT COUNT(*) FROM offsite_targets o3
+             WHERE o3.role = 'offsite' AND o3.domain = ot.domain AND o3.sort_order = 0
+               AND o3.id NOT IN (SELECT id FROM slot_primary)
+               AND (o3.created_at < ot.created_at
+                    OR (o3.created_at = ot.created_at AND o3.id < ot.id))) AS sort_order
+    FROM offsite_targets ot
+   WHERE ot.role = 'offsite' AND ot.sort_order = 0
+     AND ot.domain IN (SELECT domain FROM slot_field)
+     AND ot.id NOT IN (SELECT id FROM slot_primary);
+
+UPDATE offsite_targets
+   SET sort_order = (SELECT m.sort_order FROM slot_moves m WHERE m.id = offsite_targets.id)
+ WHERE id IN (SELECT id FROM slot_moves);
+UPDATE offsite_targets SET sort_order = 0 WHERE id IN (SELECT id FROM slot_primary);
+
+DROP TABLE temp.slot_moves;
+DROP TABLE temp.slot_primary;
+DROP TABLE temp.slot_field;`,
+		alreadySatisfied: migrationRecorded("offsite_targets_primary_slot"),
+	},
+	{
+		// Copy rules hang on the snapshot name, not on an item row, so a rule
+		// outlives the row of an item whose backups stay behind.
+		version: 110,
+		name:    "offsite_copy_rules",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_copy_rules (
+  domain     TEXT    NOT NULL,
+  identity   TEXT    NOT NULL,
+  skip       TEXT    NOT NULL DEFAULT '[]',
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (domain, identity)
+);`,
+		alreadySatisfied: tablePresent("offsite_copy_rules"),
+	},
+	{
+		// A domain that already replicates gets a confirmed default that keeps it
+		// as it is: domain path, every target. Each domain is judged on its own
+		// history, a successful backup of one of its own items or a successful
+		// off-site run of its own, not on whether anything anywhere has run, so an
+		// install that only ever backed up containers does not grandfather vms and
+		// files, which never replicated a thing. A fresh domain gets none.
+		// confirmed_at has no default, so every writer has to say whether it
+		// confirms or pauses.
+		version: 111,
+		name:    "placement_defaults",
+		sql: `
+CREATE TABLE IF NOT EXISTS placement_defaults (
+  domain       TEXT    PRIMARY KEY,
+  home         TEXT    NOT NULL DEFAULT '',
+  skip         TEXT    NOT NULL DEFAULT '[]',
+  confirmed_at INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
+SELECT 'containers', '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+ WHERE EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id IN (SELECT id FROM targets))
+    OR EXISTS (SELECT 1 FROM offsite_runs WHERE domain = 'containers' AND ok = 1);
+
+INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
+SELECT 'vms', '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+ WHERE EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id IN (SELECT id FROM vms))
+    OR EXISTS (SELECT 1 FROM offsite_runs WHERE domain = 'vms' AND ok = 1);
+
+INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
+SELECT 'files', '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+ WHERE EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id IN (SELECT id FROM file_sets))
+    OR EXISTS (SELECT 1 FROM offsite_runs WHERE domain = 'files' AND ok = 1);`,
+		alreadySatisfied: tablePresent("placement_defaults"),
+	},
+	{
+		// What a target held of each item at its last listing. The key starts with
+		// domain and target because a listing replaces all rows of one target.
+		version: 112,
+		name:    "offsite_item_copies",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_item_copies (
+  domain             TEXT    NOT NULL,
+  identity           TEXT    NOT NULL,
+  target_id          TEXT    NOT NULL,
+  snapshot_count     INTEGER NOT NULL DEFAULT 0,
+  latest_snapshot_at INTEGER NOT NULL DEFAULT 0,
+  observed_at        INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (domain, target_id, identity)
+);
+CREATE INDEX IF NOT EXISTS idx_offsite_item_copies_identity
+  ON offsite_item_copies(domain, identity);`,
+		alreadySatisfied: tablePresent("offsite_item_copies"),
+	},
+	{
+		// One row per domain and target once the target was listed for the domain,
+		// so a target never listed and a target listed empty stay apart.
+		version: 113,
+		name:    "offsite_observations",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_observations (
+  domain    TEXT    NOT NULL,
+  target_id TEXT    NOT NULL,
+  listed_at INTEGER NOT NULL,
+  rules_rev TEXT    NOT NULL DEFAULT '',
+  aged_at   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (domain, target_id)
+);`,
+		alreadySatisfied: tablePresent("offsite_observations"),
+	},
+	{
+		// A run that only listed and aged a target succeeds without saying anything
+		// about how current the target is.
+		version:          114,
+		name:             "offsite_runs_aging_only",
+		sql:              `ALTER TABLE offsite_runs ADD COLUMN aging_only INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("offsite_runs", "aging_only"),
+	},
+	{
+		// Every row that exists here was set up before a default could name a
+		// location, so each one counts as chosen. Rows created later start open and
+		// take the default's location at their first backup.
+		version:          115,
+		name:             "items_repo_chosen",
+		alreadySatisfied: columnPresentOnAll("repo_chosen", "targets", "vms", "file_sets"),
+		sql: `
+ALTER TABLE targets   ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE vms       ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE file_sets ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
+UPDATE targets   SET repo_chosen = 1;
+UPDATE vms       SET repo_chosen = 1;
+UPDATE file_sets SET repo_chosen = 1;`,
+	},
+	{
+		// Confirmed_at alone cannot tell an operator's confirmation from a default
+		// PutPlacementDefault just saved, so an install already replicating before
+		// this column existed is grandfathered here: its seeded defaults count as
+		// confirmed, the same as if ConfirmPlacement had run.
+		version:          116,
+		name:             "placement_confirmed_manually",
+		alreadySatisfied: columnPresent("placement_defaults", "confirmed_manually"),
+		sql: `
+ALTER TABLE placement_defaults ADD COLUMN confirmed_manually INTEGER NOT NULL DEFAULT 0;
+UPDATE placement_defaults SET confirmed_manually = 1 WHERE confirmed_at <> 0;`,
+	},
+	{
+		// A direct repository is a named repository written beside an off-site
+		// target. companion_of ties it to that target so the row can take the
+		// target's settings; companion_lost labels a row whose target an import
+		// removed.
+		version:          117,
+		name:             "offsite_targets_companion",
+		alreadySatisfied: columnPresent("offsite_targets", "companion_of"),
+		sql: `
+ALTER TABLE offsite_targets ADD COLUMN companion_of   TEXT    NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN companion_lost INTEGER NOT NULL DEFAULT 0;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_offsite_targets_companion
+  ON offsite_targets(companion_of) WHERE companion_of <> '';`,
+	},
+	{
+		// A named repository marked off the premises counts as a site of its own for
+		// sites and 3-2-1 and never changes replication. Remote ones start marked,
+		// with restic.IsRemoteRepo's scheme list; a direct repository counts with its
+		// target instead.
+		version:          118,
+		name:             "offsite_targets_off_premises",
+		alreadySatisfied: columnPresent("offsite_targets", "off_premises"),
+		sql: `
+ALTER TABLE offsite_targets ADD COLUMN off_premises INTEGER NOT NULL DEFAULT 0;
+UPDATE offsite_targets SET off_premises = 1
+ WHERE role = 'repo' AND companion_of = ''
+   AND (` + remoteLocation("repo") + `);`,
+	},
+	{
 		// Target renaming (#233). One durable row per detached alias: domain,
 		// the container or VM's old name, which target absorbed it, and when the
 		// link was made. A rename undone later still needs its own history, so
 		// the alias survives the target it points at being edited or deleted
 		// around it.
 		//
-		// Versions 109 to 119 stay free because other builds record unrelated
-		// migrations as 109. The guard records this version without the body on
-		// a database that already has the table.
+		// A branch build recorded this body and the next two as 109 to 111,
+		// numbers the placement migrations own (see misnumbered), so they sit
+		// above those. The guard records this version without the body on a
+		// database that already has the table.
 		version: 120,
 		name:    "target_aliases",
 		sql: `CREATE TABLE IF NOT EXISTS target_aliases (
@@ -2460,6 +2685,20 @@ const vmBlocksMigration = 220
 // network announcement.
 const apiMigrationBase = 230
 
+// misnumbered holds records that branch builds wrote under the numbers of the
+// placement migrations. Migrate forgets them, so the placement migrations run
+// there too; the guards of target_aliases, vm_uuid and
+// target_alias_prev_definition record those again under their own numbers.
+var misnumbered = []struct {
+	version int
+	name    string
+}{
+	{109, "target_aliases"},
+	{110, "vm_uuid"},
+	{111, "target_alias_prev_definition"},
+	{109, "named_repo_already_offsite"},
+}
+
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.
 const pairingMigration = 250
@@ -2482,6 +2721,11 @@ func Migrate(db *sql.DB) error {
 	)`)
 	if err != nil {
 		return fmt.Errorf("migrate: create schema_migrations: %w", err)
+	}
+	for _, r := range misnumbered {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, r.version, r.name); err != nil {
+			return fmt.Errorf("migrate: forget v%d (%s): %w", r.version, r.name, err)
+		}
 	}
 
 	for _, m := range migrations {
@@ -2535,4 +2779,14 @@ func Migrate(db *sql.DB) error {
 		}
 	}
 	return nil
+}
+
+// DatabaseBornAt is when this database recorded its first migration. A snapshot
+// older than that was written before this database existed.
+func (r *Repo) DatabaseBornAt() (time.Time, error) {
+	var at sql.NullInt64
+	if err := r.db.QueryRow(`SELECT MIN(applied_at) FROM schema_migrations`).Scan(&at); err != nil {
+		return time.Time{}, fmt.Errorf("DatabaseBornAt: %w", err)
+	}
+	return time.Unix(at.Int64, 0), nil
 }

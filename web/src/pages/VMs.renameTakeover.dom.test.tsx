@@ -31,6 +31,7 @@ vi.mock("../lib/api", async () => {
 
 const { listVMs, listVMSnapshots, takeOverVM, unlinkVMAlias } = await import("../lib/api");
 const { VMRow, VMs } = await import("./VMs");
+const { placementView } = await import("../lib/placement.testsupport");
 const { countText, en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
 
@@ -46,6 +47,7 @@ const win11: VM = {
   includeInSchedule: false,
   lastBackup: null,
   lastBackupStarted: null,
+  placement: placementView(),
 };
 
 function renderRow(vm: VM, linkCandidates?: string[], onRefresh: () => void = () => {}) {

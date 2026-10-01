@@ -139,7 +139,7 @@ func (s *Service) createZFSDataset(ctx context.Context, item ZFSCreateItem, rows
 	if err := s.zfsValidateStopContainers(ctx, item.StopContainers); err != nil {
 		return store.ZFSDataset{}, err
 	}
-	if err := s.validateItemRepoID(item.Repo); err != nil {
+	if err := s.validateItemRepoID(zfsDomain, item.Repo); err != nil {
 		return store.ZFSDataset{}, err
 	}
 	if err := s.zfsCreateRefusal(ctx, item.Dataset); err != nil {
@@ -234,7 +234,7 @@ func (s *Service) PatchZFSDataset(ctx context.Context, id string, p ZFSDatasetPa
 			return errors.New("cannot change the repository of a dataset item that already has backups; " +
 				"they stay in the repository they were written to and nothing moves them. Delete its backups first")
 		}
-		if vErr := s.validateItemRepoID(*p.Repo); vErr != nil {
+		if vErr := s.validateItemRepoID(zfsDomain, *p.Repo); vErr != nil {
 			return vErr
 		}
 	}
@@ -446,7 +446,7 @@ func (s *Service) DiscoverZFSDatasets(ctx context.Context, dryRun bool) (int, []
 	if err != nil {
 		return 0, nil, fmt.Errorf("read settings: %w", err)
 	}
-	names, _, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, zfsDomain, "zfs:")
+	names, _, skipped, _, readErr := s.discoverNamesAcrossRepos(ctx, settings, zfsDomain, "zfs:")
 
 	// Dataset names carry slashes and spaces, so the boundary charset of the
 	// other domains would drop every one of them.

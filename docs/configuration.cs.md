@@ -31,14 +31,14 @@ Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je
 
 Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
-Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Úložiště, Zálohovací cesty**. Každé pole cesty má také vestavěný přepínač **Místní / Vzdálené**: cesta může být místo místní složky vzdálený restic repozitář (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) a záloha pak jde přímo do něj, bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
+Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Úložiště, Zálohovací cesty**. Každé pole cesty má také vestavěný přepínač **Místní / Vzdálené**: cesta může být místo místní složky vzdálený restic repozitář (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) a záloha pak jde přímo do něj, bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.
 
 ## Rozpoznávání zdrojů zálohy {#backup-source-detection}
 
-Pro každý kontejner si BombVault sám vybírá, která připojení bind a pojmenované svazky se zálohují. Cesta se převezme, jakmile platí kterýkoli z následujících bodů (výsledek lze u každého kontejneru kdykoli přepsat v jeho **Cestách zálohy**):
+Pro každý kontejner si BombVault sám vybírá, která připojení bind a pojmenované svazky se zálohují. Cesta se převezme, jakmile platí kterýkoli z následujících bodů (výsledek lze u každého kontejneru kdykoli přepsat v jeho sekci **Zálohované složky**):
 
 - **Shoda se segmentem kořene dat:** hostitelský zdroj bindu obsahuje jeden ze segmentů `DATA_ROOT_SEGMENTS` jako celou složku cesty (ve výchozím stavu pouze `appdata`).
 - **Pojmenované svazky Dockeru** se zahrnují vždy, protože k nim neexistuje jednorázový protějšek, a není tedy co filtrovat, **ale jen tehdy, když je skutečná úložná cesta svazku na hostiteli dosažitelná přes připojení Host Data**, přesně jako každá jiná hostitelská cesta, kterou BombVault zálohuje. Výchozí ovladač místních svazků ukládá svazek pod kořen dat samotného démona, tedy `/var/lib/docker/volumes/<název>/_data`, pokud to nebylo upraveno (ověříte příkazem `docker info -f '{{.DockerRootDir}}'`). Toto místo NENÍ pokryto úzkým, jednoadresářovým připojením Host Data, které obecný `docker-compose.yml` ve výchozím stavu používá. Nedosažitelný svazek se tiše přeskočí, není to chyba. Aby se pojmenované svazky na obecném hostiteli opravdu zálohovaly, nasměrujte Host Data (a `HOST_SOURCE_ROOT`) na společného předka, který pokrývá i kořen dat Dockeru: kompromis popisuje komentář Host Data v souboru compose (Unraid to obchází tím, že ze stejného důvodu připojí celé `/mnt`, svou vlastní univerzální konvenci nejvyšší úrovně).
@@ -84,7 +84,7 @@ Rychlé nastavení:
 
 Nastavte repliku mimo lokalitu na stránce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
 
-- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
 - **Sdílené cloudové přihlašovací údaje** se ukládají šifrovaně pod Nastavení, Cloudový přístup, Sdílené cloudové přihlašovací údaje.
 - **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
 - **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, navíc k (obvykle místnímu) primárnímu repozitáři. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
@@ -106,11 +106,11 @@ Detekce anomálií se nastavuje na kartě **Anomálie** v **Nastavení, Integrit
 | **Posílat oznámení pro** | Jen kritické nálezy | Nejnižší závažnost, která pošle zprávu kanály nastavenými v Oznámení. Opakovaně selhané zálohy a výpisy a selhané plánované kontroly obnovy už posílají vlastní zprávu a neposílají se dvakrát. |
 | **Ponechat staré zálohy, když se zdroj prudce zmenší nebo je přepsán** | Zapnuto | Dokud má položka otevřené zjištění kvůli téměř prázdnému zdroji, výraznému zmenšení nebo znovu uložené většině dat, uchovávání a čištění nechají její staré zálohy na pokoji. Potvrďte zjištění nebo ho označte jako očekávané, aby se uvolnily. |
 
-Každá položka může mít vlastní citlivost a vlastní minimum oznámení. Nastavíte je na záložce **Položky** stránky **Anomálie** nebo v panelu samotné položky: v sekci složek kontejneru a v nastavení virtuálního počítače (obojí v pokročilém režimu), v editoru složek sady složek a na stránkách **Flash** a **Autozáloha**. U položky ZFS jsou v jejím editoru na stránce **ZFS** a platí pro každou datovou sadu jejího stromu.
+Každá položka může mít vlastní citlivost a vlastní minimum oznámení. Nastavíte je na stránce **Anomálie**, kde je položka s otevřenými zjištěními má pod **Sledování** na své kartě a každá jiná položka je otevře z karty **Nic otevřeného**, nebo v panelu samotné položky: v sekci složek kontejneru a v nastavení virtuálního počítače (obojí v pokročilém režimu), v editoru složek sady složek a na stránkách **Flash** a **Autozáloha**. U položky ZFS jsou v jejím editoru na stránce **ZFS** a platí pro každou datovou sadu jejího stromu.
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 
-Karta **Export a import nastavení** na stránce **Nastavení, Systém** zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
+Karta **Export / import nastavení** na stránce **Nastavení, Systém** zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
     Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu, oznámení a brokeru MQTT. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

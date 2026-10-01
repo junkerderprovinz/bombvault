@@ -31,14 +31,14 @@ Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şabl
 
 ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
 
-Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Depolama, Yedekleme yolları**'nda değiştirin. Her yol alanında ayrıca satır içi bir **Yerel / Uzak** anahtarı vardır: bir yol, yerel bir klasör yerine bir restic uzak konumu (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) olabilir ve yedekleme ayrı bir yerel kopya olmadan doğrudan oraya yapılır; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
+Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Depolama, Yedekleme yolları**'nda değiştirin. Her yol alanında ayrıca satır içi bir **Yerel / Uzak** anahtarı vardır: bir yol, yerel bir klasör yerine bir restic uzak konumu (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) olabilir ve yedekleme ayrı bir yerel kopya olmadan doğrudan oraya yapılır; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Host entegrasyon denetimi"
+!!! note "Host Entegrasyon Denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
 
 ## Yedekleme kaynaklarının belirlenmesi {#backup-source-detection}
 
-Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin yedekleneceğini BombVault kendisi seçer. Aşağıdakilerden herhangi biri geçerli olur olmaz bir yol alınır (sonucu kapsayıcı bazında her zaman **Yedekleme yolları** altından değiştirebilirsiniz):
+Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin yedekleneceğini BombVault kendisi seçer. Aşağıdakilerden herhangi biri geçerli olur olmaz bir yol alınır (sonucu kapsayıcı bazında her zaman **Yedeklenecek klasörler** altından değiştirebilirsiniz):
 
 - **Veri kökü parçası eşleşmesi:** bind bağının ana makinedeki kaynağı, `DATA_ROOT_SEGMENTS` parçalarından birini tam bir yol bileşeni olarak içeriyor (varsayılan olarak yalnızca `appdata`).
 - **Adlandırılmış Docker birimleri** her zaman dahil edilir, çünkü atılabilir bir karşılıkları yoktur ve süzülecek bir şey kalmaz, **ama yalnızca birimin ana makinedeki gerçek depolama yolunun kendisi Host Data bağı üzerinden erişilebilir olduğunda**, tıpkı BombVault'un yedeklediği diğer her ana makine yolu gibi. Varsayılan yerel birim sürücüsü bir birimi arka planın kendi veri kökünün altına, yani değiştirilmediyse `/var/lib/docker/volumes/<ad>/_data` yoluna koyar (`docker info -f '{{.DockerRootDir}}'` ile bakabilirsiniz). Bu konum, genel `docker-compose.yml` dosyasının varsayılan olarak kullandığı tek dizinlik dar Host Data bağının kapsamında DEĞİLDİR. Erişilemeyen birim sessizce atlanır, bu bir hata değildir. Genel bir ana makinede adlandırılmış birimlerin gerçekten yedeklenmesi için Host Data'yı (ve `HOST_SOURCE_ROOT` değerini) Docker'ın veri kökünü de kapsayan ortak bir üst dizine yöneltin: ödünleşim compose dosyasının Host Data yorumunda anlatılıyor (Unraid, aynı nedenle kendi en üst düzey genel geleneği olan `/mnt` dizininin tamamını bağlayarak bunu aşar).
@@ -84,7 +84,7 @@ Hızlı kurulum:
 
 **Ayarlar, Site dışı** sayfasında bir site dışı kopya kurun. Tam iş akışı için (değiştirilemez/yalnızca ekleme, kurcalama testi ve DR tatbikatları) bkz. [Site dışı ve kurtarma](offsite-recovery.md). Kısaca:
 
-- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
+- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
 - **Paylaşılan bulut kimlik bilgileri** Ayarlar, Bulut erişimi, Paylaşılan bulut kimlik bilgileri altında şifreli saklanır.
 - **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Entegrasyonlar, Ana makine SSH** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
 - **Site dışı kopya:** BombVault, (genellikle yerel) bir birincil depoya ek olarak yeni anlık görüntüleri en iyi çaba temelinde `restic copy` ile çoğaltır. Her etki alanının kendi site dışı zamanlaması ve ayrıca bir **Şimdi çoğalt** düğmesi vardır.
@@ -106,11 +106,11 @@ Anomali algılama **Ayarlar, Bütünlük** altındaki **Anormallikler** kartınd
 | **Şunlar için bildirim gönder** | Yalnızca kritik bulgular | Bildirimler altında kurulan kanallar üzerinden mesaj gönderen en düşük önem derecesi. Tekrarlanan başarısız yedekler ve dökümler ile başarısız zamanlanmış geri yükleme denetimleri zaten kendi mesajlarını gönderir ve iki kez gönderilmez. |
 | **Bir kaynak sert biçimde küçüldüğünde veya yeniden yazıldığında eski yedekleri tut** | Açık | Bir öğenin neredeyse boş kaynak, güçlü küçülme ya da verilerin çoğunun yeniden kaydedilmesi için açık bir bulgusu olduğu sürece saklama ve temizlik o öğenin eski yedeklerine dokunmaz. Serbest bırakmak için bulguyu onaylayın ya da beklenen olarak işaretleyin. |
 
-Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunları **Anormallikler** sayfasının **Ögeler** sekmesinde ya da öğenin kendi panelinde ayarlayın: bir konteynerin klasörler bölümü ve bir VM'nin ayarları (ikisi de gelişmiş modda), bir klasör setinin klasör düzenleyicisi ve **Flash** ile **Öz yedek** sayfaları. Bir ZFS öğesinde bunlar **ZFS** sayfasındaki öğe düzenleyicisindedir ve ağacın her veri kümesi için geçerlidir.
+Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunları **Anormallikler** sayfasında ayarlayın: açık bulgusu olan bir öğede kartındaki **İzleme** altında bulunur, diğer her öğe bunları **Açık bir şey yok** kartından açar. Öğenin kendi panelinde de ayarlanabilir: bir konteynerin klasörler bölümü ve bir VM'nin ayarları (ikisi de gelişmiş modda), bir klasör setinin klasör düzenleyicisi ve **Flash** ile **Öz yedek** sayfaları. Bir ZFS öğesinde bunlar **ZFS** sayfasındaki öğe düzenleyicisindedir ve ağacın her veri kümesi için geçerlidir.
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 
-Ayarlar, Sistem sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
+Ayarlar, Sistem sayfasındaki **Ayarları dışa / içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
 
 !!! warning "Dışa aktarma kimlik bilgileri içerebilir"
     Site dışı, bildirim ve MQTT aracısı kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.

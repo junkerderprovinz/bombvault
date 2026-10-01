@@ -26,6 +26,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "activityLog.lineOther",
   "anomaly.figure",
   "cadence.fmtCron",
+  "placement.flow",
   "dbdump.versionLabel",
   "zfs.safety.row",
 
@@ -45,6 +46,9 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // "Containers" is the word el and he use in their own nav entry. Consistency
   // within the language decides, not whether the string looks English.
   "stack.members",
+
+  // "direct" reads the same in fr, nl and ro as in English.
+  "placement.homeDirect",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */
@@ -78,6 +82,32 @@ describe("translations are actually translated", () => {
       leaks,
       `${code} carries English sentences verbatim. Translate them, or add the key to ` +
         "SAME_AS_EN_IS_FINE with a reason if it is genuinely the same word in this language.",
+    ).toEqual([]);
+  });
+});
+
+describe("placement text is not left in English", () => {
+  // Every locale is checked here, not just the non-Latin ones above, because
+  // a Latin-script locale can leave English text in place just as easily.
+  const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement.", "repos.offPremises"];
+  const codes = Object.keys(locales).filter((c) => c !== "en");
+
+  it.each(codes)("%s translates its placement text", (code) => {
+    const table = locales[code as keyof typeof locales] as Record<string, string>;
+    const leaks: string[] = [];
+    for (const [key, value] of Object.entries(en)) {
+      if (typeof value !== "string") continue;
+      if (!FAMILIES.some((family) => key.startsWith(family))) continue;
+      if (SAME_AS_EN_IS_FINE.has(key)) continue;
+      if (typeof table[key] !== "string") continue;
+      if (table[key] !== value) continue;
+      if (isUntranslatable(value)) continue;
+      leaks.push(`${key}: ${JSON.stringify(value.slice(0, 60))}`);
+    }
+    expect(
+      leaks,
+      `${code} leaves placement text identical to English. Translate it, or add the key to ` +
+        "SAME_AS_EN_IS_FINE with a reason.",
     ).toEqual([]);
   });
 });

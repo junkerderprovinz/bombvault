@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Container, Snapshot } from "../lib/api";
+import { placementView } from "../lib/placement.testsupport";
 import type { TranslationKey } from "../lib/i18n";
 
 class FakeEventSource {
@@ -35,7 +36,6 @@ const { listContainers, listSnapshots, takeOverContainer, unlinkContainerAlias }
 const { ContainerRow, Containers } = await import("./Containers");
 const { countText, en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
-const { AdvancedProvider } = await import("../lib/advanced");
 
 const t = ((key: TranslationKey, n?: number) => countText(en[key], "en", n)) as unknown as Parameters<typeof ContainerRow>[0]["t"];
 
@@ -56,6 +56,7 @@ const radarr: Container = {
   lastUpdateCheck: 0,
   lastUpdateResult: "",
   stack: "",
+  placement: placementView(),
 };
 
 type RowExtra = { onDeleted?: () => void; linkCandidates?: string[] };
@@ -158,6 +159,19 @@ describe("the rename suggestion on a container card", () => {
     await confirmDialog();
 
     expect(await screen.findByText("radarr already has backups of its own")).toBeTruthy();
+  });
+
+  it("shows the translated reason when the refusal carries a code", async () => {
+    vi.mocked(takeOverContainer).mockResolvedValueOnce({
+      ok: false,
+      error: 'rename "radarr-movies": container:radarr: that name already has a copy rule',
+      code: "copy-rule-taken",
+    });
+    renderRow(suggested);
+    fireEvent.click(screen.getByRole("button", { name: "Take over" }));
+    await confirmDialog();
+
+    expect(await screen.findByText(en["placementCode.copyRuleTaken"])).toBeTruthy();
   });
 
   it("stays hidden for that pair after Not this one, across a fresh render", async () => {
@@ -323,23 +337,6 @@ describe("a container card that took over an entry", () => {
     expect(screen.getByLabelText(/^Formerly: radarr-movies, radarr-old\./)).toBeTruthy();
   });
 
-  it("hides the former names' ownership tags in its backups", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
-    vi.mocked(listSnapshots).mockResolvedValueOnce({
-      ok: true,
-      snapshots: [{ ...snap("0123456789"), tags: ["container:radarr-old", "before-upgrade"] }],
-    });
-    render(
-      <AdvancedProvider>
-        <ContainerRow container={linked} installedContainers={[]} t={t} onDeleted={() => {}} index={0} />
-      </AdvancedProvider>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
-
-    expect(await screen.findByText("before-upgrade")).toBeTruthy();
-    expect(screen.queryByText("container:radarr-old")).toBeNull();
-  });
-
   it("unlinks a former name once confirmed, then reloads the list", async () => {
     const onDeleted = vi.fn();
     renderRow(linked, { onDeleted });
@@ -357,6 +354,19 @@ describe("a container card that took over an entry", () => {
     await confirmDialog();
 
     expect(await screen.findByText("radarr-old stays linked")).toBeTruthy();
+  });
+
+  it("shows the translated reason when the unlink refusal carries a code", async () => {
+    vi.mocked(unlinkContainerAlias).mockResolvedValueOnce({
+      ok: false,
+      error: 'unlink "radarr-old": container:radarr-old: that name already has a copy rule',
+      code: "copy-rule-taken",
+    });
+    renderRow(linked);
+    fireEvent.click(screen.getByRole("button", { name: "Unlink radarr-old" }));
+    await confirmDialog();
+
+    expect(await screen.findByText(en["placementCode.copyRuleTaken"])).toBeTruthy();
   });
 
   it("does not unlink when the dialog is cancelled", async () => {

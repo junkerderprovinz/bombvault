@@ -5,7 +5,9 @@
 // The strip is a single tab stop. Arrow keys, Home and End move between
 // segments with a roving tabindex, and the arrows follow the reading direction
 // under dir="rtl". With select="one" moving also selects, as in a tab strip;
-// with select="many" the segments are toggle buttons.
+// with select="many" the segments are toggle buttons. A strip that saves a
+// setting takes activation="manual" and is a radio group instead, since a tab
+// strip promises a panel that changes.
 //
 // The strip spans its box and its segments share the width, so a card of
 // stacked selectors ends in one edge. A strip that shares a toolbar row with a
@@ -16,6 +18,7 @@
 // not a <label> around the row: a label around several tabs forwards its clicks
 // to the first one and gives screen readers that tab's name.
 import {
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -95,9 +98,16 @@ interface SelectorCommon {
    *  together every segment shows its glyph alone, the label staying its
    *  accessible name and tooltip. Overrides `equalWidth` and `inline`. */
   fit?: boolean;
+  /** Below 600px, sets the segments two to a row and lets a label wrap rather
+   *  than truncate, so a strip of three on a phone reads as two full rows. */
+  pairsOnPhone?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
+  /** "manual" moves focus with the arrow keys, Home and End and chooses only on
+   *  Space, Enter or a click, as a radio group inside a toolbar does. For
+   *  select="one". */
+  activation?: "auto" | "manual";
   className?: string;
 }
 
@@ -108,12 +118,12 @@ interface SelectorCommon {
  * every hued selector in that tree to take its offset from here.
  *
  * There are more selectors than the palette has colours, so some share a
- * start: `drillKind` with the first label row, and `theme`, `notifyOn` and
- * `mcpClient` the last colour. `theme` sits on Look, `notifyOn` on
- * Notifications and the client picker in a dialog from Integrations, so none
- * of them is on screen with another. Look spends all eight positions, so a
- * selector added there has no free start and the table needs rethinking
- * rather than another entry.
+ * start: `drillKind` and the placement rows with the first label row, and
+ * `theme`, `notifyOn` and `mcpClient` the last colour. `theme` sits on Look,
+ * `notifyOn` on Notifications, the placement rows on Storage and the client
+ * picker in a dialog from Integrations, so none of them is on screen with
+ * another. Look spends all eight positions, so a selector added there has no
+ * free start and the table needs rethinking rather than another entry.
  */
 export const HUE_OFFSET = {
   /** The settings rail. */
@@ -126,6 +136,8 @@ export const HUE_OFFSET = {
   theme: 7,
   notifyOn: 7,
   drillKind: 1,
+  /** The three placement default rows, +3 per row: 1, 4 and 7. */
+  placement: 1,
   mcpClient: 7,
 } as const;
 
@@ -273,7 +285,8 @@ export function rovedIndex(disabled: boolean[], activeIndex: number): number {
 // hold its own tooltip hook.
 interface SelectorTabProps {
   item: SelectorItem;
-  many: boolean;
+  /** A tab of a tablist, a radio of a radio group, or a pressed button. */
+  kind: "tab" | "radio" | "toggle";
   on: boolean;
   disabled: boolean;
   roved: boolean;
@@ -296,7 +309,7 @@ interface SelectorTabProps {
 
 function SelectorTab({
   item,
-  many,
+  kind,
   on,
   disabled,
   roved,
@@ -328,6 +341,12 @@ function SelectorTab({
   // that says why.
   const tooltip = useTipBubble(reactive && !disabled ? undefined : tip, disabled);
 
+  // A disabled segment takes no hover or focus, so its tip needs a
+  // description that is there from the start rather than one that exists
+  // only while the bubble happens to be open.
+  const descId = useId();
+  const hiddenDescId = disabled && tip ? descId : undefined;
+
   return (
     <>
       {tooltip.wrap(
@@ -335,11 +354,12 @@ function SelectorTab({
           ref={tooltip.ref}
           type="button"
           data-sel-id={item.id}
-          role={many ? undefined : "tab"}
-          aria-selected={many ? undefined : on}
-          aria-pressed={many ? on : undefined}
+          role={kind === "toggle" ? undefined : kind}
+          aria-selected={kind === "tab" ? on : undefined}
+          aria-checked={kind === "radio" ? on : undefined}
+          aria-pressed={kind === "toggle" ? on : undefined}
           aria-label={nameHidden ? item.label : undefined}
-          aria-describedby={tooltip.describedBy}
+          aria-describedby={hiddenDescId ?? tooltip.describedBy}
           disabled={disabled}
           tabIndex={roved ? 0 : -1}
           style={
@@ -370,6 +390,11 @@ function SelectorTab({
         </button>,
         flex,
       )}
+      {hiddenDescId && (
+        <span id={hiddenDescId} className="sr-only">
+          {tip}
+        </span>
+      )}
       {tooltip.bubble}
     </>
   );
@@ -387,7 +412,9 @@ export function Selector(props: SelectorProps) {
     equalWidth = false,
     inline = false,
     fit = false,
+    pairsOnPhone = false,
     disabled = false,
+    activation = "auto",
     className = "",
   } = props;
   const well = variant === "well";
@@ -415,7 +442,8 @@ export function Selector(props: SelectorProps) {
   const chosen = props.select === "many" ? props.active : null;
   const only = props.select === "many" ? null : props.active;
   const { onChange } = props;
-  const auto = !many;
+  const manual = activation === "manual";
+  const auto = !many && !manual;
 
   const strip = useRef<HTMLDivElement>(null);
 
@@ -538,7 +566,7 @@ export function Selector(props: SelectorProps) {
             minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
             flex: `1 0 calc((100% - ${pinnedRows.perRow} * ${pinnedRows.gap}px) / ${pinnedRows.perRow})`,
           }
-        : { flex: "1 0 auto" };
+        : { flex: pairsOnPhone ? "1 0 var(--seg-basis, auto)" : "1 0 auto" };
   const trackStyle: CSSProperties | undefined = fit
     ? { flexWrap: "nowrap" }
     : byContent
@@ -592,7 +620,7 @@ export function Selector(props: SelectorProps) {
   return (
     <div
       ref={strip}
-      role={many ? "group" : "tablist"}
+      role={many ? "group" : manual ? "radiogroup" : "tablist"}
       aria-label={label}
       aria-orientation="horizontal"
       onKeyDown={onKeyDown}
@@ -606,6 +634,8 @@ export function Selector(props: SelectorProps) {
       className={[
         "flex flex-wrap items-center",
         inline && !fit ? "w-fit max-w-full" : "w-full",
+        // The larger of the two gaps, so two segments always fit a row.
+        pairsOnPhone ? "max-[600px]:[--seg-basis:calc(50%_-_0.25rem)]" : "",
         well
           ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "gap-1",
@@ -648,7 +678,7 @@ export function Selector(props: SelectorProps) {
           // sizes have to be kept in step by hand.
           well && equalWidth
             ? `text-center h-[var(--badge-md)] ${SIZE[size].padding}`
-            : equalWidth
+            : equalWidth || pairsOnPhone
               ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
@@ -662,14 +692,14 @@ export function Selector(props: SelectorProps) {
             key={item.id}
             item={item}
             axis={labelAxis}
-            many={many}
+            kind={many ? "toggle" : manual ? "radio" : "tab"}
             on={on}
             disabled={itemDisabled}
             roved={i === roved}
             className={cls}
             style={hue ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
             flex={segmentFlex}
-            wraps={pinWidth}
+            wraps={pinWidth || pairsOnPhone}
             squeezed={canSqueeze && squeezed}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);

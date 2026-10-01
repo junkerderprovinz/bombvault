@@ -112,7 +112,9 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	for _, r := range repos {
 		immutable := false
 		if isOffsiteSource(source) {
-			immutable = s.offsiteSourceImmutable(settings, domain, source)
+			if immutable, err = s.offsiteSourceImmutable(settings, domain, source); err != nil {
+				return RetentionPreview{}, err
+			}
 		} else {
 			immutable = s.refAppendOnly(domain, r) != appendOnlyNone
 		}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -31,10 +32,19 @@ type offsiteTargetView struct {
 	Enabled              bool   `json:"enabled"`
 	CreatedAt            int64  `json:"createdAt"`
 	SortOrder            int    `json:"sortOrder"`
+	// CompanionOf is set only on a NamedRepos row: the off-site target this
+	// repository is the direct repository of, "" for a plain one. Read-only,
+	// since toStoreTarget never maps it back: an import can read a companion
+	// link the file already describes, never create or change one.
+	CompanionOf string `json:"companionOf,omitempty"`
+	// OffPremises is set only on a named repository (RoleRepo): a destination
+	// carries no meaning for it, so the export leaves the field off entirely
+	// rather than send a value that means nothing there.
+	OffPremises *bool `json:"offPremises,omitempty"`
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
-	return offsiteTargetView{
+	v := offsiteTargetView{
 		ID:                   t.ID,
 		Domain:               t.Domain,
 		Name:                 t.Name,
@@ -55,7 +65,12 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		Enabled:              t.Enabled,
 		CreatedAt:            t.CreatedAt,
 		SortOrder:            t.SortOrder,
+		CompanionOf:          t.CompanionOf,
 	}
+	if t.Role == store.RoleRepo {
+		v.OffPremises = &t.OffPremises
+	}
+	return v
 }
 
 func offsiteTargetsToViews(ts []store.OffsiteTarget) []offsiteTargetView {
@@ -66,10 +81,20 @@ func offsiteTargetsToViews(ts []store.OffsiteTarget) []offsiteTargetView {
 	return out
 }
 
+// offsiteTargetBody is a target as the Off-site tab sends it. The answer to the
+// new-target question rides here rather than on offsiteTargetView, which the
+// settings file uses too.
+type offsiteTargetBody struct {
+	offsiteTargetView
+	// SortOrder shadows the view's so a missing one can be told apart from 0.
+	SortOrder   *int                `json:"sortOrder"`
+	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
+}
+
 // toStoreTarget floors the numeric fields at zero, trims the repo and
 // upper-cases the storage class. ID and CreatedAt are left to the handlers.
 func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
-	return store.OffsiteTarget{
+	t := store.OffsiteTarget{
 		Domain:               v.Domain,
 		Name:                 v.Name,
 		Repo:                 strings.TrimSpace(v.Repo),
@@ -89,6 +114,10 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 		Enabled:              v.Enabled,
 		SortOrder:            v.SortOrder,
 	}
+	if v.OffPremises != nil {
+		t.OffPremises = *v.OffPremises
+	}
+	return t
 }
 
 // validateOffsiteTargetInput returns a user-facing error, or "" when t is
@@ -130,14 +159,51 @@ func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 	}
 	for _, r := range rows {
 		other, oErr := h.svc.resolveRepo(r.Repo)
-		if oErr != nil || !sameRepoLocation(other, loc) {
+		if oErr != nil || !repoLocationsOverlap(other, loc) {
 			continue
 		}
 		// The row's name is left out: it is free text, and scrubError turns a
 		// name with a slash into "[path]".
-		return "that location is already a named repository; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
+		return "that location is a named repository, or lies inside or around one; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
 	}
 	return ""
+}
+
+// nestedTargetLocation refuses a target location that holds or lies inside a
+// domain repository, an off-site field, another target or a named repository,
+// and one that is a named repository's place; id is "" for a new target.
+func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings to check this location: %w", err)
+	}
+	loc, err := h.svc.resolveRepo(t.Repo)
+	if err != nil {
+		return err
+	}
+	self := locationSelf{target: true}
+	if id != "" {
+		self.ids = []string{id}
+		field, ok, err := h.store.FieldOffsiteTarget(t.Domain)
+		if err != nil {
+			return err
+		}
+		if ok && field.ID == id {
+			self.field = t.Domain
+		}
+	}
+	return h.svc.locationClash(settings, loc, self)
+}
+
+// removeHalfMadeTarget takes back a target whose exclusions could not be
+// written and returns the error to answer with. Nothing on screen shows that
+// target, so the next move is to press the button again, and
+// CreateOffsiteTarget mints a fresh id every time.
+func (h *Handler) removeHalfMadeTarget(id string, cause error) error {
+	if err := h.store.DeleteOffsiteTarget(id); err != nil {
+		return fmt.Errorf("%w; the target could not be taken back either: %v", cause, err)
+	}
+	return cause
 }
 
 // handleListOffsiteTargets lists all off-site targets, or those of one domain
@@ -168,12 +234,7 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 // createdAt in the body is ignored, and without a sortOrder the target goes
 // after the domain's existing ones.
 func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
-	// The pointer shadows the view's sortOrder so a missing one can be told
-	// apart from 0.
-	var v struct {
-		offsiteTargetView
-		SortOrder *int `json:"sortOrder"`
-	}
+	var v offsiteTargetBody
 	if !decodeBody(w, r, &v) {
 		return
 	}
@@ -192,20 +253,30 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if v.SortOrder != nil {
-		t.SortOrder = *v.SortOrder
-	} else {
-		next, err := h.svc.nextOffsiteSortOrder(t.Domain)
-		if err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
+	if err := h.nestedTargetLocation("", t); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	if v.AlsoExclude != nil {
+		if err := checkExclusion(t.Domain, *v.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
 			return
 		}
-		t.SortOrder = next
 	}
-	stored, err := h.store.UpsertOffsiteTarget(t)
+	t.SortOrder = 0
+	if v.SortOrder != nil {
+		t.SortOrder = *v.SortOrder
+	}
+	stored, err := h.store.CreateOffsiteTarget(t)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if v.AlsoExclude != nil {
+		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
+			placementFail(w, h.removeHalfMadeTarget(stored.ID, err), nil)
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
 }
@@ -223,10 +294,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such off-site target"})
 		return
 	}
-	var v struct {
-		offsiteTargetView
-		SortOrder *int `json:"sortOrder"`
-	}
+	var v offsiteTargetBody
 	if !decodeBody(w, r, &v) {
 		return
 	}
@@ -245,16 +313,31 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "sortOrder must be 1 or higher: 0 is the primary target, and the off-site setting in Settings manages it"})
 		return
 	}
-	if existing.SortOrder == 0 && t.Domain != existing.Domain {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the primary target stays in its domain: change the off-site setting in Settings instead"})
+	// A target's copy rules and its direct repository belong to its domain.
+	if t.Domain != existing.Domain {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot move an off-site target to another domain"})
 		return
 	}
 	// Checked only when the request moves the target, as in
 	// rejectSettingsPathOnNamedRepo, so a row the settings import left on a
 	// colliding location can still be edited rather than only deleted.
-	if !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo)) {
+	moved := !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo))
+	if moved {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+			return
+		}
+		if err := h.nestedTargetLocation(existing.ID, t); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+	}
+	// The answer is kept whether or not this save moves the target: the client
+	// asks as soon as the field changed, and two spellings of one location are
+	// no reason to drop what the user chose to leave out.
+	if v.AlsoExclude != nil {
+		if err := checkExclusion(t.Domain, *v.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
 			return
 		}
 	}
@@ -265,14 +348,32 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+	if v.AlsoExclude != nil {
+		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
+			// The row keeps its id, so there is nothing to take back here; the
+			// answer says which half of the save went through.
+			placementFail(w, fmt.Errorf("%w: %w", errExclusionUnsaved, err), nil)
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"target":   offsiteTargetToView(stored),
+		"warnings": h.svc.targetSaveWarnings(r.Context(), existing, stored),
+	}))
 }
 
-// handleDeleteOffsiteTarget removes an off-site target. An unknown id still
-// answers ok.
+// handleDeleteOffsiteTarget removes an off-site target and its direct
+// repository (a no-op, still ok, when the target does not exist), refused
+// while an item or a default still uses that direct repository.
+// DELETE /api/offsite/targets/{id}.
 func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Request) {
-	if err := h.store.DeleteOffsiteTarget(r.PathValue("id")); err != nil {
+	use, err := h.store.DeleteOffsiteTargetIfUnused(r.PathValue("id"))
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if use.InUse() {
+		placementFail(w, errTargetInUse, map[string]any{"use": targetUseView(use)})
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

@@ -103,6 +103,7 @@ vi.mock("../lib/api", async (importOriginal) => {
           offsiteTargets: 0,
           credentials: { present: false, cloud: false, rclone: false, notify: false, mqtt: false },
           settingsGroups: ["schedules"],
+          newTargets: [],
         },
       }),
     importSettingsApply: (text: string) => {

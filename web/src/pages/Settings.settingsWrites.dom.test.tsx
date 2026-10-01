@@ -96,6 +96,7 @@ vi.mock("../lib/api", async (importOriginal) => {
           offsiteTargets: 0,
           credentials: { present: false, cloud: false, rclone: false, notify: false, mqtt: false },
           settingsGroups: ["schedules"],
+          newTargets: [],
         },
       }),
     importSettingsApply: (text: string) => {
@@ -182,7 +183,9 @@ afterEach(() => {
   cleanup();
 });
 
-describe("two settings writes inside one round-trip", () => {
+// Each test renders the whole Settings page, which can take past five seconds
+// when the suite runs in parallel.
+describe("two settings writes inside one round-trip", { timeout: 15000 }, () => {
   it("sends the second one built on the first, not on the pre-first baseline", async () => {
     await renderPage();
 
@@ -237,7 +240,7 @@ describe("two settings writes inside one round-trip", () => {
   });
 });
 
-describe("a settings import", () => {
+describe("a settings import", { timeout: 15000 }, () => {
   async function importAFile() {
     await gotoPage("system");
     const file = new File(['{"schemaVersion":1}'], "settings.json", { type: "application/json" });
