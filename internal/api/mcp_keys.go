@@ -547,7 +547,7 @@ func RevokeMCPKeysAfterConfigRestore(st *store.Repo, dataDir string, now time.Ti
 		return fmt.Errorf("revoke MCP keys after the configuration restore: %w", err)
 	}
 	if n > 0 {
-		log.Printf("selfrestore: revoked %d MCP key(s) and API token(s): a restored configuration may contain keys that were revoked after it was saved; create new ones under Settings > Integrations", n)
+		log.Printf("selfrestore: revoked %d MCP key(s) and API token(s): a restored configuration may contain keys that were revoked after it was saved; create new ones under Settings, Integrations", n)
 	}
 	return os.Remove(marker)
 }

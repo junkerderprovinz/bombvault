@@ -677,7 +677,7 @@ func TestMCPReadOnlyKeyGetsNotPermitted(t *testing.T) {
 		if code := res.code(t); code != "not_permitted" {
 			t.Fatalf("%s: code = %q, want not_permitted (result %v)", c.tool, code, res.Structured)
 		}
-		if msg := res.message(t); !strings.Contains(msg, "Settings > System > MCP server") {
+		if msg := res.message(t); !strings.Contains(msg, "Settings, Integrations, MCP server") {
 			t.Fatalf("%s: message %q does not say where to change it", c.tool, msg)
 		}
 	}

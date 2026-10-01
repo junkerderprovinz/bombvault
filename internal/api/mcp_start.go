@@ -36,7 +36,7 @@ type mcpSkipped struct {
 }
 
 const (
-	mcpReadOnlyKeyMessage = "this key may only read; allow backups for it under Settings > System > MCP server"
+	mcpReadOnlyKeyMessage = "this key may only read; allow backups for it under Settings, Integrations, MCP server"
 	mcpNotRunningMessage  = "this run is not running any more"
 	mcpItemFollowUp       = "Call get_activity for progress and list_runs with this domain and item for the result."
 	mcpEverythingFollowUp = "Call get_activity for progress and list_runs with domain everything for the result."
@@ -478,10 +478,14 @@ func (h *Handler) mcpStartPreflight(ctx context.Context, tool, keyID, what strin
 	if last > 0 {
 		since := now.Sub(time.Unix(last, 0))
 		wait := mcpStartCooldown - since
+		ago := "just now"
+		if m := int(since.Minutes()); m > 0 {
+			ago = minutes(m) + " ago"
+		}
 		h.logMCPCall(ctx, tool, "cooldown")
 		return nil, mcpToolError("cooldown", fmt.Sprintf(
-			"a backup of %s was started outside the web interface %d minutes ago; wait %d minutes or start it in the web interface",
-			what, int(since.Minutes()), int(math.Ceil(wait.Minutes()))),
+			"a backup of %s was started outside the web interface %s; wait %s or start it in the web interface",
+			what, ago, minutes(int(math.Ceil(wait.Minutes())))),
 			map[string]any{"retryAfterSeconds": secondsUntil(wait)})
 	}
 
@@ -492,6 +496,13 @@ func (h *Handler) mcpStartPreflight(ctx context.Context, tool, keyID, what strin
 			map[string]any{"retryAfterSeconds": secondsUntil(retry)})
 	}
 	return release, nil
+}
+
+func minutes(n int) string {
+	if n == 1 {
+		return "1 minute"
+	}
+	return fmt.Sprintf("%d minutes", n)
 }
 
 // The retention guard counts finished restore points only, so a Backup
