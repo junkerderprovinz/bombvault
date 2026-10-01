@@ -123,7 +123,7 @@ A child that was emptied barely changes the total of a large tree, so anomaly de
 
 A dataset that the previous run backed up and this run could not read counts as emptied, as long as the item's selection did not change. That covers a key that is not loaded, a dataset that is not mounted and one that is gone from the tree. A child you exclude yourself changes the selection, so its history starts afresh instead. While a finding about lost data is open, retention keeps the old backups of that one dataset and prunes the rest of the tree as usual.
 
-On the **Items** tab of the **Anomalies** page every dataset has a line of its own under its item, and the item's tree on this page shows the open findings next to each dataset. The link in a finding opens the item's restore panel on the dataset's last good backup. Whether a run finishes is judged for the whole item, because a run succeeds or fails as a whole.
+On the **Anomalies** page every dataset has a line of its own in the item's panel, which opens with **Monitoring** on the item's card or, when nothing is open for the item, from its line in the **Nothing open** card. The item's tree on this page shows the open findings next to each dataset. The link in a finding opens the item's restore panel on the dataset's last good backup. Whether a run finishes is judged for the whole item, because a run succeeds or fails as a whole.
 
 The checks themselves are described under [Features](features.md). An assistant connected through the [MCP server](mcp.md) can list a ZFS item's restore points, start its backup and read the findings, but acknowledging one happens on the **Anomalies** page.
 
