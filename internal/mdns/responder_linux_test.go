@@ -27,7 +27,7 @@ func TestTheResponderAnswersASimpleResolver(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	if _, err := conn.WriteToUDP(query(t, 7, host+".local.", dnsmessage.TypeA), &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 5353}); err != nil {
 		t.Fatal(err)
 	}
