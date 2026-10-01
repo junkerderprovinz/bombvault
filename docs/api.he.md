@@ -29,7 +29,7 @@
 | `GET /api/v1/anomalies/{id}` | חריגה אחת | קריאה |
 | `GET /api/v1/storage/{domain}` | היסטוריית גודל, גידול שבועי ומקום פנוי של כל מאגר בתחום | קריאה |
 | `POST /api/v1/backups` | מגבה פריט אחד (`{"domain":"containers","item":"plex"}`) או תחום שלם (`{"domain":"vms"}`) | התחלה |
-| `POST /api/v1/backups/everything` | מריץ את Backup Everything | התחלה |
+| `POST /api/v1/backups/everything` | מריץ את הגיבוי המלא | התחלה |
 | `POST /api/v1/runs/{id}/cancel` | מבטל גיבוי רץ שהאסימון הזה התחיל | התחלה |
 
 התחומים הם `containers`, `vms`, `files`, `zfs`, `flash` ו-`config`. הזמנים בשניות Unix. התשובות זהות לאלה של [כלי MCP](mcp.md#tools) באותו שם, כך שהשניים נשארים מתואמים.

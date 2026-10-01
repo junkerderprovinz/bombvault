@@ -49,7 +49,7 @@ BombVault là lớp điều phối và giao diện, không phải công cụ lư
 
 Mới đến đây? Hãy vào **[Bắt đầu](getting-started.md)** để cài đặt BombVault trên Unraid qua Community Applications và chạy bản sao lưu đầu tiên của bạn. Sau đó khám phá đầy đủ **[Tính năng](features.md)**, tinh chỉnh **[Cấu hình](configuration.md)** của bạn, và thiết lập **[Off-site & khôi phục](offsite-recovery.md)**.
 
-Off-site có thể phân phối tới nhiều đích cho mỗi miền cùng lúc, một **bảng điều khiển bên nhận** chỉ đọc giám sát các bản sao đó trên máy nhận chúng, và bạn có thể mang toàn bộ cấu hình của mình sang một máy mới bằng thẻ **Xuất và nhập cài đặt**. Xem [Off-site & khôi phục](offsite-recovery.md) và [Cấu hình](configuration.md#portable-settings-export-and-import).
+Off-site có thể phân phối tới nhiều đích cho mỗi miền cùng lúc, một **bảng điều khiển bên nhận** chỉ đọc giám sát các bản sao đó trên máy nhận chúng, và bạn có thể mang toàn bộ cấu hình của mình sang một máy mới bằng thẻ **Xuất / nhập cài đặt**. Xem [Off-site & khôi phục](offsite-recovery.md) và [Cấu hình](configuration.md#portable-settings-export-and-import).
 
 ## Liên kết
 

@@ -29,7 +29,7 @@ BombVault には、スクリプト、ダッシュボード、ホームオート�
 | `GET /api/v1/anomalies/{id}` | 1 件の異常 | 読み取り |
 | `GET /api/v1/storage/{domain}` | 領域の各リポジトリのサイズ履歴、週あたりの増加量、空き容量 | 読み取り |
 | `POST /api/v1/backups` | 1 項目 (`{"domain":"containers","item":"plex"}`) または領域全体 (`{"domain":"vms"}`) をバックアップ | 開始 |
-| `POST /api/v1/backups/everything` | Backup Everything を実行 | 開始 |
+| `POST /api/v1/backups/everything` | 全体バックアップを実行 | 開始 |
 | `POST /api/v1/runs/{id}/cancel` | このトークンが開始した実行中のバックアップを中止 | 開始 |
 
 領域は `containers`、`vms`、`files`、`zfs`、`flash`、`config` です。時刻は Unix 秒です。応答は同じ名前の [MCP ツール](mcp.md#tools) と同じなので、両者は常にそろっています。

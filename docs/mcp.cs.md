@@ -19,7 +19,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 | `get_anomaly` | Jedno z těchto zjištění s poznámkou, která zůstala při jeho potvrzení | čtení |
 | `start_backup` | Hned zazálohuje jednu položku | spuštění |
 | `start_domain_backup` | Zazálohuje každou chráněnou položku jedné domény | spuštění |
-| `start_backup_everything` | Spustí průchod Backup Everything | spuštění |
+| `start_backup_everything` | Spustí Zálohu všeho | spuštění |
 | `cancel_backup` | Zruší běžící zálohu, kterou spustil tento klíč | zrušení |
 
 Ve webovém rozhraní zůstává: obnova jakéhokoli druhu (včetně stažení, uložení nebo importu databázového dumpu), mazání záloh, prune, unlock, kontroly a cvičení, replikace off-site, nastavení, přihlašovací údaje a klíče MCP a také zrušení zálohy, kterou spustil plán, webové rozhraní nebo jiný klíč. Totéž platí pro potvrzení anomálie nebo její označení jako očekávané, což se dělá na stránce **Anomálie**. Důvod: odpovědi nástrojů obsahují názvy a chybové zprávy z vašeho serveru a kterákoli z nich může nést text napsaný tak, aby asistenta ovládl. Asistent, který na takový text naletí, může nanejvýš spustit zálohu v mezích uvedených níže nebo zrušit zálohu, kterou sám spustil.
@@ -33,11 +33,11 @@ Záloha spuštěná asistentem je stejná záloha, jakou spouští webové rozhr
 Protože záloha zastavuje služby a vytlačuje staré body obnovy, jsou spuštění přes MCP omezená:
 
 - 12 spuštěných záloh za hodinu na klíč.
-- 15 minut mezi dvěma spuštěními přes MCP u téže položky, téže domény nebo Backup Everything.
+- 15 minut mezi dvěma spuštěními přes MCP u téže položky, téže domény nebo Zálohy všeho.
 - Nejvýše 4 spuštění téže položky přes MCP za 24 hodin.
 - **Ochrana uchovávání.** Když doména uchovává pevný počet bodů obnovy (jen "ponechat posledních N", bez denního, týdenního či měsíčního pravidla, lokálně nebo v cíli off-site), každá nová záloha vytlačí tu nejstarší. BombVault pak odmítne spuštění položky přes MCP, pokud jejích nejnovějších N-1 úspěšných záloh spustilo MCP. V uchovávané sadě tak vždy zůstane alespoň jeden bod obnovy, který vytvořil plán nebo vy. Při nastavení "ponechat poslední 1" nemůže asistent tuto položku zálohovat vůbec. Další naplánovaná záloha zase udělá místo. Samotné roční pravidlo se počítá jako "ponechat poslední 1", protože pro aktuální rok ponechá jen jeden bod obnovení.
 
-Spuštění domény nebo Backup Everything vynechá položky, které nějaký limit zadrží, a vyjmenuje je v odpovědi. Webové rozhraní ani plán se žádného z těchto limitů netýkají. Hodinový rozpočet je jen v paměti, takže restart BombVaultu ho vynuluje.
+Spuštění domény nebo Zálohy všeho vynechá položky, které nějaký limit zadrží, a vyjmenuje je v odpovědi. Webové rozhraní ani plán se žádného z těchto limitů netýkají. Hodinový rozpočet je jen v paměti, takže restart BombVaultu ho vynuluje.
 
 Spuštění přes [API](api.md#errors) a z [Home Assistant](api.md#home-assistant) se u limitů na položku i u ochrany uchovávání počítají spolu se spuštěními přes MCP.
 
@@ -258,7 +258,7 @@ Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ní
 | `429` | Příliš mnoho špatných klíčů z této adresy, nebo víc než 120 požadavků za minutu s jedním klíčem. Minutu počkejte a zkontrolujte, zda asistent neuvízl ve smyčce. |
 | Chyby s "certificate", "self-signed" nebo "unable to verify" | Klient nedůvěřuje certifikátu BombVaultu. Viz [TLS a certifikáty](#tls). |
 | `busy` | Doménu zabírá jiná záloha nebo úloha údržby. Zkuste to znovu, až skončí. |
-| `cooldown` | Tato položka, tato doména nebo Backup Everything byla spuštěna mimo webové rozhraní před méně než 15 minutami. |
+| `cooldown` | Tato položka, tato doména nebo Záloha všeho byla spuštěna mimo webové rozhraní před méně než 15 minutami. |
 | `retention_guard` | Další záloha přes MCP by v okně "ponechat posledních N" nechala jen body obnovy z MCP, nebo položka už za posledních 24 hodin dostala 4 zálohy přes MCP, včetně neúspěšných a zrušených. V prvním případě udělá místo další naplánovaná záloha, ve druhém je položka znovu volná 24 hodin po nejstarší z těchto záloh. Ve webovém rozhraní ji můžete spustit kdykoli. |
 | `rate_limited` | Klíč vyčerpal svých 12 spuštění pro tuto hodinu. |
 | `not_permitted` při spuštění | Klíč smí jen číst. Zapněte v kartě **Povolit spouštění záloh**; nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |

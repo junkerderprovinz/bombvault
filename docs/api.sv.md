@@ -29,7 +29,7 @@ Utan inloggningslösenord kan alla som kan öppna webbgränssnittet också skapa
 | `GET /api/v1/anomalies/{id}` | En avvikelse | läsa |
 | `GET /api/v1/storage/{domain}` | Storlekshistorik, tillväxt per vecka och ledigt utrymme för varje repository i ett område | läsa |
 | `POST /api/v1/backups` | Säkerhetskopierar ett objekt (`{"domain":"containers","item":"plex"}`) eller ett helt område (`{"domain":"vms"}`) | starta |
-| `POST /api/v1/backups/everything` | Kör Backup Everything | starta |
+| `POST /api/v1/backups/everything` | Kör Total säkerhetskopia | starta |
 | `POST /api/v1/runs/{id}/cancel` | Avbryter en pågående kopia som det här tokenet startade | starta |
 
 Områdena heter `containers`, `vms`, `files`, `zfs`, `flash` och `config`. Tider är Unix-sekunder. Svaren är desamma som från [MCP-verktygen](mcp.md#tools) med samma namn, så de två hänger ihop.

@@ -40,7 +40,7 @@ Not on Unraid? BombVault also runs as a plain container on any Docker host (this
 
 What's different from Unraid:
 
-- **No flash/USB domain.** There is no boot USB to capture or restore, so the Flash domain in Settings has nothing to do here. Instead, the Files domain offers a one-click **Add preset: Host system config** suggestion (a starting `/etc` file set you review and edit before saving) as a practical, generic equivalent.
+- **No flash/USB domain.** There is no boot USB to capture or restore, so the Flash domain in Settings has nothing to do here. Instead, the Folders domain offers a one-click **Add preset: Host system config** suggestion (a starting `/etc` file set you review and edit before saving) as a practical, generic equivalent.
 - **No Unraid-native notifications.** BombVault's own in-app notification channels (webhook, off-site failure alerts, etc.) work as normal; only the Unraid-specific push to its native notification system is skipped, since there is no such system to push to.
 - **VM backup is opt-in and needs a separate libvirtd host reachable over SSH** — see the commented-out block in the compose file. There is no VM manager built into a generic Docker host itself.
 
@@ -68,14 +68,14 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
 *The dashboard after a first backup: what is protected, what runs next, and a live log.*
 
 1. Open the web UI at `https://<your-unraid-ip>:3443` (self-signed certificate out of the box).
-2. In **Settings**, enable the backup domains you want (Containers, VMs, Flash, Config, Files, ZFS datasets) and pick an accent colour.
-3. On the **Containers** tab, pick a container and click **Back up** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` and are created on the first backup.
-4. Set up scheduling from **Settings, Schedules**. There is a one-click *include all in schedule* for containers and VMs.
+2. In **Settings**, enable the backup domains you want (Containers, VMs, Flash, Self-Backup, Folders, ZFS datasets) and pick an accent colour.
+3. On the **Containers** tab, pick a container and click **Back up now** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` and are created on the first backup.
+4. Set up scheduling from **Settings, Schedules**. There is a one-click *Include all in schedule* for containers and VMs.
 
 !!! tip "Optional: pick a backup order"
-    If some containers should always be backed up before others (for example a database before the app that uses it), open the **backup-order** panel on the Containers page and drag them into the sequence you want. Scheduled and multi-select runs then follow it; anything you leave unordered is backed up most-overdue-first, as before.
+    If some containers should always be backed up before others (for example a database before the app that uses it), open the **Backup order** panel on the Containers page and drag them into the sequence you want. Scheduled and multi-select runs then follow it; anything you leave unordered is backed up most-overdue-first, as before.
 
-!!! note "Host integration check"
+!!! note "Host Integration Check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces, so you can confirm the container is wired up correctly before you rely on it.
 
 ## Simple vs Advanced
@@ -84,11 +84,11 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
 
 *Settings has no Save button: every change is written as you make it.*
 
-By default the interface shows only the essentials (back up, restore, schedule). Use the **Simple / Advanced** switch in the sidebar to reveal the expert controls: retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics and the integrity/maintenance tools. It is a per-browser preference and off by default, so newcomers get a clean UI and power users get everything.
+By default the interface shows only the essentials (back up, restore, schedule). Use the **Simple view / Advanced view** switch in the sidebar to reveal the expert controls: retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics and the integrity/maintenance tools. It is a per-browser preference and off by default, so newcomers get a clean UI and power users get everything.
 
 ## Next steps
 
 - Browse the full **[Features](features.md)**.
 - Add one or more **[Off-site & recovery](offsite-recovery.md)** replicas (each domain can ship to several destinations at once) and save your recovery kit.
-- Cloning a setup or moving to a new box? Carry your whole configuration over with the **Export and import settings** card. See [Configuration](configuration.md#portable-settings-export-and-import).
+- Cloning a setup or moving to a new box? Carry your whole configuration over with the **Export / import settings** card. See [Configuration](configuration.md#portable-settings-export-and-import).
 - Hit a snag? See **[Troubleshooting](troubleshooting.md)**.

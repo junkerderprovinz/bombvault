@@ -49,7 +49,7 @@ BombVault est la couche d'orchestration et d'interface, pas le moteur de stockag
 
 Nouveau ici ? Rendez-vous sur **[Prise en main](getting-started.md)** pour installer BombVault sur Unraid via Community Applications et lancer votre première sauvegarde. Explorez ensuite l'ensemble des **[Fonctionnalités](features.md)**, ajustez votre **[Configuration](configuration.md)**, et mettez en place la **[Sauvegarde hors site et récupération](offsite-recovery.md)**.
 
-Le hors site peut se répartir sur plusieurs cibles par domaine à la fois, un **tableau de bord récepteur** en lecture seule surveille ces copies sur la machine qui les reçoit, et vous pouvez emporter toute votre configuration vers une nouvelle machine avec la carte **Exporter et importer les réglages**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) et [Configuration](configuration.md#portable-settings-export-and-import).
+Le hors site peut se répartir sur plusieurs cibles par domaine à la fois, un **tableau de bord récepteur** en lecture seule surveille ces copies sur la machine qui les reçoit, et vous pouvez emporter toute votre configuration vers une nouvelle machine avec la carte **Exporter / importer les paramètres**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) et [Configuration](configuration.md#portable-settings-export-and-import).
 
 ## Liens
 

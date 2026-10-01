@@ -40,7 +40,7 @@ La vía más sencilla es **Community Applications**.
 
 Qué cambia respecto a Unraid:
 
-- **No hay dominio flash/USB.** No existe un USB de arranque que capturar o restaurar, así que el dominio Flash de los ajustes no tiene nada que hacer aquí. En su lugar, el dominio Ficheros ofrece la sugerencia de un clic **Añadir preajuste: configuración del sistema anfitrión** (un conjunto inicial de ficheros de `/etc` que revisas y editas antes de guardar), como equivalente genérico práctico.
+- **No hay dominio flash/USB.** No existe un USB de arranque que capturar o restaurar, así que el dominio Flash de los ajustes no tiene nada que hacer aquí. En su lugar, el dominio Carpetas ofrece la sugerencia de un clic **Añadir preajuste: configuración del sistema anfitrión** (un conjunto inicial de ficheros de `/etc` que revisas y editas antes de guardar), como equivalente genérico práctico.
 - **No hay notificaciones nativas de Unraid.** Los canales de notificación propios de BombVault (webhook, avisos de fallo fuera de sede, etc.) funcionan con normalidad; solo se omite el envío específico al sistema de notificaciones de Unraid, porque aquí no existe tal sistema.
 - **La copia de máquinas virtuales es opcional y necesita un host libvirtd aparte, accesible por SSH.** Mira el bloque comentado del fichero compose. Un host Docker genérico no trae ningún gestor de máquinas virtuales.
 
@@ -68,12 +68,12 @@ La plantilla también monta por ti el socket de Docker, el flash (`/boot`) y la 
 *El panel tras una primera copia: qué está protegido, qué toca a continuación y un registro en vivo.*
 
 1. Abre la interfaz web en `https://<your-unraid-ip>:3443` (certificado autofirmado de fábrica).
-2. En **Ajustes**, habilita los dominios de copia que quieras (Contenedores, VMs, Flash, Config, Archivos, Conjuntos de datos ZFS) y elige un color de acento.
-3. En la pestaña **Contenedores**, elige un contenedor y haz clic en **Copiar** para crear tu primer punto de restauración. Las rutas de repositorio predeterminadas son `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` y se crean en la primera copia.
-4. Configura la programación desde **Ajustes, Programaciones**. Hay un *incluir todo en el calendario* de un clic para contenedores y VMs.
+2. En **Ajustes**, habilita los dominios de copia que quieras (Contenedores, VMs, Flash, Autocopia, Carpetas, Conjuntos de datos ZFS) y elige un color de acento.
+3. En la pestaña **Contenedores**, elige un contenedor y haz clic en **Copiar ahora** para crear tu primer punto de restauración. Las rutas de repositorio predeterminadas son `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` y se crean en la primera copia.
+4. Configura la programación desde **Ajustes, Programaciones**. Hay un *Incluir todo en el calendario* de un clic para contenedores y VMs.
 
 !!! tip "Opcional: elige un orden de copia"
-    Si algunos contenedores deben copiarse siempre antes que otros (por ejemplo, una base de datos antes que la app que la usa), abre el panel de **orden de copia** en la página de Contenedores y arrástralos a la secuencia que quieras. Las ejecuciones programadas y de selección múltiple la seguirán; todo lo que dejes sin ordenar se copia empezando por lo más atrasado, como antes.
+    Si algunos contenedores deben copiarse siempre antes que otros (por ejemplo, una base de datos antes que la app que la usa), abre el panel de **Orden de las copias de seguridad** en la página de Contenedores y arrástralos a la secuencia que quieras. Las ejecuciones programadas y de selección múltiple la seguirán; todo lo que dejes sin ordenar se copia empezando por lo más atrasado, como antes.
 
 !!! note "Comprobación de integración con el host"
     Abre `/spike` en la interfaz web después de que arranque el contenedor. Sondea cada montaje y CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de cualquier pieza que falte, para que puedas confirmar que el contenedor está bien conectado antes de confiar en él.
@@ -84,11 +84,11 @@ La plantilla también monta por ti el socket de Docker, el flash (`/boot`) y la 
 
 *Los ajustes no tienen botón Guardar: cada cambio se escribe en el momento.*
 
-Por defecto, la interfaz muestra solo lo esencial (copiar, restaurar, programar). Usa el conmutador **Simple / Avanzado** de la barra lateral para revelar los controles de experto: retención, copia externa, hooks pre/post, restauración a nivel de archivo, notificaciones, métricas de Prometheus y las herramientas de integridad/mantenimiento. Es una preferencia por navegador y está desactivada por defecto, de modo que los recién llegados obtienen una interfaz limpia y los usuarios avanzados lo tienen todo.
+Por defecto, la interfaz muestra solo lo esencial (copiar, restaurar, programar). Usa el conmutador **Vista simple / Vista avanzada** de la barra lateral para revelar los controles de experto: retención, copia externa, hooks pre/post, restauración a nivel de archivo, notificaciones, métricas de Prometheus y las herramientas de integridad/mantenimiento. Es una preferencia por navegador y está desactivada por defecto, de modo que los recién llegados obtienen una interfaz limpia y los usuarios avanzados lo tienen todo.
 
 ## Siguientes pasos
 
 - Explora todas las **[Funciones](features.md)**.
 - Añade una o varias réplicas de **[Copia externa y recuperación](offsite-recovery.md)** (cada dominio puede enviar a varios destinos a la vez) y guarda tu kit de recuperación.
-- ¿Clonando una instalación o cambiando de máquina? Lleva toda tu configuración con la tarjeta **Exportar e importar ajustes**. Consulta [Configuración](configuration.md#portable-settings-export-and-import).
+- ¿Clonando una instalación o cambiando de máquina? Lleva toda tu configuración con la tarjeta **Exportar / importar ajustes**. Consulta [Configuración](configuration.md#portable-settings-export-and-import).
 - ¿Un problema? Consulta **[Resolución de problemas](troubleshooting.md)**.

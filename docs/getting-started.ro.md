@@ -40,7 +40,7 @@ Nu ești pe Unraid? BombVault rulează și ca un container obișnuit pe orice ga
 
 Ce este diferit față de Unraid:
 
-- **Nu există domeniu flash/USB.** Nu există un stick de pornire de capturat sau de restaurat, așa că domeniul Flash din setări nu are ce face aici. În schimb, domeniul Fișiere oferă sugestia dintr-un clic **Adaugă presetare: configurația sistemului gazdă** (un set inițial de fișiere `/etc` pe care îl revizuiești și îl modifici înainte de salvare), ca echivalent generic practic.
+- **Nu există domeniu flash/USB.** Nu există un stick de pornire de capturat sau de restaurat, așa că domeniul Flash din setări nu are ce face aici. În schimb, domeniul Foldere oferă sugestia dintr-un clic **Adaugă presetare: configurația sistemului gazdă** (un set inițial de fișiere `/etc` pe care îl revizuiești și îl modifici înainte de salvare), ca echivalent generic practic.
 - **Nu există notificări native Unraid.** Canalele proprii de notificare ale BombVault (webhook, alerte de eșec în afara sediului și așa mai departe) funcționează ca de obicei; se omite doar trimiterea specifică sistemului de notificări al Unraid, întrucât aici nu există un asemenea sistem.
 - **Copierea mașinilor virtuale este opțională și are nevoie de o gazdă libvirtd separată, accesibilă prin SSH.** Vezi blocul comentat din fișierul compose. O gazdă Docker generică nu vine cu niciun administrator de mașini virtuale.
 
@@ -68,14 +68,14 @@ Lipește rezultatul în câmpul `APP_KEY` al șablonului (Unraid) sau în variab
 *Tabloul după prima copie: ce e protejat, ce rulează în continuare și un jurnal viu.*
 
 1. Deschide interfața web la `https://<your-unraid-ip>:3443` (certificat auto-semnat implicit).
-2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Config, Fișiere, Seturi de date ZFS) și alege o culoare de accent.
-3. În fila **Containere**, alege un container și apasă **Back up** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` și sunt create la primul backup.
-4. Configurează programarea din **Setări, Programări**. Există un *include all in schedule* cu un singur clic pentru containere și VM-uri.
+2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Auto-backup, Foldere, Seturi de date ZFS) și alege o culoare de accent.
+3. În fila **Containere**, alege un container și apasă **Copiază acum** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` și sunt create la primul backup.
+4. Configurează programarea din **Setări, Programări**. Există un *Include toate în programare* cu un singur clic pentru containere și VM-uri.
 
 !!! tip "Opțional: alege o ordine de backup"
-    Dacă unele containere ar trebui să fie mereu salvate înaintea altora (de exemplu o bază de date înaintea aplicației care o folosește), deschide panoul **backup-order** din pagina Containere și trage-le în ordinea dorită. Rulările programate și cele cu selecție multiplă o urmează apoi; orice lași neordonat este salvat în ordinea celor mai restante mai întâi, ca înainte.
+    Dacă unele containere ar trebui să fie mereu salvate înaintea altora (de exemplu o bază de date înaintea aplicației care o folosește), deschide panoul **Ordinea backupurilor** din pagina Containere și trage-le în ordinea dorită. Rulările programate și cele cu selecție multiplă o urmează apoi; orice lași neordonat este salvat în ordinea celor mai restante mai întâi, ca înainte.
 
-!!! note "Verificarea integrării cu gazda"
+!!! note "Verificare integrare gazdă"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă, astfel încât să poți confirma că containerul este cablat corect înainte să te bazezi pe el.
 
 ## Simplu vs Avansat
@@ -84,11 +84,11 @@ Lipește rezultatul în câmpul `APP_KEY` al șablonului (Unraid) sau în variab
 
 *Setările nu au buton de Salvare: fiecare modificare se scrie pe loc.*
 
-Implicit, interfața arată doar elementele esențiale (backup, restaurare, programare). Folosește comutatorul **Simplu / Avansat** din bara laterală pentru a dezvălui controalele pentru experți: retenție, copie off-site, hook-uri pre/post, restaurare la nivel de fișier, notificări, metrici Prometheus și instrumentele de integritate/mentenanță. Este o preferință per browser și oprită implicit, așa că noii veniți primesc o interfață curată, iar utilizatorii avansați primesc totul.
+Implicit, interfața arată doar elementele esențiale (backup, restaurare, programare). Folosește comutatorul **Vizualizare simplă / Vizualizare avansată** din bara laterală pentru a dezvălui controalele pentru experți: retenție, copie off-site, hook-uri pre/post, restaurare la nivel de fișier, notificări, metrici Prometheus și instrumentele de integritate/mentenanță. Este o preferință per browser și oprită implicit, așa că noii veniți primesc o interfață curată, iar utilizatorii avansați primesc totul.
 
 ## Pașii următori
 
 - Răsfoiește toate **[Funcționalitățile](features.md)**.
 - Adaugă una sau mai multe replici **[Off-site și recuperare](offsite-recovery.md)** (fiecare domeniu poate trimite către mai multe destinații simultan) și salvează-ți kitul de recuperare.
-- Clonezi o configurație sau te muți pe o stație nouă? Mută-ți întreaga configurație cu cardul **Export și import setări**. Vezi [Configurare](configuration.md#portable-settings-export-and-import).
+- Clonezi o configurație sau te muți pe o stație nouă? Mută-ți întreaga configurație cu cardul **Exportă / importă setările**. Vezi [Configurare](configuration.md#portable-settings-export-and-import).
 - Te-ai blocat? Vezi **[Depanare](troubleshooting.md)**.

@@ -29,7 +29,7 @@ Uden adgangskode kan alle, der kan åbne brugerfladen, også oprette et token. �
 | `GET /api/v1/anomalies/{id}` | Én anomali | læse |
 | `GET /api/v1/storage/{domain}` | Størrelseshistorik, vækst pr. uge og ledig plads for hvert repository i et område | læse |
 | `POST /api/v1/backups` | Sikkerhedskopierer ét element (`{"domain":"containers","item":"plex"}`) eller et helt område (`{"domain":"vms"}`) | starte |
-| `POST /api/v1/backups/everything` | Kører Backup Everything | starte |
+| `POST /api/v1/backups/everything` | Kører Fuld sikkerhedskopi | starte |
 | `POST /api/v1/runs/{id}/cancel` | Afbryder en kørende kopi, som dette token startede | starte |
 
 Områderne hedder `containers`, `vms`, `files`, `zfs`, `flash` og `config`. Tider er Unix-sekunder. Svarene er de samme som fra [MCP-værktøjerne](mcp.md#tools) med samme navn, så de to følges ad.

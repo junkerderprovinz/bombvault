@@ -29,7 +29,7 @@ Bez přihlašovacího hesla může token vytvořit každý, kdo otevře webové 
 | `GET /api/v1/anomalies/{id}` | Jedna anomálie | čtení |
 | `GET /api/v1/storage/{domain}` | Vývoj velikosti, týdenní růst a volné místo každého repozitáře oblasti | čtení |
 | `POST /api/v1/backups` | Zálohuje jednu položku (`{"domain":"containers","item":"plex"}`) nebo celou oblast (`{"domain":"vms"}`) | spouštění |
-| `POST /api/v1/backups/everything` | Spustí Backup Everything | spouštění |
+| `POST /api/v1/backups/everything` | Spustí Zálohu všeho | spouštění |
 | `POST /api/v1/runs/{id}/cancel` | Zruší běžící zálohu, kterou spustil tento token | spouštění |
 
 Oblasti jsou `containers`, `vms`, `files`, `zfs`, `flash` a `config`. Časy jsou v unixových sekundách. Odpovědi jsou stejné jako u [nástrojů MCP](mcp.md#tools) stejného jména, takže obojí zůstává v souladu.

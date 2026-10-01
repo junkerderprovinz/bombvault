@@ -29,7 +29,7 @@
 | `GET /api/v1/anomalies/{id}` | Μία ανωμαλία | ανάγνωση |
 | `GET /api/v1/storage/{domain}` | Ιστορικό μεγέθους, εβδομαδιαία αύξηση και ελεύθερος χώρος κάθε αποθετηρίου ενός τομέα | ανάγνωση |
 | `POST /api/v1/backups` | Παίρνει αντίγραφο ενός στοιχείου (`{"domain":"containers","item":"plex"}`) ή ολόκληρου τομέα (`{"domain":"vms"}`) | έναρξη |
-| `POST /api/v1/backups/everything` | Εκτελεί το Backup Everything | έναρξη |
+| `POST /api/v1/backups/everything` | Εκτελεί το Πλήρες αντίγραφο ασφαλείας | έναρξη |
 | `POST /api/v1/runs/{id}/cancel` | Ακυρώνει ένα αντίγραφο σε εξέλιξη που ξεκίνησε αυτό το token | έναρξη |
 
 Οι τομείς είναι `containers`, `vms`, `files`, `zfs`, `flash` και `config`. Οι χρόνοι είναι δευτερόλεπτα Unix. Οι απαντήσεις είναι ίδιες με εκείνες των ομώνυμων [εργαλείων MCP](mcp.md#tools), ώστε να μένουν ευθυγραμμισμένες.

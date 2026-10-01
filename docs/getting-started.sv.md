@@ -40,7 +40,7 @@ Inte Unraid? BombVault kör också som en vanlig container på vilken Docker-vä
 
 Vad som skiljer mot Unraid:
 
-- **Ingen flash-/USB-domän.** Det finns inget start-USB att fånga eller återställa, så Flash-domänen i inställningarna har inget att göra här. I stället erbjuder Fil-domänen ettklicksförslaget **Lägg till förinställning: värdsystemets konfiguration** (en uppsättning `/etc`-filer att börja med, som du granskar och redigerar innan du sparar) som praktisk generisk motsvarighet.
+- **Ingen flash-/USB-domän.** Det finns inget start-USB att fånga eller återställa, så Flash-domänen i inställningarna har inget att göra här. I stället erbjuder domänen Mappar ettklicksförslaget **Lägg till förinställning: värdsystemets konfiguration** (en uppsättning `/etc`-filer att börja med, som du granskar och redigerar innan du sparar) som praktisk generisk motsvarighet.
 - **Inga Unraid-egna aviseringar.** BombVaults egna aviseringskanaler (webhook, varningar vid misslyckad off-site och liknande) fungerar som vanligt; bara den Unraid-specifika sändningen till dess eget aviseringssystem uteblir, eftersom något sådant system inte finns här.
 - **Säkerhetskopiering av virtuella maskiner är valfri och kräver en separat libvirtd-värd nåbar över SSH.** Se det bortkommenterade blocket i compose-filen. En generisk Docker-värd har ingen inbyggd VM-hantering.
 
@@ -68,12 +68,12 @@ Mallen monterar också Docker-socketen, flashen (`/boot`) och **Host Data**-rote
 *Instrumentpanelen efter en första säkerhetskopia: vad som skyddas, vad som kör härnäst och en levande logg.*
 
 1. Öppna webbgränssnittet på `https://<din-unraid-ip>:3443` (självsignerat certifikat direkt ur lådan).
-2. I **Inställningar**, aktivera de säkerhetskopieringsdomäner du vill ha (Containers, VMs, Flash, Config, Files, ZFS datasets) och välj en accentfärg.
-3. På fliken **Containers**, välj en container och klicka på **Säkerhetskopiera** för att skapa din första återställningspunkt. Repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` och skapas vid den första säkerhetskopieringen.
-4. Sätt upp schemaläggning från **Inställningar, Scheman**. Det finns en *inkludera alla i schema* med ett klick för containrar och VM:ar.
+2. I **Inställningar**, aktivera de säkerhetskopieringsdomäner du vill ha (Containers, VMs, Flash, Auto-säkerhetskopia, Mappar, ZFS-datauppsättningar) och välj en accentfärg.
+3. På fliken **Containers**, välj en container och klicka på **Säkerhetskopiera nu** för att skapa din första återställningspunkt. Repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` och skapas vid den första säkerhetskopieringen.
+4. Sätt upp schemaläggning från **Inställningar, Scheman**. Det finns en *Inkludera alla i schemat* med ett klick för containrar och VM:ar.
 
 !!! tip "Valfritt: välj en säkerhetskopieringsordning"
-    Om vissa containrar alltid ska säkerhetskopieras före andra (till exempel en databas före appen som använder den), öppna panelen **säkerhetskopieringsordning** på Containers-sidan och dra dem i den sekvens du vill ha. Schemalagda och multi-select-körningar följer den sedan; allt du lämnar oordnat säkerhetskopieras mest-försenat-först, som tidigare.
+    Om vissa containrar alltid ska säkerhetskopieras före andra (till exempel en databas före appen som använder den), öppna panelen **Ordning för säkerhetskopiering** på Containers-sidan och dra dem i den sekvens du vill ha. Schemalagda och multi-select-körningar följer den sedan; allt du lämnar oordnat säkerhetskopieras mest-försenat-först, som tidigare.
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar, så att du kan bekräfta att containern är korrekt inkopplad innan du förlitar dig på den.
@@ -84,11 +84,11 @@ Mallen monterar också Docker-socketen, flashen (`/boot`) och **Host Data**-rote
 
 *Inställningarna har ingen Spara-knapp: varje ändring skrivs medan du gör den.*
 
-Som standard visar gränssnittet endast det väsentliga (säkerhetskopiera, återställa, schemalägga). Använd omkopplaren **Enkel / Avancerad** i sidofältet för att avslöja expertkontrollerna: retention, off-site-kopia, pre/post-hooks, återställning på filnivå, aviseringar, Prometheus-mätvärden och integritets-/underhållsverktygen. Det är en inställning per webbläsare och avstängd som standard, så nykomlingar får ett rent gränssnitt och avancerade användare får allt.
+Som standard visar gränssnittet endast det väsentliga (säkerhetskopiera, återställa, schemalägga). Använd omkopplaren **Enkel vy / Avancerad vy** i sidofältet för att avslöja expertkontrollerna: retention, off-site-kopia, pre/post-hooks, återställning på filnivå, aviseringar, Prometheus-mätvärden och integritets-/underhållsverktygen. Det är en inställning per webbläsare och avstängd som standard, så nykomlingar får ett rent gränssnitt och avancerade användare får allt.
 
 ## Nästa steg
 
 - Bläddra bland alla **[Funktioner](features.md)**.
 - Lägg till en eller flera **[Off-site och återställning](offsite-recovery.md)**-repliker (varje domän kan skicka till flera mål samtidigt) och spara ditt återställningskit.
-- Klonar du en uppsättning eller flyttar till en ny box? Ta med hela din konfiguration med kortet **Exportera och importera inställningar**. Se [Konfiguration](configuration.md#portable-settings-export-and-import).
+- Klonar du en uppsättning eller flyttar till en ny box? Ta med hela din konfiguration med kortet **Exportera / importera inställningar**. Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 - Stötte på ett problem? Se **[Felsökning](troubleshooting.md)**.

@@ -29,7 +29,7 @@ Zonder inlogwachtwoord kan iedereen die de webinterface kan openen ook een token
 | `GET /api/v1/anomalies/{id}` | Eén anomalie | lezen |
 | `GET /api/v1/storage/{domain}` | Groottegeschiedenis, groei per week en vrije ruimte van elke repository van een domein | lezen |
 | `POST /api/v1/backups` | Maakt een back-up van één item (`{"domain":"containers","item":"plex"}`) of een heel domein (`{"domain":"vms"}`) | starten |
-| `POST /api/v1/backups/everything` | Start Backup Everything | starten |
+| `POST /api/v1/backups/everything` | Start de Volledige back-up | starten |
 | `POST /api/v1/runs/{id}/cancel` | Breekt een lopende back-up af die dit token startte | starten |
 
 De domeinen zijn `containers`, `vms`, `files`, `zfs`, `flash` en `config`. Tijden zijn Unix-seconden. De antwoorden zijn die van de [MCP-tools](mcp.md#tools) met dezelfde naam, zodat beide gelijk blijven.

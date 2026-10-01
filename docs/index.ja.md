@@ -49,7 +49,7 @@ BombVault はオーケストレーションと UI のレイヤーであり、ス
 
 はじめてですか？ **[はじめに](getting-started.md)** に進んで、Community Applications 経由で Unraid に BombVault をインストールし、最初のバックアップを実行しましょう。その後、**[機能](features.md)**の全体を探索し、**[設定](configuration.md)**を調整し、**[オフサイトと復旧](offsite-recovery.md)**をセットアップしてください。
 
-オフサイトはドメインごとに複数のターゲットへ同時にファンアウトでき、読み取り専用の**受信側ダッシュボード**がコピーを受け取る側のマシンでそれらのコピーを監視します。また、**設定のエクスポートとインポート**カードを使えば、設定一式を新しいマシンに持ち運べます。[オフサイトと復旧](offsite-recovery.md)および[設定](configuration.md#portable-settings-export-and-import)を参照してください。
+オフサイトはドメインごとに複数のターゲットへ同時にファンアウトでき、読み取り専用の**受信側ダッシュボード**がコピーを受け取る側のマシンでそれらのコピーを監視します。また、**設定のエクスポート / インポート**カードを使えば、設定一式を新しいマシンに持ち運べます。[オフサイトと復旧](offsite-recovery.md)および[設定](configuration.md#portable-settings-export-and-import)を参照してください。
 
 ## リンク
 

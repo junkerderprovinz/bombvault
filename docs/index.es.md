@@ -49,7 +49,7 @@ BombVault es la capa de orquestación y de interfaz, no el motor de almacenamien
 
 ¿Nuevo por aquí? Ve a **[Primeros pasos](getting-started.md)** para instalar BombVault en Unraid mediante Community Applications y ejecutar tu primera copia. Después explora todas las **[Funciones](features.md)**, ajusta tu **[Configuración](configuration.md)** y prepara **[Copia externa y recuperación](offsite-recovery.md)**.
 
-La copia externa puede repartirse a varios destinos por dominio a la vez, un **panel receptor** de solo lectura monitoriza esas copias en la máquina que las recibe, y puedes llevar toda tu configuración a una máquina nueva con la tarjeta **Exportar e importar ajustes**. Consulta [Copia externa y recuperación](offsite-recovery.md) y [Configuración](configuration.md#portable-settings-export-and-import).
+La copia externa puede repartirse a varios destinos por dominio a la vez, un **panel receptor** de solo lectura monitoriza esas copias en la máquina que las recibe, y puedes llevar toda tu configuración a una máquina nueva con la tarjeta **Exportar / importar ajustes**. Consulta [Copia externa y recuperación](offsite-recovery.md) y [Configuración](configuration.md#portable-settings-export-and-import).
 
 ## Enlaces
 

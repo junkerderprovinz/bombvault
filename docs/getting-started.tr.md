@@ -40,7 +40,7 @@ Unraid değil mi? BombVault herhangi bir Docker ana makinesinde sıradan bir kap
 
 Unraid'e göre neler değişiyor:
 
-- **flash/USB alanı yok.** Yakalanacak ya da geri yüklenecek bir açılış USB'si bulunmadığından, ayarlardaki Flash alanının burada yapacağı bir şey yok. Onun yerine Dosyalar alanı, pratik bir genel karşılık olarak tek tıklamalık **Hazır ayar ekle: ana makine sistem yapılandırması** önerisini sunuyor (kaydetmeden önce gözden geçirip düzenlediğiniz bir başlangıç `/etc` dosya kümesi).
+- **flash/USB alanı yok.** Yakalanacak ya da geri yüklenecek bir açılış USB'si bulunmadığından, ayarlardaki Flash alanının burada yapacağı bir şey yok. Onun yerine Klasörler alanı, pratik bir genel karşılık olarak tek tıklamalık **Hazır ayar ekle: ana makine sistem yapılandırması** önerisini sunuyor (kaydetmeden önce gözden geçirip düzenlediğiniz bir başlangıç `/etc` dosya kümesi).
 - **Unraid'e özgü bildirimler yok.** BombVault'un kendi bildirim kanalları (webhook, saha dışı başarısızlık uyarıları ve benzeri) her zamanki gibi çalışır; yalnızca Unraid'in kendi bildirim sistemine gönderim atlanır, çünkü burada öyle bir sistem yoktur.
 - **Sanal makine yedeklemesi isteğe bağlıdır ve SSH ile erişilebilen ayrı bir libvirtd ana makinesi gerektirir.** compose dosyasındaki yorum satırına alınmış bloğa bakın. Genel bir Docker ana makinesinin kendisinde sanal makine yönetimi yoktur.
 
@@ -68,14 +68,14 @@ Sonucu şablonun `APP_KEY` alanına (Unraid) veya `docker-compose.yml` içindeki
 *İlk yedekten sonraki panel: neyin korunduğu, sırada ne olduğu ve canlı bir günlük.*
 
 1. Web arayüzünü `https://<your-unraid-ip>:3443` adresinde açın (kutudan çıktığı gibi kendinden imzalı sertifika).
-2. **Ayarlar**'da istediğiniz yedekleme etki alanlarını etkinleştirin (Konteynerler, VM'ler, Flash, Config, Dosyalar, ZFS veri kümeleri) ve bir vurgu rengi seçin.
-3. **Konteynerler** sekmesinde bir konteyner seçin ve ilk geri yükleme noktanızı oluşturmak için **Yedekle**'ye tıklayın. Depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir ve ilk yedeklemede oluşturulur.
-4. Zamanlamayı **Ayarlar, Zamanlamalar** bölümünden kurun. Konteynerler ve VM'ler için tek tıklamalık bir *tümünü zamanlamaya ekle* seçeneği vardır.
+2. **Ayarlar**'da istediğiniz yedekleme etki alanlarını etkinleştirin (Konteynerler, VM'ler, Flash, Öz yedek, Klasörler, ZFS veri kümeleri) ve bir vurgu rengi seçin.
+3. **Konteynerler** sekmesinde bir konteyner seçin ve ilk geri yükleme noktanızı oluşturmak için **Şimdi yedekle**'ye tıklayın. Depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir ve ilk yedeklemede oluşturulur.
+4. Zamanlamayı **Ayarlar, Zamanlamalar** bölümünden kurun. Konteynerler ve VM'ler için tek tıklamalık bir *Tümünü zamanlamaya ekle* seçeneği vardır.
 
 !!! tip "İsteğe bağlı: bir yedekleme sırası seçin"
-    Bazı konteynerlerin her zaman diğerlerinden önce yedeklenmesi gerekiyorsa (örneğin onu kullanan uygulamadan önce bir veritabanı), Konteynerler sayfasındaki **yedekleme sırası** panelini açın ve onları istediğiniz sıraya sürükleyin. Zamanlanan ve çoklu seçim çalışmaları buna uyar; sıralamadan bıraktığınız her şey, eskisi gibi en çok geciken önce yedeklenir.
+    Bazı konteynerlerin her zaman diğerlerinden önce yedeklenmesi gerekiyorsa (örneğin onu kullanan uygulamadan önce bir veritabanı), Konteynerler sayfasındaki **Yedekleme sırası** panelini açın ve onları istediğiniz sıraya sürükleyin. Zamanlanan ve çoklu seçim çalışmaları buna uyar; sıralamadan bıraktığınız her şey, eskisi gibi en çok geciken önce yedeklenir.
 
-!!! note "Host entegrasyon denetimi"
+!!! note "Host Entegrasyon Denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir; böylece ona güvenmeden önce konteynerin doğru bağlandığını onaylayabilirsiniz.
 
 ## Basit ve Gelişmiş karşılaştırması
@@ -84,11 +84,11 @@ Sonucu şablonun `APP_KEY` alanına (Unraid) veya `docker-compose.yml` içindeki
 
 *Ayarlarda Kaydet düğmesi yoktur: her değişiklik yaptığınız anda yazılır.*
 
-Varsayılan olarak arayüz yalnızca temel unsurları gösterir (yedekle, geri yükle, zamanla). Uzman denetimlerini ortaya çıkarmak için kenar çubuğundaki **Basit / Gelişmiş** anahtarını kullanın: saklama, site dışı kopya, ön/son kancalar, dosya düzeyinde geri yükleme, bildirimler, Prometheus metrikleri ve bütünlük/bakım araçları. Bu, tarayıcı başına bir tercihtir ve varsayılan olarak kapalıdır; böylece yeni gelenler temiz bir arayüz, güçlü kullanıcılar ise her şeyi elde eder.
+Varsayılan olarak arayüz yalnızca temel unsurları gösterir (yedekle, geri yükle, zamanla). Uzman denetimlerini ortaya çıkarmak için kenar çubuğundaki **Basit görünüm / Gelişmiş görünüm** anahtarını kullanın: saklama, site dışı kopya, ön/son kancalar, dosya düzeyinde geri yükleme, bildirimler, Prometheus metrikleri ve bütünlük/bakım araçları. Bu, tarayıcı başına bir tercihtir ve varsayılan olarak kapalıdır; böylece yeni gelenler temiz bir arayüz, güçlü kullanıcılar ise her şeyi elde eder.
 
 ## Sonraki adımlar
 
 - Tüm **[Özellikler](features.md)**'e göz atın.
 - Bir veya daha fazla **[Site dışı ve kurtarma](offsite-recovery.md)** kopyası ekleyin (her etki alanı aynı anda birkaç hedefe gönderebilir) ve kurtarma kitinizi kaydedin.
-- Bir kurulumu klonluyor ya da yeni bir makineye mi geçiyorsunuz? Tüm yapılandırmanızı **Ayarları dışa ve içe aktar** kartıyla taşıyın. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
+- Bir kurulumu klonluyor ya da yeni bir makineye mi geçiyorsunuz? Tüm yapılandırmanızı **Ayarları dışa / içe aktar** kartıyla taşıyın. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
 - Bir sorunla mı karşılaştınız? Bkz. **[Sorun giderme](troubleshooting.md)**.

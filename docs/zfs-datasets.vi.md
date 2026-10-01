@@ -123,7 +123,7 @@ Một tập con bị làm trống hầu như không làm thay đổi tổng củ
 
 Một tập dữ liệu mà lần chạy trước đã sao lưu và lần chạy này không đọc được sẽ được tính là đã bị làm trống, miễn là lựa chọn của mục không thay đổi. Điều này bao gồm khóa chưa được nạp, tập dữ liệu chưa gắn kết và tập dữ liệu đã biến mất khỏi cây. Một tập con do chính bạn loại trừ sẽ làm thay đổi lựa chọn, nên lịch sử của nó bắt đầu lại từ đầu. Khi một phát hiện về dữ liệu bị mất còn mở, chính sách giữ lại sẽ giữ các bản sao lưu cũ của riêng tập dữ liệu đó và dọn phần còn lại của cây như bình thường.
 
-Trong tab **Mục** của trang **Bất thường**, mỗi tập dữ liệu có một dòng riêng dưới mục của nó, và cây của mục trên trang này hiển thị các phát hiện đang mở bên cạnh từng tập dữ liệu. Liên kết trong một phát hiện mở bảng khôi phục của mục tại bản sao lưu tốt cuối cùng của tập dữ liệu. Việc một lần chạy có hoàn tất hay không được đánh giá cho cả mục, vì một lần chạy thành công hay thất bại như một khối.
+Trên trang **Bất thường**, mỗi tập dữ liệu có một dòng riêng trong bảng của mục, bảng này mở bằng **Giám sát** trên thẻ của mục hoặc, khi mục không có gì đang mở, từ dòng của nó trong thẻ **Không có gì đang mở**. Cây của mục trên trang này hiển thị các phát hiện đang mở bên cạnh từng tập dữ liệu. Liên kết trong một phát hiện mở bảng khôi phục của mục tại bản sao lưu tốt cuối cùng của tập dữ liệu. Việc một lần chạy có hoàn tất hay không được đánh giá cho cả mục, vì một lần chạy thành công hay thất bại như một khối.
 
 Bản thân các kiểm tra được mô tả trong [Tính năng](features.md). Trợ lý kết nối qua [máy chủ MCP](mcp.md) có thể liệt kê các điểm khôi phục của một mục ZFS, bắt đầu sao lưu nó và đọc các phát hiện, nhưng việc xác nhận một phát hiện được thực hiện trên trang **Bất thường**.
 

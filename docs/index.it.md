@@ -49,7 +49,7 @@ BombVault è il livello di orchestrazione e interfaccia, non il motore di archiv
 
 Sei nuovo qui? Vai a **[Primi passi](getting-started.md)** per installare BombVault su Unraid tramite Community Applications ed eseguire il tuo primo backup. Poi esplora l'insieme completo delle **[Funzionalità](features.md)**, regola la tua **[Configurazione](configuration.md)** e imposta **[Off-site e ripristino](offsite-recovery.md)**.
 
-L'off-site può diramarsi verso più destinazioni per dominio contemporaneamente, una **dashboard ricevente** in sola lettura monitora quelle copie sulla macchina che le riceve, e puoi portare l'intera configurazione su una nuova macchina con la scheda **Esporta e importa impostazioni**. Vedi [Off-site e ripristino](offsite-recovery.md) e [Configurazione](configuration.md#portable-settings-export-and-import).
+L'off-site può diramarsi verso più destinazioni per dominio contemporaneamente, una **dashboard ricevente** in sola lettura monitora quelle copie sulla macchina che le riceve, e puoi portare l'intera configurazione su una nuova macchina con la scheda **Esporta / importa impostazioni**. Vedi [Off-site e ripristino](offsite-recovery.md) e [Configurazione](configuration.md#portable-settings-export-and-import).
 
 ## Link
 

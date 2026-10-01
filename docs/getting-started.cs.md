@@ -40,7 +40,7 @@ Nemáte Unraid? BombVault běží i jako prostý kontejner na libovolném hostit
 
 V čem se to liší od Unraidu:
 
-- **Žádná doména flash/USB.** Není tu žádný zaváděcí USB disk, který by se dal zachytit nebo obnovit, doména Flash v nastavení tedy nemá co dělat. Místo toho doména Soubory nabízí návrh na jedno kliknutí **Přidat přednastavení: konfigurace hostitelského systému** (výchozí sada souborů `/etc`, kterou si před uložením projdete a upravíte), jako praktický obecný protějšek.
+- **Žádná doména flash/USB.** Není tu žádný zaváděcí USB disk, který by se dal zachytit nebo obnovit, doména Flash v nastavení tedy nemá co dělat. Místo toho doména Složky nabízí návrh na jedno kliknutí **Přidat přednastavení: konfigurace hostitelského systému** (výchozí sada souborů `/etc`, kterou si před uložením projdete a upravíte), jako praktický obecný protějšek.
 - **Žádná nativní oznámení Unraidu.** Vlastní oznamovací kanály BombVaultu (webhook, upozornění na selhání mimo lokalitu a podobně) fungují normálně; vynechává se jen odeslání do oznamovacího systému Unraidu, protože takový systém tu není.
 - **Záloha virtuálních strojů je volitelná a potřebuje samostatného hostitele libvirtd dostupného přes SSH.** Viz zakomentovaný blok v souboru compose. Obecný hostitel Dockeru sám o sobě žádného správce virtuálních strojů nemá.
 
@@ -68,12 +68,12 @@ Výsledek vložte do pole `APP_KEY` v šabloně (Unraid), nebo do proměnné pro
 *Přehled po první záloze: co je chráněno, co poběží dál a živý protokol.*
 
 1. Otevřete webové rozhraní na `https://<your-unraid-ip>:3443` (samopodepsaný certifikát rovnou z krabice).
-2. V **Nastavení** povolte zálohovací domény, které chcete (Kontejnery, VM, Flash, Config, Soubory, Datové sady ZFS), a vyberte barvu zvýraznění.
-3. V záložce **Kontejnery** vyberte kontejner a klikněte na **Zálohovat** pro vytvoření svého prvního bodu obnovení. Cesty repozitářů mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` a vytvoří se při první záloze.
-4. Nastavte plánování v **Nastavení, Plány**. Pro kontejnery a VM je k dispozici *zahrnout vše do plánu* na jedno kliknutí.
+2. V **Nastavení** povolte zálohovací domény, které chcete (Kontejnery, VMs, Flash, Autozáloha, Složky, Datové sady ZFS), a vyberte barvu zvýraznění.
+3. V záložce **Kontejnery** vyberte kontejner a klikněte na **Zálohovat nyní** pro vytvoření svého prvního bodu obnovení. Cesty repozitářů mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` a vytvoří se při první záloze.
+4. Nastavte plánování v **Nastavení, Plány**. Pro kontejnery a VM je k dispozici *Zahrnout vše do plánu* na jedno kliknutí.
 
 !!! tip "Volitelné: zvolte pořadí zálohování"
-    Pokud by se některé kontejnery měly vždy zálohovat před ostatními (například databáze před aplikací, která ji používá), otevřete panel **pořadí zálohování** na stránce Kontejnery a přetáhněte je do požadované sekvence. Naplánované běhy a běhy s vícenásobným výběrem se jím pak řídí; cokoli neuspořádaného se zálohuje od nejvíce po termínu, jako dříve.
+    Pokud by se některé kontejnery měly vždy zálohovat před ostatními (například databáze před aplikací, která ji používá), otevřete panel **Pořadí záloh** na stránce Kontejnery a přetáhněte je do požadované sekvence. Naplánované běhy a běhy s vícenásobným výběrem se jím pak řídí; cokoli neuspořádaného se zálohuje od nejvíce po termínu, jako dříve.
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části, takže si můžete potvrdit, že je kontejner správně zapojen, dříve než se na něj budete spoléhat.
@@ -84,11 +84,11 @@ Výsledek vložte do pole `APP_KEY` v šabloně (Unraid), nebo do proměnné pro
 
 *Nastavení nemá tlačítko Uložit: každá změna se zapíše hned.*
 
-Ve výchozím nastavení rozhraní zobrazuje jen to nejnutnější (zálohovat, obnovit, plánovat). Použijte přepínač **Jednoduché / Pokročilé** v postranním panelu k odhalení expertních ovládacích prvků: uchovávání, kopie mimo lokalitu, pre/post hooky, obnova na úrovni souborů, oznámení, metriky Prometheus a nástroje integrity/údržby. Jde o předvolbu na úrovni prohlížeče, ve výchozím stavu vypnutou, takže nováčci dostanou čisté UI a pokročilí uživatelé dostanou vše.
+Ve výchozím nastavení rozhraní zobrazuje jen to nejnutnější (zálohovat, obnovit, plánovat). Použijte přepínač **Jednoduché zobrazení / Pokročilé zobrazení** v postranním panelu k odhalení expertních ovládacích prvků: uchovávání, kopie mimo lokalitu, pre/post hooky, obnova na úrovni souborů, oznámení, metriky Prometheus a nástroje integrity/údržby. Jde o předvolbu na úrovni prohlížeče, ve výchozím stavu vypnutou, takže nováčci dostanou čisté UI a pokročilí uživatelé dostanou vše.
 
 ## Další kroky
 
 - Projděte si kompletní **[Funkce](features.md)**.
 - Přidejte jednu nebo více replik **[Mimo lokalitu a obnova](offsite-recovery.md)** (každá doména může odesílat na několik cílů najednou) a uložte si svou sadu pro obnovu.
-- Klonujete sestavu nebo přecházíte na nový stroj? Přeneste celou svou konfiguraci pomocí karty **Export a import nastavení**. Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
+- Klonujete sestavu nebo přecházíte na nový stroj? Přeneste celou svou konfiguraci pomocí karty **Export / import nastavení**. Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
 - Narazili jste na problém? Viz **[Řešení problémů](troubleshooting.md)**.

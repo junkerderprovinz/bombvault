@@ -29,7 +29,7 @@ Belépési jelszó nélkül bárki, aki meg tudja nyitni a webes felületet, tok
 | `GET /api/v1/anomalies/{id}` | Egy anomália | olvasás |
 | `GET /api/v1/storage/{domain}` | Méretelőzmények, heti növekedés és a terület minden tárolójának szabad helye | olvasás |
 | `POST /api/v1/backups` | Ment egy elemet (`{"domain":"containers","item":"plex"}`) vagy egy egész területet (`{"domain":"vms"}`) | indítás |
-| `POST /api/v1/backups/everything` | Elindítja a Backup Everything menetet | indítás |
+| `POST /api/v1/backups/everything` | Elindítja a Teljes mentés menetet | indítás |
 | `POST /api/v1/runs/{id}/cancel` | Megszakít egy futó mentést, amelyet ez a token indított | indítás |
 
 A területek: `containers`, `vms`, `files`, `zfs`, `flash` és `config`. Az idők Unix-másodpercek. A válaszok ugyanazok, mint az azonos nevű [MCP-eszközöké](mcp.md#tools), így a kettő együtt marad.

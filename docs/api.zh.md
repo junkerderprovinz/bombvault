@@ -29,7 +29,7 @@ BombVault 提供一个小型 HTTP API，供脚本、仪表板和家庭自动化�
 | `GET /api/v1/anomalies/{id}` | 单个异常 | 读取 |
 | `GET /api/v1/storage/{domain}` | 某领域每个仓库的大小历史、每周增长和剩余空间 | 读取 |
 | `POST /api/v1/backups` | 备份一个项目（`{"domain":"containers","item":"plex"}`）或整个领域（`{"domain":"vms"}`） | 启动 |
-| `POST /api/v1/backups/everything` | 运行 Backup Everything | 启动 |
+| `POST /api/v1/backups/everything` | 运行全部备份 | 启动 |
 | `POST /api/v1/runs/{id}/cancel` | 取消此令牌启动的正在运行的备份 | 启动 |
 
 领域为 `containers`、`vms`、`files`、`zfs`、`flash` 和 `config`。时间是 Unix 秒。回答与同名的 [MCP 工具](mcp.md#tools) 相同，因此两者保持一致。

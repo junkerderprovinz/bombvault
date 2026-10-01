@@ -49,7 +49,7 @@ BombVault 是编排和界面层，而非存储引擎。所有实际的数据搬�
 
 初次接触？请前往 **[快速上手](getting-started.md)**，通过 Community Applications 在 Unraid 上安装 BombVault 并运行您的第一份备份。然后探索完整的 **[功能](features.md)**，调整您的**[配置](configuration.md)**，并设置 **[异地与恢复](offsite-recovery.md)**。
 
-异地复制可以同时向每个域的多个目标分发，一个只读的**接收方仪表板**在接收这些副本的机器上对其进行监控，而您可以用**导出与导入设置**卡片将您的整套配置迁移到新机器。参见[异地与恢复](offsite-recovery.md)和[配置](configuration.md#portable-settings-export-and-import)。
+异地复制可以同时向每个域的多个目标分发，一个只读的**接收方仪表板**在接收这些副本的机器上对其进行监控，而您可以用**导出 / 导入设置**卡片将您的整套配置迁移到新机器。参见[异地与恢复](offsite-recovery.md)和[配置](configuration.md#portable-settings-export-and-import)。
 
 ## 链接
 

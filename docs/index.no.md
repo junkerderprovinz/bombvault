@@ -49,7 +49,7 @@ BombVault er orkestrerings- og UI-laget, ikke lagringsmotoren. All faktisk dataf
 
 Ny her? Gå til **[Kom i gang](getting-started.md)** for å installere BombVault på Unraid via Community Applications og kjøre din første sikkerhetskopi. Utforsk deretter alle **[Funksjoner](features.md)**, finjuster **[Konfigurasjonen](configuration.md)** din, og sett opp **[Ekstern lagring og gjenoppretting](offsite-recovery.md)**.
 
-Ekstern lagring kan fordeles til flere mål per domene samtidig, et skrivebeskyttet **mottaker-dashboard** overvåker disse kopiene på boksen som mottar dem, og du kan ta med hele konfigurasjonen din til en ny boks med kortet **Eksporter og importer innstillinger**. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) og [Konfigurasjon](configuration.md#portable-settings-export-and-import).
+Ekstern lagring kan fordeles til flere mål per domene samtidig, et skrivebeskyttet **mottaker-dashboard** overvåker disse kopiene på boksen som mottar dem, og du kan ta med hele konfigurasjonen din til en ny boks med kortet **Eksporter / importer innstillinger**. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) og [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 
 ## Lenker
 

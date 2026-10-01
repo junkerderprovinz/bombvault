@@ -29,7 +29,7 @@ Bez hasła logowania każdy, kto może otworzyć interfejs WWW, może też utwor
 | `GET /api/v1/anomalies/{id}` | Jedna anomalia | odczyt |
 | `GET /api/v1/storage/{domain}` | Historia rozmiaru, przyrost tygodniowy i wolne miejsce każdego repozytorium obszaru | odczyt |
 | `POST /api/v1/backups` | Tworzy kopię jednego elementu (`{"domain":"containers","item":"plex"}`) albo całego obszaru (`{"domain":"vms"}`) | uruchamianie |
-| `POST /api/v1/backups/everything` | Uruchamia Backup Everything | uruchamianie |
+| `POST /api/v1/backups/everything` | Uruchamia Pełną kopię | uruchamianie |
 | `POST /api/v1/runs/{id}/cancel` | Przerywa trwającą kopię uruchomioną przez ten token | uruchamianie |
 
 Obszary to `containers`, `vms`, `files`, `zfs`, `flash` i `config`. Czasy są w sekundach Unix. Odpowiedzi są takie same jak z [narzędzi MCP](mcp.md#tools) o tej samej nazwie, więc oba pozostają zgodne.

@@ -40,7 +40,7 @@ Ikke Unraid? BombVault kører også som almindelig container på enhver Docker-v
 
 Hvad der er anderledes end på Unraid:
 
-- **Intet flash-/USB-domæne.** Der er ingen boot-USB at indfange eller genskabe, så Flash-domænet i indstillingerne har intet at lave her. I stedet tilbyder Fil-domænet etklik-forslaget **Tilføj forudindstilling: værtssystemets konfiguration** (et sæt `/etc`-filer til at begynde med, som du gennemgår og retter, før du gemmer) som praktisk generisk modstykke.
+- **Intet flash-/USB-domæne.** Der er ingen boot-USB at indfange eller genskabe, så Flash-domænet i indstillingerne har intet at lave her. I stedet tilbyder Mapper-domænet etklik-forslaget **Tilføj forudindstilling: værtssystemets konfiguration** (et sæt `/etc`-filer til at begynde med, som du gennemgår og retter, før du gemmer) som praktisk generisk modstykke.
 - **Ingen Unraid-egne meddelelser.** BombVaults egne meddelelseskanaler (webhook, advarsler om mislykket off-site og lignende) virker som sædvanlig; kun den Unraid-specifikke besked til dens eget meddelelsessystem udelades, da et sådant system ikke findes her.
 - **Sikkerhedskopiering af virtuelle maskiner er valgfri og kræver en separat libvirtd-vært, der kan nås over SSH.** Se den udkommenterede blok i compose-filen. En generisk Docker-vært har ingen indbygget VM-styring.
 
@@ -68,12 +68,12 @@ Skabelonen monterer også Docker-socket'en, flashen (`/boot`) og **Host Data**-r
 *Instrumentpanelet efter en første sikkerhedskopi: hvad der er beskyttet, hvad der kører nu, og en levende log.*
 
 1. Åbn web-UI'en på `https://<your-unraid-ip>:3443` (selvsigneret certifikat fra start).
-2. Aktivér i **Indstillinger** de sikkerhedskopidomæner, du vil have (Containers, VMs, Flash, Config, Files, ZFS datasets), og vælg en accentfarve.
-3. Vælg en container på fanen **Containers**, og klik på **Sikkerhedskopier** for at oprette dit første gendannelsespunkt. Repository-stier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og oprettes ved den første sikkerhedskopi.
-4. Opsæt planlægning fra **Indstillinger, Tidsplaner**. Der er en ét-klik *inkludér alle i tidsplan* for containere og VM'er.
+2. Aktivér i **Indstillinger** de sikkerhedskopidomæner, du vil have (Containers, VMs, Flash, Auto-sikkerhedskopi, Mapper, ZFS-datasæt), og vælg en accentfarve.
+3. Vælg en container på fanen **Containers**, og klik på **Sikkerhedskopier nu** for at oprette dit første gendannelsespunkt. Repository-stier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og oprettes ved den første sikkerhedskopi.
+4. Opsæt planlægning fra **Indstillinger, Tidsplaner**. Der er en ét-klik *Inkluder alle i tidsplanen* for containere og VM'er.
 
 !!! tip "Valgfrit: vælg en sikkerhedskopi-rækkefølge"
-    Hvis nogle containere altid skal sikkerhedskopieres før andre (for eksempel en database før den app, der bruger den), så åbn panelet **sikkerhedskopi-rækkefølge** på Containers-siden, og træk dem ind i den ønskede rækkefølge. Planlagte og fler-valgs-kørsler følger den derefter; alt, du lader stå uordnet, sikkerhedskopieres mest-overskredet-først, som før.
+    Hvis nogle containere altid skal sikkerhedskopieres før andre (for eksempel en database før den app, der bruger den), så åbn panelet **Rækkefølge for sikkerhedskopiering** på Containers-siden, og træk dem ind i den ønskede rækkefølge. Planlagte og fler-valgs-kørsler følger den derefter; alt, du lader stå uordnet, sikkerhedskopieres mest-overskredet-først, som før.
 
 !!! note "Vært-integrationstjek"
     Åbn `/spike` i web-UI'en, når containeren er startet. Den prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele, så du kan bekræfte, at containeren er korrekt forbundet, før du forlader dig på den.
@@ -84,11 +84,11 @@ Skabelonen monterer også Docker-socket'en, flashen (`/boot`) og **Host Data**-r
 
 *Indstillingerne har ingen Gem-knap: hver ændring skrives, mens du laver den.*
 
-Som standard viser grænsefladen kun det væsentlige (sikkerhedskopier, gendan, planlæg). Brug **Simpel / Avanceret**-kontakten i sidebjælken for at afsløre ekspertkontrollerne: opbevaring, off-site-kopi, pre/post-hooks, gendannelse på filniveau, notifikationer, Prometheus-metrics og integritets-/vedligeholdelsesværktøjerne. Det er en præference pr. browser og slået fra som standard, så nybegyndere får en ren UI, og power-brugere får det hele.
+Som standard viser grænsefladen kun det væsentlige (sikkerhedskopier, gendan, planlæg). Brug **Enkel visning / Avanceret visning**-kontakten i sidebjælken for at afsløre ekspertkontrollerne: opbevaring, off-site-kopi, pre/post-hooks, gendannelse på filniveau, notifikationer, Prometheus-metrics og integritets-/vedligeholdelsesværktøjerne. Det er en præference pr. browser og slået fra som standard, så nybegyndere får en ren UI, og power-brugere får det hele.
 
 ## Næste skridt
 
 - Gennemse de fulde **[Funktioner](features.md)**.
 - Tilføj en eller flere **[Off-site og gendannelse](offsite-recovery.md)**-replikaer (hvert domæne kan sende til flere destinationer på én gang), og gem dit gendannelseskit.
-- Kloner du en opsætning eller flytter til en ny boks? Bær hele din konfiguration over med kortet **Eksportér og importér indstillinger**. Se [Konfiguration](configuration.md#portable-settings-export-and-import).
+- Kloner du en opsætning eller flytter til en ny boks? Bær hele din konfiguration over med kortet **Eksportér / importér indstillinger**. Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 - Løb ind i et problem? Se **[Fejlfinding](troubleshooting.md)**.

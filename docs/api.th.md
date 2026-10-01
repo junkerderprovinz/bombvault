@@ -29,7 +29,7 @@ BombVault มี HTTP API ขนาดเล็กสำหรับสคริ
 | `GET /api/v1/anomalies/{id}` | ความผิดปกติหนึ่งรายการ | อ่าน |
 | `GET /api/v1/storage/{domain}` | ประวัติขนาด การเติบโตต่อสัปดาห์ และพื้นที่ว่างของทุกคลังข้อมูลในโดเมน | อ่าน |
 | `POST /api/v1/backups` | สำรองรายการเดียว (`{"domain":"containers","item":"plex"}`) หรือทั้งโดเมน (`{"domain":"vms"}`) | เริ่ม |
-| `POST /api/v1/backups/everything` | เรียกใช้ Backup Everything | เริ่ม |
+| `POST /api/v1/backups/everything` | เรียกใช้ สำรองข้อมูลทั้งหมด | เริ่ม |
 | `POST /api/v1/runs/{id}/cancel` | ยกเลิกการสำรองที่กำลังทำงานซึ่งโทเคนนี้เริ่ม | เริ่ม |
 
 โดเมนได้แก่ `containers`, `vms`, `files`, `zfs`, `flash` และ `config` เวลาเป็นวินาทีแบบ Unix คำตอบเหมือนกับของ[เครื่องมือ MCP](mcp.md#tools) ที่ชื่อเดียวกัน ทั้งสองจึงตรงกันเสมอ

@@ -29,7 +29,7 @@ Fără parolă de conectare, oricine poate deschide interfața web poate crea ș
 | `GET /api/v1/anomalies/{id}` | O anomalie | citire |
 | `GET /api/v1/storage/{domain}` | Istoricul mărimii, creșterea pe săptămână și spațiul liber al fiecărui depozit dintr-un domeniu | citire |
 | `POST /api/v1/backups` | Copiază un element (`{"domain":"containers","item":"plex"}`) sau un domeniu întreg (`{"domain":"vms"}`) | pornire |
-| `POST /api/v1/backups/everything` | Rulează Backup Everything | pornire |
+| `POST /api/v1/backups/everything` | Rulează Backupul total | pornire |
 | `POST /api/v1/runs/{id}/cancel` | Anulează o copie în curs pornită de acest token | pornire |
 
 Domeniile sunt `containers`, `vms`, `files`, `zfs`, `flash` și `config`. Timpii sunt secunde Unix. Răspunsurile sunt aceleași ca la [instrumentele MCP](mcp.md#tools) cu același nume, așa că cele două rămân la fel.
