@@ -46,7 +46,7 @@ Et navngitt depot kan merkes **Utenfor bygningen** på Depoter-kortet. Fjerndepo
 
 ### Etter en ombygging
 
-Kopivalgene lever i BombVaults egne innstillinger. Etter en ombygging via Oppdag uten et gjenopprettet `/config` er de borte, og å kopiere alt ville sendt elementene du hadde utelatt, til B2 igjen. Ekstern replikering av hvert ombygde domene settes derfor på pause. Dashboardet viser det i rav, og Standardplasseringer tilbyr **Bekreft standard** med en forhåndsvisning av hva neste kjøring kopierer, og navnene i sikkerhetskopiene som mangler en oppføring, som du kan utelate der. Bare bekreftelsen avslutter pausen; å importere en innstillingsfil bringer tilbake regler og standarder, men avslutter den ikke.
+Kopivalgene lever i BombVaults egne innstillinger. Etter en ombygging via Oppdag sikkerhetskopier uten et gjenopprettet `/config` er de borte, og å kopiere alt ville sendt elementene du hadde utelatt, til B2 igjen. Ekstern replikering av hvert ombygde domene settes derfor på pause. Dashboardet viser det i rav, og Standardplasseringer tilbyr **Bekreft standard** med en forhåndsvisning av hva neste kjøring kopierer, og navnene i sikkerhetskopiene som mangler en oppføring, som du kan utelate der. Bare bekreftelsen avslutter pausen; å importere en innstillingsfil bringer tilbake regler og standarder, men avslutter den ikke.
 
 ## Eksterne primære arkiver {#remote-primary-repositories}
 

@@ -46,7 +46,7 @@ Un repositorio con nombre puede marcarse como **Fuera del local** en la tarjeta 
 
 ### Tras una reconstrucción
 
-Las elecciones de copia viven en los propios ajustes de BombVault. Tras una reconstrucción mediante Descubrir sin un `/config` restaurado, desaparecen, y copiar todo enviaría de nuevo a B2 los elementos que habías dejado fuera. Por eso la replicación externa de cada dominio reconstruido se pausa. El Panel lo muestra en ámbar, y Valores predeterminados de ubicación ofrece **Confirmar valor predeterminado** con una vista previa de lo que copia la siguiente ejecución y los nombres en las copias de seguridad que no tienen entrada, que puedes dejar fuera ahí. Solo la confirmación termina la pausa; importar un archivo de ajustes trae de vuelta reglas y valores predeterminados pero no la termina.
+Las elecciones de copia viven en los propios ajustes de BombVault. Tras una reconstrucción mediante Descubrir copias sin un `/config` restaurado, desaparecen, y copiar todo enviaría de nuevo a B2 los elementos que habías dejado fuera. Por eso la replicación externa de cada dominio reconstruido se pausa. El Panel lo muestra en ámbar, y Valores predeterminados de ubicación ofrece **Confirmar valor predeterminado** con una vista previa de lo que copia la siguiente ejecución y los nombres en las copias de seguridad que no tienen entrada, que puedes dejar fuera ahí. Solo la confirmación termina la pausa; importar un archivo de ajustes trae de vuelta reglas y valores predeterminados pero no la termina.
 
 ## Repositorios primarios remotos {#remote-primary-repositories}
 

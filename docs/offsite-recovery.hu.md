@@ -46,7 +46,7 @@ Egy nevesített tároló megjelölhető **Az épületen kívül**-ként a Tárol
 
 ### Újraépítés után
 
-A másolási választások a BombVault saját beállításaiban élnek. Egy Felfedezésen keresztüli újraépítés után, visszaállított `/config` nélkül, ezek eltűnnek, és minden másolása újra elküldené a B2-be azokat az elemeket, amelyeket kihagytál. Ezért minden újraépített tartomány telephelyen kívüli replikációja szünetel. Az irányítópult sárgán mutatja, és az Elhelyezési alapértelmezések felajánlja az **Alapértelmezés megerősítése** lehetőséget, egy előnézettel arról, mit másol a következő futás, és azokkal a nevekkel a mentésekben, amelyeknek nincs bejegyzésük, amelyeket ott kihagyhatsz. Csak a megerősítés zárja le a szünetet; egy beállításfájl importálása visszahozza a szabályokat és az alapértelmezéseket, de nem zárja le.
+A másolási választások a BombVault saját beállításaiban élnek. Egy, a Biztonsági mentések felfedezése gombbal végzett újraépítés után, visszaállított `/config` nélkül, ezek eltűnnek, és minden másolása újra elküldené a B2-be azokat az elemeket, amelyeket kihagytál. Ezért minden újraépített tartomány telephelyen kívüli replikációja szünetel. Az irányítópult sárgán mutatja, és az Elhelyezési alapértelmezések felajánlja az **Alapértelmezés megerősítése** lehetőséget, egy előnézettel arról, mit másol a következő futás, és azokkal a nevekkel a mentésekben, amelyeknek nincs bejegyzésük, amelyeket ott kihagyhatsz. Csak a megerősítés zárja le a szünetet; egy beállításfájl importálása visszahozza a szabályokat és az alapértelmezéseket, de nem zárja le.
 
 ## Távoli elsődleges tárolók {#remote-primary-repositories}
 

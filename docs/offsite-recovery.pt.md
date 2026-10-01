@@ -46,7 +46,7 @@ Um repositório nomeado pode ser marcado **Fora das instalações** no cartão R
 
 ### Depois de uma reconstrução
 
-As escolhas de cópia vivem nas próprias definições do BombVault. Depois de uma reconstrução através do Descobrir sem um `/config` restaurado, desaparecem, e copiar tudo voltaria a enviar para o B2 os itens que tinha deixado de fora. A replicação externa de cada domínio reconstruído entra por isso em pausa. O Painel mostra-o a âmbar, e as Localizações padrão oferecem **Confirmar padrão** com uma pré-visualização do que a próxima execução copia e os nomes nos backups que não têm entrada, que pode deixar de fora ali. Só a confirmação termina a pausa; importar um ficheiro de definições traz de volta regras e padrões mas não a termina.
+As escolhas de cópia vivem nas próprias definições do BombVault. Depois de uma reconstrução através de Descobrir backups sem um `/config` restaurado, desaparecem, e copiar tudo voltaria a enviar para o B2 os itens que tinha deixado de fora. A replicação externa de cada domínio reconstruído entra por isso em pausa. O Painel mostra-o a âmbar, e as Localizações padrão oferecem **Confirmar padrão** com uma pré-visualização do que a próxima execução copia e os nomes nos backups que não têm entrada, que pode deixar de fora ali. Só a confirmação termina a pausa; importar um ficheiro de definições traz de volta regras e padrões mas não a termina.
 
 ## Repositórios primários remotos {#remote-primary-repositories}
 

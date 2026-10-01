@@ -46,7 +46,7 @@ Ett namngivet arkiv kan märkas **Utanför lokalerna** på kortet Arkiv. Fjärra
 
 ### Efter en ombyggnad
 
-Kopieringsval lever i BombVaults egna inställningar. Efter en ombyggnad via Identifiera utan en återställd `/config` är de borta, och att kopiera allt skulle skicka objekten du hade lämnat ute till B2 igen. Off-site-replikering för varje ombyggd domän pausar därför. Översikten visar det i gult, och Standardplaceringar erbjuder **Bekräfta standard** med en förhandsgranskning av vad nästa körning kopierar och namnen i säkerhetskopiorna som saknar en post, vilka du kan lämna ute där. Endast bekräftelsen avslutar pausen; att importera en inställningsfil tar tillbaka regler och standarder men avslutar den inte.
+Kopieringsval lever i BombVaults egna inställningar. Efter en ombyggnad via Identifiera säkerhetskopior utan en återställd `/config` är de borta, och att kopiera allt skulle skicka objekten du hade lämnat ute till B2 igen. Off-site-replikering för varje ombyggd domän pausar därför. Översikten visar det i gult, och Standardplaceringar erbjuder **Bekräfta standard** med en förhandsgranskning av vad nästa körning kopierar och namnen i säkerhetskopiorna som saknar en post, vilka du kan lämna ute där. Endast bekräftelsen avslutar pausen; att importera en inställningsfil tar tillbaka regler och standarder men avslutar den inte.
 
 ## Fjärranslutna primära arkiv {#remote-primary-repositories}
 

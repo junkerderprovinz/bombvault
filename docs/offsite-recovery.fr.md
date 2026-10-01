@@ -46,7 +46,7 @@ Un dépôt nommé peut être marqué **Hors des locaux** sur la carte Dépôts. 
 
 ### Après une reconstruction
 
-Les choix de copie vivent dans les propres réglages de BombVault. Après une reconstruction via Découvrir sans un `/config` restauré, ils ont disparu, et tout copier renverrait vers B2 les éléments que vous aviez laissés de côté. La réplication hors site de chaque domaine reconstruit se met donc en pause. Le tableau de bord le montre en orange, et Emplacements par défaut propose **Confirmer la valeur par défaut** avec un aperçu de ce que copie la prochaine exécution et les noms dans les sauvegardes qui n'ont pas d'entrée, que vous pouvez laisser de côté à cet endroit. Seule la confirmation met fin à la pause ; importer un fichier de réglages ramène les règles et les valeurs par défaut mais n'y met pas fin.
+Les choix de copie vivent dans les propres réglages de BombVault. Après une reconstruction via Découvrir les sauvegardes sans un `/config` restauré, ils ont disparu, et tout copier renverrait vers B2 les éléments que vous aviez laissés de côté. La réplication hors site de chaque domaine reconstruit se met donc en pause. Le tableau de bord le montre en orange, et Emplacements par défaut propose **Confirmer la valeur par défaut** avec un aperçu de ce que copie la prochaine exécution et les noms dans les sauvegardes qui n'ont pas d'entrée, que vous pouvez laisser de côté à cet endroit. Seule la confirmation met fin à la pause ; importer un fichier de réglages ramène les règles et les valeurs par défaut mais n'y met pas fin.
 
 ## Dépôts primaires distants {#remote-primary-repositories}
 

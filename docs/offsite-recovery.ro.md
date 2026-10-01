@@ -46,7 +46,7 @@ Un depozit numit poate fi marcat **În afara sediului** pe cardul Depozite. Depo
 
 ### După o reconstrucție
 
-Alegerile de copiere trăiesc în propriile setări ale BombVault. După o reconstrucție prin Descoperă fără un `/config` restaurat, ele dispar, iar copierea a tot ar trimite din nou în B2 elementele pe care le lăsaseși deoparte. Replicarea off-site a fiecărui domeniu reconstruit se suspendă de aceea. Panoul principal arată asta în galben, iar Amplasările implicite oferă **Confirmă valoarea implicită** cu o previzualizare a ceea ce copiază următoarea rulare și numele din backupuri care nu au o intrare, pe care le poți lăsa deoparte acolo. Doar confirmarea încheie suspendarea; importarea unui fișier de setări readuce regulile și valorile implicite, dar nu o încheie.
+Alegerile de copiere trăiesc în propriile setări ale BombVault. După o reconstrucție prin Descoperă copii de rezervă fără un `/config` restaurat, ele dispar, iar copierea a tot ar trimite din nou în B2 elementele pe care le lăsaseși deoparte. Replicarea off-site a fiecărui domeniu reconstruit se suspendă de aceea. Panoul principal arată asta în galben, iar Amplasările implicite oferă **Confirmă valoarea implicită** cu o previzualizare a ceea ce copiază următoarea rulare și numele din backupuri care nu au o intrare, pe care le poți lăsa deoparte acolo. Doar confirmarea încheie suspendarea; importarea unui fișier de setări readuce regulile și valorile implicite, dar nu o încheie.
 
 ## Depozite primare la distanță {#remote-primary-repositories}
 
