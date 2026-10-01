@@ -29,6 +29,16 @@ func (h *Handler) handleProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// A reader that only wants what is running now, such as the Android app's
+	// start screen, gets the bars in flight and an end to the stream.
+	if r.URL.Query().Has("snapshot") {
+		for _, e := range h.progress.Snapshot() {
+			writeSSEEvent(w, e)
+		}
+		flusher.Flush()
+		return
+	}
+
 	ch, cancel := h.progress.Subscribe()
 	defer cancel()
 
