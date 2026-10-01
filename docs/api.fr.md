@@ -29,7 +29,7 @@ Sans mot de passe de connexion, toute personne qui peut ouvrir l'interface web p
 | `GET /api/v1/anomalies/{id}` | Une anomalie | lecture |
 | `GET /api/v1/storage/{domain}` | Historique de taille, croissance par semaine et espace libre de chaque dépôt d'un domaine | lecture |
 | `POST /api/v1/backups` | Sauvegarde un élément (`{"domain":"containers","item":"plex"}`) ou un domaine entier (`{"domain":"vms"}`) | lancement |
-| `POST /api/v1/backups/everything` | Lance Backup Everything | lancement |
+| `POST /api/v1/backups/everything` | Lance la Sauvegarde complète | lancement |
 | `POST /api/v1/runs/{id}/cancel` | Annule une sauvegarde en cours lancée par ce jeton | lancement |
 
 Les domaines sont `containers`, `vms`, `files`, `zfs`, `flash` et `config`. Les heures sont des secondes Unix. Les réponses sont celles des [outils MCP](mcp.md#tools) du même nom, les deux restent donc alignés.

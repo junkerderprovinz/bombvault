@@ -29,7 +29,7 @@ Sin contraseña de acceso, cualquiera que pueda abrir la interfaz web también p
 | `GET /api/v1/anomalies/{id}` | Una anomalía | lectura |
 | `GET /api/v1/storage/{domain}` | Historial de tamaño, crecimiento semanal y espacio libre de cada repositorio de un dominio | lectura |
 | `POST /api/v1/backups` | Copia un elemento (`{"domain":"containers","item":"plex"}`) o un dominio entero (`{"domain":"vms"}`) | inicio |
-| `POST /api/v1/backups/everything` | Ejecuta Backup Everything | inicio |
+| `POST /api/v1/backups/everything` | Ejecuta la Copia total | inicio |
 | `POST /api/v1/runs/{id}/cancel` | Cancela una copia en marcha que inició este token | inicio |
 
 Los dominios son `containers`, `vms`, `files`, `zfs`, `flash` y `config`. Las horas son segundos Unix. Las respuestas son las de las [herramientas MCP](mcp.md#tools) del mismo nombre, así ambas van a la par.

@@ -29,7 +29,7 @@ BombVault에는 스크립트, 대시보드, 홈 자동화를 위한 작은 HTTP 
 | `GET /api/v1/anomalies/{id}` | 이상 징후 하나 | 읽기 |
 | `GET /api/v1/storage/{domain}` | 영역의 각 저장소에 대한 크기 기록, 주간 증가량, 여유 공간 | 읽기 |
 | `POST /api/v1/backups` | 항목 하나(`{"domain":"containers","item":"plex"}`) 또는 영역 전체(`{"domain":"vms"}`)를 백업 | 시작 |
-| `POST /api/v1/backups/everything` | Backup Everything 실행 | 시작 |
+| `POST /api/v1/backups/everything` | 전체 백업 실행 | 시작 |
 | `POST /api/v1/runs/{id}/cancel` | 이 토큰이 시작한 실행 중인 백업 취소 | 시작 |
 
 영역은 `containers`, `vms`, `files`, `zfs`, `flash`, `config`입니다. 시간은 Unix 초입니다. 응답은 같은 이름의 [MCP 도구](mcp.md#tools)와 같아서 둘이 어긋나지 않습니다.

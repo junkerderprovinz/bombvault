@@ -29,7 +29,7 @@
 | `GET /api/v1/anomalies/{id}` | حالة شاذة واحدة | قراءة |
 | `GET /api/v1/storage/{domain}` | تاريخ الحجم والنمو الأسبوعي والمساحة الحرة لكل مستودع في مجال | قراءة |
 | `POST /api/v1/backups` | ينسخ عنصرًا واحدًا (`{"domain":"containers","item":"plex"}`) أو مجالًا كاملًا (`{"domain":"vms"}`) | بدء |
-| `POST /api/v1/backups/everything` | يشغّل Backup Everything | بدء |
+| `POST /api/v1/backups/everything` | يشغّل النسخ الاحتياطي الشامل | بدء |
 | `POST /api/v1/runs/{id}/cancel` | يلغي نسخة جارية بدأها هذا الرمز | بدء |
 
 المجالات هي `containers` و`vms` و`files` و`zfs` و`flash` و`config`. الأوقات بثواني Unix. الإجابات هي نفسها إجابات [أدوات MCP](mcp.md#tools) التي تحمل الأسماء نفسها، فيبقى الاثنان متطابقين.

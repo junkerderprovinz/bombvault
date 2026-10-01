@@ -29,7 +29,7 @@ Uten innloggingspassord kan alle som kan åpne nettgrensesnittet, også lage et 
 | `GET /api/v1/anomalies/{id}` | Én anomali | lese |
 | `GET /api/v1/storage/{domain}` | Størrelseshistorikk, vekst per uke og ledig plass for hvert repository i et område | lese |
 | `POST /api/v1/backups` | Tar kopi av ett element (`{"domain":"containers","item":"plex"}`) eller et helt område (`{"domain":"vms"}`) | starte |
-| `POST /api/v1/backups/everything` | Kjører Backup Everything | starte |
+| `POST /api/v1/backups/everything` | Kjører Full sikkerhetskopi | starte |
 | `POST /api/v1/runs/{id}/cancel` | Avbryter en kjørende kopi som dette tokenet startet | starte |
 
 Områdene heter `containers`, `vms`, `files`, `zfs`, `flash` og `config`. Tider er Unix-sekunder. Svarene er de samme som fra [MCP-verktøyene](mcp.md#tools) med samme navn, så de to følger hverandre.

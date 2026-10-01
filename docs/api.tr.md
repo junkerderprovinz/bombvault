@@ -29,7 +29,7 @@ Giriş parolası yoksa web arayüzünü açabilen herkes belirteç de oluşturab
 | `GET /api/v1/anomalies/{id}` | Tek bir anomali | okuma |
 | `GET /api/v1/storage/{domain}` | Bir alanın her deposu için boyut geçmişi, haftalık büyüme ve boş alan | okuma |
 | `POST /api/v1/backups` | Tek bir öğeyi (`{"domain":"containers","item":"plex"}`) veya bütün bir alanı (`{"domain":"vms"}`) yedekler | başlatma |
-| `POST /api/v1/backups/everything` | Backup Everything'i çalıştırır | başlatma |
+| `POST /api/v1/backups/everything` | Tam yedeklemeyi çalıştırır | başlatma |
 | `POST /api/v1/runs/{id}/cancel` | Bu belirtecin başlattığı, süren bir yedeklemeyi iptal eder | başlatma |
 
 Alanlar `containers`, `vms`, `files`, `zfs`, `flash` ve `config`. Zamanlar Unix saniyesidir. Yanıtlar aynı adlı [MCP araçlarınınkiyle](mcp.md#tools) aynıdır, böylece ikisi birlikte kalır.

@@ -29,7 +29,7 @@
 | `GET /api/v1/anomalies/{id}` | Одна аномалия | чтение |
 | `GET /api/v1/storage/{domain}` | История размера, рост за неделю и свободное место каждого репозитория области | чтение |
 | `POST /api/v1/backups` | Копирует один элемент (`{"domain":"containers","item":"plex"}`) или всю область (`{"domain":"vms"}`) | запуск |
-| `POST /api/v1/backups/everything` | Запускает Backup Everything | запуск |
+| `POST /api/v1/backups/everything` | Запускает Полный бэкап | запуск |
 | `POST /api/v1/runs/{id}/cancel` | Отменяет идущее копирование, запущенное этим токеном | запуск |
 
 Области называются `containers`, `vms`, `files`, `zfs`, `flash` и `config`. Время указано в секундах Unix. Ответы те же, что у одноимённых [инструментов MCP](mcp.md#tools), поэтому они не расходятся.

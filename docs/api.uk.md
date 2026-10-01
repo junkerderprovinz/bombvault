@@ -29,7 +29,7 @@ BombVault має невеликий HTTP API для скриптів, панел
 | `GET /api/v1/anomalies/{id}` | Одна аномалія | читання |
 | `GET /api/v1/storage/{domain}` | Історія розміру, зростання за тиждень і вільне місце кожного репозиторію області | читання |
 | `POST /api/v1/backups` | Копіює один елемент (`{"domain":"containers","item":"plex"}`) або всю область (`{"domain":"vms"}`) | запуск |
-| `POST /api/v1/backups/everything` | Запускає Backup Everything | запуск |
+| `POST /api/v1/backups/everything` | Запускає Повний бекап | запуск |
 | `POST /api/v1/runs/{id}/cancel` | Скасовує поточне копіювання, яке запустив цей токен | запуск |
 
 Області: `containers`, `vms`, `files`, `zfs`, `flash` і `config`. Час подано в секундах Unix. Відповіді такі самі, як в однойменних [інструментів MCP](mcp.md#tools), тож вони не розходяться.

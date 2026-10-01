@@ -29,7 +29,7 @@ Ilman kirjautumissalasanaa jokainen, joka voi avata käyttöliittymän, voi myö
 | `GET /api/v1/anomalies/{id}` | Yksi poikkeama | luku |
 | `GET /api/v1/storage/{domain}` | Koon historia, kasvu viikossa ja vapaa tila alueen jokaisessa repositoryssä | luku |
 | `POST /api/v1/backups` | Varmuuskopioi yhden kohteen (`{"domain":"containers","item":"plex"}`) tai koko alueen (`{"domain":"vms"}`) | käynnistys |
-| `POST /api/v1/backups/everything` | Ajaa Backup Everythingin | käynnistys |
+| `POST /api/v1/backups/everything` | Ajaa Täysvarmuuskopion | käynnistys |
 | `POST /api/v1/runs/{id}/cancel` | Peruu käynnissä olevan kopion, jonka tämä token käynnisti | käynnistys |
 
 Alueet ovat `containers`, `vms`, `files`, `zfs`, `flash` ja `config`. Ajat ovat Unix-sekunteja. Vastaukset ovat samat kuin samannimisillä [MCP-työkaluilla](mcp.md#tools), joten ne pysyvät samoina.

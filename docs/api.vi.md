@@ -29,7 +29,7 @@ Khi chưa có mật khẩu đăng nhập, ai mở được giao diện web cũng
 | `GET /api/v1/anomalies/{id}` | Một bất thường | đọc |
 | `GET /api/v1/storage/{domain}` | Lịch sử dung lượng, mức tăng mỗi tuần và dung lượng trống của từng kho trong một miền | đọc |
 | `POST /api/v1/backups` | Sao lưu một mục (`{"domain":"containers","item":"plex"}`) hoặc cả miền (`{"domain":"vms"}`) | bắt đầu |
-| `POST /api/v1/backups/everything` | Chạy Backup Everything | bắt đầu |
+| `POST /api/v1/backups/everything` | Chạy Sao lưu toàn bộ | bắt đầu |
 | `POST /api/v1/runs/{id}/cancel` | Hủy một bản sao lưu đang chạy do mã này bắt đầu | bắt đầu |
 
 Các miền là `containers`, `vms`, `files`, `zfs`, `flash` và `config`. Thời gian tính bằng giây Unix. Câu trả lời giống với [công cụ MCP](mcp.md#tools) cùng tên, nên hai bên luôn khớp nhau.
