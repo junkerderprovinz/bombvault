@@ -73,7 +73,7 @@ Hurtig opsætning:
 
 1. **Indstillinger, Integrationer, Værts-SSH:** kopiér den viste offentlige nøgle.
 2. Tilføj den til Unraids `/root/.ssh/authorized_keys` (også persisteret til flashen, så den overlever genstarter).
-3. Klik på **Test connection**.
+3. Klik på **Test forbindelse**.
 
 Skabelonen tilføjer `--add-host=host.docker.internal:host-gateway`, så containeren kan nå værten. Sæt `LIBVIRT_HOST` til din Unraid LAN-IP, hvis det navn ikke resolverer (for eksempel når containeren kører på et brugerdefineret `br0.x`-netværk). Hvis du ændrede Unraids SSH-port, så sæt `LIBVIRT_SSH_PORT` til at matche. **Live-øjebliksbilleder** kræver derudover qemu guest agent i VM'en og disken på `/mnt/cache` (ikke `/mnt/user`).
 

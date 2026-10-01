@@ -68,9 +68,9 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 *Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.*
 
 1. Mở giao diện web tại `https://<your-unraid-ip>:3443` (chứng chỉ tự ký ngay từ đầu).
-2. Trong **Settings**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Config, Files, ZFS datasets) và chọn một màu nhấn.
+2. Trong **Cài đặt**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Config, Files, ZFS datasets) và chọn một màu nhấn.
 3. Ở tab **Containers**, chọn một container và nhấp **Back up** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
-4. Thiết lập lập lịch từ **Settings, Schedules**. Có một tùy chọn *đưa tất cả vào lịch trình* một cú nhấp cho container và VM.
+4. Thiết lập lập lịch từ **Cài đặt, Lịch trình**. Có một tùy chọn *đưa tất cả vào lịch trình* một cú nhấp cho container và VM.
 
 !!! tip "Tùy chọn: chọn một thứ tự sao lưu"
     Nếu một số container luôn cần được sao lưu trước những cái khác (ví dụ một cơ sở dữ liệu trước ứng dụng dùng nó), hãy mở bảng **backup-order** trên trang Containers và kéo chúng vào trình tự bạn muốn. Các lần chạy theo lịch và chọn nhiều sau đó sẽ tuân theo thứ tự này; bất cứ cái nào bạn để không sắp xếp sẽ được sao lưu theo thứ tự quá hạn nhất trước, như trước đây.
@@ -90,5 +90,5 @@ Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (
 
 - Duyệt đầy đủ **[Tính năng](features.md)**.
 - Thêm một hoặc nhiều bản sao **[Off-site & khôi phục](offsite-recovery.md)** (mỗi miền có thể gửi tới nhiều đích cùng lúc) và lưu bộ khôi phục của bạn.
-- Nhân bản một thiết lập hay chuyển sang một máy mới? Mang toàn bộ cấu hình của bạn theo với thẻ **Xuất và nhập cài đặt**. Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
+- Nhân bản một thiết lập hay chuyển sang một máy mới? Mang toàn bộ cấu hình của bạn theo với thẻ **Xuất / nhập cài đặt**. Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
 - Gặp trục trặc? Xem **[Khắc phục sự cố](troubleshooting.md)**.
