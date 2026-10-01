@@ -86,6 +86,24 @@ describe("the settings search index", () => {
     for (const card of cards) expect(card.rows).toContainEqual(row);
   });
 
+  it.each([
+    ["schedules", "IdleCard"],
+    ["offsite", "StreamingCard"],
+  ] as const)("has every caption and (i) of the card the %s page mounts as %s", (page, file) => {
+    expect(region(page)).toContain(`<${file}`);
+    const source = readFileSync(join(HERE, `${file}.tsx`), "utf8");
+    const [title] = cardTitles(source);
+    const card = SETTINGS_INDEX[page].find((c) => c.title === title);
+    expect(card, `${title} on ${page}`).toBeDefined();
+    const rows = [
+      ...source.matchAll(/key: "\w+", label: "([\w.]+)"(?:, hint: "([\w.]+)")?/g),
+      ...source.matchAll(/label=\{t\("([\w.]+)"\)\}\s*hint=\{t\("([\w.]+)"\)\}/g),
+      ...source.matchAll(/\{t\("([\w.]+)"\)\}\s*<InfoBubble tip=\{t\("([\w.]+)"\)\}/g),
+    ].map(([, key, hint]) => (hint ? { key, hint } : { key }));
+    expect(rows.length).toBeGreaterThanOrEqual(3);
+    for (const row of rows) expect(card?.rows).toContainEqual(row);
+  });
+
   it("lists no card twice on one page", () => {
     for (const [page, cards] of Object.entries(SETTINGS_INDEX)) {
       const names = cards.map((c) => `${c.title}${JSON.stringify(c.vars ?? {})}`);

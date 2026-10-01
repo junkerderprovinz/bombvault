@@ -227,6 +227,15 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "settings.missedSchedulesTitle",
       rows: [{ key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" }],
     },
+    {
+      title: "idle.title",
+      hint: "idle.hint",
+      rows: [
+        { key: "idle.cpu", hint: "idle.cpuHint" },
+        { key: "idle.net" },
+        { key: "idle.quiet", hint: "idle.quietHint" },
+      ],
+    },
   ],
 
   containers: [
@@ -297,6 +306,17 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "settings.offsiteLimits",
       hint: "settings.limitHint",
       rows: [{ key: "settings.limitUpload" }, { key: "settings.limitDownload" }],
+    },
+    {
+      title: "streaming.title",
+      hint: "streaming.hint",
+      rows: [
+        { key: "streaming.toggle", hint: "streaming.toggleHint" },
+        { key: "streaming.servers", hint: "streaming.serversHint" },
+        { key: "streaming.threshold", hint: "streaming.thresholdHint" },
+        { key: "streaming.limit", hint: "streaming.limitHint" },
+        { key: "streaming.hold", hint: "streaming.holdHint" },
+      ],
     },
   ],
 

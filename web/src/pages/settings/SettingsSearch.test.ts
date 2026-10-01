@@ -69,4 +69,30 @@ describe("the settings index in English", () => {
     expect(hit?.inHint).toBe(true);
     expect(hit?.item.name).toBe(en["settings.retentionYearly"]);
   });
+
+  it("leads the idle limits to the Schedules page", () => {
+    const top = search(items, "idle before backup")[0];
+    expect(top.item.page).toBe("schedules");
+    expect(top.item.name).toBe(en["idle.title"]);
+    expect(where("traffic below")).toEqual([`schedules: ${en["idle.title"]}`]);
+    expect(where("for at least")).toContain(`schedules: ${en["idle.title"]}`);
+  });
+
+  it("leads Streaming first and its limits to the Off-site page", () => {
+    const top = search(items, "streaming first")[0];
+    expect(top.item.page).toBe("offsite");
+    expect(top.item.name).toBe(en["streaming.title"]);
+    expect(where("upload limit while streaming")).toEqual([`offsite: ${en["streaming.title"]}`]);
+    expect(where("media servers")).toContain(`offsite: ${en["streaming.title"]}`);
+    expect(where("back to normal")).toContain(`offsite: ${en["streaming.title"]}`);
+  });
+
+  it("finds the idle and streaming rows by the words behind their (i)", () => {
+    const cpu = search(items, "docker stats").find((h) => h.item.page === "schedules");
+    expect(cpu?.inHint).toBe(true);
+    expect(cpu?.item.name).toBe(en["idle.cpu"]);
+    const servers = search(items, "image name").filter((h) => h.item.page === "offsite");
+    expect(servers.map((h) => h.item.name)).toContain(en["streaming.servers"]);
+    expect(servers.every((h) => h.inHint)).toBe(true);
+  });
 });
