@@ -114,6 +114,7 @@ func sameOffsitePolicy(a, b store.OffsiteTarget) bool {
 	return a.Immutable == b.Immutable && a.Schedule == b.Schedule &&
 		a.RetentionKeepLast == b.RetentionKeepLast && a.RetentionKeepDaily == b.RetentionKeepDaily &&
 		a.RetentionKeepWeekly == b.RetentionKeepWeekly && a.RetentionKeepMonthly == b.RetentionKeepMonthly &&
+		a.RetentionKeepYearly == b.RetentionKeepYearly && storedCompression(a.Compression) == storedCompression(b.Compression) &&
 		a.LimitUpload == b.LimitUpload && a.LimitDownload == b.LimitDownload &&
 		a.GrowthBudgetGB == b.GrowthBudgetGB
 }

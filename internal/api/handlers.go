@@ -25,6 +25,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
+	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -634,6 +635,9 @@ type containerView struct {
 	// DumpOnly: the repositories hold database dumps of this container and no
 	// files backup, so restoring it alone brings back an empty database.
 	DumpOnly bool `json:"dumpOnly"`
+	// ChangedSinceBackup is how the container differs from its last good
+	// backup: image, ports, variables by name and volumes.
+	ChangedSinceBackup []DefinitionChange `json:"changedSinceBackup,omitempty"`
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -702,6 +706,11 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		snapTimes = m
 	}
 
+	shapes, shErr := h.store.BackedUpShapes()
+	if shErr != nil {
+		log.Printf("api: list containers: change notice: %v", shErr)
+	}
+
 	views := make([]containerView, 0, len(infos)+len(targets))
 	viewIndex := make(map[string]int, len(infos)) // live rows only, for the rename-suggestion backfill below
 	hasOwnBackup := make(map[string]bool, len(infos))
@@ -751,6 +760,9 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
+		if t, ok := byName[c.Name]; ok && !v.Self && (run != nil || shapes[t.ID] != "") {
+			v.ChangedSinceBackup = h.svc.changesSinceBackup(r.Context(), c, t, shapes[t.ID])
+		}
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -2202,11 +2214,16 @@ type settingsView struct {
 	RetentionKeepDaily   int `json:"retentionKeepDaily"`
 	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
+	RetentionKeepYearly  int `json:"retentionKeepYearly"`
+	// Compression is restic's --compression per repository, keyed like
+	// store.Settings.Compression.
+	Compression map[string]string `json:"compression"`
 	// Separate off-site retention keep-policy (all 0 = off-site keeps everything).
 	OffsiteRetentionKeepLast    int `json:"offsiteRetentionKeepLast"`
 	OffsiteRetentionKeepDaily   int `json:"offsiteRetentionKeepDaily"`
 	OffsiteRetentionKeepWeekly  int `json:"offsiteRetentionKeepWeekly"`
 	OffsiteRetentionKeepMonthly int `json:"offsiteRetentionKeepMonthly"`
+	OffsiteRetentionKeepYearly  int `json:"offsiteRetentionKeepYearly"`
 	// Off-site transfer bandwidth caps (KiB/s; 0 = unlimited).
 	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
 	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
@@ -2417,10 +2434,13 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepDaily:          s.RetentionKeepDaily,
 		RetentionKeepWeekly:         s.RetentionKeepWeekly,
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
+		RetentionKeepYearly:         s.RetentionKeepYearly,
+		Compression:                 compressionView(s),
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
 		OffsiteRetentionKeepWeekly:  s.OffsiteRetentionKeepWeekly,
 		OffsiteRetentionKeepMonthly: s.OffsiteRetentionKeepMonthly,
+		OffsiteRetentionKeepYearly:  s.OffsiteRetentionKeepYearly,
 		OffsiteLimitUpload:          s.OffsiteLimitUpload,
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 		BackupCores:                 s.BackupCores,
@@ -2684,6 +2704,7 @@ func applyOffsiteSettings(cur *store.Settings, v settingsView) {
 	cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
 	cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	cur.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
 	cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
@@ -2807,6 +2828,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if msg := rejectInvalidAnomalySettings(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if msg := rejectInvalidCompression(v.Compression); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
@@ -2958,6 +2983,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
+		cur.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+		applyCompression(cur, v.Compression)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
@@ -3088,7 +3115,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
 		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
-			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
+			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0 || s.OffsiteRetentionKeepYearly > 0) {
 		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
 	}
 	if len(warnings) > 0 {
@@ -3821,6 +3848,8 @@ type runView struct {
 	// run the web interface or the scheduler started.
 	StartedViaLabel   string `json:"startedViaLabel"`
 	StartedViaRevoked bool   `json:"startedViaRevoked"`
+	// Bottleneck is what held a slow backup back, when one thing clearly did.
+	Bottleneck *hostload.Cause `json:"bottleneck,omitempty"`
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
@@ -3894,7 +3923,7 @@ func (h *Handler) runViews(runs []store.Run) []runView {
 	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]}
+		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
 		if key, ok := keys[r.StartedViaKey]; ok {
 			v.StartedViaLabel = key.Label
 			v.StartedViaRevoked = key.RevokedAt > 0

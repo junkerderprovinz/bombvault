@@ -6,14 +6,22 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { Toggle } from "../../components/Toggle";
 import { hueVars } from "../../lib/appearance";
 import { type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { useT } from "../../lib/i18n";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
-/** The new-password field on the System tab. The MCP card sends the operator
- *  there, because a key created while the web interface has no password is
- *  handed to whoever can reach the page. */
+/** The new-password field on the Security page. The MCP and pairing cards
+ *  send the operator there, because a key or a phrase made while the web
+ *  interface has no password is handed to whoever can reach the page. */
 export const LOGIN_PASSWORD_FIELD = "bv-login-password";
+
+/** useOpenPasswordField opens the Security page with the cursor in the login
+ *  password field. */
+export function useOpenPasswordField(): () => void {
+  const navigate = useNavigate();
+  return () => navigate(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
+}
 
 export function Card({
   title,

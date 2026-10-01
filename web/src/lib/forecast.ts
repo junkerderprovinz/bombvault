@@ -42,6 +42,10 @@ export interface ForecastLine {
   /** True when weeksToFull < FORECAST_WARN_WEEKS; the projection is then shown
    *  in the statusWarn colour. */
   warn: boolean;
+  /** "Free space unknown" for a backend that cannot report it, with the reason
+   *  as the info bubble's tip. */
+  freeUnknown: string | null;
+  freeUnknownTip: string | null;
 }
 
 /**
@@ -84,7 +88,10 @@ export function buildForecastLine(
   }
 
   const free = freeBytes == null ? null : resolve("dashboard.forecastFree", { bytes: humanBytes(freeBytes) });
+  const unknown = forecast.capacityUnsupported === true;
+  const freeUnknown = unknown ? resolve("dashboard.forecastFreeUnknown") : null;
+  const freeUnknownTip = unknown ? resolve("dashboard.forecastFreeUnknownInfo") : null;
 
-  if (growth == null && projection == null && free == null) return null;
-  return { growth, projection, free, warn };
+  if (growth == null && projection == null && free == null && freeUnknown == null) return null;
+  return { growth, projection, free, warn, freeUnknown, freeUnknownTip };
 }

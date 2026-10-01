@@ -2120,6 +2120,25 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
 	{
+		// A yearly rule next to daily, weekly and monthly, for the local policy,
+		// the settings-level off-site policy and every off-site destination.
+		// Zero keeps the policies exactly as they were.
+		version:          retentionYearlyMigration,
+		name:             "retention_keep_yearly",
+		alreadySatisfied: columnPresent("offsite_targets", "retention_keep_yearly"),
+		sql: `ALTER TABLE settings ADD COLUMN retention_keep_yearly INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN offsite_retention_keep_yearly INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE offsite_targets ADD COLUMN retention_keep_yearly INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// restic's --compression per repository. Empty is restic's own default.
+		version:          retentionYearlyMigration + 1,
+		name:             "repo_compression",
+		alreadySatisfied: columnPresent("offsite_targets", "compression"),
+		sql: `ALTER TABLE settings ADD COLUMN repo_compression TEXT NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN compression TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// One restore probe of one item: the check after its first backup, or
 		// one somebody asked for. The time this migration ran is when first
 		// backups start counting, so items backed up before it are not all
@@ -2165,6 +2184,42 @@ CREATE INDEX IF NOT EXISTS idx_start_tests_target ON start_tests(target_id, at);
 		name:             "settings_start_test_enabled",
 		alreadySatisfied: columnPresent("settings", "start_test_enabled"),
 		sql:              `ALTER TABLE settings ADD COLUMN start_test_enabled INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// What a container looked like when its last backup succeeded, so the
+		// card can say what changed since. The definition cannot serve: it is
+		// written before restic runs, so a failed backup would replace it.
+		version:          insightMigration,
+		name:             "targets_backed_up_shape",
+		alreadySatisfied: columnPresent("targets", "backed_up_shape"),
+		sql:              `ALTER TABLE targets ADD COLUMN backed_up_shape TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// How busy the CPU, the disks and the network were during a backup, and
+		// the one thing that held it back when it was slow. JSON, written by the
+		// api package after the run.
+		version:          insightMigration + 1,
+		name:             "runs_load_summary",
+		alreadySatisfied: columnPresent("runs", "load_summary"),
+		sql:              `ALTER TABLE runs ADD COLUMN load_summary TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The size of each folder in a backup and what the backup added, one
+		// row per item and snapshot. Rows are built from the repository and
+		// can be dropped at any time; the newest few per item are kept.
+		version: insightMigration + 2,
+		name:    "size_breakdowns",
+		sql: `CREATE TABLE IF NOT EXISTS size_breakdowns (
+  target_id   TEXT    NOT NULL,
+  snapshot_id TEXT    NOT NULL,
+  domain      TEXT    NOT NULL,
+  parent_id   TEXT    NOT NULL DEFAULT '',
+  created_at  INTEGER NOT NULL,
+  partial     INTEGER NOT NULL DEFAULT 0,
+  tree        TEXT    NOT NULL,
+  PRIMARY KEY (target_id, snapshot_id)
+);
+CREATE INDEX IF NOT EXISTS idx_size_breakdowns_target ON size_breakdowns(target_id, created_at);`,
 	},
 	{
 		// The pairing group: this instance's id within it, the secret behind
@@ -2274,9 +2329,17 @@ const mcpActivityMigration = 148
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
 
+// retentionYearlyMigration starts the block of retention and destination
+// settings, 160 to 169.
+const retentionYearlyMigration = 160
+
 // verifyMigrationBase numbers the restore probes and start tests from one
 // place, for the same reason dbDumpMigrationBase does.
 const verifyMigrationBase = 180
+
+// insightMigration numbers the migrations behind the change notice, the load
+// summary of a run and the size breakdown.
+const insightMigration = 190
 
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.

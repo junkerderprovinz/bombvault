@@ -19,7 +19,15 @@ const snap = (c: string, hoursAgo: number) => ({
   tags: ["config"],
   hostname: "tower",
 });
-const SNAPSHOTS = [snap("a1", 2), snap("b2", 26), snap("c3", 50), snap("d4", 74), snap("e5", 24 * 30)];
+// The oldest backup falls on 2 January: a one-digit month and day give the
+// shortest date a locale prints, the row with the most room beside its time.
+const SNAPSHOTS = [
+  snap("a1", 2),
+  snap("b2", 26),
+  snap("c3", 50),
+  snap("d4", 74),
+  { ...snap("e5", 0), time: new Date(2026, 0, 2, 12).toISOString() },
+];
 const FLAGGED = SNAPSHOTS[1].id;
 
 const target = (id: string, name: string, sortOrder: number) => ({

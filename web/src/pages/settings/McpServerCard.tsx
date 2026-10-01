@@ -32,7 +32,7 @@ import { McpClientDialog, type FreshKey } from "./McpClientDialog";
 import { ClientMark } from "./McpClientMark";
 import { keyLogId, McpKeyLog } from "./McpKeyLog";
 import { McpOAuthSettings } from "./McpOAuthSettings";
-import { Card, LOGIN_PASSWORD_FIELD } from "./shared";
+import { Card, useOpenPasswordField } from "./shared";
 
 // McpServerCard is where an MCP key comes from, and the only place it is ever
 // visible: the server keeps a hash, so a key that is not copied out of the
@@ -111,6 +111,7 @@ const FIRST_CALL_POLL_MS = 3000;
 export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; passwordSet?: boolean }) {
   const { t } = useT();
   const { push } = useToast();
+  const openPasswordField = useOpenPasswordField();
   const [data, setData] = useState<McpKeysResponse | null>(null);
   const [lists, setLists] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -380,11 +381,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 label={t("mcp.setPassword")}
                 labelKey="mcp.setPassword"
                 tone="subtle"
-                onClick={() => {
-                  const field = document.getElementById(LOGIN_PASSWORD_FIELD);
-                  field?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-                  field?.focus();
-                }}
+                onClick={openPasswordField}
                 hueIndex={hueIndex}
               />
             </div>

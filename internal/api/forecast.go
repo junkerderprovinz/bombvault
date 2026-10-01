@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"math"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -30,7 +33,18 @@ type StorageForecast struct {
 	// WeeksToFull is FreeBytes / GrowthBytesPerWeek to one decimal, set only
 	// while the repo grows.
 	WeeksToFull *float64 `json:"weeksToFull,omitempty"`
+	// CapacitySource names what measured FreeBytes: statfs, smb or nfs for a
+	// path on this box, rclone or sftp for a remote repository.
+	CapacitySource string `json:"capacitySource,omitempty"`
+	// CapacityUnsupported marks a backend that cannot report its free space
+	// at all, such as S3, B2 or a REST server, so only the growth is known.
+	CapacityUnsupported bool `json:"capacityUnsupported,omitempty"`
 }
+
+// remoteReadingMaxAge is how old the last reading of a remote volume may be
+// and still stand for its free space today. Readings are taken at most every
+// six hours and only around backups.
+const remoteReadingMaxAge = 7 * 24 * time.Hour
 
 // growthBytesPerWeek returns the raw repo size change per week between the
 // oldest and newest sample inside forecastWindow. stats is sorted by At, as
@@ -84,18 +98,54 @@ func (s *Service) rcloneAboutFn() func(context.Context, string) (aboutResult, er
 	}
 }
 
+// sftpAboutFn returns the SFTP probe a test injected, or the ssh-backed one.
+func (s *Service) sftpAboutFn() func(context.Context, string) (aboutResult, error) {
+	if s.sftpAbout != nil {
+		return s.sftpAbout
+	}
+	return sftpCapacity
+}
+
+// remoteVolumeSource names the probe that can measure a remote repository, or
+// returns "" for a backend no probe reaches.
+func remoteVolumeSource(loc string) string {
+	switch {
+	case isRcloneLocation(loc):
+		return "rclone"
+	case strings.HasPrefix(strings.TrimSpace(loc), "sftp:"):
+		return "sftp"
+	}
+	return ""
+}
+
+// remoteVolumeKey names a remote repository's volume in the samples table.
+func remoteVolumeKey(loc string) string { return "remote:" + repoLocationKey(loc) }
+
 // StorageForecast builds the forecast for a domain and source from its size
-// samples, or returns nil when nothing is known. Free space is measured only
-// for a local repo.
+// samples, or returns nil when nothing is known. A local repository is
+// measured now; a remote one is read from the capacity rule's last reading of
+// its volume, since asking a remote costs an API call or an ssh login.
 func (s *Service) StorageForecast(domain, source string, stats []store.RepoStat) *StorageForecast {
+	now := time.Now()
 	var f StorageForecast
-	if growth, ok := growthBytesPerWeek(stats, time.Now()); ok {
+	if growth, ok := growthBytesPerWeek(stats, now); ok {
 		f.GrowthBytesPerWeek = &growth
 	}
-	if _, repo, err := s.domainRepoSource(domain, source); err == nil && !restic.IsRemoteRepo(repo) {
-		if free, fErr := s.diskFreeFn()(repo); fErr == nil {
-			freeBytes := int64(math.Min(float64(free), math.MaxInt64)) // clamp: JSON numbers are signed
-			f.FreeBytes = &freeBytes
+	if _, repo, err := s.domainRepoSource(domain, source); err == nil {
+		switch {
+		case !restic.IsRemoteRepo(repo):
+			if free, fErr := s.diskFreeFn()(repo); fErr == nil {
+				freeBytes := int64(math.Min(float64(free), math.MaxInt64)) // clamp: JSON numbers are signed
+				f.FreeBytes = &freeBytes
+				f.CapacitySource = localVolumeSource(repo)
+			}
+		case remoteVolumeSource(repo) == "":
+			f.CapacityUnsupported = true
+		default:
+			if sample, ok := s.lastVolumeReading(remoteVolumeKey(repo), now); ok {
+				f.FreeBytes = &sample.FreeBytes
+				f.CapacitySource = sample.Source
+			}
 		}
 	}
 	if f.GrowthBytesPerWeek != nil && f.FreeBytes != nil {
@@ -103,7 +153,7 @@ func (s *Service) StorageForecast(domain, source string, stats []store.RepoStat)
 			f.WeeksToFull = &weeks
 		}
 	}
-	if f.GrowthBytesPerWeek == nil && f.FreeBytes == nil {
+	if f.GrowthBytesPerWeek == nil && f.FreeBytes == nil && !f.CapacityUnsupported {
 		return nil
 	}
 	return &f
@@ -119,15 +169,19 @@ func weeksToFull(freeBytes, growthPerWeek int64) (float64, bool) {
 }
 
 // repoCapacity is the room on the disk or remote one repository sits on. A
-// nil figure is unknown, and At is when it was read.
+// nil figure is unknown, and At is when it was read. Source names what
+// measured it, as in StorageForecast, and Unsupported marks a backend that
+// cannot report its room at all.
 type repoCapacity struct {
-	Name    string
-	Primary bool
-	Remote  bool
-	At      *int64
-	Free    *int64
-	Used    *int64
-	Total   *int64
+	Name        string
+	Primary     bool
+	Remote      bool
+	At          *int64
+	Free        *int64
+	Used        *int64
+	Total       *int64
+	Source      string
+	Unsupported bool
 }
 
 // repoCapacities reads the room around every repository a domain writes to. A
@@ -154,13 +208,17 @@ func (s *Service) repoCapacities(domain string) []repoCapacity {
 				now := s.anomalies.nowUnix()
 				free, used, total := clampToInt64(res.Free), clampToInt64(res.Used), clampToInt64(res.Total)
 				c.At, c.Free, c.Used, c.Total = &now, &free, &used, &total
+				c.Source = volumeSource(res.FSType)
 			}
-		case isRcloneLocation(ref.Loc):
+		case remoteVolumeSource(ref.Loc) == "":
+			c.Unsupported = true
+		default:
 			if readings == nil {
 				readings = s.newestVolumeReadings()
 			}
-			if v, ok := readings["remote:"+repoLocationKey(ref.Loc)]; ok {
+			if v, ok := readings[remoteVolumeKey(ref.Loc)]; ok {
 				c.At, c.Free, c.Total = &v.At, &v.FreeBytes, v.TotalBytes
+				c.Source = v.Source
 				if v.TotalBytes != nil {
 					used := *v.TotalBytes - v.FreeBytes
 					c.Used = &used
@@ -184,4 +242,28 @@ func (s *Service) newestVolumeReadings() map[string]store.VolumeSample {
 		newest[v.Volume] = v // oldest first, so the last one stays
 	}
 	return newest
+}
+
+// lastVolumeReading returns the newest reading of volume that is recent enough
+// to stand for today.
+func (s *Service) lastVolumeReading(volume string, now time.Time) (store.VolumeSample, bool) {
+	samples, err := s.store.ListVolumeSamples(now.Add(-remoteReadingMaxAge).Unix())
+	if err != nil {
+		return store.VolumeSample{}, false
+	}
+	for i := len(samples) - 1; i >= 0; i-- {
+		if samples[i].Volume == volume {
+			return samples[i], true
+		}
+	}
+	return store.VolumeSample{}, false
+}
+
+// localVolumeSource names what statfs measured for a path on this box.
+func localVolumeSource(repo string) string {
+	mounts, err := os.ReadFile(mountinfoPath)
+	if err != nil {
+		return volumeSource("")
+	}
+	return volumeSource(fsTypeAt(bytes.NewReader(mounts), repo))
 }

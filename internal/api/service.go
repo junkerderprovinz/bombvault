@@ -38,6 +38,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -159,6 +160,11 @@ type ResticEngine interface {
 	// buffer the entire listing (measured 1.36 GiB on a 672k-node snapshot) —
 	// see restic.LsStream's own doc comment.
 	LsStream(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
+	// LsStreamNoLock is LsStream without a repository lock, and DiffStream
+	// hands over the paths two snapshots differ in. The size breakdown reads
+	// both beside running backups.
+	LsStreamNoLock(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
+	DiffStream(ctx context.Context, repo, snap1, snap2 string, mode restic.Mode, onChange func(restic.DiffChange)) error
 	// LsPath lists one directory's own node plus its direct children, scoped to
 	// dirPath (a subtree root) — used to read back a restored directory's
 	// original owner/mode after a remapped restore, since restic's restorer
@@ -301,6 +307,7 @@ type Service struct {
 	// binary. Accessed via diskStatFn and rcloneAboutFn.
 	diskStat    func(path string) (diskStatResult, error)
 	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
+	sftpAbout   func(ctx context.Context, repo string) (aboutResult, error)
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
@@ -424,6 +431,10 @@ type Service struct {
 	// OpenScheduledRun.
 	runsOpenMu sync.Mutex
 	runsOpen   map[string]int
+	// load measures the host while backups run, for the bottleneck line.
+	load *hostload.Sampler
+
+	breakdowns breakdowns
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
@@ -570,6 +581,11 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestFlights:    map[string]*suggestFlight{},
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
+	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
+	if st != nil {
+		st.SetRunStartedHook(s.runStarted)
+		st.AddRunFinishedHook(s.runEnded)
+	}
 	return s
 }
 
@@ -1660,6 +1676,7 @@ func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolic
 		KeepDaily:   settings.RetentionKeepDaily,
 		KeepWeekly:  settings.RetentionKeepWeekly,
 		KeepMonthly: settings.RetentionKeepMonthly,
+		KeepYearly:  settings.RetentionKeepYearly,
 	}
 }
 
@@ -1674,6 +1691,7 @@ func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.Retenti
 		KeepDaily:   settings.OffsiteRetentionKeepDaily,
 		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
 		KeepMonthly: settings.OffsiteRetentionKeepMonthly,
+		KeepYearly:  settings.OffsiteRetentionKeepYearly,
 	}
 }
 
@@ -1688,6 +1706,7 @@ func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy 
 		KeepDaily:   t.RetentionKeepDaily,
 		KeepWeekly:  t.RetentionKeepWeekly,
 		KeepMonthly: t.RetentionKeepMonthly,
+		KeepYearly:  t.RetentionKeepYearly,
 	}
 }
 
@@ -1716,6 +1735,7 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 	if target.StorageClass != "" {
 		mode.StorageClass = target.StorageClass
 	}
+	mode.Compression = storedCompression(target.Compression)
 	return mode
 }
 
@@ -2180,11 +2200,11 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 		return
 	}
 	title := "BombVault: MCP key " + event
-	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > MCP server.",
+	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings, Integrations, MCP server.",
 		k.Label, k.Hint, event, addr)
 	if k.Kind == store.MCPKindOAuth {
 		title = "BombVault: MCP client " + event
-		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings > System > MCP server.",
+		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings, Integrations, MCP server.",
 			k.Label, event, addr)
 	}
 	go func() {
@@ -2272,9 +2292,11 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 		RetentionKeepDaily:   settings.OffsiteRetentionKeepDaily,
 		RetentionKeepWeekly:  settings.OffsiteRetentionKeepWeekly,
 		RetentionKeepMonthly: settings.OffsiteRetentionKeepMonthly,
+		RetentionKeepYearly:  settings.OffsiteRetentionKeepYearly,
 		LimitUpload:          settings.OffsiteLimitUpload,
 		LimitDownload:        settings.OffsiteLimitDownload,
 		GrowthBudgetGB:       settings.OffsiteGrowthBudgetGB,
+		Compression:          settings.CompressionFor(offsiteCompressionKey(domain)),
 		Enabled:              true,
 	}
 }
@@ -2455,7 +2477,7 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 // whose absolute-path regex redacts any slash-led token.
 var (
 	// A named repository (#204). Its toggle is on the Repositories card.
-	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Repositories, delete what you meant to delete, and switch it back on")
+	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Storage, Repositories, delete what you meant to delete, and switch it back on")
 	// An off-site destination. Its toggle is on the off-site destinations card.
 	errAppendOnlyOffsiteTarget = errors.New("this off-site destination is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Off-site, delete what you meant to delete, and switch it back on")
 	// A domain's own remote primary. Its toggle is in the Remote safety dialog
@@ -2969,7 +2991,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			settings.OffsiteRetentionKeepLast > 0 ||
 			settings.OffsiteRetentionKeepDaily > 0 ||
 			settings.OffsiteRetentionKeepWeekly > 0 ||
-			settings.OffsiteRetentionKeepMonthly > 0
+			settings.OffsiteRetentionKeepMonthly > 0 ||
+			settings.OffsiteRetentionKeepYearly > 0
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,
@@ -3453,7 +3476,7 @@ func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
 }
 
 // errVolumeUnmeasurable is a repository this box cannot ask about at all: S3,
-// B2, a REST server or SFTP answer no capacity question.
+// B2 and a REST server answer no capacity question.
 var errVolumeUnmeasurable = errors.New("this backend reports no capacity")
 
 // probeVolume measures one repository, or returns nil when the volume it sits
@@ -3474,28 +3497,35 @@ func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
 		}
 		total := clampToInt64(res.Total)
 		return &store.VolumeSample{
-			Volume: res.Volume, At: now, Source: "statfs",
+			Volume: res.Volume, At: now, Source: volumeSource(res.FSType),
 			FreeBytes: clampToInt64(res.Free), TotalBytes: &total,
 		}, nil
 	}
-	if !isRcloneLocation(ref.Loc) {
+	source := remoteVolumeSource(ref.Loc)
+	if source == "" {
 		return nil, errVolumeUnmeasurable
 	}
-	volume := "remote:" + repoLocationKey(ref.Loc)
+	volume := remoteVolumeKey(ref.Loc)
 	if now-seen[volume] < volumeSampleRemoteEvery {
 		return nil, nil
 	}
-	remote, err := rcloneRemoteOf(ref.Loc)
-	if err != nil {
-		return nil, err
+	var probe func() (aboutResult, error)
+	if source == "sftp" {
+		probe = func() (aboutResult, error) { return s.sftpAboutFn()(ctx, ref.Loc) }
+	} else {
+		remote, err := rcloneRemoteOf(ref.Loc)
+		if err != nil {
+			return nil, err
+		}
+		probe = func() (aboutResult, error) { return s.rcloneAboutFn()(ctx, remote) }
 	}
 	s.anomalies.noteVolumeProbe(volume, now)
-	about, err := s.rcloneAboutFn()(ctx, remote)
+	about, err := probe()
 	if err != nil {
 		return nil, err
 	}
 	return &store.VolumeSample{
-		Volume: volume, At: now, Source: "rclone",
+		Volume: volume, At: now, Source: source,
 		FreeBytes: about.Free, TotalBytes: about.Total,
 	}, nil
 }
@@ -5676,6 +5706,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		return backup.Summary{}, err
 	}
 	s.queueFirstProbe(tg.ID)
+	s.recordBackedUpShape(tg.ID, name, in)
 
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild its state via Discover after losing
@@ -12970,7 +13001,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 }
 
 // VMSSHInfo returns the libvirt SSH host and BombVault's public key for the user
-// to authorize on the Unraid host (Settings → VM Backup). Errors when SSH is not
+// to authorize on the Unraid host (Settings, Integrations, Host SSH). Errors when SSH is not
 // wired (no key yet).
 func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	if s.ssh == nil {
@@ -17347,10 +17378,22 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("## Repository locations\n\n")
 	w("Paths are inside the BombVault container, under the host data mount (%s).\n", s.cfg.HostMountRoot)
 	w("On the host they live under your backup share; remote backends (rclone:/s3:/rest:/sftp:) are used as shown.\n\n")
+	// A repository written with a compression mode other than restic's default
+	// says so, because plain restic writing to it later would fall back to the
+	// default without anybody noticing.
+	compressed := false
+	kitCompression := func(stored string) string {
+		c := storedCompression(stored)
+		if c == "" {
+			return ""
+		}
+		compressed = true
+		return " (compression: " + string(c) + ")"
+	}
 	for _, rr := range repos {
-		w("- %s (local): %s\n", rr.Domain, orNone(rr.Local))
+		w("- %s (local): %s%s\n", rr.Domain, orNone(rr.Local), kitCompression(settings.CompressionFor(rr.Domain)))
 		if rr.Offsite != "" {
-			w("- %s (off-site): %s\n", rr.Domain, rr.Offsite)
+			w("- %s (off-site): %s%s\n", rr.Domain, rr.Offsite, kitCompression(settings.CompressionFor(offsiteCompressionKey(rr.Domain))))
 		}
 	}
 	w("\n")
@@ -17378,7 +17421,7 @@ func (s *Service) RecoveryKit() (string, error) {
 			if resolved, rErr := s.resolveRepo(n.Repo); rErr == nil {
 				loc = resolved
 			}
-			w("- %s: %s\n", n.Name, loc)
+			w("- %s: %s%s\n", n.Name, loc, kitCompression(n.Compression))
 			if items := s.namedRepoItemNames(n.ID); items != "" {
 				w("  holds: %s\n", items)
 			}
@@ -17403,15 +17446,21 @@ func (s *Service) RecoveryKit() (string, error) {
 	if loc, cErr := s.configRepoPath(settings); cErr == nil {
 		configLocal = loc
 	}
-	w("- config (local): %s\n", orNone(configLocal))
+	w("- config (local): %s%s\n", orNone(configLocal), kitCompression(settings.CompressionFor("config")))
 	if settings.ConfigOffsite != "" {
-		w("- config (off-site): %s\n", settings.ConfigOffsite)
+		w("- config (off-site): %s%s\n", settings.ConfigOffsite, kitCompression(settings.CompressionFor(offsiteCompressionKey("config"))))
 	}
 	w("\n")
+	if compressed {
+		w("A repository marked with a compression mode is written with restic's\n")
+		w("--compression option. Pass the same mode whenever you write to it with restic\n")
+		w("yourself, for example `restic -r <repo> --compression max backup <path>`.\n")
+		w("Reading and restoring need nothing extra.\n\n")
+	}
 	if mcpShipped {
 		w("Restoring this backup revokes every MCP key and every OAuth sign-in; create\n")
 		w("new keys and let cloud assistants sign in again under\n")
-		w("Settings > System > MCP server afterwards.\n\n")
+		w("Settings, Integrations, MCP server afterwards.\n\n")
 	}
 
 	// Off-site/cloud credentials — the stored rest-server / S3 keys and rclone
@@ -17876,7 +17925,7 @@ func formatItemFailures(failures []schedule.ItemFailure) string {
 // host's notify script over SSH. level is "normal" | "warning" | "alert".
 func (s *Service) sendUnraidNotify(ctx context.Context, subject, desc, level string) error {
 	if s.ssh == nil {
-		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, System, Host SSH)")
+		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, Integrations, Host SSH)")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

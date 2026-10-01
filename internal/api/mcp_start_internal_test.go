@@ -259,6 +259,28 @@ func TestMCPStartCooldown(t *testing.T) {
 	waitForFilesIdle(t, h)
 }
 
+func TestMCPStartCooldownCountsMinutesInTheSingular(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	base := time.Now()
+	ctx := mcpStartCaller("0b7e", true)
+	seedBackup(t, repo, sets["docs"].ID, "mcp", "0b7e")
+
+	for _, c := range []struct {
+		after time.Duration
+		want  string
+	}{
+		{30 * time.Second, "just now; wait 15 minutes"},
+		{90 * time.Second, "1 minute ago; wait 14 minutes"},
+		{mcpStartCooldown - 30*time.Second, "14 minutes ago; wait 1 minute or"},
+	} {
+		h.mcp.now = func() time.Time { return base.Add(c.after) }
+		msg := mcpErrorMessage(t, startFileSet(ctx, h, "docs"))
+		if !strings.Contains(msg, c.want) {
+			t.Errorf("after %v the refusal says %q, want it to contain %q", c.after, msg, c.want)
+		}
+	}
+}
+
 // Under a policy that keeps a fixed number of restore points, MCP must never
 // fill the window on its own: one of the kept points always comes from the
 // schedule or from the operator.
@@ -337,6 +359,52 @@ func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
 		}
 		if hold != nil {
 			t.Fatalf("the daily rule keeps the older days, but the start was held back: %v", hold.detail)
+		}
+	})
+
+	t.Run("a yearly rule does not hold this year's restore points", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "docs")
+		set := sets["docs"]
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.RetentionKeepLast = 3
+		s.RetentionKeepYearly = 5
+		if err := repo.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		seedBackup(t, repo, set.ID, "mcp", "0b7e")
+		seedBackup(t, repo, set.ID, "mcp", "0b7e")
+
+		hold, err := h.mcpRetentionHold(s, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hold == nil {
+			t.Fatal("the yearly rule keeps one restore point a year, so the last three must still be guarded")
+		}
+	})
+
+	t.Run("a yearly rule alone keeps one restore point of this year", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "docs")
+		set := sets["docs"]
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.RetentionKeepYearly = 5
+		if err := repo.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		seedBackup(t, repo, set.ID, "", "")
+
+		hold, err := h.mcpRetentionHold(s, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hold == nil {
+			t.Fatal("a new restore point would push out the only one kept for this year, but the start was allowed")
 		}
 	})
 

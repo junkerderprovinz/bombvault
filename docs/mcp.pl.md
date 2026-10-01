@@ -9,11 +9,12 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | `get_health` | Wersja, nazwa instancji, czy trwa kopia i co wolno temu kluczowi | odczyt |
 | `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, a dla kontenerów najnowszy test uruchomienia | odczyt |
 | `get_coverage` | Co BombVault chroni, a czego nie, z podanym powodem | odczyt |
-| `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli; każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować | odczyt |
-| `list_runs` | Historia przebiegów od najnowszych, z filtrem według domeny, elementu, stanu, rodzaju i czasu | odczyt |
+| `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli; każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować; kontener utworzony ponownie z innymi ustawieniami od ostatniej kopii wymienia zmiany | odczyt |
+| `list_runs` | Historia przebiegów od najnowszych, z filtrem według domeny, elementu, stanu, rodzaju i czasu; wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |
 | `list_restore_points` | Punkty przywracania jednego elementu z jego głównego repozytorium, a dla kontenera także jego zrzuty baz danych; zbiór danych ZFS ma jeden punkt przywracania na kopię, ze snapshotem każdego zbioru danych pod nim | odczyt |
 | `get_activity` | Co działa w tej chwili, z etapem i procentem | odczyt |
 | `get_storage_stats` | Historia rozmiaru głównego repozytorium domeny i jego przyrost tygodniowy oraz zajęte, wolne i całkowite miejsce na dysku lub zdalnym magazynie każdego z jej repozytoriów | odczyt |
+| `get_size_breakdown` | Które foldery i pliki zajmują miejsce w najnowszej kopii kontenera, maszyny wirtualnej lub zestawu folderów i ile z tego dodała ostatnia kopia | odczyt |
 | `list_anomalies` | Anomalie, które BombVault zauważył w kopiach, z filtrowaniem według stanu, wagi i domeny oraz podsumowaniem tego, co otwarte | odczyt |
 | `get_anomaly` | Jedno z tych zgłoszeń wraz z notatką zostawioną przy jego potwierdzeniu | odczyt |
 | `start_backup` | Od razu robi kopię jednego elementu | uruchomienie |
@@ -34,7 +35,7 @@ Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomi
 - 12 uruchomionych kopii na godzinę na klucz.
 - 15 minut między dwoma uruchomieniami przez MCP tego samego elementu, tej samej domeny lub Backup Everything.
 - Najwyżej 4 uruchomienia przez MCP tego samego elementu w ciągu 24 godzin.
-- **Ochrona przechowywania.** Gdy domena przechowuje stałą liczbę punktów przywracania (tylko "zachowaj ostatnie N", bez reguły dziennej, tygodniowej ani miesięcznej, lokalnie lub w miejscu off-site), każda nowa kopia wypycha najstarszą. BombVault odrzuca wtedy uruchomienie przez MCP elementu, którego N-1 najnowszych udanych kopii uruchomiono przez MCP. Dzięki temu w zachowanym zestawie zawsze zostaje co najmniej jeden punkt przywracania utworzony przez harmonogram albo przez ciebie. Przy "zachowaj ostatnią 1" asystent nie może w ogóle skopiować tego elementu. Następna zaplanowana kopia znowu robi miejsce.
+- **Ochrona przechowywania.** Gdy domena przechowuje stałą liczbę punktów przywracania (tylko "zachowaj ostatnie N", bez reguły dziennej, tygodniowej ani miesięcznej, lokalnie lub w miejscu off-site), każda nowa kopia wypycha najstarszą. BombVault odrzuca wtedy uruchomienie przez MCP elementu, którego N-1 najnowszych udanych kopii uruchomiono przez MCP. Dzięki temu w zachowanym zestawie zawsze zostaje co najmniej jeden punkt przywracania utworzony przez harmonogram albo przez ciebie. Przy "zachowaj ostatnią 1" asystent nie może w ogóle skopiować tego elementu. Następna zaplanowana kopia znowu robi miejsce. Sama reguła roczna liczy się jak "zachowaj ostatnią 1", bo z bieżącego roku zachowuje tylko jeden punkt przywracania.
 
 Uruchomienie domeny lub Backup Everything pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
 

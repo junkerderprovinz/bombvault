@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -61,7 +62,14 @@ type settingsExport struct {
 	// a build without the ZFS domain, so its empty ZFS fields say nothing about
 	// the ZFS setup of the instance it is applied to.
 	predatesZFS bool
+	// predatesYearly and targetsPredate say the same of the yearly rule and
+	// of the destinations' yearly rule and compression.
+	predatesYearly bool
+	targetsPredate targetKeysMissing
 }
+
+// targetKeysMissing names the destination settings a file does not carry.
+type targetKeysMissing struct{ yearly, compression bool }
 
 func (e *settingsExport) UnmarshalJSON(b []byte) error {
 	type plain settingsExport
@@ -69,13 +77,22 @@ func (e *settingsExport) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	var probe struct {
-		Settings map[string]json.RawMessage `json:"settings"`
+		Settings       map[string]json.RawMessage   `json:"settings"`
+		OffsiteTargets []map[string]json.RawMessage `json:"offsiteTargets"`
 	}
 	if err := json.Unmarshal(b, &probe); err != nil {
 		return err
 	}
 	_, hasZFS := probe.Settings["zfsEnabled"]
 	e.predatesZFS = !hasZFS
+	_, hasYearly := probe.Settings["retentionKeepYearly"]
+	e.predatesYearly = !hasYearly
+	for _, t := range probe.OffsiteTargets {
+		_, yearly := t["retentionKeepYearly"]
+		_, compression := t["compression"]
+		e.targetsPredate.yearly = e.targetsPredate.yearly || !yearly
+		e.targetsPredate.compression = e.targetsPredate.compression || !compression
+	}
 	return nil
 }
 
@@ -632,6 +649,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 		if msg := staticNamedRepoRefusals(loc, mountRoot); msg != "" {
 			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, msg)
 		}
+		if _, err := restic.ParseCompression(tv.Compression); err != nil {
+			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, err)
+		}
 	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
 	// settings save enforces), so an apply cannot install an un-runnable schedule.
@@ -669,6 +689,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// The two anomaly presets, through the guard the save uses, so an import
 	// cannot persist a value the Settings page then refuses to save.
 	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
+		return "invalid settings: " + msg
+	}
+	if msg := rejectInvalidCompression(exp.Settings.Compression); msg != "" {
 		return "invalid settings: " + msg
 	}
 	return ""
@@ -733,8 +756,9 @@ func settingsGroups(v settingsView) []string {
 	// one setting an apply can switch ON for a box that never ran it, so the
 	// preview has to name it.
 	add("everything", v.EverythingSchedule != "")
-	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 ||
-		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
+	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 || v.RetentionKeepYearly > 0 ||
+		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0 ||
+		v.OffsiteRetentionKeepYearly > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
 		v.FilesOffsite != "" || v.ZFSOffsite != "")
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled || v.StartTestEnabled)
@@ -789,6 +813,9 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 		if exp.predatesZFS {
 			keepZFSSettings(&merged, *cur)
 		}
+		if exp.predatesYearly {
+			merged.RetentionKeepYearly, merged.OffsiteRetentionKeepYearly = cur.RetentionKeepYearly, cur.OffsiteRetentionKeepYearly
+		}
 		anomalyChanged = anomalySettingsMoved(*cur, merged)
 		*cur = merged
 		return nil
@@ -802,7 +829,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// Replace the off-site targets with the imported set (a clean, deterministic
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
-	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.predatesZFS); err != nil {
+	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.predatesZFS, exp.targetsPredate); err != nil {
 		return err
 	}
 
@@ -847,18 +874,19 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 
 // replaceOffsiteTargets drops all current off-site targets and re-inserts the
 // imported set, preserving each id + created_at for an exact round-trip. With
-// keepZFS the ZFS destinations stay, because the file cannot describe them.
-func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool) error {
+// keepZFS the ZFS destinations stay, because the file cannot describe them,
+// and a setting the file does not carry keeps the value stored under that id.
+func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool, missing targetKeysMissing) error {
 	current, err := h.store.ListOffsiteTargets()
 	if err != nil {
 		return err
 	}
-	// Remember each row's location BEFORE the rows are dropped: a location the
+	// Remember each row before the rows are dropped: a location the
 	// file carries redacted must not overwrite the working one this instance
 	// already has for that id (see importedLocation).
-	currentRepo := make(map[string]string, len(current))
+	stored := make(map[string]store.OffsiteTarget, len(current))
 	for _, t := range current {
-		currentRepo[t.ID] = t.Repo
+		stored[t.ID] = t
 	}
 	for _, t := range current {
 		if keepZFS && t.Domain == zfsDomain {
@@ -872,7 +900,14 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool)
 		t := tv.toStoreTarget()
 		t.ID = strings.TrimSpace(tv.ID) // preserve the exported id (empty → store mints one)
 		t.CreatedAt = tv.CreatedAt      // preserve the exported timestamp (0 → store stamps now)
-		t.Repo = importedLocation(currentRepo[t.ID], t.Repo)
+		old, known := stored[t.ID]
+		t.Repo = importedLocation(old.Repo, t.Repo)
+		if known && missing.yearly {
+			t.RetentionKeepYearly = old.RetentionKeepYearly
+		}
+		if known && missing.compression {
+			t.Compression = old.Compression
+		}
 		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
 			return err
 		}
@@ -1089,10 +1124,13 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
 	out.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 	out.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
+	out.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+	applyCompression(&out, v.Compression)
 	out.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
 	out.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
 	out.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	out.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	out.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
 	out.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	out.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	out.MetricsEnabled = v.MetricsEnabled

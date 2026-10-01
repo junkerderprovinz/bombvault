@@ -132,6 +132,41 @@ type Mode struct {
 	// it looks like the operator mistyping a key they typed correctly, which is
 	// the worst shape a defect can take on this surface.
 	From *From
+	// Compression is how restic compresses data it writes into this
+	// repository; empty is restic's default. Only the commands that write
+	// carry it.
+	Compression Compression
+}
+
+// Compression is restic's --compression mode.
+type Compression string
+
+// The three modes restic 0.17 knows. Auto is its default.
+const (
+	CompressionAuto Compression = "auto"
+	CompressionOff  Compression = "off"
+	CompressionMax  Compression = "max"
+)
+
+// ParseCompression reads a stored or submitted mode. Empty is auto, so a row
+// written before the setting existed keeps restic's default.
+func ParseCompression(s string) (Compression, error) {
+	switch c := Compression(strings.ToLower(strings.TrimSpace(s))); c {
+	case "", CompressionAuto:
+		return CompressionAuto, nil
+	case CompressionOff, CompressionMax:
+		return c, nil
+	}
+	return "", fmt.Errorf("compression must be off, auto or max, not %q", s)
+}
+
+// compressionFlags returns the global --compression flag. Auto is left out so
+// the argv of a repository nobody configured stays as it was.
+func compressionFlags(c Compression) []string {
+	if c == CompressionOff || c == CompressionMax {
+		return []string{"--compression", string(c)}
+	}
+	return nil
 }
 
 // From is the source half of a `restic copy`: which password opens the
@@ -489,6 +524,7 @@ func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, po
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
+	args = append(args, compressionFlags(m.Compression)...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -558,6 +594,7 @@ func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
+	args = append(args, compressionFlags(m.Compression)...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -584,6 +621,7 @@ func BackupCommandArgs(repo, stdinPath string, tags []string, m Mode, command []
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
+	args = append(args, compressionFlags(m.Compression)...)
 	args = append(args, "backup")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -628,6 +666,7 @@ func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode
 	args = append(args, storageClassFlags(destRepo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(lim)...)
+	args = append(args, compressionFlags(m.Compression)...)
 	args = append(args, "copy", "--from-repo", srcRepo)
 	// The two ends answer separately. `--insecure-no-password` is about the
 	// DESTINATION and `--from-insecure-no-password` about the SOURCE, and a pull
@@ -962,6 +1001,9 @@ func TagAddArgs(repo, snapID string, tags []string, m Mode) []string {
 func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, retryLockFlags()...)
+	if prune {
+		args = append(args, compressionFlags(m.Compression)...)
+	}
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -981,11 +1023,12 @@ type RetentionPolicy struct {
 	KeepDaily   int
 	KeepWeekly  int
 	KeepMonthly int
+	KeepYearly  int
 }
 
 // Any reports whether at least one keep dimension is set, i.e. retention is on.
 func (p RetentionPolicy) Any() bool {
-	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
+	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0 || p.KeepYearly > 0
 }
 
 // ForgetGroup is one entry of `restic forget --json`: the snapshots a keep
@@ -1044,6 +1087,9 @@ func keepFlags(p RetentionPolicy) []string {
 	if p.KeepMonthly > 0 {
 		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
 	}
+	if p.KeepYearly > 0 {
+		args = append(args, "--keep-yearly", strconv.Itoa(p.KeepYearly))
+	}
 	return args
 }
 
@@ -1063,6 +1109,9 @@ func keepFlags(p RetentionPolicy) []string {
 func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, prune bool) []string {
 	args := repoFlag(repo)
 	args = append(args, retryLockFlags()...)
+	if prune {
+		args = append(args, compressionFlags(m.Compression)...)
+	}
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1139,6 +1188,7 @@ func UnlockArgs(repo string, removeAll bool, m Mode) []string {
 func PruneArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, retryLockFlags()...)
+	args = append(args, compressionFlags(m.Compression)...)
 	args = append(args, "prune")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -2099,19 +2149,16 @@ func isBoilerplateReason(line string) bool {
 		strings.Contains(l, "for further troubleshooting")
 }
 
-// subcommandValueFlags are restic's GLOBAL flags that take a value and are
-// placed before the subcommand word (see repoFlag, retryLockFlags, limitFlags,
-// storageClassFlags): -r <repo>, --retry-lock <duration> (every lock-taking op),
-// --limit-upload/--limit-download <KiB/s> (CopyArgs), and -o <key=value> (the
-// s3.storage-class option). Without skipping their values, subcommand() below
-// would misidentify the flag's VALUE (e.g. "5m", a limit number, or
-// "s3.storage-class=...") as the subcommand name, since it is otherwise just "the
-// first arg not starting with -".
+// subcommandValueFlags are the global flags the builders place before the
+// subcommand that take a value (repoFlag, retryLockFlags, limitFlags,
+// compressionFlags, storageClassFlags). subcommand skips their values, or it
+// would take "5m" or "max" for the subcommand.
 var subcommandValueFlags = map[string]bool{
 	"-r":               true,
 	"--retry-lock":     true,
 	"--limit-upload":   true,
 	"--limit-download": true,
+	"--compression":    true,
 	"-o":               true, // -o s3.storage-class=<class> (storageClassFlags)
 }
 

@@ -9,11 +9,12 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 | `get_health` | Version, instansnamn, om en säkerhetskopia pågår och vad den här nyckeln får göra | läsa |
 | `get_status` | Skyddsstatus per domän: senaste lyckade säkerhetskopia, förväntat intervall, verifieringar och off-site-kontroller, nästa schemalagda körningar, för containrar det senaste starttestet | läsa |
 | `get_coverage` | Vad BombVault skyddar och vad det inte skyddar, med skälet för varje | läsa |
-| `list_items` | Varje skyddad container, VM och mappuppsättning, flashminnet och appkonfigurationen, med schema, vad en säkerhetskopia stoppar, senaste säkerhetskopian och hur lång tid den tog; databascontainrar visar även sin senaste dump; ZFS-dataset finns också med, med resultatet av sin senaste kontroll; varje objekt har sin senaste återställningskontroll, och en container sitt senaste starttest eller skälet till att den inte kan testas | läsa |
-| `list_runs` | Körningshistorik, nyaste först, filtrerbar på domän, objekt, status, typ och tid | läsa |
+| `list_items` | Varje skyddad container, VM och mappuppsättning, flashminnet och appkonfigurationen, med schema, vad en säkerhetskopia stoppar, senaste säkerhetskopian och hur lång tid den tog; databascontainrar visar även sin senaste dump; ZFS-dataset finns också med, med resultatet av sin senaste kontroll; varje objekt har sin senaste återställningskontroll, och en container sitt senaste starttest eller skälet till att den inte kan testas; en container som skapats om med andra inställningar sedan sin senaste säkerhetskopia listar ändringarna | läsa |
+| `list_runs` | Körningshistorik, nyaste först, filtrerbar på domän, objekt, status, typ och tid; en långsam säkerhetskopia som en sak höll tillbaka nämner den | läsa |
 | `list_restore_points` | Återställningspunkter för ett objekt från dess primära repository, och för en container även dess databasdumpar; ett ZFS-dataset får en återställningspunkt per säkerhetskopia, med en snapshot av varje dataset under det | läsa |
 | `get_activity` | Vad som körs just nu, med fas och procent | läsa |
 | `get_storage_stats` | Storlekshistorik för en domäns primära repository och dess tillväxt per vecka, plus använt, ledigt och totalt utrymme på disken eller fjärrlagringen för vart och ett av dess repositories | läsa |
+| `get_size_breakdown` | Vilka mappar och filer som tar plats i den senaste säkerhetskopian av en container, en VM eller en mappuppsättning, och hur mycket av det den senaste säkerhetskopian lade till | läsa |
 | `list_anomalies` | Avvikelser som BombVault har upptäckt i säkerhetskopiorna, kan filtreras på tillstånd, allvarlighet och domän, med en sammanfattning av det som är öppet | läsa |
 | `get_anomaly` | En av dessa avvikelser, med anteckningen som lämnades när den kvitterades | läsa |
 | `start_backup` | Säkerhetskopierar ett objekt direkt | starta |
@@ -34,7 +35,7 @@ Eftersom en säkerhetskopia stoppar saker och trycker ut gamla återställningsp
 - 12 startade säkerhetskopior per timme och nyckel.
 - 15 minuter mellan två MCP-starter av samma objekt, samma domän eller Backup Everything.
 - Högst 4 MCP-starter av samma objekt på 24 timmar.
-- **Lagringsskydd.** När en domän behåller ett fast antal återställningspunkter (bara "behåll de senaste N", utan daglig, veckovis eller månadsvis regel, lokalt eller på ett off-site-mål), trycker varje ny säkerhetskopia ut den äldsta. BombVault nekar då en MCP-start av ett objekt vars senaste N-1 lyckade säkerhetskopior alla startades via MCP. Därför finns alltid minst en återställningspunkt i den behållna mängden som schemat eller du har skapat. Med "behåll den senaste 1" kan en assistent inte säkerhetskopiera det objektet alls. Nästa schemalagda säkerhetskopia gör plats igen.
+- **Lagringsskydd.** När en domän behåller ett fast antal återställningspunkter (bara "behåll de senaste N", utan daglig, veckovis eller månadsvis regel, lokalt eller på ett off-site-mål), trycker varje ny säkerhetskopia ut den äldsta. BombVault nekar då en MCP-start av ett objekt vars senaste N-1 lyckade säkerhetskopior alla startades via MCP. Därför finns alltid minst en återställningspunkt i den behållna mängden som schemat eller du har skapat. Med "behåll den senaste 1" kan en assistent inte säkerhetskopiera det objektet alls. Nästa schemalagda säkerhetskopia gör plats igen. En årsregel ensam räknas som "behåll den senaste 1", eftersom den bara behåller en återställningspunkt för innevarande år.
 
 En start av en domän eller av Backup Everything hoppar över de objekt som en gräns håller tillbaka och nämner dem i svaret. Webbgränssnittet och schemat påverkas inte av något av detta. Timbudgeten finns i minnet, så en omstart av BombVault nollställer den.
 

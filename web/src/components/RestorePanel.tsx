@@ -14,6 +14,7 @@ import { Badge } from "./Badge";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
+import { SizeBreakdown } from "./SizeBreakdown";
 import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
@@ -725,12 +726,16 @@ function SnapshotRow({
     // same as Config.tsx's ConfigSnapshotRow.
     <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm max-md:flex-wrap">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
-          {snap.id.slice(0, 8)}
-        </span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
+        {/* On a phone the id and time take the whole first line, so the
+            actions cannot squeeze the time into a column beside them. */}
+        <div className="flex items-center gap-3 flex-1 min-w-0 max-md:basis-full">
+          <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
+            {snap.id.slice(0, 8)}
+          </span>
+          <span className="text-carbon-textMuted text-xs flex-1">
+            {new Date(snap.time).toLocaleString()}
+          </span>
+        </div>
         {flagged && (
           <Badge tone="fail" size="small">
             {t("anomaly.snapshotFlagged")}
@@ -761,6 +766,7 @@ function SnapshotRow({
           glyph={<IconRestore />}
           tone="accent"
           onClick={() => setShowRestore((p) => !p)}
+          className="max-md:ms-auto"
         />
 
         {/* Not red: the trash glyph, the tooltip and the confirm dialog carry
@@ -954,6 +960,7 @@ export function RestorePanel({
         </div>
       </Advanced>
       <RecentRunsList name={name} domain="container" t={t} />
+      <SizeBreakdown domain="containers" item={name} t={t} />
       {loading && (
         <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
       )}

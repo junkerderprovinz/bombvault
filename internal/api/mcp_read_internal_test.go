@@ -338,11 +338,11 @@ func TestMCPStorageStatsReportsTheRoomAroundEachRepository(t *testing.T) {
 		t.Fatalf("repositories = %v, want the domain's own and the two named ones", out["repositories"])
 	}
 	want := []map[string]any{
-		{"name": "folder containers", "primary": true, "remote": false,
+		{"name": "folder containers", "primary": true, "remote": false, "capacitySource": "statfs",
 			"usedBytes": float64(30_000_000), "freeBytes": float64(50_000_000), "totalBytes": float64(80_000_000)},
-		{"name": "Cloud", "primary": false, "remote": true, "at": float64(now - 3600),
+		{"name": "Cloud", "primary": false, "remote": true, "at": float64(now - 3600), "capacitySource": "rclone",
 			"usedBytes": float64(6_000_000_000), "freeBytes": float64(2_000_000_000), "totalBytes": float64(8_000_000_000)},
-		{"name": "NAS", "primary": false, "remote": true, "at": nil,
+		{"name": "NAS", "primary": false, "remote": true, "at": nil, "capacitySource": nil, "capacityUnsupported": false,
 			"usedBytes": nil, "freeBytes": nil, "totalBytes": nil},
 	}
 	for i, fields := range want {

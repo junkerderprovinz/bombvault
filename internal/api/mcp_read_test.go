@@ -2,6 +2,8 @@ package api_test
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -1559,4 +1561,61 @@ func TestMCPListRunsKeepsTheDatabaseToolsOwnWordsOut(t *testing.T) {
 	if !strings.Contains(errs[importID], store.ReasonDBImportFailed) || strings.Contains(errs[importID], "alice@example.com") {
 		t.Fatalf("import error reads %q, want the reason without the quoted row", errs[importID])
 	}
+}
+
+func TestMCPGetStorageStatsCarriesTheFreeSpace(t *testing.T) {
+	h, st, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	now := time.Now().Unix()
+	const week = int64(7 * 86400)
+	for _, sample := range []store.RepoStat{
+		{At: now - week, RawSize: 1 << 30, Domain: "containers", Source: "local"},
+		{At: now, RawSize: 2 << 30, Domain: "containers", Source: "local"},
+	} {
+		if err := st.AddRepoStat(sample); err != nil {
+			t.Fatal(err)
+		}
+	}
+	setPath := func(loc string) {
+		t.Helper()
+		if _, err := st.MutateSettings(func(s *store.Settings) error {
+			s.ContainersPath = loc
+			return nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	loc := "sftp:backup@nas.lan:/srv/restic"
+	setPath(loc)
+	sum := sha256.Sum256([]byte(loc))
+	if err := st.AddVolumeSample(store.VolumeSample{
+		Volume: "remote:" + hex.EncodeToString(sum[:])[:16], At: now, FreeBytes: 6 << 30, Source: "sftp",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	res := mcpCallTool(t, h, key, "get_storage_stats", `{"domain":"containers"}`)
+	own := primaryRepository(t, res.Structured)
+	if own["freeBytes"] != float64(6<<30) || own["capacitySource"] != "sftp" || res.Structured["weeksToFull"] != float64(6) {
+		t.Fatalf("an SFTP repository's reading did not reach the answer: %v", res.Structured)
+	}
+
+	setPath("b2:bucket/containers")
+	res = mcpCallTool(t, h, key, "get_storage_stats", `{"domain":"containers"}`)
+	own = primaryRepository(t, res.Structured)
+	if own["capacityUnsupported"] != true || own["freeBytes"] != nil {
+		t.Fatalf("a B2 repository must say it reports no free space: %v", res.Structured)
+	}
+}
+
+// primaryRepository is the domain's own entry in get_storage_stats' list.
+func primaryRepository(t *testing.T, out map[string]any) map[string]any {
+	t.Helper()
+	repos, _ := out["repositories"].([]any)
+	for _, r := range repos {
+		if m, _ := r.(map[string]any); m["primary"] == true {
+			return m
+		}
+	}
+	t.Fatalf("no primary repository in %v", out)
+	return nil
 }

@@ -233,14 +233,20 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		if c.Primary {
 			primaryFree = c.Free
 		}
+		var source any
+		if c.Source != "" {
+			source = c.Source
+		}
 		repositories = append(repositories, map[string]any{
-			"name":       c.Name,
-			"primary":    c.Primary,
-			"remote":     c.Remote,
-			"at":         c.At,
-			"usedBytes":  c.Used,
-			"freeBytes":  c.Free,
-			"totalBytes": c.Total,
+			"name":                c.Name,
+			"primary":             c.Primary,
+			"remote":              c.Remote,
+			"at":                  c.At,
+			"usedBytes":           c.Used,
+			"freeBytes":           c.Free,
+			"totalBytes":          c.Total,
+			"capacitySource":      source,
+			"capacityUnsupported": c.Unsupported,
 		})
 	}
 
@@ -317,6 +323,7 @@ type mcpItemView struct {
 	Database            *mcpDatabase  `json:"database,omitempty"`
 	RestoreCheck        *mcpProbe     `json:"restoreCheck,omitempty"`
 	StartTest           *mcpStartTest `json:"startTest,omitempty"`
+	ChangedSinceBackup  []mcpChange   `json:"changedSinceBackup,omitempty"`
 }
 
 // mcpStartTest is the newest start test of a container, or why it cannot be
@@ -337,6 +344,28 @@ type mcpProbe struct {
 	OK      bool   `json:"ok"`
 	Detail  string `json:"detail,omitempty"`
 	Trigger string `json:"trigger"`
+}
+
+// mcpChange is one way a container differs from its last good backup. Host
+// paths of volumes stay out, like everywhere else an assistant reads.
+type mcpChange struct {
+	Field  string `json:"field"`
+	Name   string `json:"name,omitempty"`
+	Change string `json:"change"`
+	Backup string `json:"backup,omitempty"`
+	Now    string `json:"now,omitempty"`
+}
+
+func mcpChangesOf(changes []DefinitionChange) []mcpChange {
+	var out []mcpChange
+	for _, c := range changes {
+		m := mcpChange{Field: c.Field, Name: c.Name, Change: c.Change}
+		if c.Field != "volume" {
+			m.Backup, m.Now = c.Backup, c.Now
+		}
+		out = append(out, m)
+	}
+	return out
 }
 
 func (v *mcpItemView) stamp(s store.BackupStamp) {
@@ -523,6 +552,10 @@ func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings
 	}
 	dbRows := h.svc.dbDumpRows(ctx, state.infos, byName)
 	self := h.svc.SelfContainerName(ctx)
+	shapes, err := h.store.BackedUpShapes()
+	if err != nil {
+		return nil, false, err
+	}
 
 	rows := make([]mcpItemView, 0, len(targets))
 	for _, t := range targets {
@@ -548,6 +581,9 @@ func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings
 			}
 		}
 		view.stamp(stamps[t.ID])
+		if c, installed := live[t.ContainerName]; installed && (view.LastSuccessAt > 0 || shapes[t.ID] != "") {
+			view.ChangedSinceBackup = mcpChangesOf(h.svc.changesSinceBackup(ctx, c, t, shapes[t.ID]))
+		}
 		if db := mcpDatabaseOf(t, dbRows[t.ContainerName], dockerAnswered); db != nil {
 			if dump, ok := dumps[t.ID]; ok {
 				at := dump.StartedAt
@@ -1160,7 +1196,7 @@ func mcpRunRow(v runView) map[string]any {
 	if v.FinishedAt != nil {
 		finished = *v.FinishedAt
 	}
-	return map[string]any{
+	row := map[string]any{
 		"id":              v.ID,
 		"domain":          domain,
 		"itemId":          v.TargetID,
@@ -1176,6 +1212,10 @@ func mcpRunRow(v runView) map[string]any {
 		"startedVia":      v.StartedVia,
 		"startedViaLabel": v.StartedViaLabel,
 	}
+	if v.Bottleneck != nil {
+		row["bottleneck"] = bottleneckSentence(v.Bottleneck)
+	}
+	return row
 }
 
 // mcpStartTests fills in the start test of every container row.

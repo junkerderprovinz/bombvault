@@ -49,6 +49,7 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepDaily: 7,
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
+    retentionKeepYearly: 0,
     defaultLanguage: "en",
     registryAuths: [],
     ...over,

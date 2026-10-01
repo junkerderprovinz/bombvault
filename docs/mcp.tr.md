@@ -9,11 +9,12 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir; Clau
 | `get_health` | Sürüm, örnek adı, bir yedeklemenin sürüp sürmediği ve bu anahtarın neye izni olduğu | okuma |
 | `get_status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, doğrulamalar ve off-site denetimleri, sıradaki zamanlanmış çalıştırmalar, kapsayıcılar için en son başlatma testi | okuma |
 | `get_coverage` | BombVault'un neyi koruduğu ve neyi korumadığı, her biri için gerekçesiyle | okuma |
-| `list_items` | Korunan her kapsayıcı, VM ve klasör kümesi, flash sürücü ve uygulama yapılandırması; zamanlama, bir yedeklemenin neyi durdurduğu, son yedek ve ne kadar sürdüğü ile; veritabanı kapsayıcıları son dökümlerini de gösterir; ZFS veri kümeleri de son denetimlerinin sonucuyla birlikte listelenir; her öğe son geri yükleme denetimini, bir kapsayıcı ayrıca son başlatma testini ya da neden test edilemediğini taşır | okuma |
-| `list_runs` | Çalıştırma geçmişi, en yeniler önce; alan, öğe, durum, tür ve zamana göre süzülebilir | okuma |
+| `list_items` | Korunan her kapsayıcı, VM ve klasör kümesi, flash sürücü ve uygulama yapılandırması; zamanlama, bir yedeklemenin neyi durdurduğu, son yedek ve ne kadar sürdüğü ile; veritabanı kapsayıcıları son dökümlerini de gösterir; ZFS veri kümeleri de son denetimlerinin sonucuyla birlikte listelenir; her öğe son geri yükleme denetimini, bir kapsayıcı ayrıca son başlatma testini ya da neden test edilemediğini taşır; son yedeklemeden beri başka ayarlarla yeniden oluşturulan bir konteyner değişenleri listeler | okuma |
+| `list_runs` | Çalıştırma geçmişi, en yeniler önce; alan, öğe, durum, tür ve zamana göre süzülebilir; tek bir şeyin yavaşlattığı bir yedekleme onu adlandırır | okuma |
 | `list_restore_points` | Bir öğenin birincil deposundaki geri yükleme noktaları, bir kapsayıcı için ayrıca veritabanı dökümleri; bir ZFS veri kümesinin her yedek için bir geri yükleme noktası vardır ve bu noktada altındaki her veri kümesinin anlık görüntüsü bulunur | okuma |
 | `get_activity` | Şu anda neyin çalıştığı, aşama ve yüzdesiyle | okuma |
 | `get_storage_stats` | Bir alanın birincil deposunun boyut geçmişi ve haftalık büyümesi, ayrıca her deposunun diskindeki veya uzak konumundaki kullanılan, boş ve toplam alan | okuma |
+| `get_size_breakdown` | Bir konteynerin, VM'in ya da klasör kümesinin en yeni yedeğinde hangi klasörlerin ve dosyaların yer kapladığı ve bunun ne kadarını son yedeklemenin eklediği | okuma |
 | `list_anomalies` | BombVault'un yedeklerde fark ettiği anormallikler; duruma, önem derecesine ve alana göre süzülebilir, açık olanların özetiyle birlikte | okuma |
 | `get_anomaly` | Bu bulgulardan biri, onaylanırken bırakılan notla birlikte | okuma |
 | `start_backup` | Bir öğeyi hemen yedekler | başlatma |
@@ -34,7 +35,7 @@ Bir yedekleme hizmetleri durdurduğu ve eski geri yükleme noktalarını dışar
 - Anahtar başına saatte 12 başlatılmış yedekleme.
 - Aynı öğenin, aynı alanın ya da Backup Everything'in iki MCP başlatması arasında 15 dakika.
 - Aynı öğe için 24 saatte en fazla 4 MCP başlatması.
-- **Saklama koruması.** Bir alan sabit sayıda geri yükleme noktası tuttuğunda (yalnızca "son N taneyi tut"; günlük, haftalık ya da aylık kural olmadan, yerelde ya da bir off-site hedefte), her yeni yedek en eskisini dışarı iter. BombVault bu durumda en yeni N-1 başarılı yedeğinin tamamı MCP üzerinden başlatılmış bir öğenin MCP başlatmasını reddeder. Böylece tutulan kümede her zaman zamanlamanın ya da sizin oluşturduğunuz en az bir geri yükleme noktası kalır. "Son 1 taneyi tut" ayarında bir asistan o öğeyi hiç yedekleyemez. Bir sonraki zamanlanmış yedekleme yeniden yer açar.
+- **Saklama koruması.** Bir alan sabit sayıda geri yükleme noktası tuttuğunda (yalnızca "son N taneyi tut"; günlük, haftalık ya da aylık kural olmadan, yerelde ya da bir off-site hedefte), her yeni yedek en eskisini dışarı iter. BombVault bu durumda en yeni N-1 başarılı yedeğinin tamamı MCP üzerinden başlatılmış bir öğenin MCP başlatmasını reddeder. Böylece tutulan kümede her zaman zamanlamanın ya da sizin oluşturduğunuz en az bir geri yükleme noktası kalır. "Son 1 taneyi tut" ayarında bir asistan o öğeyi hiç yedekleyemez. Bir sonraki zamanlanmış yedekleme yeniden yer açar. Tek başına yıllık bir kural "Son 1 taneyi tut" gibi sayılır, çünkü içinde bulunulan yıl için yalnızca bir geri yükleme noktası tutar.
 
 Bir alanın ya da Backup Everything'in başlatılması, bir sınırın geri tuttuğu öğeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
 

@@ -20,6 +20,7 @@ type RetentionPolicyView struct {
 	KeepDaily   int  `json:"keepDaily"`
 	KeepWeekly  int  `json:"keepWeekly"`
 	KeepMonthly int  `json:"keepMonthly"`
+	KeepYearly  int  `json:"keepYearly"`
 }
 
 // RetentionPreviewItem is one identity's verdict: the snapshots the policy
@@ -99,6 +100,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		KeepDaily:   policy.KeepDaily,
 		KeepWeekly:  policy.KeepWeekly,
 		KeepMonthly: policy.KeepMonthly,
+		KeepYearly:  policy.KeepYearly,
 	}, Repos: []RetentionPreviewRepo{}}
 
 	// Append-only repositories are classified exactly as pruneDomain classifies

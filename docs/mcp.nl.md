@@ -9,11 +9,12 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 | `get_health` | Versie, naam van de instantie, of er een back-up loopt en wat deze sleutel mag | lezen |
 | `get_status` | Beschermingsstatus per domein: laatste geslaagde back-up, verwacht interval, verificaties en off-site-controles, volgende geplande runs, voor containers de nieuwste starttest | lezen |
 | `get_coverage` | Wat BombVault beschermt en wat niet, telkens met de reden | lezen |
-| `list_items` | Elke beschermde container, VM en mappenset, de flashstick en de app-configuratie, met planning, wat een back-up ervan stopt, de laatste back-up en hoe lang die duurde; databasecontainers vermelden ook hun laatste dump; ZFS-datasets staan er ook in, met de uitkomst van hun laatste controle; elk item draagt zijn laatste herstelcontrole, een container ook zijn laatste starttest of de reden waarom hij niet te testen is | lezen |
-| `list_runs` | Runhistorie, nieuwste eerst, te filteren op domein, item, status, soort en tijd | lezen |
+| `list_items` | Elke beschermde container, VM en mappenset, de flashstick en de app-configuratie, met planning, wat een back-up ervan stopt, de laatste back-up en hoe lang die duurde; databasecontainers vermelden ook hun laatste dump; ZFS-datasets staan er ook in, met de uitkomst van hun laatste controle; elk item draagt zijn laatste herstelcontrole, een container ook zijn laatste starttest of de reden waarom hij niet te testen is; een container die sinds zijn laatste back-up opnieuw is gemaakt met andere instellingen, noemt wat er veranderd is | lezen |
+| `list_runs` | Runhistorie, nieuwste eerst, te filteren op domein, item, status, soort en tijd; een trage back-up die door één ding werd afgeremd, noemt dat | lezen |
 | `list_restore_points` | Herstelpunten van één item uit zijn primaire repository, en bij een container ook zijn databasedumps; een ZFS-dataset krijgt één herstelpunt per back-up, met een snapshot van elke dataset eronder | lezen |
 | `get_activity` | Wat er nu loopt, met fase en percentage | lezen |
 | `get_storage_stats` | Groottegeschiedenis van de primaire repository van een domein en de groei per week, plus gebruikte, vrije en totale ruimte op de schijf of remote van elk van zijn repositories | lezen |
+| `get_size_breakdown` | Welke mappen en bestanden ruimte innemen in de nieuwste back-up van een container, een VM of een mapset, en hoeveel daarvan de laatste back-up heeft toegevoegd | lezen |
 | `list_anomalies` | Anomalieën die BombVault in de back-ups heeft opgemerkt, te filteren op status, ernst en domein, met een overzicht van wat nog openstaat | lezen |
 | `get_anomaly` | Eén van die meldingen, met de notitie die bij het bevestigen is achtergelaten | lezen |
 | `start_backup` | Maakt nu een back-up van één item | starten |
@@ -34,7 +35,7 @@ Omdat een back-up dingen stilzet en oude herstelpunten eruit duwt, zijn starts v
 - 12 gestarte back-ups per uur per sleutel.
 - 15 minuten tussen twee MCP-starts van hetzelfde item, hetzelfde domein of Backup Everything.
 - Hoogstens 4 MCP-starts van hetzelfde item in 24 uur.
-- **Bewaarbeveiliging.** Houdt een domein een vast aantal herstelpunten (alleen "laatste N bewaren", zonder dagelijkse, wekelijkse of maandelijkse regel, lokaal of op een off-site-bestemming), dan duwt elke nieuwe back-up de oudste eruit. BombVault weigert dan een MCP-start van een item waarvan de nieuwste N-1 geslaagde back-ups allemaal via MCP zijn gestart. Er blijft dus altijd minstens één herstelpunt in de bewaarde set dat de planning of jij hebt gemaakt. Met "laatste 1 bewaren" kan een assistent van dat item helemaal geen back-up maken. De volgende geplande back-up maakt weer ruimte.
+- **Bewaarbeveiliging.** Houdt een domein een vast aantal herstelpunten (alleen "laatste N bewaren", zonder dagelijkse, wekelijkse of maandelijkse regel, lokaal of op een off-site-bestemming), dan duwt elke nieuwe back-up de oudste eruit. BombVault weigert dan een MCP-start van een item waarvan de nieuwste N-1 geslaagde back-ups allemaal via MCP zijn gestart. Er blijft dus altijd minstens één herstelpunt in de bewaarde set dat de planning of jij hebt gemaakt. Met "laatste 1 bewaren" kan een assistent van dat item helemaal geen back-up maken. De volgende geplande back-up maakt weer ruimte. Een jaarregel alleen telt als "laatste 1 bewaren", omdat die voor het lopende jaar maar één herstelpunt bewaart.
 
 Een start van een domein of van Backup Everything laat de items weg die een grens tegenhoudt en noemt ze in het antwoord. De webinterface en de planning hebben met geen van deze grenzen te maken. Het uurbudget staat in het geheugen, dus een herstart van BombVault zet het op nul.
 

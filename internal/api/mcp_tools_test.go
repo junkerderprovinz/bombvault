@@ -19,6 +19,7 @@ var mcpReadTools = []string{
 	"get_coverage",
 	"get_activity",
 	"get_storage_stats",
+	"get_size_breakdown",
 	"list_items",
 	"list_runs",
 	"list_restore_points",
@@ -128,8 +129,8 @@ func TestMCPToolAnnotationsAndSchemas(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s carries no annotations", name)
 		}
-		// Listing restore points is the one read that leaves the machine: a
-		// primary repository can be an S3 bucket or a REST server. A start
+		// Listing restore points and a size breakdown are the reads that leave
+		// the machine: a primary repository can be an S3 bucket or a REST server. A start
 		// leaves it too, and a second call makes a second backup, but nothing
 		// it does destroys a restore point.
 		// Cancelling writes too, and a second call finds nothing left to stop,
@@ -139,7 +140,7 @@ func TestMCPToolAnnotationsAndSchemas(t *testing.T) {
 			"readOnlyHint":    !starts,
 			"destructiveHint": false,
 			"idempotentHint":  !starts || name == "cancel_backup",
-			"openWorldHint":   starts || name == "list_restore_points",
+			"openWorldHint":   starts || name == "list_restore_points" || name == "get_size_breakdown",
 		} {
 			if ann[hint] != want {
 				t.Fatalf("%s %s = %v, want %v", name, hint, ann[hint], want)
@@ -191,8 +192,8 @@ func TestMCPReadToolsOnEmptyInstall(t *testing.T) {
 		"list_anomalies":      {"anomalies"},
 	}
 	for _, tool := range mcpReadTools {
-		if tool == "get_anomaly" {
-			continue // reads one finding by its id, and a fresh install has none
+		if tool == "get_anomaly" || tool == "get_size_breakdown" {
+			continue // each reads one finding or item, and a fresh install has none
 		}
 		res := mcpCallTool(t, h, key, tool, args[tool])
 		if res.IsError {

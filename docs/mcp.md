@@ -9,11 +9,12 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 | `get_health` | Version, instance name, whether a backup is running, and what this key may do | read |
 | `get_status` | Protection status per domain: last successful backup, expected interval, verification and off-site checks, next scheduled runs, and for containers the newest start test | read |
 | `get_coverage` | What BombVault protects and what it does not, with the reason for each | read |
-| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check; every item carries its last restore check, and a container its last start test or why it cannot be tested | read |
-| `list_runs` | Run history, newest first, filterable by domain, item, status, kind and time | read |
+| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check; every item carries its last restore check, and a container its last start test or why it cannot be tested; a container recreated with other settings since its last backup lists what changed | read |
+| `list_runs` | Run history, newest first, filterable by domain, item, status, kind and time; a slow backup that one thing held back names it | read |
 | `list_restore_points` | Restore points of one item from its primary repository, and for a container its database dumps; a ZFS dataset gets one restore point per backup, with a snapshot of every dataset below it | read |
 | `get_activity` | What is running right now, with phase and percentage | read |
 | `get_storage_stats` | Size history of one domain's primary repository and its growth per week, and the used, free and total space on the disk or remote of each of its repositories | read |
+| `get_size_breakdown` | Which folders and files take the space in the newest backup of one container, VM or folder set, and how much of each the latest backup added | read |
 | `list_anomalies` | Anomalies BombVault noticed in the backups, filterable by state, severity and domain, with a summary of what is open | read |
 | `get_anomaly` | One of those findings, with the note left when it was acknowledged | read |
 | `start_backup` | Backs up one item now | start |
@@ -34,7 +35,7 @@ Because a backup stops things and rotates old restore points out, starts through
 - 12 started backups per hour per key.
 - 15 minutes between two MCP starts of the same item, domain or Backup Everything.
 - At most 4 MCP starts of the same item in 24 hours.
-- **Retention guard.** When a domain keeps a fixed number of restore points (only "keep last N", no daily, weekly or monthly rule, locally or on an off-site destination), every new backup pushes the oldest one out. BombVault then refuses an MCP start of an item whose newest N-1 successful backups were all started through MCP. At least one restore point that the schedule or you made therefore always stays in the kept set. With "keep last 1" an assistant cannot back that item up at all. The next scheduled backup makes room again.
+- **Retention guard.** When a domain keeps a fixed number of restore points (only "keep last N", no daily, weekly or monthly rule, locally or on an off-site destination), every new backup pushes the oldest one out. BombVault then refuses an MCP start of an item whose newest N-1 successful backups were all started through MCP. At least one restore point that the schedule or you made therefore always stays in the kept set. With "keep last 1" an assistant cannot back that item up at all. The next scheduled backup makes room again. A yearly rule on its own counts as "keep last 1", since it keeps a single restore point for the current year.
 
 A domain or Backup Everything start leaves out the items a limit holds back and names them in its answer. The web interface and the schedule are not limited by any of this. The hourly budget lives in memory, so a restart of BombVault resets it.
 

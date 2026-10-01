@@ -16,6 +16,7 @@ import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
+import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
 import {
   CONTROL_AXES,
   LABEL_MODES,
@@ -890,7 +891,11 @@ export function SettingsPage() {
     pageDir.current = ids.indexOf(page) > ids.indexOf(shownPage.current) ? 1 : -1;
     shownPage.current = page;
   }
-  useEffect(() => writeLastPage(page), [page]);
+  // Only a page named in the address counts: /settings alone renders the
+  // fallback for a moment before its redirect, and must not overwrite it.
+  useEffect(() => {
+    if (isSettingsPage(param)) writeLastPage(param);
+  }, [param]);
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedBaseline is the server's last-confirmed state. Every save merges its
   // own fields onto this baseline rather than the live `settings`, so saving
@@ -1224,8 +1229,9 @@ export function SettingsPage() {
   }
 
   // A hash such as /settings/integrity#anomalies names a card below the fold,
-  // and a search result names a card and row to mark. Anything else opens a
-  // page at its top, since the scroller is shared by every page.
+  // or a field that should take the cursor, and a search result names a card
+  // and row to mark. Anything else opens a page at its top, since the scroller
+  // is shared by every page.
   const settingsLoaded = settings !== null;
   const handledJump = useRef("");
   useEffect(() => {
@@ -1246,7 +1252,13 @@ export function SettingsPage() {
       if (target || jump.card) return;
     }
     if (anchor) {
-      document.getElementById(anchor)?.scrollIntoView?.({ block: "start" });
+      const target = document.getElementById(anchor);
+      if (target instanceof HTMLInputElement) {
+        target.scrollIntoView?.({ block: "center" });
+        target.focus();
+      } else {
+        target?.scrollIntoView?.({ block: "start" });
+      }
       return;
     }
     document.getElementById("bv-main")?.scrollTo?.({ top: 0 });
@@ -2218,12 +2230,13 @@ export function SettingsPage() {
         hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
         hueIndex={nextHue()}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {([
             ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
             ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
             ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
             ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+            ["retentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
           ] as const).map(([key, label, info]) => (
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
@@ -2690,6 +2703,12 @@ export function SettingsPage() {
                 <span className="text-xs text-carbon-textMuted">
                   {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
                 </span>
+                {settings[repoKey] && (
+                  <CompressionSelector
+                    value={settings.compression[`offsite:${domain}`]}
+                    onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
+                  />
+                )}
               </>
             )}
             {/* Extra copies of this domain beyond the primary above, managed
@@ -2710,12 +2729,13 @@ export function SettingsPage() {
         hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionImmutableNotPruned")}`}
         hueIndex={nextHue()}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {([
             ["offsiteRetentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
             ["offsiteRetentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
             ["offsiteRetentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
             ["offsiteRetentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+            ["offsiteRetentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
           ] as const).map(([key, label, info]) => (
             <label key={key} className="flex flex-col gap-1">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">

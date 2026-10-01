@@ -1024,7 +1024,7 @@ func TestRunFinishedHookFires(t *testing.T) {
 	}
 
 	var seen []store.RunFinished
-	r.SetRunFinishedHook(func(f store.RunFinished) { seen = append(seen, f) })
+	r.AddRunFinishedHook(func(f store.RunFinished) { seen = append(seen, f) })
 
 	plain, err := r.StartRun(tg.ID, "backup")
 	if err != nil {

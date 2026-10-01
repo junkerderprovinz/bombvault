@@ -141,3 +141,41 @@ func zfsPoolAt(r io.Reader, target string) (string, bool) {
 	}
 	return pool, pool != ""
 }
+
+// fsTypeAt returns the filesystem type of the deepest mount that holds target,
+// read from mountinfo records, such as "cifs" for an SMB share.
+func fsTypeAt(r io.Reader, target string) string {
+	clean := strings.TrimRight(path.Clean(filepath.ToSlash(target)), "/")
+	fsType, deepest := "", -1
+	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for sc.Scan() {
+		left, right, ok := strings.Cut(sc.Text(), " - ")
+		if !ok {
+			continue
+		}
+		fields, rest := strings.Fields(left), strings.Fields(right)
+		if len(fields) < 5 || len(rest) < 1 {
+			continue
+		}
+		point := strings.TrimRight(path.Clean(unescapeOctal(fields[4])), "/")
+		if len(point) <= deepest || (clean != point && point != "" && !strings.HasPrefix(clean, point+"/")) {
+			continue
+		}
+		fsType, deepest = rest[0], len(point)
+	}
+	return fsType
+}
+
+// volumeSource names what measured a local repository's volume. A share
+// mounted over the network reports the server's free space through statfs, and
+// naming it tells a reader the figure is the share's, not a local disk's.
+func volumeSource(fsType string) string {
+	switch fsType {
+	case "cifs", "smb3", "smbfs":
+		return "smb"
+	case "nfs", "nfs4":
+		return "nfs"
+	}
+	return "statfs"
+}

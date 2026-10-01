@@ -6,6 +6,7 @@ import type { useT } from "../lib/i18n";
 import { formatTs, formatDuration } from "../lib/reltime";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { RunAnomalyBadge } from "./RunAnomalyBadge";
+import { bottleneckText } from "../lib/bottleneck";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -112,11 +113,17 @@ export function RecentRunsList({
           </>
         );
         const badge = <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />;
+        const slow = run.bottleneck && (
+          <p className="ps-3.5 text-caption text-carbon-textSub">{bottleneckText(run.bottleneck, t)}</p>
+        );
         if (!renderDetail) {
           return (
-            <div key={run.id} className="flex items-center gap-2 text-caption">
-              {line}
-              {badge}
+            <div key={run.id} className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2 text-caption">
+                {line}
+                {badge}
+              </div>
+              {slow}
             </div>
           );
         }
@@ -135,6 +142,7 @@ export function RecentRunsList({
               </button>
               {badge}
             </div>
+            {slow}
             {open && renderDetail(run)}
           </div>
         );

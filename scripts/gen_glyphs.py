@@ -57,6 +57,11 @@ ACTION = [
     # Two offset panes held against each other. The magnifier already means
     # scan and browse.
     ("IconCompare", "interface-essential/layers-2.svg", "Compare two things"),
+    # restic's three compression modes: data packed as it is, restic's own
+    # choice, and squeezed as far as it goes.
+    ("IconCompressOff", "shipping/shipping-box-1.svg", "Store data uncompressed"),
+    ("IconCompressAuto", "interface-essential/magic-wand-2.svg", "Let restic choose the compression"),
+    ("IconCompressMax", "interface-essential/arrow-shrink.svg", "Compress as far as possible"),
 ]
 
 # Glyphs that point along the reading direction, so a right-to-left layout

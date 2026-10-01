@@ -9,11 +9,12 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 | `get_health` | Verze, název instance, zda běží záloha a co tento klíč smí | čtení |
 | `get_status` | Stav ochrany podle domén: poslední úspěšná záloha, očekávaný interval, ověření a kontroly off-site, další naplánované běhy, u kontejnerů nejnovější test spuštění | čtení |
 | `get_coverage` | Co BombVault chrání a co ne, u každé položky s důvodem | čtení |
-| `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou; databázové kontejnery uvádějí i poslední dump; uvádí i datasety ZFS s výsledkem jejich poslední kontroly; každá položka nese svou poslední kontrolu obnovy, kontejner navíc svůj poslední test spuštění nebo důvod, proč ho nelze otestovat | čtení |
-| `list_runs` | Historie běhů od nejnovějších, filtrovatelná podle domény, položky, stavu, druhu a času | čtení |
+| `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou; databázové kontejnery uvádějí i poslední dump; uvádí i datasety ZFS s výsledkem jejich poslední kontroly; každá položka nese svou poslední kontrolu obnovy, kontejner navíc svůj poslední test spuštění nebo důvod, proč ho nelze otestovat; kontejner znovu vytvořený s jiným nastavením od poslední zálohy uvádí, co se změnilo | čtení |
+| `list_runs` | Historie běhů od nejnovějších, filtrovatelná podle domény, položky, stavu, druhu a času; pomalá záloha, kterou brzdila jedna věc, ji jmenuje | čtení |
 | `list_restore_points` | Body obnovy jedné položky z jejího primárního repozitáře a u kontejneru i jeho databázové dumpy; dataset ZFS má jeden bod obnovy na zálohu se snapshotem každého datasetu pod ním | čtení |
 | `get_activity` | Co právě běží, s fází a procenty | čtení |
 | `get_storage_stats` | Historie velikosti primárního repozitáře domény a její týdenní růst, k tomu obsazené, volné a celkové místo na disku nebo vzdáleném úložišti každého jejího repozitáře | čtení |
+| `get_size_breakdown` | Které složky a soubory zabírají místo v nejnovější záloze kontejneru, VM nebo sady složek a kolik z nich přidala poslední záloha | čtení |
 | `list_anomalies` | Anomálie, kterých si BombVault všiml v zálohách, lze filtrovat podle stavu, závažnosti a domény, se souhrnem toho, co je otevřené | čtení |
 | `get_anomaly` | Jedno z těchto zjištění s poznámkou, která zůstala při jeho potvrzení | čtení |
 | `start_backup` | Hned zazálohuje jednu položku | spuštění |
@@ -34,7 +35,7 @@ Protože záloha zastavuje služby a vytlačuje staré body obnovy, jsou spušt�
 - 12 spuštěných záloh za hodinu na klíč.
 - 15 minut mezi dvěma spuštěními přes MCP u téže položky, téže domény nebo Backup Everything.
 - Nejvýše 4 spuštění téže položky přes MCP za 24 hodin.
-- **Ochrana uchovávání.** Když doména uchovává pevný počet bodů obnovy (jen "ponechat posledních N", bez denního, týdenního či měsíčního pravidla, lokálně nebo v cíli off-site), každá nová záloha vytlačí tu nejstarší. BombVault pak odmítne spuštění položky přes MCP, pokud jejích nejnovějších N-1 úspěšných záloh spustilo MCP. V uchovávané sadě tak vždy zůstane alespoň jeden bod obnovy, který vytvořil plán nebo vy. Při nastavení "ponechat poslední 1" nemůže asistent tuto položku zálohovat vůbec. Další naplánovaná záloha zase udělá místo.
+- **Ochrana uchovávání.** Když doména uchovává pevný počet bodů obnovy (jen "ponechat posledních N", bez denního, týdenního či měsíčního pravidla, lokálně nebo v cíli off-site), každá nová záloha vytlačí tu nejstarší. BombVault pak odmítne spuštění položky přes MCP, pokud jejích nejnovějších N-1 úspěšných záloh spustilo MCP. V uchovávané sadě tak vždy zůstane alespoň jeden bod obnovy, který vytvořil plán nebo vy. Při nastavení "ponechat poslední 1" nemůže asistent tuto položku zálohovat vůbec. Další naplánovaná záloha zase udělá místo. Samotné roční pravidlo se počítá jako "ponechat poslední 1", protože pro aktuální rok ponechá jen jeden bod obnovení.
 
 Spuštění domény nebo Backup Everything vynechá položky, které nějaký limit zadrží, a vyjmenuje je v odpovědi. Webové rozhraní ani plán se žádného z těchto limitů netýkají. Hodinový rozpočet je jen v paměti, takže restart BombVaultu ho vynuluje.
 

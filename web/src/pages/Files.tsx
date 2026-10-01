@@ -40,6 +40,7 @@ import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { SizeBreakdown } from "../components/SizeBreakdown";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -716,7 +717,7 @@ function FileSetRestorePanel({
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
+          <div className="flex flex-wrap items-center gap-2 py-2 border-b border-carbon-border">
               {/* The source toggle and its hint are advanced; basic mode uses local. */}
               <Advanced>
                 <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
@@ -747,6 +748,7 @@ function FileSetRestorePanel({
               )}
           </div>
           <RecentRunsList name={set.name} domain="files" t={t} />
+          <SizeBreakdown domain="files" item={set.id} t={t} />
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
