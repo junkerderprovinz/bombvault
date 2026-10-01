@@ -240,8 +240,11 @@ type itemInput struct {
 
 // finding is one raised event or condition, in the shape a row is written from.
 type finding struct {
-	Metric, Severity              string
-	RunID, LastGoodRunID          string
+	Metric, Severity     string
+	RunID, LastGoodRunID string
+	// OnsetRunID is the first backup a condition held on when that is older
+	// than RunID, the run it was judged on.
+	OnsetRunID                    string
 	RunAt                         int64
 	Observed, Expected, Threshold float64
 	Samples                       int
@@ -616,18 +619,40 @@ func (r sizeRule) collapsed(current measurement, prior []measurement, p sensPara
 	if !collapse {
 		expected, samples = peak, len(month)
 	}
-	details := map[string]any{"ratio": current.value / expected, "lastGoodAt": float64(prior[len(prior)-1].at)}
+	details := map[string]any{"ratio": current.value / expected}
 	if collapse {
 		details["collapse"] = true
 	}
 	if drain {
 		details["drain"] = true
 	}
-	return &finding{
+	f := &finding{
 		Metric: r.shrinkMetric, Severity: "critical",
-		RunID: current.runID, RunAt: current.at, LastGoodRunID: prior[len(prior)-1].runID,
+		RunID: current.runID, RunAt: current.at,
 		Observed: current.value, Expected: expected, Threshold: p.CollapseFrac * expected,
-		Samples: samples, Details: finiteDetails(details),
+		Samples: samples, Details: details,
+	}
+	f.dateOnset(prior, func(v float64) bool { return r.lost(v, expected, p) })
+	f.Details = finiteDetails(f.Details)
+	return f
+}
+
+// dateOnset moves a condition back to the backup it began on. A history read
+// back from the repositories reaches the detectors all at once, so the run
+// before the judged one can already be a bad one, and restoring it would hand
+// back the loss.
+func (f *finding) dateOnset(prior []measurement, bad func(float64) bool) {
+	i := len(prior) - 1
+	for i >= 0 && bad(prior[i].value) {
+		i--
+	}
+	if i < len(prior)-1 {
+		f.OnsetRunID = prior[i+1].runID
+		f.Details["since"] = float64(prior[i+1].at)
+	}
+	if i >= 0 {
+		f.LastGoodRunID = prior[i].runID
+		f.Details["lastGoodAt"] = float64(prior[i].at)
 	}
 }
 
@@ -657,15 +682,14 @@ func (r sizeRule) shrank(current measurement, samples []measurement, p sensParam
 	if current.value < strongShrinkFrac*level {
 		severity = "critical"
 	}
-	lastGood := samples[len(samples)-1]
-	details := levelDetails(current.value, level, spread, z)
-	details["lastGoodAt"] = float64(lastGood.at)
-	return &finding{
+	f := &finding{
 		Metric: r.shrinkMetric, Severity: severity,
-		RunID: current.runID, RunAt: current.at, LastGoodRunID: lastGood.runID,
+		RunID: current.runID, RunAt: current.at,
 		Observed: current.value, Expected: level, Threshold: p.ShrinkRatio * level,
-		Samples: len(samples), Details: details,
+		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
 	}
+	f.dateOnset(samples, func(v float64) bool { return v < p.ShrinkRatio*level })
+	return f
 }
 
 // grew is the same rule in the other direction. A source that gained a lot is

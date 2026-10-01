@@ -120,13 +120,17 @@ func fingerprintOf(sc scopeRef, metric string) string {
 }
 
 func newRow(sc scopeRef, fingerprint string, f finding, occurrences int, now int64) store.Anomaly {
+	first := f.RunID
+	if f.OnsetRunID != "" {
+		first = f.OnsetRunID
+	}
 	return store.Anomaly{
 		Fingerprint: fingerprint,
 		Detector:    anomalyDetectors[f.Metric],
 		Metric:      f.Metric,
 		Severity:    f.Severity,
 		ScopeKind:   sc.Kind, ScopeID: sc.ID, TargetID: sc.TargetID, Domain: sc.Domain,
-		RunID: f.RunID, LastRunID: f.RunID, LastRunAt: f.RunAt, LastGoodRunID: f.LastGoodRunID,
+		RunID: first, LastRunID: f.RunID, LastRunAt: f.RunAt, LastGoodRunID: f.LastGoodRunID,
 		Observed: f.Observed, Expected: f.Expected, Threshold: f.Threshold,
 		Samples: f.Samples, Sensitivity: sc.Sensitivity,
 		Details:     detailsJSON(f.Details),
