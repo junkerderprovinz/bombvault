@@ -123,7 +123,7 @@ Et underdatasett som er tømt, endrer nesten ikke totalen for et stort tre, så 
 
 Et datasett som forrige kjøring sikkerhetskopierte og som denne kjøringen ikke kunne lese, teller som tømt, så lenge elementets utvalg ikke er endret. Det dekker en nøkkel som ikke er lastet, et datasett som ikke er montert, og et som har forsvunnet fra treet. Et underdatasett du utelukker selv, endrer utvalget, så historikken begynner på nytt i stedet. Så lenge et funn om tapte data er åpent, beholder oppbevaringen de gamle sikkerhetskopiene av akkurat det datasettet og beskjærer resten av treet som vanlig.
 
-På fanen **Elementer** på siden **Avvik** har hvert datasett sin egen linje under elementet sitt, og elementets tre på denne siden viser de åpne funnene ved hvert datasett. Lenken i et funn åpner elementets gjenopprettingspanel ved datasettets siste gode sikkerhetskopi. Om en kjøring blir ferdig, vurderes for hele elementet, fordi en kjøring lykkes eller feiler som en helhet.
+På siden **Avvik** har hvert datasett sin egen linje i elementets panel, som åpnes med **Overvåking** på elementets kort eller, når ingenting er åpent for elementet, fra linjen i kortet **Ingenting åpent**. Elementets tre på denne siden viser de åpne funnene ved hvert datasett. Lenken i et funn åpner elementets gjenopprettingspanel ved datasettets siste gode sikkerhetskopi. Om en kjøring blir ferdig, vurderes for hele elementet, fordi en kjøring lykkes eller feiler som en helhet.
 
 Selve kontrollene er beskrevet under [Funksjoner](features.md). En assistent som er koblet til via [MCP-serveren](mcp.md), kan liste gjenopprettingspunktene til et ZFS-element, starte sikkerhetskopien og lese funnene, men et funn kvitteres på siden **Avvik**.
 

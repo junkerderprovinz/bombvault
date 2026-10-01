@@ -123,7 +123,7 @@ Tyhjennetty alatietojoukko tuskin muuttaa suuren puun kokonaismäärää, joten 
 
 Tietojoukko, jonka edellinen ajo varmuuskopioi ja jota tämä ajo ei voinut lukea, lasketaan tyhjennetyksi, kunhan kohteen valinta ei ole muuttunut. Tämä kattaa lataamattoman avaimen, liittämättömän tietojoukon ja puusta kadonneen tietojoukon. Itse pois sulkemasi alatietojoukko muuttaa valintaa, joten sen historia alkaa silloin alusta. Niin kauan kuin kadonneita tietoja koskeva löydös on auki, säilytys pitää juuri tuon tietojoukon vanhat varmuuskopiot ja karsii muun puun tavalliseen tapaan.
 
-**Poikkeamat**-sivun välilehdellä **Kohteet** jokaisella tietojoukolla on oma rivinsä kohteensa alla, ja kohteen puu tällä sivulla näyttää avoimet löydökset kunkin tietojoukon vieressä. Löydöksen linkki avaa kohteen palautuspaneelin tietojoukon viimeisimmän hyvän varmuuskopion kohdalta. Se, valmistuuko ajo, arvioidaan koko kohteelle, koska ajo onnistuu tai epäonnistuu kokonaisuutena.
+**Poikkeamat**-sivulla jokaisella tietojoukolla on oma rivinsä kohteen paneelissa, joka avautuu kohteen kortin kohdasta **Valvonta** tai, jos kohteella ei ole mitään avoinna, sen riviltä kortilla **Ei mitään avoinna**. Kohteen puu tällä sivulla näyttää avoimet löydökset kunkin tietojoukon vieressä. Löydöksen linkki avaa kohteen palautuspaneelin tietojoukon viimeisimmän hyvän varmuuskopion kohdalta. Se, valmistuuko ajo, arvioidaan koko kohteelle, koska ajo onnistuu tai epäonnistuu kokonaisuutena.
 
 Itse tarkistukset kuvataan kohdassa [Ominaisuudet](features.md). [MCP-palvelimen](mcp.md) kautta yhdistetty avustaja voi luetella ZFS-kohteen palautuspisteet, käynnistää sen varmuuskopion ja lukea löydökset, mutta löydös kuitataan **Poikkeamat**-sivulla.
 
