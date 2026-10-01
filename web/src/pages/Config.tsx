@@ -240,10 +240,14 @@ function ConfigSnapshotRow({
       }`}
     >
       <div className="flex items-center gap-3 text-sm max-md:flex-wrap">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
+        {/* On a phone the id and time take the whole first line, so a short
+            date cannot let the delete action squeeze the time into a column. */}
+        <div className="flex items-center gap-3 flex-1 min-w-0 max-md:basis-full">
+          <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
+          <span className="text-carbon-textMuted text-xs flex-1">
+            {new Date(snap.time).toLocaleString()}
+          </span>
+        </div>
         {flagged && (
           <Badge tone="fail" size="small">
             {t("anomaly.snapshotFlagged")}
