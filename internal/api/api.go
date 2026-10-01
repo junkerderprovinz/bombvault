@@ -326,6 +326,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/anomalies/summary", h.handleAnomalySummary)
 	mux.HandleFunc("GET /api/anomalies/items", h.handleAnomalyItems)
 	mux.HandleFunc("GET /api/anomalies/{id}", h.handleAnomaly)
+	mux.HandleFunc("GET /api/anomalies/{id}/changes", h.handleAnomalyChanges)
 	mux.HandleFunc("POST /api/anomalies/acknowledge", h.handleAcknowledgeAnomalies)
 	mux.HandleFunc("POST /api/anomalies/expected", h.handleAnomaliesExpected)
 	mux.HandleFunc("PUT /api/anomalies/items/{targetId}/prefs", h.handleAnomalyItemPrefs)

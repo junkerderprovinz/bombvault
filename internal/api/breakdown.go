@@ -125,17 +125,20 @@ func (s *Service) breakdownItemByID(domain, id string) (breakdownItem, error) {
 	return s.breakdownItem(domain, id)
 }
 
-// newestSnapshots returns the item's newest backup and the one before it.
-func (s *Service) newestSnapshots(ctx context.Context, it breakdownItem) (newest, prev *restic.Snapshot, err error) {
-	var snaps []restic.Snapshot
+func (s *Service) itemSnapshots(ctx context.Context, it breakdownItem) ([]restic.Snapshot, error) {
 	switch it.domain {
 	case "containers":
-		snaps, err = s.Snapshots(ctx, it.name, "local")
+		return s.Snapshots(ctx, it.name, "local")
 	case "vms":
-		snaps, err = s.SnapshotsVM(ctx, it.name, "local")
+		return s.SnapshotsVM(ctx, it.name, "local")
 	default:
-		snaps, err = s.SnapshotsFileSet(ctx, it.id, "local")
+		return s.SnapshotsFileSet(ctx, it.id, "local")
 	}
+}
+
+// newestSnapshots returns the item's newest backup and the one before it.
+func (s *Service) newestSnapshots(ctx context.Context, it breakdownItem) (newest, prev *restic.Snapshot, err error) {
+	snaps, err := s.itemSnapshots(ctx, it)
 	if err != nil || len(snaps) == 0 {
 		return nil, nil, err
 	}

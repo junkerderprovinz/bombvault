@@ -435,6 +435,7 @@ type Service struct {
 	load *hostload.Sampler
 
 	breakdowns breakdowns
+	changes    changeComparisons
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
