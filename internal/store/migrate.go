@@ -2622,6 +2622,15 @@ UPDATE group_state SET joined_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE 
 		sql: `ALTER TABLE group_state ADD COLUMN direct_url TEXT NOT NULL DEFAULT '';
 ALTER TABLE group_state ADD COLUMN direct_url_manual INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// A group member can be the Android app, whose Fleet card has no
+		// scorecard. The kind is kept so the card still says so while the
+		// phone is away.
+		version:          appMemberMigration,
+		name:             "fleet_peers_kind",
+		alreadySatisfied: columnPresent("fleet_peers", "kind"),
+		sql:              `ALTER TABLE fleet_peers ADD COLUMN kind TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2702,6 +2711,10 @@ var misnumbered = []struct {
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.
 const pairingMigration = 250
+
+// appMemberMigration numbers what the Android app as a group member needs,
+// in a block of its own above pairing.
+const appMemberMigration = 270
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

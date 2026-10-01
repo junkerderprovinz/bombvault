@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -44,8 +45,11 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 	}
 	for _, m := range s.pairing().Members() {
 		if i, ok := known[m.ID]; ok {
-			if rows[i].Name != m.Name {
+			if rows[i].Name != m.Name || (m.Kind != "" && rows[i].Kind != m.Kind) {
 				rows[i].Name = m.Name
+				if m.Kind != "" {
+					rows[i].Kind = m.Kind
+				}
 				if err := s.store.UpdateFleetPeer(rows[i]); err != nil {
 					return nil, err
 				}
@@ -67,7 +71,7 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 		if adopted {
 			continue
 		}
-		p, err := s.store.CreateFleetPeer(store.FleetPeer{MemberID: m.ID, Name: m.Name, Enabled: true, SortOrder: len(rows)})
+		p, err := s.store.CreateFleetPeer(store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows)})
 		if err != nil {
 			return nil, err
 		}
@@ -75,6 +79,16 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 		rows = append(rows, p)
 	}
 	return rows, nil
+}
+
+// memberPresent reports whether the member is reachable in the group at the moment.
+func (s *Service) memberPresent(id string) error {
+	for _, m := range s.pairing().Members() {
+		if m.ID == id {
+			return nil
+		}
+	}
+	return group.ErrNotMember
 }
 
 func sameInstanceName(p store.FleetPeer, name string) bool {
@@ -87,7 +101,12 @@ func sameInstanceName(p store.FleetPeer, name string) bool {
 func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer) (fleetStatusResponse, error) {
 	var resp fleetStatusResponse
 	err := errors.New("pair this instance again: it is not in this group")
-	if !p.NeedsPairing() {
+	switch {
+	case p.NeedsPairing():
+	case p.Kind != "":
+		// The app has no scorecard; being on the relay is all there is to know.
+		err = s.memberPresent(p.MemberID)
+	default:
 		err = s.callMember(ctx, p.MemberID, http.MethodGet, "/api/group/peer/status", nil, &resp)
 	}
 

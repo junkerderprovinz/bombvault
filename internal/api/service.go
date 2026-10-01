@@ -558,6 +558,9 @@ type Service struct {
 	relayServe     atomic.Bool
 	peerMuxOnce    sync.Once
 	peerMuxHandler http.Handler
+	// peerActivity answers a member asking what runs here; NewHandler sets
+	// it, since runs and the schedule are the Handler's to read.
+	peerActivity func() (peerActivityResponse, error)
 	// probeQueue holds the items waiting for the restore probe after their
 	// first backup, and probeWorking says whether its worker is running. Both
 	// are guarded by probeMu.
