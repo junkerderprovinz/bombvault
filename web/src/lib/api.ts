@@ -4798,6 +4798,9 @@ export type AnomalyView = {
   runId: string;
   lastRunId: string;
   lastRunAt: number;
+  /** When the backup the finding began on started. firstSeenAt is when
+   *  BombVault noticed, which after an upgrade can be days later. */
+  firstRunAt?: number;
   /** Only on the findings that mean data was lost. */
   lastGood?: RestorePointRef;
   /** The backups such a finding was raised and last seen on. */
@@ -4948,6 +4951,44 @@ export function getAnomaly(
   id: string
 ): Promise<OkEnvelope & { anomaly: AnomalyView }> {
   return fetchJSON(`/api/anomalies/${encodeURIComponent(id)}`);
+}
+
+/** What changed under one folder between two backups. Changed files are in
+ *  both and differ; their bytes are the new size. */
+export type ChangeFolder = {
+  path: string;
+  removedBytes: number;
+  removedFiles: number;
+  addedBytes: number;
+  addedFiles: number;
+  changedBytes: number;
+  changedFiles: number;
+};
+
+/** A finding's last good backup compared with the first affected one. */
+export type AnomalyChanges = {
+  state: "running" | "ready" | "failed";
+  error?: string;
+  fromAt?: number;
+  toAt?: number;
+  root?: string;
+  summary?: {
+    total: ChangeFolder;
+    folders: ChangeFolder[];
+    other?: ChangeFolder;
+    /** The deepest folder holding nearly all of the churn. */
+    focus?: string;
+    /** focus looks like data an app rebuilds by itself. */
+    regenerable?: boolean;
+    partial?: boolean;
+  };
+};
+
+export function getAnomalyChanges(
+  id: string,
+  retry = false
+): Promise<{ ok: boolean; error?: string; changes?: AnomalyChanges }> {
+  return fetchJSON(`/api/anomalies/${encodeURIComponent(id)}/changes${retry ? "?retry=1" : ""}`);
 }
 
 export type AnomalyActionResult = OkEnvelope & {

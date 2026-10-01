@@ -51,6 +51,10 @@ type AnomalyView struct {
 	RunID      string `json:"runId"`
 	LastRunID  string `json:"lastRunId"`
 	LastRunAt  int64  `json:"lastRunAt"`
+	// FirstRunAt is when the backup the finding began on started. FirstSeenAt
+	// is when BombVault noticed, which for a history read back after an
+	// upgrade can be days later.
+	FirstRunAt int64 `json:"firstRunAt,omitempty"`
 	// LastGood is the backup to restore from after a loss of data, absent on
 	// every finding that is not about one.
 	LastGood *RestorePointRef `json:"lastGood,omitempty"`
@@ -259,10 +263,14 @@ func (s *Service) ListAnomalies(ctx context.Context, f store.AnomalyFilter) (Ano
 	if err != nil {
 		return AnomalyPage{}, err
 	}
+	starts, err := s.firstRunStarts(rows)
+	if err != nil {
+		return AnomalyPage{}, err
+	}
 	page := AnomalyPage{Anomalies: make([]AnomalyView, 0, len(rows)), NextCursor: cursor}
 	targets := s.offsiteTargetNames(rows)
 	for _, row := range rows {
-		page.Anomalies = append(page.Anomalies, anomalyViewOf(row, items, targets, points, settings))
+		page.Anomalies = append(page.Anomalies, anomalyViewOf(row, items, targets, points, starts, settings))
 	}
 	return page, ctx.Err()
 }
@@ -309,6 +317,20 @@ func (s *Service) lastGoodPoints(rows []store.Anomaly) (map[string]store.Restore
 	return out, nil
 }
 
+// firstRunStarts looks up when the backup each row began on started.
+func (s *Service) firstRunStarts(rows []store.Anomaly) (map[string]int64, error) {
+	var ids []string
+	for _, row := range rows {
+		if row.RunID != "" && !slices.Contains(ids, row.RunID) {
+			ids = append(ids, row.RunID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	return s.store.RunStarts(ids)
+}
+
 // restorePointKey is where lastGoodPoints files the backup one run left for a
 // finding's series. Each dataset of a ZFS run wrote a snapshot of its own,
 // and the run row carries only the root's.
@@ -337,8 +359,12 @@ func (s *Service) GetAnomaly(ctx context.Context, id string) (AnomalyView, bool,
 	if err != nil {
 		return AnomalyView{}, false, err
 	}
+	starts, err := s.firstRunStarts([]store.Anomaly{row})
+	if err != nil {
+		return AnomalyView{}, false, err
+	}
 	targets := s.offsiteTargetNames([]store.Anomaly{row})
-	return anomalyViewOf(row, items, targets, points, settings), true, ctx.Err()
+	return anomalyViewOf(row, items, targets, points, starts, settings), true, ctx.Err()
 }
 
 // offsiteTargetNames resolves the named off-site targets the given drill rows
@@ -556,13 +582,13 @@ func (s *Service) StartAnomalyEngine(ctx context.Context) {
 }
 
 func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets map[string]string,
-	points map[string]store.RestorePoint, settings store.Settings) AnomalyView {
+	points map[string]store.RestorePoint, starts map[string]int64, settings store.Settings) AnomalyView {
 	view := AnomalyView{
 		ID: row.ID, Detector: row.Detector, Metric: row.Metric,
 		Severity: row.Severity, State: row.State,
 		ScopeKind: row.ScopeKind, ScopeID: row.ScopeID, TargetID: row.TargetID, Domain: row.Domain,
 		Name:  items[row.TargetID].Name,
-		RunID: row.RunID, LastRunID: row.LastRunID, LastRunAt: row.LastRunAt,
+		RunID: row.RunID, LastRunID: row.LastRunID, LastRunAt: row.LastRunAt, FirstRunAt: starts[row.RunID],
 		Observed: row.Observed, Expected: row.Expected, Threshold: row.Threshold,
 		Samples: row.Samples, Sensitivity: row.Sensitivity,
 		Details: anomalyDetails(row.Details), Occurrences: row.Occurrences,
