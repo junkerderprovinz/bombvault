@@ -29,6 +29,7 @@ export type SettingsPageId =
   | "security"
   | "pairing"
   | "integrations"
+  | "apps"
   | "system";
 
 export interface SettingsPageDef {
@@ -45,6 +46,17 @@ function IconSchedules() {
         fillRule="evenodd"
         d="M14.2,8 A6.2,6.2 0 1 0 1.8,8 A6.2,6.2 0 1 0 14.2,8 Z M7.35,4.5 H8.65 V8.1 H7.35 Z M8.163,7.339 L11.506,9.347 L10.837,10.462 L7.494,8.453 Z"
       />
+    </svg>
+  );
+}
+
+function IconApps() {
+  return (
+    <svg viewBox="2 2 12 12" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="4.8" height="4.8" rx="1.2" />
+      <rect x="8.7" y="2.5" width="4.8" height="4.8" rx="1.2" />
+      <rect x="2.5" y="8.7" width="4.8" height="4.8" rx="1.2" />
+      <rect x="8.7" y="8.7" width="4.8" height="4.8" rx="1.2" />
     </svg>
   );
 }
@@ -73,6 +85,7 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "security", label: "settings.tab.security", icon: <IconShield /> },
   { id: "pairing", label: "pairing.title", icon: <IconLink /> },
   { id: "integrations", label: "settings.tab.integrations", icon: <IconLive /> },
+  { id: "apps", label: "settings.tab.apps", icon: <IconApps /> },
   { id: "system", label: "settings.tab.system", icon: <IconTabSystem /> },
 ];
 

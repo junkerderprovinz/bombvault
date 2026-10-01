@@ -16,4 +16,6 @@ BUTTONS = {
     # that lists it.
     "source": "https://github.com/junkerderprovinz/bombvault/releases/latest",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
+    "parleyport": "https://github.com/junkerderprovinz/parleyport",
+    "bombvault-widget": "https://github.com/junkerderprovinz/bombvault-widget",
 }

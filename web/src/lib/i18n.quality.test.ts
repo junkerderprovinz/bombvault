@@ -41,6 +41,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // The relay container's name as the Community Apps list it, which is what
   // a reader searches for there.
   "relay.containerName",
+  "apps.widget.title",
   "ha.title",
 
   // "Containers" is the word el and he use in their own nav entry. Consistency

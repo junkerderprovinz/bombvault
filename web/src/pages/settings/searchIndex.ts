@@ -532,10 +532,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "settings.widget",
       hint: "settings.widgetHint",
-      rows: [
-        { key: "settings.widgetToken" },
-        { key: "settings.dashTile", hint: "settings.dashTileHint" },
-      ],
+      rows: [{ key: "settings.widgetToken" }],
     },
     {
       title: "mcp.title",
@@ -588,6 +585,19 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     { title: "spike.title", rows: [] },
+  ],
+
+  apps: [
+    {
+      title: "apps.parleyport.title",
+      hint: "apps.parleyport.hint",
+      rows: [{ key: "apps.parleyport.toRelay" }],
+    },
+    {
+      title: "apps.widget.title",
+      hint: "apps.widget.hint",
+      rows: [{ key: "settings.dashTile", hint: "settings.dashTileHint" }],
+    },
   ],
 
   system: [
