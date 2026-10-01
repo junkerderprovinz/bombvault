@@ -4,12 +4,12 @@ Các bản sao lưu cục bộ bảo vệ bạn khỏi một container bị mấ
 
 ## Nhân bản off-site
 
-Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên trang **Settings, Off-site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Ở dạng này kho cục bộ vẫn là chính và kho off-site là một bản sao, nhưng kho chính của một miền hoàn toàn không cần phải là cục bộ; xem [Kho chính từ xa](#remote-primary-repositories) bên dưới để sao lưu thẳng tới S3/rest-server/v.v. thay vì nhân bản tới đó.
+Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên trang **Cài đặt, Ngoài site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Ở dạng này kho cục bộ vẫn là chính và kho off-site là một bản sao, nhưng kho chính của một miền hoàn toàn không cần phải là cục bộ; xem [Kho chính từ xa](#remote-primary-repositories) bên dưới để sao lưu thẳng tới S3/rest-server/v.v. thay vì nhân bản tới đó.
 
-- **Nhiều đích off-site cho mỗi miền.** Mỗi miền (container, VM, flash, config, bộ tập tin và tập dữ liệu ZFS) có thể nhân bản tới nhiều đích off-site cùng lúc, không chỉ một, nên bạn có thể giữ, ví dụ, một rest-server trên máy của một người bạn và một S3 bucket song song. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng. Một thiết lập off-site đơn hiện có được chuyển sang nguyên vẹn làm đích đầu tiên, và mọi đích của một miền đều nhân bản theo lịch trình off-site của miền đó.
-- **Lịch trình off-site theo từng miền** (được chỉnh cùng với mọi lịch trình khác trên Settings, Schedules): để trống để nhân bản sau mỗi lần sao lưu cục bộ, hoặc đặt một nhịp độ (ví dụ `weekly Sun 03:00`) để gửi off-site ít thường xuyên hơn tần suất bạn sao lưu cục bộ. Một nút **Replicate now** lo các lần chạy theo yêu cầu.
-- **Lưu giữ off-site** nằm trên Settings, Retention để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
-- **Giới hạn băng thông** (Settings, Off-site) giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
+- **Nhiều đích off-site cho mỗi miền.** Mỗi miền (container, VM, flash, config, bộ tập tin và tập dữ liệu ZFS) có thể nhân bản tới nhiều đích off-site cùng lúc, không chỉ một, nên bạn có thể giữ, ví dụ, một rest-server trên máy của một người bạn và một S3 bucket song song. Thêm các đích bổ sung trên Cài đặt, Ngoài site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng. Một thiết lập off-site đơn hiện có được chuyển sang nguyên vẹn làm đích đầu tiên, và mọi đích của một miền đều nhân bản theo lịch trình off-site của miền đó.
+- **Lịch trình off-site theo từng miền** (được chỉnh cùng với mọi lịch trình khác trên Cài đặt, Lịch trình): để trống để nhân bản sau mỗi lần sao lưu cục bộ, hoặc đặt một nhịp độ (ví dụ `weekly Sun 03:00`) để gửi off-site ít thường xuyên hơn tần suất bạn sao lưu cục bộ. Một nút **Sao chép ngay** lo các lần chạy theo yêu cầu.
+- **Lưu giữ off-site** nằm trên Cài đặt, Lưu giữ để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
+- **Giới hạn băng thông** (Cài đặt, Ngoài site) giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
 - Một **chỉ báo nhân bản** hiển thị miền nào đang nhân bản trong khi nó chạy (trên trang của nó và bảng điều khiển). Đó là một chỉ báo hoạt động, không phải một thanh phần trăm, vì `restic copy` không phơi bày tiến độ đọc được bằng máy.
 
 !!! note "Khôi phục thẳng từ off-site"
@@ -67,7 +67,7 @@ Một lần lật thực sự từ được-bảo-vệ sang không-được-bả
 
 BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu của bạn thực sự khôi phục được, không chỉ hiện diện.
 
-- **Diễn tập xác minh khôi phục (cục bộ).** BombVault định kỳ chạy `restic check --read-data-subset` (có giới hạn, không bao giờ là một lần khôi phục toàn bộ làm đầy đĩa) và hiển thị một huy hiệu *xác minh khôi phục được lần cuối* cho mỗi miền. Nhịp độ nằm trên Settings, Schedules; huy hiệu trên Settings, Integrity.
+- **Diễn tập xác minh khôi phục (cục bộ).** BombVault định kỳ chạy `restic check --read-data-subset` (có giới hạn, không bao giờ là một lần khôi phục toàn bộ làm đầy đĩa) và hiển thị một huy hiệu *xác minh khôi phục được lần cuối* cho mỗi miền. Nhịp độ nằm trên Cài đặt, Lịch trình; huy hiệu trên Cài đặt, Toàn vẹn.
 - **Diễn tập DR (off-site).** BombVault khôi phục một đích thực từ kho off-site vào một hộp cát dùng một lần, xác minh nó từng tập tin và từng byte, rồi dọn dẹp. Điều này chứng minh bạn có thể khôi phục từ off-site, không chỉ là kho phản hồi.
 
 **Bảng điểm bảo vệ chống ransomware** trên bảng điều khiển gom điều này thành một thế phòng thủ xanh / hổ phách / đỏ cho mỗi miền, với một danh sách kiểm tra có đóng dấu tuổi (off-site đã cấu hình, append-only đã xác minh, nhân bản hiện thời, diễn tập khôi phục đã qua, mã hóa đã bật, chiến lược dọn bớt đã đặt). Mỗi hàng đỏ liên kết sâu tới bản sửa, và thẻ chỉ bao giờ chuyển xanh dựa trên các sự thật đã xác minh.
@@ -102,7 +102,7 @@ Nơi duy nhất vẫn còn nhận APP_KEY nhập bằng tay là [Khôi phục t�
 
 Mọi thứ ở trên là phía *gửi*. Trên máy **nhận** các bản sao off-site bất biến từ một BombVault khác, bảng điều khiển bên nhận cho bạn giám sát độc lập, chỉ đọc các kho đó trên phần cứng bên nhận, nên một lần thất bại âm thầm ở đầu xa không bị bỏ qua.
 
-Bật công tắc **Receiver** trong Settings để hé lộ một tab **Receiver**. Nó mặc định tắt; chỉ bật nó trên một máy thực sự nhận các bản sao lưu off-site bất biến. Sau đó đăng ký một kho đã nhận (chỉ đọc, mở bằng mật khẩu restic của phiên bản gửi, đến qua [nhóm ghép nối](#pairing)) để có được:
+Bật công tắc **Bộ nhận** trong Cài đặt để hé lộ một tab **Bộ nhận**. Nó mặc định tắt; chỉ bật nó trên một máy thực sự nhận các bản sao lưu off-site bất biến. Sau đó đăng ký một kho đã nhận (chỉ đọc, mở bằng mật khẩu restic của phiên bản gửi, đến qua [nhóm ghép nối](#pairing)) để có được:
 
 - **Một kho snapshot được gom theo nguồn**, nên bạn có thể thấy chính xác những container, VM và bộ tập tin nào đã đến.
 - **Nhận lần cuối** cho mỗi nguồn, nên bạn biết mỗi cái mới đến mức nào.
@@ -156,7 +156,7 @@ Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới hoặc
 5. **Khôi phục các container và VM cùng một lúc** (để nguyên trạng thái dừng, nên bạn khởi động chúng một cách có chủ đích) và liệt kê các bộ tập tin và mục ZFS để khôi phục từng cái một; các mục ZFS trở lại ở trạng thái tắt. Bộ khôi phục của bạn chỉ cách một cú nhấp.
 
 !!! tip "Di chuyển theo kế hoạch so với thảm họa"
-    Khôi phục có hướng dẫn khôi phục cài đặt của chính BombVault từ một bản sao lưu. Với một lần chuyển *theo kế hoạch* sang một máy mới, thay vào đó bạn có thể mang cấu hình của mình theo trực tiếp bằng thẻ **Xuất và nhập cài đặt** (một tệp JSON di động). Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
+    Khôi phục có hướng dẫn khôi phục cài đặt của chính BombVault từ một bản sao lưu. Với một lần chuyển *theo kế hoạch* sang một máy mới, thay vào đó bạn có thể mang cấu hình của mình theo trực tiếp bằng thẻ **Xuất / nhập cài đặt** (một tệp JSON di động). Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
 
 ### Khôi phục từ một kho BombVault khác {#restore-from-another-bombvault-repo}
 

@@ -73,7 +73,7 @@ Pikamääritys:
 
 1. **Asetukset, Integraatiot, Palvelimen SSH:** kopioi näytetty julkinen avain.
 2. Lisää se Unraidin tiedostoon `/root/.ssh/authorized_keys` (myös flashiin tallennettuna, jotta se säilyy uudelleenkäynnistysten yli).
-3. Napsauta **Test connection**.
+3. Napsauta **Testaa yhteys**.
 
 Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoittaa isännän. Aseta `LIBVIRT_HOST` Unraidin LAN-IP-osoitteeseesi, jos tuo nimi ei ratkea (esimerkiksi kun kontti pyörii mukautetussa `br0.x`-verkossa). Jos vaihdoit Unraidin SSH-porttia, aseta `LIBVIRT_SSH_PORT` vastaamaan. **Live-tilannevedokset** tarvitsevat lisäksi qemu guest agentin VM:ssä ja levyn sijainniksi `/mnt/cache` (ei `/mnt/user`).
 

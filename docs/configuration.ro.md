@@ -73,7 +73,7 @@ Configurare rapidă:
 
 1. **Setări, Integrări, SSH al gazdei:** copiază cheia publică afișată.
 2. Adaug-o la `/root/.ssh/authorized_keys` al Unraid (persistată de asemenea în flash astfel încât să supraviețuiască reporniri).
-3. Apasă **Test connection**.
+3. Apasă **Testează conexiunea**.
 
 Șablonul adaugă `--add-host=host.docker.internal:host-gateway` astfel încât containerul să poată ajunge la gazdă. Setează `LIBVIRT_HOST` la IP-ul LAN al Unraid dacă acel nume nu se rezolvă (de exemplu când containerul rulează pe o rețea `br0.x` personalizată). Dacă ai schimbat portul SSH al Unraid, setează `LIBVIRT_SSH_PORT` să corespundă. **Instantaneele live** au nevoie suplimentar de qemu guest agent în VM și de discul pe `/mnt/cache` (nu `/mnt/user`).
 
