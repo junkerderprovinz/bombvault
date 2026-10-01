@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { TestButton, VerdictLine } from "../../components/TestButton";
 import { NumberField } from "../../components/NumberField";
 import { SelectField } from "../../components/SelectField";
@@ -259,11 +260,9 @@ export function NotifyCard({
         </div>
       )}
 
-      {/* A plain hash link: the settings page switches tabs on hashchange,
-          which a router navigation does not fire. */}
-      <a href="#anomalies" className="text-xs text-accentText hover:underline">
+      <Link to="/settings/integrity#anomalies" className="text-xs text-accentText hover:underline">
         {t("anomaly.settings.notifyCrossLink")}
-      </a>
+      </Link>
 
       {/* Test lives on this card rather than the channels card so it still
           works with Advanced off. */}

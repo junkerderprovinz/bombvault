@@ -20,7 +20,7 @@
 2. **BombVault** を検索します。
 3. **Install** をクリックし、必要な変数（下記）を設定して適用します。
 
-!!! tip "Manual template install"
+!!! tip "テンプレートの手動インストール"
     テンプレートを手動で追加したい場合は:
 
     1. **Docker, Add Container, Template repositories** に移動して、以下を追加します:
@@ -54,9 +54,9 @@ Unraid との違い:
 openssl rand -hex 32
 ```
 
-生成された結果をテンプレートの `APP_KEY` フィールドに貼り付けます。
+生成された結果をテンプレートの `APP_KEY` フィールド（Unraid）、または `docker-compose.yml` の環境変数 `APP_KEY`（汎用の Docker ホスト）に貼り付けます。
 
-!!! danger "Do not lose your APP_KEY"
+!!! danger "APP_KEY をなくさないでください"
     `APP_KEY` を失うと、暗号化されたバックアップは復元不能になります。サーバーとは別の安全な場所に保管してください。BombVault が起動したら、ワンクリックの**暗号化キー・リカバリーキット**（[オフサイトと復旧](offsite-recovery.md)を参照）を使って、完全なリカバリーバンドルを保存してください。
 
 テンプレートは Docker ソケット、フラッシュ（`/boot`）、そして **Host Data** ルート（`/mnt`）もマウントしてくれます。バックアップの*ソース*と*デスティネーション*はどちらも Host Data の配下に存在します。変数の完全なリファレンスとオフサイトのセットアップについては、[設定](configuration.md)を参照してください。
@@ -72,10 +72,10 @@ openssl rand -hex 32
 3. **Containers** タブでコンテナを選び、**Back up** をクリックして最初の復元ポイントを作成します。リポジトリパスはデフォルトで `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` になり、初回バックアップ時に作成されます。
 4. **Settings, Schedules** からスケジュールを設定します。コンテナと VM には*すべてをスケジュールに含める*ワンクリック操作があります。
 
-!!! tip "Optional: pick a backup order"
+!!! tip "任意: バックアップ順序を決める"
     一部のコンテナを常に他のコンテナより先にバックアップしたい場合（たとえばデータベースをそれを使うアプリより先に）は、Containers ページの**バックアップ順序**パネルを開き、希望する順序にドラッグします。以降、スケジュール実行や複数選択実行はその順序に従います。順序を指定しなかったものは、これまでどおり最も期限超過のものから順にバックアップされます。
 
-!!! note "Host integration check"
+!!! note "ホスト連携チェック"
     コンテナが起動したあと、Web UI で `/spike` を開いてください。これはすべてのマウントと CLI（Docker ソケット、libvirt、restic、qemu-img、rclone）をプローブし、欠けている部分を報告します。これにより、コンテナに頼る前に、正しく配線されていることを確認できます。
 
 ## シンプル vs 詳細

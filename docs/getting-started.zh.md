@@ -54,7 +54,7 @@
 openssl rand -hex 32
 ```
 
-将结果粘贴到模板的 `APP_KEY` 字段。
+将结果粘贴到模板的 `APP_KEY` 字段（Unraid），或 `docker-compose.yml` 中的 `APP_KEY` 环境变量（通用 Docker 主机）。
 
 !!! danger "切勿丢失您的 APP_KEY"
     丢失 `APP_KEY` 将使您的加密备份无法恢复。请将它存放在安全且与服务器分离的地方。BombVault 运行后，使用其一键式的**加密密钥恢复工具包**（参见[异地与恢复](offsite-recovery.md)）保存完整的恢复捆绑包。

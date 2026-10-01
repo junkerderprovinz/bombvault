@@ -564,15 +564,13 @@ func (h *Handler) handleGroup(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleGroupCreate starts a group and answers with its phrase, the only time
-// the phrase is handed out without the password being entered again. Every
-// route that hands out or takes a phrase needs a login password to be set,
-// since the phrase yields the restic password of every member. An instance
-// already in a group has to leave it first, since a new secret would cut off
-// every member of the old one. POST /api/group/phrase
+// the phrase is handed out without the password being entered again. Pairing
+// works without a login password too; the page then warns that anyone who can
+// open it can read the words and, through the group, ask every member for its
+// restic password. An instance already in a group has to leave it first, since
+// a new secret would cut off every member of the old one.
+// POST /api/group/phrase
 func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
-	if !h.requireAuthForSecrets(w, "pairing this instance") {
-		return
-	}
 	if h.svc.pairing().Active() {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "groupExists", "error": "this instance is already paired; leave the group first to start a new one"})
 		return
@@ -610,30 +608,28 @@ func (h *Handler) storeGroupSecret(sec []byte) error {
 	return nil
 }
 
-// handleGroupShow shows the phrase again once the login password is entered
-// again: a session may be open on an unattended screen, and the phrase lets
-// any instance into the group. Wrong passwords count against the same
-// throttle as the login. POST /api/group/phrase/show
+// handleGroupShow shows the phrase again. With a login password set it has to
+// be entered again: a session may be open on an unattended screen, and the
+// phrase lets any instance into the group. Wrong passwords count against the
+// same throttle as the login. POST /api/group/phrase/show
 func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "showing the pairing phrase") {
-		return
-	}
 	var body struct {
 		Password string `json:"password"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	hash, _, _ := h.authEnabled()
-	key := h.loginClientKey(r)
-	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-		return
-	}
-	if !verifyPassword(h.cfg.AppKey, body.Password, hash) {
-		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "passwordWrong", "error": "the password is needed to show the phrase again"})
-		return
+	if hash, _, on := h.authEnabled(); on {
+		key := h.loginClientKey(r)
+		if h.loginThrottled(key) {
+			writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
+			return
+		}
+		if !verifyPassword(h.cfg.AppKey, body.Password, hash) {
+			h.recordLoginFail(key)
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "passwordWrong", "error": "the password is needed to show the phrase again"})
+			return
+		}
 	}
 	g, err := h.store.GetGroupState()
 	if err != nil {
@@ -662,9 +658,6 @@ func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
 // and the word at fault, so the page can point at it in the reader's
 // language. POST /api/group/join
 func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "pairing this instance") {
-		return
-	}
 	var body struct {
 		Phrase string `json:"phrase"`
 	}

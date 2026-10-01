@@ -4266,6 +4266,8 @@ export interface GroupMember {
   direct: boolean;
   /** Connected to the same relay. */
   relay: boolean;
+  /** Where it takes direct calls; "" when none is known. */
+  address: string;
 }
 
 export type RelayMode = "project" | "own" | "off";

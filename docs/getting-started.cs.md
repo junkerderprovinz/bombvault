@@ -54,7 +54,7 @@ Vygenerujte si jej na libovolném stroji:
 openssl rand -hex 32
 ```
 
-Výsledek vložte do pole `APP_KEY` v šabloně.
+Výsledek vložte do pole `APP_KEY` v šabloně (Unraid), nebo do proměnné prostředí `APP_KEY` v `docker-compose.yml` (běžný Docker host).
 
 !!! danger "Neztraťte svůj APP_KEY"
     Ztráta `APP_KEY` učiní vaše šifrované zálohy neobnovitelnými. Uložte jej na bezpečné místo oddělené od serveru. Jakmile BombVault běží, použijte jeho **sadu pro obnovu šifrovacího klíče** na jedno kliknutí (viz [Mimo lokalitu a obnova](offsite-recovery.md)) k uložení kompletního balíčku pro obnovu.

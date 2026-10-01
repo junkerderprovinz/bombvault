@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-// The Fleet tab shows every instance of the group as a card, this one first,
-// each with whether it is connected. It asks again by itself instead of
-// offering a button, and fetches a connected member's scorecard once it has
-// gone stale. A card's details open state is remembered per browser.
+// The Instances tab shows every instance of the group as a card, this one
+// first, each with its address and whether it is connected. It asks again by
+// itself instead of offering a button, and fetches a connected member's
+// scorecard once it has gone stale. A card's details open state is remembered
+// per browser. Outside a group the tab is one tile that leads to pairing.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { FleetPeer } from "../lib/api";
@@ -34,6 +36,7 @@ function peer(over: Partial<FleetPeer>): FleetPeer {
 }
 
 let peers: FleetPeer[] = [];
+let active = true;
 const listCalls = vi.fn();
 const polled: string[] = [];
 
@@ -49,7 +52,14 @@ vi.mock("../lib/api", async (importOriginal) => {
       polled.push(id);
       return Promise.resolve({ ok: true });
     },
-    getGroup: () => Promise.resolve({ ok: true, name: "cellar" }),
+    getGroup: () =>
+      Promise.resolve({
+        ok: true,
+        active,
+        name: "cellar",
+        selfAddress: "https://192.168.1.20:3443",
+        members: [{ id: "m1", name: "DXP480T", version: "v8.0.0", direct: true, relay: false, address: "https://192.168.1.21:3443" }],
+      }),
     getHealth: () => Promise.resolve({ ok: true, version: "v9.2.1" }),
     getStatus: () => Promise.resolve({ ok: true, domains: [] }),
     listMeshOffers: () => Promise.resolve({ ok: true, offers: [] }),
@@ -58,12 +68,22 @@ vi.mock("../lib/api", async (importOriginal) => {
 
 const { Fleet, FLEET_REFRESH_MS, SCORECARD_STALE_S, scorecardDue } = await import("./Fleet");
 
+function Where() {
+  const loc = useLocation();
+  return <div data-testid="where">{loc.pathname + loc.hash}</div>;
+}
+
 async function renderFleet() {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <Fleet />
+          <MemoryRouter initialEntries={["/instances"]}>
+            <Routes>
+              <Route path="/instances" element={<Fleet />} />
+              <Route path="/settings/:page" element={<Where />} />
+            </Routes>
+          </MemoryRouter>
         </ToastProvider>
       </I18nProvider>
     );
@@ -85,6 +105,7 @@ function detailsOpen() {
 beforeEach(() => {
   localStorage.clear();
   peers = [peer({})];
+  active = true;
   listCalls.mockClear();
   polled.length = 0;
 });
@@ -104,6 +125,36 @@ describe("fleet cards", () => {
     expect(all[0].textContent).toContain(en["instances.thisInstance"]);
     expect(all[0].textContent).toContain("v9.2.1");
     expect(all[1].textContent).not.toContain(en["instances.thisInstance"]);
+  });
+
+  it("shows where each instance is reached, without the scheme", async () => {
+    peers = [peer({}), peer({ id: "p2", memberId: "gone", name: "attic" })];
+    await renderFleet();
+    const [self, member, unknown] = cards();
+    expect(self.textContent).toContain("192.168.1.20:3443");
+    expect(self.textContent).not.toContain("https://");
+    expect(member.textContent).toContain("192.168.1.21:3443");
+    expect(unknown.textContent).not.toContain("192.168.1.");
+  });
+
+  it("opens pairing in Settings from the button under the cards", async () => {
+    await renderFleet();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["pairing.title"] }));
+    });
+    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
+  });
+
+  it("is one tile leading to pairing while this instance is in no group", async () => {
+    active = false;
+    peers = [];
+    await renderFleet();
+    expect(cards()).toHaveLength(0);
+    expect(screen.getByText(en["instances.pairLead"])).not.toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(en["pairing.title"]) }));
+    });
+    expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
   it("says for each member whether it is connected, without naming the route", async () => {

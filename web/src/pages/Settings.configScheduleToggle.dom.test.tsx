@@ -6,6 +6,7 @@
 // lifetime only; after a reload the default is all there is.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
@@ -107,17 +108,22 @@ function stubResizeObserver() {
 
 async function renderSchedulesTab() {
   await act(async () => {
-    window.location.hash = "#schedules";
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <SettingsPage />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter initialEntries={["/settings/schedules"]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <SettingsPage />
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
     );
-  });
-  await act(async () => {
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
   });
 }
 

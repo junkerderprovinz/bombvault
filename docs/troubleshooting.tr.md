@@ -18,7 +18,7 @@ BombVault, kutudan çıktığı gibi `3443` portunda HTTPS sunar (kendinden imza
 
 VM yedeklemesi, bir bağlamayla değil, SSH üzerinden libvirt ile konuşur.
 
-- Host'ta SSH'nin etkin olduğunu ve BombVault'un genel anahtarının `/root/.ssh/authorized_keys` içinde yetkilendirildiğini onaylayın (Ayarlar, Sistem, Ana makine SSH anahtarı ve bir **Bağlantıyı test et** düğmesi gösterir).
+- Host'ta SSH'nin etkin olduğunu ve BombVault'un genel anahtarının `/root/.ssh/authorized_keys` içinde yetkilendirildiğini onaylayın (Ayarlar, Entegrasyonlar, Ana makine SSH anahtarı ve bir **Bağlantıyı test et** düğmesi gösterir).
 - Özel bir `br0.x` ağında, `LIBVIRT_HOST`'u Unraid LAN IP'nize ayarlayın (konteyner orada host'a `host.docker.internal` üzerinden ulaşamaz). **Ayarlar, Docker, Özel ağlara host erişimi**'ni etkinleştirin.
 - Unraid'in SSH portunu değiştirdiyseniz, eşleşmesi için `LIBVIRT_SSH_PORT`'u ayarlayın.
 - Tam adım adım tanılama (ulaşılabilirlik testi, VLAN yönlendirme, `Permission denied (publickey)`, `Host key verification failed`) [SSH üzerinden VM yedekleme kılavuzu](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'nda yer alır.
@@ -29,11 +29,11 @@ Canlı anlık görüntüler, VM'de qemu guest agent'ın kurulu olmasını ve dis
 
 ## Bir yedekleme "repository is already locked" ile başarısız oldu
 
-Bu genellikle, konteyner işlem ortasında güncellendiğinde ya da yeniden başlatıldığında geride kalan öksüz bir restic kilididir. BombVault, kanıtlanabilir biçimde öksüz bir kilidi algılar, zorla temizler ve otomatik olarak bir kez yeniden dener. Sürerse, eski bir kilidi elle temizlemek için etkilenen etki alanı için **Ayarlar, Bütünlük ve bakım, Kilidi aç**'ı kullanın. Gerçek bir sorun gizlenmek yerine yine de ortaya çıkar. Yeniden başlatmadan sonra BombVault, böyle bir kilit on dakika boyunca yenilenmeyene kadar bekler. Hâlâ çalışan bir restic, örneğin aynı depodaki ikinci bir BombVault içinde, kilidini beş dakikada bir yeniler.
+Bu genellikle, konteyner işlem ortasında güncellendiğinde ya da yeniden başlatıldığında geride kalan öksüz bir restic kilididir. BombVault, kanıtlanabilir biçimde öksüz bir kilidi algılar, zorla temizler ve otomatik olarak bir kez yeniden dener. Sürerse, eski bir kilidi elle temizlemek için etkilenen etki alanı için **Ayarlar, Bütünlük, Kilidi aç**'ı kullanın. Gerçek bir sorun gizlenmek yerine yine de ortaya çıkar. Yeniden başlatmadan sonra BombVault, böyle bir kilit on dakika boyunca yenilenmeyene kadar bekler. Hâlâ çalışan bir restic, örneğin aynı depodaki ikinci bir BombVault içinde, kilidini beş dakikada bir yeniler.
 
 ## Bir yedeklemeden sonra site dışı kopyam gerçekleşmedi
 
-Site dışı çoğaltma tasarım gereği en iyi çabadır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. O etki alanı için site dışı zamanlamayı denetleyin (Ayarlar, Zamanlamalar): boş bir zamanlama her yerel yedeklemeden sonra çoğaltır, bir sıklık ise daha seyrek gönderir. İstek üzerine bir çalışma için Site dışı sekmesindeki **Şimdi çoğalt**'ı kullanın ve Kontrol Paneli'ndeki çoğaltma göstergesini izleyin.
+Site dışı çoğaltma tasarım gereği en iyi çabadır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. O etki alanı için site dışı zamanlamayı denetleyin (Ayarlar, Zamanlamalar): boş bir zamanlama her yerel yedeklemeden sonra çoğaltır, bir sıklık ise daha seyrek gönderir. İstek üzerine bir çalışma için Site dışı sayfasındaki **Şimdi çoğalt**'ı kullanın ve Kontrol Paneli'ndeki çoğaltma göstergesini izleyin.
 
 ## Bir geri yükleme başlamadan iptal oldu
 

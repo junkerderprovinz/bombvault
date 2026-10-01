@@ -849,12 +849,17 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 // for none. The run stands in only while the repository could not be listed,
 // because an unreachable repository must not read as "never backed up". The
 // start time comes from the run that wrote that backup and from no other,
-// since the dashboard measures a duration from the pair.
+// since the dashboard measures a duration from the pair. A successful run
+// without a snapshot is a config-only backup: the definition it saved lives
+// on the entry rather than in the repository, so that run dates it.
 func lastBackupDate(run *store.Run, newest int64, unreadable bool) (finished, started *int64) {
 	if unreadable {
 		if run == nil {
 			return nil, nil
 		}
+		return run.FinishedAt, &run.StartedAt
+	}
+	if run != nil && run.SnapshotID == "" && run.FinishedAt != nil && *run.FinishedAt > newest {
 		return run.FinishedAt, &run.StartedAt
 	}
 	if newest <= 0 {

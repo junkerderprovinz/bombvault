@@ -14,6 +14,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   getGroup,
   getHealth,
@@ -37,8 +38,7 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
 import { relativeTime } from "../lib/reltime";
-import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconFleet } from "../components/Sidebar";
+import { IconLink } from "../components/glyphs";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { copyText } from "../lib/clipboard";
@@ -446,6 +446,7 @@ function InstanceMark() {
  *  actions along the foot. */
 function FleetCard({
   name,
+  address,
   self,
   badges,
   facts,
@@ -455,6 +456,8 @@ function FleetCard({
   t,
 }: {
   name: string;
+  /** Where the instance is reached, empty when it is not known. */
+  address?: string;
   self?: boolean;
   badges: ReactNode;
   facts?: ReactNode;
@@ -486,6 +489,11 @@ function FleetCard({
             )}
             <span className="ms-auto flex flex-wrap items-center gap-2">{badges}</span>
           </div>
+          {address && (
+            <p dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted max-md:whitespace-normal max-md:break-all">
+              {withoutScheme(address)}
+            </p>
+          )}
           {facts && <p className="text-xs text-carbon-textMuted wrap-break-word">{facts}</p>}
         </div>
       </div>
@@ -495,17 +503,24 @@ function FleetCard({
   );
 }
 
+/** The address as a card shows it, the way it would be typed. */
+function withoutScheme(url: string): string {
+  return url.replace(/^https?:\/\//, "");
+}
+
 function ConnectionBadge({ connected, t }: { connected: boolean; t: T }) {
   return <Badge tone={connected ? "ok" : "fail"} size="large">{connected ? t("instances.connected") : t("instances.notConnected")}</Badge>;
 }
 
 function FleetPeerCard({
   peer,
+  address,
   t,
   onRefresh,
   index,
 }: {
   peer: FleetPeer;
+  address?: string;
   t: T;
   onRefresh: () => void;
   index: number;
@@ -603,11 +618,6 @@ function FleetPeerCard({
       {peer.lastPollVersion && peer.lastPollAt > 0 && " · "}
       {peer.lastPollAt > 0 && t("fleet.lastPolled").replace("{time}", relativeTime(t, peer.lastPollAt))}
       {peer.lastPollOk === false && peer.lastPollError && <span className="text-statusFail"> · {peer.lastPollError}</span>}
-      {peer.needsPairing && peer.url && (
-        <span dir="ltr" className="block truncate text-start font-mono max-md:whitespace-normal max-md:break-all">
-          {peer.url}
-        </span>
-      )}
     </>
   );
 
@@ -655,6 +665,7 @@ function FleetPeerCard({
   return (
     <FleetCard
       name={peer.lastPollInstanceName || peer.name}
+      address={address || peer.url}
       badges={badges}
       facts={facts}
       actions={actions}
@@ -689,6 +700,11 @@ export function scorecardDue(peer: FleetPeer, nowS: number): boolean {
 
 interface Self {
   name: string;
+  address: string;
+  /** In a group at all; outside one the tab is only the way into pairing. */
+  active: boolean;
+  /** Where each member of the group takes direct calls, by member id. */
+  addresses: Record<string, string>;
   version: string;
   domains: DomainStatus[];
   ok: boolean;
@@ -698,6 +714,7 @@ interface Self {
  *  the heading. */
 export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
+  const navigate = useNavigate();
   const [peers, setPeers] = useState<FleetPeer[]>([]);
   const [self, setSelf] = useState<Self | null>(null);
   const [loading, setLoading] = useState(true);
@@ -724,7 +741,15 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
     (): Promise<void> =>
       Promise.all([getGroup(), getHealth(), getStatus()])
         .then(([group, health, status]) =>
-          setSelf({ name: group.name, version: health.version ?? "", domains: status.domains ?? [], ok: status.ok }),
+          setSelf({
+            name: group.name,
+            address: group.selfAddress,
+            active: group.active,
+            addresses: Object.fromEntries(group.members.map((m) => [m.id, m.address])),
+            version: health.version ?? "",
+            domains: status.domains ?? [],
+            ok: status.ok,
+          }),
         )
         .catch(() => setSelf((prev) => (prev ? { ...prev, ok: false } : prev))),
     [],
@@ -770,16 +795,13 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   }, [peers, loadPeers]);
 
   const pendingOffers = offers.filter((o) => o.status === "pending");
-  const showEmptyState = !loading && !error && peers.length === 0;
-
-  // Heading notches take hues in render order. The offers card and the empty
-  // state can show together, so neither can assume hue 0.
-  let hueSeq = 0;
-  const nextHue = () => hueSeq++;
+  // Nothing to show but this instance: the tab is the way into pairing.
+  const empty = !loading && !error && self !== null && !self.active && peers.length === 0;
+  const openPairing = () => navigate("/settings/pairing");
 
   return (
     <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      {!embedded && <PageTitle>{t("fleet.title")}</PageTitle>}
+      {!embedded && <PageTitle>{t("instances.title")}</PageTitle>}
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
@@ -790,7 +812,7 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
             {/* The padded card is `relative`, so the notch straddles its edge
                 and not this inner div's. */}
             <h2 className="flex items-center">
-              <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("fleet.mesh.offersTitle")}</Badge>
+              <Badge tone="heading" size="heading" wrap hueIndex={0}>{t("fleet.mesh.offersTitle")}</Badge>
             </h2>
             <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.offersHint")}</p>
           </div>
@@ -802,11 +824,31 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
-      {!loading && (self || peers.length > 0) && (
+      {empty && (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center">
+          <button
+            type="button"
+            onClick={openPairing}
+            className="grid w-full max-w-md grid-cols-[48px_minmax(0,1fr)] items-center gap-4 rounded-card bg-carbon-surface p-5 text-start transition-colors hover:bg-carbon-surface2 glim-field-focus"
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-control bg-accent text-accentContrast [&>svg]:h-5.5 [&>svg]:w-5.5">
+              <IconLink />
+            </span>
+            <span>
+              <span className="block text-lg font-semibold text-carbon-text">{t("pairing.title")}</span>
+              <span className="mt-0.5 block text-sm text-carbon-textSub">{t("instances.pairLead")}</span>
+            </span>
+          </button>
+        </div>
+      )}
+
+      {!loading && !empty && (self || peers.length > 0) && (
+        <>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,28rem),1fr))] gap-4 glim-content-fade">
           {self && (
             <FleetCard
               name={self.name}
+              address={self.address}
               self
               badges={<ConnectionBadge connected={self.ok} t={t} />}
               facts={self.version || undefined}
@@ -817,37 +859,21 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
             </FleetCard>
           )}
           {peers.map((p, i) => (
-            <FleetPeerCard key={p.id} peer={p} t={t} onRefresh={() => void loadPeers()} index={i + 1} />
+            <FleetPeerCard
+              key={p.id}
+              peer={p}
+              address={self?.addresses[p.memberId]}
+              t={t}
+              onRefresh={() => void loadPeers()}
+              index={i + 1}
+            />
           ))}
         </div>
+        <div>
+          <Button label={t("pairing.title")} labelKey="pairing.title" glyph={<IconLink />} tone="accent" onClick={openPairing} />
+        </div>
+        </>
       )}
-
-      {/* insetStart corrects the notch in a centred card, see Badge.tsx. */}
-      {showEmptyState && (() => {
-        const emptyHue = nextHue();
-        return (
-          <div
-            className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-            style={hueVars(emptyHue) as CSSProperties}
-          >
-            <h2 className="flex items-center">
-              <Badge tone="heading" size="heading" wrap hueIndex={emptyHue} insetStart={6}>
-                {t("fleet.emptyTitle")}
-                <InfoBubble tip={t("fleet.empty")} onAccent />
-              </Badge>
-            </h2>
-            <EmptyStateIcon icon={IconFleet} />
-            <Button
-              label={t("fleet.openPairing")}
-              labelKey="fleet.openPairing"
-              tone="accent"
-              onClick={() => {
-                window.location.hash = "#pairing";
-              }}
-            />
-          </div>
-        );
-      })()}
     </div>
   );
 }

@@ -284,7 +284,6 @@ export function Flash() {
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("flash.title")}</PageTitle>
-      <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
       <OffsiteIndicator domain="flash" />
 
       {/* The outer div holds the heading badge, so it carries the notch hover
@@ -300,7 +299,12 @@ export function Flash() {
           </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-          <div className="flex justify-end">
+          {/* As on the self-backup page, the learning caption sits with the
+              backups it counts. */}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <span className="me-auto">
+              <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+            </span>
             <FlashBackupButton
               t={t}
               onBackedUp={reload}

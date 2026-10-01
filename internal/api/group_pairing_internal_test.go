@@ -348,44 +348,35 @@ func TestShowingThePhraseAgainNeedsThePassword(t *testing.T) {
 	}
 }
 
-// Without a login password anyone on the network could use the page, and the
-// phrase opens every member's repositories, so it is neither made, shown nor
-// taken.
-func TestWithoutALoginPasswordThePhraseIsNeitherMadeShownNorTaken(t *testing.T) {
+// Pairing does not depend on a login password: the page warns about a missing
+// one instead. The phrase then shows without asking for anything, since there
+// is nothing to ask for.
+func TestWithoutALoginPasswordThePhraseIsMadeShownAndTaken(t *testing.T) {
+	noPassword := func(in *instance) {
+		t.Helper()
+		if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
+			t.Fatal(err)
+		}
+		in.session = ""
+	}
 	donor := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	_, created := donor.do(t, http.MethodPost, "/api/group/phrase", nil)
+	noPassword(donor)
+	code, created := donor.do(t, http.MethodPost, "/api/group/phrase", nil)
 	phrase, _ := created["phrase"].(string)
+	if code != http.StatusOK || phrase == "" {
+		t.Fatalf("creating a phrase without a login password = %d %v, want the phrase", code, created)
+	}
+	if code, out := donor.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{}); code != http.StatusOK || out["phrase"] != phrase {
+		t.Fatalf("showing the phrase without a login password = %d %v, want it shown", code, out)
+	}
 
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
+	noPassword(in)
+	if code, out := in.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": phrase}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("joining without a login password = %d %v, want it joined", code, out)
 	}
-	in.session = ""
-	for _, try := range []struct {
-		path string
-		body any
-	}{
-		{"/api/group/phrase", nil},
-		{"/api/group/join", map[string]any{"phrase": phrase}},
-	} {
-		code, out := in.do(t, http.MethodPost, try.path, try.body)
-		if code != http.StatusForbidden || out["phrase"] != nil || !strings.Contains(fmt.Sprint(out["error"]), "set a login password") {
-			t.Errorf("POST %s without a login password = %d %v, want the 403 refusal", try.path, code, out)
-		}
-	}
-	if in.svc.pairing().Active() {
-		t.Fatal("an instance without a login password was paired")
-	}
-
-	sec, err := seedphrase.Decode(phrase)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := in.h.storeGroupSecret(sec); err != nil {
-		t.Fatal(err)
-	}
-	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{}); code != http.StatusForbidden || out["phrase"] != nil {
-		t.Fatalf("showing the phrase of a paired instance whose password was removed = %d %v, want the 403 refusal", code, out)
+	if !in.svc.pairing().Active() {
+		t.Fatal("an instance without a login password was not paired")
 	}
 }
 

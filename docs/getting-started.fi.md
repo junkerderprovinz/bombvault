@@ -54,7 +54,7 @@ Luo sellainen millä tahansa koneella:
 openssl rand -hex 32
 ```
 
-Liitä tulos mallin `APP_KEY`-kenttään.
+Liitä tulos mallin `APP_KEY`-kenttään (Unraid) tai `docker-compose.yml`-tiedoston `APP_KEY`-ympäristömuuttujaan (tavallinen Docker-isäntä).
 
 !!! danger "Älä menetä APP_KEY:tä"
     `APP_KEY`:n menettäminen tekee salatuista varmuuskopioistasi palautuskelvottomia. Säilytä se turvallisessa paikassa erillään palvelimesta. Kun BombVault on käynnissä, käytä sen yhden napsautuksen **salausavaimen palautuspakettia** (katso [Etäsijainti ja palautus](offsite-recovery.md)) tallentaaksesi koko palautusnipun.

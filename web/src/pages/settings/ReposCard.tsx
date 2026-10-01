@@ -156,7 +156,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             key={r.id}
             className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2"
           >
-            <div className="flex-1 min-w-0 max-md:basis-full">
+            <div className="flex-1 min-w-[min(12rem,100%)] max-md:basis-full">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-carbon-text font-semibold truncate max-md:whitespace-normal max-md:wrap-anywhere">
                   {r.name}
@@ -233,7 +233,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
           </div>
-          <div className="flex flex-col gap-1 flex-[2] min-w-[14rem]">
+          <div className="flex flex-col gap-1 flex-[2] min-w-[min(14rem,100%)]">
             <label className="flex items-center gap-1 text-xs text-carbon-textSub" htmlFor="repo-location">
               {t("repos.location")}
               <InfoBubble tip={t("repos.locationHint")} />

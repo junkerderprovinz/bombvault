@@ -18,7 +18,7 @@ A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela (e sem o kit 
 
 O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 
-- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Sistema, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
+- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Integrações, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
 - Numa rede `br0.x` personalizada, defina `LIBVIRT_HOST` para o IP LAN do seu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ative **Definições, Docker, Host access to custom networks**.
 - Se alterou a porta SSH do Unraid, defina `LIBVIRT_SSH_PORT` para corresponder.
 - O diagnóstico completo passo a passo (teste de alcance, encaminhamento de VLAN, `Permission denied (publickey)`, `Host key verification failed`) está no [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Os instantâneos a quente precisam do agente convidado qemu instalado na VM e do
 
 ## Um backup falhou com "repository is already locked"
 
-Isto é geralmente um bloqueio restic órfão deixado para trás quando o container foi atualizado ou reiniciado a meio de uma operação. O BombVault deteta um bloqueio comprovadamente órfão, força a sua limpeza e reexperimenta uma vez, automaticamente. Se persistir, use **Definições, Integridade e manutenção, Desbloquear** para o domínio afetado para limpar um bloqueio preso à mão. Um problema genuíno continua a vir ao de cima em vez de ser escondido. Depois de um reinício, o BombVault espera até esse bloqueio passar dez minutos sem ser renovado. Um restic ainda em execução, por exemplo num segundo BombVault no mesmo repositório, renova o bloqueio a cada cinco minutos.
+Isto é geralmente um bloqueio restic órfão deixado para trás quando o container foi atualizado ou reiniciado a meio de uma operação. O BombVault deteta um bloqueio comprovadamente órfão, força a sua limpeza e reexperimenta uma vez, automaticamente. Se persistir, use **Definições, Integridade, Desbloquear** para o domínio afetado para limpar um bloqueio preso à mão. Um problema genuíno continua a vir ao de cima em vez de ser escondido. Depois de um reinício, o BombVault espera até esse bloqueio passar dez minutos sem ser renovado. Um restic ainda em execução, por exemplo num segundo BombVault no mesmo repositório, renova o bloqueio a cada cinco minutos.
 
 ## A minha cópia externa não aconteceu após um backup
 
-A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifique o agendamento externo para esse domínio (Definições, Agendamentos): um agendamento em branco replica após cada backup local, enquanto uma cadência envia com menos frequência. Use **Replicar agora** no separador Externo para uma execução a pedido, e observe o indicador de replicação no Painel.
+A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifique o agendamento externo para esse domínio (Definições, Agendamentos): um agendamento em branco replica após cada backup local, enquanto uma cadência envia com menos frequência. Use **Replicar agora** na página Externo para uma execução a pedido, e observe o indicador de replicação no Painel.
 
 ## Um restauro abortou antes de começar
 

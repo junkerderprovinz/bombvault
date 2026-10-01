@@ -54,7 +54,7 @@ Générez-en un sur n'importe quelle machine :
 openssl rand -hex 32
 ```
 
-Collez le résultat dans le champ `APP_KEY` du modèle.
+Collez le résultat dans le champ `APP_KEY` du modèle (Unraid), ou dans la variable d'environnement `APP_KEY` de `docker-compose.yml` (hôte Docker générique).
 
 !!! danger "Ne perdez pas votre APP_KEY"
     Perdre `APP_KEY` rend vos sauvegardes chiffrées irrécupérables. Conservez-le en lieu sûr et à l'écart du serveur. Une fois BombVault en fonctionnement, utilisez son **kit de récupération de clé de chiffrement** en un clic (voir [Sauvegarde hors site et récupération](offsite-recovery.md)) pour sauvegarder l'ensemble du paquet de récupération.

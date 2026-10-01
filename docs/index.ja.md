@@ -8,7 +8,7 @@ BombVault は、Docker コンテナと KVM/libvirt VM の**バックアップと
 
 [restic](https://restic.net) を基盤としているため、すべてのバックアップは重複排除され、増分方式で、常に暗号化されています。
 
-!!! note "Keep your APP_KEY safe"
+!!! note "APP_KEY は安全に保管してください"
     BombVault は、`APP_KEY` という名前の 32 バイトのシークレットから restic リポジトリのパスワードを導出します。これを失うと、暗号化されたバックアップは復元不能になります。`openssl rand -hex 32` で生成し、安全な場所に保管してください。[設定](configuration.md)を参照してください。
 
 ## BombVault が保護するもの
@@ -57,5 +57,5 @@ BombVault はオーケストレーションと UI のレイヤーであり、ス
 - **Unraid サポートスレッド:** [forums.unraid.net](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)
 - **Issue:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
-!!! warning "Root-equivalent control of the host"
+!!! warning "ホストに対する root 相当の制御"
     Docker ソケットを通じて、BombVault はコンテナの停止、削除、再作成を行い、appdata の読み書きができます。また VM バックアップのためにホストに SSH でログインして `virsh` を実行します。その Web UI に到達できる者は、実質的にホストの root 権限を持つことになります。BombVault は信頼できる、外部に公開されていないネットワークでのみ実行し、オフサイトまたはイミュータブルなバックアップを使い始めたら、任意のパスワードゲート（設定、セキュリティ）を有効にしてください。完全なセキュリティモデルについては[設定](configuration.md)を参照してください。

@@ -18,7 +18,7 @@ BombVault serve HTTPS pronto all'uso sulla porta `3443` (certificato autofirmato
 
 Il backup delle VM comunica con libvirt via SSH, mai un mount.
 
-- Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Sistema, SSH dell'host mostra la chiave e un pulsante **Prova connessione**).
+- Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Integrazioni, SSH dell'host mostra la chiave e un pulsante **Prova connessione**).
 - Su una rete `br0.x` personalizzata, imposta `LIBVIRT_HOST` sull'IP LAN del tuo Unraid (lì il container non può raggiungere l'host tramite `host.docker.internal`). Abilita **Impostazioni, Docker, Host access to custom networks**.
 - Se hai cambiato la porta SSH di Unraid, imposta `LIBVIRT_SSH_PORT` di conseguenza.
 - La diagnosi completa passo passo (test di raggiungibilità, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) è nella [guida al backup delle VM via SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Gli snapshot a caldo necessitano del qemu guest agent installato nella VM e del 
 
 ## Un backup è fallito con "repository is already locked"
 
-Di solito è un lock restic orfano lasciato quando il container è stato aggiornato o riavviato a metà operazione. BombVault rileva un lock dimostrabilmente orfano, lo rimuove forzatamente e ritenta una volta, automaticamente. Se persiste, usa **Impostazioni, Integrità e manutenzione, Sblocca** per il dominio interessato per rimuovere a mano un lock bloccato. Un problema autentico si presenta comunque invece di essere nascosto. Dopo un riavvio BombVault aspetta che un lock del genere resti dieci minuti senza essere rinnovato. Un restic ancora in esecuzione, per esempio in un secondo BombVault sullo stesso repository, rinnova il suo lock ogni cinque minuti.
+Di solito è un lock restic orfano lasciato quando il container è stato aggiornato o riavviato a metà operazione. BombVault rileva un lock dimostrabilmente orfano, lo rimuove forzatamente e ritenta una volta, automaticamente. Se persiste, usa **Impostazioni, Integrità, Sblocca** per il dominio interessato per rimuovere a mano un lock bloccato. Un problema autentico si presenta comunque invece di essere nascosto. Dopo un riavvio BombVault aspetta che un lock del genere resti dieci minuti senza essere rinnovato. Un restic ancora in esecuzione, per esempio in un secondo BombVault sullo stesso repository, rinnova il suo lock ogni cinque minuti.
 
 ## La mia copia off-site non è avvenuta dopo un backup
 
-La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla il calendario off-site per quel dominio (Impostazioni, Calendari): un calendario vuoto replica dopo ogni backup locale, mentre una cadenza spedisce meno spesso. Usa **Replica ora** nella scheda Off-site per un'esecuzione su richiesta, e osserva l'indicatore di replica sulla Dashboard.
+La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla il calendario off-site per quel dominio (Impostazioni, Pianificazioni): un calendario vuoto replica dopo ogni backup locale, mentre una cadenza spedisce meno spesso. Usa **Replica ora** nella pagina Off-site per un'esecuzione su richiesta, e osserva l'indicatore di replica sulla Dashboard.
 
 ## Un ripristino si è interrotto prima di iniziare
 

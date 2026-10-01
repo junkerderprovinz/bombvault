@@ -1,6 +1,6 @@
 # Konfigurasjon
 
-Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-sikkerhetskopiering over SSH og oppsettet for ekstern lagring. Sikkerhetskopi-**repository-stier** konfigureres inne i appen (Innstillinger, Sikkerhetskopistier), ikke via miljøvariabler.
+Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-sikkerhetskopiering over SSH og oppsettet for ekstern lagring. Sikkerhetskopi-**repository-stier** konfigureres inne i appen (Innstillinger, Lagring, Sikkerhetskopistier), ikke via miljøvariabler.
 
 ## Miljøvariabler
 
@@ -21,6 +21,7 @@ Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-s
 | `PLATFORM` | Nei | Tvinger hvilken plattform BombVault oppfatter seg selv som å kjøre på, i stedet for å auto-oppdage: `unraid`, `generic`, eller `truenas` (ikke satt som standard: auto-oppdager Unraid ved å sondere etter `dockerMan`-markøren under flash-monteringen, ellers `generic`; en ukjent verdi faller også tilbake til `generic`, logget). Sett den eksplisitt på en generisk Docker-host eller TrueNAS Scale i stedet for å stole på auto-sonderingen som er forbeholdt Unraid; det gjør den generiske compose-filen. Endrer appdata-fallback-konvensjonen, standardene for gjenopprettingsmål på tvers av instanser, og om varslings- og følgesvenn-plugin-trinnene som er forbeholdt Unraid i det hele tatt forsøkes (se `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nei | Navnet på selve BombVault-containeren, så den aldri sikkerhetskopierer (og dermed stopper) seg selv. |
 | `BACKUP_MAX_HOURS` | Nei | Maksimalt antall klokketimer en enkelt sikkerhetskopieringskjøring kan holde domenelåsen sin før den tvangsavbrytes (en beskyttelse så en fastkjørt kjøring ikke kan blokkere domenet for alltid). Tom (standard) bruker `48`. Hev den for svært store eller trege sky-sikkerhetskopier (en kjøring avbrutt ved taket feiler med `context deadline exceeded`). Sett `0` for å deaktivere taket helt. |
+| `BACKUP_STALL_HOURS` | Nei | Timer en sikkerhetskopiering kan gå **helt uten fremdrift** før den avbrytes. Tom (standard) bruker `2`; sett `0` for aldri å avbryte ved stillstand. Dette er den finere av de to beskyttelsene og som regel den som slår til: den følger med på om noe fortsatt skjer, ikke på hvor lenge kjøringen har pågått, så en treg men frisk sikkerhetskopiering på flere terabyte får være i fred, mens en som henger på en deling som ikke svarer, stoppes etter timer i stedet for dager. En advarsel logges etter 30 minutter med stillhet, før noe avbrytes. Skanning teller som fremdrift: restic skriver ingen byte mens det går gjennom et stort tre, og den fasen overvåkes via totalene for filer og byte i stedet for via skrevne byte. De to variablene er uavhengige, og `BACKUP_MAX_HOURS` begrenser fortsatt fasene etter selve sikkerhetskopieringen (oppbevaring, statistikk, ekstern kopi), der det ikke finnes tellere å følge med på. |
 | `DB_DUMP_MAX_HOURS` | Nei | Timer én automatisk databasedump får kjøre før den stoppes. Tomt (standard) bruker `6`; tillatte verdier er `1` til `48`, og grensen holdes en time under `BACKUP_MAX_HOURS` (på halvparten av den når den er under to timer), slik at en lang dump kuttes av sin egen grense og meldes som det, i stedet for å dra sikkerhetskopien med seg. En dump som ikke kommer videre, stoppes tidligere, etter `BACKUP_STALL_HOURS`. En stoppet dump feiler for seg selv, og sikkerhetskopien av containeren fortsetter. På Unraid legger du variabelen til BombVault-containeren med **Add another Path, Port, Variable**. |
 | `TZ` | Nei | Tidssone for planleggeren (for eksempel `Europe/Berlin`). **Hvis den ikke settes, kjører alle planer i UTC**: en plan satt til 02:30 starter da 02:30 UTC og ikke etter lokal tid. På Unraid setter du aldri dette selv: systemet sender sin egen tidssone videre til hver container. |
 
@@ -30,7 +31,7 @@ Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vi
 
 Sikkerhetskopi av ZFS-datasett trenger også denne modusen: verten monterer øyeblikksbildet av et datasett først etter at containeren har startet. Se [ZFS-datasett](zfs-datasets.md).
 
-Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Sikkerhetskopistier**.
+Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Lagring, Sikkerhetskopistier**. Hvert stifelt har også en **Lokal / Ekstern**-bryter rett ved siden av: en sti kan være en restic-remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Sjekk av host-integrasjon"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.
@@ -62,7 +63,7 @@ For hver container velger BombVault selv hvilke bind-monteringer og navngitte vo
 
 ## MCP-server {#mcp-server}
 
-MCP-serveren trenger ingen miljøvariabel. Du slår den på ved å lage en nøkkel under **Innstillinger, System, MCP-server**, og den svarer på `/mcp` på samme port som webgrensesnittet (for eksempel `https://192.168.1.10:3443/mcp`). Uten en aktiv nøkkel svarer den stien med `404`. Klienter, sertifikater og grenser er beskrevet på [MCP-server](mcp.md).
+MCP-serveren trenger ingen miljøvariabel. Du slår den på ved å lage en nøkkel under **Innstillinger, Integrasjoner, MCP-server**, og den svarer på `/mcp` på samme port som webgrensesnittet (for eksempel `https://192.168.1.10:3443/mcp`). Uten en aktiv nøkkel svarer den stien med `404`. Klienter, sertifikater og grenser er beskrevet på [MCP-server](mcp.md).
 
 ## VM-sikkerhetskopiering over SSH
 
@@ -70,7 +71,7 @@ BombVault sikkerhetskopierer KVM/libvirt-VM-er **uten å montere noen libvirt-st
 
 Rask oppsett:
 
-1. **Innstillinger, System, Verts-SSH:** kopier den viste offentlige nøkkelen.
+1. **Innstillinger, Integrasjoner, Verts-SSH:** kopier den viste offentlige nøkkelen.
 2. Legg den til i Unraids `/root/.ssh/authorized_keys` (også lagret til flashen så den overlever omstarter).
 3. Klikk **Test tilkobling**.
 
@@ -81,17 +82,18 @@ Malen legger til `--add-host=host.docker.internal:host-gateway` så containeren 
 
 ## Oppsett for ekstern lagring
 
-Sett opp en ekstern replika på **Innstillinger, Ekstern**-fanen. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
+Sett opp en ekstern replika på **Innstillinger, Off-site**-siden. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
 
 - **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
-- **Sky-legitimasjon** lagres kryptert under Innstillinger, Ekstern, Sky-legitimasjon.
-- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, System, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
-- **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis. Det lokale repoet forblir primært. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.
-- **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
-- **Oppbevaring per kilde:** den lokale policyen ligger på Innstillinger, Stier og lagring; den eksterne policyen på Innstillinger, Ekstern (la den stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).
-- **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Ekstern.
+- **Delt skylegitimasjon** lagres kryptert under Innstillinger, Skytilgang, Delt skylegitimasjon.
+- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
+- **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis, i tillegg til et (vanligvis lokalt) primært repo. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.
+- **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Off-site, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
+- **Oppbevaring per kilde:** både den lokale og den eksterne policyen ligger på Innstillinger, Oppbevaring (la den eksterne policyen stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).
+- **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Off-site.
 - **Strømming først:** under Innstillinger, Ekstern velger du medieserverne (Plex, Jellyfin og Emby er forhåndsvalgt ut fra image-navnet), sendehastigheten der en server regnes som strømmende, opplastingsgrensen under strømming og hvor lenge etter en strøm den vanlige grensen kommer tilbake.
 - **Kald og arkiv-lagringsklasse (S3):** for et native S3-eksternt repo, velg et gjenopprettingslesbart nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remoter setter klassen sin i rclone-konfigurasjonen.
+- **Eksternt primærrepo i stedet for lokalt:** et domenes sikkerhetskopisti kan selv være en av backendene over, uten lokal kopi og uten replikeringssteg. Bryteren Lokal/Ekstern ved feltet og sikkerhetsinnstillingene for båndbredde, append-only og vekstbudsjett er beskrevet under [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 ## Avvik {#anomalies}
 
@@ -108,7 +110,7 @@ Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still de
 
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 
-Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
+Kortet **Eksporter og importer innstillinger** på siden Innstillinger, System skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
 
 !!! warning "Eksporten kan inneholde legitimasjon"
     Du velger om du vil inkludere ekstern- og varslingslegitimasjonen i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.

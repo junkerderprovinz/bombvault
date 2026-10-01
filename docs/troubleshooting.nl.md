@@ -18,7 +18,7 @@ BombVault serveert HTTPS out of the box op poort `3443` (zelfondertekend certifi
 
 VM-back-up praat met libvirt via SSH, nooit een mount.
 
-- Bevestig dat SSH is ingeschakeld op de host en dat BombVaults publieke sleutel geautoriseerd is in `/root/.ssh/authorized_keys` (Instellingen, Systeem, Host-SSH toont de sleutel en een knop **Verbinding testen**).
+- Bevestig dat SSH is ingeschakeld op de host en dat BombVaults publieke sleutel geautoriseerd is in `/root/.ssh/authorized_keys` (Instellingen, Integraties, Host-SSH toont de sleutel en een knop **Verbinding testen**).
 - Stel op een custom `br0.x`-netwerk `LIBVIRT_HOST` in op je Unraid LAN-IP (de container kan de host daar niet via `host.docker.internal` bereiken). Schakel **Instellingen, Docker, Host access to custom networks** in.
 - Als je de SSH-poort van Unraid hebt gewijzigd, stel `LIBVIRT_SSH_PORT` overeenkomstig in.
 - Volledige stap-voor-stap-diagnose (bereikbaarheidstest, VLAN-routing, `Permission denied (publickey)`, `Host key verification failed`) staat in de [VM-back-up-via-SSH-gids](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -29,11 +29,11 @@ Live snapshots hebben de qemu guest agent geïnstalleerd in de VM nodig en de sc
 
 ## Een back-up mislukte met "repository is already locked"
 
-Dit is meestal een verweesde restic-lock die achterblijft wanneer de container werd bijgewerkt of herstart midden in een operatie. BombVault detecteert een aantoonbaar verweesde lock, wist hem geforceerd en probeert automatisch één keer opnieuw. Als het aanhoudt, gebruik **Instellingen, Integriteit en onderhoud, Ontgrendelen** voor het betrokken domein om een verouderde lock met de hand te wissen. Een echt probleem komt nog steeds boven in plaats van verborgen te worden. Na een herstart wacht BombVault tot zo'n lock tien minuten niet is vernieuwd. Een restic die nog draait, bijvoorbeeld in een tweede BombVault op dezelfde repository, vernieuwt zijn lock elke vijf minuten.
+Dit is meestal een verweesde restic-lock die achterblijft wanneer de container werd bijgewerkt of herstart midden in een operatie. BombVault detecteert een aantoonbaar verweesde lock, wist hem geforceerd en probeert automatisch één keer opnieuw. Als het aanhoudt, gebruik **Instellingen, Integriteit, Ontgrendelen** voor het betrokken domein om een verouderde lock met de hand te wissen. Een echt probleem komt nog steeds boven in plaats van verborgen te worden. Na een herstart wacht BombVault tot zo'n lock tien minuten niet is vernieuwd. Een restic die nog draait, bijvoorbeeld in een tweede BombVault op dezelfde repository, vernieuwt zijn lock elke vijf minuten.
 
 ## Mijn off-site kopie is niet gemaakt na een back-up
 
-Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer de off-site planning voor dat domein (Instellingen, Planningen): een lege planning repliceert na elke lokale back-up, terwijl een cadans minder vaak stuurt. Gebruik **Nu repliceren** op het tabblad Off-site voor een run op aanvraag, en let op de replicatie-indicator op het Dashboard.
+Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer de off-site planning voor dat domein (Instellingen, Schema's): een lege planning repliceert na elke lokale back-up, terwijl een cadans minder vaak stuurt. Gebruik **Nu repliceren** op de pagina Off-site voor een run op aanvraag, en let op de replicatie-indicator op het Dashboard.
 
 ## Een herstel brak af voordat het begon
 

@@ -41,7 +41,7 @@ A domain or Backup Everything start leaves out the items a limit holds back and 
 
 ## Switch it on {#switch-on}
 
-1. Open **Settings, System, MCP server** and click the button of your client. A client that is not listed connects through **Other client**.
+1. Open **Settings, Integrations, MCP server** and click the button of your client. A client that is not listed connects through **Other client**.
 2. Under **Key**, keep **New key** and the name it suggests, which is the client's, or type one that says where the key is used, for example "Claude Code on the laptop". One key per client lets you revoke one without touching the others. **Existing key** gives the client a key you made before.
 3. Switch **Allow starting backups** on for a key that should be able to start backups; without it the key can only read. You can change it later on the key's tile, and the change applies to the assistant's next request without a reconnect.
 4. Click **Create key**. The key is shown once. BombVault keeps only a fingerprint of it and cannot show it again, so copy it now. If you close the dialog before the client has used the key, the card keeps showing it until you confirm that you have copied it.
@@ -174,7 +174,7 @@ ChatGPT, Claude on claude.ai, Grok and Le Chat call BombVault from their vendors
 
 For a client that cannot take a key, BombVault is its own OAuth authorization server. The client registers itself, sends you to a BombVault page, and there you sign in with your login password (and the second factor, if you set one up) and allow it. The client then gets a token that works only for the MCP endpoint of this BombVault, and renews it by itself.
 
-1. Set a login password under **Settings, System**. Without one BombVault offers no sign-in at all, because there would be nobody to ask for consent.
+1. Set a login password under **Settings, Security**. Without one BombVault offers no sign-in at all, because there would be nobody to ask for consent.
 2. Make BombVault reachable from the internet over https with a certificate browsers trust, usually through a reverse proxy. The client calls `/mcp`, `/oauth/` and `/.well-known/` from its own servers, so a proxy with a login of its own has to let those three paths through to BombVault. The consent page at `/oauth/authorize` opens in your own browser and may stay behind the proxy login. Name the proxy in `TRUSTED_PROXY` as well (see [Configuration](configuration.md)). BombVault limits client registrations per address, and without it every client seems to come from the proxy.
 3. On the MCP card, switch on **Sign-in through OAuth** and enter the **Public address**: the https address without a path, for example `https://backup.example.com`. Every token is tied to this address, so after a change each client has to sign in again.
 4. Click the ChatGPT or Claude button. The dialog shows the **Connector URL**, which is the public address plus `/mcp`, and where it goes in that client. In ChatGPT, switch on Developer mode under **Settings, Apps & Connectors, Advanced settings**, choose **Create**, paste the connector URL as the MCP server URL and pick OAuth as authentication. On claude.ai, open **Settings, Connectors, Add custom connector**, paste the connector URL, leave the OAuth client ID and secret empty and choose **Connect**.

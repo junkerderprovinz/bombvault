@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-// The MCP card is the only way to mint a key, so it sits on the System tab in
-// plain sight rather than behind Advanced.
+// The MCP card is the only way to mint a key, so it sits on the Integrations
+// page in plain sight rather than behind Advanced.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
@@ -71,19 +72,24 @@ function stubBrowser() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderTab(tab: string) {
+async function renderPage(page: string) {
   await act(async () => {
-    window.location.hash = "#" + tab;
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <SettingsPage />
-        </ToastProvider>
-      </I18nProvider>
+      <MemoryRouter initialEntries={[`/settings/${page}`]}>
+        <Routes>
+          <Route
+            path="/settings/:page"
+            element={
+              <I18nProvider>
+                <ToastProvider>
+                  <SettingsPage />
+                </ToastProvider>
+              </I18nProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
     );
-  });
-  await act(async () => {
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
   });
 }
 
@@ -94,22 +100,22 @@ afterEach(() => {
 });
 
 describe("the MCP card on the settings page", () => {
-  it("renders on the System tab", async () => {
-    await renderTab("system");
+  it("renders on the Integrations page", async () => {
+    await renderPage("integrations");
 
     expect(screen.getByText(en["mcp.title"])).toBeTruthy();
     expect(screen.getByText(en["mcp.statusOff"])).toBeTruthy();
   });
 
-  it("stays off the other tabs", async () => {
-    await renderTab("general");
+  it("stays off the other pages", async () => {
+    await renderPage("general");
 
     expect(screen.queryByText(en["mcp.title"])).toBeNull();
   });
 
   it("is nowhere while the server is switched off", async () => {
     mcp.shipped = false;
-    await renderTab("system");
+    await renderPage("integrations");
 
     expect(screen.queryByText(en["mcp.title"])).toBeNull();
     expect(screen.queryByText(en["mcp.statusOff"])).toBeNull();

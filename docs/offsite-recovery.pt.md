@@ -4,11 +4,11 @@ Os backups locais protegem-no de um container perdido ou de uma atualização m�
 
 ## Replicação externa
 
-Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defina um repo por domínio no separador **Definições, Externo**. O BombVault replica novos instantâneos para lá com `restic copy` numa base de melhor esforço, por isso um percalço externo nunca faz o backup local falhar. O repo local mantém-se primário.
+Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defina um repo por domínio na página **Definições, Externo**. O BombVault replica novos instantâneos para lá com `restic copy` numa base de melhor esforço, por isso um percalço externo nunca faz o backup local falhar. Nesta forma o repo local mantém-se primário e o repo externo é uma réplica, mas o repo primário de um domínio não tem de ser local; consulte [Repositórios primários remotos](#remote-primary-repositories) mais abaixo para fazer backup diretamente para S3, rest-server, etc. em vez de replicar para lá.
 
 - **Vários destinos externos por domínio.** Cada domínio (containers, VMs, flash, config, conjuntos de ficheiros e conjuntos de dados ZFS) pode replicar para vários destinos externos de uma só vez, não apenas um, para que possa manter, por exemplo, um rest-server na máquina de um amigo e um bucket S3 em paralelo. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento. Uma configuração externa única existente é transferida intacta como o primeiro destino, e cada destino de um domínio replica no agendamento externo desse domínio.
 - **Agendamento externo por domínio** (editado ao lado de todos os outros agendamentos em Definições, Agendamentos): deixe-o em branco para replicar após cada backup local, ou defina uma cadência (por exemplo `weekly Sun 03:00`) para enviar para o externo com menos frequência do que faz backup localmente. Um botão **Replicar agora** cobre as execuções a pedido.
-- **A retenção externa** vive em Definições, Externo para que possa manter as cópias externas por mais tempo como arquivo. Deixe a política toda a zero para nunca aparar automaticamente os instantâneos externos.
+- **A retenção externa** vive em Definições, Retenção para que possa manter as cópias externas por mais tempo como arquivo. Deixe a política toda a zero para nunca aparar automaticamente os instantâneos externos.
 - **Os limites de largura de banda** (Definições, Externo) limitam a taxa de envio/receção do restic para que a replicação não sature a sua WAN.
 - Um **indicador de replicação** mostra qual o domínio que está a replicar enquanto corre (na sua página e no Painel). É um indicador ativo, não uma barra de percentagem, porque o `restic copy` não expõe nenhum progresso legível por máquina.
 
@@ -17,21 +17,29 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 
 ## Repositórios primários remotos {#remote-primary-repositories}
 
-O caminho de cópia de um domínio (Definições, Caminhos e armazenamento) não se limita a uma pasta local: aponta-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurares também uma replicação fora do local (ou um segundo remoto) para esse domínio.
+O caminho de cópia de um domínio (Definições, Armazenamento) não se limita a uma pasta local: aponte-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurar também uma replicação fora do local (ou um segundo remoto) para esse domínio.
 
 Cada um dos seis campos de caminho (Contentores, Máquinas virtuais, Flash, Configuração, Ficheiros, Conjuntos de dados ZFS) tem mesmo ao lado um interruptor **Local / Remoto**:
 
 - **Local** mostra o explorador de pastas do costume.
-- **Remoto** troca-o por um simples campo de URL, mais um botão que abre a mesma janela de teste de ligação e credenciais que os destinos fora do local usam, configurada para este primário. A partir daí obténs:
-    - **Um teste de ligação** contra o caminho real, antes de dependeres dele.
-    - **Limites de largura de banda** (envio e receção), para que uma cópia agendada para um primário remoto não sature a tua ligação WAN: os mesmos parâmetros restic `--limit-upload` e `--limit-download` que a replicação fora do local usa, aplicados à própria cópia.
+- **Remoto** troca-o por um simples campo de URL, mais um botão que abre a mesma janela de teste de ligação e credenciais que os destinos fora do local usam, configurada para este primário. A partir daí obtém:
+    - **Um teste de ligação** contra o caminho real, antes de depender dele.
+    - **Limites de largura de banda** (envio e receção), para que uma cópia agendada para um primário remoto não sature a sua ligação WAN: os mesmos parâmetros restic `--limit-upload` e `--limit-download` que a replicação fora do local usa, aplicados à própria cópia.
     - **Proteção append-only (imutabilidade)**, verificada com o mesmo teste ativo de adulteração (uma sonda DELETE real contra o outro lado) que os destinos fora do local recebem. Com ela ligada, o BombVault recusa-se a podar o repositório: como atrás dele não há cópia local separada, as credenciais nesta máquina não podem ser capazes de apagar a única cópia da salvaguarda.
     - **Um alarme de orçamento de crescimento**, tirado da mesma tendência de tamanho do repositório que o cartão Armazenamento já acompanha.
 
-Nada disto é obrigatório: um caminho remoto escrito à mão e sem definições de segurança guardadas copia exatamente como sempre (largura de banda ilimitada, podável, sem alarme de orçamento). A janela de segurança existe para quando quiseres as mesmas proteções que uma cópia fora do local recebe, sem teres de criar um destino fora do local só para isso.
+Nada disto é obrigatório: um caminho remoto escrito à mão e sem definições de segurança guardadas copia exatamente como sempre (largura de banda ilimitada, podável, sem alarme de orçamento). A janela de segurança existe para quando quiser as mesmas proteções que uma cópia fora do local recebe, sem ter de criar um destino fora do local só para isso.
 
 !!! note "As credenciais de nuvem e REST são partilhadas"
-    Um primário remoto autentica-se com as mesmas credenciais S3/REST configuradas em Definições, Fora do local, Credenciais de nuvem. Não há um cofre de credenciais separado para repositórios primários.
+    Um primário remoto autentica-se com as mesmas credenciais S3/REST configuradas em Definições, Acesso à nuvem, Credenciais de nuvem partilhadas. Não há um cofre de credenciais separado para repositórios primários.
+
+### SMB e WebDAV sem montagem no host {#smb-webdav}
+
+Definições, Acesso à nuvem, rclone tem um formulário para uma partilha Windows ou Samba e para um servidor WebDAV (Nextcloud, ownCloud, SharePoint ou qualquer outro). Preencha um nome curto, o host e a partilha (SMB) ou o URL e o tipo de servidor (WebDAV), o utilizador e a palavra-passe, e o BombVault escreve a secção do rclone por si. O rclone ofusca a palavra-passe por conta própria antes de ser guardada; adicionar um destino com um nome que já existe substitui essa secção em vez de acrescentar uma segunda.
+
+O formulário responde com a localização final, por exemplo `rclone:nas:backups`. Coloque-a num Caminho de backup ou num destino externo e acrescente uma subpasta se quiser (`rclone:nas:backups/bombvault`). A partilha é o primeiro segmento do caminho, não faz parte do nome.
+
+É um caminho melhor do que montar a partilha no Unraid: o restic desaconselha manter um repositório numa partilha CIFS montada, e aqui nada é montado. O NFS não está no formulário porque nem o restic nem o rclone têm um backend NFS; para NFS, monte o export no host e aponte-lhe um Caminho de backup.
 
 ## Externo imutável (append-only)
 
@@ -66,9 +74,9 @@ O **scorecard de proteção contra ransomware** no Painel resume isto numa postu
 
 ## Emparelhamento de instâncias {#pairing}
 
-Recetores, origens de recolha, a vista Fleet e o Mesh externo falam todos com outro BombVault. Fazem-no como membros de um único grupo de emparelhamento, e uma instância entra no grupo com doze palavras.
+Recetores, origens de recolha, a página Instâncias e o Mesh externo falam todos com outro BombVault. Fazem-no como membros de um único grupo de emparelhamento, e uma instância entra no grupo com doze palavras.
 
-Na primeira instância, abra **Instâncias → Emparelhamento** e clique em **Gerar frase**. Aparecem doze palavras. Em cada uma das outras instâncias, abra o mesmo separador, clique em **Introduzir frase** e cole-as ou escreva-as. Uma palavra que não está na lista é indicada com a sua posição logo que a escreve, e a última palavra traz uma soma de verificação, por isso uma palavra escrita incorretamente ou trocada é detetada antes de qualquer emparelhamento. Gere a frase apenas numa instância: duas instâncias que criem cada uma uma frase formam dois grupos separados. Se ninguém aparecer num minuto, o separador mostra como sair do grupo a mais e juntar-se ao outro. O emparelhamento exige uma palavra-passe de acesso em cada instância, porque as palavras abrem as cópias de segurança de todas as instâncias do grupo. A frase pode ser mostrada de novo mais tarde, depois de introduzir essa palavra-passe. **Sair do grupo** retira uma instância outra vez.
+Na primeira instância, abra **Definições → Emparelhamento** e clique em **Gerar frase** nos cartões de emparelhamento. Aparecem doze palavras numa janela com um botão **Copiar**. Em cada uma das outras instâncias, abra o mesmo local, clique em **Introduzir frase** e cole-as ou escreva-as, ou clique em **Colar** nessa janela. Uma palavra que não está na lista é indicada com a sua posição logo que a escreve, e a última palavra traz uma soma de verificação, por isso uma palavra escrita incorretamente ou trocada é detetada antes de qualquer emparelhamento. Gere a frase apenas numa instância: duas instâncias que criem cada uma uma frase formam dois grupos separados. Se ninguém aparecer num minuto, o separador oferece duas saídas: mostrar as palavras outra vez para as introduzir do outro lado, ou introduzir as palavras da outra instância e juntar-se ao seu grupo num só passo. O emparelhamento funciona sem palavra-passe de acesso, mas defina uma: sem ela, quem conseguir abrir esta interface web pode ler as palavras e obter, através do grupo, a palavra-passe restic de cada instância nele. O cartão de emparelhamento avisa disso até ser definida uma palavra-passe. Com uma palavra-passe, mostrar a frase de novo pede-a. **Sair do grupo** retira uma instância outra vez.
 
 Quem quer que conheça as palavras pode entrar no grupo, por isso trate-as como uma palavra-passe.
 
@@ -80,9 +88,9 @@ Quem quer que conheça as palavras pode entrar no grupo, por isso trate-as como 
 
 **O que o retransmissor vê.** Cada chamada entre membros é selada com AES-256-GCM sob uma chave derivada das doze palavras, e essa chave nunca sai das suas instâncias. O retransmissor fica a saber um hash que agrupa as ligações, para que instância é uma mensagem, qual o seu tamanho e quando passa. Uma chamada direta na rede local é selada da mesma forma e assinada também, por isso nada depende do certificado autoassinado que uma instância serve.
 
-**O que viaja pelo grupo.** O scorecard do Fleet, um pedido para verificar um domínio agora, as ofertas do Mesh para off-site, e o que um recetor ou uma origem de recolha precisa: as localizações do repositório da outra instância e a sua palavra-passe restic. Os dados de backup nunca viajam por aqui, continuam a ir diretamente para os backends restic. Nem a APP_KEY: a palavra-passe restic abre apenas os repositórios dessa instância e mais nada, nem os seus segredos guardados, sessões ou códigos de recuperação.
+**O que viaja pelo grupo.** Os scorecards da página Instâncias, um pedido para verificar um domínio agora, as ofertas do Mesh para off-site, e o que um recetor ou uma origem de recolha precisa: as localizações do repositório da outra instância e a sua palavra-passe restic. Os dados de backup nunca viajam por aqui, continuam a ir diretamente para os backends restic. Nem a APP_KEY: a palavra-passe restic abre apenas os repositórios dessa instância e mais nada, nem os seus segredos guardados, sessões ou códigos de recuperação.
 
-**Entradas anteriores ao emparelhamento.** Pares do Fleet adicionados com um token de fleet, e recetores e origens de recolha configurados com a APP_KEY da outra instância, mantêm-se depois da atualização e ficam marcados **Emparelhar novamente**. Os recetores e as origens de recolha continuam a funcionar: no primeiro arranque, o BombVault substitui cada APP_KEY guardada pela palavra-passe restic derivada dela. Emparelhe as duas instâncias, depois edite a entrada e escolha a sua instância. Um par do Fleet retoma a sua linha antiga assim que surge no grupo uma instância com o mesmo nome.
+**Entradas anteriores ao emparelhamento.** Instâncias adicionadas com um token de fleet, e recetores e origens de recolha configurados com a APP_KEY da outra instância, mantêm-se depois da atualização e ficam marcados **Emparelhar novamente**. Os recetores e as origens de recolha continuam a funcionar: no primeiro arranque, o BombVault substitui cada APP_KEY guardada pela palavra-passe restic derivada dela. Emparelhe as duas instâncias, depois edite a entrada e escolha a sua instância. Uma instância dessas retoma o seu cartão antigo assim que surge no grupo uma instância com o mesmo nome.
 
 O único sítio que ainda pede uma APP_KEY à mão é [Restaurar a partir de outro repo BombVault](#restore-from-another-bombvault-repo), para o caso de a outra instância ter desaparecido e já não poder responder em nenhum grupo.
 
@@ -110,7 +118,7 @@ Acima estão as peças. Isto é uma instalação completa com valores reais, por
 
 Duas máquinas: **TOWER** executa os contentores e envia as cópias, **VAULT** recebe-as e impõe a imutabilidade. Substitua pelos seus próprios nomes, endereços e caminhos de partilha.
 
-**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora. Essa linha leva a mesma palavra-passe, já cifrada com bcrypt para ti: o texto em claro vai nas credenciais REST em TOWER, a linha cifrada no `.htpasswd` em VAULT. Não tens de cifrar nada.
+**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora. Essa linha leva a mesma palavra-passe, já cifrada com bcrypt para si: o texto em claro vai nas credenciais REST em TOWER, a linha cifrada no `.htpasswd` em VAULT. Não tem de cifrar nada.
 
     Deixe `--append-only` no campo OPTIONS. É esse o objetivo: sem ele, o VAULT volta a ser uma partilha comum.
 
@@ -128,7 +136,7 @@ O primeiro segmento do caminho é o utilizador htpasswd, o segundo é o reposit�
 | **NÃO protegido** | O VAULT aceitou uma eliminação. Falta `--append-only` ou foi retirado. |
 | **inconclusivo** | Nem uma coisa nem outra. Normalmente o URL não é o que o restic usa, ou as credenciais mudaram. Nada é registado e nenhum alerta é disparado. |
 
-**4. No VAULT, veja o que chega.** Emparelhe as duas máquinas ([Emparelhamento de instâncias](#pairing)), ative *Definições → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura com o TOWER como instância emissora.
+**4. No VAULT, veja o que chega.** Emparelhe as duas máquinas ([Emparelhamento de instâncias](#pairing)), ative *Definições → Emparelhamento → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura com o TOWER como instância emissora.
 
 !!! warning "A localização é um caminho **dentro** do contentor, escrito relativamente à montagem do anfitrião"
     Introduza `user/appdata/rest-server/bombvault-containers/containers`, e **não** `/mnt/user/appdata/…`. O BombVault corre num contentor onde o `/mnt` do anfitrião está montado noutro sítio; um caminho absoluto do anfitrião não existe lá. Se colar um, o BombVault indica-lhe agora o caminho relativo a usar.
@@ -152,7 +160,7 @@ Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou re
 
 ### Restaurar a partir de outro repo BombVault {#restore-from-another-bombvault-repo}
 
-Um cartão separado no separador **Recuperação** abre o repo de uma instância BombVault *diferente* (uma partilha montada sob `/mnt`, ou um URL remoto) com a **`APP_KEY` dessa instância**, numa sessão pontual e só de leitura. Navegue pelos containers, VMs e conjuntos de ficheiros lá armazenados, escolha um instantâneo e restaure-o, e o objeto restaurado torna-se um container, VM ou conjunto de ficheiros local normal. Nada é alguma vez escrito no outro repo, e as suas próprias definições de backup ficam intactas (a sessão vive em memória e expira por si própria). Mover um container do servidor A para o servidor B deixa de significar reapontar as suas definições de repo e revertê-las depois. A federação ao vivo servidor-a-servidor está explicitamente fora de âmbito; isto é um puxão pontual deliberado.
+Um cartão separado no separador **Recuperação** abre o repo de uma instância BombVault *diferente* (uma partilha montada sob `/mnt`, ou um URL remoto) com a **`APP_KEY` dessa instância**, numa sessão pontual e só de leitura. Navegue pelos containers, VMs e conjuntos de ficheiros lá armazenados, escolha um instantâneo e restaure-o, e o objeto restaurado torna-se um container, VM ou conjunto de ficheiros local normal. Nada é alguma vez escrito no outro repo, e as suas próprias definições de backup ficam intactas (a sessão vive em memória e expira por si própria). Mover um container do servidor A para o servidor B deixa de significar reapontar as suas definições de repo e revertê-las depois. Este cartão é de uso único: abre uma sessão, restaura o que escolher e esquece a outra instância. Se quiser antes um arranjo permanente, em que esta máquina vai buscar segundo um agendamento os instantâneos de outra instância para o seu próprio repositório, isso é o separador **Recolha** da página **Instâncias**.
 
 ## Kit de recuperação da chave de encriptação
 
@@ -166,9 +174,18 @@ Um clique transfere a **chave mestra**, a **palavra-passe restic derivada**, e a
 !!! warning "O snapshot mais recente nem sempre é o que deve restaurar"
     Desde o restic 0.17, `restic snapshots` mostra o tamanho de cada snapshot. Após uma perda de dados, o snapshot mais recente pode ser o que foi esvaziado, por isso não restaure um snapshot muito mais pequeno do que os anteriores. Após um ransomware pode ser o cifrado, com o tamanho habitual. Se o BombVault ainda estiver a correr, veja primeiro a sua página **Anomalias**: ela indica o último backup bom. Um restauro não precisa de nenhum dado de anomalias do BombVault, e a pausa da retenção só mantém mais snapshots.
 
-### Se não tiveres o kit à mão
+### Selar o kit
 
-A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell podes reproduzi-la tu próprio:
+Se ligou a encriptação age para as exportações simples (Definições), o kit também é selado com ela e é transferido como `bombvault-recovery-kit.md.age`. Está em ASCII armor e não em binário, por isso continua a ser texto: colá-lo num gestor de palavras-passe ou imprimi-lo funciona exatamente como antes, só que o conteúdo fica ilegível sem a sua chave.
+
+!!! warning "Não guarde a chave age dentro do kit"
+    Precisa da sua chave age **privada** para abrir um kit selado. Guarde-a num sítio que não dependa do próprio kit, ou terá duas coisas para recuperar em vez de uma. Selar compensa quando o kit está guardado num sítio que não controla totalmente (um gestor de palavras-passe partilhado, notas na nuvem, uma cópia impressa num escritório); um kit no seu próprio cofre já está protegido pelo cofre.
+
+    Com a encriptação ligada e nenhum destinatário utilizável configurado, a transferência é simplesmente recusada. O BombVault nunca recorre a entregar a chave mestra em claro.
+
+### Se não tiver o kit à mão
+
+A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell pode reproduzi-la por si próprio:
 
 ```sh
 printf 'bombvault:restic-repo' \
@@ -176,9 +193,9 @@ printf 'bombvault:restic-repo' \
   | cut -d' ' -f1
 ```
 
-É um HMAC-SHA256 sobre a cadeia fixa `bombvault:restic-repo`, com os bytes crus da `APP_KEY` hexadecimal como chave, impresso como 64 caracteres hexadecimais minúsculos. O mesmo valor está no kit, como palavra-passe restic derivada; isto serve para o dia em que o kit esteja noutro sítio que não contigo.
+É um HMAC-SHA256 sobre a cadeia fixa `bombvault:restic-repo`, com os bytes crus da `APP_KEY` hexadecimal como chave, impresso como 64 caracteres hexadecimais minúsculos. O mesmo valor está no kit, como palavra-passe restic derivada; isto serve para o dia em que o kit esteja noutro sítio que não junto de si.
 
-!!! warning "Para um repositório recebido, usa a chave da instância REMETENTE"
+!!! warning "Para um repositório recebido, use a chave da instância REMETENTE"
     Um repositório que chegou aqui por replicação fora do local foi criado pela máquina que o enviou, com a **sua** `APP_KEY`. Derivar a partir da chave da máquina recetora dá uma palavra-passe que o restic recusa, o que se lê exatamente como um repositório corrompido sem o ser. É a razão habitual para o `restic check` num repositório recebido pedir a palavra-passe vezes sem conta.
 
 Como as definições de recuperação vivem **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), uma pasta de repo copiada é totalmente autossuficiente, por isso o kit mais o repo é tudo o que um restauro em bare-metal precisa.
@@ -194,7 +211,7 @@ restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > 
 
 As etiquetas `dbversion:` e `dbname:` de cada dump dizem de que versão de servidor veio e que bases contém. Um ficheiro completo termina com `-- PostgreSQL database cluster dump complete` ou `-- Dump completed`.
 
-Importa-o para um container da mesma versão ou de uma mais recente (PostgreSQL), ou da mesma versão principal (MySQL e MariaDB), arrancado uma vez com a pasta de dados vazia para que se inicialize. O anfitrião não precisa de cliente de base de dados, o container tem um:
+Importe-o para um container da mesma versão ou de uma mais recente (PostgreSQL), ou da mesma versão principal (MySQL e MariaDB), arrancado uma vez com a pasta de dados vazia para que se inicialize. O anfitrião não precisa de cliente de base de dados, o container tem um:
 
 ```sh
 docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
@@ -202,7 +219,7 @@ docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
 docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
 ```
 
-Para uma só base dentro de um dump completo, o MySQL e o MariaDB aceitam `--one-database <name>` no comando do cliente. Um dump de PostgreSQL tem uma secção por base, cada uma a começar numa linha `\connect <name>`: copia essa secção para um ficheiro próprio e importa-o com `-d <name>` depois de criares a base.
+Para uma só base dentro de um dump completo, o MySQL e o MariaDB aceitam `--one-database <name>` no comando do cliente. Um dump de PostgreSQL tem uma secção por base, cada uma a começar numa linha `\connect <name>`: copie essa secção para um ficheiro próprio e importe-o com `-d <name>` depois de criar a base.
 
 !!! warning "Um dump feito como root traz as contas do servidor"
     Um dump completo de MySQL ou MariaDB feito como root contém a base de sistema `mysql`, pelo que importá-lo substitui as contas do servidor novo, palavra-passe de root incluída, pelas do dump. No PostgreSQL, `role ... already exists` para o utilizador criado pelo container é esperado e inofensivo.

@@ -41,7 +41,7 @@ O pornire de domeniu sau de Backup Everything lasă pe dinafară elementele reț
 
 ## Pornire {#switch-on}
 
-1. Deschide **Setări, Sistem, Server MCP** și dă clic pe butonul clientului tău. Un client care nu e în listă se conectează prin **Alt client**.
+1. Deschide **Setări, Integrări, Server MCP** și dă clic pe butonul clientului tău. Un client care nu e în listă se conectează prin **Alt client**.
 2. La **Cheie** lasă **Cheie nouă** și numele propus, adică al clientului, sau scrie unul care spune unde e folosită cheia, de exemplu „Claude Code pe laptop”. O cheie pentru fiecare client îți permite să revoci una fără să le atingi pe celelalte. **Cheie existentă** îi dă clientului o cheie creată mai devreme.
 3. Pornește **Permite pornirea copiilor** pentru o cheie care trebuie să poată porni copii; fără asta poate doar să citească. Poți schimba asta mai târziu pe placa cheii, iar schimbarea se aplică de la următoarea cerere a asistentului, fără reconectare.
 4. Dă clic pe **Creează cheia**. Cheia e afișată o singură dată. BombVault păstrează doar o amprentă a ei și nu o mai poate arăta, așa că copiaz-o acum. Dacă închizi dialogul înainte ca clientul să fi folosit cheia, cardul continuă să o afișeze până confirmi că ai copiat-o.
@@ -174,7 +174,7 @@ ChatGPT, Claude pe claude.ai, Grok și Le Chat apelează BombVault de pe servere
 
 Pentru un client care nu poate primi o cheie, BombVault este propriul lui server de autorizare OAuth. Clientul se înregistrează singur, te trimite pe o pagină BombVault, iar acolo te autentifici cu parola de conectare (și cu al doilea factor, dacă l-ai configurat) și îi dai permisiunea. Clientul primește apoi un token care funcționează doar pentru endpoint-ul MCP al acestui BombVault și îl reînnoiește singur.
 
-1. Setează o parolă de conectare la **Setări, Sistem**. Fără ea, BombVault nu oferă nicio autentificare, pentru că nu ar exista cineva căruia să i se ceară acordul.
+1. Setează o parolă de conectare la **Setări, Securitate**. Fără ea, BombVault nu oferă nicio autentificare, pentru că nu ar exista cineva căruia să i se ceară acordul.
 2. Fă BombVault accesibil din internet prin https, cu un certificat în care browserele au încredere, de obicei printr-un proxy invers. Clientul apelează `/mcp`, `/oauth/` și `/.well-known/` de pe propriile servere, așa că un proxy cu propria autentificare trebuie să lase aceste trei căi să treacă până la BombVault. Pagina de acord de la `/oauth/authorize` se deschide în propriul tău browser și poate rămâne în spatele autentificării proxy-ului. Trece proxy-ul și în `TRUSTED_PROXY` (vezi [Configurare](configuration.md)). BombVault limitează înregistrările clienților pe adresă, iar fără asta fiecare client pare să vină de la proxy.
 3. Pe cardul MCP, activează **Autentificare prin OAuth** și introdu **Adresă publică**: adresa https fără cale, de exemplu `https://backup.example.com`. Fiecare token este legat de această adresă, așa că după o schimbare fiecare client trebuie să se autentifice din nou.
 4. Apasă butonul ChatGPT sau Claude. Dialogul arată **URL-ul conectorului**, adică adresa publică urmată de `/mcp`, și unde se pune în acel client. În ChatGPT activezi modul dezvoltator la **Setări, Aplicații și conectori, Setări avansate**, alegi **Creează**, lipești URL-ul conectorului ca URL al serverului MCP și alegi OAuth ca autentificare. Pe claude.ai deschizi **Setări, Conectori, Adaugă conector personalizat**, lipești URL-ul conectorului, lași goale ID-ul de client și secretul OAuth și alegi **Conectează**.

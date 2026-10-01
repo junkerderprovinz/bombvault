@@ -122,7 +122,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         // to a column one character wide.
         <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3 max-md:flex-col">
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-sm text-carbon-text truncate">{s.name}</span>
+            <span className="text-sm text-carbon-text truncate max-md:whitespace-normal max-md:wrap-anywhere">{s.name}</span>
             <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
               {s.s3KeyId || s.restUser || "—"}
             </span>
@@ -197,7 +197,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
               <RevealInput {...revealRestPassword} value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
                 placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               label={t("common.close")}
               labelKey="common.close"
@@ -224,7 +224,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
           // Accent: with no editor open this is the card's one primary action.
           tone="accent"
           onClick={openNew}
-          className="self-start"
+          className="glim-btn-wrap self-start"
         />
       )}
     </Card>

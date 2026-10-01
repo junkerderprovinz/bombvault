@@ -54,7 +54,7 @@ Genera uno en cualquier máquina:
 openssl rand -hex 32
 ```
 
-Pega el resultado en el campo `APP_KEY` de la plantilla.
+Pega el resultado en el campo `APP_KEY` de la plantilla (Unraid), o en la variable de entorno `APP_KEY` de `docker-compose.yml` (host Docker genérico).
 
 !!! danger "No pierdas tu APP_KEY"
     Perder `APP_KEY` hace que tus copias cifradas queden irrecuperables. Guárdalo en un lugar seguro y separado del servidor. Una vez que BombVault esté en marcha, usa su **kit de recuperación de la clave de cifrado** de un clic (consulta [Copia externa y recuperación](offsite-recovery.md)) para guardar el paquete de recuperación completo.
@@ -70,7 +70,7 @@ La plantilla también monta por ti el socket de Docker, el flash (`/boot`) y la 
 1. Abre la interfaz web en `https://<your-unraid-ip>:3443` (certificado autofirmado de fábrica).
 2. En **Ajustes**, habilita los dominios de copia que quieras (Contenedores, VMs, Flash, Config, Archivos, Conjuntos de datos ZFS) y elige un color de acento.
 3. En la pestaña **Contenedores**, elige un contenedor y haz clic en **Copiar** para crear tu primer punto de restauración. Las rutas de repositorio predeterminadas son `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` y se crean en la primera copia.
-4. Configura la programación desde **Ajustes, Calendarios**. Hay un *incluir todo en el calendario* de un clic para contenedores y VMs.
+4. Configura la programación desde **Ajustes, Programaciones**. Hay un *incluir todo en el calendario* de un clic para contenedores y VMs.
 
 !!! tip "Opcional: elige un orden de copia"
     Si algunos contenedores deben copiarse siempre antes que otros (por ejemplo, una base de datos antes que la app que la usa), abre el panel de **orden de copia** en la página de Contenedores y arrástralos a la secuencia que quieras. Las ejecuciones programadas y de selección múltiple la seguirán; todo lo que dejes sin ordenar se copia empezando por lo más atrasado, como antes.

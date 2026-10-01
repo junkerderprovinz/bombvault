@@ -133,8 +133,8 @@ async function expectFits(page: Page): Promise<void> {
 async function open(page: Page, f: Instance, width = 1280): Promise<void> {
   await stage(page, f);
   await page.setViewportSize({ width, height: 900 });
-  await page.goto("/instances#pairing");
-  await expect(page.getByRole("tab", { name: "Kopplung" })).toHaveAttribute("aria-selected", "true");
+  await page.goto("/settings/pairing");
+  await expect(page.getByRole("navigation", { name: "Einstellungsseiten" }).getByRole("link", { name: "Kopplung", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByText("Erste Instanz", { exact: true })).toBeVisible();
   await settle(page);
 }
@@ -185,7 +185,7 @@ for (const width of [1280, 390]) {
     Object.assign(f, { members: [], memberSeen: false, joinedAgo: 90, mode: "project", connected: false });
     await page.reload();
     await expect(phraseCard(page)).toHaveAttribute("data-stage", "alone");
-    await expect(page.getByRole("heading", { name: "Relay nicht erreichbar" })).toBeVisible();
+    await expect(page.getByText("Relay nicht erreichbar", { exact: true })).toBeVisible();
     await settle(page);
     await expectFits(page);
 
@@ -194,7 +194,7 @@ for (const width of [1280, 390]) {
     await page.reload();
     await expect(generate(page)).toBeVisible();
     await enter(page).click();
-    await expect(page.getByLabel(/Die zwölf Wörter deiner ersten Instanz/)).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Die zwölf Wörter deiner ersten Instanz" })).toBeVisible();
     await settle(page);
     await expectFits(page);
   });
@@ -215,6 +215,9 @@ test("two instances that both generate a phrase are told after a minute how to b
     await expect(phraseCard(p)).toHaveAttribute("data-stage", "new");
     await expect(p.getByText("Neue Gruppe", { exact: true })).toBeVisible();
     await expect(p.getByText("Jetzt auf der anderen Instanz")).toBeVisible();
+    // The words open in a window of their own; closing it leaves the card.
+    await p.keyboard.press("Escape");
+    await expect(p.getByRole("dialog")).toHaveCount(0);
   }
 
   a.joinedAgo = b.joinedAgo = 61;
@@ -222,19 +225,13 @@ test("two instances that both generate a phrase are told after a minute how to b
     await p.clock.fastForward(11_000);
     await expect(phraseCard(p)).toHaveAttribute("data-stage", "alone");
     await expect(p.getByText("Noch allein", { exact: true })).toBeVisible();
-    await expect(p.getByText("Auf beiden Instanzen eine Phrase erstellt?")).toBeVisible();
-    await expect(p.getByText("Diese Gruppe verlassen")).toBeVisible();
-    await expect(p.getByText("Die Wörter der anderen Instanz eingeben")).toBeVisible();
-    await expect(p.getByLabel("Die zwölf Wörter der anderen Instanz")).toBeDisabled();
+    await expect(p.getByRole("button", { name: /Drüben auch eine Phrase generiert\?/ })).toBeVisible();
   }
 
-  // B follows the two steps with A's words and finds A.
+  // B enters A's words in place of its own and finds A.
   b.joinFinds = [{ id: "a", name: "Tower Linz", version: "v9.2.1", direct: true, relay: false }];
-  await pageB.getByRole("button", { name: "Gruppe verlassen" }).click();
-  await expect(pageB.getByText("Verlassen", { exact: true })).toBeVisible();
-  const field = pageB.getByLabel("Die zwölf Wörter der anderen Instanz");
-  await expect(field).toBeEnabled();
-  await field.fill(PHRASE);
+  await pageB.getByRole("button", { name: /Drüben auch eine Phrase generiert\?/ }).click();
+  await pageB.getByRole("textbox", { name: "Die zwölf Wörter der anderen Instanz" }).fill(PHRASE);
   await pageB.getByRole("button", { name: "Koppeln" }).click();
   await expect(phraseCard(pageB)).toHaveAttribute("data-stage", "paired");
   await expect(phraseCard(pageB).getByText("Gekoppelt", { exact: true })).toBeVisible();
@@ -252,7 +249,7 @@ test("the second instance enters the phrase, pastes the numbered words and both 
   const pageB = await context.newPage();
   await open(pageB, b);
   await enter(pageB).click();
-  const field = pageB.getByLabel("Die zwölf Wörter deiner ersten Instanz");
+  const field = pageB.getByRole("textbox", { name: "Die zwölf Wörter deiner ersten Instanz" });
   const pair = pageB.getByRole("button", { name: "Koppeln" });
   await field.fill("abandon abandon unveel ");
   await expect(pageB.getByRole("alert")).toHaveText("Wort 3 („unveel“) steht nicht auf der Wortliste.");
