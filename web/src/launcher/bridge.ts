@@ -6,7 +6,10 @@
 export interface Server {
   id: string;
   name: string;
+  /** Empty for a group member whose address is not known yet. */
   url: string;
+  /** The server came from the paired group. */
+  member?: boolean;
 }
 
 export interface FoundServer {
@@ -27,14 +30,24 @@ export interface Problem {
   detail?: string;
 }
 
+/** Why a pairing code was refused, in the terms of BombVault's own pairing card. */
+export type PairError =
+  | { reason: "count"; count: number }
+  | { reason: "word"; word: string; position: number }
+  | { reason: "checksum" };
+
 export interface LauncherState {
   servers: Server[];
   found: FoundServer[];
+  /** Whether the app is in a BombVault group, and connected to its relay. */
+  group: { paired: boolean; connected: boolean };
   problem?: Problem;
+  pairError?: PairError;
 }
 
-/** A server's answer to a fetch. Status 0 means it was not reached and -1
- *  that its certificate is not the one trusted for it; the body then says why. */
+/** A server's answer to the activity question: its runs, the progress events
+ *  in flight and the next scheduled runs. Status 0 means it was not reached and
+ *  -1 that its certificate is not the one trusted for it; the body then says why. */
 export interface Fetched {
   status: number;
   body: string;
@@ -47,16 +60,19 @@ export type Request =
   | { op: "open"; id: string }
   | { op: "trust"; id: string; fingerprint: string }
   | { op: "dismiss" }
-  | { op: "fetch"; ticket: number; id: string; path: string };
+  | { op: "activity"; ticket: number; id: string }
+  | { op: "scan" }
+  | { op: "join"; code: string }
+  | { op: "leave" };
 
-type Reply = ({ op: "state" } & LauncherState) | ({ op: "fetched"; ticket: number } & Fetched);
+type Reply = ({ op: "state" } & LauncherState) | ({ op: "activity"; ticket: number } & Fetched);
 
 export interface Bridge {
   send(req: Request): void;
   /** Calls `onState` with every state the app reports and returns the unsubscribe. */
   listen(onState: (s: LauncherState) => void): () => void;
-  /** GETs `path` from the server with the app's session for it. */
-  fetch(id: string, path: string): Promise<Fetched>;
+  /** Asks what runs on the server, over the group or with the app's session for it. */
+  activity(id: string): Promise<Fetched>;
 }
 
 /** The transport underneath a Bridge: the injected object, or a stand-in. */
@@ -71,7 +87,7 @@ export function bridgeOver(port: Port): Bridge {
   const waiting = new Map<number, (f: Fetched) => void>();
   port.addEventListener("message", (e) => {
     const reply = JSON.parse(e.data) as Reply;
-    if (reply.op !== "fetched") return;
+    if (reply.op !== "activity") return;
     waiting.get(reply.ticket)?.({ status: reply.status, body: reply.body });
     waiting.delete(reply.ticket);
   });
@@ -86,12 +102,12 @@ export function bridgeOver(port: Port): Bridge {
       port.addEventListener("message", fn);
       return () => port.removeEventListener("message", fn);
     },
-    fetch(id, path) {
+    activity(id) {
       ticket += 1;
       const t = ticket;
       return new Promise((resolve) => {
         waiting.set(t, resolve);
-        send({ op: "fetch", ticket: t, id, path });
+        send({ op: "activity", ticket: t, id });
       });
     },
   };

@@ -3,5 +3,6 @@
     <string name="saved">Mentve a Letöltések mappába: %1$s</string>
     <string name="save_failed">A fájlt nem sikerült menteni: %1$s</string>
     <string name="save_untrusted">A szerver tanúsítványa megváltozott. Nyisd meg újra a kezdőképernyőről, hogy ellenőrizd az újat.</string>
+    <string name="scan_prompt">Olvasd be a kódot a Beállítások, Párosítás menüben az egyik BombVault szervereden.</string>
     <string name="no_app">Ezen a telefonon egyetlen app sem nyitja meg ezt a linket.</string>
 </resources>

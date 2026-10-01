@@ -3,5 +3,6 @@
     <string name="saved">Tallennettu Lataukset-kansioon: %1$s</string>
     <string name="save_failed">Tiedostoa ei voitu tallentaa: %1$s</string>
     <string name="save_untrusted">Palvelimen varmenne on vaihtunut. Avaa se uudelleen aloitusnäytöltä tarkistaaksesi uuden.</string>
+    <string name="scan_prompt">Skannaa koodi kohdassa Asetukset, Pariliitos yhdellä BombVault-palvelimellasi.</string>
     <string name="no_app">Mikään tämän puhelimen sovellus ei avaa tätä linkkiä.</string>
 </resources>

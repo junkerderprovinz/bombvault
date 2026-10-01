@@ -1,6 +1,9 @@
 package bombvault.halleluja.design
 
 import android.webkit.CookieManager
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -100,3 +103,31 @@ private class PinnedTrust(private val pin: String) : X509TrustManager {
 }
 
 private const val TIMEOUT_MS = 5000
+
+/**
+ * What runs on [server], read over HTTP with the session, in the shape the
+ * group's activity route answers in: runs, the progress snapshot as events,
+ * and the next scheduled runs.
+ */
+fun activityOverHttp(server: Server): Answer {
+    val runs = get(server, "/api/runs")
+    if (runs.status != 200) return runs
+    val live = get(server, "/api/progress?snapshot=1")
+    val next = get(server, "/api/schedule/next")
+    return try {
+        val progress = JSONArray()
+        if (live.status == 200) {
+            for (line in live.body.lines()) if (line.startsWith("data: ")) progress.put(JSONObject(line.removePrefix("data: ")))
+        }
+        val upcoming = if (next.status == 200) JSONObject(next.body).optJSONArray("runs") ?: JSONArray() else JSONArray()
+        val out = JSONObject()
+            .put("ok", true)
+            .put("runs", JSONObject(runs.body).optJSONArray("runs") ?: JSONArray())
+            .put("progress", progress)
+            .put("next", upcoming)
+        Answer(200, out.toString())
+    } catch (e: JSONException) {
+        // Something answered that is not BombVault, such as a proxy's error page.
+        Answer(0, e.message ?: "not BombVault")
+    }
+}

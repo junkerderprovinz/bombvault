@@ -30,6 +30,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,9 +63,18 @@ class MainActivity : ComponentActivity() {
     private var forgetHistory = false
     private var chooser: ValueCallback<Array<Uri>>? = null
 
+    private lateinit var pairing: Pairing
+
+    /** Why the last pairing code was refused, shown once by the launcher. */
+    private var pairError: JSONObject? = null
+
     private val pickFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         chooser?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
         chooser = null
+    }
+
+    private val scan = registerForActivityResult(ScanContract()) { result ->
+        result.contents?.let(::join)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -74,6 +85,7 @@ class MainActivity : ComponentActivity() {
             found = it
             pushState()
         }
+        pairing = Pairing(this, servers) { runOnUiThread(::pushState) }
         loader = WebViewAssetLoader.Builder()
             .addPathHandler("/", LauncherAssets(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
@@ -130,6 +142,16 @@ class MainActivity : ComponentActivity() {
         web.saveState(outState)
     }
 
+    override fun onStart() {
+        super.onStart()
+        pairing.start()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        pairing.stop()
+    }
+
     override fun onResume() {
         super.onResume()
         if (current == null) discovery.start()
@@ -139,6 +161,18 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         discovery.stop()
         CookieManager.getInstance().flush()
+    }
+
+    /** Joins the group of a scanned or typed code, or tells the launcher why not. */
+    private fun join(code: String) {
+        pairError = when (val refused = pairing.join(code)) {
+            null -> null
+            is PhraseError.WordCount -> JSONObject().put("reason", "count").put("count", refused.count)
+            is PhraseError.UnknownWord -> JSONObject().put("reason", "word").put("word", refused.word).put("position", refused.position)
+            PhraseError.Checksum -> JSONObject().put("reason", "checksum")
+        }
+        pushState()
+        pairError = null
     }
 
     private fun showLauncher() {
@@ -180,7 +214,8 @@ class MainActivity : ComponentActivity() {
                 servers.remove(msg.getString("id"))
                 pushState()
             }
-            "open" -> servers.get(msg.getString("id"))?.let(::open)
+            // A member known only over the group has no address to open yet.
+            "open" -> servers.get(msg.getString("id"))?.takeIf { it.url.isNotEmpty() }?.let(::open)
             "trust" -> {
                 servers.trust(msg.getString("id"), msg.getString("fingerprint"))
                 // The WebView remembers the refusal for the host otherwise.
@@ -191,16 +226,25 @@ class MainActivity : ComponentActivity() {
                 problem = null
                 pushState()
             }
-            "fetch" -> {
+            "activity" -> {
                 val server = servers.get(msg.getString("id")) ?: return
                 val ticket = msg.getInt("ticket")
                 lifecycleScope.launch {
-                    val answer = withContext(Dispatchers.IO) { get(server, msg.getString("path")) }
+                    val answer = withContext(Dispatchers.IO) { pairing.activity(server) ?: activityOverHttp(server) }
                     launcher?.postMessage(
-                        JSONObject().put("op", "fetched").put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
+                        JSONObject().put("op", "activity").put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
                     )
                 }
             }
+            "scan" -> scan.launch(
+                ScanOptions()
+                    .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                    .setPrompt(getString(R.string.scan_prompt))
+                    .setBeepEnabled(false)
+                    .setOrientationLocked(false),
+            )
+            "join" -> join(msg.getString("code"))
+            "leave" -> pairing.leave()
         }
     }
 
@@ -212,7 +256,9 @@ class MainActivity : ComponentActivity() {
                 "found",
                 JSONArray(found.map { JSONObject().put("name", it.name).put("url", it.url).put("version", it.version) }),
             )
+            .put("group", JSONObject().put("paired", pairing.paired).put("connected", pairing.connected))
         problem?.let { state.put("problem", it) }
+        pairError?.let { state.put("pairError", it) }
         launcher?.postMessage(state.toString())
     }
 

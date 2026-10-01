@@ -3,5 +3,6 @@
     <string name="saved">บันทึกลงดาวน์โหลดแล้ว: %1$s</string>
     <string name="save_failed">ไม่สามารถบันทึกไฟล์ได้: %1$s</string>
     <string name="save_untrusted">ใบรับรองของเซิร์ฟเวอร์เปลี่ยนไป เปิดใหม่จากหน้าจอเริ่มต้นเพื่อตรวจสอบใบรับรองใหม่</string>
+    <string name="scan_prompt">สแกนรหัสที่การตั้งค่า, การจับคู่ บนเซิร์ฟเวอร์ BombVault เครื่องหนึ่งของคุณ</string>
     <string name="no_app">ไม่มีแอปในโทรศัพท์เครื่องนี้ที่เปิดลิงก์นี้ได้</string>
 </resources>

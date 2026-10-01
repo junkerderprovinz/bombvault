@@ -3,5 +3,6 @@
     <string name="saved">Uložené do Stiahnutých súborov: %1$s</string>
     <string name="save_failed">Súbor sa nepodarilo uložiť: %1$s</string>
     <string name="save_untrusted">Certifikát servera sa zmenil. Otvorte ho znova z úvodnej obrazovky a skontrolujte nový.</string>
+    <string name="scan_prompt">Naskenuj kód v časti Nastavenia, Párovanie na jednom zo svojich serverov BombVault.</string>
     <string name="no_app">Žiadna aplikácia v telefóne tento odkaz neotvorí.</string>
 </resources>

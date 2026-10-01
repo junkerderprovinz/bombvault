@@ -21,6 +21,7 @@ import {
   type Bridge,
   type FoundServer,
   type LauncherState,
+  type PairError,
   type Problem,
   type Server,
 } from "./bridge";
@@ -53,10 +54,21 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     return off;
   }, [bridge]);
 
-  const servers = state?.servers;
+  // A joined group closes the sheet it was joined from: what comes next is the
+  // list filling up.
+  const paired = state?.group.paired ?? false;
+  const wasPaired = useRef(paired);
   useEffect(() => {
-    if (!servers || servers.length === 0) return;
-    const list = servers;
+    if (paired && !wasPaired.current) setEditing(null);
+    wasPaired.current = paired;
+  }, [paired]);
+
+  // Every state the app pushes is a new array; the poll restarts only when
+  // the servers themselves change.
+  const watched = JSON.stringify(state?.servers ?? []);
+  useEffect(() => {
+    const list = JSON.parse(watched) as Server[];
+    if (list.length === 0) return;
     let live = true;
     const resolveName: ResolveName = (key, params, count) => {
       let s = t(key as TranslationKey, count);
@@ -81,7 +93,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       live = false;
       clearInterval(timer);
     };
-  }, [bridge, servers, t]);
+  }, [bridge, watched, t]);
 
   if (state === null) return null;
 
@@ -132,6 +144,11 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         t={t}
         editing={editing}
         found={found}
+        group={state.group}
+        pairError={state.pairError}
+        onScan={() => bridge.send({ op: "scan" })}
+        onJoin={(code) => bridge.send({ op: "join", code })}
+        onLeave={() => bridge.send({ op: "leave" })}
         onClose={() => setEditing(null)}
         onSave={(server, open) => {
           bridge.send({ op: "save", server, open });
@@ -154,26 +171,21 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   );
 }
 
-/** readServer asks one server for its runs, what is in flight and the next
- *  schedule, and turns them into the lines its own dashboard shows. */
+/** readServer asks one server what runs there and turns the answer into the
+ *  lines its own dashboard shows. */
 async function readServer(
   bridge: Bridge,
   server: Server,
   resolveName: ResolveName,
   now: number
 ): Promise<{ reach: Reach; lines: ServerLine[] }> {
-  const [runs, live, next] = await Promise.all([
-    bridge.fetch(server.id, "/api/runs"),
-    bridge.fetch(server.id, "/api/progress?snapshot=1"),
-    bridge.fetch(server.id, "/api/schedule/next"),
-  ]);
-  if (runs.status === 401 || runs.status === 403) return { reach: "signIn", lines: [] };
-  if (runs.status === -1) return { reach: "certificate", lines: [] };
-  if (runs.status !== 200) return { reach: "offline", lines: [] };
+  const answer = await bridge.activity(server.id);
+  if (answer.status === 401 || answer.status === 403) return { reach: "signIn", lines: [] };
+  if (answer.status === -1) return { reach: "certificate", lines: [] };
+  if (answer.status !== 200) return { reach: "offline", lines: [] };
   try {
-    const r = JSON.parse(runs.body) as { runs?: Run[] };
-    const n = next.status === 200 ? ((JSON.parse(next.body) as { runs?: ScheduleNext[] }).runs ?? []) : [];
-    const lines = buildLogLines(r.runs ?? [], inFlight(live.body, now), n, resolveName, now).map((l) => ({
+    const a = JSON.parse(answer.body) as { runs?: Run[]; progress?: unknown[]; next?: ScheduleNext[] };
+    const lines = buildLogLines(a.runs ?? [], inFlight(a.progress ?? [], now), a.next ?? [], resolveName, now).map((l) => ({
       ...l,
       id: `${server.id}:${l.id}`,
       server: server.name,
@@ -185,13 +197,11 @@ async function readServer(
   }
 }
 
-/** inFlight reads the progress snapshot, an event stream that ends after the
- *  bars running now. */
-function inFlight(stream: string, now: number): ProgressMap {
+/** inFlight turns the progress events in flight into the map the log reads. */
+function inFlight(events: unknown[], now: number): ProgressMap {
   const map: ProgressMap = {};
-  for (const line of stream.split("\n")) {
-    if (!line.startsWith("data: ")) continue;
-    const frame = parseProgressFrame(line.slice(6));
+  for (const ev of events) {
+    const frame = parseProgressFrame(JSON.stringify(ev));
     if (frame) map[frame.key] = progressEntry(frame, now);
   }
   return map;
@@ -272,7 +282,7 @@ function ServerCard({
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
           <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-            {displayAddress(server.url)}
+            {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
           </span>
           {trouble !== undefined && (
             <span dir="ltr" className="text-start font-mono text-xs text-statusFail break-all" role="alert">
@@ -297,6 +307,11 @@ function ServerSheet({
   t,
   editing,
   found,
+  group,
+  pairError,
+  onScan,
+  onJoin,
+  onLeave,
   onClose,
   onSave,
   onRemove,
@@ -305,6 +320,11 @@ function ServerSheet({
   editing: Server | "new" | null;
   /** Servers announced on the network and not in the list yet. */
   found: FoundServer[];
+  group: LauncherState["group"];
+  pairError?: PairError;
+  onScan: () => void;
+  onJoin: (code: string) => void;
+  onLeave: () => void;
   onClose: () => void;
   onSave: (server: { id?: string; name: string; url: string }, open: boolean) => void;
   onRemove: (id: string) => void;
@@ -351,7 +371,8 @@ function ServerSheet({
         title={existing ? t("launcher.editTitle") : t("launcher.add")}
         footer={
           <div className="flex flex-col gap-3 py-3">
-            {existing && (
+            {/* A server from the group comes back while the app is in it. */}
+            {existing && !existing.member && (
               <Button
                 label={t("launcher.remove")}
                 labelKey="launcher.remove"
@@ -372,6 +393,7 @@ function ServerSheet({
         }
       >
         <div className="flex flex-col gap-5 px-4 py-3">
+          {!existing && <PairBlock t={t} group={group} error={pairError} onScan={onScan} onJoin={onJoin} onLeave={onLeave} />}
           {!existing && (
             <div className="flex flex-col gap-1.5">
               <span className="flex items-center gap-2 text-xs font-medium text-carbon-textSub">
@@ -445,6 +467,108 @@ function ServerSheet({
       </BottomSheet>
       {confirmDialog}
     </>
+  );
+}
+
+/** The words of a refused code, in the sentences the pairing card uses. */
+function pairErrorText(t: T, e: PairError): string {
+  switch (e.reason) {
+    case "count":
+      return t("pairing.errWordCount").replace("{count}", String(e.count));
+    case "word":
+      return t("pairing.errUnknownWord").replace("{position}", String(e.position)).replace("{word}", e.word);
+    case "checksum":
+      return t("pairing.errChecksum");
+  }
+}
+
+/** PairBlock joins the app to a BombVault group by its QR code or its twelve
+ *  words, or, once joined, says so and offers to leave. */
+function PairBlock({
+  t,
+  group,
+  error,
+  onScan,
+  onJoin,
+  onLeave,
+}: {
+  t: T;
+  group: LauncherState["group"];
+  error?: PairError;
+  onScan: () => void;
+  onJoin: (code: string) => void;
+  onLeave: () => void;
+}) {
+  const wordsId = useId();
+  const [typing, setTyping] = useState(false);
+  const [words, setWords] = useState("");
+  const { confirm, confirmDialog } = useConfirm();
+
+  if (group.paired) {
+    return (
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-carbon-textSub">{t("launcher.pairTitle")}</span>
+        <div className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-2.5">
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{t("launcher.paired")}</span>
+          <Badge tone={group.connected ? "ok" : "warn"}>
+            {group.connected ? t("launcher.relayConnected") : t("launcher.relayOffline")}
+          </Badge>
+        </div>
+        <Button
+          label={t("pairing.leave")}
+          labelKey="pairing.leave"
+          tone="neutral"
+          onClick={() =>
+            void confirm(t("launcher.leaveConfirm"), { confirmKey: "pairing.leave" }).then((ok) => {
+              if (ok) onLeave();
+            })
+          }
+        />
+        {confirmDialog}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="flex items-center gap-2 text-xs font-medium text-carbon-textSub">
+        {t("launcher.pairTitle")}
+        <InfoBubble tip={t("launcher.pairHint")} />
+      </span>
+      <Button label={t("launcher.scan")} labelKey="launcher.scan" tone="accent" onClick={onScan} className="glim-btn-key w-full" />
+      {typing ? (
+        <form
+          className="flex flex-col gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onJoin(words);
+          }}
+        >
+          <label htmlFor={wordsId} className="sr-only">
+            {t("pairing.enterLabel")}
+          </label>
+          <textarea
+            id={wordsId}
+            value={words}
+            onChange={(e) => setWords(e.target.value)}
+            rows={3}
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder={t("pairing.enterPlaceholder")}
+            className="w-full resize-none rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text glim-field-focus"
+          />
+          <Button label={t("pairing.join")} labelKey="pairing.join" tone="neutral" type="submit" disabled={words.trim() === ""} />
+        </form>
+      ) : (
+        <Button label={t("launcher.enterWords")} labelKey="launcher.enterWords" glyph={<IconPencil />} tone="neutral" onClick={() => setTyping(true)} />
+      )}
+      {error && (
+        <p className="text-xs text-statusFail" role="alert">
+          {pairErrorText(t, error)}
+        </p>
+      )}
+    </div>
   );
 }
 

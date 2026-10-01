@@ -3,5 +3,6 @@
     <string name="saved">Guardado em Transferências: %1$s</string>
     <string name="save_failed">Não foi possível guardar o ficheiro: %1$s</string>
     <string name="save_untrusted">O certificado do servidor mudou. Abra-o novamente a partir do ecrã inicial para verificar o novo.</string>
+    <string name="scan_prompt">Digitaliza o código em Definições, Emparelhamento num dos seus servidores BombVault.</string>
     <string name="no_app">Nenhuma app neste telemóvel abre esta ligação.</string>
 </resources>

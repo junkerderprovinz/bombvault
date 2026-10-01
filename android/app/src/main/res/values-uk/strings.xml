@@ -3,5 +3,6 @@
     <string name="saved">Збережено в Завантаження: %1$s</string>
     <string name="save_failed">Не вдалося зберегти файл: %1$s</string>
     <string name="save_untrusted">Сертифікат сервера змінився. Відкрийте його знову з початкового екрана, щоб перевірити новий.</string>
+    <string name="scan_prompt">Відскануйте код у розділі Налаштування, Спарювання на одному зі своїх серверів BombVault.</string>
     <string name="no_app">Жоден застосунок на цьому телефоні не відкриває це посилання.</string>
 </resources>

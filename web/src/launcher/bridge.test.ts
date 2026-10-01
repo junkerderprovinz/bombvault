@@ -29,7 +29,7 @@ describe("displayAddress", () => {
 });
 
 describe("bridgeOver", () => {
-  it("hands each fetch the answer with its own ticket", async () => {
+  it("hands each activity question the answer with its own ticket", async () => {
     const sent: string[] = [];
     const listeners: ((e: { data: string }) => void)[] = [];
     const port: Port = {
@@ -38,13 +38,13 @@ describe("bridgeOver", () => {
       removeEventListener: () => undefined,
     };
     const bridge = bridgeOver(port);
-    const first = bridge.fetch("a", "/api/runs");
-    const second = bridge.fetch("b", "/api/runs");
+    const first = bridge.activity("a");
+    const second = bridge.activity("b");
     const [t1, t2] = sent.map((d) => (JSON.parse(d) as { ticket: number }).ticket);
 
     // Answers come back in whatever order the servers reply.
-    for (const fn of listeners) fn({ data: JSON.stringify({ op: "fetched", ticket: t2, status: 401, body: "" }) });
-    for (const fn of listeners) fn({ data: JSON.stringify({ op: "fetched", ticket: t1, status: 200, body: "{}" }) });
+    for (const fn of listeners) fn({ data: JSON.stringify({ op: "activity", ticket: t2, status: 401, body: "" }) });
+    for (const fn of listeners) fn({ data: JSON.stringify({ op: "activity", ticket: t1, status: 200, body: "{}" }) });
 
     expect(await first).toEqual({ status: 200, body: "{}" });
     expect(await second).toEqual({ status: 401, body: "" });

@@ -476,6 +476,14 @@ BombVault also runs as a plain container on any Docker host, and on TrueNAS Scal
 
 What changes away from Unraid: **the flash domain does not exist**, since there is no boot USB to capture or restore, so the Folders domain offers a one-click *Host system config* preset (a starting `/etc` file set you review before saving) as the practical equivalent. Unraid's native notification mirror and the dashboard-widget plugin are skipped for the same reason. And a container's data folder is found from the segments you name in `DATA_ROOT_SEGMENTS`, plus Docker named volumes, a Compose project's own working directory and a `bombvault.data` label, instead of from Unraid's `appdata` convention. Named volumes and the `/etc` preset can only reach paths that lie inside your Host Data mount, so point Host Data at a common ancestor that also covers Docker's data root.
 
+### Android app
+
+Every release has an APK, `bombvault-android.apk`, on its release page. The app starts on a list of your BombVault servers with the activity log of all of them on top, and opens the phone view of whichever you tap.
+
+Pair the phone with your group to set it up: on any server open **Settings → Pairing → Show phrase** and scan the QR code with the app, or type the twelve words. The app joins the group like another instance and finds every server in it. It shows what runs on each, also away from home over the relay, and appears on the **Instances** page as an Android app. It backs nothing up itself. A server outside a group can be added by its address, and the app also lists servers that announce themselves on the local network.
+
+The interface opens directly, so the phone has to reach the server, at home or over a VPN, and you sign in as in a browser. A self-signed certificate is trusted once by its fingerprint, and the app warns if the server later shows a different one.
+
 <br>
 
 ## 8. Configuration

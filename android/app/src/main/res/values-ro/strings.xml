@@ -3,5 +3,6 @@
     <string name="saved">Salvat în Descărcări: %1$s</string>
     <string name="save_failed">Fișierul nu a putut fi salvat: %1$s</string>
     <string name="save_untrusted">Certificatul serverului s-a schimbat. Deschide-l din nou din ecranul de pornire pentru a verifica noul certificat.</string>
+    <string name="scan_prompt">Scanează codul din Setări, Împerechere pe unul dintre serverele tale BombVault.</string>
     <string name="no_app">Nicio aplicație de pe acest telefon nu deschide acest link.</string>
 </resources>

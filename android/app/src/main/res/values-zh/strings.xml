@@ -3,5 +3,6 @@
     <string name="saved">已保存到下载: %1$s</string>
     <string name="save_failed">无法保存文件: %1$s</string>
     <string name="save_untrusted">服务器的证书已更改。请从开始屏幕重新打开它以查看新证书。</string>
+    <string name="scan_prompt">在你的某台 BombVault 服务器上，在设置、配对中扫描这个码。</string>
     <string name="no_app">此手机上没有应用能打开此链接。</string>
 </resources>

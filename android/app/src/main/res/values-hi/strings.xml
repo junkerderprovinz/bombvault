@@ -3,5 +3,6 @@
     <string name="saved">डाउनलोड में सहेजा गया: %1$s</string>
     <string name="save_failed">फ़ाइल सहेजी नहीं जा सकी: %1$s</string>
     <string name="save_untrusted">सर्वर का प्रमाणपत्र बदल गया है। नया प्रमाणपत्र जाँचने के लिए इसे स्टार्ट स्क्रीन से फिर से खोलें।</string>
+    <string name="scan_prompt">अपने किसी एक BombVault सर्वर पर सेटिंग्स, पेयरिंग में मौजूद कोड को स्कैन करें।</string>
     <string name="no_app">इस फ़ोन पर कोई भी ऐप यह लिंक नहीं खोलता।</string>
 </resources>

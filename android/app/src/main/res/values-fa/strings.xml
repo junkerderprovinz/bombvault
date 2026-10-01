@@ -3,5 +3,6 @@
     <string name="saved">در دانلودها ذخیره شد: %1$s</string>
     <string name="save_failed">ذخیره فایل ممکن نشد: %1$s</string>
     <string name="save_untrusted">گواهی سرور تغییر کرده است. برای بررسی گواهی جدید، آن را دوباره از صفحه شروع باز کنید.</string>
+    <string name="scan_prompt">کد را در تنظیمات، جفت‌سازی، روی یکی از سرورهای BombVault خود اسکن کنید.</string>
     <string name="no_app">هیچ برنامه‌ای در این گوشی این پیوند را باز نمی‌کند.</string>
 </resources>

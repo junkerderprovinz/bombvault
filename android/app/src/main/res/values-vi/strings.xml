@@ -3,5 +3,6 @@
     <string name="saved">Đã lưu vào Tải xuống: %1$s</string>
     <string name="save_failed">Không thể lưu tệp: %1$s</string>
     <string name="save_untrusted">Chứng chỉ của máy chủ đã thay đổi. Mở lại từ màn hình bắt đầu để kiểm tra chứng chỉ mới.</string>
+    <string name="scan_prompt">Quét mã ở Cài đặt, Ghép nối trên một trong các máy chủ BombVault của bạn.</string>
     <string name="no_app">Không có ứng dụng nào trên điện thoại này mở được liên kết này.</string>
 </resources>

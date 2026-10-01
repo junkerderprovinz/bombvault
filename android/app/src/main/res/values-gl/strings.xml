@@ -3,5 +3,6 @@
     <string name="saved">Gardado en Descargas: %1$s</string>
     <string name="save_failed">Non se puido gardar o ficheiro: %1$s</string>
     <string name="save_untrusted">O certificado do servidor cambiou. Ábreo de novo desde a pantalla de inicio para comprobar o novo certificado.</string>
+    <string name="scan_prompt">Escanea o código baixo Configuración, Emparellamento nun dos teus servidores BombVault.</string>
     <string name="no_app">Ningunha app deste teléfono abre esta ligazón.</string>
 </resources>

@@ -3,5 +3,6 @@
     <string name="saved">İndirilenler klasörüne kaydedildi: %1$s</string>
     <string name="save_failed">Dosya kaydedilemedi: %1$s</string>
     <string name="save_untrusted">Sunucunun sertifikası değişti. Yenisini kontrol etmek için başlangıç ekranından tekrar açın.</string>
+    <string name="scan_prompt">BombVault sunucularınızdan birinde, Ayarlar, Eşleştirme altındaki kodu tarayın.</string>
     <string name="no_app">Bu telefonda bu bağlantıyı açan bir uygulama yok.</string>
 </resources>

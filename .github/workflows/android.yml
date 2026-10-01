@@ -85,7 +85,7 @@ jobs:
             export ANDROID_KEYSTORE="$RUNNER_TEMP/release.p12"
             echo "$KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE"
           fi
-          gradle --no-daemon assembleRelease -PbombvaultVersion="$version"
+          gradle --no-daemon testDebugUnitTest assembleRelease -PbombvaultVersion="$version"
           mkdir -p out
           cp app/build/outputs/apk/release/app-release.apk out/bombvault-android.apk
 
