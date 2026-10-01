@@ -2211,11 +2211,11 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 		return
 	}
 	title := "BombVault: MCP key " + event
-	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > MCP server.",
+	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings, Integrations, MCP server.",
 		k.Label, k.Hint, event, addr)
 	if k.Kind == store.MCPKindOAuth {
 		title = "BombVault: MCP client " + event
-		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings > System > MCP server.",
+		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings, Integrations, MCP server.",
 			k.Label, event, addr)
 	}
 	go func() {
@@ -2488,7 +2488,7 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 // whose absolute-path regex redacts any slash-led token.
 var (
 	// A named repository (#204). Its toggle is on the Repositories card.
-	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Repositories, delete what you meant to delete, and switch it back on")
+	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Storage, Repositories, delete what you meant to delete, and switch it back on")
 	// An off-site destination. Its toggle is on the off-site destinations card.
 	errAppendOnlyOffsiteTarget = errors.New("this off-site destination is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Off-site, delete what you meant to delete, and switch it back on")
 	// A domain's own remote primary. Its toggle is in the Remote safety dialog
@@ -13015,7 +13015,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 }
 
 // VMSSHInfo returns the libvirt SSH host and BombVault's public key for the user
-// to authorize on the Unraid host (Settings → VM Backup). Errors when SSH is not
+// to authorize on the Unraid host (Settings, Integrations, Host SSH). Errors when SSH is not
 // wired (no key yet).
 func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	if s.ssh == nil {
@@ -17474,7 +17474,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	if mcpShipped {
 		w("Restoring this backup revokes every MCP key and every OAuth sign-in; create\n")
 		w("new keys and let cloud assistants sign in again under\n")
-		w("Settings > System > MCP server afterwards.\n\n")
+		w("Settings, Integrations, MCP server afterwards.\n\n")
 	}
 
 	// Off-site/cloud credentials — the stored rest-server / S3 keys and rclone
@@ -17939,7 +17939,7 @@ func formatItemFailures(failures []schedule.ItemFailure) string {
 // host's notify script over SSH. level is "normal" | "warning" | "alert".
 func (s *Service) sendUnraidNotify(ctx context.Context, subject, desc, level string) error {
 	if s.ssh == nil {
-		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, System, Host SSH)")
+		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, Integrations, Host SSH)")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

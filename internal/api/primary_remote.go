@@ -152,7 +152,7 @@ type appendOnlyFlag int
 
 const (
 	appendOnlyNone appendOnlyFlag = iota
-	// The flag is on the named repository's own row (Settings, Repositories).
+	// The flag is on the named repository's own row (Settings, Storage, Repositories).
 	appendOnlyNamedRepo
 	// The flag is on the domain's remote-primary safety row.
 	appendOnlyPrimaryRemote

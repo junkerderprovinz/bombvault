@@ -259,6 +259,28 @@ func TestMCPStartCooldown(t *testing.T) {
 	waitForFilesIdle(t, h)
 }
 
+func TestMCPStartCooldownCountsMinutesInTheSingular(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	base := time.Now()
+	ctx := mcpStartCaller("0b7e", true)
+	seedBackup(t, repo, sets["docs"].ID, "mcp", "0b7e")
+
+	for _, c := range []struct {
+		after time.Duration
+		want  string
+	}{
+		{30 * time.Second, "just now; wait 15 minutes"},
+		{90 * time.Second, "1 minute ago; wait 14 minutes"},
+		{mcpStartCooldown - 30*time.Second, "14 minutes ago; wait 1 minute or"},
+	} {
+		h.mcp.now = func() time.Time { return base.Add(c.after) }
+		msg := mcpErrorMessage(t, startFileSet(ctx, h, "docs"))
+		if !strings.Contains(msg, c.want) {
+			t.Errorf("after %v the refusal says %q, want it to contain %q", c.after, msg, c.want)
+		}
+	}
+}
+
 // Under a policy that keeps a fixed number of restore points, MCP must never
 // fill the window on its own: one of the kept points always comes from the
 // schedule or from the operator.
