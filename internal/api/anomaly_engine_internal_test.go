@@ -184,7 +184,7 @@ func TestLastGoodBackupStaysWhereTheFindingOpened(t *testing.T) {
 	if row.LastGoodRunID != good {
 		t.Fatalf("last good run = %q, want %q", row.LastGoodRunID, good)
 	}
-	view := anomalyViewOf(row, nil, nil, nil, store.Settings{})
+	view := anomalyViewOf(row, nil, nil, nil, nil, store.Settings{})
 	if got := anomalyDetailInt(view, "lastGoodAt"); got != goodAt {
 		t.Fatalf("details.lastGoodAt = %d, want the good backup at %d", got, goodAt)
 	}
