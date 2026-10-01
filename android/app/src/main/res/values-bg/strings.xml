@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Запазено в Изтегляния: %1$s</string>
+    <string name="save_failed">Файлът не можа да се запази: %1$s</string>
+    <string name="save_untrusted">Сертификатът на сървъра се промени. Отвори го отново от началния екран, за да провериш новия.</string>
+    <string name="scan_prompt">Сканирай кода в Настройки, Сдвояване на един от твоите BombVault сървъри.</string>
+    <string name="no_app">Нито едно приложение на този телефон не отваря тази връзка.</string>
+</resources>

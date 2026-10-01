@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Desat a Baixades: %1$s</string>
+    <string name="save_failed">No s\'ha pogut desar el fitxer: %1$s</string>
+    <string name="save_untrusted">El certificat del servidor ha canviat. Obre\'l de nou des de la pantalla d\'inici per comprovar el nou.</string>
+    <string name="scan_prompt">Escaneja el codi a Configuració, Aparellament en un dels teus servidors BombVault.</string>
+    <string name="no_app">Cap app d\'aquest telèfon obre aquest enllaç.</string>
+</resources>

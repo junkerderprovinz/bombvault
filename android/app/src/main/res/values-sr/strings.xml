@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Сачувано у Преузимања: %1$s</string>
+    <string name="save_failed">Датотека није могла да се сачува: %1$s</string>
+    <string name="save_untrusted">Сертификат сервера се променио. Отвори га поново са почетног екрана да провериш нови.</string>
+    <string name="scan_prompt">Скенирај код у делу Подешавања, Упаривање на једном од својих BombVault сервера.</string>
+    <string name="no_app">Ниједна апликација на овом телефону не отвара ову везу.</string>
+</resources>

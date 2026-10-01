@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">تم الحفظ في التنزيلات: %1$s</string>
+    <string name="save_failed">تعذر حفظ الملف: %1$s</string>
+    <string name="save_untrusted">تغيّرت شهادة الخادم. افتحه مرة أخرى من الشاشة الرئيسية للتحقق من الشهادة الجديدة.</string>
+    <string name="scan_prompt">امسح الرمز ضمن الإعدادات، الاقتران على أحد خوادم BombVault لديك.</string>
+    <string name="no_app">لا يوجد تطبيق على هذا الهاتف يفتح هذا الرابط.</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Shranjeno v Prenosi: %1$s</string>
+    <string name="save_failed">Datoteke ni bilo mogoče shraniti: %1$s</string>
+    <string name="save_untrusted">Certifikat strežnika se je spremenil. Odpri ga znova z začetnega zaslona in preveri novega.</string>
+    <string name="scan_prompt">Skeniraj kodo v razdelku Nastavitve, Seznanjanje na enem od svojih strežnikov BombVault.</string>
+    <string name="no_app">Nobena aplikacija v tem telefonu ne odpre te povezave.</string>
+</resources>

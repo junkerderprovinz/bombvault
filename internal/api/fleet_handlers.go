@@ -27,6 +27,7 @@ type fleetPeerView struct {
 	LastPollDomains      []DomainStatusEntry `json:"lastPollDomains"`
 	CreatedAt            int64               `json:"createdAt"`
 	SortOrder            int                 `json:"sortOrder"`
+	Kind                 string              `json:"kind,omitempty"`
 }
 
 // fleetPeerInput is the update request body. The pointers tell a field left
@@ -42,7 +43,8 @@ func fleetPeerToView(p store.FleetPeer, members []group.Member) fleetPeerView {
 		v := p.LastPollOK.Bool
 		ok = &v
 	}
-	var domains []DomainStatusEntry
+	// Empty rather than null for a member never polled: the page reads it as a list.
+	domains := []DomainStatusEntry{}
 	if p.LastPollDomainsJSON != "" {
 		_ = json.Unmarshal([]byte(p.LastPollDomainsJSON), &domains) // on failure the view shows no cached domains
 	}
@@ -61,6 +63,7 @@ func fleetPeerToView(p store.FleetPeer, members []group.Member) fleetPeerView {
 		LastPollDomains:      domains,
 		CreatedAt:            p.CreatedAt,
 		SortOrder:            p.SortOrder,
+		Kind:                 p.Kind,
 	}
 	for _, m := range members {
 		if m.ID == p.MemberID && p.MemberID != "" {

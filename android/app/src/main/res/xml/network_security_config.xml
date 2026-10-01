@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BombVault can serve plain HTTP on a home network, at whatever address the
+  person types, so cleartext cannot be limited to known hosts. Certificates
+  Android cannot verify are accepted per server, by fingerprint, in the app.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -92,7 +92,7 @@ func NewHandler(
 	scheduler *schedule.Scheduler,
 	probes []spike.Probe,
 ) *Handler {
-	return &Handler{
+	h := &Handler{
 		cfg:       cfg,
 		store:     st,
 		docker:    d,
@@ -119,6 +119,10 @@ func NewHandler(
 		loginFails: make(map[string][]time.Time),
 		mcp:        newMCPState(),
 	}
+	if svc != nil {
+		svc.peerActivity = h.activity
+	}
+	return h
 }
 
 // SetProgress wires the live-progress store the SSE endpoint streams from (the

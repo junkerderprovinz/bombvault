@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">다운로드에 저장됨: %1$s</string>
+    <string name="save_failed">파일을 저장할 수 없습니다: %1$s</string>
+    <string name="save_untrusted">서버 인증서가 변경되었습니다. 새 인증서를 확인하려면 시작 화면에서 다시 여세요.</string>
+    <string name="scan_prompt">BombVault 서버 중 하나에서 설정, 페어링에 있는 코드를 스캔하세요.</string>
+    <string name="no_app">이 휴대폰에는 이 링크를 여는 앱이 없습니다.</string>
+</resources>

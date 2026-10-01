@@ -618,8 +618,10 @@ function FleetPeerCard({
     }
   }
 
+  const app = peer.kind === "android";
   const badges = (
     <>
+      {app && <Badge tone="neutral">{t("fleet.kindAndroid")}</Badge>}
       {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
       {peer.needsPairing ? (
         <Badge tone="warn">
@@ -644,7 +646,7 @@ function FleetPeerCard({
 
   const actions = (
     <>
-      {!peer.needsPairing && (
+      {!peer.needsPairing && !app && (
         <Button
           label={t("fleet.mesh.proposeButton")}
           labelKey="fleet.mesh.proposeButton"
@@ -652,7 +654,7 @@ function FleetPeerCard({
           onClick={() => setShowPropose(true)}
         />
       )}
-      {!peer.needsPairing && (
+      {!peer.needsPairing && !app && (
         <Button
           label={t("fleet.details")}
           labelKey="fleet.details"
@@ -693,11 +695,14 @@ function FleetPeerCard({
       index={index}
       t={t}
     >
-      <PeerScorecard
-        domains={peer.lastPollDomains}
-        t={t}
-        onCheck={open && !peer.needsPairing ? (domain) => handleCheck(domain) : undefined}
-      />
+      {/* A phone backs nothing up, so its card has no scorecard. */}
+      {!app && (
+        <PeerScorecard
+          domains={peer.lastPollDomains}
+          t={t}
+          onCheck={open && !peer.needsPairing ? (domain) => handleCheck(domain) : undefined}
+        />
+      )}
       {open && !peer.needsPairing && (
         <ToggleRow checked={peer.enabled} onChange={(v) => void handleEnabled(v)} label={t("fleet.enabledLabel")} />
       )}
@@ -716,7 +721,7 @@ export const SCORECARD_STALE_S = 15 * 60;
 
 /** scorecardDue says whether the page should fetch a member's scorecard now. */
 export function scorecardDue(peer: FleetPeer, nowS: number): boolean {
-  return peer.enabled && !peer.needsPairing && (peer.direct || peer.relay) && nowS - peer.lastPollAt >= SCORECARD_STALE_S;
+  return peer.enabled && !peer.needsPairing && peer.kind !== "android" && (peer.direct || peer.relay) && nowS - peer.lastPollAt >= SCORECARD_STALE_S;
 }
 
 interface Self {

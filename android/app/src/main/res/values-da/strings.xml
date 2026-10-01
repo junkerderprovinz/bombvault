@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Gemt i Downloads: %1$s</string>
+    <string name="save_failed">Filen kunne ikke gemmes: %1$s</string>
+    <string name="save_untrusted">Serverens certifikat er ændret. Åbn den igen fra startskærmen for at tjekke det nye.</string>
+    <string name="scan_prompt">Scan koden under Indstillinger, Parring på en af dine BombVault-servere.</string>
+    <string name="no_app">Ingen app på denne telefon åbner dette link.</string>
+</resources>

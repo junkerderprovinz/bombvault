@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
+    <!-- Lets Chrome and Edge install BombVault as an app. There is no service
+         worker: one would cache the interface, and after an update people would
+         keep seeing the old one. -->
+    <link rel="manifest" href="/manifest.json" />
     <!-- viewport-fit=cover extends the layout viewport into the device's own
          unsafe edges (notch, rounded corners, home indicator). Without it the
          system chrome insets the viewport and every env(safe-area-inset-*)
