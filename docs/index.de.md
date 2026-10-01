@@ -49,7 +49,7 @@ BombVault ist die Orchestrierungs- und UI-Schicht, nicht die Speicher-Engine. S�
 
 Neu hier? Ab zu **[Erste Schritte](getting-started.md)**, um BombVault auf Unraid über Community Applications zu installieren und dein erstes Backup auszuführen. Erkunde dann die vollständigen **[Funktionen](features.md)**, stimme deine **[Konfiguration](configuration.md)** ab und richte **[Off-site & Wiederherstellung](offsite-recovery.md)** ein.
 
-Off-site kann pro Bereich gleichzeitig auf mehrere Ziele verteilen, ein schreibgeschütztes **Empfänger-Dashboard** überwacht diese Kopien auf der Box, die sie empfängt, und du kannst deine gesamte Konfiguration mit der Karte **Einstellungen exportieren und importieren** auf eine neue Box mitnehmen. Siehe [Off-site & Wiederherstellung](offsite-recovery.md) und [Konfiguration](configuration.md#portable-settings-export-and-import).
+Off-site kann pro Bereich gleichzeitig auf mehrere Ziele verteilen, ein schreibgeschütztes **Empfänger-Dashboard** überwacht diese Kopien auf der Box, die sie empfängt, und du kannst deine gesamte Konfiguration mit der Karte **Einstellungen exportieren / importieren** auf eine neue Box mitnehmen. Siehe [Off-site & Wiederherstellung](offsite-recovery.md) und [Konfiguration](configuration.md#portable-settings-export-and-import).
 
 ## Links
 

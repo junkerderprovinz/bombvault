@@ -38,7 +38,7 @@ Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bomb
 
 ## Deteção das fontes de cópia {#backup-source-detection}
 
-Para cada contentor, o BombVault escolhe por si que bind mounts e volumes nomeados são copiados. Um caminho é aceite assim que um dos pontos seguintes se aplique (o resultado pode sempre ser corrigido por contentor nos seus **Caminhos de cópia**):
+Para cada contentor, o BombVault escolhe por si que bind mounts e volumes nomeados são copiados. Um caminho é aceite assim que um dos pontos seguintes se aplique (o resultado pode sempre ser corrigido por contentor nas suas **Pastas a copiar**):
 
 - **Correspondência de um segmento de raiz de dados:** a origem no anfitrião do bind contém um dos segmentos de `DATA_ROOT_SEGMENTS` como componente completo do caminho (por omissão apenas `appdata`).
 - **Os volumes Docker nomeados** são sempre incluídos, porque não têm equivalente descartável e portanto não há nada a filtrar, **mas só quando o caminho real de armazenamento do volume no anfitrião é alcançável através da montagem Host Data**, tal como qualquer outro caminho do anfitrião que o BombVault copia. O controlador local por omissão guarda um volume sob a raiz de dados do próprio daemon, ou seja `/var/lib/docker/volumes/<nome>/_data` salvo personalização (confirma com `docker info -f '{{.DockerRootDir}}'`). Esse local NÃO está coberto pela montagem Host Data estreita, de um único diretório, que o `docker-compose.yml` genérico usa por omissão. Um volume inalcançável é ignorado em silêncio, não é um erro. Para copiar mesmo os volumes nomeados num anfitrião genérico, aponta o Host Data (e `HOST_SOURCE_ROOT`) para um antecessor comum que cubra também a raiz de dados do Docker: vê o comentário Host Data no ficheiro compose para o compromisso (o Unraid contorna isto montando todo o `/mnt`, a sua própria convenção universal de topo, pela mesma razão).
@@ -110,7 +110,7 @@ Cada elemento pode ter a sua própria sensibilidade e o seu próprio mínimo de 
 
 ## Definições portáteis (exportar e importar) {#portable-settings-export-and-import}
 
-O cartão **Exportar e importar definições** na página Definições, Sistema escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
+O cartão **Exportar / importar configurações** na página Definições, Sistema escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
 
 !!! warning "A exportação pode conter credenciais"
     Escolhe se inclui as credenciais externas, de notificação e do broker MQTT no ficheiro. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.

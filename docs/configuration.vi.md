@@ -38,7 +38,7 @@ Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{contai
 
 ## Nhận diện nguồn sao lưu {#backup-source-detection}
 
-Với mỗi container, BombVault tự chọn những bind mount và volume có tên nào sẽ được sao lưu. Một đường dẫn được nhận ngay khi một trong các điểm sau đúng (bạn luôn có thể ghi đè kết quả cho từng container trong mục **Đường dẫn sao lưu** của nó):
+Với mỗi container, BombVault tự chọn những bind mount và volume có tên nào sẽ được sao lưu. Một đường dẫn được nhận ngay khi một trong các điểm sau đúng (bạn luôn có thể ghi đè kết quả cho từng container trong mục **Thư mục sao lưu** của nó):
 
 - **Khớp một đoạn gốc dữ liệu:** nguồn trên máy chủ của bind chứa một trong các đoạn của `DATA_ROOT_SEGMENTS` như một thành phần đường dẫn trọn vẹn (mặc định chỉ `appdata`).
 - **Volume Docker có tên** luôn được đưa vào, vì chúng không có bản tương đương dùng một lần nên chẳng có gì để lọc bỏ, **nhưng chỉ khi đường dẫn lưu trữ thật của volume trên máy chủ tự nó tới được qua điểm gắn Host Data**, đúng như mọi đường dẫn máy chủ khác mà BombVault sao lưu. Trình điều khiển volume cục bộ mặc định đặt volume dưới gốc dữ liệu của chính daemon, tức `/var/lib/docker/volumes/<tên>/_data` nếu bạn chưa đổi (kiểm tra bằng `docker info -f '{{.DockerRootDir}}'`). Vị trí đó KHÔNG nằm trong điểm gắn Host Data hẹp, chỉ một thư mục, mà tệp `docker-compose.yml` chung dùng theo mặc định. Volume không tới được sẽ bị bỏ qua lặng lẽ, đó không phải lỗi. Để thật sự sao lưu volume có tên trên một máy chủ thông thường, hãy trỏ Host Data (và `HOST_SOURCE_ROOT`) tới một thư mục cha chung bao trùm cả gốc dữ liệu của Docker: đánh đổi được nêu trong ghi chú Host Data của tệp compose (Unraid né chuyện này bằng cách gắn toàn bộ `/mnt`, quy ước cấp cao nhất của riêng nó, cũng vì cùng lý do).
@@ -110,7 +110,7 @@ Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riên
 
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 
-Thẻ **Xuất và nhập cài đặt** trên trang Cài đặt, Hệ thống ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
+Thẻ **Xuất / nhập cài đặt** trên trang Cài đặt, Hệ thống ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
 
 !!! warning "Bản xuất có thể chứa thông tin đăng nhập"
     Bạn chọn có bao gồm thông tin đăng nhập off-site, thông báo và broker MQTT trong tệp hay không. Khi có kèm thông tin đăng nhập, bản xuất nhạy cảm như bộ khôi phục của bạn, nên hãy cất giữ nó ở nơi an toàn. Không có chúng, tệp chỉ chứa các cài đặt không bí mật.

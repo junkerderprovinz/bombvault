@@ -38,7 +38,7 @@ Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,
 
 ## Varmuuskopion lähteiden tunnistus {#backup-source-detection}
 
-Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt taltiot varmuuskopioidaan. Polku otetaan mukaan heti, kun jokin seuraavista pätee (tuloksen voi aina ohittaa konttikohtaisesti sen **Varmuuskopiopoluissa**):
+Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt taltiot varmuuskopioidaan. Polku otetaan mukaan heti, kun jokin seuraavista pätee (tuloksen voi aina ohittaa konttikohtaisesti sen **Varmuuskopioitavat kansiot** -osiossa):
 
 - **Osuma datajuuren osaan:** liitoksen isäntälähde sisältää jonkin `DATA_ROOT_SEGMENTS`-osista täytenä polun osana (oletuksena vain `appdata`).
 - **Nimetyt Docker-taltiot** otetaan aina mukaan, koska niillä ei ole kertakäyttöistä vastinetta eikä siten mitään suodatettavaa, **mutta vain silloin, kun taltion todellinen tallennuspolku isännässä on itse tavoitettavissa Host Data -liitoksen kautta**, aivan kuten mikä tahansa muu isäntäpolku, jonka BombVault varmuuskopioi. Paikallisten taltioiden oletusajuri sijoittaa taltion demonin oman datajuuren alle, siis polkuun `/var/lib/docker/volumes/<nimi>/_data`, ellei sitä ole muutettu (tarkista komennolla `docker info -f '{{.DockerRootDir}}'`). Tuo paikka EI kuulu siihen kapeaan, yhden hakemiston Host Data -liitokseen, jota yleinen `docker-compose.yml` oletuksena käyttää. Tavoittamaton taltio ohitetaan äänettömästi, se ei ole virhe. Jotta nimetyt taltiot todella varmuuskopioituvat yleisessä isännässä, osoita Host Data (ja `HOST_SOURCE_ROOT`) yhteiseen ylempään hakemistoon, joka kattaa myös Dockerin datajuuren: kompromissi on kuvattu compose-tiedoston Host Data -kommentissa (Unraid kiertää tämän liittämällä samasta syystä koko `/mnt`-hakemiston, oman ylimmän tason yleiskäytäntönsä).
@@ -110,7 +110,7 @@ Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 
-**Vie ja tuo asetukset** -kortti Asetukset, Järjestelmä -sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
+**Vie / tuo asetukset** -kortti Asetukset, Järjestelmä -sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
 
 !!! warning "Vienti voi sisältää tunnuksia"
     Valitset itse, sisällytetäänkö etä-, ilmoitus- ja MQTT-välittäjän tunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

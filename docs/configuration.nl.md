@@ -33,12 +33,12 @@ Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapsh
 
 Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Opslag, Back-uppaden**. Elk padveld heeft ook een schakelaar **Lokaal / Extern** ernaast: een pad kan een restic-remote zijn (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) in plaats van een lokale map, en dan wordt er rechtstreeks naartoe geback-upt zonder aparte lokale kopie; zie [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Controle van hostintegratie"
+!!! note "Host-integratiecontrole"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
 
 ## Herkenning van de back-upbronnen {#backup-source-detection}
 
-Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes worden meegenomen. Een pad wordt opgepikt zodra een van de volgende punten geldt (het resultaat kun je per container altijd overschrijven bij zijn **Back-uppaden**):
+Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes worden meegenomen. Een pad wordt opgepikt zodra een van de volgende punten geldt (het resultaat kun je per container altijd overschrijven bij zijn **Back-upmappen**):
 
 - **Treffer op een datawortel-segment:** de hostbron van de bind bevat een van de segmenten uit `DATA_ROOT_SEGMENTS` als volledige padcomponent (standaard alleen `appdata`).
 - **Benoemde Docker-volumes** worden altijd meegenomen, want er is geen wegwerpbaar equivalent en dus niets te filteren, **maar alleen wanneer het echte opslagpad van het volume op de host zelf bereikbaar is via de Host Data-koppeling**, net als elk ander hostpad dat BombVault back-upt. Het standaard stuurprogramma voor lokale volumes legt een volume onder de datawortel van de daemon zelf, dus `/var/lib/docker/volumes/<naam>/_data` tenzij dat is aangepast (controleer met `docker info -f '{{.DockerRootDir}}'`). Die plek valt NIET binnen de smalle Host Data-koppeling van één map die de generieke `docker-compose.yml` standaard gebruikt. Een onbereikbaar volume wordt stilzwijgend overgeslagen, dat is geen fout. Om benoemde volumes op een generieke host echt te back-uppen, richt je Host Data (en `HOST_SOURCE_ROOT`) op een gemeenschappelijke bovenliggende map die ook de datawortel van Docker omvat: zie de Host Data-opmerking in het compose-bestand voor de afweging (Unraid omzeilt dit door om dezelfde reden heel `/mnt` te koppelen, zijn eigen universele conventie op het hoogste niveau).
@@ -110,7 +110,7 @@ Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 
-De kaart **Instellingen exporteren en importeren** op de pagina Instellingen, Systeem schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
+De kaart **Instellingen exporteren / importeren** op de pagina Instellingen, Systeem schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
 
 !!! warning "De export kan inloggegevens bevatten"
     Je kiest of je de off-site-, meldings- en MQTT-brokerinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

@@ -49,7 +49,7 @@ BombVault on orkestrointi- ja käyttöliittymäkerros, ei tallennusmoottori. Kai
 
 Uusi täällä? Siirry kohtaan **[Aloitus](getting-started.md)** asentaaksesi BombVaultin Unraidiin Community Applicationsin kautta ja ajaaksesi ensimmäisen varmuuskopiosi. Tutustu sitten täyteen **[Ominaisuudet](features.md)**-listaan, viritä **[Asetukset](configuration.md)** ja pystytä **[Etäsijainti ja palautus](offsite-recovery.md)**.
 
-Etäsijainti voi haarautua useaan kohteeseen per toimialue yhtä aikaa, vain luku -tilainen **vastaanottimen kojelauta** valvoo näitä kopioita niitä vastaanottavassa laatikossa, ja voit kantaa koko kokoonpanosi uuteen laatikkoon **Vie ja tuo asetukset** -kortilla. Katso [Etäsijainti ja palautus](offsite-recovery.md) ja [Asetukset](configuration.md#portable-settings-export-and-import).
+Etäsijainti voi haarautua useaan kohteeseen per toimialue yhtä aikaa, vain luku -tilainen **vastaanottimen kojelauta** valvoo näitä kopioita niitä vastaanottavassa laatikossa, ja voit kantaa koko kokoonpanosi uuteen laatikkoon **Vie / tuo asetukset** -kortilla. Katso [Etäsijainti ja palautus](offsite-recovery.md) ja [Asetukset](configuration.md#portable-settings-export-and-import).
 
 ## Linkit
 

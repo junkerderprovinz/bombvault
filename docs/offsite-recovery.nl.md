@@ -19,7 +19,7 @@ Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel e
 
 Het back-uppad van een domein (Instellingen, Opslag) is niet beperkt tot een lokale map: richt het rechtstreeks op een restic-remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:gebruiker@host:/repo`, `rclone:remote:bucket/pad`) en BombVault back-upt daar direct naartoe, zonder aparte lokale kopie en zonder replicatiestap. Dat is een werkelijk andere vorm dan de off-sitereplicatie hierboven: daar is het lokale repository primair en is het off-site-repository er een archief van naar beste vermogen; hier **is** het externe repository het primaire, en is het de enige kopie zolang je voor dat domein niet ook off-sitereplicatie (of een tweede remote) instelt.
 
-Elk van de zes padvelden (Containers, Virtuele machines, Flash, Configuratie, Bestanden, ZFS-datasets) heeft er direct naast een schakelaar **Lokaal / Extern**:
+Elk van de zes padvelden (Containers, VM's, Flash, Zelf-back-up, Mappen, ZFS-datasets) heeft er direct naast een schakelaar **Lokaal / Extern**:
 
 - **Lokaal** toont de vertrouwde mappenbrowser.
 - **Extern** vervangt hem door een eenvoudig URL-veld, plus een knop die hetzelfde venster voor verbindingstest en inloggegevens opent dat off-sitebestemmingen gebruiken, maar dan ingesteld voor dit primaire repository. Daar krijg je:
@@ -67,7 +67,7 @@ Een echte omslag van beschermd naar onbeschermd vuurt één enkele waarschuwing 
 
 BombVault biedt twee niveaus van bewijs dat je back-ups daadwerkelijk herstelbaar zijn, niet alleen aanwezig.
 
-- **Herstelverificatie-oefeningen (lokaal).** BombVault draait periodiek `restic check --read-data-subset` (begrensd, nooit een schijfvullend volledig herstel) en toont een badge *laatst geverifieerd herstelbaar* per domein. De cadans staat op Instellingen, Schema's; de badge op Instellingen, Integriteit.
+- **Herstelverificatie-oefeningen (lokaal).** BombVault draait periodiek `restic check --read-data-subset` (begrensd, nooit een schijfvullend volledig herstel) en toont een badge *Herstelbaarheid geverifieerd* per domein. De cadans staat op Instellingen, Schema's; de badge op Instellingen, Integriteit.
 - **DR-oefeningen (off-site).** BombVault herstelt een echt doel vanuit de off-site repo in een wegwerp-sandbox, verifieert het bestand-voor-bestand en byte-voor-byte, en ruimt daarna op. Dit bewijst dat je vanaf off-site kunt herstellen, niet alleen dat de repo antwoordt.
 
 De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een groene / oranje / rode houding per domein, met een van datum voorziene checklist (off-site geconfigureerd, append-only geverifieerd, replicatie actueel, hersteloefening geslaagd, versleuteling aan, prune-strategie ingesteld). Elke rode rij linkt diep door naar de fix, en de kaart wordt alleen groen op geverifieerde feiten.
@@ -118,7 +118,7 @@ Hierboven staan de onderdelen. Dit is één volledige opstelling met echte waard
 
 Twee machines: **TOWER** draait de containers en stuurt de back-ups, **VAULT** ontvangt ze en dwingt onveranderlijkheid af. Vul je eigen namen, adressen en sharepaden in.
 
-**1. Zet op VAULT de append-only-server op.** Ga in BombVault op TOWER naar *Instellingen → Off-site → begeleide installatie*, kies **rest-server** en genereer het recept. Kopieer het tabblad **Unraid-sjabloon (XML)**, sla het op VAULT op als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, dan *Docker → Add Container* en kies **rest-server** uit de sjabloonlijst. Schrijf vóór het starten de getoonde `htpasswd`-regel op VAULT in `/mnt/user/appdata/rest-server/.htpasswd`. Het eenmalige wachtwoord wordt één keer getoond en nooit bewaard: kopieer het nu. Die regel bevat hetzelfde wachtwoord, al voor je gehasht met bcrypt: de platte tekst hoort in de REST-inloggegevens op TOWER, de gehashte regel in de `.htpasswd` op VAULT. Je hoeft zelf niets te hashen.
+**1. Zet op VAULT de append-only-server op.** Ga in BombVault op TOWER naar *Instellingen → Off-site → Instellen*, kies **rest-server** en genereer het recept. Kopieer het tabblad **Unraid-sjabloon (XML)**, sla het op VAULT op als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, dan *Docker → Add Container* en kies **rest-server** uit de sjabloonlijst. Schrijf vóór het starten de getoonde `htpasswd`-regel op VAULT in `/mnt/user/appdata/rest-server/.htpasswd`. Het eenmalige wachtwoord wordt één keer getoond en nooit bewaard: kopieer het nu. Die regel bevat hetzelfde wachtwoord, al voor je gehasht met bcrypt: de platte tekst hoort in de REST-inloggegevens op TOWER, de gehashte regel in de `.htpasswd` op VAULT. Je hoeft zelf niets te hashen.
 
     Laat `--append-only` in het OPTIONS-veld staan. Daar draait alles om: zonder dat is VAULT weer een gewone share.
 
@@ -136,7 +136,7 @@ Het eerste padsegment is de htpasswd-gebruiker, het tweede de repository. Vul de
 | **NIET beschermd** | VAULT accepteerde een verwijdering. `--append-only` ontbreekt of is verwijderd. |
 | **niet doorslaggevend** | Geen van beide. Meestal is de URL niet die welke restic zelf gebruikt, of de inloggegevens zijn gewijzigd. Er wordt niets vastgelegd en geen waarschuwing gegeven. |
 
-**4. Kijk op VAULT wat er binnenkomt.** Koppel de twee machines ([Koppeling van instanties](#pairing)), zet *Instellingen → Koppeling → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen met TOWER als de zendende instantie.
+**4. Kijk op VAULT wat er binnenkomt.** Koppel de twee machines ([Koppeling van instanties](#pairing)), zet *Instellingen → Algemeen → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen met TOWER als de zendende instantie.
 
 !!! warning "De locatie is een pad **binnen** de container, geschreven ten opzichte van de host-mount"
     Vul `user/appdata/rest-server/bombvault-containers/containers` in, **niet** `/mnt/user/appdata/…`. BombVault draait in een container waar de `/mnt` van de host elders is gemount; een absoluut hostpad bestaat daar niet. Plak je er toch een, dan noemt BombVault nu het relatieve pad dat je nodig hebt.
@@ -156,7 +156,7 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 5. **Herstelt de containers en VM's in één keer** (gestopt gelaten, zodat je ze bewust start) en toont de bestandssets en ZFS-items om een voor een te herstellen; ZFS-items komen uitgeschakeld terug. Je herstelkit is één klik weg.
 
 !!! tip "Geplande migratie versus noodgeval"
-    Begeleid herstel herstelt BombVaults eigen instellingen vanuit een back-up. Voor een *geplande* verhuizing naar een nieuwe machine kun je in plaats daarvan je configuratie rechtstreeks meenemen met de kaart **Instellingen exporteren en importeren** (een portable JSON-bestand). Zie [Configuratie](configuration.md#portable-settings-export-and-import).
+    Begeleid herstel herstelt BombVaults eigen instellingen vanuit een back-up. Voor een *geplande* verhuizing naar een nieuwe machine kun je in plaats daarvan je configuratie rechtstreeks meenemen met de kaart **Instellingen exporteren / importeren** (een portable JSON-bestand). Zie [Configuratie](configuration.md#portable-settings-export-and-import).
 
 ### Herstellen vanuit een andere BombVault-repo {#restore-from-another-bombvault-repo}
 

@@ -19,7 +19,7 @@ Conserva la copia local rápida y añade una o varias réplicas externas. Define
 
 La ruta de copia de un dominio (Ajustes, Almacenamiento) no se limita a una carpeta local: apúntala directamente a un remoto de restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:usuario@host:/repo`, `rclone:remoto:bucket/ruta`) y BombVault copia allí directamente, sin copia local aparte y sin paso de replicación. Es una forma realmente distinta de la replicación fuera de sede de más arriba: allí el repositorio local es el primario y el de fuera de sede es un archivo suyo en la medida de lo posible; aquí el repositorio remoto **es** el primario, y es la única copia mientras no configures además una replicación fuera de sede (o un segundo remoto) para ese dominio.
 
-Cada uno de los seis campos de ruta (Contenedores, Máquinas virtuales, Flash, Configuración, Ficheros, Conjuntos de datos ZFS) lleva justo al lado un conmutador **Local / Remoto**:
+Cada uno de los seis campos de ruta (Contenedores, VMs, Flash, Autocopia, Carpetas, Conjuntos de datos ZFS) lleva justo al lado un conmutador **Local / Remoto**:
 
 - **Local** muestra el explorador de carpetas de siempre.
 - **Remoto** lo cambia por un campo de URL sencillo, más un botón que abre el mismo diálogo de prueba de conexión y credenciales que usan los destinos fuera de sede, configurado para este primario. Desde ahí obtienes:
@@ -67,7 +67,7 @@ Un cambio real de protegido a no protegido dispara una única alerta.
 
 BombVault ofrece dos niveles de prueba de que tus copias son realmente restaurables, no solo de que están presentes.
 
-- **Ensayos de verificación de restauración (local).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco) y muestra una insignia de *restaurable verificado por última vez* por dominio. La cadencia vive en Ajustes, Programaciones; la insignia en Ajustes, Integridad.
+- **Ensayos de verificación de restauración (local).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco) y muestra una insignia de *Restaurabilidad verificada* por dominio. La cadencia vive en Ajustes, Programaciones; la insignia en Ajustes, Integridad.
 - **Ensayos de DR (externo).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas desechable, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde.
 
 El **cuadro de mando de protección contra ransomware** en el Panel lo resume en una postura verde / ámbar / rojo por dominio, con una lista de comprobación con marca de antigüedad (externo configurado, append-only verificado, replicación al día, ensayo de restauración superado, cifrado activado, estrategia de poda definida). Cada fila roja enlaza directamente con la solución, y la tarjeta solo se pone verde con hechos verificados.
@@ -118,7 +118,7 @@ Lo anterior describe las piezas. Esto es una instalación completa con valores r
 
 Dos equipos: **TOWER** ejecuta los contenedores y envía las copias, **VAULT** las recibe e impone la inmutabilidad. Sustituye por tus propios nombres, direcciones y rutas de recurso compartido.
 
-**1. En VAULT, levanta el servidor append-only.** En BombVault en TOWER ve a *Ajustes → Externo → configuración guiada*, elige **rest-server** y genera la receta. Copia la pestaña **Plantilla de Unraid (XML)**, guárdala en VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, luego *Docker → Add Container* y elige **rest-server** en la lista de plantillas. Antes de arrancarlo, escribe la línea `htpasswd` mostrada en `/mnt/user/appdata/rest-server/.htpasswd` en VAULT. La contraseña de un solo uso se muestra una vez y nunca se guarda: cópiala ahora. Esa línea lleva la misma contraseña, ya cifrada con bcrypt para ti: el texto en claro va en las credenciales REST de TOWER, la línea cifrada en el `.htpasswd` de VAULT. No tienes que cifrar nada tú.
+**1. En VAULT, levanta el servidor append-only.** En BombVault en TOWER ve a *Ajustes → Externo → Configurar*, elige **rest-server** y genera la receta. Copia la pestaña **Plantilla de Unraid (XML)**, guárdala en VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, luego *Docker → Add Container* y elige **rest-server** en la lista de plantillas. Antes de arrancarlo, escribe la línea `htpasswd` mostrada en `/mnt/user/appdata/rest-server/.htpasswd` en VAULT. La contraseña de un solo uso se muestra una vez y nunca se guarda: cópiala ahora. Esa línea lleva la misma contraseña, ya cifrada con bcrypt para ti: el texto en claro va en las credenciales REST de TOWER, la línea cifrada en el `.htpasswd` de VAULT. No tienes que cifrar nada tú.
 
     Deja `--append-only` en el campo OPTIONS. Es el sentido de todo esto: sin él, VAULT vuelve a ser un recurso compartido normal.
 
@@ -136,7 +136,7 @@ El primer segmento de la ruta es el usuario htpasswd, el segundo el repositorio.
 | **NO protegido** | VAULT aceptó un borrado. Falta `--append-only` o se ha quitado. |
 | **no concluyente** | Ninguna de las dos. Normalmente la URL no es la que usa restic, o las credenciales han cambiado. No se registra nada ni se dispara ninguna alerta. |
 
-**4. En VAULT, observa lo que llega.** Empareja los dos equipos ([Emparejamiento de instancias](#pairing)), activa *Ajustes → Emparejamiento → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura con TOWER como instancia emisora.
+**4. En VAULT, observa lo que llega.** Empareja los dos equipos ([Emparejamiento de instancias](#pairing)), activa *Ajustes → General → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura con TOWER como instancia emisora.
 
 !!! warning "La ubicación es una ruta **dentro** del contenedor, escrita relativa al montaje del host"
     Introduce `user/appdata/rest-server/bombvault-containers/containers`, **no** `/mnt/user/appdata/…`. BombVault se ejecuta en un contenedor donde el `/mnt` del host está montado en otro sitio; una ruta absoluta del host no existe ahí. Si pegas una, BombVault ahora te indica la ruta relativa que debes usar.
@@ -156,7 +156,7 @@ Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstru
 5. **Restaura los contenedores y las VMs de una vez** (dejados detenidos, para que los inicies deliberadamente) y lista los conjuntos de archivos y los elementos ZFS para restaurarlos uno a uno; los elementos ZFS vuelven desactivados. Tu kit de recuperación está a un clic de distancia.
 
 !!! tip "Migración planificada frente a desastre"
-    La recuperación guiada restaura los propios ajustes de BombVault desde una copia. Para un traslado *planificado* a una máquina nueva, puedes en su lugar llevar tu configuración directamente con la tarjeta **Exportar e importar ajustes** (un archivo JSON portátil). Consulta [Configuración](configuration.md#portable-settings-export-and-import).
+    La recuperación guiada restaura los propios ajustes de BombVault desde una copia. Para un traslado *planificado* a una máquina nueva, puedes en su lugar llevar tu configuración directamente con la tarjeta **Exportar / importar ajustes** (un archivo JSON portátil). Consulta [Configuración](configuration.md#portable-settings-export-and-import).
 
 ### Restaurar desde otro repo de BombVault {#restore-from-another-bombvault-repo}
 

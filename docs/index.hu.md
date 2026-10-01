@@ -49,7 +49,7 @@ A BombVault az orkesztrációs és felhasználói felületi réteg, nem a tárol
 
 Új vagy itt? Ugorj a **[Kezdő lépések](getting-started.md)** oldalra, hogy a Community Applications segítségével telepítsd a BombVaultot Unraidre, és lefuttasd az első mentésedet. Ezután fedezd fel a teljes **[Funkciók](features.md)** listát, hangold a **[Konfigurációt](configuration.md)**, és állítsd be a **[Telephelyen kívüli mentést és helyreállítást](offsite-recovery.md)**.
 
-A telephelyen kívüli mentés tartományonként egyszerre több célra is szétoszthat, egy csak olvasható **fogadó irányítópult** figyeli ezeket a másolatokat azon a gépen, amely fogadja őket, a teljes konfigurációdat pedig átviheted egy új gépre az **Exportálás és importálás beállítások** kártyával. Lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md) és [Konfiguráció](configuration.md#portable-settings-export-and-import).
+A telephelyen kívüli mentés tartományonként egyszerre több célra is szétoszthat, egy csak olvasható **fogadó irányítópult** figyeli ezeket a másolatokat azon a gépen, amely fogadja őket, a teljes konfigurációdat pedig átviheted egy új gépre az **Beállítások exportálása / importálása** kártyával. Lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md) és [Konfiguráció](configuration.md#portable-settings-export-and-import).
 
 ## Hivatkozások
 

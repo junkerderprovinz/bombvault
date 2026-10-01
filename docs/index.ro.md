@@ -49,7 +49,7 @@ BombVault este stratul de orchestrare și interfață, nu motorul de stocare. To
 
 Nou pe aici? Mergi la **[Primii pași](getting-started.md)** pentru a instala BombVault pe Unraid prin Community Applications și a rula primul tău backup. Apoi explorează toate **[Funcționalitățile](features.md)**, ajustează-ți **[Configurarea](configuration.md)** și configurează **[Off-site și recuperare](offsite-recovery.md)**.
 
-Off-site poate distribui către mai multe ținte per domeniu simultan, un **panou de recepție** doar în citire monitorizează aceste copii pe stația care le primește, iar întreaga ta configurație o poți muta pe o stație nouă cu cardul **Export și import setări**. Vezi [Off-site și recuperare](offsite-recovery.md) și [Configurare](configuration.md#portable-settings-export-and-import).
+Off-site poate distribui către mai multe ținte per domeniu simultan, un **panou de recepție** doar în citire monitorizează aceste copii pe stația care le primește, iar întreaga ta configurație o poți muta pe o stație nouă cu cardul **Exportă / importă setările**. Vezi [Off-site și recuperare](offsite-recovery.md) și [Configurare](configuration.md#portable-settings-export-and-import).
 
 ## Linkuri
 

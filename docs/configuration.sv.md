@@ -38,7 +38,7 @@ Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bomb
 
 ## Igenkänning av säkerhetskopieringens källor {#backup-source-detection}
 
-För varje container väljer BombVault själv vilka bind-monteringar och namngivna volymer som ska säkerhetskopieras. En sökväg tas med så snart någon av följande punkter gäller (resultatet kan alltid skrivas över per container under dess **Säkerhetskopieringssökvägar**):
+För varje container väljer BombVault själv vilka bind-monteringar och namngivna volymer som ska säkerhetskopieras. En sökväg tas med så snart någon av följande punkter gäller (resultatet kan alltid skrivas över per container under dess **Säkerhetskopierade mappar**):
 
 - **Träff på ett datarot-segment:** bindens värdkälla innehåller något av segmenten i `DATA_ROOT_SEGMENTS` som en fullständig sökvägsdel (som standard endast `appdata`).
 - **Namngivna Docker-volymer** tas alltid med, eftersom de saknar en slängbar motsvarighet och det därmed inte finns något att filtrera bort, **men bara när volymens verkliga lagringssökväg på värden själv går att nå genom Host Data-monteringen**, precis som varje annan värdsökväg BombVault säkerhetskopierar. Standarddrivrutinen för lokala volymer lägger en volym under demonens egen datarot, alltså `/var/lib/docker/volumes/<namn>/_data` om inget ändrats (kontrollera med `docker info -f '{{.DockerRootDir}}'`). Den platsen omfattas INTE av den smala Host Data-monteringen med en enda katalog som den generiska `docker-compose.yml` använder som standard. En onåbar volym hoppas tyst över, det är inget fel. För att verkligen säkerhetskopiera namngivna volymer på en generisk värd, rikta Host Data (och `HOST_SOURCE_ROOT`) mot en gemensam överordnad katalog som även täcker Dockers datarot: avvägningen står i Host Data-kommentaren i compose-filen (Unraid kringgår detta genom att av samma skäl montera hela `/mnt`, sin egen allmängiltiga konvention på översta nivån).
@@ -110,7 +110,7 @@ Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ i
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 
-Kortet **Exportera och importera inställningar** på sidan Inställningar, System skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
+Kortet **Exportera / importera inställningar** på sidan Inställningar, System skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
 
 !!! warning "Exporten kan innehålla uppgifter"
     Du väljer om off-site-, aviserings- och MQTT-broker-uppgifterna ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.

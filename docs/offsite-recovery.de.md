@@ -19,7 +19,7 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 
 Der Sicherungspfad einer Domäne (Einstellungen, Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
 
-Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Remote**:
+Jedes der sechs Pfadfelder (Container, VMs, Flash, Selbst-Backup, Ordner, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Remote**:
 
 - **Lokal** zeigt den gewohnten Ordner-Browser.
 - **Remote** tauscht ihn gegen ein einfaches URL-Feld, dazu eine Schaltfläche, die denselben Dialog für Verbindungstest und Zugangsdaten öffnet, den auch Off-site-Ziele verwenden, nur eben für dieses primäre Repo. Von dort bekommst du:
@@ -67,7 +67,7 @@ Ein echtes Kippen von geschützt zu ungeschützt löst einen einzelnen Alarm aus
 
 BombVault bietet zwei Stufen des Nachweises, dass deine Backups tatsächlich wiederherstellbar und nicht nur vorhanden sind.
 
-- **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung) und zeigt pro Bereich ein Abzeichen *zuletzt als wiederherstellbar geprüft*. Die Taktung liegt unter Einstellungen, Zeitpläne; das Abzeichen unter Einstellungen, Integrität.
+- **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung) und zeigt pro Bereich ein Abzeichen *Wiederherstellbar verifiziert*. Die Taktung liegt unter Einstellungen, Zeitpläne; das Abzeichen unter Einstellungen, Integrität.
 - **DR-Übungen (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in eine Wegwerf-Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Dies beweist, dass du aus dem Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet.
 
 Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gelb / rot-Haltung pro Bereich zusammen, mit einer altersgestempelten Checkliste (Off-site konfiguriert, Append-only verifiziert, Replikation aktuell, Wiederherstellungsübung bestanden, Verschlüsselung an, Kürzungsstrategie gesetzt). Jede rote Zeile verlinkt tief zur Behebung, und die Karte wird nur bei verifizierten Fakten grün.
@@ -118,7 +118,7 @@ Oben stehen die Einzelteile. Hier ist ein vollständiger Aufbau mit echten Werte
 
 Zwei Kisten: **TOWER** betreibt die Container und schiebt die Backups, **VAULT** nimmt sie an und erzwingt die Unveränderlichkeit. Setze deine eigenen Namen, Adressen und Freigabepfade ein.
 
-**1. Auf VAULT den Append-only-Server aufsetzen.** In BombVault auf TOWER unter *Einstellungen → Off-site → geführte Einrichtung* **rest-server** wählen und das Rezept erzeugen. Den Reiter **Unraid-Vorlage (XML)** kopieren, auf VAULT als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` speichern, dann *Docker → Add Container* und **rest-server** aus der Vorlagenliste wählen. Vor dem Start die angezeigte `htpasswd`-Zeile auf VAULT in `/mnt/user/appdata/rest-server/.htpasswd` schreiben. Das Einmal-Passwort wird nur einmal angezeigt und nie gespeichert, kopiere es jetzt. Diese Zeile trägt dasselbe Passwort, für dich schon bcrypt-gehasht: der Klartext gehört in die REST-Zugangsdaten auf TOWER, die gehashte Zeile in die `.htpasswd` auf VAULT. Du musst selbst nichts hashen.
+**1. Auf VAULT den Append-only-Server aufsetzen.** In BombVault auf TOWER unter *Einstellungen → Off-site → Einrichten* **rest-server** wählen und das Rezept erzeugen. Den Reiter **Unraid-Vorlage (XML)** kopieren, auf VAULT als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` speichern, dann *Docker → Add Container* und **rest-server** aus der Vorlagenliste wählen. Vor dem Start die angezeigte `htpasswd`-Zeile auf VAULT in `/mnt/user/appdata/rest-server/.htpasswd` schreiben. Das Einmal-Passwort wird nur einmal angezeigt und nie gespeichert, kopiere es jetzt. Diese Zeile trägt dasselbe Passwort, für dich schon bcrypt-gehasht: der Klartext gehört in die REST-Zugangsdaten auf TOWER, die gehashte Zeile in die `.htpasswd` auf VAULT. Du musst selbst nichts hashen.
 
     `--append-only` im OPTIONS-Feld stehen lassen. Es ist der ganze Sinn der Sache: ohne das ist VAULT wieder eine gewöhnliche Freigabe.
 
@@ -136,7 +136,7 @@ Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trag
 | **NICHT geschützt** | VAULT hat ein Löschen angenommen. `--append-only` fehlt oder wurde entfernt. |
 | **unentschieden** | Weder noch. Meist ist die URL nicht die, die restic selbst benutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
 
-**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Kopplung → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
+**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Allgemein → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
 
 !!! warning "Der Ort ist ein Pfad **innerhalb** des Containers, relativ zum Host-Mount geschrieben"
     Trage `user/appdata/rest-server/bombvault-containers/containers` ein, **nicht** `/mnt/user/appdata/…`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts an anderer Stelle eingehängt ist; ein absoluter Host-Pfad existiert dort nicht. Fügst du trotzdem einen ein, nennt BombVault dir jetzt den relativen Pfad, den du stattdessen brauchst.
@@ -156,7 +156,7 @@ Ein eigener Reiter **Wiederherstellung** führt eine frische oder neu aufgebaute
 5. **Stellt Container und VMs in einem Rutsch wieder her** (gestoppt belassen, sodass du sie bewusst startest) und listet Dateisätze und ZFS-Elemente auf, die du einzeln wiederherstellst; ZFS-Elemente kommen ausgeschaltet zurück. Dein Recovery-Kit ist einen Klick entfernt.
 
 !!! tip "Geplante Migration versus Katastrophe"
-    Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren und importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
+    Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren / importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
 
 ### Wiederherstellung aus einem anderen BombVault-Repo {#restore-from-another-bombvault-repo}
 

@@ -49,7 +49,7 @@ BombVault는 오케스트레이션 및 UI 계층이지 스토리지 엔진이 �
 
 여기가 처음이신가요? **[시작하기](getting-started.md)**로 이동하여 Community Applications를 통해 Unraid에 BombVault를 설치하고 첫 백업을 실행하세요. 그런 다음 전체 **[기능](features.md)**을 살펴보고, **[구성](configuration.md)**을 조정하고, **[오프사이트 및 복구](offsite-recovery.md)**를 설정하세요.
 
-오프사이트는 도메인별로 여러 대상에 동시에 분산될 수 있으며, 읽기 전용 **수신자 대시보드**가 그 사본을 받는 쪽 장비에서 모니터링하고, **설정 내보내기 및 가져오기** 카드로 전체 구성을 새 장비로 옮길 수 있습니다. [오프사이트 및 복구](offsite-recovery.md)와 [구성](configuration.md#portable-settings-export-and-import)을 참고하세요.
+오프사이트는 도메인별로 여러 대상에 동시에 분산될 수 있으며, 읽기 전용 **수신자 대시보드**가 그 사본을 받는 쪽 장비에서 모니터링하고, **설정 내보내기 / 가져오기** 카드로 전체 구성을 새 장비로 옮길 수 있습니다. [오프사이트 및 복구](offsite-recovery.md)와 [구성](configuration.md#portable-settings-export-and-import)을 참고하세요.
 
 ## 링크
 

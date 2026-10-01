@@ -38,7 +38,7 @@ Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{contai
 
 ## Genkendelse af sikkerhedskopiernes kilder {#backup-source-detection}
 
-For hver container vælger BombVault selv, hvilke bind-monteringer og navngivne diskenheder der sikkerhedskopieres. En sti tages med, så snart et af følgende punkter gælder (resultatet kan altid tilsidesættes for den enkelte container under dens **Stier til sikkerhedskopi**):
+For hver container vælger BombVault selv, hvilke bind-monteringer og navngivne diskenheder der sikkerhedskopieres. En sti tages med, så snart et af følgende punkter gælder (resultatet kan altid tilsidesættes for den enkelte container under dens **Sikkerhedskopierede mapper**):
 
 - **Match på et datarod-segment:** bindets værtskilde indeholder et af segmenterne i `DATA_ROOT_SEGMENTS` som en hel stikomponent (som standard kun `appdata`).
 - **Navngivne Docker-diskenheder** tages altid med, fordi de ikke har nogen engangsudgave, og der derfor ikke er noget at filtrere fra, **men kun når diskenhedens rigtige lagersti på værten selv kan nås gennem Host Data-monteringen**, nøjagtig som enhver anden værtssti, BombVault sikkerhedskopierer. Standarddriveren til lokale diskenheder lægger en diskenhed under dæmonens egen datarod, altså `/var/lib/docker/volumes/<navn>/_data`, medmindre det er ændret (tjek med `docker info -f '{{.DockerRootDir}}'`). Det sted er IKKE dækket af den smalle Host Data-montering med én enkelt mappe, som den generiske `docker-compose.yml` bruger som standard. En diskenhed, der ikke kan nås, springes stiltiende over, det er ikke en fejl. For rent faktisk at sikkerhedskopiere navngivne diskenheder på en generisk vært skal du pege Host Data (og `HOST_SOURCE_ROOT`) på en fælles overordnet mappe, der også dækker Dockers datarod: afvejningen står i Host Data-kommentaren i compose-filen (Unraid går uden om det ved af samme grund at montere hele `/mnt`, sin egen almengyldige konvention på øverste niveau).
@@ -110,7 +110,7 @@ Hvert element kan have sin egen følsomhed og sit eget notifikationsminimum. Ind
 
 ## Bærbare indstillinger (eksportér og importér) {#portable-settings-export-and-import}
 
-Kortet **Eksportér og importér indstillinger** på siden **Indstillinger, System** skriver hele din BombVault-konfiguration (domæneindstillinger, off-site-destinationer, tidsplaner, opbevaring, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik.
+Kortet **Eksportér / importér indstillinger** på siden **Indstillinger, System** skriver hele din BombVault-konfiguration (domæneindstillinger, off-site-destinationer, tidsplaner, opbevaring, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik.
 
 !!! warning "Eksporten kan indeholde legitimationsoplysninger"
     Du vælger, om off-site-, notifikations- og MQTT-broker-legitimationsoplysninger skal medtages i filen. Med legitimationsoplysninger medtaget er eksporten lige så følsom som dit gendannelseskit, så opbevar den et sikkert sted. Uden dem indeholder filen kun ikke-hemmelige indstillinger.

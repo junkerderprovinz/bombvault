@@ -33,12 +33,12 @@ Anche i backup dei dataset ZFS hanno bisogno di questa modalità: l'host monta l
 
 I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Archiviazione, Percorsi di backup**. Ogni campo percorso ha anche un interruttore **Locale / Remoto** integrato: un percorso può essere un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) invece di una cartella locale, e il backup va direttamente lì, senza una copia locale separata; vedi [Repository primari remoti](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Verifica dell'integrazione host"
+!!! note "Verifica integrazione host"
     Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti.
 
 ## Rilevamento delle sorgenti di backup {#backup-source-detection}
 
-Per ogni contenitore, BombVault sceglie da sé quali bind mount e volumi con nome salvare. Un percorso viene preso non appena vale uno dei punti seguenti (il risultato si può sempre correggere per singolo contenitore nei suoi **Percorsi di backup**):
+Per ogni contenitore, BombVault sceglie da sé quali bind mount e volumi con nome salvare. Un percorso viene preso non appena vale uno dei punti seguenti (il risultato si può sempre correggere per singolo contenitore nelle sue **Cartelle da salvare**):
 
 - **Corrispondenza di un segmento di radice dati:** l'origine host del bind contiene uno dei segmenti di `DATA_ROOT_SEGMENTS` come componente completa del percorso (per impostazione predefinita solo `appdata`).
 - **I volumi Docker con nome** sono sempre inclusi, perché non hanno un equivalente usa e getta e quindi non c'è nulla da filtrare, **ma soltanto quando il percorso di archiviazione reale del volume sull'host è raggiungibile attraverso il mount Host Data**, esattamente come ogni altro percorso host salvato da BombVault. Il driver locale predefinito colloca un volume sotto la radice dati del demone, cioè `/var/lib/docker/volumes/<nome>/_data` salvo personalizzazioni (verificalo con `docker info -f '{{.DockerRootDir}}'`). Quel punto NON rientra nel mount Host Data stretto, a directory singola, che il `docker-compose.yml` generico usa per impostazione predefinita. Un volume irraggiungibile viene saltato in silenzio, non è un errore. Per salvare davvero i volumi con nome su un host generico, punta Host Data (e `HOST_SOURCE_ROOT`) a un antenato comune che copra anche la radice dati di Docker: vedi il commento Host Data nel file compose per il compromesso (Unraid aggira la cosa montando tutto `/mnt`, la sua convenzione universale di primo livello, per lo stesso motivo).
@@ -110,7 +110,7 @@ Ogni elemento può avere una propria sensibilità e un proprio minimo di notific
 
 ## Impostazioni portatili (esporta e importa) {#portable-settings-export-and-import}
 
-La scheda **Esporta e importa impostazioni** nella pagina Impostazioni, Sistema scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
+La scheda **Esporta / importa impostazioni** nella pagina Impostazioni, Sistema scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
 
 !!! warning "L'esportazione può contenere credenziali"
     Scegli tu se includere le credenziali off-site, di notifica e del broker MQTT nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.
