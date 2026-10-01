@@ -79,6 +79,7 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
           ariaExpanded={open}
           ariaControls={panelId}
           keepLabel
+          className="glim-btn-wrap"
         />
         <InfoBubble tip={t("anomaly.changes.hint")} />
       </div>
