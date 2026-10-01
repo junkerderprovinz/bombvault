@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- The scanner asks for the camera when the pairing code is scanned.
-         Typing the words works on a phone without one. -->
+    <!-- The pairing code is scanned in the launcher, which asks for the camera
+         when the scanner opens. Typing the words works on a phone without one. -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
@@ -31,12 +31,6 @@
             </intent-filter>
         </activity>
 
-        <!-- The scanner ships locked to landscape; the pairing code is held
-             up to a phone in portrait. -->
-        <activity
-            android:name="com.journeyapps.barcodescanner.CaptureActivity"
-            android:screenOrientation="fullSensor"
-            tools:replace="screenOrientation" />
     </application>
 
 </manifest>

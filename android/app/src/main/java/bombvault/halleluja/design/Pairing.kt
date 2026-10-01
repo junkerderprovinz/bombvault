@@ -32,21 +32,49 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     private val asked = ConcurrentHashMap.newKeySet<String>()
     private var relay: Relay? = null
 
+    // A group being looked at before it is taken over: its relay, and what
+    // joining it would store.
+    private var preview: Relay? = null
+    private var previewSecret: ByteArray? = null
+    private var previewUrl = PROJECT_RELAY
+
     val paired: Boolean get() = prefs.contains(SECRET)
     val connected: Boolean get() = relay?.connected == true
 
-    /** Joins the group of [code]: twelve words, and an own relay's address on a second line. */
+    /** The instances of the group being looked at, or null when none is. */
+    val joining: List<Sibling>? get() = preview?.siblings?.filter { it.kind.isEmpty() }
+
+    /**
+     * Looks at the group of [code], twelve words and an own relay's address on
+     * a second line, without joining it yet: its instances turn up in
+     * [joining] for the person to take over.
+     */
     fun join(code: String): PhraseError? {
         val lines = code.trim().lines().map { it.trim() }.filter { it.isNotEmpty() }
         val secret = Phrase(context).decode(lines.firstOrNull() ?: "").getOrElse { return (it as Phrase.Refused).reason }
-        prefs.edit()
-            .putString(SECRET, wrap(secret))
-            .putString(RELAY, lines.getOrNull(1) ?: PROJECT_RELAY)
-            .putString(ID, prefs.getString(ID, null) ?: randomId())
-            .apply()
-        stop()
-        start()
+        cancelJoin()
+        previewSecret = secret
+        previewUrl = lines.getOrNull(1) ?: PROJECT_RELAY
+        preview = open(secret, previewUrl)
         return null
+    }
+
+    /** Joins the group being looked at and takes its instances over. */
+    fun adopt() {
+        val secret = previewSecret ?: return
+        prefs.edit().putString(SECRET, wrap(secret)).putString(RELAY, previewUrl).apply()
+        stop()
+        relay = preview
+        preview = null
+        previewSecret = null
+        adoptMembers()
+        onChange()
+    }
+
+    fun cancelJoin() {
+        preview?.stop()
+        preview = null
+        previewSecret = null
     }
 
     fun leave() {
@@ -58,19 +86,24 @@ class Pairing(private val context: Context, private val servers: Servers, privat
 
     fun start() {
         if (relay != null || !paired) return
-        val secret = unwrap(prefs.getString(SECRET, null) ?: return)
-        val r = Relay(prefs.getString(RELAY, PROJECT_RELAY)!!, GroupKeys(secret), prefs.getString(ID, null)!!, identity(), ::serve) {
-            adopt()
-            onChange()
-        }
-        relay = r
-        r.start()
+        relay = open(unwrap(prefs.getString(SECRET, null) ?: return), prefs.getString(RELAY, PROJECT_RELAY)!!)
     }
 
     fun stop() {
         relay?.stop()
         relay = null
         asked.clear()
+    }
+
+    private fun open(secret: ByteArray, url: String): Relay {
+        val id = prefs.getString(ID, null) ?: randomId().also { prefs.edit().putString(ID, it).apply() }
+        lateinit var r: Relay
+        r = Relay(url, GroupKeys(secret), id, identity(), ::serve) {
+            if (r === relay) adoptMembers()
+            onChange()
+        }
+        r.start()
+        return r
     }
 
     /** What runs on [server], asked through the group, or null when the group cannot carry the question. */
@@ -89,7 +122,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     }
 
     /** Asks each instance that turned up where it takes calls and puts it in the list. */
-    private fun adopt() {
+    private fun adoptMembers() {
         val r = relay ?: return
         for (s in r.siblings) {
             if (s.kind.isNotEmpty() || !asked.add(s.id)) continue

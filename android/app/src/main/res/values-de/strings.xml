@@ -3,6 +3,5 @@
     <string name="saved">In Downloads gespeichert: %1$s</string>
     <string name="save_failed">Die Datei konnte nicht gespeichert werden: %1$s</string>
     <string name="save_untrusted">Das Zertifikat des Servers hat sich geändert. Öffne ihn erneut über den Startbildschirm, um das neue zu prüfen.</string>
-    <string name="scan_prompt">Scanne den Code unter Einstellungen, Kopplung auf einem deiner BombVault-Server.</string>
     <string name="no_app">Keine App auf diesem Telefon öffnet diesen Link.</string>
 </resources>

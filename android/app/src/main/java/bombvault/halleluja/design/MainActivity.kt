@@ -1,14 +1,19 @@
 package bombvault.halleluja.design
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Bundle
+import android.provider.Settings
 import android.webkit.CookieManager
+import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -22,6 +27,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -30,8 +36,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,8 +77,13 @@ class MainActivity : ComponentActivity() {
         chooser = null
     }
 
-    private val scan = registerForActivityResult(ScanContract()) { result ->
-        result.contents?.let(::join)
+    /** Set once Android stops asking for the camera, so the next tap opens its settings page instead. */
+    private var cameraBlocked = false
+
+    private val askCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        // After a second refusal Android answers without asking.
+        cameraBlocked = !granted && !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+        pushState()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -108,6 +117,8 @@ class MainActivity : ComponentActivity() {
         web.settings.domStorageEnabled = true
         web.settings.allowFileAccess = false
         web.settings.allowContentAccess = false
+        // The scanner's camera picture plays without a tap.
+        web.settings.mediaPlaybackRequiresUserGesture = false
         web.webViewClient = Client()
         web.webChromeClient = Chrome()
         web.setDownloadListener { url, _, disposition, mime, _ -> download(url, disposition, mime) }
@@ -154,6 +165,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // The camera may have been allowed on the settings page in between.
+        pushState()
         if (current == null) discovery.start()
     }
 
@@ -163,7 +176,7 @@ class MainActivity : ComponentActivity() {
         CookieManager.getInstance().flush()
     }
 
-    /** Joins the group of a scanned or typed code, or tells the launcher why not. */
+    /** Looks at the group of a scanned or typed code, or tells the launcher why not. */
     private fun join(code: String) {
         pairError = when (val refused = pairing.join(code)) {
             null -> null
@@ -236,17 +249,30 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-            "scan" -> scan.launch(
-                ScanOptions()
-                    .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                    .setPrompt(getString(R.string.scan_prompt))
-                    .setBeepEnabled(false)
-                    .setOrientationLocked(false),
-            )
             "join" -> join(msg.getString("code"))
+            "adopt" -> pairing.adopt()
+            "cancelJoin" -> {
+                pairing.cancelJoin()
+                pushState()
+            }
             "leave" -> pairing.leave()
+            "camera" -> when {
+                cameraAllowed() -> pushState()
+                cameraBlocked -> startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)),
+                )
+                else -> askCamera.launch(Manifest.permission.CAMERA)
+            }
+            "paste" -> {
+                val clip = getSystemService(ClipboardManager::class.java).primaryClip
+                val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString() ?: ""
+                launcher?.postMessage(JSONObject().put("op", "pasted").put("ticket", msg.getInt("ticket")).put("text", text).toString())
+            }
         }
     }
+
+    private fun cameraAllowed() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
 
     private fun pushState() {
         val state = JSONObject()
@@ -256,7 +282,8 @@ class MainActivity : ComponentActivity() {
                 "found",
                 JSONArray(found.map { JSONObject().put("name", it.name).put("url", it.url).put("version", it.version) }),
             )
-            .put("group", JSONObject().put("paired", pairing.paired).put("connected", pairing.connected))
+            .put("group", group())
+            .put("camera", cameraAllowed())
         problem?.let { state.put("problem", it) }
         pairError?.let { state.put("pairError", it) }
         launcher?.postMessage(state.toString())
@@ -385,7 +412,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun group(): JSONObject {
+        val g = JSONObject().put("paired", pairing.paired).put("connected", pairing.connected)
+        pairing.joining?.let { members ->
+            val list = JSONArray(members.map { JSONObject().put("id", it.id).put("name", it.name).put("version", it.version) })
+            g.put("joining", JSONObject().put("members", list))
+        }
+        return g
+    }
+
     private inner class Chrome : WebChromeClient() {
+        // The scanner on the launcher reads the camera, and nothing else may.
+        override fun onPermissionRequest(request: PermissionRequest) {
+            val video = PermissionRequest.RESOURCE_VIDEO_CAPTURE
+            val fromLauncher = request.origin.toString().trimEnd('/') == LAUNCHER_ORIGIN
+            if (fromLauncher && video in request.resources && cameraAllowed()) request.grant(arrayOf(video)) else request.deny()
+        }
+
         override fun onShowFileChooser(
             webView: WebView,
             callback: ValueCallback<Array<Uri>>,

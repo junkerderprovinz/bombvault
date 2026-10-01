@@ -3549,12 +3549,18 @@ export const en = {
   "launcher.pairTitle": "Pair with your group",
   "launcher.pairHint": "On one of your BombVault servers, open Settings > Pairing and show the words. The app then finds every server of the group and shows what runs on them, away from home too.",
   "launcher.scan": "Scan QR code",
-  "launcher.enterWords": "Enter the words",
   "launcher.paired": "Paired",
   "launcher.relayConnected": "Connected over the relay",
   "launcher.relayOffline": "Relay not reachable",
   "launcher.leaveConfirm": "Leave the group? The servers stay in the list and open by their address as before.",
   "launcher.viaGroup": "Address not known yet",
+  "launcher.cameraHint": "Camera access is needed to scan the QR code.",
+  "launcher.cameraAllow": "Allow access",
+  "launcher.scanHint": "Scan the QR code shown beside the phrase",
+  "launcher.groupFound": "On this relay",
+  "launcher.noInstances": "Nothing in this group is online right now. Check the phrase, and that at least one instance is running.",
+  "launcher.adoptOne": "Add this instance",
+  "launcher.adoptAll": "Add all {count}",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -6791,12 +6797,18 @@ export const de: Translations = {
   "launcher.pairTitle": "Mit deiner Gruppe koppeln",
   "launcher.pairHint": "Öffne auf einem deiner BombVault-Server Einstellungen > Kopplung und lass dir die Wörter zeigen. Danach findet die App alle Server der Gruppe und zeigt, was auf ihnen läuft, auch unterwegs.",
   "launcher.scan": "QR-Code scannen",
-  "launcher.enterWords": "Wörter eingeben",
   "launcher.paired": "Gekoppelt",
   "launcher.relayConnected": "Über das Relay verbunden",
   "launcher.relayOffline": "Relay nicht erreichbar",
   "launcher.leaveConfirm": "Gruppe verlassen? Die Server bleiben in der Liste und öffnen sich wie bisher über ihre Adresse.",
   "launcher.viaGroup": "Adresse noch unbekannt",
+  "launcher.cameraHint": "Kamera-Zugriff wird für den QR-Scan benötigt.",
+  "launcher.cameraAllow": "Zugriff erlauben",
+  "launcher.scanHint": "Den QR-Code neben der Phrase scannen",
+  "launcher.groupFound": "An diesem Relay",
+  "launcher.noInstances": "Gerade ist keine Instanz dieser Gruppe online. Prüf die Phrase, und ob mindestens eine Instanz läuft.",
+  "launcher.adoptOne": "Diese Instanz übernehmen",
+  "launcher.adoptAll": "Alle {count} übernehmen",
 };
 
 // ---------------------------------------------------------------------------

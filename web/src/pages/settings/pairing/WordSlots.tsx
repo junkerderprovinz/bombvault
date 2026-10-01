@@ -11,6 +11,7 @@ export function WordSlots({
   unknown = [],
   label,
   qr,
+  filled = false,
 }: {
   words: string[];
   /** Positions, from 0, of words not on the list. */
@@ -20,6 +21,9 @@ export function WordSlots({
   label?: string;
   /** What the QR code beside the words carries, for the Android app to scan. */
   qr?: string;
+  /** Tiles on the page ground rather than inside a card, as on the phone:
+   *  every slot is a filled tile, an empty one at half strength. */
+  filled?: boolean;
 }) {
   const bad = new Set(unknown);
   const slots: ReactNode[] = [];
@@ -27,10 +31,14 @@ export function WordSlots({
     const w = words[i];
     const tone =
       w === undefined
-        ? "ring-1 ring-inset ring-carbon-border text-carbon-textMuted"
+        ? filled
+          ? "bg-carbon-surface text-carbon-textMuted opacity-50"
+          : "ring-1 ring-inset ring-carbon-border text-carbon-textMuted"
         : bad.has(i)
           ? "bg-statusFailBg text-statusFail"
-          : "bg-carbon-surface2 text-carbon-text";
+          : filled
+            ? "bg-carbon-surface text-carbon-text"
+            : "bg-carbon-surface2 text-carbon-text";
     slots.push(
       <li
         key={i}

@@ -3,6 +3,5 @@
     <string name="saved">Disimpan dalam Muat Turun: %1$s</string>
     <string name="save_failed">Fail tidak dapat disimpan: %1$s</string>
     <string name="save_untrusted">Sijil pelayan telah berubah. Buka semula daripada skrin permulaan untuk semak sijil baharu.</string>
-    <string name="scan_prompt">Imbas kod di Tetapan, Gandingan pada salah satu pelayan BombVault anda.</string>
     <string name="no_app">Tiada aplikasi pada telefon ini membuka pautan ini.</string>
 </resources>

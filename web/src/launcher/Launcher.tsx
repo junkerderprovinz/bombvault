@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { colorFor, glyphFor, glyphLabelKey } from "../components/ActivityLog";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
@@ -19,12 +19,11 @@ import {
   normalizeAddress,
   origin,
   type Bridge,
-  type FoundServer,
   type LauncherState,
-  type PairError,
   type Problem,
   type Server,
 } from "./bridge";
+import { PairPage } from "./PairPage";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -54,14 +53,32 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     return off;
   }, [bridge]);
 
-  // A joined group closes the sheet it was joined from: what comes next is the
-  // list filling up.
+  // The pairing page is a history entry of its own, so the phone's Back key
+  // closes it the way Back closes every page.
+  const [pairing, setPairing] = useState(false);
+  useEffect(() => {
+    const onPop = () => {
+      setPairing(false);
+      bridge.send({ op: "cancelJoin" });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [bridge]);
+  const openPairing = () => {
+    window.history.pushState({ pairing: true }, "");
+    setPairing(true);
+  };
+  const closePairing = () => window.history.back();
+  const askCamera = useCallback(() => bridge.send({ op: "camera" }), [bridge]);
+
+  // Taking a group over closes the page it was joined from: what comes next
+  // is the list filling up.
   const paired = state?.group.paired ?? false;
   const wasPaired = useRef(paired);
   useEffect(() => {
-    if (paired && !wasPaired.current) setEditing(null);
+    if (paired && !wasPaired.current && pairing) window.history.back();
     wasPaired.current = paired;
-  }, [paired]);
+  }, [paired, pairing]);
 
   // Every state the app pushes is a new array; the poll restarts only when
   // the servers themselves change.
@@ -102,13 +119,61 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   const saved = new Set(state.servers.map((s) => origin(s.url)));
   const found = state.found.filter((f) => !saved.has(origin(f.url)));
 
+  const sheets = (
+    <>
+      <ServerSheet
+        t={t}
+        editing={editing}
+        onClose={() => setEditing(null)}
+        onSave={(server, open) => {
+          bridge.send({ op: "save", server, open });
+          setEditing(null);
+        }}
+        onRemove={(id) => {
+          bridge.send({ op: "remove", id });
+          setEditing(null);
+        }}
+      />
+      <TrustSheet
+        t={t}
+        problem={certProblem}
+        server={state.servers.find((s) => s.id === certProblem?.id)}
+        onTrust={(p) => bridge.send({ op: "trust", id: p.id, fingerprint: p.fingerprint ?? "" })}
+        onCancel={() => bridge.send({ op: "dismiss" })}
+      />
+    </>
+  );
+
+  if (pairing) {
+    return (
+      <>
+        <PairPage
+          t={t}
+          group={state.group}
+          pairError={state.pairError}
+          found={found}
+          camera={state.camera}
+          onJoin={(code) => bridge.send({ op: "join", code })}
+          onAdopt={() => bridge.send({ op: "adopt" })}
+          onLeave={() => bridge.send({ op: "leave" })}
+          onPaste={() => bridge.paste()}
+          onAskCamera={askCamera}
+          onPickFound={(f) => bridge.send({ op: "save", server: { name: f.name, url: f.url }, open: true })}
+          onByAddress={() => setEditing("new")}
+          onBack={closePairing}
+        />
+        {sheets}
+      </>
+    );
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-5">
       <header className="flex items-center gap-3">
         <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-10 w-10 dark:hidden" />
         <img src="/logo-light.svg" alt="" aria-hidden="true" draggable={false} className="hidden h-10 w-10 dark:block" />
         <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-carbon-text">BombVault</h1>
-        <Badge as="button" shape="square" size="icon" tone="active" tip={t("launcher.add")} onClick={() => setEditing("new")}>
+        <Badge as="button" shape="square" size="icon" tone="active" tip={t("launcher.add")} onClick={openPairing}>
           <IconAdd />
         </Badge>
       </header>
@@ -118,7 +183,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
           <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-12 w-12 opacity-50 dark:hidden" />
           <img src="/logo-light.svg" alt="" aria-hidden="true" draggable={false} className="hidden h-12 w-12 opacity-50 dark:block" />
           <p className="text-sm text-carbon-textMuted">{t("launcher.empty")}</p>
-          <Button label={t("launcher.add")} labelKey="launcher.add" tone="accent" onClick={() => setEditing("new")} />
+          <Button label={t("launcher.add")} labelKey="launcher.add" tone="accent" onClick={openPairing} />
         </div>
       ) : (
         <>
@@ -140,33 +205,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         </>
       )}
 
-      <ServerSheet
-        t={t}
-        editing={editing}
-        found={found}
-        group={state.group}
-        pairError={state.pairError}
-        onScan={() => bridge.send({ op: "scan" })}
-        onJoin={(code) => bridge.send({ op: "join", code })}
-        onLeave={() => bridge.send({ op: "leave" })}
-        onClose={() => setEditing(null)}
-        onSave={(server, open) => {
-          bridge.send({ op: "save", server, open });
-          setEditing(null);
-        }}
-        onRemove={(id) => {
-          bridge.send({ op: "remove", id });
-          setEditing(null);
-        }}
-      />
-
-      <TrustSheet
-        t={t}
-        problem={certProblem}
-        server={state.servers.find((s) => s.id === certProblem?.id)}
-        onTrust={(p) => bridge.send({ op: "trust", id: p.id, fingerprint: p.fingerprint ?? "" })}
-        onCancel={() => bridge.send({ op: "dismiss" })}
-      />
+      {sheets}
     </main>
   );
 }
@@ -306,25 +345,12 @@ function ServerCard({
 function ServerSheet({
   t,
   editing,
-  found,
-  group,
-  pairError,
-  onScan,
-  onJoin,
-  onLeave,
   onClose,
   onSave,
   onRemove,
 }: {
   t: T;
   editing: Server | "new" | null;
-  /** Servers announced on the network and not in the list yet. */
-  found: FoundServer[];
-  group: LauncherState["group"];
-  pairError?: PairError;
-  onScan: () => void;
-  onJoin: (code: string) => void;
-  onLeave: () => void;
   onClose: () => void;
   onSave: (server: { id?: string; name: string; url: string }, open: boolean) => void;
   onRemove: (id: string) => void;
@@ -393,34 +419,6 @@ function ServerSheet({
         }
       >
         <div className="flex flex-col gap-5 px-4 py-3">
-          {!existing && <PairBlock t={t} group={group} error={pairError} onScan={onScan} onJoin={onJoin} onLeave={onLeave} />}
-          {!existing && (
-            <div className="flex flex-col gap-1.5">
-              <span className="flex items-center gap-2 text-xs font-medium text-carbon-textSub">
-                {t("launcher.found")}
-                <InfoBubble tip={t("launcher.foundHint")} />
-              </span>
-              {found.map((f) => (
-                <button
-                  key={f.url}
-                  type="button"
-                  onClick={() => onSave({ name: f.name, url: f.url }, true)}
-                  className="flex min-w-0 items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start glim-field-focus"
-                >
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm font-semibold text-carbon-text">{f.name}</span>
-                    <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-                      {`${displayAddress(f.url)} · ${f.version}`}
-                    </span>
-                  </span>
-                  <svg aria-hidden width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-accentText">
-                    <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-                  </svg>
-                </button>
-              ))}
-              <p className="text-xs text-carbon-textMuted">{found.length === 0 ? t("launcher.searching") : t("launcher.foundLead")}</p>
-            </div>
-          )}
           <form
             className="flex flex-col gap-4"
             onSubmit={(e) => {
@@ -467,108 +465,6 @@ function ServerSheet({
       </BottomSheet>
       {confirmDialog}
     </>
-  );
-}
-
-/** The words of a refused code, in the sentences the pairing card uses. */
-function pairErrorText(t: T, e: PairError): string {
-  switch (e.reason) {
-    case "count":
-      return t("pairing.errWordCount").replace("{count}", String(e.count));
-    case "word":
-      return t("pairing.errUnknownWord").replace("{position}", String(e.position)).replace("{word}", e.word);
-    case "checksum":
-      return t("pairing.errChecksum");
-  }
-}
-
-/** PairBlock joins the app to a BombVault group by its QR code or its twelve
- *  words, or, once joined, says so and offers to leave. */
-function PairBlock({
-  t,
-  group,
-  error,
-  onScan,
-  onJoin,
-  onLeave,
-}: {
-  t: T;
-  group: LauncherState["group"];
-  error?: PairError;
-  onScan: () => void;
-  onJoin: (code: string) => void;
-  onLeave: () => void;
-}) {
-  const wordsId = useId();
-  const [typing, setTyping] = useState(false);
-  const [words, setWords] = useState("");
-  const { confirm, confirmDialog } = useConfirm();
-
-  if (group.paired) {
-    return (
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-medium text-carbon-textSub">{t("launcher.pairTitle")}</span>
-        <div className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-2.5">
-          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{t("launcher.paired")}</span>
-          <Badge tone={group.connected ? "ok" : "warn"}>
-            {group.connected ? t("launcher.relayConnected") : t("launcher.relayOffline")}
-          </Badge>
-        </div>
-        <Button
-          label={t("pairing.leave")}
-          labelKey="pairing.leave"
-          tone="neutral"
-          onClick={() =>
-            void confirm(t("launcher.leaveConfirm"), { confirmKey: "pairing.leave" }).then((ok) => {
-              if (ok) onLeave();
-            })
-          }
-        />
-        {confirmDialog}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="flex items-center gap-2 text-xs font-medium text-carbon-textSub">
-        {t("launcher.pairTitle")}
-        <InfoBubble tip={t("launcher.pairHint")} />
-      </span>
-      <Button label={t("launcher.scan")} labelKey="launcher.scan" tone="accent" onClick={onScan} className="glim-btn-key w-full" />
-      {typing ? (
-        <form
-          className="flex flex-col gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onJoin(words);
-          }}
-        >
-          <label htmlFor={wordsId} className="sr-only">
-            {t("pairing.enterLabel")}
-          </label>
-          <textarea
-            id={wordsId}
-            value={words}
-            onChange={(e) => setWords(e.target.value)}
-            rows={3}
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder={t("pairing.enterPlaceholder")}
-            className="w-full resize-none rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text glim-field-focus"
-          />
-          <Button label={t("pairing.join")} labelKey="pairing.join" tone="neutral" type="submit" disabled={words.trim() === ""} />
-        </form>
-      ) : (
-        <Button label={t("launcher.enterWords")} labelKey="launcher.enterWords" glyph={<IconPencil />} tone="neutral" onClick={() => setTyping(true)} />
-      )}
-      {error && (
-        <p className="text-xs text-statusFail" role="alert">
-          {pairErrorText(t, error)}
-        </p>
-      )}
-    </div>
   );
 }
 

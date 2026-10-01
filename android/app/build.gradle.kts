@@ -74,9 +74,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // The relay is a WebSocket, which the platform has no client for.
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
-    // Scanning the pairing code without Google Play services.
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.zxing:core:3.5.4")
 
     testImplementation("junit:junit:4.13.2")
 }
