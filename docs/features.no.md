@@ -66,7 +66,7 @@ BombVault er enkel som standard og dyp når du trenger det. Grensesnittet viser 
 ## Innsikt, verifisering og overvåking
 
 - **Beskyttelsesstatus (RPO).** Dashboardet viser en grønn / gul / rød indikator per domene, som sammenligner den siste vellykkede sikkerhetskopien mot dens tidsplan, så en forfalt sikkerhetskopi blir rød i stedet for å gjemme seg i en logg.
-- **Varmekart for sikkerhetskopihelse.** En kalender i GitHub-bidrag-stil over sikkerhetskopiutfall per dag per domene, med en Containere / VM-er / Flash / Config / Filer-veksler.
+- **Varmekart for sikkerhetskopihelse.** En kalender i GitHub-bidrag-stil over sikkerhetskopiutfall per dag per domene, med en Kontainere / VM-er / Flash / Auto-sikkerhetskopi / Mapper-veksler.
 - **Kjøretidspunkt overalt.** Hver kjørehistorikk-oppføring viser `start, slutt (varighet)`, og hver container og VM bærer sin egen **Siste kjøringer**-liste på siden sin.
 - **Et dashboard du kan omorganisere.** Slå på tilpasningsmodus for å dra kort inn i rekkefølgen din og skjule dem du ikke trenger. Layouten lagres per nettleser.
 - **Repository-størrelse og dedup-trend.** Nåværende repo-størrelse, dedupliseringsforhold og øyeblikksbilde-antall per domene, med en sparkline over lagringsvekst.

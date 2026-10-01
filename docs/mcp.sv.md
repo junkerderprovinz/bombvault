@@ -19,7 +19,7 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 | `get_anomaly` | En av dessa avvikelser, med anteckningen som lämnades när den kvitterades | läsa |
 | `start_backup` | Säkerhetskopierar ett objekt direkt | starta |
 | `start_domain_backup` | Säkerhetskopierar varje skyddat objekt i en domän | starta |
-| `start_backup_everything` | Kör Backup Everything-genomgången | starta |
+| `start_backup_everything` | Kör genomgången Total säkerhetskopia | starta |
 | `cancel_backup` | Avbryter en pågående säkerhetskopia som den här nyckeln har startat | avbryta |
 
 Detta stannar i webbgränssnittet: återställningar av alla slag (även att ladda ner, spara eller importera en databasdump), att radera säkerhetskopior, prune, unlock, kontroller och övningar, off-site-replikering, inställningar, inloggningsuppgifter och MCP-nycklar, samt att avbryta en säkerhetskopia som schemat, webbgränssnittet eller en annan nyckel har startat. Detsamma gäller att kvittera en avvikelse eller markera den som förväntad, vilket görs på sidan **Avvikelser**. Skälet är att verktygens svar innehåller namn och felmeddelanden från din server, och vilket som helst av dem kan innehålla text som skrivits för att styra assistenten. En assistent som går på sådan text kan i värsta fall starta en säkerhetskopia inom gränserna nedan eller avbryta en som den själv startat.
@@ -33,11 +33,11 @@ En assistents säkerhetskopia är samma säkerhetskopia som webbgränssnittet st
 Eftersom en säkerhetskopia stoppar saker och trycker ut gamla återställningspunkter är starter via MCP begränsade:
 
 - 12 startade säkerhetskopior per timme och nyckel.
-- 15 minuter mellan två MCP-starter av samma objekt, samma domän eller Backup Everything.
+- 15 minuter mellan två MCP-starter av samma objekt, samma domän eller Total säkerhetskopia.
 - Högst 4 MCP-starter av samma objekt på 24 timmar.
 - **Lagringsskydd.** När en domän behåller ett fast antal återställningspunkter (bara "behåll de senaste N", utan daglig, veckovis eller månadsvis regel, lokalt eller på ett off-site-mål), trycker varje ny säkerhetskopia ut den äldsta. BombVault nekar då en MCP-start av ett objekt vars senaste N-1 lyckade säkerhetskopior alla startades via MCP. Därför finns alltid minst en återställningspunkt i den behållna mängden som schemat eller du har skapat. Med "behåll den senaste 1" kan en assistent inte säkerhetskopiera det objektet alls. Nästa schemalagda säkerhetskopia gör plats igen. En årsregel ensam räknas som "behåll den senaste 1", eftersom den bara behåller en återställningspunkt för innevarande år.
 
-En start av en domän eller av Backup Everything hoppar över de objekt som en gräns håller tillbaka och nämner dem i svaret. Webbgränssnittet och schemat påverkas inte av något av detta. Timbudgeten finns i minnet, så en omstart av BombVault nollställer den.
+En start av en domän eller av Total säkerhetskopia hoppar över de objekt som en gräns håller tillbaka och nämner dem i svaret. Webbgränssnittet och schemat påverkas inte av något av detta. Timbudgeten finns i minnet, så en omstart av BombVault nollställer den.
 
 Starter via [API:t](api.md#errors) och från [Home Assistant](api.md#home-assistant) räknas in i samma gränser per objekt som starter via MCP, och i lagringsskyddet.
 
@@ -258,7 +258,7 @@ Det som en assistent läser går till AI-leverantören bakom den: objektnamn, sc
 | `429` | För många felaktiga nycklar från den här adressen, eller fler än 120 förfrågningar i minuten med en nyckel. Vänta en minut och kontrollera om assistenten har fastnat i en loop. |
 | Fel med "certificate", "self-signed" eller "unable to verify" | Klienten litar inte på BombVaults certifikat. Se [TLS och certifikat](#tls). |
 | `busy` | En annan säkerhetskopia eller en underhållsuppgift upptar domänen. Försök igen när den är klar. |
-| `cooldown` | Det här objektet, den här domänen eller Backup Everything startades utanför webbgränssnittet för mindre än 15 minuter sedan. |
+| `cooldown` | Det här objektet, den här domänen eller Total säkerhetskopia startades utanför webbgränssnittet för mindre än 15 minuter sedan. |
 | `retention_guard` | Ytterligare en MCP-säkerhetskopia skulle bara lämna återställningspunkter från MCP i ett fönster med "behåll de senaste N", eller så har objektet redan fått 4 säkerhetskopior via MCP de senaste 24 timmarna, misslyckade och avbrutna medräknade. I det första fallet gör nästa schemalagda säkerhetskopia plats, i det andra är objektet ledigt igen 24 timmar efter den äldsta av dem. Du kan alltid starta den i webbgränssnittet. |
 | `rate_limited` | Nyckeln har använt sina 12 starter för den här timmen. |
 | `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Tillåt att starta säkerhetskopior** i kortet; ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |

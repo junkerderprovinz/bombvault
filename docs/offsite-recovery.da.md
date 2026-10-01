@@ -37,9 +37,9 @@ Intet af dette er påkrævet: en håndskrevet fjernsti uden gemte sikkerhedsinds
 
 Indstillinger, Cloud-adgang, rclone har en formular til en Windows- eller Samba-share og til en WebDAV-server (Nextcloud, ownCloud, SharePoint eller en anden). Udfyld et kort navn, værten og sharen (SMB) eller URL'en og servertypen (WebDAV), brugeren og adgangskoden, så skriver BombVault rclone-sektionen for dig. rclone slører selv adgangskoden, før den gemmes; tilføjer du en destination med et navn, der allerede findes, erstatter den den sektion i stedet for at tilføje en ekstra.
 
-Formularen svarer med den færdige placering, for eksempel `rclone:nas:backups`. Sæt den ind i en Backup Path eller en off-site-destination, og tilføj en undermappe, hvis du vil have en (`rclone:nas:backups/bombvault`). Sharen er det første led i stien, ikke en del af navnet.
+Formularen svarer med den færdige placering, for eksempel `rclone:nas:backups`. Sæt den ind i en sikkerhedskopisti eller en off-site-destination, og tilføj en undermappe, hvis du vil have en (`rclone:nas:backups/bombvault`). Sharen er det første led i stien, ikke en del af navnet.
 
-Det er en bedre vej end at montere sharen på Unraid: restic fraråder at have et repository på en monteret CIFS-share, og her monteres intet. NFS er ikke med i formularen, fordi hverken restic eller rclone har en NFS-backend; til NFS monterer du eksporten på værten og peger en Backup Path mod den.
+Det er en bedre vej end at montere sharen på Unraid: restic fraråder at have et repository på en monteret CIFS-share, og her monteres intet. NFS er ikke med i formularen, fordi hverken restic eller rclone har en NFS-backend; til NFS monterer du eksporten på værten og peger en sikkerhedskopisti mod den.
 
 ## Uforanderlig (append-only) off-site
 

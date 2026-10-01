@@ -66,7 +66,7 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 ## Přehled, ověření a monitorování
 
 - **Stav ochrany (RPO).** Přehled zobrazuje zelený / oranžový / červený indikátor na doménu, porovnávající poslední úspěšnou zálohu s jejím plánem, takže záloha po termínu zčervená místo toho, aby se skryla v logu.
-- **Heatmapa stavu záloh.** Kalendář ve stylu příspěvků na GitHubu s denními výsledky záloh na doménu, s přepínačem Kontejnery / VM / Flash / Config / Soubory.
+- **Heatmapa stavu záloh.** Kalendář ve stylu příspěvků na GitHubu s denními výsledky záloh na doménu, s přepínačem Kontejnery / VMs / Flash / Autozáloha / Složky.
 - **Časování běhů všude.** Každá položka historie běhů uvádí `start, end (duration)` a každý kontejner a VM nese vlastní seznam **Nedávné běhy** na své stránce.
 - **Přehled, který si můžete přeuspořádat.** Přepněte režim přizpůsobení a přetáhněte karty do svého pořadí a skryjte ty, které nepotřebujete. Rozvržení se ukládá pro každý prohlížeč.
 - **Trend velikosti repozitáře a deduplikace.** Aktuální velikost repozitáře, poměr deduplikace a počet snímků na doménu, se sparkline růstu úložiště.

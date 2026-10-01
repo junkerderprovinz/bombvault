@@ -66,7 +66,7 @@ BombVault on oletuksena yksinkertainen ja syvä silloin kun tarvitset. Käyttöl
 ## Näkyvyys, tarkistus ja valvonta
 
 - **Suojaustila (RPO).** Kojelauta näyttää vihreä / keltainen / punainen -osoittimen per toimialue, vertaamalla viimeistä onnistunutta varmuuskopiota sen aikatauluun, joten erääntynyt varmuuskopio muuttuu punaiseksi sen sijaan että piiloutuisi lokiin.
-- **Varmuuskopioinnin tila -lämpökartta.** GitHub-kontribuutioiden tyylinen kalenteri päiväkohtaisista varmuuskopiotuloksista per toimialue, Kontit / Virtuaalikoneet / Flash / Config / Tiedostot -kytkimellä.
+- **Varmuuskopioinnin tila -lämpökartta.** GitHub-kontribuutioiden tyylinen kalenteri päiväkohtaisista varmuuskopiotuloksista per toimialue, Kontit / VMs / Flash / Itsevarmuuskopio / Kansiot -kytkimellä.
 - **Ajoituksen aika kaikkialla.** Jokainen ajohistorian merkintä lukee `aloitus, loppu (kesto)`, ja jokaisella kontilla ja VM:llä on oma **Viimeisimmät ajot** -lista sivullaan.
 - **Kojelauta, jonka voit järjestää uudelleen.** Vaihda mukautustilaan vetääksesi kortit haluamaasi järjestykseen ja piilottaaksesi tarpeettomat. Asettelu tallennetaan selainkohtaisesti.
 - **Repositorion koko ja deduplikaatiotrendi.** Nykyinen repon koko, deduplikaatiosuhde ja tilannevedosten määrä per toimialue, tallennuksen kasvun sparkline-käyrällä.

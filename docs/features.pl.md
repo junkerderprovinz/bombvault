@@ -66,7 +66,7 @@ BombVault jest domyślnie prosty i głęboki, gdy tego potrzebujesz. Interfejs p
 ## Wgląd, weryfikacja i monitorowanie
 
 - **Status ochrony (RPO).** Panel pokazuje wskaźnik zielony / bursztynowy / czerwony per domena, porównując ostatnią udaną kopię z jej harmonogramem, więc zaległa kopia staje się czerwona zamiast chować się w logu.
-- **Mapa cieplna kondycji kopii.** Kalendarz w stylu wykresu kontrybucji GitHub pokazujący wyniki kopii per dzień per domena, z przełącznikiem Kontenery / VM / Flash / Config / Pliki.
+- **Mapa cieplna kondycji kopii.** Kalendarz w stylu wykresu kontrybucji GitHub pokazujący wyniki kopii per dzień per domena, z przełącznikiem Containers / Maszyny wirtualne / Flash / Autokopia / Foldery.
 - **Czas trwania wszędzie.** Każdy wpis w historii uruchomień pokazuje `start, koniec (czas trwania)`, a każdy kontener i VM ma na swojej stronie własną listę **Ostatnie uruchomienia**.
 - **Panel, który możesz przearanżować.** Włącz tryb dostosowywania, aby przeciągać karty w wybraną kolejność i ukrywać te, których nie potrzebujesz. Układ jest zapisywany per przeglądarka.
 - **Trend rozmiaru repozytorium i deduplikacji.** Bieżący rozmiar repozytorium, współczynnik deduplikacji i liczba migawek per domena, z wykresem iskrowym wzrostu magazynu.

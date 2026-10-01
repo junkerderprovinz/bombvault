@@ -39,7 +39,7 @@ BombVault är enkel som standard och djup när du behöver det. Gränssnittet vi
 - **Filuppsättningsåterställning.** Återställ en filuppsättningsögonblicksbild på plats (efter en uttrycklig bekräftelse) eller till en mapp du väljer, aldrig i tysthet. Selektiv återställning fungerar även här.
 - **Återställning av ZFS-datauppsättningar.** Återställ en datauppsättning i ett objekt på sin plats (efter en ZFS-säkerhetsbild som ligger kvar tills du tar bort den), till en mapp eller bara de filer du väljer, eller alla uppsättningar i en säkerhetskopia till en mapp. En datauppsättning rullas aldrig tillbaka och ersätts aldrig.
 - **Återställning behåller körningstillståndet.** En container eller VM som körde när den säkerhetskopierades kommer tillbaka körande; en som var stoppad förblir stoppad. Kryssa i **Lämna stoppad efter återställning** för att återskapa utan att starta.
-- **Återställ en hel stack.** Containrar från samma Docker Compose-projekt grupperas i en **Stacks**-panel. **Återställ stack** återbygger varje medlem från sin senaste säkerhetskopia lämnad stoppad och startar dem sedan valfritt i `depends_on`-ordning.
+- **Återställ en hel stack.** Containrar från samma Docker Compose-projekt grupperas i en **Stackar**-panel. **Återställ stack** återbygger varje medlem från sin senaste säkerhetskopia lämnad stoppad och startar dem sedan valfritt i `depends_on`-ordning.
 - **Live-förlopp, avbryt och upptagen-återkoppling.** En lång återställning visar en live-procentstapel och kan avbrytas med en typmedveten bekräftelse. En avbruten återställning registreras som *avbruten*, inte misslyckad.
 - **Guidad återställning.** En dedikerad **Återställning**-flik lotsar en nyinstallation genom katastrofscenariot. Se [Off-site och återställning](offsite-recovery.md).
 - **Återställ från ett annat BombVault-repo.** En engångs, skrivskyddad session öppnar en annan BombVault-instans repo med den instansens `APP_KEY`, så att du kan hämta en container från server A till server B utan att röra dina egna inställningar. Se [Off-site och återställning](offsite-recovery.md).
@@ -66,7 +66,7 @@ BombVault är enkel som standard och djup när du behöver det. Gränssnittet vi
 ## Insyn, verifiering och övervakning
 
 - **Skyddsstatus (RPO).** Översikten visar en grön / gul / röd indikator per domän, som jämför den senaste lyckade säkerhetskopian mot dess schema, så att en försenad säkerhetskopiering blir röd istället för att gömma sig i en logg.
-- **Värmekarta för säkerhetskopieringshälsa.** En kalender i GitHub-bidragsstil över säkerhetskopieringsutfall per dag och domän, med en Containers / VMs / Flash / Config / Files-växlare.
+- **Värmekarta för säkerhetskopieringshälsa.** En kalender i GitHub-bidragsstil över säkerhetskopieringsutfall per dag och domän, med en Containers / VMs / Flash / Auto-säkerhetskopia / Mappar-växlare.
 - **Körningstider överallt.** Varje post i körningshistoriken läser `start, slut (varaktighet)`, och varje container och VM har sin egen **Senaste körningar**-lista på sin sida.
 - **En översikt du kan arrangera om.** Slå på anpassningsläge för att dra kort i din ordning och dölja dem du inte behöver. Layouten sparas per webbläsare.
 - **Repository-storlek och dedup-trend.** Aktuell repo-storlek, dedupliceringskvot och antal ögonblicksbilder per domän, med en sparkline över lagringstillväxten.

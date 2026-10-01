@@ -68,7 +68,7 @@ Malli liittää myös Docker-soketin, flashin (`/boot`) ja **Host Data** -juuren
 *Koontinäyttö ensimmäisen varmuuskopion jälkeen: mikä on suojattu, mikä ajetaan seuraavaksi ja elävä loki.*
 
 1. Avaa verkkokäyttöliittymä osoitteessa `https://<your-unraid-ip>:3443` (itse allekirjoitettu varmenne valmiiksi).
-2. Ota **Asetuksissa** käyttöön haluamasi varmuuskopioinnin toimialueet (Kontit, Virtuaalikoneet, Flash, Config, Tiedostot, ZFS-tietojoukot) ja valitse korostusväri.
+2. Ota **Asetuksissa** käyttöön haluamasi varmuuskopioinnin toimialueet (Kontit, VMs, Flash, Itsevarmuuskopio, Kansiot, ZFS-tietojoukot) ja valitse korostusväri.
 3. Valitse **Kontit**-välilehdellä kontti ja napsauta **Varmuuskopioi** tehdäksesi ensimmäisen palautuspisteesi. Repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` ja ne luodaan ensimmäisen varmuuskopion yhteydessä.
 4. Määritä ajastus kohdasta **Asetukset, Aikataulut**. Konteille ja virtuaalikoneille on yhden napsautuksen *sisällytä kaikki aikatauluun*.
 

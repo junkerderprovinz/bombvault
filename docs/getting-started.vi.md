@@ -68,8 +68,8 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 *Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.*
 
 1. Mở giao diện web tại `https://<your-unraid-ip>:3443` (chứng chỉ tự ký ngay từ đầu).
-2. Trong **Cài đặt**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Config, Files, ZFS datasets) và chọn một màu nhấn.
-3. Ở tab **Containers**, chọn một container và nhấp **Back up** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
+2. Trong **Cài đặt**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) và chọn một màu nhấn.
+3. Ở tab **Containers**, chọn một container và nhấp **Sao lưu ngay** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
 4. Thiết lập lập lịch từ **Cài đặt, Lịch trình**. Có một tùy chọn *đưa tất cả vào lịch trình* một cú nhấp cho container và VM.
 
 !!! tip "Tùy chọn: chọn một thứ tự sao lưu"
@@ -84,7 +84,7 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 
 *Phần cài đặt không có nút Lưu: mỗi thay đổi được ghi ngay khi bạn thực hiện.*
 
-Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (sao lưu, khôi phục, lên lịch). Dùng công tắc **Simple / Advanced** trong thanh bên để hé lộ các điều khiển chuyên gia: lưu giữ, bản sao off-site, hook trước/sau, khôi phục ở cấp tập tin, thông báo, số liệu Prometheus và các công cụ toàn vẹn/bảo trì. Đây là một tùy chọn theo từng trình duyệt và tắt theo mặc định, nên người mới có giao diện gọn gàng còn người dùng chuyên sâu có đủ mọi thứ.
+Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (sao lưu, khôi phục, lên lịch). Dùng công tắc **Chế độ xem đơn giản / Chế độ xem nâng cao** trong thanh bên để hé lộ các điều khiển chuyên gia: lưu giữ, bản sao off-site, hook trước/sau, khôi phục ở cấp tập tin, thông báo, số liệu Prometheus và các công cụ toàn vẹn/bảo trì. Đây là một tùy chọn theo từng trình duyệt và tắt theo mặc định, nên người mới có giao diện gọn gàng còn người dùng chuyên sâu có đủ mọi thứ.
 
 ## Bước tiếp theo
 

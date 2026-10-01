@@ -84,7 +84,7 @@ Skabelonen tilføjer `--add-host=host.docker.internal:host-gateway`, så contain
 
 Opsæt en off-site-replika på siden **Indstillinger, Off-site**. Se [Off-site og gendannelse](offsite-recovery.md) for det fulde arbejdsforløb (uforanderlig/append-only, manipulationstest og DR-øvelser). Kort sagt:
 
-- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en Backup Path mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en sikkerhedskopisti mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Delte cloud-legitimationsoplysninger** gemmes krypteret under Indstillinger, Cloud-adgang, Delte cloud-legitimationsoplysninger.
 - **SSH-destinationer kræver intet installeret på den anden side.** `sftp:` kræver kun en SSH-server. Tilføj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** (også på `/config/ssh/id_ed25519.pub`) til destinationsbrugerens `~/.ssh/authorized_keys`.
 - **Off-site-kopi:** BombVault replikerer nye øjebliksbilleder med `restic copy` på et best-effort-grundlag oven på et (som regel lokalt) primært repo. Hvert domæne har sin egen off-site-tidsplan plus en **Replikér nu**-knap.
@@ -93,7 +93,7 @@ Opsæt en off-site-replika på siden **Indstillinger, Off-site**. Se [Off-site o
 - **Båndbreddegrænser:** begræns restic-upload/download-hastigheden under Indstillinger, Off-site.
 - **Streaming først:** under Indstillinger, Off-site vælger du medieserverne (Plex, Jellyfin og Emby er forvalgt ud fra image-navnet), den sendehastighed hvorfra en server tæller som streamende, upload-grænsen under streaming og hvor længe efter en stream den normale grænse kommer tilbage.
 - **Kold- og arkivlagringsklasse (S3):** for et native S3 off-site-repo, vælg et gendannelses-læsbart niveau (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes sætter deres klasse i rclone-konfigurationen.
-- **Fjernprimært i stedet for lokalt:** et domænes Backup Path kan selv være en af backends ovenfor, uden lokal kopi og uden replikeringstrin. Kontakten Lokal/Fjern ved feltet og dens sikkerhedsindstillinger for båndbredde, append-only og vækstbudget er beskrevet under [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
+- **Fjernprimært i stedet for lokalt:** et domænes sikkerhedskopisti kan selv være en af backends ovenfor, uden lokal kopi og uden replikeringstrin. Kontakten Lokal/Fjern ved feltet og dens sikkerhedsindstillinger for båndbredde, append-only og vækstbudget er beskrevet under [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 ## Afvigelser {#anomalies}
 
