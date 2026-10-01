@@ -27,6 +27,7 @@ import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { FindingChanges, findingHasChanges } from "./FindingChanges";
 
 export type FindingAction = (a: AnomalyView) => Promise<AnomalyActionResult>;
 
@@ -145,6 +146,8 @@ export function FindingLine({
             ))}
             {more && <InfoBubble tip={more} />}
           </div>
+
+          {findingHasChanges(a) && <FindingChanges a={a} t={t} />}
 
           {recovered && (
             <p className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
