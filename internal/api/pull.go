@@ -129,7 +129,11 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	}
 	// BombVault is the only writer of dest, so a lock left behind is stale.
 	// listSnapshots leaves the source's locks alone because its mode sets NoLock.
-	s.unlockStale(ctx, dest, destMode)
+	// A remote dest is unlocked only when a lock stops the copy, since every
+	// call to it is billed.
+	if !restic.IsRemoteRepo(dest) {
+		s.unlockStale(ctx, dest, destMode)
+	}
 
 	srcSnaps, err := s.listSnapshots(ctx, src, srcMode)
 	if err != nil {
@@ -156,7 +160,7 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	copyMode.From = &restic.From{Encrypted: srcMode.Encrypted, Password: srcMode.Password}
 	copyMode.Env = append(append([]string{}, destMode.Env...), srcMode.Env...)
 	lim := restic.Limits{DownloadKBps: ps.LimitDownload, UploadKBps: ps.LimitUpload}
-	if err := s.engine.Copy(ctx, dest, src, nil, lim, copyMode); err != nil {
+	if err := s.retryAfterUnlock(ctx, dest, destMode, func() error { return s.engine.Copy(ctx, dest, src, nil, lim, copyMode) }); err != nil {
 		return 0, fmt.Errorf("copy from the source: %w", err)
 	}
 	return pending, nil

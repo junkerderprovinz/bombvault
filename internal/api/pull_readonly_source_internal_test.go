@@ -175,3 +175,49 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 			"the pull would write nothing and blame the local repository for it.")
 	}
 }
+
+func TestAPullIntoARemoteRepositoryUnlocksNothingWithoutALock(t *testing.T) {
+	const ourKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	const theirKey = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+	const srcLoc = "rest:http://192.168.1.9:8000/their-containers"
+	const destLoc = "s3:https://s3.example.com/bucket/containers"
+
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = destLoc
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(ourKey, []byte(restickey.Derive(theirKey)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := &pullRecorder{snaps: map[string][]restic.Snapshot{srcLoc: {{ID: "aaa"}}}}
+	dir := t.TempDir()
+	svc := &Service{cfg: config.Config{AppKey: ourKey, DataDir: dir, HostMountRoot: dir}, store: st, engine: eng}
+	ps := store.PullSource{ID: "p1", Name: "Tower", Repo: srcLoc, ResticPasswordEnc: enc, Domain: "containers", Enabled: true}
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	copied := false
+	for _, c := range eng.calls {
+		if strings.HasPrefix(c, "Unlock ") {
+			t.Fatalf("the pull unlocked %q without a lock in the way", c)
+		}
+		copied = copied || strings.HasPrefix(c, "Copy dest="+destLoc)
+	}
+	if !copied {
+		t.Fatalf("no copy into the remote repository: %v", eng.calls)
+	}
+}
