@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Spremljeno u Preuzimanja: %1$s</string>
+    <string name="save_failed">Datoteku nije bilo moguće spremiti: %1$s</string>
+    <string name="save_untrusted">Certifikat poslužitelja se promijenio. Otvorite ga ponovno s početnog zaslona da provjerite novi.</string>
+    <string name="no_app">Nijedna aplikacija na ovom telefonu ne otvara ovu poveznicu.</string>
+</resources>

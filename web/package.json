@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && tsc -p tsconfig.harness.json && vite build",
+    "build:launcher": "vite build --config vite.launcher.config.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.harness.json",
     "preview": "vite preview",
     "lint": "eslint src e2e playwright.config.ts",

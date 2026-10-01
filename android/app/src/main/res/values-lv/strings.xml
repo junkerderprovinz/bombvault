@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Saglabāts mapē Lejupielādes: %1$s</string>
+    <string name="save_failed">Neizdevās saglabāt failu: %1$s</string>
+    <string name="save_untrusted">Servera sertifikāts ir mainījies. Atveriet to vēlreiz no sākuma ekrāna, lai pārbaudītu jauno.</string>
+    <string name="no_app">Neviena lietotne šajā tālrunī neatver šo saiti.</string>
+</resources>

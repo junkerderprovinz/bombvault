@@ -65,3 +65,21 @@ const placeLogo = (x, y, w, h) =>
   writeFileSync(join(__dir, "bombvault-banner-logo.png"), lb.render().asPng());
   console.log("bombvault-banner-logo.png written (1600x500, textless, optically centred)");
 }
+
+// The Android app's launcher icon is two layers of 108dp. Only a circle of 66dp
+// in the middle survives every launcher's mask, so the logo's box takes 54dp
+// and its empty corners are what a round mask cuts.
+{
+  const RES = join(__dir, "../../android/app/src/main/res");
+  const DENSITIES = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
+  const half = Math.max(OPT_CX, LOGO_W - OPT_CX, OPT_CY, LOGO_H - OPT_CY);
+  const s = 27 / half;
+  const fg = `<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  ${placeLogo(54 - OPT_CX * s, 54 - OPT_CY * s, LOGO_W * s, LOGO_H * s)}
+</svg>`;
+  for (const [name, factor] of Object.entries(DENSITIES)) {
+    const png = new Resvg(fg, { fitTo: { mode: "width", value: Math.round(108 * factor) } });
+    writeFileSync(join(RES, `mipmap-${name}`, "ic_launcher_foreground.png"), png.render().asPng());
+  }
+  console.log("android launcher foregrounds written (108dp, five densities)");
+}

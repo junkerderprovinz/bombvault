@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Đã lưu vào Tải xuống: %1$s</string>
+    <string name="save_failed">Không thể lưu tệp: %1$s</string>
+    <string name="save_untrusted">Chứng chỉ của máy chủ đã thay đổi. Mở lại từ màn hình bắt đầu để kiểm tra chứng chỉ mới.</string>
+    <string name="no_app">Không có ứng dụng nào trên điện thoại này mở được liên kết này.</string>
+</resources>

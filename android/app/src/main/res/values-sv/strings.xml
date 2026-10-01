@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Sparad i Nedladdningar: %1$s</string>
+    <string name="save_failed">Filen kunde inte sparas: %1$s</string>
+    <string name="save_untrusted">Serverns certifikat har ändrats. Öppna den igen från startskärmen för att kontrollera det nya.</string>
+    <string name="no_app">Ingen app på telefonen öppnar den här länken.</string>
+</resources>

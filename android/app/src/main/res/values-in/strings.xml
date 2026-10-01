@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Disimpan di Unduhan: %1$s</string>
+    <string name="save_failed">File tidak dapat disimpan: %1$s</string>
+    <string name="save_untrusted">Sertifikat server telah berubah. Buka lagi dari layar awal untuk memeriksa yang baru.</string>
+    <string name="no_app">Tidak ada aplikasi di ponsel ini yang membuka tautan ini.</string>
+</resources>

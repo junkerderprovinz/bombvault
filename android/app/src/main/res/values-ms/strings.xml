@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Disimpan dalam Muat Turun: %1$s</string>
+    <string name="save_failed">Fail tidak dapat disimpan: %1$s</string>
+    <string name="save_untrusted">Sijil pelayan telah berubah. Buka semula daripada skrin permulaan untuk semak sijil baharu.</string>
+    <string name="no_app">Tiada aplikasi pada telefon ini membuka pautan ini.</string>
+</resources>

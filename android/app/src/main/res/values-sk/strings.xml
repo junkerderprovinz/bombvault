@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Uložené do Stiahnutých súborov: %1$s</string>
+    <string name="save_failed">Súbor sa nepodarilo uložiť: %1$s</string>
+    <string name="save_untrusted">Certifikát servera sa zmenil. Otvorte ho znova z úvodnej obrazovky a skontrolujte nový.</string>
+    <string name="no_app">Žiadna aplikácia v telefóne tento odkaz neotvorí.</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Salvato in Download: %1$s</string>
+    <string name="save_failed">Impossibile salvare il file: %1$s</string>
+    <string name="save_untrusted">Il certificato del server è cambiato. Aprilo di nuovo dalla schermata iniziale per controllare quello nuovo.</string>
+    <string name="no_app">Nessuna app su questo telefono apre questo link.</string>
+</resources>
