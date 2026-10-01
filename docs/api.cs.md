@@ -4,7 +4,7 @@ BombVault má malé HTTP API pro skripty, dashboardy a domácí automatizaci. Č
 
 ## Tokeny {#tokens}
 
-Každý požadavek potřebuje token API, i když není nastavené přihlašovací heslo. Vytvoříš ho v **Nastavení, Systém, Tokeny API**:
+Každý požadavek potřebuje token API, i když není nastavené přihlašovací heslo. Vytvoříš ho v **Nastavení, Integrace, Tokeny API**:
 
 1. Napiš název, který říká, kde se token používá, třeba „Home Assistant“ nebo „Uptime Kuma“.
 2. Zapni **Povolit spouštění záloh**, pokud má token spouštět zálohy. Bez toho může jen číst.
@@ -73,7 +73,7 @@ BombVault poskytuje popis těchto cest na `/api/v1/openapi.json` (OpenAPI 3.1). 
 
 BombVault se může v Home Assistant objevit jako zařízení díky zjišťování MQTT. Home Assistant k tomu potřebuje svou integraci MQTT a broker, třeba doplněk Mosquitto. Žádná vlastní komponenta není potřeba.
 
-1. V BombVault otevři **Nastavení, Systém, Home Assistant**.
+1. V BombVault otevři **Nastavení, Integrace, Home Assistant**.
 2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883; jeho certifikát musí platit pro zadanou adresu. Když změníš adresu, port nebo uživatelské jméno, zadej heslo znovu: BombVault uložené heslo jinému brokeru ani uživateli nepředá.
 3. Zapni **Připojit k Home Assistant** a klikni na **Uložit**. Karta ukáže, až spojení naběhne.
 
@@ -96,7 +96,7 @@ BombVault čte svůj stav každých 15 sekund a zveřejní ho, když se něco zm
 
 ## Najít BombVault v síti {#mdns}
 
-BombVault ohlašuje své webové rozhraní v místní síti přes mDNS, protokol, na kterém stojí Bonjour a Avahi. Prohlížeč ho pak najde jako `https://bombvault.local:3443`, s `HTTP_ONLY` jako `http://bombvault.local:3000`, a prohlížeče služeb ho vypíšou jako webovou službu s podtypem `_bombvault`. Jeho záznamy TXT nesou verzi a cestu. Přepínač je v **Nastavení, Systém, Najít v síti** a ve výchozím stavu je zapnutý. Pokud název už používá jiné zařízení, BombVault si vezme `bombvault-2.local` a tak dál a karta ukáže adresu, kterou dostal. Když se BombVault zastaví nebo ohlašování vypneš, dá o tom síti vědět a prohlížeče záznam hned odstraní.
+BombVault ohlašuje své webové rozhraní v místní síti přes mDNS, protokol, na kterém stojí Bonjour a Avahi. Prohlížeč ho pak najde jako `https://bombvault.local:3443`, s `HTTP_ONLY` jako `http://bombvault.local:3000`, a prohlížeče služeb ho vypíšou jako webovou službu s podtypem `_bombvault`. Jeho záznamy TXT nesou verzi a cestu. Přepínač je v **Nastavení, Integrace, Najít v síti** a ve výchozím stavu je zapnutý. Pokud název už používá jiné zařízení, BombVault si vezme `bombvault-2.local` a tak dál a karta ukáže adresu, kterou dostal. Když se BombVault zastaví nebo ohlašování vypneš, dá o tom síti vědět a prohlížeče záznam hned odstraní.
 
 Zda ohlášení doputuje do tvé sítě, záleží na tom, jak je kontejner připojený:
 

@@ -4,7 +4,7 @@ BombVault are un mic API HTTP pentru scripturi, panouri și automatizarea casei.
 
 ## Tokenuri {#tokens}
 
-Fiecare cerere are nevoie de un token API, chiar și fără parolă de conectare. Creează unul în **Setări, Sistem, Tokenuri API**:
+Fiecare cerere are nevoie de un token API, chiar și fără parolă de conectare. Creează unul în **Setări, Integrări, Tokenuri API**:
 
 1. Scrie un nume care spune unde se folosește tokenul, de exemplu „Home Assistant” sau „Uptime Kuma”.
 2. Pornește **Permite pornirea copiilor** dacă tokenul trebuie să poată porni copii. Fără asta poate doar să citească.
@@ -73,7 +73,7 @@ BombVault servește o descriere a acestor rute la `/api/v1/openapi.json` (OpenAP
 
 BombVault poate apărea în Home Assistant ca dispozitiv, prin descoperirea MQTT. Home Assistant are nevoie de integrarea sa MQTT și de un broker, de exemplu add-on-ul Mosquitto. Nu e nevoie de nicio componentă proprie.
 
-1. În BombVault, deschide **Setări, Sistem, Home Assistant**.
+1. În BombVault, deschide **Setări, Integrări, Home Assistant**.
 2. Introdu adresa și portul brokerului, iar utilizatorul și parola dacă le cere. Pornește **Folosește TLS** dacă brokerul folosește TLS, de obicei pe portul 8883; certificatul lui trebuie să fie valid pentru adresa introdusă. Dacă schimbi adresa, portul sau numele de utilizator, introdu din nou parola: BombVault nu dă parola salvată mai departe unui alt broker sau utilizator.
 3. Pornește **Conectează la Home Assistant** și apasă **Salvare**. Cardul arată când conexiunea e activă.
 
@@ -96,7 +96,7 @@ BombVault își citește starea la fiecare 15 secunde și o publică atunci cân
 
 ## Găsirea BombVault în rețea {#mdns}
 
-BombVault își anunță interfața web în rețeaua locală prin mDNS, protocolul din spatele Bonjour și Avahi. Un browser ajunge atunci la el ca `https://bombvault.local:3443`, sau `http://bombvault.local:3000` cu `HTTP_ONLY`, iar browserele de servicii îl afișează ca serviciu web cu subtipul `_bombvault`. Înregistrările sale TXT conțin versiunea și calea. Comutatorul se află în **Setări, Sistem, Găsește în rețea** și e pornit implicit. Dacă alt dispozitiv folosește deja numele, BombVault ia `bombvault-2.local` și așa mai departe, iar cardul arată adresa primită. Când BombVault se oprește sau oprești anunțul, anunță rețeaua, iar browserele scot imediat intrarea.
+BombVault își anunță interfața web în rețeaua locală prin mDNS, protocolul din spatele Bonjour și Avahi. Un browser ajunge atunci la el ca `https://bombvault.local:3443`, sau `http://bombvault.local:3000` cu `HTTP_ONLY`, iar browserele de servicii îl afișează ca serviciu web cu subtipul `_bombvault`. Înregistrările sale TXT conțin versiunea și calea. Comutatorul se află în **Setări, Integrări, Găsește în rețea** și e pornit implicit. Dacă alt dispozitiv folosește deja numele, BombVault ia `bombvault-2.local` și așa mai departe, iar cardul arată adresa primită. Când BombVault se oprește sau oprești anunțul, anunță rețeaua, iar browserele scot imediat intrarea.
 
 Dacă anunțul ajunge în rețeaua ta depinde de felul în care e conectat containerul:
 

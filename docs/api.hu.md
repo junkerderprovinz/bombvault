@@ -4,7 +4,7 @@ A BombVault kis HTTP API-t kínál szkriptekhez, irányítópultokhoz és otthon
 
 ## Tokenek {#tokens}
 
-Minden kéréshez API-token kell, akkor is, ha nincs belépési jelszó. A **Beállítások, Rendszer, API-tokenek** alatt hozhatsz létre egyet:
+Minden kéréshez API-token kell, akkor is, ha nincs belépési jelszó. A **Beállítások, Integrációk, API-tokenek** alatt hozhatsz létre egyet:
 
 1. Adj meg egy nevet, amely elárulja, hol használod a tokent, például „Home Assistant” vagy „Uptime Kuma”.
 2. Kapcsold be a **Mentések indításának engedélyezése** kapcsolót, ha a tokennek mentést kell indítania. Nélküle csak olvasni tud.
@@ -73,7 +73,7 @@ A BombVault ezeknek az útvonalaknak a leírását a `/api/v1/openapi.json` cím
 
 A BombVault eszközként jelenhet meg a Home Assistantben, MQTT-felderítéssel. Ehhez a Home Assistantnek kell a saját MQTT-integrációja és egy bróker, például a Mosquitto bővítmény. Saját komponensre nincs szükség.
 
-1. A BombVaultban nyisd meg a **Beállítások, Rendszer, Home Assistant** részt.
+1. A BombVaultban nyisd meg a **Beállítások, Integrációk, Home Assistant** részt.
 2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton; a tanúsítványának érvényesnek kell lennie a megadott címre. Ha módosítod a címet, a portot vagy a felhasználónevet, add meg újra a jelszót: a BombVault a tároltat nem adja tovább másik brókernek vagy felhasználónak.
 3. Kapcsold be a **Csatlakozás a Home Assistanthez** kapcsolót, és kattints a **Mentés** gombra. A kártya mutatja, amikor a kapcsolat felépült.
 
@@ -96,7 +96,7 @@ A BombVault 15 másodpercenként beolvassa az állapotát, és közzéteszi, ha 
 
 ## A BombVault megtalálása a hálózaton {#mdns}
 
-A BombVault mDNS-sel bejelenti a webes felületét a helyi hálózaton, azzal a protokollal, amelyre a Bonjour és az Avahi épül. Egy böngésző így `https://bombvault.local:3443` címen éri el, `HTTP_ONLY` esetén `http://bombvault.local:3000` címen, a szolgáltatásböngészők pedig webszolgáltatásként listázzák `_bombvault` altípussal. A TXT-rekordjai a verziót és az útvonalat tartalmazzák. A kapcsoló a **Beállítások, Rendszer, Megtalálás a hálózaton** alatt van, és alapból be van kapcsolva. Ha egy másik eszköz már használja a nevet, a BombVault a `bombvault-2.local` nevet veszi fel és így tovább, a kártya pedig mutatja a kapott címet. Amikor a BombVault leáll, vagy kikapcsolod a bejelentést, szól a hálózatnak, és a böngészők azonnal eltávolítják a bejegyzést.
+A BombVault mDNS-sel bejelenti a webes felületét a helyi hálózaton, azzal a protokollal, amelyre a Bonjour és az Avahi épül. Egy böngésző így `https://bombvault.local:3443` címen éri el, `HTTP_ONLY` esetén `http://bombvault.local:3000` címen, a szolgáltatásböngészők pedig webszolgáltatásként listázzák `_bombvault` altípussal. A TXT-rekordjai a verziót és az útvonalat tartalmazzák. A kapcsoló a **Beállítások, Integrációk, Megtalálás a hálózaton** alatt van, és alapból be van kapcsolva. Ha egy másik eszköz már használja a nevet, a BombVault a `bombvault-2.local` nevet veszi fel és így tovább, a kártya pedig mutatja a kapott címet. Amikor a BombVault leáll, vagy kikapcsolod a bejelentést, szól a hálózatnak, és a böngészők azonnal eltávolítják a bejegyzést.
 
 Hogy a bejelentés eléri-e a hálózatodat, attól függ, hogyan csatlakozik a konténer:
 

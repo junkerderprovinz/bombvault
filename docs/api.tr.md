@@ -4,7 +4,7 @@ BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si v
 
 ## Belirteçler {#tokens}
 
-Her istek, giriş parolası olmasa bile bir API belirteci ister. Belirteci **Ayarlar, Sistem, API belirteçleri** altında oluştur:
+Her istek, giriş parolası olmasa bile bir API belirteci ister. Belirteci **Ayarlar, Entegrasyonlar, API belirteçleri** altında oluştur:
 
 1. Belirtecin nerede kullanıldığını söyleyen bir ad yaz, örneğin "Home Assistant" veya "Uptime Kuma".
 2. Belirteç yedekleme başlatabilsin istiyorsan **Yedekleme başlatmaya izin ver** seçeneğini aç. Açık değilse yalnızca okuyabilir.
@@ -73,7 +73,7 @@ BombVault bu yolların açıklamasını `/api/v1/openapi.json` adresinde sunar (
 
 BombVault, MQTT keşfi sayesinde Home Assistant'ta bir cihaz olarak görünebilir. Home Assistant'ın bunun için MQTT entegrasyonuna ve bir aracıya, örneğin Mosquitto eklentisine ihtiyacı vardır. Ayrı bir bileşen gerekmez.
 
-1. BombVault'ta **Ayarlar, Sistem, Home Assistant** bölümünü aç.
+1. BombVault'ta **Ayarlar, Entegrasyonlar, Home Assistant** bölümünü aç.
 2. Aracının adresini ve bağlantı noktasını, isterse kullanıcı adını ve parolayı gir. Aracı TLS kullanıyorsa, genellikle 8883 numaralı bağlantı noktasında, **TLS kullan** seçeneğini aç; sertifikası girdiğin adres için geçerli olmalı. Adresi, bağlantı noktasını ya da kullanıcı adını değiştirirsen parolayı yeniden gir: BombVault kayıtlı parolayı başka bir aracıya ya da kullanıcıya iletmez.
 3. **Home Assistant'a bağlan** seçeneğini aç ve **Kaydet** düğmesine tıkla. Kart, bağlantı kurulduğunda bunu gösterir.
 
@@ -96,7 +96,7 @@ BombVault durumunu her 15 saniyede bir okur ve bir şey değiştiğinde `<önek>
 
 ## BombVault'u ağda bulmak {#mdns}
 
-BombVault, web arayüzünü yerel ağda Bonjour ve Avahi'nin ardındaki protokol olan mDNS ile duyurur. Böylece bir tarayıcı ona `https://bombvault.local:3443` adresinden, `HTTP_ONLY` ile `http://bombvault.local:3000` adresinden ulaşır ve hizmet tarayıcıları onu `_bombvault` alt türüyle bir web hizmeti olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar **Ayarlar, Sistem, Ağda bul** altındadır ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından kullanılıyorsa BombVault `bombvault-2.local` gibi bir sonraki adı alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında bunu ağa bildirir, tarayıcılar da kaydı hemen kaldırır.
+BombVault, web arayüzünü yerel ağda Bonjour ve Avahi'nin ardındaki protokol olan mDNS ile duyurur. Böylece bir tarayıcı ona `https://bombvault.local:3443` adresinden, `HTTP_ONLY` ile `http://bombvault.local:3000` adresinden ulaşır ve hizmet tarayıcıları onu `_bombvault` alt türüyle bir web hizmeti olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar **Ayarlar, Entegrasyonlar, Ağda bul** altındadır ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından kullanılıyorsa BombVault `bombvault-2.local` gibi bir sonraki adı alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında bunu ağa bildirir, tarayıcılar da kaydı hemen kaldırır.
 
 Duyurunun ağına ulaşıp ulaşmadığı konteynerin nasıl bağlandığına bağlıdır:
 

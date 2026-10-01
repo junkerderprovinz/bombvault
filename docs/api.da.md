@@ -4,7 +4,7 @@ BombVault har et lille HTTP-API til scripts, dashboards og hjemmeautomatisering.
 
 ## Tokens {#tokens}
 
-Hver forespørgsel skal have et API-token, også når der ikke er sat en adgangskode. Opret et under **Indstillinger, System, API-tokens**:
+Hver forespørgsel skal have et API-token, også når der ikke er sat en adgangskode. Opret et under **Indstillinger, Integrationer, API-tokens**:
 
 1. Skriv et navn, der siger, hvor tokenet bruges, for eksempel "Home Assistant" eller "Uptime Kuma".
 2. Slå **Tillad at starte sikkerhedskopier** til, hvis tokenet skal kunne starte kopier. Uden det kan det kun læse.
@@ -73,7 +73,7 @@ BombVault leverer en beskrivelse af disse ruter på `/api/v1/openapi.json` (Open
 
 BombVault kan vises i Home Assistant som en enhed via MQTT-discovery. Home Assistant skal bruge sin MQTT-integration og en broker, for eksempel Mosquitto-tilføjelsen. Der skal ikke installeres nogen egen komponent.
 
-1. Åbn **Indstillinger, System, Home Assistant** i BombVault.
+1. Åbn **Indstillinger, Integrationer, Home Assistant** i BombVault.
 2. Skriv brokerens adresse og port, og brugernavn og adgangskode, hvis den beder om dem. Slå **Brug TLS** til, hvis brokeren taler TLS, som regel på port 8883; dens certifikat skal være gyldigt for den adresse, du skrev. Ændrer du adressen, porten eller brugernavnet, skal du indtaste adgangskoden igen: BombVault giver ikke den gemte videre til en anden broker eller bruger.
 3. Slå **Forbind til Home Assistant** til, og klik på **Gem**. Kortet viser, når forbindelsen er oppe.
 
@@ -96,7 +96,7 @@ BombVault læser sin status hvert 15. sekund og udgiver den, når noget har ænd
 
 ## Find BombVault på netværket {#mdns}
 
-BombVault annoncerer sin brugerflade på det lokale netværk via mDNS, protokollen bag Bonjour og Avahi. En browser når den så som `https://bombvault.local:3443`, eller `http://bombvault.local:3000` med `HTTP_ONLY`, og tjenestebrowsere viser den som webtjeneste med undertypen `_bombvault`. TXT-posterne indeholder versionen og stien. Kontakten ligger under **Indstillinger, System, Find på netværket** og er slået til fra start. Bruger en anden enhed allerede navnet, tager BombVault `bombvault-2.local` og så videre, og kortet viser den adresse, den fik. Når BombVault stopper, eller du slår annonceringen fra, melder den fra på netværket, så browsere fjerner posten med det samme.
+BombVault annoncerer sin brugerflade på det lokale netværk via mDNS, protokollen bag Bonjour og Avahi. En browser når den så som `https://bombvault.local:3443`, eller `http://bombvault.local:3000` med `HTTP_ONLY`, og tjenestebrowsere viser den som webtjeneste med undertypen `_bombvault`. TXT-posterne indeholder versionen og stien. Kontakten ligger under **Indstillinger, Integrationer, Find på netværket** og er slået til fra start. Bruger en anden enhed allerede navnet, tager BombVault `bombvault-2.local` og så videre, og kortet viser den adresse, den fik. Når BombVault stopper, eller du slår annonceringen fra, melder den fra på netværket, så browsere fjerner posten med det samme.
 
 Om annonceringen når dit netværk, afhænger af, hvordan containeren er forbundet:
 

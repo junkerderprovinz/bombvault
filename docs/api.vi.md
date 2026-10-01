@@ -4,7 +4,7 @@ BombVault có một API HTTP nhỏ cho script, bảng điều khiển và nhà t
 
 ## Mã thông báo {#tokens}
 
-Mỗi yêu cầu cần một mã thông báo API, kể cả khi chưa đặt mật khẩu đăng nhập. Tạo mã tại **Cài đặt, Hệ thống, Mã thông báo API**:
+Mỗi yêu cầu cần một mã thông báo API, kể cả khi chưa đặt mật khẩu đăng nhập. Tạo mã tại **Cài đặt, Tích hợp, Mã thông báo API**:
 
 1. Nhập một cái tên cho biết mã được dùng ở đâu, ví dụ "Home Assistant" hoặc "Uptime Kuma".
 2. Bật **Cho phép bắt đầu sao lưu** nếu mã cần bắt đầu sao lưu. Nếu không, mã chỉ đọc được.
@@ -73,7 +73,7 @@ BombVault cung cấp mô tả các tuyến này tại `/api/v1/openapi.json` (Op
 
 BombVault có thể xuất hiện trong Home Assistant như một thiết bị, nhờ cơ chế khám phá MQTT. Home Assistant cần tích hợp MQTT của nó và một broker, ví dụ tiện ích bổ sung Mosquitto. Không cần thành phần riêng nào.
 
-1. Trong BombVault, mở **Cài đặt, Hệ thống, Home Assistant**.
+1. Trong BombVault, mở **Cài đặt, Tích hợp, Home Assistant**.
 2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883; chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập. Nếu bạn đổi địa chỉ, cổng hoặc tên người dùng, hãy nhập lại mật khẩu: BombVault không chuyển mật khẩu đã lưu sang broker hay người dùng khác.
 3. Bật **Kết nối với Home Assistant** và bấm **Lưu**. Thẻ sẽ cho biết khi kết nối đã thông.
 
@@ -96,7 +96,7 @@ BombVault đọc trạng thái của mình mỗi 15 giây và công bố khi có
 
 ## Tìm BombVault trên mạng {#mdns}
 
-BombVault quảng bá giao diện web của mình trên mạng cục bộ qua mDNS, giao thức đứng sau Bonjour và Avahi. Khi đó trình duyệt vào được bằng `https://bombvault.local:3443`, hoặc `http://bombvault.local:3000` khi dùng `HTTP_ONLY`, và các trình duyệt dịch vụ liệt kê nó là dịch vụ web với kiểu con `_bombvault`. Các bản ghi TXT chứa phiên bản và đường dẫn. Công tắc nằm ở **Cài đặt, Hệ thống, Tìm trên mạng** và được bật sẵn. Nếu thiết bị khác đã dùng tên này, BombVault lấy `bombvault-2.local` và cứ thế tiếp tục, còn thẻ hiện địa chỉ nó nhận được. Khi BombVault dừng hoặc bạn tắt quảng bá, nó báo cho mạng biết, nên trình duyệt gỡ mục đó ngay.
+BombVault quảng bá giao diện web của mình trên mạng cục bộ qua mDNS, giao thức đứng sau Bonjour và Avahi. Khi đó trình duyệt vào được bằng `https://bombvault.local:3443`, hoặc `http://bombvault.local:3000` khi dùng `HTTP_ONLY`, và các trình duyệt dịch vụ liệt kê nó là dịch vụ web với kiểu con `_bombvault`. Các bản ghi TXT chứa phiên bản và đường dẫn. Công tắc nằm ở **Cài đặt, Tích hợp, Tìm trên mạng** và được bật sẵn. Nếu thiết bị khác đã dùng tên này, BombVault lấy `bombvault-2.local` và cứ thế tiếp tục, còn thẻ hiện địa chỉ nó nhận được. Khi BombVault dừng hoặc bạn tắt quảng bá, nó báo cho mạng biết, nên trình duyệt gỡ mục đó ngay.
 
 Lời quảng bá có tới được mạng của bạn hay không tùy vào cách container được kết nối:
 

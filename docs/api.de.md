@@ -4,7 +4,7 @@ BombVault hat eine kleine HTTP-API für Skripte, Dashboards und Hausautomation. 
 
 ## Tokens {#tokens}
 
-Jede Anfrage braucht ein API-Token, auch wenn kein Login-Passwort gesetzt ist. Du legst es unter **Einstellungen, System, API-Tokens** an:
+Jede Anfrage braucht ein API-Token, auch wenn kein Login-Passwort gesetzt ist. Du legst es unter **Einstellungen, Anbindungen, API-Tokens** an:
 
 1. Gib einen Namen ein, der sagt, wo das Token benutzt wird, etwa „Home Assistant“ oder „Uptime Kuma“.
 2. Schalte **Backups starten erlauben** ein, wenn das Token Backups starten soll. Ohne diese Erlaubnis kann es nur lesen.
@@ -73,7 +73,7 @@ BombVault liefert unter `/api/v1/openapi.json` eine Beschreibung dieser Routen (
 
 BombVault kann in Home Assistant als Gerät erscheinen, über MQTT-Discovery. Home Assistant braucht dafür seine MQTT-Integration und einen Broker, etwa das Mosquitto-Add-on. Eine eigene Komponente gibt es nicht.
 
-1. Öffne in BombVault **Einstellungen, System, Home Assistant**.
+1. Öffne in BombVault **Einstellungen, Anbindungen, Home Assistant**.
 2. Trag Adresse und Port des Brokers ein, dazu Benutzername und Passwort, falls er danach fragt. Schalte **TLS verwenden** ein, wenn der Broker TLS spricht, meist auf Port 8883; sein Zertifikat muss für die eingetragene Adresse gültig sein. Änderst du Adresse, Port oder Benutzernamen, gib das Passwort neu ein: BombVault gibt das gespeicherte nicht an einen anderen Broker oder Benutzer weiter.
 3. Schalte **Mit Home Assistant verbinden** ein und klick auf **Speichern**. Die Karte zeigt, sobald die Verbindung steht.
 
@@ -96,7 +96,7 @@ BombVault liest seinen Zustand alle 15 Sekunden und veröffentlicht ihn, wenn si
 
 ## BombVault im Netzwerk finden {#mdns}
 
-BombVault kündigt seine Weboberfläche per mDNS im lokalen Netz an, dem Protokoll hinter Bonjour und Avahi. Ein Browser erreicht es dann als `https://bombvault.local:3443`, mit `HTTP_ONLY` als `http://bombvault.local:3000`, und Dienst-Browser führen es als Webdienst mit dem Untertyp `_bombvault`. Die TXT-Einträge tragen Version und Pfad. Der Schalter liegt unter **Einstellungen, System, Im Netzwerk finden** und ist ab Werk an. Nutzt ein anderes Gerät den Namen schon, nimmt BombVault `bombvault-2.local` und so weiter, und die Karte zeigt die Adresse, die es bekommen hat. Stoppt BombVault oder schaltest du die Ankündigung aus, meldet es sich im Netz ab, und Browser entfernen den Eintrag sofort.
+BombVault kündigt seine Weboberfläche per mDNS im lokalen Netz an, dem Protokoll hinter Bonjour und Avahi. Ein Browser erreicht es dann als `https://bombvault.local:3443`, mit `HTTP_ONLY` als `http://bombvault.local:3000`, und Dienst-Browser führen es als Webdienst mit dem Untertyp `_bombvault`. Die TXT-Einträge tragen Version und Pfad. Der Schalter liegt unter **Einstellungen, Anbindungen, Im Netzwerk finden** und ist ab Werk an. Nutzt ein anderes Gerät den Namen schon, nimmt BombVault `bombvault-2.local` und so weiter, und die Karte zeigt die Adresse, die es bekommen hat. Stoppt BombVault oder schaltest du die Ankündigung aus, meldet es sich im Netz ab, und Browser entfernen den Eintrag sofort.
 
 Ob die Ankündigung dein Netz erreicht, hängt davon ab, wie der Container angebunden ist:
 

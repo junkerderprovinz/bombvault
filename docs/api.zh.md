@@ -4,7 +4,7 @@ BombVault 提供一个小型 HTTP API，供脚本、仪表板和家庭自动化�
 
 ## 令牌 {#tokens}
 
-即使没有设置登录密码，每个请求也都需要 API 令牌。在 **设置、系统、API 令牌** 中创建：
+即使没有设置登录密码，每个请求也都需要 API 令牌。在 **设置、集成、API 令牌** 中创建：
 
 1. 输入一个能说明令牌用途的名称，例如“Home Assistant”或“Uptime Kuma”。
 2. 如果令牌需要启动备份，就打开 **允许启动备份**。不打开时它只能读取。
@@ -73,7 +73,7 @@ BombVault 在 `/api/v1/openapi.json` 提供这些路由的说明（OpenAPI 3.1�
 
 BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 中。Home Assistant 需要启用它的 MQTT 集成，并有一个代理，例如 Mosquitto 加载项。不需要任何专用组件。
 
-1. 在 BombVault 中打开 **设置、系统、Home Assistant**。
+1. 在 BombVault 中打开 **设置、集成、Home Assistant**。
 2. 输入代理的地址和端口；如果代理要求，再输入用户名和密码。如果代理使用 TLS（通常在端口 8883），就打开 **使用 TLS**；它的证书必须对你输入的地址有效。如果你改了地址、端口或用户名，请重新输入密码：BombVault 不会把已保存的密码交给另一个代理或另一个用户。
 3. 打开 **连接到 Home Assistant** 并点击 **保存**。连接建立后，卡片会显示出来。
 
@@ -96,7 +96,7 @@ BombVault 每 15 秒读取一次自身状态，有变化时以 JSON 发布到 `<
 
 ## 在网络中找到 BombVault {#mdns}
 
-BombVault 通过 mDNS（Bonjour 和 Avahi 背后的协议）在局域网中广播自己的网页界面。浏览器随后可以用 `https://bombvault.local:3443` 打开它，使用 `HTTP_ONLY` 时为 `http://bombvault.local:3000`；服务浏览器会把它列为子类型 `_bombvault` 的网页服务。它的 TXT 记录包含版本和路径。开关位于 **设置、系统、在网络中查找**，默认打开。如果名称已被其他设备占用，BombVault 会改用 `bombvault-2.local` 等名称，卡片会显示它得到的地址。当 BombVault 停止或你关闭广播时，它会通知网络，浏览器会立即移除该条目。
+BombVault 通过 mDNS（Bonjour 和 Avahi 背后的协议）在局域网中广播自己的网页界面。浏览器随后可以用 `https://bombvault.local:3443` 打开它，使用 `HTTP_ONLY` 时为 `http://bombvault.local:3000`；服务浏览器会把它列为子类型 `_bombvault` 的网页服务。它的 TXT 记录包含版本和路径。开关位于 **设置、集成、在网络中查找**，默认打开。如果名称已被其他设备占用，BombVault 会改用 `bombvault-2.local` 等名称，卡片会显示它得到的地址。当 BombVault 停止或你关闭广播时，它会通知网络，浏览器会立即移除该条目。
 
 广播能否到达你的网络，取决于容器的连接方式：
 

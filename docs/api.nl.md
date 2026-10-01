@@ -4,7 +4,7 @@ BombVault heeft een kleine HTTP-API voor scripts, dashboards en domotica. Die le
 
 ## Tokens {#tokens}
 
-Elke aanvraag heeft een API-token nodig, ook als er geen inlogwachtwoord is. Maak er een aan onder **Instellingen, Systeem, API-tokens**:
+Elke aanvraag heeft een API-token nodig, ook als er geen inlogwachtwoord is. Maak er een aan onder **Instellingen, Integraties, API-tokens**:
 
 1. Typ een naam die zegt waar het token gebruikt wordt, bijvoorbeeld "Home Assistant" of "Uptime Kuma".
 2. Zet **Back-ups laten starten** aan als het token back-ups moet kunnen starten. Anders kan het alleen lezen.
@@ -73,7 +73,7 @@ BombVault levert een beschrijving van deze routes op `/api/v1/openapi.json` (Ope
 
 BombVault kan in Home Assistant als apparaat verschijnen, via MQTT-discovery. Home Assistant heeft daarvoor zijn MQTT-integratie en een broker nodig, bijvoorbeeld de Mosquitto-add-on. Een eigen component is niet nodig.
 
-1. Open in BombVault **Instellingen, Systeem, Home Assistant**.
+1. Open in BombVault **Instellingen, Integraties, Home Assistant**.
 2. Vul het adres en de poort van de broker in, en gebruikersnaam en wachtwoord als hij daarom vraagt. Zet **TLS gebruiken** aan als de broker TLS spreekt, meestal op poort 8883; zijn certificaat moet geldig zijn voor het adres dat je invulde. Verander je het adres, de poort of de gebruikersnaam, voer dan het wachtwoord opnieuw in: BombVault geeft het opgeslagen wachtwoord niet door aan een andere broker of gebruiker.
 3. Zet **Verbinden met Home Assistant** aan en klik op **Opslaan**. De kaart laat zien wanneer de verbinding staat.
 
@@ -96,7 +96,7 @@ BombVault leest zijn status elke 15 seconden en publiceert die als er iets veran
 
 ## BombVault vinden op het netwerk {#mdns}
 
-BombVault maakt zijn webinterface via mDNS bekend op het lokale netwerk, het protocol achter Bonjour en Avahi. Een browser bereikt het dan als `https://bombvault.local:3443`, of `http://bombvault.local:3000` met `HTTP_ONLY`, en servicebrowsers tonen het als webdienst met het subtype `_bombvault`. De TXT-records bevatten de versie en het pad. De schakelaar staat onder **Instellingen, Systeem, Vinden op het netwerk** en staat standaard aan. Gebruikt een ander apparaat de naam al, dan neemt BombVault `bombvault-2.local` enzovoort, en de kaart toont het adres dat het kreeg. Stopt BombVault of zet je de aankondiging uit, dan meldt het zich af op het netwerk en halen browsers de vermelding meteen weg.
+BombVault maakt zijn webinterface via mDNS bekend op het lokale netwerk, het protocol achter Bonjour en Avahi. Een browser bereikt het dan als `https://bombvault.local:3443`, of `http://bombvault.local:3000` met `HTTP_ONLY`, en servicebrowsers tonen het als webdienst met het subtype `_bombvault`. De TXT-records bevatten de versie en het pad. De schakelaar staat onder **Instellingen, Integraties, Vinden op het netwerk** en staat standaard aan. Gebruikt een ander apparaat de naam al, dan neemt BombVault `bombvault-2.local` enzovoort, en de kaart toont het adres dat het kreeg. Stopt BombVault of zet je de aankondiging uit, dan meldt het zich af op het netwerk en halen browsers de vermelding meteen weg.
 
 Of de aankondiging je netwerk bereikt, hangt af van hoe de container verbonden is:
 
