@@ -115,9 +115,9 @@ func (c mcpCaller) budgetKey() string {
 func (c mcpCaller) readOnlyMessage() string {
 	switch c.via() {
 	case viaAPI:
-		return "this token may only read; allow backups for it under Settings > System > API tokens"
+		return "this token may only read; allow backups for it under Settings > Integrations > API tokens"
 	case viaMQTT:
-		return "the backup buttons are switched off under Settings > System > Home Assistant"
+		return "the backup buttons are switched off under Settings > Integrations > Home Assistant"
 	}
 	return mcpReadOnlyKeyMessage
 }

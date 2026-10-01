@@ -201,7 +201,7 @@ func TestAPIV1ReadOnlyTokenCannotStartABackup(t *testing.T) {
 		var body struct {
 			Error struct{ Message string } `json:"error"`
 		}
-		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || !strings.Contains(body.Error.Message, "Settings > System > API tokens") {
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || !strings.Contains(body.Error.Message, "Settings > Integrations > API tokens") {
 			t.Fatalf("POST %s does not say where to allow it: %s", c.path, w.Body)
 		}
 	}
