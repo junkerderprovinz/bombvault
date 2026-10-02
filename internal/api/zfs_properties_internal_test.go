@@ -170,6 +170,58 @@ func TestZFSRestoreIntoANewDatasetCreatesItWithTheStoredProperties(t *testing.T)
 	}
 }
 
+// zfsNewDatasetHost makes a dataset the restore creates appear on the host
+// and in the container's mount table, the way propagation brings it in.
+func zfsNewDatasetHost(t *testing.T, s *Service, host *fakeZFSHost) {
+	t.Helper()
+	root := s.cfg.HostMountRoot
+	host.strictTree = true
+	records := zfsMountRecords
+	host.onCreate = func(name string) {
+		host.mu.Lock()
+		host.tree = append(host.tree, zfsEntry(name, "/mnt/"+name))
+		host.mu.Unlock()
+		zfsMountRecords = func() []zfs.MountRecord {
+			return append(records(), zfs.MountRecord{
+				MountPoint: zfsMemberPath(root, name), Root: "/", FSType: "zfs", Source: name,
+				Options: []string{"rw"}, Optional: []string{"master:9"},
+			})
+		}
+	}
+	t.Cleanup(func() { zfsMountRecords = records })
+}
+
+func TestZFSRestoreIntoANewDatasetSetsQuotasAfterTheFiles(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	zfsNewDatasetHost(t, s, host)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "quota": "1024"})
+	restoredAt := map[string]int{}
+	host.onSet = func() {
+		calls := host.calls
+		restoredAt[calls[len(calls)-1]] = len(eng.restores)
+	}
+	const fresh = "cache/copy"
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = fresh
+	req.SafetySnapshot = false
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("restore run = %+v", run)
+	}
+	if !hostDid(host, "create -o compression=zstd "+fresh) {
+		t.Fatalf("host calls = %v, want a create without the quota", host.recorded())
+	}
+	if at, ok := restoredAt["set quota=1024 "+fresh]; !ok || at != 1 {
+		t.Fatalf("restores done when each set ran = %v, want the quota on %s after the files", restoredAt, fresh)
+	}
+	if hostDid(host, "set quota=1024 "+zfsRoot) {
+		t.Fatal("the quota went onto the dataset the backup came from")
+	}
+}
+
 func TestZFSRestoreRefusesANewDatasetThatExists(t *testing.T) {
 	s, st, host, _ := zfsRestoreFixture(t)
 	host.strictTree = true
