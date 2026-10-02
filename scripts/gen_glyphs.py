@@ -38,7 +38,7 @@ ACTION = [
     ("IconClearSelection", "interface-essential/subtract-square.svg", "Clear the selection"),
     ("IconKey", "interface-essential/key.svg", "Credentials"),
     ("IconLink", "interface-essential/link-chain.svg", "Connect or link"),
-    ("IconEye", "interface-essential/glasses.svg", "Show, reveal or preview"),
+    # IconEye and IconEyeOff are in EXTRA_ACTION.
     ("IconInfo", "interface-essential/information-circle.svg", "Information or details"),
     # The About card's coffee and mail buttons.
     ("IconCoffee", "food-drink/coffee-takeaway-cup.svg", "Buy the author a coffee"),
@@ -255,6 +255,31 @@ KEY_REVOKE = '<path fillRule="evenodd" d="%s" />' % io.open(
 ).read().strip()
 KEY_REVOKE_BOX = "0 0 14 14"
 
+# KnightLoader's eye, so both apps reveal a phrase or a password with the same
+# mark. The pupil is cut out with evenodd rather than painted in a surface
+# colour, which would show as a grey dot on any other fill. Drawn on a 20-unit
+# grid; the box is cropped to the lens, so the struck-through variant's bar
+# runs from corner to corner of it.
+_EYE_PATH = (
+    "M2.5 10C2.5 10 6 4.3 10 4.3C14 4.3 17.5 10 17.5 10C17.5 10 14 15.7 10 15.7"
+    "C6 15.7 2.5 10 2.5 10Z M12.6 10a2.6 2.6 0 1 1 -5.2 0 2.6 2.6 0 0 1 5.2 0Z"
+)
+EYE = '<path fillRule="evenodd" d="%s" />' % _EYE_PATH
+EYE_OFF = (
+    '<path opacity="0.55" fillRule="evenodd" d="%s" />'
+    '<rect x="9.1" y="0" width="1.8" height="20" rx="0.9" transform="rotate(45 10 10)" />'
+) % _EYE_PATH
+EYE_BOX = cropped_box((2.5, 4.3, 15.0, 11.4))
+
+# The Security tab's shield. IconShieldOn and IconShieldOff carry a mark inside
+# theirs and mean a switch; this one names the whole area, so it stays plain.
+SHIELD = (
+    '<path d="M0 1.5C0 0.677 0.68 0 1.5 0h11c0.82 0 1.5 0.678 1.5 1.5v2.853c0 4.136 -2.51 8.006 '
+    '-6.411 9.528a1.62 1.62 0 0 1 -0.596 0.12 1.625 1.625 0 0 1 -0.582 -0.12C2.51 12.359 0 8.489 '
+    '0 4.353V1.5Z" />'
+)
+SHIELD_BOX = "0 0 14 14"
+
 # Glyphs that do not come from the Streamline set. They are emitted after the
 # generated ones and carry their own viewBox instead of going through G's
 # 14-unit grid; the rendered box is 16px either way.
@@ -326,6 +351,9 @@ EXTRA_ACTION = [
     # that means them.
     imported("IconGithub", "The project's GitHub repository", "0 0 24 24", (0.0, 0.297, 24.0, 23.406), "github"),
     ("IconKeyRevoke", "Revoke a key or a passkey", KEY_REVOKE_BOX, KEY_REVOKE),
+    ("IconShield", "Security: sign-in, second factor and passkeys", SHIELD_BOX, SHIELD),
+    ("IconEye", "Show, reveal or preview", EYE_BOX, EYE),
+    ("IconEyeOff", "Hide what IconEye revealed", EYE_BOX, EYE_OFF),
 ]
 
 ATTRIBUTION = """// %s
