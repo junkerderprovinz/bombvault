@@ -10,6 +10,7 @@ import type { StreamingSettings } from "../../lib/api";
 
 const saved: StreamingSettings[] = [];
 let streamingNow = "";
+let refuse = false;
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -27,7 +28,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
       }),
     setStreaming: (v: StreamingSettings) => {
       saved.push(v);
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(refuse ? { ok: false, error: "database is locked" } : { ok: true });
     },
   };
 });
@@ -55,6 +56,7 @@ afterEach(() => {
   cleanup();
   saved.length = 0;
   streamingNow = "";
+  refuse = false;
 });
 
 it("shows the media servers picked by image name", async () => {
@@ -93,4 +95,21 @@ it("names the server whose stream slows the copies", async () => {
     fireEvent.click(screen.getByRole("switch", { name: new RegExp(en["streaming.toggle"]) }));
   });
   expect(screen.getByText(en["streaming.now"].replace("{name}", "plex"))).toBeTruthy();
+});
+
+it("takes back a server choice the server refused, so the next save leaves it out", async () => {
+  await renderCard();
+  refuse = true;
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: en["streaming.pick"] }));
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("option", { name: /jellyfin/ }));
+  });
+  expect(screen.getByRole("option", { name: /jellyfin/ }).getAttribute("aria-selected")).toBe("false");
+  refuse = false;
+  await act(async () => {
+    fireEvent.click(screen.getByRole("switch", { name: new RegExp(en["streaming.toggle"]) }));
+  });
+  expect(saved.at(-1)).toMatchObject({ enabled: true, mediaServers: ["plex"], mediaServersAuto: true });
 });
