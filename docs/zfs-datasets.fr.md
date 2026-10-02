@@ -181,6 +181,7 @@ La page, l'historique des exécutions et les notifications nomment un problème 
 | `create-failed` | Le nouveau jeu de données n'a pas pu être créé. | Les détails montrent le message de zfs. Vérifiez que le jeu de données parent existe. |
 | `new-dataset-not-visible` | Le nouveau jeu de données a été créé, mais BombVault ne le voit pas, donc rien n'a été restauré. | Le jeu de données reste sur le serveur. Montez-le sous le chemin Host Data et restaurez dedans. |
 | `set-properties-failed` | Les propriétés enregistrées n'ont pas pu être appliquées, donc rien n'a été restauré. | Les détails affichent le message de zfs. |
+| `set-limits-failed` | Les fichiers ont été restaurés, mais le quota ou la réservation enregistré n'a pas pu être appliqué. | Les détails montrent le message de zfs. Appliquez vous-même le quota ou la réservation avec `zfs set`. |
 
 ### Vérifier ce que voit le conteneur {#mountinfo}
 

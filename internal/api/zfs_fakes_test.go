@@ -47,6 +47,8 @@ type fakeZFSHost struct {
 	// onSet runs when properties are set, for a test that checks what
 	// happened before.
 	onSet func()
+	// setErr answers a property set, so a test can make one fail.
+	setErr func(p zfs.Properties) error
 	// strictTree lists only the asked root and its descendants, and answers
 	// not-found for a root the tree does not hold.
 	strictTree bool
@@ -212,6 +214,9 @@ func (h *fakeZFSHost) SetProperties(_ context.Context, dataset string, p zfs.Pro
 	h.record(strings.Join(args[1:], " "))
 	if h.onSet != nil {
 		h.onSet()
+	}
+	if h.setErr != nil {
+		return h.setErr(p)
 	}
 	return nil
 }

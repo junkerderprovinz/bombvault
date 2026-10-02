@@ -1717,6 +1717,8 @@ const ja: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "新しいデータセットは作成されましたが、BombVault から見えないため何も復元していません。",
   "zfs.fix.new-dataset-not-visible": "データセットはサーバーに残ります。Host Data のパスの下にマウントしてから、そこへ復元してください。",
   "zfs.code.set-properties-failed": "保存済みのプロパティを設定できなかったため、何も復元していません。",
+  "zfs.code.set-limits-failed": "ファイルは復元しましたが、保存済みのクォータまたは予約を設定できませんでした。",
+  "zfs.fix.set-limits-failed": "詳細に zfs のメッセージが表示されます。クォータまたは予約は zfs set で設定してください。",
   "zfs.code.unknown": "不明な状態 ({code})。",
   "zfs.fix.host-placeholder": "コンテナのテンプレートで Host SSH: Address をこのサーバーの LAN の IP にしてください。",
   "zfs.fix.ssh-auth": "このカードに出ているコマンドを、サーバーのターミナルで一度実行してください。",

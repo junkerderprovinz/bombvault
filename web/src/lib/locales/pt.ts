@@ -1725,6 +1725,8 @@ const pt: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "O novo conjunto de dados foi criado, mas o BombVault não o vê, por isso nada foi restaurado.",
   "zfs.fix.new-dataset-not-visible": "O conjunto de dados fica no servidor. Monte-o abaixo do caminho Host Data e restaure para dentro dele.",
   "zfs.code.set-properties-failed": "Não foi possível definir as propriedades guardadas, por isso nada foi restaurado.",
+  "zfs.code.set-limits-failed": "Os ficheiros foram restaurados, mas não foi possível definir a quota ou a reserva guardada.",
+  "zfs.fix.set-limits-failed": "Os detalhes mostram a mensagem do zfs. Defina a quota ou a reserva manualmente com zfs set.",
   "zfs.code.unknown": "Estado desconhecido ({code}).",
   "zfs.fix.host-placeholder": "No modelo do contentor, define Host SSH: Address com o IP local deste servidor.",
   "zfs.fix.ssh-auth": "Executa uma vez o comando que este cartão mostra num terminal deste servidor.",

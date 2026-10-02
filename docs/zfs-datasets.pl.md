@@ -181,6 +181,7 @@ Strona, historia przebiegów i powiadomienia nazywają problem jednym z tych kod
 | `create-failed` | Nie udało się utworzyć nowego zbioru danych. | Szczegóły pokazują komunikat zfs. Sprawdź, czy nadrzędny zbiór danych istnieje. |
 | `new-dataset-not-visible` | Nowy zbiór danych został utworzony, ale BombVault go nie widzi, więc nic nie zostało przywrócone. | Zbiór danych zostaje na serwerze. Zamontuj go pod ścieżką Host Data i przywróć do niego. |
 | `set-properties-failed` | Nie udało się ustawić zapisanych właściwości, więc nic nie zostało przywrócone. | Szczegóły pokazują komunikat zfs. |
+| `set-limits-failed` | Pliki zostały przywrócone, ale nie udało się ustawić zapisanego limitu (quota) ani rezerwacji. | Szczegóły pokazują komunikat zfs. Ustaw limit lub rezerwację samodzielnie poleceniem `zfs set`. |
 
 ### Sprawdzanie, co widzi kontener {#mountinfo}
 

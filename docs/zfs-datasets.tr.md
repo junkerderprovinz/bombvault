@@ -181,6 +181,7 @@ Sayfa, çalıştırma geçmişi ve bildirimler bir sorunu bu kodlardan biriyle a
 | `create-failed` | Yeni veri kümesi oluşturulamadı. | Ayrıntılar zfs'in mesajını gösterir. Üstteki veri kümesinin var olduğunu kontrol et. |
 | `new-dataset-not-visible` | Yeni veri kümesi oluşturuldu ama BombVault onu göremiyor, bu yüzden hiçbir şey geri yüklenmedi. | Veri kümesi sunucuda kalır. Onu Host Data yolunun altına bağla ve içine geri yükle. |
 | `set-properties-failed` | Saklanan özellikler ayarlanamadı, bu yüzden hiçbir şey geri yüklenmedi. | Ayrıntılar zfs'nin iletisini gösterir. |
+| `set-limits-failed` | Dosyalar geri yüklendi, ancak saklanan kota ya da rezervasyon ayarlanamadı. | Ayrıntılar zfs'in mesajını gösterir. Kotayı ya da rezervasyonu `zfs set` ile kendin ayarla. |
 
 ### Konteynerin ne gördüğünü denetlemek {#mountinfo}
 

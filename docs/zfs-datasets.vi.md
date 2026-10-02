@@ -181,6 +181,7 @@ Trang, lịch sử chạy và thông báo nêu một vấn đề bằng một tr
 | `create-failed` | Không tạo được tập dữ liệu mới. | Phần chi tiết cho thấy thông báo của zfs. Kiểm tra tập dữ liệu phía trên có tồn tại không. |
 | `new-dataset-not-visible` | Tập dữ liệu mới đã được tạo nhưng BombVault không thấy nó, nên chưa khôi phục gì. | Tập dữ liệu vẫn còn trên máy chủ. Gắn nó dưới đường dẫn Host Data rồi khôi phục vào đó. |
 | `set-properties-failed` | Không đặt được các thuộc tính đã lưu, nên chưa khôi phục gì. | Phần chi tiết hiển thị thông báo của zfs. |
+| `set-limits-failed` | Đã khôi phục các tệp, nhưng không đặt được hạn mức (quota) hoặc dung lượng đặt trước (reservation) đã lưu. | Phần chi tiết cho thấy thông báo của zfs. Hãy tự đặt hạn mức hoặc dung lượng đặt trước bằng `zfs set`. |
 
 ### Kiểm tra những gì container nhìn thấy {#mountinfo}
 

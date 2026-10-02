@@ -1720,6 +1720,8 @@ const pl: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Nowy zbiór danych został utworzony, ale BombVault go nie widzi, więc nic nie zostało przywrócone.",
   "zfs.fix.new-dataset-not-visible": "Zbiór danych zostaje na serwerze. Zamontuj go pod ścieżką Host Data i przywróć do niego.",
   "zfs.code.set-properties-failed": "Nie udało się ustawić zapisanych właściwości, więc nic nie zostało przywrócone.",
+  "zfs.code.set-limits-failed": "Pliki zostały przywrócone, ale nie udało się ustawić zapisanego limitu (quota) ani rezerwacji.",
+  "zfs.fix.set-limits-failed": "Szczegóły pokazują komunikat zfs. Ustaw limit lub rezerwację samodzielnie poleceniem zfs set.",
   "zfs.code.unknown": "Nieznany stan ({code}).",
   "zfs.fix.host-placeholder": "W szablonie kontenera ustaw Host SSH: Address na lokalny adres IP tego serwera.",
   "zfs.fix.ssh-auth": "Uruchom polecenie z tej karty raz w terminalu na tym serwerze.",

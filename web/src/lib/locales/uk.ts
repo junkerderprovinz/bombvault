@@ -1720,6 +1720,8 @@ const uk: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Новий набір даних створено, але BombVault його не бачить, тому нічого не відновлено.",
   "zfs.fix.new-dataset-not-visible": "Набір даних залишається на сервері. Змонтуйте його нижче шляху Host Data і відновіть у нього.",
   "zfs.code.set-properties-failed": "Не вдалося задати збережені властивості, тому нічого не відновлено.",
+  "zfs.code.set-limits-failed": "Файли відновлено, але збережену квоту чи резервування задати не вдалося.",
+  "zfs.fix.set-limits-failed": "У подробицях є повідомлення zfs. Задайте квоту чи резервування самі через zfs set.",
   "zfs.code.unknown": "Невідомий стан ({code}).",
   "zfs.fix.host-placeholder": "У шаблоні контейнера задай Host SSH: Address як локальний IP цього сервера.",
   "zfs.fix.ssh-auth": "Виконай команду з цієї картки один раз у терміналі на цьому сервері.",

@@ -181,6 +181,7 @@ Stránka, historie běhů a oznámení pojmenují problém jedním z těchto kó
 | `create-failed` | Novou datovou sadu se nepodařilo vytvořit. | Podrobnosti ukazují zprávu zfs. Zkontroluj, že nadřazená datová sada existuje. |
 | `new-dataset-not-visible` | Nová datová sada byla vytvořena, ale BombVault ji nevidí, takže se nic neobnovilo. | Datová sada zůstává na serveru. Připoj ji pod cestu Host Data a obnov do ní. |
 | `set-properties-failed` | Uložené vlastnosti se nepodařilo nastavit, takže se nic neobnovilo. | Podrobnosti ukazují zprávu zfs. |
+| `set-limits-failed` | Soubory se obnovily, ale uloženou kvótu nebo rezervaci se nepodařilo nastavit. | Podrobnosti ukazují zprávu zfs. Nastav kvótu nebo rezervaci sám pomocí `zfs set`. |
 
 ### Kontrola toho, co kontejner vidí {#mountinfo}
 

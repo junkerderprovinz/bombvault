@@ -181,6 +181,7 @@ La pagina, la cronologia delle esecuzioni e le notifiche nominano un problema co
 | `create-failed` | Non è stato possibile creare il nuovo dataset. | I dettagli mostrano il messaggio di zfs. Controlla che il dataset superiore esista. |
 | `new-dataset-not-visible` | Il nuovo dataset è stato creato, ma BombVault non lo vede, quindi non è stato ripristinato nulla. | Il dataset resta sul server. Montalo sotto il percorso Host Data e ripristina al suo interno. |
 | `set-properties-failed` | Non è stato possibile impostare le proprietà salvate, quindi non è stato ripristinato nulla. | I dettagli mostrano il messaggio di zfs. |
+| `set-limits-failed` | I file sono stati ripristinati, ma non è stato possibile impostare la quota o la prenotazione salvata. | I dettagli mostrano il messaggio di zfs. Imposta tu la quota o la prenotazione con `zfs set`. |
 
 ### Controllare cosa vede il container {#mountinfo}
 

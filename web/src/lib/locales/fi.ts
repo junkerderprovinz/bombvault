@@ -1725,6 +1725,8 @@ const fi: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Uusi tietojoukko luotiin, mutta BombVault ei näe sitä, joten mitään ei palautettu.",
   "zfs.fix.new-dataset-not-visible": "Tietojoukko jää palvelimelle. Liitä se Host Data -polun alle ja palauta sen sisään.",
   "zfs.code.set-properties-failed": "Tallennettuja ominaisuuksia ei voitu asettaa, joten mitään ei palautettu.",
+  "zfs.code.set-limits-failed": "Tiedostot palautettiin, mutta tallennettua kiintiötä tai varausta ei voitu asettaa.",
+  "zfs.fix.set-limits-failed": "Yksityiskohdissa näkyy zfs:n viesti. Aseta kiintiö tai varaus itse komennolla zfs set.",
   "zfs.code.unknown": "Tuntematon tila ({code}).",
   "zfs.fix.host-placeholder": "Aseta konttipohjassa Host SSH: Address tämän palvelimen lähiverkko-osoitteeksi.",
   "zfs.fix.ssh-auth": "Aja tällä kortilla näkyvä komento kerran palvelimen päätteessä.",

@@ -2043,6 +2043,8 @@ const is: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Nýja gagnasafnið var búið til, en BombVault sér það ekki, svo ekkert var endurheimt.",
   "zfs.fix.new-dataset-not-visible": "Gagnasafnið verður áfram á þjóninum. Tengdu það undir Host Data-slóðina og endurheimtu í það.",
   "zfs.code.set-properties-failed": "Ekki tókst að stilla vistuðu eiginleikana, svo ekkert var endurheimt.",
+  "zfs.code.set-limits-failed": "Skrárnar voru endurheimtar, en ekki tókst að stilla vistaðan kvóta eða frátekt.",
+  "zfs.fix.set-limits-failed": "Nánari upplýsingar sýna skilaboð zfs. Stilltu kvótann eða frátektina með zfs set.",
   "zfs.code.unknown": "Óþekkt staða ({code}).",
   "zfs.fix.host-placeholder": "Stilltu Host SSH: Address í gámasniðmátinu á staðarnetsvistfang þjónsins.",
   "zfs.fix.ssh-auth": "Keyrðu skipunina af þessu spjaldi einu sinni í skipanaglugga á þjóninum.",

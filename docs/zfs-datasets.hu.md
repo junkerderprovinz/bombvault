@@ -181,6 +181,7 @@ Az oldal, a futási előzmények és az értesítések ezek egyikével nevezik m
 | `create-failed` | Az új adatkészletet nem sikerült létrehozni. | A részletek a zfs üzenetét mutatják. Ellenőrizd, hogy a fölötte lévő adatkészlet létezik-e. |
 | `new-dataset-not-visible` | Az új adatkészlet létrejött, de a BombVault nem látja, ezért semmi sem lett visszaállítva. | Az adatkészlet a szerveren marad. Csatold a Host Data útvonal alá, és állíts vissza bele. |
 | `set-properties-failed` | A tárolt tulajdonságokat nem sikerült beállítani, ezért semmi sem lett visszaállítva. | A részletek mutatják a zfs üzenetét. |
+| `set-limits-failed` | A fájlok visszaálltak, de a tárolt kvótát vagy foglalást nem sikerült beállítani. | A részletek a zfs üzenetét mutatják. Állítsd be a kvótát vagy a foglalást magad a `zfs set` paranccsal. |
 
 ### Mit lát a konténer {#mountinfo}
 

@@ -1717,6 +1717,8 @@ const ko: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "새 데이터세트는 만들었지만 BombVault에서 보이지 않아 아무것도 복원하지 않았습니다.",
   "zfs.fix.new-dataset-not-visible": "데이터세트는 서버에 남아 있습니다. Host Data 경로 아래에 마운트한 뒤 그 안으로 복원하세요.",
   "zfs.code.set-properties-failed": "저장된 속성을 설정하지 못해 아무것도 복원하지 않았습니다.",
+  "zfs.code.set-limits-failed": "파일은 복원했지만 저장된 쿼터나 예약을 설정하지 못했습니다.",
+  "zfs.fix.set-limits-failed": "세부 정보에 zfs 메시지가 나옵니다. 쿼터나 예약은 zfs set으로 직접 설정하세요.",
   "zfs.code.unknown": "알 수 없는 상태 ({code}).",
   "zfs.fix.host-placeholder": "컨테이너 템플릿에서 Host SSH: Address를 이 서버의 랜 IP로 맞추세요.",
   "zfs.fix.ssh-auth": "이 카드에 보이는 명령을 서버 터미널에서 한 번 실행하세요.",

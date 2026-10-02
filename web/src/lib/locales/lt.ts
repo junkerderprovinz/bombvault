@@ -2043,6 +2043,8 @@ const lt: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Naujas duomenų rinkinys sukurtas, bet BombVault jo nemato, todėl niekas neatkurta.",
   "zfs.fix.new-dataset-not-visible": "Duomenų rinkinys lieka serveryje. Prijunk jį po Host Data keliu ir atkurk į jį.",
   "zfs.code.set-properties-failed": "Išsaugotų savybių nustatyti nepavyko, todėl niekas neatkurta.",
+  "zfs.code.set-limits-failed": "Failai atkurti, bet išsaugotos kvotos ar rezervacijos nustatyti nepavyko.",
+  "zfs.fix.set-limits-failed": "Išsamioje informacijoje rodomas zfs pranešimas. Kvotą ar rezervaciją nustatyk pats su zfs set.",
   "zfs.code.unknown": "Nežinoma būsena ({code}).",
   "zfs.fix.host-placeholder": "Konteinerio šablone nustatyk Host SSH: Address į šio serverio vietinio tinklo IP.",
   "zfs.fix.ssh-auth": "Paleisk šioje kortelėje rodomą komandą vieną kartą serverio terminale.",

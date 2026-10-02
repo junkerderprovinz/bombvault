@@ -1723,6 +1723,8 @@ const cs: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Nová datová sada byla vytvořena, ale BombVault ji nevidí, takže se nic neobnovilo.",
   "zfs.fix.new-dataset-not-visible": "Datová sada zůstává na serveru. Připoj ji pod cestu Host Data a obnov do ní.",
   "zfs.code.set-properties-failed": "Uložené vlastnosti se nepodařilo nastavit, takže se nic neobnovilo.",
+  "zfs.code.set-limits-failed": "Soubory se obnovily, ale uloženou kvótu nebo rezervaci se nepodařilo nastavit.",
+  "zfs.fix.set-limits-failed": "Podrobnosti ukazují zprávu zfs. Nastav kvótu nebo rezervaci sám pomocí zfs set.",
   "zfs.code.unknown": "Neznámý stav ({code}).",
   "zfs.fix.host-placeholder": "V šabloně kontejneru nastav Host SSH: Address na místní IP tohoto serveru.",
   "zfs.fix.ssh-auth": "Spusť příkaz z této karty jednou v terminálu na tomto serveru.",

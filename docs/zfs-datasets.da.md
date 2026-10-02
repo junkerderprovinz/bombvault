@@ -181,6 +181,7 @@ Siden, kørselshistorikken og notifikationerne nævner et problem med en af diss
 | `create-failed` | Det nye datasæt kunne ikke oprettes. | Detaljerne viser beskeden fra zfs. Tjek, at datasættet ovenover findes. |
 | `new-dataset-not-visible` | Det nye datasæt blev oprettet, men BombVault kan ikke se det, så intet blev gendannet. | Datasættet bliver på serveren. Montér det under Host Data-stien, og gendan ind i det. |
 | `set-properties-failed` | De gemte egenskaber kunne ikke sættes, så intet blev gendannet. | Detaljerne viser zfs' besked. |
+| `set-limits-failed` | Filerne blev gendannet, men den gemte kvote eller reservation kunne ikke sættes. | Detaljerne viser beskeden fra zfs. Sæt selv kvoten eller reservationen med `zfs set`. |
 
 ### Tjek, hvad containeren ser {#mountinfo}
 

@@ -1723,6 +1723,8 @@ const es: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "El conjunto de datos nuevo se creó, pero BombVault no lo ve, así que no se restauró nada.",
   "zfs.fix.new-dataset-not-visible": "El conjunto de datos queda en el servidor. Móntalo bajo la ruta de Host Data y restaura dentro.",
   "zfs.code.set-properties-failed": "No se pudieron aplicar las propiedades guardadas, así que no se restauró nada.",
+  "zfs.code.set-limits-failed": "Los archivos se restauraron, pero no se pudo aplicar la cuota o la reserva guardada.",
+  "zfs.fix.set-limits-failed": "Los detalles muestran el mensaje de zfs. Aplica tú mismo la cuota o la reserva con zfs set.",
   "zfs.code.unknown": "Estado desconocido ({code}).",
   "zfs.fix.host-placeholder": "En la plantilla del contenedor, pon en Host SSH: Address la IP local de este servidor.",
   "zfs.fix.ssh-auth": "Ejecuta una vez el comando que muestra esta tarjeta en una terminal de este servidor.",

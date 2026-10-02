@@ -1728,6 +1728,8 @@ const hu: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Az új adatkészlet létrejött, de a BombVault nem látja, ezért semmi sem lett visszaállítva.",
   "zfs.fix.new-dataset-not-visible": "Az adatkészlet a szerveren marad. Csatold a Host Data útvonal alá, és állíts vissza bele.",
   "zfs.code.set-properties-failed": "A tárolt tulajdonságokat nem sikerült beállítani, ezért semmi sem lett visszaállítva.",
+  "zfs.code.set-limits-failed": "A fájlok visszaálltak, de a tárolt kvótát vagy foglalást nem sikerült beállítani.",
+  "zfs.fix.set-limits-failed": "A részletek a zfs üzenetét mutatják. Állítsd be a kvótát vagy a foglalást magad a zfs set paranccsal.",
   "zfs.code.unknown": "Ismeretlen állapot ({code}).",
   "zfs.fix.host-placeholder": "A konténersablonban állítsd a Host SSH: Address mezőt a kiszolgáló helyi IP-címére.",
   "zfs.fix.ssh-auth": "Futtasd az ezen a kártyán látható parancsot egyszer a kiszolgáló termináljában.",

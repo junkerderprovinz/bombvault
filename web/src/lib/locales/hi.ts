@@ -2043,6 +2043,8 @@ const hi: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "नया डेटासेट बन गया, पर BombVault उसे देख नहीं पा रहा, इसलिए कुछ रीस्टोर नहीं हुआ।",
   "zfs.fix.new-dataset-not-visible": "डेटासेट सर्वर पर रहता है। उसे Host Data पथ के नीचे माउंट करें और उसमें रीस्टोर करें।",
   "zfs.code.set-properties-failed": "सहेजी गई प्रॉपर्टी सेट नहीं हो सकीं, इसलिए कुछ रीस्टोर नहीं हुआ।",
+  "zfs.code.set-limits-failed": "फ़ाइलें रीस्टोर हो गईं, लेकिन सहेजा गया कोटा या रिज़र्वेशन सेट नहीं हो सका।",
+  "zfs.fix.set-limits-failed": "विवरण में zfs का संदेश है। कोटा या रिज़र्वेशन खुद zfs set से सेट करें।",
   "zfs.code.unknown": "अज्ञात स्थिति ({code})।",
   "zfs.fix.host-placeholder": "कंटेनर टेम्पलेट में Host SSH: Address को इस सर्वर के LAN IP पर सेट करें।",
   "zfs.fix.ssh-auth": "इस कार्ड पर दिखाई गई कमांड को इस सर्वर के टर्मिनल में एक बार चलाएँ।",

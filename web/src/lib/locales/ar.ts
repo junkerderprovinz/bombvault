@@ -1728,6 +1728,8 @@ const ar: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "أُنشئت مجموعة البيانات الجديدة، لكن BombVault لا يراها، لذلك لم تُستعد أي بيانات.",
   "zfs.fix.new-dataset-not-visible": "تبقى مجموعة البيانات على الخادم. ركّبها تحت مسار Host Data واستعد إليها.",
   "zfs.code.set-properties-failed": "تعذّر ضبط الخصائص المحفوظة، لذلك لم تُستعد أي بيانات.",
+  "zfs.code.set-limits-failed": "استُعيدت الملفات، لكن تعذّر ضبط الحصة أو الحجز المحفوظ.",
+  "zfs.fix.set-limits-failed": "تعرض التفاصيل رسالة zfs. اضبط الحصة أو الحجز بنفسك باستخدام zfs set.",
   "zfs.code.unknown": "حالة غير معروفة ({code}).",
   "zfs.fix.host-placeholder": "في قالب الحاوية اضبط Host SSH: Address على عنوان IP المحلي لهذا الخادم.",
   "zfs.fix.ssh-auth": "شغّل الأمر الظاهر على هذه البطاقة مرة واحدة في طرفية الخادم.",

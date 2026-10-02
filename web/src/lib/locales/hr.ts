@@ -2043,6 +2043,8 @@ const hr: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Novi skup podataka je stvoren, ali ga BombVault ne vidi, pa ništa nije vraćeno.",
   "zfs.fix.new-dataset-not-visible": "Skup podataka ostaje na poslužitelju. Montiraj ga ispod putanje Host Data i vrati podatke u njega.",
   "zfs.code.set-properties-failed": "Spremljena svojstva nije bilo moguće postaviti, pa ništa nije vraćeno.",
+  "zfs.code.set-limits-failed": "Datoteke su vraćene, ali spremljenu kvotu ili rezervaciju nije bilo moguće postaviti.",
+  "zfs.fix.set-limits-failed": "Pojedinosti prikazuju poruku zfs-a. Postavi kvotu ili rezervaciju sam pomoću zfs set.",
   "zfs.code.unknown": "Nepoznato stanje ({code}).",
   "zfs.fix.host-placeholder": "U predlošku spremnika postavi Host SSH: Address na lokalnu IP adresu ovog poslužitelja.",
   "zfs.fix.ssh-auth": "Pokreni naredbu s ove kartice jednom u terminalu na ovom poslužitelju.",

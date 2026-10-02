@@ -1728,6 +1728,8 @@ const ro: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Setul de date nou a fost creat, dar BombVault nu îl vede, așa că nu s-a restaurat nimic.",
   "zfs.fix.new-dataset-not-visible": "Setul de date rămâne pe server. Montează-l sub calea Host Data și restaurează în el.",
   "zfs.code.set-properties-failed": "Proprietățile salvate nu au putut fi setate, așa că nu s-a restaurat nimic.",
+  "zfs.code.set-limits-failed": "Fișierele au fost restaurate, dar cota sau rezervarea salvată nu a putut fi setată.",
+  "zfs.fix.set-limits-failed": "Detaliile arată mesajul zfs. Setează singur cota sau rezervarea cu zfs set.",
   "zfs.code.unknown": "Stare necunoscută ({code}).",
   "zfs.fix.host-placeholder": "În șablonul containerului, pune la Host SSH: Address adresa IP locală a acestui server.",
   "zfs.fix.ssh-auth": "Rulează o dată comanda afișată pe acest card într-un terminal pe acest server.",

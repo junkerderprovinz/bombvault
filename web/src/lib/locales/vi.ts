@@ -1717,6 +1717,8 @@ const vi: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Tập dữ liệu mới đã được tạo nhưng BombVault không thấy nó, nên chưa khôi phục gì.",
   "zfs.fix.new-dataset-not-visible": "Tập dữ liệu vẫn còn trên máy chủ. Gắn nó dưới đường dẫn Host Data rồi khôi phục vào đó.",
   "zfs.code.set-properties-failed": "Không đặt được các thuộc tính đã lưu, nên chưa khôi phục gì.",
+  "zfs.code.set-limits-failed": "Đã khôi phục các tệp, nhưng không đặt được hạn mức (quota) hoặc dung lượng đặt trước (reservation) đã lưu.",
+  "zfs.fix.set-limits-failed": "Phần chi tiết cho thấy thông báo của zfs. Hãy tự đặt hạn mức hoặc dung lượng đặt trước bằng zfs set.",
   "zfs.code.unknown": "Trạng thái lạ ({code}).",
   "zfs.fix.host-placeholder": "Trong mẫu container, đặt Host SSH: Address thành IP nội bộ của máy chủ này.",
   "zfs.fix.ssh-auth": "Chạy lệnh hiện trên thẻ này một lần trong terminal của máy chủ.",

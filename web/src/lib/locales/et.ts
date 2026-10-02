@@ -2043,6 +2043,8 @@ const et: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Uus andmestik loodi, kuid BombVault ei näe seda, seega midagi ei taastatud.",
   "zfs.fix.new-dataset-not-visible": "Andmestik jääb serverisse. Ühenda see Host Data tee alla ja taasta sellesse.",
   "zfs.code.set-properties-failed": "Salvestatud omadusi ei õnnestunud seada, seega midagi ei taastatud.",
+  "zfs.code.set-limits-failed": "Failid taastati, kuid salvestatud kvooti või reservatsiooni ei õnnestunud seada.",
+  "zfs.fix.set-limits-failed": "Üksikasjades on zfs-i teade. Sea kvoot või reservatsioon ise käsuga zfs set.",
   "zfs.code.unknown": "Tundmatu olek ({code}).",
   "zfs.fix.host-placeholder": "Sea konteineri mallis Host SSH: Address selle serveri kohtvõrgu IP-ks.",
   "zfs.fix.ssh-auth": "Käivita sellel kaardil näidatud käsk ühe korra serveri terminalis.",

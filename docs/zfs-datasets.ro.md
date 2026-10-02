@@ -181,6 +181,7 @@ Pagina, istoricul rulărilor și notificările numesc o problemă cu unul dintre
 | `create-failed` | Setul de date nou nu a putut fi creat. | Detaliile arată mesajul zfs. Verifică dacă setul de date de deasupra există. |
 | `new-dataset-not-visible` | Setul de date nou a fost creat, dar BombVault nu îl vede, așa că nu s-a restaurat nimic. | Setul de date rămâne pe server. Montează-l sub calea Host Data și restaurează în el. |
 | `set-properties-failed` | Proprietățile salvate nu au putut fi setate, așa că nu s-a restaurat nimic. | Detaliile arată mesajul zfs. |
+| `set-limits-failed` | Fișierele au fost restaurate, dar cota sau rezervarea salvată nu a putut fi setată. | Detaliile arată mesajul zfs. Setează singur cota sau rezervarea cu `zfs set`. |
 
 ### Verifică ce vede containerul {#mountinfo}
 

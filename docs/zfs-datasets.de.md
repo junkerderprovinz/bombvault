@@ -181,6 +181,7 @@ Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit ein
 | `create-failed` | Das neue Dataset konnte nicht angelegt werden. | Die Details zeigen die Meldung von zfs. Prüfe, ob das Dataset darüber existiert. |
 | `new-dataset-not-visible` | Das neue Dataset wurde angelegt, aber BombVault sieht es nicht, deshalb wurde nichts wiederhergestellt. | Das Dataset bleibt auf dem Server. Hänge es unterhalb des Host-Data-Pfads ein und stelle dort hinein wieder her. |
 | `set-properties-failed` | Die gespeicherten Eigenschaften konnten nicht gesetzt werden, deshalb wurde nichts wiederhergestellt. | Die Details zeigen die Meldung von zfs. |
+| `set-limits-failed` | Die Dateien wurden wiederhergestellt, aber die gespeicherte Quota oder Reservierung konnte nicht gesetzt werden. | Die Details zeigen die Meldung von zfs. Setze die Quota oder Reservierung selbst mit `zfs set`. |
 
 ### Prüfen, was der Container sieht {#mountinfo}
 

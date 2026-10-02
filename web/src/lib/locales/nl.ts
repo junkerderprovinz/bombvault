@@ -1722,6 +1722,8 @@ const nl: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "De nieuwe dataset is aangemaakt, maar BombVault ziet hem niet, dus er is niets hersteld.",
   "zfs.fix.new-dataset-not-visible": "De dataset blijft op de server. Koppel hem onder het Host Data-pad en herstel erin.",
   "zfs.code.set-properties-failed": "De opgeslagen eigenschappen konden niet worden ingesteld, dus er is niets hersteld.",
+  "zfs.code.set-limits-failed": "De bestanden zijn hersteld, maar het opgeslagen quotum of de reservering kon niet worden ingesteld.",
+  "zfs.fix.set-limits-failed": "De details tonen de melding van zfs. Stel het quotum of de reservering zelf in met zfs set.",
   "zfs.code.unknown": "Onbekende toestand ({code}).",
   "zfs.fix.host-placeholder": "Zet in het containersjabloon Host SSH: Address op het lokale IP van deze server.",
   "zfs.fix.ssh-auth": "Voer het commando van deze kaart één keer uit in een terminal op deze server.",

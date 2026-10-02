@@ -181,6 +181,7 @@ A página, o histórico de execuções e as notificações indicam um problema c
 | `create-failed` | Não foi possível criar o novo conjunto de dados. | Os detalhes mostram a mensagem do zfs. Verifique se o conjunto de dados acima existe. |
 | `new-dataset-not-visible` | O novo conjunto de dados foi criado, mas o BombVault não o vê, por isso nada foi restaurado. | O conjunto de dados fica no servidor. Monte-o abaixo do caminho Host Data e restaure para dentro dele. |
 | `set-properties-failed` | Não foi possível definir as propriedades guardadas, por isso nada foi restaurado. | Os detalhes mostram a mensagem do zfs. |
+| `set-limits-failed` | Os ficheiros foram restaurados, mas não foi possível definir a quota ou a reserva guardada. | Os detalhes mostram a mensagem do zfs. Defina a quota ou a reserva manualmente com `zfs set`. |
 
 ### Verificar o que o contentor vê {#mountinfo}
 

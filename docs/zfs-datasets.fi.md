@@ -181,6 +181,7 @@ Sivu, ajohistoria ja ilmoitukset nimeävät ongelman jollakin näistä koodeista
 | `create-failed` | Uutta tietojoukkoa ei voitu luoda. | Yksityiskohdissa näkyy zfs:n viesti. Tarkista, että yläpuolinen tietojoukko on olemassa. |
 | `new-dataset-not-visible` | Uusi tietojoukko luotiin, mutta BombVault ei näe sitä, joten mitään ei palautettu. | Tietojoukko jää palvelimelle. Liitä se Host Data -polun alle ja palauta sen sisään. |
 | `set-properties-failed` | Tallennettuja ominaisuuksia ei voitu asettaa, joten mitään ei palautettu. | Tiedot näyttävät zfs:n viestin. |
+| `set-limits-failed` | Tiedostot palautettiin, mutta tallennettua kiintiötä tai varausta ei voitu asettaa. | Yksityiskohdissa näkyy zfs:n viesti. Aseta kiintiö tai varaus itse komennolla `zfs set`. |
 
 ### Tarkista, mitä kontti näkee {#mountinfo}
 

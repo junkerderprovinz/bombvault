@@ -2043,6 +2043,8 @@ const eu: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Datu multzo berria sortu da, baina BombVaultek ez du ikusten, beraz ez da ezer leheneratu.",
   "zfs.fix.new-dataset-not-visible": "Datu multzoak zerbitzarian jarraitzen du. Muntatu Host Data bidearen azpian eta leheneratu bertara.",
   "zfs.code.set-properties-failed": "Ezin izan dira gordetako propietateak ezarri, beraz ez da ezer leheneratu.",
+  "zfs.code.set-limits-failed": "Fitxategiak leheneratu dira, baina ezin izan da gordetako kuota edo erreserba ezarri.",
+  "zfs.fix.set-limits-failed": "Xehetasunek zfs-ren mezua erakusten dute. Ezarri zuk zeuk kuota edo erreserba zfs set erabiliz.",
   "zfs.code.unknown": "Egoera ezezaguna ({code}).",
   "zfs.fix.host-placeholder": "Edukiontziaren txantiloian, jarri Host SSH: Address zerbitzari honen sare lokaleko IP helbidearekin.",
   "zfs.fix.ssh-auth": "Exekutatu txartel honetan agertzen den agindua behin zerbitzariko terminal batean.",

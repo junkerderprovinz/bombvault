@@ -1725,6 +1725,8 @@ const sv: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Den nya datauppsättningen skapades, men BombVault ser den inte, så ingenting återställdes.",
   "zfs.fix.new-dataset-not-visible": "Datauppsättningen ligger kvar på servern. Montera den under Host Data-sökvägen och återställ till den.",
   "zfs.code.set-properties-failed": "De sparade egenskaperna kunde inte sättas, så ingenting återställdes.",
+  "zfs.code.set-limits-failed": "Filerna återställdes, men den sparade kvoten eller reservationen kunde inte sättas.",
+  "zfs.fix.set-limits-failed": "Detaljerna visar meddelandet från zfs. Sätt kvoten eller reservationen själv med zfs set.",
   "zfs.code.unknown": "Okänt tillstånd ({code}).",
   "zfs.fix.host-placeholder": "Sätt Host SSH: Address i containermallen till serverns lokala IP-adress.",
   "zfs.fix.ssh-auth": "Kör kommandot från det här kortet en gång i en terminal på servern.",

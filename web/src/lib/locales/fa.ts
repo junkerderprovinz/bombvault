@@ -2043,6 +2043,8 @@ const fa: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "مجموعه‌دادهٔ تازه ساخته شد، اما BombVault آن را نمی‌بیند، پس چیزی بازیابی نشد.",
   "zfs.fix.new-dataset-not-visible": "مجموعه‌داده روی سرور می‌ماند. آن را زیر مسیر Host Data وصل کن و درون آن بازیابی کن.",
   "zfs.code.set-properties-failed": "تنظیم ویژگی‌های ذخیره‌شده ممکن نشد، پس چیزی بازیابی نشد.",
+  "zfs.code.set-limits-failed": "فایل‌ها بازیابی شدند، اما سهمیه یا رزرو ذخیره‌شده تنظیم نشد.",
+  "zfs.fix.set-limits-failed": "جزئیات پیام zfs را نشان می‌دهد. سهمیه یا رزرو را خودت با zfs set تنظیم کن.",
   "zfs.code.unknown": "وضعیت ناشناخته ({code}).",
   "zfs.fix.host-placeholder": "در الگوی کانتینر، Host SSH: Address را روی نشانی IP محلی این سرور بگذار.",
   "zfs.fix.ssh-auth": "فرمان نشان‌داده‌شده روی این کارت را یک بار در پایانهٔ سرور اجرا کن.",

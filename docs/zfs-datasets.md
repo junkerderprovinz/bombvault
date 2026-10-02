@@ -181,6 +181,7 @@ The page, the run history and the notifications name a problem with one of these
 | `create-failed` | The new dataset could not be created. | The details show zfs's message. Check that the dataset above it exists. |
 | `new-dataset-not-visible` | The new dataset was created, but BombVault cannot see it, so nothing was restored. | The dataset stays on the server. Mount it below the Host Data path and restore into it. |
 | `set-properties-failed` | The stored properties could not be set, so nothing was restored. | The details show zfs's message. |
+| `set-limits-failed` | The files were restored, but the stored quota or reservation could not be set. | The details show zfs's message. Set the quota or reservation yourself with `zfs set`. |
 
 ### Checking what the container sees {#mountinfo}
 

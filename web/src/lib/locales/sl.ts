@@ -2027,6 +2027,8 @@ const sl: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Nova zbirka podatkov je bila ustvarjena, a je BombVault ne vidi, zato ni bilo nič obnovljeno.",
   "zfs.fix.new-dataset-not-visible": "Zbirka podatkov ostane na strežniku. Priklopi jo pod pot Host Data in obnovi vanjo.",
   "zfs.code.set-properties-failed": "Shranjenih lastnosti ni bilo mogoče nastaviti, zato ni bilo nič obnovljeno.",
+  "zfs.code.set-limits-failed": "Datoteke so obnovljene, vendar shranjene kvote ali rezervacije ni bilo mogoče nastaviti.",
+  "zfs.fix.set-limits-failed": "Podrobnosti prikazujejo sporočilo zfs. Kvoto ali rezervacijo nastavi sam z zfs set.",
   "zfs.code.unknown": "Neznano stanje ({code}).",
   "zfs.fix.host-placeholder": "V predlogi vsebnika nastavi Host SSH: Address na krajevni IP tega strežnika.",
   "zfs.fix.ssh-auth": "Ukaz s te kartice enkrat zaženi v terminalu na tem strežniku.",

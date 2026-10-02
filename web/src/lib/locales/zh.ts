@@ -1717,6 +1717,8 @@ const zh: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "新数据集已创建，但 BombVault 看不到它，因此没有恢复任何内容。",
   "zfs.fix.new-dataset-not-visible": "数据集保留在服务器上。把它挂载到 Host Data 路径下，再恢复到其中。",
   "zfs.code.set-properties-failed": "无法设置保存的属性，因此没有恢复任何内容。",
+  "zfs.code.set-limits-failed": "文件已恢复，但无法设置保存的配额或预留。",
+  "zfs.fix.set-limits-failed": "详细信息中显示 zfs 的消息。请用 zfs set 自行设置配额或预留。",
   "zfs.code.unknown": "未知状态（{code}）。",
   "zfs.fix.host-placeholder": "在容器模板里把 Host SSH: Address 设成这台服务器的局域网 IP。",
   "zfs.fix.ssh-auth": "在服务器的终端里把这张卡片上的命令执行一次。",

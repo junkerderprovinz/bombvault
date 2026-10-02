@@ -2043,6 +2043,8 @@ const lv: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Jaunā datu kopa tika izveidota, bet BombVault to neredz, tāpēc nekas netika atjaunots.",
   "zfs.fix.new-dataset-not-visible": "Datu kopa paliek serverī. Piemontē to zem Host Data ceļa un atjauno tajā.",
   "zfs.code.set-properties-failed": "Saglabātās īpašības neizdevās iestatīt, tāpēc nekas netika atjaunots.",
+  "zfs.code.set-limits-failed": "Faili tika atjaunoti, bet saglabāto kvotu vai rezervāciju neizdevās iestatīt.",
+  "zfs.fix.set-limits-failed": "Detaļās redzams zfs ziņojums. Iestati kvotu vai rezervāciju pats ar zfs set.",
   "zfs.code.unknown": "Nezināms stāvoklis ({code}).",
   "zfs.fix.host-placeholder": "Konteinera veidnē iestati Host SSH: Address uz šī servera lokālo IP.",
   "zfs.fix.ssh-auth": "Izpildi šajā kartītē rādīto komandu vienu reizi šī servera terminālī.",

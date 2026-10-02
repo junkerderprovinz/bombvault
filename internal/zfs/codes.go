@@ -62,6 +62,7 @@ var AllCodes = []string{
 	"create-failed",
 	"new-dataset-not-visible",
 	"set-properties-failed",
+	"set-limits-failed",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their

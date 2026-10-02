@@ -181,6 +181,7 @@ De pagina, de rungeschiedenis en de meldingen noemen een probleem met een van de
 | `create-failed` | De nieuwe dataset kon niet worden aangemaakt. | De details tonen de melding van zfs. Controleer of de dataset erboven bestaat. |
 | `new-dataset-not-visible` | De nieuwe dataset is aangemaakt, maar BombVault ziet hem niet, dus er is niets hersteld. | De dataset blijft op de server. Koppel hem onder het Host Data-pad en herstel erin. |
 | `set-properties-failed` | De opgeslagen eigenschappen konden niet worden ingesteld, dus er is niets hersteld. | De details tonen de melding van zfs. |
+| `set-limits-failed` | De bestanden zijn hersteld, maar het opgeslagen quotum of de reservering kon niet worden ingesteld. | De details tonen de melding van zfs. Stel het quotum of de reservering zelf in met `zfs set`. |
 
 ### Controleren wat de container ziet {#mountinfo}
 

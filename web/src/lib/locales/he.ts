@@ -1725,6 +1725,8 @@ const he: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "מערך הנתונים החדש נוצר, אבל BombVault לא רואה אותו, ולכן שום דבר לא שוחזר.",
   "zfs.fix.new-dataset-not-visible": "מערך הנתונים נשאר בשרת. עגן אותו מתחת לנתיב Host Data ושחזר לתוכו.",
   "zfs.code.set-properties-failed": "לא ניתן היה להגדיר את המאפיינים השמורים, ולכן שום דבר לא שוחזר.",
+  "zfs.code.set-limits-failed": "הקבצים שוחזרו, אבל לא ניתן היה להגדיר את המכסה או ההזמנה השמורה.",
+  "zfs.fix.set-limits-failed": "הפרטים מציגים את ההודעה של zfs. הגדר בעצמך את המכסה או ההזמנה עם zfs set.",
   "zfs.code.unknown": "מצב לא מוכר ({code}).",
   "zfs.fix.host-placeholder": "בתבנית המכל, הגדר את Host SSH: Address לכתובת ה-IP המקומית של השרת הזה.",
   "zfs.fix.ssh-auth": "הרץ את הפקודה שמופיעה בכרטיס הזה פעם אחת במסוף של השרת.",

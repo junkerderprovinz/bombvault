@@ -1725,6 +1725,8 @@ const tr: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Yeni veri kümesi oluşturuldu ama BombVault onu göremiyor, bu yüzden hiçbir şey geri yüklenmedi.",
   "zfs.fix.new-dataset-not-visible": "Veri kümesi sunucuda kalır. Onu Host Data yolunun altına bağla ve içine geri yükle.",
   "zfs.code.set-properties-failed": "Saklanan özellikler ayarlanamadı, bu yüzden hiçbir şey geri yüklenmedi.",
+  "zfs.code.set-limits-failed": "Dosyalar geri yüklendi, ancak saklanan kota ya da rezervasyon ayarlanamadı.",
+  "zfs.fix.set-limits-failed": "Ayrıntılar zfs'in mesajını gösterir. Kotayı ya da rezervasyonu zfs set ile kendin ayarla.",
   "zfs.code.unknown": "Bilinmeyen durum ({code}).",
   "zfs.fix.host-placeholder": "Kapsayıcı şablonunda Host SSH: Address alanını bu sunucunun yerel IP adresine ayarla.",
   "zfs.fix.ssh-auth": "Bu kartta gösterilen komutu sunucudaki bir uçbirimde bir kez çalıştır.",

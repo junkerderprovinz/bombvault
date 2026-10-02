@@ -181,6 +181,7 @@ zfs destroy -r cache/appdata@bombvault-20260924021500
 | `create-failed` | 无法创建新数据集。 | 详细信息中显示 zfs 的消息。请检查上级数据集是否存在。 |
 | `new-dataset-not-visible` | 新数据集已创建，但 BombVault 看不到它，因此没有恢复任何内容。 | 数据集保留在服务器上。把它挂载到 Host Data 路径下，再恢复到其中。 |
 | `set-properties-failed` | 无法设置保存的属性，因此没有恢复任何内容。 | 详细信息中会显示 zfs 的消息。 |
+| `set-limits-failed` | 文件已恢复，但无法设置保存的配额或预留。 | 详细信息中显示 zfs 的消息。请用 `zfs set` 自行设置配额或预留。 |
 
 ### 检查容器能看到什么 {#mountinfo}
 

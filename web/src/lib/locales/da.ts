@@ -1725,6 +1725,8 @@ const da: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Det nye datasæt blev oprettet, men BombVault kan ikke se det, så intet blev gendannet.",
   "zfs.fix.new-dataset-not-visible": "Datasættet bliver på serveren. Montér det under Host Data-stien, og gendan ind i det.",
   "zfs.code.set-properties-failed": "De gemte egenskaber kunne ikke sættes, så intet blev gendannet.",
+  "zfs.code.set-limits-failed": "Filerne blev gendannet, men den gemte kvote eller reservation kunne ikke sættes.",
+  "zfs.fix.set-limits-failed": "Detaljerne viser beskeden fra zfs. Sæt selv kvoten eller reservationen med zfs set.",
   "zfs.code.unknown": "Ukendt tilstand ({code}).",
   "zfs.fix.host-placeholder": "Sæt Host SSH: Address i containerskabelonen til serverens lokale IP.",
   "zfs.fix.ssh-auth": "Kør kommandoen fra dette kort én gang i en terminal på serveren.",

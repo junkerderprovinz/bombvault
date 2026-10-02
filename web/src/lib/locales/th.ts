@@ -1728,6 +1728,8 @@ const th: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "สร้างชุดข้อมูลใหม่แล้ว แต่ BombVault มองไม่เห็น จึงไม่มีการกู้คืนใดๆ",
   "zfs.fix.new-dataset-not-visible": "ชุดข้อมูลยังอยู่บนเซิร์ฟเวอร์ เมานต์ไว้ใต้พาธ Host Data แล้วกู้คืนลงไป",
   "zfs.code.set-properties-failed": "ตั้งคุณสมบัติที่บันทึกไว้ไม่ได้ จึงไม่มีการกู้คืนใดๆ",
+  "zfs.code.set-limits-failed": "กู้คืนไฟล์แล้ว แต่ตั้งโควตาหรือการจองพื้นที่ที่บันทึกไว้ไม่ได้",
+  "zfs.fix.set-limits-failed": "รายละเอียดแสดงข้อความจาก zfs ตั้งโควตาหรือการจองพื้นที่เองด้วย zfs set",
   "zfs.code.unknown": "สถานะที่ไม่รู้จัก ({code})",
   "zfs.fix.host-placeholder": "ในเทมเพลตคอนเทนเนอร์ ตั้ง Host SSH: Address เป็นไอพีในวงแลนของเซิร์ฟเวอร์นี้",
   "zfs.fix.ssh-auth": "รันคำสั่งที่แสดงบนการ์ดนี้หนึ่งครั้งในเทอร์มินัลบนเซิร์ฟเวอร์",

@@ -181,6 +181,7 @@ Siden, kjøringshistorikken og varslene nevner et problem med en av disse kodene
 | `create-failed` | Det nye datasettet kunne ikke opprettes. | Detaljene viser meldingen fra zfs. Sjekk at datasettet over finnes. |
 | `new-dataset-not-visible` | Det nye datasettet ble opprettet, men BombVault ser det ikke, så ingenting ble gjenopprettet. | Datasettet blir på serveren. Monter det under Host Data-stien og gjenopprett inn i det. |
 | `set-properties-failed` | De lagrede egenskapene kunne ikke settes, så ingenting ble gjenopprettet. | Detaljene viser meldingen fra zfs. |
+| `set-limits-failed` | Filene ble gjenopprettet, men den lagrede kvoten eller reservasjonen kunne ikke settes. | Detaljene viser meldingen fra zfs. Sett kvoten eller reservasjonen selv med `zfs set`. |
 
 ### Sjekke hva containeren ser {#mountinfo}
 

@@ -2043,6 +2043,8 @@ const ms: Partial<Translations> = {
   "zfs.code.new-dataset-not-visible": "Set data baharu telah dicipta, tetapi BombVault tidak nampak, jadi tiada apa-apa dipulihkan.",
   "zfs.fix.new-dataset-not-visible": "Set data kekal pada pelayan. Lekapkannya di bawah laluan Host Data dan pulihkan ke dalamnya.",
   "zfs.code.set-properties-failed": "Sifat yang disimpan tidak dapat ditetapkan, jadi tiada apa-apa dipulihkan.",
+  "zfs.code.set-limits-failed": "Fail telah dipulihkan, tetapi kuota atau tempahan yang disimpan tidak dapat ditetapkan.",
+  "zfs.fix.set-limits-failed": "Butiran menunjukkan mesej zfs. Tetapkan sendiri kuota atau tempahan dengan zfs set.",
   "zfs.code.unknown": "Keadaan tidak diketahui ({code}).",
   "zfs.fix.host-placeholder": "Dalam templat bekas, isi Host SSH: Address dengan IP setempat pelayan ini.",
   "zfs.fix.ssh-auth": "Jalankan arahan pada kad ini sekali dalam terminal pelayan.",

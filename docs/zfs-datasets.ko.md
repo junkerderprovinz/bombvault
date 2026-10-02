@@ -181,6 +181,7 @@ zfs destroy -r cache/appdata@bombvault-20260924021500
 | `create-failed` | 새 데이터세트를 만들지 못했습니다. | 세부 정보에 zfs 메시지가 나옵니다. 상위 데이터세트가 있는지 확인하세요. |
 | `new-dataset-not-visible` | 새 데이터세트는 만들었지만 BombVault에서 보이지 않아 아무것도 복원하지 않았습니다. | 데이터세트는 서버에 남아 있습니다. Host Data 경로 아래에 마운트한 뒤 그 안으로 복원하세요. |
 | `set-properties-failed` | 저장된 속성을 설정하지 못해 아무것도 복원하지 않았습니다. | 세부 정보에 zfs의 메시지가 표시됩니다. |
+| `set-limits-failed` | 파일은 복원했지만 저장된 쿼터나 예약을 설정하지 못했습니다. | 세부 정보에 zfs 메시지가 나옵니다. 쿼터나 예약은 `zfs set`으로 직접 설정하세요. |
 
 ### 컨테이너가 보는 것 확인하기 {#mountinfo}
 

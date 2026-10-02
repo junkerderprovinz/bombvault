@@ -222,6 +222,30 @@ func TestZFSRestoreIntoANewDatasetSetsQuotasAfterTheFiles(t *testing.T) {
 	}
 }
 
+func TestAQuotaThatCannotBeSetAfterTheFilesSaysTheFilesAreBack(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "quota": "1024"})
+	host.setErr = func(p zfs.Properties) error {
+		if _, ok := p["quota"]; ok {
+			return errors.New("cannot set property for 'cache/appdata': size is less than current used or reserved space")
+		}
+		return nil
+	}
+	req := zfsRestoreRequest(zfsRoot)
+	req.ApplyProperties = true
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	run := zfsAwaitRestore(t, st, d.ID)
+	if len(eng.restores) != 1 {
+		t.Fatalf("restores = %v, want the files written", eng.restores)
+	}
+	if run.Status != "failed" || !strings.HasPrefix(run.Error, "set-limits-failed: ") {
+		t.Fatalf("restore run = %+v, want the limits failure after the files", run)
+	}
+}
+
 func TestZFSRestoreRefusesANewDatasetThatExists(t *testing.T) {
 	s, st, host, _ := zfsRestoreFixture(t)
 	host.strictTree = true
