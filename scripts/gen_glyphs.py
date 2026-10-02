@@ -302,7 +302,8 @@ EXTRA_NAV = [
     # Imported whole and cropped to their measured ink. Sources and licences,
     # all attributed in ATTRIBUTION below:
     #   save                  - Vecteezy, Free License (attribution required)
-    #   storage, local        - Font Awesome Free (CC BY 4.0)
+    #   storage, local,
+    #   retention             - Font Awesome Free (CC BY 4.0)
     #   copy                  - Tabler Icons, filled variant (MIT)
     #   integrity, tune       - Material Design Icons (Apache 2.0)
     #   verify                - shipped as an Illustrator export
@@ -322,6 +323,10 @@ EXTRA_NAV = [
              (0.0, 0.0, 448.0, 512.0), "storage"),
     # GlimStone's General tab glyph in every app, Material's tune.
     imported("IconTabGeneral", "General tab", "0 0 24 24", (3.0, 3.0, 18.0, 18.0), "tune"),
+    # An archive box: what is kept, and for how long. Prune's shredder is the
+    # act of throwing away, so it would read as the opposite of this tab.
+    imported("IconTabRetention", "Retention tab", "0 0 512 512",
+             (0.0, 32.0, 512.0, 448.0), "retention"),
     # The bottom bar's More slot. Three equal dots on the text baseline: the
     # mark every platform uses for "there is more".
     ("IconEllipsis", "More, the overflow destination", "1.4 1.4 11.2 11.2",
