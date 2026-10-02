@@ -504,7 +504,15 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	err = s.zfs.Create(cctx, name, props)
 	cancel()
 	if err != nil {
-		return ZFSRestoreAck{}, zfsRefuse("create-failed", name+": "+zfsDetail(err.Error()))
+		// zfs create also fails when it made the dataset but could not mount
+		// or share it; the mount wait below tells those apart.
+		lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
+		_, tErr := s.zfs.Tree(lctx, name)
+		cancel()
+		if tErr != nil {
+			return ZFSRestoreAck{}, zfsRefuse("create-failed", name+": "+zfsDetail(err.Error()))
+		}
+		log.Printf("api: zfs: %s was created, but zfs create reported: %s", name, zfsDetail(err.Error())) //nolint:gosec // G706: the name passed ValidateDatasetName
 	}
 	cpath, code := s.zfsAwaitWritableMount(ctx, name)
 	switch code {

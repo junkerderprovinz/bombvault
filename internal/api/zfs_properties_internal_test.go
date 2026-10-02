@@ -246,6 +246,47 @@ func TestAQuotaThatCannotBeSetAfterTheFilesSaysTheFilesAreBack(t *testing.T) {
 	}
 }
 
+func TestANewDatasetThatCouldNotBeMountedIsNotReportedAsNotCreated(t *testing.T) {
+	s, st, host, _ := zfsRestoreFixture(t)
+	host.strictTree = true
+	host.createErr = errors.New("cannot mount '/mnt/cache/copy': failed to create mountpoint")
+	host.createdAnyway = true
+	host.onCreate = func(name string) {
+		host.mu.Lock()
+		host.tree = append(host.tree, zfsEntry(name, "/mnt/"+name))
+		host.mu.Unlock()
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = "cache/copy"
+	req.SafetySnapshot = false
+	_, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req)
+	if started {
+		t.Fatal("a restore started into a dataset nobody can see")
+	}
+	if code, _ := zfsRefusalCode(err); code != "new-dataset-not-visible" {
+		t.Fatalf("err = %v, want new-dataset-not-visible, since the dataset was created", err)
+	}
+}
+
+func TestANewDatasetThatCouldNotBeSharedIsRestoredInto(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	zfsNewDatasetHost(t, s, host)
+	host.createErr = errors.New("cannot share 'cache/copy': smb add share failed")
+	host.createdAnyway = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = "cache/copy"
+	req.SafetySnapshot = false
+	ack, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req)
+	if err != nil || !started || ack.Created != "cache/copy" {
+		t.Fatalf("start = %+v %v %v, want the restore into the created dataset", ack, started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" || len(eng.restores) != 1 {
+		t.Fatalf("restore run = %+v, restores %v", run, eng.restores)
+	}
+}
+
 func TestZFSRestoreRefusesANewDatasetThatExists(t *testing.T) {
 	s, st, host, _ := zfsRestoreFixture(t)
 	host.strictTree = true

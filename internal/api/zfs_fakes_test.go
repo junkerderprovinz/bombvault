@@ -40,6 +40,10 @@ type fakeZFSHost struct {
 	createErr   error
 	propsErr    error
 
+	// createdAnyway makes createErr come after the dataset exists, the way
+	// zfs create fails when it cannot mount or share what it created.
+	createdAnyway bool
+
 	// props is what Properties reports for the tree, and onCreate runs after a
 	// dataset was created, for a test that mounts it.
 	props    map[string]zfs.Properties
@@ -197,13 +201,13 @@ func (h *fakeZFSHost) Create(_ context.Context, dataset string, p zfs.Properties
 		return err
 	}
 	h.record(strings.Join(args[1:], " "))
-	if h.createErr != nil {
+	if h.createErr != nil && !h.createdAnyway {
 		return h.createErr
 	}
 	if h.onCreate != nil {
 		h.onCreate(dataset)
 	}
-	return nil
+	return h.createErr
 }
 
 func (h *fakeZFSHost) SetProperties(_ context.Context, dataset string, p zfs.Properties) error {
