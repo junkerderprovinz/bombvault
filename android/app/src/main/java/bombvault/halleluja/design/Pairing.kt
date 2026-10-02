@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.security.KeyStore
@@ -134,6 +135,32 @@ class Pairing(private val context: Context, private val servers: Servers, privat
             // its own address may.
             if (status == 404) null else Answer(status, String(body))
         } catch (_: IOException) {
+            null
+        }
+    }
+
+    /**
+     * The session cookie [server] gives this phone, as a Set-Cookie value, so
+     * its page opens signed in. Null when the group cannot ask, the server
+     * has no password, or it does not list this phone on its Instances page.
+     */
+    suspend fun session(server: Server): String? {
+        val r = relay ?: return null
+        val member = server.member ?: return null
+        if (r.siblings.none { it.id == member }) return null
+        val ask = JSONObject().put("instanceId", prefs.getString(ID, "")).toString().toByteArray()
+        return try {
+            val (status, body) = r.call(member, "POST", "/api/group/peer/session", ask)
+            if (status != 200) return null
+            val s = JSONObject(String(body))
+            if (!s.optBoolean("needed")) return null
+            buildString {
+                append("${s.getString("name")}=${s.getString("value")}; Path=/; Max-Age=${s.optInt("maxAge")}; HttpOnly; SameSite=Lax")
+                if (s.optBoolean("secure")) append("; Secure")
+            }
+        } catch (_: IOException) {
+            null
+        } catch (_: JSONException) {
             null
         }
     }

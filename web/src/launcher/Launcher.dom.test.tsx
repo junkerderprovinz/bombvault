@@ -105,6 +105,18 @@ describe("Launcher", () => {
     expect(sent).toContainEqual({ op: "adopt" });
   });
 
+  it("shows only what the words found and the step that takes it over", async () => {
+    const members = [{ id: "a", name: "Tower", version: "v9.7.0" }];
+    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members } }, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
+    expect(await screen.findByRole("button", { name: /Add this instance/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Pair$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Scan QR code/ })).toBeNull();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /Cancel/ })));
+    expect(sent).toContainEqual({ op: "cancelJoin" });
+  });
+
   it("asks for the camera before the scanner shows anything", async () => {
     const { bridge, sent } = fakeBridge({ servers: [], found: [], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);

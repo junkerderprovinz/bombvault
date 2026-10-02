@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
-import { IconSignOut } from "../components/glyphs";
 import { IconTipButton } from "../components/IconTipButton";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconCopy, IconTrash } from "../components/navGlyphs";
@@ -176,23 +175,19 @@ function SwatchReset({ label, onClick }: { label: string; onClick: () => void })
 export function SettingsPage({
   t,
   app,
-  paired,
   onBack,
   onLanguage,
   onRename,
   onFollow,
-  onLeave,
   onRemoveAll,
 }: {
   t: T;
   app: AppInfo;
-  paired: boolean;
   onBack: () => void;
   onLanguage: () => void;
   onRename: (name: string) => void;
   /** Asks the first server for its look, after following was switched on. */
   onFollow: () => void;
-  onLeave: () => void;
   onRemoveAll: () => void;
 }) {
   const { lang, languages } = useT();
@@ -528,23 +523,10 @@ export function SettingsPage({
         </div>
       </Section>
 
-      {/* No red on the buttons: what warns is the question each one asks. */}
+      {/* No red on the button: what warns is the question it asks. Leaving
+          the group alone is on the pairing page. */}
       <Section title={t("launcher.dangerZone")} hue={4}>
-        <div className="my-1 flex flex-col gap-3">
-          {paired && (
-            <Button
-              label={t("pairing.leave")}
-              labelKey="pairing.leave"
-              glyph={<IconSignOut />}
-              tone="neutral"
-              onClick={() =>
-                void confirm(t("launcher.leaveConfirm"), { confirmKey: "pairing.leave" }).then((ok) => {
-                  if (ok) onLeave();
-                })
-              }
-              className="glim-btn-key w-full"
-            />
-          )}
+        <div className="my-1">
           <Button
             label={t("launcher.removeAll")}
             labelKey="launcher.removeAll"

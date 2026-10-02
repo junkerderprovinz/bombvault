@@ -3,7 +3,7 @@ import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { IconLink, IconSearch } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconAdd, IconCopy } from "../components/navGlyphs";
+import { IconAdd, IconClose, IconCopy } from "../components/navGlyphs";
 import { hueVars } from "../lib/appearance";
 import type { useT } from "../lib/i18n";
 import { PHRASE_WORDS, checkPhrase } from "../lib/phraseWords";
@@ -45,6 +45,7 @@ export function PairPage({
   camera,
   onJoin,
   onAdopt,
+  onCancel,
   onLeave,
   onPaste,
   onAskCamera,
@@ -60,6 +61,8 @@ export function PairPage({
   camera: boolean;
   onJoin: (words: string) => void;
   onAdopt: () => void;
+  /** Drops the group being looked at and goes back to the words. */
+  onCancel: () => void;
   onLeave: () => void;
   onPaste: () => Promise<string>;
   onAskCamera: () => void;
@@ -119,6 +122,8 @@ export function PairPage({
         <InfoBubble tip={t("launcher.pairHint")} />
       </PageTop>
 
+      {/* Once the words are in, the page shows only what they found and the
+          one step that takes it over; the words are one Cancel away. */}
       {group.paired && !joining ? (
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 rounded-card bg-carbon-surface p-4">
@@ -137,6 +142,51 @@ export function PairPage({
             className="glim-btn-key w-full"
           />
         </div>
+      ) : joining ? (
+        <>
+          <section className="mt-2 flex flex-col gap-1.5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">{t("launcher.groupFound")}</h2>
+            {joining.members.map((m) => (
+              <div key={m.id} className="rounded-card bg-carbon-surface p-3.5">
+                <p className="truncate text-sm font-semibold text-carbon-text">{m.name || m.id}</p>
+                <p className="truncate text-xs text-carbon-textMuted">{m.version}</p>
+              </div>
+            ))}
+            {joining.members.length === 0 && searching && <p className="text-sm text-carbon-textMuted">{t("pairing.searching")}</p>}
+            {joining.members.length === 0 && !searching && (
+              <div className="flex flex-col items-center gap-2.5 rounded-card bg-carbon-surface p-6 text-center">
+                <span className="text-carbon-textMuted opacity-50 [&_svg]:h-7 [&_svg]:w-7">
+                  <IconLink />
+                </span>
+                <p className="text-sm text-carbon-textMuted">{t("launcher.noInstances")}</p>
+              </div>
+            )}
+          </section>
+          <div className="mt-2 flex flex-col gap-3">
+            {joining.members.length > 0 && (
+              <Button
+                label={
+                  joining.members.length === 1
+                    ? t("launcher.adoptOne")
+                    : t("launcher.adoptAll").replace("{count}", String(joining.members.length))
+                }
+                labelKey="launcher.adoptAll"
+                glyph={<IconAdd />}
+                tone="accent"
+                onClick={onAdopt}
+                className="glim-btn-key w-full"
+              />
+            )}
+            <Button
+              label={t("common.cancel")}
+              labelKey="common.cancel"
+              glyph={<IconClose />}
+              tone="neutral"
+              onClick={onCancel}
+              className="glim-btn-key w-full"
+            />
+          </div>
+        </>
       ) : (
         <>
           <div className="mt-2 flex items-baseline justify-between gap-3">
@@ -204,70 +254,38 @@ export function PairPage({
             />
           </div>
 
-          {joining && (
-            <section className="mt-3 flex flex-col gap-1.5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">{t("launcher.groupFound")}</h2>
-              {joining.members.map((m) => (
-                <div key={m.id} className="rounded-card bg-carbon-surface p-3.5">
-                  <p className="truncate text-sm font-semibold text-carbon-text">{m.name || m.id}</p>
-                  <p className="truncate text-xs text-carbon-textMuted">{m.version}</p>
-                </div>
-              ))}
-              {joining.members.length === 0 && !searching && (
-                <div className="mt-2 flex flex-col items-center gap-2.5 rounded-card bg-carbon-surface p-6 text-center">
-                  <span className="text-carbon-textMuted opacity-50 [&_svg]:h-7 [&_svg]:w-7">
-                    <IconLink />
-                  </span>
-                  <p className="text-sm text-carbon-textMuted">{t("launcher.noInstances")}</p>
-                </div>
-              )}
-              {joining.members.length > 0 && (
-                <Button
-                  label={
-                    joining.members.length === 1
-                      ? t("launcher.adoptOne")
-                      : t("launcher.adoptAll").replace("{count}", String(joining.members.length))
-                  }
-                  labelKey="launcher.adoptAll"
-                  glyph={<IconAdd />}
-                  tone="accent"
-                  hueIndex={3}
-                  onClick={onAdopt}
-                  className="glim-btn-key mt-1 w-full"
-                />
-              )}
-            </section>
-          )}
         </>
       )}
 
-      <section className="mt-4 flex flex-col gap-1.5">
-        <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">
-          {t("launcher.found")}
-          <InfoBubble tip={t("launcher.foundHint")} />
-        </h2>
-        {found.map((f, i) => (
-          <button
-            key={f.url}
-            type="button"
-            onClick={() => onPickFound(f)}
-            style={hueVars(i) as CSSProperties}
-            className="flex min-w-0 items-center gap-3 rounded-card bg-carbon-surface p-3.5 text-start glim-hue glim-field-focus"
-          >
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="truncate text-sm font-semibold text-carbon-text">{f.name}</span>
-              <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-                {`${displayAddress(f.url)} · ${f.version}`}
+      {!joining && (
+        <section className="mt-4 flex flex-col gap-1.5">
+          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">
+            {t("launcher.found")}
+            <InfoBubble tip={t("launcher.foundHint")} />
+          </h2>
+          {found.map((f, i) => (
+            <button
+              key={f.url}
+              type="button"
+              onClick={() => onPickFound(f)}
+              style={hueVars(i) as CSSProperties}
+              className="flex min-w-0 items-center gap-3 rounded-card bg-carbon-surface p-3.5 text-start glim-hue glim-field-focus"
+            >
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-sm font-semibold text-carbon-text">{f.name}</span>
+                <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
+                  {`${displayAddress(f.url)} · ${f.version}`}
+                </span>
               </span>
-            </span>
-            <svg aria-hidden width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-accentText">
-              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-            </svg>
-          </button>
-        ))}
-        <p className="text-xs text-carbon-textMuted">{found.length === 0 ? t("launcher.searching") : t("launcher.foundLead")}</p>
-        <Button label={t("launcher.add")} labelKey="launcher.add" tone="neutral" onClick={onByAddress} className="glim-btn-key w-full" />
-      </section>
+              <svg aria-hidden width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-accentText">
+                <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+              </svg>
+            </button>
+          ))}
+          <p className="text-xs text-carbon-textMuted">{found.length === 0 ? t("launcher.searching") : t("launcher.foundLead")}</p>
+          <Button label={t("launcher.add")} labelKey="launcher.add" tone="neutral" onClick={onByAddress} className="glim-btn-key w-full" />
+        </section>
+      )}
 
       {scanning && (
         <QRScanner t={t} hint={t("launcher.scanHint")} camera={camera} onAskCamera={onAskCamera} onScanned={scanned} onClose={closeScanner} />

@@ -561,6 +561,9 @@ type Service struct {
 	// peerActivity answers a member asking what runs here; NewHandler sets
 	// it, since runs and the schedule are the Handler's to read.
 	peerActivity func() (peerActivityResponse, error)
+	// peerSession mints a session for a paired phone; NewHandler sets it,
+	// since the session cookie is the Handler's.
+	peerSession func() peerSessionResponse
 	// probeQueue holds the items waiting for the restore probe after their
 	// first backup, and probeWorking says whether its worker is running. Both
 	// are guarded by probeMu.
