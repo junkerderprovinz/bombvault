@@ -42,13 +42,18 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
   // before this page was opened, and how many of them failed.
   const startedWith = useRef<number | null>(null);
   const failed = useRef(0);
+  // Bumped by every scan and every change of the folder, so an answer for a
+  // folder that is no longer chosen is dropped.
+  const scanSeq = useRef(0);
   const hues = { heading: nextHue(), folder: nextHue(), list: nextHue() };
 
   async function scan(path = folder) {
     if (path.trim() === "") return;
+    const seq = ++scanSeq.current;
     setScanning(true);
     try {
       const r = await scanAppdataBackup(path.trim());
+      if (seq !== scanSeq.current) return;
       if (r.ok) setArchives(r.archives ?? []);
       else {
         setArchives(null);
@@ -56,10 +61,11 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
         setShake((n) => n + 1);
       }
     } catch (err) {
+      if (seq !== scanSeq.current) return;
       push(err instanceof Error ? err.message : t("recovery.abScanFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
-      setScanning(false);
+      if (seq === scanSeq.current) setScanning(false);
     }
   }
 
@@ -121,6 +127,8 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
           onChange={(v) => {
             setFolder(v);
             setArchives(null);
+            scanSeq.current++;
+            setScanning(false);
           }}
           hint={t("recovery.abFolderHint")}
         />

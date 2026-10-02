@@ -102,3 +102,19 @@ it("warns when only some archives went in", async () => {
   await runImport(view, 1);
   await waitFor(() => expect(push).toHaveBeenCalledWith(en["recovery.abSomeFailed"], "warn"));
 });
+
+it("drops a scan that answers after the folder changed", async () => {
+  let answer: (v: { ok: boolean; archives: AppdataBackupArchive[] }) => void = () => undefined;
+  scan.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+  renderIt();
+  const field = screen.getByLabelText(en["recovery.abFolder"]);
+  fireEvent.change(field, { target: { value: "user/old" } });
+  fireEvent.click(screen.getByRole("button", { name: en["recovery.abScan"] }));
+  await waitFor(() => expect(scan).toHaveBeenCalledWith("user/old"));
+  fireEvent.change(field, { target: { value: "user/new" } });
+  answer({ ok: true, archives });
+  await new Promise((r) => setTimeout(r, 20));
+  expect(screen.queryByText("plex")).toBeNull();
+  expect(screen.queryByRole("button", { name: en["recovery.abImport"] })).toBeNull();
+  expect(screen.getByRole("button", { name: en["recovery.abScan"] }).hasAttribute("disabled")).toBe(false);
+});
