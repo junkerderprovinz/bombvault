@@ -277,9 +277,6 @@ export function PairPage({
                   {`${displayAddress(f.url)} · ${f.version}`}
                 </span>
               </span>
-              <svg aria-hidden width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-accentText">
-                <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-              </svg>
             </button>
           ))}
           <p className="text-xs text-carbon-textMuted">{found.length === 0 ? t("launcher.searching") : t("launcher.foundLead")}</p>

@@ -4,8 +4,7 @@ import type { useT } from "../lib/i18n";
 
 type T = ReturnType<typeof useT>["t"];
 
-/** The back glyph of the app's pages, a filled triangle like the one each
- *  server card points with. */
+/** The back glyph of the app's pages, a filled triangle. */
 export function BackGlyph() {
   return (
     <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" fill="none">
