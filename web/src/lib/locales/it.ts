@@ -2481,7 +2481,7 @@ const it: Partial<Translations> = {
   "relay.project": "Relay del progetto",
   "relay.own": "Relay proprio",
   "relay.off": "Nessun relay",
-  "relay.projectSentence": "Il progetto gestisce il relay su {host}, gratuitamente.",
+  "relay.projectSentence": "Il progetto gestisce ParleyPort su {host}, gratuitamente.",
   "relay.projectNeed": "Niente. Funziona senza configurazione.",
   "relay.projectSees": "Per quale istanza è un messaggio, quanto è grande e quando arriva.",
   "relay.projectAlt": "Istanza A nella tua rete e istanza B in un'altra rete, collegate tramite il relay del progetto. Le chiavi sono solo su A e B.",

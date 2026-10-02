@@ -1548,7 +1548,7 @@ const eu: Partial<Translations> = {
   "relay.project": "Proiektuaren bitartekaria",
   "relay.own": "Norberaren bitartekaria",
   "relay.off": "Bitartekaririk ez",
-  "relay.projectSentence": "Proiektuak bitartekaria {host} helbidean darabil, doan.",
+  "relay.projectSentence": "Proiektuak ParleyPort {host} helbidean darabil, doan.",
   "relay.projectNeed": "Ezer ez. Konfiguraziorik gabe funtzionatzen du.",
   "relay.projectSees": "Zein instantziarentzat den mezu bat, zein handia den eta noiz iristen den.",
   "relay.projectAlt": "A instantzia zure sarean eta B instantzia beste sare batean, proiektuaren bitartekariaren bidez konektatuta. Gakoak A eta B-n bakarrik daude.",

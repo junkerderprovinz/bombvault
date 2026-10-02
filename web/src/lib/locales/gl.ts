@@ -1548,7 +1548,7 @@ const gl: Partial<Translations> = {
   "relay.project": "Relé do proxecto",
   "relay.own": "Relé propio",
   "relay.off": "Sen relé",
-  "relay.projectSentence": "O proxecto executa o relé en {host}, de balde.",
+  "relay.projectSentence": "O proxecto executa ParleyPort en {host}, de balde.",
   "relay.projectNeed": "Nada. Funciona sen configuración.",
   "relay.projectSees": "Para que instancia é unha mensaxe, canto pesa e cando chega.",
   "relay.projectAlt": "Instancia A na túa rede e instancia B noutra rede, conectadas a través do relé do proxecto. As chaves están só en A e B.",

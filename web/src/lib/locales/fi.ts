@@ -2481,7 +2481,7 @@ const fi: Partial<Translations> = {
   "relay.project": "Projektin rele",
   "relay.own": "Oma rele",
   "relay.off": "Ei relettä",
-  "relay.projectSentence": "Projekti ylläpitää relettä osoitteessa {host}, maksutta.",
+  "relay.projectSentence": "Projekti ylläpitää ParleyPortia osoitteessa {host}, maksutta.",
   "relay.projectNeed": "Ei mitään. Se toimii ilman asetuksia.",
   "relay.projectSees": "Kenelle viesti on tarkoitettu, kuinka suuri se on ja milloin se saapuu.",
   "relay.projectAlt": "Instanssi A verkossasi ja instanssi B toisessa verkossa, yhdistettynä projektin releen kautta. Avaimet ovat vain A:ssa ja B:ssä.",

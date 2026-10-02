@@ -56,7 +56,7 @@ function view(f: Instance) {
     relay: {
       mode: f.mode,
       url: "wss://relay.familie-hofer.example.at",
-      projectUrl: "wss://relay.halleluja.design/relay/connect",
+      projectUrl: "wss://parleyport.halleluja.design/relay/connect",
       connected: f.active && f.connected,
       serve: false,
       serveClients: 0,

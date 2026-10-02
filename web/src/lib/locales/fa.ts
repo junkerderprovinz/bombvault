@@ -1548,7 +1548,7 @@ const fa: Partial<Translations> = {
   "relay.project": "رلهٔ پروژه",
   "relay.own": "رلهٔ شخصی",
   "relay.off": "بدون رله",
-  "relay.projectSentence": "پروژه رله را روی {host} به‌صورت رایگان اجرا می‌کند.",
+  "relay.projectSentence": "پروژه ParleyPort را روی {host} به‌صورت رایگان اجرا می‌کند.",
   "relay.projectNeed": "هیچ‌چیز. بدون تنظیم کار می‌کند.",
   "relay.projectSees": "پیام برای کدام نمونه است، چقدر بزرگ است و کی می‌رسد.",
   "relay.projectAlt": "نمونهٔ A در شبکهٔ تو و نمونهٔ B در شبکه‌ای دیگر، از طریق رلهٔ پروژه متصل‌اند. کلیدها فقط روی A و B هستند.",

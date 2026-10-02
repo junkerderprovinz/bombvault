@@ -1548,7 +1548,7 @@ const id: Partial<Translations> = {
   "relay.project": "Relay proyek",
   "relay.own": "Relay sendiri",
   "relay.off": "Tanpa relay",
-  "relay.projectSentence": "Proyek ini menjalankan relay di {host}, tanpa biaya.",
+  "relay.projectSentence": "Proyek ini menjalankan ParleyPort di {host}, tanpa biaya.",
   "relay.projectNeed": "Tidak ada. Ini berfungsi tanpa pengaturan.",
   "relay.projectSees": "Untuk instance mana sebuah pesan ditujukan, seberapa besar, dan kapan tiba.",
   "relay.projectAlt": "Instance A di jaringan Anda dan instance B di jaringan lain, terhubung melalui relay proyek. Kuncinya hanya ada di A dan B.",

@@ -1548,7 +1548,7 @@ const et: Partial<Translations> = {
   "relay.project": "Projekti edastaja",
   "relay.own": "Oma edastaja",
   "relay.off": "Edastajata",
-  "relay.projectSentence": "Projekt haldab edastajat aadressil {host} tasuta.",
+  "relay.projectSentence": "Projekt haldab ParleyPorti aadressil {host} tasuta.",
   "relay.projectNeed": "Mitte midagi. Töötab ilma seadistuseta.",
   "relay.projectSees": "Millisele eksemplarile sõnum on mõeldud, kui suur see on ja millal see jõuab kohale.",
   "relay.projectAlt": "Eksemplar A sinu võrgus ja eksemplar B teises võrgus, ühendatud projekti edastaja kaudu. Võtmed on ainult A-l ja B-l.",

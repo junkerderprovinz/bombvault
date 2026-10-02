@@ -2481,7 +2481,7 @@ const sv: Partial<Translations> = {
   "relay.project": "Projektrelä",
   "relay.own": "Eget relä",
   "relay.off": "Inget relä",
-  "relay.projectSentence": "Projektet driver reläet på {host}, kostnadsfritt.",
+  "relay.projectSentence": "Projektet driver ParleyPort på {host}, kostnadsfritt.",
   "relay.projectNeed": "Inget. Det fungerar utan uppsättning.",
   "relay.projectSees": "Vilken instans ett meddelande är till, hur stort det är och när det kommer fram.",
   "relay.projectAlt": "Instans A i ditt nätverk och instans B i ett annat nätverk, kopplade via projektreläet. Nycklarna finns bara hos A och B.",

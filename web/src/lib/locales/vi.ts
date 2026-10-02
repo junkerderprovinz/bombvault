@@ -2473,7 +2473,7 @@ const vi: Partial<Translations> = {
   "relay.project": "Relay của dự án",
   "relay.own": "Relay riêng",
   "relay.off": "Không dùng relay",
-  "relay.projectSentence": "Dự án vận hành relay tại {host}, hoàn toàn miễn phí.",
+  "relay.projectSentence": "Dự án vận hành ParleyPort tại {host}, hoàn toàn miễn phí.",
   "relay.projectNeed": "Không cần gì cả. Hoạt động mà không cần thiết lập.",
   "relay.projectSees": "Thông điệp dành cho phiên bản nào, kích thước bao nhiêu và đến lúc nào.",
   "relay.projectAlt": "Phiên bản A trong mạng của bạn và phiên bản B ở mạng khác, kết nối qua relay của dự án. Các khóa chỉ nằm ở A và B.",

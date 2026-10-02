@@ -115,7 +115,7 @@ Den som känner till orden kan gå med i gruppen, så behandla dem som ett löse
 
 **Hur medlemmar når varandra.** Varje instans lär sig sin egen adress på nätverket från din webbläsare så snart du loggar in, den visas i reläkortet som **Den här instansen på ditt nätverk**; rätta den där om en reverse proxy eller en ovanlig port ligger framför. I samma nätverk kungör medlemmarna den adressen via multicast och pratar direkt med varandra, och där multicast inte kan ta sig över ett containernätverk, som Dockers standard-bridge-nätverk, söker en instans i stället igenom sitt eget subnät efter de andra med ett signerat anrop som bara en gruppmedlem kan svara på, så parkopplingen ändå blir klar på några sekunder utan relä. Dyker inget upp tar **Hittar du den inte?** under parkopplingskortet emot en adress för hand, för ett annat subnät eller en icke-standardport. Instanser i olika nätverk går via ett relä, valt på samma flik:
 
-- **Projektrelä** (standard): `relay.halleluja.design`, samma relä som KnightLoader använder. Inget att ställa in.
+- **Projektrelä** (standard): `parleyport.halleluja.design`, samma relä som KnightLoader använder. Inget att ställa in.
 - **Eget relä**: containern [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) från Unraid Community Apps, eller en av dina instanser som redan är nåbar utifrån med **Fungera som relä** påslaget. Den instansen svarar då på `/relay/connect` på sin egen adress, bakom den reverse proxy och det certifikat den redan har, och släpper bara in din grupp. Ange reläets adress på varje instans som ska använda det.
 - **Inget relä**: medlemmar hittar varandra automatiskt i samma nätverk, och ingen annanstans.
 

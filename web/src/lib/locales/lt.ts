@@ -1548,7 +1548,7 @@ const lt: Partial<Translations> = {
   "relay.project": "Projekto relay",
   "relay.own": "Savas relay",
   "relay.off": "Be relay",
-  "relay.projectSentence": "Projektas nemokamai valdo relay adresu {host}.",
+  "relay.projectSentence": "Projektas nemokamai valdo ParleyPort adresu {host}.",
   "relay.projectNeed": "Nieko. Veikia be jokio nustatymo.",
   "relay.projectSees": "Kuriam egzemplioriui skirtas pranešimas, koks jo dydis ir kada jis atkeliauja.",
   "relay.projectAlt": "Egzempliorius A jūsų tinkle ir egzempliorius B kitame tinkle, sujungti per projekto relay. Raktai yra tik pas A ir B.",

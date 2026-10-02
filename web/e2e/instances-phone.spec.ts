@@ -224,7 +224,7 @@ const GROUP = {
   relay: {
     mode: "project",
     url: "",
-    projectUrl: "wss://relay.halleluja.design/relay/connect",
+    projectUrl: "wss://parleyport.halleluja.design/relay/connect",
     connected: true,
     serve: false,
     serveClients: 0,

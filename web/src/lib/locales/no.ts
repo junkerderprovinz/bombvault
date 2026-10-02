@@ -2481,7 +2481,7 @@ const no: Partial<Translations> = {
   "relay.project": "Prosjektrelay",
   "relay.own": "Eget relay",
   "relay.off": "Ingen relay",
-  "relay.projectSentence": "Prosjektet drifter relayet på {host}, gratis.",
+  "relay.projectSentence": "Prosjektet drifter ParleyPort på {host}, gratis.",
   "relay.projectNeed": "Ingenting. Det virker uten oppsett.",
   "relay.projectSees": "Hvilken instans en melding er til, hvor stor den er, og når den kommer.",
   "relay.projectAlt": "Instans A i nettverket ditt og instans B i et annet nettverk, koblet sammen via prosjektrelayet. Nøklene ligger bare hos A og B.",

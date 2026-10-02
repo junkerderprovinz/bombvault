@@ -1548,7 +1548,7 @@ const hr: Partial<Translations> = {
   "relay.project": "Relej projekta",
   "relay.own": "Vlastiti relej",
   "relay.off": "Bez releja",
-  "relay.projectSentence": "Projekt pokreće relej na {host}, besplatno.",
+  "relay.projectSentence": "Projekt pokreće ParleyPort na {host}, besplatno.",
   "relay.projectNeed": "Ništa. Radi bez postavljanja.",
   "relay.projectSees": "Za koju je instancu poruka namijenjena, koliko je velika i kad stiže.",
   "relay.projectAlt": "Instanca A u vašoj mreži i instanca B u drugoj mreži, povezane preko releja projekta. Ključevi su samo na A i B.",

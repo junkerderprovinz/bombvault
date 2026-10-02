@@ -2479,7 +2479,7 @@ const cs: Partial<Translations> = {
   "relay.project": "Přeposílač projektu",
   "relay.own": "Vlastní přeposílač",
   "relay.off": "Bez přeposílače",
-  "relay.projectSentence": "Projekt provozuje přeposílač na {host} zdarma.",
+  "relay.projectSentence": "Projekt provozuje ParleyPort na {host} zdarma.",
   "relay.projectNeed": "Nic. Funguje bez nastavení.",
   "relay.projectSees": "Pro kterou instanci je zpráva určena, jak je velká a kdy dorazí.",
   "relay.projectAlt": "Instance A ve vaší síti a instance B v jiné síti, propojené přes přeposílač projektu. Klíče jsou jen na A a B.",

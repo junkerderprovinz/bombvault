@@ -2476,7 +2476,7 @@ const ru: Partial<Translations> = {
   "relay.project": "Relay проекта",
   "relay.own": "Собственный Relay",
   "relay.off": "Без Relay",
-  "relay.projectSentence": "Проект бесплатно предоставляет Relay по адресу {host}.",
+  "relay.projectSentence": "Проект бесплатно предоставляет ParleyPort по адресу {host}.",
   "relay.projectNeed": "Ничего. Он работает без настройки.",
   "relay.projectSees": "Для какого экземпляра предназначено сообщение, насколько оно велико и когда приходит.",
   "relay.projectAlt": "Экземпляр A в вашей сети и экземпляр B в другой сети, соединённые через Relay проекта. Ключи есть только на A и B.",

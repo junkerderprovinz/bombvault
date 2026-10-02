@@ -115,7 +115,7 @@ Kelimeleri bilen herkes gruba katılabilir, bu yüzden onlara bir parola gibi da
 
 **Üyeler birbirine nasıl ulaşır.** Her örnek, oturum açtığınız anda kendi ağ adresini tarayıcınızdan öğrenir; bu adres röle kartında **Ağınızdaki bu örnek** olarak gösterilir, önünde bir ters proxy veya alışılmadık bir port varsa orada düzeltebilirsiniz. Aynı ağdaysa üyeler bu adresi çoklu yayınla duyurur ve doğrudan konuşurlar; çoklu yayının Docker'ın varsayılan köprü ağı gibi bir konteyner ağını aşamadığı yerlerde ise bir örnek, yalnızca bir grup üyesinin yanıtlayabileceği imzalı bir çağrıyla kendi alt ağını tarayarak diğerlerini bulur, böylece eşleştirme rölesiz de saniyeler içinde tamamlanır. Hiçbir şey bulunmazsa, eşleştirme kartının altındaki **Bulamıyor musunuz?** bir adresi elle girmenizi sağlar; başka bir alt ağ veya standart olmayan bir port için. Farklı ağlardaki örnekler, aynı sekmeden seçilen bir röle üzerinden gider:
 
-- **Proje rölesi** (varsayılan): `relay.halleluja.design`, KnightLoader'ın da kullandığı röle. Kurulacak hiçbir şey yok.
+- **Proje rölesi** (varsayılan): `parleyport.halleluja.design`, KnightLoader'ın da kullandığı röle. Kurulacak hiçbir şey yok.
 - **Kendi röleniz**: Unraid Community Apps'ten [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) konteyneri ya da **Röle olarak hizmet ver** açık olan, dışarıdan zaten erişilebilir örneklerinizden biri. O örnek daha sonra kendi adresinde `/relay/connect`'te yanıt verir, zaten sahip olduğu ters proxy ve sertifikanın arkasında, ve yalnızca grubunuzu içeri alır. Röleyi kullanması gereken her örneğe rölenin adresini girin.
 - **Röle yok**: üyeler birbirini yalnızca aynı ağda otomatik olarak bulur, başka hiçbir yerde bulamaz.
 

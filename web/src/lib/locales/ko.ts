@@ -2473,7 +2473,7 @@ const ko: Partial<Translations> = {
   "relay.project": "프로젝트 릴레이",
   "relay.own": "자체 릴레이",
   "relay.off": "릴레이 없음",
-  "relay.projectSentence": "프로젝트가 {host}에서 무료로 릴레이를 운영합니다.",
+  "relay.projectSentence": "프로젝트가 {host}에서 무료로 ParleyPort를 운영합니다.",
   "relay.projectNeed": "필요한 것이 없습니다. 별도 설정 없이 작동합니다.",
   "relay.projectSees": "메시지가 어느 인스턴스로 가는지, 크기가 얼마나 되는지, 언제 도착하는지입니다.",
   "relay.projectAlt": "사용자 네트워크의 인스턴스 A와 다른 네트워크의 인스턴스 B가 프로젝트 릴레이를 통해 연결됩니다. 키는 A와 B에만 있습니다.",

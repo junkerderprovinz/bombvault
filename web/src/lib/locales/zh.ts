@@ -2473,7 +2473,7 @@ const zh: Partial<Translations> = {
   "relay.project": "项目中继",
   "relay.own": "自建中继",
   "relay.off": "不用中继",
-  "relay.projectSentence": "项目在 {host} 免费提供中继。",
+  "relay.projectSentence": "项目在 {host} 免费提供 ParleyPort。",
   "relay.projectNeed": "什么都不需要，无需任何设置即可使用。",
   "relay.projectSees": "一条消息是发给哪台实例的、有多大，以及什么时候到达。",
   "relay.projectAlt": "你网络里的实例 A 和另一个网络里的实例 B，通过项目中继连接。密钥只存在于 A 和 B 上。",

@@ -1548,7 +1548,7 @@ const is: Partial<Translations> = {
   "relay.project": "Verkefnis-relay",
   "relay.own": "Eigið relay",
   "relay.off": "Ekkert relay",
-  "relay.projectSentence": "Verkefnið keyrir relayið á {host}, án endurgjalds.",
+  "relay.projectSentence": "Verkefnið keyrir ParleyPort á {host}, án endurgjalds.",
   "relay.projectNeed": "Ekkert. Það virkar án uppsetningar.",
   "relay.projectSees": "Fyrir hvaða tilvik skilaboð eru, hversu stór þau eru og hvenær þau berast.",
   "relay.projectAlt": "Tilvik A í þínu neti og tilvik B í öðru neti, tengd um verkefnis-relayið. Lyklarnir eru aðeins hjá A og B.",

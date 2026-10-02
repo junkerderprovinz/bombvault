@@ -27,7 +27,7 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.math.abs
 
 /** The project relay every BombVault instance dials unless its owner picks another. */
-const val PROJECT_RELAY = "wss://relay.halleluja.design/relay/connect"
+const val PROJECT_RELAY = "wss://parleyport.halleluja.design/relay/connect"
 
 /** The keys a group secret gives, derived the way internal/relay derives them. */
 class GroupKeys(secret: ByteArray) {

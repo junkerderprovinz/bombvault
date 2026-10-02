@@ -2476,7 +2476,7 @@ const uk: Partial<Translations> = {
   "relay.project": "Реле проєкту",
   "relay.own": "Власне реле",
   "relay.off": "Без реле",
-  "relay.projectSentence": "Проєкт безкоштовно надає реле за адресою {host}.",
+  "relay.projectSentence": "Проєкт безкоштовно надає ParleyPort за адресою {host}.",
   "relay.projectNeed": "Нічого. Працює без налаштування.",
   "relay.projectSees": "Для якого екземпляра повідомлення, який у нього розмір і коли воно надходить.",
   "relay.projectAlt": "Екземпляр A у вашій мережі та екземпляр B в іншій мережі, з'єднані через реле проєкту. Ключі є лише в A та B.",

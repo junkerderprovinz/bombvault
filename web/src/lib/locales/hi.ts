@@ -1548,7 +1548,7 @@ const hi: Partial<Translations> = {
   "relay.project": "प्रोजेक्ट रिले",
   "relay.own": "अपना रिले",
   "relay.off": "कोई रिले नहीं",
-  "relay.projectSentence": "प्रोजेक्ट {host} पर रिले मुफ़्त में चलाता है।",
+  "relay.projectSentence": "प्रोजेक्ट {host} पर ParleyPort मुफ़्त में चलाता है।",
   "relay.projectNeed": "कुछ नहीं। यह बिना सेटअप के काम करता है।",
   "relay.projectSees": "कोई संदेश किस इंस्टेंस के लिए है, वह कितना बड़ा है, और कब पहुँचता है।",
   "relay.projectAlt": "आपके नेटवर्क में इंस्टेंस A और दूसरे नेटवर्क में इंस्टेंस B, प्रोजेक्ट रिले के ज़रिए जुड़े हुए। कुंजियाँ केवल A और B पर हैं।",

@@ -2478,7 +2478,7 @@ const nl: Partial<Translations> = {
   "relay.project": "Projectrelay",
   "relay.own": "Eigen relay",
   "relay.off": "Geen relay",
-  "relay.projectSentence": "Het project draait de relay op {host}, gratis.",
+  "relay.projectSentence": "Het project draait ParleyPort op {host}, gratis.",
   "relay.projectNeed": "Niets. Het werkt zonder instellen.",
   "relay.projectSees": "Voor welke instantie een bericht bedoeld is, hoe groot het is en wanneer het aankomt.",
   "relay.projectAlt": "Instantie A in jouw netwerk en instantie B in een ander netwerk, verbonden via de projectrelay. De sleutels staan alleen op A en B.",

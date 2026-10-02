@@ -2484,7 +2484,7 @@ const ar: Partial<Translations> = {
   "relay.project": "مُرحِّل المشروع",
   "relay.own": "مُرحِّل خاص",
   "relay.off": "بلا مُرحِّل",
-  "relay.projectSentence": "يشغّل المشروع المُرحِّل على {host} مجانًا.",
+  "relay.projectSentence": "يشغّل المشروع ParleyPort على {host} مجانًا.",
   "relay.projectNeed": "لا شيء. يعمل دون إعداد.",
   "relay.projectSees": "لأي مثيل الرسالة، وما حجمها، ومتى وصلت.",
   "relay.projectAlt": "المثيل A في شبكتك والمثيل B في شبكة أخرى، متصلان عبر مُرحِّل المشروع. المفاتيح موجودة فقط على A و B.",

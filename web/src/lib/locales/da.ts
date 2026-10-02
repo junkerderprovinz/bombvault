@@ -2481,7 +2481,7 @@ const da: Partial<Translations> = {
   "relay.project": "Projektets videresender",
   "relay.own": "Egen videresender",
   "relay.off": "Ingen videresender",
-  "relay.projectSentence": "Projektet driver videresenderen på {host} gratis.",
+  "relay.projectSentence": "Projektet driver ParleyPort på {host} gratis.",
   "relay.projectNeed": "Intet. Det virker uden opsætning.",
   "relay.projectSees": "Hvilken instans en besked er til, hvor stor den er, og hvornår den ankommer.",
   "relay.projectAlt": "Instans A i dit netværk og instans B i et andet netværk, forbundet gennem projektets videresender. Nøglerne findes kun på A og B.",

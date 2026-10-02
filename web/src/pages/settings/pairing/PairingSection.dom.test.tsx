@@ -35,7 +35,7 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
     relay: {
       mode: "project",
       url: "",
-      projectUrl: "wss://relay.halleluja.design/relay/connect",
+      projectUrl: "wss://parleyport.halleluja.design/relay/connect",
       connected: true,
       serve: false,
       serveClients: 0,
@@ -431,7 +431,7 @@ describe("after a minute alone", () => {
     expect(screen.getByText(en["relay.notConnected"])).not.toBeNull();
     expect(screen.queryByText(en["pairing.relayCheckFilter"])).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: en["pairing.relayCheckOpen"] }));
-    expect(screen.getByText("relay.halleluja.design", { selector: "span" })).not.toBeNull();
+    expect(screen.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
     expect(screen.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
   });
 });
