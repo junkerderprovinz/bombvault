@@ -1681,14 +1681,25 @@ func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []st
 	return out
 }
 
-// retentionPolicy maps the stored settings to a restic keep-policy.
-func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolicy {
+// retentionPolicy is the local keep-policy of a domain: its own when it has
+// one, the shared one otherwise.
+func (s *Service) retentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
+	k, own := settings.OwnRetention()[domain]
+	if !own {
+		k = store.RetentionKeep{
+			KeepLast:    settings.RetentionKeepLast,
+			KeepDaily:   settings.RetentionKeepDaily,
+			KeepWeekly:  settings.RetentionKeepWeekly,
+			KeepMonthly: settings.RetentionKeepMonthly,
+			KeepYearly:  settings.RetentionKeepYearly,
+		}
+	}
 	return restic.RetentionPolicy{
-		KeepLast:    settings.RetentionKeepLast,
-		KeepDaily:   settings.RetentionKeepDaily,
-		KeepWeekly:  settings.RetentionKeepWeekly,
-		KeepMonthly: settings.RetentionKeepMonthly,
-		KeepYearly:  settings.RetentionKeepYearly,
+		KeepLast:    k.KeepLast,
+		KeepDaily:   k.KeepDaily,
+		KeepWeekly:  k.KeepWeekly,
+		KeepMonthly: k.KeepMonthly,
+		KeepYearly:  k.KeepYearly,
 	}
 }
 
@@ -1776,14 +1787,13 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 }
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
-// source: the off-site policy for any off-site source, the local policy
-// otherwise. (The off-site policy is the settings-level one; per-target
-// retention is a later stage — bare "offsite" is unchanged.)
-func (s *Service) retentionPolicyForSource(settings store.Settings, source string) restic.RetentionPolicy {
+// source: the settings-level off-site policy for any off-site source, the
+// domain's local policy otherwise.
+func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
 	if isOffsiteSource(source) {
 		return s.offsiteRetentionPolicy(settings)
 	}
-	return s.retentionPolicy(settings)
+	return s.retentionPolicy(settings, domain)
 }
 
 // applyRetention prunes the just-backed-up item to the configured keep-policy.
@@ -1820,7 +1830,7 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // finding that says the source lost its data keeps its own item's snapshots
 // until the user has seen it. An empty hold is never held.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
-	p := s.retentionPolicy(settings)
+	p := s.retentionPolicy(settings, domain)
 	if !p.Any() {
 		return
 	}
@@ -16563,7 +16573,7 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 		log.Printf("api: prune %s: batched prune: read settings: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
-	if !s.retentionPolicy(settings).Any() {
+	if !s.retentionPolicy(settings, domain).Any() {
 		return // no retention policy → the per-item passes forgot nothing (applyRetention's gate)
 	}
 	if _, err := s.pruneDomain(ctx, domain, "local", true); err != nil {
@@ -16690,7 +16700,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	// exclusive-lock round-trips for nothing.
 	policy := restic.RetentionPolicy{}
 	if !afterBulk {
-		policy = s.retentionPolicyForSource(settings, source)
+		policy = s.retentionPolicyForSource(settings, domain, source)
 	}
 	for _, r := range repos {
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)

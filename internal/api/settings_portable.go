@@ -702,6 +702,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
 		return "invalid settings: " + msg
 	}
+	if msg := rejectInvalidOwnRetention(exp.Settings.OwnRetention); msg != "" {
+		return "invalid settings: " + msg
+	}
 	if msg := rejectInvalidCompression(exp.Settings.Compression); msg != "" {
 		return "invalid settings: " + msg
 	}
@@ -799,7 +802,7 @@ func settingsGroups(v settingsView) []string {
 	add("everything", v.EverythingSchedule != "")
 	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 || v.RetentionKeepYearly > 0 ||
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0 ||
-		v.OffsiteRetentionKeepYearly > 0)
+		v.OffsiteRetentionKeepYearly > 0 || len(v.OwnRetention) > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
 		v.FilesOffsite != "" || v.ZFSOffsite != "")
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled || v.StartTestEnabled)
@@ -1182,6 +1185,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 	out.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
 	out.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+	applyOwnRetention(&out, v.OwnRetention)
 	applyCompression(&out, v.Compression)
 	out.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
 	out.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
