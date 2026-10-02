@@ -1943,9 +1943,37 @@ func identityTags(snaps []restic.Snapshot) []string {
 	return out
 }
 
+// identityDomain is the domain whose items carry the identity tag.
+func identityDomain(tag string) string {
+	switch {
+	case tag == "flash", tag == "config":
+		return tag
+	case strings.HasPrefix(tag, "container:"), strings.HasPrefix(tag, dbDumpIdentityPrefix), strings.HasPrefix(tag, "stack:"):
+		return "containers"
+	case strings.HasPrefix(tag, "vm:"):
+		return "vms"
+	case strings.HasPrefix(tag, "fileset:"):
+		return "files"
+	case strings.HasPrefix(tag, "zfs:"):
+		return zfsDomain
+	}
+	return ""
+}
+
+// domainIdentityTags keeps the tags of the domain's items, or every tag when
+// domain is empty. A named repository can hold items of several domains, and
+// a domain's keep-policy is not theirs to apply.
+func domainIdentityTags(tags []string, domain string) []string {
+	if domain == "" {
+		return tags
+	}
+	return slices.DeleteFunc(tags, func(t string) bool { return identityDomain(t) != domain })
+}
+
 // applyRetentionPerIdentity applies policy per identity, one tag-scoped forget
 // per item, then prunes once. Used where no single item is in scope (manual
-// prune, off-site retention).
+// prune, off-site retention). With a domain, only that domain's items are
+// forgotten; the prune still reclaims the whole repository.
 //
 // A failed listing forgets nothing: the repo-wide paths-grouped pass ignores
 // identities and aliases, so it would age a renamed entry's pre-link snapshots
@@ -1953,11 +1981,11 @@ func identityTags(snaps []restic.Snapshot) []string {
 // a repository with no identity tag at all, one written before identity tags
 // existed, so its retention does not silently stop.
 //
-// It has no domain in hand and a named repository can hold several (#204), so
-// it asks for the holds of the whole installation and returns every tag it
-// left alone. The repo-wide pass cannot spare a held item, so it refuses while
-// anything is held.
-func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
+// A named repository can hold several domains (#204), so it asks for the
+// holds of the whole installation and returns every tag it left alone. The
+// repo-wide pass cannot spare a held item, so it refuses while anything is
+// held.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
 	if !p.Any() {
 		return nil, nil
 	}
@@ -1982,7 +2010,7 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p 
 		}
 		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
-	groups, _ := s.foldAliasedIdentityTags(tags, snaps) // skipped tags are logged there and kept
+	groups, _ := s.foldAliasedIdentityTags(domainIdentityTags(tags, domain), snaps) // skipped tags are logged there and kept
 	var paused []string
 	var errs []error
 	for _, group := range groups {
@@ -2131,7 +2159,7 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 // previewed and the failures come back alongside the groups that succeeded, so
 // an operator learns about the repositories that answered instead of seeing a
 // bare error for all of them.
-func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
 	if !p.Any() {
 		return nil, nil, nil
 	}
@@ -2151,7 +2179,7 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, 
 	var out []restic.ForgetGroup
 	var paused []string
 	var errs []error
-	for _, tag := range tags {
+	for _, tag := range domainIdentityTags(tags, domain) {
 		if held.holds(tag) {
 			paused = append(paused, tag)
 			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
@@ -4046,9 +4074,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		if !op.Any() {
 			break
 		}
-		// Per-identity: one tag-scoped, ungrouped forget per item, one prune —
-		// identity-stable like the local retention (issue #91).
-		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, op, mode)
+		// Per-identity: one tag-scoped, ungrouped forget per item and one prune,
+		// identity-stable like the local retention (issue #91). The destination
+		// ages everything it holds by its target's policy.
+		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, "", op, mode)
 		if perr != nil {
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
@@ -16706,10 +16735,12 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 		s.unlockStale(ctx, r.Loc, rMode)
 		if policy.Any() {
-			// Per-identity: tag-scoped, ungrouped forget per item + one prune —
-			// also drains frozen path-groups left by the old grouping (issue #91).
+			// Per-identity: a tag-scoped, ungrouped forget per item of this
+			// domain and one prune, which also drains the frozen path-groups a
+			// grouped forget leaves behind (issue #91). Another domain's items in a shared
+			// repository age by that domain's rules, on its own prune.
 			var repoPaused []string
-			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode)
+			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, domain, policy, rMode)
 			paused = append(paused, repoPaused...)
 			if err != nil {
 				err = fmt.Errorf("pruning %s: %w", s.refName(r), err)

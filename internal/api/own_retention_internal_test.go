@@ -155,6 +155,13 @@ func (e *ownRetentionEngine) Prune(_ context.Context, repo string, _ restic.Mode
 	return nil
 }
 
+// ForgetPreview keeps every snapshot under the tag.
+func (e *ownRetentionEngine) ForgetPreview(_ context.Context, repo string, _ restic.RetentionPolicy, _ restic.Mode, tag string) ([]restic.ForgetGroup, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return []restic.ForgetGroup{{Tags: []string{tag}, Keep: snapshotsTagged(e.snaps[filepath.ToSlash(repo)], tag)}}, nil
+}
+
 func (e *ownRetentionEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
 
 func (e *ownRetentionEngine) Stats(context.Context, string, string, restic.Mode) (restic.StatsResult, error) {
@@ -284,6 +291,84 @@ func TestAManualPruneAgesByTheDomainsOwnPolicy(t *testing.T) {
 		if c.Policy != (restic.RetentionPolicy{KeepLast: 10, KeepYearly: 1}) {
 			t.Errorf("%s forgot with %+v, want the domain's own policy", c.Repo, c.Policy)
 		}
+	}
+}
+
+// sharedWithAVM points the VM win11 at nas, the named repository nginx writes
+// to, and leaves one snapshot of each item there and one of plex in the
+// containers repository.
+func (f *ownRetentionFixture) sharedWithAVM() {
+	f.t.Helper()
+	named, err := f.st.ListNamedRepos()
+	if err != nil || len(named) != 1 {
+		f.t.Fatalf("ListNamedRepos = %v, %v", named, err)
+	}
+	if _, err := f.st.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
+		f.t.Fatal(err)
+	}
+	if err := f.st.SetVMRepo("win11", named[0].ID); err != nil {
+		f.t.Fatal(err)
+	}
+	f.hold(f.root+"/backups/containers", ownRetentionSnap("a1", 100, "container:plex"))
+	f.hold(f.root+"/nas", ownRetentionSnap("b1", 100, "container:nginx"), ownRetentionSnap("c1", 100, "vm:win11"))
+}
+
+func TestEveryIdentityTagBelongsToItsDomain(t *testing.T) {
+	for tag, want := range map[string]string{
+		"container:plex":     "containers",
+		"dbdump:immich":      "containers",
+		"stack:immich":       "containers",
+		"vm:win11":           "vms",
+		"vm:win11:zvol:vda":  "vms",
+		"fileset:docs":       "files",
+		"zfs:tank/media":     zfsDomain,
+		"flash":              "flash",
+		"config":             "config",
+		"engine:postgres":    "",
+		"containerless:plex": "",
+	} {
+		if got := identityDomain(tag); got != want {
+			t.Errorf("identityDomain(%q) = %q, want %q", tag, got, want)
+		}
+	}
+}
+
+func TestAManualPruneLeavesAnotherDomainsBackupsInASharedRepository(t *testing.T) {
+	f := newOwnRetentionFixture(t)
+	f.sharedWithAVM()
+	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", false); err != nil {
+		t.Fatalf("pruneDomain: %v", err)
+	}
+	want := []ownRetentionForget{
+		{Repo: f.root + "/backups/containers", Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 7}},
+		{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepDaily: 7}},
+	}
+	if !reflect.DeepEqual(f.eng.forgets, want) {
+		t.Fatalf("forgets = %+v, want only the containers under their own policy; win11 ages by the VMs' rules", f.eng.forgets)
+	}
+	if !slices.Contains(f.eng.prunes, f.root+"/nas") {
+		t.Fatalf("prunes = %v, want the shared repository's space reclaimed", f.eng.prunes)
+	}
+}
+
+func TestThePreviewOfAPruneLeavesAnotherDomainsBackupsOut(t *testing.T) {
+	f := newOwnRetentionFixture(t)
+	f.sharedWithAVM()
+	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
+	got, err := f.svc.PreviewRetention(context.Background(), "containers", "local")
+	if err != nil {
+		t.Fatalf("PreviewRetention: %v", err)
+	}
+	var tags []string
+	for _, r := range got.Repos {
+		for _, it := range r.Items {
+			tags = append(tags, it.Tag)
+		}
+	}
+	slices.Sort(tags)
+	if want := []string{"container:nginx", "container:plex"}; !slices.Equal(tags, want) {
+		t.Fatalf("preview items = %v, want %v", tags, want)
 	}
 }
 

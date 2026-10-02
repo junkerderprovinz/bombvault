@@ -149,7 +149,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 
 		rCtx, cancel := context.WithTimeout(ctx, previewPerRepoTimeout)
-		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, policy, rMode)
+		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, domain, policy, rMode)
 		cancel()
 
 		if pErr != nil {
