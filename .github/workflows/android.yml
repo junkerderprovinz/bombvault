@@ -48,6 +48,19 @@ jobs:
             exit 1
           fi
 
+      # F-Droid builds the tag with the number gradle.properties carries.
+      - name: The tree carries the release's number
+        if: env.RELEASE == 'true'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -eu
+          got="$(sed -n 's/^bombvaultVersion=//p' android/gradle.properties)"
+          if [ "$got" != "${TAG#v}" ]; then
+            echo "::error::android/gradle.properties says $got, the release is ${TAG#v}"
+            exit 1
+          fi
+
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
@@ -66,8 +79,6 @@ jobs:
           java-version: "21"
 
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
-        with:
-          gradle-version: "9.6.0"
 
       - name: Assemble
         working-directory: android
@@ -92,9 +103,11 @@ jobs:
             export ANDROID_KEYSTORE="$RUNNER_TEMP/release.p12"
             echo "$KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE"
           fi
-          gradle --no-daemon testDebugUnitTest assembleRelease -PbombvaultVersion="$version"
+          # Google Play takes a bundle, signed with the same key.
+          ./gradlew --no-daemon testDebugUnitTest assembleRelease bundleRelease -PbombvaultVersion="$version"
           mkdir -p out
           cp app/build/outputs/apk/release/app-release.apk out/bombvault-android.apk
+          cp app/build/outputs/bundle/release/app-release.aab out/bombvault-android.aab
 
       # The environment saying which key to use is no proof of the key used.
       - name: The APK carries the release key
@@ -114,11 +127,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" android/out/bombvault-android.apk --clobber
+        run: gh release upload "$TAG" android/out/bombvault-android.apk android/out/bombvault-android.aab --clobber
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: bombvault-android
-          path: android/out/bombvault-android.apk
+          path: |
+            android/out/bombvault-android.apk
+            android/out/bombvault-android.aab
           if-no-files-found: error
           retention-days: 14

@@ -7,6 +7,7 @@
 *.ts  text eol=lf
 *.tsx text eol=lf
 *.sh  text eol=lf
+*.bat text eol=crlf
 
 # Binary assets — never touch line endings or attempt diffs.
 *.png binary

@@ -2,9 +2,9 @@ plugins {
     id("com.android.application") version "9.4.1"
 }
 
-// The release workflow passes the BombVault version, so the app and the server
-// it ships with carry one number.
-val release = (findProperty("bombvaultVersion") as String?) ?: "0.0.1"
+// The app and the server it ships with carry one number, set in
+// gradle.properties. A test build passes its own, below the first release.
+val release = findProperty("bombvaultVersion") as String
 val (major, minor, patch) = release.split(".").map { it.toInt() }
 
 android {
