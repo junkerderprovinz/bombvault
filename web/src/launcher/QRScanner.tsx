@@ -17,6 +17,28 @@ const NO_POSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAA
 const READ_WIDTH = 640;
 
 /**
+ * mainBackCamera picks the back camera Android numbers first, which is the
+ * main one. Asking for the environment camera alone can land on a telephoto
+ * lens that focuses no nearer than half a metre. Labels read like
+ * `camera2 0, facing back`.
+ */
+export function mainBackCamera(devices: MediaDeviceInfo[]): string | undefined {
+  return devices
+    .filter((d) => d.kind === "videoinput" && /back|environment/i.test(d.label))
+    .map((d) => ({ id: d.deviceId, n: Number(/(\d+)\s*,\s*facing/i.exec(d.label)?.[1] ?? Infinity) }))
+    .sort((a, b) => a.n - b.n)[0]?.id;
+}
+
+/** Opens the main back camera. The labels are known only once a camera is open. */
+async function openMainBackCamera(): Promise<MediaStream> {
+  const first = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+  const main = mainBackCamera(await navigator.mediaDevices.enumerateDevices());
+  if (!main || first.getVideoTracks()[0]?.getSettings().deviceId === main) return first;
+  first.getTracks().forEach((track) => track.stop());
+  return navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: main } }, audio: false });
+}
+
+/**
  * QRScanner is a window over the whole screen that hands back the first QR
  * code the camera sees. The camera picture fills it, an accent frame shows
  * where to hold the code, and Cancel sits at the end of the bottom row like
@@ -68,8 +90,7 @@ export function QRScanner({
       }
     }
 
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "environment" }, audio: false })
+    openMainBackCamera()
       .then((s) => {
         stream = s;
         if (done) return;
