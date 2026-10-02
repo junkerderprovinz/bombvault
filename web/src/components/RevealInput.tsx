@@ -53,6 +53,8 @@ export function RevealInput({
         dir="ltr"
         className={`w-full pr-8! rtl:pr-0! rtl:pl-8! pointer-coarse:pr-11! rtl:pointer-coarse:pr-0! rtl:pointer-coarse:pl-11! text-start${className ? ` ${className}` : ""}`}
       />
+      {/* bv-convention-exception: one-icon-badge-size: the reveal eye is a bare
+          glyph inside the field, never a badge, so it keeps the glyph's own size. */}
       <button
         type="button"
         onClick={onToggleVisible}
