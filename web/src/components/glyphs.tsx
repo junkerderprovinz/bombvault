@@ -339,22 +339,6 @@ export function IconKeyRevoke() {
   );
 }
 
-/** Security: sign-in, second factor and passkeys. */
-export function IconShield() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 14 14"
-      fill="currentColor"
-      className="shrink-0"
-      aria-hidden="true"
-    >
-      <path d="M0 1.5C0 0.677 0.68 0 1.5 0h11c0.82 0 1.5 0.678 1.5 1.5v2.853c0 4.136 -2.51 8.006 -6.411 9.528a1.62 1.62 0 0 1 -0.596 0.12 1.625 1.625 0 0 1 -0.582 -0.12C2.51 12.359 0 8.489 0 4.353V1.5Z" />
-    </svg>
-  );
-}
-
 /** Show, reveal or preview. */
 export function IconEye() {
   return (

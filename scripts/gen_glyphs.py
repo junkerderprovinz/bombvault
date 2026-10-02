@@ -99,6 +99,7 @@ NAV = [
     # Settings.tsx, so the CC BY attribution stays in one file.
     ("IconTabSystem", "computer-devices/computer-chip-1.svg", "System tab"),
     ("IconTabLook", "interface-essential/color-palette.svg", "Look tab: language, theme, shape, motion, labels and colours"),
+    ("IconTabSecurity", "interface-essential/padlock-square-1.svg", "Security tab: sign-in, second factor and passkeys"),
     ("IconFlash", "computer-devices/usb-drive.svg", "The Unraid boot flash drive"),
 ]
 
@@ -271,15 +272,6 @@ EYE_OFF = (
 ) % _EYE_PATH
 EYE_BOX = cropped_box((2.5, 4.3, 15.0, 11.4))
 
-# The Security tab's shield. IconShieldOn and IconShieldOff carry a mark inside
-# theirs and mean a switch; this one names the whole area, so it stays plain.
-SHIELD = (
-    '<path d="M0 1.5C0 0.677 0.68 0 1.5 0h11c0.82 0 1.5 0.678 1.5 1.5v2.853c0 4.136 -2.51 8.006 '
-    '-6.411 9.528a1.62 1.62 0 0 1 -0.596 0.12 1.625 1.625 0 0 1 -0.582 -0.12C2.51 12.359 0 8.489 '
-    '0 4.353V1.5Z" />'
-)
-SHIELD_BOX = "0 0 14 14"
-
 # Glyphs that do not come from the Streamline set. They are emitted after the
 # generated ones and carry their own viewBox instead of going through G's
 # 14-unit grid; the rendered box is 16px either way.
@@ -351,7 +343,6 @@ EXTRA_ACTION = [
     # that means them.
     imported("IconGithub", "The project's GitHub repository", "0 0 24 24", (0.0, 0.297, 24.0, 23.406), "github"),
     ("IconKeyRevoke", "Revoke a key or a passkey", KEY_REVOKE_BOX, KEY_REVOKE),
-    ("IconShield", "Security: sign-in, second factor and passkeys", SHIELD_BOX, SHIELD),
     ("IconEye", "Show, reveal or preview", EYE_BOX, EYE),
     ("IconEyeOff", "Hide what IconEye revealed", EYE_BOX, EYE_OFF),
 ]

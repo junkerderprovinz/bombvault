@@ -234,6 +234,15 @@ export function IconTabLook() {
   );
 }
 
+/** Security tab: sign-in, second factor and passkeys. */
+export function IconTabSecurity() {
+  return (
+    <G>
+      <path fill="currentColor" fillRule="evenodd" d="M7 2a2 2 0 0 0 -2 2v1h4V4a2 2 0 0 0 -2 -2ZM3 4v1a1.5 1.5 0 0 0 -1.5 1.5v6A1.5 1.5 0 0 0 3 14h8a1.5 1.5 0 0 0 1.5 -1.5v-6A1.5 1.5 0 0 0 11 5V4a4 4 0 1 0 -8 0Zm4 6.75a1.25 1.25 0 1 0 0 -2.5 1.25 1.25 0 0 0 0 2.5Z" clipRule="evenodd" strokeWidth="1"></path>
+    </G>
+  );
+}
+
 /** The Unraid boot flash drive. */
 export function IconFlash() {
   return (
