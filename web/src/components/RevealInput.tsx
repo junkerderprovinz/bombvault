@@ -1,5 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 
+import { IconEye, IconEyeOff } from "./glyphs";
+
 // RevealInput is the password field with a show/hide eye that every secret in
 // the app renders through. It holds no state (useReveal does), so tests can
 // call it as a plain function.
@@ -17,7 +19,7 @@ import type { InputHTMLAttributes } from "react";
 // their own px-*, and Tailwind's output order, not the class order, decides
 // which one wins. rtl:right-auto! needs it for the same reason against right-2.
 //
-// Under a coarse pointer the 15px eye is too small to hit, so its button takes
+// Under a coarse pointer the 16px eye is too small to hit, so its button takes
 // the field's full height and a 44px strip at the end, and the padding widens
 // to match. The glyph stays the same size.
 
@@ -56,24 +58,10 @@ export function RevealInput({
         onClick={onToggleVisible}
         aria-label={visible ? hideLabel : showLabel}
         aria-pressed={visible}
-        className="absolute right-2 rtl:right-auto! rtl:left-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] pointer-coarse:h-full pointer-coarse:w-11 pointer-coarse:right-0 rtl:pointer-coarse:left-0! items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="absolute right-2 rtl:right-auto! rtl:left-2 top-1/2 -translate-y-1/2 inline-flex h-4 w-4 pointer-coarse:h-full pointer-coarse:w-11 pointer-coarse:right-0 rtl:pointer-coarse:left-0! items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
-        {visible ? (
-          // The eye is symmetric, so it is not mirrored under RTL. The pupil is
-          // cut out in the field's surface colour.
-          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
-            <g opacity="0.55">
-              <path d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z" />
-              <circle cx="8" cy="8" r="2.1" fill="var(--carbon-surface2, transparent)" />
-            </g>
-            <rect x="-0.5" y="7.2" width="17" height="1.6" rx="0.8" transform="rotate(45 8 8)" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
-            <path d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z" />
-            <circle cx="8" cy="8" r="2.1" fill="var(--carbon-surface2, transparent)" />
-          </svg>
-        )}
+        {/* The eye is symmetric, so it is not mirrored under RTL. */}
+        {visible ? <IconEyeOff /> : <IconEye />}
       </button>
     </div>
   );
