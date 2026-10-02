@@ -2184,6 +2184,7 @@ const bg: Partial<Translations> = {
   "recovery.abStatusImported": "Вече импортиран",
   "recovery.abStatusNoContainer": "Няма контейнер с това име",
   "recovery.abStatusNotBackedUp": "Първо архивирайте този контейнер веднъж",
+  "recovery.abStatusRepoUnavailable": "Хранилището му не е достъпно",
   "recovery.abImport": "Импортирай новите архиви",
   "recovery.abImporting": "Импортиране…",
   "recovery.abImportFailed": "Импортът не можа да започне.",

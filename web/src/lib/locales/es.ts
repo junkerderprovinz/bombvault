@@ -1864,6 +1864,7 @@ const es: Partial<Translations> = {
   "recovery.abStatusImported": "Ya importado",
   "recovery.abStatusNoContainer": "No hay contenedor con este nombre",
   "recovery.abStatusNotBackedUp": "Haz primero una copia de este contenedor",
+  "recovery.abStatusRepoUnavailable": "Su repositorio no está disponible",
   "recovery.abImport": "Importar archivos nuevos",
   "recovery.abImporting": "Importando…",
   "recovery.abImportFailed": "No se pudo iniciar la importación.",

@@ -2168,6 +2168,7 @@ const sl: Partial<Translations> = {
   "recovery.abStatusImported": "Že uvoženo",
   "recovery.abStatusNoContainer": "Ni vsebnika s tem imenom",
   "recovery.abStatusNotBackedUp": "Najprej enkrat varnostno kopiraj ta vsebnik",
+  "recovery.abStatusRepoUnavailable": "Njegov repozitorij ni na voljo",
   "recovery.abImport": "Uvozi nove arhive",
   "recovery.abImporting": "Uvažanje…",
   "recovery.abImportFailed": "Uvoza ni bilo mogoče začeti.",

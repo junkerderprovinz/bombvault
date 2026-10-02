@@ -1864,6 +1864,7 @@ const cs: Partial<Translations> = {
   "recovery.abStatusImported": "Už importováno",
   "recovery.abStatusNoContainer": "Žádný kontejner tohoto názvu",
   "recovery.abStatusNotBackedUp": "Nejdřív tento kontejner jednou zazálohuj",
+  "recovery.abStatusRepoUnavailable": "Jeho repozitář není dostupný",
   "recovery.abImport": "Importovat nové archivy",
   "recovery.abImporting": "Importuje se…",
   "recovery.abImportFailed": "Import se nepodařilo spustit.",

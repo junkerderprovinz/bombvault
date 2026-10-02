@@ -2184,6 +2184,7 @@ const fa: Partial<Translations> = {
   "recovery.abStatusImported": "قبلاً وارد شده",
   "recovery.abStatusNoContainer": "کانتینری با این نام نیست",
   "recovery.abStatusNotBackedUp": "اول یک بار از این کانتینر پشتیبان بگیر",
+  "recovery.abStatusRepoUnavailable": "مخزن آن در دسترس نیست",
   "recovery.abImport": "وارد کردن بایگانی‌های تازه",
   "recovery.abImporting": "در حال وارد کردن…",
   "recovery.abImportFailed": "وارد کردن شروع نشد.",

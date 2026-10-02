@@ -1866,6 +1866,7 @@ const sv: Partial<Translations> = {
   "recovery.abStatusImported": "Redan importerad",
   "recovery.abStatusNoContainer": "Ingen container med det här namnet",
   "recovery.abStatusNotBackedUp": "Säkerhetskopiera den här containern en gång först",
+  "recovery.abStatusRepoUnavailable": "Dess arkiv är inte tillgängligt",
   "recovery.abImport": "Importera nya arkiv",
   "recovery.abImporting": "Importerar…",
   "recovery.abImportFailed": "Importen kunde inte starta.",

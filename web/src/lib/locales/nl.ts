@@ -1863,6 +1863,7 @@ const nl: Partial<Translations> = {
   "recovery.abStatusImported": "Al geïmporteerd",
   "recovery.abStatusNoContainer": "Geen container met deze naam",
   "recovery.abStatusNotBackedUp": "Maak eerst één back-up van deze container",
+  "recovery.abStatusRepoUnavailable": "Zijn repository is niet beschikbaar",
   "recovery.abImport": "Nieuwe archieven importeren",
   "recovery.abImporting": "Importeren…",
   "recovery.abImportFailed": "De import kon niet starten.",

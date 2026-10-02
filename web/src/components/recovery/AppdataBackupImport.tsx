@@ -22,6 +22,7 @@ const STATUS: Record<AppdataBackupArchive["status"], { key: TranslationKey; tone
   imported: { key: "recovery.abStatusImported", tone: "neutral" },
   "no-container": { key: "recovery.abStatusNoContainer", tone: "warn" },
   "not-backed-up": { key: "recovery.abStatusNotBackedUp", tone: "warn" },
+  "repo-unavailable": { key: "recovery.abStatusRepoUnavailable", tone: "warn" },
 };
 
 // AppdataBackupImport turns the archives of the Appdata.Backup plugin into

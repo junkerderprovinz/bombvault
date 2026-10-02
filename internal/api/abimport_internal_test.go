@@ -28,9 +28,10 @@ import (
 // finds in the staging folder at that moment.
 type importFakeEngine struct {
 	ResticEngine
-	mu      sync.Mutex
-	snaps   []restic.Snapshot
-	imports []importCall
+	mu       sync.Mutex
+	snaps    []restic.Snapshot
+	snapsErr error
+	imports  []importCall
 }
 
 type importCall struct {
@@ -43,7 +44,7 @@ type importCall struct {
 func (e *importFakeEngine) RepoOpens(context.Context, string, restic.Mode) bool { return true }
 
 func (e *importFakeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
-	return e.snaps, nil
+	return e.snaps, e.snapsErr
 }
 
 func (e *importFakeEngine) ImportDir(_ context.Context, _, dir string, tags []string, at time.Time, _ restic.Mode) (restic.Summary, error) {
@@ -253,6 +254,50 @@ func importedID(calls []importCall, c *importCall) string {
 		}
 	}
 	return ""
+}
+
+func TestAContainerWhoseRepositoryIsSwitchedOffLeavesTheOthersToImport(t *testing.T) {
+	s, st, eng, src := importFixture(t)
+	off, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetTargetRepo("sonarr", off.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.ScanAppdataBackup(context.Background(), src)
+	if err != nil {
+		t.Fatalf("scan failed for the whole folder: %v", err)
+	}
+	status := map[string]string{}
+	for _, a := range got {
+		status[a.Folder+"/"+a.Container] = a.Status
+	}
+	if status["ab_20250101_030000/sonarr"] != abStatusRepoUnavailable || status["ab_20250201_030000/plex"] != abStatusNew {
+		t.Fatalf("statuses = %v", status)
+	}
+	n, err := s.StartImportAppdataBackup(context.Background(), src)
+	if err != nil || n != 2 {
+		t.Fatalf("started %d, %v; want the two archives of plex", n, err)
+	}
+	waitFor(t, "the import", func() bool { return !s.batchActive.Load() })
+	if calls := eng.calls(); len(calls) != 2 {
+		t.Fatalf("imports = %d, want 2", len(calls))
+	}
+}
+
+func TestAnUnreadableRepositoryMarksItsArchivesAndTheScanGoesOn(t *testing.T) {
+	s, _, eng, src := importFixture(t)
+	eng.snapsErr = errors.New("repository is locked")
+	got, err := s.ScanAppdataBackup(context.Background(), src)
+	if err != nil {
+		t.Fatalf("scan failed for the whole folder: %v", err)
+	}
+	for _, a := range got {
+		if a.Container == "plex" && a.Status != abStatusRepoUnavailable {
+			t.Fatalf("%s/%s = %q, want %q", a.Folder, a.Container, a.Status, abStatusRepoUnavailable)
+		}
+	}
 }
 
 func TestImportRefusesWhenNothingIsNew(t *testing.T) {

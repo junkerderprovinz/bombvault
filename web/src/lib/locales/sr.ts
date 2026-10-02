@@ -2168,6 +2168,7 @@ const sr: Partial<Translations> = {
   "recovery.abStatusImported": "Већ увезено",
   "recovery.abStatusNoContainer": "Нема контејнера са тим именом",
   "recovery.abStatusNotBackedUp": "Прво једном направи резервну копију овог контејнера",
+  "recovery.abStatusRepoUnavailable": "Његов репозиторијум није доступан",
   "recovery.abImport": "Увези нове архиве",
   "recovery.abImporting": "Увоз…",
   "recovery.abImportFailed": "Увоз није могао да почне.",

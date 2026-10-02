@@ -1858,6 +1858,7 @@ const ko: Partial<Translations> = {
   "recovery.abStatusImported": "이미 가져옴",
   "recovery.abStatusNoContainer": "이 이름의 컨테이너가 없음",
   "recovery.abStatusNotBackedUp": "먼저 이 컨테이너를 한 번 백업하세요",
+  "recovery.abStatusRepoUnavailable": "저장소를 사용할 수 없음",
   "recovery.abImport": "새 아카이브 가져오기",
   "recovery.abImporting": "가져오는 중…",
   "recovery.abImportFailed": "가져오기를 시작하지 못했습니다.",

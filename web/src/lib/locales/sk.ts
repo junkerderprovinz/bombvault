@@ -2184,6 +2184,7 @@ const sk: Partial<Translations> = {
   "recovery.abStatusImported": "Už importované",
   "recovery.abStatusNoContainer": "Žiadny kontajner s týmto názvom",
   "recovery.abStatusNotBackedUp": "Najprv tento kontajner raz zazálohuj",
+  "recovery.abStatusRepoUnavailable": "Jeho repozitár nie je dostupný",
   "recovery.abImport": "Importovať nové archívy",
   "recovery.abImporting": "Importuje sa…",
   "recovery.abImportFailed": "Import sa nepodarilo spustiť.",

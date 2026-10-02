@@ -1866,6 +1866,7 @@ const tr: Partial<Translations> = {
   "recovery.abStatusImported": "Zaten içe aktarıldı",
   "recovery.abStatusNoContainer": "Bu adda container yok",
   "recovery.abStatusNotBackedUp": "Önce bu container'ı bir kez yedekle",
+  "recovery.abStatusRepoUnavailable": "Deposu kullanılamıyor",
   "recovery.abImport": "Yeni arşivleri içe aktar",
   "recovery.abImporting": "İçe aktarılıyor…",
   "recovery.abImportFailed": "İçe aktarma başlatılamadı.",

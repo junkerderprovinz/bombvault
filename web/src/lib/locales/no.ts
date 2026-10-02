@@ -1866,6 +1866,7 @@ const no: Partial<Translations> = {
   "recovery.abStatusImported": "Allerede importert",
   "recovery.abStatusNoContainer": "Ingen container med dette navnet",
   "recovery.abStatusNotBackedUp": "Sikkerhetskopier denne containeren én gang først",
+  "recovery.abStatusRepoUnavailable": "Depotet er ikke tilgjengelig",
   "recovery.abImport": "Importer nye arkiver",
   "recovery.abImporting": "Importerer…",
   "recovery.abImportFailed": "Importen kunne ikke starte.",

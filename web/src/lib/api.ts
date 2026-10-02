@@ -3056,7 +3056,7 @@ export interface AppdataBackupArchive {
   size: number;
   /** When the plugin made the backup, in seconds. */
   time: number;
-  status: "new" | "imported" | "no-container" | "not-backed-up";
+  status: "new" | "imported" | "no-container" | "not-backed-up" | "repo-unavailable";
 }
 
 /** POST /api/import/appdata-backup/scan: what an Appdata.Backup folder holds. */

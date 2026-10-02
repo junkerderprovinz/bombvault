@@ -1866,6 +1866,7 @@ const el: Partial<Translations> = {
   "recovery.abStatusImported": "Έχει ήδη εισαχθεί",
   "recovery.abStatusNoContainer": "Δεν υπάρχει container με αυτό το όνομα",
   "recovery.abStatusNotBackedUp": "Κάνε πρώτα ένα αντίγραφο αυτού του container",
+  "recovery.abStatusRepoUnavailable": "Το αποθετήριό του δεν είναι διαθέσιμο",
   "recovery.abImport": "Εισαγωγή νέων αρχείων",
   "recovery.abImporting": "Εισαγωγή…",
   "recovery.abImportFailed": "Η εισαγωγή δεν μπόρεσε να ξεκινήσει.",

@@ -1869,6 +1869,7 @@ const ar: Partial<Translations> = {
   "recovery.abStatusImported": "مستورد سابقًا",
   "recovery.abStatusNoContainer": "لا توجد حاوية بهذا الاسم",
   "recovery.abStatusNotBackedUp": "انسخ هذه الحاوية احتياطيًا مرة واحدة أولًا",
+  "recovery.abStatusRepoUnavailable": "مستودعها غير متاح",
   "recovery.abImport": "استيراد الأرشيفات الجديدة",
   "recovery.abImporting": "جارٍ الاستيراد…",
   "recovery.abImportFailed": "تعذّر بدء الاستيراد.",

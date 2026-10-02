@@ -2184,6 +2184,7 @@ const hi: Partial<Translations> = {
   "recovery.abStatusImported": "पहले से इंपोर्ट किया गया",
   "recovery.abStatusNoContainer": "इस नाम का कोई कंटेनर नहीं",
   "recovery.abStatusNotBackedUp": "पहले इस कंटेनर का एक बार बैकअप लें",
+  "recovery.abStatusRepoUnavailable": "इसकी रिपॉज़िटरी उपलब्ध नहीं है",
   "recovery.abImport": "नए आर्काइव इंपोर्ट करें",
   "recovery.abImporting": "इंपोर्ट हो रहा है…",
   "recovery.abImportFailed": "इंपोर्ट शुरू नहीं हो सका।",

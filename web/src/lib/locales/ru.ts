@@ -1861,6 +1861,7 @@ const ru: Partial<Translations> = {
   "recovery.abStatusImported": "Уже импортирован",
   "recovery.abStatusNoContainer": "Нет контейнера с таким именем",
   "recovery.abStatusNotBackedUp": "Сначала один раз сохраните этот контейнер",
+  "recovery.abStatusRepoUnavailable": "Его репозиторий недоступен",
   "recovery.abImport": "Импортировать новые архивы",
   "recovery.abImporting": "Импорт…",
   "recovery.abImportFailed": "Не удалось запустить импорт.",

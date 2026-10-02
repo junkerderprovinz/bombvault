@@ -2184,6 +2184,7 @@ const ms: Partial<Translations> = {
   "recovery.abStatusImported": "Sudah diimport",
   "recovery.abStatusNoContainer": "Tiada bekas dengan nama ini",
   "recovery.abStatusNotBackedUp": "Sandarkan bekas ini sekali dahulu",
+  "recovery.abStatusRepoUnavailable": "Repositorinya tidak tersedia",
   "recovery.abImport": "Import arkib baharu",
   "recovery.abImporting": "Mengimport…",
   "recovery.abImportFailed": "Import tidak dapat dimulakan.",

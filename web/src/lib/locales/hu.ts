@@ -1869,6 +1869,7 @@ const hu: Partial<Translations> = {
   "recovery.abStatusImported": "Már importálva",
   "recovery.abStatusNoContainer": "Nincs ilyen nevű konténer",
   "recovery.abStatusNotBackedUp": "Előbb mentsd egyszer ezt a konténert",
+  "recovery.abStatusRepoUnavailable": "A tárolója nem érhető el",
   "recovery.abImport": "Új archívumok importálása",
   "recovery.abImporting": "Importálás…",
   "recovery.abImportFailed": "Az importálás nem tudott elindulni.",

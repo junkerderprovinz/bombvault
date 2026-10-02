@@ -2184,6 +2184,7 @@ const id: Partial<Translations> = {
   "recovery.abStatusImported": "Sudah diimpor",
   "recovery.abStatusNoContainer": "Tidak ada kontainer dengan nama ini",
   "recovery.abStatusNotBackedUp": "Cadangkan kontainer ini sekali dulu",
+  "recovery.abStatusRepoUnavailable": "Repositorinya tidak tersedia",
   "recovery.abImport": "Impor arsip baru",
   "recovery.abImporting": "Mengimpor…",
   "recovery.abImportFailed": "Impor tidak dapat dimulai.",

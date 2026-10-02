@@ -2184,6 +2184,7 @@ const gl: Partial<Translations> = {
   "recovery.abStatusImported": "Xa importado",
   "recovery.abStatusNoContainer": "Non hai ningún contedor con este nome",
   "recovery.abStatusNotBackedUp": "Fai primeiro unha copia deste contedor",
+  "recovery.abStatusRepoUnavailable": "O seu repositorio non está dispoñible",
   "recovery.abImport": "Importar arquivos novos",
   "recovery.abImporting": "Importando…",
   "recovery.abImportFailed": "Non se puido iniciar a importación.",

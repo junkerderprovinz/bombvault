@@ -1869,6 +1869,7 @@ const th: Partial<Translations> = {
   "recovery.abStatusImported": "นำเข้าแล้ว",
   "recovery.abStatusNoContainer": "ไม่มีคอนเทนเนอร์ชื่อนี้",
   "recovery.abStatusNotBackedUp": "สำรองคอนเทนเนอร์นี้หนึ่งครั้งก่อน",
+  "recovery.abStatusRepoUnavailable": "ใช้ที่เก็บข้อมูลของคอนเทนเนอร์นี้ไม่ได้",
   "recovery.abImport": "นำเข้าไฟล์เก็บถาวรใหม่",
   "recovery.abImporting": "กำลังนำเข้า…",
   "recovery.abImportFailed": "เริ่มการนำเข้าไม่ได้",

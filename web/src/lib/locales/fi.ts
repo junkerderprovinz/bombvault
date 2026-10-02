@@ -1866,6 +1866,7 @@ const fi: Partial<Translations> = {
   "recovery.abStatusImported": "Jo tuotu",
   "recovery.abStatusNoContainer": "Tämännimistä konttia ei ole",
   "recovery.abStatusNotBackedUp": "Varmuuskopioi tämä kontti ensin kerran",
+  "recovery.abStatusRepoUnavailable": "Sen arkisto ei ole käytettävissä",
   "recovery.abImport": "Tuo uudet arkistot",
   "recovery.abImporting": "Tuodaan…",
   "recovery.abImportFailed": "Tuontia ei voitu aloittaa.",

@@ -1858,6 +1858,7 @@ const vi: Partial<Translations> = {
   "recovery.abStatusImported": "Đã nhập",
   "recovery.abStatusNoContainer": "Không có container tên này",
   "recovery.abStatusNotBackedUp": "Hãy sao lưu container này một lần trước",
+  "recovery.abStatusRepoUnavailable": "Kho lưu trữ của nó không khả dụng",
   "recovery.abImport": "Nhập tệp lưu trữ mới",
   "recovery.abImporting": "Đang nhập…",
   "recovery.abImportFailed": "Không bắt đầu nhập được.",

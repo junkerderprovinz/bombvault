@@ -2184,6 +2184,7 @@ const is: Partial<Translations> = {
   "recovery.abStatusImported": "Þegar flutt inn",
   "recovery.abStatusNoContainer": "Enginn gámur með þessu nafni",
   "recovery.abStatusNotBackedUp": "Afritaðu þennan gám einu sinni fyrst",
+  "recovery.abStatusRepoUnavailable": "Geymsla hans er ekki tiltæk",
   "recovery.abImport": "Flytja inn nýjar safnskrár",
   "recovery.abImporting": "Flytur inn…",
   "recovery.abImportFailed": "Ekki tókst að hefja innflutninginn.",

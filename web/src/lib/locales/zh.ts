@@ -1858,6 +1858,7 @@ const zh: Partial<Translations> = {
   "recovery.abStatusImported": "已导入",
   "recovery.abStatusNoContainer": "没有同名容器",
   "recovery.abStatusNotBackedUp": "请先备份一次此容器",
+  "recovery.abStatusRepoUnavailable": "其存储库不可用",
   "recovery.abImport": "导入新归档",
   "recovery.abImporting": "正在导入…",
   "recovery.abImportFailed": "无法开始导入。",

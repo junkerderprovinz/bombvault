@@ -2184,6 +2184,7 @@ const et: Partial<Translations> = {
   "recovery.abStatusImported": "Juba imporditud",
   "recovery.abStatusNoContainer": "Selle nimega konteinerit pole",
   "recovery.abStatusNotBackedUp": "Varunda seda konteinerit enne üks kord",
+  "recovery.abStatusRepoUnavailable": "Selle hoidla pole saadaval",
   "recovery.abImport": "Impordi uued arhiivid",
   "recovery.abImporting": "Importimine…",
   "recovery.abImportFailed": "Importi ei õnnestunud alustada.",

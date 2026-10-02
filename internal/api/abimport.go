@@ -36,6 +36,9 @@ const (
 	// abStatusNotBackedUp is a container that exists but was never backed up
 	// here, so a restore would have no recreate recipe and no paths to put back.
 	abStatusNotBackedUp = "not-backed-up"
+	// abStatusRepoUnavailable is a container whose repository is switched off
+	// or cannot be read, so nobody can tell whether its archive is new.
+	abStatusRepoUnavailable = "repo-unavailable"
 )
 
 // ABImportArchive is one container archive found in the chosen folder.
@@ -105,6 +108,7 @@ func (s *Service) planAppdataImport(ctx context.Context, sub string) ([]abPlanne
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
 	imported := map[string]map[string]bool{}
+	unreadable := map[string]bool{}
 	var out []abPlanned
 	for _, b := range backups {
 		for _, a := range b.Archives {
@@ -131,14 +135,23 @@ func (s *Service) planAppdataImport(ctx context.Context, sub string) ([]abPlanne
 			}
 			repo, rErr := s.containerRepoPath(settings, tg)
 			if rErr != nil {
-				return nil, rErr
+				log.Printf("api: import: %s: %v", a.Container, rErr) //nolint:gosec // G706: a container name from the folder listing
+				p.archive.Status = abStatusRepoUnavailable
+				out = append(out, p)
+				continue
 			}
 			p.target, p.repo, p.mode = tg, repo, s.primaryModeFor(settings, "containers", repo)
-			if imported[repo] == nil {
-				imported[repo], err = s.importedArchives(ctx, repo, p.mode)
-				if err != nil {
-					return nil, err
+			if imported[repo] == nil && !unreadable[repo] {
+				done, iErr := s.importedArchives(ctx, repo, p.mode)
+				if iErr != nil {
+					log.Printf("api: import: the repository of %s: %v", a.Container, iErr) //nolint:gosec // G706: a container name from the folder listing
 				}
+				imported[repo], unreadable[repo] = done, iErr != nil
+			}
+			if unreadable[repo] {
+				p.archive.Status = abStatusRepoUnavailable
+				out = append(out, p)
+				continue
 			}
 			p.archive.Status = abStatusNew
 			if imported[repo][a.Container+"|"+b.Folder] {

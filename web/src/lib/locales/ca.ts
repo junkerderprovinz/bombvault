@@ -2184,6 +2184,7 @@ const ca: Partial<Translations> = {
   "recovery.abStatusImported": "Ja importat",
   "recovery.abStatusNoContainer": "No hi ha cap contenidor amb aquest nom",
   "recovery.abStatusNotBackedUp": "Fes primer una còpia d'aquest contenidor",
+  "recovery.abStatusRepoUnavailable": "El seu repositori no està disponible",
   "recovery.abImport": "Importa els arxius nous",
   "recovery.abImporting": "S'està important…",
   "recovery.abImportFailed": "No s'ha pogut iniciar la importació.",

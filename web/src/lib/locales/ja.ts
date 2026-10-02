@@ -1858,6 +1858,7 @@ const ja: Partial<Translations> = {
   "recovery.abStatusImported": "取り込み済み",
   "recovery.abStatusNoContainer": "この名前のコンテナはありません",
   "recovery.abStatusNotBackedUp": "先にこのコンテナを一度バックアップしてください",
+  "recovery.abStatusRepoUnavailable": "リポジトリを利用できません",
   "recovery.abImport": "新しいアーカイブを取り込む",
   "recovery.abImporting": "取り込み中…",
   "recovery.abImportFailed": "取り込みを開始できませんでした。",

@@ -1866,6 +1866,7 @@ const he: Partial<Translations> = {
   "recovery.abStatusImported": "כבר יובא",
   "recovery.abStatusNoContainer": "אין קונטיינר בשם הזה",
   "recovery.abStatusNotBackedUp": "גבה את הקונטיינר הזה פעם אחת קודם",
+  "recovery.abStatusRepoUnavailable": "המאגר שלו לא זמין",
   "recovery.abImport": "ייבוא ארכיונים חדשים",
   "recovery.abImporting": "מייבא…",
   "recovery.abImportFailed": "לא ניתן היה להתחיל את הייבוא.",

@@ -2184,6 +2184,7 @@ const lv: Partial<Translations> = {
   "recovery.abStatusImported": "Jau importēts",
   "recovery.abStatusNoContainer": "Nav konteinera ar šādu nosaukumu",
   "recovery.abStatusNotBackedUp": "Vispirms vienreiz dublē šo konteineru",
+  "recovery.abStatusRepoUnavailable": "Tā krātuve nav pieejama",
   "recovery.abImport": "Importēt jaunos arhīvus",
   "recovery.abImporting": "Importē…",
   "recovery.abImportFailed": "Importu neizdevās sākt.",

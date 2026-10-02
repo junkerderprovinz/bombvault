@@ -2184,6 +2184,7 @@ const lt: Partial<Translations> = {
   "recovery.abStatusImported": "Jau importuotas",
   "recovery.abStatusNoContainer": "Nėra tokio pavadinimo konteinerio",
   "recovery.abStatusNotBackedUp": "Pirmiausia kartą padaryk šio konteinerio atsarginę kopiją",
+  "recovery.abStatusRepoUnavailable": "Jo saugykla nepasiekiama",
   "recovery.abImport": "Importuoti naujus archyvus",
   "recovery.abImporting": "Importuojama…",
   "recovery.abImportFailed": "Nepavyko pradėti importo.",

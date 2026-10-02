@@ -1869,6 +1869,7 @@ const ro: Partial<Translations> = {
   "recovery.abStatusImported": "Deja importat",
   "recovery.abStatusNoContainer": "Niciun container cu acest nume",
   "recovery.abStatusNotBackedUp": "Fă mai întâi o dată backup acestui container",
+  "recovery.abStatusRepoUnavailable": "Depozitul lui nu este disponibil",
   "recovery.abImport": "Importă arhivele noi",
   "recovery.abImporting": "Se importă…",
   "recovery.abImportFailed": "Importul nu a putut porni.",

@@ -1861,6 +1861,7 @@ const uk: Partial<Translations> = {
   "recovery.abStatusImported": "Уже імпортовано",
   "recovery.abStatusNoContainer": "Немає контейнера з такою назвою",
   "recovery.abStatusNotBackedUp": "Спочатку один раз збережіть цей контейнер",
+  "recovery.abStatusRepoUnavailable": "Його репозиторій недоступний",
   "recovery.abImport": "Імпортувати нові архіви",
   "recovery.abImporting": "Імпорт…",
   "recovery.abImportFailed": "Не вдалося запустити імпорт.",

@@ -2184,6 +2184,7 @@ const eu: Partial<Translations> = {
   "recovery.abStatusImported": "Inportatuta dago",
   "recovery.abStatusNoContainer": "Ez dago izen hori duen edukiontzirik",
   "recovery.abStatusNotBackedUp": "Egin lehenik edukiontzi honen babeskopia bat",
+  "recovery.abStatusRepoUnavailable": "Bere biltegia ez dago erabilgarri",
   "recovery.abImport": "Inportatu artxibo berriak",
   "recovery.abImporting": "Inportatzen…",
   "recovery.abImportFailed": "Ezin izan da inportazioa hasi.",
