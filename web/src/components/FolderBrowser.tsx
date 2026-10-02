@@ -6,7 +6,7 @@ import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
 import { groupStage } from "../lib/controls";
-import { IconCheckCircle, IconFolder } from "./Sidebar";
+import { IconCheck, IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
 import { usePortalHue } from "../lib/portalHue";
@@ -248,7 +248,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           <Button
             label={t("folder.use")}
             labelKey="folder.use"
-            glyph={<IconCheckCircle />}
+            glyph={<IconCheck />}
             tone="accent"
             onClick={handleSelect}
             stage={folderActionStage}

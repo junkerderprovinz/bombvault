@@ -85,7 +85,7 @@ import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { useLoudAnomalies } from "../../lib/useAnomalies";
-import { IconEllipsis } from "../navGlyphs";
+import { IconMore } from "../navGlyphs";
 import { MoreSheet } from "./MoreSheet";
 
 export interface BottomNavProps {
@@ -224,7 +224,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
             {/* The glyph box is the 24px slot-icon box (the 16px generated
                 glyph scales up to it, the same scaling the rail applies). */}
             <span className="relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
-              <IconEllipsis />
+              <IconMore />
               {anomalyDot && (
                 <span
                   data-testid="more-anomaly-dot"

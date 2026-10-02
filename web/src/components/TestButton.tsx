@@ -4,7 +4,7 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import type { TestVerdictState, Verdict } from "../lib/useTestVerdict";
 import { Button, type ButtonTone } from "./Button";
 import { CheckDraw } from "./CheckDraw";
-import { IconCancel } from "./glyphs";
+import { IconClose } from "./navGlyphs";
 
 // The words a verdict puts on the button, by what the button tests.
 const WORDS = {
@@ -22,7 +22,7 @@ export function verdictKey(verdict: Verdict, words: VerdictWords): TranslationKe
 
 /** The check a passed test shows, and the cross a failed one shows. */
 export function verdictGlyph(verdict: Verdict): ReactNode {
-  return verdict.ok ? <CheckDraw /> : <IconCancel />;
+  return verdict.ok ? <CheckDraw /> : <IconClose />;
 }
 
 /**

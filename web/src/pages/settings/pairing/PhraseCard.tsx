@@ -10,7 +10,7 @@ import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
 import { IconDisclosure } from "../../../components/IconDisclosure";
 import { IconEye, IconRefresh, IconSignOut } from "../../../components/glyphs";
-import { IconCheckCircle, IconClose, IconCopy, IconFleet } from "../../../components/navGlyphs";
+import { IconCheck, IconClose, IconCopy, IconFleet } from "../../../components/navGlyphs";
 import {
   createPhrase,
   joinGroup,
@@ -509,7 +509,7 @@ export function PhraseCard({
     <Button
       label={copies > 0 ? t("common.copied") : t("common.copy")}
       labelKey={copies > 0 ? "common.copied" : "common.copy"}
-      glyph={copies > 0 ? <IconCheckCircle /> : <IconCopy />}
+      glyph={copies > 0 ? <IconCheck /> : <IconCopy />}
       tone="neutral"
       onClick={() => void copy()}
     />

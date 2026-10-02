@@ -10,24 +10,24 @@ import { buttonTags, walkTsx } from "./buttonTags.testsupport";
 const SRC = join(__dirname, "..");
 
 describe("glyph sizing", () => {
-  // navGlyphs.fit.dom.test.tsx proves the viewBox follows from the declared
-  // ink, not that the ink was measured right. The numbers are read from the
-  // generator, where they are typed.
-  const gen = readFileSync(join(SRC, "..", "..", "scripts", "gen_glyphs.py"), "utf8");
-  const entries = [...gen.matchAll(
-    /imported\(\s*"(\w+)"[^)]*?\(([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/gs,
-  )];
+  // glyphs.fit.dom.test.tsx proves each viewBox follows from the recorded ink,
+  // not that the ink was recorded right. The numbers come from
+  // scripts/glyphs.json, GlimStone's assortment, which the generator reads.
+  const entries: { name: string; ink: [number, number, number, number] }[] = JSON.parse(
+    readFileSync(join(SRC, "..", "..", "scripts", "glyphs.json"), "utf8"),
+  );
 
-  it("declares an ink box for every imported glyph", () => {
+  it("records an ink box for every glyph", () => {
     expect(entries.length).toBeGreaterThan(0);
+    for (const e of entries) expect(e.ink, `${e.name} has no ink box`).toHaveLength(4);
   });
 
-  it.each(entries.map((e) => [e[1], Number(e[4]), Number(e[5])] as const))(
-    "%s declares a plausible ink box",
+  it.each(entries.map((e) => [e.name, e.ink[2], e.ink[3]] as const))(
+    "%s records a plausible ink box",
     (name, w, h) => {
       // Zero or negative is a typo; the crop would divide by it.
-      expect(w, `${name} has no declared width`).toBeGreaterThan(0);
-      expect(h, `${name} has no declared height`).toBeGreaterThan(0);
+      expect(w, `${name} has no recorded width`).toBeGreaterThan(0);
+      expect(h, `${name} has no recorded height`).toBeGreaterThan(0);
       // Nothing in this set is beyond 4:1 either way, so a ratio past that is a
       // transposed or half-copied measurement.
       const ratio = Math.max(w / h, h / w);
@@ -63,8 +63,8 @@ describe("buttons", () => {
   });
 
   it("crops the viewBox of a wholly rotated glyph", () => {
-    // A rotated drawing does not fill the box its numbers claim: IconClose, the
-    // plus turned 45 degrees, fills 58% of its box against the plus's 72%.
+    // A rotated drawing does not fill the box its numbers claim: a plus turned
+    // 45 degrees fills 58% of its box against the upright plus's 72%.
     // getBBox and getBoundingClientRect report the extent before the transform,
     // so the rule is structural: a glyph drawn as one rotated group needs a
     // cropped viewBox. A detail rotated inside an unrotated shape (a tick in a
