@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   IconAdd,
   IconBackupNow,
-  IconCheckCircle,
+  IconCheck,
   IconClose,
   IconCopy,
   IconDownload,
@@ -17,9 +17,7 @@ import {
 } from "./Sidebar";
 import {
   IconBack,
-  IconCancel,
   IconClearSelection,
-  IconCoffee,
   IconCompare,
   IconEye,
   IconForward,
@@ -78,14 +76,13 @@ const RULES: Rule[] = [
   [/selectAll|selectEvery|includeAll/i, () => <IconSelectAll />],
 
   // Navigation and dialogs.
-  [/cancel|skip|decline/i, () => <IconCancel />],
-  [/close|dismiss/i, () => <IconClose />],
+  [/cancel|skip|decline|close|dismiss/i, () => <IconClose />],
   // "Done" is a sheet's terminal verb rather than a close: it signs off on what
   // the surface just let the user do (the schedule just saved, the guided flow
   // just finished), which is the same agreement the probing block's mark
   // already carries. Word-bounded, so a future key merely CONTAINING done
   // (backupDone) never takes the check by substring accident.
-  [/\bdone\b/i, () => <IconCheckCircle />],
+  [/\bdone\b/i, () => <IconCheck />],
   [/back|previous|prev\b/i, () => <IconBack />],
   [/jumpToLatest/i, () => <IconLatest />],
   [/next|continue|forward/i, () => <IconForward />],
@@ -96,10 +93,10 @@ const RULES: Rule[] = [
 
   // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
   // is on screen, so they take the same check.
-  [/test|probe|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
+  [/test|probe|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheck />],
   // Settling an anomaly: seen and closed takes the same check as the other
   // agreements, while marking it as expected records a new normal level.
-  [/acknowledge/i, () => <IconCheckCircle />],
+  [/acknowledge/i, () => <IconCheck />],
   [/expected/i, () => <IconSave />],
 
   [/scan|discover|browse|search/i, () => <IconSearch />],
@@ -138,11 +135,9 @@ const RULES: Rule[] = [
   // so only the switches match.
   [/\.local$|Local$/i, () => <IconLocal />],
 
-  // Nouns rather than verbs, for the generic cases: a plain cup for a donation
-  // and an envelope for any address. The About card's buttons carry their
-  // companies' own marks at the call site, since a brand must not be reachable
-  // by pattern.
-  [/coffee|donate|sponsor/i, () => <IconCoffee />],
+  // An envelope for any address. Nothing matches coffee or a donation: the only
+  // mark for that is Buy Me a Coffee's own, and a brand is passed at its call
+  // site, never reached by pattern.
   [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
   // Places and configuration, last because they are the vaguest.

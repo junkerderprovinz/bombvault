@@ -43,13 +43,16 @@ describe("glyphFor", () => {
 });
 
 describe("glyphFor on the About card", () => {
-  it("gives the coffee and the mail button a symbol", () => {
-    expect(glyphFor("about.coffeeButton")).toBeDefined();
+  it("gives the mail button a symbol", () => {
     expect(glyphFor("about.mail")).toBeDefined();
   });
 
-  it("keeps those two apart", () => {
-    expect(glyphFor("about.coffeeButton")).not.toEqual(glyphFor("about.mail"));
+  it("gives the coffee button no glyph", () => {
+    // The only coffee mark is Buy Me a Coffee's own, which the button carries
+    // as its vendor artwork. A pattern on "coffee" or "donate" would put that
+    // brand on anything mentioning either word.
+    expect(glyphFor("about.coffeeButton")).toBeUndefined();
+    expect(glyphFor("about.donateAppeal")).toBeUndefined();
   });
 
   it("gives the repository button no glyph", () => {

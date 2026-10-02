@@ -3,6 +3,9 @@ import type { TranslationKey } from "../../lib/i18n";
 import {
   IconContainers,
   IconLive,
+  IconNotifications,
+  IconSchedules,
+  IconTabApps,
   IconTabGeneral,
   IconTabIntegrity,
   IconTabLook,
@@ -39,38 +42,6 @@ export interface SettingsPageDef {
   icon: ReactNode;
 }
 
-function IconSchedules() {
-  // A clock: dial and both hands as one evenodd path, the hands cut out.
-  return (
-    <svg viewBox="1.8 1.8 12.4 12.4" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M14.2,8 A6.2,6.2 0 1 0 1.8,8 A6.2,6.2 0 1 0 14.2,8 Z M7.35,4.5 H8.65 V8.1 H7.35 Z M8.163,7.339 L11.506,9.347 L10.837,10.462 L7.494,8.453 Z"
-      />
-    </svg>
-  );
-}
-
-function IconApps() {
-  return (
-    <svg viewBox="2 2 12 12" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <rect x="2.5" y="2.5" width="4.8" height="4.8" rx="1.2" />
-      <rect x="8.7" y="2.5" width="4.8" height="4.8" rx="1.2" />
-      <rect x="2.5" y="8.7" width="4.8" height="4.8" rx="1.2" />
-      <rect x="8.7" y="8.7" width="4.8" height="4.8" rx="1.2" />
-    </svg>
-  );
-}
-
-function IconNotifications() {
-  return (
-    <svg viewBox="2.45 2.5 11.1 11.1" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" />
-      <path d="M6.5 12.1h3a1.5 1.5 0 0 1-3 0Z" />
-    </svg>
-  );
-}
-
 /** The default order of the rail. A reader can drag the tiles into their own. */
 export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "general", label: "settings.tab.general", icon: <IconTabGeneral /> },
@@ -86,7 +57,7 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "security", label: "settings.tab.security", icon: <IconTabSecurity /> },
   { id: "pairing", label: "pairing.title", icon: <IconLink /> },
   { id: "integrations", label: "settings.tab.integrations", icon: <IconLive /> },
-  { id: "apps", label: "settings.tab.apps", icon: <IconApps /> },
+  { id: "apps", label: "settings.tab.apps", icon: <IconTabApps /> },
   { id: "system", label: "settings.tab.system", icon: <IconTabSystem /> },
 ];
 

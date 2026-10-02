@@ -11,7 +11,7 @@
 import type { ReactNode, Ref } from "react";
 import { Badge } from "./Badge";
 import { Button, type ButtonTone } from "./Button";
-import { IconCancel } from "./glyphs";
+import { IconClose } from "./navGlyphs";
 
 export interface ConfirmDialogProps {
   /** A generic title such as t("confirmDialog.title"); the question itself
@@ -97,7 +97,7 @@ export function ConfirmDialog({
           <Button
             label={cancelLabel}
             labelKey="common.cancel"
-            glyph={<IconCancel />}
+            glyph={<IconClose />}
             tone={cancelTone}
             autoFocus
             onClick={onCancel}

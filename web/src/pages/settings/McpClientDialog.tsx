@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
-import { IconCheckCircle, IconCopy, IconDownload } from "../../components/navGlyphs";
+import { IconCheck, IconCopy, IconDownload } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
 import { HUE_OFFSET, Selector } from "../../components/Selector";
 import { Toggle } from "../../components/Toggle";
@@ -658,7 +658,7 @@ export function McpClientDialog({
           <Button
             label={connected ? t("common.done") : t("common.close")}
             labelKey={connected ? "common.done" : "common.close"}
-            glyph={connected ? <IconCheckCircle /> : undefined}
+            glyph={connected ? <IconCheck /> : undefined}
             tone="accent"
             onClick={() => closeRef.current()}
           />
@@ -678,7 +678,7 @@ function Step({ n, title, done = false, children }: { n: number; title: string; 
           done ? "bg-statusOkBg text-statusOk" : "bg-carbon-surface2 text-carbon-textSub"
         }`}
       >
-        {done ? <IconCheckCircle /> : n}
+        {done ? <IconCheck /> : n}
       </span>
       <h3 className="self-center text-sm font-semibold text-carbon-text">{title}</h3>
       <div className="col-start-2 flex min-w-0 flex-col gap-2.5">{children}</div>

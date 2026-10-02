@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 import { Button, type ButtonTone } from "../Button";
-import { IconCancel } from "../glyphs";
+import { IconClose } from "../navGlyphs";
 import { BottomSheet } from "./BottomSheet";
 
 // ConfirmSheet is useConfirm's presentation below the 48rem breakpoint. The
@@ -78,7 +78,7 @@ export function ConfirmSheet({
           <Button
             label={cancelLabel}
             labelKey="common.cancel"
-            glyph={<IconCancel />}
+            glyph={<IconClose />}
             tone={cancelTone}
             onClick={onCancel}
             className="glim-btn-key w-full"

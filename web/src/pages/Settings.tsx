@@ -83,7 +83,7 @@ import {
   writeOrder,
   type SettingsPageId,
 } from "./settings/settingsPages";
-import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
+import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheck, IconSync, IconGear, IconClose } from "../components/Sidebar";
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
@@ -247,7 +247,7 @@ function OffsiteDomainBar({
               <TestButton
                 label={t("offsite.test")}
                 labelKey="offsite.test"
-                glyph={<IconCheckCircle />}
+                glyph={<IconCheck />}
                 tone="accent"
                 hueIndex={hueIndex}
                 test={test}

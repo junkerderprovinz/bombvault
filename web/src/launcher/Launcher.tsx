@@ -2,11 +2,10 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { colorFor, glyphFor, glyphLabelKey } from "../components/ActivityLog";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconCancel } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { BottomSheet } from "../components/mobile/BottomSheet";
 import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
-import { IconAdd, IconGear, IconPencil } from "../components/navGlyphs";
+import { IconAdd, IconClose, IconGear, IconPencil } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
 import { hueVars } from "../lib/appearance";
@@ -541,7 +540,7 @@ function TrustSheet({
           <Button
             label={t("common.cancel")}
             labelKey="common.cancel"
-            glyph={<IconCancel />}
+            glyph={<IconClose />}
             tone={changed ? "accent" : "neutral"}
             onClick={onCancel}
             className="glim-btn-key w-full"

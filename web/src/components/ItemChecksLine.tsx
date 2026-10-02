@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconPlay } from "./glyphs";
-import { IconCheckCircle } from "./Sidebar";
+import { IconCheck } from "./Sidebar";
 import { probeItem, runStartTest, type ItemChecks, type StartTest, type StartTestBlocked } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
@@ -74,7 +74,7 @@ export function ItemChecksLine({
             key={shake}
             label={t("checks.probeNow")}
             labelKey="checks.probeNow"
-            glyph={<IconCheckCircle />}
+            glyph={<IconCheck />}
             tone="neutral"
             onClick={() => void run()}
             disabled={busy}

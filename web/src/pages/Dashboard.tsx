@@ -48,7 +48,7 @@ import { Selector } from "../components/Selector";
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
 import type { TranslationKey } from "../lib/i18n";
 import { Button } from "../components/Button";
-import { IconCheckCircle } from "../components/Sidebar";
+import { IconCheck } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { zfsCodeSentence, zfsFixKey } from "../lib/zfsCodes";
 
@@ -1014,7 +1014,7 @@ export function ProtectionCard({
                             ? t("drill.rerunOffsiteDr")
                             : t("drill.runOffsiteDr")}
                         labelKey={d.lastDrDrillAt && d.lastDrDrillOK ? "drill.rerunOffsiteDr" : "drill.runOffsiteDr"}
-                        glyph={<IconCheckCircle />}
+                        glyph={<IconCheck />}
                         tone="neutral"
                         onClick={() => runOffsiteDr(d.domain)}
                         className="glim-btn-wrap pointer-coarse:[--btn-h:2.75rem]"

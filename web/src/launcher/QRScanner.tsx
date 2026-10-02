@@ -1,8 +1,7 @@
 import jsQR from "jsqr";
 import { useEffect, useRef } from "react";
 import { Button } from "../components/Button";
-import { IconCancel } from "../components/glyphs";
-import { IconCheckCircle } from "../components/navGlyphs";
+import { IconCheck, IconClose } from "../components/navGlyphs";
 import type { useT } from "../lib/i18n";
 
 type T = ReturnType<typeof useT>["t"];
@@ -122,12 +121,12 @@ export function QRScanner({
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
           <p className="text-center text-sm text-carbon-text">{t("launcher.cameraHint")}</p>
-          <Button label={t("launcher.cameraAllow")} labelKey="launcher.cameraAllow" glyph={<IconCheckCircle />} tone="accent" onClick={onAskCamera} />
+          <Button label={t("launcher.cameraAllow")} labelKey="launcher.cameraAllow" glyph={<IconCheck />} tone="accent" onClick={onAskCamera} />
         </div>
       )}
       {/* Quiet, because leaving is not what this window is for. */}
       <div className="absolute inset-x-6 bottom-10 flex justify-end">
-        <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconCancel />} tone="neutral" onClick={onClose} />
+        <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />
       </div>
     </div>
   );
