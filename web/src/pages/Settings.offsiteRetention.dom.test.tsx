@@ -60,6 +60,7 @@ function baseSettings(): Settings {
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
     retentionKeepYearly: 0,
+    ownRetention: {},
     offsiteRetentionKeepLast: 7,
     offsiteRetentionKeepDaily: 0,
     offsiteRetentionKeepWeekly: 0,

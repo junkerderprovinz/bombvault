@@ -676,6 +676,9 @@ const fi: Partial<Translations> = {
   "retentionPreview.skipped": "Näitä repositorioita ei käsitelty:",
   "retentionPreview.failed": "Esikatselua ei voitu muodostaa.",
   "retentionPreview.paused": "Säilytetään: kohteella on avoin poikkeama",
+  "retentionPreview.ownPolicy": "Tämän lähteen omat säilytyssäännöt",
+  "retentionPreview.sharedPolicy": "Yhteiset säilytyssäännöt",
+  "retentionPreview.policy": "Säilytyssäännöt",
   "settings.imageMaintenanceTitle": "Image-siivous ja päivitystila",
   "settings.imageMaintenanceHint": "Ylläpitoa varmuuskopion jälkeisen konttipäivityksen ympärillä: poistetaan korvattu image ja päivitetään Unraidin oma välimuistissa oleva päivitystila.",
   "settings.retentionLast": "Säilytä viimeisimmät",
@@ -692,6 +695,11 @@ const fi: Partial<Translations> = {
   "settings.retentionOffsite": "Etärepo",
   "settings.retentionOffsiteTitle": "Etäsäilytys",
   "settings.retentionOffsiteHint": "Erillinen käytäntö etärepolle, jotta voit säilyttää sitä pidempään arkistona. Kaikki 0 = säilytä jokainen etävarmuuskopio (ei etäkarsintaa).",
+  "settings.ownRetentionTitle": "Säilytyssäännöt lähteittäin",
+  "settings.ownRetentionHint": "Lähde voi noudattaa omia säilytyssääntöjään yllä olevien yhteisten sijaan. Päivittäin muuttuvat kontit ja kansiot voivat säilyttää 7 päivittäistä varmuuskopiota, harvoin muuttuvat virtuaalikoneet vähemmän. Lähde, jolla ei ole omia sääntöjä, käyttää yhteisiä.",
+  "settings.ownRetention": "Omat säilytyssäännöt",
+  "settings.ownRetentionFor": "Omat säilytyssäännöt: {source}",
+  "settings.ownRetentionToggleHint": "Päällä: tämä lähde säilyttää varmuuskopionsa alla olevien viiden säännön mukaan, jotka alkavat yhteisistä arvoista. Pois: se käyttää yhteisiä sääntöjä. Kaikki 0 säilyttää tämän lähteen kaikki varmuuskopiot. Etäkopioilla on joka tapauksessa omat sääntönsä.",
   "settings.retentionCombineInfo": "Viisi sääntöä yhdistyvät TAI-logiikalla: snapshot säilyy, jos mikä tahansa yksittäinen sääntö säilyttäisi sen. Ne eivät summaudu kiinteäksi määräksi. Koskee jokaista varmuuskopioitua kohdetta erikseen.",
 
   // Off-site (rclone)

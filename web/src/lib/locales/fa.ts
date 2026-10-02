@@ -622,6 +622,9 @@ const fa: Partial<Translations> = {
   "retentionPreview.skipped": "این مخزن‌ها پوشش داده نشدند:",
   "retentionPreview.failed": "پیش‌نمایش ساخته نشد.",
   "retentionPreview.paused": "نگه داشته شد: این مورد ناهنجاری باز دارد",
+  "retentionPreview.ownPolicy": "قواعد نگه‌داری اختصاصی این منبع",
+  "retentionPreview.sharedPolicy": "قواعد نگه‌داری مشترک",
+  "retentionPreview.policy": "قواعد نگه‌داری",
   "settings.imageMaintenanceTitle": "پاک‌سازی ایمیج و وضعیت به‌روزرسانی",
   "settings.imageMaintenanceHint": "نگهداری پیرامون به‌روزرسانی کانتینر پس از پشتیبان‌گیری: پاک‌سازی ایمیج جایگزین‌شده و تازه‌سازی وضعیت کش‌شده به‌روزرسانی خود Unraid.",
   "settings.pruneImageAfterUpdate": "حذف ایمیج قدیمی پس از به‌روزرسانی",
@@ -649,6 +652,11 @@ const fa: Partial<Translations> = {
   "settings.retentionOffsite": "مخزن خارج از محل",
   "settings.retentionOffsiteTitle": "نگه‌داری خارج از محل",
   "settings.retentionOffsiteHint": "سیاستی جداگانه برای مخزن خارج از محل، تا بتوانید آن را طولانی‌تر به‌عنوان آرشیو نگه دارید. همه صفر = نگه‌داری همه پشتیبان‌های خارج از محل (بدون پاک‌سازی خارج از محل).",
+  "settings.ownRetentionTitle": "قواعد نگه‌داری برای هر منبع",
+  "settings.ownRetentionHint": "هر منبع می‌تواند به‌جای قواعد مشترک بالا، قواعد نگه‌داری خودش را داشته باشد. کانتینرها و پوشه‌هایی که هر روز تغییر می‌کنند ممکن است 7 نسخهٔ روزانه نگه دارند و ماشین‌های مجازی که به‌ندرت تغییر می‌کنند کمتر. منبعی که قواعد خودش را ندارد از قواعد مشترک استفاده می‌کند.",
+  "settings.ownRetention": "قواعد نگه‌داری اختصاصی",
+  "settings.ownRetentionFor": "قواعد نگه‌داری اختصاصی برای {source}",
+  "settings.ownRetentionToggleHint": "روشن: این منبع نسخه‌هایش را طبق پنج قاعدهٔ زیر نگه می‌دارد که از مقادیر مشترک شروع می‌شوند. خاموش: از قواعد مشترک استفاده می‌کند. همه 0 یعنی هر نسخهٔ این منبع نگه داشته می‌شود. نسخه‌های خارج از محل در هر حال قواعد خودشان را دارند.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "پهنای‌باند خارج از محل",

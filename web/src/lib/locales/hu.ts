@@ -676,6 +676,9 @@ const hu: Partial<Translations> = {
   "retentionPreview.skipped": "Ezek a tárolók nem szerepeltek benne:",
   "retentionPreview.failed": "Az előnézetet nem sikerült elkészíteni.",
   "retentionPreview.paused": "Megtartva: az elemnek nyitott anomáliája van",
+  "retentionPreview.ownPolicy": "A forrás saját megőrzési szabályai",
+  "retentionPreview.sharedPolicy": "Közös megőrzési szabályok",
+  "retentionPreview.policy": "Megőrzési szabályok",
   "settings.imageMaintenanceTitle": "Image-takarítás és frissítési állapot",
   "settings.imageMaintenanceHint": "Karbantartás a backup utáni konténerfrissítés körül: a lecserélt image törlése és Unraid saját gyorsítótárazott frissítési állapotának frissítése.",
   "settings.retentionLast": "Utolsók megtartása",
@@ -692,6 +695,11 @@ const hu: Partial<Translations> = {
   "settings.retentionOffsite": "Távoli repó",
   "settings.retentionOffsiteTitle": "Távoli megőrzés",
   "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli mentés megőrzése (nincs távoli takarítás).",
+  "settings.ownRetentionTitle": "Megőrzési szabályok forrásonként",
+  "settings.ownRetentionHint": "Egy forrás a fenti közös szabályok helyett saját megőrzési szabályokat követhet. A naponta változó konténerek és mappák megtarthatnak 7 napi mentést, a ritkán változó virtuális gépeknek kevesebb is elég. A saját szabályok nélküli forrás a közöseket használja.",
+  "settings.ownRetention": "Saját megőrzési szabályok",
+  "settings.ownRetentionFor": "Saját megőrzési szabályok: {source}",
+  "settings.ownRetentionToggleHint": "Be: ez a forrás az alábbi öt szabály szerint tartja meg a mentéseit, amelyek a közös értékekből indulnak. Ki: a közös szabályokat használja. Minden 0 esetén a forrás minden mentése megmarad. A távoli másolatok mindenképp a saját szabályaikat követik.",
   "settings.retentionCombineInfo": "Az öt szabály VAGY logikával kombinálódik: egy pillanatkép megmarad, ha bármelyik szabály megőrizné. Nem adódnak össze egy rögzített számmá. Külön érvényes minden mentett elemre.",
 
   // Off-site (rclone)

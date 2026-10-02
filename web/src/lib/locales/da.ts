@@ -676,6 +676,9 @@ const da: Partial<Translations> = {
   "retentionPreview.skipped": "Disse arkiver var ikke dækket:",
   "retentionPreview.failed": "Forhåndsvisningen kunne ikke laves.",
   "retentionPreview.paused": "Bevaret: elementet har en åben afvigelse",
+  "retentionPreview.ownPolicy": "Denne kildes egne opbevaringsregler",
+  "retentionPreview.sharedPolicy": "Fælles opbevaringsregler",
+  "retentionPreview.policy": "Opbevaringsregler",
   "settings.imageMaintenanceTitle": "Oprydning af images & opdateringsstatus",
   "settings.imageMaintenanceHint": "Vedligeholdelse omkring container-opdateringen efter backup: ryd op i det overflødiggjorte image og opdater Unraids egen cachede opdateringsstatus.",
   "settings.retentionLast": "Behold seneste",
@@ -692,6 +695,11 @@ const da: Partial<Translations> = {
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-opbevaring",
   "settings.retentionOffsiteHint": "En separat politik for off-site-repoet, så du kan beholde det længere som arkiv. Alt 0 = behold hver off-site-sikkerhedskopi (ingen off-site-oprydning).",
+  "settings.ownRetentionTitle": "Opbevaringsregler pr. kilde",
+  "settings.ownRetentionHint": "En kilde kan følge sine egne opbevaringsregler i stedet for de fælles ovenfor. Containere og mapper, der ændrer sig hver dag, kan beholde 7 daglige backups, mens VM'er, der sjældent ændrer sig, kan nøjes med færre. En kilde uden egne regler bruger de fælles.",
+  "settings.ownRetention": "Egne opbevaringsregler",
+  "settings.ownRetentionFor": "Egne opbevaringsregler for {source}",
+  "settings.ownRetentionToggleHint": "Til: denne kilde beholder sine backups efter de fem regler nedenfor, som starter fra de fælles værdier. Fra: den bruger de fælles regler. Alt 0 beholder alle backups af denne kilde. Off-site-kopier beholder under alle omstændigheder deres egne regler.",
   "settings.retentionCombineInfo": "De fem regler kombineres med ELLER: et snapshot overlever, hvis blot én regel ville beholde det. De lægges ikke sammen til et fast antal. Gælder separat for hvert sikkerhedskopieret element.",
 
   // Off-site (rclone)

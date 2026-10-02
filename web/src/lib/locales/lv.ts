@@ -622,6 +622,9 @@ const lv: Partial<Translations> = {
   "retentionPreview.skipped": "Šie repozitoriji netika iekļauti:",
   "retentionPreview.failed": "Priekšskatījumu neizdevās izveidot.",
   "retentionPreview.paused": "Saglabāts: šim vienumam ir atvērta anomālija",
+  "retentionPreview.ownPolicy": "Šī avota saglabāšanas noteikumi",
+  "retentionPreview.sharedPolicy": "Kopīgie saglabāšanas noteikumi",
+  "retentionPreview.policy": "Saglabāšanas noteikumi",
   "settings.imageMaintenanceTitle": "Attēlu tīrīšana un atjaunināšanas statuss",
   "settings.imageMaintenanceHint": "Uzturēšana ap konteinera atjaunināšanu pēc rezerves kopijas: aizstātā attēla tīrīšana un Unraid pašas kešatmiņas atjaunināšanas statusa atsvaidzināšana.",
   "settings.pruneImageAfterUpdate": "Noņemt veco attēlu pēc atjaunināšanas",
@@ -649,6 +652,11 @@ const lv: Partial<Translations> = {
   "settings.retentionOffsite": "Attālinātais repozitorijs",
   "settings.retentionOffsiteTitle": "Attālinātā saglabāšana",
   "settings.retentionOffsiteHint": "Atsevišķa politika attālinātajam repozitorijam, lai varētu to saglabāt ilgāk kā arhīvu. Viss uz nulli = saglabāt katru attālināto rezerves kopiju (bez attālinātas tīrīšanas).",
+  "settings.ownRetentionTitle": "Saglabāšanas noteikumi katram avotam",
+  "settings.ownRetentionHint": "Avots var ievērot savus saglabāšanas noteikumus augstāk esošo kopīgo noteikumu vietā. Konteineri un mapes, kas mainās katru dienu, var glabāt 7 ikdienas dublējumus, bet retāk mainīgām virtuālajām mašīnām pietiek ar mazāk. Avots bez saviem noteikumiem izmanto kopīgos.",
+  "settings.ownRetention": "Savi saglabāšanas noteikumi",
+  "settings.ownRetentionFor": "Savi saglabāšanas noteikumi: {source}",
+  "settings.ownRetentionToggleHint": "Ieslēgts: šis avots glabā dublējumus pēc pieciem noteikumiem zemāk, kas sākas no kopīgajām vērtībām. Izslēgts: izmanto kopīgos noteikumus. Visi 0 saglabā katru šī avota dublējumu. Attālinātās kopijas jebkurā gadījumā ievēro savus noteikumus.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Attālinātais joslas platums",

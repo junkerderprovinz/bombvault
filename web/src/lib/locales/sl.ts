@@ -622,6 +622,9 @@ const sl: Partial<Translations> = {
   "retentionPreview.skipped": "Ti repozitoriji niso bili zajeti:",
   "retentionPreview.failed": "Predogleda ni bilo mogoče ustvariti.",
   "retentionPreview.paused": "Ohranjeno: ta element ima odprto anomalijo",
+  "retentionPreview.ownPolicy": "Lastna pravila hrambe tega vira",
+  "retentionPreview.sharedPolicy": "Skupna pravila hrambe",
+  "retentionPreview.policy": "Pravila hrambe",
   "settings.imageMaintenanceTitle": "Čiščenje slik in stanje posodobitev",
   "settings.imageMaintenanceHint": "Vzdrževanje po varnostnem kopiranju za posodabljanje vsebnikov: počisti presežno sliko in osveži Unraidovo lastno predpomnjeno stanje posodobitev.",
   "settings.pruneImageAfterUpdate": "Po posodobitvi odstrani staro sliko",
@@ -649,6 +652,11 @@ const sl: Partial<Translations> = {
   "settings.retentionOffsite": "Zunanji repozitorij",
   "settings.retentionOffsiteTitle": "Hramba zunanje kopije",
   "settings.retentionOffsiteHint": "Ločena politika za zunanji repozitorij, da ga lahko ohraniš dlje kot arhiv. Vse ničle = ohrani vsako zunanjo varnostno kopijo (brez čiščenja zunanje kopije).",
+  "settings.ownRetentionTitle": "Pravila hrambe po virih",
+  "settings.ownRetentionHint": "Vir lahko sledi lastnim pravilom hrambe namesto skupnih zgoraj. Vsebniki in mape, ki se spreminjajo vsak dan, lahko hranijo 7 dnevnih varnostnih kopij, navidezni stroji, ki se redko spreminjajo, manj. Vir brez lastnih pravil uporablja skupna.",
+  "settings.ownRetention": "Lastna pravila hrambe",
+  "settings.ownRetentionFor": "Lastna pravila hrambe za {source}",
+  "settings.ownRetentionToggleHint": "Vklopljeno: ta vir hrani varnostne kopije po petih pravilih spodaj, ki izhajajo iz skupnih vrednosti. Izklopljeno: uporablja skupna pravila. Vse 0 ohrani vsako kopijo tega vira. Zunanje kopije v vsakem primeru ohranijo svoja pravila.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Pasovna širina za zunanjo kopijo",

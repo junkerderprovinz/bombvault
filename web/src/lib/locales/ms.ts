@@ -622,6 +622,9 @@ const ms: Partial<Translations> = {
   "retentionPreview.skipped": "Repositori berikut tidak dirangkumi:",
   "retentionPreview.failed": "Pratonton tidak dapat dihasilkan.",
   "retentionPreview.paused": "Disimpan: item ini mempunyai anomali terbuka",
+  "retentionPreview.ownPolicy": "Peraturan pengekalan sendiri sumber ini",
+  "retentionPreview.sharedPolicy": "Peraturan pengekalan bersama",
+  "retentionPreview.policy": "Peraturan pengekalan",
   "settings.imageMaintenanceTitle": "Pembersihan imej & status kemas kini",
   "settings.imageMaintenanceHint": "Penyelenggaraan berkaitan kemas kini bekas selepas sandaran: membersihkan imej yang digantikan dan menyegarkan status kemas kini cache milik Unraid sendiri.",
   "settings.pruneImageAfterUpdate": "Alih keluar imej lama selepas kemas kini",
@@ -649,6 +652,11 @@ const ms: Partial<Translations> = {
   "settings.retentionOffsite": "Repositori luar tapak",
   "settings.retentionOffsiteTitle": "Pengekalan luar tapak",
   "settings.retentionOffsiteHint": "Polisi berasingan untuk repositori luar tapak, supaya anda boleh menyimpannya lebih lama sebagai arkib. Semua sifar = simpan setiap sandaran luar tapak (tiada prune luar tapak).",
+  "settings.ownRetentionTitle": "Peraturan pengekalan setiap sumber",
+  "settings.ownRetentionHint": "Sesuatu sumber boleh mengikut peraturan pengekalannya sendiri dan bukan peraturan bersama di atas. Kontena dan folder yang berubah setiap hari mungkin menyimpan 7 sandaran harian, manakala VM yang jarang berubah memerlukan lebih sedikit. Sumber tanpa peraturan sendiri menggunakan peraturan bersama.",
+  "settings.ownRetention": "Peraturan pengekalan sendiri",
+  "settings.ownRetentionFor": "Peraturan pengekalan sendiri untuk {source}",
+  "settings.ownRetentionToggleHint": "Hidup: sumber ini menyimpan sandarannya mengikut lima peraturan di bawah, yang bermula daripada nilai bersama. Mati: ia menggunakan peraturan bersama. Semua 0 menyimpan setiap sandaran sumber ini. Salinan luar tapak tetap mengikut peraturannya sendiri.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Lebar jalur luar tapak",

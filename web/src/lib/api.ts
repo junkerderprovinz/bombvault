@@ -288,6 +288,10 @@ export interface Settings {
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
   retentionKeepYearly: number;
+  /** The domains with a local keep-policy of their own instead of the shared
+   *  one above, keyed by domain name. A domain missing here uses the shared
+   *  one. */
+  ownRetention: Partial<Record<OffsiteDomain, RetentionKeep>>;
   /** restic's --compression per repository: a domain name for its own
    *  repository, "offsite:<domain>" for its primary off-site destination. The
    *  server sends every key. */
@@ -2267,16 +2271,20 @@ export type RetentionPreviewRepo = {
   error?: string;
 };
 
+/** A local keep-policy as restic's five counts. All zero keeps everything. */
+export type RetentionKeep = {
+  keepLast: number;
+  keepDaily: number;
+  keepWeekly: number;
+  keepMonthly: number;
+  keepYearly: number;
+};
+
 /** What the next retention run would remove, without removing anything. */
 export type RetentionPreview = {
-  policy: {
-    on: boolean;
-    keepLast: number;
-    keepDaily: number;
-    keepWeekly: number;
-    keepMonthly: number;
-    keepYearly: number;
-  };
+  /** The policy the answer was worked out with. `own` marks the domain's own
+   *  local keep-policy rather than the shared one. */
+  policy: RetentionKeep & { on: boolean; own: boolean };
   repos: RetentionPreviewRepo[];
   skipped?: string[] | null;
 };

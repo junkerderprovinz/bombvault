@@ -676,6 +676,9 @@ const es: Partial<Translations> = {
   "retentionPreview.skipped": "Estos repositorios no se cubrieron:",
   "retentionPreview.failed": "No se pudo generar la vista previa.",
   "retentionPreview.paused": "Conservado: este elemento tiene una anomalía abierta",
+  "retentionPreview.ownPolicy": "Reglas de retención propias de este origen",
+  "retentionPreview.sharedPolicy": "Reglas de retención compartidas",
+  "retentionPreview.policy": "Reglas de retención",
   "settings.imageMaintenanceTitle": "Limpieza de imágenes y estado de actualización",
   "settings.imageMaintenanceHint": "Mantenimiento en torno a la actualización de contenedores tras el backup: eliminar la imagen sustituida y actualizar el estado de actualización propio de Unraid.",
   "settings.retentionLast": "Conservar últimas",
@@ -692,6 +695,11 @@ const es: Partial<Translations> = {
   "settings.retentionOffsite": "Repo externo",
   "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Una política separada para el repo externo, para conservarlo más tiempo como archivo. Todo en 0 = conservar cada copia externa (sin purga externa).",
+  "settings.ownRetentionTitle": "Reglas de retención por origen",
+  "settings.ownRetentionHint": "Cada origen puede seguir sus propias reglas de retención en lugar de las compartidas de arriba. Los contenedores y carpetas que cambian a diario pueden conservar 7 copias diarias, y las máquinas virtuales que apenas cambian, menos. Un origen sin reglas propias usa las compartidas.",
+  "settings.ownRetention": "Reglas de retención propias",
+  "settings.ownRetentionFor": "Reglas de retención propias para {source}",
+  "settings.ownRetentionToggleHint": "Activado: este origen conserva sus copias según las cinco reglas de abajo, que parten de los valores compartidos. Desactivado: usa las reglas compartidas. Todo a 0 conserva todas las copias de este origen. Las copias externas mantienen sus propias reglas en cualquier caso.",
   "settings.retentionCombineInfo": "Las cinco reglas se combinan con O: una copia sobrevive si cualquier regla la conservaría. No se suman a un número fijo. Se aplica por separado a cada elemento respaldado.",
 
   // Off-site (rclone)
