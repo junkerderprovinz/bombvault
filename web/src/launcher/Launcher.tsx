@@ -176,6 +176,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
           camera={state.camera}
           onJoin={(code) => bridge.send({ op: "join", code })}
           onAdopt={() => bridge.send({ op: "adopt" })}
+          onCancel={() => bridge.send({ op: "cancelJoin" })}
           onLeave={() => bridge.send({ op: "leave" })}
           onPaste={() => bridge.paste()}
           onAskCamera={askCamera}
