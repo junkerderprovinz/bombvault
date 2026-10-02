@@ -454,7 +454,8 @@ func run() error {
 	// its scheduled run instead of taking the domain between two items.
 	scheduler.SetRunBracket(svc.OpenScheduledRun)
 	svc.SetHeldContainerRun(scheduler.RunContainersNow)
-	// Waits a restart cut short go on with their own deadline.
+	// Waits a restart cut short go on with their own deadline, from the end of
+	// the start below.
 	svc.ResumeIdleWaits()
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
@@ -631,6 +632,7 @@ func run() error {
 	svc.EnableFirstProbes()
 	// Container load for slowing off-site uploads while a media server streams.
 	svc.StartTrafficWatch(ctx)
+	svc.StartIdleWaits()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	// An MCP listing of a repository that stopped answering holds its request
