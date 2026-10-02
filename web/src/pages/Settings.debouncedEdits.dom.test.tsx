@@ -56,6 +56,7 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
     retentionKeepYearly: 0,
+    ownRetention: {},
     compression: {
       containers: "auto", vms: "auto", flash: "auto", config: "auto", files: "auto", zfs: "auto",
       "offsite:containers": "auto", "offsite:vms": "auto", "offsite:flash": "auto",

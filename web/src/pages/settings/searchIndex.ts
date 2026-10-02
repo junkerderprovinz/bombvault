@@ -190,6 +190,18 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       body: ["settings.retentionCombineInfo"],
     },
     {
+      title: "settings.ownRetentionTitle",
+      hint: "settings.ownRetentionHint",
+      rows: [
+        { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
+        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
+        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
+        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
+        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
+        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+      ],
+    },
+    {
       title: "settings.retentionOffsiteTitle",
       hint: "settings.retentionOffsiteHint",
       rows: [

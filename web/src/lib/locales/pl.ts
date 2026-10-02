@@ -668,6 +668,9 @@ const pl: Partial<Translations> = {
   "retentionPreview.skipped": "Te repozytoria nie zostały objęte:",
   "retentionPreview.failed": "Nie udało się przygotować podglądu.",
   "retentionPreview.paused": "Zachowano: ten element ma otwartą anomalię",
+  "retentionPreview.ownPolicy": "Własne reguły przechowywania tego źródła",
+  "retentionPreview.sharedPolicy": "Wspólne reguły przechowywania",
+  "retentionPreview.policy": "Reguły przechowywania",
   "settings.imageMaintenanceTitle": "Czyszczenie obrazów i stan aktualizacji",
   "settings.imageMaintenanceHint": "Konserwacja wokół aktualizacji kontenera po backupie: usunięcie zastąpionego obrazu oraz odświeżenie własnego zbuforowanego statusu aktualizacji Unraid.",
   "settings.retentionLast": "Zachowaj ostatnie",
@@ -684,6 +687,11 @@ const pl: Partial<Translations> = {
   "settings.retentionOffsite": "Repo zdalne",
   "settings.retentionOffsiteTitle": "Przechowywanie zdalne",
   "settings.retentionOffsiteHint": "Osobna polityka dla repo zdalnego, aby trzymać je dłużej jako archiwum. Wszystko 0 = zachowaj każdą kopię zdalną (bez czyszczenia zdalnego).",
+  "settings.ownRetentionTitle": "Reguły przechowywania dla źródła",
+  "settings.ownRetentionHint": "Źródło może mieć własne reguły przechowywania zamiast wspólnych powyżej. Kontenery i foldery, które zmieniają się codziennie, mogą trzymać 7 dziennych kopii, a rzadko zmieniane maszyny wirtualne mniej. Źródło bez własnych reguł używa wspólnych.",
+  "settings.ownRetention": "Własne reguły przechowywania",
+  "settings.ownRetentionFor": "Własne reguły przechowywania dla {source}",
+  "settings.ownRetentionToggleHint": "Włączone: to źródło przechowuje kopie według pięciu reguł poniżej, które zaczynają od wspólnych wartości. Wyłączone: używa wspólnych reguł. Wszystkie 0 zachowuje każdą kopię tego źródła. Kopie zdalne i tak mają własne reguły.",
   "settings.retentionCombineInfo": "Pięć reguł łączy się operatorem LUB: migawka przetrwa, jeśli zachowałaby ją choć jedna reguła. Nie sumują się do stałej liczby. Dotyczy osobno każdego kopiowanego elementu.",
 
   // Off-site (rclone)

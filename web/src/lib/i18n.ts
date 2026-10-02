@@ -737,6 +737,9 @@ export const en = {
   "retentionPreview.skipped": "These repositories were not covered:",
   "retentionPreview.failed": "The preview could not be produced.",
   "retentionPreview.paused": "Kept: this item has an open anomaly",
+  "retentionPreview.ownPolicy": "This source's own keep rules",
+  "retentionPreview.sharedPolicy": "Shared keep rules",
+  "retentionPreview.policy": "Keep rules",
   // Image cleanup, Unraid's update-status refresh and registry credentials
   // share the Containers page: all of them serve the post-backup update pull.
   "settings.imageMaintenanceTitle": "Image Cleanup & Update Status",
@@ -766,6 +769,11 @@ export const en = {
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteTitle": "Off-site retention",
   "settings.retentionOffsiteHint": "A separate policy for the off-site repo, so you can keep it longer as an archive. All zero = keep every off-site backup (no off-site pruning).",
+  "settings.ownRetentionTitle": "Keep rules per source",
+  "settings.ownRetentionHint": "A source can follow its own keep rules instead of the shared ones above. Containers and folders that change every day might keep 7 daily backups, while VMs that rarely change need fewer. A source without its own rules uses the shared ones.",
+  "settings.ownRetention": "Own keep rules",
+  "settings.ownRetentionFor": "Own keep rules for {source}",
+  "settings.ownRetentionToggleHint": "When on, this source keeps its backups by the five rules below, which start from the shared values. When off, it uses the shared rules. All zero keeps every backup of this source. Off-site copies keep their own rules either way.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site bandwidth",
@@ -4224,6 +4232,9 @@ export const de: Translations = {
   "retentionPreview.skipped": "Diese Depots wurden nicht abgedeckt:",
   "retentionPreview.failed": "Die Vorschau konnte nicht erstellt werden.",
   "retentionPreview.paused": "Behalten: Dieses Element hat eine offene Anomalie",
+  "retentionPreview.ownPolicy": "Eigene Aufbewahrungsregeln dieser Quelle",
+  "retentionPreview.sharedPolicy": "Gemeinsame Aufbewahrungsregeln",
+  "retentionPreview.policy": "Aufbewahrungsregeln",
   "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
   "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
@@ -4251,6 +4262,11 @@ export const de: Translations = {
   "settings.retentionOffsite": "Off-site-Repo",
   "settings.retentionOffsiteTitle": "Off-site-Aufbewahrung",
   "settings.retentionOffsiteHint": "Eine separate Regel für das Off-site-Repo, damit du es länger als Archiv behalten kannst. Alles 0 = jedes Off-site-Backup behalten (kein Off-site-Prune).",
+  "settings.ownRetentionTitle": "Aufbewahrung je Quelle",
+  "settings.ownRetentionHint": "Eine Quelle kann eigene Aufbewahrungsregeln statt der gemeinsamen oben haben. Container und Ordner, die sich täglich ändern, behalten etwa 7 tägliche Backups, VMs, die sich selten ändern, brauchen weniger. Eine Quelle ohne eigene Regeln nutzt die gemeinsamen.",
+  "settings.ownRetention": "Eigene Aufbewahrungsregeln",
+  "settings.ownRetentionFor": "Eigene Aufbewahrungsregeln für {source}",
+  "settings.ownRetentionToggleHint": "Ein: Diese Quelle behält ihre Backups nach den fünf Regeln darunter, die mit den gemeinsamen Werten beginnen. Aus: Sie nutzt die gemeinsamen Regeln. Alles 0 behält jedes Backup dieser Quelle. Off-site-Kopien behalten in jedem Fall ihre eigenen Regeln.",
 
   // Off-site-Bandbreite
   "settings.offsiteLimits": "Off-site-Bandbreite",

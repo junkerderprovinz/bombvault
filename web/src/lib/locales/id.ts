@@ -622,6 +622,9 @@ const id: Partial<Translations> = {
   "retentionPreview.skipped": "Repositori berikut tidak tercakup:",
   "retentionPreview.failed": "Pratinjau tidak dapat dibuat.",
   "retentionPreview.paused": "Disimpan: item ini memiliki anomali terbuka",
+  "retentionPreview.ownPolicy": "Aturan retensi sendiri sumber ini",
+  "retentionPreview.sharedPolicy": "Aturan retensi bersama",
+  "retentionPreview.policy": "Aturan retensi",
   "settings.imageMaintenanceTitle": "Pembersihan image & status pembaruan",
   "settings.imageMaintenanceHint": "Pemeliharaan seputar pembaruan container setelah pencadangan: membersihkan image yang digantikan dan menyegarkan status pembaruan cache milik Unraid sendiri.",
   "settings.pruneImageAfterUpdate": "Hapus image lama setelah pembaruan",
@@ -649,6 +652,11 @@ const id: Partial<Translations> = {
   "settings.retentionOffsite": "Repositori off-site",
   "settings.retentionOffsiteTitle": "Retensi off-site",
   "settings.retentionOffsiteHint": "Kebijakan terpisah untuk repositori off-site, sehingga Anda dapat menyimpannya lebih lama sebagai arsip. Semua nol = simpan setiap cadangan off-site (tanpa prune off-site).",
+  "settings.ownRetentionTitle": "Aturan retensi per sumber",
+  "settings.ownRetentionHint": "Sebuah sumber bisa mengikuti aturan retensinya sendiri alih-alih aturan bersama di atas. Kontainer dan folder yang berubah setiap hari bisa menyimpan 7 cadangan harian, sedangkan VM yang jarang berubah cukup lebih sedikit. Sumber tanpa aturan sendiri memakai aturan bersama.",
+  "settings.ownRetention": "Aturan retensi sendiri",
+  "settings.ownRetentionFor": "Aturan retensi sendiri untuk {source}",
+  "settings.ownRetentionToggleHint": "Aktif: sumber ini menyimpan cadangannya menurut lima aturan di bawah, yang dimulai dari nilai bersama. Nonaktif: sumber memakai aturan bersama. Semua 0 menyimpan setiap cadangan sumber ini. Salinan off-site tetap memakai aturannya sendiri.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Bandwidth off-site",

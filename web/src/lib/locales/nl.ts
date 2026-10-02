@@ -670,6 +670,9 @@ const nl: Partial<Translations> = {
   "retentionPreview.skipped": "Deze repositories zijn niet meegenomen:",
   "retentionPreview.failed": "Het voorbeeld kon niet worden gemaakt.",
   "retentionPreview.paused": "Bewaard: dit item heeft een open anomalie",
+  "retentionPreview.ownPolicy": "Eigen bewaarregels van deze bron",
+  "retentionPreview.sharedPolicy": "Gedeelde bewaarregels",
+  "retentionPreview.policy": "Bewaarregels",
   "settings.imageMaintenanceTitle": "Image-opschoning & updatestatus",
   "settings.imageMaintenanceHint": "Onderhoud rond de container-update na backup: de vervangen image opruimen en Unraids eigen gecachete updatestatus vernieuwen.",
   "settings.retentionLast": "Laatste bewaren",
@@ -686,6 +689,11 @@ const nl: Partial<Translations> = {
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteTitle": "Off-site bewaarbeleid",
   "settings.retentionOffsiteHint": "Een apart beleid voor de off-site repo, zodat je die langer als archief kunt bewaren. Alles 0 = elke off-site back-up bewaren (geen off-site opschoning).",
+  "settings.ownRetentionTitle": "Bewaarregels per bron",
+  "settings.ownRetentionHint": "Een bron kan eigen bewaarregels volgen in plaats van de gedeelde regels hierboven. Containers en mappen die elke dag veranderen kunnen 7 dagelijkse back-ups bewaren, VM's die zelden veranderen minder. Een bron zonder eigen regels gebruikt de gedeelde.",
+  "settings.ownRetention": "Eigen bewaarregels",
+  "settings.ownRetentionFor": "Eigen bewaarregels voor {source}",
+  "settings.ownRetentionToggleHint": "Aan: deze bron bewaart zijn back-ups volgens de vijf regels hieronder, die beginnen bij de gedeelde waarden. Uit: hij gebruikt de gedeelde regels. Alles 0 bewaart elke back-up van deze bron. Off-site-kopieën houden hoe dan ook hun eigen regels.",
   "settings.retentionCombineInfo": "De vijf regels combineren met OF: een snapshot blijft bestaan als één enkele regel die zou bewaren. Ze tellen niet op tot een vast aantal. Geldt apart voor elk geback-upt item.",
 
   // Off-site (rclone)

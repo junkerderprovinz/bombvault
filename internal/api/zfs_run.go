@@ -197,7 +197,7 @@ func (s *Service) notifyZFSUnsuppressed(ev notify.Event) {
 // dataset whose data a finding says was lost keeps its old backups, the way a
 // container's do, while its siblings prune.
 func (s *Service) applyRetentionTags(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tags []string, domain string) {
-	p := s.retentionPolicyForRef(settings, s.refFor(settings, domain, repo))
+	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
 	if !p.Any() || len(tags) == 0 {
 		return
 	}

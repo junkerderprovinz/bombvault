@@ -27,6 +27,27 @@ function itemLabel(tag: string, t: ReturnType<typeof useT>["t"]): string {
   return tag || t("retentionPreview.wholeRepo");
 }
 
+const RULES = [
+  ["keepLast", "settings.retentionLast"],
+  ["keepDaily", "settings.retentionDaily"],
+  ["keepWeekly", "settings.retentionWeekly"],
+  ["keepMonthly", "settings.retentionMonthly"],
+  ["keepYearly", "settings.retentionYearly"],
+] as const;
+
+/** The policy the answer was worked out with and the rules it sets, so a
+ *  source's own policy cannot be mistaken for the shared one. */
+function policyLine(policy: Preview["policy"], source: "local" | "offsite", t: ReturnType<typeof useT>["t"]): string {
+  const name =
+    source === "offsite"
+      ? t("retentionPreview.policy")
+      : policy.own
+        ? t("retentionPreview.ownPolicy")
+        : t("retentionPreview.sharedPolicy");
+  const rules = RULES.filter(([key]) => policy[key] > 0).map(([key, label]) => `${t(label)} ${policy[key]}`);
+  return `${name}: ${rules.join(" · ")}`;
+}
+
 /** A short, readable stamp: the date and time, without the timezone tail. */
 function stamp(iso: string): string {
   const d = new Date(iso);
@@ -113,6 +134,8 @@ export function RetentionPreview({
       </div>
 
       {error && <p className="text-sm text-statusFail">✗ {error}</p>}
+
+      {preview?.policy.on && <p className="text-xs text-carbon-textSub">{policyLine(preview.policy, source, t)}</p>}
 
       {preview && !preview.policy.on && (
         <p className="text-sm text-carbon-textSub">{t("retentionPreview.off")}</p>
