@@ -100,7 +100,7 @@ func TestAnOffsiteCopyCarriesThePropertiesOfItsOriginal(t *testing.T) {
 		t.Fatal(err)
 	}
 	settings, _ := st.GetSettings()
-	settings.ZFSOffsite = filepath.ToSlash(offsite)
+	settings.ZFSOffsite = "offsite"
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
