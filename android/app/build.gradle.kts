@@ -48,10 +48,10 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             // Without the key a release build is a local test build, and an
             // unsigned APK does not install. The release workflow refuses a
-            // debug-signed result.
-            signingConfig = signingConfigs.getByName(
-                if (System.getenv("ANDROID_KEYSTORE") != null) "release" else "debug",
-            )
+            // debug-signed result. One line, because F-Droid strips signing
+            // lines one at a time before it builds.
+            val key = if (System.getenv("ANDROID_KEYSTORE") != null) "release" else "debug"
+            signingConfig = signingConfigs.getByName(key)
         }
     }
 
