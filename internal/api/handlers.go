@@ -2242,6 +2242,9 @@ type settingsView struct {
 	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
 	RetentionKeepYearly  int `json:"retentionKeepYearly"`
+	// OwnRetention holds the domains that age by a local keep-policy of their
+	// own instead of the one above, keyed by domain name.
+	OwnRetention map[string]store.RetentionKeep `json:"ownRetention"`
 	// Compression is restic's --compression per repository, keyed like
 	// store.Settings.Compression.
 	Compression map[string]string `json:"compression"`
@@ -2462,6 +2465,7 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepWeekly:         s.RetentionKeepWeekly,
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
 		RetentionKeepYearly:         s.RetentionKeepYearly,
+		OwnRetention:                s.OwnRetention(),
 		Compression:                 compressionView(s),
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
@@ -2911,6 +2915,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	if msg := rejectInvalidOwnRetention(v.OwnRetention); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
 
 	// Repo locations and the restore folder — the same guard the import path
 	// applies, so a value one path refuses cannot arrive through the other.
@@ -3065,6 +3073,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
 		cur.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+		applyOwnRetention(cur, v.OwnRetention)
 		applyCompression(cur, v.Compression)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
