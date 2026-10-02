@@ -118,7 +118,8 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     async function poll() {
       followFirst(list[0]?.id);
       const now = Date.now();
-      const results = await Promise.all(list.map((s) => readServer(bridge, s, resolveName, now)));
+      const names = shownNames(list);
+      const results = await Promise.all(list.map((s) => readServer(bridge, s, names[s.id], resolveName, now)));
       if (!live) return;
       setReach(Object.fromEntries(results.map((r, i) => [list[i].id, r.reach])));
       setLines(results.flatMap((r) => r.lines).sort((a, b) => a.atMs - b.atMs));
@@ -254,11 +255,22 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   );
 }
 
+/** shownNames tells servers that share a name apart by their address. */
+function shownNames(servers: Server[]): Record<string, string> {
+  return Object.fromEntries(
+    servers.map((s) => {
+      const twin = s.url && servers.some((o) => o.id !== s.id && o.name === s.name);
+      return [s.id, twin ? new URL(s.url).host : s.name];
+    })
+  );
+}
+
 /** readServer asks one server what runs there and turns the answer into the
  *  lines its own dashboard shows. */
 async function readServer(
   bridge: Bridge,
   server: Server,
+  name: string,
   resolveName: ResolveName,
   now: number
 ): Promise<{ reach: Reach; lines: ServerLine[] }> {
@@ -271,7 +283,7 @@ async function readServer(
     const lines = buildLogLines(a.runs ?? [], inFlight(a.progress ?? [], now), a.next ?? [], resolveName, now).map((l) => ({
       ...l,
       id: `${server.id}:${l.id}`,
-      server: server.name,
+      server: name,
       serverId: server.id,
     }));
     return { reach: "connected", lines };
@@ -351,6 +363,7 @@ function ActivityPage({ t, servers, lines, onBack }: { t: T; servers: Server[]; 
   const [shown, setShown] = useState("all");
   const box = useRef<HTMLDivElement>(null);
   const picked = shown === "all" ? lines : lines.filter((l) => l.serverId === shown);
+  const names = shownNames(servers);
   useLayoutEffect(() => {
     if (box.current) box.current.scrollTop = box.current.scrollHeight;
   }, [picked.length, shown]);
@@ -359,7 +372,7 @@ function ActivityPage({ t, servers, lines, onBack }: { t: T; servers: Server[]; 
       <PageTop t={t} title={t("activityLog.title")} onBack={onBack} />
       {servers.length > 1 && (
         <Selector
-          items={[{ id: "all", label: t("filter.all") }, ...servers.map((s) => ({ id: s.id, label: s.name }))]}
+          items={[{ id: "all", label: t("filter.all") }, ...servers.map((s) => ({ id: s.id, label: names[s.id] }))]}
           label={t("activityLog.title")}
           select="one"
           active={shown}

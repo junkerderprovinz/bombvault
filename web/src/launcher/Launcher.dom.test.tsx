@@ -190,4 +190,13 @@ describe("Launcher", () => {
     expect(screen.queryByText(/immich .*17%/)).toBeNull();
     expect(screen.getByText(/nextcloud .*42%/)).toBeTruthy();
   });
+
+  it("tells servers with the same name apart by their address", async () => {
+    const twin = { id: "s2", name: server.name, url: "https://192.168.1.11:3443/" };
+    const { bridge } = fakeBridge({ servers: [server, twin], found: [], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Activity Log" }));
+    expect(await screen.findByRole("tab", { name: "192.168.1.11:3443" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: new URL(server.url).host })).toBeTruthy();
+  });
 });
