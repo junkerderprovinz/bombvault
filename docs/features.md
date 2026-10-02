@@ -44,7 +44,7 @@ BombVault is simple by default and deep when you need it. The interface shows on
 - **Guided recovery.** A dedicated **Recovery** tab walks a fresh install through the disaster case. See [Off-site & recovery](offsite-recovery.md).
 - **Restore from another BombVault repo.** A one-time, read-only session opens a different BombVault instance's repo with that instance's `APP_KEY`, so you can pull a container from server A to server B without touching your own settings. See [Off-site & recovery](offsite-recovery.md).
 - **ZFS properties come back.** Every ZFS backup keeps the locally set properties of each dataset, such as compression, record size, quota and case sensitivity. A restore into a new dataset creates it with them, and a restore into an existing dataset shows them and sets them only when you ask for it. See [ZFS datasets](zfs-datasets.md#new-dataset).
-- **Import from the Appdata.Backup plugin.** On the **Recovery** page, point BombVault at the plugin's backup folder. Each container archive becomes a restore point of its container, dated when the plugin made it. Archives imported before are skipped, and the archives themselves are only read. The container needs one backup in BombVault first, so the restore has its definition.
+- **Import from the Appdata.Backup plugin.** On the **Recovery** page, point BombVault at the plugin's backup folder. Each container archive becomes a restore point of its container, dated when the plugin made it. Archives imported before are skipped, and the archives themselves are only read. The container needs one backup in BombVault first, so the restore has its definition. Retention leaves imported restore points alone, so delete one yourself when you no longer need it.
 
 ## Storage & scheduling
 

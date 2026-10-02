@@ -44,7 +44,7 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 - **Řízená obnova.** Vyhrazená záložka **Obnova** provede čistou instalaci havarijním případem. Viz [Mimo lokalitu a obnova](offsite-recovery.md).
 - **Obnova z jiného BombVault repozitáře.** Jednorázová relace jen pro čtení otevře repozitář jiné instance BombVaultu s `APP_KEY` dané instance, takže můžete přenést kontejner ze serveru A na server B, aniž byste se dotkli vlastního nastavení. Viz [Mimo lokalitu a obnova](offsite-recovery.md).
 - **Vlastnosti ZFS se vrací.** Každá záloha ZFS uchová lokálně nastavené vlastnosti každé datové sady, například kompresi, velikost záznamu, kvótu a rozlišování velikosti písmen. Obnova do nové datové sady ji s nimi vytvoří, obnova do existující je ukáže a nastaví jen na požádání. Viz [Datové sady ZFS](zfs-datasets.md#new-dataset).
-- **Import z pluginu Appdata.Backup.** Na stránce **Obnova** ukaž BombVaultu záložní složku pluginu. Každý archiv kontejneru se stane bodem obnovy svého kontejneru s datem, kdy ho plugin vytvořil. Dříve importované archivy se přeskočí a samotné archivy se jen čtou. Kontejner potřebuje nejdřív jednu zálohu v BombVaultu, aby obnova měla jeho definici.
+- **Import z pluginu Appdata.Backup.** Na stránce **Obnova** ukaž BombVaultu záložní složku pluginu. Každý archiv kontejneru se stane bodem obnovy svého kontejneru s datem, kdy ho plugin vytvořil. Dříve importované archivy se přeskočí a samotné archivy se jen čtou. Kontejner potřebuje nejdřív jednu zálohu v BombVaultu, aby obnova měla jeho definici. Uchovávání importované body obnovy nemaže, takže ten, který už nepotřebuješ, smaž sám.
 
 ## Úložiště a plánování
 

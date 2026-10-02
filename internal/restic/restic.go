@@ -519,10 +519,15 @@ func BackupDirArgs(repo string, tags []string, m Mode, excludes ...string) []str
 	return backupArgs(repo, tags, m, "host,tags", excludes, []string{"."})
 }
 
+// ImportedTag marks a snapshot made from another tool's backup. A keep policy
+// never forgets one: it is older than the item's own backups, so the next pass
+// would take it, and nothing makes it again.
+const ImportedTag = "imported"
+
 // ImportDirArgs is BackupDirArgs for a backup that did not happen now: --time
 // dates the snapshot at the moment the imported copy was made.
 func ImportDirArgs(repo string, tags []string, at time.Time, m Mode) []string {
-	args := BackupDirArgs(repo, tags, m)
+	args := BackupDirArgs(repo, append(slices.Clone(tags), ImportedTag), m)
 	sep := slices.Index(args, "--")
 	out := append([]string(nil), args[:sep]...)
 	out = append(out, "--time", at.Local().Format("2006-01-02 15:04:05"))
@@ -1100,7 +1105,7 @@ func keepFlags(p RetentionPolicy) []string {
 	if p.KeepYearly > 0 {
 		args = append(args, "--keep-yearly", strconv.Itoa(p.KeepYearly))
 	}
-	return args
+	return append(args, "--keep-tag", ImportedTag)
 }
 
 // ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
