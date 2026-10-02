@@ -145,12 +145,18 @@ func (s *Service) ListZFSRestorePoints(ctx context.Context, id, source string) (
 		if recorded, ok := outcomes[stamp][dataset]; ok {
 			outcome = recorded
 		}
+		// The properties are stored under the id of the backup; an off-site
+		// copy names that id as its original.
+		stored, ok := props[snap.ID]
+		if !ok && snap.Original != "" {
+			stored = props[snap.Original]
+		}
 		points[stamp][dataset] = ZFSRestorePointItem{
 			Dataset:    dataset,
 			RelPath:    zfsRelPath(d.Dataset, dataset),
 			SnapshotID: snap.ID,
 			Outcome:    outcome,
-			Properties: props[snap.ID],
+			Properties: stored,
 		}
 	}
 	out := make([]ZFSRestorePoint, 0, len(points))

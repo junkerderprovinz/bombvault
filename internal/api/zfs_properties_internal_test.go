@@ -88,6 +88,40 @@ func TestZFSRestorePointCarriesTheStoredProperties(t *testing.T) {
 	}
 }
 
+func TestAnOffsiteCopyCarriesThePropertiesOfItsOriginal(t *testing.T) {
+	s, st, _, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd"})
+	offsite := filepath.Join(s.cfg.HostMountRoot, "offsite")
+	if err := os.MkdirAll(offsite, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(offsite, "config"), []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings, _ := st.GetSettings()
+	settings.ZFSOffsite = filepath.ToSlash(offsite)
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	// restic copy gives each snapshot a new id and names the one it came from.
+	copies := zfsRestorePointSnapshots(s.cfg.HostMountRoot)
+	for i := range copies {
+		copies[i].Original = copies[i].ID
+		copies[i].ID = strings.Repeat("c", 63) + string(rune('0'+i))
+	}
+	eng.snaps = copies
+
+	points, err := s.ListZFSRestorePoints(context.Background(), d.ID, "offsite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, ok := zfsPointMember(points[0], zfsRoot)
+	if !ok || m.Properties["compression"] != "zstd" {
+		t.Fatalf("off-site member = %+v, want the compression stored for its original", m)
+	}
+}
+
 func TestZFSRestoreIntoANewDatasetCreatesItWithTheStoredProperties(t *testing.T) {
 	s, st, host, eng := zfsRestoreFixture(t)
 	root := s.cfg.HostMountRoot
