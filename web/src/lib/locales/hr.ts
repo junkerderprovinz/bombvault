@@ -624,6 +624,9 @@ const hr: Partial<Translations> = {
   "retentionPreview.skipped": "Ovi repozitoriji nisu bili obuhvaćeni:",
   "retentionPreview.failed": "Pregled nije bilo moguće izraditi.",
   "retentionPreview.paused": "Zadržano: ova stavka ima otvorenu anomaliju",
+  "retentionPreview.ownPolicy": "Vlastita pravila zadržavanja ovog izvora",
+  "retentionPreview.sharedPolicy": "Zajednička pravila zadržavanja",
+  "retentionPreview.policy": "Pravila zadržavanja",
   "settings.imageMaintenanceTitle": "Čišćenje slika i status ažuriranja",
   "settings.imageMaintenanceHint": "Održavanje oko ažuriranja kontejnera nakon sigurnosne kopije: čišćenje zamijenjene slike i osvježavanje vlastitog predmemoriranog statusa ažuriranja Unraida.",
   "settings.pruneImageAfterUpdate": "Ukloni staru sliku nakon ažuriranja",
@@ -651,6 +654,11 @@ const hr: Partial<Translations> = {
   "settings.retentionOffsite": "Izvanmrežni repozitorij",
   "settings.retentionOffsiteTitle": "Izvanmrežno zadržavanje",
   "settings.retentionOffsiteHint": "Zasebna politika za izvanmrežni repozitorij, kako biste ga mogli dulje čuvati kao arhivu. Sve nula = zadrži svaku izvanmrežnu sigurnosnu kopiju (bez izvanmrežnog čišćenja).",
+  "settings.ownRetentionTitle": "Pravila zadržavanja po izvoru",
+  "settings.ownRetentionHint": "Svaki izvor može slijediti vlastita pravila zadržavanja umjesto zajedničkih iznad. Spremnici i mape koji se mijenjaju svaki dan mogu zadržati 7 dnevnih sigurnosnih kopija, a virtualni strojevi koji se rijetko mijenjaju manje. Izvor bez vlastitih pravila koristi zajednička.",
+  "settings.ownRetention": "Vlastita pravila zadržavanja",
+  "settings.ownRetentionFor": "Vlastita pravila zadržavanja za {source}",
+  "settings.ownRetentionToggleHint": "Uključeno: ovaj izvor zadržava sigurnosne kopije prema pet pravila ispod, koja polaze od zajedničkih vrijednosti. Isključeno: koristi zajednička pravila. Sve 0 zadržava svaku kopiju ovog izvora. Vanjske kopije u svakom slučaju zadržavaju svoja pravila.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Izvanmrežna propusnost",

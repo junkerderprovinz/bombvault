@@ -82,6 +82,7 @@ import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconS
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
+import { OwnRetentionCard } from "./settings/OwnRetentionCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
 import { PairingSection } from "./settings/pairing/PairingSection";
@@ -2284,6 +2285,18 @@ export function SettingsPage() {
           </div>
         )}
       </Card>
+      )}
+
+      {page === "retention" && (
+        <OwnRetentionCard
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
+          debouncedSave={debouncedSave}
+          cancelDebounce={cancelDebounce}
+          t={t}
+          hueIndex={nextHue()}
+        />
       )}
 
       {/* Image cleanup and Unraid's update status both feed the post-backup */}

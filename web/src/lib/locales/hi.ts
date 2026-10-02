@@ -624,6 +624,9 @@ const hi: Partial<Translations> = {
   "retentionPreview.skipped": "ये रिपॉज़िटरी शामिल नहीं हुईं:",
   "retentionPreview.failed": "पूर्वावलोकन नहीं बनाया जा सका।",
   "retentionPreview.paused": "रखा गया: इस आइटम में एक खुली विसंगति है",
+  "retentionPreview.ownPolicy": "इस स्रोत के अपने रिटेंशन नियम",
+  "retentionPreview.sharedPolicy": "साझा रिटेंशन नियम",
+  "retentionPreview.policy": "रिटेंशन नियम",
   "settings.imageMaintenanceTitle": "इमेज सफ़ाई और अपडेट स्थिति",
   "settings.imageMaintenanceHint": "बैकअप के बाद कंटेनर अपडेट से जुड़ा रखरखाव: बदली गई इमेज को साफ़ करना और Unraid की अपनी कैश्ड अपडेट स्थिति को ताज़ा करना।",
   "settings.pruneImageAfterUpdate": "अपडेट के बाद पुरानी इमेज हटाएँ",
@@ -651,6 +654,11 @@ const hi: Partial<Translations> = {
   "settings.retentionOffsite": "ऑफ़-साइट रिपॉज़िटरी",
   "settings.retentionOffsiteTitle": "ऑफ़-साइट रिटेंशन",
   "settings.retentionOffsiteHint": "ऑफ़-साइट रिपॉज़िटरी के लिए एक अलग नीति, ताकि आप इसे आर्काइव की तरह ज़्यादा समय तक रख सकें। सभी शून्य = हर ऑफ़-साइट बैकअप रखें (कोई ऑफ़-साइट प्रूनिंग नहीं)।",
+  "settings.ownRetentionTitle": "हर स्रोत के लिए रिटेंशन नियम",
+  "settings.ownRetentionHint": "कोई स्रोत ऊपर के साझा नियमों की जगह अपने रिटेंशन नियम अपना सकता है। रोज़ बदलने वाले कंटेनर और फ़ोल्डर 7 दैनिक बैकअप रख सकते हैं, जबकि कम बदलने वाली VM को कम चाहिए। जिस स्रोत के अपने नियम नहीं हैं, वह साझा नियम इस्तेमाल करता है।",
+  "settings.ownRetention": "अपने रिटेंशन नियम",
+  "settings.ownRetentionFor": "{source} के अपने रिटेंशन नियम",
+  "settings.ownRetentionToggleHint": "चालू: यह स्रोत अपने बैकअप नीचे के पाँच नियमों से रखता है, जो साझा मानों से शुरू होते हैं। बंद: यह साझा नियम इस्तेमाल करता है। सब 0 होने पर इस स्रोत का हर बैकअप रखा जाता है। ऑफ़-साइट कॉपियाँ हर हाल में अपने नियम रखती हैं।",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "ऑफ़-साइट बैंडविड्थ",

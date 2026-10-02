@@ -677,6 +677,9 @@ const th: Partial<Translations> = {
   "retentionPreview.skipped": "ที่เก็บข้อมูลเหล่านี้ไม่ได้ถูกครอบคลุม:",
   "retentionPreview.failed": "สร้างตัวอย่างไม่สำเร็จ",
   "retentionPreview.paused": "เก็บไว้: รายการนี้มีความผิดปกติค้างอยู่",
+  "retentionPreview.ownPolicy": "กฎการเก็บรักษาของแหล่งนี้",
+  "retentionPreview.sharedPolicy": "กฎการเก็บรักษาร่วม",
+  "retentionPreview.policy": "กฎการเก็บรักษา",
   "settings.imageMaintenanceTitle": "การล้างอิมเมจและสถานะการอัปเดต",
   "settings.imageMaintenanceHint": "การดูแลรอบการอัปเดตคอนเทนเนอร์หลังการสำรองข้อมูล: ล้างอิมเมจที่ถูกแทนที่ และรีเฟรชสถานะการอัปเดตที่แคชไว้ของ Unraid เอง",
   "settings.retentionLast": "เก็บล่าสุด",
@@ -693,6 +696,11 @@ const th: Partial<Translations> = {
   "settings.retentionOffsite": "ที่เก็บนอกสถานที่",
   "settings.retentionOffsiteTitle": "การเก็บรักษานอกสถานที่",
   "settings.retentionOffsiteHint": "นโยบายแยกสำหรับที่เก็บนอกสถานที่ เพื่อเก็บไว้นานขึ้นเป็นคลังเก็บ ตั้งเป็น 0 ทั้งหมด = เก็บข้อมูลสำรองนอกสถานที่ทุกชุด (ไม่พรูนนอกสถานที่)",
+  "settings.ownRetentionTitle": "กฎการเก็บรักษาแยกตามแหล่ง",
+  "settings.ownRetentionHint": "แต่ละแหล่งใช้กฎการเก็บรักษาของตัวเองแทนกฎร่วมด้านบนได้ คอนเทนเนอร์และโฟลเดอร์ที่เปลี่ยนทุกวันอาจเก็บข้อมูลสำรองรายวัน 7 ชุด ส่วน VM ที่แทบไม่เปลี่ยนเก็บน้อยกว่านั้น แหล่งที่ไม่มีกฎของตัวเองจะใช้กฎร่วม",
+  "settings.ownRetention": "กฎการเก็บรักษาของตัวเอง",
+  "settings.ownRetentionFor": "กฎการเก็บรักษาของตัวเองสำหรับ {source}",
+  "settings.ownRetentionToggleHint": "เปิด: แหล่งนี้เก็บข้อมูลสำรองตามกฎห้าข้อด้านล่าง ซึ่งเริ่มจากค่าร่วม ปิด: ใช้กฎร่วม ทั้งหมดเป็น 0 จะเก็บข้อมูลสำรองทุกชุดของแหล่งนี้ สำเนานอกสถานที่ใช้กฎของตัวเองเสมอ",
   "settings.retentionCombineInfo": "กฎทั้งห้ารวมกันแบบ OR: สแนปช็อตจะยังอยู่หากมีกฎใดกฎหนึ่งที่จะเก็บมันไว้ ไม่ได้รวมกันเป็นจำนวนคงที่ ใช้แยกกันสำหรับแต่ละรายการที่สำรองข้อมูล",
 
   // Off-site (rclone)

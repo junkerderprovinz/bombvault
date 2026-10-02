@@ -677,6 +677,9 @@ const fr: Partial<Translations> = {
   "retentionPreview.skipped": "Ces dépôts n'ont pas été couverts :",
   "retentionPreview.failed": "L'aperçu n'a pas pu être généré.",
   "retentionPreview.paused": "Conservé : cet élément a une anomalie ouverte",
+  "retentionPreview.ownPolicy": "Règles de rétention propres à cette source",
+  "retentionPreview.sharedPolicy": "Règles de rétention communes",
+  "retentionPreview.policy": "Règles de rétention",
   "settings.imageMaintenanceTitle": "Nettoyage des images et statut de mise à jour",
   "settings.imageMaintenanceHint": "Maintenance autour de la mise à jour des conteneurs après sauvegarde : purger l'image remplacée et actualiser le statut de mise à jour mis en cache par Unraid.",
   "settings.retentionLast": "Conserver les dernières",
@@ -693,6 +696,11 @@ const fr: Partial<Translations> = {
   "settings.retentionOffsite": "Dépôt hors-site",
   "settings.retentionOffsiteTitle": "Rétention hors-site",
   "settings.retentionOffsiteHint": "Une politique distincte pour le dépôt hors-site, pour le conserver plus longtemps comme archive. Tout à 0 = conserver chaque sauvegarde hors-site (pas de purge hors-site).",
+  "settings.ownRetentionTitle": "Règles de rétention par source",
+  "settings.ownRetentionHint": "Une source peut suivre ses propres règles de rétention au lieu des règles communes ci-dessus. Les conteneurs et dossiers qui changent chaque jour peuvent garder 7 sauvegardes quotidiennes, les VM qui changent rarement moins. Une source sans règles propres utilise les règles communes.",
+  "settings.ownRetention": "Règles de rétention propres",
+  "settings.ownRetentionFor": "Règles de rétention propres pour {source}",
+  "settings.ownRetentionToggleHint": "Activé : cette source garde ses sauvegardes selon les cinq règles ci-dessous, qui partent des valeurs communes. Désactivé : elle utilise les règles communes. Tout à 0 garde chaque sauvegarde de cette source. Les copies hors-site gardent leurs propres règles dans tous les cas.",
   "settings.retentionCombineInfo": "Les cinq règles se combinent avec OU : un instantané survit si une seule règle le conserverait. Elles ne s'additionnent pas en un nombre fixe. S'applique séparément à chaque élément sauvegardé.",
 
   // Off-site (rclone)

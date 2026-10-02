@@ -677,6 +677,9 @@ const he: Partial<Translations> = {
   "retentionPreview.skipped": "המאגרים האלה לא נכללו:",
   "retentionPreview.failed": "לא ניתן היה להפיק את התצוגה המקדימה.",
   "retentionPreview.paused": "נשמר: לפריט הזה יש חריגה פתוחה",
+  "retentionPreview.ownPolicy": "כללי השמירה של המקור הזה",
+  "retentionPreview.sharedPolicy": "כללי שמירה משותפים",
+  "retentionPreview.policy": "כללי שמירה",
   "settings.imageMaintenanceTitle": "ניקוי images וסטטוס עדכון",
   "settings.imageMaintenanceHint": "תחזוקה סביב עדכון הקונטיינר לאחר הגיבוי: מחיקת ה-image הישן ורענון מצב העדכון השמור של Unraid.",
   "settings.retentionLast": "שמור אחרונים",
@@ -693,6 +696,11 @@ const he: Partial<Translations> = {
   "settings.retentionOffsite": "מאגר מרוחק",
   "settings.retentionOffsiteTitle": "שמירה מרוחקת",
   "settings.retentionOffsiteHint": "מדיניות נפרדת למאגר המרוחק, כדי לשמור אותו זמן רב יותר כארכיון. הכול 0 = שמור כל גיבוי מרוחק (ללא גיזום מרוחק).",
+  "settings.ownRetentionTitle": "כללי שמירה לפי מקור",
+  "settings.ownRetentionHint": "כל מקור יכול לפעול לפי כללי שמירה משלו במקום הכללים המשותפים שלמעלה. קונטיינרים ותיקיות שמשתנים כל יום יכולים לשמור 7 גיבויים יומיים, ומכונות וירטואליות שמשתנות לעיתים רחוקות פחות. מקור בלי כללים משלו משתמש בכללים המשותפים.",
+  "settings.ownRetention": "כללי שמירה משלו",
+  "settings.ownRetentionFor": "כללי שמירה משלו עבור {source}",
+  "settings.ownRetentionToggleHint": "מופעל: המקור הזה שומר את הגיבויים שלו לפי חמשת הכללים שלמטה, שמתחילים מהערכים המשותפים. כבוי: הוא משתמש בכללים המשותפים. הכול 0 שומר כל גיבוי של המקור הזה. עותקים מרוחקים שומרים בכל מקרה על הכללים שלהם.",
   "settings.retentionCombineInfo": "חמשת הכללים משולבים באו: גיבוי נשמר אם כלל כלשהו היה שומר אותו. הם לא מצטברים למספר קבוע. חל בנפרד על כל פריט מגובה.",
 
   // Off-site (rclone)

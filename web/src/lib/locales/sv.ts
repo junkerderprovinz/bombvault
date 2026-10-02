@@ -677,6 +677,9 @@ const sv: Partial<Translations> = {
   "retentionPreview.skipped": "De här arkiven täcktes inte:",
   "retentionPreview.failed": "Förhandsgranskningen kunde inte skapas.",
   "retentionPreview.paused": "Behållet: objektet har en öppen avvikelse",
+  "retentionPreview.ownPolicy": "Källans egna lagringsregler",
+  "retentionPreview.sharedPolicy": "Gemensamma lagringsregler",
+  "retentionPreview.policy": "Lagringsregler",
   "settings.imageMaintenanceTitle": "Image-uppstädning & uppdateringsstatus",
   "settings.imageMaintenanceHint": "Underhåll kring containeruppdateringen efter backup: rensa bort den ersatta avbildningen och uppdatera Unraids egen cachade uppdateringsstatus.",
   "settings.retentionLast": "Behåll senaste",
@@ -693,6 +696,11 @@ const sv: Partial<Translations> = {
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-lagring",
   "settings.retentionOffsiteHint": "En separat policy för off-site-repot, så att du kan behålla det längre som arkiv. Allt 0 = behåll varje off-site-säkerhetskopia (ingen off-site-rensning).",
+  "settings.ownRetentionTitle": "Lagringsregler per källa",
+  "settings.ownRetentionHint": "En källa kan följa egna lagringsregler i stället för de gemensamma ovan. Containrar och mappar som ändras varje dag kan behålla 7 dagliga säkerhetskopior, medan virtuella maskiner som sällan ändras klarar sig med färre. En källa utan egna regler använder de gemensamma.",
+  "settings.ownRetention": "Egna lagringsregler",
+  "settings.ownRetentionFor": "Egna lagringsregler för {source}",
+  "settings.ownRetentionToggleHint": "På: den här källan behåller sina säkerhetskopior enligt de fem reglerna nedan, som utgår från de gemensamma värdena. Av: den använder de gemensamma reglerna. Allt 0 behåller varje säkerhetskopia av källan. Off-site-kopior behåller sina egna regler i vilket fall som helst.",
   "settings.retentionCombineInfo": "De fem reglerna kombineras med ELLER: en ögonblicksbild överlever om någon enskild regel skulle behålla den. De summeras inte till ett fast antal. Gäller separat för varje säkerhetskopierat objekt.",
 
   // Off-site (rclone)

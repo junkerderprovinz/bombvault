@@ -624,6 +624,9 @@ const ca: Partial<Translations> = {
   "retentionPreview.skipped": "Aquests repositoris no s'han cobert:",
   "retentionPreview.failed": "No s'ha pogut generar la previsualització.",
   "retentionPreview.paused": "Conservat: aquest element té una anomalia oberta",
+  "retentionPreview.ownPolicy": "Regles de retenció pròpies d'aquest origen",
+  "retentionPreview.sharedPolicy": "Regles de retenció compartides",
+  "retentionPreview.policy": "Regles de retenció",
   "settings.imageMaintenanceTitle": "Neteja d'imatges i estat d'actualitzacions",
   "settings.imageMaintenanceHint": "Manteniment al voltant de l'actualització de contenidor després de la còpia: neteja la imatge substituïda i actualitza l'estat en caché propi d'Unraid.",
   "settings.pruneImageAfterUpdate": "Elimina la imatge antiga després d'actualitzar",
@@ -651,6 +654,11 @@ const ca: Partial<Translations> = {
   "settings.retentionOffsite": "Repositori extern",
   "settings.retentionOffsiteTitle": "Retenció externa",
   "settings.retentionOffsiteHint": "Una política separada per al repositori extern, perquè el puguis conservar més temps com a arxiu. Tot a 0 = conserva totes les còpies externes (sense neteja externa).",
+  "settings.ownRetentionTitle": "Regles de retenció per origen",
+  "settings.ownRetentionHint": "Cada origen pot seguir les seves pròpies regles de retenció en lloc de les compartides de dalt. Els contenidors i carpetes que canvien cada dia poden conservar 7 còpies diàries, i les màquines virtuals que canvien poc, menys. Un origen sense regles pròpies fa servir les compartides.",
+  "settings.ownRetention": "Regles de retenció pròpies",
+  "settings.ownRetentionFor": "Regles de retenció pròpies per a {source}",
+  "settings.ownRetentionToggleHint": "Activat: aquest origen conserva les còpies segons les cinc regles de sota, que parteixen dels valors compartits. Desactivat: fa servir les regles compartides. Tot a 0 conserva totes les còpies d'aquest origen. Les còpies externes mantenen les seves pròpies regles igualment.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Amplada de banda externa",

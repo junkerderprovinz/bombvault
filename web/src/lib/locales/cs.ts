@@ -675,6 +675,9 @@ const cs: Partial<Translations> = {
   "retentionPreview.skipped": "Tyto repozitáře nebyly pokryty:",
   "retentionPreview.failed": "Náhled se nepodařilo vytvořit.",
   "retentionPreview.paused": "Ponecháno: tato položka má otevřenou anomálii",
+  "retentionPreview.ownPolicy": "Vlastní pravidla uchovávání tohoto zdroje",
+  "retentionPreview.sharedPolicy": "Společná pravidla uchovávání",
+  "retentionPreview.policy": "Pravidla uchovávání",
   "settings.imageMaintenanceTitle": "Úklid images a stav aktualizace",
   "settings.imageMaintenanceHint": "Údržba kolem aktualizace kontejneru po zálohování: odstranění nahrazeného image a obnovení vlastního uloženého stavu aktualizace Unraid.",
   "settings.retentionLast": "Ponechat poslední",
@@ -691,6 +694,11 @@ const cs: Partial<Translations> = {
   "settings.retentionOffsite": "Vzdálené repo",
   "settings.retentionOffsiteTitle": "Vzdálené uchovávání",
   "settings.retentionOffsiteHint": "Samostatná zásada pro vzdálené repo, aby se dalo držet déle jako archiv. Vše 0 = zachovat každou vzdálenou zálohu (bez čištění vzdáleného).",
+  "settings.ownRetentionTitle": "Pravidla uchovávání podle zdroje",
+  "settings.ownRetentionHint": "Každý zdroj může mít vlastní pravidla uchovávání místo společných výše. Kontejnery a složky, které se mění každý den, mohou uchovávat 7 denních záloh, virtuální stroje, které se mění zřídka, méně. Zdroj bez vlastních pravidel používá společná.",
+  "settings.ownRetention": "Vlastní pravidla uchovávání",
+  "settings.ownRetentionFor": "Vlastní pravidla uchovávání pro {source}",
+  "settings.ownRetentionToggleHint": "Zapnuto: tento zdroj uchovává zálohy podle pěti pravidel níže, která vycházejí ze společných hodnot. Vypnuto: používá společná pravidla. Vše 0 uchová každou zálohu tohoto zdroje. Vzdálené kopie mají v každém případě svá vlastní pravidla.",
   "settings.retentionCombineInfo": "Pět pravidel se kombinuje pomocí NEBO: snapshot přežije, pokud by ho zachovalo jakékoli jedno pravidlo. Nesčítají se do pevného počtu. Platí zvlášť pro každou zálohovanou položku.",
 
   // Off-site (rclone)

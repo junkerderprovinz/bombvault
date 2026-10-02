@@ -677,6 +677,9 @@ const tr: Partial<Translations> = {
   "retentionPreview.skipped": "Bu depolar kapsanmadı:",
   "retentionPreview.failed": "Önizleme oluşturulamadı.",
   "retentionPreview.paused": "Tutuldu: bu ögenin açık bir anormalliği var",
+  "retentionPreview.ownPolicy": "Bu kaynağın kendi saklama kuralları",
+  "retentionPreview.sharedPolicy": "Ortak saklama kuralları",
+  "retentionPreview.policy": "Saklama kuralları",
   "settings.imageMaintenanceTitle": "Image Temizliği & Güncelleme Durumu",
   "settings.imageMaintenanceHint": "Yedekleme sonrası konteyner güncellemesi etrafındaki bakım: yerini alınan image'ı temizler ve Unraid'in kendi önbelleğe alınmış güncelleme durumunu yeniler.",
   "settings.retentionLast": "Son yedekleri tut",
@@ -693,6 +696,11 @@ const tr: Partial<Translations> = {
   "settings.retentionOffsite": "Uzak repo",
   "settings.retentionOffsiteTitle": "Uzak saklama",
   "settings.retentionOffsiteHint": "Uzak repo için ayrı bir politika; arşiv olarak daha uzun tutabilirsin. Hepsi 0 = her uzak yedeği sakla (uzak budama yok).",
+  "settings.ownRetentionTitle": "Kaynağa göre saklama kuralları",
+  "settings.ownRetentionHint": "Bir kaynak, yukarıdaki ortak kurallar yerine kendi saklama kurallarını izleyebilir. Her gün değişen konteynerler ve klasörler günlük 7 yedek tutabilir, nadiren değişen sanal makineler daha az. Kendi kuralı olmayan kaynak ortak kuralları kullanır.",
+  "settings.ownRetention": "Kendi saklama kuralları",
+  "settings.ownRetentionFor": "{source} için kendi saklama kuralları",
+  "settings.ownRetentionToggleHint": "Açık: bu kaynak yedeklerini aşağıdaki beş kurala göre tutar, kurallar ortak değerlerden başlar. Kapalı: ortak kuralları kullanır. Hepsi 0 olursa bu kaynağın her yedeği tutulur. Uzak kopyalar her durumda kendi kurallarını izler.",
   "settings.retentionCombineInfo": "Beş kural VEYA ile birleşir: herhangi bir kural onu tutacaksa anlık görüntü hayatta kalır. Sabit bir sayıya toplanmazlar. Yedeklenen her öğeye ayrı ayrı uygulanır.",
 
   // Off-site (rclone)
