@@ -85,6 +85,9 @@ class Servers(context: Context) {
     fun remove(id: String) = write(all().filter { it.id != id })
 
     @Synchronized
+    fun removeAll() = write(emptyList())
+
+    @Synchronized
     fun trust(id: String, pin: String) = write(all().map { if (it.id == id) it.copy(pin = pin) else it })
 
     private fun write(list: List<Server>) {

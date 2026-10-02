@@ -19,6 +19,7 @@
     "@fontsource-variable/noto-sans-hebrew": "^5.3.0",
     "@fontsource-variable/noto-sans-thai": "^5.3.0",
     "flag-icons": "^7.5.0",
+    "jsqr": "^1.4.0",
     "qrcode-generator": "^2.0.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

@@ -3,6 +3,5 @@
     <string name="saved">Lagret i Nedlastinger: %1$s</string>
     <string name="save_failed">Filen kunne ikke lagres: %1$s</string>
     <string name="save_untrusted">Serverens sertifikat er endret. Åpne den på nytt fra startskjermen for å sjekke det nye.</string>
-    <string name="scan_prompt">Skann koden under Innstillinger, Paring på en av BombVault-serverne dine.</string>
     <string name="no_app">Ingen app på denne telefonen åpner denne lenken.</string>
 </resources>

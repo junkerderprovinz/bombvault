@@ -4,6 +4,5 @@
     <string name="saved">Saved to Downloads: %1$s</string>
     <string name="save_failed">Could not save the file: %1$s</string>
     <string name="save_untrusted">The server\'s certificate has changed. Open it again from the start screen to check the new one.</string>
-    <string name="scan_prompt">Scan the code under Settings, Pairing on one of your BombVault servers.</string>
     <string name="no_app">No app on this phone opens this link.</string>
 </resources>

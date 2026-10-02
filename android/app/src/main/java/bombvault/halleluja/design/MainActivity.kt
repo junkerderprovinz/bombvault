@@ -1,14 +1,20 @@
 package bombvault.halleluja.design
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.webkit.CookieManager
+import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -22,6 +28,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -30,8 +37,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,8 +78,13 @@ class MainActivity : ComponentActivity() {
         chooser = null
     }
 
-    private val scan = registerForActivityResult(ScanContract()) { result ->
-        result.contents?.let(::join)
+    /** Set once Android stops asking for the camera, so the next tap opens its settings page instead. */
+    private var cameraBlocked = false
+
+    private val askCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        // After a second refusal Android answers without asking.
+        cameraBlocked = !granted && !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+        pushState()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -95,6 +105,9 @@ class MainActivity : ComponentActivity() {
         root.addView(web)
         setContentView(root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // The bars take the page's colour, with icons chosen to read on it, so
+        // Android's own scrim over the button bar would only grey it.
+        window.isNavigationBarContrastEnforced = false
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime(),
@@ -108,6 +121,8 @@ class MainActivity : ComponentActivity() {
         web.settings.domStorageEnabled = true
         web.settings.allowFileAccess = false
         web.settings.allowContentAccess = false
+        // The scanner's camera picture plays without a tap.
+        web.settings.mediaPlaybackRequiresUserGesture = false
         web.webViewClient = Client()
         web.webChromeClient = Chrome()
         web.setDownloadListener { url, _, disposition, mime, _ -> download(url, disposition, mime) }
@@ -154,6 +169,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // The camera may have been allowed on the settings page in between.
+        pushState()
         if (current == null) discovery.start()
     }
 
@@ -163,7 +180,7 @@ class MainActivity : ComponentActivity() {
         CookieManager.getInstance().flush()
     }
 
-    /** Joins the group of a scanned or typed code, or tells the launcher why not. */
+    /** Looks at the group of a scanned or typed code, or tells the launcher why not. */
     private fun join(code: String) {
         pairError = when (val refused = pairing.join(code)) {
             null -> null
@@ -205,6 +222,8 @@ class MainActivity : ComponentActivity() {
     private fun fromLauncher(msg: JSONObject) {
         when (msg.optString("op")) {
             "state" -> pushState()
+            // The launcher's look can differ from the phone's dark or light.
+            "bars" -> parseColor(msg.optString("color"))?.let { if (current == null) paintBars(it) }
             "save" -> {
                 val s = msg.getJSONObject("server")
                 val saved = servers.save(s.optString("id").ifEmpty { null }, s.getString("name"), s.getString("url"))
@@ -226,27 +245,56 @@ class MainActivity : ComponentActivity() {
                 problem = null
                 pushState()
             }
-            "activity" -> {
+            "activity", "look" -> {
+                val op = msg.getString("op")
                 val server = servers.get(msg.getString("id")) ?: return
                 val ticket = msg.getInt("ticket")
                 lifecycleScope.launch {
-                    val answer = withContext(Dispatchers.IO) { pairing.activity(server) ?: activityOverHttp(server) }
+                    val answer = withContext(Dispatchers.IO) {
+                        if (op == "activity") {
+                            pairing.ask(server, "/api/group/peer/activity") ?: activityOverHttp(server)
+                        } else {
+                            pairing.ask(server, "/api/group/peer/display-prefs") ?: get(server, "/api/display-prefs")
+                        }
+                    }
                     launcher?.postMessage(
-                        JSONObject().put("op", "activity").put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
+                        JSONObject().put("op", op).put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
                     )
                 }
             }
-            "scan" -> scan.launch(
-                ScanOptions()
-                    .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                    .setPrompt(getString(R.string.scan_prompt))
-                    .setBeepEnabled(false)
-                    .setOrientationLocked(false),
-            )
+            "deviceName" -> {
+                pairing.rename(msg.getString("name").trim())
+                pushState()
+            }
+            "removeAll" -> {
+                if (pairing.paired) pairing.leave()
+                servers.removeAll()
+                pushState()
+            }
             "join" -> join(msg.getString("code"))
+            "adopt" -> pairing.adopt()
+            "cancelJoin" -> {
+                pairing.cancelJoin()
+                pushState()
+            }
             "leave" -> pairing.leave()
+            "camera" -> when {
+                cameraAllowed() -> pushState()
+                cameraBlocked -> startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)),
+                )
+                else -> askCamera.launch(Manifest.permission.CAMERA)
+            }
+            "paste" -> {
+                val clip = getSystemService(ClipboardManager::class.java).primaryClip
+                val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString() ?: ""
+                launcher?.postMessage(JSONObject().put("op", "pasted").put("ticket", msg.getInt("ticket")).put("text", text).toString())
+            }
         }
     }
+
+    private fun cameraAllowed() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
 
     private fun pushState() {
         val state = JSONObject()
@@ -256,10 +304,22 @@ class MainActivity : ComponentActivity() {
                 "found",
                 JSONArray(found.map { JSONObject().put("name", it.name).put("url", it.url).put("version", it.version) }),
             )
-            .put("group", JSONObject().put("paired", pairing.paired).put("connected", pairing.connected))
+            .put("group", group())
+            .put("camera", cameraAllowed())
+            .put("app", appInfo())
         problem?.let { state.put("problem", it) }
         pairError?.let { state.put("pairError", it) }
         launcher?.postMessage(state.toString())
+    }
+
+    private fun appInfo(): JSONObject {
+        val info = packageManager.getPackageInfo(packageName, 0)
+        return JSONObject()
+            .put("version", info.versionName ?: "")
+            .put("versionCode", info.longVersionCode)
+            .put("android", Build.VERSION.SDK_INT.toString())
+            .put("model", pairing.phoneName)
+            .put("deviceName", pairing.deviceName)
     }
 
     /** Goes back to the launcher, which tells the person why [server] did not open. */
@@ -346,7 +406,6 @@ class MainActivity : ComponentActivity() {
                 if (current != null) {
                     current = null
                     discovery.start()
-                    paintBars(if (night()) DARK else LIGHT)
                 }
             } else {
                 current = servers.forOrigin(originOf(url)) ?: current
@@ -358,7 +417,6 @@ class MainActivity : ComponentActivity() {
                 forgetHistory = false
                 // The launcher is the bottom of the stack: Back from it leaves.
                 web.clearHistory()
-                paintBars(if (night()) DARK else LIGHT)
             }
         }
 
@@ -385,7 +443,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun group(): JSONObject {
+        val g = JSONObject().put("paired", pairing.paired).put("connected", pairing.connected)
+        pairing.joining?.let { members ->
+            val list = JSONArray(members.map { JSONObject().put("id", it.id).put("name", it.name).put("version", it.version) })
+            g.put("joining", JSONObject().put("members", list))
+        }
+        return g
+    }
+
     private inner class Chrome : WebChromeClient() {
+        // The scanner on the launcher reads the camera, and nothing else may.
+        override fun onPermissionRequest(request: PermissionRequest) {
+            val video = PermissionRequest.RESOURCE_VIDEO_CAPTURE
+            val fromLauncher = request.origin.toString().trimEnd('/') == LAUNCHER_ORIGIN
+            if (fromLauncher && video in request.resources && cameraAllowed()) request.grant(arrayOf(video)) else request.deny()
+        }
+
         override fun onShowFileChooser(
             webView: WebView,
             callback: ValueCallback<Array<Uri>>,

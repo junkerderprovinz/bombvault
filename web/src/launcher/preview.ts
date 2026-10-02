@@ -12,12 +12,26 @@ const FOUND = [
   { name: "BombVault (Offsite)", url: "http://192.168.30.4:3080/", version: "9.6.0" },
 ];
 
+const MEMBERS = [
+  { id: "m1", name: "BombVault (Bottich)", version: "v9.7.0" },
+  { id: "m2", name: "BombVault (Eltern)", version: "v9.7.0" },
+];
+
+/** The first server's look, which the launcher follows until it gets its own. */
+const LOOK = { "bv-theme": "dark", "bv-accent": "#ff7eb6", "bv-shape": "round" };
+
 const FINGERPRINT = "5E:0B:91:C2:7A:44:3F:18:D6:9A:02:BB:71:E5:C0:3D:48:9F:26:A1:0C:77:E2:5B:93:16:4D:F8:AA:61:07:C4";
 
 export function previewBridge(): Bridge {
   const listeners = new Set<(e: { data: string }) => void>();
   const trusted = new Set<string>();
-  let state: LauncherState = { servers: load(), found: [], group: { paired: false, connected: false } };
+  let state: LauncherState = {
+    servers: load(),
+    found: [],
+    group: { paired: false, connected: false },
+    camera: true,
+    app: { version: "0.0.3", versionCode: 3, android: "36", model: "Pixel 8", deviceName: "" },
+  };
 
   function post(msg: object) {
     const data = JSON.stringify(msg);
@@ -67,23 +81,43 @@ export function previewBridge(): Bridge {
       case "dismiss":
         emit({ problem: undefined });
         return;
-      case "scan":
-        handle({ op: "join", code: "abandon ability able about above absent absorb abstract absurd abuse access accident" });
-        return;
       case "join": {
         const count = req.code.trim().split(/\s+/).filter(Boolean).length;
         if (count !== 12) {
           emit({ pairError: { reason: "count", count } });
           return;
         }
+        emit({ group: { paired: false, connected: true, joining: { members: [] } } });
+        setTimeout(() => emit({ group: { paired: false, connected: true, joining: { members: MEMBERS } } }), 900);
+        return;
+      }
+      case "adopt": {
         const servers = [
           ...state.servers,
-          { id: crypto.randomUUID(), name: "BombVault (Bottich)", url: "https://192.168.20.12:3443/", member: true },
-          { id: crypto.randomUUID(), name: "BombVault (Eltern)", url: "", member: true },
+          { id: crypto.randomUUID(), name: MEMBERS[0].name, url: "https://192.168.20.12:3443/", member: true },
+          { id: crypto.randomUUID(), name: MEMBERS[1].name, url: "", member: true },
         ];
         emit({ servers, group: { paired: true, connected: true } });
         return;
       }
+      case "cancelJoin":
+        if (state.group.joining) emit({ group: { paired: state.group.paired, connected: state.group.connected } });
+        return;
+      case "camera":
+        emit({ camera: true });
+        return;
+      case "paste":
+        post({ op: "pasted", ticket: req.ticket, text: "" });
+        return;
+      case "look":
+        post({ op: "look", ticket: req.ticket, status: 200, body: JSON.stringify({ ok: true, prefs: LOOK, stored: true }) });
+        return;
+      case "deviceName":
+        emit({ app: { ...state.app, deviceName: req.name } });
+        return;
+      case "removeAll":
+        emit({ servers: [], group: { paired: false, connected: false } });
+        return;
       case "leave":
         emit({ servers: state.servers.filter((s) => s.url !== "").map((s) => ({ ...s, member: false })), group: { paired: false, connected: false } });
         return;

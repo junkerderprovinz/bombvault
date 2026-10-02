@@ -79,9 +79,16 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: |
           set -eu
-          version=0.0.1
+          # A test build counts up with the run, so it installs over the last
+          # one and below the first release.
+          version="0.0.$GITHUB_RUN_NUMBER"
           if [ "$RELEASE" = true ]; then
             version="${TAG#v}"
+          fi
+          # Every build of this repository carries the release key, so a test
+          # build installs over the app a phone already has. A fork's pull
+          # request gets no secrets and builds with the debug key.
+          if [ -n "$KEYSTORE_BASE64" ]; then
             export ANDROID_KEYSTORE="$RUNNER_TEMP/release.p12"
             echo "$KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE"
           fi

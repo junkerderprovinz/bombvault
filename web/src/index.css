@@ -677,7 +677,9 @@
   --brand-bitcoin: #f7931a;
   --brand-paypal:  #4fb5f0;
   --brand-github:  #ffffff;
-  --brand-docker:  #2396ed;
+  /* Docker's blue and Unraid's gradient hold on both grounds, so the light
+     themes inherit them. */
+  --brand-docker:      #2396ed;
   --brand-unraid-from: #e32929;
   --brand-unraid-to:   #ff8d30;
 
@@ -833,9 +835,6 @@
   --brand-bitcoin: #a85d00;
   --brand-paypal:  #003087;
   --brand-github:  #181717;
-  --brand-docker:  #2396ed;
-  --brand-unraid-from: #e32929;
-  --brand-unraid-to:   #ff8d30;
   color-scheme: light;
 
   /* Carbon's light values, as in GlimStone's reference/tokens.css. */
@@ -1420,6 +1419,9 @@ body {
 .glim-tile-unraid { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
 .glim-tile-zip { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 .glim-tile-bitcoin { --tile: #f7931a; --tile-ink: #161616; } /* 7.9:1 */
+.glim-tile-docker  { --tile: #1d63ed; --tile-ink: #ffffff; } /* 5.2:1 */
+.glim-tile-unraid  { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
+.glim-tile-zip     { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 /* Buy Me a Coffee's own near-black, the ink of their button. 13.8:1. */
 .glim-tile-coffee { --tile: #ffdd00; --tile-ink: #0d0c22; }
 /* The button that reaches the app's own authors follows the colour engine. */

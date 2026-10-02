@@ -3,6 +3,5 @@
     <string name="saved">Salvestatud kausta Allalaadimised: %1$s</string>
     <string name="save_failed">Faili ei õnnestunud salvestada: %1$s</string>
     <string name="save_untrusted">Serveri sertifikaat on muutunud. Ava see uuesti avakuvalt, et kontrollida uut sertifikaati.</string>
-    <string name="scan_prompt">Skanni kood kohas Seaded, Sidumine ühes oma BombVault serveris.</string>
     <string name="no_app">Ükski selle telefoni rakendus ei ava seda linki.</string>
 </resources>

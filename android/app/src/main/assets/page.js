@@ -42,4 +42,8 @@
     bars();
     new MutationObserver(bars).observe(document.head, { subtree: true, childList: true, attributes: true, attributeFilter: ["content"] });
   });
+  // A page brought back from the cache by Back loads no DOM again.
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted) bars();
+  });
 })();

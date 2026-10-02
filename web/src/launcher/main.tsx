@@ -9,16 +9,22 @@ import { I18nProvider, applyStoredLanguage } from "../lib/i18n";
 import { applyStoredTheme } from "../lib/theme";
 import { applyStoredAccent } from "../lib/accent";
 import { applyStoredShape } from "../lib/shape";
+import { applyStoredRainbow } from "../lib/appearance";
+import { applyStoredMotionIntensity } from "../lib/motion";
+import { applyStoredDisco } from "../lib/disco";
 import { appBridge } from "./bridge";
 import { previewBridge } from "./preview";
 import { Launcher } from "./Launcher";
 
-// Nothing is stored on the launcher's origin, so these resolve to the
-// defaults: the phone's dark or light, the standard accent and shape.
+// The look the settings page keeps, or the followed server's, before the
+// first paint; on a fresh install the defaults.
 applyStoredTheme();
 applyStoredLanguage();
 applyStoredAccent();
+applyStoredRainbow();
 applyStoredShape();
+applyStoredMotionIntensity();
+applyStoredDisco();
 
 const bridge = appBridge() ?? (import.meta.env.DEV ? previewBridge() : null);
 

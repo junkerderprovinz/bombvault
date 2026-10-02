@@ -3,6 +3,5 @@
     <string name="saved">Saglabāts mapē Lejupielādes: %1$s</string>
     <string name="save_failed">Neizdevās saglabāt failu: %1$s</string>
     <string name="save_untrusted">Servera sertifikāts ir mainījies. Atveriet to vēlreiz no sākuma ekrāna, lai pārbaudītu jauno.</string>
-    <string name="scan_prompt">Noskenē kodu sadaļā Iestatījumi, Pārošana vienā no saviem BombVault serveriem.</string>
     <string name="no_app">Neviena lietotne šajā tālrunī neatver šo saiti.</string>
 </resources>

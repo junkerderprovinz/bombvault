@@ -30,23 +30,52 @@ export interface Problem {
   detail?: string;
 }
 
+/** An instance of the group as its announce names it. */
+export interface GroupMember {
+  id: string;
+  name: string;
+  version: string;
+}
+
 /** Why a pairing code was refused, in the terms of BombVault's own pairing card. */
 export type PairError =
   | { reason: "count"; count: number }
   | { reason: "word"; word: string; position: number }
   | { reason: "checksum" };
 
+/** What the settings page says about the app and the phone it runs on. */
+export interface AppInfo {
+  version: string;
+  versionCode: number;
+  /** Android's API level, such as 36. */
+  android: string;
+  /** The name the person gave the phone, which the group sees while none is chosen here. */
+  model: string;
+  /** The name chosen in the settings, empty while the phone's own is used. */
+  deviceName: string;
+}
+
 export interface LauncherState {
   servers: Server[];
   found: FoundServer[];
   /** Whether the app is in a BombVault group, and connected to its relay. */
-  group: { paired: boolean; connected: boolean };
+  group: {
+    paired: boolean;
+    connected: boolean;
+    /** The instances found with words not yet taken over, while the person
+     *  looks before adding them. */
+    joining?: { members: GroupMember[] };
+  };
+  /** Whether the app may use the camera, for the scanner. */
+  camera: boolean;
+  app: AppInfo;
   problem?: Problem;
   pairError?: PairError;
 }
 
-/** A server's answer to the activity question: its runs, the progress events
- *  in flight and the next scheduled runs. Status 0 means it was not reached and
+/** A server's answer to a question the app asked it, such as the activity
+ *  question: its runs, the progress events in flight and the next scheduled
+ *  runs. Status 0 means it was not reached and
  *  -1 that its certificate is not the one trusted for it; the body then says why. */
 export interface Fetched {
   status: number;
@@ -61,11 +90,21 @@ export type Request =
   | { op: "trust"; id: string; fingerprint: string }
   | { op: "dismiss" }
   | { op: "activity"; ticket: number; id: string }
+  | { op: "look"; ticket: number; id: string }
+  | { op: "deviceName"; name: string }
+  | { op: "removeAll" }
   | { op: "scan" }
   | { op: "join"; code: string }
-  | { op: "leave" };
+  | { op: "adopt" }
+  | { op: "cancelJoin" }
+  | { op: "leave" }
+  | { op: "camera" }
+  | { op: "paste"; ticket: number };
 
-type Reply = ({ op: "state" } & LauncherState) | ({ op: "activity"; ticket: number } & Fetched);
+type Reply =
+  | ({ op: "state" } & LauncherState)
+  | ({ op: "activity" | "look"; ticket: number } & Fetched)
+  | { op: "pasted"; ticket: number; text: string };
 
 export interface Bridge {
   send(req: Request): void;
@@ -73,6 +112,10 @@ export interface Bridge {
   listen(onState: (s: LauncherState) => void): () => void;
   /** Asks what runs on the server, over the group or with the app's session for it. */
   activity(id: string): Promise<Fetched>;
+  /** Asks how the server looks: the display preferences it keeps for its interface. */
+  look(id: string): Promise<Fetched>;
+  /** The phone's clipboard as text; a WebView cannot read it itself. */
+  paste(): Promise<string>;
 }
 
 /** The transport underneath a Bridge: the injected object, or a stand-in. */
@@ -85,13 +128,26 @@ export interface Port {
 export function bridgeOver(port: Port): Bridge {
   let ticket = 0;
   const waiting = new Map<number, (f: Fetched) => void>();
+  const pasting = new Map<number, (text: string) => void>();
   port.addEventListener("message", (e) => {
     const reply = JSON.parse(e.data) as Reply;
-    if (reply.op !== "activity") return;
-    waiting.get(reply.ticket)?.({ status: reply.status, body: reply.body });
-    waiting.delete(reply.ticket);
+    if (reply.op === "activity" || reply.op === "look") {
+      waiting.get(reply.ticket)?.({ status: reply.status, body: reply.body });
+      waiting.delete(reply.ticket);
+    } else if (reply.op === "pasted") {
+      pasting.get(reply.ticket)?.(reply.text);
+      pasting.delete(reply.ticket);
+    }
   });
   const send = (req: Request) => port.postMessage(JSON.stringify(req));
+  const ask = (op: "activity" | "look", id: string) => {
+    ticket += 1;
+    const t = ticket;
+    return new Promise<Fetched>((resolve) => {
+      waiting.set(t, resolve);
+      send({ op, ticket: t, id });
+    });
+  };
   return {
     send,
     listen(onState) {
@@ -102,12 +158,14 @@ export function bridgeOver(port: Port): Bridge {
       port.addEventListener("message", fn);
       return () => port.removeEventListener("message", fn);
     },
-    activity(id) {
+    activity: (id) => ask("activity", id),
+    look: (id) => ask("look", id),
+    paste() {
       ticket += 1;
       const t = ticket;
       return new Promise((resolve) => {
-        waiting.set(t, resolve);
-        send({ op: "activity", ticket: t, id });
+        pasting.set(t, resolve);
+        send({ op: "paste", ticket: t });
       });
     },
   };
