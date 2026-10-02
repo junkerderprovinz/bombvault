@@ -487,7 +487,7 @@ Every release has an APK, `bombvault-android.apk`, on its release page. The app 
 
 Pair the phone with your group to set it up: on any server open **Settings → Pairing → Show phrase** and scan the QR code with the app, or type the twelve words. The app joins the group like another instance and finds every server in it. It shows what runs on each, also away from home over the relay, and appears on the **Instances** page as an Android app. It backs nothing up itself. A server outside a group can be added by its address, and the app also lists servers that announce themselves on the local network.
 
-The interface opens directly, so the phone has to reach the server, at home or over a VPN, and you sign in as in a browser. A self-signed certificate is trusted once by its fingerprint, and the app warns if the server later shows a different one.
+The interface opens directly, so the phone has to reach the server, at home or over a VPN. Paired with the group, the phone opens every server already signed in; a server added by its address asks for the password as in a browser. A self-signed certificate is trusted once by its fingerprint, and the app warns if the server later shows a different one.
 
 The gear beside the plus opens the settings: the language, the name the phone shows on the Instances page, and the look, which follows the first server until you set your own. The app's [privacy policy](android/PRIVACY.md) lists what it stores and what it sends where.
 

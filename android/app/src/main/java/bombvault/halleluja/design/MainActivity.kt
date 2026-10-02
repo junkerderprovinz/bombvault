@@ -126,6 +126,9 @@ class MainActivity : ComponentActivity() {
         web.webViewClient = Client()
         web.webChromeClient = Chrome()
         web.setDownloadListener { url, _, disposition, mime, _ -> download(url, disposition, mime) }
+        // On the launcher a long press is a slow tap; a server's own page keeps
+        // the browser's menu for its links and text.
+        web.setOnLongClickListener { current == null }
 
         // Registered for every origin because the list of servers changes while
         // a page is open; onMessage decides who may ask for what.
@@ -203,7 +206,16 @@ class MainActivity : ComponentActivity() {
         discovery.stop()
         current = server
         problem = null
-        web.loadUrl(server.url)
+        // A server from the group signs the phone in itself, so its page
+        // opens without the password.
+        lifecycleScope.launch {
+            val cookie = withContext(Dispatchers.IO) { pairing.session(server) }
+            if (cookie != null) {
+                CookieManager.getInstance().setCookie(server.url, cookie)
+                CookieManager.getInstance().flush()
+            }
+            if (current?.id == server.id) web.loadUrl(server.url)
+        }
     }
 
     private fun onMessage(msg: JSONObject, origin: String, reply: JavaScriptReplyProxy) {

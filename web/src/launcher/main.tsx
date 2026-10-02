@@ -16,6 +16,9 @@ import { appBridge } from "./bridge";
 import { previewBridge } from "./preview";
 import { Launcher } from "./Launcher";
 
+// Marks the page as the phone app's, for the rules only a touch screen needs.
+document.documentElement.dataset.app = "";
+
 // The look the settings page keeps, or the followed server's, before the
 // first paint; on a fresh install the defaults.
 applyStoredTheme();
