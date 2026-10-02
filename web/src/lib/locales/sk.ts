@@ -2189,6 +2189,8 @@ const sk: Partial<Translations> = {
   "recovery.abImporting": "Importuje sa…",
   "recovery.abImportFailed": "Import sa nepodarilo spustiť.",
   "recovery.abDone": "Import dokončený. Body obnovy nájdeš v zálohách každého kontajnera.",
+  "recovery.abAllFailed": "Nepodarilo sa importovať žiadny archív. Denník aktivít povie prečo.",
+  "recovery.abSomeFailed": "Niektoré archívy sa nepodarilo importovať. Denník aktivít povie prečo.",
   "recovery.foreignIntro": "Vytiahnite jednotlivé kontajnery, VM, sady priečinkov alebo dátové sady ZFS zo záloh inej inštancie BombVault: pripojte sa iba na čítanie, prehľadávajte, čo je vnútri, obnovte, čo si vyberiete. Toto iba číta druhý repozitár, tam sa nič nemení a vaše vlastné nastavenia zálohovania zostávajú nedotknuté.",
   "recovery.foreignStepConnect": "Pripojiť sa k inému repozitáru",
   "recovery.foreignStepBrowse": "Prehľadávať a obnoviť",

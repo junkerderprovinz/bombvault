@@ -2189,6 +2189,8 @@ const hr: Partial<Translations> = {
   "recovery.abImporting": "Uvoz…",
   "recovery.abImportFailed": "Uvoz nije moguće pokrenuti.",
   "recovery.abDone": "Uvoz je gotov. Točke vraćanja su među sigurnosnim kopijama svakog kontejnera.",
+  "recovery.abAllFailed": "Nijedna arhiva nije se mogla uvesti. Zapisnik aktivnosti kaže zašto.",
+  "recovery.abSomeFailed": "Neke arhive nisu se mogle uvesti. Zapisnik aktivnosti kaže zašto.",
   "recovery.foreignIntro": "Izvucite pojedinačne kontejnere, VM-ove, skupove mapa ili ZFS skupove podataka iz sigurnosnih kopija druge BombVault instance: povežite se samo za čitanje, pregledajte što je unutra, vratite ono što odaberete. Ovo samo čita drugi repozitorij. Ondje se ništa ne mijenja, a vaše vlastite postavke sigurnosne kopije ostaju netaknute.",
   "recovery.foreignStepConnect": "Poveži se s drugim repozitorijem",
   "recovery.foreignStepBrowse": "Pregledaj i vrati",

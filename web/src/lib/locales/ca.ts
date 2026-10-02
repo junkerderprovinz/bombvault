@@ -2189,6 +2189,8 @@ const ca: Partial<Translations> = {
   "recovery.abImporting": "S'està important…",
   "recovery.abImportFailed": "No s'ha pogut iniciar la importació.",
   "recovery.abDone": "Importació acabada. Els punts de restauració són a les còpies de cada contenidor.",
+  "recovery.abAllFailed": "No s'ha pogut importar cap arxiu. El registre d'activitat diu per què.",
+  "recovery.abSomeFailed": "Alguns arxius no s'han pogut importar. El registre d'activitat diu per què.",
   "recovery.foreignIntro": "Extreu contenidors, MV, conjunts de carpetes o conjunts de dades ZFS individuals de les còpies d'una altra instància de BombVault: connecta't només en lectura, explora què hi ha dins, restaura el que triïs. Això només llegeix l'altre repositori: allà no canvia res, i la teva pròpia configuració de còpies queda intacta.",
   "recovery.foreignStepConnect": "Connecta't amb l'altre repositori",
   "recovery.foreignStepBrowse": "Explora i restaura",

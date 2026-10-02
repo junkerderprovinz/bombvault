@@ -1863,6 +1863,8 @@ const vi: Partial<Translations> = {
   "recovery.abImporting": "Đang nhập…",
   "recovery.abImportFailed": "Không bắt đầu nhập được.",
   "recovery.abDone": "Đã nhập xong. Các điểm khôi phục nằm trong bản sao lưu của từng container.",
+  "recovery.abAllFailed": "Không nhập được tệp lưu trữ nào. Nhật ký hoạt động cho biết lý do.",
+  "recovery.abSomeFailed": "Một số tệp lưu trữ không nhập được. Nhật ký hoạt động cho biết lý do.",
   "recovery.foreignIntro": "Lấy từng container, máy ảo, bộ thư mục hoặc tập dữ liệu ZFS từ bản sao lưu của một phiên bản BombVault khác: kết nối chỉ đọc, duyệt nội dung và khôi phục những gì bạn chọn. Kho bên kia chỉ được đọc, không có gì thay đổi ở đó, và cài đặt sao lưu của riêng bạn vẫn nguyên vẹn.",
   "recovery.foreignStepConnect": "Kết nối với kho bên kia",
   "recovery.foreignStepBrowse": "Duyệt & khôi phục",

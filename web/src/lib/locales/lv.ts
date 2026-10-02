@@ -2189,6 +2189,8 @@ const lv: Partial<Translations> = {
   "recovery.abImporting": "Importē…",
   "recovery.abImportFailed": "Importu neizdevās sākt.",
   "recovery.abDone": "Imports pabeigts. Atjaunošanas punkti ir katra konteinera dublējumos.",
+  "recovery.abAllFailed": "Neizdevās importēt nevienu arhīvu. Darbības žurnālā redzams, kāpēc.",
+  "recovery.abSomeFailed": "Dažus arhīvus neizdevās importēt. Darbības žurnālā redzams, kāpēc.",
   "recovery.foreignIntro": "Izvelciet atsevišķus konteinerus, VM, mapju kopas vai ZFS datu kopas no citas BombVault instances rezerves kopijām: izveidojiet savienojumu tikai lasīšanai, pārlūkojiet, kas ir iekšā, atjaunojiet to, ko izvēlaties. Tas tikai nolasa otro repozitoriju. Tur nekas nemainās, un jūsu pašu rezerves kopēšanas iestatījumi paliek neskarti.",
   "recovery.foreignStepConnect": "Izveidot savienojumu ar citu repozitoriju",
   "recovery.foreignStepBrowse": "Pārlūkot un atjaunot",

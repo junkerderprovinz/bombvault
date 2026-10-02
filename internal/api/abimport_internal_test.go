@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -20,6 +21,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -31,7 +33,9 @@ type importFakeEngine struct {
 	mu       sync.Mutex
 	snaps    []restic.Snapshot
 	snapsErr error
-	imports  []importCall
+	// failFor names a container whose archives restic refuses to import.
+	failFor string
+	imports []importCall
 }
 
 type importCall struct {
@@ -48,6 +52,9 @@ func (e *importFakeEngine) Snapshots(context.Context, string, restic.Mode) ([]re
 }
 
 func (e *importFakeEngine) ImportDir(_ context.Context, _, dir string, tags []string, at time.Time, _ restic.Mode) (restic.Summary, error) {
+	if e.failFor != "" && slices.Contains(tags, "container:"+e.failFor) {
+		return restic.Summary{}, errors.New("repository is full")
+	}
 	var files []string
 	_ = filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() {
@@ -296,6 +303,32 @@ func TestAnUnreadableRepositoryMarksItsArchivesAndTheScanGoesOn(t *testing.T) {
 	for _, a := range got {
 		if a.Container == "plex" && a.Status != abStatusRepoUnavailable {
 			t.Fatalf("%s/%s = %q, want %q", a.Folder, a.Container, a.Status, abStatusRepoUnavailable)
+		}
+	}
+}
+
+func TestTheLastImportEventCountsTheArchivesThatFailed(t *testing.T) {
+	s, _, eng, src := importFixture(t)
+	eng.failFor = "plex"
+	s.progress = progress.NewStore()
+	events, stop := s.progress.Subscribe()
+	defer stop()
+	if _, err := s.StartImportAppdataBackup(context.Background(), src); err != nil {
+		t.Fatal(err)
+	}
+	timeout := time.After(5 * time.Second)
+	for {
+		select {
+		case e := <-events:
+			if e.Key != appdataImportKey || e.Active {
+				continue
+			}
+			if e.Failed != 2 {
+				t.Fatalf("last event = %+v, want the two archives of plex counted as failed", e)
+			}
+			return
+		case <-timeout:
+			t.Fatal("no last event")
 		}
 	}
 }

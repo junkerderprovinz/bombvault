@@ -1871,6 +1871,8 @@ const no: Partial<Translations> = {
   "recovery.abImporting": "Importerer…",
   "recovery.abImportFailed": "Importen kunne ikke starte.",
   "recovery.abDone": "Importen er ferdig. Gjenopprettingspunktene ligger under sikkerhetskopiene til hver container.",
+  "recovery.abAllFailed": "Ingen arkiver kunne importeres. Aktivitetsloggen forteller hvorfor.",
+  "recovery.abSomeFailed": "Noen arkiver kunne ikke importeres. Aktivitetsloggen forteller hvorfor.",
   "recovery.foreignIntro": "Hent enkeltcontainere, VM-er, mappesett eller ZFS-datasett ut av sikkerhetskopiene til en annen BombVault-instans: koble til skrivebeskyttet, bla i innholdet og gjenopprett det du velger. Det andre repoet blir bare lest, ingenting endres der, og dine egne sikkerhetskopiinnstillinger forblir urørte.",
   "recovery.foreignStepConnect": "Koble til det andre repoet",
   "recovery.foreignStepBrowse": "Bla gjennom & gjenopprett",

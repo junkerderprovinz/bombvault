@@ -2173,6 +2173,8 @@ const sl: Partial<Translations> = {
   "recovery.abImporting": "Uvažanje…",
   "recovery.abImportFailed": "Uvoza ni bilo mogoče začeti.",
   "recovery.abDone": "Uvoz končan. Točke obnovitve so med varnostnimi kopijami vsakega vsebnika.",
+  "recovery.abAllFailed": "Nobenega arhiva ni bilo mogoče uvoziti. Dnevnik dejavnosti pove, zakaj.",
+  "recovery.abSomeFailed": "Nekaterih arhivov ni bilo mogoče uvoziti. Dnevnik dejavnosti pove, zakaj.",
   "recovery.foreignIntro": "Izvleci posamezne vsebnike, VM-je, nabore map ali nabore podatkov ZFS iz varnostnih kopij druge instance BombVault: poveži se samo za branje, prebrskaj vsebino, obnovi kar izbereš. To bere drug repozitorij, ničesar tam ne spremeni in ne posega v lastne nastavitve varnostnega kopiranja.",
   "recovery.foreignStepConnect": "Poveži se z drugim repozitorijem",
   "recovery.foreignStepBrowse": "Prebrskaj in obnovi",

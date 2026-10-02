@@ -1871,6 +1871,8 @@ const da: Partial<Translations> = {
   "recovery.abImporting": "Importerer…",
   "recovery.abImportFailed": "Importen kunne ikke starte.",
   "recovery.abDone": "Importen er færdig. Gendannelsespunkterne ligger under hver containers sikkerhedskopier.",
+  "recovery.abAllFailed": "Intet arkiv kunne importeres. Aktivitetsloggen fortæller hvorfor.",
+  "recovery.abSomeFailed": "Nogle arkiver kunne ikke importeres. Aktivitetsloggen fortæller hvorfor.",
   "recovery.foreignIntro": "Hent enkelte containere, VM'er, mappesæt eller ZFS-datasæt ud af sikkerhedskopierne fra en anden BombVault-instans: forbind skrivebeskyttet, gennemse indholdet og gendan det, du vælger. Det andet repo læses kun, intet ændres der, og dine egne backup-indstillinger forbliver urørte.",
   "recovery.foreignStepConnect": "Forbind til det andet repo",
   "recovery.foreignStepBrowse": "Gennemse & gendan",

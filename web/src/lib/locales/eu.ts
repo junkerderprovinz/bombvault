@@ -2189,6 +2189,8 @@ const eu: Partial<Translations> = {
   "recovery.abImporting": "Inportatzen…",
   "recovery.abImportFailed": "Ezin izan da inportazioa hasi.",
   "recovery.abDone": "Inportazioa amaitu da. Leheneratze-puntuak edukiontzi bakoitzaren babeskopietan daude.",
+  "recovery.abAllFailed": "Ezin izan da artxiborik inportatu. Jarduera-erregistroak dio zergatik.",
+  "recovery.abSomeFailed": "Artxibo batzuk ezin izan dira inportatu. Jarduera-erregistroak dio zergatik.",
   "recovery.foreignIntro": "Atera edukiontzi, MB, karpeta-multzo edo ZFS datu-multzo indibidualak beste BombVault instantzia baten babeskopietatik: konektatu irakurtzeko soilik, arakatu barruan dagoena, berrezarri hautatutakoa. Honek beste biltegia irakurtzen du soilik: han ezer ez da aldatzen, eta zure bere babeskopia-ezarpenak ukitu gabe geratzen dira.",
   "recovery.foreignStepConnect": "Konektatu beste biltegiarekin",
   "recovery.foreignStepBrowse": "Arakatu eta berrezarri",

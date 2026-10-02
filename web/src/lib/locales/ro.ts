@@ -1874,6 +1874,8 @@ const ro: Partial<Translations> = {
   "recovery.abImporting": "Se importă…",
   "recovery.abImportFailed": "Importul nu a putut porni.",
   "recovery.abDone": "Import terminat. Punctele de restaurare sunt în backupurile fiecărui container.",
+  "recovery.abAllFailed": "Nicio arhivă nu a putut fi importată. Jurnalul de activitate spune de ce.",
+  "recovery.abSomeFailed": "Unele arhive nu au putut fi importate. Jurnalul de activitate spune de ce.",
   "recovery.foreignIntro": "Extrageți containere, VM-uri, seturi de foldere sau seturi de date ZFS individuale din copiile de rezervă ale unei alte instanțe BombVault: conectați-vă doar în citire, răsfoiți conținutul și restaurați ce alegeți. Celălalt repo este doar citit, nimic nu se schimbă acolo, iar propriile dvs. setări de backup rămân neatinse.",
   "recovery.foreignStepConnect": "Conectare la celălalt repo",
   "recovery.foreignStepBrowse": "Răsfoire și restaurare",

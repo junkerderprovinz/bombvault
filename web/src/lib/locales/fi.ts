@@ -1871,6 +1871,8 @@ const fi: Partial<Translations> = {
   "recovery.abImporting": "Tuodaan…",
   "recovery.abImportFailed": "Tuontia ei voitu aloittaa.",
   "recovery.abDone": "Tuonti valmis. Palautuspisteet ovat kunkin kontin varmuuskopioissa.",
+  "recovery.abAllFailed": "Yhtään arkistoa ei voitu tuoda. Toimintaloki kertoo miksi.",
+  "recovery.abSomeFailed": "Joitakin arkistoja ei voitu tuoda. Toimintaloki kertoo miksi.",
   "recovery.foreignIntro": "Poimi yksittäisiä kontteja, virtuaalikoneita, kansiojoukkoja tai ZFS-tietojoukkoja toisen BombVault-instanssin varmuuskopioista: yhdistä vain luku -tilassa, selaa sisältöä ja palauta valitsemasi. Toista repoa vain luetaan, siellä ei muutu mikään, ja omat varmuuskopiointiasetuksesi pysyvät koskemattomina.",
   "recovery.foreignStepConnect": "Yhdistä toiseen repoon",
   "recovery.foreignStepBrowse": "Selaa ja palauta",

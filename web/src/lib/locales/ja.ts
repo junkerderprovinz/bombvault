@@ -1863,6 +1863,8 @@ const ja: Partial<Translations> = {
   "recovery.abImporting": "取り込み中…",
   "recovery.abImportFailed": "取り込みを開始できませんでした。",
   "recovery.abDone": "取り込みが終わりました。復元ポイントは各コンテナのバックアップにあります。",
+  "recovery.abAllFailed": "どのアーカイブも取り込めませんでした。理由はアクティビティログにあります。",
+  "recovery.abSomeFailed": "一部のアーカイブを取り込めませんでした。理由はアクティビティログにあります。",
   "recovery.foreignIntro": "別の BombVault インスタンスのバックアップから、個々のコンテナ・VM・フォルダーセット・ZFS データセットを取り出せます。読み取り専用で接続し、中身を閲覧して、選んだものを復元します。相手のリポジトリは読み取りのみで、そちらでは何も変わりません。自分のバックアップ設定にも一切触れません。",
   "recovery.foreignStepConnect": "相手のリポジトリに接続",
   "recovery.foreignStepBrowse": "閲覧と復元",

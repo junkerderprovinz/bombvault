@@ -1868,6 +1868,8 @@ const nl: Partial<Translations> = {
   "recovery.abImporting": "Importeren…",
   "recovery.abImportFailed": "De import kon niet starten.",
   "recovery.abDone": "Import klaar. De herstelpunten staan bij de back-ups van elke container.",
+  "recovery.abAllFailed": "Geen enkel archief kon worden geïmporteerd. Het activiteitenlogboek zegt waarom.",
+  "recovery.abSomeFailed": "Sommige archieven konden niet worden geïmporteerd. Het activiteitenlogboek zegt waarom.",
   "recovery.foreignIntro": "Haal losse containers, VM's, mappensets of ZFS-datasets uit de back-ups van een andere BombVault-instantie: verbind alleen-lezen, blader door de inhoud en herstel wat u kiest. De andere repository wordt alleen gelezen, daar verandert niets, en uw eigen back-upinstellingen blijven onaangetast.",
   "recovery.foreignStepConnect": "Verbinden met de andere repository",
   "recovery.foreignStepBrowse": "Bladeren & herstellen",

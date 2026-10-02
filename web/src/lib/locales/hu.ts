@@ -1874,6 +1874,8 @@ const hu: Partial<Translations> = {
   "recovery.abImporting": "Importálás…",
   "recovery.abImportFailed": "Az importálás nem tudott elindulni.",
   "recovery.abDone": "Az importálás kész. A visszaállítási pontok az egyes konténerek mentései között vannak.",
+  "recovery.abAllFailed": "Egyetlen archívumot sem sikerült importálni. A tevékenységnapló megmondja, miért.",
+  "recovery.abSomeFailed": "Néhány archívumot nem sikerült importálni. A tevékenységnapló megmondja, miért.",
   "recovery.foreignIntro": "Emeljen ki egyes konténereket, VM-eket, mappakészleteket vagy ZFS-adatkészleteket egy másik BombVault-példány mentéseiből: csatlakozzon csak olvasásra, böngéssze a tartalmat, és állítsa vissza, amit kiválaszt. A másik repót csak olvassuk, ott semmi sem változik, és az Ön saját mentési beállításai érintetlenek maradnak.",
   "recovery.foreignStepConnect": "Csatlakozás a másik repóhoz",
   "recovery.foreignStepBrowse": "Böngészés és visszaállítás",

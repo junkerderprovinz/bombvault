@@ -2189,6 +2189,8 @@ const id: Partial<Translations> = {
   "recovery.abImporting": "Mengimpor…",
   "recovery.abImportFailed": "Impor tidak dapat dimulai.",
   "recovery.abDone": "Impor selesai. Titik pemulihan ada di cadangan setiap kontainer.",
+  "recovery.abAllFailed": "Tidak ada arsip yang bisa diimpor. Log aktivitas menjelaskan alasannya.",
+  "recovery.abSomeFailed": "Beberapa arsip tidak bisa diimpor. Log aktivitas menjelaskan alasannya.",
   "recovery.foreignIntro": "Tarik container, VM, set folder, atau dataset ZFS individual dari cadangan instance BombVault yang berbeda: hubungkan hanya baca, jelajahi isinya, pulihkan yang Anda pilih. Ini hanya membaca repositori lain. Tidak ada yang berubah di sana, dan pengaturan pencadangan Anda sendiri tetap tidak tersentuh.",
   "recovery.foreignStepConnect": "Hubungkan ke repositori lain",
   "recovery.foreignStepBrowse": "Jelajahi & pulihkan",

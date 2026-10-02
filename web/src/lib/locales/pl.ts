@@ -1866,6 +1866,8 @@ const pl: Partial<Translations> = {
   "recovery.abImporting": "Importowanie…",
   "recovery.abImportFailed": "Nie udało się uruchomić importu.",
   "recovery.abDone": "Import zakończony. Punkty przywracania są w kopiach każdego kontenera.",
+  "recovery.abAllFailed": "Nie udało się zaimportować żadnego archiwum. Dziennik aktywności mówi dlaczego.",
+  "recovery.abSomeFailed": "Niektórych archiwów nie udało się zaimportować. Dziennik aktywności mówi dlaczego.",
   "recovery.foreignIntro": "Wyciągnij pojedyncze kontenery, maszyny wirtualne, zestawy folderów lub zbiory danych ZFS z kopii innej instancji BombVault: połącz się w trybie tylko do odczytu, przejrzyj zawartość i przywróć, co wybierzesz. Drugie repozytorium jest tylko odczytywane, nic się tam nie zmienia, a Twoje własne ustawienia kopii zapasowych pozostają nietknięte.",
   "recovery.foreignStepConnect": "Połącz z innym repozytorium",
   "recovery.foreignStepBrowse": "Przeglądaj i przywracaj",

@@ -2189,6 +2189,8 @@ const ms: Partial<Translations> = {
   "recovery.abImporting": "Mengimport…",
   "recovery.abImportFailed": "Import tidak dapat dimulakan.",
   "recovery.abDone": "Import selesai. Titik pemulihan ada dalam sandaran setiap bekas.",
+  "recovery.abAllFailed": "Tiada arkib yang dapat diimport. Log aktiviti menerangkan sebabnya.",
+  "recovery.abSomeFailed": "Sesetengah arkib tidak dapat diimport. Log aktiviti menerangkan sebabnya.",
   "recovery.foreignIntro": "Keluarkan bekas, VM, set folder atau set data ZFS individu daripada sandaran instans BombVault yang berlainan: sambung baca sahaja, semak imbas apa yang ada di dalamnya, pulihkan apa yang anda pilih. Ini hanya membaca repositori lain. Tiada apa berubah di sana, dan tetapan sandaran anda sendiri kekal utuh.",
   "recovery.foreignStepConnect": "Sambung ke repositori lain",
   "recovery.foreignStepBrowse": "Semak imbas & pulihkan",

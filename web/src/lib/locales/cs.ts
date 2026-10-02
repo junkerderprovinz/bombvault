@@ -1869,6 +1869,8 @@ const cs: Partial<Translations> = {
   "recovery.abImporting": "Importuje se…",
   "recovery.abImportFailed": "Import se nepodařilo spustit.",
   "recovery.abDone": "Import dokončen. Body obnovy najdeš v zálohách každého kontejneru.",
+  "recovery.abAllFailed": "Žádný archiv se nepodařilo importovat. Protokol aktivit říká proč.",
+  "recovery.abSomeFailed": "Některé archivy se nepodařilo importovat. Protokol aktivit říká proč.",
   "recovery.foreignIntro": "Vytáhněte jednotlivé kontejnery, VM, sady složek nebo datové sady ZFS ze záloh jiné instance BombVault: připojte se jen pro čtení, projděte obsah a obnovte, co si vyberete. Druhý repozitář se pouze čte, nic se tam nemění a vaše vlastní nastavení zálohování zůstává nedotčeno.",
   "recovery.foreignStepConnect": "Připojit se k jinému repozitáři",
   "recovery.foreignStepBrowse": "Procházet a obnovit",

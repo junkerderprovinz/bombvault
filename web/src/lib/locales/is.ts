@@ -2189,6 +2189,8 @@ const is: Partial<Translations> = {
   "recovery.abImporting": "Flytur inn…",
   "recovery.abImportFailed": "Ekki tókst að hefja innflutninginn.",
   "recovery.abDone": "Innflutningi lokið. Endurheimtupunktarnir eru í afritum hvers gáms.",
+  "recovery.abAllFailed": "Ekki tókst að flytja inn neina safnskrá. Virknidagbókin segir hvers vegna.",
+  "recovery.abSomeFailed": "Ekki tókst að flytja inn sumar safnskrárnar. Virknidagbókin segir hvers vegna.",
   "recovery.foreignIntro": "Sæktu staka gáma, sýndarvélar, möppusett eða ZFS-gagnasöfn úr afritum annars BombVault-tilviks: tengdu aðeins með lestri, skoðaðu hvað er innan í, endurheimtu það sem þú velur. Þetta les eingöngu hitt geymslusafnið. Ekkert breytist þar, og eigin afritunarstillingar þínar haldast óáreittar.",
   "recovery.foreignStepConnect": "Tengjast öðru geymslusafni",
   "recovery.foreignStepBrowse": "Skoða og endurheimta",

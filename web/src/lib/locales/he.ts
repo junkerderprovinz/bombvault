@@ -1871,6 +1871,8 @@ const he: Partial<Translations> = {
   "recovery.abImporting": "מייבא…",
   "recovery.abImportFailed": "לא ניתן היה להתחיל את הייבוא.",
   "recovery.abDone": "הייבוא הסתיים. נקודות השחזור נמצאות בגיבויים של כל קונטיינר.",
+  "recovery.abAllFailed": "אף ארכיון לא יובא. יומן הפעילות מסביר למה.",
+  "recovery.abSomeFailed": "חלק מהארכיונים לא יובאו. יומן הפעילות מסביר למה.",
   "recovery.foreignIntro": "משכו קונטיינרים, מכונות וירטואליות, ערכות תיקיות או מערכי נתונים של ZFS בודדים מהגיבויים של מופע BombVault אחר: התחברו לקריאה בלבד, עיינו בתוכן ושחזרו את מה שתבחרו. המאגר האחר רק נקרא, שם דבר לא משתנה, והגדרות הגיבוי שלכם נשארות ללא שינוי.",
   "recovery.foreignStepConnect": "התחברות למאגר האחר",
   "recovery.foreignStepBrowse": "עיון ושחזור",

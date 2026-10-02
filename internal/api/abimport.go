@@ -218,6 +218,7 @@ func (s *Service) StartImportAppdataBackup(ctx context.Context, sub string) (int
 		defer s.recoverOperation("import appdata backup", nil, nil)
 		defer s.batchActive.Store(false)
 		startedAt := time.Now().Unix()
+		var failed int
 		publish := func(done int64, active bool) {
 			if s.progress == nil {
 				return
@@ -226,7 +227,11 @@ func (s *Service) StartImportAppdataBackup(ctx context.Context, sub string) (int
 			if total > 0 {
 				pct = float64(done) * 100 / float64(total)
 			}
-			s.progress.Publish(progress.Event{Key: appdataImportKey, Phase: "maintenance", Percent: pct, Active: active, StartedAt: startedAt})
+			e := progress.Event{Key: appdataImportKey, Phase: "maintenance", Percent: pct, Active: active, StartedAt: startedAt}
+			if !active {
+				e.Failed = failed
+			}
+			s.progress.Publish(e)
 		}
 		publish(0, true)
 		var done int64
@@ -234,6 +239,7 @@ func (s *Service) StartImportAppdataBackup(ctx context.Context, sub string) (int
 			base := done
 			err := s.importAppdataArchive(bctx, p, func(read int64) { publish(base+read/2, true) })
 			if err != nil {
+				failed++
 				log.Printf("api: import: %s from %s failed: %v", p.archive.Container, p.archive.Folder, err) //nolint:gosec // G706: container and folder names come from the folder listing
 			}
 			done += p.archive.Size

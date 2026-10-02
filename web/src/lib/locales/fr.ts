@@ -1871,6 +1871,8 @@ const fr: Partial<Translations> = {
   "recovery.abImporting": "Importation…",
   "recovery.abImportFailed": "L'importation n'a pas pu démarrer.",
   "recovery.abDone": "Importation terminée. Les points de restauration se trouvent dans les sauvegardes de chaque conteneur.",
+  "recovery.abAllFailed": "Aucune archive n'a pu être importée. Le journal d'activité indique pourquoi.",
+  "recovery.abSomeFailed": "Certaines archives n'ont pas pu être importées. Le journal d'activité indique pourquoi.",
   "recovery.foreignIntro": "Récupérez des conteneurs, VMs, jeux de dossiers ou jeux de données ZFS individuels depuis les sauvegardes d'une autre instance BombVault : connexion en lecture seule, parcours du contenu, restauration de votre sélection. L'autre dépôt est seulement lu, rien n'y change, et vos propres réglages de sauvegarde restent intacts.",
   "recovery.foreignStepConnect": "Se connecter à l'autre dépôt",
   "recovery.foreignStepBrowse": "Parcourir & restaurer",

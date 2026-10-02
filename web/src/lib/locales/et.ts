@@ -2189,6 +2189,8 @@ const et: Partial<Translations> = {
   "recovery.abImporting": "Importimine…",
   "recovery.abImportFailed": "Importi ei õnnestunud alustada.",
   "recovery.abDone": "Import on valmis. Taastepunktid on iga konteineri varukoopiate juures.",
+  "recovery.abAllFailed": "Ühtegi arhiivi ei õnnestunud importida. Tegevuslogi ütleb, miks.",
+  "recovery.abSomeFailed": "Mõnda arhiivi ei õnnestunud importida. Tegevuslogi ütleb, miks.",
   "recovery.foreignIntro": "Too üksikuid konteinereid, VM-e, kaustakomplekte või ZFS-i andmekogumeid teise BombVault eksemplari varundustest välja: ühendu ainult lugemiseks, sirvi sisu, taasta valitu. See ainult loeb teist hoidlat: seal ei muutu midagi ning sinu enda varunduse seaded jäävad puutumata.",
   "recovery.foreignStepConnect": "Ühendu teise hoidlaga",
   "recovery.foreignStepBrowse": "Sirvi ja taasta",

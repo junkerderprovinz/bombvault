@@ -1871,6 +1871,8 @@ const tr: Partial<Translations> = {
   "recovery.abImporting": "İçe aktarılıyor…",
   "recovery.abImportFailed": "İçe aktarma başlatılamadı.",
   "recovery.abDone": "İçe aktarma bitti. Geri yükleme noktaları her container'ın yedeklerinde.",
+  "recovery.abAllFailed": "Hiçbir arşiv içe aktarılamadı. Etkinlik Günlüğü nedenini söylüyor.",
+  "recovery.abSomeFailed": "Bazı arşivler içe aktarılamadı. Etkinlik Günlüğü nedenini söylüyor.",
   "recovery.foreignIntro": "Başka bir BombVault örneğinin yedeklerinden tek tek kapsayıcıları, sanal makineleri, klasör setlerini veya ZFS veri kümelerini alın: salt okunur bağlanın, içeriğe göz atın ve seçtiklerinizi geri yükleyin. Diğer depo yalnızca okunur, orada hiçbir şey değişmez ve kendi yedekleme ayarlarınız olduğu gibi kalır.",
   "recovery.foreignStepConnect": "Diğer depoya bağlan",
   "recovery.foreignStepBrowse": "Göz at ve geri yükle",

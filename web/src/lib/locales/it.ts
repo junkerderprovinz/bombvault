@@ -1871,6 +1871,8 @@ const it: Partial<Translations> = {
   "recovery.abImporting": "Importazione…",
   "recovery.abImportFailed": "Impossibile avviare l'importazione.",
   "recovery.abDone": "Importazione completata. I punti di ripristino sono nei backup di ogni container.",
+  "recovery.abAllFailed": "Nessun archivio è stato importato. Il registro attività dice perché.",
+  "recovery.abSomeFailed": "Alcuni archivi non sono stati importati. Il registro attività dice perché.",
   "recovery.foreignIntro": "Recupera singoli container, VM, set di cartelle o dataset ZFS dai backup di un'altra istanza BombVault: connettiti in sola lettura, sfoglia il contenuto, ripristina ciò che scegli. L'altro repository viene solo letto, lì non cambia nulla, e le tue impostazioni di backup restano intatte.",
   "recovery.foreignStepConnect": "Connettiti all'altro repository",
   "recovery.foreignStepBrowse": "Sfoglia e ripristina",

@@ -1863,6 +1863,8 @@ const ko: Partial<Translations> = {
   "recovery.abImporting": "가져오는 중…",
   "recovery.abImportFailed": "가져오기를 시작하지 못했습니다.",
   "recovery.abDone": "가져오기를 마쳤습니다. 복원 지점은 각 컨테이너의 백업에 있습니다.",
+  "recovery.abAllFailed": "아카이브를 하나도 가져오지 못했습니다. 이유는 활동 로그에 있습니다.",
+  "recovery.abSomeFailed": "일부 아카이브를 가져오지 못했습니다. 이유는 활동 로그에 있습니다.",
   "recovery.foreignIntro": "다른 BombVault 인스턴스의 백업에서 개별 컨테이너, VM, 폴더 세트 또는 ZFS 데이터세트를 가져옵니다. 읽기 전용으로 연결하고, 내용을 살펴본 뒤, 선택한 항목을 복원하세요. 상대 저장소는 읽기만 하며 그쪽에서는 아무것도 바뀌지 않습니다. 내 백업 설정도 그대로 유지됩니다.",
   "recovery.foreignStepConnect": "다른 저장소에 연결",
   "recovery.foreignStepBrowse": "살펴보기 및 복원",

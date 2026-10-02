@@ -2189,6 +2189,8 @@ const lt: Partial<Translations> = {
   "recovery.abImporting": "Importuojama…",
   "recovery.abImportFailed": "Nepavyko pradėti importo.",
   "recovery.abDone": "Importas baigtas. Atkūrimo taškai yra kiekvieno konteinerio atsarginėse kopijose.",
+  "recovery.abAllFailed": "Nepavyko importuoti nė vieno archyvo. Veiklos žurnale nurodyta kodėl.",
+  "recovery.abSomeFailed": "Kai kurių archyvų nepavyko importuoti. Veiklos žurnale nurodyta kodėl.",
   "recovery.foreignIntro": "Ištraukite atskirus konteinerius, VM, aplankų rinkinius ar ZFS duomenų rinkinius iš kito BombVault egzemplioriaus atsarginių kopijų: prisijunkite tik skaitymui, naršykite, kas viduje, atkurkite tai, ką pasirenkate. Tai tik skaito kitą saugyklą. Ten niekas nekeičiama, o jūsų pačių atsarginio kopijavimo nustatymai lieka nepaliesti.",
   "recovery.foreignStepConnect": "Prisijungti prie kitos saugyklos",
   "recovery.foreignStepBrowse": "Naršyti ir atkurti",

@@ -1863,6 +1863,8 @@ const zh: Partial<Translations> = {
   "recovery.abImporting": "正在导入…",
   "recovery.abImportFailed": "无法开始导入。",
   "recovery.abDone": "导入完成。还原点在各容器的备份中。",
+  "recovery.abAllFailed": "没有任何归档导入成功。原因见活动日志。",
+  "recovery.abSomeFailed": "部分归档未能导入。原因见活动日志。",
   "recovery.foreignIntro": "从另一个 BombVault 实例的备份中提取单个容器、虚拟机、文件夹集或 ZFS 数据集：以只读方式连接，浏览内容，恢复您选择的项目。对方仓库只会被读取，那边不会有任何改动，您自己的备份设置也保持不变。",
   "recovery.foreignStepConnect": "连接到对方仓库",
   "recovery.foreignStepBrowse": "浏览并恢复",

@@ -2189,6 +2189,8 @@ const gl: Partial<Translations> = {
   "recovery.abImporting": "Importando…",
   "recovery.abImportFailed": "Non se puido iniciar a importación.",
   "recovery.abDone": "Importación rematada. Os puntos de restauración están nas copias de cada contedor.",
+  "recovery.abAllFailed": "Non se puido importar ningún arquivo. O rexistro de actividade di por que.",
+  "recovery.abSomeFailed": "Algúns arquivos non se puideron importar. O rexistro de actividade di por que.",
   "recovery.foreignIntro": "Extrae contedores, MV, conxuntos de cartafoles ou conxuntos de datos ZFS individuais das copias dunha instancia diferente de BombVault: conéctate só en lectura, explora o que hai dentro, restaura o que escollas. Isto só le o outro repositorio: alí non cambia nada, e a túa propia configuración de copia queda intacta.",
   "recovery.foreignStepConnect": "Conectar co outro repositorio",
   "recovery.foreignStepBrowse": "Explorar e restaurar",
