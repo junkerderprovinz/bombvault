@@ -141,6 +141,25 @@ func TestAStreamLowersTheGateAndItsEndLiftsIt(t *testing.T) {
 	}
 }
 
+func TestAStreamHoldsForTheLongestWaitAfterIt(t *testing.T) {
+	s, st, d := newTrafficService(t)
+	cfg := store.DefaultTrafficSettings()
+	cfg.StreamThrottle = true
+	cfg.MediaServers = []string{"plex"}
+	cfg.StreamHoldMin = 120
+	if err := st.SetTrafficSettings(cfg); err != nil {
+		t.Fatal(err)
+	}
+	last := stream(s, d, time.Unix(1_700_000_000, 0), 4)
+	quiet := 119 * time.Minute / trafficPoll
+	for i := 1; i <= int(quiet); i++ {
+		s.pollTraffic(context.Background(), d, last.Add(time.Duration(i)*trafficPoll))
+	}
+	if got := s.streamingServer(); got != "plex" {
+		t.Fatalf("119 minutes after the stream with a 120-minute wait, streaming server = %q, want plex", got)
+	}
+}
+
 func TestAStreamIsIgnoredWhileTheThrottleIsOff(t *testing.T) {
 	s, st, d := newTrafficService(t)
 	cfg := store.DefaultTrafficSettings()

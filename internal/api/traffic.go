@@ -18,6 +18,11 @@ import (
 // trafficPoll is how often the watched containers are read.
 const trafficPoll = 10 * time.Second
 
+// maxStreamHoldMin is the longest wait after a stream the card accepts. The
+// watch keeps its rates that long and one poll more, so the last reading of a
+// stream is still there when the wait ends.
+const maxStreamHoldMin = 120
+
 // autoServersTTL is how long the media servers found by image name are reused
 // before the container list is read again.
 const autoServersTTL = time.Minute
@@ -62,7 +67,7 @@ type trafficState struct {
 func (s *Service) trafficState() *trafficState {
 	s.trafficOnce.Do(func() {
 		st := &trafficState{
-			watch: traffic.NewWatch(time.Hour, 3*trafficPoll),
+			watch: traffic.NewWatch(maxStreamHoldMin*time.Minute+trafficPoll, 3*trafficPoll),
 			steps: map[string]copyStep{},
 		}
 		st.gate = traffic.NewGate(func() int { return int(st.limit.Load()) })
