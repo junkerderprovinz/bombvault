@@ -1724,6 +1724,7 @@ function MobileContainerDetail({
   checks,
   onChecksChanged,
   restoreRequest,
+  onIdleWaitSaved,
 }: {
   container: Container;
   t: T;
@@ -1743,6 +1744,7 @@ function MobileContainerDetail({
   onChecksChanged?: () => void;
   /** A link from another page asking to restore this container. */
   restoreRequest?: RestoreRequest;
+  onIdleWaitSaved?: (hours: number) => void;
 }) {
   // The host mount root for the detail's mono meta line: served by the same
   // already-cached mounts response the cards use (React escaping
@@ -1890,7 +1892,7 @@ function MobileContainerDetail({
               databaseWarn={updateWarnKey(container)}
               t={t}
             />
-            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} />
+            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
           </Advanced>
           <IdleWaitLine name={container.name} />
         </div>
@@ -2793,6 +2795,7 @@ export function ContainerRow({
   restoreRequest,
   checks,
   onChecksChanged,
+  onIdleWaitSaved,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2820,6 +2823,7 @@ export function ContainerRow({
   restoreRequest?: RestoreRequest;
   checks?: ItemChecks;
   onChecksChanged?: () => void;
+  onIdleWaitSaved?: (hours: number) => void;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -2997,7 +3001,7 @@ export function ContainerRow({
               databaseWarn={updateWarnKey(container)}
               t={t}
             />
-            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} />
+            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
           </Advanced>
           <IdleWaitLine name={container.name} />
         </div>
@@ -3808,6 +3812,11 @@ export function Containers() {
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   const [containers, setContainers] = useState<Container[]>([]);
+  // The idle wait is saved by its row; the list keeps the hours, so a row drawn
+  // again after the advanced view was off shows them.
+  function idleWaitSaved(name: string, hours: number) {
+    setContainers((list) => list.map((c) => (c.name === name ? { ...c, idleWaitHours: hours } : c)));
+  }
   const [loading, setLoading] = useState(true);
   // Page-level load failure — NOT migrated to a toast (GlimStone follow-up pass,
   // v8.0.0 audit note): this blocks the whole list from rendering, so it is a
@@ -4328,6 +4337,7 @@ export function Containers() {
           checks={itemChecks.find("container", openContainer.name)}
           onChecksChanged={itemChecks.reload}
           restoreRequest={restoreRequest.item === openContainer.name ? restoreRequest : undefined}
+          onIdleWaitSaved={(hours) => idleWaitSaved(openContainer.name, hours)}
         />
       )}
 
@@ -4528,6 +4538,7 @@ export function Containers() {
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
               checks={itemChecks.find("container", c.name)}
               onChecksChanged={itemChecks.reload}
+              onIdleWaitSaved={(hours) => idleWaitSaved(c.name, hours)}
             />
           ))}
         </div>
