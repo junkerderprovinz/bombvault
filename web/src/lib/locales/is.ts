@@ -624,6 +624,9 @@ const is: Partial<Translations> = {
   "retentionPreview.skipped": "Þessi geymslusöfn voru ekki tekin með:",
   "retentionPreview.failed": "Ekki tókst að búa til forskoðunina.",
   "retentionPreview.paused": "Geymt: þessi eining er með opið frávik",
+  "retentionPreview.ownPolicy": "Eigin varðveislureglur þessa uppruna",
+  "retentionPreview.sharedPolicy": "Sameiginlegar varðveislureglur",
+  "retentionPreview.policy": "Varðveislureglur",
   "settings.imageMaintenanceTitle": "Ímyndahreinsun og uppfærslustaða",
   "settings.imageMaintenanceHint": "Viðhald í kringum uppfærslu gáms eftir afritun: hreinsa ímyndina sem var skipt út og endurnýja eigin skyndiminnisstöðu Unraid fyrir uppfærslur.",
   "settings.pruneImageAfterUpdate": "Fjarlægja gömlu ímyndina eftir uppfærslu",
@@ -651,6 +654,11 @@ const is: Partial<Translations> = {
   "settings.retentionOffsite": "Fjarlægt geymslusafn",
   "settings.retentionOffsiteTitle": "Fjarlæg varðveisla",
   "settings.retentionOffsiteHint": "Sérstök stefna fyrir fjarlæga geymslusafnið, svo þú getir geymt það lengur sem safn. Allt núll = geyma öll fjarlæg afrit (engin fjarlæg hreinsun).",
+  "settings.ownRetentionTitle": "Varðveislureglur eftir uppruna",
+  "settings.ownRetentionHint": "Uppruni getur fylgt eigin varðveislureglum í stað sameiginlegu reglnanna að ofan. Gámar og möppur sem breytast daglega geta geymt 7 dagleg afrit, en sýndarvélar sem breytast sjaldan færri. Uppruni án eigin reglna notar sameiginlegu reglurnar.",
+  "settings.ownRetention": "Eigin varðveislureglur",
+  "settings.ownRetentionFor": "Eigin varðveislureglur fyrir {source}",
+  "settings.ownRetentionToggleHint": "Kveikt: þessi uppruni geymir afrit sín eftir reglunum fimm hér fyrir neðan, sem byrja á sameiginlegu gildunum. Slökkt: hann notar sameiginlegu reglurnar. Allt 0 geymir öll afrit þessa uppruna. Fjarlæg afrit halda alltaf sínum eigin reglum.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Fjarlæg bandbreidd",

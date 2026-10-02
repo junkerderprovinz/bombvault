@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -190,7 +191,7 @@ func TestRetentionPreviewMarksPausedItem(t *testing.T) {
 	}}}
 	svc, _, _ := heldRepo(t, eng)
 
-	preview, err := svc.PreviewRetention(context.Background(), "files", "local")
+	preview, err := svc.PreviewRetention(context.Background(), "containers", "local")
 	if err != nil {
 		t.Fatalf("PreviewRetention: %v", err)
 	}
@@ -252,5 +253,46 @@ func TestPreviewRetentionReportsAYearlyRule(t *testing.T) {
 	}
 	if !hasRepo(eng.previewRepos, own) {
 		t.Fatalf("the domain repository was never previewed: %v", eng.previewRepos)
+	}
+}
+
+func TestPreviewRetentionUsesTheDomainsOwnPolicy(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st, _, _ := twoRepoDomain(t, eng)
+	withLocalRetention(t, st)
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.SetOwnRetention(map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
+		return nil
+	}); err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+
+	got, err := svc.PreviewRetention(context.Background(), "containers", "local")
+	if err != nil {
+		t.Fatalf("PreviewRetention: %v", err)
+	}
+	want := api.RetentionPolicyView{On: true, KeepDaily: 7, Own: true}
+	if got.Policy != want {
+		t.Fatalf("policy = %+v, want %+v", got.Policy, want)
+	}
+}
+
+func TestPreviewRetentionOfADomainWithoutItsOwnPolicyUsesTheSharedOne(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, st, _, _ := twoRepoDomain(t, eng)
+	withLocalRetention(t, st)
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.SetOwnRetention(map[string]store.RetentionKeep{"vms": {KeepWeekly: 2}})
+		return nil
+	}); err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+
+	got, err := svc.PreviewRetention(context.Background(), "containers", "local")
+	if err != nil {
+		t.Fatalf("PreviewRetention: %v", err)
+	}
+	if want := (api.RetentionPolicyView{On: true, KeepLast: 5}); got.Policy != want {
+		t.Fatalf("policy = %+v, want the shared %+v", got.Policy, want)
 	}
 }

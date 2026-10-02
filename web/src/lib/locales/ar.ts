@@ -677,6 +677,9 @@ const ar: Partial<Translations> = {
   "retentionPreview.skipped": "لم تُشمل هذه المستودعات:",
   "retentionPreview.failed": "تعذّر إنتاج المعاينة.",
   "retentionPreview.paused": "محفوظة: لهذا العنصر حالة شاذة مفتوحة",
+  "retentionPreview.ownPolicy": "قواعد الاحتفاظ الخاصة بهذا المصدر",
+  "retentionPreview.sharedPolicy": "قواعد الاحتفاظ المشتركة",
+  "retentionPreview.policy": "قواعد الاحتفاظ",
   "settings.imageMaintenanceTitle": "تنظيف الصور وحالة التحديث",
   "settings.imageMaintenanceHint": "صيانة لتحديث الحاوية بعد النسخ الاحتياطي: حذف الصورة القديمة وتحديث حالة تحديث Unraid المخزّنة مؤقتًا.",
   "settings.retentionLast": "الاحتفاظ بالأخيرة",
@@ -693,6 +696,11 @@ const ar: Partial<Translations> = {
   "settings.retentionOffsite": "المستودع الخارجي",
   "settings.retentionOffsiteTitle": "الاحتفاظ الخارجي",
   "settings.retentionOffsiteHint": "سياسة منفصلة للمستودع الخارجي لتحتفظ به أطول كأرشيف. الكل 0 = الاحتفاظ بكل نسخة خارجية (دون تقليم خارجي).",
+  "settings.ownRetentionTitle": "قواعد الاحتفاظ لكل مصدر",
+  "settings.ownRetentionHint": "يمكن لكل مصدر أن يتبع قواعد احتفاظ خاصة به بدل القواعد المشتركة أعلاه. الحاويات والمجلدات التي تتغير يوميًا قد تحتفظ بـ 7 نسخ يومية، بينما تحتاج الأجهزة الافتراضية التي نادرًا ما تتغير إلى أقل. المصدر الذي ليست له قواعد خاصة يستخدم القواعد المشتركة.",
+  "settings.ownRetention": "قواعد احتفاظ خاصة",
+  "settings.ownRetentionFor": "قواعد احتفاظ خاصة لـ {source}",
+  "settings.ownRetentionToggleHint": "عند التشغيل يحتفظ هذا المصدر بنسخه وفق القواعد الخمس أدناه، والتي تبدأ من القيم المشتركة. عند الإيقاف يستخدم القواعد المشتركة. كل القيم 0 تحتفظ بكل نسخ هذا المصدر. النسخ الخارجية تحتفظ بقواعدها الخاصة في كل الأحوال.",
   "settings.retentionCombineInfo": "تتحد القواعد الخمس بمنطق أو (OR): تبقى النسخة إذا احتفظت بها أي قاعدة واحدة. لا تُجمع إلى عدد ثابت. تُطبَّق بشكل منفصل على كل عنصر تم نسخه احتياطياً.",
 
   // Off-site (rclone)

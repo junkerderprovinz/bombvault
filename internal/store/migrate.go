@@ -2139,6 +2139,14 @@ ALTER TABLE offsite_targets ADD COLUMN retention_keep_yearly INTEGER NOT NULL DE
 ALTER TABLE offsite_targets ADD COLUMN compression TEXT NOT NULL DEFAULT '';`,
 	},
 	{
+		// A local keep-policy per domain. Empty leaves every domain on the
+		// shared one.
+		version:          retentionYearlyMigration + 2,
+		name:             "retention_overrides",
+		alreadySatisfied: columnPresent("settings", "retention_overrides"),
+		sql:              `ALTER TABLE settings ADD COLUMN retention_overrides TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// One restore probe of one item: the check after its first backup, or
 		// one somebody asked for. The time this migration ran is when first
 		// backups start counting, so items backed up before it are not all

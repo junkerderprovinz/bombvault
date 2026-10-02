@@ -77,12 +77,18 @@ type Settings struct {
 	// tokens. Empty is a valid epoch.
 	SessionEpoch string
 	// Retention policy, applied with `restic forget --prune` after each
-	// successful backup. All zero keeps every snapshot.
+	// successful backup. All zero keeps every snapshot. A domain listed in
+	// RetentionOverrides ages by its own policy instead.
 	RetentionKeepLast    int
 	RetentionKeepDaily   int
 	RetentionKeepWeekly  int
 	RetentionKeepMonthly int
 	RetentionKeepYearly  int
+	// RetentionOverrides is a JSON object of domain name to RetentionKeep for
+	// the domains with a local keep-policy of their own. It is a string so
+	// Settings stays comparable; read and write it through OwnRetention
+	// and SetOwnRetention.
+	RetentionOverrides string
 	// Off-site retention policy, separate from the local one so the off-site
 	// repo can serve as a longer archive. All zero never prunes the off-site
 	// repo.
@@ -321,7 +327,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       totp_secret, totp_enabled, totp_recovery,
 		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
 		       retention_keep_yearly, offsite_retention_keep_yearly,
-		       repo_compression, start_test_enabled
+		       repo_compression, start_test_enabled, retention_overrides
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -366,6 +372,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.RetentionKeepYearly, &s.OffsiteRetentionKeepYearly,
 		&s.Compression,
 		&startTestEnabled,
+		&s.RetentionOverrides,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -567,7 +574,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  retention_keep_yearly        = ?,
 		  offsite_retention_keep_yearly = ?,
 		  repo_compression             = ?,
-		  start_test_enabled           = ?
+		  start_test_enabled           = ?,
+		  retention_overrides          = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -620,6 +628,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.OffsiteRetentionKeepYearly,
 		s.Compression,
 		boolInt(s.StartTestEnabled),
+		s.RetentionOverrides,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
@@ -663,4 +672,38 @@ func compressionMap(raw string) map[string]string {
 		_ = json.Unmarshal([]byte(raw), &m)
 	}
 	return m
+}
+
+// RetentionKeep is a local keep-policy as restic's five counts. All zero keeps
+// every snapshot.
+type RetentionKeep struct {
+	KeepLast    int `json:"keepLast"`
+	KeepDaily   int `json:"keepDaily"`
+	KeepWeekly  int `json:"keepWeekly"`
+	KeepMonthly int `json:"keepMonthly"`
+	KeepYearly  int `json:"keepYearly"`
+}
+
+// OwnRetention returns the domains with a keep-policy of their own. A
+// value that does not decode reads as none, so a bad write falls back to the
+// shared policy instead of stopping retention.
+func (s Settings) OwnRetention() map[string]RetentionKeep {
+	m := map[string]RetentionKeep{}
+	if s.RetentionOverrides != "" {
+		if err := json.Unmarshal([]byte(s.RetentionOverrides), &m); err != nil {
+			return map[string]RetentionKeep{}
+		}
+	}
+	return m
+}
+
+// SetOwnRetention stores m as the domains' own keep-policies. An empty m
+// clears the column, so every domain follows the shared policy again.
+func (s *Settings) SetOwnRetention(m map[string]RetentionKeep) {
+	if len(m) == 0 {
+		s.RetentionOverrides = ""
+		return
+	}
+	b, _ := json.Marshal(m) // a map of plain structs always encodes
+	s.RetentionOverrides = string(b)
 }

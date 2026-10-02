@@ -624,6 +624,9 @@ const et: Partial<Translations> = {
   "retentionPreview.skipped": "Neid hoidlaid ei kaetud:",
   "retentionPreview.failed": "Eelvaadet ei õnnestunud koostada.",
   "retentionPreview.paused": "Alles jäetud: sellel üksusel on avatud kõrvalekalle",
+  "retentionPreview.ownPolicy": "Selle allika oma säilitusreeglid",
+  "retentionPreview.sharedPolicy": "Ühised säilitusreeglid",
+  "retentionPreview.policy": "Säilitusreeglid",
   "settings.imageMaintenanceTitle": "Tõmmiste puhastus ja uuenduse olek",
   "settings.imageMaintenanceHint": "Hooldus konteineri varundusjärgse uuenduse ümber: puhasta asendatud tõmmis ja värskenda Unraidi enda vahemällu salvestatud uuenduse olekut.",
   "settings.pruneImageAfterUpdate": "Eemalda vana tõmmis pärast uuendust",
@@ -651,6 +654,11 @@ const et: Partial<Translations> = {
   "settings.retentionOffsite": "Väline hoidla",
   "settings.retentionOffsiteTitle": "Väline säilitamine",
   "settings.retentionOffsiteHint": "Eraldi reegel välise hoidla jaoks, et saaksid seda kauem arhiivina hoida. Kõik nullid = säilita iga väline varundus (välist puhastust ei toimu).",
+  "settings.ownRetentionTitle": "Säilitusreeglid allika kaupa",
+  "settings.ownRetentionHint": "Iga allikas võib järgida oma säilitusreegleid ülal olevate ühiste asemel. Igapäevaselt muutuvad konteinerid ja kaustad võivad hoida 7 päevast varukoopiat, harva muutuvad virtuaalmasinad vähem. Ilma oma reegliteta allikas kasutab ühiseid.",
+  "settings.ownRetention": "Oma säilitusreeglid",
+  "settings.ownRetentionFor": "Allika {source} oma säilitusreeglid",
+  "settings.ownRetentionToggleHint": "Sees: see allikas säilitab varukoopiad allpool oleva viie reegli järgi, mis lähtuvad ühistest väärtustest. Väljas: kasutab ühiseid reegleid. Kõik 0 säilitab selle allika kõik varukoopiad. Välised koopiad järgivad igal juhul oma reegleid.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Väline ribalaius",

@@ -624,6 +624,9 @@ const lt: Partial<Translations> = {
   "retentionPreview.skipped": "Šios saugyklos nebuvo įtrauktos:",
   "retentionPreview.failed": "Nepavyko parengti peržiūros.",
   "retentionPreview.paused": "Išsaugota: šis elementas turi atvirą anomaliją",
+  "retentionPreview.ownPolicy": "Šio šaltinio savos saugojimo taisyklės",
+  "retentionPreview.sharedPolicy": "Bendros saugojimo taisyklės",
+  "retentionPreview.policy": "Saugojimo taisyklės",
   "settings.imageMaintenanceTitle": "Atvaizdų valymas ir atnaujinimo būsena",
   "settings.imageMaintenanceHint": "Priežiūra, susijusi su konteinerio atnaujinimu po atsarginės kopijos: pakeisto atvaizdo valymas ir Unraid paties talpykloje saugomos atnaujinimo būsenos atnaujinimas.",
   "settings.pruneImageAfterUpdate": "Pašalinti seną atvaizdą po atnaujinimo",
@@ -651,6 +654,11 @@ const lt: Partial<Translations> = {
   "settings.retentionOffsite": "Nuotolinė saugykla",
   "settings.retentionOffsiteTitle": "Nuotolinis saugojimas",
   "settings.retentionOffsiteHint": "Atskira nuotolinės saugyklos politika, kad galėtumėte ją saugoti ilgiau kaip archyvą. Visi nuliai = saugoti kiekvieną nuotolinę atsarginę kopiją (be nuotolinio valymo).",
+  "settings.ownRetentionTitle": "Saugojimo taisyklės pagal šaltinį",
+  "settings.ownRetentionHint": "Šaltinis gali laikytis savo saugojimo taisyklių vietoj bendrų aukščiau. Kasdien besikeičiantys konteineriai ir aplankai gali saugoti 7 dienines atsargines kopijas, o retai besikeičiančios virtualios mašinos mažiau. Šaltinis be savo taisyklių naudoja bendras.",
+  "settings.ownRetention": "Savos saugojimo taisyklės",
+  "settings.ownRetentionFor": "Savos saugojimo taisyklės: {source}",
+  "settings.ownRetentionToggleHint": "Įjungta: šis šaltinis saugo atsargines kopijas pagal penkias taisykles žemiau, kurios prasideda nuo bendrų reikšmių. Išjungta: naudoja bendras taisykles. Visi 0 saugo kiekvieną šio šaltinio kopiją. Nuotolinės kopijos bet kuriuo atveju laikosi savo taisyklių.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Nuotolinis pralaidumas",

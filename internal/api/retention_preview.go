@@ -21,6 +21,8 @@ type RetentionPolicyView struct {
 	KeepWeekly  int  `json:"keepWeekly"`
 	KeepMonthly int  `json:"keepMonthly"`
 	KeepYearly  int  `json:"keepYearly"`
+	// Own marks the domain's own local keep-policy, as opposed to the shared one.
+	Own bool `json:"own"`
 }
 
 // RetentionPreviewItem is one identity's verdict: the snapshots the policy
@@ -93,7 +95,8 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		return RetentionPreview{}, err
 	}
 
-	policy := s.retentionPolicyForSource(settings, source)
+	policy := s.retentionPolicyForSource(settings, domain, source)
+	_, own := settings.OwnRetention()[domain]
 	out := RetentionPreview{Policy: RetentionPolicyView{
 		On:          policy.Any(),
 		KeepLast:    policy.KeepLast,
@@ -101,6 +104,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		KeepWeekly:  policy.KeepWeekly,
 		KeepMonthly: policy.KeepMonthly,
 		KeepYearly:  policy.KeepYearly,
+		Own:         own && !isOffsiteSource(source),
 	}, Repos: []RetentionPreviewRepo{}}
 
 	// Append-only repositories are classified exactly as pruneDomain classifies
@@ -145,7 +149,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 
 		rCtx, cancel := context.WithTimeout(ctx, previewPerRepoTimeout)
-		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, policy, rMode)
+		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, domain, policy, rMode)
 		cancel()
 
 		if pErr != nil {

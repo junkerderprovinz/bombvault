@@ -392,19 +392,16 @@ func TestPruneSkipsHeldIdentitiesAcrossDomains(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, _, _ := heldRepo(t, eng)
 
-	paused, err := svc.PruneDomain(context.Background(), "files", "")
+	paused, err := svc.PruneDomain(context.Background(), "containers", "")
 	if err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
-	if !forgotSince(eng, 0, "fileset:docs") {
-		t.Fatalf("the folder set is not held and has to be forgotten, got %v", eng.forgetTags)
+	if forgotSince(eng, 0, "container:plex") || !slices.Contains(paused, "container:plex") {
+		t.Fatalf("plex is held: forgot %v, paused %v; want it kept and named as paused", eng.forgetTags, paused)
 	}
-	for _, tag := range []string{"container:plex", "vm:win11", "vm:win11:zvol:vda"} {
-		if forgotSince(eng, 0, tag) {
-			t.Fatalf("%s is held and must not be forgotten, got %v", tag, eng.forgetTags)
-		}
-		if !slices.Contains(paused, tag) {
-			t.Fatalf("the prune has to name %s as paused, got %v", tag, paused)
+	for _, tag := range []string{"fileset:docs", "vm:win11", "vm:win11:zvol:vda"} {
+		if forgotSince(eng, 0, tag) || slices.Contains(paused, tag) {
+			t.Fatalf("%s belongs to another domain, which this prune leaves alone: forgot %v, paused %v", tag, eng.forgetTags, paused)
 		}
 	}
 }
@@ -428,7 +425,7 @@ func TestManualPruneNamesPausedItems(t *testing.T) {
 	eng := &fakeResticEngine{}
 	_, _, h := heldRepo(t, eng)
 
-	w, m := doJSON(t, h, http.MethodPost, "/api/prune/files", "")
+	w, m := doJSON(t, h, http.MethodPost, "/api/prune/containers", "")
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("status %d body %v", w.Code, m)
 	}

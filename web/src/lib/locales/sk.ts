@@ -624,6 +624,9 @@ const sk: Partial<Translations> = {
   "retentionPreview.skipped": "Tieto repozitáre neboli pokryté:",
   "retentionPreview.failed": "Náhľad sa nepodarilo vytvoriť.",
   "retentionPreview.paused": "Ponechané: táto položka má otvorenú anomáliu",
+  "retentionPreview.ownPolicy": "Vlastné pravidlá uchovávania tohto zdroja",
+  "retentionPreview.sharedPolicy": "Spoločné pravidlá uchovávania",
+  "retentionPreview.policy": "Pravidlá uchovávania",
   "settings.imageMaintenanceTitle": "Čistenie obrazov a stav aktualizácií",
   "settings.imageMaintenanceHint": "Údržba súvisiaca s aktualizáciou kontajnera po zálohe: vyčistenie nahradeného obrazu a obnovenie vlastného vyrovnávacieho stavu aktualizácií Unraid.",
   "settings.pruneImageAfterUpdate": "Odstrániť starý obraz po aktualizácii",
@@ -651,6 +654,11 @@ const sk: Partial<Translations> = {
   "settings.retentionOffsite": "Externý repozitár",
   "settings.retentionOffsiteTitle": "Externé uchovávanie",
   "settings.retentionOffsiteHint": "Samostatná zásada pre externý repozitár, aby ste ho mohli uchovávať dlhšie ako archív. Všetko nula = uchovať každú externú zálohu (bez externého čistenia).",
+  "settings.ownRetentionTitle": "Pravidlá uchovávania podľa zdroja",
+  "settings.ownRetentionHint": "Každý zdroj môže mať vlastné pravidlá uchovávania namiesto spoločných vyššie. Kontajnery a priečinky, ktoré sa menia každý deň, môžu uchovávať 7 denných záloh, virtuálne stroje, ktoré sa menia zriedka, menej. Zdroj bez vlastných pravidiel používa spoločné.",
+  "settings.ownRetention": "Vlastné pravidlá uchovávania",
+  "settings.ownRetentionFor": "Vlastné pravidlá uchovávania pre {source}",
+  "settings.ownRetentionToggleHint": "Zapnuté: tento zdroj uchováva zálohy podľa piatich pravidiel nižšie, ktoré vychádzajú zo spoločných hodnôt. Vypnuté: používa spoločné pravidlá. Všetko 0 uchová každú zálohu tohto zdroja. Externé kópie majú v každom prípade svoje vlastné pravidlá.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Externá šírka pásma",

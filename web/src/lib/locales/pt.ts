@@ -674,6 +674,9 @@ const pt: Partial<Translations> = {
   "retentionPreview.skipped": "Estes repositórios não foram abrangidos:",
   "retentionPreview.failed": "Não foi possível produzir a pré-visualização.",
   "retentionPreview.paused": "Mantido: este item tem uma anomalia aberta",
+  "retentionPreview.ownPolicy": "Regras de retenção próprias desta origem",
+  "retentionPreview.sharedPolicy": "Regras de retenção partilhadas",
+  "retentionPreview.policy": "Regras de retenção",
   "settings.imageMaintenanceTitle": "Limpeza de imagens e estado de atualização",
   "settings.imageMaintenanceHint": "Manutenção em torno da atualização do contêiner após o backup: remover a imagem substituída e atualizar o estado de atualização em cache do próprio Unraid.",
   "settings.retentionLast": "Manter últimos",
@@ -690,6 +693,11 @@ const pt: Partial<Translations> = {
   "settings.retentionOffsite": "Repo externo",
   "settings.retentionOffsiteTitle": "Retenção externa",
   "settings.retentionOffsiteHint": "Uma política separada para o repo externo, para mantê-lo por mais tempo como arquivo. Tudo 0 = manter cada backup externo (sem limpeza externa).",
+  "settings.ownRetentionTitle": "Regras de retenção por origem",
+  "settings.ownRetentionHint": "Cada origem pode seguir as próprias regras de retenção em vez das partilhadas acima. Contentores e pastas que mudam todos os dias podem manter 7 cópias diárias, e VMs que raramente mudam, menos. Uma origem sem regras próprias usa as partilhadas.",
+  "settings.ownRetention": "Regras de retenção próprias",
+  "settings.ownRetentionFor": "Regras de retenção próprias para {source}",
+  "settings.ownRetentionToggleHint": "Ligado: esta origem mantém as cópias segundo as cinco regras abaixo, que partem dos valores partilhados. Desligado: usa as regras partilhadas. Tudo a 0 mantém todas as cópias desta origem. As cópias externas mantêm as próprias regras em qualquer caso.",
   "settings.retentionCombineInfo": "As cinco regras combinam-se com OU: um snapshot sobrevive se qualquer regra o mantivesse. Não se somam a um número fixo. Aplica-se separadamente a cada item com backup.",
 
   // Off-site (rclone)

@@ -677,6 +677,9 @@ const it: Partial<Translations> = {
   "retentionPreview.skipped": "Questi repository non sono stati coperti:",
   "retentionPreview.failed": "Non è stato possibile generare l'anteprima.",
   "retentionPreview.paused": "Conservato: questo elemento ha un'anomalia aperta",
+  "retentionPreview.ownPolicy": "Regole di conservazione proprie di questa origine",
+  "retentionPreview.sharedPolicy": "Regole di conservazione comuni",
+  "retentionPreview.policy": "Regole di conservazione",
   "settings.imageMaintenanceTitle": "Pulizia immagini e stato aggiornamenti",
   "settings.imageMaintenanceHint": "Manutenzione per l'aggiornamento dei container dopo il backup: elimina l'immagine sostituita e aggiorna lo stato di aggiornamento memorizzato da Unraid.",
   "settings.retentionLast": "Conserva ultimi",
@@ -693,6 +696,11 @@ const it: Partial<Translations> = {
   "settings.retentionOffsite": "Repo off-site",
   "settings.retentionOffsiteTitle": "Conservazione off-site",
   "settings.retentionOffsiteHint": "Una policy separata per il repo off-site, per tenerlo più a lungo come archivio. Tutto a 0 = mantieni ogni backup off-site (nessuna pulizia off-site).",
+  "settings.ownRetentionTitle": "Regole di conservazione per origine",
+  "settings.ownRetentionHint": "Ogni origine può seguire regole di conservazione proprie invece di quelle comuni qui sopra. Container e cartelle che cambiano ogni giorno possono tenere 7 backup giornalieri, le VM che cambiano di rado meno. Un'origine senza regole proprie usa quelle comuni.",
+  "settings.ownRetention": "Regole di conservazione proprie",
+  "settings.ownRetentionFor": "Regole di conservazione proprie per {source}",
+  "settings.ownRetentionToggleHint": "Attivo: questa origine conserva i backup secondo le cinque regole qui sotto, che partono dai valori comuni. Disattivo: usa le regole comuni. Tutto a 0 conserva ogni backup di questa origine. Le copie off-site mantengono comunque le proprie regole.",
   "settings.retentionCombineInfo": "Le cinque regole si combinano con OR: uno snapshot sopravvive se anche una sola regola lo manterrebbe. Non si sommano a un numero fisso. Si applica separatamente a ogni elemento sottoposto a backup.",
 
   // Off-site (rclone)

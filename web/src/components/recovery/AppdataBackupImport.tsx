@@ -43,7 +43,7 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
   const startedWith = useRef<number | null>(null);
   const failed = useRef(0);
   // Bumped by every scan and every change of the folder, so an answer for a
-  // folder that is no longer chosen is dropped.
+  // folder the user has since changed is dropped.
   const scanSeq = useRef(0);
   const hues = { heading: nextHue(), folder: nextHue(), list: nextHue() };
 

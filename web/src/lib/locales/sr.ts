@@ -624,6 +624,9 @@ const sr: Partial<Translations> = {
   "retentionPreview.skipped": "Ови репозиторијуми нису обухваћени:",
   "retentionPreview.failed": "Преглед није могао да се направи.",
   "retentionPreview.paused": "Задржано: ова ставка има отворену аномалију",
+  "retentionPreview.ownPolicy": "Сопствена правила задржавања овог извора",
+  "retentionPreview.sharedPolicy": "Заједничка правила задржавања",
+  "retentionPreview.policy": "Правила задржавања",
   "settings.imageMaintenanceTitle": "Чишћење слика и стање ажурирања",
   "settings.imageMaintenanceHint": "Одржавање за ажурирање контејнера после резервне копије: чисти застарелу слику и освежава Unraid-ово кеширано стање ажурирања.",
   "settings.pruneImageAfterUpdate": "Уклони стару слику после ажурирања",
@@ -651,6 +654,11 @@ const sr: Partial<Translations> = {
   "settings.retentionOffsite": "Спољни репозиторијум",
   "settings.retentionOffsiteTitle": "Задржавање спољне копије",
   "settings.retentionOffsiteHint": "Засебна политика за спољни репозиторијум, да га можеш задржати дуже као архиву. Све на нули = задржи сваку спољну резервну копију (без чишћења спољне копије).",
+  "settings.ownRetentionTitle": "Правила задржавања по извору",
+  "settings.ownRetentionHint": "Извор може да прати сопствена правила задржавања уместо заједничких изнад. Контејнери и фасцикле који се мењају сваког дана могу да задрже 7 дневних резервних копија, а виртуелне машине које се ретко мењају мање. Извор без сопствених правила користи заједничка.",
+  "settings.ownRetention": "Сопствена правила задржавања",
+  "settings.ownRetentionFor": "Сопствена правила задржавања за {source}",
+  "settings.ownRetentionToggleHint": "Укључено: овај извор задржава резервне копије према пет правила испод, која полазе од заједничких вредности. Искључено: користи заједничка правила. Све 0 задржава сваку копију овог извора. Спољне копије у сваком случају задржавају своја правила.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Пропусни опсег за спољну копију",

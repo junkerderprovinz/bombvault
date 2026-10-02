@@ -670,7 +670,7 @@ func dbDumpReasonText(reasonID, detail string) string {
 // it reclaims the space of both in one go. A renamed container's dumps age
 // with it, by the same alias rule that decides which volume snapshots it owns.
 func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name, targetID string) {
-	p := s.retentionPolicy(settings)
+	p := s.retentionPolicy(settings, "containers")
 	if !p.Any() || s.primaryIsImmutable("containers", repo) {
 		return
 	}

@@ -624,6 +624,9 @@ const gl: Partial<Translations> = {
   "retentionPreview.skipped": "Estes repositorios non se cubriron:",
   "retentionPreview.failed": "Non se puido xerar a previsualización.",
   "retentionPreview.paused": "Conservado: este elemento ten unha anomalía aberta",
+  "retentionPreview.ownPolicy": "Regras de retención propias desta orixe",
+  "retentionPreview.sharedPolicy": "Regras de retención compartidas",
+  "retentionPreview.policy": "Regras de retención",
   "settings.imageMaintenanceTitle": "Limpeza de imaxes e estado de actualizacións",
   "settings.imageMaintenanceHint": "Mantemento ao redor da actualización de contedor despois da copia: limpar a imaxe substituída e actualizar o estado en caché propio de Unraid.",
   "settings.pruneImageAfterUpdate": "Eliminar a imaxe antiga despois de actualizar",
@@ -651,6 +654,11 @@ const gl: Partial<Translations> = {
   "settings.retentionOffsite": "Repositorio externo",
   "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Unha política separada para o repositorio externo, para que o poidas conservar máis tempo como arquivo. Todo a 0 = conservar todas as copias externas (sen limpeza externa).",
+  "settings.ownRetentionTitle": "Regras de retención por orixe",
+  "settings.ownRetentionHint": "Cada orixe pode seguir as súas propias regras de retención en lugar das compartidas de arriba. Os contedores e cartafoles que cambian cada día poden conservar 7 copias diarias, e as máquinas virtuais que case non cambian, menos. Unha orixe sen regras propias usa as compartidas.",
+  "settings.ownRetention": "Regras de retención propias",
+  "settings.ownRetentionFor": "Regras de retención propias para {source}",
+  "settings.ownRetentionToggleHint": "Activado: esta orixe conserva as copias segundo as cinco regras de abaixo, que parten dos valores compartidos. Desactivado: usa as regras compartidas. Todo a 0 conserva todas as copias desta orixe. As copias externas manteñen as súas propias regras en calquera caso.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Largura de banda externa",

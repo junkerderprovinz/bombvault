@@ -624,6 +624,9 @@ const eu: Partial<Translations> = {
   "retentionPreview.skipped": "Biltegi hauek ez dira barne hartu:",
   "retentionPreview.failed": "Ezin izan da aurrebista sortu.",
   "retentionPreview.paused": "Gordeta: elementu honek anomalia irekia du",
+  "retentionPreview.ownPolicy": "Iturri honen mantentze-arau propioak",
+  "retentionPreview.sharedPolicy": "Mantentze-arau partekatuak",
+  "retentionPreview.policy": "Mantentze-arauak",
   "settings.imageMaintenanceTitle": "Irudien garbiketa eta eguneraketa-egoera",
   "settings.imageMaintenanceHint": "Babeskopiaren ondorengo edukiontzi-eguneraketaren inguruko mantentze-lanak: ordezkatutako irudia garbitu eta Unraid-en cachean gordetako eguneraketa-egoera bera freskatu.",
   "settings.pruneImageAfterUpdate": "Kendu irudi zaharra eguneraketaren ondoren",
@@ -651,6 +654,11 @@ const eu: Partial<Translations> = {
   "settings.retentionOffsite": "Kanpoko biltegia",
   "settings.retentionOffsiteTitle": "Kanpoko mantentzea",
   "settings.retentionOffsiteHint": "Kanpoko biltegirako politika bereizi bat, artxibo gisa denbora gehiago gorde ahal izateko. Denak 0 = gorde kanpoko babeskopia guztiak (kanpoko garbiketarik gabe).",
+  "settings.ownRetentionTitle": "Mantentze-arauak iturriko",
+  "settings.ownRetentionHint": "Iturri bakoitzak bere mantentze-arauak izan ditzake goiko arau partekatuen ordez. Egunero aldatzen diren edukiontziek eta karpetek 7 eguneko babeskopia gorde ditzakete, eta gutxitan aldatzen diren makina birtualek gutxiago. Arau propiorik gabeko iturriak arau partekatuak erabiltzen ditu.",
+  "settings.ownRetention": "Mantentze-arau propioak",
+  "settings.ownRetentionFor": "{source}: mantentze-arau propioak",
+  "settings.ownRetentionToggleHint": "Aktibatuta: iturri honek beheko bost arauen arabera gordetzen ditu babeskopiak, balio partekatuetatik abiatuta. Desaktibatuta: arau partekatuak erabiltzen ditu. Dena 0 bada, iturri honen babeskopia guztiak gordetzen dira. Kanpoko kopiek beren arauak dituzte beti.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Kanpoko banda-zabalera",

@@ -674,6 +674,9 @@ const ro: Partial<Translations> = {
   "retentionPreview.skipped": "Aceste depozite nu au fost acoperite:",
   "retentionPreview.failed": "Previzualizarea nu a putut fi generată.",
   "retentionPreview.paused": "Păstrat: acest element are o anomalie deschisă",
+  "retentionPreview.ownPolicy": "Regulile de retenție proprii ale acestei surse",
+  "retentionPreview.sharedPolicy": "Reguli de retenție comune",
+  "retentionPreview.policy": "Reguli de retenție",
   "settings.imageMaintenanceTitle": "Curățare imagini și stare actualizare",
   "settings.imageMaintenanceHint": "Întreținere legată de actualizarea containerului după backup: elimină imaginea înlocuită și reîmprospătează starea de actualizare memorată de Unraid.",
   "settings.retentionLast": "Păstrează ultimele",
@@ -690,6 +693,11 @@ const ro: Partial<Translations> = {
   "settings.retentionOffsite": "Repo off-site",
   "settings.retentionOffsiteTitle": "Retenție off-site",
   "settings.retentionOffsiteHint": "O politică separată pentru repo-ul off-site, ca să-l păstrezi mai mult ca arhivă. Toate 0 = păstrează fiecare backup off-site (fără curățare off-site).",
+  "settings.ownRetentionTitle": "Reguli de retenție pe sursă",
+  "settings.ownRetentionHint": "O sursă poate urma propriile reguli de retenție în locul celor comune de mai sus. Containerele și folderele care se schimbă zilnic pot păstra 7 backupuri zilnice, iar VM-urile care se schimbă rar, mai puține. O sursă fără reguli proprii le folosește pe cele comune.",
+  "settings.ownRetention": "Reguli de retenție proprii",
+  "settings.ownRetentionFor": "Reguli de retenție proprii pentru {source}",
+  "settings.ownRetentionToggleHint": "Pornit: această sursă își păstrează backupurile după cele cinci reguli de mai jos, care pornesc de la valorile comune. Oprit: folosește regulile comune. Totul 0 păstrează fiecare backup al acestei surse. Copiile off-site își păstrează oricum propriile reguli.",
   "settings.retentionCombineInfo": "Cele cinci reguli se combină prin SAU: un instantaneu supraviețuiește dacă orice regulă l-ar păstra. Nu se adună la un număr fix. Se aplică separat fiecărui element salvat.",
 
   // Off-site (rclone)

@@ -801,7 +801,7 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 			return err
 		}
 	}
-	// The files are back by now, so a failure here has a code of its own.
+	// The files are already back, so a failure here has a code of its own.
 	return s.setZFSRestoreProperties(ctx, plan.writesInto(), limits, "set-limits-failed")
 }
 

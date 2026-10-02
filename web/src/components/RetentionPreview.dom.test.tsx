@@ -216,3 +216,35 @@ describe("RetentionPreview at phone width", () => {
     expect(note.parentElement!.className).toContain("flex-wrap");
   });
 });
+
+describe("RetentionPreview's policy line", () => {
+  async function showWith(policy: Record<string, unknown>, source: "local" | "offsite" = "local") {
+    previewRetention.mockResolvedValue({
+      ok: true,
+      preview: {
+        policy: { on: true, keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0, own: false, ...policy },
+        repos: [],
+      },
+    });
+    renderPanel(source);
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") }));
+    await waitFor(() => expect(previewRetention).toHaveBeenCalled());
+  }
+
+  it("says when the source keeps by its own rules, and which ones", async () => {
+    await showWith({ keepDaily: 7, keepYearly: 2, own: true });
+    await screen.findByText(
+      `${en["retentionPreview.ownPolicy"]}: ${en["settings.retentionDaily"]} 7 · ${en["settings.retentionYearly"]} 2`
+    );
+  });
+
+  it("names the shared rules for a source without its own", async () => {
+    await showWith({ keepLast: 5 });
+    await screen.findByText(`${en["retentionPreview.sharedPolicy"]}: ${en["settings.retentionLast"]} 5`);
+  });
+
+  it("names neither for the off-site copy", async () => {
+    await showWith({ keepLast: 7 }, "offsite");
+    await screen.findByText(`${en["retentionPreview.policy"]}: ${en["settings.retentionLast"]} 7`);
+  });
+});
