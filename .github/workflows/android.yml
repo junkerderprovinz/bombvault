@@ -129,6 +129,30 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: gh release upload "$TAG" android/out/bombvault-android.apk android/out/bombvault-android.aab --clobber
 
+      # The first listing was made by hand; from then on each release goes to
+      # the track PLAY_TRACK names, with the changelog fastlane holds for its
+      # versionCode.
+      - name: Release notes for Google Play
+        if: env.RELEASE == 'true' && vars.PLAY_TRACK != ''
+        run: |
+          set -eu
+          code="$(sed -n 's/^bombvaultVersionCode=//p' android/gradle.properties)"
+          mkdir -p android/out/whatsnew
+          for lang in en-US de-DE; do
+            cp "fastlane/metadata/android/$lang/changelogs/$code.txt" "android/out/whatsnew/whatsnew-$lang"
+          done
+
+      - name: Send to Google Play
+        if: env.RELEASE == 'true' && vars.PLAY_TRACK != ''
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          packageName: bombvault.halleluja.design
+          releaseFiles: android/out/bombvault-android.aab
+          track: ${{ vars.PLAY_TRACK }}
+          status: completed
+          whatsNewDirectory: android/out/whatsnew
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: bombvault-android
