@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"log"
+	"net"
+	"net/url"
 	"os"
 	"slices"
 	"strings"
@@ -203,13 +205,96 @@ func isMediaServerImage(image string) bool {
 	return slices.ContainsFunc(mediaServerImages, func(p string) bool { return strings.Contains(image, p) })
 }
 
-// proxiedBackends are the restic backends that speak HTTP, whose upload the
-// proxy can slow while it runs. rclone passes the proxy on to its own HTTP
-// remotes.
-var proxiedBackends = []string{"rest:", "s3:", "b2:", "azure:", "gs:", "swift:", "rclone:"}
+// proxiedBackends are the restic backends that speak HTTP to a cloud service,
+// whose upload the proxy can slow while it runs.
+var proxiedBackends = []string{"b2:", "azure:", "gs:", "swift:"}
 
-func proxiedBackend(repo string) bool {
+// rcloneHTTPTypes are the rclone backends that reach their storage over HTTP.
+// rclone sends only that traffic through the proxy in its environment.
+var rcloneHTTPTypes = []string{
+	"azureblob", "azurefiles", "b2", "box", "drive", "dropbox", "fichier", "filefabric",
+	"gofile", "google cloud storage", "hidrive", "http", "iclouddrive", "internetarchive",
+	"jottacloud", "koofr", "linkbox", "mailru", "mega", "netstorage", "onedrive",
+	"opendrive", "oracleobjectstorage", "pcloud", "pikpak", "pixeldrain", "premiumizeme",
+	"protondrive", "putio", "qingstor", "quatrix", "s3", "seafile", "sharefile",
+	"sugarsync", "swift", "uptobox", "webdav", "yandex", "zoho",
+}
+
+// rcloneWrapperTypes are the rclone backends that store through the one remote
+// their "remote" key names.
+var rcloneWrapperTypes = []string{"alias", "cache", "chunker", "compress", "crypt", "hasher"}
+
+// proxiedBackend reports whether restic's upload to repo goes through the
+// proxy in its environment.
+func (s *Service) proxiedBackend(repo string) bool {
+	switch {
+	case strings.HasPrefix(repo, "rest:"):
+		return proxyReaches(strings.TrimPrefix(repo, "rest:"))
+	case strings.HasPrefix(repo, "s3:"):
+		endpoint := strings.TrimPrefix(repo, "s3:")
+		if !strings.Contains(endpoint, "://") {
+			endpoint = "https://" + endpoint
+		}
+		return proxyReaches(endpoint)
+	case strings.HasPrefix(repo, "rclone:"):
+		conf, err := os.ReadFile(s.rcloneConfPath())
+		return err == nil && rcloneOverHTTP(string(conf), strings.TrimPrefix(repo, "rclone:"))
+	}
 	return slices.ContainsFunc(proxiedBackends, func(p string) bool { return strings.HasPrefix(repo, p) })
+}
+
+// proxyReaches reports whether Go's HTTP client, which restic and rclone use,
+// sends a request for rawURL through a proxy set in the environment. It never
+// does for a loopback host.
+func proxyReaches(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return false
+	}
+	host := u.Hostname()
+	if ip := net.ParseIP(host); ip != nil {
+		return !ip.IsLoopback()
+	}
+	return host != "" && host != "localhost"
+}
+
+// rcloneOverHTTP reports whether rclone stores to remote, such as
+// "cloud:bucket/path", over HTTP, following a wrapping remote to the one it
+// stores through. A remote that is not in conf counts as not over HTTP.
+func rcloneOverHTTP(conf, remote string) bool {
+	sections := map[string]map[string]string{}
+	for _, b := range splitRcloneSections(conf) {
+		sections[b.name] = rcloneKeys(b.text)
+	}
+	// The bound stops a chain of remotes that wrap each other.
+	for range len(sections) + 1 {
+		name, _, ok := strings.Cut(remote, ":")
+		if !ok {
+			return false
+		}
+		name, _, _ = strings.Cut(name, ",")
+		keys, ok := sections[name]
+		if !ok {
+			return false
+		}
+		if !slices.Contains(rcloneWrapperTypes, keys["type"]) {
+			return slices.Contains(rcloneHTTPTypes, keys["type"])
+		}
+		remote = keys["remote"]
+	}
+	return false
+}
+
+// rcloneKeys reads the "key = value" lines of one config section.
+func rcloneKeys(section string) map[string]string {
+	keys := map[string]string{}
+	for _, line := range strings.Split(section, "\n") {
+		k, v, ok := strings.Cut(line, "=")
+		if ok {
+			keys[strings.TrimSpace(k)] = strings.TrimSpace(v)
+		}
+	}
+	return keys
 }
 
 // ambientProxy reports a proxy the container already routes through. Putting
@@ -237,7 +322,7 @@ func (s *Service) throttleCopy(domain, dest string, lim restic.Limits, mode rest
 	st := s.trafficState()
 	step := copyStep{}
 	var proxy *traffic.Proxy
-	if proxiedBackend(dest) && !ambientProxy() {
+	if s.proxiedBackend(dest) && !ambientProxy() {
 		p, perr := traffic.StartProxy(st.gate)
 		if perr != nil {
 			log.Printf("api: offsite %s: streaming limit only from the next step, proxy failed: %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
