@@ -170,4 +170,24 @@ describe("Launcher", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Follow the first server" }));
     expect(screen.getByText(/no longer follows the server/)).toBeTruthy();
   });
+
+  it("opens the whole log from the activity card and shows one server at a time", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const answer = (key: string, percent: number) => ({
+      status: 200,
+      body: JSON.stringify({ ok: true, runs: [], progress: [{ key, phase: "backup", percent, active: true, startedAt: now }], next: [] }),
+    });
+    const other = { id: "s2", name: "Attic", url: "https://192.168.1.11:3443/" };
+    const { bridge } = fakeBridge(
+      { servers: [server, other], found: [], group: alone, camera: false, app },
+      { s1: answer("container:nextcloud", 42), s2: answer("container:immich", 17) }
+    );
+    render(<Launcher bridge={bridge} />);
+    await screen.findByText(/nextcloud .*42%/);
+    fireEvent.click(screen.getByRole("button", { name: "Activity Log" }));
+    expect(await screen.findByText(/immich .*17%/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Tower" }));
+    expect(screen.queryByText(/immich .*17%/)).toBeNull();
+    expect(screen.getByText(/nextcloud .*42%/)).toBeTruthy();
+  });
 });

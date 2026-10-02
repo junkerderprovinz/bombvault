@@ -6,6 +6,7 @@ import { IconCancel } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { BottomSheet } from "../components/mobile/BottomSheet";
 import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
+import { Selector } from "../components/Selector";
 import { IconAdd, IconGear, IconPencil } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
@@ -25,19 +26,21 @@ import {
 } from "./bridge";
 import { adopt, following } from "./look";
 import { PairPage } from "./PairPage";
+import { PageTop } from "./PageTop";
 import { LanguagePage, SettingsPage } from "./SettingsPage";
 
 type T = ReturnType<typeof useT>["t"];
 
 /** The pages above the list, each a history entry of its own so the phone's
  *  Back key closes it the way Back closes every page. */
-type View = "list" | "pairing" | "settings" | "language";
+type View = "list" | "pairing" | "settings" | "language" | "activity";
 
 /** How a server answered the last poll. */
 type Reach = "connected" | "signIn" | "certificate" | "offline";
 
 interface ServerLine extends LogLine {
   server: string;
+  serverId: string;
 }
 
 const POLL_MS = 10000;
@@ -118,12 +121,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       const results = await Promise.all(list.map((s) => readServer(bridge, s, resolveName, now)));
       if (!live) return;
       setReach(Object.fromEntries(results.map((r, i) => [list[i].id, r.reach])));
-      setLines(
-        results
-          .flatMap((r) => r.lines)
-          .sort((a, b) => a.atMs - b.atMs)
-          .slice(-LOG_LINES)
-      );
+      setLines(results.flatMap((r) => r.lines).sort((a, b) => a.atMs - b.atMs));
     }
     void poll();
     const timer = setInterval(() => void poll(), POLL_MS);
@@ -208,6 +206,8 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
 
   if (view === "language") return <LanguagePage t={t} onBack={back} />;
 
+  if (view === "activity") return <ActivityPage t={t} servers={state.servers} lines={lines} onBack={back} />;
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-5">
       <header className="flex items-center gap-3">
@@ -231,7 +231,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         </div>
       ) : (
         <>
-          <ActivityCard t={t} lines={lines} />
+          <ActivityCard t={t} lines={lines.slice(-LOG_LINES)} onOpen={() => show("activity")} />
           <div className="flex flex-col gap-2">
             {state.servers.map((s, i) => (
               <ServerCard
@@ -272,6 +272,7 @@ async function readServer(
       ...l,
       id: `${server.id}:${l.id}`,
       server: server.name,
+      serverId: server.id,
     }));
     return { reach: "connected", lines };
   } catch {
@@ -290,38 +291,91 @@ function inFlight(events: unknown[], now: number): ProgressMap {
   return map;
 }
 
-function ActivityCard({ t, lines }: { t: T; lines: ServerLine[] }) {
+/** ActivityCard is the tail of the log of every server; a tap opens all of it. */
+function ActivityCard({ t, lines, onOpen }: { t: T; lines: ServerLine[]; onOpen: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   // The newest line is at the bottom, as on the dashboard.
   useLayoutEffect(() => {
     if (box.current) box.current.scrollTop = box.current.scrollHeight;
   }, [lines]);
-  const resolveName: ResolveName = (key) => t(key as TranslationKey);
   return (
     <section className="relative glim-notch-card glim-hue" style={hueVars(0) as CSSProperties}>
       <MobileSectionLabel t={t} labelKey="activityLog.title" />
-      <div className="rounded-card bg-carbon-surface p-2 pt-5">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={t("activityLog.title")}
+        onClick={onOpen}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onOpen();
+        }}
+        className="rounded-card bg-carbon-surface p-2 pt-5 glim-field-focus"
+      >
         <div
           ref={box}
           className="flex max-h-48 flex-col gap-1.5 overflow-y-auto rounded-card bg-black/20 px-3 py-2 font-mono text-xs leading-relaxed"
         >
           {lines.length === 0 && <p className="text-carbon-textMuted">{t("launcher.activityEmpty")}</p>}
           {lines.map((l) => (
-            <div key={l.id} className="flex flex-col gap-0.5">
-              <div className="flex min-w-0 items-start gap-2">
-                <span className="shrink-0 tabular-nums text-carbon-textMuted">{formatClockTime(l.atMs / 1000, false)}</span>
-                <span className={`w-4 shrink-0 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
-                  {glyphFor(l.status)}
-                </span>
-                <span className="min-w-0 truncate font-semibold text-carbon-textSub">{l.server}</span>
-                {!l.idle && <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>}
-              </div>
-              <span className={`w-full min-w-0 wrap-break-word ${l.warn ? "text-statusWarn" : colorFor(l.status)}`}>{l.text}</span>
-            </div>
+            <LogRow key={l.id} t={t} line={l} named />
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+/** One line of the log, as the dashboard writes it. */
+function LogRow({ t, line, named }: { t: T; line: ServerLine; named: boolean }) {
+  const resolveName: ResolveName = (key) => t(key as TranslationKey);
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex min-w-0 items-start gap-2">
+        <span className="shrink-0 tabular-nums text-carbon-textMuted">{formatClockTime(line.atMs / 1000, false)}</span>
+        <span className={`w-4 shrink-0 text-center ${colorFor(line.status)}`} aria-label={t(glyphLabelKey(line.status))}>
+          {glyphFor(line.status)}
+        </span>
+        {named && <span className="min-w-0 truncate font-semibold text-carbon-textSub">{line.server}</span>}
+        {!line.idle && <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, line.domain)}</span>}
+      </div>
+      <span className={`w-full min-w-0 wrap-break-word ${line.warn ? "text-statusWarn" : colorFor(line.status)}`}>{line.text}</span>
+    </div>
+  );
+}
+
+/**
+ * ActivityPage is the whole log over the page, of every server or of one,
+ * picked in the selector at the top.
+ */
+function ActivityPage({ t, servers, lines, onBack }: { t: T; servers: Server[]; lines: ServerLine[]; onBack: () => void }) {
+  const [shown, setShown] = useState("all");
+  const box = useRef<HTMLDivElement>(null);
+  const picked = shown === "all" ? lines : lines.filter((l) => l.serverId === shown);
+  useLayoutEffect(() => {
+    if (box.current) box.current.scrollTop = box.current.scrollHeight;
+  }, [picked.length, shown]);
+  return (
+    <main className="mx-auto flex h-dvh w-full max-w-xl flex-col gap-4 px-4 pb-4 pt-2">
+      <PageTop t={t} title={t("activityLog.title")} onBack={onBack} />
+      {servers.length > 1 && (
+        <Selector
+          items={[{ id: "all", label: t("filter.all") }, ...servers.map((s) => ({ id: s.id, label: s.name }))]}
+          label={t("activityLog.title")}
+          select="one"
+          active={shown}
+          onChange={setShown}
+        />
+      )}
+      <div
+        ref={box}
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-card bg-carbon-surface px-3 py-3 font-mono text-xs leading-relaxed"
+      >
+        {picked.length === 0 && <p className="text-carbon-textMuted">{t("launcher.activityEmpty")}</p>}
+        {picked.map((l) => (
+          <LogRow key={l.id} t={t} line={l} named={shown === "all"} />
+        ))}
+      </div>
+    </main>
   );
 }
 
