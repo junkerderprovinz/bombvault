@@ -5,6 +5,7 @@ import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { BottomSheet } from "../components/mobile/BottomSheet";
 import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
+import { IconForward } from "../components/glyphs";
 import { IconAdd, IconClose, IconGear, IconPencil } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
@@ -374,9 +375,9 @@ function ServerCard({
           )}
         </span>
         {badge && <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
-        <svg aria-hidden width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-accentText">
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
+        <span className="shrink-0 text-accentText [&>svg]:size-2.5">
+          <IconForward />
+        </span>
       </button>
       {/* A glyph alone: on a phone the name needs the width a label would take. */}
       <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.edit")} onClick={onEdit}>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, type CSSProperties } from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconLink, IconSearch } from "../components/glyphs";
+import { IconForward, IconLink, IconSearch } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconAdd, IconCopy } from "../components/navGlyphs";
 import { hueVars } from "../lib/appearance";
@@ -260,9 +260,9 @@ export function PairPage({
                 {`${displayAddress(f.url)} · ${f.version}`}
               </span>
             </span>
-            <svg aria-hidden width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-accentText">
-              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-            </svg>
+            <span className="shrink-0 text-accentText [&>svg]:size-2.5">
+              <IconForward />
+            </span>
           </button>
         ))}
         <p className="text-xs text-carbon-textMuted">{found.length === 0 ? t("launcher.searching") : t("launcher.foundLead")}</p>
