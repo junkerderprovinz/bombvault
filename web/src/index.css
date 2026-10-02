@@ -1437,6 +1437,15 @@ body {
   }
   [data-app] :is(.glim-brand-tile:active, .group:active > .glim-brand-tile) .glim-mark-rest { display: none; }
   [data-app] :is(.glim-brand-tile:active, .group:active > .glim-brand-tile) .glim-mark-hover { display: block; }
+  [data-app] .group:active > .glim-brand-tile .glim-readme-btn-mark,
+  [data-app] .group:active .glim-readme-btn-hint {
+    color: var(--tile-ink);
+  }
+}
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  :root[data-app]:not([data-motion="off"]) .glim-readme-btn-unit:not(.glim-readme-btn-soon):active .glim-readme-btn-sheen::after {
+    animation: glim-readme-sheen var(--motion-button-sheen-dur, 800ms) linear;
+  }
 }
 
 /* The brands' tile colours: the true colour and the ink that holds on it, white
