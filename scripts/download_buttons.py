@@ -8,6 +8,7 @@ repository.
 REPO = "bombvault"
 
 BUTTONS = {
+    "unraid": "https://unraid.net/community/apps?q=bombvault",
     # A browser cannot download an image, so this opens the package page, which
     # carries the pull command and every tag.
     "docker": "https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault",
@@ -16,4 +17,6 @@ BUTTONS = {
     # that lists it.
     "source": "https://github.com/junkerderprovinz/bombvault/releases/latest",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
+    "relay": "https://github.com/junkerderprovinz/parleyport",
+    "widget": "https://github.com/junkerderprovinz/bombvault-widget",
 }
