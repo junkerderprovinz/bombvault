@@ -461,8 +461,8 @@ func (s *Service) IdleWaits() []IdleWait {
 }
 
 // appIdle asks the traffic watch whether a container's app is idle. A media
-// server is idle while it does not stream, any other app once its CPU and
-// traffic stayed low for the quiet time.
+// server is idle while it does not stream, any other app, and a media server
+// on the host network, once its CPU and traffic stayed low for the quiet time.
 func (s *Service) appIdle(ctx context.Context, name string, now time.Time) (bool, string) {
 	cfg, err := s.store.TrafficSettings()
 	if err != nil {

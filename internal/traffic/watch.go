@@ -144,8 +144,9 @@ func (w *Watch) streamingLocked(rule StreamRule, now time.Time) (string, bool) {
 	return who, true
 }
 
-// IdleRule says when a container counts as idle. A media server is idle when
-// it does not stream by Stream; any other container when CPU and network
+// IdleRule says when a container counts as idle. A media server is idle once
+// it was measured for the hold of Stream without streaming; any other
+// container, and a media server on the host network, when CPU and network
 // stayed below the limits for Quiet.
 type IdleRule struct {
 	CPUPct float64
@@ -178,11 +179,16 @@ func (w *Watch) Idle(name string, rule IdleRule, now time.Time) (bool, string) {
 	if !last.Running {
 		return true, ""
 	}
-	if rule.Stream != nil {
+	// Without network counters a media server's streams cannot be seen, so
+	// it goes by the rule for any other container.
+	if rule.Stream != nil && last.HasNet {
 		one := *rule.Stream
 		one.Servers = []string{name}
 		if _, on := w.streamingLocked(one, now); on {
 			return false, BusyStreaming
+		}
+		if now.Sub(w.since[name]) < one.Hold {
+			return false, BusyMeasuring
 		}
 		return true, ""
 	}
