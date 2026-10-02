@@ -377,7 +377,7 @@ const nl: Partial<Translations> = {
   "settings.shape.soft": "Zacht",
   "settings.shape.square": "Vierkant",
   "settings.shape.leaf": "Blad",
-  "settings.motion": "Animaties",
+  "settings.motion": "Animatie",
   "settings.motionHint": "Bepaalt hoeveel elke animatie in de app beweegt, een handmatige instelling naast de systeeminstelling voor verminderde beweging, die deze nooit overschrijft.",
   "settings.labels": "Labels",
   "settings.labelsHint": "Hoeveel van een besturingselement wordt getoond: de woorden, het symbool of beide. Knoppen houden in alle vier de standen dezelfde breedte, wisselen hussselt de pagina dus niet door elkaar.",

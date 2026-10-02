@@ -379,7 +379,7 @@ const ro: Partial<Translations> = {
   "settings.shape.soft": "Ușor rotunjite",
   "settings.shape.square": "Drepte",
   "settings.shape.leaf": "Frunză",
-  "settings.motion": "Animații",
+  "settings.motion": "Animație",
   "settings.motionHint": "Stabilește cât de mult se mișcă fiecare animație din aplicație, un reglaj manual aflat lângă setarea sistemului pentru mișcare redusă, pe care nu o suprascrie niciodată.",
   "settings.labels": "Etichete",
   "settings.labelsHint": "Cât se afișează dintr-un control: cuvintele, simbolul sau ambele. Butoanele păstrează aceeași lățime în toate cele patru moduri, deci schimbarea nu rearanjează pagina.",

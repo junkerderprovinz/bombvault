@@ -941,7 +941,7 @@ const is: Partial<Translations> = {
   "settings.shape.soft": "Mjúk",
   "settings.shape.square": "Ferköntuð",
   "settings.shape.leaf": "Laufblað",
-  "settings.motion": "Hreyfimyndir",
+  "settings.motion": "Hreyfimynd",
   "settings.motionHint": "Hversu mikið allar hreyfimyndir í forritinu hreyfast, handvirkur stillanleiki við hlið kerfisstillingarinnar fyrir minnkaða hreyfingu, sem hann skrifar aldrei yfir.",
   "settings.labels": "Merkingar",
   "settings.labelsHint": "Hversu mikið af stýringu sést: orðin, táknið eða hvort tveggja. Hnappar halda sömu breidd í öllum fjórum stillingum, svo skipti raska ekki síðunni.",

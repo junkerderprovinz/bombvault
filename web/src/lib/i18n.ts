@@ -1138,7 +1138,7 @@ export const en = {
   // switch" decision; see that doc's Motion Intensity section and
   // lib/motion.ts's own header for the full course-correction note. Same
   // "one product, every language" reasoning as the shape keys right above.
-  "settings.motion": "Animations",
+  "settings.motion": "Animation",
   "settings.motionHint": "How much every animation in the app moves: a manual dial that sits alongside your system's reduced-motion setting, never overrides it.",
   "settings.labels": "Labels",
   "settings.labelsHint": "How much of a control is shown: its words, its symbol, or both. Reactive shows the symbol alone and slides the words back in when you point at it. Buttons keep the same width in all four, so switching never reshuffles the page.",
@@ -4536,7 +4536,7 @@ export const de: Translations = {
   "settings.shape.soft": "Abgerundet",
   "settings.shape.square": "Eckig",
   "settings.shape.leaf": "Blatt",
-  "settings.motion": "Animationen",
+  "settings.motion": "Animation",
   "settings.motionHint": "Wie stark sich alle Animationen der App bewegen: ein manueller Regler neben der Systemeinstellung für reduzierte Bewegung, der sie nie überschreibt.",
   "settings.labels": "Beschriftungen",
   "settings.labelsHint": "Wie viel von einem Bedienelement gezeigt wird: seine Wörter, sein Symbol oder beides. Reaktiv zeigt nur das Symbol und blendet die Wörter ein, sobald du darauf zeigst. Buttons behalten in allen vier Fällen dieselbe Breite, das Umschalten verschiebt also nichts.",

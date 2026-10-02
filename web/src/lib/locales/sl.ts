@@ -939,7 +939,7 @@ const sl: Partial<Translations> = {
   "settings.shape.soft": "Mehko",
   "settings.shape.square": "Kvadratno",
   "settings.shape.leaf": "List",
-  "settings.motion": "Animacije",
+  "settings.motion": "Animacija",
   "settings.motionHint": "Kako intenzivna je vsaka animacija v aplikaciji, ročno stikalo poleg sistemske nastavitve za omejeno gibanje, ki je nikoli ne prepiše.",
   "settings.labels": "Oznake",
   "settings.labelsHint": "Koliko se prikaže od kontrolnika: njegove besede, njegov simbol ali oboje. Gumbi imajo v vseh štirih načinih enako širino, zato preklop ne prerazporedi strani.",

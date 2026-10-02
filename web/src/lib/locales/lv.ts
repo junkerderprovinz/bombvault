@@ -941,7 +941,7 @@ const lv: Partial<Translations> = {
   "settings.shape.soft": "Mīksti",
   "settings.shape.square": "Taisnstūra",
   "settings.shape.leaf": "Lapa",
-  "settings.motion": "Animācijas",
+  "settings.motion": "Animācija",
   "settings.motionHint": "Cik daudz kustas visas lietotnes animācijas, manuāla regulēšana blakus sistēmas samazinātas kustības iestatījumam, ko tā nekad nepārraksta.",
   "settings.labels": "Uzraksti",
   "settings.labelsHint": "Cik daudz no vadīklas tiek rādīts: tās vārdi, simbols vai abi. Pogām visos četros režīmos ir vienāds platums, tāpēc pārslēgšana lapu nepārkārto.",

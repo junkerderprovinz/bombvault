@@ -382,7 +382,7 @@ const sv: Partial<Translations> = {
   "settings.shape.soft": "Mjuka",
   "settings.shape.square": "Fyrkantiga",
   "settings.shape.leaf": "Blad",
-  "settings.motion": "Animationer",
+  "settings.motion": "Animation",
   "settings.motionHint": "Avgör hur mycket varje animation i appen rör sig, en manuell inställning vid sidan av systemets inställning för minskad rörelse, som aldrig åsidosätter den.",
   "settings.labels": "Etiketter",
   "settings.labelsHint": "Hur mycket av en kontroll som visas: dess ord, dess symbol eller båda. Knappar har samma bredd i alla fyra lägena, så ett byte omorganiserar inte sidan.",

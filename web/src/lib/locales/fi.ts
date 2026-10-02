@@ -382,7 +382,7 @@ const fi: Partial<Translations> = {
   "settings.shape.soft": "Pehmeät",
   "settings.shape.square": "Suorakulmaiset",
   "settings.shape.leaf": "Lehti",
-  "settings.motion": "Animaatiot",
+  "settings.motion": "Animaatio",
   "settings.motionHint": "Määrittää, kuinka paljon sovelluksen animaatiot liikkuvat, manuaalinen säädin järjestelmän vähennetyn liikkeen asetuksen rinnalla, joka ei koskaan ohita sitä.",
   "settings.labels": "Nimikkeet",
   "settings.labelsHint": "Kuinka paljon säätimestä näytetään: sen sanat, sen symboli vai molemmat. Painikkeet ovat samanlevyisiä kaikissa neljässä tilassa, joten vaihto ei järjestä sivua uudelleen.",

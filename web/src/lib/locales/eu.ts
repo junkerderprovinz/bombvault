@@ -941,7 +941,7 @@ const eu: Partial<Translations> = {
   "settings.shape.soft": "Leunak",
   "settings.shape.square": "Angeluzuzenak",
   "settings.shape.leaf": "Hostoa",
-  "settings.motion": "Animazioak",
+  "settings.motion": "Animazioa",
   "settings.motionHint": "Aplikazioko animazio guztiak zenbat mugitzen diren, mugimendu murriztuko sistema-ezarpenaren ondoko eskuzko kontrol bat, hura inoiz gainidazten ez duena.",
   "settings.labels": "Etiketak",
   "settings.labelsHint": "Kontrol batetik zenbat erakusten den: bere hitzak, bere ikurra edo biak. Botoiek zabalera bera dute lau moduetan, beraz aldatzeak ez du orria berrantolatzen.",

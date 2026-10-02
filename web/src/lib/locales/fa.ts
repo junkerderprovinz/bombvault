@@ -941,7 +941,7 @@ const fa: Partial<Translations> = {
   "settings.shape.soft": "نرم",
   "settings.shape.square": "تیز",
   "settings.shape.leaf": "برگ",
-  "settings.motion": "انیمیشن‌ها",
+  "settings.motion": "انیمیشن",
   "settings.motionHint": "میزان حرکت همه انیمیشن‌های برنامه، یک دکمه تنظیم دستی در کنار تنظیم سیستم برای حرکت کاهش‌یافته، که هرگز آن را بازنویسی نمی‌کند.",
   "settings.labels": "برچسب‌ها",
   "settings.labelsHint": "چه مقدار از یک کنترل نمایش داده شود: واژه‌هایش، نمادش یا هر دو. دکمه‌ها در هر چهار حالت پهنای یکسانی دارند، بنابراین تغییر حالت صفحه را جابه‌جا نمی‌کند.",

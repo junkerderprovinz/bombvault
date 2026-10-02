@@ -382,7 +382,7 @@ const he: Partial<Translations> = {
   "settings.shape.soft": "רכות",
   "settings.shape.square": "מרובעות",
   "settings.shape.leaf": "עלה",
-  "settings.motion": "אנימציות",
+  "settings.motion": "אנימציה",
   "settings.motionHint": "קובע כמה כל אנימציה באפליקציה זזה, כוונון ידני שפועל לצד הגדרת הפחתת התנועה של המערכת, ולעולם אינו דורס אותה.",
   "settings.labels": "תוויות",
   "settings.labelsHint": "כמה מפקד תצוגה מוצג: המילים שלו, הסמל שלו או שניהם. לכפתורים יש אותו רוחב בכל ארבעת המצבים, ולכן מעבר ביניהם לא מסדר מחדש את העמוד.",

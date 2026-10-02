@@ -941,7 +941,7 @@ const ca: Partial<Translations> = {
   "settings.shape.soft": "Suaus",
   "settings.shape.square": "Quadrades",
   "settings.shape.leaf": "Fulla",
-  "settings.motion": "Animacions",
+  "settings.motion": "Animació",
   "settings.motionHint": "Com de fort es mouen totes les animacions de l'app: un control manual al costat de la configuració del sistema de moviment reduït, que mai la sobreescriu.",
   "settings.labels": "Etiquetes",
   "settings.labelsHint": "Quant es mostra d'un control: les paraules, el símbol o tots dos. Els botons mantenen la mateixa amplada en els quatre modes, així que canviar-lo no reorganitza la pàgina.",

@@ -197,7 +197,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings: configuration organised into pages for domains, paths, schedules, off-site, notifications and integrity" width="90%">
-  <br><em>Settings, organised into pages (General · Look · Storage · Retention · Schedules · Containers · Off-site · Cloud access · Notifications · Integrity · Security · Pairing · Integrations · System). General turns each backup domain on or off and holds the language and quiet toasts; Look holds the theme, colours, corners and animations. Nothing here has a Save button; every change is written as you make it.</em>
+  <br><em>Settings, organised into pages (General · Look · Storage · Retention · Schedules · Containers · Off-site · Cloud access · Notifications · Integrity · Security · Pairing · Integrations · System). General turns each backup domain on or off and holds the language and quiet toasts; Look holds the theme, colours, corners and animation. Nothing here has a Save button; every change is written as you make it.</em>
 </p>
 
 <br>
@@ -353,7 +353,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **42 languages** with a flag picker.
-- **Make it look how you want it.** Three switches on Settings → Look, applied across the whole app and remembered per browser: **Colors** (one accent, or *Rainbow Mode*, where every card, list row and toolbar takes its own colour from an editable palette of eight and paints the controls inside it, with optional *Reactive Mode* and *Colour Rotation*), **Corners** (round, soft or square, for cards, buttons, tabs, inputs and badges at once) and **Animations** (off, subtle or full). Animations is a manual dial that sits alongside your system's reduced-motion setting and never overrides it: if your OS asks for less motion, that still wins.
+- **Make it look how you want it.** Three switches on Settings → Look, applied across the whole app and remembered per browser: **Colors** (one accent, or *Rainbow Mode*, where every card, list row and toolbar takes its own colour from an editable palette of eight and paints the controls inside it, with optional *Reactive Mode* and *Colour Rotation*), **Corners** (round, soft or square, for cards, buttons, tabs, inputs and badges at once) and **Animation** (off, subtle or full). Animation is a manual dial that sits alongside your system's reduced-motion setting and never overrides it: if your OS asks for less motion, that still wins.
 
 </details>
 

@@ -382,7 +382,7 @@ const tr: Partial<Translations> = {
   "settings.shape.soft": "Yumuşak",
   "settings.shape.square": "Köşeli",
   "settings.shape.leaf": "Yaprak",
-  "settings.motion": "Animasyonlar",
+  "settings.motion": "Animasyon",
   "settings.motionHint": "Uygulamadaki her animasyonun ne kadar hareket ettiğini belirler. Sistemin azaltılmış hareket ayarının yanında duran, onu asla geçersiz kılmayan manuel bir ayar.",
   "settings.labels": "Etiketler",
   "settings.labelsHint": "Bir denetimin ne kadarının gösterileceği: sözcükleri, simgesi ya da her ikisi. Düğmeler dört modda da aynı genişlikte kalır, bu yüzden geçiş sayfayı yeniden dizmez.",

@@ -941,7 +941,7 @@ const sk: Partial<Translations> = {
   "settings.shape.soft": "Jemné",
   "settings.shape.square": "Hranaté",
   "settings.shape.leaf": "List",
-  "settings.motion": "Animácie",
+  "settings.motion": "Animácia",
   "settings.motionHint": "Do akej miery sa hýbu všetky animácie v aplikácii, manuálny ovládač popri systémovom nastavení obmedzeného pohybu, ktorý nikdy nepreváži.",
   "settings.labels": "Označenia",
   "settings.labelsHint": "Koľko z ovládacieho prvku sa zobrazí: jeho slová, jeho symbol alebo oboje. Tlačidlá majú vo všetkých štyroch režimoch rovnakú šírku, takže prepnutie stránku nepreusporiada.",

@@ -382,7 +382,7 @@ const it: Partial<Translations> = {
   "settings.shape.soft": "Morbidi",
   "settings.shape.square": "Squadrati",
   "settings.shape.leaf": "Foglia",
-  "settings.motion": "Animazioni",
+  "settings.motion": "Animazione",
   "settings.motionHint": "Determina quanto si muovono le animazioni dell'app, un regolatore manuale che si affianca all'impostazione di sistema per la riduzione del movimento, senza mai sostituirla.",
   "settings.labels": "Etichette",
   "settings.labelsHint": "Quanto di un controllo viene mostrato: le parole, il simbolo o entrambi. I pulsanti mantengono la stessa larghezza in tutte e quattro le modalità, quindi cambiare non riorganizza la pagina.",

@@ -382,7 +382,7 @@ const da: Partial<Translations> = {
   "settings.shape.soft": "Bløde",
   "settings.shape.square": "Firkantede",
   "settings.shape.leaf": "Blad",
-  "settings.motion": "Animationer",
+  "settings.motion": "Animation",
   "settings.motionHint": "Bestemmer, hvor meget hver animation i appen bevæger sig: en manuel indstilling ved siden af systemets indstilling for reduceret bevægelse, som aldrig tilsidesætter den.",
   "settings.labels": "Etiketter",
   "settings.labelsHint": "Hvor meget af en kontrol der vises: dens ord, dens symbol eller begge dele. Knapper har samme bredde i alle fire tilstande, så et skift omrokerer ikke siden.",

@@ -379,7 +379,7 @@ const pt: Partial<Translations> = {
   "settings.shape.soft": "Suaves",
   "settings.shape.square": "Quadrados",
   "settings.shape.leaf": "Folha",
-  "settings.motion": "Animações",
+  "settings.motion": "Animação",
   "settings.motionHint": "Determina o quanto as animações da app se movem, um ajuste manual que fica ao lado da definição de movimento reduzido do sistema, sem nunca a substituir.",
   "settings.labels": "Rótulos",
   "settings.labelsHint": "Quanto de um controlo é mostrado: as suas palavras, o seu símbolo ou ambos. Os botões mantêm a mesma largura nos quatro modos, portanto mudar não reorganiza a página.",

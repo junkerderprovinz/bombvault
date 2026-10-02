@@ -382,7 +382,7 @@ const hu: Partial<Translations> = {
   "settings.shape.soft": "Enyhe",
   "settings.shape.square": "Szögletes",
   "settings.shape.leaf": "Levél",
-  "settings.motion": "Animációk",
+  "settings.motion": "Animáció",
   "settings.motionHint": "Meghatározza, mennyire mozognak az alkalmazás animációi: egy kézi beállítás a rendszer csökkentett mozgás beállítása mellett, amely azt soha nem írja felül.",
   "settings.labels": "Feliratok",
   "settings.labelsHint": "Mennyi látszik egy vezérlőből: a szavai, a szimbóluma vagy mindkettő. A gombok mind a négy módban ugyanolyan szélesek, így a váltás nem rendezi át az oldalt.",

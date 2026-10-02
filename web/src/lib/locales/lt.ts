@@ -941,7 +941,7 @@ const lt: Partial<Translations> = {
   "settings.shape.soft": "Švelnūs",
   "settings.shape.square": "Kampuoti",
   "settings.shape.leaf": "Lapas",
-  "settings.motion": "Animacijos",
+  "settings.motion": "Animacija",
   "settings.motionHint": "Kiek juda visos programos animacijos, rankinis reguliatorius šalia sistemos sumažinto judėjimo nustatymo, kurio jis niekada neperrašo.",
   "settings.labels": "Etiketės",
   "settings.labelsHint": "Kiek valdiklio rodoma: jo žodžiai, jo simbolis ar abu. Mygtukai visais keturiais režimais yra vienodo pločio, todėl perjungimas puslapio nepertvarko.",

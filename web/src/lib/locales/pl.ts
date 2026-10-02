@@ -377,7 +377,7 @@ const pl: Partial<Translations> = {
   "settings.shape.soft": "Łagodne",
   "settings.shape.square": "Kwadratowe",
   "settings.shape.leaf": "Liść",
-  "settings.motion": "Animacje",
+  "settings.motion": "Animacja",
   "settings.motionHint": "Określa, jak bardzo poruszają się animacje w aplikacji, ręczne ustawienie obok systemowego ustawienia ograniczonego ruchu, którego nigdy nie zastępuje.",
   "settings.labels": "Etykiety",
   "settings.labelsHint": "Ile z elementu sterującego jest pokazywane: jego słowa, symbol albo oba. Przyciski mają tę samą szerokość we wszystkich czterech trybach, więc przełączenie nie przestawia strony.",

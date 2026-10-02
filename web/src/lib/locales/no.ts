@@ -379,7 +379,7 @@ const no: Partial<Translations> = {
   "settings.shape.soft": "Myke",
   "settings.shape.square": "Firkantede",
   "settings.shape.leaf": "Blad",
-  "settings.motion": "Animasjoner",
+  "settings.motion": "Animasjon",
   "settings.motionHint": "Bestemmer hvor mye hver animasjon i appen beveger seg, en manuell innstilling ved siden av systemets innstilling for redusert bevegelse, som aldri overstyrer den.",
   "settings.labels": "Etiketter",
   "settings.labelsHint": "Hvor mye av en kontroll som vises: ordene, symbolet eller begge deler. Knapper har samme bredde i alle fire modusene, så bytte omorganiserer ikke siden.",

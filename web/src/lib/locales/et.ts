@@ -941,7 +941,7 @@ const et: Partial<Translations> = {
   "settings.shape.soft": "Pehmed",
   "settings.shape.square": "Nurgelised",
   "settings.shape.leaf": "Leht",
-  "settings.motion": "Animatsioonid",
+  "settings.motion": "Animatsioon",
   "settings.motionHint": "Kui palju rakenduse animatsioonid liiguvad, käsitsi regulaator süsteemi vähendatud liikumise seade kõrval, mida see ei sea kunagi üle.",
   "settings.labels": "Sildid",
   "settings.labelsHint": "Kui palju juhtelemendist näidatakse: selle sõnad, sümbol või mõlemad. Nupud on kõigis neljas režiimis sama laiad, seega vahetamine ei paiguta lehte ümber.",
