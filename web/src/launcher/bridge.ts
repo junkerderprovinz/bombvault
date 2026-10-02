@@ -43,6 +43,18 @@ export type PairError =
   | { reason: "word"; word: string; position: number }
   | { reason: "checksum" };
 
+/** What the settings page says about the app and the phone it runs on. */
+export interface AppInfo {
+  version: string;
+  versionCode: number;
+  /** Android's API level, such as 36. */
+  android: string;
+  /** The name the person gave the phone, which the group sees while none is chosen here. */
+  model: string;
+  /** The name chosen in the settings, empty while the phone's own is used. */
+  deviceName: string;
+}
+
 export interface LauncherState {
   servers: Server[];
   found: FoundServer[];
@@ -56,12 +68,14 @@ export interface LauncherState {
   };
   /** Whether the app may use the camera, for the scanner. */
   camera: boolean;
+  app: AppInfo;
   problem?: Problem;
   pairError?: PairError;
 }
 
-/** A server's answer to the activity question: its runs, the progress events
- *  in flight and the next scheduled runs. Status 0 means it was not reached and
+/** A server's answer to a question the app asked it, such as the activity
+ *  question: its runs, the progress events in flight and the next scheduled
+ *  runs. Status 0 means it was not reached and
  *  -1 that its certificate is not the one trusted for it; the body then says why. */
 export interface Fetched {
   status: number;
@@ -76,6 +90,9 @@ export type Request =
   | { op: "trust"; id: string; fingerprint: string }
   | { op: "dismiss" }
   | { op: "activity"; ticket: number; id: string }
+  | { op: "look"; ticket: number; id: string }
+  | { op: "deviceName"; name: string }
+  | { op: "removeAll" }
   | { op: "scan" }
   | { op: "join"; code: string }
   | { op: "adopt" }
@@ -86,7 +103,7 @@ export type Request =
 
 type Reply =
   | ({ op: "state" } & LauncherState)
-  | ({ op: "activity"; ticket: number } & Fetched)
+  | ({ op: "activity" | "look"; ticket: number } & Fetched)
   | { op: "pasted"; ticket: number; text: string };
 
 export interface Bridge {
@@ -95,6 +112,8 @@ export interface Bridge {
   listen(onState: (s: LauncherState) => void): () => void;
   /** Asks what runs on the server, over the group or with the app's session for it. */
   activity(id: string): Promise<Fetched>;
+  /** Asks how the server looks: the display preferences it keeps for its interface. */
+  look(id: string): Promise<Fetched>;
   /** The phone's clipboard as text; a WebView cannot read it itself. */
   paste(): Promise<string>;
 }
@@ -112,7 +131,7 @@ export function bridgeOver(port: Port): Bridge {
   const pasting = new Map<number, (text: string) => void>();
   port.addEventListener("message", (e) => {
     const reply = JSON.parse(e.data) as Reply;
-    if (reply.op === "activity") {
+    if (reply.op === "activity" || reply.op === "look") {
       waiting.get(reply.ticket)?.({ status: reply.status, body: reply.body });
       waiting.delete(reply.ticket);
     } else if (reply.op === "pasted") {
@@ -121,6 +140,14 @@ export function bridgeOver(port: Port): Bridge {
     }
   });
   const send = (req: Request) => port.postMessage(JSON.stringify(req));
+  const ask = (op: "activity" | "look", id: string) => {
+    ticket += 1;
+    const t = ticket;
+    return new Promise<Fetched>((resolve) => {
+      waiting.set(t, resolve);
+      send({ op, ticket: t, id });
+    });
+  };
   return {
     send,
     listen(onState) {
@@ -131,14 +158,8 @@ export function bridgeOver(port: Port): Bridge {
       port.addEventListener("message", fn);
       return () => port.removeEventListener("message", fn);
     },
-    activity(id) {
-      ticket += 1;
-      const t = ticket;
-      return new Promise((resolve) => {
-        waiting.set(t, resolve);
-        send({ op: "activity", ticket: t, id });
-      });
-    },
+    activity: (id) => ask("activity", id),
+    look: (id) => ask("look", id),
     paste() {
       ticket += 1;
       const t = ticket;

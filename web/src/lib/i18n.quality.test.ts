@@ -42,6 +42,9 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // a reader searches for there.
   "relay.containerName",
   "ha.title",
+  // Unraid's own name for its app store, which every locale leaves as Unraid
+  // itself writes it.
+  "launcher.appsUnraidSub",
 
   // "Containers" is the word el and he use in their own nav entry. Consistency
   // within the language decides, not whether the string looks English.

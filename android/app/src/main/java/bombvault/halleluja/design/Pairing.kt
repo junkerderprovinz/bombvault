@@ -106,13 +106,30 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         return r
     }
 
-    /** What runs on [server], asked through the group, or null when the group cannot carry the question. */
-    suspend fun activity(server: Server): Answer? {
+    /** The name the phone goes by in the group, empty while it uses its own. */
+    val deviceName: String get() = prefs.getString(NAME, "") ?: ""
+
+    /** The name the person gave the phone, used while none is chosen in the app. */
+    val phoneName: String get() = Settings.Global.getString(context.contentResolver, "device_name") ?: Build.MODEL
+
+    /** Renames the phone and announces it again, so every instance shows the new name. */
+    fun rename(name: String) {
+        prefs.edit().putString(NAME, name).apply()
+        if (relay == null) return
+        stop()
+        start()
+    }
+
+    /**
+     * GETs [path] from [server] through the group, or returns null when the
+     * group cannot carry the question.
+     */
+    suspend fun ask(server: Server, path: String): Answer? {
         val r = relay ?: return null
         val member = server.member ?: return null
         if (r.siblings.none { it.id == member }) return null
         return try {
-            val (status, body) = r.call(member, "GET", "/api/group/peer/activity")
+            val (status, body) = r.call(member, "GET", path)
             // An instance older than the route has nothing to say here, but
             // its own address may.
             if (status == 404) null else Answer(status, String(body))
@@ -148,8 +165,8 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     }
 
     private fun identity(): JSONObject {
-        // The name the person gave the phone, which is what the Instances card shows.
-        val name = Settings.Global.getString(context.contentResolver, "device_name") ?: Build.MODEL
+        // What the Instances card shows.
+        val name = deviceName.ifEmpty { phoneName }
         val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
         return JSONObject().put("name", name).put("version", version).put("kind", "android")
     }
@@ -188,5 +205,6 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         private const val RELAY = "relay"
         private const val ID = "id"
         private const val KEY_ALIAS = "group"
+        private const val NAME = "name"
     }
 }

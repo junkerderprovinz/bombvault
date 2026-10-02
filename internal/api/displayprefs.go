@@ -23,7 +23,17 @@ const maxDisplayPrefsBytes = 16 << 10
 // returns an empty object and stored:false, so the client seeds the server from
 // the browser instead of resetting to defaults.
 func (h *Handler) handleGetDisplayPrefs(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
+	writeDisplayPrefs(w, h.store)
+}
+
+// handlePeerDisplayPrefs gives a member the look stored here, which the
+// Android app follows without a session.
+func (s *Service) handlePeerDisplayPrefs(w http.ResponseWriter, _ *http.Request) {
+	writeDisplayPrefs(w, s.store)
+}
+
+func writeDisplayPrefs(w http.ResponseWriter, repo *store.Repo) {
+	s, err := repo.GetSettings()
 	if err != nil {
 		log.Printf("api: display prefs: settings read failed: %v", err)
 		writeJSON(w, http.StatusOK, failEnvelope(err))

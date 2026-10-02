@@ -69,12 +69,28 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
 
 export function AboutCard({ hueIndex }: { hueIndex?: number }) {
   const { t } = useT();
-  const [version, setVersion] = useState<string | null>(null);
+  return (
+    <Card title={t("about.title")} hueIndex={hueIndex}>
+      <AboutContent />
+    </Card>
+  );
+}
+
+/**
+ * AboutContent is what the About card holds, for a page that draws its own
+ * card around it. The Android app passes its own version and its privacy
+ * policy, and hands PayPal to the browser, since PayPal's buttons need popups
+ * a WebView does not open.
+ */
+export function AboutContent({ app }: { app?: { version: string; paypal: () => void; privacy: { label: string; href: string } } }) {
+  const { t } = useT();
+  const [version, setVersion] = useState<string | null>(app?.version ?? null);
   const [coffeeOpen, setCoffeeOpen] = useState(false);
   const [paypalOpen, setPaypalOpen] = useState(false);
   const [cryptoOpen, setCryptoOpen] = useState(false);
 
   useEffect(() => {
+    if (app) return;
     let active = true;
     getHealth()
       .then((h) => {
@@ -86,10 +102,10 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [app]);
 
   return (
-    <Card title={t("about.title")} hueIndex={hueIndex}>
+    <>
       {/* GlimStone fixes the order for every app: what this is, giving,
           reporting, then the versions as a footer. Each sentence sits directly
           above the buttons it asks for, which reads as one offer rather than
@@ -112,7 +128,7 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
         />
         <ReadmeButton
           tile="glim-tile-paypal"
-          parts={[{ name: t("about.paypal"), onClick: () => setPaypalOpen(true) }]}
+          parts={[{ name: t("about.paypal"), onClick: app ? app.paypal : () => setPaypalOpen(true) }]}
           mark={<IconPayPal />}
           markClass="glim-paypal-mark"
         />
@@ -166,6 +182,11 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
         {version && <span aria-hidden="true" className="text-carbon-textMuted">·</span>}
         <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
       </p>
-    </Card>
+      {app && (
+        <a href={app.privacy.href} target="_blank" rel="noopener noreferrer" className="self-start text-xs text-accentText no-underline">
+          {app.privacy.label}
+        </a>
+      )}
+    </>
   );
 }

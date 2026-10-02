@@ -222,15 +222,16 @@ type peerRoute struct {
 
 // peerRoutes is everything a group member can reach on this instance: the
 // Fleet scorecard, a storage offer, what receiver and pull pairing need,
-// starting a check, what runs here for the app's activity log, and the bare
-// hello a blind probe gets. Settings, secrets
-// and the phrase are not among them.
+// starting a check, what runs here and how it looks for the Android app, and
+// the bare hello a blind probe gets. Settings, secrets and the phrase are not
+// among them.
 var peerRoutes = []peerRoute{
 	{"GET /api/group/peer/status", (*Service).handlePeerStatus},
 	{"POST /api/group/peer/mesh-offer", (*Service).handlePeerMeshOffer},
 	{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
 	{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
 	{"GET /api/group/peer/activity", (*Service).handlePeerActivity},
+	{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 	{"GET " + group.ProbePath, (*Service).handlePeerHello},
 }
 

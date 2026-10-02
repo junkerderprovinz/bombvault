@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, type CSSProperties } from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconBack, IconLink, IconSearch } from "../components/glyphs";
+import { IconLink, IconSearch } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconAdd, IconCopy } from "../components/navGlyphs";
 import { hueVars } from "../lib/appearance";
@@ -10,6 +10,7 @@ import { PHRASE_WORDS, checkPhrase } from "../lib/phraseWords";
 import { useConfirm } from "../lib/useConfirm";
 import { WordSlots } from "../pages/settings/pairing/WordSlots";
 import { displayAddress, type FoundServer, type LauncherState, type PairError } from "./bridge";
+import { PageTop } from "./PageTop";
 import { QRScanner } from "./QRScanner";
 
 type T = ReturnType<typeof useT>["t"];
@@ -113,14 +114,10 @@ export function PairPage({
   const joining = group.joining;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-4 px-4 py-5">
-      <header className="flex items-center gap-3">
-        <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.back")} onClick={onBack}>
-          <IconBack />
-        </Badge>
-        <h1 className="min-w-0 truncate text-xl font-semibold text-carbon-text">{t("launcher.pairTitle")}</h1>
+    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-4 px-4 pb-8 pt-2">
+      <PageTop t={t} title={t("launcher.pairTitle")} onBack={onBack}>
         <InfoBubble tip={t("launcher.pairHint")} />
-      </header>
+      </PageTop>
 
       {group.paired && !joining ? (
         <div className="flex flex-col gap-2">

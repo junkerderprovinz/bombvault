@@ -484,6 +484,8 @@ Pair the phone with your group to set it up: on any server open **Settings → P
 
 The interface opens directly, so the phone has to reach the server, at home or over a VPN, and you sign in as in a browser. A self-signed certificate is trusted once by its fingerprint, and the app warns if the server later shows a different one.
 
+The gear beside the plus opens the settings: the language, the name the phone shows on the Instances page, and the look, which follows the first server until you set your own. The app's [privacy policy](android/PRIVACY.md) lists what it stores and what it sends where.
+
 <br>
 
 ## 8. Configuration

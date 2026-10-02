@@ -17,12 +17,21 @@ const MEMBERS = [
   { id: "m2", name: "BombVault (Eltern)", version: "v9.7.0" },
 ];
 
+/** The first server's look, which the launcher follows until it gets its own. */
+const LOOK = { "bv-theme": "dark", "bv-accent": "#ff7eb6", "bv-shape": "round" };
+
 const FINGERPRINT = "5E:0B:91:C2:7A:44:3F:18:D6:9A:02:BB:71:E5:C0:3D:48:9F:26:A1:0C:77:E2:5B:93:16:4D:F8:AA:61:07:C4";
 
 export function previewBridge(): Bridge {
   const listeners = new Set<(e: { data: string }) => void>();
   const trusted = new Set<string>();
-  let state: LauncherState = { servers: load(), found: [], group: { paired: false, connected: false }, camera: true };
+  let state: LauncherState = {
+    servers: load(),
+    found: [],
+    group: { paired: false, connected: false },
+    camera: true,
+    app: { version: "0.0.3", versionCode: 3, android: "36", model: "Pixel 8", deviceName: "" },
+  };
 
   function post(msg: object) {
     const data = JSON.stringify(msg);
@@ -99,6 +108,15 @@ export function previewBridge(): Bridge {
         return;
       case "paste":
         post({ op: "pasted", ticket: req.ticket, text: "" });
+        return;
+      case "look":
+        post({ op: "look", ticket: req.ticket, status: 200, body: JSON.stringify({ ok: true, prefs: LOOK, stored: true }) });
+        return;
+      case "deviceName":
+        emit({ app: { ...state.app, deviceName: req.name } });
+        return;
+      case "removeAll":
+        emit({ servers: [], group: { paired: false, connected: false } });
         return;
       case "leave":
         emit({ servers: state.servers.filter((s) => s.url !== "").map((s) => ({ ...s, member: false })), group: { paired: false, connected: false } });

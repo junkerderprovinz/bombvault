@@ -6,7 +6,7 @@ import { IconCancel } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { BottomSheet } from "../components/mobile/BottomSheet";
 import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
-import { IconAdd, IconPencil } from "../components/navGlyphs";
+import { IconAdd, IconGear, IconPencil } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
 import { hueVars } from "../lib/appearance";
@@ -23,9 +23,15 @@ import {
   type Problem,
   type Server,
 } from "./bridge";
+import { adopt, following } from "./look";
 import { PairPage } from "./PairPage";
+import { LanguagePage, SettingsPage } from "./SettingsPage";
 
 type T = ReturnType<typeof useT>["t"];
+
+/** The pages above the list, each a history entry of its own so the phone's
+ *  Back key closes it the way Back closes every page. */
+type View = "list" | "pairing" | "settings" | "language";
 
 /** How a server answered the last poll. */
 type Reach = "connected" | "signIn" | "certificate" | "offline";
@@ -53,22 +59,26 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     return off;
   }, [bridge]);
 
-  // The pairing page is a history entry of its own, so the phone's Back key
-  // closes it the way Back closes every page.
-  const [pairing, setPairing] = useState(false);
+  const [view, setView] = useState<View>("list");
+  const shown = useRef<View>("list");
   useEffect(() => {
-    const onPop = () => {
-      setPairing(false);
-      bridge.send({ op: "cancelJoin" });
+    const onPop = (e: PopStateEvent) => {
+      const next = ((e.state as { view?: View } | null)?.view ?? "list") as View;
+      if (shown.current === "pairing" && next !== "pairing") bridge.send({ op: "cancelJoin" });
+      shown.current = next;
+      setView(next);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [bridge]);
-  const openPairing = () => {
-    window.history.pushState({ pairing: true }, "");
-    setPairing(true);
+  const show = (next: View) => {
+    window.history.pushState({ view: next }, "");
+    shown.current = next;
+    setView(next);
   };
-  const closePairing = () => window.history.back();
+  const openPairing = () => show("pairing");
+  const back = () => window.history.back();
+  const pairing = view === "pairing";
   const askCamera = useCallback(() => bridge.send({ op: "camera" }), [bridge]);
 
   // Taking a group over closes the page it was joined from: what comes next
@@ -79,6 +89,16 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     if (paired && !wasPaired.current && pairing) window.history.back();
     wasPaired.current = paired;
   }, [paired, pairing]);
+
+  const followFirst = useCallback(
+    (id: string | undefined) => {
+      if (!id || !following()) return;
+      void bridge.look(id).then((a) => {
+        if (a.status === 200 && following()) adopt(a.body);
+      });
+    },
+    [bridge]
+  );
 
   // Every state the app pushes is a new array; the poll restarts only when
   // the servers themselves change.
@@ -93,6 +113,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       return s;
     };
     async function poll() {
+      followFirst(list[0]?.id);
       const now = Date.now();
       const results = await Promise.all(list.map((s) => readServer(bridge, s, resolveName, now)));
       if (!live) return;
@@ -110,7 +131,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       live = false;
       clearInterval(timer);
     };
-  }, [bridge, watched, t]);
+  }, [bridge, watched, t, followFirst]);
 
   if (state === null) return null;
 
@@ -160,12 +181,33 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
           onAskCamera={askCamera}
           onPickFound={(f) => bridge.send({ op: "save", server: { name: f.name, url: f.url }, open: true })}
           onByAddress={() => setEditing("new")}
-          onBack={closePairing}
+          onBack={back}
         />
         {sheets}
       </>
     );
   }
+
+  if (view === "settings") {
+    return (
+      <SettingsPage
+        t={t}
+        app={state.app}
+        paired={state.group.paired}
+        onBack={back}
+        onLanguage={() => show("language")}
+        onRename={(name) => bridge.send({ op: "deviceName", name })}
+        onFollow={() => followFirst(state.servers[0]?.id)}
+        onLeave={() => bridge.send({ op: "leave" })}
+        onRemoveAll={() => {
+          bridge.send({ op: "removeAll" });
+          back();
+        }}
+      />
+    );
+  }
+
+  if (view === "language") return <LanguagePage t={t} onBack={back} />;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-5">
@@ -175,6 +217,9 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-carbon-text">BombVault</h1>
         <Badge as="button" shape="square" size="icon" tone="active" tip={t("launcher.add")} onClick={openPairing}>
           <IconAdd />
+        </Badge>
+        <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("settings.title")} onClick={() => show("settings")}>
+          <IconGear />
         </Badge>
       </header>
 

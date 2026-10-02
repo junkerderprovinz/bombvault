@@ -10,6 +10,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.CookieManager
@@ -104,6 +105,9 @@ class MainActivity : ComponentActivity() {
         root.addView(web)
         setContentView(root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // The bars take the page's colour, with icons chosen to read on it, so
+        // Android's own scrim over the button bar would only grey it.
+        window.isNavigationBarContrastEnforced = false
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime(),
@@ -218,6 +222,8 @@ class MainActivity : ComponentActivity() {
     private fun fromLauncher(msg: JSONObject) {
         when (msg.optString("op")) {
             "state" -> pushState()
+            // The launcher's look can differ from the phone's dark or light.
+            "bars" -> parseColor(msg.optString("color"))?.let { if (current == null) paintBars(it) }
             "save" -> {
                 val s = msg.getJSONObject("server")
                 val saved = servers.save(s.optString("id").ifEmpty { null }, s.getString("name"), s.getString("url"))
@@ -239,15 +245,31 @@ class MainActivity : ComponentActivity() {
                 problem = null
                 pushState()
             }
-            "activity" -> {
+            "activity", "look" -> {
+                val op = msg.getString("op")
                 val server = servers.get(msg.getString("id")) ?: return
                 val ticket = msg.getInt("ticket")
                 lifecycleScope.launch {
-                    val answer = withContext(Dispatchers.IO) { pairing.activity(server) ?: activityOverHttp(server) }
+                    val answer = withContext(Dispatchers.IO) {
+                        if (op == "activity") {
+                            pairing.ask(server, "/api/group/peer/activity") ?: activityOverHttp(server)
+                        } else {
+                            pairing.ask(server, "/api/group/peer/display-prefs") ?: get(server, "/api/display-prefs")
+                        }
+                    }
                     launcher?.postMessage(
-                        JSONObject().put("op", "activity").put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
+                        JSONObject().put("op", op).put("ticket", ticket).put("status", answer.status).put("body", answer.body).toString(),
                     )
                 }
+            }
+            "deviceName" -> {
+                pairing.rename(msg.getString("name").trim())
+                pushState()
+            }
+            "removeAll" -> {
+                if (pairing.paired) pairing.leave()
+                servers.removeAll()
+                pushState()
             }
             "join" -> join(msg.getString("code"))
             "adopt" -> pairing.adopt()
@@ -284,9 +306,20 @@ class MainActivity : ComponentActivity() {
             )
             .put("group", group())
             .put("camera", cameraAllowed())
+            .put("app", appInfo())
         problem?.let { state.put("problem", it) }
         pairError?.let { state.put("pairError", it) }
         launcher?.postMessage(state.toString())
+    }
+
+    private fun appInfo(): JSONObject {
+        val info = packageManager.getPackageInfo(packageName, 0)
+        return JSONObject()
+            .put("version", info.versionName ?: "")
+            .put("versionCode", info.longVersionCode)
+            .put("android", Build.VERSION.SDK_INT.toString())
+            .put("model", pairing.phoneName)
+            .put("deviceName", pairing.deviceName)
     }
 
     /** Goes back to the launcher, which tells the person why [server] did not open. */
@@ -373,7 +406,6 @@ class MainActivity : ComponentActivity() {
                 if (current != null) {
                     current = null
                     discovery.start()
-                    paintBars(if (night()) DARK else LIGHT)
                 }
             } else {
                 current = servers.forOrigin(originOf(url)) ?: current
@@ -385,7 +417,6 @@ class MainActivity : ComponentActivity() {
                 forgetHistory = false
                 // The launcher is the bottom of the stack: Back from it leaves.
                 web.clearHistory()
-                paintBars(if (night()) DARK else LIGHT)
             }
         }
 
