@@ -1411,6 +1411,34 @@ body {
 .glim-docker-mark { color: var(--brand-docker); }
 .glim-house-mark { color: var(--accent-text); }
 
+/* The phone app answers a press the way KnightLoader's does. Nothing hovers
+   on a touch screen, so without this a tap that works looks like one that did
+   not: a control dims while the finger is on it, and a brand tile lights in its
+   colour for as long as it is held, which leaves nothing lit at rest. */
+/* A long press on a button is a slow tap, not a request for the link menu. */
+[data-app] :is(button, a, [role="button"]) {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (hover: none) {
+  [data-app] :is(button, a, [role="button"]):not(.glim-readme-btn):not(:disabled):active {
+    opacity: .2;
+  }
+  [data-app] .glim-brand-tile:active,
+  [data-app] .group:active > .glim-brand-tile {
+    background-color: var(--tile);
+    color: var(--tile-ink);
+    --mark-ink: var(--tile-ink);
+    --mark-cut: var(--tile);
+    --brand-docker: var(--tile-ink);
+    --brand-unraid-from: var(--tile-ink);
+    --brand-unraid-to: var(--tile-ink);
+  }
+  [data-app] :is(.glim-brand-tile:active, .group:active > .glim-brand-tile) .glim-mark-rest { display: none; }
+  [data-app] :is(.glim-brand-tile:active, .group:active > .glim-brand-tile) .glim-mark-hover { display: block; }
+}
+
 /* The brands' tile colours: the true colour and the ink that holds on it, white
    wherever white reaches 2:1 and near-black below that. */
 .glim-tile-github { --tile: #181717; --tile-ink: #ffffff; } /* 17.9:1 */

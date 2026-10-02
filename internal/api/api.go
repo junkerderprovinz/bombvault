@@ -121,6 +121,7 @@ func NewHandler(
 	}
 	if svc != nil {
 		svc.peerActivity = h.activity
+		svc.peerSession = h.phoneSession
 	}
 	return h
 }

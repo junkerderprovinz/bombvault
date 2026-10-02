@@ -193,12 +193,10 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       <SettingsPage
         t={t}
         app={state.app}
-        paired={state.group.paired}
         onBack={back}
         onLanguage={() => show("language")}
         onRename={(name) => bridge.send({ op: "deviceName", name })}
         onFollow={() => followFirst(state.servers[0]?.id)}
-        onLeave={() => bridge.send({ op: "leave" })}
         onRemoveAll={() => {
           bridge.send({ op: "removeAll" });
           back();
