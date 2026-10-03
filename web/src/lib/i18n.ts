@@ -616,7 +616,7 @@ export const en = {
   "offsite.prune.statePolicy": "BombVault prunes this copy after each replication, following the off-site retention policy.",
   "offsite.prune.stateNone": "Nothing prunes this copy. Append-only is off and every off-site keep value is 0, so it grows until the disk does.",
   "offsite.prune.effective": "Keeping {last} latest, {daily} daily, {weekly} weekly, {monthly} monthly, {yearly} yearly.",
-  "offsite.prune.editedElsewhere": "Set in Settings, Retention. The values are shared by every domain.",
+  "offsite.prune.editedElsewhere": "Set in Settings, Retention. Every source shares these values unless it has rules of its own.",
   "offsite.prune.budgetInfo": "Raises an alarm once the off-site repository grows past this many gigabytes. It never deletes anything, so it is the safety net for a copy nothing prunes.",
   "settings.retentionImmutableNotPruned": "An append-only off-site destination is never pruned from here, whatever these values say. Its own step in the off-site assistant explains how to prune it from the storage side.",
 
@@ -670,7 +670,6 @@ export const en = {
   "settings.notLoadedNoSave": "The current configuration could not be loaded, so nothing is saved. Reload the page and try again.",
 
   // Retention
-  "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
   "excludes.advisoryImmichDb": "Immich keeps every photo's albums, faces and dates in a PostgreSQL database that runs in a separate container, so this backup does not contain it. Restoring from here brings the pictures back without them. BombVault dumps that database container automatically when it is backed up, so check that it is included in your schedule.",
   "excludes.advisoryNextcloudDb": "Nextcloud keeps its accounts, shares and tags in a database that usually runs in a separate container, so this backup does not contain it. The files come back, the sharing does not. BombVault dumps that database container automatically when it is backed up, so check that it is included in your schedule.",
@@ -741,7 +740,6 @@ export const en = {
   "retentionPreview.paused": "Kept: this item has an open anomaly",
   "retentionPreview.ownPolicy": "This source's own keep rules",
   "retentionPreview.sharedPolicy": "Shared keep rules",
-  "retentionPreview.policy": "Keep rules",
   // Image cleanup, Unraid's update-status refresh and registry credentials
   // share the Containers page: all of them serve the post-backup update pull.
   "settings.imageMaintenanceTitle": "Image Cleanup & Update Status",
@@ -769,13 +767,17 @@ export const en = {
   "settings.retentionCombineInfo": "The five rules combine with OR: a snapshot survives if any single rule would keep it. They don't add up to a fixed count. Applied separately to each backed-up item.",
   "settings.retentionLocal": "Local repo",
   "settings.retentionOffsite": "Off-site repo",
-  "settings.retentionOffsiteTitle": "Off-site retention",
   "settings.retentionOffsiteHint": "A separate policy for the off-site repo, so you can keep it longer as an archive. All zero = keep every off-site backup (no off-site pruning).",
   "settings.ownRetentionTitle": "Keep rules per source",
   "settings.ownRetentionHint": "A source can follow its own keep rules instead of the shared ones above. Containers and folders that change every day might keep 7 daily backups, while VMs that rarely change need fewer. A source without its own rules uses the shared ones.",
   "settings.ownRetention": "Own keep rules",
   "settings.ownRetentionFor": "Own keep rules for {source}",
-  "settings.ownRetentionToggleHint": "When on, this source keeps its backups by the five rules below, which start from the shared values. When off, it uses the shared rules. All zero keeps every backup of this source. Off-site copies keep their own rules either way.",
+  "settings.ownRetentionToggleHint": "When on, this source keeps its backups by the five rules below, which start from the shared values. When off, it uses the shared rules. All zero keeps every backup of this source.",
+  "settings.ownOffsiteRetention": "Own off-site keep rules",
+  "settings.ownOffsiteRetentionFor": "Own off-site keep rules for {source}",
+  "settings.ownOffsiteRetentionHint": "A source can keep the backups in its off-site repository by its own rules instead of the shared off-site ones above. A source without its own rules uses the shared ones.",
+  "settings.ownOffsiteRetentionToggleHint": "When on, this source's off-site repository keeps its backups by the five rules below, which start from the shared off-site values. When off, it uses the shared off-site rules. All zero keeps every off-site backup of this source.",
+  "settings.retentionExtraTargets": "Additional off-site targets keep their own rules, which you set on the Off-site page.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site bandwidth",
@@ -3746,7 +3748,7 @@ export const de: Translations = {
   "offsite.prune.statePolicy": "BombVault prunt diese Kopie nach jeder Replikation nach der Off-site-Aufbewahrungsrichtlinie.",
   "offsite.prune.stateNone": "Nichts prunt diese Kopie. Append-only ist aus und alle Off-site-Keep-Werte stehen auf 0, sie wächst also, bis die Platte nicht mehr mitmacht.",
   "offsite.prune.effective": "Behält {last} neueste, {daily} täglich, {weekly} wöchentlich, {monthly} monatlich, {yearly} jährlich.",
-  "offsite.prune.editedElsewhere": "Eingestellt unter Einstellungen, Aufbewahrung. Die Werte gelten für alle Bereiche gemeinsam.",
+  "offsite.prune.editedElsewhere": "Eingestellt unter Einstellungen, Aufbewahrung. Alle Quellen teilen sich diese Werte, außer eine hat eigene Regeln.",
   "offsite.prune.budgetInfo": "Schlägt Alarm, sobald das Off-site-Repository über so viele Gigabyte wächst. Es löscht nie etwas, ist also das Sicherheitsnetz für eine Kopie, die niemand prunt.",
   "settings.retentionImmutableNotPruned": "Ein Append-only-Off-site-Ziel wird von hier nie geprunt, egal was hier steht. Der zugehörige Schritt im Off-site-Assistenten erklärt, wie man es von der Gegenseite aus prunt.",
 
@@ -3798,7 +3800,6 @@ export const de: Translations = {
   "settings.notLoadedNoSave": "Die aktuelle Konfiguration konnte nicht geladen werden, daher wird nichts gespeichert. Lade die Seite neu und versuche es noch einmal.",
 
   // Retention
-  "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
   "excludes.advisoryImmichDb": "Immich speichert Alben, Gesichter und Datumsangaben zu jedem Foto in einer PostgreSQL-Datenbank, die in einem eigenen Container läuft. Dieses Backup enthält sie nicht. Eine Wiederherstellung von hier bringt die Bilder zurück, aber ohne all das. BombVault dumpt den Container dieser Datenbank automatisch, sobald er gesichert wird; prüfe also, dass er in deinem Zeitplan enthalten ist.",
   "excludes.advisoryNextcloudDb": "Nextcloud speichert Konten, Freigaben und Schlagworte in einer Datenbank, die meist in einem eigenen Container läuft. Dieses Backup enthält sie nicht. Die Dateien kommen zurück, die Freigaben nicht. BombVault dumpt den Container dieser Datenbank automatisch, sobald er gesichert wird; prüfe also, dass er in deinem Zeitplan enthalten ist.",
@@ -3869,7 +3870,6 @@ export const de: Translations = {
   "retentionPreview.paused": "Behalten: Dieses Element hat eine offene Anomalie",
   "retentionPreview.ownPolicy": "Eigene Aufbewahrungsregeln dieser Quelle",
   "retentionPreview.sharedPolicy": "Gemeinsame Aufbewahrungsregeln",
-  "retentionPreview.policy": "Aufbewahrungsregeln",
   "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
   "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
@@ -3895,13 +3895,17 @@ export const de: Translations = {
   "settings.retentionCombineInfo": "Die fünf Regeln kombinieren sich per ODER: ein Snapshot bleibt erhalten, wenn ihn irgendeine Regel behalten würde. Sie addieren sich nicht zu einer festen Anzahl. Gilt separat für jedes gesicherte Objekt.",
   "settings.retentionLocal": "Lokales Repo",
   "settings.retentionOffsite": "Off-site-Repo",
-  "settings.retentionOffsiteTitle": "Off-site-Aufbewahrung",
   "settings.retentionOffsiteHint": "Eine separate Regel für das Off-site-Repo, damit du es länger als Archiv behalten kannst. Alles 0 = jedes Off-site-Backup behalten (kein Off-site-Prune).",
   "settings.ownRetentionTitle": "Aufbewahrung je Quelle",
   "settings.ownRetentionHint": "Eine Quelle kann eigene Aufbewahrungsregeln statt der gemeinsamen oben haben. Container und Ordner, die sich täglich ändern, behalten etwa 7 tägliche Backups, VMs, die sich selten ändern, brauchen weniger. Eine Quelle ohne eigene Regeln nutzt die gemeinsamen.",
   "settings.ownRetention": "Eigene Aufbewahrungsregeln",
   "settings.ownRetentionFor": "Eigene Aufbewahrungsregeln für {source}",
-  "settings.ownRetentionToggleHint": "Ein: Diese Quelle behält ihre Backups nach den fünf Regeln darunter, die mit den gemeinsamen Werten beginnen. Aus: Sie nutzt die gemeinsamen Regeln. Alles 0 behält jedes Backup dieser Quelle. Off-site-Kopien behalten in jedem Fall ihre eigenen Regeln.",
+  "settings.ownRetentionToggleHint": "Ein: Diese Quelle behält ihre Backups nach den fünf Regeln darunter, die mit den gemeinsamen Werten beginnen. Aus: Sie nutzt die gemeinsamen Regeln. Alles 0 behält jedes Backup dieser Quelle.",
+  "settings.ownOffsiteRetention": "Eigene Off-site-Aufbewahrungsregeln",
+  "settings.ownOffsiteRetentionFor": "Eigene Off-site-Aufbewahrungsregeln für {source}",
+  "settings.ownOffsiteRetentionHint": "Eine Quelle kann die Backups in ihrem Off-site-Repo nach eigenen Regeln statt nach den gemeinsamen Off-site-Regeln oben aufbewahren. Eine Quelle ohne eigene Regeln nutzt die gemeinsamen.",
+  "settings.ownOffsiteRetentionToggleHint": "Ein: Das Off-site-Repo dieser Quelle behält seine Backups nach den fünf Regeln darunter, die mit den gemeinsamen Off-site-Werten beginnen. Aus: Es nutzt die gemeinsamen Off-site-Regeln. Alles 0 behält jedes Off-site-Backup dieser Quelle.",
+  "settings.retentionExtraTargets": "Weitere Off-site-Ziele behalten ihre eigenen Regeln, die du auf der Seite Off-site einstellst.",
 
   // Off-site-Bandbreite
   "settings.offsiteLimits": "Off-site-Bandbreite",

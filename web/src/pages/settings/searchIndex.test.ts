@@ -59,14 +59,18 @@ describe("the settings search index", () => {
 
   it("knows every keep rule of the retention grids with its (i)", () => {
     const grid = /\["\w+", "(settings\.retention\w+)", "(settings\.retention\w+Info)"\]/g;
-    const pageRules = [...region("retention").matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
+    expect(region("retention")).toContain("<RetentionSection");
+    const sectionSource = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
+    const pageRules = [...sectionSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     const targetSource = readFileSync(join(HERE, "..", "..", "components", "OffsiteTargetsSection.tsx"), "utf8");
     const targetRules = [...targetSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     expect(pageRules.map((r) => r.key)).toContain("settings.retentionYearly");
     expect(targetRules.map((r) => r.key)).toContain("settings.retentionYearly");
 
-    for (const card of SETTINGS_INDEX.retention) {
-      for (const rule of pageRules) expect(card.rows).toContainEqual(rule);
+    const sections = SETTINGS_INDEX.retention.filter((c) => c.title === "source.local" || c.title === "source.offsite");
+    expect(sections).toHaveLength(2);
+    for (const section of sections) {
+      for (const rule of pageRules) expect(section.rows).toContainEqual(rule);
     }
     for (const card of SETTINGS_INDEX.offsite.filter((c) => c.title === "offsite.copyDomainTitle")) {
       for (const rule of targetRules) expect(card.rows).toContainEqual(rule);
@@ -102,6 +106,20 @@ describe("the settings search index", () => {
     ].map(([, key, hint]) => (hint ? { key, hint } : { key }));
     expect(rows.length).toBeGreaterThanOrEqual(3);
     for (const row of rows) expect(card?.rows).toContainEqual(row);
+  });
+
+  it("indexes each switch and the extra-targets line of the Retention sections with its (i)", () => {
+    const source = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
+    const rows = (title: string) => SETTINGS_INDEX.retention.find((c) => c.title === title)?.rows ?? [];
+    for (const [section, key, hint] of [
+      ["source.local", "settings.ownRetention", "settings.ownRetentionToggleHint"],
+      ["source.offsite", "settings.ownOffsiteRetention", "settings.ownOffsiteRetentionToggleHint"],
+    ] as const) {
+      expect(source).toContain(`"${hint}"`);
+      expect(rows(section)).toContainEqual({ key, hint });
+    }
+    expect(source).toContain('"settings.retentionExtraTargets"');
+    expect(rows("source.offsite")).toContainEqual({ key: "settings.retentionExtraTargets" });
   });
 
   it("lists no card twice on one page", () => {

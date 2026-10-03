@@ -600,7 +600,6 @@ const pl: Partial<Translations> = {
   "files.more": "Zawęź filtr, aby zobaczyć więcej plików.",
 
   // Retention
-  "settings.retentionTitle": "Przechowywanie migawek",
   "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
   "excludes.advisoryImmichDb": "Immich trzyma albumy, twarze i daty każdego zdjęcia w bazie danych PostgreSQL, która działa w osobnym kontenerze, nie w tym, więc ta kopia zapasowa jej nie zawiera. Odtworzenie stąd przywróci zdjęcia, ale bez albumów, twarzy i dat. BombVault sam zrzuca kontener tej bazy danych, gdy robi jego kopię, więc sprawdź, czy jest w twoim harmonogramie.",
   "excludes.advisoryNextcloudDb": "Nextcloud trzyma konta, udostępnienia i tagi w bazie danych, która zwykle działa w osobnym kontenerze, więc ta kopia zapasowa jej nie zawiera. Pliki wrócą, udostępnienia nie. BombVault sam zrzuca kontener tej bazy danych, gdy robi jego kopię, więc sprawdź, czy jest w twoim harmonogramie.",
@@ -671,7 +670,6 @@ const pl: Partial<Translations> = {
   "retentionPreview.paused": "Zachowano: ten element ma otwartą anomalię",
   "retentionPreview.ownPolicy": "Własne reguły przechowywania tego źródła",
   "retentionPreview.sharedPolicy": "Wspólne reguły przechowywania",
-  "retentionPreview.policy": "Reguły przechowywania",
   "settings.imageMaintenanceTitle": "Czyszczenie obrazów i stan aktualizacji",
   "settings.imageMaintenanceHint": "Konserwacja wokół aktualizacji kontenera po backupie: usunięcie zastąpionego obrazu oraz odświeżenie własnego zbuforowanego statusu aktualizacji Unraid.",
   "settings.retentionLast": "Zachowaj ostatnie",
@@ -686,13 +684,17 @@ const pl: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N lat kalendarzowych z kopią zapasową. Gdy lat jest mniej, zachowuje też najstarszą.",
   "settings.retentionLocal": "Repo lokalne",
   "settings.retentionOffsite": "Repo zdalne",
-  "settings.retentionOffsiteTitle": "Przechowywanie zdalne",
   "settings.retentionOffsiteHint": "Osobna polityka dla repo zdalnego, aby trzymać je dłużej jako archiwum. Wszystko 0 = zachowaj każdą kopię zdalną (bez czyszczenia zdalnego).",
   "settings.ownRetentionTitle": "Reguły przechowywania dla źródła",
   "settings.ownRetentionHint": "Źródło może mieć własne reguły przechowywania zamiast wspólnych powyżej. Kontenery i foldery, które zmieniają się codziennie, mogą trzymać 7 dziennych kopii, a rzadko zmieniane maszyny wirtualne mniej. Źródło bez własnych reguł używa wspólnych.",
   "settings.ownRetention": "Własne reguły przechowywania",
   "settings.ownRetentionFor": "Własne reguły przechowywania dla {source}",
-  "settings.ownRetentionToggleHint": "Włączone: to źródło przechowuje kopie według pięciu reguł poniżej, które zaczynają od wspólnych wartości. Wyłączone: używa wspólnych reguł. Wszystkie 0 zachowuje każdą kopię tego źródła. Kopie zdalne i tak mają własne reguły.",
+  "settings.ownRetentionToggleHint": "Włączone: to źródło przechowuje kopie według pięciu reguł poniżej, które zaczynają od wspólnych wartości. Wyłączone: używa wspólnych reguł. Wszystkie 0 zachowuje każdą kopię tego źródła.",
+  "settings.ownOffsiteRetention": "Własne reguły przechowywania kopii zdalnych",
+  "settings.ownOffsiteRetentionFor": "Własne reguły przechowywania kopii zdalnych dla {source}",
+  "settings.ownOffsiteRetentionHint": "Źródło może przechowywać kopie w swoim repo zdalnym według własnych reguł zamiast wspólnych reguł zdalnych powyżej. Źródło bez własnych reguł używa wspólnych.",
+  "settings.ownOffsiteRetentionToggleHint": "Włączone: repo zdalne tego źródła przechowuje kopie według pięciu reguł poniżej, które zaczynają od wspólnych wartości zdalnych. Wyłączone: używa wspólnych reguł zdalnych. Wszystkie 0 zachowuje każdą kopię zdalną tego źródła.",
+  "settings.retentionExtraTargets": "Dodatkowe cele zdalne mają własne reguły, które ustawiasz na stronie Poza siedzibą.",
   "settings.retentionCombineInfo": "Pięć reguł łączy się operatorem LUB: migawka przetrwa, jeśli zachowałaby ją choć jedna reguła. Nie sumują się do stałej liczby. Dotyczy osobno każdego kopiowanego elementu.",
 
   // Off-site (rclone)
@@ -1375,7 +1377,7 @@ const pl: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault przycina tę kopię po każdej replikacji, zgodnie z zasadą przechowywania zdalnego.",
   "offsite.prune.stateNone": "Nic nie przycina tej kopii. Append-only jest wyłączone, a wszystkie zdalne wartości zachowywania wynoszą 0, więc rośnie, dopóki dysk wytrzyma.",
   "offsite.prune.effective": "Zachowuje {last} najnowsze, {daily} dzienne, {weekly} tygodniowe, {monthly} miesięczne, {yearly} roczne.",
-  "offsite.prune.editedElsewhere": "Ustawiane w Ustawienia, Przechowywanie. Wartości są wspólne dla wszystkich domen.",
+  "offsite.prune.editedElsewhere": "Ustawiane w Ustawienia, Przechowywanie. Wszystkie źródła dzielą te wartości, chyba że któreś ma własne reguły.",
   "offsite.prune.budgetInfo": "Podnosi alarm, gdy tylko zdalne repozytorium przekroczy tyle gigabajtów. Nigdy niczego nie usuwa, więc jest siatką bezpieczeństwa dla kopii, której nic nie przycina.",
   "settings.retentionImmutableNotPruned": "Zdalny cel z append-only nigdy nie jest stąd przycinany, cokolwiek mówią te wartości. Jego własny krok w kreatorze zdalnym wyjaśnia, jak przyciąć go po stronie magazynu.",
 

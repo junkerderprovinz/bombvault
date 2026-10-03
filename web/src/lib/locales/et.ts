@@ -504,7 +504,7 @@ const et: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault puhastab selle koopia pärast iga replikatsiooni välise säilituspoliitika järgi.",
   "offsite.prune.stateNone": "Miski ei puhasta seda koopiat. Ainult-lisamine on väljas ja kõik välised säilitusväärtused on 0, seega kasvab see, kuni ketas otsa saab.",
   "offsite.prune.effective": "Säilitab {last} viimast, {daily} päevast, {weekly} nädalast, {monthly} kuist, {yearly} aastast.",
-  "offsite.prune.editedElsewhere": "Määratakse jaotises Seaded, Säilitamine. Väärtused on kõigil valdkondadel ühised.",
+  "offsite.prune.editedElsewhere": "Määratakse jaotises Seaded, Säilitamine. Kõik allikad jagavad neid väärtusi, kui mõnel pole oma reegleid.",
   "offsite.prune.budgetInfo": "Annab häire, kui väline hoidla kasvab üle nii mitme gigabaidi. See ei kustuta kunagi midagi, seega on see turvavõrk koopiale, mida miski ei puhasta.",
   "settings.retentionImmutableNotPruned": "Ainult-lisamisega välist sihtkohta ei puhastata siit kunagi, ükskõik mida need väärtused ütlevad. Selle enda samm välises abilises selgitab, kuidas seda salvestuspoolelt puhastada.",
 
@@ -555,7 +555,6 @@ const et: Partial<Translations> = {
   "settings.notLoadedNoSave": "Praegust seadistust ei õnnestunud laadida, seega ei salvestata midagi. Laadi leht uuesti ja proovi veel kord.",
 
   // Retention
-  "settings.retentionTitle": "Hetktõmmiste säilitamine",
   "settings.retentionHint": "Mitu varundust iga üksuse kohta säilitatakse. Pärast iga varundust puhastab restic vanemad hetktõmmised selle reegli järgi. Kõik nullid = säilita kõik (väljas).",
   "excludes.advisoryImmichDb": "Immich hoiab iga foto albumeid, nägusid ja kuupäevi PostgreSQLi andmebaasis, mis töötab omaette, eraldi konteineris, nii et see varundus seda ei sisalda. Siit taastamine toob pildid tagasi, aga ilma kõige selleta. BombVault dumbib selle andmebaasi konteineri automaatselt, kui seda varundatakse, nii et kontrolli, et see oleks sinu ajakavas.",
   "excludes.advisoryNextcloudDb": "Nextcloud hoiab kontosid, jagamisi ja silte andmebaasis, mis tavaliselt töötab eraldi konteineris, nii et see varundus seda ei sisalda. Failid tulevad tagasi, jagamised mitte. BombVault dumbib selle andmebaasi konteineri automaatselt, kui seda varundatakse, nii et kontrolli, et see oleks sinu ajakavas.",
@@ -626,7 +625,6 @@ const et: Partial<Translations> = {
   "retentionPreview.paused": "Alles jäetud: sellel üksusel on avatud kõrvalekalle",
   "retentionPreview.ownPolicy": "Selle allika oma säilitusreeglid",
   "retentionPreview.sharedPolicy": "Ühised säilitusreeglid",
-  "retentionPreview.policy": "Säilitusreeglid",
   "settings.imageMaintenanceTitle": "Tõmmiste puhastus ja uuenduse olek",
   "settings.imageMaintenanceHint": "Hooldus konteineri varundusjärgse uuenduse ümber: puhasta asendatud tõmmis ja värskenda Unraidi enda vahemällu salvestatud uuenduse olekut.",
   "settings.pruneImageAfterUpdate": "Eemalda vana tõmmis pärast uuendust",
@@ -652,13 +650,17 @@ const et: Partial<Translations> = {
   "settings.retentionCombineInfo": "Need viis reeglit kombineeritakse VÕI-loogikaga: hetktõmmis säilib, kui mõni reegel seda säilitaks. Need ei liidu kindlaks arvuks. Rakendub eraldi igale varundatud üksusele.",
   "settings.retentionLocal": "Kohalik hoidla",
   "settings.retentionOffsite": "Väline hoidla",
-  "settings.retentionOffsiteTitle": "Väline säilitamine",
   "settings.retentionOffsiteHint": "Eraldi reegel välise hoidla jaoks, et saaksid seda kauem arhiivina hoida. Kõik nullid = säilita iga väline varundus (välist puhastust ei toimu).",
   "settings.ownRetentionTitle": "Säilitusreeglid allika kaupa",
   "settings.ownRetentionHint": "Iga allikas võib järgida oma säilitusreegleid ülal olevate ühiste asemel. Igapäevaselt muutuvad konteinerid ja kaustad võivad hoida 7 päevast varukoopiat, harva muutuvad virtuaalmasinad vähem. Ilma oma reegliteta allikas kasutab ühiseid.",
   "settings.ownRetention": "Oma säilitusreeglid",
   "settings.ownRetentionFor": "Allika {source} oma säilitusreeglid",
-  "settings.ownRetentionToggleHint": "Sees: see allikas säilitab varukoopiad allpool oleva viie reegli järgi, mis lähtuvad ühistest väärtustest. Väljas: kasutab ühiseid reegleid. Kõik 0 säilitab selle allika kõik varukoopiad. Välised koopiad järgivad igal juhul oma reegleid.",
+  "settings.ownRetentionToggleHint": "Sees: see allikas säilitab varukoopiad allpool oleva viie reegli järgi, mis lähtuvad ühistest väärtustest. Väljas: kasutab ühiseid reegleid. Kõik 0 säilitab selle allika kõik varukoopiad.",
+  "settings.ownOffsiteRetention": "Oma välised säilitusreeglid",
+  "settings.ownOffsiteRetentionFor": "Allika {source} oma välised säilitusreeglid",
+  "settings.ownOffsiteRetentionHint": "Iga allikas võib hoida oma välise hoidla varukoopiaid oma reeglite järgi ülal olevate ühiste väliste reeglite asemel. Ilma oma reegliteta allikas kasutab ühiseid.",
+  "settings.ownOffsiteRetentionToggleHint": "Sees: selle allika väline hoidla säilitab varukoopiad allpool oleva viie reegli järgi, mis lähtuvad ühistest välistest väärtustest. Väljas: kasutab ühiseid väliseid reegleid. Kõik 0 säilitab selle allika kõik välised varukoopiad.",
+  "settings.retentionExtraTargets": "Täiendavad välised sihtkohad järgivad oma reegleid, mille määrad lehel Väline.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Väline ribalaius",

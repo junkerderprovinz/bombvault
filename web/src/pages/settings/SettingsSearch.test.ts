@@ -49,10 +49,10 @@ describe("the settings index in English", () => {
       .filter((h) => !h.inHint)
       .map((h) => `${h.item.page}: ${h.item.cardName ?? ""}`);
 
-  it("leads the yearly rule to both policies on the Retention page and to each off-site destination", () => {
+  it("leads the yearly rule to both sections of the Retention card and to each off-site destination", () => {
     const hits = where("keep yearly");
-    expect(hits).toContain(`retention: ${en["settings.retentionTitle"]}`);
-    expect(hits).toContain(`retention: ${en["settings.retentionOffsiteTitle"]}`);
+    expect(hits).toContain(`retention: ${en["source.local"]}`);
+    expect(hits).toContain(`retention: ${en["source.offsite"]}`);
     expect(hits.filter((h) => h.startsWith("offsite: "))).toHaveLength(6);
     expect(hits.every((h) => h.startsWith("retention: ") || h.startsWith("offsite: "))).toBe(true);
   });
@@ -62,6 +62,14 @@ describe("the settings index in English", () => {
     expect(hits).toContain(`storage: ${en["settings.paths"]}`);
     expect(hits).toContain(`storage: ${en["repos.title"]}`);
     expect(hits.filter((h) => h.startsWith("offsite: "))).toHaveLength(6);
+  });
+
+  it("leads each source's own rules to their section of the Retention card", () => {
+    expect(where("own keep rules")).toContain(`retention: ${en["source.local"]}`);
+    const offsite = where("own off-site keep rules");
+    expect(offsite).toContain(`retention: ${en["source.offsite"]}`);
+    expect(offsite).not.toContain(`retention: ${en["source.local"]}`);
+    expect(where("additional off-site targets keep")).toEqual([`retention: ${en["source.offsite"]}`]);
   });
 
   it("finds a row by the words behind its (i)", () => {

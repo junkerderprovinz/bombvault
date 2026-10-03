@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
 import type { OffsiteDomain, RetentionKeep, Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
-import { Card, ToggleRow } from "./shared";
+import { ToggleRow } from "./shared";
 
 // The order and names of the off-site page, so a source reads the same on both.
 const SOURCES = [
@@ -24,81 +25,170 @@ const RULES = [
   ["keepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
 ] as const;
 
-type Own = Settings["ownRetention"];
+export type RetentionScope = "local" | "offsite";
 
-/** The shared policy, which a source starts from when it gets its own. */
-function sharedKeep(s: Settings): RetentionKeep {
+// What each section reads and writes, and the words it uses.
+const SCOPES = {
+  local: {
+    shared: {
+      keepLast: "retentionKeepLast",
+      keepDaily: "retentionKeepDaily",
+      keepWeekly: "retentionKeepWeekly",
+      keepMonthly: "retentionKeepMonthly",
+      keepYearly: "retentionKeepYearly",
+    },
+    own: "ownRetention",
+    title: "source.local",
+    hints: ["settings.retentionHint"],
+    perSourceHint: "settings.ownRetentionHint",
+    toggle: "settings.ownRetentionFor",
+    toggleHint: "settings.ownRetentionToggleHint",
+  },
+  offsite: {
+    shared: {
+      keepLast: "offsiteRetentionKeepLast",
+      keepDaily: "offsiteRetentionKeepDaily",
+      keepWeekly: "offsiteRetentionKeepWeekly",
+      keepMonthly: "offsiteRetentionKeepMonthly",
+      keepYearly: "offsiteRetentionKeepYearly",
+    },
+    own: "ownOffsiteRetention",
+    title: "source.offsite",
+    hints: ["settings.retentionOffsiteHint", "settings.retentionImmutableNotPruned"],
+    perSourceHint: "settings.ownOffsiteRetentionHint",
+    toggle: "settings.ownOffsiteRetentionFor",
+    toggleHint: "settings.ownOffsiteRetentionToggleHint",
+  },
+} as const;
+
+type Own = Settings["ownRetention"];
+type T = ReturnType<typeof useT>["t"];
+
+/** The shared policy of a section, which a source starts from when it gets
+ *  its own. */
+function sharedKeep(s: Settings, scope: RetentionScope): RetentionKeep {
+  const keys = SCOPES[scope].shared;
   return {
-    keepLast: s.retentionKeepLast,
-    keepDaily: s.retentionKeepDaily,
-    keepWeekly: s.retentionKeepWeekly,
-    keepMonthly: s.retentionKeepMonthly,
-    keepYearly: s.retentionKeepYearly,
+    keepLast: s[keys.keepLast],
+    keepDaily: s[keys.keepDaily],
+    keepWeekly: s[keys.keepWeekly],
+    keepMonthly: s[keys.keepMonthly],
+    keepYearly: s[keys.keepYearly],
   };
 }
 
+/** The five keep rules as number fields, each with its (i). */
+function KeepFields({ keep, onChange, t }: { keep: RetentionKeep; onChange: (k: RetentionKeep) => void; t: T }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {RULES.map(([key, label, info]) => (
+        <label key={key} className="flex flex-col gap-1">
+          <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+            {t(label)}
+            <InfoBubble tip={t(info)} />
+          </span>
+          <NumberField
+            min={0}
+            value={keep[key]}
+            onChange={(e) => onChange({ ...keep, [key]: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
+
 /**
- * Lets each source age by a keep-policy of its own instead of the shared one.
- * The whole map is saved on every change, so the debounce runs under one key
- * and a toggle drops the edit it would otherwise race.
+ * One section of the Retention card: the shared keep rules of the local or
+ * the off-site copies, and below them a switch per source that gives it rules
+ * of its own. A source's map is saved whole on every change, so its debounce
+ * runs under one key and a switch drops the edit it would otherwise race.
  */
-export function OwnRetentionCard({
+export function RetentionSection({
+  scope,
   settings,
   setSettings,
   save,
   debouncedSave,
   cancelDebounce,
   t,
-  hueIndex,
 }: {
+  scope: RetentionScope;
   settings: Settings;
   setSettings: React.Dispatch<React.SetStateAction<Settings | null>>;
-  save: (patch: Partial<Settings>, setState: () => void, setError: () => void) => Promise<boolean>;
+  save: (patch: Partial<Settings>) => Promise<boolean>;
   debouncedSave: (key: string, run: () => void) => void;
   cancelDebounce: (key: string) => void;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
+  t: T;
 }) {
   const [busy, setBusy] = useState<Partial<Record<OffsiteDomain, boolean>>>({});
   const [shake, setShake] = useState<Partial<Record<OffsiteDomain, number>>>({});
   const [pulse, setPulse] = useState<Partial<Record<OffsiteDomain, number>>>({});
-  const own = settings.ownRetention;
+  const text = SCOPES[scope];
+  const ownKey = text.own;
+  const own = settings[ownKey];
+  const title = t(text.title);
 
-  const persist = (next: Own) => save({ ownRetention: next }, () => undefined, () => undefined);
+  function editShared(keep: RetentionKeep) {
+    const patch: Partial<Settings> = {};
+    for (const [rule, field] of Object.entries(text.shared) as [keyof RetentionKeep, keyof Settings][]) {
+      if (keep[rule] === settings[field]) continue;
+      Object.assign(patch, { [field]: keep[rule] });
+      // Keyed by field name, so typing in one cell never resets another
+      // cell's pending save.
+      debouncedSave(field, () => void save({ [field]: keep[rule] }));
+    }
+    setSettings((prev) => (prev ? { ...prev, ...patch } : prev));
+  }
 
   async function toggle(domain: OffsiteDomain, on: boolean) {
-    cancelDebounce("ownRetention");
+    cancelDebounce(ownKey);
     const before = own;
     const next: Own = { ...own };
-    if (on) next[domain] = sharedKeep(settings);
+    if (on) next[domain] = sharedKeep(settings, scope);
     else delete next[domain];
-    setSettings((prev) => (prev ? { ...prev, ownRetention: next } : prev));
+    setSettings((prev) => (prev ? { ...prev, [ownKey]: next } : prev));
     setBusy((b) => ({ ...b, [domain]: true }));
-    const ok = await persist(next);
+    const ok = await save({ [ownKey]: next });
     setBusy((b) => ({ ...b, [domain]: false }));
     if (ok) {
       setPulse((p) => ({ ...p, [domain]: (p[domain] ?? 0) + 1 }));
       return;
     }
-    setSettings((prev) => (prev ? { ...prev, ownRetention: before } : prev));
+    setSettings((prev) => (prev ? { ...prev, [ownKey]: before } : prev));
     setShake((s) => ({ ...s, [domain]: (s[domain] ?? 0) + 1 }));
   }
 
-  function edit(domain: OffsiteDomain, keep: RetentionKeep) {
+  function editOwn(domain: OffsiteDomain, keep: RetentionKeep) {
     const next: Own = { ...own, [domain]: keep };
-    setSettings((prev) => (prev ? { ...prev, ownRetention: next } : prev));
-    debouncedSave("ownRetention", () => void persist(next));
+    setSettings((prev) => (prev ? { ...prev, [ownKey]: next } : prev));
+    debouncedSave(ownKey, () => void save({ [ownKey]: next }));
   }
 
   return (
-    <Card title={t("settings.ownRetentionTitle")} hint={t("settings.ownRetentionHint")} hueIndex={hueIndex}>
+    // data-search-card lets a search result for a row in here land on its
+    // section rather than on the top of the card.
+    <section data-search-card={title} className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+      <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+        {title}
+        <InfoBubble tip={text.hints.map((k) => t(k)).join(" ")} />
+      </h3>
+
+      <span className="text-sm text-carbon-text">{t("retentionPreview.sharedPolicy")}</span>
+      <KeepFields keep={sharedKeep(settings, scope)} onChange={editShared} t={t} />
+
+      <span className="mt-2 flex items-center gap-1 text-sm text-carbon-text">
+        {t("settings.ownRetentionTitle")}
+        <InfoBubble tip={t(text.perSourceHint)} />
+      </span>
       {SOURCES.map(({ domain, labelKey }, i) => {
         const keep = own[domain];
         return (
           <div key={domain} className="flex flex-col gap-3">
             <ToggleRow
-              label={t("settings.ownRetentionFor").replace("{source}", t(labelKey))}
-              hint={t("settings.ownRetentionToggleHint")}
+              label={t(text.toggle).replace("{source}", t(labelKey))}
+              hint={t(text.toggleHint)}
               checked={keep !== undefined}
               onChange={(v) => void toggle(domain, v)}
               disabled={busy[domain]}
@@ -106,27 +196,19 @@ export function OwnRetentionCard({
               pulseNonce={pulse[domain]}
               hueIndex={i}
             />
-            {keep && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {RULES.map(([key, label, info]) => (
-                  <label key={key} className="flex flex-col gap-1">
-                    <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                      {t(label)}
-                      <InfoBubble tip={t(info)} />
-                    </span>
-                    <NumberField
-                      min={0}
-                      value={keep[key]}
-                      onChange={(e) => edit(domain, { ...keep, [key]: Math.max(0, parseInt(e.target.value, 10) || 0) })}
-                      className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-                    />
-                  </label>
-                ))}
-              </div>
-            )}
+            {keep && <KeepFields keep={keep} onChange={(k) => editOwn(domain, k)} t={t} />}
           </div>
         );
       })}
-    </Card>
+
+      {scope === "offsite" && (
+        <Link
+          to="/settings/offsite"
+          className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
+        >
+          {t("settings.retentionExtraTargets")}
+        </Link>
+      )}
+    </section>
   );
 }

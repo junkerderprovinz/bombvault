@@ -608,7 +608,6 @@ const he: Partial<Translations> = {
   "files.more": "צמצם את הסינון כדי לראות עוד קבצים.",
 
   // Retention
-  "settings.retentionTitle": "שמירת תמונות מצב",
   "settings.retentionHint": "כמה גיבויים לשמור לכל פריט. אחרי כל גיבוי, restic גוזם snapshots ישנים לפי מדיניות זו. הכל 0 = לשמור הכל (כבוי).",
   "excludes.advisoryImmichDb": "Immich שומר את האלבומים, הפנים והתאריכים של כל תמונה במסד נתונים PostgreSQL שרץ בקונטיינר נפרד לגמרי, ולכן הגיבוי הזה לא מכיל אותו. שחזור מכאן מחזיר את התמונות בלי כל זה. BombVault מבצע דאמפ של קונטיינר מסד הנתונים הזה אוטומטית כשהוא מגובה, אז ודא שהוא נמצא בתזמון שלך.",
   "excludes.advisoryNextcloudDb": "Nextcloud שומר את החשבונות, השיתופים והתגיות שלו במסד נתונים שרץ בדרך כלל בקונטיינר נפרד, ולכן הגיבוי הזה לא מכיל אותו. הקבצים חוזרים, השיתופים לא. BombVault מבצע דאמפ של קונטיינר מסד הנתונים הזה אוטומטית כשהוא מגובה, אז ודא שהוא נמצא בתזמון שלך.",
@@ -679,7 +678,6 @@ const he: Partial<Translations> = {
   "retentionPreview.paused": "נשמר: לפריט הזה יש חריגה פתוחה",
   "retentionPreview.ownPolicy": "כללי השמירה של המקור הזה",
   "retentionPreview.sharedPolicy": "כללי שמירה משותפים",
-  "retentionPreview.policy": "כללי שמירה",
   "settings.imageMaintenanceTitle": "ניקוי images וסטטוס עדכון",
   "settings.imageMaintenanceHint": "תחזוקה סביב עדכון הקונטיינר לאחר הגיבוי: מחיקת ה-image הישן ורענון מצב העדכון השמור של Unraid.",
   "settings.retentionLast": "שמור אחרונים",
@@ -694,13 +692,17 @@ const he: Partial<Translations> = {
   "settings.retentionYearlyInfo": "שומר גיבוי אחד עבור כל אחת מ-N שנות הקלנדר האחרונות שיש בהן גיבוי. אם יש פחות שנים, נשמר גם הגיבוי הישן ביותר.",
   "settings.retentionLocal": "מאגר מקומי",
   "settings.retentionOffsite": "מאגר מרוחק",
-  "settings.retentionOffsiteTitle": "שמירה מרוחקת",
   "settings.retentionOffsiteHint": "מדיניות נפרדת למאגר המרוחק, כדי לשמור אותו זמן רב יותר כארכיון. הכול 0 = שמור כל גיבוי מרוחק (ללא גיזום מרוחק).",
   "settings.ownRetentionTitle": "כללי שמירה לפי מקור",
   "settings.ownRetentionHint": "כל מקור יכול לפעול לפי כללי שמירה משלו במקום הכללים המשותפים שלמעלה. קונטיינרים ותיקיות שמשתנים כל יום יכולים לשמור 7 גיבויים יומיים, ומכונות וירטואליות שמשתנות לעיתים רחוקות פחות. מקור בלי כללים משלו משתמש בכללים המשותפים.",
   "settings.ownRetention": "כללי שמירה משלו",
   "settings.ownRetentionFor": "כללי שמירה משלו עבור {source}",
-  "settings.ownRetentionToggleHint": "מופעל: המקור הזה שומר את הגיבויים שלו לפי חמשת הכללים שלמטה, שמתחילים מהערכים המשותפים. כבוי: הוא משתמש בכללים המשותפים. הכול 0 שומר כל גיבוי של המקור הזה. עותקים מרוחקים שומרים בכל מקרה על הכללים שלהם.",
+  "settings.ownRetentionToggleHint": "מופעל: המקור הזה שומר את הגיבויים שלו לפי חמשת הכללים שלמטה, שמתחילים מהערכים המשותפים. כבוי: הוא משתמש בכללים המשותפים. הכול 0 שומר כל גיבוי של המקור הזה.",
+  "settings.ownOffsiteRetention": "כללי שמירה מרוחקים משלו",
+  "settings.ownOffsiteRetentionFor": "כללי שמירה מרוחקים משלו עבור {source}",
+  "settings.ownOffsiteRetentionHint": "כל מקור יכול לשמור את הגיבויים במאגר המרוחק שלו לפי כללים משלו במקום הכללים המרוחקים המשותפים שלמעלה. מקור בלי כללים משלו משתמש בכללים המשותפים.",
+  "settings.ownOffsiteRetentionToggleHint": "מופעל: המאגר המרוחק של המקור הזה שומר את הגיבויים שלו לפי חמשת הכללים שלמטה, שמתחילים מהערכים המרוחקים המשותפים. כבוי: הוא משתמש בכללים המרוחקים המשותפים. הכול 0 שומר כל גיבוי מרוחק של המקור הזה.",
+  "settings.retentionExtraTargets": "יעדים חיצוניים נוספים שומרים על הכללים שלהם, שאותם קובעים בעמוד מחוץ לאתר.",
   "settings.retentionCombineInfo": "חמשת הכללים משולבים באו: גיבוי נשמר אם כלל כלשהו היה שומר אותו. הם לא מצטברים למספר קבוע. חל בנפרד על כל פריט מגובה.",
 
   // Off-site (rclone)
@@ -1384,7 +1386,7 @@ const he: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault גוזם את העותק הזה אחרי כל שכפול, לפי מדיניות השמירה המרוחקת.",
   "offsite.prune.stateNone": "שום דבר לא גוזם את העותק הזה. append-only כבוי וכל ערכי השמירה המרוחקים הם 0, ולכן הוא גדל עד שהדיסק נגמר.",
   "offsite.prune.effective": "שומר {last} אחרונים, {daily} יומיים, {weekly} שבועיים, {monthly} חודשיים, {yearly} שנתיים.",
-  "offsite.prune.editedElsewhere": "נקבע בהגדרות, שמירה. הערכים משותפים לכל התחומים.",
+  "offsite.prune.editedElsewhere": "נקבע בהגדרות, שמירה. כל המקורות חולקים את הערכים האלה, אלא אם למקור יש כללים משלו.",
   "offsite.prune.budgetInfo": "מרים התראה ברגע שהמאגר המרוחק גדל מעבר למספר הג'יגה-בייט הזה. הוא לעולם לא מוחק דבר, ולכן הוא רשת הביטחון של עותק ששום דבר לא גוזם.",
   "settings.retentionImmutableNotPruned": "יעד מרוחק במצב append-only לעולם לא נגזם מכאן, לא משנה מה כתוב בערכים האלה. השלב הייעודי שלו באשף המרוחק מסביר איך לגזום אותו מצד האחסון.",
 

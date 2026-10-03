@@ -608,7 +608,6 @@ const es: Partial<Translations> = {
   "files.more": "Afina el filtro para ver más archivos.",
 
   // Retention
-  "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cuántas copias conservar por elemento. Tras cada copia, restic poda las instantáneas más antiguas según esta política. Todo a cero = conservar todo (desactivado).",
   "excludes.advisoryImmichDb": "Immich guarda los álbumes, las caras y las fechas de cada foto en una base de datos PostgreSQL que se ejecuta en un contenedor propio, aparte, así que esta copia de seguridad no la contiene. Restaurar desde aquí devuelve las fotos, pero sin nada de eso. BombVault vuelca ese contenedor de base de datos automáticamente cuando se le hace la copia, así que comprueba que esté en tu programación.",
   "excludes.advisoryNextcloudDb": "Nextcloud guarda sus cuentas, sus recursos compartidos y sus etiquetas en una base de datos que normalmente se ejecuta en un contenedor aparte, así que esta copia de seguridad no la contiene. Los archivos vuelven, lo compartido no. BombVault vuelca ese contenedor de base de datos automáticamente cuando se le hace la copia, así que comprueba que esté en tu programación.",
@@ -679,7 +678,6 @@ const es: Partial<Translations> = {
   "retentionPreview.paused": "Conservado: este elemento tiene una anomalía abierta",
   "retentionPreview.ownPolicy": "Reglas de retención propias de este origen",
   "retentionPreview.sharedPolicy": "Reglas de retención compartidas",
-  "retentionPreview.policy": "Reglas de retención",
   "settings.imageMaintenanceTitle": "Limpieza de imágenes y estado de actualización",
   "settings.imageMaintenanceHint": "Mantenimiento en torno a la actualización de contenedores tras el backup: eliminar la imagen sustituida y actualizar el estado de actualización propio de Unraid.",
   "settings.retentionLast": "Conservar últimas",
@@ -694,13 +692,17 @@ const es: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Conserva una copia por cada uno de los últimos N años naturales con una copia de seguridad. Si hay menos años, también se conserva la más antigua.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
-  "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Una política separada para el repo externo, para conservarlo más tiempo como archivo. Todo en 0 = conservar cada copia externa (sin purga externa).",
   "settings.ownRetentionTitle": "Reglas de retención por origen",
   "settings.ownRetentionHint": "Cada origen puede seguir sus propias reglas de retención en lugar de las compartidas de arriba. Los contenedores y carpetas que cambian a diario pueden conservar 7 copias diarias, y las máquinas virtuales que apenas cambian, menos. Un origen sin reglas propias usa las compartidas.",
   "settings.ownRetention": "Reglas de retención propias",
   "settings.ownRetentionFor": "Reglas de retención propias para {source}",
-  "settings.ownRetentionToggleHint": "Activado: este origen conserva sus copias según las cinco reglas de abajo, que parten de los valores compartidos. Desactivado: usa las reglas compartidas. Todo a 0 conserva todas las copias de este origen. Las copias externas mantienen sus propias reglas en cualquier caso.",
+  "settings.ownRetentionToggleHint": "Activado: este origen conserva sus copias según las cinco reglas de abajo, que parten de los valores compartidos. Desactivado: usa las reglas compartidas. Todo a 0 conserva todas las copias de este origen.",
+  "settings.ownOffsiteRetention": "Reglas de retención externas propias",
+  "settings.ownOffsiteRetentionFor": "Reglas de retención externas propias para {source}",
+  "settings.ownOffsiteRetentionHint": "Cada origen puede conservar las copias de su repo externo según sus propias reglas en lugar de las reglas externas compartidas de arriba. Un origen sin reglas propias usa las compartidas.",
+  "settings.ownOffsiteRetentionToggleHint": "Activado: el repo externo de este origen conserva sus copias según las cinco reglas de abajo, que parten de los valores externos compartidos. Desactivado: usa las reglas externas compartidas. Todo a 0 conserva todas las copias externas de este origen.",
+  "settings.retentionExtraTargets": "Los destinos externos adicionales mantienen sus propias reglas, que configuras en la página Externo.",
   "settings.retentionCombineInfo": "Las cinco reglas se combinan con O: una copia sobrevive si cualquier regla la conservaría. No se suman a un número fijo. Se aplica por separado a cada elemento respaldado.",
 
   // Off-site (rclone)
@@ -1401,7 +1403,7 @@ const es: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault poda esta copia después de cada replicación, siguiendo la política de retención externa.",
   "offsite.prune.stateNone": "Nada poda esta copia. El append-only está desactivado y todos los valores de conservación externos son 0, así que crece hasta que el disco no da más.",
   "offsite.prune.effective": "Conserva {last} últimas, {daily} diarias, {weekly} semanales, {monthly} mensuales, {yearly} anuales.",
-  "offsite.prune.editedElsewhere": "Se configura en Ajustes, Retención. Los valores son comunes a todos los dominios.",
+  "offsite.prune.editedElsewhere": "Se configura en Ajustes, Retención. Todos los orígenes comparten estos valores, salvo que uno tenga reglas propias.",
   "offsite.prune.budgetInfo": "Lanza una alarma en cuanto el repositorio externo supera esta cantidad de gigabytes. Nunca borra nada, así que es la red de seguridad para una copia que nadie poda.",
   "settings.retentionImmutableNotPruned": "Un destino externo con append-only nunca se poda desde aquí, digan lo que digan estos valores. Su propio paso en el asistente externo explica cómo podarlo desde el lado del almacenamiento.",
 

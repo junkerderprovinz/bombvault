@@ -606,7 +606,6 @@ const cs: Partial<Translations> = {
   "files.more": "Upřesněte filtr pro zobrazení dalších souborů.",
 
   // Retention
-  "settings.retentionTitle": "Uchovávání snímků",
   "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
   "excludes.advisoryImmichDb": "Immich ukládá alba, tváře a data pořízení ke každé fotce do databáze PostgreSQL, která běží ve vlastním, odděleném kontejneru, takže tato záloha ji neobsahuje. Obnova odsud vrátí obrázky, ale bez toho všeho. BombVault dumpuje kontejner té databáze automaticky, jakmile se zálohuje, takže ověřte, že je ve vašem plánu.",
   "excludes.advisoryNextcloudDb": "Nextcloud ukládá účty, sdílení a štítky do databáze, která obvykle běží v odděleném kontejneru, takže tato záloha ji neobsahuje. Soubory se vrátí, sdílení ne. BombVault dumpuje kontejner té databáze automaticky, jakmile se zálohuje, takže ověřte, že je ve vašem plánu.",
@@ -677,7 +676,6 @@ const cs: Partial<Translations> = {
   "retentionPreview.paused": "Ponecháno: tato položka má otevřenou anomálii",
   "retentionPreview.ownPolicy": "Vlastní pravidla uchovávání tohoto zdroje",
   "retentionPreview.sharedPolicy": "Společná pravidla uchovávání",
-  "retentionPreview.policy": "Pravidla uchovávání",
   "settings.imageMaintenanceTitle": "Úklid images a stav aktualizace",
   "settings.imageMaintenanceHint": "Údržba kolem aktualizace kontejneru po zálohování: odstranění nahrazeného image a obnovení vlastního uloženého stavu aktualizace Unraid.",
   "settings.retentionLast": "Ponechat poslední",
@@ -692,13 +690,17 @@ const cs: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních let se zálohou. Když je let méně, ponechá i ten nejstarší.",
   "settings.retentionLocal": "Místní repo",
   "settings.retentionOffsite": "Vzdálené repo",
-  "settings.retentionOffsiteTitle": "Vzdálené uchovávání",
   "settings.retentionOffsiteHint": "Samostatná zásada pro vzdálené repo, aby se dalo držet déle jako archiv. Vše 0 = zachovat každou vzdálenou zálohu (bez čištění vzdáleného).",
   "settings.ownRetentionTitle": "Pravidla uchovávání podle zdroje",
   "settings.ownRetentionHint": "Každý zdroj může mít vlastní pravidla uchovávání místo společných výše. Kontejnery a složky, které se mění každý den, mohou uchovávat 7 denních záloh, virtuální stroje, které se mění zřídka, méně. Zdroj bez vlastních pravidel používá společná.",
   "settings.ownRetention": "Vlastní pravidla uchovávání",
   "settings.ownRetentionFor": "Vlastní pravidla uchovávání pro {source}",
-  "settings.ownRetentionToggleHint": "Zapnuto: tento zdroj uchovává zálohy podle pěti pravidel níže, která vycházejí ze společných hodnot. Vypnuto: používá společná pravidla. Vše 0 uchová každou zálohu tohoto zdroje. Vzdálené kopie mají v každém případě svá vlastní pravidla.",
+  "settings.ownRetentionToggleHint": "Zapnuto: tento zdroj uchovává zálohy podle pěti pravidel níže, která vycházejí ze společných hodnot. Vypnuto: používá společná pravidla. Vše 0 uchová každou zálohu tohoto zdroje.",
+  "settings.ownOffsiteRetention": "Vlastní pravidla uchovávání pro vzdálené kopie",
+  "settings.ownOffsiteRetentionFor": "Vlastní pravidla uchovávání vzdálených kopií pro {source}",
+  "settings.ownOffsiteRetentionHint": "Každý zdroj může uchovávat zálohy ve svém vzdáleném repu podle vlastních pravidel místo společných vzdálených pravidel výše. Zdroj bez vlastních pravidel používá společná.",
+  "settings.ownOffsiteRetentionToggleHint": "Zapnuto: vzdálené repo tohoto zdroje uchovává zálohy podle pěti pravidel níže, která vycházejí ze společných vzdálených hodnot. Vypnuto: používá společná vzdálená pravidla. Vše 0 uchová každou vzdálenou zálohu tohoto zdroje.",
+  "settings.retentionExtraTargets": "Další vzdálené cíle mají svá vlastní pravidla, která nastavíte na stránce Mimo lokalitu.",
   "settings.retentionCombineInfo": "Pět pravidel se kombinuje pomocí NEBO: snapshot přežije, pokud by ho zachovalo jakékoli jedno pravidlo. Nesčítají se do pevného počtu. Platí zvlášť pro každou zálohovanou položku.",
 
   // Off-site (rclone)
@@ -1401,7 +1403,7 @@ const cs: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault tuto kopii vyčistí po každé replikaci podle zásady vzdáleného uchovávání.",
   "offsite.prune.stateNone": "Tuto kopii nic nečistí. Append-only je vypnuté a všechny vzdálené hodnoty uchovávání jsou 0, takže roste, dokud stačí disk.",
   "offsite.prune.effective": "Ponechává {last} nejnovějších, {daily} denních, {weekly} týdenních, {monthly} měsíčních, {yearly} ročních.",
-  "offsite.prune.editedElsewhere": "Nastavuje se v Nastavení, Uchovávání. Hodnoty jsou společné pro všechny oblasti.",
+  "offsite.prune.editedElsewhere": "Nastavuje se v Nastavení, Uchovávání. Všechny zdroje sdílejí tyto hodnoty, pokud některý nemá vlastní pravidla.",
   "offsite.prune.budgetInfo": "Spustí poplach, jakmile vzdálený repozitář přeroste tento počet gigabajtů. Nikdy nic nemaže, je to tedy záchranná síť pro kopii, kterou nic nečistí.",
   "settings.retentionImmutableNotPruned": "Vzdálený cíl v režimu append-only se odsud nikdy nečistí, ať už je tady nastaveno cokoli. Jeho vlastní krok ve vzdáleném průvodci vysvětluje, jak ho vyčistit ze strany úložiště.",
 

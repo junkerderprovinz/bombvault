@@ -504,7 +504,7 @@ const sk: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault vyčistí túto kópiu po každej replikácii podľa zásady externého uchovávania.",
   "offsite.prune.stateNone": "Túto kópiu nič nečistí. Len-na-pridávanie je vypnuté a všetky externé hodnoty uchovávania sú 0, takže rastie, kým disk vydrží.",
   "offsite.prune.effective": "Uchováva {last} najnovších, {daily} denných, {weekly} týždenných, {monthly} mesačných, {yearly} ročných.",
-  "offsite.prune.editedElsewhere": "Nastavuje sa v Nastavenia, Uchovávanie. Hodnoty sú spoločné pre všetky oblasti.",
+  "offsite.prune.editedElsewhere": "Nastavuje sa v Nastavenia, Uchovávanie. Všetky zdroje zdieľajú tieto hodnoty, pokiaľ niektorý nemá vlastné pravidlá.",
   "offsite.prune.budgetInfo": "Spustí poplach, len čo externý repozitár prerastie tento počet gigabajtov. Nikdy nič nemaže, takže je to záchranná sieť pre kópiu, ktorú nič nečistí.",
   "settings.retentionImmutableNotPruned": "Externý cieľ s len-na-pridávaním sa odtiaľto nikdy nečistí, nech tieto hodnoty hovoria čokoľvek. Jeho vlastný krok v externom sprievodcovi vysvetľuje, ako ho vyčistiť zo strany úložiska.",
 
@@ -555,7 +555,6 @@ const sk: Partial<Translations> = {
   "settings.notLoadedNoSave": "Aktuálnu konfiguráciu sa nepodarilo načítať, preto sa nič neuloží. Znova načítajte stránku a skúste to znova.",
 
   // Retention
-  "settings.retentionTitle": "Uchovávanie snímok",
   "settings.retentionHint": "Koľko záloh sa má uchovávať pre každú položku. Po každej zálohe restic podľa tejto zásady vyčistí staršie snímky. Všetko nula = uchovať všetko (vypnuté).",
   "excludes.advisoryImmichDb": "Immich uchováva albumy, tváre a dátumy každej fotografie v databáze PostgreSQL, ktorá beží vo vlastnom, samostatnom kontajneri, takže táto záloha ju neobsahuje. Obnovenie odtiaľto vráti obrázky, ale bez toho všetkého. BombVault kontajner tejto databázy dumpuje sám, keď ho zálohuje, takže skontrolujte, či je vo vašom pláne.",
   "excludes.advisoryNextcloudDb": "Nextcloud uchováva účty, zdieľania a značky v databáze, ktorá zvyčajne beží v samostatnom kontajneri, takže táto záloha ju neobsahuje. Súbory sa vrátia, zdieľania nie. BombVault kontajner tejto databázy dumpuje sám, keď ho zálohuje, takže skontrolujte, či je vo vašom pláne.",
@@ -626,7 +625,6 @@ const sk: Partial<Translations> = {
   "retentionPreview.paused": "Ponechané: táto položka má otvorenú anomáliu",
   "retentionPreview.ownPolicy": "Vlastné pravidlá uchovávania tohto zdroja",
   "retentionPreview.sharedPolicy": "Spoločné pravidlá uchovávania",
-  "retentionPreview.policy": "Pravidlá uchovávania",
   "settings.imageMaintenanceTitle": "Čistenie obrazov a stav aktualizácií",
   "settings.imageMaintenanceHint": "Údržba súvisiaca s aktualizáciou kontajnera po zálohe: vyčistenie nahradeného obrazu a obnovenie vlastného vyrovnávacieho stavu aktualizácií Unraid.",
   "settings.pruneImageAfterUpdate": "Odstrániť starý obraz po aktualizácii",
@@ -652,13 +650,17 @@ const sk: Partial<Translations> = {
   "settings.retentionCombineInfo": "Týchto päť pravidiel sa kombinuje s ALEBO: snímka prežije, ak by ju uchovalo ktorékoľvek pravidlo. Nesčítavajú sa na pevný počet. Platí samostatne pre každú zálohovanú položku.",
   "settings.retentionLocal": "Lokálny repozitár",
   "settings.retentionOffsite": "Externý repozitár",
-  "settings.retentionOffsiteTitle": "Externé uchovávanie",
   "settings.retentionOffsiteHint": "Samostatná zásada pre externý repozitár, aby ste ho mohli uchovávať dlhšie ako archív. Všetko nula = uchovať každú externú zálohu (bez externého čistenia).",
   "settings.ownRetentionTitle": "Pravidlá uchovávania podľa zdroja",
   "settings.ownRetentionHint": "Každý zdroj môže mať vlastné pravidlá uchovávania namiesto spoločných vyššie. Kontajnery a priečinky, ktoré sa menia každý deň, môžu uchovávať 7 denných záloh, virtuálne stroje, ktoré sa menia zriedka, menej. Zdroj bez vlastných pravidiel používa spoločné.",
   "settings.ownRetention": "Vlastné pravidlá uchovávania",
   "settings.ownRetentionFor": "Vlastné pravidlá uchovávania pre {source}",
-  "settings.ownRetentionToggleHint": "Zapnuté: tento zdroj uchováva zálohy podľa piatich pravidiel nižšie, ktoré vychádzajú zo spoločných hodnôt. Vypnuté: používa spoločné pravidlá. Všetko 0 uchová každú zálohu tohto zdroja. Externé kópie majú v každom prípade svoje vlastné pravidlá.",
+  "settings.ownRetentionToggleHint": "Zapnuté: tento zdroj uchováva zálohy podľa piatich pravidiel nižšie, ktoré vychádzajú zo spoločných hodnôt. Vypnuté: používa spoločné pravidlá. Všetko 0 uchová každú zálohu tohto zdroja.",
+  "settings.ownOffsiteRetention": "Vlastné pravidlá uchovávania externých kópií",
+  "settings.ownOffsiteRetentionFor": "Vlastné pravidlá uchovávania externých kópií pre {source}",
+  "settings.ownOffsiteRetentionHint": "Každý zdroj môže uchovávať zálohy vo svojom externom repozitári podľa vlastných pravidiel namiesto spoločných externých pravidiel vyššie. Zdroj bez vlastných pravidiel používa spoločné.",
+  "settings.ownOffsiteRetentionToggleHint": "Zapnuté: externý repozitár tohto zdroja uchováva zálohy podľa piatich pravidiel nižšie, ktoré vychádzajú zo spoločných externých hodnôt. Vypnuté: používa spoločné externé pravidlá. Všetko 0 uchová každú externú zálohu tohto zdroja.",
+  "settings.retentionExtraTargets": "Ďalšie externé ciele majú svoje vlastné pravidlá, ktoré nastavíte na stránke Externé.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Externá šírka pásma",

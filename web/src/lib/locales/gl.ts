@@ -504,7 +504,7 @@ const gl: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault limpa esta copia despois de cada replicación, seguindo a política de retención externa.",
   "offsite.prune.stateNone": "Nada limpa esta copia. O só-engadir está desactivado e todos os valores de conservación externos son 0, así que medra ata que o disco non dá máis.",
   "offsite.prune.effective": "Conserva {last} últimas, {daily} diarias, {weekly} semanais, {monthly} mensuais, {yearly} anuais.",
-  "offsite.prune.editedElsewhere": "Configúrase en Configuración, Retención. Os valores son comúns a todos os ámbitos.",
+  "offsite.prune.editedElsewhere": "Configúrase en Configuración, Retención. Todas as orixes comparten estes valores, agás que unha teña regras propias.",
   "offsite.prune.budgetInfo": "Dá a alarma en canto o repositorio externo supera esta cantidade de xigabytes. Nunca borra nada, así que é a rede de seguridade para unha copia que ninguén limpa.",
   "settings.retentionImmutableNotPruned": "Un destino externo de só-engadir nunca se limpa dende aquí, digan o que digan estes valores. O seu propio paso no asistente externo explica como limpalo dende o lado do almacenamento.",
 
@@ -555,7 +555,6 @@ const gl: Partial<Translations> = {
   "settings.notLoadedNoSave": "Non se puido cargar a configuración actual, así que non se garda nada. Recarga a páxina e téntao de novo.",
 
   // Retention
-  "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cantas copias conservar por elemento. Despois de cada copia, restic limpa instantáneas máis antigas segundo esta política. Todo a 0 = conservar todo (desactivado).",
   "excludes.advisoryImmichDb": "Immich garda os álbums, as caras e as datas de cada foto nunha base de datos PostgreSQL que se executa nun contedor totalmente aparte, así que esta copia non a contén. Restaurar desde aquí devolve as imaxes sen nada diso. BombVault volca ese contedor de base de datos automaticamente cando se lle fai a copia, así que comproba que estea na túa planificación.",
   "excludes.advisoryNextcloudDb": "Nextcloud garda as contas, as comparticións e as etiquetas nunha base de datos que adoita executarse nun contedor á parte, así que esta copia non a contén. Os ficheiros volven, as comparticións non. BombVault volca ese contedor de base de datos automaticamente cando se lle fai a copia, así que comproba que estea na túa planificación.",
@@ -626,7 +625,6 @@ const gl: Partial<Translations> = {
   "retentionPreview.paused": "Conservado: este elemento ten unha anomalía aberta",
   "retentionPreview.ownPolicy": "Regras de retención propias desta orixe",
   "retentionPreview.sharedPolicy": "Regras de retención compartidas",
-  "retentionPreview.policy": "Regras de retención",
   "settings.imageMaintenanceTitle": "Limpeza de imaxes e estado de actualizacións",
   "settings.imageMaintenanceHint": "Mantemento ao redor da actualización de contedor despois da copia: limpar a imaxe substituída e actualizar o estado en caché propio de Unraid.",
   "settings.pruneImageAfterUpdate": "Eliminar a imaxe antiga despois de actualizar",
@@ -652,13 +650,17 @@ const gl: Partial<Translations> = {
   "settings.retentionCombineInfo": "As cinco regras combínanse con OU: unha instantánea sobrevive se calquera regra a conservaría. Non se suman a un número fixo. Aplícase por separado a cada elemento copiado.",
   "settings.retentionLocal": "Repositorio local",
   "settings.retentionOffsite": "Repositorio externo",
-  "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Unha política separada para o repositorio externo, para que o poidas conservar máis tempo como arquivo. Todo a 0 = conservar todas as copias externas (sen limpeza externa).",
   "settings.ownRetentionTitle": "Regras de retención por orixe",
   "settings.ownRetentionHint": "Cada orixe pode seguir as súas propias regras de retención en lugar das compartidas de arriba. Os contedores e cartafoles que cambian cada día poden conservar 7 copias diarias, e as máquinas virtuais que case non cambian, menos. Unha orixe sen regras propias usa as compartidas.",
   "settings.ownRetention": "Regras de retención propias",
   "settings.ownRetentionFor": "Regras de retención propias para {source}",
-  "settings.ownRetentionToggleHint": "Activado: esta orixe conserva as copias segundo as cinco regras de abaixo, que parten dos valores compartidos. Desactivado: usa as regras compartidas. Todo a 0 conserva todas as copias desta orixe. As copias externas manteñen as súas propias regras en calquera caso.",
+  "settings.ownRetentionToggleHint": "Activado: esta orixe conserva as copias segundo as cinco regras de abaixo, que parten dos valores compartidos. Desactivado: usa as regras compartidas. Todo a 0 conserva todas as copias desta orixe.",
+  "settings.ownOffsiteRetention": "Regras de retención externas propias",
+  "settings.ownOffsiteRetentionFor": "Regras de retención externas propias para {source}",
+  "settings.ownOffsiteRetentionHint": "Cada orixe pode conservar as copias do seu repositorio externo segundo as súas propias regras en lugar das regras externas compartidas de arriba. Unha orixe sen regras propias usa as compartidas.",
+  "settings.ownOffsiteRetentionToggleHint": "Activado: o repositorio externo desta orixe conserva as copias segundo as cinco regras de abaixo, que parten dos valores externos compartidos. Desactivado: usa as regras externas compartidas. Todo a 0 conserva todas as copias externas desta orixe.",
+  "settings.retentionExtraTargets": "Os destinos externos adicionais manteñen as súas propias regras, que configuras na páxina Externa.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Largura de banda externa",

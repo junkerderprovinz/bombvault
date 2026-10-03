@@ -504,7 +504,7 @@ const ms: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault mem-prune salinan ini selepas setiap replikasi, mengikut polisi pengekalan luar tapak.",
   "offsite.prune.stateNone": "Tiada apa-apa yang mem-prune salinan ini. Tambah-sahaja dimatikan dan setiap nilai simpanan luar tapak ialah 0, jadi ia membesar selagi cakera mampu.",
   "offsite.prune.effective": "Menyimpan {last} terkini, {daily} harian, {weekly} mingguan, {monthly} bulanan, {yearly} tahunan.",
-  "offsite.prune.editedElsewhere": "Ditetapkan dalam Tetapan, Pengekalan. Nilainya dikongsi oleh setiap domain.",
+  "offsite.prune.editedElsewhere": "Ditetapkan dalam Tetapan, Pengekalan. Semua sumber berkongsi nilai ini, kecuali sumber yang mempunyai peraturan sendiri.",
   "offsite.prune.budgetInfo": "Membunyikan penggera sebaik sahaja repositori luar tapak membesar melebihi jumlah gigabait ini. Ia tidak pernah memadam apa-apa, jadi ia jaring keselamatan bagi salinan yang tiada apa-apa mem-prune-nya.",
   "settings.retentionImmutableNotPruned": "Destinasi luar tapak dengan tambah-sahaja tidak pernah di-prune dari sini, apa pun yang dinyatakan oleh nilai-nilai ini. Langkah tersendiri dalam pembantu luar tapak menerangkan cara mem-prune-nya dari sebelah storan.",
 
@@ -555,7 +555,6 @@ const ms: Partial<Translations> = {
   "settings.notLoadedNoSave": "Konfigurasi semasa gagal dimuatkan, jadi tiada apa-apa yang disimpan. Muat semula halaman dan cuba lagi.",
 
   // Retention
-  "settings.retentionTitle": "Pengekalan snapshot",
   "settings.retentionHint": "Berapa banyak sandaran untuk disimpan bagi setiap item. Selepas setiap sandaran, restic mem-prune snapshot yang lebih lama mengikut polisi ini. Semua sifar = simpan semua (mati).",
   "excludes.advisoryImmichDb": "Immich menyimpan album, wajah dan tarikh bagi setiap foto dalam pangkalan data PostgreSQL yang berjalan dalam bekas yang berasingan, bukan bekas ini, jadi sandaran ini tidak mengandunginya. Pemulihan dari sini mengembalikan gambar, tetapi tanpa album, wajah dan tarikh. BombVault membuang pangkalan data bekas itu secara automatik apabila bekas tersebut disandarkan, jadi pastikan ia ada dalam jadual anda.",
   "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akaun, perkongsian dan tag dalam pangkalan data yang biasanya berjalan dalam bekas yang berasingan, jadi sandaran ini tidak mengandunginya. Fail kembali, perkongsian tidak. BombVault membuang pangkalan data bekas itu secara automatik apabila bekas tersebut disandarkan, jadi pastikan ia ada dalam jadual anda.",
@@ -626,7 +625,6 @@ const ms: Partial<Translations> = {
   "retentionPreview.paused": "Disimpan: item ini mempunyai anomali terbuka",
   "retentionPreview.ownPolicy": "Peraturan pengekalan sendiri sumber ini",
   "retentionPreview.sharedPolicy": "Peraturan pengekalan bersama",
-  "retentionPreview.policy": "Peraturan pengekalan",
   "settings.imageMaintenanceTitle": "Pembersihan imej & status kemas kini",
   "settings.imageMaintenanceHint": "Penyelenggaraan berkaitan kemas kini bekas selepas sandaran: membersihkan imej yang digantikan dan menyegarkan status kemas kini cache milik Unraid sendiri.",
   "settings.pruneImageAfterUpdate": "Alih keluar imej lama selepas kemas kini",
@@ -652,13 +650,17 @@ const ms: Partial<Translations> = {
   "settings.retentionCombineInfo": "Kelima-lima peraturan ini digabungkan dengan ATAU: snapshot terus wujud jika mana-mana peraturan akan mengekalkannya. Ia tidak dijumlahkan kepada bilangan tetap. Terpakai secara berasingan kepada setiap item yang disandarkan.",
   "settings.retentionLocal": "Repositori setempat",
   "settings.retentionOffsite": "Repositori luar tapak",
-  "settings.retentionOffsiteTitle": "Pengekalan luar tapak",
   "settings.retentionOffsiteHint": "Polisi berasingan untuk repositori luar tapak, supaya anda boleh menyimpannya lebih lama sebagai arkib. Semua sifar = simpan setiap sandaran luar tapak (tiada prune luar tapak).",
   "settings.ownRetentionTitle": "Peraturan pengekalan setiap sumber",
   "settings.ownRetentionHint": "Sesuatu sumber boleh mengikut peraturan pengekalannya sendiri dan bukan peraturan bersama di atas. Kontena dan folder yang berubah setiap hari mungkin menyimpan 7 sandaran harian, manakala VM yang jarang berubah memerlukan lebih sedikit. Sumber tanpa peraturan sendiri menggunakan peraturan bersama.",
   "settings.ownRetention": "Peraturan pengekalan sendiri",
   "settings.ownRetentionFor": "Peraturan pengekalan sendiri untuk {source}",
-  "settings.ownRetentionToggleHint": "Hidup: sumber ini menyimpan sandarannya mengikut lima peraturan di bawah, yang bermula daripada nilai bersama. Mati: ia menggunakan peraturan bersama. Semua 0 menyimpan setiap sandaran sumber ini. Salinan luar tapak tetap mengikut peraturannya sendiri.",
+  "settings.ownRetentionToggleHint": "Hidup: sumber ini menyimpan sandarannya mengikut lima peraturan di bawah, yang bermula daripada nilai bersama. Mati: ia menggunakan peraturan bersama. Semua 0 menyimpan setiap sandaran sumber ini.",
+  "settings.ownOffsiteRetention": "Peraturan pengekalan luar tapak sendiri",
+  "settings.ownOffsiteRetentionFor": "Peraturan pengekalan luar tapak sendiri untuk {source}",
+  "settings.ownOffsiteRetentionHint": "Sesuatu sumber boleh menyimpan sandaran dalam repositori luar tapaknya mengikut peraturannya sendiri dan bukan peraturan luar tapak bersama di atas. Sumber tanpa peraturan sendiri menggunakan peraturan bersama.",
+  "settings.ownOffsiteRetentionToggleHint": "Hidup: repositori luar tapak sumber ini menyimpan sandarannya mengikut lima peraturan di bawah, yang bermula daripada nilai luar tapak bersama. Mati: ia menggunakan peraturan luar tapak bersama. Semua 0 menyimpan setiap sandaran luar tapak sumber ini.",
+  "settings.retentionExtraTargets": "Sasaran luar tapak tambahan tetap mengikut peraturannya sendiri, yang anda tetapkan pada halaman Luar tapak.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Lebar jalur luar tapak",

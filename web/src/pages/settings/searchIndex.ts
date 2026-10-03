@@ -27,6 +27,15 @@ export interface SearchCard {
   body?: TranslationKey[];
 }
 
+// The five keep rules, drawn with their (i) wherever a keep-policy is edited.
+const KEEP_RULE_ROWS: SearchRow[] = [
+  { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
+  { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
+  { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
+  { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
+  { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+];
+
 // The additional off-site targets editor (OffsiteTargetsSection) sits on
 // every per-domain off-site Card, so its rows are shared rather than typed
 // out six times.
@@ -39,11 +48,7 @@ const OFFSITE_TARGET_ROWS: SearchRow[] = [
   { key: "settings.compression", hint: "settings.compressionInfo" },
   { key: "offsite.immutable", hint: "offsite.immutableHint" },
   { key: "offsite.targets.retentionTitle" },
-  { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-  { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-  { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-  { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-  { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+  ...KEEP_RULE_ROWS,
   { key: "offsite.retention.budget" },
 ];
 
@@ -156,44 +161,36 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
   ],
 
+  // The Retention card has a Local and an Off-site section. Each section is
+  // its own entry, and RetentionSection marks it with data-search-card, so a
+  // rule found in one of them leads there and not to its twin in the other.
   retention: [
     {
-      title: "settings.retentionTitle",
+      title: "settings.tab.retention",
+      hint: "settings.retentionCombineInfo",
+      rows: [{ key: "retentionPreview.title", hint: "retentionPreview.hint" }],
+    },
+    {
+      title: "source.local",
       hint: "settings.retentionHint",
       rows: [
-        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
-        { key: "retentionPreview.title", hint: "retentionPreview.hint" },
-      ],
-      body: ["settings.retentionCombineInfo"],
-    },
-    {
-      title: "settings.ownRetentionTitle",
-      hint: "settings.ownRetentionHint",
-      rows: [
+        { key: "retentionPreview.sharedPolicy" },
+        ...KEEP_RULE_ROWS,
+        { key: "settings.ownRetentionTitle", hint: "settings.ownRetentionHint" },
         { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
-        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
       ],
     },
     {
-      title: "settings.retentionOffsiteTitle",
+      title: "source.offsite",
       hint: "settings.retentionOffsiteHint",
       rows: [
-        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
-        { key: "retentionPreview.title", hint: "retentionPreview.hint" },
+        { key: "retentionPreview.sharedPolicy" },
+        ...KEEP_RULE_ROWS,
+        { key: "settings.ownRetentionTitle", hint: "settings.ownOffsiteRetentionHint" },
+        { key: "settings.ownOffsiteRetention", hint: "settings.ownOffsiteRetentionToggleHint" },
+        { key: "settings.retentionExtraTargets" },
       ],
-      body: ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"],
+      body: ["settings.retentionImmutableNotPruned"],
     },
   ],
 

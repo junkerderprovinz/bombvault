@@ -504,7 +504,7 @@ const hr: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault čisti ovu kopiju nakon svake replikacije, prema politici izvanmrežnog zadržavanja.",
   "offsite.prune.stateNone": "Ništa ne čisti ovu kopiju. Samo-dodavanje je isključeno i sve izvanmrežne vrijednosti zadržavanja su 0, pa raste dok disk izdrži.",
   "offsite.prune.effective": "Zadržava {last} najnovijih, {daily} dnevnih, {weekly} tjednih, {monthly} mjesečnih, {yearly} godišnjih.",
-  "offsite.prune.editedElsewhere": "Postavlja se u Postavke, Zadržavanje. Vrijednosti su zajedničke svim područjima.",
+  "offsite.prune.editedElsewhere": "Postavlja se u Postavke, Zadržavanje. Svi izvori dijele ove vrijednosti, osim ako neki ima vlastita pravila.",
   "offsite.prune.budgetInfo": "Diže uzbunu čim izvanmrežni repozitorij naraste preko toliko gigabajta. Nikad ništa ne briše, pa je sigurnosna mreža za kopiju koju ništa ne čisti.",
   "settings.retentionImmutableNotPruned": "Izvanmrežno odredište sa samo-dodavanjem odavde se nikad ne čisti, što god ove vrijednosti govorile. Njegov vlastiti korak u izvanmrežnom čarobnjaku objašnjava kako ga očistiti sa strane pohrane.",
 
@@ -555,7 +555,6 @@ const hr: Partial<Translations> = {
   "settings.notLoadedNoSave": "Trenutnu konfiguraciju nije bilo moguće učitati, pa se ništa ne sprema. Ponovno učitajte stranicu i pokušajte ponovno.",
 
   // Retention
-  "settings.retentionTitle": "Zadržavanje snimki",
   "settings.retentionHint": "Koliko sigurnosnih kopija zadržati po stavci. Nakon svake sigurnosne kopije, restic čisti starije snimke prema ovoj politici. Sve nula = zadrži sve (isključeno).",
   "excludes.advisoryImmichDb": "Immich čuva albume, lica i datume svake fotografije u PostgreSQL bazi podataka koja radi u posve zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Vraćanje odavde vraća slike, ali bez svega toga. BombVault automatski radi dump kontejnera te baze podataka kad se on sigurnosno kopira, pa provjerite je li u vašem rasporedu.",
   "excludes.advisoryNextcloudDb": "Nextcloud čuva svoje račune, dijeljenja i oznake u bazi podataka koja obično radi u zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Datoteke se vraćaju, dijeljenja ne. BombVault automatski radi dump kontejnera te baze podataka kad se on sigurnosno kopira, pa provjerite je li u vašem rasporedu.",
@@ -626,7 +625,6 @@ const hr: Partial<Translations> = {
   "retentionPreview.paused": "Zadržano: ova stavka ima otvorenu anomaliju",
   "retentionPreview.ownPolicy": "Vlastita pravila zadržavanja ovog izvora",
   "retentionPreview.sharedPolicy": "Zajednička pravila zadržavanja",
-  "retentionPreview.policy": "Pravila zadržavanja",
   "settings.imageMaintenanceTitle": "Čišćenje slika i status ažuriranja",
   "settings.imageMaintenanceHint": "Održavanje oko ažuriranja kontejnera nakon sigurnosne kopije: čišćenje zamijenjene slike i osvježavanje vlastitog predmemoriranog statusa ažuriranja Unraida.",
   "settings.pruneImageAfterUpdate": "Ukloni staru sliku nakon ažuriranja",
@@ -652,13 +650,17 @@ const hr: Partial<Translations> = {
   "settings.retentionCombineInfo": "Ovih pet pravila kombinira se s ILI: snimka preživljava ako bi je bilo koje pravilo zadržalo. Ne zbrajaju se u fiksni broj. Primjenjuje se zasebno na svaku stavku s izrađenom sigurnosnom kopijom.",
   "settings.retentionLocal": "Lokalni repozitorij",
   "settings.retentionOffsite": "Izvanmrežni repozitorij",
-  "settings.retentionOffsiteTitle": "Izvanmrežno zadržavanje",
   "settings.retentionOffsiteHint": "Zasebna politika za izvanmrežni repozitorij, kako biste ga mogli dulje čuvati kao arhivu. Sve nula = zadrži svaku izvanmrežnu sigurnosnu kopiju (bez izvanmrežnog čišćenja).",
   "settings.ownRetentionTitle": "Pravila zadržavanja po izvoru",
   "settings.ownRetentionHint": "Svaki izvor može slijediti vlastita pravila zadržavanja umjesto zajedničkih iznad. Spremnici i mape koji se mijenjaju svaki dan mogu zadržati 7 dnevnih sigurnosnih kopija, a virtualni strojevi koji se rijetko mijenjaju manje. Izvor bez vlastitih pravila koristi zajednička.",
   "settings.ownRetention": "Vlastita pravila zadržavanja",
   "settings.ownRetentionFor": "Vlastita pravila zadržavanja za {source}",
-  "settings.ownRetentionToggleHint": "Uključeno: ovaj izvor zadržava sigurnosne kopije prema pet pravila ispod, koja polaze od zajedničkih vrijednosti. Isključeno: koristi zajednička pravila. Sve 0 zadržava svaku kopiju ovog izvora. Vanjske kopije u svakom slučaju zadržavaju svoja pravila.",
+  "settings.ownRetentionToggleHint": "Uključeno: ovaj izvor zadržava sigurnosne kopije prema pet pravila ispod, koja polaze od zajedničkih vrijednosti. Isključeno: koristi zajednička pravila. Sve 0 zadržava svaku kopiju ovog izvora.",
+  "settings.ownOffsiteRetention": "Vlastita izvanmrežna pravila zadržavanja",
+  "settings.ownOffsiteRetentionFor": "Vlastita izvanmrežna pravila zadržavanja za {source}",
+  "settings.ownOffsiteRetentionHint": "Svaki izvor može čuvati sigurnosne kopije u svom izvanmrežnom repozitoriju prema vlastitim pravilima umjesto zajedničkih izvanmrežnih pravila iznad. Izvor bez vlastitih pravila koristi zajednička.",
+  "settings.ownOffsiteRetentionToggleHint": "Uključeno: izvanmrežni repozitorij ovog izvora zadržava sigurnosne kopije prema pet pravila ispod, koja polaze od zajedničkih izvanmrežnih vrijednosti. Isključeno: koristi zajednička izvanmrežna pravila. Sve 0 zadržava svaku izvanmrežnu kopiju ovog izvora.",
+  "settings.retentionExtraTargets": "Dodatna izvanmrežna odredišta zadržavaju svoja pravila, koja postavljate na stranici Izvanmrežno.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Izvanmrežna propusnost",

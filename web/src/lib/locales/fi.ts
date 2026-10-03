@@ -608,7 +608,6 @@ const fi: Partial<Translations> = {
   "files.more": "Tarkenna suodatinta nähdäksesi lisää tiedostoja.",
 
   // Retention
-  "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
   "excludes.advisoryImmichDb": "Immich säilyttää jokaisen kuvan albumit, kasvot ja päivämäärät PostgreSQL-tietokannassa, joka pyörii omassa erillisessä kontissaan, joten tämä varmuuskopio ei sisällä sitä. Täältä palauttaminen tuo kuvat takaisin ilman niitä. BombVault ottaa sen tietokantakontin vedoksen itsestään, kun kontti varmuuskopioidaan, joten tarkista, että se on aikataulussasi.",
   "excludes.advisoryNextcloudDb": "Nextcloud säilyttää tilinsä, jakonsa ja tunnisteensa tietokannassa, joka pyörii yleensä erillisessä kontissa, joten tämä varmuuskopio ei sisällä sitä. Tiedostot palaavat, jaot eivät. BombVault ottaa sen tietokantakontin vedoksen itsestään, kun kontti varmuuskopioidaan, joten tarkista, että se on aikataulussasi.",
@@ -679,7 +678,6 @@ const fi: Partial<Translations> = {
   "retentionPreview.paused": "Säilytetään: kohteella on avoin poikkeama",
   "retentionPreview.ownPolicy": "Tämän lähteen omat säilytyssäännöt",
   "retentionPreview.sharedPolicy": "Yhteiset säilytyssäännöt",
-  "retentionPreview.policy": "Säilytyssäännöt",
   "settings.imageMaintenanceTitle": "Image-siivous ja päivitystila",
   "settings.imageMaintenanceHint": "Ylläpitoa varmuuskopion jälkeisen konttipäivityksen ympärillä: poistetaan korvattu image ja päivitetään Unraidin oma välimuistissa oleva päivitystila.",
   "settings.retentionLast": "Säilytä viimeisimmät",
@@ -694,13 +692,17 @@ const fi: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenterivuodelta, jolla on varmuuskopio. Jos vuosia on vähemmän, myös vanhin säilytetään.",
   "settings.retentionLocal": "Paikallinen repo",
   "settings.retentionOffsite": "Etärepo",
-  "settings.retentionOffsiteTitle": "Etäsäilytys",
   "settings.retentionOffsiteHint": "Erillinen käytäntö etärepolle, jotta voit säilyttää sitä pidempään arkistona. Kaikki 0 = säilytä jokainen etävarmuuskopio (ei etäkarsintaa).",
   "settings.ownRetentionTitle": "Säilytyssäännöt lähteittäin",
   "settings.ownRetentionHint": "Lähde voi noudattaa omia säilytyssääntöjään yllä olevien yhteisten sijaan. Päivittäin muuttuvat kontit ja kansiot voivat säilyttää 7 päivittäistä varmuuskopiota, harvoin muuttuvat virtuaalikoneet vähemmän. Lähde, jolla ei ole omia sääntöjä, käyttää yhteisiä.",
   "settings.ownRetention": "Omat säilytyssäännöt",
   "settings.ownRetentionFor": "Omat säilytyssäännöt: {source}",
-  "settings.ownRetentionToggleHint": "Päällä: tämä lähde säilyttää varmuuskopionsa alla olevien viiden säännön mukaan, jotka alkavat yhteisistä arvoista. Pois: se käyttää yhteisiä sääntöjä. Kaikki 0 säilyttää tämän lähteen kaikki varmuuskopiot. Etäkopioilla on joka tapauksessa omat sääntönsä.",
+  "settings.ownRetentionToggleHint": "Päällä: tämä lähde säilyttää varmuuskopionsa alla olevien viiden säännön mukaan, jotka alkavat yhteisistä arvoista. Pois: se käyttää yhteisiä sääntöjä. Kaikki 0 säilyttää tämän lähteen kaikki varmuuskopiot.",
+  "settings.ownOffsiteRetention": "Omat etäsäilytyssäännöt",
+  "settings.ownOffsiteRetentionFor": "Omat etäsäilytyssäännöt: {source}",
+  "settings.ownOffsiteRetentionHint": "Lähde voi säilyttää etärepossaan olevat varmuuskopiot omien sääntöjensä mukaan yllä olevien yhteisten etäsääntöjen sijaan. Lähde, jolla ei ole omia sääntöjä, käyttää yhteisiä.",
+  "settings.ownOffsiteRetentionToggleHint": "Päällä: tämän lähteen etärepo säilyttää varmuuskopionsa alla olevien viiden säännön mukaan, jotka alkavat yhteisistä etäarvoista. Pois: se käyttää yhteisiä etäsääntöjä. Kaikki 0 säilyttää tämän lähteen kaikki etävarmuuskopiot.",
+  "settings.retentionExtraTargets": "Lisäetäkohteilla on omat sääntönsä, jotka asetat Etä-sivulla.",
   "settings.retentionCombineInfo": "Viisi sääntöä yhdistyvät TAI-logiikalla: snapshot säilyy, jos mikä tahansa yksittäinen sääntö säilyttäisi sen. Ne eivät summaudu kiinteäksi määräksi. Koskee jokaista varmuuskopioitua kohdetta erikseen.",
 
   // Off-site (rclone)
@@ -1403,7 +1405,7 @@ const fi: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault karsii tämän kopion jokaisen replikoinnin jälkeen etäsäilytyskäytännön mukaan.",
   "offsite.prune.stateNone": "Mikään ei karsi tätä kopiota. Append-only on pois päältä ja kaikki etäsäilytysarvot ovat 0, joten se kasvaa niin kauan kuin levy kestää.",
   "offsite.prune.effective": "Säilyttää {last} viimeisintä, {daily} päivittäistä, {weekly} viikoittaista, {monthly} kuukausittaista, {yearly} vuosittaista.",
-  "offsite.prune.editedElsewhere": "Asetetaan kohdassa Asetukset, Säilytys. Arvot ovat yhteiset kaikille osa-alueille.",
+  "offsite.prune.editedElsewhere": "Asetetaan kohdassa Asetukset, Säilytys. Kaikki lähteet jakavat nämä arvot, ellei jollakin ole omia sääntöjä.",
   "offsite.prune.budgetInfo": "Antaa hälytyksen heti, kun etärepo kasvaa yli tämän gigatavumäärän. Se ei koskaan poista mitään, joten se on turvaverkko kopiolle, jota mikään ei karsi.",
   "settings.retentionImmutableNotPruned": "Append-only-etäkohdetta ei koskaan karsita täältä, sanoivat nämä arvot mitä tahansa. Sen oma vaihe etäopastuksessa kertoo, miten sen karsii tallennuspuolelta.",
 

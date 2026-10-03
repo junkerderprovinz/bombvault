@@ -608,7 +608,6 @@ const hu: Partial<Translations> = {
   "files.more": "Finomítsa a szűrőt további fájlok megtekintéséhez.",
 
   // Retention
-  "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
   "excludes.advisoryImmichDb": "Az Immich minden fénykép albumait, arcait és dátumait egy PostgreSQL adatbázisban tartja, amely egy teljesen külön konténerben fut, így ez a mentés nem tartalmazza. Az innen való visszaállítás visszahozza a képeket, csak mindezek nélkül. A BombVault annak az adatbázisnak a konténeréről magától készít dumpot, amikor azt menti, ezért ellenőrizd, hogy benne van-e az ütemezésedben.",
   "excludes.advisoryNextcloudDb": "A Nextcloud a fiókjait, megosztásait és címkéit egy adatbázisban tartja, amely általában külön konténerben fut, így ez a mentés nem tartalmazza. A fájlok visszajönnek, a megosztások nem. A BombVault annak az adatbázisnak a konténeréről magától készít dumpot, amikor azt menti, ezért ellenőrizd, hogy benne van-e az ütemezésedben.",
@@ -679,7 +678,6 @@ const hu: Partial<Translations> = {
   "retentionPreview.paused": "Megtartva: az elemnek nyitott anomáliája van",
   "retentionPreview.ownPolicy": "A forrás saját megőrzési szabályai",
   "retentionPreview.sharedPolicy": "Közös megőrzési szabályok",
-  "retentionPreview.policy": "Megőrzési szabályok",
   "settings.imageMaintenanceTitle": "Image-takarítás és frissítési állapot",
   "settings.imageMaintenanceHint": "Karbantartás a backup utáni konténerfrissítés körül: a lecserélt image törlése és Unraid saját gyorsítótárazott frissítési állapotának frissítése.",
   "settings.retentionLast": "Utolsók megtartása",
@@ -694,13 +692,17 @@ const hu: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári év mindegyikéből, amelyben van mentés. Ha kevesebb év van, a legrégebbit is megtartja.",
   "settings.retentionLocal": "Helyi repó",
   "settings.retentionOffsite": "Távoli repó",
-  "settings.retentionOffsiteTitle": "Távoli megőrzés",
   "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli mentés megőrzése (nincs távoli takarítás).",
   "settings.ownRetentionTitle": "Megőrzési szabályok forrásonként",
   "settings.ownRetentionHint": "Egy forrás a fenti közös szabályok helyett saját megőrzési szabályokat követhet. A naponta változó konténerek és mappák megtarthatnak 7 napi mentést, a ritkán változó virtuális gépeknek kevesebb is elég. A saját szabályok nélküli forrás a közöseket használja.",
   "settings.ownRetention": "Saját megőrzési szabályok",
   "settings.ownRetentionFor": "Saját megőrzési szabályok: {source}",
-  "settings.ownRetentionToggleHint": "Be: ez a forrás az alábbi öt szabály szerint tartja meg a mentéseit, amelyek a közös értékekből indulnak. Ki: a közös szabályokat használja. Minden 0 esetén a forrás minden mentése megmarad. A távoli másolatok mindenképp a saját szabályaikat követik.",
+  "settings.ownRetentionToggleHint": "Be: ez a forrás az alábbi öt szabály szerint tartja meg a mentéseit, amelyek a közös értékekből indulnak. Ki: a közös szabályokat használja. Minden 0 esetén a forrás minden mentése megmarad.",
+  "settings.ownOffsiteRetention": "Saját távoli megőrzési szabályok",
+  "settings.ownOffsiteRetentionFor": "Saját távoli megőrzési szabályok: {source}",
+  "settings.ownOffsiteRetentionHint": "Egy forrás a távoli repójában lévő mentéseket a fenti közös távoli szabályok helyett saját szabályok szerint is megtarthatja. A saját szabályok nélküli forrás a közöseket használja.",
+  "settings.ownOffsiteRetentionToggleHint": "Be: a forrás távoli repója az alábbi öt szabály szerint tartja meg a mentéseit, amelyek a közös távoli értékekből indulnak. Ki: a közös távoli szabályokat használja. Minden 0 esetén a forrás minden távoli mentése megmarad.",
+  "settings.retentionExtraTargets": "A további külső célok a saját szabályaikat követik, ezeket a Telephelyen kívüli oldalon állítod be.",
   "settings.retentionCombineInfo": "Az öt szabály VAGY logikával kombinálódik: egy pillanatkép megmarad, ha bármelyik szabály megőrizné. Nem adódnak össze egy rögzített számmá. Külön érvényes minden mentett elemre.",
 
   // Off-site (rclone)
@@ -1387,7 +1389,7 @@ const hu: Partial<Translations> = {
   "offsite.prune.statePolicy": "A BombVault minden replikáció után nyesi ezt a másolatot, a távoli megőrzési szabály szerint.",
   "offsite.prune.stateNone": "Semmi nem nyesi ezt a másolatot. Az append-only ki van kapcsolva, és minden távoli megtartási érték 0, így addig nő, ameddig a lemez bírja.",
   "offsite.prune.effective": "Megtart {last} legutóbbit, {daily} napit, {weekly} hetit, {monthly} havit, {yearly} évest.",
-  "offsite.prune.editedElsewhere": "A Beállítások, Megőrzés alatt állítható. Az értékek minden területre közösek.",
+  "offsite.prune.editedElsewhere": "A Beállítások, Megőrzés alatt állítható. Minden forrás ezeket az értékeket használja, hacsak nincs saját szabálya.",
   "offsite.prune.budgetInfo": "Riaszt, amint a távoli repository ennyi gigabájt fölé nő. Soha nem töröl semmit, így az a védőháló, ami egy semmi által nem nyesett másolatot óv.",
   "settings.retentionImmutableNotPruned": "Az append-only távoli célt innen soha nem nyesi semmi, bármit is mutatnak ezek az értékek. A távoli varázsló saját lépése elmagyarázza, hogyan lehet a tároló oldaláról nyesni.",
 

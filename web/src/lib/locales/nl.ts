@@ -602,7 +602,6 @@ const nl: Partial<Translations> = {
   "files.more": "Verfijn het filter om meer bestanden te zien.",
 
   // Retention
-  "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
   "excludes.advisoryImmichDb": "Immich bewaart de albums, gezichten en datums van elke foto in een PostgreSQL-database die in een andere container draait dan deze, dus deze back-up bevat die niet. Herstellen vanaf hier brengt de foto's terug, maar zonder albums, gezichten en datums. BombVault dumpt die databasecontainer vanzelf zodra er een back-up van wordt gemaakt, dus controleer of hij in je planning staat.",
   "excludes.advisoryNextcloudDb": "Nextcloud bewaart accounts, gedeelde items en tags in een database die meestal in een aparte container draait, dus deze back-up bevat die niet. De bestanden komen terug, het delen niet. BombVault dumpt die databasecontainer vanzelf zodra er een back-up van wordt gemaakt, dus controleer of hij in je planning staat.",
@@ -673,7 +672,6 @@ const nl: Partial<Translations> = {
   "retentionPreview.paused": "Bewaard: dit item heeft een open anomalie",
   "retentionPreview.ownPolicy": "Eigen bewaarregels van deze bron",
   "retentionPreview.sharedPolicy": "Gedeelde bewaarregels",
-  "retentionPreview.policy": "Bewaarregels",
   "settings.imageMaintenanceTitle": "Image-opschoning & updatestatus",
   "settings.imageMaintenanceHint": "Onderhoud rond de container-update na backup: de vervangen image opruimen en Unraids eigen gecachete updatestatus vernieuwen.",
   "settings.retentionLast": "Laatste bewaren",
@@ -688,13 +686,17 @@ const nl: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderjaren met een back-up. Zijn er minder jaren, dan blijft ook de oudste bewaard.",
   "settings.retentionLocal": "Lokale repo",
   "settings.retentionOffsite": "Off-site repo",
-  "settings.retentionOffsiteTitle": "Off-site bewaarbeleid",
   "settings.retentionOffsiteHint": "Een apart beleid voor de off-site repo, zodat je die langer als archief kunt bewaren. Alles 0 = elke off-site back-up bewaren (geen off-site opschoning).",
   "settings.ownRetentionTitle": "Bewaarregels per bron",
   "settings.ownRetentionHint": "Een bron kan eigen bewaarregels volgen in plaats van de gedeelde regels hierboven. Containers en mappen die elke dag veranderen kunnen 7 dagelijkse back-ups bewaren, VM's die zelden veranderen minder. Een bron zonder eigen regels gebruikt de gedeelde.",
   "settings.ownRetention": "Eigen bewaarregels",
   "settings.ownRetentionFor": "Eigen bewaarregels voor {source}",
-  "settings.ownRetentionToggleHint": "Aan: deze bron bewaart zijn back-ups volgens de vijf regels hieronder, die beginnen bij de gedeelde waarden. Uit: hij gebruikt de gedeelde regels. Alles 0 bewaart elke back-up van deze bron. Off-site-kopieën houden hoe dan ook hun eigen regels.",
+  "settings.ownRetentionToggleHint": "Aan: deze bron bewaart zijn back-ups volgens de vijf regels hieronder, die beginnen bij de gedeelde waarden. Uit: hij gebruikt de gedeelde regels. Alles 0 bewaart elke back-up van deze bron.",
+  "settings.ownOffsiteRetention": "Eigen off-site bewaarregels",
+  "settings.ownOffsiteRetentionFor": "Eigen off-site bewaarregels voor {source}",
+  "settings.ownOffsiteRetentionHint": "Een bron kan de back-ups in zijn off-site repo volgens eigen regels bewaren in plaats van de gedeelde off-site regels hierboven. Een bron zonder eigen regels gebruikt de gedeelde.",
+  "settings.ownOffsiteRetentionToggleHint": "Aan: de off-site repo van deze bron bewaart zijn back-ups volgens de vijf regels hieronder, die beginnen bij de gedeelde off-site waarden. Uit: hij gebruikt de gedeelde off-site regels. Alles 0 bewaart elke off-site back-up van deze bron.",
+  "settings.retentionExtraTargets": "Aanvullende off-site bestemmingen houden hun eigen regels, die je instelt op de pagina Off-site.",
   "settings.retentionCombineInfo": "De vijf regels combineren met OF: een snapshot blijft bestaan als één enkele regel die zou bewaren. Ze tellen niet op tot een vast aantal. Geldt apart voor elk geback-upt item.",
 
   // Off-site (rclone)
@@ -1377,7 +1379,7 @@ const nl: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault pruned deze kopie na elke replicatie, volgens het off-site bewaarbeleid.",
   "offsite.prune.stateNone": "Niets pruned deze kopie. Append-only staat uit en elke off-site bewaarwaarde is 0, dus hij groeit tot de schijf het opgeeft.",
   "offsite.prune.effective": "Bewaart {last} laatste, {daily} dagelijkse, {weekly} wekelijkse, {monthly} maandelijkse, {yearly} jaarlijkse.",
-  "offsite.prune.editedElsewhere": "Wordt ingesteld bij Instellingen, Bewaarbeleid. De waarden gelden voor elk domein samen.",
+  "offsite.prune.editedElsewhere": "Wordt ingesteld bij Instellingen, Bewaarbeleid. Alle bronnen delen deze waarden, tenzij een bron eigen regels heeft.",
   "offsite.prune.budgetInfo": "Slaat alarm zodra de off-site repository boven dit aantal gigabytes uitgroeit. Hij verwijdert nooit iets, dus is het vangnet voor een kopie die niemand pruned.",
   "settings.retentionImmutableNotPruned": "Een off-site bestemming met append-only wordt hiervandaan nooit geprund, wat deze waarden ook zeggen. De eigen stap in de off-site assistent legt uit hoe je hem aan de opslagkant pruned.",
 

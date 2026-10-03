@@ -82,7 +82,7 @@ import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconS
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
-import { OwnRetentionCard } from "./settings/OwnRetentionCard";
+import { RetentionSection } from "./settings/OwnRetentionCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
 import { PairingSection } from "./settings/pairing/PairingSection";
@@ -1071,9 +1071,6 @@ export function SettingsPage() {
   const [, setCacheSaveError] = useState<string | null>(null);
   const [, setCoresSaveState] = useState<SaveState>("idle");
   const [, setCoresSaveError] = useState<string | null>(null);
-
-  const [, setOffRetSaveState] = useState<SaveState>("idle");
-  const [, setOffRetSaveError] = useState<string | null>(null);
 
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
@@ -2236,67 +2233,39 @@ export function SettingsPage() {
 
       {page === "retention" && (
       <Card
-        title={t("settings.retentionTitle")}
-        // The intro and the OR-combination rule share the title bubble.
-        hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
+        title={t("settings.tab.retention")}
+        // The OR rule holds for the local and the off-site rules alike.
+        hint={t("settings.retentionCombineInfo")}
         hueIndex={nextHue()}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {([
-            ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
-            ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
-            ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
-            ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
-            ["retentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
-          ] as const).map(([key, label, info]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t(label)}
-                <InfoBubble tip={t(info)} />
-              </span>
-              <NumberField
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  // Keyed by field name, so typing in one cell never resets
-                  // another cell's pending save.
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setRetSaveState, setRetSaveError));
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-              />
-            </label>
-          ))}
-        </div>
+        {(["local", "offsite"] as const).map((scope) => (
+          <RetentionSection
+            key={scope}
+            scope={scope}
+            settings={settings}
+            setSettings={setSettings}
+            save={(patch) => save(patch, setRetSaveState, setRetSaveError)}
+            debouncedSave={debouncedSave}
+            cancelDebounce={cancelDebounce}
+            t={t}
+          />
+        ))}
         {/* The answer the numbers above never give: which restore points the
-            next run is about to delete. Advanced-only, because it costs one
-            restic call per item per repository and is a question you ask on
-            purpose rather than one a page should poll. */}
+            next run is about to delete, locally and off-site. Advanced-only,
+            because it costs one restic call per item per repository and is a
+            question you ask on purpose rather than one a page should poll. */}
         {advanced && (
-          <div className="mt-4 border-t border-carbon-border pt-3">
+          <div className="border-t border-carbon-border pt-4">
             <div className="flex items-center gap-1 text-sm text-carbon-text">
               {t("retentionPreview.title")}
               <InfoBubble tip={t("retentionPreview.hint")} />
             </div>
             <div className="mt-2">
-              <RetentionPreview t={t} source="local" />
+              <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
             </div>
           </div>
         )}
       </Card>
-      )}
-
-      {page === "retention" && (
-        <OwnRetentionCard
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          debouncedSave={debouncedSave}
-          cancelDebounce={cancelDebounce}
-          t={t}
-          hueIndex={nextHue()}
-        />
       )}
 
       {/* Image cleanup and Unraid's update status both feed the post-backup */}
@@ -2742,57 +2711,6 @@ export function SettingsPage() {
         );
       })}
       </div>
-      )}
-
-      {page === "retention" && (
-      <Card
-        title={t("settings.retentionOffsiteTitle")}
-        // The intro, the OR-combination rule and the immutable-destination
-        // override share the title bubble.
-        hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionImmutableNotPruned")}`}
-        hueIndex={nextHue()}
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {([
-            ["offsiteRetentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
-            ["offsiteRetentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
-            ["offsiteRetentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
-            ["offsiteRetentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
-            ["offsiteRetentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
-          ] as const).map(([key, label, info]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t(label)}
-                <InfoBubble tip={t(info)} />
-              </span>
-              <NumberField
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError));
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-              />
-            </label>
-          ))}
-        </div>
-        {/* The off-site twin. Its own source, because the off-site policy is a
-            separate policy: an archive kept longer off-site than locally would
-            otherwise be previewed against the wrong rule. */}
-        {advanced && (
-          <div className="mt-4 border-t border-carbon-border pt-3">
-            <div className="flex items-center gap-1 text-sm text-carbon-text">
-              {t("retentionPreview.title")}
-              <InfoBubble tip={t("retentionPreview.hint")} />
-            </div>
-            <div className="mt-2">
-              <RetentionPreview t={t} source="offsite" />
-            </div>
-          </div>
-        )}
-      </Card>
       )}
 
       {/* `advanced &&` inline for the same reason as the cache card. */}

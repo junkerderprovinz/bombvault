@@ -608,7 +608,6 @@ const da: Partial<Translations> = {
   "files.more": "Forfin filteret for at se flere filer.",
 
   // Retention
-  "settings.retentionTitle": "Opbevaring af snapshots",
   "settings.retentionHint": "Hvor mange sikkerhedskopier der beholdes pr. element. Efter hver sikkerhedskopiering renser restic ældre øjebliksbilleder efter denne politik. Alt 0 = behold alt (fra).",
   "excludes.advisoryImmichDb": "Immich gemmer hvert billedes album, ansigter og datoer i en PostgreSQL-database, der kører i sin egen, separate container, så denne sikkerhedskopi indeholder den ikke. En gendannelse herfra henter billederne tilbage uden alt det. BombVault dumper den databasecontainer automatisk, når den bliver sikkerhedskopieret, så tjek at den er med i din plan.",
   "excludes.advisoryNextcloudDb": "Nextcloud gemmer konti, delinger og tags i en database, der som regel kører i en separat container, så denne sikkerhedskopi indeholder den ikke. Filerne kommer tilbage, delingerne gør ikke. BombVault dumper den databasecontainer automatisk, når den bliver sikkerhedskopieret, så tjek at den er med i din plan.",
@@ -679,7 +678,6 @@ const da: Partial<Translations> = {
   "retentionPreview.paused": "Bevaret: elementet har en åben afvigelse",
   "retentionPreview.ownPolicy": "Denne kildes egne opbevaringsregler",
   "retentionPreview.sharedPolicy": "Fælles opbevaringsregler",
-  "retentionPreview.policy": "Opbevaringsregler",
   "settings.imageMaintenanceTitle": "Oprydning af images & opdateringsstatus",
   "settings.imageMaintenanceHint": "Vedligeholdelse omkring container-opdateringen efter backup: ryd op i det overflødiggjorte image og opdater Unraids egen cachede opdateringsstatus.",
   "settings.retentionLast": "Behold seneste",
@@ -694,13 +692,17 @@ const da: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Beholder ét snapshot for hvert af de sidste N kalenderår med en sikkerhedskopi. Er der færre år end det, beholdes det ældste også.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
-  "settings.retentionOffsiteTitle": "Off-site-opbevaring",
   "settings.retentionOffsiteHint": "En separat politik for off-site-repoet, så du kan beholde det længere som arkiv. Alt 0 = behold hver off-site-sikkerhedskopi (ingen off-site-oprydning).",
   "settings.ownRetentionTitle": "Opbevaringsregler pr. kilde",
   "settings.ownRetentionHint": "En kilde kan følge sine egne opbevaringsregler i stedet for de fælles ovenfor. Containere og mapper, der ændrer sig hver dag, kan beholde 7 daglige backups, mens VM'er, der sjældent ændrer sig, kan nøjes med færre. En kilde uden egne regler bruger de fælles.",
   "settings.ownRetention": "Egne opbevaringsregler",
   "settings.ownRetentionFor": "Egne opbevaringsregler for {source}",
-  "settings.ownRetentionToggleHint": "Til: denne kilde beholder sine backups efter de fem regler nedenfor, som starter fra de fælles værdier. Fra: den bruger de fælles regler. Alt 0 beholder alle backups af denne kilde. Off-site-kopier beholder under alle omstændigheder deres egne regler.",
+  "settings.ownRetentionToggleHint": "Til: denne kilde beholder sine backups efter de fem regler nedenfor, som starter fra de fælles værdier. Fra: den bruger de fælles regler. Alt 0 beholder alle backups af denne kilde.",
+  "settings.ownOffsiteRetention": "Egne off-site-opbevaringsregler",
+  "settings.ownOffsiteRetentionFor": "Egne off-site-opbevaringsregler for {source}",
+  "settings.ownOffsiteRetentionHint": "En kilde kan beholde sine backups i off-site-repoet efter egne regler i stedet for de fælles off-site-regler ovenfor. En kilde uden egne regler bruger de fælles.",
+  "settings.ownOffsiteRetentionToggleHint": "Til: denne kildes off-site-repo beholder sine backups efter de fem regler nedenfor, som starter fra de fælles off-site-værdier. Fra: det bruger de fælles off-site-regler. Alt 0 beholder alle off-site-backups af denne kilde.",
+  "settings.retentionExtraTargets": "Yderligere eksterne mål beholder deres egne regler, som du angiver på siden Off-site.",
   "settings.retentionCombineInfo": "De fem regler kombineres med ELLER: et snapshot overlever, hvis blot én regel ville beholde det. De lægges ikke sammen til et fast antal. Gælder separat for hvert sikkerhedskopieret element.",
 
   // Off-site (rclone)
@@ -1403,7 +1405,7 @@ const da: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault pruner denne kopi efter hver replikering, efter off-site-opbevaringspolitikken.",
   "offsite.prune.stateNone": "Intet pruner denne kopi. Append-only er slået fra, og alle off-site-behold-værdier er 0, så den vokser, indtil disken siger stop.",
   "offsite.prune.effective": "Beholder {last} seneste, {daily} daglige, {weekly} ugentlige, {monthly} månedlige, {yearly} årlige.",
-  "offsite.prune.editedElsewhere": "Angives under Indstillinger, Opbevaring. Værdierne deles af alle områder.",
+  "offsite.prune.editedElsewhere": "Angives under Indstillinger, Opbevaring. Alle kilder deler disse værdier, medmindre en har egne regler.",
   "offsite.prune.budgetInfo": "Slår alarm, når off-site-repoet vokser ud over så mange gigabyte. Det sletter aldrig noget, så det er sikkerhedsnettet for en kopi, som intet pruner.",
   "settings.retentionImmutableNotPruned": "En off-site-destination med append-only prunes aldrig herfra, uanset hvad der står her. Dens eget trin i off-site-guiden forklarer, hvordan du pruner den fra lagersiden.",
 

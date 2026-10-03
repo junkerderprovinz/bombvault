@@ -504,7 +504,7 @@ const sl: Partial<Translations> = {
   "offsite.prune.statePolicy": "BombVault to kopijo počisti po vsaki replikaciji, po politiki hrambe zunanje kopije.",
   "offsite.prune.stateNone": "Te kopije ne čisti nič. Samo-dodajanje je izklopljeno in vse vrednosti hrambe zunanje kopije so 0, zato raste, dokler disk zdrži.",
   "offsite.prune.effective": "Ohranja {last} najnovejših, {daily} dnevnih, {weekly} tedenskih, {monthly} mesečnih, {yearly} letnih.",
-  "offsite.prune.editedElsewhere": "Nastavi se v Nastavitve, Hramba. Vrednosti so skupne vsem področjem.",
+  "offsite.prune.editedElsewhere": "Nastavi se v Nastavitve, Hramba. Vsi viri si delijo te vrednosti, razen če ima kateri lastna pravila.",
   "offsite.prune.budgetInfo": "Sproži alarm, brž ko zunanji repozitorij preraste toliko gigabajtov. Nikoli ničesar ne izbriše, zato je varnostna mreža za kopijo, ki je nič ne čisti.",
   "settings.retentionImmutableNotPruned": "Zunanji cilj s samo-dodajanjem se od tu nikoli ne čisti, karkoli že govorijo te vrednosti. Njegov lastni korak v čarovniku za zunanjo kopijo pojasni, kako ga počistiti s strani shrambe.",
 
@@ -555,7 +555,6 @@ const sl: Partial<Translations> = {
   "settings.notLoadedNoSave": "Trenutne konfiguracije ni bilo mogoče naložiti, zato se nič ne shrani. Znova naloži stran in poskusi znova.",
 
   // Retention
-  "settings.retentionTitle": "Hramba posnetkov",
   "settings.retentionHint": "Koliko varnostnih kopij ohraniti na posamezen element. Po vsaki varnostni kopiji restic po tej politiki počisti starejše posnetke. Vse ničle = ohrani vse (izklopljeno).",
   "excludes.advisoryImmichDb": "Immich hrani albume, obraze in datume vsake fotografije v bazi podatkov PostgreSQL, ki teče v svojem lastnem, ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Obnovitev od tod vrne slike, a brez vsega tega. BombVault vsebnik te baze podatkov izpiše sam, ko ga varnostno kopira, zato preveri, da je v tvojem urniku.",
   "excludes.advisoryNextcloudDb": "Nextcloud hrani račune, deljenja in oznake v bazi podatkov, ki običajno teče v ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Datoteke se vrnejo, deljenja ne. BombVault vsebnik te baze podatkov izpiše sam, ko ga varnostno kopira, zato preveri, da je v tvojem urniku.",
@@ -626,7 +625,6 @@ const sl: Partial<Translations> = {
   "retentionPreview.paused": "Ohranjeno: ta element ima odprto anomalijo",
   "retentionPreview.ownPolicy": "Lastna pravila hrambe tega vira",
   "retentionPreview.sharedPolicy": "Skupna pravila hrambe",
-  "retentionPreview.policy": "Pravila hrambe",
   "settings.imageMaintenanceTitle": "Čiščenje slik in stanje posodobitev",
   "settings.imageMaintenanceHint": "Vzdrževanje po varnostnem kopiranju za posodabljanje vsebnikov: počisti presežno sliko in osveži Unraidovo lastno predpomnjeno stanje posodobitev.",
   "settings.pruneImageAfterUpdate": "Po posodobitvi odstrani staro sliko",
@@ -652,13 +650,17 @@ const sl: Partial<Translations> = {
   "settings.retentionCombineInfo": "Vseh pet pravil se združuje z ALI: posnetek preživi, če bi ga ohranilo katero koli od pravil. Ne seštevajo se v fiksno število. Uporablja se ločeno za vsak varnostno kopiran element.",
   "settings.retentionLocal": "Lokalni repozitorij",
   "settings.retentionOffsite": "Zunanji repozitorij",
-  "settings.retentionOffsiteTitle": "Hramba zunanje kopije",
   "settings.retentionOffsiteHint": "Ločena politika za zunanji repozitorij, da ga lahko ohraniš dlje kot arhiv. Vse ničle = ohrani vsako zunanjo varnostno kopijo (brez čiščenja zunanje kopije).",
   "settings.ownRetentionTitle": "Pravila hrambe po virih",
   "settings.ownRetentionHint": "Vir lahko sledi lastnim pravilom hrambe namesto skupnih zgoraj. Vsebniki in mape, ki se spreminjajo vsak dan, lahko hranijo 7 dnevnih varnostnih kopij, navidezni stroji, ki se redko spreminjajo, manj. Vir brez lastnih pravil uporablja skupna.",
   "settings.ownRetention": "Lastna pravila hrambe",
   "settings.ownRetentionFor": "Lastna pravila hrambe za {source}",
-  "settings.ownRetentionToggleHint": "Vklopljeno: ta vir hrani varnostne kopije po petih pravilih spodaj, ki izhajajo iz skupnih vrednosti. Izklopljeno: uporablja skupna pravila. Vse 0 ohrani vsako kopijo tega vira. Zunanje kopije v vsakem primeru ohranijo svoja pravila.",
+  "settings.ownRetentionToggleHint": "Vklopljeno: ta vir hrani varnostne kopije po petih pravilih spodaj, ki izhajajo iz skupnih vrednosti. Izklopljeno: uporablja skupna pravila. Vse 0 ohrani vsako kopijo tega vira.",
+  "settings.ownOffsiteRetention": "Lastna pravila hrambe zunanjih kopij",
+  "settings.ownOffsiteRetentionFor": "Lastna pravila hrambe zunanjih kopij za {source}",
+  "settings.ownOffsiteRetentionHint": "Vir lahko hrani varnostne kopije v svojem zunanjem repozitoriju po lastnih pravilih namesto po skupnih zunanjih pravilih zgoraj. Vir brez lastnih pravil uporablja skupna.",
+  "settings.ownOffsiteRetentionToggleHint": "Vklopljeno: zunanji repozitorij tega vira hrani varnostne kopije po petih pravilih spodaj, ki izhajajo iz skupnih zunanjih vrednosti. Izklopljeno: uporablja skupna zunanja pravila. Vse 0 ohrani vsako zunanjo kopijo tega vira.",
+  "settings.retentionExtraTargets": "Dodatni zunanji cilji ohranijo svoja pravila, ki jih nastaviš na strani Zunanja kopija.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Pasovna širina za zunanjo kopijo",
