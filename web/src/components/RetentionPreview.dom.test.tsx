@@ -141,7 +141,13 @@ describe("RetentionPreview", () => {
     await waitFor(() => expect(screen.getByText(/not reachable now/)).toBeTruthy());
   });
 
-  it("offers every domain that keeps snapshots, ZFS among them", () => {
+  it("names its picker a source, as the rest of the Retention card does", () => {
+    renderPanel();
+    expect(screen.getByText(en["retentionPreview.sourceLabel"])).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: en["retentionPreview.sourceLabel"] })).toBeTruthy();
+  });
+
+  it("offers every source that keeps snapshots, ZFS among them", () => {
     renderPanel();
     fireEvent.click(screen.getByRole("combobox"));
     expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([

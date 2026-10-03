@@ -109,10 +109,10 @@ export function RetentionPreview({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("common.domain")}</span>
+          <span className="text-xs text-carbon-textSub">{t("retentionPreview.sourceLabel")}</span>
           <SelectField
             value={domain}
-            label={t("common.domain")}
+            label={t("retentionPreview.sourceLabel")}
             options={DOMAINS.map((d) => ({ value: d.key, label: t(d.labelKey) }))}
             onChange={(next) => {
               setDomain(next);
