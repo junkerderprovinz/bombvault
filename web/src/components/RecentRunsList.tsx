@@ -7,11 +7,15 @@ import { formatTs, formatDuration } from "../lib/reltime";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { RunAnomalyBadge } from "./RunAnomalyBadge";
 import { bottleneckText } from "../lib/bottleneck";
+import { runKindLabel } from "../lib/runKind";
 
 type T = ReturnType<typeof useT>["t"];
 
 // A quick look at recent runs; the full log is on the dashboard.
 const MAX_RUNS = 8;
+
+// An import leaves a restore point just as a backup does.
+const LISTED_KINDS = new Set(["backup", "import"]);
 
 // statusDotClass maps a run status to a dot colour. Running uses bg-accentText
 // because the plain accent measures 1.61:1 in the light theme, under the 3:1
@@ -35,8 +39,8 @@ function statusDotClass(status: string): string {
 }
 
 /**
- * RecentRunsList shows one target's latest backup runs with their start and
- * end time and duration. It fetches the run log when it mounts and again
+ * RecentRunsList shows one target's latest backups and imports with their
+ * start and end time and duration. It fetches the run log when it mounts and again
  * whenever `refreshKey` changes, and filters it by domain and name. With
  * `renderDetail` each row opens to what that run did, which is where a domain
  * with per-run detail of its own puts it.
@@ -67,7 +71,7 @@ export function RecentRunsList({
         if (!alive || !res.ok) return;
         setRuns(
           (res.runs ?? [])
-            .filter((r) => r.kind === "backup" && r.domain === domain && r.target === name)
+            .filter((r) => LISTED_KINDS.has(r.kind) && r.domain === domain && r.target === name)
             .slice(0, MAX_RUNS),
         );
       })
@@ -108,6 +112,7 @@ export function RecentRunsList({
               )}
             </span>
             {dur && <span className="text-carbon-textMuted whitespace-nowrap">({dur})</span>}
+            {run.kind === "import" && <span className="text-carbon-textMuted">{runKindLabel(t, run.kind)}</span>}
             {/* The grey dot alone reads as a failure. */}
             {run.status === "cancelled" && <span className="text-carbon-textMuted">{t("run.statusCancelled")}</span>}
           </>
