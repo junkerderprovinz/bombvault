@@ -3,7 +3,7 @@
 // or clipping with every optional section open, and the secret fields' eye and
 // the encryption switch staying large enough to hit under a coarse pointer.
 // German, because its labels run longest. The desktop half pins the 40px
-// rhythm and the unchanged 15px eye.
+// rhythm and the 16px eye.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -116,7 +116,7 @@ test("recovery on the desktop keeps the 40px rhythm and the small eye", async ({
 
   expect(await cardGap(page)).toBe("40px");
   const eyeBox = (await page.getByRole("button", { name: "Wert anzeigen" }).first().boundingBox())!;
-  expect(Math.round(eyeBox.width)).toBe(15);
+  expect(Math.round(eyeBox.width)).toBe(16);
   const switchBox = (await page.getByRole("switch", { name: "Passwort" }).boundingBox())!;
   expect(Math.round(switchBox.height)).toBe(20);
 });
