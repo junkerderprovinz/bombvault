@@ -3357,17 +3357,48 @@ func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
 		return // sampled recently enough
 	}
 	// Detach from the request (keep its values) so the sampling survives the
-	// handler returning, with a hard cap so a wedged restic can't leak a goroutine.
-	bg := context.WithoutCancel(ctx)
-	go func() {
-		cctx, cancel := context.WithTimeout(bg, 5*time.Minute)
-		defer cancel()
-		// Guarded, not bare: the check above reads a row this work only writes at
-		// the end, so it is the throttle that cannot see a sample in progress.
-		if err := s.collectStatsGuarded(cctx, domain, "local"); err != nil {
-			log.Printf("api: stats: %s: collect failed (backup is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
-		}
-	}()
+	// handler returning. Guarded inside, since the check above reads a row this
+	// work only writes at the end and cannot see a sample in progress.
+	go s.sampleInBackground(context.WithoutCancel(ctx), domain, "local")
+}
+
+// statsLocalTimeout and statsRemoteTimeout bound one background size sample,
+// so a wedged restic cannot leak a goroutine. Walking every snapshot across a
+// network fetches the trees over that link, which takes far longer than on a
+// local disk, and the walk takes no lock, so the longer bound holds up nothing.
+var (
+	statsLocalTimeout  = 5 * time.Minute
+	statsRemoteTimeout = time.Hour
+)
+
+// statsTimeout is the bound for sampling domain+source: the remote one for an
+// off-site copy and for a primary that lives on a remote backend.
+func (s *Service) statsTimeout(domain, source string) time.Duration {
+	if isOffsiteSource(source) {
+		return statsRemoteTimeout
+	}
+	if _, repo, err := s.domainRepoSource(domain, source); err == nil && restic.IsRemoteRepo(repo) {
+		return statsRemoteTimeout
+	}
+	return statsLocalTimeout
+}
+
+// sampleInBackground takes one guarded sample under its own bound, for callers
+// that start it in a goroutine and never wait for it. A sample that runs out of
+// time says nothing about the backups and nothing reads a missing sample as a
+// fault, so it is logged as what happens next; any other error is a failure.
+func (s *Service) sampleInBackground(ctx context.Context, domain, source string) {
+	limit := s.statsTimeout(domain, source)
+	cctx, cancel := context.WithTimeout(ctx, limit)
+	defer cancel()
+	err := s.collectStatsGuarded(cctx, domain, source)
+	switch {
+	case err == nil:
+	case errors.Is(err, context.DeadlineExceeded):
+		log.Printf("api: stats: %s/%s: measuring the repository size took longer than %d minutes and was stopped; the next backup or off-site copy measures it again. Backups are not affected.", domain, source, int(limit.Minutes())) //nolint:gosec // G706: domain/source are fixed-whitelist values
+	default:
+		log.Printf("api: stats: %s/%s: collect failed (backups are not affected): %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
+	}
 }
 
 // collectStatsAfterItem is the per-item success hook: it samples after a single
@@ -3412,18 +3443,12 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 		time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
 		return // sampled recently enough
 	}
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-		// Guarded: this is the one sampling path a browser can drive without
-		// bound. The Storage card asks for four domains on every mount, and the
-		// throttle above cannot fire at all while a repo has no sample yet
-		// (found=false), so every tab and every remount used to start another
-		// fan-out.
-		if err := s.collectStatsGuarded(ctx, domain, source); err != nil {
-			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
-		}
-	}()
+	// Guarded inside: this is the one sampling path a browser can drive without
+	// bound. The Storage card asks for four domains on every mount, and the
+	// throttle above cannot fire at all while a repo has no sample yet
+	// (found=false), so without the guard every tab and every remount would
+	// start another fan-out.
+	go s.sampleInBackground(context.Background(), domain, source)
 }
 
 // domainEnabled reports whether domain is switched on in s.

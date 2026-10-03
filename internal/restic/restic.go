@@ -1325,7 +1325,7 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 		out, err = runStreaming(cmd, args, sink, WatcherFrom(ctx))
 	} else {
 		cmd.Env = env
-		out, err = runBuffered(cmd, args)
+		out, err = runBuffered(ctx, cmd, args)
 	}
 	return out, ctxCancelErr(ctx, args, err)
 }
@@ -1348,14 +1348,20 @@ func ctxCancelErr(ctx context.Context, args []string, err error) error {
 	return err
 }
 
-// runBuffered runs restic capturing all stdout into a buffer.
-func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
+// runBuffered runs restic capturing all stdout into a buffer. When ctx stopped
+// the run, stderr only holds restic's reaction to the signal ("signal
+// terminated received", "context canceled" for every tree it was walking), so
+// it stays out of the log and the caller reports the stop.
+func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
 			return stdout.Bytes(), werr
+		}
+		if ctx.Err() != nil {
+			return nil, stderrError(args, stderr.String())
 		}
 		return nil, runError(args, stderr.String())
 	}
@@ -2519,7 +2525,7 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 		return err
 	}
 	cmd.Env = env
-	_, err := runBuffered(cmd, args)
+	_, err := runBuffered(ctx, cmd, args)
 	return err
 }
 

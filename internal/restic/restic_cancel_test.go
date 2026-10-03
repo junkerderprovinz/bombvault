@@ -1,9 +1,13 @@
 package restic
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -72,5 +76,69 @@ func TestRunKeepsDeadlineExceededDistinct(t *testing.T) {
 	}
 	if errors.Is(err, context.Canceled) {
 		t.Fatalf("a deadline must NOT be recorded as a user cancel, got %v", err)
+	}
+}
+
+// resticTalkerEnv makes the child write the line restic writes when it is
+// stopped mid-walk, then block ("sleep") or exit 1 ("fail").
+const resticTalkerEnv = "BOMBVAULT_RESTIC_TALKER"
+
+const talkerLine = "error walking snapshot: walking tree c2b4: context canceled"
+
+// TestResticTalker is a helper, not a test.
+func TestResticTalker(t *testing.T) {
+	switch os.Getenv(resticTalkerEnv) {
+	case "sleep":
+		fmt.Fprintln(os.Stderr, talkerLine)
+		time.Sleep(30 * time.Second)
+	case "fail":
+		fmt.Fprintln(os.Stderr, talkerLine)
+		os.Exit(1)
+	}
+}
+
+func capturedLog(fn func()) string {
+	var buf bytes.Buffer
+	prev, flags := log.Writer(), log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0)
+	defer func() { log.SetOutput(prev); log.SetFlags(flags) }()
+	fn()
+	return buf.String()
+}
+
+// What restic writes on its way out of a run that BombVault stopped describes
+// the stop, and the caller already logs that.
+func TestStoppedRunKeepsResticsStderrOutOfTheLog(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "sleep")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var err error
+	out := capturedLog(func() {
+		_, err = r.run(ctx, []string{"-test.run=^TestResticTalker$", "--", "stats"}, Mode{})
+	})
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("want the deadline back, got %v", err)
+	}
+	if strings.Contains(out, talkerLine) {
+		t.Fatalf("a stopped run put restic's stderr into the log:\n%s", out)
+	}
+}
+
+func TestFailedRunLogsResticsStderr(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "fail")
+
+	var err error
+	out := capturedLog(func() {
+		_, err = r.run(context.Background(), []string{"-test.run=^TestResticTalker$", "--", "stats"}, Mode{})
+	})
+	if err == nil {
+		t.Fatal("a failing run must return an error")
+	}
+	if !strings.Contains(out, talkerLine) {
+		t.Fatalf("a failed run must log restic's stderr, got:\n%s", out)
 	}
 }
