@@ -40,8 +40,8 @@ function statusDotClass(status: string): string {
 
 /**
  * RecentRunsList shows one target's latest backups and imports with their
- * start and end time and duration. It fetches the run log when it mounts and again
- * whenever `refreshKey` changes, and filters it by domain and name. With
+ * start and end time and duration. It fetches the run log when it mounts and
+ * again whenever `refreshKey` changes, and filters it by domain and name. With
  * `renderDetail` each row opens to what that run did, which is where a domain
  * with per-run detail of its own puts it.
  */

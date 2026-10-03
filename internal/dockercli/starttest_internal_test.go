@@ -139,9 +139,6 @@ func TestIsolatedConfigNamesTheInstance(t *testing.T) {
 	}
 }
 
-// The copy runs under the start test's own limits. A CPU quota next to them
-// is refused by Docker, a reservation above them too, and the original's log
-// driver would send the copy's output where the original's goes.
 func TestIsolatedConfigReplacesTheOriginalsLimits(t *testing.T) {
 	noOOMKill := true
 	from := model.Inspect{
