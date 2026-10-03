@@ -82,7 +82,7 @@ BombVault 从不自行删除安全快照。对象会列出这些快照及其时�
 
 BombVault 每次备份都会保存每个数据集在本地设置的 ZFS 属性：compression、recordsize、quota、reservation、atime、xattr、acltype、casesensitivity 以及你自己的用户属性。继承的值和只读值会自行恢复，因此不保存。在 BombVault 开始保存之前的备份中没有这些属性。
 
-- **到新数据集**会带上所有保存的属性运行 `zfs create`。casesensitivity、normalization 和 utf8only 只能这样设置。挂载点不带过去，以免副本与原数据集冲突；`canmount`、`readonly` 和加密设置也不带过去，以便还原可以写入。在加密数据集下创建的新数据集会继承它的加密。上级数据集必须存在。如果创建之后出了问题，新数据集会留在服务器上，因为 BombVault 从不销毁数据集。
+- **到新数据集**会带上所有保存的属性运行 `zfs create`。casesensitivity、normalization 和 utf8only 只能这样设置。配额和预留会在写入文件之后才设置，因此不会拒绝这些文件。挂载点不带过去，以免副本与原数据集冲突；`canmount`、`readonly` 和加密设置也不带过去，以便还原可以写入。在加密数据集下创建的新数据集会继承它的加密。上级数据集必须存在。如果创建之后出了问题，新数据集会留在服务器上，因为 BombVault 从不销毁数据集。
 - **恢复回数据集里**会在还原旁边列出保存的属性。**同时设置这些属性** 会在写入任何文件之前，设置现有数据集仍然接受的属性。配额和预留会在写入文件之后才设置，因此不会拒绝这些文件。不打开此开关，数据集会保留自己的设置。
 
 ## 备份里包含什么 {#contents}
@@ -181,6 +181,7 @@ zfs destroy -r cache/appdata@bombvault-20260924021500
 | `create-failed` | 无法创建新数据集。 | 详细信息中显示 zfs 的消息。请检查上级数据集是否存在。 |
 | `new-dataset-not-visible` | 新数据集已创建，但 BombVault 看不到它，因此没有恢复任何内容。 | 数据集保留在服务器上。把它挂载到 Host Data 路径下，再恢复到其中。 |
 | `set-properties-failed` | 无法设置保存的属性，因此没有恢复任何内容。 | 详细信息中会显示 zfs 的消息。 |
+| `set-limits-failed` | 文件已恢复，但无法设置保存的配额或预留。 | 详细信息中显示 zfs 的消息。请用 `zfs set` 自行设置配额或预留。 |
 
 ### 检查容器能看到什么 {#mountinfo}
 

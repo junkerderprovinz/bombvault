@@ -26,6 +26,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/compose"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // ---------------------------------------------------------------------------
@@ -342,6 +343,9 @@ type RestoreDeps struct {
 	// if it was running when backed up. Lets a restore rebuild a stack member by
 	// member without prematurely starting containers that depend on each other.
 	LeaveStopped bool
+	// WithoutRuntime recreates the container without its GPU request and with
+	// the daemon's default runtime, for a host that lacks them.
+	WithoutRuntime bool
 	// TargetID is the run-recording target id.
 	TargetID string
 
@@ -821,6 +825,8 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: record run start: %w", err)
 	}
 
+	var unlinked []string
+	d.Inspect.HostConfig.Links, unlinked = usableLinks(ctx, d.Docker, d.Inspect.HostConfig.Links, d.Inspect.Running && !d.LeaveStopped)
 	restoreErr := runRestore(ctx, d)
 	if restoreErr != nil {
 		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, truncateErr(restoreErr))
@@ -836,7 +842,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	// A partial-mapping restore (RESTORE-01) still records success — the run
 	// itself completed — but the note channel says what was left out, so a DR
 	// audit never mistakes "success" for "everything came back".
-	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: recordedSnap}, skippedPathsNote(d.SkippedPaths)); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: recordedSnap}, restoreNote(d, unlinked)); err != nil {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil
@@ -953,11 +959,30 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 	}
 	// Start only if it was running when backed up AND the restore didn't ask to
 	// leave it stopped.
-	if err := d.Docker.CreateAndStart(ctx, d.Inspect, d.Inspect.Running && !d.LeaveStopped); err != nil {
+	in := d.Inspect
+	if d.WithoutRuntime {
+		in.HostConfig.Runtime = ""
+		in.HostConfig.DeviceRequests = nil
+	}
+	if err := d.Docker.CreateAndStart(ctx, in, in.Running && !d.LeaveStopped); err != nil {
+		var missing *model.MissingRuntimeError
+		if errors.As(err, &missing) {
+			return &runtimeRefusal{missing}
+		}
 		return fmt.Errorf("restore: recreate container: %w", err)
 	}
 	return nil
 }
+
+// runtimeRefusal is a restore that failed because the host lacks the runtime
+// or GPU driver of the container. Its run reason begins with
+// store.ReasonRestoreNoRuntime, which the restore panel answers with a retry
+// without them.
+type runtimeRefusal struct{ err *model.MissingRuntimeError }
+
+func (e *runtimeRefusal) Error() string { return store.ReasonRestoreNoRuntime + ": " + e.err.Error() }
+
+func (e *runtimeRefusal) Unwrap() error { return e.err }
 
 // checkRestoreConflicts runs the restore pre-flight: it refuses to proceed when
 // the container's requested static IP or a published host port is already held
@@ -1164,6 +1189,45 @@ func truncateErr(err error) string {
 // returns "", which keeps Finish's errMsg — and therefore every
 // cleanly-mapping run row — byte-identical to the pre-feature shape
 // (pinned by TestRestoreDepsSkippedPathsEmptyIsByteIdentical).
+// restoreNote is what a successful container restore records: that it left
+// out the GPU or runtime or links Docker would refuse, and which stored paths
+// it skipped.
+func restoreNote(d RestoreDeps, unlinked []string) string {
+	var notes []string
+	if d.WithoutRuntime && d.Inspect.HostConfig.UsesExtraRuntime() {
+		notes = append(notes, store.NoteRestoredWithoutRuntime)
+	}
+	if len(unlinked) > 0 {
+		notes = append(notes, store.NoteRestoredWithoutLinks+": "+strings.Join(unlinked, ", "))
+	}
+	if skipped := skippedPathsNote(d.SkippedPaths); skipped != "" {
+		notes = append(notes, skipped)
+	}
+	return strings.Join(notes, "; ")
+}
+
+// usableLinks splits legacy links into the ones Docker accepts and the names
+// of the containers it would refuse: a missing one on create, and a stopped
+// one when the restored container starts. An inspect that fails keeps the
+// link and leaves the verdict to Docker.
+func usableLinks(ctx context.Context, docker Docker, links []string, start bool) (keep, refused []string) {
+	for _, l := range links {
+		name, _, _ := strings.Cut(strings.TrimPrefix(l, "/"), ":")
+		if live, err := docker.InspectName(ctx, name); err == nil && live == "" {
+			refused = append(refused, name)
+			continue
+		}
+		if start {
+			if h, err := docker.Health(ctx, name); err == nil && !h.Running {
+				refused = append(refused, name)
+				continue
+			}
+		}
+		keep = append(keep, l)
+	}
+	return keep, refused
+}
+
 func skippedPathsNote(skipped []string) string {
 	if len(skipped) == 0 {
 		return ""

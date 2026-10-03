@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -141,6 +143,25 @@ func TestAStreamLowersTheGateAndItsEndLiftsIt(t *testing.T) {
 	}
 }
 
+func TestAStreamHoldsForTheLongestWaitAfterIt(t *testing.T) {
+	s, st, d := newTrafficService(t)
+	cfg := store.DefaultTrafficSettings()
+	cfg.StreamThrottle = true
+	cfg.MediaServers = []string{"plex"}
+	cfg.StreamHoldMin = 120
+	if err := st.SetTrafficSettings(cfg); err != nil {
+		t.Fatal(err)
+	}
+	last := stream(s, d, time.Unix(1_700_000_000, 0), 4)
+	quiet := 119 * time.Minute / trafficPoll
+	for i := 1; i <= int(quiet); i++ {
+		s.pollTraffic(context.Background(), d, last.Add(time.Duration(i)*trafficPoll))
+	}
+	if got := s.streamingServer(); got != "plex" {
+		t.Fatalf("119 minutes after the stream with a 120-minute wait, streaming server = %q, want plex", got)
+	}
+}
+
 func TestAStreamIsIgnoredWhileTheThrottleIsOff(t *testing.T) {
 	s, st, d := newTrafficService(t)
 	cfg := store.DefaultTrafficSettings()
@@ -208,6 +229,43 @@ func TestOtherBackendsStartAtTheStreamingLimit(t *testing.T) {
 	}
 	if got := s.offsiteThrottle("vms"); got != throttleNow {
 		t.Fatalf("offsiteThrottle = %q, want now", got)
+	}
+}
+
+// rclone and restic send through the proxy only what goes over HTTP, and Go
+// sends nothing for a loopback host through it.
+func TestOnlyHTTPRemotesOffThisHostGoThroughTheProxy(t *testing.T) {
+	s, st, d := newTrafficService(t)
+	s.cfg.DataDir = t.TempDir()
+	conf := "[cloud]\ntype = s3\nprovider = AWS\n\n[nas]\ntype = smb\nhost = 192.168.1.5\n\n" +
+		"[box]\ntype = sftp\nhost = box\n\n[secret]\ntype = crypt\nremote = cloud:bucket/enc\n\n[safe]\ntype = crypt\nremote = nas:share/enc\n"
+	if err := os.WriteFile(filepath.Join(s.cfg.DataDir, "rclone.conf"), []byte(conf), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	enableThrottle(t, st, []string{"plex"})
+	stream(s, d, time.Unix(1_700_000_000, 0), 3)
+	for dest, live := range map[string]bool{
+		"rclone:cloud:bucket/bv":        true,
+		"rclone:secret:bv":              true,
+		"rclone:nas:share/bv":           false,
+		"rclone:box:bv":                 false,
+		"rclone:safe:bv":                false,
+		"rclone:missing:bv":             false,
+		"rest:https://backup.lan:8000/": true,
+		"rest:http://127.0.0.1:8000/":   false,
+		"rest:http://localhost:8000/":   false,
+		"s3:http://[::1]:9000/bucket":   false,
+		"s3:s3.amazonaws.com/bucket":    true,
+	} {
+		lim, mode, release := s.throttleCopy("containers", dest, restic.Limits{UploadKBps: 4096}, restic.Mode{})
+		proxied := strings.Contains(strings.Join(mode.Env, "\n"), "HTTPS_PROXY=")
+		release()
+		if proxied != live {
+			t.Errorf("%s: through the proxy = %v, want %v", dest, proxied, live)
+		}
+		if want := map[bool]int{true: 4096, false: 512}[live]; lim.UploadKBps != want {
+			t.Errorf("%s: upload limit %d, want %d", dest, lim.UploadKBps, want)
+		}
 	}
 }
 

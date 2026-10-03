@@ -82,7 +82,7 @@ Pour revenir en arrière après une restauration, copiez des fichiers isolés de
 
 BombVault enregistre à chaque sauvegarde les propriétés ZFS définies localement de chaque jeu de données : compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity et vos propres propriétés utilisateur. Les valeurs héritées et en lecture seule sont laissées de côté, car elles reviennent d'elles-mêmes. Les sauvegardes antérieures à cet enregistrement n'en ont pas.
 
-- **Dans un nouveau jeu de données** exécute `zfs create` avec chaque propriété enregistrée. casesensitivity, normalization et utf8only ne peuvent être définies que de cette façon. Le point de montage est laissé de côté pour que la copie n'entre pas en conflit avec l'original, tout comme `canmount`, `readonly` et le chiffrement, pour que la restauration puisse écrire. Un nouveau jeu de données placé sous un jeu chiffré reprend son chiffrement. Le jeu de données parent doit exister. Si quelque chose échoue après sa création, le nouveau jeu de données reste sur le serveur, car BombVault ne détruit jamais un jeu de données.
+- **Dans un nouveau jeu de données** exécute `zfs create` avec chaque propriété enregistrée. casesensitivity, normalization et utf8only ne peuvent être définies que de cette façon. Les quotas et réservations sont appliqués après les fichiers, pour qu'ils ne puissent pas les refuser. Le point de montage est laissé de côté pour que la copie n'entre pas en conflit avec l'original, tout comme `canmount`, `readonly` et le chiffrement, pour que la restauration puisse écrire. Un nouveau jeu de données placé sous un jeu chiffré reprend son chiffrement. Le jeu de données parent doit exister. Si quelque chose échoue après sa création, le nouveau jeu de données reste sur le serveur, car BombVault ne détruit jamais un jeu de données.
 - **Restaurer dans le jeu de données** affiche les propriétés enregistrées à côté de la restauration. **Appliquer aussi ces propriétés** applique celles qu'un jeu de données existant accepte encore, avant l'écriture du moindre fichier. Les quotas et réservations sont appliqués après les fichiers, pour qu'ils ne puissent pas les refuser. Sans ce bouton, le jeu de données garde ses réglages.
 
 ## Ce que contient la sauvegarde {#contents}
@@ -181,6 +181,7 @@ La page, l'historique des exécutions et les notifications nomment un problème 
 | `create-failed` | Le nouveau jeu de données n'a pas pu être créé. | Les détails montrent le message de zfs. Vérifiez que le jeu de données parent existe. |
 | `new-dataset-not-visible` | Le nouveau jeu de données a été créé, mais BombVault ne le voit pas, donc rien n'a été restauré. | Le jeu de données reste sur le serveur. Montez-le sous le chemin Host Data et restaurez dedans. |
 | `set-properties-failed` | Les propriétés enregistrées n'ont pas pu être appliquées, donc rien n'a été restauré. | Les détails affichent le message de zfs. |
+| `set-limits-failed` | Les fichiers ont été restaurés, mais le quota ou la réservation enregistré n'a pas pu être appliqué. | Les détails montrent le message de zfs. Appliquez vous-même le quota ou la réservation avec `zfs set`. |
 
 ### Vérifier ce que voit le conteneur {#mountinfo}
 

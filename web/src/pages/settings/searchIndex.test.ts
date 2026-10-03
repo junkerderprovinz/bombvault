@@ -59,14 +59,20 @@ describe("the settings search index", () => {
 
   it("knows every keep rule of the retention grids with its (i)", () => {
     const grid = /\["\w+", "(settings\.retention\w+)", "(settings\.retention\w+Info)"\]/g;
-    const pageRules = [...region("retention").matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
+    expect(region("retention")).toContain("<RetentionRulesCard");
+    const sectionSource = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
+    const pageRules = [...sectionSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     const targetSource = readFileSync(join(HERE, "..", "..", "components", "OffsiteTargetsSection.tsx"), "utf8");
     const targetRules = [...targetSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     expect(pageRules.map((r) => r.key)).toContain("settings.retentionYearly");
     expect(targetRules.map((r) => r.key)).toContain("settings.retentionYearly");
 
-    for (const card of SETTINGS_INDEX.retention) {
-      for (const rule of pageRules) expect(card.rows).toContainEqual(rule);
+    const sections = SETTINGS_INDEX.retention.filter(
+      (c) => c.title === "settings.retentionLocalTitle" || c.title === "settings.retentionOffsiteTitle"
+    );
+    expect(sections).toHaveLength(2);
+    for (const section of sections) {
+      for (const rule of pageRules) expect(section.rows).toContainEqual(rule);
     }
     for (const card of SETTINGS_INDEX.offsite.filter((c) => c.title === "offsite.copyDomainTitle")) {
       for (const rule of targetRules) expect(card.rows).toContainEqual(rule);
@@ -126,6 +132,29 @@ describe("the settings search index", () => {
       }
     }
   );
+
+  it("indexes each switch and the extra-targets line of the retention cards with its (i)", () => {
+    const source = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
+    const rows = (title: string) => SETTINGS_INDEX.retention.find((c) => c.title === title)?.rows ?? [];
+    for (const [section, key, hint] of [
+      ["settings.retentionLocalTitle", "settings.ownRetention", "settings.ownRetentionToggleHint"],
+      ["settings.retentionOffsiteTitle", "settings.ownOffsiteRetention", "settings.ownOffsiteRetentionToggleHint"],
+    ] as const) {
+      expect(source).toContain(`"${hint}"`);
+      expect(rows(section)).toContainEqual({ key, hint });
+    }
+    expect(source).toContain('"settings.retentionExtraTargets"');
+    expect(rows("settings.retentionOffsiteTitle")).toContainEqual({ key: "settings.retentionExtraTargets" });
+    for (const [card, hint] of [
+      ["settings.retentionLocalTitle", "settings.ownRetentionToggleHint"],
+      ["settings.retentionOffsiteTitle", "settings.ownOffsiteRetentionToggleHint"],
+    ] as const) {
+      for (const key of ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const) {
+        expect(source).toContain(`"${key}"`);
+        expect(rows(card)).toContainEqual({ key, hint });
+      }
+    }
+  });
 
   it("lists no card twice on one page", () => {
     for (const [page, cards] of Object.entries(SETTINGS_INDEX)) {

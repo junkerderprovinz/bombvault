@@ -82,7 +82,7 @@ For at gå tilbage efter en gendannelse kopierer du enkelte filer fra `.zfs/snap
 
 BombVault gemmer med hver sikkerhedskopi de lokalt satte ZFS-egenskaber for hvert datasæt: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity og dine egne brugeregenskaber. Nedarvede og skrivebeskyttede værdier udelades, fordi de kommer tilbage af sig selv. Sikkerhedskopier fra før BombVault gemte dem, har ingen.
 
-- **Til et nyt datasæt** kører `zfs create` med hver gemt egenskab. casesensitivity, normalization og utf8only kan kun sættes på den måde. Monteringspunktet udelades, så kopien ikke støder sammen med originalen, og det samme gælder `canmount`, `readonly` og krypteringen, så gendannelsen kan skrive. Et nyt datasæt under et krypteret overtager dets kryptering. Datasættet ovenover skal findes. Hvis noget fejler, efter det er oprettet, bliver det nye datasæt på serveren, fordi BombVault aldrig ødelægger et datasæt.
+- **Til et nyt datasæt** kører `zfs create` med hver gemt egenskab. casesensitivity, normalization og utf8only kan kun sættes på den måde. Kvoter og reservationer sættes først efter filerne, så de ikke kan afvise dem. Monteringspunktet udelades, så kopien ikke støder sammen med originalen, og det samme gælder `canmount`, `readonly` og krypteringen, så gendannelsen kan skrive. Et nyt datasæt under et krypteret overtager dets kryptering. Datasættet ovenover skal findes. Hvis noget fejler, efter det er oprettet, bliver det nye datasæt på serveren, fordi BombVault aldrig ødelægger et datasæt.
 - **Gendan ind i datasættet** viser de gemte egenskaber ved siden af gendannelsen. **Sæt også disse egenskaber** sætter dem, et eksisterende datasæt stadig tager imod, før en eneste fil skrives. Kvoter og reservationer sættes først efter filerne, så de ikke kan afvise dem. Uden den kontakt beholder datasættet sine indstillinger.
 
 ## Hvad sikkerhedskopien indeholder {#contents}
@@ -181,6 +181,7 @@ Siden, kørselshistorikken og notifikationerne nævner et problem med en af diss
 | `create-failed` | Det nye datasæt kunne ikke oprettes. | Detaljerne viser beskeden fra zfs. Tjek, at datasættet ovenover findes. |
 | `new-dataset-not-visible` | Det nye datasæt blev oprettet, men BombVault kan ikke se det, så intet blev gendannet. | Datasættet bliver på serveren. Montér det under Host Data-stien, og gendan ind i det. |
 | `set-properties-failed` | De gemte egenskaber kunne ikke sættes, så intet blev gendannet. | Detaljerne viser zfs' besked. |
+| `set-limits-failed` | Filerne blev gendannet, men den gemte kvote eller reservation kunne ikke sættes. | Detaljerne viser beskeden fra zfs. Sæt selv kvoten eller reservationen med `zfs set`. |
 
 ### Tjek, hvad containeren ser {#mountinfo}
 

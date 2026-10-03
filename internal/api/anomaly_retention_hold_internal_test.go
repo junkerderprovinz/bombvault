@@ -112,7 +112,7 @@ func TestRepoWideRetentionNamesTheListingFailureAndTheHold(t *testing.T) {
 	}
 	f.svc.engine = &previewEngine{snapsErr: errors.New("repository is unreachable")}
 
-	paused, err := f.svc.applyRetentionPerIdentity(context.Background(), "/repo",
+	paused, err := f.svc.applyRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 
 	if len(paused) == 0 {

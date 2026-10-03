@@ -82,7 +82,7 @@ Palataksesi takaisin palautuksen jälkeen kopioi yksittäisiä tiedostoja tietoj
 
 BombVault tallentaa jokaisen varmuuskopion mukana kunkin tietojoukon paikallisesti asetetut ZFS-ominaisuudet: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity ja omat käyttäjäominaisuutesi. Periytyvät ja vain luku -arvot jätetään pois, koska ne palaavat itsestään. Varmuuskopioissa ajalta ennen kuin BombVault tallensi niitä ei ole yhtään.
 
-- **Uuteen tietojoukkoon** ajaa `zfs create` -komennon jokaisella tallennetulla ominaisuudella. casesensitivity, normalization ja utf8only voi asettaa vain näin. Liitoskohta jätetään pois, jotta kopio ei törmää alkuperäiseen, samoin `canmount`, `readonly` ja salaus, jotta palautus voi kirjoittaa. Salatun alle luotu uusi tietojoukko saa sen salauksen. Yläpuolisen tietojoukon on oltava olemassa. Jos jokin epäonnistuu luonnin jälkeen, uusi tietojoukko jää palvelimelle, koska BombVault ei koskaan tuhoa tietojoukkoa.
+- **Uuteen tietojoukkoon** ajaa `zfs create` -komennon jokaisella tallennetulla ominaisuudella. casesensitivity, normalization ja utf8only voi asettaa vain näin. Kiintiöt ja varaukset asetetaan vasta tiedostojen jälkeen, jotta ne eivät voi estää niitä. Liitoskohta jätetään pois, jotta kopio ei törmää alkuperäiseen, samoin `canmount`, `readonly` ja salaus, jotta palautus voi kirjoittaa. Salatun alle luotu uusi tietojoukko saa sen salauksen. Yläpuolisen tietojoukon on oltava olemassa. Jos jokin epäonnistuu luonnin jälkeen, uusi tietojoukko jää palvelimelle, koska BombVault ei koskaan tuhoa tietojoukkoa.
 - **Palauta tietojoukkoon** näyttää tallennetut ominaisuudet palautuksen vieressä. **Aseta myös nämä ominaisuudet** asettaa ne, jotka olemassa oleva tietojoukko vielä hyväksyy, ennen kuin yhtään tiedostoa kirjoitetaan. Kiintiöt ja varaukset asetetaan vasta tiedostojen jälkeen, jotta ne eivät voi estää niitä. Ilman tätä kytkintä tietojoukko säilyttää asetuksensa.
 
 ## Mitä varmuuskopio sisältää {#contents}
@@ -181,6 +181,7 @@ Sivu, ajohistoria ja ilmoitukset nimeävät ongelman jollakin näistä koodeista
 | `create-failed` | Uutta tietojoukkoa ei voitu luoda. | Yksityiskohdissa näkyy zfs:n viesti. Tarkista, että yläpuolinen tietojoukko on olemassa. |
 | `new-dataset-not-visible` | Uusi tietojoukko luotiin, mutta BombVault ei näe sitä, joten mitään ei palautettu. | Tietojoukko jää palvelimelle. Liitä se Host Data -polun alle ja palauta sen sisään. |
 | `set-properties-failed` | Tallennettuja ominaisuuksia ei voitu asettaa, joten mitään ei palautettu. | Tiedot näyttävät zfs:n viestin. |
+| `set-limits-failed` | Tiedostot palautettiin, mutta tallennettua kiintiötä tai varausta ei voitu asettaa. | Yksityiskohdissa näkyy zfs:n viesti. Aseta kiintiö tai varaus itse komennolla `zfs set`. |
 
 ### Tarkista, mitä kontti näkee {#mountinfo}
 

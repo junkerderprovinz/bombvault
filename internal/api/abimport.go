@@ -36,6 +36,9 @@ const (
 	// abStatusNotBackedUp is a container that exists but was never backed up
 	// here, so a restore would have no recreate recipe and no paths to put back.
 	abStatusNotBackedUp = "not-backed-up"
+	// abStatusRepoUnavailable is a container whose repository is switched off
+	// or cannot be read, so nobody can tell whether its archive is new.
+	abStatusRepoUnavailable = "repo-unavailable"
 )
 
 // ABImportArchive is one container archive found in the chosen folder.
@@ -105,6 +108,7 @@ func (s *Service) planAppdataImport(ctx context.Context, sub string) ([]abPlanne
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
 	imported := map[string]map[string]bool{}
+	unreadable := map[string]bool{}
 	var out []abPlanned
 	for _, b := range backups {
 		for _, a := range b.Archives {
@@ -131,14 +135,23 @@ func (s *Service) planAppdataImport(ctx context.Context, sub string) ([]abPlanne
 			}
 			repo, rErr := s.containerRepoPath(settings, tg)
 			if rErr != nil {
-				return nil, rErr
+				log.Printf("api: import: %s: %v", a.Container, rErr) //nolint:gosec // G706: a container name from the folder listing
+				p.archive.Status = abStatusRepoUnavailable
+				out = append(out, p)
+				continue
 			}
 			p.target, p.repo, p.mode = tg, repo, s.primaryModeFor(settings, "containers", repo)
-			if imported[repo] == nil {
-				imported[repo], err = s.importedArchives(ctx, repo, p.mode)
-				if err != nil {
-					return nil, err
+			if imported[repo] == nil && !unreadable[repo] {
+				done, iErr := s.importedArchives(ctx, repo, p.mode)
+				if iErr != nil {
+					log.Printf("api: import: the repository of %s: %v", a.Container, iErr) //nolint:gosec // G706: a container name from the folder listing
 				}
+				imported[repo], unreadable[repo] = done, iErr != nil
+			}
+			if unreadable[repo] {
+				p.archive.Status = abStatusRepoUnavailable
+				out = append(out, p)
+				continue
 			}
 			p.archive.Status = abStatusNew
 			if imported[repo][a.Container+"|"+b.Folder] {
@@ -205,6 +218,7 @@ func (s *Service) StartImportAppdataBackup(ctx context.Context, sub string) (int
 		defer s.recoverOperation("import appdata backup", nil, nil)
 		defer s.batchActive.Store(false)
 		startedAt := time.Now().Unix()
+		var failed int
 		publish := func(done int64, active bool) {
 			if s.progress == nil {
 				return
@@ -213,7 +227,11 @@ func (s *Service) StartImportAppdataBackup(ctx context.Context, sub string) (int
 			if total > 0 {
 				pct = float64(done) * 100 / float64(total)
 			}
-			s.progress.Publish(progress.Event{Key: appdataImportKey, Phase: "maintenance", Percent: pct, Active: active, StartedAt: startedAt})
+			e := progress.Event{Key: appdataImportKey, Phase: "maintenance", Percent: pct, Active: active, StartedAt: startedAt}
+			if !active {
+				e.Failed = failed
+			}
+			s.progress.Publish(e)
 		}
 		publish(0, true)
 		var done int64
@@ -221,6 +239,7 @@ func (s *Service) StartImportAppdataBackup(ctx context.Context, sub string) (int
 			base := done
 			err := s.importAppdataArchive(bctx, p, func(read int64) { publish(base+read/2, true) })
 			if err != nil {
+				failed++
 				log.Printf("api: import: %s from %s failed: %v", p.archive.Container, p.archive.Folder, err) //nolint:gosec // G706: container and folder names come from the folder listing
 			}
 			done += p.archive.Size

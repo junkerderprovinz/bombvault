@@ -1,8 +1,11 @@
 package dockercli
 
 import (
+	"encoding/json"
+	"slices"
 	"testing"
 
+	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -221,5 +224,142 @@ func TestRecreateKeepsTheContainersOwnHealthcheck(t *testing.T) {
 	resp.Config.Healthcheck = nil
 	if cfg, _ := buildCreateConfig(mapInspect(resp)); cfg.Healthcheck != nil {
 		t.Fatal("without a healthcheck of its own, the image's applies")
+	}
+}
+
+// restoredHostConfig takes inspect data the way a backup stores it and a
+// restore reads it back: through the definition's JSON.
+func restoredHostConfig(t *testing.T, resp container.InspectResponse) *container.HostConfig {
+	t.Helper()
+	raw, err := json.Marshal(mapInspect(resp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var in model.Inspect
+	if err := json.Unmarshal(raw, &in); err != nil {
+		t.Fatal(err)
+	}
+	_, hc := buildCreateConfig(in)
+	return hc
+}
+
+func TestRestoreKeepsResourceLimitsAndLogDriver(t *testing.T) {
+	swappiness, pids, noOOMKill, withInit := int64(10), int64(200), true, true
+	src := &container.HostConfig{
+		LogConfig:   container.LogConfig{Type: "none"},
+		ShmSize:     128 << 20,
+		OomScoreAdj: 300,
+		Init:        &withInit,
+	}
+	src.Memory = 16 << 20
+	src.MemoryReservation = 8 << 20
+	src.MemorySwap = 32 << 20
+	src.MemorySwappiness = &swappiness
+	src.NanoCPUs = 50_000_000
+	src.CPUShares = 512
+	src.CpusetCpus = "0-1"
+	src.CpusetMems = "0"
+	src.PidsLimit = &pids
+	src.OomKillDisable = &noOOMKill
+	hc := restoredHostConfig(t, container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{Name: "/tiny", HostConfig: src},
+		Config:            &container.Config{Image: "alpine"},
+	})
+
+	if hc.Memory != 16<<20 || hc.MemoryReservation != 8<<20 || hc.MemorySwap != 32<<20 {
+		t.Fatalf("memory limits = %d/%d/%d", hc.Memory, hc.MemoryReservation, hc.MemorySwap)
+	}
+	if hc.MemorySwappiness == nil || *hc.MemorySwappiness != 10 {
+		t.Fatalf("swappiness = %v", hc.MemorySwappiness)
+	}
+	if hc.NanoCPUs != 50_000_000 || hc.CPUShares != 512 || hc.CpusetCpus != "0-1" || hc.CpusetMems != "0" {
+		t.Fatalf("cpu limits = %+v", hc.Resources)
+	}
+	if hc.PidsLimit == nil || *hc.PidsLimit != 200 {
+		t.Fatalf("pids limit = %v", hc.PidsLimit)
+	}
+	if hc.OomKillDisable == nil || !*hc.OomKillDisable || hc.OomScoreAdj != 300 {
+		t.Fatalf("oom settings = %v/%d", hc.OomKillDisable, hc.OomScoreAdj)
+	}
+	if hc.LogConfig.Type != "none" {
+		t.Fatalf("log driver = %q", hc.LogConfig.Type)
+	}
+	if hc.ShmSize != 128<<20 || hc.Init == nil || !*hc.Init {
+		t.Fatalf("shm size = %d, init = %v", hc.ShmSize, hc.Init)
+	}
+}
+
+func TestRestoreKeepsDNSNamespacesLinksAndIOLimits(t *testing.T) {
+	src := &container.HostConfig{
+		DNS:          []string{"192.168.20.2"},
+		DNSSearch:    []string{"lan"},
+		DNSOptions:   []string{"ndots:1"},
+		UTSMode:      "host",
+		CgroupnsMode: "private",
+		Links:        []string{"/db:/app/db"},
+		StorageOpt:   map[string]string{"size": "20G"},
+	}
+	src.BlkioWeight = 300
+	src.BlkioWeightDevice = []*blkiodev.WeightDevice{{Path: "/dev/sda", Weight: 200}}
+	src.BlkioDeviceReadBps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 1 << 20}}
+	src.BlkioDeviceWriteBps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 2 << 20}}
+	src.BlkioDeviceReadIOps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 100}}
+	src.BlkioDeviceWriteIOps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 50}}
+	hc := restoredHostConfig(t, container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
+		Config:            &container.Config{Image: "alpine"},
+	})
+
+	if !slices.Equal(hc.DNS, src.DNS) || !slices.Equal(hc.DNSSearch, src.DNSSearch) || !slices.Equal(hc.DNSOptions, src.DNSOptions) {
+		t.Fatalf("dns = %v %v %v", hc.DNS, hc.DNSSearch, hc.DNSOptions)
+	}
+	if hc.UTSMode != "host" || hc.CgroupnsMode != "private" {
+		t.Fatalf("uts = %q, cgroupns = %q", hc.UTSMode, hc.CgroupnsMode)
+	}
+	if !slices.Equal(hc.Links, src.Links) || hc.StorageOpt["size"] != "20G" {
+		t.Fatalf("links = %v, storage = %v", hc.Links, hc.StorageOpt)
+	}
+	if hc.BlkioWeight != 300 || len(hc.BlkioWeightDevice) != 1 || hc.BlkioWeightDevice[0].Weight != 200 {
+		t.Fatalf("blkio weight = %d %+v", hc.BlkioWeight, hc.BlkioWeightDevice)
+	}
+	throttles := [][]*blkiodev.ThrottleDevice{hc.BlkioDeviceReadBps, hc.BlkioDeviceWriteBps, hc.BlkioDeviceReadIOps, hc.BlkioDeviceWriteIOps}
+	for i, want := range []uint64{1 << 20, 2 << 20, 100, 50} {
+		if len(throttles[i]) != 1 || throttles[i][0].Path != "/dev/sda" || throttles[i][0].Rate != want {
+			t.Fatalf("throttle %d = %+v, want %d", i, throttles[i], want)
+		}
+	}
+}
+
+func TestRestoreKeepsLogOptions(t *testing.T) {
+	src := &container.HostConfig{LogConfig: container.LogConfig{Type: "json-file", Config: map[string]string{"max-size": "50m", "max-file": "1"}}}
+	hc := restoredHostConfig(t, container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
+		Config:            &container.Config{Image: "alpine"},
+	})
+	if hc.LogConfig.Type != "json-file" || hc.LogConfig.Config["max-size"] != "50m" || hc.LogConfig.Config["max-file"] != "1" {
+		t.Fatalf("log config = %+v", hc.LogConfig)
+	}
+}
+
+// A definition stored before limits were recorded must restore with Docker's
+// defaults, not with a zero limit or an empty log driver.
+func TestRestoreFromAnOlderDefinitionLeavesLimitsUnset(t *testing.T) {
+	var in model.Inspect
+	old := `{"Name":"/plex","Config":{"Image":"plexinc/pms-docker"},"HostConfig":{"Binds":["/mnt/user/appdata/plex:/config"],"RestartPolicy":{"Name":"unless-stopped"},"NetworkMode":"bridge"}}`
+	if err := json.Unmarshal([]byte(old), &in); err != nil {
+		t.Fatal(err)
+	}
+	_, hc := buildCreateConfig(in)
+	if hc.Memory != 0 || hc.MemorySwap != 0 || hc.NanoCPUs != 0 || hc.CPUShares != 0 || hc.ShmSize != 0 {
+		t.Fatalf("limits = %+v, want none", hc.Resources)
+	}
+	if hc.PidsLimit != nil || hc.MemorySwappiness != nil || hc.OomKillDisable != nil || hc.Init != nil {
+		t.Fatalf("optional settings must stay unset: %+v", hc)
+	}
+	if hc.LogConfig.Type != "" || hc.LogConfig.Config != nil {
+		t.Fatalf("log config = %+v, want the daemon's default", hc.LogConfig)
+	}
+	if hc.DNS != nil || hc.Links != nil || hc.StorageOpt != nil || hc.UTSMode != "" || hc.CgroupnsMode != "" || hc.BlkioWeight != 0 {
+		t.Fatalf("dns, links, namespaces and io limits must stay unset: %+v", hc)
 	}
 }

@@ -5,15 +5,15 @@ import type { FileEntry, ZFSDatasetView, ZFSHostDataset, ZFSRestoreAck, ZFSResto
 import { Advanced, useAdvanced } from "../../lib/advanced";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { copyText } from "../../lib/clipboard";
-import { useT } from "../../lib/i18n";
-import { tLtr } from "../../lib/ltrFragments";
+import { useT, type TranslationKey } from "../../lib/i18n";
+import { isolateLtr, tLtr } from "../../lib/ltrFragments";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import type { RestoreRequest } from "../../lib/restoreRequest";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { useConfirm } from "../../lib/useConfirm";
 import { restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
 import { useToast } from "../../lib/toast";
-import { zfsCodeSentence, zfsMemberKey } from "../../lib/zfsCodes";
+import { zfsCodeSentence, zfsFixKey, zfsMemberKey } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
@@ -47,6 +47,14 @@ const WHOLE_TREE = "";
 const NOT_WRITABLE = new Set(["gone", "not-mounted", "not-visible"]);
 
 type Mode = "inPlace" | "newDataset" | "folder" | "select";
+
+/** A refusal as the panel shows it: the coded sentence, then what the server
+ *  said beyond the name the restore was about, such as zfs's own message. */
+function withRefusalDetail(sentence: string, code: string, raw: string, names: string[]): string {
+  const detail = raw.startsWith(`${code}: `) ? raw.slice(code.length + 2) : "";
+  if (detail === "" || names.includes(detail)) return sentence;
+  return `${sentence} ${isolateLtr(detail)}`;
+}
 
 export function ZFSRestorePanel({
   item,
@@ -91,6 +99,8 @@ export function ZFSRestorePanel({
   const [fileFilter, setFileFilter] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [ack, setAck] = useState<ZFSRestoreAck | null>(null);
+  // What to do about the code the server refused the last start with.
+  const [refusalFix, setRefusalFix] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -182,6 +192,7 @@ export function ZFSRestorePanel({
     cancelledRef,
     start: async () => {
       setAck(null);
+      setRefusalFix(null);
       const res = await restoreZFS(
         item.id,
         {
@@ -200,9 +211,12 @@ export function ZFSRestorePanel({
         source,
       );
       if (res.ok) setAck(res);
-      // The coded sentence replaces the raw "code: detail" line the server
-      // sends along with it.
-      else if (res.code) return { ...res, error: zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint }) };
+      else if (res.code) {
+        setRefusalFix(zfsFixKey(res.code));
+        const sentence = zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint });
+        const error = withRefusalDetail(sentence, res.code, res.error ?? "", [dataset, newDataset.trim()]);
+        return { ...res, error };
+      }
       return res;
     },
   });
@@ -555,6 +569,9 @@ export function ZFSRestorePanel({
                 successMessage={t("files.restoreComplete")}
                 t={t}
               />
+              {state.phase === "error" && refusalFix && (
+                <p className="text-xs text-carbon-textSub">{t(refusalFix)}</p>
+              )}
             </>
           )}
         </div>

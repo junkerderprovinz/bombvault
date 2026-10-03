@@ -290,6 +290,10 @@ export interface Settings {
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
   retentionKeepYearly: number;
+  /** The domains with a local keep-policy of their own instead of the shared
+   *  one above, keyed by domain name. A domain missing here uses the shared
+   *  one. */
+  ownRetention: Partial<Record<OffsiteDomain, RetentionKeep>>;
   /** restic's --compression per repository: a domain name for its own
    *  repository, "offsite:<domain>" for its primary off-site destination. The
    *  server sends every key. */
@@ -299,6 +303,10 @@ export interface Settings {
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
   offsiteRetentionKeepYearly: number;
+  /** The domains whose built-in off-site repository keeps by a policy of its
+   *  own instead of the off-site one above. Additional off-site targets keep
+   *  their own rules either way. */
+  ownOffsiteRetention: Partial<Record<OffsiteDomain, RetentionKeep>>;
   offsiteLimitUpload: number;
   /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
    *  restic's own default ([558], issue #189). */
@@ -833,17 +841,20 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
  * survives this connection dying, so a multi-hour restore can't be killed by
  * the browser/proxy dropping the request. Watch the "container:<name>" SSE
  * progress key + the recorded run (kind "restore") for the outcome.
+ * withoutRuntime recreates the container without its GPU request and runtime,
+ * the retry after this host refused them.
  */
 export function restore(
   name: string,
   snapshotId: string,
   confirm: boolean,
   source?: string,
-  leaveStopped?: boolean
+  leaveStopped?: boolean,
+  withoutRuntime?: boolean
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped, withoutRuntime }),
   });
 }
 
@@ -2247,16 +2258,20 @@ export type RetentionPreviewRepo = {
   error?: string;
 };
 
+/** A keep-policy as restic's five counts. All zero keeps everything. */
+export type RetentionKeep = {
+  keepLast: number;
+  keepDaily: number;
+  keepWeekly: number;
+  keepMonthly: number;
+  keepYearly: number;
+};
+
 /** What the next retention run would remove, without removing anything. */
 export type RetentionPreview = {
-  policy: {
-    on: boolean;
-    keepLast: number;
-    keepDaily: number;
-    keepWeekly: number;
-    keepMonthly: number;
-    keepYearly: number;
-  };
+  /** The policy the answer was worked out with. `own` marks the domain's own
+   *  keep-policy, local or off-site, rather than the shared one. */
+  policy: RetentionKeep & { on: boolean; own: boolean };
   repos: RetentionPreviewRepo[];
   skipped?: string[] | null;
 };
@@ -3073,7 +3088,7 @@ export interface AppdataBackupArchive {
   size: number;
   /** When the plugin made the backup, in seconds. */
   time: number;
-  status: "new" | "imported" | "no-container" | "not-backed-up";
+  status: "new" | "imported" | "no-container" | "not-backed-up" | "repo-unavailable";
 }
 
 /** POST /api/import/appdata-backup/scan: what an Appdata.Backup folder holds. */

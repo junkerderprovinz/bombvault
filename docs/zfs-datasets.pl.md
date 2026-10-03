@@ -82,7 +82,7 @@ Aby wrócić po przywróceniu, skopiuj pojedyncze pliki z `.zfs/snapshot/bombvau
 
 BombVault zapisuje przy każdej kopii lokalnie ustawione właściwości ZFS każdego zbioru danych: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity i twoje własne właściwości użytkownika. Wartości dziedziczone i tylko do odczytu są pomijane, bo wracają same. Kopie sprzed zapisywania ich przez BombVault ich nie mają.
 
-- **Do nowego zbioru danych** uruchamia `zfs create` z każdą zapisaną właściwością. casesensitivity, normalization i utf8only da się ustawić tylko w ten sposób. Punkt montowania jest pomijany, żeby kopia nie kolidowała z oryginałem, podobnie `canmount`, `readonly` i szyfrowanie, żeby przywracanie mogło zapisywać. Nowy zbiór danych pod zaszyfrowanym przejmuje jego szyfrowanie. Nadrzędny zbiór danych musi istnieć. Jeśli coś się nie uda po utworzeniu, nowy zbiór danych zostaje na serwerze, bo BombVault nigdy nie niszczy zbioru danych.
+- **Do nowego zbioru danych** uruchamia `zfs create` z każdą zapisaną właściwością. casesensitivity, normalization i utf8only da się ustawić tylko w ten sposób. Limity (quota) i rezerwacje są ustawiane dopiero po plikach, więc nie mogą ich odrzucić. Punkt montowania jest pomijany, żeby kopia nie kolidowała z oryginałem, podobnie `canmount`, `readonly` i szyfrowanie, żeby przywracanie mogło zapisywać. Nowy zbiór danych pod zaszyfrowanym przejmuje jego szyfrowanie. Nadrzędny zbiór danych musi istnieć. Jeśli coś się nie uda po utworzeniu, nowy zbiór danych zostaje na serwerze, bo BombVault nigdy nie niszczy zbioru danych.
 - **Przywróć do samego zbioru danych** pokazuje zapisane właściwości obok przywracania. **Ustaw też te właściwości** ustawia te, które istniejący zbiór danych jeszcze przyjmie, zanim zostanie zapisany jakikolwiek plik. Limity (quota) i rezerwacje są ustawiane dopiero po plikach, więc nie mogą ich odrzucić. Bez tego przełącznika zbiór danych zachowuje swoje ustawienia.
 
 ## Co jest w kopii {#contents}
@@ -181,6 +181,7 @@ Strona, historia przebiegów i powiadomienia nazywają problem jednym z tych kod
 | `create-failed` | Nie udało się utworzyć nowego zbioru danych. | Szczegóły pokazują komunikat zfs. Sprawdź, czy nadrzędny zbiór danych istnieje. |
 | `new-dataset-not-visible` | Nowy zbiór danych został utworzony, ale BombVault go nie widzi, więc nic nie zostało przywrócone. | Zbiór danych zostaje na serwerze. Zamontuj go pod ścieżką Host Data i przywróć do niego. |
 | `set-properties-failed` | Nie udało się ustawić zapisanych właściwości, więc nic nie zostało przywrócone. | Szczegóły pokazują komunikat zfs. |
+| `set-limits-failed` | Pliki zostały przywrócone, ale nie udało się ustawić zapisanego limitu (quota) ani rezerwacji. | Szczegóły pokazują komunikat zfs. Ustaw limit lub rezerwację samodzielnie poleceniem `zfs set`. |
 
 ### Sprawdzanie, co widzi kontener {#mountinfo}
 

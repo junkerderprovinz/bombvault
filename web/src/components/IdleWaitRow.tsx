@@ -12,8 +12,10 @@ const MAX_HOURS = 24;
 const DEBOUNCE_MS = 800;
 
 // IdleWaitRow is a container's "wait until the app is idle" option: a switch,
-// and once it is on, the most hours a scheduled backup waits.
-export function IdleWaitRow({ name, initial }: { name: string; initial: number }) {
+// and once it is on, the most hours a scheduled backup waits. onSaved hears
+// the hours once the server took them, so the list the row was drawn from
+// shows them when the row is drawn again.
+export function IdleWaitRow({ name, initial, onSaved }: { name: string; initial: number; onSaved?: (hours: number) => void }) {
   const { t } = useT();
   const { push } = useToast();
   const [hours, setHours] = useState(initial);
@@ -24,12 +26,23 @@ export function IdleWaitRow({ name, initial }: { name: string; initial: number }
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The hours a pending debounce would save, flushed when the card goes away.
   const pending = useRef<number | null>(null);
+  const onSavedRef = useRef(onSaved);
+
+  useEffect(() => {
+    onSavedRef.current = onSaved;
+  }, [onSaved]);
 
   useEffect(() => setHours(initial), [initial]);
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
-      if (pending.current !== null) void setIdleWait(name, pending.current).catch(() => undefined);
+      const last = pending.current;
+      if (last === null) return;
+      void setIdleWait(name, last)
+        .then((res) => {
+          if (res.ok) onSavedRef.current?.(last);
+        })
+        .catch(() => undefined);
     },
     [name]
   );
@@ -37,7 +50,10 @@ export function IdleWaitRow({ name, initial }: { name: string; initial: number }
   async function save(next: number): Promise<boolean> {
     try {
       const res = await setIdleWait(name, next);
-      if (res.ok) return true;
+      if (res.ok) {
+        onSavedRef.current?.(next);
+        return true;
+      }
       push(res.error ?? t("settings.error"), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");

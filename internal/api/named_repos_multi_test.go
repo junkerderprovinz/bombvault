@@ -926,7 +926,7 @@ func TestEveryReaderAddressesItsOwnRepository(t *testing.T) {
 	}
 
 	eng.listedRepos, eng.listedModes = nil, nil
-	if _, err := svc.StartRestore(context.Background(), "plex", "abcd1234deadbeef", "local", true); err != nil {
+	if _, err := svc.StartRestore(context.Background(), "plex", "abcd1234deadbeef", "local", true, false); err != nil {
 		// The restore may fail for other reasons, such as no definition or no
 		// Docker. Only the mode of what it opened matters here.
 		t.Logf("StartRestore returned %v (the mode below is what this test is about)", err)
