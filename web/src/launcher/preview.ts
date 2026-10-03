@@ -8,13 +8,13 @@ import { bridgeOver, type Bridge, type LauncherState, type Port, type Request } 
 const KEY = "bv-launcher-preview";
 
 const FOUND = [
-  { name: "BombVault (Bottich)", url: "https://192.168.20.12:3443/", version: "9.7.0" },
-  { name: "BombVault (Offsite)", url: "http://192.168.30.4:3080/", version: "9.6.0" },
+  { name: "Home NAS", url: "https://192.168.1.20:3443/", version: "9.7.0" },
+  { name: "Offsite", url: "http://10.8.0.2:3080/", version: "9.6.0" },
 ];
 
 const MEMBERS = [
-  { id: "m1", name: "BombVault (Bottich)", version: "v9.7.0" },
-  { id: "m2", name: "BombVault (Eltern)", version: "v9.7.0" },
+  { id: "m1", name: "Home NAS", version: "v9.7.0" },
+  { id: "m2", name: "Offsite", version: "v9.7.0" },
 ];
 
 /** The first server's look, which the launcher follows until it gets its own. */
@@ -94,7 +94,7 @@ export function previewBridge(): Bridge {
       case "adopt": {
         const servers = [
           ...state.servers,
-          { id: crypto.randomUUID(), name: MEMBERS[0].name, url: "https://192.168.20.12:3443/", member: true },
+          { id: crypto.randomUUID(), name: MEMBERS[0].name, url: "https://192.168.1.20:3443/", member: true },
           { id: crypto.randomUUID(), name: MEMBERS[1].name, url: "", member: true },
         ];
         emit({ servers, group: { paired: true, connected: true } });
@@ -164,7 +164,7 @@ function answer(): string {
       run("r1", "paperless", "success", now - 1900, now - 1830),
     ],
     progress: [{ key: "container:nextcloud", phase: "backup", percent: 42, active: true, startedAt: now - 95 }],
-    next: [{ job: "containers", domain: "containers", next: new Date((now + 3 * 3600) * 1000).toISOString() }],
+    next: [{ job: "backup", domain: "", next: new Date((now + 3 * 3600) * 1000).toISOString() }],
   });
 }
 
