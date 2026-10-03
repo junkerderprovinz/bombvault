@@ -134,6 +134,7 @@ export function AccentPresetSwatch({
 
 export function ToggleRow({
   label,
+  accessibleName,
   hint,
   checked,
   onChange,
@@ -143,6 +144,9 @@ export function ToggleRow({
   hueIndex,
 }: {
   label: string;
+  /** What a screen reader hears for the switch, when the visible label
+   *  leans on a heading above it for the rest of its meaning. */
+  accessibleName?: string;
   /** Optional (i) bubble beside the label, same contract as Card's hint. */
   hint?: string;
   checked: boolean;
@@ -189,7 +193,7 @@ export function ToggleRow({
       <Toggle
         key={feedbackKey}
         hideLabel
-        label={label}
+        label={accessibleName ?? label}
         checked={checked}
         onChange={onChange}
         disabled={disabled}

@@ -303,6 +303,10 @@ export interface Settings {
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
   offsiteRetentionKeepYearly: number;
+  /** The domains whose built-in off-site repository keeps by a policy of its
+   *  own instead of the off-site one above. Additional off-site targets keep
+   *  their own rules either way. */
+  ownOffsiteRetention: Partial<Record<OffsiteDomain, RetentionKeep>>;
   offsiteLimitUpload: number;
   /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
    *  restic's own default ([558], issue #189). */
@@ -2252,7 +2256,7 @@ export type RetentionPreviewRepo = {
   error?: string;
 };
 
-/** A local keep-policy as restic's five counts. All zero keeps everything. */
+/** A keep-policy as restic's five counts. All zero keeps everything. */
 export type RetentionKeep = {
   keepLast: number;
   keepDaily: number;
@@ -2264,7 +2268,7 @@ export type RetentionKeep = {
 /** What the next retention run would remove, without removing anything. */
 export type RetentionPreview = {
   /** The policy the answer was worked out with. `own` marks the domain's own
-   *  local keep-policy rather than the shared one. */
+   *  keep-policy, local or off-site, rather than the shared one. */
   policy: RetentionKeep & { on: boolean; own: boolean };
   repos: RetentionPreviewRepo[];
   skipped?: string[] | null;

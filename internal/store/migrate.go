@@ -2147,6 +2147,14 @@ ALTER TABLE offsite_targets ADD COLUMN compression TEXT NOT NULL DEFAULT '';`,
 		sql:              `ALTER TABLE settings ADD COLUMN retention_overrides TEXT NOT NULL DEFAULT '';`,
 	},
 	{
+		// The same for the built-in off-site repo of each domain. Empty leaves
+		// every domain on the shared off-site policy.
+		version:          retentionYearlyMigration + 3,
+		name:             "offsite_retention_overrides",
+		alreadySatisfied: columnPresent("settings", "offsite_retention_overrides"),
+		sql:              `ALTER TABLE settings ADD COLUMN offsite_retention_overrides TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// One restore probe of one item: the check after its first backup, or
 		// one somebody asked for. The time this migration ran is when first
 		// backups start counting, so items backed up before it are not all

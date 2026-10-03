@@ -91,12 +91,17 @@ type Settings struct {
 	RetentionOverrides string
 	// Off-site retention policy, separate from the local one so the off-site
 	// repo can serve as a longer archive. All zero never prunes the off-site
-	// repo.
+	// repo. A domain listed in OffsiteRetentionOverrides ages its built-in
+	// off-site repo by its own policy instead.
 	OffsiteRetentionKeepLast    int
 	OffsiteRetentionKeepDaily   int
 	OffsiteRetentionKeepWeekly  int
 	OffsiteRetentionKeepMonthly int
 	OffsiteRetentionKeepYearly  int
+	// OffsiteRetentionOverrides is RetentionOverrides for the off-site
+	// policy. Read and write it through OwnOffsiteRetention and
+	// SetOwnOffsiteRetention.
+	OffsiteRetentionOverrides string
 	// Bandwidth caps in KiB/s for off-site replication and remote backups,
 	// passed to restic as --limit-upload and --limit-download. 0 is unlimited.
 	OffsiteLimitUpload   int
@@ -327,7 +332,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       totp_secret, totp_enabled, totp_recovery,
 		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
 		       retention_keep_yearly, offsite_retention_keep_yearly,
-		       repo_compression, start_test_enabled, retention_overrides
+		       repo_compression, start_test_enabled, retention_overrides,
+		       offsite_retention_overrides
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -373,6 +379,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.Compression,
 		&startTestEnabled,
 		&s.RetentionOverrides,
+		&s.OffsiteRetentionOverrides,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -575,7 +582,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  offsite_retention_keep_yearly = ?,
 		  repo_compression             = ?,
 		  start_test_enabled           = ?,
-		  retention_overrides          = ?
+		  retention_overrides          = ?,
+		  offsite_retention_overrides  = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -629,6 +637,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.Compression,
 		boolInt(s.StartTestEnabled),
 		s.RetentionOverrides,
+		s.OffsiteRetentionOverrides,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
@@ -674,8 +683,8 @@ func compressionMap(raw string) map[string]string {
 	return m
 }
 
-// RetentionKeep is a local keep-policy as restic's five counts. All zero keeps
-// every snapshot.
+// RetentionKeep is a keep-policy as restic's five counts. All zero keeps every
+// snapshot.
 type RetentionKeep struct {
 	KeepLast    int `json:"keepLast"`
 	KeepDaily   int `json:"keepDaily"`
@@ -684,26 +693,46 @@ type RetentionKeep struct {
 	KeepYearly  int `json:"keepYearly"`
 }
 
-// OwnRetention returns the domains with a keep-policy of their own. A
-// value that does not decode reads as none, so a bad write falls back to the
-// shared policy instead of stopping retention.
+// OwnRetention returns the domains with a local keep-policy of their own.
 func (s Settings) OwnRetention() map[string]RetentionKeep {
+	return keepMap(s.RetentionOverrides)
+}
+
+// SetOwnRetention stores m as the domains' own local keep-policies. An empty
+// m clears the column, so every domain follows the shared policy again.
+func (s *Settings) SetOwnRetention(m map[string]RetentionKeep) {
+	s.RetentionOverrides = encodeKeepMap(m)
+}
+
+// OwnOffsiteRetention returns the domains whose built-in off-site repo ages by
+// a keep-policy of their own.
+func (s Settings) OwnOffsiteRetention() map[string]RetentionKeep {
+	return keepMap(s.OffsiteRetentionOverrides)
+}
+
+// SetOwnOffsiteRetention stores m as the domains' own off-site keep-policies.
+// An empty m puts every domain back on the shared off-site policy.
+func (s *Settings) SetOwnOffsiteRetention(m map[string]RetentionKeep) {
+	s.OffsiteRetentionOverrides = encodeKeepMap(m)
+}
+
+// keepMap decodes a stored set of keep-policies. A value that does not decode
+// reads as none, so a bad write falls back to the shared policy instead of
+// stopping retention.
+func keepMap(raw string) map[string]RetentionKeep {
 	m := map[string]RetentionKeep{}
-	if s.RetentionOverrides != "" {
-		if err := json.Unmarshal([]byte(s.RetentionOverrides), &m); err != nil {
+	if raw != "" {
+		if err := json.Unmarshal([]byte(raw), &m); err != nil {
 			return map[string]RetentionKeep{}
 		}
 	}
 	return m
 }
 
-// SetOwnRetention stores m as the domains' own keep-policies. An empty m
-// clears the column, so every domain follows the shared policy again.
-func (s *Settings) SetOwnRetention(m map[string]RetentionKeep) {
+func encodeKeepMap(m map[string]RetentionKeep) string {
 	if len(m) == 0 {
-		s.RetentionOverrides = ""
-		return
+		return ""
 	}
 	b, _ := json.Marshal(m) // a map of plain structs always encodes
-	s.RetentionOverrides = string(b)
+	return string(b)
 }
