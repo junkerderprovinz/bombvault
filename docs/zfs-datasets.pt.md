@@ -63,6 +63,7 @@ Abra **Backups** no elemento, escolha o backup e depois o conjunto de dados. Por
 
 - **Restaurar dentro do conjunto de dados.** Os ficheiros do backup são escritos no ponto de montagem do conjunto de dados. Os ficheiros com o mesmo nome são substituídos, os outros ficam. O conjunto de dados nunca é revertido nem substituído. O BombVault verifica que o conjunto de dados está montado, visível e gravável, uma vez antes de começar e de novo mesmo antes de escrever. Onde um conjunto de dados filho estiver montado lá dentro, nada é escrito: o filho mantém os seus ficheiros, o dono e as permissões, e é restaurado a partir do seu próprio backup.
 - **Restaurar para uma pasta.** Escolha uma pasta abaixo de `/mnt`. O BombVault verifica que a pasta está num pool ou partilha montados e que há espaço livre suficiente. Funciona sem a ligação SSH e para conjuntos de dados que já não existem.
+- **Num conjunto de dados novo.** Indique um conjunto de dados que ainda não existe. O BombVault cria-o com as propriedades ZFS guardadas na cópia e restaura para dentro dele, veja [Restaurar como conjunto de dados novo](#new-dataset).
 - **Escolher ficheiros** (avançado): escrever de volta no conjunto de dados apenas os ficheiros e pastas que escolher.
 - **Todos os conjuntos de dados desta cópia** (avançado): cada conjunto de dados da árvore na sua própria subpasta da pasta que escolher. Os conjuntos de dados ignorados nesse backup são indicados.
 - **A partir de outro servidor:** a página **Recuperação** restaura a partir do repositório de outro BombVault, sempre para uma pasta: todos os conjuntos de dados de um backup, cada um na sua própria subpasta, ou um conjunto de dados da árvore, inteiro ou ficheiros escolhidos.
@@ -79,27 +80,23 @@ Para voltar atrás depois de um restauro, copie ficheiros individuais de `.zfs/s
 
 ### Restaurar como conjunto de dados novo {#new-dataset}
 
-O BombVault não cria conjuntos de dados. Crie-o no servidor com as propriedades que quiser e depois restaure para uma pasta que seja o seu ponto de montagem:
+O BombVault guarda em cada cópia as propriedades ZFS definidas localmente de cada conjunto de dados: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity e as suas próprias propriedades de utilizador. Os valores herdados e só de leitura ficam de fora, porque voltam sozinhos. As cópias de antes de o BombVault as guardar não têm nenhuma.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-e no BombVault restaure para a pasta `cache/appdata-restored` abaixo de `/mnt`.
+- **Num conjunto de dados novo** executa `zfs create` com cada propriedade guardada. casesensitivity, normalization e utf8only só podem ser definidas assim. As quotas e reservas são definidas depois dos ficheiros, para não os poderem recusar. O ponto de montagem fica de fora para a cópia não colidir com o original, tal como `canmount`, `readonly` e a encriptação, para o restauro poder escrever. Um conjunto de dados novo abaixo de um encriptado herda a sua encriptação. O conjunto de dados acima tem de existir. Se algo falhar depois de criado, o conjunto de dados novo fica no servidor, porque o BombVault nunca destrói um conjunto de dados.
+- **Restaurar dentro do conjunto de dados** mostra as propriedades guardadas junto ao restauro. **Definir também estas propriedades** define as que um conjunto de dados existente ainda aceita, antes de escrever qualquer ficheiro. As quotas e reservas são definidas depois dos ficheiros, para não os poderem recusar. Sem esse interruptor, o conjunto de dados mantém as suas definições.
 
 ## O que está no backup {#contents}
 
-No backup: os ficheiros e pastas de cada conjunto de dados guardado, com o dono, as permissões, as datas e os atributos estendidos tal como o restic os guarda.
+No backup: os ficheiros e pastas de cada conjunto de dados guardado, com o dono, as permissões, as datas e os atributos estendidos tal como o restic os guarda, e as propriedades ZFS definidas localmente de cada conjunto de dados.
 
 Não está no backup:
 
-- as propriedades ZFS dos conjuntos de dados (compression, recordsize, quota, mountpoint e as restantes);
 - o dono e as permissões da própria pasta de topo de cada conjunto de dados (tudo o que está abaixo dela está incluído). Um restauro dentro do conjunto de dados deixa a pasta de topo existente como está; um restauro para uma pasta cria-a com as permissões `0755`;
 - os instantâneos ZFS existentes;
 - os filhos que foram ignorados ou deixados de fora;
 - os volumes.
 
-Para restaurar num pool novo, crie primeiro os conjuntos de dados com as propriedades que quiser. Ainda não foi verificado se as ACL NFSv4, tal como o TrueNAS as usa em conjuntos de dados SMB, voltam como espera, por isso teste um restauro com os seus próprios dados antes de confiar nelas.
+Para restaurar num pool novo, crie o pool e restaure cada conjunto de dados num conjunto de dados novo. Ainda não foi verificado se as ACL NFSv4, tal como o TrueNAS as usa em conjuntos de dados SMB, voltam como espera, por isso teste um restauro com os seus próprios dados antes de confiar nelas.
 
 ## Conjuntos de dados encriptados {#encryption}
 
@@ -126,7 +123,7 @@ Um filho que foi esvaziado mal altera o total de uma árvore grande, por isso a 
 
 Um conjunto de dados que a execução anterior guardou e que esta não conseguiu ler conta como esvaziado, desde que a seleção do elemento não tenha mudado. Isso abrange uma chave não carregada, um conjunto de dados não montado e um que desapareceu da árvore. Um filho que exclui por si próprio altera a seleção, por isso o seu histórico recomeça do zero. Enquanto uma deteção de dados perdidos estiver aberta, a retenção mantém os backups antigos apenas desse conjunto de dados e limpa o resto da árvore como de costume.
 
-No separador **Elementos** da página **Anomalias**, cada conjunto de dados tem uma linha própria sob o seu elemento, e a árvore do elemento nesta página mostra as deteções abertas junto a cada conjunto de dados. A ligação numa deteção abre o painel de restauro do elemento no último backup bom do conjunto de dados. Se uma execução chega ao fim é avaliado para o elemento inteiro, porque uma execução tem êxito ou falha como um todo.
+Na página **Anomalias**, cada conjunto de dados tem uma linha própria no painel do elemento, que se abre com **Monitorização** no cartão do elemento ou, quando o elemento não tem nada em aberto, a partir da sua linha no cartão **Nada em aberto**. A árvore do elemento nesta página mostra as deteções abertas junto a cada conjunto de dados. A ligação numa deteção abre o painel de restauro do elemento no último backup bom do conjunto de dados. Se uma execução chega ao fim é avaliado para o elemento inteiro, porque uma execução tem êxito ou falha como um todo.
 
 As verificações em si estão descritas em [Funcionalidades](features.md). Um assistente ligado através do [servidor MCP](mcp.md) pode listar os pontos de restauro de um elemento ZFS, iniciar o seu backup e ler as deteções, mas confirmar uma deteção faz-se na página **Anomalias**.
 
@@ -180,6 +177,11 @@ A página, o histórico de execuções e as notificações indicam um problema c
 | `not-enough-space` | Não há espaço livre suficiente no destino. | Liberte espaço ou escolha outra pasta. |
 | `safety-snapshot-failed` | Não foi possível tirar o instantâneo de segurança, por isso nada foi restaurado. | Os detalhes mostram a mensagem do zfs. |
 | `safety-name-too-long` | O nome do conjunto de dados é demasiado longo para um instantâneo de segurança. | Desligue o instantâneo de segurança, ou restaure para uma pasta. |
+| `dataset-exists` | Já existe um conjunto de dados com este nome. | Escolha outro nome, ou restaure para dentro do próprio conjunto de dados. |
+| `create-failed` | Não foi possível criar o novo conjunto de dados. | Os detalhes mostram a mensagem do zfs. Verifique se o conjunto de dados acima existe. |
+| `new-dataset-not-visible` | O novo conjunto de dados foi criado, mas o BombVault não o vê, por isso nada foi restaurado. | O conjunto de dados fica no servidor. Monte-o abaixo do caminho Host Data e restaure para dentro dele. |
+| `set-properties-failed` | Não foi possível definir as propriedades guardadas, por isso nada foi restaurado. | Os detalhes mostram a mensagem do zfs. |
+| `set-limits-failed` | Os ficheiros foram restaurados, mas não foi possível definir a quota ou a reserva guardada. | Os detalhes mostram a mensagem do zfs. Defina a quota ou a reserva manualmente com `zfs set`. |
 
 ### Verificar o que o contentor vê {#mountinfo}
 
@@ -201,6 +203,8 @@ Cada linha é uma montagem dentro do contentor. A linha de um conjunto de dados 
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Restaurar num conjunto de dados novo precisa também de `create` no conjunto de dados acima, e definir propriedades guardadas precisa de permissão para essas propriedades.
 
   Uma sessão SSH sem root no TrueNAS não tem `/usr/sbin` no caminho; o BombVault chama então `/usr/sbin/zfs` diretamente.
 - O **Host Data** da app tem de ser um caminho do anfitrião acima dos conjuntos de dados, por exemplo `/mnt/tank`, e não um ixVolume. Com um caminho do anfitrião, a app passa ao BombVault as montagens novas do anfitrião (`rslave`), que é o que o acesso aos instantâneos precisa.

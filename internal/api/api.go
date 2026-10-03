@@ -262,6 +262,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/notify/test", h.handleTestNotify)
 	mux.HandleFunc("GET /api/release-notes", h.handleReleaseNotes)
 	mux.HandleFunc("GET /api/schedule/next", h.handleScheduleNext)
+	mux.HandleFunc("GET /api/schedule/waiting", h.handleScheduleWaiting)
 	mux.HandleFunc("POST /api/check/{domain}", h.handleCheck)
 	mux.HandleFunc("POST /api/verify/{domain}", h.handleRunDrill)
 	mux.HandleFunc("GET /api/verify", h.handleDrills)
@@ -301,6 +302,10 @@ func (h *Handler) Router() http.Handler {
 	// off-site target schema with role="primary" (see internal/api/primary_remote.go).
 	// Distinct from the /api/offsite/... routes above: a "primary" row is never a
 	// replication destination and is never reachable through them.
+	mux.HandleFunc("GET /api/settings/idle", h.handleGetIdle)
+	mux.HandleFunc("PUT /api/settings/idle", h.handleSetIdle)
+	mux.HandleFunc("GET /api/settings/streaming", h.handleGetStreaming)
+	mux.HandleFunc("PUT /api/settings/streaming", h.handleSetStreaming)
 	mux.HandleFunc("GET /api/settings/primary-remote/{domain}", h.handleGetPrimaryRemote)
 	mux.HandleFunc("PUT /api/settings/primary-remote/{domain}", h.handleSetPrimaryRemote)
 	mux.HandleFunc("DELETE /api/settings/primary-remote/{domain}", h.handleDeletePrimaryRemote)
@@ -374,6 +379,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/flash/backup", h.handleBackupFlash)
 	mux.HandleFunc("GET /api/flash/snapshots", h.handleSnapshotsFlash)
 	mux.HandleFunc("GET /api/flash/download", h.handleDownloadFlash)
+	mux.HandleFunc("GET /api/flash/plugins", h.handleFlashPlugins)
+	mux.HandleFunc("POST /api/flash/plugins/restore", h.handleRestoreFlashPlugin)
+	mux.HandleFunc("POST /api/import/appdata-backup/scan", h.handleScanAppdataBackup)
+	mux.HandleFunc("POST /api/import/appdata-backup", h.handleImportAppdataBackup)
 
 	// Config endpoints (singleton domain — BombVault's own /config self-backup).
 	mux.HandleFunc("POST /api/config/backup", h.handleBackupConfig)

@@ -116,6 +116,17 @@ describe("parseProgressFrame", () => {
     expect(parseProgressFrame('{"key":"container:plex","phase":"backup","percent":40,"active":true}')?.committed).toBeUndefined();
   });
 
+  it("carries a stream holding an off-site copy back, and drops a state it does not know", () => {
+    expect(parseProgressFrame('{"key":"offsite:vms","phase":"replicate","active":true,"throttle":"now"}')?.throttle).toBe("now");
+    expect(parseProgressFrame('{"key":"offsite:vms","phase":"replicate","active":true,"throttle":"next"}')?.throttle).toBe("next");
+    expect(parseProgressFrame('{"key":"offsite:vms","phase":"replicate","active":true,"throttle":"paused"}')?.throttle).toBeUndefined();
+  });
+
+  it("carries how many items of a batch failed on its last frame", () => {
+    expect(parseProgressFrame('{"key":"import:containers","phase":"maintenance","percent":100,"failed":2}')?.failed).toBe(2);
+    expect(parseProgressFrame('{"key":"import:containers","phase":"maintenance","percent":100}')?.failed).toBeUndefined();
+  });
+
   it("keeps rejecting a frame without a key", () => {
     expect(parseProgressFrame('{"phase":"backup","active":true}')).toBeNull();
     expect(parseProgressFrame("not json")).toBeNull();

@@ -73,14 +73,15 @@ const (
 	lineFail = "fail"
 	lineSkip = "skip"
 
-	reasonUnencrypted = "unencrypted"
-	reasonNoRepo      = "no-repository"
-	reasonNoSnapshot  = "no-snapshot"
-	reasonDownload    = "download"
-	reasonNothing     = "nothing-written"
-	reasonUnmeasured  = "unmeasured"
-	reasonShort       = "short"
-	reasonRefused     = "refused"
+	reasonUnencrypted   = "unencrypted"
+	reasonNoRepo        = "no-repository"
+	reasonNoSnapshot    = "no-snapshot"
+	reasonDownload      = "download"
+	reasonNothing       = "nothing-written"
+	reasonUnmeasured    = "unmeasured"
+	reasonShort         = "short"
+	reasonRefused       = "refused"
+	reasonParentMissing = "parent-missing"
 )
 
 // CheckLine is one line of the pre-flight checklist. Detail carries the
@@ -133,6 +134,10 @@ type restoreScope struct {
 	fixedNeed int64
 	fixedAt   string
 	download  bool
+	// newDataset is the ZFS dataset a restore creates. It is empty until the
+	// restore writes into it, so the dry run compares against an empty folder
+	// and the plan lists the files under the dataset's name.
+	newDataset string
 }
 
 // CheckRestore runs the pre-flight checks for a restore and, when they get
@@ -170,6 +175,11 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	switch {
 	case ctx.Err() != nil:
 		return RestoreCheck{}, ctx.Err()
+	case zfsParentMissing(err) != "":
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineSpace, Status: lineFail, Reason: reasonParentMissing, Detail: zfsParentMissing(err)})
+		return out, nil
 	case isDestinationRefusal(err):
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},
@@ -474,7 +484,7 @@ func fileSetFilesScope(plan fileSetFilesRestorePlan) restoreScope {
 
 // zfsScope mirrors restoreZFSStep and restoreZFSFile.
 func zfsScope(plan zfsRestorePlan) restoreScope {
-	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.inPlace}
+	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.inPlace, newDataset: plan.newDataset}
 	excludes := make([]string, len(plan.covered))
 	for i, c := range plan.covered {
 		excludes[i] = escapeGlobLiteral(c)

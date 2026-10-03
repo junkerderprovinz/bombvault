@@ -49,9 +49,9 @@ describe("the settings index in English", () => {
       .filter((h) => !h.inHint)
       .map((h) => `${h.item.page}: ${h.item.cardName ?? ""}`);
 
-  it("leads the yearly rule to both policies on the Retention page and to each off-site destination", () => {
+  it("leads the yearly rule to both retention cards and to each off-site destination", () => {
     const hits = where("keep yearly");
-    expect(hits).toContain(`retention: ${en["settings.retentionTitle"]}`);
+    expect(hits).toContain(`retention: ${en["settings.retentionLocalTitle"]}`);
     expect(hits).toContain(`retention: ${en["settings.retentionOffsiteTitle"]}`);
     expect(hits.filter((h) => h.startsWith("offsite: "))).toHaveLength(6);
     expect(hits.every((h) => h.startsWith("retention: ") || h.startsWith("offsite: "))).toBe(true);
@@ -64,9 +64,49 @@ describe("the settings index in English", () => {
     expect(hits.filter((h) => h.startsWith("offsite: "))).toHaveLength(6);
   });
 
+  it("leads each source's own rules to their retention card, by the phrase and by the source's name", () => {
+    const local = `retention: ${en["settings.retentionLocalTitle"]}`;
+    const offsite = `retention: ${en["settings.retentionOffsiteTitle"]}`;
+    expect(where("own keep rules")).toContain(local);
+    expect(where("own off-site keep rules")).toContain(offsite);
+    expect(where("own off-site keep rules")).not.toContain(local);
+    expect(where(en["nav.vms"])).toEqual(expect.arrayContaining([local, offsite]));
+    expect(where("additional off-site targets keep")).toEqual([offsite]);
+  });
+
+  it("finds the preview on its own card", () => {
+    expect(where(en["retentionPreview.show"])).toEqual([`retention: ${en["restore.preview"]}`]);
+  });
+
   it("finds a row by the words behind its (i)", () => {
     const hit = search(items, "calendar years").find((h) => h.item.page === "retention");
     expect(hit?.inHint).toBe(true);
     expect(hit?.item.name).toBe(en["settings.retentionYearly"]);
+  });
+
+  it("leads the idle limits to the Schedules page", () => {
+    const top = search(items, "idle before backup")[0];
+    expect(top.item.page).toBe("schedules");
+    expect(top.item.name).toBe(en["idle.title"]);
+    expect(where("traffic below")).toEqual([`schedules: ${en["idle.title"]}`]);
+    expect(where("for at least")).toContain(`schedules: ${en["idle.title"]}`);
+  });
+
+  it("leads Streaming first and its limits to the Off-site page", () => {
+    const top = search(items, "streaming first")[0];
+    expect(top.item.page).toBe("offsite");
+    expect(top.item.name).toBe(en["streaming.title"]);
+    expect(where("upload limit while streaming")).toEqual([`offsite: ${en["streaming.title"]}`]);
+    expect(where("media servers")).toContain(`offsite: ${en["streaming.title"]}`);
+    expect(where("back to normal")).toContain(`offsite: ${en["streaming.title"]}`);
+  });
+
+  it("finds the idle and streaming rows by the words behind their (i)", () => {
+    const cpu = search(items, "docker stats").find((h) => h.item.page === "schedules");
+    expect(cpu?.inHint).toBe(true);
+    expect(cpu?.item.name).toBe(en["idle.cpu"]);
+    const servers = search(items, "image name").filter((h) => h.item.page === "offsite");
+    expect(servers.map((h) => h.item.name)).toContain(en["streaming.servers"]);
+    expect(servers.every((h) => h.inHint)).toBe(true);
   });
 });

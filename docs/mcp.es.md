@@ -7,7 +7,7 @@ BombVault incluye un servidor para el Model Context Protocol (MCP), el protocolo
 | Herramienta | Qué hace | Tipo |
 |---|---|---|
 | `get_health` | Versión, nombre de la instancia, si hay una copia en curso y qué puede hacer esta clave | lectura |
-| `get_status` | Estado de protección por dominio: última copia correcta, intervalo esperado, verificaciones y comprobaciones externas, próximas ejecuciones programadas y, para los contenedores, la prueba de arranque más reciente | lectura |
+| `get_status` | Estado de protección por dominio: última copia correcta, intervalo esperado, verificaciones y comprobaciones externas, próximas ejecuciones programadas, copias que esperan a que la app esté inactiva y, para los contenedores, la prueba de arranque más reciente | lectura |
 | `get_coverage` | Qué protege BombVault y qué no, con el motivo de cada caso | lectura |
 | `list_items` | Cada contenedor, VM y conjunto de carpetas protegido, la memoria flash y la configuración de la app, con su programación, lo que detiene una copia, su última copia y cuánto duró; los contenedores de bases de datos indican también su último volcado; los datasets ZFS también aparecen, con el resultado de su última comprobación; cada elemento lleva su última comprobación de restauración, y un contenedor su última prueba de arranque o el motivo por el que no se puede probar; un contenedor recreado con otra configuración desde su última copia indica lo que cambió | lectura |
 | `list_runs` | Historial de ejecuciones, primero las más recientes, filtrable por dominio, elemento, estado, tipo y fecha; una copia lenta frenada por una sola cosa la nombra | lectura |
@@ -19,7 +19,7 @@ BombVault incluye un servidor para el Model Context Protocol (MCP), el protocolo
 | `get_anomaly` | Uno de esos hallazgos, con la nota que se dejó al reconocerlo | lectura |
 | `start_backup` | Hace ahora la copia de un elemento | inicio |
 | `start_domain_backup` | Hace la copia de cada elemento protegido de un dominio | inicio |
-| `start_backup_everything` | Lanza la pasada de Backup Everything | inicio |
+| `start_backup_everything` | Lanza la pasada de Copia total | inicio |
 | `cancel_backup` | Cancela una copia en curso que inició esta clave | cancelación |
 
 Esto se queda en la interfaz web: las restauraciones de cualquier tipo (también descargar, guardar o importar un volcado de base de datos), borrar copias, prune, unlock, las comprobaciones y los simulacros, la replicación externa, los ajustes, las credenciales y las claves MCP, y cancelar una copia que haya iniciado la programación, la interfaz web u otra clave. Lo mismo vale para reconocer una anomalía o marcarla como esperada, que se hace en la página **Anomalías**. El motivo: las respuestas de las herramientas contienen nombres y mensajes de error de tu servidor, y cualquiera de ellos podría llevar un texto escrito para manipular al asistente. Un asistente que caiga en ese texto puede, como mucho, iniciar una copia dentro de los límites de abajo o cancelar una que haya iniciado él mismo.
@@ -33,11 +33,11 @@ La copia de un asistente es la misma que inicia la interfaz web. Un contenedor e
 Como una copia detiene servicios y saca puntos de restauración antiguos, los inicios por MCP están limitados:
 
 - 12 copias iniciadas por hora y clave.
-- 15 minutos entre dos inicios MCP del mismo elemento, del mismo dominio o de Backup Everything.
+- 15 minutos entre dos inicios MCP del mismo elemento, del mismo dominio o de Copia total.
 - Como mucho 4 inicios MCP del mismo elemento en 24 horas.
 - **Protección de retención.** Cuando un dominio conserva un número fijo de puntos de restauración (solo "conservar los últimos N", sin regla diaria, semanal ni mensual, en local o en un destino externo), cada copia nueva saca la más antigua. BombVault rechaza entonces un inicio MCP de un elemento cuyas N-1 copias correctas más recientes se iniciaron todas por MCP. Así siempre queda en el conjunto conservado al menos un punto de restauración que creó la programación o tú. Con "conservar el último" (N = 1), un asistente no puede hacer copia de ese elemento en absoluto. La próxima copia programada vuelve a hacer sitio. Una regla anual por sí sola cuenta como "conservar el último" (N = 1), porque solo conserva un punto de restauración del año en curso.
 
-Un inicio de dominio o de Backup Everything deja fuera los elementos que retiene algún límite y los nombra en su respuesta. Ni la interfaz web ni la programación se ven afectadas por nada de esto. El cupo por hora vive en memoria, así que un reinicio de BombVault lo pone a cero.
+Un inicio de dominio o de Copia total deja fuera los elementos que retiene algún límite y los nombra en su respuesta. Ni la interfaz web ni la programación se ven afectadas por nada de esto. El cupo por hora vive en memoria, así que un reinicio de BombVault lo pone a cero.
 
 ## Activarlo {#switch-on}
 
@@ -256,7 +256,7 @@ Todo lo que lee un asistente va al proveedor de IA que tiene detrás: nombres de
 | `429` | Demasiadas claves erróneas desde esta dirección, o más de 120 peticiones por minuto con una clave. Espera un minuto y comprueba si el asistente está atascado en un bucle. |
 | Errores con "certificate", "self-signed" o "unable to verify" | El cliente no confía en el certificado de BombVault. Ver [TLS y certificados](#tls). |
 | `busy` | Otra copia o una tarea de mantenimiento ocupa ese dominio. Vuelve a intentarlo cuando termine. |
-| `cooldown` | Este elemento, este dominio o Backup Everything se inició por MCP hace menos de 15 minutos. |
+| `cooldown` | Este elemento, este dominio o Copia total se inició por MCP hace menos de 15 minutos. |
 | `retention_guard` | Una copia MCP más dejaría solo puntos de restauración de MCP en una ventana de "conservar los últimos N", o el elemento ya recibió 4 copias por MCP en las últimas 24 horas, contando las fallidas y las canceladas. En el primer caso la próxima copia programada hace sitio; en el segundo el elemento vuelve a estar libre 24 horas después de la más antigua de esas copias. En ambos casos puedes iniciarla desde la interfaz web. |
 | `rate_limited` | La clave ha gastado sus 12 inicios de esta hora. |
 | `not_permitted` al iniciar | La clave es de solo lectura. Activa **Permitir iniciar copias** en la tarjeta; no hace falta reconectar. Al cancelar significa que esta clave no inició la ejecución. |

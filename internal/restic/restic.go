@@ -519,6 +519,21 @@ func BackupDirArgs(repo string, tags []string, m Mode, excludes ...string) []str
 	return backupArgs(repo, tags, m, "host,tags", excludes, []string{"."})
 }
 
+// ImportedTag marks a snapshot made from another tool's backup. A keep policy
+// never forgets one: it is older than the item's own backups, so the next pass
+// would take it, and nothing makes it again.
+const ImportedTag = "imported"
+
+// ImportDirArgs is BackupDirArgs for a backup that did not happen now: --time
+// dates the snapshot at the moment the imported copy was made.
+func ImportDirArgs(repo string, tags []string, at time.Time, m Mode) []string {
+	args := BackupDirArgs(repo, append(slices.Clone(tags), ImportedTag), m)
+	sep := slices.Index(args, "--")
+	out := append([]string(nil), args[:sep]...)
+	out = append(out, "--time", at.Local().Format("2006-01-02 15:04:05"))
+	return append(out, args[sep:]...)
+}
+
 func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, positionals []string) []string {
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
@@ -1090,7 +1105,7 @@ func keepFlags(p RetentionPolicy) []string {
 	if p.KeepYearly > 0 {
 		args = append(args, "--keep-yearly", strconv.Itoa(p.KeepYearly))
 	}
-	return args
+	return append(args, "--keep-tag", ImportedTag)
 }
 
 // ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
@@ -1310,7 +1325,7 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 		out, err = runStreaming(cmd, args, sink, WatcherFrom(ctx))
 	} else {
 		cmd.Env = env
-		out, err = runBuffered(cmd, args)
+		out, err = runBuffered(ctx, cmd, args)
 	}
 	return out, ctxCancelErr(ctx, args, err)
 }
@@ -1333,14 +1348,20 @@ func ctxCancelErr(ctx context.Context, args []string, err error) error {
 	return err
 }
 
-// runBuffered runs restic capturing all stdout into a buffer.
-func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
+// runBuffered runs restic capturing all stdout into a buffer. When ctx stopped
+// the run, stderr only holds restic's reaction to the signal ("signal
+// terminated received", "context canceled" for every tree it was walking), so
+// it stays out of the log and the caller reports the stop.
+func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
 			return stdout.Bytes(), werr
+		}
+		if ctx.Err() != nil {
+			return nil, stderrError(args, stderr.String())
 		}
 		return nil, runError(args, stderr.String())
 	}
@@ -2257,6 +2278,29 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 	return summarySince(out, start)
 }
 
+// ImportDir backs up the contents of dir as the snapshot's own tree root, dated
+// at. It serves copies made by another tool, laid out below dir the way the
+// source paths looked.
+func (r Restic) ImportDir(ctx context.Context, repo, dir string, tags []string, at time.Time, m Mode) (Summary, error) {
+	if !filepath.IsAbs(dir) {
+		return Summary{}, fmt.Errorf("restic import directory %q is not absolute", dir)
+	}
+	if !IsRemoteRepo(repo) && !filepath.IsAbs(repo) {
+		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
+	}
+	start := time.Now()
+	out, err := r.runIn(ctx, dir, ImportDirArgs(repo, tags, at, m), m)
+	if err != nil {
+		if errors.Is(err, ErrBackupSourceUnreadable) {
+			if sum, perr := summarySince(out, start); perr == nil {
+				return sum, nil
+			}
+		}
+		return Summary{}, err
+	}
+	return summarySince(out, start)
+}
+
 // snapshotDirMode keeps restic from storing each file's device number. Every
 // mount of a ZFS snapshot gets a new one, so an unchanged run would otherwise
 // write the whole metadata tree again. restic still stores it for hardlinks,
@@ -2481,7 +2525,7 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 		return err
 	}
 	cmd.Env = env
-	_, err := runBuffered(cmd, args)
+	_, err := runBuffered(ctx, cmd, args)
 	return err
 }
 

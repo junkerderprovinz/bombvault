@@ -37,6 +37,25 @@ type fakeZFSHost struct {
 	destroyErr  error
 	primeErr    error
 	safetyErr   error
+	createErr   error
+	propsErr    error
+
+	// createdAnyway makes createErr come after the dataset exists, the way
+	// zfs create fails when it cannot mount or share what it created.
+	createdAnyway bool
+
+	// props is what Properties reports for the tree, and onCreate runs after a
+	// dataset was created, for a test that mounts it.
+	props    map[string]zfs.Properties
+	onCreate func(dataset string)
+	// onSet runs when properties are set, for a test that checks what
+	// happened before.
+	onSet func()
+	// setErr answers a property set, so a test can make one fail.
+	setErr func(p zfs.Properties) error
+	// strictTree lists only the asked root and its descendants, and answers
+	// not-found for a root the tree does not hold.
+	strictTree bool
 
 	calls []string
 	// taken are the snapshot names currently on the host, so the mount table
@@ -85,6 +104,20 @@ func (h *fakeZFSHost) Tree(_ context.Context, root string) ([]zfs.ListEntry, err
 	}
 	if h.treeErr != nil {
 		return nil, h.treeErr
+	}
+	if h.strictTree {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		var out []zfs.ListEntry
+		for _, e := range h.tree {
+			if e.Name == root || zfs.DescendantOf(e.Name, root) {
+				out = append(out, e)
+			}
+		}
+		if len(out) == 0 {
+			return nil, &zfs.CmdError{Code: "not-found", Stderr: "dataset does not exist"}
+		}
+		return out, nil
 	}
 	return h.tree, nil
 }
@@ -152,6 +185,44 @@ func (h *fakeZFSHost) DestroySafety(_ context.Context, dataset, snap string) err
 func (h *fakeZFSHost) Prime(_ context.Context, hostMountpoint, snap string) error {
 	h.record("stat " + hostMountpoint + "/.zfs/snapshot/" + snap)
 	return h.primeErr
+}
+
+func (h *fakeZFSHost) Properties(_ context.Context, root string) (map[string]zfs.Properties, error) {
+	h.record("get " + root)
+	if h.propsErr != nil {
+		return nil, h.propsErr
+	}
+	return h.props, nil
+}
+
+func (h *fakeZFSHost) Create(_ context.Context, dataset string, p zfs.Properties) error {
+	args, err := zfs.CreateArgs(dataset, p)
+	if err != nil {
+		return err
+	}
+	h.record(strings.Join(args[1:], " "))
+	if h.createErr != nil && !h.createdAnyway {
+		return h.createErr
+	}
+	if h.onCreate != nil {
+		h.onCreate(dataset)
+	}
+	return h.createErr
+}
+
+func (h *fakeZFSHost) SetProperties(_ context.Context, dataset string, p zfs.Properties) error {
+	args, err := zfs.SetArgs(dataset, p)
+	if err != nil || args == nil {
+		return err
+	}
+	h.record(strings.Join(args[1:], " "))
+	if h.onSet != nil {
+		h.onSet()
+	}
+	if h.setErr != nil {
+		return h.setErr(p)
+	}
+	return nil
 }
 
 // zfsFakeEngine answers the restic calls a ZFS run makes and records what it

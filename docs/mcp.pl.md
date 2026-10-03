@@ -7,7 +7,7 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | Narzędzie | Co robi | Rodzaj |
 |---|---|---|
 | `get_health` | Wersja, nazwa instancji, czy trwa kopia i co wolno temu kluczowi | odczyt |
-| `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, a dla kontenerów najnowszy test uruchomienia | odczyt |
+| `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, kopie czekające na bezczynność aplikacji, a dla kontenerów najnowszy test uruchomienia | odczyt |
 | `get_coverage` | Co BombVault chroni, a czego nie, z podanym powodem | odczyt |
 | `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli; każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować; kontener utworzony ponownie z innymi ustawieniami od ostatniej kopii wymienia zmiany | odczyt |
 | `list_runs` | Historia przebiegów od najnowszych, z filtrem według domeny, elementu, stanu, rodzaju i czasu; wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |
@@ -19,7 +19,7 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | `get_anomaly` | Jedno z tych zgłoszeń wraz z notatką zostawioną przy jego potwierdzeniu | odczyt |
 | `start_backup` | Od razu robi kopię jednego elementu | uruchomienie |
 | `start_domain_backup` | Robi kopię każdego chronionego elementu jednej domeny | uruchomienie |
-| `start_backup_everything` | Uruchamia przebieg Backup Everything | uruchomienie |
+| `start_backup_everything` | Uruchamia Pełną kopię | uruchomienie |
 | `cancel_backup` | Anuluje trwającą kopię uruchomioną przez ten klucz | anulowanie |
 
 W interfejsie WWW zostaje: przywracanie każdego rodzaju (także pobieranie, zapisywanie i import zrzutu bazy danych), usuwanie kopii, prune, unlock, kontrole i ćwiczenia, replikacja off-site, ustawienia, dane logowania i klucze MCP oraz anulowanie kopii uruchomionej przez harmonogram, interfejs WWW albo inny klucz. To samo dotyczy potwierdzenia anomalii lub oznaczenia jej jako oczekiwanej, co robi się na stronie **Anomalie**. Powód: odpowiedzi narzędzi zawierają nazwy i komunikaty błędów z twojego serwera, a w każdym z nich może się znaleźć tekst napisany po to, by sterować asystentem. Asystent, który się na to nabierze, może w najgorszym razie uruchomić kopię w granicach opisanych niżej albo anulować kopię, którą sam uruchomił.
@@ -33,11 +33,11 @@ Kopia uruchomiona przez asystenta to ta sama kopia, którą uruchamia interfejs 
 Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomienia przez MCP są ograniczone:
 
 - 12 uruchomionych kopii na godzinę na klucz.
-- 15 minut między dwoma uruchomieniami przez MCP tego samego elementu, tej samej domeny lub Backup Everything.
+- 15 minut między dwoma uruchomieniami przez MCP tego samego elementu, tej samej domeny lub Pełnej kopii.
 - Najwyżej 4 uruchomienia przez MCP tego samego elementu w ciągu 24 godzin.
 - **Ochrona przechowywania.** Gdy domena przechowuje stałą liczbę punktów przywracania (tylko "zachowaj ostatnie N", bez reguły dziennej, tygodniowej ani miesięcznej, lokalnie lub w miejscu off-site), każda nowa kopia wypycha najstarszą. BombVault odrzuca wtedy uruchomienie przez MCP elementu, którego N-1 najnowszych udanych kopii uruchomiono przez MCP. Dzięki temu w zachowanym zestawie zawsze zostaje co najmniej jeden punkt przywracania utworzony przez harmonogram albo przez ciebie. Przy "zachowaj ostatnią 1" asystent nie może w ogóle skopiować tego elementu. Następna zaplanowana kopia znowu robi miejsce. Sama reguła roczna liczy się jak "zachowaj ostatnią 1", bo z bieżącego roku zachowuje tylko jeden punkt przywracania.
 
-Uruchomienie domeny lub Backup Everything pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
+Uruchomienie domeny lub Pełnej kopii pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
 
 ## Włączanie {#switch-on}
 
@@ -256,7 +256,7 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | `429` | Za dużo złych kluczy z tego adresu albo ponad 120 żądań na minutę z jednym kluczem. Odczekaj minutę i sprawdź, czy asystent nie utknął w pętli. |
 | Błędy z "certificate", "self-signed" albo "unable to verify" | Klient nie ufa certyfikatowi BombVault. Zobacz [TLS i certyfikaty](#tls). |
 | `busy` | Domenę zajmuje inna kopia albo zadanie konserwacji. Spróbuj ponownie, gdy się skończy. |
-| `cooldown` | Ten element, ta domena albo Backup Everything został uruchomiony przez MCP mniej niż 15 minut temu. |
+| `cooldown` | Ten element, ta domena albo Pełna kopia została uruchomiona przez MCP mniej niż 15 minut temu. |
 | `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP albo element dostał już 4 kopie przez MCP w ciągu ostatnich 24 godzin, licząc nieudane i anulowane. W pierwszym przypadku miejsce zrobi następna zaplanowana kopia, w drugim element zwolni się 24 godziny po najstarszej z tych kopii. W interfejsie WWW możesz ją uruchomić w każdej chwili. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
 | `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |

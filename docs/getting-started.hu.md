@@ -40,7 +40,7 @@ Nem Unraid? A BombVault sima konténerként is fut bármelyik Docker-gazdagépen
 
 Miben más ez, mint az Unraid:
 
-- **Nincs flash/USB tartomány.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a beállítások Flash tartományának itt nincs dolga. Helyette a Fájlok tartomány egy kattintással felkínálja az **Előbeállítás hozzáadása: gazdagép rendszerkonfigurációja** javaslatot (egy induló `/etc` fájlkészlet, amit mentés előtt átnézel és szerkesztesz), gyakorlatias általános megfelelőként.
+- **Nincs flash/USB tartomány.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a beállítások Flash tartományának itt nincs dolga. Helyette a Mappák tartomány egy kattintással felkínálja az **Előbeállítás hozzáadása: gazdagép rendszerkonfigurációja** javaslatot (egy induló `/etc` fájlkészlet, amit mentés előtt átnézel és szerkesztesz), gyakorlatias általános megfelelőként.
 - **Nincsenek Unraid-natív értesítések.** A BombVault saját értesítési csatornái (webhook, külső telephelyi hiba riasztásai és így tovább) a szokott módon működnek; csak az Unraid saját értesítési rendszerébe küldés marad el, mert ilyen rendszer itt nincs.
 - **A virtuális gépek mentése választható, és külön, SSH-n elérhető libvirtd gazdagépet igényel.** Lásd a compose fájl kikommentezett blokkját. Egy általános Docker-gazdagépben magában nincs virtuálisgép-kezelő.
 
@@ -68,14 +68,14 @@ A sablon ezen felül csatolja a Docker socketet, a flasht (`/boot`) és a **Host
 *A műszerfal az első mentés után: mi védett, mi fut legközelebb, és egy élő napló.*
 
 1. Nyisd meg a webes felületet a `https://<your-unraid-ip>:3443` címen (alapból önaláírt tanúsítvánnyal).
-2. A **Beállításokban** engedélyezd a kívánt mentési tartományokat (Konténerek, VM-ek, Flash, Config, Fájlok, ZFS-adatkészletek), és válassz egy kiemelőszínt.
-3. A **Konténerek** fülön válassz egy konténert, és kattints a **Mentés** gombra az első visszaállítási pont létrehozásához. A tároló útvonalai alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre.
-4. Állítsd be az ütemezést a **Beállítások, Ütemezések** alatt. A konténerekhez és VM-ekhez van egykattintásos *összes felvétele az ütemezésbe* lehetőség.
+2. A **Beállításokban** engedélyezd a kívánt mentési tartományokat (Konténerek, VM-ek, Flash, Önmentés, Mappák, ZFS-adatkészletek), és válassz egy kiemelőszínt.
+3. A **Konténerek** fülön válassz egy konténert, és kattints a **Mentés most** gombra az első visszaállítási pont létrehozásához. A tároló útvonalai alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre.
+4. Állítsd be az ütemezést a **Beállítások, Ütemezések** alatt. A konténerekhez és VM-ekhez van egykattintásos *Mind az ütemezésbe* lehetőség.
 
 !!! tip "Opcionális: válassz mentési sorrendet"
-    Ha egyes konténereket mindig más konténerek előtt kell menteni (például egy adatbázist az azt használó alkalmazás előtt), nyisd meg a **mentési sorrend** panelt a Konténerek oldalon, és húzd őket a kívánt sorrendbe. Az ütemezett és a többszörös kijelöléses futások ezt követik; amit rendezetlenül hagysz, azt a korábbi módon a legrégebben esedékes elve szerint menti.
+    Ha egyes konténereket mindig más konténerek előtt kell menteni (például egy adatbázist az azt használó alkalmazás előtt), nyisd meg a **Mentések sorrendje** panelt a Konténerek oldalon, és húzd őket a kívánt sorrendbe. Az ütemezett és a többszörös kijelöléses futások ezt követik; amit rendezetlenül hagysz, azt a korábbi módon a legrégebben esedékes elve szerint menti.
 
-!!! note "Hosztintegráció-ellenőrzés"
+!!! note "Hosztellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat, így megbizonyosodhatsz róla, hogy a konténer helyesen van bekötve, mielőtt rá hagyatkoznál.
 
 ## Egyszerű vs Speciális
@@ -84,11 +84,11 @@ A sablon ezen felül csatolja a Docker socketet, a flasht (`/boot`) és a **Host
 
 *A beállításoknak nincs Mentés gombja: minden változás azonnal kiíródik.*
 
-Alapértelmezetten a felület csak a lényeget mutatja (mentés, visszaállítás, ütemezés). Használd az **Egyszerű / Speciális** kapcsolót az oldalsávban a szakértői vezérlők felfedéséhez: megőrzés, telephelyen kívüli másolat, mentés előtti/utáni horgok, fájlszintű visszaállítás, értesítések, Prometheus-metrikák és az integritási/karbantartási eszközök. Ez böngészőnkénti beállítás, és alapból ki van kapcsolva, így az újoncok tiszta felületet, a haladók pedig mindent megkapnak.
+Alapértelmezetten a felület csak a lényeget mutatja (mentés, visszaállítás, ütemezés). Használd az **Egyszerű nézet / Speciális nézet** kapcsolót az oldalsávban a szakértői vezérlők felfedéséhez: megőrzés, telephelyen kívüli másolat, mentés előtti/utáni horgok, fájlszintű visszaállítás, értesítések, Prometheus-metrikák és az integritási/karbantartási eszközök. Ez böngészőnkénti beállítás, és alapból ki van kapcsolva, így az újoncok tiszta felületet, a haladók pedig mindent megkapnak.
 
 ## Következő lépések
 
 - Böngészd a teljes **[Funkciók](features.md)** oldalt.
 - Adj hozzá egy vagy több **[Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)** replikát (minden tartomány egyszerre több célra is szállíthat), és mentsd el a helyreállítási csomagodat.
-- Egy beállítást klónozol, vagy új gépre költözöl? Vidd át a teljes konfigurációdat az **Exportálás és importálás beállítások** kártyával. Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
+- Egy beállítást klónozol, vagy új gépre költözöl? Vidd át a teljes konfigurációdat az **Beállítások exportálása / importálása** kártyával. Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
 - Elakadtál? Lásd: **[Hibaelhárítás](troubleshooting.md)**.

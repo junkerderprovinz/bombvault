@@ -19,7 +19,7 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 
 Ścieżka kopii domeny (Ustawienia, Pamięć) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
 
-Każde z sześciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfiguracja, Pliki, Zbiory danych ZFS) ma tuż obok przełącznik **Lokalne / Zdalne**:
+Każde z sześciu pól ścieżki (Containers, Maszyny wirtualne, Flash, Autokopia, Foldery, Zbiory danych ZFS) ma tuż obok przełącznik **Lokalne / Zdalne**:
 
 - **Lokalne** pokazuje znaną przeglądarkę katalogów.
 - **Zdalne** zamienia ją na zwykłe pole URL oraz przycisk otwierający to samo okno testu połączenia i danych logowania, którego używają cele poza siedzibą, tyle że skonfigurowane dla tego repozytorium podstawowego. Dostajesz stamtąd:
@@ -67,7 +67,7 @@ Prawdziwe przejście z chronionego do niechronionego wyzwala pojedynczy alert.
 
 BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracalne, a nie tylko obecne.
 
-- **Próby weryfikacji przywracalności (lokalne).** BombVault okresowo uruchamia `restic check --read-data-subset` (ograniczone, nigdy zapełniające dysk pełne przywracanie) i pokazuje odznakę *ostatnio zweryfikowano przywracalność* per domena. Kadencja znajduje się w Ustawienia, Harmonogramy; odznaka w Ustawienia, Integralność.
+- **Próby weryfikacji przywracalności (lokalne).** BombVault okresowo uruchamia `restic check --read-data-subset` (ograniczone, nigdy zapełniające dysk pełne przywracanie) i pokazuje odznakę *Zweryfikowano możliwość przywrócenia* per domena. Kadencja znajduje się w Ustawienia, Harmonogramy; odznaka w Ustawienia, Integralność.
 - **Próby DR (poza siedzibą).** BombVault przywraca prawdziwy cel z repozytorium poza siedzibą do jednorazowej piaskownicy, weryfikuje go plik po pliku i bajt po bajcie, a następnie sprząta. To dowodzi, że możesz odzyskać z kopii poza siedzibą, a nie tylko że repozytorium odpowiada.
 
 **Karta wyników ochrony przed ransomware** na panelu zbiera to w postawę zielony / bursztynowy / czerwony per domena, z listą kontrolną ze znacznikiem wieku (skonfigurowano poza siedzibą, zweryfikowano append-only, replikacja aktualna, próba przywracania zaliczona, szyfrowanie włączone, ustawiono strategię przycinania). Każdy czerwony wiersz linkuje bezpośrednio do naprawy, a karta przechodzi na zielony tylko na podstawie zweryfikowanych faktów.
@@ -118,7 +118,7 @@ Powyżej opisano części. To jest jedna kompletna konfiguracja z prawdziwymi wa
 
 Dwie maszyny: **TOWER** uruchamia kontenery i wysyła kopie, **VAULT** je przyjmuje i wymusza niezmienność. Podstaw własne nazwy, adresy i ścieżki udziałów.
 
-**1. Na VAULT postaw serwer append-only.** W BombVault na TOWER przejdź do *Ustawienia → Poza siedzibą → kreator*, wybierz **rest-server** i wygeneruj przepis. Skopiuj zakładkę **Szablon Unraid (XML)**, zapisz ją na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, następnie *Docker → Add Container* i wybierz **rest-server** z listy szablonów. Przed uruchomieniem wpisz pokazaną linię `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorazowe hasło pokazywane jest raz i nigdy nie jest zapisywane: skopiuj je teraz. Ta linia niesie to samo hasło, już zahaszowane bcryptem: jawny tekst trafia do danych REST na TOWER, zahaszowana linia do `.htpasswd` na VAULT. Sam nie musisz niczego haszować.
+**1. Na VAULT postaw serwer append-only.** W BombVault na TOWER przejdź do *Ustawienia → Poza siedzibą → Skonfiguruj*, wybierz **rest-server** i wygeneruj przepis. Skopiuj zakładkę **Szablon Unraid (XML)**, zapisz ją na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, następnie *Docker → Add Container* i wybierz **rest-server** z listy szablonów. Przed uruchomieniem wpisz pokazaną linię `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorazowe hasło pokazywane jest raz i nigdy nie jest zapisywane: skopiuj je teraz. Ta linia niesie to samo hasło, już zahaszowane bcryptem: jawny tekst trafia do danych REST na TOWER, zahaszowana linia do `.htpasswd` na VAULT. Sam nie musisz niczego haszować.
 
     Zostaw `--append-only` w polu OPTIONS. O to właśnie chodzi: bez tego VAULT znów jest zwykłym udziałem.
 
@@ -136,7 +136,7 @@ Pierwszy segment ścieżki to użytkownik htpasswd, drugi to repozytorium. Wpisz
 | **NIE chronione** | VAULT przyjął usunięcie. Brakuje `--append-only` albo je usunięto. |
 | **nierozstrzygnięte** | Ani jedno, ani drugie. Zwykle adres nie jest tym, którego używa sam restic, albo zmieniły się dane logowania. Nic nie jest zapisywane i nie uruchamia się alarm. |
 
-**4. Na VAULT patrz, co przychodzi.** Sparuj obie maszyny ([Parowanie instancji](#pairing)), włącz *Ustawienia → Parowanie → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu, wskazując TOWER jako instancję wysyłającą.
+**4. Na VAULT patrz, co przychodzi.** Sparuj obie maszyny ([Parowanie instancji](#pairing)), włącz *Ustawienia → Ogólne → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu, wskazując TOWER jako instancję wysyłającą.
 
 !!! warning "Lokalizacja to ścieżka **wewnątrz** kontenera, zapisana względem montowania hosta"
     Wpisz `user/appdata/rest-server/bombvault-containers/containers`, a **nie** `/mnt/user/appdata/…`. BombVault działa w kontenerze, w którym `/mnt` hosta jest zamontowane gdzie indziej; bezwzględna ścieżka hosta tam nie istnieje. Jeśli ją wkleisz, BombVault poda ci teraz ścieżkę względną, której należy użyć.
@@ -156,7 +156,7 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 5. **Przywraca kontenery i VM za jednym razem** (pozostawiając zatrzymanymi, więc uruchamiasz je świadomie) i wypisuje zestawy plików oraz elementy ZFS do przywrócenia po kolei; elementy ZFS wracają wyłączone. Twój zestaw odzyskiwania jest o jedno kliknięcie stąd.
 
 !!! tip "Zaplanowana migracja kontra awaria"
-    Odzyskiwanie z przewodnikiem przywraca własne ustawienia BombVault z kopii zapasowej. Do *zaplanowanego* przejścia na nową maszynę możesz zamiast tego przenieść swoją konfigurację bezpośrednio za pomocą karty **Eksport i import ustawień** (przenośny plik JSON). Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
+    Odzyskiwanie z przewodnikiem przywraca własne ustawienia BombVault z kopii zapasowej. Do *zaplanowanego* przejścia na nową maszynę możesz zamiast tego przenieść swoją konfigurację bezpośrednio za pomocą karty **Eksport / import ustawień** (przenośny plik JSON). Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 
 ### Przywracanie z innego repozytorium BombVault {#restore-from-another-bombvault-repo}
 

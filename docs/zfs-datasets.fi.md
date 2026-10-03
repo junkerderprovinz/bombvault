@@ -63,6 +63,7 @@ Avaa kohteessa **Varmuuskopiot**, valitse varmuuskopio ja sitten tietojoukko. Ol
 
 - **Palauta tietojoukkoon.** Varmuuskopion tiedostot kirjoitetaan tietojoukon liitoskohtaan. Samannimiset tiedostot korvataan, muut jäävät. Tietojoukkoa ei koskaan palauteta aiempaan tilaan eikä korvata. BombVault tarkistaa, että tietojoukko on liitetty, näkyvissä ja kirjoitettavissa, kerran ennen aloitusta ja uudelleen juuri ennen kirjoittamista. Kohtiin, joihin on liitetty alatietojoukko, ei kirjoiteta mitään: alatietojoukko säilyttää tiedostonsa, omistajansa ja oikeutensa, ja se palautetaan omasta varmuuskopiostaan.
 - **Palauta kansioon.** Valitse kansio polun `/mnt` alta. BombVault tarkistaa, että kansio on liitetyssä poolissa tai jaossa ja että vapaata tilaa on riittävästi. Tämä toimii ilman SSH-yhteyttä ja myös tietojoukoille, joita ei enää ole.
+- **Uuteen tietojoukkoon.** Anna tietojoukko, jota ei vielä ole. BombVault luo sen varmuuskopioon tallennetuilla ZFS-ominaisuuksilla ja palauttaa sen sisään, katso [Palauttaminen uutena tietojoukkona](#new-dataset).
 - **Valitse tiedostot** (edistynyt): kirjoita tietojoukkoon takaisin vain valitsemasi tiedostot ja kansiot.
 - **Tämän varmuuskopion kaikki tietojoukot** (edistynyt): puun jokainen tietojoukko omaan alikansioonsa valitsemassasi kansiossa. Varmuuskopiossa ohitetut tietojoukot mainitaan.
 - **Toiselta palvelimelta:** **Palautus**-sivu palauttaa toisen BombVaultin reposta, aina kansioon: yhden varmuuskopion kaikki tietojoukot kukin omaan alikansioonsa tai yhden puun tietojoukon kokonaan tai valitut tiedostot.
@@ -79,27 +80,23 @@ Palataksesi takaisin palautuksen jälkeen kopioi yksittäisiä tiedostoja tietoj
 
 ### Palauttaminen uutena tietojoukkona {#new-dataset}
 
-BombVault ei luo tietojoukkoja. Luo se palvelimelle haluamillasi ominaisuuksilla ja palauta sitten kansioon, joka on sen liitoskohta:
+BombVault tallentaa jokaisen varmuuskopion mukana kunkin tietojoukon paikallisesti asetetut ZFS-ominaisuudet: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity ja omat käyttäjäominaisuutesi. Periytyvät ja vain luku -arvot jätetään pois, koska ne palaavat itsestään. Varmuuskopioissa ajalta ennen kuin BombVault tallensi niitä ei ole yhtään.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-ja palauta BombVaultissa kansioon `cache/appdata-restored` polun `/mnt` alla.
+- **Uuteen tietojoukkoon** ajaa `zfs create` -komennon jokaisella tallennetulla ominaisuudella. casesensitivity, normalization ja utf8only voi asettaa vain näin. Kiintiöt ja varaukset asetetaan vasta tiedostojen jälkeen, jotta ne eivät voi estää niitä. Liitoskohta jätetään pois, jotta kopio ei törmää alkuperäiseen, samoin `canmount`, `readonly` ja salaus, jotta palautus voi kirjoittaa. Salatun alle luotu uusi tietojoukko saa sen salauksen. Yläpuolisen tietojoukon on oltava olemassa. Jos jokin epäonnistuu luonnin jälkeen, uusi tietojoukko jää palvelimelle, koska BombVault ei koskaan tuhoa tietojoukkoa.
+- **Palauta tietojoukkoon** näyttää tallennetut ominaisuudet palautuksen vieressä. **Aseta myös nämä ominaisuudet** asettaa ne, jotka olemassa oleva tietojoukko vielä hyväksyy, ennen kuin yhtään tiedostoa kirjoitetaan. Kiintiöt ja varaukset asetetaan vasta tiedostojen jälkeen, jotta ne eivät voi estää niitä. Ilman tätä kytkintä tietojoukko säilyttää asetuksensa.
 
 ## Mitä varmuuskopio sisältää {#contents}
 
-Varmuuskopiossa: jokaisen varmuuskopioidun tietojoukon tiedostot ja kansiot omistajineen, oikeuksineen, aikaleimoineen ja laajennettuine määritteineen siten kuin restic ne tallentaa.
+Varmuuskopiossa: jokaisen varmuuskopioidun tietojoukon tiedostot ja kansiot omistajineen, oikeuksineen, aikaleimoineen ja laajennettuine määritteineen siten kuin restic ne tallentaa sekä kunkin tietojoukon paikallisesti asetetut ZFS-ominaisuudet.
 
 Ei varmuuskopiossa:
 
-- tietojoukkojen ZFS-ominaisuudet (compression, recordsize, quota, mountpoint ja muut);
 - kunkin tietojoukon ylimmän kansion oma omistaja ja oikeudet (kaikki sen alla on mukana). Palautus tietojoukkoon jättää olemassa olevan ylimmän kansion ennalleen, palautus kansioon luo sen oikeuksilla `0755`;
 - olemassa olevat ZFS-tilannevedokset;
 - ohitetut tai pois jätetyt alatietojoukot;
 - taltiot.
 
-Kun palautat uuteen pooliin, luo ensin tietojoukot haluamillasi ominaisuuksilla. Sitä, palautuvatko NFSv4-ACL:t, joita TrueNAS käyttää SMB-tietojoukoissa, niin kuin odotat, ei ole vielä tarkistettu, joten kokeile palautusta omilla tiedoillasi ennen kuin luotat niihin.
+Palauttaaksesi uuteen pooliin luo pool ja palauta jokainen tietojoukko uuteen tietojoukkoon. Sitä, palautuvatko NFSv4-ACL:t, joita TrueNAS käyttää SMB-tietojoukoissa, niin kuin odotat, ei ole vielä tarkistettu, joten kokeile palautusta omilla tiedoillasi ennen kuin luotat niihin.
 
 ## Salatut tietojoukot {#encryption}
 
@@ -126,7 +123,7 @@ Tyhjennetty alatietojoukko tuskin muuttaa suuren puun kokonaismäärää, joten 
 
 Tietojoukko, jonka edellinen ajo varmuuskopioi ja jota tämä ajo ei voinut lukea, lasketaan tyhjennetyksi, kunhan kohteen valinta ei ole muuttunut. Tämä kattaa lataamattoman avaimen, liittämättömän tietojoukon ja puusta kadonneen tietojoukon. Itse pois sulkemasi alatietojoukko muuttaa valintaa, joten sen historia alkaa silloin alusta. Niin kauan kuin kadonneita tietoja koskeva löydös on auki, säilytys pitää juuri tuon tietojoukon vanhat varmuuskopiot ja karsii muun puun tavalliseen tapaan.
 
-**Poikkeamat**-sivun välilehdellä **Kohteet** jokaisella tietojoukolla on oma rivinsä kohteensa alla, ja kohteen puu tällä sivulla näyttää avoimet löydökset kunkin tietojoukon vieressä. Löydöksen linkki avaa kohteen palautuspaneelin tietojoukon viimeisimmän hyvän varmuuskopion kohdalta. Se, valmistuuko ajo, arvioidaan koko kohteelle, koska ajo onnistuu tai epäonnistuu kokonaisuutena.
+**Poikkeamat**-sivulla jokaisella tietojoukolla on oma rivinsä kohteen paneelissa, joka avautuu kohteen kortin kohdasta **Valvonta** tai, jos kohteella ei ole mitään avoinna, sen riviltä kortilla **Ei mitään avoinna**. Kohteen puu tällä sivulla näyttää avoimet löydökset kunkin tietojoukon vieressä. Löydöksen linkki avaa kohteen palautuspaneelin tietojoukon viimeisimmän hyvän varmuuskopion kohdalta. Se, valmistuuko ajo, arvioidaan koko kohteelle, koska ajo onnistuu tai epäonnistuu kokonaisuutena.
 
 Itse tarkistukset kuvataan kohdassa [Ominaisuudet](features.md). [MCP-palvelimen](mcp.md) kautta yhdistetty avustaja voi luetella ZFS-kohteen palautuspisteet, käynnistää sen varmuuskopion ja lukea löydökset, mutta löydös kuitataan **Poikkeamat**-sivulla.
 
@@ -180,6 +177,11 @@ Sivu, ajohistoria ja ilmoitukset nimeävät ongelman jollakin näistä koodeista
 | `not-enough-space` | Kohteessa ei ole tarpeeksi vapaata tilaa. | Vapauta tilaa tai valitse toinen kansio. |
 | `safety-snapshot-failed` | Turvatilannevedosta ei voitu ottaa, joten mitään ei palautettu. | Tiedot näyttävät zfs:n viestin. |
 | `safety-name-too-long` | Tietojoukon nimi on liian pitkä turvatilannevedokselle. | Kytke turvatilannevedos pois, tai palauta kansioon. |
+| `dataset-exists` | Tämänniminen tietojoukko on jo olemassa. | Valitse uusi nimi tai palauta suoraan tietojoukkoon. |
+| `create-failed` | Uutta tietojoukkoa ei voitu luoda. | Yksityiskohdissa näkyy zfs:n viesti. Tarkista, että yläpuolinen tietojoukko on olemassa. |
+| `new-dataset-not-visible` | Uusi tietojoukko luotiin, mutta BombVault ei näe sitä, joten mitään ei palautettu. | Tietojoukko jää palvelimelle. Liitä se Host Data -polun alle ja palauta sen sisään. |
+| `set-properties-failed` | Tallennettuja ominaisuuksia ei voitu asettaa, joten mitään ei palautettu. | Tiedot näyttävät zfs:n viestin. |
+| `set-limits-failed` | Tiedostot palautettiin, mutta tallennettua kiintiötä tai varausta ei voitu asettaa. | Yksityiskohdissa näkyy zfs:n viesti. Aseta kiintiö tai varaus itse komennolla `zfs set`. |
 
 ### Tarkista, mitä kontti näkee {#mountinfo}
 
@@ -201,6 +203,8 @@ Jokainen rivi on yksi liitos kontin sisällä. Tietojoukon rivi näyttää sen p
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Palautus uuteen tietojoukkoon tarvitsee lisäksi `create`-oikeuden yläpuoliseen tietojoukkoon, ja tallennettujen ominaisuuksien asettaminen tarvitsee oikeudet niihin ominaisuuksiin.
 
   TrueNASissa SSH-istunnolla ilman root-oikeuksia ei ole polussaan hakemistoa `/usr/sbin`; BombVault kutsuu silloin suoraan `/usr/sbin/zfs`.
 - Sovelluksen **Host Data** -polun on oltava isäntäpolku tietojoukkojen yläpuolella, esimerkiksi `/mnt/tank`, ei ixVolume. Isäntäpolun kanssa sovellus välittää isännän uudet liitokset BombVaultille (`rslave`), ja sitä pääsy tilannevedoksiin tarvitsee.

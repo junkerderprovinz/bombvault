@@ -7,6 +7,7 @@ import { hueVars } from "../lib/appearance";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
+import { useIdleWaits } from "../lib/idleWaits";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { RunAnomalyBadge } from "./RunAnomalyBadge";
 import { useT } from "../lib/i18n";
@@ -103,6 +104,7 @@ export function ActivityLog({
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const progressMap = useProgress();
+  const waits = useIdleWaits();
   const { byRunId } = useOpenAnomalies();
 
   const [filterText, setFilterText] = useState("");
@@ -184,8 +186,8 @@ export function ActivityLog({
   };
 
   const lines = useMemo(
-    () => buildLogLines(runs, progressMap, scheduleNext, resolveName, now, liveNow),
-    [runs, progressMap, scheduleNext, now, liveNow, t]
+    () => buildLogLines(runs, progressMap, scheduleNext, resolveName, now, liveNow, waits),
+    [runs, progressMap, scheduleNext, now, liveNow, waits, t]
   );
 
   // Without lang the date search uses the browser locale, the same one

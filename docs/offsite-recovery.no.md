@@ -19,7 +19,7 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 
 Et domenes sti for sikkerhetskopi (Innstillinger, Lagring) er ikke begrenset til en lokal mappe: pek den rett mot et restic-fjernarkiv (`s3:...`, `rest:http://vert:8000/arkiv`, `b2:...`, `sftp:bruker@vert:/arkiv`, `rclone:ekstern:bucket/sti`), så sikkerhetskopierer BombVault direkte dit, uten egen lokal kopi og uten replikeringssteg. Det er en virkelig annen form enn off-site-replikeringen over: der er det lokale arkivet det primære, og off-site-arkivet er et arkiv av det etter beste evne; her **er** fjernarkivet det primære, og det er den eneste kopien så lenge du ikke også setter opp off-site-replikering (eller et andre fjernarkiv) for det domenet.
 
-Hvert av de seks stifeltene (Containere, Virtuelle maskiner, Flash, Konfigurasjon, Filer, ZFS-datasett) har en bryter **Lokal / Ekstern** rett ved siden av:
+Hvert av de seks stifeltene (Kontainere, VM-er, Flash, Auto-sikkerhetskopi, Mapper, ZFS-datasett) har en bryter **Lokal / Ekstern** rett ved siden av:
 
 - **Lokal** viser den kjente mappeutforskeren.
 - **Ekstern** bytter den ut med et enkelt URL-felt, pluss en knapp som åpner den samme dialogen for tilkoblingstest og påloggingsdetaljer som off-site-destinasjoner bruker, bare stilt inn for dette primære arkivet. Derfra får du:
@@ -67,7 +67,7 @@ En ekte beskyttet-til-ubeskyttet-vending utløser et enkelt varsel.
 
 BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gjenopprettbare, ikke bare til stede.
 
-- **Gjenopprettingsverifiseringsøvelser (lokale).** BombVault kjører jevnlig `restic check --read-data-subset` (avgrenset, aldri en disk-fyllende full gjenoppretting) og viser et *sist verifisert gjenopprettbar*-merke per domene. Kadensen ligger på Innstillinger, Tidsplaner; merket på Innstillinger, Integritet.
+- **Gjenopprettingsverifiseringsøvelser (lokale).** BombVault kjører jevnlig `restic check --read-data-subset` (avgrenset, aldri en disk-fyllende full gjenoppretting) og viser et *Verifisert gjenopprettbar*-merke per domene. Kadensen ligger på Innstillinger, Tidsplaner; merket på Innstillinger, Integritet.
 - **DR-øvelser (ekstern).** BombVault gjenoppretter et ekte mål fra det eksterne repoet inn i en engangs-sandkasse, verifiserer det fil-for-fil og byte-for-byte, og rydder deretter opp. Dette beviser at du kan komme deg tilbake fra ekstern, ikke bare at repoet svarer.
 
 **Poengkortet for løsepengevirusbeskyttelse** på Dashboardet ruller dette opp i en grønn / gul / rød holdning per domene, med en aldersstemplet sjekkliste (ekstern konfigurert, append-only verifisert, replikering oppdatert, gjenopprettingsøvelse bestått, kryptering på, beskjæringsstrategi satt). Hver rød rad dyplenker til fiksen, og kortet blir bare grønt på verifiserte fakta.
@@ -118,7 +118,7 @@ Over beskrives delene. Her er ett komplett oppsett med ekte verdier, for deler e
 
 To maskiner: **TOWER** kjører containerne og sender sikkerhetskopiene, **VAULT** tar imot dem og håndhever uforanderligheten. Bytt ut med dine egne navn, adresser og delingsstier.
 
-**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Off-site → veiledet oppsett*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
+**1. Sett opp append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Innstillinger → Off-site → Sett opp*, velg **rest-server** og generer oppskriften. Kopier fanen **Unraid-mal (XML)**, lagre den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og velg deretter *Docker → Add Container* og **rest-server** fra mallisten. Skriv den viste `htpasswd`-linjen inn i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT før du starter den. Engangspassordet vises én gang og lagres aldri, så kopier det nå. Den linjen bærer det samme passordet, allerede bcrypt-hashet for deg: klarteksten hører hjemme i REST-legitimasjonen på TOWER, den hashede linjen i `.htpasswd` på VAULT. Du skal ikke hashe noe selv.
 
     La `--append-only` bli stående i OPTIONS-feltet. Det er hele poenget: uten det er VAULT en vanlig deling igjen.
 
@@ -136,7 +136,7 @@ Første ledd i stien er htpasswd-brukeren, det andre er arkivet. Skriv inn den g
 | **IKKE beskyttet** | VAULT godtok en sletting. `--append-only` mangler eller er fjernet. |
 | **uavklart** | Verken eller. Som regel er adressen ikke den restic selv bruker, eller legitimasjonen er endret. Ingenting registreres, og ingen varsling utløses. |
 
-**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Paring → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
+**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Generelt → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
 
 !!! warning "Plasseringen er en sti **inne i** containeren, skrevet relativt til vertsmonteringen"
     Skriv inn `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kjører i en container der vertens `/mnt` er montert et annet sted; en absolutt vertssti finnes ikke der. Limer du inn en, forteller BombVault deg nå den relative stien du skal bruke i stedet.
@@ -156,7 +156,7 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 5. **Gjenoppretter containerne og VM-ene på én gang** (la stå stoppet, så du starter dem bevisst) og viser filsettene og ZFS-elementene som du gjenoppretter ett om gangen; ZFS-elementer kommer tilbake slått av. Gjenopprettingssettet ditt er ett klikk unna.
 
 !!! tip "Planlagt migrering versus katastrofe"
-    Veiledet gjenoppretting gjenoppretter BombVaults egne innstillinger fra en sikkerhetskopi. For en *planlagt* flytting til en ny boks kan du i stedet ta med konfigurasjonen din direkte via kortet **Eksporter og importer innstillinger** (en portabel JSON-fil). Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
+    Veiledet gjenoppretting gjenoppretter BombVaults egne innstillinger fra en sikkerhetskopi. For en *planlagt* flytting til en ny boks kan du i stedet ta med konfigurasjonen din direkte via kortet **Eksporter / importer innstillinger** (en portabel JSON-fil). Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 
 ### Gjenopprett fra et annet BombVault-repo {#restore-from-another-bombvault-repo}
 

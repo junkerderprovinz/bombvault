@@ -26,8 +26,38 @@ export const RUN_REASONS: Record<string, TranslationKey> = {
   "cancelled by the user": "runReason.cancelled",
 };
 
+/** What a container restore writes when Docker refused the GPU or runtime of
+ *  the container, followed by ": " and Docker's refusal. Keep in step with
+ *  ReasonRestoreNoRuntime in internal/store/runs.go. */
+export const RESTORE_NO_RUNTIME = "restore failed: the container used a GPU or runtime this host does not have";
+
+/** The note of the restore that left them out. Keep in step with
+ *  NoteRestoredWithoutRuntime. */
+export const RESTORED_WITHOUT_RUNTIME = "restored without the GPU or runtime the container used";
+
+/** The note of a restore that left out links Docker would refuse, followed by
+ *  ": " and the containers. Keep in step with NoteRestoredWithoutLinks. */
+export const RESTORED_WITHOUT_LINKS = "restored without links to containers that are not running";
+
+/** Whether a restore failed because this host lacks the GPU or runtime of the
+ *  container. */
+export function isRuntimeRefusal(raw: string | null | undefined): boolean {
+  return !!raw && (raw === RESTORE_NO_RUNTIME || raw.startsWith(RESTORE_NO_RUNTIME + ": "));
+}
+
+/** What a successful container restore left out, read from its notes, which
+ *  it joins with "; ". */
+export function restoreNotes(raw: string | null | undefined): { withoutRuntime: boolean; unlinked: string[] } {
+  const out = { withoutRuntime: false, unlinked: [] as string[] };
+  for (const note of (raw ?? "").split("; ")) {
+    if (note === RESTORED_WITHOUT_RUNTIME) out.withoutRuntime = true;
+    else if (note.startsWith(RESTORED_WITHOUT_LINKS + ": ")) out.unlinked = note.slice(RESTORED_WITHOUT_LINKS.length + 2).split(", ");
+  }
+  return out;
+}
+
 /**
- * The reasons a database dump or import writes, which may be followed by
+ * The reasons a dump, an import or a restore writes, which may be followed by
  * ": <detail>" holding the tool's own message. The head is translated, the
  * detail is shown as it was stored. Keep in step with the Reason* and Note*
  * constants in internal/store/runs.go; runreason_internal_test.go fails when
@@ -60,6 +90,9 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database import failed: the import tool reported an error": "runReason.dbimportFailed",
   "database imported; the previous data folder was kept": "runReason.dbimportKeptOld",
   "database imported with errors": "runReason.dbimportErrors",
+  [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
+  [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
+  [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
 };
 
 /**
@@ -131,7 +164,9 @@ const WARNING_NOTES = [
 export function isWarningNote(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
   if (importAppTail(text)) return true;
-  return WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "));
+  if (WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "))) return true;
+  const left = restoreNotes(text);
+  return left.withoutRuntime || left.unlinked.length > 0;
 }
 
 /**

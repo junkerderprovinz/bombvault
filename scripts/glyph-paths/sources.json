@@ -43,5 +43,10 @@
     "viewBox": "0 0 24 24",
     "paths": 1,
     "from": "Material Design Icons tune (Apache 2.0)"
+  },
+  "retention": {
+    "viewBox": "0 0 512 512",
+    "paths": 1,
+    "from": "Font Awesome Free 7.3.1 box-archive (CC BY 4.0)"
   }
 }

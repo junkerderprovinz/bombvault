@@ -63,6 +63,7 @@ Nyisd meg az elemen a **Biztonsági mentések** részt, válaszd ki a mentést, 
 
 - **Visszaállítás az adatkészletbe.** A mentés fájljai az adatkészlet csatolási pontjába íródnak. Az azonos nevű fájlok felülíródnak, a többiek maradnak. Az adatkészletet soha nem görgetjük vissza és nem cseréljük le. A BombVault ellenőrzi, hogy az adatkészlet csatolva, látható és írható, egyszer a kezdés előtt, és újra közvetlenül az írás előtt. Ahol egy gyermek-adatkészlet van benne csatolva, oda semmi nem íródik: a gyermek megtartja fájljait, tulajdonosát és jogosultságait, és a saját mentéséből áll vissza.
 - **Visszaállítás mappába.** Válassz egy mappát a `/mnt` alatt. A BombVault ellenőrzi, hogy a mappa csatolt poolon vagy megosztáson van-e, és van-e elég szabad hely. Ez SSH-kapcsolat nélkül és már nem létező adatkészleteknél is működik.
+- **Új adatkészletbe.** Adj meg egy adatkészletet, amely még nem létezik. A BombVault létrehozza a mentésben tárolt ZFS-tulajdonságokkal, és abba állít vissza, lásd: [Visszaállítás új adatkészletként](#new-dataset).
 - **Fájlok kiválasztása** (speciális): csak a kiválasztott fájlokat és mappákat írja vissza az adatkészletbe.
 - **Ennek a mentésnek az összes adatkészlete** (speciális): a fa minden adatkészletét a kiválasztott mappa saját almappájába. A mentésben kihagyott adatkészletek meg vannak nevezve.
 - **Másik kiszolgálóról:** a **Helyreállítás** oldal egy másik BombVault tárolójából állít vissza, mindig mappába: egy mentés összes adatkészletét, mindegyiket saját almappába, vagy a fa egy adatkészletét, egészben vagy kiválasztott fájlokat.
@@ -79,27 +80,23 @@ Ha egy visszaállítás után vissza szeretnél lépni, másolj egyes fájlokat 
 
 ### Visszaállítás új adatkészletként {#new-dataset}
 
-A BombVault nem hoz létre adatkészleteket. Hozd létre a kiszolgálón a kívánt tulajdonságokkal, majd állítsd vissza egy olyan mappába, amely a csatolási pontja:
+A BombVault minden mentéssel eltárolja minden adatkészlet helyben beállított ZFS-tulajdonságait: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity és a saját felhasználói tulajdonságaid. Az örökölt és csak olvasható értékek kimaradnak, mert maguktól visszajönnek. Azokban a mentésekben, amelyek még azelőtt készültek, hogy a BombVault tárolta volna őket, nincsenek ilyenek.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-majd a BombVaultban állítsd vissza a `/mnt` alatti `cache/appdata-restored` mappába.
+- **Új adatkészletbe** a `zfs create` parancsot futtatja minden tárolt tulajdonsággal. A casesensitivity, a normalization és az utf8only csak így állítható be. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. A csatolási pont kimarad, hogy a másolat ne ütközzön az eredetivel, és ugyanígy a `canmount`, a `readonly` és a titkosítás is, hogy a visszaállítás írni tudjon. Egy titkosított alatti új adatkészlet átveszi annak titkosítását. A fölötte lévő adatkészletnek léteznie kell. Ha a létrehozás után valami hibára fut, az új adatkészlet a szerveren marad, mert a BombVault soha nem töröl adatkészletet.
+- **Visszaállítás az adatkészletbe** a visszaállítás mellett mutatja a tárolt tulajdonságokat. A **Ezeket a tulajdonságokat is beállítja** beállítja azokat, amelyeket egy meglévő adatkészlet még elfogad, mielőtt bármilyen fájl íródna. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. E kapcsoló nélkül az adatkészlet megtartja a beállításait.
 
 ## Mi van a mentésben {#contents}
 
-A mentésben: minden mentett adatkészlet fájljai és mappái, tulajdonossal, jogosultságokkal, időbélyegekkel és kiterjesztett attribútumokkal, ahogy a restic tárolja őket.
+A mentésben: minden mentett adatkészlet fájljai és mappái, tulajdonossal, jogosultságokkal, időbélyegekkel és kiterjesztett attribútumokkal, ahogy a restic tárolja őket, valamint minden adatkészlet helyben beállított ZFS-tulajdonságai.
 
 Nincs a mentésben:
 
-- az adatkészletek ZFS-tulajdonságai (compression, recordsize, quota, mountpoint és a többi);
 - az egyes adatkészletek legfelső mappájának saját tulajdonosa és jogosultságai (minden alatta lévő benne van). Az adatkészletbe történő visszaállítás a meglévő legfelső mappát változatlanul hagyja, a mappába történő visszaállítás `0755` jogosultsággal hozza létre;
 - a meglévő ZFS-pillanatképek;
 - a kihagyott vagy kizárt gyermekek;
 - a kötetek.
 
-Új poolra való visszaállításhoz előbb hozd létre az adatkészleteket a kívánt tulajdonságokkal. Azt még nem ellenőriztük, hogy az NFSv4 ACL-ek, ahogy a TrueNAS használja őket SMB-adatkészleteken, úgy jönnek-e vissza, ahogy várod, ezért próbálj ki egy visszaállítást a saját adataidon, mielőtt rájuk hagyatkozol.
+Új poolra való visszaállításhoz hozd létre a poolt, és minden adatkészletet állíts vissza egy új adatkészletbe. Azt még nem ellenőriztük, hogy az NFSv4 ACL-ek, ahogy a TrueNAS használja őket SMB-adatkészleteken, úgy jönnek-e vissza, ahogy várod, ezért próbálj ki egy visszaállítást a saját adataidon, mielőtt rájuk hagyatkozol.
 
 ## Titkosított adatkészletek {#encryption}
 
@@ -126,7 +123,7 @@ Egy kiürített gyermek alig változtat egy nagy fa összegén, ezért az anomá
 
 Egy adatkészlet, amelyet az előző futás mentett, de ez a futás nem tudott beolvasni, kiürítettnek számít, feltéve, hogy az elem kiválasztása nem változott. Ez lefedi a be nem töltött kulcsot, a nem csatolt adatkészletet és azt, amelyik eltűnt a fából. Egy gyermek, amelyet te magad zársz ki, megváltoztatja a kiválasztást, ezért az előzménye ilyenkor elölről kezdődik. Amíg egy elveszett adatokról szóló megállapítás nyitva van, a megőrzés csak annak az adatkészletnek a régi mentéseit tartja meg, a fa többi részét a szokásos módon ritkítja.
 
-Az **Anomáliák** oldal **Elemek** lapján minden adatkészletnek saját sora van az eleme alatt, és az elem fája ezen az oldalon minden adatkészlet mellett mutatja a nyitott megállapításokat. Egy megállapítás hivatkozása az elem visszaállítási paneljét az adatkészlet utolsó jó mentésénél nyitja meg. Azt, hogy egy futás befejeződik-e, az egész elemre nézve ítéljük meg, mert egy futás egészként sikerül vagy hiúsul meg.
+Az **Anomáliák** oldalon minden adatkészletnek saját sora van az elem paneljén, amely az elem kártyáján a **Figyelés** gombbal nyílik meg, vagy ha az elemnél nincs semmi nyitott, a sorából a **Nincs nyitott** kártyán. Az elem fája ezen az oldalon minden adatkészlet mellett mutatja a nyitott megállapításokat. Egy megállapítás hivatkozása az elem visszaállítási paneljét az adatkészlet utolsó jó mentésénél nyitja meg. Azt, hogy egy futás befejeződik-e, az egész elemre nézve ítéljük meg, mert egy futás egészként sikerül vagy hiúsul meg.
 
 Magukat az ellenőrzéseket a [Funkciók](features.md) írja le. Egy, az [MCP-kiszolgálón](mcp.md) keresztül kapcsolódó asszisztens listázhatja egy ZFS-elem visszaállítási pontjait, elindíthatja a mentését és olvashatja a megállapításokat, de egy megállapítás nyugtázása az **Anomáliák** oldalon történik.
 
@@ -180,6 +177,11 @@ Az oldal, a futási előzmények és az értesítések ezek egyikével nevezik m
 | `not-enough-space` | Nincs elég szabad hely a célhelyen. | Szabadíts fel helyet, vagy válassz másik mappát. |
 | `safety-snapshot-failed` | A biztonsági pillanatképet nem sikerült elkészíteni, ezért semmi nem állt vissza. | A részletek mutatják a zfs üzenetét. |
 | `safety-name-too-long` | Az adatkészlet neve túl hosszú egy biztonsági pillanatképhez. | Kapcsold ki a biztonsági pillanatképet, vagy állítsd vissza mappába. |
+| `dataset-exists` | Már van ilyen nevű adatkészlet. | Válassz új nevet, vagy állíts vissza magába az adatkészletbe. |
+| `create-failed` | Az új adatkészletet nem sikerült létrehozni. | A részletek a zfs üzenetét mutatják. Ellenőrizd, hogy a fölötte lévő adatkészlet létezik-e. |
+| `new-dataset-not-visible` | Az új adatkészlet létrejött, de a BombVault nem látja, ezért semmi sem lett visszaállítva. | Az adatkészlet a szerveren marad. Csatold a Host Data útvonal alá, és állíts vissza bele. |
+| `set-properties-failed` | A tárolt tulajdonságokat nem sikerült beállítani, ezért semmi sem lett visszaállítva. | A részletek mutatják a zfs üzenetét. |
+| `set-limits-failed` | A fájlok visszaálltak, de a tárolt kvótát vagy foglalást nem sikerült beállítani. | A részletek a zfs üzenetét mutatják. Állítsd be a kvótát vagy a foglalást magad a `zfs set` paranccsal. |
 
 ### Mit lát a konténer {#mountinfo}
 
@@ -201,6 +203,8 @@ Minden sor egy csatolás a konténerben. Egy adatkészlet sora mutatja az útvon
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Az új adatkészletbe való visszaállításhoz kell még a `create` jog a fölötte lévő adatkészleten, a tárolt tulajdonságok beállításához pedig az adott tulajdonságokra vonatkozó jog.
 
   TrueNAS-on egy nem root SSH-munkamenet útvonalában nincs benne a `/usr/sbin`; a BombVault ilyenkor közvetlenül a `/usr/sbin/zfs` parancsot hívja.
 - Az alkalmazás **Host Data** értékének az adatkészletek feletti gazdaútvonalnak kell lennie, például `/mnt/tank`, nem ixVolume-nak. Gazdaútvonallal az alkalmazás továbbadja a gazda új csatolásait a BombVaultnak (`rslave`), és erre van szüksége a pillanatkép-hozzáférésnek.

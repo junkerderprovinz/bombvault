@@ -58,6 +58,10 @@ type settingsExport struct {
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
 	Credentials    *exportCredentials  `json:"credentials,omitempty"`
+	// Streaming and Idle are the "Streaming first" and "Idle before backup"
+	// cards, absent from files written before they existed.
+	Streaming *streamingView `json:"streaming,omitempty"`
+	Idle      *idleView      `json:"idle,omitempty"`
 	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
 	// a build without the ZFS domain, so its empty ZFS fields say nothing about
 	// the ZFS setup of the instance it is applied to.
@@ -265,6 +269,11 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	traffic, err := h.store.TrafficSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	exp := settingsExport{
 		SchemaVersion:  settingsExportSchema,
@@ -273,6 +282,8 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		Settings:       buildSettingsView(s),
 		OffsiteTargets: offsiteTargetsToViews(targets),
 		NamedRepos:     offsiteTargetsToViews(namedRepos),
+		Streaming:      streamingToView(traffic),
+		Idle:           idleToView(traffic),
 	}
 
 	if withCredentials {
@@ -691,8 +702,24 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
 		return "invalid settings: " + msg
 	}
+	if msg := rejectInvalidOwnRetention("ownRetention", exp.Settings.OwnRetention); msg != "" {
+		return "invalid settings: " + msg
+	}
+	if msg := rejectInvalidOwnRetention("ownOffsiteRetention", exp.Settings.OwnOffsiteRetention); msg != "" {
+		return "invalid settings: " + msg
+	}
 	if msg := rejectInvalidCompression(exp.Settings.Compression); msg != "" {
 		return "invalid settings: " + msg
+	}
+	if exp.Streaming != nil {
+		if err := validateStreaming(*exp.Streaming); err != nil {
+			return "invalid streaming settings: " + err.Error()
+		}
+	}
+	if exp.Idle != nil {
+		if err := validateIdle(*exp.Idle); err != nil {
+			return "invalid idle settings: " + err.Error()
+		}
 	}
 	return ""
 }
@@ -718,8 +745,28 @@ func summarizeExport(exp settingsExport) importSummary {
 		OffsiteTargets: len(exp.OffsiteTargets),
 		NamedRepos:     len(exp.NamedRepos),
 		Credentials:    credsPresence(exp.Credentials),
-		SettingsGroups: settingsGroups(exp.Settings),
+		SettingsGroups: exportGroups(exp),
 	}
+}
+
+// exportGroups is settingsGroups plus the blocks the file carries beside the
+// settings view. The streaming card is named only when it departs from how
+// the card ships.
+func exportGroups(exp settingsExport) []string {
+	groups := settingsGroups(exp.Settings)
+	if v := exp.Streaming; v != nil {
+		d := store.DefaultTrafficSettings()
+		if v.Enabled || !v.MediaServersAuto || v.ThresholdMbit != d.StreamMbit || v.LimitKiB != d.StreamLimitKiB || v.HoldMin != d.StreamHoldMin {
+			groups = append(groups, "streaming")
+		}
+	}
+	if v := exp.Idle; v != nil {
+		d := store.DefaultTrafficSettings()
+		if v.CPUPct != d.IdleCPUPct || v.NetMbit != d.IdleNetMbit || v.QuietMin != d.IdleQuietMin {
+			groups = append(groups, "idle")
+		}
+	}
+	return groups
 }
 
 // credsPresence reports which credential kinds the file carries.
@@ -758,7 +805,7 @@ func settingsGroups(v settingsView) []string {
 	add("everything", v.EverythingSchedule != "")
 	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 || v.RetentionKeepYearly > 0 ||
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0 ||
-		v.OffsiteRetentionKeepYearly > 0)
+		v.OffsiteRetentionKeepYearly > 0 || len(v.OwnRetention) > 0 || len(v.OwnOffsiteRetention) > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
 		v.FilesOffsite != "" || v.ZFSOffsite != "")
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled || v.StartTestEnabled)
@@ -839,6 +886,22 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// leave every item pointing at an id that no longer exists.
 	if len(exp.NamedRepos) > 0 {
 		if err := h.replaceNamedRepos(exp.NamedRepos); err != nil {
+			return err
+		}
+	}
+
+	if exp.Streaming != nil || exp.Idle != nil {
+		cur, err := h.store.TrafficSettings()
+		if err != nil {
+			return err
+		}
+		if exp.Streaming != nil {
+			cur = applyStreamingView(cur, *exp.Streaming)
+		}
+		if exp.Idle != nil {
+			cur = applyIdleView(cur, *exp.Idle)
+		}
+		if err := h.store.SetTrafficSettings(cur); err != nil {
 			return err
 		}
 	}
@@ -1125,12 +1188,14 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 	out.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
 	out.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+	applyOwnRetention(&out, v.OwnRetention)
 	applyCompression(&out, v.Compression)
 	out.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
 	out.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
 	out.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	out.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
 	out.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
+	applyOwnOffsiteRetention(&out, v.OwnOffsiteRetention)
 	out.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	out.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	out.MetricsEnabled = v.MetricsEnabled

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
-import type { AnomalyItem, Container, ItemChecks, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
+import { listContainers, listRuns, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
+import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
 import { PageTitle } from "../components/PageTitle";
@@ -31,6 +31,7 @@ import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
 import { ContainerChangeNotice } from "../components/ContainerChangeNotice";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { IdleWaitLine, IdleWaitRow } from "../components/IdleWaitRow";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
@@ -62,10 +63,13 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
+import { ExcludePresetPanel } from "../components/ExcludePresetPanel";
 
 import { Toggle } from "../components/Toggle";
 import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
 import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
+import { RuntimeRetry } from "../components/restore/RuntimeRetry";
+import { isRuntimeRefusal } from "../lib/runReason";
 type T = ReturnType<typeof useT>["t"];
 
 // Helpers
@@ -1722,6 +1726,7 @@ function MobileContainerDetail({
   checks,
   onChecksChanged,
   restoreRequest,
+  onIdleWaitSaved,
 }: {
   container: Container;
   t: T;
@@ -1741,6 +1746,7 @@ function MobileContainerDetail({
   onChecksChanged?: () => void;
   /** A link from another page asking to restore this container. */
   restoreRequest?: RestoreRequest;
+  onIdleWaitSaved?: (hours: number) => void;
 }) {
   // The host mount root for the detail's mono meta line: served by the same
   // already-cached mounts response the cards use (React escaping
@@ -1888,7 +1894,9 @@ function MobileContainerDetail({
               databaseWarn={updateWarnKey(container)}
               t={t}
             />
+            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
           </Advanced>
+          <IdleWaitLine name={container.name} />
         </div>
       )}
       {/* The same editor the desktop row expands: one tree, one queue, zero
@@ -2379,6 +2387,7 @@ export function ExcludesEditor({
   // single exclusion is offered, and the most important one is true precisely
   // when the list is empty.
   const [advisories, setAdvisories] = useState<string[]>([]);
+  const [preset, setPreset] = useState<ExcludePreset | null>(null);
   // The backup index could not be read. Not a failed scan: the panel stays up
   // and offers the folder scan as an explicit second request.
   const [indexFailed, setIndexFailed] = useState(false);
@@ -2410,6 +2419,7 @@ export function ExcludesEditor({
     setUnreadable([]);
     setPathsUnavailable(false);
     setAdvisories([]);
+    setPreset(null);
     try {
       const r = await suggestContainerExcludes(name, live ? "live" : undefined);
       if (r.ok) {
@@ -2427,6 +2437,7 @@ export function ExcludesEditor({
         setPathsUnavailable(r.pathsUnavailable === true);
         setIndexFailed(r.indexFailed === true);
         setAdvisories(r.advisories ?? []);
+        setPreset(r.preset ?? null);
       } else {
         setSuggestions([]);
         setScanFailed(true);
@@ -2457,6 +2468,13 @@ export function ExcludesEditor({
     if (currentLines.includes(line)) return;
     cancelPendingSave();
     await saveLines([...currentLines, line]);
+  }
+
+  async function addExcludes(lines: string[]) {
+    const fresh = lines.filter((l) => !currentLines.includes(l));
+    if (fresh.length === 0) return;
+    cancelPendingSave();
+    await saveLines([...currentLines, ...fresh]);
   }
 
   async function removeExclude(line: string) {
@@ -2545,7 +2563,7 @@ export function ExcludesEditor({
         {assistOpen && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Colour-engine integration (same fix/reasoning as
                   FoldersEditor's "Hinzufügen" button above): was the one
                   plain grey `bg-carbon-surface2` button in this
@@ -2609,6 +2627,16 @@ export function ExcludesEditor({
                   </p>
                 ) : null;
               })}
+            {!scanning && preset && (
+              <ExcludePresetPanel
+                key={preset.app}
+                preset={preset}
+                currentLines={currentLines}
+                saving={state === "saving"}
+                onApply={(lines) => void addExcludes(lines)}
+                t={t}
+              />
+            )}
             {!scanning && unexamined.length > 0 && (
               <p className="text-xs text-statusWarn">
                 {withLtrPlaceholder(t("excludes.assistUnexamined"), "{paths}", unexamined.join(", "))}
@@ -2769,6 +2797,7 @@ export function ContainerRow({
   restoreRequest,
   checks,
   onChecksChanged,
+  onIdleWaitSaved,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2796,6 +2825,7 @@ export function ContainerRow({
   restoreRequest?: RestoreRequest;
   checks?: ItemChecks;
   onChecksChanged?: () => void;
+  onIdleWaitSaved?: (hours: number) => void;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -2973,7 +3003,9 @@ export function ContainerRow({
               databaseWarn={updateWarnKey(container)}
               t={t}
             />
+            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
           </Advanced>
+          <IdleWaitLine name={container.name} />
         </div>
       </div>
 
@@ -3183,6 +3215,9 @@ function groupStacks(containers: Container[]): StackGroup[] {
 // between sequential members.
 const STACK_DONE_GRACE_MS = 8000;
 
+// How often a stack card reads the run history for its members' outcomes.
+const STACK_RUNS_POLL_MS = 2000;
+
 // StackCard is one compose stack: its name, members, and (in a collapsible panel)
 // a "Restore stack" action that restores every member stopped, then optionally
 // starts them in dependency order. The restore is ASYNC on the server (the POST
@@ -3216,6 +3251,11 @@ export function StackCard({
   // status instead — the shake, like the toast, only covers the click itself).
   const [shake, setShake] = useState(0);
   const [started, setStarted] = useState(false);
+  // The restore runs its members detached, so their outcomes are read back
+  // from the run history, counting only runs newer than watchFrom holds. A
+  // member Docker refused for its GPU or runtime is offered again without them.
+  const [watchFrom, setWatchFrom] = useState<Set<string> | null>(null);
+  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   // Terminal state for the stack restore: since StackCard drives no fire-and-
   // watch of its own, we derive "finished" from the members' progress below.
   const [finished, setFinished] = useState(false);
@@ -3252,6 +3292,37 @@ export function StackCard({
     return () => clearTimeout(timer);
   }, [started, anyMemberActive]);
 
+  const memberNames = group.members.map((m) => m.name).join(",");
+  useEffect(() => {
+    if (!watchFrom) return;
+    const names = new Set(memberNames.split(","));
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      const res = await listRuns().catch(() => null);
+      if (!alive) return;
+      // The list is newest first, so the first run of a member is its latest.
+      const latest = new Map<string, Run>();
+      for (const r of res?.runs ?? []) {
+        if (r.kind === "restore" && r.domain === "container" && names.has(r.target) && !watchFrom.has(r.id) && !latest.has(r.target)) {
+          latest.set(r.target, r);
+        }
+      }
+      const done = [...latest.values()].filter((r) => r.status !== "running");
+      if (done.length === names.size || done.some((r) => r.status === "cancelled") || finished) {
+        setRuntimeRefused(done.filter((r) => isRuntimeRefusal(r.error)).map((r) => r.target));
+        setWatchFrom(null);
+        return;
+      }
+      timer = setTimeout(() => void poll(), STACK_RUNS_POLL_MS);
+    };
+    timer = setTimeout(() => void poll(), STACK_RUNS_POLL_MS);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [watchFrom, finished, memberNames]);
+
   async function run() {
     // A member whose data folder is copied while the stack runs comes back as
     // files that may not start, so the question names it.
@@ -3265,14 +3336,17 @@ export function StackCard({
     const refusal = restoreBlockReason(check, t);
     const extra = <RestoreCheckPanel check={check} t={t} />;
     if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
+    setRuntimeRefused([]);
     setBusy(true);
     setStarted(false);
     setFinished(false);
     sawActive.current = false;
     try {
+      const before = await listRuns().catch(() => null);
       const res = await restoreStack(group.project, startInOrder, true, source);
       if (res.ok) {
         setStarted(true);
+        setWatchFrom(new Set((before?.runs ?? []).map((r) => r.id)));
         onRestored(); // refresh the main list so run-state/orphan rows update
       } else {
         // GlimStone follow-up pass (v8.0.0): a failure to even START the async
@@ -3368,6 +3442,16 @@ export function StackCard({
           )}
           {finished && !busy && (
             <p className="text-xs text-carbon-textSub">{t("stack.restoreFinished")}</p>
+          )}
+          {runtimeRefused.length > 0 && (
+            <RuntimeRetry
+              key={runtimeRefused.join(",")}
+              names={runtimeRefused}
+              source={source}
+              leaveStopped={!startInOrder}
+              onDone={onRestored}
+              t={t}
+            />
           )}
         </div>
       )}
@@ -3782,6 +3866,11 @@ export function Containers() {
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   const [containers, setContainers] = useState<Container[]>([]);
+  // The idle wait is saved by its row; the list keeps the hours, so a row drawn
+  // again after the advanced view was off shows them.
+  function idleWaitSaved(name: string, hours: number) {
+    setContainers((list) => list.map((c) => (c.name === name ? { ...c, idleWaitHours: hours } : c)));
+  }
   const [loading, setLoading] = useState(true);
   // Page-level load failure — NOT migrated to a toast (GlimStone follow-up pass,
   // v8.0.0 audit note): this blocks the whole list from rendering, so it is a
@@ -3796,6 +3885,9 @@ export function Containers() {
   const [backupFilter, setBackupFilter] = useState<BackupFilterKey>(loadBackupFilterKey);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  // The containers the last bulk restore could not recreate for a GPU or
+  // runtime this host lacks, offered again without them.
+  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   const [discovering, setDiscovering] = useState(false);
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Discover / "Backup selected" buttons alongside their existing toasts.
@@ -4128,14 +4220,19 @@ export function Containers() {
   // "already running"). fireAndWaitRun handles the fire/retry/wait cycle.
   async function restoreSelected() {
     if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
-    void runBulk((name) =>
-      fireAndWaitRun({
+    setRuntimeRefused([]);
+    const refused: string[] = [];
+    await runBulk(async (name) => {
+      const res = await fireAndWaitRun({
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
         start: () => restore(name, "latest", true),
         t,
-      })
-    );
+      });
+      if (isRuntimeRefusal(res.error)) refused.push(name);
+      return res;
+    });
+    setRuntimeRefused(refused);
   }
 
   // GlimStone follow-up pass (v8.0.0): the "+N" / error note never auto-cleared
@@ -4302,6 +4399,7 @@ export function Containers() {
           checks={itemChecks.find("container", openContainer.name)}
           onChecksChanged={itemChecks.reload}
           restoreRequest={restoreRequest.item === openContainer.name ? restoreRequest : undefined}
+          onIdleWaitSaved={(hours) => idleWaitSaved(openContainer.name, hours)}
         />
       )}
 
@@ -4478,6 +4576,9 @@ export function Containers() {
       {bulkBusy && (
         <p className="text-xs text-carbon-textSub">{t("containers.working")}</p>
       )}
+      {runtimeRefused.length > 0 && (
+        <RuntimeRetry key={runtimeRefused.join(",")} names={runtimeRefused} onDone={() => void loadContainers()} t={t} />
+      )}
 
       {/* The desktop list: full row cards with their inline editors. JSX-gated
           on `isDesktop`: at >=48rem this is the list; below it the phone gets
@@ -4502,6 +4603,7 @@ export function Containers() {
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
               checks={itemChecks.find("container", c.name)}
               onChecksChanged={itemChecks.reload}
+              onIdleWaitSaved={(hours) => idleWaitSaved(c.name, hours)}
             />
           ))}
         </div>

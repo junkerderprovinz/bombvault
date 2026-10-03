@@ -1,6 +1,6 @@
 # Configuration
 
-This page covers the container's environment variables, the mounts the template provides, VM backup over SSH, and the off-site setup. Backup **repository paths** are configured inside the app (Settings, Storage, Backup paths), not via environment variables.
+This page covers the container's environment variables, the mounts the template provides, VM backup over SSH, and the off-site setup. Backup **repository paths** are configured inside the app (Settings, Storage, Backup Paths), not via environment variables.
 
 ## Environment variables
 
@@ -31,14 +31,14 @@ Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`)
 
 ZFS dataset backups need this mode too: the host mounts a dataset's snapshot only after the container has started. See [ZFS datasets](zfs-datasets.md).
 
-Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. Change the location any time in **Settings, Storage, Backup paths**. Each path field also has an inline **Local / Remote** switch: a path can be a restic remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
+Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. Change the location any time in **Settings, Storage, Backup Paths**. Each path field also has an inline **Local / Remote** switch: a path can be a restic remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
 
-!!! note "Host integration check"
+!!! note "Host Integration Check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
 
 ## Backup source detection {#backup-source-detection}
 
-For each container, BombVault auto-selects which bind mounts and named volumes to back up. A path is picked up when any of the following applies (you can always override the result per container in the container's **Backup paths**):
+For each container, BombVault auto-selects which bind mounts and named volumes to back up. A path is picked up when any of the following applies (you can always override the result per container in the container's **Backup folders**):
 
 - **Data-root segment match:** the bind's host source contains one of the `DATA_ROOT_SEGMENTS` segments as a full path component (default `appdata` only).
 - **Docker named volumes** are always included — they have no throwaway equivalent, so there is nothing to filter — **but only when the volume's real host storage path is itself reachable through the Host Data mount**, exactly like any other host path BombVault backs up. Docker's default local-volume driver stores a volume under the daemon's own data root — `/var/lib/docker/volumes/<name>/_data` unless you've customized it (check with `docker info -f '{{.DockerRootDir}}'`) — which is NOT covered by the narrow, single-directory Host Data mount the generic `docker-compose.yml` uses by default. An unreachable volume is silently skipped, not an error. To actually back up named volumes on a generic host, point Host Data (and `HOST_SOURCE_ROOT`) at a common ancestor that also covers the Docker data root — see the compose file's Host Data comment for the tradeoff (Unraid sidesteps this by mounting all of `/mnt`, its own universal top-level convention, for the same reason).
@@ -89,8 +89,9 @@ Set up an off-site replica on the **Settings, Off-site** page. See [Off-site & r
 - **SSH targets need nothing installed on the far side.** `sftp:` only needs an SSH server. Add the public key from **Settings, Integrations, Host SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`.
 - **Off-site copy:** BombVault replicates new snapshots with `restic copy` on a best-effort basis, on top of a (usually local) primary. Each domain has its own off-site schedule, plus a **Replicate now** button.
 - **Multiple off-site targets per domain:** each domain can replicate to several off-site destinations at once. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget; they all replicate on that domain's off-site schedule. An existing single off-site setup is carried over as the first target.
-- **Retention per source:** the local and off-site policies both live on Settings, Retention (leave the off-site one all-zero to never auto-trim off-site snapshots).
+- **Retention per source:** the local and off-site policies both live on Settings, Retention (leave the off-site one all-zero to never auto-trim off-site snapshots). Its **Local retention** and **Off-site retention** cards each have **Keep rules per source**, which gives containers, VMs, flash, folders, ZFS or the self-backup keep rules of their own, for their local backups and for their off-site repository. A source without them follows the shared ones, and the retention after each backup, the off-site copy, a manual prune and the retention preview all use the rules of the source they work on. Additional off-site targets keep the rules set for them on Settings, Off-site.
 - **Bandwidth limits:** cap the restic upload/download rate under Settings, Off-site.
+- **Streaming first:** under Settings, Off-site, pick the media servers (Plex, Jellyfin and Emby are preselected by image name), the send rate from which one counts as streaming, the upload limit while it streams and how long after a stream the normal limit comes back.
 - **Cold and archival storage class (S3):** for a native S3 off-site repo, pick a restore-readable tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes set their class in the rclone config.
 - **Remote primary instead of local:** a domain's Backup Path itself can be one of the backends above, with no local copy and no replication step — see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories) for the inline Local/Remote switch and its bandwidth/append-only/growth-budget safety settings.
 
@@ -105,11 +106,11 @@ Anomaly detection is set up in the **Anomalies** card on **Settings, Integrity**
 | **Send a notification for** | Critical findings only | The lowest severity that sends a message through the channels set up under Notifications. Repeated backup and dump failures and failed scheduled restore checks already send their own message and are not sent twice. |
 | **Keep old backups when a source shrinks sharply or is rewritten** | On | While an item has an open finding for an almost empty source, a sharp shrink or most of its data stored again, retention and prune leave that item's old backups alone. Acknowledge the finding or mark it as expected to let them go. |
 
-Each item can use its own sensitivity and notification minimum. Set them on the **Items** tab of the **Anomalies** page, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages. For a ZFS item they are in its editor on the **ZFS** page and apply to every dataset of its tree.
+Each item can use its own sensitivity and notification minimum. Set them on the **Anomalies** page, where an item with open findings has them under **Monitoring** on its card and every other item opens them from the **Nothing open** card, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages. For a ZFS item they are in its editor on the **ZFS** page and apply to every dataset of its tree.
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 
-The **Export and import settings** card on the Settings, System page writes your whole BombVault configuration (domain settings, off-site targets, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
+The **Export / import settings** card on the Settings, System page writes your whole BombVault configuration (domain settings, off-site targets, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
 
 !!! warning "The export can contain credentials"
     You choose whether to include the off-site and notification credentials in the file. With credentials included, the export is as sensitive as your recovery kit, so store it somewhere safe. Without them, the file holds only non-secret settings.

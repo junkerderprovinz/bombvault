@@ -63,6 +63,7 @@ Open **Back-ups** bij het item, kies de back-up en daarna de dataset. Standaard 
 
 - **Terugzetten in de dataset.** Bestanden uit de back-up worden in het mountpoint van de dataset geschreven. Bestanden met dezelfde naam worden overschreven, andere blijven staan. De dataset wordt nooit teruggezet naar een eerdere stand of vervangen. BombVault controleert of de dataset gemount, zichtbaar en beschrijfbaar is, één keer voor het begint en opnieuw vlak voor het schrijft. Waar een onderliggende dataset erin is gemount, wordt niets geschreven: die behoudt zijn bestanden, eigenaar en rechten en wordt teruggezet uit zijn eigen back-up.
 - **Terugzetten naar een map.** Kies een map onder `/mnt`. BombVault controleert of de map op een gemounte pool of share staat en of er genoeg vrije ruimte is. Dit werkt zonder de SSH-verbinding en voor datasets die niet meer bestaan.
+- **In een nieuwe dataset.** Geef een dataset op die nog niet bestaat. BombVault maakt hem aan met de ZFS-eigenschappen uit de back-up en zet de bestanden erin terug, zie [Terugzetten als nieuwe dataset](#new-dataset).
 - **Bestanden kiezen** (geavanceerd): alleen de bestanden en mappen die je kiest terugschrijven in de dataset.
 - **Alle datasets van deze back-up** (geavanceerd): elke dataset van de boom in een eigen submap van de map die je kiest. Datasets die in die back-up werden overgeslagen, worden genoemd.
 - **Van een andere server:** de pagina **Herstel** zet terug uit de repository van een andere BombVault, altijd naar een map: alle datasets van één back-up, elk in een eigen submap, of één dataset van de boom, geheel of gekozen bestanden.
@@ -79,27 +80,23 @@ Om na het terugzetten terug te gaan, kopieer je losse bestanden uit `.zfs/snapsh
 
 ### Terugzetten als nieuwe dataset {#new-dataset}
 
-BombVault maakt geen datasets aan. Maak hem op de server aan met de eigenschappen die je wilt en zet daarna terug naar een map die zijn mountpoint is:
+BombVault bewaart bij elke back-up de lokaal ingestelde ZFS-eigenschappen van elke dataset: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity en je eigen gebruikerseigenschappen. Geërfde en alleen-lezen waarden blijven weg, omdat ze vanzelf terugkomen. Back-ups van voordat BombVault ze bewaarde, hebben er geen.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-en zet in BombVault terug naar de map `cache/appdata-restored` onder `/mnt`.
+- **In een nieuwe dataset** voert `zfs create` uit met elke bewaarde eigenschap. casesensitivity, normalization en utf8only kunnen alleen zo worden ingesteld. Quota en reserveringen volgen pas na de bestanden, zodat ze die niet kunnen weigeren. Het koppelpunt blijft weg zodat de kopie niet met het origineel botst, net als `canmount`, `readonly` en de versleuteling, zodat het herstel kan schrijven. Een nieuwe dataset onder een versleutelde neemt diens versleuteling over. De dataset erboven moet bestaan. Mislukt er iets nadat hij is aangemaakt, dan blijft de nieuwe dataset op de server, want BombVault vernietigt nooit een dataset.
+- **Terugzetten in de dataset** toont de bewaarde eigenschappen naast het herstel. **Deze eigenschappen ook instellen** stelt de eigenschappen in die een bestaande dataset nog aanneemt, voordat er een bestand wordt geschreven. Quota en reserveringen volgen pas na de bestanden, zodat ze die niet kunnen weigeren. Zonder die schakelaar houdt de dataset zijn instellingen.
 
 ## Wat er in de back-up zit {#contents}
 
-In de back-up: de bestanden en mappen van elke geback-upte dataset, met eigenaar, rechten, tijdstempels en uitgebreide attributen zoals restic ze opslaat.
+In de back-up: de bestanden en mappen van elke geback-upte dataset, met eigenaar, rechten, tijdstempels en uitgebreide attributen zoals restic ze opslaat, en de lokaal ingestelde ZFS-eigenschappen van elke dataset.
 
 Niet in de back-up:
 
-- de ZFS-eigenschappen van de datasets (compression, recordsize, quota, mountpoint en de rest);
 - de eigenaar en rechten van de bovenste map van elke dataset zelf (alles daaronder zit erin). Terugzetten in de dataset laat de bestaande bovenste map zoals hij is, terugzetten naar een map maakt hem aan met rechten `0755`;
 - bestaande ZFS-snapshots;
 - onderliggende datasets die werden overgeslagen of weggelaten;
 - volumes.
 
-Om op een nieuwe pool terug te zetten, maak je eerst de datasets aan met de eigenschappen die je wilt. Of NFSv4-ACL's, zoals TrueNAS die op SMB-datasets gebruikt, terugkomen zoals je verwacht, is nog niet gecontroleerd; test dus een terugzetting op je eigen data voordat je erop vertrouwt.
+Om op een nieuwe pool terug te zetten, maak je de pool aan en zet je elke dataset terug in een nieuwe dataset. Of NFSv4-ACL's, zoals TrueNAS die op SMB-datasets gebruikt, terugkomen zoals je verwacht, is nog niet gecontroleerd; test dus een terugzetting op je eigen data voordat je erop vertrouwt.
 
 ## Versleutelde datasets {#encryption}
 
@@ -126,7 +123,7 @@ Een onderliggende dataset die werd leeggemaakt, verandert het totaal van een gro
 
 Een dataset die de vorige run heeft geback-upt en die deze run niet kon lezen, telt als leeggemaakt, zolang de selectie van het item niet veranderde. Dat dekt een sleutel die niet geladen is, een dataset die niet gemount is en een die uit de boom is verdwenen. Een onderliggende dataset die je zelf uitsluit, verandert de selectie, dus zijn geschiedenis begint dan opnieuw. Zolang een bevinding over verloren data open staat, bewaart de retentie de oude back-ups van alleen die dataset en snoeit de rest van de boom zoals gewoonlijk.
 
-Op het tabblad **Items** van de pagina **Anomalieën** heeft elke dataset een eigen regel onder zijn item, en de boom van het item op deze pagina toont de open bevindingen naast elke dataset. De link in een bevinding opent het terugzetpaneel van het item bij de laatste goede back-up van de dataset. Of een run afloopt, wordt beoordeeld voor het hele item, omdat een run als geheel slaagt of mislukt.
+Op de pagina **Anomalieën** heeft elke dataset een eigen regel in het paneel van het item, dat opengaat met **Bewaking** op de kaart van het item of, als er voor het item niets open is, vanuit zijn regel in de kaart **Niets open**. De boom van het item op deze pagina toont de open bevindingen naast elke dataset. De link in een bevinding opent het terugzetpaneel van het item bij de laatste goede back-up van de dataset. Of een run afloopt, wordt beoordeeld voor het hele item, omdat een run als geheel slaagt of mislukt.
 
 De controles zelf staan beschreven onder [Functies](features.md). Een assistent die via de [MCP-server](mcp.md) is verbonden, kan de herstelpunten van een ZFS-item opsommen, zijn back-up starten en de bevindingen lezen, maar een bevinding bevestigen gebeurt op de pagina **Anomalieën**.
 
@@ -180,6 +177,11 @@ De pagina, de rungeschiedenis en de meldingen noemen een probleem met een van de
 | `not-enough-space` | Niet genoeg vrije ruimte op de bestemming. | Maak ruimte vrij of kies een andere map. |
 | `safety-snapshot-failed` | De veiligheidssnapshot kon niet worden gemaakt, dus er is niets teruggezet. | De details tonen de melding van zfs. |
 | `safety-name-too-long` | De datasetnaam is te lang voor een veiligheidssnapshot. | Schakel de veiligheidssnapshot uit, of zet terug naar een map. |
+| `dataset-exists` | Er bestaat al een dataset met deze naam. | Kies een nieuwe naam, of herstel in de dataset zelf. |
+| `create-failed` | De nieuwe dataset kon niet worden aangemaakt. | De details tonen de melding van zfs. Controleer of de dataset erboven bestaat. |
+| `new-dataset-not-visible` | De nieuwe dataset is aangemaakt, maar BombVault ziet hem niet, dus er is niets hersteld. | De dataset blijft op de server. Koppel hem onder het Host Data-pad en herstel erin. |
+| `set-properties-failed` | De opgeslagen eigenschappen konden niet worden ingesteld, dus er is niets hersteld. | De details tonen de melding van zfs. |
+| `set-limits-failed` | De bestanden zijn hersteld, maar het opgeslagen quotum of de reservering kon niet worden ingesteld. | De details tonen de melding van zfs. Stel het quotum of de reservering zelf in met `zfs set`. |
 
 ### Controleren wat de container ziet {#mountinfo}
 
@@ -201,6 +203,8 @@ Elke regel is een mount in de container. De regel van een dataset toont zijn pad
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Terugzetten in een nieuwe dataset heeft daarnaast `create` nodig op de dataset erboven, en bewaarde eigenschappen instellen heeft rechten op die eigenschappen nodig.
 
   Een SSH-sessie zonder root heeft op TrueNAS `/usr/sbin` niet in het pad; BombVault roept dan direct `/usr/sbin/zfs` aan.
 - **Host Data** van de app moet een hostpad boven de datasets zijn, bijvoorbeeld `/mnt/tank`, geen ixVolume. Met een hostpad geeft de app nieuwe mounts van de host door aan BombVault (`rslave`), en dat heeft snapshottoegang nodig.

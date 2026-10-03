@@ -109,8 +109,8 @@ ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
     `<Badge shape="square" size="icon" tip={t("x")} className="max-w-full"><IconTrash /></Badge>`,
     // The canonical hand-rolled size is 32px, so h-8/w-8 passes.
     `<IconTipButton tip={t("x")} className="h-8 w-8 rounded-control"><svg /></IconTipButton>`,
-    // components/RevealInput.tsx: the 15px eye is an arbitrary-value box, not
-    // an h-N/w-N tile.
+    // An arbitrary-value box such as h-[15px] w-[15px] is not an h-N/w-N
+    // tile.
     `<button type="button" aria-label={l} onClick={f} className="h-[15px] w-[15px] rounded-pill"><svg /></button>`,
     // pages/Containers.tsx: the bare "x" remove glyph has no h-/w- pair, so
     // there is no size to be wrong.

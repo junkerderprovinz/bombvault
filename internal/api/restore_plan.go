@@ -81,13 +81,25 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 	plan := RestorePlan{InPlace: sc.inPlace, Files: []PlanFile{}}
 	need := map[string]int64{}
 	listed := map[string]int{}
-	add := func(p, change string) {
+	add := func(hostPath, change string) {
 		if listed[change] >= planListCap {
 			plan.ListCapped = true
 			return
 		}
 		listed[change]++
-		plan.Files = append(plan.Files, PlanFile{Path: s.toHostPath(p), Change: change})
+		plan.Files = append(plan.Files, PlanFile{Path: hostPath, Change: change})
+	}
+	// A new dataset is empty until the restore fills it, so its dry run
+	// compares against an empty folder instead of whatever lies where it will
+	// be mounted.
+	var empty string
+	if sc.newDataset != "" {
+		dir, err := os.MkdirTemp("", "bombvault-plan-")
+		if err != nil {
+			return RestorePlan{}, nil, fmt.Errorf("plan a new dataset: %w", err)
+		}
+		defer func() { _ = os.RemoveAll(dir) }()
+		empty = filepath.ToSlash(dir)
 	}
 	budget := previewBudget
 	if d, ok := ctx.Value(previewBudgetKey{}).(time.Duration); ok {
@@ -97,8 +109,22 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 	defer cancel()
 	for _, st := range sc.steps {
 		// A target the restore adds nothing to still gets its free space shown.
-		if _, ok := need[st.Target]; !ok {
-			need[st.Target] = 0
+		target := st.Target
+		if _, ok := need[target]; !ok {
+			need[target] = 0
+		}
+		shownAs := s.toHostPath(target)
+		if empty != "" {
+			st.Target = empty
+			if target == "" {
+				shownAs = sc.newDataset
+			}
+		}
+		show := func(p string) string {
+			if empty != "" {
+				return path.Join(shownAs, strings.TrimPrefix(p, empty))
+			}
+			return s.toHostPath(p)
 		}
 		dirs := map[string]bool{}
 		err := s.engine.RestorePreview(pctx, sc.ref.repo, st, sc.ref.mode, func(it restic.PreviewItem) {
@@ -117,8 +143,8 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 					return
 				}
 				plan.Added++
-				need[st.Target] += it.Size
-				add(p, changeAdded)
+				need[target] += it.Size
+				add(show(p), changeAdded)
 			case "updated":
 				plan.Changed++
 				grow := it.Size
@@ -126,14 +152,14 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 					grow -= fi.Size()
 				}
 				if grow > 0 {
-					need[st.Target] += grow
+					need[target] += grow
 				}
-				add(p, changeChanged)
+				add(show(p), changeChanged)
 			case "unchanged":
 				plan.Unchanged++
 			case "deleted":
 				plan.Extra++
-				add(p, changeExtra)
+				add(show(p), changeExtra)
 			}
 		})
 		switch {
@@ -174,6 +200,11 @@ func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete b
 	type volume struct{ need, free int64 }
 	volumes := map[string]*volume{}
 	for target, n := range need {
+		// A new dataset whose mount cannot be told yet has no volume to ask.
+		if target == "" {
+			line.Status, line.Reason = lineSkip, reasonUnmeasured
+			return line
+		}
 		st, err := s.diskStatFn()(nearestExistingDir(target))
 		if err != nil {
 			line.Status, line.Reason = lineSkip, reasonUnmeasured

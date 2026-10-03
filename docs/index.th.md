@@ -49,7 +49,7 @@ BombVault คือชั้นการจัดการและ UI ไม่
 
 เพิ่งมาที่นี่? ไปที่ **[Getting started](getting-started.md)** เพื่อติดตั้ง BombVault บน Unraid ผ่าน Community Applications และรันการสำรองข้อมูลครั้งแรกของคุณ จากนั้นสำรวจ **[Features](features.md)** ฉบับเต็ม, ปรับแต่ง **[Configuration](configuration.md)** ของคุณ และตั้งค่า **[Off-site & recovery](offsite-recovery.md)**
 
-การสำรองข้อมูลนอกสถานที่สามารถกระจายไปยังหลายปลายทางต่อโดเมนพร้อมกันได้ **แดชบอร์ดผู้รับ (receiver dashboard)** แบบอ่านอย่างเดียวจะตรวจสอบสำเนาเหล่านั้นบนเครื่องที่รับ และคุณสามารถนำการตั้งค่าทั้งหมดของคุณไปยังเครื่องใหม่ได้ด้วยการ์ด **Export and import settings** ดู [Off-site & recovery](offsite-recovery.md) และ [Configuration](configuration.md#portable-settings-export-and-import)
+การสำรองข้อมูลนอกสถานที่สามารถกระจายไปยังหลายปลายทางต่อโดเมนพร้อมกันได้ **แดชบอร์ดผู้รับ (receiver dashboard)** แบบอ่านอย่างเดียวจะตรวจสอบสำเนาเหล่านั้นบนเครื่องที่รับ และคุณสามารถนำการตั้งค่าทั้งหมดของคุณไปยังเครื่องใหม่ได้ด้วยการ์ด **ส่งออก / นำเข้าการตั้งค่า** ดู [Off-site & recovery](offsite-recovery.md) และ [Configuration](configuration.md#portable-settings-export-and-import)
 
 ## ลิงก์
 
@@ -58,4 +58,4 @@ BombVault คือชั้นการจัดการและ UI ไม่
 - **ปัญหา (Issues):** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "การควบคุมโฮสต์เทียบเท่า root"
-    ผ่าน Docker socket, BombVault สามารถหยุด, ลบ และสร้าง containers ใหม่ รวมถึงอ่าน/เขียน appdata ได้ และสำหรับการสำรองข้อมูล VM มันจะล็อกอินเข้าโฮสต์ผ่าน SSH เพื่อรัน `virsh` ใครก็ตามที่เข้าถึงเว็บ UI ของมันได้ ก็มีสิทธิ์เทียบเท่า root บนโฮสต์ รัน BombVault บนเครือข่ายที่เชื่อถือได้และไม่เปิดเผยต่อภายนอกเท่านั้น และเปิดใช้งานด่านรหัสผ่านเสริม (Settings, Security) เมื่อมีการใช้การสำรองข้อมูลนอกสถานที่หรือแบบไม่เปลี่ยนแปลงได้ ดู [Configuration](configuration.md) สำหรับโมเดลความปลอดภัยฉบับเต็ม
+    ผ่าน Docker socket, BombVault สามารถหยุด, ลบ และสร้าง containers ใหม่ รวมถึงอ่าน/เขียน appdata ได้ และสำหรับการสำรองข้อมูล VM มันจะล็อกอินเข้าโฮสต์ผ่าน SSH เพื่อรัน `virsh` ใครก็ตามที่เข้าถึงเว็บ UI ของมันได้ ก็มีสิทธิ์เทียบเท่า root บนโฮสต์ รัน BombVault บนเครือข่ายที่เชื่อถือได้และไม่เปิดเผยต่อภายนอกเท่านั้น และเปิดใช้งานด่านรหัสผ่านเสริม (การตั้งค่า, ความปลอดภัย) เมื่อมีการใช้การสำรองข้อมูลนอกสถานที่หรือแบบไม่เปลี่ยนแปลงได้ ดู [Configuration](configuration.md) สำหรับโมเดลความปลอดภัยฉบับเต็ม

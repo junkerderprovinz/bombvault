@@ -63,6 +63,7 @@ Ouvrez **Sauvegardes** sur l'élément, choisissez la sauvegarde, puis le jeu de
 
 - **Restaurer dans le jeu de données.** Les fichiers de la sauvegarde sont écrits dans le point de montage du jeu de données. Les fichiers portant le même nom sont écrasés, les autres restent. Le jeu de données n'est jamais ramené en arrière ni remplacé. BombVault vérifie que le jeu de données est monté, visible et accessible en écriture, une fois avant de commencer et de nouveau juste avant d'écrire. Là où un jeu de données enfant est monté à l'intérieur, rien n'est écrit : l'enfant garde ses fichiers, son propriétaire et ses permissions, et est restauré depuis sa propre sauvegarde.
 - **Restaurer dans un dossier.** Choisissez un dossier sous `/mnt`. BombVault vérifie que le dossier se trouve sur un pool ou un partage monté et qu'il y a assez d'espace libre. Cela fonctionne sans la liaison SSH et pour des jeux de données qui n'existent plus.
+- **Dans un nouveau jeu de données.** Indiquez un jeu de données qui n'existe pas encore. BombVault le crée avec les propriétés ZFS enregistrées dans la sauvegarde et restaure dedans, voir [Restaurer comme nouveau jeu de données](#new-dataset).
 - **Choisir des fichiers** (avancé) : n'écrire dans le jeu de données que les fichiers et dossiers que vous choisissez.
 - **Tous les jeux de données de cette sauvegarde** (avancé) : chaque jeu de données de l'arborescence dans son propre sous-dossier du dossier choisi. Les jeux de données ignorés dans cette sauvegarde sont nommés.
 - **Depuis un autre serveur :** la page **Récupération** restaure depuis le dépôt d'un autre BombVault, toujours dans un dossier : tous les jeux de données d'une sauvegarde, chacun dans son propre sous-dossier, ou un jeu de données de l'arborescence, en entier ou des fichiers choisis.
@@ -79,27 +80,23 @@ Pour revenir en arrière après une restauration, copiez des fichiers isolés de
 
 ### Restaurer comme nouveau jeu de données {#new-dataset}
 
-BombVault ne crée pas de jeux de données. Créez-le sur le serveur avec les propriétés voulues, puis restaurez dans un dossier qui est son point de montage :
+BombVault enregistre à chaque sauvegarde les propriétés ZFS définies localement de chaque jeu de données : compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity et vos propres propriétés utilisateur. Les valeurs héritées et en lecture seule sont laissées de côté, car elles reviennent d'elles-mêmes. Les sauvegardes antérieures à cet enregistrement n'en ont pas.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-puis, dans BombVault, restaurez dans le dossier `cache/appdata-restored` sous `/mnt`.
+- **Dans un nouveau jeu de données** exécute `zfs create` avec chaque propriété enregistrée. casesensitivity, normalization et utf8only ne peuvent être définies que de cette façon. Les quotas et réservations sont appliqués après les fichiers, pour qu'ils ne puissent pas les refuser. Le point de montage est laissé de côté pour que la copie n'entre pas en conflit avec l'original, tout comme `canmount`, `readonly` et le chiffrement, pour que la restauration puisse écrire. Un nouveau jeu de données placé sous un jeu chiffré reprend son chiffrement. Le jeu de données parent doit exister. Si quelque chose échoue après sa création, le nouveau jeu de données reste sur le serveur, car BombVault ne détruit jamais un jeu de données.
+- **Restaurer dans le jeu de données** affiche les propriétés enregistrées à côté de la restauration. **Appliquer aussi ces propriétés** applique celles qu'un jeu de données existant accepte encore, avant l'écriture du moindre fichier. Les quotas et réservations sont appliqués après les fichiers, pour qu'ils ne puissent pas les refuser. Sans ce bouton, le jeu de données garde ses réglages.
 
 ## Ce que contient la sauvegarde {#contents}
 
-Dans la sauvegarde : les fichiers et dossiers de chaque jeu de données sauvegardé, avec leur propriétaire, leurs permissions, leurs horodatages et leurs attributs étendus, tels que restic les stocke.
+Dans la sauvegarde : les fichiers et dossiers de chaque jeu de données sauvegardé, avec leur propriétaire, leurs permissions, leurs horodatages et leurs attributs étendus, tels que restic les stocke, ainsi que les propriétés ZFS définies localement de chaque jeu de données.
 
 Pas dans la sauvegarde :
 
-- les propriétés ZFS des jeux de données (compression, recordsize, quota, mountpoint et les autres) ;
 - le propriétaire et les permissions du dossier supérieur de chaque jeu de données lui-même (tout ce qui est en dessous est inclus). Une restauration dans le jeu de données laisse le dossier supérieur existant tel quel, une restauration dans un dossier le crée avec les permissions `0755` ;
 - les instantanés ZFS existants ;
 - les enfants ignorés ou exclus ;
 - les volumes.
 
-Pour restaurer sur un nouveau pool, créez d'abord les jeux de données avec les propriétés voulues. Il n'a pas encore été vérifié si les ACL NFSv4, telles que TrueNAS les utilise sur les jeux de données SMB, reviennent comme vous l'attendez ; testez donc une restauration sur vos propres données avant de compter dessus.
+Pour restaurer sur un nouveau pool, créez le pool et restaurez chaque jeu de données dans un nouveau jeu de données. Il n'a pas encore été vérifié si les ACL NFSv4, telles que TrueNAS les utilise sur les jeux de données SMB, reviennent comme vous l'attendez ; testez donc une restauration sur vos propres données avant de compter dessus.
 
 ## Jeux de données chiffrés {#encryption}
 
@@ -126,7 +123,7 @@ Un enfant qui a été vidé change à peine le total d'une grande arborescence, 
 
 Un jeu de données que l'exécution précédente a sauvegardé et que celle-ci n'a pas pu lire compte comme vidé, tant que la sélection de l'élément n'a pas changé. Cela couvre une clé non chargée, un jeu de données non monté et un jeu de données qui a disparu de l'arborescence. Un enfant que vous excluez vous-même change la sélection, son historique repart donc de zéro. Tant qu'un constat de perte de données est ouvert, la rétention garde les anciennes sauvegardes de ce seul jeu de données et élague le reste de l'arborescence comme d'habitude.
 
-Dans l'onglet **Éléments** de la page **Anomalies**, chaque jeu de données a sa propre ligne sous son élément, et l'arborescence de l'élément sur cette page affiche les constats ouverts à côté de chaque jeu de données. Le lien d'un constat ouvre le panneau de restauration de l'élément sur la dernière bonne sauvegarde du jeu de données. La question de savoir si une exécution se termine est jugée pour l'élément entier, car une exécution réussit ou échoue d'un bloc.
+Sur la page **Anomalies**, chaque jeu de données a sa propre ligne dans le panneau de l'élément, qui s'ouvre avec **Surveillance** sur la carte de l'élément ou, quand rien n'est ouvert pour l'élément, depuis sa ligne dans la carte **Rien d'ouvert**. L'arborescence de l'élément sur cette page affiche les constats ouverts à côté de chaque jeu de données. Le lien d'un constat ouvre le panneau de restauration de l'élément sur la dernière bonne sauvegarde du jeu de données. La question de savoir si une exécution se termine est jugée pour l'élément entier, car une exécution réussit ou échoue d'un bloc.
 
 Les vérifications elles-mêmes sont décrites sous [Fonctionnalités](features.md). Un assistant connecté par le [serveur MCP](mcp.md) peut lister les points de restauration d'un élément ZFS, lancer sa sauvegarde et lire les constats, mais un constat se confirme sur la page **Anomalies**.
 
@@ -180,6 +177,11 @@ La page, l'historique des exécutions et les notifications nomment un problème 
 | `not-enough-space` | Pas assez d'espace libre à la destination. | Libérez de l'espace ou choisissez un autre dossier. |
 | `safety-snapshot-failed` | L'instantané de sécurité n'a pas pu être pris, donc rien n'a été restauré. | Les détails affichent le message de zfs. |
 | `safety-name-too-long` | Le nom du jeu de données est trop long pour un instantané de sécurité. | Désactivez l'instantané de sécurité, ou restaurez dans un dossier. |
+| `dataset-exists` | Un jeu de données porte déjà ce nom. | Choisissez un autre nom, ou restaurez dans le jeu de données lui-même. |
+| `create-failed` | Le nouveau jeu de données n'a pas pu être créé. | Les détails montrent le message de zfs. Vérifiez que le jeu de données parent existe. |
+| `new-dataset-not-visible` | Le nouveau jeu de données a été créé, mais BombVault ne le voit pas, donc rien n'a été restauré. | Le jeu de données reste sur le serveur. Montez-le sous le chemin Host Data et restaurez dedans. |
+| `set-properties-failed` | Les propriétés enregistrées n'ont pas pu être appliquées, donc rien n'a été restauré. | Les détails affichent le message de zfs. |
+| `set-limits-failed` | Les fichiers ont été restaurés, mais le quota ou la réservation enregistré n'a pas pu être appliqué. | Les détails montrent le message de zfs. Appliquez vous-même le quota ou la réservation avec `zfs set`. |
 
 ### Vérifier ce que voit le conteneur {#mountinfo}
 
@@ -201,6 +203,8 @@ Chaque ligne est un montage dans le conteneur. La ligne d'un jeu de données mon
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Une restauration dans un nouveau jeu de données demande en plus `create` sur le jeu de données parent, et appliquer des propriétés enregistrées demande les droits sur ces propriétés.
 
   Une session SSH non root sous TrueNAS n'a pas `/usr/sbin` dans son chemin ; BombVault appelle alors `/usr/sbin/zfs` directement.
 - Le **Host Data** de l'application doit être un chemin d'hôte situé au-dessus des jeux de données, par exemple `/mnt/tank`, et non un ixVolume. Avec un chemin d'hôte, l'application transmet à BombVault les nouveaux montages de l'hôte (`rslave`), ce dont l'accès aux instantanés a besoin.

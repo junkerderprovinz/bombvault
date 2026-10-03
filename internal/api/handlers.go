@@ -638,6 +638,9 @@ type containerView struct {
 	// ChangedSinceBackup is how the container differs from its last good
 	// backup: image, ports, variables by name and volumes.
 	ChangedSinceBackup []DefinitionChange `json:"changedSinceBackup,omitempty"`
+	// IdleWaitHours is how long a scheduled backup waits at most for the app to
+	// be idle, 0 when it does not wait.
+	IdleWaitHours int `json:"idleWaitHours"`
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -664,6 +667,10 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	self := h.svc.SelfContainerName(r.Context())
+	idleHours, iErr := h.store.IdleWaitHours()
+	if iErr != nil {
+		log.Printf("api: list containers: idle waits: %v", iErr)
+	}
 
 	settings, sErr := h.store.GetSettings()
 	if sErr != nil {
@@ -757,6 +764,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.BackupOrder = t.BackupOrder
 			v.ScheduleCadence = t.ScheduleCadence
 			v.Repo = t.Repo
+			v.IdleWaitHours = idleHours[t.ID]
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
@@ -1367,9 +1375,10 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID   string `json:"snapshotId"`
-		Confirm      bool   `json:"confirm"`
-		LeaveStopped bool   `json:"leaveStopped"`
+		SnapshotID     string `json:"snapshotId"`
+		Confirm        bool   `json:"confirm"`
+		LeaveStopped   bool   `json:"leaveStopped"`
+		WithoutRuntime bool   `json:"withoutRuntime"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -1381,7 +1390,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
-	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
+	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped, body.WithoutRuntime)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1850,6 +1859,9 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// saves one field at a time.
 		DBDumpOff    *bool   `json:"dbDumpOff"`
 		DBDumpEngine *string `json:"dbDumpEngine"`
+		// IdleWaitHours is how long a scheduled backup waits at most for the
+		// app to be idle; 0 switches the wait off.
+		IdleWaitHours *int `json:"idleWaitHours"`
 		// Repo is this item's OWN repository (#204): the ID of a named
 		// repository from Settings, or "" to put it back on the domain's. A
 		// pointer for the same reason as the fields above - a form that does
@@ -1924,6 +1936,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.UpdateAfterBackup != nil {
 		if err := h.svc.SetUpdateAfterBackup(r.Context(), name, *body.UpdateAfterBackup); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.IdleWaitHours != nil {
+		if err := setIdleWait(h.store, name, *body.IdleWaitHours); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -2215,6 +2233,12 @@ type settingsView struct {
 	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
 	RetentionKeepYearly  int `json:"retentionKeepYearly"`
+	// OwnRetention holds the domains that age by a local keep-policy of their
+	// own instead of the one above, keyed by domain name.
+	OwnRetention map[string]store.RetentionKeep `json:"ownRetention"`
+	// OwnOffsiteRetention holds the domains whose built-in off-site repo ages
+	// by a keep-policy of its own instead of the off-site one below.
+	OwnOffsiteRetention map[string]store.RetentionKeep `json:"ownOffsiteRetention"`
 	// Compression is restic's --compression per repository, keyed like
 	// store.Settings.Compression.
 	Compression map[string]string `json:"compression"`
@@ -2435,6 +2459,8 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepWeekly:         s.RetentionKeepWeekly,
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
 		RetentionKeepYearly:         s.RetentionKeepYearly,
+		OwnRetention:                s.OwnRetention(),
+		OwnOffsiteRetention:         s.OwnOffsiteRetention(),
 		Compression:                 compressionView(s),
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
@@ -2705,6 +2731,7 @@ func applyOffsiteSettings(cur *store.Settings, v settingsView) {
 	cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
 	cur.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
+	applyOwnOffsiteRetention(cur, v.OwnOffsiteRetention)
 	cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
@@ -2832,6 +2859,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if msg := rejectInvalidCompression(v.Compression); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if msg := rejectInvalidOwnRetention("ownRetention", v.OwnRetention); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if msg := rejectInvalidOwnRetention("ownOffsiteRetention", v.OwnOffsiteRetention); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
@@ -2984,6 +3019,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
 		cur.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+		applyOwnRetention(cur, v.OwnRetention)
 		applyCompression(cur, v.Compression)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
@@ -3112,10 +3148,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// until enforced far-side. The "warnings" array is a backward-compatible
 	// extension of the ok envelope (absent when there is nothing to warn about).
 	var warnings []string
-	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
-		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
-		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
-			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0 || s.OffsiteRetentionKeepYearly > 0) {
+	if slices.ContainsFunc(offsiteConfigDomains, func(d string) bool {
+		return offsiteImmutableFor(d, s) && h.svc.offsiteRetentionPolicy(s, d).Any()
+	}) {
 		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
 	}
 	if len(warnings) > 0 {
@@ -5363,6 +5398,75 @@ func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !lw.wrote {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 	}
+}
+
+// handleFlashPlugins lists the plugins one flash backup holds.
+// GET /api/flash/plugins?snapshot=<id>&source=<local|offsite>
+func (h *Handler) handleFlashPlugins(w http.ResponseWriter, r *http.Request) {
+	plugins, err := h.svc.FlashPlugins(r.Context(), r.URL.Query().Get("snapshot"), sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"plugins": plugins}))
+}
+
+// handleRestoreFlashPlugin writes one plugin from a flash backup into the live
+// flash. POST /api/flash/plugins/restore
+func (h *Handler) handleRestoreFlashPlugin(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Snapshot string `json:"snapshot"`
+		Source   string `json:"source"`
+		Name     string `json:"name"`
+		Confirm  bool   `json:"confirm"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	started, err := h.svc.StartRestoreFlashPlugin(r.Context(), body.Snapshot, normalizeSource(body.Source), body.Name, body.Confirm)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// handleScanAppdataBackup lists the archives of an Appdata.Backup folder and
+// what an import would do with each. POST /api/import/appdata-backup/scan
+func (h *Handler) handleScanAppdataBackup(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Path string `json:"path"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	archives, err := h.svc.ScanAppdataBackup(r.Context(), body.Path)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"archives": archives}))
+}
+
+// handleImportAppdataBackup imports every new archive of an Appdata.Backup
+// folder in the background. POST /api/import/appdata-backup
+func (h *Handler) handleImportAppdataBackup(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Path string `json:"path"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	n, err := h.svc.StartImportAppdataBackup(r.Context(), body.Path)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "archives": n}))
 }
 
 func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {

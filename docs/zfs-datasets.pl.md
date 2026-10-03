@@ -63,6 +63,7 @@ Otwórz **Kopie zapasowe** przy elemencie, wybierz kopię, a potem zbiór danych
 
 - **Przywróć do samego zbioru danych.** Pliki z kopii są zapisywane w punkcie montowania zbioru danych. Pliki o tej samej nazwie są nadpisywane, pozostałe zostają. Zbiór danych nigdy nie jest cofany ani zastępowany. BombVault sprawdza, czy zbiór danych jest zamontowany, widoczny i zapisywalny, raz przed rozpoczęciem i ponownie tuż przed zapisem. Tam, gdzie wewnątrz zamontowany jest zbiór podrzędny, nic nie jest zapisywane: zbiór podrzędny zachowuje swoje pliki, właściciela i uprawnienia i jest przywracany z własnej kopii.
 - **Przywróć do folderu.** Wybierz folder pod `/mnt`. BombVault sprawdza, czy folder leży na zamontowanej puli lub udziale i czy jest dość wolnego miejsca. Działa to bez połączenia SSH i dla zbiorów danych, które już nie istnieją.
+- **Do nowego zbioru danych.** Podaj zbiór danych, który jeszcze nie istnieje. BombVault tworzy go z właściwościami ZFS zapisanymi w kopii i przywraca do niego, zobacz [Przywracanie jako nowy zbiór danych](#new-dataset).
 - **Wybierz pliki** (zaawansowane): zapisz z powrotem w zbiorze danych tylko wybrane pliki i foldery.
 - **Wszystkie zbiory danych tej kopii** (zaawansowane): każdy zbiór danych drzewa do własnego podfolderu wybranego folderu. Zbiory danych pominięte w tej kopii są wymieniane.
 - **Z innego serwera:** strona **Odzyskiwanie** przywraca z repozytorium innego BombVault, zawsze do folderu: wszystkie zbiory danych jednej kopii, każdy do własnego podfolderu, albo jeden zbiór danych drzewa, w całości lub wybrane pliki.
@@ -79,27 +80,23 @@ Aby wrócić po przywróceniu, skopiuj pojedyncze pliki z `.zfs/snapshot/bombvau
 
 ### Przywracanie jako nowy zbiór danych {#new-dataset}
 
-BombVault nie tworzy zbiorów danych. Utwórz go na serwerze z żądanymi właściwościami, a potem przywróć do folderu, który jest jego punktem montowania:
+BombVault zapisuje przy każdej kopii lokalnie ustawione właściwości ZFS każdego zbioru danych: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity i twoje własne właściwości użytkownika. Wartości dziedziczone i tylko do odczytu są pomijane, bo wracają same. Kopie sprzed zapisywania ich przez BombVault ich nie mają.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-a w BombVault przywróć do folderu `cache/appdata-restored` pod `/mnt`.
+- **Do nowego zbioru danych** uruchamia `zfs create` z każdą zapisaną właściwością. casesensitivity, normalization i utf8only da się ustawić tylko w ten sposób. Limity (quota) i rezerwacje są ustawiane dopiero po plikach, więc nie mogą ich odrzucić. Punkt montowania jest pomijany, żeby kopia nie kolidowała z oryginałem, podobnie `canmount`, `readonly` i szyfrowanie, żeby przywracanie mogło zapisywać. Nowy zbiór danych pod zaszyfrowanym przejmuje jego szyfrowanie. Nadrzędny zbiór danych musi istnieć. Jeśli coś się nie uda po utworzeniu, nowy zbiór danych zostaje na serwerze, bo BombVault nigdy nie niszczy zbioru danych.
+- **Przywróć do samego zbioru danych** pokazuje zapisane właściwości obok przywracania. **Ustaw też te właściwości** ustawia te, które istniejący zbiór danych jeszcze przyjmie, zanim zostanie zapisany jakikolwiek plik. Limity (quota) i rezerwacje są ustawiane dopiero po plikach, więc nie mogą ich odrzucić. Bez tego przełącznika zbiór danych zachowuje swoje ustawienia.
 
 ## Co jest w kopii {#contents}
 
-W kopii: pliki i foldery każdego skopiowanego zbioru danych, z właścicielem, uprawnieniami, znacznikami czasu i atrybutami rozszerzonymi, tak jak zapisuje je restic.
+W kopii: pliki i foldery każdego skopiowanego zbioru danych, z właścicielem, uprawnieniami, znacznikami czasu i atrybutami rozszerzonymi, tak jak zapisuje je restic oraz lokalnie ustawione właściwości ZFS każdego zbioru danych.
 
 Poza kopią:
 
-- właściwości ZFS zbiorów danych (compression, recordsize, quota, mountpoint i pozostałe);
 - właściciel i uprawnienia samego najwyższego folderu każdego zbioru danych (wszystko pod nim jest uwzględnione). Przywrócenie do zbioru danych zostawia istniejący najwyższy folder bez zmian, przywrócenie do folderu tworzy go z uprawnieniami `0755`;
 - istniejące migawki ZFS;
 - zbiory podrzędne, które zostały pominięte lub wyłączone;
 - wolumeny.
 
-Aby przywrócić na nową pulę, najpierw utwórz zbiory danych z żądanymi właściwościami. Nie sprawdzono jeszcze, czy listy ACL NFSv4, których TrueNAS używa na zbiorach danych SMB, wracają tak, jak oczekujesz, więc przetestuj przywracanie na własnych danych, zanim na nich polegasz.
+Aby przywrócić na nowy pool, utwórz pool i przywróć każdy zbiór danych do nowego zbioru danych. Nie sprawdzono jeszcze, czy listy ACL NFSv4, których TrueNAS używa na zbiorach danych SMB, wracają tak, jak oczekujesz, więc przetestuj przywracanie na własnych danych, zanim na nich polegasz.
 
 ## Zaszyfrowane zbiory danych {#encryption}
 
@@ -126,7 +123,7 @@ Zbiór podrzędny, który został opróżniony, ledwo zmienia sumę dużego drze
 
 Zbiór danych, który poprzedni przebieg skopiował, a którego ten przebieg nie mógł odczytać, liczy się jako opróżniony, o ile wybór elementu się nie zmienił. Obejmuje to niezaładowany klucz, niezamontowany zbiór danych i taki, który zniknął z drzewa. Zbiór podrzędny, który sam wykluczysz, zmienia wybór, więc jego historia zaczyna się od nowa. Dopóki otwarte jest ustalenie o utraconych danych, retencja zachowuje stare kopie tylko tego zbioru danych, a resztę drzewa przycina jak zwykle.
 
-Na karcie **Elementy** strony **Anomalie** każdy zbiór danych ma własny wiersz pod swoim elementem, a drzewo elementu na tej stronie pokazuje otwarte ustalenia obok każdego zbioru danych. Link w ustaleniu otwiera panel przywracania elementu na ostatniej dobrej kopii zbioru danych. To, czy przebieg dobiega końca, ocenia się dla całego elementu, bo przebieg udaje się albo nie jako całość.
+Na stronie **Anomalie** każdy zbiór danych ma własny wiersz w panelu elementu, który otwiera się przez **Monitorowanie** na karcie elementu albo, gdy dla elementu nic nie jest otwarte, z jego wiersza na karcie **Nic otwartego**. Drzewo elementu na tej stronie pokazuje otwarte ustalenia obok każdego zbioru danych. Link w ustaleniu otwiera panel przywracania elementu na ostatniej dobrej kopii zbioru danych. To, czy przebieg dobiega końca, ocenia się dla całego elementu, bo przebieg udaje się albo nie jako całość.
 
 Same kontrole opisano w [Funkcje](features.md). Asystent połączony przez [serwer MCP](mcp.md) może wypisać punkty przywracania elementu ZFS, uruchomić jego kopię i czytać ustalenia, ale potwierdzenie ustalenia odbywa się na stronie **Anomalie**.
 
@@ -180,6 +177,11 @@ Strona, historia przebiegów i powiadomienia nazywają problem jednym z tych kod
 | `not-enough-space` | Za mało wolnego miejsca w miejscu docelowym. | Zwolnij miejsce albo wybierz inny folder. |
 | `safety-snapshot-failed` | Nie udało się zrobić migawki bezpieczeństwa, więc nic nie przywrócono. | Szczegóły pokazują komunikat zfs. |
 | `safety-name-too-long` | Nazwa zbioru danych jest za długa na migawkę bezpieczeństwa. | Wyłącz migawkę bezpieczeństwa albo przywróć do folderu. |
+| `dataset-exists` | Zbiór danych o tej nazwie już istnieje. | Wybierz nową nazwę albo przywróć do samego zbioru danych. |
+| `create-failed` | Nie udało się utworzyć nowego zbioru danych. | Szczegóły pokazują komunikat zfs. Sprawdź, czy nadrzędny zbiór danych istnieje. |
+| `new-dataset-not-visible` | Nowy zbiór danych został utworzony, ale BombVault go nie widzi, więc nic nie zostało przywrócone. | Zbiór danych zostaje na serwerze. Zamontuj go pod ścieżką Host Data i przywróć do niego. |
+| `set-properties-failed` | Nie udało się ustawić zapisanych właściwości, więc nic nie zostało przywrócone. | Szczegóły pokazują komunikat zfs. |
+| `set-limits-failed` | Pliki zostały przywrócone, ale nie udało się ustawić zapisanego limitu (quota) ani rezerwacji. | Szczegóły pokazują komunikat zfs. Ustaw limit lub rezerwację samodzielnie poleceniem `zfs set`. |
 
 ### Sprawdzanie, co widzi kontener {#mountinfo}
 
@@ -201,6 +203,8 @@ Każdy wiersz to jedno montowanie w kontenerze. Wiersz zbioru danych pokazuje je
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Przywracanie do nowego zbioru danych wymaga dodatkowo `create` na nadrzędnym zbiorze danych, a ustawianie zapisanych właściwości wymaga uprawnień do tych właściwości.
 
   Sesja SSH bez roota na TrueNAS nie ma `/usr/sbin` w ścieżce; BombVault wywołuje wtedy bezpośrednio `/usr/sbin/zfs`.
 - **Host Data** aplikacji musi być ścieżką hosta powyżej zbiorów danych, na przykład `/mnt/tank`, a nie ixVolume. Ze ścieżką hosta aplikacja przekazuje nowe montowania hosta do BombVault (`rslave`), a tego potrzebuje dostęp do migawek.

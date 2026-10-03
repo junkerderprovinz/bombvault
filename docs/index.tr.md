@@ -49,7 +49,7 @@ BombVault, düzenleme ve arayüz katmanıdır, depolama motoru değildir. Tüm g
 
 Buraya yeni mi geldiniz? BombVault'u Community Applications aracılığıyla Unraid'e kurmak ve ilk yedeğinizi çalıştırmak için **[Başlarken](getting-started.md)** sayfasına gidin. Ardından tüm **[Özellikler](features.md)**'i keşfedin, **[Yapılandırma](configuration.md)**'nızı ayarlayın ve **[Site dışı ve kurtarma](offsite-recovery.md)**'yı kurun.
 
-Site dışı, etki alanı başına aynı anda birkaç hedefe dağıtılabilir; salt okunur bir **alıcı kontrol paneli** bu kopyaları onları alan makinede izler ve **Ayarları dışa ve içe aktar** kartıyla tüm yapılandırmanızı yeni bir makineye taşıyabilirsiniz. Bkz. [Site dışı ve kurtarma](offsite-recovery.md) ve [Yapılandırma](configuration.md#portable-settings-export-and-import).
+Site dışı, etki alanı başına aynı anda birkaç hedefe dağıtılabilir; salt okunur bir **alıcı kontrol paneli** bu kopyaları onları alan makinede izler ve **Ayarları dışa / içe aktar** kartıyla tüm yapılandırmanızı yeni bir makineye taşıyabilirsiniz. Bkz. [Site dışı ve kurtarma](offsite-recovery.md) ve [Yapılandırma](configuration.md#portable-settings-export-and-import).
 
 ## Bağlantılar
 

@@ -13,7 +13,9 @@ import type { BackupWatchState } from "../../lib/backupWatch";
 import { humanBytes } from "../../lib/forecast";
 import type { ProgressState } from "../../lib/progress";
 import type { useT } from "../../lib/i18n";
-import { RunReasonText } from "../../lib/runReason";
+import { RESTORE_NO_RUNTIME, restoreNotes, RunReasonText } from "../../lib/runReason";
+import { Button } from "../Button";
+import { InfoBubble } from "../InfoBubble";
 import { ProgressBar } from "../ProgressBar";
 import { RestoreCancelButton } from "../RestoreCancelButton";
 
@@ -59,6 +61,9 @@ interface RestoreProgressProps {
   successWarn?: boolean;
   /** Shows the restore.started and restore.bgHint lines. Default true. */
   showStartedHint?: boolean;
+  /** Offered when Docker refused the container's GPU or runtime: restores it
+   *  again without them. */
+  onRestoreWithoutRuntime?: () => void;
   t: T;
 }
 
@@ -75,8 +80,11 @@ export function RestoreProgress({
   successMessage,
   successWarn = false,
   showStartedHint = true,
+  onRestoreWithoutRuntime,
   t,
 }: RestoreProgressProps) {
+  const refusal = state.phase === "error" ? runtimeRefusal(state.message) : undefined;
+  const left = state.phase === "success" ? restoreNotes(state.note) : undefined;
   return (
     <>
       {isPending && (
@@ -105,14 +113,47 @@ export function RestoreProgress({
       {state.phase === "success" && (
         <p className={`text-xs wrap-break-word ${successWarn ? "text-statusWarn" : "text-statusOk"}`}>{successMessage}</p>
       )}
+      {left?.withoutRuntime && (
+        <p className="text-xs text-statusWarn wrap-break-word">{t("restore.withoutRuntimeDone").replace("{name}", name)}</p>
+      )}
+      {left && left.unlinked.length > 0 && (
+        <p className="text-xs text-statusWarn wrap-break-word">
+          {t("restore.withoutLinksDone").replace("{name}", name).replace("{links}", left.unlinked.join(", "))}
+        </p>
+      )}
       {state.phase === "cancelled" && (
         <p className="text-xs text-carbon-textSub wrap-break-word">{t("restore.cancelled")}</p>
       )}
-      {state.phase === "error" && (
+      {refusal !== undefined && (
+        <div className="flex flex-col items-start gap-2">
+          <p className="flex items-center gap-1.5 text-xs text-statusFail wrap-break-word">
+            {t("restore.noRuntime").replace("{name}", name)}
+            {refusal && <InfoBubble tip={refusal} />}
+          </p>
+          {onRestoreWithoutRuntime && (
+            <Button
+              label={t("restore.withoutRuntime")}
+              labelKey="restore.withoutRuntime"
+              tone="accent"
+              onClick={onRestoreWithoutRuntime}
+              hint={t("restore.withoutRuntimeHint")}
+            />
+          )}
+        </div>
+      )}
+      {state.phase === "error" && refusal === undefined && (
         <p className="text-xs text-statusFail wrap-break-word">
           <RunReasonText reason={state.message} t={t} />
         </p>
       )}
     </>
   );
+}
+
+/** Docker's own words when a restore failed for a GPU or runtime the host
+ *  lacks, "" when the reason carries none, and undefined for any other
+ *  failure. */
+function runtimeRefusal(message: string): string | undefined {
+  if (message === RESTORE_NO_RUNTIME) return "";
+  return message.startsWith(RESTORE_NO_RUNTIME + ": ") ? message.slice(RESTORE_NO_RUNTIME.length + 2) : undefined;
 }

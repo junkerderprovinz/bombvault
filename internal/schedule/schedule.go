@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -719,6 +720,9 @@ type Scheduler struct {
 	fleetFn           func() error
 	everythingFn      func() error
 
+	// idleHold takes a scheduled container that has to wait for its app to be
+	// idle out of the run; see SetIdleHold.
+	idleHold IdleHoldFunc
 	// runBracket marks a multi-item run open until the func it returns is
 	// called; see SetRunBracket.
 	runBracket func(domain string) func()
@@ -948,6 +952,17 @@ func (s *Scheduler) SetStacksAfterBulkJob(fn func(names []string)) {
 	s.stacksAfterBulkFn = fn
 }
 
+// IdleHoldFunc takes the scheduled containers whose app is busy out of a run
+// and returns their names. It backs them up later with run, the members of a
+// compose stack together, once the apps are idle or the wait is over. trigger
+// names the run: domain, item or everything.
+type IdleHoldFunc func(targets []store.Target, trigger string, run func(names []string)) []string
+
+// SetIdleHold wires the wait for an idle app into the scheduled container runs.
+func (s *Scheduler) SetIdleHold(fn IdleHoldFunc) {
+	s.idleHold = fn
+}
+
 // SetRunBracket wires what learns that a scheduled multi-item run of a domain
 // started, from before its first item until after its prune and off-site
 // copy. Between two items the domain lock is free, and fn lets other work
@@ -961,6 +976,30 @@ func (s *Scheduler) openRun(domain string) func() {
 		return func() {}
 	}
 	return s.runBracket(domain)
+}
+
+// holdBusy drops the containers whose app is busy from a scheduled run. They
+// run later on their own, so the wait holds neither the domain lock nor the
+// containers behind them.
+func (s *Scheduler) holdBusy(targets []store.Target, trigger string) []store.Target {
+	if s.idleHold == nil {
+		return targets
+	}
+	included := keepTargets(targets, func(t store.Target) bool { return t.IncludeInSchedule })
+	held := s.idleHold(included, trigger, s.RunContainersNow)
+	return keepTargets(targets, func(t store.Target) bool { return !slices.Contains(held, t.ContainerName) })
+}
+
+// keepTargets filters into a new slice, since the list may be shared with the
+// caller.
+func keepTargets(targets []store.Target, keep func(store.Target) bool) []store.Target {
+	out := make([]store.Target, 0, len(targets))
+	for _, t := range targets {
+		if keep(t) {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // SetDrillJob wires the scheduled restore-verification drills. drillFn is called
@@ -1169,7 +1208,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
-				targets = DomainRunTargets(targets, perItem)
+				targets = s.holdBusy(DomainRunTargets(targets, perItem), "domain")
 				if !DomainRunHasWork(targets) {
 					return
 				}
@@ -1712,29 +1751,48 @@ func (s *Scheduler) addPerItemEntry(spec, domain string, jobFn func()) error {
 	return nil
 }
 
-// runContainerItem backs up one container on its own cadence through the same
-// path as a domain run. It re-reads the targets so that a container removed or
-// excluded since the last reload is skipped.
+// runContainerItem backs up one container on its own cadence, unless its app is
+// busy and it waits for that first.
 func (s *Scheduler) runContainerItem(name string) {
+	if one := s.holdBusy(s.scheduledContainers([]string{name}), "item"); len(one) > 0 {
+		s.backUpContainers(one)
+	}
+}
+
+// RunContainersNow backs up scheduled containers through the same path as a
+// domain run, without waiting for their apps. It re-reads the targets so that a
+// container removed or excluded since the fire is skipped.
+func (s *Scheduler) RunContainersNow(names []string) {
+	if due := s.scheduledContainers(names); len(due) > 0 {
+		s.backUpContainers(due)
+	}
+}
+
+func (s *Scheduler) scheduledContainers(names []string) []store.Target {
 	targets, err := s.listFn()
 	if err != nil {
 		log.Printf("schedule: per-item containers job: list targets: %v", err)
-		return
+		return nil
 	}
-	var one *store.Target
-	for i := range targets {
-		if targets[i].ContainerName == name {
-			one = &targets[i]
-			break
-		}
-	}
-	if one == nil || !one.IncludeInSchedule {
-		return
-	}
+	return keepTargets(targets, func(t store.Target) bool {
+		return t.IncludeInSchedule && slices.Contains(names, t.ContainerName)
+	})
+}
+
+// backUpContainers backs up containers outside a domain run, with their compose
+// project folders, since only a domain run backs those up otherwise.
+func (s *Scheduler) backUpContainers(targets []store.Target) {
 	defer s.openRun("containers")()
 	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
-		return RunContainersJob([]store.Target{*one}, s.backup)
+		return RunContainersJob(targets, s.backup)
 	})
+	if s.stacksAfterBulkFn != nil {
+		names := make([]string, 0, len(targets))
+		for _, t := range targets {
+			names = append(names, t.ContainerName)
+		}
+		s.stacksAfterBulkFn(names)
+	}
 	if s.pruneAfterBulkFn != nil {
 		s.pruneAfterBulkFn("containers")
 	}

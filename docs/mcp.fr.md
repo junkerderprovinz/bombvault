@@ -7,7 +7,7 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 | Outil | Ce qu'il fait | Type |
 |---|---|---|
 | `get_health` | Version, nom de l'instance, si une sauvegarde est en cours et ce que cette clé a le droit de faire | lecture |
-| `get_status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications et contrôles hors site, prochaines exécutions planifiées, et pour les conteneurs le test de démarrage le plus récent | lecture |
+| `get_status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications et contrôles hors site, prochaines exécutions planifiées, sauvegardes qui attendent une application au repos, et pour les conteneurs le test de démarrage le plus récent | lecture |
 | `get_coverage` | Ce que BombVault protège et ce qu'il ne protège pas, avec la raison pour chaque élément | lecture |
 | `list_items` | Chaque conteneur, VM, ensemble de dossiers protégé, la clé USB flash et la configuration de l'application, avec sa planification, ce qu'une sauvegarde arrête, sa dernière sauvegarde et sa durée ; les conteneurs de base de données indiquent aussi leur dernier dump ; les datasets ZFS y figurent aussi, avec le résultat de leur dernière vérification ; chaque élément porte son dernier contrôle de restauration, et un conteneur son dernier test de démarrage ou la raison pour laquelle il ne peut pas être testé ; un conteneur recréé avec d'autres réglages depuis sa dernière sauvegarde indique ce qui a changé | lecture |
 | `list_runs` | Historique des exécutions, les plus récentes d'abord, filtrable par domaine, élément, statut, type et date ; une sauvegarde lente freinée par une seule chose la nomme | lecture |
@@ -19,7 +19,7 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 | `get_anomaly` | Une de ces anomalies, avec la note laissée lors de sa prise en compte | lecture |
 | `start_backup` | Sauvegarde un élément tout de suite | lancement |
 | `start_domain_backup` | Sauvegarde chaque élément protégé d'un domaine | lancement |
-| `start_backup_everything` | Lance la passe Backup Everything | lancement |
+| `start_backup_everything` | Lance la passe Sauvegarde complète | lancement |
 | `cancel_backup` | Annule une sauvegarde en cours que cette clé a lancée | annulation |
 
 Tout ceci reste dans l'interface web : les restaurations de toute sorte (y compris télécharger, enregistrer ou importer un dump de base de données), la suppression de sauvegardes, prune, unlock, les vérifications et les exercices, la réplication hors site, les paramètres, les identifiants et les clés MCP, ainsi que l'annulation d'une sauvegarde lancée par la planification, par l'interface web ou par une autre clé. Il en va de même pour prendre acte d'une anomalie ou la marquer comme attendue, ce qui se fait sur la page **Anomalies**. La raison : les réponses des outils contiennent des noms et des messages d'erreur venant de votre serveur, et n'importe lequel d'entre eux peut contenir un texte écrit pour manipuler l'assistant. Un assistant qui s'y laisse prendre peut au pire lancer une sauvegarde dans les limites ci-dessous, ou annuler une sauvegarde qu'il a lancée lui-même.
@@ -33,11 +33,11 @@ La sauvegarde d'un assistant est la même que celle que lance l'interface web. U
 Comme une sauvegarde arrête des services et fait sortir d'anciens points de restauration, les lancements par MCP sont limités :
 
 - 12 sauvegardes lancées par heure et par clé.
-- 15 minutes entre deux lancements MCP du même élément, du même domaine ou de Backup Everything.
+- 15 minutes entre deux lancements MCP du même élément, du même domaine ou de la Sauvegarde complète.
 - Au plus 4 lancements MCP du même élément sur 24 heures.
 - **Garde de rétention.** Quand un domaine conserve un nombre fixe de points de restauration (uniquement « garder les N derniers », sans règle quotidienne, hebdomadaire ou mensuelle, en local ou sur une destination hors site), chaque nouvelle sauvegarde fait sortir la plus ancienne. BombVault refuse alors un lancement MCP d'un élément dont les N-1 dernières sauvegardes réussies ont toutes été lancées par MCP. Au moins un point de restauration créé par la planification ou par vous reste donc toujours dans l'ensemble conservé. Avec « garder le dernier » (N = 1), un assistant ne peut pas du tout sauvegarder cet élément. La prochaine sauvegarde planifiée refait de la place. Une règle annuelle seule compte comme « garder le dernier » (N = 1), car elle ne garde qu'un point de restauration pour l'année en cours.
 
-Un lancement de domaine ou de Backup Everything laisse de côté les éléments retenus par une limite et les nomme dans sa réponse. L'interface web et la planification ne sont concernées par aucune de ces limites. Le quota horaire est gardé en mémoire, un redémarrage de BombVault le remet donc à zéro.
+Un lancement de domaine ou de la Sauvegarde complète laisse de côté les éléments retenus par une limite et les nomme dans sa réponse. L'interface web et la planification ne sont concernées par aucune de ces limites. Le quota horaire est gardé en mémoire, un redémarrage de BombVault le remet donc à zéro.
 
 ## Activer le serveur {#switch-on}
 
@@ -256,7 +256,7 @@ Tout ce qu'un assistant lit part chez le fournisseur d'IA qui se trouve derrièr
 | `429` | Trop de mauvaises clés depuis cette adresse, ou plus de 120 requêtes par minute avec une même clé. Attendez une minute et vérifiez que l'assistant ne tourne pas en boucle. |
 | Erreurs contenant "certificate", "self-signed" ou "unable to verify" | Le client ne fait pas confiance au certificat de BombVault. Voir [TLS et certificats](#tls). |
 | `busy` | Une autre sauvegarde ou une tâche de maintenance occupe ce domaine. Réessayez quand elle est terminée. |
-| `cooldown` | Cet élément, ce domaine ou Backup Everything a été lancé par MCP il y a moins de 15 minutes. |
+| `cooldown` | Cet élément, ce domaine ou la Sauvegarde complète a été lancé par MCP il y a moins de 15 minutes. |
 | `retention_guard` | Une sauvegarde MCP de plus ne laisserait que des points de restauration venant de MCP dans une fenêtre « garder les N derniers », ou l'élément a déjà reçu 4 sauvegardes par MCP au cours des dernières 24 heures, échecs et annulations compris. Dans le premier cas, la prochaine sauvegarde planifiée refait de la place ; dans le second, l'élément redevient disponible 24 heures après la plus ancienne de ces sauvegardes. Dans les deux cas, vous pouvez la lancer depuis l'interface web. |
 | `rate_limited` | La clé a épuisé ses 12 lancements pour cette heure. |
 | `not_permitted` sur un lancement | La clé est en lecture seule. Activez **Autoriser le lancement de sauvegardes** dans la carte ; aucune reconnexion n'est nécessaire. Sur une annulation, cela signifie que l'exécution n'a pas été lancée par cette clé. |

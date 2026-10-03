@@ -7,6 +7,7 @@ package dockercli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
+	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -26,6 +28,7 @@ import (
 	"github.com/docker/go-connections/nat"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/traffic"
 )
 
 // Client is the real Docker adapter over the official SDK, talking to the
@@ -383,6 +386,36 @@ func waitExecExit(ctx context.Context, inspect func(context.Context) (running bo
 	}
 }
 
+// Stats reads a container's cumulative CPU and network counters once, without
+// the second sample docker stats waits a second for. A stopped container comes
+// back with Running false.
+func (c *Client) Stats(ctx context.Context, name string) (traffic.Sample, error) {
+	resp, err := c.api.ContainerStatsOneShot(ctx, name)
+	if err != nil {
+		return traffic.Sample{}, fmt.Errorf("dockercli: stats %s: %w", name, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	var st container.StatsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&st); err != nil {
+		return traffic.Sample{}, fmt.Errorf("dockercli: stats %s: decode: %w", name, err)
+	}
+	return statsSample(st, time.Now()), nil
+}
+
+func statsSample(st container.StatsResponse, at time.Time) traffic.Sample {
+	s := traffic.Sample{
+		At:       at,
+		Running:  !st.Read.IsZero() && st.PidsStats.Current > 0,
+		CPUNanos: st.CPUStats.CPUUsage.TotalUsage,
+		HasNet:   len(st.Networks) > 0,
+	}
+	for _, n := range st.Networks {
+		s.RxBytes += n.RxBytes
+		s.TxBytes += n.TxBytes
+	}
+	return s
+}
+
 // Remove removes a container by name or ID.
 func (c *Client) Remove(ctx context.Context, name string) error {
 	if err := c.api.ContainerRemove(ctx, name, container.RemoveOptions{}); err != nil {
@@ -467,15 +500,17 @@ func (c *Client) ImageRemove(ctx context.Context, id string) error {
 // CreateAndStart recreates a container from a captured inspect and starts it
 // when start is true. Security-relevant fields (User, Cap*, Privileged,
 // SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/
-// RestartPolicy/Env/Cmd/Image are preserved so the recreated container never
-// gains privilege over the original.
+// RestartPolicy/Env/Cmd/Image, the limits, the log driver, DNS and the GPU
+// request are preserved so the recreated container never gains privilege or
+// headroom over the original. A host that lacks the container's runtime or
+// GPU driver answers with a model.MissingRuntimeError.
 func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start bool) error {
 	cfg, hostCfg := buildCreateConfig(in)
 	name := normalizeName(in.Name)
 	netCfg := buildNetworkingConfig(in)
 	resp, err := c.api.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)
 	if err != nil {
-		return fmt.Errorf("dockercli: create: %w", err)
+		return fmt.Errorf("dockercli: create: %w", missingRuntime(err))
 	}
 	// Reconnect any SECONDARY networks (the primary is already attached, via netCfg
 	// or NetworkMode). Best-effort: a network that no longer exists must not block
@@ -495,7 +530,7 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start boo
 		return nil
 	}
 	if err := c.api.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		return fmt.Errorf("dockercli: create-start: %w", err)
+		return fmt.Errorf("dockercli: create-start: %w", missingRuntime(err))
 	}
 	return nil
 }
@@ -604,6 +639,8 @@ func mapContainerSummary(s container.Summary) ContainerInfo {
 		Created: s.Created,
 		Labels:  s.Labels,
 		Mounts:  mounts,
+
+		NetworkMode: s.HostConfig.NetworkMode,
 	}
 }
 
@@ -721,6 +758,47 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 			Name:              string(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
+		Memory:            hc.Memory,
+		MemoryReservation: hc.MemoryReservation,
+		MemorySwap:        hc.MemorySwap,
+		MemorySwappiness:  hc.MemorySwappiness,
+		NanoCPUs:          hc.NanoCPUs,
+		CPUShares:         hc.CPUShares,
+		CPUPeriod:         hc.CPUPeriod,
+		CPUQuota:          hc.CPUQuota,
+		CpusetCpus:        hc.CpusetCpus,
+		CpusetMems:        hc.CpusetMems,
+		PidsLimit:         hc.PidsLimit,
+		OomKillDisable:    hc.OomKillDisable,
+		OomScoreAdj:       hc.OomScoreAdj,
+		ShmSize:           hc.ShmSize,
+		Init:              hc.Init,
+		DNS:               hc.DNS,
+		DNSSearch:         hc.DNSSearch,
+		DNSOptions:        hc.DNSOptions,
+		UTSMode:           string(hc.UTSMode),
+		CgroupnsMode:      string(hc.CgroupnsMode),
+		Links:             hc.Links,
+		StorageOpt:        hc.StorageOpt,
+		BlkioWeight:       hc.BlkioWeight,
+		Runtime:           hc.Runtime,
+	}
+	for _, r := range hc.DeviceRequests {
+		out.DeviceRequests = append(out.DeviceRequests, model.DeviceRequest{
+			Driver: r.Driver, Count: r.Count, DeviceIDs: r.DeviceIDs, Capabilities: r.Capabilities, Options: r.Options,
+		})
+	}
+	for _, w := range hc.BlkioWeightDevice {
+		if w != nil {
+			out.BlkioWeightDevice = append(out.BlkioWeightDevice, model.WeightDevice{Path: w.Path, Weight: w.Weight})
+		}
+	}
+	out.BlkioDeviceReadBps = throttlesOf(hc.BlkioDeviceReadBps)
+	out.BlkioDeviceWriteBps = throttlesOf(hc.BlkioDeviceWriteBps)
+	out.BlkioDeviceReadIOps = throttlesOf(hc.BlkioDeviceReadIOps)
+	out.BlkioDeviceWriteIOps = throttlesOf(hc.BlkioDeviceWriteIOps)
+	if hc.LogConfig.Type != "" {
+		out.LogConfig = &model.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
 	}
 	for _, u := range hc.Ulimits {
 		if u != nil {
@@ -743,6 +821,24 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 			PathInContainer:   d.PathInContainer,
 			CgroupPermissions: d.CgroupPermissions,
 		})
+	}
+	return out
+}
+
+func throttlesOf(in []*blkiodev.ThrottleDevice) []model.ThrottleDevice {
+	var out []model.ThrottleDevice
+	for _, d := range in {
+		if d != nil {
+			out = append(out, model.ThrottleDevice{Path: d.Path, Rate: d.Rate})
+		}
+	}
+	return out
+}
+
+func throttlesFrom(in []model.ThrottleDevice) []*blkiodev.ThrottleDevice {
+	var out []*blkiodev.ThrottleDevice
+	for _, d := range in {
+		out = append(out, &blkiodev.ThrottleDevice{Path: d.Path, Rate: d.Rate})
 	}
 	return out
 }
@@ -783,10 +879,49 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 			Name:              container.RestartPolicyMode(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
+		OomScoreAdj:  hc.OomScoreAdj,
+		ShmSize:      hc.ShmSize,
+		Init:         hc.Init,
+		DNS:          hc.DNS,
+		DNSSearch:    hc.DNSSearch,
+		DNSOptions:   hc.DNSOptions,
+		UTSMode:      container.UTSMode(hc.UTSMode),
+		CgroupnsMode: container.CgroupnsMode(hc.CgroupnsMode),
+		Links:        hc.Links,
+		StorageOpt:   hc.StorageOpt,
+		Runtime:      hc.Runtime,
 	}
-	// CgroupParent and Ulimits are promoted from the embedded Resources struct, so
-	// they are set by assignment (a struct literal can't address promoted fields).
+	if hc.LogConfig != nil {
+		hostCfg.LogConfig = container.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
+	}
+	// The limits are promoted from the embedded Resources struct, so they are
+	// set by assignment (a struct literal can't address promoted fields).
 	hostCfg.CgroupParent = hc.CgroupParent
+	hostCfg.Memory = hc.Memory
+	hostCfg.MemoryReservation = hc.MemoryReservation
+	hostCfg.MemorySwap = hc.MemorySwap
+	hostCfg.MemorySwappiness = hc.MemorySwappiness
+	hostCfg.NanoCPUs = hc.NanoCPUs
+	hostCfg.CPUShares = hc.CPUShares
+	hostCfg.CPUPeriod = hc.CPUPeriod
+	hostCfg.CPUQuota = hc.CPUQuota
+	hostCfg.CpusetCpus = hc.CpusetCpus
+	hostCfg.CpusetMems = hc.CpusetMems
+	hostCfg.PidsLimit = hc.PidsLimit
+	hostCfg.OomKillDisable = hc.OomKillDisable
+	hostCfg.BlkioWeight = hc.BlkioWeight
+	for _, w := range hc.BlkioWeightDevice {
+		hostCfg.BlkioWeightDevice = append(hostCfg.BlkioWeightDevice, &blkiodev.WeightDevice{Path: w.Path, Weight: w.Weight})
+	}
+	hostCfg.BlkioDeviceReadBps = throttlesFrom(hc.BlkioDeviceReadBps)
+	hostCfg.BlkioDeviceWriteBps = throttlesFrom(hc.BlkioDeviceWriteBps)
+	hostCfg.BlkioDeviceReadIOps = throttlesFrom(hc.BlkioDeviceReadIOps)
+	hostCfg.BlkioDeviceWriteIOps = throttlesFrom(hc.BlkioDeviceWriteIOps)
+	for _, r := range hc.DeviceRequests {
+		hostCfg.DeviceRequests = append(hostCfg.DeviceRequests, container.DeviceRequest{
+			Driver: r.Driver, Count: r.Count, DeviceIDs: r.DeviceIDs, Capabilities: r.Capabilities, Options: r.Options,
+		})
+	}
 	for _, u := range hc.Ulimits {
 		hostCfg.Ulimits = append(hostCfg.Ulimits, &container.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
 	}
@@ -838,4 +973,26 @@ func endpointSettings(n model.NetworkEndpoint) *network.EndpointSettings {
 		ep.MacAddress = n.MACAddress
 	}
 	return ep
+}
+
+// Docker's refusals of a runtime it does not know (the second from daemons
+// before 23.0) and of a device request no driver serves, as for --gpus on a
+// host without the NVIDIA container toolkit. The runtime refusals arrive on
+// create, the device one on start.
+var missingRuntimeRefusals = []string{
+	"unknown or invalid runtime name: ",
+	"Unknown runtime specified ",
+	"could not select device driver ",
+}
+
+// missingRuntime marks err as a model.MissingRuntimeError when it is one of
+// Docker's refusals of a runtime or device driver this host does not have.
+func missingRuntime(err error) error {
+	msg := err.Error()
+	for _, r := range missingRuntimeRefusals {
+		if strings.Contains(msg, r) {
+			return &model.MissingRuntimeError{Err: err}
+		}
+	}
+	return err
 }

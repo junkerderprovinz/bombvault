@@ -3947,7 +3947,7 @@ func TestStartRestoreSingleFlight(t *testing.T) {
 	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || started {
 		t.Fatalf("a files restore must be rejected busy: started=%v err=%v", started, err)
 	}
-	if started, err := svc.StartRestore(ctx, "plex", "aaaa1111", "local", false); err != nil || started {
+	if started, err := svc.StartRestore(ctx, "plex", "aaaa1111", "local", false, false); err != nil || started {
 		t.Fatalf("an in-place restore must be rejected busy: started=%v err=%v", started, err)
 	}
 	if started, err := svc.StartRestoreVM(ctx, "win11", "aaaa1111", "local", false); err != nil || started {
@@ -3981,7 +3981,7 @@ func TestStartRestoreValidationFailsFast(t *testing.T) {
 	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "not-hex!", []string{fileA}, "user/restore/plex", true); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
 		t.Fatalf("files: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
 	}
-	if started, err := svc.StartRestore(ctx, "plex", "not-hex!", "local", false); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+	if started, err := svc.StartRestore(ctx, "plex", "not-hex!", "local", false, false); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
 		t.Fatalf("in-place: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
 	}
 	if started, err := svc.StartRestoreVM(ctx, "win11", "not-hex!", "local", false); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
@@ -6113,6 +6113,10 @@ func (f *fakeResticEngine) StatsRestoreSize(_ context.Context, _, _ string, _ re
 func (f *fakeResticEngine) Diff(_ context.Context, _, snap1, snap2 string, _ restic.Mode) (restic.DiffResult, error) {
 	f.diffPairs = append(f.diffPairs, snap1+"->"+snap2)
 	return f.diffResult, nil
+}
+
+func (f *fakeResticEngine) ImportDir(context.Context, string, string, []string, time.Time, restic.Mode) (restic.Summary, error) {
+	return restic.Summary{}, errors.New("fakeResticEngine does not import")
 }
 
 func (f *fakeResticEngine) TagAdd(_ context.Context, _, snapID string, tags []string, _ restic.Mode) error {

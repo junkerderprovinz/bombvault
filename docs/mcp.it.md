@@ -7,7 +7,7 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 | Strumento | Cosa fa | Tipo |
 |---|---|---|
 | `get_health` | Versione, nome dell'istanza, se è in corso un backup e cosa può fare questa chiave | lettura |
-| `get_status` | Stato di protezione per dominio: ultimo backup riuscito, intervallo previsto, verifiche e controlli off-site, prossime esecuzioni pianificate e, per i container, il test di avvio più recente | lettura |
+| `get_status` | Stato di protezione per dominio: ultimo backup riuscito, intervallo previsto, verifiche e controlli off-site, prossime esecuzioni pianificate, backup in attesa che l'app sia inattiva e, per i container, il test di avvio più recente | lettura |
 | `get_coverage` | Cosa protegge BombVault e cosa no, con il motivo per ciascuno | lettura |
 | `list_items` | Ogni container, VM e set di cartelle protetto, la chiavetta flash e la configurazione dell'app, con pianificazione, cosa ferma un backup, l'ultimo backup e quanto è durato; i container di database riportano anche l'ultimo dump; compaiono anche i dataset ZFS, con l'esito del loro ultimo controllo; ogni elemento riporta il suo ultimo controllo di ripristino, e un container il suo ultimo test di avvio o il motivo per cui non si può testare; un container ricreato con altre impostazioni dall'ultimo backup elenca cosa è cambiato | lettura |
 | `list_runs` | Cronologia delle esecuzioni, le più recenti prima, filtrabile per dominio, elemento, stato, tipo e data; un backup lento frenato da una sola cosa la nomina | lettura |
@@ -19,7 +19,7 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 | `get_anomaly` | Una di queste segnalazioni, con la nota lasciata quando è stata confermata | lettura |
 | `start_backup` | Esegue subito il backup di un elemento | avvio |
 | `start_domain_backup` | Esegue il backup di ogni elemento protetto di un dominio | avvio |
-| `start_backup_everything` | Avvia il passaggio Backup Everything | avvio |
+| `start_backup_everything` | Avvia il passaggio Backup totale | avvio |
 | `cancel_backup` | Annulla un backup in corso avviato da questa chiave | annullamento |
 
 Restano nell'interfaccia web: i ripristini di ogni tipo (compresi scaricare, salvare o importare un dump di database), l'eliminazione di backup, prune, unlock, verifiche ed esercitazioni, la replica off-site, le impostazioni, le credenziali e le chiavi MCP, e l'annullamento di un backup avviato dalla pianificazione, dall'interfaccia web o da un'altra chiave. Lo stesso vale per confermare un'anomalia o segnarla come prevista, cosa che si fa nella pagina **Anomalie**. Il motivo: le risposte degli strumenti contengono nomi e messaggi di errore del tuo server, e ognuno di essi potrebbe contenere un testo scritto per manipolare l'assistente. Un assistente che ci casca può al massimo avviare un backup entro i limiti qui sotto, o annullarne uno che ha avviato lui stesso.
@@ -33,11 +33,11 @@ Il backup di un assistente è lo stesso che avvia l'interfaccia web. Un containe
 Poiché un backup ferma dei servizi e fa uscire vecchi punti di ripristino, gli avvii tramite MCP sono limitati:
 
 - 12 backup avviati all'ora per chiave.
-- 15 minuti tra due avvii MCP dello stesso elemento, dello stesso dominio o di Backup Everything.
+- 15 minuti tra due avvii MCP dello stesso elemento, dello stesso dominio o del Backup totale.
 - Al massimo 4 avvii MCP dello stesso elemento in 24 ore.
 - **Protezione della conservazione.** Quando un dominio conserva un numero fisso di punti di ripristino (solo "conserva gli ultimi N", senza regola giornaliera, settimanale o mensile, in locale o su una destinazione off-site), ogni nuovo backup fa uscire il più vecchio. BombVault rifiuta allora un avvio MCP di un elemento i cui N-1 backup riusciti più recenti sono stati tutti avviati tramite MCP. Nell'insieme conservato resta quindi sempre almeno un punto di ripristino creato dalla pianificazione o da te. Con "conserva l'ultimo" (N = 1) un assistente non può fare il backup di quell'elemento. Il prossimo backup pianificato fa di nuovo spazio. Una regola annuale da sola conta come "conserva l'ultimo" (N = 1), perché conserva un solo punto di ripristino per l'anno in corso.
 
-Un avvio di dominio o di Backup Everything lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
+Un avvio di dominio o del Backup totale lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
 
 ## Attivarlo {#switch-on}
 
@@ -256,7 +256,7 @@ Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi de
 | `429` | Troppe chiavi sbagliate da questo indirizzo, oppure più di 120 richieste al minuto con una chiave. Aspetta un minuto e controlla che l'assistente non sia bloccato in un ciclo. |
 | Errori con "certificate", "self-signed" o "unable to verify" | Il client non si fida del certificato di BombVault. Vedi [TLS e certificati](#tls). |
 | `busy` | Un altro backup o un'attività di manutenzione occupa quel dominio. Riprova quando ha finito. |
-| `cooldown` | Questo elemento, questo dominio o Backup Everything è stato avviato tramite MCP meno di 15 minuti fa. |
+| `cooldown` | Questo elemento, questo dominio o il Backup totale è stato avviato tramite MCP meno di 15 minuti fa. |
 | `retention_guard` | Un altro backup MCP lascerebbe solo punti di ripristino MCP in una finestra "conserva gli ultimi N", oppure l'elemento ha già avuto 4 backup tramite MCP nelle ultime 24 ore, contando anche quelli falliti e annullati. Nel primo caso il prossimo backup pianificato fa spazio, nel secondo l'elemento torna libero 24 ore dopo il più vecchio di quei backup. In entrambi i casi puoi avviarlo dall'interfaccia web. |
 | `rate_limited` | La chiave ha usato i suoi 12 avvii di quest'ora. |
 | `not_permitted` su un avvio | La chiave è di sola lettura. Attiva **Consenti di avviare backup** nella scheda; non serve riconnettersi. Su un annullamento significa che l'esecuzione non è stata avviata da questa chiave. |

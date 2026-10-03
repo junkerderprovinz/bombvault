@@ -63,6 +63,7 @@ Apri **Backup** sull'elemento, scegli il backup, poi il dataset. Per impostazion
 
 - **Ripristina dentro il dataset.** I file del backup vengono scritti nel mountpoint del dataset. I file con lo stesso nome vengono sovrascritti, gli altri restano. Il dataset non viene mai riportato indietro né sostituito. BombVault controlla che il dataset sia montato, visibile e scrivibile, una volta prima di iniziare e di nuovo subito prima di scrivere. Dove al suo interno è montato un dataset figlio, non viene scritto nulla: il figlio mantiene i suoi file, il proprietario e i permessi e viene ripristinato dal proprio backup.
 - **Ripristina in una cartella.** Scegli una cartella sotto `/mnt`. BombVault controlla che la cartella sia su un pool o una condivisione montati e che ci sia abbastanza spazio libero. Funziona senza il collegamento SSH e per dataset che non esistono più.
+- **In un nuovo dataset.** Indica un dataset che non esiste ancora. BombVault lo crea con le proprietà ZFS salvate nel backup e ripristina al suo interno, vedi [Ripristinare come nuovo dataset](#new-dataset).
 - **Scegli i file** (avanzato): riscrivere nel dataset solo i file e le cartelle che scegli.
 - **Tutti i dataset di questo backup** (avanzato): ogni dataset dell'albero nella propria sottocartella della cartella che scegli. I dataset saltati in quel backup vengono nominati.
 - **Da un altro server:** la pagina **Ripristino** ripristina dal repository di un altro BombVault, sempre in una cartella: tutti i dataset di un backup, ciascuno nella propria sottocartella, oppure un dataset dell'albero, intero o solo i file scelti.
@@ -79,27 +80,23 @@ Per tornare indietro dopo un ripristino, copia singoli file da `.zfs/snapshot/bo
 
 ### Ripristinare come nuovo dataset {#new-dataset}
 
-BombVault non crea dataset. Crealo sul server con le proprietà che vuoi, poi ripristina in una cartella che sia il suo mountpoint:
+BombVault salva a ogni backup le proprietà ZFS impostate localmente di ogni dataset: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity e le tue proprietà utente. I valori ereditati e di sola lettura restano fuori, perché tornano da soli. I backup di prima che BombVault le salvasse non ne hanno.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-e in BombVault ripristina nella cartella `cache/appdata-restored` sotto `/mnt`.
+- **In un nuovo dataset** esegue `zfs create` con ogni proprietà salvata. casesensitivity, normalization e utf8only si possono impostare solo così. Quote e prenotazioni vengono impostate dopo i file, così non possono rifiutarli. Il punto di montaggio resta fuori perché la copia non si scontri con l'originale, e così `canmount`, `readonly` e la cifratura, perché il ripristino possa scrivere. Un nuovo dataset sotto uno cifrato ne eredita la cifratura. Il dataset superiore deve esistere. Se qualcosa fallisce dopo la creazione, il nuovo dataset resta sul server, perché BombVault non distrugge mai un dataset.
+- **Ripristina dentro il dataset** mostra le proprietà salvate accanto al ripristino. **Imposta anche queste proprietà** imposta quelle che un dataset esistente accetta ancora, prima di scrivere qualsiasi file. Quote e prenotazioni vengono impostate dopo i file, così non possono rifiutarli. Senza questo interruttore il dataset mantiene le sue impostazioni.
 
 ## Cosa c'è nel backup {#contents}
 
-Nel backup: i file e le cartelle di ogni dataset salvato, con proprietario, permessi, marcature temporali e attributi estesi così come li salva restic.
+Nel backup: i file e le cartelle di ogni dataset salvato, con proprietario, permessi, marcature temporali e attributi estesi così come li salva restic, e le proprietà ZFS impostate localmente di ogni dataset.
 
 Non nel backup:
 
-- le proprietà ZFS dei dataset (compression, recordsize, quota, mountpoint e il resto);
 - il proprietario e i permessi della cartella superiore di ogni dataset in sé (tutto ciò che sta sotto è incluso). Un ripristino dentro il dataset lascia com'è la cartella superiore esistente, un ripristino in una cartella la crea con permessi `0755`;
 - gli snapshot ZFS esistenti;
 - i figli saltati o esclusi;
 - i volumi.
 
-Per ripristinare su un nuovo pool, crea prima i dataset con le proprietà che vuoi. Non è ancora stato verificato se le ACL NFSv4, come TrueNAS le usa sui dataset SMB, tornino come ti aspetti, quindi prova un ripristino sui tuoi dati prima di farci affidamento.
+Per ripristinare su un nuovo pool, crea il pool e ripristina ogni dataset in un nuovo dataset. Non è ancora stato verificato se le ACL NFSv4, come TrueNAS le usa sui dataset SMB, tornino come ti aspetti, quindi prova un ripristino sui tuoi dati prima di farci affidamento.
 
 ## Dataset cifrati {#encryption}
 
@@ -126,7 +123,7 @@ Un figlio che è stato svuotato cambia appena il totale di un albero grande, qui
 
 Un dataset che l'esecuzione precedente ha salvato e che questa non è riuscita a leggere conta come svuotato, purché la selezione dell'elemento non sia cambiata. Questo copre una chiave non caricata, un dataset non montato e uno sparito dall'albero. Un figlio che escludi tu stesso cambia la selezione, quindi la sua cronologia riparte da zero. Finché un rilevamento di dati persi è aperto, la conservazione tiene i vecchi backup di quel solo dataset e sfoltisce il resto dell'albero come al solito.
 
-Nella scheda **Elementi** della pagina **Anomalie** ogni dataset ha una riga propria sotto il suo elemento, e l'albero dell'elemento in questa pagina mostra i rilevamenti aperti accanto a ogni dataset. Il link di un rilevamento apre il pannello di ripristino dell'elemento sull'ultimo backup buono del dataset. Se un'esecuzione arriva in fondo viene giudicato per l'intero elemento, perché un'esecuzione riesce o fallisce nel suo insieme.
+Nella pagina **Anomalie** ogni dataset ha una riga propria nel pannello dell'elemento, che si apre con **Monitoraggio** sulla scheda dell'elemento o, quando per l'elemento non c'è niente di aperto, dalla sua riga nella scheda **Niente di aperto**. L'albero dell'elemento in questa pagina mostra i rilevamenti aperti accanto a ogni dataset. Il link di un rilevamento apre il pannello di ripristino dell'elemento sull'ultimo backup buono del dataset. Se un'esecuzione arriva in fondo viene giudicato per l'intero elemento, perché un'esecuzione riesce o fallisce nel suo insieme.
 
 I controlli in sé sono descritti in [Funzionalità](features.md). Un assistente collegato tramite il [server MCP](mcp.md) può elencare i punti di ripristino di un elemento ZFS, avviarne il backup e leggere i rilevamenti, ma la presa visione di un rilevamento avviene nella pagina **Anomalie**.
 
@@ -180,6 +177,11 @@ La pagina, la cronologia delle esecuzioni e le notifiche nominano un problema co
 | `not-enough-space` | Spazio libero insufficiente nella destinazione. | Libera spazio o scegli un'altra cartella. |
 | `safety-snapshot-failed` | Non è stato possibile prendere lo snapshot di sicurezza, quindi non è stato ripristinato nulla. | I dettagli mostrano il messaggio di zfs. |
 | `safety-name-too-long` | Il nome del dataset è troppo lungo per uno snapshot di sicurezza. | Disattiva lo snapshot di sicurezza, oppure ripristina in una cartella. |
+| `dataset-exists` | Esiste già un dataset con questo nome. | Scegli un nuovo nome, oppure ripristina nel dataset stesso. |
+| `create-failed` | Non è stato possibile creare il nuovo dataset. | I dettagli mostrano il messaggio di zfs. Controlla che il dataset superiore esista. |
+| `new-dataset-not-visible` | Il nuovo dataset è stato creato, ma BombVault non lo vede, quindi non è stato ripristinato nulla. | Il dataset resta sul server. Montalo sotto il percorso Host Data e ripristina al suo interno. |
+| `set-properties-failed` | Non è stato possibile impostare le proprietà salvate, quindi non è stato ripristinato nulla. | I dettagli mostrano il messaggio di zfs. |
+| `set-limits-failed` | I file sono stati ripristinati, ma non è stato possibile impostare la quota o la prenotazione salvata. | I dettagli mostrano il messaggio di zfs. Imposta tu la quota o la prenotazione con `zfs set`. |
 
 ### Controllare cosa vede il container {#mountinfo}
 
@@ -201,6 +203,8 @@ Ogni riga è un mount dentro il container. La riga di un dataset mostra il suo p
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Il ripristino in un nuovo dataset richiede anche `create` sul dataset superiore, e impostare le proprietà salvate richiede i permessi per quelle proprietà.
 
   Una sessione SSH non root su TrueNAS non ha `/usr/sbin` nel suo percorso; BombVault chiama allora direttamente `/usr/sbin/zfs`.
 - L'**Host Data** dell'app deve essere un percorso dell'host sopra i dataset, per esempio `/mnt/tank`, non un ixVolume. Con un percorso dell'host, l'app passa a BombVault i nuovi mount dell'host (`rslave`), ed è ciò che serve all'accesso agli snapshot.

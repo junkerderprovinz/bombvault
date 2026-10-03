@@ -956,3 +956,45 @@ func cutToBytes(s string, max int) string {
 	}
 	return s
 }
+
+// SetZFSRunMemberProperties stores the ZFS properties a dataset had when the
+// run backed it up.
+func (r *Repo) SetZFSRunMemberProperties(runID, dataset string, props map[string]string) error {
+	raw, err := json.Marshal(props)
+	if err != nil {
+		return fmt.Errorf("SetZFSRunMemberProperties marshal: %w", err)
+	}
+	if _, err := r.db.Exec(`UPDATE zfs_run_members SET properties = ? WHERE run_id = ? AND dataset = ?`,
+		string(raw), runID, dataset); err != nil {
+		return fmt.Errorf("SetZFSRunMemberProperties %s: %w", dataset, err)
+	}
+	return nil
+}
+
+// ZFSPropertiesOfItem returns the stored properties of an item's backed-up
+// datasets keyed by restic snapshot id. A snapshot from before properties were
+// recorded is absent.
+func (r *Repo) ZFSPropertiesOfItem(itemID string) (map[string]map[string]string, error) {
+	rows, err := r.db.Query(`
+		SELECT m.restic_snapshot, m.properties
+		FROM zfs_run_members m
+		JOIN zfs_runs z ON z.run_id = m.run_id
+		WHERE z.item_id = ? AND m.restic_snapshot != '' AND m.properties != ''`, itemID)
+	if err != nil {
+		return nil, fmt.Errorf("ZFSPropertiesOfItem: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string]map[string]string{}
+	for rows.Next() {
+		var snap, raw string
+		if err := rows.Scan(&snap, &raw); err != nil {
+			return nil, fmt.Errorf("ZFSPropertiesOfItem: %w", err)
+		}
+		var props map[string]string
+		if err := json.Unmarshal([]byte(raw), &props); err != nil {
+			continue
+		}
+		out[snap] = props
+	}
+	return out, rows.Err()
+}

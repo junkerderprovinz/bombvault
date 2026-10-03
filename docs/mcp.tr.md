@@ -7,7 +7,7 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir; Clau
 | Araç | Ne yapar | Tür |
 |---|---|---|
 | `get_health` | Sürüm, örnek adı, bir yedeklemenin sürüp sürmediği ve bu anahtarın neye izni olduğu | okuma |
-| `get_status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, doğrulamalar ve off-site denetimleri, sıradaki zamanlanmış çalıştırmalar, kapsayıcılar için en son başlatma testi | okuma |
+| `get_status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, doğrulamalar ve off-site denetimleri, sıradaki zamanlanmış çalıştırmalar, uygulamanın boşta kalmasını bekleyen yedekler, kapsayıcılar için en son başlatma testi | okuma |
 | `get_coverage` | BombVault'un neyi koruduğu ve neyi korumadığı, her biri için gerekçesiyle | okuma |
 | `list_items` | Korunan her kapsayıcı, VM ve klasör kümesi, flash sürücü ve uygulama yapılandırması; zamanlama, bir yedeklemenin neyi durdurduğu, son yedek ve ne kadar sürdüğü ile; veritabanı kapsayıcıları son dökümlerini de gösterir; ZFS veri kümeleri de son denetimlerinin sonucuyla birlikte listelenir; her öğe son geri yükleme denetimini, bir kapsayıcı ayrıca son başlatma testini ya da neden test edilemediğini taşır; son yedeklemeden beri başka ayarlarla yeniden oluşturulan bir konteyner değişenleri listeler | okuma |
 | `list_runs` | Çalıştırma geçmişi, en yeniler önce; alan, öğe, durum, tür ve zamana göre süzülebilir; tek bir şeyin yavaşlattığı bir yedekleme onu adlandırır | okuma |
@@ -19,7 +19,7 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir; Clau
 | `get_anomaly` | Bu bulgulardan biri, onaylanırken bırakılan notla birlikte | okuma |
 | `start_backup` | Bir öğeyi hemen yedekler | başlatma |
 | `start_domain_backup` | Bir alandaki korunan her öğeyi yedekler | başlatma |
-| `start_backup_everything` | Backup Everything turunu çalıştırır | başlatma |
+| `start_backup_everything` | Tam yedekleme turunu çalıştırır | başlatma |
 | `cancel_backup` | Bu anahtarın başlattığı, süren bir yedeklemeyi iptal eder | iptal |
 
 Şunlar web arayüzünde kalır: her türlü geri yükleme (bir veritabanı dökümünü indirmek, kaydetmek ya da içe aktarmak dâhil), yedekleri silmek, prune, unlock, denetimler ve tatbikatlar, off-site çoğaltma, ayarlar, kimlik bilgileri ve MCP anahtarları ile zamanlamanın, web arayüzünün ya da başka bir anahtarın başlattığı bir yedeklemeyi iptal etmek. Bir anormalliği onaylamak ya da beklenen olarak işaretlemek de orada kalır; bu, **Anormallikler** sayfasında yapılır. Nedeni şu: araçların yanıtları sunucunuzdan gelen adları ve hata iletilerini içerir ve bunların herhangi biri asistanı yönlendirmek için yazılmış bir metin taşıyabilir. Böyle bir metne kanan bir asistan en kötü ihtimalle aşağıdaki sınırlar içinde bir yedekleme başlatabilir ya da kendi başlattığı bir yedeklemeyi iptal edebilir.
@@ -33,11 +33,11 @@ Bir asistanın başlattığı yedekleme, web arayüzünün başlattığı yedekl
 Bir yedekleme hizmetleri durdurduğu ve eski geri yükleme noktalarını dışarı ittiği için MCP üzerinden başlatmalar sınırlıdır:
 
 - Anahtar başına saatte 12 başlatılmış yedekleme.
-- Aynı öğenin, aynı alanın ya da Backup Everything'in iki MCP başlatması arasında 15 dakika.
+- Aynı öğenin, aynı alanın ya da Tam yedeklemenin iki MCP başlatması arasında 15 dakika.
 - Aynı öğe için 24 saatte en fazla 4 MCP başlatması.
 - **Saklama koruması.** Bir alan sabit sayıda geri yükleme noktası tuttuğunda (yalnızca "son N taneyi tut"; günlük, haftalık ya da aylık kural olmadan, yerelde ya da bir off-site hedefte), her yeni yedek en eskisini dışarı iter. BombVault bu durumda en yeni N-1 başarılı yedeğinin tamamı MCP üzerinden başlatılmış bir öğenin MCP başlatmasını reddeder. Böylece tutulan kümede her zaman zamanlamanın ya da sizin oluşturduğunuz en az bir geri yükleme noktası kalır. "Son 1 taneyi tut" ayarında bir asistan o öğeyi hiç yedekleyemez. Bir sonraki zamanlanmış yedekleme yeniden yer açar. Tek başına yıllık bir kural "Son 1 taneyi tut" gibi sayılır, çünkü içinde bulunulan yıl için yalnızca bir geri yükleme noktası tutar.
 
-Bir alanın ya da Backup Everything'in başlatılması, bir sınırın geri tuttuğu öğeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
+Bir alanın ya da Tam yedeklemenin başlatılması, bir sınırın geri tuttuğu öğeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
 
 ## Açmak {#switch-on}
 
@@ -256,7 +256,7 @@ Bir asistanın okuduğu her şey arkasındaki yapay zekâ sağlayıcısına gide
 | `429` | Bu adresten çok fazla yanlış anahtar ya da tek anahtarla dakikada 120'den fazla istek. Bir dakika bekleyin ve asistanın bir döngüye takılıp takılmadığını kontrol edin. |
 | "certificate", "self-signed" ya da "unable to verify" içeren hatalar | İstemci BombVault'un sertifikasına güvenmiyor. Bkz. [TLS ve sertifikalar](#tls). |
 | `busy` | O alanı başka bir yedekleme ya da bakım işi tutuyor. Bittiğinde yeniden deneyin. |
-| `cooldown` | Bu öğe, bu alan ya da Backup Everything 15 dakikadan kısa süre önce MCP üzerinden başlatıldı. |
+| `cooldown` | Bu öğe, bu alan ya da Tam yedekleme 15 dakikadan kısa süre önce MCP üzerinden başlatıldı. |
 | `retention_guard` | Bir MCP yedeği daha, "son N taneyi tut" penceresinde yalnızca MCP'den gelen geri yükleme noktaları bırakırdı ya da öğe son 24 saatte MCP üzerinden zaten 4 yedek aldı; başarısız ve iptal edilenler de sayılır. İlk durumda bir sonraki zamanlanmış yedekleme yer açar, ikincisinde öğe bu yedeklerin en eskisinden 24 saat sonra yeniden serbest kalır. Web arayüzünden her zaman başlatabilirsiniz. |
 | `rate_limited` | Anahtar bu saat için 12 başlatmasını kullandı. |
 | Başlatmada `not_permitted` | Anahtar yalnızca okuyabilir. Kartta **Yedekleme başlatmaya izin ver** seçeneğini açın; yeniden bağlanmak gerekmez. İptalde, çalıştırmanın bu anahtar tarafından başlatılmadığı anlamına gelir. |

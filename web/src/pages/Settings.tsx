@@ -30,6 +30,8 @@ import { InfoBubble } from "../components/InfoBubble";
 import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { PageTitle } from "../components/PageTitle";
+import { StreamingCard } from "./settings/StreamingCard";
+import { IdleCard } from "./settings/IdleCard";
 // Every cadence picker on this page edits a schedule that can count an
 // interval (#166): the six domains and Backup Everything from their last
 // successful backup, drills, tamper test and digest from schedule_job_runs.
@@ -80,6 +82,7 @@ import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconS
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
+import { RetentionRulesCard } from "./settings/OwnRetentionCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
 import { PairingSection } from "./settings/pairing/PairingSection";
@@ -1069,9 +1072,6 @@ export function SettingsPage() {
   const [, setCoresSaveState] = useState<SaveState>("idle");
   const [, setCoresSaveError] = useState<string | null>(null);
 
-  const [, setOffRetSaveState] = useState<SaveState>("idle");
-  const [, setOffRetSaveError] = useState<string | null>(null);
-
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
 
@@ -1246,6 +1246,13 @@ export function SettingsPage() {
         // jsdom has no scrollIntoView.
         target.scrollIntoView?.({ block: "center" });
         markHit(target);
+        // Cards that load their own settings grow after the jump, this one or
+        // those above it, so the target is centred again while they settle.
+        if (content && typeof ResizeObserver !== "undefined") {
+          const settle = new ResizeObserver(() => target.scrollIntoView({ block: "center" }));
+          settle.observe(content);
+          window.setTimeout(() => settle.disconnect(), 1200);
+        }
       } else if (jump.card) {
         push(t("settings.search.notShown").replace("{name}", jump.row ?? jump.card), "warn");
       }
@@ -1982,6 +1989,7 @@ export function SettingsPage() {
           </Card>
 
 
+          {advanced && <IdleCard t={t} hueIndex={nextHue()} />}
         </>
       )}
 
@@ -2223,56 +2231,32 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {page === "retention" && (
-      <Card
-        title={t("settings.retentionTitle")}
-        // The intro and the OR-combination rule share the title bubble.
-        hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
-        hueIndex={nextHue()}
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {([
-            ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
-            ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
-            ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
-            ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
-            ["retentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
-          ] as const).map(([key, label, info]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t(label)}
-                <InfoBubble tip={t(info)} />
-              </span>
-              <NumberField
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  // Keyed by field name, so typing in one cell never resets
-                  // another cell's pending save.
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setRetSaveState, setRetSaveError));
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-              />
-            </label>
-          ))}
+      {page === "retention" &&
+        (["local", "offsite"] as const).map((scope) => (
+          <RetentionRulesCard
+            key={scope}
+            scope={scope}
+            settings={settings}
+            setSettings={setSettings}
+            save={(patch) => save(patch, setRetSaveState, setRetSaveError)}
+            debouncedSave={debouncedSave}
+            cancelDebounce={cancelDebounce}
+            t={t}
+            hueIndex={nextHue()}
+          />
+        ))}
+
+      {/* The answer the numbers above never give: which restore points the
+          next run is about to delete, locally and off-site. Advanced-only,
+          because it costs one restic call per item per repository and is a
+          question you ask on purpose rather than one a page should poll. */}
+      {page === "retention" && advanced && (
+      <Card title={t("restore.preview")} hueIndex={nextHue()}>
+        <div className="flex items-center gap-1 text-sm text-carbon-text">
+          {t("retentionPreview.title")}
+          <InfoBubble tip={t("retentionPreview.hint")} />
         </div>
-        {/* The answer the numbers above never give: which restore points the
-            next run is about to delete. Advanced-only, because it costs one
-            restic call per item per repository and is a question you ask on
-            purpose rather than one a page should poll. */}
-        {advanced && (
-          <div className="mt-4 border-t border-carbon-border pt-3">
-            <div className="flex items-center gap-1 text-sm text-carbon-text">
-              {t("retentionPreview.title")}
-              <InfoBubble tip={t("retentionPreview.hint")} />
-            </div>
-            <div className="mt-2">
-              <RetentionPreview t={t} source="local" />
-            </div>
-          </div>
-        )}
+        <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
       </Card>
       )}
 
@@ -2721,57 +2705,6 @@ export function SettingsPage() {
       </div>
       )}
 
-      {page === "retention" && (
-      <Card
-        title={t("settings.retentionOffsiteTitle")}
-        // The intro, the OR-combination rule and the immutable-destination
-        // override share the title bubble.
-        hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionImmutableNotPruned")}`}
-        hueIndex={nextHue()}
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {([
-            ["offsiteRetentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
-            ["offsiteRetentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
-            ["offsiteRetentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
-            ["offsiteRetentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
-            ["offsiteRetentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
-          ] as const).map(([key, label, info]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t(label)}
-                <InfoBubble tip={t(info)} />
-              </span>
-              <NumberField
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError));
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-              />
-            </label>
-          ))}
-        </div>
-        {/* The off-site twin. Its own source, because the off-site policy is a
-            separate policy: an archive kept longer off-site than locally would
-            otherwise be previewed against the wrong rule. */}
-        {advanced && (
-          <div className="mt-4 border-t border-carbon-border pt-3">
-            <div className="flex items-center gap-1 text-sm text-carbon-text">
-              {t("retentionPreview.title")}
-              <InfoBubble tip={t("retentionPreview.hint")} />
-            </div>
-            <div className="mt-2">
-              <RetentionPreview t={t} source="offsite" />
-            </div>
-          </div>
-        )}
-      </Card>
-      )}
-
       {/* `advanced &&` inline for the same reason as the cache card. */}
       {page === "offsite" && advanced && (
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
@@ -2797,6 +2730,8 @@ export function SettingsPage() {
         </div>
       </Card>
       )}
+
+      {page === "offsite" && advanced && <StreamingCard t={t} hueIndex={nextHue()} />}
 
       {/* `advanced &&` inline for the same reason as the cache card. */}
       {page === "integrations" && advanced && (

@@ -56,6 +56,8 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
     retentionKeepYearly: 0,
+    ownRetention: {},
+    ownOffsiteRetention: {},
     compression: {
       containers: "auto", vms: "auto", flash: "auto", config: "auto", files: "auto", zfs: "auto",
       "offsite:containers": "auto", "offsite:vms": "auto", "offsite:flash": "auto",
@@ -475,7 +477,7 @@ describe("the yearly retention rule", () => {
     await renderPage();
     await gotoPage("retention");
 
-    // The local policy is the first card on the page, the off-site one follows.
+    // The Local section comes first in the Retention card, the Off-site one follows.
     const label = screen.getAllByText(en["settings.retentionYearly"])[0].closest("label");
     const input = label?.querySelector("input") as HTMLInputElement;
     expect(input.value).toBe("0");

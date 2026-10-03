@@ -35,6 +35,9 @@ export interface Container {
   /** Opt-in (#52): after a successful backup, pull the image and recreate the
    *  container if a newer image is available. Off by default. */
   updateAfterBackup?: boolean;
+  /** How long a scheduled backup waits at most for the app to be idle, in
+   *  hours; 0 when it does not wait. */
+  idleWaitHours?: number;
   /** When the post-backup update check last completed (unix seconds, 0 = never)
    *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed') — makes
    *  "checked, up to date" distinguishable from "never reached". */
@@ -287,6 +290,10 @@ export interface Settings {
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
   retentionKeepYearly: number;
+  /** The domains with a local keep-policy of their own instead of the shared
+   *  one above, keyed by domain name. A domain missing here uses the shared
+   *  one. */
+  ownRetention: Partial<Record<OffsiteDomain, RetentionKeep>>;
   /** restic's --compression per repository: a domain name for its own
    *  repository, "offsite:<domain>" for its primary off-site destination. The
    *  server sends every key. */
@@ -296,6 +303,10 @@ export interface Settings {
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
   offsiteRetentionKeepYearly: number;
+  /** The domains whose built-in off-site repository keeps by a policy of its
+   *  own instead of the off-site one above. Additional off-site targets keep
+   *  their own rules either way. */
+  ownOffsiteRetention: Partial<Record<OffsiteDomain, RetentionKeep>>;
   offsiteLimitUpload: number;
   /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
    *  restic's own default ([558], issue #189). */
@@ -422,7 +433,8 @@ export interface GetSettingsResponse {
  * destination rows the file carries, `credentials` reports which secret kinds are
  * present (never the values), and `settingsGroups` names the setting areas the
  * file populates (machine ids: "domains","schedules","retention","offsite",
- * "drills","digest","monitoring","language","exportEncryption").
+ * "drills","digest","monitoring","language","exportEncryption","anomalies",
+ * "streaming","idle").
  */
 export interface ImportSettingsSummary {
   schemaVersion: number;
@@ -827,17 +839,20 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
  * survives this connection dying, so a multi-hour restore can't be killed by
  * the browser/proxy dropping the request. Watch the "container:<name>" SSE
  * progress key + the recorded run (kind "restore") for the outcome.
+ * withoutRuntime recreates the container without its GPU request and runtime,
+ * the retry after this host refused them.
  */
 export function restore(
   name: string,
   snapshotId: string,
   confirm: boolean,
   source?: string,
-  leaveStopped?: boolean
+  leaveStopped?: boolean,
+  withoutRuntime?: boolean
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped, withoutRuntime }),
   });
 }
 
@@ -1359,6 +1374,15 @@ export function setUpdateAfterBackup(name: string, updateAfterBackup: boolean): 
   });
 }
 
+/** PATCH /api/containers/{name}: how long a scheduled backup waits at most for
+ *  the app to be idle; 0 switches the wait off. */
+export function setIdleWait(name: string, idleWaitHours: number): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ idleWaitHours }),
+  });
+}
+
 /** PATCH /api/containers/{name}: switch the database dump off or back on. */
 export function setDbDumpOff(name: string, off: boolean): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
@@ -1482,6 +1506,18 @@ export interface ExcludeSuggestion {
   complete: boolean;
 }
 
+export interface ExcludePresetEntry {
+  line: string;
+  kind: string;
+  /** Starts unticked: the folder can also hold something the app cannot fetch again. */
+  optional: boolean;
+}
+
+export interface ExcludePreset {
+  app: string;
+  entries: ExcludePresetEntry[];
+}
+
 /**
  * GET /api/containers/{name}/excludes/suggest — the exclusion assistant's scan.
  * Returns exclude candidates (well-known junk dirs like cache/tmp/logs by name,
@@ -1535,6 +1571,8 @@ export function suggestContainerExcludes(
    *  the text stays translatable and an unknown id from a newer server renders
    *  nothing. Optional, so an older server still typechecks. */
   advisories?: string[] | null;
+  /** Folders a recognised app fills again by itself. Offered, never applied. */
+  preset?: ExcludePreset | null;
 }> {
   const q = source ? `?source=${source}` : "";
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest${q}`);
@@ -2218,16 +2256,20 @@ export type RetentionPreviewRepo = {
   error?: string;
 };
 
+/** A keep-policy as restic's five counts. All zero keeps everything. */
+export type RetentionKeep = {
+  keepLast: number;
+  keepDaily: number;
+  keepWeekly: number;
+  keepMonthly: number;
+  keepYearly: number;
+};
+
 /** What the next retention run would remove, without removing anything. */
 export type RetentionPreview = {
-  policy: {
-    on: boolean;
-    keepLast: number;
-    keepDaily: number;
-    keepWeekly: number;
-    keepMonthly: number;
-    keepYearly: number;
-  };
+  /** The policy the answer was worked out with. `own` marks the domain's own
+   *  keep-policy, local or off-site, rather than the shared one. */
+  policy: RetentionKeep & { on: boolean; own: boolean };
   repos: RetentionPreviewRepo[];
   skipped?: string[] | null;
 };
@@ -2365,6 +2407,38 @@ export interface PrimaryRemoteConfig {
    *  #182: an S3 primary path with its own keys had no way to say so, and
    *  primaryModeFor applies this to real backups, not only to the test. */
   credsRef: string;
+}
+
+/** The "Streaming first" card. Saved with mediaServersAuto, the media
+ *  servers go back to being picked by image name. */
+export interface StreamingSettings {
+  enabled: boolean;
+  mediaServers: string[];
+  mediaServersAuto: boolean;
+  thresholdMbit: number;
+  limitKiB: number;
+  holdMin: number;
+}
+
+/** A container the card offers as a media server. hostNetwork marks one whose
+ *  traffic Docker cannot count. */
+export interface MediaCandidate {
+  name: string;
+  image: string;
+  hostNetwork: boolean;
+}
+
+/** GET /api/settings/streaming. `streaming` names the media server whose
+ *  stream slows off-site copies right now, "" for none. */
+export function getStreaming(): Promise<
+  OkEnvelope & { settings?: StreamingSettings; candidates?: MediaCandidate[]; streaming?: string }
+> {
+  return fetchJSON("/api/settings/streaming");
+}
+
+/** PUT /api/settings/streaming */
+export function setStreaming(v: StreamingSettings): Promise<OkEnvelope> {
+  return fetchJSON("/api/settings/streaming", { method: "PUT", body: JSON.stringify(v) });
 }
 
 /** GET /api/settings/primary-remote/{domain} */
@@ -2682,6 +2756,47 @@ export async function getScheduleNext(): Promise<ScheduleNext[]> {
   return res.ok ? (res.runs ?? []) : [];
 }
 
+/** Why an app counts as busy: the traffic.Busy constants of the backend. */
+export type IdleReason = "streaming" | "cpu" | "network" | "measuring";
+
+/** A scheduled backup held back until its app is idle. since and deadline are
+ *  Unix seconds; the backup starts at the deadline if the app is still busy. */
+export interface IdleWait {
+  domain: string;
+  name: string;
+  /** The compose project whose members wait together; absent for a container
+   *  that waits alone. busy names the member whose app holds the wait. */
+  stack?: string;
+  busy: string;
+  reason: IdleReason;
+  since: number;
+  deadline: number;
+}
+
+/** GET /api/schedule/waiting */
+export async function getScheduleWaiting(): Promise<IdleWait[]> {
+  const res = await fetchJSON<{ ok: boolean; waiting?: IdleWait[] }>("/api/schedule/waiting");
+  return res.ok ? (res.waiting ?? []) : [];
+}
+
+/** When an app that is no media server counts as idle: CPU below cpuPct
+ *  percent of a core and traffic below netMbit, for quietMin minutes. */
+export interface IdleSettings {
+  cpuPct: number;
+  netMbit: number;
+  quietMin: number;
+}
+
+/** GET /api/settings/idle */
+export function getIdle(): Promise<OkEnvelope & { settings?: IdleSettings }> {
+  return fetchJSON("/api/settings/idle");
+}
+
+/** PUT /api/settings/idle */
+export function setIdle(v: IdleSettings): Promise<OkEnvelope> {
+  return fetchJSON("/api/settings/idle", { method: "PUT", body: JSON.stringify(v) });
+}
+
 /**
  * One repository-size sample for a domain at a point in time.
  * `rawSize` is the physical (deduplicated + compressed) repo size, `restoreSize`
@@ -2934,6 +3049,51 @@ export function listFlashSnapshots(source?: string): Promise<ListSnapshotsRespon
  */
 export function flashDownloadURL(snapshotId: string, source?: string): string {
   return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`;
+}
+
+export interface FlashPlugin {
+  name: string;
+  version: string;
+  size: number;
+  /** Package files outside the plugin folder, as paths below /boot. */
+  packages: string[];
+}
+
+/** GET /api/flash/plugins: the plugins one flash backup holds. */
+export function listFlashPlugins(snapshotId: string, source?: string): Promise<OkEnvelope & { plugins?: FlashPlugin[] }> {
+  return fetchJSON(`/api/flash/plugins?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`);
+}
+
+export interface AppdataBackupArchive {
+  folder: string;
+  container: string;
+  file: string;
+  size: number;
+  /** When the plugin made the backup, in seconds. */
+  time: number;
+  status: "new" | "imported" | "no-container" | "not-backed-up" | "repo-unavailable";
+}
+
+/** POST /api/import/appdata-backup/scan: what an Appdata.Backup folder holds. */
+export function scanAppdataBackup(path: string): Promise<OkEnvelope & { archives?: AppdataBackupArchive[] }> {
+  return fetchJSON("/api/import/appdata-backup/scan", { method: "POST", body: JSON.stringify({ path }) });
+}
+
+/** POST /api/import/appdata-backup: imports every new archive in the background. */
+export function importAppdataBackup(path: string): Promise<OkEnvelope & { started?: boolean; archives?: number }> {
+  return fetchJSON("/api/import/appdata-backup", { method: "POST", body: JSON.stringify({ path }) });
+}
+
+/** POST /api/flash/plugins/restore: writes one plugin back into the live flash. */
+export function restoreFlashPlugin(
+  snapshot: string,
+  name: string,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean }> {
+  return fetchJSON("/api/flash/plugins/restore", {
+    method: "POST",
+    body: JSON.stringify({ snapshot, name, source, confirm: true }),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -3414,6 +3574,9 @@ export interface ZFSRestorePointItem {
   relPath: string;
   snapshotId: string;
   outcome: string;
+  /** The dataset's locally set ZFS properties when it was backed up. Absent
+   *  for a backup from before they were recorded. */
+  properties?: Record<string, string>;
 }
 
 /** One run instant: the member snapshots that share one host snapshot stamp. */
@@ -3431,6 +3594,10 @@ export interface ZFSRestoreRequest {
   /** Absolute inside the member's own tree; empty restores all of it. */
   paths?: string[];
   targetPath?: string;
+  /** A dataset that does not exist yet, created with the stored properties. */
+  newDataset?: string;
+  /** Set the stored properties on the dataset before writing into it. */
+  applyProperties?: boolean;
   confirm: boolean;
   safetySnapshot?: boolean;
   safetyOffConfirm?: boolean;
@@ -3442,6 +3609,8 @@ export interface ZFSRestoreAck extends ZFSCodedEnvelope {
   started?: boolean;
   target?: string;
   safetySnapshot?: string;
+  /** The dataset the restore created. It stays even if the restore fails. */
+  created?: string;
 }
 
 /** What one run did to one dataset of the tree. */

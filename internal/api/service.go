@@ -104,6 +104,7 @@ type ResticEngine interface {
 	// tree root stays the dataset root although the directory it is read from
 	// names a different snapshot every run.
 	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
+	ImportDir(ctx context.Context, repo, dir string, tags []string, at time.Time, mode restic.Mode) (restic.Summary, error)
 	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
 	// recorded under path, tagged with tags — the zvol VM disk backup path
 	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
@@ -436,6 +437,15 @@ type Service struct {
 
 	breakdowns breakdowns
 	changes    changeComparisons
+	// trafficSt watches media servers and busy apps; see traffic.go.
+	trafficOnce sync.Once
+	trafficSt   *trafficState
+	// idleWaits holds the scheduled backups waiting for an idle app, and
+	// heldRun backs up a container a scheduled "Backup Everything" pass held
+	// back; see idle_wait.go.
+	waitsOnce sync.Once
+	idleWaits *idleWaits
+	heldRun   func(names []string)
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
@@ -1132,6 +1142,7 @@ func (s *Service) progBeginCopySink(ctx context.Context, domain string, startedA
 		s.progress.Publish(progress.Event{
 			Key: key, Phase: "replicate", Active: true, StartedAt: startedAt,
 			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: total,
+			Throttle: s.offsiteThrottle(domain),
 		})
 	})
 }
@@ -1670,24 +1681,50 @@ func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []st
 	return out
 }
 
-// retentionPolicy maps the stored settings to a restic keep-policy.
-func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolicy {
+// retentionPolicy is the local keep-policy of a domain: its own when it has
+// one, the shared one otherwise.
+func (s *Service) retentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
+	k, own := settings.OwnRetention()[domain]
+	if !own {
+		k = store.RetentionKeep{
+			KeepLast:    settings.RetentionKeepLast,
+			KeepDaily:   settings.RetentionKeepDaily,
+			KeepWeekly:  settings.RetentionKeepWeekly,
+			KeepMonthly: settings.RetentionKeepMonthly,
+			KeepYearly:  settings.RetentionKeepYearly,
+		}
+	}
+	return keepPolicy(k)
+}
+
+func keepPolicy(k store.RetentionKeep) restic.RetentionPolicy {
 	return restic.RetentionPolicy{
-		KeepLast:    settings.RetentionKeepLast,
-		KeepDaily:   settings.RetentionKeepDaily,
-		KeepWeekly:  settings.RetentionKeepWeekly,
-		KeepMonthly: settings.RetentionKeepMonthly,
-		KeepYearly:  settings.RetentionKeepYearly,
+		KeepLast:    k.KeepLast,
+		KeepDaily:   k.KeepDaily,
+		KeepWeekly:  k.KeepWeekly,
+		KeepMonthly: k.KeepMonthly,
+		KeepYearly:  k.KeepYearly,
 	}
 }
 
-// offsiteRetentionPolicy is the SEPARATE keep-policy for the off-site repo, so it
-// can be kept longer (archive) than the local copy. All-zero (the default) means
-// no off-site pruning — the off-site repo keeps everything, so existing setups
-// are never silently trimmed and an off-site repo only gets pruned once the user
-// explicitly sets this policy.
-func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.RetentionPolicy {
-	return restic.RetentionPolicy{
+// offsiteRetentionPolicy is the keep-policy of a domain's built-in off-site
+// repo, separate from the local one so the off-site copy can be kept longer as
+// an archive. All zero, the default, never prunes it.
+func (s *Service) offsiteRetentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
+	return keepPolicy(offsiteKeep(settings, domain))
+}
+
+// offsiteKeep is the domain's own off-site keep-policy when it has one, the
+// shared off-site one otherwise.
+func offsiteKeep(settings store.Settings, domain string) store.RetentionKeep {
+	if k, own := settings.OwnOffsiteRetention()[domain]; own {
+		return k
+	}
+	return sharedOffsiteKeep(settings)
+}
+
+func sharedOffsiteKeep(settings store.Settings) store.RetentionKeep {
+	return store.RetentionKeep{
 		KeepLast:    settings.OffsiteRetentionKeepLast,
 		KeepDaily:   settings.OffsiteRetentionKeepDaily,
 		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
@@ -1697,7 +1734,7 @@ func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.Retenti
 }
 
 // targetOffsiteRetentionPolicy is the per-DESTINATION off-site keep-policy (the
-// plural successor to offsiteRetentionPolicy, which reads the single global
+// plural successor to offsiteRetentionPolicy, which reads the settings
 // columns). All-zero means keep-everything, exactly as the global default. For a
 // backfilled N=1 target these fields equal the global policy, so behavior is
 // unchanged.
@@ -1765,14 +1802,28 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 }
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
-// source: the off-site policy for any off-site source, the local policy
-// otherwise. (The off-site policy is the settings-level one; per-target
-// retention is a later stage — bare "offsite" is unchanged.)
-func (s *Service) retentionPolicyForSource(settings store.Settings, source string) restic.RetentionPolicy {
-	if isOffsiteSource(source) {
-		return s.offsiteRetentionPolicy(settings)
+// source: the domain's local policy, the domain's off-site policy for its
+// built-in off-site repo, and the shared off-site policy for an additional
+// target, which a domain's own off-site rules do not reach.
+func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
+	switch {
+	case !isOffsiteSource(source):
+		return s.retentionPolicy(settings, domain)
+	case s.isBuiltInOffsiteSource(settings, domain, source):
+		return s.offsiteRetentionPolicy(settings, domain)
 	}
-	return s.retentionPolicy(settings)
+	return keepPolicy(sharedOffsiteKeep(settings))
+}
+
+// isBuiltInOffsiteSource reports whether an off-site source reaches the repo
+// the domain's off-site setting names rather than an additional target.
+func (s *Service) isBuiltInOffsiteSource(settings store.Settings, domain, source string) bool {
+	t, ok := s.offsiteTargetForSource(settings, domain, source)
+	return !ok || isBuiltInOffsiteTarget(settings, domain, t)
+}
+
+func isBuiltInOffsiteTarget(settings store.Settings, domain string, t store.OffsiteTarget) bool {
+	return t.Repo == offsiteRepoFromSettings(domain, settings)
 }
 
 // applyRetention prunes the just-backed-up item to the configured keep-policy.
@@ -1809,7 +1860,7 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // finding that says the source lost its data keeps its own item's snapshots
 // until the user has seen it. An empty hold is never held.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
-	p := s.retentionPolicy(settings)
+	p := s.retentionPolicy(settings, domain)
 	if !p.Any() {
 		return
 	}
@@ -1922,9 +1973,37 @@ func identityTags(snaps []restic.Snapshot) []string {
 	return out
 }
 
+// identityDomain is the domain whose items carry the identity tag.
+func identityDomain(tag string) string {
+	switch {
+	case tag == "flash", tag == "config":
+		return tag
+	case strings.HasPrefix(tag, "container:"), strings.HasPrefix(tag, dbDumpIdentityPrefix), strings.HasPrefix(tag, "stack:"):
+		return "containers"
+	case strings.HasPrefix(tag, "vm:"):
+		return "vms"
+	case strings.HasPrefix(tag, "fileset:"):
+		return "files"
+	case strings.HasPrefix(tag, "zfs:"):
+		return zfsDomain
+	}
+	return ""
+}
+
+// domainIdentityTags keeps the tags of the domain's items, or every tag when
+// domain is empty. A named repository can hold items of several domains, and
+// a domain's keep-policy is not theirs to apply.
+func domainIdentityTags(tags []string, domain string) []string {
+	if domain == "" {
+		return tags
+	}
+	return slices.DeleteFunc(tags, func(t string) bool { return identityDomain(t) != domain })
+}
+
 // applyRetentionPerIdentity applies policy per identity, one tag-scoped forget
 // per item, then prunes once. Used where no single item is in scope (manual
-// prune, off-site retention).
+// prune, off-site retention). With a domain, only that domain's items are
+// forgotten; the prune still reclaims the whole repository.
 //
 // A failed listing forgets nothing: the repo-wide paths-grouped pass ignores
 // identities and aliases, so it would age a renamed entry's pre-link snapshots
@@ -1932,11 +2011,11 @@ func identityTags(snaps []restic.Snapshot) []string {
 // a repository with no identity tag at all, one written before identity tags
 // existed, so its retention does not silently stop.
 //
-// It has no domain in hand and a named repository can hold several (#204), so
-// it asks for the holds of the whole installation and returns every tag it
-// left alone. The repo-wide pass cannot spare a held item, so it refuses while
-// anything is held.
-func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
+// A named repository can hold several domains (#204), so it asks for the
+// holds of the whole installation and returns every tag it left alone. The
+// repo-wide pass cannot spare a held item, so it refuses while anything is
+// held.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
 	if !p.Any() {
 		return nil, nil
 	}
@@ -1961,7 +2040,7 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p 
 		}
 		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
-	groups, _ := s.foldAliasedIdentityTags(tags, snaps) // skipped tags are logged there and kept
+	groups, _ := s.foldAliasedIdentityTags(domainIdentityTags(tags, domain), snaps) // skipped tags are logged there and kept
 	var paused []string
 	var errs []error
 	for _, group := range groups {
@@ -2110,7 +2189,7 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 // previewed and the failures come back alongside the groups that succeeded, so
 // an operator learns about the repositories that answered instead of seeing a
 // bare error for all of them.
-func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
 	if !p.Any() {
 		return nil, nil, nil
 	}
@@ -2130,7 +2209,7 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, 
 	var out []restic.ForgetGroup
 	var paused []string
 	var errs []error
-	for _, tag := range tags {
+	for _, tag := range domainIdentityTags(tags, domain) {
 		if held.holds(tag) {
 			paused = append(paused, tag)
 			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
@@ -2282,6 +2361,7 @@ func orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, setti
 // CloudCreds and is supplied by ModeFor, and the "" here preserves it (see the
 // per-target mode in copyToOffsiteTarget).
 func settingsOffsiteTarget(domain string, settings store.Settings, loc string) store.OffsiteTarget {
+	keep := offsiteKeep(settings, domain)
 	return store.OffsiteTarget{
 		Domain:               domain,
 		Name:                 "Primary",
@@ -2289,11 +2369,11 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 		StorageClass:         "",
 		Immutable:            offsiteImmutableFor(domain, settings),
 		Schedule:             offsiteScheduleFromSettings(domain, settings),
-		RetentionKeepLast:    settings.OffsiteRetentionKeepLast,
-		RetentionKeepDaily:   settings.OffsiteRetentionKeepDaily,
-		RetentionKeepWeekly:  settings.OffsiteRetentionKeepWeekly,
-		RetentionKeepMonthly: settings.OffsiteRetentionKeepMonthly,
-		RetentionKeepYearly:  settings.OffsiteRetentionKeepYearly,
+		RetentionKeepLast:    keep.KeepLast,
+		RetentionKeepDaily:   keep.KeepDaily,
+		RetentionKeepWeekly:  keep.KeepWeekly,
+		RetentionKeepMonthly: keep.KeepMonthly,
+		RetentionKeepYearly:  keep.KeepYearly,
 		LimitUpload:          settings.OffsiteLimitUpload,
 		LimitDownload:        settings.OffsiteLimitDownload,
 		GrowthBudgetGB:       settings.OffsiteGrowthBudgetGB,
@@ -2989,11 +3069,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
 		pruneStrategySet := offsiteImmutable ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
-			settings.OffsiteRetentionKeepLast > 0 ||
-			settings.OffsiteRetentionKeepDaily > 0 ||
-			settings.OffsiteRetentionKeepWeekly > 0 ||
-			settings.OffsiteRetentionKeepMonthly > 0 ||
-			settings.OffsiteRetentionKeepYearly > 0
+			s.offsiteRetentionPolicy(settings, d.name).Any()
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,
@@ -3281,17 +3357,48 @@ func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
 		return // sampled recently enough
 	}
 	// Detach from the request (keep its values) so the sampling survives the
-	// handler returning, with a hard cap so a wedged restic can't leak a goroutine.
-	bg := context.WithoutCancel(ctx)
-	go func() {
-		cctx, cancel := context.WithTimeout(bg, 5*time.Minute)
-		defer cancel()
-		// Guarded, not bare: the check above reads a row this work only writes at
-		// the end, so it is the throttle that cannot see a sample in progress.
-		if err := s.collectStatsGuarded(cctx, domain, "local"); err != nil {
-			log.Printf("api: stats: %s: collect failed (backup is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
-		}
-	}()
+	// handler returning. Guarded inside, since the check above reads a row this
+	// work only writes at the end and cannot see a sample in progress.
+	go s.sampleInBackground(context.WithoutCancel(ctx), domain, "local")
+}
+
+// statsLocalTimeout and statsRemoteTimeout bound one background size sample,
+// so a wedged restic cannot leak a goroutine. Walking every snapshot across a
+// network fetches the trees over that link, which takes far longer than on a
+// local disk, and the walk takes no lock, so the longer bound holds up nothing.
+var (
+	statsLocalTimeout  = 5 * time.Minute
+	statsRemoteTimeout = time.Hour
+)
+
+// statsTimeout is the bound for sampling domain+source: the remote one for an
+// off-site copy and for a primary that lives on a remote backend.
+func (s *Service) statsTimeout(domain, source string) time.Duration {
+	if isOffsiteSource(source) {
+		return statsRemoteTimeout
+	}
+	if _, repo, err := s.domainRepoSource(domain, source); err == nil && restic.IsRemoteRepo(repo) {
+		return statsRemoteTimeout
+	}
+	return statsLocalTimeout
+}
+
+// sampleInBackground takes one guarded sample under its own bound, for callers
+// that start it in a goroutine and never wait for it. A sample that runs out of
+// time says nothing about the backups and nothing reads a missing sample as a
+// fault, so it is logged as what happens next; any other error is a failure.
+func (s *Service) sampleInBackground(ctx context.Context, domain, source string) {
+	limit := s.statsTimeout(domain, source)
+	cctx, cancel := context.WithTimeout(ctx, limit)
+	defer cancel()
+	err := s.collectStatsGuarded(cctx, domain, source)
+	switch {
+	case err == nil:
+	case errors.Is(err, context.DeadlineExceeded):
+		log.Printf("api: stats: %s/%s: measuring the repository size took longer than %d minutes and was stopped; the next backup or off-site copy measures it again. Backups are not affected.", domain, source, int(limit.Minutes())) //nolint:gosec // G706: domain/source are fixed-whitelist values
+	default:
+		log.Printf("api: stats: %s/%s: collect failed (backups are not affected): %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
+	}
 }
 
 // collectStatsAfterItem is the per-item success hook: it samples after a single
@@ -3336,18 +3443,12 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 		time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
 		return // sampled recently enough
 	}
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-		// Guarded: this is the one sampling path a browser can drive without
-		// bound. The Storage card asks for four domains on every mount, and the
-		// throttle above cannot fire at all while a repo has no sample yet
-		// (found=false), so every tab and every remount used to start another
-		// fan-out.
-		if err := s.collectStatsGuarded(ctx, domain, source); err != nil {
-			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
-		}
-	}()
+	// Guarded inside: this is the one sampling path a browser can drive without
+	// bound. The Storage card asks for four domains on every mount, and the
+	// throttle above cannot fire at all while a repo has no sample yet
+	// (found=false), so without the guard every tab and every remount would
+	// start another fan-out.
+	go s.sampleInBackground(context.Background(), domain, source)
 }
 
 // domainEnabled reports whether domain is switched on in s.
@@ -3670,7 +3771,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 				case <-hbDone:
 					return
 				case <-t.C:
-					e := progress.Event{Key: "offsite:" + domain, Phase: "replicate", Active: true, StartedAt: startedAt}
+					e := progress.Event{Key: "offsite:" + domain, Phase: "replicate", Active: true, StartedAt: startedAt, Throttle: s.offsiteThrottle(domain)}
 					if cp, total, ok := lastCopy.get(); ok {
 						e.Percent, e.SnapshotIndex, e.SnapshotTotal = cp.Percent, cp.SnapshotIndex, total
 					}
@@ -3937,7 +4038,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 				continue // the destination already holds all of them
 			}
 		}
-		if cErr := s.engine.Copy(copyCtx, dest, src.Loc, ids, targetOffsiteLimits(target), mode); cErr != nil {
+		lim, stepMode, release := s.throttleCopy(domain, dest, targetOffsiteLimits(target), mode)
+		cErr := s.engine.Copy(copyCtx, dest, src.Loc, ids, lim, stepMode)
+		release()
+		if cErr != nil {
 			log.Printf("api: offsite %s: copying %s failed (continuing with the other sources): %v", domain, shortRepoName(src.Loc), scrubError(cErr)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
 			copyErrs = append(copyErrs, fmt.Errorf("copying %s: %w", shortRepoName(src.Loc), cErr))
 			continue
@@ -4022,9 +4126,16 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		if !op.Any() {
 			break
 		}
-		// Per-identity: one tag-scoped, ungrouped forget per item, one prune —
-		// identity-stable like the local retention (issue #91).
-		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, op, mode)
+		// Per-identity: one tag-scoped, ungrouped forget per item and one prune,
+		// identity-stable like the local retention (issue #91). The built-in
+		// off-site repo ages by this domain's off-site rules, so another domain
+		// that replicates there ages its own items on its own pass. An
+		// additional target ages everything it holds by its own policy.
+		scope := ""
+		if isBuiltInOffsiteTarget(settings, domain, target) {
+			scope = domain
+		}
+		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, scope, op, mode)
 		if perr != nil {
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
@@ -7397,9 +7508,10 @@ type containerRestorePlan struct {
 	// skippedPaths carries stored paths that had no mapping in the chosen
 	// snapshot (RESTORE-01): they are skipped individually — scrubbed log +
 	// orchestrator run-record note — never a global abort.
-	skippedPaths []string
-	inspect      model.Inspect
-	templateXML  string
+	skippedPaths   []string
+	inspect        model.Inspect
+	templateXML    string
+	withoutRuntime bool
 }
 
 // Restore runs a full container restore. The recreate profile is taken from the
@@ -7562,7 +7674,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// failure resolution happens here, in the synchronous prepare phase: the
 		// orchestrator only ever receives a list it has checked.
 		chosen := chosenSnapshot(snaps, snapshotID)
-		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, chosen.Paths)
+		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, s.restoreRootsOf(*chosen))
 		// A pass-2 result is a stored path that only an ANCESTOR of it was
 		// recorded for. That proves it lies under a backed-up root; it does NOT
 		// prove it is in the snapshot. The branch may have been carved out by a
@@ -7750,6 +7862,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           plan.inspect,
 		LeaveStopped:      leaveStopped,
+		WithoutRuntime:    plan.withoutRuntime,
 		TargetID:          plan.targetID,
 		Docker:            s.docker,
 		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
@@ -7857,7 +7970,10 @@ func (s *Service) CancelRun(key string) bool {
 // It shares batchActive with the backup starters so a restore can never run
 // concurrently with a backup or another restore (they contend on repo locks and
 // container stop/start). Returns (false, nil) when one is already running.
-func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, leaveStopped bool) (bool, error) {
+//
+// withoutRuntime recreates the container without its GPU request and runtime,
+// the retry the restore panel offers when this host lacks them.
+func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, leaveStopped, withoutRuntime bool) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -7866,6 +7982,7 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 		s.batchActive.Store(false)
 		return false, err
 	}
+	plan.withoutRuntime = withoutRuntime
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns), capped by restoreTimeout (see its comment
 	// for why the restore cap is far more generous than the backup one).
@@ -16549,7 +16666,7 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 		log.Printf("api: prune %s: batched prune: read settings: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
-	if !s.retentionPolicy(settings).Any() {
+	if !s.retentionPolicy(settings, domain).Any() {
 		return // no retention policy → the per-item passes forgot nothing (applyRetention's gate)
 	}
 	if _, err := s.pruneDomain(ctx, domain, "local", true); err != nil {
@@ -16676,16 +16793,18 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	// exclusive-lock round-trips for nothing.
 	policy := restic.RetentionPolicy{}
 	if !afterBulk {
-		policy = s.retentionPolicyForSource(settings, source)
+		policy = s.retentionPolicyForSource(settings, domain, source)
 	}
 	for _, r := range repos {
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 		s.unlockStale(ctx, r.Loc, rMode)
 		if policy.Any() {
-			// Per-identity: tag-scoped, ungrouped forget per item + one prune —
-			// also drains frozen path-groups left by the old grouping (issue #91).
+			// Per-identity: a tag-scoped, ungrouped forget per item of this
+			// domain and one prune, which also drains the frozen path-groups a
+			// grouped forget leaves behind (issue #91). Another domain's items in a shared
+			// repository age by that domain's rules, on its own prune.
 			var repoPaused []string
-			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode)
+			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, domain, policy, rMode)
 			paused = append(paused, repoPaused...)
 			if err != nil {
 				err = fmt.Errorf("pruning %s: %w", s.refName(r), err)

@@ -2139,6 +2139,22 @@ ALTER TABLE offsite_targets ADD COLUMN retention_keep_yearly INTEGER NOT NULL DE
 ALTER TABLE offsite_targets ADD COLUMN compression TEXT NOT NULL DEFAULT '';`,
 	},
 	{
+		// A local keep-policy per domain. Empty leaves every domain on the
+		// shared one.
+		version:          retentionYearlyMigration + 2,
+		name:             "retention_overrides",
+		alreadySatisfied: columnPresent("settings", "retention_overrides"),
+		sql:              `ALTER TABLE settings ADD COLUMN retention_overrides TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The same for the built-in off-site repo of each domain. Empty leaves
+		// every domain on the shared off-site policy.
+		version:          retentionYearlyMigration + 3,
+		name:             "offsite_retention_overrides",
+		alreadySatisfied: columnPresent("settings", "offsite_retention_overrides"),
+		sql:              `ALTER TABLE settings ADD COLUMN offsite_retention_overrides TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// One restore probe of one item: the check after its first backup, or
 		// one somebody asked for. The time this migration ran is when first
 		// backups start counting, so items backed up before it are not all
@@ -2220,6 +2236,62 @@ CREATE INDEX IF NOT EXISTS idx_start_tests_target ON start_tests(target_id, at);
   PRIMARY KEY (target_id, snapshot_id)
 );
 CREATE INDEX IF NOT EXISTS idx_size_breakdowns_target ON size_breakdowns(target_id, created_at);`,
+	},
+	{
+		// The locally set ZFS properties of each dataset a run backed up, as
+		// JSON, so a restore can create a new dataset with them.
+		version:          zfsPropertiesMigration,
+		name:             "zfs_run_members_properties",
+		alreadySatisfied: columnPresent("zfs_run_members", "properties"),
+		sql:              `ALTER TABLE zfs_run_members ADD COLUMN properties TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// How BombVault tells a media server is streaming and how far it slows
+		// its off-site uploads meanwhile. A NULL media_servers means nobody
+		// picked any yet, so the image names decide.
+		version: trafficMigration,
+		name:    "traffic_settings",
+		sql: `CREATE TABLE IF NOT EXISTS traffic_settings (
+  id               INTEGER PRIMARY KEY CHECK (id = 1),
+  stream_throttle  INTEGER NOT NULL DEFAULT 0,
+  media_servers    TEXT,
+  stream_mbit      INTEGER NOT NULL DEFAULT 2,
+  stream_limit_kib INTEGER NOT NULL DEFAULT 512,
+  stream_hold_min  INTEGER NOT NULL DEFAULT 5
+);`,
+	},
+	{
+		// When an app that is no media server counts as idle.
+		version:          trafficMigration + 1,
+		name:             "traffic_settings_idle",
+		alreadySatisfied: columnPresent("traffic_settings", "idle_cpu_pct"),
+		sql: `ALTER TABLE traffic_settings ADD COLUMN idle_cpu_pct INTEGER NOT NULL DEFAULT 10;
+ALTER TABLE traffic_settings ADD COLUMN idle_net_mbit INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE traffic_settings ADD COLUMN idle_quiet_min INTEGER NOT NULL DEFAULT 3;`,
+	},
+	{
+		// The containers whose scheduled backup waits for an idle app, keyed by
+		// target id so a rename keeps the choice.
+		version: trafficMigration + 2,
+		name:    "item_idle_wait",
+		sql: `CREATE TABLE IF NOT EXISTS item_idle_wait (
+  target_id TEXT PRIMARY KEY,
+  hours     INTEGER NOT NULL
+);`,
+	},
+	{
+		// The scheduled backups waiting for an idle app, so a restart resumes
+		// them. members is a JSON list of container names.
+		version: trafficMigration + 3,
+		name:    "idle_wait_groups",
+		sql: `CREATE TABLE IF NOT EXISTS idle_wait_groups (
+  key      TEXT PRIMARY KEY,
+  stack    TEXT NOT NULL DEFAULT '',
+  members  TEXT NOT NULL,
+  trigger  TEXT NOT NULL DEFAULT '',
+  since    INTEGER NOT NULL,
+  deadline INTEGER NOT NULL
+);`,
 	},
 	{
 		// The pairing group: this instance's id within it, the secret behind
@@ -2340,6 +2412,13 @@ const verifyMigrationBase = 180
 // insightMigration numbers the migrations behind the change notice, the load
 // summary of a run and the size breakdown.
 const insightMigration = 190
+
+// zfsPropertiesMigration numbers the column that keeps each dataset's ZFS
+// properties.
+const zfsPropertiesMigration = 200
+
+// trafficMigration numbers the streaming and idle settings.
+const trafficMigration = 210
 
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
 // numbers other branches have taken.

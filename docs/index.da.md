@@ -49,7 +49,7 @@ BombVault er orkestrerings- og UI-laget, ikke lagringsmotoren. Al faktisk datafl
 
 Ny her? Gå til **[Kom godt i gang](getting-started.md)** for at installere BombVault på Unraid via Community Applications og køre din første sikkerhedskopi. Udforsk derefter de fulde **[Funktioner](features.md)**, tilpas din **[Konfiguration](configuration.md)**, og opsæt **[Off-site og gendannelse](offsite-recovery.md)**.
 
-Off-site kan fordele til flere destinationer pr. domæne på én gang, et skrivebeskyttet **modtager-dashboard** overvåger disse kopier på den boks, der modtager dem, og du kan bære hele din konfiguration over til en ny boks med kortet **Eksportér og importér indstillinger**. Se [Off-site og gendannelse](offsite-recovery.md) og [Konfiguration](configuration.md#portable-settings-export-and-import).
+Off-site kan fordele til flere destinationer pr. domæne på én gang, et skrivebeskyttet **modtager-dashboard** overvåger disse kopier på den boks, der modtager dem, og du kan bære hele din konfiguration over til en ny boks med kortet **Eksportér / importér indstillinger**. Se [Off-site og gendannelse](offsite-recovery.md) og [Konfiguration](configuration.md#portable-settings-export-and-import).
 
 ## Links
 

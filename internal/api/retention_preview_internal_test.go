@@ -83,7 +83,7 @@ func TestPreviewRetentionPerIdentityMirrorsTheRealPass(t *testing.T) {
 	}}
 	s := &Service{engine: eng}
 
-	if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+	if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -109,7 +109,7 @@ func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 		eng := &previewEngine{snapsErr: errors.New("repository is unreachable")}
 		s := &Service{engine: eng}
 
-		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
 			t.Fatalf("want no error, got %v", err)
 		}
@@ -122,7 +122,7 @@ func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 		eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("a1", "p1", "live")}}
 		s := &Service{engine: eng}
 
-		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
 			t.Fatalf("want no error, got %v", err)
 		}
@@ -140,7 +140,7 @@ func TestPreviewRetentionInertPolicyAsksNothing(t *testing.T) {
 	eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("a1", "container:plex")}}
 	s := &Service{engine: eng}
 
-	groups, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+	groups, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
@@ -165,7 +165,7 @@ func TestPreviewRetentionSurvivesOneFailingTag(t *testing.T) {
 	}
 	s := &Service{engine: eng}
 
-	_, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+	_, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err == nil {
 		t.Fatal("want the per-tag failure surfaced, got nil")
@@ -191,7 +191,7 @@ func TestPreviewStampsQueriedIdentity(t *testing.T) {
 	s := &Service{engine: eng}
 
 	groups, _, err := s.previewRetentionPerIdentity(context.Background(),
-		"/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
+		"/repo", "", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("previewRetentionPerIdentity: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestPreviewKeepsATagResticReported(t *testing.T) {
 	s := &Service{engine: eng}
 
 	groups, _, err := s.previewRetentionPerIdentity(context.Background(),
-		"/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
+		"/repo", "", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("previewRetentionPerIdentity: %v", err)
 	}
@@ -241,7 +241,7 @@ func TestPreviewMirrorsTheHold(t *testing.T) {
 	}}
 	f.svc.engine = eng
 
-	groups, paused, err := f.svc.previewRetentionPerIdentity(context.Background(), "/repo",
+	groups, paused, err := f.svc.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
@@ -278,7 +278,7 @@ func TestPreviewReportsTheRefusalOnTheFallbackPath(t *testing.T) {
 	eng := &previewEngine{}
 	f.svc.engine = eng
 
-	if _, _, err := f.svc.previewRetentionPerIdentity(context.Background(), "/repo",
+	if _, _, err := f.svc.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err == nil {
 		t.Fatal("want an error saying the real pass would refuse")
 	}

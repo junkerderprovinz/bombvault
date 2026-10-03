@@ -40,7 +40,7 @@ Không dùng Unraid? BombVault cũng chạy như một container bình thường
 
 Khác gì so với Unraid:
 
-- **Không có miền flash/USB.** Không có USB khởi động để thu giữ hay khôi phục, nên miền Flash trong phần cài đặt ở đây không có việc gì làm. Thay vào đó, miền Tệp đưa ra gợi ý một cú nhấp **Thêm bộ định sẵn: cấu hình hệ thống máy chủ** (một bộ tệp `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu), như bản tương đương chung và thiết thực.
+- **Không có miền flash/USB.** Không có USB khởi động để thu giữ hay khôi phục, nên miền Flash trong phần cài đặt ở đây không có việc gì làm. Thay vào đó, miền Thư mục đưa ra gợi ý một cú nhấp **Thêm bộ định sẵn: cấu hình hệ thống máy chủ** (một bộ tệp `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu), như bản tương đương chung và thiết thực.
 - **Không có thông báo gốc của Unraid.** Các kênh thông báo riêng của BombVault (webhook, cảnh báo hỏng bản sao ngoại vi và những thứ tương tự) vẫn chạy bình thường; chỉ việc đẩy sang hệ thống thông báo riêng của Unraid là được bỏ qua, vì ở đây không có hệ thống đó.
 - **Sao lưu máy ảo là tùy chọn và cần một máy chủ libvirtd riêng, tới được qua SSH.** Xem khối bị chú thích trong tệp compose. Bản thân một máy chủ Docker thông thường không có sẵn trình quản lý máy ảo.
 
@@ -68,12 +68,12 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 *Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.*
 
 1. Mở giao diện web tại `https://<your-unraid-ip>:3443` (chứng chỉ tự ký ngay từ đầu).
-2. Trong **Settings**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Config, Files, ZFS datasets) và chọn một màu nhấn.
-3. Ở tab **Containers**, chọn một container và nhấp **Back up** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
-4. Thiết lập lập lịch từ **Settings, Schedules**. Có một tùy chọn *đưa tất cả vào lịch trình* một cú nhấp cho container và VM.
+2. Trong **Cài đặt**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) và chọn một màu nhấn.
+3. Ở tab **Containers**, chọn một container và nhấp **Sao lưu ngay** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` và được tạo ở lần sao lưu đầu tiên.
+4. Thiết lập lập lịch từ **Cài đặt, Lịch trình**. Có một tùy chọn *Đưa tất cả vào lịch trình* một cú nhấp cho container và VM.
 
 !!! tip "Tùy chọn: chọn một thứ tự sao lưu"
-    Nếu một số container luôn cần được sao lưu trước những cái khác (ví dụ một cơ sở dữ liệu trước ứng dụng dùng nó), hãy mở bảng **backup-order** trên trang Containers và kéo chúng vào trình tự bạn muốn. Các lần chạy theo lịch và chọn nhiều sau đó sẽ tuân theo thứ tự này; bất cứ cái nào bạn để không sắp xếp sẽ được sao lưu theo thứ tự quá hạn nhất trước, như trước đây.
+    Nếu một số container luôn cần được sao lưu trước những cái khác (ví dụ một cơ sở dữ liệu trước ứng dụng dùng nó), hãy mở bảng **Thứ tự sao lưu** trên trang Containers và kéo chúng vào trình tự bạn muốn. Các lần chạy theo lịch và chọn nhiều sau đó sẽ tuân theo thứ tự này; bất cứ cái nào bạn để không sắp xếp sẽ được sao lưu theo thứ tự quá hạn nhất trước, như trước đây.
 
 !!! note "Kiểm tra tích hợp máy chủ"
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu, để bạn có thể xác nhận container được kết nối đúng cách trước khi tin cậy nó.
@@ -84,11 +84,11 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 
 *Phần cài đặt không có nút Lưu: mỗi thay đổi được ghi ngay khi bạn thực hiện.*
 
-Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (sao lưu, khôi phục, lên lịch). Dùng công tắc **Simple / Advanced** trong thanh bên để hé lộ các điều khiển chuyên gia: lưu giữ, bản sao off-site, hook trước/sau, khôi phục ở cấp tập tin, thông báo, số liệu Prometheus và các công cụ toàn vẹn/bảo trì. Đây là một tùy chọn theo từng trình duyệt và tắt theo mặc định, nên người mới có giao diện gọn gàng còn người dùng chuyên sâu có đủ mọi thứ.
+Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (sao lưu, khôi phục, lên lịch). Dùng công tắc **Chế độ xem đơn giản / Chế độ xem nâng cao** trong thanh bên để hé lộ các điều khiển chuyên gia: lưu giữ, bản sao off-site, hook trước/sau, khôi phục ở cấp tập tin, thông báo, số liệu Prometheus và các công cụ toàn vẹn/bảo trì. Đây là một tùy chọn theo từng trình duyệt và tắt theo mặc định, nên người mới có giao diện gọn gàng còn người dùng chuyên sâu có đủ mọi thứ.
 
 ## Bước tiếp theo
 
 - Duyệt đầy đủ **[Tính năng](features.md)**.
 - Thêm một hoặc nhiều bản sao **[Off-site & khôi phục](offsite-recovery.md)** (mỗi miền có thể gửi tới nhiều đích cùng lúc) và lưu bộ khôi phục của bạn.
-- Nhân bản một thiết lập hay chuyển sang một máy mới? Mang toàn bộ cấu hình của bạn theo với thẻ **Xuất và nhập cài đặt**. Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
+- Nhân bản một thiết lập hay chuyển sang một máy mới? Mang toàn bộ cấu hình của bạn theo với thẻ **Xuất / nhập cài đặt**. Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
 - Gặp trục trặc? Xem **[Khắc phục sự cố](troubleshooting.md)**.

@@ -225,8 +225,8 @@ for (const width of [320, 360]) {
       expect(box.remove.x + box.remove.width, `Löschen of ${id.slice(0, 8)} passes the edge`).toBeLessThanOrEqual(width);
     }
 
-    await page.getByRole("tab", { name: "Offsite" }).first().click();
-    const picker = page.getByRole("combobox", { name: "Offsite-Ziel" });
+    await page.getByRole("tab", { name: "Off-site" }).first().click();
+    const picker = page.getByRole("combobox", { name: "Off-site-Ziel" });
     await expect(picker).toBeVisible();
     await expect(page.getByText(OFFSITE[0].id.slice(0, 8), { exact: true })).toBeVisible();
     await settle(page);
@@ -288,8 +288,8 @@ test("flash on the desktop keeps the 40px rhythm, one line per backup and the co
     expect(middle(box.remove)).toBe(middle(box.id));
   }
 
-  await page.getByRole("tab", { name: "Offsite" }).first().click();
-  const picker = page.getByRole("combobox", { name: "Offsite-Ziel" });
+  await page.getByRole("tab", { name: "Off-site" }).first().click();
+  const picker = page.getByRole("combobox", { name: "Off-site-Ziel" });
   await expect(picker).toBeVisible();
   expect(Math.round((await picker.boundingBox())!.height)).toBe(24);
 });

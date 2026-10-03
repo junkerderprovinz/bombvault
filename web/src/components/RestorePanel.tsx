@@ -281,10 +281,11 @@ interface RestorePanelProps {
 // acknowledges the start; the result comes from the recorded run.
 function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
   const cancelledRef = useRef(false);
+  const withoutRuntimeRef = useRef(false);
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `container:${name}`,
     kind: "restore",
-    start: () => restore(name, "latest", true, source),
+    start: () => restore(name, "latest", true, source, false, withoutRuntimeRef.current),
     matchRun: (r) => r.domain === "container" && r.target === name,
     cancelledRef,
   });
@@ -297,6 +298,11 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
   const idle = isPending || state.phase === "success";
   async function handle() {
     if (!(await confirm(t("snapshots.recreateConfirm")))) return;
+    withoutRuntimeRef.current = false;
+    void fire();
+  }
+  function recreateWithoutRuntime() {
+    withoutRuntimeRef.current = true;
     void fire();
   }
   return (
@@ -325,6 +331,7 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
         name={name}
         cancelledRef={cancelledRef}
         successMessage={t("restore.recreateComplete")}
+        onRestoreWithoutRuntime={recreateWithoutRuntime}
         t={t}
       />
       {confirmDialog}

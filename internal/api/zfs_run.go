@@ -197,7 +197,7 @@ func (s *Service) notifyZFSUnsuppressed(ev notify.Event) {
 // dataset whose data a finding says was lost keeps its old backups, the way a
 // container's do, while its siblings prune.
 func (s *Service) applyRetentionTags(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tags []string, domain string) {
-	p := s.retentionPolicy(settings)
+	p := s.retentionPolicy(settings, domain)
 	if !p.Any() || len(tags) == 0 {
 		return
 	}
@@ -259,6 +259,9 @@ type zfsRunRecorder struct {
 	// stops is whether the item holds containers for the snapshot instant. An
 	// item that stops nothing has no window to report.
 	stops bool
+	// props are the tree's ZFS properties as read before the run, stored with
+	// every member that was backed up.
+	props map[string]zfs.Properties
 }
 
 func (r zfsRunRecorder) RecordRun(runID, snap string, window time.Duration, hookDetail string) error {
@@ -298,7 +301,15 @@ func (r zfsRunRecorder) AddMember(runID string, m backup.ZFSMemberResult) error 
 	if m.Measured {
 		row.SourceBytes, row.SourceFiles = &m.SourceBytes, &m.SourceFiles
 	}
-	return r.st.AddZFSRunMember(row)
+	if err := r.st.AddZFSRunMember(row); err != nil {
+		return err
+	}
+	if p, ok := r.props[m.Dataset]; ok && m.ResticSnapshot != "" {
+		if err := r.st.SetZFSRunMemberProperties(runID, m.Dataset, p); err != nil {
+			log.Printf("api: zfs: recording the properties of %s failed: %v", m.Dataset, err)
+		}
+	}
+	return nil
 }
 
 // zfsSelection is what a ZFS item is configured to back up. The datasets
@@ -359,6 +370,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 	rctx, startedAt := s.progBegin(ctx, key, "backup")
 
 	plans, skipped, tags := zfsSplitMembers(members)
+	props := s.zfsTreeProperties(ctx, d.Dataset)
 	sum, runErr := backup.BackupZFSItem(rctx, backup.ZFSBackupDeps{
 		Root:          d.Dataset,
 		Members:       plans,
@@ -376,7 +388,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 		Consistency:   s.newZFSConsistency(d, settings, zfsLockWait(ctx)),
 		Hooks:         s.newZFSHooks(d),
 		Runs:          runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: key},
-		Recorder:      zfsRunRecorder{st: s.store, itemID: d.ID, stops: len(d.StopContainers) > 0},
+		Recorder:      zfsRunRecorder{st: s.store, itemID: d.ID, stops: len(d.StopContainers) > 0, props: props},
 		DestroyBudget: zfsDestroyBudget,
 		ShuttingDown:  s.IsShuttingDown,
 		Sleep:         sleepFor,
@@ -410,6 +422,19 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 	}
 	s.queueFirstProbe(d.ID)
 	return sum, nil
+}
+
+// zfsTreeProperties reads the tree's properties for the run to store. A
+// failure costs only the properties, never the backup.
+func (s *Service) zfsTreeProperties(ctx context.Context, root string) map[string]zfs.Properties {
+	lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
+	defer cancel()
+	props, err := s.zfs.Properties(lctx, root)
+	if err != nil {
+		log.Printf("api: zfs: reading the properties of %s failed, the run stores none: %v", root, err)
+		return nil
+	}
+	return props
 }
 
 // zfsSplitMembers separates what the run reads from what it only records, and

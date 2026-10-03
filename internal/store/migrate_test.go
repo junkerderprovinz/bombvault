@@ -324,3 +324,25 @@ func TestMigrateAddsMCPKeyClient(t *testing.T) {
 		t.Fatalf("migrate over the existing column: %v", err)
 	}
 }
+
+// A branch that already added the column under another version number must
+// not fail on it.
+func TestMigrationOffsiteRetentionOverridesSatisfiedWhenColumnExists(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'offsite_retention_overrides'`); err != nil {
+		t.Fatalf("forget the migration: %v", err)
+	}
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate over the existing column: %v", err)
+	}
+	var n int
+	if err := db.QueryRow(`SELECT count(*) FROM schema_migrations WHERE name = 'offsite_retention_overrides'`).Scan(&n); err != nil {
+		t.Fatalf("read the version row: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("version rows for offsite_retention_overrides = %d, want 1", n)
+	}
+}

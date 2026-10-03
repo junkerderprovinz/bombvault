@@ -49,7 +49,7 @@ BombVault je vrstva orchestrace a UI, nikoli úložný engine. Veškerý skuteč
 
 Jste tu noví? Přejděte na **[Začínáme](getting-started.md)** a nainstalujte BombVault na Unraid přes Community Applications a spusťte svou první zálohu. Poté prozkoumejte kompletní **[Funkce](features.md)**, vylaďte si **[Konfiguraci](configuration.md)** a nastavte si **[Mimo lokalitu a obnova](offsite-recovery.md)**.
 
-Mimo lokalitu se může rozvětvit na několik cílů na doménu najednou, **řídicí panel přijímače** určený jen pro čtení monitoruje tyto kopie na stroji, který je přijímá, a celou svou konfiguraci můžete přenést na nový stroj pomocí karty **Export a import nastavení**. Viz [Mimo lokalitu a obnova](offsite-recovery.md) a [Konfigurace](configuration.md#portable-settings-export-and-import).
+Mimo lokalitu se může rozvětvit na několik cílů na doménu najednou, **řídicí panel přijímače** určený jen pro čtení monitoruje tyto kopie na stroji, který je přijímá, a celou svou konfiguraci můžete přenést na nový stroj pomocí karty **Export / import nastavení**. Viz [Mimo lokalitu a obnova](offsite-recovery.md) a [Konfigurace](configuration.md#portable-settings-export-and-import).
 
 ## Odkazy
 

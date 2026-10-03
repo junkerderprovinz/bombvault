@@ -92,6 +92,16 @@ type RestorePointRef struct {
 	At         int64  `json:"at"`
 }
 
+// backupTakenAt is the time a run's backup goes by: the one its restore point
+// carries, close to the snapshot time the backup list shows. The run's start
+// comes before the container is stopped and its dump written.
+func backupTakenAt(startedAt, finishedAt int64) int64 {
+	if finishedAt > 0 {
+		return finishedAt
+	}
+	return startedAt
+}
+
 // AnomalyPage is one page of findings and the cursor that continues it.
 type AnomalyPage struct {
 	Anomalies  []AnomalyView `json:"anomalies"`

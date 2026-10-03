@@ -128,6 +128,13 @@ type Event struct {
 	Total     int64  `json:"total,omitempty"`
 	Unit      string `json:"unit,omitempty"`
 	Remaining int64  `json:"remaining,omitempty"`
+	// Throttle marks an off-site copy slowed for a media server's stream:
+	// "now" while it runs at the streaming limit, "next" while a stream runs
+	// that the copy can only meet from its next step.
+	Throttle string `json:"throttle,omitempty"`
+	// Failed counts the items of a batch that did not work, such as the
+	// archives of an import, on the event that ends it.
+	Failed int `json:"failed,omitempty"`
 }
 
 // Store is an in-process fan-out of progress Events. It keeps the latest active

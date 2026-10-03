@@ -40,7 +40,7 @@ Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Doc
 
 Czym różni się to od Unraida:
 
-- **Brak domeny flash/USB.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc domena Flash w ustawieniach nie ma tu nic do roboty. Zamiast tego domena Pliki proponuje jednym kliknięciem **Dodaj predefiniowany zestaw: konfiguracja systemu hosta** (początkowy zestaw plików `/etc`, który przeglądasz i poprawiasz przed zapisaniem), jako praktyczny ogólny odpowiednik.
+- **Brak domeny flash/USB.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc domena Flash w ustawieniach nie ma tu nic do roboty. Zamiast tego domena Foldery proponuje jednym kliknięciem **Dodaj predefiniowany zestaw: konfiguracja systemu hosta** (początkowy zestaw plików `/etc`, który przeglądasz i poprawiasz przed zapisaniem), jako praktyczny ogólny odpowiednik.
 - **Brak natywnych powiadomień Unraida.** Własne kanały powiadomień BombVaulta (webhook, alerty o nieudanej replikacji poza siedzibę i tak dalej) działają normalnie; pomijane jest tylko wysłanie do systemu powiadomień Unraida, bo takiego systemu tutaj nie ma.
 - **Kopia maszyn wirtualnych jest opcjonalna i wymaga osobnego hosta libvirtd dostępnego przez SSH.** Zobacz zakomentowany blok w pliku compose. Zwykły host Dockera sam w sobie nie ma menedżera maszyn wirtualnych.
 
@@ -68,14 +68,14 @@ Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog gł�
 *Pulpit po pierwszej kopii: co jest chronione, co uruchomi się dalej i dziennik na żywo.*
 
 1. Otwórz interfejs webowy pod adresem `https://<your-unraid-ip>:3443` (certyfikat samopodpisany od razu po instalacji).
-2. W **Ustawieniach** włącz domeny kopii zapasowych, których chcesz używać (Kontenery, VM, Flash, Config, Pliki, Zbiory danych ZFS) i wybierz kolor akcentu.
-3. W zakładce **Kontenery** wybierz kontener i kliknij **Utwórz kopię**, aby stworzyć swój pierwszy punkt przywracania. Ścieżki repozytoriów domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii.
-4. Skonfiguruj harmonogramowanie w **Ustawienia, Harmonogramy**. Dostępna jest funkcja *uwzględnij wszystkie w harmonogramie* za jednym kliknięciem dla kontenerów i VM.
+2. W **Ustawieniach** włącz domeny kopii zapasowych, których chcesz używać (Containers, Maszyny wirtualne, Flash, Autokopia, Foldery, Zbiory danych ZFS) i wybierz kolor akcentu.
+3. W zakładce **Kontenery** wybierz kontener i kliknij **Utwórz kopię teraz**, aby stworzyć swój pierwszy punkt przywracania. Ścieżki repozytoriów domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii.
+4. Skonfiguruj harmonogramowanie w **Ustawienia, Harmonogramy**. Dostępna jest funkcja *Uwzględnij wszystkie w harmonogramie* za jednym kliknięciem dla kontenerów i VM.
 
 !!! tip "Opcjonalnie: wybierz kolejność kopii zapasowych"
-    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz panel **kolejności kopii** na stronie Containers i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i wielokrotnego wyboru będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych, jak poprzednio.
+    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz panel **Kolejność kopii zapasowych** na stronie Containers i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i wielokrotnego wyboru będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych, jak poprzednio.
 
-!!! note "Kontrola integracji z hostem"
+!!! note "Sprawdzenie integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz.
 
 ## Prosty vs Zaawansowany
@@ -84,11 +84,11 @@ Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog gł�
 
 *Ustawienia nie mają przycisku Zapisz: każda zmiana jest zapisywana od razu.*
 
-Domyślnie interfejs pokazuje tylko rzeczy podstawowe (tworzenie kopii, przywracanie, harmonogram). Użyj przełącznika **Prosty / Zaawansowany** w panelu bocznym, aby odsłonić kontrolki dla ekspertów: przechowywanie, kopię poza siedzibą, haki pre/post, przywracanie na poziomie plików, powiadomienia, metryki Prometheus oraz narzędzia integralności/konserwacji. To preferencja per przeglądarka, domyślnie wyłączona, więc nowicjusze dostają czysty interfejs, a użytkownicy zaawansowani mają wszystko.
+Domyślnie interfejs pokazuje tylko rzeczy podstawowe (tworzenie kopii, przywracanie, harmonogram). Użyj przełącznika **Widok prosty / Widok zaawansowany** w panelu bocznym, aby odsłonić kontrolki dla ekspertów: przechowywanie, kopię poza siedzibą, haki pre/post, przywracanie na poziomie plików, powiadomienia, metryki Prometheus oraz narzędzia integralności/konserwacji. To preferencja per przeglądarka, domyślnie wyłączona, więc nowicjusze dostają czysty interfejs, a użytkownicy zaawansowani mają wszystko.
 
 ## Kolejne kroki
 
 - Przejrzyj pełne **[Funkcje](features.md)**.
 - Dodaj jedną lub więcej replik **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)** (każda domena może wysyłać do kilku celów naraz) i zapisz swój zestaw odzyskiwania.
-- Klonujesz konfigurację lub przenosisz się na nową maszynę? Przenieś całą swoją konfigurację za pomocą karty **Eksport i import ustawień**. Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
+- Klonujesz konfigurację lub przenosisz się na nową maszynę? Przenieś całą swoją konfigurację za pomocą karty **Eksport / import ustawień**. Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 - Napotkałeś problem? Zobacz **[Rozwiązywanie problemów](troubleshooting.md)**.

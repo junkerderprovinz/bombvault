@@ -7,7 +7,7 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollen s
 | Verktøy | Hva det gjør | Type |
 |---|---|---|
 | `get_health` | Versjon, instansnavn, om en sikkerhetskopi kjører, og hva denne nøkkelen får gjøre | lese |
-| `get_status` | Beskyttelsesstatus per domene: siste vellykkede sikkerhetskopi, forventet intervall, verifiseringer og off-site-kontroller, neste planlagte kjøringer, for containere den nyeste starttesten | lese |
+| `get_status` | Beskyttelsesstatus per domene: siste vellykkede sikkerhetskopi, forventet intervall, verifiseringer og off-site-kontroller, neste planlagte kjøringer, sikkerhetskopier som venter på at appen er i ro, for containere den nyeste starttesten | lese |
 | `get_coverage` | Hva BombVault beskytter og hva det ikke beskytter, med grunnen for hver | lese |
 | `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump; ZFS-datasett er også med, med resultatet av den siste kontrollen; hvert element har sin siste gjenopprettingssjekk, og en container sin siste starttest eller grunnen til at den ikke kan testes; en container som er opprettet på nytt med andre innstillinger siden siste sikkerhetskopi, viser endringene | lese |
 | `list_runs` | Kjøringshistorikk, nyeste først, kan filtreres på domene, element, status, type og tid; en treg sikkerhetskopi som én ting holdt tilbake, nevner den | lese |
@@ -19,7 +19,7 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollen s
 | `get_anomaly` | Ett av disse avvikene, med notatet som ble skrevet da det ble kvittert ut | lese |
 | `start_backup` | Sikkerhetskopierer ett element med en gang | starte |
 | `start_domain_backup` | Sikkerhetskopierer hvert beskyttet element i et domene | starte |
-| `start_backup_everything` | Kjører Backup Everything-gjennomgangen | starte |
+| `start_backup_everything` | Kjører gjennomgangen Full sikkerhetskopi | starte |
 | `cancel_backup` | Avbryter en kjørende sikkerhetskopi som denne nøkkelen har startet | avbryte |
 
 Dette blir værende i webgrensesnittet: gjenopprettinger av alle slag (også å laste ned, lagre eller importere en databasedump), sletting av sikkerhetskopier, prune, unlock, kontroller og øvelser, off-site-replikering, innstillinger, påloggingsdetaljer og MCP-nøkler, og å avbryte en sikkerhetskopi som tidsplanen, webgrensesnittet eller en annen nøkkel har startet. Det samme gjelder å kvittere ut et avvik eller merke det som forventet, noe som skjer på siden **Avvik**. Grunnen er at verktøyenes svar inneholder navn og feilmeldinger fra serveren din, og hvilken som helst av dem kan inneholde tekst skrevet for å styre assistenten. En assistent som går på slik tekst, kan i verste fall starte en sikkerhetskopi innenfor grensene nedenfor eller avbryte en den selv har startet.
@@ -33,11 +33,11 @@ En assistents sikkerhetskopi er den samme som webgrensesnittet starter. En kjør
 Fordi en sikkerhetskopi stopper ting og skyver ut gamle gjenopprettingspunkter, er starter via MCP begrenset:
 
 - 12 startede sikkerhetskopier per time per nøkkel.
-- 15 minutter mellom to MCP-starter av samme element, samme domene eller Backup Everything.
+- 15 minutter mellom to MCP-starter av samme element, samme domene eller Full sikkerhetskopi.
 - Høyst 4 MCP-starter av samme element på 24 timer.
 - **Oppbevaringsvern.** Når et domene beholder et fast antall gjenopprettingspunkter (bare "behold de siste N", uten daglig, ukentlig eller månedlig regel, lokalt eller på et off-site-mål), skyver hver ny sikkerhetskopi ut den eldste. BombVault avviser da en MCP-start av et element der de nyeste N-1 vellykkede sikkerhetskopiene alle ble startet via MCP. Det blir derfor alltid minst ett gjenopprettingspunkt igjen i det beholdte settet som tidsplanen eller du har laget. Med "behold den siste 1" kan en assistent ikke sikkerhetskopiere det elementet i det hele tatt. Neste planlagte sikkerhetskopi gir plass igjen. En årsregel alene teller som "behold den siste 1", fordi den bare beholder ett gjenopprettingspunkt for inneværende år.
 
-En start av et domene eller av Backup Everything utelater elementene som en grense holder tilbake, og nevner dem i svaret. Webgrensesnittet og tidsplanen berøres ikke av noe av dette. Timebudsjettet ligger i minnet, så en omstart av BombVault nullstiller det.
+En start av et domene eller av Full sikkerhetskopi utelater elementene som en grense holder tilbake, og nevner dem i svaret. Webgrensesnittet og tidsplanen berøres ikke av noe av dette. Timebudsjettet ligger i minnet, så en omstart av BombVault nullstiller det.
 
 ## Slå det på {#switch-on}
 
@@ -256,7 +256,7 @@ Det en assistent leser, går til AI-leverandøren bak den: navn på elementer, t
 | `429` | For mange feil nøkler fra denne adressen, eller flere enn 120 forespørsler i minuttet med én nøkkel. Vent ett minutt og sjekk om assistenten har gått seg fast i en løkke. |
 | Feil med "certificate", "self-signed" eller "unable to verify" | Klienten stoler ikke på BombVaults sertifikat. Se [TLS og sertifikater](#tls). |
 | `busy` | En annen sikkerhetskopi eller en vedlikeholdsoppgave opptar domenet. Prøv igjen når den er ferdig. |
-| `cooldown` | Dette elementet, dette domenet eller Backup Everything ble startet via MCP for mindre enn 15 minutter siden. |
+| `cooldown` | Dette elementet, dette domenet eller Full sikkerhetskopi ble startet via MCP for mindre enn 15 minutter siden. |
 | `retention_guard` | Én MCP-sikkerhetskopi til ville bare etterlate gjenopprettingspunkter fra MCP i et vindu med "behold de siste N", eller elementet har allerede fått 4 sikkerhetskopier via MCP de siste 24 timene, mislykkede og avbrutte medregnet. I det første tilfellet gir neste planlagte sikkerhetskopi plass, i det andre er elementet ledig igjen 24 timer etter den eldste av dem. Du kan alltid starte den i webgrensesnittet. |
 | `rate_limited` | Nøkkelen har brukt opp sine 12 starter for denne timen. |
 | `not_permitted` ved en start | Nøkkelen kan bare lese. Slå på **Tillat å starte sikkerhetskopier** i kortet; ny tilkobling trengs ikke. Ved en avbrytelse betyr det at denne nøkkelen ikke startet kjøringen. |

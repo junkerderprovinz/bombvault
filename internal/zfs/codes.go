@@ -58,6 +58,11 @@ var AllCodes = []string{
 	"not-enough-space",
 	"safety-snapshot-failed",
 	"safety-name-too-long",
+	"dataset-exists",
+	"create-failed",
+	"new-dataset-not-visible",
+	"set-properties-failed",
+	"set-limits-failed",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their

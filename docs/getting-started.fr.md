@@ -40,7 +40,7 @@ Pas sur Unraid ? BombVault fonctionne aussi comme simple conteneur sur n'importe
 
 Ce qui change par rapport à Unraid :
 
-- **Pas de domaine flash/USB.** Il n'y a pas de clé de démarrage à capturer ou à restaurer, le domaine Flash des paramètres n'a donc rien à faire ici. À la place, le domaine Fichiers propose une suggestion en un clic, **Ajouter un préréglage : configuration système de l'hôte** (un jeu de fichiers `/etc` de départ, que vous relisez et modifiez avant d'enregistrer), comme équivalent générique utile.
+- **Pas de domaine flash/USB.** Il n'y a pas de clé de démarrage à capturer ou à restaurer, le domaine Flash des paramètres n'a donc rien à faire ici. À la place, le domaine Dossiers propose une suggestion en un clic, **Ajouter un préréglage : configuration système de l'hôte** (un jeu de fichiers `/etc` de départ, que vous relisez et modifiez avant d'enregistrer), comme équivalent générique utile.
 - **Pas de notifications natives Unraid.** Les canaux de notification propres à BombVault (webhook, alertes d'échec hors site, etc.) fonctionnent normalement ; seule la remontée spécifique au système de notification d'Unraid est omise, puisqu'un tel système n'existe pas ici.
 - **La sauvegarde de VM est optionnelle et exige un hôte libvirtd distinct joignable en SSH.** Voyez le bloc commenté du fichier compose. Un hôte Docker générique n'embarque aucun gestionnaire de VM.
 
@@ -68,14 +68,14 @@ Le modèle monte aussi pour vous le socket Docker, la flash (`/boot`) et la raci
 *Le tableau de bord après une première sauvegarde : ce qui est protégé, ce qui suit, et un journal en direct.*
 
 1. Ouvrez l'interface web à `https://<votre-ip-unraid>:3443` (certificat auto-signé par défaut).
-2. Dans **Paramètres**, activez les domaines de sauvegarde souhaités (Conteneurs, VMs, Flash, Config, Fichiers, Jeux de données ZFS) et choisissez une couleur d'accentuation.
-3. Dans l'onglet **Conteneurs**, choisissez un conteneur et cliquez sur **Sauvegarder** pour créer votre premier point de restauration. Les chemins de dépôt ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` et sont créés à la première sauvegarde.
-4. Configurez la planification depuis **Paramètres, Plannings**. Il existe une option en un clic pour *tout inclure dans le planning* pour les conteneurs et les VMs.
+2. Dans **Paramètres**, activez les domaines de sauvegarde souhaités (Conteneurs, VMs, Flash, Auto-sauvegarde, Dossiers, Jeux de données ZFS) et choisissez une couleur d'accentuation.
+3. Dans l'onglet **Conteneurs**, choisissez un conteneur et cliquez sur **Sauvegarder maintenant** pour créer votre premier point de restauration. Les chemins de dépôt ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` et sont créés à la première sauvegarde.
+4. Configurez la planification depuis **Paramètres, Plannings**. Il existe une option en un clic pour *Tout inclure dans le planning* pour les conteneurs et les VMs.
 
 !!! tip "Optionnel : choisir un ordre de sauvegarde"
-    Si certains conteneurs doivent toujours être sauvegardés avant d'autres (par exemple une base de données avant l'application qui l'utilise), ouvrez le panneau **ordre de sauvegarde** sur la page Conteneurs et faites-les glisser dans la séquence voulue. Les exécutions planifiées et multi-sélection la suivent alors ; tout ce que vous laissez sans ordre est sauvegardé du plus en retard au moins en retard, comme avant.
+    Si certains conteneurs doivent toujours être sauvegardés avant d'autres (par exemple une base de données avant l'application qui l'utilise), ouvrez le panneau **Ordre des sauvegardes** sur la page Conteneurs et faites-les glisser dans la séquence voulue. Les exécutions planifiées et multi-sélection la suivent alors ; tout ce que vous laissez sans ordre est sauvegardé du plus en retard au moins en retard, comme avant.
 
-!!! note "Vérification de l'intégration hôte"
+!!! note "Vérification d'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante, afin que vous puissiez confirmer que le conteneur est correctement branché avant de vous y fier.
 
 ## Simple vs Avancé
@@ -84,11 +84,11 @@ Le modèle monte aussi pour vous le socket Docker, la flash (`/boot`) et la raci
 
 *Les réglages n'ont pas de bouton Enregistrer : chaque changement est écrit au moment où vous le faites.*
 
-Par défaut, l'interface ne montre que l'essentiel (sauvegarder, restaurer, planifier). Utilisez le commutateur **Simple / Avancé** dans la barre latérale pour révéler les contrôles experts : rétention, copie hors site, hooks pré/post, restauration au niveau fichier, notifications, métriques Prometheus et les outils d'intégrité/maintenance. C'est une préférence par navigateur, désactivée par défaut, afin que les nouveaux venus obtiennent une interface épurée et que les utilisateurs avancés obtiennent tout.
+Par défaut, l'interface ne montre que l'essentiel (sauvegarder, restaurer, planifier). Utilisez le commutateur **Vue simple / Vue avancée** dans la barre latérale pour révéler les contrôles experts : rétention, copie hors site, hooks pré/post, restauration au niveau fichier, notifications, métriques Prometheus et les outils d'intégrité/maintenance. C'est une préférence par navigateur, désactivée par défaut, afin que les nouveaux venus obtiennent une interface épurée et que les utilisateurs avancés obtiennent tout.
 
 ## Étapes suivantes
 
 - Parcourez l'ensemble des **[Fonctionnalités](features.md)**.
 - Ajoutez un ou plusieurs réplicas **[Sauvegarde hors site et récupération](offsite-recovery.md)** (chaque domaine peut expédier vers plusieurs destinations à la fois) et sauvegardez votre kit de récupération.
-- Vous clonez une configuration ou migrez vers une nouvelle machine ? Emportez toute votre configuration avec la carte **Exporter et importer les réglages**. Voir [Configuration](configuration.md#portable-settings-export-and-import).
+- Vous clonez une configuration ou migrez vers une nouvelle machine ? Emportez toute votre configuration avec la carte **Exporter / importer les paramètres**. Voir [Configuration](configuration.md#portable-settings-export-and-import).
 - Un souci ? Voir **[Dépannage](troubleshooting.md)**.
