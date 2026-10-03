@@ -56,6 +56,7 @@ type diagMCP struct {
 	ActivityEvents     int   `json:"activityEvents"`
 	ActivityRefusals   int   `json:"activityRefusals"`
 	OAuthOn            bool  `json:"oauthOn"`
+	ActiveAPITokens    int   `json:"activeApiTokens"`
 	ActiveGrants       int   `json:"activeGrants"`
 	RegisteredClients  int   `json:"registeredClients"`
 }
@@ -82,8 +83,12 @@ func (h *Handler) mcpDiagnostics() (diagMCP, error) {
 		if k.RevokedAt != 0 {
 			continue
 		}
-		if k.Kind == store.MCPKindOAuth {
+		switch k.Kind {
+		case store.MCPKindOAuth:
 			d.ActiveGrants++
+			continue
+		case store.MCPKindAPI:
+			d.ActiveAPITokens++
 			continue
 		}
 		d.ActiveKeys++

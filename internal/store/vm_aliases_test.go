@@ -345,7 +345,7 @@ func TestUnlinkVMAlias(t *testing.T) {
 		t.Fatalf("RenameVMTargetWithAlias: %v", err)
 	}
 
-	if err := st.UnlinkVMAlias("windows-11", "", ""); err != nil {
+	if err := st.UnlinkVMAlias("windows-11", "", "", nil); err != nil {
 		t.Fatalf("UnlinkVMAlias: %v", err)
 	}
 	got, err := st.GetVMTargetByName("windows-11")
@@ -379,7 +379,7 @@ func TestUnlinkVMAliasWritesDefinitionAtomically(t *testing.T) {
 	if err := st.RenameVMTargetWithAlias("windows-11", "win11", "as-win11", ""); err != nil {
 		t.Fatalf("RenameVMTargetWithAlias: %v", err)
 	}
-	if err := st.UnlinkVMAlias("windows-11", "as-windows-11", ""); err != nil {
+	if err := st.UnlinkVMAlias("windows-11", "as-windows-11", "", nil); err != nil {
 		t.Fatalf("UnlinkVMAlias: %v", err)
 	}
 	got, err := st.GetVMTargetByName("windows-11")
@@ -411,7 +411,7 @@ func TestUnlinkVMAliasRefusesOccupiedName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := st.UnlinkVMAlias("windows-11", "", ""); err == nil {
+	if err := st.UnlinkVMAlias("windows-11", "", "", nil); err == nil {
 		t.Fatal("a name that has since been reused by a different entry must be refused")
 	}
 
@@ -446,7 +446,7 @@ func TestRenameAndUnlinkWriteTheVMsUUID(t *testing.T) {
 	if got, err := st.GetVMTargetByName("win11"); err != nil || got.UUID != "uuid-of-win11" {
 		t.Fatalf("after the rename: %+v, %v; want uuid-of-win11", got, err)
 	}
-	if err := st.UnlinkVMAlias("windows-11", "as-windows-11", "uuid-of-windows-11"); err != nil {
+	if err := st.UnlinkVMAlias("windows-11", "as-windows-11", "uuid-of-windows-11", nil); err != nil {
 		t.Fatalf("UnlinkVMAlias: %v", err)
 	}
 	if got, err := st.GetVMTargetByName("windows-11"); err != nil || got.UUID != "uuid-of-windows-11" {
@@ -464,7 +464,7 @@ func TestUnlinkVMAliasRefusesAnAliasWhoseEntryIsGone(t *testing.T) {
 	if _, err := st.AddVMAliasAt("windows-11", "no-such-entry", 100, "as-windows-11"); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.UnlinkVMAlias("windows-11", "as-windows-11", ""); err == nil {
+	if err := st.UnlinkVMAlias("windows-11", "as-windows-11", "", nil); err == nil {
 		t.Fatal("an unlink that moves no row back must fail")
 	}
 	if _, err := st.AliasByOldName("vm", "windows-11"); err != nil {
@@ -479,7 +479,7 @@ func TestUnlinkVMAliasRefusesUnknownName(t *testing.T) {
 	}
 	st := store.New(db)
 
-	if err := st.UnlinkVMAlias("never-linked", "", ""); err == nil {
+	if err := st.UnlinkVMAlias("never-linked", "", "", nil); err == nil {
 		t.Fatal("an unknown old name must be refused")
 	}
 }
@@ -498,7 +498,7 @@ func TestDeleteVMTargetRemovesItsOwnAliases(t *testing.T) {
 		t.Fatalf("RenameVMTargetWithAlias: %v", err)
 	}
 
-	if err := st.DeleteVMTarget("win11"); err != nil {
+	if err := st.DeleteVMTarget("win11", nil); err != nil {
 		t.Fatalf("DeleteVMTarget: %v", err)
 	}
 	if _, err := st.GetVMTargetByName("win11"); !errors.Is(err, sql.ErrNoRows) {
@@ -535,7 +535,7 @@ func TestDeleteVMTargetLeavesUnrelatedAliasAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := st.DeleteVMTarget("windows-11"); err != nil {
+	if err := st.DeleteVMTarget("windows-11", nil); err != nil {
 		t.Fatalf("DeleteVMTarget: %v", err)
 	}
 	alias, err := st.AliasByOldName("vm", "windows-11")
@@ -578,7 +578,7 @@ func TestUnlinkVMAliasScopedToVMDomainNotContainer(t *testing.T) {
 		t.Fatalf("RenameVMTargetWithAlias: %v", err)
 	}
 
-	if err := st.UnlinkVMAlias("shared-name", "", ""); err != nil {
+	if err := st.UnlinkVMAlias("shared-name", "", "", nil); err != nil {
 		t.Fatalf("UnlinkVMAlias: %v", err)
 	}
 

@@ -5,8 +5,16 @@
 // in the phone's list toolbar stands for the toolbar ones: it stays as wide as
 // its own segments, well short of the toolbar.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
+
+// A test can end while a route handler still waits on the real server. Closing
+// the context then disposes the response it is about to read, and Playwright
+// fails a test that already passed, so what the handler throws is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
 
 async function stage(page: Page): Promise<void> {
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -30,6 +38,7 @@ async function stage(page: Page): Promise<void> {
           lastBackup: null,
           lastBackupStarted: null,
           scheduleCadence: "",
+          placement: PLACEMENT,
         })),
       },
     }),

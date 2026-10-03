@@ -1,7 +1,9 @@
 package store
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -29,9 +31,13 @@ type FileSet struct {
 	// Repo is the ID of the set's own named repository (a RoleRepo row in
 	// offsite_targets), not a location. Empty means the Folders domain
 	// repository (Settings.FilesPath). The API tier turns the ID into a
-	// location (itemRepoPath). Only SetFileSetRepo writes it, so renaming a set
-	// cannot move its backups to another repository.
+	// location (itemRepoPath). CreateFileSet writes it with the row and
+	// WritePlacement afterwards, never UpdateFileSet, so renaming a set cannot
+	// move its backups to another repository.
 	Repo string
+	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
+	// takes the default's location at its first backup.
+	RepoChosen RepoChoice
 	// SelectedPaths is the set's optional tree selection, in the same flat
 	// encoding as the containers' backupPaths: absolute paths under the mount
 	// root are included roots, "!"-prefixed entries are deselected branches
@@ -47,6 +53,9 @@ type FileSet struct {
 // CreateFileSet inserts a new file set. An empty ID is assigned via newID();
 // a duplicate name fails (name is UNIQUE). Returns the stored FileSet.
 func (r *Repo) CreateFileSet(fs FileSet) (FileSet, error) {
+	if err := checkRepoChoice(fs.Repo, fs.RepoChosen); err != nil {
+		return FileSet{}, fmt.Errorf("CreateFileSet: %w", err)
+	}
 	if fs.ID == "" {
 		fs.ID = newID()
 	}
@@ -66,9 +75,9 @@ func (r *Repo) CreateFileSet(fs FileSet) (FileSet, error) {
 	// set sits on the domain repository while the caller believes it is on the
 	// chosen one.
 	_, err = r.db.Exec(`
-		INSERT INTO file_sets (id, name, path, excludes, enabled, created_at, repo)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		fs.ID, fs.Name, fs.Path, string(exJSON), boolInt(fs.Enabled), fs.CreatedAt, fs.Repo,
+		INSERT INTO file_sets (id, name, path, excludes, enabled, created_at, repo, repo_chosen)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		fs.ID, fs.Name, fs.Path, string(exJSON), boolInt(fs.Enabled), fs.CreatedAt, fs.Repo, fs.RepoChosen,
 	)
 	if err != nil {
 		return FileSet{}, fmt.Errorf("CreateFileSet: %w", err)
@@ -128,7 +137,7 @@ func (r *Repo) UpdateFileSetClearingSelection(fs FileSet) error {
 // ListFileSets returns all file sets ordered by name.
 func (r *Repo) ListFileSets() ([]FileSet, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, repo_chosen, created_at
 		FROM file_sets ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListFileSets: %w", err)
@@ -149,7 +158,7 @@ func (r *Repo) ListFileSets() ([]FileSet, error) {
 // GetFileSet returns the file set with the given id.
 func (r *Repo) GetFileSet(id string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, repo_chosen, created_at
 		FROM file_sets WHERE id = ?`, id)
 	return scanFileSet(row)
 }
@@ -157,7 +166,7 @@ func (r *Repo) GetFileSet(id string) (FileSet, error) {
 // GetFileSetByName returns the file set with the given (unique) name.
 func (r *Repo) GetFileSetByName(name string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, repo_chosen, created_at
 		FROM file_sets WHERE name = ?`, name)
 	return scanFileSet(row)
 }
@@ -187,26 +196,6 @@ func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("SetFileSetScheduleCadence: no file set %q", id)
-	}
-	return nil
-}
-
-// SetFileSetRepo writes a file set's per-item repository override. An empty
-// string puts the set back on the Folders domain repository
-// (Settings.FilesPath). It is separate from UpdateFileSet so a rename cannot
-// move the set's backups: unlike a lost schedule, a moved repository looks
-// like a working one until somebody misses a snapshot.
-//
-// repo is the ID of a named repository (a RoleRepo row in offsite_targets) and
-// is stored as given. The API tier checks that it exists and is switched on
-// (validateItemRepoID, itemRepoPath).
-func (r *Repo) SetFileSetRepo(id, repo string) error {
-	res, err := r.db.Exec(`UPDATE file_sets SET repo = ? WHERE id = ?`, repo, id)
-	if err != nil {
-		return fmt.Errorf("SetFileSetRepo: %w", err)
-	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return fmt.Errorf("SetFileSetRepo: no file set %q", id)
 	}
 	return nil
 }
@@ -243,6 +232,14 @@ func (r *Repo) DeleteFileSet(id string) error {
 	if err != nil {
 		return fmt.Errorf("DeleteFileSet begin: %w", err)
 	}
+	// The name, read before the row goes: its copy rule is keyed by identity
+	// (fileset:<Name>), not by id, and a rule surviving the set would block a
+	// later set from taking the freed name.
+	var name string
+	if err := tx.QueryRow(`SELECT name FROM file_sets WHERE id = ?`, id).Scan(&name); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+		return fmt.Errorf("DeleteFileSet name: %w", err)
+	}
 	if _, err := tx.Exec(`DELETE FROM runs WHERE target_id = ?`, id); err != nil {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet runs: %w", err)
@@ -255,6 +252,12 @@ func (r *Repo) DeleteFileSet(id string) error {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet: %w", err)
 	}
+	if name != "" {
+		if _, err := tx.Exec(`DELETE FROM offsite_copy_rules WHERE domain = 'files' AND identity = ?`, "fileset:"+name); err != nil {
+			tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+			return fmt.Errorf("DeleteFileSet copy rule: %w", err)
+		}
+	}
 	return tx.Commit()
 }
 
@@ -265,7 +268,7 @@ func scanFileSet(s scanner) (FileSet, error) {
 	// selected_paths is nullable and NULL for most rows; scanning it into a
 	// plain string would fail on every one of them.
 	var selJSON *string
-	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &selJSON, &fs.Repo, &fs.CreatedAt)
+	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &selJSON, &fs.Repo, &fs.RepoChosen, &fs.CreatedAt)
 	if err != nil {
 		return FileSet{}, fmt.Errorf("scanFileSet: %w", err)
 	}

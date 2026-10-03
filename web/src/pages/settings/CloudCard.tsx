@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { pushSaveWarnings } from "../../lib/placementCodes";
 import { SelectField } from "../../components/SelectField";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 
@@ -83,6 +84,7 @@ export function CloudCard({
         if (patch.s3Secret) setSecretSet(true);
         if (patch.restPassword) setPwSet(true);
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, r.warnings);
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");
@@ -115,7 +117,7 @@ export function CloudCard({
           has to be visible. */}
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
       {/* Plain text rather than an info bubble: it is the only place that
-          lists all four remote URL prefixes (s3:, rest:, b2:, sftp:) the
+          lists the remote URL prefixes (s3:, rest:, sftp:) the
           Backup Path fields accept, and people copy from it. */}
       <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
 

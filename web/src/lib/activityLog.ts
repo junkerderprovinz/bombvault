@@ -598,16 +598,22 @@ function isDomainOpKind(kind: string): boolean {
   return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
-/** withMcpOrigin names the key behind a run an assistant started. Every kind
- *  gets the suffix, so a prune or an off-site copy an MCP start caused reads
- *  the same way as the backup. */
-function withMcpOrigin(resolveName: ResolveName, run: Run, line: string): string {
-  if (run.startedVia !== "mcp") return line;
-  if (!run.startedViaLabel) return resolveName("activityLog.viaMcpUnknownKey", { line });
+/** The suffixes that name what started a run from outside the web interface. */
+const ORIGIN_SUFFIX = {
+  mcp: { named: "activityLog.viaMcp", revoked: "activityLog.viaMcpRevoked", unknown: "activityLog.viaMcpUnknownKey" },
+  api: { named: "activityLog.viaApi", revoked: "activityLog.viaApiRevoked", unknown: "activityLog.viaApiUnknownKey" },
+} as const;
+
+/** withOrigin names the MCP key or API token behind a run, or Home Assistant.
+ *  Every kind gets the suffix, so a prune or an off-site copy such a start
+ *  caused reads the same way as the backup. */
+function withOrigin(resolveName: ResolveName, run: Run, line: string): string {
+  if (run.startedVia === "mqtt") return resolveName("activityLog.viaHomeAssistant", { line });
+  if (run.startedVia !== "mcp" && run.startedVia !== "api") return line;
+  const suffix = ORIGIN_SUFFIX[run.startedVia];
+  if (!run.startedViaLabel) return resolveName(suffix.unknown, { line });
   const key = run.startedViaLabel;
-  return run.startedViaRevoked
-    ? resolveName("activityLog.viaMcpRevoked", { line, key })
-    : resolveName("activityLog.viaMcp", { line, key });
+  return run.startedViaRevoked ? resolveName(suffix.revoked, { line, key }) : resolveName(suffix.named, { line, key });
 }
 
 /** runDomain is the filter domain of a run: the target id of a domain-wide
@@ -667,7 +673,7 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, superseded: Se
       runId: run.id,
       atMs: run.finishedAt * 1000,
       status,
-      text: withMcpOrigin(resolveName, run, text),
+      text: withOrigin(resolveName, run, text),
       domain,
       kind: asLogKind(run.kind),
       live: false,

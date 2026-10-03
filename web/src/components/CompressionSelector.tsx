@@ -15,17 +15,21 @@ export function CompressionSelector({
   value,
   onChange,
   disabled,
+  lockedReason,
 }: {
   value: Compression;
   onChange: (next: Compression) => void;
   disabled?: boolean;
+  /** Why the choice is not this repository's to make. It joins the label's
+   *  (i), and the selector is locked. */
+  lockedReason?: string;
 }) {
   const { t } = useT();
   return (
     <div className="flex items-center justify-between gap-2 flex-wrap">
       <span className="flex items-center gap-1 text-xs text-carbon-textSub">
         {t("settings.compression")}
-        <InfoBubble tip={t("settings.compressionInfo")} />
+        <InfoBubble tip={lockedReason ? `${t("settings.compressionInfo")} ${lockedReason}` : t("settings.compressionInfo")} />
       </span>
       <Selector
         items={MODES.map(({ id, labelKey, Glyph }) => ({ id, label: t(labelKey), icon: <Glyph /> }))}
@@ -34,7 +38,7 @@ export function CompressionSelector({
         select="one"
         active={value}
         onChange={(id) => onChange(id as Compression)}
-        disabled={disabled}
+        disabled={disabled || lockedReason !== undefined}
       />
     </div>
   );

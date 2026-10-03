@@ -31,7 +31,7 @@ Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) 
 
 Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
 
-Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Stockage, Chemins de sauvegarde**. Chaque champ de chemin a aussi un commutateur **Local / Distant** intégré : un chemin peut être un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) au lieu d'un dossier local, et la sauvegarde y va alors directement, sans copie locale séparée ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories).
+Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Stockage, Chemins de sauvegarde**. Chaque champ de chemin a aussi un commutateur **Local / Distant** intégré : un chemin peut être un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) au lieu d'un dossier local, et la sauvegarde y va alors directement, sans copie locale séparée ; voir [Dépôts primaires distants](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Vérification d'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
@@ -84,7 +84,7 @@ Le modèle ajoute `--add-host=host.docker.internal:host-gateway` afin que le con
 
 Configurez un réplica hors site dans la page **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
 
-- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 n'a pas de backend natif ici : on le joint via son point de terminaison S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), avec l'ID de clé et la clé d'application comme identifiants S3.
 - Les **identifiants cloud partagés** sont stockés chiffrés sous Paramètres, Accès cloud, Identifiants cloud partagés.
 - **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Intégrations, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
 - **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux, en plus d'un dépôt primaire (généralement local). Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
@@ -113,4 +113,4 @@ Chaque élément peut avoir sa propre sensibilité et son propre minimum de noti
 La carte **Exporter / importer les paramètres** sur la page Paramètres, Système écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
 
 !!! warning "L'export peut contenir des identifiants"
-    Vous choisissez d'inclure ou non les identifiants hors site et de notification dans le fichier. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.
+    Vous choisissez d'inclure ou non les identifiants hors site, de notification et du broker MQTT dans le fichier. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.

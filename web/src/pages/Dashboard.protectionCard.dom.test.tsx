@@ -23,6 +23,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     verifiedDetail: "",
     drillDetail: "",
     offsiteConfigured: false,
+    offPremisesCovered: false,
     offsiteImmutable: false,
     lastTamperAt: 0,
     lastTamperOK: false,
@@ -81,6 +82,11 @@ describe("ProtectionCard, off-site", () => {
       domain({ domain: "flash", offsiteConfigured: true }),
     ]);
     expect(screen.getAllByText(/No off-site copy/)).toHaveLength(2);
+  });
+
+  it("stays quiet when every item already lives off the premises", () => {
+    renderCard([domain({ offPremisesCovered: true })]);
+    expect(screen.queryByText(/No off-site copy/)).toBeNull();
   });
 });
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -31,9 +32,10 @@ func validOffsiteDomain(domain string) bool {
 // An existing primary keeps its id, creation time and credential set. Without
 // one, an additional target already on the repo becomes the primary, so the
 // domain does not replicate there twice, and failing that a new row is created.
-// When the domain's off-site repo is cleared, the primary is deleted so
-// offsiteRepoFor cannot return a stale repo. Other additional targets sort after
-// it and are never touched here.
+// When the domain's off-site repo is cleared, the primary is switched off
+// rather than deleted: its copy rules, observations and direct repository name
+// it by id, and filling the field again brings back the same target. Other
+// additional targets sort after it and are never touched here.
 //
 // The storage class comes from the cloud credentials. If they cannot be
 // decoded it stays empty, which offsiteModeForTarget treats as the global
@@ -56,10 +58,12 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 
 	repo := offsiteRepoFromSettings(domain, settings)
 	if repo == "" {
-		if primary != nil {
-			return s.store.DeleteOffsiteTarget(primary.ID)
+		if primary == nil || !primary.Enabled {
+			return nil
 		}
-		return nil
+		primary.Enabled = false
+		_, err := s.store.UpsertOffsiteTarget(*primary)
+		return err
 	}
 	if primary == nil {
 		for i := range targets {
@@ -71,6 +75,8 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	}
 
 	t := settingsOffsiteTarget(domain, settings, repo)
+	// Unreadable cloud credentials leave the class empty, which
+	// offsiteModeForTarget reads as the global class.
 	if c, cErr := s.decodeCloud(settings); cErr == nil {
 		t.StorageClass = c.S3StorageClass
 	}
@@ -147,8 +153,9 @@ func (s *Service) MoveTargetsOffPrimarySlot() (int, error) {
 // moveTargetsOffPrimarySlot moves every target but the primary off sort order
 // 0, which a settings save treats as the primary, and returns how many it
 // moved. The primary is the row on the repo the domain's off-site setting
-// names, or the oldest row at 0 when none is; a domain without the setting has
-// none.
+// names, or the oldest row at 0 when none is. A domain without the setting
+// keeps the oldest switched-off row at 0, the one a cleared field leaves behind
+// for the next fill.
 func (s *Service) moveTargetsOffPrimarySlot(settings store.Settings) (int, error) {
 	moved := 0
 	for _, d := range offsiteConfigDomains {
@@ -163,7 +170,7 @@ func (s *Service) moveTargetsOffPrimarySlot(settings store.Settings) (int, error
 			if t.SortOrder != 0 {
 				continue
 			}
-			if keep < 0 && repo != "" && t.Repo == repo {
+			if keep < 0 && (repo != "" && t.Repo == repo || repo == "" && !t.Enabled) {
 				keep = len(slot)
 			}
 			slot = append(slot, t)
@@ -198,19 +205,24 @@ func (s *Service) syncAllPrimaryOffsiteTargets(settings store.Settings) {
 	}
 }
 
-// offsiteSourcePrefix starts a source that names one off-site target,
-// "offsite:<id>". The bare source "offsite" means the domain's primary target.
+// offsiteSourcePrefix starts a source that names one off-site target by id. The
+// bare source "offsite" names the domain's first enabled target.
 const offsiteSourcePrefix = "offsite:"
 
+var (
+	errNoOffsiteRepo        = errors.New("no off-site repo configured for this domain")
+	errUnknownOffsiteTarget = errors.New("no such off-site target in this domain")
+)
+
 // isOffsiteSource reports whether a browse, restore, delete or prune source
-// addresses an off-site repo in either form. Call sites use it instead of
-// comparing against "offsite" so the id form works everywhere.
+// addresses an off-site repo, in either form.
 func isOffsiteSource(source string) bool {
 	return source == "offsite" || strings.HasPrefix(source, offsiteSourcePrefix)
 }
 
-// offsiteTargetIDFromSource returns the id of an "offsite:<id>" source as is,
-// or "" for any other source.
+// offsiteTargetIDFromSource returns the id an "offsite:<id>" source carries, or
+// "" for any other source. Callers that branch on the id resolve the source
+// with offsiteTargetForSource first.
 func offsiteTargetIDFromSource(source string) string {
 	if id, ok := strings.CutPrefix(source, offsiteSourcePrefix); ok {
 		return id
@@ -218,10 +230,9 @@ func offsiteTargetIDFromSource(source string) string {
 	return ""
 }
 
-// validOffsiteTargetID reports whether id looks like an id from store.newID
-// (lowercase hex), so a malformed query value never ends up in a source. A
-// well-formed id that matches no target is harmless: offsiteTargetForSource
-// falls back to the primary.
+// validOffsiteTargetID reports whether id has the shape store.newID mints: up
+// to 64 lowercase hex characters. It keeps a malformed token out of a source
+// string; whether the id names a target is offsiteTargetForSource's question.
 func validOffsiteTargetID(id string) bool {
 	if len(id) == 0 || len(id) > 64 {
 		return false
@@ -234,44 +245,43 @@ func validOffsiteTargetID(id string) bool {
 	return true
 }
 
-// offsiteTargetForSource resolves the off-site target a source addresses in a
-// domain:
-//   - "offsite" is the primary, the first enabled target
-//   - "offsite:<id>" is the enabled target with that id; an unknown id falls
-//     back to the primary so a stale id cannot strand a restore
-//   - without any target rows, the target is built from the Settings columns
-//
-// ok is false for a non-offsite source or a domain with no off-site repo.
-func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source string) (store.OffsiteTarget, bool) {
+// offsiteTargetForSource resolves the destination a source addresses. Bare
+// "offsite" is the first enabled target; "offsite:<id>" is that row among all of
+// the domain's targets, switched off or not, and nothing else.
+func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source string) (store.OffsiteTarget, error) {
 	if !isOffsiteSource(source) {
-		return store.OffsiteTarget{}, false
+		return store.OffsiteTarget{}, errNoOffsiteRepo
 	}
-	targets := s.offsiteTargetsFor(domain)
-	if id := offsiteTargetIDFromSource(source); id != "" {
-		for _, t := range targets {
-			if t.ID == id {
-				return t, true
-			}
+	if source != "offsite" {
+		t, ok, err := s.store.GetOffsiteTarget(offsiteTargetIDFromSource(source))
+		if err != nil {
+			return store.OffsiteTarget{}, err
 		}
+		if !ok || t.Domain != domain {
+			return store.OffsiteTarget{}, errUnknownOffsiteTarget
+		}
+		return t, nil
 	}
-	if len(targets) > 0 {
-		return targets[0], true
+	if targets := s.offsiteTargetsFor(domain); len(targets) > 0 {
+		return targets[0], nil
 	}
+	// No target row: the one target the settings columns describe.
 	loc := offsiteRepoFromSettings(domain, settings)
 	if loc == "" {
-		return store.OffsiteTarget{}, false
+		return store.OffsiteTarget{}, errNoOffsiteRepo
 	}
-	return settingsOffsiteTarget(domain, settings, loc), true
+	return settingsOffsiteTarget(domain, settings, loc), nil
 }
 
-// offsiteSourceImmutable reports whether the target a source addresses is
-// append-only. When no target resolves it falls back to the domain's Settings
-// flag.
-func (s *Service) offsiteSourceImmutable(settings store.Settings, domain, source string) bool {
-	if target, ok := s.offsiteTargetForSource(settings, domain, source); ok {
-		return target.Immutable
+// offsiteSourceImmutable reports whether the destination a source addresses is
+// flagged append-only. A source that resolves to no target is an error, so a
+// delete path refuses instead of treating it as writable.
+func (s *Service) offsiteSourceImmutable(settings store.Settings, domain, source string) (bool, error) {
+	t, err := s.offsiteTargetForSource(settings, domain, source)
+	if err != nil {
+		return false, err
 	}
-	return offsiteImmutableFor(domain, settings)
+	return t.Immutable, nil
 }
 
 // primaryOffsiteTarget returns the domain's first enabled off-site target in

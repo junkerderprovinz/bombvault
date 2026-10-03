@@ -305,7 +305,7 @@ func TestDeleteBackupsRefusesWhenTheEntrysFormerNamesCannotBeRead(t *testing.T) 
 		svc, eng := forgetService(t, st, "containers", forgetCase{local: []restic.Snapshot{own, pre}})
 		breakAliasReads(t, db)
 
-		refused(t, svc.DeleteBackups(context.Background(), "radarr"), eng)
+		refused(t, svc.DeleteBackups(context.Background(), "radarr", ""), eng)
 		if _, err := st.GetTargetByContainer("radarr"); err != nil {
 			t.Fatalf("the row must stay: %v", err)
 		}

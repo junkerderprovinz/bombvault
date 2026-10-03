@@ -269,7 +269,7 @@ func TestAContainerWhoseRepositoryIsSwitchedOffLeavesTheOthersToImport(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("sonarr", off.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "sonarr"}, &store.HomeWrite{Repo: off.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	got, err := s.ScanAppdataBackup(context.Background(), src)

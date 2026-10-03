@@ -31,7 +31,7 @@ Monta il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) co
 
 Anche i backup dei dataset ZFS hanno bisogno di questa modalità: l'host monta lo snapshot di un dataset solo dopo l'avvio del container. Vedi [Dataset ZFS](zfs-datasets.md).
 
-I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Archiviazione, Percorsi di backup**. Ogni campo percorso ha anche un interruttore **Locale / Remoto** integrato: un percorso può essere un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) invece di una cartella locale, e il backup va direttamente lì, senza una copia locale separata; vedi [Repository primari remoti](offsite-recovery.md#remote-primary-repositories).
+I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Archiviazione, Percorsi di backup**. Ogni campo percorso ha anche un interruttore **Locale / Remoto** integrato: un percorso può essere un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) invece di una cartella locale, e il backup va direttamente lì, senza una copia locale separata; vedi [Repository primari remoti](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verifica integrazione host"
     Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti.
@@ -84,7 +84,7 @@ Il template aggiunge `--add-host=host.docker.internal:host-gateway` così il con
 
 Configura una replica off-site nella pagina **Impostazioni, Off-site**. Vedi [Off-site e ripristino](offsite-recovery.md) per il flusso di lavoro completo (immutabile/append-only, tamper testing ed esercitazioni DR). In breve:
 
-- **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 qui non ha un backend nativo: si raggiunge tramite il suo endpoint S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), con l'ID chiave e la chiave applicativa come credenziali S3.
 - **Le credenziali cloud condivise** vengono memorizzate cifrate sotto Impostazioni, Accesso cloud, Credenziali cloud condivise.
 - **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Integrazioni, SSH dell'host** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
 - **Copia off-site:** BombVault replica i nuovi snapshot con `restic copy` su base best-effort, in aggiunta a un repository primario (di solito locale). Ogni dominio ha il proprio calendario off-site, più un pulsante **Replica ora**.
@@ -113,4 +113,4 @@ Ogni elemento può avere una propria sensibilità e un proprio minimo di notific
 La scheda **Esporta / importa impostazioni** nella pagina Impostazioni, Sistema scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
 
 !!! warning "L'esportazione può contenere credenziali"
-    Scegli tu se includere le credenziali off-site e di notifica nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.
+    Scegli tu se includere le credenziali off-site, di notifica e del broker MQTT nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.

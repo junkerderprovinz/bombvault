@@ -46,6 +46,8 @@ type Announce struct {
 type Identity struct {
 	Name    string `json:"name,omitempty"`
 	Version string `json:"version,omitempty"`
+	// Kind is empty for a BombVault instance and "android" for the app.
+	Kind string `json:"kind,omitempty"`
 }
 
 // Sibling is another group member as the relay makes it visible, with its

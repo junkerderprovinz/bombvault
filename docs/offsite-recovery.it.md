@@ -1,5 +1,8 @@
 # Off-site e ripristino
 
+!!! note "Le copie off-site attendono dopo una ricostruzione"
+    Quando il passo 4 ricostruisce voci senza le vecchie impostazioni, la replica off-site di quei domini si mette in pausa finché la collocazione predefinita non viene confermata. Vedi [Collocazione per elemento](#placement).
+
 I backup locali ti proteggono da un container perso o da un aggiornamento andato male. La replica off-site e un kit di ripristino testato ti proteggono dall'intera macchina, dal ransomware o da un incendio. Questa pagina copre la replica off-site, il rendere quella copia a prova di manomissione, il dimostrare di poter ripristinare e il recuperare quando BombVault stesso non c'è più.
 
 ## Replica off-site
@@ -12,12 +15,42 @@ Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Impost
 - **I limiti di banda** (Impostazioni, Off-site) limitano la velocità di upload/download di restic così la replica non satura la tua WAN.
 - Un **indicatore di replica** mostra quale dominio sta replicando mentre è in corso (sulla sua pagina e sulla Dashboard). È un indicatore attivo, non una barra di percentuale, perché `restic copy` non espone alcun progresso leggibile da una macchina.
 
-!!! note "Ripristina direttamente da off-site"
-    Ogni browser dei backup ha un interruttore **Locale / Off-site**, così se un repo locale è perso o corrotto puoi elencare e ripristinare direttamente dalla replica off-site. L'eliminazione è per sorgente: rimuovere un backup interessa solo la copia che stai visualizzando.
+!!! note "Ripristina da qualsiasi luogo"
+    Ogni container, VM, set di file, la flash e la configurazione dell'app elencano i propri backup come un'unica cronologia su tutti i luoghi in cui si trova un backup. Un backup copiato su B2 compare una sola volta, contrassegnato con ogni luogo che lo contiene. Un ripristino usa il primo luogo che riesce a raggiungere, a partire dal repository su cui l'elemento viene scritto, e puoi scegliere un altro luogo per ogni riga. I luoghi off-site vengono letti solo quando li apri. L'eliminazione in un luogo controlla prima gli altri e dice se era l'ultima copia.
+
+## Collocazione per elemento {#placement}
+
+Ogni scheda di container, VM e set di file ha una riga **Collocazione** con tre segmenti:
+
+- **Locale** scrive l'elemento sul repository mostrato sotto **Salvato su** e non lo copia da nessuna parte. Usalo per dati che hanno già una seconda copia, per esempio una condivisione che vive su un NAS.
+- **Locale + off-site** lo scrive anche lì e lo copia sulle destinazioni spuntate sotto **Copia su**, un chip per ogni destinazione off-site del dominio. Togli la spunta a un chip e quella destinazione non riceve più nulla di nuovo da questo elemento.
+- **Solo off-site** scrive l'elemento direttamente nel luogo sotto **Invia a**: un repository diretto accanto a una destinazione off-site, oppure un repository remoto che hai impostato in Impostazioni, Archiviazione, Repository.
+
+La posizione è fissa dal primo backup dell'elemento in poi, perché BombVault non sposta mai i backup tra repository. Le copie possono cambiare in qualsiasi momento. Una destinazione che non riceve più un elemento mantiene le copie che ha e le pota secondo la propria conservazione alla prossima esecuzione off-site del dominio; **Elimina in B2** sulla scheda le rimuove subito. Quando alcune di quelle copie non esistono da nessun'altra parte, la conferma le elenca per data e chiede il nome dell'elemento. Dalle destinazioni append-only non si può eliminare.
+
+Sotto la riga la scheda indica dove va l'elemento e cosa c'è realmente: quante sedi lo custodiscono, quando ogni destinazione è stata vista l'ultima volta, e se il 3-2-1 è rispettato. Una sede è il server con i dati originali, ogni destinazione off-site e ogni repository contrassegnato **Fuori sede**. BombVault controlla le copie e le sedi; non controlla la parte «due supporti» del 3-2-1.
+
+### Collocazioni predefinite
+
+Impostazioni, Archiviazione, **Collocazioni predefinite** ha una riga per dominio con gli stessi tre segmenti. Le copie si applicano subito a ogni elemento senza una scelta propria, e alle cartelle di progetto degli stack Compose. La posizione si applica a un nuovo elemento al suo primo backup; cambiarla non sposta nessun backup. Prima di salvare, la riga elenca ogni destinazione che guadagna o perde elementi e quanti snapshot significa. **Applica agli elementi senza backup** riporta al valore predefinito ogni elemento che non ha ancora un backup.
+
+Una nuova destinazione off-site riceve ogni elemento non impostato su Locale. La finestra che la aggiunge indica quanti elementi e, dove noto, quanta cronologia significa, e offre di escludere gli elementi già esclusi dalle altre destinazioni.
+
+### Repository diretti
+
+Scegliere il repository diretto di una destinazione sotto Solo off-site apre una finestra con una posizione suggerita accanto alla destinazione, per esempio `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, e un test di connessione che non crea nulla. **Crea e usa** crea il repository e vi punta l'elemento. Un repository diretto prende la chiave, la classe di archiviazione, i limiti, l'impostazione append-only e la conservazione della destinazione, e cambia insieme a essi; la scheda Repository lo mostra in sola lettura. Quando una nuova chiave della destinazione non riesce ad aprirlo, il repository diretto mantiene la chiave che ha e il salvataggio lo segnala. I suoi snapshot portano il tag `bv:direct`, e ogni altro passaggio di conservazione li risparmia, così un repository diretto che ha perso il collegamento con la sua destinazione non invecchia mai secondo le regole locali. Si accede a B2 tramite il suo endpoint S3, inserendo l'ID chiave e la chiave applicativa come credenziali S3; una chiave limitata alla cartella propria della destinazione non riesce a raggiungere la cartella accanto, quindi limita invece la chiave alla cartella sopra la destinazione.
+
+### Fuori sede
+
+Un repository con nome può essere contrassegnato **Fuori sede** sulla scheda Repository. I repository remoti partono contrassegnati; disattivalo per un rest-server nello stesso edificio. Il contrassegno conta solo le sedi e il 3-2-1 sulle schede. Non cambia nessuna copia.
+
+### Dopo una ricostruzione
+
+Le scelte di copia vivono nelle impostazioni di BombVault stesso. Dopo una ricostruzione tramite Scopri backup senza un `/config` ripristinato sono perse, e copiare tutto rimanderebbe su B2 gli elementi che avevi escluso. La replica off-site di ogni dominio ricostruito quindi si mette in pausa. La Dashboard lo mostra in ambra, e Collocazioni predefinite offre **Conferma valore predefinito** con un'anteprima di cosa copia la prossima esecuzione e i nomi nei backup che non hanno una voce, che puoi escludere lì. Solo la conferma termina la pausa; importare un file di impostazioni riporta regole e valori predefiniti ma non la termina.
 
 ## Repository primari remoti {#remote-primary-repositories}
 
-Il percorso di backup di un dominio (Impostazioni, Archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
+Il percorso di backup di un dominio (Impostazioni, Archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
 
 Ognuno dei sei campi di percorso (Container, VM, Flash, Auto-backup, Cartelle, Dataset ZFS) ha subito accanto un interruttore **Locale / Remoto**:
 

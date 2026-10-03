@@ -31,7 +31,7 @@ Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som 
 
 Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
 
-Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Lagring, Säkerhetskopiesökvägar**. Varje sökvägsfält har också en omkopplare **Lokal / Fjärran** alldeles intill: en sökväg kan vara en restic-fjärr (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stället för en lokal mapp, och då säkerhetskopieras det direkt dit utan separat lokal kopia; se [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
+Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Lagring, Säkerhetskopiesökvägar**. Varje sökvägsfält har också en omkopplare **Lokal / Fjärran** alldeles intill: en sökväg kan vara en restic-fjärr (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stället för en lokal mapp, och då säkerhetskopieras det direkt dit utan separat lokal kopia; se [Fjärranslutna primära arkiv](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.
@@ -84,7 +84,7 @@ Mallen lägger till `--add-host=host.docker.internal:host-gateway` så att conta
 
 Sätt upp en off-site-replik på sidan **Inställningar, Extern**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
 
-- **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
+- **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`). Backblaze B2 har ingen inbyggd backend här: nå den via dess S3-slutpunkt (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), med nyckel-ID och programnyckel som S3-uppgifter.
 - **Delade molnautentiseringsuppgifter** lagras krypterade under Inställningar, Molnåtkomst, Delade molnautentiseringsuppgifter.
 - **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, Integrationer, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
 - **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis, ovanpå ett (oftast lokalt) primärt repo. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
@@ -113,4 +113,4 @@ Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ i
 Kortet **Exportera / importera inställningar** på sidan Inställningar, System skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
 
 !!! warning "Exporten kan innehålla uppgifter"
-    Du väljer om off-site- och aviseringsuppgifterna ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.
+    Du väljer om off-site-, aviserings- och MQTT-broker-uppgifterna ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.

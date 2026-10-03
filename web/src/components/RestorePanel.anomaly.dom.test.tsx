@@ -18,7 +18,11 @@ class NoopEventSource {
 }
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
-const snap = (id: string, time: string) => ({ id, time, paths: [], tags: ["container:plex"], hostname: "tower" });
+const snap = (key: string, time: string) => ({
+  key,
+  time,
+  places: [{ place: "local", snapshotIds: [key], tags: ["container:plex"] }],
+});
 
 const SUMMARY: AnomalySummary = {
   enabled: true,
@@ -71,10 +75,11 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listSnapshots: () =>
+    getTimeline: () =>
       Promise.resolve({
         ok: true,
-        snapshots: [snap("bad0000000bb", "2026-09-02T02:00:00Z"), snap("good000000aa", "2026-09-01T02:00:00Z")],
+        places: [{ place: "local", label: "", kind: "home", remote: false, enabled: true, appendOnly: false, state: "read" }],
+        rows: [snap("bad0000000bb", "2026-09-02T02:00:00Z"), snap("good000000aa", "2026-09-01T02:00:00Z")],
       }),
     listDbDumps: () => Promise.resolve({ ok: true, dumps: dumpsOnServer }),
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
@@ -107,8 +112,9 @@ async function renderPanel(over: Partial<PanelProps> = {}) {
   });
 }
 
+// A timeline row is a rounded surface; a dump row keeps its line.
 function rowOf(shortId: string): HTMLElement {
-  return screen.getByText(shortId).closest("div.border-b") as HTMLElement;
+  return screen.getByText(shortId).closest("div.border-b, div.rounded-control") as HTMLElement;
 }
 
 afterEach(() => {

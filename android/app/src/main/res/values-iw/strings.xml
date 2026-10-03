@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">נשמר בהורדות: %1$s</string>
+    <string name="save_failed">לא ניתן היה לשמור את הקובץ: %1$s</string>
+    <string name="save_untrusted">תעודת השרת השתנתה. פתח אותו שוב ממסך הפתיחה כדי לבדוק את התעודה החדשה.</string>
+    <string name="no_app">אין אפליקציה בטלפון הזה שפותחת את הקישור הזה.</string>
+</resources>

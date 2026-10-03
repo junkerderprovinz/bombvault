@@ -110,6 +110,57 @@ describe("the settings search index", () => {
     for (const row of rows) expect(card?.rows).toContainEqual(row);
   });
 
+  it.each(["ApiTokensCard", "HomeAssistantCard", "NetworkCard"])(
+    "has every caption and (i) of the card the integrations page mounts as %s",
+    (file) => {
+      expect(region("integrations")).toContain(`<${file}`);
+      const source = readFileSync(join(HERE, `${file}.tsx`), "utf8");
+      const [title] = cardTitles(source);
+      const card = SETTINGS_INDEX.integrations.find((c) => c.title === title);
+      expect(card, `${title} on integrations`).toBeDefined();
+      // A bubble whose text is built in a variable leaves only its caption to compare.
+      const rows = [
+        ...source.matchAll(/<(?:ToggleRow|Toggle)\s+label=\{t\("([\w.]+)"\)\}(?:\s*hint=\{t\("([\w.]+)"\))?/g),
+        ...source.matchAll(/\{t\("([\w.]+)"\)\}\s*(?:<\/label>\s*)?<InfoBubble tip=\{(?:t\(|tLtr\(t, )"([\w.]+)"\)/g),
+        ...source.matchAll(/<label\b[^>]*>\s*\{t\("([\w.]+)"\)\}/g),
+      ].map(([, key, hint]) => ({ key, hint }));
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+      for (const { key, hint } of rows) {
+        const row = card?.rows.find((r) => r.key === key);
+        expect(row, `${key} on ${title}`).toBeDefined();
+        if (hint) expect(row?.hint, `the (i) of ${key}`).toBe(hint);
+      }
+    }
+  );
+
+  it("has every caption of the placement defaults card, its strip and its fields", () => {
+    expect(region("storage")).toContain("<PlacementDefaultsCard");
+    const card = SETTINGS_INDEX.storage.find((c) => c.title === "placementDefaults.title");
+    expect(card, "placementDefaults.title on storage").toBeDefined();
+    expect(card?.hint).toBe("placementDefaults.hint");
+    const sources = [
+      readFileSync(join(HERE, "PlacementDefaultsCard.tsx"), "utf8"),
+      readFileSync(join(HERE, "..", "..", "components", "placement", "PlacementBar.tsx"), "utf8"),
+    ];
+    const lib = readFileSync(join(HERE, "..", "..", "lib", "placement.ts"), "utf8");
+    const keys = [
+      ...sources.flatMap((source) => [...source.matchAll(/label=\{t\("([\w.]+)"\)\}/g)].map(([, key]) => key)),
+      ...sources.flatMap((source) => [...source.matchAll(/chips\(t\("([\w.]+)"\)\)/g)].map(([, key]) => key)),
+      ...sources.flatMap((source) => [...source.matchAll(/t\("(placementDefaults\.copyLine\w*)"\)/g)].map(([, key]) => key)),
+      ...[...lib.matchAll(/\["[\w-]+", "(placement\.seg\w+)"\]/g)].map(([, key]) => key),
+    ];
+    expect(keys.length).toBeGreaterThanOrEqual(10);
+    for (const key of keys) expect(card?.rows.map((r) => r.key), key).toContain(key);
+  });
+
+  it("has the off-premises switch of the repositories card with its (i)", () => {
+    const source = readFileSync(join(HERE, "ReposCard.tsx"), "utf8");
+    const rows = [...source.matchAll(/\{t\("([\w.]+)"\)\}\s*<InfoBubble tip=\{t\("([\w.]+)"\)\}/g)].map(([, key, hint]) => ({ key, hint }));
+    expect(rows).toContainEqual({ key: "repos.offPremises", hint: "repos.offPremisesHint" });
+    const card = SETTINGS_INDEX.storage.find((c) => c.title === "repos.title");
+    for (const row of rows) expect(card?.rows).toContainEqual(row);
+  });
+
   it("indexes each switch and the extra-targets line of the retention cards with its (i)", () => {
     const source = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
     const rows = (title: string) => SETTINGS_INDEX.retention.find((c) => c.title === title)?.rows ?? [];

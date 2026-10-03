@@ -39,6 +39,8 @@ Because a backup stops things and rotates old restore points out, starts through
 
 A domain or Backup Everything start leaves out the items a limit holds back and names them in its answer. The web interface and the schedule are not limited by any of this. The hourly budget lives in memory, so a restart of BombVault resets it.
 
+Starts through the [API](api.md#errors) and from [Home Assistant](api.md#home-assistant) count toward the same limits per item as starts through MCP, and toward the retention guard.
+
 ## Switch it on {#switch-on}
 
 1. Open **Settings, Integrations, MCP server** and click the button of your client. A client that is not listed connects through **Other client**.
@@ -54,7 +56,7 @@ Each key has a tile of its own on the card. It shows the key's name, whether it 
 
 Next to its name, the tile shows the mark of the client the key was made for. A key made through **Other client**, or before the card listed clients, shows a key instead.
 
-**Log** on a tile opens what that key did. The backups it started come first, each with its state and a link to that run in the activity log on the dashboard. Below them are its calls, newest first, with the tool and what became of the call. A refusal says why: the key may only read, the retention guard held the backup back, another backup was already running, the same item, domain or pass was started through MCP a few minutes earlier, or the key sent too many requests. A cancel links to the run it was about.
+**Log** on a tile opens what that key did. The backups it started come first, each with its state and a link to that run in the activity log on the dashboard. Below them are its calls, newest first, with the tool and what became of the call. A refusal says why: the key may only read, the retention guard held the backup back, another backup was already running, the same item, domain or pass was started outside the web interface a few minutes earlier, or the key sent too many requests. A cancel links to the run it was about.
 
 BombVault keeps each key's entries for up to 30 days: the newest 500 successful starts and cancels, and next to them the newest 200 other calls (reads, refusals and errors). An assistant that keeps polling a running backup, or keeps retrying a refused call, cannot push the start of that backup out of the log. For each call it stores the tool, the outcome and the run a cancel named. It never stores what the assistant sent, and never the key or its fingerprint. The diagnostics bundle only counts the entries, and a settings export leaves them out.
 
@@ -256,7 +258,7 @@ Whatever an assistant reads goes to the AI provider behind it: item names, sched
 | `429` | Too many wrong keys from this address, or more than 120 requests a minute with one key. Wait a minute, and check whether the assistant is stuck in a loop. |
 | "certificate", "self-signed" or "unable to verify" errors | The client does not trust BombVault's certificate. See [TLS and certificates](#tls). |
 | `busy` | Another backup or maintenance job holds that domain. Try again when it has finished. |
-| `cooldown` | This item, domain or Backup Everything was started through MCP less than 15 minutes ago. |
+| `cooldown` | This item, domain or Backup Everything was started outside the web interface less than 15 minutes ago. |
 | `retention_guard` | One more MCP backup would leave only MCP-made restore points in a "keep last N" window, or the item already got 4 backups through MCP in the last 24 hours, failed and cancelled ones included. In the first case the next scheduled backup makes room, in the second the item is free again 24 hours after the oldest of those backups. Either way you can start it in the web interface. |
 | `rate_limited` | The key has used its 12 starts for this hour. |
 | `not_permitted` on a start | The key is read-only. Switch **Allow starting backups** on in the card; no reconnect needed. On a cancel it means the run was not started by this key. |

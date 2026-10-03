@@ -31,7 +31,7 @@ Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoa
 
 Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapshot van een dataset pas aan nadat de container is gestart. Zie [ZFS-datasets](zfs-datasets.md).
 
-Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Opslag, Back-uppaden**. Elk padveld heeft ook een schakelaar **Lokaal / Extern** ernaast: een pad kan een restic-remote zijn (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) in plaats van een lokale map, en dan wordt er rechtstreeks naartoe geback-upt zonder aparte lokale kopie; zie [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
+Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Opslag, Back-uppaden**. Elk padveld heeft ook een schakelaar **Lokaal / Extern** ernaast: een pad kan een restic-remote zijn (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) in plaats van een lokale map, en dan wordt er rechtstreeks naartoe geback-upt zonder aparte lokale kopie; zie [Externe primaire repositories](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host-integratiecontrole"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
@@ -84,7 +84,7 @@ De template voegt `--add-host=host.docker.internal:host-gateway` toe zodat de co
 
 Stel een off-site replica in op de pagina **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
 
-- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een back-uppad naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een back-uppad naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 heeft hier geen eigen backend: je bereikt het via zijn S3-eindpunt (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), met de sleutel-ID en de toepassingssleutel als S3-inloggegevens.
 - **Gedeelde cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Cloudtoegang, Gedeelde cloud-inloggegevens.
 - **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Integraties, Host-SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
 - **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis, bovenop een (meestal lokale) primaire repo. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.
@@ -113,4 +113,4 @@ Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze
 De kaart **Instellingen exporteren / importeren** op de pagina Instellingen, Systeem schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
 
 !!! warning "De export kan inloggegevens bevatten"
-    Je kiest of je de off-site en meldingsinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.
+    Je kiest of je de off-site-, meldings- en MQTT-brokerinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

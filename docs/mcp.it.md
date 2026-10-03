@@ -39,6 +39,8 @@ Poiché un backup ferma dei servizi e fa uscire vecchi punti di ripristino, gli 
 
 Un avvio di dominio o del Backup totale lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
 
+Gli avvii tramite l'[API](api.md#errors) e da [Home Assistant](api.md#home-assistant) contano negli stessi limiti per elemento degli avvii tramite MCP e nella protezione della conservazione.
+
 ## Attivarlo {#switch-on}
 
 1. Apri **Impostazioni, Integrazioni, Server MCP** e fai clic sul pulsante del tuo client. Un client che non è nell'elenco si collega tramite **Altro client**.
@@ -54,7 +56,7 @@ Ogni chiave ha una scheda sua nella card. Mostra il nome della chiave, se può a
 
 Accanto al nome, il riquadro mostra il logo del client per cui la chiave è stata creata. Una chiave creata tramite **Altro client**, o prima che la scheda elencasse i client, mostra invece una chiave.
 
-**Registro** su una scheda apre ciò che ha fatto quella chiave. Prima vengono i backup che ha avviato, ognuno con il suo stato e un link a quell'esecuzione nel registro attività della dashboard. Sotto ci sono le sue chiamate, le più recenti prima, con lo strumento e l'esito. Un rifiuto dice il motivo: la chiave può solo leggere, la protezione della conservazione ha trattenuto il backup, era già in corso un altro backup, l'elemento è stato salvato tramite MCP pochi minuti fa, oppure la chiave ha inviato troppe richieste. Un annullamento rimanda all'esecuzione a cui si riferiva.
+**Registro** su una scheda apre ciò che ha fatto quella chiave. Prima vengono i backup che ha avviato, ognuno con il suo stato e un link a quell'esecuzione nel registro attività della dashboard. Sotto ci sono le sue chiamate, le più recenti prima, con lo strumento e l'esito. Un rifiuto dice il motivo: la chiave può solo leggere, la protezione della conservazione ha trattenuto il backup, era già in corso un altro backup, un backup dell'elemento è stato avviato fuori dall'interfaccia web pochi minuti fa, oppure la chiave ha inviato troppe richieste. Un annullamento rimanda all'esecuzione a cui si riferiva.
 
 BombVault conserva le voci di ogni chiave per 30 giorni al massimo: gli ultimi 500 avvii e annullamenti riusciti e, accanto a questi, le ultime 200 altre chiamate (letture, rifiuti ed errori). Così un assistente che interroga di continuo un backup in corso, o che ripete una chiamata rifiutata, non può spingere il suo avvio fuori dal registro. Per ogni chiamata salva lo strumento, l'esito e l'esecuzione nominata da un annullamento. Non salva mai ciò che l'assistente ha inviato, né la chiave o la sua impronta. Il pacchetto di diagnostica conta soltanto le voci, e un'esportazione delle impostazioni le lascia fuori.
 
@@ -256,7 +258,7 @@ Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi de
 | `429` | Troppe chiavi sbagliate da questo indirizzo, oppure più di 120 richieste al minuto con una chiave. Aspetta un minuto e controlla che l'assistente non sia bloccato in un ciclo. |
 | Errori con "certificate", "self-signed" o "unable to verify" | Il client non si fida del certificato di BombVault. Vedi [TLS e certificati](#tls). |
 | `busy` | Un altro backup o un'attività di manutenzione occupa quel dominio. Riprova quando ha finito. |
-| `cooldown` | Questo elemento, questo dominio o il Backup totale è stato avviato tramite MCP meno di 15 minuti fa. |
+| `cooldown` | Questo elemento, questo dominio o il Backup totale è stato avviato fuori dall'interfaccia web meno di 15 minuti fa. |
 | `retention_guard` | Un altro backup MCP lascerebbe solo punti di ripristino MCP in una finestra "conserva gli ultimi N", oppure l'elemento ha già avuto 4 backup tramite MCP nelle ultime 24 ore, contando anche quelli falliti e annullati. Nel primo caso il prossimo backup pianificato fa spazio, nel secondo l'elemento torna libero 24 ore dopo il più vecchio di quei backup. In entrambi i casi puoi avviarlo dall'interfaccia web. |
 | `rate_limited` | La chiave ha usato i suoi 12 avvii di quest'ora. |
 | `not_permitted` su un avvio | La chiave è di sola lettura. Attiva **Consenti di avviare backup** nella scheda; non serve riconnettersi. Su un annullamento significa che l'esecuzione non è stata avviata da questa chiave. |

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -34,8 +36,15 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	// directory. The import checks repo paths against HostMountRoot, so it gets
 	// the production default.
 	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), HostMountRoot: "/host/user"}
-	svc := &Service{cfg: cfg, store: st}
-	return &Handler{cfg: cfg, store: st, svc: svc}, st
+	// An empty restic engine, not nil: the import preview lists each enabled
+	// domain's copy sources to describe the targets a file adds, and that
+	// walk reaches the engine even with nothing ever run here.
+	eng := &placementEngine{snaps: map[string][]restic.Snapshot{}, listErr: map[string]error{}, opens: map[string]bool{}, lists: map[string]int{}}
+	svc := &Service{cfg: cfg, store: st, engine: eng}
+	h := &Handler{cfg: cfg, store: st, svc: svc}
+	h.ha = h.newHomeAssistantBridge()
+	t.Cleanup(h.ha.Close)
+	return h, st
 }
 
 const (
@@ -187,6 +196,127 @@ func TestSettingsExportImportRoundTrip(t *testing.T) {
 	nc, err := dst.svc.NotifyConfig()
 	if err != nil || nc.MatrixToken != "matrixsecret" {
 		t.Fatalf("notify conf not re-encrypted/readable on dst: %+v (err=%v)", nc, err)
+	}
+}
+
+// TestImportRestoresTheFieldsCredentialAfterAClearAndRefill: a field cleared
+// before export must still hand its credential set back to the same target
+// once the field is filled in again after the import.
+func TestImportRestoresTheFieldsCredentialAfterAClearAndRefill(t *testing.T) {
+	h, st := newPortableHandler(t, appKeyA)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:offsite-containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
+	}
+	field, ok, err := st.FieldOffsiteTarget("containers")
+	if err != nil || !ok {
+		t.Fatalf("FieldOffsiteTarget: ok=%v err=%v", ok, err)
+	}
+	field.CredsRef = "set-b2"
+	if _, err := st.UpsertOffsiteTarget(field); err != nil {
+		t.Fatal(err)
+	}
+	wantID := field.ID
+
+	// Clear the field: the row stays, switched off, with its credentials.
+	s.ContainersOffsite = ""
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := doExport(t, h, "")
+	if env := doImport(t, h, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	// Fill the field again: the same row, with its credential set, must come back.
+	s, err = st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:offsite-containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
+	}
+
+	back, ok, err := st.FieldOffsiteTarget("containers")
+	if err != nil || !ok || back.ID != wantID || back.CredsRef != "set-b2" {
+		t.Fatalf("after refill: %+v (ok=%v err=%v), want id %s with CredsRef set-b2", back, ok, err, wantID)
+	}
+}
+
+// TestImportNormalizesAgainstTheFilesOwnRedactedField: a plain export redacts
+// a field location and its target row the same way, so the import must settle
+// sort order against the file's own field, not against the merged settings
+// value importedLocation may have kept at the destination's working location
+// for an unrelated row.
+func TestImportNormalizesAgainstTheFilesOwnRedactedField(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialInLocation(t, srcStore) // ContainersOffsite and tgt-1/tgt-2 -> locWithCreds
+	body, _ := doExport(t, src, "")       // plain export: locations redacted
+
+	// The destination already has a row for the domain's field under an id the
+	// file never mentions, so the imported tgt-1 lands under a fresh id: there is
+	// nothing in currentRepo to keep, and its stored location stays redacted.
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if _, err := dstStore.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "dst-only", Domain: "containers", Name: "Primary", Repo: "s3:dst-working", Enabled: true, CreatedAt: 500,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:dst-working"
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	field, ok, err := dstStore.FieldOffsiteTarget("containers")
+	if err != nil || !ok || field.ID != "tgt-1" {
+		t.Fatalf("FieldOffsiteTarget(containers) = %q ok=%v err=%v, want tgt-1 on sort_order 0", field.ID, ok, err)
+	}
+}
+
+func TestImportGivesSortOrderZeroBackToTheFieldsTarget(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	if _, err := srcStore.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "tgt-3", Domain: "containers", Name: "mesh: tower", Repo: "rest:http://tower:8000/containers", Enabled: true, CreatedAt: 3000,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("import = %v", env)
+	}
+	for id, want := range map[string]int{"tgt-1": 0, "tgt-2": 1, "tgt-3": 2} {
+		tg, ok, err := dstStore.GetOffsiteTarget(id)
+		if err != nil || !ok || tg.SortOrder != want {
+			t.Errorf("%s: sort_order %d (ok=%v err=%v), want %d", id, tg.SortOrder, ok, err, want)
+		}
 	}
 }
 
@@ -532,6 +662,60 @@ func TestImportDoesNotTouchRunHistory(t *testing.T) {
 	}
 	if len(before) != 0 || len(after) != 0 {
 		t.Fatalf("import must not create run history: before=%d after=%d", len(before), len(after))
+	}
+}
+
+// TestImportLogsWhenAFileIDCollidesAcrossRoles pins the case the role guard
+// leaves silent: a file that carries the same id in both its offsiteTargets
+// and namedRepos blocks meets a stored row of the other role, and the upsert
+// leaves that row alone. The import must say so, the way it already says so
+// for every other row it cannot apply, and both the target and the repository
+// must come out of the apply unchanged.
+func TestImportLogsWhenAFileIDCollidesAcrossRoles(t *testing.T) {
+	h, st := newPortableHandler(t, appKeyA)
+	target, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Primary", Repo: "s3:offsite-containers", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	buf := watchLog(t)
+	exp := settingsExport{
+		OffsiteTargets: []offsiteTargetView{
+			{ID: target.ID, Domain: "containers", Name: target.Name, Repo: target.Repo, Enabled: true},
+			{ID: repo.ID, Domain: "containers", Name: "claim-offsite", Repo: "s3:claim", Enabled: true},
+		},
+		NamedRepos: []offsiteTargetView{
+			{ID: repo.ID, Name: repo.Name, Repo: repo.Repo, Enabled: true},
+			{ID: target.ID, Name: "claim-repo", Repo: "backups/claim", Enabled: true},
+		},
+	}
+	if err := h.applyImport(context.Background(), exp); err != nil {
+		t.Fatal(err)
+	}
+
+	logged := buf.String()
+	if !strings.Contains(logged, `off-site target "claim-offsite" has the id of a named repository here`) {
+		t.Errorf("no log line for the repository's id claimed as an off-site target, got:\n%s", logged)
+	}
+	if !strings.Contains(logged, `repository "claim-repo" has the id of an off-site target here`) {
+		t.Errorf("no log line for the target's id claimed as a repository, got:\n%s", logged)
+	}
+
+	backTarget, ok, err := st.GetOffsiteTarget(target.ID)
+	if err != nil || !ok || backTarget.Name != target.Name || backTarget.Repo != target.Repo {
+		t.Fatalf("the off-site target was rewritten by the colliding repository entry: %+v, ok %v, %v", backTarget, ok, err)
+	}
+	backRepo, err := st.GetNamedRepo(repo.ID)
+	if err != nil || backRepo.Name != repo.Name || backRepo.Repo != repo.Repo {
+		t.Fatalf("the named repository was rewritten by the colliding target entry: %+v, %v", backRepo, err)
 	}
 }
 

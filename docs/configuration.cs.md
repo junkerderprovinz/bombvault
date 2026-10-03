@@ -31,7 +31,7 @@ Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je
 
 Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
-Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Úložiště, Zálohovací cesty**. Každé pole cesty má také vestavěný přepínač **Místní / Vzdálené**: cesta může být místo místní složky vzdálený restic repozitář (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) a záloha pak jde přímo do něj, bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
+Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Úložiště, Zálohovací cesty**. Každé pole cesty má také vestavěný přepínač **Místní / Vzdálené**: cesta může být místo místní složky vzdálený restic repozitář (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) a záloha pak jde přímo do něj, bez samostatné místní kopie; viz [Vzdálené primární repozitáře](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.
@@ -84,7 +84,7 @@ Rychlé nastavení:
 
 Nastavte repliku mimo lokalitu na stránce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
 
-- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 tu nemá nativní backend: přistupuje se k ní přes její S3 endpoint (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), kde jako přihlašovací údaje S3 zadáte ID klíče a aplikační klíč.
 - **Sdílené cloudové přihlašovací údaje** se ukládají šifrovaně pod Nastavení, Cloudový přístup, Sdílené cloudové přihlašovací údaje.
 - **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
 - **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, navíc k (obvykle místnímu) primárnímu repozitáři. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
@@ -113,4 +113,4 @@ Každá položka může mít vlastní citlivost a vlastní minimum oznámení. N
 Karta **Export / import nastavení** na stránce **Nastavení, Systém** zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
-    Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu a oznámení. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.
+    Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu, oznámení a brokeru MQTT. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

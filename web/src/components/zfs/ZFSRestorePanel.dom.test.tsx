@@ -219,7 +219,7 @@ describe("ZFS restore panel", () => {
   it("will not write into a dataset the server has not mounted", async () => {
     await openPanel(item({ members: [member({ outcome: "not-mounted" })] }));
     expect(modeTab(en["zfs.restore.inPlace"]).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText(en["zfs.restore.missingDataset"])).toBeTruthy();
+    expect(screen.getByText(en["zfs.restore.missingDataset"], { selector: "p" })).toBeTruthy();
   });
 
   it("restores the whole tree into a folder only, without calling the dataset missing", async () => {
@@ -238,7 +238,7 @@ describe("ZFS restore panel", () => {
     const host = new Map([["cache/appdata", hostEntry({ writable: false })]]);
     await openPanel(item(), host);
     expect(modeTab(en["zfs.restore.inPlace"]).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText(en["zfs.code.read-only-mount"])).toBeTruthy();
+    expect(screen.getByText(en["zfs.code.read-only-mount"], { selector: "p" })).toBeTruthy();
   });
 
   it("takes the safety snapshot without being asked", async () => {

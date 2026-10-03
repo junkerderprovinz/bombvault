@@ -25,10 +25,16 @@ import (
 	"sync/atomic"
 )
 
-// remoteRepoRe matches a restic remote-backend repo location (vs. a local path).
-// rclone covers cloud backends (B2/S3/Drive/…); the others are restic's native
-// remote backends. A local repo is a plain filesystem path with no scheme.
-var remoteRepoRe = regexp.MustCompile(`^(rclone|sftp|rest|s3|b2|azure|gs|swift):`)
+// remoteSchemes are the location prefixes of restic's remote backends. rclone
+// covers the cloud backends (B2/S3/Drive/…); the others are native. A local
+// repo is a plain filesystem path with no scheme.
+var remoteSchemes = []string{"rclone", "sftp", "rest", "s3", "b2", "azure", "gs", "swift"}
+
+var remoteRepoRe = regexp.MustCompile(`^(` + strings.Join(remoteSchemes, "|") + `):`)
+
+// RemoteSchemes lists the prefixes IsRemoteRepo recognizes, for callers that
+// have to ask the question somewhere else than in Go, such as in SQL.
+func RemoteSchemes() []string { return slices.Clone(remoteSchemes) }
 
 // IsRemoteRepo reports whether loc is a restic remote-backend location (not a
 // local filesystem path). Used to skip path-containment resolution and to inject
@@ -306,6 +312,15 @@ type Snapshot struct {
 	Summary *SnapshotSummary `json:"summary,omitempty"`
 }
 
+// Identity is the key a snapshot is known by across copies: the id it was first
+// copied from, or its own id when it was never copied.
+func Identity(s Snapshot) string {
+	if s.Original != "" {
+		return s.Original
+	}
+	return s.ID
+}
+
 // PendingCopyIDs returns the SOURCE snapshot ids (from src) that have no
 // matching copy in dst yet, giving a caller an upfront candidate count ("N")
 // for a `restic copy` run before actually running one (see
@@ -348,11 +363,7 @@ func PendingCopyIDs(src, dst []Snapshot) []string {
 	}
 	var pending []string
 	for _, s := range src {
-		identity := s.ID
-		if s.Original != "" {
-			identity = s.Original
-		}
-		if _, ok := known[identity]; !ok {
+		if _, ok := known[Identity(s)]; !ok {
 			pending = append(pending, s.ID)
 		}
 	}
@@ -1031,6 +1042,11 @@ func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string 
 	return args
 }
 
+// DirectTag marks a snapshot written into a target's direct repository. Every
+// forget under other rules keeps it, so a direct repository that lost its
+// link never ages by the local policy.
+const DirectTag = "bv:direct"
+
 // RetentionPolicy is a restic forget keep-policy. A count of 0 omits that
 // dimension. When no dimension is set the policy is inert (Any reports false).
 type RetentionPolicy struct {
@@ -1039,11 +1055,69 @@ type RetentionPolicy struct {
 	KeepWeekly  int
 	KeepMonthly int
 	KeepYearly  int
+	// Direct marks the rules of a direct repository row; without it every
+	// forget keeps DirectTag snapshots.
+	Direct bool
 }
 
 // Any reports whether at least one keep dimension is set, i.e. retention is on.
 func (p RetentionPolicy) Any() bool {
 	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0 || p.KeepYearly > 0
+}
+
+// Forgets returns the ids restic forget removes from snaps under p when they
+// form one group, by the rules of restic's ApplyPolicy. ok is false when that
+// cannot be known: a time that does not parse, or two snapshots of the same
+// instant, which restic orders by its own listing.
+func (p RetentionPolicy) Forgets(snaps []Snapshot) (removed map[string]bool, ok bool) {
+	type dated struct {
+		Snapshot
+		at time.Time
+	}
+	list := make([]dated, 0, len(snaps))
+	for _, sn := range snaps {
+		t, err := time.Parse(time.RFC3339Nano, sn.Time)
+		if err != nil {
+			return nil, false
+		}
+		list = append(list, dated{sn, t})
+	}
+	slices.SortFunc(list, func(a, b dated) int { return b.at.Compare(a.at) })
+	for i := 1; i < len(list); i++ {
+		if list[i].at.Equal(list[i-1].at) {
+			return nil, false
+		}
+	}
+	buckets := []struct {
+		count  int
+		bucket func(t time.Time, nr int) int
+		last   int
+	}{
+		{p.KeepLast, func(_ time.Time, nr int) int { return nr }, -1},
+		{p.KeepDaily, func(t time.Time, _ int) int { return t.Year()*10000 + int(t.Month())*100 + t.Day() }, -1},
+		{p.KeepWeekly, func(t time.Time, _ int) int { y, w := t.ISOWeek(); return y*100 + w }, -1},
+		{p.KeepMonthly, func(t time.Time, _ int) int { return t.Year()*100 + int(t.Month()) }, -1},
+		{p.KeepYearly, func(t time.Time, _ int) int { return t.Year() }, -1},
+	}
+	removed = map[string]bool{}
+	for nr, sn := range list {
+		keep := slices.Contains(sn.Tags, ImportedTag) || !p.Direct && slices.Contains(sn.Tags, DirectTag)
+		for i := range buckets {
+			b := &buckets[i]
+			if b.count <= 0 {
+				continue
+			}
+			// A bucket with counts left also keeps the oldest snapshot.
+			if v := b.bucket(sn.at, nr); v != b.last || nr == len(list)-1 {
+				keep, b.last = true, v
+				b.count--
+			}
+		}
+		if !keep {
+			removed[sn.ID] = true
+		}
+	}
+	return removed, true
 }
 
 // ForgetGroup is one entry of `restic forget --json`: the snapshots a keep
@@ -1085,9 +1159,11 @@ func parseForgetGroups(out []byte) ([]ForgetGroup, error) {
 // keepFlags renders a policy's set dimensions as restic --keep-* flags, in a
 // fixed order so the argv is stable and testable. An unset (zero) dimension is
 // omitted rather than sent as 0, which restic would read as "keep none".
-// Shared by the real pass (ForgetPolicyArgs) and the preview
-// (ForgetPreviewArgs) so the two can never drift into answering different
-// questions.
+// --keep-tag ImportedTag keeps every imported snapshot and, unless p.Direct is
+// set, --keep-tag DirectTag every snapshot written into a direct repository.
+// Shared by the real pass (ForgetPolicyArgs) and the
+// preview (ForgetPreviewArgs) so the two can never drift into answering
+// different questions.
 func keepFlags(p RetentionPolicy) []string {
 	var args []string
 	if p.KeepLast > 0 {
@@ -1105,11 +1181,15 @@ func keepFlags(p RetentionPolicy) []string {
 	if p.KeepYearly > 0 {
 		args = append(args, "--keep-yearly", strconv.Itoa(p.KeepYearly))
 	}
-	return append(args, "--keep-tag", ImportedTag)
+	args = append(args, "--keep-tag", ImportedTag)
+	if !p.Direct {
+		args = append(args, "--keep-tag", DirectTag)
+	}
+	return args
 }
 
 // ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
-// Only the set dimensions are emitted.
+// Only the set dimensions are emitted, see keepFlags.
 //
 // With tags (e.g. "container:plex"), the policy covers the snapshots carrying
 // any of them as one group (--group-by ""), so an item's history stays one set

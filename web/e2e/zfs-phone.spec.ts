@@ -11,6 +11,13 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
+// A test can end while a route handler still waits on the real server. Closing
+// the context then disposes the response it is about to read, and Playwright
+// fails a test that already passed, so what the handler throws is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const NOW = Math.floor(Date.now() / 1000);
 const DAY = 24 * 60 * 60;
 

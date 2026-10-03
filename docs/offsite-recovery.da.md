@@ -1,5 +1,8 @@
 # Off-site og gendannelse
 
+!!! note "Eksterne kopier venter efter en genopbygning"
+    Når trin 4 genopbygger elementer uden de gamle indstillinger, sættes off-site-replikeringen af de domæner på pause, indtil standardplaceringen er bekræftet. Se [Placering pr. element](#placement).
+
 Lokale sikkerhedskopier beskytter dig mod en tabt container eller en dårlig opdatering. Off-site-replikering og et testet gendannelseskit beskytter dig mod hele boksen, ransomware eller en brand. Denne side dækker replikering off-site, at gøre den kopi manipulationssikker, at bevise at du kan gendanne, og at gendanne, når BombVault selv er væk.
 
 ## Off-site-replikering
@@ -12,12 +15,42 @@ Behold den hurtige lokale sikkerhedskopi, og tilføj en eller flere off-site-rep
 - **Båndbreddegrænser** (Indstillinger, Off-site) begrænser restic-upload/download-hastigheden, så replikering ikke mætter dit WAN.
 - En **replikeringsindikator** viser, hvilket domæne der replikerer, mens det kører (på dets side og på Oversigten). Det er en aktiv indikator, ikke en procentbjælke, fordi `restic copy` ikke eksponerer nogen maskinlæsbar fremdrift.
 
-!!! note "Gendan direkte fra off-site"
-    Hver sikkerhedskopi-browser har en **Lokal / Ekstern**-kontakt, så hvis et lokalt repo går tabt eller bliver beskadiget, kan du liste og gendanne direkte fra off-site-replikaen. Sletning er pr. kilde: at fjerne en sikkerhedskopi påvirker kun den kopi, du ser på.
+!!! note "Gendan fra ethvert sted"
+    Hver container, VM, mappesæt, flashen og appkonfigurationen lister deres sikkerhedskopier som én tidslinje på tværs af alle steder, en sikkerhedskopi ligger. En sikkerhedskopi kopieret til B2 vises én gang, markeret med hvert sted, der holder den. En gendannelse tager det første sted, den kan nå, startende med det arkiv, elementet skrives til, og du kan vælge et andet sted pr. række. Eksterne steder læses kun, når du åbner dem. At slette ét sted tjekker først de andre og siger, om det var den sidste kopi.
+
+## Placering pr. element {#placement}
+
+Hvert container-, VM- og mappesæt-kort har en række **Placering** med tre segmenter:
+
+- **Lokal** skriver elementet til det arkiv, der vises under **Gemt på**, og kopierer det ingen steder. Brug det til data, der allerede har en anden kopi, for eksempel en deling, der ligger på et NAS.
+- **Lokal + ekstern** skriver det også dertil og kopierer det til de destinationer, der er markeret under **Kopiér til**, én chip pr. off-site-destination i domænet. Fjern et flueben, og den destination får ikke længere noget nyt fra dette element.
+- **Kun ekstern** skriver elementet direkte til stedet under **Send til**: et direkte arkiv ved siden af en off-site-destination, eller et fjernarkiv, du sætter op under Indstillinger, Lagring, Depoter.
+
+Placeringen er fast fra elementets første sikkerhedskopi, fordi BombVault aldrig flytter sikkerhedskopier mellem arkiver. Kopierne kan ændres når som helst. En destination, der ikke længere får et element, beholder de kopier, den har, og beskærer dem til sin egen opbevaring ved domænets næste off-site-kørsel; **Slet i B2** på kortet fjerner dem med det samme. Findes nogle af de kopier ingen andre steder, lister bekræftelsen dem efter dato og spørger om elementets navn. Der kan ikke slettes fra append-only-destinationer.
+
+Under rækken viser kortet, hvor elementet går hen, og hvad der faktisk er der: hvor mange lokationer det holdes på, hvornår hver destination sidst blev set, og om 3-2-1 er opfyldt. En lokation er serveren med de originale data, hver off-site-destination og hvert arkiv markeret **Uden for bygningen**. BombVault tjekker kopier og lokationer; det tjekker ikke "to medier"-delen af 3-2-1.
+
+### Standardplaceringer
+
+Indstillinger, Lagring, **Standardplaceringer** har en række pr. domæne med de samme tre segmenter. Kopierne gælder med det samme for hvert element uden eget valg, og for projektmapperne i Compose-stacks. Placeringen gælder for et nyt element ved dets første sikkerhedskopi; at ændre den flytter ingen sikkerhedskopier. Før den gemmes, navngiver rækken hver destination, der vinder eller mister elementer, og hvor mange øjebliksbilleder det betyder. **Anvend på elementer uden sikkerhedskopier** sætter hvert element uden nogen sikkerhedskopi endnu tilbage på standarden.
+
+En ny off-site-destination modtager hvert element, der ikke er sat til Lokal. Dialogen, der tilføjer den, angiver, hvor mange elementer det er, og hvor det er kendt, hvor meget historik det udgør, og tilbyder at udelade de elementer, der allerede er udelukket fra andre destinationer.
+
+### Direkte arkiver
+
+At vælge en destinations direkte arkiv under Kun ekstern åbner en dialog med en foreslået placering ved siden af destinationen, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en forbindelsestest, der ikke opretter noget. **Opret og brug** opretter arkivet og peger elementet på det. Et direkte arkiv overtager destinationens nøgle, lagringsklasse, grænser, append-only-indstilling og opbevaring og ændrer sig med dem; Depoter-kortet viser det skrivebeskyttet. Kan en ny nøgle til destinationen ikke åbne det, beholder det direkte arkiv den nøgle, det har, og det noteres ved gemning. Dets øjebliksbilleder bærer mærket `bv:direct`, og alle andre opbevaringskørsler lader dem stå, så et direkte arkiv, der har mistet forbindelsen til sin destination, aldrig ældes efter de lokale regler. B2 nås via dets S3-endpoint, hvor nøgle-id'et og applikationsnøglen angives som S3-legitimationsoplysningerne; en nøgle, der er begrænset til destinationens egen mappe, kan ikke nå mappen ved siden af den, så begræns i stedet nøglen til mappen over destinationen.
+
+### Uden for bygningen
+
+Et navngivet arkiv kan markeres **Uden for bygningen** på Depoter-kortet. Fjernarkiver starter markeret; slå det fra for en rest-server i samme bygning. Markeringen tæller kun med i lokationer og 3-2-1 på kortene. Den ændrer ingen kopi.
+
+### Efter en genopbygning
+
+Kopivalg lever i BombVaults egne indstillinger. Efter en genopbygning via Opdag sikkerhedskopier uden et gendannet `/config` er de væk, og at kopiere alt ville sende de elementer, du havde udeladt, til B2 igen. Off-site-replikeringen af hvert genopbygget domæne sættes derfor på pause. Oversigten viser det i gult, og Standardplaceringer tilbyder **Bekræft standard** med en forhåndsvisning af, hvad næste kørsel kopierer, og navnene i de sikkerhedskopier, der ikke har noget element, som du kan udelade der. Kun bekræftelsen afslutter pausen; at importere en indstillingsfil bringer regler og standarder tilbage, men afslutter ikke pausen.
 
 ## Fjernbetjente primære arkiver {#remote-primary-repositories}
 
-Et domænes sti til sikkerhedskopi (Indstillinger, Lagring) er ikke begrænset til en lokal mappe: peg den direkte på et restic-fjernarkiv (`s3:...`, `rest:http://vært:8000/arkiv`, `b2:...`, `sftp:bruger@vært:/arkiv`, `rclone:fjern:bucket/sti`), så sikkerhedskopierer BombVault direkte dertil, uden separat lokal kopi og uden replikeringstrin. Det er en virkelig anden form end off-site-replikeringen ovenfor: dér er det lokale arkiv det primære, og off-site-arkivet er et arkiv af det efter bedste evne; her **er** fjernarkivet det primære, og det er den eneste kopi, så længe du ikke også opsætter off-site-replikering (eller et andet fjernarkiv) for det domæne.
+Et domænes sti til sikkerhedskopi (Indstillinger, Lagring) er ikke begrænset til en lokal mappe: peg den direkte på et restic-fjernarkiv (`s3:...`, `rest:http://vært:8000/arkiv`, `sftp:bruger@vært:/arkiv`, `rclone:fjern:bucket/sti`), så sikkerhedskopierer BombVault direkte dertil, uden separat lokal kopi og uden replikeringstrin. Det er en virkelig anden form end off-site-replikeringen ovenfor: dér er det lokale arkiv det primære, og off-site-arkivet er et arkiv af det efter bedste evne; her **er** fjernarkivet det primære, og det er den eneste kopi, så længe du ikke også opsætter off-site-replikering (eller et andet fjernarkiv) for det domæne.
 
 Hvert af de seks stifelter (Containers, VMs, Flash, Auto-sikkerhedskopi, Mapper, ZFS-datasæt) har en kontakt **Lokal / Fjern** lige ved siden af:
 

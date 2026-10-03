@@ -188,8 +188,7 @@ func appliedVersions(t *testing.T, db *sql.DB) map[int]string {
 // TestMigrationVersionsAreUniqueAndAscending requires every version once, in
 // ascending order. Migrate skips a version whose row already exists, so the
 // second of two migrations sharing a number would never run on a database that
-// applied the first. Gaps are allowed: 109 to 119 stay free because other
-// builds record unrelated migrations as 109.
+// applied the first. Gaps are allowed.
 func TestMigrationVersionsAreUniqueAndAscending(t *testing.T) {
 	seen := map[int]string{}
 	last := 0
@@ -208,6 +207,17 @@ func TestMigrationVersionsAreUniqueAndAscending(t *testing.T) {
 	}
 	if len(migrations) == 0 {
 		t.Fatal("no migrations defined")
+	}
+}
+
+// TestMigrationNamesAreUnique backs migrationRecorded, which finds a migration by name.
+func TestMigrationNamesAreUnique(t *testing.T) {
+	seen := map[string]int{}
+	for _, m := range migrations {
+		if prev, dup := seen[m.name]; dup {
+			t.Fatalf("migrations v%d and v%d share the name %q", prev, m.version, m.name)
+		}
+		seen[m.name] = m.version
 	}
 }
 

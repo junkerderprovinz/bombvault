@@ -5,6 +5,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
+import { stubEventSource } from "../../lib/placement.testsupport";
 
 const restore = vi.fn(() => Promise.resolve({ ok: true, started: true }));
 const restoreVM = vi.fn(() => Promise.resolve({ ok: true, started: true }));
@@ -27,14 +28,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
   };
 });
 
-// The progress store opens an EventSource on mount and jsdom has none.
-class StubEventSource {
-  onmessage: ((e: MessageEvent) => void) | null = null;
-  close() {}
-  addEventListener() {}
-  removeEventListener() {}
-}
-(globalThis as { EventSource?: unknown }).EventSource = StubEventSource;
+// The progress store opens an EventSource on mount and jsdom has none. What it
+// carries is irrelevant to these tests, which assert whether restore() is
+// called at all.
+stubEventSource();
 
 const { RestoreAction } = await import("./RestoreAction");
 
@@ -122,6 +119,19 @@ describe("row-action restore confirmation", () => {
       fireEvent.click(trigger());
     });
     await waitFor(() => expect(restore).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe("a place that lost the snapshot", () => {
+  it("is reported so the timeline can offer the next place", async () => {
+    restore.mockImplementationOnce((() =>
+      Promise.resolve({ ok: false, code: "snapshot-missing", error: "gone" })) as never);
+    const onMissing = vi.fn();
+    renderAction({ onMissing });
+    await act(async () => {
+      fireEvent.click(trigger());
+    });
+    await waitFor(() => expect(onMissing).toHaveBeenCalledTimes(1));
   });
 });
 

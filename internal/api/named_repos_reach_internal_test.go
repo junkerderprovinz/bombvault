@@ -143,19 +143,11 @@ func TestDiscoverLooksInEveryRepository(t *testing.T) {
 				"nothing on screen says its backups exist.", fn)
 		}
 	}
-	// Each rediscovered item goes back on the repository its snapshots are in.
-	// The file-set path writes it in the insert rather than through a setter.
-	for _, tc := range []struct{ fn, writes string }{
-		{"Discover", "s.store.SetTargetRepo("},
-		{"DiscoverVMs", "s.store.SetVMRepo("},
-		{"DiscoverFileSets", "Repo: repoID"},
-		{"DiscoverZFSDatasets", "Repo: repoID"},
-	} {
-		if !strings.Contains(funcBody(t, src, tc.fn), tc.writes) {
-			t.Errorf("%s no longer restores a rediscovered item's repository (%s).\n"+
-				"The item is then rebuilt onto the domain repository, shows an empty history,\n"+
-				"and its next backup lands somewhere other than its own snapshots.", tc.fn, tc.writes)
-		}
+	// A rediscovered ZFS item goes back on the repository its snapshots are in.
+	if !strings.Contains(funcBody(t, src, "DiscoverZFSDatasets"), "Repo: repoID") {
+		t.Error("DiscoverZFSDatasets no longer restores a rediscovered item's repository.\n" +
+			"The item is then rebuilt onto the domain repository, shows an empty history,\n" +
+			"and its next backup lands somewhere other than its own snapshots.")
 	}
 }
 
@@ -176,7 +168,7 @@ func TestTheRecoveryKitNamesTheNamedRepositories(t *testing.T) {
 // user as "bucket[path]", advice that cannot be typed.
 func TestTheUnprefixedRemoteAdviceSurvivesTheScrubber(t *testing.T) {
 	h := &Handler{}
-	err := h.validateNamedRepo(store.OffsiteTarget{Name: "Kalte Ablage", Repo: "BackBlaze:bucket/cold"}, true)
+	err := h.validateNamedRepo(store.OffsiteTarget{Name: "Kalte Ablage", Repo: "BackBlaze:bucket/cold"}, true, true)
 	if err == nil {
 		t.Fatal("an rclone remote name without a restic prefix is no longer refused")
 	}

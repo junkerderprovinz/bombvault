@@ -31,7 +31,7 @@
 
 ZFS 数据集备份同样需要这种模式：主机要在容器启动之后才挂载数据集的快照。参见 [ZFS 数据集](zfs-datasets.md)。
 
-备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`，在首次备份时创建。可随时在**设置，存储，备份路径**中更改位置。每个路径字段旁还有一个内联的**本地 / 远程**开关：路径可以是一个 restic 远程（`s3:...`、`rest:...`、`b2:...`、`sftp:...`、`rclone:...`）而不是本地文件夹，直接备份到那里，不另留本地副本；参见[远程主仓库](offsite-recovery.md#remote-primary-repositories)。
+备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`，在首次备份时创建。可随时在**设置，存储，备份路径**中更改位置。每个路径字段旁还有一个内联的**本地 / 远程**开关：路径可以是一个 restic 远程（`s3:...`、`rest:...`、`sftp:...`、`rclone:...`）而不是本地文件夹，直接备份到那里，不另留本地副本；参见[远程主仓库](offsite-recovery.md#remote-primary-repositories)。
 
 !!! note "主机集成检查"
     容器启动后在 Web 界面打开 `/spike`。它会探测每个挂载和 CLI（Docker 套接字、libvirt、restic、qemu-img、rclone）并报告任何缺失的部分。
@@ -84,7 +84,7 @@ BombVault **不挂载任何 libvirt 路径**即可备份 KVM/libvirt 虚拟机�
 
 在**设置，异地**页面设置异地副本。完整的工作流程（不可变/append-only、篡改测试和 DR 演练）参见[异地与恢复](offsite-recovery.md)。简而言之：
 
-- **后端：** SMB/CIFS 和 NFS（挂载共享并将备份路径指向它）、无需 rclone 的原生 restic 后端（`s3:...`、`rest:http://host:8000/repo`、`b2:...`、`sftp:user@host:/repo`），或任意 rclone 远程（`rclone:<remote>:<bucket>/path`）。
+- **后端：** SMB/CIFS 和 NFS（挂载共享并将备份路径指向它）、无需 rclone 的原生 restic 后端（`s3:...`、`rest:http://host:8000/repo`、`sftp:user@host:/repo`），或任意 rclone 远程（`rclone:<remote>:<bucket>/path`）。Backblaze B2 在这里没有原生后端：请通过其 S3 端点访问（`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`），并将密钥 ID 和应用密钥作为 S3 凭据填写。
 - **共享云凭据**以加密方式存储在设置，云访问，共享云凭据之下。
 - **SSH 目标无需在对端安装任何东西。** `sftp:` 只需要一个 SSH 服务器。将来自**设置，集成，主机 SSH**的公钥（也位于 `/config/ssh/id_ed25519.pub`）添加到目标用户的 `~/.ssh/authorized_keys`。
 - **异地复制：** BombVault 在（通常是本地的）主仓库之外，以尽力而为的方式用 `restic copy` 复制新快照。每个域都有各自的异地计划，外加一个**立即复制**按钮。
@@ -113,4 +113,4 @@ BombVault **不挂载任何 libvirt 路径**即可备份 KVM/libvirt 虚拟机�
 设置，系统页面上的**导出 / 导入设置**卡片会将您的整套 BombVault 配置（域设置、异地目标、计划、保留、通知）写入一个可移植的 JSON 文件，您可以在另一个实例上导入它，因此迁移到新机器或克隆一套配置不再意味着要手动重新录入一切。导入会显示预览并要求确认，且绝不会触动您的备份数据或历史。
 
 !!! warning "导出文件可能包含凭据"
-    您可以选择是否在文件中包含异地和通知凭据。包含凭据时，导出文件与您的恢复工具包一样敏感，因此请将它存放在安全的地方。不包含凭据时，该文件只保存非机密的设置。
+    您可以选择是否在文件中包含异地、通知和 MQTT 代理凭据。包含凭据时，导出文件与您的恢复工具包一样敏感，因此请将它存放在安全的地方。不包含凭据时，该文件只保存非机密的设置。

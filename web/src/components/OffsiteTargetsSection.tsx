@@ -5,9 +5,11 @@ import {
   createOffsiteTarget,
   updateOffsiteTarget,
   deleteOffsiteTarget,
+  excludeFromTarget,
   testOffsiteTarget,
 } from "../lib/api";
-import { useCloudCredSets } from "../lib/useCloudCredSets";
+import type { NewTargetExclusion } from "../lib/api";
+import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged, subscribeOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { useT } from "../lib/i18n";
 import { STORAGE_CLASSES } from "../lib/storageClasses";
@@ -21,19 +23,20 @@ import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
+import { useConfirm } from "../lib/useConfirm";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { isPlacementDomain, offQualifier } from "../lib/placement";
+import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
+import { placementChanged } from "../lib/placementEvents";
+import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
+import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 import { offsiteVerdict } from "../lib/offsiteVerdict";
 import { useTestVerdict } from "../lib/useTestVerdict";
-import { VerdictLine, verdictGlyph, verdictKey } from "./TestButton";
+import { TestButton, VerdictLine } from "./TestButton";
 
-// The badges and the Test, Edit and Remove buttons of a target row share one
-// size, so spans and buttons in the row have the same height. Medium is the
-// app's usual chip size.
+// The storage-class and immutable tags on a target row. Medium is the app's
+// usual chip size.
 const ROW_BADGE_SIZE: BadgeSize = "medium";
-
-// A 20px chip is too small to hit with a finger, so under a coarse pointer the
-// row's buttons take the button height. The status chips beside them stay
-// chips.
-const ROW_ACTION = "glim-tile-raise pointer-coarse:h-(--btn-h) pointer-coarse:px-3";
 
 // Editor for a domain's additional off-site targets (sortOrder > 0). The
 // primary target (sortOrder 0, synced from the Settings off-site config) has
@@ -80,9 +83,8 @@ function emptyDraft(domain: Domain): OffsiteTarget {
 // TargetRow shows one additional target with its own connection test, which
 // probes this target alone; the primary editor's Test connection probes only
 // the primary. `children` are the row's other actions.
-function TargetRow({ tgt, t, children }: { tgt: OffsiteTarget; t: T; children: ReactNode }) {
+function TargetRow({ tgt, t, hueIndex, children }: { tgt: OffsiteTarget; t: T; hueIndex?: number; children: ReactNode }) {
   const test = useTestVerdict([tgt.repo, tgt.credsRef, tgt.storageClass], t("offsite.testFailed"));
-  const { verdict, running, shake, shaking } = test;
   return (
     <div className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col">
       <div className="flex min-w-0 flex-col gap-1">
@@ -95,32 +97,30 @@ function TargetRow({ tgt, t, children }: { tgt: OffsiteTarget; t: T; children: R
           <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap className="glim-tile-raise">
             {tgt.storageClass || t("cloud.storageClass.default")}
           </Badge>
+          {!tgt.enabled && (
+            <Badge tone="muted" size={ROW_BADGE_SIZE} wrap>
+              {offQualifier(t)}
+            </Badge>
+          )}
           {tgt.immutable && (
             <Badge tone="ok" size={ROW_BADGE_SIZE} wrap>
               {t("offsite.immutable")}
             </Badge>
           )}
         </span>
-        <VerdictLine verdict={verdict} />
+        <VerdictLine verdict={test.verdict} />
       </div>
       {/* On a phone the actions move under the name, which otherwise
           shrinks to a column one character wide beside them. */}
       <div className="flex shrink-0 flex-wrap items-start gap-2">
-        {/* The row's actions are chips, so the verdict takes the chip's own
-            status tones rather than a button's solid fill. */}
-        <Badge
-          key={shake}
-          as="button"
-          tone={verdict ? (verdict.ok ? "ok" : "fail") : "neutral"}
-          size={ROW_BADGE_SIZE}
+        <TestButton
+          label={t("offsite.targets.test")}
+          labelKey="offsite.targets.test"
+          test={test}
+          hueIndex={hueIndex}
           onClick={() => void test.run(async () => offsiteVerdict(await testOffsiteTarget(tgt.id), t))}
-          disabled={running}
-          title={t("offsite.test")}
-          className={shaking ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
-        >
-          {verdict && verdictGlyph(verdict)}
-          {running ? t("offsite.testing") : verdict ? t(verdictKey(verdict, "connection")) : t("offsite.targets.test")}
-        </Badge>
+          className="glim-tile-raise"
+        />
         {children}
       </div>
     </div>
@@ -134,8 +134,9 @@ export function OffsiteTargetsSection({
 }: {
   domain: Domain;
   t: T;
-  /** The enclosing Card's hue, for the add-target button. The row buttons act
-   *  on an existing target and stay neutral. */
+  /** The enclosing Card's hue. Every button in the section takes it,
+   *  including a row's Test/Edit/Remove, which stay tone="neutral" but still
+   *  pick up its focus ring. */
   hueIndex?: number;
 }) {
   const { push } = useToast();
@@ -154,6 +155,27 @@ export function OffsiteTargetsSection({
   // The shared hook rather than a local copy, because CloudCredSetsCard on the
   // same page can add a set while this section is mounted.
   const credSets = useCloudCredSets();
+  const repos = useNamedRepos();
+  const { confirm, confirmDialog } = useConfirm();
+  const { ask, dialog: newTargetDialog } = useNewTargetQuestion();
+  const { lang } = useT();
+  const saved = draft ? targets.find((x) => x.id === draft.id) : undefined;
+  const savedUse = saved ? directUse(saved, repos) : undefined;
+
+  // A save that lowers retention or turns off append-only prunes the direct
+  // repository's own backups the same way it would the target's, so it asks
+  // before either change goes through, once for each risk that applies.
+  async function confirmDirectChanges(before: OffsiteTarget, after: OffsiteTarget): Promise<boolean> {
+    const use = directUse(before, repos);
+    if (!use) return true;
+    if (retentionLowered(before, after) && !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", [use])))) {
+      return false;
+    }
+    if (before.immutable && !after.immutable && !(await confirm(directAsk(t, lang, "offsite.directAppendOnlyAsk", [use])))) {
+      return false;
+    }
+    return true;
+  }
 
   function refresh() {
     listOffsiteTargets(domain)
@@ -203,44 +225,88 @@ export function OffsiteTargetsSection({
       setSaveShake((n) => n + 1);
       return;
     }
+    if (saved && !(await confirmDirectChanges(saved, draft))) return;
+    const location = draft.repo.trim();
+    let alsoExclude: NewTargetExclusion | undefined;
+    // The question does a round trip of its own before its dialog appears, and
+    // a disabled Save is all that keeps a second click from writing a second
+    // target.
     setSaveState("saving");
+    if (!saved || saved.repo.trim() !== location) {
+      const answer = await ask({
+        domain,
+        location,
+        targetId: saved?.id,
+        name: draft.name.trim() || location,
+        moved: saved !== undefined,
+      });
+      if (!answer.go) {
+        setSaveState("idle");
+        return;
+      }
+      alsoExclude = answer.alsoExclude ?? undefined;
+    }
+    let exclusionsWritten = true;
     try {
       if (draft.id === "") {
         // A sortOrder above every existing target, so a later Settings save
         // cannot mistake the new one for the primary and overwrite it.
         const maxSort = targets.reduce((m, x) => Math.max(m, x.sortOrder), 0);
-        const r = await createOffsiteTarget({
-          domain: draft.domain,
-          name: draft.name.trim(),
-          repo: draft.repo.trim(),
-          credsRef: draft.credsRef,
-          storageClass: draft.storageClass,
-          immutable: draft.immutable,
-          schedule: draft.schedule,
-          retentionKeepLast: draft.retentionKeepLast,
-          retentionKeepDaily: draft.retentionKeepDaily,
-          retentionKeepWeekly: draft.retentionKeepWeekly,
-          retentionKeepMonthly: draft.retentionKeepMonthly,
-          retentionKeepYearly: draft.retentionKeepYearly,
-          compression: draft.compression,
-          limitUpload: draft.limitUpload,
-          limitDownload: draft.limitDownload,
-          growthBudgetGb: draft.growthBudgetGb,
-          enabled: draft.enabled,
-          sortOrder: maxSort + 1,
-        });
-        if (!r.ok) throw new Error(r.error ?? t("settings.error"));
+        const r = await createOffsiteTarget(
+          {
+            domain: draft.domain,
+            name: draft.name.trim(),
+            repo: location,
+            credsRef: draft.credsRef,
+            storageClass: draft.storageClass,
+            immutable: draft.immutable,
+            schedule: draft.schedule,
+            retentionKeepLast: draft.retentionKeepLast,
+            retentionKeepDaily: draft.retentionKeepDaily,
+            retentionKeepWeekly: draft.retentionKeepWeekly,
+            retentionKeepMonthly: draft.retentionKeepMonthly,
+            retentionKeepYearly: draft.retentionKeepYearly,
+            compression: draft.compression,
+            limitUpload: draft.limitUpload,
+            limitDownload: draft.limitDownload,
+            growthBudgetGb: draft.growthBudgetGb,
+            enabled: draft.enabled,
+            sortOrder: maxSort + 1,
+          },
+          alsoExclude
+        );
+        if (!r.ok) throw new Error(placementErrorText(t, lang, r, "settings.error"));
       } else {
-        const r = await updateOffsiteTarget(draft.id, {
-          ...draft,
-          name: draft.name.trim(),
-          repo: draft.repo.trim(),
-        });
-        if (!r.ok) throw new Error(r.error ?? t("settings.error"));
+        const r = await updateOffsiteTarget(
+          draft.id,
+          {
+            ...draft,
+            name: draft.name.trim(),
+            repo: location,
+          },
+          alsoExclude
+        );
+        if (!r.ok) {
+          // The target itself is stored behind this code, so the save counts as
+          // done and only what it should leave out still has to be written.
+          if (r.code !== "exclusion-unsaved" || !alsoExclude || !isPlacementDomain(domain)) {
+            throw new Error(placementErrorText(t, lang, r, "settings.error"));
+          }
+          const ex = await excludeFromTarget({ domain, targetId: draft.id, ...alsoExclude });
+          if (!ex.ok) {
+            exclusionsWritten = false;
+            push(placementErrorText(t, lang, ex, "settings.error"), "fail");
+          }
+        }
+        pushSaveWarnings(push, t, r.warnings);
       }
-      push(t("settings.saved"), "success");
+      // The target is stored and its exclusions are not, so the line names that
+      // instead of reporting a save that went through whole.
+      if (exclusionsWritten) push(t("settings.saved"), "success");
+      else push(t("placementCode.exclusionUnsaved"), "warn");
       closeEditor();
       offsiteTargetsChanged();
+      if (alsoExclude) placementChanged();
     } catch (e) {
       setSaveState("idle");
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
@@ -255,7 +321,7 @@ export function OffsiteTargetsSection({
     try {
       const r = await deleteOffsiteTarget(id);
       if (!r.ok) {
-        push(r.error ?? t("settings.error"), "fail");
+        push(placementErrorText(t, lang, r, "settings.error"), "fail");
         setRemoveShake((n) => n + 1);
         return;
       }
@@ -276,6 +342,8 @@ export function OffsiteTargetsSection({
 
   return (
     <div className="mt-2 flex flex-col gap-3">
+      {confirmDialog}
+      {newTargetDialog}
       <div className="flex flex-col gap-0.5">
         <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("offsite.targets.title")}
@@ -292,34 +360,39 @@ export function OffsiteTargetsSection({
 
       {/* Existing additional targets */}
       {targets.map((tgt) => (
-        <TargetRow key={tgt.id} tgt={tgt} t={t}>
-          <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)} className={ROW_ACTION}>
-            {t("offsite.targets.edit")}
-          </Badge>
+        <TargetRow key={tgt.id} tgt={tgt} t={t} hueIndex={hueIndex}>
+          <Button
+            label={t("offsite.targets.edit")}
+            labelKey="offsite.targets.edit"
+            tone="neutral"
+            hueIndex={hueIndex}
+            onClick={() => openEdit(tgt)}
+            className="glim-tile-raise"
+          />
           {/* Neutral like Edit, not red. The two-click confirm, whose label
               changes, is what guards the removal. */}
           {confirmRemove === tgt.id ? (
-            <Badge
+            <Button
               key={removeShake}
-              as="button"
+              label={t("offsite.targets.confirmRemove")}
+              labelKey="offsite.targets.confirmRemove"
               tone="neutral"
-              size={ROW_BADGE_SIZE}
+              hueIndex={hueIndex}
               onClick={() => void remove(tgt.id)}
               disabled={removingId === tgt.id}
-              className={removeShake ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
-            >
-              {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
-            </Badge>
+              busy={removingId === tgt.id}
+              title={removingId === tgt.id ? t("offsite.targets.removing") : undefined}
+              className={removeShake ? "glim-tile-raise glim-shake" : "glim-tile-raise"}
+            />
           ) : (
-            <Badge
-              as="button"
+            <Button
+              label={t("offsite.targets.remove")}
+              labelKey="offsite.targets.remove"
               tone="neutral"
-              size={ROW_BADGE_SIZE}
+              hueIndex={hueIndex}
               onClick={() => setConfirmRemove(tgt.id)}
-              className={ROW_ACTION}
-            >
-              {t("offsite.targets.remove")}
-            </Badge>
+              className="glim-tile-raise"
+            />
           )}
         </TargetRow>
       ))}
@@ -327,6 +400,7 @@ export function OffsiteTargetsSection({
       {/* Editor form (new or edit) */}
       {draft && (
         <div className="glim-tile flex flex-col gap-3 rounded-card p-3">
+          {savedUse && <p className="text-xs text-carbon-textMuted">{alsoDirectText(t, savedUse)}</p>}
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.name")}</span>
             <input
@@ -359,7 +433,7 @@ export function OffsiteTargetsSection({
               label={t("offsite.targets.credsLabel")}
               options={[
                 { value: "", label: t("offsite.targets.credsDefault") },
-                ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
               ]}
               className={inputCls}
             />

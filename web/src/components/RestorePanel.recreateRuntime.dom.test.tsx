@@ -15,6 +15,8 @@ class NoopEventSource {
 }
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
+const fake = await vi.hoisted(async () => (await import("../lib/placement.testsupport")).createPlacementApi());
+
 let runs: Run[] = [];
 const restore = vi.fn((name: string, ...rest: unknown[]) => {
   const refused = rest[4] !== true;
@@ -43,7 +45,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listSnapshots: () => Promise.resolve({ ok: true, snapshots: [] }),
+    ...fake.api,
     listRuns: () => Promise.resolve({ ok: true, runs }),
     getSettings: () => Promise.resolve({ ok: false }),
     listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [] }),

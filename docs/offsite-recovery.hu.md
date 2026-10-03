@@ -1,5 +1,8 @@
 # Telephelyen kívüli mentés és helyreállítás
 
+!!! note "A telephelyen kívüli másolatok várnak egy újraépítés után"
+    Amikor a 4. lépés a régi beállítások nélkül épít újra bejegyzéseket, azoknak a tartományoknak a telephelyen kívüli replikációja szünetel, amíg az elhelyezési alapértelmezést meg nem erősítik. Lásd: [Elhelyezés elemenként](#placement).
+
 A helyi mentések megvédenek egy elveszett konténertől vagy egy rossz frissítéstől. A telephelyen kívüli replikáció és egy tesztelt helyreállítási csomag megvéd a teljes gép elvesztésétől, a zsarolóvírustól vagy egy tűztől. Ez az oldal a telephelyen kívüli replikálást, a másolat manipulációbiztossá tételét, a visszaállíthatóság bizonyítását és a helyreállítást ismerteti arra az esetre, amikor maga a BombVault eltűnt.
 
 ## Telephelyen kívüli replikáció
@@ -12,12 +15,42 @@ Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kí
 - **A sávszélesség-korlátok** (Beállítások, Telephelyen kívüli) korlátozzák a restic fel- és letöltési sebességét, hogy a replikáció ne telítse a WAN-odat.
 - Egy **replikációs jelző** mutatja, melyik tartomány replikál éppen, amíg fut (a saját oldalán és az irányítópulton). Ez egy aktív jelző, nem egy százalékos sáv, mert a `restic copy` nem tesz közzé géppel olvasható folyamatjelzést.
 
-!!! note "Visszaállítás közvetlenül telephelyen kívülről"
-    Minden mentésböngészőben van egy **Helyi / Telephelyen kívüli** kapcsoló, így ha egy helyi tároló elveszik vagy megsérül, közvetlenül a telephelyen kívüli replikából listázhatsz és állíthatsz vissza. A törlés forrásonkénti: egy mentés eltávolítása csak azt a másolatot érinti, amelyet éppen nézel.
+!!! note "Visszaállítás bármely helyről"
+    Minden konténer, VM, fájlkészlet, a flash és az alkalmazás-konfiguráció egyetlen idővonalként sorolja fel a mentéseit minden hely között, ahol egy mentés fekszik. Egy B2-be másolt mentés egyszer jelenik meg, minden azt tartalmazó hellyel megjelölve. A visszaállítás az első elérhető helyet veszi, a tárolóval kezdve, ahova az elem íródik, és soronként másik helyet is választhatsz. A telephelyen kívüli helyek csak akkor olvasódnak, amikor megnyitod őket. Az egy helyen történő törlés előbb a többit ellenőrzi, és megmondja, hogy az volt-e az utolsó másolat.
+
+## Elhelyezés elemenként {#placement}
+
+Minden konténer-, VM- és fájlkészlet-kártyának van egy **Elhelyezés** sora három szegmenssel:
+
+- **Helyi** a **Tárolva itt** alatt látható tárolóba írja az elemet, és sehova nem másolja. Olyan adathoz használd, amelynek már van egy második másolata, például egy NAS-on élő megosztáshoz.
+- **Helyi + telephelyen kívüli** ott is megírja, és a **Másolás ide** alatt kipipált célokra másolja, egy chip a tartomány minden telephelyen kívüli céljára. Vedd ki egy chip pipáját, és az a cél semmi újat nem kap ettől az elemtől.
+- **Csak telephelyen kívüli** egyenesen a **Küldés ide** alatti helyre írja az elemet: egy közvetlen tárolóba egy telephelyen kívüli cél mellett, vagy egy távoli tárolóba, amelyet a Beállítások, Tárolás, Tárolók alatt állítottál be.
+
+A hely az elem első biztonsági mentésétől fogva rögzített, mert a BombVault soha nem mozgat mentéseket tárolók között. A másolatok bármikor változhatnak. Az a cél, amely már nem kap egy elemet, megtartja a meglévő másolatait, és a tartomány következő telephelyen kívüli futásakor a saját megőrzésére vágja őket vissza; a kártyán a **Törlés itt: B2** azonnal eltávolítja őket. Ha ezek közül a másolatok közül néhány sehol máshol nem létezik, a megerősítés dátum szerint felsorolja őket, és kéri az elem nevét. A csak hozzáfűzésre szolgáló célokból nem lehet törölni.
+
+A sor alatt a kártya megmondja, hova kerül az elem, és mi van ott ténylegesen: hány helyszín tartja, mikor látták utoljára az egyes célokat, és teljesül-e a 3-2-1. Egy helyszín az eredeti adatokat tartalmazó szerver, minden telephelyen kívüli cél és minden **Az épületen kívül** jelölt tároló. A BombVault a másolatokat és a helyszíneket ellenőrzi; a 3-2-1 "két adathordozó" részét nem ellenőrzi.
+
+### Elhelyezési alapértelmezések
+
+A Beállítások, Tárolás, **Elhelyezési alapértelmezések** alatt tartományonként egy sor van, ugyanazzal a három szegmenssel. A másolatok azonnal érvényesek minden saját választás nélküli elemre, és a Compose-stackek projektmappáira is. A hely egy új elemre az első mentésekor válik érvényessé; a megváltoztatása egyetlen mentést sem mozgat. Mentés előtt a sor megnevez minden célt, amely elemeket nyer vagy veszít, és hogy ez hány pillanatképet jelent. Az **Alkalmazás a biztonsági mentés nélküli elemekre** minden még mentés nélküli elemet visszaállít az alapértelmezésre.
+
+Egy új telephelyen kívüli cél megkap minden elemet, amely nincs Helyire állítva. Az azt hozzáadó párbeszédablak megmondja, hány elemről van szó, és ahol ismert, mennyi előzményt jelent ez, és felajánlja, hogy kihagyja azokat az elemeket, amelyeket más céloknál is kihagytak.
+
+### Közvetlen tárolók
+
+Egy cél közvetlen tárolójának kiválasztása Csak telephelyen kívüli alatt egy párbeszédablakot nyit meg egy javasolt hellyel a cél mellett, például `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, és egy kapcsolatteszttel, amely semmit nem hoz létre. A **Létrehozás és használat** létrehozza a tárolót, és odairányítja az elemet. A közvetlen tároló átveszi a cél kulcsát, tárolási osztályát, korlátait, append-only beállítását és megőrzését, és velük együtt változik; a Tárolók kártya csak olvashatóként mutatja. Ha a cél új kulcsa nem tudja megnyitni, a közvetlen tároló megtartja azt a kulcsot, amije van, és a mentés ezt jelzi. A pillanatképei a `bv:direct` címkét viselik, és minden más megőrzési kör megtartja őket, így egy közvetlen tároló, amely elvesztette a kapcsolatát a céljával, soha nem öregszik a helyi szabályok szerint. A B2-t az S3-végpontján keresztül érjük el, ahol a kulcsazonosítót és az alkalmazáskulcsot kell megadni S3-hitelesítő adatként; a cél saját mappájára korlátozott kulcs nem éri el a mellette lévő mappát, ezért korlátozd inkább a kulcsot a cél feletti mappára.
+
+### Az épületen kívül
+
+Egy nevesített tároló megjelölhető **Az épületen kívül**-ként a Tárolók kártyán. A távoli tárolók megjelölve indulnak; kapcsold ki egy ugyanabban az épületben lévő rest-servernél. A jelölés csak a helyszíneket és a 3-2-1-et számolja a kártyákon. Egyetlen másolatot sem változtat meg.
+
+### Újraépítés után
+
+A másolási választások a BombVault saját beállításaiban élnek. Egy, a Biztonsági mentések felfedezése gombbal végzett újraépítés után, visszaállított `/config` nélkül, ezek eltűnnek, és minden másolása újra elküldené a B2-be azokat az elemeket, amelyeket kihagytál. Ezért minden újraépített tartomány telephelyen kívüli replikációja szünetel. Az irányítópult sárgán mutatja, és az Elhelyezési alapértelmezések felajánlja az **Alapértelmezés megerősítése** lehetőséget, egy előnézettel arról, mit másol a következő futás, és azokkal a nevekkel a mentésekben, amelyeknek nincs bejegyzésük, amelyeket ott kihagyhatsz. Csak a megerősítés zárja le a szünetet; egy beállításfájl importálása visszahozza a szabályokat és az alapértelmezéseket, de nem zárja le.
 
 ## Távoli elsődleges tárolók {#remote-primary-repositories}
 
-Egy tartomány mentési útvonala (Beállítások, Tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
+Egy tartomány mentési útvonala (Beállítások, Tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
 
 A hat útvonalmező (Konténerek, VM-ek, Flash, Önmentés, Mappák, ZFS-adatkészletek) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
 

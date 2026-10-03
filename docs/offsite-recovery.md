@@ -1,5 +1,8 @@
 # Off-site & recovery
 
+!!! note "Off-site copies wait after a rebuild"
+    When step 4 rebuilds entries without the old settings, off-site replication of those domains pauses until the placement default is confirmed. See [Placement per item](#placement).
+
 Local backups protect you from a lost container or a bad update. Off-site replication and a tested recovery kit protect you from the whole box, ransomware, or a fire. This page covers replicating off-site, making that copy tamper-proof, proving you can restore, and recovering when BombVault itself is gone.
 
 ## Off-site replication
@@ -12,12 +15,42 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 - **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
 - A **replication indicator** shows which domain is replicating while it runs (on its page and the Dashboard). It is an active indicator, not a percentage bar, because `restic copy` exposes no machine-readable progress.
 
-!!! note "Restore straight from off-site"
-    Every backup browser has a **Local / Off-site** switch, so if a local repo is lost or corrupt you can list and restore directly from the off-site replica. Delete is per-source: removing a backup only affects the copy you are viewing.
+!!! note "Restore from any place"
+    Every container, VM, folder set, the flash and the app configuration list their backups as one timeline across all places a backup lies. A backup copied to B2 appears once, marked with each place that holds it. A restore takes the first place it can reach, starting with the repository the item is written to, and you can pick another place per row. Off-site places are read only when you open them. Deleting at one place first checks the others and says whether it was the last copy.
+
+## Placement per item {#placement}
+
+Each container, VM and folder set card has a **Placement** row with three segments:
+
+- **Local** writes the item to the repository shown under **Stored on** and copies it nowhere. Use it for data that already has a second copy, for example a share that lives on a NAS.
+- **Local + off-site** writes it there as well and copies it to the targets ticked under **Copy to**, one chip per off-site target of the domain. Untick a chip and that target gets nothing new from this item.
+- **Off-site only** writes the item straight to the place under **Send to**: a direct repository beside an off-site target, or a remote repository you set up under Settings, Storage, Repositories.
+
+The location is fixed from the item's first backup on, because BombVault never moves backups between repositories. The copies can change at any time. A target that no longer gets an item keeps the copies it has and trims them to its own retention at the next off-site run of the domain; **Delete in B2** on the card removes them at once. When some of those copies exist nowhere else, the confirmation lists them by date and asks for the item's name. Append-only targets cannot be deleted from.
+
+Under the row the card says where the item goes and what is actually there: how many sites hold it, when each target was last seen, and whether 3-2-1 is met. A site is the server with the original data, each off-site target and each repository marked **Off the premises**. BombVault checks copies and sites; it does not check the "two media" part of 3-2-1.
+
+### Placement defaults
+
+Settings, Storage, **Placement defaults** has one row per domain with the same three segments. The copies apply at once to every item without a choice of its own, and to the project folders of Compose stacks. The location applies to a new item at its first backup; changing it moves no backups. Before saving, the row names every target that gains or loses items and how many snapshots that means. **Apply to items without backups** puts every item that has no backup yet back on the default.
+
+A new off-site target receives every item that is not set to Local. The dialog that adds it says how many items and, where known, how much history that is, and offers to leave out the items already excluded from other targets.
+
+### Direct repositories
+
+Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the target's own folder cannot reach the folder next to it, so limit the key to the folder above the target instead.
+
+### Off the premises
+
+A named repository can be marked **Off the premises** on the Repositories card. Remote repositories start marked; switch it off for a rest-server in the same building. The mark only counts sites and 3-2-1 on the cards. It changes no copy.
+
+### After a rebuild
+
+Copy choices live in BombVault's own settings. After a rebuild through Discover backups without a restored `/config` they are gone, and copying everything would send the items you had left out to B2 again. Off-site replication of every rebuilt domain therefore pauses. The Dashboard shows it in amber, and Placement defaults offers **Confirm default** with a preview of what the next run copies and the names in the backups that have no entry, which you can leave out there. Only the confirmation ends the pause; importing a settings file brings back rules and defaults but does not end it.
 
 ## Remote primary repositories {#remote-primary-repositories}
 
-A domain's Backup Path (Settings, Storage) is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
+A domain's Backup Path (Settings, Storage) is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
 
 Each of the six path fields (Containers, VMs, Flash, Self-Backup, Folders, ZFS datasets) has an inline **Local / Remote** switch right next to it:
 

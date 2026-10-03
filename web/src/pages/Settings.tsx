@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
-import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
+import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listOffsiteTargets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite, type OffsiteTarget } from "../lib/api";
+import { subscribeOffsiteTargets, useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { useConfirm } from "../lib/useConfirm";
+import { pushSaveWarnings } from "../lib/placementCodes";
+import { alsoDirectText, directAsk, primaryDirects, retentionLowered } from "../lib/directRepo";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { AccentCard, IconResetArrow } from "./settings/AccentCard";
 import { PasskeyCard } from "./settings/PasskeyCard";
 import { TwoFactorCard } from "./settings/TwoFactorCard";
 import { LanguageCard } from "./settings/LanguageCard";
 import { ReposCard } from "./settings/ReposCard";
+import { PlacementDefaultsCard } from "./settings/PlacementDefaultsCard";
 import { ThemeCard } from "./settings/ThemeCard";
 import { RestoreChecksSection } from "./settings/RestoreChecksSection";
 import { AnomalyCard } from "./settings/AnomalyCard";
@@ -15,6 +20,7 @@ import { RcloneCard } from "./settings/RcloneCard";
 import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { OffsiteLocationInput } from "../components/placement/OffsiteLocationInput";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
 import {
@@ -53,7 +59,6 @@ import { useReveal } from "../lib/useReveal";
 import type { Settings, Container, VM, FileSetView, RegistryAuthEntry, ZFSDatasetView } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useToast } from "../lib/toast";
-import { useConfirm } from "../lib/useConfirm";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, tLtr, withLtrFragments } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
@@ -91,6 +96,9 @@ import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
 import { AboutCard } from "./settings/AboutCard";
 import { DashboardWidgetCard } from "./settings/DashboardWidgetCard";
 import { McpServerCard } from "./settings/McpServerCard";
+import { ApiTokensCard } from "./settings/ApiTokensCard";
+import { HomeAssistantCard } from "./settings/HomeAssistantCard";
+import { NetworkCard } from "./settings/NetworkCard";
 import { mcpShipped } from "../lib/mcpSwitch";
 
 
@@ -864,14 +872,40 @@ export function markRegistryTokensStored(
   }));
 }
 
+/** The off-site rules a domain ages by: its own, or the shared ones. */
+function offsiteRetentionOf(s: Settings, domain: string) {
+  const own = s.ownOffsiteRetention[domain as OffsiteDomain];
+  return {
+    retentionKeepLast: own ? own.keepLast : s.offsiteRetentionKeepLast,
+    retentionKeepDaily: own ? own.keepDaily : s.offsiteRetentionKeepDaily,
+    retentionKeepWeekly: own ? own.keepWeekly : s.offsiteRetentionKeepWeekly,
+    retentionKeepMonthly: own ? own.keepMonthly : s.offsiteRetentionKeepMonthly,
+    retentionKeepYearly: own ? own.keepYearly : s.offsiteRetentionKeepYearly,
+  };
+}
+
 // bv-convention-exception: page-uses-page-shell: the rail stands beside the
 // page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
 export function SettingsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { summary: anomalySummary } = useAnomalySummary();
-  const { confirm, confirmDialog } = useConfirm();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
+  const namedRepos = useNamedRepos();
+  const [allTargets, setAllTargets] = useState<OffsiteTarget[]>([]);
+  useEffect(() => {
+    const load = () => {
+      listOffsiteTargets()
+        .then((r) => {
+          if (r.ok) setAllTargets(r.targets ?? []);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    return subscribeOffsiteTargets(load);
+  }, []);
+  const fieldDirects = primaryDirects(allTargets, namedRepos);
 
   const { page: param } = useParams();
   const page: SettingsPageId = isSettingsPage(param) ? param : FALLBACK_PAGE;
@@ -1373,6 +1407,7 @@ export function SettingsPage() {
         // disabled appears or vanishes without a reload.
         window.dispatchEvent(new Event("bv:settings-changed"));
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, res.warnings);
         return true;
       }
       setSaveState("idle");
@@ -1383,6 +1418,25 @@ export function SettingsPage() {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
     }
+  }
+
+  // A domain's off-site rules, its own or the shared ones, are copied onto its
+  // field target, so a save that lowers them reaches that target's direct
+  // repository at once. Declined, the fields go back to what was saved.
+  async function saveOffsiteRetention(patch: Partial<Settings>): Promise<boolean> {
+    const before = savedBaseline.current;
+    if (before) {
+      const after = { ...before, ...patch };
+      const reached = fieldDirects.filter((u) =>
+        retentionLowered(offsiteRetentionOf(before, u.target.domain), offsiteRetentionOf(after, u.target.domain))
+      );
+      if (reached.length > 0 && !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", reached)))) {
+        const restore = Object.fromEntries(Object.keys(patch).map((k) => [k, before[k as keyof Settings]]));
+        setSettings((prev) => (prev ? { ...prev, ...restore } : prev));
+        return false;
+      }
+    }
+    return save(patch, setRetSaveState, setRetSaveError);
   }
 
   // toggleDomainEnabled saves a domain row the moment it is clicked (#142): an
@@ -2112,6 +2166,7 @@ export function SettingsPage() {
           container, VM or folder set can be pointed at instead of the domain
           path below, so the more specific answer is read first. */}
       {page === "storage" && <ReposCard hueIndex={nextHue()} />}
+      {page === "storage" && <PlacementDefaultsCard hueIndex={nextHue()} />}
 
       {page === "storage" && (
       <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
@@ -2238,12 +2293,19 @@ export function SettingsPage() {
             scope={scope}
             settings={settings}
             setSettings={setSettings}
-            save={(patch) => save(patch, setRetSaveState, setRetSaveError)}
+            save={(patch) => (scope === "offsite" ? saveOffsiteRetention(patch) : save(patch, setRetSaveState, setRetSaveError))}
             debouncedSave={debouncedSave}
             cancelDebounce={cancelDebounce}
             t={t}
             hueIndex={nextHue()}
-          />
+          >
+            {scope === "offsite" &&
+              fieldDirects.map((u) => (
+                <p key={u.target.id} className="text-xs text-carbon-textMuted">
+                  {alsoDirectText(t, u)}
+                </p>
+              ))}
+          </RetentionRulesCard>
         ))}
 
       {/* The answer the numbers above never give: which restore points the
@@ -2638,6 +2700,7 @@ export function SettingsPage() {
         // One hue position per domain, shared by the card heading and every
         // control inside it, so a domain's buttons match its card.
         const hueIdx = nextHue();
+        const fieldTarget = allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
         return (
         <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
           {/* The repo URL prefixes (rest:, s3:, b2:) are visible reference
@@ -2667,19 +2730,14 @@ export function SettingsPage() {
               />
             ) : (
               <>
-                <input
+                <OffsiteLocationInput
+                  domain={domain}
                   value={settings[repoKey]}
-                  spellCheck={false}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-                    debouncedSave(repoKey, () =>
-                      void save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)
-                    );
-                  }}
+                  targetId={fieldTarget?.id}
+                  targetName={fieldTarget?.name}
                   placeholder="rest:http://host:8000/repo"
-                  dir="ltr"
                   className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
+                  onSave={(v) => save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)}
                 />
                 {/* A mounted share is a valid off-site target, but the
                     placeholder shows a REST URL, so this says a bare relative
@@ -2797,6 +2855,9 @@ export function SettingsPage() {
           hueIndex={nextHue()}
         />
         {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
+        <ApiTokensCard hueIndex={nextHue()} passwordSet={authEnabled} />
+        <HomeAssistantCard hueIndex={nextHue()} />
+        <NetworkCard hueIndex={nextHue()} />
         </>
       )}
 

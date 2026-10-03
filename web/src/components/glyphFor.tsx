@@ -119,6 +119,8 @@ const RULES: Rule[] = [
   [/logout|signOut/i, () => <IconSignOut />],
   [/twoFactorEnable|totpEnable/i, () => <IconShieldOn />],
   [/twoFactorDisable|totpDisable/i, () => <IconShieldOff />],
+  // Trusting a certificate is a security decision, like arming a factor.
+  [/\.trust(Changed)?$/i, () => <IconShieldOn />],
   // Revoking takes one credential away, which is neither the row being
   // deleted nor the second factor going off.
   [/revoke|passkeyRemove$/i, () => <IconKeyRevoke />],

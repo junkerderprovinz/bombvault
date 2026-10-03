@@ -39,6 +39,8 @@ Como una copia detiene servicios y saca puntos de restauración antiguos, los in
 
 Un inicio de dominio o de Copia total deja fuera los elementos que retiene algún límite y los nombra en su respuesta. Ni la interfaz web ni la programación se ven afectadas por nada de esto. El cupo por hora vive en memoria, así que un reinicio de BombVault lo pone a cero.
 
+Los inicios por la [API](api.md#errors) y desde [Home Assistant](api.md#home-assistant) cuentan para los mismos límites por elemento que los inicios por MCP, y para la protección de retención.
+
 ## Activarlo {#switch-on}
 
 1. Abre **Ajustes, Integraciones, Servidor MCP** y pulsa el botón de tu cliente. Un cliente que no está en la lista se conecta mediante **Otro cliente**.
@@ -54,7 +56,7 @@ Cada clave tiene su propia tarjeta. Muestra el nombre de la clave, si puede inic
 
 Junto a su nombre, el recuadro muestra el logotipo del cliente para el que se creó la clave. Una clave creada mediante **Otro cliente**, o antes de que la tarjeta listara clientes, muestra una llave en su lugar.
 
-**Registro** en una tarjeta abre lo que hizo esa clave. Primero van las copias que inició, cada una con su estado y un enlace a esa ejecución en el registro de actividad del panel. Debajo están sus llamadas, las más recientes primero, con la herramienta y en qué quedó la llamada. Un rechazo dice por qué: la clave solo puede leer, la protección de retención frenó la copia, ya había otra copia en curso, el elemento se copió por MCP hace unos minutos o la clave envió demasiadas solicitudes. Una cancelación enlaza la ejecución a la que se refería.
+**Registro** en una tarjeta abre lo que hizo esa clave. Primero van las copias que inició, cada una con su estado y un enlace a esa ejecución en el registro de actividad del panel. Debajo están sus llamadas, las más recientes primero, con la herramienta y en qué quedó la llamada. Un rechazo dice por qué: la clave solo puede leer, la protección de retención frenó la copia, ya había otra copia en curso, una copia del elemento se inició fuera de la interfaz web hace unos minutos o la clave envió demasiadas solicitudes. Una cancelación enlaza la ejecución a la que se refería.
 
 BombVault guarda las entradas de cada clave durante 30 días como máximo: los 500 inicios y cancelaciones correctos más recientes y, junto a ellos, las 200 llamadas restantes más recientes (lecturas, rechazos y errores). Así un asistente que consulta una y otra vez una copia en curso, o que repite una llamada rechazada, no puede sacar su inicio del registro. De cada llamada guarda la herramienta, el resultado y la ejecución que nombró una cancelación. Nunca guarda lo que envió el asistente, ni la clave ni su huella. El paquete de diagnóstico solo cuenta las entradas, y una exportación de ajustes las deja fuera.
 
@@ -256,7 +258,7 @@ Todo lo que lee un asistente va al proveedor de IA que tiene detrás: nombres de
 | `429` | Demasiadas claves erróneas desde esta dirección, o más de 120 peticiones por minuto con una clave. Espera un minuto y comprueba si el asistente está atascado en un bucle. |
 | Errores con "certificate", "self-signed" o "unable to verify" | El cliente no confía en el certificado de BombVault. Ver [TLS y certificados](#tls). |
 | `busy` | Otra copia o una tarea de mantenimiento ocupa ese dominio. Vuelve a intentarlo cuando termine. |
-| `cooldown` | Este elemento, este dominio o Copia total se inició por MCP hace menos de 15 minutos. |
+| `cooldown` | Este elemento, este dominio o Copia total se inició fuera de la interfaz web hace menos de 15 minutos. |
 | `retention_guard` | Una copia MCP más dejaría solo puntos de restauración de MCP en una ventana de "conservar los últimos N", o el elemento ya recibió 4 copias por MCP en las últimas 24 horas, contando las fallidas y las canceladas. En el primer caso la próxima copia programada hace sitio; en el segundo el elemento vuelve a estar libre 24 horas después de la más antigua de esas copias. En ambos casos puedes iniciarla desde la interfaz web. |
 | `rate_limited` | La clave ha gastado sus 12 inicios de esta hora. |
 | `not_permitted` al iniciar | La clave es de solo lectura. Activa **Permitir iniciar copias** en la tarjeta; no hace falta reconectar. Al cancelar significa que esta clave no inició la ejecución. |

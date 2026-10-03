@@ -21,11 +21,13 @@ type Target struct {
 	// container's recreate recipe (inspect + template XML) so restore works even
 	// after the container has been deleted from the host.
 	Definition string
-	// Repo is this container's OPTIONAL per-item repository override (#204): the
-	// ID of a named repository from Settings, or "" for the Containers domain
-	// repository. Owned by SetTargetRepo, never by Upsert - see that method for
-	// why a repository must not move as a side effect.
+	// Repo is this container's own repository: the ID of a named repository, or
+	// "" for the Containers domain repository. UpsertTarget writes it when it
+	// creates the row and WritePlacement afterwards, never another edit.
 	Repo string
+	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
+	// takes the default's location at its first backup.
+	RepoChosen RepoChoice
 	// PreHook / PostHook are optional shell commands run inside the container via
 	// `sh -c` before/after a backup. Owned by SetHooks (never reset by Upsert).
 	PreHook  string
@@ -123,6 +125,9 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	if t.CreatedAt == 0 {
 		t.CreatedAt = time.Now().Unix()
 	}
+	if err := checkRepoChoice(t.Repo, t.RepoChosen); err != nil {
+		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
+	}
 
 	pathsJSON, err := json.Marshal(t.AppdataPaths)
 	if err != nil {
@@ -152,14 +157,16 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	// backup_order (like selected_paths/stop_containers/excludes) is owned by its
 	// setter and intentionally NOT in the ON CONFLICT update set, so a backup's
 	// UpsertTarget never clobbers the user's chosen sequence.
+	// repo and repo_chosen are written on insert only: an upsert never moves
+	// where an item's backups go.
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence, db_dump_off, db_dump_engine)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence, boolInt(t.DBDumpOff), t.DBDumpEngine,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence, t.Repo, t.RepoChosen, boolInt(t.DBDumpOff), t.DBDumpEngine,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -172,7 +179,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -181,7 +188,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // alias's target_id resolves to the entry's current name.
 func (r *Repo) GetTargetByID(id string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
 		FROM targets WHERE id = ?`, id)
 	return scanTarget(row)
 }
@@ -189,7 +196,7 @@ func (r *Repo) GetTargetByID(id string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, db_dump_off, db_dump_engine
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen, db_dump_off, db_dump_engine
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -231,7 +238,7 @@ func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	// there is and drifts to the end of the queue for good — quietly, since the
 	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.db_dump_off, t.db_dump_engine
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.repo_chosen, t.db_dump_off, t.db_dump_engine
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -403,42 +410,6 @@ func (r *Repo) BackedUpShapes() (map[string]string, error) {
 		out[id] = shape
 	}
 	return out, rows.Err()
-}
-
-// SetTargetRepo writes a container's per-item repository override (#204): the ID of
-// a named repository from Settings, or "" to put it back on the Containers domain
-// repository.
-//
-// Its own statement rather than a field on Upsert, for the same reason
-// SetFileSetRepo is: the destination of an item's backups must never move as a
-// SIDE EFFECT of some other edit. A form that did not know about the field would
-// clear the override and send the next backup somewhere else - and unlike a
-// cleared schedule, which announces itself the next time a run does not happen,
-// a moved repository looks exactly like a working one until somebody goes
-// looking for a snapshot that is in the other repo.
-//
-// An ID, not a location. Locations are written down once in Settings and picked
-// here, which is the whole difference between configuring ten items and typing
-// the same bucket path ten times.
-// A container with no stored target row yet gets one, exactly as SetBackupPaths
-// does. That row only appears on the first backup or the first setting, so
-// without this a container that has never been backed up could not be pointed at
-// a repository at all - which is precisely when somebody would want to, BEFORE
-// the first run puts data in the wrong place. Found by clicking it.
-func (r *Repo) SetTargetRepo(containerName, repo string) error {
-	res, err := r.db.Exec(`UPDATE targets SET repo = ? WHERE container_name = ?`, repo, containerName)
-	if err != nil {
-		return fmt.Errorf("SetTargetRepo: %w", err)
-	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		if _, err := r.UpsertTarget(Target{ContainerName: containerName}); err != nil {
-			return fmt.Errorf("SetTargetRepo create target: %w", err)
-		}
-		if _, err := r.db.Exec(`UPDATE targets SET repo = ? WHERE container_name = ?`, repo, containerName); err != nil {
-			return fmt.Errorf("SetTargetRepo: %w", err)
-		}
-	}
-	return nil
 }
 
 // SetBackupPaths sets the explicit backup-folder selection (container-translated
@@ -697,8 +668,10 @@ func (r *Repo) SetExcludeCaches(containerName string, m map[string]bool) error {
 // behind, they could never be unlinked, and the unique (domain, old_name)
 // index would keep those names from ever becoming aliases again. An alias
 // whose old_name only equals name but points at another row is that row's
-// history and stays.
-func (r *Repo) DeleteTarget(name string) error {
+// history and stays. Each former name keeps the entry's copy rule, because the
+// snapshots taken under it outlive the row, unless another row carries that
+// name today or it is in installed, the containers Docker lists.
+func (r *Repo) DeleteTarget(name string, installed map[string]bool) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("DeleteTarget begin: %w", err)
@@ -725,6 +698,9 @@ func (r *Repo) DeleteTarget(name string) error {
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}
 	if hasRow {
+		if err := keepRuleOnAliasesTx(tx, containerEntries, id, name, installed); err != nil {
+			return fmt.Errorf("DeleteTarget: %w", err)
+		}
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'container' AND target_id = ?`, id); err != nil {
 			return fmt.Errorf("DeleteTarget aliases: %w", err)
 		}
@@ -744,7 +720,7 @@ func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON, ecJSON string
 	var include, updateAfter, dbDumpOff int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &dbDumpOff, &t.DBDumpEngine)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &t.RepoChosen, &dbDumpOff, &t.DBDumpEngine)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
@@ -784,6 +760,10 @@ func scanTarget(s scanner) (Target, error) {
 // it just gave up. The caller rewrites it beforehand, so a definition that
 // fails to rewrite fails before anything is written; pass the current
 // definition when there is nothing to rewrite.
+//
+// The entry's copy rule moves to the new name, and so do the copies the
+// off-site targets were last seen holding under the old one. A new name that
+// carries a rule of its own is ErrCopyRuleTaken.
 func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) error {
 	return r.renameWithAlias(containerEntries, oldName, newName, newDefinition, "")
 }
@@ -793,6 +773,12 @@ func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) err
 // oldName is no container's former name, and when an unrelated entry has
 // taken oldName since, rather than merge the two. newDefinition is written
 // with the rename back, for the same reason as in RenameTargetWithAlias.
-func (r *Repo) UnlinkAlias(oldName, newDefinition string) error {
-	return r.unlinkAlias(containerEntries, oldName, newDefinition, "")
+//
+// The copy rule comes back with the name and stays on the name the entry
+// leaves, whose snapshots from the linked time are the entry's, unless that
+// name is in installed, the containers Docker lists: the one installed under
+// it follows its own rule. An old name that carries a rule of its own is
+// ErrCopyRuleTaken.
+func (r *Repo) UnlinkAlias(oldName, newDefinition string, installed map[string]bool) error {
+	return r.unlinkAlias(containerEntries, oldName, newDefinition, "", installed)
 }

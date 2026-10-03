@@ -348,7 +348,7 @@ func TestTakeOverVMRefusesBeforeWritingAnything(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := f.st.SetVMRepo("windows-11", named.ID); err != nil {
+		if _, err := f.st.WritePlacement(store.ItemRef{Domain: "vms", Key: "windows-11"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 			t.Fatal(err)
 		}
 		return establishLocalRepo(t, f.root, "backups/cold")
@@ -464,7 +464,7 @@ func TestTakeOverVMRefusesBeforeWritingAnything(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := f.st.SetVMRepo("win11", named.ID); err != nil {
+				if _, err := f.st.WritePlacement(store.ItemRef{Domain: "vms", Key: "win11"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 					t.Fatal(err)
 				}
 			}},
@@ -693,6 +693,51 @@ func TestUnlinkVMAliasPutsBackTheDefinitionFromBeforeTheTakeover(t *testing.T) {
 	}
 	if pin := mustSettings(t, f.st).DRDrillTargetVM; pin != "windows-11" {
 		t.Fatalf("DR-drill pin = %q, want windows-11", pin)
+	}
+}
+
+// win11 is still defined when the takeover is undone, so its own backups
+// follow the domain default rather than the entry's rule.
+func TestUnlinkVMAliasLeavesNoRuleOnTheVMDefinedUnderTheNameItLeaves(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	if err := f.st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if err := f.svc.TakeOverVM(ctx, "windows-11", "win11"); err != nil {
+		t.Fatalf("TakeOverVM: %v", err)
+	}
+
+	if err := f.svc.UnlinkVMAlias(ctx, "windows-11"); err != nil {
+		t.Fatalf("UnlinkVMAlias: %v", err)
+	}
+	if rule, found, err := f.st.CopyRuleFor("vms", "vm:win11"); err != nil || found {
+		t.Fatalf("rule of win11 = %v (found %v), %v; want none", rule.Skip, found, err)
+	}
+	if rule, found, err := f.st.CopyRuleFor("vms", "vm:windows-11"); err != nil || !found {
+		t.Fatalf("rule of windows-11 = %v (found %v), %v; want the entry's", rule.Skip, found, err)
+	}
+}
+
+func TestTakeOverVMOntoARowWhoseOnlySettingIsTheEntrysOwnRule(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	for _, identity := range []string{"vm:windows-11", "vm:win11"} {
+		if err := f.st.SetCopyRule("vms", identity, []string{store.SkipAll}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := f.st.UpsertVMTarget(store.VMTarget{Name: "win11", Method: "graceful"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.svc.TakeOverVM(context.Background(), "windows-11", "win11"); err != nil {
+		t.Fatalf("TakeOverVM: %v", err)
+	}
+	if tg, err := f.st.GetVMTargetByName("win11"); err != nil || tg.ID != f.id {
+		t.Fatalf("entry on win11 = %+v, %v; want the one from windows-11", tg, err)
+	}
+	if _, found, err := f.st.CopyRuleFor("vms", "vm:win11"); err != nil || !found {
+		t.Fatalf("win11 lost the rule (found %v, %v)", found, err)
 	}
 }
 
@@ -977,6 +1022,27 @@ func TestUnlinkVMAliasRoute(t *testing.T) {
 	}
 	if tg, err := f.st.GetVMTargetByName("Windows 11"); err != nil || tg.ID != f.id || tg.Definition != f.oldDef {
 		t.Fatalf("entry on Windows 11 = %+v, %v; want it back with its old definition", tg, err)
+	}
+}
+
+func TestTheVMTakeoverRoutesRefuseACopyRuleWithItsCode(t *testing.T) {
+	f := newVMTakeover(t)
+	if err := f.st.SetCopyRule("vms", "vm:win11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	if _, m := doJSON(t, f.router(), http.MethodPost, "/api/vms/win11/takeover", `{"from":"windows-11"}`); m["ok"] != false || m["code"] != "copy-rule-taken" {
+		t.Fatalf("takeover = %v, want the copy-rule-taken refusal", m)
+	}
+
+	g := newVMTakeover(t)
+	if err := g.svc.TakeOverVM(context.Background(), "windows-11", "win11"); err != nil {
+		t.Fatalf("TakeOverVM: %v", err)
+	}
+	if err := g.st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	if _, m := doJSON(t, g.router(), http.MethodDelete, "/api/vms/win11/alias/windows-11", ""); m["ok"] != false || m["code"] != "copy-rule-taken" {
+		t.Fatalf("unlink = %v, want the copy-rule-taken refusal", m)
 	}
 }
 

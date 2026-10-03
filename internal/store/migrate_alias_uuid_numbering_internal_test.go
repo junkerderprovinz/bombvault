@@ -30,6 +30,11 @@ func seedWith109As(t *testing.T, name string) *sql.DB {
 	if _, err := db.Exec(`ALTER TABLE vms DROP COLUMN uuid`); err != nil {
 		t.Fatalf("unseed vms.uuid: %v", err)
 	}
+	// This build records 109 itself, and version is the primary key, so its row
+	// has to go before the other build's name can take that number.
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = 109`); err != nil {
+		t.Fatalf("unseed the 109 row: %v", err)
+	}
 	record(t, db, 109, name)
 	return db
 }

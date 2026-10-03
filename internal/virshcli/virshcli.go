@@ -44,6 +44,17 @@ var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
 // run executes virsh and returns its trimmed stdout. On failure it logs the
 // full stderr and returns only the scrubbed last line of it.
 func (c *Client) run(ctx context.Context, args ...string) (string, error) {
+	out, stderr, err := c.exec(ctx, args...)
+	if err != nil {
+		log.Printf("virshcli: %q failed: %s", args[0], stderr)
+		return "", fmt.Errorf("virshcli: %s: %s", args[0], lastReason(stderr))
+	}
+	return out, nil
+}
+
+// exec runs virsh and returns its trimmed stdout and, on failure, its stderr,
+// without logging, for a caller that expects some failures.
+func (c *Client) exec(ctx context.Context, args ...string) (string, string, error) {
 	cmd := exec.CommandContext(ctx, c.bin, c.baseArgs(args...)...) //nolint:gosec // G204: args are separate (never shell-interpolated); virsh name/path args come from libvirt, not raw user input
 	out, err := cmd.Output()
 	if err != nil {
@@ -51,10 +62,9 @@ func (c *Client) run(ctx context.Context, args ...string) (string, error) {
 		if ee, ok := err.(*exec.ExitError); ok {
 			stderr = string(ee.Stderr)
 		}
-		log.Printf("virshcli: %q failed: %s", args[0], stderr)
-		return "", fmt.Errorf("virshcli: %s: %s", args[0], lastReason(stderr))
+		return "", stderr, err
 	}
-	return strings.TrimSpace(string(out)), nil
+	return strings.TrimSpace(string(out)), "", nil
 }
 
 // lastReason returns the last non-empty line of virsh stderr with absolute
@@ -309,6 +319,9 @@ type domainXML struct {
 			Target struct {
 				Dev string `xml:"dev,attr"`
 			} `xml:"target"`
+			Driver struct {
+				Type string `xml:"type,attr"`
+			} `xml:"driver"`
 			ReadOnly *struct{} `xml:"readonly"`
 		} `xml:"disk"`
 		TPM *tpmXML `xml:"tpm"`
@@ -336,7 +349,7 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		switch {
 		case writable:
 			disks = append(disks, disk.Source.File)
-			diskRefs = append(diskRefs, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.File})
+			diskRefs = append(diskRefs, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.File, Format: disk.Driver.Type})
 			if device == "" {
 				device = disk.Target.Dev // the blockcommit target
 			}
