@@ -200,6 +200,17 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	hostCfg.MemorySwap = spec.MemoryBytes
 	pids := spec.PidsLimit
 	hostCfg.PidsLimit = &pids
+	// Docker refuses a CFS quota next to NanoCPUs and a reservation above the
+	// memory limit, and the OOM settings would shield the copy at the host's
+	// expense.
+	hostCfg.CPUPeriod = 0
+	hostCfg.CPUQuota = 0
+	hostCfg.MemoryReservation = 0
+	hostCfg.OomKillDisable = nil
+	hostCfg.OomScoreAdj = 0
+	// The original's log driver would ship the copy's output to wherever the
+	// original's goes.
+	hostCfg.LogConfig = container.LogConfig{}
 	return cfg, hostCfg
 }
 

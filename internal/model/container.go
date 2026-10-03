@@ -105,6 +105,33 @@ type HostConfig struct {
 	ExtraHosts     []string
 	CgroupParent   string
 	Ulimits        []Ulimit
+
+	// The limits below are absent from definitions stored before they were
+	// recorded. Their zero values and nil pointers leave Docker's defaults in
+	// place, as on a container started without the flag.
+	Memory            int64  `json:",omitempty"`
+	MemoryReservation int64  `json:",omitempty"`
+	MemorySwap        int64  `json:",omitempty"`
+	MemorySwappiness  *int64 `json:",omitempty"`
+	NanoCPUs          int64  `json:",omitempty"`
+	CPUShares         int64  `json:",omitempty"`
+	CPUPeriod         int64  `json:",omitempty"`
+	CPUQuota          int64  `json:",omitempty"`
+	CpusetCpus        string `json:",omitempty"`
+	CpusetMems        string `json:",omitempty"`
+	PidsLimit         *int64 `json:",omitempty"`
+	OomKillDisable    *bool  `json:",omitempty"`
+	OomScoreAdj       int    `json:",omitempty"`
+	ShmSize           int64  `json:",omitempty"`
+	Init              *bool  `json:",omitempty"`
+	// LogConfig is nil when the daemon's default log driver applies.
+	LogConfig *LogConfig `json:",omitempty"`
+}
+
+// LogConfig mirrors Docker's log driver and its options.
+type LogConfig struct {
+	Type   string
+	Config map[string]string `json:",omitempty"`
 }
 
 // Ulimit mirrors docker's units.Ulimit.

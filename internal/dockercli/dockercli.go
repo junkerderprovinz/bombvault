@@ -499,8 +499,9 @@ func (c *Client) ImageRemove(ctx context.Context, id string) error {
 // CreateAndStart recreates a container from a captured inspect and starts it
 // when start is true. Security-relevant fields (User, Cap*, Privileged,
 // SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/
-// RestartPolicy/Env/Cmd/Image are preserved so the recreated container never
-// gains privilege over the original.
+// RestartPolicy/Env/Cmd/Image, the resource limits and the log driver are
+// preserved so the recreated container never gains privilege or headroom
+// over the original.
 func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start bool) error {
 	cfg, hostCfg := buildCreateConfig(in)
 	name := normalizeName(in.Name)
@@ -755,6 +756,24 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 			Name:              string(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
+		Memory:            hc.Memory,
+		MemoryReservation: hc.MemoryReservation,
+		MemorySwap:        hc.MemorySwap,
+		MemorySwappiness:  hc.MemorySwappiness,
+		NanoCPUs:          hc.NanoCPUs,
+		CPUShares:         hc.CPUShares,
+		CPUPeriod:         hc.CPUPeriod,
+		CPUQuota:          hc.CPUQuota,
+		CpusetCpus:        hc.CpusetCpus,
+		CpusetMems:        hc.CpusetMems,
+		PidsLimit:         hc.PidsLimit,
+		OomKillDisable:    hc.OomKillDisable,
+		OomScoreAdj:       hc.OomScoreAdj,
+		ShmSize:           hc.ShmSize,
+		Init:              hc.Init,
+	}
+	if hc.LogConfig.Type != "" {
+		out.LogConfig = &model.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
 	}
 	for _, u := range hc.Ulimits {
 		if u != nil {
@@ -817,10 +836,28 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 			Name:              container.RestartPolicyMode(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
+		OomScoreAdj: hc.OomScoreAdj,
+		ShmSize:     hc.ShmSize,
+		Init:        hc.Init,
 	}
-	// CgroupParent and Ulimits are promoted from the embedded Resources struct, so
-	// they are set by assignment (a struct literal can't address promoted fields).
+	if hc.LogConfig != nil {
+		hostCfg.LogConfig = container.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
+	}
+	// The limits are promoted from the embedded Resources struct, so they are
+	// set by assignment (a struct literal can't address promoted fields).
 	hostCfg.CgroupParent = hc.CgroupParent
+	hostCfg.Memory = hc.Memory
+	hostCfg.MemoryReservation = hc.MemoryReservation
+	hostCfg.MemorySwap = hc.MemorySwap
+	hostCfg.MemorySwappiness = hc.MemorySwappiness
+	hostCfg.NanoCPUs = hc.NanoCPUs
+	hostCfg.CPUShares = hc.CPUShares
+	hostCfg.CPUPeriod = hc.CPUPeriod
+	hostCfg.CPUQuota = hc.CPUQuota
+	hostCfg.CpusetCpus = hc.CpusetCpus
+	hostCfg.CpusetMems = hc.CpusetMems
+	hostCfg.PidsLimit = hc.PidsLimit
+	hostCfg.OomKillDisable = hc.OomKillDisable
 	for _, u := range hc.Ulimits {
 		hostCfg.Ulimits = append(hostCfg.Ulimits, &container.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
 	}
