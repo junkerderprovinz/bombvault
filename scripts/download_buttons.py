@@ -16,4 +16,5 @@ BUTTONS = {
     # that lists it.
     "source": "https://github.com/junkerderprovinz/bombvault/releases/latest",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
+    "unraid": "https://unraid.net/community/apps?q=bombvault",
 }
