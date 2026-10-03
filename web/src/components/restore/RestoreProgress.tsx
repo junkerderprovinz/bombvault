@@ -13,7 +13,7 @@ import type { BackupWatchState } from "../../lib/backupWatch";
 import { humanBytes } from "../../lib/forecast";
 import type { ProgressState } from "../../lib/progress";
 import type { useT } from "../../lib/i18n";
-import { RESTORE_NO_RUNTIME, RESTORED_WITHOUT_RUNTIME, RunReasonText } from "../../lib/runReason";
+import { RESTORE_NO_RUNTIME, restoreNotes, RunReasonText } from "../../lib/runReason";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { ProgressBar } from "../ProgressBar";
@@ -84,6 +84,7 @@ export function RestoreProgress({
   t,
 }: RestoreProgressProps) {
   const refusal = state.phase === "error" ? runtimeRefusal(state.message) : undefined;
+  const left = state.phase === "success" ? restoreNotes(state.note) : undefined;
   return (
     <>
       {isPending && (
@@ -112,8 +113,13 @@ export function RestoreProgress({
       {state.phase === "success" && (
         <p className={`text-xs wrap-break-word ${successWarn ? "text-statusWarn" : "text-statusOk"}`}>{successMessage}</p>
       )}
-      {state.phase === "success" && state.note?.startsWith(RESTORED_WITHOUT_RUNTIME) && (
+      {left?.withoutRuntime && (
         <p className="text-xs text-statusWarn wrap-break-word">{t("restore.withoutRuntimeDone").replace("{name}", name)}</p>
+      )}
+      {left && left.unlinked.length > 0 && (
+        <p className="text-xs text-statusWarn wrap-break-word">
+          {t("restore.withoutLinksDone").replace("{name}", name).replace("{links}", left.unlinked.join(", "))}
+        </p>
       )}
       {state.phase === "cancelled" && (
         <p className="text-xs text-carbon-textSub wrap-break-word">{t("restore.cancelled")}</p>

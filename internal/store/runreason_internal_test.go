@@ -51,6 +51,7 @@ func namedReasons() map[string]string {
 		"ImportTailAppsStopped":      ImportTailAppsStopped,
 		"ReasonRestoreNoRuntime":     ReasonRestoreNoRuntime,
 		"NoteRestoredWithoutRuntime": NoteRestoredWithoutRuntime,
+		"NoteRestoredWithoutLinks":   NoteRestoredWithoutLinks,
 	}
 }
 

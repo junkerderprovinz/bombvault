@@ -53,3 +53,16 @@ describe("a restore the host has no GPU or runtime for", () => {
     expect(document.body.textContent).toContain(en["restore.withoutRuntimeDone"].replace("{name}", "plex"));
   });
 });
+
+it("names the links a restore left out", () => {
+  renderBanner({
+    state: {
+      phase: "success",
+      note: "restored without the GPU or runtime the container used; restored without links to containers that are not running: db, cache",
+    },
+  });
+  expect(document.body.textContent).toContain(en["restore.withoutRuntimeDone"].replace("{name}", "plex"));
+  expect(document.body.textContent).toContain(
+    en["restore.withoutLinksDone"].replace("{name}", "plex").replace("{links}", "db, cache")
+  );
+});

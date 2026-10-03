@@ -35,6 +35,27 @@ export const RESTORE_NO_RUNTIME = "restore failed: the container used a GPU or r
  *  NoteRestoredWithoutRuntime. */
 export const RESTORED_WITHOUT_RUNTIME = "restored without the GPU or runtime the container used";
 
+/** The note of a restore that left out links Docker would refuse, followed by
+ *  ": " and the containers. Keep in step with NoteRestoredWithoutLinks. */
+export const RESTORED_WITHOUT_LINKS = "restored without links to containers that are not running";
+
+/** Whether a restore failed because this host lacks the GPU or runtime of the
+ *  container. */
+export function isRuntimeRefusal(raw: string | null | undefined): boolean {
+  return !!raw && (raw === RESTORE_NO_RUNTIME || raw.startsWith(RESTORE_NO_RUNTIME + ": "));
+}
+
+/** What a successful container restore left out, read from its notes, which
+ *  it joins with "; ". */
+export function restoreNotes(raw: string | null | undefined): { withoutRuntime: boolean; unlinked: string[] } {
+  const out = { withoutRuntime: false, unlinked: [] as string[] };
+  for (const note of (raw ?? "").split("; ")) {
+    if (note === RESTORED_WITHOUT_RUNTIME) out.withoutRuntime = true;
+    else if (note.startsWith(RESTORED_WITHOUT_LINKS + ": ")) out.unlinked = note.slice(RESTORED_WITHOUT_LINKS.length + 2).split(", ");
+  }
+  return out;
+}
+
 /**
  * The reasons a dump, an import or a restore writes, which may be followed by
  * ": <detail>" holding the tool's own message. The head is translated, the
@@ -71,6 +92,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database imported with errors": "runReason.dbimportErrors",
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
+  [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
 };
 
 /**
@@ -136,14 +158,15 @@ const WARNING_NOTES = [
   "database dump covers one database only",
   "database dump skipped: its run could not be recorded",
   "database imported with errors",
-  RESTORED_WITHOUT_RUNTIME,
 ];
 
 /** Whether a note of a successful run reports something worth acting on. */
 export function isWarningNote(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
   if (importAppTail(text)) return true;
-  return WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "));
+  if (WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "))) return true;
+  const left = restoreNotes(text);
+  return left.withoutRuntime || left.unlinked.length > 0;
 }
 
 /**

@@ -22,6 +22,8 @@ import { RcloneCard } from "./settings/RcloneCard";
 import { ToggleRow } from "./settings/shared";
 import { Selector } from "../components/Selector";
 import { RestoreAction } from "../components/restore/RestoreAction";
+import { RuntimeRetry } from "../components/restore/RuntimeRetry";
+import { isRuntimeRefusal } from "../lib/runReason";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { importRefusedKey } from "../lib/dbdump";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -170,20 +172,26 @@ function DumpOnlyRow({
   hueIndex: number;
 }) {
   const [busy, setBusy] = useState(false);
-  const [outcome, setOutcome] = useState<{ ok: boolean; message: string } | null>(null);
+  // noRuntime marks a restore Docker refused for a GPU or runtime this host
+  // lacks, which the row then offers without them.
+  const [outcome, setOutcome] = useState<{ ok: boolean; message: string; noRuntime?: boolean } | null>(null);
 
-  async function run() {
+  async function run(withoutRuntime = false) {
     setBusy(true);
     setOutcome(null);
     try {
       const restored = await fireAndWaitRun({
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
-        start: () => restore(name, "latest", true),
+        start: () => restore(name, "latest", true, undefined, undefined, withoutRuntime),
         t,
       });
       if (!restored.ok) {
-        setOutcome({ ok: false, message: restored.error ?? t("common.restoreFailed") });
+        setOutcome({
+          ok: false,
+          message: restored.error ?? t("common.restoreFailed"),
+          noRuntime: isRuntimeRefusal(restored.error),
+        });
         return;
       }
       const list = await listDbDumps(name);
@@ -236,7 +244,21 @@ function DumpOnlyRow({
           title={busy ? t("dbdump.busyImporting") : undefined}
         />
       </div>
-      {outcome && (
+      {outcome?.noRuntime && (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-xs text-statusFail wrap-break-word">{t("restore.noRuntime").replace("{name}", name)}</p>
+          <Button
+            label={t("restore.withoutRuntime")}
+            labelKey="restore.withoutRuntime"
+            tone="accent"
+            onClick={() => void run(true)}
+            disabled={busy || otherActive}
+            busy={busy}
+            hint={t("restore.withoutRuntimeHint")}
+          />
+        </div>
+      )}
+      {outcome && !outcome.noRuntime && (
         <p className={`text-xs wrap-break-word ${outcome.ok ? "text-statusOk" : "text-statusFail"}`}>
           {outcome.message}
         </p>
@@ -1795,6 +1817,9 @@ export default function Recovery() {
   // Inline rather than a toast: it drives the step's pill, and the counts say
   // whether rows need a retry.
   const [restoreAllResult, setRestoreAllResult] = useState<{ ok: number; fail: number } | null>(null);
+  // The containers Restore all could not recreate for a GPU or runtime this
+  // host lacks, offered again without them.
+  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
 
   // A refused kit download, such as the 403 while no login password is set.
   const [kitError, setKitError] = useState<string | null>(null);
@@ -1823,6 +1848,8 @@ export default function Recovery() {
     if (!(await confirm(question))) return;
     setRestoreAllBusy(true);
     setRestoreAllResult(null);
+    setRuntimeRefused([]);
+    const refused: string[] = [];
     let ok = 0;
     let fail = 0;
     try {
@@ -1835,6 +1862,7 @@ export default function Recovery() {
         });
         if (res.ok) ok++;
         else fail++;
+        if (isRuntimeRefusal(res.error)) refused.push(c.name);
       }
       for (const v of vms) {
         // On TrueNAS `name` is display-only; virsh and the recorded run know
@@ -1849,6 +1877,7 @@ export default function Recovery() {
         else fail++;
       }
       setRestoreAllResult({ ok, fail });
+      setRuntimeRefused(refused);
     } finally {
       setRestoreAllBusy(false);
     }
@@ -2211,6 +2240,9 @@ export default function Recovery() {
                   className="ms-auto"
                 />
               </div>
+            )}
+            {runtimeRefused.length > 0 && (
+              <RuntimeRetry key={runtimeRefused.join(",")} names={runtimeRefused} leaveStopped t={t} />
             )}
 
             {vms.length > 0 && vmSshConfigured === false && (

@@ -825,6 +825,8 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: record run start: %w", err)
 	}
 
+	var unlinked []string
+	d.Inspect.HostConfig.Links, unlinked = usableLinks(ctx, d.Docker, d.Inspect.HostConfig.Links, d.Inspect.Running && !d.LeaveStopped)
 	restoreErr := runRestore(ctx, d)
 	if restoreErr != nil {
 		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, truncateErr(restoreErr))
@@ -840,7 +842,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	// A partial-mapping restore (RESTORE-01) still records success — the run
 	// itself completed — but the note channel says what was left out, so a DR
 	// audit never mistakes "success" for "everything came back".
-	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: recordedSnap}, restoreNote(d)); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: recordedSnap}, restoreNote(d, unlinked)); err != nil {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil
@@ -1188,16 +1190,42 @@ func truncateErr(err error) string {
 // cleanly-mapping run row — byte-identical to the pre-feature shape
 // (pinned by TestRestoreDepsSkippedPathsEmptyIsByteIdentical).
 // restoreNote is what a successful container restore records: that it left
-// out the GPU or runtime, and which stored paths it skipped.
-func restoreNote(d RestoreDeps) string {
-	skipped := skippedPathsNote(d.SkippedPaths)
-	if !d.WithoutRuntime || !d.Inspect.HostConfig.UsesExtraRuntime() {
-		return skipped
+// out the GPU or runtime or links Docker would refuse, and which stored paths
+// it skipped.
+func restoreNote(d RestoreDeps, unlinked []string) string {
+	var notes []string
+	if d.WithoutRuntime && d.Inspect.HostConfig.UsesExtraRuntime() {
+		notes = append(notes, store.NoteRestoredWithoutRuntime)
 	}
-	if skipped == "" {
-		return store.NoteRestoredWithoutRuntime
+	if len(unlinked) > 0 {
+		notes = append(notes, store.NoteRestoredWithoutLinks+": "+strings.Join(unlinked, ", "))
 	}
-	return store.NoteRestoredWithoutRuntime + ": " + skipped
+	if skipped := skippedPathsNote(d.SkippedPaths); skipped != "" {
+		notes = append(notes, skipped)
+	}
+	return strings.Join(notes, "; ")
+}
+
+// usableLinks splits legacy links into the ones Docker accepts and the names
+// of the containers it would refuse: a missing one on create, and a stopped
+// one when the restored container starts. An inspect that fails keeps the
+// link and leaves the verdict to Docker.
+func usableLinks(ctx context.Context, docker Docker, links []string, start bool) (keep, refused []string) {
+	for _, l := range links {
+		name, _, _ := strings.Cut(strings.TrimPrefix(l, "/"), ":")
+		if live, err := docker.InspectName(ctx, name); err == nil && live == "" {
+			refused = append(refused, name)
+			continue
+		}
+		if start {
+			if h, err := docker.Health(ctx, name); err == nil && !h.Running {
+				refused = append(refused, name)
+				continue
+			}
+		}
+		keep = append(keep, l)
+	}
+	return keep, refused
 }
 
 func skippedPathsNote(skipped []string) string {

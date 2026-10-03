@@ -303,9 +303,13 @@ const ReasonRestoreNoRuntime = "restore failed: the container used a GPU or runt
 // Notes on a successful run, shown in a warning tone: the work was done, but
 // not as completely as the user would expect.
 const (
-	// NoteRestoredWithoutRuntime may carry the skipped paths of the restore
-	// as its detail.
+	// NoteRestoredWithoutRuntime is the note of a restore told to leave the
+	// GPU and runtime out. A restore joins its notes with "; ".
 	NoteRestoredWithoutRuntime = "restored without the GPU or runtime the container used"
+
+	// NoteRestoredWithoutLinks names the containers after ": ", which Docker
+	// would not have linked because they were missing or stopped.
+	NoteRestoredWithoutLinks = "restored without links to containers that are not running"
 
 	// NoteDBDumpOneDatabase says the credentials in the container reach one
 	// database rather than the whole server.

@@ -98,6 +98,15 @@ describe("buildLogLines", () => {
     expect(restored.text).toContain("activityLog.lineRestoreSuccess");
     expect(restored.text).toContain("; runReason.restoredWithoutRuntime");
   });
+
+  it("names the links a restore left out", () => {
+    const run = makeRun({
+      kind: "restore",
+      error: "restored without the GPU or runtime the container used; restored without links to containers that are not running: db",
+    });
+    const [line] = buildLogLines([run], {}, [], resolveName, 2_000_000);
+    expect(line.text).toContain("; runReason.restoredWithoutRuntime; runReason.restoredWithoutLinks: db");
+  });
 });
 
 // Drills, tamper tests and the flash ZIP export publish live progress keys

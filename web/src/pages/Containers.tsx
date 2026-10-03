@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
+import { listContainers, listRuns, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
 import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
@@ -68,6 +68,8 @@ import { ExcludePresetPanel } from "../components/ExcludePresetPanel";
 import { Toggle } from "../components/Toggle";
 import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
 import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
+import { RuntimeRetry } from "../components/restore/RuntimeRetry";
+import { isRuntimeRefusal } from "../lib/runReason";
 type T = ReturnType<typeof useT>["t"];
 
 // Helpers
@@ -3213,6 +3215,9 @@ function groupStacks(containers: Container[]): StackGroup[] {
 // between sequential members.
 const STACK_DONE_GRACE_MS = 8000;
 
+// How often a stack card reads the run history for its members' outcomes.
+const STACK_RUNS_POLL_MS = 2000;
+
 // StackCard is one compose stack: its name, members, and (in a collapsible panel)
 // a "Restore stack" action that restores every member stopped, then optionally
 // starts them in dependency order. The restore is ASYNC on the server (the POST
@@ -3246,6 +3251,11 @@ export function StackCard({
   // status instead — the shake, like the toast, only covers the click itself).
   const [shake, setShake] = useState(0);
   const [started, setStarted] = useState(false);
+  // The restore runs its members detached, so their outcomes are read back
+  // from the run history, counting only runs newer than watchFrom holds. A
+  // member Docker refused for its GPU or runtime is offered again without them.
+  const [watchFrom, setWatchFrom] = useState<Set<string> | null>(null);
+  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   // Terminal state for the stack restore: since StackCard drives no fire-and-
   // watch of its own, we derive "finished" from the members' progress below.
   const [finished, setFinished] = useState(false);
@@ -3282,6 +3292,37 @@ export function StackCard({
     return () => clearTimeout(timer);
   }, [started, anyMemberActive]);
 
+  const memberNames = group.members.map((m) => m.name).join(",");
+  useEffect(() => {
+    if (!watchFrom) return;
+    const names = new Set(memberNames.split(","));
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      const res = await listRuns().catch(() => null);
+      if (!alive) return;
+      // The list is newest first, so the first run of a member is its latest.
+      const latest = new Map<string, Run>();
+      for (const r of res?.runs ?? []) {
+        if (r.kind === "restore" && r.domain === "container" && names.has(r.target) && !watchFrom.has(r.id) && !latest.has(r.target)) {
+          latest.set(r.target, r);
+        }
+      }
+      const done = [...latest.values()].filter((r) => r.status !== "running");
+      if (done.length === names.size || done.some((r) => r.status === "cancelled") || finished) {
+        setRuntimeRefused(done.filter((r) => isRuntimeRefusal(r.error)).map((r) => r.target));
+        setWatchFrom(null);
+        return;
+      }
+      timer = setTimeout(() => void poll(), STACK_RUNS_POLL_MS);
+    };
+    timer = setTimeout(() => void poll(), STACK_RUNS_POLL_MS);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [watchFrom, finished, memberNames]);
+
   async function run() {
     // A member whose data folder is copied while the stack runs comes back as
     // files that may not start, so the question names it.
@@ -3295,14 +3336,17 @@ export function StackCard({
     const refusal = restoreBlockReason(check, t);
     const extra = <RestoreCheckPanel check={check} t={t} />;
     if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
+    setRuntimeRefused([]);
     setBusy(true);
     setStarted(false);
     setFinished(false);
     sawActive.current = false;
     try {
+      const before = await listRuns().catch(() => null);
       const res = await restoreStack(group.project, startInOrder, true, source);
       if (res.ok) {
         setStarted(true);
+        setWatchFrom(new Set((before?.runs ?? []).map((r) => r.id)));
         onRestored(); // refresh the main list so run-state/orphan rows update
       } else {
         // GlimStone follow-up pass (v8.0.0): a failure to even START the async
@@ -3398,6 +3442,16 @@ export function StackCard({
           )}
           {finished && !busy && (
             <p className="text-xs text-carbon-textSub">{t("stack.restoreFinished")}</p>
+          )}
+          {runtimeRefused.length > 0 && (
+            <RuntimeRetry
+              key={runtimeRefused.join(",")}
+              names={runtimeRefused}
+              source={source}
+              leaveStopped={!startInOrder}
+              onDone={onRestored}
+              t={t}
+            />
           )}
         </div>
       )}
@@ -3831,6 +3885,9 @@ export function Containers() {
   const [backupFilter, setBackupFilter] = useState<BackupFilterKey>(loadBackupFilterKey);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  // The containers the last bulk restore could not recreate for a GPU or
+  // runtime this host lacks, offered again without them.
+  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   const [discovering, setDiscovering] = useState(false);
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Discover / "Backup selected" buttons alongside their existing toasts.
@@ -4163,14 +4220,19 @@ export function Containers() {
   // "already running"). fireAndWaitRun handles the fire/retry/wait cycle.
   async function restoreSelected() {
     if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
-    void runBulk((name) =>
-      fireAndWaitRun({
+    setRuntimeRefused([]);
+    const refused: string[] = [];
+    await runBulk(async (name) => {
+      const res = await fireAndWaitRun({
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
         start: () => restore(name, "latest", true),
         t,
-      })
-    );
+      });
+      if (isRuntimeRefusal(res.error)) refused.push(name);
+      return res;
+    });
+    setRuntimeRefused(refused);
   }
 
   // GlimStone follow-up pass (v8.0.0): the "+N" / error note never auto-cleared
@@ -4513,6 +4575,9 @@ export function Containers() {
           backupSelected); this is only the LIVE "still working" state. */}
       {bulkBusy && (
         <p className="text-xs text-carbon-textSub">{t("containers.working")}</p>
+      )}
+      {runtimeRefused.length > 0 && (
+        <RuntimeRetry key={runtimeRefused.join(",")} names={runtimeRefused} onDone={() => void loadContainers()} t={t} />
       )}
 
       {/* The desktop list: full row cards with their inline editors. JSX-gated
