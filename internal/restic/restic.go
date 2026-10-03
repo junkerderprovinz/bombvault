@@ -530,10 +530,15 @@ func BackupDirArgs(repo string, tags []string, m Mode, excludes ...string) []str
 	return backupArgs(repo, tags, m, "host,tags", excludes, []string{"."})
 }
 
+// ImportedTag marks a snapshot made from another tool's backup. A keep policy
+// never forgets one: it is older than the item's own backups, so the next pass
+// would take it, and nothing makes it again.
+const ImportedTag = "imported"
+
 // ImportDirArgs is BackupDirArgs for a backup that did not happen now: --time
 // dates the snapshot at the moment the imported copy was made.
 func ImportDirArgs(repo string, tags []string, at time.Time, m Mode) []string {
-	args := BackupDirArgs(repo, tags, m)
+	args := BackupDirArgs(repo, append(slices.Clone(tags), ImportedTag), m)
 	sep := slices.Index(args, "--")
 	out := append([]string(nil), args[:sep]...)
 	out = append(out, "--time", at.Local().Format("2006-01-02 15:04:05"))
@@ -1096,7 +1101,7 @@ func (p RetentionPolicy) Forgets(snaps []Snapshot) (removed map[string]bool, ok 
 	}
 	removed = map[string]bool{}
 	for nr, sn := range list {
-		keep := !p.Direct && slices.Contains(sn.Tags, DirectTag)
+		keep := slices.Contains(sn.Tags, ImportedTag) || !p.Direct && slices.Contains(sn.Tags, DirectTag)
 		for i := range buckets {
 			b := &buckets[i]
 			if b.count <= 0 {
@@ -1154,8 +1159,9 @@ func parseForgetGroups(out []byte) ([]ForgetGroup, error) {
 // keepFlags renders a policy's set dimensions as restic --keep-* flags, in a
 // fixed order so the argv is stable and testable. An unset (zero) dimension is
 // omitted rather than sent as 0, which restic would read as "keep none".
-// Unless p.Direct is set, --keep-tag DirectTag keeps every snapshot written
-// into a direct repository. Shared by the real pass (ForgetPolicyArgs) and the
+// --keep-tag ImportedTag keeps every imported snapshot and, unless p.Direct is
+// set, --keep-tag DirectTag every snapshot written into a direct repository.
+// Shared by the real pass (ForgetPolicyArgs) and the
 // preview (ForgetPreviewArgs) so the two can never drift into answering
 // different questions.
 func keepFlags(p RetentionPolicy) []string {
@@ -1175,6 +1181,7 @@ func keepFlags(p RetentionPolicy) []string {
 	if p.KeepYearly > 0 {
 		args = append(args, "--keep-yearly", strconv.Itoa(p.KeepYearly))
 	}
+	args = append(args, "--keep-tag", ImportedTag)
 	if !p.Direct {
 		args = append(args, "--keep-tag", DirectTag)
 	}
@@ -1398,7 +1405,7 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 		out, err = runStreaming(cmd, args, sink, WatcherFrom(ctx))
 	} else {
 		cmd.Env = env
-		out, err = runBuffered(cmd, args)
+		out, err = runBuffered(ctx, cmd, args)
 	}
 	return out, ctxCancelErr(ctx, args, err)
 }
@@ -1421,14 +1428,20 @@ func ctxCancelErr(ctx context.Context, args []string, err error) error {
 	return err
 }
 
-// runBuffered runs restic capturing all stdout into a buffer.
-func runBuffered(cmd *exec.Cmd, args []string) ([]byte, error) {
+// runBuffered runs restic capturing all stdout into a buffer. When ctx stopped
+// the run, stderr only holds restic's reaction to the signal ("signal
+// terminated received", "context canceled" for every tree it was walking), so
+// it stays out of the log and the caller reports the stop.
+func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
 			return stdout.Bytes(), werr
+		}
+		if ctx.Err() != nil {
+			return nil, stderrError(args, stderr.String())
 		}
 		return nil, runError(args, stderr.String())
 	}
@@ -2592,7 +2605,7 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 		return err
 	}
 	cmd.Env = env
-	_, err := runBuffered(cmd, args)
+	_, err := runBuffered(ctx, cmd, args)
 	return err
 }
 

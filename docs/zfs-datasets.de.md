@@ -82,7 +82,7 @@ Um nach einer Wiederherstellung zurückzugehen, kopiere einzelne Dateien aus `.z
 
 BombVault speichert mit jedem Backup die lokal gesetzten ZFS-Eigenschaften jedes Datasets: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity und deine eigenen Benutzereigenschaften. Geerbte und schreibgeschützte Werte bleiben weg, weil sie von selbst zurückkommen. Backups aus der Zeit, bevor BombVault sie gespeichert hat, haben keine.
 
-- **In ein neues Dataset** ruft `zfs create` mit jeder gespeicherten Eigenschaft auf. casesensitivity, normalization und utf8only lassen sich nur so setzen. Der Mountpoint bleibt weg, damit die Kopie nicht mit dem Original kollidiert, ebenso `canmount`, `readonly` und die Verschlüsselung, damit die Wiederherstellung schreiben kann. Ein neues Dataset unter einem verschlüsselten übernimmt dessen Verschlüsselung. Das Dataset darüber muss existieren. Schlägt nach dem Anlegen etwas fehl, bleibt das neue Dataset auf dem Server, weil BombVault nie ein Dataset zerstört.
+- **In ein neues Dataset** ruft `zfs create` mit jeder gespeicherten Eigenschaft auf. casesensitivity, normalization und utf8only lassen sich nur so setzen. Quotas und Reservierungen kommen erst nach den Dateien, damit sie sie nicht abweisen können. Der Mountpoint bleibt weg, damit die Kopie nicht mit dem Original kollidiert, ebenso `canmount`, `readonly` und die Verschlüsselung, damit die Wiederherstellung schreiben kann. Ein neues Dataset unter einem verschlüsselten übernimmt dessen Verschlüsselung. Das Dataset darüber muss existieren. Schlägt nach dem Anlegen etwas fehl, bleibt das neue Dataset auf dem Server, weil BombVault nie ein Dataset zerstört.
 - **In das Dataset zurückschreiben** zeigt die gespeicherten Eigenschaften neben der Wiederherstellung. **Diese Eigenschaften auch setzen** setzt die, die ein bestehendes Dataset noch annimmt, bevor eine Datei geschrieben wird. Quotas und Reservierungen kommen erst nach den Dateien, damit sie sie nicht abweisen können. Ohne diesen Schalter behält das Dataset seine Einstellungen.
 
 ## Was im Backup steckt {#contents}
@@ -181,6 +181,7 @@ Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit ein
 | `create-failed` | Das neue Dataset konnte nicht angelegt werden. | Die Details zeigen die Meldung von zfs. Prüfe, ob das Dataset darüber existiert. |
 | `new-dataset-not-visible` | Das neue Dataset wurde angelegt, aber BombVault sieht es nicht, deshalb wurde nichts wiederhergestellt. | Das Dataset bleibt auf dem Server. Hänge es unterhalb des Host-Data-Pfads ein und stelle dort hinein wieder her. |
 | `set-properties-failed` | Die gespeicherten Eigenschaften konnten nicht gesetzt werden, deshalb wurde nichts wiederhergestellt. | Die Details zeigen die Meldung von zfs. |
+| `set-limits-failed` | Die Dateien wurden wiederhergestellt, aber die gespeicherte Quota oder Reservierung konnte nicht gesetzt werden. | Die Details zeigen die Meldung von zfs. Setze die Quota oder Reservierung selbst mit `zfs set`. |
 
 ### Prüfen, was der Container sieht {#mountinfo}
 

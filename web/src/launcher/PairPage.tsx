@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, type CSSProperties } from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconForward, IconLink, IconSearch } from "../components/glyphs";
+import { IconLink, IconSearch } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconAdd, IconClose, IconCopy } from "../components/navGlyphs";
 import { hueVars } from "../lib/appearance";
@@ -276,9 +276,6 @@ export function PairPage({
                 <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
                   {`${displayAddress(f.url)} · ${f.version}`}
                 </span>
-              </span>
-              <span className="shrink-0 text-accentText [&>svg]:size-2.5">
-                <IconForward />
               </span>
             </button>
           ))}

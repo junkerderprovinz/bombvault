@@ -372,6 +372,28 @@ describe("ZFS restore panel", () => {
     expect(sent[0].req.safetySnapshot).toBe(false);
   });
 
+  it("keeps zfs's own message and says what to do when the new dataset cannot be created", async () => {
+    ack = {
+      ok: false,
+      code: "create-failed",
+      error: "create-failed: cache/copy: cannot create 'cache/copy': permission denied",
+    };
+    await openPanel();
+    fireEvent.click(modeTab(en["zfs.restore.newDataset"]));
+    fireEvent.change(screen.getByRole("textbox", { name: en["zfs.restore.newDatasetName"] }), {
+      target: { value: "cache/copy" },
+    });
+    const restore = () => screen.getByRole("button", { name: en["snapshots.restore"] }) as HTMLButtonElement;
+    await waitFor(() => expect(restore().disabled).toBe(false));
+    fireEvent.click(restore());
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: en["snapshots.restore"] }),
+    );
+    const reason = await screen.findByText((text) => text.startsWith(en["zfs.code.create-failed"]));
+    expect(reason.textContent).toContain("permission denied");
+    expect(screen.getByText(en["zfs.fix.create-failed"])).toBeTruthy();
+  });
+
   it("checks a restore into a new dataset as one", async () => {
     await openPanel();
     fireEvent.click(modeTab(en["zfs.restore.newDataset"]));

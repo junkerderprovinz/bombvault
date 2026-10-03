@@ -1,0 +1,17 @@
+BombVault is a backup tool you run yourself, on Unraid or anywhere Docker runs. It backs up containers, virtual machines, the flash drive and folders with restic. This app is its companion on your phone: it shows what your servers are doing and opens each one's dashboard. The backups themselves run on your servers, never on the phone.
+
+What you can do
+• See every server in your group on one screen, with the newest lines of its activity log
+• Open the whole activity log and switch between servers
+• Open a server's dashboard in the app, without typing its password once the phone is paired
+• Pick the language, light or dark, an accent colour and the corners, or let the app take its look from your first server
+
+To pair, scan the QR code your BombVault shows under Settings → Pairing, or type its twelve words. Every server in the group appears at once. You can also add a single server by its address.
+
+The activity log reaches the app through a relay. Requests and answers are end-to-end encrypted with a key that comes from your words, so the relay passes them on without being able to read them. Opening a dashboard needs a direct connection to the server, at home or through your VPN. The app shows no ads, tracks nothing and needs no account.
+
+You need a running BombVault server. BombVault is free and open source under the AGPL-3.0: https://github.com/junkerderprovinz/bombvault
+
+The app is new and changes quickly, and an update to your server can need an update to the app as well. Please report problems on GitHub.
+
+The app uses the camera only to scan the QR code.

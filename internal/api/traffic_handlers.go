@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -60,8 +61,8 @@ func validateStreaming(v streamingView) error {
 		return errors.New("the streaming threshold has to be between 1 and 10000 Mbit/s")
 	case v.LimitKiB < 1 || v.LimitKiB > 10_000_000:
 		return errors.New("the upload limit while streaming has to be between 1 and 10000000 KiB/s")
-	case v.HoldMin < 1 || v.HoldMin > 120:
-		return errors.New("the wait after a stream has to be between 1 and 120 minutes")
+	case v.HoldMin < 1 || v.HoldMin > maxStreamHoldMin:
+		return fmt.Errorf("the wait after a stream has to be between 1 and %d minutes", maxStreamHoldMin)
 	case len(v.MediaServers) > 200:
 		return errors.New("too many media servers")
 	}

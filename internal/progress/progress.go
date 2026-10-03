@@ -132,6 +132,9 @@ type Event struct {
 	// "now" while it runs at the streaming limit, "next" while a stream runs
 	// that the copy can only meet from its next step.
 	Throttle string `json:"throttle,omitempty"`
+	// Failed counts the items of a batch that did not work, such as the
+	// archives of an import, on the event that ends it.
+	Failed int `json:"failed,omitempty"`
 }
 
 // Store is an in-process fan-out of progress Events. It keeps the latest active

@@ -77,6 +77,6 @@ describe("RestorePanel", () => {
     // The restore waits for its pre-flight check to come back ready.
     await waitFor(() => expect(screen.getByRole("button", { name: "Restore" }).hasAttribute("disabled")).toBe(false));
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
-    await waitFor(() => expect(restore).toHaveBeenCalledWith("nginx", "b9b9b9b9", true, "offsite:t-b2", false));
+    await waitFor(() => expect(restore).toHaveBeenCalledWith("nginx", "b9b9b9b9", true, "offsite:t-b2", false, false));
   });
 });

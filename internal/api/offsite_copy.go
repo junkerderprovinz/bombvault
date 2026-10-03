@@ -542,8 +542,9 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 
 // ageTarget runs the target's keep-policy over the names it holds and records
 // what it holds afterwards. held is its listing before the copy and landed what
-// the copy added; without a listing the policy lists by itself.
-func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
+// the copy added; without a listing the policy lists by itself. With a scope,
+// only that domain's names are aged.
+func (s *Service) ageTarget(ctx context.Context, domain, scope, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
 	op := targetOffsiteRetentionPolicy(target)
 	if !op.Any() {
 		return false
@@ -557,13 +558,13 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 	var paused []string
 	var err error
 	if len(tags) == 0 {
-		paused, err = s.applyRetentionPerIdentity(ctx, dest, op, mode)
+		paused, err = s.applyRetentionPerIdentity(ctx, dest, scope, op, mode)
 	} else {
 		var held heldIdentityTags
 		if held, err = s.anomalies.HeldIdentityTags(); err != nil {
 			err = fmt.Errorf("read which items are paused: %w", err)
 		} else {
-			paused, err = s.applyRetentionToTags(ctx, dest, op, mode, tags, snaps, held)
+			paused, err = s.applyRetentionToTags(ctx, dest, op, mode, domainIdentityTags(tags, scope), snaps, held)
 		}
 	}
 	if err != nil {

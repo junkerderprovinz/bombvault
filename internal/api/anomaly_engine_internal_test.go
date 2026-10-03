@@ -175,7 +175,6 @@ func TestLastGoodBackupStaysWhereTheFindingOpened(t *testing.T) {
 	good := f.run(t, id, "backup", f.now-86400/2, 40*gib)
 	f.run(t, id, "backup", f.now-3600, 20*mib)
 	f.pass(t)
-	goodAt := f.now - 86400/2
 
 	f.run(t, id, "backup", f.now-60, 20*mib)
 	f.pass(t)
@@ -184,9 +183,63 @@ func TestLastGoodBackupStaysWhereTheFindingOpened(t *testing.T) {
 	if row.LastGoodRunID != good {
 		t.Fatalf("last good run = %q, want %q", row.LastGoodRunID, good)
 	}
-	view := anomalyViewOf(row, nil, nil, nil, nil, store.Settings{})
-	if got := anomalyDetailInt(view, "lastGoodAt"); got != goodAt {
-		t.Fatalf("details.lastGoodAt = %d, want the good backup at %d", got, goodAt)
+	view := f.view(t, row)
+	if view.LastGood == nil {
+		t.Fatal("the finding offers no backup to restore")
+	}
+	if got := anomalyDetailInt(view, "lastGoodAt"); got != view.LastGood.At {
+		t.Fatalf("details.lastGoodAt = %d, want %d, the time the restore button names", got, view.LastGood.At)
+	}
+}
+
+// view is the finding as the page gets it, with the restore points resolved.
+func (f *engineFixture) view(t *testing.T, row store.Anomaly) AnomalyView {
+	t.Helper()
+	points, err := f.st.RestorePoints([]string{row.LastGoodRunID, row.RunID, row.LastRunID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyed := map[string]store.RestorePoint{}
+	for id, p := range points {
+		keyed[restorePointKey(row.ScopeKind, row.ScopeID, id)] = p
+	}
+	return anomalyViewOf(row, nil, nil, keyed, nil, store.Settings{})
+}
+
+// A run starts before its backup is taken: the container is stopped and its
+// database dumped first. The comparison names both backups by the time the
+// backup list and the restore button use, not by when their runs started.
+func TestComparisonNamesTheBackupsLikeTheRestoreButton(t *testing.T) {
+	f := newEngineFixture(t)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "rest:http://192.168.1.9:8000/containers"
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	id := f.container(t, "nextcloud")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	good := f.run(t, id, "backup", f.now-86400/2, 40*gib)
+	bad := f.run(t, id, "backup", f.now-3600, 20*mib)
+	f.pass(t)
+
+	row := onlyRow(t, f.openRows(t))
+	pair, err := f.svc.changePairOf(row.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	points, err := f.st.RestorePoints([]string{good, bad})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := pair.view()
+	if got.FromAt != points[good].At || got.ToAt != points[bad].At {
+		t.Fatalf("comparison spans %d to %d, want %d to %d", got.FromAt, got.ToAt, points[good].At, points[bad].At)
+	}
+	if view := f.view(t, row); view.LastGood == nil || got.FromAt != view.LastGood.At {
+		t.Fatalf("comparison from %d, restore button %+v", got.FromAt, view.LastGood)
 	}
 }
 

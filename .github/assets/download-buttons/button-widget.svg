@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install the dashboard widget">
+  <title>Install the dashboard widget</title>
+  <defs>
+    <clipPath id="edge">
+      <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
+    </clipPath>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.45" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1"    stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <style>
+    @keyframes pass {
+      0%       { transform: translateX(-278.4px); }
+      15.19%   { transform: translateX(1120.3px); }
+      100%     { transform: translateX(1120.3px); }
+    }
+    .band { animation: pass 7s linear 2.771s infinite backwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .band { animation: none; opacity: 0; }
+    }
+  </style>
+  <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#f68e32"/>
+  <g transform="translate(160.0 56.65) scale(0.25781)" fill="#1b1b1b">
+    <path d="M448 96l0 128-160 0 0-128 160 0zm0 192l0 128-160 0 0-128 160 0zM224 224L64 224 64 96l160 0 0 128zM64 288l160 0 0 128L64 416l0-128zM64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32z"/>
+  </g>
+  <text x="332" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#1b1b1b">Widget</text>
+  <text x="334" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="400" fill="#1b1b1b" fill-opacity="0.9">Unraid plugin</text>
+  <g clip-path="url(#edge)">
+    <g class="band">
+      <rect x="0" y="-60" width="173.6" height="365.3"
+            fill="url(#sheen)" transform="skewX(-16)"/>
+    </g>
+  </g>
+</svg>

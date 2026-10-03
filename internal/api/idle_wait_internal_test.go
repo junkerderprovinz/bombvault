@@ -350,6 +350,7 @@ func TestAWaitResumesAfterARestartWithItsDeadline(t *testing.T) {
 	if len(w) != 1 || w[0].Deadline != deadline || w[0].Since != since {
 		t.Fatalf("resumed waits = %+v", w)
 	}
+	s.StartIdleWaits()
 	time.Sleep(100 * time.Millisecond)
 	select {
 	case <-ran:
@@ -371,8 +372,9 @@ func TestAWaitResumesAfterARestartWithItsDeadline(t *testing.T) {
 	}
 }
 
-func TestAWaitThatEndedDuringTheRestartRunsAtOnce(t *testing.T) {
+func TestAWaitThatEndedDuringTheRestartRunsOnceTheStartIsDone(t *testing.T) {
 	s, st, _ := newTrafficService(t)
+	fastIdleCheck(s)
 	idleTarget(t, st, "db", 2)
 	if err := st.SaveIdleWaitGroup(store.IdleWaitGroup{Key: "db", Members: []string{"db"}, Since: 1, Deadline: time.Now().Unix() - 60}); err != nil {
 		t.Fatal(err)
@@ -380,10 +382,39 @@ func TestAWaitThatEndedDuringTheRestartRunsAtOnce(t *testing.T) {
 	var ran atomic.Bool
 	s.SetHeldContainerRun(func([]string) { ran.Store(true) })
 	s.ResumeIdleWaits()
+	time.Sleep(100 * time.Millisecond)
+	if ran.Load() {
+		t.Fatal("the overdue backup ran before the start was done")
+	}
+	if w := s.IdleWaits(); len(w) != 1 || w[0].Name != "db" {
+		t.Fatalf("waits = %+v, want db listed until it starts", w)
+	}
+	s.StartIdleWaits()
 	waitFor(t, "the overdue backup", ran.Load)
 	if groups, _ := st.ListIdleWaitGroups(); len(groups) != 0 {
 		t.Fatalf("still stored: %+v", groups)
 	}
+}
+
+func TestAResumedWaitLooksAtItsAppOnlyOnceTheStartIsDone(t *testing.T) {
+	s, st, d := newTrafficService(t)
+	fastIdleCheck(s)
+	idleTarget(t, st, "db", 2)
+	if err := st.SaveIdleWaitGroup(store.IdleWaitGroup{Key: "db", Members: []string{"db"}, Since: 1, Deadline: time.Now().Unix() + 3600}); err != nil {
+		t.Fatal(err)
+	}
+	// A container that cannot be read counts as idle.
+	d.down["db"] = true
+	s.pollTraffic(context.Background(), d, time.Now())
+	var ran atomic.Bool
+	s.SetHeldContainerRun(func([]string) { ran.Store(true) })
+	s.ResumeIdleWaits()
+	time.Sleep(100 * time.Millisecond)
+	if ran.Load() {
+		t.Fatal("the resumed backup ran before the start was done")
+	}
+	s.StartIdleWaits()
+	waitFor(t, "the resumed backup", ran.Load)
 }
 
 func TestAContainerTakenOffTheScheduleIsDroppedFromItsResumedWait(t *testing.T) {

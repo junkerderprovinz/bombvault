@@ -5,10 +5,10 @@ download_buttons.py beside it differs. It writes one SVG per button, a sprite
 holding them together with the donation buttons, and every button row in
 README.md.
 
-The rows are always the same five, in this order: the server (the Unraid
-template, the container, the source and the manual), the desktop apps, the
-phone apps, the browser extensions and the house's companion apps. What a
-repository does not ship is left out.
+The rows are always the same four, in this order: the desktop apps, then the
+Unraid template, the container, the source and the manual, then the phone apps
+and the browser extensions, then what runs beside the app, its relay and its
+dashboard widget. What a repository does not ship is left out.
 Windows on ARM and the portable build are segments of the Windows button, and
 Linux on ARM one of the Linux button, so the desktop row keeps to the four
 places a row has.
@@ -20,8 +20,8 @@ The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
 icons), and Unraid's from Dashboard Icons (Apache-2.0); see scripts/brand-paths/.
 Each is a trademark of its owner, used unmodified and only to name the platform
 a button downloads for, with no claim of endorsement by or affiliation with its
-owner. The ZIP and the book are Font Awesome's file-zipper and book, nobody's
-mark.
+owner. The ZIP, the book, the mast and the tiles are Font Awesome's
+file-zipper, book, tower-broadcast and table-cells-large, nobody's mark.
 
 Run from anywhere:  uv run --no-project --python 3.12 python scripts/gen_download_buttons.py
 Writes .github/assets/download-buttons/*.svg, which are committed, and the
@@ -97,12 +97,12 @@ KINDS = {
     # The heading is the platform, since "Google Play" is too wide for it.
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Android", "Google Play", "Get it on Google Play"),
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
-    "chrome":           (3, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
-    "firefox":          (3, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
-    # The house's own companions keep their logos in colour, on the dark ground
-    # of the README badges, where gold and steel both read.
-    "parleyport":       (COMPANIONS, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for KnightLoader and BombVault"),
-    "bombvault-widget": (COMPANIONS, "bombvault-widget", "#1f2328", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
+    "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
+    "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
+    # The brown and the orange are taken from ParleyPort's and the widget's own
+    # logos, whose many colours a one-ink mark cannot carry.
+    "relay":            (3, "relay", "#755934", "#ffffff", "Relay", "ParleyPort", "Run the ParleyPort relay"),
+    "widget":           (3, "widget", "#f68e32", "#1b1b1b", "Widget", "Unraid plugin", "Install the dashboard widget"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
@@ -113,8 +113,9 @@ SOON = {
     "unraid": ("coming soon", "In Unraid's Community Applications soon"),
 }
 # Links that may lead away from the repository.
-STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com", "unraid.net",
-          "github.com/junkerderprovinz/parleyport", "github.com/junkerderprovinz/bombvault-widget")
+STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com", "unraid.net")
+# The relay and the widget are repositories of their own.
+SIBLINGS = ("relay", "widget")
 
 # The sheen is a tilted white band, clipped to each button, that appears to
 # travel along the whole row, the same band as the donation row's. Its numbers
@@ -246,14 +247,15 @@ def rows():
     for kind, href in config.BUTTONS.items():
         if href is None and kind not in SOON:
             raise SystemExit("%s has no link" % kind)
-        if href and "/%s/" % REPO not in href and not any(host in href for host in STORES):
+        sibling = kind in SIBLINGS and href and href.startswith("https://github.com/junkerderprovinz/")
+        if href and not sibling and "/%s/" % REPO not in href and not any(host in href for host in STORES):
             raise SystemExit("REPO is %r, but %s leads to %s" % (REPO, kind, href))
     joined = {s for group in SEGMENTS.values() for s in group}
     for base, group in SEGMENTS.items():
         present = [s for s in group if s in config.BUTTONS]
         if present and base not in config.BUTTONS:
             raise SystemExit("%s needs the %s button to join" % (present[0], base))
-    out = [[], [], [], [], []]
+    out = [[], [], [], []]
     for kind, spec in KINDS.items():
         if kind not in config.BUTTONS or kind in joined:
             continue

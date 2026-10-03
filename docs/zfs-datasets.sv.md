@@ -82,7 +82,7 @@ För att gå tillbaka efter en återställning kopierar du enskilda filer från 
 
 BombVault sparar med varje säkerhetskopia de lokalt satta ZFS-egenskaperna för varje datauppsättning: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity och dina egna användaregenskaper. Ärvda och skrivskyddade värden utelämnas, eftersom de kommer tillbaka av sig själva. Säkerhetskopior från innan BombVault sparade dem har inga.
 
-- **Till en ny datauppsättning** kör `zfs create` med varje sparad egenskap. casesensitivity, normalization och utf8only kan bara sättas så. Monteringspunkten utelämnas så att kopian inte krockar med originalet, liksom `canmount`, `readonly` och krypteringen, så att återställningen kan skriva. En ny datauppsättning under en krypterad tar över dess kryptering. Datauppsättningen ovanför måste finnas. Om något misslyckas efter att den skapats ligger den nya datauppsättningen kvar på servern, eftersom BombVault aldrig förstör en datauppsättning.
+- **Till en ny datauppsättning** kör `zfs create` med varje sparad egenskap. casesensitivity, normalization och utf8only kan bara sättas så. Kvoter och reservationer sätts först efter filerna, så att de inte kan neka dem. Monteringspunkten utelämnas så att kopian inte krockar med originalet, liksom `canmount`, `readonly` och krypteringen, så att återställningen kan skriva. En ny datauppsättning under en krypterad tar över dess kryptering. Datauppsättningen ovanför måste finnas. Om något misslyckas efter att den skapats ligger den nya datauppsättningen kvar på servern, eftersom BombVault aldrig förstör en datauppsättning.
 - **Återställ in i datauppsättningen** visar de sparade egenskaperna bredvid återställningen. **Sätt även dessa egenskaper** sätter de som en befintlig datauppsättning fortfarande tar emot, innan någon fil skrivs. Kvoter och reservationer sätts först efter filerna, så att de inte kan neka dem. Utan den brytaren behåller datauppsättningen sina inställningar.
 
 ## Vad säkerhetskopian innehåller {#contents}
@@ -181,6 +181,7 @@ Sidan, körningshistoriken och aviseringarna anger ett problem med en av de här
 | `create-failed` | Den nya datauppsättningen kunde inte skapas. | Detaljerna visar meddelandet från zfs. Kontrollera att datauppsättningen ovanför finns. |
 | `new-dataset-not-visible` | Den nya datauppsättningen skapades, men BombVault ser den inte, så ingenting återställdes. | Datauppsättningen ligger kvar på servern. Montera den under Host Data-sökvägen och återställ till den. |
 | `set-properties-failed` | De sparade egenskaperna kunde inte sättas, så ingenting återställdes. | Detaljerna visar meddelandet från zfs. |
+| `set-limits-failed` | Filerna återställdes, men den sparade kvoten eller reservationen kunde inte sättas. | Detaljerna visar meddelandet från zfs. Sätt kvoten eller reservationen själv med `zfs set`. |
 
 ### Kontrollera vad containern ser {#mountinfo}
 

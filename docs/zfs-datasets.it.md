@@ -82,7 +82,7 @@ Per tornare indietro dopo un ripristino, copia singoli file da `.zfs/snapshot/bo
 
 BombVault salva a ogni backup le proprietà ZFS impostate localmente di ogni dataset: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity e le tue proprietà utente. I valori ereditati e di sola lettura restano fuori, perché tornano da soli. I backup di prima che BombVault le salvasse non ne hanno.
 
-- **In un nuovo dataset** esegue `zfs create` con ogni proprietà salvata. casesensitivity, normalization e utf8only si possono impostare solo così. Il punto di montaggio resta fuori perché la copia non si scontri con l'originale, e così `canmount`, `readonly` e la cifratura, perché il ripristino possa scrivere. Un nuovo dataset sotto uno cifrato ne eredita la cifratura. Il dataset superiore deve esistere. Se qualcosa fallisce dopo la creazione, il nuovo dataset resta sul server, perché BombVault non distrugge mai un dataset.
+- **In un nuovo dataset** esegue `zfs create` con ogni proprietà salvata. casesensitivity, normalization e utf8only si possono impostare solo così. Quote e prenotazioni vengono impostate dopo i file, così non possono rifiutarli. Il punto di montaggio resta fuori perché la copia non si scontri con l'originale, e così `canmount`, `readonly` e la cifratura, perché il ripristino possa scrivere. Un nuovo dataset sotto uno cifrato ne eredita la cifratura. Il dataset superiore deve esistere. Se qualcosa fallisce dopo la creazione, il nuovo dataset resta sul server, perché BombVault non distrugge mai un dataset.
 - **Ripristina dentro il dataset** mostra le proprietà salvate accanto al ripristino. **Imposta anche queste proprietà** imposta quelle che un dataset esistente accetta ancora, prima di scrivere qualsiasi file. Quote e prenotazioni vengono impostate dopo i file, così non possono rifiutarli. Senza questo interruttore il dataset mantiene le sue impostazioni.
 
 ## Cosa c'è nel backup {#contents}
@@ -181,6 +181,7 @@ La pagina, la cronologia delle esecuzioni e le notifiche nominano un problema co
 | `create-failed` | Non è stato possibile creare il nuovo dataset. | I dettagli mostrano il messaggio di zfs. Controlla che il dataset superiore esista. |
 | `new-dataset-not-visible` | Il nuovo dataset è stato creato, ma BombVault non lo vede, quindi non è stato ripristinato nulla. | Il dataset resta sul server. Montalo sotto il percorso Host Data e ripristina al suo interno. |
 | `set-properties-failed` | Non è stato possibile impostare le proprietà salvate, quindi non è stato ripristinato nulla. | I dettagli mostrano il messaggio di zfs. |
+| `set-limits-failed` | I file sono stati ripristinati, ma non è stato possibile impostare la quota o la prenotazione salvata. | I dettagli mostrano il messaggio di zfs. Imposta tu la quota o la prenotazione con `zfs set`. |
 
 ### Controllare cosa vede il container {#mountinfo}
 

@@ -123,13 +123,18 @@ export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
     }, DEBOUNCE_MS);
   }
 
-  function toggleServer(name: string) {
+  async function toggleServer(name: string) {
     const base = cfgRef.current;
     if (!base) return;
     const servers = base.mediaServers.includes(name)
       ? base.mediaServers.filter((n) => n !== name)
       : [...base.mediaServers, name].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-    void save({ mediaServers: servers, mediaServersAuto: false });
+    if (await save({ mediaServers: servers, mediaServersAuto: false })) return;
+    const reverted = cfgRef.current
+      ? { ...cfgRef.current, mediaServers: base.mediaServers, mediaServersAuto: base.mediaServersAuto }
+      : null;
+    cfgRef.current = reverted;
+    setCfg(reverted);
   }
 
   if (failed) return null;
@@ -192,7 +197,7 @@ export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
                     type="button"
                     role="option"
                     aria-selected={checked}
-                    onClick={() => toggleServer(c.name)}
+                    onClick={() => void toggleServer(c.name)}
                     className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start transition-colors ${
                       checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                     }`}
@@ -219,7 +224,7 @@ export function StreamingCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
                   label={t("streaming.remove").replace("{name}", n)}
                   labelKey="streaming.remove"
                   variant="chip"
-                  onClick={() => toggleServer(n)}
+                  onClick={() => void toggleServer(n)}
                 />
               </span>
             ))}

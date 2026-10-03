@@ -11,10 +11,11 @@ import {
   IconTabLook,
   IconTabSecurity,
   IconTabOffsite,
+  IconTabRetention,
   IconTabStorage,
   IconTabSystem,
 } from "../../components/navGlyphs";
-import { IconKey, IconLink, IconPrune } from "../../components/glyphs";
+import { IconKey, IconLink } from "../../components/glyphs";
 import { save as saveDisplayPrefs } from "../../lib/displayPrefs";
 
 // Each Settings page lives at /settings/<id>. The ids are part of bookmarks
@@ -47,7 +48,7 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "general", label: "settings.tab.general", icon: <IconTabGeneral /> },
   { id: "look", label: "settings.tab.look", icon: <IconTabLook /> },
   { id: "storage", label: "settings.tab.storage", icon: <IconTabStorage /> },
-  { id: "retention", label: "settings.tab.retention", icon: <IconPrune /> },
+  { id: "retention", label: "settings.tab.retention", icon: <IconTabRetention /> },
   { id: "schedules", label: "settings.tab.schedules", icon: <IconSchedules /> },
   { id: "containers", label: "nav.containers", icon: <IconContainers /> },
   { id: "offsite", label: "settings.tab.offsite", icon: <IconTabOffsite /> },

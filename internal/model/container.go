@@ -105,6 +105,90 @@ type HostConfig struct {
 	ExtraHosts     []string
 	CgroupParent   string
 	Ulimits        []Ulimit
+
+	// The limits below are absent from definitions stored before they were
+	// recorded. Their zero values and nil pointers leave Docker's defaults in
+	// place, as on a container started without the flag.
+	Memory            int64  `json:",omitempty"`
+	MemoryReservation int64  `json:",omitempty"`
+	MemorySwap        int64  `json:",omitempty"`
+	MemorySwappiness  *int64 `json:",omitempty"`
+	NanoCPUs          int64  `json:",omitempty"`
+	CPUShares         int64  `json:",omitempty"`
+	CPUPeriod         int64  `json:",omitempty"`
+	CPUQuota          int64  `json:",omitempty"`
+	CpusetCpus        string `json:",omitempty"`
+	CpusetMems        string `json:",omitempty"`
+	PidsLimit         *int64 `json:",omitempty"`
+	OomKillDisable    *bool  `json:",omitempty"`
+	OomScoreAdj       int    `json:",omitempty"`
+	ShmSize           int64  `json:",omitempty"`
+	Init              *bool  `json:",omitempty"`
+	// LogConfig is nil when the daemon's default log driver applies.
+	LogConfig *LogConfig `json:",omitempty"`
+
+	DNS          []string          `json:"Dns,omitempty"`
+	DNSSearch    []string          `json:"DnsSearch,omitempty"`
+	DNSOptions   []string          `json:"DnsOptions,omitempty"`
+	UTSMode      string            `json:",omitempty"`
+	CgroupnsMode string            `json:",omitempty"`
+	Links        []string          `json:",omitempty"`
+	StorageOpt   map[string]string `json:",omitempty"`
+
+	BlkioWeight          uint16           `json:",omitempty"`
+	BlkioWeightDevice    []WeightDevice   `json:",omitempty"`
+	BlkioDeviceReadBps   []ThrottleDevice `json:",omitempty"`
+	BlkioDeviceWriteBps  []ThrottleDevice `json:",omitempty"`
+	BlkioDeviceReadIOps  []ThrottleDevice `json:",omitempty"`
+	BlkioDeviceWriteIOps []ThrottleDevice `json:",omitempty"`
+
+	// Runtime and DeviceRequests are how a container gets a GPU
+	// (--runtime=nvidia, --gpus). A host without that runtime or driver
+	// refuses the container with a MissingRuntimeError.
+	Runtime        string          `json:",omitempty"`
+	DeviceRequests []DeviceRequest `json:",omitempty"`
+}
+
+// DeviceRequest mirrors Docker's request for devices from a driver, the form
+// --gpus takes.
+type DeviceRequest struct {
+	Driver       string            `json:",omitempty"`
+	Count        int               `json:",omitempty"`
+	DeviceIDs    []string          `json:",omitempty"`
+	Capabilities [][]string        `json:",omitempty"`
+	Options      map[string]string `json:",omitempty"`
+}
+
+// UsesExtraRuntime reports whether the container asks for a GPU or for a
+// runtime other than Docker's own.
+func (h HostConfig) UsesExtraRuntime() bool {
+	return (h.Runtime != "" && h.Runtime != "runc") || len(h.DeviceRequests) > 0
+}
+
+// MissingRuntimeError is Docker refusing a container because this host lacks
+// the runtime or device driver its recipe asks for. Err is Docker's refusal.
+type MissingRuntimeError struct{ Err error }
+
+func (e *MissingRuntimeError) Error() string { return e.Err.Error() }
+
+func (e *MissingRuntimeError) Unwrap() error { return e.Err }
+
+// WeightDevice mirrors Docker's per-device block I/O weight.
+type WeightDevice struct {
+	Path   string
+	Weight uint16
+}
+
+// ThrottleDevice mirrors Docker's per-device block I/O rate limit.
+type ThrottleDevice struct {
+	Path string
+	Rate uint64
+}
+
+// LogConfig mirrors Docker's log driver and its options.
+type LogConfig struct {
+	Type   string
+	Config map[string]string `json:",omitempty"`
 }
 
 // Ulimit mirrors docker's units.Ulimit.

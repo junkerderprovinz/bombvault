@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -73,6 +74,17 @@ class Relay(
     val siblings: List<Sibling> get() = members.values.toList()
 
     fun start() = dial()
+
+    /**
+     * Whether member [target] is in the group, waiting a moment for it: right
+     * after the app starts, the members announce themselves only once the
+     * connection is up.
+     */
+    suspend fun reaches(target: String): Boolean =
+        withTimeoutOrNull(ANNOUNCE_WAIT_MS) {
+            while (!members.containsKey(target)) delay(100)
+            true
+        } ?: false
 
     fun stop() {
         stopped = true
@@ -183,6 +195,7 @@ class Relay(
 
     companion object {
         private const val CALL_TIMEOUT_MS = 15_000L
+        private const val ANNOUNCE_WAIT_MS = 4_000L
         private const val CLOCK_SKEW_S = 120L
         private const val MIN_BACKOFF_MS = 1_000L
         private const val MAX_BACKOFF_MS = 60_000L

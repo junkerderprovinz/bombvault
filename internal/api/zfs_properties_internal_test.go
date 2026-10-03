@@ -88,6 +88,40 @@ func TestZFSRestorePointCarriesTheStoredProperties(t *testing.T) {
 	}
 }
 
+func TestAnOffsiteCopyCarriesThePropertiesOfItsOriginal(t *testing.T) {
+	s, st, _, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd"})
+	offsite := filepath.Join(s.cfg.HostMountRoot, "offsite")
+	if err := os.MkdirAll(offsite, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(offsite, "config"), []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings, _ := st.GetSettings()
+	settings.ZFSOffsite = "offsite"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	// restic copy gives each snapshot a new id and names the one it came from.
+	copies := zfsRestorePointSnapshots(s.cfg.HostMountRoot)
+	for i := range copies {
+		copies[i].Original = copies[i].ID
+		copies[i].ID = strings.Repeat("c", 63) + string(rune('0'+i))
+	}
+	eng.snaps = copies
+
+	points, err := s.ListZFSRestorePoints(context.Background(), d.ID, "offsite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, ok := zfsPointMember(points[0], zfsRoot)
+	if !ok || m.Properties["compression"] != "zstd" {
+		t.Fatalf("off-site member = %+v, want the compression stored for its original", m)
+	}
+}
+
 func TestZFSRestoreIntoANewDatasetCreatesItWithTheStoredProperties(t *testing.T) {
 	s, st, host, eng := zfsRestoreFixture(t)
 	root := s.cfg.HostMountRoot
@@ -133,6 +167,123 @@ func TestZFSRestoreIntoANewDatasetCreatesItWithTheStoredProperties(t *testing.T)
 	want := "RestoreAll|" + zfsRootSnapID + "->" + zfsMemberPath(root, fresh)
 	if len(eng.restores) != 1 || eng.restores[0] != want {
 		t.Fatalf("restores = %v, want %q", eng.restores, want)
+	}
+}
+
+// zfsNewDatasetHost makes a dataset the restore creates appear on the host
+// and in the container's mount table, the way propagation brings it in.
+func zfsNewDatasetHost(t *testing.T, s *Service, host *fakeZFSHost) {
+	t.Helper()
+	root := s.cfg.HostMountRoot
+	host.strictTree = true
+	records := zfsMountRecords
+	host.onCreate = func(name string) {
+		host.mu.Lock()
+		host.tree = append(host.tree, zfsEntry(name, "/mnt/"+name))
+		host.mu.Unlock()
+		zfsMountRecords = func() []zfs.MountRecord {
+			return append(records(), zfs.MountRecord{
+				MountPoint: zfsMemberPath(root, name), Root: "/", FSType: "zfs", Source: name,
+				Options: []string{"rw"}, Optional: []string{"master:9"},
+			})
+		}
+	}
+	t.Cleanup(func() { zfsMountRecords = records })
+}
+
+func TestZFSRestoreIntoANewDatasetSetsQuotasAfterTheFiles(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	zfsNewDatasetHost(t, s, host)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "quota": "1024"})
+	restoredAt := map[string]int{}
+	host.onSet = func() {
+		calls := host.calls
+		restoredAt[calls[len(calls)-1]] = len(eng.restores)
+	}
+	const fresh = "cache/copy"
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = fresh
+	req.SafetySnapshot = false
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("restore run = %+v", run)
+	}
+	if !hostDid(host, "create -o compression=zstd "+fresh) {
+		t.Fatalf("host calls = %v, want a create without the quota", host.recorded())
+	}
+	if at, ok := restoredAt["set quota=1024 "+fresh]; !ok || at != 1 {
+		t.Fatalf("restores done when each set ran = %v, want the quota on %s after the files", restoredAt, fresh)
+	}
+	if hostDid(host, "set quota=1024 "+zfsRoot) {
+		t.Fatal("the quota went onto the dataset the backup came from")
+	}
+}
+
+func TestAQuotaThatCannotBeSetAfterTheFilesSaysTheFilesAreBack(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "quota": "1024"})
+	host.setErr = func(p zfs.Properties) error {
+		if _, ok := p["quota"]; ok {
+			return errors.New("cannot set property for 'cache/appdata': size is less than current used or reserved space")
+		}
+		return nil
+	}
+	req := zfsRestoreRequest(zfsRoot)
+	req.ApplyProperties = true
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	run := zfsAwaitRestore(t, st, d.ID)
+	if len(eng.restores) != 1 {
+		t.Fatalf("restores = %v, want the files written", eng.restores)
+	}
+	if run.Status != "failed" || !strings.HasPrefix(run.Error, "set-limits-failed: ") {
+		t.Fatalf("restore run = %+v, want the limits failure after the files", run)
+	}
+}
+
+func TestANewDatasetThatCouldNotBeMountedIsNotReportedAsNotCreated(t *testing.T) {
+	s, st, host, _ := zfsRestoreFixture(t)
+	host.strictTree = true
+	host.createErr = errors.New("cannot mount '/mnt/cache/copy': failed to create mountpoint")
+	host.createdAnyway = true
+	host.onCreate = func(name string) {
+		host.mu.Lock()
+		host.tree = append(host.tree, zfsEntry(name, "/mnt/"+name))
+		host.mu.Unlock()
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = "cache/copy"
+	req.SafetySnapshot = false
+	_, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req)
+	if started {
+		t.Fatal("a restore started into a dataset nobody can see")
+	}
+	if code, _ := zfsRefusalCode(err); code != "new-dataset-not-visible" {
+		t.Fatalf("err = %v, want new-dataset-not-visible, since the dataset was created", err)
+	}
+}
+
+func TestANewDatasetThatCouldNotBeSharedIsRestoredInto(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	zfsNewDatasetHost(t, s, host)
+	host.createErr = errors.New("cannot share 'cache/copy': smb add share failed")
+	host.createdAnyway = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = "cache/copy"
+	req.SafetySnapshot = false
+	ack, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req)
+	if err != nil || !started || ack.Created != "cache/copy" {
+		t.Fatalf("start = %+v %v %v, want the restore into the created dataset", ack, started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" || len(eng.restores) != 1 {
+		t.Fatalf("restore run = %+v, restores %v", run, eng.restores)
 	}
 }
 

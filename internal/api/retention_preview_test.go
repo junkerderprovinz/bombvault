@@ -191,7 +191,7 @@ func TestRetentionPreviewMarksPausedItem(t *testing.T) {
 	}}}
 	svc, _, _ := heldRepo(t, eng)
 
-	preview, err := svc.PreviewRetention(context.Background(), "files", "local")
+	preview, err := svc.PreviewRetention(context.Background(), "containers", "local")
 	if err != nil {
 		t.Fatalf("PreviewRetention: %v", err)
 	}

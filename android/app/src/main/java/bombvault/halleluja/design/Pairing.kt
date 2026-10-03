@@ -128,7 +128,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     suspend fun ask(server: Server, path: String): Answer? {
         val r = relay ?: return null
         val member = server.member ?: return null
-        if (r.siblings.none { it.id == member }) return null
+        if (!r.reaches(member)) return null
         return try {
             val (status, body) = r.call(member, "GET", path)
             // An instance older than the route has nothing to say here, but
@@ -147,7 +147,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
     suspend fun session(server: Server): String? {
         val r = relay ?: return null
         val member = server.member ?: return null
-        if (r.siblings.none { it.id == member }) return null
+        if (!r.reaches(member)) return null
         val ask = JSONObject().put("instanceId", prefs.getString(ID, "")).toString().toByteArray()
         return try {
             val (status, body) = r.call(member, "POST", "/api/group/peer/session", ask)

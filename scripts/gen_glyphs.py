@@ -92,6 +92,7 @@ NAV = [
     "IconAdd",
     "IconClose",
     "IconTabGeneral",
+    "IconTabRetention",
     "IconTabLook",
     "IconTabStorage",
     "IconSchedules",

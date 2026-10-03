@@ -36,17 +36,17 @@ saying ransomware is welcome to knock.
 
 <!-- download-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(0,0,841.9,245.3))" alt="Run it with Docker" width="160" height="46.618"></a>
+  <a href="https://unraid.net/community/apps?q=bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(0,0,841.9,245.3))" alt="Install from Unraid&#x27;s Community Applications" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(866,0,841.9,245.3))" alt="Download the source archive" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(866,0,841.9,245.3))" alt="Run it with Docker" width="160" height="46.618"></a>
   &nbsp;
   <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(1732,0,841.9,245.3))" alt="Read the documentation" width="160" height="46.618"></a>
-  <br><sub>Always downloads the latest build</sub>
 </p>
 <p align="center">
-  <a href="https://github.com/junkerderprovinz/parleyport"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(2598,0,841.9,245.3))" alt="Get ParleyPort, the relay for KnightLoader and BombVault" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/parleyport"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(2598,0,841.9,245.3))" alt="Run the ParleyPort relay" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault-widget"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3464,0,841.9,245.3))" alt="Get the BombVault Widget for the Unraid dashboard" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault-widget"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3464,0,841.9,245.3))" alt="Install the dashboard widget" width="160" height="46.618"></a>
+  <br><sub>Always downloads the latest build</sub>
 </p>
 <!-- /download-buttons -->
 
@@ -166,43 +166,36 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 ## 2. Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="Restoring a deleted container from its backup, back and running in seconds" width="90%">
-  <br><em>A container that no longer exists, restored from its backup and running again in seconds. The confirm switch is deliberate: a restore in place recreates the container, so it asks before it does.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault dashboard: recovery point, next backup, last result and the live activity log" width="90%">
+  <br><em>Dashboard: the recovery point, the next backup and the last result sit above a live activity log. The log also shows the off-site copy and the tamper test that proves the far side refuses a delete.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
-  <br><em>Dashboard — a compact health summary (overall status, next backup, last result) above a live activity log, protection status per domain, run history and a backup-health heatmap. The log carries off-site replication and the tamper test that proves the far side refuses a delete.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Recovery: the guided disaster-recovery flow onto a fresh install" width="90%">
+  <br><em>Recovery: a guided flow for a fresh install. Check that BombVault can read your backups, restore its own settings, then attach your container, VM and flash backups and restore them.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Recovery — guided disaster-recovery flow onto a fresh install" width="90%">
-  <br><em>Recovery — a guided disaster-recovery flow: confirm your backups are readable, restore BombVault's own settings, then attach and restore your container, VM and flash backups onto a fresh install.</em>
-</p>
-
-<br>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers tab — per-container backup with schedule toggle, filters and bulk include/exclude" width="90%">
-  <br><em>Containers — per-container backup with an include-in-schedule toggle, collapsible filters, bulk include/exclude, one-click backup and an expandable per-container history.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers: each container with its schedule switch, placement and restore check" width="90%">
+  <br><em>Containers: each container has its own schedule switch, a choice of local, off-site or both, a one-click backup and a restore check. Filters and bulk include or exclude sit above the list.</em>
 </p>
 
 <br>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings: configuration organised into pages for domains, paths, schedules, off-site, notifications and integrity" width="90%">
-  <br><em>Settings, organised into pages (General · Look · Storage · Retention · Schedules · Containers · Off-site · Cloud access · Notifications · Integrity · Security · Pairing · Integrations · System). General turns each backup domain on or off and holds the language and quiet toasts; Look holds the theme, colours, corners and animations. Nothing here has a Save button; every change is written as you make it.</em>
+  <br><em>Settings, organised into pages (General · Look · Storage · Retention · Schedules · Containers · Off-site · Cloud access · Notifications · Integrity · Security · Pairing · Integrations · System). General turns each backup domain on or off and holds the language and quiet toasts; Look holds the theme, colours, corners and animation. Nothing here has a Save button; every change is written as you make it.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Receiver — the receiving side of an off-site copy, watched read-only" width="90%">
-  <br><em>Receiver — the other end of an off-site copy. It watches what other instances push to this box, read-only: what arrived, when the last backup came in, and an independent integrity check run on this hardware rather than trusted from the sender.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Receiver: a received off-site copy with its snapshots by source and an independent check" width="90%">
+  <br><em>Receiver: the other end of an off-site copy, read-only. It lists what arrived from each source and when, and runs its own integrity check on this hardware instead of trusting the sender.</em>
 </p>
 
 <br>
@@ -259,7 +252,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - **Placement defaults.** **Settings → Storage → Placement defaults** sets, per domain, where new items are written and which targets items without a choice of their own are copied to. A new item takes the location at its first backup, and changing a default moves no backups. Before it saves, it names every target that gains or loses items; a new off-site target asks the same way before it receives every item not set to Local. After a rebuild through Discover without the old settings, off-site copies of the rebuilt domains wait until the default is confirmed, because the old exclusions are gone.
 - **SSH targets need nothing installed on the far side.** `sftp:` only requires an SSH server, so a bare Raspberry Pi (no Docker, no restic) works as an off-site destination. BombVault connects with its own persistent SSH keypair: add the public key shown under **Settings → Integrations → Host SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`, then use `sftp:user@host:/path/to/repo`. Host keys are pinned automatically on first contact.
 - **Off-site copy (local + remote):** keep the fast local backup *and* add off-site targets per domain on the **Settings → Off-site** page. BombVault copies new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. Which items go to which target is chosen per item (see **Placement per item**); an item nobody touched follows its domain's default, and without any choice every item goes to every target. Each domain has its own **off-site schedule** (edited alongside every other schedule on the **Settings → Schedules** page): leave it blank to replicate after every local backup, or set a cadence (e.g. `weekly Sun 03:00`) to ship off-site less often than you back up locally, plus a **Replicate now** button for on-demand runs. While a replication is in flight, an **off-site replication indicator** shows which domain is running (on its page and the Dashboard); it is an active indicator, not a percentage bar, since `restic copy` exposes no machine-readable progress.
-- Configurable **retention**: keep-last / daily / weekly / monthly / yearly, pruned automatically after each backup. Set it **per source**: both the **local** and **off-site** policies sit on Settings → Retention, so you can keep off-site copies longer as an archive. Leave the off-site policy all-zero to never auto-trim off-site snapshots.
+- Configurable **retention**: keep-last / daily / weekly / monthly / yearly, pruned automatically after each backup. Set it **per source**: both the **local** and **off-site** policies sit on Settings → Retention, so you can keep off-site copies longer as an archive. Leave the off-site policy all-zero to never auto-trim off-site snapshots. Each source can also have keep rules of its own, locally and off-site (**Keep rules per source**), for example 7 daily backups of containers that change every day and fewer of VMs that rarely change.
 - Per-repository **compression**: Off, Automatic (restic's default) or Maximum, set under each backup path and each named repository on Settings → Storage and on each off-site destination on Settings → Off-site. Backups, off-site copies and prune write with it, and the recovery kit names it.
 - Per-domain scheduling (daily / weekly incl. multi-day sets / every-N-days / raw cron), all edited in one place on Settings → Schedules, and an individual container, VM, file set or ZFS item can carry its own cadence as an override; per-backup-group scheduling is *(planned)*. **Every N days** now works on the restore drill, the tamper test and the weekly digest too, so a check you only want every ten days no longer has to be faked with a cron line. It stays unavailable in the two places that keep no record of a previous run to count an interval from (the six off-site replication schedules and the per-item overrides), and the picker says so rather than quietly hiding the option.
 - **Wait until the app is idle** (on a container, advanced view). A scheduled backup of that container waits while its app is busy, for at most the hours you set, and starts as soon as the app is idle. A media server counts as idle when it isn't streaming, any other container when its CPU and traffic stay below the limits under Settings → Schedules for a few minutes. The waiting backup shows in the activity log and on the container with its reason and deadline; the other containers go ahead meanwhile. The members of a compose stack due in the same run wait together, and a wait carries on with its deadline after a restart. Manual backups never wait.
@@ -351,7 +344,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **42 languages** with a flag picker.
-- **Make it look how you want it.** Three switches on Settings → Look, applied across the whole app and remembered per browser: **Colors** (one accent, or *Rainbow Mode*, where every card, list row and toolbar takes its own colour from an editable palette of eight and paints the controls inside it, with optional *Reactive Mode* and *Colour Rotation*), **Corners** (round, soft or square, for cards, buttons, tabs, inputs and badges at once) and **Animations** (off, subtle or full). Animations is a manual dial that sits alongside your system's reduced-motion setting and never overrides it: if your OS asks for less motion, that still wins.
+- **Make it look how you want it.** Three switches on Settings → Look, applied across the whole app and remembered per browser: **Colors** (one accent, or *Rainbow Mode*, where every card, list row and toolbar takes its own colour from an editable palette of eight and paints the controls inside it, with optional *Reactive Mode* and *Colour Rotation*), **Corners** (round, soft or square, for cards, buttons, tabs, inputs and badges at once) and **Animation** (off, subtle or full). Animation is a manual dial that sits alongside your system's reduced-motion setting and never overrides it: if your OS asks for less motion, that still wins.
 
 </details>
 
@@ -568,7 +561,7 @@ You do not have to take my word for it. The code is open and every release note 
 
 ## 13. Support this project
 
-Questions? Check the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs, ideas or feature requests? Please [open a GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
+Questions? Ask in [Discussions](https://github.com/junkerderprovinz/bombvault/discussions/categories/q-a) or check the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs, ideas or feature requests? Please [open a GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
 
 A one-knight job: I build it, keep it running, work through the issues and add what people ask for, until nothing is missing. It is free, with no accounts, no telemetry, no ads and no paid tier. No asterisk anywhere. Nothing readable ever leaves your own walls. Forged on evenings and weekends, with heart and stubbornness.
 

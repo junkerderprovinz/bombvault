@@ -1,13 +1,13 @@
 import { useState } from "react";
 
-import { previewRetention, type RetentionPreview as Preview } from "../lib/api";
+import { previewRetention, type OffsiteDomain, type RetentionPreview as Preview } from "../lib/api";
 import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
 import { useT } from "../lib/i18n";
 
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
 
-type Domain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
+type Domain = OffsiteDomain;
 
 // `as const` so each labelKey keeps its literal type: t() only accepts known
 // keys, which is what stops a typo here from reaching a user as a raw key.
@@ -37,13 +37,8 @@ const RULES = [
 
 /** The policy the answer was worked out with and the rules it sets, so a
  *  source's own policy cannot be mistaken for the shared one. */
-function policyLine(policy: Preview["policy"], source: "local" | "offsite", t: ReturnType<typeof useT>["t"]): string {
-  const name =
-    source === "offsite"
-      ? t("retentionPreview.policy")
-      : policy.own
-        ? t("retentionPreview.ownPolicy")
-        : t("retentionPreview.sharedPolicy");
+function policyLine(policy: Preview["policy"], t: ReturnType<typeof useT>["t"]): string {
+  const name = policy.own ? t("retentionPreview.ownPolicy") : t("retentionPreview.sharedPolicy");
   const rules = RULES.filter(([key]) => policy[key] > 0).map(([key, label]) => `${t(label)} ${policy[key]}`);
   return `${name}: ${rules.join(" · ")}`;
 }
@@ -55,9 +50,20 @@ function stamp(iso: string): string {
   return d.toLocaleString();
 }
 
+type Source = "local" | "offsite";
+
+/** One copy's answer: the preview, the server's refusal, or no off-site copy
+ *  to ask about at all. */
+type Part = { preview?: Preview; error?: string; none?: boolean };
+
+const SOURCES = [
+  ["local", "source.local"],
+  ["offsite", "source.offsite"],
+] as const;
+
 /**
- * Shows what the NEXT retention run would remove, beside the policy that
- * decides it.
+ * Shows what the next retention run would remove from a source's local and
+ * built-in off-site copies, each beside the policy that decides it.
  *
  * It asks only when the button is pressed, for two reasons. The cheap one: the
  * Settings page's own tests mock the API module by spreading the real one, so a
@@ -68,57 +74,51 @@ function stamp(iso: string): string {
  */
 export function RetentionPreview({
   t,
-  source,
+  hasOffsite,
 }: {
   t: ReturnType<typeof useT>["t"];
-  source: "local" | "offsite";
+  /** Whether the domain has a built-in off-site repository to ask about. */
+  hasOffsite: (domain: Domain) => boolean;
 }) {
   const [domain, setDomain] = useState<Domain>("containers");
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState<Preview | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [parts, setParts] = useState<Record<Source, Part> | null>(null);
 
-  async function run() {
-    setBusy(true);
-    setError(null);
-    setPreview(null);
+  async function ask(source: Source): Promise<Part> {
+    if (source === "offsite" && !hasOffsite(domain)) return { none: true };
     try {
       const res = await previewRetention(domain, source === "offsite" ? "offsite" : undefined);
-      if (!res.ok) {
-        // The server's own sentence, shown as it came. A refusal like "no
-        // backups yet" is the answer, not a failure to report generically.
-        setError(res.error || t("retentionPreview.failed"));
-        return;
-      }
-      setPreview(res.preview);
+      // The server's own sentence, shown as it came. A refusal like "no
+      // backups yet" is the answer, not a failure to report generically.
+      if (!res.ok) return { error: res.error || t("retentionPreview.failed") };
+      return { preview: res.preview };
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("retentionPreview.failed"));
-    } finally {
-      setBusy(false);
+      return { error: e instanceof Error ? e.message : t("retentionPreview.failed") };
     }
   }
 
-  const removalCount =
-    preview?.repos.reduce(
-      (n, r) => n + r.items.reduce((m, i) => m + (i.remove?.length ?? 0), 0),
-      0
-    ) ?? 0;
+  async function run() {
+    setBusy(true);
+    setParts(null);
+    const [local, offsite] = await Promise.all([ask("local"), ask("offsite")]);
+    setParts({ local, offsite });
+    setBusy(false);
+  }
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textSub">{t("common.domain")}</span>
+          <span className="text-xs text-carbon-textSub">{t("retentionPreview.sourceLabel")}</span>
           <SelectField
             value={domain}
-            label={t("common.domain")}
+            label={t("retentionPreview.sourceLabel")}
             options={DOMAINS.map((d) => ({ value: d.key, label: t(d.labelKey) }))}
             onChange={(next) => {
               setDomain(next);
               // A stale answer under a new domain name would be worse than no
               // answer: it would read as that domain's verdict.
-              setPreview(null);
-              setError(null);
+              setParts(null);
             }}
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
           />
@@ -133,19 +133,39 @@ export function RetentionPreview({
         />
       </div>
 
-      {error && <p className="text-sm text-statusFail">✗ {error}</p>}
+      {parts &&
+        SOURCES.map(([source, titleKey]) => (
+          <section key={source} aria-label={t(titleKey)} className="flex flex-col gap-2">
+            <h4 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">{t(titleKey)}</h4>
+            <PartView part={parts[source]} t={t} />
+          </section>
+        ))}
+    </div>
+  );
+}
 
-      {preview?.policy.on && <p className="text-xs text-carbon-textSub">{policyLine(preview.policy, source, t)}</p>}
+function PartView({ part, t }: { part: Part; t: ReturnType<typeof useT>["t"] }) {
+  if (part.none) return <p className="text-sm text-carbon-textSub">{t("dashboard.noOffsite")}</p>;
+  if (part.error) return <p className="text-sm text-statusFail">✗ {part.error}</p>;
+  const preview = part.preview;
+  if (!preview) return null;
 
-      {preview && !preview.policy.on && (
-        <p className="text-sm text-carbon-textSub">{t("retentionPreview.off")}</p>
-      )}
+  const removalCount = preview.repos.reduce(
+    (n, r) => n + r.items.reduce((m, i) => m + (i.remove?.length ?? 0), 0),
+    0
+  );
 
-      {preview && preview.policy.on && removalCount === 0 && (
+  return (
+    <>
+      {preview.policy.on && <p className="text-xs text-carbon-textSub">{policyLine(preview.policy, t)}</p>}
+
+      {!preview.policy.on && <p className="text-sm text-carbon-textSub">{t("retentionPreview.off")}</p>}
+
+      {preview.policy.on && removalCount === 0 && (
         <p className="text-sm text-carbon-textSub">{t("retentionPreview.nothing")}</p>
       )}
 
-      {preview?.repos.map((repo) => (
+      {preview.repos.map((repo) => (
         <div key={repo.name} className="rounded-control bg-carbon-surface2 px-3 py-2">
           <div className="flex flex-wrap items-center justify-between gap-x-2">
             <span className="text-sm text-carbon-text">{repo.name}</span>
@@ -176,7 +196,7 @@ export function RetentionPreview({
         </div>
       ))}
 
-      {preview?.skipped?.length ? (
+      {preview.skipped?.length ? (
         <div className="rounded-control bg-carbon-surface2 px-3 py-2">
           <p className="text-xs text-statusWarn">{t("retentionPreview.skipped")}</p>
           <ul className="mt-1 flex flex-col gap-0.5">
@@ -188,6 +208,6 @@ export function RetentionPreview({
           </ul>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

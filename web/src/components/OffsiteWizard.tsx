@@ -271,13 +271,16 @@ export function OffsiteWizard({
 
   // The prune step reports what happens rather than offering a choice:
   // service.go's copyToOffsiteTarget never prunes an immutable target from
-  // here and applies the shared off-site keep values otherwise.
-  const keepTotal =
-    settings.offsiteRetentionKeepLast +
-    settings.offsiteRetentionKeepDaily +
-    settings.offsiteRetentionKeepWeekly +
-    settings.offsiteRetentionKeepMonthly +
-    settings.offsiteRetentionKeepYearly;
+  // here and applies the domain's off-site keep values otherwise, its own or
+  // the shared ones.
+  const keep = settings.ownOffsiteRetention?.[domain] ?? {
+    keepLast: settings.offsiteRetentionKeepLast,
+    keepDaily: settings.offsiteRetentionKeepDaily,
+    keepWeekly: settings.offsiteRetentionKeepWeekly,
+    keepMonthly: settings.offsiteRetentionKeepMonthly,
+    keepYearly: settings.offsiteRetentionKeepYearly,
+  };
+  const keepTotal = keep.keepLast + keep.keepDaily + keep.keepWeekly + keep.keepMonthly + keep.keepYearly;
   const pruneMode: "farside" | "policy" | "none" = immutable
     ? "farside"
     : keepTotal > 0
@@ -868,11 +871,11 @@ export function OffsiteWizard({
               <>
                 <span className="text-xs text-carbon-textSub">
                   {t("offsite.prune.effective")
-                    .replace("{last}", String(settings.offsiteRetentionKeepLast))
-                    .replace("{daily}", String(settings.offsiteRetentionKeepDaily))
-                    .replace("{weekly}", String(settings.offsiteRetentionKeepWeekly))
-                    .replace("{monthly}", String(settings.offsiteRetentionKeepMonthly))
-                    .replace("{yearly}", String(settings.offsiteRetentionKeepYearly))}
+                    .replace("{last}", String(keep.keepLast))
+                    .replace("{daily}", String(keep.keepDaily))
+                    .replace("{weekly}", String(keep.keepWeekly))
+                    .replace("{monthly}", String(keep.keepMonthly))
+                    .replace("{yearly}", String(keep.keepYearly))}
                 </span>
                 <span className="text-xs text-carbon-textMuted">{t("offsite.prune.editedElsewhere")}</span>
               </>

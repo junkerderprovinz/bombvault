@@ -103,7 +103,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, nil, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6",
-			"--keep-tag", "bv:direct", "--prune"}
+			"--keep-tag", "imported", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -113,7 +113,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 			RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
 			Mode{Encrypted: false}, nil, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--insecure-no-password", "--group-by", "paths",
-			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--keep-tag", "bv:direct", "--prune"}
+			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--keep-tag", "imported", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -125,7 +125,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, []string{"container:plex"}, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "container:plex", "--group-by", "",
-			"--keep-last", "5", "--keep-tag", "bv:direct", "--prune"}
+			"--keep-last", "5", "--keep-tag", "imported", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -134,7 +134,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepDaily: 7}, Mode{Encrypted: true}, []string{"vm:win11"}, false)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
-			"--keep-daily", "7", "--keep-tag", "bv:direct"}
+			"--keep-daily", "7", "--keep-tag", "imported", "--keep-tag", "bv:direct"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -143,7 +143,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepLast: 3, Direct: true}, Mode{Encrypted: true}, []string{"vm:win11"}, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
-			"--keep-last", "3", "--prune"}
+			"--keep-last", "3", "--keep-tag", "imported", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -182,7 +182,7 @@ func TestForgetPreviewArgs(t *testing.T) {
 		got := ForgetPreviewArgs("/repo",
 			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, "container:plex")
 		want := []string{"-r", "/repo", "forget", "--dry-run", "--no-lock", "--json",
-			"--tag", "container:plex", "--group-by", "", "--keep-last", "5", "--keep-tag", DirectTag}
+			"--tag", "container:plex", "--group-by", "", "--keep-last", "5", "--keep-tag", "imported", "--keep-tag", DirectTag}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -191,7 +191,7 @@ func TestForgetPreviewArgs(t *testing.T) {
 		got := ForgetPreviewArgs("/repo",
 			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, "")
 		want := []string{"-r", "/repo", "forget", "--dry-run", "--no-lock", "--json",
-			"--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--keep-tag", DirectTag}
+			"--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--keep-tag", "imported", "--keep-tag", DirectTag}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -203,7 +203,7 @@ func TestForgetPreviewArgs(t *testing.T) {
 		want := []string{"-r", "/repo", "forget", "--insecure-no-password", "--dry-run", "--no-lock", "--json",
 			"--tag", "vm:win11", "--group-by", "",
 			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12",
-			"--keep-tag", DirectTag}
+			"--keep-tag", "imported", "--keep-tag", DirectTag}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -391,7 +391,7 @@ func TestForgetPolicyArgsKeepsYearlyAfterMonthly(t *testing.T) {
 	got := ForgetPolicyArgs("/repo",
 		RetentionPolicy{KeepLast: 2, KeepMonthly: 12, KeepYearly: 5}, Mode{Encrypted: true}, []string{"vm:win11"}, false)
 	want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
-		"--keep-last", "2", "--keep-monthly", "12", "--keep-yearly", "5", "--keep-tag", DirectTag}
+		"--keep-last", "2", "--keep-monthly", "12", "--keep-yearly", "5", "--keep-tag", "imported", "--keep-tag", DirectTag}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}

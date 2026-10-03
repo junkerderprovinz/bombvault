@@ -138,7 +138,7 @@ func TestMediaServerIsIdleWhenNothingStreams(t *testing.T) {
 	stream := &StreamRule{Threshold: 250_000, Hold: 2 * time.Minute}
 	rule := IdleRule{CPUPct: 1, NetBps: 1, Quiet: time.Hour, Stream: stream}
 	w := NewWatch(time.Hour, 30*time.Second)
-	last := feed(w, "plex", 4, 3, 1_000)
+	last := feed(w, "plex", 13, 3, 1_000)
 	if idle, why := w.Idle("plex", rule, last); !idle {
 		t.Fatalf("busy CPU but no stream: Idle = %v, %q", idle, why)
 	}
@@ -159,5 +159,63 @@ func TestRetainForgetsContainersNoLongerWatched(t *testing.T) {
 	}
 	if _, ok := w.last["a"]; !ok {
 		t.Fatal("a was dropped")
+	}
+}
+
+func TestAMediaServerIsMeasuredForTheHoldBeforeItCountsAsIdle(t *testing.T) {
+	stream := &StreamRule{Threshold: 250_000, Hold: 2 * time.Minute}
+	rule := IdleRule{CPUPct: 10, NetBps: 125_000, Quiet: time.Minute, Stream: stream}
+	w := NewWatch(time.Hour, 30*time.Second)
+	w.Record("plex", Sample{At: t0, Running: true, HasNet: true})
+	if idle, why := w.Idle("plex", rule, t0); idle || why != BusyMeasuring {
+		t.Fatalf("one sample: Idle = %v, %q; want measuring", idle, why)
+	}
+	last := feed(w, "plex", 12, 0.01, 1_000)
+	if idle, why := w.Idle("plex", rule, last); idle || why != BusyMeasuring {
+		t.Fatalf("110s of samples: Idle = %v, %q; want measuring", idle, why)
+	}
+	// A pause longer than the gap starts the series again.
+	resumed := last.Add(time.Minute)
+	w.Record("plex", Sample{At: resumed, Running: true, HasNet: true})
+	if idle, why := w.Idle("plex", rule, resumed); idle || why != BusyMeasuring {
+		t.Fatalf("after a pause: Idle = %v, %q; want measuring", idle, why)
+	}
+	w = NewWatch(time.Hour, 30*time.Second)
+	last = feed(w, "plex", 13, 0.01, 1_000)
+	if idle, why := w.Idle("plex", rule, last); !idle {
+		t.Fatalf("quiet for the whole hold: Idle = %v, %q", idle, why)
+	}
+}
+
+// hostFeed records samples without network counters, the way Docker reports a
+// container on the host network.
+func hostFeed(w *Watch, name string, n int, cpuSec float64) time.Time {
+	var cpu uint64
+	at := t0
+	for i := range n {
+		at = t0.Add(time.Duration(i) * 10 * time.Second)
+		w.Record(name, Sample{At: at, Running: true, CPUNanos: cpu})
+		cpu += uint64(cpuSec * 1e9)
+	}
+	return at
+}
+
+func TestAMediaServerOnTheHostNetworkIsIdleByItsCPU(t *testing.T) {
+	stream := &StreamRule{Threshold: 250_000, Hold: 2 * time.Minute}
+	rule := IdleRule{CPUPct: 10, NetBps: 125_000, Quiet: 3 * time.Minute, Stream: stream}
+	w := NewWatch(time.Hour, 30*time.Second)
+	last := hostFeed(w, "plex", 20, 5)
+	if idle, why := w.Idle("plex", rule, last); idle || why != BusyCPU {
+		t.Fatalf("50%% CPU on the host network: Idle = %v, %q; want cpu", idle, why)
+	}
+	w = NewWatch(time.Hour, 30*time.Second)
+	last = hostFeed(w, "plex", 10, 0.01)
+	if idle, why := w.Idle("plex", rule, last); idle || why != BusyMeasuring {
+		t.Fatalf("90s on the host network: Idle = %v, %q; want measuring", idle, why)
+	}
+	w = NewWatch(time.Hour, 30*time.Second)
+	last = hostFeed(w, "plex", 20, 0.01)
+	if idle, why := w.Idle("plex", rule, last); !idle {
+		t.Fatalf("quiet on the host network: Idle = %v, %q", idle, why)
 	}
 }

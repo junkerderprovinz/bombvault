@@ -27,7 +27,9 @@ type fakeDocker struct {
 	removeErr      error
 
 	// liveName is what InspectName returns; "" means absent (no such container).
-	liveName    string
+	liveName string
+	// absent names the other containers InspectName reports as missing.
+	absent      map[string]bool
 	inspectErr  error
 	started     bool
 	createdName string
@@ -132,6 +134,9 @@ func (d *fakeDocker) CreateAndStart(_ context.Context, in model.Inspect, start b
 
 func (d *fakeDocker) InspectName(_ context.Context, name string) (string, error) {
 	d.log = append(d.log, "inspectName:"+name)
+	if d.absent[name] {
+		return "", d.inspectErr
+	}
 	return d.liveName, d.inspectErr
 }
 

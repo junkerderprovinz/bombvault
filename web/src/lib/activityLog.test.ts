@@ -63,6 +63,36 @@ describe("buildLogLines", () => {
     expect(live.text).toContain("percent=41"); // clamped + rounded
   });
 
+  it("keeps earlier off-site copies of a domain while the next one runs", () => {
+    const lastNight = makeRun({ id: "r-old", kind: "offsite", targetId: "containers", target: "", domain: "", startedAt: 1000, finishedAt: 1300 });
+    const tonight = makeRun({ id: "r-now", kind: "offsite", targetId: "containers", target: "", domain: "", status: "running", startedAt: 90_000, finishedAt: null });
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 90_010_000, startedAt: 90_000 },
+    };
+    const lines = buildLogLines([lastNight, tonight], progress, [], resolveName, 90_010_000);
+    expect(lines.map((l) => l.id)).toEqual(["run:r-old", "live:offsite:containers"]);
+  });
+
+  it("keeps earlier backups of an item while it is backed up again", () => {
+    const yesterday = makeRun({ id: "r-old", finishedAt: 900 });
+    const running = makeRun({ id: "r-now", status: "running", startedAt: 5_000, finishedAt: null });
+    const progress: ProgressMap = {
+      "container:plex": { phase: "backup", percent: 12, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([yesterday, running], progress, [], resolveName, 5_000_000);
+    expect(lines.map((l) => l.id)).toEqual(["run:r-old", "live:container:plex"]);
+  });
+
+  it("hides only the finished run a live line still stands for", () => {
+    const lastNight = makeRun({ id: "r-old", kind: "offsite", targetId: "vms", target: "", domain: "", startedAt: 1000, finishedAt: 1300 });
+    const justDone = makeRun({ id: "r-done", kind: "offsite", targetId: "vms", target: "", domain: "", startedAt: 90_000, finishedAt: 90_300 });
+    const progress: ProgressMap = {
+      "offsite:vms": { phase: "replicate", percent: 100, active: true, lastSeen: 90_300_000, startedAt: 90_000 },
+    };
+    const lines = buildLogLines([lastNight, justDone], progress, [], resolveName, 90_300_000);
+    expect(lines.map((l) => l.id)).toEqual(["run:r-old", "live:offsite:vms"]);
+  });
+
   it("gives a live line the id of the run it shows, so a link to that run finds it", () => {
     const progress: ProgressMap = {
       "container:plex": { phase: "backup", percent: 12, active: true, lastSeen: 5_000_000 },
@@ -82,6 +112,30 @@ describe("buildLogLines", () => {
     expect(lines[0].idle).toBe(true);
     expect(lines[0].text).toContain("activityLog.lineNextWithDomain");
     expect(lines[0].text).toContain("countdown=1h 0m");
+  });
+
+  it("says which of the two happened to a container with a GPU", () => {
+    const refused = makeRun({
+      id: "r1",
+      kind: "restore",
+      status: "failed",
+      error: "restore failed: the container used a GPU or runtime this host does not have: Error response from daemon: unknown or invalid runtime name: nvidia",
+    });
+    const without = makeRun({ id: "r2", kind: "restore", finishedAt: 1060, error: "restored without the GPU or runtime the container used" });
+    const [failed, restored] = buildLogLines([refused, without], {}, [], resolveName, 2_000_000);
+    expect(failed.text).toContain("activityLog.lineRestoreFailed");
+    expect(failed.text).toContain("error=runReason.restoreNoRuntime: Error response from daemon: unknown or invalid runtime name: nvidia");
+    expect(restored.text).toContain("activityLog.lineRestoreSuccess");
+    expect(restored.text).toContain("; runReason.restoredWithoutRuntime");
+  });
+
+  it("names the links a restore left out", () => {
+    const run = makeRun({
+      kind: "restore",
+      error: "restored without the GPU or runtime the container used; restored without links to containers that are not running: db",
+    });
+    const [line] = buildLogLines([run], {}, [], resolveName, 2_000_000);
+    expect(line.text).toContain("; runReason.restoredWithoutRuntime; runReason.restoredWithoutLinks: db");
   });
 });
 

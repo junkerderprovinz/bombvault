@@ -27,6 +27,19 @@ export interface SearchCard {
   body?: TranslationKey[];
 }
 
+// The six sources of the retention cards, each the caption of its switch.
+const SOURCE_ROWS = (hint: TranslationKey): SearchRow[] =>
+  (["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const).map((key) => ({ key, hint }));
+
+// The five keep rules, drawn with their (i) wherever a keep-policy is edited.
+const KEEP_RULE_ROWS: SearchRow[] = [
+  { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
+  { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
+  { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
+  { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
+  { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+];
+
 // The additional off-site targets editor (OffsiteTargetsSection) sits on
 // every per-domain off-site Card, so its rows are shared rather than typed
 // out six times.
@@ -39,11 +52,7 @@ const OFFSITE_TARGET_ROWS: SearchRow[] = [
   { key: "settings.compression", hint: "settings.compressionInfo" },
   { key: "offsite.immutable", hint: "offsite.immutableHint" },
   { key: "offsite.targets.retentionTitle" },
-  { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-  { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-  { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-  { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-  { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+  ...KEEP_RULE_ROWS,
   { key: "offsite.retention.budget" },
 ];
 
@@ -177,15 +186,14 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
 
   retention: [
     {
-      title: "settings.retentionTitle",
+      title: "settings.retentionLocalTitle",
       hint: "settings.retentionHint",
       rows: [
-        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
-        { key: "retentionPreview.title", hint: "retentionPreview.hint" },
+        { key: "retentionPreview.sharedPolicy" },
+        ...KEEP_RULE_ROWS,
+        { key: "settings.ownRetentionTitle", hint: "settings.ownRetentionHint" },
+        { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
+        ...SOURCE_ROWS("settings.ownRetentionToggleHint"),
       ],
       body: ["settings.retentionCombineInfo"],
     },
@@ -205,14 +213,22 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "settings.retentionOffsiteTitle",
       hint: "settings.retentionOffsiteHint",
       rows: [
-        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
-        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
-        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
-        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
-        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
-        { key: "retentionPreview.title", hint: "retentionPreview.hint" },
+        { key: "retentionPreview.sharedPolicy" },
+        ...KEEP_RULE_ROWS,
+        { key: "settings.ownRetentionTitle", hint: "settings.ownOffsiteRetentionHint" },
+        { key: "settings.ownOffsiteRetention", hint: "settings.ownOffsiteRetentionToggleHint" },
+        ...SOURCE_ROWS("settings.ownOffsiteRetentionToggleHint"),
+        { key: "settings.retentionExtraTargets" },
       ],
       body: ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"],
+    },
+    {
+      title: "restore.preview",
+      rows: [
+        { key: "retentionPreview.title", hint: "retentionPreview.hint" },
+        { key: "retentionPreview.sourceLabel" },
+        { key: "retentionPreview.show" },
+      ],
     },
   ],
 
