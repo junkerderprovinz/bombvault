@@ -160,13 +160,6 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 ## 2. Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="Restoring a deleted container from its backup, back and running in seconds" width="90%">
-  <br><em>A container that no longer exists, restored from its backup and running again in seconds. The confirm switch is deliberate: a restore in place recreates the container, so it asks before it does.</em>
-</p>
-
-<br>
-
-<p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault dashboard: recovery point, next backup, last result and the live activity log" width="90%">
   <br><em>Dashboard: the recovery point, the next backup and the last result sit above a live activity log. The log also shows the off-site copy and the tamper test that proves the far side refuses a delete.</em>
 </p>
