@@ -38,6 +38,7 @@
 // activity-log scenarios travel with the log's own PR: the log itself
 // shipped in the first PR without them.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 // The two device projects from playwright.config.ts; everything else is a
 // desktop project (desktop-untouched.spec.ts's branching pattern).
@@ -68,6 +69,7 @@ function containerPayload(i: number, overrides: Record<string, unknown> = {}) {
     lastUpdateCheck: 0,
     lastUpdateResult: "",
     stack: "",
+    placement: PLACEMENT,
     ...overrides,
   };
 }
@@ -377,42 +379,46 @@ test("every rendered card clears the 44px touch floor", async ({ page }, testInf
 test("a restore link from the anomalies page opens that container with its backups", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile presentation only");
   await stageContainersDomain(page, containerList(3));
-  await page.route("**/api/containers/*/snapshots*", (route) => route.fulfill({ json: { ok: true, snapshots: [] } }));
-  const snapshots = page.waitForRequest(/\/api\/containers\/svc-01\/snapshots/);
+  await page.route("**/api/items/containers/*/timeline*", (route) => route.fulfill({ json: { ok: true, places: [], rows: [] } }));
+  const timeline = page.waitForRequest(/\/api\/items\/containers\/svc-01\/timeline/);
 
   await page.goto("/containers?restore=snap-9&at=1700000000&item=svc-01");
 
   await expect(page.getByRole("heading", { level: 2, name: "svc-01" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^svc-00/ })).toHaveCount(0);
-  await snapshots;
+  await timeline;
 });
 
-// 480px leaves a backup row too little room for the time beside both actions.
+// 480px leaves a backup row too little room for the time beside its actions.
 // The first backup falls on 2 January, the shortest date a locale prints.
 test("a container's backups keep each time on one line above their actions", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile presentation only");
   await page.setViewportSize({ width: 480, height: 900 });
   await stageContainersDomain(page, containerList(3));
-  const snap = (seed: string, time: Date) => ({
-    id: seed.repeat(32),
-    time: time.toISOString(),
-    paths: ["/config"],
-    tags: ["svc-01"],
-    hostname: "tower",
+  const times = [new Date(2026, 0, 2, 12), new Date(2026, 9, 28, 23, 59, 59)];
+  const rowsJson = times.map((time, i) => {
+    const id = ["a1", "b2"][i].repeat(32);
+    return { key: id, time: time.toISOString(), places: [{ place: "local", snapshotIds: [id], tags: ["container:svc-01"] }] };
   });
-  const snapshots = [snap("a1", new Date(2026, 0, 2, 12)), snap("b2", new Date(2026, 9, 28, 23, 59, 59))];
-  await page.route("**/api/containers/*/snapshots*", (route) => route.fulfill({ json: { ok: true, snapshots } }));
+  await page.route("**/api/items/containers/svc-01/timeline*", (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        places: [{ place: "local", label: "", kind: "home", remote: false, enabled: true, appendOnly: false, state: "read" }],
+        rows: rowsJson,
+      },
+    }),
+  );
   await page.goto(`/containers?restore=${"f9".repeat(32)}&item=svc-01`);
 
-  const rows = page.locator("#bv-main div.border-b").filter({ has: page.getByRole("button", { name: "Delete" }) });
-  await expect(rows).toHaveCount(snapshots.length);
+  const rows = page.locator("#bv-main [role='group'] > div").filter({ has: page.getByRole("button", { name: "Delete everywhere" }) });
+  await expect(rows).toHaveCount(times.length);
   for (const row of await rows.all()) {
-    const rowBox = (await row.boundingBox())!;
     const idBox = (await row.getByText(/^(a1|b2){4}$/).boundingBox())!;
-    const timeBox = (await row.locator("span.flex-1").boundingBox())!;
-    const deleteBox = (await row.getByRole("button", { name: "Delete" }).boundingBox())!;
+    const timeBox = (await row.locator("span.font-mono + span").first().boundingBox())!;
+    const deleteBox = (await row.getByRole("button", { name: "Delete", exact: true }).boundingBox())!;
     expect(timeBox.height, "the time wrapped").toBeLessThanOrEqual(idBox.height + 1);
+    expect(Math.abs(timeBox.y - idBox.y), "the time left the id's line").toBeLessThan(idBox.height);
     expect(deleteBox.y, "the delete action shares the time's row").toBeGreaterThanOrEqual(timeBox.y + timeBox.height);
-    expect(Math.abs(deleteBox.x + deleteBox.width - (rowBox.x + rowBox.width)), "the delete action left the row's end").toBeLessThanOrEqual(1);
   }
 });

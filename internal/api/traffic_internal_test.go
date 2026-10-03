@@ -379,7 +379,7 @@ func TestReplicationToARestServerRunsThroughTheProxy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	svc.replicateOffsite(context.Background(), "containers", settings, restic.Mode{}, own)
+	svc.replicateOffsite(context.Background(), "containers", settings, own, "container:plex")
 
 	if len(eng.envs) == 0 {
 		t.Fatal("nothing was copied")

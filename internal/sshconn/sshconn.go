@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Conn holds the SSH identity and target for reaching the host's libvirt.
@@ -293,4 +294,56 @@ func lastLine(s string) string {
 		}
 	}
 	return "unknown error"
+}
+
+// ForwardUnix makes the Unix socket remote on the host reachable at local in
+// the container, through an ssh -L stream forward that lives until stop is
+// called. Unraid's sshd refuses TCP forwarding but allows socket forwarding,
+// which is what libvirt's pull-mode backup socket needs.
+func (c *Conn) ForwardUnix(ctx context.Context, local, remote string) (stop func(), err error) {
+	_ = os.Remove(local)
+	args := append([]string{
+		"-N",
+		"-o", "ExitOnForwardFailure=yes",
+		"-o", "StreamLocalBindUnlink=yes",
+		"-L", local + ":" + remote,
+	}, c.sshArgs()...)
+	cmd := exec.Command(sshBinary, args...) //nolint:gosec // socket paths are built by BombVault, host/user from config
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("sshconn: start socket forward: %w", err)
+	}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+	stop = func() {
+		_ = cmd.Process.Kill()
+		<-exited
+		_ = os.Remove(local)
+	}
+
+	deadline := time.NewTimer(20 * time.Second)
+	defer deadline.Stop()
+	tick := time.NewTicker(100 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case err := <-exited:
+			exited <- err
+			stop()
+			return nil, fmt.Errorf("sshconn: socket forward ended: %s", lastLine(stderr.String()))
+		case <-ctx.Done():
+			stop()
+			return nil, ctx.Err()
+		case <-deadline.C:
+			stop()
+			return nil, errors.New("sshconn: socket forward did not come up")
+		case <-tick.C:
+			// ssh binds the socket once the session is up. A probe connection
+			// would reach the NBD server and count as a client there.
+			if fi, sErr := os.Stat(local); sErr == nil && fi.Mode()&os.ModeSocket != 0 {
+				return stop, nil
+			}
+		}
+	}
 }

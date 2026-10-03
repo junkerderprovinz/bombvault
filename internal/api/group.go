@@ -222,20 +222,29 @@ type peerRoute struct {
 
 // peerRoutes is everything a group member can reach on this instance: the
 // Fleet scorecard, a storage offer, what receiver and pull pairing need,
-// starting a check, and the bare hello a blind probe gets. Settings, secrets
-// and the phrase are not among them.
-var peerRoutes = []peerRoute{
-	{"GET /api/group/peer/status", (*Service).handlePeerStatus},
-	{"POST /api/group/peer/mesh-offer", (*Service).handlePeerMeshOffer},
-	{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
-	{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
-	{"GET " + group.ProbePath, (*Service).handlePeerHello},
+// starting a check, what runs here and how it looks for the Android app, a
+// session for a phone of the group, and the bare hello a blind probe gets.
+// Settings, secrets and the phrase are not among them; a member holds the key
+// to every backup already, so a session for its phone adds no reach the group
+// did not have. A function rather than a variable, since the session route
+// leads back here through the group it syncs.
+func peerRoutes() []peerRoute {
+	return []peerRoute{
+		{"GET /api/group/peer/status", (*Service).handlePeerStatus},
+		{"POST /api/group/peer/mesh-offer", (*Service).handlePeerMeshOffer},
+		{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
+		{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
+		{"GET /api/group/peer/activity", (*Service).handlePeerActivity},
+		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
+		{"POST /api/group/peer/session", (*Service).handlePeerSession},
+		{"GET " + group.ProbePath, (*Service).handlePeerHello},
+	}
 }
 
 func (s *Service) peerMux() http.Handler {
 	s.peerMuxOnce.Do(func() {
 		mux := http.NewServeMux()
-		for _, pr := range peerRoutes {
+		for _, pr := range peerRoutes() {
 			handle := pr.handle
 			mux.HandleFunc(pr.pattern, func(w http.ResponseWriter, r *http.Request) { handle(s, w, r) })
 		}

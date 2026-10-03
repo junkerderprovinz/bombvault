@@ -31,7 +31,7 @@ Hänge den Docker-Socket, den Flash (`/boot`) und das Wurzelverzeichnis **Host D
 
 ZFS-Dataset-Backups brauchen diesen Modus ebenfalls: Den Snapshot eines Datasets hängt der Host erst ein, nachdem der Container gestartet ist. Siehe [ZFS-Datasets](zfs-datasets.md).
 
-Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Speicher, Backup-Pfade**. Jedes Pfadfeld hat außerdem einen Schalter **Lokal / Remote** direkt daneben: Ein Pfad kann statt eines lokalen Ordners ein restic-Remote sein (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), und BombVault sichert dann direkt dorthin, ohne getrennte lokale Kopie; siehe [Entfernte primäre Repositories](offsite-recovery.md#remote-primary-repositories).
+Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Speicher, Backup-Pfade**. Jedes Pfadfeld hat außerdem einen Schalter **Lokal / Remote** direkt daneben: Ein Pfad kann statt eines lokalen Ordners ein restic-Remote sein (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`), und BombVault sichert dann direkt dorthin, ohne getrennte lokale Kopie; siehe [Entfernte primäre Repositories](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host-Integration-Check"
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile.
@@ -84,7 +84,7 @@ Das Template fügt `--add-host=host.docker.internal:host-gateway` hinzu, damit d
 
 Richte eine Off-site-Replik auf der Seite **Einstellungen, Off-site** ein. Siehe [Off-site & Wiederherstellung](offsite-recovery.md) für den vollständigen Ablauf (unveränderlich/append-only, Manipulationstest und DR-Übungen). Kurz gefasst:
 
-- **Backends:** SMB/CIFS und NFS (Freigabe einhängen und einen Backup-Pfad darauf richten), native restic-Backends ohne rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) oder jedes rclone-Remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS und NFS (Freigabe einhängen und einen Backup-Pfad darauf richten), native restic-Backends ohne rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) oder jedes rclone-Remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 hat hier kein eigenes Backend: Es wird über seinen S3-Endpunkt angesprochen (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), mit der Schlüssel-ID und dem Anwendungsschlüssel als S3-Zugangsdaten.
 - **Geteilte Cloud-Zugangsdaten** werden verschlüsselt gespeichert unter Einstellungen, Cloud-Zugänge, Geteilte Cloud-Zugangsdaten.
 - **SSH-Ziele brauchen auf der Gegenseite nichts installiert.** `sftp:` benötigt nur einen SSH-Server. Füge den öffentlichen Schlüssel aus **Einstellungen, Anbindungen, Host-SSH** (auch unter `/config/ssh/id_ed25519.pub`) den `~/.ssh/authorized_keys` des Zielbenutzers hinzu.
 - **Off-site-Kopie:** BombVault repliziert neue Snapshots mit `restic copy` auf Best-Effort-Basis, zusätzlich zu einem (meist lokalen) primären Repo. Jeder Bereich hat seinen eigenen Off-site-Zeitplan, plus einen Button **Jetzt replizieren**.
@@ -113,4 +113,4 @@ Jedes Element kann eine eigene Empfindlichkeit und ein eigenes Benachrichtigungs
 Die Karte **Einstellungen exportieren / importieren** auf der Seite **Einstellungen, System** schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Off-site-Ziele, Zeitpläne, Aufbewahrung, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.
 
 !!! warning "Der Export kann Zugangsdaten enthalten"
-    Du wählst, ob die Off-site- und Benachrichtigungs-Zugangsdaten in der Datei enthalten sein sollen. Mit enthaltenen Zugangsdaten ist der Export so sensibel wie dein Recovery-Kit, also bewahre ihn an einem sicheren Ort auf. Ohne sie hält die Datei nur nicht-geheime Einstellungen.
+    Du wählst, ob die Off-site-, Benachrichtigungs- und MQTT-Broker-Zugangsdaten in der Datei enthalten sein sollen. Mit enthaltenen Zugangsdaten ist der Export so sensibel wie dein Recovery-Kit, also bewahre ihn an einem sicheren Ort auf. Ohne sie hält die Datei nur nicht-geheime Einstellungen.

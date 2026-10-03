@@ -1,0 +1,667 @@
+package api
+
+import (
+	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"log"
+	"maps"
+	"net/http"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+var (
+	errPlacementUnreadable = errors.New("placement rules could not be read, so nothing is copied until they can")
+	errInvalidPlacement    = errors.New("home and copies each take follow or one value")
+	errCopiesNotAllowed    = errors.New("an item on a remote or direct repository takes no copies")
+	errNotATarget          = errors.New("that is not an off-site target of this domain")
+	errPlacementBusy       = errors.New("a backup is running in this domain; try again once it has finished")
+	errHomeHasBackups      = errors.New("cannot change the repository of an item that already has backups; they stay where they were written")
+	errHomeUncheckable     = errors.New("whether this item holds backups could not be checked, so its repository stays")
+	errPlacementStale      = errors.New("the numbers changed since they were shown; check them again")
+	errRepoInUse           = errors.New("this repository is still in use")
+	errRepoInvalid         = errors.New("that repository cannot take backups")
+	errDefaultRepoMissing  = errors.New("a default in the file points at a repository that is neither in the file nor here")
+	errExclusionUnsaved    = errors.New("the target was saved; what it should leave out was not")
+)
+
+// placementLockReason labels the domain lock an item's home change holds
+// while it writes.
+const placementLockReason = "placement"
+
+// placementCodes is searched in order and the first match wins, so an error that
+// can arrive wrapped in a broader one keeps its row above that one's.
+var placementCodes = []struct {
+	err  error
+	code string
+}{
+	// Above the codes of the error it wraps: which half of the save went
+	// through is what the answer has to say first.
+	{errExclusionUnsaved, "exclusion-unsaved"},
+	{errPlacementUnreadable, "placement-unreadable"},
+	{errInvalidPlacement, "invalid-placement"},
+	{store.ErrRuleDomain, "invalid-placement"},
+	{store.ErrUnknownDomain, "invalid-placement"},
+	{errCopiesNotAllowed, "copies-not-allowed"},
+	{errNotATarget, "unknown-target"},
+	{errUnknownOffsiteTarget, "unknown-target"},
+	{store.ErrStackCopyRule, "stack-rule"},
+	{store.ErrCopyRuleTaken, "copy-rule-taken"},
+	{errPlacementBusy, "domain-busy"},
+	{errHomeHasBackups, "has-backups"},
+	{errHomeUncheckable, "home-uncheckable"},
+	{errPlacementStale, "stale"},
+	{errForeignDomain, "foreign-domain"},
+	{errRepoInvalid, "repo-invalid"},
+	{errRepoInUse, "repo-in-use"},
+	{errDefaultRepoMissing, "default-repo-missing"},
+	{errNestedLocation, "nested-location"},
+	{errMirroredField, "mirrored-field"},
+	{store.ErrCompanionTaken, "companion-taken"},
+	{store.ErrNotOffsiteTarget, "unknown-target"},
+	{errTargetInUse, "target-in-use"},
+	{store.ErrDirectRepo, "direct-repo"},
+	{errDirectAccessDenied, "direct-access-denied"},
+	{errRepoWrongKey, "repo-wrong-key"},
+	{errRepoUnopened, "repo-unopened"},
+	{errRestPathTooDeep, "rest-path-too-deep"},
+	{errAppendOnlyOffsiteTarget, "append-only"},
+	{errRemovalGrown, "removal-grown"},
+	{errNameMismatch, "name-mismatch"},
+	{errHomeUnreadable, "home-unreadable"},
+	{errDomainBusy, "domain-busy"},
+	{errSnapshotMissing, "snapshot-missing"},
+}
+
+// placementCode returns the code the interface translates err by, "" for none.
+func placementCode(err error) string {
+	for _, c := range placementCodes {
+		if errors.Is(err, c.err) {
+			return c.code
+		}
+	}
+	return ""
+}
+
+// placementFail writes a refusal: HTTP 200, ok false, the scrubbed error, its code
+// when it has one, and the extra fields.
+func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
+	env := map[string]any{"ok": false, "error": scrubError(err)}
+	if code := placementCode(err); code != "" {
+		env["code"] = code
+	}
+	maps.Copy(env, extra)
+	writeJSON(w, http.StatusOK, env)
+}
+
+// validPlacementDomain reports whether domain is one of the three that carry
+// copy rules and named repositories (containers, vms, files); flash and config
+// replicate a single repository and never reach this.
+func validPlacementDomain(domain string) bool {
+	return slices.Contains(store.PlacementDomains, domain)
+}
+
+// itemIdentityPrefix is the tag prefix of an item's own identity in a
+// placement domain, and "" in any other.
+func itemIdentityPrefix(domain string) string {
+	if !validPlacementDomain(domain) {
+		return ""
+	}
+	return domainTagPrefixes(domain)[0]
+}
+
+// itemParam reads {domain} and {name} of an /api/items route with the validator
+// the domain's own routes use, and writes the 400 itself.
+func (h *Handler) itemParam(w http.ResponseWriter, r *http.Request, domains ...string) (domain, key string, ok bool) {
+	domain, key = r.PathValue("domain"), r.PathValue("name")
+	if !slices.Contains(domains, domain) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return "", "", false
+	}
+	var valid bool
+	switch domain {
+	case "vms":
+		valid = validVMName(key)
+	case "flash", "config":
+		valid = key == domain
+	default:
+		valid = validResourceName(key)
+	}
+	if !valid {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
+		return "", "", false
+	}
+	return domain, key, true
+}
+
+// placementRead is one read of a domain's placement, taken before a run's first
+// restic call and used for every decision in that run.
+type placementRead struct {
+	Domain           string
+	State            store.PlacementState
+	Targets          []store.OffsiteTarget // every target row of the domain, switched off or not, in sort order
+	TargetsUncertain bool                  // the target list could not be read, or only the synthetic settings target exists
+}
+
+// readPlacement reads a domain's rules, default and targets. On an error the read
+// still carries the targets, so a pass can record a failed row for each.
+func (s *Service) readPlacement(settings store.Settings, domain string) (placementRead, error) {
+	p := placementRead{Domain: domain}
+	rows, err := s.store.OffsiteTargetsForDomain(domain)
+	switch {
+	case err != nil:
+		log.Printf("api: placement %s: the off-site targets could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		p.Targets, p.TargetsUncertain = legacyTargets(domain, settings), true
+	case len(rows) == 0:
+		p.Targets = legacyTargets(domain, settings)
+		p.TargetsUncertain = len(p.Targets) > 0
+	default:
+		p.Targets = rows
+	}
+	state, err := s.store.ReadPlacement(domain)
+	if err != nil {
+		return p, fmt.Errorf("%w: %v", errPlacementUnreadable, err)
+	}
+	p.State = state
+	return p, nil
+}
+
+// legacyTargets is the target the domain's off-site field describes while no
+// target row exists.
+func legacyTargets(domain string, settings store.Settings) []store.OffsiteTarget {
+	if loc := offsiteRepoFromSettings(domain, settings); loc != "" {
+		return []store.OffsiteTarget{settingsOffsiteTarget(domain, settings, loc)}
+	}
+	return nil
+}
+
+func (p placementRead) enabledTargets() []store.OffsiteTarget {
+	out := []store.OffsiteTarget{}
+	for _, t := range p.Targets {
+		if t.Enabled {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// effectiveHome is where an item's next backup actually goes: its own
+// location once chosen, the default's while it stays open. Every copy
+// decision is judged by this, not by the row's raw repo field, which reads
+// empty for an open item however far its default points elsewhere.
+func (p placementRead) effectiveHome(home store.HomeState) (string, bool) {
+	if home.Choice != store.RepoOpen {
+		return home.Repo, false
+	}
+	return p.State.Default.Home, true
+}
+
+// defaultSkip is what an item without a rule of its own leaves out.
+func (p placementRead) defaultSkip() []string {
+	if p.State.HasDefault {
+		return p.State.Default.Skip
+	}
+	return []string{}
+}
+
+// resolvedSkip is the item's own rule or the default's skip, which project
+// folders always take. own says whether a rule of its own applied.
+func (p placementRead) resolvedSkip(identity string) (skip []string, own bool) {
+	if !strings.HasPrefix(identity, "stack:") {
+		if r, ok := p.State.Rules[identity]; ok {
+			return r.Skip, true
+		}
+	}
+	return p.defaultSkip(), false
+}
+
+// effectiveTargets are the enabled targets the item's skip leaves in, in sort
+// order. It asks neither about a pause nor about where the item lives.
+func (p placementRead) effectiveTargets(identity string) []store.OffsiteTarget {
+	skip, _ := p.resolvedSkip(identity)
+	return p.targetsFor(skip)
+}
+
+// targetsFor is the enabled targets a skip list leaves in.
+func (p placementRead) targetsFor(skip []string) []store.OffsiteTarget {
+	out := []store.OffsiteTarget{}
+	for _, t := range p.enabledTargets() {
+		if !skipsTarget(skip, t.ID) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// copiesTo is the copy filter: a snapshot stays away from a target only when
+// every identity it may belong to leaves the target out. No owner means copy.
+func (p placementRead) copiesTo(targetID string, owners []string) bool {
+	if len(owners) == 0 {
+		return true
+	}
+	for _, o := range owners {
+		if skip, _ := p.resolvedSkip(o); !skipsTarget(skip, targetID) {
+			return true
+		}
+	}
+	return false
+}
+
+// anyCopiesTo reports whether anything could be copied to the target: a name
+// without a rule of its own through the default, or one of the rules.
+func (p placementRead) anyCopiesTo(targetID string) bool {
+	if !skipsTarget(p.defaultSkip(), targetID) {
+		return true
+	}
+	for _, r := range p.State.Rules {
+		if !skipsTarget(r.Skip, targetID) {
+			return true
+		}
+	}
+	return false
+}
+
+// rulesRev fingerprints what decides how a target ages: the domain's rules, the
+// default's skip and the target's keep-policy. A deleted rule changes it too.
+func (p placementRead) rulesRev(target store.OffsiteTarget) string {
+	h := sha256.New()
+	for _, id := range slices.Sorted(maps.Keys(p.State.Rules)) {
+		_, _ = fmt.Fprintf(h, "rule %s %q\n", id, p.State.Rules[id].Skip)
+	}
+	_, _ = fmt.Fprintf(h, "default %q\n", p.defaultSkip())
+	_, _ = fmt.Fprintf(h, "keep %d %d %d %d %d\n", target.RetentionKeepLast, target.RetentionKeepDaily,
+		target.RetentionKeepWeekly, target.RetentionKeepMonthly, target.RetentionKeepYearly)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// skipsTarget reports whether a skip list leaves the target out.
+func skipsTarget(skip []string, targetID string) bool {
+	return slices.Contains(skip, store.SkipAll) || slices.Contains(skip, targetID)
+}
+
+// homeKind is what an item's home is, as far as copies and segments care.
+type homeKind string
+
+const (
+	homeDomain       homeKind = "domain"        // local domain path
+	homeDomainRemote homeKind = "domain-remote" // remote domain path, still a copy source
+	homeLocal        homeKind = "local"         // local named repository
+	homeRemote       homeKind = "remote"        // remote named repository with its own credentials
+	homeDirect       homeKind = "direct"        // a target's own direct repository
+	homeMissing      homeKind = "missing"       // an id without a row
+)
+
+// copySource reports whether snapshots at a home of this kind are copied off
+// site: restic copy has the target's credentials and no others.
+func (k homeKind) copySource() bool {
+	return k == homeDomain || k == homeDomainRemote || k == homeLocal
+}
+
+// homeKindOf is the kind of home a repo id names. named is ListNamedRepos by id,
+// read once per request.
+func (s *Service) homeKindOf(settings store.Settings, domain, repoID string, named map[string]store.OffsiteTarget) homeKind {
+	row, ok := named[repoID]
+	if ok && row.CompanionOf != "" {
+		return homeDirect
+	}
+	if repoID == "" {
+		if own, err := s.repoFor(settings, domain, "local"); err == nil && restic.IsRemoteRepo(own) {
+			return homeDomainRemote
+		}
+		return homeDomain
+	}
+	switch {
+	case !ok:
+		return homeMissing
+	case restic.IsRemoteRepo(row.Repo):
+		return homeRemote
+	}
+	return homeLocal
+}
+
+// itemIdentity is the snapshot tag that names an item: container:<name>,
+// vm:<name>, fileset:<set name>. A file set is found by id.
+func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
+	switch item.Domain {
+	case "containers":
+		return "container:" + item.Key, nil
+	case "vms":
+		return "vm:" + item.Key, nil
+	case "files":
+		fs, err := s.store.GetFileSet(item.Key)
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errFileSetNotFound
+		}
+		if err != nil {
+			return "", err
+		}
+		return "fileset:" + fs.Name, nil
+	}
+	return "", fmt.Errorf("%q has no placement", item.Domain)
+}
+
+// retentionPolicyForRef is the keep-policy a repository ages by. A direct
+// repository takes its target's rules as mirrored onto its row, word for word,
+// so all zero keeps everything; every other repository takes the domain's
+// local policy.
+func (s *Service) retentionPolicyForRef(settings store.Settings, domain string, ref domainRepoRef) restic.RetentionPolicy {
+	if ref.Named.CompanionOf != "" {
+		p := targetOffsiteRetentionPolicy(ref.Named)
+		p.Direct = true
+		return p
+	}
+	return s.retentionPolicy(settings, domain)
+}
+
+// domainHasRetention reports whether any repository of the domain ages by a
+// keep-policy, which is what makes the prune after a round worth it.
+func (s *Service) domainHasRetention(settings store.Settings, domain string) bool {
+	repos, _, err := s.domainReposInUse(settings, domain)
+	if err != nil {
+		return s.retentionPolicy(settings, domain).Any()
+	}
+	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, domain, r).Any() })
+}
+
+// placementTargetName is a target as the interface names it: its name, or its
+// location without credentials when it has none.
+func placementTargetName(t store.OffsiteTarget) string {
+	if t.Name != "" {
+		return t.Name
+	}
+	return scrubRepoLocation(t.Repo)
+}
+
+// placedItem is one item row as the copy path sees it.
+type placedItem struct {
+	ID       string // the row id runs are recorded under
+	Identity string
+	RepoID   string // named repository id, "" for the domain path
+	Kind     homeKind
+}
+
+// placedItems lists a domain's item rows with the kind of their home.
+func (s *Service) placedItems(settings store.Settings, domain string) ([]placedItem, error) {
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return nil, err
+	}
+	var out []placedItem
+	add := func(id, identity, repo string) {
+		repo = strings.TrimSpace(repo)
+		out = append(out, placedItem{ID: id, Identity: identity, RepoID: repo, Kind: s.homeKindOf(settings, domain, repo, named)})
+	}
+	switch domain {
+	case "containers":
+		rows, err := s.store.ListTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, t := range rows {
+			add(t.ID, "container:"+t.ContainerName, t.Repo)
+		}
+	case "vms":
+		rows, err := s.store.ListVMTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range rows {
+			add(v.ID, "vm:"+v.Name, v.Repo)
+		}
+	case "files":
+		rows, err := s.store.ListFileSets()
+		if err != nil {
+			return nil, err
+		}
+		for _, fs := range rows {
+			add(fs.ID, "fileset:"+fs.Name, fs.Repo)
+		}
+	}
+	return out, nil
+}
+
+// namedRepoIndex is ListNamedRepos by id, read once per request.
+func (s *Service) namedRepoIndex() (map[string]store.OffsiteTarget, error) {
+	rows, err := s.store.ListNamedRepos()
+	if err != nil {
+		return nil, err
+	}
+	return namedReposByID(rows), nil
+}
+
+// namedReposByID is namedRepoIndex for a caller that already holds the rows.
+func namedReposByID(rows []store.OffsiteTarget) map[string]store.OffsiteTarget {
+	out := make(map[string]store.OffsiteTarget, len(rows))
+	for _, r := range rows {
+		out[r.ID] = r
+	}
+	return out
+}
+
+// pauseReason names why pausePlacement started a pause, for the notification text.
+type pauseReason string
+
+const (
+	reasonFoundHistory pauseReason = "found-history"
+	reasonOlderSource  pauseReason = "older-source"
+	reasonDiscover     pauseReason = "discover"
+)
+
+// pausePlacement pauses the domain's replication until its default is confirmed,
+// and notifies when this call is the one that started the pause.
+func (s *Service) pausePlacement(ctx context.Context, domain string, why pauseReason) error {
+	s.placementMu.Lock()
+	started, err := s.store.PausePlacement(domain)
+	s.placementMu.Unlock()
+	if err != nil {
+		return err
+	}
+	if started {
+		s.notifyPlacementPaused(ctx, domain, why)
+	}
+	return nil
+}
+
+// pauseReasons says, by the reason pausePlacement paused a domain, what made it pause.
+var pauseReasons = map[pauseReason]string{
+	reasonFoundHistory: "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",
+	reasonOlderSource:  "one of its sources holds a snapshot older than this database, so the database may have been rebuilt without the rules that kept items from being copied",
+	reasonDiscover:     "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
+}
+
+// notifyPlacementPaused says that a domain's replication waits for its default
+// to be confirmed, and where. Same gate and fan-out as notifyReplicationFailed.
+func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why pauseReason) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	subject := "Off-site replication paused for " + domain
+	msg := fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the placement default under Settings, Storage, Placement defaults to resume.", domain, pauseReasons[why])
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ": " + msg, OK: false})
+	if s.unraidGate(c.Unraid) {
+		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
+}
+
+// listTargetInBackground lists one target for one domain once, so a change that
+// took copies away from a target never listed can name how many stay.
+func (s *Service) listTargetInBackground(domain, targetID string) {
+	key := domain + "\x00" + targetID
+	s.listingMu.Lock()
+	if s.listing == nil {
+		s.listing = map[string]bool{}
+	}
+	if s.listing[key] {
+		s.listingMu.Unlock()
+		return
+	}
+	s.listing[key] = true
+	s.listingMu.Unlock()
+	go func() {
+		defer func() {
+			s.listingMu.Lock()
+			delete(s.listing, key)
+			s.listingMu.Unlock()
+		}()
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		defer cancel()
+		if err := s.listTargetOnce(ctx, domain, targetID); err != nil {
+			log.Printf("api: offsite %s: listing a target in the background failed: %v", domain, scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
+		}
+	}()
+}
+
+// listTargetOnce lists the target and records what it holds. A domain that
+// never replicated, and whose default is not already confirmed, looks at the
+// listing for history first, as its passes do.
+func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(p.Targets, func(t store.OffsiteTarget) bool { return t.ID == targetID })
+	if i < 0 {
+		return errNotATarget
+	}
+	pass, err := s.newPass(settings, p)
+	if err != nil {
+		return err
+	}
+	held, err := s.listTarget(ctx, settings, p.Targets[i])
+	if err != nil {
+		return err
+	}
+	s.recordListing(domain, p.Targets[i], pass.owners, held, nil)
+	if p.State.Confirmed() {
+		return nil
+	}
+	if _, listed := pass.listed[targetID]; listed {
+		return nil
+	}
+	never, err := s.neverReplicated(domain)
+	if err != nil || !never {
+		return err
+	}
+	if pass.owners.ownsAny(held) {
+		return s.pausePlacement(ctx, domain, reasonFoundHistory)
+	}
+	sources, _ := s.offsiteReplicationSources(settings, domain)
+	_, err = s.pauseOnOlderSources(ctx, settings, pass, sources)
+	return err
+}
+
+// targetCurrency is one enabled target's side of the replication currency.
+type targetCurrency struct {
+	lastBackupAt      int64 // newest successful backup among the items copied there
+	lastReplicationAt int64 // its last successful copy
+}
+
+// placementCurrency is what the status needs from a domain's placement: whether
+// it is paused, and with copy rules each target items are copied to. Without
+// rules, or while the placement cannot be read, the domain is judged as a whole.
+func (s *Service) placementCurrency(settings store.Settings, domain string) (paused, byTarget bool, targets []targetCurrency) {
+	if !validPlacementDomain(domain) {
+		return false, false, nil
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		log.Printf("api: placement %s: could not read its placement, judging replication currency as unruled: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return false, false, nil
+	}
+	if p.State.Paused() {
+		return true, false, nil
+	}
+	if p.TargetsUncertain || !p.State.HasRules() {
+		return false, false, nil
+	}
+	items, err := s.placedItems(settings, domain)
+	if err != nil {
+		log.Printf("api: placement %s: could not read its items, judging replication currency as unruled: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return false, false, nil
+	}
+	return false, true, s.targetCurrencies(domain, p, items)
+}
+
+// targetCurrencies judges each enabled target by the items copied there. Project
+// folders do not count: they are written in the same run as their containers.
+func (s *Service) targetCurrencies(domain string, p placementRead, items []placedItem) []targetCurrency {
+	out := []targetCurrency{}
+	for _, t := range p.enabledTargets() {
+		var ids []string
+		for _, it := range items {
+			if it.Kind.copySource() && containsTarget(p.effectiveTargets(it.Identity), t.ID) {
+				ids = append(ids, it.ID)
+			}
+		}
+		if len(ids) == 0 {
+			continue
+		}
+		var c targetCurrency
+		if last, err := s.store.LastSuccessfulBackupAmong(ids); err == nil && !last.IsZero() {
+			c.lastBackupAt = last.Unix()
+		}
+		if run, found, err := s.store.LatestSuccessfulOffsiteRunForTarget(domain, t.ID); err == nil && found {
+			c.lastReplicationAt = run.StartedAt
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
+func containsTarget(targets []store.OffsiteTarget, id string) bool {
+	return slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.ID == id })
+}
+
+func skipsEverything(skip []string) bool {
+	return len(skip) == 1 && skip[0] == store.SkipAll
+}
+
+// withDefaultSkip is p as it reads once the default's skip is skip.
+func (p placementRead) withDefaultSkip(skip []string) placementRead {
+	p.State.HasDefault = true
+	p.State.Default.Domain = p.Domain
+	p.State.Default.Skip = skip
+	return p
+}
+
+// withCopies is p as it reads once copies is written for identity.
+func (p placementRead) withCopies(identity string, copies *store.CopiesWrite) placementRead {
+	if copies == nil {
+		return p
+	}
+	rules := make(map[string]store.CopyRule, len(p.State.Rules)+1)
+	maps.Copy(rules, p.State.Rules)
+	if copies.Follow {
+		delete(rules, identity)
+	} else {
+		rules[identity] = store.CopyRule{Domain: p.Domain, Identity: identity, Skip: copies.Skip}
+	}
+	p.State.Rules = rules
+	return p
+}
+
+// itemCopyTargets is where an item's snapshots go at the next run: nothing
+// from a location that is not a copy source, otherwise the targets its rule
+// leaves in.
+func (s *Service) itemCopyTargets(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID, identity string) []store.OffsiteTarget {
+	if !s.homeKindOf(settings, p.Domain, repoID, named).copySource() {
+		return nil
+	}
+	return p.effectiveTargets(identity)
+}

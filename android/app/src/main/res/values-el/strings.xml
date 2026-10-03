@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Αποθηκεύτηκε στις Λήψεις: %1$s</string>
+    <string name="save_failed">Δεν ήταν δυνατή η αποθήκευση του αρχείου: %1$s</string>
+    <string name="save_untrusted">Το πιστοποιητικό του διακομιστή άλλαξε. Ανοίξτε τον ξανά από την αρχική οθόνη για να ελέγξετε το νέο.</string>
+    <string name="no_app">Καμία εφαρμογή σε αυτό το τηλέφωνο δεν ανοίγει αυτόν τον σύνδεσμο.</string>
+</resources>

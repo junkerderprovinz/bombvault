@@ -1,8 +1,6 @@
 package api
 
 import (
-	"os"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -163,7 +161,7 @@ func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("plex", used.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "plex"}, &store.HomeWrite{Repo: used.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -182,93 +180,5 @@ func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	}
 	if !strings.HasSuffix(repos[1].Loc, "backups/cold") {
 		t.Fatalf("repos[1] = %q, want the repository the container points at", repos[1].Loc)
-	}
-}
-
-// A container or VM gets its stored row on its first backup, but its
-// repository has to be chosen before that run puts the data somewhere else.
-func TestRepoCanBeChosenBeforeTheFirstBackup(t *testing.T) {
-	st := newTestStore(t)
-	named, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Run("container with no target row yet", func(t *testing.T) {
-		if err := st.SetTargetRepo("never-backed-up", named.ID); err != nil {
-			t.Fatalf("choosing a repository before the first backup must work: %v", err)
-		}
-		tg, err := st.GetTargetByContainer("never-backed-up")
-		if err != nil {
-			t.Fatalf("the row must exist afterwards: %v", err)
-		}
-		if tg.Repo != named.ID {
-			t.Fatalf("stored repo = %q, want %q", tg.Repo, named.ID)
-		}
-	})
-
-	t.Run("VM with no row yet", func(t *testing.T) {
-		if err := st.SetVMRepo("fresh-vm", named.ID); err != nil {
-			t.Fatalf("choosing a repository before the first backup must work: %v", err)
-		}
-		vm, err := st.GetVMTargetByName("fresh-vm")
-		if err != nil {
-			t.Fatalf("the row must exist afterwards: %v", err)
-		}
-		if vm.Repo != named.ID {
-			t.Fatalf("stored repo = %q, want %q", vm.Repo, named.ID)
-		}
-	})
-}
-
-// The container list builds its view in two places: for containers Docker
-// reports and for stored targets Docker no longer knows. Both must carry the
-// item's repository, or the picker on a live container reads back the domain
-// repository whatever was stored. This scans the source because reaching the
-// first branch otherwise needs a fake Docker.
-func TestContainerViewCarriesTheRepoOnBothBranches(t *testing.T) {
-	raw, err := os.ReadFile("handlers.go")
-	if err != nil {
-		t.Fatalf("read handlers.go: %v", err)
-	}
-	src := string(raw)
-	// Any run of spaces matches, because gofmt realigns struct literal values
-	// when a longer field name is added.
-	for _, want := range []*regexp.Regexp{
-		regexp.MustCompile(`v\.Repo\s*=\s*t\.Repo`), // the live-container merge
-		regexp.MustCompile(`Repo:\s+t\.Repo,`),      // the not-installed literal
-	} {
-		if !want.MatchString(src) {
-			t.Errorf("the container view no longer carries the per-item repository on one of its two branches (%s).\n"+
-				"The picker then reads back the domain repository for an item that is not on it, which is the\n"+
-				"exact misreading the control exists to prevent.", want)
-		}
-	}
-}
-
-// Moving an item that already has backups splits its history: the old
-// snapshots stay behind, unseen by the interface and never pruned. The server
-// has to refuse, because an item rebuilt by Discover after losing /config has
-// snapshots but no run rows, and the interface's lock stays open for it.
-func TestRepoRefusedOnceAnItemHasBackups(t *testing.T) {
-	raw, err := os.ReadFile("handlers.go")
-	if err != nil {
-		t.Fatalf("read handlers.go: %v", err)
-	}
-	src := string(raw)
-	if !strings.Contains(src, "had, bErr := hasBackups()") {
-		t.Error("applyItemRepo no longer refuses an item that already has backups")
-	}
-	for _, want := range []string{
-		"h.svc.containerHasBackups(r.Context(), name)",
-		"h.svc.vmHasBackups(r.Context(), name)",
-	} {
-		if !strings.Contains(src, want) {
-			t.Errorf("one of the two domains no longer passes its has-backups check (%s).\n"+
-				"Its doc comment claims the refusal either way, which is how the gap survived\n"+
-				"three commits and two reviews.", want)
-		}
 	}
 }

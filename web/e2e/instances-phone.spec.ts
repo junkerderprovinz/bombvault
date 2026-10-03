@@ -11,6 +11,13 @@ import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
+// A test can end while a route handler still waits on the real server. Closing
+// the context then disposes the response it is about to read, and Playwright
+// fails a test that already passed, so what the handler throws is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const now = Math.floor(Date.now() / 1000);
 const iso = (secondsAgo: number) => new Date((now - secondsAgo) * 1000).toISOString();
 
@@ -217,7 +224,7 @@ const GROUP = {
   relay: {
     mode: "project",
     url: "",
-    projectUrl: "wss://relay.halleluja.design/relay/connect",
+    projectUrl: "wss://parleyport.halleluja.design/relay/connect",
     connected: true,
     serve: false,
     serveClients: 0,

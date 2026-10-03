@@ -112,6 +112,65 @@ In the **VMs** tab each VM has a method:
   `/mnt/diskX` (not `/mnt/user`). On a shut-off VM, live automatically falls back
   to graceful.
 
+## Changed blocks only
+
+A VM with qcow2 disks can be backed up by reading only what changed. Switch on
+**Changed blocks only** on the VM's card, and BombVault uses libvirt's backup API
+instead of the method above:
+
+- It starts a pull-mode backup job (`virsh backup-begin`) that creates a
+  checkpoint named `bombvault-<time>` at the same instant, and reads the disks
+  over the SSH link through a forwarded Unix socket. When the guest agent
+  answers, the guest's filesystems are frozen only while the job starts. A
+  thaw that fails is tried again for about fifteen seconds, and if the guest
+  still does not thaw, BombVault sends a notification.
+- The first run reads every allocated block. Later runs read only the blocks
+  the checkpoint's bitmap marks as written since the previous backup.
+- Each disk is stored as a folder of fixed-size segments holding what the guest
+  sees. Unchanged segments are taken over from the previous snapshot without
+  being read, so every snapshot is complete and restores on its own.
+- A restore rebuilds the disk from its segments and converts it back to qcow2
+  with `qemu-img`. The disk has the same content as at backup time, but the file
+  is a new qcow2 file, and a backing chain comes back flattened.
+- The check before such a restore lists each disk it rebuilds and counts it at
+  the guest's full size, twice for qcow2, since the raw image and its converted
+  copy sit side by side until the old file is replaced. That is the most a disk
+  can take, so a shortfall by this count leaves the space line grey instead of
+  blocking. The restore check after the first backup, and **Check restore**,
+  also make sure the snapshot holds every segment of every disk at the size it
+  should have.
+- Between runs the VM has no checkpoint on record in libvirt. BombVault keeps
+  the definition of the newest `bombvault-` checkpoint under
+  `/config/vm-checkpoints` and removes only libvirt's record of it
+  (`virsh checkpoint-delete --metadata`). Its bitmap stays in the qcow2 file
+  and keeps counting writes, and the next run puts the checkpoint back
+  (`virsh checkpoint-create --redefine`) before it starts. libvirt refuses to
+  undefine a VM that has checkpoints, so this is what lets Unraid's **Remove
+  VM** and a restore work as usual.
+- A backup job that BombVault left running because it stopped in the middle
+  of a backup is ended when BombVault starts again, and so are the
+  checkpoints that run left on record.
+- Turning the switch off, taking the VM out of the schedule or deleting its
+  backups also ends such a job and deletes the bitmap too while the VM runs. On a VM that is off,
+  libvirt cannot delete it, and it stays in the image unused.
+- Checkpoints of other tools are left alone. A VM that has some cannot be
+  restored until they are deleted, and the restore stops before it touches
+  the VM.
+
+The switch falls back on its own. A missing or broken checkpoint, a disk that
+changed size, or a newest snapshot that is not a changed-block one means the
+whole disk is read once more. A VM that is off, a raw or zvol disk, no host SSH
+link, a libvirt without the backup API, or too little free space under
+`/config` means the usual backup with the method above. The card says which of
+these the last run used and why.
+
+Requirements: libvirt with the backup API (tested with libvirt 12.2 and QEMU
+10.2 on Unraid 7.3), sshd with `AllowStreamLocalForwarding yes` (the default,
+also on Unraid, which turns TCP forwarding off), and qcow2 disks. libvirt refuses
+checkpoints on raw disks, and Unraid creates raw vdisks by default. The VM keeps
+running during the backup, as with Live, and the segments waiting for restic
+take up to 4 GiB under `/config`.
+
 ---
 
 ## TrueNAS Scale

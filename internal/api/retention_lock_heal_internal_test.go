@@ -29,7 +29,7 @@ func (e *lockHealEngine) Unlock(_ context.Context, _ string, removeAll bool, _ r
 	return nil
 }
 
-func TestForgetWithLockHealClearsStaleOrphanThenForgetsOnce(t *testing.T) {
+func TestForgetWithLockHealForgetsOnceAndUnlocksNothingWithoutALock(t *testing.T) {
 	eng := &lockHealEngine{}
 	s := &Service{engine: eng}
 
@@ -37,19 +37,16 @@ func TestForgetWithLockHealClearsStaleOrphanThenForgetsOnce(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
-	if eng.forgetCalls != 1 {
-		t.Fatalf("want exactly 1 forget attempt, got %d", eng.forgetCalls)
-	}
-	if eng.unlockCalls != 1 || eng.unlockAll {
-		t.Fatalf("want exactly one plain Unlock(removeAll=false) before forget, got calls=%d removeAll=%v", eng.unlockCalls, eng.unlockAll)
+	if eng.forgetCalls != 1 || eng.unlockCalls != 0 {
+		t.Fatalf("want 1 forget and no unlock, got forget=%d unlock=%d", eng.forgetCalls, eng.unlockCalls)
 	}
 }
 
-// A lock error from forget surfaces as-is so applyRetention notifies. restic's
-// --retry-lock waits out a transient lock, and a lock that survives the stale
-// clear belongs to a live holder that a forced unlock would strip of its
-// protection (#94).
-func TestForgetWithLockHealDoesNotForceUnlockOrRetryOnLockErr(t *testing.T) {
+// A lock error clears the stale locks without force and tries once more. A
+// lock that is still there then belongs to a live holder that a forced unlock
+// would strip of its protection (#94), so its error surfaces unchanged and
+// applyRetention notifies.
+func TestForgetWithLockHealClearsStaleLocksOnceWithoutForceOnALockErr(t *testing.T) {
 	lockErr := errors.New(`restic forget failed: unable to create lock in backend: repository is already locked by PID 12339 on 87379e1b0ca6 by root (UID 0, GID 0)`)
 	eng := &lockHealEngine{forgetErr: lockErr}
 	s := &Service{engine: eng}
@@ -58,8 +55,8 @@ func TestForgetWithLockHealDoesNotForceUnlockOrRetryOnLockErr(t *testing.T) {
 	if !errors.Is(err, lockErr) {
 		t.Fatalf("want the original lock error surfaced unchanged, got %v", err)
 	}
-	if eng.forgetCalls != 1 {
-		t.Fatalf("want exactly 1 forget attempt (no retry), got %d", eng.forgetCalls)
+	if eng.forgetCalls != 2 {
+		t.Fatalf("want 2 forget attempts, got %d", eng.forgetCalls)
 	}
 	if eng.unlockCalls != 1 || eng.unlockAll {
 		t.Fatalf("want exactly one plain Unlock(removeAll=false), got calls=%d removeAll=%v", eng.unlockCalls, eng.unlockAll)
@@ -75,7 +72,7 @@ func TestForgetWithLockHealPassesThroughOtherErrors(t *testing.T) {
 	if !errors.Is(err, boom) {
 		t.Fatalf("want the original error back, got %v", err)
 	}
-	if eng.forgetCalls != 1 || eng.unlockCalls != 1 {
-		t.Fatalf("want 1 forget + 1 (unconditional) unlock, got forget=%d unlock=%d", eng.forgetCalls, eng.unlockCalls)
+	if eng.forgetCalls != 1 || eng.unlockCalls != 0 {
+		t.Fatalf("want 1 forget and no unlock, got forget=%d unlock=%d", eng.forgetCalls, eng.unlockCalls)
 	}
 }

@@ -436,16 +436,11 @@ func run() error {
 	scheduler.SetPruneAfterBulkJob(func(domain string) {
 		svc.PruneAfterBulk(context.Background(), domain)
 	})
-	// Each Docker Compose project's working directory, ONCE per scheduled
-	// container round rather than once per member (issue #189). It used to ride
-	// along in every member's snapshot: restic deduplicated the stored bytes, so
-	// the size column showed nothing, while every service still walked, chunked
-	// and hashed the whole project folder on every run. Wired before the prune
-	// hook above runs, so the stack snapshots land in the same retention pass.
+	// Each Docker Compose project's working directory, once per scheduled
+	// container round rather than once per member. The scheduler runs it before
+	// the batched prune above, which reclaims what its retention forgets.
 	scheduler.SetStacksAfterBulkJob(func(names []string) {
-		if err := svc.BackupStacks(context.Background(), names); err != nil {
-			log.Printf("schedule: stack backup: %v", err)
-		}
+		svc.BackupStacksAfterBulk(context.Background(), names)
 	})
 	// A scheduled container whose app is busy waits outside its run, and is
 	// backed up on its own once the app is idle or the wait is over.
@@ -563,6 +558,14 @@ func run() error {
 		defer cancel()
 		svc.SweepZFSLeftoversOnStartup(sctx)
 	}()
+	// A changed-block VM backup that was running when BombVault stopped left
+	// its backup job on the VM and its checkpoints on record. virsh goes over
+	// SSH, so this runs in the background like the ZFS sweep.
+	go func() {
+		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		svc.SweepBlockBackupLeftovers(cctx)
+	}()
 	// A start test that was running when BombVault stopped left its copy,
 	// network and restored data behind. They go before the scheduler and the
 	// web interface start, so no new test can meet them and none of it is
@@ -635,11 +638,13 @@ func run() error {
 	svc.StartIdleWaits()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	handler.StartIntegrations()
 	// An MCP listing of a repository that stopped answering holds its request
 	// open until the stop context ends; without this the server would wait out
 	// its grace for it and exit with an error.
 	server.BeforeShutdown = svc.EndDetachedWork
 	runErr := server.Run(ctx)
+	handler.StopIntegrations()
 
 	if ctx.Err() != nil {
 		log.Printf("shutdown: signal received, stopping")

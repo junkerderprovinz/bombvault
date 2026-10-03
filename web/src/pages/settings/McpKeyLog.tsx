@@ -12,7 +12,6 @@ type T = ReturnType<typeof useT>["t"];
  *  missing here is shown as it came. */
 const OUTCOME: Record<string, TranslationKey> = {
   ok: "mcp.outcomeOk",
-  not_permitted: "mcp.outcomeNotPermitted",
   retention_guard: "mcp.outcomeRetentionGuard",
   busy: "mcp.outcomeBusy",
   cooldown: "mcp.outcomeCooldown",
@@ -37,10 +36,34 @@ const RUN_STATUS: Record<string, { key: TranslationKey; tone: BadgeTone }> = {
   skipped: { key: "run.statusSkipped", tone: "neutral" },
 };
 
-function outcomeText(t: T, e: McpKeyEvent): string {
+/** The sentences and names a log of something other than an MCP key tells
+ *  differently, such as an API token's. */
+export interface KeyLogWording {
+  load: (id: string) => Promise<McpKeyActivity>;
+  failed: TranslationKey;
+  empty: TranslationKey;
+  keptHint: TranslationKey;
+  notPermitted: TranslationKey;
+  startLimit: TranslationKey;
+  /** The name of what a call reached, in place of the MCP tool's. */
+  callName: (tool: string) => string;
+}
+
+const MCP_WORDING: KeyLogWording = {
+  load: getMcpKeyActivity,
+  failed: "mcp.logFailed",
+  empty: "mcp.logEmpty",
+  keptHint: "mcp.logKeptHint",
+  notPermitted: "mcp.outcomeNotPermitted",
+  startLimit: "mcp.outcomeStartLimit",
+  callName: (tool) => tool,
+};
+
+function outcomeText(t: T, e: McpKeyEvent, wording: KeyLogWording): string {
   // The gate's per-minute budget and a start tool's hourly one refuse under the
   // same code, and only the tool tells them apart.
-  if (e.outcome === "rate_limited") return t(e.tool === "" ? "mcp.outcomeRateLimited" : "mcp.outcomeStartLimit");
+  if (e.outcome === "rate_limited") return t(e.tool === "" ? "mcp.outcomeRateLimited" : wording.startLimit);
+  if (e.outcome === "not_permitted") return t(wording.notPermitted);
   const key = OUTCOME[e.outcome];
   return key ? t(key) : t("mcp.outcomeOther").replace("{code}", e.outcome);
 }
@@ -72,13 +95,24 @@ export function keyLogId(keyId: string): string {
  * the key ever connected: a used key can still have an empty log, because its
  * calls age out after a month and connecting alone records none.
  */
-export function McpKeyLog({ keyId, used, t }: { keyId: string; used: boolean; t: T }) {
+export function McpKeyLog({
+  keyId,
+  used,
+  t,
+  wording = MCP_WORDING,
+}: {
+  keyId: string;
+  used: boolean;
+  t: T;
+  wording?: KeyLogWording;
+}) {
   const [data, setData] = useState<McpKeyActivity | null>(null);
   const [failed, setFailed] = useState(false);
+  const { load } = wording;
 
   useEffect(() => {
     let alive = true;
-    getMcpKeyActivity(keyId)
+    load(keyId)
       .then((res) => {
         if (!alive) return;
         if (res.ok) setData(res);
@@ -90,11 +124,11 @@ export function McpKeyLog({ keyId, used, t }: { keyId: string; used: boolean; t:
     return () => {
       alive = false;
     };
-  }, [keyId]);
+  }, [keyId, load]);
 
   return (
     <div id={keyLogId(keyId)} className="glim-tile-well flex flex-col gap-3 rounded-card bg-carbon-background px-3 py-2">
-      {failed && <p className="text-xs text-statusWarn">{t("mcp.logFailed")}</p>}
+      {failed && <p className="text-xs text-statusWarn">{t(wording.failed)}</p>}
       {!failed && data === null && <p className="text-xs text-carbon-textMuted">{t("folder.loading")}</p>}
 
       {data !== null && data.runs.length > 0 && (
@@ -122,10 +156,10 @@ export function McpKeyLog({ keyId, used, t }: { keyId: string; used: boolean; t:
         <div className="flex flex-col gap-1.5">
           <p className="flex items-center gap-1.5 text-xs font-medium text-carbon-textSub">
             {t("mcp.logCalls")}
-            <InfoBubble tip={t("mcp.logKeptHint")} />
+            <InfoBubble tip={t(wording.keptHint)} />
           </p>
           {data.events.length === 0 ? (
-            <p className="text-xs text-carbon-textMuted">{t(used ? "mcp.logEmptyUsed" : "mcp.logEmpty")}</p>
+            <p className="text-xs text-carbon-textMuted">{t(used ? "mcp.logEmptyUsed" : wording.empty)}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {data.events.map((e, i) => (
@@ -133,13 +167,13 @@ export function McpKeyLog({ keyId, used, t }: { keyId: string; used: boolean; t:
                   <span className="text-carbon-textMuted tabular-nums">{formatTs(e.at)}</span>
                   {e.tool ? (
                     <span dir="ltr" className="min-w-0 font-mono text-carbon-text wrap-anywhere">
-                      {e.tool}
+                      {wording.callName(e.tool)}
                     </span>
                   ) : (
                     <span className="text-carbon-text">{t("mcp.logRequest")}</span>
                   )}
                   <span className={e.outcome === "ok" ? "text-carbon-textSub" : "text-statusWarn"}>
-                    {outcomeText(t, e)}
+                    {outcomeText(t, e, wording)}
                   </span>
                   {e.runId !== "" && <RunLink id={e.runId} t={t} />}
                 </li>

@@ -3,15 +3,19 @@ import type { TranslationKey } from "../../lib/i18n";
 import {
   IconContainers,
   IconLive,
+  IconNotifications,
+  IconSchedules,
+  IconTabApps,
   IconTabGeneral,
   IconTabIntegrity,
   IconTabLook,
+  IconTabSecurity,
   IconTabOffsite,
   IconTabRetention,
   IconTabStorage,
   IconTabSystem,
 } from "../../components/navGlyphs";
-import { IconKey, IconLink, IconShield } from "../../components/glyphs";
+import { IconKey, IconLink } from "../../components/glyphs";
 import { save as saveDisplayPrefs } from "../../lib/displayPrefs";
 
 // Each Settings page lives at /settings/<id>. The ids are part of bookmarks
@@ -30,33 +34,13 @@ export type SettingsPageId =
   | "security"
   | "pairing"
   | "integrations"
+  | "apps"
   | "system";
 
 export interface SettingsPageDef {
   id: SettingsPageId;
   label: TranslationKey;
   icon: ReactNode;
-}
-
-function IconSchedules() {
-  // A clock: dial and both hands as one evenodd path, the hands cut out.
-  return (
-    <svg viewBox="1.8 1.8 12.4 12.4" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M14.2,8 A6.2,6.2 0 1 0 1.8,8 A6.2,6.2 0 1 0 14.2,8 Z M7.35,4.5 H8.65 V8.1 H7.35 Z M8.163,7.339 L11.506,9.347 L10.837,10.462 L7.494,8.453 Z"
-      />
-    </svg>
-  );
-}
-
-function IconNotifications() {
-  return (
-    <svg viewBox="2.45 2.5 11.1 11.1" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" />
-      <path d="M6.5 12.1h3a1.5 1.5 0 0 1-3 0Z" />
-    </svg>
-  );
 }
 
 /** The default order of the rail. A reader can drag the tiles into their own. */
@@ -71,9 +55,10 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "cloud", label: "settings.tab.cloud", icon: <IconKey /> },
   { id: "notifications", label: "settings.tab.notifications", icon: <IconNotifications /> },
   { id: "integrity", label: "settings.tab.integrity", icon: <IconTabIntegrity /> },
-  { id: "security", label: "settings.tab.security", icon: <IconShield /> },
+  { id: "security", label: "settings.tab.security", icon: <IconTabSecurity /> },
   { id: "pairing", label: "pairing.title", icon: <IconLink /> },
   { id: "integrations", label: "settings.tab.integrations", icon: <IconLive /> },
+  { id: "apps", label: "settings.tab.apps", icon: <IconTabApps /> },
   { id: "system", label: "settings.tab.system", icon: <IconTabSystem /> },
 ];
 

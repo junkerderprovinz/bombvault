@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Zapisano w Pobranych: %1$s</string>
+    <string name="save_failed">Nie udało się zapisać pliku: %1$s</string>
+    <string name="save_untrusted">Certyfikat serwera się zmienił. Otwórz go ponownie z ekranu startowego, aby sprawdzić nowy.</string>
+    <string name="no_app">Żadna aplikacja na tym telefonie nie otwiera tego linku.</string>
+</resources>

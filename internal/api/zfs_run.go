@@ -197,7 +197,7 @@ func (s *Service) notifyZFSUnsuppressed(ev notify.Event) {
 // dataset whose data a finding says was lost keeps its old backups, the way a
 // container's do, while its siblings prune.
 func (s *Service) applyRetentionTags(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tags []string, domain string) {
-	p := s.retentionPolicy(settings, domain)
+	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
 	if !p.Any() || len(tags) == 0 {
 		return
 	}
@@ -382,7 +382,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 		Now:           time.Now,
 		Clock:         time.Now,
 		ZFS:           zfsRunHost{h: s.zfs},
-		Restic:        &resticAdapter{engine: s.engine, mode: mode},
+		Restic:        &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, zfsDomain, repo)},
 		Visible:       s.visibleSnapshot,
 		DirEmpty:      zfsDirEmpty,
 		Consistency:   s.newZFSConsistency(d, settings, zfsLockWait(ctx)),
@@ -413,7 +413,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 	if ctx.Err() == nil {
 		s.applyRetentionTags(ctx, repo, settings, mode, tags, zfsDomain)
 		makeRepoReadable(repo, s.cfg.DataDir)
-		s.replicateOffsite(ctx, zfsDomain, settings, mode, repo)
+		s.replicateOffsite(ctx, zfsDomain, settings, repo, "")
 		s.collectStatsAfterItem(ctx, zfsDomain)
 		s.checkPrimaryRemoteBudget(ctx, zfsDomain, repo, settings)
 	}

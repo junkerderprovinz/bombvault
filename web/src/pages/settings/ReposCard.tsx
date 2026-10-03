@@ -7,8 +7,12 @@ import { Toggle } from "../../components/Toggle";
 import { CompressionSelector } from "../../components/CompressionSelector";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
-import { createRepo, deleteRepo, listRepos, updateRepo, type Compression, type NamedRepo } from "../../lib/api";
+import { createRepo, deleteRepo, listOffsiteTargets, listRepos, updateRepo, type Compression, type NamedRepo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { reposChanged } from "../../lib/useNamedRepos";
+import { placementErrorText } from "../../lib/placementCodes";
+import { repoDisplayName } from "../../lib/directRepo";
+import { offsiteTargetLabel } from "../../lib/useOffsiteTargets";
 
 // ReposCard — where the named repositories of #204 are written down.
 //
@@ -32,16 +36,18 @@ import { useT } from "../../lib/i18n";
 // The interface says so BEFORE the attempt (the in-use count is on every row)
 // rather than only in the error afterwards.
 export function ReposCard({ hueIndex }: { hueIndex?: number }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [repos, setRepos] = useState<NamedRepo[]>([]);
+  const [targetNames, setTargetNames] = useState<Record<string, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState("");
   const [repo, setRepo] = useState("");
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
   const nameRef = useRef<HTMLInputElement>(null);
+  const targetOf = (row: NamedRepo) => targetNames[row.companionOf] ?? row.companionOf;
 
   // A failed list leaves the card empty and LOADED, the same answer the picker
   // gives: the alternative is a discarded rejection (void on a promise that can
@@ -51,6 +57,10 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
     try {
       const r = await listRepos();
       setRepos(r.ok ? (r.repos ?? []) : []);
+      const targets = await listOffsiteTargets().catch(() => null);
+      if (targets?.ok) {
+        setTargetNames(Object.fromEntries((targets.targets ?? []).map((x) => [x.id, offsiteTargetLabel(x)])));
+      }
     } catch {
       setRepos([]);
     } finally {
@@ -75,6 +85,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       setName("");
       setRepo("");
       nameRef.current?.focus();
+      reposChanged();
       await reload();
     } finally {
       setBusy(false);
@@ -100,6 +111,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(r.error ?? t("settings.error"), "fail");
       return;
     }
+    reposChanged();
     await reload();
   }
 
@@ -109,6 +121,17 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(r.error ?? t("settings.error"), "fail");
       return;
     }
+    reposChanged();
+    await reload();
+  }
+
+  async function setOffPremises(row: NamedRepo, next: boolean) {
+    const r = await updateRepo(row.id, { offPremises: next });
+    if (!r.ok) {
+      push(r.error ?? t("settings.error"), "fail");
+      return;
+    }
+    reposChanged();
     await reload();
   }
 
@@ -134,12 +157,13 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(t("repos.deleteBlocked"), "fail");
       return;
     }
-    if (!(await confirm(`${row.name} - ${row.repo}`, { confirmKey: "offsite.targets.remove" }))) return;
+    if (!(await confirm(`${repoDisplayName(t, row.name, row.directOf)} - ${row.repo}`, { confirmKey: "offsite.targets.remove" }))) return;
     const r = await deleteRepo(row.id);
     if (!r.ok) {
-      push(r.error ?? t("settings.error"), "fail");
+      push(placementErrorText(t, lang, r, "settings.error"), "fail");
       return;
     }
+    reposChanged();
     await reload();
   }
 
@@ -159,12 +183,19 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             <div className="flex-1 min-w-[min(12rem,100%)] max-md:basis-full">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-carbon-text font-semibold truncate max-md:whitespace-normal max-md:wrap-anywhere">
-                  {r.name}
+                  {repoDisplayName(t, r.name, r.directOf)}
                 </span>
                 {/* A negative count means the server could not read it. That is
                     treated as IN USE everywhere below: an unknown answer must
-                    not be the one that unlocks deleting. */}
-                {r.inUse < 0 ? (
+                    not be the one that unlocks deleting. A direct repository
+                    shows its target instead of a plain use count. */}
+                {r.companionOf ? (
+                  <Badge tone="neutral" wrap>
+                    {t("repos.directOf")
+                      .replace("{target}", targetOf(r))
+                      .replace("{n}", r.inUse < 0 ? "?" : String(r.inUse))}
+                  </Badge>
+                ) : r.inUse < 0 ? (
                   <Badge tone="neutral" wrap>
                     {t("repos.inUseUnknown")}
                   </Badge>
@@ -175,6 +206,11 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 ) : (
                   <Badge tone="neutral" wrap>
                     {t("repos.unused")}
+                  </Badge>
+                )}
+                {r.companionLost && (
+                  <Badge tone="neutral" wrap>
+                    {t("repos.companionLost")}
                   </Badge>
                 )}
               </div>
@@ -191,29 +227,56 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 own doc comment promised could not be reached. */}
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.immutable")}
-              <InfoBubble tip={t("repos.immutableHint")} />
+              <InfoBubble
+                tip={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : t("repos.immutableHint")}
+              />
               <Toggle
                 checked={r.immutable}
                 onChange={(v) => void setImmutable(r, v)}
                 label={t("repos.immutable")}
                 hideLabel
+                disabled={r.companionOf !== ""}
               />
             </label>
-            <CompressionSelector value={r.compression} onChange={(c) => void setCompression(r, c)} />
+            <CompressionSelector
+              value={r.compression}
+              onChange={(c) => void setCompression(r, c)}
+              lockedReason={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : undefined}
+            />
+            {r.companionOf === "" && (
+              <label className="flex items-center gap-2 text-xs text-carbon-textSub">
+                {t("repos.offPremises")}
+                <InfoBubble tip={t("repos.offPremisesHint")} />
+                <Toggle
+                  checked={r.offPremises}
+                  onChange={(v) => void setOffPremises(r, v)}
+                  label={t("repos.offPremises")}
+                  hideLabel
+                />
+              </label>
+            )}
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.enabled")}
-              <Toggle checked={r.enabled} onChange={(v) => void setEnabled(r, v)} label={t("repos.enabled")} hideLabel />
+              <Toggle
+                checked={r.enabled}
+                onChange={(v) => void setEnabled(r, v)}
+                label={t("repos.enabled")}
+                hideLabel
+              />
             </label>
             {/* The location is not editable here on purpose - see the card's
                 own note. The tooltip says why rather than leaving a greyed
                 field to puzzle over. */}
-            {r.inUse !== 0 && <InfoBubble tip={t("repos.locationLocked")} />}
+            {r.inUse !== 0 && r.companionOf === "" && <InfoBubble tip={t("repos.locationLocked")} />}
+            {/* A direct repository goes with its target and writes where the
+                target decides, so the button's hint says where to go instead. */}
             <Button
               label={t("offsite.targets.remove")}
               labelKey="offsite.targets.remove"
               tone="neutral"
               onClick={() => void remove(r)}
-              disabled={r.inUse !== 0}
+              disabled={r.inUse !== 0 || r.companionOf !== ""}
+              hint={r.companionOf !== "" ? t("repos.removeWithTarget").replace("{target}", targetOf(r)) : undefined}
             />
           </div>
         ))}

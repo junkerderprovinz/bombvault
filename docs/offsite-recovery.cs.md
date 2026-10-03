@@ -1,5 +1,8 @@
 # Mimo lokalitu a obnova
 
+!!! note "Kopie mimo lokalitu čekají po opětovném sestavení"
+    Když krok 4 znovu sestaví položky bez starého nastavení, replikace mimo lokalitu těchto domén se pozastaví, dokud se nepotvrdí výchozí umístění. Viz [Umístění pro jednotlivé položky](#placement).
+
 Místní zálohy vás chrání před ztraceným kontejnerem nebo špatnou aktualizací. Replikace mimo lokalitu a otestovaná sada pro obnovu vás chrání před celým strojem, ransomwarem nebo požárem. Tato stránka pokrývá replikaci mimo lokalitu, zajištění odolnosti té kopie proti manipulaci, prokázání, že umíte obnovit, a obnovu, když je samotný BombVault pryč.
 
 ## Replikace mimo lokalitu
@@ -12,12 +15,42 @@ Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokal
 - **Limity šířky pásma** (Nastavení, Mimo lokalitu) omezují rychlost nahrávání/stahování restic, aby replikace nezasytila vaše WAN.
 - **Indikátor replikace** zobrazuje, která doména právě replikuje, zatímco běží (na její stránce a na Přehledu). Je to aktivní indikátor, nikoli procentuální panel, protože `restic copy` nezpřístupňuje žádný strojově čitelný průběh.
 
-!!! note "Obnova přímo z mimo lokalitu"
-    Každý prohlížeč záloh má přepínač **Místní / Mimo lokalitu**, takže pokud se místní repozitář ztratí nebo poškodí, můžete vypsat a obnovit přímo z repliky mimo lokalitu. Mazání je pro každý zdroj zvlášť: odstranění zálohy ovlivní jen kopii, kterou si prohlížíte.
+!!! note "Obnova z libovolného místa"
+    Každý kontejner, VM, sada složek, flash i konfigurace aplikace vypisují své zálohy jako jednu časovou osu napříč všemi místy, kde záloha leží. Záloha zkopírovaná do B2 se objeví jednou, označená každým místem, které ji drží. Obnova vezme první dosažitelné místo, počínaje repozitářem, do kterého se položka zapisuje, a u každého řádku můžete zvolit jiné místo. Místa mimo lokalitu se čtou, jen když je otevřete. Mazání na jednom místě nejdřív zkontroluje ostatní a řekne, jestli to byla poslední kopie.
+
+## Umístění pro jednotlivé položky {#placement}
+
+Každá karta kontejneru, VM a sady složek má řádek **Umístění** se třemi segmenty:
+
+- **Místní** zapíše položku do repozitáře zobrazeného pod **Uloženo na** a nikam ji nekopíruje. Použijte to pro data, která už mají druhou kopii, například sdílenou složku, jež žije na NAS.
+- **Místní + mimo lokalitu** ji zapíše i tam a zkopíruje ji do cílů zaškrtnutých pod **Kopírovat do**, jeden čip na každý cíl domény mimo lokalitu. Odškrtněte čip a ten cíl už od této položky nedostane nic nového.
+- **Jen mimo lokalitu** zapíše položku přímo na místo pod **Odeslat do**: přímý repozitář vedle cíle mimo lokalitu, nebo vzdálený repozitář, který si nastavíte v Nastavení, Úložiště, Repozitáře.
+
+Umístění je pevné od první zálohy položky, protože BombVault nikdy nepřesouvá zálohy mezi repozitáři. Kopie se mohou kdykoli změnit. Cíl, který už položku nedostává, si ponechá kopie, které má, a při dalším běhu mimo lokalitu dané domény je zkrátí podle vlastního uchovávání; **Smazat v B2** na kartě je odstraní okamžitě. Pokud některé z těchto kopií neexistují nikde jinde, potvrzení je vypíše podle data a požádá o název položky. Z cílů append-only mazat nelze.
+
+Pod řádkem karta ukazuje, kam položka směřuje a co tam skutečně je: na kolika lokalitách leží, kdy byl každý cíl naposledy viděn a jestli je splněno 3-2-1. Lokalita je server s původními daty, každý cíl mimo lokalitu a každý repozitář označený **Mimo objekt**. BombVault kontroluje kopie a lokality; část 3-2-1 o "dvou médiích" nekontroluje.
+
+### Výchozí umístění
+
+Nastavení, Úložiště, **Výchozí umístění** má jeden řádek na doménu se stejnými třemi segmenty. Kopie platí okamžitě pro každou položku bez vlastní volby a pro projektové složky Compose stacků. Umístění platí pro novou položku při její první záloze; jeho změna žádné zálohy nepřesune. Před uložením řádek jmenuje každý cíl, který získává nebo ztrácí položky, a kolik snímků to znamená. **Použít na položky bez záloh** vrátí každou položku bez dosavadní zálohy na výchozí nastavení.
+
+Nový cíl mimo lokalitu dostane každou položku, která není nastavena na Místní. Dialog, který jej přidává, uvádí počet položek a, je-li známa, kolik historie to představuje, a nabízí vynechat položky, které jsou už vyloučené u jiných cílů.
+
+### Přímé repozitáře
+
+Volba přímého repozitáře cíle pod Jen mimo lokalitu otevře dialog s navrhovaným umístěním vedle cíle, například `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, a testem připojení, který nic nezaloží. **Vytvořit a použít** vytvoří repozitář a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře jej zobrazuje jako jen pro čtení. Když nový klíč cíle repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým cílem, nikdy nestárne podle místních pravidel. K B2 se přistupuje přes její S3 endpoint, kde jako přihlašovací údaje S3 zadáte ID klíče a aplikační klíč; klíč omezený na vlastní složku cíle se nedostane do složky vedle ní, proto klíč omezte místo toho na složku nad cílem.
+
+### Mimo objekt
+
+Pojmenovaný repozitář lze na kartě Repozitáře označit jako **Mimo objekt**. Vzdálené repozitáře začínají označené; vypněte to pro rest-server ve stejné budově. Označení se na kartách počítá jen do lokalit a 3-2-1. Žádnou kopii nemění.
+
+### Po opětovném sestavení
+
+Volby kopírování žijí ve vlastním nastavení BombVaultu. Po opětovném sestavení přes Objevit zálohy bez obnoveného `/config` jsou pryč a kopírování všeho by znovu poslalo do B2 položky, které jste dřív vynechali. Replikace mimo lokalitu každé znovu sestavené domény se proto pozastaví. Přehled to zobrazí oranžově a Výchozí umístění nabídne **Potvrdit výchozí nastavení** s náhledem toho, co příští běh zkopíruje, a jmény v zálohách, které nemají žádnou položku, jež tam můžete vynechat. Pozastavení ukončí jen potvrzení; import souboru nastavení vrátí pravidla a výchozí hodnoty, ale pozastavení neukončí.
 
 ## Vzdálené primární repozitáře {#remote-primary-repositories}
 
-Cesta zálohy domény (Nastavení, Úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
+Cesta zálohy domény (Nastavení, Úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
 
 Každé ze šesti polí cesty (Kontejnery, VMs, Flash, Autozáloha, Složky, Datové sady ZFS) má hned vedle přepínač **Místní / Vzdálené**:
 
@@ -82,8 +115,8 @@ Kdokoli zná ta slova, může se do skupiny přidat, takže s nimi zacházejte j
 
 **Jak se členové navzájem najdou.** Každá instance se dozví svou vlastní adresu v síti z vašeho prohlížeče hned, jak se přihlásíte; v kartě relay se zobrazí jako **Tato instance ve vaší síti**, a pokud před ní stojí reverzní proxy nebo neobvyklý port, opravte ji tam. Ve stejné síti si členové tuto adresu oznamují multicastem a mluví spolu přímo, a tam, kde multicast nedokáže projít sítí kontejnerů, jako je výchozí bridge síť Dockeru, instance místo toho prohledá svou vlastní podsíť a najde ostatní podepsaným voláním, na které umí odpovědět jen člen skupiny, takže se páruje v řádu sekund i bez relay. Pokud se nic nenajde, **Nemůžete ji najít?** pod kartou párování přijme jednu adresu ručně, pro jinou podsíť nebo neobvyklý port. Instance v různých sítích jdou přes relay, který se vybírá na stejné záložce:
 
-- **Relay projektu** (výchozí): `relay.halleluja.design`, stejný relay, jaký používá i KnightLoader. Není co nastavovat.
-- **Vlastní relay**: kontejner **BombVault Relay** z Unraid Community Apps, nebo jedna z vašich instancí, která je už zvenčí dostupná se zapnutým přepínačem **Sloužit jako relay**. Taková instance pak odpovídá na `/relay/connect` na své vlastní adrese, za reverzní proxy a certifikátem, které už má, a pustí dovnitř jen vaši skupinu. Adresu relay zadejte na každé instanci, která ho má používat.
+- **Relay projektu** (výchozí): `parleyport.halleluja.design`, stejný relay, jaký používá i KnightLoader. Není co nastavovat.
+- **Vlastní relay**: kontejner [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) z Unraid Community Apps, nebo jedna z vašich instancí, která je už zvenčí dostupná se zapnutým přepínačem **Sloužit jako relay**. Taková instance pak odpovídá na `/relay/connect` na své vlastní adrese, za reverzní proxy a certifikátem, které už má, a pustí dovnitř jen vaši skupinu. Adresu relay zadejte na každé instanci, která ho má používat.
 - **Žádný relay**: členové se najdou automaticky jen ve stejné síti, a nikde jinde.
 
 **Co vidí relay.** Každé volání mezi členy je zapečetěné pomocí AES-256-GCM klíčem odvozeným z dvanácti slov, a ten klíč nikdy neopustí vaše instance. Relay se dozví hash, který sdružuje spojení, dále pro kterou instanci je zpráva určená, jak je velká a kdy prochází. Přímé volání v lokální síti je zapečetěné stejným způsobem a navíc podepsané, takže nic nezávisí na self-signed certifikátu, který instance nabízí.

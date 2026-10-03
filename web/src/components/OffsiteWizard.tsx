@@ -13,10 +13,14 @@ import {
   getCloud,
 } from "../lib/api";
 import type { OffsiteTarget } from "../lib/api";
-import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
 import { restPathUserMismatch } from "../lib/restRepo";
 import { SelectField } from "./SelectField";
 import { useT } from "../lib/i18n";
+import { directAsk, directUse } from "../lib/directRepo";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { useOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useConfirm } from "../lib/useConfirm";
 import { InfoBubble } from "./InfoBubble";
 import { NumberField } from "./NumberField";
 import { Toggle } from "./Toggle";
@@ -24,6 +28,7 @@ import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
+import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
 import { TestButton, VerdictLine } from "./TestButton";
 import { useTestVerdict } from "../lib/useTestVerdict";
 import { offsiteVerdict } from "../lib/offsiteVerdict";
@@ -200,9 +205,15 @@ export function OffsiteWizard({
 
   const { push } = useToast();
 
-  // Fields save themselves after a pause, as elsewhere in Settings; none of
-  // them is a draft that could be discarded. The Settings page's own
-  // debouncedSave is not reachable from here.
+  const fieldTarget = useOffsiteTargets(domain).find((x) => x.sortOrder === 0);
+  const namedRepos = useNamedRepos();
+  const { confirm, confirmDialog } = useConfirm();
+  const { lang } = useT();
+
+  // The number fields save themselves after a pause, as elsewhere in Settings;
+  // none of them is a draft that could be discarded, and the Settings page's
+  // own debouncedSave is not reachable from here. The repo URL does not: a new
+  // location starts uploads, so it waits for Enter, Save or leaving it.
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   function debounced(key: string, run: () => void) {
     const existing = debounceTimers.current[key];
@@ -331,16 +342,8 @@ export function OffsiteWizard({
     }
   }
 
-  function patchRepo(v: string) {
-    setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-    debounced(String(repoKey), () => {
-      // Re-read the destination once the save is done as well: saving the
-      // first repo creates the row the credential selector binds to, which did
-      // not exist when repoURL changed.
-      void Promise.resolve(
-        save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined)
-      ).then(() => refreshPrimaryTarget());
-    });
+  function saveRepo(v: string): Promise<boolean> {
+    return save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined);
   }
 
   async function genSnippet() {
@@ -467,6 +470,8 @@ export function OffsiteWizard({
       }
       return;
     }
+    const use = !next && fieldTarget ? directUse(fieldTarget, namedRepos) : undefined;
+    if (use && !(await confirm(directAsk(t, lang, "offsite.directAppendOnlyAsk", [use])))) return;
     setSettings((prev) => (prev ? { ...prev, [immKey]: next } : prev));
     const ok = await save({ [immKey]: next } as Partial<Settings>, setImmState, () => undefined);
     if (!ok) {
@@ -530,6 +535,7 @@ export function OffsiteWizard({
 
   return (
     <div className="mt-2 flex flex-col gap-4 rounded-card bg-carbon-surface2 p-4">
+      {confirmDialog}
       {/* Step 1: backend choice */}
       <div className="flex flex-col gap-2">
         <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
@@ -656,13 +662,14 @@ export function OffsiteWizard({
                 {t("offsite.wizard.repoUrl")}
                 <InfoBubble tip={t("offsite.wizard.repoUrlInfo")} />
               </span>
-              <input
+              <OffsiteLocationInput
+                domain={domain}
                 value={repoURL}
-                spellCheck={false}
-                onChange={(e) => patchRepo(e.target.value)}
+                targetId={primaryTarget?.id}
+                targetName={primaryTarget?.name}
                 placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-                dir="ltr"
                 className={`${inputCls} text-start`}
+                onSave={saveRepo}
               />
               <span className="text-xs text-carbon-textMuted">
                 {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
@@ -679,7 +686,9 @@ export function OffsiteWizard({
                 </span>
               )}
             </label>
-            {/* The off-site schedule belongs to Settings › Schedules. */}
+            {/* The off-site schedule belongs to Settings › Schedules; the
+                wizard saves only the repo URL so it can never clobber that
+                cadence. */}
           </>
         )}
 
@@ -700,7 +709,7 @@ export function OffsiteWizard({
                   onChange={(v) => void (primary ? pickPrimaryCredSet(v) : pickCredSet(v))}
                   options={[
                     { value: "", label: t("offsite.targets.credsDefault") },
-                    ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                    ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
                   ]}
                   className={inputCls}
                 />

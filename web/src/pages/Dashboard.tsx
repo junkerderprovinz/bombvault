@@ -48,7 +48,7 @@ import { Selector } from "../components/Selector";
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
 import type { TranslationKey } from "../lib/i18n";
 import { Button } from "../components/Button";
-import { IconCheckCircle } from "../components/Sidebar";
+import { IconCheck } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { zfsCodeSentence, zfsFixKey } from "../lib/zfsCodes";
 
@@ -911,8 +911,9 @@ export function ProtectionCard({
                           and say nothing at the point where it matters most.
                           That there is no second copy is the first fact about a
                           backup, not an advanced one, so it shows here and not
-                          only in the advanced ransomware card. */}
-                      {!d.offsiteConfigured ? (
+                          only in the advanced ransomware card. A repository
+                          marked off the premises counts as that second copy. */}
+                      {!d.offsiteConfigured && !d.offPremisesCovered ? (
                         <div className="col-start-6 min-w-0">
                           <Badge tone="fail" className="whitespace-nowrap" title={t("dashboard.noOffsiteTitle")}>
                             ✗ {t("dashboard.noOffsite")}
@@ -1013,7 +1014,7 @@ export function ProtectionCard({
                             ? t("drill.rerunOffsiteDr")
                             : t("drill.runOffsiteDr")}
                         labelKey={d.lastDrDrillAt && d.lastDrDrillOK ? "drill.rerunOffsiteDr" : "drill.runOffsiteDr"}
-                        glyph={<IconCheckCircle />}
+                        glyph={<IconCheck />}
                         tone="neutral"
                         onClick={() => runOffsiteDr(d.domain)}
                         className="glim-btn-wrap pointer-coarse:[--btn-h:2.75rem]"
@@ -1164,6 +1165,8 @@ export function RansomwareCard({
         return { label: t("ransomware.replicationOverdue"), state: "amber", at: d.lastReplicationAt };
       case "never":
         return { label: t("ransomware.replicationNever"), state: "muted" };
+      case "paused":
+        return { label: t("ransomware.replicationPaused"), state: "amber" };
       default:
         // "" — replication is coupled to each backup (no independent expectation).
         return { label: t("ransomware.replicationCurrent"), state: "muted" };

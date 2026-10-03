@@ -53,11 +53,8 @@ export interface Container {
    *  the containers domain schedule for this container. "" means it follows the
    *  domain schedule. Only takes effect when the perItemSchedules setting is on. */
   scheduleCadence?: string;
-  /** Optional per-item repository override (#204): the ID of a named repository
-   *  from Settings, "" for the domain's own. A location is written down once in
-   *  Settings and picked here, so the same bucket path is never typed into ten
-   *  items and can be corrected in one place. */
-  repo?: string;
+  /** Where the backups go and where they are copied, as the card shows it. */
+  placement: PlacementView;
   /** The not-installed entry a live container with no backups looks like it
    *  was renamed from, or "". */
   renameFrom?: string;
@@ -188,6 +185,7 @@ export interface ListFilesResponse {
    *  etc). Populated by every list-files endpoint, local and foreign alike —
    *  callers should show it instead of a generic message (#129). */
   error?: string;
+  code?: string;
 }
 
 /** Settings from GET /api/settings (nested under "settings") */
@@ -434,7 +432,7 @@ export interface GetSettingsResponse {
  * present (never the values), and `settingsGroups` names the setting areas the
  * file populates (machine ids: "domains","schedules","retention","offsite",
  * "drills","digest","monitoring","language","exportEncryption","anomalies",
- * "streaming","idle").
+ * "streaming","idle","homeAssistant","network").
  */
 export interface ImportSettingsSummary {
   schemaVersion: number;
@@ -446,11 +444,17 @@ export interface ImportSettingsSummary {
    *  absent from the file, which is kept, and a location that would move an
    *  in-use repository, which is declined. The server logs both. */
   namedRepos: number;
+  /** null when the file lacks the block and the table stays as it is. */
+  placementDefaults: number | null;
+  copyRules: number | null;
+  /** Targets the file adds, with what each would receive at its first run. */
+  newTargets: NewTargetPreview[];
   credentials: {
     present: boolean;
     cloud: boolean;
     rclone: boolean;
     notify: boolean;
+    mqtt: boolean;
   };
   settingsGroups: string[];
 }
@@ -485,11 +489,12 @@ export interface Run {
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
   /** What asked for the run: "" for the web interface and the scheduler,
-   *  "mcp" for an assistant. */
-  startedVia?: "" | "mcp";
+   *  "mcp" for an assistant, "api" for an API token, "mqtt" for a Home
+   *  Assistant button. */
+  startedVia?: "" | "mcp" | "api" | "mqtt";
   startedViaKey?: string;
-  /** The operator's name for the MCP key behind the run, "" once that key is
-   *  purged from the list. */
+  /** The operator's name for the MCP key or API token behind the run, "" once
+   *  it is purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
   /** What held a slow backup back, when one thing clearly did. */
@@ -532,6 +537,7 @@ export interface DomainStatus {
   // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
   // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
   offsiteConfigured: boolean; // an off-site repo is configured for this domain
+  offPremisesCovered: boolean; // every item lives somewhere that is a site of its own
   offsiteImmutable: boolean; // the off-site repo is flagged append-only (immutable)
   lastTamperAt: number; // unix seconds of the last off-site tamper test; 0 = never
   lastTamperOK: boolean; // whether that test proved append-only protection
@@ -553,7 +559,7 @@ export interface DomainStatus {
   // never contradict the chip. encryptionOn/pruneStrategySet are the two config
   // facts the card also renders (no separate /api/settings round-trip needed).
   tamperState: string; // "" | "never" | "failed" | "stale" | "ok"
-  replicationState: string; // "" | "never" | "overdue" | "ok"
+  replicationState: string; // "" | "never" | "overdue" | "ok" | "paused"
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
   pruneStrategySet: boolean; // an off-site retention strategy is configured
@@ -998,16 +1004,20 @@ export function cancelBackup(
  * the server returns {ok:true, started:true} and the per-member loops run
  * detached. The ack carries NO member results; each member's restore records a
  * kind "restore" run, so outcomes live in the run history.
+ *
+ * stackDirSource takes the project folder from another source, "local" when
+ * the chosen one lacks it.
  */
 export function restoreStack(
   project: string,
   startAfter: boolean,
   confirm: boolean,
-  source?: string
+  source?: string,
+  stackDirSource?: string
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ startAfter, confirm }),
+    body: JSON.stringify(stackDirSource ? { startAfter, confirm, stackDirSource } : { startAfter, confirm }),
   });
 }
 
@@ -1119,26 +1129,6 @@ export function tagSnapshot(
 }
 
 /** PATCH /api/containers/{name} — set pre/post-backup hook commands. */
-/** PATCH /api/containers/{name} with just `repo` (#204): point this container at
- *  a named repository, or "" to put it back on the Containers domain repository.
- *  Refused once the container has backups - they stay in the repository they
- *  were written to and nothing re-homes them. */
-export function setContainerRepo(name: string, repo: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ repo }),
-  });
-}
-
-/** PATCH /api/vms/{name} with just `repo` (#204); same contract as the container
- *  twin above. */
-export function setVMRepo(name: string, repo: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ repo }),
-  });
-}
-
 export function setContainerHooks(
   name: string,
   preHook: string,
@@ -1300,7 +1290,7 @@ export interface CloudCreds {
    *  ONEZONE_IA, INTELLIGENT_TIERING, GLACIER_IR). */
   s3StorageClass: string;
 }
-export function setCloud(c: CloudCreds): Promise<OkEnvelope> {
+export function setCloud(c: CloudCreds): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
   return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });
 }
 
@@ -1327,6 +1317,11 @@ export interface CloudCredSetInfo {
   s3StorageClass: string;
   s3SecretSet: boolean;
   restPasswordSet: boolean;
+  /** The direct repository this set keeps the old values for, when a save
+   *  changed them to ones that do not open it. */
+  keptFor?: string;
+  /** The target the repository it was kept for goes by, when it has no name of its own. */
+  directOf?: string;
 }
 
 /** GET /api/cloud/creds-sets — additional named credential sets (no secrets returned). */
@@ -1336,7 +1331,7 @@ export function getCloudCredSets(): Promise<OkEnvelope & { sets?: CloudCredSetIn
 
 /** POST /api/cloud/creds-sets — replace the whole list. A blank secret on a
  *  set matched by id (against the previously stored set) keeps the stored one. */
-export function setCloudCredSets(sets: CloudCredSet[]): Promise<OkEnvelope> {
+export function setCloudCredSets(sets: CloudCredSet[]): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
   return fetchJSON("/api/cloud/creds-sets", { method: "POST", body: JSON.stringify({ sets }) });
 }
 
@@ -1601,6 +1596,9 @@ export type DiscoverEnvelope = OkEnvelope & {
   repo?: string;
   skipped?: string[];
   skippedNeedsAction?: boolean;
+  paused?: boolean;
+  leftOpen?: string[];
+  directRepos?: DirectRepoFinding[];
 };
 
 /**
@@ -1640,6 +1638,9 @@ export async function discoverAll(): Promise<{
   error?: string;
   skipped: string[];
   skippedNeedsAction: boolean;
+  paused: PlacementDomain[];
+  leftOpen: string[];
+  directRepos: DirectRepoFinding[];
 }> {
   const results = await Promise.all([discover(), discoverVMs(), discoverFiles(), discoverZFS()]);
   const [c, v, f, z] = results;
@@ -1647,6 +1648,7 @@ export async function discoverAll(): Promise<{
   // De-duplicated: the same named repository is searched by every domain, so
   // one unmounted share would otherwise be named several times in one sentence.
   const skipped = [...new Set(results.flatMap((r) => r.skipped ?? []))];
+  const answers: [PlacementDomain, DiscoverEnvelope][] = [["containers", c], ["vms", v], ["files", f]];
   return {
     containers: c.discovered ?? 0,
     vms: v.discovered ?? 0,
@@ -1657,12 +1659,33 @@ export async function discoverAll(): Promise<{
     // Any domain that hit something actionable. The sentence lists every
     // domain's skips together, so the flag has to be the union too.
     skippedNeedsAction: results.some((r) => r.skippedNeedsAction === true),
+    paused: answers.filter(([, r]) => r.paused === true).map(([d]) => d),
+    leftOpen: [...new Set(answers.flatMap(([, r]) => r.leftOpen ?? []))],
+    directRepos: mergeDirectFindings(answers.flatMap(([, r]) => r.directRepos ?? [])),
   };
 }
 
-/** Delete ALL backups of a container and forget it from the store. */
-export function deleteBackups(name: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups`, {
+// mergeDirectFindings keeps one entry per repository, with the targets every
+// domain offered for it.
+function mergeDirectFindings(found: DirectRepoFinding[]): DirectRepoFinding[] {
+  const byRepo = new Map<string, DirectRepoFinding>();
+  for (const f of found) {
+    const seen = byRepo.get(f.repoId);
+    if (!seen) {
+      byRepo.set(f.repoId, { ...f, targets: [...f.targets] });
+      continue;
+    }
+    for (const target of f.targets) {
+      if (!seen.targets.some((x) => x.id === target.id)) seen.targets.push(target);
+    }
+  }
+  return [...byRepo.values()];
+}
+
+/** Delete every backup of a container from the selected source. Local also
+ *  forgets the container; off-site keeps it. */
+export function deleteBackups(name: string, source?: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }
@@ -1828,13 +1851,12 @@ export function getSettings(): Promise<GetSettingsResponse> {
 }
 
 /**
- * PUT /api/settings — persist the settings object. `warnings` is a
- * backward-compatible extension of the ok envelope: non-fatal advisories (e.g.
- * an off-site retention policy that is inert because the repo is append-only).
+ * PUT /api/settings: persist the settings object. `warnings` says what the
+ * save means for used direct repositories, `notes` carries non-fatal advisories.
  */
 export function putSettings(
   settings: Settings
-): Promise<OkEnvelope & { warnings?: string[] }> {
+): Promise<OkEnvelope & { warnings?: SaveWarning[]; notes?: string[] }> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
@@ -2549,8 +2571,17 @@ export interface NamedRepo {
    *  delete refuse rather than repack it. */
   immutable: boolean;
   enabled: boolean;
+  /** Counts as a site of its own for sites and 3-2-1 on the cards. Changes no
+   *  copy. Always false on a direct repository. */
+  offPremises: boolean;
   inUse: number;
   compression: Compression;
+  /** The off-site target this is the direct repository of, "" for a plain one. */
+  companionOf: string;
+  /** The target a direct repository without a name of its own goes by. */
+  directOf?: string;
+  /** An import deleted its target, which leaves it a plain repository. */
+  companionLost: boolean;
 }
 
 /** restic's --compression mode. "auto" is restic's own default. */
@@ -2563,7 +2594,7 @@ export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {
 
 /** POST /api/repos — create one (the id is minted server-side). */
 export function createRepo(
-  body: Partial<Omit<NamedRepo, "id" | "inUse">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost">>
 ): Promise<OkEnvelope & { repo?: NamedRepo }> {
   return fetchJSON("/api/repos", { method: "POST", body: JSON.stringify(body) });
 }
@@ -2573,19 +2604,23 @@ export function createRepo(
  *  The LOCATION of a repository that is in use is refused: the backups already
  *  written stay where they are, so the next one would succeed into an empty
  *  repository, which looks exactly like a working backup. Name, limits and the
- *  on/off switch stay editable, because none of those move any data. */
+ *  on/off switch stay editable, because none of those move any data. The
+ *  refusal carries the same `items`/`defaultDomains` the delete refusal below
+ *  does, so the caller can name what is still pointed at this repository. */
 export function updateRepo(
   id: string,
-  body: Partial<Omit<NamedRepo, "id" | "inUse">>
-): Promise<OkEnvelope & { repo?: NamedRepo }> {
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost">>
+): Promise<OkEnvelope & { repo?: NamedRepo; items?: number; defaultDomains?: PlacementDomain[] }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify(body),
   });
 }
 
-/** DELETE /api/repos/{id} — refused while anything still points here. */
-export function deleteRepo(id: string): Promise<OkEnvelope> {
+/** DELETE /api/repos/{id}: refused while anything still points here. */
+export function deleteRepo(
+  id: string
+): Promise<OkEnvelope & { items?: number; defaultDomains?: PlacementDomain[]; target?: RefusalTarget }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
@@ -2601,32 +2636,592 @@ export function listOffsiteTargets(
   return fetchJSON(`/api/offsite/targets${qs}`);
 }
 
-/** POST /api/offsite/targets — create a target (id/createdAt are minted server-side). */
+/** POST /api/offsite/targets: create a target. `alsoExclude` is the answer to
+ *  the new-target question and goes along only when there is one. */
 export function createOffsiteTarget(
-  target: Omit<OffsiteTarget, "id" | "createdAt">
+  target: Omit<OffsiteTarget, "id" | "createdAt">,
+  alsoExclude?: NewTargetExclusion
 ): Promise<OkEnvelope & { target?: OffsiteTarget }> {
   return fetchJSON("/api/offsite/targets", {
     method: "POST",
-    body: JSON.stringify(target),
+    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
   });
 }
 
 /** PUT /api/offsite/targets/{id} — replace a target (createdAt is preserved; unknown id → 404). */
 export function updateOffsiteTarget(
   id: string,
-  target: OffsiteTarget
-): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+  target: OffsiteTarget,
+  alsoExclude?: NewTargetExclusion
+): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify(target),
+    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
   });
 }
 
-/** DELETE /api/offsite/targets/{id} — remove a target (no-op success when absent). */
-export function deleteOffsiteTarget(id: string): Promise<OkEnvelope> {
+/** DELETE /api/offsite/targets/{id}: refused while its direct repository is in use. */
+export function deleteOffsiteTarget(id: string): Promise<OkEnvelope & { use?: TargetUse }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+/** Placement: which domains have it, and what the direct repository routes answer. */
+export type PlacementDomain = "containers" | "vms" | "files";
+
+export interface SaveWarning {
+  code: "direct-retention-lowered" | "direct-append-only-off" | "direct-creds-kept";
+  targetId: string;
+  targetName: string;
+  items: number;
+}
+
+export interface TargetUse {
+  directRepoId: string;
+  items: number;
+  defaultDomains: PlacementDomain[];
+}
+
+export const PLACEMENT_DOMAINS: readonly PlacementDomain[] = ["containers", "vms", "files"];
+
+export type SegmentId = "local" | "local-offsite" | "offsite-only";
+export type HomeKind = "domain" | "domain-remote" | "local" | "remote" | "direct" | "missing";
+export type SegmentLockReason = "no-target" | "own-credentials" | "at-target" | "home-fixed";
+export type SegmentLocks = Partial<Record<SegmentId, SegmentLockReason>>;
+
+export interface ItemRef {
+  domain: PlacementDomain;
+  /** The container name, the VM's libvirtName, or the file set's id. */
+  key: string;
+}
+
+export type HomeChoice = { follow: true } | { repo: string };
+export type CopiesChoice = { follow: true } | { skip: string[] };
+
+export interface PlacementChange {
+  home?: HomeChoice;
+  copies?: CopiesChoice;
+}
+
+export interface DroppedTarget {
+  targetId: string;
+  name: string;
+  /** Copies that stay at the target; null while its first listing runs. */
+  copies: number | null;
+  appendOnly: boolean;
+}
+
+export interface UploadEstimate {
+  targetId: string;
+  name: string;
+  snapshots: number;
+  uncheckable: string[];
+}
+
+export type PlanKind =
+  | "home"
+  | "stays-domain"
+  | "default-home"
+  | "decides-at-first-backup"
+  | "paused"
+  | "not-backed-up";
+
+/** The result line's plan half: where an item's backups go and why. */
+export interface PlacementPlan {
+  kind: PlanKind;
+  home: string;
+  /** The target a direct home without a name of its own goes by. */
+  homeDirectOf?: string;
+  targets: string[];
+  warn: boolean;
+  reason: "" | "default-off" | "default-missing";
+  noCopy: boolean;
+}
+
+export interface ObservedPlace {
+  place: string;
+  label: string;
+  /** null for a home the list did not read. */
+  count: number | null;
+  latest: number;
+  seenAt: number;
+  stale: boolean;
+  state: "counts" | "unreachable" | "unknown" | "old-copy" | "no-copy" | "off";
+  since: number;
+  counts: boolean;
+}
+
+export interface OlderCopies {
+  targetId: string;
+  name: string;
+  count: number;
+  seenAt: number;
+  appendOnly: boolean;
+}
+
+/** The result line's observed half: where an item's backups actually are. */
+export interface PlacementObserved {
+  noBackup: boolean;
+  places: ObservedPlace[];
+  sites: number;
+  tone: "ok" | "warn" | "unconfirmed";
+  rule321: "met" | "one-copy" | "unconfirmed";
+  older: OlderCopies[];
+}
+
+/** Names the project folder when its copies differ from a member's own. */
+export interface StackNote {
+  project: string;
+  home: string;
+  targets: string[];
+}
+
+export interface PlacementView {
+  segment: SegmentId | "";
+  repo: string;
+  repoLabel: string;
+  /** The target a direct repository without a name of its own goes by. */
+  repoDirectOf?: string;
+  repoKind: HomeKind | "";
+  repoOff: boolean;
+  homeFollows: boolean;
+  copiesFollow: boolean;
+  skip: string[];
+  locked: boolean;
+  lockReason: "first-backup" | "";
+  segmentLocks: SegmentLocks;
+  paused: boolean;
+  unreadable: boolean;
+  plan?: PlacementPlan;
+  observed?: PlacementObserved;
+  stackNote?: StackNote;
+}
+
+export type PlacementPatchResponse = OkEnvelope & {
+  dropped?: DroppedTarget[];
+  placement?: PlacementView;
+};
+
+function itemPath(item: ItemRef): string {
+  const key = encodeURIComponent(item.key);
+  switch (item.domain) {
+    case "containers":
+      return `/api/containers/${key}`;
+    case "vms":
+      return `/api/vms/${key}`;
+    case "files":
+      return `/api/files/sets/${key}`;
+  }
+}
+
+/** Writes an item's home and copies; the answer carries its new card view. */
+export function setItemPlacement(item: ItemRef, change: PlacementChange): Promise<PlacementPatchResponse> {
+  return fetchJSON(itemPath(item), { method: "PATCH", body: JSON.stringify(change) });
+}
+
+/** What a change would upload and leave behind, without writing it. */
+export function previewItemPlacement(
+  item: ItemRef,
+  change: PlacementChange
+): Promise<OkEnvelope & { added?: UploadEstimate[]; dropped?: DroppedTarget[] }> {
+  return fetchJSON(
+    `/api/items/${encodeURIComponent(item.domain)}/${encodeURIComponent(item.key)}/placement/preview`,
+    { method: "POST", body: JSON.stringify(change) }
+  );
+}
+
+export interface RemovalPreview {
+  target: { id: string; name: string; appendOnly: boolean };
+  /** The name the delete compares the typed text with: a VM's libvirt name, not its display name. */
+  name: string;
+  count: number;
+  onlyThere: { id: string; time: string }[];
+  homeUnreadable: boolean;
+  homeLabel: string;
+  /** The target a direct home without a name of its own goes by. */
+  homeDirectOf?: string;
+}
+
+function removalPath(item: ItemRef, targetId: string): string {
+  return `/api/items/${encodeURIComponent(item.domain)}/${encodeURIComponent(item.key)}/offsite/${encodeURIComponent(targetId)}/removal`;
+}
+
+/** What deleting one item's copies at one target would remove. */
+export function getOffsiteRemoval(
+  item: ItemRef,
+  targetId: string
+): Promise<OkEnvelope & Partial<RemovalPreview>> {
+  return fetchJSON(removalPath(item, targetId));
+}
+
+/** Deletes them. `onlyThere` are the snapshots the preview listed as existing
+ *  nowhere else; `typedName` is the preview's `name`, or "" when that list was
+ *  empty. */
+export function deleteAtTarget(
+  item: ItemRef,
+  targetId: string,
+  onlyThere: string[],
+  typedName: string
+): Promise<OkEnvelope & { deleted?: number; preview?: RemovalPreview }> {
+  return fetchJSON(removalPath(item, targetId), {
+    method: "DELETE",
+    body: JSON.stringify({ onlyThere, typedName }),
+  });
+}
+
+export interface DefaultCounts {
+  follow: number;
+  own: number;
+  open: number;
+  chosenNoRun: number;
+}
+
+export interface DefaultRow {
+  domain: PlacementDomain;
+  exists: boolean;
+  home: string;
+  homeKind: HomeKind;
+  homeOff: boolean;
+  skip: string[];
+  paused: boolean;
+  confirmedAt: number;
+  counts: DefaultCounts;
+  unreadable: boolean;
+}
+
+export interface TargetImpact {
+  targetId: string;
+  name: string;
+  items: number;
+  snapshots: number;
+  unknown: boolean;
+  uncheckable: string[];
+}
+
+export interface DefaultImpact {
+  dropped: TargetImpact[];
+  added: TargetImpact[];
+  openTakeHome: number;
+  /** The home and skip this impact was computed against, so a stale PUT can
+   *  be told from one whose numbers just happen to match. */
+  home: string;
+  skip: string[];
+}
+
+export interface DefaultChange {
+  home?: string;
+  skip?: string[];
+}
+
+function defaultPath(domain: PlacementDomain, rest = ""): string {
+  return `/api/placement/default/${encodeURIComponent(domain)}${rest}`;
+}
+
+export function listPlacementDefaults(): Promise<OkEnvelope & { defaults?: DefaultRow[] }> {
+  return fetchJSON("/api/placement/defaults");
+}
+
+export function previewPlacementDefault(
+  domain: PlacementDomain,
+  change: DefaultChange
+): Promise<OkEnvelope & { impact?: DefaultImpact }> {
+  return fetchJSON(defaultPath(domain, "/preview"), { method: "POST", body: JSON.stringify(change) });
+}
+
+/** Writes a default. `expect` is the impact the question showed; code "stale"
+ *  answers with the new one. */
+export function putPlacementDefault(
+  domain: PlacementDomain,
+  change: DefaultChange,
+  expect: DefaultImpact
+): Promise<OkEnvelope & { default?: DefaultRow; impact?: DefaultImpact }> {
+  return fetchJSON(defaultPath(domain), { method: "PUT", body: JSON.stringify({ ...change, expect }) });
+}
+
+export interface ApplyCandidate {
+  key: string;
+  label: string;
+  losesHome: boolean;
+  losesRule: boolean;
+  uploads: UploadEstimate[];
+}
+
+export interface KeptItem {
+  key: string;
+  label: string;
+  reason: "has-backups" | "unreadable" | "changed";
+}
+
+export function getApplyDefaultPreview(
+  domain: PlacementDomain
+): Promise<OkEnvelope & { reset?: ApplyCandidate[]; kept?: KeptItem[] }> {
+  return fetchJSON(defaultPath(domain, "/apply"));
+}
+
+export function applyPlacementDefault(
+  domain: PlacementDomain,
+  keys: string[]
+): Promise<OkEnvelope & { reset?: string[]; kept?: KeptItem[] }> {
+  return fetchJSON(defaultPath(domain, "/apply"), { method: "POST", body: JSON.stringify({ keys }) });
+}
+
+export interface ExcludedItem {
+  identity: string;
+  skip: string[];
+}
+
+export interface TargetPreview {
+  items: number;
+  formerlyExcluded: ExcludedItem[];
+  defaultExcludes: boolean;
+  snapshots: number;
+  /** An upper bound from the last measurement; null when a source has none. */
+  bytes: number | null;
+  unreadable: string[];
+}
+
+export interface TargetPreviewRow {
+  targetId: string;
+  name: string;
+  preview: TargetPreview;
+}
+
+export interface UnmatchedName {
+  identity: string;
+  snapshots: number;
+}
+
+export function getConfirmPreview(
+  domain: PlacementDomain
+): Promise<OkEnvelope & { paused?: boolean; targets?: TargetPreviewRow[]; unmatched?: UnmatchedName[] }> {
+  return fetchJSON(defaultPath(domain, "/confirm"));
+}
+
+export function confirmPlacementDefault(domain: PlacementDomain, exclude: string[]): Promise<OkEnvelope> {
+  return fetchJSON(defaultPath(domain, "/confirm"), { method: "POST", body: JSON.stringify({ exclude }) });
+}
+
+export interface HomeOption {
+  id: string;
+  name: string;
+  location: string;
+  kind: "domain" | "domain-remote" | "local";
+  scheme: string;
+}
+
+export interface TargetOption {
+  id: string;
+  name: string;
+  enabled: boolean;
+  primary: boolean;
+  appendOnly: boolean;
+  hint: "" | "creds-differ";
+}
+
+export interface SendToOption {
+  kind: "direct" | "remote";
+  /** "" while the direct repository does not exist yet. */
+  repoId: string;
+  targetId: string;
+  name: string;
+  location: string;
+}
+
+export interface PlacementOptions {
+  domain: PlacementDomain;
+  unreadable: boolean;
+  paused: boolean;
+  homes: HomeOption[];
+  targets: TargetOption[];
+  sendTo: SendToOption[];
+  segmentLocks: SegmentLocks;
+  default: DefaultRow;
+}
+
+export function getPlacementOptions(domain: PlacementDomain): Promise<OkEnvelope & { options?: PlacementOptions }> {
+  return fetchJSON(`/api/placement/options?domain=${encodeURIComponent(domain)}`);
+}
+
+export function getNewTargetPreview(
+  domain: PlacementDomain,
+  repo: string,
+  targetId?: string
+): Promise<OkEnvelope & { preview?: TargetPreview }> {
+  const target = targetId ? `&target=${encodeURIComponent(targetId)}` : "";
+  return fetchJSON(
+    `/api/placement/new-target-preview?domain=${encodeURIComponent(domain)}&repo=${encodeURIComponent(repo)}${target}`
+  );
+}
+
+export interface NewTargetExclusion {
+  identities: string[];
+  default: boolean;
+}
+
+/** Either targetId or field, never both: field means the row the off-site field edits. */
+export interface PlacementExcludeBody {
+  domain: PlacementDomain;
+  targetId?: string;
+  field?: boolean;
+  identities: string[];
+  default: boolean;
+}
+
+export function excludeFromTarget(body: PlacementExcludeBody): Promise<OkEnvelope> {
+  return fetchJSON("/api/placement/exclude", { method: "POST", body: JSON.stringify(body) });
+}
+
+export interface NewTargetPreview {
+  id: string;
+  domain: PlacementDomain;
+  name: string;
+  preview: TargetPreview;
+}
+
+export interface DirectSuggestion {
+  location: string;
+  note: "" | "bucket-root" | "path-needed";
+}
+
+export interface DirectRepoFinding {
+  repoId: string;
+  name: string;
+  targets: { id: string; name: string }[];
+}
+
+export function getDirectRepo(
+  targetId: string
+): Promise<OkEnvelope & { repo?: NamedRepo | null; suggestion?: DirectSuggestion }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/direct`);
+}
+
+/** Probes a place for a direct repository with the target's credentials; creates nothing. */
+export function testDirectLocation(
+  targetId: string,
+  location: string
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/direct/test`, {
+    method: "POST",
+    body: JSON.stringify({ location }),
+  });
+}
+
+/** An empty name leaves the naming to the server, which calls it "<target> direct". */
+export function createDirectRepo(
+  targetId: string,
+  name: string,
+  location: string
+): Promise<OkEnvelope & { repo?: NamedRepo }> {
+  return fetchJSON("/api/repos", {
+    method: "POST",
+    body: JSON.stringify({ name, repo: location, companionOf: targetId }),
+  });
+}
+
+export function connectRepo(repoId: string, targetId: string): Promise<OkEnvelope & { repo?: NamedRepo }> {
+  return fetchJSON(`/api/repos/${encodeURIComponent(repoId)}/connect`, {
+    method: "POST",
+    body: JSON.stringify({ targetId }),
+  });
+}
+
+/** The off-site target a refusal sends the operator to. */
+export interface RefusalTarget {
+  id: string;
+  name: string;
+}
+
+export type TimelineDomain = PlacementDomain | "flash" | "config";
+
+export interface TimelinePlace {
+  place: string;
+  label: string;
+  /** The target a direct home without a name of its own goes by. */
+  directOf?: string;
+  kind: "home" | "target";
+  remote: boolean;
+  enabled: boolean;
+  appendOnly: boolean;
+  state: "read" | "unchecked" | "unreadable";
+  error?: string;
+}
+
+export interface TimelineMark {
+  place: string;
+  snapshotIds: string[];
+  tags: string[];
+  incomplete?: boolean;
+}
+
+export interface TimelineRow {
+  key: string;
+  time: string;
+  places: TimelineMark[];
+}
+
+export interface PlaceDelete {
+  place: string;
+  label: string;
+  directOf?: string;
+  snapshotIds: string[];
+}
+
+export interface OtherPlace {
+  place: string;
+  label: string;
+  directOf?: string;
+  state: "holds" | "missing" | "unreadable" | "append-only";
+}
+
+function timelinePath(domain: TimelineDomain, key: string): string {
+  return `/api/items/${encodeURIComponent(domain)}/${encodeURIComponent(key)}/timeline`;
+}
+
+/** An item's backups over all its places; remote places come back unchecked. */
+export function getTimeline(
+  domain: TimelineDomain,
+  key: string
+): Promise<OkEnvelope & { places?: TimelinePlace[]; rows?: TimelineRow[] }> {
+  return fetchJSON(timelinePath(domain, key));
+}
+
+/** Reads one place; its rows carry only that place's marks. */
+export function getTimelinePlace(
+  domain: TimelineDomain,
+  key: string,
+  place: string
+): Promise<OkEnvelope & { place?: TimelinePlace; rows?: TimelineRow[] }> {
+  return fetchJSON(`${timelinePath(domain, key)}?place=${encodeURIComponent(place)}`);
+}
+
+/** What deleting a backup at these places takes, with every other place listed
+ *  live. No places means every place of the row. */
+export function getTimelineDeletePreview(
+  domain: TimelineDomain,
+  key: string,
+  rowKey: string,
+  places?: string[]
+): Promise<OkEnvelope & { delete?: PlaceDelete[]; others?: OtherPlace[] }> {
+  const query = (places ?? []).map((p) => `place=${encodeURIComponent(p)}`).join("&");
+  return fetchJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}/delete${query ? `?${query}` : ""}`);
+}
+
+export function deleteTimelineRow(
+  domain: TimelineDomain,
+  key: string,
+  rowKey: string,
+  places: PlaceDelete[]
+): Promise<OkEnvelope & { deleted?: PlaceDelete[]; skipped?: OtherPlace[] }> {
+  return fetchJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}`, {
+    method: "DELETE",
+    body: JSON.stringify({ places }),
+  });
+}
+
+/** Whether a compose project's folder has a snapshot at a source. */
+export function getStackDir(project: string, source: string): Promise<OkEnvelope & { found?: boolean; time?: string }> {
+  return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);
 }
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
@@ -2913,9 +3508,8 @@ export interface VM {
    *  the VMs domain schedule for this VM. "" means it follows the domain schedule.
    *  Only takes effect when the perItemSchedules setting is on. */
   scheduleCadence?: string;
-  /** Optional per-item repository override (#204): the ID of a named
-   *  repository from Settings, "" for the VMs domain repository. */
-  repo?: string;
+  /** Where the backups go and where they are copied, as the card shows it. */
+  placement: PlacementView;
   /** The libvirt name of the not-installed entry this VM looks like it was
    *  renamed from, or "". */
   renameFrom?: string;
@@ -2925,6 +3519,13 @@ export interface VM {
   aliases?: string[];
   /** The former names of this entry that a live VM carries again, sorted. */
   aliasConflicts?: string[];
+  /** Whether backups read only the blocks changed since the last one. */
+  blockBackup?: boolean;
+  /** How the last backup read the disks while blockBackup is on: "changed",
+   *  "full" or "classic"; "" before the first run. */
+  blockMode?: string;
+  /** Why the last run was "full" or "classic", as a reason code. */
+  blockReason?: string;
 }
 
 export interface ListVMsResponse {
@@ -3011,6 +3612,14 @@ export function setVMMethod(name: string, method: string): Promise<OkEnvelope> {
   });
 }
 
+/** PATCH /api/vms/{name}: turns changed-block backups on or off. */
+export function setVMBlockBackup(name: string, blockBackup: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ blockBackup }),
+  });
+}
+
 /** GET /api/vm/ssh — the libvirt SSH host + BombVault's public key to authorize. */
 export function getVMSSH(): Promise<
   OkEnvelope & { host?: string; publicKey?: string }
@@ -3034,11 +3643,6 @@ export function testVMSSH(): Promise<OkEnvelope & { libvirt?: boolean; libvirtEr
  */
 export function backupFlashNow(): Promise<BackupResponse> {
   return fetchJSON("/api/flash/backup", { method: "POST" });
-}
-
-/** GET /api/flash/snapshots — list flash snapshots. */
-export function listFlashSnapshots(source?: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/flash/snapshots${srcParam(source)}`);
 }
 
 /**
@@ -3108,11 +3712,6 @@ export function restoreFlashPlugin(
  */
 export function backupConfigNow(): Promise<BackupResponse> {
   return fetchJSON("/api/config/backup", { method: "POST" });
-}
-
-/** GET /api/config/snapshots — list BombVault's own config self-backups. */
-export function listConfigSnapshots(source?: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/config/snapshots${srcParam(source)}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -3196,6 +3795,8 @@ export interface FileSetView {
    *  compiles to the single whole-folder positional), deliberately
    *  distinguishable from a written selection. */
   selectedPaths?: string[];
+  /** Where the backups go and where they are copied, as the card shows it. */
+  placement: PlacementView;
 }
 
 /** The resolved outcome for one folder set (schedule.EffectiveFileSetSchedule).
@@ -3248,18 +3849,17 @@ export function getFileSetPreset(): Promise<FileSetPresetResponse> {
   return fetchJSON("/api/files/sets/preset");
 }
 
-/** POST /api/files/sets — create a file set (path required; validated
- *  server-side). repo picks the named repository (#204) the set writes to. */
+/** POST /api/files/sets: create a file set. The path is required and checked on the server. */
 export function createFileSet(set: {
   name: string;
   path: string;
   excludes: string[];
   enabled?: boolean;
-  /** The named repository (#204) the set writes to, "" for the domain's own.
-   *  The create dialog shows the picker, so the choice has to travel with the
-   *  create - it used to be dropped here and the set landed on the domain
-   *  repository with nothing on screen saying so. */
+  /** Absent leaves the set open, so it takes the default's location at its
+   *  first backup; present, "" included, chooses that repository. */
   repo?: string;
+  /** Absent follows the default's copies. */
+  copies?: CopiesChoice;
 }): Promise<OkEnvelope & { id?: string }> {
   return fetchJSON("/api/files/sets", {
     method: "POST",
@@ -3284,13 +3884,6 @@ export function patchFileSet(
      *  server with code "empty-selection" (a set cannot mean "back up
      *  nothing"; remove the set instead), and the stored selection is kept. */
     selectedPaths?: string[];
-    /** This set's own repository (#204). Sent alone by the repository editor.
-     *  An empty string clears the override and puts the set back on the Folders
-     *  domain repository. The server refuses a change once the set HAS backups:
-     *  its snapshots live in the repo it used, nothing re-homes them, and a
-     *  later backup to a new repo would succeed while the history sat in a
-     *  repository nothing points at any more. */
-    repo?: string;
   }
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {
@@ -3307,10 +3900,10 @@ export function deleteFileSet(id: string): Promise<OkEnvelope> {
   });
 }
 
-/** DELETE /api/files/sets/{id}/backups — delete ALL backups of a file set
- *  (every fileset-tagged snapshot, pruned) and forget the set. */
-export function deleteFileSetBackups(id: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backups`, {
+/** DELETE /api/files/sets/{id}/backups: every backup of a file set from the
+ *  selected source. Local also forgets the set; off-site keeps it. */
+export function deleteFileSetBackups(id: string, source?: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }
@@ -4283,6 +4876,8 @@ export interface GroupMember {
   relay: boolean;
   /** Where it takes direct calls; "" when none is known. */
   address: string;
+  /** "android" for the app; absent for an instance. */
+  kind?: string;
 }
 
 export type RelayMode = "project" | "own" | "off";
@@ -4406,6 +5001,8 @@ export interface FleetPeer {
   /** null = never polled, else whether the last poll succeeded. */
   lastPollOk: boolean | null;
   lastPollError: string;
+  /** "android" for the app, which has no scorecard; absent for an instance. */
+  kind?: string;
   /** The name/version the peer reported about itself on the last successful poll. */
   lastPollInstanceName: string;
   lastPollVersion: string;
@@ -4490,11 +5087,12 @@ export function listMeshOffers(): Promise<OkEnvelope & { offers?: MeshOffer[] }>
  */
 export function acceptMeshOffer(
   id: string,
-  domain: string
+  domain: string,
+  alsoExclude?: NewTargetExclusion
 ): Promise<OkEnvelope & { target?: OffsiteTarget }> {
   return fetchJSON(`/api/fleet/mesh-offers/${encodeURIComponent(id)}/accept`, {
     method: "POST",
-    body: JSON.stringify({ domain }),
+    body: JSON.stringify(alsoExclude ? { domain, alsoExclude } : { domain }),
   });
 }
 
@@ -5410,6 +6008,115 @@ export function revokeMcpKey(id: string): Promise<OkEnvelope> {
 
 export function purgeMcpKey(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** GET /api/tokens: the API tokens for their settings card. A token is an MCP
+ *  key of another kind, with the same tile and log, that opens /api/v1. */
+export interface ApiTokensResponse extends OkEnvelope {
+  basePath: string;
+  openapiPath: string;
+  limit: number;
+  authEnabled: boolean;
+  /** False when no login password is set and the page was opened under a
+   *  public-looking host name: tokens can then neither be created nor replaced. */
+  hostAllowsKeys: boolean;
+  startsPerHour: number;
+  cooldownMinutes: number;
+  itemStartsPerDay: number;
+  tokens: McpKeyView[];
+  revoked: McpKeyView[];
+}
+
+export function listApiTokens(): Promise<ApiTokensResponse> {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return fetchJSON(`/api/tokens?since=${Math.floor(midnight.getTime() / 1000)}`);
+}
+
+export function createApiToken(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {
+  return fetchJSON("/api/tokens", {
+    method: "POST",
+    body: JSON.stringify({ label, canStartBackups }),
+  });
+}
+
+export function updateApiToken(
+  id: string,
+  patch: { label?: string; canStartBackups?: boolean }
+): Promise<OkEnvelope & { item?: McpKeyView }> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function rotateApiToken(id: string): Promise<McpKeySecretResponse> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+}
+
+export function revokeApiToken(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/revoke`, { method: "POST" });
+}
+
+export function purgeApiToken(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export function getApiTokenActivity(id: string): Promise<McpKeyActivity> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/activity`);
+}
+
+/** The Home Assistant link over MQTT. The password never comes back;
+ *  passwordSet says whether one is stored. */
+export interface HomeAssistantSettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  passwordSet: boolean;
+  tls: boolean;
+  prefix: string;
+  buttons: boolean;
+  nodeId: string;
+  status: { connected: boolean; error: string };
+}
+
+export function getHomeAssistant(): Promise<
+  OkEnvelope & { settings?: HomeAssistantSettings; cooldownMinutes?: number; itemStartsPerDay?: number }
+> {
+  return fetchJSON("/api/homeassistant");
+}
+
+/** Saves and reconnects. An empty password keeps the stored one. */
+export function setHomeAssistant(body: {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  tls: boolean;
+  prefix: string;
+  buttons: boolean;
+}): Promise<OkEnvelope & { settings?: HomeAssistantSettings; warning?: string }> {
+  return fetchJSON("/api/homeassistant", { method: "PUT", body: JSON.stringify(body) });
+}
+
+/** The mDNS announcement: whether it is switched on, whether it runs, and
+ *  the address it announces. */
+export interface MdnsState extends OkEnvelope {
+  enabled: boolean;
+  running: boolean;
+  url: string;
+  instance: string;
+  error: string;
+}
+
+export function getMdns(): Promise<MdnsState> {
+  return fetchJSON("/api/mdns");
+}
+
+export function setMdns(enabled: boolean): Promise<MdnsState> {
+  return fetchJSON("/api/mdns", { method: "PUT", body: JSON.stringify({ enabled }) });
 }
 
 /** Reissues BombVault's own certificate with `host` among its names, so a

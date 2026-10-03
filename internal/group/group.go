@@ -86,6 +86,8 @@ type Member struct {
 	// Address is where the member takes direct calls, as it announced it on
 	// this network or passed it over the relay; empty when none is known.
 	Address string `json:"address"`
+	// Kind is what the member said it is over the relay, empty for an instance.
+	Kind string `json:"kind,omitempty"`
 }
 
 // ErrNotMember is returned for a call to an instance that is not reachable
@@ -393,10 +395,10 @@ func (m *Manager) Members() []Member {
 	if c != nil {
 		for _, s := range c.Siblings() {
 			if mem, ok := byID[s.InstanceID]; ok {
-				mem.Relay = true
+				mem.Relay, mem.Kind = true, s.Kind
 				continue
 			}
-			byID[s.InstanceID] = &Member{ID: s.InstanceID, Name: s.Name, Version: s.Version, Relay: true, Direct: m.confirmedDirect(s.InstanceID)}
+			byID[s.InstanceID] = &Member{ID: s.InstanceID, Name: s.Name, Version: s.Version, Kind: s.Kind, Relay: true, Direct: m.confirmedDirect(s.InstanceID)}
 		}
 	}
 	// A member with no relay and no multicast, only a sweep or a manually

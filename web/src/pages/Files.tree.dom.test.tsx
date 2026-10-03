@@ -8,6 +8,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { I18nProvider, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, FileSetView } from "../lib/api";
+import { placementOptions, placementView } from "../lib/placement.testsupport";
 
 // jsdom has no EventSource, and FileSetRow opens the progress stream on mount.
 class NoopEventSource {
@@ -44,6 +45,8 @@ vi.mock("../lib/api", async (importOriginal) => {
         activePatches -= 1;
       });
     },
+    getPlacementOptions: () => Promise.resolve({ ok: true, options: placementOptions({ domain: "files" }) }),
+    getSettings: () => Promise.resolve({ ok: true, platform: "unraid", hostMountRoot: "/host/user" }),
   };
 });
 
@@ -69,6 +72,7 @@ function setView(overrides?: Partial<FileSetView>): FileSetView {
     enabled: true,
     lastBackup: 0,
     pathExists: true,
+    placement: placementView(),
     ...overrides,
   };
 }
@@ -94,7 +98,18 @@ function EditorHarness({ set, hostMountRoot = HOST_MOUNT_ROOT }: { set: FileSetV
 
 function RowHarness({ set, hostMountRoot = HOST_MOUNT_ROOT, index = 0 }: { set: FileSetView; hostMountRoot?: string; index?: number }) {
   const { t } = useT();
-  return <FileSetRow set={set} hostMountRoot={hostMountRoot} restoreFolder="/restore" t={t} onRefresh={() => {}} onEdit={() => {}} index={index} />;
+  return (
+    <FileSetRow
+      set={set}
+      hostMountRoot={hostMountRoot}
+      restoreFolder="/restore"
+      t={t}
+      onRefresh={() => {}}
+      onEdit={() => {}}
+      onPlacement={() => {}}
+      index={index}
+    />
+  );
 }
 
 function DialogHarness({ initial }: { initial: FileSetView | null }) {
@@ -675,5 +690,16 @@ describe("FileSetDialog path-change hint", () => {
     expect(
       screen.getByText("The folder to back up, a relative subpath under the host mount root."),
     ).toBeTruthy();
+  });
+});
+
+describe("FileSetRow placement", () => {
+  it("carries the placement bar, the same row the container card has", async () => {
+    render(
+      <Providers>
+        <RowHarness set={setView()} />
+      </Providers>,
+    );
+    expect(await screen.findByRole("radiogroup", { name: "Placement" })).toBeTruthy();
   });
 });

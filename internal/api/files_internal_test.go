@@ -310,7 +310,7 @@ func TestFileSetPatchBusyRefusalNamesTheHoldingOperation(t *testing.T) {
 
 // A repository chosen for the set after discovery first read it is the
 // operator's, so the repair leaves it.
-func TestRestoreFileSetRepoKeepsARepositoryChosenSinceTheFirstRead(t *testing.T) {
+func TestDiscoverHomeKeepsARepositoryChosenSinceTheFirstRead(t *testing.T) {
 	dir := t.TempDir()
 	db, err := store.Open(":memory:")
 	if err != nil {
@@ -325,13 +325,16 @@ func TestRestoreFileSetRepoKeepsARepositoryChosenSinceTheFirstRead(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Repo: chosen.ID})
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Repo: chosen.ID, RepoChosen: store.RepoChosen})
 	if err != nil {
 		t.Fatal(err)
 	}
 	svc := NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}, st, nil, nil, nil)
 
-	svc.restoreFileSetRepo(context.Background(), set.ID, "docs", "found-elsewhere")
+	item := store.ItemRef{Domain: "files", Key: set.ID}
+	if left, err := svc.discoverHome(context.Background(), item, "found-elsewhere", nil, true); err != nil || left {
+		t.Fatalf("discoverHome = %v, %v; want it to leave the chosen repository alone", left, err)
+	}
 	if got, err := st.GetFileSet(set.ID); err != nil || got.Repo != chosen.ID {
 		t.Fatalf("repo = %q, %v; want the chosen %q kept", got.Repo, err, chosen.ID)
 	}

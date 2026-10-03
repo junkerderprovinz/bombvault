@@ -4,6 +4,8 @@
 // that without failing a type check, so these tests assert position in the
 // document rather than presence. The card must also never name a contact route
 // it has no button for.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
@@ -106,11 +108,14 @@ it("wears Buy Me a Coffee's own artwork and an envelope that opens under the poi
   const mail = screen.getByRole("button", { name: new RegExp(en["about.mail"], "i") });
   const rest = mail.querySelector("svg.glim-mark-rest");
   const open = mail.querySelector("svg.glim-mark-hover");
-  // One box for both, centred on the closed envelope, so it does not jump;
-  // the open flap may rise past the box.
-  expect(rest?.getAttribute("viewBox")).toBe("2 2.32 20 19.36");
-  expect(open?.getAttribute("viewBox")).toBe("2 2.32 20 19.36");
-  expect(open?.getAttribute("overflow")).toBe("visible");
+  // Each envelope sits in the box cropped to its own ink, so the two read the
+  // same size.
+  const glyphs: { name: string; viewBox: string }[] = JSON.parse(
+    readFileSync(join(__dirname, "..", "..", "..", "..", "scripts", "glyphs.json"), "utf8"),
+  );
+  const box = (name: string) => glyphs.find((g) => g.name === name)?.viewBox;
+  expect(rest?.getAttribute("viewBox")).toBe(box("IconMail"));
+  expect(open?.getAttribute("viewBox")).toBe(box("IconMailOpen"));
 });
 
 it("puts every way to give under the sentence that asks, and none of them elsewhere", () => {

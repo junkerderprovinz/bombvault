@@ -24,6 +24,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     verifiedDetail: "",
     drillDetail: "",
     offsiteConfigured: true,
+    offPremisesCovered: false,
     offsiteImmutable: false,
     lastTamperAt: 0,
     lastTamperOK: false,
@@ -92,5 +93,15 @@ describe("RansomwareCard, append-only not enabled", () => {
     cleanup();
     renderCard([domain({ offsiteImmutable: true, tamperState: "never" })]);
     expect(screen.getByText(en["ransomware.appendOnlyNever"])).toBeTruthy();
+  });
+});
+
+describe("RansomwareCard, paused replication", () => {
+  afterEach(cleanup);
+
+  it("shows a paused replication as its own amber row", () => {
+    renderCard([domain({ replicationState: "paused", protection: "amber" })]);
+    const row = screen.getByText(en["ransomware.replicationPaused"]);
+    expect(row.className).toContain("text-statusWarn");
   });
 });

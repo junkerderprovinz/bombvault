@@ -390,9 +390,6 @@ export function DashboardWidgetCard({
           </div>
         </>
       )}
-
-      {/* The companion Unraid dashboard tile plugin, installed over SSH. */}
-      <UnraidTileSection t={t} hueIndex={hueIndex} />
     </Card>
   );
 }

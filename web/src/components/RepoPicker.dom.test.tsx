@@ -16,11 +16,11 @@ describe("RepoPicker", () => {
         <RepoPicker value="" onChange={() => {}} locked />
       </I18nProvider>,
     );
-    const label = screen.getByText(en["repos.itemLabel"]).closest("label")!;
+    const label = screen.getByText(en["zfs.repo"]).closest("label")!;
     const bubbles = [...label.querySelectorAll("[aria-label]")];
     expect(bubbles).toHaveLength(1);
     const tip = bubbles[0].getAttribute("aria-label") ?? "";
-    expect(tip).toContain(en["repos.itemHint"]);
-    expect(tip).toContain(en["repos.itemLocked"]);
+    expect(tip).toContain(en["zfs.repoHint"]);
+    expect(tip).toContain(en["zfs.repoLocked"]);
   });
 });

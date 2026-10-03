@@ -31,7 +31,7 @@ Gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) như
 
 Sao lưu tập dữ liệu ZFS cũng cần chế độ này: máy chủ chỉ gắn ảnh chụp của một tập dữ liệu sau khi container đã khởi động. Xem [Tập dữ liệu ZFS](zfs-datasets.md).
 
-Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Cài đặt, Lưu trữ, Đường dẫn sao lưu**. Mỗi trường đường dẫn còn có một công tắc **Cục bộ / Từ xa** ngay trong dòng: một đường dẫn có thể là một remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) thay vì một thư mục cục bộ, sao lưu thẳng tới đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
+Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Cài đặt, Lưu trữ, Đường dẫn sao lưu**. Mỗi trường đường dẫn còn có một công tắc **Cục bộ / Từ xa** ngay trong dòng: một đường dẫn có thể là một remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) thay vì một thư mục cục bộ, sao lưu thẳng tới đó mà không có bản sao cục bộ riêng; xem [Kho chính từ xa](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Kiểm tra tích hợp máy chủ"
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu.
@@ -84,7 +84,7 @@ Template thêm `--add-host=host.docker.internal:host-gateway` để container c�
 
 Thiết lập một bản sao off-site trên trang **Cài đặt, Ngoài site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
 
-- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một đường dẫn sao lưu tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
+- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một đường dẫn sao lưu tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`). Backblaze B2 không có backend gốc ở đây: hãy truy cập qua điểm cuối S3 của nó (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), với ID khóa và khóa ứng dụng làm thông tin xác thực S3.
 - **Thông tin đăng nhập đám mây dùng chung** được lưu mã hóa dưới Cài đặt, Truy cập đám mây, Thông tin đăng nhập đám mây dùng chung.
 - **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Cài đặt, Tích hợp, SSH máy chủ** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
 - **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa, bổ sung cho một kho chính (thường là cục bộ). Mỗi miền có lịch trình off-site riêng, cùng với một nút **Sao chép ngay**.
@@ -113,4 +113,4 @@ Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riên
 Thẻ **Xuất / nhập cài đặt** trên trang Cài đặt, Hệ thống ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
 
 !!! warning "Bản xuất có thể chứa thông tin đăng nhập"
-    Bạn chọn có bao gồm thông tin đăng nhập off-site và thông báo trong tệp hay không. Khi có kèm thông tin đăng nhập, bản xuất nhạy cảm như bộ khôi phục của bạn, nên hãy cất giữ nó ở nơi an toàn. Không có chúng, tệp chỉ chứa các cài đặt không bí mật.
+    Bạn chọn có bao gồm thông tin đăng nhập off-site, thông báo và broker MQTT trong tệp hay không. Khi có kèm thông tin đăng nhập, bản xuất nhạy cảm như bộ khôi phục của bạn, nên hãy cất giữ nó ở nơi an toàn. Không có chúng, tệp chỉ chứa các cài đặt không bí mật.

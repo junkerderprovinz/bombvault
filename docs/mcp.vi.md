@@ -39,6 +39,8 @@ Vì sao lưu làm dừng dịch vụ và đẩy các điểm khôi phục cũ ra
 
 Khi bắt đầu một miền hoặc Sao lưu toàn bộ, các mục bị một giới hạn giữ lại sẽ bị bỏ qua và được nêu tên trong câu trả lời. Không giới hạn nào trong số này áp dụng cho giao diện web và lịch. Hạn mức mỗi giờ nằm trong bộ nhớ, nên khởi động lại BombVault sẽ đặt nó về không.
 
+Các lần bắt đầu qua [API](api.md#errors) và từ [Home Assistant](api.md#home-assistant) được tính chung với các lần bắt đầu qua MCP trong cùng giới hạn cho mỗi mục và trong cơ chế bảo vệ lưu giữ.
+
 ## Bật tính năng {#switch-on}
 
 1. Mở **Cài đặt, Tích hợp, Máy chủ MCP** và bấm nút của máy khách bạn dùng. Máy khách không có trong danh sách kết nối qua **Máy khách khác**.
@@ -54,7 +56,7 @@ Mỗi khóa có một ô riêng trên thẻ. Ô hiển thị tên khóa, khóa �
 
 Cạnh tên, ô hiện logo của máy khách mà khóa được tạo cho. Khóa tạo qua **Máy khách khác**, hoặc trước khi thẻ liệt kê máy khách, sẽ hiện biểu tượng chiếc khóa thay vào đó.
 
-**Nhật ký** trên một ô mở ra những gì khóa đó đã làm. Đầu tiên là các bản sao lưu nó đã bắt đầu, mỗi bản kèm trạng thái và liên kết tới lần chạy đó trong nhật ký hoạt động trên bảng điều khiển. Bên dưới là các lượt gọi, mới nhất trước, kèm công cụ và kết quả. Một lần từ chối có ghi lý do: khóa chỉ được đọc, cơ chế bảo vệ lưu giữ đã giữ bản sao lưu lại, một bản sao lưu khác đang chạy, mục này vừa được sao lưu qua MCP vài phút trước, hoặc khóa gửi quá nhiều yêu cầu. Một lần hủy liên kết tới lần chạy liên quan.
+**Nhật ký** trên một ô mở ra những gì khóa đó đã làm. Đầu tiên là các bản sao lưu nó đã bắt đầu, mỗi bản kèm trạng thái và liên kết tới lần chạy đó trong nhật ký hoạt động trên bảng điều khiển. Bên dưới là các lượt gọi, mới nhất trước, kèm công cụ và kết quả. Một lần từ chối có ghi lý do: khóa chỉ được đọc, cơ chế bảo vệ lưu giữ đã giữ bản sao lưu lại, một bản sao lưu khác đang chạy, việc sao lưu mục này vừa được bắt đầu từ bên ngoài giao diện web vài phút trước, hoặc khóa gửi quá nhiều yêu cầu. Một lần hủy liên kết tới lần chạy liên quan.
 
 BombVault giữ các mục của mỗi khóa tối đa 30 ngày: 500 lần khởi chạy và hủy thành công gần nhất, cùng với đó là 200 lượt gọi khác gần nhất (đọc, từ chối và lỗi), nên một trợ lý hỏi đi hỏi lại về một bản sao lưu đang chạy hoặc thử lại mãi một lượt gọi bị từ chối không thể đẩy lần khởi chạy của nó ra khỏi nhật ký. Với mỗi lượt gọi, nó lưu công cụ, kết quả và lần chạy mà lệnh hủy nêu tên. Nó không bao giờ lưu nội dung trợ lý đã gửi, cũng không lưu khóa hay dấu vân tay của khóa. Gói chẩn đoán chỉ đếm số mục, và bản xuất cài đặt không chứa chúng.
 
@@ -256,7 +258,7 @@ Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đ�
 | `429` | Quá nhiều khóa sai từ địa chỉ này, hoặc hơn 120 yêu cầu mỗi phút với một khóa. Đợi một phút và kiểm tra xem trợ lý có bị kẹt trong vòng lặp không. |
 | Lỗi có "certificate", "self-signed" hoặc "unable to verify" | Máy khách không tin cậy chứng chỉ của BombVault. Xem [TLS và chứng chỉ](#tls). |
 | `busy` | Một lần sao lưu khác hoặc tác vụ bảo trì đang chiếm miền đó. Thử lại khi nó xong. |
-| `cooldown` | Mục này, miền này hoặc Sao lưu toàn bộ đã được bắt đầu qua MCP chưa đầy 15 phút trước. |
+| `cooldown` | Mục này, miền này hoặc Sao lưu toàn bộ đã được bắt đầu từ bên ngoài giao diện web chưa đầy 15 phút trước. |
 | `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP, hoặc mục đó đã được sao lưu qua MCP 4 lần trong 24 giờ qua, tính cả các lần thất bại và bị hủy. Ở trường hợp đầu, lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống; ở trường hợp sau, mục đó được bắt đầu lại sau 24 giờ kể từ lần sao lưu cũ nhất trong số đó. Trong giao diện web, bạn có thể bắt đầu nó bất cứ lúc nào. |
 | `rate_limited` | Khóa đã dùng hết 12 lần bắt đầu của giờ này. |
 | `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |

@@ -31,7 +31,7 @@ Liitä Docker-soketti, flash (`/boot`) ja **Host Data** -juuri (`/mnt`) kuten CA
 
 ZFS-tietojoukkojen varmuuskopiot tarvitsevat myös tämän tilan: isäntä liittää tietojoukon tilannevedoksen vasta sen jälkeen, kun kontti on käynnistynyt. Katso [ZFS-tietojoukot](zfs-datasets.md).
 
-Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Tallennus, Varmuuskopiopolut**. Jokaisessa polkukentässä on myös sisäinen **Paikallinen / Etä** -kytkin: polku voi olla paikallisen kansion sijaan restic-etärepositorio (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), jolloin varmuuskopio menee suoraan sinne ilman erillistä paikallista kopiota; katso [Etäsijaintiset ensisijaiset arkistot](offsite-recovery.md#remote-primary-repositories).
+Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Tallennus, Varmuuskopiopolut**. Jokaisessa polkukentässä on myös sisäinen **Paikallinen / Etä** -kytkin: polku voi olla paikallisen kansion sijaan restic-etärepositorio (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`), jolloin varmuuskopio menee suoraan sinne ilman erillistä paikallista kopiota; katso [Etäsijaintiset ensisijaiset arkistot](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset.
@@ -84,7 +84,7 @@ Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoi
 
 Määritä etäreplika **Asetukset, Etä** -sivulla. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
 
-- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
+- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`). Backblaze B2:lla ei ole tässä omaa taustajärjestelmää: siihen päästään sen S3-päätepisteen kautta (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), ja avaintunnus ja sovellusavain syötetään S3-tunnuksina.
 - **Jaetut pilvitunnistetiedot** tallennetaan salattuina kohdassa Asetukset, Pilvipääsy, Jaetut pilvitunnistetiedot.
 - **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
 - **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella (yleensä paikallisen) ensisijaisen repon lisäksi. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.
@@ -113,4 +113,4 @@ Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne **Poi
 **Vie / tuo asetukset** -kortti Asetukset, Järjestelmä -sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
 
 !!! warning "Vienti voi sisältää tunnuksia"
-    Valitset itse, sisällytetäänkö etä- ja ilmoitustunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.
+    Valitset itse, sisällytetäänkö etä-, ilmoitus- ja MQTT-välittäjän tunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

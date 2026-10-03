@@ -39,6 +39,8 @@ Eftersom en säkerhetskopia stoppar saker och trycker ut gamla återställningsp
 
 En start av en domän eller av Total säkerhetskopia hoppar över de objekt som en gräns håller tillbaka och nämner dem i svaret. Webbgränssnittet och schemat påverkas inte av något av detta. Timbudgeten finns i minnet, så en omstart av BombVault nollställer den.
 
+Starter via [API:t](api.md#errors) och från [Home Assistant](api.md#home-assistant) räknas in i samma gränser per objekt som starter via MCP, och i lagringsskyddet.
+
 ## Slå på det {#switch-on}
 
 1. Öppna **Inställningar, Integrationer, MCP-server** och klicka på knappen för din klient. En klient som inte finns i listan ansluter via **Annan klient**.
@@ -54,7 +56,7 @@ Varje nyckel har en egen ruta på kortet. Den visar nyckelns namn, om den får s
 
 Bredvid namnet visar rutan logotypen för den klient som nyckeln skapades för. En nyckel som skapats via **Annan klient**, eller innan kortet listade klienter, visar i stället en nyckel.
 
-**Logg** i en ruta öppnar det nyckeln har gjort. Först kommer de säkerhetskopior den startade, var och en med sin status och en länk till körningen i aktivitetsloggen på instrumentpanelen. Under dem står dess anrop, nyaste först, med verktyget och vad som blev av anropet. Ett avvisande säger varför: nyckeln får bara läsa, lagringsskyddet höll tillbaka säkerhetskopian, en annan säkerhetskopiering pågick redan, objektet säkerhetskopierades via MCP för några minuter sedan, eller nyckeln skickade för många begäranden. En avbrytning länkar till körningen den gällde.
+**Logg** i en ruta öppnar det nyckeln har gjort. Först kommer de säkerhetskopior den startade, var och en med sin status och en länk till körningen i aktivitetsloggen på instrumentpanelen. Under dem står dess anrop, nyaste först, med verktyget och vad som blev av anropet. Ett avvisande säger varför: nyckeln får bara läsa, lagringsskyddet höll tillbaka säkerhetskopian, en annan säkerhetskopiering pågick redan, en säkerhetskopiering av objektet startades utanför webbgränssnittet för några minuter sedan, eller nyckeln skickade för många begäranden. En avbrytning länkar till körningen den gällde.
 
 BombVault sparar varje nyckels poster i upp till 30 dagar: de senaste 500 lyckade starterna och avbrotten och vid sidan av dem de senaste 200 övriga anropen (läsningar, avvisningar och fel), så en assistent som om och om igen frågar efter en pågående säkerhetskopiering eller försöker med ett avvisat anrop inte kan tränga ut dess start ur loggen. För varje anrop sparar det verktyget, utfallet och körningen som en avbrytning nämnde. Det sparar aldrig vad assistenten skickade, och aldrig nyckeln eller dess fingeravtryck. Diagnostikpaketet räknar bara posterna, och en export av inställningarna utelämnar dem.
 
@@ -256,7 +258,7 @@ Det som en assistent läser går till AI-leverantören bakom den: objektnamn, sc
 | `429` | För många felaktiga nycklar från den här adressen, eller fler än 120 förfrågningar i minuten med en nyckel. Vänta en minut och kontrollera om assistenten har fastnat i en loop. |
 | Fel med "certificate", "self-signed" eller "unable to verify" | Klienten litar inte på BombVaults certifikat. Se [TLS och certifikat](#tls). |
 | `busy` | En annan säkerhetskopia eller en underhållsuppgift upptar domänen. Försök igen när den är klar. |
-| `cooldown` | Det här objektet, den här domänen eller Total säkerhetskopia startades via MCP för mindre än 15 minuter sedan. |
+| `cooldown` | Det här objektet, den här domänen eller Total säkerhetskopia startades utanför webbgränssnittet för mindre än 15 minuter sedan. |
 | `retention_guard` | Ytterligare en MCP-säkerhetskopia skulle bara lämna återställningspunkter från MCP i ett fönster med "behåll de senaste N", eller så har objektet redan fått 4 säkerhetskopior via MCP de senaste 24 timmarna, misslyckade och avbrutna medräknade. I det första fallet gör nästa schemalagda säkerhetskopia plats, i det andra är objektet ledigt igen 24 timmar efter den äldsta av dem. Du kan alltid starta den i webbgränssnittet. |
 | `rate_limited` | Nyckeln har använt sina 12 starter för den här timmen. |
 | `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Tillåt att starta säkerhetskopior** i kortet; ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |

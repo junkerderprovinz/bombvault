@@ -103,6 +103,30 @@ var (
 	vmEntries        = entryTable{"vm", "vms", "name"}
 )
 
+// entriesOf returns the entry table whose aliases carry aliasDomain.
+func entriesOf(aliasDomain string) (entryTable, error) {
+	for _, e := range []entryTable{containerEntries, vmEntries} {
+		if e.domain == aliasDomain {
+			return e, nil
+		}
+	}
+	return entryTable{}, fmt.Errorf("no entries have aliases of %q", aliasDomain)
+}
+
+// holds reports whether something answers to name today: a row of e, or a
+// machine in installed, the names the host reports for e's domain. A container
+// or VM has no row until its first backup, yet its card can carry a rule.
+func (e entryTable) holds(tx *sql.Tx, name string, installed map[string]bool) (bool, error) {
+	if installed[name] {
+		return true, nil
+	}
+	var n int
+	if err := tx.QueryRow(`SELECT count(*) FROM `+e.table+` WHERE `+e.nameCol+` = ?`, name).Scan(&n); err != nil {
+		return false, fmt.Errorf("check the entry of %s: %w", name, err)
+	}
+	return n > 0, nil
+}
+
 // renameWithAlias moves the entry of e on oldName to newName and links
 // oldName to it, in one transaction; see RenameTargetWithAlias. A VM alias
 // keeps the definition the entry had under oldName, and a VM row takes uuid.
@@ -136,6 +160,18 @@ func (r *Repo) renameWithAlias(e entryTable, oldName, newName, newDefinition, uu
 			return fmt.Errorf("rename %q: drop alias %q: %w", oldName, newName, err)
 		}
 	}
+	placement, prefix, err := placementDomainForAlias(e.domain)
+	if err != nil {
+		return err
+	}
+	if err := renameCopyRuleTx(tx, placement, prefix+oldName, prefix+newName); err != nil {
+		return fmt.Errorf("rename %q: %w", oldName, err)
+	}
+	// Every copy counted under oldName so far predates the link, so all of
+	// them are the entry's.
+	if err := moveItemCopiesTx(tx, placement, prefix+oldName, prefix+newName); err != nil {
+		return fmt.Errorf("rename %q: %w", oldName, err)
+	}
 	if err := e.moveRow(tx, id, newName, newDefinition, uuid); err != nil {
 		return fmt.Errorf("rename %q: %w", oldName, err)
 	}
@@ -155,7 +191,7 @@ func (r *Repo) renameWithAlias(e entryTable, oldName, newName, newDefinition, uu
 // unlinkAlias moves the entry of e that oldName is linked to back onto
 // oldName and removes the alias, in one transaction; see UnlinkAlias. A VM
 // row takes uuid.
-func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string) error {
+func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string, installed map[string]bool) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("unlink %q: %w", oldName, err)
@@ -172,7 +208,23 @@ func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string) er
 	if taken > 0 {
 		return fmt.Errorf("%q already has its own entry", oldName)
 	}
+	var current string
+	if err := tx.QueryRow(`SELECT `+e.nameCol+` FROM `+e.table+` WHERE id = ?`, targetID).Scan(&current); err != nil {
+		return fmt.Errorf("unlink %q: read the linked entry: %w", oldName, err)
+	}
+	placement, prefix, err := placementDomainForAlias(e.domain)
+	if err != nil {
+		return err
+	}
+	if err := renameCopyRuleTx(tx, placement, prefix+current, prefix+oldName); err != nil {
+		return fmt.Errorf("unlink %q: %w", oldName, err)
+	}
 	if err := e.moveRow(tx, targetID, oldName, newDefinition, uuid); err != nil {
+		return fmt.Errorf("unlink %q: %w", oldName, err)
+	}
+	// The snapshots taken under current while linked stay the entry's, and
+	// nothing links current to it any more.
+	if err := keepRuleOnNameTx(tx, e, oldName, current, installed); err != nil {
 		return fmt.Errorf("unlink %q: %w", oldName, err)
 	}
 	if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = ? AND old_name = ?`, e.domain, oldName); err != nil {

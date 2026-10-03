@@ -124,8 +124,8 @@ export function CoinMark({ coin, size = 16 }: { coin: string; size?: number }): 
  * leading move becomes absolute because the original was relative to the disc.
  *
  * The viewBox is a square centred on the ink, (5.804, 4.178) to
- * (17.318, 19.378), as gen_glyphs.py's cropped_box() does for imported glyphs,
- * so the letter fills its box like the marks beside it.
+ * (17.318, 19.378), cropped the way every glyph in scripts/glyphs.json is, so
+ * the letter fills its box like the marks beside it.
  */
 const BTC_LETTER_BOX = "3.961 4.178 15.2 15.2";
 const BTC_LETTER = PATHS.btc.d.slice(PATHS.btc.d.indexOf("m-6.35-4.613")).replace(

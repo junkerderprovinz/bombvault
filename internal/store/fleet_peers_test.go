@@ -135,3 +135,23 @@ func TestGroupStateRemembersWhenTheGroupWasEnteredAndFirstShared(t *testing.T) {
 		t.Fatalf("after leaving: joined %v, seen %v; want both zero", g.JoinedAt, g.MemberSeenAt)
 	}
 }
+
+func TestAFleetPeerKeepsTheKindOfMemberItIs(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	p, err := r.CreateFleetPeer(store.FleetPeer{MemberID: "phone", Name: "Pixel", Kind: "android", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Name = "Pixel 8"
+	if err := r.UpdateFleetPeer(p); err != nil {
+		t.Fatal(err)
+	}
+	back, _, err := r.GetFleetPeer(p.ID)
+	if err != nil || back.Kind != "android" {
+		t.Fatalf("kind after a rename = %q (err %v), want android", back.Kind, err)
+	}
+}

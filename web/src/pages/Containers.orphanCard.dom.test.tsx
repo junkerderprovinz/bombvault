@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Container } from "../lib/api";
+import { placementOptions, placementView } from "../lib/placement.testsupport";
 
 class FakeEventSource {
   onmessage: ((ev: MessageEvent) => void) | null = null;
@@ -22,6 +23,8 @@ vi.mock("../lib/api", async () => {
     forgetContainer: vi.fn(async () => ({ ok: true })),
     deleteBackups: vi.fn(async () => ({ ok: true })),
     setInclude: vi.fn(async () => ({ ok: true })),
+    getPlacementOptions: () => Promise.resolve({ ok: true, options: placementOptions() }),
+    getSettings: () => Promise.resolve({ ok: true, platform: "unraid" }),
   };
 });
 
@@ -51,6 +54,7 @@ const orphan: Container = {
   lastUpdateCheck: 0,
   lastUpdateResult: "",
   stack: "",
+  placement: placementView(),
 };
 
 afterEach(() => {
@@ -63,13 +67,13 @@ describe("ContainerRow when the container is no longer installed", () => {
   });
 
   it("offers the schedule switch", () => {
-    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
+    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} onPlacement={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
     expect(sw.getAttribute("aria-checked")).toBe("true");
   });
 
   it("saves the switch", async () => {
-    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
+    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} onPlacement={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
 
     fireEvent.click(sw);
@@ -79,7 +83,7 @@ describe("ContainerRow when the container is no longer installed", () => {
   });
 
   it("offers Remove entry, not Delete all backups, when it has no backups", async () => {
-    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} index={0} />);
+    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} onPlacement={noop} index={0} />);
     expect(screen.queryByRole("button", { name: "containers.deleteBackups" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "vms.removeEntry" }));
@@ -96,6 +100,7 @@ describe("ContainerRow when the container is no longer installed", () => {
         installedContainers={[]}
         t={t}
         onDeleted={noop}
+        onPlacement={noop}
         index={0}
       />
     );
@@ -106,5 +111,30 @@ describe("ContainerRow when the container is no longer installed", () => {
 
     await waitFor(() => expect(deleteBackups).toHaveBeenCalledWith("radarr-movies"));
     expect(forgetContainer).not.toHaveBeenCalled();
+  });
+});
+
+describe("ContainerRow placement", () => {
+  it("shows the placement bar in the simple view, between the header and the section chips", async () => {
+    render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} onPlacement={noop} index={0} />);
+    const bar = await screen.findByRole("radiogroup", { name: en["placement.title"] });
+    const sections = screen.getByRole("group", { name: "containers.sectionsLabel" });
+    expect(bar.compareDocumentPosition(sections) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  // The label is there from the row's first render, the bar only once the
+  // options resolve, so a missing bar would prove nothing here.
+  it("gives BombVault's own container no placement", () => {
+    render(
+      <ContainerRow
+        container={{ ...orphan, installed: true, state: "running", self: true }}
+        installedContainers={[]}
+        t={t}
+        onDeleted={noop}
+        onPlacement={noop}
+        index={0}
+      />
+    );
+    expect(screen.queryByText(en["placement.title"])).toBeNull();
   });
 });

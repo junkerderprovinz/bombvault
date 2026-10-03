@@ -24,6 +24,8 @@ var settingsPages = map[string]bool{
 // cardPages names the page each card a message points at lives on.
 var cardPages = map[string]string{
 	"MCP server":        "Integrations",
+	"API tokens":        "Integrations",
+	"Home Assistant":    "Integrations",
 	"Host SSH":          "Integrations",
 	"Repositories":      "Storage",
 	"Backup paths":      "Storage",
@@ -68,6 +70,9 @@ func TestMessagesNameTheSettingsPageOfTheirCard(t *testing.T) {
 			for _, m := range settingsPath.FindAllStringSubmatch(s, -1) {
 				checked++
 				page, card := m[1], m[2]
+				if strings.Contains(m[0], " > ") {
+					t.Errorf("%s: %q, write it with commas as the web interface and the docs do", fset.Position(lit.Pos()), m[0])
+				}
 				if !settingsPages[page] {
 					t.Errorf("%s: %q names %q, which is no page in Settings", fset.Position(lit.Pos()), m[0], page)
 					continue

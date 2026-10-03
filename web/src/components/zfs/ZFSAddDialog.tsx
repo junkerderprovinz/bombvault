@@ -267,10 +267,6 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
                   <RepoPicker
                     value={repo}
                     onChange={setRepo}
-                    labelKey="zfs.repo"
-                    hintKey="zfs.repoHint"
-                    defaultLabelKey="zfs.repoPlaceholder"
-                    lockedKey="zfs.repoLocked"
                   />
 
                   <div className="flex items-center justify-end gap-2 pt-1 max-md:flex-wrap">

@@ -5,7 +5,8 @@ import { RevealInput } from "../../components/RevealInput";
 import { setCloudCredSets, type CloudCredSet, type CloudCredSetInfo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { pushSaveWarnings } from "../../lib/placementCodes";
+import { credSetLabel, credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
 import { Card, type SaveState } from "./shared";
@@ -75,6 +76,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         closeEditor();
         credSetsChanged();
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, r.warnings);
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");
@@ -122,7 +124,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         // to a column one character wide.
         <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3 max-md:flex-col">
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-sm text-carbon-text truncate max-md:whitespace-normal max-md:wrap-anywhere">{s.name}</span>
+            <span className="text-sm text-carbon-text truncate max-md:whitespace-normal max-md:wrap-anywhere">{credSetLabel(t, s)}</span>
             <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
               {s.s3KeyId || s.restUser || "—"}
             </span>

@@ -10,7 +10,7 @@ import { CheckDraw } from "../../components/CheckDraw";
 import { InfoBubble } from "../../components/InfoBubble";
 import { HUE_OFFSET, Selector } from "../../components/Selector";
 import { SelectField } from "../../components/SelectField";
-import { IconCheckCircle } from "../../components/Sidebar";
+import { IconCheck } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
 import { IconKey, IconPrune } from "../../components/glyphs";
 import { ProgressBar } from "../../components/ProgressBar";
@@ -332,7 +332,7 @@ export function IntegrityCard({
       key: "verify",
       label: t("integrity.verify"),
       labelKey: "integrity.verify",
-      glyph: <IconCheckCircle />,
+      glyph: <IconCheck />,
       busy: t("integrity.checking"),
     },
     {
@@ -510,7 +510,7 @@ export function IntegrityCard({
                   // The labelKey follows the label's branch, or the button
                   // would be sized for the other wording.
                   labelKey={kind === "dr" ? "drill.runDR" : "verify.now"}
-                  glyph={<IconCheckCircle />}
+                  glyph={<IconCheck />}
                   tone="neutral"
                   hueIndex={hueIndex}
                   onClick={() => void runDrillFor(domain)}

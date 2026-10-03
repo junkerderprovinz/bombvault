@@ -7,19 +7,20 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// newMeshCredSetID returns an id for the credential set an accepted mesh offer
-// creates, in the form store.newID uses. Other credential set ids are minted by
-// the SPA.
-func newMeshCredSetID() string {
+// newCredSetID returns an id for a credential set the server creates itself,
+// the one an accepted mesh offer brings or the one a direct repository keeps,
+// in the form store.newID uses. Other credential set ids are minted by the SPA.
+func newCredSetID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("newMeshCredSetID: %v", err))
+		panic(fmt.Sprintf("newCredSetID: %v", err))
 	}
 	return hex.EncodeToString(b)
 }
@@ -115,7 +116,34 @@ func (h *Handler) handleListMeshOffers(w http.ResponseWriter, _ *http.Request) {
 // meshOfferAcceptInput names the local domain the offered storage will back
 // up.
 type meshOfferAcceptInput struct {
-	Domain string `json:"domain"`
+	Domain      string              `json:"domain"`
+	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
+}
+
+// dropCredSet takes one credential set out of the stored list. It reads that
+// list itself, because writing back a copy read earlier would drop whatever
+// another request added or renamed in between, along with its password; the
+// write merges blanked secrets back by id.
+func (h *Handler) dropCredSet(id string) error {
+	sets, err := h.svc.CloudCredSets()
+	if err != nil {
+		return err
+	}
+	return h.svc.SetCloudCredSets(slices.DeleteFunc(sets, func(s CloudCredSet) bool { return s.ID == id }))
+}
+
+// undoAcceptedOffer takes back the target and the credential set an accepted
+// offer wrote, once a later write of the same accept failed, and returns the
+// error to answer with. The credentials go only with the target, since a
+// target that stays behind would otherwise point at a set that is gone.
+func (h *Handler) undoAcceptedOffer(targetID, setID string, cause error) error {
+	if err := h.store.DeleteOffsiteTarget(targetID); err != nil {
+		return fmt.Errorf("%w; the target and its credentials are still there: %v", cause, err)
+	}
+	if err := h.dropCredSet(setID); err != nil {
+		return fmt.Errorf("%w; the credential set is still there: %v", cause, err)
+	}
+	return cause
 }
 
 // handleAcceptMeshOffer turns a pending offer into a credential set holding
@@ -144,6 +172,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": invalidOffsiteDomain})
 		return
 	}
+	if in.AlsoExclude != nil {
+		if err := checkExclusion(in.Domain, *in.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+	}
 	password, err := secret.Decrypt(h.cfg.AppKey, offer.RESTPasswordEnc)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("decrypt offer credential: %w", err)))
@@ -159,7 +193,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	if label == "" {
 		label = "mesh peer"
 	}
-	setID := newMeshCredSetID()
+	setID := newCredSetID()
 	sets, err := h.svc.CloudCredSets()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -186,13 +220,19 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		Enabled:   true,
 		SortOrder: sortOrder,
 	}
-	stored, err := h.store.UpsertOffsiteTarget(target)
+	stored, err := h.store.CreateOffsiteTarget(target)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	if in.AlsoExclude != nil {
+		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *in.AlsoExclude); err != nil {
+			placementFail(w, h.undoAcceptedOffer(stored.ID, setID, err), nil)
+			return
+		}
+	}
 	if err := h.store.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, failEnvelope(h.undoAcceptedOffer(stored.ID, setID, err)))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))

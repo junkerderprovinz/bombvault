@@ -117,10 +117,29 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [
         { key: "repos.immutable", hint: "repos.immutableHint" },
         { key: "settings.compression", hint: "settings.compressionInfo" },
+        { key: "repos.offPremises", hint: "repos.offPremisesHint" },
         { key: "repos.enabled" },
         { key: "repos.name" },
         { key: "repos.location", hint: "repos.locationHint" },
       ],
+    },
+    {
+      title: "placementDefaults.title",
+      hint: "placementDefaults.hint",
+      rows: [
+        { key: "placement.title" },
+        { key: "placement.segLocal" },
+        { key: "placement.segLocalOffsite" },
+        { key: "placement.segOffsiteOnly" },
+        { key: "placement.storedOn" },
+        { key: "placement.copyTo" },
+        { key: "placement.sendTo" },
+        { key: "placementDefaults.copyLine" },
+        { key: "placementDefaults.copyLineContainers" },
+        { key: "placementDefaults.apply" },
+        { key: "placementDefaults.confirm" },
+      ],
+      body: ["placementDefaults.paused", "placementDefaults.pausedHint"],
     },
     {
       title: "settings.paths",
@@ -177,6 +196,18 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         ...SOURCE_ROWS("settings.ownRetentionToggleHint"),
       ],
       body: ["settings.retentionCombineInfo"],
+    },
+    {
+      title: "settings.ownRetentionTitle",
+      hint: "settings.ownRetentionHint",
+      rows: [
+        { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
+        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
+        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
+        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
+        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
+        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+      ],
     },
     {
       title: "settings.retentionOffsiteTitle",
@@ -529,10 +560,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "settings.widget",
       hint: "settings.widgetHint",
-      rows: [
-        { key: "settings.widgetToken" },
-        { key: "settings.dashTile", hint: "settings.dashTileHint" },
-      ],
+      rows: [{ key: "settings.widgetToken" }],
     },
     {
       title: "mcp.title",
@@ -547,6 +575,35 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
+      title: "api.title",
+      hint: "api.hint",
+      rows: [
+        { key: "api.addressLabel", hint: "api.addressHint" },
+        { key: "api.labelLabel" },
+        { key: "mcp.allowStart", hint: "api.allowStartHint" },
+        { key: "api.newTokenTitle", hint: "mcp.showOnce" },
+      ],
+    },
+    {
+      title: "ha.title",
+      hint: "ha.hint",
+      rows: [
+        { key: "ha.enable" },
+        { key: "ha.host" },
+        { key: "notify.smtpPort" },
+        { key: "notify.smtpUser" },
+        { key: "notify.smtpPass" },
+        { key: "ha.prefix", hint: "ha.prefixHint" },
+        { key: "ha.tls", hint: "ha.tlsHint" },
+        { key: "ha.buttons", hint: "ha.buttonsHint" },
+      ],
+    },
+    {
+      title: "mdns.title",
+      hint: "mdns.hint",
+      rows: [{ key: "mdns.enable" }],
+    },
+    {
       title: "vm.ssh.title",
       hint: "vm.ssh.desc",
       rows: [
@@ -556,6 +613,19 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     { title: "spike.title", rows: [] },
+  ],
+
+  apps: [
+    {
+      title: "apps.parleyport.title",
+      hint: "apps.parleyport.hint",
+      rows: [{ key: "apps.parleyport.toRelay" }],
+    },
+    {
+      title: "apps.widget.title",
+      hint: "apps.widget.hint",
+      rows: [{ key: "settings.dashTile", hint: "settings.dashTileHint" }],
+    },
   ],
 
   system: [

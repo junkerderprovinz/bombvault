@@ -1,11 +1,10 @@
 // The self-backup page at phone width, with its data staged at the route
-// layer: a running backup, five snapshots with one flagged by a finding, two
-// off-site targets, a restore link naming a pruned backup and the item's
-// anomaly fields. On the phones: the 24px card rhythm, no pan, no control past
-// the viewport or its card, the source label above the switch it names, and
-// each snapshot's delete action on its own row at the end. On the desktop: the
-// 40px rhythm and both rows on one line. German, because its labels run
-// longest.
+// layer: a running backup, a timeline of five backups with one flagged by a
+// finding and copies at two off-site targets, a restore link naming a pruned
+// backup and the item's anomaly fields. On the phones: the 24px card rhythm,
+// no pan, no control past the viewport or its card, and each backup's place
+// switch and delete actions inside its row. On the desktop: the 40px rhythm
+// and nothing past its card. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -28,6 +27,7 @@ const SNAPSHOTS = [
   snap("d4", 74),
   { ...snap("e5", 0), time: new Date(2026, 0, 2, 12).toISOString() },
 ];
+type Snapshots = typeof SNAPSHOTS;
 const FLAGGED = SNAPSHOTS[1].id;
 
 const target = (id: string, name: string, sortOrder: number) => ({
@@ -107,8 +107,48 @@ const FINDING = {
   stillPresent: true,
 };
 
-async function stage(page: Page, snapshots: typeof SNAPSHOTS, running: boolean): Promise<void> {
-  await page.route("**/api/config/snapshots*", (route) => route.fulfill({ json: { ok: true, snapshots } }));
+const place = (id: string, label: string) => ({
+  place: id === "local" ? "local" : `offsite:${id}`,
+  label,
+  kind: id === "local" ? "home" : "target",
+  remote: id !== "local",
+  enabled: true,
+  appendOnly: false,
+  state: "read",
+});
+
+// Every backup is at home and in Frankfurt; the older ones reached Falkenstein
+// as well.
+function timeline(snapshots: Snapshots) {
+  return {
+    ok: true,
+    places: [place("local", ""), place("b2fra", "Backblaze B2 Frankfurt"), place("hetzner", "Hetzner Storage Box Falkenstein")],
+    rows: snapshots.map((s, i) => ({
+      key: s.id,
+      time: s.time,
+      places: [
+        { place: "local", snapshotIds: [s.id], tags: s.tags },
+        { place: "offsite:b2fra", snapshotIds: [hex(`f${i}`)], tags: s.tags },
+        ...(i > 1 ? [{ place: "offsite:hetzner", snapshotIds: [hex(`e${i}`)], tags: s.tags }] : []),
+      ],
+    })),
+  };
+}
+
+async function stage(page: Page, snapshots: Snapshots, running: boolean): Promise<void> {
+  await page.route("**/api/items/config/config/timeline*", (route) => route.fulfill({ json: timeline(snapshots) }));
+  await page.route("**/api/items/config/config/timeline/*/delete*", (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        delete: [{ place: "local", label: "", snapshotIds: [SNAPSHOTS[1].id] }],
+        others: [
+          { place: "offsite:b2fra", label: "Backblaze B2 Frankfurt", state: "holds" },
+          { place: "offsite:hetzner", label: "Hetzner Storage Box Falkenstein", state: "unreadable" },
+        ],
+      },
+    }),
+  );
   await page.route("**/api/offsite/targets*", (route) =>
     route.fulfill({
       json: { ok: true, targets: [target("b2fra", "Backblaze B2 Frankfurt", 0), target("hetzner", "Hetzner Storage Box Falkenstein", 1)] },
@@ -221,8 +261,8 @@ async function expectNothingPans(page: Page): Promise<void> {
   await expect(page.locator("#bv-main")).not.toContainText("`");
 }
 
-function snapshotRows(page: Page) {
-  return page.locator("#bv-main div.border-b").filter({ has: page.getByRole("button", { name: "Löschen" }) });
+function timelineRows(page: Page) {
+  return page.locator("#bv-main [role='group'] > div").filter({ has: page.getByRole("button", { name: "Überall löschen" }) });
 }
 
 for (const width of [320, 360]) {
@@ -236,27 +276,32 @@ for (const width of [320, 360]) {
     await expect(page.getByText("gibt es nicht mehr")).toBeVisible();
     await expect(page.getByText("Als Anomalie markiert")).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
-
-    await page.getByRole("tab", { name: "Off-site" }).click();
-    await expect(page.getByRole("combobox", { name: "Off-site-Ziel" })).toBeVisible();
-    await expect(snapshotRows(page)).toHaveCount(SNAPSHOTS.length);
+    await expect(timelineRows(page)).toHaveCount(SNAPSHOTS.length);
     await settle(page);
 
     expect(await cardGap(page)).toBe("24px");
     await expectNothingPans(page);
 
-    // The label heads the switch instead of standing beside a stack of it.
-    const labelBox = (await page.getByText("Quelle:", { exact: true }).boundingBox())!;
-    const switchBox = (await page.getByRole("tablist", { name: "Quelle:" }).boundingBox())!;
-    expect(switchBox.y, "the source switch shares its label's row").toBeGreaterThanOrEqual(labelBox.y + labelBox.height);
-
-    // Each delete action sits below the backup's time, at the row's end.
-    for (const row of await snapshotRows(page).all()) {
+    // The place switch and both delete actions stay inside their row, and the
+    // time stays in one piece, beside the id or on a line of its own below it,
+    // the shortest date included.
+    for (const row of await timelineRows(page).all()) {
+      const idBox = (await row.locator("span.font-mono").first().boundingBox())!;
+      const timeBox = (await row.locator("span.font-mono + span").first().boundingBox())!;
+      expect(timeBox.height, "the time wrapped into a column").toBeLessThan(idBox.height * 1.8);
+      const besideId = Math.abs(timeBox.y - idBox.y) < idBox.height;
+      expect(besideId || Math.abs(timeBox.x - idBox.x) <= 1, "the time sits neither beside the id nor below it").toBe(true);
       const rowBox = (await row.boundingBox())!;
-      const timeBox = (await row.locator("span.flex-1").boundingBox())!;
-      const deleteBox = (await row.getByRole("button", { name: "Löschen" }).boundingBox())!;
-      expect(deleteBox.y, "the delete action shares the time's row").toBeGreaterThanOrEqual(timeBox.y + timeBox.height);
-      expect(Math.abs(deleteBox.x + deleteBox.width - (rowBox.x + rowBox.width)), "the delete action left the row's end").toBeLessThanOrEqual(1);
+      const right = rowBox.x + rowBox.width;
+      const controls = [
+        row.getByRole("tablist", { name: "Quelle:" }),
+        row.getByRole("button", { name: "Löschen", exact: true }),
+        row.getByRole("button", { name: "Überall löschen" }),
+      ];
+      for (const control of controls) {
+        const box = (await control.boundingBox())!;
+        expect(box.x + box.width, "a control overhangs its backup's row").toBeLessThanOrEqual(right + 1);
+      }
     }
   });
 
@@ -264,7 +309,7 @@ for (const width of [320, 360]) {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the confirm sheet replaces the dialog below 48rem");
     await stage(page, SNAPSHOTS, false);
     await bootGerman(page, width);
-    await snapshotRows(page).nth(1).getByRole("button", { name: "Löschen" }).click();
+    await timelineRows(page).nth(1).getByRole("button", { name: "Löschen", exact: true }).click();
 
     const sheet = page.getByRole("dialog");
     await expect(sheet).toBeVisible();
@@ -285,7 +330,7 @@ for (const width of [320, 360]) {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await stage(page, [], false);
     await bootGerman(page, width);
-    await expect(page.getByText("Noch keine Einstellungs-Backups.")).toBeVisible();
+    await expect(page.getByText("Keine Backups gefunden")).toBeVisible();
     await settle(page);
 
     expect(await cardGap(page)).toBe("24px");
@@ -316,21 +361,12 @@ test("self-backup on a phone saves the switch and the anomaly fields as they cha
   await expect(page.locator("#bv-main").getByRole("button", { name: "Speichern" })).toHaveCount(0);
 });
 
-test("self-backup on the desktop keeps the 40px rhythm and one-line rows", async ({ page }, testInfo) => {
+test("self-backup on the desktop keeps the 40px rhythm and every backup inside its card", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await stage(page, SNAPSHOTS, false);
   await bootGerman(page, testInfo.project.use.viewport!.width);
-  await expect(snapshotRows(page)).toHaveCount(SNAPSHOTS.length);
+  await expect(timelineRows(page)).toHaveCount(SNAPSHOTS.length);
 
   expect(await cardGap(page)).toBe("40px");
-
-  const labelBox = (await page.getByText("Quelle:", { exact: true }).boundingBox())!;
-  const switchBox = (await page.getByRole("tablist", { name: "Quelle:" }).boundingBox())!;
-  expect(switchBox.x, "the source switch left its label's row").toBeGreaterThan(labelBox.x + labelBox.width);
-
-  for (const row of await snapshotRows(page).all()) {
-    const timeBox = (await row.locator("span.flex-1").boundingBox())!;
-    const deleteBox = (await row.getByRole("button", { name: "Löschen" }).boundingBox())!;
-    expect(deleteBox.y, "the delete action wrapped below the time").toBeLessThan(timeBox.y + timeBox.height);
-  }
+  await expectNothingPans(page);
 });

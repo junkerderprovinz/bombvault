@@ -21,14 +21,27 @@ const (
 	mcpCheckDomain = "bombvault-mcp-check:"
 )
 
+// APITokenPrefix marks a token for the public API, which is stored and checked
+// like an MCP key but opens a different door.
+const APITokenPrefix = "bvapi_"
+
 // NewMCPKey returns MCPKeyPrefix followed by 32 random bytes in unpadded
 // base64url, 49 characters in all.
 func NewMCPKey() (string, error) {
+	return newPrefixedKey(MCPKeyPrefix)
+}
+
+// NewAPIToken is NewMCPKey with APITokenPrefix.
+func NewAPIToken() (string, error) {
+	return newPrefixedKey(APITokenPrefix)
+}
+
+func newPrefixedKey(prefix string) (string, error) {
 	buf := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, buf); err != nil {
-		return "", fmt.Errorf("secret: mcp key: %w", err)
+		return "", fmt.Errorf("secret: new key: %w", err)
 	}
-	return MCPKeyPrefix + base64.RawURLEncoding.EncodeToString(buf), nil
+	return prefix + base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
 // HashMCPKey returns the lowercase hex HMAC-SHA256 of key under appKey. A 256-bit

@@ -9,7 +9,7 @@ import (
 // another. It is the same relay KnightLoader uses: the server groups by key
 // and never reads what it forwards, and BombVault's key domains keep the two
 // apps' groups apart on it.
-const DefaultURL = "wss://relay.halleluja.design/relay/connect"
+const DefaultURL = "wss://parleyport.halleluja.design/relay/connect"
 
 // keyDomain separates the relay key from every other value derived from the
 // group secret.

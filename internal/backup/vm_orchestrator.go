@@ -329,6 +329,13 @@ type VMRestoreDeps struct {
 	ZFSHost    ZFSHost
 	ZvolRestic ZvolRestic
 
+	// Images, when set, are the disks of a changed-block snapshot, rebuilt
+	// from their segments in place of the restic restore of the disk folders.
+	// DiskPaths then lists their targets for the path checks.
+	Images      []VMRestoreImage
+	ImageDumper BlockDumper
+	Convert     ImageConverter
+
 	VM     VM
 	Restic Restic
 	Runs   Runs
@@ -703,6 +710,9 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	}
 	if state != "" {
 		// VM exists on the host.
+		if err := releaseCheckpointsForRestore(ctx, d.VM, d.Name); err != nil {
+			return err
+		}
 		if state == "running" {
 			if err := d.VM.Destroy(ctx, d.Name); err != nil {
 				return fmt.Errorf("vm restore: destroy running vm: %w", err)
@@ -716,7 +726,13 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	// VM disk images, NVRAM, and TPM state are all FILES; restic's
 	// <id>:<subpath> subtree form needs a DIRECTORY (a file path fails with
 	// "not a directory").
-	if len(d.RestoreDirs) > 0 {
+	if len(d.Images) > 0 {
+		for _, img := range d.Images {
+			if err := RestoreBlockImage(ctx, d.ImageDumper, d.Convert, d.RepoPath, d.SnapshotID, img); err != nil {
+				return fmt.Errorf("vm restore: %w", err)
+			}
+		}
+	} else if len(d.RestoreDirs) > 0 {
 		// Each snapshot subtree goes into its Target: a chosen pool for a
 		// cross-instance restore, the moved folder for a snapshot from before a rename.
 		for _, rd := range d.RestoreDirs {
@@ -778,6 +794,43 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	if d.StartAfter {
 		if err := d.VM.Start(ctx, d.Name); err != nil {
 			return fmt.Errorf("vm restore: start: %w", err)
+		}
+	}
+	return nil
+}
+
+// checkpointRecords is the part of CheckpointHost a restore needs. A VM
+// without it has no checkpoints to worry about.
+type checkpointRecords interface {
+	CheckpointNames(ctx context.Context, domain string) ([]string, error)
+	CheckpointForget(ctx context.Context, domain, checkpoint string) error
+}
+
+// releaseCheckpointsForRestore clears the checkpoint records that would make
+// libvirt refuse to undefine the VM once it is off. BombVault's own go, since
+// the restore replaces their disks anyway; anyone else's stop the restore
+// before the VM is touched.
+func releaseCheckpointsForRestore(ctx context.Context, vm VM, name string) error {
+	cr, ok := vm.(checkpointRecords)
+	if !ok {
+		return nil
+	}
+	names, err := cr.CheckpointNames(ctx, name)
+	if err != nil {
+		return fmt.Errorf("vm restore: list checkpoints: %w", err)
+	}
+	var foreign []string
+	for _, n := range names {
+		if !strings.HasPrefix(n, BlocksCheckpointPrefix) {
+			foreign = append(foreign, n)
+		}
+	}
+	if len(foreign) > 0 {
+		return fmt.Errorf("vm restore: the VM has checkpoints BombVault did not create (%s); libvirt cannot remove a VM that has checkpoints, so delete them first", strings.Join(foreign, ", "))
+	}
+	for _, n := range names {
+		if err := cr.CheckpointForget(ctx, name, n); err != nil {
+			return fmt.Errorf("vm restore: remove checkpoint %s: %w", n, err)
 		}
 	}
 	return nil

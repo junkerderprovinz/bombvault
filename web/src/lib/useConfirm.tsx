@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import type { ButtonTone } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ConfirmSheet } from "../components/mobile/ConfirmSheet";
 import { useT, type TranslationKey } from "./i18n";
@@ -24,11 +25,24 @@ export interface ConfirmOptions {
   /** The key of the button that asked, so the answer repeats its words and
    *  glyph ("Delete") rather than a bare "Confirm". */
   confirmKey?: TranslationKey;
+  /** A composed label, for an answer that carries a name or a count and so has
+   *  no key of its own. It wins over confirmKey. */
+  confirmLabel?: string;
+  /** Translation key behind confirmLabel, so the confirm button shows its glyph. */
+  confirmLabelKey?: string;
   cancelLabel?: string;
-  /** A switch the action needs an answer to, shown under the question. */
+  /** Lines or switches the answer needs, shown under the question. */
   extra?: ReactNode;
   /** Why the action cannot go ahead; disables Confirm. */
   confirmBlocked?: string;
+  /** The confirm button stays locked until exactly this has been typed. */
+  requireText?: string;
+  /** Label of the field requireText is typed into. */
+  requirePrompt?: string;
+  /** Surface of the confirm button; a delete that leaves Cancel the one accent passes "neutral". */
+  confirmTone?: ButtonTone;
+  /** Surface of Cancel; a question whose answer is the one accent passes "neutral". */
+  cancelTone?: ButtonTone;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -52,6 +66,7 @@ export function useConfirm() {
   // settle paths, same translated strings, zero per-call-site changes.
   const isDesktop = useIsDesktop();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
+  const [typed, setTyped] = useState("");
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -60,6 +75,7 @@ export function useConfirm() {
     // Read before setPending: the re-render moves focus into the dialog.
     const active = document.activeElement;
     triggerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    setTyped("");
     return new Promise<boolean>((resolve) => {
       resolveRef.current = resolve;
       setPending({ message, ...options });
@@ -75,15 +91,71 @@ export function useConfirm() {
     if (trigger && document.contains(trigger)) trigger.focus();
   }, []);
 
-  // For a caller whose question stopped making sense while the dialog was open.
+  // For a caller whose question stopped making sense while the dialog was
+  // open, and for Escape.
   const dismiss = useCallback(() => settle(false), [settle]);
+  useDialogKeys(pending !== null, dialogRef, dismiss);
 
+  // Locked while a required text is still unmatched; undefined for every
+  // caller that never asked for one, so the ordinary dialog stays unaffected.
+  const locked = pending?.requireText !== undefined && typed !== pending.requireText;
+  const extra =
+    pending?.requireText === undefined ? (
+      pending?.extra
+    ) : (
+      <>
+        {pending.extra}
+        <label className="mt-3 flex flex-col gap-1 text-xs text-carbon-textSub">
+          {pending.requirePrompt}
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+          />
+        </label>
+      </>
+    );
+
+  // An ancestor with a CSS transform (e.g. .glim-page-enter) would confine a
+  // position: fixed backdrop to its own box, so the dialog goes to <body>. The
+  // sheet gets no dialogRef because BottomSheet traps Tab itself; Escape
+  // reaches both listeners, and settle() ignores the second call.
+  const surface = pending && {
+    title: t("confirmDialog.title"),
+    message: pending.message,
+    confirmLabel: pending.confirmLabel ?? t(pending.confirmKey ?? "common.confirm"),
+    confirmLabelKey: pending.confirmLabelKey ?? pending.confirmKey ?? "common.confirm",
+    cancelLabel: pending.cancelLabel ?? t("common.cancel"),
+    extra,
+    confirmDisabled: locked,
+    confirmBlocked: pending.confirmBlocked,
+    confirmTone: pending.confirmTone,
+    cancelTone: pending.cancelTone,
+    onConfirm: () => settle(true),
+    onCancel: () => settle(false),
+  };
+  const confirmDialog = surface
+    ? createPortal(
+        isDesktop ? <ConfirmDialog ref={dialogRef} {...surface} /> : <ConfirmSheet {...surface} />,
+        document.body
+      )
+    : null;
+
+  return { confirm, confirmDialog, dismiss };
+}
+
+/** useDialogKeys gives an open dialog Escape from anywhere and a Tab trap over
+ *  its own controls, so focus never reaches the page it covers. */
+export function useDialogKeys(open: boolean, dialogRef: RefObject<HTMLDivElement | null>, onCancel: () => void): void {
   useEffect(() => {
-    if (!pending) return;
+    if (!open) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        settle(false);
+        onCancel();
         return;
       }
       if (e.key !== "Tab") return;
@@ -100,59 +172,12 @@ export function useConfirm() {
           e.preventDefault();
           last.focus();
         }
-      } else {
-        if (!insideCard || active === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      } else if (!insideCard || active === last) {
+        e.preventDefault();
+        first.focus();
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [pending, settle]);
-
-  // An ancestor with a CSS transform (e.g. .glim-page-enter) would confine a
-  // position: fixed backdrop to its own box, so the dialog goes to <body>.
-  //
-  // The sheet branch does not attach dialogRef: the ref drives
-  // this hook's Tab trap, and BottomSheet already runs its own (same
-  // FOCUSABLE_SELECTOR lift) over the panel; leaving the ref null makes the
-  // trap below a no-op instead of fighting the sheet's. Escape fires from
-  // both listeners on one keypress in the sheet branch; settle() nulls its
-  // resolver on the first call, so the double dispatch is benign (the second
-  // is a guarded no-op); asserted once-and-only-once in
-  // ConfirmSheet.dom.test.tsx.
-  const confirmDialog = pending
-    ? createPortal(
-        isDesktop ? (
-          <ConfirmDialog
-            ref={dialogRef}
-            title={t("confirmDialog.title")}
-            message={pending.message}
-            confirmLabel={t(pending.confirmKey ?? "common.confirm")}
-            confirmLabelKey={pending.confirmKey ?? "common.confirm"}
-            cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-            extra={pending.extra}
-            confirmBlocked={pending.confirmBlocked}
-            onConfirm={() => settle(true)}
-            onCancel={() => settle(false)}
-          />
-        ) : (
-          <ConfirmSheet
-            title={t("confirmDialog.title")}
-            message={pending.message}
-            confirmLabel={t(pending.confirmKey ?? "common.confirm")}
-            confirmLabelKey={pending.confirmKey ?? "common.confirm"}
-            cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-            extra={pending.extra}
-            confirmBlocked={pending.confirmBlocked}
-            onConfirm={() => settle(true)}
-            onCancel={() => settle(false)}
-          />
-        ),
-        document.body
-      )
-    : null;
-
-  return { confirm, confirmDialog, dismiss };
+  }, [open, dialogRef, onCancel]);
 }

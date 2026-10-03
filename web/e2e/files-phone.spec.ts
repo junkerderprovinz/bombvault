@@ -4,6 +4,7 @@
 // below the name. On the desktop: the 40px rhythm and a header inside the
 // window, on one line at 1280px. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -19,6 +20,7 @@ const set = (id: string, name: string, path: string, pathExists: boolean, exclud
   repoEffective: "user/bombvault/files",
   effectiveSchedule: { kind: "none", spec: "", alsoSpec: "" },
   pathExists,
+  placement: PLACEMENT,
 });
 
 const FILE_SETS = [

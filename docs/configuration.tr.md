@@ -31,7 +31,7 @@ Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şabl
 
 ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
 
-Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Depolama, Yedekleme yolları**'nda değiştirin. Her yol alanında ayrıca satır içi bir **Yerel / Uzak** anahtarı vardır: bir yol, yerel bir klasör yerine bir restic uzak konumu (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) olabilir ve yedekleme ayrı bir yerel kopya olmadan doğrudan oraya yapılır; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
+Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Depolama, Yedekleme yolları**'nda değiştirin. Her yol alanında ayrıca satır içi bir **Yerel / Uzak** anahtarı vardır: bir yol, yerel bir klasör yerine bir restic uzak konumu (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) olabilir ve yedekleme ayrı bir yerel kopya olmadan doğrudan oraya yapılır; bkz. [Uzak birincil depolar](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host Entegrasyon Denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
@@ -84,7 +84,7 @@ Hızlı kurulum:
 
 **Ayarlar, Site dışı** sayfasında bir site dışı kopya kurun. Tam iş akışı için (değiştirilemez/yalnızca ekleme, kurcalama testi ve DR tatbikatları) bkz. [Site dışı ve kurtarma](offsite-recovery.md). Kısaca:
 
-- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
+- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`). Backblaze B2'nin burada yerel bir arka ucu yoktur: ona S3 uç noktası üzerinden erişilir (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`); anahtar kimliği ve uygulama anahtarı S3 kimlik bilgileri olarak girilir.
 - **Paylaşılan bulut kimlik bilgileri** Ayarlar, Bulut erişimi, Paylaşılan bulut kimlik bilgileri altında şifreli saklanır.
 - **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Entegrasyonlar, Ana makine SSH** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
 - **Site dışı kopya:** BombVault, (genellikle yerel) bir birincil depoya ek olarak yeni anlık görüntüleri en iyi çaba temelinde `restic copy` ile çoğaltır. Her etki alanının kendi site dışı zamanlaması ve ayrıca bir **Şimdi çoğalt** düğmesi vardır.
@@ -113,4 +113,4 @@ Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunlar�
 Ayarlar, Sistem sayfasındaki **Ayarları dışa / içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
 
 !!! warning "Dışa aktarma kimlik bilgileri içerebilir"
-    Site dışı ve bildirim kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.
+    Site dışı, bildirim ve MQTT aracısı kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.
