@@ -316,6 +316,7 @@ const PAGES = [
   ["security", "Sicherheit"],
   ["pairing", "Kopplung"],
   ["integrations", "Anbindungen"],
+  ["apps", "Apps"],
   ["system", "System"],
 ] as const;
 
