@@ -82,7 +82,7 @@ Para volver atrás tras una restauración, copia archivos sueltos desde `.zfs/sn
 
 BombVault guarda con cada copia las propiedades ZFS definidas localmente de cada conjunto de datos: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity y tus propias propiedades de usuario. Los valores heredados y de solo lectura se omiten, porque vuelven solos. Las copias de antes de que BombVault las guardara no tienen ninguna.
 
-- **En un conjunto de datos nuevo** ejecuta `zfs create` con cada propiedad guardada. casesensitivity, normalization y utf8only solo se pueden definir así. El punto de montaje se omite para que la copia no choque con el original, igual que `canmount`, `readonly` y el cifrado, para que la restauración pueda escribir. Un conjunto de datos nuevo bajo uno cifrado toma su cifrado. El conjunto de datos superior tiene que existir. Si algo falla después de crearlo, el conjunto de datos nuevo se queda en el servidor, porque BombVault nunca destruye un conjunto de datos.
+- **En un conjunto de datos nuevo** ejecuta `zfs create` con cada propiedad guardada. casesensitivity, normalization y utf8only solo se pueden definir así. Las cuotas y reservas se aplican después de los archivos, para que no puedan rechazarlos. El punto de montaje se omite para que la copia no choque con el original, igual que `canmount`, `readonly` y el cifrado, para que la restauración pueda escribir. Un conjunto de datos nuevo bajo uno cifrado toma su cifrado. El conjunto de datos superior tiene que existir. Si algo falla después de crearlo, el conjunto de datos nuevo se queda en el servidor, porque BombVault nunca destruye un conjunto de datos.
 - **Restaurar dentro del conjunto de datos** muestra las propiedades guardadas junto a la restauración. **Aplicar también estas propiedades** aplica las que un conjunto de datos existente todavía admite, antes de escribir ningún archivo. Las cuotas y reservas se aplican después de los archivos, para que no puedan rechazarlos. Sin ese interruptor, el conjunto de datos conserva su configuración.
 
 ## Qué contiene la copia {#contents}
@@ -181,6 +181,7 @@ La página, el historial de ejecuciones y las notificaciones nombran un problema
 | `create-failed` | No se pudo crear el conjunto de datos nuevo. | Los detalles muestran el mensaje de zfs. Comprueba que existe el conjunto de datos superior. |
 | `new-dataset-not-visible` | El conjunto de datos nuevo se creó, pero BombVault no lo ve, así que no se restauró nada. | El conjunto de datos queda en el servidor. Móntalo bajo la ruta de Host Data y restaura dentro. |
 | `set-properties-failed` | No se pudieron aplicar las propiedades guardadas, así que no se restauró nada. | Los detalles muestran el mensaje de zfs. |
+| `set-limits-failed` | Los archivos se restauraron, pero no se pudo aplicar la cuota o la reserva guardada. | Los detalles muestran el mensaje de zfs. Aplica tú mismo la cuota o la reserva con `zfs set`. |
 
 ### Comprobar lo que ve el contenedor {#mountinfo}
 

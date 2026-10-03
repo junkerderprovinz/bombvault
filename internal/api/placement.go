@@ -351,14 +351,15 @@ func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
 
 // retentionPolicyForRef is the keep-policy a repository ages by. A direct
 // repository takes its target's rules as mirrored onto its row, word for word,
-// so all zero keeps everything; every other repository takes the local policy.
-func (s *Service) retentionPolicyForRef(settings store.Settings, ref domainRepoRef) restic.RetentionPolicy {
+// so all zero keeps everything; every other repository takes the domain's
+// local policy.
+func (s *Service) retentionPolicyForRef(settings store.Settings, domain string, ref domainRepoRef) restic.RetentionPolicy {
 	if ref.Named.CompanionOf != "" {
 		p := targetOffsiteRetentionPolicy(ref.Named)
 		p.Direct = true
 		return p
 	}
-	return s.retentionPolicy(settings)
+	return s.retentionPolicy(settings, domain)
 }
 
 // domainHasRetention reports whether any repository of the domain ages by a
@@ -366,9 +367,9 @@ func (s *Service) retentionPolicyForRef(settings store.Settings, ref domainRepoR
 func (s *Service) domainHasRetention(settings store.Settings, domain string) bool {
 	repos, _, err := s.domainReposInUse(settings, domain)
 	if err != nil {
-		return s.retentionPolicy(settings).Any()
+		return s.retentionPolicy(settings, domain).Any()
 	}
-	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, r).Any() })
+	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, domain, r).Any() })
 }
 
 // placementTargetName is a target as the interface names it: its name, or its

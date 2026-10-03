@@ -643,7 +643,7 @@ func (h *Handler) mcpKeepLast(s store.Settings, domain string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	keepLast := countOnlyKeepLast(h.svc.retentionPolicy(s))
+	keepLast := countOnlyKeepLast(h.svc.retentionPolicy(s, domain))
 	for _, t := range orSettingsOffsiteTarget(targets, domain, s) {
 		if t.Immutable {
 			continue

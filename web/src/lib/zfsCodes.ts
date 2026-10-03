@@ -72,6 +72,7 @@ export const ZFS_CODE_KEY = {
   "create-failed": "zfs.code.create-failed",
   "new-dataset-not-visible": "zfs.code.new-dataset-not-visible",
   "set-properties-failed": "zfs.code.set-properties-failed",
+  "set-limits-failed": "zfs.code.set-limits-failed",
 } as const satisfies Record<string, TranslationKey>;
 
 export type ZFSReasonCode = keyof typeof ZFS_CODE_KEY;
@@ -108,6 +109,7 @@ export const ZFS_FIX_KEY: Partial<Record<ZFSReasonCode, TranslationKey>> = {
   "dataset-exists": "zfs.fix.dataset-exists",
   "create-failed": "zfs.fix.create-failed",
   "new-dataset-not-visible": "zfs.fix.new-dataset-not-visible",
+  "set-limits-failed": "zfs.fix.set-limits-failed",
 };
 
 /** Member codes whose sentence already says the dataset is skipped, so no

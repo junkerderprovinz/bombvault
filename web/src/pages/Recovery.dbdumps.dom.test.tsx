@@ -225,7 +225,7 @@ describe("containers that exist as dumps alone", () => {
     fireEvent.click(screen.getByRole("button", { name: en["recovery.restoreAndImport"] }));
     await act(() => vi.advanceTimersByTimeAsync(10_000));
 
-    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "latest", true]);
+    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "latest", true, undefined, undefined, false]);
     expect(importDbDump.mock.calls[0]).toEqual(["immich_postgres", "d1"]);
     expect(screen.getByText(en["dbdump.importDone"])).toBeTruthy();
   });

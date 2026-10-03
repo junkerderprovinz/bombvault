@@ -82,7 +82,7 @@ To go back after a restore, copy single files from `.zfs/snapshot/bombvault-prer
 
 BombVault stores the locally set ZFS properties of every dataset with each backup: compression, record size, quota, reservation, atime, xattr, acltype, case sensitivity and your own user properties. Inherited and read-only values are left out, because they come back on their own. Backups from before BombVault stored them have none.
 
-- **Into a new dataset** runs `zfs create` with every stored property. Case sensitivity, normalization and utf8only can only be set this way. The mountpoint is left out, so the copy does not collide with the original, and so are `canmount`, `readonly` and the encryption settings, so the restore can write. A new dataset below an encrypted one takes over its encryption. The dataset above the new one has to exist. If something fails after the new dataset was created, it stays on the server, because BombVault never destroys a dataset.
+- **Into a new dataset** runs `zfs create` with every stored property. Case sensitivity, normalization and utf8only can only be set this way. Quotas and reservations are set after the files, so they cannot refuse them. The mountpoint is left out, so the copy does not collide with the original, and so are `canmount`, `readonly` and the encryption settings, so the restore can write. A new dataset below an encrypted one takes over its encryption. The dataset above the new one has to exist. If something fails after the new dataset was created, it stays on the server, because BombVault never destroys a dataset.
 - **Restore into the dataset** lists the stored properties next to the restore. **Also set these properties** sets the ones an existing dataset can still take, before any file is written. Quotas and reservations are set after the files, so they cannot refuse them. Without that switch the dataset keeps its settings.
 
 ## What is in the backup {#contents}
@@ -181,6 +181,7 @@ The page, the run history and the notifications name a problem with one of these
 | `create-failed` | The new dataset could not be created. | The details show zfs's message. Check that the dataset above it exists. |
 | `new-dataset-not-visible` | The new dataset was created, but BombVault cannot see it, so nothing was restored. | The dataset stays on the server. Mount it below the Host Data path and restore into it. |
 | `set-properties-failed` | The stored properties could not be set, so nothing was restored. | The details show zfs's message. |
+| `set-limits-failed` | The files were restored, but the stored quota or reservation could not be set. | The details show zfs's message. Set the quota or reservation yourself with `zfs set`. |
 
 ### Checking what the container sees {#mountinfo}
 

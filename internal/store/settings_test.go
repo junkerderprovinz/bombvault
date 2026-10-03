@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -604,5 +605,85 @@ func TestSettingsCompressionRoundTrip(t *testing.T) {
 	}
 	if stored.CompressionFor("vms") != "off" || stored.CompressionFor("offsite:containers") != "max" || stored.CompressionFor("containers") != "" {
 		t.Fatalf("compression came back as %v", stored.Compression)
+	}
+}
+
+func TestSettingsOwnRetentionRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(s.OwnRetention()) != 0 {
+		t.Fatalf("a fresh install must leave every domain on the shared policy, got %v", s.RetentionOverrides)
+	}
+	own := map[string]store.RetentionKeep{"vms": {KeepWeekly: 4, KeepMonthly: 6}, "files": {}}
+	if _, err := r.MutateSettings(func(m *store.Settings) error {
+		m.SetOwnRetention(own)
+		return nil
+	}); err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+	stored, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := stored.OwnRetention(); !reflect.DeepEqual(got, own) {
+		t.Fatalf("own retention came back as %v", got)
+	}
+	stored.SetOwnRetention(nil)
+	if stored.RetentionOverrides != "" {
+		t.Fatalf("clearing every domain left %q", stored.RetentionOverrides)
+	}
+}
+
+func TestSettingsOwnOffsiteRetentionRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(s.OwnOffsiteRetention()) != 0 {
+		t.Fatalf("a fresh install must leave every domain on the shared off-site policy, got %v", s.OffsiteRetentionOverrides)
+	}
+	own := map[string]store.RetentionKeep{"containers": {KeepDaily: 14}, "zfs": {}}
+	local := map[string]store.RetentionKeep{"vms": {KeepWeekly: 4}}
+	if _, err := r.MutateSettings(func(m *store.Settings) error {
+		m.SetOwnOffsiteRetention(own)
+		m.SetOwnRetention(local)
+		return nil
+	}); err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+	stored, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := stored.OwnOffsiteRetention(); !reflect.DeepEqual(got, own) {
+		t.Fatalf("own off-site retention came back as %v", got)
+	}
+	if got := stored.OwnRetention(); !reflect.DeepEqual(got, local) {
+		t.Fatalf("the local overrides came back as %v beside the off-site ones", got)
+	}
+	stored.SetOwnOffsiteRetention(nil)
+	if stored.OffsiteRetentionOverrides != "" {
+		t.Fatalf("clearing every domain left %q", stored.OffsiteRetentionOverrides)
+	}
+}
+
+func TestAnUndecodableOffsiteOverrideReadsAsNone(t *testing.T) {
+	s := store.Settings{OffsiteRetentionOverrides: "{not json"}
+	if got := s.OwnOffsiteRetention(); len(got) != 0 {
+		t.Fatalf("OwnOffsiteRetention = %v, want none", got)
 	}
 }

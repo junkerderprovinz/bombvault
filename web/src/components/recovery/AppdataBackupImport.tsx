@@ -22,6 +22,7 @@ const STATUS: Record<AppdataBackupArchive["status"], { key: TranslationKey; tone
   imported: { key: "recovery.abStatusImported", tone: "neutral" },
   "no-container": { key: "recovery.abStatusNoContainer", tone: "warn" },
   "not-backed-up": { key: "recovery.abStatusNotBackedUp", tone: "warn" },
+  "repo-unavailable": { key: "recovery.abStatusRepoUnavailable", tone: "warn" },
 };
 
 // AppdataBackupImport turns the archives of the Appdata.Backup plugin into
@@ -37,13 +38,22 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
   const prog = useProgress()[APPDATA_IMPORT_KEY];
   const running = prog?.active === true;
   const wasRunning = useRef(false);
+  // How many archives the import set out with, unknown when it was started
+  // before this page was opened, and how many of them failed.
+  const startedWith = useRef<number | null>(null);
+  const failed = useRef(0);
+  // Bumped by every scan and every change of the folder, so an answer for a
+  // folder the user has since changed is dropped.
+  const scanSeq = useRef(0);
   const hues = { heading: nextHue(), folder: nextHue(), list: nextHue() };
 
   async function scan(path = folder) {
     if (path.trim() === "") return;
+    const seq = ++scanSeq.current;
     setScanning(true);
     try {
       const r = await scanAppdataBackup(path.trim());
+      if (seq !== scanSeq.current) return;
       if (r.ok) setArchives(r.archives ?? []);
       else {
         setArchives(null);
@@ -51,19 +61,31 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
         setShake((n) => n + 1);
       }
     } catch (err) {
+      if (seq !== scanSeq.current) return;
       push(err instanceof Error ? err.message : t("recovery.abScanFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
-      setScanning(false);
+      if (seq === scanSeq.current) setScanning(false);
     }
   }
+
+  // The frame that ends an import lingers a moment before the entry goes, and
+  // only it carries the count of failed archives.
+  useEffect(() => {
+    if (prog?.finished) failed.current = prog.failed ?? 0;
+  }, [prog]);
 
   // The list is read again once an import ends, so the rows say what it did.
   useEffect(() => {
     if (running) wasRunning.current = true;
     else if (wasRunning.current) {
       wasRunning.current = false;
-      push(t("recovery.abDone"), "success");
+      const total = startedWith.current;
+      if (failed.current === 0) push(t("recovery.abDone"), "success");
+      else if (total !== null && failed.current >= total) push(t("recovery.abAllFailed"), "fail");
+      else push(t("recovery.abSomeFailed"), "warn");
+      startedWith.current = null;
+      failed.current = 0;
       void scan();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -73,7 +95,8 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
     setStarting(true);
     try {
       const r = await importAppdataBackup(folder.trim());
-      if (!r.ok) {
+      if (r.ok) startedWith.current = r.archives ?? null;
+      else {
         push(r.error ?? t("recovery.abImportFailed"), "fail");
         setShake((n) => n + 1);
       }
@@ -104,6 +127,8 @@ export function AppdataBackupImport({ hostMountRoot, nextHue, t }: { hostMountRo
           onChange={(v) => {
             setFolder(v);
             setArchives(null);
+            scanSeq.current++;
+            setScanning(false);
           }}
           hint={t("recovery.abFolderHint")}
         />

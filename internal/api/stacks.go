@@ -143,10 +143,12 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 	}
 
 	// Leave every member stopped, so a dependent cannot come up before its
-	// dependency is restored and started.
+	// dependency is restored and started. Dependencies are recreated first, so
+	// a legacy link to one of them resolves.
 	results := make([]StackMemberResult, len(members))
 	restoredOK := make([]bool, len(members))
-	for i, m := range members {
+	for _, i := range stackStartOrder(members) {
+		m := members[i]
 		res := StackMemberResult{Name: m.name, Service: m.service}
 		rErr := s.restoreStackMember(ctx, m.name, source)
 		switch {
@@ -158,7 +160,7 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 			// as cancelled; the remaining members and the start loop are skipped.
 			res.Error = rErr.Error()
 			results[i] = res
-			return StackRestoreResult{Members: results[:i+1]}
+			return StackRestoreResult{Members: reached(results)}
 		default:
 			res.Error = rErr.Error()
 		}
@@ -276,4 +278,16 @@ func firstBlockedDep(deps []int, blocked []bool) int {
 // first (see compose.StartOrder).
 func stackStartOrder(members []stackMember) []int {
 	return compose.StartOrder(memberServicesAndDeps(members))
+}
+
+// reached keeps the results of the members a cancelled stack restore got to,
+// in name order.
+func reached(results []StackMemberResult) []StackMemberResult {
+	var out []StackMemberResult
+	for _, r := range results {
+		if r.Name != "" {
+			out = append(out, r)
+		}
+	}
+	return out
 }

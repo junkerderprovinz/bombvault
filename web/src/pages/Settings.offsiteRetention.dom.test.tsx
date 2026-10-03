@@ -65,6 +65,8 @@ function baseSettings(): Settings {
     offsiteRetentionKeepWeekly: 0,
     offsiteRetentionKeepMonthly: 0,
     offsiteRetentionKeepYearly: 0,
+    ownRetention: {},
+    ownOffsiteRetention: {},
     compression: {},
     defaultLanguage: "en",
     registryAuths: [],

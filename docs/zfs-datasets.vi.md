@@ -82,7 +82,7 @@ BombVault không bao giờ tự xóa ảnh chụp an toàn. Mục liệt kê ch�
 
 BombVault lưu cùng mỗi bản sao lưu các thuộc tính ZFS đặt cục bộ của từng tập dữ liệu: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity và các thuộc tính người dùng của riêng bạn. Giá trị kế thừa và giá trị chỉ đọc được bỏ qua, vì chúng tự quay lại. Các bản sao lưu từ trước khi BombVault lưu chúng không có thuộc tính nào.
 
-- **Vào một tập dữ liệu mới** chạy `zfs create` với mọi thuộc tính đã lưu. casesensitivity, normalization và utf8only chỉ đặt được theo cách này. Điểm gắn kết được bỏ qua để bản sao không đụng bản gốc, cũng như `canmount`, `readonly` và thiết lập mã hóa, để việc khôi phục ghi được. Một tập dữ liệu mới nằm dưới tập được mã hóa sẽ nhận mã hóa của nó. Tập dữ liệu phía trên phải tồn tại. Nếu có gì thất bại sau khi tạo, tập dữ liệu mới vẫn ở trên máy chủ, vì BombVault không bao giờ hủy một tập dữ liệu.
+- **Vào một tập dữ liệu mới** chạy `zfs create` với mọi thuộc tính đã lưu. casesensitivity, normalization và utf8only chỉ đặt được theo cách này. Hạn mức (quota) và dung lượng đặt trước (reservation) được đặt sau khi ghi tệp, để chúng không thể từ chối các tệp đó. Điểm gắn kết được bỏ qua để bản sao không đụng bản gốc, cũng như `canmount`, `readonly` và thiết lập mã hóa, để việc khôi phục ghi được. Một tập dữ liệu mới nằm dưới tập được mã hóa sẽ nhận mã hóa của nó. Tập dữ liệu phía trên phải tồn tại. Nếu có gì thất bại sau khi tạo, tập dữ liệu mới vẫn ở trên máy chủ, vì BombVault không bao giờ hủy một tập dữ liệu.
 - **Khôi phục vào chính tập dữ liệu** hiển thị các thuộc tính đã lưu bên cạnh việc khôi phục. **Đặt cả các thuộc tính này** đặt những thuộc tính mà tập dữ liệu có sẵn vẫn nhận, trước khi ghi bất kỳ tệp nào. Hạn mức (quota) và dung lượng đặt trước (reservation) được đặt sau khi ghi tệp, để chúng không thể từ chối các tệp đó. Không có công tắc này, tập dữ liệu giữ nguyên thiết lập của nó.
 
 ## Bản sao lưu gồm những gì {#contents}
@@ -181,6 +181,7 @@ Trang, lịch sử chạy và thông báo nêu một vấn đề bằng một tr
 | `create-failed` | Không tạo được tập dữ liệu mới. | Phần chi tiết cho thấy thông báo của zfs. Kiểm tra tập dữ liệu phía trên có tồn tại không. |
 | `new-dataset-not-visible` | Tập dữ liệu mới đã được tạo nhưng BombVault không thấy nó, nên chưa khôi phục gì. | Tập dữ liệu vẫn còn trên máy chủ. Gắn nó dưới đường dẫn Host Data rồi khôi phục vào đó. |
 | `set-properties-failed` | Không đặt được các thuộc tính đã lưu, nên chưa khôi phục gì. | Phần chi tiết hiển thị thông báo của zfs. |
+| `set-limits-failed` | Đã khôi phục các tệp, nhưng không đặt được hạn mức (quota) hoặc dung lượng đặt trước (reservation) đã lưu. | Phần chi tiết cho thấy thông báo của zfs. Hãy tự đặt hạn mức hoặc dung lượng đặt trước bằng `zfs set`. |
 
 ### Kiểm tra những gì container nhìn thấy {#mountinfo}
 

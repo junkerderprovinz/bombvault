@@ -46,6 +46,9 @@ type idleWaits struct {
 	every time.Duration
 	// wg counts the running waits, so a test can wait for them to end.
 	wg sync.WaitGroup
+	// resumed are the waits a restart interrupted, held until the start of
+	// BombVault is done.
+	resumed []*idleGroup
 }
 
 // idleDockerTimeout bounds what one look at the apps may spend on Docker.
@@ -212,10 +215,10 @@ func waitDropped(settings store.Settings, trigger string) string {
 	return ""
 }
 
-// ResumeIdleWaits picks up the waits a restart interrupted. A wait whose
-// deadline passed meanwhile backs up at once, a container that was removed
-// or taken off the schedule is dropped from its wait, and a wait whose run
-// was switched off is dropped as a whole.
+// ResumeIdleWaits picks up the waits a restart interrupted, so a scheduled run
+// joins them, and StartIdleWaits sets them going. A container that was
+// removed or taken off the schedule is dropped from its wait, and a wait whose
+// run was switched off is dropped as a whole.
 func (s *Service) ResumeIdleWaits() {
 	groups, err := s.store.ListIdleWaitGroups()
 	if err != nil {
@@ -257,22 +260,42 @@ func (s *Service) ResumeIdleWaits() {
 			continue
 		}
 		g.Members = members
-		if now >= g.Deadline {
-			s.forgetIdleGroup(g.Key)
-			log.Printf("api: starting the held backup of %s: its wait ended while BombVault was down", strings.Join(members, ", ")) //nolint:gosec // G706: container names from Docker
-			go s.heldRun(members)
-			continue
-		}
 		ig := &idleGroup{IdleWaitGroup: g, busy: members[0], reason: traffic.BusyMeasuring, run: s.heldRun}
 		w.mu.Lock()
 		w.groups[g.Key] = ig
+		w.resumed = append(w.resumed, ig)
 		w.mu.Unlock()
 		if err := s.store.SaveIdleWaitGroup(g); err != nil {
 			log.Printf("api: idle wait: remember %s: %v", g.Key, err)
 		}
-		log.Printf("api: scheduled backup of %s waits again for an idle app, at the latest until %s", //nolint:gosec // G706: container names from Docker
-			strings.Join(members, ", "), time.Unix(g.Deadline, 0).Format(time.RFC3339))
-		s.startWait(ig)
+		if now < g.Deadline {
+			log.Printf("api: scheduled backup of %s waits again for an idle app, at the latest until %s", //nolint:gosec // G706: container names from Docker
+				strings.Join(members, ", "), time.Unix(g.Deadline, 0).Format(time.RFC3339))
+		}
+	}
+}
+
+// StartIdleWaits sets the resumed waits going once the start of BombVault is
+// done, so no held backup runs into its recovery and cleanup. A wait whose
+// deadline passed while BombVault was down backs up at once.
+func (s *Service) StartIdleWaits() {
+	w := s.waits()
+	w.mu.Lock()
+	resumed := w.resumed
+	w.resumed = nil
+	w.mu.Unlock()
+	now := time.Now().Unix()
+	for _, g := range resumed {
+		if now < g.Deadline {
+			s.startWait(g)
+			continue
+		}
+		members, ok := s.endWait(g)
+		if !ok {
+			continue
+		}
+		log.Printf("api: starting the held backup of %s: its wait ended while BombVault was down", strings.Join(members, ", ")) //nolint:gosec // G706: container names from Docker
+		go g.run(members)
 	}
 }
 
@@ -461,8 +484,8 @@ func (s *Service) IdleWaits() []IdleWait {
 }
 
 // appIdle asks the traffic watch whether a container's app is idle. A media
-// server is idle while it does not stream, any other app once its CPU and
-// traffic stayed low for the quiet time.
+// server is idle while it does not stream, any other app, and a media server
+// on the host network, once its CPU and traffic stayed low for the quiet time.
 func (s *Service) appIdle(ctx context.Context, name string, now time.Time) (bool, string) {
 	cfg, err := s.store.TrafficSettings()
 	if err != nil {

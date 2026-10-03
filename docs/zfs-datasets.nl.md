@@ -82,7 +82,7 @@ Om na het terugzetten terug te gaan, kopieer je losse bestanden uit `.zfs/snapsh
 
 BombVault bewaart bij elke back-up de lokaal ingestelde ZFS-eigenschappen van elke dataset: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity en je eigen gebruikerseigenschappen. Geërfde en alleen-lezen waarden blijven weg, omdat ze vanzelf terugkomen. Back-ups van voordat BombVault ze bewaarde, hebben er geen.
 
-- **In een nieuwe dataset** voert `zfs create` uit met elke bewaarde eigenschap. casesensitivity, normalization en utf8only kunnen alleen zo worden ingesteld. Het koppelpunt blijft weg zodat de kopie niet met het origineel botst, net als `canmount`, `readonly` en de versleuteling, zodat het herstel kan schrijven. Een nieuwe dataset onder een versleutelde neemt diens versleuteling over. De dataset erboven moet bestaan. Mislukt er iets nadat hij is aangemaakt, dan blijft de nieuwe dataset op de server, want BombVault vernietigt nooit een dataset.
+- **In een nieuwe dataset** voert `zfs create` uit met elke bewaarde eigenschap. casesensitivity, normalization en utf8only kunnen alleen zo worden ingesteld. Quota en reserveringen volgen pas na de bestanden, zodat ze die niet kunnen weigeren. Het koppelpunt blijft weg zodat de kopie niet met het origineel botst, net als `canmount`, `readonly` en de versleuteling, zodat het herstel kan schrijven. Een nieuwe dataset onder een versleutelde neemt diens versleuteling over. De dataset erboven moet bestaan. Mislukt er iets nadat hij is aangemaakt, dan blijft de nieuwe dataset op de server, want BombVault vernietigt nooit een dataset.
 - **Terugzetten in de dataset** toont de bewaarde eigenschappen naast het herstel. **Deze eigenschappen ook instellen** stelt de eigenschappen in die een bestaande dataset nog aanneemt, voordat er een bestand wordt geschreven. Quota en reserveringen volgen pas na de bestanden, zodat ze die niet kunnen weigeren. Zonder die schakelaar houdt de dataset zijn instellingen.
 
 ## Wat er in de back-up zit {#contents}
@@ -181,6 +181,7 @@ De pagina, de rungeschiedenis en de meldingen noemen een probleem met een van de
 | `create-failed` | De nieuwe dataset kon niet worden aangemaakt. | De details tonen de melding van zfs. Controleer of de dataset erboven bestaat. |
 | `new-dataset-not-visible` | De nieuwe dataset is aangemaakt, maar BombVault ziet hem niet, dus er is niets hersteld. | De dataset blijft op de server. Koppel hem onder het Host Data-pad en herstel erin. |
 | `set-properties-failed` | De opgeslagen eigenschappen konden niet worden ingesteld, dus er is niets hersteld. | De details tonen de melding van zfs. |
+| `set-limits-failed` | De bestanden zijn hersteld, maar het opgeslagen quotum of de reservering kon niet worden ingesteld. | De details tonen de melding van zfs. Stel het quotum of de reservering zelf in met `zfs set`. |
 
 ### Controleren wat de container ziet {#mountinfo}
 

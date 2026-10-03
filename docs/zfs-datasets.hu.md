@@ -82,7 +82,7 @@ Ha egy visszaállítás után vissza szeretnél lépni, másolj egyes fájlokat 
 
 A BombVault minden mentéssel eltárolja minden adatkészlet helyben beállított ZFS-tulajdonságait: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity és a saját felhasználói tulajdonságaid. Az örökölt és csak olvasható értékek kimaradnak, mert maguktól visszajönnek. Azokban a mentésekben, amelyek még azelőtt készültek, hogy a BombVault tárolta volna őket, nincsenek ilyenek.
 
-- **Új adatkészletbe** a `zfs create` parancsot futtatja minden tárolt tulajdonsággal. A casesensitivity, a normalization és az utf8only csak így állítható be. A csatolási pont kimarad, hogy a másolat ne ütközzön az eredetivel, és ugyanígy a `canmount`, a `readonly` és a titkosítás is, hogy a visszaállítás írni tudjon. Egy titkosított alatti új adatkészlet átveszi annak titkosítását. A fölötte lévő adatkészletnek léteznie kell. Ha a létrehozás után valami hibára fut, az új adatkészlet a szerveren marad, mert a BombVault soha nem töröl adatkészletet.
+- **Új adatkészletbe** a `zfs create` parancsot futtatja minden tárolt tulajdonsággal. A casesensitivity, a normalization és az utf8only csak így állítható be. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. A csatolási pont kimarad, hogy a másolat ne ütközzön az eredetivel, és ugyanígy a `canmount`, a `readonly` és a titkosítás is, hogy a visszaállítás írni tudjon. Egy titkosított alatti új adatkészlet átveszi annak titkosítását. A fölötte lévő adatkészletnek léteznie kell. Ha a létrehozás után valami hibára fut, az új adatkészlet a szerveren marad, mert a BombVault soha nem töröl adatkészletet.
 - **Visszaállítás az adatkészletbe** a visszaállítás mellett mutatja a tárolt tulajdonságokat. A **Ezeket a tulajdonságokat is beállítja** beállítja azokat, amelyeket egy meglévő adatkészlet még elfogad, mielőtt bármilyen fájl íródna. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. E kapcsoló nélkül az adatkészlet megtartja a beállításait.
 
 ## Mi van a mentésben {#contents}
@@ -181,6 +181,7 @@ Az oldal, a futási előzmények és az értesítések ezek egyikével nevezik m
 | `create-failed` | Az új adatkészletet nem sikerült létrehozni. | A részletek a zfs üzenetét mutatják. Ellenőrizd, hogy a fölötte lévő adatkészlet létezik-e. |
 | `new-dataset-not-visible` | Az új adatkészlet létrejött, de a BombVault nem látja, ezért semmi sem lett visszaállítva. | Az adatkészlet a szerveren marad. Csatold a Host Data útvonal alá, és állíts vissza bele. |
 | `set-properties-failed` | A tárolt tulajdonságokat nem sikerült beállítani, ezért semmi sem lett visszaállítva. | A részletek mutatják a zfs üzenetét. |
+| `set-limits-failed` | A fájlok visszaálltak, de a tárolt kvótát vagy foglalást nem sikerült beállítani. | A részletek a zfs üzenetét mutatják. Állítsd be a kvótát vagy a foglalást magad a `zfs set` paranccsal. |
 
 ### Mit lát a konténer {#mountinfo}
 

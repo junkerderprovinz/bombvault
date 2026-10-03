@@ -1420,9 +1420,10 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID   string `json:"snapshotId"`
-		Confirm      bool   `json:"confirm"`
-		LeaveStopped bool   `json:"leaveStopped"`
+		SnapshotID     string `json:"snapshotId"`
+		Confirm        bool   `json:"confirm"`
+		LeaveStopped   bool   `json:"leaveStopped"`
+		WithoutRuntime bool   `json:"withoutRuntime"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -1434,7 +1435,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
-	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
+	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped, body.WithoutRuntime)
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -2242,6 +2243,12 @@ type settingsView struct {
 	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
 	RetentionKeepYearly  int `json:"retentionKeepYearly"`
+	// OwnRetention holds the domains that age by a local keep-policy of their
+	// own instead of the one above, keyed by domain name.
+	OwnRetention map[string]store.RetentionKeep `json:"ownRetention"`
+	// OwnOffsiteRetention holds the domains whose built-in off-site repo ages
+	// by a keep-policy of its own instead of the off-site one below.
+	OwnOffsiteRetention map[string]store.RetentionKeep `json:"ownOffsiteRetention"`
 	// Compression is restic's --compression per repository, keyed like
 	// store.Settings.Compression.
 	Compression map[string]string `json:"compression"`
@@ -2462,6 +2469,8 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepWeekly:         s.RetentionKeepWeekly,
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
 		RetentionKeepYearly:         s.RetentionKeepYearly,
+		OwnRetention:                s.OwnRetention(),
+		OwnOffsiteRetention:         s.OwnOffsiteRetention(),
 		Compression:                 compressionView(s),
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
@@ -2781,6 +2790,7 @@ func applyOffsiteSettings(cur *store.Settings, v settingsView) {
 	cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
 	cur.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
+	applyOwnOffsiteRetention(cur, v.OwnOffsiteRetention)
 	cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
@@ -2908,6 +2918,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if msg := rejectInvalidCompression(v.Compression); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if msg := rejectInvalidOwnRetention("ownRetention", v.OwnRetention); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if msg := rejectInvalidOwnRetention("ownOffsiteRetention", v.OwnOffsiteRetention); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
@@ -3065,6 +3083,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
 		cur.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+		applyOwnRetention(cur, v.OwnRetention)
 		applyCompression(cur, v.Compression)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
@@ -3192,10 +3211,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// fail. BombVault never prunes an append-only repo, so the policy is inert
 	// until enforced far-side.
 	notes := []string{}
-	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
-		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
-		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
-			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0 || s.OffsiteRetentionKeepYearly > 0) {
+	if slices.ContainsFunc(offsiteConfigDomains, func(d string) bool {
+		return offsiteImmutableFor(d, s) && h.svc.offsiteRetentionPolicy(s, d).Any()
+	}) {
 		notes = append(notes, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy; enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
 	}
 	warnings := []saveWarning{}

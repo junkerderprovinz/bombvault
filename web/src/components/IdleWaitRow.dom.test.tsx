@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // The switch brings back the hours it had, and a card whose scheduled backup
 // waits says so with the reason and the deadline.
+import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -74,4 +75,27 @@ it("stays empty for a card that is not waiting", async () => {
   waiting = [{ domain: "containers", name: "other", busy: "other", reason: "cpu", since: 1, deadline: 7200 }];
   await show(<IdleWaitLine name="plex" />);
   expect(screen.queryByText(new RegExp(en["idle.reasonCpu"]))).toBeNull();
+});
+
+it("hands the saved hours up, so the row shows them again after it was hidden", async () => {
+  function Card() {
+    const [hours, setHours] = useState(0);
+    const [shown, setShown] = useState(true);
+    return (
+      <>
+        <button type="button" onClick={() => setShown((v) => !v)}>
+          advanced
+        </button>
+        {shown && <IdleWaitRow name="plex" initial={hours} onSaved={setHours} />}
+      </>
+    );
+  }
+  await show(<Card />);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("switch", { name: new RegExp(en["idle.toggle"]) }));
+  });
+  expect(saved).toEqual([4]);
+  fireEvent.click(screen.getByRole("button", { name: "advanced" }));
+  fireEvent.click(screen.getByRole("button", { name: "advanced" }));
+  expect(screen.getByRole("switch", { name: new RegExp(en["idle.toggle"]) }).getAttribute("aria-checked")).toBe("true");
 });

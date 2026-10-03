@@ -60,6 +60,9 @@ export interface ProgressState {
   // at the streaming limit, "next" while a stream runs that the copy can only
   // meet from its next step.
   throttle?: OffsiteThrottle;
+  // How many items of a batch did not work, such as the archives of an
+  // import, on the frame that ends it.
+  failed?: number;
 }
 
 export type OffsiteThrottle = "now" | "next";
@@ -167,6 +170,7 @@ export function progressEntry(ev: ProgressFrame, now: number): ProgressState {
     bytes: ev.bytes,
     committed: ev.committed,
     throttle: ev.throttle,
+    failed: ev.failed,
     finished: ev.active ? undefined : true,
     done: ev.done,
     total: ev.total,
@@ -238,6 +242,7 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
     bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
     committed: ev.committed === true ? true : undefined,
     throttle: ev.throttle === "now" || ev.throttle === "next" ? ev.throttle : undefined,
+    failed: typeof ev.failed === "number" && ev.failed > 0 ? ev.failed : undefined,
     done: typeof ev.done === "number" ? ev.done : undefined,
     total: typeof ev.total === "number" && ev.total > 0 ? ev.total : undefined,
     unit: ev.unit && COUNT_UNITS.includes(ev.unit) ? ev.unit : ev.total ? "items" : undefined,

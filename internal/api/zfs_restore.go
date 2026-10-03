@@ -103,12 +103,21 @@ type zfsRestorePlan struct {
 	consistency backup.ZFSConsistency
 	// snapshotID is what the run record points at, the first member restored.
 	snapshotID string
-	// setProps are applied to the in-place dataset before the files.
+	// setProps are applied to the dataset the restore writes into, quotas and
+	// reservations after the files and the rest before them.
 	setProps zfs.Properties
 	// newDataset is the dataset a restore creates. A check plans it against
 	// nothing, since it will be empty; its steps' target is where it will be
 	// mounted, "" when that cannot be told yet.
 	newDataset string
+}
+
+// writesInto is the dataset whose files the restore replaces.
+func (p zfsRestorePlan) writesInto() string {
+	if p.newDataset != "" {
+		return p.newDataset
+	}
+	return p.dataset
 }
 
 // ListZFSRestorePoints groups an item's member snapshots into the run instants
@@ -145,12 +154,18 @@ func (s *Service) ListZFSRestorePoints(ctx context.Context, id, source string) (
 		if recorded, ok := outcomes[stamp][dataset]; ok {
 			outcome = recorded
 		}
+		// The properties are stored under the id of the backup; an off-site
+		// copy names that id as its original.
+		stored, ok := props[snap.ID]
+		if !ok && snap.Original != "" {
+			stored = props[snap.Original]
+		}
 		points[stamp][dataset] = ZFSRestorePointItem{
 			Dataset:    dataset,
 			RelPath:    zfsRelPath(d.Dataset, dataset),
 			SnapshotID: snap.ID,
 			Outcome:    outcome,
-			Properties: props[snap.ID],
+			Properties: stored,
 		}
 	}
 	out := make([]ZFSRestorePoint, 0, len(points))
@@ -483,11 +498,21 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 		plan.snapshotID = member.SnapshotID
 		return ZFSRestoreAck{Target: target}, nil
 	}
+	// A quota or reservation could refuse the files, so those follow them.
+	props, limits := zfs.SplitLimits(member.Properties)
 	cctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
-	err = s.zfs.Create(cctx, name, member.Properties)
+	err = s.zfs.Create(cctx, name, props)
 	cancel()
 	if err != nil {
-		return ZFSRestoreAck{}, zfsRefuse("create-failed", name+": "+zfsDetail(err.Error()))
+		// zfs create also fails when it made the dataset but could not mount
+		// or share it; the mount wait below tells those apart.
+		lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
+		_, tErr := s.zfs.Tree(lctx, name)
+		cancel()
+		if tErr != nil {
+			return ZFSRestoreAck{}, zfsRefuse("create-failed", name+": "+zfsDetail(err.Error()))
+		}
+		log.Printf("api: zfs: %s was created, but zfs create reported: %s", name, zfsDetail(err.Error())) //nolint:gosec // G706: the name passed ValidateDatasetName
 	}
 	cpath, code := s.zfsAwaitWritableMount(ctx, name)
 	switch code {
@@ -498,6 +523,8 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 		return ZFSRestoreAck{Created: name}, zfsRefuse(code, name)
 	}
 	plan.dataset = req.Dataset
+	plan.newDataset = name
+	plan.setProps = limits
 	plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: cpath}}
 	plan.snapshotID = member.SnapshotID
 	return ZFSRestoreAck{Target: cpath, Created: name}, nil
@@ -759,7 +786,7 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 	// written to apply to them; a quota or reservation could refuse them, so
 	// those follow the files.
 	props, limits := zfs.SplitLimits(plan.setProps)
-	if err := s.setZFSRestoreProperties(ctx, plan.dataset, props); err != nil {
+	if err := s.setZFSRestoreProperties(ctx, plan.writesInto(), props, "set-properties-failed"); err != nil {
 		return err
 	}
 	if plan.consistency != nil {
@@ -774,10 +801,11 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 			return err
 		}
 	}
-	return s.setZFSRestoreProperties(ctx, plan.dataset, limits)
+	// The files are already back, so a failure here has a code of its own.
+	return s.setZFSRestoreProperties(ctx, plan.writesInto(), limits, "set-limits-failed")
 }
 
-func (s *Service) setZFSRestoreProperties(ctx context.Context, dataset string, p zfs.Properties) error {
+func (s *Service) setZFSRestoreProperties(ctx context.Context, dataset string, p zfs.Properties, code string) error {
 	if len(p) == 0 {
 		return nil
 	}
@@ -785,7 +813,7 @@ func (s *Service) setZFSRestoreProperties(ctx context.Context, dataset string, p
 	err := s.zfs.SetProperties(sctx, dataset, p)
 	cancel()
 	if err != nil {
-		return &backup.ZFSRefusal{Code: "set-properties-failed", Detail: dataset + ": " + zfsDetail(err.Error())}
+		return &backup.ZFSRefusal{Code: code, Detail: dataset + ": " + zfsDetail(err.Error())}
 	}
 	return nil
 }

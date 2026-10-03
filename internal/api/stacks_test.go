@@ -200,8 +200,8 @@ func TestRestoreStack(t *testing.T) {
 // member, the remaining members get no run and nothing is started.
 func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 	d := &fakeServiceDocker{liveName: ""} // no live container: fresh restore
-	// restoreErr hits the first member the loop reaches. Enumeration is
-	// alphabetical, so svc-a is cancelled and svc-b and svc-c are never reached.
+	// restoreErr hits the first member the loop reaches. Dependencies come
+	// first, so svc-c is cancelled and svc-b and svc-a are never reached.
 	eng := &fakeResticEngine{
 		restoreErr: context.Canceled,
 		snaps: []restic.Snapshot{
@@ -242,14 +242,14 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 	if len(res.Members) != 1 {
 		t.Fatalf("a cancelled member must abort the loop: members = %d, want 1 (%+v)", len(res.Members), res.Members)
 	}
-	if res.Members[0].Name != "svc-a" {
-		t.Fatalf("the aborted member should be the first enumerated (svc-a), got %q", res.Members[0].Name)
+	if res.Members[0].Name != "svc-c" {
+		t.Fatalf("the aborted member should be the first one restored (svc-c), got %q", res.Members[0].Name)
 	}
 	if res.Members[0].Restored {
 		t.Fatalf("a cancelled member must not be marked restored: %+v", res.Members[0])
 	}
 
-	// The only restore run is svc-a's, recorded as cancelled rather than failed.
+	// The only restore run is svc-c's, recorded as cancelled rather than failed.
 	runs, err := st.ListRuns(10)
 	if err != nil {
 		t.Fatal(err)
@@ -378,7 +378,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	if started, err := svc.StartRestoreStack(ctx, "app", "local", "", true, true); err != nil || started {
 		t.Fatalf("second stack restore must be rejected busy: started=%v err=%v", started, err)
 	}
-	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false); err != nil || started {
+	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false, false); err != nil || started {
 		t.Fatalf("an in-place restore must be rejected busy: started=%v err=%v", started, err)
 	}
 	if started, _ := svc.StartBackup(ctx, "web"); started {
@@ -529,5 +529,37 @@ func TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven(t *testing.T) {
 		if !found {
 			t.Errorf("stackDirSource %q: restores = %v, want %s", c.dirSource, eng.restored, c.want)
 		}
+	}
+}
+
+// A member is recreated after the members it depends on, so a legacy link to
+// one of them finds it in place.
+func TestRestoreStackRecreatesDependenciesFirst(t *testing.T) {
+	d := &fakeServiceDocker{}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:svc-a"}},
+		{ID: "bbbb2222", Tags: []string{"container:svc-b"}},
+		{ID: "cccc3333", Tags: []string{"container:svc-c"}},
+	}}
+	svc, st, mountRoot := stackTestService(t, eng, d)
+	seedStackTarget(t, st, mountRoot, "svc-a", "media", "a", "b")
+	seedStackTarget(t, st, mountRoot, "svc-b", "media", "b", "c")
+	seedStackTarget(t, st, mountRoot, "svc-c", "media", "c", "")
+
+	res, err := svc.RestoreStack(context.Background(), "media", "local", "", false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var created []string
+	for _, c := range d.calls {
+		if name, ok := strings.CutPrefix(c, "createAndStart:/"); ok {
+			created = append(created, name)
+		}
+	}
+	if strings.Join(created, ",") != "svc-c,svc-b,svc-a" {
+		t.Fatalf("recreated %v, want svc-c, svc-b, svc-a", created)
+	}
+	if len(res.Members) != 3 || res.Members[0].Name != "svc-a" {
+		t.Fatalf("members = %+v, want all three in name order", res.Members)
 	}
 }

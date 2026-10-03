@@ -122,6 +122,11 @@ describe("parseProgressFrame", () => {
     expect(parseProgressFrame('{"key":"offsite:vms","phase":"replicate","active":true,"throttle":"paused"}')?.throttle).toBeUndefined();
   });
 
+  it("carries how many items of a batch failed on its last frame", () => {
+    expect(parseProgressFrame('{"key":"import:containers","phase":"maintenance","percent":100,"failed":2}')?.failed).toBe(2);
+    expect(parseProgressFrame('{"key":"import:containers","phase":"maintenance","percent":100}')?.failed).toBeUndefined();
+  });
+
   it("keeps rejecting a frame without a key", () => {
     expect(parseProgressFrame('{"phase":"backup","active":true}')).toBeNull();
     expect(parseProgressFrame("not json")).toBeNull();

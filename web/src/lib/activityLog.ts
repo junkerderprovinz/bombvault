@@ -12,7 +12,7 @@ import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
-import { isWarningNote, runReason, runReasonParts } from "./runReason";
+import { isWarningNote, RESTORED_WITHOUT_LINKS, RESTORED_WITHOUT_RUNTIME, restoreNotes, runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
@@ -217,9 +217,10 @@ const STAGE_LINE_KEYS: Record<ProgressStage, string> = {
 
 interface LiveResult {
   lines: LogLine[];
-  /** Signatures of currently-active operations, used to suppress the
-   *  finished-run line that would otherwise briefly double up with it. */
-  signatures: Set<string>;
+  /** The signature of each active operation and the epoch second it began,
+   *  undefined when the progress frames do not say. supersededRuns uses it to
+   *  hide the finished line that would briefly double up with a live one. */
+  signatures: Map<string, number | undefined>;
 }
 
 // itemSignature is the dedupe key for an item-scope backup or restore, so a
@@ -318,7 +319,7 @@ function buildLiveLines(
   stillRunning: ReadonlyMap<string, string> = new Map()
 ): LiveResult {
   const lines: LogLine[] = [];
-  const signatures = new Set<string>();
+  const signatures = new Map<string, number | undefined>();
 
   for (const key of Object.keys(progressMap)) {
     const state = progressMap[key];
@@ -353,7 +354,7 @@ function buildLiveLines(
           : resolveName("activityLog.lineBackingUpItem", { name, percent: String(pct) });
       const sig = itemSignature(runKind, domain, name);
       if (!keep(sig)) continue;
-      signatures.add(sig);
+      signatures.set(sig, state.startedAt);
       lines.push({ id: `live:${key}`, runId: stillRunning.get(sig), atMs: state.lastSeen, status: "running", text, domain, kind: asLogKind(runKind), live: true });
       continue;
     }
@@ -381,7 +382,7 @@ function buildLiveLines(
       // keeps its finished line from showing next to this one.
       const offsiteSig = domainOpSignature("offsite", domain);
       if (!keep(offsiteSig)) continue;
-      signatures.add(offsiteSig);
+      signatures.set(offsiteSig, state.startedAt);
       lines.push({ id: `live:${key}`, runId: stillRunning.get(offsiteSig), atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
       continue;
     }
@@ -405,7 +406,7 @@ function buildLiveLines(
     const text = counted ? `${base} ${counted}` : base;
     const opSig = domainOpSignature(parsed.scope, domain);
     if (!keep(opSig)) continue;
-    signatures.add(opSig);
+    signatures.set(opSig, state.startedAt);
     lines.push({ id: `live:${key}`, runId: stillRunning.get(opSig), atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope === "import" ? "backup" : parsed.scope, live: true });
   }
 
@@ -529,11 +530,18 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   }
 
   if (run.kind === "restore") {
-    return run.status === "success"
-      ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
-      : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineRestoreFailed", { name, error: reasonText(run.error, resolveName) }) }
-        : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+    if (run.status === "success") {
+      // Only what the restore left out is shown; the other notes are English
+      // detail for the run history.
+      const left = restoreNotes(run.error);
+      const parts = [resolveName("activityLog.lineRestoreSuccess", { name, duration })];
+      if (left.withoutRuntime) parts.push(reasonText(RESTORED_WITHOUT_RUNTIME, resolveName));
+      if (left.unlinked.length > 0) parts.push(reasonText(`${RESTORED_WITHOUT_LINKS}: ${left.unlinked.join(", ")}`, resolveName));
+      return { status: "success", text: parts.join("; ") };
+    }
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineRestoreFailed", { name, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
   if (run.kind === "update") {
@@ -608,19 +616,57 @@ function withOrigin(resolveName: ResolveName, run: Run, line: string): string {
   return run.startedViaRevoked ? resolveName(suffix.revoked, { line, key }) : resolveName(suffix.named, { line, key });
 }
 
-function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures: Set<string>): LogLine[] {
+/** runDomain is the filter domain of a run: the target id of a domain-wide
+ *  operation, the target's own domain for an item. */
+function runDomain(run: Run): LogDomain {
+  return isDomainOpKind(run.kind) ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
+}
+
+function runSignature(run: Run): string {
+  const domain = runDomain(run);
+  return isDomainOpKind(run.kind) ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target);
+}
+
+/**
+ * supersededRuns names the finished runs a live line still stands for. A
+ * signature also matches every earlier run of the item or domain, so only a
+ * run that finished after the live operation began counts. Without a start
+ * time it is the newest finished run, and none while a run of it is still
+ * going, since the live line then belongs to that new run.
+ */
+function supersededRuns(
+  runs: Run[],
+  live: ReadonlyMap<string, number | undefined>,
+  stillRunning: ReadonlyMap<string, string>
+): Set<string> {
+  const out = new Set<string>();
+  const newest = new Map<string, Run>();
+  for (const run of runs) {
+    if (run.finishedAt == null) continue;
+    const signature = runSignature(run);
+    if (!live.has(signature)) continue;
+    const startedAt = live.get(signature);
+    if (startedAt !== undefined && startedAt > 0) {
+      if (run.finishedAt >= startedAt) out.add(run.id);
+      continue;
+    }
+    if (stillRunning.has(signature)) continue;
+    const prev = newest.get(signature);
+    if (!prev || run.finishedAt > (prev.finishedAt ?? 0)) newest.set(signature, run);
+  }
+  for (const run of newest.values()) out.add(run.id);
+  return out;
+}
+
+function buildHistoryLines(runs: Run[], resolveName: ResolveName, superseded: Set<string>): LogLine[] {
   const lines: LogLine[] = [];
   for (const run of runs) {
     // A run still in flight shows as its live progress line instead.
     if (run.finishedAt == null) continue;
+    if (superseded.has(run.id)) continue;
 
-    const isDomainOp = isDomainOpKind(run.kind);
-    const domain: LogDomain = isDomainOp ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
+    const domain = runDomain(run);
     const name = run.target;
-
-    const signature = isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, name);
-    if (liveSignatures.has(signature)) continue;
-
     const { status, text } = finishedLineText(resolveName, run, domain, name);
     const line: LogLine = {
       id: `run:${run.id}`,
@@ -697,22 +743,17 @@ export function buildLogLines(
   liveNow: number = now,
   waits: IdleWait[] = []
 ): LogLine[] {
-  // The runs the backend still reports as running, keyed with the same
-  // signatures buildHistoryLines uses, so a stale live line can ask whether
+  // The runs the backend still reports as running, keyed by runSignature like
+  // the finished ones, so a stale live line can ask whether
   // its run is still going and a live line carries its run's id.
   const stillRunning = new Map<string, string>();
   for (const run of runs) {
     if (run.status !== "running") continue;
-    const isDomainOp = isDomainOpKind(run.kind);
-    const domain: LogDomain = isDomainOp ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
-    stillRunning.set(
-      isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target),
-      run.id
-    );
+    stillRunning.set(runSignature(run), run.id);
   }
 
   const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now, liveNow, stillRunning);
-  const historyLines = buildHistoryLines(runs, resolveName, signatures);
+  const historyLines = buildHistoryLines(runs, resolveName, supersededRuns(runs, signatures, stillRunning));
 
   const orderedHistory = historyLines.slice().sort((a, b) => a.atMs - b.atMs);
   const orderedLive = liveLines.slice().sort((a, b) => a.atMs - b.atMs);
