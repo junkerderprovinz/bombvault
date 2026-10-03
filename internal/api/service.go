@@ -1694,6 +1694,10 @@ func (s *Service) retentionPolicy(settings store.Settings, domain string) restic
 			KeepYearly:  settings.RetentionKeepYearly,
 		}
 	}
+	return keepPolicy(k)
+}
+
+func keepPolicy(k store.RetentionKeep) restic.RetentionPolicy {
 	return restic.RetentionPolicy{
 		KeepLast:    k.KeepLast,
 		KeepDaily:   k.KeepDaily,
@@ -1703,13 +1707,24 @@ func (s *Service) retentionPolicy(settings store.Settings, domain string) restic
 	}
 }
 
-// offsiteRetentionPolicy is the SEPARATE keep-policy for the off-site repo, so it
-// can be kept longer (archive) than the local copy. All-zero (the default) means
-// no off-site pruning — the off-site repo keeps everything, so existing setups
-// are never silently trimmed and an off-site repo only gets pruned once the user
-// explicitly sets this policy.
-func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.RetentionPolicy {
-	return restic.RetentionPolicy{
+// offsiteRetentionPolicy is the keep-policy of a domain's built-in off-site
+// repo, separate from the local one so the off-site copy can be kept longer as
+// an archive. All zero, the default, never prunes it.
+func (s *Service) offsiteRetentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
+	return keepPolicy(offsiteKeep(settings, domain))
+}
+
+// offsiteKeep is the domain's own off-site keep-policy when it has one, the
+// shared off-site one otherwise.
+func offsiteKeep(settings store.Settings, domain string) store.RetentionKeep {
+	if k, own := settings.OwnOffsiteRetention()[domain]; own {
+		return k
+	}
+	return sharedOffsiteKeep(settings)
+}
+
+func sharedOffsiteKeep(settings store.Settings) store.RetentionKeep {
+	return store.RetentionKeep{
 		KeepLast:    settings.OffsiteRetentionKeepLast,
 		KeepDaily:   settings.OffsiteRetentionKeepDaily,
 		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
@@ -1719,7 +1734,7 @@ func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.Retenti
 }
 
 // targetOffsiteRetentionPolicy is the per-DESTINATION off-site keep-policy (the
-// plural successor to offsiteRetentionPolicy, which reads the single global
+// plural successor to offsiteRetentionPolicy, which reads the settings
 // columns). All-zero means keep-everything, exactly as the global default. For a
 // backfilled N=1 target these fields equal the global policy, so behavior is
 // unchanged.
@@ -1787,13 +1802,28 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 }
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
-// source: the settings-level off-site policy for any off-site source, the
-// domain's local policy otherwise.
+// source: the domain's local policy, the domain's off-site policy for its
+// built-in off-site repo, and the shared off-site policy for an additional
+// target, which a domain's own off-site rules do not reach.
 func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
-	if isOffsiteSource(source) {
-		return s.offsiteRetentionPolicy(settings)
+	switch {
+	case !isOffsiteSource(source):
+		return s.retentionPolicy(settings, domain)
+	case s.isBuiltInOffsiteSource(settings, domain, source):
+		return s.offsiteRetentionPolicy(settings, domain)
 	}
-	return s.retentionPolicy(settings, domain)
+	return keepPolicy(sharedOffsiteKeep(settings))
+}
+
+// isBuiltInOffsiteSource reports whether an off-site source reaches the repo
+// the domain's off-site setting names rather than an additional target.
+func (s *Service) isBuiltInOffsiteSource(settings store.Settings, domain, source string) bool {
+	t, ok := s.offsiteTargetForSource(settings, domain, source)
+	return !ok || isBuiltInOffsiteTarget(settings, domain, t)
+}
+
+func isBuiltInOffsiteTarget(settings store.Settings, domain string, t store.OffsiteTarget) bool {
+	return t.Repo == offsiteRepoFromSettings(domain, settings)
 }
 
 // applyRetention prunes the just-backed-up item to the configured keep-policy.
@@ -2331,6 +2361,7 @@ func orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, setti
 // CloudCreds and is supplied by ModeFor, and the "" here preserves it (see the
 // per-target mode in copyToOffsiteTarget).
 func settingsOffsiteTarget(domain string, settings store.Settings, loc string) store.OffsiteTarget {
+	keep := offsiteKeep(settings, domain)
 	return store.OffsiteTarget{
 		Domain:               domain,
 		Name:                 "Primary",
@@ -2338,11 +2369,11 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 		StorageClass:         "",
 		Immutable:            offsiteImmutableFor(domain, settings),
 		Schedule:             offsiteScheduleFromSettings(domain, settings),
-		RetentionKeepLast:    settings.OffsiteRetentionKeepLast,
-		RetentionKeepDaily:   settings.OffsiteRetentionKeepDaily,
-		RetentionKeepWeekly:  settings.OffsiteRetentionKeepWeekly,
-		RetentionKeepMonthly: settings.OffsiteRetentionKeepMonthly,
-		RetentionKeepYearly:  settings.OffsiteRetentionKeepYearly,
+		RetentionKeepLast:    keep.KeepLast,
+		RetentionKeepDaily:   keep.KeepDaily,
+		RetentionKeepWeekly:  keep.KeepWeekly,
+		RetentionKeepMonthly: keep.KeepMonthly,
+		RetentionKeepYearly:  keep.KeepYearly,
 		LimitUpload:          settings.OffsiteLimitUpload,
 		LimitDownload:        settings.OffsiteLimitDownload,
 		GrowthBudgetGB:       settings.OffsiteGrowthBudgetGB,
@@ -3038,11 +3069,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
 		pruneStrategySet := offsiteImmutable ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
-			settings.OffsiteRetentionKeepLast > 0 ||
-			settings.OffsiteRetentionKeepDaily > 0 ||
-			settings.OffsiteRetentionKeepWeekly > 0 ||
-			settings.OffsiteRetentionKeepMonthly > 0 ||
-			settings.OffsiteRetentionKeepYearly > 0
+			s.offsiteRetentionPolicy(settings, d.name).Any()
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,
@@ -4075,9 +4102,15 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 			break
 		}
 		// Per-identity: one tag-scoped, ungrouped forget per item and one prune,
-		// identity-stable like the local retention (issue #91). The destination
-		// ages everything it holds by its target's policy.
-		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, "", op, mode)
+		// identity-stable like the local retention (issue #91). The built-in
+		// off-site repo ages by this domain's off-site rules, so another domain
+		// that replicates there ages its own items on its own pass. An
+		// additional target ages everything it holds by its own policy.
+		scope := ""
+		if isBuiltInOffsiteTarget(settings, domain, target) {
+			scope = domain
+		}
+		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, scope, op, mode)
 		if perr != nil {
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
 		}
