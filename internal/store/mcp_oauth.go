@@ -301,7 +301,7 @@ func freeLabel(tx *sql.Tx, base string) (string, error) {
 			}
 			label += suffix
 		}
-		taken, err := mcpLabelTaken(tx, label, "")
+		taken, err := mcpLabelTaken(tx, MCPKindOAuth, label, "")
 		if err != nil {
 			return "", err
 		}

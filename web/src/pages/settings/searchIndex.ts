@@ -547,6 +547,35 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
+      title: "api.title",
+      hint: "api.hint",
+      rows: [
+        { key: "api.addressLabel", hint: "api.addressHint" },
+        { key: "api.labelLabel" },
+        { key: "mcp.allowStart", hint: "api.allowStartHint" },
+        { key: "api.newTokenTitle", hint: "mcp.showOnce" },
+      ],
+    },
+    {
+      title: "ha.title",
+      hint: "ha.hint",
+      rows: [
+        { key: "ha.enable" },
+        { key: "ha.host" },
+        { key: "notify.smtpPort" },
+        { key: "notify.smtpUser" },
+        { key: "notify.smtpPass" },
+        { key: "ha.prefix", hint: "ha.prefixHint" },
+        { key: "ha.tls", hint: "ha.tlsHint" },
+        { key: "ha.buttons", hint: "ha.buttonsHint" },
+      ],
+    },
+    {
+      title: "mdns.title",
+      hint: "mdns.hint",
+      rows: [{ key: "mdns.enable" }],
+    },
+    {
       title: "vm.ssh.title",
       hint: "vm.ssh.desc",
       rows: [

@@ -46,8 +46,8 @@ interface ErrorGroup {
   domains: string[]; // unique singular domains present in the group
   latest: number; // newest startedAt across the group (unix seconds)
   count: number; // number of failed runs in the group
-  viaMcp: boolean; // the whole group was started by an assistant
-  mcpLabels: string[]; // the MCP keys behind the members, without the purged ones
+  via: "" | "mcp" | "api" | "mqtt"; // what started every member, "" for the schedule and the web interface
+  viaLabels: string[]; // the MCP keys or API tokens behind the members, without the purged ones
 }
 
 export function ErrorDetailPanel({
@@ -135,21 +135,18 @@ export function ErrorDetailPanel({
       // failures, the MCP line below would speak for occurrences no assistant
       // caused. Neither a kind nor an origin contains a space, so the triple
       // cannot be read two ways.
-      const origin = r.startedVia === "mcp" ? "mcp" : "self";
+      const origin = r.startedVia || "self";
       const key = `${r.kind} ${origin} ${message}`;
       let g = byMsg.get(key);
       if (!g) {
-        g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0, viaMcp: false, mcpLabels: [] };
+        g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0, via: r.startedVia ?? "", viaLabels: [] };
         byMsg.set(key, g);
       }
       g.ids.push(r.id);
       g.count++;
       if (r.target && !g.targets.includes(r.target)) g.targets.push(r.target);
       if (r.domain && !g.domains.includes(r.domain)) g.domains.push(r.domain);
-      if (r.startedVia === "mcp") {
-        g.viaMcp = true;
-        if (r.startedViaLabel && !g.mcpLabels.includes(r.startedViaLabel)) g.mcpLabels.push(r.startedViaLabel);
-      }
+      if (r.startedViaLabel && !g.viaLabels.includes(r.startedViaLabel)) g.viaLabels.push(r.startedViaLabel);
       if (r.startedAt > g.latest) g.latest = r.startedAt;
     }
     return Array.from(byMsg.values()).sort((a, b) => b.latest - a.latest);
@@ -293,14 +290,27 @@ export function ErrorDetailPanel({
                     </span>
                     {/* A failure an assistant caused overnight belongs where
                         the operator first looks, not only in the activity log. */}
-                    {g.viaMcp && (
+                    {g.via === "mcp" && (
                       <span className="wrap-break-word">
-                        {g.mcpLabels.length > 0
-                          ? t("activityLog.viaMcpLine", g.mcpLabels.length).replace(
+                        {g.viaLabels.length > 0
+                          ? t("activityLog.viaMcpLine", g.viaLabels.length).replace(
                               "{keys}",
-                              g.mcpLabels.join(", ")
+                              g.viaLabels.join(", ")
                             )
                           : t("activityLog.viaMcpLineUnknownKey")}
+                      </span>
+                    )}
+                    {g.via === "mqtt" && (
+                      <span className="wrap-break-word">{t("activityLog.viaHomeAssistantLine")}</span>
+                    )}
+                    {g.via === "api" && (
+                      <span className="wrap-break-word">
+                        {g.viaLabels.length > 0
+                          ? t("activityLog.viaApiLine", g.viaLabels.length).replace(
+                              "{keys}",
+                              g.viaLabels.join(", ")
+                            )
+                          : t("activityLog.viaApiLineUnknownKey")}
                       </span>
                     )}
                     <span title={formatTs(g.latest)}>{relativeTime(t, g.latest)}</span>

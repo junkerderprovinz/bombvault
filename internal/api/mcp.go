@@ -62,8 +62,12 @@ const (
 var mcpResticTimeout = time.Minute
 
 // mcpCaller is the key a request came in with. The gate puts it into the
-// request context, which is how a tool learns who is asking.
+// request context, which is how a tool learns who is asking. The public API and
+// the Home Assistant buttons call the same tools under a caller of their own.
 type mcpCaller struct {
+	// Via is the run origin the caller's backups are recorded under: "mcp",
+	// "api" or "mqtt". Empty reads as "mcp".
+	Via   string
 	KeyID string
 	// Label is the operator's name for the key. get_health shows it to the
 	// assistant; it never reaches a log line.
@@ -82,6 +86,40 @@ func withMCPCaller(ctx context.Context, c mcpCaller) context.Context {
 func mcpCallerFrom(ctx context.Context) (mcpCaller, bool) {
 	c, ok := ctx.Value(mcpCallerKey{}).(mcpCaller)
 	return c, ok
+}
+
+// Run origins of the callers outside the web interface and the schedule.
+const (
+	viaMCP  = "mcp"
+	viaAPI  = "api"
+	viaMQTT = "mqtt"
+)
+
+func (c mcpCaller) via() string {
+	if c.Via == "" {
+		return viaMCP
+	}
+	return c.Via
+}
+
+// budgetKey is what the hourly start budget counts under. The Home Assistant
+// buttons have no key row, so they count as one caller.
+func (c mcpCaller) budgetKey() string {
+	if c.KeyID == "" {
+		return "via:" + c.via()
+	}
+	return c.KeyID
+}
+
+// readOnlyMessage says where the permission a refused start lacked is granted.
+func (c mcpCaller) readOnlyMessage() string {
+	switch c.via() {
+	case viaAPI:
+		return "this token may only read; allow backups for it under Settings, Integrations, API tokens"
+	case viaMQTT:
+		return "the backup buttons are switched off under Settings, Integrations, Home Assistant"
+	}
+	return mcpReadOnlyKeyMessage
 }
 
 // mcpState is what the endpoint keeps between requests. NewHandler creates it,

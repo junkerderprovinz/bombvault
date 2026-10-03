@@ -119,12 +119,13 @@ The idea of one-click backup with automatic reinstall comes from [**VolumeVault*
 
 On Unraid, backups usually run through [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or through a general engine such as [Duplicati](https://duplicati.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
 
-The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore, backs up installed Unraid plugins, and its web UI works on a phone. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real, up to starting a restored container in isolation. Worth a look.
+The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore, and it has a good deal of what BombVault has, down to changed-block VM backups and Home Assistant. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real, up to starting a restored container in isolation. Worth a look.
 
 | | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | Restore brings a container back whole (image, env, ports, labels) | ✅ | ✅ | ⚠️ files and XML | ❌ | ❌ | ❌ |
 | Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ |
+| VM backups read only changed blocks | ✅ qcow2 | ✅ qcow2 | ❌ | ❌ | ❌ | ❌ |
 | Database dumps for recognised database containers | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
 | Installed Unraid plugins | ✅ one by one from the flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ |
 | ZFS datasets as a source | ✅ | ✅ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |
@@ -142,6 +143,9 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
 | Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ |
 | AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
+| Documented HTTP API for scripts, with its own tokens | ✅ | ✅ | ❌ | ⚠️ undocumented | ⚠️ undocumented | ❌ |
+| Home Assistant integration | ✅ over MQTT | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ⚠️ third party |
+| Announces itself on the network (mDNS) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
@@ -149,18 +153,11 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Web UI usable on a phone | ✅ | ✅ per its README | ❓ | ✅ | ❓ | ❓ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. The BombVault column is v9.5.0. The other tools were checked against their code and docs on 25 September 2026, and the start-test row and Vault's cell for idle waiting again on 28 September 2026 against Vault v2026.09.01.
+✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. The BombVault column is v9.6.0. The other tools were checked against their code and docs on 25 September 2026, and the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026 against Vault v2026.09.01.
 
 <br>
 
 ## 2. Screenshots
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="Restoring a deleted container from its backup, back and running in seconds" width="90%">
-  <br><em>A container that no longer exists, restored from its backup and running again in seconds. The confirm switch is deliberate: a restore in place recreates the container, so it asks before it does.</em>
-</p>
-
-<br>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault dashboard: recovery point, next backup, last result and the live activity log" width="90%">
@@ -206,7 +203,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | What | What is saved |
 |---|---|
 | **Docker containers** | Appdata directory + container definition (image, env vars, ports, labels, volumes). The whole appdata directory by default; open **Choose folders** on the container to tick exactly which folders the backup covers, with a live count of the paths the next run hands restic, a reviewable list of what you left out, and a per-root **Skip cache folders** switch (`CACHEDIR.TAG`). The exclusion assistant offers recommended excludes for well-known apps such as Plex, Jellyfin, the *arr apps, Immich and Nextcloud: caches, logs and preview images the app fills again by itself |
-| **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH). Live snapshots **fall back to a graceful backup automatically** if the snapshot can't be created, so a VM backup never just errors out. **ZFS zvol-backed disks** are covered too: each is streamed with `zfs send` over the same SSH link and kept under its own snapshot history, so a VM whose disks are zvols (TrueNAS Scale's default) is backed up as one VM rather than half of one. A guest's **vTPM state** is saved next to the NVRAM whenever the domain XML names its path, so a Secure-Boot guest comes back able to unseal its own disk. That is the passthrough case, a real TPM chip. An **emulated vTPM**, which is what TrueNAS provisions for Windows 11 and Secure Boot guests, does not publish its state path in the domain XML at all, so its state is **not** captured: keep that guest's recovery key to hand before you restore it. BombVault reports "no TPM path found" instead of guessing a path ([the full reasoning](docs/vm-backup-ssh-setup.md)) |
+| **KVM / libvirt VMs** | VM disk image(s) + XML definition + UEFI NVRAM (graceful-shutdown or live-snapshot, over SSH). Live snapshots **fall back to a graceful backup automatically** if the snapshot can't be created, so a VM backup never just errors out. **ZFS zvol-backed disks** are covered too: each is streamed with `zfs send` over the same SSH link and kept under its own snapshot history, so a VM whose disks are zvols (TrueNAS Scale's default) is backed up as one VM rather than half of one. A guest's **vTPM state** is saved next to the NVRAM whenever the domain XML names its path, so a Secure-Boot guest comes back able to unseal its own disk. That is the passthrough case, a real TPM chip. An **emulated vTPM**, which is what TrueNAS provisions for Windows 11 and Secure Boot guests, does not publish its state path in the domain XML at all, so its state is **not** captured: keep that guest's recovery key to hand before you restore it. BombVault reports "no TPM path found" instead of guessing a path ([the full reasoning](docs/vm-backup-ssh-setup.md)). With **Changed blocks only** on, a running VM with qcow2 disks is read through libvirt checkpoints, so a backup reads just the blocks written since the last one, and every restore point still restores the whole disk on its own |
 | **Unraid flash** | The whole USB flash (`/boot`): OS, license, array config, shares, network + plugin config. Restore is a one-click **`.zip` download** (never overwrites the live flash); a single plugin can be put back into the running flash |
 | **App configuration** | BombVault's own `/config` — its settings database, off-site credentials (`rclone.conf`) and libvirt SSH keypair, snapshotted with SQLite `VACUUM INTO` so a WAL-mode database is never captured mid-write. No container stop. Restore is from the **Recovery** tab, staged and applied by a self-restart so the live database is never overwritten under an open handle |
 | **Files & folders** | Named **file sets** — any folder on the server (a share, your documents, a photo library), each with optional per-set **exclude patterns**. Full parity with the other domains: schedules, retention, off-site copy, integrity checks and restore drills. Sources just need to be visible under the container's `/mnt` mapping — the Unraid template's default Host Data mount (all of `/mnt`) already covers shares, cache and pool paths. A set can be narrowed with the same **Choose folders** tree, and can point at a repository of its own instead of the Folders one |
@@ -280,6 +277,9 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)**, a self-hosted **[Apprise API](https://github.com/caronc/apprise-api)** server (point BombVault at its `/notify/<key>` endpoint to fan out to Apprise's 100+ services — Telegram, Pushover, Signal, …) and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always. Each channel has its own on/off switch, so you can leave a webhook URL or a Matrix room configured and simply silence it instead of clearing the field and typing it back in later; Healthchecks sits in its own card with the same treatment. A scheduled run of many containers/VMs can send **one "N of M items succeeded" summary** per run instead of a message per item (off by default — 45 containers no longer means 45 emails); manual backups still notify per item. **Healthchecks** gets the full lifecycle — a `/start` ping when a backup begins, then success / `/fail` on done — whenever a URL is set, independent of that policy, so it measures duration, catches a run that started but never finished, and stays green on success even with failure-only notifications. You can also give each domain (containers / VMs / flash / config / files / ZFS) its own Healthchecks check for per-domain runtime and history, or leave them blank to share one global check.
 - **Weekly digest** — one message per week through those same channels: run counts, how much new backup data landed, whether off-site is current, and the top failures. Off by default, with its own cadence on Settings → Notifications, so a week in which nothing needed you is still reported as such instead of being indistinguishable from a week the alerts never fired.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
+- **HTTP API** under `/api/v1` for scripts and dashboards: status, items, runs, anomalies, storage and starting a backup, described in an OpenAPI file BombVault serves itself. Each script gets a named token, read-only or allowed to start backups, created under **Settings → Integrations → API tokens**. See [docs/api.md](docs/api.md).
+- **Home Assistant** through MQTT discovery: BombVault appears as a device with sensors for status, the running job, open anomalies, the next scheduled backup and each domain's last backup, result and free space, plus a backup button per domain once you switch **Buttons start backups** on. Off by default; set the broker under **Settings → Integrations → Home Assistant**. See [docs/api.md](docs/api.md#home-assistant).
+- **Found by name on the network**: BombVault announces its web interface over mDNS as `bombvault.local`, with its version in the TXT records. On by default; it reaches the LAN when the container runs on br0, macvlan or the host network. See [docs/api.md](docs/api.md#mdns).
 
 </details>
 

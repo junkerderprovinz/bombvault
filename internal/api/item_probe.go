@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -304,8 +305,28 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 	s.unlockStale(ctx, repo, mode)
 
 	sampler := newProbeSampler(rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 0))) //nolint:gosec // G404: picks which files to read back, nothing secret
-	if err := s.engine.LsStream(ctx, repo, snapshotID, mode, sampler.add); err != nil {
+	layout := blockLayout{}
+	if err := s.engine.LsStream(ctx, repo, snapshotID, mode, func(e restic.FileEntry) {
+		sampler.add(e)
+		if it.domain == "vms" {
+			layout.add(e)
+		}
+	}); err != nil {
 		return probeResult{}, fmt.Errorf("list the backup: %w", err)
+	}
+	// A changed-block snapshot is a set of segments per disk. The sample reads
+	// some of them back; a missing or short one would only show when the disk
+	// is put back together, so the listing is held against the manifest too.
+	if layout.manifest {
+		m, err := (&vmBlockRestic{engine: s.engine, mode: mode}).Manifest(ctx, repo, snapshotID)
+		if err != nil {
+			return probeResult{}, fmt.Errorf("read the disk list: %w", err)
+		}
+		for _, d := range m.Disks {
+			if err := backup.CheckBlocksLayout(d, layout.segments["/"+d.Dev]); err != nil {
+				return probeResult{}, err
+			}
+		}
 	}
 	files, bytes, big := sampler.pick()
 	if len(files) == 0 && big == nil {
@@ -378,6 +399,34 @@ func (s *Service) dumpHead(ctx context.Context, repo, snapshotID, file string, m
 		return w.n, nil
 	}
 	return w.n, err
+}
+
+// blockLayout collects the segment files of a changed-block VM snapshot by
+// disk folder, and whether the snapshot carries the manifest that names them.
+type blockLayout struct {
+	manifest bool
+	segments map[string]map[string]int64
+}
+
+func (l *blockLayout) add(e restic.FileEntry) {
+	if e.Type != "file" {
+		return
+	}
+	if e.Path == "/"+backup.BlocksManifestName {
+		l.manifest = true
+		return
+	}
+	dir := path.Dir(e.Path)
+	if path.Dir(dir) != "/" {
+		return
+	}
+	if l.segments == nil {
+		l.segments = map[string]map[string]int64{}
+	}
+	if l.segments[dir] == nil {
+		l.segments[dir] = map[string]int64{}
+	}
+	l.segments[dir][path.Base(e.Path)] = e.Size
 }
 
 // probeSampler draws the probe sample while restic lists the snapshot, so a

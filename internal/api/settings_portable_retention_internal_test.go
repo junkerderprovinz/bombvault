@@ -8,10 +8,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// One file carries the yearly rules, the compression of every repository and
-// the streaming and idle cards together, and a fresh instance comes out of the
-// import with all of them.
-func TestSettingsExportImportCarriesRetentionCompressionAndTrafficTogether(t *testing.T) {
+// One file carries the yearly rules, the compression of every repository, the
+// streaming and idle cards and the Home Assistant link together, and a fresh
+// instance comes out of the import with all of them.
+func TestSettingsExportImportCarriesRetentionCompressionTrafficAndIntegrationsTogether(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
 	s, err := srcStore.GetSettings()
@@ -40,6 +40,7 @@ func TestSettingsExportImportCarriesRetentionCompressionAndTrafficTogether(t *te
 	if err := srcStore.SetTrafficSettings(traffic); err != nil {
 		t.Fatal(err)
 	}
+	seedIntegrations(t, srcStore, appKeyA, false)
 
 	body, _ := doExport(t, src, "?includeCredentials=true")
 	dst, dstStore := newPortableHandler(t, appKeyB)
@@ -63,6 +64,16 @@ func TestSettingsExportImportCarriesRetentionCompressionAndTrafficTogether(t *te
 	}
 	if gotTraffic, err := dstStore.TrafficSettings(); err != nil || !reflect.DeepEqual(gotTraffic, traffic) {
 		t.Fatalf("traffic = %+v (err=%v), want %+v", gotTraffic, err, traffic)
+	}
+	mqtt, err := dstStore.GetMQTTSettings()
+	if err != nil || mqtt.Host != "127.0.0.1" || mqtt.Prefix != "home/bv" || !mqtt.TLS {
+		t.Fatalf("Home Assistant = %+v (err=%v)", mqtt, err)
+	}
+	if pw := brokerPasswordOf(t, dstStore, appKeyB); pw != brokerPassword {
+		t.Fatalf("broker password = %q", pw)
+	}
+	if on, err := dstStore.MDNSEnabled(); err != nil || on {
+		t.Fatalf("network announcement = %v (err=%v), want off", on, err)
 	}
 }
 

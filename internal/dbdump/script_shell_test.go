@@ -786,6 +786,7 @@ exit 0`
 	})
 
 	t.Run("postgres that listens on the socket alone", func(t *testing.T) {
+		waitForNoEntrypoint(t)
 		c := newShellCase(t)
 		c.stub("pg_dumpall", "exit 0")
 		c.stub("pg_isready", socketOnly)
@@ -808,6 +809,7 @@ exit 0`
 	})
 
 	t.Run("mariadb that listens on the socket alone", func(t *testing.T) {
+		waitForNoEntrypoint(t)
 		c := newShellCase(t)
 		c.stub("mariadb-dump", "exit 0")
 		c.stub("mariadb-admin", socketOnly)
@@ -871,6 +873,45 @@ func runEntrypoint(t *testing.T) {
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 	})
+}
+
+// waitForNoEntrypoint waits until no process on the machine carries the
+// entrypoint script's name. The ready check looks at every process it can see,
+// which in a database container is the container's own, but on a test machine
+// includes whatever else runs there.
+func waitForNoEntrypoint(t *testing.T) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for waited := false; ; waited = true {
+		found := runningEntrypoints()
+		if len(found) == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Skipf("another process is named like the entrypoint script: %s", strings.Join(found, "; "))
+		}
+		if !waited {
+			t.Logf("waiting for %s", strings.Join(found, "; "))
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+// runningEntrypoints lists the pid and command line of every process whose
+// name the ready check takes for an entrypoint script.
+func runningEntrypoints() []string {
+	comms, _ := filepath.Glob("/proc/[0-9]*/comm")
+	var found []string
+	for _, comm := range comms {
+		name, err := os.ReadFile(comm) //nolint:gosec // G304: a path under /proc
+		if err != nil || !strings.HasPrefix(string(name), "docker-entrypoi") {
+			continue
+		}
+		dir := filepath.Dir(comm)
+		cmdline, _ := os.ReadFile(filepath.Join(dir, "cmdline")) //nolint:gosec // G304: a path under /proc
+		found = append(found, filepath.Base(dir)+" "+strings.TrimSpace(strings.ReplaceAll(string(cmdline), "\x00", " ")))
+	}
+	return found
 }
 
 func TestImportScriptReadsStdin(t *testing.T) {
