@@ -11,10 +11,6 @@ BUTTONS = {
     # A browser cannot download an image, so this opens the package page, which
     # carries the pull command and every tag.
     "docker": "https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault",
-    # A release's "Source code (zip)" is the whole repository at that tag, and
-    # GitHub gives the newest one no fixed address, so this leads to the release
-    # that lists it.
-    "source": "https://github.com/junkerderprovinz/bombvault/releases/latest",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
     "unraid": "https://unraid.net/community/apps?q=bombvault",
 }
