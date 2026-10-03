@@ -163,22 +163,22 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
-  <br><em>Dashboard — a compact health summary (overall status, next backup, last result) above a live activity log, protection status per domain, run history and a backup-health heatmap. The log carries off-site replication and the tamper test that proves the far side refuses a delete.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault dashboard: recovery point, next backup, last result and the live activity log" width="90%">
+  <br><em>Dashboard: the recovery point, the next backup and the last result sit above a live activity log. The log also shows the off-site copy and the tamper test that proves the far side refuses a delete.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Recovery — guided disaster-recovery flow onto a fresh install" width="90%">
-  <br><em>Recovery — a guided disaster-recovery flow: confirm your backups are readable, restore BombVault's own settings, then attach and restore your container, VM and flash backups onto a fresh install.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/recovery.png" alt="BombVault Recovery: the guided disaster-recovery flow onto a fresh install" width="90%">
+  <br><em>Recovery: a guided flow for a fresh install. Check that BombVault can read your backups, restore its own settings, then attach your container, VM and flash backups and restore them.</em>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers tab — per-container backup with schedule toggle, filters and bulk include/exclude" width="90%">
-  <br><em>Containers — per-container backup with an include-in-schedule toggle, collapsible filters, bulk include/exclude, one-click backup and an expandable per-container history.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/containers.png" alt="BombVault Containers: each container with its schedule switch, backup button and restore check" width="90%">
+  <br><em>Containers: each container has its own schedule switch, a one-click backup and a restore check. Filters and bulk include or exclude sit above the list.</em>
 </p>
 
 <br>
@@ -191,8 +191,8 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Receiver — the receiving side of an off-site copy, watched read-only" width="90%">
-  <br><em>Receiver — the other end of an off-site copy. It watches what other instances push to this box, read-only: what arrived, when the last backup came in, and an independent integrity check run on this hardware rather than trusted from the sender.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Receiver: a received off-site copy with its snapshots by source and an independent check" width="90%">
+  <br><em>Receiver: the other end of an off-site copy, read-only. It lists what arrived from each source and when, and runs its own integrity check on this hardware instead of trusting the sender.</em>
 </p>
 
 <br>
