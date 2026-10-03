@@ -1375,9 +1375,10 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID   string `json:"snapshotId"`
-		Confirm      bool   `json:"confirm"`
-		LeaveStopped bool   `json:"leaveStopped"`
+		SnapshotID     string `json:"snapshotId"`
+		Confirm        bool   `json:"confirm"`
+		LeaveStopped   bool   `json:"leaveStopped"`
+		WithoutRuntime bool   `json:"withoutRuntime"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -1389,7 +1390,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
-	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
+	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped, body.WithoutRuntime)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

@@ -83,6 +83,21 @@ describe("buildLogLines", () => {
     expect(lines[0].text).toContain("activityLog.lineNextWithDomain");
     expect(lines[0].text).toContain("countdown=1h 0m");
   });
+
+  it("says which of the two happened to a container with a GPU", () => {
+    const refused = makeRun({
+      id: "r1",
+      kind: "restore",
+      status: "failed",
+      error: "restore failed: the container used a GPU or runtime this host does not have: Error response from daemon: unknown or invalid runtime name: nvidia",
+    });
+    const without = makeRun({ id: "r2", kind: "restore", finishedAt: 1060, error: "restored without the GPU or runtime the container used" });
+    const [failed, restored] = buildLogLines([refused, without], {}, [], resolveName, 2_000_000);
+    expect(failed.text).toContain("activityLog.lineRestoreFailed");
+    expect(failed.text).toContain("error=runReason.restoreNoRuntime: Error response from daemon: unknown or invalid runtime name: nvidia");
+    expect(restored.text).toContain("activityLog.lineRestoreSuccess");
+    expect(restored.text).toContain("; runReason.restoredWithoutRuntime");
+  });
 });
 
 // Drills, tamper tests and the flash ZIP export publish live progress keys

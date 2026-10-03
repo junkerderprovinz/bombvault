@@ -26,8 +26,17 @@ export const RUN_REASONS: Record<string, TranslationKey> = {
   "cancelled by the user": "runReason.cancelled",
 };
 
+/** What a container restore writes when Docker refused the GPU or runtime of
+ *  the container, followed by ": " and Docker's refusal. Keep in step with
+ *  ReasonRestoreNoRuntime in internal/store/runs.go. */
+export const RESTORE_NO_RUNTIME = "restore failed: the container used a GPU or runtime this host does not have";
+
+/** The note of the restore that left them out. Keep in step with
+ *  NoteRestoredWithoutRuntime. */
+export const RESTORED_WITHOUT_RUNTIME = "restored without the GPU or runtime the container used";
+
 /**
- * The reasons a database dump or import writes, which may be followed by
+ * The reasons a dump, an import or a restore writes, which may be followed by
  * ": <detail>" holding the tool's own message. The head is translated, the
  * detail is shown as it was stored. Keep in step with the Reason* and Note*
  * constants in internal/store/runs.go; runreason_internal_test.go fails when
@@ -60,6 +69,8 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database import failed: the import tool reported an error": "runReason.dbimportFailed",
   "database imported; the previous data folder was kept": "runReason.dbimportKeptOld",
   "database imported with errors": "runReason.dbimportErrors",
+  [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
+  [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
 };
 
 /**
@@ -125,6 +136,7 @@ const WARNING_NOTES = [
   "database dump covers one database only",
   "database dump skipped: its run could not be recorded",
   "database imported with errors",
+  RESTORED_WITHOUT_RUNTIME,
 ];
 
 /** Whether a note of a successful run reports something worth acting on. */

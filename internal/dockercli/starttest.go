@@ -185,6 +185,10 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	hostCfg.RestartPolicy = container.RestartPolicy{Name: container.RestartPolicyDisabled}
 	hostCfg.Privileged = false
 	hostCfg.Devices = nil
+	// No GPU and the daemon's own runtime: the original may be using the GPU,
+	// and a host without the driver would fail the test for that alone.
+	hostCfg.DeviceRequests = nil
+	hostCfg.Runtime = ""
 	hostCfg.PidMode = ""
 	hostCfg.IpcMode = ""
 	hostCfg.UsernsMode = ""
@@ -257,6 +261,12 @@ func GrantedPrivileges(in model.Inspect) []string {
 	}
 	if hc.CgroupParent != "" {
 		out = append(out, "cgroup parent "+hc.CgroupParent)
+	}
+	if hc.Runtime != "" && hc.Runtime != "runc" {
+		out = append(out, "runtime "+hc.Runtime)
+	}
+	if len(hc.DeviceRequests) > 0 {
+		out = append(out, "GPU")
 	}
 	return out
 }

@@ -378,7 +378,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	if started, err := svc.StartRestoreStack(ctx, "app", "local", true, true); err != nil || started {
 		t.Fatalf("second stack restore must be rejected busy: started=%v err=%v", started, err)
 	}
-	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false); err != nil || started {
+	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false, false); err != nil || started {
 		t.Fatalf("an in-place restore must be rejected busy: started=%v err=%v", started, err)
 	}
 	if started, _ := svc.StartBackup(ctx, "web"); started {

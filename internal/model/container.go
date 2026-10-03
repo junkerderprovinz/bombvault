@@ -141,7 +141,37 @@ type HostConfig struct {
 	BlkioDeviceWriteBps  []ThrottleDevice `json:",omitempty"`
 	BlkioDeviceReadIOps  []ThrottleDevice `json:",omitempty"`
 	BlkioDeviceWriteIOps []ThrottleDevice `json:",omitempty"`
+
+	// Runtime and DeviceRequests are how a container gets a GPU
+	// (--runtime=nvidia, --gpus). A host without that runtime or driver
+	// refuses the container with a MissingRuntimeError.
+	Runtime        string          `json:",omitempty"`
+	DeviceRequests []DeviceRequest `json:",omitempty"`
 }
+
+// DeviceRequest mirrors Docker's request for devices from a driver, the form
+// --gpus takes.
+type DeviceRequest struct {
+	Driver       string            `json:",omitempty"`
+	Count        int               `json:",omitempty"`
+	DeviceIDs    []string          `json:",omitempty"`
+	Capabilities [][]string        `json:",omitempty"`
+	Options      map[string]string `json:",omitempty"`
+}
+
+// UsesExtraRuntime reports whether the container asks for a GPU or for a
+// runtime other than Docker's own.
+func (h HostConfig) UsesExtraRuntime() bool {
+	return (h.Runtime != "" && h.Runtime != "runc") || len(h.DeviceRequests) > 0
+}
+
+// MissingRuntimeError is Docker refusing a container because this host lacks
+// the runtime or device driver its recipe asks for. Err is Docker's refusal.
+type MissingRuntimeError struct{ Err error }
+
+func (e *MissingRuntimeError) Error() string { return e.Err.Error() }
+
+func (e *MissingRuntimeError) Unwrap() error { return e.Err }
 
 // WeightDevice mirrors Docker's per-device block I/O weight.
 type WeightDevice struct {

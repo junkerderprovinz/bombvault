@@ -105,6 +105,9 @@ export function RestoreAction({
 
   const progressKey = `${domain}:${name}`;
   const cancelledRef = useRef(false);
+  // Set by the retry RestoreProgress offers after Docker refused the GPU or
+  // runtime, and cleared by the restore button.
+  const withoutRuntimeRef = useRef(false);
   const { state, fire, isPending } = useBackupWatch({
     progressKey,
     kind: "restore",
@@ -112,7 +115,7 @@ export function RestoreAction({
     cancelledRef,
     start: () =>
       domain === "container"
-        ? restore(name, snapshotId, true, source, forceLeaveStopped || leaveStopped)
+        ? restore(name, snapshotId, true, source, forceLeaveStopped || leaveStopped, withoutRuntimeRef.current)
         : restoreVM(name, snapshotId, true, source, forceLeaveStopped || leaveStopped),
   });
   const prog = useProgress()[progressKey];
@@ -136,6 +139,12 @@ export function RestoreAction({
         if (!ok) return;
       }
     } else if (confirmMessage && !(await confirm(confirmMessage))) return;
+    withoutRuntimeRef.current = false;
+    void fire();
+  }
+
+  function restoreWithoutRuntime() {
+    withoutRuntimeRef.current = true;
     void fire();
   }
 
@@ -221,6 +230,7 @@ export function RestoreAction({
         cancelledRef={cancelledRef}
         successMessage={successMessage}
         showStartedHint={showStartedHint}
+        onRestoreWithoutRuntime={domain === "container" ? restoreWithoutRuntime : undefined}
         t={t}
       />
     </div>

@@ -294,9 +294,19 @@ const (
 	ReasonDBDumpLeftover = "database dump failed: a damaged dump snapshot could not be removed"
 )
 
+// ReasonRestoreNoRuntime begins the reason of a container restore that Docker
+// refused because this host lacks the container's runtime or GPU driver. The
+// detail is Docker's refusal, and the restore panel offers a restore without
+// them, whose run carries NoteRestoredWithoutRuntime.
+const ReasonRestoreNoRuntime = "restore failed: the container used a GPU or runtime this host does not have"
+
 // Notes on a successful run, shown in a warning tone: the work was done, but
 // not as completely as the user would expect.
 const (
+	// NoteRestoredWithoutRuntime may carry the skipped paths of the restore
+	// as its detail.
+	NoteRestoredWithoutRuntime = "restored without the GPU or runtime the container used"
+
 	// NoteDBDumpOneDatabase says the credentials in the container reach one
 	// database rather than the whole server.
 	NoteDBDumpOneDatabase = "database dump covers one database only"

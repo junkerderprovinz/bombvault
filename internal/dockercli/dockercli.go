@@ -500,16 +500,17 @@ func (c *Client) ImageRemove(ctx context.Context, id string) error {
 // CreateAndStart recreates a container from a captured inspect and starts it
 // when start is true. Security-relevant fields (User, Cap*, Privileged,
 // SecurityOpt, ReadonlyRootfs, NetworkMode, Devices) plus Binds/PortBindings/
-// RestartPolicy/Env/Cmd/Image, the resource limits and the log driver are
-// preserved so the recreated container never gains privilege or headroom
-// over the original.
+// RestartPolicy/Env/Cmd/Image, the limits, the log driver, DNS and the GPU
+// request are preserved so the recreated container never gains privilege or
+// headroom over the original. A host that lacks the container's runtime or
+// GPU driver answers with a model.MissingRuntimeError.
 func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start bool) error {
 	cfg, hostCfg := buildCreateConfig(in)
 	name := normalizeName(in.Name)
 	netCfg := buildNetworkingConfig(in)
 	resp, err := c.api.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)
 	if err != nil {
-		return fmt.Errorf("dockercli: create: %w", err)
+		return fmt.Errorf("dockercli: create: %w", missingRuntime(err))
 	}
 	// Reconnect any SECONDARY networks (the primary is already attached, via netCfg
 	// or NetworkMode). Best-effort: a network that no longer exists must not block
@@ -529,7 +530,7 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start boo
 		return nil
 	}
 	if err := c.api.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		return fmt.Errorf("dockercli: create-start: %w", err)
+		return fmt.Errorf("dockercli: create-start: %w", missingRuntime(err))
 	}
 	return nil
 }
@@ -780,6 +781,12 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		Links:             hc.Links,
 		StorageOpt:        hc.StorageOpt,
 		BlkioWeight:       hc.BlkioWeight,
+		Runtime:           hc.Runtime,
+	}
+	for _, r := range hc.DeviceRequests {
+		out.DeviceRequests = append(out.DeviceRequests, model.DeviceRequest{
+			Driver: r.Driver, Count: r.Count, DeviceIDs: r.DeviceIDs, Capabilities: r.Capabilities, Options: r.Options,
+		})
 	}
 	for _, w := range hc.BlkioWeightDevice {
 		if w != nil {
@@ -882,6 +889,7 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 		CgroupnsMode: container.CgroupnsMode(hc.CgroupnsMode),
 		Links:        hc.Links,
 		StorageOpt:   hc.StorageOpt,
+		Runtime:      hc.Runtime,
 	}
 	if hc.LogConfig != nil {
 		hostCfg.LogConfig = container.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
@@ -909,6 +917,11 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 	hostCfg.BlkioDeviceWriteBps = throttlesFrom(hc.BlkioDeviceWriteBps)
 	hostCfg.BlkioDeviceReadIOps = throttlesFrom(hc.BlkioDeviceReadIOps)
 	hostCfg.BlkioDeviceWriteIOps = throttlesFrom(hc.BlkioDeviceWriteIOps)
+	for _, r := range hc.DeviceRequests {
+		hostCfg.DeviceRequests = append(hostCfg.DeviceRequests, container.DeviceRequest{
+			Driver: r.Driver, Count: r.Count, DeviceIDs: r.DeviceIDs, Capabilities: r.Capabilities, Options: r.Options,
+		})
+	}
 	for _, u := range hc.Ulimits {
 		hostCfg.Ulimits = append(hostCfg.Ulimits, &container.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
 	}
@@ -960,4 +973,26 @@ func endpointSettings(n model.NetworkEndpoint) *network.EndpointSettings {
 		ep.MacAddress = n.MACAddress
 	}
 	return ep
+}
+
+// Docker's refusals of a runtime it does not know (the second from daemons
+// before 23.0) and of a device request no driver serves, as for --gpus on a
+// host without the NVIDIA container toolkit. The runtime refusals arrive on
+// create, the device one on start.
+var missingRuntimeRefusals = []string{
+	"unknown or invalid runtime name: ",
+	"Unknown runtime specified ",
+	"could not select device driver ",
+}
+
+// missingRuntime marks err as a model.MissingRuntimeError when it is one of
+// Docker's refusals of a runtime or device driver this host does not have.
+func missingRuntime(err error) error {
+	msg := err.Error()
+	for _, r := range missingRuntimeRefusals {
+		if strings.Contains(msg, r) {
+			return &model.MissingRuntimeError{Err: err}
+		}
+	}
+	return err
 }

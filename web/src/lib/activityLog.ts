@@ -12,7 +12,7 @@ import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
-import { isWarningNote, runReason, runReasonParts } from "./runReason";
+import { isWarningNote, RESTORED_WITHOUT_RUNTIME, runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
@@ -529,11 +529,16 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   }
 
   if (run.kind === "restore") {
-    return run.status === "success"
-      ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
-      : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineRestoreFailed", { name, error: reasonText(run.error, resolveName) }) }
-        : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+    if (run.status === "success") {
+      const text = resolveName("activityLog.lineRestoreSuccess", { name, duration });
+      // The one note a restore writes that the reader has to act on.
+      return run.error?.startsWith(RESTORED_WITHOUT_RUNTIME)
+        ? { status: "success", text: `${text}; ${reasonText(run.error, resolveName)}` }
+        : { status: "success", text };
+    }
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineRestoreFailed", { name, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
   if (run.kind === "update") {

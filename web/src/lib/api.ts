@@ -835,17 +835,20 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
  * survives this connection dying, so a multi-hour restore can't be killed by
  * the browser/proxy dropping the request. Watch the "container:<name>" SSE
  * progress key + the recorded run (kind "restore") for the outcome.
+ * withoutRuntime recreates the container without its GPU request and runtime,
+ * the retry after this host refused them.
  */
 export function restore(
   name: string,
   snapshotId: string,
   confirm: boolean,
   source?: string,
-  leaveStopped?: boolean
+  leaveStopped?: boolean,
+  withoutRuntime?: boolean
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped, withoutRuntime }),
   });
 }
 

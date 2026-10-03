@@ -7450,9 +7450,10 @@ type containerRestorePlan struct {
 	// skippedPaths carries stored paths that had no mapping in the chosen
 	// snapshot (RESTORE-01): they are skipped individually — scrubbed log +
 	// orchestrator run-record note — never a global abort.
-	skippedPaths []string
-	inspect      model.Inspect
-	templateXML  string
+	skippedPaths   []string
+	inspect        model.Inspect
+	templateXML    string
+	withoutRuntime bool
 }
 
 // Restore runs a full container restore. The recreate profile is taken from the
@@ -7803,6 +7804,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           plan.inspect,
 		LeaveStopped:      leaveStopped,
+		WithoutRuntime:    plan.withoutRuntime,
 		TargetID:          plan.targetID,
 		Docker:            s.docker,
 		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
@@ -7910,7 +7912,10 @@ func (s *Service) CancelRun(key string) bool {
 // It shares batchActive with the backup starters so a restore can never run
 // concurrently with a backup or another restore (they contend on repo locks and
 // container stop/start). Returns (false, nil) when one is already running.
-func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, leaveStopped bool) (bool, error) {
+//
+// withoutRuntime recreates the container without its GPU request and runtime,
+// the retry the restore panel offers when this host lacks them.
+func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, leaveStopped, withoutRuntime bool) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -7919,6 +7924,7 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 		s.batchActive.Store(false)
 		return false, err
 	}
+	plan.withoutRuntime = withoutRuntime
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns), capped by restoreTimeout (see its comment
 	// for why the restore cap is far more generous than the backup one).
