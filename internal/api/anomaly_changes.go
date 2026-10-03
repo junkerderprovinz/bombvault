@@ -238,6 +238,18 @@ type changePair struct {
 
 func (p changePair) key() string { return p.item.id + "/" + p.from.SnapshotID + "/" + p.to.SnapshotID }
 
+func (p changePair) view() ChangesView {
+	return ChangesView{FromAt: runTakenAt(p.from), ToAt: runTakenAt(p.to)}
+}
+
+func runTakenAt(r store.Run) int64 {
+	var finished int64
+	if r.FinishedAt != nil {
+		finished = *r.FinishedAt
+	}
+	return backupTakenAt(r.StartedAt, finished)
+}
+
 var errNoComparison = errors.New("this finding has no backup before it to compare with")
 
 // AnomalyChanges answers what changed between the last good backup and the
@@ -259,7 +271,8 @@ func (s *Service) AnomalyChanges(id string, retry bool) (ChangesView, error) {
 		if c.results == nil || len(c.results) >= changeResultsKept {
 			c.results = map[string]ChangesView{}
 		}
-		view = ChangesView{State: breakdownRunning, FromAt: pair.from.StartedAt, ToAt: pair.to.StartedAt}
+		view = pair.view()
+		view.State = breakdownRunning
 		c.results[key] = view
 		go s.compareBackups(pair)
 	}
@@ -304,7 +317,7 @@ func (s *Service) changePairOf(id string) (changePair, error) {
 		}
 		for _, run := range series {
 			if run.Status == "success" && run.SnapshotID != "" {
-				from = store.Run{ID: run.ID, SnapshotID: run.SnapshotID, StartedAt: run.StartedAt}
+				from = store.Run{ID: run.ID, SnapshotID: run.SnapshotID, StartedAt: run.StartedAt, FinishedAt: &run.FinishedAt}
 				break
 			}
 		}
@@ -322,7 +335,7 @@ func (s *Service) compareBackups(pair changePair) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), breakdownTimeout)
 	defer cancel()
-	view := ChangesView{FromAt: pair.from.StartedAt, ToAt: pair.to.StartedAt}
+	view := pair.view()
 	root, summary, err := s.diffBackups(ctx, pair)
 	if err != nil {
 		log.Printf("api: compare the backups of %s: %v", pair.item.id, err)

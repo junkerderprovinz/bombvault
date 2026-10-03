@@ -418,7 +418,7 @@ func rewriteFinding(run store.SeriesRun, lastGood *store.SeriesRun, samples int)
 	var lastGoodID string
 	if lastGood != nil {
 		lastGoodID = lastGood.ID
-		details["lastGoodAt"] = lastGood.StartedAt
+		details["lastGoodAt"] = backupTakenAt(lastGood.StartedAt, lastGood.FinishedAt)
 	}
 	if allFilesNew(run) {
 		details["allFilesNew"] = true
@@ -652,7 +652,7 @@ func (f *finding) dateOnset(prior []measurement, bad func(float64) bool) {
 	}
 	if i >= 0 {
 		f.LastGoodRunID = prior[i].runID
-		f.Details["lastGoodAt"] = float64(prior[i].at)
+		f.Details["lastGoodAt"] = float64(prior[i].takenAt)
 	}
 }
 
@@ -1006,7 +1006,9 @@ func newestFinished(series []store.SeriesRun) []store.SeriesRun {
 type measurement struct {
 	runID string
 	at    int64
-	value float64
+	// takenAt is when its backup was taken, the time a finding names it by.
+	takenAt int64
+	value   float64
 }
 
 // measurements reads a metric off the runs that carry it, keeping the order it
@@ -1015,7 +1017,7 @@ func measurements(rows []store.SeriesRun, of func(store.SeriesRun) *int64) []mea
 	out := make([]measurement, 0, len(rows))
 	for _, run := range rows {
 		if value := of(run); value != nil {
-			out = append(out, measurement{runID: run.ID, at: run.StartedAt, value: float64(*value)})
+			out = append(out, measurement{runID: run.ID, at: run.StartedAt, takenAt: backupTakenAt(run.StartedAt, run.FinishedAt), value: float64(*value)})
 		}
 	}
 	return out
@@ -1187,7 +1189,7 @@ func newDataMeasurements(window []store.SeriesRun) []measurement {
 	rows := oldestFirst(window)
 	out := make([]measurement, 0, len(rows))
 	for _, run := range rows {
-		out = append(out, measurement{runID: run.ID, at: run.StartedAt, value: float64(run.Bytes)})
+		out = append(out, measurement{runID: run.ID, at: run.StartedAt, takenAt: backupTakenAt(run.StartedAt, run.FinishedAt), value: float64(run.Bytes)})
 	}
 	return out
 }
