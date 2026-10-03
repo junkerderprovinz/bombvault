@@ -13,7 +13,7 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 - Eine **Replikationsanzeige** zeigt, welcher Bereich gerade repliziert, während es läuft (auf seiner Seite und im Dashboard). Es ist eine aktive Anzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt bereitstellt.
 
 !!! note "Direkt aus dem Off-site wiederherstellen"
-    Jeder Backup-Browser hat einen Schalter **Lokal / Offsite**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
+    Jeder Backup-Browser hat einen Schalter **Lokal / Off-site**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
 
 ## Entfernte primäre Repositories {#remote-primary-repositories}
 

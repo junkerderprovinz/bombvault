@@ -41,8 +41,8 @@ for (const width of [320, 360]) {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await bootGerman(page, width);
 
-    await page.getByRole("tab", { name: "Offsite" }).first().click();
-    await page.getByRole("button", { name: "Offsite-Kopie (optional)", exact: true }).click();
+    await page.getByRole("tab", { name: "Off-site" }).first().click();
+    await page.getByRole("button", { name: "Off-site-Kopie (optional)", exact: true }).click();
     await page.getByRole("button", { name: "Cloud-Zugangsdaten (optional)", exact: true }).click();
     await settle(page);
 

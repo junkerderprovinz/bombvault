@@ -237,8 +237,8 @@ for (const width of [320, 360]) {
     await expect(page.getByText("Als Anomalie markiert")).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
 
-    await page.getByRole("tab", { name: "Offsite" }).click();
-    await expect(page.getByRole("combobox", { name: "Offsite-Ziel" })).toBeVisible();
+    await page.getByRole("tab", { name: "Off-site" }).click();
+    await expect(page.getByRole("combobox", { name: "Off-site-Ziel" })).toBeVisible();
     await expect(snapshotRows(page)).toHaveCount(SNAPSHOTS.length);
     await settle(page);
 
