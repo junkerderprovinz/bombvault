@@ -126,6 +126,33 @@ type HostConfig struct {
 	Init              *bool  `json:",omitempty"`
 	// LogConfig is nil when the daemon's default log driver applies.
 	LogConfig *LogConfig `json:",omitempty"`
+
+	DNS          []string          `json:"Dns,omitempty"`
+	DNSSearch    []string          `json:"DnsSearch,omitempty"`
+	DNSOptions   []string          `json:"DnsOptions,omitempty"`
+	UTSMode      string            `json:",omitempty"`
+	CgroupnsMode string            `json:",omitempty"`
+	Links        []string          `json:",omitempty"`
+	StorageOpt   map[string]string `json:",omitempty"`
+
+	BlkioWeight          uint16           `json:",omitempty"`
+	BlkioWeightDevice    []WeightDevice   `json:",omitempty"`
+	BlkioDeviceReadBps   []ThrottleDevice `json:",omitempty"`
+	BlkioDeviceWriteBps  []ThrottleDevice `json:",omitempty"`
+	BlkioDeviceReadIOps  []ThrottleDevice `json:",omitempty"`
+	BlkioDeviceWriteIOps []ThrottleDevice `json:",omitempty"`
+}
+
+// WeightDevice mirrors Docker's per-device block I/O weight.
+type WeightDevice struct {
+	Path   string
+	Weight uint16
+}
+
+// ThrottleDevice mirrors Docker's per-device block I/O rate limit.
+type ThrottleDevice struct {
+	Path string
+	Rate uint64
 }
 
 // LogConfig mirrors Docker's log driver and its options.

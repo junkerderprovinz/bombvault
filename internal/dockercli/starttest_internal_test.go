@@ -170,3 +170,35 @@ func TestIsolatedConfigReplacesTheOriginalsLimits(t *testing.T) {
 		t.Fatalf("log driver = %q, want the daemon's default", hc.LogConfig.Type)
 	}
 }
+
+// A link names a container the test network does not have, a host UTS or
+// cgroup namespace reaches out of the copy, and a storage option or an I/O
+// limit can refuse the copy for reasons that are not the app's.
+func TestIsolatedConfigLeavesOutLinksNamespacesAndIOLimits(t *testing.T) {
+	from := model.Inspect{
+		Name:   "/wordpress",
+		Config: model.Config{Image: "wordpress"},
+		HostConfig: model.HostConfig{
+			DNS:                []string{"192.168.20.2"},
+			Links:              []string{"/db:/wordpress/db"},
+			UTSMode:            "host",
+			CgroupnsMode:       "host",
+			StorageOpt:         map[string]string{"size": "20G"},
+			BlkioWeight:        300,
+			BlkioWeightDevice:  []model.WeightDevice{{Path: "/dev/sda", Weight: 200}},
+			BlkioDeviceReadBps: []model.ThrottleDevice{{Path: "/dev/sda", Rate: 1 << 20}},
+		},
+	}
+	spec := IsolatedSpec{Name: StartTestPrefix + "wordpress-1", Network: StartTestPrefix + "net-1", From: from, NanoCPUs: 1_000_000_000, MemoryBytes: 2 << 30, PidsLimit: 512}
+	_, hc := isolatedConfig(spec)
+
+	if len(hc.Links) != 0 || hc.UTSMode != "" || hc.CgroupnsMode != "" || len(hc.StorageOpt) != 0 {
+		t.Fatalf("links = %v, uts = %q, cgroupns = %q, storage = %v", hc.Links, hc.UTSMode, hc.CgroupnsMode, hc.StorageOpt)
+	}
+	if hc.BlkioWeight != 0 || len(hc.BlkioWeightDevice) != 0 || len(hc.BlkioDeviceReadBps) != 0 {
+		t.Fatalf("io limits = %d %v %v", hc.BlkioWeight, hc.BlkioWeightDevice, hc.BlkioDeviceReadBps)
+	}
+	if !slices.Equal(hc.DNS, from.HostConfig.DNS) {
+		t.Fatalf("dns = %v, want the recipe's", hc.DNS)
+	}
+}

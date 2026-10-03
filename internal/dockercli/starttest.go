@@ -188,6 +188,8 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	hostCfg.PidMode = ""
 	hostCfg.IpcMode = ""
 	hostCfg.UsernsMode = ""
+	hostCfg.UTSMode = ""
+	hostCfg.CgroupnsMode = ""
 	// Added capabilities, unconfined profiles, sysctls and another cgroup
 	// parent would give the copy what the original was granted on the host. A
 	// copy that cannot start without them fails its test.
@@ -200,14 +202,24 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	hostCfg.MemorySwap = spec.MemoryBytes
 	pids := spec.PidsLimit
 	hostCfg.PidsLimit = &pids
-	// Docker refuses a CFS quota next to NanoCPUs and a reservation above the
-	// memory limit, and the OOM settings would shield the copy at the host's
-	// expense.
+	// The copy runs under these limits alone. Docker refuses a CFS quota next
+	// to NanoCPUs and a reservation above the memory limit, and the OOM
+	// settings would shield the copy at the host's expense.
 	hostCfg.CPUPeriod = 0
 	hostCfg.CPUQuota = 0
 	hostCfg.MemoryReservation = 0
 	hostCfg.OomKillDisable = nil
 	hostCfg.OomScoreAdj = 0
+	hostCfg.BlkioWeight = 0
+	hostCfg.BlkioWeightDevice = nil
+	hostCfg.BlkioDeviceReadBps = nil
+	hostCfg.BlkioDeviceWriteBps = nil
+	hostCfg.BlkioDeviceReadIOps = nil
+	hostCfg.BlkioDeviceWriteIOps = nil
+	// A link names a container the test network does not have, and a storage
+	// option is the driver's to refuse; neither says whether the app starts.
+	hostCfg.Links = nil
+	hostCfg.StorageOpt = nil
 	// The original's log driver would ship the copy's output to wherever the
 	// original's goes.
 	hostCfg.LogConfig = container.LogConfig{}

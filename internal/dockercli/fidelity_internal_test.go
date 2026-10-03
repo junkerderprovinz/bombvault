@@ -2,8 +2,10 @@ package dockercli
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
+	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -287,6 +289,47 @@ func TestRestoreKeepsResourceLimitsAndLogDriver(t *testing.T) {
 	}
 }
 
+func TestRestoreKeepsDNSNamespacesLinksAndIOLimits(t *testing.T) {
+	src := &container.HostConfig{
+		DNS:          []string{"192.168.20.2"},
+		DNSSearch:    []string{"lan"},
+		DNSOptions:   []string{"ndots:1"},
+		UTSMode:      "host",
+		CgroupnsMode: "private",
+		Links:        []string{"/db:/app/db"},
+		StorageOpt:   map[string]string{"size": "20G"},
+	}
+	src.BlkioWeight = 300
+	src.BlkioWeightDevice = []*blkiodev.WeightDevice{{Path: "/dev/sda", Weight: 200}}
+	src.BlkioDeviceReadBps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 1 << 20}}
+	src.BlkioDeviceWriteBps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 2 << 20}}
+	src.BlkioDeviceReadIOps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 100}}
+	src.BlkioDeviceWriteIOps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 50}}
+	hc := restoredHostConfig(t, container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
+		Config:            &container.Config{Image: "alpine"},
+	})
+
+	if !slices.Equal(hc.DNS, src.DNS) || !slices.Equal(hc.DNSSearch, src.DNSSearch) || !slices.Equal(hc.DNSOptions, src.DNSOptions) {
+		t.Fatalf("dns = %v %v %v", hc.DNS, hc.DNSSearch, hc.DNSOptions)
+	}
+	if hc.UTSMode != "host" || hc.CgroupnsMode != "private" {
+		t.Fatalf("uts = %q, cgroupns = %q", hc.UTSMode, hc.CgroupnsMode)
+	}
+	if !slices.Equal(hc.Links, src.Links) || hc.StorageOpt["size"] != "20G" {
+		t.Fatalf("links = %v, storage = %v", hc.Links, hc.StorageOpt)
+	}
+	if hc.BlkioWeight != 300 || len(hc.BlkioWeightDevice) != 1 || hc.BlkioWeightDevice[0].Weight != 200 {
+		t.Fatalf("blkio weight = %d %+v", hc.BlkioWeight, hc.BlkioWeightDevice)
+	}
+	throttles := [][]*blkiodev.ThrottleDevice{hc.BlkioDeviceReadBps, hc.BlkioDeviceWriteBps, hc.BlkioDeviceReadIOps, hc.BlkioDeviceWriteIOps}
+	for i, want := range []uint64{1 << 20, 2 << 20, 100, 50} {
+		if len(throttles[i]) != 1 || throttles[i][0].Path != "/dev/sda" || throttles[i][0].Rate != want {
+			t.Fatalf("throttle %d = %+v, want %d", i, throttles[i], want)
+		}
+	}
+}
+
 func TestRestoreKeepsLogOptions(t *testing.T) {
 	src := &container.HostConfig{LogConfig: container.LogConfig{Type: "json-file", Config: map[string]string{"max-size": "50m", "max-file": "1"}}}
 	hc := restoredHostConfig(t, container.InspectResponse{
@@ -315,5 +358,8 @@ func TestRestoreFromAnOlderDefinitionLeavesLimitsUnset(t *testing.T) {
 	}
 	if hc.LogConfig.Type != "" || hc.LogConfig.Config != nil {
 		t.Fatalf("log config = %+v, want the daemon's default", hc.LogConfig)
+	}
+	if hc.DNS != nil || hc.Links != nil || hc.StorageOpt != nil || hc.UTSMode != "" || hc.CgroupnsMode != "" || hc.BlkioWeight != 0 {
+		t.Fatalf("dns, links, namespaces and io limits must stay unset: %+v", hc)
 	}
 }

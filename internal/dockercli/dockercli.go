@@ -17,6 +17,7 @@ import (
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
+	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -771,7 +772,24 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		OomScoreAdj:       hc.OomScoreAdj,
 		ShmSize:           hc.ShmSize,
 		Init:              hc.Init,
+		DNS:               hc.DNS,
+		DNSSearch:         hc.DNSSearch,
+		DNSOptions:        hc.DNSOptions,
+		UTSMode:           string(hc.UTSMode),
+		CgroupnsMode:      string(hc.CgroupnsMode),
+		Links:             hc.Links,
+		StorageOpt:        hc.StorageOpt,
+		BlkioWeight:       hc.BlkioWeight,
 	}
+	for _, w := range hc.BlkioWeightDevice {
+		if w != nil {
+			out.BlkioWeightDevice = append(out.BlkioWeightDevice, model.WeightDevice{Path: w.Path, Weight: w.Weight})
+		}
+	}
+	out.BlkioDeviceReadBps = throttlesOf(hc.BlkioDeviceReadBps)
+	out.BlkioDeviceWriteBps = throttlesOf(hc.BlkioDeviceWriteBps)
+	out.BlkioDeviceReadIOps = throttlesOf(hc.BlkioDeviceReadIOps)
+	out.BlkioDeviceWriteIOps = throttlesOf(hc.BlkioDeviceWriteIOps)
 	if hc.LogConfig.Type != "" {
 		out.LogConfig = &model.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
 	}
@@ -796,6 +814,24 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 			PathInContainer:   d.PathInContainer,
 			CgroupPermissions: d.CgroupPermissions,
 		})
+	}
+	return out
+}
+
+func throttlesOf(in []*blkiodev.ThrottleDevice) []model.ThrottleDevice {
+	var out []model.ThrottleDevice
+	for _, d := range in {
+		if d != nil {
+			out = append(out, model.ThrottleDevice{Path: d.Path, Rate: d.Rate})
+		}
+	}
+	return out
+}
+
+func throttlesFrom(in []model.ThrottleDevice) []*blkiodev.ThrottleDevice {
+	var out []*blkiodev.ThrottleDevice
+	for _, d := range in {
+		out = append(out, &blkiodev.ThrottleDevice{Path: d.Path, Rate: d.Rate})
 	}
 	return out
 }
@@ -836,9 +872,16 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 			Name:              container.RestartPolicyMode(hc.RestartPolicy.Name),
 			MaximumRetryCount: hc.RestartPolicy.MaximumRetryCount,
 		},
-		OomScoreAdj: hc.OomScoreAdj,
-		ShmSize:     hc.ShmSize,
-		Init:        hc.Init,
+		OomScoreAdj:  hc.OomScoreAdj,
+		ShmSize:      hc.ShmSize,
+		Init:         hc.Init,
+		DNS:          hc.DNS,
+		DNSSearch:    hc.DNSSearch,
+		DNSOptions:   hc.DNSOptions,
+		UTSMode:      container.UTSMode(hc.UTSMode),
+		CgroupnsMode: container.CgroupnsMode(hc.CgroupnsMode),
+		Links:        hc.Links,
+		StorageOpt:   hc.StorageOpt,
 	}
 	if hc.LogConfig != nil {
 		hostCfg.LogConfig = container.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
@@ -858,6 +901,14 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 	hostCfg.CpusetMems = hc.CpusetMems
 	hostCfg.PidsLimit = hc.PidsLimit
 	hostCfg.OomKillDisable = hc.OomKillDisable
+	hostCfg.BlkioWeight = hc.BlkioWeight
+	for _, w := range hc.BlkioWeightDevice {
+		hostCfg.BlkioWeightDevice = append(hostCfg.BlkioWeightDevice, &blkiodev.WeightDevice{Path: w.Path, Weight: w.Weight})
+	}
+	hostCfg.BlkioDeviceReadBps = throttlesFrom(hc.BlkioDeviceReadBps)
+	hostCfg.BlkioDeviceWriteBps = throttlesFrom(hc.BlkioDeviceWriteBps)
+	hostCfg.BlkioDeviceReadIOps = throttlesFrom(hc.BlkioDeviceReadIOps)
+	hostCfg.BlkioDeviceWriteIOps = throttlesFrom(hc.BlkioDeviceWriteIOps)
 	for _, u := range hc.Ulimits {
 		hostCfg.Ulimits = append(hostCfg.Ulimits, &container.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
 	}
