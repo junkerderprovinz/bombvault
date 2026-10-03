@@ -82,7 +82,7 @@ import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconS
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
-import { RetentionSection } from "./settings/OwnRetentionCard";
+import { RetentionRulesCard } from "./settings/OwnRetentionCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
 import { PairingSection } from "./settings/pairing/PairingSection";
@@ -2231,15 +2231,9 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {page === "retention" && (
-      <Card
-        title={t("settings.tab.retention")}
-        // The OR rule holds for the local and the off-site rules alike.
-        hint={t("settings.retentionCombineInfo")}
-        hueIndex={nextHue()}
-      >
-        {(["local", "offsite"] as const).map((scope) => (
-          <RetentionSection
+      {page === "retention" &&
+        (["local", "offsite"] as const).map((scope) => (
+          <RetentionRulesCard
             key={scope}
             scope={scope}
             settings={settings}
@@ -2248,23 +2242,21 @@ export function SettingsPage() {
             debouncedSave={debouncedSave}
             cancelDebounce={cancelDebounce}
             t={t}
+            hueIndex={nextHue()}
           />
         ))}
-        {/* The answer the numbers above never give: which restore points the
-            next run is about to delete, locally and off-site. Advanced-only,
-            because it costs one restic call per item per repository and is a
-            question you ask on purpose rather than one a page should poll. */}
-        {advanced && (
-          <div className="border-t border-carbon-border pt-4">
-            <div className="flex items-center gap-1 text-sm text-carbon-text">
-              {t("retentionPreview.title")}
-              <InfoBubble tip={t("retentionPreview.hint")} />
-            </div>
-            <div className="mt-2">
-              <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
-            </div>
-          </div>
-        )}
+
+      {/* The answer the numbers above never give: which restore points the
+          next run is about to delete, locally and off-site. Advanced-only,
+          because it costs one restic call per item per repository and is a
+          question you ask on purpose rather than one a page should poll. */}
+      {page === "retention" && advanced && (
+      <Card title={t("restore.preview")} hueIndex={nextHue()}>
+        <div className="flex items-center gap-1 text-sm text-carbon-text">
+          {t("retentionPreview.title")}
+          <InfoBubble tip={t("retentionPreview.hint")} />
+        </div>
+        <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
       </Card>
       )}
 

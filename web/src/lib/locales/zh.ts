@@ -688,6 +688,8 @@ const zh: Partial<Translations> = {
   "settings.retentionYearlyInfo": "为最近 N 个有备份的日历年各保留一个快照。年份不足时，也会保留最早的那个。",
   "settings.retentionLocal": "本地仓库",
   "settings.retentionOffsite": "异地仓库",
+  "settings.retentionLocalTitle": "本地保留",
+  "settings.retentionOffsiteTitle": "异地保留",
   "settings.retentionOffsiteHint": "为异地仓库设置单独策略，可作为归档保留更久。全为 0 = 保留每个异地备份（不清理异地）。",
   "settings.ownRetentionTitle": "按来源设置保留规则",
   "settings.ownRetentionHint": "每个来源都可以使用自己的保留规则，而不是上面的共用规则。每天变化的容器和文件夹可以保留 7 个每日备份，很少变化的虚拟机可以少一些。没有自己规则的来源使用共用规则。",

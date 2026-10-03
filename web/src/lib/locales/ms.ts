@@ -650,6 +650,8 @@ const ms: Partial<Translations> = {
   "settings.retentionCombineInfo": "Kelima-lima peraturan ini digabungkan dengan ATAU: snapshot terus wujud jika mana-mana peraturan akan mengekalkannya. Ia tidak dijumlahkan kepada bilangan tetap. Terpakai secara berasingan kepada setiap item yang disandarkan.",
   "settings.retentionLocal": "Repositori setempat",
   "settings.retentionOffsite": "Repositori luar tapak",
+  "settings.retentionLocalTitle": "Pengekalan setempat",
+  "settings.retentionOffsiteTitle": "Pengekalan luar tapak",
   "settings.retentionOffsiteHint": "Polisi berasingan untuk repositori luar tapak, supaya anda boleh menyimpannya lebih lama sebagai arkib. Semua sifar = simpan setiap sandaran luar tapak (tiada prune luar tapak).",
   "settings.ownRetentionTitle": "Peraturan pengekalan setiap sumber",
   "settings.ownRetentionHint": "Sesuatu sumber boleh mengikut peraturan pengekalannya sendiri dan bukan peraturan bersama di atas. Kontena dan folder yang berubah setiap hari mungkin menyimpan 7 sandaran harian, manakala VM yang jarang berubah memerlukan lebih sedikit. Sumber tanpa peraturan sendiri menggunakan peraturan bersama.",

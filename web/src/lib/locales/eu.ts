@@ -650,6 +650,8 @@ const eu: Partial<Translations> = {
   "settings.retentionCombineInfo": "Bost arauak EDO logikarekin konbinatzen dira: arau batek gordeko lukeen argazki bat bizirik irauten du. Ez dira zenbaki finko batera batzen. Babestutako elementu bakoitzari bereizita aplikatzen zaio.",
   "settings.retentionLocal": "Biltegi lokala",
   "settings.retentionOffsite": "Kanpoko biltegia",
+  "settings.retentionLocalTitle": "Mantentze lokala",
+  "settings.retentionOffsiteTitle": "Kanpoko mantentzea",
   "settings.retentionOffsiteHint": "Kanpoko biltegirako politika bereizi bat, artxibo gisa denbora gehiago gorde ahal izateko. Denak 0 = gorde kanpoko babeskopia guztiak (kanpoko garbiketarik gabe).",
   "settings.ownRetentionTitle": "Mantentze-arauak iturriko",
   "settings.ownRetentionHint": "Iturri bakoitzak bere mantentze-arauak izan ditzake goiko arau partekatuen ordez. Egunero aldatzen diren edukiontziek eta karpetek 7 eguneko babeskopia gorde ditzakete, eta gutxitan aldatzen diren makina birtualek gutxiago. Arau propiorik gabeko iturriak arau partekatuak erabiltzen ditu.",

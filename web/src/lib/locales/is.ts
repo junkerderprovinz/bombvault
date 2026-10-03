@@ -650,6 +650,8 @@ const is: Partial<Translations> = {
   "settings.retentionCombineInfo": "Þessar fimm reglur sameinast með EÐA: snapshot lifir af ef einhver regla myndi geyma það. Þær leggjast ekki saman í fasta tölu. Gildir sérstaklega fyrir hvern afritaðan hlut.",
   "settings.retentionLocal": "Staðbundið geymslusafn",
   "settings.retentionOffsite": "Fjarlægt geymslusafn",
+  "settings.retentionLocalTitle": "Staðbundin varðveisla",
+  "settings.retentionOffsiteTitle": "Fjarlæg varðveisla",
   "settings.retentionOffsiteHint": "Sérstök stefna fyrir fjarlæga geymslusafnið, svo þú getir geymt það lengur sem safn. Allt núll = geyma öll fjarlæg afrit (engin fjarlæg hreinsun).",
   "settings.ownRetentionTitle": "Varðveislureglur eftir uppruna",
   "settings.ownRetentionHint": "Uppruni getur fylgt eigin varðveislureglum í stað sameiginlegu reglnanna að ofan. Gámar og möppur sem breytast daglega geta geymt 7 dagleg afrit, en sýndarvélar sem breytast sjaldan færri. Uppruni án eigin reglna notar sameiginlegu reglurnar.",

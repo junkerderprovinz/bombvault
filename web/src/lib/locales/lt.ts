@@ -650,6 +650,8 @@ const lt: Partial<Translations> = {
   "settings.retentionCombineInfo": "Šios penkios taisyklės derinamos su ARBA: momentinė kopija išlieka, jei bet kuri taisyklė ją saugotų. Jos nesusumuojamos į fiksuotą skaičių. Taikoma atskirai kiekvienam kopijuojamam elementui.",
   "settings.retentionLocal": "Vietinė saugykla",
   "settings.retentionOffsite": "Nuotolinė saugykla",
+  "settings.retentionLocalTitle": "Vietinis saugojimas",
+  "settings.retentionOffsiteTitle": "Nuotolinis saugojimas",
   "settings.retentionOffsiteHint": "Atskira nuotolinės saugyklos politika, kad galėtumėte ją saugoti ilgiau kaip archyvą. Visi nuliai = saugoti kiekvieną nuotolinę atsarginę kopiją (be nuotolinio valymo).",
   "settings.ownRetentionTitle": "Saugojimo taisyklės pagal šaltinį",
   "settings.ownRetentionHint": "Šaltinis gali laikytis savo saugojimo taisyklių vietoj bendrų aukščiau. Kasdien besikeičiantys konteineriai ir aplankai gali saugoti 7 dienines atsargines kopijas, o retai besikeičiančios virtualios mašinos mažiau. Šaltinis be savo taisyklių naudoja bendras.",

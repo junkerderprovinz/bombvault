@@ -650,6 +650,8 @@ const ca: Partial<Translations> = {
   "settings.retentionCombineInfo": "Les cinc regles es combinen amb O: un instantani sobreviu si qualsevol regla el conservaria. No se sumen a un nombre fix. S'aplica per separat a cada element copiat.",
   "settings.retentionLocal": "Repositori local",
   "settings.retentionOffsite": "Repositori extern",
+  "settings.retentionLocalTitle": "Retenció local",
+  "settings.retentionOffsiteTitle": "Retenció externa",
   "settings.retentionOffsiteHint": "Una política separada per al repositori extern, perquè el puguis conservar més temps com a arxiu. Tot a 0 = conserva totes les còpies externes (sense neteja externa).",
   "settings.ownRetentionTitle": "Regles de retenció per origen",
   "settings.ownRetentionHint": "Cada origen pot seguir les seves pròpies regles de retenció en lloc de les compartides de dalt. Els contenidors i carpetes que canvien cada dia poden conservar 7 còpies diàries, i les màquines virtuals que canvien poc, menys. Un origen sense regles pròpies fa servir les compartides.",

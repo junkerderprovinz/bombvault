@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// The Retention page is one card: a Local and an Off-site section, each with
-// its shared rules and a switch per source, and one preview at the bottom.
+// The Retention page has three cards: the local keep rules, the off-site keep
+// rules, each with its shared rules and a switch per source, and the preview.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
@@ -94,13 +94,17 @@ async function renderRetention() {
   await act(async () => {
     render(<RouterProvider router={router} />);
   });
-  await screen.findByRole("heading", { name: new RegExp(`^${en["settings.tab.retention"]}`) });
+  await screen.findByRole("heading", { name: new RegExp(`^${en["settings.retentionLocalTitle"]}`) });
   return router;
 }
 
-function section(name: string): HTMLElement {
-  return screen.getByRole("heading", { name: new RegExp(`^${name}`) }).closest("section") as HTMLElement;
+function card(name: string): HTMLElement {
+  return document.querySelector(`[data-search-card="${name}"]`) as HTMLElement;
 }
+
+const LOCAL = en["settings.retentionLocalTitle"];
+const OFFSITE = en["settings.retentionOffsiteTitle"];
+const PREVIEW = en["restore.preview"];
 
 beforeEach(() => {
   localStorage.setItem("bombvault.advanced", "1");
@@ -129,32 +133,30 @@ afterEach(() => {
 });
 
 describe("the Retention page", () => {
-  it("draws one card with a Local and an Off-site section", async () => {
+  it("draws a Local retention, an Off-site retention and a Preview card", async () => {
     await renderRetention();
-    const cards = document.querySelectorAll("[data-search-card]");
-    expect([...cards].map((c) => c.getAttribute("data-search-card"))).toEqual([
-      en["settings.tab.retention"],
-      en["source.local"],
-      en["source.offsite"],
-    ]);
-    expect(section(en["source.local"]).closest(`[data-search-card="${en["settings.tab.retention"]}"]`)).not.toBeNull();
-    expect(section(en["source.offsite"]).closest(`[data-search-card="${en["settings.tab.retention"]}"]`)).not.toBeNull();
+    const cards = [...document.querySelectorAll("[data-search-card]")].map((c) => c.getAttribute("data-search-card"));
+    expect(cards).toEqual([LOCAL, OFFSITE, PREVIEW]);
   });
 
-  it("shows each section's shared rules and a switch per source", async () => {
+  it("shows each card's shared rules and a switch per source, named by the source", async () => {
     await renderRetention();
-    const local = section(en["source.local"]);
-    const offsite = section(en["source.offsite"]);
-    expect(within(local).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["5", "7", "4", "6", "0"]);
-    expect(within(offsite).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["0", "0", "0", "12", "0"]);
-    expect(within(local).getAllByRole("switch")).toHaveLength(6);
-    expect(within(offsite).getAllByRole("switch")).toHaveLength(6);
+    expect(within(card(LOCAL)).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["5", "7", "4", "6", "0"]);
+    expect(within(card(OFFSITE)).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["0", "0", "0", "12", "0"]);
+    for (const [name, sentence] of [
+      [LOCAL, en["settings.ownRetentionFor"]],
+      [OFFSITE, en["settings.ownOffsiteRetentionFor"]],
+    ] as const) {
+      const switches = within(card(name)).getAllByRole("switch");
+      expect(switches).toHaveLength(6);
+      expect(switches[0].getAttribute("aria-label")).toBe(sentence.replace("{source}", en["nav.containers"]));
+      expect(within(card(name)).getByText(en["nav.containers"])).toBeTruthy();
+    }
   });
 
   it("unfolds a source's off-site fields under its switch and saves them as its own off-site rules", async () => {
     await renderRetention();
-    const offsite = section(en["source.offsite"]);
-    const toggle = within(offsite).getByRole("switch", {
+    const toggle = within(card(OFFSITE)).getByRole("switch", {
       name: en["settings.ownOffsiteRetentionFor"].replace("{source}", en["nav.containers"]),
     });
     await act(async () => {
@@ -165,15 +167,16 @@ describe("the Retention page", () => {
       containers: { keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 12, keepYearly: 0 },
     });
     expect(putCalls[0].ownRetention).toEqual({});
-    expect(within(offsite).getAllByRole("spinbutton")).toHaveLength(10);
-    expect(within(section(en["source.local"])).getAllByRole("spinbutton")).toHaveLength(5);
+    expect(within(card(OFFSITE)).getAllByRole("spinbutton")).toHaveLength(10);
+    expect(within(card(LOCAL)).getAllByRole("spinbutton")).toHaveLength(5);
   });
 
-  it("has one preview for the whole card, asking about both copies", async () => {
+  it("has one preview, on its own card, asking about both copies", async () => {
     await renderRetention();
     const buttons = screen.getAllByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") });
     expect(buttons).toHaveLength(1);
-    expect(buttons[0].closest("section")).toBeNull();
+    expect(card(PREVIEW).contains(buttons[0])).toBe(true);
+    expect(within(card(PREVIEW)).getByRole("combobox", { name: en["retentionPreview.sourceLabel"] })).toBeTruthy();
     await act(async () => {
       fireEvent.click(buttons[0]);
     });
@@ -181,21 +184,32 @@ describe("the Retention page", () => {
     expect(previews).toEqual(expect.arrayContaining([["containers", undefined], ["containers", "offsite"]]));
   });
 
+  it("leaves the Preview card out of the simple view", async () => {
+    localStorage.removeItem("bombvault.advanced");
+    await renderRetention();
+    expect(card(PREVIEW)).toBeNull();
+    expect(screen.queryByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") })).toBeNull();
+  });
+
   it("links the additional off-site targets to the Off-site page", async () => {
     const router = await renderRetention();
-    const link = within(section(en["source.offsite"])).getByRole("link", { name: en["settings.retentionExtraTargets"] });
+    const link = within(card(OFFSITE)).getByRole("link", { name: en["settings.retentionExtraTargets"] });
     await act(async () => {
       fireEvent.click(link);
     });
     expect(router.state.location.pathname).toBe("/settings/offsite");
   });
 
-  it("keeps the OR rule, the all-zero rule and the append-only note in (i) bubbles", async () => {
+  it("puts the OR rule in both rules cards' (i) and the append-only note in the off-site one", async () => {
     await renderRetention();
+    const tips = (name: string) =>
+      [...card(name).querySelectorAll("h2 [aria-label]")].map((el) => el.getAttribute("aria-label") ?? "").join(" ");
+    expect(tips(LOCAL)).toContain(en["settings.retentionCombineInfo"]);
+    expect(tips(LOCAL)).toContain(en["settings.retentionHint"]);
+    expect(tips(OFFSITE)).toContain(en["settings.retentionCombineInfo"]);
+    expect(tips(OFFSITE)).toContain(en["settings.retentionImmutableNotPruned"]);
     for (const key of ["settings.retentionCombineInfo", "settings.retentionHint", "settings.retentionImmutableNotPruned"] as const) {
       expect(screen.queryByText(en[key])).toBeNull();
-      const tips = [...document.querySelectorAll("[aria-label]")].map((el) => el.getAttribute("aria-label") ?? "");
-      expect(tips.some((tip) => tip.includes(en[key]))).toBe(true);
     }
   });
 });

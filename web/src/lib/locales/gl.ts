@@ -650,6 +650,8 @@ const gl: Partial<Translations> = {
   "settings.retentionCombineInfo": "As cinco regras combínanse con OU: unha instantánea sobrevive se calquera regra a conservaría. Non se suman a un número fixo. Aplícase por separado a cada elemento copiado.",
   "settings.retentionLocal": "Repositorio local",
   "settings.retentionOffsite": "Repositorio externo",
+  "settings.retentionLocalTitle": "Retención local",
+  "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Unha política separada para o repositorio externo, para que o poidas conservar máis tempo como arquivo. Todo a 0 = conservar todas as copias externas (sen limpeza externa).",
   "settings.ownRetentionTitle": "Regras de retención por orixe",
   "settings.ownRetentionHint": "Cada orixe pode seguir as súas propias regras de retención en lugar das compartidas de arriba. Os contedores e cartafoles que cambian cada día poden conservar 7 copias diarias, e as máquinas virtuais que case non cambian, menos. Unha orixe sen regras propias usa as compartidas.",

@@ -689,6 +689,8 @@ const ro: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimii N ani calendaristici cu o copie de rezervă. Dacă sunt mai puțini ani, îl păstrează și pe cel mai vechi.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo off-site",
+  "settings.retentionLocalTitle": "Retenție locală",
+  "settings.retentionOffsiteTitle": "Retenție externă",
   "settings.retentionOffsiteHint": "O politică separată pentru repo-ul off-site, ca să-l păstrezi mai mult ca arhivă. Toate 0 = păstrează fiecare backup off-site (fără curățare off-site).",
   "settings.ownRetentionTitle": "Reguli de retenție pe sursă",
   "settings.ownRetentionHint": "O sursă poate urma propriile reguli de retenție în locul celor comune de mai sus. Containerele și folderele care se schimbă zilnic pot păstra 7 backupuri zilnice, iar VM-urile care se schimbă rar, mai puține. O sursă fără reguli proprii le folosește pe cele comune.",

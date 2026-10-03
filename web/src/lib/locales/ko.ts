@@ -688,6 +688,8 @@ const ko: Partial<Translations> = {
   "settings.retentionYearlyInfo": "백업이 있는 마지막 N개의 달력 연도마다 스냅샷 하나씩을 보관합니다. 연도가 그보다 적으면 가장 오래된 스냅샷도 보관합니다.",
   "settings.retentionLocal": "로컬 저장소",
   "settings.retentionOffsite": "오프사이트 저장소",
+  "settings.retentionLocalTitle": "로컬 보존",
+  "settings.retentionOffsiteTitle": "오프사이트 보존",
   "settings.retentionOffsiteHint": "오프사이트 저장소를 위한 별도 정책으로, 아카이브로 더 오래 보관할 수 있습니다. 모두 0 = 모든 오프사이트 백업 보관(오프사이트 정리 없음).",
   "settings.ownRetentionTitle": "소스별 보존 규칙",
   "settings.ownRetentionHint": "소스마다 위의 공통 규칙 대신 자체 보존 규칙을 따를 수 있습니다. 매일 바뀌는 컨테이너와 폴더는 일별 백업 7개를, 거의 바뀌지 않는 VM은 더 적게 보존할 수 있습니다. 자체 규칙이 없는 소스는 공통 규칙을 사용합니다.",

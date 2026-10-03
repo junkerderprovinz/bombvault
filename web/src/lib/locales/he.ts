@@ -692,6 +692,8 @@ const he: Partial<Translations> = {
   "settings.retentionYearlyInfo": "שומר גיבוי אחד עבור כל אחת מ-N שנות הקלנדר האחרונות שיש בהן גיבוי. אם יש פחות שנים, נשמר גם הגיבוי הישן ביותר.",
   "settings.retentionLocal": "מאגר מקומי",
   "settings.retentionOffsite": "מאגר מרוחק",
+  "settings.retentionLocalTitle": "שמירה מקומית",
+  "settings.retentionOffsiteTitle": "שמירה מחוץ לאתר",
   "settings.retentionOffsiteHint": "מדיניות נפרדת למאגר המרוחק, כדי לשמור אותו זמן רב יותר כארכיון. הכול 0 = שמור כל גיבוי מרוחק (ללא גיזום מרוחק).",
   "settings.ownRetentionTitle": "כללי שמירה לפי מקור",
   "settings.ownRetentionHint": "כל מקור יכול לפעול לפי כללי שמירה משלו במקום הכללים המשותפים שלמעלה. קונטיינרים ותיקיות שמשתנים כל יום יכולים לשמור 7 גיבויים יומיים, ומכונות וירטואליות שמשתנות לעיתים רחוקות פחות. מקור בלי כללים משלו משתמש בכללים המשותפים.",

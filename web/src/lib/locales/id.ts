@@ -650,6 +650,8 @@ const id: Partial<Translations> = {
   "settings.retentionCombineInfo": "Kelima aturan ini digabungkan dengan ATAU: snapshot bertahan jika aturan mana pun akan mempertahankannya. Tidak dijumlahkan menjadi jumlah tetap. Berlaku terpisah untuk setiap item yang dicadangkan.",
   "settings.retentionLocal": "Repositori lokal",
   "settings.retentionOffsite": "Repositori off-site",
+  "settings.retentionLocalTitle": "Retensi lokal",
+  "settings.retentionOffsiteTitle": "Retensi off-site",
   "settings.retentionOffsiteHint": "Kebijakan terpisah untuk repositori off-site, sehingga Anda dapat menyimpannya lebih lama sebagai arsip. Semua nol = simpan setiap cadangan off-site (tanpa prune off-site).",
   "settings.ownRetentionTitle": "Aturan retensi per sumber",
   "settings.ownRetentionHint": "Sebuah sumber bisa mengikuti aturan retensinya sendiri alih-alih aturan bersama di atas. Kontainer dan folder yang berubah setiap hari bisa menyimpan 7 cadangan harian, sedangkan VM yang jarang berubah cukup lebih sedikit. Sumber tanpa aturan sendiri memakai aturan bersama.",

@@ -692,6 +692,8 @@ const it: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Mantiene uno snapshot per ciascuno degli ultimi N anni di calendario con un backup. Se gli anni sono meno, viene mantenuto anche il più vecchio.",
   "settings.retentionLocal": "Repo locale",
   "settings.retentionOffsite": "Repo off-site",
+  "settings.retentionLocalTitle": "Conservazione locale",
+  "settings.retentionOffsiteTitle": "Conservazione off-site",
   "settings.retentionOffsiteHint": "Una policy separata per il repo off-site, per tenerlo più a lungo come archivio. Tutto a 0 = mantieni ogni backup off-site (nessuna pulizia off-site).",
   "settings.ownRetentionTitle": "Regole di conservazione per origine",
   "settings.ownRetentionHint": "Ogni origine può seguire regole di conservazione proprie invece di quelle comuni qui sopra. Container e cartelle che cambiano ogni giorno possono tenere 7 backup giornalieri, le VM che cambiano di rado meno. Un'origine senza regole proprie usa quelle comuni.",

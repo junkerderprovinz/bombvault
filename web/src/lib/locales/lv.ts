@@ -650,6 +650,8 @@ const lv: Partial<Translations> = {
   "settings.retentionCombineInfo": "Šie pieci noteikumi tiek apvienoti ar VAI: momentuzņēmums saglabājas, ja to saglabātu jebkurš noteikums. Tie nesummējas fiksētā skaitā. Piemēro atsevišķi katram dublētajam vienumam.",
   "settings.retentionLocal": "Vietējais repozitorijs",
   "settings.retentionOffsite": "Attālinātais repozitorijs",
+  "settings.retentionLocalTitle": "Vietējā saglabāšana",
+  "settings.retentionOffsiteTitle": "Attālinātā saglabāšana",
   "settings.retentionOffsiteHint": "Atsevišķa politika attālinātajam repozitorijam, lai varētu to saglabāt ilgāk kā arhīvu. Viss uz nulli = saglabāt katru attālināto rezerves kopiju (bez attālinātas tīrīšanas).",
   "settings.ownRetentionTitle": "Saglabāšanas noteikumi katram avotam",
   "settings.ownRetentionHint": "Avots var ievērot savus saglabāšanas noteikumus augstāk esošo kopīgo noteikumu vietā. Konteineri un mapes, kas mainās katru dienu, var glabāt 7 ikdienas dublējumus, bet retāk mainīgām virtuālajām mašīnām pietiek ar mazāk. Avots bez saviem noteikumiem izmanto kopīgos.",

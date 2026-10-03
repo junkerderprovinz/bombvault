@@ -650,6 +650,8 @@ const sk: Partial<Translations> = {
   "settings.retentionCombineInfo": "Týchto päť pravidiel sa kombinuje s ALEBO: snímka prežije, ak by ju uchovalo ktorékoľvek pravidlo. Nesčítavajú sa na pevný počet. Platí samostatne pre každú zálohovanú položku.",
   "settings.retentionLocal": "Lokálny repozitár",
   "settings.retentionOffsite": "Externý repozitár",
+  "settings.retentionLocalTitle": "Lokálne uchovávanie",
+  "settings.retentionOffsiteTitle": "Externé uchovávanie",
   "settings.retentionOffsiteHint": "Samostatná zásada pre externý repozitár, aby ste ho mohli uchovávať dlhšie ako archív. Všetko nula = uchovať každú externú zálohu (bez externého čistenia).",
   "settings.ownRetentionTitle": "Pravidlá uchovávania podľa zdroja",
   "settings.ownRetentionHint": "Každý zdroj môže mať vlastné pravidlá uchovávania namiesto spoločných vyššie. Kontajnery a priečinky, ktoré sa menia každý deň, môžu uchovávať 7 denných záloh, virtuálne stroje, ktoré sa menia zriedka, menej. Zdroj bez vlastných pravidiel používa spoločné.",

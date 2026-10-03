@@ -692,6 +692,8 @@ const da: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Beholder ét snapshot for hvert af de sidste N kalenderår med en sikkerhedskopi. Er der færre år end det, beholdes det ældste også.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
+  "settings.retentionLocalTitle": "Lokal opbevaring",
+  "settings.retentionOffsiteTitle": "Off-site-opbevaring",
   "settings.retentionOffsiteHint": "En separat politik for off-site-repoet, så du kan beholde det længere som arkiv. Alt 0 = behold hver off-site-sikkerhedskopi (ingen off-site-oprydning).",
   "settings.ownRetentionTitle": "Opbevaringsregler pr. kilde",
   "settings.ownRetentionHint": "En kilde kan følge sine egne opbevaringsregler i stedet for de fælles ovenfor. Containere og mapper, der ændrer sig hver dag, kan beholde 7 daglige backups, mens VM'er, der sjældent ændrer sig, kan nøjes med færre. En kilde uden egne regler bruger de fælles.",

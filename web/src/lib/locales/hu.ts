@@ -692,6 +692,8 @@ const hu: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári év mindegyikéből, amelyben van mentés. Ha kevesebb év van, a legrégebbit is megtartja.",
   "settings.retentionLocal": "Helyi repó",
   "settings.retentionOffsite": "Távoli repó",
+  "settings.retentionLocalTitle": "Helyi megőrzés",
+  "settings.retentionOffsiteTitle": "Telephelyen kívüli megőrzés",
   "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli mentés megőrzése (nincs távoli takarítás).",
   "settings.ownRetentionTitle": "Megőrzési szabályok forrásonként",
   "settings.ownRetentionHint": "Egy forrás a fenti közös szabályok helyett saját megőrzési szabályokat követhet. A naponta változó konténerek és mappák megtarthatnak 7 napi mentést, a ritkán változó virtuális gépeknek kevesebb is elég. A saját szabályok nélküli forrás a közöseket használja.",

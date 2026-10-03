@@ -689,6 +689,8 @@ const no: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Beholder ett øyeblikksbilde for hvert av de siste N kalenderårene med en sikkerhetskopi. Er det færre år enn det, beholdes også det eldste.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
+  "settings.retentionLocalTitle": "Lokal oppbevaring",
+  "settings.retentionOffsiteTitle": "Off-site-oppbevaring",
   "settings.retentionOffsiteHint": "En egen policy for off-site-repoet, så du kan beholde det lenger som arkiv. Alt 0 = behold hver off-site-sikkerhetskopi (ingen off-site-opprydding).",
   "settings.ownRetentionTitle": "Oppbevaringsregler per kilde",
   "settings.ownRetentionHint": "En kilde kan følge egne oppbevaringsregler i stedet for de felles reglene ovenfor. Containere og mapper som endres hver dag kan beholde 7 daglige sikkerhetskopier, mens VM-er som sjelden endres trenger færre. En kilde uten egne regler bruker de felles.",

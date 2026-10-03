@@ -6,10 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Settings } from "../../lib/api";
 import { en } from "../../lib/i18n";
-import { RetentionSection, type RetentionScope } from "./OwnRetentionCard";
+import { RetentionRulesCard, type RetentionScope } from "./OwnRetentionCard";
 
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<
-  typeof RetentionSection
+  typeof RetentionRulesCard
 >[0]["t"];
 
 function baseSettings(over: Partial<Settings> = {}): Settings {
@@ -38,7 +38,7 @@ function Harness({ scope, initial }: { scope: RetentionScope; initial: Settings 
   if (!settings) return null;
   return (
     <MemoryRouter>
-      <RetentionSection
+      <RetentionRulesCard
         scope={scope}
         settings={settings}
         setSettings={setSettings}
@@ -72,7 +72,7 @@ afterEach(() => {
 describe.each([
   ["local", "ownRetention", { keepLast: 5, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 0 }],
   ["offsite", "ownOffsiteRetention", { keepLast: 0, keepDaily: 14, keepWeekly: 0, keepMonthly: 12, keepYearly: 2 }],
-] as const)("the %s section", (scope, field, shared) => {
+] as const)("the %s rules card", (scope, field, shared) => {
   it("shows the shared rules and every source on them until one is switched on", () => {
     render(<Harness scope={scope} initial={baseSettings()} />);
     for (const key of ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const) {
@@ -127,7 +127,18 @@ describe.each([
     expect(fieldsOf(scope, en["nav.zfs"])).toHaveLength(0);
   });
 
-  it("leaves the other section's rules alone", async () => {
+  it("shows each source by its name alone, with the whole sentence as the switch's name", () => {
+    render(<Harness scope={scope} initial={baseSettings()} />);
+    for (const key of ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const) {
+      const row = toggleFor(scope, en[key]).closest("[data-search-row]") as HTMLElement;
+      expect(row.getAttribute("data-search-row")).toBe(en[key]);
+      expect(within(row).getByText(en[key])).toBeTruthy();
+      expect(row.textContent).not.toContain(LABEL[scope].replace("{source}", ""));
+      expect(within(row).getAllByLabelText(en[scope === "local" ? "settings.ownRetentionToggleHint" : "settings.ownOffsiteRetentionToggleHint"])).toHaveLength(1);
+    }
+  });
+
+  it("leaves the other card's rules alone", async () => {
     save.mockResolvedValue(true);
     render(<Harness scope={scope} initial={baseSettings()} />);
     await act(async () => {
@@ -139,7 +150,7 @@ describe.each([
   });
 });
 
-describe("the shared rules of a section", () => {
+describe("the shared rules of a card", () => {
   it("save the edited field alone", async () => {
     save.mockResolvedValue(true);
     render(<Harness scope="offsite" initial={baseSettings()} />);
@@ -152,7 +163,7 @@ describe("the shared rules of a section", () => {
   });
 });
 
-describe("the off-site section", () => {
+describe("the off-site card", () => {
   it("sends additional targets to the Off-site page", () => {
     render(<Harness scope="offsite" initial={baseSettings()} />);
     const link = screen.getByRole("link", { name: en["settings.retentionExtraTargets"] });
@@ -162,13 +173,14 @@ describe("the off-site section", () => {
   it("carries the append-only note in its (i), not as loose text", () => {
     render(<Harness scope="offsite" initial={baseSettings()} />);
     expect(screen.queryByText(en["settings.retentionImmutableNotPruned"])).toBeNull();
-    const heading = screen.getByRole("heading", { name: new RegExp(en["source.offsite"]) });
+    const heading = screen.getByRole("heading", { name: new RegExp(`^${en["settings.retentionOffsiteTitle"]}`) });
     const tip = within(heading).getByLabelText(new RegExp(en["settings.retentionOffsiteHint"].slice(0, 30)));
     expect(tip.getAttribute("aria-label")).toContain(en["settings.retentionImmutableNotPruned"]);
+    expect(tip.getAttribute("aria-label")).toContain(en["settings.retentionCombineInfo"]);
   });
 });
 
-describe("the local section", () => {
+describe("the local card", () => {
   it("has no link to the Off-site page", () => {
     render(<Harness scope="local" initial={baseSettings()} />);
     expect(screen.queryByRole("link")).toBeNull();

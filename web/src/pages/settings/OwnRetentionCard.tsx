@@ -5,7 +5,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
 import type { OffsiteDomain, RetentionKeep, Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
-import { ToggleRow } from "./shared";
+import { Card, ToggleRow } from "./shared";
 
 // The order and names of the off-site page, so a source reads the same on both.
 const SOURCES = [
@@ -38,8 +38,8 @@ const SCOPES = {
       keepYearly: "retentionKeepYearly",
     },
     own: "ownRetention",
-    title: "source.local",
-    hints: ["settings.retentionHint"],
+    title: "settings.retentionLocalTitle",
+    hints: ["settings.retentionHint", "settings.retentionCombineInfo"],
     perSourceHint: "settings.ownRetentionHint",
     toggle: "settings.ownRetentionFor",
     toggleHint: "settings.ownRetentionToggleHint",
@@ -53,8 +53,8 @@ const SCOPES = {
       keepYearly: "offsiteRetentionKeepYearly",
     },
     own: "ownOffsiteRetention",
-    title: "source.offsite",
-    hints: ["settings.retentionOffsiteHint", "settings.retentionImmutableNotPruned"],
+    title: "settings.retentionOffsiteTitle",
+    hints: ["settings.retentionOffsiteHint", "settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"],
     perSourceHint: "settings.ownOffsiteRetentionHint",
     toggle: "settings.ownOffsiteRetentionFor",
     toggleHint: "settings.ownOffsiteRetentionToggleHint",
@@ -100,12 +100,12 @@ function KeepFields({ keep, onChange, t }: { keep: RetentionKeep; onChange: (k: 
 }
 
 /**
- * One section of the Retention card: the shared keep rules of the local or
- * the off-site copies, and below them a switch per source that gives it rules
- * of its own. A source's map is saved whole on every change, so its debounce
- * runs under one key and a switch drops the edit it would otherwise race.
+ * The keep rules of the local or the off-site copies: the shared ones, and
+ * below them a switch per source that gives it rules of its own. A source's
+ * map is saved whole on every change, so its debounce runs under one key and
+ * a switch drops the edit it would otherwise race.
  */
-export function RetentionSection({
+export function RetentionRulesCard({
   scope,
   settings,
   setSettings,
@@ -113,6 +113,7 @@ export function RetentionSection({
   debouncedSave,
   cancelDebounce,
   t,
+  hueIndex,
 }: {
   scope: RetentionScope;
   settings: Settings;
@@ -121,6 +122,7 @@ export function RetentionSection({
   debouncedSave: (key: string, run: () => void) => void;
   cancelDebounce: (key: string) => void;
   t: T;
+  hueIndex?: number;
 }) {
   const [busy, setBusy] = useState<Partial<Record<OffsiteDomain, boolean>>>({});
   const [shake, setShake] = useState<Partial<Record<OffsiteDomain, number>>>({});
@@ -128,7 +130,6 @@ export function RetentionSection({
   const text = SCOPES[scope];
   const ownKey = text.own;
   const own = settings[ownKey];
-  const title = t(text.title);
 
   function editShared(keep: RetentionKeep) {
     const patch: Partial<Settings> = {};
@@ -167,14 +168,7 @@ export function RetentionSection({
   }
 
   return (
-    // data-search-card lets a search result for a row in here land on its
-    // section rather than on the top of the card.
-    <section data-search-card={title} className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-      <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-        {title}
-        <InfoBubble tip={text.hints.map((k) => t(k)).join(" ")} />
-      </h3>
-
+    <Card title={t(text.title)} hint={text.hints.map((k) => t(k)).join(" ")} hueIndex={hueIndex}>
       <span className="text-sm text-carbon-text">{t("retentionPreview.sharedPolicy")}</span>
       <KeepFields keep={sharedKeep(settings, scope)} onChange={editShared} t={t} />
 
@@ -187,7 +181,8 @@ export function RetentionSection({
         return (
           <div key={domain} className="flex flex-col gap-3">
             <ToggleRow
-              label={t(text.toggle).replace("{source}", t(labelKey))}
+              label={t(labelKey)}
+              accessibleName={t(text.toggle).replace("{source}", t(labelKey))}
               hint={t(text.toggleHint)}
               checked={keep !== undefined}
               onChange={(v) => void toggle(domain, v)}
@@ -209,6 +204,6 @@ export function RetentionSection({
           {t("settings.retentionExtraTargets")}
         </Link>
       )}
-    </section>
+    </Card>
   );
 }

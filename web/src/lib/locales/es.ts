@@ -692,6 +692,8 @@ const es: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Conserva una copia por cada uno de los últimos N años naturales con una copia de seguridad. Si hay menos años, también se conserva la más antigua.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
+  "settings.retentionLocalTitle": "Retención local",
+  "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Una política separada para el repo externo, para conservarlo más tiempo como archivo. Todo en 0 = conservar cada copia externa (sin purga externa).",
   "settings.ownRetentionTitle": "Reglas de retención por origen",
   "settings.ownRetentionHint": "Cada origen puede seguir sus propias reglas de retención en lugar de las compartidas de arriba. Los contenedores y carpetas que cambian a diario pueden conservar 7 copias diarias, y las máquinas virtuales que apenas cambian, menos. Un origen sin reglas propias usa las compartidas.",

@@ -684,6 +684,8 @@ const pl: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N lat kalendarzowych z kopią zapasową. Gdy lat jest mniej, zachowuje też najstarszą.",
   "settings.retentionLocal": "Repo lokalne",
   "settings.retentionOffsite": "Repo zdalne",
+  "settings.retentionLocalTitle": "Przechowywanie lokalne",
+  "settings.retentionOffsiteTitle": "Przechowywanie poza siedzibą",
   "settings.retentionOffsiteHint": "Osobna polityka dla repo zdalnego, aby trzymać je dłużej jako archiwum. Wszystko 0 = zachowaj każdą kopię zdalną (bez czyszczenia zdalnego).",
   "settings.ownRetentionTitle": "Reguły przechowywania dla źródła",
   "settings.ownRetentionHint": "Źródło może mieć własne reguły przechowywania zamiast wspólnych powyżej. Kontenery i foldery, które zmieniają się codziennie, mogą trzymać 7 dziennych kopii, a rzadko zmieniane maszyny wirtualne mniej. Źródło bez własnych reguł używa wspólnych.",

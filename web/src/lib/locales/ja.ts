@@ -688,6 +688,8 @@ const ja: Partial<Translations> = {
   "settings.retentionYearlyInfo": "バックアップのある直近 N 暦年それぞれについて1つのスナップショットを保持します。年数がそれより少ない間は、最も古いものも保持します。",
   "settings.retentionLocal": "ローカルリポジトリ",
   "settings.retentionOffsite": "オフサイトリポジトリ",
+  "settings.retentionLocalTitle": "ローカルの保持",
+  "settings.retentionOffsiteTitle": "オフサイトの保持",
   "settings.retentionOffsiteHint": "オフサイトリポジトリ用の別ポリシー。アーカイブとして長く保持できます。すべて0＝オフサイトのバックアップをすべて保持（オフサイトの整理なし）。",
   "settings.ownRetentionTitle": "ソースごとの保持ルール",
   "settings.ownRetentionHint": "ソースごとに、上の共通ルールの代わりに独自の保持ルールを使えます。毎日変わるコンテナーやフォルダーは日次バックアップを7つ、ほとんど変わらないVMはもっと少なく保持する、といった使い方です。独自ルールのないソースは共通ルールを使います。",

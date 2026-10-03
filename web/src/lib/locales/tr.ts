@@ -692,6 +692,8 @@ const tr: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Yedeği olan son N takvim yılının her biri için bir anlık görüntü tutar. Daha az yıl varsa en eskisi de tutulur.",
   "settings.retentionLocal": "Yerel repo",
   "settings.retentionOffsite": "Uzak repo",
+  "settings.retentionLocalTitle": "Yerel saklama",
+  "settings.retentionOffsiteTitle": "Site dışı saklama",
   "settings.retentionOffsiteHint": "Uzak repo için ayrı bir politika; arşiv olarak daha uzun tutabilirsin. Hepsi 0 = her uzak yedeği sakla (uzak budama yok).",
   "settings.ownRetentionTitle": "Kaynağa göre saklama kuralları",
   "settings.ownRetentionHint": "Bir kaynak, yukarıdaki ortak kurallar yerine kendi saklama kurallarını izleyebilir. Her gün değişen konteynerler ve klasörler günlük 7 yedek tutabilir, nadiren değişen sanal makineler daha az. Kendi kuralı olmayan kaynak ortak kuralları kullanır.",

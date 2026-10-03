@@ -692,6 +692,8 @@ const fr: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Conserve un instantané pour chacune des N dernières années civiles ayant une sauvegarde. S'il y a moins d'années, le plus ancien est conservé aussi.",
   "settings.retentionLocal": "Dépôt local",
   "settings.retentionOffsite": "Dépôt hors-site",
+  "settings.retentionLocalTitle": "Rétention locale",
+  "settings.retentionOffsiteTitle": "Rétention hors site",
   "settings.retentionOffsiteHint": "Une politique distincte pour le dépôt hors-site, pour le conserver plus longtemps comme archive. Tout à 0 = conserver chaque sauvegarde hors-site (pas de purge hors-site).",
   "settings.ownRetentionTitle": "Règles de rétention par source",
   "settings.ownRetentionHint": "Une source peut suivre ses propres règles de rétention au lieu des règles communes ci-dessus. Les conteneurs et dossiers qui changent chaque jour peuvent garder 7 sauvegardes quotidiennes, les VM qui changent rarement moins. Une source sans règles propres utilise les règles communes.",

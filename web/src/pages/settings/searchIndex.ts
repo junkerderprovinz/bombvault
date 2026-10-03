@@ -27,6 +27,10 @@ export interface SearchCard {
   body?: TranslationKey[];
 }
 
+// The six sources of the retention cards, each the caption of its switch.
+const SOURCE_ROWS = (hint: TranslationKey): SearchRow[] =>
+  (["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const).map((key) => ({ key, hint }));
+
 // The five keep rules, drawn with their (i) wherever a keep-policy is edited.
 const KEEP_RULE_ROWS: SearchRow[] = [
   { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
@@ -161,36 +165,39 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
   ],
 
-  // The Retention card has a Local and an Off-site section. Each section is
-  // its own entry, and RetentionSection marks it with data-search-card, so a
-  // rule found in one of them leads there and not to its twin in the other.
   retention: [
     {
-      title: "settings.tab.retention",
-      hint: "settings.retentionCombineInfo",
-      rows: [{ key: "retentionPreview.title", hint: "retentionPreview.hint" }],
-    },
-    {
-      title: "source.local",
+      title: "settings.retentionLocalTitle",
       hint: "settings.retentionHint",
       rows: [
         { key: "retentionPreview.sharedPolicy" },
         ...KEEP_RULE_ROWS,
         { key: "settings.ownRetentionTitle", hint: "settings.ownRetentionHint" },
         { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
+        ...SOURCE_ROWS("settings.ownRetentionToggleHint"),
       ],
+      body: ["settings.retentionCombineInfo"],
     },
     {
-      title: "source.offsite",
+      title: "settings.retentionOffsiteTitle",
       hint: "settings.retentionOffsiteHint",
       rows: [
         { key: "retentionPreview.sharedPolicy" },
         ...KEEP_RULE_ROWS,
         { key: "settings.ownRetentionTitle", hint: "settings.ownOffsiteRetentionHint" },
         { key: "settings.ownOffsiteRetention", hint: "settings.ownOffsiteRetentionToggleHint" },
+        ...SOURCE_ROWS("settings.ownOffsiteRetentionToggleHint"),
         { key: "settings.retentionExtraTargets" },
       ],
-      body: ["settings.retentionImmutableNotPruned"],
+      body: ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"],
+    },
+    {
+      title: "restore.preview",
+      rows: [
+        { key: "retentionPreview.title", hint: "retentionPreview.hint" },
+        { key: "retentionPreview.sourceLabel" },
+        { key: "retentionPreview.show" },
+      ],
     },
   ],
 

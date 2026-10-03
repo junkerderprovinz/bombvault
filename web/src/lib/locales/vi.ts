@@ -688,6 +688,8 @@ const vi: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Giữ lại một bản chụp cho mỗi năm trong N năm dương lịch gần nhất có bản sao lưu. Nếu có ít năm hơn, bản cũ nhất cũng được giữ lại.",
   "settings.retentionLocal": "Kho cục bộ",
   "settings.retentionOffsite": "Kho off-site",
+  "settings.retentionLocalTitle": "Lưu giữ cục bộ",
+  "settings.retentionOffsiteTitle": "Lưu giữ ngoài site",
   "settings.retentionOffsiteHint": "Một chính sách riêng cho kho off-site, để giữ lâu hơn như kho lưu trữ. Tất cả bằng 0 = giữ mọi bản sao lưu off-site (không dọn off-site).",
   "settings.ownRetentionTitle": "Quy tắc lưu giữ theo nguồn",
   "settings.ownRetentionHint": "Mỗi nguồn có thể theo quy tắc lưu giữ riêng thay cho quy tắc chung ở trên. Container và thư mục thay đổi hằng ngày có thể giữ 7 bản sao lưu hằng ngày, còn VM ít thay đổi thì giữ ít hơn. Nguồn không có quy tắc riêng sẽ dùng quy tắc chung.",

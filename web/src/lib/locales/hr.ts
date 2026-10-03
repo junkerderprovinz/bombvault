@@ -650,6 +650,8 @@ const hr: Partial<Translations> = {
   "settings.retentionCombineInfo": "Ovih pet pravila kombinira se s ILI: snimka preživljava ako bi je bilo koje pravilo zadržalo. Ne zbrajaju se u fiksni broj. Primjenjuje se zasebno na svaku stavku s izrađenom sigurnosnom kopijom.",
   "settings.retentionLocal": "Lokalni repozitorij",
   "settings.retentionOffsite": "Izvanmrežni repozitorij",
+  "settings.retentionLocalTitle": "Lokalno zadržavanje",
+  "settings.retentionOffsiteTitle": "Izvanmrežno zadržavanje",
   "settings.retentionOffsiteHint": "Zasebna politika za izvanmrežni repozitorij, kako biste ga mogli dulje čuvati kao arhivu. Sve nula = zadrži svaku izvanmrežnu sigurnosnu kopiju (bez izvanmrežnog čišćenja).",
   "settings.ownRetentionTitle": "Pravila zadržavanja po izvoru",
   "settings.ownRetentionHint": "Svaki izvor može slijediti vlastita pravila zadržavanja umjesto zajedničkih iznad. Spremnici i mape koji se mijenjaju svaki dan mogu zadržati 7 dnevnih sigurnosnih kopija, a virtualni strojevi koji se rijetko mijenjaju manje. Izvor bez vlastitih pravila koristi zajednička.",

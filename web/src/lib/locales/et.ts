@@ -650,6 +650,8 @@ const et: Partial<Translations> = {
   "settings.retentionCombineInfo": "Need viis reeglit kombineeritakse VÕI-loogikaga: hetktõmmis säilib, kui mõni reegel seda säilitaks. Need ei liidu kindlaks arvuks. Rakendub eraldi igale varundatud üksusele.",
   "settings.retentionLocal": "Kohalik hoidla",
   "settings.retentionOffsite": "Väline hoidla",
+  "settings.retentionLocalTitle": "Kohalik säilitamine",
+  "settings.retentionOffsiteTitle": "Väline säilitamine",
   "settings.retentionOffsiteHint": "Eraldi reegel välise hoidla jaoks, et saaksid seda kauem arhiivina hoida. Kõik nullid = säilita iga väline varundus (välist puhastust ei toimu).",
   "settings.ownRetentionTitle": "Säilitusreeglid allika kaupa",
   "settings.ownRetentionHint": "Iga allikas võib järgida oma säilitusreegleid ülal olevate ühiste asemel. Igapäevaselt muutuvad konteinerid ja kaustad võivad hoida 7 päevast varukoopiat, harva muutuvad virtuaalmasinad vähem. Ilma oma reegliteta allikas kasutab ühiseid.",

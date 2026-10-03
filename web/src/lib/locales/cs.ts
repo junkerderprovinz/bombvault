@@ -690,6 +690,8 @@ const cs: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních let se zálohou. Když je let méně, ponechá i ten nejstarší.",
   "settings.retentionLocal": "Místní repo",
   "settings.retentionOffsite": "Vzdálené repo",
+  "settings.retentionLocalTitle": "Místní uchovávání",
+  "settings.retentionOffsiteTitle": "Uchovávání mimo lokalitu",
   "settings.retentionOffsiteHint": "Samostatná zásada pro vzdálené repo, aby se dalo držet déle jako archiv. Vše 0 = zachovat každou vzdálenou zálohu (bez čištění vzdáleného).",
   "settings.ownRetentionTitle": "Pravidla uchovávání podle zdroje",
   "settings.ownRetentionHint": "Každý zdroj může mít vlastní pravidla uchovávání místo společných výše. Kontejnery a složky, které se mění každý den, mohou uchovávat 7 denních záloh, virtuální stroje, které se mění zřídka, méně. Zdroj bez vlastních pravidel používá společná.",

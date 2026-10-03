@@ -692,6 +692,8 @@ const fi: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenterivuodelta, jolla on varmuuskopio. Jos vuosia on vähemmän, myös vanhin säilytetään.",
   "settings.retentionLocal": "Paikallinen repo",
   "settings.retentionOffsite": "Etärepo",
+  "settings.retentionLocalTitle": "Paikallinen säilytys",
+  "settings.retentionOffsiteTitle": "Etäsäilytys",
   "settings.retentionOffsiteHint": "Erillinen käytäntö etärepolle, jotta voit säilyttää sitä pidempään arkistona. Kaikki 0 = säilytä jokainen etävarmuuskopio (ei etäkarsintaa).",
   "settings.ownRetentionTitle": "Säilytyssäännöt lähteittäin",
   "settings.ownRetentionHint": "Lähde voi noudattaa omia säilytyssääntöjään yllä olevien yhteisten sijaan. Päivittäin muuttuvat kontit ja kansiot voivat säilyttää 7 päivittäistä varmuuskopiota, harvoin muuttuvat virtuaalikoneet vähemmän. Lähde, jolla ei ole omia sääntöjä, käyttää yhteisiä.",

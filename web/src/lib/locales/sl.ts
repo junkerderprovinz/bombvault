@@ -650,6 +650,8 @@ const sl: Partial<Translations> = {
   "settings.retentionCombineInfo": "Vseh pet pravil se združuje z ALI: posnetek preživi, če bi ga ohranilo katero koli od pravil. Ne seštevajo se v fiksno število. Uporablja se ločeno za vsak varnostno kopiran element.",
   "settings.retentionLocal": "Lokalni repozitorij",
   "settings.retentionOffsite": "Zunanji repozitorij",
+  "settings.retentionLocalTitle": "Lokalna hramba",
+  "settings.retentionOffsiteTitle": "Hramba zunanje kopije",
   "settings.retentionOffsiteHint": "Ločena politika za zunanji repozitorij, da ga lahko ohraniš dlje kot arhiv. Vse ničle = ohrani vsako zunanjo varnostno kopijo (brez čiščenja zunanje kopije).",
   "settings.ownRetentionTitle": "Pravila hrambe po virih",
   "settings.ownRetentionHint": "Vir lahko sledi lastnim pravilom hrambe namesto skupnih zgoraj. Vsebniki in mape, ki se spreminjajo vsak dan, lahko hranijo 7 dnevnih varnostnih kopij, navidezni stroji, ki se redko spreminjajo, manj. Vir brez lastnih pravil uporablja skupna.",

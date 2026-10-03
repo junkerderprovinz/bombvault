@@ -686,6 +686,8 @@ const nl: Partial<Translations> = {
   "settings.retentionYearlyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderjaren met een back-up. Zijn er minder jaren, dan blijft ook de oudste bewaard.",
   "settings.retentionLocal": "Lokale repo",
   "settings.retentionOffsite": "Off-site repo",
+  "settings.retentionLocalTitle": "Lokaal bewaarbeleid",
+  "settings.retentionOffsiteTitle": "Off-site bewaarbeleid",
   "settings.retentionOffsiteHint": "Een apart beleid voor de off-site repo, zodat je die langer als archief kunt bewaren. Alles 0 = elke off-site back-up bewaren (geen off-site opschoning).",
   "settings.ownRetentionTitle": "Bewaarregels per bron",
   "settings.ownRetentionHint": "Een bron kan eigen bewaarregels volgen in plaats van de gedeelde regels hierboven. Containers en mappen die elke dag veranderen kunnen 7 dagelijkse back-ups bewaren, VM's die zelden veranderen minder. Een bron zonder eigen regels gebruikt de gedeelde.",
