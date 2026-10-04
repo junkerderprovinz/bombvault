@@ -1,6 +1,6 @@
 # Privacy policy: BombVault Android app
 
-Last updated: 2 October 2026. Applies to version 9.7.0 and later, until this
+Last updated: 5 October 2026. Applies to version 9.7.0 and later, until this
 date changes.
 
 ## The short version
@@ -57,8 +57,8 @@ announce themselves on the local network (DNS-SD). It announces nothing itself.
 ### To the relay
 
 The app connects to the relay only while it is paired with a group. The relay
-is `relay.halleluja.design`, on a server in Germany. Every connection to it
-carries:
+is ParleyPort at `parleyport.halleluja.design`, on a server in Germany. Every
+connection to it carries:
 
 - A group key derived from your phrase with a one-way hash. It cannot be turned
   back into the words. Whoever presents this key joins your group, so it works
