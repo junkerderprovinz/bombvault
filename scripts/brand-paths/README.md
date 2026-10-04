@@ -23,8 +23,8 @@ in one ink. **Apache-2.0**, whose licence text is beside this file as
 The widget mark is the BombVault Widget's own logo, from
 <https://github.com/junkerderprovinz/bombvault-widget>, one path per shape.
 
-ParleyPort's logo is `parleyport.svg`, from
-<https://github.com/junkerderprovinz/parleyport>, drawn in its own colours.
+ParleyPort's mark is its own logo, from
+<https://github.com/junkerderprovinz/parleyport>, one path per shape.
 
 ## Trademarks
 
@@ -40,5 +40,3 @@ archive and the manual.
 Take the SVG, keep its `viewBox` verbatim in `<name>.box.txt`, and put the `d`
 attribute of each path on a line of its own in `<name>.txt`, a `rect` written as
 a path. The button draws every path in one ink, so the mark's colours are lost.
-A logo that keeps its colours goes in whole as `<name>.svg` instead and needs no
-box file, since its own viewBox is read.

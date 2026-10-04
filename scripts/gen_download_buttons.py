@@ -57,9 +57,11 @@ W, H, R = 841.9, 245.3, 38.2
 # The mark is drawn into a square this tall, centred vertically, inset from the
 # left. Its own viewBox decides the horizontal centring, because the marks are
 # not equally wide: Apple's is 384 units against Windows' and Tux's 448. The
-# inset centres a mark with a line as wide as "Windows" beside it.
+# inset keeps the mark near the left edge and leaves a clear gap before the
+# words at TEXT_X.
 GLYPH = 132.0
-GX, GY = 160.0, (H - GLYPH) / 2
+GX, GY = 85.0, (H - GLYPH) / 2
+TEXT_X = 300
 # Docker's whale, 640 units wide against 512 high, is as wide as a mark gets
 # before it runs into the words. A wider one is scaled to this width instead.
 WIDEST = GLYPH * 1.25
@@ -106,9 +108,8 @@ KINDS = {
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
     "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
     "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
-    # ParleyPort keeps its logo in colour on the dark ground of the README
-    # badges, as on KnightLoader's button. The grey is the widget logo's darker
-    # half, since a one-ink mark cannot carry its colours.
+    # ParleyPort's dark is the README badges' ground. The grey is the widget
+    # logo's darker half, since a one-ink mark cannot carry its colours.
     "relay":            (3, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for KnightLoader and BombVault"),
     "widget":           (3, "widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Install the dashboard widget"),
 }
@@ -196,8 +197,8 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 FULL_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
 {paths}
   </g>
-  <text x="332" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
-  <text x="334" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
+  <text x="{head_x}" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
+  <text x="{sub_x}" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # A segment has no mark, and its left edge is a darker line against the part
 # before it. The baselines are the full button's, so the lines read across.
@@ -303,40 +304,19 @@ def outline(w, corners):
     return " ".join(d) + " Z"
 
 
-def logo(name):
-    """A logo kept in its own colours, from brand-paths/<name>.svg, and its viewBox.
-
-    Its classes become fill attributes and its ids go, because CSS and ids
-    inside the sprite are shared: a second logo's .cls-1 would repaint the first.
-    """
-    svg = io.open(os.path.join(BRANDS, name + ".svg"), encoding="utf-8").read()
-    box = re.search(r'viewBox="([^"]+)"', svg).group(1)
-    fills = dict(re.findall(r"\.([\w-]+)\s*\{\s*fill:\s*(#[0-9a-fA-F]+);?\s*\}", svg))
-    body = re.search(r"<svg\b[^>]*>(.*)</svg>", svg, re.S).group(1)
-    body = re.sub(r"<defs>.*?</defs>", "", body, flags=re.S)
-    body = re.sub(r'\s(?:id|data-name)="[^"]*"', "", body)
-    body = re.sub(r'class="([\w-]+)"', lambda m: 'fill="%s"' % fills[m.group(1)], body)
-    return re.sub(r"\s*\n\s*", "", body), box
-
-
 def brand(name, ink):
-    """One mark as markup, in the button's ink or as a logo in its own colours,
-    and the scale and offsets that centre it in GLYPH."""
-    paths = []
-    if os.path.exists(os.path.join(BRANDS, name + ".svg")):
-        markup, box = logo(name)
-    else:
-        paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
-        box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
+    """One mark as markup in the button's ink, and the scale and offsets that
+    centre it in GLYPH."""
+    paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
+    box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
     x, y, width, height = (float(n) for n in box.split())
     # Scaled by height so the marks share an optical size, then nudged right by
     # half the width they do not use, since Apple's mark is narrower. A mark
     # wider than WIDEST is scaled by width and lowered by half the height it
     # leaves. The box's origin is taken off, since not every viewBox starts at 0.
     scale = min(GLYPH / height, WIDEST / width) * LARGER.get(name, 1.0)
-    if paths:
-        seam = ' stroke="%s" stroke-width="%s"' % (ink, num(SEAM / scale)) if len(paths) > 1 else ""
-        markup = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
+    seam = ' stroke="%s" stroke-width="%s"' % (ink, num(SEAM / scale)) if len(paths) > 1 else ""
+    markup = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
     return markup, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
 
 
@@ -350,7 +330,8 @@ def button(part, delay, cycle):
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
     if part.mark:
         markup, scale, dx, dy = brand(part.mark, part.ink)
-        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup, **common)
+        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup,
+                                head_x=TEXT_X, sub_x=TEXT_X + 2, **common)
     else:
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED
