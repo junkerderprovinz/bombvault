@@ -102,35 +102,107 @@ func (r *Repo) SaveDestination(d OffsiteTarget) (OffsiteTarget, error) {
 		} else {
 			d.ID = newID()
 		}
-		_, err := tx.Exec(`
-			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable,
-			  enabled, created_at, sort_order, provider)
-			VALUES (?, '', ?, ?, ?, ?, ?, ?, 1, ?, 0, ?)
-			ON CONFLICT(id) DO UPDATE SET
-			  name = excluded.name, repo = excluded.repo, creds_ref = excluded.creds_ref,
-			  storage_class = excluded.storage_class, immutable = excluded.immutable, provider = excluded.provider
-			WHERE offsite_targets.role = excluded.role`,
-			d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, boolInt(d.Immutable), d.CreatedAt, d.Provider)
-		if err != nil {
+		if err := writeDestinationTx(tx, d); err != nil {
 			return err
 		}
-		set := make([]string, len(destinationMirroredCols))
-		for i, c := range destinationMirroredCols {
-			set[i] = c + " = ?"
-		}
-		args := slices.Concat(destinationMirroredValues(d), []any{RoleOffsite, d.ID})
-		//nolint:gosec // G202: set is built from the fixed destinationMirroredCols names; every value travels in args.
-		if _, err := tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
-			WHERE role = ? AND destination_id = ?`, args...); err != nil {
-			return err
-		}
-		saved, err = destinationTx(tx, d.ID)
+		out, err := destinationTx(tx, d.ID)
+		saved = out
 		return err
 	})
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("SaveDestination: %w", err)
 	}
 	return saved, nil
+}
+
+// writeDestinationTx inserts or updates d and mirrors it into its domain
+// targets. A row of another role under the same id is left alone.
+func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
+	_, err := tx.Exec(`
+		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable,
+		  enabled, created_at, sort_order, provider)
+		VALUES (?, '', ?, ?, ?, ?, ?, ?, 1, ?, 0, ?)
+		ON CONFLICT(id) DO UPDATE SET
+		  name = excluded.name, repo = excluded.repo, creds_ref = excluded.creds_ref,
+		  storage_class = excluded.storage_class, immutable = excluded.immutable, provider = excluded.provider
+		WHERE offsite_targets.role = excluded.role`,
+		d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, boolInt(d.Immutable), d.CreatedAt, d.Provider)
+	if err != nil {
+		return err
+	}
+	set := make([]string, len(destinationMirroredCols))
+	for i, c := range destinationMirroredCols {
+		set[i] = c + " = ?"
+	}
+	args := slices.Concat(destinationMirroredValues(d), []any{RoleOffsite, d.ID})
+	//nolint:gosec // G202: set is built from the fixed destinationMirroredCols names; every value travels in args.
+	_, err = tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
+		WHERE role = ? AND destination_id = ?`, args...)
+	return err
+}
+
+// ImportDestinations writes the destinations of a settings file, each under
+// its own id. A destination whose location here already holds domain
+// repositories keeps that location, and its name is returned in kept.
+func (r *Repo) ImportDestinations(ds []OffsiteTarget) (kept []string, err error) {
+	err = r.inTx(func(tx *sql.Tx) error {
+		for _, d := range ds {
+			if strings.TrimSpace(d.Repo) == "" {
+				return ErrEmptyOffsiteRepo
+			}
+			if d.ID == "" {
+				d.ID = newID()
+			}
+			d.Role, d.Domain, d.Enabled = RoleDestination, "", true
+			old, err := destinationTx(tx, d.ID)
+			switch {
+			case err == nil:
+				d.CreatedAt = old.CreatedAt
+				if old.Repo != d.Repo {
+					n, err := derivedCountTx(tx, d.ID)
+					if err != nil {
+						return err
+					}
+					if n > 0 {
+						d.Repo = old.Repo
+						kept = append(kept, d.Name)
+					}
+				}
+			case !errors.Is(err, ErrNotDestination):
+				return err
+			case d.CreatedAt == 0:
+				d.CreatedAt = time.Now().Unix()
+			}
+			if err := writeDestinationTx(tx, d); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ImportDestinations: %w", err)
+	}
+	return kept, nil
+}
+
+// DeleteUnusedDestinationsExcept removes every destination outside keep that
+// no domain target is derived from.
+func (r *Repo) DeleteUnusedDestinationsExcept(keep []string) error {
+	ds, err := r.ListDestinations()
+	if err != nil {
+		return err
+	}
+	for _, d := range ds {
+		if slices.Contains(keep, d.ID) {
+			continue
+		}
+		if _, err := r.db.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?
+			AND NOT EXISTS (SELECT 1 FROM offsite_targets t WHERE t.role = ? AND t.destination_id = ?)`,
+			d.ID, RoleDestination, RoleOffsite, d.ID); err != nil {
+			return fmt.Errorf("DeleteUnusedDestinationsExcept: %w", err)
+		}
+	}
+	return nil
 }
 
 // DestinationTargets returns the domain targets derived from a destination.

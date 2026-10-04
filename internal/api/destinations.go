@@ -21,6 +21,7 @@ type destinationView struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
 	Provider     string   `json:"provider"`
+	Mark         string   `json:"mark,omitempty"`
 	Repo         string   `json:"repo"`
 	CredsRef     string   `json:"credsRef"`
 	StorageClass string   `json:"storageClass"`
@@ -39,7 +40,7 @@ func (s *Service) destinationView(d store.OffsiteTarget) (destinationView, error
 		domains = append(domains, t.Domain)
 	}
 	return destinationView{
-		ID: d.ID, Name: d.Name, Provider: d.Provider, Repo: scrubRepoLocation(d.Repo),
+		ID: d.ID, Name: d.Name, Provider: d.Provider, Mark: providerMark(d.Provider), Repo: scrubRepoLocation(d.Repo),
 		CredsRef: d.CredsRef, StorageClass: d.StorageClass, Immutable: d.Immutable,
 		CreatedAt: d.CreatedAt, Domains: domains,
 	}, nil
@@ -143,17 +144,25 @@ func (s *Service) draftRestMode(settings map[string]string) (restic.Mode, error)
 	return mode, nil
 }
 
-// DraftFolders lists the folders in req.Dir of a draft.
-func (s *Service) DraftFolders(ctx context.Context, req draftRequest) ([]string, error) {
+// DraftFolders lists the folders in req.Dir of a draft. At the top it also
+// asks for the free space; free is nil when the backend does not report it.
+func (s *Service) DraftFolders(ctx context.Context, req draftRequest) (folders []string, free *int64, err error) {
 	p, err := findProvider(req.Provider)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	d, err := s.draftFor(p, req.Settings)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return s.remotes().Folders(ctx, "", &d, req.Dir)
+	folders, err = s.remotes().Folders(ctx, "", &d, req.Dir)
+	if err != nil || strings.Trim(req.Dir, "/") != "" {
+		return folders, nil, err
+	}
+	if n, ok := s.remotes().Free(ctx, "", &d); ok {
+		free = &n
+	}
+	return folders, free, nil
 }
 
 // DraftMakeFolder creates req.Folder in req.Dir of a draft.
@@ -428,12 +437,16 @@ func (h *Handler) handleDraftFolders(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	folders, err := h.svc.DraftFolders(r.Context(), req)
+	folders, free, err := h.svc.DraftFolders(r.Context(), req)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"folders": folders}))
+	body := map[string]any{"folders": folders}
+	if free != nil {
+		body["free"] = *free
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(body))
 }
 
 // handleDraftMakeFolder creates a folder on a destination before it is saved.
@@ -593,4 +606,10 @@ func (h *Handler) answerDestination(w http.ResponseWriter, d store.OffsiteTarget
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"destination": v}))
+}
+
+// providerMark is the mark of the provider a destination was set up with.
+func providerMark(id string) string {
+	p, _ := remotes.FindProvider(id)
+	return p.Mark
 }

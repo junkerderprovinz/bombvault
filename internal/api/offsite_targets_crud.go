@@ -328,6 +328,15 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	// rejectSettingsPathOnNamedRepo, so a row the settings import left on a
 	// colliding location can still be edited rather than only deleted.
 	moved := !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo))
+	// A target derived from a destination takes these from the destination,
+	// whose next save would overwrite them anyway.
+	if existing.DestinationID != "" {
+		if moved {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target was made from a destination and its location holds the domain's repository, so it cannot move"})
+			return
+		}
+		t.Name, t.CredsRef, t.StorageClass, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Immutable
+	}
 	if moved {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})

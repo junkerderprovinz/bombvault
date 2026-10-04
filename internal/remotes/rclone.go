@@ -223,6 +223,26 @@ func (r *Rclone) Check(ctx context.Context, remote string, d *Draft) error {
 	return err
 }
 
+// Free returns the free space of a remote in bytes. ok is false when the
+// backend does not report it, which most object stores do not.
+func (r *Rclone) Free(ctx context.Context, remote string, d *Draft) (free int64, ok bool) {
+	env, remote, err := r.target(ctx, remote, d)
+	if err != nil {
+		return 0, false
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	out, err := r.run(ctx, env, "", "about", "--json", "--retries", "1", "--low-level-retries", "1", "--", Join(remote, ""))
+	if err != nil {
+		return 0, false
+	}
+	var about struct{ Free *int64 }
+	if json.Unmarshal(out, &about) != nil || about.Free == nil {
+		return 0, false
+	}
+	return *about.Free, true
+}
+
 func (r *Rclone) target(ctx context.Context, remote string, d *Draft) ([]string, string, error) {
 	if d == nil {
 		if !NameRe.MatchString(remote) {
