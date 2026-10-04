@@ -9,3 +9,11 @@ func SetHealthTimingForTest(poll, grace time.Duration) func() {
 	healthPollInterval, healthNoCheckGrace = poll, grace
 	return func() { healthPollInterval, healthNoCheckGrace = prevPoll, prevGrace }
 }
+
+// SetThawRetryForTest shortens the first wait between thaw attempts and
+// returns a function that restores it.
+func SetThawRetryForTest(d time.Duration) func() {
+	prev := thawRetryDelay
+	thawRetryDelay = d
+	return func() { thawRetryDelay = prev }
+}

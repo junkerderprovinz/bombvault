@@ -11,7 +11,7 @@ BombVault is simple by default and deep when you need it. The interface shows on
 | What | What is saved |
 |---|---|
 | **Docker containers** | Appdata directory plus the container definition (image, env vars, ports, labels, volumes). |
-| **KVM / libvirt VMs** | VM disk image(s), XML definition and UEFI NVRAM (graceful shutdown or live snapshot, over SSH). Live snapshots fall back to a graceful backup automatically if the snapshot cannot be created, so a VM backup never just errors out. |
+| **KVM / libvirt VMs** | VM disk image(s), XML definition and UEFI NVRAM (graceful shutdown or live snapshot, over SSH). Live snapshots fall back to a graceful backup automatically if the snapshot cannot be created, so a VM backup never just errors out. With *Changed blocks only* switched on, a running VM with qcow2 disks is read through libvirt checkpoints, so a backup reads just the blocks written since the previous one, and every snapshot still restores the whole disk on its own. |
 | **Unraid flash** | The whole USB flash (`/boot`): OS, license, array config, shares, network and plugin config. Restore is a one-click `.zip` download and never overwrites the live flash. |
 | **App configuration** | BombVault's own `/config` (settings database, off-site credentials, libvirt SSH keypair), snapshotted with SQLite `VACUUM INTO` so a WAL-mode database is never captured mid-write. Restored via a self-restart, so the live database is never overwritten under an open handle. |
 | **Files & folders** | Named **file sets**: any folder on the server (a share, your documents, a photo library), each with optional per-set exclude patterns. Full parity with the other domains (schedules, retention, off-site copy, integrity checks and restore drills). |

@@ -113,4 +113,4 @@ Każdy element może mieć własną czułość i własne minimum powiadomień. U
 Karta **Eksport / import ustawień** na stronie Ustawienia, System zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
 
 !!! warning "Eksport może zawierać poświadczenia"
-    Sam decydujesz, czy dołączyć do pliku poświadczenia poza siedzibą i powiadomień. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.
+    Sam decydujesz, czy dołączyć do pliku poświadczenia poza siedzibą, powiadomień i brokera MQTT. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.

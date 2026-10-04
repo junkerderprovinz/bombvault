@@ -113,4 +113,4 @@ Ogni elemento può avere una propria sensibilità e un proprio minimo di notific
 La scheda **Esporta / importa impostazioni** nella pagina Impostazioni, Sistema scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
 
 !!! warning "L'esportazione può contenere credenziali"
-    Scegli tu se includere le credenziali off-site e di notifica nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.
+    Scegli tu se includere le credenziali off-site, di notifica e del broker MQTT nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.

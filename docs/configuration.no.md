@@ -113,4 +113,4 @@ Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still de
 Kortet **Eksporter / importer innstillinger** på siden Innstillinger, System skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
 
 !!! warning "Eksporten kan inneholde legitimasjon"
-    Du velger om du vil inkludere ekstern- og varslingslegitimasjonen i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.
+    Du velger om du vil inkludere ekstern-, varslings- og MQTT-megler-legitimasjonen i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.

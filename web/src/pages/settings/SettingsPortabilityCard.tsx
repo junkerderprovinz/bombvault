@@ -24,6 +24,8 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   anomalies: "settingsIO.group.anomalies",
   streaming: "settingsIO.group.streaming",
   idle: "settingsIO.group.idle",
+  homeAssistant: "ha.title",
+  network: "mdns.title",
 };
 // SettingsPortabilityCard, lifted out of Settings.tsx ([337]).
 //

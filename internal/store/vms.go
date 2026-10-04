@@ -231,6 +231,9 @@ func (r *Repo) DeleteVMTarget(name string) error {
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'vm' AND target_id = ?`, id); err != nil {
 			return fmt.Errorf("DeleteVMTarget aliases: %w", err)
 		}
+		if _, err := tx.Exec(`DELETE FROM vm_block_backup WHERE target_id = ?`, id); err != nil {
+			return fmt.Errorf("DeleteVMTarget block backup: %w", err)
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("DeleteVMTarget commit: %w", err)

@@ -39,6 +39,8 @@ Comme une sauvegarde arrête des services et fait sortir d'anciens points de res
 
 Un lancement de domaine ou de la Sauvegarde complète laisse de côté les éléments retenus par une limite et les nomme dans sa réponse. L'interface web et la planification ne sont concernées par aucune de ces limites. Le quota horaire est gardé en mémoire, un redémarrage de BombVault le remet donc à zéro.
 
+Les lancements via l'[API](api.md#errors) et depuis [Home Assistant](api.md#home-assistant) comptent dans les mêmes limites par élément que ceux via MCP, ainsi que pour la protection de rétention.
+
 ## Activer le serveur {#switch-on}
 
 1. Ouvre **Paramètres, Intégrations, Serveur MCP** et clique sur le bouton de ton client. Un client qui n'est pas dans la liste se connecte via **Autre client**.
@@ -54,7 +56,7 @@ Chaque clé a sa propre tuile sur la carte. Elle affiche le nom de la clé, si e
 
 À côté de son nom, la tuile montre le logo du client pour lequel la clé a été créée. Une clé créée via **Autre client**, ou avant que la carte liste les clients, montre une clé à la place.
 
-**Journal** sur une tuile ouvre ce que cette clé a fait. D'abord les sauvegardes qu'elle a lancées, chacune avec son état et un lien vers cette exécution dans le journal d'activité du tableau de bord. En dessous, ses appels, les plus récents d'abord, avec l'outil et ce qu'est devenu l'appel. Un refus dit pourquoi : la clé peut seulement lire, la protection de rétention a retenu la sauvegarde, une autre sauvegarde était déjà en cours, l'élément a été sauvegardé via MCP il y a quelques minutes, ou la clé a envoyé trop de requêtes. Une annulation renvoie vers l'exécution concernée.
+**Journal** sur une tuile ouvre ce que cette clé a fait. D'abord les sauvegardes qu'elle a lancées, chacune avec son état et un lien vers cette exécution dans le journal d'activité du tableau de bord. En dessous, ses appels, les plus récents d'abord, avec l'outil et ce qu'est devenu l'appel. Un refus dit pourquoi : la clé peut seulement lire, la protection de rétention a retenu la sauvegarde, une autre sauvegarde était déjà en cours, une sauvegarde de l'élément a été lancée hors de l'interface web il y a quelques minutes, ou la clé a envoyé trop de requêtes. Une annulation renvoie vers l'exécution concernée.
 
 BombVault garde les entrées de chaque clé pendant 30 jours au plus : les 500 lancements et annulations réussis les plus récents et, à côté, les 200 autres appels les plus récents (lectures, refus et erreurs). Un assistant qui interroge sans cesse une sauvegarde en cours, ou qui répète un appel refusé, ne peut donc pas faire sortir son lancement du journal. Pour chaque appel, il enregistre l'outil, le résultat et l'exécution nommée par une annulation. Il n'enregistre jamais ce que l'assistant a envoyé, ni la clé ou son empreinte. Le paquet de diagnostic ne fait que compter les entrées, et un export des réglages les laisse de côté.
 
@@ -256,7 +258,7 @@ Tout ce qu'un assistant lit part chez le fournisseur d'IA qui se trouve derrièr
 | `429` | Trop de mauvaises clés depuis cette adresse, ou plus de 120 requêtes par minute avec une même clé. Attendez une minute et vérifiez que l'assistant ne tourne pas en boucle. |
 | Erreurs contenant "certificate", "self-signed" ou "unable to verify" | Le client ne fait pas confiance au certificat de BombVault. Voir [TLS et certificats](#tls). |
 | `busy` | Une autre sauvegarde ou une tâche de maintenance occupe ce domaine. Réessayez quand elle est terminée. |
-| `cooldown` | Cet élément, ce domaine ou la Sauvegarde complète a été lancé par MCP il y a moins de 15 minutes. |
+| `cooldown` | Cet élément, ce domaine ou la Sauvegarde complète a été lancé hors de l'interface web il y a moins de 15 minutes. |
 | `retention_guard` | Une sauvegarde MCP de plus ne laisserait que des points de restauration venant de MCP dans une fenêtre « garder les N derniers », ou l'élément a déjà reçu 4 sauvegardes par MCP au cours des dernières 24 heures, échecs et annulations compris. Dans le premier cas, la prochaine sauvegarde planifiée refait de la place ; dans le second, l'élément redevient disponible 24 heures après la plus ancienne de ces sauvegardes. Dans les deux cas, vous pouvez la lancer depuis l'interface web. |
 | `rate_limited` | La clé a épuisé ses 12 lancements pour cette heure. |
 | `not_permitted` sur un lancement | La clé est en lecture seule. Activez **Autoriser le lancement de sauvegardes** dans la carte ; aucune reconnexion n'est nécessaire. Sur une annulation, cela signifie que l'exécution n'a pas été lancée par cette clé. |

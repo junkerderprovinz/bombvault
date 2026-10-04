@@ -14,6 +14,13 @@ import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
+// A test can end while a route handler still waits on the real server. Closing
+// the context then disposes the response it is about to read, and Playwright
+// fails a test that already passed, so what the handler throws is dropped.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const NOW = Math.floor(Date.now() / 1000);
 
 const SETTINGS = {
@@ -372,6 +379,26 @@ async function settle(page: Page): Promise<void> {
   );
 }
 
+// Scrolling up reveals the search bar, which moves the cards a frame later, so a
+// click aimed right after a scroll can land beside its target.
+async function scrollRest(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => {
+        const main = document.getElementById("bv-main")!;
+        let last = -1;
+        let still = 0;
+        const tick = () => {
+          still = main.scrollTop === last ? still + 1 : 0;
+          last = main.scrollTop;
+          if (still >= 5) done();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+}
+
 function rail(page: Page) {
   return page.getByRole("navigation", { name: "Einstellungsseiten" });
 }
@@ -587,7 +614,10 @@ test("settings integrations on a phone: the MCP confirmations come up as a sheet
   await expect(sheet).toBeHidden();
 
   // The client dialog stays a dialog: it fits, and it scrolls inside.
-  await page.getByRole("button", { name: /Claude Code/ }).first().click();
+  const client = page.getByRole("button", { name: /Claude Code/ }).first();
+  await client.scrollIntoViewIfNeeded();
+  await scrollRest(page);
+  await client.click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await settle(page);

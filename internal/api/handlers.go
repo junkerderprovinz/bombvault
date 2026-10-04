@@ -5109,6 +5109,10 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     It is self-gated on its own keys and answers 404 while none exists, so it
 //     is never open. The key management routes under /api/mcp stay
 //     session-protected.)
+//   - everything under /api/v1/  (the public API for scripts and home
+//     automation. Every route but the OpenAPI description demands an API token
+//     inside serveAPIV1, with or without a login password. The token routes
+//     under /api/tokens stay session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -5176,7 +5180,7 @@ func authGatePublicPath(path string) bool {
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
 		return true
 	}
-	return false
+	return strings.HasPrefix(path, apiV1Prefix)
 }
 
 // ---------------------------------------------------------------------------
@@ -5484,9 +5488,17 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 		// not know about it must not clear it by omitting it, and clearing it
 		// MOVES where the next backup lands.
 		Repo *string `json:"repo"`
+		// BlockBackup turns changed-block backups on or off.
+		BlockBackup *bool `json:"blockBackup"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
+	}
+	if body.BlockBackup != nil {
+		if err := h.svc.SetVMBlockBackup(r.Context(), name, *body.BlockBackup); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	if body.Repo != nil {
 		if !h.applyItemRepo(w, *body.Repo, func() (string, error) {

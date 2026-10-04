@@ -5,9 +5,10 @@ download_buttons.py beside it differs. It writes one SVG per button, a sprite
 holding them together with the donation buttons, and every button row in
 README.md.
 
-The rows are always the same three, in this order: the desktop apps, then the
+The rows are always the same four, in this order: the desktop apps, then the
 Unraid template, the container, the source and the manual, then the phone apps
-and the browser extensions. What a repository does not ship is left out.
+and the browser extensions, then what runs beside the app, its relay and its
+dashboard widget. What a repository does not ship is left out.
 Windows on ARM and the portable build are segments of the Windows button, and
 Linux on ARM one of the Linux button, so the desktop row keeps to the four
 places a row has.
@@ -19,8 +20,8 @@ The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
 icons), and Unraid's from Dashboard Icons (Apache-2.0); see scripts/brand-paths/.
 Each is a trademark of its owner, used unmodified and only to name the platform
 a button downloads for, with no claim of endorsement by or affiliation with its
-owner. The ZIP and the book are Font Awesome's file-zipper and book, nobody's
-mark.
+owner. The ZIP, the book, the mast and the tiles are Font Awesome's
+file-zipper, book, tower-broadcast and table-cells-large, nobody's mark.
 
 Run from anywhere:  uv run --no-project --python 3.12 python scripts/gen_download_buttons.py
 Writes .github/assets/download-buttons/*.svg, which are committed, and the
@@ -61,6 +62,9 @@ GX, GY = 160.0, (H - GLYPH) / 2
 # Docker's whale, 640 units wide against 512 high, is as wide as a mark gets
 # before it runs into the words. A wider one is scaled to this width instead.
 WIDEST = GLYPH * 1.25
+# A mark drawn as several shapes gets an outline this wide in its ink, since
+# shapes that only touch leave a seam where each edge is anti-aliased alone.
+SEAM = 1.0
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -97,6 +101,10 @@ KINDS = {
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
     "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
     "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
+    # The brown is ParleyPort's and the grey the widget logo's darker half, since
+    # a one-ink mark cannot carry either logo's colours.
+    "relay":            (3, "relay", "#755934", "#ffffff", "Relay", "ParleyPort", "Run the ParleyPort relay"),
+    "widget":           (3, "widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Install the dashboard widget"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
@@ -108,6 +116,8 @@ SOON = {
 }
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com", "unraid.net")
+# The relay and the widget are repositories of their own.
+SIBLINGS = ("relay", "widget")
 
 # The sheen is a tilted white band, clipped to each button, that appears to
 # travel along the whole row, the same band as the donation row's. Its numbers
@@ -177,7 +187,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 FULL_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
-    <path d="{path}"/>
+{paths}
   </g>
   <text x="332" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
   <text x="334" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
@@ -239,14 +249,15 @@ def rows():
     for kind, href in config.BUTTONS.items():
         if href is None and kind not in SOON:
             raise SystemExit("%s has no link" % kind)
-        if href and "/%s/" % REPO not in href and not any(host in href for host in STORES):
+        sibling = kind in SIBLINGS and href and href.startswith("https://github.com/junkerderprovinz/")
+        if href and not sibling and "/%s/" % REPO not in href and not any(host in href for host in STORES):
             raise SystemExit("REPO is %r, but %s leads to %s" % (REPO, kind, href))
     joined = {s for group in SEGMENTS.values() for s in group}
     for base, group in SEGMENTS.items():
         present = [s for s in group if s in config.BUTTONS]
         if present and base not in config.BUTTONS:
             raise SystemExit("%s needs the %s button to join" % (present[0], base))
-    out = [[], [], []]
+    out = [[], [], [], []]
     for kind, spec in KINDS.items():
         if kind not in config.BUTTONS or kind in joined:
             continue
@@ -281,8 +292,8 @@ def outline(w, corners):
 
 
 def brand(name):
-    """One mark: its path, and the scale and offsets that centre it in GLYPH."""
-    path = io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().strip()
+    """One mark: its paths, and the scale and offsets that centre it in GLYPH."""
+    paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
     box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
     x, y, width, height = (float(n) for n in box.split())
     # Scaled by height so the marks share an optical size, then nudged right by
@@ -290,7 +301,7 @@ def brand(name):
     # wider than WIDEST is scaled by width and lowered by half the height it
     # leaves. The box's origin is taken off, since not every viewBox starts at 0.
     scale = min(GLYPH / height, WIDEST / width)
-    return path, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
+    return paths, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
 
 
 def num(x):
@@ -302,8 +313,10 @@ def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
     if part.mark:
-        path, scale, dx, dy = brand(part.mark)
-        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), path=path, **common)
+        paths, scale, dx, dy = brand(part.mark)
+        seam = ' stroke="%s" stroke-width="%s"' % (part.ink, num(SEAM / scale)) if len(paths) > 1 else ""
+        drawn = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
+        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=drawn, **common)
     else:
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED
