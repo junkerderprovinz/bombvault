@@ -30,6 +30,7 @@ sprite, .github/assets/download-buttons/buttons.svg.
 """
 
 import glob
+import hashlib
 import http.client
 import io
 import math
@@ -234,6 +235,10 @@ CAPTION = "Always downloads the latest build"
 LATEST = "/releases/latest/download/"
 GIVE_OPEN = "<!-- give-buttons: written by scripts/gen_download_buttons.py -->"
 GIVE_CLOSE = "<!-- /give-buttons -->"
+# The Android row again, in the README's section on the app.
+APP_OPEN = "<!-- app-buttons: written by scripts/gen_download_buttons.py -->"
+APP_CLOSE = "<!-- /app-buttons -->"
+APP_ROW = 2
 
 
 class Part:
@@ -463,7 +468,7 @@ def read_readme():
     return text
 
 
-def row(items, nl, caption=None):
+def row(items, nl, url, caption=None):
     """One centred row: a link per image, the separator on its own line, two
     spaces in, because that is the gap GAP_PX was measured on. The parts of one
     button share a line with nothing between them."""
@@ -474,7 +479,7 @@ def row(items, nl, caption=None):
         imgs = []
         for href, alt, x, width, height, render in parts:
             img = ('<img src="%s#svgView(viewBox(%s,0,%s,%s))" alt="%s" width="%s" height="%s">'
-                   % (SPRITE_URL, num(x), num(width), num(height), escape(alt), num(render), num(render * height / width)))
+                   % (url, num(x), num(width), num(height), escape(alt), num(render), num(render * height / width)))
             imgs.append('<a href="%s">%s</a>' % (escape(href), img) if href else img)
         lines.append("  " + "".join(imgs))
     if caption:
@@ -483,17 +488,19 @@ def row(items, nl, caption=None):
     return nl.join(lines) + nl
 
 
-def write_readme(text, downloads, donations):
+def write_readme(text, downloads, apps, donations, url):
     """Replace every marked block, each taking the line ending of its own marker.
 
     Both width and height are set, because the image's own proportions are the
     whole sprite's, not the button's.
     """
-    for opener, closer, table, caption in ((ROW_OPEN, ROW_CLOSE, downloads, CAPTION), (GIVE_OPEN, GIVE_CLOSE, donations, None)):
+    blocks_out = ((ROW_OPEN, ROW_CLOSE, downloads, CAPTION), (APP_OPEN, APP_CLOSE, apps, CAPTION),
+                  (GIVE_OPEN, GIVE_CLOSE, donations, None))
+    for opener, closer, table, caption in blocks_out:
         for start, end in reversed(blocks(text, opener, closer)):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
             last = max((i for i, items in enumerate(table) if any(LATEST in p[0] for parts in items for p in parts if p[0])), default=None)
-            body = "".join(row(items, nl, caption if i == last else None) for i, items in enumerate(table))
+            body = "".join(row(items, nl, url, caption if i == last else None) for i, items in enumerate(table))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)
     print("README.md  download rows of %s, donation rows of %d"
@@ -589,9 +596,13 @@ def main():
 
     place = iter(xs)
     table_out = [[[(p.href, p.alt, next(place), p.width, H, p.px) for p in item] for item in items] for items in table]
+    apps = [out for items, out in zip(table, table_out) if KINDS[items[0][0].kind][0] == APP_ROW]
     donations = [[[(href, alt, xs[len(parts) + i], gives[i][1], gives[i][2], GIVE_RENDER_PX)]
                   for i, (_s, href, alt) in enumerate(GIVE)]]
-    write_readme(readme, table_out, donations)
+    # Browsers and GitHub keep the sprite for a while, and an old sprite cut at
+    # new offsets shows the wrong buttons, so its address changes with it.
+    url = "%s?v=%s" % (SPRITE_URL, hashlib.sha256(whole.encode("utf-8")).hexdigest()[:12])
+    write_readme(readme, table_out, apps, donations, url)
 
 
 if __name__ == "__main__":
