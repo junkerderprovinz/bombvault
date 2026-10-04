@@ -31,9 +31,9 @@ const INK: Record<string, readonly [number, number, number, number]> = {
   IconCheckCircle: [2, 1.9934, 20.0078, 20.0143],
   IconTabIntegrity: [3, 1, 18, 22],
   IconTabStorage: [0, 0, 448, 512],
-  // The source declares `0 0 492 492` and the ink is a 368.7 square inside it;
+  // The source declares `0 0 24 24` and the ink is an 18 square inside it;
   // uncropped, the mark would render at three quarters of its neighbours' size.
-  IconSave: [61.8, 62.4, 368.7, 368.7],
+  IconSave: [3, 3, 18, 18],
 };
 
 /** Mirrors gen_glyphs.py's `cropped_box`. */

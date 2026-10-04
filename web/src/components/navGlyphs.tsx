@@ -9,18 +9,15 @@
 //   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
-//   IconSave from Vecteezy - https://www.vecteezy.com
 //
 // Only Streamline's free 1000-icon subset is used
 // (github.com/webalys-hq/streamline-vectors, core/solid), which is CC BY 4.0
 // and may be redistributed. The 5771-icon set sold on streamlinehq.com is a
 // separate product whose licence forbids redistribution.
 //
-// Vecteezy's Free License asks for Vecteezy.com to be credited in the design,
-// with a link to vecteezy.com where possible; the line above does that. Font
-// Awesome Free puts its icons under CC BY 4.0 (its fonts are SIL OFL, its code
-// MIT), and the off-site cloud (scripts/cloud-path.txt) is one of those icons,
-// so the attribution above covers it.
+// Font Awesome Free puts its icons under CC BY 4.0 (its fonts are SIL OFL,
+// its code MIT), and the off-site cloud (scripts/cloud-path.txt) is one of
+// those icons, so the attribution above covers it.
 //
 // On import, fill becomes `currentColor` so a glyph takes the ink of its
 // control in every theme, and the source <desc> gives way to `aria-hidden`,

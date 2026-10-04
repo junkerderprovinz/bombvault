@@ -301,11 +301,10 @@ EXTRA_NAV = [
     ("IconClose", CLOSE_NOTE, CROSS_BOX, CROSS),
     # Imported whole and cropped to their measured ink. Sources and licences,
     # all attributed in ATTRIBUTION below:
-    #   save                  - Vecteezy, Free License (attribution required)
     #   storage, local,
     #   retention             - Font Awesome Free (CC BY 4.0)
     #   copy                  - Tabler Icons, filled variant (MIT)
-    #   integrity, tune       - Material Design Icons (Apache 2.0)
+    #   integrity, tune, save - Material Design Icons (Apache 2.0)
     #   verify                - shipped as an Illustrator export
     #
     # copy and verify each came with a transparent path covering the whole
@@ -337,12 +336,8 @@ EXTRA_NAV = [
 # IconCancel is the same cross as IconClose, so the app has one X.
 EXTRA_ACTION = [
     ("IconCancel", CANCEL_NOTE, CROSS_BOX, CROSS),
-    # Vecteezy's floppy, the same file ArrowLoop uses. Its Free License asks for
-    # the name and a link, both in ATTRIBUTION. The source box is 0 0 492 492
-    # but the drawing fills only a 368.7 square of it; ArrowLoop's
-    # scripts/measure_ink.py measures that without a browser.
-    imported("IconSave", "Save", "0 0 492 492", (61.80, 62.40, 368.70, 368.70), "save",
-             even_odd=True),
+    # Material's content-save, GlimStone's Save glyph in every app.
+    imported("IconSave", "Save", "0 0 24 24", (3.0, 3.0, 18.0, 18.0), "save", even_odd=True),
     # A brand mark like the Docker whale, also from Simple Icons (CC0), and
     # used on the same trademark terms. Every other glyph stands for what a
     # button does, the same shape wherever the action appears; a logo names
@@ -372,18 +367,15 @@ ATTRIBUTION = """// %s
 //   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
-//   IconSave from Vecteezy - https://www.vecteezy.com
 //
 // Only Streamline's free 1000-icon subset is used
 // (github.com/webalys-hq/streamline-vectors, core/solid), which is CC BY 4.0
 // and may be redistributed. The 5771-icon set sold on streamlinehq.com is a
 // separate product whose licence forbids redistribution.
 //
-// Vecteezy's Free License asks for Vecteezy.com to be credited in the design,
-// with a link to vecteezy.com where possible; the line above does that. Font
-// Awesome Free puts its icons under CC BY 4.0 (its fonts are SIL OFL, its code
-// MIT), and the off-site cloud (scripts/cloud-path.txt) is one of those icons,
-// so the attribution above covers it.
+// Font Awesome Free puts its icons under CC BY 4.0 (its fonts are SIL OFL,
+// its code MIT), and the off-site cloud (scripts/cloud-path.txt) is one of
+// those icons, so the attribution above covers it.
 //
 // On import, fill becomes `currentColor` so a glyph takes the ink of its
 // control in every theme, and the source <desc> gives way to `aria-hidden`,

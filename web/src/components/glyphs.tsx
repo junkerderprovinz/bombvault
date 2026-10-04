@@ -9,18 +9,15 @@
 //   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
-//   IconSave from Vecteezy - https://www.vecteezy.com
 //
 // Only Streamline's free 1000-icon subset is used
 // (github.com/webalys-hq/streamline-vectors, core/solid), which is CC BY 4.0
 // and may be redistributed. The 5771-icon set sold on streamlinehq.com is a
 // separate product whose licence forbids redistribution.
 //
-// Vecteezy's Free License asks for Vecteezy.com to be credited in the design,
-// with a link to vecteezy.com where possible; the line above does that. Font
-// Awesome Free puts its icons under CC BY 4.0 (its fonts are SIL OFL, its code
-// MIT), and the off-site cloud (scripts/cloud-path.txt) is one of those icons,
-// so the attribution above covers it.
+// Font Awesome Free puts its icons under CC BY 4.0 (its fonts are SIL OFL,
+// its code MIT), and the off-site cloud (scripts/cloud-path.txt) is one of
+// those icons, so the attribution above covers it.
 //
 // On import, fill becomes `currentColor` so a glyph takes the ink of its
 // control in every theme, and the source <desc> gives way to `aria-hidden`,
@@ -297,12 +294,12 @@ export function IconSave() {
     <svg
       width="16"
       height="16"
-      viewBox="61.8 62.4 368.7 368.7"
+      viewBox="3 3 18 18"
       fill="currentColor"
       className="shrink-0"
       aria-hidden="true"
     >
-      <path fillRule="evenodd" d="M267.8,79.6v86.4c0,1.7.7,3.2,1.8,4.3,1.1,1.1,2.6,1.8,4.3,1.8h34.4c1.7,0,3.2-.7,4.3-1.8,1.1-1.1,1.8-2.6,1.8-4.3v-86.4c0-1.7-.7-3.2-1.8-4.3-1.1-1.1-2.6-1.8-4.3-1.8h-34.4c-1.7,0-3.2.7-4.3,1.8-1.1,1.1-1.8,2.6-1.8,4.3Z" /><path fillRule="evenodd" d="M77.3,431.1h337.8c8.5,0,15.4-6.9,15.4-15.4V108.7l-46.3-46.3h-51.8v120.7h-172.5V62.4h-82.7c-8.5,0-15.4,6.9-15.4,15.4v337.8c0,8.5,6.9,15.4,15.4,15.4h0ZM152.1,265.2h188.4c7.8,0,14.1,6.4,14.1,14.1v108.4c0,7.8-6.4,14.1-14.1,14.1h-188.4c-7.8,0-14.1-6.4-14.1-14.1v-108.4c0-7.8,6.4-14.1,14.1-14.1Z" />
+      <path fillRule="evenodd" d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
     </svg>
   );
 }
