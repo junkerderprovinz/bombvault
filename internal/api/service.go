@@ -4745,7 +4745,15 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	if err != nil {
 		return false, false, err
 	}
-	return s.probeOffsiteRepo(ctx, repo, s.ModeFor(settings))
+	mode := s.ModeFor(settings)
+	field, ok, err := s.store.FieldOffsiteTarget(domain)
+	if err != nil {
+		return false, false, fmt.Errorf("read off-site target: %w", err)
+	}
+	if ok && field.Repo == loc {
+		mode = s.offsiteModeForTarget(settings, field)
+	}
+	return s.probeOffsiteRepo(ctx, repo, mode)
 }
 
 // TestOffsiteTarget runs the SAME probe as TestOffsite against ONE off-site
