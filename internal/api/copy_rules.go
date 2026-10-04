@@ -276,9 +276,9 @@ func checkSkip(p placementRead, skip []string) error {
 	return nil
 }
 
-// checkCopies refuses a copy rule the item's home cannot carry: restic copy
-// has only the target's own credentials, so a remote or direct repository
-// gets none.
+// checkCopies refuses a copy rule the item's home cannot carry: a remote named
+// repository gets no copies, and a direct repository none to the target it is
+// the direct repository of, which holds them already.
 func (s *Service) checkCopies(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID string, copies store.CopiesWrite) error {
 	if copies.Follow {
 		return nil
@@ -286,7 +286,15 @@ func (s *Service) checkCopies(settings store.Settings, p placementRead, named ma
 	if err := checkSkip(p, copies.Skip); err != nil {
 		return err
 	}
-	if !s.homeKindOf(settings, p.Domain, repoID, named).copySource() && !skipsEverything(copies.Skip) {
+	if skipsEverything(copies.Skip) {
+		return nil
+	}
+	switch s.homeKindOf(settings, p.Domain, repoID, named) {
+	case homeDirect:
+		if own := named[repoID].CompanionOf; !skipsTarget(copies.Skip, own) {
+			return errCopiesToOwnTarget
+		}
+	case homeRemote, homeMissing:
 		return errCopiesNotAllowed
 	}
 	return nil

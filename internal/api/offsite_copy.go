@@ -122,7 +122,7 @@ func (r replicationPass) visit(t store.OffsiteTarget) (targetVisit, bool) {
 // itemsCopiedTo reports whether an item row is copied to the target.
 func (r replicationPass) itemsCopiedTo(targetID string) bool {
 	return slices.ContainsFunc(r.items, func(it placedItem) bool {
-		return it.Kind.copySource() && slices.ContainsFunc(r.p.effectiveTargets(it.Identity),
+		return slices.ContainsFunc(r.p.copyTargets(it),
 			func(t store.OffsiteTarget) bool { return t.ID == targetID })
 	})
 }
@@ -173,6 +173,8 @@ type copyOutcome struct {
 // sourceCopy is one source planned for one target.
 type sourceCopy struct {
 	src        domainRepoRef
+	loc        string            // where restic reads the source, see sourceAccess
+	mode       restic.Mode       // the destination's mode with what reading the source needs
 	whole      bool              // hand restic no ids; the unfiltered domain path, where restic decides
 	send       []restic.Snapshot // what goes; with whole, what restic is expected to take
 	answers    bool              // the source holds snapshots of the domain
@@ -184,7 +186,7 @@ type sourceCopy struct {
 // copySources copies every source to one target; dst is the target's listing
 // before the copy. With rules and no listing nothing is copied, because handing
 // restic every id would send what the rules leave out.
-func (s *Service) copySources(ctx context.Context, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit,
+func (s *Service) copySources(ctx context.Context, settings store.Settings, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit,
 	sources []domainRepoRef, dst []restic.Snapshot, dstErr error, startedAt int64, lastCopy *offsiteLastCopy) copyOutcome {
 	var out copyOutcome
 	if v.filtered && dstErr != nil {
@@ -203,7 +205,16 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 			out.destIsASource = true
 			continue
 		}
-		c, err := s.planSource(ctx, domain, mode, v, src, held, dstErr == nil)
+		// A direct repository lies at its own target already.
+		if src.Named.CompanionOf != "" && src.Named.CompanionOf == target.ID {
+			continue
+		}
+		loc, srcMode, err := s.sourceAccess(settings, src, dest, mode)
+		if err != nil {
+			out.errs = append(out.errs, err)
+			continue
+		}
+		c, err := s.planSource(ctx, domain, srcMode, v, src, loc, held, dstErr == nil)
 		if err != nil {
 			log.Printf("api: offsite %s: could not read %s, skipping it this pass: %v", domain, shortRepoName(src.Loc), scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
 			out.errs = append(out.errs, fmt.Errorf("reading %s: %w", shortRepoName(src.Loc), err))
@@ -243,14 +254,14 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		var err error
 		var landed []restic.Snapshot
 		if c.whole {
-			if err = s.copyTo(withIndexOffset(copyCtx, done), domain, dest, c.src.Loc, nil, lim, mode); err == nil {
+			if err = s.copyTo(withIndexOffset(copyCtx, done), domain, dest, c.loc, nil, lim, c.mode); err == nil {
 				landed = c.send
 				if c.unmeasured {
 					out.uncertain = true
 				}
 			}
 		} else {
-			landed, err = s.copyInChunks(copyCtx, domain, dest, c.src.Loc, c.send, lim, mode, done)
+			landed, err = s.copyInChunks(copyCtx, domain, dest, c.loc, c.send, lim, c.mode, done)
 		}
 		out.landed = append(out.landed, landed...)
 		done += len(landed)
@@ -277,7 +288,7 @@ func (s *Service) copyWhatWasLeftOut(ctx context.Context, domain, dest string, m
 		if c.failed || len(c.left) == 0 {
 			continue
 		}
-		landed, err := s.copyInChunks(ctx, domain, dest, c.src.Loc, c.left, lim, mode, done)
+		landed, err := s.copyInChunks(ctx, domain, dest, c.loc, c.left, lim, c.mode, done)
 		out.landed = append(out.landed, landed...)
 		done += len(landed)
 		if err != nil {
@@ -289,9 +300,9 @@ func (s *Service) copyWhatWasLeftOut(ctx context.Context, domain, dest string, m
 
 // planSource lists one source and decides what it sends to the target. held is
 // what the target holds plus what earlier sources of this pass send it.
-func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
-	c := sourceCopy{src: src, whole: !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
-	snaps, err := s.listSnapshots(ctx, src.Loc, mode)
+func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, loc string, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
+	c := sourceCopy{src: src, loc: loc, mode: mode, whole: !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
+	snaps, err := s.listSnapshots(ctx, loc, mode)
 	if err != nil {
 		if c.whole {
 			// restic reads the source itself; the listing only fed the estimate, so
@@ -323,7 +334,7 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 // otherwise pending again at every pass, uploaded and forgotten once more. A
 // whole source that loses a snapshot this way hands restic its ids instead.
 func (s *Service) leaveOutWhatTheTargetForgets(plan []sourceCopy, dst []restic.Snapshot, target store.OffsiteTarget) {
-	p := targetOffsiteRetentionPolicy(target)
+	p := targetAgingPolicy(target)
 	if !p.Any() || target.Immutable {
 		return
 	}
@@ -545,7 +556,7 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 // the copy added; without a listing the policy lists by itself. With a scope,
 // only that domain's names are aged.
 func (s *Service) ageTarget(ctx context.Context, domain, scope, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
-	op := targetOffsiteRetentionPolicy(target)
+	op := targetAgingPolicy(target)
 	if !op.Any() {
 		return false
 	}
@@ -665,7 +676,7 @@ func repoKey(ref domainRepoRef) string {
 func (r replicationPass) copyingRepos() map[string]bool {
 	out := map[string]bool{}
 	for _, it := range r.items {
-		if it.Kind.copySource() && len(r.p.effectiveTargets(it.Identity)) > 0 {
+		if len(r.p.copyTargets(it)) > 0 {
 			out[it.RepoID] = true
 		}
 	}

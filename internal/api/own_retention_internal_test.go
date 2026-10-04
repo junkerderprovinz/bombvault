@@ -61,7 +61,7 @@ func TestTheOffsitePolicyIgnoresTheDomainsOwnOne(t *testing.T) {
 	s := store.Settings{RetentionKeepLast: 5, OffsiteRetentionKeepMonthly: 12}
 	s.SetOwnRetention(map[string]store.RetentionKeep{"vms": {KeepWeekly: 4}})
 	svc := &Service{}
-	if got := svc.retentionPolicyForSource(s, "vms", "offsite"); got != (restic.RetentionPolicy{KeepMonthly: 12}) {
+	if got := svc.retentionPolicyForSource(s, "vms", "offsite"); got != (restic.RetentionPolicy{KeepMonthly: 12, Direct: true}) {
 		t.Fatalf("off-site policy = %+v, want the off-site keep-monthly 12", got)
 	}
 	if got := svc.retentionPolicyForSource(s, "vms", "local"); got != (restic.RetentionPolicy{KeepWeekly: 4}) {

@@ -157,23 +157,42 @@ func TestAnOffsiteOnlyHomeLeavesTheDefaultSkipAlone(t *testing.T) {
 // direct repository is no copy source either, so moving the default onto one
 // must leave the skip list untouched the same way a remote named repository
 // does.
-func TestADirectRepositoryOnlyHomeLeavesTheDefaultSkipAlone(t *testing.T) {
+// A default on a direct repository still decides the copies: of the items it
+// sends there, to every target but that one, and of the items that stay put.
+func TestADefaultOnADirectRepositoryTakesItsSkip(t *testing.T) {
 	f := newPlacementFixture(t)
 	repo := f.direct(f.target("containers", "NAS", "backups/nas-containers"))
 	f.setDefault("containers", "")
 	f.container("web", "")
 	body := map[string]any{"home": repo.ID, "skip": []string{store.SkipAll}}
 	impact := f.do(http.MethodPost, "/api/placement/default/containers/preview", body)["impact"].(map[string]any)
-	if len(impact["dropped"].([]any)) != 0 {
-		t.Fatalf("impact = %v, want no target to lose web", impact)
+	if len(impact["dropped"].([]any)) != 1 {
+		t.Fatalf("impact = %v, want NAS to lose web, which stays on the domain path", impact)
 	}
 	body["expect"] = impact
 	if res := f.do(http.MethodPut, "/api/placement/default/containers", body); res["ok"] != true {
 		t.Fatalf("PUT = %v", res)
 	}
 	d, found, err := f.st.PlacementDefaultFor("containers")
-	if err != nil || !found || d.Home != repo.ID || len(d.Skip) != 0 {
-		t.Fatalf("default = %+v, %v, %v, want the direct repository with skip still []", d, found, err)
+	if err != nil || !found || d.Home != repo.ID || !slices.Equal(d.Skip, []string{store.SkipAll}) {
+		t.Fatalf("default = %+v, %v, %v, want the direct repository with skip [*]", d, found, err)
+	}
+}
+
+// An item that moves into a target's direct repository with the default lands
+// at that target itself, so the target does not lose it.
+func TestAnOpenItemMovingIntoADirectRepositoryIsNotLostToItsTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "backups/nas-containers")
+	repo := f.direct(nas)
+	f.setDefault("containers", "")
+	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "containers", Key: "web"}, &store.HomeWrite{Repo: "", Choice: store.RepoOpen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	body := map[string]any{"home": repo.ID, "skip": []string{nas.ID}}
+	impact := f.do(http.MethodPost, "/api/placement/default/containers/preview", body)["impact"].(map[string]any)
+	if len(impact["dropped"].([]any)) != 0 {
+		t.Fatalf("impact = %v, want no target to lose web", impact)
 	}
 }
 

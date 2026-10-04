@@ -1790,6 +1790,15 @@ func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy 
 	}
 }
 
+// targetAgingPolicy is the keep-policy a target ages what it holds by. A
+// target holds DirectTag snapshots only as copies from a direct repository, so
+// they age by its rules like every other copy.
+func targetAgingPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
+	p := targetOffsiteRetentionPolicy(t)
+	p.Direct = true
+	return p
+}
+
 // targetOffsiteLimits is the per-DESTINATION bandwidth cap (KiB/s). All-zero means
 // unlimited. For a backfilled N=1 target these equal the global caps.
 func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
@@ -1848,13 +1857,19 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 // built-in off-site repo, and the shared off-site policy for an additional
 // target, which a domain's own off-site rules do not reach.
 func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
+	var p restic.RetentionPolicy
 	switch {
 	case !isOffsiteSource(source):
 		return s.retentionPolicy(settings, domain)
 	case s.isBuiltInOffsiteSource(settings, domain, source):
-		return s.offsiteRetentionPolicy(settings, domain)
+		p = s.offsiteRetentionPolicy(settings, domain)
+	default:
+		p = keepPolicy(sharedOffsiteKeep(settings))
 	}
-	return keepPolicy(sharedOffsiteKeep(settings))
+	// A target ages its copies from a direct repository like any other copy,
+	// as the copy pass does (targetAgingPolicy).
+	p.Direct = true
+	return p
 }
 
 // isBuiltInOffsiteSource reports whether an off-site source reaches the repo
@@ -4098,7 +4113,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
 	}
 	visit.unreachable = len(unreachableSkips(skipped)) > 0
-	out := s.copySources(ctx, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
+	out := s.copySources(ctx, settings, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and
 	// measured against the budget, and the joined error still reaches the run row.
@@ -4177,7 +4192,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	case target.Immutable:
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
 	case visit.aged && len(out.landed) == 0 && !out.uncertain && dstErr == nil &&
-		!s.policyWouldForget(dstSnaps, targetOffsiteRetentionPolicy(target)):
+		!s.policyWouldForget(dstSnaps, targetAgingPolicy(target)):
 		// Nothing arrived since the target was aged under these rules, and
 		// the listing shows nothing its keep-policy would forget, so a forget
 		// and a prune would only bill the calls.
@@ -4554,7 +4569,7 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	// narrowed at all: a one-element slice is always "index 0".
 	ref := s.refFor(settings, domain, localRepo)
 	if alreadyOffSite(ref) {
-		log.Printf("api: offsite %s: this item's repository %s; not copied again", domain, offSiteReason(ref)) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: offsite %s: this item's repository is remote and is already off site; not copied again", domain) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
 	// The local backup is written by now. A cancel, the stall guard or the hour
@@ -9043,7 +9058,7 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 			// operator can do makes b2: stop being remote, so reporting it as an
 			// incomplete pass condemns a supported configuration to fail forever
 			// over a repository that was never meant to be copied.
-			log.Printf("api: offsite %s: named repository %s %s; not copied again", domain, scrubRepoLocation(r.Loc), offSiteReason(r)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
+			log.Printf("api: offsite %s: named repository %s is remote and is already off site; not copied again", domain, scrubRepoLocation(r.Loc)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
 			continue
 		}
 		out = append(out, r)
@@ -9140,8 +9155,9 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 }
 
 // alreadyOffSite reports whether a source is one the off-site copy leaves out:
-// a direct repository, which lies at its target already, or a repository that
-// is not the domain's own and is remote.
+// a remote repository that is neither the domain's own nor a direct repository.
+// A direct repository is copied to every target but its own, read with its own
+// credentials (sourceAccess).
 //
 // ONE predicate, shared by the post-backup hook and the whole-domain pass, and
 // it is shared because they drifted. The hook additionally required a non-empty
@@ -9157,15 +9173,7 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 // ownership: see offsiteReplicationSources for why a domain's OWN remote primary
 // stays in.
 func alreadyOffSite(r domainRepoRef) bool {
-	return r.Named.CompanionOf != "" || (!r.Own && restic.IsRemoteRepo(r.Loc))
-}
-
-// offSiteReason says in a log line why alreadyOffSite left a source out.
-func offSiteReason(r domainRepoRef) string {
-	if r.Named.CompanionOf != "" {
-		return "is the direct repository of an off-site target"
-	}
-	return "is remote and is already off site"
+	return r.Named.CompanionOf == "" && !r.Own && restic.IsRemoteRepo(r.Loc)
 }
 
 // refName names a repository for a message: a named repository by its NAME, the

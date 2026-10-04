@@ -22,7 +22,8 @@ import (
 var (
 	errPlacementUnreadable = errors.New("placement rules could not be read, so nothing is copied until they can")
 	errInvalidPlacement    = errors.New("home and copies each take follow or one value")
-	errCopiesNotAllowed    = errors.New("an item on a remote or direct repository takes no copies")
+	errCopiesNotAllowed    = errors.New("an item on a remote repository takes no copies")
+	errCopiesToOwnTarget   = errors.New("an item on a direct repository is copied to every target but its own")
 	errNotATarget          = errors.New("that is not an off-site target of this domain")
 	errPlacementBusy       = errors.New("a backup is running in this domain; try again once it has finished")
 	errHomeHasBackups      = errors.New("cannot change the repository of an item that already has backups; they stay where they were written")
@@ -52,6 +53,7 @@ var placementCodes = []struct {
 	{store.ErrRuleDomain, "invalid-placement"},
 	{store.ErrUnknownDomain, "invalid-placement"},
 	{errCopiesNotAllowed, "copies-not-allowed"},
+	{errCopiesToOwnTarget, "copies-to-own-target"},
 	{errNotATarget, "unknown-target"},
 	{errUnknownOffsiteTarget, "unknown-target"},
 	{store.ErrStackCopyRule, "stack-rule"},
@@ -231,6 +233,20 @@ func (p placementRead) effectiveTargets(identity string) []store.OffsiteTarget {
 	return p.targetsFor(skip)
 }
 
+// targetsOf is where an item's snapshots are copied: nothing from a home that
+// is not a copy source, and from a direct repository nothing to ownTarget, the
+// target it is the direct repository of.
+func (p placementRead) targetsOf(identity string, home homeKind, ownTarget string) []store.OffsiteTarget {
+	if !home.copySource() {
+		return nil
+	}
+	targets := p.effectiveTargets(identity)
+	if home != homeDirect {
+		return targets
+	}
+	return slices.DeleteFunc(targets, func(t store.OffsiteTarget) bool { return t.ID == ownTarget })
+}
+
 // targetsFor is the enabled targets a skip list leaves in.
 func (p placementRead) targetsFor(skip []string) []store.OffsiteTarget {
 	out := []store.OffsiteTarget{}
@@ -301,9 +317,10 @@ const (
 )
 
 // copySource reports whether snapshots at a home of this kind are copied off
-// site: restic copy has the target's credentials and no others.
+// site. A direct repository is, to every target but its own: the copy reads it
+// with its own credentials (sourceAccess). A remote named repository is not.
 func (k homeKind) copySource() bool {
-	return k == homeDomain || k == homeDomainRemote || k == homeLocal
+	return k == homeDomain || k == homeDomainRemote || k == homeLocal || k == homeDirect
 }
 
 // homeKindOf is the kind of home a repo id names. named is ListNamedRepos by id,
@@ -387,6 +404,13 @@ type placedItem struct {
 	Identity string
 	RepoID   string // named repository id, "" for the domain path
 	Kind     homeKind
+	// OwnTarget is the target a direct home is the direct repository of.
+	OwnTarget string
+}
+
+// copyTargets is where the item's snapshots are copied.
+func (p placementRead) copyTargets(it placedItem) []store.OffsiteTarget {
+	return p.targetsOf(it.Identity, it.Kind, it.OwnTarget)
 }
 
 // placedItems lists a domain's item rows with the kind of their home.
@@ -398,7 +422,8 @@ func (s *Service) placedItems(settings store.Settings, domain string) ([]placedI
 	var out []placedItem
 	add := func(id, identity, repo string) {
 		repo = strings.TrimSpace(repo)
-		out = append(out, placedItem{ID: id, Identity: identity, RepoID: repo, Kind: s.homeKindOf(settings, domain, repo, named)})
+		out = append(out, placedItem{ID: id, Identity: identity, RepoID: repo, Kind: s.homeKindOf(settings, domain, repo, named),
+			OwnTarget: named[repo].CompanionOf})
 	}
 	switch domain {
 	case "containers":
@@ -605,7 +630,7 @@ func (s *Service) targetCurrencies(domain string, p placementRead, items []place
 	for _, t := range p.enabledTargets() {
 		var ids []string
 		for _, it := range items {
-			if it.Kind.copySource() && containsTarget(p.effectiveTargets(it.Identity), t.ID) {
+			if containsTarget(p.copyTargets(it), t.ID) {
 				ids = append(ids, it.ID)
 			}
 		}
@@ -660,8 +685,5 @@ func (p placementRead) withCopies(identity string, copies *store.CopiesWrite) pl
 // from a location that is not a copy source, otherwise the targets its rule
 // leaves in.
 func (s *Service) itemCopyTargets(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID, identity string) []store.OffsiteTarget {
-	if !s.homeKindOf(settings, p.Domain, repoID, named).copySource() {
-		return nil
-	}
-	return p.effectiveTargets(identity)
+	return p.targetsOf(identity, s.homeKindOf(settings, p.Domain, repoID, named), named[repoID].CompanionOf)
 }

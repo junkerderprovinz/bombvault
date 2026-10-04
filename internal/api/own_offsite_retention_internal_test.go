@@ -80,7 +80,7 @@ func TestTheCopyPassAgesTheBuiltInOffsiteRepoByTheSourcesOwnPolicy(t *testing.T)
 	replicateContainers(f, settings)
 
 	got := forgetsAt(f, dest)
-	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 14}}}
+	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 14, Direct: true}}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("off-site forgets = %+v, want only the containers under their own off-site rules; win11 ages on the VMs' pass", got)
 	}
@@ -96,7 +96,7 @@ func TestAnotherSourcesOwnOffsitePolicyLeavesTheSharedOneOnTheCopyPass(t *testin
 	replicateContainers(f, settings)
 
 	got := forgetsAt(f, dest)
-	if len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
+	if len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3, Direct: true}) {
 		t.Fatalf("off-site forgets = %+v, want one with the shared off-site keep-last 3", got)
 	}
 }
@@ -145,10 +145,10 @@ func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
 	}
 	replicateContainers(f, stored)
 
-	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepDaily: 14}) {
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepDaily: 14, Direct: true}) {
 		t.Fatalf("built-in off-site forgets = %+v, want the containers' own daily 14", got)
 	}
-	if got := forgetsAt(f, extraDest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 9}) {
+	if got := forgetsAt(f, extraDest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 9, Direct: true}) {
 		t.Fatalf("forgets on the additional target %s = %+v, want its own keep-last 9", extra.Name, got)
 	}
 }
@@ -163,7 +163,7 @@ func TestAManualOffsitePruneAgesByTheSourcesOwnOffsitePolicy(t *testing.T) {
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepWeekly: 8}}}
+	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepWeekly: 8, Direct: true}}}
 	if got := forgetsAt(f, dest); !reflect.DeepEqual(got, want) {
 		t.Fatalf("forgets = %+v, want %+v", got, want)
 	}
@@ -179,7 +179,7 @@ func TestAManualOffsitePruneOfAnotherSourceKeepsTheSharedOffsitePolicy(t *testin
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3, Direct: true}) {
 		t.Fatalf("forgets = %+v, want one with the shared off-site keep-last 3", got)
 	}
 }
@@ -200,7 +200,7 @@ func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *te
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", offsiteSourcePrefix+extra.ID, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3, Direct: true}) {
 		t.Fatalf("forgets = %+v, want the shared off-site keep-last 3", got)
 	}
 }

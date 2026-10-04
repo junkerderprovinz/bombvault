@@ -31,6 +31,7 @@ type placementView struct {
 	RepoLabel    string             `json:"repoLabel"`              // name of the repository, "" for the domain path
 	RepoDirectOf string             `json:"repoDirectOf,omitempty"` // the target a direct repository without a name of its own goes by
 	RepoKind     homeKind           `json:"repoKind"`
+	RepoTarget   string             `json:"repoTarget,omitempty"` // the target a direct home is the direct repository of
 	RepoOff      bool               `json:"repoOff"`
 	HomeFollows  bool               `json:"homeFollows"`  // repo_chosen = 0
 	CopiesFollow bool               `json:"copiesFollow"` // no own rule
@@ -105,7 +106,7 @@ func (s *Service) itemPlacementView(settings store.Settings, p placementRead, na
 		Paused:       p.State.Paused(),
 	}
 	if r, ok := named[repo]; ok {
-		v.RepoLabel, v.RepoDirectOf, v.RepoOff = r.Name, s.directOf(r), !r.Enabled
+		v.RepoLabel, v.RepoDirectOf, v.RepoOff, v.RepoTarget = r.Name, s.directOf(r), !r.Enabled, r.CompanionOf
 	}
 	switch kind {
 	case homeRemote:
