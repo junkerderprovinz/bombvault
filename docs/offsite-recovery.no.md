@@ -18,13 +18,30 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 !!! note "Gjenopprett fra hvilket som helst sted"
     Hver container, VM, filsett, flashen og appkonfigurasjonen lister sikkerhetskopiene sine som én tidslinje på tvers av alle stedene en sikkerhetskopi finnes. En sikkerhetskopi kopiert til B2 vises én gang, merket med hvert sted som har den. En gjenoppretting bruker det første stedet den kan nå, med utgangspunkt i depotet elementet er skrevet til, og du kan velge et annet sted per rad. Eksterne steder leses bare når du åpner dem. Sletting på ett sted sjekker de andre først og sier om det var siste kopi.
 
+## Mål {#destinations}
+
+Innstillinger, Off-site starter med **Mål**: stedene de eksterne kopiene går til, satt opp én gang for alle domener. Et mål dukker deretter opp som en knapp i **Plassering**-raden til hvert domene og hvert element. Første gang det krysses av for et domene, oppretter BombVault domenets repository i en mappe under det, for eksempel `rclone:onedrive:BombVault/containers`.
+
+**Legg til mål** åpner en veiviser i fem steg:
+
+1. **Hvor skal sikkerhetskopiene gå?** Hver tjeneste er listet med logoen sin, i fire grupper: lagringstjenester med S3-buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 og flere), din egen S3-server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), din egen server og delte ressurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en montert sti) og skylagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud og resten rclone støtter). Hver av dem sier hvor godt den egner seg for sikkerhetskopier: skystasjoner strupper mange forespørsler, så første sikkerhetskopi og opprydding tar lengre tid der.
+2. **Logg på.** Feltene avhenger av tjenesten: en tilgangsnøkkel for S3, bruker og passord for WebDAV og SMB, et appassord der tofaktorinnlogging blokkerer det vanlige, BombVaults offentlige SSH-nøkkel for SFTP og Storage Box, eller et token for tjenester som logger på via nettleseren. For dem viser veiviseren en `rclone authorize`-kommando du kjører på en datamaskin med nettleser; tokenet den skriver ut, limes inn i feltet. **Test tilkobling** sjekker påloggingen før noe lagres.
+3. **Velg en mappe.** Veiviseren lister mappene på målet, med **Ny mappe** for å opprette en og ledig plass der tjenesten melder det. En tom mappe er tryggest.
+4. **Beskyttelse mot sletting.** Veiviseren sier rett ut hva tjenesten kan gjøre. En rest-server i append-only-modus nekter sletting, og tamper-testen sjekker det. En S3-bucket kan beholde gamle versjoner med versjonering og Object Lock, noe BombVault ennå ikke kan sjekke. En skystasjon kan ikke nekte sletting i det hele tatt: den som kommer inn på serveren, kommer også inn på den kopien. Slå på **Uforanderlig (append-only)** bare der den andre siden virkelig nekter sletting; BombVault beskjærer da aldri der.
+5. **For en nødsituasjon.** Gjenopprettingssettet lister hvert mål med repositoryet til hvert domene under det. Påloggingen kommer tilbake med BombVaults innstillingssikkerhetskopi; på en fersk installasjon uten den setter du opp målet på nytt på samme sted.
+
+S3-tjenester går gjennom restics egen S3-backend, og det er det som gjør at en lagringsklasse og Object Lock kan brukes. Alle andre tjenester går gjennom rclone som følger med BombVault, og remoten deres dukker da opp i rclone-konfigen under Innstillinger, Skytilgang. En innstillingseksport tar med målene; med legitimasjon inkludert tar den med påloggingen deres også.
+
+Et eksternt mål i et domene som er laget fra et mål, overtar målets navn, plassering, legitimasjon, lagringsklasse og bryteren Uforanderlig. Oppbevaring, komprimering og vekstbudsjett forblir per domene, og plasseringen kan ikke flyttes fordi domenets repository ligger der. **Legg til et mål bare for dette domenet** under hvert domene tar fortsatt en repository-URL du skriver selv.
+
 ## Plassering per element {#placement}
 
-Hvert kort for container, VM og filsett har en **Plassering**-rad med tre segmenter:
+Hvert kort for container, VM og filsett har en **Plassering**-rad med knapper: **Lokal** og én knapp per eksternt mål i domenet, etterfulgt av målene domenet ennå ikke har noe mål under. Knapper som lyser, får elementets sikkerhetskopier.
 
-- **Lokal** skriver elementet til depotet vist under **Lagret på** og kopierer det ingen steder. Bruk det for data som allerede har en ekstra kopi, for eksempel en deling som ligger på en NAS.
-- **Lokal + ekstern** skriver det dit også og kopierer det til målene som er huket av under **Kopier til**, én chip per eksternt mål i domenet. Fjern haken fra en chip, og det målet får ingenting nytt fra dette elementet.
-- **Kun ekstern** skriver elementet rett til stedet under **Send til**: et direkte depot ved siden av et eksternt mål, eller et fjernt depot du har satt opp under Innstillinger, Lagring, Depoter.
+- Med **Lokal** på skrives elementet til depotet vist under **Lagret på** og kopieres til hvert annet mål som lyser. Slå et mål av, så får det ingenting nytt fra dette elementet. Bare Lokal kopierer ingen steder, noe som passer for data som allerede har en ekstra kopi, for eksempel en deling som ligger på en NAS.
+- Med **Lokal** av skrives elementet rett til det direkte depotet til det første målet som lyser, og kopieres derfra til de andre målene som lyser. Første gang oppretter en dialog det direkte depotet.
+- En målknapp oppretter domenets mål under målet og tenner det for dette elementet alene. Alle andre elementer starter uten kopi der.
+- Én knapp forblir tent, fordi en sikkerhetskopi trenger et sted å gå. For å utelate noe fra sikkerhetskopiene, ekskluder det.
 
 Plasseringen er fast fra elementets første sikkerhetskopi, fordi BombVault aldri flytter sikkerhetskopier mellom depoter. Kopiene kan endres når som helst. Et mål som ikke lenger får et element, beholder kopiene det har og trimmer dem til sin egen oppbevaring ved domenets neste eksterne kjøring; **Slett hos B2** på kortet fjerner dem med det samme. Når noen av de kopiene ikke finnes noe annet sted, viser bekreftelsen dem etter dato og ber om elementets navn. Append-only-mål kan det ikke slettes fra.
 
@@ -32,13 +49,13 @@ Under raden sier kortet hvor elementet går og hva som faktisk finnes: hvor mang
 
 ### Standardplasseringer
 
-Innstillinger, Lagring, **Standardplasseringer** har én rad per domene med de samme tre segmentene. Kopiene gjelder med det samme for hvert element uten eget valg, og for prosjektmappene til Compose-stabler. Plasseringen gjelder for et nytt element ved dets første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring lister raden opp hvert mål som får eller mister elementer, og hvor mange øyeblikksbilder det betyr. **Bruk på elementer uten sikkerhetskopier** setter hvert element som ennå ikke har en sikkerhetskopi, tilbake på standarden.
+Innstillinger, Lagring, **Standardplasseringer** har én rad per domene med de samme knappene. Kopiene gjelder med det samme for hvert element uten eget valg, og for prosjektmappene til Compose-stabler. Plasseringen gjelder for et nytt element ved dets første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring lister raden opp hvert mål som får eller mister elementer, og hvor mange øyeblikksbilder det betyr. **Bruk på elementer uten sikkerhetskopier** setter hvert element som ennå ikke har en sikkerhetskopi, tilbake på standarden.
 
 Et nytt eksternt mål mottar hvert element som ikke er satt til Lokal. Dialogen som legger det til, sier hvor mange elementer og, der det er kjent, hvor mye historikk det er, og tilbyr å utelate elementene som allerede er utelatt fra andre mål.
 
 ### Direkte depoter
 
-Å velge et måls direkte depot under Kun ekstern åpner en dialog med en foreslått plassering ved siden av målet, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter depotet og peker elementet dit. Et direkte depot overtar målets nøkkel, lagringsklasse, grenser, append-only-innstilling og oppbevaring, og endres med dem; Depoter-kortet viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte depotet nøkkelen det har, og lagringen sier fra om det. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde lar dem være, så et direkte depot som har mistet lenken til målet sitt, aldri eldes etter de lokale reglene. B2 nås via S3-endepunktet, med nøkkel-ID-en og applikasjonsnøkkelen angitt som S3-legitimasjon; en nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av, så begrens i stedet nøkkelen til mappen over målet.
+Å slå Lokal av for et element, slik at et mål uten direkte depot blir hjemmet, åpner en dialog med en foreslått plassering ved siden av målet, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter depotet og peker elementet dit. Et direkte depot overtar målets nøkkel, lagringsklasse, grenser, append-only-innstilling og oppbevaring, og endres med dem; Depoter-kortet viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte depotet nøkkelen det har, og lagringen sier fra om det. Et element på et direkte depot kopieres derfra til de andre målene som lyser, aldri til målet depotet tilhører. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde lar dem være, så et direkte depot som har mistet lenken til målet sitt, aldri eldes etter de lokale reglene. B2 nås via S3-endepunktet, med nøkkel-ID-en og applikasjonsnøkkelen angitt som S3-legitimasjon; en nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av, så begrens i stedet nøkkelen til mappen over målet.
 
 ### Utenfor bygningen
 
