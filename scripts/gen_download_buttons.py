@@ -62,6 +62,9 @@ GX, GY = 160.0, (H - GLYPH) / 2
 # Docker's whale, 640 units wide against 512 high, is as wide as a mark gets
 # before it runs into the words. A wider one is scaled to this width instead.
 WIDEST = GLYPH * 1.25
+# A mark drawn as several shapes gets an outline this wide in its ink, since
+# shapes that only touch leave a seam where each edge is anti-aliased alone.
+SEAM = 1.0
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -98,10 +101,10 @@ KINDS = {
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
     "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
     "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
-    # The brown and the orange are taken from ParleyPort's and the widget's own
-    # logos, whose many colours a one-ink mark cannot carry.
+    # The brown is ParleyPort's and the grey the widget logo's darker half, since
+    # a one-ink mark cannot carry either logo's colours.
     "relay":            (3, "relay", "#755934", "#ffffff", "Relay", "ParleyPort", "Run the ParleyPort relay"),
-    "widget":           (3, "widget", "#f68e32", "#1b1b1b", "Widget", "Unraid plugin", "Install the dashboard widget"),
+    "widget":           (3, "widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Install the dashboard widget"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
@@ -184,7 +187,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 FULL_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
-    <path d="{path}"/>
+{paths}
   </g>
   <text x="332" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
   <text x="334" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
@@ -289,8 +292,8 @@ def outline(w, corners):
 
 
 def brand(name):
-    """One mark: its path, and the scale and offsets that centre it in GLYPH."""
-    path = io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().strip()
+    """One mark: its paths, and the scale and offsets that centre it in GLYPH."""
+    paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
     box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
     x, y, width, height = (float(n) for n in box.split())
     # Scaled by height so the marks share an optical size, then nudged right by
@@ -298,7 +301,7 @@ def brand(name):
     # wider than WIDEST is scaled by width and lowered by half the height it
     # leaves. The box's origin is taken off, since not every viewBox starts at 0.
     scale = min(GLYPH / height, WIDEST / width)
-    return path, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
+    return paths, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
 
 
 def num(x):
@@ -310,8 +313,10 @@ def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
     if part.mark:
-        path, scale, dx, dy = brand(part.mark)
-        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), path=path, **common)
+        paths, scale, dx, dy = brand(part.mark)
+        seam = ' stroke="%s" stroke-width="%s"' % (part.ink, num(SEAM / scale)) if len(paths) > 1 else ""
+        drawn = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
+        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=drawn, **common)
     else:
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED
