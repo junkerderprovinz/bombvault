@@ -988,8 +988,8 @@ const id: Partial<Translations> = {
   "settings.rainbowPalette": "Warna palet",
   "settings.rainbowPaletteLabel": "Palet warna",
   "settings.rainbowPaletteReset": "Reset palet warna",
-  "settings.quietToasts": "Notifikasi tenang",
-  "settings.quietToastsHint": "Menyembunyikan pemberitahuan keberhasilan seperti konfirmasi simpan dan salin. Kesalahan, dan hal lain yang membutuhkan perhatian Anda, tetap ditampilkan.",
+  "settings.quietToasts": "Pesan pop-up senyap",
+  "settings.quietToastsHint": "Menyembunyikan pesan pop-up keberhasilan seperti konfirmasi simpan dan salin. Kesalahan, dan hal lain yang membutuhkan perhatian Anda, tetap ditampilkan.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",

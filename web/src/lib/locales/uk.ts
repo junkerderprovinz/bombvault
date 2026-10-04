@@ -403,7 +403,7 @@ const uk: Partial<Translations> = {
   "settings.motion.off": "Вимкнено",
   "settings.motion.subtle": "М'яко",
   "settings.motion.wild": "Шалено",
-  "settings.motion.storm": "Буремне",
+  "settings.motion.storm": "Буремно",
   "settings.rainbow": "Режим веселки",
   "settings.rainbowHint": "Кожен рядок у списку отримує власний колір з набору восьми, замість того щоб усе використовувало один акцентний колір — це робить довгі списки легшими для розрізнення з першого погляду.",
   "settings.disco": "Режим диско",
@@ -415,8 +415,8 @@ const uk: Partial<Translations> = {
   "settings.rainbowPalette": "Колір палітри",
   "settings.rainbowPaletteLabel": "Кольорова палітра",
   "settings.rainbowPaletteReset": "Скинути кольорову палітру",
-  "settings.quietToasts": "Тихі сповіщення",
-  "settings.quietToastsHint": "Приховує сповіщення про успіх, як-от підтвердження збереження й копіювання. Помилки та все інше, що потребує вашої уваги, як і раніше показуються.",
+  "settings.quietToasts": "Тихі спливні повідомлення",
+  "settings.quietToastsHint": "Приховує спливні повідомлення про успіх, як-от підтвердження збереження й копіювання. Помилки та все інше, що потребує вашої уваги, як і раніше показуються.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнери",

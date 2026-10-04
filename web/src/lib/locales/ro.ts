@@ -402,7 +402,7 @@ const ro: Partial<Translations> = {
   "settings.motion.off": "Dezactivată",
   "settings.motion.subtle": "Discretă",
   "settings.motion.wild": "Sălbatică",
-  "settings.motion.storm": "Furtunos",
+  "settings.motion.storm": "Furtunoasă",
   "settings.rainbow": "Mod curcubeu",
   "settings.rainbowHint": "Fiecare rând dintr-o listă primește propria culoare dintr-un set de opt, în loc ca totul să împartă o singură culoare de accent. Face listele lungi mai ușor de distins dintr-o privire.",
   "settings.disco": "Mod disco",
@@ -414,8 +414,8 @@ const ro: Partial<Translations> = {
   "settings.rainbowPalette": "Culoare din paletă",
   "settings.rainbowPaletteLabel": "Paletă de culori",
   "settings.rainbowPaletteReset": "Resetează paleta de culori",
-  "settings.quietToasts": "Notificări discrete",
-  "settings.quietToastsHint": "Ascunde notificările de succes, cum ar fi confirmările de salvare și copiere. Erorile și orice altceva care necesită atenția ta sunt afișate în continuare.",
+  "settings.quietToasts": "Mesaje pop-up discrete",
+  "settings.quietToastsHint": "Ascunde mesajele pop-up de succes, cum ar fi confirmările de salvare și copiere. Erorile și orice altceva care necesită atenția ta sunt afișate în continuare.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containere",

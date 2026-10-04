@@ -988,8 +988,8 @@ const et: Partial<Translations> = {
   "settings.rainbowPalette": "Paleti värv",
   "settings.rainbowPaletteLabel": "Värvipalett",
   "settings.rainbowPaletteReset": "Lähtesta värvipalett",
-  "settings.quietToasts": "Vaiksed teated",
-  "settings.quietToastsHint": "Peidab õnnestumisteated nagu salvestamise ja kopeerimise kinnitused. Vead ja kõik muu, mis vajab sinu tähelepanu, kuvatakse jätkuvalt.",
+  "settings.quietToasts": "Vaiksed hüpikteated",
+  "settings.quietToastsHint": "Peidab õnnestumise hüpikteated, nagu salvestamise ja kopeerimise kinnitused. Vead ja kõik muu, mis vajab sinu tähelepanu, kuvatakse jätkuvalt.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteinerid",

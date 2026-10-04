@@ -417,8 +417,8 @@ const ja: Partial<Translations> = {
   "settings.rainbowPalette": "パレットの色",
   "settings.rainbowPaletteLabel": "カラーパレット",
   "settings.rainbowPaletteReset": "カラーパレットをリセット",
-  "settings.quietToasts": "通知を控えめにする",
-  "settings.quietToastsHint": "保存やコピーの完了通知など、成功通知を非表示にします。エラーや注意が必要な内容は引き続き表示されます。",
+  "settings.quietToasts": "ポップアップを控えめにする",
+  "settings.quietToastsHint": "保存やコピーの完了など、成功を知らせるポップアップを表示しません。エラーや注意が必要な内容は引き続き表示されます。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "コンテナ",

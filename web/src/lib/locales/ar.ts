@@ -405,7 +405,7 @@ const ar: Partial<Translations> = {
   "settings.motion.off": "إيقاف",
   "settings.motion.subtle": "خفيفة",
   "settings.motion.wild": "جامحة",
-  "settings.motion.storm": "عاصف",
+  "settings.motion.storm": "عاصفة",
   "settings.rainbow": "وضع قوس قزح",
   "settings.rainbowHint": "يحصل كل صف في القائمة على لونه الخاص من مجموعة مكوّنة من ثمانية ألوان، بدلاً من أن يشترك كل شيء في لون تمييز واحد، ما يجعل القوائم الطويلة أسهل تمييزًا للوهلة الأولى.",
   "settings.disco": "وضع الديسكو",
@@ -417,8 +417,8 @@ const ar: Partial<Translations> = {
   "settings.rainbowPalette": "لون اللوحة",
   "settings.rainbowPaletteLabel": "لوحة الألوان",
   "settings.rainbowPaletteReset": "إعادة تعيين لوحة الألوان",
-  "settings.quietToasts": "إشعارات هادئة",
-  "settings.quietToastsHint": "إخفاء إشعارات النجاح مثل تأكيدات الحفظ والنسخ. الأخطاء وأي شيء آخر يحتاج انتباهك سيظل يظهر.",
+  "settings.quietToasts": "رسائل منبثقة هادئة",
+  "settings.quietToastsHint": "يُخفي الرسائل المنبثقة عند النجاح، مثل تأكيدات الحفظ والنسخ. الأخطاء وأي شيء آخر يحتاج انتباهك سيظل يظهر.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

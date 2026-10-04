@@ -417,8 +417,8 @@ const vi: Partial<Translations> = {
   "settings.rainbowPalette": "Màu trong bảng",
   "settings.rainbowPaletteLabel": "Bảng màu",
   "settings.rainbowPaletteReset": "Đặt lại bảng màu",
-  "settings.quietToasts": "Thông báo im lặng",
-  "settings.quietToastsHint": "Ẩn các thông báo thành công như xác nhận lưu và sao chép. Lỗi và mọi thứ khác cần sự chú ý của bạn vẫn sẽ hiển thị.",
+  "settings.quietToasts": "Thông điệp bật lên im lặng",
+  "settings.quietToastsHint": "Ẩn các thông điệp bật lên khi thành công, như xác nhận lưu và sao chép. Lỗi và mọi thứ khác cần sự chú ý của bạn vẫn sẽ hiển thị.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

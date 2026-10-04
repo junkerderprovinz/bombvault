@@ -412,8 +412,8 @@ const nl: Partial<Translations> = {
   "settings.rainbowPalette": "Paletkleur",
   "settings.rainbowPaletteLabel": "Kleurenpalet",
   "settings.rainbowPaletteReset": "Kleurenpalet herstellen",
-  "settings.quietToasts": "Stille meldingen",
-  "settings.quietToastsHint": "Verbergt succesmeldingen zoals opslaan- en kopieerbevestigingen. Fouten en al het andere dat je aandacht nodig heeft, blijven zichtbaar.",
+  "settings.quietToasts": "Stille pop-ups",
+  "settings.quietToastsHint": "Verbergt pop-ups bij succes, zoals bevestigingen van opslaan en kopiëren. Fouten en al het andere dat je aandacht nodig heeft, blijven zichtbaar.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

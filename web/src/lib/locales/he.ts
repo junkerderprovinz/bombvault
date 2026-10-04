@@ -417,8 +417,8 @@ const he: Partial<Translations> = {
   "settings.rainbowPalette": "צבע בלוח",
   "settings.rainbowPaletteLabel": "לוח צבעים",
   "settings.rainbowPaletteReset": "איפוס לוח הצבעים",
-  "settings.quietToasts": "התראות שקטות",
-  "settings.quietToastsHint": "מסתיר הודעות הצלחה כמו אישורי שמירה והעתקה. שגיאות וכל דבר אחר שדורש את תשומת ליבך ימשיכו להיות מוצגים.",
+  "settings.quietToasts": "הודעות קופצות שקטות",
+  "settings.quietToastsHint": "מסתיר הודעות קופצות על הצלחה, כמו אישורי שמירה והעתקה. שגיאות וכל דבר אחר שדורש את תשומת ליבך ימשיכו להיות מוצגים.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

@@ -986,8 +986,8 @@ const sl: Partial<Translations> = {
   "settings.rainbowPalette": "Barva palete",
   "settings.rainbowPaletteLabel": "Barvna paleta",
   "settings.rainbowPaletteReset": "Ponastavi barvno paleto",
-  "settings.quietToasts": "Tiha obvestila",
-  "settings.quietToastsHint": "Skrije uspešna obvestila, kot so potrditve shranjevanja in kopiranja. Napake in vse drugo, kar zahteva pozornost, se še vedno prikažejo.",
+  "settings.quietToasts": "Tiha pojavna sporočila",
+  "settings.quietToastsHint": "Skrije pojavna sporočila o uspehu, kot so potrditve shranjevanja in kopiranja. Napake in vse drugo, kar zahteva pozornost, se še vedno prikažejo.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Vsebniki",

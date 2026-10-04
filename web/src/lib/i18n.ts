@@ -4621,8 +4621,8 @@ export const de: Translations = {
   "settings.rainbowPalette": "Palettenfarbe",
   "settings.rainbowPaletteLabel": "Farbpalette",
   "settings.rainbowPaletteReset": "Farbpalette zurücksetzen",
-  "settings.quietToasts": "Leise Benachrichtigungen",
-  "settings.quietToastsHint": "Blendet Erfolgsmeldungen wie Speicher- und Kopierbestätigungen aus. Fehler und alles andere, das deine Aufmerksamkeit braucht, werden weiterhin angezeigt.",
+  "settings.quietToasts": "Leise Pop-up-Meldungen",
+  "settings.quietToastsHint": "Blendet Pop-up-Meldungen bei Erfolg aus, etwa Speicher- und Kopierbestätigungen. Fehler und alles andere, das deine Aufmerksamkeit braucht, werden weiterhin angezeigt.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",

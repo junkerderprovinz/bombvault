@@ -988,8 +988,8 @@ const bg: Partial<Translations> = {
   "settings.rainbowPalette": "Цвят от палитрата",
   "settings.rainbowPaletteLabel": "Цветова палитра",
   "settings.rainbowPaletteReset": "Възстанови цветовата палитра",
-  "settings.quietToasts": "Тихи известия",
-  "settings.quietToastsHint": "Скрива съобщения за успех като потвърждения за запазване и копиране. Грешките и всичко останало, което изисква внимание, продължават да се показват.",
+  "settings.quietToasts": "Тихи изскачащи съобщения",
+  "settings.quietToastsHint": "Скрива изскачащите съобщения за успех, като потвърждения за запазване и копиране. Грешките и всичко останало, което изисква внимание, продължават да се показват.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнери",

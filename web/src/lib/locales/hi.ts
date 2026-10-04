@@ -988,8 +988,8 @@ const hi: Partial<Translations> = {
   "settings.rainbowPalette": "पैलेट रंग",
   "settings.rainbowPaletteLabel": "कलर पैलेट",
   "settings.rainbowPaletteReset": "कलर पैलेट रीसेट करें",
-  "settings.quietToasts": "शांत सूचनाएँ",
-  "settings.quietToastsHint": "सहेजने और कॉपी करने की पुष्टि जैसी सफलता सूचनाओं को छिपाता है। त्रुटियाँ, और आपका ध्यान चाहने वाली हर चीज़, फिर भी दिखती रहती हैं।",
+  "settings.quietToasts": "शांत पॉप-अप संदेश",
+  "settings.quietToastsHint": "सहेजने और कॉपी करने की पुष्टि जैसे सफलता वाले पॉप-अप संदेश छिपाता है। त्रुटियाँ, और आपका ध्यान चाहने वाली हर चीज़, फिर भी दिखती रहती हैं।",
 
   // Dashboard stat cards
   "dashboard.statContainers": "कंटेनर",

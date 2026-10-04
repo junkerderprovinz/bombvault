@@ -417,8 +417,8 @@ const cs: Partial<Translations> = {
   "settings.rainbowPalette": "Barva palety",
   "settings.rainbowPaletteLabel": "Barevná paleta",
   "settings.rainbowPaletteReset": "Obnovit barevnou paletu",
-  "settings.quietToasts": "Tichá oznámení",
-  "settings.quietToastsHint": "Skrývá úspěšná oznámení, jako potvrzení uložení a kopírování. Chyby a vše ostatní, co vyžaduje pozornost, se stále zobrazí.",
+  "settings.quietToasts": "Tichá vyskakovací hlášení",
+  "settings.quietToastsHint": "Skrývá vyskakovací hlášení o úspěchu, jako potvrzení uložení a kopírování. Chyby a vše ostatní, co vyžaduje pozornost, se stále zobrazí.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontejnery",

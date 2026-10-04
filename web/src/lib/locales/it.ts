@@ -417,8 +417,8 @@ const it: Partial<Translations> = {
   "settings.rainbowPalette": "Colore della tavolozza",
   "settings.rainbowPaletteLabel": "Tavolozza dei colori",
   "settings.rainbowPaletteReset": "Reimposta la tavolozza dei colori",
-  "settings.quietToasts": "Notifiche silenziose",
-  "settings.quietToastsHint": "Nasconde le notifiche di successo come le conferme di salvataggio e copia. Gli errori e tutto ciò che richiede la tua attenzione restano visibili.",
+  "settings.quietToasts": "Pop-up silenziosi",
+  "settings.quietToastsHint": "Nasconde i pop-up di successo, come le conferme di salvataggio e copia. Gli errori e tutto ciò che richiede la tua attenzione restano visibili.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",

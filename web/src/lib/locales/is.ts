@@ -988,8 +988,8 @@ const is: Partial<Translations> = {
   "settings.rainbowPalette": "Litur úr litaspjaldi",
   "settings.rainbowPaletteLabel": "Litaspjald",
   "settings.rainbowPaletteReset": "Endurstilla litaspjald",
-  "settings.quietToasts": "Hljóðlátar tilkynningar",
-  "settings.quietToastsHint": "Felur árangursskilaboð eins og staðfestingar á vistun og afritun. Villur, og allt annað sem þarfnast athygli þinnar, eru áfram sýnd.",
+  "settings.quietToasts": "Hljóðlátir sprettigluggar",
+  "settings.quietToastsHint": "Felur sprettiglugga um árangur, eins og staðfestingar á vistun og afritun. Villur, og allt annað sem þarfnast athygli þinnar, eru áfram sýnd.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Gámar",

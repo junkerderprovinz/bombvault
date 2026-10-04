@@ -988,8 +988,8 @@ const ca: Partial<Translations> = {
   "settings.rainbowPalette": "Color de la paleta",
   "settings.rainbowPaletteLabel": "Paleta de colors",
   "settings.rainbowPaletteReset": "Restableix la paleta de colors",
-  "settings.quietToasts": "Avisos silenciosos",
-  "settings.quietToastsHint": "Amaga avisos d'èxit com les confirmacions de desat i còpia. Els errors, i qualsevol altra cosa que necessiti la teva atenció, es continuen mostrant.",
+  "settings.quietToasts": "Avisos emergents discrets",
+  "settings.quietToastsHint": "Amaga els avisos emergents d'èxit, com les confirmacions de desat i còpia. Els errors, i qualsevol altra cosa que necessiti la teva atenció, es continuen mostrant.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Contenidors",

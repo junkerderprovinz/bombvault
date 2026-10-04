@@ -417,8 +417,8 @@ const tr: Partial<Translations> = {
   "settings.rainbowPalette": "Palet rengi",
   "settings.rainbowPaletteLabel": "Renk paleti",
   "settings.rainbowPaletteReset": "Renk paletini sıfırla",
-  "settings.quietToasts": "Sessiz bildirimler",
-  "settings.quietToastsHint": "Kaydetme ve kopyalama onayları gibi başarı bildirimlerini gizler. Hatalar ve dikkatini gerektiren her şey gösterilmeye devam eder.",
+  "settings.quietToasts": "Sessiz açılır mesajlar",
+  "settings.quietToastsHint": "Kaydetme ve kopyalama onayları gibi başarılı işlemlerin açılır mesajlarını gizler. Hatalar ve dikkatini gerektiren her şey gösterilmeye devam eder.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteynerler",

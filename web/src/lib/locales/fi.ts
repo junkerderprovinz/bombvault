@@ -417,8 +417,8 @@ const fi: Partial<Translations> = {
   "settings.rainbowPalette": "Paletin väri",
   "settings.rainbowPaletteLabel": "Väripaletti",
   "settings.rainbowPaletteReset": "Palauta väripaletti",
-  "settings.quietToasts": "Hiljaiset ilmoitukset",
-  "settings.quietToastsHint": "Piilottaa onnistumisilmoitukset, kuten tallennus- ja kopiointivahvistukset. Virheet ja kaikki muu huomiotasi vaativa näytetään edelleen.",
+  "settings.quietToasts": "Hiljaiset ponnahdusviestit",
+  "settings.quietToastsHint": "Piilottaa onnistumisesta kertovat ponnahdusviestit, kuten tallennus- ja kopiointivahvistukset. Virheet ja kaikki muu huomiotasi vaativa näytetään edelleen.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontit",
