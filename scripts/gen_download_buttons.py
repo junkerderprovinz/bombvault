@@ -62,6 +62,9 @@ GX, GY = 160.0, (H - GLYPH) / 2
 # Docker's whale, 640 units wide against 512 high, is as wide as a mark gets
 # before it runs into the words. A wider one is scaled to this width instead.
 WIDEST = GLYPH * 1.25
+# A mark drawn as several shapes gets an outline this wide in its ink, since
+# shapes that only touch leave a seam where each edge is anti-aliased alone.
+SEAM = 1.0
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -71,38 +74,37 @@ FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-se
 # brand file, background, ink, heading, second line, accessible name. The same
 # thing carries the same words in every README.
 WINDOWS = ("#0078d4", "#ffffff")
-COMPANIONS = 4
 KINDS = {
+    "windows":          (0, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
+    "windows-arm":      (0, None, *WINDOWS, "Windows", "ARM64", "Download for Windows on ARM"),
+    "windows-portable": (0, None, *WINDOWS, "Windows", "Portable", "Download the portable Windows app"),
+    "windows-script":   (0, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
+    # Space grey, since black vanishes against GitHub's dark theme.
+    "macos":            (0, "apple", "#6e6e73", "#ffffff", "macOS", "Universal", "Download for macOS"),
+    # Tux yellow, with dark ink for contrast.
+    "linux":            (0, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
+    "linux-arm":        (0, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
+    "linux-script":     (0, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     # The middle of the orange in Unraid's logo, where white holds 3.4:1,
     # enough for type this large.
-    "unraid":           (0, "unraid", "#f15a2c", "#ffffff", "Unraid", "Template", "Install from Unraid's Community Applications"),
-    "docker":           (0, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
-    "compose":          (0, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
+    "unraid":           (1, "unraid", "#f15a2c", "#ffffff", "Unraid", "Template", "Install from Unraid's Community Applications"),
+    "docker":           (1, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
+    "compose":          (1, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
     # Slate, since GitHub's black vanishes in the dark theme.
-    "source":           (0, "zip", "#4d5562", "#ffffff", "Source", "zip archive", "Download the source archive"),
+    "source":           (1, "zip", "#4d5562", "#ffffff", "Source", "zip archive", "Download the source archive"),
     # "Docs" rather than "Documentation": 13 characters at font-size 82 need
     # more than the 510 units left of the right edge. The yellow is the coffee
     # button's #fd0, and white on yellow fails contrast, so the ink is dark.
-    "docs":             (0, "book", "#fd0", "#0d0c23", "Docs", "online manual", "Read the documentation"),
-    "windows":          (1, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
-    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM64", "Download for Windows on ARM"),
-    "windows-portable": (1, None, *WINDOWS, "Windows", "Portable", "Download the portable Windows app"),
-    "windows-script":   (1, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
-    # Space grey, since black vanishes against GitHub's dark theme.
-    "macos":            (1, "apple", "#6e6e73", "#ffffff", "macOS", "Universal", "Download for macOS"),
-    # Tux yellow, with dark ink for contrast.
-    "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
-    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
-    "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
+    "docs":             (1, "book", "#fd0", "#0d0c23", "Docs", "online manual", "Read the documentation"),
     # The heading is the platform, since "Google Play" is too wide for it.
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Android", "Google Play", "Get it on Google Play"),
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
     "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
     "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
-    # The brown and the orange are taken from ParleyPort's and the widget's own
-    # logos, whose many colours a one-ink mark cannot carry.
+    # The brown is ParleyPort's and the grey the widget logo's darker half, since
+    # a one-ink mark cannot carry either logo's colours.
     "relay":            (3, "relay", "#755934", "#ffffff", "Relay", "ParleyPort", "Run the ParleyPort relay"),
-    "widget":           (3, "widget", "#f68e32", "#1b1b1b", "Widget", "Unraid plugin", "Install the dashboard widget"),
+    "widget":           (3, "widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Install the dashboard widget"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
@@ -185,7 +187,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 FULL_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
-    {shape}
+{paths}
   </g>
   <text x="332" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
   <text x="334" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
@@ -289,37 +291,17 @@ def outline(w, corners):
     return " ".join(d) + " Z"
 
 
-def logo(name):
-    """A logo kept in its own colours, from brand-paths/<name>.svg, and its viewBox.
-
-    Its classes become fill attributes and its ids go, because CSS and ids
-    inside the sprite are shared: a second logo's .cls-1 would repaint the first.
-    """
-    svg = io.open(os.path.join(BRANDS, name + ".svg"), encoding="utf-8").read()
-    box = re.search(r'viewBox="([^"]+)"', svg).group(1)
-    fills = dict(re.findall(r"\.([\w-]+)\s*\{\s*fill:\s*(#[0-9a-fA-F]+);?\s*\}", svg))
-    body = re.search(r"<svg\b[^>]*>(.*)</svg>", svg, re.S).group(1)
-    body = re.sub(r"<defs>.*?</defs>", "", body, flags=re.S)
-    body = re.sub(r'\s(?:id|data-name)="[^"]*"', "", body)
-    body = re.sub(r'class="([\w-]+)"', lambda m: 'fill="%s"' % fills[m.group(1)], body)
-    return re.sub(r"\s*\n\s*", "", body), box
-
-
 def brand(name):
-    """One mark, a path in the button's ink or a logo in its own colours, and
-    the scale and offsets that centre it in GLYPH."""
-    if os.path.exists(os.path.join(BRANDS, name + ".svg")):
-        path, box = logo(name)
-    else:
-        path = io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().strip()
-        box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
+    """One mark: its paths, and the scale and offsets that centre it in GLYPH."""
+    paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
+    box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
     x, y, width, height = (float(n) for n in box.split())
     # Scaled by height so the marks share an optical size, then nudged right by
     # half the width they do not use, since Apple's mark is narrower. A mark
     # wider than WIDEST is scaled by width and lowered by half the height it
     # leaves. The box's origin is taken off, since not every viewBox starts at 0.
     scale = min(GLYPH / height, WIDEST / width)
-    return path, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
+    return paths, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
 
 
 def num(x):
@@ -331,9 +313,10 @@ def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
     if part.mark:
-        path, scale, dx, dy = brand(part.mark)
-        shape = path if path.startswith("<") else '<path d="%s"/>' % path
-        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), shape=shape, **common)
+        paths, scale, dx, dy = brand(part.mark)
+        seam = ' stroke="%s" stroke-width="%s"' % (part.ink, num(SEAM / scale)) if len(paths) > 1 else ""
+        drawn = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
+        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=drawn, **common)
     else:
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED
@@ -471,16 +454,16 @@ def row(items, nl, caption=None):
     return nl.join(lines) + nl
 
 
-def write_readme(text, downloads, donations, caption_row):
+def write_readme(text, downloads, donations):
     """Replace every marked block, each taking the line ending of its own marker.
 
     Both width and height are set, because the image's own proportions are the
     whole sprite's, not the button's.
     """
-    for opener, closer, table, caption, last in ((ROW_OPEN, ROW_CLOSE, downloads, CAPTION, caption_row),
-                                                 (GIVE_OPEN, GIVE_CLOSE, donations, None, 0)):
+    for opener, closer, table, caption in ((ROW_OPEN, ROW_CLOSE, downloads, CAPTION), (GIVE_OPEN, GIVE_CLOSE, donations, None)):
         for start, end in reversed(blocks(text, opener, closer)):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
+            last = len(table) - 1
             body = "".join(row(items, nl, caption if i == last else None) for i, items in enumerate(table))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)
@@ -579,11 +562,7 @@ def main():
     table_out = [[[(p.href, p.alt, next(place), p.width, H, p.px) for p in item] for item in items] for items in table]
     donations = [[[(href, alt, xs[len(parts) + i], gives[i][1], gives[i][2], GIVE_RENDER_PX)]
                   for i, (_s, href, alt) in enumerate(GIVE)]]
-    # The caption speaks of downloads, so it stays above the companion row,
-    # whose buttons lead to repositories.
-    caption_row = max((i for i, items in enumerate(table) if KINDS[items[0][0].kind][0] < COMPANIONS),
-                      default=len(table) - 1)
-    write_readme(readme, table_out, donations, caption_row)
+    write_readme(readme, table_out, donations)
 
 
 if __name__ == "__main__":
