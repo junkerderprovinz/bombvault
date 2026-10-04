@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // ErrEmptyOffsiteRepo is returned by UpsertOffsiteTarget when the target has no
@@ -86,6 +89,26 @@ type OffsiteTarget struct {
 	Enabled        bool
 	CreatedAt      int64
 	SortOrder      int
+	// CompanionOf is the id of the off-site target this RoleRepo row is the
+	// direct repository of.
+	CompanionOf string
+	// CompanionLost marks a row whose target an import deleted, which leaves
+	// it a plain remote repository.
+	CompanionLost bool
+	OffPremises   bool // counts as a site of its own for sites and 3-2-1, never for replication
+}
+
+// remoteLocation is the SQL that asks of a location column what
+// restic.IsRemoteRepo asks in Go: does it name a remote backend. A remote
+// repository stands off the premises, and the two places that decide that,
+// here and in the off-premises migration, read the same scheme list.
+func remoteLocation(col string) string {
+	schemes := restic.RemoteSchemes()
+	globs := make([]string, len(schemes))
+	for i, scheme := range schemes {
+		globs[i] = fmt.Sprintf("%s GLOB '%s:*'", col, scheme)
+	}
+	return strings.Join(globs, " OR ")
 }
 
 // Off-site target roles (see OffsiteTarget.Role's doc comment).
@@ -110,12 +133,20 @@ const (
 	RoleRepo = "repo"
 )
 
-// UpsertOffsiteTarget inserts or updates an off-site target by id. An empty ID
-// is assigned via newID(); CreatedAt is stamped now when 0. An empty Role
-// normalizes to RoleOffsite, so every row written before this field existed (and
-// every caller that does not set it) keeps behaving as a replication
-// destination. Returns the stored OffsiteTarget (with the assigned
-// id/timestamp/role).
+// UpsertOffsiteTarget inserts t or updates the row with its id, keeping that
+// row's companion link, and returns the row as stored. An
+// empty ID gets a fresh one and an empty Role means RoleOffsite.
+//
+// Every read and write here is scoped to t's role, like the rest of this
+// file: a stored row of the other role is left as it is. A settings file can
+// carry one id in both of its blocks, and writing it through would turn a
+// destination into a named repository, which stops replication, or move a
+// direct repository to wherever the file's target points.
+//
+// A row that is already a direct repository (companion_of set) only takes
+// name, repo, schedule and enabled from t; its mirrored fields come from its
+// target instead. Saving a target mirrors its own fields, credentials aside,
+// into that companion in the same transaction.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -129,54 +160,219 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if t.Role == "" {
 		t.Role = RoleOffsite
 	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	var companionOf string
+	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`, t.ID, t.Role).Scan(&companionOf)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if companionOf != "" {
+		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ? AND role = ?`,
+			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), t.ID, t.Role)
+	} else {
+		_, err = tx.Exec(`
+			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
+			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
+			  companion_of, companion_lost, off_premises, retention_keep_yearly, compression)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(id) DO UPDATE SET
+			  domain                 = excluded.domain,
+			  name                   = excluded.name,
+			  repo                   = excluded.repo,
+			  creds_ref              = excluded.creds_ref,
+			  storage_class          = excluded.storage_class,
+			  immutable              = excluded.immutable,
+			  schedule               = excluded.schedule,
+			  retention_keep_last    = excluded.retention_keep_last,
+			  retention_keep_daily   = excluded.retention_keep_daily,
+			  retention_keep_weekly  = excluded.retention_keep_weekly,
+			  retention_keep_monthly = excluded.retention_keep_monthly,
+			  limit_upload           = excluded.limit_upload,
+			  limit_download         = excluded.limit_download,
+			  growth_budget_gb       = excluded.growth_budget_gb,
+			  enabled                = excluded.enabled,
+			  sort_order             = excluded.sort_order,
+			  off_premises           = excluded.off_premises,
+			  retention_keep_yearly  = excluded.retention_keep_yearly,
+			  compression            = excluded.compression
+			WHERE offsite_targets.role = excluded.role`,
+			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
+			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
+			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
+			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
+			t.RetentionKeepYearly, t.Compression,
+		)
+	}
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if t.Role == RoleOffsite {
+		if err := mirrorTx(tx, t, false); err != nil {
+			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget mirror: %w", err)
+		}
+	}
+	return commitStoredTargetTx(tx, t.ID)
+}
 
-	_, err := r.db.Exec(`
+// CreateOffsiteTarget inserts a replication destination at t.SortOrder, or
+// behind the domain's last one when that is 0.
+func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
+	if strings.TrimSpace(t.Repo) == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
+	if t.ID == "" {
+		t.ID = newID()
+	}
+	if t.CreatedAt == 0 {
+		t.CreatedAt = time.Now().Unix()
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateOffsiteTarget: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	_, err = tx.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly, compression)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET
-		  domain                 = excluded.domain,
-		  name                   = excluded.name,
-		  repo                   = excluded.repo,
-		  role                   = excluded.role,
-		  creds_ref              = excluded.creds_ref,
-		  storage_class          = excluded.storage_class,
-		  immutable              = excluded.immutable,
-		  schedule               = excluded.schedule,
-		  retention_keep_last    = excluded.retention_keep_last,
-		  retention_keep_daily   = excluded.retention_keep_daily,
-		  retention_keep_weekly  = excluded.retention_keep_weekly,
-		  retention_keep_monthly = excluded.retention_keep_monthly,
-		  limit_upload           = excluded.limit_upload,
-		  limit_download         = excluded.limit_download,
-		  growth_budget_gb       = excluded.growth_budget_gb,
-		  enabled                = excluded.enabled,
-		  sort_order             = excluded.sort_order,
-		  retention_keep_yearly  = excluded.retention_keep_yearly,
-		  compression            = excluded.compression`,
-		t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
+		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		  CASE WHEN ? > 0 THEN ? ELSE COALESCE(MAX(sort_order), 0) + 1 END, ?, ?
+		  FROM offsite_targets WHERE role = ? AND domain = ?`,
+		t.ID, t.Domain, t.Name, t.Repo, RoleOffsite, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
-		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder, t.RetentionKeepYearly, t.Compression,
+		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt,
+		t.SortOrder, t.SortOrder, t.RetentionKeepYearly, t.Compression, RoleOffsite, t.Domain,
 	)
 	if err != nil {
-		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+		return OffsiteTarget{}, fmt.Errorf("CreateOffsiteTarget: %w", err)
+	}
+	return commitStoredTargetTx(tx, t.ID)
+}
+
+// commitStoredTargetTx reads back the row a write in tx just made, then commits.
+func commitStoredTargetTx(tx *sql.Tx, id string) (OffsiteTarget, error) {
+	t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+` FROM offsite_targets WHERE id = ?`, id))
+	if err != nil {
+		return OffsiteTarget{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("commit offsite target: %w", err)
 	}
 	return t, nil
 }
 
+// FieldOffsiteTarget returns the row the domain's off-site settings field edits:
+// role offsite, sort_order 0, enabled or not.
+func (r *Repo) FieldOffsiteTarget(domain string) (OffsiteTarget, bool, error) {
+	row := r.db.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE domain = ? AND role = ? AND sort_order = 0
+		ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite)
+	t, err := scanOffsiteTarget(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, false, nil
+	}
+	if err != nil {
+		return OffsiteTarget{}, false, err
+	}
+	return t, true, nil
+}
+
+// NormalizeOffsiteSortOrder applies the rule of the offsite_targets_primary_slot
+// migration to one domain: the oldest target whose location is field takes
+// sort_order 0, and every other target on 0 moves behind the domain's last one,
+// in the order they were created. With field empty, the oldest switched-off
+// target already on sort_order 0 keeps it instead: that is the row a cleared
+// field leaves behind, still holding its id and credentials for the next fill.
+func (r *Repo) NormalizeOffsiteSortOrder(domain, field string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("NormalizeOffsiteSortOrder: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	slots, err := targetSlotsTx(tx, domain)
+	if err != nil {
+		return err
+	}
+	primary, last := "", 0
+	for _, s := range slots {
+		switch {
+		case primary != "":
+		case field != "" && s.repo == field:
+			primary = s.id
+		case field == "" && s.order == 0 && !s.enabled:
+			primary = s.id
+		}
+		last = max(last, s.order)
+	}
+	next := last + 1
+	for _, s := range slots {
+		order := s.order
+		switch {
+		case s.id == primary:
+			order = 0
+		case s.order == 0:
+			order = next
+			next++
+		}
+		if order == s.order {
+			continue
+		}
+		if _, err := tx.Exec(`UPDATE offsite_targets SET sort_order = ? WHERE id = ?`, order, s.id); err != nil {
+			return fmt.Errorf("NormalizeOffsiteSortOrder: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("NormalizeOffsiteSortOrder commit: %w", err)
+	}
+	return nil
+}
+
+type targetSlot struct {
+	id, repo string
+	order    int
+	enabled  bool
+}
+
+// targetSlotsTx lists a domain's replication destinations in creation order.
+func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
+	rows, err := tx.Query(`SELECT id, repo, sort_order, enabled FROM offsite_targets
+		WHERE domain = ? AND role = ? ORDER BY created_at, id`, domain, RoleOffsite)
+	if err != nil {
+		return nil, fmt.Errorf("list target slots: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	var out []targetSlot
+	for rows.Next() {
+		var s targetSlot
+		var enabled int
+		if err := rows.Scan(&s.id, &s.repo, &s.order, &enabled); err != nil {
+			return nil, fmt.Errorf("scan target slot: %w", err)
+		}
+		s.enabled = enabled != 0
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly, compression`
+	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
+	companion_of, companion_lost, off_premises, retention_keep_yearly, compression`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
 // them — see PrimaryRemoteTarget) ordered by domain, then sort_order, then
-// created_at (a stable per-domain display order).
+// created_at, then id (a stable per-domain display order, tie-broken all the
+// way down so equal sort_order and created_at never leave the order to chance).
 func (r *Repo) ListOffsiteTargets() ([]OffsiteTarget, error) {
 	rows, err := r.db.Query(`
 		SELECT `+offsiteTargetCols+`
-		FROM offsite_targets WHERE role = ? ORDER BY domain, sort_order, created_at`, RoleOffsite)
+		FROM offsite_targets WHERE role = ? ORDER BY domain, sort_order, created_at, id`, RoleOffsite)
 	if err != nil {
 		return nil, fmt.Errorf("ListOffsiteTargets: %w", err)
 	}
@@ -194,15 +390,15 @@ func (r *Repo) ListOffsiteTargets() ([]OffsiteTarget, error) {
 }
 
 // OffsiteTargetsForDomain returns the off-site REPLICATION DESTINATIONS (role =
-// 'offsite') for a single domain, ordered by sort_order then created_at. A
-// domain's "primary" row (issue #152 remote-primary safety settings, if any)
+// 'offsite') for a single domain, ordered by sort_order, then created_at, then
+// id. A domain's "primary" row (issue #152 remote-primary safety settings, if any)
 // is deliberately excluded — see PrimaryRemoteTarget — so it can never be
 // picked up by the replication loop, the multi-target CRUD UI, or anything
 // else that iterates a domain's off-site destinations.
 func (r *Repo) OffsiteTargetsForDomain(domain string) ([]OffsiteTarget, error) {
 	rows, err := r.db.Query(`
 		SELECT `+offsiteTargetCols+`
-		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY sort_order, created_at`, domain, RoleOffsite)
+		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY sort_order, created_at, id`, domain, RoleOffsite)
 	if err != nil {
 		return nil, fmt.Errorf("OffsiteTargetsForDomain: %w", err)
 	}
@@ -247,6 +443,219 @@ func (r *Repo) GetNamedRepo(id string) (OffsiteTarget, error) {
 	return scanOffsiteTarget(row)
 }
 
+var (
+	ErrCompanionTaken   = errors.New("offsite target already has a direct repository")
+	ErrNotOffsiteTarget = errors.New("no such offsite target")
+	ErrDirectRepo       = errors.New("a direct repository goes with its off-site target; remove the target instead")
+)
+
+// mirroredCols are the columns a direct repository takes from its target, in
+// the order mirroredValues returns them. creds_ref leads because a plain
+// target save skips it: new credentials reach the direct repository only
+// once they open it.
+var mirroredCols = []string{
+	"creds_ref", "storage_class", "immutable",
+	"retention_keep_last", "retention_keep_daily", "retention_keep_weekly", "retention_keep_monthly",
+	"retention_keep_yearly", "compression",
+	"limit_upload", "limit_download", "growth_budget_gb",
+}
+
+func mirroredValues(t OffsiteTarget) []any {
+	return []any{
+		t.CredsRef, t.StorageClass, boolInt(t.Immutable),
+		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
+		t.RetentionKeepYearly, mirroredCompression(t.Compression),
+		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB,
+	}
+}
+
+// mirroredCompression writes restic's default as "", the way a row that never
+// chose a mode stores it, so a target saved with "auto" and its direct
+// repository saved without one count as the same.
+func mirroredCompression(c string) string {
+	c = strings.ToLower(strings.TrimSpace(c))
+	if c == "auto" {
+		return ""
+	}
+	return c
+}
+
+// MirroredEqual reports whether two rows agree on every field a direct
+// repository takes from its target, credentials included.
+func (t OffsiteTarget) MirroredEqual(o OffsiteTarget) bool {
+	return slices.Equal(mirroredValues(t), mirroredValues(o))
+}
+
+// mirrorTx copies the target's mirrored fields onto its direct repository.
+// The row is written only when a field differs, so a save that changes none
+// of them leaves it as it was.
+func mirrorTx(tx *sql.Tx, target OffsiteTarget, withCreds bool) error {
+	cols, vals := mirroredCols, mirroredValues(target)
+	if !withCreds {
+		cols, vals = cols[1:], vals[1:]
+	}
+	set := make([]string, len(cols))
+	differs := make([]string, len(cols))
+	for i, c := range cols {
+		set[i] = c + " = ?"
+		differs[i] = c + " <> ?"
+	}
+	args := slices.Concat(vals, []any{RoleRepo, target.ID}, vals)
+	//nolint:gosec // G202: set and differs are built from the fixed mirroredCols column names, never user text; every value travels in args.
+	_, err := tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
+		WHERE role = ? AND companion_of = ? AND companion_of <> '' AND (`+strings.Join(differs, " OR ")+`)`, args...)
+	return err
+}
+
+// offsiteTargetTx reads a replication destination inside a transaction.
+func offsiteTargetTx(tx *sql.Tx, id string) (OffsiteTarget, error) {
+	t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite))
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, ErrNotOffsiteTarget
+	}
+	return t, err
+}
+
+// CompanionFor returns the direct repository of an off-site target.
+func (r *Repo) CompanionFor(targetID string) (OffsiteTarget, bool, error) {
+	t, err := scanOffsiteTarget(r.db.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`, RoleRepo, targetID))
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, false, nil
+	}
+	if err != nil {
+		return OffsiteTarget{}, false, err
+	}
+	return t, true, nil
+}
+
+// CreateCompanionRepo writes a target's direct repository: an enabled named
+// repository at location, behind the other named repositories, carrying
+// every mirrored field of the target, credentials included.
+func (r *Repo) CreateCompanionRepo(targetID, name, location string) (OffsiteTarget, error) {
+	location = strings.TrimSpace(location)
+	if location == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	target, err := offsiteTargetTx(tx, targetID)
+	if err != nil {
+		return OffsiteTarget{}, err
+	}
+	var taken int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM offsite_targets WHERE companion_of = ?`, targetID).Scan(&taken); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo: %w", err)
+	}
+	if taken > 0 {
+		return OffsiteTarget{}, ErrCompanionTaken
+	}
+	id := newID()
+	if _, err := tx.Exec(`
+		INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order, companion_of)
+		VALUES (?, '', ?, ?, ?, 1, ?,
+		        (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM offsite_targets WHERE role = ?), ?)`,
+		id, strings.TrimSpace(name), location, RoleRepo, time.Now().Unix(), RoleRepo, targetID); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo: %w", err)
+	}
+	if err := mirrorTx(tx, target, true); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo mirror: %w", err)
+	}
+	return commitStoredTargetTx(tx, id)
+}
+
+// MirrorCompanionCreds copies the target's credential selector onto its direct
+// repository and reports whether the row changed. The caller has opened the
+// repository with those credentials first.
+func (r *Repo) MirrorCompanionCreds(targetID string) (bool, error) {
+	res, err := r.db.Exec(`
+		UPDATE offsite_targets
+		   SET creds_ref = (SELECT t.creds_ref FROM offsite_targets t WHERE t.id = ? AND t.role = ?)
+		 WHERE role = ? AND companion_of = ? AND companion_of <> ''
+		   AND creds_ref <> (SELECT t.creds_ref FROM offsite_targets t WHERE t.id = ? AND t.role = ?)`,
+		targetID, RoleOffsite, RoleRepo, targetID, targetID, RoleOffsite)
+	if err != nil {
+		return false, fmt.Errorf("MirrorCompanionCreds: %w", err)
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+// SwapCompanionCreds moves a direct repository from one credential selector to
+// another and reports whether it did. A row that no longer names from is left
+// as it is.
+func (r *Repo) SwapCompanionCreds(repoID, from, to string) (bool, error) {
+	res, err := r.db.Exec(`UPDATE offsite_targets SET creds_ref = ?
+		WHERE id = ? AND role = ? AND companion_of <> '' AND creds_ref = ?`, to, repoID, RoleRepo, from)
+	if err != nil {
+		return false, fmt.Errorf("SwapCompanionCreds: %w", err)
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+// CredsRefsInUse returns the credential set ids that an off-site target, a
+// named repository or a pull source names.
+func (r *Repo) CredsRefsInUse() (map[string]bool, error) {
+	rows, err := r.db.Query(`SELECT creds_ref FROM offsite_targets WHERE creds_ref <> ''
+		UNION SELECT creds_ref FROM pull_sources WHERE creds_ref <> ''`)
+	if err != nil {
+		return nil, fmt.Errorf("CredsRefsInUse: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("CredsRefsInUse: %w", err)
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
+// ConnectCompanion makes a named repository the direct repository of a target:
+// it sets the link, clears the lost label and mirrors every field, credentials
+// included, in one transaction.
+func (r *Repo) ConnectCompanion(repoID, targetID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	target, err := offsiteTargetTx(tx, targetID)
+	if err != nil {
+		return err
+	}
+	var taken int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM offsite_targets WHERE companion_of = ? AND id <> ?`, targetID, repoID).Scan(&taken); err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	if taken > 0 {
+		return ErrCompanionTaken
+	}
+	res, err := tx.Exec(`UPDATE offsite_targets SET companion_of = ?, companion_lost = 0, off_premises = 0
+		WHERE id = ? AND role = ?`, targetID, repoID, RoleRepo)
+	if err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	if err := mirrorTx(tx, target, true); err != nil {
+		return fmt.Errorf("ConnectCompanion mirror: %w", err)
+	}
+	return tx.Commit()
+}
+
 // itemsUsingNamedRepoQ is the in-use count, written once and run against either
 // the database or an open transaction, so the guarded writes below cannot drift
 // from the count the interface shows.
@@ -256,64 +665,89 @@ const itemsUsingNamedRepoQ = `
 		     + (SELECT COUNT(*) FROM file_sets    WHERE repo = ?)
 		     + (SELECT COUNT(*) FROM zfs_datasets WHERE repo = ?)`
 
-// DeleteNamedRepoIfUnused deletes a named repository ONLY while nothing points
-// at it, counting and deleting in ONE transaction. It returns the count it saw:
-// 0 means the row is gone, anything else means nothing was written.
-//
-// The count and the delete were two separate statements, which left a window:
-// an item pointed at the repository between them was silently put back on its
-// domain repository, and its next backup landed there looking exactly like a
-// working backup. The window is small and a single operator will rarely hit it -
-// but the whole point of the refusal is that this particular mistake is
-// invisible afterwards, so it must not have a race that reproduces it.
-func (r *Repo) DeleteNamedRepoIfUnused(id string) (int, error) {
+// NamedRepoUse is what still points at a named repository.
+type NamedRepoUse struct {
+	Items          int
+	DefaultDomains []string // domains whose placement default has home = the repository, sorted
+}
+
+// InUse reports whether anything still points at the repository.
+func (u NamedRepoUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains) > 0 }
+
+// DeleteNamedRepoIfUnused deletes a named repository only while no item and no
+// default points at it, counting and deleting in one transaction so nothing can
+// start pointing at it in between. A direct repository is refused outright: it
+// goes with its target, and removing the row alone would leave the snapshots in
+// the bucket with nothing that names them.
+func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
+	var use NamedRepoUse
 	tx, err := r.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var n int
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&n); err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
+	var companionOf string
+	if err := tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`,
+		id, RoleRepo).Scan(&companionOf); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused companion: %w", err)
 	}
-	if n > 0 {
-		return n, nil
+	if companionOf != "" {
+		return use, ErrDirectRepo
+	}
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&use.Items); err != nil {
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
+	}
+	if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused defaults: %w", err)
+	}
+	slices.Sort(use.DefaultDomains)
+	if use.InUse() {
+		return use, nil
 	}
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleRepo); err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused commit: %w", err)
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused commit: %w", err)
 	}
-	return 0, nil
+	return use, nil
 }
 
 // SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
 // nothing points at it, in one transaction, for the same reason
 // DeleteNamedRepoIfUnused does it that way: everything already written stays
-// where it is, so a move under a live item makes its next backup succeed into
-// an empty repository. Returns the in-use count it saw; 0 means the move was
-// written.
-func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (int, error) {
+// where it is, so a move under a live item, or under a default that homes open
+// items on this repository, makes the next backup succeed into an empty
+// repository.
+//
+// offPremises is written with the location, because it describes that location:
+// a mark left behind goes on counting a repository moved onto the array as a
+// site of its own, and every item there reads as having a copy off the premises.
+func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises bool) (NamedRepoUse, error) {
+	var use NamedRepoUse
 	tx, err := r.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var n int
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&n); err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused count: %w", err)
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&use.Items); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused count: %w", err)
 	}
-	if n > 0 {
-		return n, nil
+	if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused defaults: %w", err)
 	}
-	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ? WHERE id = ? AND role = ?`, location, id, RoleRepo); err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
+	slices.Sort(use.DefaultDomains)
+	if use.InUse() {
+		return use, nil
+	}
+	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, off_premises = ? WHERE id = ? AND role = ?`,
+		location, boolInt(offPremises), id, RoleRepo); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused commit: %w", err)
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused commit: %w", err)
 	}
-	return 0, nil
+	return use, nil
 }
 
 // ItemsUsingNamedRepo counts the containers, VMs, file sets and ZFS items that
@@ -357,11 +791,82 @@ func (r *Repo) GetOffsiteTarget(id string) (OffsiteTarget, bool, error) {
 // exist, or if id names a "primary" row — the off-site delete handler must
 // never be able to remove a domain's remote-primary safety-config row (that
 // row is removed only via DeletePrimaryRemoteTarget, keyed by domain).
+// It is the import's path: a direct repository beside the target stays as a
+// plain named repository, labelled lost and, at a remote location, off the
+// premises.
 func (r *Repo) DeleteOffsiteTarget(id string) error {
-	if _, err := r.db.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+	err := r.inTx(func(tx *sql.Tx) error {
+		// A direct repository without a name of its own went by its target, so
+		// it keeps that name, or its location when the target had none.
+		//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
+		if _, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
+			  off_premises = (`+remoteLocation("repo")+`),
+			  name = CASE WHEN name <> '' THEN name
+			              ELSE COALESCE(NULLIF((SELECT t.name FROM offsite_targets t WHERE t.id = ? AND t.role = ?), ''), repo) END
+			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+			return err
+		}
+		return deleteTargetObservationsTx(tx, id)
+	})
+	if err != nil {
 		return fmt.Errorf("DeleteOffsiteTarget: %w", err)
 	}
 	return nil
+}
+
+// TargetUse is what keeps an offsite target from being deleted in the Off-site tab.
+type TargetUse struct {
+	CompanionID    string
+	Items          int
+	DefaultDomains []string
+}
+
+// InUse reports whether an item or a placement default still points at the
+// target's direct repository.
+func (u TargetUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains) > 0 }
+
+// DeleteOffsiteTargetIfUnused is the Off-site tab's delete: in one transaction
+// it removes the target, its direct repository and the target's observations,
+// and writes nothing while an item or a default uses that repository.
+func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
+	var use TargetUse
+	tx, err := r.db.Begin()
+	if err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	err = tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
+		RoleRepo, id).Scan(&use.CompanionID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if c := use.CompanionID; c != "" {
+		if err := tx.QueryRow(itemsUsingNamedRepoQ, c, c, c, c).Scan(&use.Items); err != nil {
+			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused count: %w", err)
+		}
+		if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, c); err != nil {
+			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused defaults: %w", err)
+		}
+		if use.InUse() {
+			return use, nil
+		}
+		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, c, RoleRepo); err != nil {
+			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+		}
+	}
+	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if err := deleteTargetObservationsTx(tx, id); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused commit: %w", err)
+	}
+	return use, nil
 }
 
 // PrimaryRemoteTarget returns the domain's "primary" row (issue #152: the
@@ -427,16 +932,19 @@ func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 
 func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	var t OffsiteTarget
-	var immutable, enabled int
+	var immutable, enabled, lost, offPremises int
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
-		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder, &t.RetentionKeepYearly, &t.Compression,
+		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
+		&t.CompanionOf, &lost, &offPremises, &t.RetentionKeepYearly, &t.Compression,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
 	}
 	t.Immutable = immutable != 0
 	t.Enabled = enabled != 0
+	t.CompanionLost = lost != 0
+	t.OffPremises = offPremises != 0
 	return t, nil
 }

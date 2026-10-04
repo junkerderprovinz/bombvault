@@ -31,9 +31,12 @@ import {
 } from "../lib/api";
 import { IconDisclosure } from "../components/IconDisclosure";
 import { PageTitle } from "../components/PageTitle";
-import type { FleetPeer, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
+import type { FleetPeer, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
 import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
+import { placementErrorText } from "../lib/placementCodes";
+import { placementChanged } from "../lib/placementEvents";
+import { useNewTargetQuestion } from "../components/placement/NewTargetQuestion";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
@@ -204,21 +207,38 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { lang } = useT();
+  const { ask, dialog } = useNewTargetQuestion();
   const [shakeAccept, setShakeAccept] = useState(0);
   const [shakeDecline, setShakeDecline] = useState(0);
 
   async function handleAccept() {
+    // The question does a round trip of its own before its dialog appears, and
+    // a disabled button is all that keeps a second accept from minting a
+    // second target.
     setBusy(true);
+    const answer = await ask({
+      // The select offers only MESH_DOMAINS, all of them off-site domains.
+      domain: domain as OffsiteDomain,
+      location: offer.repo,
+      name: offer.from || t("fleet.mesh.unknownPeer"),
+      moved: false,
+    });
+    if (!answer.go) {
+      setBusy(false);
+      return;
+    }
     try {
-      const res = await acceptMeshOffer(offer.id, domain);
+      const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
       if (res.ok) {
         // Accepting creates a credential set with the peer's REST login and
         // an off-site target, so every mounted reader of either list reloads.
         credSetsChanged();
         offsiteTargetsChanged();
+        if (answer.alsoExclude) placementChanged();
         onChanged();
       } else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
+        push(placementErrorText(t, lang, res, "fleet.mesh.saveError"), "fail");
         setShakeAccept((n) => n + 1);
       }
     } catch (err) {
@@ -250,6 +270,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
 
   return (
     <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
+      {dialog}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">{offer.from || t("fleet.mesh.unknownPeer")}</span>
         <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
@@ -597,8 +618,10 @@ function FleetPeerCard({
     }
   }
 
+  const app = peer.kind === "android";
   const badges = (
     <>
+      {app && <Badge tone="neutral">{t("fleet.kindAndroid")}</Badge>}
       {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
       {peer.needsPairing ? (
         <Badge tone="warn">
@@ -623,7 +646,7 @@ function FleetPeerCard({
 
   const actions = (
     <>
-      {!peer.needsPairing && (
+      {!peer.needsPairing && !app && (
         <Button
           label={t("fleet.mesh.proposeButton")}
           labelKey="fleet.mesh.proposeButton"
@@ -631,7 +654,7 @@ function FleetPeerCard({
           onClick={() => setShowPropose(true)}
         />
       )}
-      {!peer.needsPairing && (
+      {!peer.needsPairing && !app && (
         <Button
           label={t("fleet.details")}
           labelKey="fleet.details"
@@ -672,11 +695,14 @@ function FleetPeerCard({
       index={index}
       t={t}
     >
-      <PeerScorecard
-        domains={peer.lastPollDomains}
-        t={t}
-        onCheck={open && !peer.needsPairing ? (domain) => handleCheck(domain) : undefined}
-      />
+      {/* A phone backs nothing up, so its card has no scorecard. */}
+      {!app && (
+        <PeerScorecard
+          domains={peer.lastPollDomains}
+          t={t}
+          onCheck={open && !peer.needsPairing ? (domain) => handleCheck(domain) : undefined}
+        />
+      )}
       {open && !peer.needsPairing && (
         <ToggleRow checked={peer.enabled} onChange={(v) => void handleEnabled(v)} label={t("fleet.enabledLabel")} />
       )}
@@ -695,7 +721,7 @@ export const SCORECARD_STALE_S = 15 * 60;
 
 /** scorecardDue says whether the page should fetch a member's scorecard now. */
 export function scorecardDue(peer: FleetPeer, nowS: number): boolean {
-  return peer.enabled && !peer.needsPairing && (peer.direct || peer.relay) && nowS - peer.lastPollAt >= SCORECARD_STALE_S;
+  return peer.enabled && !peer.needsPairing && peer.kind !== "android" && (peer.direct || peer.relay) && nowS - peer.lastPollAt >= SCORECARD_STALE_S;
 }
 
 interface Self {

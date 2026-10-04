@@ -92,7 +92,7 @@ func NewHandler(
 	scheduler *schedule.Scheduler,
 	probes []spike.Probe,
 ) *Handler {
-	return &Handler{
+	h := &Handler{
 		cfg:       cfg,
 		store:     st,
 		docker:    d,
@@ -119,6 +119,11 @@ func NewHandler(
 		loginFails: make(map[string][]time.Time),
 		mcp:        newMCPState(),
 	}
+	if svc != nil {
+		svc.peerActivity = h.activity
+		svc.peerSession = h.phoneSession
+	}
+	return h
 }
 
 // SetProgress wires the live-progress store the SSE endpoint streams from (the
@@ -240,6 +245,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/restore/check", h.handleRestoreCheck)
 	mux.HandleFunc("POST /api/backup/cancel", h.handleBackupCancel)
 	mux.HandleFunc("POST /api/stacks/{project}/restore", h.handleRestoreStack)
+	mux.HandleFunc("GET /api/stacks/{project}/dir", h.handleStackDir)
 	mux.HandleFunc("GET /api/containers/{name}/mounts", h.handleContainerMounts)
 	mux.HandleFunc("POST /api/containers/{name}/excludes/preview", h.handleExcludesPreview)
 	mux.HandleFunc("GET /api/containers/{name}/excludes/suggest", h.handleExcludesSuggest)
@@ -314,11 +320,24 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/repos", h.handleCreateNamedRepo)
 	mux.HandleFunc("PATCH /api/repos/{id}", h.handleUpdateNamedRepo)
 	mux.HandleFunc("DELETE /api/repos/{id}", h.handleDeleteNamedRepo)
+	mux.HandleFunc("POST /api/repos/{id}/connect", h.handleConnectRepo)
 	mux.HandleFunc("GET /api/offsite/targets", h.handleListOffsiteTargets)
 	mux.HandleFunc("POST /api/offsite/targets", h.handleCreateOffsiteTarget)
 	mux.HandleFunc("PUT /api/offsite/targets/{id}", h.handleUpdateOffsiteTarget)
 	mux.HandleFunc("DELETE /api/offsite/targets/{id}", h.handleDeleteOffsiteTarget)
 	mux.HandleFunc("POST /api/offsite/targets/{id}/test", h.handleTestOffsiteTarget)
+	mux.HandleFunc("GET /api/offsite/targets/{id}/direct", h.handleGetDirectRepo)
+	mux.HandleFunc("POST /api/offsite/targets/{id}/direct/test", h.handleTestDirectLocation)
+	mux.HandleFunc("GET /api/placement/defaults", h.handleListPlacementDefaults)
+	mux.HandleFunc("POST /api/placement/default/{domain}/preview", h.handlePreviewPlacementDefault)
+	mux.HandleFunc("PUT /api/placement/default/{domain}", h.handlePutPlacementDefault)
+	mux.HandleFunc("GET /api/placement/default/{domain}/apply", h.handleApplyDefaultPreview)
+	mux.HandleFunc("POST /api/placement/default/{domain}/apply", h.handleApplyDefault)
+	mux.HandleFunc("GET /api/placement/default/{domain}/confirm", h.handleConfirmPreview)
+	mux.HandleFunc("POST /api/placement/default/{domain}/confirm", h.handleConfirmDefault)
+	mux.HandleFunc("GET /api/placement/new-target-preview", h.handleNewTargetPreview)
+	mux.HandleFunc("POST /api/placement/exclude", h.handlePlacementExclude)
+	mux.HandleFunc("GET /api/placement/options", h.handlePlacementOptions)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	// Primary-target probe; the per-target one is the /targets/{id}/test route above.
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)
@@ -439,6 +458,13 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/files/sets/{id}/restore-files", h.handleRestoreFileSetFiles)
 	mux.HandleFunc("POST /api/files/discover", h.handleDiscoverFiles)
 
+	// Placement of one container, VM or file set.
+	mux.HandleFunc("POST /api/items/{domain}/{name}/placement/preview", h.handlePreviewItemPlacement)
+	mux.HandleFunc("GET /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemovalPreview)
+	mux.HandleFunc("DELETE /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemoval)
+	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline", h.handleTimeline)
+	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline/{key}/delete", h.handleTimelineDeletePreview)
+	mux.HandleFunc("DELETE /api/items/{domain}/{name}/timeline/{key}", h.handleTimelineDelete)
 	// ZFS endpoints (the zfs domain: a dataset and the datasets below it, read
 	// from one recursive snapshot).
 	mux.HandleFunc("GET /api/zfs", h.handleListZFSDatasets)

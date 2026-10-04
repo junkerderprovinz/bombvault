@@ -9,6 +9,7 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -328,5 +329,29 @@ func TestItemProbeFailsAChangedBlockSnapshotWithAShortSegment(t *testing.T) {
 	}
 	if rec.OK || !strings.Contains(rec.Detail, "holds 4 bytes, want 10") {
 		t.Fatalf("probe = %+v, want a failure naming the short segment", rec)
+	}
+}
+
+func TestItemProbeOfARemoteRepositoryUnlocksNothingWithoutALock(t *testing.T) {
+	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)}}
+	s, tg := newProbeService(t, eng)
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "s3:https://s3.example.com/bucket/containers"
+	if err := s.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+
+	if _, err := s.ProbeItem(context.Background(), tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	if slices.ContainsFunc(eng.calls, func(c string) bool { return strings.HasPrefix(c, "Unlock") }) {
+		t.Fatalf("calls = %v, want no unlock without a lock in the way", eng.calls)
+	}
+	if !slices.Contains(eng.calls, "RestoreVerify") {
+		t.Fatalf("calls = %v, the probe never read anything back", eng.calls)
 	}
 }

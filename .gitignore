@@ -61,3 +61,18 @@ Thumbs.db
 # in CLAUDE.md is in the project vault note instead.
 CLAUDE.md
 .claude/
+
+# Android app: Gradle output, the SDK path Android Studio writes, and the
+# launcher bundle, which `npm run build:launcher` produces before every build.
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/launcher/
+
+# Signing keys never live in the repository; the release workflow reads the
+# key from secrets. android/debug.keystore is Android's public debug key.
+*.jks
+*.p12
+*.keystore
+!android/debug.keystore

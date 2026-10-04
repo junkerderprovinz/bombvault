@@ -507,10 +507,6 @@ function ZFSItemSettings({
         value={item.repo}
         onChange={(next) => void save({ repo: next })}
         locked={item.lastBackup > 0}
-        labelKey="zfs.repo"
-        hintKey="zfs.repoHint"
-        defaultLabelKey="zfs.repoPlaceholder"
-        lockedKey="zfs.repoLocked"
         disabled={busy}
       />
 

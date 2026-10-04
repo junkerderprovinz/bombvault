@@ -8,17 +8,18 @@ import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-li
 import { MemoryRouter } from "react-router-dom";
 import { VMRow, VMs } from "./VMs";
 import type { VM, Settings } from "../lib/api";
+import {
+  homeOption,
+  placementOptions,
+  placementView,
+  stubEventSource,
+  timelineMark,
+  timelinePlace,
+  timelineRow,
+} from "../lib/placement.testsupport";
 
-// useProgress() opens an EventSource on mount, which jsdom lacks; the hook
-// only touches onmessage and close().
-class FakeEventSource {
-  onmessage: ((ev: MessageEvent) => void) | null = null;
-  close() {
-    /* no-op */
-  }
-}
-
-vi.stubGlobal("EventSource", FakeEventSource);
+// useProgress() opens an EventSource on mount, which jsdom lacks.
+stubEventSource();
 
 vi.mock("../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../lib/api")>("../lib/api");
@@ -31,6 +32,8 @@ vi.mock("../lib/api", async () => {
     forgetVM: vi.fn(async () => ({ ok: true })),
     deleteBackupsVM: vi.fn(async () => ({ ok: true })),
     setVMInclude: vi.fn(async () => ({ ok: true })),
+    getTimeline: vi.fn(async () => ({ ok: true, places: [], rows: [] })),
+    getPlacementOptions: vi.fn(async () => ({ ok: true, options: placementOptions({ homes: [homeOption()] }) })),
     // Page-level fetches (the single-layout tests below render the full <VMs>
     // page). The mobile block's own fetches (getSettings/getScheduleNext)
     // never run under jsdom's desktop matchMedia; the stubs only have to
@@ -40,14 +43,14 @@ vi.mock("../lib/api", async () => {
       ok: true,
       settings: {} as Settings,
       hostMountRoot: "",
-      platform: "generic",
+      platform: "unraid",
     })),
     getScheduleNext: vi.fn(async () => []),
   };
 });
 
-// Imported AFTER vi.mock so this binding is the mocked function.
-import { backupVMNow, deleteBackupsVM, forgetVM, setVMInclude, listVMs } from "../lib/api";
+// Imported after vi.mock so these bindings are the mocked functions.
+import { backupVMNow, deleteBackupsVM, forgetVM, getTimeline, setVMInclude, listVMs } from "../lib/api";
 import { en } from "../lib/i18n";
 
 const noop = () => {
@@ -56,6 +59,8 @@ const noop = () => {
 // VMRow only needs t() to return a stable string per key; none of this test's
 // assertions depend on real translations.
 const t = ((key: string) => key) as unknown as Parameters<typeof VMRow>[0]["t"];
+// For the one test that reads a sentence rather than a key.
+const tEn = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof VMRow>[0]["t"];
 
 // A TrueNAS-shaped VM whose display name and libvirt name differ.
 const trueNasVM: VM = {
@@ -66,6 +71,7 @@ const trueNasVM: VM = {
   includeInSchedule: false,
   lastBackup: null,
   lastBackupStarted: null,
+  placement: placementView(),
 };
 
 afterEach(() => {
@@ -78,7 +84,7 @@ describe("VMRow action wiring", () => {
   });
 
   it("sends VM.libvirtName to backupVMNow, never the display VM.name", async () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
     // By role and name: the viewer chooses whether a control shows its text,
     // its glyph or both, and only the accessible name stays the same.
@@ -90,7 +96,7 @@ describe("VMRow action wiring", () => {
   });
 
   it("still shows the display name to the user, not the raw identifier", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
     expect(screen.getByText(trueNasVM.name)).toBeTruthy();
     expect(screen.queryByText(trueNasVM.libvirtName)).toBeNull();
   });
@@ -105,15 +111,20 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("renders the backups disclosure as a pressable chip, not a bespoke button", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
     // Selector's segments carry aria-pressed, which a plain <button> lacks.
     const chip = screen.getByRole("button", { name: "snapshots.title" });
     expect(chip.getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("carries the placement bar, the same row the container card has", async () => {
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
+    expect(await screen.findByRole("radiogroup", { name: en["placement.title"] })).toBeTruthy();
+  });
+
   it("keeps the backups pane collapsed until the chip is pressed, and the row owns that state", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
     // Closed: VMRestorePanel returns null, so nothing of its content exists.
     expect(screen.queryByText("source.label")).toBeNull();
@@ -125,7 +136,7 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("shows last-backup as one combined summary line, like the container row", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
     // lastBackup is null on the fixture, so the line ends in the "never" key.
     // Two stacked <p>s would leave no single node with both halves.
@@ -133,10 +144,11 @@ describe("VMRow matches the container card's structure", () => {
   });
 
   it("offers the backup method as two icon-only badges, with the stored one active", () => {
-    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
-    // A native <select> would expose a combobox and no per-option segments.
-    expect(screen.queryByRole("combobox")).toBeNull();
+    // A native <select> would expose a combobox here instead of the segments.
+    const method = screen.getByRole("tablist", { name: "vm.method" });
+    expect(within(method).queryByRole("combobox")).toBeNull();
 
     // Single-select segments are tabs with aria-selected, and an icon-only
     // segment's accessible name is its label.
@@ -145,6 +157,27 @@ describe("VMRow matches the container card's structure", () => {
     // Both show at once, so the alternative never has to be inferred.
     expect(graceful.getAttribute("aria-selected")).toBe("true");
     expect(live.getAttribute("aria-selected")).toBe("false");
+  });
+
+  it("opens the backups timeline under the libvirt name", async () => {
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
+    fireEvent.click(screen.getByRole("button", { name: "snapshots.title" }));
+    await waitFor(() => expect(getTimeline).toHaveBeenCalledWith("vms", trueNasVM.libvirtName));
+  });
+
+  it("deletes the local backups its question names", async () => {
+    vi.mocked(getTimeline).mockResolvedValueOnce({
+      ok: true,
+      places: [timelinePlace()],
+      rows: [timelineRow("a1a1a1a1", "2026-09-18T03:00:00Z", timelineMark("local", "a1a1a1a1"))],
+    });
+    render(<VMRow vm={trueNasVM} t={tEn} onRefresh={noop} onPlacement={noop} index={0} />);
+    fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
+    fireEvent.click(await screen.findByRole("button", { name: en["snapshots.deleteAll"] }));
+
+    expect(await screen.findByText(/all local backups/)).toBeTruthy();
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["snapshots.deleteAll"] }));
+    await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(trueNasVM.libvirtName, "local"));
   });
 });
 
@@ -161,13 +194,13 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 
   it("offers the schedule switch", () => {
-    render(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={orphan} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
     expect(sw.getAttribute("aria-checked")).toBe("true");
   });
 
   it("saves the switch as a VM setting, under the libvirt name", async () => {
-    render(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={orphan} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
     const sw = screen.getByRole("switch", { name: en["containers.includeInSchedule"] });
 
     fireEvent.click(sw);
@@ -177,7 +210,7 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 
   it("offers Remove entry, not Delete all backups, when it has no backups", async () => {
-    render(<VMRow vm={orphan} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={orphan} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
     expect(screen.queryByRole("button", { name: "containers.deleteBackups" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "vms.removeEntry" }));
@@ -188,7 +221,7 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 
   it("offers Delete all backups, not Remove entry, when it has backups", async () => {
-    render(<VMRow vm={{ ...orphan, lastBackup: 1_757_000_000 }} t={t} onRefresh={noop} index={0} />);
+    render(<VMRow vm={{ ...orphan, lastBackup: 1_757_000_000 }} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
     expect(screen.queryByRole("button", { name: "vms.removeEntry" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "containers.deleteBackups" }));
@@ -231,6 +264,7 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
     includeInSchedule: false,
     lastBackup: null,
     lastBackupStarted: null,
+    placement: placementView(),
   }));
 
   beforeEach(() => {
@@ -238,6 +272,8 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
     vi.mocked(listVMs).mockResolvedValue({ ok: true, vms: manyVMs });
   });
 
+  // Role queries over 25 cards with their placement rows take seconds in jsdom
+  // while the whole suite runs, hence the longer timeout.
   it("renders the desktop face with no hidden twin and the mobile block absent", async () => {
     const { container } = render(
       <MemoryRouter>
@@ -267,5 +303,5 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
     for (const vm of manyVMs) {
       expect(screen.getByText(vm.name)).toBeTruthy();
     }
-  });
+  }, 20_000);
 });

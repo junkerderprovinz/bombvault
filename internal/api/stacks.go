@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -51,7 +52,7 @@ func (s *Service) prepareRestoreStack(project, source string, confirm bool) ([]s
 	if !confirm {
 		return nil, backup.ErrNotConfirmed
 	}
-	if source != "local" && source != "offsite" {
+	if source != "local" && !isOffsiteSource(source) {
 		return nil, fmt.Errorf("invalid source (must be local or offsite)")
 	}
 	// The name is only compared with labels, never used as a path, but
@@ -100,13 +101,14 @@ func (s *Service) prepareRestoreStack(project, source string, confirm bool) ([]s
 // startAfter, the members that restored are then started in depends_on order;
 // dependencies outside the stack are ignored and a cycle falls back to
 // enumeration order. A member's failure is recorded in its result and does not
-// stop the others. The HTTP layer uses StartRestoreStack, which runs detached.
-func (s *Service) RestoreStack(ctx context.Context, project, source string, startAfter, confirm bool) (StackRestoreResult, error) {
+// stop the others. stackDirSource says where the project folder comes from,
+// empty for source. The HTTP layer uses StartRestoreStack, which runs detached.
+func (s *Service) RestoreStack(ctx context.Context, project, source, stackDirSource string, startAfter, confirm bool) (StackRestoreResult, error) {
 	members, err := s.prepareRestoreStack(project, source, confirm)
 	if err != nil {
 		return StackRestoreResult{}, err
 	}
-	return s.runRestoreStack(ctx, members, source, startAfter), nil
+	return s.runRestoreStack(ctx, members, source, stackDirSource, startAfter), nil
 }
 
 // restoreStackMember restores one member and turns a panic into that member's
@@ -126,13 +128,13 @@ func (s *Service) restoreStackMember(ctx context.Context, name, source string) (
 // runRestoreStack restores the members, then with startAfter starts them in
 // dependency order. Each member's restore records its own run, so the outcomes
 // stay visible when this runs detached from the request.
-func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, source string, startAfter bool) StackRestoreResult {
+func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, source, stackDirSource string, startAfter bool) StackRestoreResult {
 	// The project directory comes first: it holds the compose file and shared
 	// files a member may read on start. Older backups have no stack snapshot and
 	// bring the folder back with the first member instead.
 	if len(members) > 0 {
 		if project := s.projectOfMember(ctx, members[0].name); project != "" {
-			if _, err := s.RestoreStackDir(ctx, project, source); err != nil {
+			if _, err := s.RestoreStackDir(ctx, project, cmp.Or(stackDirSource, source)); err != nil {
 				// Not fatal: failing every member over the shared folder would
 				// turn a partial problem into a total one.
 				log.Printf("api: restore stack: %v", err)
@@ -210,7 +212,7 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 //
 // It shares batchActive with backups and the other restores and returns
 // (false, nil) when one is already running.
-func (s *Service) StartRestoreStack(ctx context.Context, project, source string, startAfter, confirm bool) (bool, error) {
+func (s *Service) StartRestoreStack(ctx context.Context, project, source, stackDirSource string, startAfter, confirm bool) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -233,7 +235,7 @@ func (s *Service) StartRestoreStack(ctx context.Context, project, source string,
 		defer cancel()
 		s.registerCancel(key, cancel)
 		defer s.unregisterCancel(key)
-		res := s.runRestoreStack(rctx, members, source, startAfter)
+		res := s.runRestoreStack(rctx, members, source, stackDirSource, startAfter)
 		for _, m := range res.Members {
 			if m.Error != "" {
 				log.Printf("api: restore stack: member %q failed: %v", m.Name, m.Error) //nolint:gosec // G706: name is %q-quoted; the error is service/restic-generated

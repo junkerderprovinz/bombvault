@@ -31,7 +31,7 @@ Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/m
 
 A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatképét a hoszt csak a konténer indulása után csatolja. Lásd: [ZFS-adatkészletek](zfs-datasets.md).
 
-A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Tárolás, Mentési útvonalak** alatt. Minden útvonalmező mellett van egy beépített **Helyi / Távoli** kapcsoló is: egy útvonal helyi mappa helyett lehet távoli restic tároló is (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`), ilyenkor a mentés közvetlenül oda megy, külön helyi másolat nélkül; lásd: [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories).
+A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Tárolás, Mentési útvonalak** alatt. Minden útvonalmező mellett van egy beépített **Helyi / Távoli** kapcsoló is: egy útvonal helyi mappa helyett lehet távoli restic tároló is (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`), ilyenkor a mentés közvetlenül oda megy, külön helyi másolat nélkül; lásd: [Távoli elsődleges tárolók](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Hosztellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.
@@ -84,7 +84,7 @@ A sablon hozzáadja a `--add-host=host.docker.internal:host-gateway` opciót, ho
 
 Állíts be egy telephelyen kívüli replikát a **Beállítások, Telephelyen kívüli** oldalon. A teljes munkafolyamathoz (módosíthatatlan/append-only, manipulációs tesztelés és DR-próbák) lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md). Röviden:
 
-- **Backendek:** SMB/CIFS és NFS (csatold a megosztást, és irányíts rá egy Mentési útvonalat), natív restic backendek rclone nélkül (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), vagy bármely rclone remote (`rclone:<remote>:<bucket>/path`).
+- **Backendek:** SMB/CIFS és NFS (csatold a megosztást, és irányíts rá egy Mentési útvonalat), natív restic backendek rclone nélkül (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), vagy bármely rclone remote (`rclone:<remote>:<bucket>/path`). A Backblaze B2-nek itt nincs saját backendje: az S3-végpontján keresztül érhető el (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), a kulcsazonosítóval és az alkalmazáskulccsal mint S3-hitelesítő adatokkal.
 - **A megosztott felhőbeli hitelesítő adatok** titkosítva tárolódnak a Beállítások, Felhőhozzáférés, Megosztott felhőbeli hitelesítő adatok alatt.
 - **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Az `sftp:` csak egy SSH-szervert igényel. Add hozzá a nyilvános kulcsot a **Beállítások, Integrációk, Gazdagép SSH** alól (a `/config/ssh/id_ed25519.pub` alatt is) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
 - **Telephelyen kívüli másolat:** A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja, egy (általában helyi) elsődleges tároló mellé. Minden tartománynak saját telephelyen kívüli ütemezése van, plusz egy **Replikálás most** gomb.

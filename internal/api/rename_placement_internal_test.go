@@ -1,0 +1,992 @@
+package api
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+// copiedTo lists the snapshot ids the runs so far copied to dest, sorted.
+func copiedTo(f *placementFixture, dest string) []string {
+	f.t.Helper()
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	var ids []string
+	for _, c := range f.eng.copies {
+		if c.Dest != dest {
+			continue
+		}
+		if c.IDs == nil {
+			f.t.Fatalf("a whole-repository copy from %s to %s", c.Src, dest)
+		}
+		ids = append(ids, c.IDs...)
+	}
+	slices.Sort(ids)
+	return ids
+}
+
+func TestTakeoverAndUnlinkCarryTheCopyRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of web = %v (found %v), want [*]", skip, ok)
+	}
+	if _, ok := ruleOf(t, f, "containers", "container:nginx"); ok {
+		t.Fatal("the former name kept a rule of its own")
+	}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx after the unlink = %v (found %v), want [*]", skip, ok)
+	}
+}
+
+func TestAnUnlinkKeepsTheBackupsOfTheLinkedPeriodOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	linked := time.Now().Add(5 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", linked, "container:web", "formerly:nginx"),
+		snap("aaaa0003", linked, "container:db"))
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+// Beside B2, which the containers default leaves out, db copies everywhere so
+// a replication shows it ran.
+func b2OutByDefault(t *testing.T) (*placementFixture, store.OffsiteTarget) {
+	t.Helper()
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.setDefault("containers", "", b2.ID)
+	f.container("db", "")
+	f.rule("containers", "container:db")
+	return f, b2
+}
+
+func TestAnUnlinkLeavesNoRuleOnALiveContainerUnderTheNameItLeaves(t *testing.T) {
+	f, b2 := b2OutByDefault(t)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx")
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); ok {
+		t.Fatalf("web, installed at the unlink, took the rule %v", skip)
+	}
+	later := time.Now().Add(10 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0004", later, "container:web"),
+		snap("aaaa0005", later, "container:db"))
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0005"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestADeleteLeavesNoRuleOnALiveContainerUnderAFormerName(t *testing.T) {
+	f, b2 := b2OutByDefault(t)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx")
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if err := f.svc.DeleteBackups(ctx, "web", "local"); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); ok {
+		t.Fatalf("nginx, installed without a row, took the rule %v", skip)
+	}
+	f.openContainer("nginx")
+	later := time.Now().Add(10 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("bbbb0001", later, "container:nginx"),
+		snap("bbbb0002", later, "container:db"))
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"bbbb0002"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+// web answered to nginx before, so its delete has to know whether a container
+// is installed under that name.
+func TestADeleteWaitsForTheInstalledContainers(t *testing.T) {
+	f := newPlacementFixture(t)
+	web := f.container("web", "")
+	if _, err := f.st.AddAliasAt("container", "nginx", web.ID, 200); err != nil {
+		t.Fatal(err)
+	}
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:web"))
+	f.dock.listErr = errors.New("docker socket unreachable")
+
+	err := f.svc.DeleteBackups(context.Background(), "web", "local")
+	if err == nil || !strings.Contains(err.Error(), "nothing was deleted") {
+		t.Fatalf("DeleteBackups = %v, want a refusal", err)
+	}
+	if _, err := f.st.GetTargetByContainer("web"); err != nil {
+		t.Fatalf("the entry went although the delete was refused: %v", err)
+	}
+	if len(f.eng.deletes) > 0 {
+		t.Fatalf("forgot %v although the delete was refused", f.eng.deletes)
+	}
+}
+
+func TestADeleteWithoutFormerNamesGoesAheadWhileNothingCanBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("web", "")
+	f.vm("win11", "")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:web"))
+	f.hold(f.domainPath("vms"), snap("bbbb0001", 100, "vm:win11"))
+	f.settings(func(s *store.Settings) { s.VMsEnabled = true })
+	f.dock.listErr = errors.New("docker socket unreachable")
+	f.virsh.listErr = errors.New("libvirt is not running")
+	ctx := context.Background()
+
+	if err := f.svc.DeleteBackups(ctx, "web", "local"); err != nil {
+		t.Errorf("DeleteBackups: %v", err)
+	}
+	if err := f.svc.DeleteBackupsVM(ctx, "win11", "local"); err != nil {
+		t.Errorf("DeleteBackupsVM: %v", err)
+	}
+}
+
+func TestAFileExportedBeforeATakeoverKeepsTheOldHistoryOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	f.listing("containers", b2.ID, 50)
+	linked := time.Now().Add(5 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", linked, "container:web", "formerly:nginx"),
+		snap("aaaa0003", linked, "container:db"))
+
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+// The new nginx is set to Local on its card before its first backup, so it
+// holds that rule without a row.
+func TestAnImportLeavesTheRuleOfAnInstalledContainerOnItsName(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	web := f.container("web", "")
+	if _, err := f.st.AddAliasAt("container", "nginx", web.ID, 200); err != nil {
+		t.Fatal(err)
+	}
+	f.dock.installed = map[string]bool{"web": true, "nginx": true}
+	if res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"copies": map[string]any{"skip": []string{store.SkipAll}}}); res["ok"] != true {
+		t.Fatalf("PATCH = %v", res)
+	}
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx = %v (found %v), want [*]", skip, ok)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); ok {
+		t.Fatalf("web took the rule %v", skip)
+	}
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", time.Now().Unix()+5, "container:nginx"),
+		snap("aaaa0003", 300, "container:web"))
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestAnImportWithCopyRulesWaitsForTheInstalledContainers(t *testing.T) {
+	f := newPlacementFixture(t)
+	web := f.container("web", "")
+	if _, err := f.st.AddAliasAt("container", "nginx", web.ID, 200); err != nil {
+		t.Fatal(err)
+	}
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.dock.listErr = errors.New("docker socket unreachable")
+
+	res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp)
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "not imported") {
+		t.Fatalf("import = %v, want a refusal", res)
+	}
+	if _, ok := ruleOf(t, f, "containers", "container:nginx"); !ok {
+		t.Fatal("the refused import replaced the copy rules")
+	}
+}
+
+func TestAnImportWithoutFormerNamesGoesAheadWhileNothingCanBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("web", "")
+	f.vm("win11", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.rule("vms", "vm:win11", store.SkipAll)
+	f.settings(func(s *store.Settings) { s.VMsEnabled = true })
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.dock.listErr = errors.New("docker socket unreachable")
+	f.virsh.listErr = errors.New("libvirt is not running")
+
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	for domain, identity := range map[string]string{"containers": "container:web", "vms": "vm:win11"} {
+		if skip, ok := ruleOf(t, f, domain, identity); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+			t.Errorf("rule of %s = %v (found %v), want [*]", identity, skip, ok)
+		}
+	}
+}
+
+func TestDiscoverLeavesTheRuleOfAnInstalledContainerOnAFormerName(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web", "formerly:nginx"))
+	writeLinkedContainerDef(t, f, "web", "nginx", 200)
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if _, err := f.svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := f.st.AliasByOldName("container", "nginx"); err != nil {
+		t.Fatalf("nginx is not linked to web: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx = %v (found %v), want [*]", skip, ok)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); ok {
+		t.Fatalf("web took the rule %v", skip)
+	}
+}
+
+func TestDiscoverLinksButLeavesTheRuleWhileTheInstalledContainersCannotBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web", "formerly:nginx"))
+	writeLinkedContainerDef(t, f, "web", "nginx", 200)
+	f.dock.listErr = errors.New("docker socket unreachable")
+
+	if _, err := f.svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := f.st.AliasByOldName("container", "nginx"); err != nil {
+		t.Fatalf("nginx is not linked to web: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx = %v (found %v), want [*]", skip, ok)
+	}
+}
+
+// linkedVMWithARuleOnItsFormerName is win11, linked at 200 to windows-11, a
+// name whose rule leaves every target out.
+func linkedVMWithARuleOnItsFormerName(t *testing.T, f *placementFixture) {
+	t.Helper()
+	win := f.vm("win11", "")
+	if _, err := f.st.AddVMAliasAt("windows-11", win.ID, 200, ""); err != nil {
+		t.Fatal(err)
+	}
+	f.rule("vms", "vm:windows-11", store.SkipAll)
+}
+
+// windows-11 is defined again and set to Local before its first backup, while
+// VMs are switched off here.
+func TestAnImportWhileVMsAreOffLeavesTheRuleOfADefinedVMOnItsName(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("vms", "B2", "b2:bucket/vms")
+	f.listing("vms", b2.ID, 50)
+	linkedVMWithARuleOnItsFormerName(t, f)
+	f.virsh.defined = []string{"win11", "windows-11"}
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of windows-11 = %v (found %v), want [*]", skip, ok)
+	}
+	f.openVM("windows-11")
+	f.hold(f.domainPath("vms"),
+		snap("bbbb0001", time.Now().Unix()+5, "vm:windows-11"),
+		snap("bbbb0003", 300, "vm:win11"))
+	if err := f.svc.ReplicateOffsite(context.Background(), "vms"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"bbbb0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestAnImportLeavesTheRuleOnAFormerVMNameWhileLibvirtCannotAnswer(t *testing.T) {
+	for _, vmsOn := range []bool{false, true} {
+		t.Run(map[bool]string{false: "VMs off", true: "VMs on"}[vmsOn], func(t *testing.T) {
+			f := newPlacementFixture(t)
+			linkedVMWithARuleOnItsFormerName(t, f)
+			f.settings(func(s *store.Settings) { s.VMsEnabled = vmsOn })
+			exp := f.do(http.MethodGet, "/api/settings/export", nil)
+			f.virsh.listErr = errors.New("libvirt is not running")
+
+			if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+				t.Fatalf("import = %v", res)
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+				t.Fatalf("rule of windows-11 = %v (found %v), want [*]", skip, ok)
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:win11"); ok {
+				t.Fatalf("win11 took the rule %v", skip)
+			}
+		})
+	}
+}
+
+// renamedVMThatCopiesEverywhere is windows-11 renamed to win11, with a rule
+// that copies it to every target.
+func renamedVMThatCopiesEverywhere(t *testing.T, f *placementFixture) {
+	t.Helper()
+	f.vm("windows-11", "")
+	f.rule("vms", "vm:windows-11")
+	if err := f.st.RenameVMTargetWithAlias("windows-11", "win11", "", ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A new windows-11 is defined without a row while VMs are switched off here.
+func TestRemovingAVMWhileVMsAreOffLeavesNoRuleOnAVMDefinedUnderAFormerName(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		remove func(*Service) error
+	}{
+		{"delete", func(s *Service) error { return s.DeleteBackupsVM(context.Background(), "win11", "local") }},
+		{"forget", func(s *Service) error { return s.ForgetVMTarget(context.Background(), "win11") }},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			b2 := f.target("vms", "B2", "b2:bucket/vms")
+			f.listing("vms", b2.ID, 50)
+			f.setDefault("vms", "", b2.ID)
+			renamedVMThatCopiesEverywhere(t, f)
+			f.virsh.defined = []string{"windows-11"}
+
+			if err := c.remove(f.svc); err != nil {
+				t.Fatalf("%s: %v", c.name, err)
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); ok {
+				t.Fatalf("windows-11, defined without a row, took the rule %v", skip)
+			}
+			f.openVM("windows-11")
+			f.hold(f.domainPath("vms"), snap("bbbb0001", time.Now().Unix()+5, "vm:windows-11"))
+			if err := f.svc.ReplicateOffsite(context.Background(), "vms"); err != nil {
+				t.Fatalf("ReplicateOffsite: %v", err)
+			}
+			if got := copiedTo(f, b2.Repo); len(got) > 0 {
+				t.Fatalf("copied %v to B2, which the default leaves out", got)
+			}
+		})
+	}
+}
+
+func TestAVMDeleteLeavesEveryFormerNameAloneWhileLibvirtCannotAnswer(t *testing.T) {
+	for _, vmsOn := range []bool{false, true} {
+		t.Run(map[bool]string{false: "VMs off", true: "VMs on"}[vmsOn], func(t *testing.T) {
+			f := newPlacementFixture(t)
+			renamedVMThatCopiesEverywhere(t, f)
+			f.settings(func(s *store.Settings) { s.VMsEnabled = vmsOn })
+			f.virsh.listErr = errors.New("libvirt is not running")
+
+			if err := f.svc.DeleteBackupsVM(context.Background(), "win11", "local"); err != nil {
+				t.Fatalf("DeleteBackupsVM: %v", err)
+			}
+			if _, err := f.st.GetVMTargetByName("win11"); err == nil {
+				t.Fatal("the entry of win11 stayed")
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); ok {
+				t.Fatalf("windows-11 took the rule %v although libvirt could not say what is defined there", skip)
+			}
+		})
+	}
+}
+
+// writeLinkedContainerDef leaves the definition mirror of name at the domain
+// path, recording old as the former name linked to it at linkedAt.
+func writeLinkedContainerDef(t *testing.T, f *placementFixture, name, old string, linkedAt int64) {
+	t.Helper()
+	def, err := json.Marshal(map[string]any{
+		"appdataPaths": []string{},
+		"aliases":      []definitionAlias{{Name: old, LinkedAt: linkedAt}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(f.svc.cfg.AppKey, def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := defsDirFor(filepath.FromSlash(f.domainPath("containers")))
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name+".def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestARuleOnAFormerNameDiscoverLinksKeepsItsHistoryOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web", "formerly:nginx"),
+		snap("aaaa0003", 300, "container:db"))
+	writeLinkedContainerDef(t, f, "web", "nginx", 200)
+	writeContainerDef(t, f, f.domainPath("containers"), "db")
+	ctx := context.Background()
+
+	if _, err := f.svc.Discover(ctx, false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if err := f.st.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestATakenOverCardCountsTheCopiesItsTargetHolds(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-hour, copiesRow("container:nginx", 20, now-2*hour))
+	f.dock.installed = map[string]bool{"web": true}
+
+	if err := f.svc.TakeOverContainer(context.Background(), "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	o := f.cardOf("containers", "web", now-2*hour).Observed
+	if o.Sites != 2 || o.Rule321 != "met" {
+		t.Fatalf("observed = %+v, want two sites, 3-2-1 met", o)
+	}
+	if got := placeAt(o, "offsite:"+b2.ID); got.State != "counts" || *got.Count != 20 {
+		t.Fatalf("B2 = %+v, want the 20 copies counted", got)
+	}
+}
+
+func TestAnUnlinkListsTheTargetsThatHoldTheEntryAgain(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	linked := time.Now().Add(5 * time.Second).Unix()
+	f.listing("containers", b2.ID, linked, copiesRow("container:web", 2, linked))
+	f.hold("b2:bucket:containers",
+		copied("bbbb0001", "aaaa0001", 100, "container:nginx"),
+		copied("bbbb0002", "aaaa0002", linked, "container:web", "formerly:nginx"))
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	waitForListings(t, f)
+	for identity, want := range map[string]int{"container:nginx": 1, "container:web": 1} {
+		got, err := f.st.ItemCopiesFor("containers", identity)
+		if err != nil || len(got) != 1 || got[0].SnapshotCount != want {
+			t.Errorf("copies of %s = %+v, %v, want %d at B2", identity, got, err, want)
+		}
+	}
+}
+
+func TestATakeoverOntoANameWithOnlyACopyRuleIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+
+	err := f.svc.TakeOverContainer(context.Background(), "nginx", "web")
+	if !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
+	}
+	if _, err := f.st.GetTargetByContainer("nginx"); err != nil {
+		t.Fatalf("the entry left its name after a refused takeover: %v", err)
+	}
+}
+
+func TestTheContainerTakeoverRoutesRefuseACopyRuleWithItsCode(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("db", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true, "postgres": true}
+
+	res := f.do(http.MethodPost, "/api/containers/web/takeover", map[string]any{"from": "nginx"})
+	if res["ok"] != false || res["code"] != "copy-rule-taken" {
+		t.Fatalf("takeover = %v, want the copy-rule-taken refusal", res)
+	}
+
+	if err := f.svc.TakeOverContainer(context.Background(), "db", "postgres"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	f.rule("containers", "container:db", store.SkipAll)
+	res = f.do(http.MethodDelete, "/api/containers/postgres/alias/db", nil)
+	if res["ok"] != false || res["code"] != "copy-rule-taken" {
+		t.Fatalf("unlink = %v, want the copy-rule-taken refusal", res)
+	}
+}
+
+func TestATakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("web", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+
+	err := f.svc.TakeOverContainer(context.Background(), "nginx", "web")
+	if err == nil || !strings.Contains(err.Error(), "copy rule") {
+		t.Fatalf("err = %v, want a refusal that names the copy rule", err)
+	}
+	if _, err := f.st.GetTargetByContainer("web"); err != nil {
+		t.Fatalf("the row of web was removed although it has a copy rule: %v", err)
+	}
+}
+
+func TestATakeoverOntoARowWithOnlyACopyRuleAnswersWithItsCode(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("web", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+
+	res := f.do(http.MethodPost, "/api/containers/web/takeover", map[string]any{"from": "nginx"})
+	if res["ok"] != false || res["code"] != "copy-rule-taken" {
+		t.Fatalf("takeover = %v, want the copy-rule-taken refusal", res)
+	}
+	if err := f.st.SetInclude("web", true); err != nil {
+		t.Fatal(err)
+	}
+	res = f.do(http.MethodPost, "/api/containers/web/takeover", map[string]any{"from": "nginx"})
+	if res["ok"] != false || res["code"] != nil || !strings.Contains(res["error"].(string), "scheduled, copy rule") {
+		t.Fatalf("takeover = %v, want a refusal that names both settings", res)
+	}
+}
+
+func TestATakeoverOntoARowWhoseOnlySettingIsTheEntrysOwnRule(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		webRule []string
+		refused bool
+	}{
+		{"the same rule goes ahead", []string{store.SkipAll}, false},
+		{"another rule is refused", []string{"t-b2"}, true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			nginx := f.container("nginx", "")
+			f.rule("containers", "container:nginx", store.SkipAll)
+			f.container("web", "")
+			f.rule("containers", "container:web", c.webRule...)
+			f.dock.installed = map[string]bool{"web": true}
+
+			err := f.svc.TakeOverContainer(context.Background(), "nginx", "web")
+			if c.refused {
+				if !errors.Is(err, store.ErrCopyRuleTaken) {
+					t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("TakeOverContainer: %v", err)
+			}
+			if tg, err := f.st.GetTargetByContainer("web"); err != nil || tg.ID != nginx.ID {
+				t.Fatalf("entry on web = %+v, %v; want the one from nginx", tg, err)
+			}
+			if skip, ok := ruleOf(t, f, "containers", "container:web"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+				t.Fatalf("rule of web = %v (found %v), want [*]", skip, ok)
+			}
+			if skip, ok := ruleOf(t, f, "containers", "container:nginx"); ok {
+				t.Fatalf("nginx kept the rule %v", skip)
+			}
+		})
+	}
+}
+
+func TestAVMTakeoverOntoARowWithOnlyACopyRuleIsACopyRuleRefusal(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("win11", "")
+	f.rule("vms", "vm:win11", store.SkipAll)
+
+	if err := f.svc.removeEmptyVMRow(context.Background(), "windows-11", "win11", nil); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
+	}
+	if err := f.st.SetVMInclude("win11", true); err != nil {
+		t.Fatal(err)
+	}
+	err := f.svc.removeEmptyVMRow(context.Background(), "windows-11", "win11", nil)
+	if errors.Is(err, store.ErrCopyRuleTaken) || err == nil || !strings.Contains(err.Error(), "scheduled, copy rule") {
+		t.Fatalf("err = %v, want a refusal that names both settings", err)
+	}
+}
+
+func TestAVMTakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("win11", "")
+	f.rule("vms", "vm:win11", store.SkipAll)
+
+	err := f.svc.removeEmptyVMRow(context.Background(), "windows-11", "win11", nil)
+	if err == nil || !strings.Contains(err.Error(), "copy rule") {
+		t.Fatalf("err = %v, want a refusal that names the copy rule", err)
+	}
+	if _, err := f.st.GetVMTargetByName("win11"); err != nil {
+		t.Fatalf("the row of win11 was removed although it has a copy rule: %v", err)
+	}
+}
+
+func TestADeletedEntryKeepsTheHistoryItTookOverOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.container("nginx", "")
+	f.container("db", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	if err := f.st.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.DeleteTarget("web", nil); err != nil {
+		t.Fatal(err)
+	}
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web"),
+		snap("aaaa0003", 300, "container:db"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+// takenOver is newName, formerly oldName and linked at 200, beside a new entry
+// that carries oldName today, with B2 as the domain's only target.
+func takenOver(t *testing.T, domain, oldName, newName string) (*placementFixture, store.OffsiteTarget) {
+	t.Helper()
+	f := newPlacementFixture(t)
+	b2 := f.target(domain, "B2", "b2:bucket/"+domain)
+	f.listing(domain, b2.ID, 50)
+	aliasDomain, id := "container", ""
+	if domain == "vms" {
+		aliasDomain = "vm"
+		id = f.vm(newName, "").ID
+		f.vm(oldName, "")
+	} else {
+		id = f.container(newName, "").ID
+		f.container(oldName, "")
+	}
+	if _, err := f.st.AddAliasAt(aliasDomain, oldName, id, 200); err != nil {
+		t.Fatal(err)
+	}
+	return f, b2
+}
+
+func TestAFormerNameBelongsToTheRenamedEntryUntilTheLink(t *testing.T) {
+	f, _ := takenOver(t, "containers", "nginx", "web")
+	c, err := f.svc.ownerContextFor("containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := c.owners([]restic.Snapshot{
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:nginx"),
+		{ID: "aaaa0003", Time: "not a time", Tags: []string{"container:nginx"}},
+	})
+	for id, want := range map[string]snapshotOwner{
+		"aaaa0001": {Possible: []string{"container:web"}, Owner: "container:web"},
+		"aaaa0002": {Possible: []string{"container:nginx"}, Owner: "container:nginx"},
+		"aaaa0003": {Possible: []string{"container:nginx", "container:web"}},
+	} {
+		if o := got[id]; o.Owner != want.Owner || !slices.Equal(o.Possible, want.Possible) {
+			t.Errorf("%s: owner %+v, want %+v", id, o, want)
+		}
+	}
+}
+
+func TestAFormerNamesDiskSnapshotFollowsItsVM(t *testing.T) {
+	f, _ := takenOver(t, "vms", "windows-11", "win11")
+	c, err := f.svc.ownerContextFor("vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := c.owners([]restic.Snapshot{
+		snap("bbbb0001", 100, "vm:windows-11", "vmrun:r1"),
+		snap("bbbb0002", 100, "vm:windows-11:zvol:sda", "vmrun:r1"),
+		snap("bbbb0003", 300, "vm:windows-11", "vmrun:r2"),
+		snap("bbbb0004", 300, "vm:windows-11:zvol:sda", "vmrun:r2"),
+	})
+	for id, want := range map[string]string{
+		"bbbb0001": "vm:win11",
+		"bbbb0002": "vm:win11",
+		"bbbb0003": "vm:windows-11",
+		"bbbb0004": "vm:windows-11",
+	} {
+		if o := got[id]; o.Owner != want {
+			t.Errorf("%s: owner %+v, want %s", id, o, want)
+		}
+	}
+}
+
+func TestUnreadableAliasesLeaveEveryEntryAPossibleOwner(t *testing.T) {
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	for _, name := range []string{"db", "nginx", "web"} {
+		if _, err := st.UpsertTarget(store.Target{ContainerName: name}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	b2, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: "b2:bucket/containers", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"container:nginx", "container:web"} {
+		if err := st.SetCopyRule("containers", id, []string{store.SkipAll}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := db.Exec("DROP TABLE target_aliases"); err != nil {
+		t.Fatal(err)
+	}
+	s := &Service{store: st}
+
+	c, err := s.ownerContextFor("containers")
+	if err != nil {
+		t.Fatalf("an unreadable alias table stopped the run: %v", err)
+	}
+	o := c.owners([]restic.Snapshot{snap("aaaa0001", 100, "container:nginx")})["aaaa0001"]
+	if want := []string{"container:db", "container:nginx", "container:web"}; o.Owner != "" || !slices.Equal(o.Possible, want) {
+		t.Fatalf("owner = %+v, want every entry possible and none settled", o)
+	}
+
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := s.readPlacement(settings, "containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.copiesTo(b2.ID, o.Possible) {
+		t.Fatal("db follows the default and may own the snapshot, so it must be copied")
+	}
+	if err := st.SetCopyRule("containers", "container:db", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	if p, err = s.readPlacement(settings, "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if p.copiesTo(b2.ID, o.Possible) {
+		t.Fatal("every possible owner leaves B2 out, so the snapshot stays out")
+	}
+}
+
+func TestTakenOverContainerHistoryFollowsTheRuleOfItsOwner(t *testing.T) {
+	for _, c := range []struct {
+		name  string
+		local string
+		want  []string
+	}{
+		{"new nginx on local beside web", "container:nginx", []string{"aaaa0001", "aaaa0003"}},
+		{"web on local beside a live nginx", "container:web", []string{"aaaa0002"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f, b2 := takenOver(t, "containers", "nginx", "web")
+			f.rule("containers", c.local, store.SkipAll)
+			f.hold(f.domainPath("containers"),
+				snap("aaaa0001", 100, "container:nginx"),
+				snap("aaaa0002", 300, "container:nginx"),
+				snap("aaaa0003", 400, "container:web"))
+
+			if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+				t.Fatalf("ReplicateOffsite: %v", err)
+			}
+			if got := copiedTo(f, b2.Repo); !slices.Equal(got, c.want) {
+				t.Fatalf("copied %v to B2, want %v", got, c.want)
+			}
+		})
+	}
+}
+
+func TestTakenOverVMHistoryFollowsTheRuleOfItsOwner(t *testing.T) {
+	for _, c := range []struct {
+		name  string
+		local string
+		want  []string
+	}{
+		{"new windows-11 on local beside win11", "vm:windows-11", []string{"bbbb0001", "bbbb0002", "bbbb0005"}},
+		{"win11 on local beside a live windows-11", "vm:win11", []string{"bbbb0003", "bbbb0004"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f, b2 := takenOver(t, "vms", "windows-11", "win11")
+			f.rule("vms", c.local, store.SkipAll)
+			f.hold(f.domainPath("vms"),
+				snap("bbbb0001", 100, "vm:windows-11", "vmrun:r1"),
+				snap("bbbb0002", 100, "vm:windows-11:zvol:sda", "vmrun:r1"),
+				snap("bbbb0003", 300, "vm:windows-11", "vmrun:r2"),
+				snap("bbbb0004", 300, "vm:windows-11:zvol:sda", "vmrun:r2"),
+				snap("bbbb0005", 400, "vm:win11", "vmrun:r3"))
+
+			if err := f.svc.ReplicateOffsite(context.Background(), "vms"); err != nil {
+				t.Fatalf("ReplicateOffsite: %v", err)
+			}
+			if got := copiedTo(f, b2.Repo); !slices.Equal(got, c.want) {
+				t.Fatalf("copied %v to B2, want %v", got, c.want)
+			}
+		})
+	}
+}
+
+func TestDeletingAContainersBackupsAtATargetTakesItsHistoryUnderAFormerName(t *testing.T) {
+	f, b2 := takenOver(t, "containers", "nginx", "web")
+	f.hold(b2.Repo,
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:nginx"),
+		snap("aaaa0003", 400, "container:web", "formerly:nginx"))
+
+	if err := f.svc.DeleteBackups(context.Background(), "web", offsiteSourcePrefix+b2.ID); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+	if got, want := forgottenAt(f, b2.Repo), []string{"aaaa0001", "aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("deleted %v at B2, want %v", got, want)
+	}
+}
+
+func TestDeletingAVMsBackupsAtATargetTakesItsHistoryUnderAFormerName(t *testing.T) {
+	f, b2 := takenOver(t, "vms", "windows-11", "win11")
+	f.hold(b2.Repo,
+		snap("bbbb0001", 100, "vm:windows-11", "vmrun:r1"),
+		snap("bbbb0002", 100, "vm:windows-11:zvol:sda", "vmrun:r1"),
+		snap("bbbb0003", 300, "vm:windows-11", "vmrun:r2"),
+		snap("bbbb0005", 400, "vm:win11", "vmrun:r3"))
+
+	if err := f.svc.DeleteBackupsVM(context.Background(), "win11", offsiteSourcePrefix+b2.ID); err != nil {
+		t.Fatalf("DeleteBackupsVM: %v", err)
+	}
+	if got, want := forgottenAt(f, b2.Repo), []string{"bbbb0001", "bbbb0005"}; !slices.Equal(got, want) {
+		t.Fatalf("deleted %v at B2, want %v", got, want)
+	}
+}
+
+func TestASnapshotWithoutAReadableTimeStaysOutOnlyWhenBothPossibleOwnersExclude(t *testing.T) {
+	undated := restic.Snapshot{ID: "aaaa0009", Time: "not a time", Tags: []string{"container:nginx"}}
+	for _, c := range []struct {
+		name  string
+		local []string
+		want  []string
+	}{
+		{"the renamed entry still copies", []string{"container:nginx"}, []string{"aaaa0009"}},
+		{"both possible owners on local", []string{"container:nginx", "container:web"}, nil},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f, b2 := takenOver(t, "containers", "nginx", "web")
+			for _, id := range c.local {
+				f.rule("containers", id, store.SkipAll)
+			}
+			f.hold(f.domainPath("containers"), undated)
+
+			if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+				t.Fatalf("ReplicateOffsite: %v", err)
+			}
+			if got := copiedTo(f, b2.Repo); !slices.Equal(got, c.want) {
+				t.Fatalf("copied %v to B2, want %v", got, c.want)
+			}
+		})
+	}
+}

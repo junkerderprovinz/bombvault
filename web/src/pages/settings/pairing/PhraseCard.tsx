@@ -10,7 +10,7 @@ import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
 import { IconDisclosure } from "../../../components/IconDisclosure";
 import { IconEye, IconRefresh, IconSignOut } from "../../../components/glyphs";
-import { IconCheckCircle, IconClose, IconCopy, IconFleet } from "../../../components/navGlyphs";
+import { IconCheck, IconClose, IconCopy, IconFleet } from "../../../components/navGlyphs";
 import {
   createPhrase,
   joinGroup,
@@ -96,6 +96,7 @@ function MemberRow({ m, t }: { m: GroupMember; t: T }) {
   return (
     <Row
       name={m.name || m.id}
+      mark={m.kind === "android" ? t("fleet.kindAndroid") : undefined}
       badge={<Badge tone={m.direct ? "ok" : "neutral"}>{m.direct ? t("pairing.direct") : t("pairing.viaRelay")}</Badge>}
     />
   );
@@ -508,7 +509,7 @@ export function PhraseCard({
     <Button
       label={copies > 0 ? t("common.copied") : t("common.copy")}
       labelKey={copies > 0 ? "common.copied" : "common.copy"}
-      glyph={copies > 0 ? <IconCheckCircle /> : <IconCopy />}
+      glyph={copies > 0 ? <IconCheck /> : <IconCopy />}
       tone="neutral"
       onClick={() => void copy()}
     />
@@ -542,7 +543,20 @@ export function PhraseCard({
           </>
         }
       >
-        {phrase ? <WordSlots words={phrase.split(/\s+/)} label={t("pairing.wordsLabel")} /> : passwordPrompt}
+        {phrase ? (
+          <div className="flex flex-col gap-2">
+            <WordSlots
+              words={phrase.split(/\s+/)}
+              label={t("pairing.wordsLabel")}
+              // An own relay rides along on a second line, since the app has
+              // no other way to learn its address.
+              qr={group.relay.mode === "own" ? `${phrase}\n${group.relay.url}` : phrase}
+            />
+            <p className="text-end text-xs text-carbon-textMuted">{t("pairing.qrCaption")}</p>
+          </div>
+        ) : (
+          passwordPrompt
+        )}
       </PairingWindow>
     ) : shown === "enter" ? (
       <JoinWindow

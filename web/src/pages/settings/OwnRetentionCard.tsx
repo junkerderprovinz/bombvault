@@ -103,7 +103,8 @@ function KeepFields({ keep, onChange, t }: { keep: RetentionKeep; onChange: (k: 
  * The keep rules of the local or the off-site copies: the shared ones, and
  * below them a switch per source that gives it rules of its own. A source's
  * map is saved whole on every change, so its debounce runs under one key and
- * a switch drops the edit it would otherwise race.
+ * a switch drops the edit it would otherwise race. children stand under the
+ * switches.
  */
 export function RetentionRulesCard({
   scope,
@@ -114,6 +115,7 @@ export function RetentionRulesCard({
   cancelDebounce,
   t,
   hueIndex,
+  children,
 }: {
   scope: RetentionScope;
   settings: Settings;
@@ -123,6 +125,7 @@ export function RetentionRulesCard({
   cancelDebounce: (key: string) => void;
   t: T;
   hueIndex?: number;
+  children?: React.ReactNode;
 }) {
   const [busy, setBusy] = useState<Partial<Record<OffsiteDomain, boolean>>>({});
   const [shake, setShake] = useState<Partial<Record<OffsiteDomain, number>>>({});
@@ -196,6 +199,7 @@ export function RetentionRulesCard({
         );
       })}
 
+      {children}
       {scope === "offsite" && (
         <Link
           to="/settings/offsite"

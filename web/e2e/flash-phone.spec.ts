@@ -1,10 +1,11 @@
-// The Flash page at phone width, with backups, off-site targets, a running
-// backup, an open finding and the ZIP export staged at the route layer (a fresh
-// harness database has none of them). On the phones: the 24px card rhythm, no
-// pan, no control past the edge on either source, each backup's actions
-// wrapping under its id and time, and the off-site target picker at control
-// height under a coarse pointer. On the desktop: the 40px rhythm, one line per
-// backup and the compact picker. German, because its labels run longest.
+// The Flash page at phone width, with a timeline of backups and their copies
+// at two off-site targets, a running backup, an open finding and the ZIP
+// export staged at the route layer (a fresh harness database has none of
+// them). On the phones: the 24px card rhythm, no pan, no control past the edge
+// at home or at a target, each backup's actions wrapping under its id and
+// time, and the delete question as a sheet that fits. On the desktop: the 40px
+// rhythm and each backup's actions on one line. German, because its labels
+// run longest.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -34,6 +35,37 @@ const LOCAL = [
   snap("d4", "2026-09-05T03:15:00Z"),
 ];
 const OFFSITE = [snap("e5", "2026-09-26T04:02:00Z", LOCAL[0].id), snap("f6", "2026-09-19T04:05:00Z", LOCAL[1].id)];
+
+const place = (id: string, label: string) => ({
+  place: id === "local" ? "local" : `offsite:${id}`,
+  label,
+  kind: id === "local" ? "home" : "target",
+  remote: id !== "local",
+  enabled: true,
+  appendOnly: false,
+  state: "read",
+});
+
+// The two newest backups reached the first target as well.
+function timeline(empty: boolean) {
+  return {
+    ok: true,
+    places: empty ? [place("local", "")] : [place("local", ""), place("primary", "Hetzner Storage Box Falkenstein"), place("second", "Backblaze B2 Amsterdam")],
+    rows: empty
+      ? []
+      : LOCAL.map((s) => {
+          const copy = OFFSITE.find((o) => o.original === s.id);
+          return {
+            key: s.id,
+            time: s.time,
+            places: [
+              { place: "local", snapshotIds: [s.id], tags: s.tags },
+              ...(copy ? [{ place: "offsite:primary", snapshotIds: [copy.id], tags: copy.tags }] : []),
+            ],
+          };
+        }),
+  };
+}
 
 const target = (id: string, name: string, sortOrder: number) => ({
   id,
@@ -119,11 +151,16 @@ const FINDING = {
 };
 
 async function bootGerman(page: Page, width: number, opts: { empty?: boolean; query?: string } = {}): Promise<void> {
-  await page.route("**/api/flash/snapshots*", (route) => {
-    const offsite = new URL(route.request().url()).searchParams.has("source");
-    const snapshots = opts.empty ? [] : offsite ? OFFSITE : LOCAL;
-    return route.fulfill({ json: { ok: true, snapshots } });
-  });
+  await page.route("**/api/items/flash/flash/timeline*", (route) => route.fulfill({ json: timeline(!!opts.empty) }));
+  await page.route("**/api/items/flash/flash/timeline/*/delete*", (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        delete: [{ place: "local", label: "", snapshotIds: [LOCAL[0].id] }],
+        others: [{ place: "offsite:primary", label: "Hetzner Storage Box Falkenstein", state: "holds" }],
+      },
+    }),
+  );
   await page.route("**/api/offsite/targets*", (route) => route.fulfill({ json: { ok: true, targets: TARGETS } }));
   // The real settings with the ZIP export switched on, so the card shows its
   // path and keep fields. Every write is answered without touching the store.
@@ -157,7 +194,7 @@ async function bootGerman(page: Page, width: number, opts: { empty?: boolean; qu
   await page.setViewportSize({ width, height: 800 });
   await page.goto(`/flash${opts.query ?? ""}`);
   await expect(page.getByRole("heading", { level: 1, name: "Flash-Backup" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Backup abbrechen" }).or(page.getByText("Noch keine Flash-Backups"))).toBeVisible();
+  await expect(page.getByRole("button", { name: "Backup abbrechen" }).or(page.getByText("Keine Backups gefunden"))).toBeVisible();
   await expect(page.getByText("Export-Ordner")).toBeVisible();
   await settle(page);
 }
@@ -209,11 +246,11 @@ async function expectNothingPansOrClips(page: Page): Promise<void> {
 // Each backup row by its short id, with the id's box and its two actions.
 async function rowBoxes(page: Page, id: string) {
   const idText = page.getByText(id.slice(0, 8), { exact: true });
-  const row = idText.locator("xpath=..");
+  const row = idText.locator("xpath=../..");
   return {
     id: (await idText.boundingBox())!,
     download: (await row.getByRole("button", { name: "Download (.zip)" }).boundingBox())!,
-    remove: (await row.getByRole("button", { name: "Löschen" }).boundingBox())!,
+    remove: (await row.getByRole("button", { name: "Löschen", exact: true }).boundingBox())!,
   };
 }
 
@@ -232,24 +269,24 @@ for (const width of [320, 360]) {
       expect(box.remove.x + box.remove.width, `Löschen of ${id.slice(0, 8)} passes the edge`).toBeLessThanOrEqual(width);
     }
 
-    await page.getByRole("tab", { name: "Off-site" }).first().click();
-    const picker = page.getByRole("combobox", { name: "Off-site-Ziel" });
-    await expect(picker).toBeVisible();
-    await expect(page.getByText(OFFSITE[0].id.slice(0, 8), { exact: true })).toBeVisible();
+    // The copies at a target, picked on each backup's own place switch.
+    for (const copy of OFFSITE) {
+      const row = page.getByText(copy.original!.slice(0, 8), { exact: true }).locator("xpath=../..");
+      await row.getByRole("tab", { name: "Hetzner Storage Box Falkenstein" }).click();
+      await expect(page.getByText(copy.id.slice(0, 8), { exact: true })).toBeVisible();
+    }
     await settle(page);
     await expectNothingPansOrClips(page);
     for (const { id } of OFFSITE) {
       const box = await rowBoxes(page, id);
       expect(box.download.y, `the actions of ${id.slice(0, 8)} share the id's line`).toBeGreaterThanOrEqual(box.id.y + box.id.height);
     }
-    const pickerBox = (await picker.boundingBox())!;
-    expect(pickerBox.height, "the target picker is shorter than a control").toBeGreaterThanOrEqual(31.5);
 
     // useConfirm answers with the bottom sheet on a phone, whose buttons have
     // to stay on screen with the long German question above them.
-    await page.getByRole("button", { name: "Löschen" }).first().click();
+    await page.getByRole("button", { name: "Löschen", exact: true }).last().click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByText("Dieses Backup löschen?", { exact: false })).toBeVisible();
+    await expect(dialog.getByText("Diese Sicherung hier löschen", { exact: false })).toBeVisible();
     // WebKit reports the sheet visible before it slides in, so wait until its
     // answers are on screen and have held still for three frames.
     await dialog.evaluate(async (sheet) => {
@@ -277,13 +314,13 @@ test("flash on a phone with no backups and a restore link to a lost one", async 
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
   await bootGerman(page, 320, { empty: true, query: `?restore=${hex("9f")}&at=1789787700` });
 
-  await expect(page.getByText("Noch keine Flash-Backups. Oben eines starten.")).toBeVisible();
+  await expect(page.getByText("Keine Backups gefunden")).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "2026" })).toBeVisible();
   expect(await cardGap(page)).toBe("24px");
   await expectNothingPansOrClips(page);
 });
 
-test("flash on the desktop keeps the 40px rhythm, one line per backup and the compact picker", async ({ page }, testInfo) => {
+test("flash on the desktop keeps the 40px rhythm and each backup's actions on one line", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await bootGerman(page, testInfo.project.use.viewport!.width);
 
@@ -291,12 +328,6 @@ test("flash on the desktop keeps the 40px rhythm, one line per backup and the co
   for (const { id } of LOCAL) {
     const box = await rowBoxes(page, id);
     const middle = (b: { y: number; height: number }) => Math.round(b.y + b.height / 2);
-    expect(middle(box.download), `the actions of ${id.slice(0, 8)} left the id's line`).toBe(middle(box.id));
-    expect(middle(box.remove)).toBe(middle(box.id));
+    expect(middle(box.remove), `Löschen of ${id.slice(0, 8)} left the download's line`).toBe(middle(box.download));
   }
-
-  await page.getByRole("tab", { name: "Off-site" }).first().click();
-  const picker = page.getByRole("combobox", { name: "Off-site-Ziel" });
-  await expect(picker).toBeVisible();
-  expect(Math.round((await picker.boundingBox())!.height)).toBe(24);
 });

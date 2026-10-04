@@ -31,7 +31,7 @@ Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`)
 
 ZFS dataset backups need this mode too: the host mounts a dataset's snapshot only after the container has started. See [ZFS datasets](zfs-datasets.md).
 
-Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. Change the location any time in **Settings, Storage, Backup Paths**. Each path field also has an inline **Local / Remote** switch: a path can be a restic remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
+Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. Change the location any time in **Settings, Storage, Backup Paths**. Each path field also has an inline **Local / Remote** switch: a path can be a restic remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host Integration Check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
@@ -84,7 +84,7 @@ The template adds `--add-host=host.docker.internal:host-gateway` so the containe
 
 Set up an off-site replica on the **Settings, Off-site** page. See [Off-site & recovery](offsite-recovery.md) for the full workflow (immutable/append-only, tamper testing and DR drills). In short:
 
-- **Backends:** SMB/CIFS and NFS (mount the share and point a Backup Path at it), native restic backends without rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), or any rclone remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS and NFS (mount the share and point a Backup Path at it), native restic backends without rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), or any rclone remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 has no native backend here: reach it through its S3 endpoint (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`) with the key ID and application key as the S3 credentials.
 - **Shared cloud credentials** are stored encrypted under Settings, Cloud access, Shared cloud credentials.
 - **SSH targets need nothing installed on the far side.** `sftp:` only needs an SSH server. Add the public key from **Settings, Integrations, Host SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`.
 - **Off-site copy:** BombVault replicates new snapshots with `restic copy` on a best-effort basis, on top of a (usually local) primary. Each domain has its own off-site schedule, plus a **Replicate now** button.

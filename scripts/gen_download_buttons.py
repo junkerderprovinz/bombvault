@@ -65,6 +65,9 @@ WIDEST = GLYPH * 1.25
 # A mark drawn as several shapes gets an outline this wide in its ink, since
 # shapes that only touch leave a seam where each edge is anti-aliased alone.
 SEAM = 1.0
+# ParleyPort's flag leaves much of its box empty and reads small beside the
+# solid marks, so it is drawn a little larger.
+LARGER = {"parleyport": 1.12}
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -98,24 +101,27 @@ KINDS = {
     "docs":             (1, "book", "#fd0", "#0d0c23", "Docs", "online manual", "Read the documentation"),
     # The heading is the platform, since "Google Play" is too wide for it.
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Android", "Google Play", "Get it on Google Play"),
+    "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "Android", "F-Droid", "Get it on F-Droid"),
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
     "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
     "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
-    # The brown is ParleyPort's and the grey the widget logo's darker half, since
-    # a one-ink mark cannot carry either logo's colours.
-    "relay":            (3, "relay", "#755934", "#ffffff", "Relay", "ParleyPort", "Run the ParleyPort relay"),
+    # ParleyPort keeps its logo in colour on the dark ground of the README
+    # badges, as on KnightLoader's button. The grey is the widget logo's darker
+    # half, since a one-ink mark cannot carry its colours.
+    "relay":            (3, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for KnightLoader and BombVault"),
     "widget":           (3, "widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Install the dashboard widget"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
 # A store listing that does not exist yet is drawn without a link.
 SOON = {
-    "google-play": ("coming soon", "On Google Play soon"),
+    "google-play": ("Play Store soon", "On Google Play soon"),
+    "f-droid": ("F-Droid soon", "On F-Droid soon"),
     "firefox": ("coming soon", "The Firefox add-on, soon"),
     "unraid": ("coming soon", "In Unraid's Community Applications soon"),
 }
 # Links that may lead away from the repository.
-STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com", "unraid.net")
+STORES = ("play.google.com", "f-droid.org", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com", "unraid.net")
 # The relay and the widget are repositories of their own.
 SIBLINGS = ("relay", "widget")
 
@@ -222,9 +228,10 @@ GIVE = [
 README = os.path.join(HERE, "..", "README.md")
 ROW_OPEN = "<!-- download-buttons: written by scripts/gen_download_buttons.py -->"
 ROW_CLOSE = "<!-- /download-buttons -->"
-# Inside the last download row's paragraph, so it sits right under the buttons
-# rather than a paragraph margin away.
+# Inside the paragraph of the last row that downloads a release file, so it
+# sits right under those buttons rather than a paragraph margin away.
 CAPTION = "Always downloads the latest build"
+LATEST = "/releases/latest/download/"
 GIVE_OPEN = "<!-- give-buttons: written by scripts/gen_download_buttons.py -->"
 GIVE_CLOSE = "<!-- /give-buttons -->"
 
@@ -291,17 +298,41 @@ def outline(w, corners):
     return " ".join(d) + " Z"
 
 
-def brand(name):
-    """One mark: its paths, and the scale and offsets that centre it in GLYPH."""
-    paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
-    box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
+def logo(name):
+    """A logo kept in its own colours, from brand-paths/<name>.svg, and its viewBox.
+
+    Its classes become fill attributes and its ids go, because CSS and ids
+    inside the sprite are shared: a second logo's .cls-1 would repaint the first.
+    """
+    svg = io.open(os.path.join(BRANDS, name + ".svg"), encoding="utf-8").read()
+    box = re.search(r'viewBox="([^"]+)"', svg).group(1)
+    fills = dict(re.findall(r"\.([\w-]+)\s*\{\s*fill:\s*(#[0-9a-fA-F]+);?\s*\}", svg))
+    body = re.search(r"<svg\b[^>]*>(.*)</svg>", svg, re.S).group(1)
+    body = re.sub(r"<defs>.*?</defs>", "", body, flags=re.S)
+    body = re.sub(r'\s(?:id|data-name)="[^"]*"', "", body)
+    body = re.sub(r'class="([\w-]+)"', lambda m: 'fill="%s"' % fills[m.group(1)], body)
+    return re.sub(r"\s*\n\s*", "", body), box
+
+
+def brand(name, ink):
+    """One mark as markup, in the button's ink or as a logo in its own colours,
+    and the scale and offsets that centre it in GLYPH."""
+    paths = []
+    if os.path.exists(os.path.join(BRANDS, name + ".svg")):
+        markup, box = logo(name)
+    else:
+        paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
+        box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
     x, y, width, height = (float(n) for n in box.split())
     # Scaled by height so the marks share an optical size, then nudged right by
     # half the width they do not use, since Apple's mark is narrower. A mark
     # wider than WIDEST is scaled by width and lowered by half the height it
     # leaves. The box's origin is taken off, since not every viewBox starts at 0.
-    scale = min(GLYPH / height, WIDEST / width)
-    return paths, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
+    scale = min(GLYPH / height, WIDEST / width) * LARGER.get(name, 1.0)
+    if paths:
+        seam = ' stroke="%s" stroke-width="%s"' % (ink, num(SEAM / scale)) if len(paths) > 1 else ""
+        markup = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
+    return markup, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
 
 
 def num(x):
@@ -313,10 +344,8 @@ def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
     if part.mark:
-        paths, scale, dx, dy = brand(part.mark)
-        seam = ' stroke="%s" stroke-width="%s"' % (part.ink, num(SEAM / scale)) if len(paths) > 1 else ""
-        drawn = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
-        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=drawn, **common)
+        markup, scale, dx, dy = brand(part.mark, part.ink)
+        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup, **common)
     else:
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED
@@ -463,7 +492,7 @@ def write_readme(text, downloads, donations):
     for opener, closer, table, caption in ((ROW_OPEN, ROW_CLOSE, downloads, CAPTION), (GIVE_OPEN, GIVE_CLOSE, donations, None)):
         for start, end in reversed(blocks(text, opener, closer)):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
-            last = len(table) - 1
+            last = max((i for i, items in enumerate(table) if any(LATEST in p[0] for parts in items for p in parts if p[0])), default=None)
             body = "".join(row(items, nl, caption if i == last else None) for i, items in enumerate(table))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)

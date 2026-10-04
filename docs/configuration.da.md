@@ -31,7 +31,7 @@ Montér Docker-socket'en, flashen (`/boot`) og **Host Data**-roden (`/mnt`) som 
 
 Sikkerhedskopi af ZFS-datasæt kræver også denne tilstand: værten monterer et datasæts snapshot først, efter at containeren er startet. Se [ZFS-datasæt](zfs-datasets.md).
 
-Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, oprettet ved den første sikkerhedskopi. Skift placeringen når som helst i **Indstillinger, Lagring, Sikkerhedskopistier**. Hvert stifelt har også en **Lokal / Fjern**-kontakt lige ved siden af: en sti kan være en restic-remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og så sikkerhedskopieres der direkte dertil uden separat lokal kopi; se [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
+Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, oprettet ved den første sikkerhedskopi. Skift placeringen når som helst i **Indstillinger, Lagring, Sikkerhedskopistier**. Hvert stifelt har også en **Lokal / Fjern**-kontakt lige ved siden af: en sti kan være en restic-remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og så sikkerhedskopieres der direkte dertil uden separat lokal kopi; se [Fjernbetjente primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Vært-integrationstjek"
     Åbn `/spike` i web-UI'en, når containeren er startet. Den prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele.
@@ -84,7 +84,7 @@ Skabelonen tilføjer `--add-host=host.docker.internal:host-gateway`, så contain
 
 Opsæt en off-site-replika på siden **Indstillinger, Off-site**. Se [Off-site og gendannelse](offsite-recovery.md) for det fulde arbejdsforløb (uforanderlig/append-only, manipulationstest og DR-øvelser). Kort sagt:
 
-- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en sikkerhedskopisti mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en sikkerhedskopisti mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 har ingen indbygget backend her: nå den via dens S3-endpoint (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), med nøgle-id'et og applikationsnøglen som S3-legitimationsoplysninger.
 - **Delte cloud-legitimationsoplysninger** gemmes krypteret under Indstillinger, Cloud-adgang, Delte cloud-legitimationsoplysninger.
 - **SSH-destinationer kræver intet installeret på den anden side.** `sftp:` kræver kun en SSH-server. Tilføj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** (også på `/config/ssh/id_ed25519.pub`) til destinationsbrugerens `~/.ssh/authorized_keys`.
 - **Off-site-kopi:** BombVault replikerer nye øjebliksbilleder med `restic copy` på et best-effort-grundlag oven på et (som regel lokalt) primært repo. Hvert domæne har sin egen off-site-tidsplan plus en **Replikér nu**-knap.

@@ -117,10 +117,29 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [
         { key: "repos.immutable", hint: "repos.immutableHint" },
         { key: "settings.compression", hint: "settings.compressionInfo" },
+        { key: "repos.offPremises", hint: "repos.offPremisesHint" },
         { key: "repos.enabled" },
         { key: "repos.name" },
         { key: "repos.location", hint: "repos.locationHint" },
       ],
+    },
+    {
+      title: "placementDefaults.title",
+      hint: "placementDefaults.hint",
+      rows: [
+        { key: "placement.title" },
+        { key: "placement.segLocal" },
+        { key: "placement.segLocalOffsite" },
+        { key: "placement.segOffsiteOnly" },
+        { key: "placement.storedOn" },
+        { key: "placement.copyTo" },
+        { key: "placement.sendTo" },
+        { key: "placementDefaults.copyLine" },
+        { key: "placementDefaults.copyLineContainers" },
+        { key: "placementDefaults.apply" },
+        { key: "placementDefaults.confirm" },
+      ],
+      body: ["placementDefaults.paused", "placementDefaults.pausedHint"],
     },
     {
       title: "settings.paths",
@@ -177,6 +196,18 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         ...SOURCE_ROWS("settings.ownRetentionToggleHint"),
       ],
       body: ["settings.retentionCombineInfo"],
+    },
+    {
+      title: "settings.ownRetentionTitle",
+      hint: "settings.ownRetentionHint",
+      rows: [
+        { key: "settings.ownRetention", hint: "settings.ownRetentionToggleHint" },
+        { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
+        { key: "settings.retentionDaily", hint: "settings.retentionDailyInfo" },
+        { key: "settings.retentionWeekly", hint: "settings.retentionWeeklyInfo" },
+        { key: "settings.retentionMonthly", hint: "settings.retentionMonthlyInfo" },
+        { key: "settings.retentionYearly", hint: "settings.retentionYearlyInfo" },
+      ],
     },
     {
       title: "settings.retentionOffsiteTitle",
@@ -529,10 +560,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "settings.widget",
       hint: "settings.widgetHint",
-      rows: [
-        { key: "settings.widgetToken" },
-        { key: "settings.dashTile", hint: "settings.dashTileHint" },
-      ],
+      rows: [{ key: "settings.widgetToken" }],
     },
     {
       title: "mcp.title",
@@ -585,6 +613,19 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     { title: "spike.title", rows: [] },
+  ],
+
+  apps: [
+    {
+      title: "apps.parleyport.title",
+      hint: "apps.parleyport.hint",
+      rows: [{ key: "apps.parleyport.toRelay" }],
+    },
+    {
+      title: "apps.widget.title",
+      hint: "apps.widget.hint",
+      rows: [{ key: "settings.dashTile", hint: "settings.dashTileHint" }],
+    },
   ],
 
   system: [

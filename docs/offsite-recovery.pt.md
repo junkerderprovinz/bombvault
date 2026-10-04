@@ -1,5 +1,8 @@
 # Externo e recuperação
 
+!!! note "As cópias externas esperam depois de uma reconstrução"
+    Quando o passo 4 reconstrói entradas sem as definições antigas, a replicação externa desses domínios entra em pausa até a localização padrão ser confirmada. Consulte [Localização por item](#placement).
+
 Os backups locais protegem-no de um container perdido ou de uma atualização má. A replicação externa e um kit de recuperação testado protegem-no da máquina inteira, de ransomware, ou de um incêndio. Esta página cobre replicar para o externo, tornar essa cópia à prova de adulteração, provar que consegue restaurar, e recuperar quando o próprio BombVault desaparece.
 
 ## Replicação externa
@@ -12,12 +15,42 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 - **Os limites de largura de banda** (Definições, Externo) limitam a taxa de envio/receção do restic para que a replicação não sature a sua WAN.
 - Um **indicador de replicação** mostra qual o domínio que está a replicar enquanto corre (na sua página e no Painel). É um indicador ativo, não uma barra de percentagem, porque o `restic copy` não expõe nenhum progresso legível por máquina.
 
-!!! note "Restaurar diretamente do externo"
-    Cada navegador de backups tem um interruptor **Local / Externo**, por isso, se um repo local se perder ou corromper, pode listar e restaurar diretamente a partir da réplica externa. A eliminação é por origem: remover um backup afeta apenas a cópia que está a ver.
+!!! note "Restaurar de qualquer local"
+    Cada container, VM, conjunto de ficheiros, a flash e a configuração da aplicação listam os seus backups como uma única linha do tempo por todos os locais onde um backup se encontra. Um backup copiado para o B2 aparece uma vez, marcado com cada local que o guarda. Um restauro usa o primeiro local a que consegue chegar, começando pelo repositório onde o item é escrito, e pode escolher outro local por linha. Os locais externos só são lidos quando os abre. Eliminar num local verifica primeiro os outros e diz se era a última cópia.
+
+## Localização por item {#placement}
+
+Cada cartão de container, VM e conjunto de ficheiros tem uma linha **Localização** com três segmentos:
+
+- **Local** escreve o item no repositório mostrado em **Guardado em** e não o copia para lado nenhum. Use-o para dados que já têm uma segunda cópia, por exemplo uma partilha que vive num NAS.
+- **Local + externo** escreve-o lá também e copia-o para os destinos marcados em **Copiar para**, um chip por destino externo do domínio. Desmarque um chip e esse destino deixa de receber algo de novo deste item.
+- **Apenas externo** escreve o item diretamente no local em **Enviar para**: um repositório direto ao lado de um destino externo, ou um repositório remoto configurado em Definições, Armazenamento, Repositórios.
+
+A localização fica fixa desde o primeiro backup do item, porque o BombVault nunca move backups entre repositórios. As cópias podem mudar a qualquer momento. Um destino que deixa de receber um item mantém as cópias que tem e apara-as pela sua própria retenção na próxima execução externa do domínio; **Apagar em B2** no cartão remove-as de imediato. Quando algumas dessas cópias não existem em mais lado nenhum, a confirmação lista-as por data e pede o nome do item. De destinos append-only não se pode apagar.
+
+Sob a linha, o cartão diz para onde vai o item e o que está lá de facto: quantos locais o guardam, quando cada destino foi visto pela última vez, e se o 3-2-1 é cumprido. Um local é o servidor com os dados originais, cada destino externo e cada repositório marcado **Fora das instalações**. O BombVault verifica cópias e locais; não verifica a parte dos «dois suportes» do 3-2-1.
+
+### Localizações padrão
+
+Definições, Armazenamento, **Localizações padrão** tem uma linha por domínio com os mesmos três segmentos. As cópias aplicam-se de imediato a cada item sem escolha própria, e às pastas de projeto das stacks Compose. A localização aplica-se a um item novo no seu primeiro backup; alterá-la não move nenhum backup. Antes de guardar, a linha nomeia cada destino que ganha ou perde itens e quantos instantâneos isso significa. **Aplicar a itens sem backups** repõe no padrão todo o item que ainda não tem backup.
+
+Um destino externo novo recebe todo o item que não está definido como Local. O diálogo que o adiciona diz quantos itens e, quando conhecido, quanto histórico isso representa, e propõe deixar de fora os itens já excluídos de outros destinos.
+
+### Repositórios diretos
+
+Escolher o repositório direto de um destino em Apenas externo abre um diálogo com uma localização sugerida junto ao destino, por exemplo `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, e um teste de ligação que não cria nada. **Criar e usar** cria o repositório e aponta o item para ele. Um repositório direto assume a chave, a classe de armazenamento, os limites, a definição append-only e a retenção do destino, e muda com eles; o cartão Repositórios mostra-o só de leitura. Quando uma chave nova do destino não consegue abri-lo, o repositório direto mantém a chave que tem e a gravação diz-o. Os seus instantâneos levam a etiqueta `bv:direct`, e todas as outras passagens de retenção mantêm-nos, por isso um repositório direto que perdeu a ligação ao seu destino nunca envelhece pelas regras locais. Acede-se ao B2 através do seu endpoint S3, indicando o ID da chave e a chave de aplicação como credenciais S3; uma chave limitada à pasta do próprio destino não consegue alcançar a pasta ao lado dela, por isso limite antes a chave à pasta acima do destino.
+
+### Fora das instalações
+
+Um repositório nomeado pode ser marcado **Fora das instalações** no cartão Repositórios. Os repositórios remotos começam marcados; desligue isto para um rest-server no mesmo edifício. A marca só conta para locais e para o 3-2-1 nos cartões. Não muda nenhuma cópia.
+
+### Depois de uma reconstrução
+
+As escolhas de cópia vivem nas próprias definições do BombVault. Depois de uma reconstrução através de Descobrir backups sem um `/config` restaurado, desaparecem, e copiar tudo voltaria a enviar para o B2 os itens que tinha deixado de fora. A replicação externa de cada domínio reconstruído entra por isso em pausa. O Painel mostra-o a âmbar, e as Localizações padrão oferecem **Confirmar padrão** com uma pré-visualização do que a próxima execução copia e os nomes nos backups que não têm entrada, que pode deixar de fora ali. Só a confirmação termina a pausa; importar um ficheiro de definições traz de volta regras e padrões mas não a termina.
 
 ## Repositórios primários remotos {#remote-primary-repositories}
 
-O caminho de cópia de um domínio (Definições, Armazenamento) não se limita a uma pasta local: aponte-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurar também uma replicação fora do local (ou um segundo remoto) para esse domínio.
+O caminho de cópia de um domínio (Definições, Armazenamento) não se limita a uma pasta local: aponte-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurar também uma replicação fora do local (ou um segundo remoto) para esse domínio.
 
 Cada um dos seis campos de caminho (Containers, VMs, Flash, Auto-backup, Pastas, Conjuntos de dados ZFS) tem mesmo ao lado um interruptor **Local / Remoto**:
 
@@ -82,8 +115,8 @@ Quem quer que conheça as palavras pode entrar no grupo, por isso trate-as como 
 
 **Como os membros se alcançam.** Cada instância aprende o seu próprio endereço na rede a partir do seu navegador assim que inicia sessão, mostrado no cartão do retransmissor como **Esta instância na sua rede**; corrija-o aí se houver um proxy reverso ou uma porta pouco habitual à frente. Na mesma rede, os membros anunciam esse endereço por multicast e falam diretamente entre si, e onde o multicast não consegue atravessar uma rede de contentores, como a rede bridge predefinida do Docker, uma instância passa antes a procurar na sua própria sub-rede pelas outras, com uma chamada assinada que só um membro do grupo consegue responder, por isso o emparelhamento continua a ficar concluído em segundos, sem retransmissor. Se nada aparecer, **Não a encontra?** por baixo do cartão de emparelhamento aceita um endereço à mão, para outra sub-rede ou uma porta não habitual. Instâncias em redes diferentes passam por um retransmissor, escolhido no mesmo separador:
 
-- **Retransmissor do projeto** (a predefinição): `relay.halleluja.design`, o mesmo retransmissor que o KnightLoader também usa. Nada a configurar.
-- **Retransmissor próprio**: o contentor **BombVault Relay** das Unraid Community Apps, ou uma das suas instâncias que já esteja acessível a partir de fora com **Servir de retransmissor** ativado. Essa instância passa a responder em `/relay/connect` no seu próprio endereço, atrás do proxy reverso e do certificado que já tem, e deixa entrar apenas o seu grupo. Introduza o endereço do retransmissor em cada instância que o deva usar.
+- **Retransmissor do projeto** (a predefinição): `parleyport.halleluja.design`, o mesmo retransmissor que o KnightLoader também usa. Nada a configurar.
+- **Retransmissor próprio**: o contentor [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) das Unraid Community Apps, ou uma das suas instâncias que já esteja acessível a partir de fora com **Servir de retransmissor** ativado. Essa instância passa a responder em `/relay/connect` no seu próprio endereço, atrás do proxy reverso e do certificado que já tem, e deixa entrar apenas o seu grupo. Introduza o endereço do retransmissor em cada instância que o deva usar.
 - **Sem retransmissor**: os membros encontram-se automaticamente na mesma rede, e em mais lado nenhum.
 
 **O que o retransmissor vê.** Cada chamada entre membros é selada com AES-256-GCM sob uma chave derivada das doze palavras, e essa chave nunca sai das suas instâncias. O retransmissor fica a saber um hash que agrupa as ligações, para que instância é uma mensagem, qual o seu tamanho e quando passa. Uma chamada direta na rede local é selada da mesma forma e assinada também, por isso nada depende do certificado autoassinado que uma instância serve.

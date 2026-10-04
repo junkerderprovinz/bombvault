@@ -11,46 +11,34 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// Copy records nothing: the off-site tests look at what the pass forgets
-// afterwards.
-func (e *ownRetentionEngine) Copy(context.Context, string, string, []string, restic.Limits, restic.Mode) error {
-	return nil
-}
-
 // withOwnOffsiteRetention gives containers the built-in off-site repo
 // offsite/containers and stores the shared off-site keep-last and the given
 // per-domain off-site policies. It returns the settings as stored.
-func withOwnOffsiteRetention(t *testing.T, st *store.Repo, sharedKeepLast int, own map[string]store.RetentionKeep) store.Settings {
-	t.Helper()
-	s, err := st.MutateSettings(func(s *store.Settings) error {
-		s.ContainersOffsite = "offsite/containers"
+func withOwnOffsiteRetention(f *placementFixture, sharedKeepLast int, own map[string]store.RetentionKeep) store.Settings {
+	f.t.Helper()
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
 		s.OffsiteRetentionKeepLast = sharedKeepLast
 		s.SetOwnOffsiteRetention(own)
 		return nil
-	})
+	}); err != nil {
+		f.t.Fatal(err)
+	}
+	f.fieldTarget("containers", "offsite/containers")
+	s, err := f.st.GetSettings()
 	if err != nil {
-		t.Fatal(err)
+		f.t.Fatal(err)
 	}
 	return s
 }
 
-// forgetsAt returns the forgets the engine saw against one location.
-func (f *ownRetentionFixture) forgetsAt(loc string) []ownRetentionForget {
-	f.eng.mu.Lock()
-	defer f.eng.mu.Unlock()
-	var out []ownRetentionForget
-	for _, c := range f.eng.forgets {
-		if c.Repo == loc {
-			out = append(out, c)
-		}
-	}
-	return out
-}
-
-func (f *ownRetentionFixture) replicateContainers(settings store.Settings) {
+// replicateContainers runs the copy pass of the containers domain from its own
+// repository. The domain counts as replicated before, so the pass does not
+// pause at its first look at a target that already holds its items.
+func replicateContainers(f *placementFixture, settings store.Settings) {
 	f.t.Helper()
-	local := []domainRepoRef{ownRef(f.root + "/backups/containers")}
-	if err := f.svc.copyToOffsite(context.Background(), "containers", settings, restic.Mode{}, local, nil); err != nil {
+	f.replicated("containers")
+	local := []domainRepoRef{ownRef(f.domainPath("containers"))}
+	if err := f.svc.copyToOffsite(context.Background(), "containers", settings, "", local, nil); err != nil {
 		f.t.Fatalf("copyToOffsite: %v", err)
 	}
 }
@@ -83,37 +71,39 @@ func TestOffsiteRetentionPolicyFallsBackToTheSharedOne(t *testing.T) {
 }
 
 func TestTheCopyPassAgesTheBuiltInOffsiteRepoByTheSourcesOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	settings := withOwnOffsiteRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 14}})
+	f := newPlacementFixture(t)
+	settings := withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 14}})
 	dest := f.root + "/offsite/containers"
-	f.hold(dest, ownRetentionSnap("o1", 100, "container:plex"), ownRetentionSnap("o2", 100, "vm:win11"))
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
+	f.hold(dest, snap("o1", 100, "container:plex"), snap("o2", 100, "vm:win11"))
 
-	f.replicateContainers(settings)
+	replicateContainers(f, settings)
 
-	got := f.forgetsAt(dest)
-	want := []ownRetentionForget{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 14}}}
+	got := forgetsAt(f, dest)
+	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 14}}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("off-site forgets = %+v, want only the containers under their own off-site rules; win11 ages on the VMs' pass", got)
 	}
 }
 
 func TestAnotherSourcesOwnOffsitePolicyLeavesTheSharedOneOnTheCopyPass(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	settings := withOwnOffsiteRetention(t, f.st, 3, map[string]store.RetentionKeep{"vms": {KeepWeekly: 2}})
+	f := newPlacementFixture(t)
+	settings := withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"vms": {KeepWeekly: 2}})
 	dest := f.root + "/offsite/containers"
-	f.hold(dest, ownRetentionSnap("o1", 100, "container:plex"))
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
+	f.hold(dest, snap("o1", 100, "container:plex"))
 
-	f.replicateContainers(settings)
+	replicateContainers(f, settings)
 
-	got := f.forgetsAt(dest)
+	got := forgetsAt(f, dest)
 	if len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
 		t.Fatalf("off-site forgets = %+v, want one with the shared off-site keep-last 3", got)
 	}
 }
 
 func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	withOwnOffsiteRetention(t, f.st, 3, nil)
+	f := newPlacementFixture(t)
+	withOwnOffsiteRetention(f, 3, nil)
 	extra, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "containers", Name: "B2", Repo: "extra/containers", Enabled: true, SortOrder: 1, RetentionKeepLast: 9,
 	})
@@ -146,57 +136,57 @@ func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
 
 	dest := f.root + "/offsite/containers"
 	extraDest := f.root + "/extra/containers"
-	f.hold(dest, ownRetentionSnap("o1", 100, "container:plex"))
-	f.hold(extraDest, ownRetentionSnap("e1", 100, "container:plex"))
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
+	f.hold(dest, snap("o1", 100, "container:plex"))
+	f.hold(extraDest, snap("e1", 100, "container:plex"))
 	stored, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.replicateContainers(stored)
+	replicateContainers(f, stored)
 
-	if got := f.forgetsAt(dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepDaily: 14}) {
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepDaily: 14}) {
 		t.Fatalf("built-in off-site forgets = %+v, want the containers' own daily 14", got)
 	}
-	if got := f.forgetsAt(extraDest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 9}) {
+	if got := forgetsAt(f, extraDest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 9}) {
 		t.Fatalf("forgets on the additional target %s = %+v, want its own keep-last 9", extra.Name, got)
 	}
 }
 
 func TestAManualOffsitePruneAgesByTheSourcesOwnOffsitePolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	withOwnOffsiteRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepWeekly: 8}})
+	f := newPlacementFixture(t)
+	withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"containers": {KeepWeekly: 8}})
 	dest := f.root + "/offsite/containers"
 	f.makeRepo(dest)
-	f.hold(dest, ownRetentionSnap("o1", 100, "container:plex"), ownRetentionSnap("o2", 100, "vm:win11"))
+	f.hold(dest, snap("o1", 100, "container:plex"), snap("o2", 100, "vm:win11"))
 
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	want := []ownRetentionForget{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepWeekly: 8}}}
-	if got := f.forgetsAt(dest); !reflect.DeepEqual(got, want) {
+	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepWeekly: 8}}}
+	if got := forgetsAt(f, dest); !reflect.DeepEqual(got, want) {
 		t.Fatalf("forgets = %+v, want %+v", got, want)
 	}
 }
 
 func TestAManualOffsitePruneOfAnotherSourceKeepsTheSharedOffsitePolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	withOwnOffsiteRetention(t, f.st, 3, map[string]store.RetentionKeep{"vms": {KeepWeekly: 8}})
+	f := newPlacementFixture(t)
+	withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"vms": {KeepWeekly: 8}})
 	dest := f.root + "/offsite/containers"
 	f.makeRepo(dest)
-	f.hold(dest, ownRetentionSnap("o1", 100, "container:plex"))
+	f.hold(dest, snap("o1", 100, "container:plex"))
 
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	if got := f.forgetsAt(dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
 		t.Fatalf("forgets = %+v, want one with the shared off-site keep-last 3", got)
 	}
 }
 
 func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	settings := withOwnOffsiteRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepWeekly: 8}})
-	f.svc.syncAllPrimaryOffsiteTargets(settings)
+	f := newPlacementFixture(t)
+	withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"containers": {KeepWeekly: 8}})
 	extra, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "containers", Name: "B2", Repo: "extra/containers", Enabled: true, SortOrder: 1,
 	})
@@ -205,22 +195,22 @@ func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *te
 	}
 	dest := f.root + "/extra/containers"
 	f.makeRepo(dest)
-	f.hold(dest, ownRetentionSnap("e1", 100, "container:plex"))
+	f.hold(dest, snap("e1", 100, "container:plex"))
 
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", offsiteSourcePrefix+extra.ID, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	if got := f.forgetsAt(dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
-		t.Fatalf("forgets = %+v, want the shared off-site keep-last 3, as before keep rules per source", got)
+	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
+		t.Fatalf("forgets = %+v, want the shared off-site keep-last 3", got)
 	}
 }
 
 func TestTheOffsitePreviewNamesTheSourcesOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	withOwnOffsiteRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 14}})
+	f := newPlacementFixture(t)
+	withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 14}})
 	dest := f.root + "/offsite/containers"
 	f.makeRepo(dest)
-	f.hold(dest, ownRetentionSnap("o1", 100, "container:plex"), ownRetentionSnap("o2", 100, "vm:win11"))
+	f.hold(dest, snap("o1", 100, "container:plex"), snap("o2", 100, "vm:win11"))
 
 	got, err := f.svc.PreviewRetention(context.Background(), "containers", "offsite")
 	if err != nil {
@@ -270,7 +260,7 @@ func TestTheStartGuardReadsTheSourcesOwnOffsitePolicy(t *testing.T) {
 }
 
 func TestASettingsSaveKeepsOwnOffsiteRetentionItDoesNotMention(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -318,8 +308,8 @@ func TestASettingsSaveKeepsOwnOffsiteRetentionItDoesNotMention(t *testing.T) {
 	}
 }
 
-func TestASettingsSaveWarnsOfAnOwnOffsitePolicyOnAnAppendOnlyRepo(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+func TestASettingsSaveNotesAnOwnOffsitePolicyOnAnAppendOnlyRepo(t *testing.T) {
+	f := newPlacementFixture(t)
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -332,8 +322,8 @@ func TestASettingsSaveWarnsOfAnOwnOffsitePolicyOnAnAppendOnlyRepo(t *testing.T) 
 	if res["ok"] != true {
 		t.Fatalf("PUT: %v", res["error"])
 	}
-	if w, _ := res["warnings"].([]any); len(w) != 1 {
-		t.Fatalf("warnings = %v, want the append-only note for the containers' own off-site rules", res["warnings"])
+	if n, _ := res["notes"].([]any); len(n) != 1 {
+		t.Fatalf("notes = %v, want the append-only note for the containers' own off-site rules", res["notes"])
 	}
 }
 

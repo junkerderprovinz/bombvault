@@ -38,8 +38,7 @@ function Cell({ row }: { row: Row }) {
 
   // The glyph is rasterised and its pixels counted. getBBox and
   // getBoundingClientRect report a transformed group's extent before the
-  // transform, so IconClose, a plus turned 45 degrees, would measure as the
-  // unrotated plus.
+  // transform, so a turned drawing would measure as the unturned one.
   useEffect(() => {
     const svg = box.current?.querySelector("svg");
     if (!svg) return;

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// A snapshot taken together with a database dump says so, on the local
-// repository and on an off-site copy, which carries a new id and keeps the
-// source id. The tags that make the pairing possible stay out of the row.
+// A snapshot taken together with a database dump says so, at its home and at
+// an off-site place, whose copy carries a new id and keeps the source id. The
+// tags that make the pairing possible stay out of the row.
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { AdvancedProvider } from "../lib/advanced";
@@ -16,21 +16,30 @@ class NoopEventSource {
 }
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
-const LOCAL = {
-  id: "a1b2c3d4e5f6",
-  time: "2026-09-01T10:00:00Z",
-  paths: [],
-  tags: ["container:immich_postgres", "bvrun:run-7", "dbengine:postgres", "dbversion:16.4", "dbname:immich", "nightly"],
-  hostname: "tower",
-};
-const COPY = { ...LOCAL, id: "ffff0000ffff", original: "a1b2c3d4e5f6" };
+const TAGS = ["container:immich_postgres", "bvrun:run-7", "dbengine:postgres", "dbversion:16.4", "dbname:immich", "nightly"];
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listSnapshots: (_name: string, source?: string) =>
-      Promise.resolve({ ok: true, snapshots: [source === "local" ? LOCAL : COPY] }),
+    getTimeline: () =>
+      Promise.resolve({
+        ok: true,
+        places: [
+          { place: "local", label: "", kind: "home", remote: false, enabled: true, appendOnly: false, state: "read" },
+          { place: "offsite:t-b2", label: "B2", kind: "target", remote: false, enabled: true, appendOnly: false, state: "read" },
+        ],
+        rows: [
+          {
+            key: "a1b2c3d4e5f6",
+            time: "2026-09-01T10:00:00Z",
+            places: [
+              { place: "local", snapshotIds: ["a1b2c3d4e5f6"], tags: TAGS },
+              { place: "offsite:t-b2", snapshotIds: ["ffff0000ffff"], tags: TAGS },
+            ],
+          },
+        ],
+      }),
     listDbDumps: () =>
       Promise.resolve({
         ok: true,
@@ -87,7 +96,7 @@ it("marks the snapshot the dump belongs to", async () => {
 it("marks an off-site copy of that snapshot too", async () => {
   await renderPanel();
   await act(async () => {
-    fireEvent.click(screen.getByRole("tab", { name: en["source.offsite"] }));
+    fireEvent.click(await screen.findByRole("tab", { name: "B2" }));
   });
   expect(await screen.findByText(en["dbdump.pairedBadge"])).toBeTruthy();
 });
@@ -117,5 +126,5 @@ it("warns that the data folder is in no backup at all", async () => {
 it("wraps a snapshot row with the badge on a phone instead of pushing its buttons out", async () => {
   await renderPanel();
   const badge = await screen.findByText(en["dbdump.pairedBadge"]);
-  expect(badge.closest("span.flex")!.parentElement!.className).toContain("max-md:flex-wrap");
+  expect(badge.closest("span.flex")!.parentElement!.className).toContain("flex-wrap");
 });

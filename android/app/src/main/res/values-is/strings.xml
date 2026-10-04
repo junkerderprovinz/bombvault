@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Vistað í Niðurhal: %1$s</string>
+    <string name="save_failed">Ekki tókst að vista skrána: %1$s</string>
+    <string name="save_untrusted">Skírteini netþjónsins hefur breyst. Opnaðu hann aftur frá upphafsskjánum til að skoða nýja skírteinið.</string>
+    <string name="no_app">Ekkert forrit á þessum síma opnar þennan hlekk.</string>
+</resources>

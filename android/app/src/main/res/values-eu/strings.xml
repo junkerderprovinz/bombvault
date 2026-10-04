@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Deskargak karpetan gordeta: %1$s</string>
+    <string name="save_failed">Ezin izan da fitxategia gorde: %1$s</string>
+    <string name="save_untrusted">Zerbitzariaren ziurtagiria aldatu da. Ireki ezazu berriro hasierako pantailatik berria egiaztatzeko.</string>
+    <string name="no_app">Telefono honetako aplikaziorik ez du esteka hau irekitzen.</string>
+</resources>

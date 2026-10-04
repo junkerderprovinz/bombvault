@@ -12,6 +12,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // A VM backup names each former name of its entry, oldest link first, and an
@@ -49,6 +50,13 @@ const (
 // mirrors beside them.
 func vmsAfterConfigLoss(t *testing.T, snaps []restic.Snapshot, defs map[string]string) (*api.Service, *store.Repo, *fakeResticEngine) {
 	t.Helper()
+	return vmsAfterConfigLossOn(t, fakeVirsh{}, snaps, defs)
+}
+
+// vmsAfterConfigLossOn is vmsAfterConfigLoss on a host where virsh defines
+// what it lists.
+func vmsAfterConfigLossOn(t *testing.T, virsh virshcli.Virsh, snaps []restic.Snapshot, defs map[string]string) (*api.Service, *store.Repo, *fakeResticEngine) {
+	t.Helper()
 	dir := filepath.ToSlash(t.TempDir())
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
@@ -59,7 +67,7 @@ func vmsAfterConfigLoss(t *testing.T, snaps []restic.Snapshot, defs map[string]s
 	}
 	writeVMDefs(t, filepath.Join(establishLocalRepo(t, dir, s.VMsPath), "vm-def"), defs)
 	eng := &fakeResticEngine{snaps: snaps}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st, eng
+	return api.NewService(cfg, st, &fakeServiceDocker{}, virsh, eng), st, eng
 }
 
 func writeVMDefs(t *testing.T, dir string, defs map[string]string) {
@@ -113,7 +121,7 @@ func TestDiscoverVMsFoldsAFormerNameIntoItsSuccessor(t *testing.T) {
 	svc, st, _ := vmsAfterConfigLoss(t, renamedVMSnaps, map[string]string{"windows-11": windows11Def, "win11": win11Linked(t)})
 	ctx := context.Background()
 
-	if _, _, err := svc.DiscoverVMs(ctx, true); err != nil {
+	if _, err := svc.DiscoverVMs(ctx, true); err != nil {
 		t.Fatalf("DiscoverVMs (dry run): %v", err)
 	}
 	if rows := vmRowNames(t, st); rows != "" {
@@ -123,7 +131,7 @@ func TestDiscoverVMsFoldsAFormerNameIntoItsSuccessor(t *testing.T) {
 		t.Fatal("a dry run wrote an alias")
 	}
 
-	if _, _, err := svc.DiscoverVMs(ctx, false); err != nil {
+	if _, err := svc.DiscoverVMs(ctx, false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
 	if rows := vmRowNames(t, st); rows != "win11" {
@@ -149,6 +157,26 @@ func TestDiscoverVMsFoldsAFormerNameIntoItsSuccessor(t *testing.T) {
 	}
 }
 
+// windows-11 is defined again with a rule of its own while VMs are switched
+// off here, so the link Discover makes leaves that rule where it is.
+func TestDiscoverVMsLeavesTheRuleOfAVMDefinedUnderTheFormerName(t *testing.T) {
+	defined := &renameSuggestVirsh{vms: []virshcli.VMInfo{{Name: "windows-11"}}}
+	svc, st, _ := vmsAfterConfigLossOn(t, defined, renamedVMSnaps, map[string]string{"windows-11": windows11Def, "win11": win11Linked(t)})
+	if err := st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+		t.Fatalf("DiscoverVMs: %v", err)
+	}
+	if _, err := st.AliasByOldName("vm", "windows-11"); err != nil {
+		t.Fatalf("windows-11 is not linked to win11: %v", err)
+	}
+	if rule, found, err := st.CopyRuleFor("vms", "vm:win11"); err != nil || found {
+		t.Fatalf("win11 took the rule %v (found %v, %v)", rule.Skip, found, err)
+	}
+}
+
 // The readability probe writes nothing, and a row left by an earlier Discover
 // must not change that.
 func TestDiscoverVMsDryRunLinksNothingEvenWhenTheSuccessorHasARow(t *testing.T) {
@@ -157,7 +185,7 @@ func TestDiscoverVMsDryRunLinksNothingEvenWhenTheSuccessorHasARow(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	if _, _, err := svc.DiscoverVMs(context.Background(), true); err != nil {
+	if _, err := svc.DiscoverVMs(context.Background(), true); err != nil {
 		t.Fatalf("DiscoverVMs (dry run): %v", err)
 	}
 	if _, err := st.AliasByOldName("vm", "windows-11"); err == nil {
@@ -176,7 +204,7 @@ func TestDiscoverVMsLinksAFormerNameToTheFirstClaimantByName(t *testing.T) {
 	linked := withLinks(t, win11Def, "windows-11")
 	svc, st, _ := vmsAfterConfigLoss(t, snaps, map[string]string{"windows-11": windows11Def, "win11": linked, "win11-b": linked})
 
-	if _, _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
 	if rows := vmRowNames(t, st); rows != "win11,win11-b" {
@@ -197,7 +225,7 @@ func TestDiscoverVMsLinksAFormerNameToTheFirstClaimantByName(t *testing.T) {
 func TestDiscoverVMsLeavesAnExistingLinkAsItIs(t *testing.T) {
 	svc, st, eng := vmsAfterConfigLoss(t, renamedVMSnaps, map[string]string{"windows-11": windows11Def, "win11": withLinks(t, win11Def, "windows-11")})
 	ctx := context.Background()
-	if _, _, err := svc.DiscoverVMs(ctx, false); err != nil {
+	if _, err := svc.DiscoverVMs(ctx, false); err != nil {
 		t.Fatalf("first DiscoverVMs: %v", err)
 	}
 	first, err := st.AliasByOldName("vm", "windows-11")
@@ -206,7 +234,7 @@ func TestDiscoverVMsLeavesAnExistingLinkAsItIs(t *testing.T) {
 	}
 	eng.snaps = append(eng.snaps, restic.Snapshot{ID: "later1", Time: "2024-09-01T00:00:00Z", Tags: []string{"vm:windows-11", "p2"}})
 
-	if _, _, err := svc.DiscoverVMs(ctx, false); err != nil {
+	if _, err := svc.DiscoverVMs(ctx, false); err != nil {
 		t.Fatalf("second DiscoverVMs: %v", err)
 	}
 	if rows := vmRowNames(t, st); rows != "win11,windows-11" {
@@ -247,7 +275,7 @@ func TestDiscoverVMsLooksForALaterVMInTheOldNamesOwnRepository(t *testing.T) {
 	cold := append(append([]restic.Snapshot(nil), renamedVMSnaps...), later)
 	svc, st := vmsOnTwoRepositories(t, nil, cold, nil, map[string]string{"windows-11": windows11Def, "win11": win11Linked(t)})
 
-	if _, _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
 	if _, err := st.AliasByOldName("vm", "windows-11"); err != nil {
@@ -269,7 +297,7 @@ func TestDiscoverVMsLinksWithoutAnOldDefinitionAndUnlinkRefuses(t *testing.T) {
 	svc, st, _ := vmsAfterConfigLoss(t, renamedVMSnaps, map[string]string{"windows-11": windows11Def, "win11": withLinks(t, win11Def, "windows-11")})
 	ctx := context.Background()
 
-	if _, _, err := svc.DiscoverVMs(ctx, false); err != nil {
+	if _, err := svc.DiscoverVMs(ctx, false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
 	a, err := st.AliasByOldName("vm", "windows-11")
@@ -295,7 +323,7 @@ func TestDiscoverVMsDoesNotLinkAnUnsafeFormerName(t *testing.T) {
 			}
 			svc, st, _ := vmsAfterConfigLoss(t, snaps, map[string]string{old: windows11Def, "win11": withLinks(t, win11Def, old)})
 
-			if _, _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+			if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
 				t.Fatalf("DiscoverVMs: %v", err)
 			}
 			if _, err := st.AliasByOldName("vm", old); err == nil {

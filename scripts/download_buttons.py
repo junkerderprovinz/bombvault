@@ -13,6 +13,11 @@ BUTTONS = {
     # carries the pull command and every tag.
     "docker": "https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
+    # Neither listing is public yet, so both buttons are drawn without a link.
+    # The README's call for testers leads to the closed test meanwhile.
+    "google-play": None,
+    "f-droid": None,
+    "apk": "https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk",
     "relay": "https://github.com/junkerderprovinz/parleyport",
     "widget": "https://github.com/junkerderprovinz/bombvault-widget",
 }

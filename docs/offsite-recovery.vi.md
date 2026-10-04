@@ -1,5 +1,8 @@
 # Off-site & khôi phục
 
+!!! note "Các bản sao off-site chờ sau một lần xây dựng lại"
+    Khi bước 4 xây dựng lại các mục nhập mà không có cài đặt cũ, việc nhân bản off-site của các miền đó tạm dừng cho đến khi nơi lưu trữ mặc định được xác nhận. Xem [Nơi lưu trữ theo từng mục](#placement).
+
 Các bản sao lưu cục bộ bảo vệ bạn khỏi một container bị mất hay một bản cập nhật tồi. Nhân bản off-site và một bộ khôi phục đã được kiểm thử bảo vệ bạn khỏi mất cả cái máy, ransomware, hoặc một trận hỏa hoạn. Trang này bao quát việc nhân bản off-site, làm cho bản sao đó chống can thiệp, chứng minh rằng bạn có thể khôi phục, và khôi phục khi chính BombVault không còn.
 
 ## Nhân bản off-site
@@ -12,12 +15,42 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 - **Giới hạn băng thông** (Cài đặt, Ngoài site) giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
 - Một **chỉ báo nhân bản** hiển thị miền nào đang nhân bản trong khi nó chạy (trên trang của nó và bảng điều khiển). Đó là một chỉ báo hoạt động, không phải một thanh phần trăm, vì `restic copy` không phơi bày tiến độ đọc được bằng máy.
 
-!!! note "Khôi phục thẳng từ off-site"
-    Mọi trình duyệt sao lưu đều có công tắc **Cục bộ / Ngoài site**, nên nếu một kho cục bộ bị mất hay hỏng, bạn có thể liệt kê và khôi phục trực tiếp từ bản sao off-site. Việc xóa là theo từng nguồn: xóa một bản sao lưu chỉ ảnh hưởng đến bản sao bạn đang xem.
+!!! note "Khôi phục từ bất kỳ nơi nào"
+    Mọi container, VM, bộ tập tin, flash và cấu hình ứng dụng đều liệt kê các bản sao lưu của mình như một dòng thời gian duy nhất trên tất cả những nơi một bản sao lưu nằm ở đó. Một bản sao lưu đã được sao chép sang B2 chỉ xuất hiện một lần, được đánh dấu bằng từng nơi đang giữ nó. Một lần khôi phục lấy nơi đầu tiên nó tiếp cận được, bắt đầu từ kho mà mục đó được ghi vào, và bạn có thể chọn một nơi khác cho từng hàng. Các nơi off-site chỉ được đọc khi bạn mở chúng. Xóa tại một nơi sẽ kiểm tra những nơi khác trước và cho biết đó có phải bản sao cuối cùng hay không.
+
+## Nơi lưu trữ theo từng mục {#placement}
+
+Mỗi thẻ container, VM và bộ tập tin có một hàng **Nơi lưu trữ** với ba phân đoạn:
+
+- **Cục bộ** ghi mục vào kho được hiển thị dưới **Lưu tại** và không sao chép nó đi đâu cả. Dùng cho dữ liệu đã có sẵn một bản sao thứ hai, ví dụ một share nằm trên NAS.
+- **Cục bộ + ngoài site** cũng ghi vào đó, đồng thời sao chép đến các đích đã đánh dấu dưới **Sao chép đến**, mỗi chip ứng với một đích off-site của miền. Bỏ đánh dấu một chip thì đích đó sẽ không nhận thêm gì mới từ mục này nữa.
+- **Chỉ ngoài site** ghi mục thẳng vào nơi dưới **Gửi đến**: một kho trực tiếp bên cạnh một đích off-site, hoặc một kho từ xa bạn đã thiết lập dưới Cài đặt, Lưu trữ, Kho lưu trữ.
+
+Vị trí được cố định kể từ lần sao lưu đầu tiên của mục, vì BombVault không bao giờ di chuyển bản sao lưu giữa các kho. Các bản sao thì có thể thay đổi bất cứ lúc nào. Một đích không còn nhận mục nữa vẫn giữ các bản sao đang có và cắt bớt chúng theo mức lưu giữ riêng ở lần chạy off-site tiếp theo của miền; **Xóa tại B2** trên thẻ sẽ xóa chúng ngay lập tức. Khi một số bản sao đó không tồn tại ở nơi nào khác, xác nhận sẽ liệt kê chúng theo ngày và yêu cầu nhập tên của mục. Không thể xóa bất cứ thứ gì khỏi các đích append-only.
+
+Dưới hàng này, thẻ cho biết mục đang đi đến đâu và thực sự có gì ở đó: có bao nhiêu địa điểm đang giữ nó, mỗi đích được thấy lần cuối khi nào, và có đáp ứng 3-2-1 hay không. Một địa điểm là máy chủ có dữ liệu gốc, mỗi đích off-site và mỗi kho được đánh dấu **Ngoài cơ sở**. BombVault kiểm tra bản sao và địa điểm; nó không kiểm tra phần "hai loại vật lưu trữ" của 3-2-1.
+
+### Nơi lưu trữ mặc định
+
+Cài đặt, Lưu trữ, **Nơi lưu trữ mặc định** có một hàng cho mỗi miền với cùng ba phân đoạn. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Vị trí áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó; thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi đích sẽ nhận thêm hoặc mất mục, và điều đó có nghĩa là bao nhiêu snapshot. **Áp dụng cho các mục chưa có bản sao lưu** đưa mọi mục chưa có bản sao lưu nào trở về mặc định.
+
+Một đích off-site mới sẽ nhận mọi mục không đặt là Cục bộ. Hộp thoại thêm đích đó cho biết có bao nhiêu mục và, nếu biết, đó là bao nhiêu lịch sử, đồng thời đề nghị bỏ qua những mục đã bị loại trừ khỏi các đích khác.
+
+### Kho trực tiếp
+
+Chọn kho trực tiếp của một đích dưới Chỉ ngoài site sẽ mở một hộp thoại với vị trí được đề xuất bên cạnh đích đó, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, và một lần kiểm tra kết nối không tạo ra gì cả. **Tạo và dùng** sẽ tạo kho và trỏ mục vào đó. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của đích, và thay đổi theo chúng; thẻ Kho lưu trữ hiển thị nó ở chế độ chỉ đọc. Khi một khóa mới của đích không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với đích của nó sẽ không bao giờ già đi theo các quy tắc cục bộ. B2 được truy cập qua điểm cuối S3 của nó, với ID khóa và khóa ứng dụng được nhập làm thông tin xác thực S3; một khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó, vì vậy hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.
+
+### Ngoài cơ sở
+
+Một kho đã đặt tên có thể được đánh dấu **Ngoài cơ sở** trên thẻ Kho lưu trữ. Các kho từ xa bắt đầu ở trạng thái đã đánh dấu; hãy tắt nó cho một rest-server trong cùng tòa nhà. Dấu này chỉ tính vào số địa điểm và 3-2-1 trên các thẻ. Nó không thay đổi bản sao nào.
+
+### Sau một lần xây dựng lại
+
+Các lựa chọn sao chép sống trong cài đặt riêng của BombVault. Sau một lần xây dựng lại qua Tìm bản sao lưu mà không có `/config` được khôi phục, chúng biến mất, và việc sao chép mọi thứ sẽ gửi lại lên B2 những mục bạn đã từng bỏ qua. Vì vậy việc nhân bản off-site của mọi miền được xây dựng lại sẽ tạm dừng. Tổng quan hiển thị điều này bằng màu hổ phách, và Nơi lưu trữ mặc định đưa ra **Xác nhận mặc định** với một bản xem trước những gì lần chạy tiếp theo sẽ sao chép, cùng các tên trong bản sao lưu không có mục tương ứng, mà bạn có thể bỏ qua ngay tại đó. Chỉ có xác nhận mới chấm dứt việc tạm dừng; nhập một tệp cài đặt sẽ mang quy tắc và mặc định trở lại nhưng không chấm dứt việc tạm dừng.
 
 ## Kho chính từ xa {#remote-primary-repositories}
 
-Đường dẫn sao lưu của một miền (Cài đặt, Lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
+Đường dẫn sao lưu của một miền (Cài đặt, Lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
 
 Mỗi trong sáu ô đường dẫn (Containers, VMs, Flash, Tự sao lưu, Thư mục, Tập dữ liệu ZFS) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
 
@@ -82,8 +115,8 @@ Bất kỳ ai biết các từ đó đều có thể gia nhập nhóm, nên hãy
 
 **Các thành viên đến được với nhau như thế nào.** Ngay khi bạn đăng nhập, mỗi phiên bản sẽ nhận biết địa chỉ mạng của chính nó từ trình duyệt của bạn, được hiển thị trên thẻ relay là **Phiên bản này trên mạng của bạn**; hãy sửa lại ở đó nếu có một reverse proxy hay một cổng khác thường đứng phía trước. Trong cùng một mạng, các thành viên thông báo địa chỉ đó bằng multicast và nói chuyện trực tiếp với nhau, còn ở nơi multicast không thể vượt qua một mạng container, chẳng hạn mạng bridge mặc định của Docker, một phiên bản sẽ quét mạng con của chính nó để tìm những phiên bản còn lại bằng một lệnh gọi có chữ ký mà chỉ thành viên trong nhóm mới trả lời được, nhờ đó việc ghép nối vẫn hoàn tất trong vài giây mà không cần relay. Nếu không tìm thấy gì, **Không tìm thấy?** bên dưới thẻ ghép nối sẽ nhận một địa chỉ nhập tay, dùng cho mạng con khác hoặc cổng không chuẩn. Các phiên bản ở mạng khác nhau đi qua một relay, được chọn trên cùng tab đó:
 
-- **Relay của dự án** (mặc định): `relay.halleluja.design`, cũng là relay mà KnightLoader dùng. Không cần thiết lập gì cả.
-- **Relay riêng**: container **BombVault Relay** từ Unraid Community Apps, hoặc một trong các phiên bản của bạn vốn đã truy cập được từ bên ngoài với **Làm relay** được bật. Phiên bản đó khi ấy sẽ trả lời tại `/relay/connect` trên địa chỉ của chính nó, phía sau reverse proxy và chứng chỉ mà nó đã có sẵn, và chỉ cho nhóm của bạn vào. Nhập địa chỉ của relay trên mọi phiên bản cần dùng nó.
+- **Relay của dự án** (mặc định): `parleyport.halleluja.design`, cũng là relay mà KnightLoader dùng. Không cần thiết lập gì cả.
+- **Relay riêng**: container [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) từ Unraid Community Apps, hoặc một trong các phiên bản của bạn vốn đã truy cập được từ bên ngoài với **Làm relay** được bật. Phiên bản đó khi ấy sẽ trả lời tại `/relay/connect` trên địa chỉ của chính nó, phía sau reverse proxy và chứng chỉ mà nó đã có sẵn, và chỉ cho nhóm của bạn vào. Nhập địa chỉ của relay trên mọi phiên bản cần dùng nó.
 - **Không dùng relay**: các thành viên tự động tìm thấy nhau trong cùng một mạng, và không ở đâu khác.
 
 **Relay thấy được gì.** Mọi cuộc gọi giữa các thành viên được niêm phong bằng AES-256-GCM dưới một khóa suy ra từ mười hai từ, và khóa đó không bao giờ rời khỏi các phiên bản của bạn. Relay chỉ biết một hash gom nhóm các kết nối, phiên bản nào là đích của một thông điệp, nó lớn bao nhiêu và khi nào nó đi qua. Một cuộc gọi trực tiếp trên mạng cục bộ cũng được niêm phong theo cùng cách và còn được ký nữa, nên không có gì phụ thuộc vào chứng chỉ tự ký mà một phiên bản đang dùng.

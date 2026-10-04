@@ -1,176 +1,15 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"reflect"
 	"slices"
-	"strings"
-	"sync"
 	"testing"
-	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
-	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
-
-// ownRetentionFixture is a Service and a Handler over an in-memory store whose
-// containers domain has its own repository and a named one, nas, that nginx
-// writes to.
-type ownRetentionFixture struct {
-	t    *testing.T
-	svc  *Service
-	h    *Handler
-	st   *store.Repo
-	eng  *ownRetentionEngine
-	root string // host mount root, slash-spelled
-}
-
-func newOwnRetentionFixture(t *testing.T) *ownRetentionFixture {
-	t.Helper()
-	dir := t.TempDir()
-	db, err := store.Open(":memory:")
-	if err != nil {
-		t.Fatalf("open store: %v", err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	if err := store.Migrate(db); err != nil {
-		t.Fatalf("migrate: %v", err)
-	}
-	st := store.New(db)
-	settings, err := st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	settings.ContainersPath = "backups/containers"
-	if err := st.UpdateSettings(settings); err != nil {
-		t.Fatal(err)
-	}
-	root := filepath.ToSlash(dir)
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
-	eng := &ownRetentionEngine{snaps: map[string][]restic.Snapshot{}}
-	svc := NewService(cfg, st, nil, nil, eng)
-	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
-	f := &ownRetentionFixture{t: t, svc: svc, h: NewHandler(cfg, st, nil, svc, sched, nil), st: st, eng: eng, root: root}
-
-	f.makeRepo(f.root + "/backups/containers")
-	f.makeRepo(f.root + "/nas")
-	nas, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "NAS", Repo: "nas", Enabled: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := st.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
-		t.Fatal(err)
-	}
-	if err := st.SetTargetRepo("nginx", nas.ID); err != nil {
-		t.Fatal(err)
-	}
-	return f
-}
-
-// makeRepo leaves a local repository the service treats as created.
-func (f *ownRetentionFixture) makeRepo(loc string) {
-	f.t.Helper()
-	dir := filepath.FromSlash(loc)
-	if err := os.MkdirAll(dir, 0o750); err != nil {
-		f.t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "config"), []byte("x"), 0o600); err != nil {
-		f.t.Fatal(err)
-	}
-}
-
-// hold sets what a listing of the location returns.
-func (f *ownRetentionFixture) hold(location string, snaps ...restic.Snapshot) {
-	f.eng.mu.Lock()
-	defer f.eng.mu.Unlock()
-	f.eng.snaps[filepath.ToSlash(location)] = snaps
-}
-
-// do sends one request through the router and returns its JSON body. Anything
-// but 200 fails the test.
-func (f *ownRetentionFixture) do(method, path string, body any) map[string]any {
-	f.t.Helper()
-	b, err := json.Marshal(body)
-	if err != nil {
-		f.t.Fatal(err)
-	}
-	rec := httptest.NewRecorder()
-	f.h.Router().ServeHTTP(rec, jsonReq(method, path, bytes.NewReader(b)))
-	if rec.Code != http.StatusOK {
-		f.t.Fatalf("%s %s = %d: %s", method, path, rec.Code, rec.Body.String())
-	}
-	var out map[string]any
-	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
-		f.t.Fatalf("%s %s: %v", method, path, err)
-	}
-	return out
-}
-
-type ownRetentionForget struct {
-	Repo   string
-	Tags   []string
-	Policy restic.RetentionPolicy
-	Prune  bool
-}
-
-// ownRetentionEngine answers listings per location and records the forgets
-// and prunes a retention pass runs.
-type ownRetentionEngine struct {
-	ResticEngine
-	mu      sync.Mutex
-	snaps   map[string][]restic.Snapshot // by slash-spelled location
-	forgets []ownRetentionForget
-	prunes  []string
-}
-
-func (e *ownRetentionEngine) RepoOpens(context.Context, string, restic.Mode) bool { return true }
-
-func (e *ownRetentionEngine) RepoOpensErr(context.Context, string, restic.Mode) error { return nil }
-
-func (e *ownRetentionEngine) Snapshots(_ context.Context, repo string, _ restic.Mode) ([]restic.Snapshot, error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return slices.Clone(e.snaps[filepath.ToSlash(repo)]), nil
-}
-
-func (e *ownRetentionEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tags []string, prune bool) error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.forgets = append(e.forgets, ownRetentionForget{Repo: filepath.ToSlash(repo), Tags: slices.Clone(tags), Policy: p, Prune: prune})
-	return nil
-}
-
-func (e *ownRetentionEngine) Prune(_ context.Context, repo string, _ restic.Mode) error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.prunes = append(e.prunes, filepath.ToSlash(repo))
-	return nil
-}
-
-// ForgetPreview keeps every snapshot under the tag.
-func (e *ownRetentionEngine) ForgetPreview(_ context.Context, repo string, _ restic.RetentionPolicy, _ restic.Mode, tag string) ([]restic.ForgetGroup, error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return []restic.ForgetGroup{{Tags: []string{tag}, Keep: snapshotsTagged(e.snaps[filepath.ToSlash(repo)], tag)}}, nil
-}
-
-func (e *ownRetentionEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
-
-func (e *ownRetentionEngine) Stats(context.Context, string, string, restic.Mode) (restic.StatsResult, error) {
-	return restic.StatsResult{}, nil
-}
-
-func ownRetentionSnap(id string, at int64, tags ...string) restic.Snapshot {
-	return restic.Snapshot{ID: id, Time: time.Unix(at, 0).UTC().Format(time.RFC3339), Tags: tags}
-}
 
 // withOwnRetention stores the shared keep-last and the given per-domain
 // policies, and returns the settings as stored.
@@ -231,17 +70,21 @@ func TestTheOffsitePolicyIgnoresTheDomainsOwnOne(t *testing.T) {
 }
 
 func TestABackupAgesByItsDomainsOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 	settings := withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
 	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
-	want := []ownRetentionForget{{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepDaily: 7}, Prune: true}}
+	want := []forgetCall{{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepDaily: 7}, Prune: true}}
 	if !reflect.DeepEqual(f.eng.forgets, want) {
 		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)
 	}
 }
 
 func TestAnotherDomainsOwnPolicyLeavesTheSharedOneInPlace(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 	settings := withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"vms": {KeepWeekly: 2}})
 	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
 	if len(f.eng.forgets) != 1 || f.eng.forgets[0].Policy != (restic.RetentionPolicy{KeepLast: 3}) {
@@ -250,7 +93,9 @@ func TestAnotherDomainsOwnPolicyLeavesTheSharedOneInPlace(t *testing.T) {
 }
 
 func TestAnOwnPolicyThatKeepsEverythingSkipsTheBackupsRetention(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 	settings := withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {}})
 	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
 	if len(f.eng.forgets) != 0 {
@@ -259,7 +104,9 @@ func TestAnOwnPolicyThatKeepsEverythingSkipsTheBackupsRetention(t *testing.T) {
 }
 
 func TestADatabaseDumpAgesByTheContainersOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 	settings := withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepMonthly: 4}})
 	f.svc.forgetDBDumpSeries(context.Background(), f.root+"/nas", settings, restic.Mode{}, "nginx", "t1")
 	if len(f.eng.forgets) != 1 || f.eng.forgets[0].Policy != (restic.RetentionPolicy{KeepMonthly: 4}) {
@@ -268,7 +115,9 @@ func TestADatabaseDumpAgesByTheContainersOwnPolicy(t *testing.T) {
 }
 
 func TestZFSDatasetsAgeByTheirOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 	settings := withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{zfsDomain: {KeepWeekly: 8}})
 	f.svc.applyRetentionTags(context.Background(), f.root+"/nas", settings, restic.Mode{}, []string{"zfs:tank/media"}, zfsDomain)
 	if len(f.eng.forgets) != 1 || f.eng.forgets[0].Policy != (restic.RetentionPolicy{KeepWeekly: 8}) {
@@ -277,10 +126,12 @@ func TestZFSDatasetsAgeByTheirOwnPolicy(t *testing.T) {
 }
 
 func TestAManualPruneAgesByTheDomainsOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepLast: 10, KeepYearly: 1}})
-	f.hold(f.root+"/backups/containers", ownRetentionSnap("a1", 100, "container:plex"))
-	f.hold(f.root+"/nas", ownRetentionSnap("b1", 100, "container:nginx"))
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
+	f.hold(f.root+"/nas", snap("b1", 100, "container:nginx"))
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
@@ -294,23 +145,16 @@ func TestAManualPruneAgesByTheDomainsOwnPolicy(t *testing.T) {
 	}
 }
 
-// sharedWithAVM points the VM win11 at nas, the named repository nginx writes
-// to, and leaves one snapshot of each item there and one of plex in the
-// containers repository.
-func (f *ownRetentionFixture) sharedWithAVM() {
+// sharedWithAVM places nginx and the VM win11 on the named repository nas and
+// leaves one snapshot of each item there and one of plex in the containers
+// repository.
+func sharedWithAVM(f *placementFixture) {
 	f.t.Helper()
-	named, err := f.st.ListNamedRepos()
-	if err != nil || len(named) != 1 {
-		f.t.Fatalf("ListNamedRepos = %v, %v", named, err)
-	}
-	if _, err := f.st.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
-		f.t.Fatal(err)
-	}
-	if err := f.st.SetVMRepo("win11", named[0].ID); err != nil {
-		f.t.Fatal(err)
-	}
-	f.hold(f.root+"/backups/containers", ownRetentionSnap("a1", 100, "container:plex"))
-	f.hold(f.root+"/nas", ownRetentionSnap("b1", 100, "container:nginx"), ownRetentionSnap("c1", 100, "vm:win11"))
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
+	f.vm("win11", nas.ID)
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
+	f.hold(f.root+"/nas", snap("b1", 100, "container:nginx"), snap("c1", 100, "vm:win11"))
 }
 
 func TestEveryIdentityTagBelongsToItsDomain(t *testing.T) {
@@ -334,14 +178,14 @@ func TestEveryIdentityTagBelongsToItsDomain(t *testing.T) {
 }
 
 func TestAManualPruneLeavesAnotherDomainsBackupsInASharedRepository(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	f.sharedWithAVM()
+	f := newPlacementFixture(t)
+	sharedWithAVM(f)
 	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
 	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
-	want := []ownRetentionForget{
-		{Repo: f.root + "/backups/containers", Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 7}},
+	want := []forgetCall{
+		{Repo: f.domainPath("containers"), Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepDaily: 7}},
 		{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepDaily: 7}},
 	}
 	if !reflect.DeepEqual(f.eng.forgets, want) {
@@ -353,8 +197,8 @@ func TestAManualPruneLeavesAnotherDomainsBackupsInASharedRepository(t *testing.T
 }
 
 func TestThePreviewOfAPruneLeavesAnotherDomainsBackupsOut(t *testing.T) {
-	f := newOwnRetentionFixture(t)
-	f.sharedWithAVM()
+	f := newPlacementFixture(t)
+	sharedWithAVM(f)
 	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
 	got, err := f.svc.PreviewRetention(context.Background(), "containers", "local")
 	if err != nil {
@@ -373,7 +217,9 @@ func TestThePreviewOfAPruneLeavesAnotherDomainsBackupsOut(t *testing.T) {
 }
 
 func TestTheBatchedPruneFollowsTheDomainsOwnPolicy(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
 
 	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {}})
 	f.svc.PruneAfterBulk(context.Background(), "containers")
@@ -401,7 +247,7 @@ func TestTheStartGuardReadsTheDomainsOwnPolicy(t *testing.T) {
 }
 
 func TestASettingsSaveKeepsOwnRetentionItDoesNotMention(t *testing.T) {
-	f := newOwnRetentionFixture(t)
+	f := newPlacementFixture(t)
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)

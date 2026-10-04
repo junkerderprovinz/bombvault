@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">บันทึกลงดาวน์โหลดแล้ว: %1$s</string>
+    <string name="save_failed">ไม่สามารถบันทึกไฟล์ได้: %1$s</string>
+    <string name="save_untrusted">ใบรับรองของเซิร์ฟเวอร์เปลี่ยนไป เปิดใหม่จากหน้าจอเริ่มต้นเพื่อตรวจสอบใบรับรองใหม่</string>
+    <string name="no_app">ไม่มีแอปในโทรศัพท์เครื่องนี้ที่เปิดลิงก์นี้ได้</string>
+</resources>

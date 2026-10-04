@@ -69,7 +69,7 @@ func TestDeletingBackupsForgetsTheDumpsOfAFormerName(t *testing.T) {
 		{ID: "other", Time: "2024-07-01T00:00:00Z", Tags: []string{"dbdump:sonarr", "p1"}},
 	})
 
-	if err := svc.DeleteBackups(context.Background(), "radarr"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "radarr", "local"); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
 	}
 	if got, want := strings.Join(sortedCopy(eng.forgotten), ","), "files1,own1,pre1"; got != want {

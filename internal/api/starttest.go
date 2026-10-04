@@ -293,7 +293,9 @@ func (s *Service) restoreForStartTest(ctx context.Context, settings store.Settin
 		return startTestSetupError{err}
 	}
 	mode := s.primaryModeFor(settings, "containers", repo)
-	s.unlockStale(ctx, repo, mode)
+	if !restic.IsRemoteRepo(repo) {
+		s.unlockStale(ctx, repo, mode)
+	}
 	rctx, cancel := context.WithTimeout(ctx, restoreTimeout)
 	defer cancel()
 	if _, want, sErr := s.engine.StatsRestoreSize(rctx, repo, snapshotID, mode); sErr == nil && want > 0 {
@@ -301,7 +303,8 @@ func (s *Service) restoreForStartTest(ctx context.Context, settings store.Settin
 			return startTestSetupError{fmt.Errorf("not enough free space in the restore folder: the backup needs %d bytes, %d are free", want, free)}
 		}
 	}
-	if err := s.engine.RestoreAll(rctx, repo, snapshotID, sandbox, mode); err != nil && !errors.Is(err, restic.ErrRestoreMetadataOnly) {
+	restore := func() error { return s.engine.RestoreAll(rctx, repo, snapshotID, sandbox, mode) }
+	if err := s.retryAfterUnlock(rctx, repo, mode, restore); err != nil && !errors.Is(err, restic.ErrRestoreMetadataOnly) {
 		return fmt.Errorf("restore the backup: %w", err)
 	}
 	return nil

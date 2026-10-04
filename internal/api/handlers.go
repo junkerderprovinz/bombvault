@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
+	"maps"
 	"mime"
 	"net"
 	"net/http"
@@ -498,6 +500,29 @@ func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
 	return true
 }
 
+// decodeOptionalBody is decodeBody for a route whose fields are all optional:
+// an absent body leaves v at its zero value instead of failing, so a caller
+// does not have to send an empty JSON object just to take the defaults.
+func decodeOptionalBody(w http.ResponseWriter, r *http.Request, v any) bool {
+	if !crossOriginGuard(w, r) {
+		return false
+	}
+	if r.Body == nil {
+		return true
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(v); err != nil {
+		if errors.Is(err, io.EOF) {
+			return true
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid request body"})
+		return false
+	}
+	return true
+}
+
 // ---------------------------------------------------------------------------
 // handlers
 // ---------------------------------------------------------------------------
@@ -581,10 +606,6 @@ type containerView struct {
 	// "" means it follows the containers domain schedule. Only takes effect when the
 	// perItemSchedules setting is on.
 	ScheduleCadence string `json:"scheduleCadence"`
-	// Repo is the container's optional per-item repository override (#204): the
-	// ID of a named repository from Settings, "" for the Containers domain
-	// repository. The interface needs it to show what the picker currently says.
-	Repo string `json:"repo"`
 	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
 	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
 	// 'updated' | 'failed') — so "checked, up to date" is visible without a
@@ -596,7 +617,8 @@ type containerView struct {
 	Stack string `json:"stack"`
 	// Self marks BombVault's own container: the UI hides its backup action and
 	// excludes it from "select all" so a batch can never stop the app itself.
-	Self bool `json:"self"`
+	Self      bool          `json:"self"`
+	Placement placementView `json:"placement"`
 	// RenameFrom and RenameReason name the not-installed entry a live container
 	// without backups of its own looks renamed from (see matchRenames); the UI
 	// words the reason. Both are empty when nothing matched or the backup times
@@ -641,6 +663,9 @@ type containerView struct {
 	// IdleWaitHours is how long a scheduled backup waits at most for the app to
 	// be idle, 0 when it does not wait.
 	IdleWaitHours int `json:"idleWaitHours"`
+	// homeBackups is how many backups the listing found at the container's
+	// home, nil when the home was not listed.
+	homeBackups *int
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -705,12 +730,13 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	// container has backups under its own name; snapTimesFailed keeps that pass
 	// from guessing off a partial read.
 	var snapTimes map[string]ContainerSnapshotTimes
+	var homeCounts backupCounts
 	snapTimesFailed := false
-	if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
+	if m, c, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
 		log.Printf("api: list containers: latest backup times: %v", sErr)
 		snapTimesFailed = true
 	} else {
-		snapTimes = m
+		snapTimes, homeCounts = m, c
 	}
 
 	shapes, shErr := h.store.BackedUpShapes()
@@ -763,11 +789,13 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.LastUpdateResult = t.LastUpdateResult
 			v.BackupOrder = t.BackupOrder
 			v.ScheduleCadence = t.ScheduleCadence
-			v.Repo = t.Repo
 			v.IdleWaitHours = idleHours[t.ID]
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
+		home, hErr := h.svc.primaryRepo(settings, "containers", c.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), unlisted)
+		v.homeBackups = homeCounts.at(home, c.Name)
 		if t, ok := byName[c.Name]; ok && !v.Self && (run != nil || shapes[t.ID] != "") {
 			v.ChangedSinceBackup = h.svc.changesSinceBackup(r.Context(), c, t, shapes[t.ID])
 		}
@@ -805,7 +833,6 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			Installed:         false,
 			IncludeInSchedule: t.IncludeInSchedule,
 			ScheduleCadence:   t.ScheduleCadence,
-			Repo:              t.Repo,
 			AliasConflicts:    aliasConflicts.of(t.ID),
 			Aliases:           formerNames.of(t.ID),
 		}
@@ -838,16 +865,34 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		// everything.
 		v.DumpOnly = snapTimes[t.ContainerName].DumpOnly()
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), snapTimesFailed)
+		home, hErr := h.svc.primaryRepo(settings, "containers", t.ContainerName)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), unlisted)
+		v.homeBackups = homeCounts.at(home, t.ContainerName)
 		views = append(views, v)
+	}
+	items := make([]placementItem, 0, len(views))
+	for _, v := range views {
+		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack, HomeBackups: v.homeBackups}
+		if t, ok := byName[v.Name]; ok {
+			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
+			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
+				it.LastSuccess = run.StartedAt
+			}
+		}
+		items = append(items, it)
+	}
+	placements := h.svc.listPlacements(r.Context(), "containers", items)
+	for i := range views {
+		views[i].Placement = placements[views[i].Name]
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
 
 // lastBackupDate is the newest backup an entry owns, so a card's date agrees
 // with the list of backups under it. newest is when that backup was taken, 0
-// for none. The run stands in only while the repository could not be listed,
-// because an unreachable repository must not read as "never backed up". The
+// for none. The run stands in when the repository was not listed, remote or
+// unreachable, because that must not read as "never backed up". The
 // start time comes from the run that wrote that backup and from no other,
 // since the dashboard measures a duration from the pair. A successful run
 // without a snapshot is a config-only backup: the definition it saved lives
@@ -993,14 +1038,14 @@ func (h *Handler) vmNameParam(w http.ResponseWriter, r *http.Request) (string, b
 	return name, true
 }
 
-// handleDeleteBackups removes ALL backups of a container and forgets it from the
-// store. Used for containers that are no longer installed.
+// handleDeleteBackups removes every backup of a container from the selected
+// source. DELETE /api/containers/{name}/backups?source=
 func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
 		return
 	}
-	if err := h.svc.DeleteBackups(r.Context(), name); err != nil {
+	if err := h.svc.DeleteBackups(r.Context(), name, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1020,6 +1065,17 @@ func (h *Handler) handleForgetContainer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// takeoverFail answers a refused takeover or unlink. A copy rule already on the
+// name gets the code the placement routes send for it, so the interface can say
+// it in the user's language.
+func takeoverFail(w http.ResponseWriter, err error) {
+	if errors.Is(err, store.ErrCopyRuleTaken) {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, failEnvelope(err))
 }
 
 // handleTakeOverContainer moves a not-installed entry onto the name its
@@ -1043,7 +1099,7 @@ func (h *Handler) handleTakeOverContainer(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if err := h.svc.TakeOverContainer(r.Context(), body.From, name); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -1062,7 +1118,7 @@ func (h *Handler) handleUnlinkContainerAlias(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := h.svc.UnlinkContainerAlias(r.Context(), old); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -1087,7 +1143,7 @@ func (h *Handler) handleTakeOverVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.TakeOverVM(r.Context(), body.From, name); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -1105,7 +1161,7 @@ func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.UnlinkVMAlias(r.Context(), old); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -1142,6 +1198,24 @@ func (h *Handler) handleForgetVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// discoverFields is what every Discover answer carries, success or not.
+// skippedNeedsAction flags only skips that need action: a repository somebody
+// switched off is named, but it is not a fault.
+func discoverFields(res DiscoverResult) map[string]any {
+	leftOpen := res.LeftOpen
+	if leftOpen == nil {
+		leftOpen = []string{}
+	}
+	return map[string]any{
+		"discovered":         res.Found,
+		"skipped":            skipNames(res.Skipped),
+		"skippedNeedsAction": len(actionableSkips(res.Skipped)) > 0,
+		"paused":             res.Paused,
+		"leftOpen":           leftOpen,
+		"directRepos":        directRepoViews(res.Direct),
+	}
+}
+
 // handleDiscover rebuilds the target list from the backup storage (disaster
 // recovery after a fresh install / loss of /config).
 func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
@@ -1149,7 +1223,7 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	// to prove the repo/APP_KEY, but write no targets — so a readiness check never
 	// resurrects orphan entries. The default (no probe) is the real rebuild (#44).
 	probe := r.URL.Query().Get("probe") == "true"
-	n, skipped, err := h.svc.Discover(r.Context(), probe)
+	res, err := h.svc.Discover(r.Context(), probe)
 	if err != nil {
 		// The failure envelope carries the partial result too. The pass searches
 		// the named repositories BEFORE the domain's own, so when the domain's own
@@ -1158,9 +1232,7 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 		// configuration. "Could not open the domain repository" and "…and nothing
 		// was rebuilt" are two different answers.
 		body := failEnvelope(err)
-		body["discovered"] = n
-		body["skipped"] = skipNames(skipped)
-		body["skippedNeedsAction"] = len(actionableSkips(skipped)) > 0
+		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
@@ -1173,24 +1245,16 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	// loss looked identical whether the repositories were empty or unreachable -
 	// in the one screen whose entire job is to tell somebody their backups are
 	// still there.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"discovered": n,
-		"repo":       h.svc.DiscoverSource("containers"),
-		"skipped":    skipNames(skipped),
-		// What to SAY and what to FLAG are two lists. A repository switched off on
-		// purpose belongs in the sentence - after a /config loss the operator has
-		// every reason to know it was not searched - but it is not a fault, so it
-		// must not hold the readability pill amber forever and swallow the
-		// save-success toast behind it. See repoSkip.Note.
-		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
-	}))
+	fields := discoverFields(res)
+	fields["repo"] = h.svc.DiscoverSource("containers")
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // handleDiscoverVMs rebuilds the VM target list from backup storage, so a VM
 // deleted from the host (or lost with the database) becomes restorable again.
 func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
-	n, skipped, err := h.svc.DiscoverVMs(r.Context(), probe)
+	res, err := h.svc.DiscoverVMs(r.Context(), probe)
 	if err != nil {
 		// The failure envelope carries the partial result too. The pass searches
 		// the named repositories BEFORE the domain's own, so when the domain's own
@@ -1199,26 +1263,16 @@ func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 		// configuration. "Could not open the domain repository" and "…and nothing
 		// was rebuilt" are two different answers.
 		body := failEnvelope(err)
-		body["discovered"] = n
-		body["skipped"] = skipNames(skipped)
-		body["skippedNeedsAction"] = len(actionableSkips(skipped)) > 0
+		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
 	// `repo` names the folder this pass actually read (#196): the wizard asks
 	// for an off-site repository a step earlier and then reads the PRIMARY
 	// path, and an empty answer about an unnamed folder is unreadable.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"discovered": n,
-		"repo":       h.svc.DiscoverSource("vms"),
-		"skipped":    skipNames(skipped),
-		// What to SAY and what to FLAG are two lists. A repository switched off on
-		// purpose belongs in the sentence - after a /config loss the operator has
-		// every reason to know it was not searched - but it is not a fault, so it
-		// must not hold the readability pill amber forever and swallow the
-		// save-success toast behind it. See repoSkip.Note.
-		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
-	}))
+	fields := discoverFields(res)
+	fields["repo"] = h.svc.DiscoverSource("vms")
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // handleBackup starts a single container backup ON THE SERVER and returns
@@ -1304,31 +1358,22 @@ func (h *Handler) handleBackupEverything(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
-// sourceParam returns the requested repo source from the ?source= query:
-// "offsite" selects the off-site replica, anything else (incl. absent) is the
-// local repo. Used by the snapshot-browser, restore and maintenance endpoints.
-// The frontend still sends only bare "offsite"; the "offsite:<id>" form is
-// accepted here (dormant) so a specific off-site target can be addressed later
-// without a second parsing seam.
+// sourceParam returns the repo source a ?source= query asks for, through
+// normalizeSource. Used by the snapshot browser, restore and maintenance routes.
 func sourceParam(r *http.Request) string {
 	return normalizeSource(r.URL.Query().Get("source"))
 }
 
-// normalizeSource maps a raw ?source= value onto a repo source the service
-// understands:
-//   - "offsite" → the domain's primary off-site replica (unchanged).
-//   - "offsite:<id>" → that specific off-site target, when <id> is plausibly
-//     formed; a well-formed-but-unknown id later resolves to the primary in
-//     offsiteTargetForSource, so a stale id never breaks a restore.
-//   - a malformed "offsite:<junk>" collapses to bare "offsite" (safe primary),
-//     never carrying the garbage token onward.
-//   - anything else (incl. absent) → the local repo.
+// normalizeSource maps a raw ?source= value onto a source the service
+// understands. "offsite" and a well-formed "offsite:<id>" stay as they are; a
+// malformed id becomes "offsite:" with no id, which offsiteTargetForSource
+// refuses; anything else is the local repo.
 func normalizeSource(raw string) string {
-	if id, ok := strings.CutPrefix(raw, "offsite:"); ok {
+	if id, ok := strings.CutPrefix(raw, offsiteSourcePrefix); ok {
 		if validOffsiteTargetID(id) {
-			return "offsite:" + id
+			return offsiteSourcePrefix + id
 		}
-		return "offsite"
+		return offsiteSourcePrefix
 	}
 	if raw == "offsite" {
 		return "offsite"
@@ -1392,7 +1437,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped, body.WithoutRuntime)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -1467,6 +1512,17 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": false, "reason": reason})
 }
 
+// stackParam reads {project}, a compose project name, which is laxer than a
+// container name but must not carry a path.
+func stackParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	project := r.PathValue("project")
+	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid stack name"})
+		return "", false
+	}
+	return project, true
+}
+
 // handleRestoreStack restores every backed-up member of a compose stack STOPPED,
 // then (optionally) starts them in dependency order. POST /api/stacks/{project}/restore
 // The {project} is a compose project name, which is laxer than a container name
@@ -1478,19 +1534,23 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 // per-member restore + start loops run detached. Per-member outcomes land in
 // the run history (each member's restore records a kind "restore" run).
 func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
-	project := r.PathValue("project")
-	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid stack name"})
+	project, ok := stackParam(w, r)
+	if !ok {
 		return
 	}
 	var body struct {
-		StartAfter bool `json:"startAfter"`
-		Confirm    bool `json:"confirm"`
+		StartAfter     bool   `json:"startAfter"`
+		Confirm        bool   `json:"confirm"`
+		StackDirSource string `json:"stackDirSource"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartRestoreStack(r.Context(), project, sourceParam(r), body.StartAfter, body.Confirm)
+	dirSource := ""
+	if body.StackDirSource != "" {
+		dirSource = normalizeSource(body.StackDirSource)
+	}
+	started, err := h.svc.StartRestoreStack(r.Context(), project, sourceParam(r), dirSource, body.StartAfter, body.Confirm)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1512,7 +1572,7 @@ func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
 	snapshot := r.URL.Query().Get("snapshot")
 	files, err := h.svc.ListSnapshotFiles(r.Context(), name, snapshot, sourceParam(r))
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if files == nil {
@@ -1544,7 +1604,7 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 	}
 	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -1577,7 +1637,7 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	}
 	target, started, err := h.svc.StartRestoreToPath(r.Context(), name, sourceParam(r), body.SnapshotID, body.TargetPath)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -1765,59 +1825,6 @@ func (h *Handler) handleTagSnapshot(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// applyItemRepo applies a per-item repository choice (#204) for one item, and
-// reports whether the request may continue. It writes its own failure envelope.
-//
-// One function for containers, VMs and folder sets because the rules are the
-// same in all three and the consequence of getting them wrong is the same: a
-// repository that moves is indistinguishable from one that works, until somebody
-// goes looking for a snapshot that is in the other place.
-//
-//   - unchanged is a no-op, so a form that re-sends the current value never
-//     trips the has-backups refusal below;
-//   - the choice is validated here rather than at the next backup;
-//   - an item that ALREADY has backups keeps its repository: the snapshots
-//     written so far stay where they are and nothing moves them, so pointing
-//     the item elsewhere would split its history across two places with no
-//     sign of it on screen.
-func (h *Handler) applyItemRepo(w http.ResponseWriter, want string, current func() (string, error), hasBackups func() (bool, error), set func(string) error) bool {
-	want = strings.TrimSpace(want)
-	now, err := current()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	if want == strings.TrimSpace(now) {
-		return true
-	}
-	if err := h.svc.validateItemRepoID(want); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	// The has-backups refusal. It was described here and in two other places and
-	// implemented for the file set only, so a container or VM with forty
-	// snapshots could be re-pointed through the API with ok:true - the review
-	// proved it by doing it. The interface's own lock is not a substitute: an
-	// item rebuilt by Discover after a /config loss has snapshots in the repo and
-	// no run rows, so lastBackup is null and the control stands open on exactly
-	// the item that must not move.
-	had, bErr := hasBackups()
-	if bErr != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(bErr))
-		return false
-	}
-	if had {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false,
-			"error": "cannot change the repository of an item that already has backups; they stay in the repository they were written to and nothing moves them. Delete its backups first"})
-		return false
-	}
-	if err := set(want); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	return true
-}
-
 func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1862,14 +1869,26 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// IdleWaitHours is how long a scheduled backup waits at most for the
 		// app to be idle; 0 switches the wait off.
 		IdleWaitHours *int `json:"idleWaitHours"`
-		// Repo is this item's OWN repository (#204): the ID of a named
-		// repository from Settings, or "" to put it back on the domain's. A
-		// pointer for the same reason as the fields above - a form that does
-		// not know about it must not clear it by omitting it, and clearing it
-		// MOVES where the next backup lands.
+		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
+		// Home is this item's own location: a named repository from Settings,
+		// or follow to take the domain's default.
+		Home *homeChoice `json:"home"`
+		// Copies is the item's own copy rule: which off-site targets it goes to,
+		// or follow to take the domain's default.
+		Copies *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	item := store.ItemRef{Domain: "containers", Key: name}
+	if err := h.svc.checkPlacementChange(r.Context(), item, change); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	if body.IncludeInSchedule != nil {
@@ -1882,22 +1901,6 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		pre, post := strOr(body.PreHook), strOr(body.PostHook)
 		if err := h.svc.SetContainerHooks(r.Context(), name, pre, post); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-	}
-	if body.Repo != nil {
-		if !h.applyItemRepo(w, *body.Repo, func() (string, error) {
-			// A container that has never been backed up has no target row, and
-			// that is not an error here: it simply has no override yet. Reading
-			// it as one refused the very case somebody most wants - choosing the
-			// destination BEFORE the first run puts data in the wrong place.
-			tg, tErr := h.store.GetTargetByContainer(name)
-			if tErr != nil {
-				return "", nil
-			}
-			return tg.Repo, nil
-		}, func() (bool, error) { return h.svc.containerHasBackups(r.Context(), name) },
-			func(id string) error { return h.store.SetTargetRepo(name, id) }) {
 			return
 		}
 	}
@@ -1975,7 +1978,14 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	placed, ok := h.applyPlacement(w, r, item, change)
+	if !ok {
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"dropped":   placed.Dropped,
+		"placement": h.svc.placementViewOf(r.Context(), store.ItemRef{Domain: "containers", Key: name}),
+	}))
 }
 
 // dueGates is the set of last-run queries the everyN cadence needs, one per
@@ -2694,10 +2704,59 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 		}
 		for _, r := range rows {
 			other, oErr := h.svc.resolveRepo(r.Repo)
-			if oErr != nil || !sameRepoLocation(other, loc) {
+			if oErr != nil || !repoLocationsOverlap(other, loc) {
 				continue
 			}
-			return fmt.Sprintf("the %s path is the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, r.Name)
+			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, h.svc.repoName(r))
+		}
+	}
+	return ""
+}
+
+// rejectNestedSettingsPath refuses a save that moves a domain path or an
+// off-site field into or around another repository or target. Like
+// rejectSettingsPathOnNamedRepo it checks only the fields this save changes.
+func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) string {
+	next := cur
+	next.ContainersPath, next.VMsPath, next.FlashPath, next.ConfigPath, next.FilesPath =
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath
+	next.ContainersOffsite, next.VMsOffsite, next.FlashOffsite, next.ConfigOffsite, next.FilesOffsite =
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite
+	for _, f := range []struct {
+		label, domain, loc, was string
+		field                   bool
+	}{
+		{"Containers", "containers", v.ContainersPath, cur.ContainersPath, false},
+		{"VMs", "vms", v.VMsPath, cur.VMsPath, false},
+		{"Flash", "flash", v.FlashPath, cur.FlashPath, false},
+		{"Config", "config", v.ConfigPath, cur.ConfigPath, false},
+		{"Folders", "files", v.FilesPath, cur.FilesPath, false},
+		{"Containers off-site", "containers", v.ContainersOffsite, cur.ContainersOffsite, true},
+		{"VMs off-site", "vms", v.VMsOffsite, cur.VMsOffsite, true},
+		{"Flash off-site", "flash", v.FlashOffsite, cur.FlashOffsite, true},
+		{"Config off-site", "config", v.ConfigOffsite, cur.ConfigOffsite, true},
+		{"Folders off-site", "files", v.FilesOffsite, cur.FilesOffsite, true},
+	} {
+		if strings.TrimSpace(f.loc) == "" || sameRepoLocation(strings.TrimSpace(f.loc), strings.TrimSpace(f.was)) {
+			continue
+		}
+		loc, err := h.svc.resolveRepo(f.loc)
+		if err != nil {
+			continue // rejectInvalidSettingsPaths already refused what cannot resolve
+		}
+		self := locationSelf{own: f.domain}
+		if f.field {
+			self = locationSelf{field: f.domain}
+			row, ok, err := h.store.FieldOffsiteTarget(f.domain)
+			if err != nil {
+				return "could not check this path against the off-site targets; try again"
+			}
+			if ok {
+				self.ids = []string{row.ID}
+			}
+		}
+		if err := h.svc.locationClash(next, loc, self); err != nil {
+			return fmt.Sprintf("the %s path: %s", f.label, scrubError(err))
 		}
 	}
 	return ""
@@ -2896,6 +2955,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	if msg := h.rejectNestedSettingsPath(v, cur); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
 	next := cur
 	applyOffsiteSettings(&next, v)
 	adoptMsg, adoptErr := h.svc.rejectAdoptionOverOwnSettings(next)
@@ -2988,6 +3051,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// here (the VM SSH test between them can burn its whole timeout), and writing
 	// its auth hash / session epoch back would revert a password change made
 	// meanwhile.
+	before := h.svc.fieldTargets()
 	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		cur.EncryptionEnabled = v.EncryptionEnabled
 		cur.ContainersEnabled = v.ContainersEnabled
@@ -3143,21 +3207,25 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	// Immutable off-site + an off-site retention policy both set: warn, don't
+	// Immutable off-site + an off-site retention policy both set: note it, don't
 	// fail. BombVault never prunes an append-only repo, so the policy is inert
-	// until enforced far-side. The "warnings" array is a backward-compatible
-	// extension of the ok envelope (absent when there is nothing to warn about).
-	var warnings []string
+	// until enforced far-side.
+	notes := []string{}
 	if slices.ContainsFunc(offsiteConfigDomains, func(d string) bool {
 		return offsiteImmutableFor(d, s) && h.svc.offsiteRetentionPolicy(s, d).Any()
 	}) {
-		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
+		notes = append(notes, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy; enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
 	}
-	if len(warnings) > 0 {
-		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings}))
-		return
+	warnings := []saveWarning{}
+	after := h.svc.fieldTargets()
+	for _, d := range offsiteConfigDomains {
+		b, hadRow := before[d]
+		a, hasRow := after[d]
+		if hadRow && hasRow {
+			warnings = append(warnings, h.svc.targetSaveWarnings(r.Context(), b, a)...)
+		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes}))
 }
 
 // handleDetectEncryption probes the configured repositories and reports which
@@ -3724,6 +3792,11 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &c) {
 		return
 	}
+	before, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if err := h.svc.SetCloudCreds(c); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -3734,7 +3807,11 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	if settings, sErr := h.store.GetSettings(); sErr == nil {
 		h.svc.syncAllPrimaryOffsiteTargets(settings)
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"warnings": h.svc.directCredsWarnings(r.Context(), before, func(direct, target store.OffsiteTarget) bool {
+			return direct.CredsRef == "" || target.CredsRef == ""
+		}),
+	}))
 }
 
 // handleGetCloudCredSets returns the additional named credential sets (#141
@@ -3758,6 +3835,16 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 			"s3SecretSet":     c.S3Secret != "",
 			"restPasswordSet": c.RESTPassword != "",
 		}
+		// The interface names a kept set in the reader's language from this.
+		if c.KeptFor == "" {
+			continue
+		}
+		out[i]["keptFor"] = c.KeptFor
+		if direct, err := h.store.GetNamedRepo(c.KeptFor); err == nil {
+			if target := h.svc.directOf(direct); target != "" {
+				out[i]["directOf"] = target
+			}
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"sets": out}))
 }
@@ -3773,11 +3860,20 @@ func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	before, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if err := h.svc.SetCloudCredSets(body.Sets); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"warnings": h.svc.directCredsWarnings(r.Context(), before, func(direct, target store.OffsiteTarget) bool {
+			return direct.CredsRef != "" || target.CredsRef != ""
+		}),
+	}))
 }
 
 // handleTestNotify sends a test notification using the POSTed config (so the
@@ -5196,6 +5292,26 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	if views == nil {
 		views = []VMView{}
 	}
+	targets, _ := h.store.ListVMTargets()
+	byName := make(map[string]store.VMTarget, len(targets))
+	for _, t := range targets {
+		byName[t.Name] = t
+	}
+	items := make([]placementItem, 0, len(views))
+	for _, v := range views {
+		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName, HomeBackups: v.homeBackups}
+		if t, ok := byName[v.LibvirtName]; ok {
+			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
+			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
+				it.LastSuccess = run.StartedAt
+			}
+		}
+		items = append(items, it)
+	}
+	placements := h.svc.listPlacements(r.Context(), "vms", items)
+	for i := range views {
+		views[i].Placement = placements[views[i].LibvirtName]
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
 }
 
@@ -5258,7 +5374,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -5345,9 +5461,10 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	// The source rides the BODY here (not ?source=), so normalize it explicitly —
 	// same contract as sourceParam, incl. the "offsite:<id>" per-target form.
-	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, normalizeSource(body.Source))
+	source := normalizeSource(body.Source)
+	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, source)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, source, err)
 		return
 	}
 	if !started {
@@ -5400,7 +5517,7 @@ func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 	// (bad/ambiguous id, no backups, repo locked). A mid-stream failure (after
 	// bytes flowed) can only truncate the body; the failed run is recorded.
 	if err != nil && !lw.wrote {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 	}
 }
 
@@ -5482,34 +5599,33 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 		Method            *string `json:"method"`
 		IncludeInSchedule *bool   `json:"includeInSchedule"`
 		ScheduleCadence   *string `json:"scheduleCadence"`
-		// Repo is this item's OWN repository (#204): the ID of a named
-		// repository from Settings, or "" to put it back on the domain's. A
-		// pointer for the same reason as the fields above - a form that does
-		// not know about it must not clear it by omitting it, and clearing it
-		// MOVES where the next backup lands.
+		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
 		// BlockBackup turns changed-block backups on or off.
 		BlockBackup *bool `json:"blockBackup"`
+		// Home is this item's own location: a named repository from Settings,
+		// or follow to take the domain's default.
+		Home *homeChoice `json:"home"`
+		// Copies is the item's own copy rule: which off-site targets it goes to,
+		// or follow to take the domain's default.
+		Copies *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	item := store.ItemRef{Domain: "vms", Key: name}
+	if err := h.svc.checkPlacementChange(r.Context(), item, change); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	if body.BlockBackup != nil {
 		if err := h.svc.SetVMBlockBackup(r.Context(), name, *body.BlockBackup); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-	}
-	if body.Repo != nil {
-		if !h.applyItemRepo(w, *body.Repo, func() (string, error) {
-			// Same as the container twin: no row yet means no override yet.
-			vm, vErr := h.store.GetVMTargetByName(name)
-			if vErr != nil {
-				return "", nil
-			}
-			return vm.Repo, nil
-		}, func() (bool, error) { return h.svc.vmHasBackups(r.Context(), name) },
-			func(id string) error { return h.store.SetVMRepo(name, id) }) {
 			return
 		}
 	}
@@ -5537,7 +5653,14 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	placed, ok := h.applyPlacement(w, r, item, change)
+	if !ok {
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"dropped":   placed.Dropped,
+		"placement": h.svc.placementViewOf(r.Context(), store.ItemRef{Domain: "vms", Key: name}),
+	}))
 }
 
 // handleVMScheduleIncludeAll sets the include_in_schedule flag for every VM on
@@ -5833,26 +5956,43 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 	if views == nil {
 		views = []FileSetView{}
 	}
+	sets, _ := h.store.ListFileSets()
+	byID := make(map[string]store.FileSet, len(sets))
+	for _, fs := range sets {
+		byID[fs.ID] = fs
+	}
+	items := make([]placementItem, 0, len(views))
+	for _, v := range views {
+		fs := byID[v.ID]
+		it := placementItem{
+			Key: v.ID, Identity: "fileset:" + v.Name,
+			Home:        store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen},
+			HomeBackups: v.homeBackups,
+		}
+		if run, _ := h.store.LastSuccessfulBackup(v.ID); run != nil {
+			it.LastSuccess = run.StartedAt
+		}
+		items = append(items, it)
+	}
+	placements := h.svc.listPlacements(r.Context(), "files", items)
+	for i := range views {
+		views[i].Placement = placements[views[i].ID]
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "fileSets": views})
 }
 
 // handleCreateFileSet creates a file set. POST /api/files/sets
-// body {name, path, excludes, enabled, repo}. Path is required here (only
-// DiscoverFileSets may store a path-less set) and, like the name, is fully
-// validated before the row is written.
+// body {name, path, excludes, enabled, repo, copies}. Without repo the set is
+// open and takes the Folders default at its first backup; with it, the empty
+// string for the domain repository included, it stays where it is put.
 func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name     string   `json:"name"`
-		Path     string   `json:"path"`
-		Excludes []string `json:"excludes"`
-		Enabled  *bool    `json:"enabled"`
-		// The named repository (#204) this set writes to, "" for the domain's
-		// own. Accepted at CREATE, not only on the later PATCH: the new-set
-		// dialog shows the picker, so a choice made there has to arrive. Without
-		// it the set was created on the domain repository and the picker's
-		// answer was thrown away silently - the field even read back correctly
-		// afterwards, because it re-rendered from the same discarded state.
-		Repo string `json:"repo"`
+		Name     string        `json:"name"`
+		Path     string        `json:"path"`
+		Excludes []string      `json:"excludes"`
+		Enabled  *bool         `json:"enabled"`
+		Repo     *string       `json:"repo"`
+		Copies   *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -5866,7 +6006,10 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		Path:     strings.TrimSpace(body.Path),
 		Excludes: body.Excludes,
 		Enabled:  enabled,
-		Repo:     strings.TrimSpace(body.Repo),
+	}
+	if body.Repo != nil {
+		fs.Repo = strings.TrimSpace(*body.Repo)
+		fs.RepoChosen = store.RepoChosen
 	}
 	if fs.Path == "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "path is required"})
@@ -5874,12 +6017,6 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 	}
 	// A new set's path counts as changed, so it has to exist.
 	if err := h.svc.validateFileSet(fs, true); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	// The same check the PATCH path applies: the repository has to exist and be
-	// switched on, refused here rather than at the first backup.
-	if err := h.svc.validateItemRepoID(fs.Repo); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -5897,19 +6034,16 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	created, err := h.store.CreateFileSet(fs)
+	created, err := h.svc.createFileSet(fs, body.Copies)
 	if err != nil {
 		// A duplicate name violates the UNIQUE constraint; report it clearly.
 		if strings.Contains(err.Error(), "UNIQUE") {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return
 		}
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
-	// The repository rides along in the INSERT (see CreateFileSet), so there is no
-	// window in which the set exists on the domain repository while the caller
-	// believes it is on the chosen one.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"id": created.ID}))
 }
 
@@ -5940,13 +6074,26 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		// must never clear a selection by omitting it. [] decodes non-nil and
 		// is refused downstream (D-06), never silently stored.
 		SelectedPaths *[]string `json:"selectedPaths"`
-		// The set's OWN repository (#204); empty puts it back on the Folders
-		// domain repository. A pointer for the same reason as the two fields
-		// above: a form that does not know about it must not clear it by
-		// omitting it, and clearing it MOVES where the next backup lands.
+		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
+		// Home is this item's own location: a named repository from Settings,
+		// or follow to take the domain's default.
+		Home *homeChoice `json:"home"`
+		// Copies is the item's own copy rule: which off-site targets it goes to,
+		// or follow to take the domain's default.
+		Copies *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	item := store.ItemRef{Domain: "files", Key: id}
+	if err := h.svc.checkPlacementChange(r.Context(), item, change); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	fs, err := h.store.GetFileSet(id)
@@ -5989,19 +6136,15 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// A rename and a repository change both move where the set's next backup
-	// writes, so either one needs the files domain lock: BackupFileSet holds it
-	// for its whole run, and a change landing mid-backup would leave that run's
-	// snapshot behind the old identity while the set already points at the new
-	// one.
+	// A rename moves where the set's next backup writes, so it needs the files
+	// domain lock: BackupFileSet holds it for its whole run, and a rename
+	// landing mid-backup would leave that run's snapshot behind the old name
+	// while the set already points at the new one. A home change in the same
+	// request brings the same lock along in writeItemPlacement, so it is left
+	// to take it there.
 	nameChanging := fs.Name != oldName
-	repoChanging := body.Repo != nil && strings.TrimSpace(*body.Repo) != strings.TrimSpace(fs.Repo)
-	if nameChanging || repoChanging {
-		reason := "repository change"
-		if nameChanging {
-			reason = "rename"
-		}
-		unlock, ok := h.svc.tryLockDomainFor("files", reason)
+	if nameChanging && change.Home == nil {
+		unlock, ok := h.svc.tryLockDomainFor("files", "rename")
 		if !ok {
 			op, busy := h.svc.domainBusy("files")
 			if !busy {
@@ -6017,70 +6160,21 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	// (DeleteBackupsFileSet then can't find them). Path, excludes and enabled
 	// edits stay allowed; only the name is load-bearing for the snapshot tags.
 	if nameChanging {
-		hasBackups, bErr := h.svc.fileSetHasBackups(r.Context(), id)
-		if bErr != nil && !errors.Is(bErr, errFileSetRepoUnreachable) {
+		presence, bErr := h.svc.itemBackups(r.Context(), store.ItemRef{Domain: "files", Key: id})
+		if bErr != nil && presence != backupsUnreadable {
 			writeJSON(w, http.StatusOK, failEnvelope(bErr))
 			return
 		}
-		if hasBackups {
+		if presence != backupsNone {
 			msg := "cannot rename a file set that already has backups; create a new set instead"
-			if errors.Is(bErr, errFileSetRepoUnreachable) {
-				msg = "cannot rename: " + bErr.Error()
+			if presence == backupsUnreadable {
+				msg = fmt.Sprintf("cannot rename: %s: %v", errFileSetRepoUnreachable, bErr)
 			}
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 			return
 		}
-	}
-	// The repository override goes through its own store setter, not
-	// UpdateFileSet.
-	//
-	// Refused once the set has backups, for the same reason as a rename above
-	// and with more at stake: its snapshots live in the repo it used, nothing
-	// re-homes them, and the set would look healthy while its history sat in a
-	// repository nothing points at. Unlike a rename, the damage is invisible: a
-	// backup to the new repo succeeds, so nothing ever reports an error. The
-	// files lock above already covers this block too.
-	repoChanged := false
-	if body.Repo != nil {
-		want := strings.TrimSpace(*body.Repo)
-		if want != strings.TrimSpace(fs.Repo) {
-			hasBackups, bErr := h.svc.fileSetHasBackups(r.Context(), id)
-			if bErr != nil && !errors.Is(bErr, errFileSetRepoUnreachable) {
-				writeJSON(w, http.StatusOK, failEnvelope(bErr))
-				return
-			}
-			if hasBackups {
-				msg := "cannot change the repository of a file set that already has backups; delete its backups first, or create a new set"
-				if errors.Is(bErr, errFileSetRepoUnreachable) {
-					msg = "cannot change the repository: " + bErr.Error()
-				}
-				writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
-				return
-			}
-			// Checked once here so an unusable choice is refused at the
-			// boundary rather than at the next backup, where it would surface as
-			// a restic error in a run record nobody is watching.
-			if vErr := h.svc.validateItemRepoID(want); vErr != nil {
-				writeJSON(w, http.StatusOK, failEnvelope(vErr))
-				return
-			}
-			// The target repository may hold leftover fileset:<name>
-			// snapshots of an unrelated folder.
-			if err := h.svc.fileSetNameAdoptable(r.Context(), fs.Name, want, fs.Path); err != nil {
-				writeJSON(w, http.StatusOK, failEnvelope(err))
-				return
-			}
-			if sErr := h.store.SetFileSetRepo(id, want); sErr != nil {
-				writeJSON(w, http.StatusOK, failEnvelope(sErr))
-				return
-			}
-			fs.Repo = want
-			repoChanged = true
-		}
-	}
-	// A repository change above already checked the new name against the
-	// final repo.
-	if fs.Name != oldName && !repoChanged {
+		// The new name's fileset:<name> snapshots can still be in the
+		// repository, left behind by a set that was removed without them.
 		if err := h.svc.fileSetNameAdoptable(r.Context(), fs.Name, fs.Repo, fs.Path); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
@@ -6090,6 +6184,12 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	// (UpdateFileSetClearingSelection), so either the whole save lands or the
 	// row is untouched, and a failure cannot leave the new path live with the
 	// old-anchor selection still stored.
+	if fs.Name != oldName {
+		if err := h.svc.moveFileSetRule(oldName, fs.Name); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+	}
 	var upErr error
 	if pathChanged {
 		upErr = h.store.UpdateFileSetClearingSelection(fs)
@@ -6097,6 +6197,11 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		upErr = h.store.UpdateFileSet(fs)
 	}
 	if upErr != nil {
+		if fs.Name != oldName {
+			if err := h.svc.moveFileSetRule(fs.Name, oldName); err != nil {
+				log.Printf("api: file set %q: its copy rule stays under the new name after the rename failed: %v", oldName, err) //nolint:gosec // G706: the name is %q-quoted
+			}
+		}
 		if strings.Contains(upErr.Error(), "UNIQUE") {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return
@@ -6135,7 +6240,17 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	// Written last, after every other field landed: WritePlacement reads the
+	// set's name fresh inside its own transaction, so it keys the copy rule by
+	// the new name on its own when this same request also renamed the set.
+	placed, ok := h.applyPlacement(w, r, item, change)
+	if !ok {
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"dropped":   placed.Dropped,
+		"placement": h.svc.placementViewOf(r.Context(), store.ItemRef{Domain: "files", Key: id}),
+	}))
 }
 
 // handleDeleteFileSet removes a file set (row + run history) WITHOUT touching
@@ -6154,15 +6269,14 @@ func (h *Handler) handleDeleteFileSet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleDeleteBackupsFileSet removes ALL backups of a file set (every
-// fileset:<Name>-tagged snapshot, pruned) and forgets the set from the store.
-// DELETE /api/files/sets/{id}/backups
+// handleDeleteBackupsFileSet removes every backup of a file set from the
+// selected source. DELETE /api/files/sets/{id}/backups?source=
 func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
 		return
 	}
-	if err := h.svc.DeleteBackupsFileSet(r.Context(), id); err != nil {
+	if err := h.svc.DeleteBackupsFileSet(r.Context(), id, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -6267,7 +6381,7 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 	}
 	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -6287,7 +6401,7 @@ func (h *Handler) handleListSnapshotFilesFileSet(w http.ResponseWriter, r *http.
 	snapshot := r.URL.Query().Get("snapshot")
 	files, err := h.svc.ListSnapshotFilesFileSet(r.Context(), id, snapshot, sourceParam(r))
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if files == nil {
@@ -6320,7 +6434,7 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 	}
 	target, started, err := h.svc.StartRestoreFileSetFiles(r.Context(), id, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -6335,7 +6449,7 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 // sets lost with the database become restorable again. POST /api/files/discover
 func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
-	n, skipped, err := h.svc.DiscoverFileSets(r.Context(), probe)
+	res, err := h.svc.DiscoverFileSets(r.Context(), probe)
 	if err != nil {
 		// The failure envelope carries the partial result too. The pass searches
 		// the named repositories BEFORE the domain's own, so when the domain's own
@@ -6344,26 +6458,16 @@ func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 		// configuration. "Could not open the domain repository" and "…and nothing
 		// was rebuilt" are two different answers.
 		body := failEnvelope(err)
-		body["discovered"] = n
-		body["skipped"] = skipNames(skipped)
-		body["skippedNeedsAction"] = len(actionableSkips(skipped)) > 0
+		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
 	// `repo` names the folder this pass actually read (#196): the wizard asks
 	// for an off-site repository a step earlier and then reads the PRIMARY
 	// path, and an empty answer about an unnamed folder is unreadable.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"discovered": n,
-		"repo":       h.svc.DiscoverSource("files"),
-		"skipped":    skipNames(skipped),
-		// What to SAY and what to FLAG are two lists. A repository switched off on
-		// purpose belongs in the sentence - after a /config loss the operator has
-		// every reason to know it was not searched - but it is not a fault, so it
-		// must not hold the readability pill amber forever and swallow the
-		// save-success toast behind it. See repoSkip.Note.
-		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
-	}))
+	fields := discoverFields(res)
+	fields["repo"] = h.svc.DiscoverSource("files")
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // handleForeignOpen opens ANOTHER BombVault instance's repository READ-ONLY

@@ -23,7 +23,7 @@ func TestLatestContainerBackupTimesMarksTheDumpOnlyContainer(t *testing.T) {
 		{ID: "3333cccc", Time: "2026-09-02T00:00:00Z", Tags: []string{"dbdump:sonarr"}},
 	}
 
-	got, err := svc.LatestContainerBackupTimes(context.Background())
+	got, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}

@@ -136,7 +136,7 @@ func (s *Service) planBlockBackup(ctx context.Context, name string, domain virsh
 
 // backupVMBlocks runs the changed-block backup. A *backup.BlocksUnavailableError
 // means nothing was written and no run recorded.
-func (s *Service) backupVMBlocks(ctx context.Context, name string, tg store.VMTarget, plan vmBlockPlan, repo string, mode restic.Mode, formerNames []string, runs backup.Runs) (backup.VMBlocksResult, error) {
+func (s *Service) backupVMBlocks(ctx context.Context, name string, tg store.VMTarget, plan vmBlockPlan, repo string, mode restic.Mode, extraTags, formerNames []string, runs backup.Runs) (backup.VMBlocksResult, error) {
 	var latest *backup.BlocksLatest
 	snaps, err := s.snapshotsOwnedBy(ctx, repo, mode, s.vmIdentity(name))
 	if err != nil {
@@ -160,7 +160,7 @@ func (s *Service) backupVMBlocks(ctx context.Context, name string, tg store.VMTa
 		Latest:      latest,
 		Host:        plan.host,
 		Checkpoints: s.blockCheckpointFile(tg.ID),
-		Restic:      &vmBlockRestic{engine: s.engine, mode: mode},
+		Restic:      &vmBlockRestic{engine: s.engine, mode: mode, extraTags: extraTags, svc: s},
 		Runs:        runs,
 		ThawFailed:  func(err error) { s.notifyGuestStillFrozen(context.WithoutCancel(ctx), name, err) },
 	})
@@ -473,6 +473,21 @@ func (d *nbdDisk) ranges(context string, keep func(uint32) bool) ([]backup.Range
 type vmBlockRestic struct {
 	engine ResticEngine
 	mode   restic.Mode
+	// extraTags go on every snapshot of the run, after the run's own.
+	extraTags []string
+	// svc clears stale locks when one stops a write. A remote home is not
+	// unlocked before the run, so without it a lock left by a killed run
+	// would fail every later one.
+	svc *Service
+}
+
+// healed runs op, once more after clearing stale locks when svc is set and a
+// lock was in the way.
+func (r *vmBlockRestic) healed(ctx context.Context, repo string, op func() error) error {
+	if r.svc == nil {
+		return op()
+	}
+	return r.svc.retryAfterUnlock(ctx, repo, r.mode, op)
 }
 
 var (
@@ -503,7 +518,11 @@ func (r *vmBlockRestic) Nodes(ctx context.Context, repo, snapshotID, dir string)
 }
 
 func (r *vmBlockRestic) BackupDir(ctx context.Context, repo, dir, parent string, tags []string) (backup.BlockBackup, error) {
-	sum, err := r.engine.(vmBlockEngine).BackupDirFrom(ctx, repo, dir, parent, tags, r.mode)
+	var sum restic.Summary
+	err := r.healed(ctx, repo, func() (err error) {
+		sum, err = r.engine.(vmBlockEngine).BackupDirFrom(ctx, repo, dir, parent, withTags(tags, r.extraTags), r.mode)
+		return err
+	})
 	if err != nil {
 		return backup.BlockBackup{}, err
 	}
@@ -530,7 +549,7 @@ func (r *vmBlockRestic) SnapshotIDsTagged(ctx context.Context, repo, tag string)
 }
 
 func (r *vmBlockRestic) Forget(ctx context.Context, repo string, ids []string) error {
-	return r.engine.Forget(ctx, repo, ids, false, r.mode)
+	return r.healed(ctx, repo, func() error { return r.engine.Forget(ctx, repo, ids, false, r.mode) })
 }
 
 func (r *vmBlockRestic) DumpDir(ctx context.Context, repo, snapshotID, dir string, w io.Writer) error {

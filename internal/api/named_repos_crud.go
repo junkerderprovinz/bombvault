@@ -52,10 +52,21 @@ type namedRepoView struct {
 	Enabled   bool `json:"enabled"`
 	// Compression is restic's --compression for backups written here.
 	Compression string `json:"compression"`
+	// OffPremises counts the repository as a site of its own for sites and 3-2-1
+	// on the cards. It never changes what is copied.
+	OffPremises bool `json:"offPremises"`
 	// InUse is how many containers, VMs and folder sets currently point here.
 	// The interface needs it to explain why a repository cannot be deleted
 	// BEFORE the attempt, rather than only in the error afterwards.
 	InUse int `json:"inUse"`
+	// CompanionOf is the off-site target this repository is the direct
+	// repository of, "" for a plain named repository.
+	CompanionOf string `json:"companionOf"`
+	// DirectOf is the target a direct repository without a name of its own goes by.
+	DirectOf string `json:"directOf,omitempty"`
+	// CompanionLost marks a direct repository whose target an import deleted:
+	// it still holds backups, but nothing on this box links to it anymore.
+	CompanionLost bool `json:"companionLost"`
 }
 
 func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
@@ -74,8 +85,10 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 		out = append(out, namedRepoView{
 			ID: t.ID, Name: t.Name, Repo: t.Repo, CredsRef: t.CredsRef,
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
-			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled, InUse: n,
+			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
+			OffPremises: t.OffPremises, InUse: n,
 			Compression: normalizedCompression(t.Compression),
+			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost, DirectOf: h.svc.directOf(t),
 		})
 	}
 	return out
@@ -105,6 +118,10 @@ type namedRepoBody struct {
 	Immutable     *bool   `json:"immutable"`
 	Enabled       *bool   `json:"enabled"`
 	Compression   *string `json:"compression"`
+	// CompanionOf routes the create to handleCreateDirectRepo instead: a direct
+	// repository takes everything but its name and location from the target.
+	CompanionOf *string `json:"companionOf"`
+	OffPremises *bool   `json:"offPremises"`
 }
 
 // applyTo merges the sent fields onto a row.
@@ -146,6 +163,9 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 	}
 	if b.Compression != nil {
 		t.Compression = strings.ToLower(strings.TrimSpace(*b.Compression))
+	}
+	if b.OffPremises != nil {
+		t.OffPremises = *b.OffPremises
 	}
 }
 
@@ -194,8 +214,12 @@ func staticNamedRepoRefusals(loc, mountRoot string) string {
 // such a row could otherwise never be edited again, and the two safety toggles
 // that ARE on the card would be unreachable on exactly the repository somebody
 // most wants to protect.
-func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) error {
-	if t.Name == "" {
+// checkLocation is true for a create and for an edit that moves the location,
+// the same scoping handleUpdateOffsiteTarget uses. A row that already sits
+// inside another place, which an import can install, would otherwise be refused
+// every edit over a field the request does not touch, down to switching it off.
+func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass, checkLocation bool) error {
+	if t.Name == "" && t.CompanionOf == "" {
 		return errors.New("a repository needs a name, so it can be told apart in the picker")
 	}
 	// The location refusals that need nothing but the string and the mount root,
@@ -216,22 +240,15 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	if err != nil {
 		return err
 	}
-	// A named repository may not sit on a DOMAIN's own repository either. The row
-	// would then answer for that domain: namedRepoForLocation matches on the
-	// resolved location and both primaryModeFor and primaryIsImmutable consult it
-	// first, so every backup of the domain would silently take the named row's
-	// (empty) credential set instead of the domain's saved one, and the #152
-	// append-only interlock would read the named row's flag in place of the
-	// domain's - two rows over one repository, and the operator with no way to
-	// tell which of them the next prune will obey.
-	//
-	// The same refusal covers a domain's OFF-SITE DESTINATION, and that one is
-	// worse than it sounds. A destination is often a local share, so a named
-	// repository could legally be created on it; the items pointed there then
-	// write their ONLY copy into the place replication treats as the second copy.
-	// copyToOffsiteTarget would find source and destination identical, copy
-	// nothing, stamp the run a success - and then run the OFF-SITE retention
-	// policy, a tag-scoped forget plus prune, over that only copy.
+	if !checkLocation {
+		return nil
+	}
+	// A named repository may not sit on, in or around a domain's own repository,
+	// a domain's off-site destination, an off-site target or another named
+	// repository. Two rows over one place, or one inside the other, would give
+	// every question about that place two answers, and a destination that is
+	// really a named repository would take an item's only copy while
+	// replication still treats it as a second one.
 	//
 	// A settings read that fails takes the whole validation with it rather than
 	// dropping the guard: a refusal that quietly does not apply when the database
@@ -240,54 +257,7 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	if sErr != nil {
 		return fmt.Errorf("read settings to check this location: %w", sErr)
 	}
-	for _, d := range []string{"containers", "vms", "flash", "config", "files", "zfs"} {
-		if own, oErr := h.svc.repoFor(settings, d, "local"); oErr == nil && sameRepoLocation(own, loc) {
-			return fmt.Errorf("that is already the %s domain's own repository; a named repository has to be a different place", d)
-		}
-		if off := h.svc.offsiteRepoFor(d, settings); off != "" {
-			if offLoc, rErr := h.svc.resolveRepo(off); rErr == nil && sameRepoLocation(offLoc, loc) {
-				return fmt.Errorf("that is already the %s domain's off-site destination; backups written there would be their own off-site copy", d)
-			}
-		}
-	}
-	// Every off-site DESTINATION row too, not only the per-domain setting: a
-	// domain can carry several.
-	if targets, tErr := h.store.ListOffsiteTargets(); tErr == nil {
-		for _, t := range targets {
-			if tLoc, rErr := h.svc.resolveRepo(t.Repo); rErr == nil && sameRepoLocation(tLoc, loc) {
-				return fmt.Errorf("that is already the off-site destination %q; backups written there would be their own off-site copy", t.Name)
-			}
-		}
-	}
-	// No two named repositories may name the SAME place. Two rows over one
-	// repository is not a second repository, it is two labels for one, and every
-	// question asked about it afterwards - whose credentials, whose bandwidth
-	// caps, is it append-only, is it still in use - would have two answers. It
-	// is also how the location-in-use refusal would be walked around: add a
-	// second row with the same location, point the items at it, delete the
-	// first.
-	rows, lErr := h.store.ListNamedRepos()
-	if lErr != nil {
-		return lErr
-	}
-	for _, r := range rows {
-		if r.ID == t.ID {
-			continue
-		}
-		// Compared NORMALISED. A remote location is a URL-ish string, so
-		// "b2:bucket/cold" and "b2:bucket/cold/" name the same place while
-		// differing as bytes, and the trailing slash was enough to register a
-		// second row over one repository - which is precisely the walk-around this
-		// refusal exists to close.
-		if other, oErr := h.svc.resolveRepo(r.Repo); oErr == nil && sameRepoLocation(other, loc) {
-			// The NAME is not echoed: it is free text, a name carrying a slash is
-			// redacted by scrubError on the way out, and the sentence then points
-			// at "[path]". Saying which repository it is happens in the interface,
-			// which has the list.
-			return errors.New("another repository already points at that location; two rows over one place would give every question about it two answers")
-		}
-	}
-	return nil
+	return h.svc.locationClash(settings, loc, locationSelf{ids: []string{t.ID}})
 }
 
 // sameRepoLocation reports whether two RESOLVED locations name the same place.
@@ -336,11 +306,18 @@ func (h *Handler) handleCreateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	if body.CompanionOf != nil && strings.TrimSpace(*body.CompanionOf) != "" {
+		h.handleCreateDirectRepo(w, r, body)
+		return
+	}
 	// A new repository is ON unless the caller says otherwise: somebody who just
 	// created one means to use it.
 	row := store.OffsiteTarget{Role: store.RoleRepo, Enabled: true}
 	body.applyTo(&row)
-	if err := h.validateNamedRepo(row, body.StorageClass != nil); err != nil {
+	if body.OffPremises == nil {
+		row.OffPremises = restic.IsRemoteRepo(row.Repo)
+	}
+	if err := h.validateNamedRepo(row, body.StorageClass != nil, true); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -371,10 +348,21 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	if body.CompanionOf != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false,
+			"error": "a repository is tied to a target when it is created or connected, not by an edit"})
+		return
+	}
+	if row.CompanionOf != "" {
+		if fields := mirroredFieldsChanged(body, row); len(fields) > 0 {
+			placementFail(w, errMirroredField, map[string]any{"fields": fields})
+			return
+		}
+	}
 	current := strings.TrimSpace(row.Repo)
 	moving := body.Repo != nil && strings.TrimSpace(*body.Repo) != current
 	body.applyTo(&row)
-	if err := h.validateNamedRepo(row, body.StorageClass != nil); err != nil {
+	if err := h.validateNamedRepo(row, body.StorageClass != nil, moving); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -390,29 +378,39 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// leaves the other fields saved and the location where it was.
 	newLocation := row.Repo
 	row.Repo = current
+	// The mark says whether the location stands off the premises, so a move that
+	// brings no answer of its own takes the new location's. A direct repository
+	// counts with its target and keeps its cleared mark.
+	mark := row.OffPremises
+	if body.OffPremises == nil && row.CompanionOf == "" {
+		mark = restic.IsRemoteRepo(newLocation)
+	}
 	saved, err := h.store.UpsertOffsiteTarget(row)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	if moving {
-		n, mErr := h.store.SetNamedRepoLocationIfUnused(id, newLocation)
+		use, mErr := h.store.SetNamedRepoLocationIfUnused(id, newLocation, mark)
 		if mErr != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(mErr))
 			return
 		}
-		if n != 0 {
+		if use.InUse() {
 			// The rest of the edit IS saved - name, limits, flags - and the answer
 			// says so. Reporting a bare failure over a request that did write
 			// something leaves the operator with a screen that disagrees with the
 			// database, which is how a "failed" save gets repeated until it does
 			// something unintended.
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false,
-				"error": "this repository is in use, so its location was NOT moved; the backups already written stay where they are. Everything else you changed was saved. Create a second repository and point the items at it instead",
-				"repo":  h.namedRepoViews([]store.OffsiteTarget{saved})[0]})
+			placementFail(w, errRepoInUse, map[string]any{
+				"error":          "this repository is in use, so its location was NOT moved; the backups already written stay where they are. Everything else you changed was saved. Create a second repository and point the items at it instead",
+				"items":          use.Items,
+				"defaultDomains": append([]string{}, use.DefaultDomains...),
+				"repo":           h.namedRepoViews([]store.OffsiteTarget{saved})[0],
+			})
 			return
 		}
-		saved.Repo = newLocation
+		saved.Repo, saved.OffPremises = newLocation, mark
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repo": h.namedRepoViews([]store.OffsiteTarget{saved})[0]})
 }
@@ -421,24 +419,32 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 //
 // Refused while anything still points here. Deleting would put those items back
 // on their domain repository silently, and their next backup would land
-// somewhere else and look exactly like a working backup.
+// somewhere else and look exactly like a working backup. A direct repository is
+// refused outright and the answer names its target, which is where it goes.
 func (h *Handler) handleDeleteNamedRepo(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimSpace(r.PathValue("id"))
-	if _, err := h.store.GetNamedRepo(id); err != nil {
+	row, err := h.store.GetNamedRepo(id)
+	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no such repository"})
 		return
 	}
 	// Counted and deleted in ONE transaction, so an item that starts pointing
 	// here while this request is in flight blocks the delete instead of being
 	// put back on its domain repository without a word.
-	n, err := h.store.DeleteNamedRepoIfUnused(id)
+	use, err := h.store.DeleteNamedRepoIfUnused(id)
+	if errors.Is(err, store.ErrDirectRepo) {
+		placementFail(w, err, map[string]any{"target": h.offsiteTargetRef(row.CompanionOf)})
+		return
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if n > 0 {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false,
-			"error": "this repository is still in use; point those items somewhere else first"})
+	if use.InUse() {
+		placementFail(w, errRepoInUse, map[string]any{
+			"items":          use.Items,
+			"defaultDomains": append([]string{}, use.DefaultDomains...),
+		})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})

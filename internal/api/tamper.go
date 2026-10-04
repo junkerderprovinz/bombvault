@@ -70,7 +70,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	if len(targets) == 0 {
 		// No run row: a manual caller gets the error, and the scheduler already
 		// logs an immutable flag without a repo.
-		return TamperVerdict{}, errors.New("no off-site repo configured for this domain")
+		return TamperVerdict{}, errNoOffsiteRepo
 	}
 	// Open the run row now and settle it from the named returns, so every
 	// outcome from here on leaves a dated row.

@@ -31,7 +31,7 @@ Monte o socket Docker, o flash (`/boot`) e a raiz **Host Data** (`/mnt`) como mo
 
 As cópias de conjuntos de dados ZFS também precisam deste modo: o host só monta o instantâneo de um conjunto depois de o container ter arrancado. Veja [Conjuntos de dados ZFS](zfs-datasets.md).
 
-Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Armazenamento, Caminhos de backup**. Cada campo de caminho tem também um interruptor **Local / Remoto** integrado: um caminho pode ser um remoto restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) em vez de uma pasta local, e o backup vai diretamente para lá, sem cópia local separada; consulte [Repositórios primários remotos](offsite-recovery.md#remote-primary-repositories).
+Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Armazenamento, Caminhos de backup**. Cada campo de caminho tem também um interruptor **Local / Remoto** integrado: um caminho pode ser um remoto restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) em vez de uma pasta local, e o backup vai diretamente para lá, sem cópia local separada; consulte [Repositórios primários remotos](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verificação de integração com o host"
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta.
@@ -84,7 +84,7 @@ O template adiciona `--add-host=host.docker.internal:host-gateway` para que o co
 
 Configure uma réplica externa na página **Definições, Externo**. Consulte [Externo e recuperação](offsite-recovery.md) para o fluxo de trabalho completo (imutável/append-only, teste de adulteração e ensaios de DR). Em resumo:
 
-- **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`). O Backblaze B2 não tem aqui um backend nativo: acede-se através do seu endpoint S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), com o ID da chave e a chave de aplicação como credenciais S3.
 - **Credenciais de nuvem partilhadas** são guardadas encriptadas em Definições, Acesso à nuvem, Credenciais de nuvem partilhadas.
 - **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Integrações, SSH do anfitrião** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
 - **Cópia externa:** o BombVault replica novos instantâneos com `restic copy` numa base de melhor esforço, além de um repositório primário (normalmente local). Cada domínio tem o seu próprio agendamento externo, mais um botão **Replicar agora**.

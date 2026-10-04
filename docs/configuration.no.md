@@ -31,7 +31,7 @@ Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vi
 
 Sikkerhetskopi av ZFS-datasett trenger også denne modusen: verten monterer øyeblikksbildet av et datasett først etter at containeren har startet. Se [ZFS-datasett](zfs-datasets.md).
 
-Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Lagring, Sikkerhetskopistier**. Hvert stifelt har også en **Lokal / Ekstern**-bryter rett ved siden av: en sti kan være en restic-remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
+Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Lagring, Sikkerhetskopistier**. Hvert stifelt har også en **Lokal / Ekstern**-bryter rett ved siden av: en sti kan være en restic-remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) i stedet for en lokal mappe, og da sikkerhetskopieres det rett dit uten egen lokal kopi; se [Eksterne primære arkiver](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host-integrasjonssjekk"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.
@@ -84,7 +84,7 @@ Malen legger til `--add-host=host.docker.internal:host-gateway` så containeren 
 
 Sett opp en ekstern replika på **Innstillinger, Off-site**-siden. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
 
-- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 har ingen innebygd backend her: nå den via S3-endepunktet (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), med nøkkel-ID-en og applikasjonsnøkkelen som S3-legitimasjon.
 - **Delt skylegitimasjon** lagres kryptert under Innstillinger, Skytilgang, Delt skylegitimasjon.
 - **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
 - **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis, i tillegg til et (vanligvis lokalt) primært repo. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.

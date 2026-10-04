@@ -7,6 +7,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { I18nProvider, en, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { OkEnvelope } from "../../lib/api";
+import { IconClose } from "../../components/navGlyphs";
 
 let testAnswer: OkEnvelope & { libvirt?: boolean; libvirtError?: string } = { ok: true, libvirt: true };
 
@@ -76,7 +77,10 @@ it("turns the button red with Not connected and a cross, shakes it and gives the
   expect(button.className).toContain("bg-statusFailSolid");
   expect(button.className).toContain("glim-shake");
   expect(button.querySelector(".glim-check-draw")).toBeNull();
-  expect(button.querySelector('svg[viewBox="2 2 10 10"]')).not.toBeNull();
+  const { container, unmount } = render(<IconClose />);
+  const cross = container.querySelector("svg")?.innerHTML;
+  unmount();
+  expect([...button.querySelectorAll("svg")].map((svg) => svg.innerHTML)).toContain(cross);
   const reason = screen.getByText("Permission denied (publickey)");
   expect(reason.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

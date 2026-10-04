@@ -170,6 +170,8 @@ export const FLASH_PLUGIN_PATH_LTR_FRAGMENTS = ["/boot/config/plugins/{name}.plg
 /** Where the public API lives, and where its description is. */
 export const API_BASE_LTR_FRAGMENTS = ["/api/v1"] as const;
 export const API_DESCRIPTION_LTR_FRAGMENTS = ["/api/v1/openapi.json"] as const;
+/** The two rest-server paths a direct repository may take, the longer first. */
+export const REST_PATH_EXAMPLE_LTR_FRAGMENTS = ["/user/files-direct", "/files-direct"] as const;
 
 /**
  * LTR_FRAGMENTS_BY_KEY maps each translation key to its fragment list. The
@@ -207,6 +209,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "flash.pluginRestored": FLASH_PLUGIN_PATH_LTR_FRAGMENTS,
   "api.hint": API_BASE_LTR_FRAGMENTS,
   "api.addressHint": API_DESCRIPTION_LTR_FRAGMENTS,
+  "placementCode.restPathTooDeep": REST_PATH_EXAMPLE_LTR_FRAGMENTS,
 } as const satisfies Record<string, readonly string[]>;
 
 /**

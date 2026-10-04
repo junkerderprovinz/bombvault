@@ -50,6 +50,36 @@ func TestTrueNASCatalogTracksLatestRelease(t *testing.T) {
 	}
 }
 
+// TestAndroidAppTracksLatestRelease checks the version android/gradle.properties
+// carries, which F-Droid reads at the release tag to build the app.
+func TestAndroidAppTracksLatestRelease(t *testing.T) {
+	repoRoot := filepath.Join("..", "..")
+	latest, err := latestReleaseNoteVersion(filepath.Join(repoRoot, ".github", "release-notes"))
+	if err != nil {
+		t.Skipf("cannot determine latest release (%v), skipping app version check", err)
+	}
+	raw, err := os.ReadFile(filepath.Join(repoRoot, "android", "gradle.properties")) //nolint:gosec // G304: test reads a repo-local file at a fixed relative path
+	if err != nil {
+		t.Fatal(err)
+	}
+	name := regexp.MustCompile(`(?m)^bombvaultVersion=(\S+)\s*$`).FindSubmatch(raw)
+	code := regexp.MustCompile(`(?m)^bombvaultVersionCode=(\d+)\s*$`).FindSubmatch(raw)
+	if name == nil || code == nil {
+		t.Fatal("android/gradle.properties: bombvaultVersion or bombvaultVersionCode line missing")
+	}
+	if got := string(name[1]); got != latest {
+		t.Errorf("android/gradle.properties: bombvaultVersion is %q but the newest release note is v%s", got, latest)
+	}
+	var want int
+	for _, part := range strings.Split(latest, ".") {
+		n, _ := strconv.Atoi(part)
+		want = want*100 + n
+	}
+	if got, _ := strconv.Atoi(string(code[1])); got != want {
+		t.Errorf("android/gradle.properties: bombvaultVersionCode is %d, %s needs %d", got, latest, want)
+	}
+}
+
 var releaseNoteRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)\.md$`)
 
 // latestReleaseNoteVersion returns the highest vX.Y.Z release note in dir as a

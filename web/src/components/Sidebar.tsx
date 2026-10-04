@@ -47,7 +47,7 @@ export {
   IconLive,
   IconTrash,
   IconPencil,
-  IconCheckCircle,
+  IconCheck,
   IconSync,
   IconGear,
   IconClose,

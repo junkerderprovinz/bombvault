@@ -4,6 +4,7 @@
 // domains are on and a folder set is staged, so the header rows carry every
 // action they can.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 // A test can end while a route handler still waits on the real server. Closing
 // the context then disposes the response it is about to read, and Playwright
@@ -28,6 +29,7 @@ const FILE_SET = {
   repoEffective: "user/bombvault/files",
   effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "schedule-off" },
   pathExists: true,
+  placement: PLACEMENT,
 };
 
 async function stage(page: Page): Promise<void> {

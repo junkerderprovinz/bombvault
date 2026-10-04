@@ -152,23 +152,17 @@ function emit(): void {
   for (const listener of listeners) listener(current);
 }
 
-function applyEvent(ev: ProgressFrame): void {
-  // An existing drop timer for this key is stale once a fresh event arrives.
-  const pending = dropTimers.get(ev.key);
-  if (pending) {
-    clearTimeout(pending);
-    dropTimers.delete(ev.key);
-  }
-
+/** progressEntry is the state one frame leaves for its key. */
+export function progressEntry(ev: ProgressFrame, now: number): ProgressState {
   // The reported percent is kept as is (100 on success, 0 on failure) rather
   // than forced to 100, or a failed backup would flash a full bar. Consumers
   // render the bar only while `active` is true, so the entry stays active
   // through the linger and is dropped afterwards.
-  const entry: ProgressState = {
+  return {
     phase: ev.phase,
     percent: ev.percent,
     active: true,
-    lastSeen: Date.now(),
+    lastSeen: now,
     startedAt: ev.startedAt,
     snapshotIndex: ev.snapshotIndex,
     snapshotTotal: ev.snapshotTotal,
@@ -183,8 +177,17 @@ function applyEvent(ev: ProgressFrame): void {
     unit: ev.unit,
     remaining: ev.remaining,
   };
+}
 
-  current = { ...current, [ev.key]: entry };
+function applyEvent(ev: ProgressFrame): void {
+  // An existing drop timer for this key is stale once a fresh event arrives.
+  const pending = dropTimers.get(ev.key);
+  if (pending) {
+    clearTimeout(pending);
+    dropTimers.delete(ev.key);
+  }
+
+  current = { ...current, [ev.key]: progressEntry(ev, Date.now()) };
   emit();
 
   if (!ev.active) {

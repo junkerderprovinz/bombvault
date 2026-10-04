@@ -34,6 +34,9 @@ type FleetPeer struct {
 	LastPollDomainsJSON string
 	CreatedAt           int64
 	SortOrder           int
+	// Kind is what the member said it is: empty for a BombVault instance,
+	// "android" for the app, which has no scorecard to poll.
+	Kind string
 }
 
 // NeedsPairing reports whether the row predates pairing and has no member to
@@ -41,7 +44,7 @@ type FleetPeer struct {
 func (p FleetPeer) NeedsPairing() bool { return p.MemberID == "" }
 
 const fleetPeerCols = `id, member_id, name, url, enabled, last_poll_at, last_poll_ok, last_poll_error,
-	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order`
+	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order, kind`
 
 // CreateFleetPeer inserts a new fleet peer and returns the stored row. An
 // empty ID is assigned and a zero CreatedAt is set to now.
@@ -54,9 +57,9 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 	}
 	_, err := r.db.Exec(`
 		INSERT INTO fleet_peers (`+fleetPeerCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.LastPollAt, nullBool(p.LastPollOK), p.LastPollError,
-		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder,
+		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder, p.Kind,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("CreateFleetPeer: %w", err)
@@ -73,9 +76,10 @@ func (r *Repo) UpdateFleetPeer(p FleetPeer) error {
 		  name       = ?,
 		  url        = ?,
 		  enabled    = ?,
-		  sort_order = ?
+		  sort_order = ?,
+		  kind       = ?
 		WHERE id = ?`,
-		p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.SortOrder, p.ID,
+		p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.SortOrder, p.Kind, p.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateFleetPeer: %w", err)
@@ -153,7 +157,7 @@ func scanFleetPeer(s scanner) (FleetPeer, error) {
 	var enabled int
 	err := s.Scan(
 		&p.ID, &p.MemberID, &p.Name, &p.URL, &enabled, &p.LastPollAt, &p.LastPollOK, &p.LastPollError,
-		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder,
+		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder, &p.Kind,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("scanFleetPeer: %w", err)

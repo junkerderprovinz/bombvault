@@ -31,7 +31,7 @@ Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/
 
 Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbioru dopiero po starcie kontenera. Zobacz [Zbiory danych ZFS](zfs-datasets.md).
 
-Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Pamięć, Ścieżki kopii**. Każde pole ścieżki ma też wbudowany przełącznik **Lokalne / Zdalne**: ścieżka może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
+Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Pamięć, Ścieżki kopii**. Każde pole ścieżki ma też wbudowany przełącznik **Lokalne / Zdalne**: ścieżka może być zdalnym repozytorium restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) zamiast lokalnego folderu, a kopia trafia wtedy prosto tam, bez osobnej kopii lokalnej; zobacz [Zdalne repozytoria podstawowe](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Sprawdzenie integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.
@@ -84,7 +84,7 @@ Szablon dodaje `--add-host=host.docker.internal:host-gateway`, aby kontener móg
 
 Skonfiguruj replikę poza siedzibą na stronie **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
 
-- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 nie ma tu natywnego backendu: dostęp uzyskuje się przez jego punkt końcowy S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), podając identyfikator klucza i klucz aplikacji jako dane uwierzytelniające S3.
 - **Współdzielone dane logowania do chmury** są przechowywane zaszyfrowane w Ustawienia, Dostęp do chmury, Współdzielone dane logowania do chmury.
 - **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
 - **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort, jako uzupełnienie (zwykle lokalnego) repozytorium podstawowego. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.

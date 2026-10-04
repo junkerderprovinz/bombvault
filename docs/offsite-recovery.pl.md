@@ -1,5 +1,8 @@
 # Kopie poza siedzibą i odzyskiwanie
 
+!!! note "Kopie poza siedzibą czekają po odbudowie"
+    Gdy krok 4 odbudowuje wpisy bez starych ustawień, replikacja poza siedzibą tych domen wstrzymuje się, dopóki domyślne rozmieszczenie nie zostanie potwierdzone. Zobacz [Rozmieszczenie per element](#placement).
+
 Kopie lokalne chronią Cię przed utraconym kontenerem lub złą aktualizacją. Replikacja poza siedzibą i przetestowany zestaw odzyskiwania chronią Cię przed całą maszyną, ransomware lub pożarem. Ta strona omawia replikację poza siedzibą, uczynienie tej kopii odporną na manipulacje, dowodzenie, że możesz przywracać, oraz odzyskiwanie, gdy sam BombVault zniknął.
 
 ## Replikacja poza siedzibą
@@ -12,12 +15,42 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 - **Limity przepustowości** (Ustawienia, Poza siedzibą) ograniczają tempo wysyłania/pobierania restic, aby replikacja nie nasycała Twojego łącza WAN.
 - **Wskaźnik replikacji** pokazuje, która domena jest replikowana w trakcie działania (na jej stronie i na panelu). To wskaźnik aktywności, a nie pasek procentowy, ponieważ `restic copy` nie udostępnia postępu czytelnego maszynowo.
 
-!!! note "Przywracanie prosto z kopii poza siedzibą"
-    Każda przeglądarka kopii ma przełącznik **Lokalne / Poza siedzibą**, więc jeśli repozytorium lokalne zostanie utracone lub uszkodzone, możesz wylistować i przywrócić bezpośrednio z repliki poza siedzibą. Usuwanie działa per źródło: usunięcie kopii dotyczy tylko oglądanej właśnie kopii.
+!!! note "Przywróć z dowolnego miejsca"
+    Każdy kontener, VM, zestaw plików, flash i konfiguracja aplikacji wylistowują swoje kopie jako jedną oś czasu obejmującą wszystkie miejsca, w których leży kopia. Kopia skopiowana do B2 pojawia się raz, oznaczona każdym miejscem, które ją przechowuje. Przywracanie sięga po pierwsze osiągalne miejsce, zaczynając od repozytorium, do którego element jest zapisywany, a dla każdego wiersza możesz wybrać inne miejsce. Miejsca poza siedzibą są odczytywane dopiero, gdy je otworzysz. Usunięcie w jednym miejscu najpierw sprawdza pozostałe i mówi, czy była to ostatnia kopia.
+
+## Rozmieszczenie per element {#placement}
+
+Każda karta kontenera, VM i zestawu plików ma wiersz **Rozmieszczenie** z trzema segmentami:
+
+- **Lokalne** zapisuje element w repozytorium pokazanym pod **Zapisane na** i nigdzie go nie kopiuje. Użyj tego dla danych, które mają już drugą kopię, na przykład udziału, który leży na NAS.
+- **Lokalne + poza siedzibą** zapisuje go tam tak samo i kopiuje do celów zaznaczonych pod **Kopiuj do**, po jednym znaczniku na każdy cel poza siedzibą domeny. Odznacz znacznik, a ten cel nie dostanie od tego elementu nic nowego.
+- **Tylko poza siedzibą** zapisuje element wprost w miejscu pod **Wyślij do**: repozytorium bezpośrednim obok celu poza siedzibą albo zdalnym repozytorium skonfigurowanym w Ustawienia, Pamięć, Repozytoria.
+
+Lokalizacja jest ustalona od pierwszej kopii elementu, ponieważ BombVault nigdy nie przenosi kopii między repozytoriami. Kopie można zmieniać w dowolnym momencie. Cel, który przestaje otrzymywać element, zachowuje posiadane kopie i przycina je do własnego przechowywania przy następnym uruchomieniu poza siedzibą tej domeny; **Usuń w B2** na karcie usuwa je od razu. Gdy część tych kopii nie istnieje nigdzie indziej, potwierdzenie wylistowuje je według daty i prosi o nazwę elementu. Z celów tylko do dopisywania nie da się usuwać.
+
+Pod wierszem karta mówi, dokąd trafia element i co faktycznie tam jest: ile miejsc go przechowuje, kiedy każdy cel widziano ostatnio oraz czy spełnione jest 3-2-1. Miejscem jest serwer z danymi oryginalnymi, każdy cel poza siedzibą i każde repozytorium oznaczone **Poza obiektem**. BombVault sprawdza kopie i miejsca; nie sprawdza części „dwa nośniki” zasady 3-2-1.
+
+### Domyślne rozmieszczenie
+
+Ustawienia, Pamięć, **Domyślne rozmieszczenie** ma jeden wiersz na domenę z tymi samymi trzema segmentami. Kopie stosują się od razu do każdego elementu bez własnego wyboru oraz do folderów projektu stosów Compose. Lokalizacja stosuje się do nowego elementu przy jego pierwszej kopii; jej zmiana nie przenosi żadnych kopii. Przed zapisem wiersz wymienia każdy cel, który zyskuje lub traci elementy, i ile to znaczy migawek. **Zastosuj do elementów bez kopii zapasowych** przywraca do domyślnego każdy element, który nie ma jeszcze kopii.
+
+Nowy cel poza siedzibą otrzymuje każdy element, który nie jest ustawiony na Lokalne. Okno dialogowe, które go dodaje, mówi, ile to elementów i, gdzie to wiadome, ile historii to oznacza, oraz proponuje pominięcie elementów już wykluczonych z innych celów.
+
+### Repozytoria bezpośrednie
+
+Wybranie repozytorium bezpośredniego celu pod Tylko poza siedzibą otwiera okno dialogowe z proponowaną lokalizacją obok celu, na przykład `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, oraz testem połączenia, który niczego nie tworzy. **Utwórz i użyj** tworzy repozytorium i kieruje na nie element. Repozytorium bezpośrednie przejmuje klucz celu, klasę pamięci, limity, ustawienie append-only i przechowywanie, i zmienia się razem z nimi; karta Repozytoria pokazuje je jako tylko do odczytu. Gdy nowy klucz celu nie może go otworzyć, repozytorium bezpośrednie zachowuje klucz, który ma, a zapis o tym informuje. Jego migawki niosą tag `bv:direct`, a każde inne przejście przechowywania je zachowuje, więc repozytorium bezpośrednie, które straciło łączność ze swoim celem, nigdy nie starzeje się według reguł lokalnych. Do B2 uzyskuje się dostęp przez jego punkt końcowy S3, podając identyfikator klucza i klucz aplikacji jako dane uwierzytelniające S3; klucz ograniczony do własnego katalogu celu nie sięga do katalogu obok niego, więc ogranicz klucz zamiast tego do katalogu nad celem.
+
+### Poza obiektem
+
+Nazwane repozytorium można oznaczyć jako **Poza obiektem** na karcie Repozytoria. Repozytoria zdalne zaczynają oznaczone; wyłącz to dla rest-servera w tym samym budynku. Oznaczenie liczy się tylko do miejsc i 3-2-1 na kartach. Nie zmienia żadnej kopii.
+
+### Po odbudowie
+
+Wybory kopiowania żyją we własnych ustawieniach BombVault. Po odbudowie przez Odkryj kopie zapasowe bez przywróconego `/config` znikają, a skopiowanie wszystkiego wysłałoby ponownie do B2 elementy, które pominąłeś. Replikacja poza siedzibą każdej odbudowanej domeny dlatego wstrzymuje się. Panel pokazuje to na bursztynowo, a Domyślne rozmieszczenie oferuje **Potwierdź domyślne** z podglądem tego, co skopiuje następne uruchomienie, oraz nazwami w kopiach, które nie mają wpisu, a które możesz tam pominąć. Tylko potwierdzenie kończy wstrzymanie; import pliku ustawień przywraca reguły i wartości domyślne, ale go nie kończy.
 
 ## Zdalne repozytoria podstawowe {#remote-primary-repositories}
 
-Ścieżka kopii domeny (Ustawienia, Pamięć) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
+Ścieżka kopii domeny (Ustawienia, Pamięć) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
 
 Każde z sześciu pól ścieżki (Containers, Maszyny wirtualne, Flash, Autokopia, Foldery, Zbiory danych ZFS) ma tuż obok przełącznik **Lokalne / Zdalne**:
 
@@ -82,8 +115,8 @@ Każdy, kto zna słowa, może dołączyć do grupy, więc traktuj je jak hasło.
 
 **Jak członkowie się odnajdują.** Każda instancja poznaje swój własny adres w sieci od twojej przeglądarki w chwili, gdy się logujesz, widoczny na karcie przekaźnika jako **Ta instancja w twojej sieci**; popraw go tam, jeśli z przodu stoi odwrotne proxy albo niestandardowy port. W tej samej sieci członkowie ogłaszają ten adres przez multicast i rozmawiają bezpośrednio, a tam, gdzie multicast nie przechodzi przez sieć kontenera, taką jak domyślna sieć bridge Dockera, instancja zamiast tego przeszukuje swoją własną podsieć w poszukiwaniu innych, podpisanym zapytaniem, na które odpowiedzieć może tylko członek grupy, więc parowanie i tak kończy się w kilka sekund, bez przekaźnika. Jeśli nic się nie znajdzie, **Nie możesz jej znaleźć?** pod kartą parowania przyjmuje jeden adres ręcznie, dla innej podsieci albo niestandardowego portu. Instancje w różnych sieciach idą przez przekaźnik, wybierany na tej samej zakładce:
 
-- **Przekaźnik projektu** (domyślny): `relay.halleluja.design`, ten sam przekaźnik, którego używa też KnightLoader. Nic do skonfigurowania.
-- **Własny przekaźnik**: kontener **BombVault Relay** z Unraid Community Apps, albo jedna z twoich instancji, która jest już dostępna z zewnątrz, z włączonym **Działaj jako przekaźnik**. Ta instancja odpowiada wtedy pod `/relay/connect` na swoim własnym adresie, za odwrotnym proxy i certyfikatem, które już ma, i wpuszcza tylko twoją grupę. Wpisz adres przekaźnika na każdej instancji, która ma go używać.
+- **Przekaźnik projektu** (domyślny): `parleyport.halleluja.design`, ten sam przekaźnik, którego używa też KnightLoader. Nic do skonfigurowania.
+- **Własny przekaźnik**: kontener [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) z Unraid Community Apps, albo jedna z twoich instancji, która jest już dostępna z zewnątrz, z włączonym **Działaj jako przekaźnik**. Ta instancja odpowiada wtedy pod `/relay/connect` na swoim własnym adresie, za odwrotnym proxy i certyfikatem, które już ma, i wpuszcza tylko twoją grupę. Wpisz adres przekaźnika na każdej instancji, która ma go używać.
 - **Żaden przekaźnik**: członkowie odnajdują się automatycznie w tej samej sieci i nigdzie indziej.
 
 **Co widzi przekaźnik.** Każde połączenie między członkami jest zapieczętowane AES-256-GCM kluczem wyprowadzonym z dwunastu słów, a ten klucz nigdy nie opuszcza twoich instancji. Przekaźnik poznaje skrót grupujący połączenia, dla której instancji jest wiadomość, jak duża jest i kiedy przechodzi. Bezpośrednie połączenie w sieci lokalnej jest zapieczętowane tak samo i dodatkowo podpisane, więc nic nie zależy od certyfikatu samopodpisanego, który serwuje instancja.

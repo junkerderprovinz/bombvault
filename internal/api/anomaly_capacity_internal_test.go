@@ -303,7 +303,7 @@ func (f *capacityFixture) namedRepo(t *testing.T, id, loc string) {
 	if _, err := f.st.UpsertTarget(store.Target{ContainerName: "Nexterm", IncludeInSchedule: true}); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.st.SetTargetRepo("Nexterm", id); err != nil {
+	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "containers", Key: "Nexterm"}, &store.HomeWrite{Repo: id, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(loc, "://") && !restic.IsRemoteRepo(loc) {

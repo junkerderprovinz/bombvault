@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
-import { Button } from "../Button";
-import { IconCancel } from "../glyphs";
+import { Button, type ButtonTone } from "../Button";
+import { IconClose } from "../navGlyphs";
 import { BottomSheet } from "./BottomSheet";
 
 // ConfirmSheet is useConfirm's presentation below the 48rem breakpoint. The
@@ -41,6 +41,10 @@ export interface ConfirmSheetProps {
   /** Why the action cannot go ahead, as on ConfirmDialog: it disables
    *  Confirm and becomes the (i) in the button. */
   confirmBlocked?: string;
+  /** The same lock and surfaces ConfirmDialog takes. */
+  confirmDisabled?: boolean;
+  confirmTone?: ButtonTone;
+  cancelTone?: ButtonTone;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -53,6 +57,9 @@ export function ConfirmSheet({
   cancelLabel,
   extra,
   confirmBlocked,
+  confirmDisabled,
+  confirmTone = "accent",
+  cancelTone = "accent",
   onConfirm,
   onCancel,
 }: ConfirmSheetProps) {
@@ -71,8 +78,8 @@ export function ConfirmSheet({
           <Button
             label={cancelLabel}
             labelKey="common.cancel"
-            glyph={<IconCancel />}
-            tone="accent"
+            glyph={<IconClose />}
+            tone={cancelTone}
             onClick={onCancel}
             className="glim-btn-key w-full"
           />
@@ -83,9 +90,9 @@ export function ConfirmSheet({
             // the one useConfirm falls back to for the label, so word and
             // glyph stay the same answer.
             labelKey={confirmLabelKey ?? "common.confirm"}
-            tone="accent"
+            tone={confirmTone}
+            disabled={confirmDisabled || confirmBlocked !== undefined}
             onClick={onConfirm}
-            disabled={confirmBlocked !== undefined}
             hint={confirmBlocked}
             className="glim-btn-key w-full"
           />

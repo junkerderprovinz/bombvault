@@ -882,6 +882,22 @@ describe("Selector glyph mode names its segments", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a target folder first");
   });
 
+  it("gives a disabled item with a title an accessible description, with no hover needed", () => {
+    const items: SelectorItem[] = [
+      { id: "a", label: "Alpha", disabled: true, title: "Pick a target folder first" },
+      { id: "b", label: "Beta" },
+    ];
+    render(<Selector items={items} label="Test strip" active="b" onChange={() => {}} />);
+    const alpha = screen.getByRole("tab", { name: "Alpha" });
+    const describedBy = alpha.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    const desc = document.getElementById(describedBy!);
+    expect(desc?.textContent).toBe("Pick a target folder first");
+    expect(desc?.className).toContain("sr-only");
+    // No hover or focus happened, so the bubble itself stays closed.
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+  });
+
   // A strip follows the axis its size implies: lg is a page-level tab strip
   // and follows "tabs", any other size sits in a form row and follows
   // "buttons". Both directions are checked, since one alone would pass on a
@@ -986,5 +1002,58 @@ describe("Selector hueOffset", () => {
     for (const it of ITEMS) {
       expect(styleOf(it.label)).not.toContain("--item-hue");
     }
+  });
+});
+
+describe("Selector with activation=\"manual\"", () => {
+  function Manual({ spy }: { spy: (id: string) => void }) {
+    const [active, setActive] = useState("a");
+    return (
+      <Selector
+        items={ITEMS}
+        label="Placement"
+        activation="manual"
+        active={active}
+        onChange={(id) => {
+          setActive(id);
+          spy(id);
+        }}
+      />
+    );
+  }
+
+  it("announces a radio group with the chosen segment checked rather than a tablist", () => {
+    render(<Manual spy={vi.fn()} />);
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.getByRole("radiogroup", { name: "Placement" })).toBeTruthy();
+    const alpha = screen.getByRole("radio", { name: "Alpha" });
+    expect(alpha.getAttribute("aria-checked")).toBe("true");
+    expect(alpha.hasAttribute("aria-pressed")).toBe(false);
+    expect(screen.getByRole("radio", { name: "Beta" }).getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("moves focus with the arrow keys, Home and End without choosing", () => {
+    const spy = vi.fn();
+    render(<Manual spy={spy} />);
+    screen.getByRole("radio", { name: "Alpha" }).focus();
+    const bar = screen.getByRole("radiogroup");
+    fireEvent.keyDown(bar, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "Beta" }));
+    fireEvent.keyDown(bar, { key: "End" });
+    fireEvent.keyDown(bar, { key: "Home" });
+    fireEvent.keyDown(bar, { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "Gamma" }));
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("chooses once for Enter and the click the browser sends with it", () => {
+    const spy = vi.fn();
+    render(<Manual spy={spy} />);
+    const beta = screen.getByRole("radio", { name: "Beta" });
+    beta.focus();
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Enter" });
+    fireEvent.click(beta);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith("b");
   });
 });

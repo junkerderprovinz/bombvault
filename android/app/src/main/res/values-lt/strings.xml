@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">Išsaugota aplanke Atsisiuntimai: %1$s</string>
+    <string name="save_failed">Nepavyko išsaugoti failo: %1$s</string>
+    <string name="save_untrusted">Serverio sertifikatas pasikeitė. Atidarykite jį iš naujo pradiniame ekrane, kad patikrintumėte naują.</string>
+    <string name="no_app">Jokia programa šiame telefone neatidaro šios nuorodos.</string>
+</resources>

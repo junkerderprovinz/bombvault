@@ -1,0 +1,1 @@
+Die erste Version der App: per QR-Code mit deiner Gruppe koppeln, die Aktivität jedes Servers verfolgen und sein Dashboard ohne Passwort öffnen.

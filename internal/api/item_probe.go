@@ -301,16 +301,22 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 		return probeResult{}, err
 	}
 	mode := s.primaryModeFor(settings, it.domain, repo)
-	// An interrupted run's lock would stop the restore below outright.
-	s.unlockStale(ctx, repo, mode)
+	// An interrupted run's lock would stop the restore below outright. A remote
+	// repository is unlocked only when a lock is in the way, since every call
+	// to it is billed.
+	if !restic.IsRemoteRepo(repo) {
+		s.unlockStale(ctx, repo, mode)
+	}
 
 	sampler := newProbeSampler(rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 0))) //nolint:gosec // G404: picks which files to read back, nothing secret
 	layout := blockLayout{}
-	if err := s.engine.LsStream(ctx, repo, snapshotID, mode, func(e restic.FileEntry) {
-		sampler.add(e)
-		if it.domain == "vms" {
-			layout.add(e)
-		}
+	if err := s.retryAfterUnlock(ctx, repo, mode, func() error {
+		return s.engine.LsStream(ctx, repo, snapshotID, mode, func(e restic.FileEntry) {
+			sampler.add(e)
+			if it.domain == "vms" {
+				layout.add(e)
+			}
+		})
 	}); err != nil {
 		return probeResult{}, fmt.Errorf("list the backup: %w", err)
 	}

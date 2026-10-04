@@ -26,6 +26,7 @@ class NoopEventSource {
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
 const putBodies: Settings[] = [];
+const timelineCalls: unknown[][] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -36,7 +37,10 @@ vi.mock("../lib/api", async (importOriginal) => {
       putBodies.push(s);
       return Promise.resolve({ ok: true });
     },
-    listConfigSnapshots: () => Promise.resolve({ ok: true, snapshots: [] }),
+    getTimeline: (...args: unknown[]) => {
+      timelineCalls.push(args);
+      return Promise.resolve({ ok: true, places: [], rows: [] });
+    },
   };
 });
 
@@ -44,6 +48,7 @@ const { Config } = await import("./Config");
 
 beforeEach(() => {
   putBodies.length = 0;
+  timelineCalls.length = 0;
 });
 
 afterEach(() => {
@@ -79,4 +84,9 @@ it("persists the self-backup toggle without a save button", async () => {
 it("has no save button on this card", async () => {
   await renderPage();
   expect(screen.queryByRole("button", { name: en["settings.save"] })).toBeNull();
+});
+
+it("lists the settings backups as the config timeline", async () => {
+  await renderPage();
+  await waitFor(() => expect(timelineCalls).toEqual([["config", "config"]]));
 });

@@ -151,7 +151,7 @@ func TestLatestContainerBackupTimesDoesNotFoldWhenTargetsUnreadable(t *testing.T
 		t.Fatal(err)
 	}
 
-	times, err := svc.LatestContainerBackupTimes(context.Background())
+	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}

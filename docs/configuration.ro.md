@@ -31,7 +31,7 @@ Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/m
 
 Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
-Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**. Fiecare câmp de cale are și un comutator **Local / La distanță** integrat: o cale poate fi un remote restic (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
+Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Stocare, Căi de backup**. Fiecare câmp de cale are și un comutator **Local / La distanță** integrat: o cale poate fi un remote restic (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) în loc de un folder local, iar backupul merge direct acolo, fără o copie locală separată; vezi [Depozite primare la distanță](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Verificare integrare gazdă"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
@@ -84,7 +84,7 @@ Configurare rapidă:
 
 Configurează o replică off-site în pagina **Setări, Extern**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
 
-- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`). Backblaze B2 nu are aici un backend nativ: se accesează prin punctul său final S3 (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`), cu ID-ul cheii și cheia aplicației ca acreditări S3.
 - **Credențialele cloud partajate** sunt stocate criptat sub Setări, Acces cloud, Credențiale cloud partajate.
 - **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Integrări, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
 - **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort, pe lângă un depozit primar (de obicei local). Fiecare domeniu are propria programare off-site, plus un buton **Replică acum**.

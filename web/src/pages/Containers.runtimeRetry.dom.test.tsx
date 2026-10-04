@@ -4,6 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Container, Run } from "../lib/api";
+import { placementView } from "../lib/placement.testsupport";
 
 class FakeEventSource {
   onmessage: ((ev: MessageEvent) => void) | null = null;
@@ -84,6 +85,7 @@ function member(name: string): Container {
     lastUpdateCheck: 0,
     lastUpdateResult: "",
     stack: "media",
+    placement: placementView(),
   };
 }
 

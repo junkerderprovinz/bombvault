@@ -204,6 +204,14 @@
 .glim-btn-md { min-width: var(--btn-w-md); }
 .glim-btn-lg { min-width: var(--btn-w-lg); }
 
+/* Gives up the stage's width floor, for a button in a row too narrow to
+   honour it (a per-domain card at phone width). Tailwind's own `min-w-0`
+   cannot do this: it lives in the utilities layer and this file does not, so
+   an unlayered rule always wins over it regardless of class order. Without a
+   floor the button shrinks to whatever the row leaves it, down to the
+   ellipsis `.glim-btn-label` already sets up. */
+.glim-btn-elastic { min-width: 0; }
+
 /* For a button whose words are the only thing that tells it from its
    neighbours. Below 48rem the column can be narrower than the label, so the
    label wraps onto a second line instead of ending in an ellipsis, and the
@@ -669,6 +677,11 @@
   --brand-bitcoin: #f7931a;
   --brand-paypal:  #4fb5f0;
   --brand-github:  #ffffff;
+  /* Docker's blue and Unraid's gradient hold on both grounds, so the light
+     themes inherit them. */
+  --brand-docker:      #2396ed;
+  --brand-unraid-from: #e32929;
+  --brand-unraid-to:   #ff8d30;
 
   --carbon-bg:        #161616;
   --carbon-surface:   #262626;
@@ -1378,6 +1391,9 @@ body {
     color: var(--tile-ink);
     --mark-ink: var(--tile-ink);
     --mark-cut: var(--tile);
+    --brand-docker: var(--tile-ink);
+    --brand-unraid-from: var(--tile-ink);
+    --brand-unraid-to: var(--tile-ink);
   }
   :is(.glim-brand-tile:hover, .group:hover > .glim-brand-tile) .glim-mark-rest { display: none; }
   :is(.glim-brand-tile:hover, .group:hover > .glim-brand-tile) .glim-mark-hover { display: block; }
@@ -1392,13 +1408,57 @@ body {
 .glim-paypal-mark { color: var(--brand-paypal); }
 .glim-bitcoin-mark { color: var(--brand-bitcoin); }
 .glim-github-mark { color: var(--brand-github); }
+.glim-docker-mark { color: var(--brand-docker); }
 .glim-house-mark { color: var(--accent-text); }
+
+/* The phone app answers a press the way KnightLoader's does. Nothing hovers
+   on a touch screen, so without this a tap that works looks like one that did
+   not: a control dims while the finger is on it, and a brand tile lights in its
+   colour for as long as it is held, which leaves nothing lit at rest. */
+/* A long press on a button is a slow tap, not a request for the link menu. */
+[data-app] :is(button, a, [role="button"]) {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (hover: none) {
+  [data-app] :is(button, a, [role="button"]):not(.glim-readme-btn):not(:disabled):active {
+    opacity: .2;
+  }
+  [data-app] .glim-brand-tile:active,
+  [data-app] .group:active > .glim-brand-tile {
+    background-color: var(--tile);
+    color: var(--tile-ink);
+    --mark-ink: var(--tile-ink);
+    --mark-cut: var(--tile);
+    --brand-docker: var(--tile-ink);
+    --brand-unraid-from: var(--tile-ink);
+    --brand-unraid-to: var(--tile-ink);
+  }
+  [data-app] :is(.glim-brand-tile:active, .group:active > .glim-brand-tile) .glim-mark-rest { display: none; }
+  [data-app] :is(.glim-brand-tile:active, .group:active > .glim-brand-tile) .glim-mark-hover { display: block; }
+  [data-app] .group:active > .glim-brand-tile .glim-readme-btn-mark,
+  [data-app] .group:active .glim-readme-btn-hint {
+    color: var(--tile-ink);
+  }
+}
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  :root[data-app]:not([data-motion="off"]) .glim-readme-btn-unit:not(.glim-readme-btn-soon):active .glim-readme-btn-sheen::after {
+    animation: glim-readme-sheen var(--motion-button-sheen-dur, 800ms) linear;
+  }
+}
 
 /* The brands' tile colours: the true colour and the ink that holds on it, white
    wherever white reaches 2:1 and near-black below that. */
 .glim-tile-github { --tile: #181717; --tile-ink: #ffffff; } /* 17.9:1 */
 .glim-tile-paypal { --tile: #003087; --tile-ink: #ffffff; } /* 13.4:1 */
+.glim-tile-docker { --tile: #1d63ed; --tile-ink: #ffffff; } /* 5.2:1 */
+.glim-tile-unraid { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
+.glim-tile-zip { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 .glim-tile-bitcoin { --tile: #f7931a; --tile-ink: #161616; } /* 7.9:1 */
+.glim-tile-docker  { --tile: #1d63ed; --tile-ink: #ffffff; } /* 5.2:1 */
+.glim-tile-unraid  { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
+.glim-tile-zip     { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 /* Buy Me a Coffee's own near-black, the ink of their button. 13.8:1. */
 .glim-tile-coffee { --tile: #ffdd00; --tile-ink: #0d0c22; }
 /* The button that reaches the app's own authors follows the colour engine. */

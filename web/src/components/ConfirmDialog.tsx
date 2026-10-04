@@ -10,8 +10,8 @@
 // left the dialog.
 import type { ReactNode, Ref } from "react";
 import { Badge } from "./Badge";
-import { Button } from "./Button";
-import { IconCancel } from "./glyphs";
+import { Button, type ButtonTone } from "./Button";
+import { IconClose } from "./navGlyphs";
 
 export interface ConfirmDialogProps {
   /** A generic title such as t("confirmDialog.title"); the question itself
@@ -32,6 +32,11 @@ export interface ConfirmDialogProps {
   /** Why the action cannot go ahead. Set, it disables Confirm and becomes
    *  the (i) in the button. */
   confirmBlocked?: string;
+  /** Keeps the confirm button locked while the question still wants an answer. */
+  confirmDisabled?: boolean;
+  /** Surfaces of the two buttons, for a view that keeps one accent action. */
+  confirmTone?: ButtonTone;
+  cancelTone?: ButtonTone;
   onConfirm: () => void;
   onCancel: () => void;
   /** The dialog card's root DOM node, for useConfirm.tsx's focus trap. */
@@ -46,6 +51,9 @@ export function ConfirmDialog({
   confirmGlyph,
   extra,
   confirmBlocked,
+  confirmDisabled,
+  confirmTone = "accent",
+  cancelTone = "accent",
   onConfirm,
   onCancel,
   ref,
@@ -89,8 +97,8 @@ export function ConfirmDialog({
           <Button
             label={cancelLabel}
             labelKey="common.cancel"
-            glyph={<IconCancel />}
-            tone="accent"
+            glyph={<IconClose />}
+            tone={cancelTone}
             autoFocus
             onClick={onCancel}
           />
@@ -102,9 +110,9 @@ export function ConfirmDialog({
             // overwrite), so there is no fixed key.
             labelKey={confirmLabelKey ?? null}
             glyph={confirmGlyph}
-            tone="accent"
+            tone={confirmTone}
+            disabled={confirmDisabled || confirmBlocked !== undefined}
             onClick={onConfirm}
-            disabled={confirmBlocked !== undefined}
             hint={confirmBlocked}
           />
         </div>

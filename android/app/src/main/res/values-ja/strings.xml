@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved">ダウンロードに保存しました: %1$s</string>
+    <string name="save_failed">ファイルを保存できませんでした: %1$s</string>
+    <string name="save_untrusted">サーバーの証明書が変わりました。新しい証明書を確認するには、スタート画面からもう一度開いてください。</string>
+    <string name="no_app">この端末にはこのリンクを開けるアプリがありません。</string>
+</resources>
