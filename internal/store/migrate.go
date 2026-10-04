@@ -2647,6 +2647,23 @@ ALTER TABLE group_state ADD COLUMN direct_url_manual INTEGER NOT NULL DEFAULT 0;
 		alreadySatisfied: columnPresent("fleet_peers", "kind"),
 		sql:              `ALTER TABLE fleet_peers ADD COLUMN kind TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// The provider a destination was set up with, so the screens can show
+		// its mark and the wizard can reopen the right form.
+		version:          destinationMigration,
+		name:             "offsite_targets_provider",
+		alreadySatisfied: columnPresent("offsite_targets", "provider"),
+		sql:              `ALTER TABLE offsite_targets ADD COLUMN provider TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The destination a domain's target was derived from. Empty on every
+		// target set up for one domain only.
+		version:          destinationMigration + 1,
+		name:             "offsite_targets_destination_id",
+		alreadySatisfied: columnPresent("offsite_targets", "destination_id"),
+		sql: `ALTER TABLE offsite_targets ADD COLUMN destination_id TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS offsite_targets_destination ON offsite_targets(destination_id) WHERE destination_id <> '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2731,6 +2748,10 @@ const pairingMigration = 250
 // appMemberMigration numbers what the Android app as a group member needs,
 // in a block of its own above pairing.
 const appMemberMigration = 270
+
+// destinationMigration numbers the destinations that are set up once and
+// offered to every domain, 280 to 289.
+const destinationMigration = 280
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

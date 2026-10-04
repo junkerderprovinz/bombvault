@@ -41,6 +41,10 @@ type offsiteTargetView struct {
 	// carries no meaning for it, so the export leaves the field off entirely
 	// rather than send a value that means nothing there.
 	OffPremises *bool `json:"offPremises,omitempty"`
+	// DestinationID and Provider are set on a target derived from a
+	// destination. Read-only, like CompanionOf.
+	DestinationID string `json:"destinationId,omitempty"`
+	Provider      string `json:"provider,omitempty"`
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
@@ -66,6 +70,8 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		CreatedAt:            t.CreatedAt,
 		SortOrder:            t.SortOrder,
 		CompanionOf:          t.CompanionOf,
+		DestinationID:        t.DestinationID,
+		Provider:             t.Provider,
 	}
 	if t.Role == store.RoleRepo {
 		v.OffPremises = &t.OffPremises

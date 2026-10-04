@@ -45,6 +45,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
+	"github.com/junkerderprovinz/bombvault/internal/remotes"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -266,6 +267,11 @@ type Service struct {
 	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
 	zfsHostMu   sync.Mutex
 	zfsHostLast *zfsHostListing
+	// rclone runs against the instance's own config file; rcloneConfMu keeps
+	// two edits of that file from dropping each other's remote.
+	rcloneOnce   sync.Once
+	rclone       *remotes.Rclone
+	rcloneConfMu sync.Mutex
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
@@ -17224,6 +17230,12 @@ func (s *Service) repoHoldingSnapshot(ctx context.Context, settings store.Settin
 // rcloneConfPath is where the decrypted rclone config is written for restic→rclone.
 func (s *Service) rcloneConfPath() string { return filepath.Join(s.cfg.DataDir, "rclone.conf") }
 
+// remotes runs rclone against this instance's own config file.
+func (s *Service) remotes() *remotes.Rclone {
+	s.rcloneOnce.Do(func() { s.rclone = &remotes.Rclone{Config: s.rcloneConfPath()} })
+	return s.rclone
+}
+
 // WriteRcloneConfFile (re)writes the on-disk rclone config from the encrypted
 // value in settings, or removes it when empty. Called at startup so off-site
 // repos work immediately after a restart.
@@ -17856,6 +17868,25 @@ func (s *Service) RecoveryKit() (string, error) {
 			}
 			if !n.Enabled {
 				w("  (switched off at the time this kit was written)\n")
+			}
+		}
+		w("\n")
+	}
+
+	// A destination's domain repositories exist only in the database, like a
+	// named repository's location. The sign-in to reach them is not here: it
+	// comes back with the settings backup below.
+	if dests, dErr := s.store.ListDestinations(); dErr == nil && len(dests) > 0 {
+		w("## Destinations\n\n")
+		w("Each domain that copies to a destination has its own restic repository under\n")
+		w("it, with the SAME password as the rest. The rclone remotes and credential sets\n")
+		w("that reach them come back with the settings backup below; on a fresh install\n")
+		w("without it, set the destination up again at the same place.\n\n")
+		for _, d := range dests {
+			w("- %s: %s\n", d.Name, d.Repo)
+			derived, _ := s.store.DestinationTargets(d.ID)
+			for _, t := range derived {
+				w("  %s: %s\n", t.Domain, t.Repo)
 			}
 		}
 		w("\n")

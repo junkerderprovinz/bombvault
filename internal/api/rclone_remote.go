@@ -1,14 +1,15 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"os/exec"
 	"regexp"
+	"sort"
 	"strings"
+
+	"github.com/junkerderprovinz/bombvault/internal/remotes"
 )
 
 // Building an rclone remote from a form instead of from a pasted INI file.
@@ -62,13 +63,8 @@ type rcloneRemote struct {
 	ObscuredPass string
 }
 
-// rcloneNameRe is what a remote name may look like. rclone addresses a remote
-// as "name:path", so a colon or a slash in the name makes the location
-// unparseable, and a space or a bracket breaks the INI section header.
-var rcloneNameRe = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
-
 func (r rcloneRemote) validate() error {
-	if !rcloneNameRe.MatchString(r.Name) {
+	if !remotes.NameRe.MatchString(r.Name) {
 		return errors.New("the remote name may contain only letters, digits, dashes and underscores")
 	}
 	if r.ObscuredPass == "" {
@@ -131,16 +127,58 @@ func appendRcloneSection(conf string, r rcloneRemote) (string, error) {
 	if err := r.validate(); err != nil {
 		return "", err
 	}
+	return replaceRcloneSection(conf, r.Name, rcloneSection(r)), nil
+}
 
+// replaceRcloneSection puts section in place of the one called name, or
+// after the others when there is none. An empty section removes it.
+func replaceRcloneSection(conf, name, section string) string {
 	var kept []string
 	for _, block := range splitRcloneSections(conf) {
-		if strings.EqualFold(block.name, r.Name) {
-			continue // replaced below
+		if strings.EqualFold(block.name, name) {
+			continue
 		}
 		kept = append(kept, strings.TrimRight(block.text, "\n"))
 	}
-	kept = append(kept, strings.TrimRight(rcloneSection(r), "\n"))
-	return strings.Join(kept, "\n\n") + "\n", nil
+	if section != "" {
+		kept = append(kept, strings.TrimRight(section, "\n"))
+	}
+	if len(kept) == 0 {
+		return ""
+	}
+	return strings.Join(kept, "\n\n") + "\n"
+}
+
+// settingKeyRe is what an rclone option name looks like.
+var settingKeyRe = regexp.MustCompile(`^[a-z0-9_]+$`)
+
+// settingsSection renders a remote of any backend. A key or value that could
+// end the line is refused: it would add settings, or a whole remote, nobody
+// typed.
+func settingsSection(name, backend string, settings map[string]string) (string, error) {
+	if !remotes.NameRe.MatchString(name) {
+		return "", errors.New("the remote name may contain only letters, digits, dashes and underscores")
+	}
+	if strings.ContainsAny(backend, "\r\n") {
+		return "", errors.New("the backend name is not valid")
+	}
+	keys := make([]string, 0, len(settings))
+	for k, v := range settings {
+		if !settingKeyRe.MatchString(k) || k == "type" {
+			return "", fmt.Errorf("%q is not a setting rclone takes", k)
+		}
+		if strings.ContainsAny(v, "\r\n") {
+			return "", fmt.Errorf("the value of %s may not contain a line break", k)
+		}
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var b strings.Builder
+	fmt.Fprintf(&b, "[%s]\ntype = %s\n", name, backend)
+	for _, k := range keys {
+		fmt.Fprintf(&b, "%s = %s\n", k, settings[k])
+	}
+	return b.String(), nil
 }
 
 type rcloneBlock struct {
@@ -173,67 +211,19 @@ func splitRcloneSections(conf string) []rcloneBlock {
 	return out
 }
 
-// rcloneObscure turns a plaintext password into rclone's obscured form by
-// asking rclone itself.
-//
-// Reimplementing the transform in Go would be a handful of lines, and it would
-// be the wrong handful: it is rclone's format, it can change, and a silently
-// wrong obscure produces a config that looks right and fails to authenticate.
-// Asking the binary that will read it back cannot drift.
-//
-// The password goes in on STDIN, never as an argument. An argument is visible
-// in the process list to every user on the host, which for a backup
-// destination's credentials is exactly the leak this feature must not add.
-func rcloneObscure(ctx context.Context, plain string) (string, error) {
-	if strings.TrimSpace(plain) == "" {
-		return "", errors.New("the password is empty")
-	}
-	cmd := exec.CommandContext(ctx, "rclone", "obscure", "-") //nolint:gosec // G204: fixed argv; the secret travels on stdin
-	cmd.Stdin = strings.NewReader(plain)
-	var out, errBuf bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &errBuf
-	if err := cmd.Run(); err != nil {
-		// rclone's own message is surfaced, never the password. The most common
-		// cause by far is that rclone is not installed, which the message says
-		// plainly enough to act on.
-		detail := strings.TrimSpace(errBuf.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-		return "", fmt.Errorf("could not prepare the password with rclone: %s", detail)
-	}
-	obscured := strings.TrimSpace(out.String())
-	if obscured == "" {
-		return "", errors.New("rclone returned an empty password")
-	}
-	return obscured, nil
-}
-
 // AddRcloneRemote stores a destination described by a form.
 //
 // The plaintext password exists for exactly as long as it takes to obscure it:
 // it is never written to the settings, never logged, and never returned.
 func (s *Service) AddRcloneRemote(ctx context.Context, r rcloneRemote, plainPassword string) error {
-	obscured, err := rcloneObscure(ctx, plainPassword)
+	obscured, err := s.remotes().Obscure(ctx, plainPassword)
 	if err != nil {
 		return err
 	}
 	r.ObscuredPass = obscured
-
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	current, err := s.decodeRcloneConf(settings)
-	if err != nil {
-		return err
-	}
-	next, err := appendRcloneSection(current, r)
-	if err != nil {
-		return err
-	}
-	return s.SetRcloneConf(next)
+	return s.editRcloneConf(func(conf string) (string, error) {
+		return appendRcloneSection(conf, r)
+	})
 }
 
 // handleAddRcloneRemote stores an SMB or WebDAV destination from a form.
