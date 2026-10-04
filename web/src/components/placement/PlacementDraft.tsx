@@ -4,13 +4,17 @@ import type { CopiesChoice, PlacementChange, PlacementOptions, PlacementView, Se
 import { useT } from "../../lib/i18n";
 import {
   draftView,
-  stepForChip,
+  newTargetRefused,
   stepForHome,
-  stepForSegment,
-  stepForSendTo,
+  stepForLocal,
+  stepForNewTarget,
+  stepForTarget,
   viewSegment,
   type PlacementStep,
 } from "../../lib/placement";
+import { blockedText, tickDestination, useNewDestinations } from "../../lib/placementButtons";
+import { placementErrorText } from "../../lib/placementCodes";
+import { useToast } from "../../lib/toast";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { DirectRepoDialog } from "./DirectRepoDialog";
@@ -43,6 +47,7 @@ function valueView(value: PlacementDraftValue, options: PlacementOptions): Place
   if (home && "direct" in home) {
     view.repo = `direct:${home.direct.targetId}`;
     view.repoKind = "direct";
+    view.repoTarget = home.direct.targetId;
     view.repoLabel = home.direct.name;
     view.repoDirectOf = home.direct.name ? undefined : options.sendTo.find((s) => s.targetId === home.direct.targetId)?.name;
     view.homeFollows = false;
@@ -71,18 +76,33 @@ export function PlacementDraft({
   value: PlacementDraftValue;
   onChange: (next: PlacementDraftValue) => void;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const host = useHostLabel();
+  const { push } = useToast();
   const { options } = usePlacementOptions("files");
-  const [direct, setDirect] = useState<SendToOption | null>(null);
+  const destinations = useNewDestinations("files", options);
+  const [direct, setDirect] = useState<{ target: SendToOption; skip: string[] } | null>(null);
 
   if (!options) return null;
   if (options.unreadable) return <p className="text-xs text-statusWarn">{t("placement.unreadable")}</p>;
-  const view = valueView(value, options);
+  const ready = options;
+  const view = valueView(value, ready);
 
   function run(step: PlacementStep) {
-    if (step.kind === "direct") setDirect(step.target);
+    if (step.kind === "blocked") push(blockedText(t, step, host), "warn");
+    else if (step.kind === "direct") setDirect({ target: step.target, skip: step.skip ?? ["*"] });
     else if (step.kind === "save") onChange(withChange(value, step.change));
+  }
+
+  async function addDestination(id: string) {
+    const refused = newTargetRefused(view);
+    if (refused) return run(refused);
+    const made = await tickDestination(id, "files");
+    if ("error" in made) {
+      push(placementErrorText(t, lang, made.error, "settings.error"), "fail");
+      return;
+    }
+    run(stepForNewTarget(made.targetId, view, ready));
   }
 
   return (
@@ -97,22 +117,24 @@ export function PlacementDraft({
         view={view}
         options={options}
         host={host}
-        onSegment={(seg) => run(stepForSegment(seg, view, options, t, host))}
-        onHome={(id) => run(stepForHome(id, view, options, t, host))}
-        onSendTo={(opt) => run(stepForSendTo(opt, view, t))}
-        onChip={(id, on) => run(stepForChip(id, on, view, options))}
+        destinations={destinations}
+        onLocal={(on) => run(stepForLocal(on, view, ready, t, host))}
+        onTarget={(id, on) => run(stepForTarget(id, on, view, ready, t))}
+        onDestination={(id) => void addDestination(id)}
+        onHome={(id) => run(stepForHome(id, view, ready, t, host))}
       />
       {direct && (
         <DirectRepoDialog
-          target={{ id: direct.targetId, name: direct.name }}
+          target={{ id: direct.target.targetId, name: direct.target.name }}
           mode="remember"
           onClose={() => setDirect(null)}
           onDone={(result) => {
+            const { target, skip } = direct;
             setDirect(null);
             if (result.kind !== "remembered") return;
             onChange({
-              home: { direct: { targetId: direct.targetId, name: result.name, location: result.location } },
-              copies: { skip: ["*"] },
+              home: { direct: { targetId: target.targetId, name: result.name, location: result.location } },
+              copies: { skip },
             });
           }}
         />

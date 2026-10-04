@@ -117,7 +117,7 @@ describe("ContainerRow when the container is no longer installed", () => {
 describe("ContainerRow placement", () => {
   it("shows the placement bar in the simple view, between the header and the section chips", async () => {
     render(<ContainerRow container={orphan} installedContainers={[]} t={t} onDeleted={noop} onPlacement={noop} index={0} />);
-    const bar = await screen.findByRole("radiogroup", { name: en["placement.title"] });
+    const bar = await screen.findByRole("group", { name: en["placement.title"] });
     const sections = screen.getByRole("group", { name: "containers.sectionsLabel" });
     expect(bar.compareDocumentPosition(sections) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

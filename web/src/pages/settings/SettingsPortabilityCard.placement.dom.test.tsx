@@ -24,6 +24,7 @@ function summary(over: Partial<ImportSettingsSummary>): ImportSettingsSummary {
     appVersion: "v8.12.0",
     offsiteTargets: 2,
     namedRepos: 1,
+    destinations: null,
     credentials: { present: false, cloud: false, rclone: false, notify: false },
     settingsGroups: [],
     placementDefaults: 3,

@@ -286,6 +286,10 @@ export function SettingsPortabilityCard({
                 <dd dir="ltr" className="font-mono text-start">{preview.namedRepos ?? 0}</dd>
               </div>
               <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("dest.title")}</dt>
+                <dd className="text-end">{preview.destinations ?? t("settingsIO.previewNotInFile")}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("placementDefaults.title")}</dt>
                 <dd className="text-end">{preview.placementDefaults ?? t("settingsIO.previewNotInFile")}</dd>
               </div>

@@ -19,14 +19,25 @@ import {
   type OkEnvelope,
   type PlacementDomain,
   type PlacementOptions,
-  type SegmentId,
   type SendToOption,
   type TargetPreviewRow,
   type UnmatchedName,
   type UploadEstimate,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { defaultView, domainLabel, formatList, stepForChip, stepForDefaultSegment, viewHomeLabel } from "../../lib/placement";
+import {
+  defaultChangeOf,
+  defaultView,
+  domainLabel,
+  formatList,
+  newTargetRefused,
+  stepForLocal,
+  stepForNewTarget,
+  stepForTarget,
+  viewHomeLabel,
+  type PlacementStep,
+} from "../../lib/placement";
+import { blockedText, tickDestination, useNewDestinations } from "../../lib/placementButtons";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { useToast } from "../../lib/toast";
@@ -142,7 +153,8 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
   const host = useHostLabel();
   const repos = useNamedRepos();
   const { confirm, confirmDialog } = useConfirm();
-  const [direct, setDirect] = useState<SendToOption | null>(null);
+  const [direct, setDirect] = useState<{ target: SendToOption; skip: string[] } | null>(null);
+  const destinations = useNewDestinations(row.domain, options);
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
   const domain = domainLabel(t, row.domain);
@@ -296,20 +308,31 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
     }
   }
 
-  function onSegment(seg: SegmentId) {
-    const step = stepForDefaultSegment(seg, row, options);
-    if (step.kind === "direct") setDirect(step.target);
-    else if (step.kind === "change") void change(step.change);
+  function run(step: PlacementStep) {
+    if (step.kind === "blocked") {
+      push(blockedText(t, step, viewHomeLabel(t, host, view, options)), "warn");
+      setShake((n) => n + 1);
+      return;
+    }
+    if (step.kind === "direct") {
+      setDirect({ target: step.target, skip: step.skip ?? ["*"] });
+      return;
+    }
+    const next = defaultChangeOf(step);
+    if (next) void change(next);
   }
 
-  function onSendTo(opt: SendToOption) {
-    if (!opt.repoId) setDirect(opt);
-    else if (opt.repoId !== row.home) void change({ home: opt.repoId });
-  }
-
-  function onChip(targetId: string, on: boolean) {
-    const step = stepForChip(targetId, on, view, options);
-    if (step.kind === "save" && step.change.copies && "skip" in step.change.copies) void change({ skip: step.change.copies.skip });
+  async function addDestination(id: string) {
+    const refused = newTargetRefused(view);
+    if (refused) return run(refused);
+    setBusy(true);
+    const made = await tickDestination(id, row.domain);
+    setBusy(false);
+    if ("error" in made) {
+      fail(made.error);
+      return;
+    }
+    run(stepForNewTarget(made.targetId, view, options));
   }
 
   const counts = COUNT_KEYS.filter(([k]) => row.counts[k] > 0)
@@ -338,12 +361,13 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
           host={host}
           hueOffset={hueOffset}
           disabled={busy}
-          onSegment={onSegment}
+          destinations={destinations}
+          onLocal={(on) => run(stepForLocal(on, view, options, t, host))}
+          onTarget={(id, on) => run(stepForTarget(id, on, view, options, t))}
+          onDestination={(id) => void addDestination(id)}
           onHome={(id) => {
             if (id !== row.home) void change({ home: id });
           }}
-          onSendTo={onSendTo}
-          onChip={onChip}
         />
       </div>
       {counts !== "" && <p className="text-xs text-carbon-textMuted">{counts}</p>}
@@ -368,12 +392,12 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       </div>
       {direct && (
         <DirectRepoDialog
-          target={{ id: direct.targetId, name: direct.name }}
+          target={{ id: direct.target.targetId, name: direct.target.name }}
           mode="create"
           onClose={() => setDirect(null)}
           onDone={(result) => {
             setDirect(null);
-            if (result.kind === "created") void change({ home: result.repo.id });
+            if (result.kind === "created") void change({ home: result.repo.id, skip: direct.skip });
           }}
         />
       )}

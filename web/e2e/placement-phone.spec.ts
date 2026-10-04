@@ -1,9 +1,9 @@
-// The placement row in the Settings defaults card, with a target staged at the
-// route layer. Below 600px its three segments sit in two rows, two over one,
-// every label whole; wider, they share one row. A screen reader hears a radio
-// group, and the keyboard moves along it without choosing until Space. The
-// copy chips under it keep to their segments beside their caption, and the
-// location field and the apply button keep their words whole.
+// The placement row in the Settings defaults card, with a target and a
+// destination staged at the route layer. Lokal, the target and the
+// destination share one row at every width, every label whole, and the row
+// hugs its buttons. A screen reader hears a group of toggle buttons, and the
+// keyboard moves along it without choosing until Space. The location field
+// under it and the apply button keep their words whole.
 // German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
@@ -40,6 +40,18 @@ function options(domain: string) {
   };
 }
 
+const WASABI = {
+  id: "d-wasabi",
+  name: "Wasabi",
+  provider: "wasabi",
+  repo: "s3:https://s3.wasabisys.com/bombvault",
+  credsRef: "",
+  storageClass: "",
+  immutable: false,
+  createdAt: 1_758_170_400,
+  domains: [],
+};
+
 /** Stages the defaults and returns the default changes the page asked for. */
 async function stage(page: Page): Promise<string[]> {
   const asked: string[] = [];
@@ -52,6 +64,7 @@ async function stage(page: Page): Promise<string[]> {
     const domain = new URL(route.request().url()).searchParams.get("domain") ?? "containers";
     return route.fulfill({ json: { ok: true, options: options(domain) } });
   });
+  await page.route("**/api/offsite/destinations", (route) => route.fulfill({ json: { ok: true, destinations: [WASABI] } }));
   await page.route("**/api/placement/default/**", (route) => {
     asked.push(route.request().url());
     return route.fulfill({ json: { ok: false, error: "staged" } });
@@ -61,60 +74,70 @@ async function stage(page: Page): Promise<string[]> {
 
 async function containersRow(page: Page): Promise<Locator> {
   await page.goto("/settings#storage");
-  const row = page.getByRole("radiogroup", { name: "Ablage" }).first();
+  const row = page.getByRole("group", { name: "Ablage" }).first();
   await expect(row).toBeVisible();
-  await expect(row.getByRole("radio")).toHaveCount(3);
+  await expect(row.getByRole("button")).toHaveCount(3);
   return row;
 }
 
-test("the placement row takes two rows below 600px and one above, every label whole", async ({ page }) => {
+test("the placement row keeps its buttons on one row, every label whole and inside the window", async ({ page }) => {
   await stage(page);
   const row = await containersRow(page);
-  const narrow = page.viewportSize()!.width < 600;
 
-  const tops = await row.getByRole("radio").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
-  expect(new Set(tops).size, JSON.stringify(tops)).toBe(narrow ? 2 : 1);
-  if (narrow) expect(tops[0], "Lokal and Lokal + Off-site share the first row").toBe(tops[1]);
+  const tops = await row.getByRole("button").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+  expect(new Set(tops).size, JSON.stringify(tops)).toBe(1);
 
   const cut = await row.locator("[data-sel-label]").evaluateAll((els) =>
     els.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent),
   );
   expect(cut, "labels cut off").toEqual([]);
+
+  const vw = page.viewportSize()!.width;
+  const past = await row.getByRole("button").evaluateAll(
+    (els, width) => els.filter((el) => el.getBoundingClientRect().right > width + 1).map((el) => el.textContent),
+    vw,
+  );
+  expect(past, "buttons past the window").toEqual([]);
 });
 
 test("the keyboard moves along the placement row and chooses on Space", async ({ page }) => {
   const asked = await stage(page);
   const row = await containersRow(page);
-  const local = row.getByRole("radio", { name: "Lokal", exact: true });
-  const both = row.getByRole("radio", { name: "Lokal + Off-site" });
-  await expect(both).toHaveAttribute("aria-checked", "true");
+  const local = row.getByRole("button", { name: "Lokal", exact: true });
+  const b2 = row.getByRole("button", { name: "B2", exact: true });
+  await expect(local).toHaveAttribute("aria-pressed", "true");
+  await expect(b2).toHaveAttribute("aria-pressed", "true");
 
-  await both.focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect(local).toBeFocused();
-  await expect(local).toHaveAttribute("aria-checked", "false");
+  await local.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(b2).toBeFocused();
+  await expect(b2).toHaveAttribute("aria-pressed", "true");
   expect(asked).toEqual([]);
 
   await page.keyboard.press("Space");
   await expect.poll(() => asked.length).toBeGreaterThan(0);
 });
 
-test("the copy chips keep to their segments beside their caption", async ({ page }) => {
+test("the row offers the destination unpressed beside the target and hugs its buttons", async ({ page }) => {
   await stage(page);
-  await containersRow(page);
-  const chips = page.getByRole("group", { name: "Kopie nach" }).first();
-  await expect(chips).toBeVisible();
-  const caption = page.getByText("Kopie nach", { exact: true }).first();
-  const [chipBox, captionBox] = [await chips.boundingBox(), await caption.boundingBox()];
-  expect(chipBox!.x, "the chips start after the caption").toBeGreaterThan(captionBox!.x + captionBox!.width);
-  const segments = await chips.getByRole("button").evaluateAll((els) => els.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0));
-  expect(chipBox!.width, "the track hugs its chip").toBeLessThan(segments + 20);
+  const row = await containersRow(page);
+  const wasabi = row.getByRole("button", { name: "Wasabi", exact: true });
+  await expect(wasabi).toHaveAttribute("aria-pressed", "false");
+  const [rowBox, b2Box, wasabiBox] = [
+    await row.boundingBox(),
+    await row.getByRole("button", { name: "B2", exact: true }).boundingBox(),
+    await wasabi.boundingBox(),
+  ];
+  expect(wasabiBox!.x, "the destination comes after the target").toBeGreaterThan(b2Box!.x + b2Box!.width - 1);
+  const buttons = await row.getByRole("button").evaluateAll((els) => els.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0));
+  expect(rowBox!.width, "the track hugs its buttons").toBeLessThan(buttons + 20);
 });
 
 test("the default's location and its apply button keep their words whole", async ({ page }) => {
   await stage(page);
   await containersRow(page);
-  const card = page.locator("section").filter({ has: page.getByRole("radiogroup", { name: "Ablage" }) }).first();
+  const card = page.locator("section").filter({ has: page.getByRole("group", { name: "Ablage" }) }).first();
+  await expect(card.getByRole("combobox", { name: "Gespeichert auf" })).toBeVisible();
   const cut = await card.evaluate((root) =>
     [...root.querySelectorAll("[role='combobox'] span:not(.invisible), .glim-btn-label")]
       .filter((el) => el.getBoundingClientRect().width > 0 && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1))

@@ -4,6 +4,7 @@ import { fireEvent, render, type RenderResult } from "@testing-library/react";
 import type {
   DefaultImpact,
   DefaultRow,
+  Destination,
   DroppedTarget,
   HomeOption,
   NamedRepo,
@@ -57,6 +58,21 @@ export function targetOption(over?: Partial<TargetOption>): TargetOption {
 
 export function sendToOption(over?: Partial<SendToOption>): SendToOption {
   return { kind: "direct", repoId: "", targetId: "t-b2", name: "B2", location: "", ...over };
+}
+
+export function destination(over?: Partial<Destination>): Destination {
+  return {
+    id: "dest-wasabi",
+    name: "Wasabi",
+    provider: "wasabi",
+    repo: "s3:https://s3.wasabisys.com/bv",
+    credsRef: "",
+    storageClass: "",
+    immutable: false,
+    createdAt: 1_758_170_400,
+    domains: [],
+    ...over,
+  };
 }
 
 export function defaultRow(over?: Partial<DefaultRow>): DefaultRow {
@@ -271,6 +287,8 @@ const DEFAULTS: Record<string, Reply> = {
   deleteAtTarget: () => ({ ok: true, deleted: 14 }),
   createFileSet: () => ({ ok: true, id: "set-new" }),
   createOffsiteTarget: (...args) => ({ ok: true, target: { ...(args[0] as object), id: "t-new", createdAt: 1 } }),
+  listDestinations: () => ({ ok: true, destinations: [] }),
+  destinationForDomain: (...args) => ({ ok: true, created: true, target: { id: "t-new", domain: args[1], destinationId: args[0] } }),
   updateOffsiteTarget: (...args) => ({ ok: true, target: args[1], warnings: [] }),
   acceptMeshOffer: () => ({ ok: true }),
   getSettings: () => ({ ok: true, platform: "unraid", hostMountRoot: "/host/user" }),

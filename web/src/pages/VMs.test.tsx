@@ -120,7 +120,7 @@ describe("VMRow matches the container card's structure", () => {
 
   it("carries the placement bar, the same row the container card has", async () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
-    expect(await screen.findByRole("radiogroup", { name: en["placement.title"] })).toBeTruthy();
+    expect(await screen.findByRole("group", { name: en["placement.title"] })).toBeTruthy();
   });
 
   it("keeps the backups pane collapsed until the chip is pressed, and the row owns that state", () => {

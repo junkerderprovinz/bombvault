@@ -44,48 +44,13 @@ import { relativeTime } from "../lib/reltime";
 import { IconLink } from "../components/glyphs";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
-import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { CopyBlock } from "../components/CopyBlock";
 
 import { ToggleRow } from "./settings/shared";
 type T = ReturnType<typeof useT>["t"];
-
-// CopyBlock is a monospace <pre> with a copy button, like OffsiteWizard's.
-// copyText() is used because the Clipboard API alone silently does nothing on
-// a plain HTTP origin.
-function CopyBlock({ text, t }: { text: string; t: T }) {
-  const { push } = useToast();
-  const [shake, setShake] = useState(0);
-  async function copy() {
-    if (await copyText(text)) {
-      push(t("common.copied"), "success");
-    } else {
-      // Both the Clipboard API and the execCommand fallback failed, which is
-      // worth telling even in quiet mode.
-      push(t("vm.ssh.copyFailed"), "fail");
-      setShake((n) => n + 1);
-    }
-  }
-  return (
-    <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
-        {text}
-      </pre>
-      <Button
-        key={shake}
-        label={t("common.copy")}
-        labelKey="common.copy"
-        tone="neutral"
-        onClick={() => void copy()}
-        className={`shrink-0 rounded-pill px-3 py-2 text-xs text-carbon-text${
-          shake ? " glim-shake" : ""
-        }`}
-      />
-    </div>
-  );
-}
 
 const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files", "zfs"] as const;
 
@@ -427,11 +392,11 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>
-              <CopyBlock text={snippet.dockerRun} t={t} />
+              <CopyBlock text={snippet.dockerRun} />
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("fleet.mesh.compose")}</span>
-              <CopyBlock text={snippet.compose} t={t} />
+              <CopyBlock text={snippet.compose} />
             </div>
             <div className="flex items-center justify-end pt-1">
               <Button

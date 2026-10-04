@@ -129,13 +129,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [
         { key: "placement.title" },
         { key: "placement.segLocal" },
-        { key: "placement.segLocalOffsite" },
-        { key: "placement.segOffsiteOnly" },
         { key: "placement.storedOn" },
-        { key: "placement.copyTo" },
-        { key: "placement.sendTo" },
-        { key: "placementDefaults.copyLine" },
-        { key: "placementDefaults.copyLineContainers" },
         { key: "placementDefaults.apply" },
         { key: "placementDefaults.confirm" },
       ],
@@ -313,6 +307,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   ],
 
   offsite: [
+    {
+      title: "dest.title",
+      hint: "dest.hint",
+      rows: [{ key: "dest.add" }, { key: "dest.name" }, { key: "offsite.immutable" }],
+    },
     {
       title: "offsite.copyDomainTitle",
       vars: { domain: "nav.containers" },

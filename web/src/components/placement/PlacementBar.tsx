@@ -1,10 +1,9 @@
-import { Selector } from "../Selector";
+import { Selector, type SelectorItem } from "../Selector";
 import type { SelectOption } from "../SelectField";
-import type { PlacementDomain, PlacementOptions, PlacementView, SegmentId, SendToOption } from "../../lib/api";
+import type { Destination, PlacementDomain, PlacementOptions, PlacementView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { homeOptionLabel, lockedSegments, segmentItems, sendToLabel, viewHomeLabel } from "../../lib/placement";
+import { homeOptionLabel, lockHint, offQualifier, placementButtons, viewHomeLabel } from "../../lib/placement";
 import { HomeSelect } from "./HomeSelect";
-import { TargetChips } from "./TargetChips";
 
 export interface PlacementBarProps {
   domain: PlacementDomain;
@@ -12,19 +11,20 @@ export interface PlacementBarProps {
   view: PlacementView;
   options: PlacementOptions;
   host: string;
+  /** Destinations with no target in this domain yet. */
+  destinations: Destination[];
   hueOffset?: number;
   disabled?: boolean;
-  onSegment: (seg: SegmentId) => void;
+  onLocal: (on: boolean) => void;
+  onTarget: (targetId: string, on: boolean) => void;
+  onDestination: (destinationId: string) => void;
+  /** Picks among several local repositories. */
   onHome: (repoId: string) => void;
-  onSendTo: (opt: SendToOption) => void;
-  onChip: (targetId: string, on: boolean) => void;
 }
 
-/** sendToKey tells a direct repository that does not exist yet apart from every
- *  repository id, so Send to can offer it as a value of its own. */
-export function sendToKey(opt: SendToOption): string {
-  return opt.repoId || `direct:${opt.targetId}`;
-}
+const LOCAL = "local";
+const DESTINATION = "destination:";
+const REMOTE_HOME = "home:";
 
 // withStored keeps a stored value that is switched off or unknown in the list,
 // marked and not selectable, so the field never pretends the item is elsewhere.
@@ -32,75 +32,70 @@ function withStored(list: SelectOption<string>[], value: string, label: string):
   return list.some((o) => o.value === value) ? list : [...list, { value, label, disabled: true }];
 }
 
+/**
+ * PlacementBar is one row of buttons: Local and every target. A lit button
+ * gets the backups, Local or the first lit target as the place they are
+ * written to and every other lit one as a copy.
+ */
 export function PlacementBar({
-  domain,
-  context,
   view,
   options,
   host,
+  destinations,
   hueOffset,
   disabled,
-  onSegment,
+  onLocal,
+  onTarget,
+  onDestination,
   onHome,
-  onSendTo,
-  onChip,
 }: PlacementBarProps) {
   const { t } = useT();
+  const b = placementButtons(view, options);
   const home = viewHomeLabel(t, host, view, options);
-  const segment = view.segment === "" ? null : view.segment;
-  const homes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h) }));
-  const sendTo = options.sendTo.map((s) => ({ value: sendToKey(s), label: sendToLabel(t, s) }));
-  const chips = (label: string) => (
-    <TargetChips
-      label={label}
-      targets={options.targets}
-      view={view}
-      options={options}
-      disabled={disabled}
-      hueOffset={hueOffset}
-      onToggle={onChip}
-    />
-  );
+  const fixed = view.locked ? lockHint(t, "home-fixed", home) : undefined;
+  const items: SelectorItem[] = [
+    { id: LOCAL, label: t("placement.segLocal"), title: b.local ? fixed : undefined },
+    ...options.targets.map((x) => ({
+      id: x.id,
+      label: x.enabled ? x.name : `${x.name} ${offQualifier(t)}`,
+      disabled: !x.enabled && !b.ticked.includes(x.id),
+      title: x.id === b.home ? fixed : x.hint === "creds-differ" ? t("placement.credsDiffer") : undefined,
+    })),
+    ...destinations.map((d) => ({ id: DESTINATION + d.id, label: d.name })),
+  ];
+  if (view.repoKind === "remote") {
+    items.push({ id: REMOTE_HOME + view.repo, label: home, disabled: true, title: lockHint(t, "own-credentials", home) });
+  }
+  const active = new Set<string>(b.ticked);
+  if (b.local) active.add(LOCAL);
+  if (view.repoKind === "remote") active.add(REMOTE_HOME + view.repo);
+  const localHomes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h) }));
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Selector
-        items={segmentItems(t, lockedSegments(view, options), home)}
+        items={items}
         label={t("placement.title")}
-        select="one"
-        activation="manual"
-        pairsOnPhone
-        active={segment}
+        select="many"
+        inline
+        active={active}
         hueOffset={hueOffset}
         disabled={disabled}
-        onChange={(id) => onSegment(id as SegmentId)}
+        onChange={(id) => {
+          if (id === LOCAL) onLocal(!b.local);
+          else if (id.startsWith(DESTINATION)) onDestination(id.slice(DESTINATION.length));
+          else if (!id.startsWith(REMOTE_HOME)) onTarget(id, !active.has(id));
+        }}
       />
-      {segment !== "offsite-only" && (
+      {b.local && localHomes.length > 1 && (
         <HomeSelect
           label={t("placement.storedOn")}
           value={view.repo}
-          options={withStored(homes, view.repo, home)}
+          options={withStored(localHomes, view.repo, home)}
           locked={view.locked}
           disabled={disabled}
           onCommit={onHome}
         />
       )}
-      {segment === "local-offsite" && chips(t("placement.copyTo"))}
-      {segment === "offsite-only" && (
-        <HomeSelect
-          label={t("placement.sendTo")}
-          value={view.repo}
-          options={withStored(sendTo, view.repo, home)}
-          locked={view.locked}
-          disabled={disabled}
-          onCommit={(key) => {
-            const opt = options.sendTo.find((s) => sendToKey(s) === key);
-            if (opt) onSendTo(opt);
-          }}
-        />
-      )}
-      {context === "default" &&
-        segment === "offsite-only" &&
-        chips(domain === "containers" ? t("placementDefaults.copyLineContainers") : t("placementDefaults.copyLine"))}
     </div>
   );
 }

@@ -1687,6 +1687,42 @@ body {
   margin-block: calc(var(--text-body) * 1.5);
 }
 
+/* A provider in the off-site wizard takes its colour pair from its list item,
+   since there are too many brands for a class each. A provider without one
+   lights up in the accent, like the house button. */
+.glim-tile-provider {
+  --tile: var(--provider-tile, var(--accent));
+  --tile-ink: var(--provider-ink, var(--accent-contrast));
+}
+
+/* The provider grid: as many README buttons across as the card is wide. */
+.glim-provider-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+  gap: 0.8125rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.glim-provider-pick .glim-readme-btn-unit { display: flex; }
+/* The wizard sits on surface2, the README button's own surface. */
+.glim-provider-pick .glim-readme-btn { flex: 1; width: auto; background-color: var(--carbon-surface); }
+
+/* The picked provider and one reached with Tab stay lit, as under the pointer. */
+.glim-provider-picked > .glim-brand-tile,
+.glim-provider-pick .glim-brand-tile:focus-visible {
+  background-color: var(--tile);
+  color: var(--tile-ink);
+  --mark-ink: var(--tile-ink);
+  --mark-cut: var(--tile);
+}
+.glim-provider-picked .glim-readme-btn-mark,
+.glim-provider-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark {
+  color: var(--tile-ink);
+}
+:is(.glim-provider-picked > .glim-brand-tile, .glim-provider-pick .glim-brand-tile:focus-visible) .glim-mark-rest { display: none; }
+:is(.glim-provider-picked > .glim-brand-tile, .glim-provider-pick .glim-brand-tile:focus-visible) .glim-mark-hover { display: block; }
+
 /* The MCP clients' tile colours (McpServerCard's client buttons), from the
    brands' own palettes, with the ink as GlimStone's brand tiles pick it: white
    wherever white reaches 2:1 on the fill, near-black below that. */

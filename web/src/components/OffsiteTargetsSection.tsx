@@ -24,6 +24,7 @@ import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
+import { useDestinations } from "../lib/useDestinations";
 import { useNamedRepos } from "../lib/useNamedRepos";
 import { isPlacementDomain, offQualifier } from "../lib/placement";
 import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
@@ -83,13 +84,29 @@ function emptyDraft(domain: Domain): OffsiteTarget {
 // TargetRow shows one additional target with its own connection test, which
 // probes this target alone; the primary editor's Test connection probes only
 // the primary. `children` are the row's other actions.
-function TargetRow({ tgt, t, hueIndex, children }: { tgt: OffsiteTarget; t: T; hueIndex?: number; children: ReactNode }) {
+function TargetRow({
+  tgt,
+  from,
+  t,
+  hueIndex,
+  children,
+}: {
+  tgt: OffsiteTarget;
+  /** The destination the target was made from. */
+  from: string | null;
+  t: T;
+  hueIndex?: number;
+  children: ReactNode;
+}) {
   const test = useTestVerdict([tgt.repo, tgt.credsRef, tgt.storageClass], t("offsite.testFailed"));
   return (
     <div className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="text-sm text-carbon-text truncate max-md:whitespace-normal max-md:wrap-anywhere">{tgt.name || tgt.repo}</span>
         <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
+        {from !== null && (
+          <span className="text-xs text-carbon-textMuted">{t("offsite.targets.fromDestination").replace("{name}", () => from)}</span>
+        )}
         {/* A long repo can squeeze this column until the chip labels wrap
             to several lines; without `wrap` the tinted background would
             stay one line tall. */}
@@ -156,6 +173,7 @@ export function OffsiteTargetsSection({
   // same page can add a set while this section is mounted.
   const credSets = useCloudCredSets();
   const repos = useNamedRepos();
+  const { destinations } = useDestinations();
   const { confirm, confirmDialog } = useConfirm();
   const { ask, dialog: newTargetDialog } = useNewTargetQuestion();
   const { lang } = useT();
@@ -204,6 +222,13 @@ export function OffsiteTargetsSection({
   function openNew() {
     setDraft(emptyDraft(domain));
     setSaveState("idle");
+  }
+
+  // Name, location, credentials, storage class and append-only of a target
+  // made from a destination belong to the destination.
+  function destinationOf(tgt: OffsiteTarget): string | null {
+    if (!tgt.destinationId) return null;
+    return destinations.find((d) => d.id === tgt.destinationId)?.name ?? tgt.name;
   }
 
   function openEdit(tgt: OffsiteTarget) {
@@ -337,6 +362,7 @@ export function OffsiteTargetsSection({
 
   const inputCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
+  const draftFrom = draft ? destinationOf(draft) : null;
   const numCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well";
 
@@ -360,7 +386,7 @@ export function OffsiteTargetsSection({
 
       {/* Existing additional targets */}
       {targets.map((tgt) => (
-        <TargetRow key={tgt.id} tgt={tgt} t={t} hueIndex={hueIndex}>
+        <TargetRow key={tgt.id} tgt={tgt} from={destinationOf(tgt)} t={t} hueIndex={hueIndex}>
           <Button
             label={t("offsite.targets.edit")}
             labelKey="offsite.targets.edit"
@@ -401,11 +427,15 @@ export function OffsiteTargetsSection({
       {draft && (
         <div className="glim-tile flex flex-col gap-3 rounded-card p-3">
           {savedUse && <p className="text-xs text-carbon-textMuted">{alsoDirectText(t, savedUse)}</p>}
+          {draftFrom !== null && (
+            <p className="text-xs text-carbon-textMuted">{t("offsite.targets.fromDestinationEdit").replace("{name}", () => draftFrom)}</p>
+          )}
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.name")}</span>
             <input
               value={draft.name}
               onChange={(e) => setDraft((d) => (d ? { ...d, name: e.target.value } : d))}
+              disabled={draftFrom !== null}
               spellCheck={false}
               placeholder={t("offsite.targets.namePlaceholder")}
               className={inputCls}
@@ -416,6 +446,7 @@ export function OffsiteTargetsSection({
             <input
               value={draft.repo}
               onChange={(e) => setDraft((d) => (d ? { ...d, repo: e.target.value } : d))}
+              disabled={draftFrom !== null}
               spellCheck={false}
               placeholder={t("offsite.wizard.repoUrlPlaceholder")}
               dir="ltr"
@@ -430,6 +461,7 @@ export function OffsiteTargetsSection({
             <SelectField
               value={draft.credsRef}
               onChange={(v) => setDraft((d) => (d ? { ...d, credsRef: v } : d))}
+              disabled={draftFrom !== null}
               label={t("offsite.targets.credsLabel")}
               options={[
                 { value: "", label: t("offsite.targets.credsDefault") },
@@ -443,6 +475,7 @@ export function OffsiteTargetsSection({
             <SelectField
               value={draft.storageClass}
               onChange={(v) => setDraft((d) => (d ? { ...d, storageClass: v } : d))}
+              disabled={draftFrom !== null}
               label={t("cloud.storageClass.label")}
               options={[
                 { value: "", label: t("cloud.storageClass.default") },
@@ -468,6 +501,7 @@ export function OffsiteTargetsSection({
               label={t("offsite.immutable")}
               checked={draft.immutable}
               onChange={(v) => setDraft((d) => (d ? { ...d, immutable: v } : d))}
+              disabled={draftFrom !== null}
               className="mt-0.5"
             />
           </div>

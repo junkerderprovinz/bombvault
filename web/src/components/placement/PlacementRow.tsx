@@ -15,18 +15,21 @@ import {
   addsTargets,
   followLine,
   formatList,
+  newTargetRefused,
   noCopyNow,
-  stepForChip,
   stepForHome,
+  stepForLocal,
+  stepForNewTarget,
   stepForReset,
-  stepForSegment,
-  stepForSendTo,
+  stepForTarget,
   viewHomeLabel,
   type FollowLine,
   type PlacementStep,
 } from "../../lib/placement";
+import { blockedText, tickDestination, useNewDestinations } from "../../lib/placementButtons";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
+import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
@@ -76,7 +79,9 @@ export function PlacementRow({
   const { options, error } = usePlacementOptions(item.domain);
   const { shown, shake, save } = usePlacementSave(item, view, onView);
   const { confirm, confirmDialog } = useConfirm();
-  const [direct, setDirect] = useState<SendToOption | null>(null);
+  const { push } = useToast();
+  const destinations = useNewDestinations(item.domain, options);
+  const [direct, setDirect] = useState<{ target: SendToOption; skip: string[] } | null>(null);
   const [asking, setAsking] = useState(false);
 
   async function uploadsAgreed(change: PlacementChange): Promise<boolean> {
@@ -105,8 +110,12 @@ export function PlacementRow({
 
   async function run(step: PlacementStep) {
     if (step.kind === "none") return;
+    if (step.kind === "blocked") {
+      push(blockedText(t, step, options ? viewHomeLabel(t, host, shown, options) : host), "warn");
+      return;
+    }
     if (step.kind === "direct") {
-      setDirect(step.target);
+      setDirect({ target: step.target, skip: step.skip ?? ["*"] });
       return;
     }
     // The bar stays put until the question is answered: a second choice would
@@ -130,11 +139,25 @@ export function PlacementRow({
     save(step.change, step.optimistic);
   }
 
+  async function addDestination(id: string) {
+    if (!options) return;
+    const refused = newTargetRefused(shown);
+    if (refused) return void run(refused);
+    setAsking(true);
+    const made = await tickDestination(id, item.domain);
+    setAsking(false);
+    if ("error" in made) {
+      push(placementErrorText(t, lang, made.error, "settings.error"), "fail");
+      return;
+    }
+    void run(stepForNewTarget(made.targetId, shown, options));
+  }
+
   const unreadable = shown.unreadable || options?.unreadable === true || (options === null && error !== null);
   const line = followLine(shown);
-  // An item fixed on a remote or direct repository is never copied and cannot
-  // move, so a line about its copies and a Reset would only mislead.
-  const copiesLine = !(shown.locked && shown.segment === "offsite-only");
+  // An item fixed on a remote repository is never copied and cannot move, so
+  // a line about its copies and a Reset would only mislead.
+  const copiesLine = !(shown.locked && shown.repoKind === "remote");
   const warn = options ? noCopyNow(shown, options) : [];
 
   return (
@@ -148,8 +171,8 @@ export function PlacementRow({
           <span className="pt-1.5 text-xs text-statusWarn">{t("placement.unreadable")}</span>
         ) : (
           options && (
-            // Beside the label a phone leaves the bar too narrow for its three
-            // segments, so there it takes a line of its own.
+            // Beside the label a phone leaves the bar too narrow for its
+            // buttons, so there it takes a line of its own.
             <div key={shake} className={`min-w-0 flex-1 max-md:basis-full${shake ? " glim-shake" : ""}`}>
               <PlacementBar
                 domain={item.domain}
@@ -157,11 +180,12 @@ export function PlacementRow({
                 view={shown}
                 options={options}
                 host={host}
+                destinations={destinations}
                 disabled={asking}
-                onSegment={(seg) => void run(stepForSegment(seg, shown, options, t, host))}
+                onLocal={(on) => void run(stepForLocal(on, shown, options, t, host))}
+                onTarget={(id, on) => void run(stepForTarget(id, on, shown, options, t))}
+                onDestination={(id) => void addDestination(id)}
                 onHome={(id) => void run(stepForHome(id, shown, options, t, host))}
-                onSendTo={(opt) => void run(stepForSendTo(opt, shown, t))}
-                onChip={(id, on) => void run(stepForChip(id, on, shown, options))}
               />
             </div>
           )
@@ -198,21 +222,23 @@ export function PlacementRow({
       {confirmDialog}
       {direct && (
         <DirectRepoDialog
-          target={{ id: direct.targetId, name: direct.name }}
+          target={{ id: direct.target.targetId, name: direct.target.name }}
           mode="create"
           onClose={() => setDirect(null)}
           onDone={(result) => {
+            const { target, skip } = direct;
             setDirect(null);
             if (result.kind !== "created") return;
             save(
-              { home: { repo: result.repo.id }, copies: { skip: ["*"] } },
+              { home: { repo: result.repo.id }, copies: { skip } },
               {
                 segment: "offsite-only",
                 repo: result.repo.id,
                 repoKind: "direct",
+                repoTarget: target.targetId,
                 repoLabel: result.repo.name,
                 homeFollows: false,
-                skip: ["*"],
+                skip,
                 copiesFollow: false,
               }
             );

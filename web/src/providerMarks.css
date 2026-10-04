@@ -1,0 +1,127 @@
+/* Colours of the provider marks that need another lightness on one of the
+   two grounds, taken from ArrowLoop's brandGlyphs.css. A mark drawn in navy
+   or black is invisible on a dark surface, a part in near-white on a light
+   one. The blocks follow the theme selectors of index.css. */
+
+:root,
+[data-theme="dark"] {
+  --brand-nextcloud-0: #0089d3;
+  --brand-owncloud-0: #2d80f2;
+  --brand-dropbox-0: #2d7dff;
+  --brand-box-0: #137fff;
+  --brand-maildotru-0: #2d7dff;
+  --brand-zoho-0: #e8484a;
+  --brand-citrix-0: #9b6cd4;
+  --brand-backblaze-0: #e84952;
+  --brand-openstack-0: #f03a5f;
+  --brand-scaleway-0: #a958fa;
+  --brand-hetzner-0: #f43453;
+  --brand-ovh-0: #2e84dd;
+  --brand-jottacloud-0: #896ee8;
+  --brand-opendrive-forced0: #ffffff;
+  --brand-putio-0: #ffffff;
+  --brand-putio-1: #FDCE45;
+  --brand-ulozto-forced0: #ffffff;
+  --brand-seaweedfs-0: #62dff2;
+  --brand-seaweedfs-1: #9fe7f6;
+  --brand-seaweedfs-2: #fff;
+  --brand-quatrix-0: #ffd6b3;
+  --brand-linkbox-0: #fff;
+  --brand-pixeldrain-0: #828282;
+  --brand-azureblob-0: #0085e7;
+  --brand-filen-0: #fff;
+  --brand-filescom-0: #f53542;
+  --brand-filescom-1: #e34c5e;
+  --brand-filescom-2: #ff144c;
+  --brand-filescom-3: #e05154;
+  --brand-filescom-4: #de5168;
+  --brand-filescom-5: #e44c54;
+  --brand-filescom-6: #e7475e;
+  --brand-filescom-7: #ff1840;
+  --brand-hidrive-0: #1e7eff;
+  --brand-storj-0: #3c7bff;
+  --brand-opencloud-0: #e2baff;
+  --brand-oracle-cloud-0: #d15f4f;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --brand-nextcloud-0: #0082C9;
+    --brand-owncloud-0: #041E42;
+    --brand-dropbox-0: #0061FF;
+    --brand-box-0: #0061D5;
+    --brand-maildotru-0: #005FF9;
+    --brand-zoho-0: #E42527;
+    --brand-citrix-0: #452170;
+    --brand-backblaze-0: #E21E29;
+    --brand-openstack-0: #ED1944;
+    --brand-scaleway-0: #4F0599;
+    --brand-hetzner-0: #D50C2D;
+    --brand-ovh-0: #123F6D;
+    --brand-jottacloud-0: #7d5fe6;
+    --brand-opendrive-forced0: #2b2b2b;
+    --brand-putio-0: #666666;
+    --brand-putio-1: #7f5f01;
+    --brand-ulozto-forced0: #3d3d3d;
+    --brand-seaweedfs-0: #0a6e7e;
+    --brand-seaweedfs-1: #0c6c80;
+    --brand-seaweedfs-2: #666666;
+    --brand-quatrix-0: #a94e00;
+    --brand-linkbox-0: #666666;
+    --brand-pixeldrain-0: #000000;
+    --brand-azureblob-0: #0072c6;
+    --brand-filen-0: #666666;
+    --brand-filescom-0: #f42534;
+    --brand-filescom-1: #d82237;
+    --brand-filescom-2: #c3002f;
+    --brand-filescom-3: #911a1d;
+    --brand-filescom-4: #a41f35;
+    --brand-filescom-5: #d6202a;
+    --brand-filescom-6: #ac162c;
+    --brand-filescom-7: #eb0029;
+    --brand-hidrive-0: #003d8f;
+    --brand-storj-0: #0052ff;
+    --brand-opencloud-0: #20434f;
+    --brand-oracle-cloud-0: #C74634;
+  }
+}
+
+[data-theme="light"] {
+  --brand-nextcloud-0: #0082C9;
+  --brand-owncloud-0: #041E42;
+  --brand-dropbox-0: #0061FF;
+  --brand-box-0: #0061D5;
+  --brand-maildotru-0: #005FF9;
+  --brand-zoho-0: #E42527;
+  --brand-citrix-0: #452170;
+  --brand-backblaze-0: #E21E29;
+  --brand-openstack-0: #ED1944;
+  --brand-scaleway-0: #4F0599;
+  --brand-hetzner-0: #D50C2D;
+  --brand-ovh-0: #123F6D;
+  --brand-jottacloud-0: #7d5fe6;
+  --brand-opendrive-forced0: #2b2b2b;
+  --brand-putio-0: #666666;
+  --brand-putio-1: #7f5f01;
+  --brand-ulozto-forced0: #3d3d3d;
+  --brand-seaweedfs-0: #0a6e7e;
+  --brand-seaweedfs-1: #0c6c80;
+  --brand-seaweedfs-2: #666666;
+  --brand-quatrix-0: #a94e00;
+  --brand-linkbox-0: #666666;
+  --brand-pixeldrain-0: #000000;
+  --brand-azureblob-0: #0072c6;
+  --brand-filen-0: #666666;
+  --brand-filescom-0: #f42534;
+  --brand-filescom-1: #d82237;
+  --brand-filescom-2: #c3002f;
+  --brand-filescom-3: #911a1d;
+  --brand-filescom-4: #a41f35;
+  --brand-filescom-5: #d6202a;
+  --brand-filescom-6: #ac162c;
+  --brand-filescom-7: #eb0029;
+  --brand-hidrive-0: #003d8f;
+  --brand-storj-0: #0052ff;
+  --brand-opencloud-0: #20434f;
+  --brand-oracle-cloud-0: #C74634;
+}

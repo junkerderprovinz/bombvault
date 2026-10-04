@@ -2,13 +2,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { DefaultRow } from "../../lib/api";
+import { en } from "../../lib/i18n";
 import {
   accentButtons,
   defaultImpact,
   defaultRow,
+  destination,
   namedRepo,
   placementOptions,
   renderWithProviders,
+  sendToOption,
   targetImpact,
   targetOption,
   targetPreview,
@@ -37,7 +40,7 @@ function withContainers(over: Partial<DefaultRow>) {
 async function containersRow(): Promise<HTMLElement> {
   renderWithProviders(<PlacementDefaultsCard />);
   const row = await screen.findByRole("region", { name: "Containers" });
-  await within(row).findByRole("radiogroup", { name: "Placement" });
+  await within(row).findByRole("group", { name: "Placement" });
   return row;
 }
 
@@ -51,11 +54,11 @@ describe("PlacementDefaultsCard", () => {
     expect(within(row).getByText("Following the default: 14 · Own choice: 2 · No location yet: 3 · Location set, no backup: 1")).toBeTruthy();
   });
 
-  it("names what a target stops getting and what stays there before Local is saved", async () => {
+  it("names what a target stops getting and what stays there before it goes dark", async () => {
     const impact = defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] });
     fake.reply("previewPlacementDefault", { ok: true, impact });
     const row = await containersRow();
-    fireEvent.click(within(row).getByRole("radio", { name: "Local" }));
+    fireEvent.click(within(row).getByRole("button", { name: "B2" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("Items and project folders that B2 no longer gets: 15. Copies that stay there: 210.");
     expect(accentButtons(dialog)).toEqual(["Confirm"]);
@@ -72,7 +75,7 @@ describe("PlacementDefaultsCard", () => {
     fake.reply("previewPlacementDefault", { ok: true, impact });
     renderWithProviders(<PlacementDefaultsCard />);
     const row = await screen.findByRole("region", { name: "Folders" });
-    fireEvent.click(await within(row).findByRole("radio", { name: "Local" }));
+    fireEvent.click(await within(row).findByRole("button", { name: "B2" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("Items that B2 no longer gets: 3. Copies that stay there: 6.");
     expect(dialog.textContent).toContain("Items that Hetzner gets from now on: 3.");
@@ -85,7 +88,7 @@ describe("PlacementDefaultsCard", () => {
     fake.reply("previewPlacementDefault", { ok: true, impact: first });
     fake.reply("putPlacementDefault", { ok: false, error: "stale", code: "stale", impact: second }, { ok: true, default: defaultRow() });
     const row = await containersRow();
-    fireEvent.click(within(row).getByRole("radio", { name: "Local" }));
+    fireEvent.click(within(row).getByRole("button", { name: "B2" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText(/no longer gets: 16\. Copies that stay there: 230\./)).toBeTruthy();
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
@@ -124,29 +127,56 @@ describe("PlacementDefaultsCard", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("writes nothing when the one open segment of a domain without a target is clicked", async () => {
-    const locks = { "local-offsite": "no-target", "offsite-only": "no-target" } as const;
-    const noTarget = { ok: true, options: placementOptions({ targets: [], sendTo: [], segmentLocks: locks }) };
+  it("keeps Local lit in a domain without a target, says why and writes nothing", async () => {
+    const noTarget = { ok: true, options: placementOptions({ targets: [], sendTo: [] }) };
     fake.reply("getPlacementOptions", noTarget, noTarget, noTarget);
     const row = await containersRow();
-    const local = within(row).getByRole("radio", { name: "Local" });
-    expect(local.getAttribute("aria-checked")).toBe("true");
+    const local = within(row).getByRole("button", { name: "Local" });
+    expect(local.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(local);
+    expect(await screen.findByText(en["placement.lastButton"])).toBeTruthy();
     expect(fake.callsTo("previewPlacementDefault")).toEqual([]);
     expect(fake.callsTo("putPlacementDefault")).toEqual([]);
   });
 
-  it("opens the direct repository window for Off-site only and moves the default there", async () => {
+  it("opens the direct repository window when Local goes dark and moves the default there", async () => {
     const row = await containersRow();
-    fireEvent.click(within(row).getByRole("radio", { name: "Off-site only" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Local" }));
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
     expect(await screen.findByText(/New items in Containers take/)).toBeTruthy();
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Set" }));
     await waitFor(() =>
-      expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { home: "repo-direct" }, defaultImpact()]])
+      expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { home: "repo-direct", skip: ["*"] }, defaultImpact()]])
     );
     expect(fake.callsTo("createDirectRepo")).toEqual([["t-b2", "", "b2:bucket:containers-direct"]]);
+  });
+
+  it("brings a default on a direct repository back to Local and keeps its target as a copy", async () => {
+    const direct = { ok: true, options: placementOptions({ sendTo: [sendToOption({ repoId: "repo-b2-direct" })] }) };
+    fake.reply("getPlacementOptions", direct, direct, direct);
+    withContainers({ home: "repo-b2-direct", homeKind: "direct", homeTarget: "t-b2", skip: ["*"] });
+    const row = await containersRow();
+    expect(within(row).getByRole("button", { name: "Local" }).getAttribute("aria-pressed")).toBe("false");
+    expect(within(row).getByRole("button", { name: "B2" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(within(row).getByRole("button", { name: "Local" }));
+    expect(await screen.findByText(/New items in Containers take/)).toBeTruthy();
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Set" }));
+    await waitFor(() =>
+      expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { home: "", skip: [] }, defaultImpact()]])
+    );
+  });
+
+  it("gives the domain its target under a destination and lets the default copy there", async () => {
+    const wasabi = { ok: true, destinations: [destination()] };
+    fake.reply("listDestinations", wasabi, wasabi, wasabi);
+    withContainers({ skip: ["*"] });
+    const row = await containersRow();
+    fireEvent.click(await within(row).findByRole("button", { name: "Wasabi" }));
+    await waitFor(() =>
+      expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { skip: ["t-b2"] }, defaultImpact()]])
+    );
+    expect(fake.callsTo("destinationForDomain")).toEqual([["dest-wasabi", "containers"]]);
   });
 
   it("confirms a paused default and leaves out the ticked names", async () => {
@@ -238,7 +268,7 @@ describe("PlacementDefaultsCard", () => {
     fake.reply("listPlacementDefaults", { ok: false, error: "database is locked" });
     act(() => placementChanged());
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
-    expect(within(row).getByRole("radiogroup", { name: "Placement" })).toBeTruthy();
+    expect(within(row).getByRole("group", { name: "Placement" })).toBeTruthy();
   });
 
   describe("says so when the server cannot be reached", () => {
@@ -274,6 +304,6 @@ describe("PlacementDefaultsCard", () => {
     renderWithProviders(<PlacementDefaultsCard />);
     const row = await screen.findByRole("region", { name: "Containers" });
     expect(await within(row).findByText("Placement could not be read")).toBeTruthy();
-    expect(within(row).queryByRole("radiogroup")).toBeNull();
+    expect(within(row).queryByRole("group", { name: "Placement" })).toBeNull();
   });
 });

@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import type { FileSetView } from "../lib/api";
 import { useT } from "../lib/i18n";
 import {
+  defaultRow,
+  destination,
   placementOptions,
   placementView,
   renderWithProviders,
@@ -34,7 +36,7 @@ function Harness({ initial }: { initial: FileSetView | null }) {
 
 async function openAdd() {
   renderWithProviders(<Harness initial={null} />);
-  await screen.findByRole("radiogroup", { name: "Placement" });
+  await screen.findByRole("group", { name: "Placement" });
 }
 
 function fillAndSave() {
@@ -67,6 +69,17 @@ describe("adding a folder set", () => {
     await waitFor(() => expect(fake.callsTo("createFileSet")).toEqual([[{ ...BASE, copies: { skip: ["t-hz"] } }]]));
   });
 
+  it("lights a destination's new target for this set alone", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: placementOptions({ default: defaultRow({ domain: "files", skip: ["*"] }) }) });
+    fake.reply("listDestinations", { ok: true, destinations: [destination()] });
+    await openAdd();
+    fireEvent.click(await screen.findByRole("button", { name: "Wasabi" }));
+    await waitFor(() => expect(fake.callsTo("destinationForDomain")).toEqual([["dest-wasabi", "files"]]));
+    await act(async () => {});
+    fillAndSave();
+    await waitFor(() => expect(fake.callsTo("createFileSet")).toEqual([[{ ...BASE, copies: { skip: ["t-b2"] } }]]));
+  });
+
   it("sends a location only once it is set, without asking", async () => {
     await openAdd();
     wheel(screen.getByRole("combobox", { name: "Stored on" }), 1);
@@ -76,13 +89,14 @@ describe("adding a folder set", () => {
     await waitFor(() => expect(fake.callsTo("createFileSet")).toEqual([[{ ...BASE, repo: "repo-nas" }]]));
   });
 
-  it("creates the remembered direct repository before the set", async () => {
+  it("creates the remembered direct repository before the set once Local goes dark", async () => {
     await openAdd();
-    fireEvent.click(screen.getByRole("radio", { name: "Off-site only" }));
+    fireEvent.click(screen.getByRole("button", { name: "Local" }));
     expect(await screen.findByText("Created together with the folder set.")).toBeTruthy();
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
-    expect(await screen.findByText("Send to")).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Local" }).getAttribute("aria-pressed")).toBe("false"));
+    expect(screen.getByRole("button", { name: "B2" }).getAttribute("aria-pressed")).toBe("true");
     expect(fake.callsTo("createDirectRepo")).toEqual([]);
     fillAndSave();
     await waitFor(() => expect(fake.callsTo("createFileSet")).toHaveLength(1));
@@ -97,7 +111,7 @@ describe("adding a folder set", () => {
   it("keeps the direct repository when the set fails and does not make a second one", async () => {
     fake.reply("createFileSet", { ok: false, error: "name taken" }, { ok: true, id: "set-new" });
     await openAdd();
-    fireEvent.click(screen.getByRole("radio", { name: "Off-site only" }));
+    fireEvent.click(screen.getByRole("button", { name: "Local" }));
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
     fillAndSave();
@@ -119,7 +133,7 @@ describe("editing a folder set", () => {
   it("has no placement field and never sends a location", async () => {
     const set = { id: "set1", ...BASE, lastBackup: 0, pathExists: true, placement: placementView() } as FileSetView;
     renderWithProviders(<Harness initial={set} />);
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(screen.queryByRole("group", { name: "Placement" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(patchFileSet).toHaveBeenCalledTimes(1));
     expect(patchFileSet.mock.calls[0]).toEqual(["set1", BASE]);

@@ -700,6 +700,6 @@ describe("FileSetRow placement", () => {
         <RowHarness set={setView()} />
       </Providers>,
     );
-    expect(await screen.findByRole("radiogroup", { name: "Placement" })).toBeTruthy();
+    expect(await screen.findByRole("group", { name: "Placement" })).toBeTruthy();
   });
 });
