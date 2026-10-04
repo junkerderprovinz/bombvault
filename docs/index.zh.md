@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault 使用 Docker 套接字在备份前停止容器，并在还原后重新创建容器。对于虚拟机，它通过 SSH（`qemu+ssh://`）在主机上运行 `virsh`，以正常关闭域或创建实时快照。它从不绑定挂载任何 libvirt 路径，因此不会妨碍主机上的虚拟机管理器。
+
 BombVault 是编排和界面层，而非存储引擎。所有实际的数据搬运都通过 restic 完成。
 
 ## 快速上手
@@ -50,6 +52,21 @@ BombVault 是编排和界面层，而非存储引擎。所有实际的数据搬�
 初次接触？请前往 **[快速上手](getting-started.md)**，通过 Community Applications 在 Unraid 上安装 BombVault 并运行您的第一份备份。然后探索完整的 **[功能](features.md)**，调整您的**[配置](configuration.md)**，并设置 **[异地与恢复](offsite-recovery.md)**。
 
 异地复制可以同时向每个域的多个目标分发，一个只读的**接收方仪表板**在接收这些副本的机器上对其进行监控，而您可以用**导出 / 导入设置**卡片将您的整套配置迁移到新机器。参见[异地与恢复](offsite-recovery.md)和[配置](configuration.md#portable-settings-export-and-import)。
+
+**[Android 应用](android.md)** 把群组中的每台服务器都放到您的手机上，并在一个屏幕上显示所有服务器的活动日志。
+
+## 致谢 {#credits}
+
+- [@Darkdragon14](https://github.com/Darkdragon14) 的 **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)**（Apache-2.0）为 BombVault 提供了最初的构想：一键备份并自动重装 Docker 容器。BombVault 是基于 Go 和 restic 的独立实现，把这一构想扩展到了虚拟机、闪存等更多方面。
+- **[restic](https://restic.net/)** 是 BombVault 所驱动的快速、安全、去重的备份引擎。
+- **[rclone](https://rclone.org/)** 提供云后端。
+- 按钮上的大部分图标来自 **[Streamline](https://streamlinehq.com)** 的免费 Core Solid 图标集（[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，[来源](https://github.com/webalys-hq/streamline-vectors)）。其余图标来自 Font Awesome Free、Material Design Icons、Simple Icons 和 Tabler Icons，或是为本项目绘制的。
+
+## 许可证 {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault 是依据 **GNU Affero General Public License v3.0**（[LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)）发布的自由软件。您可以运行、研究、分享和修改它。如果您分发它，或将修改后的版本作为网络服务运行，则必须以相同的许可证公开您的源代码，并保留现有的版权声明和署名声明。
+
+名称和品牌不在许可范围内。AGPL 只涵盖源代码："BombVault"、其徽标和品牌均保留权利，因此分支必须使用自己的名称和品牌，且不得将自己呈现为 BombVault。
 
 ## 链接
 

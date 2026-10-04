@@ -6,11 +6,13 @@ Denne siden tar deg fra en ny Unraid-boks til din første sikkerhetskopi.
 
 | Krav | Merknader |
 |---|---|
-| **Unraid 6.12+** | Tidligere versjoner er ikke testet. |
+| **Unraid 6.12+** | Tidligere versjoner er ikke testet. Unraid er hovedmålet, men BombVault kjører også på en vanlig Docker-vert og på TrueNAS Scale (se [Generisk Docker-vert](#generic-docker-host)). |
 | **Plassering for restic-repo** | En lokal sti (anbefalt: array-et eller cachen din), SMB, NFS eller en hvilken som helst rclone-backend. |
 | **Docker-socket** | Monteres automatisk av malen (`/var/run/docker.sock`). |
 | **Unraid-flash** (`/boot`) | Monteres i sin helhet automatisk av malen (`/boot` til `/host/boot`). Driver flash-sikkerhetskopiering og lar en gjenopprettet container dukke opp igjen som en normal, redigerbar Unraid-app. |
 | **KVM-VM-er** (valgfritt) | VM-sikkerhetskopiering snakker med libvirt over SSH, ingen libvirt-montering. Sett det opp i Innstillinger (se [Konfigurasjon](configuration.md)). |
+| **ZFS-datasett** (valgfritt) | Den samme SSH-forbindelsen som for VM-sikkerhetskopier, `zfs` på verten og Host Data tilordnet som `/mnt` med tilgangsmodusen Read/Write - Slave, malens standard. Se [ZFS-datasett](zfs-datasets.md). |
+| **Android-app** (valgfritt) | Android 10 eller nyere, paret med servere på versjon 9.7.0 eller nyere. Se [Android-app](android.md). |
 
 ## Installer på Unraid
 
@@ -30,7 +32,7 @@ Den enkleste veien er **Community Applications**.
     2. Søk etter **BombVault** i Templates.
     3. Sett de påkrevde variablene og klikk **Apply**.
 
-## Generisk Docker-vert
+## Generisk Docker-vert {#generic-docker-host}
 
 Ikke Unraid? BombVault kjører også som en vanlig container på hvilken som helst Docker-vert (det er også det som bærer containerstøtten på TrueNAS Scale, i påvente av en egen oppføring i app-katalogen der).
 
@@ -43,6 +45,11 @@ Hva som er annerledes enn på Unraid:
 - **Ingen flash-/USB-domene.** Det finnes ingen oppstarts-USB å fange inn eller gjenopprette, så Flash-domenet i innstillingene har ingenting å gjøre her. I stedet tilbyr Mapper-domenet ettklikksforslaget **Legg til forhåndsinnstilling: vertssystemets konfigurasjon** (et sett `/etc`-filer å begynne med, som du går gjennom og redigerer før du lagrer) som praktisk generisk motstykke.
 - **Ingen Unraid-egne varsler.** BombVaults egne varselkanaler (webhook, varsler om mislykket off-site og lignende) virker som vanlig; bare den Unraid-spesifikke meldingen til dens eget varselsystem utelates, siden et slikt system ikke finnes her.
 - **Sikkerhetskopiering av virtuelle maskiner er valgfri og trenger en egen libvirtd-vert som er nåbar over SSH.** Se den utkommenterte blokken i compose-filen. En generisk Docker-vert har ingen innebygd VM-håndtering.
+- **Ingen dashboard-widget.** BombVault Widget er en Unraid-plugin, så det trinnet hoppes også over.
+- **Finne dataene til en container.** Uten Unraids `appdata`-konvensjon finnes datamappen til en container ut fra segmentene i `DATA_ROOT_SEGMENTS`, navngitte Docker-volumer, arbeidskatalogen til et Compose-prosjekt og etiketten `bombvault.data` (se [Gjenkjenning av sikkerhetskopiens kilder](configuration.md#backup-source-detection)). Navngitte volumer og `/etc`-forhåndsinnstillingen når bare stier innenfor Host Data-monteringen, så pek Host Data mot en felles overordnet mappe som også dekker datarotkatalogen til Docker.
+- **`PLATFORM`.** Sett den til `generic` eller `truenas`. Uten verdi kjenner BombVault igjen Unraid på dens egen markør på flash-monteringen og behandler alt annet som generisk, og trinnene som bare gjelder Unraid, hoppes over i stedet for å bli forsøkt og feile.
+
+**TrueNAS Scale** følger den samme compose-veien; en katalogoppføring er forberedt i arkivet, men ikke sendt inn ennå. VM-sikkerhetskopiering krever der `LIBVIRT_URI`, fordi libvirtd i TrueNAS lytter på sin egen socket (`/run/truenas_libvirt/libvirt-sock`) som de tre `LIBVIRT_*`-variablene ikke kan uttrykke (se [Konfigurasjon](configuration.md)). Så langt er dette bevist: zvol-sikkerhetskopien ble kjørt mot en ekte TrueNAS Scale-boks, på en zvol koblet til en kjørende VM, og `zfs snapshot`, `zfs send`, restic og `zfs receive` tok den fram og tilbake byte for byte. En fullstendig gjenoppretting styrt av BombVault selv er ennå ikke kjørt på TrueNAS-maskinvare, og den zvol-en var tynt allokert, så gjennomstrømningen ved mange gigabyte er ikke testet. Test en gjenoppretting der før du stoler på den.
 
 ## Den ene påkrevde innstillingen
 
@@ -86,9 +93,25 @@ Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (
 
 Som standard viser grensesnittet bare det essensielle (sikkerhetskopier, gjenopprett, planlegg). Bruk **Enkel visning / Avansert visning**-bryteren i sidefeltet for å avdekke ekspertkontrollene: oppbevaring, ekstern kopi, pre/post-hooks, gjenoppretting på filnivå, varsler, Prometheus-metrikker og integritets-/vedlikeholdsverktøyene. Det er en innstilling per nettleser og av som standard, så nykommere får et rent grensesnitt og erfarne brukere får alt.
 
+## Bygge fra kildekode {#build-from-source}
+
+BombVault er én statisk Go-binærfil som leverer et JSON-API og et innebygd React-grensesnitt. Bygg grensesnittet først, og kjør deretter binærfilen:
+
+```bash
+npm --prefix web ci
+npm --prefix web run build     # skriver web/dist, som binærfilen bygger inn
+export APP_KEY=$(openssl rand -hex 32)
+go test ./...                  # enhets- og integrasjonstester, med en ekte restic-runde fram og tilbake
+golangci-lint run ./...
+go run ./cmd/bombvault         # leverer https://localhost:3443 med et selvsignert sertifikat
+```
+
+Grensesnittbygget trengs også for `go run`. Arkivet inneholder bare en tom markør under `web/dist`, så uten `npm --prefix web run build` bygger binærfilen ikke inn noe og svarer `500 SPA index not found`, og det er forventet. Docker, libvirt og Unraid kan ikke testes i CI, så sjekk monteringer, restic og SSH-forbindelsen for VM-er på en ekte vert med host-integrasjonssjekken (`/spike`) før du åpner en pull request.
+
 ## Neste steg
 
 - Bla gjennom alle **[Funksjoner](features.md)**.
+- Ha alle servere i gruppen din på telefonen med **[Android-appen](android.md)**.
 - Legg til én eller flere **[Ekstern lagring og gjenoppretting](offsite-recovery.md)**-replikaer (hvert domene kan sende til flere destinasjoner samtidig) og lagre gjenopprettingssettet ditt.
 - Kloner du et oppsett eller flytter til en ny boks? Ta med hele konfigurasjonen din via kortet **Eksporter / importer innstillinger**. Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 - Støtt på et problem? Se **[Feilsøking](troubleshooting.md)**.

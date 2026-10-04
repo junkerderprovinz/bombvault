@@ -6,11 +6,13 @@
 
 | 요구 사항 | 참고 |
 |---|---|
-| **Unraid 6.12+** | 이전 버전은 테스트되지 않았습니다. |
+| **Unraid 6.12+** | 이전 버전은 테스트되지 않았습니다. Unraid가 주 대상이지만, BombVault는 일반 Docker 호스트와 TrueNAS Scale에서도 실행됩니다([일반 Docker 호스트](#generic-docker-host) 참고). |
 | **Restic 저장소 위치** | 로컬 경로(권장: 배열 또는 캐시), SMB, NFS, 또는 모든 rclone 백엔드. |
 | **Docker 소켓** | 템플릿이 자동으로 마운트합니다(`/var/run/docker.sock`). |
 | **Unraid 플래시** (`/boot`) | 템플릿이 전체를 자동으로 마운트합니다(`/boot`을 `/host/boot`로). 플래시 백업을 구동하고, 복원된 컨테이너가 정상적이고 편집 가능한 Unraid 앱으로 다시 나타나게 합니다. |
 | **KVM VM** (선택 사용) | VM 백업은 SSH를 통해 libvirt와 통신하며 libvirt 마운트가 없습니다. 설정에서 구성하세요([구성](configuration.md) 참고). |
+| **ZFS 데이터세트** (선택 사용) | VM 백업과 같은 SSH 연결, 호스트의 `zfs`, 그리고 접근 모드 Read/Write - Slave로 `/mnt`에 매핑된 Host Data(템플릿 기본값)가 필요합니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요. |
+| **Android 앱** (선택) | Android 10 이상이며, 버전 9.7.0 이상인 서버와 페어링합니다. [Android 앱](android.md)을 참고하세요. |
 
 ## Unraid에 설치
 
@@ -30,7 +32,7 @@
     2. Templates에서 **BombVault**를 검색합니다.
     3. 필수 변수를 설정하고 **Apply**를 클릭합니다.
 
-## 일반 Docker 호스트
+## 일반 Docker 호스트 {#generic-docker-host}
 
 Unraid가 아니라면? BombVault는 어떤 Docker 호스트에서도 평범한 컨테이너로 돌아갑니다(TrueNAS Scale의 컨테이너 지원도, 그쪽 앱 카탈로그에 자체 항목이 생기기 전까지는 이것으로 굴러갑니다).
 
@@ -43,6 +45,11 @@ Unraid와 다른 점:
 - **flash/USB 도메인이 없습니다.** 담거나 되살릴 부팅 USB가 없으므로 설정의 플래시 도메인은 여기서 할 일이 없습니다. 대신 폴더 도메인이 한 번의 클릭으로 **프리셋 추가: 호스트 시스템 구성**(저장 전에 살펴보고 손질하는 `/etc` 시작 파일 묶음)을 실용적인 일반 대응물로 제안합니다.
 - **Unraid 자체 알림이 없습니다.** BombVault 자신의 알림 채널(웹훅, 원격지 실패 경고 등)은 평소대로 동작합니다. 빠지는 것은 Unraid 고유 알림 시스템으로 보내는 것뿐이며, 여기에는 그런 시스템이 없기 때문입니다.
 - **VM 백업은 선택 사항이며 SSH로 닿는 별도의 libvirtd 호스트가 필요합니다.** compose 파일의 주석 처리된 블록을 보십시오. 일반 Docker 호스트 자체에는 VM 관리자가 들어 있지 않습니다.
+- **대시보드 위젯이 없습니다.** BombVault Widget은 Unraid 플러그인이므로 그 단계도 건너뜁니다.
+- **컨테이너 데이터 찾기.** Unraid의 `appdata` 규칙이 없으므로, 컨테이너의 데이터 폴더는 `DATA_ROOT_SEGMENTS`의 구간, Docker 이름 있는 볼륨, Compose 프로젝트의 작업 디렉터리, `bombvault.data` 레이블로 찾습니다([백업 원본 자동 판별](configuration.md#backup-source-detection) 참고). 이름 있는 볼륨과 `/etc` 프리셋은 Host Data 마운트 안의 경로에만 닿으므로, Host Data는 Docker의 데이터 루트까지 포함하는 공통 상위 디렉터리로 지정하세요.
+- **`PLATFORM`.** `generic` 또는 `truenas`로 설정합니다. 설정하지 않으면 BombVault는 플래시 마운트에 있는 Unraid 고유 표식으로 Unraid를 알아보고 그 밖의 경우는 모두 일반 호스트로 취급하며, Unraid 전용 단계는 시도했다 실패하는 대신 건너뜁니다.
+
+**TrueNAS Scale**도 같은 compose 방식을 씁니다. 카탈로그 항목은 저장소에 준비되어 있지만 아직 제출하지 않았습니다. TrueNAS의 libvirtd는 자체 소켓(`/run/truenas_libvirt/libvirt-sock`)에서 대기하는데 세 개의 `LIBVIRT_*` 변수로는 이를 표현할 수 없으므로, 그곳에서 VM을 백업하려면 `LIBVIRT_URI`가 필요합니다([구성](configuration.md) 참고). 지금까지 확인된 범위는 이렇습니다. zvol 백업은 실제 TrueNAS Scale 장비에서 실행 중인 VM에 연결된 zvol을 대상으로 돌렸고, `zfs snapshot`, `zfs send`, restic, `zfs receive`를 한 바퀴 거친 결과가 바이트 단위로 일치했습니다. BombVault가 직접 수행하는 전체 복원은 아직 TrueNAS 하드웨어에서 실행해 보지 않았고, 그 zvol은 희소(sparse) 볼륨이었으므로 수 기가바이트 규모의 처리량은 검증되지 않았습니다. 그곳에서 믿고 쓰기 전에 복원을 시험해 보세요.
 
 ## 유일한 필수 설정
 
@@ -86,9 +93,25 @@ openssl rand -hex 32
 
 기본적으로 인터페이스는 필수 항목(백업, 복원, 예약)만 표시합니다. 사이드바의 **간단히 보기 / 고급 보기** 스위치를 사용하여 전문가용 컨트롤을 표시하세요: 보존, 오프사이트 복사, 사전/사후 훅, 파일 수준 복원, 알림, Prometheus 메트릭, 무결성/유지 관리 도구. 브라우저별 설정이며 기본적으로 꺼져 있으므로, 처음 오는 사람은 깔끔한 UI를, 파워 유저는 모든 기능을 얻습니다.
 
+## 소스에서 빌드하기 {#build-from-source}
+
+BombVault는 JSON API와 내장 React 인터페이스를 제공하는 단일 정적 Go 바이너리입니다. 먼저 인터페이스를 빌드한 다음 바이너리를 실행하세요:
+
+```bash
+npm --prefix web ci
+npm --prefix web run build     # web/dist에 기록하며, 바이너리가 이를 내장함
+export APP_KEY=$(openssl rand -hex 32)
+go test ./...                  # 단위 및 통합 테스트, 실제 restic 왕복 포함
+golangci-lint run ./...
+go run ./cmd/bombvault         # 자체 서명 인증서로 https://localhost:3443 제공
+```
+
+`go run`에도 인터페이스 빌드가 필요합니다. 저장소는 `web/dist` 아래에 빈 표식 파일만 추적하므로, `npm --prefix web run build` 없이는 바이너리에 아무것도 내장되지 않고 `500 SPA index not found`로 응답하는데, 이는 예상된 동작입니다. Docker, libvirt, Unraid는 CI에서 테스트할 수 없으므로, 풀 리퀘스트를 열기 전에 실제 호스트에서 호스트 통합 검사(`/spike`)로 마운트, restic, VM SSH 연결을 확인하세요.
+
 ## 다음 단계
 
 - 전체 **[기능](features.md)**을 둘러보세요.
+- **[Android 앱](android.md)**으로 그룹의 모든 서버를 휴대폰에 담으세요.
 - 하나 이상의 **[오프사이트 및 복구](offsite-recovery.md)** 복제본을 추가하고(각 도메인은 여러 대상에 동시에 전송할 수 있음) 복구 키트를 저장하세요.
 - 설정을 복제하거나 새 장비로 옮기시나요? **설정 내보내기 / 가져오기** 카드로 전체 구성을 옮기세요. [구성](configuration.md#portable-settings-export-and-import)을 참고하세요.
 - 문제가 생겼나요? **[문제 해결](troubleshooting.md)**을 참고하세요.

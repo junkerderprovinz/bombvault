@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault は Docker ソケットを使って、バックアップ前にコンテナを停止し、復元後にコンテナを再作成します。VM については、SSH（`qemu+ssh://`）経由でホスト上の `virsh` を実行し、ドメインを正常にシャットダウンするか、ライブスナップショットを取ります。libvirt のパスをバインドマウントすることは一切ないため、ホストの VM Manager の邪魔になることはありません。
+
 BombVault はオーケストレーションと UI のレイヤーであり、ストレージエンジンではありません。実際のデータ移動はすべて restic を通じて行われます。
 
 ## クイックスタート
@@ -50,6 +52,21 @@ BombVault はオーケストレーションと UI のレイヤーであり、ス
 はじめてですか？ **[はじめに](getting-started.md)** に進んで、Community Applications 経由で Unraid に BombVault をインストールし、最初のバックアップを実行しましょう。その後、**[機能](features.md)**の全体を探索し、**[設定](configuration.md)**を調整し、**[オフサイトと復旧](offsite-recovery.md)**をセットアップしてください。
 
 オフサイトはドメインごとに複数のターゲットへ同時にファンアウトでき、読み取り専用の**受信側ダッシュボード**がコピーを受け取る側のマシンでそれらのコピーを監視します。また、**設定のエクスポート / インポート**カードを使えば、設定一式を新しいマシンに持ち運べます。[オフサイトと復旧](offsite-recovery.md)および[設定](configuration.md#portable-settings-export-and-import)を参照してください。
+
+**[Android アプリ](android.md)** を使えば、グループ内のすべてのサーバーをスマートフォンで扱え、全サーバーのアクティビティログを 1 つの画面で見られます。
+
+## クレジット {#credits}
+
+- [@Darkdragon14](https://github.com/Darkdragon14) による **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)**（Apache-2.0）が、BombVault の出発点となるアイデアをくれました。Docker コンテナのワンクリックバックアップと自動再インストールです。BombVault は Go と restic による別個の実装で、そのアイデアを VM やフラッシュなどへ広げています。
+- **[restic](https://restic.net/)** は、BombVault が動かす、高速で安全な重複排除バックアップエンジンです。
+- **[rclone](https://rclone.org/)** はクラウドバックエンドを提供します。
+- ボタンのグリフの大半は、**[Streamline](https://streamlinehq.com)** の無料の Core Solid セット（[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)、[ソース](https://github.com/webalys-hq/streamline-vectors)）のものです。残りは Font Awesome Free、Material Design Icons、Simple Icons、Tabler Icons のもの、またはこのプロジェクトのために描いたものです。
+
+## ライセンス {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault は **GNU Affero General Public License v3.0**（[LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)）のもとで提供されるフリーソフトウェアです。実行、研究、共有、改変を行うことができます。配布する場合、または改変したバージョンをネットワークサービスとして運用する場合は、同じライセンスのもとでソースコードを公開し、既存の著作権表示と帰属表示を保持しなければなりません。
+
+名前とブランドはライセンスの対象外です。AGPL が対象とするのはソースコードだけです。「BombVault」、そのロゴ、そのブランドは権利が留保されたままであり、フォークは独自の名前とブランドを使わなければならず、BombVault を名乗ってはなりません。
 
 ## リンク
 

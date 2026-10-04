@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault używa gniazda Docker, aby zatrzymywać kontenery przed kopią i odtwarzać je po przywróceniu. Dla maszyn wirtualnych uruchamia `virsh` na hoście przez SSH (`qemu+ssh://`), aby płynnie wyłączyć maszynę albo wykonać migawkę na żywo. Nigdy nie montuje (bind mount) żadnej ścieżki libvirt, więc nie może przeszkadzać VM Managerowi na hoście.
+
 BombVault jest warstwą orkiestracji i interfejsu, a nie silnikiem magazynu. Cały faktyczny przepływ danych odbywa się przez restic.
 
 ## Szybki start
@@ -50,6 +52,21 @@ BombVault jest warstwą orkiestracji i interfejsu, a nie silnikiem magazynu. Ca�
 Jesteś tu nowy? Przejdź do **[Pierwsze kroki](getting-started.md)**, aby zainstalować BombVault na Unraid przez Community Applications i uruchomić swoją pierwszą kopię zapasową. Następnie poznaj pełne **[Funkcje](features.md)**, dostrój swoją **[Konfigurację](configuration.md)** i skonfiguruj **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)**.
 
 Kopie poza siedzibą mogą rozgałęziać się na kilka celów per domena naraz, tylko do odczytu **panel odbiornika** monitoruje te kopie na maszynie, która je otrzymuje, a całą swoją konfigurację możesz przenieść na nową maszynę za pomocą karty **Eksport / import ustawień**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md) oraz [Konfiguracja](configuration.md#portable-settings-export-and-import).
+
+**[Aplikacja na Androida](android.md)** przenosi na telefon wszystkie serwery Twojej grupy, z dziennikiem aktywności ich wszystkich na jednym ekranie.
+
+## Podziękowania {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** autorstwa [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) dał BombVault punkt wyjścia: kopię zapasową jednym kliknięciem i automatyczną ponowną instalację kontenerów Docker. BombVault to osobna implementacja oparta na Go i restic, która przenosi ten pomysł na maszyny wirtualne, flash i nie tylko.
+- **[restic](https://restic.net/)** to szybki, bezpieczny silnik kopii zapasowych z deduplikacją, którym steruje BombVault.
+- **[rclone](https://rclone.org/)** zapewnia backendy chmurowe.
+- Większość symboli na przyciskach pochodzi z darmowego zestawu Core Solid od **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [źródło](https://github.com/webalys-hq/streamline-vectors)). Pozostałe pochodzą z Font Awesome Free, Material Design Icons, Simple Icons i Tabler Icons albo zostały narysowane dla projektu.
+
+## Licencja {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault jest wolnym oprogramowaniem na licencji **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Możesz go uruchamiać, badać, udostępniać i zmieniać. Jeśli go rozpowszechniasz albo uruchamiasz zmienioną wersję jako usługę sieciową, musisz opublikować swój kod źródłowy na tej samej licencji i zachować istniejące informacje o prawach autorskich i autorstwie.
+
+Nazwa i identyfikacja wizualna nie są objęte licencją. AGPL obejmuje wyłącznie kod źródłowy: "BombVault", jego logo i jego identyfikacja wizualna pozostają zastrzeżone, więc fork musi używać własnej nazwy i identyfikacji wizualnej i nie może przedstawiać się jako BombVault.
 
 ## Odnośniki
 

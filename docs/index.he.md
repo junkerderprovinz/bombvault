@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+‏BombVault משתמשת ב-Docker socket כדי לעצור containers לפני גיבוי וכדי ליצור אותם מחדש אחרי שחזור. עבור מכונות וירטואליות היא מריצה `virsh` במארח דרך SSH (`qemu+ssh://`) כדי לכבות מכונה באופן מסודר או לצלם תמונת מצב חיה. היא לעולם אינה מעגנת נתיב libvirt, ולכן אינה יכולה להפריע ל-VM Manager במארח.
+
 BombVault היא שכבת התזמור והממשק, לא מנוע האחסון. כל תנועת הנתונים בפועל עוברת דרך restic.
 
 ## התחלה מהירה
@@ -50,6 +52,21 @@ BombVault היא שכבת התזמור והממשק, לא מנוע האחסון.
 חדש כאן? עבור אל **[תחילת העבודה](getting-started.md)** כדי להתקין את BombVault ב-Unraid דרך Community Applications ולהריץ את הגיבוי הראשון שלך. לאחר מכן חקור את כל **[התכונות](features.md)**, כוונן את **[ההגדרות](configuration.md)** שלך, והגדר **[מחוץ לאתר והתאוששות](offsite-recovery.md)**.
 
 מחוץ לאתר יכול להתפצל למספר יעדים לכל דומיין בבת אחת, **לוח בקרה של מקבל** לקריאה בלבד מנטר את העותקים האלה בתיבה שמקבלת אותם, ואתה יכול לשאת את כל התצורה שלך לתיבה חדשה עם כרטיס **ייצוא / ייבוא הגדרות**. ראה [מחוץ לאתר והתאוששות](offsite-recovery.md) ו-[הגדרות](configuration.md#portable-settings-export-and-import).
+
+**[אפליקציית Android](android.md)** מביאה לטלפון שלך את כל השרתים של הקבוצה שלך, עם יומן הפעילות של כולם במסך אחד.
+
+## קרדיטים {#credits}
+
+- **‏[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** מאת [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) נתן ל-BombVault את רעיון המוצא שלה: גיבוי בלחיצה אחת והתקנה מחדש אוטומטית של Docker containers. ‏BombVault היא מימוש נפרד ב-Go וב-restic, שמרחיב את הרעיון למכונות וירטואליות, ל-flash ועוד.
+- **‏[restic](https://restic.net/)** הוא מנוע הגיבוי המהיר, המאובטח ומבצע הדדופליקציה ש-BombVault מפעילה.
+- **‏[rclone](https://rclone.org/)** מספק את ה-backends של הענן.
+- רוב הסמלים שעל הכפתורים לקוחים מהסט החינמי Core Solid של **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [מקור](https://github.com/webalys-hq/streamline-vectors)). השאר לקוחים מ-Font Awesome Free,‏ Material Design Icons,‏ Simple Icons ו-Tabler Icons, או שצוירו עבור הפרויקט.
+
+## רישיון {#license}
+
+‏Copyright (C) 2026 Junker der Provinz. ‏BombVault היא תוכנה חופשית תחת **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). מותר לך להריץ אותה, ללמוד אותה, לשתף אותה ולשנות אותה. אם אתה מפיץ אותה, או מריץ גרסה ששונתה כשירות רשת, עליך לפרסם את קוד המקור שלך תחת אותו רישיון ולשמור על הודעות זכויות היוצרים והייחוס הקיימות.
+
+השם והמיתוג אינם כלולים ברישיון. ה-AGPL חל על קוד המקור בלבד: הזכויות על השם "BombVault", על הלוגו שלה ועל המיתוג שלה שמורות, ולכן fork חייב להשתמש בשם ובמיתוג משלו ואסור לו להציג את עצמו כ-BombVault.
 
 ## קישורים
 

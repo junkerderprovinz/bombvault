@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault käyttää Docker-sokettia pysäyttääkseen kontit ennen varmuuskopiota ja luodakseen ne uudelleen palautuksen jälkeen. Virtuaalikoneita varten se ajaa `virsh`-komennon isännällä SSH:n yli (`qemu+ssh://`) sammuttaakseen virtuaalikoneen hallitusti tai ottaakseen live-tilannevedoksen. Se ei koskaan liitä (bind mount) yhtäkään libvirt-polkua, joten se ei voi häiritä isännän VM Manageria.
+
 BombVault on orkestrointi- ja käyttöliittymäkerros, ei tallennusmoottori. Kaikki varsinainen datan siirto kulkee resticin läpi.
 
 ## Pikaopas
@@ -50,6 +52,21 @@ BombVault on orkestrointi- ja käyttöliittymäkerros, ei tallennusmoottori. Kai
 Uusi täällä? Siirry kohtaan **[Aloitus](getting-started.md)** asentaaksesi BombVaultin Unraidiin Community Applicationsin kautta ja ajaaksesi ensimmäisen varmuuskopiosi. Tutustu sitten täyteen **[Ominaisuudet](features.md)**-listaan, viritä **[Asetukset](configuration.md)** ja pystytä **[Etäsijainti ja palautus](offsite-recovery.md)**.
 
 Etäsijainti voi haarautua useaan kohteeseen per toimialue yhtä aikaa, vain luku -tilainen **vastaanottimen kojelauta** valvoo näitä kopioita niitä vastaanottavassa laatikossa, ja voit kantaa koko kokoonpanosi uuteen laatikkoon **Vie / tuo asetukset** -kortilla. Katso [Etäsijainti ja palautus](offsite-recovery.md) ja [Asetukset](configuration.md#portable-settings-export-and-import).
+
+**[Android-sovellus](android.md)** tuo ryhmäsi kaikki palvelimet puhelimeesi, kaikkien toimintaloki yhdellä näytöllä.
+
+## Kiitokset {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)**, tekijänä [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0), antoi BombVaultille sen lähtöajatuksen: Docker-konttien varmuuskopioinnin yhdellä napsautuksella ja automaattisen uudelleenasennuksen. BombVault on erillinen, Gon ja resticin päälle rakennettu toteutus, joka vie ajatuksen virtuaalikoneisiin, flashiin ja muuhun.
+- **[restic](https://restic.net/)** on nopea, turvallinen ja deduplikoiva varmuuskopiomoottori, jota BombVault ohjaa.
+- **[rclone](https://rclone.org/)** tarjoaa pilvitaustajärjestelmät.
+- Useimmat painikkeiden symbolit ovat ilmaisesta Core Solid -sarjasta, jonka on tehnyt **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [lähde](https://github.com/webalys-hq/streamline-vectors)). Loput ovat sarjoista Font Awesome Free, Material Design Icons, Simple Icons ja Tabler Icons, tai ne on piirretty projektia varten.
+
+## Lisenssi {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault on vapaa ohjelmisto, jota koskee **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Saat ajaa, tutkia, jakaa ja muuttaa sitä. Jos levität sitä tai ajat muutettua versiota verkkopalveluna, sinun on julkaistava lähdekoodisi saman lisenssin alla ja säilytettävä olemassa olevat tekijänoikeus- ja nimeämismerkinnät.
+
+Nimeä ja brändiä ei ole lisensoitu. AGPL kattaa vain lähdekoodin: "BombVault", sen logo ja sen brändi pysyvät varattuina, joten haaran (forkin) on käytettävä omaa nimeään ja brändiään eikä se saa esittää olevansa BombVault.
 
 ## Linkit
 

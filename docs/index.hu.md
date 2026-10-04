@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+A BombVault a Docker socketen keresztül állítja le a konténereket mentés előtt, és hozza létre őket újra visszaállítás után. A VM-ekhez SSH-n keresztül (`qemu+ssh://`) futtatja a `virsh` parancsot a hoszton, hogy szabályosan leállítsa a VM-et, vagy élő pillanatképet készítsen. Soha nem csatol be (bind mount) libvirt-útvonalat, így nem zavarhatja a hoszt VM Managerét.
+
 A BombVault az orkesztrációs és felhasználói felületi réteg, nem a tárolómotor. Minden tényleges adatmozgatás a resticen keresztül történik.
 
 ## Gyorsindítás
@@ -50,6 +52,21 @@ A BombVault az orkesztrációs és felhasználói felületi réteg, nem a tárol
 Új vagy itt? Ugorj a **[Kezdő lépések](getting-started.md)** oldalra, hogy a Community Applications segítségével telepítsd a BombVaultot Unraidre, és lefuttasd az első mentésedet. Ezután fedezd fel a teljes **[Funkciók](features.md)** listát, hangold a **[Konfigurációt](configuration.md)**, és állítsd be a **[Telephelyen kívüli mentést és helyreállítást](offsite-recovery.md)**.
 
 A telephelyen kívüli mentés tartományonként egyszerre több célra is szétoszthat, egy csak olvasható **fogadó irányítópult** figyeli ezeket a másolatokat azon a gépen, amely fogadja őket, a teljes konfigurációdat pedig átviheted egy új gépre az **Beállítások exportálása / importálása** kártyával. Lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md) és [Konfiguráció](configuration.md#portable-settings-export-and-import).
+
+Az **[Android-alkalmazás](android.md)** a csoportod összes szerverét a telefonodra hozza, mindegyikük tevékenységnaplójával egyetlen képernyőn.
+
+## Köszönetnyilvánítás {#credits}
+
+- A **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** ([@Darkdragon14](https://github.com/Darkdragon14), Apache-2.0) adta a BombVault kiinduló ötletét: a Docker-konténerek egykattintásos mentését és automatikus újratelepítését. A BombVault egy különálló, Go-ra és resticre épülő megvalósítás, amely ezt az ötletet a VM-ekre, a flashre és egyebekre is kiterjeszti.
+- A **[restic](https://restic.net/)** az a gyors, biztonságos, deduplikáló mentőmotor, amelyet a BombVault vezérel.
+- Az **[rclone](https://rclone.org/)** biztosítja a felhős backendeket.
+- A gombokon lévő jelek többsége a **[Streamline](https://streamlinehq.com)** ingyenes Core Solid készletéből származik ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [forrás](https://github.com/webalys-hq/streamline-vectors)). A többi a Font Awesome Free, a Material Design Icons, a Simple Icons és a Tabler Icons készletből való, vagy a projekthez rajzolták.
+
+## Licenc {#license}
+
+Copyright (C) 2026 Junker der Provinz. A BombVault szabad szoftver, a **GNU Affero General Public License v3.0** alatt ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Futtathatod, tanulmányozhatod, megoszthatod és módosíthatod. Ha terjeszted, vagy egy módosított változatát hálózati szolgáltatásként futtatod, a forráskódodat ugyanazon licenc alatt közzé kell tenned, és meg kell őrizned a meglévő szerzői jogi és szerzőségi megjegyzéseket.
+
+A név és az arculat nem tartozik a licenc alá. Az AGPL csak a forráskódra vonatkozik: a "BombVault" név, a logója és az arculata fenntartott marad, így egy forknak saját nevet és arculatot kell használnia, és nem adhatja ki magát BombVaultnak.
 
 ## Hivatkozások
 

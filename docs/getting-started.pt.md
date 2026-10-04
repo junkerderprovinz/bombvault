@@ -6,11 +6,13 @@ Esta página acompanha-o desde uma máquina Unraid acabada de instalar até ao s
 
 | Requisito | Notas |
 |---|---|
-| **Unraid 6.12+** | Versões anteriores não são testadas. |
+| **Unraid 6.12+** | Versões anteriores não são testadas. O Unraid é o alvo principal, mas o BombVault também corre num host Docker simples e no TrueNAS Scale (consulte [Host Docker genérico](#generic-docker-host)). |
 | **Localização do repo restic** | Um caminho local (recomendado: o seu array ou cache), SMB, NFS, ou qualquer backend rclone. |
 | **Socket Docker** | Montado automaticamente pelo template (`/var/run/docker.sock`). |
 | **Flash do Unraid** (`/boot`) | Montada por inteiro pelo template automaticamente (`/boot` para `/host/boot`). Alimenta o backup do flash e permite que um container restaurado reapareça como uma aplicação Unraid normal e editável. |
 | **VMs KVM** (opcional) | O backup de VMs comunica com o libvirt por SSH, sem montagem de libvirt. Configure-o em Definições (consulte [Configuração](configuration.md)). |
+| **Conjuntos de dados ZFS** (opcional) | A mesma ligação SSH que o backup de VMs, `zfs` no host e Host Data mapeado como `/mnt` com o modo de acesso Read/Write - Slave, a predefinição do template. Consulte [Conjuntos de dados ZFS](zfs-datasets.md). |
+| **Aplicação Android** (opcional) | Android 10 ou posterior, emparelhada com servidores na versão 9.7.0 ou posterior. Consulte [Aplicação Android](android.md). |
 
 ## Instalar no Unraid
 
@@ -30,7 +32,7 @@ O caminho mais fácil são as **Community Applications**.
     2. Pesquise por **BombVault** em Templates.
     3. Defina as variáveis obrigatórias e clique em **Apply**.
 
-## Anfitrião Docker genérico
+## Anfitrião Docker genérico {#generic-docker-host}
 
 Não estás no Unraid? O BombVault também corre como contentor simples em qualquer anfitrião Docker (é também o que sustenta o suporte a contentores no TrueNAS Scale, antes de ter uma entrada própria no catálogo de aplicações).
 
@@ -43,6 +45,11 @@ O que muda face ao Unraid:
 - **Não há domínio flash/USB.** Não existe pen de arranque para capturar ou repor, por isso o domínio Flash nas definições não tem aqui nada que fazer. Em vez disso, o domínio Pastas oferece a sugestão de um clique **Adicionar predefinição: configuração do sistema anfitrião** (um conjunto inicial de ficheiros `/etc` que revês e editas antes de guardar), como equivalente genérico prático.
 - **Não há notificações nativas do Unraid.** Os canais de notificação próprios do BombVault (webhook, alertas de falha fora do local, etc.) funcionam normalmente; só é omitido o envio específico para o sistema de notificações do Unraid, já que aqui esse sistema não existe.
 - **A cópia de máquinas virtuais é opcional e precisa de um anfitrião libvirtd separado, alcançável por SSH.** Vê o bloco comentado no ficheiro compose. Um anfitrião Docker genérico não traz gestor de máquinas virtuais.
+- **Sem widget no painel.** O BombVault Widget é um plugin do Unraid, por isso esse passo também é omitido.
+- **Encontrar os dados de um container.** Sem a convenção `appdata` do Unraid, a pasta de dados de um container é encontrada a partir dos segmentos em `DATA_ROOT_SEGMENTS`, dos volumes com nome do Docker, do diretório de trabalho de um projeto Compose e da etiqueta `bombvault.data` (consulte [Deteção das fontes de cópia](configuration.md#backup-source-detection)). Os volumes com nome e a predefinição `/etc` só alcançam caminhos dentro da montagem Host Data, por isso aponte o Host Data para uma pasta ascendente comum que abranja também a raiz de dados do Docker.
+- **`PLATFORM`.** Defina-a como `generic` ou `truenas`. Se não for definida, o BombVault deteta o Unraid pelo seu próprio marcador na montagem do flash e trata tudo o resto como genérico, e os passos exclusivos do Unraid são omitidos em vez de serem tentados e falharem.
+
+O **TrueNAS Scale** segue o mesmo caminho com compose; há uma entrada de catálogo preparada no repositório, mas ainda não submetida. Aí o backup de VMs precisa de `LIBVIRT_URI`, porque o libvirtd do TrueNAS escuta num socket próprio (`/run/truenas_libvirt/libvirt-sock`) que as três variáveis `LIBVIRT_*` não conseguem exprimir (consulte [Configuração](configuration.md)). Até onde isto está comprovado: o backup de zvol foi executado numa máquina TrueNAS Scale real, num zvol ligado a uma VM em execução, e `zfs snapshot`, `zfs send`, restic e `zfs receive` fizeram a ida e volta byte a byte. Um restauro completo conduzido pelo próprio BombVault ainda não foi executado em hardware TrueNAS, e esse zvol era esparso, por isso o débito com muitos gigabytes não está testado. Teste aí um restauro antes de confiar nele.
 
 ## A única definição obrigatória
 
@@ -86,9 +93,25 @@ O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data
 
 Por predefinição, a interface mostra apenas o essencial (fazer backup, restaurar, agendar). Use o interruptor **Vista simples / Vista avançada** na barra lateral para revelar os controlos de especialista: retenção, cópia externa, hooks pré/pós, restauro ao nível do ficheiro, notificações, métricas Prometheus e as ferramentas de integridade/manutenção. É uma preferência por navegador e está desligada por predefinição, para que os recém-chegados tenham uma interface limpa e os utilizadores avançados tenham tudo.
 
+## Compilar a partir do código-fonte {#build-from-source}
+
+O BombVault é um único binário Go estático que serve uma API JSON e uma interface React incorporada. Compile primeiro a interface e depois corra o binário:
+
+```bash
+npm --prefix web ci
+npm --prefix web run build     # writes web/dist, which the binary embeds
+export APP_KEY=$(openssl rand -hex 32)
+go test ./...                  # unit and integration tests, with a real restic round trip
+golangci-lint run ./...
+go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
+```
+
+A compilação da interface também é necessária para `go run`. O repositório só regista um marcador vazio em `web/dist`, por isso sem `npm --prefix web run build` o binário não incorpora nada e responde `500 SPA index not found`, o que é normal. Docker, libvirt e Unraid não podem ser testados em CI, por isso verifique as montagens, o restic e a ligação SSH das VMs num host real com a verificação de integração com o host (`/spike`) antes de abrir um pull request.
+
 ## Passos seguintes
 
 - Percorra as **[Funcionalidades](features.md)** completas.
+- Leve todos os servidores do seu grupo para o telemóvel com a **[Aplicação Android](android.md)**.
 - Adicione uma ou mais réplicas **[Externo e recuperação](offsite-recovery.md)** (cada domínio pode enviar para vários destinos de uma só vez) e guarde o seu kit de recuperação.
 - A clonar uma configuração ou a mudar para uma máquina nova? Leve toda a sua configuração consigo com o cartão **Exportar / importar configurações**. Consulte [Configuração](configuration.md#portable-settings-export-and-import).
 - Encontrou um obstáculo? Consulte **[Resolução de problemas](troubleshooting.md)**.

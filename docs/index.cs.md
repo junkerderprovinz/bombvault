@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault používá Docker socket k zastavení kontejnerů před zálohou a k jejich znovuvytvoření po obnově. U VM spouští `virsh` na hostiteli přes SSH (`qemu+ssh://`), aby VM šetrně vypnul nebo pořídil živý snímek. Nikdy nepřipojuje (bind-mount) žádnou cestu libvirt, takže nemůže překážet VM Manageru na hostiteli.
+
 BombVault je vrstva orchestrace a UI, nikoli úložný engine. Veškerý skutečný přenos dat prochází přes restic.
 
 ## Rychlý start
@@ -50,6 +52,21 @@ BombVault je vrstva orchestrace a UI, nikoli úložný engine. Veškerý skuteč
 Jste tu noví? Přejděte na **[Začínáme](getting-started.md)** a nainstalujte BombVault na Unraid přes Community Applications a spusťte svou první zálohu. Poté prozkoumejte kompletní **[Funkce](features.md)**, vylaďte si **[Konfiguraci](configuration.md)** a nastavte si **[Mimo lokalitu a obnova](offsite-recovery.md)**.
 
 Mimo lokalitu se může rozvětvit na několik cílů na doménu najednou, **řídicí panel přijímače** určený jen pro čtení monitoruje tyto kopie na stroji, který je přijímá, a celou svou konfiguraci můžete přenést na nový stroj pomocí karty **Export / import nastavení**. Viz [Mimo lokalitu a obnova](offsite-recovery.md) a [Konfigurace](configuration.md#portable-settings-export-and-import).
+
+**[Aplikace pro Android](android.md)** vám dá do telefonu všechny servery vaší skupiny, s protokolem aktivit všech z nich na jedné obrazovce.
+
+## Poděkování {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** od [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) dal BombVaultu výchozí myšlenku: zálohu na jedno kliknutí a automatickou reinstalaci kontejnerů Dockeru. BombVault je samostatná implementace v Go nad restic, která tuto myšlenku přenáší na VM, flash a další.
+- **[restic](https://restic.net/)** je rychlý, bezpečný a deduplikující zálohovací engine, který BombVault řídí.
+- **[rclone](https://rclone.org/)** poskytuje cloudové backendy.
+- Většina symbolů na tlačítkách pochází z bezplatné sady Core Solid od **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [zdroj](https://github.com/webalys-hq/streamline-vectors)). Ostatní pocházejí z Font Awesome Free, Material Design Icons, Simple Icons a Tabler Icons, nebo byly nakresleny pro tento projekt.
+
+## Licence {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault je svobodný software pod licencí **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Smíte ho spouštět, studovat, sdílet a měnit. Pokud ho šíříte nebo provozujete upravenou verzi jako síťovou službu, musíte zveřejnit svůj zdrojový kód pod stejnou licencí a zachovat stávající upozornění na autorská práva a uvedení autorství.
+
+Název a vizuální identita nejsou licencovány. AGPL pokrývá pouze zdrojový kód: "BombVault", jeho logo a jeho vizuální identita zůstávají vyhrazeny, takže fork musí používat vlastní název a vizuální identitu a nesmí se vydávat za BombVault.
 
 ## Odkazy
 

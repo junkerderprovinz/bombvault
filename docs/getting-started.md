@@ -6,11 +6,13 @@ This page walks you from a fresh Unraid box to your first backup.
 
 | Requirement | Notes |
 |---|---|
-| **Unraid 6.12+** | Earlier versions are not tested. |
+| **Unraid 6.12+** | Earlier versions are not tested. Unraid is the main target, but BombVault also runs on a plain Docker host and on TrueNAS Scale (see [Generic Docker host](#generic-docker-host)). |
 | **Restic repo location** | A local path (recommended: your array or cache), SMB, NFS, or any rclone backend. |
 | **Docker socket** | Mounted by the template automatically (`/var/run/docker.sock`). |
 | **Unraid flash** (`/boot`) | Mounted whole by the template automatically (`/boot` to `/host/boot`). Powers flash backup and lets a restored container reappear as a normal, editable Unraid app. |
 | **KVM VMs** (opt-in) | VM backup talks to libvirt over SSH, no libvirt mount. Set it up in Settings (see [Configuration](configuration.md)). |
+| **ZFS datasets** (opt-in) | The same SSH link as VM backups, `zfs` on the host, and Host Data mapped as `/mnt` with access mode Read/Write - Slave, the template default. See [ZFS datasets](zfs-datasets.md). |
+| **Android app** (optional) | Android 10 or later, paired with servers on version 9.7.0 or later. See [Android app](android.md). |
 
 ## Install on Unraid
 
@@ -30,7 +32,7 @@ The easiest path is **Community Applications**.
     2. Search for **BombVault** in Templates.
     3. Set the required variables and click **Apply**.
 
-## Generic Docker host
+## Generic Docker host {#generic-docker-host}
 
 Not on Unraid? BombVault also runs as a plain container on any Docker host (this is also what powers containers-only support on TrueNAS Scale, ahead of its own app-catalog entry).
 
@@ -43,6 +45,11 @@ What's different from Unraid:
 - **No flash/USB domain.** There is no boot USB to capture or restore, so the Flash domain in Settings has nothing to do here. Instead, the Folders domain offers a one-click **Add preset: Host system config** suggestion (a starting `/etc` file set you review and edit before saving) as a practical, generic equivalent.
 - **No Unraid-native notifications.** BombVault's own in-app notification channels (webhook, off-site failure alerts, etc.) work as normal; only the Unraid-specific push to its native notification system is skipped, since there is no such system to push to.
 - **VM backup is opt-in and needs a separate libvirtd host reachable over SSH** — see the commented-out block in the compose file. There is no VM manager built into a generic Docker host itself.
+- **No dashboard widget.** The BombVault Widget is an Unraid plugin, so that step is skipped as well.
+- **Finding a container's data.** Without Unraid's `appdata` convention, a container's data folder is found from the segments in `DATA_ROOT_SEGMENTS`, Docker named volumes, a Compose project's working directory and the `bombvault.data` label (see [Backup source detection](configuration.md#backup-source-detection)). Named volumes and the `/etc` preset only reach paths inside the Host Data mount, so point Host Data at a common ancestor that also covers Docker's data root.
+- **`PLATFORM`.** Set it to `generic` or `truenas`. Left unset, BombVault detects Unraid by its own marker on the flash mount and treats anything else as generic, and the Unraid-only steps are skipped instead of tried and failing.
+
+**TrueNAS Scale** takes the same compose route; a catalog entry is prepared in the repository but not submitted yet. VM backup there needs `LIBVIRT_URI`, because TrueNAS's libvirtd listens on a socket of its own (`/run/truenas_libvirt/libvirt-sock`) that the three `LIBVIRT_*` variables cannot express (see [Configuration](configuration.md)). How far this is proven: the zvol backup was run against a real TrueNAS Scale box, on a zvol attached to a running VM, and `zfs snapshot`, `zfs send`, restic and `zfs receive` round-tripped it byte for byte. A complete restore driven by BombVault itself has not been run on TrueNAS hardware yet, and that zvol was sparse, so throughput at many gigabytes is untested. Test a restore there before you rely on it.
 
 ## The one required setting
 
@@ -86,9 +93,25 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
 
 By default the interface shows only the essentials (back up, restore, schedule). Use the **Simple view / Advanced view** switch in the sidebar to reveal the expert controls: retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics and the integrity/maintenance tools. It is a per-browser preference and off by default, so newcomers get a clean UI and power users get everything.
 
+## Building from source {#build-from-source}
+
+BombVault is a single static Go binary that serves a JSON API and an embedded React interface. Build the interface first, then run the binary:
+
+```bash
+npm --prefix web ci
+npm --prefix web run build     # writes web/dist, which the binary embeds
+export APP_KEY=$(openssl rand -hex 32)
+go test ./...                  # unit and integration tests, with a real restic round trip
+golangci-lint run ./...
+go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signed certificate
+```
+
+The interface build is needed for `go run` too. The repository tracks only an empty marker under `web/dist`, so without `npm --prefix web run build` the binary embeds nothing and answers `500 SPA index not found`, which is expected. Docker, libvirt and Unraid cannot be tested in CI, so check mounts, restic and the VM SSH link on a real host with the Host Integration Check (`/spike`) before you open a pull request.
+
 ## Next steps
 
 - Browse the full **[Features](features.md)**.
+- Put every server of your group on your phone with the **[Android app](android.md)**.
 - Add one or more **[Off-site & recovery](offsite-recovery.md)** replicas (each domain can ship to several destinations at once) and save your recovery kit.
 - Cloning a setup or moving to a new box? Carry your whole configuration over with the **Export / import settings** card. See [Configuration](configuration.md#portable-settings-export-and-import).
 - Hit a snag? See **[Troubleshooting](troubleshooting.md)**.

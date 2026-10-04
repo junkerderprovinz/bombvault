@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+يستخدم BombVault مقبس Docker لإيقاف الحاويات قبل النسخ الاحتياطي ولإعادة إنشائها بعد الاستعادة. أما الأجهزة الافتراضية فيشغّل لها `virsh` على المضيف عبر SSH (`qemu+ssh://`) ليوقف الجهاز بشكل آمن أو يأخذ لقطة حية. ولا يركّب أي مسار libvirt أبدًا، فلا يمكنه أن يعترض عمل مدير الأجهزة الافتراضية على المضيف.
+
 BombVault هو طبقة التنسيق والواجهة، وليس محرك التخزين. تمر كل عمليات نقل البيانات الفعلية عبر restic.
 
 ## بداية سريعة
@@ -50,6 +52,21 @@ BombVault هو طبقة التنسيق والواجهة، وليس محرك ال
 جديد هنا؟ توجّه إلى **[البدء](getting-started.md)** لتثبيت BombVault على Unraid عبر Community Applications وتشغيل أول نسخة احتياطية لك. ثم استكشف كامل **[الميزات](features.md)**، واضبط **[الإعدادات](configuration.md)**، وأعدّ **[النسخ خارج الموقع والتعافي](offsite-recovery.md)**.
 
 يمكن للنسخ خارج الموقع أن يتوزّع على عدة أهداف لكل نطاق في آن واحد، وتراقب **لوحة تحكم المُستقبِل** للقراءة فقط تلك النسخ على الجهاز الذي يستقبلها، ويمكنك نقل إعداداتك بالكامل إلى جهاز جديد ببطاقة **تصدير / استيراد الإعدادات**. راجع [النسخ خارج الموقع والتعافي](offsite-recovery.md) و[الإعدادات](configuration.md#portable-settings-export-and-import).
+
+يجمع **[تطبيق Android](android.md)** كل خوادم مجموعتك على هاتفك، مع سجل النشاط لها جميعًا في شاشة واحدة.
+
+## شكر وتقدير {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** من [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) منح BombVault فكرته الأولى: نسخ حاويات Docker احتياطيًا بنقرة واحدة وإعادة تثبيتها تلقائيًا. BombVault تنفيذ مستقل مبني على Go وrestic، يمد الفكرة إلى الأجهزة الافتراضية والفلاش وغيرها.
+- **[restic](https://restic.net/)** هو محرك النسخ الاحتياطي السريع والآمن المُزيل للتكرار الذي يقوده BombVault.
+- **[rclone](https://rclone.org/)** يوفّر الخلفيات السحابية.
+- معظم الرموز على الأزرار من مجموعة Core Solid المجانية من **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)، [المصدر](https://github.com/webalys-hq/streamline-vectors)). والبقية من Font Awesome Free وMaterial Design Icons وSimple Icons وTabler Icons، أو رُسمت خصيصًا للمشروع.
+
+## الترخيص {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault برنامج حر مرخَّص بموجب **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). يحق لك تشغيله ودراسته ومشاركته وتعديله. إذا وزّعته، أو شغّلت نسخة معدّلة منه كخدمة شبكية، فيجب عليك نشر الكود المصدري الخاص بك بموجب الترخيص نفسه والإبقاء على إشعارات حقوق النشر والإسناد القائمة.
+
+الاسم والهوية التجارية غير مرخَّصين. يغطي ترخيص AGPL الكود المصدري فقط: "BombVault" وشعاره وهويته التجارية تبقى حقوقها محفوظة، لذا يجب على أي نسخة متفرّعة (fork) أن يستخدم اسمًا وهوية تجارية خاصين به، ولا يجوز له أن يقدّم نفسه على أنه BombVault.
 
 ## روابط
 

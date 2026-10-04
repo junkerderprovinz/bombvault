@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault는 Docker 소켓을 사용해 백업 전에 컨테이너를 중지하고 복원 후에 다시 생성합니다. VM의 경우 SSH(`qemu+ssh://`)를 통해 호스트에서 `virsh`를 실행해 도메인을 정상 종료하거나 라이브 스냅샷을 만듭니다. libvirt 경로를 바인드 마운트하는 일은 없으므로 호스트의 VM Manager에 방해가 되지 않습니다.
+
 BombVault는 오케스트레이션 및 UI 계층이지 스토리지 엔진이 아닙니다. 실제 모든 데이터 이동은 restic을 거칩니다.
 
 ## 빠른 시작
@@ -50,6 +52,21 @@ BombVault는 오케스트레이션 및 UI 계층이지 스토리지 엔진이 �
 여기가 처음이신가요? **[시작하기](getting-started.md)**로 이동하여 Community Applications를 통해 Unraid에 BombVault를 설치하고 첫 백업을 실행하세요. 그런 다음 전체 **[기능](features.md)**을 살펴보고, **[구성](configuration.md)**을 조정하고, **[오프사이트 및 복구](offsite-recovery.md)**를 설정하세요.
 
 오프사이트는 도메인별로 여러 대상에 동시에 분산될 수 있으며, 읽기 전용 **수신자 대시보드**가 그 사본을 받는 쪽 장비에서 모니터링하고, **설정 내보내기 / 가져오기** 카드로 전체 구성을 새 장비로 옮길 수 있습니다. [오프사이트 및 복구](offsite-recovery.md)와 [구성](configuration.md#portable-settings-export-and-import)을 참고하세요.
+
+**[Android 앱](android.md)**은 그룹의 모든 서버를 휴대폰에 담고, 모든 서버의 활동 로그를 한 화면에 보여 줍니다.
+
+## 크레딧 {#credits}
+
+- [@Darkdragon14](https://github.com/Darkdragon14)의 **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)**(Apache-2.0)가 BombVault의 출발점이 된 아이디어를 주었습니다. Docker 컨테이너의 원클릭 백업과 자동 재설치입니다. BombVault는 Go와 restic으로 만든 별개의 구현으로, 그 아이디어를 VM, 플래시 등으로 넓혔습니다.
+- **[restic](https://restic.net/)**은 BombVault가 구동하는 빠르고 안전한 중복 제거 백업 엔진입니다.
+- **[rclone](https://rclone.org/)**이 클라우드 백엔드를 제공합니다.
+- 버튼에 쓰인 글리프 대부분은 **[Streamline](https://streamlinehq.com)**의 무료 Core Solid 세트([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [출처](https://github.com/webalys-hq/streamline-vectors))에서 왔습니다. 나머지는 Font Awesome Free, Material Design Icons, Simple Icons, Tabler Icons에서 가져왔거나 이 프로젝트를 위해 그린 것입니다.
+
+## 라이선스 {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault는 **GNU Affero General Public License v3.0**([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE))에 따른 자유 소프트웨어입니다. 누구나 실행, 연구, 공유, 수정할 수 있습니다. 배포하거나 수정한 버전을 네트워크 서비스로 운영하는 경우에는 같은 라이선스로 소스를 공개하고 기존 저작권 및 저작자 표시 고지를 유지해야 합니다.
+
+이름과 브랜드는 라이선스 대상이 아닙니다. AGPL은 소스 코드에만 적용됩니다. "BombVault", 그 로고와 브랜드는 권리가 유보되어 있으므로, 포크는 자체 이름과 브랜드를 써야 하며 자신을 BombVault로 내세워서는 안 됩니다.
 
 ## 링크
 

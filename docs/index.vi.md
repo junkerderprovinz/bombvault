@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault dùng Docker socket để dừng các container trước khi sao lưu và tạo lại chúng sau khi khôi phục. Với VM, nó chạy `virsh` trên máy chủ qua SSH (`qemu+ssh://`) để tắt một domain êm ái hoặc chụp một snapshot trực tiếp. Nó không bao giờ bind-mount một đường dẫn libvirt, nên không thể cản trở VM Manager trên máy chủ.
+
 BombVault là lớp điều phối và giao diện, không phải công cụ lưu trữ. Toàn bộ việc di chuyển dữ liệu thực tế đều đi qua restic.
 
 ## Bắt đầu nhanh
@@ -50,6 +52,21 @@ BombVault là lớp điều phối và giao diện, không phải công cụ lư
 Mới đến đây? Hãy vào **[Bắt đầu](getting-started.md)** để cài đặt BombVault trên Unraid qua Community Applications và chạy bản sao lưu đầu tiên của bạn. Sau đó khám phá đầy đủ **[Tính năng](features.md)**, tinh chỉnh **[Cấu hình](configuration.md)** của bạn, và thiết lập **[Off-site & khôi phục](offsite-recovery.md)**.
 
 Off-site có thể phân phối tới nhiều đích cho mỗi miền cùng lúc, một **bảng điều khiển bên nhận** chỉ đọc giám sát các bản sao đó trên máy nhận chúng, và bạn có thể mang toàn bộ cấu hình của mình sang một máy mới bằng thẻ **Xuất / nhập cài đặt**. Xem [Off-site & khôi phục](offsite-recovery.md) và [Cấu hình](configuration.md#portable-settings-export-and-import).
+
+**[Ứng dụng Android](android.md)** đưa mọi máy chủ trong nhóm của bạn lên điện thoại, với nhật ký hoạt động của tất cả trên một màn hình.
+
+## Ghi công {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** của [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) đã cho BombVault ý tưởng khởi đầu: sao lưu bằng một cú nhấp và tự động cài đặt lại các Docker container. BombVault là một bản hiện thực riêng trên Go và restic, đưa ý tưởng đó sang VM, flash và hơn thế nữa.
+- **[restic](https://restic.net/)** là công cụ sao lưu nhanh, an toàn, có khử trùng lặp mà BombVault điều khiển.
+- **[rclone](https://rclone.org/)** cung cấp các backend đám mây.
+- Phần lớn biểu tượng trên các nút lấy từ bộ Core Solid miễn phí của **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [nguồn](https://github.com/webalys-hq/streamline-vectors)). Số còn lại lấy từ Font Awesome Free, Material Design Icons, Simple Icons và Tabler Icons, hoặc được vẽ riêng cho dự án.
+
+## Giấy phép {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault là phần mềm tự do theo **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Bạn có thể chạy, nghiên cứu, chia sẻ và sửa đổi nó. Nếu bạn phân phối nó, hoặc chạy một phiên bản đã sửa đổi dưới dạng dịch vụ mạng, bạn phải công bố mã nguồn của mình theo cùng giấy phép đó và giữ nguyên các thông báo bản quyền và ghi nhận tác giả hiện có.
+
+Tên và thương hiệu không được cấp phép. AGPL chỉ áp dụng cho mã nguồn: "BombVault", logo và thương hiệu của nó vẫn được bảo lưu, nên một bản fork phải dùng tên và thương hiệu của riêng mình và không được tự giới thiệu là BombVault.
 
 ## Liên kết
 

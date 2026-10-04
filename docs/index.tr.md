@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault, Docker soketini konteynerleri yedeklemeden önce durdurmak ve geri yüklemeden sonra yeniden oluşturmak için kullanır. VM'ler için `virsh`'i host'ta SSH üzerinden (`qemu+ssh://`) çalıştırarak bir VM'i düzgünce kapatır ya da canlı bir anlık görüntü alır. Hiçbir libvirt yolunu bağlamaz, bu yüzden host'taki VM Manager'ın işine karışamaz.
+
 BombVault, düzenleme ve arayüz katmanıdır, depolama motoru değildir. Tüm gerçek veri hareketi restic üzerinden gerçekleşir.
 
 ## Hızlı başlangıç
@@ -50,6 +52,21 @@ BombVault, düzenleme ve arayüz katmanıdır, depolama motoru değildir. Tüm g
 Buraya yeni mi geldiniz? BombVault'u Community Applications aracılığıyla Unraid'e kurmak ve ilk yedeğinizi çalıştırmak için **[Başlarken](getting-started.md)** sayfasına gidin. Ardından tüm **[Özellikler](features.md)**'i keşfedin, **[Yapılandırma](configuration.md)**'nızı ayarlayın ve **[Site dışı ve kurtarma](offsite-recovery.md)**'yı kurun.
 
 Site dışı, etki alanı başına aynı anda birkaç hedefe dağıtılabilir; salt okunur bir **alıcı kontrol paneli** bu kopyaları onları alan makinede izler ve **Ayarları dışa / içe aktar** kartıyla tüm yapılandırmanızı yeni bir makineye taşıyabilirsiniz. Bkz. [Site dışı ve kurtarma](offsite-recovery.md) ve [Yapılandırma](configuration.md#portable-settings-export-and-import).
+
+**[Android uygulaması](android.md)**, grubunuzdaki tüm sunucuları telefonunuza getirir ve hepsinin etkinlik günlüğünü tek ekranda gösterir.
+
+## Teşekkürler {#credits}
+
+- [@Darkdragon14](https://github.com/Darkdragon14) tarafından geliştirilen **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** (Apache-2.0), BombVault'a başlangıç fikrini verdi: Docker konteynerlerinin tek tıkla yedeklenmesi ve otomatik olarak yeniden kurulması. BombVault, bu fikri VM'lere, flash'a ve daha fazlasına taşıyan, Go ve restic üzerine kurulu ayrı bir uygulamadır.
+- **[restic](https://restic.net/)**, BombVault'un yönettiği hızlı, güvenli ve yinelenenleri ayıklayan yedekleme motorudur.
+- **[rclone](https://rclone.org/)** bulut arka uçlarını sağlar.
+- Düğmelerdeki simgelerin çoğu **[Streamline](https://streamlinehq.com)**'in ücretsiz Core Solid setinden gelir ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [kaynak](https://github.com/webalys-hq/streamline-vectors)). Diğerleri Font Awesome Free, Material Design Icons, Simple Icons ve Tabler Icons'tan gelir ya da proje için çizilmiştir.
+
+## Lisans {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault, **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)) altında özgür bir yazılımdır. Onu çalıştırabilir, inceleyebilir, paylaşabilir ve değiştirebilirsiniz. Onu dağıtırsanız ya da değiştirilmiş bir sürümünü ağ hizmeti olarak çalıştırırsanız, kaynak kodunuzu aynı lisansla yayımlamak ve mevcut telif hakkı ve atıf bildirimlerini korumak zorundasınız.
+
+Ad ve marka kimliği lisanslanmamıştır. AGPL yalnızca kaynak kodunu kapsar: "BombVault", logosu ve marka kimliği üzerindeki haklar saklıdır; bu yüzden bir fork kendine ait bir ad ve marka kimliği kullanmalıdır ve kendini BombVault olarak sunamaz.
 
 ## Bağlantılar
 

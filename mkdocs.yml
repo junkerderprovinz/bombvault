@@ -118,6 +118,7 @@ exclude_docs: |
 nav:
   - index.md
   - getting-started.md
+  - android.md
   - features.md
   - configuration.md
   - zfs-datasets.md

@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault utilise le socket Docker pour arrêter les conteneurs avant une sauvegarde et les recréer après une restauration. Pour les VMs, il exécute `virsh` sur l'hôte via SSH (`qemu+ssh://`) afin d'arrêter proprement une VM ou d'en prendre un instantané à chaud. Il ne monte jamais de chemin libvirt, il ne peut donc pas gêner le VM Manager de l'hôte.
+
 BombVault est la couche d'orchestration et d'interface, pas le moteur de stockage. Tout le mouvement réel des données passe par restic.
 
 ## Démarrage rapide
@@ -50,6 +52,21 @@ BombVault est la couche d'orchestration et d'interface, pas le moteur de stockag
 Nouveau ici ? Rendez-vous sur **[Prise en main](getting-started.md)** pour installer BombVault sur Unraid via Community Applications et lancer votre première sauvegarde. Explorez ensuite l'ensemble des **[Fonctionnalités](features.md)**, ajustez votre **[Configuration](configuration.md)**, et mettez en place la **[Sauvegarde hors site et récupération](offsite-recovery.md)**.
 
 Le hors site peut se répartir sur plusieurs cibles par domaine à la fois, un **tableau de bord récepteur** en lecture seule surveille ces copies sur la machine qui les reçoit, et vous pouvez emporter toute votre configuration vers une nouvelle machine avec la carte **Exporter / importer les paramètres**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) et [Configuration](configuration.md#portable-settings-export-and-import).
+
+L'**[application Android](android.md)** met tous les serveurs de votre groupe sur votre téléphone, avec le journal d'activité de chacun d'eux sur un seul écran.
+
+## Remerciements {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** de [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) a donné à BombVault son idée de départ : la sauvegarde en un clic et la réinstallation automatique des conteneurs Docker. BombVault en est une implémentation distincte, en Go et avec restic, qui étend l'idée aux VMs, à la flash et au-delà.
+- **[restic](https://restic.net/)** est le moteur de sauvegarde rapide, sûr et dédupliquant que pilote BombVault.
+- **[rclone](https://rclone.org/)** fournit les backends cloud.
+- La plupart des pictogrammes des boutons proviennent du jeu gratuit Core Solid de **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [source](https://github.com/webalys-hq/streamline-vectors)). Les autres proviennent de Font Awesome Free, Material Design Icons, Simple Icons et Tabler Icons, ou ont été dessinés pour le projet.
+
+## Licence {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault est un logiciel libre sous **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Vous pouvez l'exécuter, l'étudier, le partager et le modifier. Si vous le distribuez, ou si vous exécutez une version modifiée en tant que service réseau, vous devez publier votre code source sous la même licence et conserver les mentions de copyright et d'attribution existantes.
+
+Le nom et l'identité visuelle ne sont pas couverts par la licence. L'AGPL ne couvre que le code source : « BombVault », son logo et son identité visuelle restent réservés, si bien qu'un fork doit utiliser un nom et une identité visuelle qui lui sont propres et n'a pas le droit de se présenter comme BombVault.
 
 ## Liens
 

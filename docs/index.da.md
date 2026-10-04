@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault bruger Docker-socket'en til at stoppe containere før en sikkerhedskopi og genskabe dem efter en gendannelse. Til VM'er kører den `virsh` på værten over SSH (`qemu+ssh://`) for at lukke en VM pænt ned eller tage et live-øjebliksbillede. Den bind-monterer aldrig en libvirt-sti, så den kan ikke komme i vejen for VM Manager på værten.
+
 BombVault er orkestrerings- og UI-laget, ikke lagringsmotoren. Al faktisk dataflytning går gennem restic.
 
 ## Hurtig start
@@ -50,6 +52,21 @@ BombVault er orkestrerings- og UI-laget, ikke lagringsmotoren. Al faktisk datafl
 Ny her? Gå til **[Kom godt i gang](getting-started.md)** for at installere BombVault på Unraid via Community Applications og køre din første sikkerhedskopi. Udforsk derefter de fulde **[Funktioner](features.md)**, tilpas din **[Konfiguration](configuration.md)**, og opsæt **[Off-site og gendannelse](offsite-recovery.md)**.
 
 Off-site kan fordele til flere destinationer pr. domæne på én gang, et skrivebeskyttet **modtager-dashboard** overvåger disse kopier på den boks, der modtager dem, og du kan bære hele din konfiguration over til en ny boks med kortet **Eksportér / importér indstillinger**. Se [Off-site og gendannelse](offsite-recovery.md) og [Konfiguration](configuration.md#portable-settings-export-and-import).
+
+**[Android-appen](android.md)** giver dig alle servere i din gruppe på din telefon, med aktivitetsloggen for dem alle på én skærm.
+
+## Tak til {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** af [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) gav BombVault dets udgangspunkt: sikkerhedskopiering med ét klik og automatisk geninstallation af Docker-containere. BombVault er en selvstændig implementering i Go og restic, der fører idéen videre til VM'er, flashen og mere.
+- **[restic](https://restic.net/)** er den hurtige, sikre, deduplikerende sikkerhedskopimotor, som BombVault styrer.
+- **[rclone](https://rclone.org/)** leverer cloud-backends.
+- De fleste symboler på knapper kommer fra det gratis Core Solid-sæt fra **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [kilde](https://github.com/webalys-hq/streamline-vectors)). Resten kommer fra Font Awesome Free, Material Design Icons, Simple Icons og Tabler Icons eller er tegnet til projektet.
+
+## Licens {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault er fri software under **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). Du må køre, studere, dele og ændre det. Hvis du distribuerer det eller kører en ændret version som en netværkstjeneste, skal du offentliggøre din kildekode under samme licens og bevare de eksisterende ophavsrets- og kildeangivelser.
+
+Navnet og brandingen er ikke licenseret. AGPL dækker kun kildekoden: "BombVault", dets logo og dets branding forbliver forbeholdt, så en fork skal bruge sit eget navn og sin egen branding og må ikke udgive sig for at være BombVault.
 
 ## Links
 

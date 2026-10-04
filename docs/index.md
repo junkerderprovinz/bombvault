@@ -43,6 +43,8 @@ Browser --HTTPS--> BombVault container
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
+BombVault uses the Docker socket to stop containers before a backup and to recreate them after a restore. For VMs it runs `virsh` on the host over SSH (`qemu+ssh://`) to shut a domain down gracefully or take a live snapshot. It never bind-mounts a libvirt path, so it cannot get in the way of the VM Manager on the host.
+
 BombVault is the orchestration and UI layer, not the storage engine. All actual data movement goes through restic.
 
 ## Quick start
@@ -50,6 +52,21 @@ BombVault is the orchestration and UI layer, not the storage engine. All actual 
 New here? Head to **[Getting started](getting-started.md)** to install BombVault on Unraid via Community Applications and run your first backup. Then explore the full **[Features](features.md)**, tune your **[Configuration](configuration.md)**, and set up **[Off-site & recovery](offsite-recovery.md)**.
 
 Off-site can fan out to several targets per domain at once, a read-only **receiver dashboard** monitors those copies on the box that receives them, and you can carry your whole configuration to a new box with the **Export / import settings** card. See [Off-site & recovery](offsite-recovery.md) and [Configuration](configuration.md#portable-settings-export-and-import).
+
+The **[Android app](android.md)** puts every server of your group on your phone, with the activity log of all of them on one screen.
+
+## Credits {#credits}
+
+- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) gave BombVault its starting idea: one-click backup and automatic reinstall of Docker containers. BombVault is a separate implementation on Go and restic that carries the idea over to VMs, the flash and more.
+- **[restic](https://restic.net/)** is the fast, secure, deduplicating backup engine BombVault drives.
+- **[rclone](https://rclone.org/)** provides the cloud backends.
+- Most glyphs on buttons come from the free Core Solid set by **[Streamline](https://streamlinehq.com)** ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [source](https://github.com/webalys-hq/streamline-vectors)). The others come from Font Awesome Free, Material Design Icons, Simple Icons and Tabler Icons, or were drawn for the project.
+
+## License {#license}
+
+Copyright (C) 2026 Junker der Provinz. BombVault is free software under the **GNU Affero General Public License v3.0** ([LICENSE](https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE)). You may run, study, share and change it. If you distribute it, or run a changed version as a network service, you must publish your source under the same licence and keep the existing copyright and attribution notices.
+
+The name and branding are not licensed. The AGPL covers the source code only: "BombVault", its logo and its branding stay reserved, so a fork has to use a name and branding of its own and may not present itself as BombVault.
 
 ## Links
 
