@@ -115,6 +115,7 @@ LICENCES = [
     ("Streamline", "Free icons from Streamline - https://streamlinehq.com (CC BY 4.0)"),
     ("Font Awesome Free", "Font Awesome Free - https://fontawesome.com (icons: CC BY 4.0)"),
     ("Tabler Icons", "Tabler Icons - https://tabler.io/icons (MIT)"),
+    ("Material Design Icons", "Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)"),
     ("Simple Icons", "Simple Icons - https://simpleicons.org (CC0)"),
 ]
 # Drawings made for GlimStone or KnightLoader, and the reCAPTCHA mark, which is
