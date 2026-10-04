@@ -2841,6 +2841,8 @@ const hu: Partial<Translations> = {
   "timeline.deleteSpace": "A hely csak a nyesés lefutása után szabadul fel.",
   "timeline.deleteFinal": "Ez nem vonható vissza.",
   "timeline.unchecked": "{place}: nincs ellenőrizve",
+  "timeline.uncheckedHint":
+    "A BombVault csak kérésre olvassa ezt a helyet, így az oldal nem vár egy távoli listára a megnyitáskor. Az „Ellenőrzés” kilistázza az ott tárolt mentéseket. Ezek addig maradnak a listán, amíg el nem hagyod az oldalt.",
   "timeline.unreadable": "{place}: nem olvasható",
   "timeline.check": "Ellenőrzés",
   "timeline.showOlder": "Régebbiek betöltése",

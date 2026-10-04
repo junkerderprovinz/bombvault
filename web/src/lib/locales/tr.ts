@@ -2838,6 +2838,8 @@ const tr: Partial<Translations> = {
   "timeline.deleteSpace": "Bir budama çalışana kadar alan geri kazanılmaz.",
   "timeline.deleteFinal": "Bu geri alınamaz.",
   "timeline.unchecked": "{place}: kontrol edilmedi",
+  "timeline.uncheckedHint":
+    "BombVault bu yeri yalnızca siz istediğinizde okur, böylece sayfa uzak bir listeyi beklemeden açılır. “Kontrol et” orada saklanan yedekleri listeler. Siz sayfadan ayrılana kadar listede kalırlar.",
   "timeline.unreadable": "{place}: okunamıyor",
   "timeline.check": "Kontrol et",
   "timeline.showOlder": "Daha eskileri yükle",

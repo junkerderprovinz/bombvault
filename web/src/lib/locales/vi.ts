@@ -2829,6 +2829,8 @@ const vi: Partial<Translations> = {
   "timeline.deleteSpace": "Dung lượng không được thu hồi cho đến khi chạy dọn dẹp.",
   "timeline.deleteFinal": "Việc này không thể hoàn tác.",
   "timeline.unchecked": "{place}: chưa kiểm tra",
+  "timeline.uncheckedHint":
+    "BombVault chỉ đọc vị trí này khi bạn yêu cầu, nên trang mở ra mà không phải chờ danh sách từ xa. “Kiểm tra” liệt kê các bản sao lưu được lưu ở đó. Chúng vẫn hiện trong danh sách cho đến khi bạn rời trang.",
   "timeline.unreadable": "{place}: không đọc được",
   "timeline.check": "Kiểm tra",
   "timeline.showOlder": "Tải bản cũ hơn",

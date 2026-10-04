@@ -2849,6 +2849,8 @@ const gl: Partial<Translations> = {
   "timeline.deleteSpace": "O espazo non se recupera ata que se executa unha limpeza.",
   "timeline.deleteFinal": "Isto non se pode desfacer.",
   "timeline.unchecked": "{place}: sen comprobar",
+  "timeline.uncheckedHint":
+    "BombVault só le este lugar cando llo pides, así a páxina ábrese sen esperar por unha listaxe remota. «Comprobar» mostra as copias gardadas alí. Seguen na lista ata que saes da páxina.",
   "timeline.unreadable": "{place}: ilexible",
   "timeline.check": "Comprobar",
   "timeline.showOlder": "Cargar máis antigas",

@@ -2833,6 +2833,8 @@ const ru: Partial<Translations> = {
   "timeline.deleteSpace": "Место не освобождается, пока не запустится очистка.",
   "timeline.deleteFinal": "Это нельзя отменить.",
   "timeline.unchecked": "{place}: не проверено",
+  "timeline.uncheckedHint":
+    "BombVault читает это место только по вашему запросу, поэтому страница открывается без ожидания удалённого списка. «Проверить» показывает резервные копии, которые там лежат. Они остаются в списке, пока вы не покинете страницу.",
   "timeline.unreadable": "{place}: нечитаемо",
   "timeline.check": "Проверить",
   "timeline.showOlder": "Загрузить более старые",

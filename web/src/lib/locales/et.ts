@@ -2849,6 +2849,8 @@ const et: Partial<Translations> = {
   "timeline.deleteSpace": "Ruum ei vabane enne, kui koristus käivitub.",
   "timeline.deleteFinal": "Seda ei saa tagasi võtta.",
   "timeline.unchecked": "{place}: kontrollimata",
+  "timeline.uncheckedHint":
+    "BombVault loeb seda kohta ainult siis, kui palud, nii et leht avaneb ilma kauge loendi ootamiseta. „Kontrolli“ näitab sinna salvestatud varundusi. Need jäävad nähtavale, kuni lehelt lahkud.",
   "timeline.unreadable": "{place}: loetamatu",
   "timeline.check": "Kontrolli",
   "timeline.showOlder": "Laadi vanemaid",

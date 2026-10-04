@@ -2849,6 +2849,8 @@ const ca: Partial<Translations> = {
   "timeline.deleteSpace": "L'espai no es recupera fins que s'executa una neteja.",
   "timeline.deleteFinal": "Això no es pot desfer.",
   "timeline.unchecked": "{place}: no comprovat",
+  "timeline.uncheckedHint":
+    "BombVault només llegeix aquest lloc quan li ho demanes, així la pàgina s'obre sense esperar un llistat remot. «Comprova» llista les còpies que hi ha desades. Es mantenen a la llista fins que surts de la pàgina.",
   "timeline.unreadable": "{place}: no llegible",
   "timeline.check": "Comprova",
   "timeline.showOlder": "Carrega'n de més antigues",

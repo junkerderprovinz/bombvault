@@ -2849,6 +2849,8 @@ const fa: Partial<Translations> = {
   "timeline.deleteSpace": "فضا تا زمانی که یک پاک‌سازی اجرا نشود، بازپس گرفته نمی‌شود.",
   "timeline.deleteFinal": "این قابل بازگشت نیست.",
   "timeline.unchecked": "{place}: بررسی نشده",
+  "timeline.uncheckedHint":
+    "BombVault این مکان را فقط وقتی بخواهید می‌خواند، تا صفحه بدون انتظار برای فهرست راه‌دور باز شود. «بررسی» پشتیبان‌های ذخیره‌شده در آنجا را فهرست می‌کند. این‌ها تا وقتی از صفحه خارج نشده‌اید در فهرست می‌مانند.",
   "timeline.unreadable": "{place}: خوانا نیست",
   "timeline.check": "بررسی",
   "timeline.showOlder": "بارگذاری قدیمی‌تر‌ها",

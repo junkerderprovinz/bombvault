@@ -2829,6 +2829,8 @@ const ja: Partial<Translations> = {
   "timeline.deleteSpace": "整理が実行されるまで領域は解放されません。",
   "timeline.deleteFinal": "これは元に戻せません。",
   "timeline.unchecked": "{place}: 未チェック",
+  "timeline.uncheckedHint":
+    "BombVault はこの場所を、あなたが求めたときだけ読み込みます。そのため、リモートの一覧を待たずにページが開きます。「チェック」を押すと、そこに保存されているバックアップが一覧表示され、ページを離れるまで表示されたままになります。",
   "timeline.unreadable": "{place}: 読み取り不可",
   "timeline.check": "チェック",
   "timeline.showOlder": "古いものを読み込む",

@@ -2836,6 +2836,8 @@ const es: Partial<Translations> = {
   "timeline.deleteSpace": "El espacio no se recupera hasta que se ejecuta una poda.",
   "timeline.deleteFinal": "Esto no se puede deshacer.",
   "timeline.unchecked": "{place}: no comprobado",
+  "timeline.uncheckedHint":
+    "BombVault solo lee este lugar cuando se lo pides, así la página se abre sin esperar a un listado remoto. «Comprobar» muestra las copias guardadas allí. Siguen en la lista hasta que sales de la página.",
   "timeline.unreadable": "{place}: no legible",
   "timeline.check": "Comprobar",
   "timeline.showOlder": "Cargar más antiguas",

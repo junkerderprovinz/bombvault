@@ -2849,6 +2849,8 @@ const bg: Partial<Translations> = {
   "timeline.deleteSpace": "Мястото не се освобождава, докато не се изпълни прочистване.",
   "timeline.deleteFinal": "Това не може да бъде отменено.",
   "timeline.unchecked": "{place}: непроверено",
+  "timeline.uncheckedHint":
+    "BombVault чете това място само когато поискаш, така че страницата се отваря, без да чака отдалечен списък. „Провери“ показва архивиранията, които са там. Те остават видими, докато не напуснеш страницата.",
   "timeline.unreadable": "{place}: нечетимо",
   "timeline.check": "Провери",
   "timeline.showOlder": "Зареди по-стари",

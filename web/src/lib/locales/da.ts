@@ -2838,6 +2838,8 @@ const da: Partial<Translations> = {
   "timeline.deleteSpace": "Pladsen frigøres ikke, før en oprydning kører.",
   "timeline.deleteFinal": "Dette kan ikke fortrydes.",
   "timeline.unchecked": "{place}: ikke tjekket",
+  "timeline.uncheckedHint":
+    "BombVault læser kun dette sted, når du beder om det, så siden åbner uden at vente på en liste fra et fjernt sted. »Tjek« viser de sikkerhedskopier, der ligger der. De bliver stående på listen, indtil du forlader siden.",
   "timeline.unreadable": "{place}: ikke læsbar",
   "timeline.check": "Tjek",
   "timeline.showOlder": "Indlæs ældre",

@@ -2849,6 +2849,8 @@ const sk: Partial<Translations> = {
   "timeline.deleteSpace": "Miesto sa neuvoľní, kým neprebehne upratovanie.",
   "timeline.deleteFinal": "Toto nemožno vrátiť späť.",
   "timeline.unchecked": "{place}: neskontrolované",
+  "timeline.uncheckedHint":
+    "BombVault toto miesto číta len na požiadanie, takže sa stránka otvorí bez čakania na vzdialený zoznam. „Skontrolovať“ vypíše zálohy uložené tam. Zostanú v zozname, kým stránku neopustíte.",
   "timeline.unreadable": "{place}: nečitateľné",
   "timeline.check": "Skontrolovať",
   "timeline.showOlder": "Načítať staršie",

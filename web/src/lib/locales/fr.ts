@@ -2838,6 +2838,8 @@ const fr: Partial<Translations> = {
   "timeline.deleteSpace": "L'espace n'est récupéré qu'après l'exécution d'un élagage.",
   "timeline.deleteFinal": "Ceci est irréversible.",
   "timeline.unchecked": "{place} : non vérifié",
+  "timeline.uncheckedHint":
+    "BombVault ne lit cet endroit que lorsque vous le demandez, pour que la page s'ouvre sans attendre une liste distante. « Vérifier » affiche les sauvegardes qui s'y trouvent. Elles restent listées jusqu'à ce que vous quittiez la page.",
   "timeline.unreadable": "{place} : non lisible",
   "timeline.check": "Vérifier",
   "timeline.showOlder": "Charger plus anciennes",

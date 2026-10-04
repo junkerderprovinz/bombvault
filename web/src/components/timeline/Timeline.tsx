@@ -119,7 +119,11 @@ export function Timeline({
               () => labelOf(p.place)
             )}
           </span>
-          {p.error && <InfoBubble tip={p.error} />}
+          {p.state === "unchecked" ? (
+            <InfoBubble tip={t("timeline.uncheckedHint")} />
+          ) : (
+            p.error && <InfoBubble tip={p.error} />
+          )}
           <Button
             label={t("timeline.check")}
             labelKey="timeline.check"

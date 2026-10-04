@@ -2841,6 +2841,8 @@ const th: Partial<Translations> = {
   "timeline.deleteSpace": "พื้นที่จะไม่ถูกคืนจนกว่าจะมีการเก็บกวาด",
   "timeline.deleteFinal": "ไม่สามารถยกเลิกการกระทำนี้ได้",
   "timeline.unchecked": "{place}: ยังไม่ได้ตรวจสอบ",
+  "timeline.uncheckedHint":
+    "BombVault จะอ่านตำแหน่งนี้เฉพาะเมื่อคุณสั่งเท่านั้น หน้านี้จึงเปิดได้โดยไม่ต้องรอรายการจากปลายทางระยะไกล “ตรวจสอบ” จะแสดงรายการข้อมูลสำรองที่เก็บอยู่ที่นั่น และรายการจะคงอยู่จนกว่าคุณจะออกจากหน้านี้",
   "timeline.unreadable": "{place}: อ่านไม่ได้",
   "timeline.check": "ตรวจสอบ",
   "timeline.showOlder": "โหลดรายการเก่ากว่า",

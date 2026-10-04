@@ -2833,6 +2833,8 @@ const pl: Partial<Translations> = {
   "timeline.deleteSpace": "Miejsce zwalnia się dopiero po uruchomieniu porządkowania.",
   "timeline.deleteFinal": "Tego nie można cofnąć.",
   "timeline.unchecked": "{place}: niesprawdzone",
+  "timeline.uncheckedHint":
+    "BombVault czyta to miejsce tylko na Twoją prośbę, więc strona otwiera się bez czekania na zdalną listę. „Sprawdź” wyświetla kopie zapasowe zapisane w tym miejscu. Pozostają na liście, dopóki nie opuścisz strony.",
   "timeline.unreadable": "{place}: nieczytelne",
   "timeline.check": "Sprawdź",
   "timeline.showOlder": "Wczytaj starsze",

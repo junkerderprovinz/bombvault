@@ -2838,6 +2838,8 @@ const pt: Partial<Translations> = {
   "timeline.deleteSpace": "O espaço só é recuperado depois de uma limpeza ser executada.",
   "timeline.deleteFinal": "Isto não pode ser desfeito.",
   "timeline.unchecked": "{place}: não verificado",
+  "timeline.uncheckedHint":
+    "O BombVault só lê este local quando você pede, para a página abrir sem esperar por uma listagem remota. “Verificar” lista os backups guardados lá. Eles continuam na lista até você sair da página.",
   "timeline.unreadable": "{place}: não legível",
   "timeline.check": "Verificar",
   "timeline.showOlder": "Carregar mais antigas",

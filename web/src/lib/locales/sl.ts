@@ -2833,6 +2833,8 @@ const sl: Partial<Translations> = {
   "timeline.deleteSpace": "Prostor se ne sprosti, dokler se ne izvede pospravljanje.",
   "timeline.deleteFinal": "Tega ni mogoče razveljaviti.",
   "timeline.unchecked": "{place}: ni preverjeno",
+  "timeline.uncheckedHint":
+    "BombVault to mesto prebere samo, ko to zahtevaš, zato se stran odpre brez čakanja na oddaljen seznam. »Preveri« izpiše varnostne kopije, shranjene tam. Ostanejo na seznamu, dokler ne zapustiš strani.",
   "timeline.unreadable": "{place}: neberljivo",
   "timeline.check": "Preveri",
   "timeline.showOlder": "Naloži starejše",

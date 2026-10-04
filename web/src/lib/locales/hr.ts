@@ -2849,6 +2849,8 @@ const hr: Partial<Translations> = {
   "timeline.deleteSpace": "Prostor se ne oslobađa dok se ne izvrši čišćenje.",
   "timeline.deleteFinal": "Ovo se ne može poništiti.",
   "timeline.unchecked": "{place}: nije provjereno",
+  "timeline.uncheckedHint":
+    "BombVault čita ovo mjesto samo kad to zatražite, pa se stranica otvara bez čekanja na udaljeni popis. „Provjeri“ ispisuje sigurnosne kopije koje su tamo pohranjene. Ostaju na popisu dok ne napustite stranicu.",
   "timeline.unreadable": "{place}: nije čitljivo",
   "timeline.check": "Provjeri",
   "timeline.showOlder": "Učitaj starije",

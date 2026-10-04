@@ -2849,6 +2849,8 @@ const lv: Partial<Translations> = {
   "timeline.deleteSpace": "Vieta netiek atbrīvota, kamēr netiek palaista tīrīšana.",
   "timeline.deleteFinal": "To nevarēs atsaukt.",
   "timeline.unchecked": "{place}: nepārbaudīts",
+  "timeline.uncheckedHint":
+    "BombVault šo vietu nolasa tikai pēc jūsu pieprasījuma, tāpēc lapa atveras, negaidot attālu sarakstu. „Pārbaudīt“ parāda tur glabātās rezerves kopijas. Tās paliek sarakstā, līdz atstājat lapu.",
   "timeline.unreadable": "{place}: nenolasāms",
   "timeline.check": "Pārbaudīt",
   "timeline.showOlder": "Ielādēt vecākas",

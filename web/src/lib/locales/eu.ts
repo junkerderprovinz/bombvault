@@ -2849,6 +2849,8 @@ const eu: Partial<Translations> = {
   "timeline.deleteSpace": "Lekua ez da berreskuratzen garbiketa bat exekutatu arte.",
   "timeline.deleteFinal": "Hau ezin da desegin.",
   "timeline.unchecked": "{place}: egiaztatu gabe",
+  "timeline.uncheckedHint":
+    "BombVault-ek leku hau eskatzen diozunean bakarrik irakurtzen du, orria urruneko zerrenda baten zain egon gabe ireki dadin. «Egiaztatu» botoiak han gordetako babeskopiak zerrendatzen ditu. Orritik irten arte ikusgai geratzen dira.",
   "timeline.unreadable": "{place}: irakurtezina",
   "timeline.check": "Egiaztatu",
   "timeline.showOlder": "Kargatu zaharragoak",

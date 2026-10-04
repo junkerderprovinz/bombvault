@@ -2829,6 +2829,8 @@ const ko: Partial<Translations> = {
   "timeline.deleteSpace": "정리가 실행될 때까지 공간이 회수되지 않습니다.",
   "timeline.deleteFinal": "되돌릴 수 없습니다.",
   "timeline.unchecked": "{place}: 확인 안 됨",
+  "timeline.uncheckedHint":
+    "BombVault는 요청할 때만 이 위치를 읽으므로, 원격 목록을 기다리지 않고 페이지가 열립니다. “확인”을 누르면 그곳에 저장된 백업이 나열되며, 페이지를 떠날 때까지 그대로 표시됩니다.",
   "timeline.unreadable": "{place}: 읽을 수 없음",
   "timeline.check": "확인",
   "timeline.showOlder": "이전 항목 불러오기",

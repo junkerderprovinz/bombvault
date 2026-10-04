@@ -2849,6 +2849,8 @@ const is: Partial<Translations> = {
   "timeline.deleteSpace": "Plássið losnar ekki fyrr en hreinsun keyrir.",
   "timeline.deleteFinal": "Þessu verður ekki afturkallað.",
   "timeline.unchecked": "{place}: ekki athugað",
+  "timeline.uncheckedHint":
+    "BombVault les þennan stað aðeins þegar þú biður um það, svo síðan opnast án þess að bíða eftir fjarlægum lista. „Athuga“ sýnir afritin sem eru geymd þar. Þau haldast á listanum þar til þú yfirgefur síðuna.",
   "timeline.unreadable": "{place}: ekki læsilegt",
   "timeline.check": "Athuga",
   "timeline.showOlder": "Hlaða eldri",

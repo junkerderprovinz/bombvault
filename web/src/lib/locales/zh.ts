@@ -2829,6 +2829,8 @@ const zh: Partial<Translations> = {
   "timeline.deleteSpace": "在运行清理之前不会回收空间。",
   "timeline.deleteFinal": "此操作无法撤销。",
   "timeline.unchecked": "{place}：未检查",
+  "timeline.uncheckedHint":
+    "BombVault 只在你提出要求时才读取此位置，所以页面打开时不必等待远程列表。“检查”会列出存放在那里的备份，它们会一直显示，直到你离开页面。",
   "timeline.unreadable": "{place}：不可读",
   "timeline.check": "检查",
   "timeline.showOlder": "加载更早的",

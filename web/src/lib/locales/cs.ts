@@ -2836,6 +2836,8 @@ const cs: Partial<Translations> = {
   "timeline.deleteSpace": "Místo se neuvolní, dokud neproběhne úklid.",
   "timeline.deleteFinal": "Toto nelze vrátit zpět.",
   "timeline.unchecked": "{place}: nezkontrolováno",
+  "timeline.uncheckedHint":
+    "BombVault toto místo čte jen na vyžádání, takže se stránka otevře bez čekání na výpis ze vzdáleného umístění. „Zkontrolovat“ vypíše zálohy, které tam jsou uložené. Zůstanou vypsané, dokud stránku neopustíte.",
   "timeline.unreadable": "{place}: nečitelné",
   "timeline.check": "Zkontrolovat",
   "timeline.showOlder": "Načíst starší",

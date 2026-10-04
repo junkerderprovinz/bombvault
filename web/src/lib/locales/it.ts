@@ -2838,6 +2838,8 @@ const it: Partial<Translations> = {
   "timeline.deleteSpace": "Lo spazio non viene recuperato finché non viene eseguita una pulizia.",
   "timeline.deleteFinal": "Questa operazione non è reversibile.",
   "timeline.unchecked": "{place}: non controllato",
+  "timeline.uncheckedHint":
+    "BombVault legge questo luogo solo quando lo chiedi, così la pagina si apre senza aspettare un elenco remoto. «Controlla» elenca i backup salvati lì. Restano in elenco finché non lasci la pagina.",
   "timeline.unreadable": "{place}: non leggibile",
   "timeline.check": "Controlla",
   "timeline.showOlder": "Carica più vecchie",

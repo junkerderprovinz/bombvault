@@ -2390,6 +2390,8 @@ export const en = {
   "timeline.deleteSpace": "The space is not reclaimed until a prune runs.",
   "timeline.deleteFinal": "This cannot be undone.",
   "timeline.unchecked": "{place}: not checked",
+  "timeline.uncheckedHint":
+    "BombVault reads this location only when you ask, so the page opens without waiting for a remote listing. Check lists the backups stored there. They stay listed until you leave the page.",
   "timeline.unreadable": "{place}: not readable",
   "timeline.check": "Check",
   "timeline.showOlder": "Load older",
@@ -5725,6 +5727,8 @@ export const de: Translations = {
   "timeline.deleteSpace": "Der Speicher wird erst frei, wenn ein Aufräumen läuft.",
   "timeline.deleteFinal": "Kann nicht rückgängig gemacht werden.",
   "timeline.unchecked": "{place}: nicht geprüft",
+  "timeline.uncheckedHint":
+    "BombVault liest diesen Ort nur, wenn du darum bittest, damit die Seite nicht auf ein entferntes Ziel warten muss. „Prüfen“ listet die Sicherungen, die dort liegen. Sie bleiben sichtbar, bis du die Seite verlässt.",
   "timeline.unreadable": "{place}: nicht lesbar",
   "timeline.check": "Prüfen",
   "timeline.showOlder": "Ältere laden",

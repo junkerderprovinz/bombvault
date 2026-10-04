@@ -2835,6 +2835,8 @@ const nl: Partial<Translations> = {
   "timeline.deleteSpace": "De ruimte komt pas vrij als er een opschoning draait.",
   "timeline.deleteFinal": "Dit kan niet ongedaan worden gemaakt.",
   "timeline.unchecked": "{place}: niet gecontroleerd",
+  "timeline.uncheckedHint":
+    "BombVault leest deze plek alleen als je erom vraagt, zodat de pagina opent zonder te wachten op een lijst van een externe locatie. “Controleren” toont de back-ups die daar staan. Ze blijven zichtbaar totdat je de pagina verlaat.",
   "timeline.unreadable": "{place}: niet leesbaar",
   "timeline.check": "Controleren",
   "timeline.showOlder": "Oudere laden",

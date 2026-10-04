@@ -2838,6 +2838,8 @@ const fi: Partial<Translations> = {
   "timeline.deleteSpace": "Tila ei vapaudu ennen kuin karsinta ajetaan.",
   "timeline.deleteFinal": "Tätä ei voi perua.",
   "timeline.unchecked": "{place}: ei tarkistettu",
+  "timeline.uncheckedHint":
+    "BombVault lukee tämän paikan vain pyynnöstäsi, jotta sivu aukeaa odottamatta etälistausta. ”Tarkista” listaa sinne tallennetut varmuuskopiot. Ne pysyvät listassa, kunnes poistut sivulta.",
   "timeline.unreadable": "{place}: ei luettavissa",
   "timeline.check": "Tarkista",
   "timeline.showOlder": "Lataa vanhempia",

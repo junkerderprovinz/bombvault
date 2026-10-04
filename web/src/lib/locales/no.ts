@@ -2838,6 +2838,8 @@ const no: Partial<Translations> = {
   "timeline.deleteSpace": "Plassen frigjøres ikke før en opprydding kjører.",
   "timeline.deleteFinal": "Dette kan ikke angres.",
   "timeline.unchecked": "{place}: ikke sjekket",
+  "timeline.uncheckedHint":
+    "BombVault leser dette stedet bare når du ber om det, så siden åpnes uten å vente på en liste fra et eksternt sted. «Sjekk» viser sikkerhetskopiene som ligger der. De blir stående i listen til du forlater siden.",
   "timeline.unreadable": "{place}: ikke lesbar",
   "timeline.check": "Sjekk",
   "timeline.showOlder": "Last eldre",

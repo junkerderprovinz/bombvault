@@ -2841,6 +2841,8 @@ const ro: Partial<Translations> = {
   "timeline.deleteSpace": "Spațiul nu este recuperat până nu rulează o curățare.",
   "timeline.deleteFinal": "Aceasta nu poate fi anulată.",
   "timeline.unchecked": "{place}: neverificat",
+  "timeline.uncheckedHint":
+    "BombVault citește acest loc doar când ceri tu, așa că pagina se deschide fără să aștepte o listă de la distanță. „Verifică” afișează copiile de rezervă păstrate acolo. Rămân în listă până când părăsești pagina.",
   "timeline.unreadable": "{place}: ilizibil",
   "timeline.check": "Verifică",
   "timeline.showOlder": "Încarcă mai vechi",

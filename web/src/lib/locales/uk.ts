@@ -2833,6 +2833,8 @@ const uk: Partial<Translations> = {
   "timeline.deleteSpace": "Місце не звільняється, доки не запуститься очищення.",
   "timeline.deleteFinal": "Це неможливо скасувати.",
   "timeline.unchecked": "{place}: не перевірено",
+  "timeline.uncheckedHint":
+    "BombVault читає це місце лише на ваш запит, тому сторінка відкривається без очікування віддаленого списку. «Перевірити» показує резервні копії, які там зберігаються. Вони лишаються в списку, доки ви не залишите сторінку.",
   "timeline.unreadable": "{place}: нечитабельно",
   "timeline.check": "Перевірити",
   "timeline.showOlder": "Завантажити старіші",

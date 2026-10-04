@@ -2849,6 +2849,8 @@ const ms: Partial<Translations> = {
   "timeline.deleteSpace": "Ruang tidak diperoleh semula sehingga pemangkasan dijalankan.",
   "timeline.deleteFinal": "Ini tidak boleh dibuat asal.",
   "timeline.unchecked": "{place}: belum disemak",
+  "timeline.uncheckedHint":
+    "BombVault hanya membaca tempat ini apabila anda memintanya, jadi halaman terbuka tanpa menunggu senarai jauh. “Semak” menyenaraikan sandaran yang disimpan di situ. Sandaran itu kekal disenaraikan sehingga anda meninggalkan halaman.",
   "timeline.unreadable": "{place}: tidak boleh dibaca",
   "timeline.check": "Semak",
   "timeline.showOlder": "Muat yang lebih lama",

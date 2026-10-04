@@ -2838,6 +2838,8 @@ const he: Partial<Translations> = {
   "timeline.deleteSpace": "השטח לא משתחרר עד שהרצת ניקוי מתבצעת.",
   "timeline.deleteFinal": "אי אפשר לבטל את זה.",
   "timeline.unchecked": "{place}: לא נבדק",
+  "timeline.uncheckedHint":
+    "BombVault קורא את המקום הזה רק לפי בקשה, כך שהדף נפתח בלי להמתין לרשימה מרוחקת. ”בדוק” מציג את הגיבויים השמורים שם. הם נשארים ברשימה עד שיוצאים מהדף.",
   "timeline.unreadable": "{place}: לא ניתן לקריאה",
   "timeline.check": "בדוק",
   "timeline.showOlder": "טען ישנים יותר",

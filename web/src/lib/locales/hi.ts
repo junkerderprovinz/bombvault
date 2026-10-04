@@ -2849,6 +2849,8 @@ const hi: Partial<Translations> = {
   "timeline.deleteSpace": "जगह तब तक वापस नहीं मिलती जब तक प्रून नहीं चलता।",
   "timeline.deleteFinal": "इसे वापस नहीं लिया जा सकता।",
   "timeline.unchecked": "{place}: जाँचा नहीं गया",
+  "timeline.uncheckedHint":
+    "BombVault इस जगह को तभी पढ़ता है जब आप कहते हैं, ताकि पेज किसी दूर की सूची का इंतज़ार किए बिना खुल जाए। “जाँचें” वहाँ रखे बैकअप की सूची दिखाता है। ये सूची में तब तक रहते हैं जब तक आप पेज छोड़ नहीं देते।",
   "timeline.unreadable": "{place}: पढ़ने योग्य नहीं",
   "timeline.check": "जाँचें",
   "timeline.showOlder": "पुराने लोड करें",

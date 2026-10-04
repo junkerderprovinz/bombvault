@@ -2849,6 +2849,8 @@ const lt: Partial<Translations> = {
   "timeline.deleteSpace": "Vieta neatlaisvinama, kol nepaleidžiamas valymas.",
   "timeline.deleteFinal": "To nebus galima anuliuoti.",
   "timeline.unchecked": "{place}: nepatikrinta",
+  "timeline.uncheckedHint":
+    "BombVault šią vietą nuskaito tik jums paprašius, todėl puslapis atsidaro nelaukdamas nuotolinio sąrašo. „Tikrinti“ išvardija ten saugomas atsargines kopijas. Jos lieka sąraše, kol išeinate iš puslapio.",
   "timeline.unreadable": "{place}: neįskaitoma",
   "timeline.check": "Tikrinti",
   "timeline.showOlder": "Įkelti senesnius",

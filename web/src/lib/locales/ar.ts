@@ -2841,6 +2841,8 @@ const ar: Partial<Translations> = {
   "timeline.deleteSpace": "لا تُستعاد المساحة إلا عند تشغيل عملية تقليم.",
   "timeline.deleteFinal": "لا يمكن التراجع عن ذلك.",
   "timeline.unchecked": "{place}: لم يُتحقق منه",
+  "timeline.uncheckedHint":
+    "لا يقرأ BombVault هذا المكان إلا عندما تطلب ذلك، فتُفتح الصفحة دون انتظار قائمة من مكان بعيد. «تحقّق» يعرض النسخ الاحتياطية المخزّنة هناك، وتبقى ظاهرة حتى تغادر الصفحة.",
   "timeline.unreadable": "{place}: غير قابل للقراءة",
   "timeline.check": "تحقّق",
   "timeline.showOlder": "تحميل الأقدم",

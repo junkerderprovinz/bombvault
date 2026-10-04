@@ -2838,6 +2838,8 @@ const sv: Partial<Translations> = {
   "timeline.deleteSpace": "Utrymmet frigörs inte förrän en städning körs.",
   "timeline.deleteFinal": "Detta kan inte ångras.",
   "timeline.unchecked": "{place}: inte kontrollerad",
+  "timeline.uncheckedHint":
+    "BombVault läser den här platsen bara när du ber om det, så sidan öppnas utan att vänta på en fjärrlista. ”Kontrollera” listar säkerhetskopiorna som finns där. De ligger kvar i listan tills du lämnar sidan.",
   "timeline.unreadable": "{place}: inte läsbar",
   "timeline.check": "Kontrollera",
   "timeline.showOlder": "Läs in äldre",

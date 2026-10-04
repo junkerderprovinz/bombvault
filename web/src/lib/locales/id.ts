@@ -2849,6 +2849,8 @@ const id: Partial<Translations> = {
   "timeline.deleteSpace": "Ruang tidak dipulihkan sampai pemangkasan dijalankan.",
   "timeline.deleteFinal": "Ini tidak dapat dibatalkan.",
   "timeline.unchecked": "{place}: belum diperiksa",
+  "timeline.uncheckedHint":
+    "BombVault hanya membaca tempat ini saat Anda memintanya, sehingga halaman terbuka tanpa menunggu daftar jarak jauh. “Periksa” menampilkan cadangan yang tersimpan di sana. Cadangan itu tetap tampil sampai Anda meninggalkan halaman.",
   "timeline.unreadable": "{place}: tidak dapat dibaca",
   "timeline.check": "Periksa",
   "timeline.showOlder": "Muat yang lebih lama",

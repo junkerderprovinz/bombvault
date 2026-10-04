@@ -2833,6 +2833,8 @@ const sr: Partial<Translations> = {
   "timeline.deleteSpace": "Простор се не ослобађа док се не изврши чишћење.",
   "timeline.deleteFinal": "Ово се не може поништити.",
   "timeline.unchecked": "{place}: непроверено",
+  "timeline.uncheckedHint":
+    "BombVault чита ово место само када то затражиш, па се страница отвара без чекања на удаљени списак. „Провери“ приказује резервне копије које су ту сачуване. Остају на списку док не напустиш страницу.",
   "timeline.unreadable": "{place}: нечитљиво",
   "timeline.check": "Провери",
   "timeline.showOlder": "Учитај старије",
