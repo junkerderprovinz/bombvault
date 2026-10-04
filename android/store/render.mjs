@@ -9,8 +9,11 @@
 // Every page is rendered at twice the size and scaled down in a second page,
 // which keeps the text sharp through the phone's tilt.
 //
+// `node android/store/render.mjs readme` builds the README's call for Android
+// testers instead, .github/assets/screenshots/testers.png at 1920x640.
+//
 // Deps (global): playwright-core with its Chromium installed.
-// Run: (cd web && npm run build:launcher) && node android/store/render.mjs
+// Run: (cd web && npm run build:launcher) && node android/store/render.mjs [readme]
 
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -385,6 +388,31 @@ ${phone(front, { x: 758, y: 40, sw: 220 })}
 </body></html>`;
 }
 
+/** The README's call for Android testers, in English like the README. */
+function testersShot(back, front) {
+  return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}
+body { width: 1920px; height: 640px; }
+.copy { position: absolute; left: 96px; top: 0; bottom: 0; width: 1060px; display: flex; flex-direction: column; justify-content: center; gap: 26px; }
+.head { display: flex; align-items: center; gap: 22px; }
+.head img { width: 64px; }
+.label { padding: 8px 18px; border-radius: 8px; background: #FCC419; color: #141414; font: 700 22px/1 Lato, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+h1 { font-size: 92px; line-height: 1.05; }
+.sub { font-size: 34px; line-height: 1.35; }
+.go { align-self: flex-start; margin-top: 8px; padding: 22px 40px; border-radius: 18px; background: #FCC419; color: #141414; font: 700 34px/1 Lato, sans-serif;
+  box-shadow: 0 0 0 6px rgba(252,196,25,.18), 0 18px 40px rgba(0,0,0,.5); }
+</style></head><body>
+${backdrop("40%", "58%", "-30%")}
+<div class="copy">
+  <div class="head"><img src="${vault}"><span class="label">Google Play closed test</span></div>
+  <h1>Android testers <em>wanted</em></h1>
+  <p class="sub">Keep BombVault installed for 14 days and help it go public.</p>
+  <span class="go">Become a tester &rarr;</span>
+</div>
+${phone(back, { x: 1290, y: 92, sw: 250 })}
+${phone(front, { x: 1530, y: 58, sw: 282 })}
+</body></html>`;
+}
+
 /** Play masks the icon itself, so the tile goes in square and without its rounded corners. */
 function storeIcon() {
   const square = iconSvg.replace(/ rx="68" ry="68"/, "").replace(/(<path class="cls-2" d=")[^"]*"/, '$1M500,0H1000V1000H500Z"');
@@ -409,10 +437,15 @@ async function render(browser, html, width, height, file) {
   await small.close();
 }
 
-const server = await serve();
-const url = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch();
-try {
+async function readme(browser, url) {
+  const text = CAPTIONS["en-US"];
+  const shot = (name) => capture(browser, url, text, SHOTS.find((s) => s.name === name));
+  const file = join(root, ".github", "assets", "screenshots", "testers.png");
+  await render(browser, testersShot(await shot("list"), await shot("activity")), 1920, 640, file);
+  console.log("wrote .github/assets/screenshots/testers.png");
+}
+
+async function store(browser, url) {
   for (const [locale, text] of Object.entries(CAPTIONS)) {
     const images = join(metadata, locale, "images");
     mkdirSync(join(images, "phoneScreenshots"), { recursive: true });
@@ -433,6 +466,13 @@ try {
     await render(browser, storeIcon(), 512, 512, join(images, "icon.png"));
     console.log(`wrote ${locale}/images/icon.png`);
   }
+}
+
+const server = await serve();
+const url = `http://127.0.0.1:${server.address().port}`;
+const browser = await chromium.launch();
+try {
+  await (process.argv[2] === "readme" ? readme : store)(browser, url);
 } finally {
   await browser.close();
   server.close();
