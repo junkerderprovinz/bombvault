@@ -9,8 +9,9 @@
 // Every page is rendered at twice the size and scaled down in a second page,
 // which keeps the text sharp through the phone's tilt.
 //
-// `node android/store/render.mjs readme` builds the README's call for Android
-// testers instead, .github/assets/screenshots/testers.png at 1920x640.
+// `node android/store/render.mjs readme` builds the README's pictures instead:
+// .github/assets/screenshots/android.png at 1920x1000, as wide as the other
+// screenshots, and the call for Android testers, testers.png at 1920x640.
 //
 // Deps (global): playwright-core with its Chromium installed.
 // Run: (cd web && npm run build:launcher) && node android/store/render.mjs [readme]
@@ -388,6 +389,23 @@ ${phone(front, { x: 758, y: 40, sw: 220 })}
 </body></html>`;
 }
 
+/** The README's one picture of the app, three phones as wide as the screenshots above it. */
+function androidShot(left, middle, right, text) {
+  return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}
+body { width: 1920px; height: 1000px; }
+.copy { position: absolute; left: 84px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+.copy img { width: 92px; }
+h1 { font-size: 64px; line-height: 1.12; }
+.sub { font-size: 28px; line-height: 1.35; }
+</style></head><body>
+${backdrop("50%", "-9%", "-6%")}
+<div class="copy"><img src="${vault}"><h1>${text.list}</h1><p class="sub">${text.tagline}</p></div>
+${phone(left, { x: 660, y: 230, sw: 330 })}
+${phone(right, { x: 1500, y: 230, sw: 330 })}
+${phone(middle, { x: 1060, y: 150, sw: 380, lift: middle.lift })}
+</body></html>`;
+}
+
 /** The README's call for Android testers, in English like the README. */
 function testersShot(back, front) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}
@@ -440,8 +458,11 @@ async function render(browser, html, width, height, file) {
 async function readme(browser, url) {
   const text = CAPTIONS["en-US"];
   const shot = (name) => capture(browser, url, text, SHOTS.find((s) => s.name === name));
-  const file = join(root, ".github", "assets", "screenshots", "testers.png");
-  await render(browser, testersShot(await shot("list"), await shot("activity")), 1920, 640, file);
+  const out = join(root, ".github", "assets", "screenshots");
+  const [list, activity, pairing] = [await shot("list"), await shot("activity"), await shot("pairing")];
+  await render(browser, androidShot(activity, list, pairing, text), 1920, 1000, join(out, "android.png"));
+  console.log("wrote .github/assets/screenshots/android.png");
+  await render(browser, testersShot(list, activity), 1920, 640, join(out, "testers.png"));
   console.log("wrote .github/assets/screenshots/testers.png");
 }
 

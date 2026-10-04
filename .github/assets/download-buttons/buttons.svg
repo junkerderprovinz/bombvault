@@ -278,8 +278,8 @@
     </g>
   </g>
 </svg>
-<svg x="6062" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install the dashboard widget">
-  <title>Install the dashboard widget</title>
+<svg x="6062" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get the BombVault Widget for the Unraid dashboard">
+  <title>Get the BombVault Widget for the Unraid dashboard</title>
   <defs>
     <clipPath id="b7-edge">
       <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>

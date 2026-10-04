@@ -18,6 +18,6 @@ BUTTONS = {
     "google-play": None,
     "f-droid": None,
     "apk": "https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk",
-    "relay": "https://github.com/junkerderprovinz/parleyport",
-    "widget": "https://github.com/junkerderprovinz/bombvault-widget",
+    "parleyport": "https://github.com/junkerderprovinz/parleyport",
+    "bombvault-widget": "https://github.com/junkerderprovinz/bombvault-widget",
 }
