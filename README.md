@@ -222,10 +222,10 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
-| App | ✅ Android | ❌ | ❌ | ⚠️ desktop only | ⚠️ desktop only | ⚠️ desktop, third party |
+| Android app | ✅ APK, Google Play in closed test | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no. The BombVault column is v9.7.0. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026 against Vault v2026.09.01, and the app row on 4 October 2026.
+✅ yes · ⚠️ partly · ❌ no. The BombVault column is v9.7.0. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026 against Vault v2026.09.01, and the Android app row on 4 October 2026.
 
 <br>
 
