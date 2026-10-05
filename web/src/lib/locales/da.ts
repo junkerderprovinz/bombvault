@@ -417,8 +417,8 @@ const da: Partial<Translations> = {
   "settings.rainbowPalette": "Paletfarve",
   "settings.rainbowPaletteLabel": "Farvepalet",
   "settings.rainbowPaletteReset": "Nulstil farvepalet",
-  "settings.quietToasts": "Stille notifikationer",
-  "settings.quietToastsHint": "Skjuler succesmeddelelser som gem- og kopibekræftelser. Fejl og alt andet, der kræver din opmærksomhed, vises stadig.",
+  "settings.quietToasts": "Stille pop op-beskeder",
+  "settings.quietToastsHint": "Skjuler pop op-beskeder om succes, som gem- og kopibekræftelser. Fejl og alt andet, der kræver din opmærksomhed, vises stadig.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

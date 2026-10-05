@@ -1073,7 +1073,7 @@ const lv: Partial<Translations> = {
   "settings.motion.off": "Izslēgta",
   "settings.motion.subtle": "Neliela",
   "settings.motion.wild": "Mežonīga",
-  "settings.motion.storm": "Vētrains",
+  "settings.motion.storm": "Vētraina",
   "settings.rainbow": "Varavīksnes režīms",
   "settings.rainbowHint": "Katra saraksta rinda iegūst savu krāsu no astoņu krāsu kopas, nevis visi koplieto vienu akcenta krāsu. Tas atvieglo garu sarakstu atšķiršanu vienā skatienā.",
   "settings.disco": "Disko režīms",
@@ -1085,8 +1085,8 @@ const lv: Partial<Translations> = {
   "settings.rainbowPalette": "Paletes krāsa",
   "settings.rainbowPaletteLabel": "Krāsu palete",
   "settings.rainbowPaletteReset": "Atiestatīt krāsu paleti",
-  "settings.quietToasts": "Klusi paziņojumi",
-  "settings.quietToastsHint": "Slēpj veiksmes paziņojumus, piemēram, saglabāšanas un kopēšanas apstiprinājumus. Kļūdas un viss cits, kam nepieciešama jūsu uzmanība, joprojām tiek rādīts.",
+  "settings.quietToasts": "Klusi uznirstošie ziņojumi",
+  "settings.quietToastsHint": "Slēpj uznirstošos veiksmes ziņojumus, piemēram, saglabāšanas un kopēšanas apstiprinājumus. Kļūdas un viss cits, kam nepieciešama jūsu uzmanība, joprojām tiek rādīts.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteineri",

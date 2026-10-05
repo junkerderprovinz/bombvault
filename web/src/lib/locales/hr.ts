@@ -1085,8 +1085,8 @@ const hr: Partial<Translations> = {
   "settings.rainbowPalette": "Boja palete",
   "settings.rainbowPaletteLabel": "Paleta boja",
   "settings.rainbowPaletteReset": "Vrati paletu boja na zadano",
-  "settings.quietToasts": "Tihe obavijesti",
-  "settings.quietToastsHint": "Skriva obavijesti o uspjehu poput potvrda spremanja i kopiranja. Greške, i sve ostalo što zahtijeva vašu pozornost, i dalje se prikazuju.",
+  "settings.quietToasts": "Tihe skočne poruke",
+  "settings.quietToastsHint": "Skriva skočne poruke o uspjehu, poput potvrda spremanja i kopiranja. Greške, i sve ostalo što zahtijeva vašu pozornost, i dalje se prikazuju.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontejneri",

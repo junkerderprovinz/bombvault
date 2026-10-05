@@ -417,8 +417,8 @@ const th: Partial<Translations> = {
   "settings.rainbowPalette": "สีในจานสี",
   "settings.rainbowPaletteLabel": "จานสี",
   "settings.rainbowPaletteReset": "รีเซ็ตจานสี",
-  "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
-  "settings.quietToastsHint": "ซ่อนการแจ้งเตือนความสำเร็จ เช่น การยืนยันการบันทึกและคัดลอก ข้อผิดพลาดและสิ่งอื่นที่ต้องการความสนใจของคุณจะยังคงแสดงอยู่",
+  "settings.quietToasts": "ข้อความป๊อปอัปแบบเงียบ",
+  "settings.quietToastsHint": "ซ่อนข้อความป๊อปอัปเมื่อทำสำเร็จ เช่น การยืนยันการบันทึกและคัดลอก ข้อผิดพลาดและสิ่งอื่นที่ต้องการความสนใจของคุณจะยังคงแสดงอยู่",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

@@ -400,7 +400,7 @@ const pl: Partial<Translations> = {
   "settings.motion.off": "Wyłączony",
   "settings.motion.subtle": "Subtelny",
   "settings.motion.wild": "Dziki",
-  "settings.motion.storm": "Burzliwe",
+  "settings.motion.storm": "Burzliwy",
   "settings.rainbow": "Tryb tęczowy",
   "settings.rainbowHint": "Każdy wiersz na liście otrzymuje własny kolor z zestawu ośmiu, zamiast dzielić jeden wspólny kolor akcentu. Dzięki temu długie listy łatwiej odróżnić na pierwszy rzut oka.",
   "settings.disco": "Tryb disco",
@@ -412,8 +412,8 @@ const pl: Partial<Translations> = {
   "settings.rainbowPalette": "Kolor palety",
   "settings.rainbowPaletteLabel": "Paleta kolorów",
   "settings.rainbowPaletteReset": "Resetuj paletę kolorów",
-  "settings.quietToasts": "Ciche powiadomienia",
-  "settings.quietToastsHint": "Ukrywa powiadomienia o powodzeniu, takie jak potwierdzenia zapisu i kopiowania. Błędy i wszystko inne wymagające uwagi nadal się wyświetlają.",
+  "settings.quietToasts": "Ciche wyskakujące komunikaty",
+  "settings.quietToastsHint": "Ukrywa wyskakujące komunikaty o powodzeniu, takie jak potwierdzenia zapisu i kopiowania. Błędy i wszystko inne wymagające uwagi nadal się wyświetlają.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

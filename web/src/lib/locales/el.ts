@@ -405,7 +405,7 @@ const el: Partial<Translations> = {
   "settings.motion.off": "Απενεργοποιημένη",
   "settings.motion.subtle": "Διακριτική",
   "settings.motion.wild": "Άγρια",
-  "settings.motion.storm": "Θυελλώδες",
+  "settings.motion.storm": "Θυελλώδης",
   "settings.rainbow": "Λειτουργία ουράνιου τόξου",
   "settings.rainbowHint": "Κάθε γραμμή σε μια λίστα αποκτά το δικό της χρώμα από ένα σύνολο οκτώ, αντί όλα να μοιράζονται ένα χρώμα τονισμού, έτσι οι μεγάλες λίστες ξεχωρίζουν με μια ματιά.",
   "settings.disco": "Λειτουργία ντίσκο",
@@ -417,8 +417,8 @@ const el: Partial<Translations> = {
   "settings.rainbowPalette": "Χρώμα παλέτας",
   "settings.rainbowPaletteLabel": "Χρωματική παλέτα",
   "settings.rainbowPaletteReset": "Επαναφορά χρωματικής παλέτας",
-  "settings.quietToasts": "Σιωπηλές ειδοποιήσεις",
-  "settings.quietToastsHint": "Αποκρύπτει ειδοποιήσεις επιτυχίας όπως επιβεβαιώσεις αποθήκευσης και αντιγραφής. Σφάλματα και οτιδήποτε άλλο χρειάζεται την προσοχή σου εξακολουθούν να εμφανίζονται.",
+  "settings.quietToasts": "Σιωπηλά αναδυόμενα μηνύματα",
+  "settings.quietToastsHint": "Αποκρύπτει τα αναδυόμενα μηνύματα επιτυχίας, όπως επιβεβαιώσεις αποθήκευσης και αντιγραφής. Σφάλματα και οτιδήποτε άλλο χρειάζεται την προσοχή σου εξακολουθούν να εμφανίζονται.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",

@@ -1085,8 +1085,8 @@ const eu: Partial<Translations> = {
   "settings.rainbowPalette": "Paletaren kolorea",
   "settings.rainbowPaletteLabel": "Kolore-paleta",
   "settings.rainbowPaletteReset": "Berrezarri kolore-paleta",
-  "settings.quietToasts": "Jakinarazpen isilak",
-  "settings.quietToastsHint": "Ezkutatzen ditu arrakasta-oharrak, gorde eta kopiatze-baieztapenak bezala. Erroreak, eta zure arreta behar duen beste edozer, erakusten jarraitzen dute.",
+  "settings.quietToasts": "Mezu gainerakor isilak",
+  "settings.quietToastsHint": "Arrakasta-mezu gainerakorrak ezkutatzen ditu, gorde eta kopiatze-baieztapenak bezala. Erroreak, eta zure arreta behar duen beste edozer, erakusten jarraitzen dute.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Edukiontziak",

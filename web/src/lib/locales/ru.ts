@@ -412,8 +412,8 @@ const ru: Partial<Translations> = {
   "settings.rainbowPalette": "Цвет палитры",
   "settings.rainbowPaletteLabel": "Цветовая палитра",
   "settings.rainbowPaletteReset": "Сбросить цветовую палитру",
-  "settings.quietToasts": "Тихие уведомления",
-  "settings.quietToastsHint": "Скрывает уведомления об успехе, например подтверждения сохранения и копирования. Ошибки и всё остальное, что требует вашего внимания, по-прежнему отображаются.",
+  "settings.quietToasts": "Тихие всплывающие сообщения",
+  "settings.quietToastsHint": "Скрывает всплывающие сообщения об успехе, например подтверждения сохранения и копирования. Ошибки и всё остальное, что требует вашего внимания, по-прежнему отображаются.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнеры",

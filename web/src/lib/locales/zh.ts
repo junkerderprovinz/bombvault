@@ -417,8 +417,8 @@ const zh: Partial<Translations> = {
   "settings.rainbowPalette": "调色板颜色",
   "settings.rainbowPaletteLabel": "调色板",
   "settings.rainbowPaletteReset": "重置调色板",
-  "settings.quietToasts": "安静通知",
-  "settings.quietToastsHint": "隐藏保存和复制确认等成功通知。错误以及其他需要你注意的内容仍会显示。",
+  "settings.quietToasts": "安静的弹出提示",
+  "settings.quietToastsHint": "隐藏保存和复制确认等成功弹出提示。错误以及其他需要你注意的内容仍会显示。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "容器",

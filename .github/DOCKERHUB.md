@@ -6,98 +6,64 @@
   <a href="https://github.com/junkerderprovinz/bombvault/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/junkerderprovinz/bombvault/build.yml?branch=main&label=Build&style=for-the-badge&logo=githubactions&logoColor=white" alt="Build" height="36"></a>&nbsp;
   <a href="https://hub.docker.com/r/junkerderprovinz/bombvault"><img src="https://img.shields.io/docker/pulls/junkerderprovinz/bombvault?style=for-the-badge&logo=docker&logoColor=white&label=Pulls&color=1d99f3" alt="Docker Pulls" height="36"></a>&nbsp;
   <a href="https://hub.docker.com/r/junkerderprovinz/bombvault"><img src="https://img.shields.io/docker/image-size/junkerderprovinz/bombvault/latest?style=for-the-badge&logo=docker&logoColor=white&label=Size&color=1d99f3" alt="Image Size" height="36"></a>&nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault"><img src="https://img.shields.io/badge/Arch-amd64%20%7C%20arm64-success?style=for-the-badge&logo=linux&logoColor=white" alt="Arch" height="36"></a>&nbsp;
+  <img src="https://img.shields.io/badge/Arch-amd64%20%7C%20arm64-success?style=for-the-badge&logo=linux&logoColor=white" alt="Arch" height="36">&nbsp;
   <a href="https://restic.net"><img src="https://img.shields.io/badge/Engine-restic-CE4844?style=for-the-badge&logoColor=white" alt="restic" height="36"></a>&nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License: AGPL-3.0" height="36"></a>
+  <a href="https://unraid.net/community/apps?q=bombvault"><img src="https://img.shields.io/badge/Unraid-Template-f15a2c?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid" height="36"></a>&nbsp;
+  <a href="https://github.com/junkerderprovinz/bombvault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge&logo=gnu&logoColor=white" alt="License: AGPL-3.0" height="36"></a>&nbsp;
+  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://img.shields.io/badge/Docs-online-526CFE?style=for-the-badge&logo=materialformkdocs&logoColor=white" alt="Documentation" height="36"></a>
 </p>
 
 <p align="center">
-Your Unraid data, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
-BombVault backs up Docker containers, KVM VMs, appdata, ZFS datasets, the Unraid flash config — and even itself —
-and restores everything with a single click. Containers <b>automatically reappear in the
-Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
-reconfiguration, no drama.<br>
+Your Unraid server, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
 <br>
-<b>Your data, locked in. Loss, locked out.</b><br>
-Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental, always encrypted.
+Containers, VMs, appdata, the flash drive and any folder you point it at. BombVault also backs up
+<b>itself</b>. One click puts it all back: containers reappear in the <b>Docker tab</b>, VMs in the
+<b>VM tab</b>, already configured. Built on <a href="https://restic.net">restic</a>, so every snapshot
+is deduplicated, incremental and encrypted before it leaves the box.
 </p>
 
-## What is this?
+## What it does
 
-BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery**. One container, a modern web UI that follows your system's light/dark preference, and the whole lifecycle:
+- Backs up containers with their appdata and definition, VMs with their disks, XML and NVRAM, the Unraid flash, any folder, ZFS datasets and its own settings. PostgreSQL, MySQL and MariaDB containers are dumped first.
+- Restores a container to the Docker tab and a VM to the VM tab, running as before, and shows what a restore will change before it starts.
+- Copies each item off site to one or more encrypted targets, which can be append-only, and says how many sites hold it and whether 3-2-1 is met.
+- Proves that restores work, with a check after each item's first backup, scheduled drills and a start test that runs a restored container in an isolated network.
+- Warns when a backup looks wrong, such as much more new data than usual or a source that shrank. When a source shrinks sharply, its old backups stay until you acknowledge the finding.
+- Pairs several servers by twelve words and talks to AI assistants, scripts and Home Assistant over MCP, an HTTP API and MQTT.
 
-- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), ZFS datasets with their child datasets (read from one snapshot), and its own `/config`. Recognised PostgreSQL, MySQL and MariaDB containers are **dumped before each backup**, as a restore point of their own.
-- **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before; VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
-- **Schedules** incremental backups per domain from one place, with one-click *"include all in schedule"*.
-- **Notices when a backup looks wrong.** Each backup is compared with the item's own history: much more new data than usual, most of the data stored again, a source or database dump that shrank sharply, a much slower run, repeated failures, a restore check that stopped passing, a disk about to fill up. When a source shrinks sharply, the old backups of that item are kept until you acknowledge it. A ZFS item is checked dataset by dataset.
-- **Answers your AI assistant.** The built-in MCP server lets Claude Code, Claude Desktop or another MCP client read backup status, restore points and the open anomalies and, with a key that allows it, start a backup. Every client gets a key of its own; restores, deletions and settings stay in the web interface.
-- **Optionally updates a container right after its backup** (advanced, off by default) — a fresh restore point always exists first, so a bad update is one restore away; it can notify per updated container and clean up the superseded image.
+The [Android app](https://junkerderprovinz.github.io/bombvault/android/) shows every server of your group on one list, paired by a QR code.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
-  <br><em>Dashboard — health summary, protection status per domain, run history and a backup-health heatmap.</em>
-</p>
+## Getting started
 
-## Feature highlights
+On Unraid, install **BombVault** from [Community Applications](https://unraid.net/community/apps?q=bombvault). The one setting it needs is `APP_KEY`, a secret you make with `openssl rand -hex 32`. Keep a copy somewhere other than the server, because without it nobody can read the encrypted backups. Then open `https://<server-ip>:3443`.
 
-**Simple by default** — the UI shows only the essentials; a Simple/Advanced switch reveals the expert controls.
+On any other Docker host:
 
-- **One-click full restore** of containers, VMs, flash, config, file sets and ZFS datasets, one at a time (keeping each item's run-state), or all containers and VMs at once via guided recovery (left stopped, so you start things deliberately), from **local or off-site**.
-- **Guided disaster recovery** — a dedicated Recovery tab restores BombVault's own settings first, discovers everything stored in your repos, restores the containers and VMs onto a fresh install in one go and lists file sets and ZFS items to restore one by one; plus a one-time, read-only **restore from another BombVault instance's repo**.
-- **Flash restore as a `.zip` download** (the live `/boot` is never touched) and a **scheduled flash zip export** so a bootable-USB copy leaves the server automatically.
-- **File-level restore** — tick any files/folders inside a snapshot and restore them in place or into a folder; **stack restore** rebuilds a Docker Compose project, then starts its members in `depends_on` order.
-- **Storage anywhere** — local path, SMB/NFS, native restic backends (`s3:` / `rest:` / `b2:` / `sftp:`) or any **rclone** remote; **off-site replication** (`restic copy`) with its own schedule and bandwidth caps; **per-source retention** pruned automatically.
-- **Proof, not hope** — a customizable protection-status (RPO) dashboard, backup-health heatmap, run history with `start → end (duration)` timing, **restore-verification drills** with a "last verified restorable" badge, repository integrity checks, and an **encryption-key recovery kit** for restoring without a running BombVault.
-- **Ransomware protection** — append-only (immutable) off-site repos with a periodic **tamper test** that *proves* deletes are refused, off-site DR drills into a throwaway sandbox, a posture scorecard and a growth-budget alarm.
-- **Notifications** — webhook (Discord/Slack/Gotify/ntfy), Matrix, Healthchecks.io (full start/success/fail lifecycle), email (SMTP) and Unraid-native alerts, with an optional one-summary-per-scheduled-run mode; opt-in **Prometheus `/metrics`**.
-- **Ops niceties** — a whole-server **Backup Everything** pass (every domain in one run, with global pre/post commands for a dead-man's-switch ping), Settings that save themselves with no Save button, pre/post-backup hooks, stop-dependent-containers during backup, per-container exclude patterns with live preview, plain `tar.gz` exports (containers *and* VMs), snapshot diff & tags, server-side batch backups, Docker healthcheck, HTTPS out of the box, dark/light UI in **42 languages** with your own choice of colours, corners and animations, quiet toasts (pop-ups only on failure).
-
-## Install on Unraid
-
-Requires **Unraid 6.12+** (earlier versions untested). Install via **Community Applications** — search for **BombVault**. Or add the template repo manually under **Docker → Template repositories**:
-
-```
-https://github.com/junkerderprovinz/unraid-apps
+```sh
+docker run -d --name bombvault \
+  --hostname bombvault \
+  --restart unless-stopped \
+  -p 3443:3443 \
+  -v /path/to/config:/config \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /srv/appdata:/host/user \
+  -e APP_KEY=<output of openssl rand -hex 32> \
+  -e PLATFORM=generic \
+  -e HOST_SOURCE_ROOT=/srv/appdata \
+  junkerderprovinz/bombvault:latest
 ```
 
-### Configuration
+Replace `/srv/appdata` in both places with the host folder that holds your containers' data. The same setup as a Compose file is [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml). BombVault has root-level control of the host through the Docker socket, so keep it on a trusted network.
 
-| Variable | Required | Description |
-|---|---|---|
-| `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. **Keep this safe** — losing it makes encrypted backups unrecoverable. |
-| `LIBVIRT_HOST` | For VMs and ZFS datasets | Unraid host reached over SSH for VM and ZFS dataset backups (template field **Host SSH: Address**, default `host.docker.internal`). The template pre-fills the placeholder `192.168.x.x`, which counts as unset. Use your Unraid LAN IP, required on a custom `br0.x` network. |
-| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM and ZFS dataset backups (template field **Host SSH: Port**, default `22`). |
-| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM and ZFS dataset backups (template field **Host SSH: User**, default `root`). |
-| `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
-| `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
-| `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
-| `HOST_SOURCE_ROOT` | No | The host path mounted as **Host Data** (default `/mnt`); change only if you mounted a different host root. |
-| `BOMBVAULT_SELF_CONTAINER` | No | The name of the BombVault container itself, so it never backs up (and thus stops) itself (default `BombVault`). |
-| `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
+`latest` is the newest release. Each release is also tagged with its version, such as `9.7.0`, and with `9.7` and `9`. `edge` follows the main branch.
 
-Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`, mounted with slave propagation so late-mounting remote shares appear without a restart) as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths), not via env. **VM backup needs no libvirt mount** — it runs `virsh` on the host over SSH (`qemu+ssh://`): copy the key shown under *Settings → System → Host SSH* into the host's `authorized_keys` and click *Test connection*. After the first start, open `/spike` in the web UI — it probes every mount and CLI and reports any missing pieces.
+## More
 
-## Security
+- [Documentation](https://junkerderprovinz.github.io/bombvault/): getting started, configuration, VM and ZFS backups over SSH, off-site copies and recovery
+- [Source and Android app](https://github.com/junkerderprovinz/bombvault)
 
-**⚠️ BombVault holds root-equivalent control of the host** (Docker socket + SSH for VMs). Run it **only on a trusted, non-exposed network** — never publish it directly to the internet; for remote access use a VPN or a reverse proxy that adds authentication and TLS. Optional built-in password protection is available under Settings → System → Security (off by default for trusted-LAN use); backups are encrypted by restic (on by default), with the key derived from `APP_KEY`.
+Questions? Ask in [Discussions](https://github.com/junkerderprovinz/bombvault/discussions/categories/q-a) or the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs and ideas go to [GitHub issues](https://github.com/junkerderprovinz/bombvault/issues).
 
-## Full documentation & support
+BombVault is free, with no accounts, no telemetry and no ads. If it has earned a place on your server, a coffee helps keep it going.
 
-The complete README — features in depth, screenshots, the security/trust model, the **VM-backup-over-SSH setup + networking guide**, and development docs — lives on GitHub:
-
-**[github.com/junkerderprovinz/bombvault](https://github.com/junkerderprovinz/bombvault)**
-
-Questions, bugs, ideas? **[Unraid support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)** · [GitHub issues](https://github.com/junkerderprovinz/bombvault/issues)
-
-<a href="https://buymeacoffee.com/junkerderprovinz">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-buy-me-a-coffee-live.svg" alt="Buy me a coffee" width="160">
-</a>
-
-## Credits
-
-- **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) — the original idea. BombVault is an independent rewrite (Go + restic) that extends the concept to VMs and the Unraid flash.
-- **[restic](https://restic.net/)** — the backup engine. **[rclone](https://rclone.org/)** — off-site cloud backends.
-
----
-
-<sub>Part of a family of self-hosted Unraid apps + plugins by <b>junkerderprovinz</b> — see them all at <a href="https://github.com/junkerderprovinz">github.com/junkerderprovinz</a>, or install from <a href="https://unraid.net/community/apps">Community Applications</a>.</sub>
+<a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-buy-me-a-coffee-live.svg" alt="Buy me a coffee" width="160"></a>

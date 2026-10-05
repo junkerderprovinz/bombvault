@@ -1085,8 +1085,8 @@ const fa: Partial<Translations> = {
   "settings.rainbowPalette": "رنگ پالت",
   "settings.rainbowPaletteLabel": "پالت رنگ",
   "settings.rainbowPaletteReset": "بازنشانی پالت رنگ",
-  "settings.quietToasts": "اعلان‌های بی‌صدا",
-  "settings.quietToastsHint": "پیام‌های موفقیت مانند تأییدیه‌های ذخیره و کپی را پنهان می‌کند. خطاها و هر چیز دیگری که نیاز به توجه شما دارد، همچنان نمایش داده می‌شوند.",
+  "settings.quietToasts": "پیام‌های بازشوی بی‌صدا",
+  "settings.quietToastsHint": "پیام‌های بازشوی موفقیت، مانند تأیید ذخیره و کپی، را پنهان می‌کند. خطاها و هر چیز دیگری که نیاز به توجه شما دارد، همچنان نمایش داده می‌شوند.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "کانتینرها",

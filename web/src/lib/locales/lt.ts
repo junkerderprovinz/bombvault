@@ -1085,8 +1085,8 @@ const lt: Partial<Translations> = {
   "settings.rainbowPalette": "Paletės spalva",
   "settings.rainbowPaletteLabel": "Spalvų paletė",
   "settings.rainbowPaletteReset": "Atkurti spalvų paletę",
-  "settings.quietToasts": "Tylūs pranešimai",
-  "settings.quietToastsHint": "Slepia sėkmės pranešimus, tokius kaip išsaugojimo ir kopijavimo patvirtinimai. Klaidos ir viskas kita, kam reikia jūsų dėmesio, ir toliau rodomi.",
+  "settings.quietToasts": "Tylios iškylančios žinutės",
+  "settings.quietToastsHint": "Slepia iškylančias žinutes apie sėkmę, tokias kaip išsaugojimo ir kopijavimo patvirtinimai. Klaidos ir viskas kita, kam reikia jūsų dėmesio, ir toliau rodomi.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteineriai",

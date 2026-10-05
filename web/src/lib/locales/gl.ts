@@ -1085,8 +1085,8 @@ const gl: Partial<Translations> = {
   "settings.rainbowPalette": "Cor da paleta",
   "settings.rainbowPaletteLabel": "Paleta de cores",
   "settings.rainbowPaletteReset": "Restaurar a paleta de cores",
-  "settings.quietToasts": "Avisos silenciosos",
-  "settings.quietToastsHint": "Oculta avisos de éxito como as confirmacións de gardado e copia. Os erros, e calquera outra cousa que precise a túa atención, séguense mostrando.",
+  "settings.quietToasts": "Avisos emerxentes discretos",
+  "settings.quietToastsHint": "Oculta os avisos emerxentes de éxito, como as confirmacións de gardado e copia. Os erros, e calquera outra cousa que precise a túa atención, séguense mostrando.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Contedores",

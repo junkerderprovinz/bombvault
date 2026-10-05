@@ -1085,8 +1085,8 @@ const sk: Partial<Translations> = {
   "settings.rainbowPalette": "Farba palety",
   "settings.rainbowPaletteLabel": "Farebná paleta",
   "settings.rainbowPaletteReset": "Obnoviť farebnú paletu",
-  "settings.quietToasts": "Tiché upozornenia",
-  "settings.quietToastsHint": "Skryje oznámenia o úspechu, ako sú potvrdenia uloženia a kopírovania. Chyby a všetko ostatné, čo vyžaduje vašu pozornosť, sa naďalej zobrazujú.",
+  "settings.quietToasts": "Tiché vyskakovacie hlásenia",
+  "settings.quietToastsHint": "Skryje vyskakovacie hlásenia o úspechu, ako sú potvrdenia uloženia a kopírovania. Chyby a všetko ostatné, čo vyžaduje vašu pozornosť, sa naďalej zobrazujú.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontajnery",
