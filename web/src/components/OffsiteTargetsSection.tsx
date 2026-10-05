@@ -580,7 +580,7 @@ export function OffsiteTargetsSection({
           tone="accent"
           onClick={openNew}
           hueIndex={hueIndex}
-          className={"self-start"}
+          className="glim-btn-wrap self-start"
         />
       )}
     </div>
