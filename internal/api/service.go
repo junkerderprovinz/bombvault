@@ -7850,6 +7850,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	// match); docker.sock, /etc/localtime, /dev/dri and every non-appdata bind are
 	// left verbatim (they carry no backed-up data). See #125.
 	if len(bindRemap) > 0 {
+		bindRemap = s.remapSourceBinds(in.HostConfig.Binds, restoreDirs, bindRemap)
 		in.HostConfig.Binds = rewriteBinds(in.HostConfig.Binds, bindRemap)
 		in.Mounts = rewriteMountSources(in.Mounts, bindRemap)
 		xml = template.RewriteHostPaths(xml, bindRemap)
@@ -13162,6 +13163,46 @@ func (s *Service) containerAppdataRemap(destBase string, appdataPaths []string) 
 		}
 	}
 	return dirs, remap
+}
+
+// remapSourceBinds adds the binds of a container backed up on a server with
+// another host root to remap. remap is keyed by this server's host path for
+// each appdata folder, which is the source's bind only when both servers map
+// the same root, such as /mnt on two Unraid boxes. A bind it misses is matched
+// by its path from the appdata folder down, such as appdata/web, when exactly
+// one bind ends in it.
+func (s *Service) remapSourceBinds(binds []string, dirs []backup.RestoreDir, remap map[string]string) map[string]string {
+	hosts := make([]string, 0, len(binds))
+	for _, b := range binds {
+		if h, _, ok := strings.Cut(b, ":"); ok {
+			hosts = append(hosts, path.Clean(h))
+		}
+	}
+	out := maps.Clone(remap)
+	add := func(rel, dest string) {
+		var match []string
+		for _, h := range hosts {
+			if strings.HasSuffix(h, "/appdata/"+rel) {
+				match = append(match, h)
+			}
+		}
+		if len(match) == 1 && out[match[0]] == "" {
+			out[match[0]] = s.toHostPath(dest)
+		}
+	}
+	for _, d := range dirs {
+		_, rel := appdataRelPath(path.Clean(d.Subtree))
+		if rel == "" {
+			continue
+		}
+		add(rel, d.Target)
+		// A bind on the container's own folder while the backup narrowed to a
+		// folder inside it.
+		if rootName, sub, ok := strings.Cut(rel, "/"); ok {
+			add(rootName, strings.TrimSuffix(d.Target, "/"+sub))
+		}
+	}
+	return out
 }
 
 // rewriteBinds points a recreated container's docker binds at the remapped appdata
