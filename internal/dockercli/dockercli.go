@@ -427,6 +427,15 @@ func (c *Client) Remove(ctx context.Context, name string) error {
 	return nil
 }
 
+// Signal sends signal, such as "SIGHUP", to the main process of a running
+// container.
+func (c *Client) Signal(ctx context.Context, name, signal string) error {
+	if err := c.api.ContainerKill(ctx, name, signal); err != nil {
+		return fmt.Errorf("dockercli: signal: %w", err)
+	}
+	return nil
+}
+
 // Pull pulls an image anonymously, draining the progress stream to completion
 // so the image is guaranteed present when Pull returns.
 func (c *Client) Pull(ctx context.Context, img string) error {

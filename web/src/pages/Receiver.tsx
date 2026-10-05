@@ -32,6 +32,7 @@ import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { MemberField } from "./instances/MemberField";
+import { ReceiverServerCard } from "./receiver/ReceiverServerCard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
@@ -618,6 +619,8 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
           />
         )}
       </div>
+
+      <ReceiverServerCard t={t} />
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
