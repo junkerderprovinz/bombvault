@@ -4,6 +4,7 @@ Android 앱은 그룹에 속한 모든 BombVault 서버를 휴대폰 하나에 �
 
 ## 앱 받기 {#install}
 
+- **설정, 앱:** Android 앱 카드가 서버가 실행 중인 릴리스의 APK를 제공하며, 휴대폰으로 스캔할 QR 코드도 함께 표시됩니다.
 - **APK:** 모든 릴리스의 릴리스 페이지에 `bombvault-android.apk`가 있고, [이 링크](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk)는 항상 최신 빌드를 내려받습니다. Android 10 이상이 필요하며, 파일을 여는 앱이 앱을 설치해도 되는지 Android가 한 번 묻습니다.
 - **Google Play:** 공개할 수 있을 때까지 앱은 비공개 테스트 중입니다. Google Play는 새 개발자 계정의 앱을 최소 12명의 테스터가 14일 동안 설치해 둔 뒤에야 공개합니다. 도와주시려면 [테스터 그룹](https://groups.google.com/g/arrowloop-testers)에 가입하고, [테스트 페이지](https://play.google.com/apps/testing/bombvault.halleluja.design)를 열어 **테스터 되기**를 탭한 다음 Google Play에서 BombVault를 설치하세요.
 - **F-Droid:** 등록은 곧 이어집니다.

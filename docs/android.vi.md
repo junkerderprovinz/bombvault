@@ -4,6 +4,7 @@
 
 ## Tải ứng dụng {#install}
 
+- **Cài đặt, Ứng dụng:** thẻ của ứng dụng Android cung cấp APK của bản phát hành mà máy chủ của bạn đang chạy, kèm một mã QR để quét từ điện thoại.
 - **APK:** mỗi bản phát hành đều có `bombvault-android.apk` trên trang phát hành của nó, và [liên kết này](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) luôn tải về bản dựng mới nhất. Cần Android 10 trở lên, và Android sẽ hỏi một lần xem ứng dụng bạn dùng để mở tệp có được phép cài đặt ứng dụng hay không.
 - **Google Play:** ứng dụng đang trong giai đoạn thử nghiệm kín cho đến khi có thể phát hành công khai. Google Play chỉ đưa ứng dụng từ một tài khoản nhà phát triển mới lên danh sách sau khi có ít nhất 12 người thử nghiệm giữ ứng dụng được cài trong 14 ngày. Nếu muốn giúp, hãy tham gia [nhóm người thử nghiệm](https://groups.google.com/g/arrowloop-testers), mở [trang thử nghiệm](https://play.google.com/apps/testing/bombvault.halleluja.design), chạm vào **Trở thành người thử nghiệm** rồi cài BombVault từ Google Play.
 - **F-Droid:** sẽ có sau.

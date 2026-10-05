@@ -32,6 +32,8 @@ Nastavení, Mimo lokalitu začíná kartou **Cíle**: místa, kam míří kopie 
 
 Služby S3 běží přes vlastní backend S3 resticu, díky čemuž se může uplatnit třída úložiště a zámek objektů. Všechny ostatní služby běží přes rclone, který BombVault dodává, a jejich remote se pak objeví v konfiguraci rclone v Nastavení, Cloudový přístup. Export nastavení zahrnuje karty Cíle; s přihlašovacími údaji zahrnuje i jejich přihlášení.
 
+Přijímací server, který provozuje jiná instance vaší skupiny, se v průvodci objeví pod **Z vaší skupiny**; viz [Přijímací server](#receiving-server).
+
 Cíl domény vytvořený z karty Cíle převezme její název, umístění, přihlašovací údaje, třídu úložiště a přepínač neměnnosti. Uchovávání, komprese a rozpočet růstu zůstávají na doménu a jeho umístění se přesunout nedá, protože tam leží repozitář domény. **Přidat cíl jen pro tuto doménu** pod každou doménou dál přijímá ručně zadanou URL repozitáře.
 
 ## Umístění pro jednotlivé položky {#placement}
@@ -161,6 +163,19 @@ Zapněte přepínač **Přijímač** v Nastavení k odhalení záložky **Přij�
 - **Upozornění na integritu:** upozornění, když kontrola na přijímací straně selže.
 
 Přijímač je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na kterou se odesílatel spoléhá.
+
+### Přijímací server {#receiving-server}
+
+Přijímací stroj může také provozovat rest-server, na který ostatní kopírují. **Nastavit přijímací server** nahoře na záložce **Přijímač** se zeptá na složku na sdílené složce, s tlačítkem **Nová složka** pro její vytvoření, a na port (8000, pokud ho nepoužívá jiný kontejner). BombVault pak:
+
+1. odmítne pokračovat, pokud už existuje kontejner s názvem `rest-server` nebo port drží jiný kontejner;
+2. stáhne `restic/rest-server` a spustí ho přes Docker socket v režimu append-only se soukromými repozitáři a souborem s přihlášením ve složce;
+3. zapíše jeho šablonu pro Unraid na flash disk, takže kontejner zůstane upravitelný na záložce Docker, nebo šablonu nabídne ke stažení, když je flash disk mimo dosah;
+4. spustí na něm test odolnosti proti manipulaci a ukáže, zda odmítá mazání.
+
+Instance vaší skupiny pak server najdou v průvodci cílem pod **Z vaší skupiny**, pojmenovaný podle přijímacího stroje. Každá instance dostane vlastní přihlášení při prvním výběru serveru a zapisuje tam jen do své složky. Karta tato přihlášení vypisuje a **Odvolat přihlášení** jedno z nich odebere; co ta instance už zkopírovala, ve složce zůstane. Nastavení vytvoří také jedno přihlášení pro někoho mimo skupinu, jehož heslo karta ukáže jen jednou.
+
+Instance, která se k přijímacímu stroji dostane jen přes relay, server použít nemůže, protože relay žádné zálohy nepřenáší. Nejprve přidejte adresu přijímacího stroje v **Nastavení → Párování**. Když BombVault běží na vlastní IP adrese (například na br0), vyplňte **Adresa pro partnery**, protože server naslouchá na adrese hostitele.
 
 ## Kompletní příklad: dva stroje Unraid, od začátku do konce
 

@@ -71,6 +71,7 @@ BombVault is simple by default and deep when you need it. The interface shows on
 
 ## Insight, verification & monitoring
 
+- **Pause from the card.** Every container, VM and folder set card has **Pause schedule**, which takes the item out of the schedule and out of Backup Everything, and **Resume schedule** to bring it back. It sets the same switch as **Include in schedule**, so the two always agree. A paused item wears a grey **Schedule paused** badge, and **Back up now** still works.
 - **Protection status (RPO).** The Dashboard shows a green / amber / red indicator per domain, comparing the last successful backup against its schedule, so an overdue backup turns red instead of hiding in a log.
 - **Backup-health heatmap.** A GitHub-contributions-style calendar of per-day backup outcomes per domain, with a Containers / VMs / Flash / Self-Backup / Folders toggle.
 - **Run timing everywhere.** Every run-history entry reads `start, end (duration)`, and each container and VM carries its own **Recent runs** list on its page.
@@ -125,7 +126,8 @@ BombVault has a built-in MCP server, so an assistant such as Claude Code or Clau
 ## Apps and companions {#apps}
 
 - **Android app.** Every server of your group on your phone, with the activity log of all of them on one screen. It pairs with your group by QR code and opens each server already signed in. See [Android app](android.md).
-- **Settings, Apps.** A page with a card for each companion. ParleyPort's card offers its Unraid template, copies the Docker command that starts it, and leads to its repository and to the relay settings under Pairing. The BombVault Widget's card offers its template and its repository, and installs or removes the plugin over the host SSH connection.
+- **Receiving server.** The box that receives off-site copies can start an append-only rest-server with one click and offer it to the other instances of your group, each with a login of its own. See [Receiving server](offsite-recovery.md#receiving-server).
+- **Settings, Apps.** A page that starts with the Android app, its APK for the release the server runs and a QR code for it, followed by a card for each companion. ParleyPort's card offers its Unraid template, copies the Docker command that starts it, and leads to its repository and to the relay settings under Pairing. The BombVault Widget's card offers its template and its repository, and installs or removes the plugin over the host SSH connection.
 - **BombVault Widget.** A tile on the Unraid Dashboard with BombVault's activity log and the next scheduled run. Without a host SSH connection the card hands you the `.plg` address to install under **Plugins, Install Plugin**, and the plugin can be removed there like any other.
 - **Embeddable activity log.** Generate a read-only token under **Settings, Integrations** and you get an address for any dashboard that shows an iframe, such as Homepage, Organizr or Heimdall: a small page with just the live activity log. The token grants that log and nothing else, and **Disable** revokes it at once. The embedded page is in English only.
 

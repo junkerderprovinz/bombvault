@@ -32,6 +32,8 @@ Impostazioni, Off-site inizia con **Destinazioni**: i luoghi in cui vanno le cop
 
 I servizi S3 passano dal backend S3 di restic, ed è questo che permette di applicare una classe di archiviazione e l'object lock. Ogni altro servizio passa dal rclone fornito con BombVault, e il suo remote compare poi nella configurazione di rclone in Impostazioni, Accesso cloud. Un'esportazione delle impostazioni include le destinazioni; con le credenziali incluse porta con sé anche il loro accesso.
 
+Un server ricevente gestito da un'altra istanza del tuo gruppo compare nella procedura guidata sotto **Dal tuo gruppo**; vedi [Server ricevente](#receiving-server).
+
 La destinazione che un dominio ottiene da una destinazione prende da questa nome, posizione, credenziali, classe di archiviazione e interruttore immutabile. La conservazione, la compressione e il budget di crescita restano per dominio, e la sua posizione non può spostarsi perché lì si trova il repository del dominio. **Aggiungi una destinazione solo per questo dominio** sotto ogni dominio accetta ancora un URL di repository scritto a mano.
 
 ## Collocazione per elemento {#placement}
@@ -161,6 +163,19 @@ Attiva l'interruttore **Ricevitore** in Impostazioni per rivelare una scheda **R
 - **Avvisi di integrità:** un avviso quando un controllo sul lato ricevente fallisce.
 
 Il Ricevitore è rigorosamente in sola lettura. Non scrive mai nel repository ricevuto, così non può mai rompere la garanzia append-only su cui il mittente fa affidamento.
+
+### Server ricevente {#receiving-server}
+
+La macchina ricevente può anche eseguire il rest-server su cui copiano gli altri. **Configura server ricevente** in cima alla scheda Ricevitore chiede una cartella su una condivisione, con **Nuova cartella** per crearne una, e una porta (8000, a meno che la usi un altro container). BombVault poi:
+
+1. rifiuta se esiste già un container chiamato `rest-server` o se un altro container occupa la porta;
+2. scarica `restic/rest-server` e lo avvia tramite il socket Docker in modalità append-only, con repository privati e un file di accessi nella cartella;
+3. scrive il suo template Unraid sul flash, così il container resta modificabile nella scheda Docker, oppure offre il template come download quando il flash non è raggiungibile;
+4. esegue il tamper test e mostra se rifiuta le eliminazioni.
+
+Le istanze del tuo gruppo trovano poi il server nella procedura guidata della destinazione sotto **Dal tuo gruppo**, con il nome della macchina ricevente. Ogni istanza riceve un accesso proprio la prima volta che sceglie il server e scrive lì solo nella propria cartella. La scheda elenca questi accessi, e **Revoca accesso** ne toglie uno; ciò che quell'istanza ha già copiato resta nella cartella. L'impostazione crea anche un accesso per qualcuno fuori dal gruppo, la cui password la scheda mostra una sola volta.
+
+Un'istanza che raggiunge la macchina ricevente solo tramite il relay non può usare il server, perché il relay non trasporta backup. Aggiungi prima l'indirizzo della macchina ricevente in Impostazioni, Associazione. Quando BombVault gira su un indirizzo IP proprio (su br0, per esempio), compila **Indirizzo per i partner**, perché il server ascolta sull'indirizzo dell'host.
 
 ## Esempio completo: due macchine Unraid, dall'inizio alla fine
 

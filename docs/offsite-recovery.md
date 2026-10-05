@@ -32,6 +32,8 @@ Settings, Off-site starts with **Destinations**: the places off-site copies go, 
 
 S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. Every other service runs through the rclone BombVault ships, and its remote then appears in the rclone config under Settings, Cloud access. A settings export carries the destinations; with credentials included it carries their sign-in as well.
 
+A receiving server that another instance of your group runs appears in the wizard under **From your group**; see [Receiving server](#receiving-server).
+
 A domain's target made from a destination takes the destination's name, location, credentials, storage class and immutable switch. Its retention, compression and growth budget stay per domain, and its location cannot move because the domain's repository is there. **Add a target for this domain only** under each domain still takes a hand-typed repository URL.
 
 ## Placement per item {#placement}
@@ -161,6 +163,19 @@ Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is 
 - **Integrity alerts:** an alert when a check on the receiving side fails.
 
 The Receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
+
+### Receiving server {#receiving-server}
+
+The receiving box can also run the rest-server the others copy to. **Set up receiving server** at the top of the Receiver tab asks for a folder on a share, with **New folder** to create one, and a port (8000 unless another container uses it). BombVault then:
+
+1. refuses if a container called `rest-server` already exists or another container holds the port;
+2. pulls `restic/rest-server` and starts it through the Docker socket in append-only mode with private repositories and a login file in the folder;
+3. writes its Unraid template to the flash drive, so the container stays editable in the Docker tab, or offers the template as a download when the flash drive is out of reach;
+4. runs the tamper test against it and shows whether it refuses deletes.
+
+The instances in your group then find the server in the destination wizard under **From your group**, named after the receiving box. Each instance gets a login of its own the first time it picks the server, and writes only into its own folder there. The card lists these logins, and **Revoke login** takes one away; what that instance already copied stays in the folder. Setup also creates one login for someone outside the group, whose password the card shows once.
+
+An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address under Settings, Pairing first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
 
 ## Worked example: two Unraid boxes, end to end
 

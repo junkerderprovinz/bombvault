@@ -71,6 +71,7 @@ BombVault ist standardmäßig einfach und tiefgehend, wenn du es brauchst. Die O
 
 ## Einblick, Prüfung & Überwachung
 
+- **Pausieren auf der Karte.** Jede Container-, VM- und Ordner-Set-Karte hat **Zeitplan pausieren**, das den Eintrag aus dem Zeitplan und aus dem Gesamt-Backup nimmt, und **Zeitplan fortsetzen**, das ihn zurückholt. Der Knopf setzt denselben Schalter wie **Im Zeitplan einschließen**, die beiden stimmen also immer überein. Ein pausierter Eintrag trägt das graue Abzeichen **Zeitplan pausiert**, und **Jetzt sichern** geht weiterhin.
 - **Schutzstatus (RPO).** Das Dashboard zeigt pro Bereich eine grün / gelb / rot-Anzeige, die das letzte erfolgreiche Backup mit seinem Zeitplan vergleicht, sodass ein überfälliges Backup rot wird, statt sich in einem Log zu verstecken.
 - **Backup-Gesundheits-Heatmap.** Ein Kalender im Stil der GitHub-Contributions mit Backup-Ergebnissen pro Tag und Bereich, mit einem Umschalter für Container / VMs / Flash / Selbst-Backup / Ordner.
 - **Laufzeiten überall.** Jeder Eintrag der Laufhistorie liest `Start, Ende (Dauer)`, und jeder Container und jede VM trägt auf ihrer Seite eine eigene Liste **Letzte Läufe**.
@@ -125,7 +126,8 @@ BombVault bringt einen MCP-Server mit, über den ein Assistent wie Claude Code o
 ## Apps und Begleiter {#apps}
 
 - **Android-App.** Jeder Server deiner Gruppe auf deinem Handy, mit dem Aktivitätsprotokoll aller Server auf einem Bildschirm. Die App koppelt sich per QR-Code mit deiner Gruppe und öffnet jeden Server bereits angemeldet. Siehe [Android-App](android.md).
-- **Einstellungen, Apps.** Eine Seite mit einer Karte für jeden Begleiter. Die Karte von ParleyPort bietet sein Unraid-Template an, kopiert den Docker-Befehl, der ihn startet, und führt zu seinem Repository und zu den Relay-Einstellungen unter Kopplung. Die Karte des BombVault Widget bietet sein Template und sein Repository an und installiert oder entfernt das Plugin über die Host-SSH-Verbindung.
+- **Empfangsserver.** Die Box, die Off-site-Kopien empfängt, startet mit einem Klick einen rest-server im Append-only-Modus und bietet ihn den anderen Instanzen deiner Gruppe an, jeder mit eigenem Login. Siehe [Empfangsserver](offsite-recovery.md#receiving-server).
+- **Einstellungen, Apps.** Eine Seite, die mit der Android-App beginnt, mit ihrer APK für das Release, das auf dem Server läuft, und einem QR-Code dazu, danach eine Karte für jeden Begleiter. Die Karte von ParleyPort bietet sein Unraid-Template an, kopiert den Docker-Befehl, der ihn startet, und führt zu seinem Repository und zu den Relay-Einstellungen unter Kopplung. Die Karte des BombVault Widget bietet sein Template und sein Repository an und installiert oder entfernt das Plugin über die Host-SSH-Verbindung.
 - **BombVault Widget.** Eine Kachel auf dem Unraid-Dashboard mit BombVaults Aktivitätsprotokoll und dem nächsten geplanten Lauf. Ohne Host-SSH-Verbindung gibt dir die Karte die `.plg`-Adresse zum Installieren unter **Plugins, Install Plugin**, und das Plugin lässt sich dort entfernen wie jedes andere.
 - **Einbettbares Aktivitätsprotokoll.** Erzeuge unter **Einstellungen, Anbindungen** ein Nur-Lese-Token, dann bekommst du eine Adresse für jedes Dashboard, das ein Iframe anzeigen kann, etwa Homepage, Organizr oder Heimdall: eine kleine Seite, die nur das laufende Aktivitätsprotokoll zeigt. Das Token gewährt dieses Protokoll und sonst nichts, und **Deaktivieren** widerruft es sofort. Die eingebettete Seite gibt es nur auf Englisch.
 

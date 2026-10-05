@@ -32,6 +32,8 @@ Instellingen, Off-site begint met **Bestemmingen**: de plekken waar off-site kop
 
 S3-diensten lopen via de eigen S3-backend van restic, waardoor een opslagklasse en object lock kunnen werken. Elke andere dienst loopt via de rclone die BombVault meelevert, en zijn remote verschijnt dan in de rclone-config onder Instellingen, Cloudtoegang. Een export van de instellingen bevat de bestemmingen; met inloggegevens erbij ook hun inloggen.
 
+Een ontvangserver die een andere instantie van je groep draait, verschijnt in de wizard onder **Uit je groep**; zie [Ontvangserver](#receiving-server).
+
 Het doel van een domein dat uit een bestemming is gemaakt, neemt de naam, locatie, inloggegevens, opslagklasse en onveranderlijk-schakelaar van de bestemming over. Retentie, compressie en groeibudget blijven per domein, en de locatie kan niet verhuizen omdat de repository van het domein daar staat. **Een bestemming toevoegen voor alleen dit domein** onder elk domein vraagt nog steeds om een met de hand getypte repository-URL.
 
 ## Plaatsing per item {#placement}
@@ -161,6 +163,19 @@ Zet de schakelaar **Ontvanger** in Instellingen aan om een tabblad **Ontvanger**
 - **Integriteitswaarschuwingen:** een waarschuwing wanneer een controle aan de ontvangende kant mislukt.
 
 De Ontvanger is strikt alleen-lezen. Het schrijft nooit naar de ontvangen repository, dus het kan nooit de append-only-garantie breken waar de zender op vertrouwt.
+
+### Ontvangserver {#receiving-server}
+
+De ontvangende machine kan ook de rest-server draaien waarnaar de anderen kopiëren. **Ontvangserver instellen** bovenaan het tabblad Ontvanger vraagt om een map op een share, met **Nieuwe map** om er een te maken, en om een poort (8000, tenzij een andere container die gebruikt). BombVault doet dan het volgende:
+
+1. weigert als er al een container met de naam `rest-server` bestaat of een andere container de poort bezet;
+2. haalt `restic/rest-server` op en start die via de Docker-socket in append-only-modus, met privérepository's en een loginbestand in de map;
+3. schrijft de Unraid-template naar de flash, zodat de container bewerkbaar blijft in het Docker-tabblad, of biedt de template als download aan als de flash niet bereikbaar is;
+4. voert de manipulatietest ertegen uit en toont of de server verwijderen weigert.
+
+De instanties van je groep vinden de server daarna in de bestemmingswizard onder **Uit je groep**, met de naam van de ontvangende machine. Elke instantie krijgt de eerste keer dat ze de server kiest een eigen login en schrijft daar alleen in een eigen map. De kaart toont deze logins, en met **Login intrekken** haal je er een weg; wat die instantie al heeft gekopieerd, blijft in de map. Bij het instellen ontstaat ook een login voor iemand buiten de groep, waarvan de kaart het wachtwoord één keer toont.
+
+Een instantie die de ontvangende machine alleen via de relay bereikt, kan de server niet gebruiken, omdat de relay geen back-ups vervoert. Voeg eerst het adres van de ontvangende machine toe onder Instellingen, Koppeling. Draait BombVault op een eigen IP-adres (bijvoorbeeld op br0), vul dan **Adres voor partners** in, omdat de server op het adres van de host luistert.
 
 ## Uitgewerkt voorbeeld: twee Unraid-machines, van begin tot eind
 

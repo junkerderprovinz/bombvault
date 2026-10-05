@@ -32,6 +32,8 @@ Inställningar, Extern börjar med **Mål**: de platser dit off-site-kopiorna g�
 
 S3-tjänster körs genom restics egen S3-backend, vilket gör att lagringsklass och objektlås kan tillämpas. Alla andra tjänster körs genom den rclone som BombVault levererar, och dess remote syns sedan i rclone-konfigurationen under Inställningar, Molnåtkomst. En export av inställningarna innehåller målen; med uppgifter inkluderade innehåller den även deras inloggning.
 
+En mottagarserver som en annan instans i din grupp kör visas i guiden under **Från din grupp**; se [Mottagarserver](#receiving-server).
+
 Ett off-site-mål för en domän som skapats från ett mål tar över det målets namn, plats, uppgifter, lagringsklass och omkopplaren för oföränderlighet. Dess retention, komprimering och tillväxtbudget förblir per domän, och dess plats kan inte flyttas eftersom domänens arkiv ligger där. **Lägg till ett mål bara för den här domänen** under varje domän tar fortfarande en handskriven arkiv-URL.
 
 ## Placering per objekt {#placement}
@@ -161,6 +163,19 @@ Slå på **Mottagare**-växeln i Inställningar för att avslöja en **Mottagare
 - **Integritetslarm:** ett larm när en kontroll på den mottagande sidan misslyckas.
 
 Mottagaren är strikt skrivskyddad. Den skriver aldrig till det mottagna repositoriet, så den kan aldrig bryta append-only-garantin som avsändaren förlitar sig på.
+
+### Mottagarserver {#receiving-server}
+
+Mottagarboxen kan också köra den rest-server som de andra kopierar till. **Ställ in mottagarserver** överst på fliken Mottagare frågar efter en mapp på en resurs, där **Ny mapp** skapar en, och en port (8000 om ingen annan container använder den). BombVault gör sedan så här:
+
+1. avbryter om en container som heter `rest-server` redan finns eller om en annan container har porten;
+2. hämtar `restic/rest-server` och startar den via Docker-socketen i append-only-läge med privata arkiv och en inloggningsfil i mappen;
+3. skriver dess Unraid-mall till flashen, så att containern går att redigera på fliken Docker, eller erbjuder mallen som nedladdning när flashen inte går att nå;
+4. kör manipulationstestet mot den och visar om den vägrar radera.
+
+Instanserna i din grupp hittar sedan servern i målguiden under **Från din grupp**, med mottagarboxens namn. Varje instans får en egen inloggning första gången den väljer servern och skriver bara till sin egen mapp där. Kortet listar inloggningarna, och **Återkalla inloggning** tar bort en; det den instansen redan har kopierat ligger kvar i mappen. Konfigurationen skapar också en inloggning för någon utanför gruppen, vars lösenord kortet visar en enda gång.
+
+En instans som når mottagarboxen bara via reläet kan inte använda servern, eftersom reläet inte bär några säkerhetskopior. Lägg först till mottagarboxens adress under Inställningar, Parkoppling. När BombVault körs på en egen IP-adress (till exempel på br0), fyll i **Adress för partner**, eftersom servern lyssnar på värdens adress.
 
 ## Genomgånget exempel: två Unraid-maskiner, hela vägen
 

@@ -71,6 +71,7 @@ BombVault on oletuksena yksinkertainen ja syvä silloin kun tarvitset. Käyttöl
 
 ## Näkyvyys, tarkistus ja valvonta
 
+- **Tauko kortista.** Jokaisessa kontin, VM:n ja kansiojoukon kortissa on **Keskeytä aikataulu**, joka ottaa kohteen pois aikataulusta ja Täysvarmuuskopiosta, ja **Jatka aikataulua**, joka palauttaa sen. Se asettaa saman kytkimen kuin **Sisällytä aikatauluun**, joten ne ovat aina yhtä mieltä. Keskeytetyllä kohteella on harmaa **Aikataulu keskeytetty** -merkki, ja **Varmuuskopioi nyt** toimii edelleen.
 - **Suojaustila (RPO).** Kojelauta näyttää vihreä / keltainen / punainen -osoittimen per toimialue, vertaamalla viimeistä onnistunutta varmuuskopiota sen aikatauluun, joten erääntynyt varmuuskopio muuttuu punaiseksi sen sijaan että piiloutuisi lokiin.
 - **Varmuuskopioinnin tila -lämpökartta.** GitHub-kontribuutioiden tyylinen kalenteri päiväkohtaisista varmuuskopiotuloksista per toimialue, Kontit / VMs / Flash / Itsevarmuuskopio / Kansiot -kytkimellä.
 - **Ajoituksen aika kaikkialla.** Jokainen ajohistorian merkintä lukee `aloitus, loppu (kesto)`, ja jokaisella kontilla ja VM:llä on oma **Viimeisimmät ajot** -lista sivullaan.
@@ -125,7 +126,8 @@ BombVaultissa on sisäänrakennettu MCP-palvelin, jonka kautta avustaja, kuten C
 ## Sovellukset ja apuohjelmat {#apps}
 
 - **Android-sovellus.** Ryhmäsi kaikki palvelimet puhelimessasi, kaikkien toimintaloki yhdellä näytöllä. Se pariliitetään ryhmään QR-koodilla ja avaa jokaisen palvelimen valmiiksi kirjautuneena. Katso [Android-sovellus](android.md).
-- **Asetukset, Sovellukset.** Sivu, jolla jokaisella apuohjelmalla on oma korttinsa. ParleyPortin kortti tarjoaa sen Unraid-mallin, kopioi sen käynnistävän Docker-komennon ja vie sen repoon sekä Pariliitos-kohdan releen asetuksiin. BombVault Widgetin kortti tarjoaa sen mallin ja repon sekä asentaa tai poistaa laajennuksen isännän SSH-yhteyden kautta.
+- **Vastaanottopalvelin.** Laatikko, joka vastaanottaa etäkopiot, voi käynnistää yhdellä napsautuksella append-only-tilaisen rest-serverin ja tarjota sen ryhmäsi muille instansseille, kullekin oman kirjautumisen. Katso [Vastaanottopalvelin](offsite-recovery.md#receiving-server).
+- **Asetukset, Sovellukset.** Sivu, joka alkaa Android-sovelluksella, sen APK:lla palvelimen ajamalle julkaisulle ja siihen kuuluvalla QR-koodilla, ja jonka jälkeen jokaisella apuohjelmalla on oma korttinsa. ParleyPortin kortti tarjoaa sen Unraid-mallin, kopioi sen käynnistävän Docker-komennon ja vie sen repoon sekä Pariliitos-kohdan releen asetuksiin. BombVault Widgetin kortti tarjoaa sen mallin ja repon sekä asentaa tai poistaa laajennuksen isännän SSH-yhteyden kautta.
 - **BombVault Widget.** Ruutu Unraidin Dashboardilla, jossa näkyvät BombVaultin toimintaloki ja seuraava ajastettu ajo. Ilman isännän SSH-yhteyttä kortti antaa `.plg`-osoitteen asennettavaksi kohdassa **Plugins, Install Plugin**, ja laajennuksen voi poistaa sieltä kuten minkä tahansa muun.
 - **Upotettava toimintaloki.** Luo vain luku -tunnus kohdassa **Asetukset, Integraatiot**, niin saat osoitteen mille tahansa kojelaudalle, joka osaa näyttää iframen, kuten Homepage, Organizr tai Heimdall: pienen sivun, jolla on pelkkä reaaliaikainen toimintaloki. Tunnus antaa pääsyn tähän lokiin eikä mihinkään muuhun, ja **Poista käytöstä** peruuttaa sen heti. Upotettu sivu on vain englanniksi.
 

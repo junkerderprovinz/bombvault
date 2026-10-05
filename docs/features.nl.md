@@ -71,6 +71,7 @@ BombVault is standaard simpel en diepgaand wanneer je het nodig hebt. De interfa
 
 ## Inzicht, verificatie en monitoring
 
+- **Pauzeren vanaf de kaart.** Elke kaart van een container, VM en mappenset heeft **Schema pauzeren**, waarmee het item uit de planning en uit Volledige back-up gaat, en **Schema hervatten** om het terug te zetten. Het zet dezelfde schakelaar als **Opnemen in planning**, dus de twee zijn altijd gelijk. Een gepauzeerd item krijgt een grijze badge **Schema gepauzeerd**, en **Nu back-up maken** werkt gewoon door.
 - **Beschermingsstatus (RPO).** Het Dashboard toont een groene / oranje / rode indicator per domein, die de laatste geslaagde back-up vergelijkt met de planning, zodat een achterstallige back-up rood wordt in plaats van weg te schuilen in een log.
 - **Back-upgezondheids-heatmap.** Een kalender in de stijl van GitHub-contributies met back-upuitkomsten per dag per domein, met een Containers / VM's / Flash / Zelf-back-up / Mappen-schakelaar.
 - **Timing overal.** Elk item in de draaigeschiedenis leest `start, einde (duur)`, en elke container en VM heeft zijn eigen lijst **Recente runs** op zijn pagina.
@@ -125,7 +126,8 @@ BombVault heeft een ingebouwde MCP-server waarmee een assistent zoals Claude Cod
 ## Apps en aanvullingen {#apps}
 
 - **Android-app.** Elke server van je groep op je telefoon, met het activiteitenlogboek van allemaal op één scherm. De app koppelt met je groep via een QR-code en opent elke server al aangemeld. Zie [Android-app](android.md).
-- **Instellingen, Apps.** Een pagina met een kaart voor elke aanvulling. De kaart van ParleyPort biedt de Unraid-template aan, kopieert het Docker-commando waarmee je hem start en leidt naar de repository en naar de relay-instellingen onder Koppeling. De kaart van de BombVault Widget biedt de template en de repository aan, en installeert of verwijdert de plugin via de host-SSH-verbinding.
+- **Ontvangserver.** De machine die off-site kopieën ontvangt, kan met één klik een append-only rest-server starten en die aanbieden aan de andere instanties van je groep, elk met een eigen login. Zie [Ontvangserver](offsite-recovery.md#receiving-server).
+- **Instellingen, Apps.** Een pagina die begint met de Android-app, de APK voor de release die de server draait en een QR-code daarvoor, gevolgd door een kaart voor elke aanvulling. De kaart van ParleyPort biedt de Unraid-template aan, kopieert het Docker-commando waarmee je hem start en leidt naar de repository en naar de relay-instellingen onder Koppeling. De kaart van de BombVault Widget biedt de template en de repository aan, en installeert of verwijdert de plugin via de host-SSH-verbinding.
 - **BombVault Widget.** Een tegel op het Unraid-dashboard met het activiteitenlogboek van BombVault en de volgende geplande run. Zonder host-SSH-verbinding geeft de kaart je het `.plg`-adres om te installeren onder **Plugins, Install Plugin**, en daar kun je de plugin ook verwijderen zoals elke andere.
 - **Insluitbaar activiteitenlogboek.** Maak onder **Instellingen, Integraties** een alleen-lezen token aan en je krijgt een adres voor elk dashboard dat een iframe toont, zoals Homepage, Organizr of Heimdall: een kleine pagina met alleen het live activiteitenlogboek. Het token geeft toegang tot dat logboek en tot niets anders, en **Uitschakelen** trekt het meteen in. De ingesloten pagina is alleen in het Engels.
 

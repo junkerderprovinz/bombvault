@@ -4,6 +4,7 @@
 
 ## השגת האפליקציה {#install}
 
+- **הגדרות, אפליקציות:** הכרטיס של אפליקציית Android מציע את ה-APK לגרסה שהשרת שלך מריץ, עם קוד QR לסריקה מהטלפון.
 - **‏APK:** לכל גרסה יש `bombvault-android.apk` בעמוד הגרסה שלה, ו[הקישור הזה](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) תמיד מוריד את ה-build האחרון. נדרש Android 10 ומעלה, ו-Android שואל פעם אחת אם האפליקציה שבה אתה פותח את הקובץ רשאית להתקין אפליקציות.
 - **‏Google Play:** האפליקציה נמצאת בבדיקה סגורה עד שתוכל לצאת לציבור. ‏Google Play מציג אפליקציה של חשבון מפתח חדש רק אחרי שלפחות 12 בודקים השאירו אותה מותקנת במשך 14 יום. כדי לעזור, הצטרף ל[קבוצת הבודקים](https://groups.google.com/g/arrowloop-testers), פתח את [עמוד הבדיקה](https://play.google.com/apps/testing/bombvault.halleluja.design), הקש על **הפוך לבודק** והתקן את BombVault מ-Google Play.
 - **‏F-Droid:** הרישום יגיע בהמשך.

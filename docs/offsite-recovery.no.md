@@ -32,6 +32,8 @@ Innstillinger, Off-site starter med **Mål**: stedene de eksterne kopiene går t
 
 S3-tjenester går gjennom restics egen S3-backend, og det er det som gjør at en lagringsklasse og Object Lock kan brukes. Alle andre tjenester går gjennom rclone som følger med BombVault, og remoten deres dukker da opp i rclone-konfigen under Innstillinger, Skytilgang. En innstillingseksport tar med målene; med legitimasjon inkludert tar den med påloggingen deres også.
 
+En mottaksserver som en annen instans i gruppen din kjører, vises i veiviseren under **Fra gruppen din**; se [Mottaksserver](#receiving-server).
+
 Et eksternt mål i et domene som er laget fra et mål, overtar målets navn, plassering, legitimasjon, lagringsklasse og bryteren Uforanderlig. Oppbevaring, komprimering og vekstbudsjett forblir per domene, og plasseringen kan ikke flyttes fordi domenets repository ligger der. **Legg til et mål bare for dette domenet** under hvert domene tar fortsatt en repository-URL du skriver selv.
 
 ## Plassering per element {#placement}
@@ -161,6 +163,19 @@ Slå på **Mottaker**-bryteren i Innstillinger for å avdekke en **Mottaker**-fa
 - **Integritetsvarsler:** et varsel når en sjekk på mottakssiden feiler.
 
 Mottakeren er strengt skrivebeskyttet. Den skriver aldri til det mottatte repositoriet, så den kan aldri bryte append-only-garantien senderen stoler på.
+
+### Mottaksserver {#receiving-server}
+
+Mottaksmaskinen kan også kjøre rest-serveren som de andre kopierer til. **Sett opp mottaksserver** øverst i Mottaker-fanen ber om en mappe på en deling, med **Ny mappe** for å lage en, og en port (8000 hvis ikke en annen container bruker den). BombVault gjør deretter dette:
+
+1. avslår hvis en container som heter `rest-server` allerede finnes, eller en annen container holder porten;
+2. henter `restic/rest-server` og starter den gjennom Docker-socketen i append-only-modus med private repositorier og en påloggingsfil i mappen;
+3. skriver Unraid-malen til flashen, slik at containeren kan redigeres i Docker-fanen, eller tilbyr malen som nedlasting når flashen ikke er innen rekkevidde;
+4. kjører tamper-testen mot den og viser om den avslår sletting.
+
+Instansene i gruppen din finner serveren i målveiviseren under **Fra gruppen din**, oppkalt etter mottaksmaskinen. Hver instans får en egen pålogging første gang den velger serveren, og skriver der bare i sin egen mappe. Kortet lister disse påloggingene, og **Trekk tilbake pålogging** fjerner én; det instansen allerede har kopiert, blir liggende i mappen. Oppsettet lager også én pålogging til noen utenfor gruppen, og kortet viser passordet bare én gang.
+
+En instans som bare når mottaksmaskinen gjennom relayet, kan ikke bruke serveren, fordi relayet ikke frakter sikkerhetskopier. Legg først til adressen til mottaksmaskinen under Innstillinger, Paring. Kjører BombVault på en egen IP-adresse (for eksempel på br0), fyll ut **Adresse for partnere**, fordi serveren lytter på vertens adresse.
 
 ## Gjennomgått eksempel: to Unraid-maskiner, hele veien
 

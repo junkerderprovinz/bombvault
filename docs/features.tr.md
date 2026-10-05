@@ -71,6 +71,7 @@ BombVault varsayılan olarak basit, ihtiyaç duyduğunuzda ise derindir. **Basit
 
 ## Öngörü, doğrulama ve izleme
 
+- **Karttan duraklatma.** Her kapsayıcı, VM ve klasör kümesi kartında, ögeyi zamanlamadan ve Backup Everything'den çıkaran **Zamanlamayı duraklat** ile onu geri getiren **Zamanlamayı sürdür** bulunur. İkisi de **Zamanlamaya ekle** ile aynı anahtarı ayarlar, bu yüzden her zaman birbiriyle uyumludur. Duraklatılmış öge gri bir **Zamanlama duraklatıldı** rozeti taşır ve **Şimdi yedekle** yine çalışır.
 - **Koruma durumu (RPO).** Kontrol Paneli, son başarılı yedeklemeyi zamanlamasıyla karşılaştırarak etki alanı başına yeşil / sarı / kırmızı bir gösterge gösterir, böylece geciken bir yedekleme bir günlükte saklanmak yerine kırmızıya döner.
 - **Yedekleme sağlığı ısı haritası.** Etki alanı başına günlük yedekleme sonuçlarının GitHub katkıları tarzında bir takvimi, bir Konteynerler / VM'ler / Flash / Öz yedek / Klasörler geçişiyle.
 - **Her yerde çalışma zamanlaması.** Her çalışma geçmişi girişi `başlangıç, bitiş (süre)` okur ve her konteyner ile VM kendi sayfasında kendi **Son çalışmalar** listesini taşır.
@@ -125,7 +126,8 @@ BombVault yerleşik bir MCP sunucusu içerir; Claude Code ya da Claude Desktop g
 ## Uygulamalar ve yardımcılar {#apps}
 
 - **Android uygulaması.** Grubunuzdaki her sunucu telefonunuzda, hepsinin etkinlik günlüğü tek ekranda. Grubunuzla QR koduyla eşleşir ve her sunucuyu oturum açılmış olarak açar. Bkz. [Android uygulaması](android.md).
-- **Ayarlar, Uygulamalar.** Her yardımcı için bir kart içeren bir sayfa. ParleyPort'un kartı onun Unraid şablonunu sunar, onu başlatan Docker komutunu kopyalar ve deposuna ve Eşleştirme altındaki röle ayarlarına götürür. BombVault Widget'ın kartı şablonunu ve deposunu sunar ve eklentiyi host SSH bağlantısı üzerinden yükler ya da kaldırır.
+- **Alıcı sunucu.** Site dışı kopyaları alan makine tek tıkla yalnızca ekleme kipinde bir rest-server başlatabilir ve onu grubunuzun diğer örneklerine sunabilir; her örneğin kendi oturum bilgisi olur. Bkz. [Alıcı sunucu](offsite-recovery.md#receiving-server).
+- **Ayarlar, Uygulamalar.** Android uygulamasıyla başlayan, sunucunun çalıştırdığı sürümün APK'sını ve onun için bir QR kodu sunan, ardından her yardımcı için bir kart içeren bir sayfa. ParleyPort'un kartı onun Unraid şablonunu sunar, onu başlatan Docker komutunu kopyalar ve deposuna ve Eşleştirme altındaki röle ayarlarına götürür. BombVault Widget'ın kartı şablonunu ve deposunu sunar ve eklentiyi host SSH bağlantısı üzerinden yükler ya da kaldırır.
 - **BombVault Widget.** Unraid Dashboard'unda BombVault'un etkinlik günlüğünü ve sıradaki zamanlanmış çalışmayı gösteren bir kutucuk. Host SSH bağlantısı yoksa kart size **Plugins, Install Plugin** altında yüklemeniz için `.plg` adresini verir ve eklenti orada diğerleri gibi kaldırılabilir.
 - **Gömülebilir etkinlik günlüğü.** **Ayarlar, Entegrasyonlar** altında salt okunur bir belirteç oluşturun; Homepage, Organizr ya da Heimdall gibi iframe gösteren her pano için bir adres alırsınız: yalnızca canlı etkinlik günlüğünü içeren küçük bir sayfa. Belirteç yalnızca o günlüğe erişim verir, başka hiçbir şeye değil, ve **Devre dışı bırak** onu anında iptal eder. Gömülen sayfa yalnızca İngilizcedir.
 

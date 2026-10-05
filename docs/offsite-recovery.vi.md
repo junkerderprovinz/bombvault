@@ -32,6 +32,8 @@ Cài đặt, Ngoài site bắt đầu bằng **Đích sao lưu**: những nơi c
 
 Các dịch vụ S3 chạy qua backend S3 riêng của restic, nhờ đó lớp lưu trữ và object lock mới áp dụng được. Mọi dịch vụ khác chạy qua rclone mà BombVault đi kèm, và remote của nó sau đó xuất hiện trong cấu hình rclone ở Cài đặt, Truy cập đám mây. Bản xuất cài đặt chứa các đích sao lưu; khi gộp cả thông tin xác thực thì nó cũng chứa thông tin đăng nhập của chúng.
 
+Một máy chủ nhận do phiên bản khác trong nhóm của bạn chạy xuất hiện trong trình hướng dẫn ở mục **Từ nhóm của bạn**; xem [Máy chủ nhận](#receiving-server).
+
 Một đích off-site của miền tạo từ đích sao lưu lấy tên, vị trí, thông tin xác thực, lớp lưu trữ và công tắc bất biến của đích sao lưu đó. Mức lưu giữ, nén và ngân sách tăng trưởng vẫn tính riêng theo từng miền, và vị trí của nó không thể di chuyển vì kho của miền nằm ở đó. **Thêm đích chỉ cho miền này** dưới mỗi miền vẫn nhận một URL kho gõ tay.
 
 ## Nơi lưu trữ theo từng mục {#placement}
@@ -161,6 +163,19 @@ Bật công tắc **Bộ nhận** trong Cài đặt để hé lộ một tab **B
 - **Cảnh báo toàn vẹn:** một cảnh báo khi một lần kiểm tra ở phía nhận thất bại.
 
 Bên nhận nghiêm ngặt chỉ đọc. Nó không bao giờ ghi vào kho đã nhận, nên nó không bao giờ có thể phá vỡ bảo đảm append-only mà bên gửi dựa vào.
+
+### Máy chủ nhận {#receiving-server}
+
+Máy nhận cũng có thể chạy rest-server mà các máy khác sao chép tới. **Thiết lập máy chủ nhận** ở đầu tab Bộ nhận yêu cầu một thư mục trên một share, với **Thư mục mới** để tạo thư mục, và một cổng (8000 nếu không có container nào khác dùng). Sau đó BombVault:
+
+1. từ chối nếu đã có container tên `rest-server` hoặc container khác đang giữ cổng đó;
+2. kéo `restic/rest-server` và khởi động nó qua socket Docker ở chế độ append-only, với kho riêng tư và một tệp đăng nhập trong thư mục;
+3. ghi mẫu Unraid của nó vào ổ flash, để container vẫn chỉnh sửa được trong tab Docker, hoặc cho tải mẫu về khi không truy cập được ổ flash;
+4. chạy kiểm tra can thiệp lên nó và cho biết nó có từ chối xóa hay không.
+
+Các phiên bản trong nhóm của bạn sau đó tìm thấy máy chủ trong trình hướng dẫn đích sao lưu ở mục **Từ nhóm của bạn**, mang tên của máy nhận. Mỗi phiên bản nhận một đăng nhập riêng lần đầu chọn máy chủ và chỉ ghi vào thư mục của chính nó ở đó. Thẻ liệt kê các đăng nhập này, và **Thu hồi thông tin đăng nhập** gỡ bỏ một cái; những gì phiên bản đó đã sao chép vẫn nằm trong thư mục. Phần thiết lập cũng tạo một đăng nhập cho người ngoài nhóm, mật khẩu của nó được thẻ hiển thị đúng một lần.
+
+Một phiên bản chỉ tới được máy nhận qua relay thì không dùng được máy chủ này, vì relay không chuyển bản sao lưu. Hãy thêm địa chỉ của máy nhận ở Cài đặt, Ghép nối trước. Khi BombVault chạy trên một địa chỉ IP riêng (ví dụ trên br0), hãy điền **Địa chỉ cho đối tác**, vì máy chủ lắng nghe ở địa chỉ của máy chủ lưu trữ.
 
 ## Ví dụ hoàn chỉnh: hai máy Unraid, từ đầu đến cuối
 

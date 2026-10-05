@@ -4,6 +4,7 @@ Android-sovellus tuo ryhmäsi kaikki BombVault-palvelimet puhelimeesi. Se avautu
 
 ## Sovelluksen hankkiminen {#install}
 
+- **Asetukset, Sovellukset:** Android-sovelluksen kortti tarjoaa APK:n palvelimesi ajamalle julkaisulle, ja mukana on QR-koodi, jonka voit skannata puhelimelta.
 - **APK:** jokaisen julkaisun sivulla on `bombvault-android.apk`, ja [tämä linkki](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) lataa aina uusimman version. Sovellus vaatii Android 10:n tai uudemman, ja Android kysyy kerran, saako sovellus, jolla avaat tiedoston, asentaa sovelluksia.
 - **Google Play:** sovellus on suljetussa testauksessa, kunnes se voidaan julkaista. Google Play julkaisee uuden kehittäjätilin sovelluksen vasta, kun vähintään 12 testaajaa on pitänyt sen asennettuna 14 päivän ajan. Jos haluat auttaa, liity [testaajaryhmään](https://groups.google.com/g/arrowloop-testers), avaa [testisivu](https://play.google.com/apps/testing/bombvault.halleluja.design), napauta **Ryhdy testaajaksi** ja asenna BombVault Google Playsta.
 - **F-Droid:** listaus tulee myöhemmin.

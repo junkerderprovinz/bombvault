@@ -32,6 +32,8 @@ Asetukset, Etä alkaa **Kohteet**-kortilla: paikoilla, joihin etäkopiot menevä
 
 S3-palvelut kulkevat resticin oman S3-taustajärjestelmän kautta, minkä ansiosta tallennusluokka ja objektilukko ovat käytettävissä. Kaikki muut palvelut kulkevat BombVaultin mukana tulevan rclonen kautta, ja niiden remote näkyy sen jälkeen rclone-määrityksessä kohdassa Asetukset, Pilvipääsy. Asetusten vienti sisältää kohteet; tunnukset mukaan otettuna se sisältää myös niiden kirjautumisen.
 
+Vastaanottopalvelin, jota ryhmäsi toinen instanssi ajaa, näkyy ohjatussa toiminnossa kohdassa **Ryhmästäsi**; katso [Vastaanottopalvelin](#receiving-server).
+
 Kohteesta tehty toimialueen etäkohde perii kohteen nimen, sijainnin, tunnukset, tallennusluokan ja muuttumattomuuskytkimen. Sen säilytys, pakkaus ja kasvubudjetti pysyvät toimialuekohtaisina, eikä sen sijaintia voi siirtää, koska toimialueen arkisto on siellä. **Lisää kohde vain tälle toimialueelle** kunkin toimialueen kohdalla pyytää yhä käsin kirjoitettua arkiston URL-osoitetta.
 
 ## Sijoittelu per kohde {#placement}
@@ -161,6 +163,19 @@ Kytke **Vastaanotin**-kytkin päälle Asetuksissa paljastaaksesi **Vastaanotin**
 - **Eheyshälytykset:** hälytys, kun tarkistus vastaanottavalla puolella epäonnistuu.
 
 Vastaanotin on ehdottoman vain luku -tilainen. Se ei koskaan kirjoita vastaanotettuun repositorioon, joten se ei voi koskaan rikkoa append-only-takuuta, johon lähettäjä nojaa.
+
+### Vastaanottopalvelin {#receiving-server}
+
+Vastaanottava laatikko voi ajaa myös rest-serveriä, johon muut kopioivat. **Ota vastaanottopalvelin käyttöön** **Vastaanotin**-välilehden ylälaidassa kysyy kansiota jaolta, ja **Uusi kansio** luo sellaisen, sekä portin (8000, ellei toinen kontti käytä sitä). BombVault tekee sitten seuraavaa:
+
+1. kieltäytyy jatkamasta, jos kontti nimeltä `rest-server` on jo olemassa tai toinen kontti pitää porttia;
+2. hakee `restic/rest-server`in ja käynnistää sen Dockerin socketin kautta append-only-tilassa yksityisillä repositorioilla ja kansiossa olevalla kirjautumistiedostolla;
+3. kirjoittaa sen Unraid-mallin flash-asemalle, jolloin kontti pysyy muokattavana Docker-välilehdellä, tai tarjoaa mallin ladattavaksi, kun flash-asema ei ole saatavilla;
+4. ajaa sille peukalointitestin ja näyttää, kieltäytyykö se poistoista.
+
+Ryhmäsi instanssit löytävät palvelimen kohteen ohjatusta toiminnosta kohdasta **Ryhmästäsi**, vastaanottavan laatikon nimellä. Jokainen instanssi saa oman kirjautumisen, kun se valitsee palvelimen ensimmäistä kertaa, ja kirjoittaa siellä vain omaan kansioonsa. Kortti listaa nämä kirjautumiset, ja **Peruuta tunnus** poistaa yhden; mitä kyseinen instanssi on jo kopioinut, jää kansioon. Määritys luo lisäksi yhden kirjautumisen ryhmän ulkopuoliselle, ja sen salasanan kortti näyttää kerran.
+
+Instanssi, joka tavoittaa vastaanottavan laatikon vain releen kautta, ei voi käyttää palvelinta, koska rele ei kuljeta varmuuskopioita. Lisää vastaanottavan laatikon osoite ensin kohdassa **Asetukset → Pariliitos**. Kun BombVault toimii omalla IP-osoitteellaan (esimerkiksi br0:ssa), täytä **Osoite kumppaneille**, koska palvelin kuuntelee isännän osoitetta.
 
 ## Läpikäyty esimerkki: kaksi Unraid-konetta, päästä päähän
 

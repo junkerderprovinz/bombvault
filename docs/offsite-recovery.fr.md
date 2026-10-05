@@ -32,6 +32,8 @@ Paramètres, Hors site commence par **Destinations** : les endroits où vont les
 
 Les services S3 passent par le backend S3 propre à restic, ce qui permet d'appliquer une classe de stockage et le verrouillage d'objet. Tous les autres services passent par le rclone fourni avec BombVault, et leur remote apparaît ensuite dans la config rclone sous Paramètres, Accès cloud. Un export des réglages contient les destinations ; avec les identifiants inclus, il contient aussi leur identification.
 
+Un serveur récepteur qu'une autre instance de votre groupe exécute apparaît dans l'assistant sous **Depuis votre groupe** ; voir [Serveur récepteur](#receiving-server).
+
 La cible d'un domaine créée à partir d'une destination reprend le nom, l'emplacement, les identifiants, la classe de stockage et le réglage Immuable de la destination. Sa rétention, sa compression et son budget de croissance restent propres à chaque domaine, et son emplacement ne peut pas changer, parce que le dépôt du domaine s'y trouve. **Ajouter une cible pour ce domaine uniquement**, sous chaque domaine, accepte toujours une URL de dépôt saisie à la main.
 
 ## Emplacement par élément {#placement}
@@ -161,6 +163,19 @@ Activez la bascule **Récepteur** dans les Paramètres pour révéler un onglet 
 - **Des alertes d'intégrité :** une alerte lorsqu'une vérification côté réception échoue.
 
 Le récepteur est strictement en lecture seule. Il n'écrit jamais dans le dépôt reçu, il ne peut donc jamais briser la garantie append-only sur laquelle l'émetteur compte.
+
+### Serveur récepteur {#receiving-server}
+
+La machine qui reçoit peut aussi exécuter le rest-server vers lequel les autres copient. **Configurer le serveur récepteur**, en haut de l'onglet **Récepteur**, demande un dossier sur un partage, avec **Nouveau dossier** pour en créer un, et un port (8000, sauf si un autre conteneur l'utilise). BombVault :
+
+1. refuse de continuer si un conteneur nommé `rest-server` existe déjà ou si un autre conteneur occupe le port ;
+2. télécharge `restic/rest-server` et le démarre via le socket Docker en mode append-only, avec des dépôts privés et un fichier d'identifiants dans le dossier ;
+3. écrit son modèle Unraid sur la clé flash, afin que le conteneur reste modifiable dans l'onglet Docker, ou propose le modèle en téléchargement quand la clé flash est hors d'atteinte ;
+4. lance le test de sabotage contre lui et indique s'il refuse les suppressions.
+
+Les instances de votre groupe trouvent ensuite le serveur dans l'assistant de destination sous **Depuis votre groupe**, nommé d'après la machine de réception. Chaque instance reçoit son propre identifiant la première fois qu'elle choisit le serveur, et n'y écrit que dans son propre dossier. La carte liste ces identifiants, et **Révoquer l'identifiant** en retire un ; ce que cette instance a déjà copié reste dans le dossier. La configuration crée aussi un identifiant pour quelqu'un hors du groupe, dont la carte montre le mot de passe une seule fois.
+
+Une instance qui n'atteint la machine de réception que par le relais ne peut pas utiliser le serveur, car le relais ne transporte aucune sauvegarde. Ajoutez d'abord l'adresse de la machine de réception sous **Paramètres → Appairage**. Quand BombVault tourne sur une adresse IP à lui (sur br0, par exemple), renseignez **Adresse pour les partenaires**, car le serveur écoute sur l'adresse de l'hôte.
 
 ## Exemple complet : deux machines Unraid, de bout en bout
 

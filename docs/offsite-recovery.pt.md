@@ -32,6 +32,8 @@ Definições, Externo começa com **Destinos**: os locais para onde vão as cóp
 
 Os serviços S3 funcionam através do backend S3 do próprio restic, que é o que permite aplicar uma classe de armazenamento e o bloqueio de objetos. Todos os outros serviços funcionam através do rclone que o BombVault inclui, e o seu remote aparece então na configuração do rclone em Definições, Acesso à nuvem. Uma exportação de definições leva os destinos; com as credenciais incluídas, leva também o respetivo início de sessão.
 
+Um servidor recetor que outra instância do seu grupo executa aparece no assistente em **Do teu grupo**; veja [Servidor recetor](#receiving-server).
+
 O destino de um domínio criado a partir de um destino assume o nome, a localização, as credenciais, a classe de armazenamento e o interruptor imutável do destino. A sua retenção, compressão e orçamento de crescimento continuam por domínio, e a sua localização não pode mudar porque o repositório do domínio está lá. **Adicionar um destino só para este domínio** sob cada domínio continua a aceitar um URL de repositório escrito à mão.
 
 ## Localização por item {#placement}
@@ -161,6 +163,19 @@ Ligue o interruptor **Recetor** em Definições para revelar um separador **Rece
 - **Alertas de integridade:** um alerta quando uma verificação no lado recetor falha.
 
 O Recetor é estritamente só de leitura. Nunca escreve no repositório recebido, por isso nunca pode quebrar a garantia append-only da qual o emissor depende.
+
+### Servidor recetor {#receiving-server}
+
+A máquina recetora também pode executar o rest-server para onde as outras copiam. **Configurar servidor recetor**, no topo do separador Recetor, pede uma pasta numa partilha, com **Nova pasta** para criar uma, e uma porta (8000, a menos que outro container a use). O BombVault depois:
+
+1. recusa se já existir um container chamado `rest-server` ou se outro container ocupar a porta;
+2. obtém `restic/rest-server` e arranca-o através do socket do Docker em modo append-only, com repositórios privados e um ficheiro de inícios de sessão na pasta;
+3. escreve o respetivo template Unraid no flash, para que o container continue editável no separador Docker, ou oferece o template como transferência quando o flash está fora de alcance;
+4. executa o teste de adulteração contra ele e mostra se recusa eliminações.
+
+As instâncias do seu grupo encontram depois o servidor no assistente de destinos em **Do teu grupo**, com o nome da máquina recetora. Cada instância recebe um início de sessão próprio na primeira vez que escolhe o servidor e escreve lá apenas na sua própria pasta. O cartão lista esses inícios de sessão, e **Revogar início de sessão** retira um; o que essa instância já copiou fica na pasta. A configuração cria também um início de sessão para alguém fora do grupo, cuja palavra-passe o cartão mostra uma única vez.
+
+Uma instância que chega à máquina recetora apenas através do relay não pode usar o servidor, porque o relay não transporta backups. Adicione primeiro o endereço da máquina recetora em Definições, Emparelhamento. Quando o BombVault corre num endereço IP próprio (em br0, por exemplo), preencha **Endereço para os parceiros**, porque o servidor escuta no endereço do host.
 
 ## Exemplo completo: duas máquinas Unraid, de ponta a ponta
 

@@ -4,6 +4,7 @@ Aplicația Android pune pe telefon toate serverele BombVault din grupul tău. Po
 
 ## Obținerea aplicației {#install}
 
+- **Setări, Aplicații:** cardul aplicației Android oferă APK-ul pentru versiunea pe care o rulează serverul tău, cu un cod QR de scanat de pe telefon.
 - **APK:** fiecare versiune are `bombvault-android.apk` pe pagina sa de release, iar [acest link](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) descarcă mereu cea mai nouă versiune. Are nevoie de Android 10 sau mai nou, iar Android întreabă o dată dacă aplicația cu care deschizi fișierul are voie să instaleze aplicații.
 - **Google Play:** aplicația este într-un test închis până când poate deveni publică. Google Play listează o aplicație de la un cont de dezvoltator nou doar după ce cel puțin 12 testeri au păstrat-o instalată timp de 14 zile. Ca să ajuți, intră în [grupul de testeri](https://groups.google.com/g/arrowloop-testers), deschide [pagina de test](https://play.google.com/apps/testing/bombvault.halleluja.design), atinge **Deveniți tester** și instalează BombVault din Google Play.
 - **F-Droid:** listarea va urma.

@@ -32,6 +32,8 @@ Ayarlar, Site dışı **Hedefler** ile başlar: site dışı kopyaların gittiğ
 
 S3 hizmetleri restic'in kendi S3 arka ucu üzerinden çalışır; depolama sınıfı ve nesne kilidi bu sayede uygulanabilir. Diğer tüm hizmetler BombVault'un içinde gelen rclone üzerinden çalışır ve remote'u sonra Ayarlar, Bulut erişimi altındaki rclone yapılandırmasında görünür. Bir ayar dışa aktarımı hedefleri içerir; kimlik bilgileri dahil edilirse oturum açma bilgilerini de içerir.
 
+Grubunuzun başka bir örneğinin çalıştırdığı alıcı sunucu, sihirbazda **Grubundan** altında görünür; bkz. [Alıcı sunucu](#receiving-server).
+
 Bir hedeften oluşturulan etki alanı hedefi, hedefin adını, konumunu, kimlik bilgilerini, depolama sınıfını ve değiştirilemez anahtarını alır. Saklaması, sıkıştırması ve büyüme bütçesi etki alanı başına kalır; konumu taşınamaz, çünkü etki alanının deposu oradadır. Her etki alanının altındaki **Yalnızca bu etki alanı için hedef ekle** yine elle yazılmış bir depo URL'si alır.
 
 ## Öge başına yerleşim {#placement}
@@ -161,6 +163,19 @@ Bir **Alıcı** sekmesini ortaya çıkarmak için Ayarlar'da **Alıcı** geçiş
 - **Bütünlük uyarıları:** alan tarafta bir denetim başarısız olduğunda bir uyarı.
 
 Alıcı kesinlikle salt okunurdur. Alınan depoya asla yazmaz, böylece göndericinin dayandığı yalnızca ekleme garantisini asla bozamaz.
+
+### Alıcı sunucu {#receiving-server}
+
+Alan makine, diğerlerinin kopyaladığı rest-server'ı da çalıştırabilir. Alıcı sekmesinin üstündeki **Alıcı sunucuyu kur**, bir paylaşımda bir klasör ister; **Yeni klasör** ile yenisi oluşturulur. Ayrıca bir port ister (başka bir kapsayıcı kullanmıyorsa 8000). BombVault ardından şunları yapar:
+
+1. `rest-server` adında bir kapsayıcı zaten varsa ya da portu başka bir kapsayıcı tutuyorsa reddeder;
+2. `restic/rest-server` imajını çeker ve Docker soketi üzerinden yalnızca ekleme kipinde, özel depolarla ve klasörde bir oturum dosyasıyla başlatır;
+3. Unraid şablonunu flash sürücüye yazar, böylece kapsayıcı Docker sekmesinde düzenlenebilir kalır; flash sürücüye ulaşılamıyorsa şablonu indirme olarak sunar;
+4. sunucuya karşı kurcalama testini çalıştırır ve silme isteklerini reddedip reddetmediğini gösterir.
+
+Grubunuzdaki örnekler sunucuyu hedef sihirbazında **Grubundan** altında, alan makinenin adıyla bulur. Her örnek sunucuyu ilk seçtiğinde kendine ait bir oturum bilgisi alır ve orada yalnızca kendi klasörüne yazar. Kart bu oturum bilgilerini listeler, **Oturum bilgisini geri al** birini kaldırır; o örneğin o ana kadar kopyaladıkları klasörde kalır. Kurulum ayrıca grubun dışındaki biri için bir oturum bilgisi oluşturur; kart bunun parolasını yalnızca bir kez gösterir.
+
+Alan makineye yalnızca röle üzerinden ulaşan bir örnek sunucuyu kullanamaz, çünkü röle yedek taşımaz. Önce alan makinenin adresini Ayarlar, Eşleştirme altına ekleyin. BombVault kendi IP adresinde çalışıyorsa (örneğin br0 üzerinde), **Ortaklar için adres** alanını doldurun, çünkü sunucu ana makinenin adresinde dinler.
 
 ## Baştan sona örnek: iki Unraid makinesi
 

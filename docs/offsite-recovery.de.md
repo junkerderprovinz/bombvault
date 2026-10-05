@@ -32,6 +32,8 @@ Einstellungen, Off-site beginnt mit **Ziele**: den Orten, an die Off-site-Kopien
 
 S3-Dienste laufen über restics eigenes S3-Backend, nur so greifen Speicherklasse und Object Lock. Jeder andere Dienst läuft über das rclone, das BombVault mitbringt, und sein Remote steht danach in der rclone-Konfiguration unter Einstellungen, Cloud-Zugänge. Ein Einstellungs-Export nimmt die Ziele mit, mit Zugangsdaten auch deren Anmeldung.
 
+Einen Empfangsserver, den eine andere Instanz deiner Gruppe betreibt, zeigt der Assistent unter **Aus deiner Gruppe**; siehe [Empfangsserver](#receiving-server).
+
 Das Ziel eines Bereichs, das aus einem Ziel entstanden ist, übernimmt dessen Name, Ort, Zugangsdaten, Speicherklasse und den Schalter Unveränderlich. Aufbewahrung, Kompression und Wachstumsbudget bleiben je Bereich, und sein Ort lässt sich nicht verschieben, weil dort das Repository des Bereichs liegt. **Ziel nur für diesen Bereich hinzufügen** unter jedem Bereich nimmt weiterhin eine von Hand eingegebene Repository-URL.
 
 ## Ablage pro Element {#placement}
@@ -161,6 +163,19 @@ Schalte den **Empfänger**-Schalter in den Einstellungen ein, um einen **Empfän
 - **Integritätsalarme:** ein Alarm, wenn eine Prüfung auf der empfangenden Seite fehlschlägt.
 
 Der Empfänger ist strikt schreibgeschützt. Er schreibt niemals in das empfangene Repository, sodass er die Append-only-Garantie, auf die sich der Sender verlässt, nie brechen kann.
+
+### Empfangsserver {#receiving-server}
+
+Die empfangende Box kann auch den rest-server betreiben, auf den die anderen kopieren. **Empfangsserver einrichten** oben im Empfänger-Reiter fragt nach einem Ordner auf einer Freigabe, mit **Neuer Ordner** zum Anlegen, und nach einem Port (8000, solange kein anderer Container ihn belegt). Danach geht BombVault so vor:
+
+1. Es lehnt ab, wenn schon ein Container namens `rest-server` existiert oder ein anderer Container den Port belegt.
+2. Es holt `restic/rest-server` und startet ihn über den Docker-Socket im Append-only-Modus, mit privaten Repositories und einer Login-Datei im Ordner.
+3. Es legt die Unraid-Vorlage auf das Flash-Laufwerk, damit du den Container im Docker-Tab bearbeiten kannst. Ist das Flash-Laufwerk nicht erreichbar, bietet es die Vorlage zum Herunterladen an.
+4. Es lässt den Manipulationstest gegen den Server laufen und zeigt, ob er Löschen verweigert.
+
+Die Instanzen deiner Gruppe finden den Server danach im Ziele-Assistenten unter **Aus deiner Gruppe**, benannt nach der empfangenden Box. Jede Instanz bekommt einen eigenen Login, wenn sie den Server zum ersten Mal auswählt, und schreibt dort nur in ihren eigenen Ordner. Die Karte listet diese Logins auf, und **Login entziehen** nimmt einen weg; was die Instanz schon kopiert hat, bleibt im Ordner. Beim Einrichten entsteht außerdem ein Login für jemanden außerhalb der Gruppe, dessen Passwort die Karte einmal anzeigt.
+
+Eine Instanz, die die empfangende Box nur über das Relay erreicht, kann den Server nicht nutzen, denn das Relay transportiert keine Backups. Trag die Adresse der empfangenden Box vorher unter Einstellungen, Kopplung ein. Läuft BombVault mit eigener IP-Adresse (etwa auf br0), füll **Adresse für Partner** aus, denn der Server lauscht auf der Adresse des Hosts.
 
 ## Durchgerechnetes Beispiel: zwei Unraid-Kisten, Ende zu Ende
 

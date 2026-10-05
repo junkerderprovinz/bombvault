@@ -32,6 +32,8 @@ Indstillinger, Off-site starter med **Destinationer**: de steder, off-site-kopie
 
 S3-tjenester kører gennem restics eget S3-backend, og det er det, der gør, at en lagringsklasse og object lock kan bruges. Alle andre tjenester kører gennem den rclone, BombVault leveres med, og deres remote vises derefter i rclone-konfigurationen under Indstillinger, Cloud-adgang. En eksport af indstillingerne indeholder destinationerne; med legitimationsoplysninger inkluderet indeholder den også deres login.
 
+En modtageserver, som en anden instans i din gruppe kører, vises i guiden under **Fra din gruppe**; se [Modtageserver](#receiving-server).
+
 Et domænes mål, der er oprettet ud fra en destination, overtager destinationens navn, placering, legitimationsoplysninger, lagringsklasse og kontakten Uforanderlig. Opbevaring, komprimering og vækstbudget forbliver pr. domæne, og placeringen kan ikke flyttes, fordi domænets repository ligger dér. **Tilføj et mål kun til dette domæne** under hvert domæne tager stadig en håndskrevet repository-URL.
 
 ## Placering pr. element {#placement}
@@ -161,6 +163,19 @@ Slå **Modtager**-omskifteren til i Indstillinger for at afsløre en **Modtager*
 - **Integritetsadvarsler:** en advarsel, når et tjek på den modtagende side fejler.
 
 Modtageren er strengt skrivebeskyttet. Den skriver aldrig til det modtagne repository, så den kan aldrig bryde append-only-garantien, afsenderen forlader sig på.
+
+### Modtageserver {#receiving-server}
+
+Den modtagende boks kan også køre den rest-server, de andre kopierer til. **Opsæt modtageserver** øverst i fanen **Modtager** spørger efter en mappe på et share, med **Ny mappe** til at oprette en, og en port (8000, medmindre en anden container bruger den). BombVault gør så følgende:
+
+1. afviser, hvis der allerede findes en container med navnet `rest-server`, eller en anden container holder porten;
+2. henter `restic/rest-server` og starter den gennem Docker-socketten i append-only-tilstand med private repositories og en loginfil i mappen;
+3. skriver dens Unraid-skabelon til flashdrevet, så containeren kan redigeres i fanen Docker, eller tilbyder skabelonen som download, når flashdrevet ikke kan nås;
+4. kører manipulationstesten mod den og viser, om den afviser sletning.
+
+Instanserne i din gruppe finder så serveren i destinationsguiden under **Fra din gruppe**, opkaldt efter den modtagende boks. Hver instans får sit eget login, første gang den vælger serveren, og skriver kun i sin egen mappe dér. Kortet viser disse logins, og **Tilbagekald login** fjerner ét; det, den instans allerede har kopieret, bliver liggende i mappen. Opsætningen opretter også ét login til en person uden for gruppen, hvis adgangskode kortet viser én gang.
+
+En instans, der kun når den modtagende boks gennem relayet, kan ikke bruge serveren, fordi relayet ikke bærer sikkerhedskopier. Tilføj først den modtagende bokss adresse under **Indstillinger → Parring**. Når BombVault kører på sin egen IP-adresse (for eksempel på br0), skal du udfylde **Adresse til partnere**, fordi serveren lytter på værtens adresse.
 
 ## Gennemgået eksempel: to Unraid-maskiner, hele vejen
 

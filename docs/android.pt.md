@@ -4,6 +4,7 @@ A aplicação Android leva todos os servidores BombVault do seu grupo para o tel
 
 ## Obter a aplicação {#install}
 
+- **Definições, Aplicações:** o cartão da aplicação Android oferece o APK da versão que o seu servidor executa, com um código QR para ler a partir do telemóvel.
 - **APK:** cada versão tem `bombvault-android.apk` na sua página de release, e [esta ligação](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) descarrega sempre a compilação mais recente. Precisa de Android 10 ou posterior, e o Android pergunta uma vez se a aplicação com que abre o ficheiro pode instalar aplicações.
 - **Google Play:** a aplicação está num teste fechado até poder ser pública. O Google Play só lista uma aplicação de uma conta de programador nova depois de pelo menos 12 testadores a terem mantido instalada durante 14 dias. Para ajudar, junte-se ao [grupo de testadores](https://groups.google.com/g/arrowloop-testers), abra a [página de teste](https://play.google.com/apps/testing/bombvault.halleluja.design), toque em **Tornar-se testador** e instale o BombVault a partir do Google Play.
 - **F-Droid:** a listagem virá mais tarde.

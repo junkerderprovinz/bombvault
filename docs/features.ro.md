@@ -71,6 +71,7 @@ BombVault este simplu implicit și profund atunci când ai nevoie. Interfața ar
 
 ## Perspectivă, verificare și monitorizare
 
+- **Pauză direct de pe card.** Fiecare card de container, VM și set de foldere are **Pune programarea pe pauză**, care scoate elementul din programare și din Backup Everything, și **Reia programarea** pentru a-l readuce. Setează același comutator ca **Includeți în programare**, așa că cele două sunt mereu de acord. Un element în pauză poartă o insignă gri **Programare oprită**, iar **Copiază acum** funcționează în continuare.
 - **Stare de protecție (RPO).** Panoul principal arată un indicator verde / galben / roșu per domeniu, comparând ultimul backup reușit cu programarea sa, astfel încât un backup restant devine roșu în loc să se ascundă într-un jurnal.
 - **Heatmap de sănătate a backupului.** Un calendar în stil contribuții-GitHub cu rezultatele backupului per zi și per domeniu, cu un comutator Containere / VM-uri / Flash / Auto-backup / Foldere.
 - **Timp de rulare peste tot.** Fiecare intrare din istoricul rulărilor arată `start, sfârșit (durată)`, iar fiecare container și VM poartă propria listă **Rulări recente** pe pagina sa.
@@ -125,7 +126,8 @@ BombVault are un server MCP integrat prin care un asistent precum Claude Code sa
 ## Aplicații și însoțitori {#apps}
 
 - **Aplicația Android.** Toate serverele grupului tău pe telefon, cu jurnalul de activitate al tuturor pe un singur ecran. Se împerechează cu grupul tău printr-un cod QR și deschide fiecare server deja autentificat. Vezi [Aplicația Android](android.md).
-- **Setări, Aplicații.** O pagină cu un card pentru fiecare însoțitor. Cardul ParleyPort oferă șablonul său Unraid, copiază comanda Docker care îl pornește și duce la depozitul său și la setările releului de la Împerechere. Cardul BombVault Widget oferă șablonul și depozitul său și instalează sau elimină pluginul prin conexiunea SSH la gazdă.
+- **Server receptor.** Mașina care primește copiile off-site poate porni un rest-server append-only cu un singur clic și îl poate oferi celorlalte instanțe ale grupului tău, fiecare cu un login propriu. Vezi [Server receptor](offsite-recovery.md#receiving-server).
+- **Setări, Aplicații.** O pagină care începe cu aplicația Android, cu APK-ul pentru versiunea pe care o rulează serverul și un cod QR pentru el, urmată de un card pentru fiecare însoțitor. Cardul ParleyPort oferă șablonul său Unraid, copiază comanda Docker care îl pornește și duce la depozitul său și la setările releului de la Împerechere. Cardul BombVault Widget oferă șablonul și depozitul său și instalează sau elimină pluginul prin conexiunea SSH la gazdă.
 - **BombVault Widget.** O dală pe Dashboard-ul Unraid cu jurnalul de activitate al BombVault și următoarea rulare programată. Fără o conexiune SSH la gazdă, cardul îți dă adresa `.plg` de instalat la **Plugins, Install Plugin**, iar pluginul poate fi eliminat de acolo ca oricare altul.
 - **Jurnal de activitate încorporabil.** Generează un token doar în citire la **Setări, Integrări** și primești o adresă pentru orice panou care afișează un iframe, cum ar fi Homepage, Organizr sau Heimdall: o pagină mică doar cu jurnalul de activitate în timp real. Tokenul dă acces la acel jurnal și la nimic altceva, iar **Dezactivează** îl revocă imediat. Pagina încorporată este disponibilă doar în engleză.
 

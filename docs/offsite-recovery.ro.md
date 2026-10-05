@@ -32,6 +32,8 @@ Setări, Extern începe cu **Destinații**: locurile în care ajung copiile off-
 
 Serviciile S3 rulează prin backendul S3 propriu al restic, ceea ce permite aplicarea unei clase de stocare și a blocării obiectelor. Orice alt serviciu rulează prin rclone livrat cu BombVault, iar remote-ul lui apare apoi în configurația rclone de la Setări, Acces cloud. Un export al setărilor conține destinațiile; cu acreditările incluse, conține și autentificarea lor.
 
+Un server receptor pe care îl rulează o altă instanță a grupului tău apare în asistent la **Din grupul tău**; vezi [Server receptor](#receiving-server).
+
 Ținta unui domeniu creată dintr-o destinație preia numele, locația, acreditările, clasa de stocare și comutatorul imuabil ale destinației. Retenția, compresia și bugetul de creștere rămân per domeniu, iar locația ei nu se poate muta, pentru că acolo se află depozitul domeniului. **Adaugă o țintă doar pentru acest domeniu** de sub fiecare domeniu primește în continuare un URL de depozit scris de mână.
 
 ## Amplasare per element {#placement}
@@ -161,6 +163,19 @@ Activează comutatorul **Receptor** în Setări pentru a dezvălui o filă **Rec
 - **Alerte de integritate:** o alertă când o verificare pe partea de recepție eșuează.
 
 Receptorul este strict doar în citire. Nu scrie niciodată în depozitul primit, deci nu poate niciodată strica garanția append-only pe care se bazează expeditorul.
+
+### Server receptor {#receiving-server}
+
+Mașina care primește poate rula și rest-serverul către care copiază celelalte. **Configurează serverul receptor**, în partea de sus a filei Receptor, cere un folder de pe un share, cu **Dosar nou** pentru a crea unul, și un port (8000, dacă nu îl folosește alt container). Apoi BombVault:
+
+1. refuză dacă există deja un container numit `rest-server` sau dacă alt container ocupă portul;
+2. descarcă `restic/rest-server` și îl pornește prin socket-ul Docker în modul append-only, cu depozite private și un fișier de autentificare în folder;
+3. scrie șablonul lui Unraid pe unitatea flash, astfel încât containerul rămâne editabil în fila Docker, sau oferă șablonul ca descărcare când unitatea flash nu poate fi atinsă;
+4. rulează testul de manipulare împotriva lui și arată dacă refuză ștergerile.
+
+Instanțele din grupul tău găsesc apoi serverul în asistentul de destinații, la **Din grupul tău**, cu numele mașinii care primește. Fiecare instanță primește un login propriu prima dată când alege serverul și scrie acolo doar în folderul ei. Cardul listează aceste login-uri, iar **Revocă autentificarea** îl elimină pe unul; ce a copiat deja instanța respectivă rămâne în folder. Configurarea creează și un login pentru cineva din afara grupului, a cărui parolă o arată cardul o singură dată.
+
+O instanță care ajunge la mașina de recepție doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă backupuri. Adaugă mai întâi adresa mașinii de recepție la Setări, Împerechere. Când BombVault rulează pe o adresă IP proprie (de exemplu pe br0), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
 
 ## Exemplu complet: două mașini Unraid, de la un capăt la altul
 

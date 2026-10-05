@@ -32,6 +32,8 @@ Ustawienia, Poza siedzibą zaczynają się od sekcji **Miejsca docelowe**: to mi
 
 Usługi S3 działają przez własny backend S3 restic, dzięki czemu mogą działać klasa pamięci i blokada obiektów. Każda inna usługa działa przez rclone dostarczany z BombVault, a jej remote pojawia się wtedy w konfiguracji rclone w Ustawienia, Dostęp do chmury. Eksport ustawień zawiera miejsca docelowe; z dołączonymi danymi logowania zawiera także ich logowanie.
 
+Serwer odbiorczy, który uruchamia inna instancja Twojej grupy, pojawia się w kreatorze w sekcji **Z twojej grupy**; zobacz [Serwer odbiorczy](#receiving-server).
+
 Cel domeny utworzony z miejsca docelowego przejmuje jego nazwę, lokalizację, dane logowania, klasę pamięci i przełącznik niezmienności. Jego przechowywanie, kompresja i budżet wzrostu pozostają per domena, a lokalizacji nie da się przenieść, bo leży tam repozytorium domeny. **Dodaj cel tylko dla tej domeny** pod każdą domeną nadal przyjmuje ręcznie wpisany adres repozytorium.
 
 ## Rozmieszczenie per element {#placement}
@@ -161,6 +163,19 @@ Włącz przełącznik **Odbiornik** w Ustawieniach, aby odsłonić zakładkę **
 - **Alerty integralności:** alert, gdy kontrola po stronie odbierającej zawiedzie.
 
 Odbiornik jest ściśle tylko do odczytu. Nigdy nie zapisuje do otrzymanego repozytorium, więc nigdy nie może naruszyć gwarancji append-only, na której polega nadawca.
+
+### Serwer odbiorczy {#receiving-server}
+
+Maszyna odbierająca może też uruchomić rest-server, na który kopiują pozostałe. **Skonfiguruj serwer odbiorczy** na górze zakładki Odbiornik prosi o folder na udziale, z przyciskiem **Nowy folder** do jego utworzenia, oraz o port (8000, chyba że używa go inny kontener). BombVault następnie:
+
+1. odmawia, jeśli kontener o nazwie `rest-server` już istnieje albo port zajmuje inny kontener;
+2. pobiera `restic/rest-server` i uruchamia go przez gniazdo Docker w trybie append-only, z prywatnymi repozytoriami i plikiem z danymi logowania w folderze;
+3. zapisuje jego szablon Unraid na flashu, dzięki czemu kontener można dalej edytować w zakładce Docker, albo oferuje szablon do pobrania, gdy flash jest poza zasięgiem;
+4. uruchamia na nim test manipulacji i pokazuje, czy serwer odrzuca usuwanie.
+
+Instancje Twojej grupy znajdują potem serwer w kreatorze miejsca docelowego w sekcji **Z twojej grupy**, pod nazwą maszyny odbierającej. Każda instancja dostaje własne dane logowania przy pierwszym wyborze serwera i zapisuje tam tylko do własnego folderu. Karta wymienia te dane logowania, a **Odwołaj login** odbiera jedne z nich; to, co instancja już skopiowała, zostaje w folderze. Konfiguracja tworzy też jedne dane logowania dla kogoś spoza grupy, których hasło karta pokazuje tylko raz.
+
+Instancja, która dociera do maszyny odbierającej tylko przez relay, nie może użyć serwera, bo relay nie przenosi kopii zapasowych. Najpierw dodaj adres maszyny odbierającej w Ustawieniach, Parowanie. Gdy BombVault działa pod własnym adresem IP (na przykład na br0), uzupełnij **Adres dla partnerów**, ponieważ serwer nasłuchuje na adresie hosta.
 
 ## Pełny przykład: dwie maszyny Unraid, od początku do końca
 
