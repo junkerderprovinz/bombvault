@@ -61,6 +61,9 @@ type RestoreCheckRequest struct {
 	Overwrite  bool              `json:"overwrite"`
 	ZvolPool   string            `json:"zvolPool"`
 	WholeTree  bool              `json:"wholeTree"`
+	// Network is the network a foreign container is restored onto when this
+	// host lacks its own.
+	Network string `json:"network"`
 }
 
 // Check line ids, statuses and the reasons the page turns into sentences.
@@ -69,6 +72,7 @@ const (
 	lineKey        = "key"
 	lineSnapshot   = "snapshot"
 	lineSpace      = "space"
+	lineNetwork    = "network"
 
 	lineOK   = "ok"
 	lineFail = "fail"
@@ -83,6 +87,7 @@ const (
 	reasonShort         = "short"
 	reasonRefused       = "refused"
 	reasonParentMissing = "parent-missing"
+	reasonNoNetwork     = "network-missing"
 )
 
 // CheckLine is one line of the pre-flight checklist. Detail carries the
@@ -184,6 +189,11 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},
 			CheckLine{ID: lineSpace, Status: lineFail, Reason: reasonParentMissing, Detail: zfsParentMissing(err)})
+		return out, nil
+	case missingNetworkName(err) != "":
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNoNetwork, Detail: missingNetworkName(err)})
 		return out, nil
 	case isDestinationRefusal(err):
 		out.Checks = append(out.Checks,
@@ -546,6 +556,9 @@ func (s *Service) foreignScope(ctx context.Context, req RestoreCheckRequest) (re
 		}
 		plan, err := s.prepareRestoreForTarget(ctx, ref, req.Name, req.SnapshotID, tg, tagIdentity("container:"+req.Name), destBase, req.Overwrite)
 		if err != nil {
+			return restoreScope{}, err
+		}
+		if err := s.placeOnNetwork(ctx, &plan, req.Network); err != nil {
 			return restoreScope{}, err
 		}
 		return containerScope(plan, req.Name), nil

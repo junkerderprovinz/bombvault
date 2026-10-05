@@ -227,6 +227,8 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 
 Osobna karta w zakładce **Odzyskiwanie** otwiera repozytorium *innej* instancji BombVault (udział zamontowany pod `/mnt` lub zdalny URL) za pomocą **`APP_KEY` tej instancji**, w jednorazowej sesji tylko do odczytu. Przeglądaj przechowywane tam kontenery, VM i zestawy plików, wybierz migawkę i przywróć ją, a przywrócony obiekt staje się normalnym lokalnym kontenerem, VM lub zestawem plików. Nic nigdy nie jest zapisywane do drugiego repozytorium, a Twoje własne ustawienia kopii pozostają nietknięte (sesja żyje w pamięci i wygasa sama). Przeniesienie kontenera z serwera A na serwer B nie oznacza przekierowywania ustawień repozytorium i cofania ich potem. Ta karta działa jednorazowo: otwiera sesję, przywraca to, co wybierzesz, i zapomina o drugiej instancji. Jeśli zamiast tego chcesz stałego układu, w którym ta maszyna według harmonogramu pobiera migawki innej instancji do własnego repozytorium, służy do tego zakładka **Pobieranie** na stronie **Instancje**.
 
+Kontener, którego sieci nie ma na tym serwerze, na przykład sieć `br0` z Unraida na zwykłym hoście Dockera, pokazuje pod swoim wierszem wybór sieci. BombVault tworzy go w wybranej sieci, razem z jego pozostałymi sieciami. Stały adres IP i adres MAC należały do starej sieci i przepadają, więc nada je nowa sieć.
+
 ## Zestaw odzyskiwania klucza szyfrowania
 
 To element, który umożliwia odzyskiwanie po awarii nawet wtedy, gdy nie ma działającego BombVault.

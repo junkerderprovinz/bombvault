@@ -57,6 +57,9 @@ type fakeServiceDocker struct {
 
 	allocations []model.Allocation
 	allocErr    error
+	// networks are the networks on the fake host; nil means Docker's three
+	// defaults.
+	networks []string
 
 	stopErr        error
 	startErr       error
@@ -205,6 +208,14 @@ func (f *fakeServiceDocker) Self(_ context.Context) (string, error) {
 func (f *fakeServiceDocker) Allocations(_ context.Context) ([]model.Allocation, error) {
 	f.calls = append(f.calls, "allocations")
 	return f.allocations, f.allocErr
+}
+
+func (f *fakeServiceDocker) Networks(_ context.Context) ([]string, error) {
+	f.calls = append(f.calls, "networks")
+	if f.networks == nil {
+		return []string{"bridge", "host", "none"}, nil
+	}
+	return f.networks, nil
 }
 
 // fakeVirsh is a no-op virshcli.Virsh.

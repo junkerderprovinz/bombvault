@@ -227,6 +227,8 @@ Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou re
 
 Um cartão separado no separador **Recuperação** abre o repo de uma instância BombVault *diferente* (uma partilha montada sob `/mnt`, ou um URL remoto) com a **`APP_KEY` dessa instância**, numa sessão pontual e só de leitura. Navegue pelos containers, VMs e conjuntos de ficheiros lá armazenados, escolha um instantâneo e restaure-o, e o objeto restaurado torna-se um container, VM ou conjunto de ficheiros local normal. Nada é alguma vez escrito no outro repo, e as suas próprias definições de backup ficam intactas (a sessão vive em memória e expira por si própria). Mover um container do servidor A para o servidor B deixa de significar reapontar as suas definições de repo e revertê-las depois. Este cartão é de uso único: abre uma sessão, restaura o que escolher e esquece a outra instância. Se quiser antes um arranjo permanente, em que esta máquina vai buscar segundo um agendamento os instantâneos de outra instância para o seu próprio repositório, isso é o separador **Recolha** da página **Instâncias**.
 
+Um contentor cuja rede não existe neste servidor, como uma rede `br0` do Unraid num host Docker comum, mostra uma escolha de rede por baixo da sua linha. O BombVault cria-o na rede que escolheres, juntamente com as outras redes. O IP fixo e o endereço MAC pertenciam à rede antiga e são descartados, por isso é a nova rede que os atribui.
+
 ## Kit de recuperação da chave de encriptação
 
 Esta é a peça que torna a recuperação de desastres possível mesmo quando não existe um BombVault em execução.

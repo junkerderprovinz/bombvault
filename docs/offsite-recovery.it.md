@@ -227,6 +227,8 @@ Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostru
 
 Una scheda separata nella scheda **Ripristino** apre il repo di un'*altra* istanza BombVault (una condivisione montata sotto `/mnt`, o un URL remoto) con l'**`APP_KEY` di quell'istanza**, in una sessione monouso e in sola lettura. Sfoglia i container, le VM e i set di file memorizzati lì, scegli uno snapshot e ripristinalo, e l'oggetto ripristinato diventa un normale container, VM o set di file locale. Nulla viene mai scritto nell'altro repo, e le tue impostazioni di backup restano intatte (la sessione risiede in memoria e scade da sé). Spostare un container dal server A al server B non significa più ripuntare le impostazioni del tuo repo e riportarle indietro dopo. Questa scheda è monouso: apre una sessione, ripristina ciò che scegli e dimentica l'altra istanza. Se invece vuoi un accordo stabile, in cui questa macchina preleva secondo una pianificazione gli snapshot di un'altra istanza nel proprio repository, quella è la scheda **Prelievo** della pagina **Istanze**.
 
+Un container la cui rete non esiste su questo server, per esempio una rete `br0` di Unraid su un normale host Docker, mostra una scelta della rete sotto la sua riga. BombVault lo crea sulla rete che scegli, insieme alle sue altre reti. L'IP fisso e l'indirizzo MAC appartenevano alla vecchia rete e vengono tolti, quindi li assegna la nuova rete.
+
 ## Kit di ripristino della chiave di crittografia
 
 Questo è il pezzo che rende possibile il disaster recovery anche quando non c'è alcun BombVault in esecuzione.

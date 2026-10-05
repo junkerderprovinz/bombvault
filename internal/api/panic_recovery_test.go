@@ -189,7 +189,7 @@ func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) 
 	// The snapshot has no Paths, so runRestoreFileSet falls back to
 	// RestoreInclude("/"), where restorePanic fires.
 	eng.restorePanic = true
-	started, err := svc.StartForeignRestore(context.Background(), sessionID, "files", "docs", "latest", true, "restore-here/docs", nil, false, "")
+	started, err := svc.StartForeignRestore(context.Background(), sessionID, "files", "docs", "latest", true, "restore-here/docs", nil, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("foreign restore should start: started=%v err=%v", started, err)
 	}

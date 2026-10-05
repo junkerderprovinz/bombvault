@@ -227,6 +227,8 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 
 A separate card on the **Recovery** tab opens a *different* BombVault instance's repo (a share mounted under `/mnt`, or a remote URL) with **that instance's `APP_KEY`**, in a one-time, read-only session. Browse the containers, VMs and file sets stored there, pick a snapshot and restore it, and the restored object becomes a normal local container, VM or file set. Nothing is ever written to the other repo, and your own backup settings stay untouched (the session lives in memory and expires by itself). Moving a container from server A to server B does not mean repointing your repo settings and reverting them afterwards. This card is a one-shot: it opens a session, restores what you pick, and forgets the other instance. If you want a standing arrangement instead, where this box fetches another instance's snapshots into its own repository on a schedule, that is the **Pull** tab of the **Instances** page.
 
+A container whose network does not exist on this server, such as an Unraid `br0` network on a plain Docker host, shows a network picker under its row. BombVault creates it on the network you pick, together with its other networks. The fixed IP and MAC address belonged to the old network and are dropped, so the new network assigns them.
+
 ## Encryption-key recovery kit
 
 This is the piece that makes disaster recovery possible even when there is no running BombVault.

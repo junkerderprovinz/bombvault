@@ -6530,7 +6530,8 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 // it is reachable via a direct API call only; the request fails with a clear,
 // actionable error instead of a deep zfs-receive failure when it's needed but
 // missing. wholeTree, for the zfs domain, restores every dataset of the
-// snapshot's run into its own subfolder of target.
+// snapshot's run into its own subfolder of target. network names the network
+// a container goes onto when this host lacks its own.
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session   string   `json:"session"`
@@ -6543,6 +6544,7 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		Overwrite bool     `json:"overwrite"`
 		ZvolPool  string   `json:"zvolPool"`
 		WholeTree bool     `json:"wholeTree"`
+		Network   string   `json:"network"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -6555,7 +6557,7 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	case body.WholeTree:
 		started, err = h.svc.StartForeignRestoreZFSTree(r.Context(), body.Session, body.Item, body.Snapshot, body.Confirm, body.Target)
 	default:
-		started, err = h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
+		started, err = h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool, body.Network)
 	}
 	if err != nil { // synchronous validation failed — nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
@@ -6598,7 +6600,9 @@ func (h *Handler) handleForeignFiles(w http.ResponseWriter, r *http.Request) {
 // container that point at a pool this host lacks, so the Recovery card can warn
 // the operator BEFORE a cross-pool restore (appdata is remapped automatically;
 // these binds are theirs to fix in the template). Read-only; key stays
-// server-side. POST /api/foreign/container-warnings  body {session, item}
+// server-side. It also names the container's network when this host lacks it,
+// with the networks it can go onto instead.
+// POST /api/foreign/container-warnings  body {session, item}
 func (h *Handler) handleForeignContainerWarnings(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session string `json:"session"`
@@ -6615,5 +6619,14 @@ func (h *Handler) handleForeignContainerWarnings(w http.ResponseWriter, r *http.
 	if warnings == nil {
 		warnings = []ForeignBindWarning{}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings}))
+	// The restore refuses a missing network by itself, so a Docker error here
+	// only costs the picker.
+	missing, networks, err := h.svc.ForeignContainerNetwork(r.Context(), body.Session, body.Item)
+	if err != nil {
+		log.Printf("api: foreign container networks: %v", scrubError(err))
+	}
+	if networks == nil {
+		networks = []string{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "missingNetwork": missing, "networks": networks}))
 }

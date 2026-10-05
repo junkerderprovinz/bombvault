@@ -227,6 +227,8 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 
 Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. Cette carte ne sert qu'une fois : elle ouvre une session, restaure ce que vous choisissez et oublie l'autre instance. Si vous voulez plutôt un arrangement permanent, où cette machine récupère selon un planning les instantanés d'une autre instance dans son propre dépôt, c'est l'onglet **Rapatriement** de la page **Instances**.
 
+Un conteneur dont le réseau n'existe pas sur ce serveur, par exemple un réseau `br0` d'Unraid sur un hôte Docker ordinaire, affiche un choix de réseau sous sa ligne. BombVault le crée sur le réseau que tu choisis, avec ses autres réseaux. L'adresse IP fixe et l'adresse MAC appartenaient à l'ancien réseau et disparaissent, c'est donc le nouveau réseau qui les attribue.
+
 ## Kit de récupération de clé de chiffrement
 
 C'est la pièce qui rend la reprise après sinistre possible même lorsqu'il n'y a aucun BombVault en fonctionnement.

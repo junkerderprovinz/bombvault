@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
@@ -39,12 +40,10 @@ func (s *Service) destinationMounted(repo string) bool {
 	if restic.IsRemoteRepo(repo) {
 		return false
 	}
-	f, err := os.Open(mountinfoPath) //nolint:gosec // G304: mountinfoPath is a fixed package var (/proc/self/mountinfo), overridden only by tests
-	if err != nil {
+	mounted, ok := mountPoints()
+	if !ok {
 		return false
 	}
-	defer f.Close() //nolint:errcheck // read-only handle
-	mounted := parseMountedDirs(f)
 
 	// Mount records use forward slashes, so both paths are normalised the same
 	// way.
@@ -60,6 +59,36 @@ func (s *Service) destinationMounted(repo string) bool {
 		}
 		p = parent
 	}
+}
+
+// restoreTargetMounted is destinationMounted for a folder a cross-instance
+// restore writes into. On a plain Docker host the Host Data bind at
+// HostMountRoot is the storage itself, so a folder below it counts as long as
+// that bind is mounted. On Unraid the bind is /mnt, where a folder outside a
+// mounted share lives in RAM, so there only a mount below the root counts.
+func (s *Service) restoreTargetMounted(p string) bool {
+	if s.destinationMounted(p) {
+		return true
+	}
+	if s.platformFn().Kind() != platform.KindGeneric {
+		return false
+	}
+	mounted, ok := mountPoints()
+	if !ok {
+		return false
+	}
+	root := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
+	return mounted[root] && isStrictSubpath(root, path.Clean(filepath.ToSlash(p)))
+}
+
+// mountPoints reads the mount table; false means it could not be read.
+func mountPoints() (map[string]bool, bool) {
+	f, err := os.Open(mountinfoPath) //nolint:gosec // G304: mountinfoPath is a fixed package var (/proc/self/mountinfo), overridden only by tests
+	if err != nil {
+		return nil, false
+	}
+	defer f.Close() //nolint:errcheck // read-only handle
+	return parseMountedDirs(f), true
 }
 
 // isStrictSubpath reports whether p lies below root and is not root itself.

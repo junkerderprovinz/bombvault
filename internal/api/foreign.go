@@ -459,11 +459,14 @@ func foreignItems(m map[string][]restic.Snapshot) []ForeignItem {
 // is. See prepareRestoreVMForTarget's destZvolPool doc comment for the full
 // rebase/refusal behavior. Ignored for every other domain and for a VM with
 // no zvol disks.
-func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool string) (bool, error) {
+//
+// network is the network a container goes onto when this host lacks its
+// primary one; see placeOnNetwork.
+func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool, network string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	key, run, onPanic, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite, zvolPool)
+	key, run, onPanic, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite, zvolPool, network)
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
@@ -536,7 +539,7 @@ func (s *Service) launchForeignRestore(ctx context.Context, domain, item, key st
 // prepareRestore); the item name is boundary-checked here because it feeds
 // restic tags, def filenames and progress keys. zvolPool is StartForeignRestore's
 // own parameter, passed straight through — see its doc comment.
-func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool string) (string, func(context.Context) error, func(string), error) {
+func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool, network string) (string, func(context.Context) error, func(string), error) {
 	if !confirm {
 		return "", nil, nil, backup.ErrNotConfirmed
 	}
@@ -577,6 +580,9 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// aliases say nothing about, so only the item's own tag is restored.
 		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, tagIdentity("container:"+item), destBase, overwrite)
 		if err != nil {
+			return "", nil, nil, err
+		}
+		if err := s.placeOnNetwork(ctx, &plan, network); err != nil {
 			return "", nil, nil, err
 		}
 		adopted, err := s.store.UpsertTarget(tg)
@@ -1175,22 +1181,32 @@ type ForeignBindWarning struct {
 // source mount root) are not pool binds and are skipped; appdata binds are
 // remapped by the restore and skipped. Read-only, session-scoped.
 func (s *Service) ForeignContainerBindWarnings(_ context.Context, sessionID, item string) ([]ForeignBindWarning, error) {
+	def, tg, err := s.foreignContainerDefinition(sessionID, item)
+	if err != nil {
+		return nil, err
+	}
+	return s.foreignBindWarnings(def.Inspect.HostConfig.Binds, tg.AppdataPaths), nil
+}
+
+// foreignContainerDefinition reads the stored definition of a container in an
+// open foreign session.
+func (s *Service) foreignContainerDefinition(sessionID, item string) (containerDefinition, store.Target, error) {
 	if !validResourceName(item) {
-		return nil, errors.New("invalid item name")
+		return containerDefinition{}, store.Target{}, errors.New("invalid item name")
 	}
 	sess, err := s.foreignSession(sessionID)
 	if err != nil {
-		return nil, err
+		return containerDefinition{}, store.Target{}, err
 	}
 	tg, err := s.foreignContainerTarget(sess, item)
 	if err != nil {
-		return nil, err
+		return containerDefinition{}, store.Target{}, err
 	}
 	var def containerDefinition
 	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
-		return nil, fmt.Errorf("foreign definition for %q is corrupt: %w", item, err)
+		return containerDefinition{}, store.Target{}, fmt.Errorf("foreign definition for %q is corrupt: %w", item, err)
 	}
-	return s.foreignBindWarnings(def.Inspect.HostConfig.Binds, tg.AppdataPaths), nil
+	return def, tg, nil
 }
 
 // foreignBindWarnings is the pure classification behind ForeignContainerBindWarnings
@@ -1217,7 +1233,7 @@ func (s *Service) foreignBindWarnings(binds, appdataPaths []string) []ForeignBin
 		if appdata[path.Clean(cp)] {
 			continue // appdata bind — remapped automatically
 		}
-		if !s.destinationMounted(cp) {
+		if !s.restoreTargetMounted(cp) {
 			out = append(out, ForeignBindWarning{Host: host, Container: container})
 		}
 	}
