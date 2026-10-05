@@ -2278,7 +2278,7 @@ const gl: Partial<Translations> = {
   "recovery.foreignOverwrite": "Sobrescribir se o destino xa contén datos",
   "recovery.foreignNetworkMissing": "Este servidor non ten ningunha rede {name}. No seu lugar:",
   "recovery.foreignNetwork": "Rede",
-  "recovery.foreignNetworkHint": "O contedor conserva o seu enderezo MAC e as outras redes. O seu IP fixo pertencía á rede antiga, así que a nova asígnalle un enderezo.",
+  "recovery.foreignNetworkHint": "O contedor conserva as outras redes. O IP fixo e o enderezo MAC pertencían á rede antiga, así que os asigna a nova.",
   "recovery.foreignBindWarning": "Estes binds apuntan a almacenamento que este servidor non ten. O appdata reasígnase automaticamente, pero corrixe isto na plantilla do contedor despois de restaurar:",
   "recovery.foreignRestore": "Restaurar aquí",
   "recovery.foreignExistsConfirm": "«{name}» xa existe neste sistema, así que restaurar SOBRESCRIBIRAO coa copia allea. Continuar?",

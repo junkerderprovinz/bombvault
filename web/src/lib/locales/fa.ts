@@ -2278,7 +2278,7 @@ const fa: Partial<Translations> = {
   "recovery.foreignOverwrite": "اگر مقصد از قبل داده دارد، رونویسی شود",
   "recovery.foreignNetworkMissing": "این سرور شبکه‌ای به نام {name} ندارد. به‌جای آن:",
   "recovery.foreignNetwork": "شبکه",
-  "recovery.foreignNetworkHint": "کانتینر آدرس MAC و شبکه‌های دیگرش را نگه می‌دارد. آدرس IP ثابتش مال شبکه قدیمی بود، پس شبکه جدید به آن آدرس می‌دهد.",
+  "recovery.foreignNetworkHint": "کانتینر شبکه‌های دیگرش را نگه می‌دارد. آدرس IP ثابت و آدرس MAC مال شبکه قدیمی بودند، پس شبکه جدید آن‌ها را می‌دهد.",
   "recovery.foreignBindWarning": "این bindها به فضای ذخیره‌سازی‌ای اشاره می‌کنند که این سرور ندارد. appdata به‌طور خودکار بازنگاشت می‌شود، اما این‌ها را پس از بازیابی در قالب کانتینر اصلاح کنید:",
   "recovery.foreignRestore": "بازیابی اینجا",
   "recovery.foreignExistsConfirm": "«{name}» از قبل روی این سیستم وجود دارد، پس بازیابی آن را با پشتیبان خارجی رونویسی خواهد کرد. ادامه می‌دهید؟",

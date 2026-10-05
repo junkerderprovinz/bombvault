@@ -1942,7 +1942,7 @@ const zh: Partial<Translations> = {
   "recovery.foreignOverwrite": "如果目标已包含数据则覆盖",
   "recovery.foreignNetworkMissing": "此服务器上没有网络 {name}。改用：",
   "recovery.foreignNetwork": "网络",
-  "recovery.foreignNetworkHint": "容器会保留其 MAC 地址和其他网络。它的固定 IP 地址属于旧网络，因此由新网络分配地址。",
+  "recovery.foreignNetworkHint": "容器会保留其他网络。固定 IP 地址和 MAC 地址属于旧网络，因此由新网络分配。",
   "recovery.foreignBindWarning": "这些绑定指向本服务器没有的存储。appdata 会自动重新映射，但请在恢复后于容器模板中修正这些:",
   "recovery.foreignRestore": "恢复到此处",
   "recovery.foreignExistsConfirm": "“{name}”已存在于本系统。恢复会用外部备份将其覆盖。是否继续？",

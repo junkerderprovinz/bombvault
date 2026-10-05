@@ -195,7 +195,7 @@ Erillinen **Palautus**-välilehti opastaa tuoreen tai uudelleenrakennetun asennu
 
 Erillinen kortti **Palautus**-välilehdellä avaa *toisen* BombVault-instanssin repon (kohtaan `/mnt` liitetty jako tai etä-URL) **kyseisen instanssin `APP_KEY`:llä**, kertaluonteisessa, vain luku -tilaisessa istunnossa. Selaa siihen tallennettuja kontteja, virtuaalikoneita ja tiedostojoukkoja, valitse tilannevedos ja palauta se, ja palautetusta objektista tulee normaali paikallinen kontti, VM tai tiedostojoukko. Toiseen repoon ei koskaan kirjoiteta mitään, ja omat varmuuskopioasetuksesi pysyvät koskemattomina (istunto asuu muistissa ja vanhenee itsestään). Kontin siirtäminen palvelimelta A palvelimelle B ei tarkoita repoasetustesi uudelleensuuntaamista ja niiden palauttamista jälkeenpäin. Tämä kortti on kertaluonteinen: se avaa istunnon, palauttaa valitsemasi ja unohtaa toisen instanssin. Jos haluat sen sijaan pysyvän järjestelyn, jossa tämä laatikko noutaa toisen instanssin tilannevedokset omaan repoonsa aikataulun mukaan, siihen on **Ilmentymät**-sivun **Nouto**-välilehti.
 
-Kontti, jonka verkkoa tällä palvelimella ei ole, esimerkiksi Unraidin `br0`-verkko tavallisella Docker-isännällä, näyttää rivinsä alla verkon valinnan. BombVault luo sen valitsemaasi verkkoon MAC-osoitteineen ja muine verkkoineen. Kiinteä IP-osoite kuului vanhaan verkkoon ja jää pois, joten uusi verkko antaa osoitteen.
+Kontti, jonka verkkoa tällä palvelimella ei ole, esimerkiksi Unraidin `br0`-verkko tavallisella Docker-isännällä, näyttää rivinsä alla verkon valinnan. BombVault luo sen valitsemaasi verkkoon muine verkkoineen. Kiinteä IP-osoite ja MAC-osoite kuuluivat vanhaan verkkoon ja jäävät pois, joten uusi verkko antaa ne.
 
 ## Salausavaimen palautuspaketti
 

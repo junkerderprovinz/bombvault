@@ -1951,7 +1951,7 @@ const da: Partial<Translations> = {
   "recovery.foreignOverwrite": "Overskriv, hvis destinationen allerede indeholder data",
   "recovery.foreignNetworkMissing": "Denne server har ikke netværket {name}. Brug i stedet:",
   "recovery.foreignNetwork": "Netværk",
-  "recovery.foreignNetworkHint": "Containeren beholder sin MAC-adresse og sine andre netværk. Dens faste IP-adresse hørte til det gamle netværk, så det nye tildeler en adresse.",
+  "recovery.foreignNetworkHint": "Containeren beholder sine andre netværk. Den faste IP-adresse og MAC-adressen hørte til det gamle netværk, så det nye tildeler dem.",
   "recovery.foreignBindWarning": "Disse bind peger på lager, denne server ikke har. Appdata remappes automatisk, men ret disse i containerens skabelon efter gendannelsen:",
   "recovery.foreignRestore": "Gendan hertil",
   "recovery.foreignExistsConfirm": "”{name}” findes allerede på dette system. Gendannelsen OVERSKRIVER det med den fremmede sikkerhedskopi. Fortsæt?",

@@ -2278,7 +2278,7 @@ const ca: Partial<Translations> = {
   "recovery.foreignOverwrite": "Sobreescriu si el destí ja conté dades",
   "recovery.foreignNetworkMissing": "Aquest servidor no té cap xarxa {name}. En lloc seu:",
   "recovery.foreignNetwork": "Xarxa",
-  "recovery.foreignNetworkHint": "El contenidor conserva la seva adreça MAC i les altres xarxes. L'adreça IP fixa pertanyia a la xarxa antiga, així que la nova n'assigna una.",
+  "recovery.foreignNetworkHint": "El contenidor conserva les altres xarxes. L'adreça IP fixa i l'adreça MAC pertanyien a la xarxa antiga, així que les assigna la nova.",
   "recovery.foreignBindWarning": "Aquests binds apunten a emmagatzematge que aquest servidor no té. L'appdata es redirigeix automàticament, però corregeix això a la plantilla del contenidor després de restaurar:",
   "recovery.foreignRestore": "Restaura aquí",
   "recovery.foreignExistsConfirm": "«{name}» ja existeix en aquest sistema, així que restaurar la SOBREESCRIURÀ amb la còpia externa. Vols continuar?",

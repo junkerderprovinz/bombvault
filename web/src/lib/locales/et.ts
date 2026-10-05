@@ -2278,7 +2278,7 @@ const et: Partial<Translations> = {
   "recovery.foreignOverwrite": "Kirjuta üle, kui sihtkohas on juba andmeid",
   "recovery.foreignNetworkMissing": "Selles serveris pole võrku {name}. Selle asemel:",
   "recovery.foreignNetwork": "Võrk",
-  "recovery.foreignNetworkHint": "Konteiner säilitab oma MAC-aadressi ja muud võrgud. Tema fikseeritud IP-aadress kuulus vanale võrgule, seega annab aadressi uus võrk.",
+  "recovery.foreignNetworkHint": "Konteiner säilitab oma muud võrgud. Fikseeritud IP-aadress ja MAC-aadress kuulusid vanale võrgule, seega annab need uus võrk.",
   "recovery.foreignBindWarning": "Need bindid osutavad salvestusruumile, mida sellel serveril pole. Appdata suunatakse automaatselt ümber, kuid paranda need pärast taastamist konteineri mallis:",
   "recovery.foreignRestore": "Taasta siia",
   "recovery.foreignExistsConfirm": "„{name}” on selles süsteemis juba olemas, seega taastamine KIRJUTAB selle üle võõra varundusega. Kas jätkata?",

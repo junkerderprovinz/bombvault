@@ -1949,7 +1949,7 @@ const es: Partial<Translations> = {
   "recovery.foreignOverwrite": "Sobrescribir si el destino ya contiene datos",
   "recovery.foreignNetworkMissing": "Este servidor no tiene ninguna red {name}. En su lugar:",
   "recovery.foreignNetwork": "Red",
-  "recovery.foreignNetworkHint": "El contenedor conserva su dirección MAC y sus otras redes. Su IP fija pertenecía a la red antigua, así que la nueva le asigna una dirección.",
+  "recovery.foreignNetworkHint": "El contenedor conserva sus otras redes. La IP fija y la dirección MAC pertenecían a la red antigua, así que las asigna la nueva.",
   "recovery.foreignBindWarning": "Estos montajes apuntan a almacenamiento que este servidor no tiene. Los appdata se reasignan automáticamente, pero corrige estos en la plantilla del contenedor tras la restauración:",
   "recovery.foreignRestore": "Restaurar aquí",
   "recovery.foreignExistsConfirm": "«{name}» ya existe en este sistema: la restauración lo SOBRESCRIBIRÁ con la copia ajena. ¿Continuar?",

@@ -1948,7 +1948,7 @@ const nl: Partial<Translations> = {
   "recovery.foreignOverwrite": "Overschrijven als de bestemming al gegevens bevat",
   "recovery.foreignNetworkMissing": "Deze server heeft geen netwerk {name}. In plaats daarvan:",
   "recovery.foreignNetwork": "Netwerk",
-  "recovery.foreignNetworkHint": "De container houdt zijn MAC-adres en zijn andere netwerken. Zijn vaste IP-adres hoorde bij het oude netwerk, dus het nieuwe geeft een adres.",
+  "recovery.foreignNetworkHint": "De container houdt zijn andere netwerken. Het vaste IP-adres en het MAC-adres hoorden bij het oude netwerk, dus het nieuwe geeft ze.",
   "recovery.foreignBindWarning": "Deze binds wijzen naar opslag die deze server niet heeft. Appdata wordt automatisch geremapt, maar corrigeer deze na het herstel in het containersjabloon:",
   "recovery.foreignRestore": "Hierheen herstellen",
   "recovery.foreignExistsConfirm": "“{name}” bestaat al op dit systeem. Herstellen zal het OVERSCHRIJVEN met de vreemde back-up. Doorgaan?",

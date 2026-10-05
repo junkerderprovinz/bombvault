@@ -1954,7 +1954,7 @@ const ro: Partial<Translations> = {
   "recovery.foreignOverwrite": "Suprascrie dacă destinația conține deja date",
   "recovery.foreignNetworkMissing": "Acest server nu are rețeaua {name}. În schimb:",
   "recovery.foreignNetwork": "Rețea",
-  "recovery.foreignNetworkHint": "Containerul își păstrează adresa MAC și celelalte rețele. Adresa IP fixă aparținea rețelei vechi, așa că adresa o atribuie rețeaua nouă.",
+  "recovery.foreignNetworkHint": "Containerul își păstrează celelalte rețele. Adresa IP fixă și adresa MAC aparțineau rețelei vechi, așa că le atribuie rețeaua nouă.",
   "recovery.foreignBindWarning": "Aceste montări indică spre stocare pe care acest server nu o are. Datele appdata sunt remapate automat, dar corectează-le în șablonul containerului după restaurare:",
   "recovery.foreignRestore": "Restaurează aici",
   "recovery.foreignExistsConfirm": "„{name}” există deja pe acest sistem. Restaurarea îl va SUPRASCRIE cu copia străină. Continuați?",

@@ -1951,7 +1951,7 @@ const pt: Partial<Translations> = {
   "recovery.foreignOverwrite": "Substituir se o destino já contiver dados",
   "recovery.foreignNetworkMissing": "Este servidor não tem nenhuma rede {name}. Em vez dela:",
   "recovery.foreignNetwork": "Rede",
-  "recovery.foreignNetworkHint": "O contentor mantém o endereço MAC e as outras redes. O IP fixo pertencia à rede antiga, por isso é a nova que atribui um endereço.",
+  "recovery.foreignNetworkHint": "O contentor mantém as outras redes. O IP fixo e o endereço MAC pertenciam à rede antiga, por isso é a nova que os atribui.",
   "recovery.foreignBindWarning": "Estas ligações apontam para armazenamento que este servidor não tem. Os appdata são remapeados automaticamente, mas corrija estas no modelo do contentor após o restauro:",
   "recovery.foreignRestore": "Restaurar aqui",
   "recovery.foreignExistsConfirm": "«{name}» já existe neste sistema. O restauro irá SOBRESCREVÊ-LO com o backup externo. Continuar?",

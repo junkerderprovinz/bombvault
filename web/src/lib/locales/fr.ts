@@ -1951,7 +1951,7 @@ const fr: Partial<Translations> = {
   "recovery.foreignOverwrite": "Écraser si la destination contient déjà des données",
   "recovery.foreignNetworkMissing": "Ce serveur n'a pas de réseau {name}. À la place :",
   "recovery.foreignNetwork": "Réseau",
-  "recovery.foreignNetworkHint": "Le conteneur garde son adresse MAC et ses autres réseaux. Son adresse IP fixe appartenait à l'ancien réseau, c'est donc le nouveau qui attribue une adresse.",
+  "recovery.foreignNetworkHint": "Le conteneur garde ses autres réseaux. L'adresse IP fixe et l'adresse MAC appartenaient à l'ancien réseau, c'est donc le nouveau qui les attribue.",
   "recovery.foreignBindWarning": "Ces montages pointent vers un stockage que ce serveur n'a pas. Les appdata sont remappés automatiquement, mais corrigez ceux-ci dans le modèle du conteneur après la restauration :",
   "recovery.foreignRestore": "Restaurer ici",
   "recovery.foreignExistsConfirm": "« {name} » existe déjà sur ce système : la restauration l'ÉCRASERA avec la sauvegarde étrangère. Continuer ?",

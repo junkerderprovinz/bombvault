@@ -59,7 +59,7 @@ func openForeignWithDef(t *testing.T, s *Service, in model.Inspect) string {
 	return id
 }
 
-func TestMoveToNetworkKeepsMACAndSecondaryNetworks(t *testing.T) {
+func TestMoveToNetworkKeepsTheSecondaryNetworks(t *testing.T) {
 	plan := containerRestorePlan{inspect: unraidWeb(), templateXML: "<Network>br0.20</Network>"}
 	moveToNetwork(&plan, "br0.20", "bridge")
 
@@ -67,7 +67,7 @@ func TestMoveToNetworkKeepsMACAndSecondaryNetworks(t *testing.T) {
 	if in.HostConfig.NetworkMode != "bridge" {
 		t.Fatalf("network mode = %q, want bridge", in.HostConfig.NetworkMode)
 	}
-	want := model.NetworkEndpoint{Name: "bridge", MACAddress: "02:42:c0:a8:14:05", Aliases: []string{"web"}}
+	want := model.NetworkEndpoint{Name: "bridge", Aliases: []string{"web"}}
 	if !reflect.DeepEqual(in.Network, want) {
 		t.Fatalf("primary = %+v, want %+v", in.Network, want)
 	}
@@ -148,8 +148,8 @@ func TestForeignRestoreCreatesTheContainerOnTheChosenNetwork(t *testing.T) {
 	if created != 1 {
 		t.Fatalf("created %d containers, want one", created)
 	}
-	if in.HostConfig.NetworkMode != "bridge" || in.Network.Name != "bridge" || in.Network.IPv4Address != "" {
-		t.Fatalf("recreated on %q with primary %+v, want bridge without the old IP", in.HostConfig.NetworkMode, in.Network)
+	if in.HostConfig.NetworkMode != "bridge" || in.Network.Name != "bridge" || in.Network.IPv4Address != "" || in.Network.MACAddress != "" {
+		t.Fatalf("recreated on %q with primary %+v, want bridge without the old IP and MAC", in.HostConfig.NetworkMode, in.Network)
 	}
 	xml, _, err := template.Read(s.cfg.FlashTemplatesDir, "web")
 	if err != nil || !strings.Contains(xml, "<Network>bridge</Network>") {

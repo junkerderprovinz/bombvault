@@ -42,8 +42,8 @@ func customNetwork(in model.Inspect) string {
 }
 
 // restoreNetworks are the networks a container can be moved onto. host and
-// none are left out: neither takes the endpoint settings a moved container
-// carries along.
+// none are left out: neither takes the aliases and secondary networks a moved
+// container keeps.
 func restoreNetworks(have []string) []string {
 	return slices.DeleteFunc(slices.Clone(have), func(n string) bool { return n == "host" || n == "none" })
 }
@@ -83,13 +83,12 @@ func (s *Service) placeOnNetwork(ctx context.Context, plan *containerRestorePlan
 }
 
 // moveToNetwork puts the restored container on to in place of its primary
-// network from. The static IP belonged to the old subnet and is dropped.
+// network from. The static IP and MAC address belonged to the old network and
+// are dropped; an ipvlan network refuses a set MAC address outright.
 func moveToNetwork(plan *containerRestorePlan, from, to string) {
 	in := &plan.inspect
 	in.HostConfig.NetworkMode = to
-	ep := in.Network
-	ep.Name = to
-	ep.IPv4Address = ""
+	ep := model.NetworkEndpoint{Name: to, Aliases: in.Network.Aliases}
 	in.Network = ep
 	nets := []model.NetworkEndpoint{ep}
 	for _, n := range in.Networks {

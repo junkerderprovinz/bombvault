@@ -2278,7 +2278,7 @@ const sk: Partial<Translations> = {
   "recovery.foreignOverwrite": "Prepísať, ak cieľ už obsahuje dáta",
   "recovery.foreignNetworkMissing": "Tento server nemá sieť {name}. Namiesto nej:",
   "recovery.foreignNetwork": "Sieť",
-  "recovery.foreignNetworkHint": "Kontajner si ponechá svoju MAC adresu aj ostatné siete. Jeho pevná IP adresa patrila starej sieti, adresu teraz pridelí nová.",
+  "recovery.foreignNetworkHint": "Kontajner si ponechá ostatné siete. Pevná IP adresa aj MAC adresa patrili starej sieti, obe teraz pridelí nová.",
   "recovery.foreignBindWarning": "Tieto väzby ukazujú na úložisko, ktoré tento server nemá. Appdata sa automaticky premapuje, ale opravte toto v šablóne kontajnera po obnovení:",
   "recovery.foreignRestore": "Obnoviť sem",
   "recovery.foreignExistsConfirm": "„{name}“ už v tomto systéme existuje, takže obnovenie ho PREPÍŠE cudzou zálohou. Pokračovať?",

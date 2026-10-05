@@ -1951,7 +1951,7 @@ const he: Partial<Translations> = {
   "recovery.foreignOverwrite": "לשכתב אם היעד כבר מכיל נתונים",
   "recovery.foreignNetworkMissing": "בשרת הזה אין רשת בשם {name}. במקומה:",
   "recovery.foreignNetwork": "רשת",
-  "recovery.foreignNetworkHint": "הקונטיינר שומר על כתובת ה-MAC שלו ועל הרשתות האחרות שלו. כתובת ה-IP הקבועה שלו הייתה שייכת לרשת הישנה, ולכן הרשת החדשה מקצה לו כתובת.",
+  "recovery.foreignNetworkHint": "הקונטיינר שומר על הרשתות האחרות שלו. כתובת ה-IP הקבועה וכתובת ה-MAC היו שייכות לרשת הישנה, ולכן הרשת החדשה מקצה אותן.",
   "recovery.foreignBindWarning": "חיבורים אלה מצביעים על אחסון שאין לשרת הזה. נתוני appdata ממופים מחדש אוטומטית, אך תקנו אותם בתבנית הקונטיינר לאחר השחזור:",
   "recovery.foreignRestore": "שחזר לכאן",
   "recovery.foreignExistsConfirm": "\"{name}\" כבר קיים במערכת הזו: השחזור ידרוס אותו עם הגיבוי הזר. להמשיך?",

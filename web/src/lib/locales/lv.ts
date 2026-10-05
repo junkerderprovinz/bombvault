@@ -2278,7 +2278,7 @@ const lv: Partial<Translations> = {
   "recovery.foreignOverwrite": "Pārrakstīt, ja mērķī jau ir dati",
   "recovery.foreignNetworkMissing": "Šajā serverī nav tīkla {name}. Tā vietā:",
   "recovery.foreignNetwork": "Tīkls",
-  "recovery.foreignNetworkHint": "Konteiners saglabā savu MAC adresi un citus tīklus. Tā fiksētā IP adrese piederēja vecajam tīklam, tāpēc adresi piešķir jaunais.",
+  "recovery.foreignNetworkHint": "Konteiners saglabā savus citus tīklus. Fiksētā IP adrese un MAC adrese piederēja vecajam tīklam, tāpēc tās piešķir jaunais.",
   "recovery.foreignBindWarning": "Šīs saites norāda uz krātuvi, kāda šim serverim nav. Appdata tiek automātiski pārkartota, bet salabojiet to konteinera veidnē pēc atjaunošanas:",
   "recovery.foreignRestore": "Atjaunot šeit",
   "recovery.foreignExistsConfirm": "„{name}” šajā sistēmā jau eksistē, tāpēc atjaunošana to PĀRRAKSTĪS ar svešu rezerves kopiju. Turpināt?",

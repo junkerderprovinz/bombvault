@@ -2262,7 +2262,7 @@ const sl: Partial<Translations> = {
   "recovery.foreignOverwrite": "Prepiši, če cilj že vsebuje podatke",
   "recovery.foreignNetworkMissing": "Ta strežnik nima omrežja {name}. Namesto njega:",
   "recovery.foreignNetwork": "Omrežje",
-  "recovery.foreignNetworkHint": "Vsebnik obdrži svoj naslov MAC in druga omrežja. Njegov stalni naslov IP je pripadal staremu omrežju, zato naslov dodeli novo.",
+  "recovery.foreignNetworkHint": "Vsebnik obdrži druga omrežja. Stalni naslov IP in naslov MAC sta pripadala staremu omrežju, zato ju dodeli novo.",
   "recovery.foreignBindWarning": "Te povezave kažejo na shrambo, ki je ta strežnik nima. Appdata se preslika samodejno, a to po obnovitvi popravi v predlogi vsebnika:",
   "recovery.foreignRestore": "Obnovi sem",
   "recovery.foreignExistsConfirm": "\"{name}\" na tem sistemu že obstaja, zato bo obnovitev to PREPISALA s tujo varnostno kopijo. Nadaljujem?",

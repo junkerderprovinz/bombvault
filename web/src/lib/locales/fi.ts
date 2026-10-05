@@ -1951,7 +1951,7 @@ const fi: Partial<Translations> = {
   "recovery.foreignOverwrite": "Korvaa, jos kohteessa on jo dataa",
   "recovery.foreignNetworkMissing": "Tällä palvelimella ei ole verkkoa {name}. Sen sijaan:",
   "recovery.foreignNetwork": "Verkko",
-  "recovery.foreignNetworkHint": "Kontti säilyttää MAC-osoitteensa ja muut verkkonsa. Sen kiinteä IP-osoite kuului vanhaan verkkoon, joten uusi verkko antaa osoitteen.",
+  "recovery.foreignNetworkHint": "Kontti säilyttää muut verkkonsa. Kiinteä IP-osoite ja MAC-osoite kuuluivat vanhaan verkkoon, joten uusi verkko antaa ne.",
   "recovery.foreignBindWarning": "Nämä sidokset osoittavat tallennustilaan jota tällä palvelimella ei ole. Appdata uudelleenohjataan automaattisesti, mutta korjaa nämä kontin mallipohjassa palautuksen jälkeen:",
   "recovery.foreignRestore": "Palauta tänne",
   "recovery.foreignExistsConfirm": "”{name}” on jo tässä järjestelmässä. Palautus KORVAA sen vieraalla varmuuskopiolla. Jatketaanko?",

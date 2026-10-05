@@ -2278,7 +2278,7 @@ const eu: Partial<Translations> = {
   "recovery.foreignOverwrite": "Gainidatzi helmugak jada daturik badu",
   "recovery.foreignNetworkMissing": "Zerbitzari honek ez du {name} sarerik. Horren ordez:",
   "recovery.foreignNetwork": "Sarea",
-  "recovery.foreignNetworkHint": "Edukiontziak bere MAC helbidea eta beste sareak gordetzen ditu. IP helbide finkoa sare zaharrarena zen, beraz sare berriak emango dio helbidea.",
+  "recovery.foreignNetworkHint": "Edukiontziak bere beste sareak gordetzen ditu. IP helbide finkoa eta MAC helbidea sare zaharrarenak ziren, beraz sare berriak emango ditu.",
   "recovery.foreignBindWarning": "Bind hauek zerbitzari honek ez duen biltegiratzera zuzentzen dute. Appdata automatikoki birbideratzen da, baina konpondu hauek berrezarpenaren ondoren edukiontziaren txantiloian:",
   "recovery.foreignRestore": "Berrezarri hemen",
   "recovery.foreignExistsConfirm": "«{name}» sistema honetan jada existitzen da, beraz berrezartzeak kanpoko babeskopiarekin GAINIDATZIKO du. Jarraitu nahi duzu?",

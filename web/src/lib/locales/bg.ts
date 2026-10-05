@@ -2278,7 +2278,7 @@ const bg: Partial<Translations> = {
   "recovery.foreignOverwrite": "Презапиши, ако целта вече съдържа данни",
   "recovery.foreignNetworkMissing": "На този сървър няма мрежа {name}. Вместо нея:",
   "recovery.foreignNetwork": "Мрежа",
-  "recovery.foreignNetworkHint": "Контейнерът запазва своя MAC адрес и другите си мрежи. Фиксираният му IP адрес принадлежеше на старата мрежа, затова новата задава адрес.",
+  "recovery.foreignNetworkHint": "Контейнерът запазва другите си мрежи. Фиксираният IP адрес и MAC адресът принадлежаха на старата мрежа, затова новата ги задава.",
   "recovery.foreignBindWarning": "Тези binds сочат към съхранение, което този сървър няма. Appdata се пренасочва автоматично, но поправи тези в шаблона на контейнера след възстановяването:",
   "recovery.foreignRestore": "Възстанови тук",
   "recovery.foreignExistsConfirm": "„{name}“ вече съществува на тази система, затова възстановяването ще я ПРЕЗАПИШЕ с чуждото архивиране. Продължи ли?",

@@ -2278,7 +2278,7 @@ const ms: Partial<Translations> = {
   "recovery.foreignOverwrite": "Tulis ganti jika destinasi sudah mengandungi data",
   "recovery.foreignNetworkMissing": "Pelayan ini tiada rangkaian {name}. Sebagai ganti:",
   "recovery.foreignNetwork": "Rangkaian",
-  "recovery.foreignNetworkHint": "Bekas mengekalkan alamat MAC dan rangkaian lainnya. Alamat IP tetapnya milik rangkaian lama, jadi rangkaian baharu yang memberikan alamat.",
+  "recovery.foreignNetworkHint": "Bekas mengekalkan rangkaian lainnya. Alamat IP tetap dan alamat MAC milik rangkaian lama, jadi rangkaian baharu yang memberikannya.",
   "recovery.foreignBindWarning": "Bind ini menunjuk kepada storan yang tiada pada pelayan ini. Appdata dipetakan semula secara automatik, tetapi betulkan ini dalam templat bekas selepas pemulihan:",
   "recovery.foreignRestore": "Pulihkan di sini",
   "recovery.foreignExistsConfirm": "\"{name}\" sudah wujud pada sistem ini, jadi pemulihan akan MENULIS GANTI ia dengan sandaran asing. Teruskan?",

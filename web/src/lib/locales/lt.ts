@@ -2278,7 +2278,7 @@ const lt: Partial<Translations> = {
   "recovery.foreignOverwrite": "Perrašyti, jei paskirtyje jau yra duomenų",
   "recovery.foreignNetworkMissing": "Šiame serveryje nėra tinklo {name}. Vietoj jo:",
   "recovery.foreignNetwork": "Tinklas",
-  "recovery.foreignNetworkHint": "Konteineris išlaiko savo MAC adresą ir kitus tinklus. Jo fiksuotas IP adresas priklausė senajam tinklui, todėl adresą suteikia naujasis.",
+  "recovery.foreignNetworkHint": "Konteineris išlaiko kitus savo tinklus. Fiksuotas IP adresas ir MAC adresas priklausė senajam tinklui, todėl juos suteikia naujasis.",
   "recovery.foreignBindWarning": "Šie bind nurodo į saugyklą, kurios šis serveris neturi. Appdata automatiškai pertvarkoma, tačiau ištaisykite tai konteinerio šablone po atkūrimo:",
   "recovery.foreignRestore": "Atkurti čia",
   "recovery.foreignExistsConfirm": "„{name}“ jau yra šioje sistemoje, todėl atkūrimas jį PERRAŠYS svetimo šaltinio atsargine kopija. Tęsti?",

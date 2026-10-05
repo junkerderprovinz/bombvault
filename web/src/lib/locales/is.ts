@@ -2278,7 +2278,7 @@ const is: Partial<Translations> = {
   "recovery.foreignOverwrite": "Skrifa yfir ef áfangastaðurinn inniheldur þegar gögn",
   "recovery.foreignNetworkMissing": "Þessi þjónn hefur ekkert net sem heitir {name}. Í staðinn:",
   "recovery.foreignNetwork": "Net",
-  "recovery.foreignNetworkHint": "Gámurinn heldur MAC-vistfangi sínu og hinum netunum. Fasta IP-vistfangið tilheyrði gamla netinu, svo nýja netið úthlutar vistfangi.",
+  "recovery.foreignNetworkHint": "Gámurinn heldur hinum netunum sínum. Fasta IP-vistfangið og MAC-vistfangið tilheyrðu gamla netinu, svo nýja netið úthlutar þeim.",
   "recovery.foreignBindWarning": "Þessar bindingar benda á geymslu sem þessi netþjónn hefur ekki. Appdata er endurkortlagt sjálfkrafa, en lagfærðu þetta í gámasniðmátinu eftir endurheimtina:",
   "recovery.foreignRestore": "Endurheimta hér",
   "recovery.foreignExistsConfirm": "„{name}“ er þegar til á þessu kerfi, svo endurheimt mun SKRIFA YFIR það með aðkomna afritinu. Halda áfram?",

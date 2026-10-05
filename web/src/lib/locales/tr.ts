@@ -1951,7 +1951,7 @@ const tr: Partial<Translations> = {
   "recovery.foreignOverwrite": "Hedefte zaten veri varsa üzerine yaz",
   "recovery.foreignNetworkMissing": "Bu sunucuda {name} adlı bir ağ yok. Bunun yerine:",
   "recovery.foreignNetwork": "Ağ",
-  "recovery.foreignNetworkHint": "Konteyner MAC adresini ve diğer ağlarını korur. Sabit IP adresi eski ağa aitti, bu yüzden adresi yeni ağ verir.",
+  "recovery.foreignNetworkHint": "Konteyner diğer ağlarını korur. Sabit IP adresi ve MAC adresi eski ağa aitti, bu yüzden bunları yeni ağ verir.",
   "recovery.foreignBindWarning": "Bu bağlamalar bu sunucuda olmayan depolamayı gösteriyor. Appdata otomatik olarak yeniden eşlenir, ancak bunları geri yüklemeden sonra kapsayıcının şablonunda düzeltin:",
   "recovery.foreignRestore": "Buraya geri yükle",
   "recovery.foreignExistsConfirm": "\"{name}\" bu sistemde zaten var. Geri yükleme onu yabancı yedekle ÜZERİNE YAZACAK. Devam edilsin mi?",

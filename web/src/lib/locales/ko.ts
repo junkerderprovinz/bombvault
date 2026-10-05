@@ -1942,7 +1942,7 @@ const ko: Partial<Translations> = {
   "recovery.foreignOverwrite": "대상에 이미 데이터가 있으면 덮어쓰기",
   "recovery.foreignNetworkMissing": "이 서버에는 {name} 네트워크가 없습니다. 대신 사용할 네트워크:",
   "recovery.foreignNetwork": "네트워크",
-  "recovery.foreignNetworkHint": "컨테이너는 MAC 주소와 다른 네트워크를 그대로 유지합니다. 고정 IP 주소는 이전 네트워크에 속해 있었으므로 새 네트워크가 주소를 할당합니다.",
+  "recovery.foreignNetworkHint": "컨테이너는 다른 네트워크를 그대로 유지합니다. 고정 IP 주소와 MAC 주소는 이전 네트워크에 속해 있었으므로 새 네트워크가 할당합니다.",
   "recovery.foreignBindWarning": "이 바인드는 이 서버에 없는 저장 공간을 가리킵니다. appdata는 자동으로 재매핑되지만, 복원 후 컨테이너 템플릿에서 이 항목들을 수정하세요:",
   "recovery.foreignRestore": "여기로 복원",
   "recovery.foreignExistsConfirm": "\"{name}\"이(가) 이 시스템에 이미 있습니다. 복원하면 외부 백업으로 덮어쓰게 됩니다. 계속할까요?",

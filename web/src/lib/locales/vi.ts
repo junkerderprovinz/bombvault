@@ -1942,7 +1942,7 @@ const vi: Partial<Translations> = {
   "recovery.foreignOverwrite": "Ghi đè nếu đích đã chứa dữ liệu",
   "recovery.foreignNetworkMissing": "Máy chủ này không có mạng {name}. Thay vào đó:",
   "recovery.foreignNetwork": "Mạng",
-  "recovery.foreignNetworkHint": "Container giữ nguyên địa chỉ MAC và các mạng khác của nó. Địa chỉ IP cố định thuộc về mạng cũ, nên mạng mới sẽ cấp địa chỉ.",
+  "recovery.foreignNetworkHint": "Container giữ nguyên các mạng khác của nó. Địa chỉ IP cố định và địa chỉ MAC thuộc về mạng cũ, nên mạng mới sẽ cấp chúng.",
   "recovery.foreignBindWarning": "Các bind này trỏ đến bộ nhớ mà máy chủ này không có. Appdata được ánh xạ lại tự động, nhưng hãy sửa chúng trong mẫu container sau khi khôi phục:",
   "recovery.foreignRestore": "Khôi phục vào đây",
   "recovery.foreignExistsConfirm": "\"{name}\" đã tồn tại trên hệ thống này. Việc khôi phục sẽ GHI ĐÈ nó bằng bản sao lưu bên ngoài. Tiếp tục?",

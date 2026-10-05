@@ -1954,7 +1954,7 @@ const ar: Partial<Translations> = {
   "recovery.foreignOverwrite": "الكتابة فوق البيانات إذا كانت الوجهة تحتوي بالفعل على بيانات",
   "recovery.foreignNetworkMissing": "لا توجد على هذا الخادم شبكة باسم {name}. بدلًا منها:",
   "recovery.foreignNetwork": "الشبكة",
-  "recovery.foreignNetworkHint": "تحتفظ الحاوية بعنوان MAC الخاص بها وبشبكاتها الأخرى. عنوان IP الثابت كان تابعًا للشبكة القديمة، لذلك تمنح الشبكة الجديدة عنوانًا.",
+  "recovery.foreignNetworkHint": "تحتفظ الحاوية بشبكاتها الأخرى. عنوان IP الثابت وعنوان MAC كانا تابعين للشبكة القديمة، لذلك تمنحهما الشبكة الجديدة.",
   "recovery.foreignBindWarning": "تشير هذه الارتباطات إلى تخزين لا يملكه هذا الخادم. تُعاد بيانات appdata تلقائيًا، لكن صحّح هذه في قالب الحاوية بعد الاستعادة:",
   "recovery.foreignRestore": "الاستعادة إلى هنا",
   "recovery.foreignExistsConfirm": "«{name}» موجود بالفعل على هذا النظام. ستؤدي الاستعادة إلى الكتابة فوقه بالنسخة الخارجية. هل تريد المتابعة؟",

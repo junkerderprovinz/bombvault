@@ -1951,7 +1951,7 @@ const it: Partial<Translations> = {
   "recovery.foreignOverwrite": "Sovrascrivi se la destinazione contiene già dati",
   "recovery.foreignNetworkMissing": "Questo server non ha nessuna rete {name}. Al suo posto:",
   "recovery.foreignNetwork": "Rete",
-  "recovery.foreignNetworkHint": "Il container mantiene il suo indirizzo MAC e le altre reti. Il suo IP fisso apparteneva alla vecchia rete, quindi l'indirizzo lo assegna quella nuova.",
+  "recovery.foreignNetworkHint": "Il container mantiene le altre reti. L'IP fisso e l'indirizzo MAC appartenevano alla vecchia rete, quindi li assegna quella nuova.",
   "recovery.foreignBindWarning": "Questi bind puntano ad archiviazione che questo server non ha. Gli appdata vengono rimappati automaticamente, ma correggi questi nel modello del contenitore dopo il ripristino:",
   "recovery.foreignRestore": "Ripristina qui",
   "recovery.foreignExistsConfirm": "“{name}” esiste già su questo sistema. Il ripristino lo SOVRASCRIVERÀ con il backup esterno. Continuare?",

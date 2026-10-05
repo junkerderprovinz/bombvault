@@ -2278,7 +2278,7 @@ const id: Partial<Translations> = {
   "recovery.foreignOverwrite": "Timpa jika tujuan sudah berisi data",
   "recovery.foreignNetworkMissing": "Server ini tidak punya jaringan {name}. Sebagai gantinya:",
   "recovery.foreignNetwork": "Jaringan",
-  "recovery.foreignNetworkHint": "Container tetap memakai alamat MAC dan jaringan lainnya. Alamat IP tetapnya milik jaringan lama, jadi jaringan baru yang memberi alamat.",
+  "recovery.foreignNetworkHint": "Container tetap memakai jaringan lainnya. Alamat IP tetap dan alamat MAC milik jaringan lama, jadi jaringan baru yang memberikannya.",
   "recovery.foreignBindWarning": "Bind ini mengarah ke penyimpanan yang tidak dimiliki server ini. Appdata dipetakan ulang secara otomatis, tetapi perbaiki ini di template container setelah pemulihan:",
   "recovery.foreignRestore": "Pulihkan di sini",
   "recovery.foreignExistsConfirm": "\"{name}\" sudah ada di sistem ini, jadi pemulihan akan MENIMPANYA dengan cadangan asing. Lanjutkan?",

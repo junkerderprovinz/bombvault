@@ -1946,7 +1946,7 @@ const pl: Partial<Translations> = {
   "recovery.foreignOverwrite": "Nadpisz, jeśli miejsce docelowe już zawiera dane",
   "recovery.foreignNetworkMissing": "Ten serwer nie ma sieci {name}. Zamiast niej:",
   "recovery.foreignNetwork": "Sieć",
-  "recovery.foreignNetworkHint": "Kontener zachowuje swój adres MAC i pozostałe sieci. Jego stały adres IP należał do starej sieci, więc adres nada nowa.",
+  "recovery.foreignNetworkHint": "Kontener zachowuje pozostałe sieci. Stały adres IP i adres MAC należały do starej sieci, więc nada je nowa.",
   "recovery.foreignBindWarning": "Te montowania wskazują na pamięć, której ten serwer nie ma. Appdata są przemapowywane automatycznie, ale popraw je w szablonie kontenera po przywróceniu:",
   "recovery.foreignRestore": "Przywróć tutaj",
   "recovery.foreignExistsConfirm": "„{name}” już istnieje w tym systemie. Przywracanie NADPISZE go obcą kopią. Kontynuować?",

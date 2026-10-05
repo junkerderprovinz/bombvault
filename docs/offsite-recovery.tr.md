@@ -195,7 +195,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 
 **Kurtarma** sekmesindeki ayrı bir kart, *farklı* bir BombVault örneğinin deposunu (`/mnt` altında bağlanmış bir paylaşım ya da bir uzak URL) **o örneğin `APP_KEY`'iyle**, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere ve dosya kümelerine göz atın, bir anlık görüntü seçip geri yükleyin; geri yüklenen nesne normal bir yerel konteyner, VM ya da dosya kümesi olur. Diğer depoya asla hiçbir şey yazılmaz ve kendi yedekleme ayarlarınız dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak, depo ayarlarınızı yeniden yönlendirmek ve sonrasında geri almak anlamına gelmez. Bu kart tek seferliktir: bir oturum açar, seçtiğinizi geri yükler ve diğer örneği unutur. Bunun yerine bu makinenin başka bir örneğin anlık görüntülerini bir zamanlamaya göre kendi deposuna çektiği kalıcı bir düzen istiyorsanız, bu **Örnekler** sayfasının **Çekme** sekmesidir.
 
-Ağı bu sunucuda olmayan bir konteyner, örneğin sıradan bir Docker ana makinesindeki Unraid `br0` ağı, satırının altında bir ağ seçimi gösterir. BombVault onu seçtiğin ağda, MAC adresi ve diğer ağlarıyla birlikte oluşturur. Sabit IP adresi eski ağa aitti ve düşer, bu yüzden adresi yeni ağ verir.
+Ağı bu sunucuda olmayan bir konteyner, örneğin sıradan bir Docker ana makinesindeki Unraid `br0` ağı, satırının altında bir ağ seçimi gösterir. BombVault onu seçtiğin ağda, diğer ağlarıyla birlikte oluşturur. Sabit IP adresi ve MAC adresi eski ağa aitti ve düşer, bu yüzden bunları yeni ağ verir.
 
 ## Şifreleme anahtarı kurtarma kiti
 

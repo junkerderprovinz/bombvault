@@ -1949,7 +1949,7 @@ const cs: Partial<Translations> = {
   "recovery.foreignOverwrite": "Přepsat, pokud cíl již obsahuje data",
   "recovery.foreignNetworkMissing": "Tento server nemá síť {name}. Místo ní:",
   "recovery.foreignNetwork": "Síť",
-  "recovery.foreignNetworkHint": "Kontejner si ponechá svou MAC adresu i ostatní sítě. Jeho pevná IP adresa patřila ke staré síti, adresu teď přidělí nová.",
+  "recovery.foreignNetworkHint": "Kontejner si ponechá ostatní sítě. Pevná IP adresa i MAC adresa patřily ke staré síti, obě teď přidělí nová.",
   "recovery.foreignBindWarning": "Tyto přípojné body ukazují na úložiště, které tento server nemá. Appdata se přemapuje automaticky, ale tyto po obnově upravte v šabloně kontejneru:",
   "recovery.foreignRestore": "Obnovit sem",
   "recovery.foreignExistsConfirm": "„{name}“ v tomto systému už existuje. Obnova ho PŘEPÍŠE cizí zálohou. Pokračovat?",

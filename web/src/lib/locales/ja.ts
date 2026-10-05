@@ -1942,7 +1942,7 @@ const ja: Partial<Translations> = {
   "recovery.foreignOverwrite": "復元先に既にデータがある場合は上書きする",
   "recovery.foreignNetworkMissing": "このサーバーにはネットワーク {name} がありません。代わりに使うネットワーク:",
   "recovery.foreignNetwork": "ネットワーク",
-  "recovery.foreignNetworkHint": "コンテナは MAC アドレスとほかのネットワークをそのまま保持します。固定 IP アドレスは古いネットワークのものだったため、新しいネットワークがアドレスを割り当てます。",
+  "recovery.foreignNetworkHint": "コンテナはほかのネットワークをそのまま保持します。固定 IP アドレスと MAC アドレスは古いネットワークのものだったため、新しいネットワークが割り当てます。",
   "recovery.foreignBindWarning": "これらのバインドはこのサーバーに無いストレージを指しています。appdata は自動的に再マッピングされますが、これらは復元後にコンテナのテンプレートで修正してください:",
   "recovery.foreignRestore": "ここに復元",
   "recovery.foreignExistsConfirm": "「{name}」はこのシステムに既に存在します。復元すると外部のバックアップで上書きされます。続行しますか？",

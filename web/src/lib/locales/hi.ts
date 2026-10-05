@@ -2278,7 +2278,7 @@ const hi: Partial<Translations> = {
   "recovery.foreignOverwrite": "अगर गंतव्य में पहले से डेटा है तो ओवरराइट करें",
   "recovery.foreignNetworkMissing": "इस सर्वर पर {name} नाम का कोई नेटवर्क नहीं है। इसकी जगह:",
   "recovery.foreignNetwork": "नेटवर्क",
-  "recovery.foreignNetworkHint": "कंटेनर अपना MAC पता और अपने बाकी नेटवर्क बनाए रखता है। उसका स्थिर IP पता पुराने नेटवर्क का था, इसलिए अब पता नया नेटवर्क देता है।",
+  "recovery.foreignNetworkHint": "कंटेनर अपने बाकी नेटवर्क बनाए रखता है। स्थिर IP पता और MAC पता पुराने नेटवर्क के थे, इसलिए अब इन्हें नया नेटवर्क देता है।",
   "recovery.foreignBindWarning": "ये बाइंड्स ऐसे स्टोरेज की ओर इशारा करते हैं जो इस सर्वर के पास नहीं है। Appdata स्वचालित रूप से पुनर्मैप होता है, लेकिन रीस्टोर के बाद कंटेनर टेम्पलेट में इन्हें ठीक करें:",
   "recovery.foreignRestore": "यहाँ रीस्टोर करें",
   "recovery.foreignExistsConfirm": "\"{name}\" इस सिस्टम पर पहले से मौजूद है, इसलिए रीस्टोर करना इसे विदेशी बैकअप से ओवरराइट कर देगा। जारी रखें?",

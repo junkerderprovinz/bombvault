@@ -2278,7 +2278,7 @@ const hr: Partial<Translations> = {
   "recovery.foreignOverwrite": "Prepiši ako odredište već sadrži podatke",
   "recovery.foreignNetworkMissing": "Ovaj poslužitelj nema mrežu {name}. Umjesto nje:",
   "recovery.foreignNetwork": "Mreža",
-  "recovery.foreignNetworkHint": "Kontejner zadržava svoju MAC adresu i ostale mreže. Njegova fiksna IP adresa pripadala je staroj mreži, pa adresu dodjeljuje nova.",
+  "recovery.foreignNetworkHint": "Kontejner zadržava ostale mreže. Fiksna IP adresa i MAC adresa pripadale su staroj mreži, pa ih dodjeljuje nova.",
   "recovery.foreignBindWarning": "Ovi bindovi pokazuju na pohranu koju ovaj poslužitelj nema. Appdata se automatski preusmjerava, ali popravite ovo u predlošku kontejnera nakon vraćanja:",
   "recovery.foreignRestore": "Vrati ovdje",
   "recovery.foreignExistsConfirm": "„{name}” već postoji na ovom sustavu, pa će ga vraćanje PREPISATI stranom sigurnosnom kopijom. Nastaviti?",

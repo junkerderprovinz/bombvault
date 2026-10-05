@@ -1946,7 +1946,7 @@ const uk: Partial<Translations> = {
   "recovery.foreignOverwrite": "Перезаписати, якщо призначення вже містить дані",
   "recovery.foreignNetworkMissing": "На цьому сервері немає мережі {name}. Замість неї:",
   "recovery.foreignNetwork": "Мережа",
-  "recovery.foreignNetworkHint": "Контейнер зберігає свою MAC-адресу та інші мережі. Його фіксована IP-адреса належала старій мережі, тому адресу видасть нова.",
+  "recovery.foreignNetworkHint": "Контейнер зберігає інші мережі. Фіксована IP-адреса та MAC-адреса належали старій мережі, тому їх видасть нова.",
   "recovery.foreignBindWarning": "Ці прив'язки вказують на сховище, якого немає на цьому сервері. Appdata переспрямовуються автоматично, але виправте їх у шаблоні контейнера після відновлення:",
   "recovery.foreignRestore": "Відновити сюди",
   "recovery.foreignExistsConfirm": "«{name}» вже існує в цій системі — відновлення ПЕРЕЗАПИШЕ його чужою копією. Продовжити?",

@@ -2262,7 +2262,7 @@ const sr: Partial<Translations> = {
   "recovery.foreignOverwrite": "Препиши ако одредиште већ садржи податке",
   "recovery.foreignNetworkMissing": "Овај сервер нема мрежу {name}. Уместо ње:",
   "recovery.foreignNetwork": "Мрежа",
-  "recovery.foreignNetworkHint": "Контејнер задржава своју MAC адресу и остале мреже. Његова фиксна IP адреса припадала је старој мрежи, па адресу додељује нова.",
+  "recovery.foreignNetworkHint": "Контејнер задржава остале мреже. Фиксна IP адреса и MAC адреса припадале су старој мрежи, па их додељује нова.",
   "recovery.foreignBindWarning": "Ове везе показују на складиште које овај сервер нема. Appdata се преусмерава аутоматски, али ово после враћања исправи у шаблону контејнера:",
   "recovery.foreignRestore": "Врати овде",
   "recovery.foreignExistsConfirm": "\"{name}\" већ постоји на овом систему, па ће враћање то ПРЕПИСАТИ страном резервном копијом. Наставим?",

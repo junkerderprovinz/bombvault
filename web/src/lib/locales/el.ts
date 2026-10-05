@@ -1951,7 +1951,7 @@ const el: Partial<Translations> = {
   "recovery.foreignOverwrite": "Αντικατάσταση αν ο προορισμός περιέχει ήδη δεδομένα",
   "recovery.foreignNetworkMissing": "Αυτός ο διακομιστής δεν έχει δίκτυο {name}. Αντί γι' αυτό:",
   "recovery.foreignNetwork": "Δίκτυο",
-  "recovery.foreignNetworkHint": "Το container κρατά τη διεύθυνση MAC και τα άλλα δίκτυά του. Η σταθερή του διεύθυνση IP ανήκε στο παλιό δίκτυο, οπότε τη διεύθυνση τη δίνει το νέο.",
+  "recovery.foreignNetworkHint": "Το container κρατά τα άλλα δίκτυά του. Η σταθερή διεύθυνση IP και η διεύθυνση MAC ανήκαν στο παλιό δίκτυο, οπότε τις δίνει το νέο.",
   "recovery.foreignBindWarning": "Αυτά τα bind δείχνουν σε αποθηκευτικό χώρο που δεν έχει αυτός ο διακομιστής. Τα appdata αντιστοιχίζονται αυτόματα, αλλά διορθώστε αυτά στο πρότυπο του κοντέινερ μετά την επαναφορά:",
   "recovery.foreignRestore": "Επαναφορά εδώ",
   "recovery.foreignExistsConfirm": "Το «{name}» υπάρχει ήδη σε αυτό το σύστημα. Η επαναφορά θα το ΑΝΤΙΚΑΤΑΣΤΗΣΕΙ με το ξένο αντίγραφο. Συνέχεια;",

@@ -1954,7 +1954,7 @@ const hu: Partial<Translations> = {
   "recovery.foreignOverwrite": "Felülírás, ha a cél már tartalmaz adatot",
   "recovery.foreignNetworkMissing": "Ezen a szerveren nincs {name} nevű hálózat. Helyette:",
   "recovery.foreignNetwork": "Hálózat",
-  "recovery.foreignNetworkHint": "A konténer megtartja a MAC-címét és a többi hálózatát. A fix IP-címe a régi hálózathoz tartozott, ezért az új hálózat ad neki címet.",
+  "recovery.foreignNetworkHint": "A konténer megtartja a többi hálózatát. A fix IP-cím és a MAC-cím a régi hálózathoz tartozott, ezért ezeket az új hálózat adja.",
   "recovery.foreignBindWarning": "Ezek a csatolások olyan tárolóra mutatnak, amellyel ez a szerver nem rendelkezik. Az appdata automatikusan átképeződik, de ezeket a visszaállítás után javítsd a konténer sablonjában:",
   "recovery.foreignRestore": "Visszaállítás ide",
   "recovery.foreignExistsConfirm": "„{name}” már létezik ezen a rendszeren. A visszaállítás FELÜLÍRJA az idegen biztonsági mentéssel. Folytatja?",
