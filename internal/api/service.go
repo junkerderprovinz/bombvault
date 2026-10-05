@@ -13016,7 +13016,7 @@ func snapshotDiskSources(disks, snapshotPaths []string) ([]string, error) {
 //     treated as "cannot prove insufficient" and does not block (the mount check
 //     is the primary defence); only a proven shortfall aborts.
 func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, snapshotID, destDir string) error {
-	if !s.destinationMounted(destDir) {
+	if !s.restoreTargetMounted(destDir) {
 		return destinationRefusal("restore destination %q is not on a mounted pool or share; a VM disk restored there would be written into the host's RAM and crash it. Choose a destination folder on real storage and retry", s.toHostPath(destDir))
 	}
 	_, wantBytes, err := s.engine.StatsRestoreSize(ctx, ref.repo, snapshotID, ref.mode)
@@ -13045,7 +13045,7 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 // so a normal cross-Unraid restore never regresses.
 func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repoRef, snapshotID string, appdataPaths []string) error {
 	for _, p := range appdataPaths {
-		if !s.destinationMounted(p) {
+		if !s.restoreTargetMounted(p) {
 			return destinationRefusal("appdata destination %q is not on a mounted pool or share on this system — the source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
 		}
 	}

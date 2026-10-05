@@ -1233,7 +1233,7 @@ func (s *Service) foreignBindWarnings(binds, appdataPaths []string) []ForeignBin
 		if appdata[path.Clean(cp)] {
 			continue // appdata bind — remapped automatically
 		}
-		if !s.destinationMounted(cp) {
+		if !s.restoreTargetMounted(cp) {
 			out = append(out, ForeignBindWarning{Host: host, Container: container})
 		}
 	}
