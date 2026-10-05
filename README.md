@@ -154,7 +154,7 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 - **Backs up the whole server.** Containers with their appdata and definition, VMs with their disks, XML and NVRAM, the Unraid flash, any folder, ZFS datasets with their children, and BombVault's own settings. PostgreSQL, MySQL and MariaDB containers are dumped first. [Features](https://junkerderprovinz.github.io/bombvault/features/)
 - **Restores to a running state.** A restored container comes back in the Docker tab with its image, settings and data, a VM in the VM tab with its disks and NVRAM. Every restore shows what it will change before it starts. [Features](https://junkerderprovinz.github.io/bombvault/features/)
-- **Copies off site, item by item.** Encrypted, to one or more targets that can be append-only. Each container, VM and folder set chooses local, local plus off-site or off-site only, and its card says how many sites hold it and whether 3-2-1 is met. [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/)
+- **Copies off site, item by item.** Encrypted, to one or more targets that can be append-only. A destination is set up once, with a wizard that knows S3 storage services, your own servers and every cloud drive rclone supports. Each container, VM and folder set then lights the places that get its backups, and its card says how many sites hold it and whether 3-2-1 is met. [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/)
 - **Proves that restores work.** A restore check after each item's first backup, scheduled drills, and a start test that runs a restored container in an isolated network. [Features](https://junkerderprovinz.github.io/bombvault/features/)
 - **Notices when a backup looks wrong.** Much more new data than usual, a source that shrank, a run that took far longer. When a source shrinks sharply, its old backups are kept until you acknowledge the finding. [Features](https://junkerderprovinz.github.io/bombvault/features/)
 - **Fits into the rest of your setup.** Several servers pair by twelve words, an Android app shows them all, and AI assistants, scripts and Home Assistant read the status over MCP, an HTTP API and MQTT. [Android app](https://junkerderprovinz.github.io/bombvault/android/), [MCP server](https://junkerderprovinz.github.io/bombvault/mcp/), [API and integrations](https://junkerderprovinz.github.io/bombvault/api/)
@@ -203,7 +203,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Android app | ✅ APK, Google Play in closed test | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no. The BombVault column is v9.7.0. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026 against Vault v2026.09.01, and the rows for placement, 3-2-1 and the Android app on 4 October 2026.
+✅ yes · ⚠️ partly · ❌ no. The BombVault column is v9.8.0. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026 against Vault v2026.09.01, and the rows for placement, 3-2-1 and the Android app on 4 October 2026.
 
 <br>
 
@@ -238,7 +238,7 @@ The [documentation](https://junkerderprovinz.github.io/bombvault/), in 26 langua
 - [Android app](https://junkerderprovinz.github.io/bombvault/android/): pairing by QR code, servers outside a group, settings and downloads
 - [Features](https://junkerderprovinz.github.io/bombvault/features/): everything BombVault backs up, restores, checks and reports, and the companion apps
 - [Configuration](https://junkerderprovinz.github.io/bombvault/configuration/): environment variables, mounts, the security model, VM backup over SSH and the off-site setup
-- [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/): placement per item, append-only copies, tamper tests, pairing, the recovery kit and guided recovery
+- [Off-site & recovery](https://junkerderprovinz.github.io/bombvault/offsite-recovery/): destinations, placement per item, append-only copies, tamper tests, pairing, the recovery kit and guided recovery
 - [ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/): items and child datasets, restores and the safety snapshot
 - [MCP server](https://junkerderprovinz.github.io/bombvault/mcp/): connecting AI assistants, keys and limits
 - [API and integrations](https://junkerderprovinz.github.io/bombvault/api/): the HTTP API, Home Assistant and mDNS
