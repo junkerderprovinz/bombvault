@@ -112,7 +112,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   const pinned =
     open || query !== "" || (typeof document !== "undefined" && document.activeElement === field.current);
   const { pathname } = useLocation();
-  const { revealed, barRef } = useRevealOnScrollUp(pathname, pinned);
+  const { revealed, barRef, hide } = useRevealOnScrollUp(pathname, pinned);
 
   const items = useMemo(() => buildItems(t, pages), [t, pages]);
   const hits: Hit[] = useMemo(() => search(items, query), [items, query]);
@@ -130,11 +130,13 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    // Escape steps back one thing at a time: the list, then the text, then the
+    // bar itself, which nobody should have to scroll to get rid of.
     if (e.key === "Escape") {
-      if (query) {
-        e.preventDefault();
-        setQuery("");
-      }
+      e.preventDefault();
+      if (showList) setOpen(false);
+      else if (query) setQuery("");
+      else hide();
       return;
     }
     if (!showList || shown.length === 0) return;

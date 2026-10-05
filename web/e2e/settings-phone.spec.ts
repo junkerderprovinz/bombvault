@@ -337,6 +337,8 @@ async function stage(page: Page): Promise<void> {
     const body = await response.json();
     await route.fulfill({ response, json: { ...body, platform: "unraid", settings: { ...body.settings, ...SETTINGS } } });
   });
+  // A release, so the Apps page's phone card shows the number in its corner.
+  await page.route("**/api/health", json({ ok: true, version: "v9.8.0" }));
   await page.route("**/api/auth", json({ ok: true, enabled: true, authed: true, totp: true, recoveryCodesLeft: 7, minPasswordLen: 12 }));
   await page.route("**/api/auth/passkeys", json(PASSKEYS));
   await page.route("**/api/repos", json({ ok: true, repos: REPOS }));

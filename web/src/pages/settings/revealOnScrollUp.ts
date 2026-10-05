@@ -4,7 +4,7 @@
 // It listens for wheel as well as scroll because at the top of the page the
 // browser fires no scroll event; scroll still catches a scrollbar drag, a
 // swipe and Page Up, which fire no wheel event.
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /** How much movement counts as a direction rather than as settling noise. */
 const DELTA = 6;
@@ -78,5 +78,5 @@ export function useRevealOnScrollUp(resetKey: string, pinned: boolean) {
     }
   }, [revealed]);
 
-  return { revealed, barRef };
+  return { revealed, barRef, hide: useCallback(() => setRevealed(false), []) };
 }

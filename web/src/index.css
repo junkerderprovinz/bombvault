@@ -677,8 +677,9 @@
   --brand-bitcoin: #f7931a;
   --brand-paypal:  #4fb5f0;
   --brand-github:  #ffffff;
-  /* Docker's blue and Unraid's gradient hold on both grounds, so the light
-     themes inherit them. */
+  /* Docker's blue, Android's green and Unraid's gradient are GlimStone's
+     values on both grounds, so the light themes inherit them. */
+  --brand-android:     #32de84;
   --brand-docker:      #2396ed;
   --brand-unraid-from: #e32929;
   --brand-unraid-to:   #ff8d30;
@@ -1391,6 +1392,7 @@ body {
     color: var(--tile-ink);
     --mark-ink: var(--tile-ink);
     --mark-cut: var(--tile);
+    --brand-android: var(--tile-ink);
     --brand-docker: var(--tile-ink);
     --brand-unraid-from: var(--tile-ink);
     --brand-unraid-to: var(--tile-ink);
@@ -1408,6 +1410,7 @@ body {
 .glim-paypal-mark { color: var(--brand-paypal); }
 .glim-bitcoin-mark { color: var(--brand-bitcoin); }
 .glim-github-mark { color: var(--brand-github); }
+.glim-android-mark { color: var(--brand-android); }
 .glim-docker-mark { color: var(--brand-docker); }
 .glim-house-mark { color: var(--accent-text); }
 
@@ -1431,6 +1434,7 @@ body {
     color: var(--tile-ink);
     --mark-ink: var(--tile-ink);
     --mark-cut: var(--tile);
+    --brand-android: var(--tile-ink);
     --brand-docker: var(--tile-ink);
     --brand-unraid-from: var(--tile-ink);
     --brand-unraid-to: var(--tile-ink);
@@ -1456,6 +1460,10 @@ body {
 .glim-tile-unraid { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
 .glim-tile-zip { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */
 .glim-tile-bitcoin { --tile: #f7931a; --tile-ink: #161616; } /* 7.9:1 */
+.glim-tile-android { --tile: #32de84; --tile-ink: #161616; } /* 10.3:1 */
+.glim-tile-play    { --tile: #01875f; --tile-ink: #ffffff; } /* 4.5:1 */
+/* F-Droid's blue from the README's button. */
+.glim-tile-fdroid  { --tile: #1976d2; --tile-ink: #ffffff; } /* 4.6:1 */
 .glim-tile-docker  { --tile: #1d63ed; --tile-ink: #ffffff; } /* 5.2:1 */
 .glim-tile-unraid  { --tile: #f15a2c; --tile-ink: #ffffff; } /* 3.4:1 */
 .glim-tile-zip     { --tile: #4d5562; --tile-ink: #ffffff; } /* 7.5:1 */

@@ -525,7 +525,7 @@ export function SettingsPage({
 
       {/* No red on the button: what warns is the question it asks. Leaving
           the group alone is on the pairing page. */}
-      <Section title={t("launcher.dangerZone")} hue={4}>
+      <Section title={t("launcher.dangerZone")} hue={6}>
         <div className="my-1">
           <Button
             label={t("launcher.removeAll")}
