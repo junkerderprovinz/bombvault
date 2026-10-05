@@ -1210,7 +1210,7 @@ export function FileSetRow({
             the last backup sits beside the Backups trigger instead. Backup
             leads Edit and Delete, since it is what the card is for. Pause
             sits before it, because the forward action goes last. */}
-        <div className="ms-auto flex items-start gap-1.5 shrink-0 flex-wrap max-md:w-full max-md:justify-end">
+        <div className="ms-auto flex min-w-0 items-start justify-end gap-1.5 flex-wrap max-md:w-full">
           <PauseButton
             paused={!set.enabled}
             save={(include) => patchFileSet(set.id, { enabled: include })}
