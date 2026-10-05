@@ -1513,7 +1513,6 @@ const sv: Partial<Translations> = {
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-utdelning",
   "dest.immutableHint": "BombVault rensar eller raderar då aldrig där och överlåter lagringstiden åt andra sidan, som måste neka radering för att något ska skyddas.",
-  "dest.needsPassword": "Ange först ett inloggningslösenord under Inställningar, Säkerhet. BombVault tar bara emot inloggningar för lagring bakom ett sådant.",
   "offsite.tamperTestNow": "Testa append-only nu",
   "offsite.tamperTesting": "Testar…",
   "offsite.tamperOk": "radering nekad, append-only aktivt",

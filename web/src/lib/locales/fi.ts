@@ -1513,7 +1513,6 @@ const fi: Partial<Translations> = {
   "dest.provider.s3": "S3-yhteensopiva",
   "dest.provider.smb": "SMB-jako",
   "dest.immutableHint": "BombVault ei tällöin koskaan karsi tai poista siellä mitään vaan jättää säilytyksen vastapuolelle, jonka on kieltäydyttävä poistoista, jotta tästä olisi mitään suojaa.",
-  "dest.needsPassword": "Aseta ensin kirjautumissalasana kohdassa Asetukset, Turvallisuus. BombVault hyväksyy kirjautumisen tallennukseen vain, jos salasana on asetettu.",
   "offsite.tamperTestNow": "Testaa append-only nyt",
   "offsite.tamperTesting": "Testataan…",
   "offsite.tamperOk": "poisto estetty, append-only käytössä",

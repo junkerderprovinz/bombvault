@@ -1486,7 +1486,6 @@ const ko: Partial<Translations> = {
   "dest.provider.s3": "S3 호환",
   "dest.provider.smb": "SMB 공유",
   "dest.immutableHint": "이 경우 BombVault는 그곳에서 정리나 삭제를 하지 않고 보존을 상대 측에 맡깁니다. 이것이 보호 효과를 가지려면 상대 측이 삭제를 거부해야 합니다.",
-  "dest.needsPassword": "먼저 설정, 보안에서 로그인 비밀번호를 설정하세요. BombVault는 비밀번호로 보호된 스토리지에 대한 로그인만 받습니다.",
   "offsite.tamperTestNow": "지금 append-only 테스트",
   "offsite.tamperTesting": "테스트 중…",
   "offsite.tamperOk": "삭제가 거부됨, 추가 전용 활성",

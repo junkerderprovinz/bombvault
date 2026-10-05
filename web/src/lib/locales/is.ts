@@ -589,7 +589,6 @@ const is: Partial<Translations> = {
   "dest.provider.s3": "S3-samhæft",
   "dest.provider.smb": "SMB-sameign",
   "dest.immutableHint": "BombVault hreinsar þá aldrei né eyðir þar og lætur hina hliðina um varðveislu, en hún verður að neita eyðingu til að þetta verndi nokkuð.",
-  "dest.needsPassword": "Settu fyrst innskráningarlykilorð, undir Stillingar, Öryggi. BombVault tekur aðeins við innskráningum fyrir geymslu sem er á bak við slíkt.",
   "offsite.tamperTestNow": "Prófa aðeins-bæta-við núna",
   "offsite.tamperTesting": "Prófa…",
   "offsite.tamperOk": "eyðingu hafnað, aðeins-bæta-við virkt",

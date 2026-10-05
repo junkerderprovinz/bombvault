@@ -1513,7 +1513,6 @@ const tr: Partial<Translations> = {
   "dest.provider.s3": "S3 uyumlu",
   "dest.provider.smb": "SMB paylaşımı",
   "dest.immutableHint": "BombVault orada artık budama veya silme yapmaz ve saklamayı karşı tarafa bırakır; bunun bir şeyi koruması için karşı tarafın silmeyi reddetmesi gerekir.",
-  "dest.needsPassword": "Önce Ayarlar, Güvenlik altında bir oturum açma parolası belirleyin. BombVault yalnızca parolayla korunan depolamalar için oturum açmayı kabul eder.",
   "offsite.tamperTestNow": "Append-only'yi şimdi test et",
   "offsite.tamperTesting": "Test ediliyor…",
   "offsite.tamperOk": "silme reddedildi, salt-ekleme etkin",

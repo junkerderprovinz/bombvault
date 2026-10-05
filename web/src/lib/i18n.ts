@@ -699,7 +699,6 @@ export const en = {
   "dest.provider.s3": "S3 compatible",
   "dest.provider.smb": "SMB share",
   "dest.immutableHint": "BombVault then never prunes or deletes there and leaves retention to the far side, which has to refuse deletion for this to protect anything.",
-  "dest.needsPassword": "Set a login password first, under Settings, Security. BombVault only takes sign-ins for storage behind one.",
   "offsite.tamperTestNow": "Test append-only now",
   "offsite.tamperTesting": "Testing…",
   // Tamper verdicts carry NO ✓/✗ glyph — OffsiteWizard.tsx renders the glyph
@@ -4308,7 +4307,6 @@ export const de: Translations = {
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-Freigabe",
   "dest.immutableHint": "BombVault löscht und prunet dort dann nichts mehr und überlässt die Aufbewahrung der Gegenseite. Schützen tut das nur, wenn die Gegenseite das Löschen verweigert.",
-  "dest.needsPassword": "Setze zuerst ein Anmeldepasswort, unter Einstellungen, Sicherheit. Zugangsdaten für Speicher nimmt BombVault nur hinter einem Passwort an.",
   "offsite.tamperTestNow": "Append-only jetzt testen",
   "offsite.tamperTesting": "Teste…",
   "offsite.tamperOk": "Löschen verweigert, Append-only aktiv",

@@ -1486,7 +1486,6 @@ const ja: Partial<Translations> = {
   "dest.provider.s3": "S3 互換",
   "dest.provider.smb": "SMB 共有",
   "dest.immutableHint": "この場合 BombVault はそこで整理も削除も行わず、保持をリモート側に任せます。保護として機能させるには、リモート側が削除を拒否する必要があります。",
-  "dest.needsPassword": "先に、設定、セキュリティでログインパスワードを設定してください。BombVault は、パスワードで保護されたストレージへのサインインのみ受け付けます。",
   "offsite.tamperTestNow": "append-only を今すぐテスト",
   "offsite.tamperTesting": "テスト中…",
   "offsite.tamperOk": "削除は拒否されました。追記専用が有効",

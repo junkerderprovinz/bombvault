@@ -412,9 +412,6 @@ func (h *Handler) handleOffsiteProviders(w http.ResponseWriter, r *http.Request)
 // handleCheckDraft tests a destination before it is saved.
 // POST /api/offsite/drafts/check
 func (h *Handler) handleCheckDraft(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "testing a storage destination") {
-		return
-	}
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
 		return
@@ -430,9 +427,6 @@ func (h *Handler) handleCheckDraft(w http.ResponseWriter, r *http.Request) {
 // handleDraftFolders lists a folder of a destination before it is saved.
 // POST /api/offsite/drafts/folders
 func (h *Handler) handleDraftFolders(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "browsing a storage destination") {
-		return
-	}
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
 		return
@@ -452,9 +446,6 @@ func (h *Handler) handleDraftFolders(w http.ResponseWriter, r *http.Request) {
 // handleDraftMakeFolder creates a folder on a destination before it is saved.
 // POST /api/offsite/drafts/mkdir
 func (h *Handler) handleDraftMakeFolder(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "creating a folder on a storage destination") {
-		return
-	}
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
 		return
@@ -490,9 +481,6 @@ func (h *Handler) handleListDestinations(w http.ResponseWriter, _ *http.Request)
 // handleCreateDestination saves a destination the wizard set up.
 // POST /api/offsite/destinations
 func (h *Handler) handleCreateDestination(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "adding a storage destination") {
-		return
-	}
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
 		return

@@ -1486,7 +1486,6 @@ const pl: Partial<Translations> = {
   "dest.provider.s3": "Zgodne z S3",
   "dest.provider.smb": "Udział SMB",
   "dest.immutableHint": "BombVault nigdy tam wtedy nie czyści ani nie usuwa i zostawia retencję drugiej stronie, która musi odmawiać usuwania, żeby to cokolwiek chroniło.",
-  "dest.needsPassword": "Najpierw ustaw hasło logowania w Ustawieniach, Bezpieczeństwo. BombVault przyjmuje logowania tylko dla przestrzeni chronionej hasłem.",
   "offsite.tamperTestNow": "Przetestuj append-only teraz",
   "offsite.tamperTesting": "Testowanie…",
   "offsite.tamperOk": "usunięcie odrzucone, tryb append-only aktywny",

@@ -1513,7 +1513,6 @@ const da: Partial<Translations> = {
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-deling",
   "dest.immutableHint": "BombVault pruner eller sletter så aldrig dér og overlader opbevaring til fjernsiden, som skal afvise sletning, for at dette beskytter noget.",
-  "dest.needsPassword": "Angiv først en loginadgangskode under Indstillinger, Sikkerhed. BombVault tager kun imod logins til lager bag en sådan.",
   "offsite.tamperTestNow": "Test append-only nu",
   "offsite.tamperTesting": "Tester…",
   "offsite.tamperOk": "sletning afvist, append-only aktiv",

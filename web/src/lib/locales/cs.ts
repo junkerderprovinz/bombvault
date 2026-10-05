@@ -1511,7 +1511,6 @@ const cs: Partial<Translations> = {
   "dest.provider.s3": "Kompatibilní s S3",
   "dest.provider.smb": "Sdílená složka SMB",
   "dest.immutableHint": "BombVault tam pak nikdy nepročišťuje ani nemaže a uchovávání nechává na vzdálené straně, která musí mazání odmítat, aby to cokoli chránilo.",
-  "dest.needsPassword": "Nejprve nastavte přihlašovací heslo v Nastavení, Zabezpečení. BombVault přijímá přihlášení pro úložiště jen za takovým heslem.",
   "offsite.tamperTestNow": "Otestovat append-only nyní",
   "offsite.tamperTesting": "Testuji…",
   "offsite.tamperOk": "smazání odmítnuto, append-only aktivní",

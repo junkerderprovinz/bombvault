@@ -1494,7 +1494,6 @@ const ro: Partial<Translations> = {
   "dest.provider.s3": "Compatibil S3",
   "dest.provider.smb": "Partajare SMB",
   "dest.immutableHint": "BombVault nu curăță și nu șterge atunci niciodată acolo și lasă retenția în seama părții îndepărtate, care trebuie să refuze ștergerea pentru ca acest lucru să protejeze ceva.",
-  "dest.needsPassword": "Setează mai întâi o parolă de autentificare, la Setări, Securitate. BombVault acceptă autentificări doar pentru stocarea aflată în spatele unei parole.",
   "offsite.tamperTestNow": "Testează append-only acum",
   "offsite.tamperTesting": "Se testează…",
   "offsite.tamperOk": "ștergerea a fost refuzată, append-only activ",

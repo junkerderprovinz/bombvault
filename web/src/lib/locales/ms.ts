@@ -589,7 +589,6 @@ const ms: Partial<Translations> = {
   "dest.provider.s3": "Serasi S3",
   "dest.provider.smb": "Perkongsian SMB",
   "dest.immutableHint": "BombVault kemudian tidak pernah memangkas atau memadam di sana dan menyerahkan pengekalan kepada pihak sana, yang mesti menolak pemadaman supaya ini melindungi apa-apa.",
-  "dest.needsPassword": "Tetapkan kata laluan log masuk dahulu, di bawah Tetapan, Keselamatan. BombVault hanya menerima log masuk untuk storan yang berada di belakangnya.",
   "offsite.tamperTestNow": "Uji tambah-sahaja sekarang",
   "offsite.tamperTesting": "Menguji…",
   "offsite.tamperOk": "pemadaman ditolak, tambah-sahaja aktif",

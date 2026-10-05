@@ -1516,7 +1516,6 @@ const th: Partial<Translations> = {
   "dest.provider.s3": "รองรับ S3",
   "dest.provider.smb": "แชร์ SMB",
   "dest.immutableHint": "BombVault จะไม่พรูนหรือลบที่นั่นอีก และปล่อยให้ฝั่งปลายทางดูแลการเก็บรักษา ฝั่งปลายทางต้องปฏิเสธการลบ จึงจะป้องกันได้จริง",
-  "dest.needsPassword": "ตั้งรหัสผ่านเข้าสู่ระบบก่อนที่ การตั้งค่า, ความปลอดภัย BombVault รับการลงชื่อเข้าใช้เฉพาะพื้นที่จัดเก็บที่มีรหัสผ่านเท่านั้น",
   "offsite.tamperTestNow": "ทดสอบ append-only เดี๋ยวนี้",
   "offsite.tamperTesting": "กำลังทดสอบ…",
   "offsite.tamperOk": "การลบถูกปฏิเสธ โหมดเขียนต่อท้ายเท่านั้นทำงานอยู่",

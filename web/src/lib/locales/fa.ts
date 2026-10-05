@@ -589,7 +589,6 @@ const fa: Partial<Translations> = {
   "dest.provider.s3": "سازگار با S3",
   "dest.provider.smb": "اشتراک SMB",
   "dest.immutableHint": "در این صورت BombVault هرگز آنجا پاک‌سازی یا حذف نمی‌کند و نگهداری را به طرف مقابل می‌سپارد که برای محافظت‌کردن باید حذف را رد کند.",
-  "dest.needsPassword": "ابتدا در تنظیمات، امنیت یک رمز عبور ورود تعیین کنید. BombVault فقط برای ذخیره‌سازی‌ای ورود می‌پذیرد که پشت چنین رمزی باشد.",
   "offsite.tamperTestNow": "آزمایش فقط-افزودنی همین حالا",
   "offsite.tamperTesting": "در حال آزمایش…",
   "offsite.tamperOk": "حذف رد شد، فقط-افزودنی فعال است",

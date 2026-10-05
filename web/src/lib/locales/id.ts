@@ -589,7 +589,6 @@ const id: Partial<Translations> = {
   "dest.provider.s3": "Kompatibel S3",
   "dest.provider.smb": "Share SMB",
   "dest.immutableHint": "BombVault kemudian tidak pernah memangkas atau menghapus di sana dan menyerahkan retensi kepada sisi lain, yang harus menolak penghapusan agar ini melindungi apa pun.",
-  "dest.needsPassword": "Atur kata sandi login terlebih dahulu, di Pengaturan, Keamanan. BombVault hanya menerima login untuk penyimpanan yang dilindungi kata sandi.",
   "offsite.tamperTestNow": "Uji append-only sekarang",
   "offsite.tamperTesting": "Menguji…",
   "offsite.tamperOk": "penghapusan ditolak: append-only aktif",

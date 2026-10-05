@@ -1495,7 +1495,6 @@ const it: Partial<Translations> = {
   "dest.provider.s3": "Compatibile S3",
   "dest.provider.smb": "Condivisione SMB",
   "dest.immutableHint": "BombVault allora non pota né elimina mai lì e lascia la conservazione all'altro lato, che deve rifiutare le eliminazioni perché questo protegga davvero qualcosa.",
-  "dest.needsPassword": "Imposta prima una password di accesso, in Impostazioni, Sicurezza. BombVault accetta accessi solo per l'archiviazione protetta da una.",
   "offsite.tamperTestNow": "Prova append-only ora",
   "offsite.tamperTesting": "Prova in corso…",
   "offsite.tamperOk": "eliminazione rifiutata, append-only attivo",

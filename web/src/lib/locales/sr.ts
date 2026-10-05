@@ -589,7 +589,6 @@ const sr: Partial<Translations> = {
   "dest.provider.s3": "Компатибилно са S3",
   "dest.provider.smb": "SMB дељени ресурс",
   "dest.immutableHint": "BombVault тамо тада никада не чисти и не брише и чување препушта другој страни, која мора да одбија брисање, иначе ништа не штити.",
-  "dest.needsPassword": "Прво подеси лозинку за пријаву у Подешавања, Безбедност. BombVault прима пријаве на складиште само иза ње.",
   "offsite.tamperTestNow": "Тестирај само додавање сада",
   "offsite.tamperTesting": "Тестирање…",
   "offsite.tamperOk": "брисање одбијено — само додавање активно",

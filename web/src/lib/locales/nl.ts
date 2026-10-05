@@ -1488,7 +1488,6 @@ const nl: Partial<Translations> = {
   "dest.provider.s3": "S3-compatibel",
   "dest.provider.smb": "SMB-share",
   "dest.immutableHint": "BombVault schoont daar dan nooit op en verwijdert niets, en laat de retentie over aan de andere kant, die het verwijderen moet weigeren om iets te beschermen.",
-  "dest.needsPassword": "Stel eerst een inlogwachtwoord in, onder Instellingen, Beveiliging. BombVault accepteert alleen aanmeldingen voor opslag achter een wachtwoord.",
   "offsite.tamperTestNow": "Append-only nu testen",
   "offsite.tamperTesting": "Testen…",
   "offsite.tamperOk": "verwijderen geweigerd, append-only actief",

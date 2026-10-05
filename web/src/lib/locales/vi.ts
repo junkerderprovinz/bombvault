@@ -1504,7 +1504,6 @@ const vi: Partial<Translations> = {
   "dest.provider.s3": "Tương thích S3",
   "dest.provider.smb": "Thư mục chia sẻ SMB",
   "dest.immutableHint": "Khi đó BombVault không bao giờ dọn bớt hay xóa ở đó và để việc lưu giữ cho phía bên kia, phía này phải từ chối việc xóa thì mới bảo vệ được gì.",
-  "dest.needsPassword": "Hãy đặt mật khẩu đăng nhập trước, trong Cài đặt, Bảo mật. BombVault chỉ nhận đăng nhập đối với kho lưu trữ có mật khẩu.",
   "offsite.tamperTestNow": "Kiểm tra append-only ngay",
   "offsite.tamperTesting": "Đang kiểm tra…",
   "offsite.tamperOk": "xóa bị từ chối, chế độ chỉ ghi thêm đang hoạt động",

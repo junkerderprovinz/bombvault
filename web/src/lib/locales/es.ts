@@ -1511,7 +1511,6 @@ const es: Partial<Translations> = {
   "dest.provider.s3": "Compatible con S3",
   "dest.provider.smb": "Recurso compartido SMB",
   "dest.immutableHint": "BombVault entonces nunca purga ni borra allí y deja la retención al otro lado, que debe rechazar el borrado para que esto proteja algo.",
-  "dest.needsPassword": "Establece primero una contraseña de acceso, en Ajustes, Seguridad. BombVault solo acepta inicios de sesión para el almacenamiento detrás de una.",
   "offsite.tamperTestNow": "Probar append-only ahora",
   "offsite.tamperTesting": "Probando…",
   "offsite.tamperOk": "borrado rechazado, append-only activo",

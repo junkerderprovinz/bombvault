@@ -589,7 +589,6 @@ const lv: Partial<Translations> = {
   "dest.provider.s3": "S3 saderīgs",
   "dest.provider.smb": "SMB koplietojums",
   "dest.immutableHint": "Tad BombVault tur nekad netīra un nedzēš, bet saglabāšanu atstāj otrai pusei, kurai, lai tas kaut ko aizsargātu, jāatsakās dzēst.",
-  "dest.needsPassword": "Vispirms iestati pierakstīšanās paroli sadaļā Iestatījumi, Drošība. BombVault pieņem pierakstīšanos tikai krātuvei, kas atrodas aiz tās.",
   "offsite.tamperTestNow": "Pārbaudīt tikai-pievienot tagad",
   "offsite.tamperTesting": "Pārbauda…",
   "offsite.tamperOk": "dzēšana noraidīta, tikai-pievienot ir aktīvs",
