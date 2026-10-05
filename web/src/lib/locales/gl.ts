@@ -593,7 +593,6 @@ const gl: Partial<Translations> = {
   "dest.provider.s3": "Compatible con S3",
   "dest.provider.smb": "Comparticón SMB",
   "dest.immutableHint": "BombVault nunca limpa nin elimina alí e deixa a retención ao outro lado, que ten que rexeitar as eliminacións para que isto protexa algo.",
-  "dest.needsPassword": "Primeiro define un contrasinal de acceso en Configuración, Seguridade. BombVault só acepta inicios de sesión para o almacenamento detrás dun contrasinal.",
   "offsite.tamperTestNow": "Probar só-engadir agora",
   "offsite.tamperTesting": "Probando…",
   "offsite.tamperOk": "borrado rexeitado, só-engadir activo",

@@ -1512,7 +1512,6 @@ const uk: Partial<Translations> = {
   "dest.provider.s3": "Сумісний із S3",
   "dest.provider.smb": "Ресурс SMB",
   "dest.immutableHint": "Тоді BombVault там ніколи не очищає й не видаляє, а зберігання лишає віддаленій стороні, яка має відхиляти видалення, інакше це нічого не захищає.",
-  "dest.needsPassword": "Спершу задайте пароль для входу в Налаштування, Безпека. BombVault приймає входи лише для сховищ, що за ними стоять.",
   "offsite.tamperTestNow": "Перевірити append-only зараз",
   "offsite.tamperTesting": "Перевірка…",
   "offsite.tamperOk": "видалення відхилено — режим append-only активний",

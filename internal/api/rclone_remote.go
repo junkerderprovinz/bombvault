@@ -229,16 +229,9 @@ func (s *Service) AddRcloneRemote(ctx context.Context, r rcloneRemote, plainPass
 // handleAddRcloneRemote stores an SMB or WebDAV destination from a form.
 // POST /api/offsite/rclone-remote
 //
-// Behind requireAuthForSecrets: the request body carries a live password for a
-// storage backend, and a route that accepts one must not be open in
-// trusted-LAN mode the way the read API is by design.
-//
 // The answer never echoes the password back, not even on failure. The most
 // likely failure by far is a typo in it.
 func (h *Handler) handleAddRcloneRemote(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "adding a storage destination") {
-		return
-	}
 	var body struct {
 		Name     string `json:"name"`
 		Type     string `json:"type"`

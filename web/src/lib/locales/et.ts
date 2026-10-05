@@ -593,7 +593,6 @@ const et: Partial<Translations> = {
   "dest.provider.s3": "S3-ühilduv",
   "dest.provider.smb": "SMB jagatud kaust",
   "dest.immutableHint": "BombVault siis ei puhasta ega kustuta seal kunagi ja jätab säilituse teisele poolele, mis peab kustutamisest keelduma, et see midagi kaitseks.",
-  "dest.needsPassword": "Määra kõigepealt sisselogimisparool jaotises Seaded, Turvalisus. BombVault võtab sisselogimisi salvestuse jaoks vastu ainult siis, kui see on olemas.",
   "offsite.tamperTestNow": "Testi ainult-lisamist kohe",
   "offsite.tamperTesting": "Testimine…",
   "offsite.tamperOk": "kustutamine tagasi lükatud, ainult-lisamine aktiivne",

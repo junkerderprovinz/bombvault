@@ -1499,7 +1499,6 @@ const he: Partial<Translations> = {
   "dest.provider.s3": "תואם S3",
   "dest.provider.smb": "שיתוף SMB",
   "dest.immutableHint": "BombVault אז לעולם לא גוזם ולא מוחק שם ומשאיר את השמירה לצד המרוחק, שחייב לסרב למחיקה כדי שזה יגן על משהו.",
-  "dest.needsPassword": "הגדר קודם סיסמת התחברות תחת הגדרות, אבטחה. BombVault מקבל התחברויות לאחסון רק מאחורי סיסמה.",
   "offsite.tamperTestNow": "בדוק append-only עכשיו",
   "offsite.tamperTesting": "בודק…",
   "offsite.tamperOk": "המחיקה נדחתה, מצב הוספה-בלבד פעיל",

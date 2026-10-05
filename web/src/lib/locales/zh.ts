@@ -1508,7 +1508,6 @@ const zh: Partial<Translations> = {
   "dest.provider.s3": "兼容 S3",
   "dest.provider.smb": "SMB 共享",
   "dest.immutableHint": "这样 BombVault 在那里就不会再清理或删除，保留策略交给对端处理，而对端必须拒绝删除，这样才真正起到保护作用。",
-  "dest.needsPassword": "请先在设置，安全中设置登录密码。BombVault 只对设有密码的存储接受登录。",
   "offsite.tamperTestNow": "立即测试 append-only",
   "offsite.tamperTesting": "测试中…",
   "offsite.tamperOk": "删除被拒绝，仅追加模式已生效",

@@ -593,7 +593,6 @@ const sk: Partial<Translations> = {
   "dest.provider.s3": "Kompatibilné s S3",
   "dest.provider.smb": "Zdieľanie SMB",
   "dest.immutableHint": "BombVault tam potom nikdy nečistí ani nemaže a ponecháva uchovávanie na druhú stranu, ktorá musí mazanie odmietať, inak nič nechráni.",
-  "dest.needsPassword": "Najprv nastav prihlasovacie heslo v Nastavenia, Zabezpečenie. BombVault prijíma prihlásenia do úložiska len za ním.",
   "offsite.tamperTestNow": "Otestovať len-na-pridávanie teraz",
   "offsite.tamperTesting": "Testuje sa…",
   "offsite.tamperOk": "odstránenie odmietnuté, len-na-pridávanie je aktívne",

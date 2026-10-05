@@ -1495,7 +1495,6 @@ const no: Partial<Translations> = {
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-ressurs",
   "dest.immutableHint": "BombVault rydder eller sletter da aldri der og overlater oppbevaringen til den andre siden, som må nekte sletting for at dette skal beskytte noe.",
-  "dest.needsPassword": "Angi først et påloggingspassord under Innstillinger, Sikkerhet. BombVault tar bare imot pålogginger for lagring bak et passord.",
   "offsite.tamperTestNow": "Test append-only nå",
   "offsite.tamperTesting": "Tester…",
   "offsite.tamperOk": "sletting avvist, append-only aktiv",

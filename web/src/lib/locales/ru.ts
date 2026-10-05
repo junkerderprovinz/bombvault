@@ -1490,7 +1490,6 @@ const ru: Partial<Translations> = {
   "dest.provider.s3": "S3-совместимое",
   "dest.provider.smb": "Ресурс SMB",
   "dest.immutableHint": "Тогда BombVault никогда не очищает и не удаляет там данные и оставляет хранение удалённой стороне, которая должна отклонять удаление, иначе защиты не будет.",
-  "dest.needsPassword": "Сначала задайте пароль для входа в разделе Настройки, Безопасность. BombVault принимает входы в хранилище только при его наличии.",
   "offsite.tamperTestNow": "Проверить append-only сейчас",
   "offsite.tamperTesting": "Проверка…",
   "offsite.tamperOk": "удаление отклонено — режим append-only активен",

@@ -593,7 +593,6 @@ const eu: Partial<Translations> = {
   "dest.provider.s3": "S3rekin bateragarria",
   "dest.provider.smb": "SMB partekatutako karpeta",
   "dest.immutableHint": "BombVaultek orduan ez du han inoiz garbitzen edo ezabatzen eta atxikipena beste aldeari uzten dio, zeinak ezabatzeari uko egin behar dion honek zerbait babesteko.",
-  "dest.needsPassword": "Ezarri lehenik saio-hasierako pasahitz bat, Ezarpenak, Segurtasuna atalean. BombVaultek biltegiratzerako saio-hasierak pasahitz baten atzean daudenean soilik onartzen ditu.",
   "offsite.tamperTestNow": "Probatu gehitu-soilik orain",
   "offsite.tamperTesting": "Probatzen…",
   "offsite.tamperOk": "ezabatzea ukatuta, gehitu-soilik aktibo",

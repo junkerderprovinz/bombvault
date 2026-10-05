@@ -593,7 +593,6 @@ const hi: Partial<Translations> = {
   "dest.provider.s3": "S3 संगत",
   "dest.provider.smb": "SMB शेयर",
   "dest.immutableHint": "तब BombVault वहाँ कभी प्रून या डिलीट नहीं करता और रिटेंशन दूसरे पक्ष पर छोड़ देता है, जिसे डिलीट से मना करना होगा, तभी इससे कोई सुरक्षा मिलती है।",
-  "dest.needsPassword": "पहले सेटिंग्स, सुरक्षा में लॉगिन पासवर्ड सेट करें। BombVault स्टोरेज के लिए साइन-इन केवल तभी लेता है जब उसके पीछे पासवर्ड हो।",
   "offsite.tamperTestNow": "अभी अपेंड-ओनली जाँचें",
   "offsite.tamperTesting": "जाँचा जा रहा है…",
   "offsite.tamperOk": "हटाना अस्वीकार हुआ: अपेंड-ओनली सक्रिय है",

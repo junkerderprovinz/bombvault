@@ -593,7 +593,6 @@ const sl: Partial<Translations> = {
   "dest.provider.s3": "Združljivo z S3",
   "dest.provider.smb": "Souporaba SMB",
   "dest.immutableHint": "BombVault tam potem nikoli ne čisti in ne briše ter hranjenje prepusti drugi strani, ki mora brisanje zavračati, sicer ničesar ne ščiti.",
-  "dest.needsPassword": "Najprej nastavi prijavno geslo pod Nastavitve, Varnost. BombVault sprejema prijave v shrambo samo za njim.",
   "offsite.tamperTestNow": "Preizkusi samo-dodajanje zdaj",
   "offsite.tamperTesting": "Preizkušanje…",
   "offsite.tamperOk": "brisanje zavrnjeno, samo-dodajanje aktivno",

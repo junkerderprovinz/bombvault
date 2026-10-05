@@ -1502,7 +1502,6 @@ const hu: Partial<Translations> = {
   "dest.provider.s3": "S3-kompatibilis",
   "dest.provider.smb": "SMB-megosztás",
   "dest.immutableHint": "A BombVault ilyenkor ott soha nem nyes és nem töröl, a megőrzést a túloldalra bízza, amelynek el kell utasítania a törlést, hogy ez bármit védjen.",
-  "dest.needsPassword": "Előbb állíts be bejelentkezési jelszót a Beállítások, Biztonság alatt. A BombVault csak jelszóval védett tárhelyre fogad el bejelentkezést.",
   "offsite.tamperTestNow": "Append-only tesztelése most",
   "offsite.tamperTesting": "Tesztelés…",
   "offsite.tamperOk": "a törlés elutasítva: append-only aktív",

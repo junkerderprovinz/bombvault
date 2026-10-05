@@ -1520,7 +1520,6 @@ const ar: Partial<Translations> = {
   "dest.provider.s3": "متوافق مع S3",
   "dest.provider.smb": "مجلد مشترك SMB",
   "dest.immutableHint": "عندها لا يقلّم BombVault ولا يحذف هناك أبداً ويترك الاحتفاظ للطرف البعيد، الذي يجب أن يرفض الحذف حتى يحمي هذا شيئاً.",
-  "dest.needsPassword": "عيّن كلمة مرور لتسجيل الدخول أولاً في الإعدادات، الأمان. لا يقبل BombVault تسجيل الدخول إلا للتخزين الذي تحميه كلمة مرور.",
   "offsite.tamperTestNow": "اختبر append-only الآن",
   "offsite.tamperTesting": "جارٍ الاختبار…",
   "offsite.tamperOk": "رُفض الحذف: وضع الإلحاق فقط نشط",

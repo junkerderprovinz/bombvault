@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ApiError,
   checkDraft,
   createDestination,
   draftFolders,
@@ -163,10 +162,7 @@ export function DestinationWizard({ onDone, onCancel }: { onDone: (d: Destinatio
     return { provider: picked?.id ?? "", settings, ...extra };
   }
 
-  // A 403 is the server refusing sign-ins while no login password is set,
-  // which the bare status would not say.
   function failure(e: unknown, fallback: TranslationKey): string {
-    if (e instanceof ApiError && e.status === 403) return t("dest.needsPassword");
     return e instanceof Error && e.message ? e.message : t(fallback);
   }
 

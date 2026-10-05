@@ -593,7 +593,6 @@ const ca: Partial<Translations> = {
   "dest.provider.s3": "Compatible amb S3",
   "dest.provider.smb": "Recurs compartit SMB",
   "dest.immutableHint": "BombVault llavors no neteja ni esborra mai allà i deixa la retenció a l'altra banda, que ha de rebutjar l'esborrat perquè això protegeixi res.",
-  "dest.needsPassword": "Defineix primer una contrasenya d'inici de sessió a Configuració, Seguretat. BombVault només accepta inicis de sessió per a emmagatzematge protegit per una.",
   "offsite.tamperTestNow": "Prova ara el només-afegir",
   "offsite.tamperTesting": "Provant…",
   "offsite.tamperOk": "esborrat rebutjat, només-afegir actiu",

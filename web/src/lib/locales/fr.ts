@@ -1499,7 +1499,6 @@ const fr: Partial<Translations> = {
   "dest.provider.s3": "Compatible S3",
   "dest.provider.smb": "Partage SMB",
   "dest.immutableHint": "BombVault n'élague ni ne supprime alors jamais là-bas et laisse la rétention au côté distant, qui doit refuser les suppressions pour que cela protège quoi que ce soit.",
-  "dest.needsPassword": "Définissez d'abord un mot de passe de connexion sous Paramètres, Sécurité. BombVault n'accepte les connexions vers le stockage que derrière un mot de passe.",
   "offsite.tamperTestNow": "Tester l'append-only maintenant",
   "offsite.tamperTesting": "Test…",
   "offsite.tamperOk": "suppression refusée, append-only actif",

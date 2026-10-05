@@ -593,7 +593,6 @@ const lt: Partial<Translations> = {
   "dest.provider.s3": "S3 suderinama",
   "dest.provider.smb": "SMB bendrinamas aplankas",
   "dest.immutableHint": "Tada BombVault ten niekada nevalo ir netrina, o saugojimą palieka kitai pusei, kuri, kad tai ką nors apsaugotų, turi atsisakyti trynimo.",
-  "dest.needsPassword": "Pirmiausia nustatyk prisijungimo slaptažodį skiltyje Nustatymai, Saugumas. BombVault priima prisijungimus tik prie saugyklos, kuri už jo yra.",
   "offsite.tamperTestNow": "Tikrinti tik-pridėjimą dabar",
   "offsite.tamperTesting": "Tikrinama…",
   "offsite.tamperOk": "trynimas atmestas, tik-pridėjimas aktyvus",
