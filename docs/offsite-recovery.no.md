@@ -195,6 +195,8 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 
 Et separat kort på **Gjenoppretting**-fanen åpner et *annet* BombVault-instans' repo (en deling montert under `/mnt`, eller en fjern-URL) med **den instansens `APP_KEY`**, i en engangs, skrivebeskyttet økt. Bla gjennom containerne, VM-ene og filsettene lagret der, velg et øyeblikksbilde og gjenopprett det, og det gjenopprettede objektet blir en normal lokal container, VM eller filsett. Ingenting skrives noensinne til det andre repoet, og dine egne sikkerhetskopiinnstillinger forblir urørte (økten lever i minnet og utløper av seg selv). Å flytte en container fra server A til server B betyr ikke lenger å peke om repo-innstillingene dine og reversere dem etterpå. Dette kortet er for én gang: det åpner en økt, gjenoppretter det du velger, og glemmer den andre instansen. Vil du heller ha en fast ordning, der denne boksen etter en tidsplan henter en annen instans' øyeblikksbilder inn i sitt eget repository, er det fanen **Henting** på siden **Instanser**.
 
+En kontainer der nettverket ikke finnes på denne serveren, for eksempel et Unraid-`br0`-nettverk på en vanlig Docker-vert, viser et nettverksvalg under raden sin. BombVault oppretter den på nettverket du velger, med MAC-adressen og de andre nettverkene sine. Den faste IP-adressen hørte til det gamle nettverket og faller bort, så det nye nettverket tildeler en.
+
 ## Gjenopprettingssett for krypteringsnøkkel
 
 Dette er delen som gjør katastrofegjenoppretting mulig selv når det ikke finnes en kjørende BombVault.

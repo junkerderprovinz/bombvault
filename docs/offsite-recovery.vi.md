@@ -195,6 +195,8 @@ Một tab **Khôi phục** chuyên biệt dẫn một bản cài đặt mới ho
 
 Một thẻ riêng trên tab **Khôi phục** mở kho của một phiên bản BombVault *khác* (một share được gắn kết dưới `/mnt`, hoặc một URL từ xa) bằng **`APP_KEY` của phiên bản đó**, trong một phiên chỉ đọc, dùng một lần. Duyệt các container, VM và bộ tập tin được lưu ở đó, chọn một snapshot và khôi phục nó, và đối tượng đã khôi phục trở thành một container, VM hay bộ tập tin cục bộ bình thường. Không có gì bao giờ được ghi vào kho kia, và các cài đặt sao lưu của chính bạn giữ nguyên không bị đụng (phiên sống trong bộ nhớ và tự hết hạn). Chuyển một container từ máy chủ A sang máy chủ B không còn có nghĩa là trỏ lại cài đặt kho của bạn rồi hoàn nguyên chúng sau đó. Thẻ này chỉ dùng một lần: nó mở một phiên, khôi phục những gì bạn chọn, rồi quên phiên bản kia. Nếu bạn muốn một sắp xếp lâu dài thay vào đó, trong đó máy này lấy các snapshot của một phiên bản khác về kho của chính nó theo lịch, thì đó là tab **Kéo về** của trang **Phiên bản**.
 
+Một container có mạng không tồn tại trên máy chủ này, ví dụ mạng `br0` của Unraid trên một máy chủ Docker thông thường, sẽ hiện phần chọn mạng dưới hàng của nó. BombVault tạo container trên mạng bạn chọn, giữ nguyên địa chỉ MAC và các mạng khác. Địa chỉ IP cố định thuộc về mạng cũ nên bị bỏ, và mạng mới sẽ cấp địa chỉ.
+
 ## Bộ khôi phục khóa mã hóa
 
 Đây là mảnh khiến việc khôi phục sau thảm họa trở nên khả thi ngay cả khi không có một BombVault đang chạy.

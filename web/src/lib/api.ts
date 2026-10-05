@@ -904,9 +904,11 @@ export interface RestoreCheckRequest {
   overwrite?: boolean;
   zvolPool?: string;
   wholeTree?: boolean;
+  /** The network a foreign container goes onto when this host lacks its own. */
+  network?: string;
 }
 
-export type CheckLineId = "repository" | "key" | "snapshot" | "space";
+export type CheckLineId = "repository" | "key" | "snapshot" | "space" | "network";
 
 /** One line of the pre-flight checklist. need and free are bytes. */
 export interface CheckLine {
@@ -4572,6 +4574,9 @@ export async function foreignRestore(req: {
   /** zfs domain: restore every dataset of the snapshot's run, each into its
    *  own subfolder of `target`. */
   wholeTree?: boolean;
+  /** containers domain: the network to create the container on when this
+   *  host lacks its own. The backend refuses without it in that case. */
+  network?: string;
 }): Promise<OkEnvelope & { started?: boolean }> {
   const res = await fetch("/api/foreign/restore", {
     method: "POST",
@@ -4618,7 +4623,15 @@ export interface ForeignBindWarning {
 export function foreignContainerWarnings(
   session: string,
   item: string
-): Promise<OkEnvelope & { warnings?: ForeignBindWarning[] }> {
+): Promise<
+  OkEnvelope & {
+    warnings?: ForeignBindWarning[];
+    /** The container's network when this host lacks it, else "". */
+    missingNetwork?: string;
+    /** The networks it can be restored onto instead. */
+    networks?: string[];
+  }
+> {
   return fetchJSON("/api/foreign/container-warnings", {
     method: "POST",
     body: JSON.stringify({ session, item }),

@@ -623,6 +623,9 @@ type foreignFakeDocker struct {
 	created      int
 	createdIn    model.Inspect
 	createdStart bool
+	// networks are the networks on this host; nil means Docker's three
+	// defaults.
+	networks []string
 }
 
 var _ dockercli.Docker = (*foreignFakeDocker)(nil)
@@ -637,6 +640,13 @@ func (f *foreignFakeDocker) Inspect(context.Context, string) (model.Inspect, err
 
 func (f *foreignFakeDocker) Allocations(context.Context) ([]model.Allocation, error) {
 	return nil, nil
+}
+
+func (f *foreignFakeDocker) Networks(context.Context) ([]string, error) {
+	if f.networks == nil {
+		return []string{"bridge", "host", "none"}, nil
+	}
+	return f.networks, nil
 }
 
 func (f *foreignFakeDocker) Stop(context.Context, string, time.Duration) error    { return nil }
@@ -757,7 +767,7 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 		t.Fatalf("foreignSession: %v", err)
 	}
 
-	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", "latest", true, "", nil, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", "latest", true, "", nil, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}
@@ -1059,7 +1069,7 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 		t.Fatalf("inventory fileSets = %+v, want [docs]", inv.FileSets)
 	}
 
-	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs", nil, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs", nil, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}
@@ -1148,7 +1158,7 @@ func TestForeignRestoreFileSetSelectiveUsesSubtreeInclude(t *testing.T) {
 	}
 
 	sel := []string{"/host/user/appdata/vaultwarden", "/host/user/appdata/immich"}
-	started, err := s.StartForeignRestore(context.Background(), id, "files", "appdata", "latest", true, "restore-here/subset", sel, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "appdata", "latest", true, "restore-here/subset", sel, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore (selective): started=%v err=%v", started, err)
 	}
@@ -1237,12 +1247,12 @@ func TestForeignRestoreFileSetSelectiveGuards(t *testing.T) {
 	}
 
 	// A selected path outside the snapshot's subtree is a traversal attempt.
-	started, err := s.StartForeignRestore(ctx, id, "files", "appdata", "latest", true, "restore-here/x", []string{"/host/other/secret"}, false, "")
+	started, err := s.StartForeignRestore(ctx, id, "files", "appdata", "latest", true, "restore-here/x", []string{"/host/other/secret"}, false, "", "")
 	if started || err == nil || !strings.Contains(err.Error(), "outside the file set snapshot") {
 		t.Fatalf("outside-subtree selection: want the containment error, got started=%v err=%v", started, err)
 	}
 	// A selection with no target folder: foreign restores never go in place.
-	started, err = s.StartForeignRestore(ctx, id, "files", "appdata", "latest", true, "", []string{"/host/user/appdata/vaultwarden"}, false, "")
+	started, err = s.StartForeignRestore(ctx, id, "files", "appdata", "latest", true, "", []string{"/host/user/appdata/vaultwarden"}, false, "", "")
 	if started || err == nil || !strings.Contains(err.Error(), "target folder") {
 		t.Fatalf("selection without target: want the target-folder error, got started=%v err=%v", started, err)
 	}
@@ -1277,7 +1287,7 @@ func TestForeignRestoreFileSetSelectiveDeepSelectionNoTree(t *testing.T) {
 	}
 
 	deep := "/host/user/appdata/stacks/DXP480T/xo"
-	started, err := s.StartForeignRestore(context.Background(), id, "files", "appdata", "latest", true, "restore-here", []string{deep}, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "appdata", "latest", true, "restore-here", []string{deep}, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore (deep selective): started=%v err=%v", started, err)
 	}
@@ -1374,7 +1384,7 @@ func TestForeignRestoreLeavesSettingsUntouched(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
-	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs", nil, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "files", "docs", "latest", true, "restore-here/docs", nil, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("StartForeignRestore: started=%v err=%v", started, err)
 	}
@@ -1402,7 +1412,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Unconfirmed: the sentinel, before ANY engine call or session lookup.
-	started, err := s.StartForeignRestore(ctx, "whatever", "containers", "web", "latest", false, "", nil, false, "")
+	started, err := s.StartForeignRestore(ctx, "whatever", "containers", "web", "latest", false, "", nil, false, "", "")
 	if started || !errors.Is(err, backup.ErrNotConfirmed) {
 		t.Fatalf("unconfirmed: want ErrNotConfirmed, got started=%v err=%v", started, err)
 	}
@@ -1411,7 +1421,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 	}
 
 	// Unknown session (also the expired case — foreignSession sweeps first).
-	started, err = s.StartForeignRestore(ctx, "nope", "containers", "web", "latest", true, "", nil, false, "")
+	started, err = s.StartForeignRestore(ctx, "nope", "containers", "web", "latest", true, "", nil, false, "", "")
 	if started || !errors.Is(err, errForeignSession) {
 		t.Fatalf("unknown session: want errForeignSession, got started=%v err=%v", started, err)
 	}
@@ -1422,20 +1432,20 @@ func TestForeignRestoreValidation(t *testing.T) {
 	}
 
 	// Unknown domain.
-	if started, err = s.StartForeignRestore(ctx, id, "flash", "boot", "latest", true, "", nil, false, ""); started || err == nil || !strings.Contains(err.Error(), "unknown domain") {
+	if started, err = s.StartForeignRestore(ctx, id, "flash", "boot", "latest", true, "", nil, false, "", ""); started || err == nil || !strings.Contains(err.Error(), "unknown domain") {
 		t.Fatalf("unknown domain: want the domain error, got started=%v err=%v", started, err)
 	}
 	// File set without a target folder (foreign sets never restore in place).
-	if started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "", nil, false, ""); started || err == nil || !strings.Contains(err.Error(), "target folder") {
+	if started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "", nil, false, "", ""); started || err == nil || !strings.Contains(err.Error(), "target folder") {
 		t.Fatalf("files without target: want the target-folder error, got started=%v err=%v", started, err)
 	}
 	// Unsafe item name (feeds tags, def filenames and progress keys).
-	if started, err = s.StartForeignRestore(ctx, id, "files", "../evil", "latest", true, "restore-here", nil, false, ""); started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
+	if started, err = s.StartForeignRestore(ctx, id, "files", "../evil", "latest", true, "restore-here", nil, false, "", ""); started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 		t.Fatalf("unsafe item: want the name error, got started=%v err=%v", started, err)
 	}
 	// Container whose def the foreign repo does not mirror (the seeded repo has a
 	// config marker but no def/ghost.def to read).
-	if started, err = s.StartForeignRestore(ctx, id, "containers", "ghost", "latest", true, "", nil, false, ""); started || err == nil || !strings.Contains(err.Error(), "definition") {
+	if started, err = s.StartForeignRestore(ctx, id, "containers", "ghost", "latest", true, "", nil, false, "", ""); started || err == nil || !strings.Contains(err.Error(), "definition") {
 		t.Fatalf("missing def: want the definition error, got started=%v err=%v", started, err)
 	}
 
@@ -1444,7 +1454,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 	if s.BackupInProgress() {
 		t.Fatal("a failed foreign restore must release the single-flight guard")
 	}
-	started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "restore-here/docs", nil, false, "")
+	started, err = s.StartForeignRestore(ctx, id, "files", "docs", "latest", true, "restore-here/docs", nil, false, "", "")
 	if err != nil || !started {
 		t.Fatalf("valid restore after failures: started=%v err=%v", started, err)
 	}
@@ -1473,7 +1483,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 
 	// A VM name with a space passes the name check: the failure is the later
 	// missing-definition error, never "invalid item name".
-	started, err := s.StartForeignRestore(ctx, id, "vms", "Windows Server 2022", "latest", true, "", nil, false, "")
+	started, err := s.StartForeignRestore(ctx, id, "vms", "Windows Server 2022", "latest", true, "", nil, false, "", "")
 	if started {
 		t.Fatalf("no def seeded, restore must not start; got started=%v", started)
 	}
@@ -1486,7 +1496,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 
 	// Unsafe VM names are still rejected by the name check itself.
 	for _, unsafe := range []string{"../evil", "win/../etc", `win\evil`, "-oProxyCommand"} {
-		started, err = s.StartForeignRestore(ctx, id, "vms", unsafe, "latest", true, "", nil, false, "")
+		started, err = s.StartForeignRestore(ctx, id, "vms", unsafe, "latest", true, "", nil, false, "", "")
 		if started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 			t.Fatalf("unsafe VM name %q: want the name rejection, got started=%v err=%v", unsafe, started, err)
 		}
@@ -1495,7 +1505,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 	// Containers and file sets keep the strict validResourceName: a space is not
 	// a valid Docker container / file-set name, so it is rejected on the name.
 	for _, domain := range []string{"containers", "files"} {
-		started, err = s.StartForeignRestore(ctx, id, domain, "has space", "latest", true, "restore-here", nil, false, "")
+		started, err = s.StartForeignRestore(ctx, id, domain, "has space", "latest", true, "restore-here", nil, false, "", "")
 		if started || err == nil || !strings.Contains(err.Error(), "invalid item name") {
 			t.Fatalf("%s spaced name: want the strict name rejection, got started=%v err=%v", domain, started, err)
 		}
@@ -1784,7 +1794,7 @@ func TestForeignRestoreValidationFailureLeavesLocalTargetIntact(t *testing.T) {
 	// A valid-shaped but not-owned snapshot id → validation fails synchronously,
 	// before any adoption.
 	notOwned := strings.Repeat("ab", 8) // 16 lowercase hex = a well-formed short id
-	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", notOwned, true, "", nil, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", notOwned, true, "", nil, false, "", "")
 	if started || err == nil || !strings.Contains(err.Error(), "does not belong") {
 		t.Fatalf("want a not-owned-snapshot failure that starts nothing, got started=%v err=%v", started, err)
 	}
@@ -1854,16 +1864,16 @@ func TestForeignZFSRestoreRequiresFolderAndGuards(t *testing.T) {
 		t.Fatalf("OpenForeign: %v", err)
 	}
 	ctx := context.Background()
-	started, err := s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, "", nil, false, "")
+	started, err := s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, "", nil, false, "", "")
 	if started || err == nil || !strings.Contains(err.Error(), "folder") {
 		t.Fatalf("started = %v, err = %v, want a refusal that asks for a folder", started, err)
 	}
-	started, err = s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, "unmounted/here", nil, false, "")
+	started, err = s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, "unmounted/here", nil, false, "", "")
 	if started || zfsCodeOf(t, err) != "destination-not-mounted" {
 		t.Fatalf("started = %v, err = %v, want the destination guard to refuse", started, err)
 	}
 
-	started, err = s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, zfsMountedSub+"/from-other", nil, false, "")
+	started, err = s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, zfsMountedSub+"/from-other", nil, false, "", "")
 	if !started || err != nil {
 		t.Fatalf("started = %v, err = %v", started, err)
 	}
@@ -1915,7 +1925,7 @@ func TestForeignZFSRestoreOverALocalItemCreatesNoOverlappingRow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
-	started, err := s.StartForeignRestore(context.Background(), id, "zfs", "tank/data", "latest", true, zfsMountedSub+"/from-other", nil, false, "")
+	started, err := s.StartForeignRestore(context.Background(), id, "zfs", "tank/data", "latest", true, zfsMountedSub+"/from-other", nil, false, "", "")
 	if !started || err != nil {
 		t.Fatalf("started = %v, err = %v", started, err)
 	}
@@ -1985,7 +1995,7 @@ func TestForeignZFSRestoreReachesEveryDatasetOfTheTree(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			s, id, eng, target := foreignZFSTreeFixture(t, tc.snaps)
-			started, err := s.StartForeignRestore(context.Background(), id, "zfs", tc.item, tc.snapshot, true, zfsMountedSub+"/from-other", nil, false, "")
+			started, err := s.StartForeignRestore(context.Background(), id, "zfs", tc.item, tc.snapshot, true, zfsMountedSub+"/from-other", nil, false, "", "")
 			if !started || err != nil {
 				t.Fatalf("started = %v, err = %v", started, err)
 			}

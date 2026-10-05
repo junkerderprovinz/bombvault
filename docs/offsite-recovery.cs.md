@@ -195,6 +195,8 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 
 Samostatná karta v záložce **Obnova** otevře repozitář *jiné* instance BombVaultu (sdílená složka připojená pod `/mnt`, nebo vzdálená URL) s **`APP_KEY` dané instance**, v jednorázové relaci jen pro čtení. Procházejte kontejnery, VM a sady souborů tam uložené, vyberte snímek a obnovte jej, a obnovený objekt se stane běžným místním kontejnerem, VM nebo sadou souborů. Do druhého repozitáře se nikdy nic nezapíše a vaše vlastní nastavení záloh zůstane nedotčeno (relace žije v paměti a sama vyprší). Přesun kontejneru ze serveru A na server B neznamená přesměrovávat nastavení repozitáře a poté je vracet zpět. Tato karta je jednorázová: otevře relaci, obnoví, co vyberete, a na druhou instanci zapomene. Pokud místo toho chcete trvalé uspořádání, kde tento stroj podle plánu stahuje snímky jiné instance do vlastního repozitáře, slouží k tomu záložka **Stažení** na stránce **Instance**.
 
+Kontejner, jehož síť na tomto serveru neexistuje, třeba síť `br0` z Unraidu na běžném Docker hostiteli, ukáže pod svým řádkem výběr sítě. BombVault ho vytvoří ve zvolené síti, s jeho MAC adresou a ostatními sítěmi. Pevná IP adresa patřila ke staré síti a odpadá, adresu přidělí nová síť.
+
 ## Sada pro obnovu šifrovacího klíče
 
 Toto je díl, který umožňuje zotavení po havárii, i když neběží žádný BombVault.

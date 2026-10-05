@@ -195,6 +195,8 @@ O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită pri
 
 Un card separat în fila **Recuperare** deschide depozitul unei *alte* instanțe BombVault (o partajare montată sub `/mnt`, sau un URL la distanță) cu **`APP_KEY`-ul acelei instanțe**, într-o sesiune unică, doar în citire. Răsfoiește containerele, VM-urile și seturile de fișiere stocate acolo, alege un instantaneu și restaurează-l, iar obiectul restaurat devine un container, VM sau set de fișiere local normal. Nimic nu este scris vreodată în celălalt depozit, iar propriile tale setări de backup rămân neatinse (sesiunea trăiește în memorie și expiră singură). Mutarea unui container de pe serverul A pe serverul B nu mai înseamnă repointarea setărilor depozitului tău și revenirea lor ulterioară. Acest card este de unică folosință: deschide o sesiune, restaurează ce alegi și uită cealaltă instanță. Dacă vrei în schimb un aranjament permanent, în care această stație aduce după o programare instantaneele altei instanțe în propriul depozit, aceea este fila **Preluare** a paginii **Instanțe**.
 
+Un container a cărui rețea nu există pe acest server, de exemplu o rețea `br0` din Unraid pe un host Docker obișnuit, arată sub rândul său o alegere de rețea. BombVault îl creează în rețeaua pe care o alegi, cu adresa MAC și celelalte rețele. Adresa IP fixă aparținea rețelei vechi și se renunță la ea, așa că adresa o atribuie rețeaua nouă.
+
 ## Kit de recuperare a cheii de criptare
 
 Aceasta este piesa care face recuperarea în caz de dezastru posibilă chiar și când nu există niciun BombVault în execuție.

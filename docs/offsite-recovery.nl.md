@@ -195,6 +195,8 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op Ã©Ã
 
 Een aparte kaart op het tabblad **Herstel** opent de repo van een *andere* BombVault-instantie (een share gemount onder `/mnt`, of een remote URL) met **de `APP_KEY` van die instantie**, in een eenmalige, alleen-lezen sessie. Blader door de containers, VM's en bestandssets die daar zijn opgeslagen, kies een snapshot en herstel hem, en het herstelde object wordt een normale lokale container, VM of bestandsset. Er wordt nooit iets naar de andere repo geschreven, en je eigen back-upinstellingen blijven onaangeroerd (de sessie leeft in het geheugen en verloopt vanzelf). Een container van server A naar server B verplaatsen betekent niet langer je repo-instellingen omleiden en die achteraf terugdraaien. Deze kaart is eenmalig: ze opent een sessie, herstelt wat je kiest en vergeet de andere instantie. Wil je in plaats daarvan een vaste regeling, waarbij deze machine volgens een planning de snapshots van een andere instantie in haar eigen repository ophaalt, dan is dat het tabblad **Ophalen** van de pagina **Instanties**.
 
+Een container waarvan het netwerk op deze server niet bestaat, zoals een `br0`-netwerk van Unraid op een gewone Docker-host, toont onder zijn rij een netwerkkeuze. BombVault maakt hem aan op het netwerk dat je kiest, met zijn MAC-adres en zijn andere netwerken. Het vaste IP-adres hoorde bij het oude netwerk en vervalt, dus het nieuwe netwerk geeft een adres.
+
 ## Herstelkit voor de encryptiesleutel
 
 Dit is het onderdeel dat noodherstel mogelijk maakt, zelfs wanneer er geen draaiende BombVault is.

@@ -6,7 +6,7 @@ import { SelectField } from "../components/SelectField";
 import { hueVars } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
-import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { withLtrFragments, withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { AppdataBackupImport } from "../components/recovery/AppdataBackupImport";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
@@ -474,6 +474,13 @@ function ForeignItemRow({
   // the operator fixes in the template.
   const [overwrite, setOverwrite] = useState(false);
   const [warnings, setWarnings] = useState<ForeignBindWarning[]>([]);
+  // The container's network when this host lacks it, and the network picked
+  // to restore it onto instead. Unraid's br0 networks are the usual case on a
+  // plain Docker host.
+  const [missingNetwork, setMissingNetwork] = useState("");
+  const [networks, setNetworks] = useState<string[]>([]);
+  const [network, setNetwork] = useState("");
+  const chosenNetwork = missingNetwork !== "" ? network : undefined;
 
   // onSessionGone is a new arrow on every parent render, and the parent renders
   // on every progress tick. As an effect dependency it would wipe the selection
@@ -509,8 +516,13 @@ function ForeignItemRow({
     foreignContainerWarnings(session, item.name)
       .then((res) => {
         if (cancelled) return;
-        if (res.ok) setWarnings(res.warnings ?? []);
-        else if (isForeignSessionGone(res.error)) onSessionGoneRef.current();
+        if (res.ok) {
+          setWarnings(res.warnings ?? []);
+          const nets = res.networks ?? [];
+          setMissingNetwork(res.missingNetwork ?? "");
+          setNetworks(nets);
+          setNetwork(nets.includes("bridge") ? "bridge" : (nets[0] ?? ""));
+        } else if (isForeignSessionGone(res.error)) onSessionGoneRef.current();
       })
       .catch(() => {
         /* The appdata remap and the destination guard still protect the restore. */
@@ -572,6 +584,7 @@ function ForeignItemRow({
       paths: subsetActive ? [...selected] : undefined,
       overwrite: domain === "containers" ? overwrite : undefined,
       wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
+      network: chosenNetwork,
     });
     setBusy(false);
     const refusal = restoreBlockReason(check, t);
@@ -606,6 +619,7 @@ function ForeignItemRow({
             paths: subsetActive ? [...selected] : undefined,
             overwrite: domain === "containers" ? overwrite : undefined,
             wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
+            network: chosenNetwork,
           }),
         t,
       });
@@ -790,6 +804,22 @@ function ForeignItemRow({
             disabled={busy}
             label={t("recovery.foreignOverwrite")}
           />
+          {missingNetwork !== "" && (
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <span className="text-carbon-textSub">
+                {withLtrFragments(t("recovery.foreignNetworkMissing").replace("{name}", missingNetwork), [missingNetwork])}
+              </span>
+              <SelectField
+                value={network}
+                onChange={setNetwork}
+                label={t("recovery.foreignNetwork")}
+                disabled={busy || networks.length === 0}
+                options={networks.map((n) => ({ value: n, label: n }))}
+                className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text glim-field-focus"
+              />
+              <InfoBubble tip={t("recovery.foreignNetworkHint")} />
+            </div>
+          )}
           {warnings.length > 0 && (
             <div className="rounded-card bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
               <p className="text-statusWarn">{t("recovery.foreignBindWarning")}</p>
