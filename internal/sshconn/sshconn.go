@@ -115,11 +115,24 @@ func (c *Conn) sshExec(remote ...string) []string {
 	return full
 }
 
+// sshConfigMark heads the file WriteSSHConfig writes, so a later start can
+// tell its own file from a person's.
+const sshConfigMark = "# Written by BombVault for libvirt's ssh transport.\n"
+
+// ErrForeignSSHConfig is returned when ~/.ssh/config exists and was not
+// written by BombVault.
+var ErrForeignSSHConfig = errors.New("an ssh config BombVault did not write is in place, so it was left alone")
+
 // WriteSSHConfig writes ~/.ssh/config for libvirt builds whose qemu+ssh
 // transport runs the external ssh binary (Unraid among them). That binary
 // ignores the URI's keyfile and known_hosts parameters, so without this file
 // it falls back to the empty ~/.ssh defaults with strict checking and virsh
 // fails with "Host key verification failed".
+//
+// The file is one Host * block, so it would redirect every ssh call of the
+// account. In the container that account is BombVault's own, but run on a
+// desktop it is a person's, which is why a file someone else wrote is never
+// replaced.
 func (c *Conn) WriteSSHConfig() error {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
@@ -129,12 +142,23 @@ func (c *Conn) WriteSSHConfig() error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("sshconn: mkdir %s: %w", dir, err)
 	}
-	cfg := fmt.Sprintf("Host *\n  IdentityFile %s\n  UserKnownHostsFile %s\n  StrictHostKeyChecking accept-new\n  BatchMode yes\n  ConnectTimeout 10\n",
-		filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
-	if err := os.WriteFile(filepath.Join(dir, "config"), []byte(cfg), 0o600); err != nil {
-		return fmt.Errorf("sshconn: write %s/config: %w", dir, err)
+	path := filepath.Join(dir, "config")
+	if old, err := os.ReadFile(path); err == nil && !c.ownsSSHConfig(string(old)) { //nolint:gosec // G304: the path is the account's own ~/.ssh/config
+		return fmt.Errorf("sshconn: %s: %w", path, ErrForeignSSHConfig)
+	}
+	cfg := fmt.Sprintf("%sHost *\n  IdentityFile %s\n  UserKnownHostsFile %s\n  StrictHostKeyChecking accept-new\n  BatchMode yes\n  ConnectTimeout 10\n",
+		sshConfigMark, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
+	if err := os.WriteFile(path, []byte(cfg), 0o600); err != nil {
+		return fmt.Errorf("sshconn: write %s: %w", path, err)
 	}
 	return nil
+}
+
+// ownsSSHConfig reports whether cfg is a file WriteSSHConfig wrote: one with
+// the mark, or one from a build before the mark that points at this key.
+func (c *Conn) ownsSSHConfig(cfg string) bool {
+	return strings.HasPrefix(cfg, sshConfigMark) ||
+		strings.Contains(cfg, "IdentityFile "+filepath.ToSlash(c.keyPath())+"\n")
 }
 
 // EnsureKnownHost opens a throwaway SSH connection so the host key is in
