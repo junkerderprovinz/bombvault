@@ -5,4 +5,4 @@
  * that release's tag, so it has to name a published release (see `gh release
  * list` in the glimstone repo), not a changelog heading.
  */
-export const GLIMSTONE_VERSION = "3.0.2";
+export const GLIMSTONE_VERSION = "3.1.6";

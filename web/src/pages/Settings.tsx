@@ -96,7 +96,7 @@ import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
 import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
 import { AboutCard } from "./settings/AboutCard";
 import { DashboardWidgetCard } from "./settings/DashboardWidgetCard";
-import { ParleyPortCard, WidgetAppCard } from "./settings/AppsCards";
+import { ParleyPortCard, PhoneAppCard, WidgetAppCard } from "./settings/AppsCards";
 import { McpServerCard } from "./settings/McpServerCard";
 import { ApiTokensCard } from "./settings/ApiTokensCard";
 import { HomeAssistantCard } from "./settings/HomeAssistantCard";
@@ -3406,6 +3406,7 @@ export function SettingsPage() {
 
       {page === "apps" && (
         <>
+          <PhoneAppCard t={t} hueIndex={nextHue()} />
           <ParleyPortCard t={t} hueIndex={nextHue()} />
           <WidgetAppCard t={t} hueIndex={nextHue()} />
         </>

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "../Button";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { ConfirmSheet } from "../mobile/ConfirmSheet";
+import { TestButton, VerdictLine } from "../TestButton";
 import {
   createDirectRepo,
   getDirectRepo,
@@ -16,6 +16,7 @@ import { placementErrorText } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
 import { useDialogKeys } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
+import { useTestVerdict } from "../../lib/useTestVerdict";
 import { reposChanged } from "../../lib/useNamedRepos";
 
 export type DirectRepoResult =
@@ -51,8 +52,7 @@ export function DirectRepoDialog({
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [note, setNote] = useState<DirectSuggestion["note"]>("");
-  const [result, setResult] = useState<string | null>(null);
-  const [testing, setTesting] = useState(false);
+  const verdict = useTestVerdict(location.trim(), t("settings.error"));
   const isDesktop = useIsDesktop();
   useDialogKeys(isDesktop, dialogRef, onClose);
 
@@ -80,21 +80,20 @@ export function DirectRepoDialog({
 
   const withTarget = (text: string) => text.replace(/\{target\}/g, () => target.name);
 
-  async function test() {
-    setTesting(true);
-    let r: OkEnvelope & { initialized?: boolean };
-    try {
-      r = await testDirectLocation(target.id, location.trim());
-    } catch (err) {
-      r = { ok: false, error: err instanceof Error ? err.message : undefined };
-    } finally {
-      setTesting(false);
-    }
-    if (!r.ok) {
-      setResult(t("directRepo.testFailed").replace("{error}", () => placementErrorText(t, lang, r, "settings.error")));
-      return;
-    }
-    setResult(r.initialized ? t("directRepo.testExisting") : t("directRepo.testEmpty"));
+  function test() {
+    void verdict.run(async () => {
+      let r: OkEnvelope & { initialized?: boolean };
+      try {
+        r = await testDirectLocation(target.id, location.trim());
+      } catch (err) {
+        r = { ok: false, error: err instanceof Error ? err.message : undefined };
+      }
+      if (!r.ok) {
+        const error = placementErrorText(t, lang, r, "settings.error");
+        return { ok: false, reason: t("directRepo.testFailed").replace("{error}", () => error) };
+      }
+      return { ok: true, note: r.initialized ? t("directRepo.testExisting") : t("directRepo.testEmpty") };
+    });
   }
 
   async function confirm() {
@@ -147,7 +146,6 @@ export function DirectRepoDialog({
             onChange={(e) => {
               locationTouched.current = true;
               setLocation(e.target.value);
-              setResult(null);
             }}
             spellCheck={false}
             autoComplete="off"
@@ -157,16 +155,15 @@ export function DirectRepoDialog({
         </label>
         {note !== "" && <p className="text-xs text-carbon-textSub">{withTarget(t(NOTE_KEYS[note]))}</p>}
         {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
+        <VerdictLine verdict={verdict.verdict} />
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
+          <TestButton
             label={t("directRepo.test")}
             labelKey="directRepo.test"
-            tone="neutral"
-            onClick={() => void test()}
-            busy={testing}
-            disabled={testing || location.trim() === ""}
+            test={verdict}
+            onClick={test}
+            disabled={location.trim() === ""}
           />
-          {result && <span className="text-xs text-carbon-textSub">{result}</span>}
         </div>
       </div>
     ),

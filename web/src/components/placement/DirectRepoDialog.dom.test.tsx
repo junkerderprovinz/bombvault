@@ -109,6 +109,7 @@ describe("DirectRepoDialog", () => {
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
     expect(await screen.findByText("Reachable, empty")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Connected/ }).className).toContain("bg-statusOkSolid");
     expect(fake.callsTo("testDirectLocation")).toEqual([["t-b2", "b2:bucket:containers-direct"]]);
     expect(fake.callsTo("createDirectRepo")).toEqual([]);
   });
@@ -119,6 +120,7 @@ describe("DirectRepoDialog", () => {
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
     expect(await screen.findByText("Not reachable: connection refused")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Not connected/ }).className).toContain("bg-statusFailSolid");
   });
 
   it("explains a key scoped too narrowly to read the place", async () => {

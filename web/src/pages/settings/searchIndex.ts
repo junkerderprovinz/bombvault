@@ -616,6 +616,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
 
   apps: [
     {
+      title: "apps.phone.title",
+      hint: "apps.phone.hint",
+      rows: [],
+    },
+    {
       title: "apps.parleyport.title",
       hint: "apps.parleyport.hint",
       rows: [{ key: "apps.parleyport.toRelay" }],
