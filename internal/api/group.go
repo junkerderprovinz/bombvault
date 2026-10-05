@@ -221,9 +221,10 @@ type peerRoute struct {
 }
 
 // peerRoutes is everything a group member can reach on this instance: the
-// Fleet scorecard, a storage offer, what receiver and pull pairing need,
-// starting a check, what runs here and how it looks for the Android app, a
-// session for a phone of the group, and the bare hello a blind probe gets.
+// Fleet scorecard, a storage offer, the receiver this instance runs for the
+// group and a login on it, what receiver and pull pairing need, starting a
+// check, what runs here and how it looks for the Android app, a session for a
+// phone of the group, and the bare hello a blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -232,6 +233,7 @@ func peerRoutes() []peerRoute {
 	return []peerRoute{
 		{"GET /api/group/peer/status", (*Service).handlePeerStatus},
 		{"POST /api/group/peer/mesh-offer", (*Service).handlePeerMeshOffer},
+		{"POST /api/group/peer/receiver", (*Service).handlePeerReceiver},
 		{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
 		{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
 		{"GET /api/group/peer/activity", (*Service).handlePeerActivity},

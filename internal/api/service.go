@@ -272,6 +272,9 @@ type Service struct {
 	rcloneOnce   sync.Once
 	rclone       *remotes.Rclone
 	rcloneConfMu sync.Mutex
+	// receiverMu keeps two partners asking for a login at once from
+	// rewriting the receiver's htpasswd file over each other.
+	receiverMu sync.Mutex
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;

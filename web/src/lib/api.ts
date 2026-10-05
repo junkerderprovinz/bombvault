@@ -4870,6 +4870,73 @@ export function checkReceivedRepo(
   });
 }
 
+/** The append-only rest-server this instance runs for its group. */
+export interface ReceiverServer {
+  containerName: string;
+  /** Relative to the host data mount, as it was picked. */
+  folder: string;
+  hostPath: string;
+  port: number;
+  /** The login for someone outside the group. */
+  user: string;
+  /** The address members reach it at, empty for this instance's own. */
+  host: string;
+  /** The server's address without a login, empty while this instance does not know its own. */
+  url: string;
+  createdAt: number;
+  /** False once the container is gone from Docker. */
+  present: boolean;
+  check: "" | "protected" | "unprotected" | "inconclusive";
+  checkDetail: string;
+  checkedAt: number;
+  /** The group members that fetched a login of their own. */
+  logins: ReceiverLogin[];
+}
+
+export interface ReceiverLogin {
+  memberId: string;
+  name: string;
+  user: string;
+  createdAt: number;
+}
+
+export interface ReceiverServerInput {
+  folder: string;
+  port: number;
+  host: string;
+}
+
+export function getReceiverServer(): Promise<
+  OkEnvelope & { server?: ReceiverServer | null; defaultPort?: number; hostMountRoot?: string }
+> {
+  return fetchJSON("/api/receiver/server");
+}
+
+/** POST /api/receiver/server creates and starts the server. The password comes
+ *  back this once; template says whether the Unraid template is on the flash
+ *  drive ("written"), has to be downloaded ("download"), or does not apply. */
+export function setUpReceiverServer(
+  input: ReceiverServerInput
+): Promise<OkEnvelope & { server?: ReceiverServer; password?: string; template?: "written" | "download" | "none" }> {
+  return fetchJSON("/api/receiver/server", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function checkReceiverServer(): Promise<OkEnvelope & { server?: ReceiverServer }> {
+  return fetchJSON("/api/receiver/server/check", { method: "POST" });
+}
+
+/** Stops offering the server to the group. The container and its data stay. */
+export function forgetReceiverServer(): Promise<OkEnvelope> {
+  return fetchJSON("/api/receiver/server", { method: "DELETE" });
+}
+
+/** Takes a member's login off the server. What it copied stays in the folder. */
+export function revokeReceiverLogin(memberId: string): Promise<OkEnvelope & { server?: ReceiverServer }> {
+  return fetchJSON(`/api/receiver/server/logins/${encodeURIComponent(memberId)}`, { method: "DELETE" });
+}
+
+export const RECEIVER_TEMPLATE_URL = "/api/receiver/server/template";
+
 // Pairing group API. Instances that share a twelve-word phrase form a group;
 // members on one network talk directly, the others over a relay, and every
 // call between them is sealed under a key derived from the phrase.
@@ -5637,6 +5704,27 @@ export function updateDestination(
 
 export function deleteDestination(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** A receiver another member of the group runs, as the destination wizard
+ *  offers it. */
+export interface GroupReceiver {
+  memberId: string;
+  name: string;
+  /** The server's address without a login, absent when this instance reaches
+   *  the member only through the relay. */
+  url?: string;
+  needsAddress: boolean;
+}
+
+export function listGroupReceivers(): Promise<OkEnvelope & { receivers?: GroupReceiver[] }> {
+  return fetchJSON("/api/offsite/group-receivers");
+}
+
+export function groupReceiverLogin(
+  memberId: string
+): Promise<OkEnvelope & { login?: { name: string; url: string; user: string; password: string } }> {
+  return fetchJSON(`/api/offsite/group-receivers/${encodeURIComponent(memberId)}/login`, { method: "POST" });
 }
 
 /** The domain's target under a destination, created unticked the first time. */

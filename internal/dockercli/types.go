@@ -109,6 +109,14 @@ type Docker interface {
 	ExecStdin(ctx context.Context, name string, cmd []string, stdin io.Reader, tailMax int) (string, int, error)
 }
 
+// Signaler sends a signal to a container's main process, which is how a
+// server is told to reread its configuration.
+type Signaler interface {
+	Signal(ctx context.Context, name, signal string) error
+}
+
+var _ Signaler = (*Client)(nil)
+
 // normalizeName strips a single leading slash from a docker container name.
 func normalizeName(name string) string {
 	if len(name) > 0 && name[0] == '/' {
