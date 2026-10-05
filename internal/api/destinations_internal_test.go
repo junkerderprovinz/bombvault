@@ -27,6 +27,12 @@ func TestADomainRepositorySitsUnderItsDestination(t *testing.T) {
 	}
 }
 
+func TestTheSelfBackupIsNotPutWhereARestServerKeepsItsConfig(t *testing.T) {
+	if got := destinationLocation("rest:http://box:8000/", "config"); got != "rest:http://box:8000/selfbackup" {
+		t.Errorf("self-backup location = %q, want it under selfbackup", got)
+	}
+}
+
 func TestTheS3EndpointGetsAScheme(t *testing.T) {
 	aws, _ := remotes.FindProvider("aws")
 	wasabi, _ := remotes.FindProvider("wasabi")

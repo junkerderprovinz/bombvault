@@ -387,13 +387,19 @@ func (s *Service) DeleteDestination(id string) error {
 }
 
 // destinationLocation is where a domain's repository sits under a
-// destination.
+// destination. The self-backup's folder is not called config: at the root of
+// a rest-server that path is the root repository's own config file, so a
+// repository there could never be opened.
 func destinationLocation(base, domain string) string {
+	folder := domain
+	if domain == "config" {
+		folder = "selfbackup"
+	}
 	base = strings.TrimRight(strings.TrimSpace(base), "/")
 	if strings.HasSuffix(base, ":") {
-		return base + domain
+		return base + folder
 	}
-	return base + "/" + domain
+	return base + "/" + folder
 }
 
 // handleOffsiteProviders lists the providers the wizard offers and how
