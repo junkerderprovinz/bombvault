@@ -31,6 +31,7 @@ import { Button } from "../components/Button";
 import { groupStage } from "../lib/controls";
 // The Containers page's schedule switch, saving through setVMInclude here.
 import { IncludeToggle } from "../components/IncludeToggle";
+import { PauseButton, PausedBadge } from "../components/SchedulePause";
 import { VMBlockToggle } from "../components/VMBlockToggle";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
@@ -532,6 +533,7 @@ export function VMRow({
   restoreRequest,
   checks,
   onChecksChanged,
+  onIncludeSaved,
 }: {
   vm: VM;
   t: T;
@@ -551,8 +553,11 @@ export function VMRow({
   restoreRequest?: RestoreRequest;
   checks?: ItemChecks;
   onChecksChanged?: () => void;
+  /** Takes the include-in-schedule value the switch or the Pause button stored. */
+  onIncludeSaved?: (include: boolean) => void;
 }) {
   const installed = vm.state !== "not-installed";
+  const paused = installed && !vm.includeInSchedule;
   const progressMap = useProgress();
   // The server keys progress by the raw libvirt name ("vm:"+name in
   // internal/api/service.go), not by the display name.
@@ -620,6 +625,7 @@ export function VMRow({
             ) : (
               <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
+            {paused && <PausedBadge />}
           </div>
         </div>
 
@@ -642,6 +648,11 @@ export function VMRow({
               <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </div>
             <div className="flex items-center gap-1.5">
+              <PauseButton
+                paused={paused}
+                save={(include) => setVMInclude(vm.libvirtName, include)}
+                onSaved={onIncludeSaved}
+              />
               <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
               {/* Plain export is an advanced-only extra. */}
               <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
@@ -696,6 +707,7 @@ export function VMRow({
             name={vm.libvirtName}
             initial={vm.includeInSchedule}
             save={setVMInclude}
+            onSaved={onIncludeSaved}
           />
           {installed && <VMBlockToggle vm={vm} />}
         </div>
@@ -1285,6 +1297,12 @@ export function VMs() {
     setVMs((prev) => prev.map((v) => (v.libvirtName === libvirtName ? { ...v, placement: next } : v)));
   }
 
+  // The switch and the Pause button store the same flag, and both read it back
+  // from this list, as do the scheduled count and the schedule filter.
+  function includeSaved(libvirtName: string, include: boolean) {
+    setVMs((prev) => prev.map((v) => (v.libvirtName === libvirtName ? { ...v, includeInSchedule: include } : v)));
+  }
+
   function handleSortChange(k: SortKey) {
     setSortKey(k);
     localStorage.setItem(SORT_STORAGE_KEY, k);
@@ -1576,6 +1594,7 @@ export function VMs() {
               restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
               checks={itemChecks.find("vm", v.libvirtName)}
               onChecksChanged={itemChecks.reload}
+              onIncludeSaved={(include) => includeSaved(v.libvirtName, include)}
             />
           ))}
         </div>
@@ -1602,6 +1621,7 @@ export function VMs() {
               restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
               checks={itemChecks.find("vm", v.libvirtName)}
               onChecksChanged={itemChecks.reload}
+              onIncludeSaved={(include) => includeSaved(v.libvirtName, include)}
             />
           ))}
         </div>
@@ -1637,6 +1657,7 @@ export function VMs() {
           onClearSelection={() => setSelected(new Set())}
           bulkBusy={bulkBusy}
           onIncludeAllChanged={() => void loadVMs()}
+          onIncludeSaved={includeSaved}
           vms={vms}
           anomalyOf={(name) => anomalies.find("vm", name)}
           anomalyEnabled={anomalyEnabled}
@@ -1692,6 +1713,7 @@ function MobileVMsBlock({
   onClearSelection,
   bulkBusy,
   onIncludeAllChanged,
+  onIncludeSaved,
   vms,
   anomalyOf,
   anomalyEnabled,
@@ -1736,6 +1758,7 @@ function MobileVMsBlock({
   bulkBusy: boolean;
   /** The include-all switch's refresh: the page reloads its list. */
   onIncludeAllChanged: () => void;
+  onIncludeSaved: (libvirtName: string, include: boolean) => void;
   /** The full list payload, for the advanced backup order panel. */
   vms: VM[];
   anomalyOf: (libvirtName: string) => AnomalyItem | undefined;
@@ -1834,6 +1857,7 @@ function MobileVMsBlock({
           checks={checksOf(openVm.libvirtName)}
           onChecksChanged={onChecksChanged}
           restoreRequest={restoreRequest.item === openVm.libvirtName ? restoreRequest : undefined}
+          onIncludeSaved={(include) => onIncludeSaved(openVm.libvirtName, include)}
         />
       )}
 
@@ -2014,7 +2038,10 @@ function MobileVMCard({
       }
       badge={
         installed ? (
-          <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
+          <>
+            {!vm.includeInSchedule && <PausedBadge explained={false} />}
+            <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
+          </>
         ) : (
           <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
         )
@@ -2045,6 +2072,7 @@ function MobileVMDetail({
   checks,
   onChecksChanged,
   restoreRequest,
+  onIncludeSaved,
 }: {
   vm: VM;
   t: T;
@@ -2060,10 +2088,12 @@ function MobileVMDetail({
   checks?: ItemChecks;
   onChecksChanged?: () => void;
   restoreRequest?: RestoreRequest;
+  onIncludeSaved: (include: boolean) => void;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`vm:${vm.libvirtName}`];
   const installed = vm.state !== "not-installed";
+  const paused = installed && !vm.includeInSchedule;
   // The same one-section disclosure the desktop row keeps (snapshots and
   // restore live behind it), through the same Set rule ContainerRow uses.
   const [openSections, setOpenSections] = useState<Set<string>>(
@@ -2091,6 +2121,7 @@ function MobileVMDetail({
           ) : (
             <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
           )}
+          {paused && <PausedBadge />}
         </>
       }
       onBack={onBack}
@@ -2148,6 +2179,11 @@ function MobileVMDetail({
             <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
           </div>
           <div className="flex items-center gap-1.5">
+            <PauseButton
+              paused={paused}
+              save={(include) => setVMInclude(vm.libvirtName, include)}
+              onSaved={onIncludeSaved}
+            />
             <VMBackupButton
               name={vm.libvirtName}
               t={t}
@@ -2173,7 +2209,7 @@ function MobileVMDetail({
           way to schedule or unschedule a VM from a phone at all. It shows on
           a removed VM too: the entry stays scheduled and every run logs a
           skip until this switch goes off. */}
-      <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />
+      <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} onSaved={onIncludeSaved} />
       {installed && <VMBlockToggle vm={vm} />}
 
       <PlacementRow

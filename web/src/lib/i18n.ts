@@ -1622,6 +1622,10 @@ export const en = {
   "schedule.includeAll": "Include all in schedule",
   "schedule.excludeAll": "Exclude all from schedule",
   "schedule.updateFailed": "Failed to update schedule",
+  "schedule.pause": "Pause schedule",
+  "schedule.resume": "Resume schedule",
+  "schedule.paused": "Schedule paused",
+  "schedule.pausedHint": "Scheduled runs and {everything} skip this item. “{backupNow}” still works.",
   // Per-item schedule overrides (#121)
   "jobs.noVMsIncluded": "No VMs included in schedule.",
   "settings.perItemSchedules": "Per-item schedules",
@@ -5102,6 +5106,10 @@ export const de: Translations = {
   "schedule.includeAll": "Alle in den Zeitplan",
   "schedule.excludeAll": "Alle aus dem Zeitplan",
   "schedule.updateFailed": "Zeitplan konnte nicht aktualisiert werden",
+  "schedule.pause": "Zeitplan pausieren",
+  "schedule.resume": "Zeitplan fortsetzen",
+  "schedule.paused": "Zeitplan pausiert",
+  "schedule.pausedHint": "Geplante Läufe und das {everything} lassen diesen Eintrag aus. „{backupNow}“ geht weiterhin.",
   // Pro-Element-Zeitpläne (#121)
   "jobs.noVMsIncluded": "Keine VMs im Zeitplan enthalten.",
   "settings.perItemSchedules": "Zeitpläne pro Element",
