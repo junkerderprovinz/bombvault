@@ -5,6 +5,7 @@ import "@fontsource-variable/noto-sans-arabic";
 import "@fontsource-variable/noto-sans-hebrew";
 import "@fontsource-variable/noto-sans-thai";
 import "./index.css";
+import "./providerMarks.css";
 import "flag-icons/css/flag-icons.min.css";
 import { AppRouter } from "./app/router";
 import { AdvancedProvider } from "./lib/advanced";

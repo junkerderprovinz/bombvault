@@ -45,6 +45,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
+	"github.com/junkerderprovinz/bombvault/internal/remotes"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -266,6 +267,11 @@ type Service struct {
 	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
 	zfsHostMu   sync.Mutex
 	zfsHostLast *zfsHostListing
+	// rclone runs against the instance's own config file; rcloneConfMu keeps
+	// two edits of that file from dropping each other's remote.
+	rcloneOnce   sync.Once
+	rclone       *remotes.Rclone
+	rcloneConfMu sync.Mutex
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
@@ -1784,6 +1790,15 @@ func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy 
 	}
 }
 
+// targetAgingPolicy is the keep-policy a target ages what it holds by. A
+// target holds DirectTag snapshots only as copies from a direct repository, so
+// they age by its rules like every other copy.
+func targetAgingPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
+	p := targetOffsiteRetentionPolicy(t)
+	p.Direct = true
+	return p
+}
+
 // targetOffsiteLimits is the per-DESTINATION bandwidth cap (KiB/s). All-zero means
 // unlimited. For a backfilled N=1 target these equal the global caps.
 func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
@@ -1842,13 +1857,19 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 // built-in off-site repo, and the shared off-site policy for an additional
 // target, which a domain's own off-site rules do not reach.
 func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
+	var p restic.RetentionPolicy
 	switch {
 	case !isOffsiteSource(source):
 		return s.retentionPolicy(settings, domain)
 	case s.isBuiltInOffsiteSource(settings, domain, source):
-		return s.offsiteRetentionPolicy(settings, domain)
+		p = s.offsiteRetentionPolicy(settings, domain)
+	default:
+		p = keepPolicy(sharedOffsiteKeep(settings))
 	}
-	return keepPolicy(sharedOffsiteKeep(settings))
+	// A target ages its copies from a direct repository like any other copy,
+	// as the copy pass does (targetAgingPolicy).
+	p.Direct = true
+	return p
 }
 
 // isBuiltInOffsiteSource reports whether an off-site source reaches the repo
@@ -4092,7 +4113,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
 	}
 	visit.unreachable = len(unreachableSkips(skipped)) > 0
-	out := s.copySources(ctx, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
+	out := s.copySources(ctx, settings, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and
 	// measured against the budget, and the joined error still reaches the run row.
@@ -4171,7 +4192,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	case target.Immutable:
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
 	case visit.aged && len(out.landed) == 0 && !out.uncertain && dstErr == nil &&
-		!s.policyWouldForget(dstSnaps, targetOffsiteRetentionPolicy(target)):
+		!s.policyWouldForget(dstSnaps, targetAgingPolicy(target)):
 		// Nothing arrived since the target was aged under these rules, and
 		// the listing shows nothing its keep-policy would forget, so a forget
 		// and a prune would only bill the calls.
@@ -4548,7 +4569,7 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	// narrowed at all: a one-element slice is always "index 0".
 	ref := s.refFor(settings, domain, localRepo)
 	if alreadyOffSite(ref) {
-		log.Printf("api: offsite %s: this item's repository %s; not copied again", domain, offSiteReason(ref)) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: offsite %s: this item's repository is remote and is already off site; not copied again", domain) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
 	// The local backup is written by now. A cancel, the stall guard or the hour
@@ -4745,7 +4766,15 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	if err != nil {
 		return false, false, err
 	}
-	return s.probeOffsiteRepo(ctx, repo, s.ModeFor(settings))
+	mode := s.ModeFor(settings)
+	field, ok, err := s.store.FieldOffsiteTarget(domain)
+	if err != nil {
+		return false, false, fmt.Errorf("read off-site target: %w", err)
+	}
+	if ok && field.Repo == loc {
+		mode = s.offsiteModeForTarget(settings, field)
+	}
+	return s.probeOffsiteRepo(ctx, repo, mode)
 }
 
 // TestOffsiteTarget runs the SAME probe as TestOffsite against ONE off-site
@@ -9029,7 +9058,7 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 			// operator can do makes b2: stop being remote, so reporting it as an
 			// incomplete pass condemns a supported configuration to fail forever
 			// over a repository that was never meant to be copied.
-			log.Printf("api: offsite %s: named repository %s %s; not copied again", domain, scrubRepoLocation(r.Loc), offSiteReason(r)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
+			log.Printf("api: offsite %s: named repository %s is remote and is already off site; not copied again", domain, scrubRepoLocation(r.Loc)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
 			continue
 		}
 		out = append(out, r)
@@ -9126,8 +9155,9 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 }
 
 // alreadyOffSite reports whether a source is one the off-site copy leaves out:
-// a direct repository, which lies at its target already, or a repository that
-// is not the domain's own and is remote.
+// a remote repository that is neither the domain's own nor a direct repository.
+// A direct repository is copied to every target but its own, read with its own
+// credentials (sourceAccess).
 //
 // ONE predicate, shared by the post-backup hook and the whole-domain pass, and
 // it is shared because they drifted. The hook additionally required a non-empty
@@ -9143,15 +9173,7 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 // ownership: see offsiteReplicationSources for why a domain's OWN remote primary
 // stays in.
 func alreadyOffSite(r domainRepoRef) bool {
-	return r.Named.CompanionOf != "" || (!r.Own && restic.IsRemoteRepo(r.Loc))
-}
-
-// offSiteReason says in a log line why alreadyOffSite left a source out.
-func offSiteReason(r domainRepoRef) string {
-	if r.Named.CompanionOf != "" {
-		return "is the direct repository of an off-site target"
-	}
-	return "is remote and is already off site"
+	return r.Named.CompanionOf == "" && !r.Own && restic.IsRemoteRepo(r.Loc)
 }
 
 // refName names a repository for a message: a named repository by its NAME, the
@@ -17216,6 +17238,12 @@ func (s *Service) repoHoldingSnapshot(ctx context.Context, settings store.Settin
 // rcloneConfPath is where the decrypted rclone config is written for restic→rclone.
 func (s *Service) rcloneConfPath() string { return filepath.Join(s.cfg.DataDir, "rclone.conf") }
 
+// remotes runs rclone against this instance's own config file.
+func (s *Service) remotes() *remotes.Rclone {
+	s.rcloneOnce.Do(func() { s.rclone = &remotes.Rclone{Config: s.rcloneConfPath()} })
+	return s.rclone
+}
+
 // WriteRcloneConfFile (re)writes the on-disk rclone config from the encrypted
 // value in settings, or removes it when empty. Called at startup so off-site
 // repos work immediately after a restart.
@@ -17848,6 +17876,25 @@ func (s *Service) RecoveryKit() (string, error) {
 			}
 			if !n.Enabled {
 				w("  (switched off at the time this kit was written)\n")
+			}
+		}
+		w("\n")
+	}
+
+	// A destination's domain repositories exist only in the database, like a
+	// named repository's location. The sign-in to reach them is not here: it
+	// comes back with the settings backup below.
+	if dests, dErr := s.store.ListDestinations(); dErr == nil && len(dests) > 0 {
+		w("## Destinations\n\n")
+		w("Each domain that copies to a destination has its own restic repository under\n")
+		w("it, with the SAME password as the rest. The rclone remotes and credential sets\n")
+		w("that reach them come back with the settings backup below; on a fresh install\n")
+		w("without it, set the destination up again at the same place.\n\n")
+		for _, d := range dests {
+			w("- %s: %s\n", d.Name, d.Repo)
+			derived, _ := s.store.DestinationTargets(d.ID)
+			for _, t := range derived {
+				w("  %s: %s\n", t.Domain, t.Repo)
 			}
 		}
 		w("\n")

@@ -62,6 +62,10 @@ type settingsExport struct {
 	Settings       settingsView        `json:"settings"`
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
+	// Destinations are the off-site destinations set up once for every domain.
+	// The block is written even empty, so a file without it (an older build)
+	// leaves this instance's destinations alone.
+	Destinations []offsiteTargetView `json:"destinations"`
 	// PlacementDefaults and CopyRules carry each domain's placement default and
 	// its copy rules. Always present, even empty, so the import can tell a
 	// missing block (an older file, leave the table alone) from an empty one
@@ -83,8 +87,9 @@ type settingsExport struct {
 	predatesZFS bool
 	// predatesYearly and targetsPredate say the same of the yearly rule and
 	// of the destinations' yearly rule and compression.
-	predatesYearly bool
-	targetsPredate targetKeysMissing
+	predatesYearly      bool
+	targetsPredate      targetKeysMissing
+	carriesDestinations bool
 }
 
 // targetKeysMissing names the destination settings a file does not carry.
@@ -98,10 +103,12 @@ func (e *settingsExport) UnmarshalJSON(b []byte) error {
 	var probe struct {
 		Settings       map[string]json.RawMessage   `json:"settings"`
 		OffsiteTargets []map[string]json.RawMessage `json:"offsiteTargets"`
+		Destinations   json.RawMessage              `json:"destinations"`
 	}
 	if err := json.Unmarshal(b, &probe); err != nil {
 		return err
 	}
+	e.carriesDestinations = probe.Destinations != nil
 	_, hasZFS := probe.Settings["zfsEnabled"]
 	e.predatesZFS = !hasZFS
 	_, hasYearly := probe.Settings["retentionKeepYearly"]
@@ -203,6 +210,9 @@ func redactExportLocations(exp *settingsExport) {
 	for i := range exp.NamedRepos {
 		exp.NamedRepos[i].Repo = scrubRepoLocation(exp.NamedRepos[i].Repo)
 	}
+	for i := range exp.Destinations {
+		exp.Destinations[i].Repo = scrubRepoLocation(exp.Destinations[i].Repo)
+	}
 }
 
 // redactedLocations names the repo-location slots in a file whose credential the
@@ -240,6 +250,11 @@ func redactedLocations(exp settingsExport) []string {
 			name = strings.TrimSpace(tv.ID)
 		}
 		out = append(out, "repository "+name)
+	}
+	for _, tv := range exp.Destinations {
+		if locationRedacted(tv.Repo) {
+			out = append(out, "destination "+strings.TrimSpace(tv.Name))
+		}
 	}
 	return out
 }
@@ -284,6 +299,11 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	destinations, err := h.store.ListDestinations()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	traffic, err := h.store.TrafficSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -307,6 +327,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		Settings:          buildSettingsView(s),
 		OffsiteTargets:    offsiteTargetsToViews(targets),
 		NamedRepos:        offsiteTargetsToViews(namedRepos),
+		Destinations:      append([]offsiteTargetView{}, offsiteTargetsToViews(destinations)...),
 		PlacementDefaults: placementDefaultsToExport(defaults),
 		CopyRules:         copyRulesToExport(rules),
 		Streaming:         streamingToView(traffic),
@@ -376,6 +397,7 @@ type importSummary struct {
 	AppVersion        string              `json:"appVersion"`
 	OffsiteTargets    int                 `json:"offsiteTargets"`
 	NamedRepos        int                 `json:"namedRepos"`
+	Destinations      *int                `json:"destinations"`
 	PlacementDefaults *int                `json:"placementDefaults"`
 	CopyRules         *int                `json:"copyRules"`
 	NewTargets        []newTargetRow      `json:"newTargets"`
@@ -722,6 +744,14 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, err)
 		}
 	}
+	for i, tv := range exp.Destinations {
+		if strings.TrimSpace(tv.Name) == "" {
+			return fmt.Sprintf("destination #%d: needs a name", i+1)
+		}
+		if strings.TrimSpace(tv.Repo) == "" {
+			return fmt.Sprintf("destination #%d (%s): needs a location", i+1, tv.Name)
+		}
+	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
 	// settings save enforces), so an apply cannot install an un-runnable schedule.
 	for _, cad := range exportCadences(exp.Settings) {
@@ -802,12 +832,22 @@ func summarizeExport(exp settingsExport) importSummary {
 		AppVersion:        exp.AppVersion,
 		OffsiteTargets:    len(exp.OffsiteTargets),
 		NamedRepos:        len(exp.NamedRepos),
+		Destinations:      destinationCount(exp),
 		PlacementDefaults: countIfPresent(exp.PlacementDefaults),
 		CopyRules:         countIfPresent(exp.CopyRules),
 		NewTargets:        []newTargetRow{},
 		Credentials:       credsPresence(exp.Credentials),
 		SettingsGroups:    exportGroups(exp),
 	}
+}
+
+// destinationCount is nil for a file without a destinations block.
+func destinationCount(exp settingsExport) *int {
+	if !exp.carriesDestinations {
+		return nil
+	}
+	n := len(exp.Destinations)
+	return &n
 }
 
 // exportGroups is settingsGroups plus the blocks the file carries beside the
@@ -943,8 +983,22 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// Replace the off-site targets with the imported set (a clean, deterministic
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
+	if exp.carriesDestinations {
+		if err := h.importDestinations(exp.Destinations); err != nil {
+			return err
+		}
+	}
 	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.Settings, exp.predatesZFS, exp.targetsPredate); err != nil {
 		return err
+	}
+	if exp.carriesDestinations {
+		keep := make([]string, len(exp.Destinations))
+		for i, d := range exp.Destinations {
+			keep[i] = strings.TrimSpace(d.ID)
+		}
+		if err := h.store.DeleteUnusedDestinationsExcept(keep); err != nil {
+			return err
+		}
 	}
 
 	// The placement defaults and copy rules, written here so an imported default
@@ -1099,6 +1153,14 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 		if known && missing.compression {
 			t.Compression = old.Compression
 		}
+		t.Provider = tv.Provider
+		if id := strings.TrimSpace(tv.DestinationID); id != "" {
+			if _, ok, err := h.store.GetDestination(id); err != nil {
+				return err
+			} else if ok {
+				t.DestinationID = id
+			}
+		}
 		saved, err := h.store.UpsertOffsiteTarget(t)
 		if err != nil {
 			return err
@@ -1114,6 +1176,42 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// importDestinations writes the file's destinations under their own ids, a
+// redacted location giving way to the one stored here. A destination whose
+// location holds repositories here keeps it, and the log says so.
+func (h *Handler) importDestinations(views []offsiteTargetView) error {
+	stored, err := h.store.ListDestinations()
+	if err != nil {
+		return err
+	}
+	byID := make(map[string]string, len(stored))
+	for _, d := range stored {
+		byID[d.ID] = d.Repo
+	}
+	ds := make([]store.OffsiteTarget, len(views))
+	for i, v := range views {
+		id := strings.TrimSpace(v.ID)
+		ds[i] = store.OffsiteTarget{
+			ID:           id,
+			Name:         strings.TrimSpace(v.Name),
+			Repo:         importedLocation(byID[id], strings.TrimSpace(v.Repo)),
+			CredsRef:     v.CredsRef,
+			StorageClass: strings.ToUpper(strings.TrimSpace(v.StorageClass)),
+			Immutable:    v.Immutable,
+			Provider:     v.Provider,
+			CreatedAt:    v.CreatedAt,
+		}
+	}
+	kept, err := h.store.ImportDestinations(ds)
+	if err != nil {
+		return err
+	}
+	if len(kept) > 0 {
+		log.Printf("api: settings import: these destinations kept their location here, because repositories already sit under it: %s", strings.Join(kept, ", ")) //nolint:gosec // G706: names of the operator's own destinations
 	}
 	return nil
 }

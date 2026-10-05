@@ -18,13 +18,30 @@ Behåll den snabba lokala säkerhetskopian och lägg till en eller flera off-sit
 !!! note "Återställ från vilken plats som helst"
     Varje container, VM, filuppsättning, flashen och app-konfigurationen listar sina säkerhetskopior som en enda tidslinje över alla platser en kopia ligger på. En säkerhetskopia kopierad till B2 dyker upp en gång, märkt med varje plats som har den. En återställning tar den första platsen den kan nå, med start i det arkiv objektet skrivs till, och du kan välja en annan plats per rad. Off-site-platser läses bara när du öppnar dem. Att radera på en plats kontrollerar först de andra och säger om det var den sista kopian.
 
+## Mål {#destinations}
+
+Inställningar, Extern börjar med **Mål**: de platser dit off-site-kopiorna går, uppsatta en gång för alla domäner. Ett mål dyker sedan upp som en knapp i raden **Placering** för varje domän och objekt. Första gången det kryssas i för en domän skapar BombVault domänens arkiv i en mapp under det, till exempel `rclone:onedrive:BombVault/containers`.
+
+**Lägg till mål** öppnar en guide i fem steg:
+
+1. **Vart ska säkerhetskopiorna ta vägen?** Varje tjänst visas med sin logotyp, i fyra grupper: lagringstjänster med S3-bucketar (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 och fler), din egen S3-server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), din egen server och dina resurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en monterad sökväg) och molnlagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud och resten som rclone stöder). Varje tjänst anger hur väl den lämpar sig för säkerhetskopior: molndiskar saktar ner vid många förfrågningar, så den första säkerhetskopian och rensningen tar längre tid där.
+2. **Logga in på** den valda tjänsten. Fälten beror på tjänsten: en åtkomstnyckel för S3, användare och lösenord för WebDAV och SMB, ett appspecifikt lösenord där tvåstegsinloggning blockerar det vanliga, BombVaults publika SSH-nyckel för SFTP och Storage Box, eller en token för tjänster som loggar in via webbläsaren. För dem visar guiden ett `rclone authorize`-kommando som körs på en dator med webbläsare; den token det skriver ut klistras in i fältet. **Testa anslutning** kontrollerar inloggningen innan något sparas.
+3. **Välj en mapp.** Guiden listar mapparna på målet, med **Ny mapp** för att skapa en och med ledigt utrymme där tjänsten rapporterar det. En tom mapp är säkrast.
+4. **Skydd mot radering.** Guiden säger rakt ut vad tjänsten kan. En rest-server i append-only-läge vägrar radering, och manipulationstestet kontrollerar det. En S3-bucket kan behålla gamla versioner med versionshantering och objektlås, vilket BombVault ännu inte kan kontrollera. En molndisk kan inte vägra radering alls: den som tar sig in på servern tar sig också in i den kopian. Slå bara på **Oföränderlig (append-only)** där andra sidan verkligen vägrar radering; BombVault rensar då aldrig där.
+5. **För nödläge.** Återställningskitet listar varje mål med arkivet för varje domän under det. Inloggningen kommer tillbaka med BombVaults inställningssäkerhetskopia; på en ny installation utan den sätter du upp målet igen på samma plats.
+
+S3-tjänster körs genom restics egen S3-backend, vilket gör att lagringsklass och objektlås kan tillämpas. Alla andra tjänster körs genom den rclone som BombVault levererar, och dess remote syns sedan i rclone-konfigurationen under Inställningar, Molnåtkomst. En export av inställningarna innehåller målen; med uppgifter inkluderade innehåller den även deras inloggning.
+
+Ett off-site-mål för en domän som skapats från ett mål tar över det målets namn, plats, uppgifter, lagringsklass och omkopplaren för oföränderlighet. Dess retention, komprimering och tillväxtbudget förblir per domän, och dess plats kan inte flyttas eftersom domänens arkiv ligger där. **Lägg till ett mål bara för den här domänen** under varje domän tar fortfarande en handskriven arkiv-URL.
+
 ## Placering per objekt {#placement}
 
-Varje kort för container, VM och filuppsättning har en rad **Placering** med tre segment:
+Varje kort för container, VM och filuppsättning har en rad **Placering** med knappar: **Lokal** och en knapp per off-site-mål för domänen, följt av de mål som domänen ännu inte har något mål under. Tända knappar får objektets säkerhetskopior.
 
-- **Lokal** skriver objektet till arkivet som visas under **Sparad på** och kopierar det ingenstans. Använd det för data som redan har en andra kopia, till exempel en resurs som ligger på en NAS.
-- **Lokal + utanför platsen** skriver det dit också och kopierar det till målen ikryssade under **Kopiera till**, ett chip per off-site-mål för domänen. Kryssa ur ett chip och det målet får inget nytt från det här objektet.
-- **Endast utanför platsen** skriver objektet direkt till platsen under **Skicka till**: ett direkt arkiv bredvid ett off-site-mål, eller ett fjärrarkiv du satt upp under Inställningar, Lagring, Arkiv.
+- Med **Lokal** tänd skrivs objektet till arkivet som visas under **Sparad på** och kopieras till varje annat tänt mål. Släck ett mål och det får inget nytt från det här objektet. Enbart Lokal kopierar ingenstans, vilket passar data som redan har en andra kopia, till exempel en resurs som ligger på en NAS.
+- Med **Lokal** släckt skrivs objektet direkt till det direkta arkivet för det första tända målet och kopieras därifrån till de andra tända målen. Första gången skapar en dialog det direkta arkivet.
+- En målknapp skapar domänens mål under det målet och tänder det bara för det här objektet. Varje annat objekt börjar utan kopia där.
+- En knapp förblir alltid tänd, eftersom en säkerhetskopia behöver någonstans att ta vägen. Vill du lämna något utanför säkerhetskopiorna, utesluter du det.
 
 Platsen är fast från objektets första säkerhetskopiering, eftersom BombVault aldrig flyttar säkerhetskopior mellan arkiv. Kopiorna kan ändras när som helst. Ett mål som inte längre får ett objekt behåller de kopior det har och trimmar dem till sin egen retention vid domänens nästa off-site-körning; **Radera hos B2** på kortet tar bort dem direkt. När några av de kopiorna inte finns någon annanstans listar bekräftelsen dem efter datum och ber om objektets namn. Från append-only-mål går det inte att radera.
 
@@ -32,13 +49,13 @@ Under raden berättar kortet vart objektet går och vad som faktiskt finns där:
 
 ### Standardplaceringar
 
-Inställningar, Lagring, **Standardplaceringar** har en rad per domän med samma tre segment. Kopiorna gäller genast för varje objekt utan eget val, och för projektmapparna i Compose-stackar. Platsen gäller för ett nytt objekt vid dess första säkerhetskopiering; att ändra den flyttar inga säkerhetskopior. Innan du sparar namnger raden varje mål som vinner eller förlorar objekt och hur många ögonblicksbilder det innebär. **Tillämpa på objekt utan säkerhetskopior** sätter tillbaka varje objekt som ännu inte har en säkerhetskopia till standarden.
+Inställningar, Lagring, **Standardplaceringar** har en rad per domän med samma knappar. Kopiorna gäller genast för varje objekt utan eget val, och för projektmapparna i Compose-stackar. Platsen gäller för ett nytt objekt vid dess första säkerhetskopiering; att ändra den flyttar inga säkerhetskopior. Innan du sparar namnger raden varje mål som vinner eller förlorar objekt och hur många ögonblicksbilder det innebär. **Tillämpa på objekt utan säkerhetskopior** sätter tillbaka varje objekt som ännu inte har en säkerhetskopia till standarden.
 
 Ett nytt off-site-mål tar emot varje objekt som inte är satt till Lokal. Dialogen som lägger till det säger hur många objekt det är och, där det är känt, hur mycket historik det motsvarar, och erbjuder att lämna ute objekt som redan är uteslutna från andra mål.
 
 ### Direkta arkiv
 
-Att välja ett måls direkta arkiv under Endast utanför platsen öppnar en dialog med en föreslagen plats intill målet, till exempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar objektet mot det. Ett direkt arkiv tar över målets nyckel, lagringsklass, gränser, append-only-inställning och retention, och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparningen säger det. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retention-passering behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig efter de lokala reglerna. B2 nås via sin S3-slutpunkt, med nyckel-ID och programnyckel angivna som S3-uppgifter; en nyckel som är begränsad till målets egen mapp når inte mappen bredvid den, så begränsa i stället nyckeln till mappen ovanför målet.
+Att stänga av Lokal för ett objekt, så att ett mål utan direkt arkiv blir dess hem, öppnar en dialog med en föreslagen plats intill målet, till exempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar objektet mot det. Ett direkt arkiv tar över målets nyckel, lagringsklass, gränser, append-only-inställning och retention, och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparningen säger det. Ett objekt på ett direkt arkiv kopieras därifrån till de andra tända målen, aldrig till det mål som arkivet tillhör. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retention-passering behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig efter de lokala reglerna. B2 nås via sin S3-slutpunkt, med nyckel-ID och programnyckel angivna som S3-uppgifter; en nyckel som är begränsad till målets egen mapp når inte mappen bredvid den, så begränsa i stället nyckeln till mappen ovanför målet.
 
 ### Utanför lokalerna
 

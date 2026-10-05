@@ -20,6 +20,7 @@ import { RcloneCard } from "./settings/RcloneCard";
 import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { DestinationsCard } from "./settings/DestinationsCard";
 import { OffsiteLocationInput } from "../components/placement/OffsiteLocationInput";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
@@ -2685,6 +2686,7 @@ export function SettingsPage() {
       {/* protection depends on them. The id is the target of /settings/offsite. */}
       {page === "offsite" && (
       <div id="offsite" className="flex flex-col gap-6">
+      <DestinationsCard hueIndex={nextHue()} />
       {/* Self-backup ("config") is listed with the other domains (#176): the
           backend gives it its own off-site repo and targets like any other,
           so it gets the wizard, the connection test and per-destination

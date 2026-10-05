@@ -102,6 +102,44 @@ func TestTestOffsiteTargetProbesThatTarget(t *testing.T) {
 	}
 }
 
+// modeRecordingEngine opens every repo and records the mode of each probe.
+type modeRecordingEngine struct {
+	ResticEngine
+	mu    sync.Mutex
+	modes []restic.Mode
+}
+
+func (e *modeRecordingEngine) RepoOpensErr(_ context.Context, _ string, m restic.Mode) error {
+	e.mu.Lock()
+	e.modes = append(e.modes, m)
+	e.mu.Unlock()
+	return nil
+}
+
+// The domain's test probes its primary target the way replication writes to
+// it, with the target's own storage class rather than the global one.
+func TestTestOffsiteProbesWithThePrimaryTargetsMode(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	eng := &modeRecordingEngine{}
+	svc.engine = eng
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Primary", Repo: "s3:https://s3.example.com/bucket/containers",
+		StorageClass: "STANDARD_IA", Enabled: true, SortOrder: 0,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, err := svc.TestOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.modes) == 0 {
+		t.Fatal("nothing was probed")
+	}
+	if got := eng.modes[0].StorageClass; got != "STANDARD_IA" {
+		t.Fatalf("probed with storage class %q, want the target's STANDARD_IA", got)
+	}
+}
+
 // An unknown id is an error and probes nothing. Falling back to the primary
 // would report on a different target.
 func TestTestOffsiteTargetUnknownID(t *testing.T) {

@@ -41,6 +41,10 @@ type offsiteTargetView struct {
 	// carries no meaning for it, so the export leaves the field off entirely
 	// rather than send a value that means nothing there.
 	OffPremises *bool `json:"offPremises,omitempty"`
+	// DestinationID and Provider are set on a target derived from a
+	// destination. Read-only, like CompanionOf.
+	DestinationID string `json:"destinationId,omitempty"`
+	Provider      string `json:"provider,omitempty"`
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
@@ -66,6 +70,8 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		CreatedAt:            t.CreatedAt,
 		SortOrder:            t.SortOrder,
 		CompanionOf:          t.CompanionOf,
+		DestinationID:        t.DestinationID,
+		Provider:             t.Provider,
 	}
 	if t.Role == store.RoleRepo {
 		v.OffPremises = &t.OffPremises
@@ -322,6 +328,15 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	// rejectSettingsPathOnNamedRepo, so a row the settings import left on a
 	// colliding location can still be edited rather than only deleted.
 	moved := !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo))
+	// A target derived from a destination takes these from the destination,
+	// whose next save would overwrite them anyway.
+	if existing.DestinationID != "" {
+		if moved {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target was made from a destination and its location holds the domain's repository, so it cannot move"})
+			return
+		}
+		t.Name, t.CredsRef, t.StorageClass, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Immutable
+	}
 	if moved {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})

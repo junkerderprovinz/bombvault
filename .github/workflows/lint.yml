@@ -35,7 +35,7 @@ jobs:
       - run: npm test
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
@@ -51,7 +51,9 @@ jobs:
           bunzip2 restic.bz2
           sudo install -m 0755 restic /usr/local/bin/restic
           restic version
-      - run: go test ./...
+      # internal/api alone takes five to seven minutes on a hosted runner, close
+      # to go test's default ten-minute limit per package.
+      - run: go test -timeout 18m ./...
   playwright:
     # The responsive-regression gate: the specs under web/e2e/ boot the real
     # binary over a wiped fresh DB (see web/playwright.config.ts) and hold the

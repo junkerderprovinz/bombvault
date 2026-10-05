@@ -43,6 +43,8 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "relay.containerName",
   "apps.widget.title",
   "ha.title",
+  // Apple's own name for the account an iCloud remote signs in with.
+  "dest.field.apple_id",
   // Unraid's own name for its app store, which every locale leaves as Unraid
   // itself writes it.
   "launcher.appsUnraidSub",

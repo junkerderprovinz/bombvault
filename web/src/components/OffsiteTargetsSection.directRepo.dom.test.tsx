@@ -20,6 +20,7 @@ vi.mock("../lib/api", () => ({
   createOffsiteTarget: vi.fn(),
   testOffsiteTarget: vi.fn(),
   getCloudCredSets: () => Promise.resolve({ ok: true, sets: [] }),
+  listDestinations: () => Promise.resolve({ ok: true, destinations: [] }),
 }));
 vi.mock("../lib/toast", () => ({
   useToast: () => ({

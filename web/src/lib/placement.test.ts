@@ -4,29 +4,28 @@ import { de, en } from "./i18n";
 import {
   addsTargets,
   chipTicked,
+  defaultChangeOf,
   defaultSegment,
   defaultView,
   draftView,
   followLine,
   formatList,
   homeOptionLabel,
-  lastChipLocked,
-  lockedSegments,
   lockHint,
   noCopyNow,
   observedLine,
+  placementButtons,
   planLines,
-  segmentItems,
   sendToLabel,
   stackNoteText,
-  stepForChip,
-  stepForDefaultSegment,
   stepForHome,
+  stepForLocal,
+  stepForNewTarget,
   stepForReset,
-  stepForSegment,
-  stepForSendTo,
+  stepForTarget,
   viewHomeLabel,
 } from "./placement";
+import { blockedText } from "./placementButtons";
 import {
   defaultRow,
   homeOption,
@@ -44,15 +43,33 @@ import { formatTs } from "./reltime";
 const t = ((key: string) => en[key as keyof typeof en] ?? key) as never;
 const LRI = "⁦";
 const PDI = "⁩";
+const DOMAIN_PATH = `Unraid · domain repository · ${LRI}backups/containers${PDI}`;
 
 const opts = placementOptions();
 const two = placementOptions({ targets: [targetOption(), targetOption({ id: "t-hz", name: "Hetzner", primary: false })] });
 const box = sendToOption({ kind: "remote", repoId: "repo-box", targetId: "", name: "Storagebox", location: "sftp:u1@box.example:/bv" });
 const onBox: PlacementView = placementView({ segment: "offsite-only", repo: "repo-box", repoLabel: "Storagebox", repoKind: "remote", skip: ["*"] });
+// B2 has its direct repository, Hetzner does not have one yet.
+const direct = placementOptions({
+  targets: two.targets,
+  sendTo: [sendToOption({ repoId: "repo-b2-direct" }), sendToOption({ targetId: "t-hz", name: "Hetzner" })],
+});
+const bothDirect = placementOptions({
+  targets: two.targets,
+  sendTo: [sendToOption({ repoId: "repo-b2-direct" }), sendToOption({ targetId: "t-hz", name: "Hetzner", repoId: "repo-hz-direct" })],
+});
+const onB2: PlacementView = placementView({
+  segment: "offsite-only",
+  repo: "repo-b2-direct",
+  repoLabel: "B2 direct",
+  repoKind: "direct",
+  repoTarget: "t-b2",
+  skip: ["*"],
+});
 
 describe("labels", () => {
   it("names the domain path with the host and keeps its path left to right", () => {
-    expect(homeOptionLabel(t, "Unraid", homeOption())).toBe(`Unraid · domain repository · ${LRI}backups/containers${PDI}`);
+    expect(homeOptionLabel(t, "Unraid", homeOption())).toBe(DOMAIN_PATH);
     expect(homeOptionLabel(t, "Unraid", homeOption({ kind: "domain-remote", scheme: "s3", location: "s3:https://s3.example.com/c" }))).toBe(
       "Domain repository · remote · s3"
     );
@@ -83,16 +100,21 @@ describe("labels", () => {
     expect(viewHomeLabel(t, "Unraid", direct, placementOptions({ sendTo: [] }))).toBe("B2 · direct");
   });
 
-  it("gives each locked segment its reason", () => {
-    const items = segmentItems(t, { "offsite-only": "home-fixed" }, "NAS Keller · mounted");
-    expect(items.map((i) => [i.id, i.label, i.disabled, i.title])).toEqual([
-      ["local", "Local", false, undefined],
-      ["local-offsite", "Local + off-site", false, undefined],
-      ["offsite-only", "Off-site only", true, "Fixed since the first backup: NAS Keller · mounted"],
-    ]);
+  it("gives each lock its reason", () => {
     expect(lockHint(t, "no-target", "")).toBe("No off-site target set up");
     expect(lockHint(t, "own-credentials", "")).toBe("Has its own credentials and is already off the premises");
     expect(lockHint(t, "at-target", "")).toBe("Already lies at the target");
+    expect(lockHint(t, "home-fixed", "NAS Keller · mounted")).toBe("Fixed since the first backup: NAS Keller · mounted");
+  });
+
+  it("says why a button cannot move", () => {
+    expect(blockedText(t, { kind: "blocked", reason: "home-fixed" }, "NAS Keller · mounted")).toBe(
+      "Fixed since the first backup: NAS Keller · mounted"
+    );
+    expect(blockedText(t, { kind: "blocked", reason: "remote" }, "Storagebox · remote")).toBe(
+      "Has its own credentials and is already off the premises"
+    );
+    expect(blockedText(t, { kind: "blocked", reason: "last" }, "")).toBe(en["placement.lastButton"]);
   });
 
   it("joins names the way the language does", () => {
@@ -100,61 +122,172 @@ describe("labels", () => {
   });
 });
 
+describe("buttons", () => {
+  it("lights Local for a home on the server and every target a copy goes to", () => {
+    expect(placementButtons(placementView(), two)).toEqual({ local: true, home: null, ticked: ["t-b2", "t-hz"] });
+    expect(placementButtons(placementView({ skip: ["t-hz"] }), two)).toEqual({ local: true, home: null, ticked: ["t-b2"] });
+    expect(placementButtons(placementView({ skip: ["*"] }), two)).toEqual({ local: true, home: null, ticked: [] });
+    expect(placementButtons(placementView({ repo: "repo-nas", repoKind: "local" }), two).local).toBe(true);
+  });
+
+  it("lights a direct home's own target along with the targets it copies to", () => {
+    expect(placementButtons(onB2, direct)).toEqual({ local: false, home: "t-b2", ticked: ["t-b2"] });
+    expect(placementButtons({ ...onB2, skip: ["t-b2"] }, direct)).toEqual({ local: false, home: "t-b2", ticked: ["t-b2", "t-hz"] });
+  });
+
+  it("finds a direct home's target through the send-to list when the view does not name it", () => {
+    expect(placementButtons({ ...onB2, repoTarget: undefined }, direct).home).toBe("t-b2");
+  });
+
+  it("lights nothing for a home on a remote repository", () => {
+    expect(placementButtons(onBox, placementOptions({ sendTo: [box] }))).toEqual({ local: false, home: null, ticked: [] });
+  });
+});
+
 describe("steps", () => {
-  it("Local writes only the copies of an item on a copy source", () => {
-    expect(stepForSegment("local", placementView(), opts, t, "Unraid")).toEqual({
+  it("turning Local off makes the first lit target the home and copies to the others", () => {
+    expect(stepForLocal(false, placementView(), bothDirect, t, "Unraid")).toEqual({
       kind: "save",
-      change: { copies: { skip: ["*"] } },
-      confirmHome: null,
-      optimistic: { segment: "local", skip: ["*"], copiesFollow: false },
+      change: { home: { repo: "repo-b2-direct" }, copies: { skip: ["t-b2"] } },
+      confirmHome: "B2 · direct",
+      optimistic: {
+        repo: "repo-b2-direct",
+        repoKind: "direct",
+        repoTarget: "t-b2",
+        repoLabel: "B2",
+        homeFollows: false,
+        skip: ["t-b2"],
+        copiesFollow: false,
+      },
     });
   });
 
-  it("Local brings an item off a remote repository back to a default that is a copy source", () => {
-    const nasDefault = placementOptions({ default: defaultRow({ home: "repo-nas", homeKind: "local" }), sendTo: [box] });
-    expect(stepForSegment("local", onBox, nasDefault, t, "Unraid")).toMatchObject({
-      kind: "save",
-      change: { home: { follow: true }, copies: { skip: ["*"] } },
-      confirmHome: "NAS Keller · mounted",
-      optimistic: { repo: "repo-nas", repoKind: "local", homeFollows: true, segment: "local" },
+  it("opens the window when the new home's direct repository does not exist yet", () => {
+    expect(stepForLocal(false, placementView(), two, t, "Unraid")).toEqual({ kind: "direct", target: two.sendTo[0], skip: ["t-b2"] });
+    expect(stepForLocal(false, placementView(), opts, t, "Unraid")).toEqual({ kind: "direct", target: opts.sendTo[0], skip: ["*"] });
+  });
+
+  it("keeps Local lit while no target is", () => {
+    expect(stepForLocal(false, placementView({ skip: ["*"] }), two, t, "Unraid")).toEqual({ kind: "blocked", reason: "last" });
+    expect(stepForLocal(false, placementView(), placementOptions({ targets: [], sendTo: [] }), t, "Unraid")).toEqual({
+      kind: "blocked",
+      reason: "last",
     });
   });
 
-  it("Local + off-site chooses the domain path when the default is not a copy source", () => {
-    const remoteDefault = placementOptions({ default: defaultRow({ home: "repo-box", homeKind: "remote" }), sendTo: [box] });
-    expect(stepForSegment("local-offsite", onBox, remoteDefault, t, "Unraid")).toMatchObject({
+  it("turning Local on brings the item to the domain path and keeps every lit target as a copy", () => {
+    expect(stepForLocal(true, { ...onB2, skip: ["t-b2"] }, direct, t, "Unraid")).toEqual({
+      kind: "save",
       change: { home: { repo: "" }, copies: { skip: [] } },
-      confirmHome: `Unraid · domain repository · ${LRI}backups/containers${PDI}`,
+      confirmHome: DOMAIN_PATH,
+      optimistic: { repo: "", repoKind: "domain", repoTarget: undefined, repoLabel: "", homeFollows: false, skip: [], copiesFollow: false },
+    });
+  });
+
+  it("turning Local on goes to the default's home when that is on the server", () => {
+    const nasDefault = { ...direct, default: defaultRow({ home: "repo-nas", homeKind: "local" }) };
+    expect(stepForLocal(true, onB2, nasDefault, t, "Unraid")).toMatchObject({
+      change: { home: { repo: "repo-nas" }, copies: { skip: ["t-hz"] } },
+      confirmHome: "NAS Keller · mounted",
+      optimistic: { repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller" },
+    });
+  });
+
+  it("turning Local on chooses the domain path when the default is off the premises", () => {
+    const remoteDefault = placementOptions({ default: defaultRow({ home: "repo-box", homeKind: "remote" }), sendTo: [box] });
+    expect(stepForLocal(true, onBox, remoteDefault, t, "Unraid")).toMatchObject({
+      change: { home: { repo: "" }, copies: { skip: ["*"] } },
+      confirmHome: DOMAIN_PATH,
     });
   });
 
   it("leaves the home alone once the first backup fixed it", () => {
-    const step = stepForSegment("local", { ...onBox, locked: true }, placementOptions({ sendTo: [box] }), t, "Unraid");
-    expect(step).toEqual({
+    expect(stepForLocal(true, { ...onB2, locked: true }, direct, t, "Unraid")).toEqual({ kind: "blocked", reason: "home-fixed" });
+    expect(stepForLocal(false, placementView({ locked: true }), direct, t, "Unraid")).toEqual({ kind: "blocked", reason: "home-fixed" });
+    expect(stepForTarget("t-b2", false, { ...onB2, skip: ["t-b2"], locked: true }, bothDirect, t)).toEqual({
+      kind: "blocked",
+      reason: "home-fixed",
+    });
+  });
+
+  it("changes nothing for a button that already shows what was asked", () => {
+    expect(stepForLocal(true, placementView(), opts, t, "Unraid")).toEqual({ kind: "none" });
+    expect(stepForLocal(false, onB2, direct, t, "Unraid")).toEqual({ kind: "none" });
+    expect(stepForTarget("t-b2", true, placementView(), opts, t)).toEqual({ kind: "none" });
+    expect(stepForTarget("t-hz", false, onB2, direct, t)).toEqual({ kind: "none" });
+  });
+
+  it("a target writes the targets left dark and drops ids of deleted ones", () => {
+    expect(stepForTarget("t-hz", false, placementView({ skip: ["t-gone"] }), two, t)).toEqual({
       kind: "save",
-      change: { copies: { skip: ["*"] } },
+      change: { copies: { skip: ["t-hz"] } },
       confirmHome: null,
-      optimistic: { segment: "local", skip: ["*"], copiesFollow: false },
+      optimistic: { skip: ["t-hz"], copiesFollow: false },
+    });
+    expect(stepForTarget("t-b2", true, placementView({ skip: ["t-b2", "t-gone"] }), two, t)).toMatchObject({ change: { copies: { skip: [] } } });
+  });
+
+  it("darkening the last copy leaves the item on Local alone", () => {
+    expect(stepForTarget("t-b2", false, placementView(), opts, t)).toMatchObject({ change: { copies: { skip: ["*"] } } });
+  });
+
+  it("copies from a direct home to every other lit target and never to its own", () => {
+    expect(stepForTarget("t-hz", true, onB2, direct, t)).toMatchObject({ change: { copies: { skip: ["t-b2"] } }, confirmHome: null });
+    expect(stepForTarget("t-hz", false, { ...onB2, skip: ["t-b2"] }, direct, t)).toMatchObject({ change: { copies: { skip: ["*"] } } });
+  });
+
+  it("darkening the home moves it to the next lit target", () => {
+    expect(stepForTarget("t-b2", false, { ...onB2, skip: ["t-b2"] }, bothDirect, t)).toMatchObject({
+      change: { home: { repo: "repo-hz-direct" }, copies: { skip: ["*"] } },
+      confirmHome: "Hetzner · direct",
+      optimistic: { repoTarget: "t-hz" },
+    });
+    expect(stepForTarget("t-b2", false, { ...onB2, skip: ["t-b2"] }, direct, t)).toEqual({
+      kind: "direct",
+      target: direct.sendTo[1],
+      skip: ["*"],
     });
   });
 
-  it("Off-site only opens the window while the direct repository does not exist", () => {
-    expect(stepForSegment("offsite-only", placementView(), opts, t, "Unraid")).toEqual({ kind: "direct", target: opts.sendTo[0] });
+  it("keeps the home lit while no other button is", () => {
+    expect(stepForTarget("t-b2", false, onB2, direct, t)).toEqual({ kind: "blocked", reason: "last" });
   });
 
-  it("Off-site only sends to the first place and takes no copies", () => {
-    expect(stepForSegment("offsite-only", placementView(), placementOptions({ sendTo: [box] }), t, "Unraid")).toMatchObject({
-      change: { home: { repo: "repo-box" }, copies: { skip: ["*"] } },
-      confirmHome: "Storagebox · remote",
+  it("still changes the copies of a home the first backup fixed", () => {
+    expect(stepForTarget("t-hz", false, { ...onB2, skip: ["t-b2"], locked: true }, bothDirect, t)).toMatchObject({
+      change: { copies: { skip: ["*"] } },
+    });
+    expect(stepForTarget("t-hz", false, placementView({ locked: true }), two, t)).toMatchObject({ change: { copies: { skip: ["t-hz"] } } });
+  });
+
+  it("makes the first lit target the home of an item that has neither Local nor a known home", () => {
+    const elsewhere = placementView({ repo: "repo-gone-direct", repoKind: "direct", skip: ["*"] });
+    expect(stepForTarget("t-b2", true, elsewhere, direct, t)).toMatchObject({
+      change: { home: { repo: "repo-b2-direct" }, copies: { skip: ["*"] } },
     });
   });
 
-  it("locks Off-site only with nothing to send to, and a click that slips through changes nothing", () => {
-    const empty = placementOptions({ sendTo: [] });
-    expect(lockedSegments(placementView(), empty)).toEqual({ "offsite-only": "no-target" });
-    expect(lockedSegments(placementView(), opts)).toEqual({});
-    expect(stepForSegment("offsite-only", placementView(), empty, t, "Unraid")).toEqual({ kind: "none" });
-    expect(stepForDefaultSegment("offsite-only", defaultRow(), empty)).toEqual({ kind: "none" });
+  it("refuses every target for a home on a remote repository", () => {
+    expect(stepForTarget("t-b2", true, onBox, placementOptions({ sendTo: [box] }), t)).toEqual({ kind: "blocked", reason: "remote" });
+  });
+
+  it("moves a home that is gone to the target clicked", () => {
+    const gone = placementView({ repo: "repo-gone", repoKind: "missing" });
+    expect(stepForTarget("t-b2", true, gone, direct, t)).toMatchObject({
+      change: { home: { repo: "repo-b2-direct" }, copies: { skip: ["*"] } },
+    });
+  });
+
+  it("lights a target a destination has just made, which the options do not list yet", () => {
+    expect(stepForNewTarget("t-new", placementView({ skip: ["*"] }), opts)).toEqual({
+      kind: "save",
+      change: { copies: { skip: ["t-b2"] } },
+      confirmHome: null,
+      optimistic: { skip: ["t-b2"], copiesFollow: false },
+    });
+    expect(stepForNewTarget("t-new", placementView(), opts)).toMatchObject({ change: { copies: { skip: [] } } });
+    expect(stepForNewTarget("t-new", onB2, direct)).toMatchObject({ change: { copies: { skip: ["t-b2", "t-hz"] } } });
+    expect(stepForNewTarget("t-new", onBox, placementOptions({ sendTo: [box] }))).toEqual({ kind: "blocked", reason: "remote" });
   });
 
   it("Stored on asks with the new home, and a chosen home picked again sends nothing", () => {
@@ -164,25 +297,6 @@ describe("steps", () => {
     });
     expect(stepForHome("", placementView(), opts, t, "Unraid")).toEqual({ kind: "none" });
     expect(stepForHome("", placementView({ homeFollows: true }), opts, t, "Unraid")).toMatchObject({ change: { home: { repo: "" } } });
-  });
-
-  it("Send to opens the window for a direct repository that does not exist yet", () => {
-    expect(stepForSendTo(sendToOption(), onBox, t)).toEqual({ kind: "direct", target: sendToOption() });
-    expect(stepForSendTo(box, onBox, t)).toEqual({ kind: "none" });
-  });
-
-  it("a chip writes the unticked targets and drops ids of deleted ones", () => {
-    expect(stepForChip("t-hz", false, placementView({ skip: ["t-gone"] }), two)).toMatchObject({
-      change: { copies: { skip: ["t-hz"] } },
-      confirmHome: null,
-    });
-    expect(stepForChip("t-b2", true, placementView({ skip: ["t-b2", "t-gone"] }), two)).toMatchObject({ change: { copies: { skip: [] } } });
-  });
-
-  it("keeps the last ticked enabled target, since Local is how to copy nowhere", () => {
-    expect(stepForChip("t-b2", false, placementView(), opts)).toEqual({ kind: "none" });
-    expect(lastChipLocked(placementView(), opts, "t-b2")).toBe(true);
-    expect(lastChipLocked(placementView(), two, "t-b2")).toBe(false);
   });
 
   it("resets both axes before the first backup and only the copies after it", () => {
@@ -231,34 +345,41 @@ describe("defaults", () => {
     expect(defaultSegment(defaultRow({ home: "repo-direct", homeKind: "direct" }), opts)).toBe("offsite-only");
   });
 
-  it("gives a domain without a target the segment the bar shows for it", () => {
+  it("gives a domain without a target the segment the bar shows for it, and keeps its Local lit", () => {
     const none = placementOptions({ targets: [], sendTo: [] });
     expect(defaultSegment(defaultRow(), none)).toBe("local");
     expect(defaultView(defaultRow(), none).segment).toBe("local");
-    expect(stepForDefaultSegment("local", defaultRow(), none)).toEqual({ kind: "none" });
+    expect(stepForLocal(false, defaultView(defaultRow(), none), none, t, "Unraid")).toEqual({ kind: "blocked", reason: "last" });
   });
 
-  it("changes only the home of a default for Off-site only", () => {
-    expect(stepForDefaultSegment("offsite-only", defaultRow({ skip: ["t-b2"] }), placementOptions({ sendTo: [box] }))).toEqual({
-      kind: "change",
-      change: { home: "repo-box" },
-    });
-    expect(stepForDefaultSegment("offsite-only", defaultRow(), opts)).toEqual({ kind: "direct", target: sendToOption() });
+  it("lights a default's direct home by the target it belongs to", () => {
+    const row = defaultRow({ home: "repo-b2-direct", homeKind: "direct", homeTarget: "t-b2", skip: ["*"] });
+    expect(placementButtons(defaultView(row, direct), direct)).toEqual({ local: false, home: "t-b2", ticked: ["t-b2"] });
   });
 
-  it("sets the skip for Local and Local + off-site and brings a remote home back", () => {
-    expect(stepForDefaultSegment("local", defaultRow(), opts)).toEqual({ kind: "change", change: { skip: ["*"] } });
-    expect(stepForDefaultSegment("local-offsite", defaultRow({ home: "repo-box", homeKind: "remote", skip: ["*"] }), opts)).toEqual({
-      kind: "change",
-      change: { skip: [], home: "" },
+  it("takes a step's home and skip as a default's change, and nothing that follows", () => {
+    expect(defaultChangeOf(stepForLocal(false, defaultView(defaultRow({ skip: ["t-hz"] }), bothDirect), bothDirect, t, "Unraid"))).toEqual({
+      home: "repo-b2-direct",
+      skip: ["*"],
     });
+    expect(defaultChangeOf(stepForTarget("t-hz", false, defaultView(defaultRow(), two), two, t))).toEqual({ skip: ["t-hz"] });
+    expect(defaultChangeOf(stepForReset(placementView()))).toEqual({});
+    expect(defaultChangeOf({ kind: "blocked", reason: "last" })).toBeNull();
+    expect(defaultChangeOf({ kind: "none" })).toBeNull();
+  });
+
+  it("brings a direct or remote home back with every lit target as a copy", () => {
+    const onDirect = defaultRow({ home: "repo-b2-direct", homeKind: "direct", homeTarget: "t-b2", skip: ["*"] });
+    expect(defaultChangeOf(stepForLocal(true, defaultView(onDirect, direct), direct, t, "Unraid"))).toEqual({ home: "", skip: ["t-hz"] });
+    const onRemote = defaultRow({ home: "repo-box", homeKind: "remote", skip: ["*"] });
+    const withBox = placementOptions({ sendTo: [box], default: onRemote });
+    expect(defaultChangeOf(stepForLocal(true, defaultView(onRemote, withBox), withBox, t, "Unraid"))).toEqual({ home: "", skip: ["*"] });
   });
 
   it("also brings back a home that points at a deleted repository, not only a remote or direct one", () => {
-    expect(stepForDefaultSegment("local", defaultRow({ home: "repo-gone", homeKind: "missing" }), opts)).toEqual({
-      kind: "change",
-      change: { skip: ["*"], home: "" },
-    });
+    const gone = defaultRow({ home: "repo-gone", homeKind: "missing" });
+    const withGone = placementOptions({ default: gone });
+    expect(defaultChangeOf(stepForLocal(true, defaultView(gone, withGone), withGone, t, "Unraid"))).toEqual({ home: "", skip: ["*"] });
   });
 
   it("starts a draft at the default, following both axes", () => {

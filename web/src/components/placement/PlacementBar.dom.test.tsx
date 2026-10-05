@@ -1,68 +1,127 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
-import type { PlacementDomain, PlacementOptions, PlacementView } from "../../lib/api";
+import type { Destination, PlacementOptions, PlacementView } from "../../lib/api";
 import {
-  defaultRow,
+  destination,
+  homeOption,
   placementOptions,
   placementView,
   renderWithProviders,
   sendToOption,
+  targetOption,
 } from "../../lib/placement.testsupport";
 import { PlacementBar } from "./PlacementBar";
 
-function renderBar(
-  view: PlacementView,
-  options: PlacementOptions = placementOptions(),
-  context: "item" | "default" = "item",
-  domain: PlacementDomain = "containers"
-) {
-  const handlers = { onSegment: vi.fn(), onHome: vi.fn(), onSendTo: vi.fn(), onChip: vi.fn() };
+const two = placementOptions({ targets: [targetOption(), targetOption({ id: "t-hz", name: "Hetzner", primary: false })] });
+const onB2 = placementView({ segment: "offsite-only", repo: "repo-b2-direct", repoKind: "direct", repoTarget: "t-b2", skip: ["*"] });
+
+function renderBar(view: PlacementView, options: PlacementOptions = two, destinations: Destination[] = []) {
+  const handlers = { onLocal: vi.fn(), onTarget: vi.fn(), onDestination: vi.fn(), onHome: vi.fn() };
   renderWithProviders(
-    <PlacementBar domain={domain} context={context} view={view} options={options} host="Unraid" {...handlers} />
+    <PlacementBar
+      domain="containers"
+      context="item"
+      view={view}
+      options={options}
+      host="Unraid"
+      destinations={destinations}
+      {...handlers}
+    />
   );
   return handlers;
 }
 
-// A default sitting on its target's own repository, which is where the copy
-// line is shown.
-function offsiteDefault(): { view: PlacementView; options: PlacementOptions } {
-  const row = defaultRow({ home: "repo-direct", homeKind: "direct" });
-  return {
-    view: placementView({ segment: "offsite-only", repo: row.home, repoKind: "direct" }),
-    options: placementOptions({ sendTo: [sendToOption({ repoId: "repo-direct" })] }),
-  };
+function pressed(name: string): string | null {
+  return screen.getByRole("button", { name }).getAttribute("aria-pressed");
+}
+
+// A disabled button takes no pointer events, so its bubble answers on the wrapper.
+function bubbleOf(el: HTMLButtonElement): string | null | undefined {
+  fireEvent.mouseEnter(el.disabled ? (el.parentElement as HTMLElement) : el);
+  return document.querySelector(".glim-bubble")?.textContent;
 }
 
 describe("PlacementBar", () => {
   afterEach(cleanup);
 
-  it("announces the three segments as a choice group with the chosen one checked", () => {
-    renderBar(placementView());
+  it("announces one group of buttons with the lit ones pressed", () => {
+    renderBar(placementView({ skip: ["t-hz"] }));
+    expect(screen.queryByRole("radiogroup")).toBeNull();
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.getByRole("radiogroup", { name: "Placement" })).toBeTruthy();
-    expect(screen.getByRole("radio", { name: "Local + off-site" }).getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByRole("radio", { name: "Local" }).getAttribute("aria-checked")).toBe("false");
-    expect(screen.getByRole("radio", { name: "Off-site only" }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("group", { name: "Placement" })).toBeTruthy();
+    expect(pressed("Local")).toBe("true");
+    expect(pressed("B2")).toBe("true");
+    expect(pressed("Hetzner")).toBe("false");
   });
 
-  it("locks Off-site only while the options offer nothing to send to", () => {
-    renderBar(placementView(), placementOptions({ sendTo: [] }));
-    expect((screen.getByRole("radio", { name: "Off-site only" }) as HTMLButtonElement).disabled).toBe(true);
+  it("lights a direct home's own target and leaves Local dark", () => {
+    renderBar(onB2, placementOptions({ targets: two.targets, sendTo: [sendToOption({ repoId: "repo-b2-direct" })] }));
+    expect(pressed("Local")).toBe("false");
+    expect(pressed("B2")).toBe("true");
+    expect(pressed("Hetzner")).toBe("false");
   });
 
-  it("puts Stored on and the chips under Local + off-site", () => {
+  it("hands each click back with the state the button is asked to take", () => {
+    const { onLocal, onTarget } = renderBar(placementView({ skip: ["t-hz"] }));
+    fireEvent.click(screen.getByRole("button", { name: "Local" }));
+    fireEvent.click(screen.getByRole("button", { name: "B2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hetzner" }));
+    expect(onLocal).toHaveBeenCalledWith(false);
+    expect(onTarget.mock.calls).toEqual([
+      ["t-b2", false],
+      ["t-hz", true],
+    ]);
+  });
+
+  it("offers a button for each destination the domain has no target under yet", () => {
+    const { onDestination, onTarget } = renderBar(placementView(), two, [destination()]);
+    expect(pressed("Wasabi")).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "Wasabi" }));
+    expect(onDestination).toHaveBeenCalledWith("dest-wasabi");
+    expect(onTarget).not.toHaveBeenCalled();
+  });
+
+  it("shows a home on a remote repository as a lit button that cannot be pressed", () => {
+    const box = sendToOption({ kind: "remote", repoId: "repo-box", targetId: "", name: "Storagebox" });
+    const { onTarget } = renderBar(
+      placementView({ segment: "offsite-only", repo: "repo-box", repoLabel: "Storagebox", repoKind: "remote", skip: ["*"] }),
+      placementOptions({ targets: two.targets, sendTo: [box] })
+    );
+    const home = screen.getByRole("button", { name: "Storagebox · remote" }) as HTMLButtonElement;
+    expect(home.getAttribute("aria-pressed")).toBe("true");
+    expect(home.disabled).toBe(true);
+    expect(bubbleOf(home)).toBe("Has its own credentials and is already off the premises");
+    expect(pressed("Local")).toBe("false");
+    fireEvent.click(home);
+    expect(onTarget).not.toHaveBeenCalled();
+  });
+
+  it("marks a switched-off target and lets it go dark but not light up", () => {
+    const off = placementOptions({ targets: [targetOption(), targetOption({ id: "t-hz", name: "Hetzner", primary: false, enabled: false })] });
+    renderBar(placementView({ skip: [] }), off);
+    expect((screen.getByRole("button", { name: "Hetzner (off)" }) as HTMLButtonElement).disabled).toBe(false);
+    cleanup();
+    renderBar(placementView({ skip: ["t-hz"] }), off);
+    expect((screen.getByRole("button", { name: "Hetzner (off)" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("says on the home's button why it cannot move", () => {
+    renderBar(placementView({ repo: "repo-nas", repoKind: "local", locked: true, lockReason: "first-backup" }));
+    expect(bubbleOf(screen.getByRole("button", { name: "Local" }) as HTMLButtonElement)).toBe(
+      "Fixed since the first backup: NAS Keller · mounted"
+    );
+  });
+
+  it("offers Stored on only while Local is lit and the domain has more than one home on the server", () => {
     renderBar(placementView());
     expect(screen.getByRole("combobox", { name: "Stored on" })).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Copy to" })).toBeTruthy();
-    expect(screen.queryByText("Send to")).toBeNull();
-  });
-
-  it("puts only Send to under Off-site only, with a direct repository still to be made", () => {
-    renderBar(placementView({ segment: "offsite-only", repoKind: "direct", repo: "direct:t-b2", skip: ["*"] }));
+    cleanup();
+    renderBar(onB2);
     expect(screen.queryByRole("combobox", { name: "Stored on" })).toBeNull();
-    expect(screen.getByText("Send to")).toBeTruthy();
-    expect(screen.getByText("B2 · direct · created when first chosen")).toBeTruthy();
+    cleanup();
+    renderBar(placementView(), placementOptions({ targets: two.targets, homes: [homeOption()] }));
+    expect(screen.queryByRole("combobox", { name: "Stored on" })).toBeNull();
   });
 
   it("keeps a stored home that is off in the list, marked and not selectable", () => {
@@ -71,34 +130,13 @@ describe("PlacementBar", () => {
     expect((screen.getByRole("option", { name: "Cold (off)" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("hands a send-to choice back as the option it came from", () => {
-    const box = sendToOption({ kind: "remote", repoId: "repo-box", targetId: "", name: "Storagebox" });
-    const opts = placementOptions({ sendTo: [sendToOption({ repoId: "repo-direct" }), box] });
-    const { onSendTo } = renderBar(placementView({ segment: "offsite-only", repo: "repo-direct", repoKind: "direct", skip: ["*"] }), opts);
-    fireEvent.click(screen.getByRole("combobox", { name: "Send to" }));
-    fireEvent.click(screen.getByRole("option", { name: "Storagebox · remote" }));
-    fireEvent.click(screen.getByRole("button", { name: "Set" }));
-    expect(onSendTo).toHaveBeenCalledWith(box);
-  });
-
-  it("keeps a copy line under Off-site only for a default, worded for containers", () => {
-    const { view, options } = offsiteDefault();
-    renderBar(view, options, "default");
-    expect(screen.getByText("Project folders and items whose location is a copy source:")).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Project folders and items whose location is a copy source:" })).toBeTruthy();
-  });
-
-  it("leaves the project folders out of that line for a domain that has none", () => {
-    const { view, options } = offsiteDefault();
-    renderBar(view, { ...options, domain: "vms" }, "default", "vms");
-    expect(screen.getByRole("group", { name: "Items whose location is a copy source:" })).toBeTruthy();
-  });
-
   it("chooses nothing while the arrow keys move along it", () => {
-    const { onSegment } = renderBar(placementView());
-    screen.getByRole("radio", { name: "Local" }).focus();
-    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
-    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "End" });
-    expect(onSegment).not.toHaveBeenCalled();
+    const { onLocal, onTarget } = renderBar(placementView());
+    screen.getByRole("button", { name: "Local" }).focus();
+    fireEvent.keyDown(screen.getByRole("group", { name: "Placement" }), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("group", { name: "Placement" }), { key: "End" });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Hetzner" }));
+    expect(onLocal).not.toHaveBeenCalled();
+    expect(onTarget).not.toHaveBeenCalled();
   });
 });

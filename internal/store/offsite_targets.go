@@ -96,6 +96,10 @@ type OffsiteTarget struct {
 	// it a plain remote repository.
 	CompanionLost bool
 	OffPremises   bool // counts as a site of its own for sites and 3-2-1, never for replication
+	// Provider is the id of the provider a destination was set up with.
+	Provider string
+	// DestinationID is the destination a domain's target was derived from.
+	DestinationID string
 }
 
 // remoteLocation is the SQL that asks of a location column what
@@ -178,8 +182,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-			  companion_of, companion_lost, off_premises, retention_keep_yearly, compression)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			  companion_of, companion_lost, off_premises, retention_keep_yearly, compression, destination_id, provider)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
@@ -199,13 +203,15 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  sort_order             = excluded.sort_order,
 			  off_premises           = excluded.off_premises,
 			  retention_keep_yearly  = excluded.retention_keep_yearly,
-			  compression            = excluded.compression
+			  compression            = excluded.compression,
+			  destination_id         = CASE excluded.destination_id WHEN '' THEN offsite_targets.destination_id ELSE excluded.destination_id END,
+			  provider               = CASE excluded.provider WHEN '' THEN offsite_targets.provider ELSE excluded.provider END
 			WHERE offsite_targets.role = excluded.role`,
 			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
 			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
-			t.RetentionKeepYearly, t.Compression,
+			t.RetentionKeepYearly, t.Compression, t.DestinationID, t.Provider,
 		)
 	}
 	if err != nil {
@@ -362,7 +368,7 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-	companion_of, companion_lost, off_premises, retention_keep_yearly, compression`
+	companion_of, companion_lost, off_premises, retention_keep_yearly, compression, provider, destination_id`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -937,7 +943,7 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
-		&t.CompanionOf, &lost, &offPremises, &t.RetentionKeepYearly, &t.Compression,
+		&t.CompanionOf, &lost, &offPremises, &t.RetentionKeepYearly, &t.Compression, &t.Provider, &t.DestinationID,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)

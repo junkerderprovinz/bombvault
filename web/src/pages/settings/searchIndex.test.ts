@@ -133,7 +133,7 @@ describe("the settings search index", () => {
     }
   );
 
-  it("has every caption of the placement defaults card, its strip and its fields", () => {
+  it("has every caption of the placement defaults card, its row of buttons and its fields", () => {
     expect(region("storage")).toContain("<PlacementDefaultsCard");
     const card = SETTINGS_INDEX.storage.find((c) => c.title === "placementDefaults.title");
     expect(card, "placementDefaults.title on storage").toBeDefined();
@@ -142,14 +142,12 @@ describe("the settings search index", () => {
       readFileSync(join(HERE, "PlacementDefaultsCard.tsx"), "utf8"),
       readFileSync(join(HERE, "..", "..", "components", "placement", "PlacementBar.tsx"), "utf8"),
     ];
-    const lib = readFileSync(join(HERE, "..", "..", "lib", "placement.ts"), "utf8");
-    const keys = [
-      ...sources.flatMap((source) => [...source.matchAll(/label=\{t\("([\w.]+)"\)\}/g)].map(([, key]) => key)),
-      ...sources.flatMap((source) => [...source.matchAll(/chips\(t\("([\w.]+)"\)\)/g)].map(([, key]) => key)),
-      ...sources.flatMap((source) => [...source.matchAll(/t\("(placementDefaults\.copyLine\w*)"\)/g)].map(([, key]) => key)),
-      ...[...lib.matchAll(/\["[\w-]+", "(placement\.seg\w+)"\]/g)].map(([, key]) => key),
-    ];
-    expect(keys.length).toBeGreaterThanOrEqual(10);
+    const keys = sources.flatMap((source) => [
+      ...[...source.matchAll(/label=\{t\("([\w.]+)"\)\}/g)].map(([, key]) => key),
+      ...[...source.matchAll(/\blabel: t\("([\w.]+)"\)/g)].map(([, key]) => key),
+    ]);
+    expect(keys).toContain("placement.segLocal");
+    expect(keys.length).toBeGreaterThanOrEqual(5);
     for (const key of keys) expect(card?.rows.map((r) => r.key), key).toContain(key);
   });
 

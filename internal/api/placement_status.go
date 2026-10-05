@@ -178,7 +178,7 @@ func (s *Service) placementCoverage(settings store.Settings, domain string) (cop
 	for identity, state := range homes {
 		repoID, _ := p.effectiveHome(state)
 		home := s.homeKindOf(settings, domain, repoID, named)
-		if home.copySource() && len(p.effectiveTargets(identity)) > 0 {
+		if len(p.targetsOf(identity, home, named[repoID].CompanionOf)) > 0 {
 			copied = true
 		}
 		if !homeOffPremises(home, repoID, named) {
@@ -297,7 +297,7 @@ func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID s
 		if p.State.Paused() {
 			return &placementPlan{Kind: "paused", Home: plan.Home, HomeDirectOf: plan.HomeDirectOf, Targets: []string{}, Warn: true}
 		}
-		for _, t := range p.effectiveTargets(item.Identity) {
+		for _, t := range p.targetsOf(item.Identity, home, f.named[repoID].CompanionOf) {
 			plan.Targets = append(plan.Targets, placementTargetName(t))
 		}
 	}
@@ -343,7 +343,7 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 	for _, c := range copies {
 		held[c.TargetID] = c
 	}
-	ticked := tickedTargets(p, item.Identity, home)
+	ticked := tickedTargets(p, item.Identity, home, f.named[repoID].CompanionOf)
 	for _, t := range p.Targets {
 		c, has := held[t.ID]
 		switch {
@@ -366,15 +366,16 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 }
 
 // tickedTargets are the targets an item's rule copies to, switched off or not.
-// An item whose home is not a copy source has none.
-func tickedTargets(p placementRead, identity string, home homeKind) map[string]bool {
+// An item whose home is not a copy source has none, and a direct home never
+// ticks its own target.
+func tickedTargets(p placementRead, identity string, home homeKind, ownTarget string) map[string]bool {
 	ticked := map[string]bool{}
 	if !home.copySource() {
 		return ticked
 	}
 	skip, _ := p.resolvedSkip(identity)
 	for _, t := range p.Targets {
-		ticked[t.ID] = !skipsTarget(skip, t.ID)
+		ticked[t.ID] = !skipsTarget(skip, t.ID) && (home != homeDirect || t.ID != ownTarget)
 	}
 	return ticked
 }

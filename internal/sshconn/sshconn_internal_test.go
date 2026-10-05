@@ -127,6 +127,57 @@ func TestWriteSSHConfigUsesOwnKeyAndKnownHosts(t *testing.T) {
 	}
 }
 
+func TestWriteSSHConfigLeavesSomeoneElsesConfigAlone(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	path := filepath.Join(home, ".ssh", "config")
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	mine := "Host nas\n  HostName 192.168.1.5\n  User admin\n"
+	if err := os.WriteFile(path, []byte(mine), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := testConn(t).WriteSSHConfig()
+	if !errors.Is(err, ErrForeignSSHConfig) {
+		t.Fatalf("WriteSSHConfig = %v, want ErrForeignSSHConfig", err)
+	}
+	raw, _ := os.ReadFile(path) //nolint:gosec // G304: this test's own t.TempDir()
+	if string(raw) != mine {
+		t.Fatalf("the person's ssh config was changed:\n%s", raw)
+	}
+}
+
+func TestWriteSSHConfigReplacesItsOwnFile(t *testing.T) {
+	c := testConn(t)
+	for name, old := range map[string]string{
+		"marked":       sshConfigMark + "Host *\n  IdentityFile /elsewhere/id_ed25519\n",
+		"before marks": "Host *\n  IdentityFile " + filepath.ToSlash(c.keyPath()) + "\n  BatchMode yes\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			home := t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("USERPROFILE", home)
+			path := filepath.Join(home, ".ssh", "config")
+			if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(old), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := c.WriteSSHConfig(); err != nil {
+				t.Fatalf("WriteSSHConfig: %v", err)
+			}
+			raw, _ := os.ReadFile(path) //nolint:gosec // G304: this test's own t.TempDir()
+			if !strings.HasPrefix(string(raw), sshConfigMark) || !strings.Contains(string(raw), "UserKnownHostsFile") {
+				t.Fatalf("own file not rewritten:\n%s", raw)
+			}
+		})
+	}
+}
+
 func TestLastLine(t *testing.T) {
 	for _, tc := range []struct{ name, in, want string }{
 		{"plain", "boom", "boom"},

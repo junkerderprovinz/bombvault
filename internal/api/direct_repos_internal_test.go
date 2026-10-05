@@ -90,7 +90,7 @@ func TestADirectRepositoryServesOnlyItsTargetsDomain(t *testing.T) {
 	}
 }
 
-func TestADirectRepositoryIsItsOwnKindOfHomeWhereverItLies(t *testing.T) {
+func TestADirectRepositoryIsACopySourceOfItsOwnKind(t *testing.T) {
 	f := newPlacementFixture(t)
 	d := f.direct(f.target("containers", "NAS", "backups/nas-offsite"))
 	settings, err := f.st.GetSettings()
@@ -98,7 +98,7 @@ func TestADirectRepositoryIsItsOwnKindOfHomeWhereverItLies(t *testing.T) {
 		t.Fatal(err)
 	}
 	kind := f.svc.homeKindOf(settings, "containers", d.ID, map[string]store.OffsiteTarget{d.ID: d})
-	if kind != homeDirect || kind.copySource() {
+	if kind != homeDirect || !kind.copySource() {
 		t.Fatalf("homeKindOf = %q, copy source %v", kind, kind.copySource())
 	}
 }
@@ -596,7 +596,7 @@ func TestMirroredFieldRefusalNamesTheField(t *testing.T) {
 	}
 }
 
-func TestAlreadyOffSiteCountsADirectRepositoryWhereverItLies(t *testing.T) {
+func TestAlreadyOffSiteLeavesOutOnlyRemoteNamedRepositories(t *testing.T) {
 	direct := store.OffsiteTarget{ID: "d", CompanionOf: "t"}
 	plain := store.OffsiteTarget{ID: "n"}
 	cases := []struct {
@@ -604,8 +604,8 @@ func TestAlreadyOffSiteCountsADirectRepositoryWhereverItLies(t *testing.T) {
 		ref  domainRepoRef
 		want bool
 	}{
-		{"local direct repository", namedRef("/mnt/user/nas-direct", direct), true},
-		{"remote direct repository", namedRef("b2:bkt:x-direct", direct), true},
+		{"local direct repository", namedRef("/mnt/user/nas-direct", direct), false},
+		{"remote direct repository", namedRef("b2:bkt:x-direct", direct), false},
 		{"local named repository", namedRef("/mnt/user/nas", plain), false},
 		{"remote named repository", namedRef("b2:bkt:cold", plain), true},
 		{"remote domain path", ownRef("s3:host/bkt/containers"), false},
@@ -617,27 +617,53 @@ func TestAlreadyOffSiteCountsADirectRepositoryWhereverItLies(t *testing.T) {
 	}
 }
 
-func TestADirectRepositoryIsNeverACopySource(t *testing.T) {
+func TestADirectRepositoryIsCopiedToEveryTargetButItsOwn(t *testing.T) {
 	f := newPlacementFixture(t)
-	d := f.direct(f.target("containers", "NAS", "backups/nas-offsite"))
+	nas := f.target("containers", "NAS", "backups/nas-offsite")
+	b2 := f.target("containers", "B2", "backups/b2")
+	d := f.direct(nas)
 	f.container("web", d.ID)
-	f.container("db", "")
-	settings, err := f.st.GetSettings()
+	f.rule("containers", "container:web", nas.ID)
+	f.replicated("containers")
+	f.listing("containers", nas.ID, 1000)
+	f.listing("containers", b2.ID, 1000)
+	dloc, err := f.svc.resolveRepo(d.Repo)
 	if err != nil {
 		t.Fatal(err)
 	}
-	loc, err := f.svc.resolveRepo(d.Repo)
+	f.hold(dloc, snap("w1", 100, "container:web", restic.DirectTag))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	b2loc, err := f.svc.resolveRepo(b2.Repo)
 	if err != nil {
 		t.Fatal(err)
 	}
-	refs, _ := f.svc.offsiteReplicationSources(settings, "containers")
-	if len(refs) == 0 {
-		t.Fatal("the domain path is no longer a source")
-	}
-	for _, r := range refs {
-		if sameRepoLocation(r.Loc, loc) {
-			t.Fatalf("the direct repository %s is a copy source", r.Loc)
+	var fromDirect []copyCall
+	for _, c := range f.eng.copies {
+		if sameRepoLocation(c.Src, dloc) {
+			fromDirect = append(fromDirect, c)
 		}
+	}
+	if len(fromDirect) != 1 || !sameRepoLocation(fromDirect[0].Dest, b2loc) || !slices.Equal(fromDirect[0].IDs, []string{"w1"}) {
+		t.Fatalf("copies from the direct repository = %+v, want w1 to B2 and nothing to NAS", fromDirect)
+	}
+}
+
+func TestADirectHomeCannotCopyToItsOwnTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "backups/nas-offsite")
+	f.target("containers", "B2", "backups/b2")
+	d := f.direct(nas)
+	f.container("web", d.ID)
+	res := f.do("PATCH", "/api/containers/web", map[string]any{"copies": map[string]any{"skip": []string{}}})
+	if res["code"] != "copies-to-own-target" {
+		t.Fatalf("PATCH = %v, want the own-target refusal", res)
+	}
+	res = f.do("PATCH", "/api/containers/web", map[string]any{"copies": map[string]any{"skip": []string{nas.ID}}})
+	if res["ok"] != true {
+		t.Fatalf("PATCH = %v, want copies to every target but NAS", res)
 	}
 }
 

@@ -28,6 +28,7 @@ import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
+import { CopyBlock } from "./CopyBlock";
 import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
 import { TestButton, VerdictLine } from "./TestButton";
 import { useTestVerdict } from "../lib/useTestVerdict";
@@ -88,34 +89,6 @@ function inferBackend(url: string): Backend {
   // relative to the Host Data mount.
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) return "path";
   return "other";
-}
-
-// CopyBlock is a monospace <pre> with a copy button. On a non-HTTPS origin the
-// clipboard is unavailable, and the text can still be selected by hand.
-function CopyBlock({ text, t }: { text: string; t: T }) {
-  const { push } = useToast();
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      push(t("common.copied"), "success");
-    } catch {
-      push(t("vm.ssh.copyFailed"), "fail");
-    }
-  }
-  return (
-    <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
-        {text}
-      </pre>
-      <Button
-        label={t("common.copy")}
-        labelKey="common.copy"
-        tone="neutral"
-        onClick={() => void copy()}
-        className="shrink-0"
-      />
-    </div>
-  );
 }
 
 export function OffsiteWizard({
@@ -598,22 +571,22 @@ export function OffsiteWizard({
                   {t("offsite.wizard.password")}
                   <InfoBubble tip={t("offsite.wizard.passwordInfo")} />
                 </span>
-                <CopyBlock text={snippet.password} t={t} />
+                <CopyBlock text={snippet.password} />
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-carbon-textMuted">docker run</span>
-                <CopyBlock text={snippet.dockerRun} t={t} />
+                <CopyBlock text={snippet.dockerRun} />
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-carbon-textMuted">docker-compose</span>
-                <CopyBlock text={snippet.compose} t={t} />
+                <CopyBlock text={snippet.compose} />
               </div>
               {/* A container started with docker run has no Unraid template
                   behind it, so it cannot be edited in Unraid's Docker UI. The
                   template can. */}
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.unraidTemplate")}</span>
-                <CopyBlock text={snippet.unraid} t={t} />
+                <CopyBlock text={snippet.unraid} />
               </div>
               <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
@@ -884,7 +857,7 @@ export function OffsiteWizard({
 
           {/* Only while append-only is on and BombVault leaves pruning to the
               far side; otherwise it would invite a second pruner. */}
-          {pruneMode === "farside" && <CopyBlock text={cronHint} t={t} />}
+          {pruneMode === "farside" && <CopyBlock text={cronHint} />}
 
           {/* Always shown: the wizard is the only editor for the growth
               budget. */}

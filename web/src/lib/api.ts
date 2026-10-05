@@ -444,6 +444,8 @@ export interface ImportSettingsSummary {
    *  absent from the file, which is kept, and a location that would move an
    *  in-use repository, which is declined. The server logs both. */
   namedRepos: number;
+  /** null when the file lacks the block and the destinations stay as they are. */
+  destinations: number | null;
   /** null when the file lacks the block and the table stays as it is. */
   placementDefaults: number | null;
   copyRules: number | null;
@@ -2549,6 +2551,9 @@ export interface OffsiteTarget {
   createdAt: number;
   /** Ordering within a domain; the primary is 0, additional targets are > 0. */
   sortOrder: number;
+  /** The destination this target sits under, when it was derived from one. */
+  destinationId?: string;
+  provider?: string;
 }
 
 /** A named repository (#204): a location written down once in Settings and then
@@ -2784,6 +2789,8 @@ export interface PlacementView {
   /** The target a direct repository without a name of its own goes by. */
   repoDirectOf?: string;
   repoKind: HomeKind | "";
+  /** The target a direct home is the direct repository of. */
+  repoTarget?: string;
   repoOff: boolean;
   homeFollows: boolean;
   copiesFollow: boolean;
@@ -2882,6 +2889,8 @@ export interface DefaultRow {
   exists: boolean;
   home: string;
   homeKind: HomeKind;
+  /** The target a direct home is the direct repository of. */
+  homeTarget?: string;
   homeOff: boolean;
   skip: string[];
   paused: boolean;
@@ -5522,6 +5531,120 @@ export function addRcloneRemote(
     method: "POST",
     body: JSON.stringify(form),
   });
+}
+
+export type ProviderGroup = "storage" | "selfs3" | "server" | "cloud";
+export type ProviderRoute = "s3" | "rest" | "rclone" | "path";
+export type ProviderAuth = "apppassword" | "token" | "apikey" | "accesskey" | "login" | "sshkey";
+
+/** A storage product the off-site wizard offers, from internal/remotes. */
+export interface Provider {
+  id: string;
+  name: string;
+  backend: string;
+  group: ProviderGroup;
+  route: ProviderRoute;
+  preset?: Record<string, string>;
+  mark?: string;
+  urlHint?: string;
+  auth?: ProviderAuth;
+  /** Can keep old versions from someone holding the credentials. */
+  lock?: boolean;
+  selfHosted?: boolean;
+}
+
+export interface BackendOption {
+  name: string;
+  help: string;
+  required: boolean;
+  secret: boolean;
+  password: boolean;
+  advanced: boolean;
+  essential: boolean;
+  default: string;
+  examples?: { value: string; help: string; provider?: string }[];
+  /** The S3 providers the option applies to; absent means every one. */
+  providers?: string[];
+}
+
+export interface Backend {
+  name: string;
+  description: string;
+  options: BackendOption[];
+}
+
+/** GET /api/offsite/providers. backendsError says why rclone could not be asked. */
+export function getProviders(): Promise<
+  OkEnvelope & { providers?: Provider[]; backends?: Record<string, Backend>; backendsError?: string }
+> {
+  return fetchJSON("/api/offsite/providers");
+}
+
+/** A destination as the wizard has it before it is saved. */
+export interface DestinationDraft {
+  provider: string;
+  settings: Record<string, string>;
+  dir?: string;
+  folder?: string;
+  name?: string;
+  storageClass?: string;
+  immutable?: boolean;
+}
+
+export function checkDraft(d: DestinationDraft): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+  return fetchJSON("/api/offsite/drafts/check", { method: "POST", body: JSON.stringify(d) });
+}
+
+/** free is the destination's free space in bytes, sent for the top level
+ *  when the backend reports it. */
+export function draftFolders(d: DestinationDraft): Promise<OkEnvelope & { folders?: string[]; free?: number }> {
+  return fetchJSON("/api/offsite/drafts/folders", { method: "POST", body: JSON.stringify(d) });
+}
+
+export function draftMakeFolder(d: DestinationDraft): Promise<OkEnvelope & { dir?: string }> {
+  return fetchJSON("/api/offsite/drafts/mkdir", { method: "POST", body: JSON.stringify(d) });
+}
+
+/** A destination set up once and offered to every domain. */
+export interface Destination {
+  id: string;
+  name: string;
+  provider: string;
+  mark?: string;
+  repo: string;
+  credsRef: string;
+  storageClass: string;
+  immutable: boolean;
+  createdAt: number;
+  /** The domains with a target under it. */
+  domains: string[];
+}
+
+export function listDestinations(): Promise<OkEnvelope & { destinations?: Destination[] }> {
+  return fetchJSON("/api/offsite/destinations");
+}
+
+export function createDestination(d: DestinationDraft): Promise<OkEnvelope & { destination?: Destination }> {
+  return fetchJSON("/api/offsite/destinations", { method: "POST", body: JSON.stringify(d) });
+}
+
+export function updateDestination(
+  id: string,
+  edit: { name: string; storageClass: string; immutable: boolean }
+): Promise<OkEnvelope & { destination?: Destination }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(edit) });
+}
+
+export function deleteDestination(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** The domain's target under a destination, created unticked the first time. */
+export function destinationForDomain(
+  id: string,
+  domain: OffsiteDomain
+): Promise<OkEnvelope & { target?: OffsiteTarget; created?: boolean }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/domains/${domain}`, { method: "POST" });
 }
 
 export type AnomalySeverity = "critical" | "warning" | "info";

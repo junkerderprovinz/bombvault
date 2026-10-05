@@ -18,13 +18,30 @@ Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. *
 !!! note "Herhangi bir yerden geri yükleyin"
     Her konteyner, VM, dosya kümesi, flash ve uygulama yapılandırması, yedeklerini bir yedeğin bulunduğu tüm yerler boyunca tek bir zaman çizelgesi olarak listeler. B2'ye kopyalanan bir yedek yalnızca bir kez görünür, onu tutan her yerle işaretlenmiş olarak. Bir geri yükleme, ulaşabildiği ilk yeri alır, ögenin yazıldığı depoyla başlayarak, ve her satır için başka bir yer seçebilirsin. Site dışı yerler yalnızca onları açtığında okunur. Bir yerde silme, önce diğerlerini kontrol eder ve bunun son kopya olup olmadığını söyler.
 
+## Hedefler {#destinations}
+
+Ayarlar, Site dışı **Hedefler** ile başlar: site dışı kopyaların gittiği yerler, tüm etki alanları için bir kez kurulur. Bir hedef sonra her etki alanının ve her ögenin **Yerleşim** satırında bir düğme olarak görünür. Bir etki alanı için ilk kez işaretlendiğinde BombVault, o etki alanının deposunu hedefin altındaki bir klasörde oluşturur, örneğin `rclone:onedrive:BombVault/containers`.
+
+**Hedef ekle**, beş adımlı bir sihirbaz açar:
+
+1. **Yedekler nereye gitsin?** Her hizmet logosuyla listelenir, dört grupta: S3 bucket'ları sunan depolama hizmetleri (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 ve diğerleri), kendi S3 sunucun (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), kendi sunucun ve paylaşımların (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, bağlanmış bir yol) ve bulut depolama (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud ve rclone'un desteklediği diğerleri). Her biri yedeklemeye ne kadar uygun olduğunu söyler: bulut sürücüleri çok sayıda istekte yavaşlar, bu yüzden ilk yedekleme ve budama orada daha uzun sürer.
+2. **Oturum aç.** Alanlar hizmete göre değişir: S3 için bir erişim anahtarı, WebDAV ve SMB için kullanıcı adı ve parola, iki adımlı doğrulamanın normal parolayı engellediği yerlerde bir uygulama parolası, SFTP ve Storage Box için BombVault'un genel SSH anahtarı ya da tarayıcı üzerinden oturum açan hizmetler için bir belirteç. Bunlar için sihirbaz, tarayıcısı olan bir bilgisayarda çalıştırman gereken bir `rclone authorize` komutu gösterir; yazdırdığı belirteç alana girilir. **Bağlantıyı test et**, hiçbir şey kaydedilmeden önce oturum açmayı denetler.
+3. **Bir klasör seç.** Sihirbaz hedefteki klasörleri listeler; yeni bir klasör için **Yeni klasör** vardır ve hizmet bildiriyorsa boş alan gösterilir. Boş bir klasör en güvenlisidir.
+4. **Silmeye karşı koruma.** Sihirbaz hizmetin neler yapabildiğini açıkça söyler. Append-only kipindeki bir rest-server silmeyi reddeder ve kurcalama testi bunu denetler. Bir S3 bucket'ı sürümleme ve nesne kilidiyle eski sürümleri tutabilir; BombVault bunu henüz denetleyemez. Bir bulut sürücüsü silmeyi hiç reddedemez: sunucuya giren o kopyaya da girer. **Değiştirilemez (append-only)** seçeneğini yalnızca uzak taraf silmeyi gerçekten reddediyorsa aç; BombVault o zaman orada hiç budama yapmaz.
+5. **Acil durum için.** Kurtarma kiti her hedefi, altındaki her etki alanının deposuyla birlikte listeler. Oturum açma bilgisi BombVault'un ayar yedeğiyle geri gelir; o olmadan yapılan yeni bir kurulumda hedefi aynı yerde yeniden kur.
+
+S3 hizmetleri restic'in kendi S3 arka ucu üzerinden çalışır; depolama sınıfı ve nesne kilidi bu sayede uygulanabilir. Diğer tüm hizmetler BombVault'un içinde gelen rclone üzerinden çalışır ve remote'u sonra Ayarlar, Bulut erişimi altındaki rclone yapılandırmasında görünür. Bir ayar dışa aktarımı hedefleri içerir; kimlik bilgileri dahil edilirse oturum açma bilgilerini de içerir.
+
+Bir hedeften oluşturulan etki alanı hedefi, hedefin adını, konumunu, kimlik bilgilerini, depolama sınıfını ve değiştirilemez anahtarını alır. Saklaması, sıkıştırması ve büyüme bütçesi etki alanı başına kalır; konumu taşınamaz, çünkü etki alanının deposu oradadır. Her etki alanının altındaki **Yalnızca bu etki alanı için hedef ekle** yine elle yazılmış bir depo URL'si alır.
+
 ## Öge başına yerleşim {#placement}
 
-Her konteyner, VM ve dosya kümesi kartında üç segmentli bir **Yerleşim** satırı vardır:
+Her konteyner, VM ve dosya kümesi kartında düğmelerden oluşan bir **Yerleşim** satırı vardır: **Yerel** ve etki alanının her site dışı hedefi için bir düğme, ardından etki alanının altında henüz hedef oluşturmadığı Hedefler. Yanan düğmeler ögenin yedeklerini alır.
 
-- **Yerel**, ögeyi **Depolama konumu** altında gösterilen depoya yazar ve hiçbir yere kopyalamaz. Zaten bir ikinci kopyası olan veriler için kullan, örneğin bir NAS üzerinde yaşayan bir paylaşım.
-- **Yerel + site dışı**, oraya da yazar ve **Kopyalama hedefi** altında işaretlenen hedeflere kopyalar, etki alanının her site dışı hedefi için bir çip. Bir çipin işaretini kaldır, o hedef bu ögeden artık yeni bir şey almaz.
-- **Yalnızca site dışı**, ögeyi doğrudan **Gönderim hedefi** altındaki yere yazar: bir site dışı hedefin yanındaki doğrudan bir depo, ya da Ayarlar, Depolama, Depolar altında kurduğun bir uzak depo.
+- **Yerel** yanıkken öge, **Depolama konumu** altında gösterilen depoya yazılır ve yanan her diğer hedefe kopyalanır. Bir hedefi söndür, o hedef bu ögeden artık yeni bir şey almaz. Tek başına Yerel hiçbir yere kopyalamaz; bu, zaten bir ikinci kopyası olan veriler için uygundur, örneğin bir NAS üzerinde yaşayan bir paylaşım.
+- **Yerel** sönükken öge, yanan ilk hedefin doğrudan deposuna yazılır ve oradan yanan diğer hedeflere kopyalanır. İlk seferde bir iletişim kutusu bu doğrudan depoyu oluşturur.
+- Bir Hedefler düğmesi, etki alanının hedefini o Hedefler girdisinin altında oluşturur ve yalnızca bu öge için yakar. Diğer her öge orada kopyasız başlar.
+- Bir düğme her zaman yanık kalır, çünkü bir yedeğin gidecek bir yere ihtiyacı vardır. Bir şeyi yedeklerin dışında bırakmak için onu hariç tut.
 
 Konum, ögenin ilk yedeklemesinden itibaren sabittir, çünkü BombVault yedekleri depolar arasında asla taşımaz. Kopyalar ise her zaman değişebilir. Bir ögeyi artık almayan bir hedef, sahip olduğu kopyaları tutar ve etki alanının bir sonraki site dışı çalıştırmasında kendi saklama kuralına göre kırpar; karttaki **B2 içinde sil**, onları hemen kaldırır. Bu kopyalardan bazıları başka hiçbir yerde yoksa, onay ekranı bunları tarihe göre listeler ve ögenin adını sorar. Yalnızca ekleme hedeflerden hiçbir şey silinemez.
 
@@ -32,13 +49,13 @@ Satırın altında kart, ögenin nereye gittiğini ve gerçekte nerede olduğunu
 
 ### Varsayılan yerleşimler
 
-Ayarlar, Depolama, **Varsayılan yerleşimler**'de aynı üç segmentle etki alanı başına bir satır vardır. Kopyalar, kendi seçimi olmayan her ögeye ve Compose yığınlarının proje klasörlerine hemen uygulanır. Konum, yeni bir ögeye ilk yedeklemesinde uygulanır; onu değiştirmek hiçbir yedeği taşımaz. Kaydetmeden önce satır, öge kazanan ya da kaybeden her hedefi ve bunun kaç anlık görüntü anlamına geldiğini adlandırır. **Yedeksiz ögelere uygula**, henüz yedeği olmayan her ögeyi varsayılana geri döndürür.
+Ayarlar, Depolama, **Varsayılan yerleşimler**'de aynı düğmelerle etki alanı başına bir satır vardır. Kopyalar, kendi seçimi olmayan her ögeye ve Compose yığınlarının proje klasörlerine hemen uygulanır. Konum, yeni bir ögeye ilk yedeklemesinde uygulanır; onu değiştirmek hiçbir yedeği taşımaz. Kaydetmeden önce satır, öge kazanan ya da kaybeden her hedefi ve bunun kaç anlık görüntü anlamına geldiğini adlandırır. **Yedeksiz ögelere uygula**, henüz yedeği olmayan her ögeyi varsayılana geri döndürür.
 
 Yeni bir site dışı hedef, Yerel'e ayarlanmamış her ögeyi alır. Onu ekleyen iletişim kutusu kaç öge olduğunu ve, biliniyorsa, bunun ne kadar geçmiş anlamına geldiğini söyler, ve diğer hedeflerden zaten hariç tutulan ögeleri dışarıda bırakmayı önerir.
 
 ### Doğrudan depolar
 
-Yalnızca site dışı altında bir hedefin doğrudan deposunu seçmek, hedefin yanında önerilen bir konumla, örneğin `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testiyle bir iletişim kutusu açar. **Oluştur ve kullan**, depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo, hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamadığında, doğrudan depo sahip olduğu anahtarı tutar ve kayıt bunu belirtir. Anlık görüntüleri `bv:direct` etiketini taşır ve diğer her budama bunları tutar, böylece hedefiyle bağlantısını kaybetmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz. B2'ye S3 uç noktası üzerinden erişilir; anahtar kimliği ve uygulama anahtarı S3 kimlik bilgileri olarak girilir. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez, bu yüzden anahtarı bunun yerine hedefin üstündeki klasörle sınırla.
+Bir öge için Yerel'i kapatmak, yani doğrudan deposu olmayan bir hedefin onun yuvası olması, hedefin yanında önerilen bir konumla, örneğin `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testiyle bir iletişim kutusu açar. **Oluştur ve kullan**, depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo, hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamadığında, doğrudan depo sahip olduğu anahtarı tutar ve kayıt bunu belirtir. Doğrudan depodaki bir öge oradan yanan diğer hedeflere kopyalanır, deponun ait olduğu hedefe asla. Anlık görüntüleri `bv:direct` etiketini taşır ve diğer her budama bunları tutar, böylece hedefiyle bağlantısını kaybetmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz. B2'ye S3 uç noktası üzerinden erişilir; anahtar kimliği ve uygulama anahtarı S3 kimlik bilgileri olarak girilir. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez, bu yüzden anahtarı bunun yerine hedefin üstündeki klasörle sınırla.
 
 ### Bina dışında
 

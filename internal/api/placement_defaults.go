@@ -27,6 +27,7 @@ type defaultRow struct {
 	Exists      bool          `json:"exists"`
 	Home        string        `json:"home"`
 	HomeKind    homeKind      `json:"homeKind"`
+	HomeTarget  string        `json:"homeTarget,omitempty"` // the target a direct home is the direct repository of
 	HomeOff     bool          `json:"homeOff"`
 	Skip        []string      `json:"skip"`
 	Paused      bool          `json:"paused"`
@@ -165,6 +166,7 @@ func (s *Service) defaultRowFor(settings store.Settings, named map[string]store.
 	row.Home = d.Home
 	row.HomeKind = s.homeKindOf(settings, domain, d.Home, named)
 	row.HomeOff = known && !repo.Enabled
+	row.HomeTarget = repo.CompanionOf
 	row.Skip = append(row.Skip, d.Skip...)
 	row.Paused = p.State.Paused()
 	row.ConfirmedAt = d.ConfirmedAt
@@ -269,11 +271,23 @@ func (s *Service) defaultImpactFor(ctx context.Context, domain string, change de
 		return impact, err
 	}
 	next := p.withDefaultSkip(*change.Skip)
+	// An open item moving into a target's direct repository lands there
+	// itself, so that target does not lose it.
+	landsAt := map[string]string{}
+	if change.Home != nil {
+		if own := named[strings.TrimSpace(*change.Home)].CompanionOf; own != "" {
+			for _, it := range items {
+				if it.home.Choice == store.RepoOpen {
+					landsAt[it.identity] = own
+				}
+			}
+		}
+	}
 	dropped, added := map[string]*targetImpact{}, map[string]*targetImpact{}
 	for _, id := range s.copySubjects(settings, p, named, items, listing, observed, excludeOwnRules) {
 		before, after := p.effectiveTargets(id), next.effectiveTargets(id)
 		for _, t := range before {
-			if !containsTarget(after, t.ID) {
+			if !containsTarget(after, t.ID) && landsAt[id] != t.ID {
 				ti := impactFor(dropped, t)
 				ti.Items++
 				ti.Snapshots += observedCount(observed, id, t.ID)

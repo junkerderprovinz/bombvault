@@ -18,13 +18,30 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 !!! note "Khôi phục từ bất kỳ nơi nào"
     Mọi container, VM, bộ tập tin, flash và cấu hình ứng dụng đều liệt kê các bản sao lưu của mình như một dòng thời gian duy nhất trên tất cả những nơi một bản sao lưu nằm ở đó. Một bản sao lưu đã được sao chép sang B2 chỉ xuất hiện một lần, được đánh dấu bằng từng nơi đang giữ nó. Một lần khôi phục lấy nơi đầu tiên nó tiếp cận được, bắt đầu từ kho mà mục đó được ghi vào, và bạn có thể chọn một nơi khác cho từng hàng. Các nơi off-site chỉ được đọc khi bạn mở chúng. Xóa tại một nơi sẽ kiểm tra những nơi khác trước và cho biết đó có phải bản sao cuối cùng hay không.
 
+## Đích sao lưu {#destinations}
+
+Cài đặt, Ngoài site bắt đầu bằng **Đích sao lưu**: những nơi các bản sao off-site được gửi đến, thiết lập một lần cho mọi miền. Sau đó một đích sao lưu xuất hiện dưới dạng nút trong hàng **Nơi lưu trữ** của mỗi miền và mỗi mục. Lần đầu tiên nó được đánh dấu cho một miền, BombVault tạo kho của miền đó trong một thư mục bên dưới nó, ví dụ `rclone:onedrive:BombVault/containers`.
+
+**Thêm đích** mở một trình hướng dẫn gồm năm bước:
+
+1. **Bản sao lưu nên đi đâu?** Mỗi dịch vụ được liệt kê cùng logo, trong bốn nhóm: dịch vụ lưu trữ có bucket S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 và các dịch vụ khác), máy chủ S3 của riêng bạn (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), máy chủ và các share của riêng bạn (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, một đường dẫn đã mount) và lưu trữ đám mây (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud và phần còn lại mà rclone hỗ trợ). Mỗi dịch vụ cho biết nó phù hợp với sao lưu đến đâu: ổ đám mây chậm đi khi có nhiều yêu cầu, nên lần sao lưu đầu tiên và việc cắt tỉa ở đó mất nhiều thời gian hơn.
+2. **Đăng nhập vào** dịch vụ đã chọn. Các trường tùy theo dịch vụ: khóa truy cập cho S3, tên người dùng và mật khẩu cho WebDAV và SMB, mật khẩu ứng dụng ở nơi xác thực hai yếu tố chặn mật khẩu thông thường, khóa SSH công khai của BombVault cho SFTP và Storage Box, hoặc token cho các dịch vụ đăng nhập qua trình duyệt. Với những dịch vụ này, trình hướng dẫn hiển thị một lệnh `rclone authorize` để chạy trên máy tính có trình duyệt; token mà lệnh in ra được dán vào trường. **Kiểm tra kết nối** xác minh việc đăng nhập trước khi bất cứ thứ gì được lưu.
+3. **Chọn một thư mục.** Trình hướng dẫn liệt kê các thư mục trên đích sao lưu, có **Thư mục mới** để tạo một thư mục và dung lượng trống ở nơi dịch vụ báo cáo. Một thư mục trống là an toàn nhất.
+4. **Bảo vệ chống xóa.** Trình hướng dẫn nói thẳng dịch vụ làm được gì. Một rest-server ở chế độ append-only từ chối việc xóa, và kiểm tra can thiệp xác minh điều đó. Một bucket S3 có thể giữ các phiên bản cũ nhờ versioning và object lock, điều mà BombVault chưa thể kiểm tra. Một ổ đám mây hoàn toàn không thể từ chối việc xóa: ai vào được máy chủ thì cũng vào được bản sao đó. Chỉ bật **Bất biến (append-only)** ở nơi phía xa thực sự từ chối việc xóa; khi đó BombVault không bao giờ cắt tỉa ở đó.
+5. **Phòng khi khẩn cấp.** Bộ khôi phục liệt kê mọi đích sao lưu cùng kho của từng miền bên dưới nó. Thông tin đăng nhập quay lại cùng bản sao lưu cài đặt của BombVault; trên bản cài mới không có nó, hãy thiết lập lại đích sao lưu ở cùng chỗ.
+
+Các dịch vụ S3 chạy qua backend S3 riêng của restic, nhờ đó lớp lưu trữ và object lock mới áp dụng được. Mọi dịch vụ khác chạy qua rclone mà BombVault đi kèm, và remote của nó sau đó xuất hiện trong cấu hình rclone ở Cài đặt, Truy cập đám mây. Bản xuất cài đặt chứa các đích sao lưu; khi gộp cả thông tin xác thực thì nó cũng chứa thông tin đăng nhập của chúng.
+
+Một đích off-site của miền tạo từ đích sao lưu lấy tên, vị trí, thông tin xác thực, lớp lưu trữ và công tắc bất biến của đích sao lưu đó. Mức lưu giữ, nén và ngân sách tăng trưởng vẫn tính riêng theo từng miền, và vị trí của nó không thể di chuyển vì kho của miền nằm ở đó. **Thêm đích chỉ cho miền này** dưới mỗi miền vẫn nhận một URL kho gõ tay.
+
 ## Nơi lưu trữ theo từng mục {#placement}
 
-Mỗi thẻ container, VM và bộ tập tin có một hàng **Nơi lưu trữ** với ba phân đoạn:
+Mỗi thẻ container, VM và bộ tập tin có một hàng nút **Nơi lưu trữ**: **Cục bộ** và một nút cho mỗi đích off-site của miền, tiếp theo là các đích sao lưu mà miền chưa có đích nào bên dưới. Các nút đang sáng nhận bản sao lưu của mục.
 
-- **Cục bộ** ghi mục vào kho được hiển thị dưới **Lưu tại** và không sao chép nó đi đâu cả. Dùng cho dữ liệu đã có sẵn một bản sao thứ hai, ví dụ một share nằm trên NAS.
-- **Cục bộ + ngoài site** cũng ghi vào đó, đồng thời sao chép đến các đích đã đánh dấu dưới **Sao chép đến**, mỗi chip ứng với một đích off-site của miền. Bỏ đánh dấu một chip thì đích đó sẽ không nhận thêm gì mới từ mục này nữa.
-- **Chỉ ngoài site** ghi mục thẳng vào nơi dưới **Gửi đến**: một kho trực tiếp bên cạnh một đích off-site, hoặc một kho từ xa bạn đã thiết lập dưới Cài đặt, Lưu trữ, Kho lưu trữ.
+- Khi **Cục bộ** sáng, mục được ghi vào kho hiển thị dưới **Lưu tại** và được sao chép đến mọi đích sáng khác. Tắt một đích thì đích đó sẽ không nhận thêm gì mới từ mục này nữa. Chỉ riêng Cục bộ thì không sao chép đi đâu cả, phù hợp với dữ liệu đã có sẵn một bản sao thứ hai, ví dụ một share nằm trên NAS.
+- Khi **Cục bộ** tắt, mục được ghi thẳng vào kho trực tiếp của đích sáng đầu tiên và được sao chép từ đó đến các đích sáng khác. Lần đầu tiên, một hộp thoại tạo kho trực tiếp đó.
+- Một nút đích sao lưu tạo đích của miền bên dưới đích sao lưu đó và làm nó sáng chỉ cho mục này. Mọi mục khác bắt đầu mà không có bản sao ở đó.
+- Luôn có một nút còn sáng, vì một bản sao lưu cần có nơi để đến. Để loại một thứ ra khỏi sao lưu, hãy loại trừ nó.
 
 Vị trí được cố định kể từ lần sao lưu đầu tiên của mục, vì BombVault không bao giờ di chuyển bản sao lưu giữa các kho. Các bản sao thì có thể thay đổi bất cứ lúc nào. Một đích không còn nhận mục nữa vẫn giữ các bản sao đang có và cắt bớt chúng theo mức lưu giữ riêng ở lần chạy off-site tiếp theo của miền; **Xóa tại B2** trên thẻ sẽ xóa chúng ngay lập tức. Khi một số bản sao đó không tồn tại ở nơi nào khác, xác nhận sẽ liệt kê chúng theo ngày và yêu cầu nhập tên của mục. Không thể xóa bất cứ thứ gì khỏi các đích append-only.
 
@@ -32,13 +49,13 @@ Dưới hàng này, thẻ cho biết mục đang đi đến đâu và thực s�
 
 ### Nơi lưu trữ mặc định
 
-Cài đặt, Lưu trữ, **Nơi lưu trữ mặc định** có một hàng cho mỗi miền với cùng ba phân đoạn. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Vị trí áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó; thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi đích sẽ nhận thêm hoặc mất mục, và điều đó có nghĩa là bao nhiêu snapshot. **Áp dụng cho các mục chưa có bản sao lưu** đưa mọi mục chưa có bản sao lưu nào trở về mặc định.
+Cài đặt, Lưu trữ, **Nơi lưu trữ mặc định** có một hàng cho mỗi miền với cùng các nút. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Vị trí áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó; thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi đích sẽ nhận thêm hoặc mất mục, và điều đó có nghĩa là bao nhiêu snapshot. **Áp dụng cho các mục chưa có bản sao lưu** đưa mọi mục chưa có bản sao lưu nào trở về mặc định.
 
 Một đích off-site mới sẽ nhận mọi mục không đặt là Cục bộ. Hộp thoại thêm đích đó cho biết có bao nhiêu mục và, nếu biết, đó là bao nhiêu lịch sử, đồng thời đề nghị bỏ qua những mục đã bị loại trừ khỏi các đích khác.
 
 ### Kho trực tiếp
 
-Chọn kho trực tiếp của một đích dưới Chỉ ngoài site sẽ mở một hộp thoại với vị trí được đề xuất bên cạnh đích đó, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, và một lần kiểm tra kết nối không tạo ra gì cả. **Tạo và dùng** sẽ tạo kho và trỏ mục vào đó. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của đích, và thay đổi theo chúng; thẻ Kho lưu trữ hiển thị nó ở chế độ chỉ đọc. Khi một khóa mới của đích không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với đích của nó sẽ không bao giờ già đi theo các quy tắc cục bộ. B2 được truy cập qua điểm cuối S3 của nó, với ID khóa và khóa ứng dụng được nhập làm thông tin xác thực S3; một khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó, vì vậy hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.
+Tắt Cục bộ cho một mục, để một đích chưa có kho trực tiếp trở thành nơi lưu của nó, sẽ mở một hộp thoại với vị trí được đề xuất bên cạnh đích đó, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, và một lần kiểm tra kết nối không tạo ra gì cả. **Tạo và dùng** sẽ tạo kho và trỏ mục vào đó. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của đích, và thay đổi theo chúng; thẻ Kho lưu trữ hiển thị nó ở chế độ chỉ đọc. Khi một khóa mới của đích không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Một mục nằm trên kho trực tiếp được sao chép từ đó đến các đích sáng khác, không bao giờ đến đích mà kho đó thuộc về. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với đích của nó sẽ không bao giờ già đi theo các quy tắc cục bộ. B2 được truy cập qua điểm cuối S3 của nó, với ID khóa và khóa ứng dụng được nhập làm thông tin xác thực S3; một khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó, vì vậy hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.
 
 ### Ngoài cơ sở
 

@@ -18,13 +18,30 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 !!! note "Restore from any place"
     Every container, VM, folder set, the flash and the app configuration list their backups as one timeline across all places a backup lies. A backup copied to B2 appears once, marked with each place that holds it. A restore takes the first place it can reach, starting with the repository the item is written to, and you can pick another place per row. Off-site places are read only when you open them. Deleting at one place first checks the others and says whether it was the last copy.
 
+## Destinations {#destinations}
+
+Settings, Off-site starts with **Destinations**: the places off-site copies go, set up once for every domain. A destination then shows up as a button in the **Placement** row of every domain and item. The first time it is ticked for a domain, BombVault creates that domain's repository in a folder under it, for example `rclone:onedrive:BombVault/containers`.
+
+**Add destination** opens a wizard in five steps:
+
+1. **Where should the backups go?** Every service is listed with its logo, in four groups: storage services with S3 buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 and others), your own S3 server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), your own server and shares (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, a mounted path) and cloud storage (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud and the rest rclone supports). Each one says how well it suits backups: cloud drives slow down under many requests, so the first backup and pruning take longer there.
+2. **Sign in.** The fields depend on the service: an access key for S3, a user and password for WebDAV and SMB, an app password where two-factor sign-in blocks the normal one, BombVault's public SSH key for SFTP and the Storage Box, or a token for services that sign in through a browser. For those, the wizard shows an `rclone authorize` command to run on a computer with a browser; the token it prints goes into the field. **Test connection** checks the sign-in before anything is saved.
+3. **Choose a folder.** The wizard lists the folders on the destination, with **New folder** to create one and the free space where the service reports it. An empty folder is safest.
+4. **Protection against deletion.** The wizard says plainly what the service can do. A rest-server in append-only mode refuses deletion, and the tamper test checks that. An S3 bucket can keep old versions with versioning and object lock, which BombVault cannot check yet. A cloud drive cannot refuse deletion at all: whoever gets into the server gets into that copy too. Switch **Immutable** on only where the far side really refuses deletion; BombVault then never prunes there.
+5. **For an emergency.** The recovery kit lists every destination with the repository of each domain under it. The sign-in comes back with BombVault's settings backup; on a fresh install without it, set the destination up again at the same place.
+
+S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. Every other service runs through the rclone BombVault ships, and its remote then appears in the rclone config under Settings, Cloud access. A settings export carries the destinations; with credentials included it carries their sign-in as well.
+
+A domain's target made from a destination takes the destination's name, location, credentials, storage class and immutable switch. Its retention, compression and growth budget stay per domain, and its location cannot move because the domain's repository is there. **Add a target for this domain only** under each domain still takes a hand-typed repository URL.
+
 ## Placement per item {#placement}
 
-Each container, VM and folder set card has a **Placement** row with three segments:
+Each container, VM and folder set card has a **Placement** row of buttons: **Local** and one button per off-site target of the domain, followed by the destinations the domain has no target under yet. Lit buttons get the item's backups.
 
-- **Local** writes the item to the repository shown under **Stored on** and copies it nowhere. Use it for data that already has a second copy, for example a share that lives on a NAS.
-- **Local + off-site** writes it there as well and copies it to the targets ticked under **Copy to**, one chip per off-site target of the domain. Untick a chip and that target gets nothing new from this item.
-- **Off-site only** writes the item straight to the place under **Send to**: a direct repository beside an off-site target, or a remote repository you set up under Settings, Storage, Repositories.
+- With **Local** lit, the item is written to the repository shown under **Stored on** and copied to every other lit target. Darken a target and it gets nothing new from this item. Local alone copies nowhere, which suits data that already has a second copy, for example a share that lives on a NAS.
+- With **Local** dark, the item is written straight to the direct repository of the first lit target and copied from there to the other lit targets. The first time, a dialog creates that direct repository.
+- A destination button creates the domain's target under the destination and lights it for this item only. Every other item starts without a copy there.
+- One button stays lit, because a backup needs a place to go. To leave something out of backups, exclude it.
 
 The location is fixed from the item's first backup on, because BombVault never moves backups between repositories. The copies can change at any time. A target that no longer gets an item keeps the copies it has and trims them to its own retention at the next off-site run of the domain; **Delete in B2** on the card removes them at once. When some of those copies exist nowhere else, the confirmation lists them by date and asks for the item's name. Append-only targets cannot be deleted from.
 
@@ -32,13 +49,13 @@ Under the row the card says where the item goes and what is actually there: how 
 
 ### Placement defaults
 
-Settings, Storage, **Placement defaults** has one row per domain with the same three segments. The copies apply at once to every item without a choice of its own, and to the project folders of Compose stacks. The location applies to a new item at its first backup; changing it moves no backups. Before saving, the row names every target that gains or loses items and how many snapshots that means. **Apply to items without backups** puts every item that has no backup yet back on the default.
+Settings, Storage, **Placement defaults** has one row per domain with the same buttons. The copies apply at once to every item without a choice of its own, and to the project folders of Compose stacks. The location applies to a new item at its first backup; changing it moves no backups. Before saving, the row names every target that gains or loses items and how many snapshots that means. **Apply to items without backups** puts every item that has no backup yet back on the default.
 
 A new off-site target receives every item that is not set to Local. The dialog that adds it says how many items and, where known, how much history that is, and offers to leave out the items already excluded from other targets.
 
 ### Direct repositories
 
-Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the target's own folder cannot reach the folder next to it, so limit the key to the folder above the target instead.
+Turning Local off for an item, so that a target without a direct repository becomes its home, opens a dialog with a suggested location next to the target, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. An item on a direct repository is copied from there to the other lit targets, never to the target the repository belongs to. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the target's own folder cannot reach the folder next to it, so limit the key to the folder above the target instead.
 
 ### Off the premises
 
