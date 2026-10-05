@@ -2419,7 +2419,7 @@ const th: Partial<Translations> = {
   "schedule.updateFailed": "อัปเดตตารางเวลาไม่สำเร็จ",
   "schedule.pause": "หยุดกำหนดการชั่วคราว",
   "schedule.resume": "ทำกำหนดการต่อ",
-  "schedule.paused": "หยุดกำหนดการชั่วคราว",
+  "schedule.paused": "กำหนดการถูกหยุดชั่วคราว",
   "schedule.pausedHint": "การรันตามกำหนดการและ{everything}จะข้ามรายการนี้ ปุ่ม “{backupNow}” ยังใช้งานได้ตามปกติ",
   "jobs.noVMsIncluded": "ไม่มี VM รวมอยู่ในกำหนดการ",
   "settings.perItemSchedules": "กำหนดการต่อรายการ",
