@@ -1,0 +1,1 @@
+Das Aussehen folgt GlimStone 3.1.6, und die Gefahrenzone in den Einstellungen hat eine eigene Farbe. Die Dashboards kommen von deinem Server, und dort bringt BombVault 9.9.0 „Zeitplan pausieren“ auf jeder Karte und einen Empfangsserver für deine Gruppe.

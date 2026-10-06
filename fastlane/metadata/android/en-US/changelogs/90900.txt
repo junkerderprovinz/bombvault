@@ -1,0 +1,1 @@
+The look follows GlimStone 3.1.6, and the danger zone in the settings has a colour of its own. Dashboards come from your server, where BombVault 9.9.0 adds Pause schedule on every card and a receiving server for your group.
