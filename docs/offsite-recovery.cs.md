@@ -24,13 +24,15 @@ Nastavení, Mimo lokalitu začíná kartou **Cíle**: místa, kam míří kopie 
 
 **Přidat cíl** otevře průvodce o pěti krocích:
 
-1. **Kam se mají zálohy ukládat?** Každá služba je vypsaná se svým logem ve čtyřech skupinách: úložné služby s buckety S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 a další), váš vlastní server S3 (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), váš vlastní server a sdílené složky (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, připojená cesta) a cloudová úložiště (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud a vše ostatní, co rclone podporuje). U každé je uvedeno, jak se pro zálohy hodí: cloudové disky zpomalují při velkém počtu požadavků, takže tam první záloha a prořezávání trvají déle.
+1. **Kam se mají zálohy ukládat?** Každá služba je vypsaná se svým logem ve čtyřech skupinách: úložné služby s buckety S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 a další), váš vlastní server S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), váš vlastní server a sdílené složky (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, připojená cesta) a cloudová úložiště (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud a vše ostatní, co rclone podporuje). U každé je uvedeno, jak se pro zálohy hodí: cloudové disky zpomalují při velkém počtu požadavků, takže tam první záloha a prořezávání trvají déle.
 2. **Přihlášení.** Pole závisí na službě: přístupový klíč pro S3, uživatel a heslo pro WebDAV a SMB, heslo aplikace tam, kde dvoufázové přihlášení blokuje běžné heslo, veřejný klíč SSH z BombVaultu pro SFTP a Storage Box, nebo token u služeb, které se přihlašují přes prohlížeč. Pro ně průvodce ukáže příkaz `rclone authorize`, který spustíte na počítači s prohlížečem; token, který vypíše, vložíte do pole. **Otestovat připojení** ověří přihlášení dřív, než se cokoli uloží.
 3. **Vyberte složku.** Průvodce vypíše složky na cíli, s tlačítkem **Nová složka** pro založení nové a s volným místem, pokud ho služba hlásí. Nejbezpečnější je prázdná složka.
 4. **Ochrana proti smazání.** Průvodce otevřeně řekne, co služba umí. Rest-server v režimu append-only smazání odmítne a test odolnosti proti manipulaci to ověří. Bucket S3 může uchovávat staré verze pomocí verzování a zámku objektů, což BombVault zatím ověřit neumí. Cloudový disk smazání odmítnout neumí vůbec: kdo se dostane na server, dostane se i k té kopii. Zapněte **Neměnné (append-only)** jen tam, kde druhá strana smazání opravdu odmítá; BombVault tam pak nikdy neprořezává.
 5. **Pro případ nouze.** Sada pro obnovu vypisuje každý cíl s repozitářem každé domény pod ním. Přihlášení se vrátí se zálohou nastavení BombVaultu; na čisté instalaci bez ní nastavte cíl znovu na stejném místě.
 
 Služby S3 běží přes vlastní backend S3 resticu, díky čemuž se může uplatnit třída úložiště a zámek objektů. Všechny ostatní služby běží přes rclone, který BombVault dodává, a jejich remote se pak objeví v konfiguraci rclone v Nastavení, Cloudový přístup. Export nastavení zahrnuje karty Cíle; s přihlašovacími údaji zahrnuje i jejich přihlášení.
+
+Přijímací server, který provozuje jiná instance vaší skupiny, se v průvodci objeví pod **Z vaší skupiny**; viz [Přijímací server](#receiving-server).
 
 Cíl domény vytvořený z karty Cíle převezme její název, umístění, přihlašovací údaje, třídu úložiště a přepínač neměnnosti. Uchovávání, komprese a rozpočet růstu zůstávají na doménu a jeho umístění se přesunout nedá, protože tam leží repozitář domény. **Přidat cíl jen pro tuto doménu** pod každou doménou dál přijímá ručně zadanou URL repozitáře.
 
@@ -162,6 +164,19 @@ Zapněte přepínač **Přijímač** v Nastavení k odhalení záložky **Přij�
 
 Přijímač je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na kterou se odesílatel spoléhá.
 
+### Přijímací server {#receiving-server}
+
+Přijímací stroj může také provozovat rest-server, na který ostatní kopírují. **Nastavit přijímací server** nahoře na záložce **Přijímač** se zeptá na složku na sdílené složce, s tlačítkem **Nová složka** pro její vytvoření, a na port (8000, pokud ho nepoužívá jiný kontejner). BombVault pak:
+
+1. odmítne pokračovat, pokud už existuje kontejner s názvem `rest-server` nebo port drží jiný kontejner;
+2. stáhne `restic/rest-server` a spustí ho přes Docker socket v režimu append-only se soukromými repozitáři a souborem s přihlášením ve složce;
+3. zapíše jeho šablonu pro Unraid na flash disk, takže kontejner zůstane upravitelný na záložce Docker, nebo šablonu nabídne ke stažení, když je flash disk mimo dosah;
+4. spustí na něm test odolnosti proti manipulaci a ukáže, zda odmítá mazání.
+
+Instance vaší skupiny pak server najdou v průvodci cílem pod **Z vaší skupiny**, pojmenovaný podle přijímacího stroje. Každá instance dostane vlastní přihlášení při prvním výběru serveru a zapisuje tam jen do své složky. Karta tato přihlášení vypisuje a **Odvolat přihlášení** jedno z nich odebere; co ta instance už zkopírovala, ve složce zůstane. Nastavení vytvoří také jedno přihlášení pro někoho mimo skupinu, jehož heslo karta ukáže jen jednou.
+
+Instance, která se k přijímacímu stroji dostane jen přes relay, server použít nemůže, protože relay žádné zálohy nepřenáší. Nejprve přidejte adresu přijímacího stroje v **Nastavení → Párování**. Když BombVault běží na vlastní IP adrese (například na br0), vyplňte **Adresa pro partnery**, protože server naslouchá na adrese hostitele.
+
 ## Kompletní příklad: dva stroje Unraid, od začátku do konce
 
 Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se skutečnými hodnotami, protože díly se skládají snáz, když je člověk jednou viděl složené.
@@ -211,6 +226,8 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 ### Obnova z jiného BombVault repozitáře {#restore-from-another-bombvault-repo}
 
 Samostatná karta v záložce **Obnova** otevře repozitář *jiné* instance BombVaultu (sdílená složka připojená pod `/mnt`, nebo vzdálená URL) s **`APP_KEY` dané instance**, v jednorázové relaci jen pro čtení. Procházejte kontejnery, VM a sady souborů tam uložené, vyberte snímek a obnovte jej, a obnovený objekt se stane běžným místním kontejnerem, VM nebo sadou souborů. Do druhého repozitáře se nikdy nic nezapíše a vaše vlastní nastavení záloh zůstane nedotčeno (relace žije v paměti a sama vyprší). Přesun kontejneru ze serveru A na server B neznamená přesměrovávat nastavení repozitáře a poté je vracet zpět. Tato karta je jednorázová: otevře relaci, obnoví, co vyberete, a na druhou instanci zapomene. Pokud místo toho chcete trvalé uspořádání, kde tento stroj podle plánu stahuje snímky jiné instance do vlastního repozitáře, slouží k tomu záložka **Stažení** na stránce **Instance**.
+
+Kontejner, jehož síť na tomto serveru neexistuje, třeba síť `br0` z Unraidu na běžném Docker hostiteli, ukáže pod svým řádkem výběr sítě. BombVault ho vytvoří ve zvolené síti, spolu s jeho ostatními sítěmi. Pevná IP a MAC adresa patřily ke staré síti a odpadají, obě přidělí nová síť.
 
 ## Sada pro obnovu šifrovacího klíče
 

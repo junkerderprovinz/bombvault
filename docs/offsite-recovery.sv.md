@@ -24,13 +24,15 @@ Inställningar, Extern börjar med **Mål**: de platser dit off-site-kopiorna g�
 
 **Lägg till mål** öppnar en guide i fem steg:
 
-1. **Vart ska säkerhetskopiorna ta vägen?** Varje tjänst visas med sin logotyp, i fyra grupper: lagringstjänster med S3-bucketar (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 och fler), din egen S3-server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), din egen server och dina resurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en monterad sökväg) och molnlagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud och resten som rclone stöder). Varje tjänst anger hur väl den lämpar sig för säkerhetskopior: molndiskar saktar ner vid många förfrågningar, så den första säkerhetskopian och rensningen tar längre tid där.
+1. **Vart ska säkerhetskopiorna ta vägen?** Varje tjänst visas med sin logotyp, i fyra grupper: lagringstjänster med S3-bucketar (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 och fler), din egen S3-server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), din egen server och dina resurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en monterad sökväg) och molnlagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud och resten som rclone stöder). Varje tjänst anger hur väl den lämpar sig för säkerhetskopior: molndiskar saktar ner vid många förfrågningar, så den första säkerhetskopian och rensningen tar längre tid där.
 2. **Logga in på** den valda tjänsten. Fälten beror på tjänsten: en åtkomstnyckel för S3, användare och lösenord för WebDAV och SMB, ett appspecifikt lösenord där tvåstegsinloggning blockerar det vanliga, BombVaults publika SSH-nyckel för SFTP och Storage Box, eller en token för tjänster som loggar in via webbläsaren. För dem visar guiden ett `rclone authorize`-kommando som körs på en dator med webbläsare; den token det skriver ut klistras in i fältet. **Testa anslutning** kontrollerar inloggningen innan något sparas.
 3. **Välj en mapp.** Guiden listar mapparna på målet, med **Ny mapp** för att skapa en och med ledigt utrymme där tjänsten rapporterar det. En tom mapp är säkrast.
 4. **Skydd mot radering.** Guiden säger rakt ut vad tjänsten kan. En rest-server i append-only-läge vägrar radering, och manipulationstestet kontrollerar det. En S3-bucket kan behålla gamla versioner med versionshantering och objektlås, vilket BombVault ännu inte kan kontrollera. En molndisk kan inte vägra radering alls: den som tar sig in på servern tar sig också in i den kopian. Slå bara på **Oföränderlig (append-only)** där andra sidan verkligen vägrar radering; BombVault rensar då aldrig där.
 5. **För nödläge.** Återställningskitet listar varje mål med arkivet för varje domän under det. Inloggningen kommer tillbaka med BombVaults inställningssäkerhetskopia; på en ny installation utan den sätter du upp målet igen på samma plats.
 
 S3-tjänster körs genom restics egen S3-backend, vilket gör att lagringsklass och objektlås kan tillämpas. Alla andra tjänster körs genom den rclone som BombVault levererar, och dess remote syns sedan i rclone-konfigurationen under Inställningar, Molnåtkomst. En export av inställningarna innehåller målen; med uppgifter inkluderade innehåller den även deras inloggning.
+
+En mottagarserver som en annan instans i din grupp kör visas i guiden under **Från din grupp**; se [Mottagarserver](#receiving-server).
 
 Ett off-site-mål för en domän som skapats från ett mål tar över det målets namn, plats, uppgifter, lagringsklass och omkopplaren för oföränderlighet. Dess retention, komprimering och tillväxtbudget förblir per domän, och dess plats kan inte flyttas eftersom domänens arkiv ligger där. **Lägg till ett mål bara för den här domänen** under varje domän tar fortfarande en handskriven arkiv-URL.
 
@@ -162,6 +164,19 @@ Slå på **Mottagare**-växeln i Inställningar för att avslöja en **Mottagare
 
 Mottagaren är strikt skrivskyddad. Den skriver aldrig till det mottagna repositoriet, så den kan aldrig bryta append-only-garantin som avsändaren förlitar sig på.
 
+### Mottagarserver {#receiving-server}
+
+Mottagarboxen kan också köra den rest-server som de andra kopierar till. **Ställ in mottagarserver** överst på fliken Mottagare frågar efter en mapp på en resurs, där **Ny mapp** skapar en, och en port (8000 om ingen annan container använder den). BombVault gör sedan så här:
+
+1. avbryter om en container som heter `rest-server` redan finns eller om en annan container har porten;
+2. hämtar `restic/rest-server` och startar den via Docker-socketen i append-only-läge med privata arkiv och en inloggningsfil i mappen;
+3. skriver dess Unraid-mall till flashen, så att containern går att redigera på fliken Docker, eller erbjuder mallen som nedladdning när flashen inte går att nå;
+4. kör manipulationstestet mot den och visar om den vägrar radera.
+
+Instanserna i din grupp hittar sedan servern i målguiden under **Från din grupp**, med mottagarboxens namn. Varje instans får en egen inloggning första gången den väljer servern och skriver bara till sin egen mapp där. Kortet listar inloggningarna, och **Återkalla inloggning** tar bort en; det den instansen redan har kopierat ligger kvar i mappen. Konfigurationen skapar också en inloggning för någon utanför gruppen, vars lösenord kortet visar en enda gång.
+
+En instans som når mottagarboxen bara via reläet kan inte använda servern, eftersom reläet inte bär några säkerhetskopior. Lägg först till mottagarboxens adress under Inställningar, Parkoppling. När BombVault körs på en egen IP-adress (till exempel på br0), fyll i **Adress för partner**, eftersom servern lyssnar på värdens adress.
+
 ## Genomgånget exempel: två Unraid-maskiner, hela vägen
 
 Ovan beskrivs delarna. Här är en komplett uppsättning med riktiga värden, för delar är lättare att sätta ihop när man har sett dem ihopsatta en gång.
@@ -211,6 +226,8 @@ En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation ge
 ### Återställ från ett annat BombVault-repo {#restore-from-another-bombvault-repo}
 
 Ett separat kort på fliken **Återställning** öppnar en *annan* BombVault-instans repo (en resurs monterad under `/mnt`, eller en fjärr-URL) med **den instansens `APP_KEY`**, i en engångs, skrivskyddad session. Bläddra bland containrarna, VM:arna och filuppsättningarna som lagras där, välj en ögonblicksbild och återställ den, och det återställda objektet blir en normal lokal container, VM eller filuppsättning. Inget skrivs någonsin till det andra repot, och dina egna säkerhetskopieringsinställningar förblir orörda (sessionen lever i minnet och löper ut av sig själv). Att flytta en container från server A till server B innebär inte längre att peka om dina repo-inställningar och återställa dem efteråt. Det här kortet är för en enda gång: det öppnar en session, återställer det du väljer och glömmer den andra instansen. Vill du i stället ha ett stående arrangemang, där den här boxen enligt ett schema hämtar en annan instans ögonblicksbilder till sitt eget repository, är det fliken **Hämtning** på sidan **Instanser**.
+
+En container vars nätverk inte finns på den här servern, till exempel ett Unraid-`br0`-nätverk på en vanlig Docker-värd, visar ett nätverksval under sin rad. BombVault skapar den på nätverket du väljer, tillsammans med dess andra nätverk. Den fasta IP-adressen och MAC-adressen hörde till det gamla nätverket och faller bort, så det nya nätverket delar ut dem.
 
 ## Återställningskit för krypteringsnyckeln
 

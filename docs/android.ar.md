@@ -4,6 +4,7 @@
 
 ## الحصول على التطبيق {#install}
 
+- **الإعدادات، التطبيقات:** تعرض بطاقة تطبيق Android ملف APK للإصدار الذي يشغّله خادمك، مع رمز QR لمسحه من الهاتف.
 - **APK:** يحمل كل إصدار الملف `bombvault-android.apk` في صفحته، و[هذا الرابط](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) ينزّل دائمًا أحدث بناء. يحتاج إلى Android 10 أو أحدث، ويسألك Android مرة واحدة هل يُسمح للتطبيق الذي تفتح به الملف بتثبيت التطبيقات.
 - **Google Play:** التطبيق في اختبار مغلق إلى أن يصبح نشره للعامة ممكنًا. لا يُدرج Google Play تطبيقًا من حساب مطوّر جديد إلا بعد أن يُبقيه 12 مختبِرًا على الأقل مثبّتًا مدة 14 يومًا. للمساعدة، انضم إلى [مجموعة المختبِرين](https://groups.google.com/g/arrowloop-testers)، وافتح [صفحة الاختبار](https://play.google.com/apps/testing/bombvault.halleluja.design)، وانقر على **كن مختبِرًا** ثم ثبّت BombVault من Google Play.
 - **F-Droid:** الإدراج فيه قادم لاحقًا.

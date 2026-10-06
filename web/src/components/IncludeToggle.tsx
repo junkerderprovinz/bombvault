@@ -10,9 +10,12 @@ interface IncludeToggleProps {
   /** The request that stores the switch. Containers by default; the VMs page
    *  passes setVMInclude, so both pages render this one control. */
   save?: (name: string, include: boolean) => Promise<OkEnvelope>;
+  /** Hands the stored value to the page's list, which the card's Pause
+   *  button and badge read. */
+  onSaved?: (include: boolean) => void;
 }
 
-export function IncludeToggle({ name, initial, save = setInclude }: IncludeToggleProps) {
+export function IncludeToggle({ name, initial, save = setInclude, onSaved }: IncludeToggleProps) {
   const { t } = useT();
   const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
@@ -30,6 +33,7 @@ export function IncludeToggle({ name, initial, save = setInclude }: IncludeToggl
       const res = await save(name, next);
       if (res.ok) {
         setEnabled(next);
+        onSaved?.(next);
       } else {
         push(res.error ?? t("schedule.updateFailed"), "fail");
         setShake((n) => n + 1);

@@ -4,6 +4,7 @@ Az Android-alkalmazás a csoportod összes BombVault-szerverét a telefonodra ho
 
 ## Az alkalmazás beszerzése {#install}
 
+- **Beállítások, Alkalmazások:** az Android-alkalmazás kártyája felkínálja a szerver által futtatott kiadás APK-ját, QR-kóddal, amelyet a telefonról lehet beolvasni.
 - **APK:** minden kiadás oldalán ott van a `bombvault-android.apk`, és [ez a hivatkozás](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) mindig a legújabb buildet tölti le. Android 10 vagy újabb kell hozzá, és az Android egyszer megkérdezi, hogy az az alkalmazás, amellyel a fájlt megnyitod, telepíthet-e alkalmazásokat.
 - **Google Play:** az alkalmazás zárt tesztben van, amíg nyilvános nem lehet. A Google Play egy új fejlesztői fiók alkalmazását csak akkor teszi közzé, ha legalább 12 tesztelő 14 napig telepítve tartotta. Ha segítenél, lépj be a [tesztelői csoportba](https://groups.google.com/g/arrowloop-testers), nyisd meg a [tesztoldalt](https://play.google.com/apps/testing/bombvault.halleluja.design), koppints a **Legyen tesztelő** gombra, és telepítsd a BombVaultot a Google Playről.
 - **F-Droid:** a bejegyzés később érkezik.

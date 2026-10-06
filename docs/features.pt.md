@@ -71,6 +71,7 @@ O BombVault é simples por predefinição e profundo quando precisa. A interface
 
 ## Perceção, verificação e monitorização
 
+- **Pausa a partir do cartão.** Cada cartão de container, VM e conjunto de pastas tem **Pausar agendamento**, que tira o item do agendamento e do Backup total, e **Retomar agendamento** para o repor. Define o mesmo interruptor que **Incluir no agendamento**, por isso os dois concordam sempre. Um item em pausa mostra um emblema cinzento **Agendamento em pausa**, e **Fazer backup agora** continua a funcionar.
 - **Estado de proteção (RPO).** O Painel mostra um indicador verde / âmbar / vermelho por domínio, comparando o último backup bem-sucedido com o seu agendamento, para que um backup em atraso fique vermelho em vez de se esconder num registo.
 - **Mapa de calor da saúde dos backups.** Um calendário ao estilo das contribuições do GitHub dos resultados de backup por dia e por domínio, com um alternador Containers / VMs / Flash / Auto-backup / Pastas.
 - **Cronometragem das execuções em toda a parte.** Cada entrada do histórico de execuções lê `início, fim (duração)`, e cada container e VM tem a sua própria lista **Execuções recentes** na sua página.
@@ -125,7 +126,8 @@ O BombVault traz um servidor MCP com o qual um assistente como o Claude Code ou 
 ## Aplicações e complementos {#apps}
 
 - **Aplicação Android.** Todos os servidores do seu grupo no telemóvel, com o registo de atividade de todos eles num só ecrã. Emparelha-se com o seu grupo por código QR e abre cada servidor já com sessão iniciada. Consulte [Aplicação Android](android.md).
-- **Definições, Aplicações.** Uma página com um cartão para cada complemento. O cartão do ParleyPort oferece o seu template Unraid, copia o comando Docker que o inicia e leva ao seu repositório e às definições do retransmissor em Emparelhamento. O cartão do BombVault Widget oferece o seu template e o seu repositório, e instala ou remove o plugin através da ligação SSH ao host.
+- **Servidor recetor.** A máquina que recebe as cópias externas pode iniciar com um clique um rest-server append-only e oferecê-lo às outras instâncias do seu grupo, cada uma com um início de sessão próprio. Veja [Servidor recetor](offsite-recovery.md#receiving-server).
+- **Definições, Aplicações.** Uma página que começa com a aplicação Android, o seu APK para a versão que o servidor executa e um código QR para ele, seguida de um cartão para cada complemento. O cartão do ParleyPort oferece o seu template Unraid, copia o comando Docker que o inicia e leva ao seu repositório e às definições do retransmissor em Emparelhamento. O cartão do BombVault Widget oferece o seu template e o seu repositório, e instala ou remove o plugin através da ligação SSH ao host.
 - **BombVault Widget.** Um mosaico no Dashboard do Unraid com o registo de atividade do BombVault e a próxima execução agendada. Sem ligação SSH ao host, o cartão dá-lhe o endereço `.plg` para instalar em **Plugins, Install Plugin**, e o plugin pode ser removido aí como qualquer outro.
 - **Registo de atividade incorporável.** Gere um token só de leitura em **Definições, Integrações** e obtém um endereço para qualquer painel que mostre um iframe, como Homepage, Organizr ou Heimdall: uma pequena página só com o registo de atividade em tempo real. O token dá acesso a esse registo e a mais nada, e **Desativar** revoga-o de imediato. A página incorporada só existe em inglês.
 

@@ -4,6 +4,7 @@ Android 应用把您群组中的每一台 BombVault 服务器都放到手机上�
 
 ## 获取应用 {#install}
 
+- **设置、应用：** Android 应用的卡片提供您的服务器所运行版本的 APK，并附一个可用手机扫描的二维码。
 - **APK：** 每个版本的发布页面上都有 `bombvault-android.apk`，[这个链接](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) 始终下载最新构建。需要 Android 10 或更高版本，Android 会询问一次，是否允许您用来打开该文件的应用安装应用。
 - **Google Play：** 在可以公开发布之前，应用处于封闭测试阶段。对于新开发者帐号的应用，Google Play 要求至少 12 名测试人员连续 14 天保持安装，之后才会公开上架。如果您愿意帮忙，请加入[测试人员群组](https://groups.google.com/g/arrowloop-testers)，打开[测试页面](https://play.google.com/apps/testing/bombvault.halleluja.design)，点按 **成为测试人员**，然后从 Google Play 安装 BombVault。
 - **F-Droid：** 上架信息稍后提供。

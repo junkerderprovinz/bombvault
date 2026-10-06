@@ -4,6 +4,7 @@ De Android-app zet elke BombVault-server van je groep op je telefoon. Hij start 
 
 ## De app downloaden {#install}
 
+- **Instellingen, Apps:** de kaart van de Android-app biedt de APK aan voor de release die je server draait, met een QR-code om vanaf de telefoon te scannen.
 - **APK:** elke release heeft `bombvault-android.apk` op de releasepagina, en [deze link](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) downloadt altijd de nieuwste build. De app heeft Android 10 of nieuwer nodig, en Android vraagt één keer of de app waarmee je het bestand opent apps mag installeren.
 - **Google Play:** de app zit in een gesloten test tot hij openbaar kan worden. Google Play toont een app van een nieuw ontwikkelaarsaccount pas nadat minstens 12 testers hem 14 dagen lang geïnstalleerd hebben gehouden. Wil je helpen, word dan lid van de [testersgroep](https://groups.google.com/g/arrowloop-testers), open de [testpagina](https://play.google.com/apps/testing/bombvault.halleluja.design), tik op **Tester worden** en installeer BombVault vanuit Google Play.
 - **F-Droid:** de vermelding volgt.

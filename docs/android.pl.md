@@ -4,6 +4,7 @@ Aplikacja na Androida przenosi na telefon wszystkie serwery BombVault z Twojej g
 
 ## Instalacja aplikacji {#install}
 
+- **Ustawienia, Aplikacje:** karta aplikacji na Androida oferuje plik APK dla wydania, które uruchamia Twój serwer, wraz z kodem QR do zeskanowania z telefonu.
 - **APK:** każde wydanie ma na swojej stronie plik `bombvault-android.apk`, a [ten link](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) zawsze pobiera najnowszą kompilację. Aplikacja wymaga Androida 10 lub nowszego, a Android raz zapyta, czy aplikacja, w której otwierasz plik, może instalować aplikacje.
 - **Google Play:** aplikacja jest w teście zamkniętym, dopóki nie będzie mogła stać się publiczna. Google Play udostępnia aplikację z nowego konta dewelopera dopiero wtedy, gdy co najmniej 12 testerów miało ją zainstalowaną przez 14 dni. Jeśli chcesz pomóc, dołącz do [grupy testerów](https://groups.google.com/g/arrowloop-testers), otwórz [stronę testu](https://play.google.com/apps/testing/bombvault.halleluja.design), stuknij **Zostań testerem** i zainstaluj BombVault z Google Play.
 - **F-Droid:** wpis pojawi się później.

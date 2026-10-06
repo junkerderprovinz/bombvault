@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { listContainers, listRuns, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, getStackDir, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
+import { listContainers, listRuns, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setInclude, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, getStackDir, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
 import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, PlacementView, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
@@ -41,6 +41,7 @@ import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/So
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
+import { PauseButton, PausedBadge } from "../components/SchedulePause";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
 import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
@@ -1670,7 +1671,10 @@ function MobileContainerCard({
       }
       badge={
         container.installed ? (
-          <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
+          <>
+            {!container.self && !container.includeInSchedule && <PausedBadge explained={false} />}
+            <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
+          </>
         ) : (
           <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
         )
@@ -1696,6 +1700,7 @@ function MobileContainerDetail({
   onChecksChanged,
   restoreRequest,
   onIdleWaitSaved,
+  onIncludeSaved,
 }: {
   container: Container;
   t: T;
@@ -1718,6 +1723,7 @@ function MobileContainerDetail({
   /** A link from another page asking to restore this container. */
   restoreRequest?: RestoreRequest;
   onIdleWaitSaved?: (hours: number) => void;
+  onIncludeSaved?: (include: boolean) => void;
 }) {
   // The host mount root for the detail's mono meta line: served by the same
   // already-cached mounts response the cards use (React escaping
@@ -1762,6 +1768,7 @@ function MobileContainerDetail({
   }
   const installed = container.installed;
   const self = container.self;
+  const paused = installed && !self && !container.includeInSchedule;
   const aliases = container.aliases ?? [];
   const takeoverEntry = { name: container.name, displayName: container.name, api: containerTakeover };
   return (
@@ -1776,6 +1783,7 @@ function MobileContainerDetail({
           ) : (
             <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
           )}
+          {paused && <PausedBadge />}
         </>
       }
       subtitle={
@@ -1826,20 +1834,27 @@ function MobileContainerDetail({
         <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onDeleted} t={t} />
       )}
       {installed && !self && (
-        <BackupButton
-          name={container.name}
-          t={t}
-          running={running}
-          progress={progress}
-          onRunCorrelated={(run) => {
-            if (lastCorrelatedRun.current !== run.id) {
-              lastCorrelatedRun.current = run.id;
-              sheetDismissed.current = false; // new fire re-arms the deep-link
-            }
-            setSheetRun(run);
-            if (!sheetDismissed.current) setSheetOpen(true);
-          }}
-        />
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <PauseButton
+            paused={paused}
+            save={(include) => setInclude(container.name, include)}
+            onSaved={onIncludeSaved}
+          />
+          <BackupButton
+            name={container.name}
+            t={t}
+            running={running}
+            progress={progress}
+            onRunCorrelated={(run) => {
+              if (lastCorrelatedRun.current !== run.id) {
+                lastCorrelatedRun.current = run.id;
+                sheetDismissed.current = false; // new fire re-arms the deep-link
+              }
+              setSheetRun(run);
+              if (!sheetDismissed.current) setSheetOpen(true);
+            }}
+          />
+        </div>
       )}
       {installed && !self && (
         <Advanced>
@@ -1852,7 +1867,7 @@ function MobileContainerDetail({
           this switch ends that without deleting its backups. */}
       {installed && (
         <div className="flex flex-col gap-2">
-          <IncludeToggle name={container.name} initial={container.includeInSchedule} />
+          <IncludeToggle name={container.name} initial={container.includeInSchedule} onSaved={onIncludeSaved} />
           {/* Outside Advanced: the dump is on by default and changes what a
               backup does. */}
           <DatabaseDumpRow container={container} t={t} />
@@ -2777,6 +2792,7 @@ export function ContainerRow({
   checks,
   onChecksChanged,
   onIdleWaitSaved,
+  onIncludeSaved,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2807,8 +2823,11 @@ export function ContainerRow({
   checks?: ItemChecks;
   onChecksChanged?: () => void;
   onIdleWaitSaved?: (hours: number) => void;
+  /** Takes the include-in-schedule value the switch or the Pause button stored. */
+  onIncludeSaved?: (include: boolean) => void;
 }) {
   const installed = container.installed;
+  const paused = installed && !container.self && !container.includeInSchedule;
   const progressMap = useProgress();
   const progress = progressMap[`container:${container.name}`];
   // "Something is running" across any domain — used to busy-guard this row's
@@ -2882,6 +2901,7 @@ export function ContainerRow({
             ) : (
               <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
+            {paused && <PausedBadge />}
             {container.ip && (
               <span dir="ltr" className="text-xs text-carbon-textMuted font-mono text-start">{container.ip}</span>
             )}
@@ -2926,6 +2946,11 @@ export function ContainerRow({
             </span>
           ) : (
             <>
+              <PauseButton
+                paused={paused}
+                save={(include) => setInclude(container.name, include)}
+                onSaved={onIncludeSaved}
+              />
               <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} progress={progress} />
               {/* Plain tar+xml export is an advanced-only extra. */}
               <Advanced><ExportButton name={container.name} t={t} /></Advanced>
@@ -2971,6 +2996,7 @@ export function ContainerRow({
           <IncludeToggle
             name={container.name}
             initial={container.includeInSchedule}
+            onSaved={onIncludeSaved}
           />
           {/* The dump row shows in both views: it is on by default and changes
               what a backup does, so it must not hide behind advanced. */}
@@ -3888,6 +3914,11 @@ export function Containers() {
   function idleWaitSaved(name: string, hours: number) {
     setContainers((list) => list.map((c) => (c.name === name ? { ...c, idleWaitHours: hours } : c)));
   }
+  // The switch and the Pause button store the same flag, and both read it back
+  // from this list, as do the scheduled count and the schedule filter.
+  function includeSaved(name: string, include: boolean) {
+    setContainers((list) => list.map((c) => (c.name === name ? { ...c, includeInSchedule: include } : c)));
+  }
   const [loading, setLoading] = useState(true);
   // Page-level load failure — NOT migrated to a toast (GlimStone follow-up pass,
   // v8.0.0 audit note): this blocks the whole list from rendering, so it is a
@@ -4437,6 +4468,7 @@ export function Containers() {
           onChecksChanged={itemChecks.reload}
           restoreRequest={restoreRequest.item === openContainer.name ? restoreRequest : undefined}
           onIdleWaitSaved={(hours) => idleWaitSaved(openContainer.name, hours)}
+          onIncludeSaved={(include) => includeSaved(openContainer.name, include)}
         />
       )}
 
@@ -4642,6 +4674,7 @@ export function Containers() {
               checks={itemChecks.find("container", c.name)}
               onChecksChanged={itemChecks.reload}
               onIdleWaitSaved={(hours) => idleWaitSaved(c.name, hours)}
+              onIncludeSaved={(include) => includeSaved(c.name, include)}
             />
           ))}
         </div>
@@ -4786,6 +4819,7 @@ export function Containers() {
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
               checks={itemChecks.find("container", c.name)}
               onChecksChanged={itemChecks.reload}
+              onIncludeSaved={(include) => includeSaved(c.name, include)}
             />
           ))}
         </div>

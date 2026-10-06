@@ -2664,6 +2664,39 @@ ALTER TABLE group_state ADD COLUMN direct_url_manual INTEGER NOT NULL DEFAULT 0;
 		sql: `ALTER TABLE offsite_targets ADD COLUMN destination_id TEXT NOT NULL DEFAULT '';
 CREATE INDEX IF NOT EXISTS offsite_targets_destination ON offsite_targets(destination_id) WHERE destination_id <> '';`,
 	},
+	{
+		// The rest-server BombVault set up on this host for group members:
+		// one row, written when it is created.
+		version: receiverServerMigration,
+		name:    "receiver_server",
+		sql: `CREATE TABLE IF NOT EXISTS receiver_server (
+  id             INTEGER PRIMARY KEY CHECK (id = 1),
+  container_name TEXT    NOT NULL DEFAULT '',
+  folder         TEXT    NOT NULL DEFAULT '',
+  host_path      TEXT    NOT NULL DEFAULT '',
+  port           INTEGER NOT NULL DEFAULT 8000,
+  rest_user      TEXT    NOT NULL DEFAULT '',
+  password_enc   BLOB    NOT NULL DEFAULT x'',
+  host           TEXT    NOT NULL DEFAULT '',
+  created_at     INTEGER NOT NULL DEFAULT 0,
+  check_verdict  TEXT    NOT NULL DEFAULT '',
+  check_detail   TEXT    NOT NULL DEFAULT '',
+  checked_at     INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
+		// The login each group member gets on the receiver, one per member id
+		// so a renamed member keeps its own.
+		version: receiverServerMigration + 1,
+		name:    "receiver_logins",
+		sql: `CREATE TABLE IF NOT EXISTS receiver_logins (
+  member_id    TEXT    PRIMARY KEY,
+  member_name  TEXT    NOT NULL DEFAULT '',
+  rest_user    TEXT    NOT NULL UNIQUE,
+  password_enc BLOB    NOT NULL DEFAULT x'',
+  created_at   INTEGER NOT NULL DEFAULT 0
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2752,6 +2785,10 @@ const appMemberMigration = 270
 // destinationMigration numbers the destinations that are set up once and
 // offered to every domain, 280 to 289.
 const destinationMigration = 280
+
+// receiverServerMigration numbers the rest-server a receiving instance sets
+// up for its group, 290 to 299.
+const receiverServerMigration = 290
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

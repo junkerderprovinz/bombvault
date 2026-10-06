@@ -24,13 +24,15 @@ Impostazioni, Off-site inizia con **Destinazioni**: i luoghi in cui vanno le cop
 
 **Aggiungi destinazione** apre una procedura guidata in cinque passi:
 
-1. **Dove devono andare i backup?** Ogni servizio è elencato con il suo logo, in quattro gruppi: servizi di archiviazione con bucket S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 e altri), il tuo server S3 (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), il tuo server e le condivisioni (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, un percorso montato) e lo storage cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud e tutto il resto che rclone supporta). Ognuno indica quanto è adatto ai backup: i cloud drive rallentano con molte richieste, quindi il primo backup e la potatura richiedono più tempo.
+1. **Dove devono andare i backup?** Ogni servizio è elencato con il suo logo, in quattro gruppi: servizi di archiviazione con bucket S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 e altri), il tuo server S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), il tuo server e le condivisioni (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, un percorso montato) e lo storage cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud e tutto il resto che rclone supporta). Ognuno indica quanto è adatto ai backup: i cloud drive rallentano con molte richieste, quindi il primo backup e la potatura richiedono più tempo.
 2. **Accedi.** I campi dipendono dal servizio: una chiave di accesso per S3, utente e password per WebDAV e SMB, una password per app dove l'accesso a due fattori blocca quella normale, la chiave SSH pubblica di BombVault per SFTP e la Storage Box, oppure un token per i servizi che accedono tramite browser. Per questi ultimi la procedura mostra un comando `rclone authorize` da eseguire su un computer con un browser; il token che stampa va nel campo. **Prova connessione** verifica l'accesso prima che venga salvato qualcosa.
 3. **Scegli una cartella.** La procedura elenca le cartelle della destinazione, con **Nuova cartella** per crearne una e lo spazio libero dove il servizio lo riporta. Una cartella vuota è la scelta più sicura.
 4. **Protezione dall'eliminazione.** La procedura dice senza giri di parole cosa può fare il servizio. Un rest-server in modalità append-only rifiuta l'eliminazione, e il tamper test lo verifica. Un bucket S3 può conservare le vecchie versioni con versioning e object lock, cosa che BombVault non sa ancora verificare. Un cloud drive non può rifiutare l'eliminazione in nessun caso: chi entra nel server entra anche in quella copia. Attiva **Immutabile (append-only)** solo dove il lato remoto rifiuta davvero l'eliminazione; BombVault allora non pota mai lì.
 5. **Per le emergenze.** Il kit di ripristino elenca ogni destinazione con il repository di ciascun dominio al suo interno. L'accesso torna con il backup delle impostazioni di BombVault; su un'installazione nuova senza di esso, imposta di nuovo la destinazione nello stesso posto.
 
 I servizi S3 passano dal backend S3 di restic, ed è questo che permette di applicare una classe di archiviazione e l'object lock. Ogni altro servizio passa dal rclone fornito con BombVault, e il suo remote compare poi nella configurazione di rclone in Impostazioni, Accesso cloud. Un'esportazione delle impostazioni include le destinazioni; con le credenziali incluse porta con sé anche il loro accesso.
+
+Un server ricevente gestito da un'altra istanza del tuo gruppo compare nella procedura guidata sotto **Dal tuo gruppo**; vedi [Server ricevente](#receiving-server).
 
 La destinazione che un dominio ottiene da una destinazione prende da questa nome, posizione, credenziali, classe di archiviazione e interruttore immutabile. La conservazione, la compressione e il budget di crescita restano per dominio, e la sua posizione non può spostarsi perché lì si trova il repository del dominio. **Aggiungi una destinazione solo per questo dominio** sotto ogni dominio accetta ancora un URL di repository scritto a mano.
 
@@ -162,6 +164,19 @@ Attiva l'interruttore **Ricevitore** in Impostazioni per rivelare una scheda **R
 
 Il Ricevitore è rigorosamente in sola lettura. Non scrive mai nel repository ricevuto, così non può mai rompere la garanzia append-only su cui il mittente fa affidamento.
 
+### Server ricevente {#receiving-server}
+
+La macchina ricevente può anche eseguire il rest-server su cui copiano gli altri. **Configura server ricevente** in cima alla scheda Ricevitore chiede una cartella su una condivisione, con **Nuova cartella** per crearne una, e una porta (8000, a meno che la usi un altro container). BombVault poi:
+
+1. rifiuta se esiste già un container chiamato `rest-server` o se un altro container occupa la porta;
+2. scarica `restic/rest-server` e lo avvia tramite il socket Docker in modalità append-only, con repository privati e un file di accessi nella cartella;
+3. scrive il suo template Unraid sul flash, così il container resta modificabile nella scheda Docker, oppure offre il template come download quando il flash non è raggiungibile;
+4. esegue il tamper test e mostra se rifiuta le eliminazioni.
+
+Le istanze del tuo gruppo trovano poi il server nella procedura guidata della destinazione sotto **Dal tuo gruppo**, con il nome della macchina ricevente. Ogni istanza riceve un accesso proprio la prima volta che sceglie il server e scrive lì solo nella propria cartella. La scheda elenca questi accessi, e **Revoca accesso** ne toglie uno; ciò che quell'istanza ha già copiato resta nella cartella. L'impostazione crea anche un accesso per qualcuno fuori dal gruppo, la cui password la scheda mostra una sola volta.
+
+Un'istanza che raggiunge la macchina ricevente solo tramite il relay non può usare il server, perché il relay non trasporta backup. Aggiungi prima l'indirizzo della macchina ricevente in Impostazioni, Associazione. Quando BombVault gira su un indirizzo IP proprio (su br0, per esempio), compila **Indirizzo per i partner**, perché il server ascolta sull'indirizzo dell'host.
+
 ## Esempio completo: due macchine Unraid, dall'inizio alla fine
 
 Sopra sono descritti i pezzi. Questa è un'installazione completa con valori reali, perché i pezzi si montano meglio dopo averli visti montati una volta.
@@ -211,6 +226,8 @@ Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostru
 ### Ripristino da un altro repo BombVault {#restore-from-another-bombvault-repo}
 
 Una scheda separata nella scheda **Ripristino** apre il repo di un'*altra* istanza BombVault (una condivisione montata sotto `/mnt`, o un URL remoto) con l'**`APP_KEY` di quell'istanza**, in una sessione monouso e in sola lettura. Sfoglia i container, le VM e i set di file memorizzati lì, scegli uno snapshot e ripristinalo, e l'oggetto ripristinato diventa un normale container, VM o set di file locale. Nulla viene mai scritto nell'altro repo, e le tue impostazioni di backup restano intatte (la sessione risiede in memoria e scade da sé). Spostare un container dal server A al server B non significa più ripuntare le impostazioni del tuo repo e riportarle indietro dopo. Questa scheda è monouso: apre una sessione, ripristina ciò che scegli e dimentica l'altra istanza. Se invece vuoi un accordo stabile, in cui questa macchina preleva secondo una pianificazione gli snapshot di un'altra istanza nel proprio repository, quella è la scheda **Prelievo** della pagina **Istanze**.
+
+Un container la cui rete non esiste su questo server, per esempio una rete `br0` di Unraid su un normale host Docker, mostra una scelta della rete sotto la sua riga. BombVault lo crea sulla rete che scegli, insieme alle sue altre reti. L'IP fisso e l'indirizzo MAC appartenevano alla vecchia rete e vengono tolti, quindi li assegna la nuova rete.
 
 ## Kit di ripristino della chiave di crittografia
 

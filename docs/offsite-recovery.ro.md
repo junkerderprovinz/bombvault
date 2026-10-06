@@ -24,13 +24,15 @@ Setări, Extern începe cu **Destinații**: locurile în care ajung copiile off-
 
 **Adaugă destinație** deschide un asistent în cinci pași:
 
-1. **Unde să meargă copiile de rezervă?** Fiecare serviciu este listat cu sigla lui, în patru grupuri: servicii de stocare cu bucket-uri S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 și altele), propriul tău server S3 (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), propriul tău server și partajările tale (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, o cale montată) și stocare în cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud și restul serviciilor pe care le acceptă rclone). Fiecare spune cât de potrivit este pentru copii de rezervă: unitățile cloud încetinesc la multe cereri, așa că prima copie și curățarea durează mai mult acolo.
+1. **Unde să meargă copiile de rezervă?** Fiecare serviciu este listat cu sigla lui, în patru grupuri: servicii de stocare cu bucket-uri S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 și altele), propriul tău server S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), propriul tău server și partajările tale (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, o cale montată) și stocare în cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud și restul serviciilor pe care le acceptă rclone). Fiecare spune cât de potrivit este pentru copii de rezervă: unitățile cloud încetinesc la multe cereri, așa că prima copie și curățarea durează mai mult acolo.
 2. **Autentifică-te la** serviciul ales. Câmpurile depind de serviciu: o cheie de acces pentru S3, un utilizator și o parolă pentru WebDAV și SMB, o parolă de aplicație acolo unde autentificarea în doi pași o blochează pe cea obișnuită, cheia SSH publică a BombVault pentru SFTP și Storage Box, sau un token pentru serviciile care cer autentificare prin browser. Pentru acestea, asistentul arată o comandă `rclone authorize` de rulat pe un calculator cu browser; tokenul pe care îl afișează se pune în câmp. **Testează conexiunea** verifică autentificarea înainte să se salveze ceva.
 3. **Alege un dosar.** Asistentul listează dosarele de pe destinație, cu **Dosar nou** pentru a crea unul și cu spațiul liber acolo unde serviciul îl raportează. Un dosar gol este cea mai sigură variantă.
 4. **Protecție împotriva ștergerii.** Asistentul spune deschis ce poate face serviciul. Un rest-server în modul append-only refuză ștergerea, iar testul de manipulare verifică asta. Un bucket S3 poate păstra versiuni vechi prin versionare și blocarea obiectelor, lucru pe care BombVault nu îl poate verifica încă. O unitate cloud nu poate refuza deloc ștergerea: cine ajunge pe server ajunge și la acea copie. Activează **Imuabil (append-only)** doar acolo unde partea îndepărtată refuză cu adevărat ștergerea; BombVault nu mai curăță atunci niciodată acolo.
 5. **Pentru o urgență.** Kitul de recuperare listează fiecare destinație cu depozitul fiecărui domeniu de sub ea. Autentificarea revine odată cu backupul de setări al BombVault; pe o instalare nouă fără el, configurează din nou destinația în același loc.
 
 Serviciile S3 rulează prin backendul S3 propriu al restic, ceea ce permite aplicarea unei clase de stocare și a blocării obiectelor. Orice alt serviciu rulează prin rclone livrat cu BombVault, iar remote-ul lui apare apoi în configurația rclone de la Setări, Acces cloud. Un export al setărilor conține destinațiile; cu acreditările incluse, conține și autentificarea lor.
+
+Un server receptor pe care îl rulează o altă instanță a grupului tău apare în asistent la **Din grupul tău**; vezi [Server receptor](#receiving-server).
 
 Ținta unui domeniu creată dintr-o destinație preia numele, locația, acreditările, clasa de stocare și comutatorul imuabil ale destinației. Retenția, compresia și bugetul de creștere rămân per domeniu, iar locația ei nu se poate muta, pentru că acolo se află depozitul domeniului. **Adaugă o țintă doar pentru acest domeniu** de sub fiecare domeniu primește în continuare un URL de depozit scris de mână.
 
@@ -162,6 +164,19 @@ Activează comutatorul **Receptor** în Setări pentru a dezvălui o filă **Rec
 
 Receptorul este strict doar în citire. Nu scrie niciodată în depozitul primit, deci nu poate niciodată strica garanția append-only pe care se bazează expeditorul.
 
+### Server receptor {#receiving-server}
+
+Mașina care primește poate rula și rest-serverul către care copiază celelalte. **Configurează serverul receptor**, în partea de sus a filei Receptor, cere un folder de pe un share, cu **Dosar nou** pentru a crea unul, și un port (8000, dacă nu îl folosește alt container). Apoi BombVault:
+
+1. refuză dacă există deja un container numit `rest-server` sau dacă alt container ocupă portul;
+2. descarcă `restic/rest-server` și îl pornește prin socket-ul Docker în modul append-only, cu depozite private și un fișier de autentificare în folder;
+3. scrie șablonul lui Unraid pe unitatea flash, astfel încât containerul rămâne editabil în fila Docker, sau oferă șablonul ca descărcare când unitatea flash nu poate fi atinsă;
+4. rulează testul de manipulare împotriva lui și arată dacă refuză ștergerile.
+
+Instanțele din grupul tău găsesc apoi serverul în asistentul de destinații, la **Din grupul tău**, cu numele mașinii care primește. Fiecare instanță primește un login propriu prima dată când alege serverul și scrie acolo doar în folderul ei. Cardul listează aceste login-uri, iar **Revocă autentificarea** îl elimină pe unul; ce a copiat deja instanța respectivă rămâne în folder. Configurarea creează și un login pentru cineva din afara grupului, a cărui parolă o arată cardul o singură dată.
+
+O instanță care ajunge la mașina de recepție doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă backupuri. Adaugă mai întâi adresa mașinii de recepție la Setări, Împerechere. Când BombVault rulează pe o adresă IP proprie (de exemplu pe br0), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
+
 ## Exemplu complet: două mașini Unraid, de la un capăt la altul
 
 Mai sus sunt descrise piesele. Aici este o configurație completă cu valori reale, pentru că piesele se asamblează mai ușor după ce le-ai văzut asamblate o dată.
@@ -211,6 +226,8 @@ O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită pri
 ### Restaurare dintr-un alt depozit BombVault {#restore-from-another-bombvault-repo}
 
 Un card separat în fila **Recuperare** deschide depozitul unei *alte* instanțe BombVault (o partajare montată sub `/mnt`, sau un URL la distanță) cu **`APP_KEY`-ul acelei instanțe**, într-o sesiune unică, doar în citire. Răsfoiește containerele, VM-urile și seturile de fișiere stocate acolo, alege un instantaneu și restaurează-l, iar obiectul restaurat devine un container, VM sau set de fișiere local normal. Nimic nu este scris vreodată în celălalt depozit, iar propriile tale setări de backup rămân neatinse (sesiunea trăiește în memorie și expiră singură). Mutarea unui container de pe serverul A pe serverul B nu mai înseamnă repointarea setărilor depozitului tău și revenirea lor ulterioară. Acest card este de unică folosință: deschide o sesiune, restaurează ce alegi și uită cealaltă instanță. Dacă vrei în schimb un aranjament permanent, în care această stație aduce după o programare instantaneele altei instanțe în propriul depozit, aceea este fila **Preluare** a paginii **Instanțe**.
+
+Un container a cărui rețea nu există pe acest server, de exemplu o rețea `br0` din Unraid pe un host Docker obișnuit, arată sub rândul său o alegere de rețea. BombVault îl creează în rețeaua pe care o alegi, împreună cu celelalte rețele. Adresa IP fixă și adresa MAC aparțineau rețelei vechi și se renunță la ele, așa că le atribuie rețeaua nouă.
 
 ## Kit de recuperare a cheii de criptare
 

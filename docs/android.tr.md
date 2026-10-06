@@ -4,6 +4,7 @@ Android uygulaması, grubunuzdaki tüm BombVault sunucularını telefonunuza get
 
 ## Uygulamayı edinme {#install}
 
+- **Ayarlar, Uygulamalar:** Android uygulamasının kartı, sunucunuzun çalıştırdığı sürümün APK'sını ve telefondan taranacak bir QR kodu sunar.
 - **APK:** her sürümün sayfasında `bombvault-android.apk` bulunur ve [bu bağlantı](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) her zaman en son derlemeyi indirir. Android 10 veya üstü gerekir; Android, dosyayı açtığınız uygulamanın uygulama yükleyip yükleyemeyeceğini bir kez sorar.
 - **Google Play:** uygulama, herkese açılabilene kadar kapalı testte. Google Play, yeni bir geliştirici hesabının uygulamasını ancak en az 12 test kullanıcısı onu 14 gün boyunca yüklü tuttuktan sonra listeler. Yardım etmek isterseniz [test grubuna](https://groups.google.com/g/arrowloop-testers) katılın, [test sayfasını](https://play.google.com/apps/testing/bombvault.halleluja.design) açın, **Test kullanıcısı ol** düğmesine dokunun ve BombVault'u Google Play'den yükleyin.
 - **F-Droid:** kaydı daha sonra gelecek.

@@ -71,6 +71,7 @@ BombVault es simple por defecto y profundo cuando lo necesitas. La interfaz mues
 
 ## Análisis, verificación y monitorización
 
+- **Pausa desde la tarjeta.** Cada tarjeta de contenedor, VM y conjunto de carpetas tiene **Pausar programación**, que saca el elemento del calendario y de la Copia total, y **Reanudar programación** para devolverlo. Cambia el mismo conmutador que **Incluir en el calendario**, así que los dos siempre coinciden. Un elemento en pausa lleva una insignia gris **Programación en pausa**, y **Copiar ahora** sigue funcionando.
 - **Estado de protección (RPO).** El Panel muestra un indicador verde / ámbar / rojo por dominio, comparando la última copia correcta con su calendario, de modo que una copia atrasada se pone en rojo en lugar de esconderse en un registro.
 - **Mapa de calor de salud de las copias.** Un calendario al estilo de las contribuciones de GitHub con los resultados de copia por día y por dominio, con un conmutador Contenedores / VMs / Flash / Autocopia / Carpetas.
 - **Cronometraje de ejecuciones en todas partes.** Cada entrada del historial de ejecuciones muestra `inicio, fin (duración)`, y cada contenedor y VM lleva su propia lista de **Ejecuciones recientes** en su página.
@@ -125,7 +126,8 @@ BombVault incluye un servidor MCP con el que un asistente como Claude Code o Cla
 ## Apps y complementos {#apps}
 
 - **App de Android.** Todos los servidores de tu grupo en el móvil, con el registro de actividad de todos ellos en una sola pantalla. Se empareja con tu grupo mediante un código QR y abre cada servidor con la sesión ya iniciada. Consulta [App de Android](android.md).
-- **Ajustes, Apps.** Una página con una tarjeta para cada complemento. La tarjeta de ParleyPort ofrece su plantilla de Unraid, copia el comando de Docker que lo inicia y lleva a su repositorio y a los ajustes del relay en Emparejamiento. La tarjeta de BombVault Widget ofrece su plantilla y su repositorio, e instala o quita el plugin a través de la conexión SSH del host.
+- **Servidor receptor.** La máquina que recibe las copias externas puede iniciar con un clic un rest-server en modo append-only y ofrecerlo a las demás instancias de tu grupo, cada una con un inicio de sesión propio. Consulta [Servidor receptor](offsite-recovery.md#receiving-server).
+- **Ajustes, Apps.** Una página que empieza por la app de Android, su APK para la versión que ejecuta el servidor y un código QR para ella, seguida de una tarjeta para cada complemento. La tarjeta de ParleyPort ofrece su plantilla de Unraid, copia el comando de Docker que lo inicia y lleva a su repositorio y a los ajustes del relay en Emparejamiento. La tarjeta de BombVault Widget ofrece su plantilla y su repositorio, e instala o quita el plugin a través de la conexión SSH del host.
 - **BombVault Widget.** Un mosaico en el Dashboard de Unraid con el registro de actividad de BombVault y la próxima ejecución programada. Sin conexión SSH con el host, la tarjeta te da la dirección `.plg` para instalarlo en **Plugins, Install Plugin**, y el plugin se puede quitar allí como cualquier otro.
 - **Registro de actividad integrable.** Genera un token de solo lectura en **Ajustes, Integraciones** y obtendrás una dirección para cualquier panel que muestre un iframe, como Homepage, Organizr o Heimdall: una pequeña página con solo el registro de actividad en directo. El token da acceso a ese registro y a nada más, y **Desactivar** lo revoca al instante. La página integrada solo está en inglés.
 

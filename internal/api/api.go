@@ -337,6 +337,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/offsite/destinations/{id}", h.handleUpdateDestination)
 	mux.HandleFunc("DELETE /api/offsite/destinations/{id}", h.handleDeleteDestination)
 	mux.HandleFunc("POST /api/offsite/destinations/{id}/domains/{domain}", h.handleDestinationForDomain)
+	// The receivers other members of the group run, offered as destinations.
+	// The login route reveals a password and is gated inside the handler.
+	mux.HandleFunc("GET /api/offsite/group-receivers", h.handleListGroupReceivers)
+	mux.HandleFunc("POST /api/offsite/group-receivers/{id}/login", h.handleGroupReceiverLogin)
 	mux.HandleFunc("GET /api/placement/defaults", h.handleListPlacementDefaults)
 	mux.HandleFunc("POST /api/placement/default/{domain}/preview", h.handlePreviewPlacementDefault)
 	mux.HandleFunc("PUT /api/placement/default/{domain}", h.handlePutPlacementDefault)
@@ -517,6 +521,15 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/receiver/repos/{id}", h.handleDeleteReceiverRepo)
 	mux.HandleFunc("GET /api/receiver/repos/{id}/inventory", h.handleReceiverInventory)
 	mux.HandleFunc("POST /api/receiver/repos/{id}/check", h.handleReceiverCheck)
+	// The append-only rest-server this box runs for its group. Setting it up
+	// starts a container and answers with its password, so that route sits
+	// behind requireAuthForSecrets inside the handler.
+	mux.HandleFunc("GET /api/receiver/server", h.handleGetReceiver)
+	mux.HandleFunc("POST /api/receiver/server", h.handleSetUpReceiver)
+	mux.HandleFunc("POST /api/receiver/server/check", h.handleCheckReceiver)
+	mux.HandleFunc("DELETE /api/receiver/server", h.handleForgetReceiver)
+	mux.HandleFunc("DELETE /api/receiver/server/logins/{id}", h.handleRevokeReceiverLogin)
+	mux.HandleFunc("GET /api/receiver/server/template", h.handleReceiverTemplate)
 
 	// Pull sources (#227): repositories belonging to OTHER instances that this
 	// box fetches snapshots out of. Session-protected like every other /api

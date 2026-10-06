@@ -71,6 +71,7 @@ export const CHECK_LINE_LABEL: Record<CheckLine["id"], TranslationKey> = {
   key: "restoreCheck.line.key",
   snapshot: "restoreCheck.line.snapshot",
   space: "restoreCheck.line.space",
+  network: "restoreCheck.line.network",
 };
 
 /**

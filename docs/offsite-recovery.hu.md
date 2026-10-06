@@ -24,13 +24,15 @@ A Beállítások, Telephelyen kívüli oldal a **Célok** résszel kezdődik: ez
 
 A **Cél hozzáadása** egy öt lépéses varázslót nyit meg:
 
-1. **Hová kerüljenek a mentések?** Minden szolgáltatás a logójával együtt szerepel, négy csoportban: S3-bucketeket kínáló tárolási szolgáltatások (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 és mások), a saját S3 szervered (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), saját szerver és megosztások (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, csatolt útvonal) és felhőtárhely (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud és a többi, amit az rclone támogat). Mindegyik megmondja, mennyire alkalmas mentésekre: a felhős meghajtók sok kérés alatt lassulnak, ezért az első mentés és a nyesés itt tovább tart.
+1. **Hová kerüljenek a mentések?** Minden szolgáltatás a logójával együtt szerepel, négy csoportban: S3-bucketeket kínáló tárolási szolgáltatások (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 és mások), a saját S3 szervered (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), saját szerver és megosztások (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, csatolt útvonal) és felhőtárhely (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud és a többi, amit az rclone támogat). Mindegyik megmondja, mennyire alkalmas mentésekre: a felhős meghajtók sok kérés alatt lassulnak, ezért az első mentés és a nyesés itt tovább tart.
 2. **Bejelentkezés.** A mezők a szolgáltatástól függnek: hozzáférési kulcs S3-hoz, felhasználónév és jelszó WebDAV-hoz és SMB-hez, alkalmazásjelszó ott, ahol a kétlépcsős bejelentkezés a szokásos jelszót blokkolja, a BombVault nyilvános SSH-kulcsa SFTP-hez és a Storage Boxhoz, vagy token a böngészőn át bejelentkező szolgáltatásokhoz. Ezeknél a varázsló egy `rclone authorize` parancsot mutat, amelyet egy böngészős számítógépen kell lefuttatni; a kiírt tokent a mezőbe kell írni. A **Kapcsolat tesztelése** mentés előtt ellenőrzi a bejelentkezést.
 3. **Válassz mappát.** A varázsló felsorolja a cél mappáit, az **Új mappa** gombbal újat lehet létrehozni, és ahol a szolgáltatás jelzi, a szabad hely is látszik. Egy üres mappa a legbiztonságosabb.
 4. **Védelem a törlés ellen.** A varázsló nyíltan megmondja, mire képes a szolgáltatás. Az append-only módú rest-server elutasítja a törlést, és a manipulációs teszt ezt ellenőrzi. Egy S3-bucket a verziókezeléssel és az Object Lockkal megtarthatja a régi verziókat, ezt a BombVault még nem tudja ellenőrizni. Egy felhős meghajtó egyáltalán nem tudja elutasítani a törlést: aki bejut a szerverre, ebbe a másolatba is bejut. A **Nem módosítható (append-only)** kapcsolót csak ott kapcsold be, ahol a túloldal tényleg elutasítja a törlést; a BombVault ilyenkor ott soha nem nyes.
 5. **Vészhelyzetre.** A helyreállítási csomag felsorolja az összes célt, alattuk minden tartomány tárolójával. A bejelentkezés a BombVault beállításmentésével tér vissza; ennek hiányában, friss telepítésen a célt ugyanarra a helyre újra be kell állítani.
 
 Az S3-szolgáltatások a restic saját S3-háttérrendszerén futnak, ezért érvényesülhet a tárolási osztály és az object lock. Minden más szolgáltatás a BombVaulttal szállított rclone-on keresztül fut, és a remote ezután megjelenik az rclone konfigurációban a Beállítások, Felhőhozzáférés alatt. A beállítások exportja tartalmazza a célokat; a hitelesítő adatokkal együtt a bejelentkezésüket is.
+
+A fogadószerver, amelyet a csoportod egy másik példánya futtat, a varázslóban az **A csoportodból** alatt jelenik meg; lásd: [Fogadószerver](#receiving-server).
 
 Egy tartomány célja, amely egy célból készült, átveszi a cél nevét, helyét, hitelesítő adatait, tárolási osztályát és a nem módosítható kapcsolót. A megőrzése, tömörítése és növekedési kerete tartományonként külön marad, a helye pedig nem mozdítható, mert ott van a tartomány tárolója. A **Cél hozzáadása csak ehhez a tartományhoz** gomb minden tartomány alatt továbbra is kézzel beírt tárolócímet kér.
 
@@ -162,6 +164,19 @@ Kapcsold be a **Fogadó** kapcsolót a Beállításokban egy **Fogadó** fül fe
 
 A Fogadó szigorúan csak olvasható. Soha nem ír a fogadott tárolóba, így soha nem tudja megtörni az append-only garanciát, amelyre a küldő támaszkodik.
 
+### Fogadószerver {#receiving-server}
+
+A fogadó gép azt a rest-servert is futtathatja, amelyre a többiek másolnak. A Fogadó fül tetején a **Fogadószerver beállítása** egy megosztáson lévő mappát kér, az **Új mappa** gombbal újat is létre lehet hozni, valamint egy portot (8000, kivéve ha egy másik konténer már használja). A BombVault ezután:
+
+1. visszautasítja a műveletet, ha már van `rest-server` nevű konténer, vagy egy másik konténer foglalja a portot;
+2. letölti a `restic/rest-server` képet, és a Docker-socketen át append-only módban indítja, privát tárolókkal és a mappában lévő bejelentkezési fájllal;
+3. kiírja az Unraid-sablonját a flash meghajtóra, így a konténer szerkeszthető marad a Docker fülön, vagy letölthető sablonként kínálja fel, ha a flash meghajtó nem érhető el;
+4. lefuttatja rajta a manipulációs tesztet, és megmutatja, hogy elutasítja-e a törlést.
+
+A csoportod példányai ezután a célvarázslóban az **A csoportodból** alatt találják meg a szervert, a fogadó gép nevén. Minden példány az első választáskor saját bejelentkezést kap, és ott csak a saját mappájába ír. A kártya felsorolja ezeket a bejelentkezéseket, a **Bejelentkezés visszavonása** pedig elvesz egyet; amit az a példány már átmásolt, a mappában marad. A beállítás egy bejelentkezést a csoporton kívüli valakinek is létrehoz, amelynek jelszavát a kártya egyszer mutatja meg.
+
+Az a példány, amely a fogadó gépet csak a relayen át éri el, nem használhatja a szervert, mert a relay nem visz mentéseket. Előbb add meg a fogadó gép címét a Beállítások, Párosítás alatt. Ha a BombVault saját IP-címen fut (például br0-n), töltsd ki a **Cím a partnereknek** mezőt, mert a szerver a hoszt címén figyel.
+
 ## Végigvezetett példa: két Unraid gép, elejétől a végéig
 
 Fent az alkatrészek szerepelnek. Itt egy teljes összeállítás valódi értékekkel, mert az alkatrészeket könnyebb összerakni, ha az ember egyszer már látta őket összerakva.
@@ -211,6 +226,8 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 ### Visszaállítás egy másik BombVault tárolóból {#restore-from-another-bombvault-repo}
 
 Egy külön kártya a **Helyreállítás** fülön megnyit egy *másik* BombVault-példány tárolóját (egy a `/mnt` alá csatolt megosztás vagy egy távoli URL) **annak a példánynak az `APP_KEY`-ével**, egy egyszeri, csak olvasható munkamenetben. Böngészd az ott tárolt konténereket, VM-eket és fájlkészleteket, válassz egy pillanatképet és állítsd vissza, és a visszaállított objektum normál helyi konténerré, VM-mé vagy fájlkészletté válik. Semmi sem íródik soha a másik tárolóba, és a saját mentési beállításaid érintetlenek maradnak (a munkamenet a memóriában él és magától lejár). Egy konténer áthelyezése az A szerverről a B szerverre nem jelenti a tárolóbeállításaid átirányítását és utólagos visszaállítását. Ez a kártya egyszeri: megnyit egy munkamenetet, visszaállítja, amit kiválasztasz, és elfelejti a másik példányt. Ha ehelyett állandó elrendezést szeretnél, amelyben ez a gép ütemezetten lehívja egy másik példány pillanatképeit a saját tárolójába, arra a **Példányok** oldal **Lehívás** füle való.
+
+Az a konténer, amelynek a hálózata ezen a szerveren nem létezik, például egy Unraid `br0` hálózat egy sima Docker-gazdán, a sora alatt hálózatválasztót mutat. A BombVault a választott hálózaton hozza létre, a többi hálózatával együtt. A fix IP-cím és a MAC-cím a régi hálózathoz tartozott, ezért elmarad, és ezeket az új hálózat adja.
 
 ## Titkosításikulcs-helyreállító csomag
 

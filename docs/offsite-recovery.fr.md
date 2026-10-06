@@ -24,13 +24,15 @@ Paramètres, Hors site commence par **Destinations** : les endroits où vont les
 
 **Ajouter une destination** ouvre un assistant en cinq étapes :
 
-1. **Où envoyer les sauvegardes ?** Chaque service est listé avec son logo, en quatre groupes : les services de stockage avec des buckets S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 et d'autres), votre propre serveur S3 (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), votre propre serveur et vos partages (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, un chemin monté) et le stockage cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud et tout ce que rclone prend en charge). Chacun indique dans quelle mesure il convient aux sauvegardes : les disques cloud ralentissent sous un grand nombre de requêtes, la première sauvegarde et l'élagage y prennent donc plus de temps.
+1. **Où envoyer les sauvegardes ?** Chaque service est listé avec son logo, en quatre groupes : les services de stockage avec des buckets S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 et d'autres), votre propre serveur S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), votre propre serveur et vos partages (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, un chemin monté) et le stockage cloud (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud et tout ce que rclone prend en charge). Chacun indique dans quelle mesure il convient aux sauvegardes : les disques cloud ralentissent sous un grand nombre de requêtes, la première sauvegarde et l'élagage y prennent donc plus de temps.
 2. **Se connecter.** Les champs dépendent du service : une clé d'accès pour S3, un utilisateur et un mot de passe pour WebDAV et SMB, un mot de passe d'application quand l'authentification à deux facteurs bloque le mot de passe normal, la clé SSH publique de BombVault pour SFTP et la Storage Box, ou un jeton pour les services qui se connectent par le navigateur. Pour ces derniers, l'assistant affiche une commande `rclone authorize` à lancer sur un ordinateur doté d'un navigateur ; le jeton qu'elle affiche se colle dans le champ. **Tester la connexion** vérifie l'identification avant que quoi que ce soit soit enregistré.
 3. **Choisir un dossier.** L'assistant liste les dossiers de la destination, avec **Nouveau dossier** pour en créer un et l'espace libre quand le service l'indique. Un dossier vide est le plus sûr.
 4. **Protection contre la suppression.** L'assistant dit clairement ce que le service peut faire. Un rest-server en mode append-only refuse la suppression, et le test de sabotage le vérifie. Un bucket S3 peut conserver d'anciennes versions grâce au versionnage et au verrouillage d'objet, ce que BombVault ne sait pas encore vérifier. Un disque cloud ne peut pas du tout refuser la suppression : qui accède au serveur accède aussi à cette copie. N'activez **Immuable (append-only)** que là où l'autre bout refuse réellement la suppression ; BombVault n'y élague alors jamais.
 5. **En cas d'urgence.** Le kit de récupération liste chaque destination avec le dépôt de chaque domaine placé dessous. L'identification revient avec la sauvegarde des réglages de BombVault ; sur une installation neuve sans elle, configurez de nouveau la destination au même endroit.
 
 Les services S3 passent par le backend S3 propre à restic, ce qui permet d'appliquer une classe de stockage et le verrouillage d'objet. Tous les autres services passent par le rclone fourni avec BombVault, et leur remote apparaît ensuite dans la config rclone sous Paramètres, Accès cloud. Un export des réglages contient les destinations ; avec les identifiants inclus, il contient aussi leur identification.
+
+Un serveur récepteur qu'une autre instance de votre groupe exécute apparaît dans l'assistant sous **Depuis votre groupe** ; voir [Serveur récepteur](#receiving-server).
 
 La cible d'un domaine créée à partir d'une destination reprend le nom, l'emplacement, les identifiants, la classe de stockage et le réglage Immuable de la destination. Sa rétention, sa compression et son budget de croissance restent propres à chaque domaine, et son emplacement ne peut pas changer, parce que le dépôt du domaine s'y trouve. **Ajouter une cible pour ce domaine uniquement**, sous chaque domaine, accepte toujours une URL de dépôt saisie à la main.
 
@@ -162,6 +164,19 @@ Activez la bascule **Récepteur** dans les Paramètres pour révéler un onglet 
 
 Le récepteur est strictement en lecture seule. Il n'écrit jamais dans le dépôt reçu, il ne peut donc jamais briser la garantie append-only sur laquelle l'émetteur compte.
 
+### Serveur récepteur {#receiving-server}
+
+La machine qui reçoit peut aussi exécuter le rest-server vers lequel les autres copient. **Configurer le serveur récepteur**, en haut de l'onglet **Récepteur**, demande un dossier sur un partage, avec **Nouveau dossier** pour en créer un, et un port (8000, sauf si un autre conteneur l'utilise). BombVault :
+
+1. refuse de continuer si un conteneur nommé `rest-server` existe déjà ou si un autre conteneur occupe le port ;
+2. télécharge `restic/rest-server` et le démarre via le socket Docker en mode append-only, avec des dépôts privés et un fichier d'identifiants dans le dossier ;
+3. écrit son modèle Unraid sur la clé flash, afin que le conteneur reste modifiable dans l'onglet Docker, ou propose le modèle en téléchargement quand la clé flash est hors d'atteinte ;
+4. lance le test de sabotage contre lui et indique s'il refuse les suppressions.
+
+Les instances de votre groupe trouvent ensuite le serveur dans l'assistant de destination sous **Depuis votre groupe**, nommé d'après la machine de réception. Chaque instance reçoit son propre identifiant la première fois qu'elle choisit le serveur, et n'y écrit que dans son propre dossier. La carte liste ces identifiants, et **Révoquer l'identifiant** en retire un ; ce que cette instance a déjà copié reste dans le dossier. La configuration crée aussi un identifiant pour quelqu'un hors du groupe, dont la carte montre le mot de passe une seule fois.
+
+Une instance qui n'atteint la machine de réception que par le relais ne peut pas utiliser le serveur, car le relais ne transporte aucune sauvegarde. Ajoutez d'abord l'adresse de la machine de réception sous **Paramètres → Appairage**. Quand BombVault tourne sur une adresse IP à lui (sur br0, par exemple), renseignez **Adresse pour les partenaires**, car le serveur écoute sur l'adresse de l'hôte.
+
 ## Exemple complet : deux machines Unraid, de bout en bout
 
 Ce qui précède décrit les pièces. Voici une installation complète avec de vraies valeurs, parce que les pièces s'assemblent plus facilement quand on les a vues assemblées une fois.
@@ -211,6 +226,8 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 ### Restauration depuis un autre dépôt BombVault {#restore-from-another-bombvault-repo}
 
 Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. Cette carte ne sert qu'une fois : elle ouvre une session, restaure ce que vous choisissez et oublie l'autre instance. Si vous voulez plutôt un arrangement permanent, où cette machine récupère selon un planning les instantanés d'une autre instance dans son propre dépôt, c'est l'onglet **Rapatriement** de la page **Instances**.
+
+Un conteneur dont le réseau n'existe pas sur ce serveur, par exemple un réseau `br0` d'Unraid sur un hôte Docker ordinaire, affiche un choix de réseau sous sa ligne. BombVault le crée sur le réseau que tu choisis, avec ses autres réseaux. L'adresse IP fixe et l'adresse MAC appartenaient à l'ancien réseau et disparaissent, c'est donc le nouveau réseau qui les attribue.
 
 ## Kit de récupération de clé de chiffrement
 

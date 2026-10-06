@@ -24,13 +24,15 @@ Ajustes, Externo empieza con **Destinos**: los lugares a los que van las copias 
 
 **Añadir destino** abre un asistente de cinco pasos:
 
-1. **¿Adónde deben ir las copias?** Cada servicio aparece con su logotipo, en cuatro grupos: servicios de almacenamiento con buckets S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 y otros), tu propio servidor S3 (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), tu propio servidor y recursos compartidos (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, una ruta montada) y almacenamiento en la nube (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud y el resto de lo que admite rclone). Cada uno indica lo adecuado que es para copias de seguridad: las unidades en la nube se ralentizan con muchas peticiones, así que la primera copia y la purga tardan más allí.
+1. **¿Adónde deben ir las copias?** Cada servicio aparece con su logotipo, en cuatro grupos: servicios de almacenamiento con buckets S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 y otros), tu propio servidor S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), tu propio servidor y recursos compartidos (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, una ruta montada) y almacenamiento en la nube (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud y el resto de lo que admite rclone). Cada uno indica lo adecuado que es para copias de seguridad: las unidades en la nube se ralentizan con muchas peticiones, así que la primera copia y la purga tardan más allí.
 2. **Iniciar sesión en**. Los campos dependen del servicio: una clave de acceso para S3, un usuario y una contraseña para WebDAV y SMB, una contraseña de aplicación cuando la verificación en dos pasos bloquea la normal, la clave SSH pública de BombVault para SFTP y el Storage Box, o un token para los servicios que inician sesión a través de un navegador. Para estos, el asistente muestra un comando `rclone authorize` que se ejecuta en un ordenador con navegador; el token que imprime se pega en el campo. **Probar conexión** comprueba el inicio de sesión antes de guardar nada.
 3. **Elige una carpeta.** El asistente enumera las carpetas del destino, con **Nueva carpeta** para crear una y el espacio libre cuando el servicio lo indica. Una carpeta vacía es lo más seguro.
 4. **Protección contra borrado.** El asistente dice con claridad lo que puede hacer el servicio. Un rest-server en modo append-only rechaza el borrado, y la prueba de manipulación lo comprueba. Un bucket S3 puede conservar versiones antiguas con versionado y object lock, algo que BombVault todavía no puede comprobar. Una unidad en la nube no puede rechazar el borrado en absoluto: quien entre en el servidor entra también en esa copia. Activa **Inmutable (append-only)** solo donde el otro extremo rechace de verdad el borrado; BombVault no purga nunca allí.
 5. **Para una emergencia.** El kit de recuperación enumera cada destino con el repositorio de cada dominio que hay debajo. El inicio de sesión vuelve con la copia de los ajustes de BombVault; en una instalación limpia sin ella, configura el destino de nuevo en el mismo sitio.
 
 Los servicios S3 usan el backend S3 propio de restic, lo que permite aplicar una clase de almacenamiento y object lock. Todos los demás servicios pasan por el rclone que incluye BombVault, y su remoto aparece entonces en el rclone.conf de Ajustes, Acceso a la nube. Una exportación de ajustes incluye los destinos; con las credenciales incluidas, también su inicio de sesión.
+
+Un servidor receptor que ejecuta otra instancia de tu grupo aparece en el asistente en **De tu grupo**; consulta [Servidor receptor](#receiving-server).
 
 El destino externo que un dominio crea a partir de un destino toma el nombre del destino, su ubicación, ubicación, credenciales, clase de almacenamiento e interruptor de inmutable. Su retención, compresión y presupuesto de crecimiento siguen siendo por dominio, y su ubicación no se puede mover porque ahí está el repositorio del dominio. **Añadir un destino solo para este dominio**, bajo cada dominio, sigue aceptando una URL de repositorio escrita a mano.
 
@@ -162,6 +164,19 @@ Activa el conmutador **Receptor** en Ajustes para revelar una pestaña **Recepto
 
 El Receptor es estrictamente de solo lectura. Nunca escribe en el repositorio recibido, de modo que nunca puede romper la garantía append-only en la que confía el emisor.
 
+### Servidor receptor {#receiving-server}
+
+La máquina receptora también puede ejecutar el rest-server al que copian las demás. **Configurar servidor receptor**, arriba en la pestaña **Receptor**, pide una carpeta en un recurso compartido, con **Nueva carpeta** para crear una, y un puerto (8000, salvo que lo use otro contenedor). BombVault entonces:
+
+1. se niega a seguir si ya existe un contenedor llamado `rest-server` o si otro contenedor ocupa el puerto;
+2. descarga `restic/rest-server` y lo inicia a través del socket de Docker en modo append-only, con repositorios privados y un archivo de inicios de sesión en la carpeta;
+3. escribe su plantilla de Unraid en la unidad flash, de modo que el contenedor siga siendo editable en la pestaña Docker, u ofrece la plantilla como descarga cuando la unidad flash no está al alcance;
+4. ejecuta la prueba de manipulación contra él y muestra si rechaza los borrados.
+
+Las instancias de tu grupo encuentran entonces el servidor en el asistente de destinos, en **De tu grupo**, con el nombre de la máquina receptora. Cada instancia recibe un inicio de sesión propio la primera vez que elige el servidor y solo escribe en su propia carpeta allí. La tarjeta enumera esos inicios de sesión, y **Revocar acceso** quita uno; lo que esa instancia ya copió se queda en la carpeta. La configuración crea además un inicio de sesión para alguien ajeno al grupo, cuya contraseña la tarjeta muestra una sola vez.
+
+Una instancia que solo llega a la máquina receptora a través del relay no puede usar el servidor, porque el relay no transporta copias de seguridad. Añade antes la dirección de la máquina receptora en **Ajustes → Emparejamiento**. Cuando BombVault se ejecuta en una dirección IP propia (en br0, por ejemplo), rellena **Dirección para los socios**, porque el servidor escucha en la dirección del host.
+
 ## Ejemplo completo: dos equipos Unraid, de principio a fin
 
 Lo anterior describe las piezas. Esto es una instalación completa con valores reales, porque las piezas se montan mejor cuando uno las ha visto montadas una vez.
@@ -211,6 +226,8 @@ Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstru
 ### Restaurar desde otro repo de BombVault {#restore-from-another-bombvault-repo}
 
 Una tarjeta aparte en la pestaña **Recuperación** abre el repo de una instancia *distinta* de BombVault (un recurso compartido montado bajo `/mnt`, o una URL remota) con **la `APP_KEY` de esa instancia**, en una sesión única y de solo lectura. Explora los contenedores, VMs y conjuntos de archivos almacenados ahí, elige una instantánea y restáurala, y el objeto restaurado se convierte en un contenedor, VM o conjunto de archivos local normal. Nunca se escribe nada en el otro repo, y tus propios ajustes de copia quedan intactos (la sesión vive en memoria y expira por sí sola). Mover un contenedor del servidor A al servidor B ya no significa reapuntar los ajustes de tu repo y revertirlos después. Esta tarjeta es de un solo uso: abre una sesión, restaura lo que eliges y se olvida de la otra instancia. Si en cambio quieres un arreglo permanente, en el que esta máquina trae según una programación las instantáneas de otra instancia a su propio repositorio, eso es la pestaña **Recogida** de la página **Instancias**.
+
+Un contenedor cuya red no existe en este servidor, como una red `br0` de Unraid en un host Docker normal, muestra un selector de red bajo su fila. BombVault lo crea en la red que elijas, junto con sus otras redes. La IP fija y la dirección MAC pertenecían a la red antigua y se descartan, así que las asigna la nueva red.
 
 ## Kit de recuperación de la clave de cifrado
 

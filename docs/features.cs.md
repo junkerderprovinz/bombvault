@@ -71,6 +71,7 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 
 ## Přehled, ověření a monitorování
 
+- **Pozastavení z karty.** Každá karta kontejneru, VM a sady složek má **Pozastavit plán**, které položku vyjme z plánu i ze Zálohy všeho, a **Obnovit plán**, které ji vrátí. Nastavuje stejný přepínač jako **Zahrnout do plánu**, takže oba vždy souhlasí. Pozastavená položka nese šedý odznak **Plán pozastaven** a **Zálohovat nyní** dál funguje.
 - **Stav ochrany (RPO).** Přehled zobrazuje zelený / oranžový / červený indikátor na doménu, porovnávající poslední úspěšnou zálohu s jejím plánem, takže záloha po termínu zčervená místo toho, aby se skryla v logu.
 - **Heatmapa stavu záloh.** Kalendář ve stylu příspěvků na GitHubu s denními výsledky záloh na doménu, s přepínačem Kontejnery / VMs / Flash / Autozáloha / Složky.
 - **Časování běhů všude.** Každá položka historie běhů uvádí `start, end (duration)` a každý kontejner a VM nese vlastní seznam **Nedávné běhy** na své stránce.
@@ -125,7 +126,8 @@ BombVault má vestavěný server MCP, přes který asistent jako Claude Code neb
 ## Aplikace a doplňky {#apps}
 
 - **Aplikace pro Android.** Všechny servery vaší skupiny v telefonu, s protokolem aktivit všech z nich na jedné obrazovce. Se skupinou se spáruje QR kódem a každý server otevře rovnou přihlášený. Viz [Aplikace pro Android](android.md).
-- **Nastavení, Aplikace.** Stránka s kartou pro každý doplněk. Karta ParleyPortu nabízí jeho šablonu pro Unraid, zkopíruje příkaz Dockeru, který ho spustí, a vede na jeho repozitář a na nastavení relay v Párování. Karta BombVault Widgetu nabízí jeho šablonu a repozitář a nainstaluje nebo odebere plugin přes SSH spojení s hostitelem.
+- **Přijímací server.** Stroj, který přijímá kopie mimo lokalitu, může jedním kliknutím spustit rest-server v režimu append-only a nabídnout ho ostatním instancím vaší skupiny, každé s vlastním přihlášením. Viz [Přijímací server](offsite-recovery.md#receiving-server).
+- **Nastavení, Aplikace.** Stránka, která začíná aplikací pro Android, jejím APK pro vydání, které server provozuje, a QR kódem k němu, a pak následuje karta pro každý doplněk. Karta ParleyPortu nabízí jeho šablonu pro Unraid, zkopíruje příkaz Dockeru, který ho spustí, a vede na jeho repozitář a na nastavení relay v Párování. Karta BombVault Widgetu nabízí jeho šablonu a repozitář a nainstaluje nebo odebere plugin přes SSH spojení s hostitelem.
 - **BombVault Widget.** Dlaždice na Dashboardu Unraidu s protokolem aktivit BombVaultu a příštím naplánovaným během. Bez SSH spojení s hostitelem vám karta dá adresu `.plg` k instalaci v **Plugins, Install Plugin** a plugin se tam dá odebrat jako kterýkoli jiný.
 - **Vložitelný protokol aktivit.** Vygenerujte v **Nastavení, Integrace** token jen pro čtení a dostanete adresu pro jakýkoli dashboard, který umí zobrazit iframe, například Homepage, Organizr nebo Heimdall: malou stránku jen s živým protokolem aktivit. Token zpřístupní tento protokol a nic jiného a **Zakázat** ho okamžitě odvolá. Vložená stránka je jen v angličtině.
 

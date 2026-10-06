@@ -272,6 +272,9 @@ type Service struct {
 	rcloneOnce   sync.Once
 	rclone       *remotes.Rclone
 	rcloneConfMu sync.Mutex
+	// receiverMu keeps two partners asking for a login at once from
+	// rewriting the receiver's htpasswd file over each other.
+	receiverMu sync.Mutex
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
@@ -7879,6 +7882,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	// match); docker.sock, /etc/localtime, /dev/dri and every non-appdata bind are
 	// left verbatim (they carry no backed-up data). See #125.
 	if len(bindRemap) > 0 {
+		bindRemap = s.remapSourceBinds(in.HostConfig.Binds, restoreDirs, bindRemap)
 		in.HostConfig.Binds = rewriteBinds(in.HostConfig.Binds, bindRemap)
 		in.Mounts = rewriteMountSources(in.Mounts, bindRemap)
 		xml = template.RewriteHostPaths(xml, bindRemap)
@@ -13038,7 +13042,7 @@ func snapshotDiskSources(disks, snapshotPaths []string) ([]string, error) {
 //     treated as "cannot prove insufficient" and does not block (the mount check
 //     is the primary defence); only a proven shortfall aborts.
 func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, snapshotID, destDir string) error {
-	if !s.destinationMounted(destDir) {
+	if !s.restoreTargetMounted(destDir) {
 		return destinationRefusal("restore destination %q is not on a mounted pool or share; a VM disk restored there would be written into the host's RAM and crash it. Choose a destination folder on real storage and retry", s.toHostPath(destDir))
 	}
 	_, wantBytes, err := s.engine.StatsRestoreSize(ctx, ref.repo, snapshotID, ref.mode)
@@ -13067,7 +13071,7 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 // so a normal cross-Unraid restore never regresses.
 func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repoRef, snapshotID string, appdataPaths []string) error {
 	for _, p := range appdataPaths {
-		if !s.destinationMounted(p) {
+		if !s.restoreTargetMounted(p) {
 			return destinationRefusal("appdata destination %q is not on a mounted pool or share on this system — the source backed it up from a pool this host does not have, so restoring would write it to the wrong place. Create or mount that share here, then retry", s.toHostPath(p))
 		}
 	}
@@ -13184,6 +13188,46 @@ func (s *Service) containerAppdataRemap(destBase string, appdataPaths []string) 
 		}
 	}
 	return dirs, remap
+}
+
+// remapSourceBinds adds the binds of a container backed up on a server with
+// another host root to remap. remap is keyed by this server's host path for
+// each appdata folder, which is the source's bind only when both servers map
+// the same root, such as /mnt on two Unraid boxes. A bind it misses is matched
+// by its path from the appdata folder down, such as appdata/web, when exactly
+// one bind ends in it.
+func (s *Service) remapSourceBinds(binds []string, dirs []backup.RestoreDir, remap map[string]string) map[string]string {
+	hosts := make([]string, 0, len(binds))
+	for _, b := range binds {
+		if h, _, ok := strings.Cut(b, ":"); ok {
+			hosts = append(hosts, path.Clean(h))
+		}
+	}
+	out := maps.Clone(remap)
+	add := func(rel, dest string) {
+		var match []string
+		for _, h := range hosts {
+			if strings.HasSuffix(h, "/appdata/"+rel) {
+				match = append(match, h)
+			}
+		}
+		if len(match) == 1 && out[match[0]] == "" {
+			out[match[0]] = s.toHostPath(dest)
+		}
+	}
+	for _, d := range dirs {
+		_, rel := appdataRelPath(path.Clean(d.Subtree))
+		if rel == "" {
+			continue
+		}
+		add(rel, d.Target)
+		// A bind on the container's own folder while the backup narrowed to a
+		// folder inside it.
+		if rootName, sub, ok := strings.Cut(rel, "/"); ok {
+			add(rootName, strings.TrimSuffix(d.Target, "/"+sub))
+		}
+	}
+	return out
 }
 
 // rewriteBinds points a recreated container's docker binds at the remapped appdata

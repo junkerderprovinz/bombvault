@@ -6,10 +6,12 @@ import {
   draftMakeFolder,
   getProviders,
   getVMSSH,
+  groupReceiverLogin,
   type Backend,
   type BackendOption,
   type Destination,
   type DestinationDraft,
+  type GroupReceiver,
   type Provider,
 } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
@@ -25,6 +27,7 @@ import { IconFolder } from "../navGlyphs";
 import { SelectField } from "../SelectField";
 import { TestButton, VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
+import { GroupReceiverPicker } from "./GroupReceiverPicker";
 import { ProviderPicker, providerName } from "./ProviderPicker";
 
 const FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
@@ -106,6 +109,8 @@ export function DestinationWizard({ onDone, onCancel }: { onDone: (d: Destinatio
   const [backends, setBackends] = useState<Record<string, Backend>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [picked, setPicked] = useState<Provider | null>(null);
+  // The member whose receiver filled the rest-server form, if one did.
+  const [fromMember, setFromMember] = useState<string | undefined>(undefined);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
   const [showMore, setShowMore] = useState(false);
@@ -162,6 +167,7 @@ export function DestinationWizard({ onDone, onCancel }: { onDone: (d: Destinatio
   }
 
   function pick(p: Provider) {
+    setFromMember(undefined);
     setPicked(p);
     setSettings({});
     setName(providerName(p, t));
@@ -171,6 +177,25 @@ export function DestinationWizard({ onDone, onCancel }: { onDone: (d: Destinatio
     setFree(null);
     setImmutable(false);
     setStorageClass("");
+  }
+
+  async function pickFromGroup(r: GroupReceiver) {
+    const rest = providers.find((p) => p.route === "rest");
+    if (!rest) return;
+    try {
+      const res = await groupReceiverLogin(r.memberId);
+      if (!res.ok || !res.login) {
+        push(res.error ?? t("dest.loadError"), "fail");
+        return;
+      }
+      const login = res.login;
+      pick(rest);
+      setFromMember(r.memberId);
+      setName(login.name);
+      setSettings({ url: login.url, user: login.user, pass: login.password });
+    } catch (e) {
+      push(failure(e, "dest.loadError"), "fail");
+    }
   }
 
   async function loadFolders(path: string[]) {
@@ -302,7 +327,8 @@ export function DestinationWizard({ onDone, onCancel }: { onDone: (d: Destinatio
       <section className="flex flex-col gap-3">
         <span className={STEP}>{t("dest.step.where")}</span>
         {loadError && <p className="text-xs text-statusFail">{loadError}</p>}
-        <ProviderPicker providers={providers} picked={picked?.id} onPick={pick} />
+        <GroupReceiverPicker picked={fromMember} onPick={(r) => void pickFromGroup(r)} />
+        <ProviderPicker providers={providers} picked={fromMember ? undefined : picked?.id} onPick={pick} />
         <p className="text-xs text-carbon-textMuted">{t("dest.ownConf")}</p>
       </section>
 

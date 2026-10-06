@@ -71,6 +71,7 @@ BombVault est simple par défaut et profond quand vous en avez besoin. L'interfa
 
 ## Analyse, vérification et surveillance
 
+- **Pause depuis la carte.** Chaque carte de conteneur, de VM et de jeu de dossiers propose **Suspendre le planning**, qui retire l'élément du planning et de la Sauvegarde complète, et **Reprendre le planning** pour le remettre. Elle agit sur le même commutateur que **Inclure dans le planning**, les deux concordent donc toujours. Un élément en pause porte un badge gris **Planning suspendu**, et **Sauvegarder maintenant** fonctionne toujours.
 - **État de protection (RPO).** Le tableau de bord affiche un indicateur vert / orange / rouge par domaine, comparant la dernière sauvegarde réussie à son planning, de sorte qu'une sauvegarde en retard devient rouge au lieu de se cacher dans un journal.
 - **Carte de chaleur de santé des sauvegardes.** Un calendrier de style contributions GitHub des résultats de sauvegarde par jour et par domaine, avec un bascule Conteneurs / VMs / Flash / Auto-sauvegarde / Dossiers.
 - **Chronométrage des exécutions partout.** Chaque entrée d'historique d'exécution se lit `début, fin (durée)`, et chaque conteneur et VM porte sa propre liste **Exécutions récentes** sur sa page.
@@ -125,7 +126,8 @@ BombVault intègre un serveur MCP, grâce auquel un assistant comme Claude Code 
 ## Applications et compagnons {#apps}
 
 - **Application Android.** Tous les serveurs de votre groupe sur votre téléphone, avec le journal d'activité de chacun d'eux sur un seul écran. Elle rejoint votre groupe par code QR et ouvre chaque serveur avec la session déjà ouverte. Voir [Application Android](android.md).
-- **Paramètres, Applications.** Une page avec une carte pour chaque compagnon. La carte de ParleyPort propose son modèle Unraid, copie la commande Docker qui le démarre, et mène à son dépôt ainsi qu'aux réglages du relais sous Appairage. La carte du BombVault Widget propose son modèle et son dépôt, et installe ou supprime le plugin via la connexion SSH à l'hôte.
+- **Serveur récepteur.** La machine qui reçoit les copies hors site peut démarrer en un clic un rest-server en mode append-only et l'offrir aux autres instances de votre groupe, chacune avec son propre identifiant. Voir [Serveur récepteur](offsite-recovery.md#receiving-server).
+- **Paramètres, Applications.** Une page qui commence par l'application Android, son APK pour la version que le serveur exécute et un code QR pour elle, suivie d'une carte pour chaque compagnon. La carte de ParleyPort propose son modèle Unraid, copie la commande Docker qui le démarre, et mène à son dépôt ainsi qu'aux réglages du relais sous Appairage. La carte du BombVault Widget propose son modèle et son dépôt, et installe ou supprime le plugin via la connexion SSH à l'hôte.
 - **BombVault Widget.** Une tuile sur le tableau de bord d'Unraid avec le journal d'activité de BombVault et la prochaine exécution planifiée. Sans connexion SSH à l'hôte, la carte vous donne l'adresse `.plg` à installer sous **Plugins, Install Plugin**, et le plugin peut y être supprimé comme n'importe quel autre.
 - **Journal d'activité intégrable.** Générez un jeton en lecture seule sous **Paramètres, Intégrations** et vous obtenez une adresse pour tout tableau de bord capable d'afficher une iframe, comme Homepage, Organizr ou Heimdall : une petite page avec seulement le journal d'activité en direct. Le jeton donne accès à ce journal et à rien d'autre, et **Désactiver** le révoque immédiatement. La page intégrée n'existe qu'en anglais.
 

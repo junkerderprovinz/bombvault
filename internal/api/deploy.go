@@ -3,10 +3,9 @@ package api
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"strings"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 // DeploySnippet is a one-time recipe for an append-only rest-server holding a
@@ -23,6 +22,18 @@ type DeploySnippet struct {
 
 // bcryptDeployCost is the work factor of the generated htpasswd hash.
 const bcryptDeployCost = 12
+
+// What every rest-server recipe runs, and what the receiver BombVault sets up
+// runs too.
+const (
+	restServerName          = "rest-server"
+	restServerImage         = "restic/rest-server:0.14.0"
+	restServerOptions       = "--append-only --private-repos --htpasswd-file /data/.htpasswd"
+	restServerIcon          = "https://raw.githubusercontent.com/restic/restic/master/doc/logo/logo.png"
+	restServerDataDefault   = "/mnt/user/appdata/rest-server"
+	restServerPort          = 8000
+	restServerContainerPort = 8000
+)
 
 // tlsGuidance ends each recipe: restic sends the htpasswd credential as HTTP
 // Basic auth, so over plain http it travels in the clear.
@@ -53,11 +64,10 @@ func buildDeploySnippet(domain string) (DeploySnippet, error) {
 		return DeploySnippet{}, err
 	}
 	user := "bombvault-" + domain
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptDeployCost)
+	htpasswd, err := htpasswdLine(user, password)
 	if err != nil {
-		return DeploySnippet{}, fmt.Errorf("hash password: %w", err)
+		return DeploySnippet{}, err
 	}
-	htpasswd := user + ":" + string(hash)
 
 	// A placeholder address, never a real one.
 	repoHint := fmt.Sprintf("# repo URL for BombVault: rest:http://192.168.x.x:8000/%s/%s", user, domain)
@@ -66,10 +76,10 @@ func buildDeploySnippet(domain string) (DeploySnippet, error) {
 echo '%s' >> /path/on/storage-box/restic/.htpasswd
 
 # 2) start the append-only rest-server:
-docker run -d --name rest-server -p 8000:8000 -v /path/on/storage-box/restic:/data -e OPTIONS="--append-only --private-repos --htpasswd-file /data/.htpasswd" restic/rest-server:0.14.0
+docker run -d --name rest-server -p 8000:8000 -v /path/on/storage-box/restic:/data -e OPTIONS="%s" %s
 
 %s
-%s`, htpasswd, tlsGuidance, repoHint)
+%s`, htpasswd, restServerOptions, restServerImage, tlsGuidance, repoHint)
 
 	compose := fmt.Sprintf(`# 1) create the append-only credential on the storage box:
 echo '%s' >> /path/on/storage-box/restic/.htpasswd
@@ -77,18 +87,18 @@ echo '%s' >> /path/on/storage-box/restic/.htpasswd
 # 2) docker-compose.yml for the append-only rest-server:
 services:
   rest-server:
-    image: restic/rest-server:0.14.0
+    image: %s
     container_name: rest-server
     ports:
       - "8000:8000"
     environment:
-      OPTIONS: "--append-only --private-repos --htpasswd-file /data/.htpasswd"
+      OPTIONS: "%s"
     volumes:
       - /path/on/storage-box/restic:/data
     restart: unless-stopped
 
 %s
-%s`, htpasswd, tlsGuidance, repoHint)
+%s`, htpasswd, restServerImage, restServerOptions, tlsGuidance, repoHint)
 
 	return DeploySnippet{
 		User:      user,
@@ -108,24 +118,34 @@ services:
 // templates on the flash drive and the credential is shown only once. All notes
 // go in the leading comment: nothing but whitespace may follow the root element.
 func unraidTemplate(htpasswd, repoHint string) string {
-	// The XML declaration has to come before the comment.
-	return fmt.Sprintf(`<?xml version="1.0"?>
-<!--
-  1) create the append-only credential on the storage box FIRST:
-     echo '%s' >> /mnt/user/appdata/rest-server/.htpasswd
+	note := fmt.Sprintf(`  1) create the append-only credential on the storage box FIRST:
+     echo '%s' >> %s/.htpasswd
 
   2) save this file on the storage box as
-     /boot/config/plugins/dockerMan/templates-user/my-rest-server.xml
-     then Docker tab, Add Container, and pick "rest-server" from the
+     /boot/config/plugins/dockerMan/templates-user/my-%s.xml
+     then Docker tab, Add Container, and pick "%s" from the
      template dropdown. Every field below is editable there.
 
   3) %s
 
-  4) %s
+  4) %s`, xmlCommentSafe(htpasswd), restServerDataDefault, restServerName, restServerName,
+		xmlCommentSafe(noteText(tlsGuidance)), xmlCommentSafe(noteText(repoHint)))
+	return restServerTemplate(restServerName, restServerPort, restServerDataDefault, note)
+}
+
+// restServerTemplate renders an Unraid container template for an append-only
+// rest-server called name that publishes port and keeps its repositories in
+// dataPath on the host. note fills the leading comment and has to be safe
+// inside one.
+func restServerTemplate(name string, port int, dataPath, note string) string {
+	// The XML declaration has to come before the comment.
+	return fmt.Sprintf(`<?xml version="1.0"?>
+<!--
+%s
 -->
 <Container version="2">
-  <Name>rest-server</Name>
-  <Repository>restic/rest-server:0.14.0</Repository>
+  <Name>%s</Name>
+  <Repository>%s</Repository>
   <Registry>https://hub.docker.com/r/restic/rest-server</Registry>
   <Network>bridge</Network>
   <Privileged>false</Privileged>
@@ -133,12 +153,20 @@ func unraidTemplate(htpasswd, repoHint string) string {
   <Overview>Append-only restic REST server. Receives immutable off-site copies from BombVault: the DESTINATION refuses deletes and overwrites, so a compromised or misconfigured sender cannot reach the copy that is meant to be the last line of defence.</Overview>
   <Category>Backup:</Category>
   <WebUI/>
-  <Icon>https://raw.githubusercontent.com/restic/restic/master/doc/logo/logo.png</Icon>
-  <Config Name="Port" Target="8000" Default="8000" Mode="tcp" Description="Port BombVault connects to." Type="Port" Display="always" Required="true" Mask="false">8000</Config>
-  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/rest-server" Mode="rw" Description="Where the repositories and the .htpasswd file live." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/rest-server</Config>
-  <Config Name="OPTIONS" Target="OPTIONS" Default="--append-only --private-repos --htpasswd-file /data/.htpasswd" Description="Leave --append-only in place: it is what makes this an immutable destination. Removing it turns the box back into an ordinary share." Type="Variable" Display="always" Required="true" Mask="false">--append-only --private-repos --htpasswd-file /data/.htpasswd</Config>
+  <Icon>%s</Icon>
+  <Config Name="Port" Target="%d" Default="%d" Mode="tcp" Description="Port BombVault connects to." Type="Port" Display="always" Required="true" Mask="false">%d</Config>
+  <Config Name="Data" Target="/data" Default="%s" Mode="rw" Description="Where the repositories and the .htpasswd file live." Type="Path" Display="always" Required="true" Mask="false">%s</Config>
+  <Config Name="OPTIONS" Target="OPTIONS" Default="%s" Description="Leave --append-only in place: it is what makes this an immutable destination. Removing it turns the box back into an ordinary share." Type="Variable" Display="always" Required="true" Mask="false">%s</Config>
 </Container>
-`, xmlCommentSafe(htpasswd), xmlCommentSafe(noteText(tlsGuidance)), xmlCommentSafe(noteText(repoHint)))
+`, note, xmlText(name), restServerImage, restServerIcon,
+		restServerContainerPort, restServerPort, port, restServerDataDefault, xmlText(dataPath), restServerOptions, restServerOptions)
+}
+
+// xmlText escapes s for an XML element or attribute.
+func xmlText(s string) string {
+	var b strings.Builder
+	_ = xml.EscapeText(&b, []byte(s))
+	return b.String()
 }
 
 // noteText strips the "# " the shared notes carry for the shell snippets.

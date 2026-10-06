@@ -4,6 +4,7 @@
 
 ## การติดตั้งแอป {#install}
 
+- **การตั้งค่า, แอป:** การ์ดของแอป Android มี APK ของรุ่นที่เซิร์ฟเวอร์ของคุณรันอยู่ พร้อมคิวอาร์โค้ดให้สแกนจากโทรศัพท์
 - **APK:** ทุกรุ่นมีไฟล์ `bombvault-android.apk` อยู่ในหน้ารุ่นนั้น และ [ลิงก์นี้](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) จะดาวน์โหลดบิลด์ล่าสุดเสมอ ต้องใช้ Android 10 ขึ้นไป และ Android จะถามหนึ่งครั้งว่าแอปที่คุณใช้เปิดไฟล์ได้รับอนุญาตให้ติดตั้งแอปหรือไม่
 - **Google Play:** แอปอยู่ในการทดสอบแบบปิดจนกว่าจะเผยแพร่สู่สาธารณะได้ Google Play จะแสดงแอปจากบัญชีนักพัฒนาใหม่ก็ต่อเมื่อมีผู้ทดสอบอย่างน้อย 12 คนติดตั้งแอปไว้ต่อเนื่อง 14 วัน หากอยากช่วย ให้เข้าร่วม [กลุ่มผู้ทดสอบ](https://groups.google.com/g/arrowloop-testers) เปิด [หน้าทดสอบ](https://play.google.com/apps/testing/bombvault.halleluja.design) แตะ **เป็นผู้ทดสอบ** แล้วติดตั้ง BombVault จาก Google Play
 - **F-Droid:** จะตามมาภายหลัง

@@ -24,13 +24,15 @@ Cài đặt, Ngoài site bắt đầu bằng **Đích sao lưu**: những nơi c
 
 **Thêm đích** mở một trình hướng dẫn gồm năm bước:
 
-1. **Bản sao lưu nên đi đâu?** Mỗi dịch vụ được liệt kê cùng logo, trong bốn nhóm: dịch vụ lưu trữ có bucket S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 và các dịch vụ khác), máy chủ S3 của riêng bạn (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), máy chủ và các share của riêng bạn (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, một đường dẫn đã mount) và lưu trữ đám mây (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud và phần còn lại mà rclone hỗ trợ). Mỗi dịch vụ cho biết nó phù hợp với sao lưu đến đâu: ổ đám mây chậm đi khi có nhiều yêu cầu, nên lần sao lưu đầu tiên và việc cắt tỉa ở đó mất nhiều thời gian hơn.
+1. **Bản sao lưu nên đi đâu?** Mỗi dịch vụ được liệt kê cùng logo, trong bốn nhóm: dịch vụ lưu trữ có bucket S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 và các dịch vụ khác), máy chủ S3 của riêng bạn (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), máy chủ và các share của riêng bạn (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, một đường dẫn đã mount) và lưu trữ đám mây (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud và phần còn lại mà rclone hỗ trợ). Mỗi dịch vụ cho biết nó phù hợp với sao lưu đến đâu: ổ đám mây chậm đi khi có nhiều yêu cầu, nên lần sao lưu đầu tiên và việc cắt tỉa ở đó mất nhiều thời gian hơn.
 2. **Đăng nhập vào** dịch vụ đã chọn. Các trường tùy theo dịch vụ: khóa truy cập cho S3, tên người dùng và mật khẩu cho WebDAV và SMB, mật khẩu ứng dụng ở nơi xác thực hai yếu tố chặn mật khẩu thông thường, khóa SSH công khai của BombVault cho SFTP và Storage Box, hoặc token cho các dịch vụ đăng nhập qua trình duyệt. Với những dịch vụ này, trình hướng dẫn hiển thị một lệnh `rclone authorize` để chạy trên máy tính có trình duyệt; token mà lệnh in ra được dán vào trường. **Kiểm tra kết nối** xác minh việc đăng nhập trước khi bất cứ thứ gì được lưu.
 3. **Chọn một thư mục.** Trình hướng dẫn liệt kê các thư mục trên đích sao lưu, có **Thư mục mới** để tạo một thư mục và dung lượng trống ở nơi dịch vụ báo cáo. Một thư mục trống là an toàn nhất.
 4. **Bảo vệ chống xóa.** Trình hướng dẫn nói thẳng dịch vụ làm được gì. Một rest-server ở chế độ append-only từ chối việc xóa, và kiểm tra can thiệp xác minh điều đó. Một bucket S3 có thể giữ các phiên bản cũ nhờ versioning và object lock, điều mà BombVault chưa thể kiểm tra. Một ổ đám mây hoàn toàn không thể từ chối việc xóa: ai vào được máy chủ thì cũng vào được bản sao đó. Chỉ bật **Bất biến (append-only)** ở nơi phía xa thực sự từ chối việc xóa; khi đó BombVault không bao giờ cắt tỉa ở đó.
 5. **Phòng khi khẩn cấp.** Bộ khôi phục liệt kê mọi đích sao lưu cùng kho của từng miền bên dưới nó. Thông tin đăng nhập quay lại cùng bản sao lưu cài đặt của BombVault; trên bản cài mới không có nó, hãy thiết lập lại đích sao lưu ở cùng chỗ.
 
 Các dịch vụ S3 chạy qua backend S3 riêng của restic, nhờ đó lớp lưu trữ và object lock mới áp dụng được. Mọi dịch vụ khác chạy qua rclone mà BombVault đi kèm, và remote của nó sau đó xuất hiện trong cấu hình rclone ở Cài đặt, Truy cập đám mây. Bản xuất cài đặt chứa các đích sao lưu; khi gộp cả thông tin xác thực thì nó cũng chứa thông tin đăng nhập của chúng.
+
+Một máy chủ nhận do phiên bản khác trong nhóm của bạn chạy xuất hiện trong trình hướng dẫn ở mục **Từ nhóm của bạn**; xem [Máy chủ nhận](#receiving-server).
 
 Một đích off-site của miền tạo từ đích sao lưu lấy tên, vị trí, thông tin xác thực, lớp lưu trữ và công tắc bất biến của đích sao lưu đó. Mức lưu giữ, nén và ngân sách tăng trưởng vẫn tính riêng theo từng miền, và vị trí của nó không thể di chuyển vì kho của miền nằm ở đó. **Thêm đích chỉ cho miền này** dưới mỗi miền vẫn nhận một URL kho gõ tay.
 
@@ -162,6 +164,19 @@ Bật công tắc **Bộ nhận** trong Cài đặt để hé lộ một tab **B
 
 Bên nhận nghiêm ngặt chỉ đọc. Nó không bao giờ ghi vào kho đã nhận, nên nó không bao giờ có thể phá vỡ bảo đảm append-only mà bên gửi dựa vào.
 
+### Máy chủ nhận {#receiving-server}
+
+Máy nhận cũng có thể chạy rest-server mà các máy khác sao chép tới. **Thiết lập máy chủ nhận** ở đầu tab Bộ nhận yêu cầu một thư mục trên một share, với **Thư mục mới** để tạo thư mục, và một cổng (8000 nếu không có container nào khác dùng). Sau đó BombVault:
+
+1. từ chối nếu đã có container tên `rest-server` hoặc container khác đang giữ cổng đó;
+2. kéo `restic/rest-server` và khởi động nó qua socket Docker ở chế độ append-only, với kho riêng tư và một tệp đăng nhập trong thư mục;
+3. ghi mẫu Unraid của nó vào ổ flash, để container vẫn chỉnh sửa được trong tab Docker, hoặc cho tải mẫu về khi không truy cập được ổ flash;
+4. chạy kiểm tra can thiệp lên nó và cho biết nó có từ chối xóa hay không.
+
+Các phiên bản trong nhóm của bạn sau đó tìm thấy máy chủ trong trình hướng dẫn đích sao lưu ở mục **Từ nhóm của bạn**, mang tên của máy nhận. Mỗi phiên bản nhận một đăng nhập riêng lần đầu chọn máy chủ và chỉ ghi vào thư mục của chính nó ở đó. Thẻ liệt kê các đăng nhập này, và **Thu hồi thông tin đăng nhập** gỡ bỏ một cái; những gì phiên bản đó đã sao chép vẫn nằm trong thư mục. Phần thiết lập cũng tạo một đăng nhập cho người ngoài nhóm, mật khẩu của nó được thẻ hiển thị đúng một lần.
+
+Một phiên bản chỉ tới được máy nhận qua relay thì không dùng được máy chủ này, vì relay không chuyển bản sao lưu. Hãy thêm địa chỉ của máy nhận ở Cài đặt, Ghép nối trước. Khi BombVault chạy trên một địa chỉ IP riêng (ví dụ trên br0), hãy điền **Địa chỉ cho đối tác**, vì máy chủ lắng nghe ở địa chỉ của máy chủ lưu trữ.
+
 ## Ví dụ hoàn chỉnh: hai máy Unraid, từ đầu đến cuối
 
 Phần trên mô tả các bộ phận. Đây là một thiết lập hoàn chỉnh với giá trị thật, vì các bộ phận dễ lắp hơn nhiều khi ta đã thấy chúng lắp xong một lần.
@@ -211,6 +226,8 @@ Một tab **Khôi phục** chuyên biệt dẫn một bản cài đặt mới ho
 ### Khôi phục từ một kho BombVault khác {#restore-from-another-bombvault-repo}
 
 Một thẻ riêng trên tab **Khôi phục** mở kho của một phiên bản BombVault *khác* (một share được gắn kết dưới `/mnt`, hoặc một URL từ xa) bằng **`APP_KEY` của phiên bản đó**, trong một phiên chỉ đọc, dùng một lần. Duyệt các container, VM và bộ tập tin được lưu ở đó, chọn một snapshot và khôi phục nó, và đối tượng đã khôi phục trở thành một container, VM hay bộ tập tin cục bộ bình thường. Không có gì bao giờ được ghi vào kho kia, và các cài đặt sao lưu của chính bạn giữ nguyên không bị đụng (phiên sống trong bộ nhớ và tự hết hạn). Chuyển một container từ máy chủ A sang máy chủ B không còn có nghĩa là trỏ lại cài đặt kho của bạn rồi hoàn nguyên chúng sau đó. Thẻ này chỉ dùng một lần: nó mở một phiên, khôi phục những gì bạn chọn, rồi quên phiên bản kia. Nếu bạn muốn một sắp xếp lâu dài thay vào đó, trong đó máy này lấy các snapshot của một phiên bản khác về kho của chính nó theo lịch, thì đó là tab **Kéo về** của trang **Phiên bản**.
+
+Một container có mạng không tồn tại trên máy chủ này, ví dụ mạng `br0` của Unraid trên một máy chủ Docker thông thường, sẽ hiện phần chọn mạng dưới hàng của nó. BombVault tạo container trên mạng bạn chọn, giữ nguyên các mạng khác. Địa chỉ IP cố định và địa chỉ MAC thuộc về mạng cũ nên bị bỏ, và mạng mới sẽ cấp chúng.
 
 ## Bộ khôi phục khóa mã hóa
 

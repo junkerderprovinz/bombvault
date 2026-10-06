@@ -24,13 +24,15 @@ Ustawienia, Poza siedzibą zaczynają się od sekcji **Miejsca docelowe**: to mi
 
 **Dodaj miejsce docelowe** otwiera kreator w pięciu krokach:
 
-1. **Dokąd mają trafiać kopie zapasowe?** Każda usługa jest wymieniona z logo, w czterech grupach: usługi pamięci z bucketami S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 i inne), własny serwer S3 (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), własny serwer i udziały (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, zamontowana ścieżka) oraz pamięć w chmurze (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud i reszta obsługiwana przez rclone). Przy każdej jest napisane, jak dobrze nadaje się do kopii zapasowych: dyski w chmurze zwalniają przy wielu żądaniach, więc pierwsza kopia i przycinanie trwają tam dłużej.
+1. **Dokąd mają trafiać kopie zapasowe?** Każda usługa jest wymieniona z logo, w czterech grupach: usługi pamięci z bucketami S3 (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 i inne), własny serwer S3 (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), własny serwer i udziały (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, zamontowana ścieżka) oraz pamięć w chmurze (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud i reszta obsługiwana przez rclone). Przy każdej jest napisane, jak dobrze nadaje się do kopii zapasowych: dyski w chmurze zwalniają przy wielu żądaniach, więc pierwsza kopia i przycinanie trwają tam dłużej.
 2. **Zaloguj się.** Pola zależą od usługi: klucz dostępu dla S3, użytkownik i hasło dla WebDAV i SMB, hasło aplikacji tam, gdzie uwierzytelnianie dwuskładnikowe blokuje zwykłe, publiczny klucz SSH BombVault dla SFTP i Storage Box albo token dla usług, które logują się przez przeglądarkę. Dla nich kreator pokazuje polecenie `rclone authorize` do uruchomienia na komputerze z przeglądarką; token, który wypisze, wklejasz w pole. **Testuj połączenie** sprawdza logowanie, zanim cokolwiek zostanie zapisane.
 3. **Wybierz folder.** Kreator wylistowuje foldery w miejscu docelowym, z przyciskiem **Nowy folder** do utworzenia nowego i wolnym miejscem, jeśli usługa je podaje. Najbezpieczniejszy jest pusty folder.
 4. **Ochrona przed usunięciem.** Kreator mówi wprost, co potrafi usługa. Rest-server w trybie append-only odmawia usuwania, a test manipulacji (tamper test) to sprawdza. Bucket S3 może zachowywać stare wersje dzięki wersjonowaniu i blokadzie obiektów, czego BombVault na razie nie umie sprawdzić. Dysk w chmurze w ogóle nie potrafi odmówić usunięcia: kto dostanie się na serwer, dostanie się też do tej kopii. Włącz **Niezmienne (append-only)** tylko tam, gdzie druga strona naprawdę odmawia usuwania; BombVault nigdy wtedy tam nie przycina.
 5. **Na wypadek awarii.** Zestaw odzyskiwania wylistowuje każde miejsce docelowe wraz z repozytorium każdej domeny pod nim. Logowanie wraca z kopią ustawień BombVault; na świeżej instalacji bez niej ustaw miejsce docelowe ponownie w tym samym miejscu.
 
 Usługi S3 działają przez własny backend S3 restic, dzięki czemu mogą działać klasa pamięci i blokada obiektów. Każda inna usługa działa przez rclone dostarczany z BombVault, a jej remote pojawia się wtedy w konfiguracji rclone w Ustawienia, Dostęp do chmury. Eksport ustawień zawiera miejsca docelowe; z dołączonymi danymi logowania zawiera także ich logowanie.
+
+Serwer odbiorczy, który uruchamia inna instancja Twojej grupy, pojawia się w kreatorze w sekcji **Z twojej grupy**; zobacz [Serwer odbiorczy](#receiving-server).
 
 Cel domeny utworzony z miejsca docelowego przejmuje jego nazwę, lokalizację, dane logowania, klasę pamięci i przełącznik niezmienności. Jego przechowywanie, kompresja i budżet wzrostu pozostają per domena, a lokalizacji nie da się przenieść, bo leży tam repozytorium domeny. **Dodaj cel tylko dla tej domeny** pod każdą domeną nadal przyjmuje ręcznie wpisany adres repozytorium.
 
@@ -162,6 +164,19 @@ Włącz przełącznik **Odbiornik** w Ustawieniach, aby odsłonić zakładkę **
 
 Odbiornik jest ściśle tylko do odczytu. Nigdy nie zapisuje do otrzymanego repozytorium, więc nigdy nie może naruszyć gwarancji append-only, na której polega nadawca.
 
+### Serwer odbiorczy {#receiving-server}
+
+Maszyna odbierająca może też uruchomić rest-server, na który kopiują pozostałe. **Skonfiguruj serwer odbiorczy** na górze zakładki Odbiornik prosi o folder na udziale, z przyciskiem **Nowy folder** do jego utworzenia, oraz o port (8000, chyba że używa go inny kontener). BombVault następnie:
+
+1. odmawia, jeśli kontener o nazwie `rest-server` już istnieje albo port zajmuje inny kontener;
+2. pobiera `restic/rest-server` i uruchamia go przez gniazdo Docker w trybie append-only, z prywatnymi repozytoriami i plikiem z danymi logowania w folderze;
+3. zapisuje jego szablon Unraid na flashu, dzięki czemu kontener można dalej edytować w zakładce Docker, albo oferuje szablon do pobrania, gdy flash jest poza zasięgiem;
+4. uruchamia na nim test manipulacji i pokazuje, czy serwer odrzuca usuwanie.
+
+Instancje Twojej grupy znajdują potem serwer w kreatorze miejsca docelowego w sekcji **Z twojej grupy**, pod nazwą maszyny odbierającej. Każda instancja dostaje własne dane logowania przy pierwszym wyborze serwera i zapisuje tam tylko do własnego folderu. Karta wymienia te dane logowania, a **Odwołaj login** odbiera jedne z nich; to, co instancja już skopiowała, zostaje w folderze. Konfiguracja tworzy też jedne dane logowania dla kogoś spoza grupy, których hasło karta pokazuje tylko raz.
+
+Instancja, która dociera do maszyny odbierającej tylko przez relay, nie może użyć serwera, bo relay nie przenosi kopii zapasowych. Najpierw dodaj adres maszyny odbierającej w Ustawieniach, Parowanie. Gdy BombVault działa pod własnym adresem IP (na przykład na br0), uzupełnij **Adres dla partnerów**, ponieważ serwer nasłuchuje na adresie hosta.
+
 ## Pełny przykład: dwie maszyny Unraid, od początku do końca
 
 Powyżej opisano części. To jest jedna kompletna konfiguracja z prawdziwymi wartościami, bo części łatwiej złożyć, gdy raz się je widziało złożone.
@@ -211,6 +226,8 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 ### Przywracanie z innego repozytorium BombVault {#restore-from-another-bombvault-repo}
 
 Osobna karta w zakładce **Odzyskiwanie** otwiera repozytorium *innej* instancji BombVault (udział zamontowany pod `/mnt` lub zdalny URL) za pomocą **`APP_KEY` tej instancji**, w jednorazowej sesji tylko do odczytu. Przeglądaj przechowywane tam kontenery, VM i zestawy plików, wybierz migawkę i przywróć ją, a przywrócony obiekt staje się normalnym lokalnym kontenerem, VM lub zestawem plików. Nic nigdy nie jest zapisywane do drugiego repozytorium, a Twoje własne ustawienia kopii pozostają nietknięte (sesja żyje w pamięci i wygasa sama). Przeniesienie kontenera z serwera A na serwer B nie oznacza przekierowywania ustawień repozytorium i cofania ich potem. Ta karta działa jednorazowo: otwiera sesję, przywraca to, co wybierzesz, i zapomina o drugiej instancji. Jeśli zamiast tego chcesz stałego układu, w którym ta maszyna według harmonogramu pobiera migawki innej instancji do własnego repozytorium, służy do tego zakładka **Pobieranie** na stronie **Instancje**.
+
+Kontener, którego sieci nie ma na tym serwerze, na przykład sieć `br0` z Unraida na zwykłym hoście Dockera, pokazuje pod swoim wierszem wybór sieci. BombVault tworzy go w wybranej sieci, razem z jego pozostałymi sieciami. Stały adres IP i adres MAC należały do starej sieci i przepadają, więc nada je nowa sieć.
 
 ## Zestaw odzyskiwania klucza szyfrowania
 

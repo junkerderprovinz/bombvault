@@ -165,7 +165,27 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 	// rest:http://host:8000/path becomes http://host:8000/path, without a
 	// trailing slash.
 	base := strings.TrimRight(strings.TrimPrefix(loc, "rest:"), "/")
+	verdict, err := probeAppendOnly(ctx, base, creds.RESTUser, creds.RESTPassword)
+	if err != nil {
+		return TamperVerdict{}, err
+	}
 
+	// Read the previous verdict before recording the new one, so a flip to
+	// unprotected alerts exactly once.
+	prev, hadPrev, _ := s.store.LatestTamperTestForTarget(domain, target.ID)
+	if recErr := s.store.RecordTamperTestForTarget(domain, target.ID, verdict.Protected, verdict.Detail); recErr != nil {
+		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
+	}
+	if hadPrev && prev.Protected && !verdict.Protected {
+		s.notifyProtectionLost(ctx, domain, verdict.Detail)
+	}
+	return verdict, nil
+}
+
+// probeAppendOnly sends two authenticated DELETEs for objects that cannot
+// exist to the rest-server repository at base and reads whether it refused
+// them. An answer that is no verdict is returned as an error.
+func probeAppendOnly(ctx context.Context, base, user, pass string) (TamperVerdict, error) {
 	// Two random object IDs, which cannot name real repo data. rest-server names
 	// every object by its full 64-hex ID; any other length is not an object path.
 	// Measured with and without --append-only:
@@ -189,7 +209,7 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 	protected := true
 	var details []string
 	for _, url := range probes {
-		p, detail, perr := tamperProbe(ctx, url, creds.RESTUser, creds.RESTPassword)
+		p, detail, perr := tamperProbe(ctx, url, user, pass)
 		if perr != nil {
 			// An unreachable server is neither protected nor unprotected.
 			return TamperVerdict{}, perr
@@ -205,16 +225,6 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 	verdict := TamperVerdict{Testable: true, Protected: protected}
 	if !protected {
 		verdict.Detail = strings.Join(details, "; ")
-	}
-
-	// Read the previous verdict before recording the new one, so a flip to
-	// unprotected alerts exactly once.
-	prev, hadPrev, _ := s.store.LatestTamperTestForTarget(domain, target.ID)
-	if recErr := s.store.RecordTamperTestForTarget(domain, target.ID, verdict.Protected, verdict.Detail); recErr != nil {
-		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
-	}
-	if hadPrev && prev.Protected && !verdict.Protected {
-		s.notifyProtectionLost(ctx, domain, verdict.Detail)
 	}
 	return verdict, nil
 }

@@ -156,6 +156,7 @@ var providers = []Provider{
 	ownS3("garage", "Garage", "Other", "IconGarage", false),
 	ownS3("seaweedfs", "SeaweedFS", "SeaweedFS", "IconSeaweedfs", false),
 	ownS3("rustfs", "RustFS", "Other", "rustfs", true),
+	ownS3("silo", "Silo", "Minio", "silo", true),
 	ownS3("ceph", "Ceph", "Ceph", "IconCeph", true),
 	ownS3("juicefs", "JuiceFS", "Other", "juicefs", false),
 	ownS3("versity", "Versity S3 Gateway", "Other", "versity", false),

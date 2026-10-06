@@ -76,6 +76,7 @@ import { IconDisclosure } from "../components/IconDisclosure";
 import { SNAPSHOT_MISSING } from "../lib/timeline";
 import { Timeline } from "../components/timeline/Timeline";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { PauseButton, PausedBadge } from "../components/SchedulePause";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
@@ -90,7 +91,15 @@ function formatTs(unix: number | null | undefined): string {
 }
 
 // FileSetEnabledToggle is the file-set copy of components/IncludeToggle.tsx.
-function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean }) {
+function FileSetEnabledToggle({
+  id,
+  initial,
+  onSaved,
+}: {
+  id: string;
+  initial: boolean;
+  onSaved?: (enabled: boolean) => void;
+}) {
   const { t } = useT();
   const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
@@ -107,6 +116,7 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
       const res = await patchFileSet(id, { enabled: next });
       if (res.ok) {
         setEnabled(next);
+        onSaved?.(next);
       } else {
         push(res.error ?? t("schedule.updateFailed"), "fail");
         setShake((n) => n + 1);
@@ -1092,6 +1102,7 @@ export function FileSetRow({
   restoreRequest,
   checks,
   onChecksChanged,
+  onEnabledSaved,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -1110,6 +1121,8 @@ export function FileSetRow({
   restoreRequest?: RestoreRequest;
   checks?: ItemChecks;
   onChecksChanged?: () => void;
+  /** Takes the include-in-schedule value the switch or the Pause button stored. */
+  onEnabledSaved?: (enabled: boolean) => void;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`files:${set.name}`];
@@ -1164,6 +1177,7 @@ export function FileSetRow({
               {set.name}
             </span>
             <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+            {!set.enabled && <PausedBadge />}
             {set.excludes.length > 0 && (
               <Badge tone="neutral" wrap>
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
@@ -1194,8 +1208,14 @@ export function FileSetRow({
 
         {/* Action badges in the top-right corner, as on the container card;
             the last backup sits beside the Backups trigger instead. Backup
-            comes first, since it is what the card is for. */}
-        <div className="ms-auto flex items-start gap-1.5 shrink-0 flex-wrap max-md:w-full max-md:justify-end">
+            leads Edit and Delete, since it is what the card is for. Pause
+            sits before it, because the forward action goes last. */}
+        <div className="ms-auto flex min-w-0 items-start justify-end gap-1.5 flex-wrap max-md:w-full">
+          <PauseButton
+            paused={!set.enabled}
+            save={(include) => patchFileSet(set.id, { enabled: include })}
+            onSaved={onEnabledSaved}
+          />
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
           {/* Just the verb: the card already names the set. files.editSet
               stays the dialog heading, where the set has to be named. */}
@@ -1225,7 +1245,7 @@ export function FileSetRow({
           container card. */}
       <div className="flex items-start">
         <div className="ms-auto flex flex-col items-end gap-2">
-          <FileSetEnabledToggle id={set.id} initial={set.enabled} />
+          <FileSetEnabledToggle id={set.id} initial={set.enabled} onSaved={onEnabledSaved} />
         </div>
       </div>
 
@@ -1383,6 +1403,14 @@ export function Files() {
 
   function placeSet(id: string, next: PlacementView) {
     setSets((prev) => prev.map((s) => (s.id === id ? { ...s, placement: next } : s)));
+  }
+
+  // The switch and the Pause button store the same flag, and both read it back
+  // from this list. The reload brings the schedule sentence, which the server
+  // words from the flag.
+  function enabledSaved(id: string, enabled: boolean) {
+    setSets((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
+    void loadSets();
   }
 
   /** Opens the create dialog pre-filled with the "Host system config" preset,
@@ -1575,6 +1603,7 @@ export function Files() {
               checks={itemChecks.find("files", s.id)}
               onChecksChanged={itemChecks.reload}
               restoreRequest={restoreRequest.item === s.name ? restoreRequest : undefined}
+              onEnabledSaved={(enabled) => enabledSaved(s.id, enabled)}
             />
           ))}
         </div>

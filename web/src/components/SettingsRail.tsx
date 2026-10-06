@@ -59,6 +59,8 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
   });
   const byId = new Map(items.map((i) => [i.id, i] as const));
   const ordered = drag.order.map((id) => byId.get(id)).filter((i): i is RailItem => !!i);
+  // The column is one tab stop, on the open page; the arrow keys walk the rest.
+  const stop = ordered.some((i) => i.id === active) ? active : ordered[0]?.id;
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const tiles = Array.from(list.current?.querySelectorAll<HTMLElement>("[data-rail-id]") ?? []);
@@ -101,6 +103,7 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
             item={item}
             hue={i + HUE_OFFSET.tabs}
             on={item.id === active}
+            tabStop={item.id === stop}
             glyphs={glyphs}
             reactive={reactive}
             showIcon={showIcon}
@@ -118,6 +121,7 @@ interface RailTileProps {
   item: RailItem;
   hue: number;
   on: boolean;
+  tabStop: boolean;
   glyphs: boolean;
   reactive: boolean;
   showIcon: boolean;
@@ -126,7 +130,7 @@ interface RailTileProps {
   endsDrag: (e: { detail: number }) => boolean;
 }
 
-function RailTile({ item, hue, on, glyphs, reactive, showIcon, look, onPress, endsDrag }: RailTileProps) {
+function RailTile({ item, hue, on, tabStop, glyphs, reactive, showIcon, look, onPress, endsDrag }: RailTileProps) {
   const tooltip = useTipBubble(glyphs ? item.label : undefined);
   // With glyphs only, or names on hover, the glyph stands centred and a name
   // opens as a caption under it, the shape of the phone's bottom bar tab.
@@ -138,6 +142,7 @@ function RailTile({ item, hue, on, glyphs, reactive, showIcon, look, onPress, en
         ref={tooltip.ref}
         data-rail-id={item.id}
         aria-current={on ? "page" : undefined}
+        tabIndex={tabStop ? 0 : -1}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
         // A native link drag would cancel the pointer and end the reorder.

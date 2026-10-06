@@ -24,13 +24,15 @@ Settings, Off-site starts with **Destinations**: the places off-site copies go, 
 
 **Add destination** opens a wizard in five steps:
 
-1. **Where should the backups go?** Every service is listed with its logo, in four groups: storage services with S3 buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 and others), your own S3 server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), your own server and shares (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, a mounted path) and cloud storage (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud and the rest rclone supports). Each one says how well it suits backups: cloud drives slow down under many requests, so the first backup and pruning take longer there.
+1. **Where should the backups go?** Every service is listed with its logo, in four groups: storage services with S3 buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 and others), your own S3 server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), your own server and shares (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, a mounted path) and cloud storage (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud and the rest rclone supports). Each one says how well it suits backups: cloud drives slow down under many requests, so the first backup and pruning take longer there.
 2. **Sign in.** The fields depend on the service: an access key for S3, a user and password for WebDAV and SMB, an app password where two-factor sign-in blocks the normal one, BombVault's public SSH key for SFTP and the Storage Box, or a token for services that sign in through a browser. For those, the wizard shows an `rclone authorize` command to run on a computer with a browser; the token it prints goes into the field. **Test connection** checks the sign-in before anything is saved.
 3. **Choose a folder.** The wizard lists the folders on the destination, with **New folder** to create one and the free space where the service reports it. An empty folder is safest.
 4. **Protection against deletion.** The wizard says plainly what the service can do. A rest-server in append-only mode refuses deletion, and the tamper test checks that. An S3 bucket can keep old versions with versioning and object lock, which BombVault cannot check yet. A cloud drive cannot refuse deletion at all: whoever gets into the server gets into that copy too. Switch **Immutable** on only where the far side really refuses deletion; BombVault then never prunes there.
 5. **For an emergency.** The recovery kit lists every destination with the repository of each domain under it. The sign-in comes back with BombVault's settings backup; on a fresh install without it, set the destination up again at the same place.
 
 S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. Every other service runs through the rclone BombVault ships, and its remote then appears in the rclone config under Settings, Cloud access. A settings export carries the destinations; with credentials included it carries their sign-in as well.
+
+A receiving server that another instance of your group runs appears in the wizard under **From your group**; see [Receiving server](#receiving-server).
 
 A domain's target made from a destination takes the destination's name, location, credentials, storage class and immutable switch. Its retention, compression and growth budget stay per domain, and its location cannot move because the domain's repository is there. **Add a target for this domain only** under each domain still takes a hand-typed repository URL.
 
@@ -162,6 +164,19 @@ Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is 
 
 The Receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
 
+### Receiving server {#receiving-server}
+
+The receiving box can also run the rest-server the others copy to. **Set up receiving server** at the top of the Receiver tab asks for a folder on a share, with **New folder** to create one, and a port (8000 unless another container uses it). BombVault then:
+
+1. refuses if a container called `rest-server` already exists or another container holds the port;
+2. pulls `restic/rest-server` and starts it through the Docker socket in append-only mode with private repositories and a login file in the folder;
+3. writes its Unraid template to the flash drive, so the container stays editable in the Docker tab, or offers the template as a download when the flash drive is out of reach;
+4. runs the tamper test against it and shows whether it refuses deletes.
+
+The instances in your group then find the server in the destination wizard under **From your group**, named after the receiving box. Each instance gets a login of its own the first time it picks the server, and writes only into its own folder there. The card lists these logins, and **Revoke login** takes one away; what that instance already copied stays in the folder. Setup also creates one login for someone outside the group, whose password the card shows once.
+
+An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address under Settings, Pairing first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
+
 ## Worked example: two Unraid boxes, end to end
 
 Everything above describes the parts. This is one complete setup with real values, because the parts are easier to assemble when you have seen them assembled once.
@@ -211,6 +226,8 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 ### Restore from another BombVault repo {#restore-from-another-bombvault-repo}
 
 A separate card on the **Recovery** tab opens a *different* BombVault instance's repo (a share mounted under `/mnt`, or a remote URL) with **that instance's `APP_KEY`**, in a one-time, read-only session. Browse the containers, VMs and file sets stored there, pick a snapshot and restore it, and the restored object becomes a normal local container, VM or file set. Nothing is ever written to the other repo, and your own backup settings stay untouched (the session lives in memory and expires by itself). Moving a container from server A to server B does not mean repointing your repo settings and reverting them afterwards. This card is a one-shot: it opens a session, restores what you pick, and forgets the other instance. If you want a standing arrangement instead, where this box fetches another instance's snapshots into its own repository on a schedule, that is the **Pull** tab of the **Instances** page.
+
+A container whose network does not exist on this server, such as an Unraid `br0` network on a plain Docker host, shows a network picker under its row. BombVault creates it on the network you pick, together with its other networks. The fixed IP and MAC address belonged to the old network and are dropped, so the new network assigns them.
 
 ## Encryption-key recovery kit
 

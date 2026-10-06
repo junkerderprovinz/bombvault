@@ -71,6 +71,7 @@ BombVault är enkel som standard och djup när du behöver det. Gränssnittet vi
 
 ## Insyn, verifiering och övervakning
 
+- **Pausa från kortet.** Varje kort för container, VM och mappuppsättning har **Pausa schemat**, som tar bort objektet ur schemat och ur Backup Everything, och **Återuppta schemat** för att ta tillbaka det. Det ställer in samma reglage som **Inkludera i schema**, så de två stämmer alltid överens. Ett pausat objekt får ett grått märke **Schema pausat**, och **Säkerhetskopiera nu** fungerar fortfarande.
 - **Skyddsstatus (RPO).** Översikten visar en grön / gul / röd indikator per domän, som jämför den senaste lyckade säkerhetskopian mot dess schema, så att en försenad säkerhetskopiering blir röd istället för att gömma sig i en logg.
 - **Värmekarta för säkerhetskopieringshälsa.** En kalender i GitHub-bidragsstil över säkerhetskopieringsutfall per dag och domän, med en Containers / VMs / Flash / Auto-säkerhetskopia / Mappar-växlare.
 - **Körningstider överallt.** Varje post i körningshistoriken läser `start, slut (varaktighet)`, och varje container och VM har sin egen **Senaste körningar**-lista på sin sida.
@@ -125,7 +126,8 @@ BombVault har en inbyggd MCP-server, så att en assistent som Claude Code eller 
 ## Appar och tillägg {#apps}
 
 - **Android-app.** Alla servrar i din grupp i telefonen, med aktivitetsloggen för dem alla på en skärm. Den parkopplas med din grupp via QR-kod och öppnar varje server redan inloggad. Se [Android-app](android.md).
-- **Inställningar, Appar.** En sida med ett kort för varje tillägg. ParleyPorts kort erbjuder dess Unraid-mall, kopierar Docker-kommandot som startar den och leder till dess repository och till reläinställningarna under Parkoppling. Kortet för BombVault Widget erbjuder dess mall och dess repository, och installerar eller tar bort pluginet över värd-SSH-anslutningen.
+- **Mottagarserver.** Boxen som tar emot off-site-kopior kan starta en append-only rest-server med ett klick och erbjuda den till de andra instanserna i din grupp, var och en med en egen inloggning. Se [Mottagarserver](offsite-recovery.md#receiving-server).
+- **Inställningar, Appar.** En sida som börjar med Android-appen, dess APK för den version servern kör och en QR-kod till den, följd av ett kort för varje tillägg. ParleyPorts kort erbjuder dess Unraid-mall, kopierar Docker-kommandot som startar den och leder till dess repository och till reläinställningarna under Parkoppling. Kortet för BombVault Widget erbjuder dess mall och dess repository, och installerar eller tar bort pluginet över värd-SSH-anslutningen.
 - **BombVault Widget.** En ruta på Unraids instrumentpanel med BombVaults aktivitetslogg och nästa schemalagda körning. Utan en värd-SSH-anslutning ger kortet dig `.plg`-adressen att installera under **Plugins, Install Plugin**, och pluginet kan tas bort där som vilket annat som helst.
 - **Inbäddningsbar aktivitetslogg.** Generera en skrivskyddad token under **Inställningar, Integrationer** så får du en adress för vilken instrumentpanel som helst som kan visa en iframe, till exempel Homepage, Organizr eller Heimdall: en liten sida med bara den löpande aktivitetsloggen. Token ger tillgång till den loggen och inget annat, och **Inaktivera** återkallar den direkt. Den inbäddade sidan finns bara på engelska.
 

@@ -71,6 +71,7 @@ BombVault đơn giản theo mặc định và sâu sắc khi bạn cần. Giao d
 
 ## Thấu hiểu, xác minh & giám sát
 
+- **Tạm dừng ngay từ thẻ.** Mỗi thẻ container, VM và bộ thư mục có **Tạm dừng lịch trình**, đưa mục ra khỏi lịch và khỏi Backup Everything, và **Tiếp tục lịch trình** để đưa nó trở lại. Hai nút đặt cùng một công tắc với **Đưa vào lịch trình**, nên chúng luôn khớp nhau. Mục bị tạm dừng mang huy hiệu xám **Lịch trình đang tạm dừng**, và **Sao lưu ngay** vẫn dùng được.
 - **Trạng thái bảo vệ (RPO).** Bảng điều khiển hiển thị một chỉ báo xanh / hổ phách / đỏ cho mỗi miền, so sánh bản sao lưu thành công gần nhất với lịch trình của nó, nên một bản sao lưu quá hạn chuyển sang đỏ thay vì ẩn mình trong một nhật ký.
 - **Bản đồ nhiệt tình trạng sao lưu.** Một lịch theo kiểu đóng góp GitHub về kết quả sao lưu theo từng ngày cho mỗi miền, với một công tắc Containers / VMs / Flash / Tự sao lưu / Thư mục.
 - **Thời gian chạy ở khắp nơi.** Mỗi mục lịch sử chạy đọc là `start, end (duration)`, và mỗi container và VM mang danh sách **Lần chạy gần đây** riêng trên trang của nó.
@@ -125,7 +126,8 @@ BombVault có sẵn một máy chủ MCP, nhờ đó một trợ lý như Claude
 ## Ứng dụng và công cụ đi kèm {#apps}
 
 - **Ứng dụng Android.** Mọi máy chủ trong nhóm của bạn trên điện thoại, với nhật ký hoạt động của tất cả trên một màn hình. Ứng dụng ghép nối với nhóm bằng mã QR và mở từng máy chủ ở trạng thái đã đăng nhập sẵn. Xem [Ứng dụng Android](android.md).
-- **Cài đặt, Ứng dụng.** Một trang có một thẻ cho mỗi công cụ đi kèm. Thẻ của ParleyPort cung cấp template Unraid của nó, sao chép lệnh Docker để khởi chạy nó, và dẫn tới kho mã của nó cùng phần cài đặt relay dưới Ghép nối. Thẻ của BombVault Widget cung cấp template và kho mã của nó, và cài đặt hoặc gỡ plugin qua kết nối SSH tới máy chủ.
+- **Máy chủ nhận.** Máy nhận các bản sao off-site có thể khởi động một rest-server append-only chỉ bằng một cú nhấp và cung cấp nó cho các phiên bản khác trong nhóm của bạn, mỗi phiên bản có một đăng nhập riêng. Xem [Máy chủ nhận](offsite-recovery.md#receiving-server).
+- **Cài đặt, Ứng dụng.** Một trang mở đầu bằng ứng dụng Android, với APK của bản phát hành mà máy chủ đang chạy và một mã QR cho nó, rồi đến một thẻ cho mỗi công cụ đi kèm. Thẻ của ParleyPort cung cấp template Unraid của nó, sao chép lệnh Docker để khởi chạy nó, và dẫn tới kho mã của nó cùng phần cài đặt relay dưới Ghép nối. Thẻ của BombVault Widget cung cấp template và kho mã của nó, và cài đặt hoặc gỡ plugin qua kết nối SSH tới máy chủ.
 - **BombVault Widget.** Một ô trên Dashboard của Unraid hiển thị nhật ký hoạt động của BombVault và lần chạy theo lịch tiếp theo. Khi không có kết nối SSH tới máy chủ, thẻ đưa cho bạn địa chỉ `.plg` để cài dưới **Plugins, Install Plugin**, và có thể gỡ plugin ở đó như mọi plugin khác.
 - **Nhật ký hoạt động nhúng được.** Tạo một token chỉ đọc dưới **Cài đặt, Tích hợp** và bạn có một địa chỉ cho bất kỳ bảng điều khiển nào hiển thị được iframe, như Homepage, Organizr hay Heimdall: một trang nhỏ chỉ có nhật ký hoạt động trực tiếp. Token chỉ cấp quyền xem nhật ký đó và không gì khác, và **Tắt** thu hồi nó ngay lập tức. Trang nhúng chỉ có tiếng Anh.
 

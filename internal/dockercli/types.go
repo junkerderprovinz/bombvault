@@ -53,6 +53,8 @@ type Docker interface {
 	// Allocations reports the static IP / published host ports every container
 	// currently holds, for the restore pre-flight conflict check.
 	Allocations(ctx context.Context) ([]model.Allocation, error)
+	// Networks returns the names of the networks on this host, sorted.
+	Networks(ctx context.Context) ([]string, error)
 	Stop(ctx context.Context, name string, timeout time.Duration) error
 	Start(ctx context.Context, name string) error
 	// Restart asks the daemon to restart the named container (stop then start).
@@ -108,6 +110,14 @@ type Docker interface {
 	// its stderr and the exit code. Used to feed a dump back into a database.
 	ExecStdin(ctx context.Context, name string, cmd []string, stdin io.Reader, tailMax int) (string, int, error)
 }
+
+// Signaler sends a signal to a container's main process, which is how a
+// server is told to reread its configuration.
+type Signaler interface {
+	Signal(ctx context.Context, name, signal string) error
+}
+
+var _ Signaler = (*Client)(nil)
 
 // normalizeName strips a single leading slash from a docker container name.
 func normalizeName(name string) string {

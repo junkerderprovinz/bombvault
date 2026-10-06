@@ -24,13 +24,15 @@ Instellingen, Off-site begint met **Bestemmingen**: de plekken waar off-site kop
 
 **Bestemming toevoegen** opent een wizard in vijf stappen:
 
-1. **Waar moeten de back-ups naartoe?** Elke dienst staat met zijn logo in de lijst, in vier groepen: opslagdiensten met S3-buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 en andere), je eigen S3-server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), je eigen server en shares (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, een gemount pad) en cloudopslag (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud en de rest die rclone ondersteunt). Elke dienst zegt hoe goed hij bij back-ups past: cloudschijven vertragen bij veel verzoeken, dus de eerste back-up en het opschonen duren daar langer.
+1. **Waar moeten de back-ups naartoe?** Elke dienst staat met zijn logo in de lijst, in vier groepen: opslagdiensten met S3-buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 en andere), je eigen S3-server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), je eigen server en shares (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, een gemount pad) en cloudopslag (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud en de rest die rclone ondersteunt). Elke dienst zegt hoe goed hij bij back-ups past: cloudschijven vertragen bij veel verzoeken, dus de eerste back-up en het opschonen duren daar langer.
 2. **Inloggen bij.** De velden hangen af van de dienst: een toegangssleutel voor S3, een gebruiker en wachtwoord voor WebDAV en SMB, een app-wachtwoord waar tweestapsverificatie het gewone wachtwoord blokkeert, de publieke SSH-sleutel van BombVault voor SFTP en de Storage Box, of een token voor diensten die via een browser inloggen. Voor die laatste toont de wizard een `rclone authorize`-opdracht die je op een computer met een browser uitvoert; het token dat die afdrukt, komt in het veld. **Verbinding testen** controleert het inloggen voordat er iets wordt opgeslagen.
 3. **Kies een map.** De wizard toont de mappen op de bestemming, met **Nieuwe map** om er een aan te maken en de vrije ruimte waar de dienst die meldt. Een lege map is het veiligst.
 4. **Bescherming tegen verwijderen.** De wizard zegt eerlijk wat de dienst kan. Een rest-server in append-only-modus weigert verwijderen, en de manipulatietest controleert dat. Een S3-bucket kan oude versies bewaren met versiebeheer en object lock, wat BombVault nog niet kan controleren. Een cloudschijf kan verwijderen helemaal niet weigeren: wie in de server komt, komt ook bij die kopie. Zet **Onveranderlijk** alleen aan waar de overkant verwijderen echt weigert; BombVault schoont daar dan nooit op.
 5. **Voor noodgevallen.** De herstelkit toont elke bestemming met daaronder de repository van elk domein. Het inloggen komt terug met de back-up van de instellingen van BombVault; stel bij een verse installatie zonder die back-up de bestemming opnieuw in op dezelfde plek.
 
 S3-diensten lopen via de eigen S3-backend van restic, waardoor een opslagklasse en object lock kunnen werken. Elke andere dienst loopt via de rclone die BombVault meelevert, en zijn remote verschijnt dan in de rclone-config onder Instellingen, Cloudtoegang. Een export van de instellingen bevat de bestemmingen; met inloggegevens erbij ook hun inloggen.
+
+Een ontvangserver die een andere instantie van je groep draait, verschijnt in de wizard onder **Uit je groep**; zie [Ontvangserver](#receiving-server).
 
 Het doel van een domein dat uit een bestemming is gemaakt, neemt de naam, locatie, inloggegevens, opslagklasse en onveranderlijk-schakelaar van de bestemming over. Retentie, compressie en groeibudget blijven per domein, en de locatie kan niet verhuizen omdat de repository van het domein daar staat. **Een bestemming toevoegen voor alleen dit domein** onder elk domein vraagt nog steeds om een met de hand getypte repository-URL.
 
@@ -162,6 +164,19 @@ Zet de schakelaar **Ontvanger** in Instellingen aan om een tabblad **Ontvanger**
 
 De Ontvanger is strikt alleen-lezen. Het schrijft nooit naar de ontvangen repository, dus het kan nooit de append-only-garantie breken waar de zender op vertrouwt.
 
+### Ontvangserver {#receiving-server}
+
+De ontvangende machine kan ook de rest-server draaien waarnaar de anderen kopiëren. **Ontvangserver instellen** bovenaan het tabblad Ontvanger vraagt om een map op een share, met **Nieuwe map** om er een te maken, en om een poort (8000, tenzij een andere container die gebruikt). BombVault doet dan het volgende:
+
+1. weigert als er al een container met de naam `rest-server` bestaat of een andere container de poort bezet;
+2. haalt `restic/rest-server` op en start die via de Docker-socket in append-only-modus, met privérepository's en een loginbestand in de map;
+3. schrijft de Unraid-template naar de flash, zodat de container bewerkbaar blijft in het Docker-tabblad, of biedt de template als download aan als de flash niet bereikbaar is;
+4. voert de manipulatietest ertegen uit en toont of de server verwijderen weigert.
+
+De instanties van je groep vinden de server daarna in de bestemmingswizard onder **Uit je groep**, met de naam van de ontvangende machine. Elke instantie krijgt de eerste keer dat ze de server kiest een eigen login en schrijft daar alleen in een eigen map. De kaart toont deze logins, en met **Login intrekken** haal je er een weg; wat die instantie al heeft gekopieerd, blijft in de map. Bij het instellen ontstaat ook een login voor iemand buiten de groep, waarvan de kaart het wachtwoord één keer toont.
+
+Een instantie die de ontvangende machine alleen via de relay bereikt, kan de server niet gebruiken, omdat de relay geen back-ups vervoert. Voeg eerst het adres van de ontvangende machine toe onder Instellingen, Koppeling. Draait BombVault op een eigen IP-adres (bijvoorbeeld op br0), vul dan **Adres voor partners** in, omdat de server op het adres van de host luistert.
+
 ## Uitgewerkt voorbeeld: twee Unraid-machines, van begin tot eind
 
 Hierboven staan de onderdelen. Dit is één volledige opstelling met echte waarden, want onderdelen zijn makkelijker samen te voegen als je ze één keer samengevoegd hebt gezien.
@@ -211,6 +226,8 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 ### Herstellen vanuit een andere BombVault-repo {#restore-from-another-bombvault-repo}
 
 Een aparte kaart op het tabblad **Herstel** opent de repo van een *andere* BombVault-instantie (een share gemount onder `/mnt`, of een remote URL) met **de `APP_KEY` van die instantie**, in een eenmalige, alleen-lezen sessie. Blader door de containers, VM's en bestandssets die daar zijn opgeslagen, kies een snapshot en herstel hem, en het herstelde object wordt een normale lokale container, VM of bestandsset. Er wordt nooit iets naar de andere repo geschreven, en je eigen back-upinstellingen blijven onaangeroerd (de sessie leeft in het geheugen en verloopt vanzelf). Een container van server A naar server B verplaatsen betekent niet langer je repo-instellingen omleiden en die achteraf terugdraaien. Deze kaart is eenmalig: ze opent een sessie, herstelt wat je kiest en vergeet de andere instantie. Wil je in plaats daarvan een vaste regeling, waarbij deze machine volgens een planning de snapshots van een andere instantie in haar eigen repository ophaalt, dan is dat het tabblad **Ophalen** van de pagina **Instanties**.
+
+Een container waarvan het netwerk op deze server niet bestaat, zoals een `br0`-netwerk van Unraid op een gewone Docker-host, toont onder zijn rij een netwerkkeuze. BombVault maakt hem aan op het netwerk dat je kiest, samen met zijn andere netwerken. Het vaste IP-adres en het MAC-adres hoorden bij het oude netwerk en vervallen, dus het nieuwe netwerk geeft ze.
 
 ## Herstelkit voor de encryptiesleutel
 

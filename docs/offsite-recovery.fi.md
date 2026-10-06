@@ -24,13 +24,15 @@ Asetukset, Etä alkaa **Kohteet**-kortilla: paikoilla, joihin etäkopiot menevä
 
 **Lisää kohde** avaa ohjatun toiminnon viidellä vaiheella:
 
-1. **Minne varmuuskopiot viedään?** Jokainen palvelu on listattu logoineen neljässä ryhmässä: S3-ämpäreitä tarjoavat tallennuspalvelut (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 ja muut), oma S3-palvelin (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), oma palvelin ja jaot (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, liitetty polku) sekä pilvitallennus (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud ja muut rcloneen kuuluvat). Jokaisesta kerrotaan, kuinka hyvin se sopii varmuuskopiointiin: pilvilevyt hidastuvat, kun pyyntöjä on paljon, joten ensimmäinen varmuuskopio ja karsinta kestävät niissä pidempään.
+1. **Minne varmuuskopiot viedään?** Jokainen palvelu on listattu logoineen neljässä ryhmässä: S3-ämpäreitä tarjoavat tallennuspalvelut (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 ja muut), oma S3-palvelin (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), oma palvelin ja jaot (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, liitetty polku) sekä pilvitallennus (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud ja muut rcloneen kuuluvat). Jokaisesta kerrotaan, kuinka hyvin se sopii varmuuskopiointiin: pilvilevyt hidastuvat, kun pyyntöjä on paljon, joten ensimmäinen varmuuskopio ja karsinta kestävät niissä pidempään.
 2. **Kirjaudu palveluun.** Kentät riippuvat palvelusta: S3:lle pääsyavain, WebDAV:lle ja SMB:lle käyttäjä ja salasana, sovelluskohtainen salasana siellä, missä kaksivaiheinen tunnistus estää tavallisen salasanan, BombVaultin julkinen SSH-avain SFTP:lle ja Storage Boxille, tai tunnus palveluille, jotka kirjautuvat selaimen kautta. Niitä varten ohjattu toiminto näyttää `rclone authorize` -komennon, joka ajetaan koneella, jossa on selain; sen tulostama tunnus liitetään kenttään. **Testaa yhteys** tarkistaa kirjautumisen ennen kuin mitään tallennetaan.
 3. **Valitse kansio.** Ohjattu toiminto listaa kohteen kansiot, ja **Uusi kansio** luo uuden sekä näyttää vapaan tilan, kun palvelu ilmoittaa sen. Tyhjä kansio on turvallisin.
 4. **Suojaus poistoa vastaan.** Ohjattu toiminto kertoo suoraan, mihin palvelu pystyy. Append-only-tilassa oleva rest-server kieltäytyy poistoista, ja peukalointitesti tarkistaa sen. S3-ämpäri voi säilyttää vanhoja versioita versioinnilla ja objektilukolla, mitä BombVault ei vielä pysty tarkistamaan. Pilvilevy ei voi kieltäytyä poistoista lainkaan: kuka tahansa, joka pääsee palvelimelle, pääsee myös tähän kopioon. Kytke **Muuttumaton (append-only)** päälle vain siellä, missä vastapuoli oikeasti kieltäytyy poistoista; BombVault ei silloin koskaan karsi siellä.
 5. **Hätätilanteen varalle.** Palautuspaketti listaa jokaisen kohteen ja sen alla kunkin toimialueen arkiston. Kirjautuminen palautuu BombVaultin asetusten varmuuskopion mukana; tuoreessa asennuksessa ilman sitä kohde määritetään uudelleen samaan paikkaan.
 
 S3-palvelut kulkevat resticin oman S3-taustajärjestelmän kautta, minkä ansiosta tallennusluokka ja objektilukko ovat käytettävissä. Kaikki muut palvelut kulkevat BombVaultin mukana tulevan rclonen kautta, ja niiden remote näkyy sen jälkeen rclone-määrityksessä kohdassa Asetukset, Pilvipääsy. Asetusten vienti sisältää kohteet; tunnukset mukaan otettuna se sisältää myös niiden kirjautumisen.
+
+Vastaanottopalvelin, jota ryhmäsi toinen instanssi ajaa, näkyy ohjatussa toiminnossa kohdassa **Ryhmästäsi**; katso [Vastaanottopalvelin](#receiving-server).
 
 Kohteesta tehty toimialueen etäkohde perii kohteen nimen, sijainnin, tunnukset, tallennusluokan ja muuttumattomuuskytkimen. Sen säilytys, pakkaus ja kasvubudjetti pysyvät toimialuekohtaisina, eikä sen sijaintia voi siirtää, koska toimialueen arkisto on siellä. **Lisää kohde vain tälle toimialueelle** kunkin toimialueen kohdalla pyytää yhä käsin kirjoitettua arkiston URL-osoitetta.
 
@@ -162,6 +164,19 @@ Kytke **Vastaanotin**-kytkin päälle Asetuksissa paljastaaksesi **Vastaanotin**
 
 Vastaanotin on ehdottoman vain luku -tilainen. Se ei koskaan kirjoita vastaanotettuun repositorioon, joten se ei voi koskaan rikkoa append-only-takuuta, johon lähettäjä nojaa.
 
+### Vastaanottopalvelin {#receiving-server}
+
+Vastaanottava laatikko voi ajaa myös rest-serveriä, johon muut kopioivat. **Ota vastaanottopalvelin käyttöön** **Vastaanotin**-välilehden ylälaidassa kysyy kansiota jaolta, ja **Uusi kansio** luo sellaisen, sekä portin (8000, ellei toinen kontti käytä sitä). BombVault tekee sitten seuraavaa:
+
+1. kieltäytyy jatkamasta, jos kontti nimeltä `rest-server` on jo olemassa tai toinen kontti pitää porttia;
+2. hakee `restic/rest-server`in ja käynnistää sen Dockerin socketin kautta append-only-tilassa yksityisillä repositorioilla ja kansiossa olevalla kirjautumistiedostolla;
+3. kirjoittaa sen Unraid-mallin flash-asemalle, jolloin kontti pysyy muokattavana Docker-välilehdellä, tai tarjoaa mallin ladattavaksi, kun flash-asema ei ole saatavilla;
+4. ajaa sille peukalointitestin ja näyttää, kieltäytyykö se poistoista.
+
+Ryhmäsi instanssit löytävät palvelimen kohteen ohjatusta toiminnosta kohdasta **Ryhmästäsi**, vastaanottavan laatikon nimellä. Jokainen instanssi saa oman kirjautumisen, kun se valitsee palvelimen ensimmäistä kertaa, ja kirjoittaa siellä vain omaan kansioonsa. Kortti listaa nämä kirjautumiset, ja **Peruuta tunnus** poistaa yhden; mitä kyseinen instanssi on jo kopioinut, jää kansioon. Määritys luo lisäksi yhden kirjautumisen ryhmän ulkopuoliselle, ja sen salasanan kortti näyttää kerran.
+
+Instanssi, joka tavoittaa vastaanottavan laatikon vain releen kautta, ei voi käyttää palvelinta, koska rele ei kuljeta varmuuskopioita. Lisää vastaanottavan laatikon osoite ensin kohdassa **Asetukset → Pariliitos**. Kun BombVault toimii omalla IP-osoitteellaan (esimerkiksi br0:ssa), täytä **Osoite kumppaneille**, koska palvelin kuuntelee isännän osoitetta.
+
 ## Läpikäyty esimerkki: kaksi Unraid-konetta, päästä päähän
 
 Yllä kuvataan osat. Tässä on yksi kokonainen kokoonpano oikeilla arvoilla, sillä osat on helpompi koota, kun ne on kerran nähnyt koottuina.
@@ -211,6 +226,8 @@ Erillinen **Palautus**-välilehti opastaa tuoreen tai uudelleenrakennetun asennu
 ### Palautus toisesta BombVault-repositoriosta {#restore-from-another-bombvault-repo}
 
 Erillinen kortti **Palautus**-välilehdellä avaa *toisen* BombVault-instanssin repon (kohtaan `/mnt` liitetty jako tai etä-URL) **kyseisen instanssin `APP_KEY`:llä**, kertaluonteisessa, vain luku -tilaisessa istunnossa. Selaa siihen tallennettuja kontteja, virtuaalikoneita ja tiedostojoukkoja, valitse tilannevedos ja palauta se, ja palautetusta objektista tulee normaali paikallinen kontti, VM tai tiedostojoukko. Toiseen repoon ei koskaan kirjoiteta mitään, ja omat varmuuskopioasetuksesi pysyvät koskemattomina (istunto asuu muistissa ja vanhenee itsestään). Kontin siirtäminen palvelimelta A palvelimelle B ei tarkoita repoasetustesi uudelleensuuntaamista ja niiden palauttamista jälkeenpäin. Tämä kortti on kertaluonteinen: se avaa istunnon, palauttaa valitsemasi ja unohtaa toisen instanssin. Jos haluat sen sijaan pysyvän järjestelyn, jossa tämä laatikko noutaa toisen instanssin tilannevedokset omaan repoonsa aikataulun mukaan, siihen on **Ilmentymät**-sivun **Nouto**-välilehti.
+
+Kontti, jonka verkkoa tällä palvelimella ei ole, esimerkiksi Unraidin `br0`-verkko tavallisella Docker-isännällä, näyttää rivinsä alla verkon valinnan. BombVault luo sen valitsemaasi verkkoon muine verkkoineen. Kiinteä IP-osoite ja MAC-osoite kuuluivat vanhaan verkkoon ja jäävät pois, joten uusi verkko antaa ne.
 
 ## Salausavaimen palautuspaketti
 

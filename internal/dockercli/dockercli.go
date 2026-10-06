@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -133,6 +134,20 @@ func (c *Client) Allocations(ctx context.Context) ([]model.Allocation, error) {
 		out = append(out, model.Allocation{Name: name, IPv4: ip, HostPorts: ports})
 	}
 	return out, nil
+}
+
+// Networks returns the names of the networks on this host, sorted.
+func (c *Client) Networks(ctx context.Context) ([]string, error) {
+	list, err := c.api.NetworkList(ctx, network.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("dockercli: list networks: %w", err)
+	}
+	names := make([]string, 0, len(list))
+	for _, n := range list {
+		names = append(names, n.Name)
+	}
+	slices.Sort(names)
+	return names, nil
 }
 
 // Inspect returns the captured inspect subset for a container by name or ID.
@@ -423,6 +438,15 @@ func (c *Client) Remove(ctx context.Context, name string) error {
 			return nil // already gone — a restore/recreate can proceed
 		}
 		return fmt.Errorf("dockercli: remove: %w", err)
+	}
+	return nil
+}
+
+// Signal sends signal, such as "SIGHUP", to the main process of a running
+// container.
+func (c *Client) Signal(ctx context.Context, name, signal string) error {
+	if err := c.api.ContainerKill(ctx, name, signal); err != nil {
+		return fmt.Errorf("dockercli: signal: %w", err)
 	}
 	return nil
 }

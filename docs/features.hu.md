@@ -71,6 +71,7 @@ A BombVault alapból egyszerű, és mély, amikor szükséged van rá. A felüle
 
 ## Betekintés, ellenőrzés és monitorozás
 
+- **Szüneteltetés a kártyáról.** Minden konténer, VM és mappakészlet kártyáján ott van az **Ütemezés szüneteltetése**, amely kiveszi az elemet az ütemezésből és a Teljes biztonsági mentésből, valamint az **Ütemezés folytatása**, amely visszateszi. Ugyanazt a kapcsolót állítja, mint az **Ütemezésbe foglalás**, így a kettő mindig egyezik. A szüneteltetett elem szürke **Ütemezés szünetel** jelvényt kap, a **Biztonsági mentés most** pedig továbbra is működik.
 - **Védelmi állapot (RPO).** Az irányítópult tartományonként zöld / sárga / piros jelzőt mutat, amely az utolsó sikeres mentést az ütemezéséhez hasonlítja, így egy lejárt mentés pirosra vált, ahelyett hogy egy naplóban rejtőzne.
 - **Mentésállapot-hőtérkép.** A per-napi mentési eredmények GitHub-hozzájárulás stílusú naptára tartományonként, Konténerek / VM-ek / Flash / Önmentés / Mappák kapcsolóval.
 - **Futásidőzítés mindenhol.** Minden futáselőzmény-bejegyzés `kezdés, vég (időtartam)` formátumot mutat, és minden konténer és VM saját **Legutóbbi futások** listát hordoz a saját oldalán.
@@ -125,7 +126,8 @@ A BombVault beépített MCP-kiszolgálót kínál, amelyen át egy asszisztens, 
 ## Alkalmazások és kiegészítők {#apps}
 
 - **Android-alkalmazás.** A csoportod összes szervere a telefonodon, mindegyikük tevékenységnaplójával egyetlen képernyőn. QR-kóddal párosodik a csoportoddal, és minden szervert eleve bejelentkezve nyit meg. Lásd: [Android-alkalmazás](android.md).
-- **Beállítások, Alkalmazások.** Egy oldal, amelyen minden kiegészítő kártyát kap. A ParleyPort kártyája felkínálja az Unraid-sablonját, kimásolja az indító Docker-parancsát, és a repójához, valamint a Párosítás alatti relébeállításokhoz vezet. A BombVault Widget kártyája felkínálja a sablonját és a repóját, és a hoszt SSH-kapcsolatán keresztül telepíti vagy eltávolítja a bővítményt.
+- **Fogadószerver.** Az a gép, amely a telephelyen kívüli másolatokat fogadja, egyetlen kattintással elindíthat egy append-only rest-servert, és felkínálhatja a csoportod többi példányának, mindegyiknek saját bejelentkezéssel. Lásd: [Fogadószerver](offsite-recovery.md#receiving-server).
+- **Beállítások, Alkalmazások.** Egy oldal, amely az Android-alkalmazással kezdődik, a szerver kiadásához tartozó APK-val és egy QR-kóddal hozzá, majd minden kiegészítő kártyát kap. A ParleyPort kártyája felkínálja az Unraid-sablonját, kimásolja az indító Docker-parancsát, és a repójához, valamint a Párosítás alatti relébeállításokhoz vezet. A BombVault Widget kártyája felkínálja a sablonját és a repóját, és a hoszt SSH-kapcsolatán keresztül telepíti vagy eltávolítja a bővítményt.
 - **BombVault Widget.** Egy csempe az Unraid Dashboardon a BombVault tevékenységnaplójával és a következő ütemezett futással. Hoszt-SSH-kapcsolat nélkül a kártya megadja a `.plg` címét, amelyet a **Plugins, Install Plugin** alatt telepíthetsz, és a bővítmény ott ugyanúgy eltávolítható, mint bármelyik másik.
 - **Beágyazható tevékenységnapló.** Generálj egy csak olvasható tokent a **Beállítások, Integrációk** alatt, és kapsz egy címet bármely irányítópulthoz, amely iframe-et tud megjeleníteni, például a Homepage, az Organizr vagy a Heimdall számára: egy kis oldalt, rajta csak az élő tevékenységnaplóval. A token ehhez a naplóhoz ad hozzáférést, semmi máshoz, és a **Letiltás** azonnal visszavonja. A beágyazott oldal csak angol nyelvű.
 

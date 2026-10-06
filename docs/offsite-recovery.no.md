@@ -24,13 +24,15 @@ Innstillinger, Off-site starter med **Mål**: stedene de eksterne kopiene går t
 
 **Legg til mål** åpner en veiviser i fem steg:
 
-1. **Hvor skal sikkerhetskopiene gå?** Hver tjeneste er listet med logoen sin, i fire grupper: lagringstjenester med S3-buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 og flere), din egen S3-server (Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), din egen server og delte ressurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en montert sti) og skylagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud og resten rclone støtter). Hver av dem sier hvor godt den egner seg for sikkerhetskopier: skystasjoner strupper mange forespørsler, så første sikkerhetskopi og opprydding tar lengre tid der.
+1. **Hvor skal sikkerhetskopiene gå?** Hver tjeneste er listet med logoen sin, i fire grupper: lagringstjenester med S3-buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 og flere), din egen S3-server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), din egen server og delte ressurser (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, en montert sti) og skylagring (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud og resten rclone støtter). Hver av dem sier hvor godt den egner seg for sikkerhetskopier: skystasjoner strupper mange forespørsler, så første sikkerhetskopi og opprydding tar lengre tid der.
 2. **Logg på.** Feltene avhenger av tjenesten: en tilgangsnøkkel for S3, bruker og passord for WebDAV og SMB, et appassord der tofaktorinnlogging blokkerer det vanlige, BombVaults offentlige SSH-nøkkel for SFTP og Storage Box, eller et token for tjenester som logger på via nettleseren. For dem viser veiviseren en `rclone authorize`-kommando du kjører på en datamaskin med nettleser; tokenet den skriver ut, limes inn i feltet. **Test tilkobling** sjekker påloggingen før noe lagres.
 3. **Velg en mappe.** Veiviseren lister mappene på målet, med **Ny mappe** for å opprette en og ledig plass der tjenesten melder det. En tom mappe er tryggest.
 4. **Beskyttelse mot sletting.** Veiviseren sier rett ut hva tjenesten kan gjøre. En rest-server i append-only-modus nekter sletting, og tamper-testen sjekker det. En S3-bucket kan beholde gamle versjoner med versjonering og Object Lock, noe BombVault ennå ikke kan sjekke. En skystasjon kan ikke nekte sletting i det hele tatt: den som kommer inn på serveren, kommer også inn på den kopien. Slå på **Uforanderlig (append-only)** bare der den andre siden virkelig nekter sletting; BombVault beskjærer da aldri der.
 5. **For en nødsituasjon.** Gjenopprettingssettet lister hvert mål med repositoryet til hvert domene under det. Påloggingen kommer tilbake med BombVaults innstillingssikkerhetskopi; på en fersk installasjon uten den setter du opp målet på nytt på samme sted.
 
 S3-tjenester går gjennom restics egen S3-backend, og det er det som gjør at en lagringsklasse og Object Lock kan brukes. Alle andre tjenester går gjennom rclone som følger med BombVault, og remoten deres dukker da opp i rclone-konfigen under Innstillinger, Skytilgang. En innstillingseksport tar med målene; med legitimasjon inkludert tar den med påloggingen deres også.
+
+En mottaksserver som en annen instans i gruppen din kjører, vises i veiviseren under **Fra gruppen din**; se [Mottaksserver](#receiving-server).
 
 Et eksternt mål i et domene som er laget fra et mål, overtar målets navn, plassering, legitimasjon, lagringsklasse og bryteren Uforanderlig. Oppbevaring, komprimering og vekstbudsjett forblir per domene, og plasseringen kan ikke flyttes fordi domenets repository ligger der. **Legg til et mål bare for dette domenet** under hvert domene tar fortsatt en repository-URL du skriver selv.
 
@@ -162,6 +164,19 @@ Slå på **Mottaker**-bryteren i Innstillinger for å avdekke en **Mottaker**-fa
 
 Mottakeren er strengt skrivebeskyttet. Den skriver aldri til det mottatte repositoriet, så den kan aldri bryte append-only-garantien senderen stoler på.
 
+### Mottaksserver {#receiving-server}
+
+Mottaksmaskinen kan også kjøre rest-serveren som de andre kopierer til. **Sett opp mottaksserver** øverst i Mottaker-fanen ber om en mappe på en deling, med **Ny mappe** for å lage en, og en port (8000 hvis ikke en annen container bruker den). BombVault gjør deretter dette:
+
+1. avslår hvis en container som heter `rest-server` allerede finnes, eller en annen container holder porten;
+2. henter `restic/rest-server` og starter den gjennom Docker-socketen i append-only-modus med private repositorier og en påloggingsfil i mappen;
+3. skriver Unraid-malen til flashen, slik at containeren kan redigeres i Docker-fanen, eller tilbyr malen som nedlasting når flashen ikke er innen rekkevidde;
+4. kjører tamper-testen mot den og viser om den avslår sletting.
+
+Instansene i gruppen din finner serveren i målveiviseren under **Fra gruppen din**, oppkalt etter mottaksmaskinen. Hver instans får en egen pålogging første gang den velger serveren, og skriver der bare i sin egen mappe. Kortet lister disse påloggingene, og **Trekk tilbake pålogging** fjerner én; det instansen allerede har kopiert, blir liggende i mappen. Oppsettet lager også én pålogging til noen utenfor gruppen, og kortet viser passordet bare én gang.
+
+En instans som bare når mottaksmaskinen gjennom relayet, kan ikke bruke serveren, fordi relayet ikke frakter sikkerhetskopier. Legg først til adressen til mottaksmaskinen under Innstillinger, Paring. Kjører BombVault på en egen IP-adresse (for eksempel på br0), fyll ut **Adresse for partnere**, fordi serveren lytter på vertens adresse.
+
 ## Gjennomgått eksempel: to Unraid-maskiner, hele veien
 
 Over beskrives delene. Her er ett komplett oppsett med ekte verdier, for deler er lettere å sette sammen når man har sett dem satt sammen én gang.
@@ -211,6 +226,8 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 ### Gjenopprett fra et annet BombVault-repo {#restore-from-another-bombvault-repo}
 
 Et separat kort på **Gjenoppretting**-fanen åpner et *annet* BombVault-instans' repo (en deling montert under `/mnt`, eller en fjern-URL) med **den instansens `APP_KEY`**, i en engangs, skrivebeskyttet økt. Bla gjennom containerne, VM-ene og filsettene lagret der, velg et øyeblikksbilde og gjenopprett det, og det gjenopprettede objektet blir en normal lokal container, VM eller filsett. Ingenting skrives noensinne til det andre repoet, og dine egne sikkerhetskopiinnstillinger forblir urørte (økten lever i minnet og utløper av seg selv). Å flytte en container fra server A til server B betyr ikke lenger å peke om repo-innstillingene dine og reversere dem etterpå. Dette kortet er for én gang: det åpner en økt, gjenoppretter det du velger, og glemmer den andre instansen. Vil du heller ha en fast ordning, der denne boksen etter en tidsplan henter en annen instans' øyeblikksbilder inn i sitt eget repository, er det fanen **Henting** på siden **Instanser**.
+
+En kontainer der nettverket ikke finnes på denne serveren, for eksempel et Unraid-`br0`-nettverk på en vanlig Docker-vert, viser et nettverksvalg under raden sin. BombVault oppretter den på nettverket du velger, sammen med de andre nettverkene sine. Den faste IP-adressen og MAC-adressen hørte til det gamle nettverket og faller bort, så det nye nettverket tildeler dem.
 
 ## Gjenopprettingssett for krypteringsnøkkel
 
