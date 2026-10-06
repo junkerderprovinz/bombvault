@@ -778,6 +778,7 @@ const ca: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Cada origen pot conservar les còpies del seu repositori extern segons les seves pròpies regles en lloc de les regles externes compartides de dalt. Un origen sense regles pròpies fa servir les compartides.",
   "settings.ownOffsiteRetentionToggleHint": "Activat: el repositori extern d'aquest origen conserva les còpies segons les cinc regles de sota, que parteixen dels valors externs compartits. Desactivat: fa servir les regles externes compartides. Tot a 0 conserva totes les còpies externes d'aquest origen.",
   "settings.retentionExtraTargets": "Els destins externs addicionals mantenen les seves pròpies regles, que configures a la pàgina Extern.",
+  "settings.retentionOffsiteScope": "Aquestes regles s'apliquen al destí extern primari de cada domini, és a dir, l'adreça del seu camp extern. Qualsevol altre destí extern, també el que prové d'una destinació, manté les seves pròpies regles. Si allà només hi ha zeros, BombVault no el neteja mai.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Amplada de banda externa",

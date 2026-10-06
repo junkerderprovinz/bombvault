@@ -778,6 +778,7 @@ const sk: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Každý zdroj môže uchovávať zálohy vo svojom externom repozitári podľa vlastných pravidiel namiesto spoločných externých pravidiel vyššie. Zdroj bez vlastných pravidiel používa spoločné.",
   "settings.ownOffsiteRetentionToggleHint": "Zapnuté: externý repozitár tohto zdroja uchováva zálohy podľa piatich pravidiel nižšie, ktoré vychádzajú zo spoločných externých hodnôt. Vypnuté: používa spoločné externé pravidlá. Všetko 0 uchová každú externú zálohu tohto zdroja.",
   "settings.retentionExtraTargets": "Ďalšie externé ciele majú svoje vlastné pravidlá, ktoré nastavíte na stránke Externé.",
+  "settings.retentionOffsiteScope": "Tieto pravidlá platia pre primárny externý cieľ každej domény, teda adresu v jej poli externej kópie. Každý ďalší externý cieľ, aj taký, ktorý vznikol z cieľa, má vlastné pravidlá. Ak sú tam iba nuly, BombVault ho nikdy nečistí.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Externá šírka pásma",

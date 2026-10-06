@@ -704,6 +704,7 @@ const pl: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Źródło może przechowywać kopie w swoim repo zdalnym według własnych reguł zamiast wspólnych reguł zdalnych powyżej. Źródło bez własnych reguł używa wspólnych.",
   "settings.ownOffsiteRetentionToggleHint": "Włączone: repo zdalne tego źródła przechowuje kopie według pięciu reguł poniżej, które zaczynają od wspólnych wartości zdalnych. Wyłączone: używa wspólnych reguł zdalnych. Wszystkie 0 zachowuje każdą kopię zdalną tego źródła.",
   "settings.retentionExtraTargets": "Dodatkowe cele zdalne mają własne reguły, które ustawiasz na stronie Poza siedzibą.",
+  "settings.retentionOffsiteScope": "Te reguły dotyczą głównego celu zdalnego każdej domeny, czyli adresu w jej polu kopii poza siedzibą. Każdy inny cel zdalny, także utworzony z miejsca docelowego, zachowuje własne reguły. Jeśli są tam same zera, BombVault nigdy go nie przycina.",
   "settings.retentionCombineInfo": "Pięć reguł łączy się operatorem LUB: migawka przetrwa, jeśli zachowałaby ją choć jedna reguła. Nie sumują się do stałej liczby. Dotyczy osobno każdego kopiowanego elementu.",
 
   // Off-site (rclone)

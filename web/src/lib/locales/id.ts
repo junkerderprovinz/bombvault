@@ -778,6 +778,7 @@ const id: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Sebuah sumber bisa menyimpan cadangan di repositori off-site-nya menurut aturannya sendiri alih-alih aturan off-site bersama di atas. Sumber tanpa aturan sendiri memakai aturan bersama.",
   "settings.ownOffsiteRetentionToggleHint": "Aktif: repositori off-site sumber ini menyimpan cadangannya menurut lima aturan di bawah, yang dimulai dari nilai off-site bersama. Nonaktif: memakai aturan off-site bersama. Semua 0 menyimpan setiap cadangan off-site sumber ini.",
   "settings.retentionExtraTargets": "Target off-site tambahan tetap memakai aturannya sendiri, yang Anda atur di halaman Off-site.",
+  "settings.retentionOffsiteScope": "Aturan ini berlaku untuk target off-site utama setiap domain, yaitu alamat di kolom off-site-nya. Target off-site lain, termasuk yang dibuat dari tujuan, tetap memakai aturannya sendiri. Jika isinya hanya nol, BombVault tidak pernah mem-prune-nya.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Bandwidth off-site",

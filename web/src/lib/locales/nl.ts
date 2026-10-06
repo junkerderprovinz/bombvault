@@ -706,6 +706,7 @@ const nl: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Een bron kan de back-ups in zijn off-site repo volgens eigen regels bewaren in plaats van de gedeelde off-site regels hierboven. Een bron zonder eigen regels gebruikt de gedeelde.",
   "settings.ownOffsiteRetentionToggleHint": "Aan: de off-site repo van deze bron bewaart zijn back-ups volgens de vijf regels hieronder, die beginnen bij de gedeelde off-site waarden. Uit: hij gebruikt de gedeelde off-site regels. Alles 0 bewaart elke off-site back-up van deze bron.",
   "settings.retentionExtraTargets": "Aanvullende off-site bestemmingen houden hun eigen regels, die je instelt op de pagina Off-site.",
+  "settings.retentionOffsiteScope": "Deze regels gelden voor het primaire off-site doel van elk domein, dus het adres in het off-site veld. Elke andere off-site bestemming, ook een die uit een bestemming is gemaakt, houdt eigen regels. Staan daar alleen nullen, dan pruned BombVault die nooit.",
   "settings.retentionCombineInfo": "De vijf regels combineren met OF: een snapshot blijft bestaan als één enkele regel die zou bewaren. Ze tellen niet op tot een vast aantal. Geldt apart voor elk geback-upt item.",
 
   // Off-site (rclone)

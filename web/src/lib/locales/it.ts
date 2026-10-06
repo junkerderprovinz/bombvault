@@ -712,6 +712,7 @@ const it: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Ogni origine può conservare i backup del proprio repo off-site secondo regole proprie invece delle regole off-site comuni qui sopra. Un'origine senza regole proprie usa quelle comuni.",
   "settings.ownOffsiteRetentionToggleHint": "Attivo: il repo off-site di questa origine conserva i backup secondo le cinque regole qui sotto, che partono dai valori off-site comuni. Disattivo: usa le regole off-site comuni. Tutto a 0 conserva ogni backup off-site di questa origine.",
   "settings.retentionExtraTargets": "Le destinazioni off-site aggiuntive mantengono le proprie regole, che imposti nella pagina Off-site.",
+  "settings.retentionOffsiteScope": "Queste regole valgono per la destinazione off-site primaria di ogni dominio, cioè l'indirizzo nel suo campo off-site. Ogni altra destinazione off-site, anche una creata da una destinazione, mantiene le proprie regole. Se lì ci sono solo zeri, BombVault non la pota mai.",
   "settings.retentionCombineInfo": "Le cinque regole si combinano con OR: uno snapshot sopravvive se anche una sola regola lo manterrebbe. Non si sommano a un numero fisso. Si applica separatamente a ogni elemento sottoposto a backup.",
 
   // Off-site (rclone)

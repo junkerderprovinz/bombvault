@@ -712,6 +712,7 @@ const fr: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Une source peut garder les sauvegardes de son dépôt hors-site selon ses propres règles au lieu des règles hors-site communes ci-dessus. Une source sans règles propres utilise les règles communes.",
   "settings.ownOffsiteRetentionToggleHint": "Activé : le dépôt hors-site de cette source garde ses sauvegardes selon les cinq règles ci-dessous, qui partent des valeurs hors-site communes. Désactivé : il utilise les règles hors-site communes. Tout à 0 garde chaque sauvegarde hors-site de cette source.",
   "settings.retentionExtraTargets": "Les cibles hors-site supplémentaires gardent leurs propres règles, que vous réglez sur la page Hors site.",
+  "settings.retentionOffsiteScope": "Ces règles s'appliquent à la cible hors-site principale de chaque domaine, c'est-à-dire l'adresse de son champ hors-site. Toute autre cible hors-site, y compris une issue d'une destination, garde ses propres règles. Si ses valeurs sont toutes à 0, BombVault ne l'élague jamais.",
   "settings.retentionCombineInfo": "Les cinq règles se combinent avec OU : un instantané survit si une seule règle le conserverait. Elles ne s'additionnent pas en un nombre fixe. S'applique séparément à chaque élément sauvegardé.",
 
   // Off-site (rclone)

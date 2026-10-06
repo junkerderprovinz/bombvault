@@ -712,6 +712,7 @@ const sv: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "En källa kan behålla säkerhetskopiorna i sitt off-site-repo enligt egna regler i stället för de gemensamma off-site-reglerna ovan. En källa utan egna regler använder de gemensamma.",
   "settings.ownOffsiteRetentionToggleHint": "På: källans off-site-repo behåller sina säkerhetskopior enligt de fem reglerna nedan, som utgår från de gemensamma off-site-värdena. Av: det använder de gemensamma off-site-reglerna. Allt 0 behåller varje off-site-säkerhetskopia av källan.",
   "settings.retentionExtraTargets": "Ytterligare externa mål behåller sina egna regler, som du ställer in på sidan Extern.",
+  "settings.retentionOffsiteScope": "Reglerna gäller det primära externa målet för varje domän, alltså adressen i dess off-site-fält. Alla andra externa mål, även ett som skapats från en destination, behåller sina egna regler. Står det bara nollor där rensar BombVault det aldrig.",
   "settings.retentionCombineInfo": "De fem reglerna kombineras med ELLER: en ögonblicksbild överlever om någon enskild regel skulle behålla den. De summeras inte till ett fast antal. Gäller separat för varje säkerhetskopierat objekt.",
 
   // Off-site (rclone)

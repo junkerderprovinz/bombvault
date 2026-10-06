@@ -712,6 +712,7 @@ const da: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "En kilde kan beholde sine backups i off-site-repoet efter egne regler i stedet for de fælles off-site-regler ovenfor. En kilde uden egne regler bruger de fælles.",
   "settings.ownOffsiteRetentionToggleHint": "Til: denne kildes off-site-repo beholder sine backups efter de fem regler nedenfor, som starter fra de fælles off-site-værdier. Fra: det bruger de fælles off-site-regler. Alt 0 beholder alle off-site-backups af denne kilde.",
   "settings.retentionExtraTargets": "Yderligere eksterne mål beholder deres egne regler, som du angiver på siden Off-site.",
+  "settings.retentionOffsiteScope": "Disse regler gælder for det primære off-site-mål for hvert domæne, altså adressen i dets off-site-felt. Alle andre eksterne mål, også et der er oprettet fra en destination, beholder deres egne regler. Står der kun nuller, pruner BombVault det aldrig.",
   "settings.retentionCombineInfo": "De fem regler kombineres med ELLER: et snapshot overlever, hvis blot én regel ville beholde det. De lægges ikke sammen til et fast antal. Gælder separat for hvert sikkerhedskopieret element.",
 
   // Off-site (rclone)

@@ -778,6 +778,7 @@ const hr: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Svaki izvor može čuvati sigurnosne kopije u svom izvanmrežnom repozitoriju prema vlastitim pravilima umjesto zajedničkih izvanmrežnih pravila iznad. Izvor bez vlastitih pravila koristi zajednička.",
   "settings.ownOffsiteRetentionToggleHint": "Uključeno: izvanmrežni repozitorij ovog izvora zadržava sigurnosne kopije prema pet pravila ispod, koja polaze od zajedničkih izvanmrežnih vrijednosti. Isključeno: koristi zajednička izvanmrežna pravila. Sve 0 zadržava svaku izvanmrežnu kopiju ovog izvora.",
   "settings.retentionExtraTargets": "Dodatna izvanmrežna odredišta zadržavaju svoja pravila, koja postavljate na stranici Izvanmrežno.",
+  "settings.retentionOffsiteScope": "Ova pravila vrijede za primarno izvanmrežno odredište svake domene, to jest adresu u njezinu izvanmrežnom polju. Svako drugo izvanmrežno odredište, i ono nastalo iz odredišta, zadržava vlastita pravila. Ako su tamo samo nule, BombVault ga nikad ne čisti.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Izvanmrežna propusnost",

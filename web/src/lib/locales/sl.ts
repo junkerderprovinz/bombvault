@@ -778,6 +778,7 @@ const sl: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Vir lahko hrani varnostne kopije v svojem zunanjem repozitoriju po lastnih pravilih namesto po skupnih zunanjih pravilih zgoraj. Vir brez lastnih pravil uporablja skupna.",
   "settings.ownOffsiteRetentionToggleHint": "Vklopljeno: zunanji repozitorij tega vira hrani varnostne kopije po petih pravilih spodaj, ki izhajajo iz skupnih zunanjih vrednosti. Izklopljeno: uporablja skupna zunanja pravila. Vse 0 ohrani vsako zunanjo kopijo tega vira.",
   "settings.retentionExtraTargets": "Dodatni zunanji cilji ohranijo svoja pravila, ki jih nastaviš na strani Zunanja kopija.",
+  "settings.retentionOffsiteScope": "Ta pravila veljajo za primarni zunanji cilj vsake domene, to je naslov v njenem polju zunanje kopije. Vsak drug zunanji cilj, tudi tisti, ki je nastal iz cilja, ohrani svoja pravila. Če so tam samo ničle, ga BombVault nikoli ne čisti.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Pasovna širina za zunanjo kopijo",

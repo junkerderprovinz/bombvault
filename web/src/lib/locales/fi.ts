@@ -712,6 +712,7 @@ const fi: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Lähde voi säilyttää etärepossaan olevat varmuuskopiot omien sääntöjensä mukaan yllä olevien yhteisten etäsääntöjen sijaan. Lähde, jolla ei ole omia sääntöjä, käyttää yhteisiä.",
   "settings.ownOffsiteRetentionToggleHint": "Päällä: tämän lähteen etärepo säilyttää varmuuskopionsa alla olevien viiden säännön mukaan, jotka alkavat yhteisistä etäarvoista. Pois: se käyttää yhteisiä etäsääntöjä. Kaikki 0 säilyttää tämän lähteen kaikki etävarmuuskopiot.",
   "settings.retentionExtraTargets": "Lisäetäkohteilla on omat sääntönsä, jotka asetat Etä-sivulla.",
+  "settings.retentionOffsiteScope": "Nämä säännöt koskevat kunkin toimialueen ensisijaista etäkohdetta eli sen etäkenttään annettua osoitetta. Jokaisella muulla etäkohteella, myös kohteesta tehdyllä, on omat sääntönsä. Jos siellä on vain nollia, BombVault ei koskaan karsi sitä.",
   "settings.retentionCombineInfo": "Viisi sääntöä yhdistyvät TAI-logiikalla: snapshot säilyy, jos mikä tahansa yksittäinen sääntö säilyttäisi sen. Ne eivät summaudu kiinteäksi määräksi. Koskee jokaista varmuuskopioitua kohdetta erikseen.",
 
   // Off-site (rclone)

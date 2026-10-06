@@ -709,6 +709,7 @@ const ro: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "O sursă poate păstra backupurile din repo-ul ei off-site după reguli proprii în locul regulilor off-site comune de mai sus. O sursă fără reguli proprii le folosește pe cele comune.",
   "settings.ownOffsiteRetentionToggleHint": "Pornit: repo-ul off-site al acestei surse își păstrează backupurile după cele cinci reguli de mai jos, care pornesc de la valorile off-site comune. Oprit: folosește regulile off-site comune. Totul 0 păstrează fiecare backup off-site al acestei surse.",
   "settings.retentionExtraTargets": "Țintele externe suplimentare își păstrează propriile reguli, pe care le setezi în pagina Extern.",
+  "settings.retentionOffsiteScope": "Aceste reguli se aplică țintei externe principale a fiecărui domeniu, adică adresei din câmpul ei extern. Orice altă țintă externă, chiar și una creată dintr-o destinație, își păstrează propriile reguli. Dacă acolo sunt doar zerouri, BombVault nu o curăță niciodată.",
   "settings.retentionCombineInfo": "Cele cinci reguli se combină prin SAU: un instantaneu supraviețuiește dacă orice regulă l-ar păstra. Nu se adună la un număr fix. Se aplică separat fiecărui element salvat.",
 
   // Off-site (rclone)

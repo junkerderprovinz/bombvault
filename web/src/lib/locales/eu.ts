@@ -778,6 +778,7 @@ const eu: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Iturri bakoitzak bere kanpoko biltegiko babeskopiak bere arauen arabera gorde ditzake, goiko kanpoko arau partekatuen ordez. Arau propiorik gabeko iturriak arau partekatuak erabiltzen ditu.",
   "settings.ownOffsiteRetentionToggleHint": "Aktibatuta: iturri honen kanpoko biltegiak beheko bost arauen arabera gordetzen ditu babeskopiak, kanpoko balio partekatuetatik abiatuta. Desaktibatuta: kanpoko arau partekatuak erabiltzen ditu. Dena 0 bada, iturri honen kanpoko babeskopia guztiak gordetzen dira.",
   "settings.retentionExtraTargets": "Kanpoko helmuga gehigarriek beren arauak dituzte, eta Kanpokoa orrian ezartzen dituzu.",
+  "settings.retentionOffsiteScope": "Arau hauek domeinu bakoitzaren kanpoko helmuga nagusiari aplikatzen zaizkio, hau da, bere kanpoko eremuko helbideari. Kanpoko beste edozein helmugak, helmuga batetik sortutakoak ere, bere arauak ditu. Hor zeroak baino ez badaude, BombVault-ek ez du inoiz garbitzen.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Kanpoko banda-zabalera",

@@ -778,6 +778,7 @@ const gl: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Cada orixe pode conservar as copias do seu repositorio externo segundo as súas propias regras en lugar das regras externas compartidas de arriba. Unha orixe sen regras propias usa as compartidas.",
   "settings.ownOffsiteRetentionToggleHint": "Activado: o repositorio externo desta orixe conserva as copias segundo as cinco regras de abaixo, que parten dos valores externos compartidos. Desactivado: usa as regras externas compartidas. Todo a 0 conserva todas as copias externas desta orixe.",
   "settings.retentionExtraTargets": "Os destinos externos adicionais manteñen as súas propias regras, que configuras na páxina Externa.",
+  "settings.retentionOffsiteScope": "Estas regras aplícanse ao destino externo primario de cada dominio, é dicir, o enderezo do seu campo externo. Calquera outro destino externo, tamén o creado a partir dun destino, mantén as súas propias regras. Se alí só hai ceros, BombVault nunca o limpa.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Largura de banda externa",

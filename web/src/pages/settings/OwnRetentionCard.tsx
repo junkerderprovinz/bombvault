@@ -200,6 +200,7 @@ export function RetentionRulesCard({
       })}
 
       {children}
+      {scope === "offsite" && <p className="text-sm text-carbon-textSub">{t("settings.retentionOffsiteScope")}</p>}
       {scope === "offsite" && (
         <Link
           to="/settings/offsite"

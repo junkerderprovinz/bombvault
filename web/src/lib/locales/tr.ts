@@ -712,6 +712,7 @@ const tr: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Bir kaynak, uzak reposundaki yedekleri yukarıdaki ortak uzak kurallar yerine kendi kurallarına göre tutabilir. Kendi kuralı olmayan kaynak ortak kuralları kullanır.",
   "settings.ownOffsiteRetentionToggleHint": "Açık: bu kaynağın uzak reposu yedeklerini aşağıdaki beş kurala göre tutar, kurallar ortak uzak değerlerden başlar. Kapalı: ortak uzak kuralları kullanır. Hepsi 0 olursa bu kaynağın her uzak yedeği tutulur.",
   "settings.retentionExtraTargets": "Ek dış hedefler kendi kurallarını izler, bunları Site dışı sayfasında belirlersin.",
+  "settings.retentionOffsiteScope": "Bu kurallar her etki alanının birincil site dışı hedefi için geçerlidir, yani site dışı alanındaki adres. Diğer tüm dış hedefler, bir hedeften oluşturulanlar dahil, kendi kurallarını korur. Orada yalnızca sıfır varsa BombVault onu hiçbir zaman budamaz.",
   "settings.retentionCombineInfo": "Beş kural VEYA ile birleşir: herhangi bir kural onu tutacaksa anlık görüntü hayatta kalır. Sabit bir sayıya toplanmazlar. Yedeklenen her öğeye ayrı ayrı uygulanır.",
 
   // Off-site (rclone)

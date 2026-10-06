@@ -708,6 +708,7 @@ const zh: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "每个来源都可以按自己的规则保留其异地仓库中的备份，而不是使用上面的共用异地规则。没有自己规则的来源使用共用规则。",
   "settings.ownOffsiteRetentionToggleHint": "开启：此来源的异地仓库按下面五条规则保留备份，初始值取自共用异地规则。关闭：使用共用异地规则。全部为 0 时保留此来源的所有异地备份。",
   "settings.retentionExtraTargets": "其他异地目标使用它们自己的规则，在异地页面中设置。",
+  "settings.retentionOffsiteScope": "这些规则适用于每个域的主异地目标，即其异地字段中的地址。其他异地目标，包括由目标创建的，都使用各自的规则。如果那里全为 0，BombVault 永远不会清理它。",
   "settings.retentionCombineInfo": "五条规则以「或」逻辑组合：只要任意一条规则会保留该快照，它就会保留下来，不会累加为固定数量。分别应用于每个备份对象。",
 
   "rclone.title": "异地 (rclone)",

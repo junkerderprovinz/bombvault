@@ -778,6 +778,7 @@ const et: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Iga allikas võib hoida oma välise hoidla varukoopiaid oma reeglite järgi ülal olevate ühiste väliste reeglite asemel. Ilma oma reegliteta allikas kasutab ühiseid.",
   "settings.ownOffsiteRetentionToggleHint": "Sees: selle allika väline hoidla säilitab varukoopiad allpool oleva viie reegli järgi, mis lähtuvad ühistest välistest väärtustest. Väljas: kasutab ühiseid väliseid reegleid. Kõik 0 säilitab selle allika kõik välised varukoopiad.",
   "settings.retentionExtraTargets": "Täiendavad välised sihtkohad järgivad oma reegleid, mille määrad lehel Väline.",
+  "settings.retentionOffsiteScope": "Need reeglid kehtivad iga valdkonna peamisele välisele sihtkohale ehk aadressile selle välise koopia väljal. Iga teine väline sihtkoht, ka see, mis on tehtud sihtkohast, järgib oma reegleid. Kui seal on ainult nullid, ei puhasta BombVault seda kunagi.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Väline ribalaius",

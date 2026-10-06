@@ -778,6 +778,7 @@ const is: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Uppruni getur geymt afritin í fjarlæga geymslusafninu sínu eftir eigin reglum í stað sameiginlegu fjarlægu reglnanna að ofan. Uppruni án eigin reglna notar sameiginlegu reglurnar.",
   "settings.ownOffsiteRetentionToggleHint": "Kveikt: fjarlæga geymslusafn þessa uppruna geymir afrit sín eftir reglunum fimm hér fyrir neðan, sem byrja á sameiginlegu fjarlægu gildunum. Slökkt: það notar sameiginlegu fjarlægu reglurnar. Allt 0 geymir öll fjarlæg afrit þessa uppruna.",
   "settings.retentionExtraTargets": "Fleiri fjarlægir áfangastaðir halda sínum eigin reglum, sem þú stillir á síðunni Fjarlægt.",
+  "settings.retentionOffsiteScope": "Þessar reglur gilda um aðal fjarlæga áfangastað hvers svæðis, það er heimilisfangið í fjarafritsreit þess. Allir aðrir fjarlægir áfangastaðir, líka sá sem er búinn til úr áfangastað, halda sínum eigin reglum. Ef þar eru bara núll hreinsar BombVault hann aldrei.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Fjarlæg bandbreidd",

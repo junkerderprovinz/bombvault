@@ -709,6 +709,7 @@ const pt: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Cada origem pode manter as cópias do seu repo externo segundo as próprias regras em vez das regras externas partilhadas acima. Uma origem sem regras próprias usa as partilhadas.",
   "settings.ownOffsiteRetentionToggleHint": "Ligado: o repo externo desta origem mantém as cópias segundo as cinco regras abaixo, que partem dos valores externos partilhados. Desligado: usa as regras externas partilhadas. Tudo a 0 mantém todas as cópias externas desta origem.",
   "settings.retentionExtraTargets": "Os destinos externos adicionais mantêm as próprias regras, que defines na página Externo.",
+  "settings.retentionOffsiteScope": "Estas regras aplicam-se ao destino externo principal de cada domínio, ou seja, o endereço do seu campo externo. Qualquer outro destino externo, mesmo um criado a partir de um destino, mantém as próprias regras. Se lá só houver zeros, o BombVault nunca o poda.",
   "settings.retentionCombineInfo": "As cinco regras combinam-se com OU: um snapshot sobrevive se qualquer regra o mantivesse. Não se somam a um número fixo. Aplica-se separadamente a cada item com backup.",
 
   // Off-site (rclone)

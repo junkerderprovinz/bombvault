@@ -708,6 +708,7 @@ const vi: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Mỗi nguồn có thể giữ bản sao lưu trong kho off-site của mình theo quy tắc riêng thay cho quy tắc off-site chung ở trên. Nguồn không có quy tắc riêng sẽ dùng quy tắc chung.",
   "settings.ownOffsiteRetentionToggleHint": "Bật: kho off-site của nguồn này giữ bản sao lưu theo năm quy tắc bên dưới, bắt đầu từ các giá trị off-site chung. Tắt: dùng quy tắc off-site chung. Tất cả bằng 0 sẽ giữ mọi bản sao lưu off-site của nguồn này.",
   "settings.retentionExtraTargets": "Các đích ngoại vi bổ sung giữ quy tắc riêng của chúng, bạn đặt chúng ở trang Ngoài site.",
+  "settings.retentionOffsiteScope": "Các quy tắc này áp dụng cho đích ngoại vi chính của từng miền, tức địa chỉ trong trường ngoại vi của miền đó. Mọi đích ngoại vi khác, kể cả đích tạo từ một đích sao lưu, giữ quy tắc riêng. Nếu ở đó chỉ toàn số 0, BombVault không bao giờ dọn bớt đích đó.",
   "settings.retentionCombineInfo": "Năm quy tắc kết hợp theo kiểu HOẶC: một bản chụp tồn tại nếu bất kỳ quy tắc nào giữ lại nó. Chúng không cộng dồn thành một số cố định. Áp dụng riêng cho từng mục được sao lưu.",
 
   "rclone.title": "Ngoại vi (rclone)",

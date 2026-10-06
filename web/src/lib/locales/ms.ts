@@ -778,6 +778,7 @@ const ms: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Sesuatu sumber boleh menyimpan sandaran dalam repositori luar tapaknya mengikut peraturannya sendiri dan bukan peraturan luar tapak bersama di atas. Sumber tanpa peraturan sendiri menggunakan peraturan bersama.",
   "settings.ownOffsiteRetentionToggleHint": "Hidup: repositori luar tapak sumber ini menyimpan sandarannya mengikut lima peraturan di bawah, yang bermula daripada nilai luar tapak bersama. Mati: ia menggunakan peraturan luar tapak bersama. Semua 0 menyimpan setiap sandaran luar tapak sumber ini.",
   "settings.retentionExtraTargets": "Sasaran luar tapak tambahan tetap mengikut peraturannya sendiri, yang anda tetapkan pada halaman Luar tapak.",
+  "settings.retentionOffsiteScope": "Peraturan ini terpakai pada sasaran luar tapak utama bagi setiap domain, iaitu alamat dalam medan luar tapaknya. Setiap sasaran luar tapak lain, termasuk yang dibuat daripada destinasi, mengekalkan peraturannya sendiri. Jika hanya ada sifar di situ, BombVault tidak akan mem-prune-nya.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Lebar jalur luar tapak",

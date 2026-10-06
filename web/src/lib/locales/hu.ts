@@ -712,6 +712,7 @@ const hu: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Egy forrás a távoli repójában lévő biztonsági mentéseket a fenti közös távoli szabályok helyett saját szabályok szerint is megtarthatja. A saját szabályok nélküli forrás a közöseket használja.",
   "settings.ownOffsiteRetentionToggleHint": "Be: a forrás távoli repója az alábbi öt szabály szerint tartja meg a biztonsági mentéseit, amelyek a közös távoli értékekből indulnak. Ki: a közös távoli szabályokat használja. Minden 0 esetén a forrás minden távoli mentése megmarad.",
   "settings.retentionExtraTargets": "A további külső célok a saját szabályaikat követik, ezeket a Telephelyen kívüli oldalon állítod be.",
+  "settings.retentionOffsiteScope": "Ezek a szabályok minden tartomány elsődleges külső céljára vonatkoznak, vagyis a külső mezőjében megadott címre. Minden további külső cél, akár egy célból létrehozott is, megtartja a saját szabályait. Ha ott csak nullák vannak, a BombVault soha nem takarítja.",
   "settings.retentionCombineInfo": "Az öt szabály VAGY logikával kombinálódik: egy pillanatkép megmarad, ha bármelyik szabály megőrizné. Nem adódnak össze egy rögzített számmá. Külön érvényes minden mentett elemre.",
 
   // Off-site (rclone)

@@ -778,6 +778,7 @@ const lt: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Šaltinis gali saugoti savo nuotolinės saugyklos atsargines kopijas pagal savo taisykles vietoj bendrų nuotolinių taisyklių aukščiau. Šaltinis be savo taisyklių naudoja bendras.",
   "settings.ownOffsiteRetentionToggleHint": "Įjungta: šio šaltinio nuotolinė saugykla saugo atsargines kopijas pagal penkias taisykles žemiau, kurios prasideda nuo bendrų nuotolinių reikšmių. Išjungta: naudoja bendras nuotolines taisykles. Visi 0 saugo kiekvieną šio šaltinio nuotolinę kopiją.",
   "settings.retentionExtraTargets": "Papildomos nuotolinės paskirties vietos laikosi savo taisyklių, kurias nustatote puslapyje Nuotolinis.",
+  "settings.retentionOffsiteScope": "Šios taisyklės taikomos kiekvienos srities pagrindinei nuotolinei paskirties vietai, tai yra adresui jos nuotolinės kopijos lauke. Kiekviena kita nuotolinė paskirties vieta, net sukurta iš paskirties vietos, išlaiko savo taisykles. Jei ten tik nuliai, BombVault jos niekada nevalo.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Nuotolinis pralaidumas",

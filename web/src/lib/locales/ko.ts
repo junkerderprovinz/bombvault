@@ -708,6 +708,7 @@ const ko: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "소스마다 위의 오프사이트 공통 규칙 대신 자체 규칙으로 오프사이트 저장소의 백업을 보존할 수 있습니다. 자체 규칙이 없는 소스는 공통 규칙을 사용합니다.",
   "settings.ownOffsiteRetentionToggleHint": "켜짐: 이 소스의 오프사이트 저장소는 아래 다섯 가지 규칙에 따라 백업을 보존하며, 시작값은 오프사이트 공통 값입니다. 꺼짐: 오프사이트 공통 규칙을 사용합니다. 모두 0이면 이 소스의 모든 오프사이트 백업을 보존합니다.",
   "settings.retentionExtraTargets": "추가 오프사이트 대상은 자체 규칙을 따르며, 오프사이트 페이지에서 설정합니다.",
+  "settings.retentionOffsiteScope": "이 규칙은 각 도메인의 기본 오프사이트 대상, 즉 오프사이트 필드의 주소에 적용됩니다. 그 밖의 오프사이트 대상은 대상에서 만든 것도 포함해 자체 규칙을 따릅니다. 거기에 0만 있으면 BombVault는 그 대상을 정리하지 않습니다.",
   "settings.retentionCombineInfo": "다섯 가지 규칙은 OR로 결합됩니다: 어느 한 규칙이라도 보관하려는 스냅샷은 남습니다. 고정된 개수로 합산되지 않습니다. 백업된 각 항목에 개별적으로 적용됩니다.",
 
   "rclone.title": "오프사이트 (rclone)",

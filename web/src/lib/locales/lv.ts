@@ -778,6 +778,7 @@ const lv: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Avots var glabāt sava attālinātā repozitorija dublējumus pēc saviem noteikumiem augstāk esošo kopīgo attālināto noteikumu vietā. Avots bez saviem noteikumiem izmanto kopīgos.",
   "settings.ownOffsiteRetentionToggleHint": "Ieslēgts: šī avota attālinātais repozitorijs glabā dublējumus pēc pieciem noteikumiem zemāk, kas sākas no kopīgajām attālinātajām vērtībām. Izslēgts: izmanto kopīgos attālinātos noteikumus. Visi 0 saglabā katru šī avota attālināto dublējumu.",
   "settings.retentionExtraTargets": "Papildu attālinātie mērķi ievēro savus noteikumus, kurus iestatāt lapā Attālināts.",
+  "settings.retentionOffsiteScope": "Šie noteikumi attiecas uz katra domēna primāro attālināto mērķi, tas ir, adresi tā attālinātās kopijas laukā. Jebkuram citam attālinātajam mērķim, arī tādam, kas izveidots no mērķa, ir savi noteikumi. Ja tur ir tikai nulles, BombVault to nekad netīra.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Attālinātais joslas platums",

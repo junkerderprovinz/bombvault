@@ -895,6 +895,7 @@ export const en = {
   "settings.ownOffsiteRetentionHint": "A source can keep the backups in its off-site repository by its own rules instead of the shared off-site ones above. A source without its own rules uses the shared ones.",
   "settings.ownOffsiteRetentionToggleHint": "When on, this source's off-site repository keeps its backups by the five rules below, which start from the shared off-site values. When off, it uses the shared off-site rules. All zero keeps every off-site backup of this source.",
   "settings.retentionExtraTargets": "Additional off-site targets keep their own rules, which you set on the Off-site page.",
+  "settings.retentionOffsiteScope": "These rules apply to each domain's primary off-site target, the address in its off-site field. Every other off-site target, including one made from a destination, keeps its own rules. With only zeros there, BombVault never prunes it.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site bandwidth",
@@ -4562,6 +4563,7 @@ export const de: Translations = {
   "settings.ownOffsiteRetentionHint": "Eine Quelle kann die Backups in ihrem Off-site-Repo nach eigenen Regeln statt nach den gemeinsamen Off-site-Regeln oben aufbewahren. Eine Quelle ohne eigene Regeln nutzt die gemeinsamen.",
   "settings.ownOffsiteRetentionToggleHint": "Ein: Das Off-site-Repo dieser Quelle behält seine Backups nach den fünf Regeln darunter, die mit den gemeinsamen Off-site-Werten beginnen. Aus: Es nutzt die gemeinsamen Off-site-Regeln. Alles 0 behält jedes Off-site-Backup dieser Quelle.",
   "settings.retentionExtraTargets": "Weitere Off-site-Ziele behalten ihre eigenen Regeln, die du auf der Seite Off-site einstellst.",
+  "settings.retentionOffsiteScope": "Diese Regeln gelten für das primäre Off-site-Ziel jedes Bereichs, also die Adresse in seinem Off-site-Feld. Jedes weitere Off-site-Ziel, auch eines, das von einem Ziel stammt, hat eigene Regeln. Stehen dort nur Nullen, räumt BombVault dort nie auf.",
 
   // Off-site-Bandbreite
   "settings.offsiteLimits": "Off-site-Bandbreite",

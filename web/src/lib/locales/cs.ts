@@ -710,6 +710,7 @@ const cs: Partial<Translations> = {
   "settings.ownOffsiteRetentionHint": "Každý zdroj může uchovávat zálohy ve svém vzdáleném repu podle vlastních pravidel místo společných vzdálených pravidel výše. Zdroj bez vlastních pravidel používá společná.",
   "settings.ownOffsiteRetentionToggleHint": "Zapnuto: vzdálené repo tohoto zdroje uchovává zálohy podle pěti pravidel níže, která vycházejí ze společných vzdálených hodnot. Vypnuto: používá společná vzdálená pravidla. Vše 0 uchová každou vzdálenou zálohu tohoto zdroje.",
   "settings.retentionExtraTargets": "Další vzdálené cíle mají svá vlastní pravidla, která nastavíte na stránce Mimo lokalitu.",
+  "settings.retentionOffsiteScope": "Tato pravidla platí pro hlavní cíl mimo lokalitu každé domény, tedy adresu v jejím poli pro kopii mimo lokalitu. Každý další vzdálený cíl, včetně cíle vytvořeného v sekci Cíle, má vlastní pravidla. Pokud tam jsou jen nuly, BombVault ho nikdy nečistí.",
   "settings.retentionCombineInfo": "Pět pravidel se kombinuje pomocí NEBO: snapshot přežije, pokud by ho zachovalo jakékoli jedno pravidlo. Nesčítají se do pevného počtu. Platí zvlášť pro každou zálohovanou položku.",
 
   // Off-site (rclone)
