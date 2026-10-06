@@ -20,7 +20,7 @@ Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Impost
 
 ## Destinazioni {#destinations}
 
-Impostazioni, Off-site inizia con **Destinazioni**: i luoghi in cui vanno le copie off-site, impostati una sola volta per tutti i domini. Una destinazione compare poi come pulsante nella riga **Collocazione** di ogni dominio e di ogni elemento. La prima volta che viene accesa per un dominio, BombVault crea il repository di quel dominio in una cartella al suo interno, per esempio `rclone:onedrive:BombVault/containers`.
+Impostazioni, Off-site inizia con **Destinazioni**: i luoghi in cui vanno le copie off-site, impostati una sola volta per tutti i domini. Una destinazione compare poi come pulsante nella riga **Collocazione** di ogni dominio e di ogni elemento. La prima volta che viene accesa per un dominio, BombVault crea il repository di quel dominio in una cartella al suo interno, per esempio `rclone:onedrive:BombVault/containers`. Flash, Auto-backup e dataset ZFS non hanno una riga **Collocazione**, quindi la loro sezione off-site offre invece **Aggiungi da** e il nome della destinazione.
 
 **Aggiungi destinazione** apre una procedura guidata in cinque passi:
 

@@ -20,7 +20,7 @@ Behold den hurtige lokale sikkerhedskopi, og tilføj en eller flere off-site-rep
 
 ## Destinationer {#destinations}
 
-Indstillinger, Off-site starter med **Destinationer**: de steder, off-site-kopierne havner, oprettet én gang for alle domæner. En destination vises derefter som en knap i rækken **Placering** for hvert domæne og hvert element. Første gang den afkrydses for et domæne, opretter BombVault domænets repository i en mappe under den, for eksempel `rclone:onedrive:BombVault/containers`.
+Indstillinger, Off-site starter med **Destinationer**: de steder, off-site-kopierne havner, oprettet én gang for alle domæner. En destination vises derefter som en knap i rækken **Placering** for hvert domæne og hvert element. Første gang den afkrydses for et domæne, opretter BombVault domænets repository i en mappe under den, for eksempel `rclone:onedrive:BombVault/containers`. Flash, auto-sikkerhedskopi og ZFS-datasæt har ingen **Placering**-række, så deres off-site-sektion tilbyder i stedet **Tilføj fra** og destinationens navn.
 
 **Tilføj destination** åbner en guide i fem trin:
 

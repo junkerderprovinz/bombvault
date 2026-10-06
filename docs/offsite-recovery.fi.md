@@ -20,7 +20,7 @@ Säilytä nopea paikallinen varmuuskopio ja lisää yksi tai useampi etäreplika
 
 ## Kohteet {#destinations}
 
-Asetukset, Etä alkaa **Kohteet**-kortilla: paikoilla, joihin etäkopiot menevät ja jotka määritetään kerran kaikille toimialueille. Kohde näkyy sen jälkeen painikkeena jokaisen toimialueen ja kohteen **Sijoittelu**-rivillä. Kun se rastitetaan toimialueelle ensimmäisen kerran, BombVault luo toimialueen arkiston kansioon sen alle, esimerkiksi `rclone:onedrive:BombVault/containers`.
+Asetukset, Etä alkaa **Kohteet**-kortilla: paikoilla, joihin etäkopiot menevät ja jotka määritetään kerran kaikille toimialueille. Kohde näkyy sen jälkeen painikkeena jokaisen toimialueen ja kohteen **Sijoittelu**-rivillä. Kun se rastitetaan toimialueelle ensimmäisen kerran, BombVault luo toimialueen arkiston kansioon sen alle, esimerkiksi `rclone:onedrive:BombVault/containers`. Flashilla, itsevarmuuskopiolla ja ZFS-tietojoukoilla ei ole **Sijoittelu**-riviä, joten niiden etäreplikoinnin osio tarjoaa sen sijaan **Lisää kohteesta** ja kohteen nimen.
 
 **Lisää kohde** avaa ohjatun toiminnon viidellä vaiheella:
 

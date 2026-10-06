@@ -20,7 +20,7 @@ Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors 
 
 ## Destinations {#destinations}
 
-Paramètres, Hors site commence par **Destinations** : les endroits où vont les copies hors site, configurés une seule fois pour tous les domaines. Une destination apparaît ensuite comme un bouton dans la ligne **Emplacement** de chaque domaine et de chaque élément. La première fois qu'elle est activée pour un domaine, BombVault crée le dépôt de ce domaine dans un dossier placé dessous, par exemple `rclone:onedrive:BombVault/containers`.
+Paramètres, Hors site commence par **Destinations** : les endroits où vont les copies hors site, configurés une seule fois pour tous les domaines. Une destination apparaît ensuite comme un bouton dans la ligne **Emplacement** de chaque domaine et de chaque élément. La première fois qu'elle est activée pour un domaine, BombVault crée le dépôt de ce domaine dans un dossier placé dessous, par exemple `rclone:onedrive:BombVault/containers`. Flash, Auto-sauvegarde et jeux de données ZFS n'ont pas de ligne **Emplacement** ; leur section hors site propose donc à la place **Ajouter depuis** et le nom de la destination.
 
 **Ajouter une destination** ouvre un assistant en cinq étapes :
 

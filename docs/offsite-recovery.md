@@ -20,7 +20,7 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 
 ## Destinations {#destinations}
 
-Settings, Off-site starts with **Destinations**: the places off-site copies go, set up once for every domain. A destination then shows up as a button in the **Placement** row of every domain and item. The first time it is ticked for a domain, BombVault creates that domain's repository in a folder under it, for example `rclone:onedrive:BombVault/containers`.
+Settings, Off-site starts with **Destinations**: the places off-site copies go, set up once for every domain. A destination then shows up as a button in the **Placement** row of every domain and item. The first time it is ticked for a domain, BombVault creates that domain's repository in a folder under it, for example `rclone:onedrive:BombVault/containers`. Flash, self-backup and ZFS datasets have no placement row, so their off-site section has an **Add from** button for each destination instead.
 
 **Add destination** opens a wizard in five steps:
 

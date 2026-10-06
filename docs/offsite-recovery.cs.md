@@ -20,7 +20,7 @@ Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokal
 
 ## Cíle {#destinations}
 
-Nastavení, Mimo lokalitu začíná kartou **Cíle**: místa, kam míří kopie mimo lokalitu, nastavená jednou pro všechny domény. Cíl se pak objeví jako tlačítko v řádku **Umístění** každé domény a položky. Při prvním zaškrtnutí pro doménu BombVault vytvoří repozitář té domény ve složce pod cílem, například `rclone:onedrive:BombVault/containers`.
+Nastavení, Mimo lokalitu začíná kartou **Cíle**: místa, kam míří kopie mimo lokalitu, nastavená jednou pro všechny domény. Cíl se pak objeví jako tlačítko v řádku **Umístění** každé domény a položky. Při prvním zaškrtnutí pro doménu BombVault vytvoří repozitář té domény ve složce pod cílem, například `rclone:onedrive:BombVault/containers`. Flash, Autozáloha a datové sady ZFS nemají řádek **Umístění**, proto jejich sekce mimo lokalitu místo toho nabízí **Přidat z** a název cíle.
 
 **Přidat cíl** otevře průvodce o pěti krocích:
 

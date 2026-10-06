@@ -20,7 +20,7 @@ Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kí
 
 ## Célok {#destinations}
 
-A Beállítások, Telephelyen kívüli oldal a **Célok** résszel kezdődik: ezek azok a helyek, ahová a telephelyen kívüli másolatok kerülnek, egyszer beállítva minden tartományra. Egy cél ezután gombként jelenik meg minden tartomány és elem **Elhelyezés** sorában. Amikor először jelölöd be egy tartományhoz, a BombVault létrehozza a tartomány tárolóját a cél alatti egy mappában, például `rclone:onedrive:BombVault/containers`.
+A Beállítások, Telephelyen kívüli oldal a **Célok** résszel kezdődik: ezek azok a helyek, ahová a telephelyen kívüli másolatok kerülnek, egyszer beállítva minden tartományra. Egy cél ezután gombként jelenik meg minden tartomány és elem **Elhelyezés** sorában. Amikor először jelölöd be egy tartományhoz, a BombVault létrehozza a tartomány tárolóját a cél alatti egy mappában, például `rclone:onedrive:BombVault/containers`. A Flash, az Önmentés és a ZFS-adatkészletek nem rendelkeznek **Elhelyezés** sorral, ezért a telephelyen kívüli szakaszuk ehelyett a **Hozzáadás innen:** gombot kínálja a cél nevével.
 
 A **Cél hozzáadása** egy öt lépéses varázslót nyit meg:
 

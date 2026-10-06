@@ -16,6 +16,7 @@ const fromBox: OffsiteTarget = {
 };
 
 vi.mock("../lib/api", () => ({
+  PLACEMENT_DOMAINS: ["containers", "vms", "files"],
   listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [fromBox] }),
   updateOffsiteTarget: vi.fn(),
   deleteOffsiteTarget: vi.fn(),

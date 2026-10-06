@@ -20,7 +20,7 @@ Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel e
 
 ## Bestemmingen {#destinations}
 
-Instellingen, Off-site begint met **Bestemmingen**: de plekken waar off-site kopieën naartoe gaan, eenmalig ingesteld voor elk domein. Een bestemming verschijnt daarna als knop in de rij **Plaatsing** van elk domein en item. De eerste keer dat hij voor een domein wordt aangevinkt, maakt BombVault de repository van dat domein aan in een map eronder, bijvoorbeeld `rclone:onedrive:BombVault/containers`.
+Instellingen, Off-site begint met **Bestemmingen**: de plekken waar off-site kopieën naartoe gaan, eenmalig ingesteld voor elk domein. Een bestemming verschijnt daarna als knop in de rij **Plaatsing** van elk domein en item. De eerste keer dat hij voor een domein wordt aangevinkt, maakt BombVault de repository van dat domein aan in een map eronder, bijvoorbeeld `rclone:onedrive:BombVault/containers`. Flash, Zelf-back-up en ZFS-datasets hebben geen rij **Plaatsing**, dus hun off-site-sectie biedt in plaats daarvan **Toevoegen vanuit** en de naam van de bestemming.
 
 **Bestemming toevoegen** opent een wizard in vijf stappen:
 

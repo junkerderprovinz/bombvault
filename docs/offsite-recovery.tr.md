@@ -20,7 +20,7 @@ Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. *
 
 ## Hedefler {#destinations}
 
-Ayarlar, Site dışı **Hedefler** ile başlar: site dışı kopyaların gittiği yerler, tüm etki alanları için bir kez kurulur. Bir hedef sonra her etki alanının ve her ögenin **Yerleşim** satırında bir düğme olarak görünür. Bir etki alanı için ilk kez işaretlendiğinde BombVault, o etki alanının deposunu hedefin altındaki bir klasörde oluşturur, örneğin `rclone:onedrive:BombVault/containers`.
+Ayarlar, Site dışı **Hedefler** ile başlar: site dışı kopyaların gittiği yerler, tüm etki alanları için bir kez kurulur. Bir hedef sonra her etki alanının ve her ögenin **Yerleşim** satırında bir düğme olarak görünür. Bir etki alanı için ilk kez işaretlendiğinde BombVault, o etki alanının deposunu hedefin altındaki bir klasörde oluşturur, örneğin `rclone:onedrive:BombVault/containers`. Flash, Öz yedek ve ZFS veri kümelerinin **Yerleşim** satırı yoktur; bu yüzden site dışı bölümleri bunun yerine hedefin adını ve ardından **hedefinden ekle** düğmesini sunar.
 
 **Hedef ekle**, beş adımlı bir sihirbaz açar:
 

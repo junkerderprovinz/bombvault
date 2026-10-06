@@ -20,7 +20,7 @@ Păstrează backupul local rapid și adaugă una sau mai multe replici off-site.
 
 ## Destinații {#destinations}
 
-Setări, Extern începe cu **Destinații**: locurile în care ajung copiile off-site, configurate o singură dată pentru toate domeniile. O destinație apare apoi ca buton în rândul **Amplasare** al fiecărui domeniu și element. Prima dată când este bifată pentru un domeniu, BombVault creează depozitul acelui domeniu într-un dosar sub ea, de exemplu `rclone:onedrive:BombVault/containers`.
+Setări, Extern începe cu **Destinații**: locurile în care ajung copiile off-site, configurate o singură dată pentru toate domeniile. O destinație apare apoi ca buton în rândul **Amplasare** al fiecărui domeniu și element. Prima dată când este bifată pentru un domeniu, BombVault creează depozitul acelui domeniu într-un dosar sub ea, de exemplu `rclone:onedrive:BombVault/containers`. Flash, Auto-backup și seturile de date ZFS nu au rând **Amplasare**, așa că secțiunea lor off-site oferă în schimb **Adaugă din** și numele destinației.
 
 **Adaugă destinație** deschide un asistent în cinci pași:
 

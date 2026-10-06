@@ -20,7 +20,7 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 
 ## Miejsca docelowe {#destinations}
 
-Ustawienia, Poza siedzibą zaczynają się od sekcji **Miejsca docelowe**: to miejsca, do których trafiają kopie poza siedzibą, ustawiane raz dla wszystkich domen. Miejsce docelowe pojawia się potem jako przycisk w wierszu **Rozmieszczenie** każdej domeny i każdego elementu. Gdy zaznaczysz je po raz pierwszy dla domeny, BombVault tworzy repozytorium tej domeny w folderze pod nim, na przykład `rclone:onedrive:BombVault/containers`.
+Ustawienia, Poza siedzibą zaczynają się od sekcji **Miejsca docelowe**: to miejsca, do których trafiają kopie poza siedzibą, ustawiane raz dla wszystkich domen. Miejsce docelowe pojawia się potem jako przycisk w wierszu **Rozmieszczenie** każdej domeny i każdego elementu. Gdy zaznaczysz je po raz pierwszy dla domeny, BombVault tworzy repozytorium tej domeny w folderze pod nim, na przykład `rclone:onedrive:BombVault/containers`. Flash, Autokopia i zbiory danych ZFS nie mają wiersza **Rozmieszczenie**, więc ich sekcja poza siedzibą oferuje zamiast niego **Dodaj z** i nazwę miejsca docelowego.
 
 **Dodaj miejsce docelowe** otwiera kreator w pięciu krokach:
 

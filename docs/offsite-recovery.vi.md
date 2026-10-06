@@ -20,7 +20,7 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 
 ## Đích sao lưu {#destinations}
 
-Cài đặt, Ngoài site bắt đầu bằng **Đích sao lưu**: những nơi các bản sao off-site được gửi đến, thiết lập một lần cho mọi miền. Sau đó một đích sao lưu xuất hiện dưới dạng nút trong hàng **Nơi lưu trữ** của mỗi miền và mỗi mục. Lần đầu tiên nó được đánh dấu cho một miền, BombVault tạo kho của miền đó trong một thư mục bên dưới nó, ví dụ `rclone:onedrive:BombVault/containers`.
+Cài đặt, Ngoài site bắt đầu bằng **Đích sao lưu**: những nơi các bản sao off-site được gửi đến, thiết lập một lần cho mọi miền. Sau đó một đích sao lưu xuất hiện dưới dạng nút trong hàng **Nơi lưu trữ** của mỗi miền và mỗi mục. Lần đầu tiên nó được đánh dấu cho một miền, BombVault tạo kho của miền đó trong một thư mục bên dưới nó, ví dụ `rclone:onedrive:BombVault/containers`. Flash, Tự sao lưu và tập dữ liệu ZFS không có hàng **Nơi lưu trữ**, nên phần off-site của chúng thay vào đó có **Thêm từ** và tên đích sao lưu.
 
 **Thêm đích** mở một trình hướng dẫn gồm năm bước:
 

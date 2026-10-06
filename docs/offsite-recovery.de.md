@@ -20,7 +20,7 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 
 ## Ziele {#destinations}
 
-Einstellungen, Off-site beginnt mit **Ziele**: den Orten, an die Off-site-Kopien gehen, einmal für alle Bereiche eingerichtet. Ein Ziel steht danach als Knopf in der Zeile **Ablage** jedes Bereichs und jedes Elements. Wird es für einen Bereich zum ersten Mal angeklickt, legt BombVault das Repository dieses Bereichs in einem Ordner darunter an, zum Beispiel `rclone:onedrive:BombVault/containers`.
+Einstellungen, Off-site beginnt mit **Ziele**: den Orten, an die Off-site-Kopien gehen, einmal für alle Bereiche eingerichtet. Ein Ziel steht danach als Knopf in der Zeile **Ablage** jedes Bereichs und jedes Elements. Wird es für einen Bereich zum ersten Mal angeklickt, legt BombVault das Repository dieses Bereichs in einem Ordner darunter an, zum Beispiel `rclone:onedrive:BombVault/containers`. Flash, Selbst-Backup und ZFS-Datasets haben keine Zeile **Ablage**, deshalb hat ihr Off-site-Abschnitt stattdessen für jedes Ziel einen Knopf **Aus … hinzufügen**.
 
 **Ziel hinzufügen** öffnet einen Assistenten mit fünf Schritten:
 

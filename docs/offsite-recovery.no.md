@@ -20,7 +20,7 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 
 ## Mål {#destinations}
 
-Innstillinger, Off-site starter med **Mål**: stedene de eksterne kopiene går til, satt opp én gang for alle domener. Et mål dukker deretter opp som en knapp i **Plassering**-raden til hvert domene og hvert element. Første gang det krysses av for et domene, oppretter BombVault domenets repository i en mappe under det, for eksempel `rclone:onedrive:BombVault/containers`.
+Innstillinger, Off-site starter med **Mål**: stedene de eksterne kopiene går til, satt opp én gang for alle domener. Et mål dukker deretter opp som en knapp i **Plassering**-raden til hvert domene og hvert element. Første gang det krysses av for et domene, oppretter BombVault domenets repository i en mappe under det, for eksempel `rclone:onedrive:BombVault/containers`. Flash, Auto-sikkerhetskopi og ZFS-datasett har ingen **Plassering**-rad, så den eksterne delen deres tilbyr i stedet **Legg til fra** og navnet på målet.
 
 **Legg til mål** åpner en veiviser i fem steg:
 

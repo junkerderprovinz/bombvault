@@ -7,6 +7,8 @@ import {
   deleteOffsiteTarget,
   excludeFromTarget,
   testOffsiteTarget,
+  destinationForDomain,
+  type Destination,
 } from "../lib/api";
 import type { NewTargetExclusion } from "../lib/api";
 import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
@@ -24,7 +26,7 @@ import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
-import { useDestinations } from "../lib/useDestinations";
+import { destinationsChanged, useDestinations } from "../lib/useDestinations";
 import { useNamedRepos } from "../lib/useNamedRepos";
 import { isPlacementDomain, offQualifier } from "../lib/placement";
 import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
@@ -222,6 +224,21 @@ export function OffsiteTargetsSection({
   function openNew() {
     setDraft(emptyDraft(domain));
     setSaveState("idle");
+  }
+
+  // A domain without a placement row has no destination buttons there, so
+  // its destinations are offered here.
+  const unusedDestinations = isPlacementDomain(domain) ? [] : destinations.filter((d) => !d.domains.includes(domain));
+
+  async function addFrom(d: Destination) {
+    const r = await destinationForDomain(d.id, domain).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
+    if (!r.ok) {
+      push(r.error ?? t("settings.error"), "fail");
+      return;
+    }
+    push(t("offsite.targets.addedFrom").replace("{name}", () => d.name), "success");
+    offsiteTargetsChanged();
+    destinationsChanged();
   }
 
   // Name, location, credentials, storage class and append-only of a target
@@ -572,6 +589,22 @@ export function OffsiteTargetsSection({
         </div>
       )}
 
+      {!draft && unusedDestinations.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {unusedDestinations.map((d) => (
+            <Button
+              key={d.id}
+              label={t("offsite.targets.addFrom").replace("{name}", () => d.name)}
+              labelKey="offsite.targets.addFrom"
+              glyph={<IconAdd />}
+              tone="neutral"
+              onClick={() => void addFrom(d)}
+              className="glim-btn-wrap glim-tile-raise"
+            />
+          ))}
+          <InfoBubble tip={t("offsite.targets.addFromTip")} />
+        </div>
+      )}
       {!draft && (
         <Button
           label={t("offsite.targets.add")}

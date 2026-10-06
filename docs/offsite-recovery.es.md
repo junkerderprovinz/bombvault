@@ -20,7 +20,7 @@ Conserva la copia local rápida y añade una o varias réplicas externas. Define
 
 ## Destinos {#destinations}
 
-Ajustes, Externo empieza con **Destinos**: los lugares a los que van las copias externas, configurados una sola vez para todos los dominios. Después, un destino aparece como un botón en la fila **Ubicación** de cada dominio y elemento. La primera vez que se marca para un dominio, BombVault crea el repositorio de ese dominio en una carpeta debajo, por ejemplo `rclone:onedrive:BombVault/containers`.
+Ajustes, Externo empieza con **Destinos**: los lugares a los que van las copias externas, configurados una sola vez para todos los dominios. Después, un destino aparece como un botón en la fila **Ubicación** de cada dominio y elemento. La primera vez que se marca para un dominio, BombVault crea el repositorio de ese dominio en una carpeta debajo, por ejemplo `rclone:onedrive:BombVault/containers`. Flash, Autocopia y los conjuntos de datos ZFS no tienen fila **Ubicación**, así que su sección externa ofrece en su lugar **Añadir desde** y el nombre del destino.
 
 **Añadir destino** abre un asistente de cinco pasos:
 

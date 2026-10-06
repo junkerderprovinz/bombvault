@@ -13,6 +13,7 @@ const api = {
 const pushed: { message: string; severity?: string }[] = [];
 
 vi.mock("../lib/api", () => ({
+  PLACEMENT_DOMAINS: ["containers", "vms", "files"],
   listOffsiteTargets: (...a: unknown[]) => api.listOffsiteTargets(...a),
   updateOffsiteTarget: (...a: unknown[]) => api.updateOffsiteTarget(...a),
   deleteOffsiteTarget: (...a: unknown[]) => api.deleteOffsiteTarget(...a),

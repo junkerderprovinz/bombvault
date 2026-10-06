@@ -20,7 +20,7 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 
 ## Destinos {#destinations}
 
-Definições, Externo começa com **Destinos**: os locais para onde vão as cópias externas, configurados uma só vez para todos os domínios. Um destino aparece depois como um botão na linha **Localização** de cada domínio e item. Na primeira vez que é ligado para um domínio, o BombVault cria o repositório desse domínio numa pasta dentro dele, por exemplo `rclone:onedrive:BombVault/containers`.
+Definições, Externo começa com **Destinos**: os locais para onde vão as cópias externas, configurados uma só vez para todos os domínios. Um destino aparece depois como um botão na linha **Localização** de cada domínio e item. Na primeira vez que é ligado para um domínio, o BombVault cria o repositório desse domínio numa pasta dentro dele, por exemplo `rclone:onedrive:BombVault/containers`. Flash, Auto-backup e conjuntos de dados ZFS não têm linha **Localização**, por isso a secção externa deles oferece em vez disso **Adicionar de** e o nome do destino.
 
 **Adicionar destino** abre um assistente em cinco passos:
 
