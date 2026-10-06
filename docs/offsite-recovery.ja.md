@@ -21,7 +21,7 @@
 
 **保存先を追加** は五つの手順のウィザードを開きます。
 
-1. **バックアップの保存先を選びます** 対応するすべてのサービスがロゴ付きで、四つのグループに分けて並びます。S3 バケットを持つストレージサービス（Backblaze B2、Wasabi、Cloudflare R2、Hetzner Object Storage、Amazon S3 など）、自前の S3 サーバー（Garage、SeaweedFS、RustFS、Ceph、JuiceFS、Versity S3 Gateway）、自前のサーバーと共有（rest-server、Hetzner Storage Box、SFTP、SMB、WebDAV、マウント済みパス）、そしてクラウドストレージ（OneDrive、Google Drive、Dropbox、pCloud、Nextcloud など、rclone が対応するすべて）です。それぞれ、バックアップにどの程度向いているかが示されます。クラウドドライブは大量のリクエストで遅くなるため、最初のバックアップと prune に時間がかかります。
+1. **バックアップの保存先を選びます** 対応するすべてのサービスがロゴ付きで、四つのグループに分けて並びます。S3 バケットを持つストレージサービス（Backblaze B2、Wasabi、Cloudflare R2、Hetzner Object Storage、Amazon S3 など）、自前の S3 サーバー（Garage、SeaweedFS、RustFS、Silo、Ceph、JuiceFS、Versity S3 Gateway）、自前のサーバーと共有（rest-server、Hetzner Storage Box、SFTP、SMB、WebDAV、マウント済みパス）、そしてクラウドストレージ（OneDrive、Google Drive、Dropbox、pCloud、Nextcloud など、rclone が対応するすべて）です。それぞれ、バックアップにどの程度向いているかが示されます。クラウドドライブは大量のリクエストで遅くなるため、最初のバックアップと prune に時間がかかります。
 2. **サインイン** 入力欄はサービスによって異なります。S3 ならアクセスキー、WebDAV と SMB ならユーザーとパスワード、二要素認証が通常のパスワードを拒む場合はアプリパスワード、SFTP と Storage Box なら BombVault の公開 SSH 鍵、ブラウザー経由でサインインするサービスならトークンです。そのようなサービスでは、ウィザードがブラウザーのあるコンピューターで実行する `rclone authorize` コマンドを表示し、出力されたトークンを入力欄に貼り付けます。**接続をテスト** は、何かを保存する前にサインインを確認します。
 3. **フォルダーを選択** ウィザードは保存先のフォルダーを一覧表示します。**新しいフォルダー** で作成でき、サービスが報告する場合は空き容量も表示されます。空のフォルダーが最も安全です。
 4. **削除に対する保護** ウィザードは、そのサービスに何ができるかをはっきり示します。append-only モードの rest-server は削除を拒み、改ざんテストがそれを確認します。S3 バケットはバージョニングとオブジェクトロックで古いバージョンを保持できますが、BombVault はまだそれを確認できません。クラウドドライブは削除を拒むことがまったくできません。サーバーに侵入した者は、そのコピーにも侵入できます。**イミュータブル（append-only）** は、相手側が本当に削除を拒む場合にだけオンにしてください。オンにすると、BombVault はそこでは prune を行いません。

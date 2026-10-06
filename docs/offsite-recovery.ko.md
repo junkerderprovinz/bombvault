@@ -24,7 +24,7 @@
 
 **대상 추가**는 다섯 단계의 마법사를 엽니다.
 
-1. **백업을 어디에 보낼까요?** 모든 서비스가 로고와 함께 네 그룹으로 나열됩니다. S3 버킷을 제공하는 스토리지 서비스(Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 등), 직접 운영하는 S3 서버(Garage, SeaweedFS, RustFS, Ceph, JuiceFS, Versity S3 Gateway), 직접 운영하는 서버와 공유(rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, 마운트된 경로), 클라우드 스토리지(OneDrive, Google Drive, Dropbox, pCloud, Nextcloud 및 rclone이 지원하는 나머지)입니다. 각 항목에는 백업에 얼마나 적합한지가 적혀 있습니다. 클라우드 드라이브는 요청이 많아지면 느려지므로, 첫 백업과 정리에 시간이 더 걸립니다.
+1. **백업을 어디에 보낼까요?** 모든 서비스가 로고와 함께 네 그룹으로 나열됩니다. S3 버킷을 제공하는 스토리지 서비스(Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 등), 직접 운영하는 S3 서버(Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), 직접 운영하는 서버와 공유(rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, 마운트된 경로), 클라우드 스토리지(OneDrive, Google Drive, Dropbox, pCloud, Nextcloud 및 rclone이 지원하는 나머지)입니다. 각 항목에는 백업에 얼마나 적합한지가 적혀 있습니다. 클라우드 드라이브는 요청이 많아지면 느려지므로, 첫 백업과 정리에 시간이 더 걸립니다.
 2. **로그인.** 입력란은 서비스에 따라 다릅니다. S3는 액세스 키, WebDAV와 SMB는 사용자와 비밀번호, 2단계 인증이 일반 비밀번호를 막는 곳에서는 앱 비밀번호, SFTP와 Storage Box는 BombVault의 공개 SSH 키, 브라우저로 로그인하는 서비스는 토큰입니다. 후자의 경우 마법사가 브라우저가 있는 컴퓨터에서 실행할 `rclone authorize` 명령을 보여 주며, 그 명령이 출력하는 토큰을 입력란에 넣으면 됩니다. **연결 테스트**는 무엇이든 저장하기 전에 로그인을 확인합니다.
 3. **폴더 선택.** 마법사가 대상의 폴더를 나열합니다. **새 폴더**로 폴더를 만들 수 있고, 서비스가 알려 주는 경우 남은 공간도 표시됩니다. 비어 있는 폴더가 가장 안전합니다.
 4. **삭제 방지.** 마법사가 서비스가 할 수 있는 일을 솔직하게 알려 줍니다. append-only 모드의 rest-server는 삭제를 거부하며, 변조 테스트가 이를 확인합니다. S3 버킷은 버전 관리와 객체 잠금으로 이전 버전을 보관할 수 있지만, BombVault는 아직 이를 확인할 수 없습니다. 클라우드 드라이브는 삭제를 아예 거부할 수 없습니다. 서버에 침입한 사람은 그 사본에도 접근할 수 있습니다. **불변 (append-only)**은 상대편이 실제로 삭제를 거부하는 경우에만 켜세요. 그러면 BombVault는 그곳에서 절대 정리하지 않습니다.

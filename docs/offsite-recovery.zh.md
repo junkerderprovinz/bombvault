@@ -24,7 +24,7 @@
 
 **添加目标**会打开一个五步向导：
 
-1. **备份应存放到哪里？** 每个服务都带着标志列出，分为四组：提供 S3 存储桶的存储服务（Backblaze B2、Wasabi、Cloudflare R2、Hetzner Object Storage、Amazon S3 等）、您自己的 S3 服务器（Garage、SeaweedFS、RustFS、Ceph、JuiceFS、Versity S3 Gateway）、您自己的服务器和共享（rest-server、Hetzner Storage Box、SFTP、SMB、WebDAV、已挂载的路径）以及云存储（OneDrive、Google Drive、Dropbox、pCloud、Nextcloud 和 rclone 支持的其余服务）。每个服务都会说明它有多适合备份：请求很多时云盘会变慢，所以首次备份和修剪在那里要花更长时间。
+1. **备份应存放到哪里？** 每个服务都带着标志列出，分为四组：提供 S3 存储桶的存储服务（Backblaze B2、Wasabi、Cloudflare R2、Hetzner Object Storage、Amazon S3 等）、您自己的 S3 服务器（Garage、SeaweedFS、RustFS、Silo、Ceph、JuiceFS、Versity S3 Gateway）、您自己的服务器和共享（rest-server、Hetzner Storage Box、SFTP、SMB、WebDAV、已挂载的路径）以及云存储（OneDrive、Google Drive、Dropbox、pCloud、Nextcloud 和 rclone 支持的其余服务）。每个服务都会说明它有多适合备份：请求很多时云盘会变慢，所以首次备份和修剪在那里要花更长时间。
 2. **登录** 所选服务。需要填写的字段取决于服务：S3 用访问密钥，WebDAV 和 SMB 用用户名和密码，两步验证挡住普通密码时用应用专用密码，SFTP 和 Storage Box 用 BombVault 的公开 SSH 密钥，通过浏览器登录的服务则用令牌。对这类服务，向导会显示一条 `rclone authorize` 命令，供您在有浏览器的电脑上运行；它打印出的令牌填入该字段。**测试连接**会在保存任何内容之前检查登录。
 3. **选择文件夹。** 向导会列出目标上的文件夹，**新建文件夹**可创建一个，服务有上报时还会显示可用空间。空文件夹最安全。
 4. **防删除保护。** 向导会直说服务能做什么。append-only 模式的 rest-server 会拒绝删除，篡改测试会检查这一点。S3 存储桶可以通过版本控制和对象锁保留旧版本，BombVault 目前还无法检查这一点。云盘完全无法拒绝删除：谁进入服务器，谁就也能进入那份副本。只有在远端确实拒绝删除时才打开**不可变（append-only）**；之后 BombVault 绝不会在那里修剪。
