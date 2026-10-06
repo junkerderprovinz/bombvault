@@ -10,7 +10,7 @@ COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
 RUN npm --prefix web run build
 
-FROM --platform=$BUILDPLATFORM golang:1.27-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195 AS build
+FROM --platform=$BUILDPLATFORM golang:1.27-bookworm@sha256:8d48e12ec56735e9358640898b9d9b9fcca110612ed8a5567438c0a1baa24e66 AS build
 WORKDIR /src
 
 # Modules first, so the download stays cached across source changes.
