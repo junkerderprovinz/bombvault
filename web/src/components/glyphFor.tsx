@@ -89,7 +89,7 @@ const RULES: Rule[] = [
 
   // Connections, above the probing rules so recovery.connectPreview, which
   // connects first and previews after, gets the link.
-  [/connect|pair|link|reconnect/i, () => <IconLink />],
+  [/connect|pair|link|reconnect|adopt\.take/i, () => <IconLink />],
 
   // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
   // is on screen, so they take the same check.
