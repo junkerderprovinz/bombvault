@@ -45,6 +45,9 @@ func TestTheS3EndpointGetsAScheme(t *testing.T) {
 		{wasabi, map[string]string{"endpoint": "http://minio.lan:9000"}, "http://minio.lan:9000"},
 		{aws, map[string]string{"region": "eu-west-1"}, "https://s3.eu-west-1.amazonaws.com"},
 		{aws, nil, "https://s3.amazonaws.com"},
+		{wasabi, map[string]string{"endpoint": "s3:http://192.168.2.51:9000/bombvault/dxp6800"}, "http://192.168.2.51:9000"},
+		{wasabi, map[string]string{"endpoint": "s3:s3.eu-central-2.wasabisys.com/bucket"}, "https://s3.eu-central-2.wasabisys.com"},
+		{wasabi, map[string]string{"endpoint": "https://gateway.lan/s3"}, "https://gateway.lan/s3"},
 	} {
 		got, err := s3Endpoint(c.p, c.settings)
 		if err != nil || got != c.want {
@@ -53,6 +56,17 @@ func TestTheS3EndpointGetsAScheme(t *testing.T) {
 	}
 	if _, err := s3Endpoint(wasabi, nil); err == nil {
 		t.Error("a missing endpoint was accepted")
+	}
+}
+
+func TestAResticAddressInTheEndpointFieldReachesRcloneAsTheServer(t *testing.T) {
+	p, _ := remotes.FindProvider("s3")
+	d, err := new(Service).draftFor(p, map[string]string{"endpoint": " s3:http://192.168.2.51:9000/bombvault/dxp6800 "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := d.Settings["endpoint"]; got != "http://192.168.2.51:9000" {
+		t.Fatalf("endpoint = %q", got)
 	}
 }
 

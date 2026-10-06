@@ -85,6 +85,9 @@ func (s *Service) draftFor(p remotes.Provider, settings map[string]string) (remo
 		merged[k] = strings.TrimSpace(v)
 	}
 	maps.Copy(merged, p.Preset)
+	if p.Route == remotes.RouteS3 && merged["endpoint"] != "" {
+		merged["endpoint"] = s3Host(merged["endpoint"])
+	}
 	if p.Auth == remotes.AuthSSHKey {
 		merged["key_file"] = s.sshKeyPath()
 		delete(merged, "pass")
@@ -215,9 +218,26 @@ func freeRemoteName(conf, base string) string {
 	return name
 }
 
+// s3Host turns a restic repository address pasted into the endpoint field,
+// such as s3:http://nas:9000/bucket/folder, into the server alone. The AWS
+// SDK reads s3: as a URL scheme and then fails on the region instead.
+func s3Host(ep string) string {
+	ep = strings.TrimSpace(ep)
+	rest, ok := strings.CutPrefix(ep, "s3:")
+	if !ok {
+		return ep
+	}
+	scheme := ""
+	if before, after, found := strings.Cut(rest, "://"); found {
+		scheme, rest = before+"://", after
+	}
+	host, _, _ := strings.Cut(rest, "/")
+	return scheme + host
+}
+
 // s3Endpoint is the host restic's S3 backend talks to, with its scheme.
 func s3Endpoint(p remotes.Provider, settings map[string]string) (string, error) {
-	ep := strings.TrimRight(strings.TrimSpace(settings["endpoint"]), "/")
+	ep := strings.TrimRight(s3Host(settings["endpoint"]), "/")
 	if ep == "" && p.ID == "aws" {
 		ep = "s3.amazonaws.com"
 		if region := strings.TrimSpace(settings["region"]); region != "" {
