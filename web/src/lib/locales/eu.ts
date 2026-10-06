@@ -3030,6 +3030,7 @@ const eu: Partial<Translations> = {
   "placementDefaults.title": "Kokapenaren lehenespenak",
   "placementDefaults.hint": "Elementu berriek beren lehen babeskopian kokapena hartzen dute. Aldatzeak ez du babeskopiarik mugitzen. Kopiak berehala aplikatzen dira beren aukerarik ez duen elementu bakoitzari.",
   "placementDefaults.countFollow": "Lehenetsia jarraitzen dute: {n}",
+  "placementDefaults.othersOffsite": "Flash, Autobabeskopia eta ZFS datasetek beren helmugak Kanpoko kopia orrian hautatzen dituzte",
   "placementDefaults.countOwn": "Aukera propioa: {n}",
   "placementDefaults.countOpen": "Kokapenik gabe oraindik: {n}",
   "placementDefaults.countChosenNoRun": "Kokapena ezarrita, babeskopiarik gabe: {n}",

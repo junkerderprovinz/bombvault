@@ -3010,6 +3010,7 @@ const vi: Partial<Translations> = {
   "placementDefaults.title": "Nơi lưu trữ mặc định",
   "placementDefaults.hint": "Mục mới sẽ nhận vị trí ở lần sao lưu đầu tiên. Thay đổi vị trí không di chuyển bất kỳ bản sao lưu nào. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng.",
   "placementDefaults.countFollow": "Theo mặc định: {n}",
+  "placementDefaults.othersOffsite": "Flash, Tự sao lưu và dataset ZFS chọn đích sao lưu tại trang Bản sao ngoài site",
   "placementDefaults.countOwn": "Lựa chọn riêng: {n}",
   "placementDefaults.countOpen": "Chưa có vị trí: {n}",
   "placementDefaults.countChosenNoRun": "Đã đặt vị trí, chưa sao lưu: {n}",

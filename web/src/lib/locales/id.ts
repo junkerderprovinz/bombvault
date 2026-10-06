@@ -3030,6 +3030,7 @@ const id: Partial<Translations> = {
   "placementDefaults.title": "Penempatan bawaan",
   "placementDefaults.hint": "Item baru mengambil lokasi pada cadangan pertamanya. Mengubahnya tidak memindahkan cadangan apa pun. Salinan berlaku langsung untuk setiap item tanpa pilihan sendiri.",
   "placementDefaults.countFollow": "Mengikuti bawaan: {n}",
+  "placementDefaults.othersOffsite": "Flash, Cadangan Mandiri, dan dataset ZFS memilih tujuannya di halaman Salinan off-site",
   "placementDefaults.countOwn": "Pilihan sendiri: {n}",
   "placementDefaults.countOpen": "Belum ada lokasi: {n}",
   "placementDefaults.countChosenNoRun": "Lokasi diatur, tanpa cadangan: {n}",

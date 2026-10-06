@@ -3030,6 +3030,7 @@ const bg: Partial<Translations> = {
   "placementDefaults.title": "Настройки по подразбиране за разположение",
   "placementDefaults.hint": "Новите елементи вземат местоположението при първото си резервно копие. Промяната му не премества резервни копия. Копията важат веднага за всеки елемент без свой избор.",
   "placementDefaults.countFollow": "Следват подразбирането: {n}",
+  "placementDefaults.othersOffsite": "Flash, Самобекъп и ZFS наборите от данни избират дестинациите си на страницата Копие извън обекта",
   "placementDefaults.countOwn": "Собствен избор: {n}",
   "placementDefaults.countOpen": "Все още без местоположение: {n}",
   "placementDefaults.countChosenNoRun": "Местоположение зададено, без резервно копие: {n}",

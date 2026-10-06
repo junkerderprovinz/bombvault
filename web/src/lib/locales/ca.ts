@@ -3030,6 +3030,7 @@ const ca: Partial<Translations> = {
   "placementDefaults.title": "Valors per defecte d'emplaçament",
   "placementDefaults.hint": "Els elements nous prenen la ubicació en la seva primera còpia de seguretat. Canviar-la no mou cap còpia de seguretat. Les còpies s'apliquen a l'instant a cada element sense elecció pròpia.",
   "placementDefaults.countFollow": "Segueixen el valor per defecte: {n}",
+  "placementDefaults.othersOffsite": "Flash, Autocòpia i els datasets de ZFS trien les seves destinacions a la pàgina Còpia externa",
   "placementDefaults.countOwn": "Elecció pròpia: {n}",
   "placementDefaults.countOpen": "Encara sense ubicació: {n}",
   "placementDefaults.countChosenNoRun": "Ubicació establerta, sense còpia de seguretat: {n}",

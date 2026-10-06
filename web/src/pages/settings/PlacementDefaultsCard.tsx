@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, ToggleRow } from "./shared";
 import { Button } from "../../components/Button";
 import { HUE_OFFSET } from "../../components/Selector";
@@ -431,6 +432,12 @@ export function PlacementDefaultsCard({ hueIndex }: { hueIndex?: number }) {
         {rows?.map((row, i) => (
           <DefaultLine key={row.domain} row={row} hueOffset={HUE_OFFSET.placement + 3 * i} />
         ))}
+        <Link
+          to="/settings/offsite"
+          className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
+        >
+          {t("placementDefaults.othersOffsite")}
+        </Link>
       </div>
     </Card>
   );

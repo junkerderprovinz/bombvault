@@ -3010,6 +3010,7 @@ const ko: Partial<Translations> = {
   "placementDefaults.title": "배치 기본값",
   "placementDefaults.hint": "새 항목은 첫 백업 시 위치를 물려받습니다. 위치를 변경해도 백업이 이동하지 않습니다. 자체 선택이 없는 모든 항목에 사본이 즉시 적용됩니다.",
   "placementDefaults.countFollow": "기본값을 따름: {n}개",
+  "placementDefaults.othersOffsite": "플래시, 셀프 백업, ZFS 데이터셋은 오프사이트 복사 페이지에서 대상을 선택합니다",
   "placementDefaults.countOwn": "자체 선택: {n}개",
   "placementDefaults.countOpen": "아직 위치 없음: {n}개",
   "placementDefaults.countChosenNoRun": "위치 설정됨, 백업 없음: {n}개",

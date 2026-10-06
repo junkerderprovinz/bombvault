@@ -3014,6 +3014,7 @@ const sr: Partial<Translations> = {
   "placementDefaults.title": "Подразумевани размештај",
   "placementDefaults.hint": "Нове ставке преузимају локацију при првој резервној копији. Њена промена не помера ниједну резервну копију. Копије се одмах примењују на сваку ставку без сопственог избора.",
   "placementDefaults.countFollow": "Прате подразумевано: {n}",
+  "placementDefaults.othersOffsite": "Flash, Сопствена резервна копија и ZFS скупови података бирају одредишта на страници Спољна копија",
   "placementDefaults.countOwn": "Сопствени избор: {n}",
   "placementDefaults.countOpen": "Још без локације: {n}",
   "placementDefaults.countChosenNoRun": "Локација постављена, без резервне копије: {n}",

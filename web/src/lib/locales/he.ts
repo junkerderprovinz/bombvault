@@ -3019,6 +3019,7 @@ const he: Partial<Translations> = {
   "placementDefaults.title": "ברירות מחדל של מיקום",
   "placementDefaults.hint": "פריטים חדשים מקבלים את המיקום בגיבוי הראשון שלהם. שינוי המיקום לא מזיז אף גיבוי. ההעתקים חלים מיד על כל פריט שאין לו בחירה משלו.",
   "placementDefaults.countFollow": "עוקבים אחרי ברירת המחדל: {n}",
+  "placementDefaults.othersOffsite": "Flash, גיבוי עצמי ו-datasets של ZFS בוחרים את היעדים שלהם בעמוד עותק מחוץ לאתר",
   "placementDefaults.countOwn": "בחירה משלו: {n}",
   "placementDefaults.countOpen": "עדיין בלי מיקום: {n}",
   "placementDefaults.countChosenNoRun": "מיקום נקבע, בלי גיבוי: {n}",

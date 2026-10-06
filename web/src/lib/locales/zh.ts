@@ -3010,6 +3010,7 @@ const zh: Partial<Translations> = {
   "placementDefaults.title": "存放位置默认值",
   "placementDefaults.hint": "新项目在首次备份时采用该位置。更改位置不会移动任何备份。副本会立即应用于每个没有自己选择的项目。",
   "placementDefaults.countFollow": "跟随默认值：{n}",
+  "placementDefaults.othersOffsite": "闪存、自我备份和 ZFS 数据集在异地副本页面选择目标",
   "placementDefaults.countOwn": "自选：{n}",
   "placementDefaults.countOpen": "尚无位置：{n}",
   "placementDefaults.countChosenNoRun": "已设位置，未备份：{n}",

@@ -3019,6 +3019,7 @@ const sv: Partial<Translations> = {
   "placementDefaults.title": "Standardplaceringar",
   "placementDefaults.hint": "Nya objekt tar över platsen vid sin första säkerhetskopiering. Att ändra den flyttar inga säkerhetskopior. Kopiorna gäller genast för varje objekt utan eget val.",
   "placementDefaults.countFollow": "Följer standarden: {n}",
+  "placementDefaults.othersOffsite": "Flash, Auto-säkerhetskopia och ZFS-datasets väljer sina mål på sidan Extern kopia",
   "placementDefaults.countOwn": "Eget val: {n}",
   "placementDefaults.countOpen": "Fortfarande utan plats: {n}",
   "placementDefaults.countChosenNoRun": "Plats angiven, ingen säkerhetskopia: {n}",

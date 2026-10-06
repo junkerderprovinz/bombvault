@@ -3014,6 +3014,7 @@ const ru: Partial<Translations> = {
   "placementDefaults.title": "Размещение по умолчанию",
   "placementDefaults.hint": "Новые элементы перенимают расположение при первом резервном копировании. Его изменение не перемещает ни одной резервной копии. Копии сразу применяются к каждому элементу без собственного выбора.",
   "placementDefaults.countFollow": "Следуют значению по умолчанию: {n}",
+  "placementDefaults.othersOffsite": "Flash, Автобэкап и датасеты ZFS выбирают места назначения на странице Внешняя копия",
   "placementDefaults.countOwn": "Собственный выбор: {n}",
   "placementDefaults.countOpen": "Пока без расположения: {n}",
   "placementDefaults.countChosenNoRun": "Расположение задано, без резервной копии: {n}",

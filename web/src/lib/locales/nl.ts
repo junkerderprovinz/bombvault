@@ -3016,6 +3016,7 @@ const nl: Partial<Translations> = {
   "placementDefaults.title": "Standaardplaatsing",
   "placementDefaults.hint": "Nieuwe items nemen de locatie over bij hun eerste back-up. Wijzigen verplaatst geen back-ups. De kopieën gelden meteen voor elk item zonder eigen keuze.",
   "placementDefaults.countFollow": "Volgen de standaard: {n}",
+  "placementDefaults.othersOffsite": "Flash, Zelf-back-up en ZFS-datasets kiezen hun bestemmingen op de pagina Offsite-kopie",
   "placementDefaults.countOwn": "Eigen keuze: {n}",
   "placementDefaults.countOpen": "Nog geen locatie: {n}",
   "placementDefaults.countChosenNoRun": "Locatie ingesteld, geen back-up: {n}",

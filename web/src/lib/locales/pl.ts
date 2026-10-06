@@ -3014,6 +3014,7 @@ const pl: Partial<Translations> = {
   "placementDefaults.title": "Domyślne rozmieszczenie",
   "placementDefaults.hint": "Nowe elementy przejmują lokalizację przy pierwszej kopii zapasowej. Jej zmiana nie przenosi żadnych kopii zapasowych. Kopie stosują się od razu do każdego elementu bez własnego wyboru.",
   "placementDefaults.countFollow": "Podąża za domyślnym: {n}",
+  "placementDefaults.othersOffsite": "Flash, Autokopia i zbiory danych ZFS wybierają miejsca docelowe na stronie Kopia poza siedzibą",
   "placementDefaults.countOwn": "Własny wybór: {n}",
   "placementDefaults.countOpen": "Jeszcze bez lokalizacji: {n}",
   "placementDefaults.countChosenNoRun": "Lokalizacja ustawiona, bez kopii zapasowej: {n}",

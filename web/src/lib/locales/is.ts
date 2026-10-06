@@ -3030,6 +3030,7 @@ const is: Partial<Translations> = {
   "placementDefaults.title": "Sjálfgefin staðsetning",
   "placementDefaults.hint": "Ný atriði taka staðsetninguna við fyrsta afritið sitt. Að breyta henni flytur engin afrit. Afritin gilda strax fyrir hvert atriði án eigin vals.",
   "placementDefaults.countFollow": "Fylgja sjálfgefnu: {n}",
+  "placementDefaults.othersOffsite": "Flash, Sjálfvirk afritun og ZFS-gagnasöfn velja áfangastaði sína á síðunni Fjarlægt afrit",
   "placementDefaults.countOwn": "Eigið val: {n}",
   "placementDefaults.countOpen": "Enn án staðsetningar: {n}",
   "placementDefaults.countChosenNoRun": "Staðsetning stillt, ekkert afrit: {n}",

@@ -3030,6 +3030,7 @@ const fa: Partial<Translations> = {
   "placementDefaults.title": "پیش‌فرض‌های مکان‌گذاری",
   "placementDefaults.hint": "موردهای جدید در اولین پشتیبان‌گیری خود، مکان را می‌گیرند. تغییر آن هیچ پشتیبانی را جابه‌جا نمی‌کند. کپی‌ها بی‌درنگ برای هر موردی که انتخاب خودش را ندارد اعمال می‌شوند.",
   "placementDefaults.countFollow": "پیرو پیش‌فرض: {n}",
+  "placementDefaults.othersOffsite": "فلش، پشتیبان‌گیری خودکار و دیتاست‌های ZFS مقصدهای خود را در صفحه نسخه خارج از محل انتخاب می‌کنند",
   "placementDefaults.countOwn": "انتخاب خود: {n}",
   "placementDefaults.countOpen": "هنوز بدون مکان: {n}",
   "placementDefaults.countChosenNoRun": "مکان تنظیم شده، بدون پشتیبان: {n}",

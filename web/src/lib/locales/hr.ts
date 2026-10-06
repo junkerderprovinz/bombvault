@@ -3030,6 +3030,7 @@ const hr: Partial<Translations> = {
   "placementDefaults.title": "Zadani smještaj",
   "placementDefaults.hint": "Nove stavke preuzimaju lokaciju pri prvoj sigurnosnoj kopiji. Promjena ne premješta nijednu sigurnosnu kopiju. Kopije se odmah primjenjuju na svaku stavku bez vlastitog izbora.",
   "placementDefaults.countFollow": "Slijede zadano: {n}",
+  "placementDefaults.othersOffsite": "Flash, Samostalna sigurnosna kopija i ZFS datasetovi biraju svoja odredišta na stranici Izvanmrežna kopija",
   "placementDefaults.countOwn": "Vlastiti izbor: {n}",
   "placementDefaults.countOpen": "Još bez lokacije: {n}",
   "placementDefaults.countChosenNoRun": "Lokacija postavljena, bez sigurnosne kopije: {n}",

@@ -3030,6 +3030,7 @@ const sk: Partial<Translations> = {
   "placementDefaults.title": "Predvolené rozmiestnenie",
   "placementDefaults.hint": "Nové položky preberajú umiestnenie pri prvej zálohe. Jeho zmena nepresúva žiadne zálohy. Kópie platia okamžite pre každú položku bez vlastnej voľby.",
   "placementDefaults.countFollow": "Riadi sa predvoleným nastavením: {n}",
+  "placementDefaults.othersOffsite": "Flash, Vlastná záloha a datasety ZFS si vyberajú ciele na stránke Externá kópia",
   "placementDefaults.countOwn": "Vlastná voľba: {n}",
   "placementDefaults.countOpen": "Zatiaľ bez umiestnenia: {n}",
   "placementDefaults.countChosenNoRun": "Umiestnenie nastavené, bez zálohy: {n}",

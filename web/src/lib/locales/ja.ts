@@ -3010,6 +3010,7 @@ const ja: Partial<Translations> = {
   "placementDefaults.title": "配置の既定値",
   "placementDefaults.hint": "新しい項目は最初のバックアップ時に保存先を引き継ぎます。変更してもバックアップは移動しません。コピーは、独自の選択をしていないすべての項目にすぐに適用されます。",
   "placementDefaults.countFollow": "既定に従う: {n}",
+  "placementDefaults.othersOffsite": "フラッシュ、セルフバックアップ、ZFSデータセットの保存先は、オフサイトコピーのページで選びます",
   "placementDefaults.countOwn": "独自の選択: {n}",
   "placementDefaults.countOpen": "まだ保存先なし: {n}",
   "placementDefaults.countChosenNoRun": "保存先設定済み、バックアップなし: {n}",

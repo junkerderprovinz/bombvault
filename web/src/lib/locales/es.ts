@@ -3017,6 +3017,7 @@ const es: Partial<Translations> = {
   "placementDefaults.title": "Valores predeterminados de ubicación",
   "placementDefaults.hint": "Los elementos nuevos toman la ubicación en su primera copia de seguridad. Cambiarla no mueve ninguna copia de seguridad. Las copias se aplican de inmediato a cada elemento sin elección propia.",
   "placementDefaults.countFollow": "Siguen el valor predeterminado: {n}",
+  "placementDefaults.othersOffsite": "Flash, Autocopia y los datasets de ZFS eligen sus destinos en la página Copia externa",
   "placementDefaults.countOwn": "Elección propia: {n}",
   "placementDefaults.countOpen": "Todavía sin ubicación: {n}",
   "placementDefaults.countChosenNoRun": "Ubicación establecida, sin copia de seguridad: {n}",

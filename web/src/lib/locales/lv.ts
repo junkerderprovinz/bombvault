@@ -3030,6 +3030,7 @@ const lv: Partial<Translations> = {
   "placementDefaults.title": "Novietojuma noklusējumi",
   "placementDefaults.hint": "Jauni vienumi pārņem atrašanās vietu pirmajā dublēšanas reizē. Tās mainīšana nepārvieto nevienu dublējumu. Kopijas nekavējoties attiecas uz katru vienumu bez sava izvēles.",
   "placementDefaults.countFollow": "Seko noklusējumam: {n}",
+  "placementDefaults.othersOffsite": "Flash, Pašrezerve un ZFS datu kopas savus mērķus izvēlas lapā Attālinātā kopija",
   "placementDefaults.countOwn": "Sava izvēle: {n}",
   "placementDefaults.countOpen": "Vēl bez atrašanās vietas: {n}",
   "placementDefaults.countChosenNoRun": "Atrašanās vieta iestatīta, bez dublējuma: {n}",

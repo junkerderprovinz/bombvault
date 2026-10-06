@@ -3017,6 +3017,7 @@ const cs: Partial<Translations> = {
   "placementDefaults.title": "Výchozí umístění",
   "placementDefaults.hint": "Nové položky přebírají umístění při první záloze. Změna nepřesune žádné zálohy. Kopie platí okamžitě pro každou položku bez vlastní volby.",
   "placementDefaults.countFollow": "Řídí se výchozím nastavením: {n}",
+  "placementDefaults.othersOffsite": "Flash, Autozáloha a datasety ZFS volí své cíle na stránce Kopie mimo lokalitu",
   "placementDefaults.countOwn": "Vlastní volba: {n}",
   "placementDefaults.countOpen": "Zatím bez umístění: {n}",
   "placementDefaults.countChosenNoRun": "Umístění nastaveno, bez zálohy: {n}",

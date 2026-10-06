@@ -3022,6 +3022,7 @@ const ar: Partial<Translations> = {
   "placementDefaults.title": "افتراضيات الموضع",
   "placementDefaults.hint": "تأخذ العناصر الجديدة الموقع عند أول نسخة احتياطية لها. تغييره لا ينقل أي نسخ احتياطية. تُطبَّق النسخ فورًا على كل عنصر لا يملك اختياره الخاص.",
   "placementDefaults.countFollow": "يتبع الافتراضي: {n}",
+  "placementDefaults.othersOffsite": "Flash والنسخ الذاتي ومجموعات بيانات ZFS تختار وجهاتها في صفحة نسخة خارج الموقع",
   "placementDefaults.countOwn": "اختيار خاص: {n}",
   "placementDefaults.countOpen": "بلا موقع بعد: {n}",
   "placementDefaults.countChosenNoRun": "الموقع مُعيَّن، بلا نسخة احتياطية: {n}",

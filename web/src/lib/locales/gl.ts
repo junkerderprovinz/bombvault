@@ -3030,6 +3030,7 @@ const gl: Partial<Translations> = {
   "placementDefaults.title": "Valores por defecto de colocación",
   "placementDefaults.hint": "Os elementos novos toman a localización na súa primeira copia de seguranza. Cambiala non move ningunha copia de seguranza. As copias aplícanse decontado a cada elemento sen elección propia.",
   "placementDefaults.countFollow": "Seguen o valor por defecto: {n}",
+  "placementDefaults.othersOffsite": "Flash, Autocopia e os datasets de ZFS escollen os seus destinos na páxina Copia externa",
   "placementDefaults.countOwn": "Elección propia: {n}",
   "placementDefaults.countOpen": "Aínda sen localización: {n}",
   "placementDefaults.countChosenNoRun": "Localización establecida, sen copia de seguranza: {n}",

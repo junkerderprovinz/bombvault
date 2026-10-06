@@ -3022,6 +3022,7 @@ const th: Partial<Translations> = {
   "placementDefaults.title": "ค่าเริ่มต้นของการจัดวาง",
   "placementDefaults.hint": "รายการใหม่จะรับตำแหน่งตอนสำรองข้อมูลครั้งแรก การเปลี่ยนตำแหน่งไม่ย้ายการสำรองข้อมูลใด ๆ สำเนาจะมีผลทันทีกับทุกรายการที่ไม่มีตัวเลือกของตัวเอง",
   "placementDefaults.countFollow": "เป็นไปตามค่าเริ่มต้น: {n}",
+  "placementDefaults.othersOffsite": "Flash, สำรองข้อมูลตัวเอง และ ZFS dataset เลือกปลายทางของตนเองในหน้าสำเนานอกสถานที่",
   "placementDefaults.countOwn": "ตัวเลือกของตัวเอง: {n}",
   "placementDefaults.countOpen": "ยังไม่มีตำแหน่ง: {n}",
   "placementDefaults.countChosenNoRun": "ตั้งตำแหน่งแล้ว ไม่มีการสำรองข้อมูล: {n}",

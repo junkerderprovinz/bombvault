@@ -3014,6 +3014,7 @@ const sl: Partial<Translations> = {
   "placementDefaults.title": "Privzeta postavitev",
   "placementDefaults.hint": "Novi elementi prevzamejo lokacijo ob prvi varnostni kopiji. Sprememba ne premakne nobene varnostne kopije. Kopije veljajo takoj za vsak element brez lastne izbire.",
   "placementDefaults.countFollow": "Sledijo privzetemu: {n}",
+  "placementDefaults.othersOffsite": "Flash, Lastna varnostna kopija in nabori podatkov ZFS izberejo cilje na strani Zunanja kopija",
   "placementDefaults.countOwn": "Lastna izbira: {n}",
   "placementDefaults.countOpen": "Še brez lokacije: {n}",
   "placementDefaults.countChosenNoRun": "Lokacija nastavljena, brez varnostne kopije: {n}",

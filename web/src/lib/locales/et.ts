@@ -3030,6 +3030,7 @@ const et: Partial<Translations> = {
   "placementDefaults.title": "Paigutuse vaikeväärtused",
   "placementDefaults.hint": "Uued üksused võtavad asukoha oma esimesel varundamisel. Selle muutmine ei liiguta ühtegi varukoopiat. Koopiad kehtivad kohe iga üksuse jaoks, millel pole oma valikut.",
   "placementDefaults.countFollow": "Järgivad vaikeväärtust: {n}",
+  "placementDefaults.othersOffsite": "Flash, Iseenda varundus ja ZFS-i andmekogumid valivad oma sihtkohad lehel Väline koopia",
   "placementDefaults.countOwn": "Oma valik: {n}",
   "placementDefaults.countOpen": "Veel ilma asukohata: {n}",
   "placementDefaults.countChosenNoRun": "Asukoht määratud, varukoopiata: {n}",

@@ -3019,6 +3019,7 @@ const pt: Partial<Translations> = {
   "placementDefaults.title": "Localizações padrão",
   "placementDefaults.hint": "Itens novos assumem a localização no primeiro backup. Alterá-la não move nenhum backup. As cópias se aplicam de imediato a cada item sem escolha própria.",
   "placementDefaults.countFollow": "Segue o padrão: {n}",
+  "placementDefaults.othersOffsite": "Flash, Auto-backup e os datasets ZFS escolhem os seus destinos na página Cópia externa",
   "placementDefaults.countOwn": "Escolha própria: {n}",
   "placementDefaults.countOpen": "Ainda sem localização: {n}",
   "placementDefaults.countChosenNoRun": "Localização definida, sem backup: {n}",

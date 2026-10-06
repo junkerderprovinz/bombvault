@@ -3030,6 +3030,7 @@ const ms: Partial<Translations> = {
   "placementDefaults.title": "Lalai penempatan",
   "placementDefaults.hint": "Item baharu mengambil lokasi pada sandaran pertamanya. Menukarnya tidak memindahkan sebarang sandaran. Salinan terpakai serta-merta pada setiap item tanpa pilihan sendiri.",
   "placementDefaults.countFollow": "Mengikut lalai: {n}",
+  "placementDefaults.othersOffsite": "Flash, Sandaran Sendiri dan set data ZFS memilih destinasi masing-masing di halaman Salinan luar tapak",
   "placementDefaults.countOwn": "Pilihan sendiri: {n}",
   "placementDefaults.countOpen": "Masih tiada lokasi: {n}",
   "placementDefaults.countChosenNoRun": "Lokasi ditetapkan, tiada sandaran: {n}",

@@ -3022,6 +3022,7 @@ const hu: Partial<Translations> = {
   "placementDefaults.title": "Elhelyezési alapértelmezések",
   "placementDefaults.hint": "Az új elemek az első biztonsági mentésükkor veszik fel a helyet. A megváltoztatása egyetlen biztonsági mentést sem mozgat. A másolatok azonnal érvényesek minden saját választás nélküli elemre.",
   "placementDefaults.countFollow": "Az alapértelmezést követi: {n}",
+  "placementDefaults.othersOffsite": "A Flash, az Önmentés és a ZFS-datasetek a céljaikat a Telephelyen kívüli másolat oldalon választják",
   "placementDefaults.countOwn": "Saját választás: {n}",
   "placementDefaults.countOpen": "Még hely nélkül: {n}",
   "placementDefaults.countChosenNoRun": "Hely beállítva, biztonsági mentés nélkül: {n}",

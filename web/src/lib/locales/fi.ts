@@ -3019,6 +3019,7 @@ const fi: Partial<Translations> = {
   "placementDefaults.title": "Sijoittelun oletukset",
   "placementDefaults.hint": "Uudet kohteet ottavat sijainnin ensimmäisessä varmuuskopioinnissaan. Sen muuttaminen ei siirrä yhtään varmuuskopiota. Kopiot pätevät heti jokaiseen kohteeseen, jolla ei ole omaa valintaa.",
   "placementDefaults.countFollow": "Noudattavat oletusta: {n}",
+  "placementDefaults.othersOffsite": "Flash, Itsevarmuuskopio ja ZFS-datasetit valitsevat kohteensa Etäkopio-sivulla",
   "placementDefaults.countOwn": "Oma valinta: {n}",
   "placementDefaults.countOpen": "Ei vielä sijaintia: {n}",
   "placementDefaults.countChosenNoRun": "Sijainti asetettu, ei varmuuskopiota: {n}",

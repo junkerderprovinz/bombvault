@@ -3030,6 +3030,7 @@ const hi: Partial<Translations> = {
   "placementDefaults.title": "प्लेसमेंट डिफ़ॉल्ट",
   "placementDefaults.hint": "नई प्रविष्टियाँ अपने पहले बैकअप में स्थान अपनाती हैं। इसे बदलने से कोई बैकअप नहीं हटता। बिना अपनी पसंद वाली हर प्रविष्टि पर कॉपियाँ तुरंत लागू होती हैं।",
   "placementDefaults.countFollow": "डिफ़ॉल्ट का पालन: {n}",
+  "placementDefaults.othersOffsite": "फ़्लैश, सेल्फ़-बैकअप और ZFS डेटासेट अपने गंतव्य ऑफ़-साइट कॉपी पेज पर चुनते हैं",
   "placementDefaults.countOwn": "अपनी पसंद: {n}",
   "placementDefaults.countOpen": "अभी तक स्थान नहीं: {n}",
   "placementDefaults.countChosenNoRun": "स्थान तय, बैकअप नहीं: {n}",

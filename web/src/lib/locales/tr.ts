@@ -3019,6 +3019,7 @@ const tr: Partial<Translations> = {
   "placementDefaults.title": "Varsayılan yerleşimler",
   "placementDefaults.hint": "Yeni ögeler ilk yedeklemelerinde konumu devralır. Konumu değiştirmek hiçbir yedeği taşımaz. Kopyalar, kendi seçimi olmayan her öge için hemen uygulanır.",
   "placementDefaults.countFollow": "Varsayılanı izliyor: {n}",
+  "placementDefaults.othersOffsite": "Flash, Öz yedek ve ZFS veri kümeleri hedeflerini Site dışı kopya sayfasında seçer",
   "placementDefaults.countOwn": "Kendi seçimi: {n}",
   "placementDefaults.countOpen": "Henüz konumu yok: {n}",
   "placementDefaults.countChosenNoRun": "Konum ayarlandı, yedek yok: {n}",

@@ -3019,6 +3019,7 @@ const da: Partial<Translations> = {
   "placementDefaults.title": "Standardplaceringer",
   "placementDefaults.hint": "Nye elementer overtager placeringen ved deres første sikkerhedskopi. En ændring flytter ingen sikkerhedskopier. Kopierne gælder med det samme for hvert element uden eget valg.",
   "placementDefaults.countFollow": "Følger standarden: {n}",
+  "placementDefaults.othersOffsite": "Flash, Auto-sikkerhedskopi og ZFS-datasets vælger deres destinationer på siden Ekstern kopi",
   "placementDefaults.countOwn": "Eget valg: {n}",
   "placementDefaults.countOpen": "Endnu uden placering: {n}",
   "placementDefaults.countChosenNoRun": "Placering angivet, ingen sikkerhedskopi: {n}",

@@ -2572,6 +2572,7 @@ export const en = {
   "placementDefaults.hint":
     "New items take the location at their first backup. Changing it moves no backups. The copies apply at once to every item without its own choice.",
   "placementDefaults.countFollow": "Following the default: {n}",
+  "placementDefaults.othersOffsite": "Flash, self-backup and ZFS datasets pick their destinations on the Off-site page",
   "placementDefaults.countOwn": "Own choice: {n}",
   "placementDefaults.countOpen": "No location yet: {n}",
   "placementDefaults.countChosenNoRun": "Location set, no backup: {n}",
@@ -6063,6 +6064,7 @@ export const de: Translations = {
   "placementDefaults.hint":
     "Neue Einträge übernehmen den Ort beim ersten Backup. Eine Änderung verschiebt keine Backups. Die Kopien gelten sofort für jeden Eintrag ohne eigene Wahl.",
   "placementDefaults.countFollow": "Folgen der Vorgabe: {n}",
+  "placementDefaults.othersOffsite": "Flash, Selbst-Backup und ZFS-Datasets wählen ihre Ziele auf der Seite Off-site",
   "placementDefaults.countOwn": "Eigene Wahl: {n}",
   "placementDefaults.countOpen": "Noch ohne Ort: {n}",
   "placementDefaults.countChosenNoRun": "Ort eingetragen, ohne Backup: {n}",

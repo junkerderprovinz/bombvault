@@ -3022,6 +3022,7 @@ const ro: Partial<Translations> = {
   "placementDefaults.title": "Amplasări implicite",
   "placementDefaults.hint": "Elementele noi preiau locația la prima copie de siguranță. Schimbarea ei nu mută nicio copie de siguranță. Copiile se aplică imediat fiecărui element fără alegere proprie.",
   "placementDefaults.countFollow": "Urmează valoarea implicită: {n}",
+  "placementDefaults.othersOffsite": "Flash, Auto-backup și seturile de date ZFS își aleg destinațiile pe pagina Copie externă",
   "placementDefaults.countOwn": "Alegere proprie: {n}",
   "placementDefaults.countOpen": "Încă fără locație: {n}",
   "placementDefaults.countChosenNoRun": "Locație stabilită, fără copie de siguranță: {n}",

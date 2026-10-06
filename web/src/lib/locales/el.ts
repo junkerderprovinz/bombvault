@@ -3019,6 +3019,7 @@ const el: Partial<Translations> = {
   "placementDefaults.title": "Προεπιλογές τοποθέτησης",
   "placementDefaults.hint": "Τα νέα στοιχεία παίρνουν την τοποθεσία στο πρώτο τους αντίγραφο ασφαλείας. Η αλλαγή της δεν μετακινεί κανένα αντίγραφο ασφαλείας. Τα αντίγραφα ισχύουν αμέσως για κάθε στοιχείο χωρίς δική του επιλογή.",
   "placementDefaults.countFollow": "Ακολουθούν την προεπιλογή: {n}",
+  "placementDefaults.othersOffsite": "Το Flash, το Αυτο-αντίγραφο και τα σύνολα δεδομένων ZFS επιλέγουν τους προορισμούς τους στη σελίδα Αντίγραφο εκτός τόπου",
   "placementDefaults.countOwn": "Δική τους επιλογή: {n}",
   "placementDefaults.countOpen": "Ακόμα χωρίς τοποθεσία: {n}",
   "placementDefaults.countChosenNoRun": "Τοποθεσία ορισμένη, χωρίς αντίγραφο ασφαλείας: {n}",

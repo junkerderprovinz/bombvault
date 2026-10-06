@@ -3030,6 +3030,7 @@ const lt: Partial<Translations> = {
   "placementDefaults.title": "Numatytasis išdėstymas",
   "placementDefaults.hint": "Nauji elementai perima vietą pirmosios atsarginės kopijos metu. Jos pakeitimas nekeičia jokių atsarginių kopijų vietos. Kopijos iškart pritaikomos kiekvienam elementui be savo pasirinkimo.",
   "placementDefaults.countFollow": "Seka numatytąją: {n}",
+  "placementDefaults.othersOffsite": "Flash, Savarankiška atsarga ir ZFS duomenų rinkiniai paskirties vietas pasirenka puslapyje Nuotolinė kopija",
   "placementDefaults.countOwn": "Savas pasirinkimas: {n}",
   "placementDefaults.countOpen": "Kol kas be vietos: {n}",
   "placementDefaults.countChosenNoRun": "Vieta nustatyta, be atsarginės kopijos: {n}",

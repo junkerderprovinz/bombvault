@@ -3019,6 +3019,7 @@ const it: Partial<Translations> = {
   "placementDefaults.title": "Collocazioni predefinite",
   "placementDefaults.hint": "I nuovi elementi assumono la posizione al primo backup. Cambiarla non sposta alcun backup. Le copie si applicano subito a ogni elemento senza una scelta propria.",
   "placementDefaults.countFollow": "Seguono il valore predefinito: {n}",
+  "placementDefaults.othersOffsite": "Flash, Auto-backup e i dataset ZFS scelgono le proprie destinazioni nella pagina Copia off-site",
   "placementDefaults.countOwn": "Scelta propria: {n}",
   "placementDefaults.countOpen": "Ancora senza posizione: {n}",
   "placementDefaults.countChosenNoRun": "Posizione impostata, senza backup: {n}",

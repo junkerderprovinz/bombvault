@@ -3019,6 +3019,7 @@ const fr: Partial<Translations> = {
   "placementDefaults.title": "Emplacements par défaut",
   "placementDefaults.hint": "Les nouveaux éléments prennent l'emplacement à leur première sauvegarde. Le changer ne déplace aucune sauvegarde. Les copies s'appliquent aussitôt à chaque élément sans choix propre.",
   "placementDefaults.countFollow": "Suivent la valeur par défaut : {n}",
+  "placementDefaults.othersOffsite": "Flash, Auto-sauvegarde et les datasets ZFS choisissent leurs destinations sur la page Copie hors site",
   "placementDefaults.countOwn": "Choix propre : {n}",
   "placementDefaults.countOpen": "Pas encore d'emplacement : {n}",
   "placementDefaults.countChosenNoRun": "Emplacement défini, sans sauvegarde : {n}",

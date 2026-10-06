@@ -3014,6 +3014,7 @@ const uk: Partial<Translations> = {
   "placementDefaults.title": "Розміщення за замовчуванням",
   "placementDefaults.hint": "Нові елементи переймають розташування при першому резервному копіюванні. Його зміна не переміщує жодної резервної копії. Копії застосовуються одразу до кожного елемента без власного вибору.",
   "placementDefaults.countFollow": "Слідують значенню за замовчуванням: {n}",
+  "placementDefaults.othersOffsite": "Flash, Автобекап і датасети ZFS обирають місця призначення на сторінці Зовнішня копія",
   "placementDefaults.countOwn": "Власний вибір: {n}",
   "placementDefaults.countOpen": "Поки без розташування: {n}",
   "placementDefaults.countChosenNoRun": "Розташування задано, без резервної копії: {n}",
