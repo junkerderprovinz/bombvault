@@ -36,6 +36,8 @@ A fogadószerver, amelyet a csoportod egy másik példánya futtat, a varázsló
 
 Egy tartomány célja, amely egy célból készült, átveszi a cél nevét, helyét, hitelesítő adatait, tárolási osztályát és a nem módosítható kapcsolót. A megőrzése, tömörítése és növekedési kerete tartományonként külön marad, a helye pedig nem mozdítható, mert ott van a tartomány tárolója. A **Cél hozzáadása csak ehhez a tartományhoz** gomb minden tartomány alatt továbbra is kézzel beírt tárolócímet kér.
 
+Egy kézzel beírt cél, amelynek tárolója egy cél egyik mappájában van, csatlakozhat ehhez a célhoz. A cél az ilyen célokat az **Már ennek a célnak az alatt van** alatt listázza, az **Átvétel** pedig felfűz egyet rá. A kézzel beírt cél megtartja a tárolóját, a pillanatképeit, a megőrzését és az elhelyezését, és átveszi a cél nevét, hitelesítő adatait, tárolási osztályát és a nem módosítható kapcsolót. A BombVault először ellenőrzi, hogy a cél bejelentkezése megnyitja-e a tárolót, és nem hajlandó append-only célt olyan cél alá tenni, amely nem append-only. Ha egy tartomány elsődleges célját átveszed, a tartomány off-site mezője kiürül.
+
 ## Elhelyezés elemenként {#placement}
 
 Minden konténer-, VM- és fájlkészlet-kártyának van egy **Elhelyezés** sora gombokkal: **Helyi**, majd a tartomány minden telephelyen kívüli céljához egy gomb, utánuk azok a célok, amelyek alatt a tartománynak még nincs célja. A világító gombok kapják az elem mentéseit.

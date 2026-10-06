@@ -36,6 +36,8 @@ Một máy chủ nhận do phiên bản khác trong nhóm của bạn chạy xu�
 
 Một đích off-site của miền tạo từ đích sao lưu lấy tên, vị trí, thông tin xác thực, lớp lưu trữ và công tắc bất biến của đích sao lưu đó. Mức lưu giữ, nén và ngân sách tăng trưởng vẫn tính riêng theo từng miền, và vị trí của nó không thể di chuyển vì kho của miền nằm ở đó. **Thêm đích chỉ cho miền này** dưới mỗi miền vẫn nhận một URL kho gõ tay.
 
+Một đích off-site gõ tay có kho nằm trong thư mục của một đích sao lưu có thể gia nhập đích đó. Đích sao lưu liệt kê các đích như vậy dưới **Đã nằm dưới đích này**, và **Tiếp quản** treo một đích vào nó. Đích off-site giữ nguyên kho, snapshot, mức lưu giữ và nơi lưu trữ của mình, và lấy tên, thông tin xác thực, lớp lưu trữ và công tắc bất biến của đích sao lưu. BombVault trước hết kiểm tra rằng thông tin đăng nhập của đích sao lưu mở được kho, và từ chối đặt một đích append-only dưới đích sao lưu không phải append-only. Tiếp quản đích chính của một miền sẽ làm trống trường off-site của miền đó.
+
 ## Nơi lưu trữ theo từng mục {#placement}
 
 Mỗi thẻ container, VM và bộ tập tin có một hàng nút **Nơi lưu trữ**: **Cục bộ** và một nút cho mỗi đích off-site của miền, tiếp theo là các đích sao lưu mà miền chưa có đích nào bên dưới. Các nút đang sáng nhận bản sao lưu của mục.

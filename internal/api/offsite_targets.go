@@ -107,7 +107,13 @@ func (s *Service) rejectAdoptionOverOwnSettings(settings store.Settings) (string
 			continue
 		}
 		i := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return t.Repo == repo })
-		if i < 0 || sameOffsitePolicy(targets[i], settingsOffsiteTarget(d, settings, repo)) {
+		if i < 0 {
+			continue
+		}
+		if targets[i].DestinationID != "" {
+			return fmt.Sprintf("the %s off-site repository is the target %q, which follows a destination: leave the field empty", d, targets[i].Name), nil
+		}
+		if sameOffsitePolicy(targets[i], settingsOffsiteTarget(d, settings, repo)) {
 			continue
 		}
 		return fmt.Sprintf("the %s off-site repository is the additional target %q, which has settings of its own: remove that target or give it the off-site settings first", d, targets[i].Name), nil

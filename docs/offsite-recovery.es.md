@@ -36,6 +36,8 @@ Un servidor receptor que ejecuta otra instancia de tu grupo aparece en el asiste
 
 El destino externo que un dominio crea a partir de un destino toma el nombre del destino, su ubicación, ubicación, credenciales, clase de almacenamiento e interruptor de inmutable. Su retención, compresión y presupuesto de crecimiento siguen siendo por dominio, y su ubicación no se puede mover porque ahí está el repositorio del dominio. **Añadir un destino solo para este dominio**, bajo cada dominio, sigue aceptando una URL de repositorio escrita a mano.
 
+Un destino externo escrito a mano cuyo repositorio está en una carpeta de un destino puede unirse a él. El destino lista esos destinos externos en **Ya está bajo este destino**, y **Asumir** cuelga uno de él. El destino externo conserva su repositorio, sus snapshots, su retención y su ubicación, y toma el nombre, las credenciales, la clase de almacenamiento y el interruptor de inmutable del destino. BombVault comprueba primero que el inicio de sesión del destino abre el repositorio, y se niega a poner un destino externo append-only bajo un destino que no lo es. Si asumes el principal de un dominio, el campo off-site de ese dominio queda vacío.
+
 ## Ubicación por elemento {#placement}
 
 Cada tarjeta de contenedor, VM y conjunto de archivos tiene una fila de botones de **Ubicación**: **Local** y un botón por cada destino externo del dominio, seguidos de los destinos bajo los que el dominio aún no tiene ningún destino externo. Los botones encendidos reciben las copias de seguridad del elemento.

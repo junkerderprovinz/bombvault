@@ -36,6 +36,8 @@ Přijímací server, který provozuje jiná instance vaší skupiny, se v průvo
 
 Cíl domény vytvořený z karty Cíle převezme její název, umístění, přihlašovací údaje, třídu úložiště a přepínač neměnnosti. Uchovávání, komprese a rozpočet růstu zůstávají na doménu a jeho umístění se přesunout nedá, protože tam leží repozitář domény. **Přidat cíl jen pro tuto doménu** pod každou doménou dál přijímá ručně zadanou URL repozitáře.
 
+Ručně zadaný cíl domény, jehož repozitář leží ve složce některého cíle, se k tomuto cíli může připojit. Cíl takové cíle domén vypisuje pod **Už pod tímto cílem** a **Převzít** jeden z nich pod něj zařadí. Cíl domény si ponechá svůj repozitář, snapshoty, uchovávání a umístění a převezme název, přihlašovací údaje, třídu úložiště a přepínač neměnnosti cíle. BombVault nejprve ověří, že přihlášení cíle repozitář otevře, a odmítne zařadit append-only cíl domény pod cíl, který append-only není. Převzetí primárního cíle domény vyprázdní pole Off-site této domény.
+
 ## Umístění pro jednotlivé položky {#placement}
 
 Každá karta kontejneru, VM a sady složek má řádek **Umístění** z tlačítek: **Místní** a jedno tlačítko na každý cíl domény mimo lokalitu, za nimi cíle, pod kterými doména zatím žádný cíl nemá. Rozsvícená tlačítka dostávají zálohy položky.

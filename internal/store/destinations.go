@@ -325,6 +325,82 @@ func skipNewTargetTx(tx *sql.Tx, domain, targetID string, now int64) error {
 	return nil
 }
 
+var (
+	// ErrTargetFollowsDestination is returned for a target that already
+	// follows a destination.
+	ErrTargetFollowsDestination = errors.New("the target already follows a destination")
+	// ErrDomainHasDestinationTarget is returned when the domain already has a
+	// target from the destination.
+	ErrDomainHasDestinationTarget = errors.New("the domain already has a target from this destination")
+)
+
+// AdoptIntoDestination hangs a domain target typed in by hand on a
+// destination. The target takes the destination's mirrored fields and keeps
+// its repository, retention and copy rules. A target in the primary slot
+// leaves it, and clearField empties the domain's off-site field in the same
+// transaction, because that field rewrites the primary slot on every save.
+func (r *Repo) AdoptIntoDestination(targetID, destID string, clearField func(*Settings)) (OffsiteTarget, error) {
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+	var out OffsiteTarget
+	err := r.inTx(func(tx *sql.Tx) error {
+		d, err := destinationTx(tx, destID)
+		if err != nil {
+			return err
+		}
+		t, err := offsiteTargetTx(tx, targetID)
+		if err != nil {
+			return err
+		}
+		if t.DestinationID != "" {
+			return ErrTargetFollowsDestination
+		}
+		var n int
+		if err := tx.QueryRow(`SELECT count(*) FROM offsite_targets WHERE role = ? AND destination_id = ? AND domain = ?`,
+			RoleOffsite, destID, t.Domain).Scan(&n); err != nil {
+			return err
+		}
+		if n > 0 {
+			return ErrDomainHasDestinationTarget
+		}
+		primary := t.SortOrder == 0
+		if primary {
+			if err := tx.QueryRow(`SELECT COALESCE(MAX(sort_order), 0) + 1 FROM offsite_targets WHERE role = ? AND domain = ?`,
+				RoleOffsite, t.Domain).Scan(&t.SortOrder); err != nil {
+				return err
+			}
+		}
+		t.DestinationID = d.ID
+		t.Name, t.CredsRef, t.StorageClass, t.Immutable, t.Provider = d.Name, d.CredsRef, d.StorageClass, d.Immutable, d.Provider
+		if _, err := tx.Exec(`UPDATE offsite_targets SET destination_id = ?, name = ?, creds_ref = ?, storage_class = ?,
+			  immutable = ?, provider = ?, sort_order = ?
+			WHERE id = ? AND role = ?`,
+			t.DestinationID, t.Name, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Provider, t.SortOrder,
+			t.ID, RoleOffsite); err != nil {
+			return err
+		}
+		if err := mirrorTx(tx, t, false); err != nil {
+			return err
+		}
+		if primary && clearField != nil {
+			s, err := getSettings(tx)
+			if err != nil {
+				return err
+			}
+			clearField(&s)
+			if err := updateSettings(tx, s); err != nil {
+				return err
+			}
+		}
+		out, err = offsiteTargetTx(tx, t.ID)
+		return err
+	})
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("AdoptIntoDestination: %w", err)
+	}
+	return out, nil
+}
+
 // DeleteDestinationIfUnused removes a destination that no domain target is
 // derived from any more.
 func (r *Repo) DeleteDestinationIfUnused(id string) error {

@@ -5698,6 +5698,17 @@ export interface Destination {
   createdAt: number;
   /** The domains with a target under it. */
   domains: string[];
+  /** Targets typed in by hand whose repositories lie under it. */
+  adoptable?: AdoptableTarget[];
+}
+
+export interface AdoptableTarget {
+  id: string;
+  domain: string;
+  name: string;
+  repo: string;
+  /** The target the domain's off-site field edits. */
+  primary: boolean;
 }
 
 export function listDestinations(): Promise<OkEnvelope & { destinations?: Destination[] }> {
@@ -5717,6 +5728,12 @@ export function updateDestination(
 
 export function deleteDestination(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** Hangs a target typed in by hand on the destination its repository lies
+ *  under, keeping the repository. */
+export function adoptIntoDestination(id: string, targetId: string): Promise<OkEnvelope & { destination?: Destination }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/adopt/${encodeURIComponent(targetId)}`, { method: "POST" });
 }
 
 /** A receiver another member of the group runs, as the destination wizard

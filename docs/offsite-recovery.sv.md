@@ -36,6 +36,8 @@ En mottagarserver som en annan instans i din grupp kör visas i guiden under **F
 
 Ett off-site-mål för en domän som skapats från ett mål tar över det målets namn, plats, uppgifter, lagringsklass och omkopplaren för oföränderlighet. Dess retention, komprimering och tillväxtbudget förblir per domän, och dess plats kan inte flyttas eftersom domänens arkiv ligger där. **Lägg till ett mål bara för den här domänen** under varje domän tar fortfarande en handskriven arkiv-URL.
 
+Ett handskrivet mål vars arkiv ligger i en mapp under ett mål kan gå med i det. Målet listar sådana mål under **Ligger redan under det här målet**, och **Ta över** hänger upp ett på det. Det handskrivna målet behåller sitt arkiv, sina snapshots, sin retention och sin placering och tar över målets namn, uppgifter, lagringsklass och omkopplaren för oföränderlighet. BombVault kontrollerar först att målets inloggning öppnar arkivet och vägrar lägga ett append-only-mål under ett mål som inte är append-only. Om du tar över en domäns primära mål töms domänens off-site-fält.
+
 ## Placering per objekt {#placement}
 
 Varje kort för container, VM och filuppsättning har en rad **Placering** med knappar: **Lokal** och en knapp per off-site-mål för domänen, följt av de mål som domänen ännu inte har något mål under. Tända knappar får objektets säkerhetskopior.

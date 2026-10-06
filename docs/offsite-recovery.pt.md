@@ -36,6 +36,8 @@ Um servidor recetor que outra instância do seu grupo executa aparece no assiste
 
 O destino de um domínio criado a partir de um destino assume o nome, a localização, as credenciais, a classe de armazenamento e o interruptor imutável do destino. A sua retenção, compressão e orçamento de crescimento continuam por domínio, e a sua localização não pode mudar porque o repositório do domínio está lá. **Adicionar um destino só para este domínio** sob cada domínio continua a aceitar um URL de repositório escrito à mão.
 
+Um destino escrito à mão cujo repositório está numa pasta de um destino pode juntar-se a ele. O destino lista esses destinos em **Já está sob este destino**, e **Assumir** pendura um deles nele. O destino mantém o seu repositório, snapshots, retenção e localização, e assume o nome, as credenciais, a classe de armazenamento e o interruptor imutável do destino. O BombVault verifica primeiro que o início de sessão do destino abre o repositório e recusa pôr um destino append-only sob um destino que não é append-only. Assumir o principal de um domínio esvazia o campo off-site desse domínio.
+
 ## Localização por item {#placement}
 
 Cada cartão de container, VM e conjunto de ficheiros tem uma linha **Localização** de botões: **Local** e um botão por destino externo do domínio, seguidos dos destinos sob os quais o domínio ainda não tem nenhum destino externo. Os botões acesos recebem os backups do item.

@@ -103,6 +103,8 @@ import { HomeAssistantCard } from "./settings/HomeAssistantCard";
 import { NetworkCard } from "./settings/NetworkCard";
 import { mcpShipped } from "../lib/mcpSwitch";
 
+type OffsiteField = "containersOffsite" | "vmsOffsite" | "flashOffsite" | "configOffsite" | "filesOffsite" | "zfsOffsite";
+
 
 
 export function SaveBar({
@@ -2686,7 +2688,14 @@ export function SettingsPage() {
       {/* protection depends on them. The id is the target of /settings/offsite. */}
       {page === "offsite" && (
       <div id="offsite" className="flex flex-col gap-6">
-      <DestinationsCard hueIndex={nextHue()} />
+      <DestinationsCard
+        hueIndex={nextHue()}
+        onFieldCleared={(domain) => {
+          const key = `${domain}Offsite` as OffsiteField;
+          setSettings((s) => (s ? { ...s, [key]: "" } : s));
+          if (savedBaseline.current) savedBaseline.current = { ...savedBaseline.current, [key]: "" };
+        }}
+      />
       {/* Self-backup ("config") is listed with the other domains (#176): the
           backend gives it its own off-site repo and targets like any other,
           so it gets the wizard, the connection test and per-destination

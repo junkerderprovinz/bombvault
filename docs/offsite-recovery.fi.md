@@ -36,6 +36,8 @@ Vastaanottopalvelin, jota ryhmäsi toinen instanssi ajaa, näkyy ohjatussa toimi
 
 Kohteesta tehty toimialueen etäkohde perii kohteen nimen, sijainnin, tunnukset, tallennusluokan ja muuttumattomuuskytkimen. Sen säilytys, pakkaus ja kasvubudjetti pysyvät toimialuekohtaisina, eikä sen sijaintia voi siirtää, koska toimialueen arkisto on siellä. **Lisää kohde vain tälle toimialueelle** kunkin toimialueen kohdalla pyytää yhä käsin kirjoitettua arkiston URL-osoitetta.
 
+Käsin kirjoitettu etäkohde, jonka arkisto on kohteen kansiossa, voi liittyä siihen. Kohde luettelee tällaiset etäkohteet kohdassa **Jo tämän kohteen alla**, ja **Ota haltuun** kiinnittää yhden siihen. Etäkohde pitää arkistonsa, tilannevedoksensa, säilytyksensä ja sijoittelunsa ja perii kohteen nimen, tunnukset, tallennusluokan ja muuttumattomuuskytkimen. BombVault tarkistaa ensin, että kohteen kirjautuminen avaa arkiston, eikä suostu panemaan append-only-etäkohdetta kohteen alle, joka ei ole append-only. Kun toimialueen ensisijainen etäkohde otetaan haltuun, sen toimialueen etäkenttä tyhjenee.
+
 ## Sijoittelu per kohde {#placement}
 
 Jokaisella kontti-, VM- ja tiedostojoukkokortilla on **Sijoittelu**-rivi painikkeita: **Paikallinen** ja yksi painike per toimialueen etäkohde, minkä jälkeen tulevat kohteet, joiden alla toimialueella ei vielä ole etäkohdetta. Päällä olevat painikkeet saavat kohteen varmuuskopiot.

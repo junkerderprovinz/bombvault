@@ -36,6 +36,8 @@ A receiving server that another instance of your group runs appears in the wizar
 
 A domain's target made from a destination takes the destination's name, location, credentials, storage class and immutable switch. Its retention, compression and growth budget stay per domain, and its location cannot move because the domain's repository is there. **Add a target for this domain only** under each domain still takes a hand-typed repository URL.
 
+A hand-typed target whose repository lies in a folder of a destination can join it. The destination lists such targets under **Already under this destination**, and **Take over** hangs one on it. The target keeps its repository, snapshots, retention and placement, and takes the destination's name, credentials, storage class and immutable switch. BombVault first checks that the destination's sign-in opens the repository, and it refuses to put an append-only target under a destination that is not append-only. Taking over a domain's primary empties that domain's off-site field.
+
 ## Placement per item {#placement}
 
 Each container, VM and folder set card has a **Placement** row of buttons: **Local** and one button per off-site target of the domain, followed by the destinations the domain has no target under yet. Lit buttons get the item's backups.

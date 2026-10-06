@@ -337,6 +337,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/offsite/destinations/{id}", h.handleUpdateDestination)
 	mux.HandleFunc("DELETE /api/offsite/destinations/{id}", h.handleDeleteDestination)
 	mux.HandleFunc("POST /api/offsite/destinations/{id}/domains/{domain}", h.handleDestinationForDomain)
+	mux.HandleFunc("POST /api/offsite/destinations/{id}/adopt/{target}", h.handleAdoptIntoDestination)
 	// The receivers other members of the group run, offered as destinations.
 	// The login route reveals a password and is gated inside the handler.
 	mux.HandleFunc("GET /api/offsite/group-receivers", h.handleListGroupReceivers)

@@ -36,6 +36,8 @@ En mottaksserver som en annen instans i gruppen din kjører, vises i veiviseren 
 
 Et eksternt mål i et domene som er laget fra et mål, overtar målets navn, plassering, legitimasjon, lagringsklasse og bryteren Uforanderlig. Oppbevaring, komprimering og vekstbudsjett forblir per domene, og plasseringen kan ikke flyttes fordi domenets repository ligger der. **Legg til et mål bare for dette domenet** under hvert domene tar fortsatt en repository-URL du skriver selv.
 
+Et håndskrevet mål der repositoryet ligger i en mappe under et mål, kan bli med på dette målet. Målet lister slike mål under **Ligger allerede under dette målet**, og **Overta** henger ett på det. Det håndskrevne målet beholder repositoryet, snapshotene, oppbevaringen og plasseringen sin, og overtar målets navn, legitimasjon, lagringsklasse og bryteren Uforanderlig. BombVault sjekker først at målets pålogging åpner repositoryet, og nekter å legge et append-only-mål under et mål som ikke er append-only. Overtar du det primære målet i et domene, blir off-site-feltet til domenet tømt.
+
 ## Plassering per element {#placement}
 
 Hvert kort for container, VM og filsett har en **Plassering**-rad med knapper: **Lokal** og én knapp per eksternt mål i domenet, etterfulgt av målene domenet ennå ikke har noe mål under. Knapper som lyser, får elementets sikkerhetskopier.

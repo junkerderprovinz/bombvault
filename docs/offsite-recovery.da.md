@@ -36,6 +36,8 @@ En modtageserver, som en anden instans i din gruppe kører, vises i guiden under
 
 Et domænes mål, der er oprettet ud fra en destination, overtager destinationens navn, placering, legitimationsoplysninger, lagringsklasse og kontakten Uforanderlig. Opbevaring, komprimering og vækstbudget forbliver pr. domæne, og placeringen kan ikke flyttes, fordi domænets repository ligger dér. **Tilføj et mål kun til dette domæne** under hvert domæne tager stadig en håndskrevet repository-URL.
 
+Et håndskrevet mål, hvis repository ligger i en mappe under en destination, kan blive en del af den. Destinationen viser sådanne mål under **Ligger allerede under denne destination**, og **Overtag** hænger et på den. Målet beholder sit repository, sine snapshots, sin opbevaring og sin placering og overtager destinationens navn, legitimationsoplysninger, lagringsklasse og kontakten Uforanderlig. BombVault kontrollerer først, at destinationens login åbner repositoryet, og nægter at lægge et append-only-mål under en destination, der ikke er append-only. Overtager du et domænes primære mål, bliver domænets off-site-felt tømt.
+
 ## Placering pr. element {#placement}
 
 Hvert container-, VM- og mappesæt-kort har en række knapper under **Placering**: **Lokal** og én knap pr. off-site-mål i domænet, efterfulgt af de destinationer, domænet endnu ikke har noget mål under. Tændte knapper får elementets sikkerhedskopier.

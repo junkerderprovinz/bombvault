@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -217,5 +218,88 @@ func TestAPresetBeatsTheForm(t *testing.T) {
 	rest, _ := remotes.FindProvider("rest")
 	if _, err := svc.draftFor(rest, nil); err == nil {
 		t.Fatal("a rest-server was turned into an rclone remote")
+	}
+}
+
+func TestARepositoryIsUnderADestinationOnlyBelowIt(t *testing.T) {
+	for _, c := range []struct {
+		base, repo string
+		want       bool
+	}{
+		{"s3:http://nas:9000/bv/dxp", "s3:http://nas:9000/bv/dxp/container", true},
+		{"s3:http://nas:9000/bv/dxp/", "s3:http://nas:9000/bv/dxp/a/b", true},
+		{"rclone:b2:", "rclone:b2:containers", true},
+		{"s3:http://nas:9000/bv/dxp", "s3:http://nas:9000/bv/dxp", false},
+		{"s3:http://nas:9000/bv/dxp", "s3:http://nas:9000/bv/dxp6800/container", false},
+		{"rclone:b2:", "rclone:b2:", false},
+	} {
+		if got := repoUnder(c.base, c.repo); got != c.want {
+			t.Errorf("repoUnder(%q, %q) = %v, want %v", c.base, c.repo, got, c.want)
+		}
+	}
+}
+
+func TestAHandTypedPrimaryUnderADestinationIsOfferedAndTakenOver(t *testing.T) {
+	const repo = "s3:http://nas:9000/bv/dxp/container"
+	svc, st, _ := newProbeSvc(t, map[string]bool{repo: true})
+	if _, err := st.MutateSettings(func(s *store.Settings) error { s.ContainersOffsite = repo; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: repo, Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := st.SaveDestination(store.OffsiteTarget{Name: "QNAP", Repo: "s3:http://nas:9000/bv/dxp"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v, err := svc.destinationView(d)
+	if err != nil || len(v.Adoptable) != 1 || v.Adoptable[0].ID != primary.ID || !v.Adoptable[0].Primary {
+		t.Fatalf("adoptable = %+v, %v, want the primary", v.Adoptable, err)
+	}
+	if _, err := svc.AdoptIntoDestination(context.Background(), d.ID, primary.ID); err != nil {
+		t.Fatal(err)
+	}
+	v, err = svc.destinationView(d)
+	if err != nil || len(v.Adoptable) != 0 || !slices.Equal(v.Domains, []string{"containers"}) {
+		t.Fatalf("after adoption: domains %v, adoptable %+v, %v", v.Domains, v.Adoptable, err)
+	}
+	if s, _ := st.GetSettings(); s.ContainersOffsite != "" {
+		t.Fatalf("containers off-site field = %q, want it cleared", s.ContainersOffsite)
+	}
+	if got := svc.offsiteReplicationTargets("containers", store.Settings{}); len(got) != 1 || got[0].Repo != repo {
+		t.Fatalf("replication targets = %+v, want the adopted target on its repository", got)
+	}
+	// A page that still holds the old field must not turn the target back
+	// into the primary.
+	if msg, err := svc.rejectAdoptionOverOwnSettings(store.Settings{ContainersOffsite: repo}); err != nil || !strings.Contains(msg, "follows a destination") {
+		t.Fatalf("saving the old field again: %q, %v", msg, err)
+	}
+}
+
+func TestATakeoverThatWouldLoseProtectionOrCannotSignInIsRefused(t *testing.T) {
+	const repo = "rest:http://box:8000/bv/vms"
+	svc, st, _ := newProbeSvc(t, map[string]bool{})
+	guarded, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "box", Repo: repo, Enabled: true, Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plain, err := st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: "rest:http://box:8000/bv"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.AdoptIntoDestination(context.Background(), plain.ID, guarded.ID); err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("taking an append-only target into a plain destination: %v", err)
+	}
+	locked, err := st.SaveDestination(store.OffsiteTarget{Name: "Locked box", Repo: "rest:http://box:8000/bv", Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.AdoptIntoDestination(context.Background(), locked.ID, guarded.ID); err == nil || !strings.Contains(err.Error(), "does not open") {
+		t.Fatalf("taking over a repository the sign-in cannot open: %v", err)
+	}
+	if got, _, _ := st.GetOffsiteTarget(guarded.ID); got.DestinationID != "" || got.Name != "box" {
+		t.Fatalf("a refused takeover changed the target: %+v", got)
 	}
 }

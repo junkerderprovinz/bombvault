@@ -36,6 +36,8 @@ Serwer odbiorczy, który uruchamia inna instancja Twojej grupy, pojawia się w k
 
 Cel domeny utworzony z miejsca docelowego przejmuje jego nazwę, lokalizację, dane logowania, klasę pamięci i przełącznik niezmienności. Jego przechowywanie, kompresja i budżet wzrostu pozostają per domena, a lokalizacji nie da się przenieść, bo leży tam repozytorium domeny. **Dodaj cel tylko dla tej domeny** pod każdą domeną nadal przyjmuje ręcznie wpisany adres repozytorium.
 
+Ręcznie wpisany cel, którego repozytorium leży w folderze miejsca docelowego, może do niego dołączyć. Miejsce docelowe wylicza takie cele w sekcji **Już pod tym miejscem docelowym**, a **Przejmij** podpina jeden z nich. Cel zachowuje swoje repozytorium, snapshoty, przechowywanie i rozmieszczenie, a od miejsca docelowego przejmuje nazwę, dane logowania, klasę pamięci i przełącznik niezmienności. BombVault najpierw sprawdza, czy logowanie miejsca docelowego otwiera repozytorium, i odmawia podpięcia celu append-only pod miejsce docelowe, które nie jest append-only. Przejęcie głównego celu domeny opróżnia pole off-site tej domeny.
+
 ## Rozmieszczenie per element {#placement}
 
 Każda karta kontenera, VM i zestawu plików ma wiersz **Rozmieszczenie** z przyciskami: **Lokalne** i po jednym na każdy cel poza siedzibą domeny, a dalej miejsca docelowe, pod którymi domena nie ma jeszcze celu. Podświetlone przyciski dostają kopie elementu.

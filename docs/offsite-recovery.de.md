@@ -36,6 +36,8 @@ Einen Empfangsserver, den eine andere Instanz deiner Gruppe betreibt, zeigt der 
 
 Das Ziel eines Bereichs, das aus einem Ziel entstanden ist, übernimmt dessen Name, Ort, Zugangsdaten, Speicherklasse und den Schalter Unveränderlich. Aufbewahrung, Kompression und Wachstumsbudget bleiben je Bereich, und sein Ort lässt sich nicht verschieben, weil dort das Repository des Bereichs liegt. **Ziel nur für diesen Bereich hinzufügen** unter jedem Bereich nimmt weiterhin eine von Hand eingegebene Repository-URL.
 
+Ein von Hand eingetragenes Off-site-Ziel, dessen Repository in einem Ordner eines Ziels liegt, kann sich diesem Ziel anschließen. Das Ziel listet solche Off-site-Ziele unter **Liegt schon unter diesem Ziel**, und **Übernehmen** hängt eines daran. Das Off-site-Ziel behält sein Repository, seine Snapshots, seine Aufbewahrung und seine Ablage und übernimmt Name, Zugangsdaten, Speicherklasse und den Schalter Unveränderlich des Ziels. BombVault prüft zuerst, ob die Anmeldung des Ziels das Repository öffnet, und weigert sich, ein Append-only-Off-site-Ziel unter ein Ziel zu hängen, das nicht Append-only ist. Übernimmst du das primäre Ziel eines Bereichs, wird das Off-site-Feld dieses Bereichs geleert.
+
 ## Ablage pro Element {#placement}
 
 Jede Container-, VM- und Ordner-Set-Karte hat eine Zeile **Ablage** mit Knöpfen: **Lokal** und ein Knopf pro Off-site-Ziel des Bereichs, danach die Ziele, unter denen der Bereich noch nichts hat. Die leuchtenden Knöpfe bekommen die Backups des Elements.

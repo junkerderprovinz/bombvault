@@ -28,6 +28,18 @@ type destinationView struct {
 	Immutable    bool     `json:"immutable"`
 	CreatedAt    int64    `json:"createdAt"`
 	Domains      []string `json:"domains"`
+	// Adoptable are the targets typed in by hand whose repositories lie
+	// under the destination.
+	Adoptable []adoptableTarget `json:"adoptable"`
+}
+
+// adoptableTarget is a target typed in by hand that a destination can take over.
+type adoptableTarget struct {
+	ID      string `json:"id"`
+	Domain  string `json:"domain"`
+	Name    string `json:"name"`
+	Repo    string `json:"repo"`
+	Primary bool   `json:"primary"`
 }
 
 func (s *Service) destinationView(d store.OffsiteTarget) (destinationView, error) {
@@ -39,11 +51,76 @@ func (s *Service) destinationView(d store.OffsiteTarget) (destinationView, error
 	for _, t := range derived {
 		domains = append(domains, t.Domain)
 	}
+	all, err := s.store.ListOffsiteTargets()
+	if err != nil {
+		return destinationView{}, err
+	}
+	adoptable := []adoptableTarget{}
+	for _, t := range all {
+		if t.Enabled && t.DestinationID == "" && !slices.Contains(domains, t.Domain) && repoUnder(d.Repo, t.Repo) {
+			adoptable = append(adoptable, adoptableTarget{ID: t.ID, Domain: t.Domain, Name: t.Name,
+				Repo: scrubRepoLocation(t.Repo), Primary: t.SortOrder == 0})
+		}
+	}
 	return destinationView{
 		ID: d.ID, Name: d.Name, Provider: d.Provider, Mark: providerMark(d.Provider), Repo: scrubRepoLocation(d.Repo),
 		CredsRef: d.CredsRef, StorageClass: d.StorageClass, Immutable: d.Immutable,
-		CreatedAt: d.CreatedAt, Domains: domains,
+		CreatedAt: d.CreatedAt, Domains: domains, Adoptable: adoptable,
 	}, nil
+}
+
+// repoUnder reports whether repo is a folder below the destination at base.
+func repoUnder(base, repo string) bool {
+	base = strings.TrimRight(strings.TrimSpace(base), "/")
+	repo = strings.TrimRight(strings.TrimSpace(repo), "/")
+	if strings.HasSuffix(base, ":") {
+		return len(repo) > len(base) && strings.HasPrefix(repo, base)
+	}
+	return strings.HasPrefix(repo, base+"/")
+}
+
+// AdoptIntoDestination hangs a target typed in by hand on the destination its
+// repository lies under, after checking that the destination's sign-in opens
+// that repository. The target keeps its repository and snapshots.
+func (s *Service) AdoptIntoDestination(ctx context.Context, destID, targetID string) (store.OffsiteTarget, error) {
+	d, ok, err := s.store.GetDestination(destID)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if !ok {
+		return store.OffsiteTarget{}, store.ErrNotDestination
+	}
+	t, ok, err := s.store.GetOffsiteTarget(targetID)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if !ok {
+		return store.OffsiteTarget{}, store.ErrNotOffsiteTarget
+	}
+	if !repoUnder(d.Repo, t.Repo) {
+		return store.OffsiteTarget{}, fmt.Errorf("%s does not lie under %s", scrubRepoLocation(t.Repo), d.Name)
+	}
+	// Taking the destination's flag would let retention prune a repository
+	// the user protected.
+	if t.Immutable && !d.Immutable {
+		return store.OffsiteTarget{}, fmt.Errorf("this target is append-only and %s is not: switch on append-only for %s first", d.Name, d.Name)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	probe := t
+	probe.CredsRef, probe.StorageClass = d.CredsRef, d.StorageClass
+	reachable, initialized, err := s.probeOffsiteRepo(ctx, t.Repo, s.offsiteModeForTarget(settings, probe))
+	if err != nil || !reachable || !initialized {
+		why := fmt.Errorf("the sign-in of %s does not open %s", d.Name, scrubRepoLocation(t.Repo))
+		if err != nil {
+			why = fmt.Errorf("%w: %s", why, scrubError(err))
+		}
+		return store.OffsiteTarget{}, why
+	}
+	domain := t.Domain
+	return s.store.AdoptIntoDestination(t.ID, d.ID, func(st *store.Settings) { setOffsiteRepoInSettings(st, domain, "") })
 }
 
 // draftRequest is a destination as the wizard has it before saving.
@@ -611,6 +688,30 @@ func (h *Handler) handleDestinationForDomain(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored), "created": created}))
+}
+
+// handleAdoptIntoDestination hangs a target typed in by hand on the
+// destination its repository lies under.
+// POST /api/offsite/destinations/{id}/adopt/{target}
+func (h *Handler) handleAdoptIntoDestination(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.svc.AdoptIntoDestination(r.Context(), r.PathValue("id"), r.PathValue("target")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// Taking over a primary empties the domain's off-site field, which the
+	// scheduler reads.
+	if s, err := h.store.GetSettings(); err == nil {
+		if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
+			return
+		}
+	}
+	d, ok, err := h.store.GetDestination(r.PathValue("id"))
+	if err != nil || !ok {
+		writeJSON(w, http.StatusOK, failEnvelope(errors.Join(err, store.ErrNotDestination)))
+		return
+	}
+	h.answerDestination(w, d)
 }
 
 func (h *Handler) answerDestination(w http.ResponseWriter, d store.OffsiteTarget) {

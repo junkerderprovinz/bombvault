@@ -2580,6 +2580,24 @@ func offsiteRepoFromSettings(domain string, settings store.Settings) string {
 	return ""
 }
 
+// setOffsiteRepoInSettings writes the domain's off-site field.
+func setOffsiteRepoInSettings(settings *store.Settings, domain, repo string) {
+	switch domain {
+	case "containers":
+		settings.ContainersOffsite = repo
+	case "vms":
+		settings.VMsOffsite = repo
+	case "flash":
+		settings.FlashOffsite = repo
+	case "config":
+		settings.ConfigOffsite = repo
+	case "files":
+		settings.FilesOffsite = repo
+	case zfsDomain:
+		settings.ZFSOffsite = repo
+	}
+}
+
 // offsiteScheduleFor returns the per-domain off-site replication schedule. Empty
 // means "replicate after every local backup"; a non-empty cadence means
 // replication is driven by the scheduler instead (decoupled from backups).

@@ -125,3 +125,56 @@ func TestAnUnusedDestinationCanMoveAndGo(t *testing.T) {
 		t.Fatalf("after delete: found=%v err=%v", ok, err)
 	}
 }
+
+func TestAdoptingThePrimaryKeepsItsRepositoryAndLeavesTheFieldSlot(t *testing.T) {
+	r := newRepo(t)
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:http://nas:9000/bv/dxp/container"
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	primary, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary",
+		Repo: "s3:http://nas:9000/bv/dxp/container", Enabled: true, RetentionKeepDaily: 9})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "QNAP", Repo: "s3:http://nas:9000/bv/dxp", CredsRef: "c1", Provider: "s3"})
+
+	got, err := r.AdoptIntoDestination(primary.ID, d.ID, func(s *store.Settings) { s.ContainersOffsite = "" })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != primary.ID || got.Repo != primary.Repo || got.RetentionKeepDaily != 9 {
+		t.Fatalf("adopted = %+v, want the same target on its own repository with its retention", got)
+	}
+	if got.DestinationID != d.ID || got.Name != "QNAP" || got.CredsRef != "c1" || got.Provider != "s3" {
+		t.Fatalf("adopted = %+v, want the destination's fields", got)
+	}
+	if got.SortOrder == 0 {
+		t.Fatal("the adopted target stayed in the slot of the settings field")
+	}
+	if s, _ := r.GetSettings(); s.ContainersOffsite != "" {
+		t.Fatalf("containers off-site field = %q, want it cleared", s.ContainersOffsite)
+	}
+	if _, err := r.AdoptIntoDestination(primary.ID, d.ID, nil); !errors.Is(err, store.ErrTargetFollowsDestination) {
+		t.Fatalf("adopting again: %v, want ErrTargetFollowsDestination", err)
+	}
+}
+
+func TestADomainTakesOneTargetPerDestination(t *testing.T) {
+	r := newRepo(t)
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "B2", Repo: "rclone:b2:bv"})
+	if _, _, err := r.EnsureDestinationTarget(d.ID, "vms", "rclone:b2:bv/vms"); err != nil {
+		t.Fatal(err)
+	}
+	extra, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "old", Repo: "rclone:b2:bv/old-vms", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.AdoptIntoDestination(extra.ID, d.ID, nil); !errors.Is(err, store.ErrDomainHasDestinationTarget) {
+		t.Fatalf("adopting a second vms target: %v, want ErrDomainHasDestinationTarget", err)
+	}
+}

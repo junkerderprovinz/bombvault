@@ -36,6 +36,8 @@ Un server ricevente gestito da un'altra istanza del tuo gruppo compare nella pro
 
 La destinazione che un dominio ottiene da una destinazione prende da questa nome, posizione, credenziali, classe di archiviazione e interruttore immutabile. La conservazione, la compressione e il budget di crescita restano per dominio, e la sua posizione non può spostarsi perché lì si trova il repository del dominio. **Aggiungi una destinazione solo per questo dominio** sotto ogni dominio accetta ancora un URL di repository scritto a mano.
 
+Una destinazione scritta a mano il cui repository si trova in una cartella di una destinazione può unirsi a essa. La destinazione elenca queste destinazioni sotto **Già sotto questa destinazione**, e **Prendi in carico** ne aggancia una. La destinazione scritta a mano mantiene repository, snapshot, conservazione e collocazione, e prende nome, credenziali, classe di archiviazione e interruttore immutabile dalla destinazione. BombVault controlla prima che l'accesso della destinazione apra il repository, e rifiuta di mettere una destinazione append-only sotto una destinazione che non lo è. Prendere in carico la destinazione primaria di un dominio svuota il campo off-site di quel dominio.
+
 ## Collocazione per elemento {#placement}
 
 Ogni scheda di container, VM e set di file ha una riga **Collocazione** di pulsanti: **Locale** e un pulsante per ogni destinazione off-site del dominio, seguiti dalle destinazioni sotto cui il dominio non ha ancora una destinazione. I pulsanti accesi ricevono i backup dell'elemento.

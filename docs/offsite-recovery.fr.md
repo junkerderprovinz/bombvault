@@ -36,6 +36,8 @@ Un serveur récepteur qu'une autre instance de votre groupe exécute apparaît d
 
 La cible d'un domaine créée à partir d'une destination reprend le nom, l'emplacement, les identifiants, la classe de stockage et le réglage Immuable de la destination. Sa rétention, sa compression et son budget de croissance restent propres à chaque domaine, et son emplacement ne peut pas changer, parce que le dépôt du domaine s'y trouve. **Ajouter une cible pour ce domaine uniquement**, sous chaque domaine, accepte toujours une URL de dépôt saisie à la main.
 
+Une cible saisie à la main dont le dépôt se trouve dans un dossier d'une destination peut la rejoindre. La destination liste ces cibles sous **Déjà sous cette destination**, et **Reprendre** en rattache une. La cible garde son dépôt, ses snapshots, sa rétention et son emplacement, et reprend le nom, les identifiants, la classe de stockage et le réglage Immuable de la destination. BombVault vérifie d'abord que la connexion de la destination ouvre le dépôt, et refuse de placer une cible append-only sous une destination qui ne l'est pas. Reprendre la cible principale d'un domaine vide le champ off-site de ce domaine.
+
 ## Emplacement par élément {#placement}
 
 Chaque carte de conteneur, VM et jeu de fichiers a une ligne **Emplacement** de boutons : **Local** et un bouton par cible hors site du domaine, suivis des destinations sous lesquelles le domaine n'a pas encore de cible. Les boutons allumés reçoivent les sauvegardes de l'élément.

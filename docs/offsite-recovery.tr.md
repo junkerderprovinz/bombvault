@@ -36,6 +36,8 @@ Grubunuzun başka bir örneğinin çalıştırdığı alıcı sunucu, sihirbazda
 
 Bir hedeften oluşturulan etki alanı hedefi, hedefin adını, konumunu, kimlik bilgilerini, depolama sınıfını ve değiştirilemez anahtarını alır. Saklaması, sıkıştırması ve büyüme bütçesi etki alanı başına kalır; konumu taşınamaz, çünkü etki alanının deposu oradadır. Her etki alanının altındaki **Yalnızca bu etki alanı için hedef ekle** yine elle yazılmış bir depo URL'si alır.
 
+Elle yazılmış ve deposu bir hedefin klasöründe bulunan bir etki alanı hedefi, o hedefe katılabilir. Hedef, bu tür hedefleri **Zaten bu hedefin altında** başlığı altında listeler ve **Devral** bunlardan birini hedefin altına asar. Etki alanı hedefi deposunu, snapshot'larını, saklamasını ve yerleşimini korur; hedefin adını, kimlik bilgilerini, depolama sınıfını ve değiştirilemez anahtarını alır. BombVault önce hedefin oturum açmasının depoyu açtığını doğrular ve append-only olmayan bir hedefin altına append-only bir hedef koymayı reddeder. Bir etki alanının birincil hedefini devralmak, o etki alanının off-site alanını boşaltır.
+
 ## Öge başına yerleşim {#placement}
 
 Her konteyner, VM ve dosya kümesi kartında düğmelerden oluşan bir **Yerleşim** satırı vardır: **Yerel** ve etki alanının her site dışı hedefi için bir düğme, ardından etki alanının altında henüz hedef oluşturmadığı Hedefler. Yanan düğmeler ögenin yedeklerini alır.

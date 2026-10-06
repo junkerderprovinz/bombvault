@@ -36,6 +36,8 @@ Een ontvangserver die een andere instantie van je groep draait, verschijnt in de
 
 Het doel van een domein dat uit een bestemming is gemaakt, neemt de naam, locatie, inloggegevens, opslagklasse en onveranderlijk-schakelaar van de bestemming over. Retentie, compressie en groeibudget blijven per domein, en de locatie kan niet verhuizen omdat de repository van het domein daar staat. **Een bestemming toevoegen voor alleen dit domein** onder elk domein vraagt nog steeds om een met de hand getypte repository-URL.
 
+Een met de hand getypt doel waarvan de repository in een map van een bestemming ligt, kan zich bij die bestemming voegen. De bestemming toont zulke doelen onder **Staat al onder deze bestemming**, en **Overnemen** hangt er een aan. Het doel behoudt zijn repository, snapshots, retentie en plaatsing, en neemt de naam, inloggegevens, opslagklasse en onveranderlijk-schakelaar van de bestemming over. BombVault controleert eerst of de login van de bestemming de repository opent, en weigert een append-only doel onder een bestemming te hangen die niet append-only is. Als je het primaire doel van een domein overneemt, wordt het off-site-veld van dat domein leeggemaakt.
+
 ## Plaatsing per item {#placement}
 
 Elke kaart van een container, VM en bestandsset heeft een rij **Plaatsing** met knoppen: **Lokaal** en één knop per off-site doel van het domein, gevolgd door de bestemmingen waaronder het domein nog geen doel heeft. Verlichte knoppen krijgen de back-ups van het item.

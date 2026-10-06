@@ -36,6 +36,8 @@ Un server receptor pe care îl rulează o altă instanță a grupului tău apare
 
 Ținta unui domeniu creată dintr-o destinație preia numele, locația, acreditările, clasa de stocare și comutatorul imuabil ale destinației. Retenția, compresia și bugetul de creștere rămân per domeniu, iar locația ei nu se poate muta, pentru că acolo se află depozitul domeniului. **Adaugă o țintă doar pentru acest domeniu** de sub fiecare domeniu primește în continuare un URL de depozit scris de mână.
 
+O țintă scrisă de mână, al cărei depozit se află într-un dosar al unei destinații, i se poate alătura. Destinația listează astfel de ținte la **Deja sub această destinație**, iar **Preia** agață una de ea. Ținta își păstrează depozitul, instantaneele, retenția și amplasarea, și preia numele, acreditările, clasa de stocare și comutatorul imuabil ale destinației. BombVault verifică mai întâi că autentificarea destinației deschide depozitul și refuză să pună o țintă append-only sub o destinație care nu este append-only. Preluarea țintei principale a unui domeniu golește câmpul off-site al acelui domeniu.
+
 ## Amplasare per element {#placement}
 
 Fiecare card de container, VM și set de fișiere are un rând **Amplasare** de butoane: **Local** și câte un buton pentru fiecare țintă off-site a domeniului, urmate de destinațiile sub care domeniul nu are încă nicio țintă. Butoanele aprinse primesc copiile de rezervă ale elementului.
