@@ -8,7 +8,7 @@ What you can do
 
 To pair, scan the QR code your BombVault shows under Settings → Pairing, or type its twelve words. Every server in the group appears at once. You can also add a single server by its address.
 
-The activity log reaches the app through a relay. Requests and answers are end-to-end encrypted with a key that comes from your words, so the relay passes them on without being able to read them. Opening a dashboard needs a direct connection to the server, at home or through your VPN. The app shows no ads, tracks nothing and needs no account.
+The activity log reaches the app through a relay: by default the project's relay at parleyport.halleluja.design, or your own ParleyPort if you enter its address on your servers. Requests and answers are end-to-end encrypted with a key that comes from your words, so the relay passes them on without being able to read them. Opening a dashboard needs a direct connection to the server, at home or through your VPN. The app shows no ads, tracks nothing and needs no account.
 
 You need a running BombVault server. BombVault is free and open source under the AGPL-3.0: https://github.com/junkerderprovinz/bombvault
 

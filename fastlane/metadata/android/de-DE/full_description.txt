@@ -8,7 +8,7 @@ Was du tun kannst
 
 Zum Koppeln scannst du den QR-Code, den dein BombVault unter Einstellungen → Kopplung zeigt, oder tippst seine zwölf Wörter ein. Alle Server der Gruppe erscheinen sofort. Einen einzelnen Server kannst du auch über seine Adresse hinzufügen.
 
-Das Aktivitätsprotokoll kommt über ein Relay in die App. Anfragen und Antworten sind Ende-zu-Ende verschlüsselt, mit einem Schlüssel aus deinen Wörtern, und das Relay reicht sie weiter, ohne sie lesen zu können. Zum Öffnen eines Dashboards braucht die App eine direkte Verbindung zum Server, zu Hause oder über dein VPN. Die App zeigt keine Werbung, verfolgt nichts und braucht kein Konto.
+Das Aktivitätsprotokoll kommt über ein Relay in die App: standardmäßig über das Relay des Projekts unter parleyport.halleluja.design oder über dein eigenes ParleyPort, wenn du seine Adresse auf deinen Servern einträgst. Anfragen und Antworten sind Ende-zu-Ende verschlüsselt, mit einem Schlüssel aus deinen Wörtern, und das Relay reicht sie weiter, ohne sie lesen zu können. Zum Öffnen eines Dashboards braucht die App eine direkte Verbindung zum Server, zu Hause oder über dein VPN. Die App zeigt keine Werbung, verfolgt nichts und braucht kein Konto.
 
 Du brauchst einen laufenden BombVault-Server. BombVault ist frei und quelloffen unter der AGPL-3.0: https://github.com/junkerderprovinz/bombvault
 
