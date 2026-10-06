@@ -2704,7 +2704,6 @@ const ja: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "この BombVault と同じ",
   "receiver.server.start": "設定して起動",
   "receiver.server.setUpFailed": "受信サーバーを設定できませんでした。",
-  "receiver.server.needsPassword": "先に、設定、セキュリティでログインパスワードを設定してください。BombVault は、パスワードで保護されている場合にだけ受信サーバーを起動します。",
   "receiver.server.loadError": "受信サーバーを読み込めませんでした。",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "削除を受け付ける",

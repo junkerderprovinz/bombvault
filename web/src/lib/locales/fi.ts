@@ -2713,7 +2713,6 @@ const fi: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "sama kuin tällä BombVaultilla",
   "receiver.server.start": "Ota käyttöön ja käynnistä",
   "receiver.server.setUpFailed": "Vastaanottopalvelinta ei voitu ottaa käyttöön.",
-  "receiver.server.needsPassword": "Aseta ensin kirjautumissalasana kohdassa Asetukset, Turvallisuus. BombVault käynnistää vastaanottopalvelimen vain, jos salasana on asetettu.",
   "receiver.server.loadError": "Vastaanottopalvelinta ei voitu ladata.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Hyväksyy poistot",

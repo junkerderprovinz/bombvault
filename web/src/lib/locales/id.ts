@@ -1772,7 +1772,6 @@ const id: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "sama dengan BombVault ini",
   "receiver.server.start": "Siapkan dan jalankan",
   "receiver.server.setUpFailed": "Server penerima tidak dapat disiapkan.",
-  "receiver.server.needsPassword": "Atur kata sandi login terlebih dahulu, di Pengaturan, Keamanan. BombVault hanya menjalankan server penerima di balik kata sandi.",
   "receiver.server.loadError": "Server penerima tidak dapat dimuat.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Menerima penghapusan",

@@ -6,7 +6,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ApiError,
   RECEIVER_TEMPLATE_URL,
   checkReceiverServer,
   forgetReceiverServer,
@@ -299,9 +298,7 @@ function ReceiverServerDialog({
       }
       onDone(r.server, { password: r.password ?? "", template: r.template ?? "none" });
     } catch (e) {
-      // The server refuses with 403 while no login password is set.
-      if (e instanceof ApiError && e.status === 403) push(t("receiver.server.needsPassword"), "fail");
-      else push(e instanceof Error ? e.message : t("receiver.server.setUpFailed"), "fail");
+      push(e instanceof Error ? e.message : t("receiver.server.setUpFailed"), "fail");
     } finally {
       setSaving(false);
     }

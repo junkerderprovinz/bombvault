@@ -2711,7 +2711,6 @@ const es: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "igual que este BombVault",
   "receiver.server.start": "Configurar y arrancar",
   "receiver.server.setUpFailed": "No se pudo configurar el servidor receptor.",
-  "receiver.server.needsPassword": "Establece primero una contraseña de acceso, en Ajustes, Seguridad. BombVault solo arranca un servidor receptor detrás de una.",
   "receiver.server.loadError": "No se pudo cargar el servidor receptor.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Acepta borrados",

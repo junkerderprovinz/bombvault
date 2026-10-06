@@ -2713,7 +2713,6 @@ const fr: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "comme ce BombVault",
   "receiver.server.start": "Configurer et démarrer",
   "receiver.server.setUpFailed": "Le serveur récepteur n'a pas pu être configuré.",
-  "receiver.server.needsPassword": "Définissez d'abord un mot de passe de connexion sous Paramètres, Sécurité. BombVault ne démarre un serveur récepteur que derrière un mot de passe.",
   "receiver.server.loadError": "Le serveur récepteur n'a pas pu être chargé.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Accepte les suppressions",

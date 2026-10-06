@@ -1772,7 +1772,6 @@ const is: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "sama og þessi BombVault",
   "receiver.server.start": "Setja upp og ræsa",
   "receiver.server.setUpFailed": "Ekki tókst að setja upp móttökuþjóninn.",
-  "receiver.server.needsPassword": "Settu fyrst innskráningarlykilorð, undir Stillingar, Öryggi. BombVault ræsir aðeins móttökuþjón á bak við slíkt.",
   "receiver.server.loadError": "Ekki tókst að hlaða móttökuþjóninum.",
   "receiver.server.protected": "Aðeins-bæta-við",
   "receiver.server.unprotected": "Tekur við eyðingum",

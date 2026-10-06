@@ -2713,7 +2713,6 @@ const tr: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "bu BombVault ile aynı",
   "receiver.server.start": "Kur ve başlat",
   "receiver.server.setUpFailed": "Alıcı sunucu kurulamadı.",
-  "receiver.server.needsPassword": "Önce Ayarlar, Güvenlik altında bir oturum açma parolası belirle. BombVault bir alıcı sunucuyu yalnızca parolanın arkasında başlatır.",
   "receiver.server.loadError": "Alıcı sunucu yüklenemedi.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Silmeyi kabul eder",

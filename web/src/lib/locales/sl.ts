@@ -1766,7 +1766,6 @@ const sl: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "enako kot ta BombVault",
   "receiver.server.start": "Nastavi in zaženi",
   "receiver.server.setUpFailed": "Sprejemnega strežnika ni bilo mogoče nastaviti.",
-  "receiver.server.needsPassword": "Najprej nastavi prijavno geslo pod Nastavitve, Varnost. BombVault sprejemni strežnik zažene samo za geslom.",
   "receiver.server.loadError": "Sprejemnega strežnika ni bilo mogoče naložiti.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Sprejema brisanje",

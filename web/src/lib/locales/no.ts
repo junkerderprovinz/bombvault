@@ -2713,7 +2713,6 @@ const no: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "samme som denne BombVault",
   "receiver.server.start": "Sett opp og start",
   "receiver.server.setUpFailed": "Mottaksserveren kunne ikke settes opp.",
-  "receiver.server.needsPassword": "Angi først et påloggingspassord under Innstillinger, Sikkerhet. BombVault starter bare en mottaksserver bak et passord.",
   "receiver.server.loadError": "Mottaksserveren kunne ikke lastes.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Tar imot sletting",

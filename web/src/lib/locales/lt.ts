@@ -1772,7 +1772,6 @@ const lt: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "toks pat kaip šio BombVault",
   "receiver.server.start": "Nustatyti ir paleisti",
   "receiver.server.setUpFailed": "Nepavyko nustatyti priėmimo serverio.",
-  "receiver.server.needsPassword": "Pirmiausia nustatyk prisijungimo slaptažodį skiltyje Nustatymai, Saugumas. BombVault paleidžia priėmimo serverį tik už slaptažodžio.",
   "receiver.server.loadError": "Nepavyko įkelti priėmimo serverio.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Priima trynimą",

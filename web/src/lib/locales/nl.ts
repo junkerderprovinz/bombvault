@@ -2710,7 +2710,6 @@ const nl: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "hetzelfde als deze BombVault",
   "receiver.server.start": "Instellen en starten",
   "receiver.server.setUpFailed": "De ontvangserver kon niet worden ingesteld.",
-  "receiver.server.needsPassword": "Stel eerst een inlogwachtwoord in, onder Instellingen, Beveiliging. BombVault start een ontvangserver alleen achter een wachtwoord.",
   "receiver.server.loadError": "De ontvangserver kon niet worden geladen.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Accepteert verwijderen",

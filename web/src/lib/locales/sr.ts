@@ -1766,7 +1766,6 @@ const sr: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "исто као овај BombVault",
   "receiver.server.start": "Подеси и покрени",
   "receiver.server.setUpFailed": "Пријемни сервер није могао да се подеси.",
-  "receiver.server.needsPassword": "Прво подеси лозинку за пријаву у Подешавања, Безбедност. BombVault покреће пријемни сервер само иза лозинке.",
   "receiver.server.loadError": "Пријемни сервер није могао да се учита.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Прима брисање",

@@ -2713,7 +2713,6 @@ const el: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "ίδια με αυτό το BombVault",
   "receiver.server.start": "Ρύθμιση και εκκίνηση",
   "receiver.server.setUpFailed": "Ο διακομιστής λήψης δεν μπόρεσε να ρυθμιστεί.",
-  "receiver.server.needsPassword": "Ορίστε πρώτα έναν κωδικό σύνδεσης, στις Ρυθμίσεις, Ασφάλεια. Το BombVault ξεκινά διακομιστή λήψης μόνο πίσω από έναν τέτοιο κωδικό.",
   "receiver.server.loadError": "Ο διακομιστής λήψης δεν μπόρεσε να φορτωθεί.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Δέχεται διαγραφές",

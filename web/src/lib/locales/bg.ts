@@ -1772,7 +1772,6 @@ const bg: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "като на този BombVault",
   "receiver.server.start": "Настрой и стартирай",
   "receiver.server.setUpFailed": "Приемащият сървър не можа да бъде настроен.",
-  "receiver.server.needsPassword": "Първо задай парола за вход в Настройки, Сигурност. BombVault стартира приемащ сървър само зад такава.",
   "receiver.server.loadError": "Приемащият сървър не можа да бъде зареден.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Приема изтриване",

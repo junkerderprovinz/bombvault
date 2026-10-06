@@ -1772,7 +1772,6 @@ const fa: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "مثل همین BombVault",
   "receiver.server.start": "راه‌اندازی و شروع",
   "receiver.server.setUpFailed": "سرور دریافت‌کننده راه‌اندازی نشد.",
-  "receiver.server.needsPassword": "ابتدا در تنظیمات، امنیت یک رمز عبور ورود تعیین کن. BombVault سرور دریافت‌کننده را فقط پشت چنین رمزی راه‌اندازی می‌کند.",
   "receiver.server.loadError": "سرور دریافت‌کننده بارگذاری نشد.",
   "receiver.server.protected": "append-only",
   "receiver.server.unprotected": "حذف را می‌پذیرد",

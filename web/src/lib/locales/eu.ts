@@ -1772,7 +1772,6 @@ const eu: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "BombVault honen berbera",
   "receiver.server.start": "Konfiguratu eta abiarazi",
   "receiver.server.setUpFailed": "Ezin izan da hartzaile-zerbitzaria konfiguratu.",
-  "receiver.server.needsPassword": "Ezarri lehenik saio-hasierako pasahitz bat, Ezarpenak, Segurtasuna atalean. BombVaultek hartzaile-zerbitzaria pasahitz baten atzean soilik abiarazten du.",
   "receiver.server.loadError": "Ezin izan da hartzaile-zerbitzaria kargatu.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Ezabatzeak onartzen ditu",

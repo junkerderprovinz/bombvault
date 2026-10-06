@@ -2716,7 +2716,6 @@ const ar: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "مثل BombVault هذا",
   "receiver.server.start": "إعداد وتشغيل",
   "receiver.server.setUpFailed": "تعذّر إعداد خادم الاستقبال.",
-  "receiver.server.needsPassword": "عيّن كلمة مرور لتسجيل الدخول أولاً في الإعدادات، الأمان. لا يشغّل BombVault خادم استقبال إلا خلف كلمة مرور.",
   "receiver.server.loadError": "تعذّر تحميل خادم الاستقبال.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "يقبل الحذف",

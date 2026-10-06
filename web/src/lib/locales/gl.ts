@@ -1772,7 +1772,6 @@ const gl: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "igual que este BombVault",
   "receiver.server.start": "Configurar e arrancar",
   "receiver.server.setUpFailed": "Non se puido configurar o servidor receptor.",
-  "receiver.server.needsPassword": "Primeiro define un contrasinal de acceso en Configuración, Seguridade. BombVault só arranca un servidor receptor detrás dun contrasinal.",
   "receiver.server.loadError": "Non se puido cargar o servidor receptor.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Acepta borrados",

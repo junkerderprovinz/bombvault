@@ -850,13 +850,9 @@ func (h *Handler) handleGetReceiver(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleSetUpReceiver creates the receiver. It starts a container on the host
-// and answers with the server's password, so it fails closed like every route
-// that hands out a secret.
+// and answers with the outsider's password.
 // POST /api/receiver/server
 func (h *Handler) handleSetUpReceiver(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "setting up a receiver") {
-		return
-	}
 	var in receiverServerInput
 	if !decodeBody(w, r, &in) {
 		return
@@ -932,12 +928,9 @@ func (h *Handler) handleListGroupReceivers(w http.ResponseWriter, r *http.Reques
 }
 
 // handleGroupReceiverLogin hands the wizard the address and login of a
-// member's receiver. It reveals a password, so it fails closed.
+// member's receiver.
 // POST /api/offsite/group-receivers/{id}/login
 func (h *Handler) handleGroupReceiverLogin(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, "using a receiver from your group") {
-		return
-	}
 	login, err := h.svc.GroupReceiverLogin(r.Context(), r.PathValue("id"))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

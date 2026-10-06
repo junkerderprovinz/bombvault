@@ -1772,7 +1772,6 @@ const hr: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "isto kao ovaj BombVault",
   "receiver.server.start": "Postavi i pokreni",
   "receiver.server.setUpFailed": "Prijamni poslužitelj nije bilo moguće postaviti.",
-  "receiver.server.needsPassword": "Prvo postavite lozinku za prijavu, pod Postavke, Sigurnost. BombVault pokreće prijamni poslužitelj samo iza takve lozinke.",
   "receiver.server.loadError": "Prijamni poslužitelj nije bilo moguće učitati.",
   "receiver.server.protected": "Samo-dodavanje",
   "receiver.server.unprotected": "Prihvaća brisanje",

@@ -2704,7 +2704,6 @@ const vi: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "giống BombVault này",
   "receiver.server.start": "Thiết lập và khởi động",
   "receiver.server.setUpFailed": "Không thể thiết lập máy chủ nhận.",
-  "receiver.server.needsPassword": "Hãy đặt mật khẩu đăng nhập trước, trong Cài đặt, Bảo mật. BombVault chỉ khởi động máy chủ nhận khi có mật khẩu.",
   "receiver.server.loadError": "Không thể tải máy chủ nhận.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Chấp nhận xóa",

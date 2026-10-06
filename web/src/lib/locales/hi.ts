@@ -1772,7 +1772,6 @@ const hi: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "इसी BombVault जैसा",
   "receiver.server.start": "सेट करें और शुरू करें",
   "receiver.server.setUpFailed": "रिसीवर सर्वर सेट नहीं हो सका।",
-  "receiver.server.needsPassword": "पहले सेटिंग्स, सुरक्षा में लॉगिन पासवर्ड सेट करें। BombVault रिसीवर सर्वर सिर्फ़ ऐसे पासवर्ड के पीछे शुरू करता है।",
   "receiver.server.loadError": "रिसीवर सर्वर लोड नहीं हो सका।",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "डिलीट स्वीकार करता है",

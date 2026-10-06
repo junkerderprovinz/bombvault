@@ -2713,7 +2713,6 @@ const he: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "כמו ה-BombVault הזה",
   "receiver.server.start": "הגדרה והפעלה",
   "receiver.server.setUpFailed": "לא ניתן היה להגדיר את שרת המקלט.",
-  "receiver.server.needsPassword": "הגדר קודם סיסמת התחברות תחת הגדרות, אבטחה. BombVault מפעיל שרת מקלט רק מאחורי סיסמה.",
   "receiver.server.loadError": "לא ניתן היה לטעון את שרת המקלט.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "מקבל מחיקות",

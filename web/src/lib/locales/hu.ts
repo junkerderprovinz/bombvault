@@ -2716,7 +2716,6 @@ const hu: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "ugyanaz, mint ennek a BombVaultnak",
   "receiver.server.start": "Beállítás és indítás",
   "receiver.server.setUpFailed": "A fogadószervert nem sikerült beállítani.",
-  "receiver.server.needsPassword": "Előbb állíts be bejelentkezési jelszót a Beállítások, Biztonság alatt. A BombVault csak jelszó mögött indít fogadószervert.",
   "receiver.server.loadError": "A fogadószervert nem sikerült betölteni.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Elfogadja a törlést",

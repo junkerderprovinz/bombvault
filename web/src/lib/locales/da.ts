@@ -2713,7 +2713,6 @@ const da: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "samme som denne BombVault",
   "receiver.server.start": "Opsæt og start",
   "receiver.server.setUpFailed": "Modtageserveren kunne ikke opsættes.",
-  "receiver.server.needsPassword": "Angiv først en loginadgangskode under Indstillinger, Sikkerhed. BombVault starter kun en modtageserver bag en sådan.",
   "receiver.server.loadError": "Modtageserveren kunne ikke indlæses.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Accepterer sletning",

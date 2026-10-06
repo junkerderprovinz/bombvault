@@ -1772,7 +1772,6 @@ const et: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "sama mis selle BombVaulti oma",
   "receiver.server.start": "Seadista ja käivita",
   "receiver.server.setUpFailed": "Vastuvõtuserverit ei saanud seadistada.",
-  "receiver.server.needsPassword": "Määra kõigepealt sisselogimisparool jaotises Seaded, Turvalisus. BombVault käivitab vastuvõtuserveri ainult siis, kui parool on olemas.",
   "receiver.server.loadError": "Vastuvõtuserverit ei saanud laadida.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Võtab kustutamisi vastu",

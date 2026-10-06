@@ -2716,7 +2716,6 @@ const ro: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "la fel ca acest BombVault",
   "receiver.server.start": "Configurează și pornește",
   "receiver.server.setUpFailed": "Serverul receptor nu a putut fi configurat.",
-  "receiver.server.needsPassword": "Setează mai întâi o parolă de autentificare, la Setări, Securitate. BombVault pornește un server receptor doar în spatele unei parole.",
   "receiver.server.loadError": "Serverul receptor nu a putut fi încărcat.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Acceptă ștergeri",

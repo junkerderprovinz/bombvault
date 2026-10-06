@@ -2716,7 +2716,6 @@ const th: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "เหมือนกับ BombVault นี้",
   "receiver.server.start": "ตั้งค่าและเริ่มทำงาน",
   "receiver.server.setUpFailed": "ตั้งค่าเซิร์ฟเวอร์รับข้อมูลไม่สำเร็จ",
-  "receiver.server.needsPassword": "ตั้งรหัสผ่านเข้าสู่ระบบก่อนที่การตั้งค่า, ความปลอดภัย BombVault จะเริ่มเซิร์ฟเวอร์รับข้อมูลเฉพาะเมื่อมีรหัสผ่านเท่านั้น",
   "receiver.server.loadError": "โหลดเซิร์ฟเวอร์รับข้อมูลไม่สำเร็จ",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "รับการลบ",

@@ -2713,7 +2713,6 @@ const sv: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "samma som den här BombVault",
   "receiver.server.start": "Ställ in och starta",
   "receiver.server.setUpFailed": "Mottagarservern kunde inte ställas in.",
-  "receiver.server.needsPassword": "Ange först ett inloggningslösenord under Inställningar, Säkerhet. BombVault startar bara en mottagarserver bakom ett lösenord.",
   "receiver.server.loadError": "Mottagarservern kunde inte läsas in.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Tar emot radering",

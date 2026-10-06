@@ -2711,7 +2711,6 @@ const cs: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "stejná jako u tohoto BombVaultu",
   "receiver.server.start": "Nastavit a spustit",
   "receiver.server.setUpFailed": "Přijímací server se nepodařilo nastavit.",
-  "receiver.server.needsPassword": "Nejprve nastavte přihlašovací heslo v Nastavení, Zabezpečení. BombVault spustí přijímací server jen za takovým heslem.",
   "receiver.server.loadError": "Přijímací server se nepodařilo načíst.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Přijímá mazání",

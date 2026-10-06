@@ -2704,7 +2704,6 @@ const zh: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "与这个 BombVault 相同",
   "receiver.server.start": "设置并启动",
   "receiver.server.setUpFailed": "无法设置接收服务器。",
-  "receiver.server.needsPassword": "请先在设置，安全中设置登录密码。BombVault 只会在设有密码的情况下启动接收服务器。",
   "receiver.server.loadError": "无法加载接收服务器。",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "接受删除",

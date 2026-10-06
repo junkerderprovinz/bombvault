@@ -2704,7 +2704,6 @@ const ko: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "이 BombVault와 동일",
   "receiver.server.start": "설정 후 시작",
   "receiver.server.setUpFailed": "수신 서버를 설정하지 못했습니다.",
-  "receiver.server.needsPassword": "먼저 설정, 보안에서 로그인 비밀번호를 설정하세요. BombVault는 비밀번호가 있을 때만 수신 서버를 시작합니다.",
   "receiver.server.loadError": "수신 서버를 불러오지 못했습니다.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "삭제를 허용함",

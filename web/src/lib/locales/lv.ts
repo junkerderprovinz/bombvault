@@ -1772,7 +1772,6 @@ const lv: Partial<Translations> = {
   "receiver.server.hostPlaceholder": "tāda pati kā šim BombVault",
   "receiver.server.start": "Iestatīt un palaist",
   "receiver.server.setUpFailed": "Uztvērējserveri neizdevās iestatīt.",
-  "receiver.server.needsPassword": "Vispirms iestati pierakstīšanās paroli sadaļā Iestatījumi, Drošība. BombVault uztvērējserveri palaiž tikai aiz paroles.",
   "receiver.server.loadError": "Uztvērējserveri neizdevās ielādēt.",
   "receiver.server.protected": "Append-only",
   "receiver.server.unprotected": "Pieņem dzēšanu",
