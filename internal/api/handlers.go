@@ -3052,6 +3052,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// its auth hash / session epoch back would revert a password change made
 	// meanwhile.
 	before := h.svc.fieldTargets()
+	linked, err := h.svc.linkedPrimaries()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		cur.EncryptionEnabled = v.EncryptionEnabled
 		cur.ContainersEnabled = v.ContainersEnabled
@@ -3068,6 +3073,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.ZFSPath = v.ZFSPath
 		cur.RestoreFolder = v.RestoreFolder
 		applyOffsiteSettings(cur, v)
+		pinLinkedPrimaries(cur, linked)
 		cur.ContainersSchedule = v.ContainersSchedule
 		cur.VMsSchedule = v.VMsSchedule
 		cur.FlashSchedule = v.FlashSchedule

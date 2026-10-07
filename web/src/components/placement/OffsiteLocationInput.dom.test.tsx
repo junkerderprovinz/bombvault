@@ -111,4 +111,46 @@ describe("OffsiteLocationInput", () => {
     expect(fake.callsTo("excludeFromTarget")).toEqual([]);
     expect(screen.getByPlaceholderText<HTMLInputElement>(PLACEHOLDER).value).toBe("b2:bucket:containers");
   });
+
+  it("puts the copy into the folder of a destination the domain does not use yet", async () => {
+    fake.reply("listDestinations", {
+      ok: true,
+      destinations: [
+        { id: "d-b2", name: "B2", provider: "b2", repo: "rclone:b2:bv", credsRef: "", storageClass: "", immutable: true, createdAt: 1, domains: [] },
+        { id: "d-nas", name: "NAS", provider: "smb", repo: "rclone:nas:bv", credsRef: "", storageClass: "", immutable: false, createdAt: 2, domains: ["flash"] },
+      ],
+    });
+    const onFromDestination = vi.fn();
+    renderWithProviders(
+      <OffsiteLocationInput
+        domain="flash"
+        value="rest:http://old:8000/flash"
+        placeholder={PLACEHOLDER}
+        className=""
+        onSave={vi.fn()}
+        onFromDestination={onFromDestination}
+      />
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Use B2" }));
+    await waitFor(() => expect(onFromDestination).toHaveBeenCalledWith("rclone:b2:bv/flash", true));
+    expect(fake.callsTo("primaryFromDestination")).toEqual([["d-b2", "flash"]]);
+    expect(screen.queryByRole("button", { name: "Use NAS" })).toBeNull();
+  });
+
+  it("shows a copy that follows a destination locked until a location is typed", () => {
+    renderWithProviders(
+      <OffsiteLocationInput
+        domain="flash"
+        value="rclone:b2:bv/flash"
+        following="B2"
+        placeholder={PLACEHOLDER}
+        className=""
+        onSave={vi.fn()}
+      />
+    );
+    expect(screen.queryByPlaceholderText(PLACEHOLDER)).toBeNull();
+    expect(screen.getByText("rclone:b2:bv/flash")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Type a location" }));
+    expect(screen.getByPlaceholderText<HTMLInputElement>(PLACEHOLDER).value).toBe("rclone:b2:bv/flash");
+  });
 });

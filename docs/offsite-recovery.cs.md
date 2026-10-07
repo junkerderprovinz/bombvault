@@ -36,7 +36,9 @@ Přijímací server, který provozuje jiná instance vaší skupiny, se v průvo
 
 Cíl domény vytvořený z karty Cíle převezme její název, umístění, přihlašovací údaje, třídu úložiště a přepínač neměnnosti. Uchovávání, komprese a rozpočet růstu zůstávají na doménu a jeho umístění se přesunout nedá, protože tam leží repozitář domény. **Přidat cíl jen pro tuto doménu** pod každou doménou dál přijímá ručně zadanou URL repozitáře.
 
-Ručně zadaný cíl domény, jehož repozitář leží ve složce některého cíle, se k tomuto cíli může připojit. Cíl takové cíle domén vypisuje pod **Už pod tímto cílem** a **Převzít** jeden z nich pod něj zařadí. Cíl domény si ponechá svůj repozitář, snapshoty, uchovávání a umístění a převezme název, přihlašovací údaje, třídu úložiště a přepínač neměnnosti cíle. BombVault nejprve ověří, že přihlášení cíle repozitář otevře, a odmítne zařadit append-only cíl domény pod cíl, který append-only není. Převzetí primárního cíle domény vyprázdní pole Off-site této domény.
+Pole Off-site domény, tedy její primární kopie, může také sledovat cíl. Pod polem je tlačítko **Použít** pro každý cíl, na který doména ještě nekopíruje. Přesune primární kopii do složky domény pod tímto cílem a kopie pak převezme název, přihlašovací údaje, třídu úložiště a přepínač neměnnosti cíle, zatímco její uchovávání zůstává na stránce Uchovávání. Pole od té chvíle zobrazuje umístění zamčené. **Zadat umístění** ho odemkne a uložení ručně zadaného umístění vazbu ukončí.
+
+Ručně zadaný cíl domény, jehož repozitář leží ve složce některého cíle, se k tomuto cíli může připojit. Cíl takové cíle domén vypisuje pod **Už pod tímto cílem** a **Převzít** jeden z nich pod něj zařadí. Cíl domény si ponechá svůj repozitář, snapshoty, uchovávání a umístění a převezme název, přihlašovací údaje, třídu úložiště a přepínač neměnnosti cíle. BombVault nejprve ověří, že přihlášení cíle repozitář otevře, a odmítne zařadit append-only cíl domény pod cíl, který append-only není. Primární kopie domény, která byla převzata, zůstává v poli Off-site této domény.
 
 ## Umístění pro jednotlivé položky {#placement}
 

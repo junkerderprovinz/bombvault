@@ -336,10 +336,10 @@ var (
 
 // AdoptIntoDestination hangs a domain target typed in by hand on a
 // destination. The target takes the destination's mirrored fields and keeps
-// its repository, retention and copy rules. A target in the primary slot
-// leaves it, and clearField empties the domain's off-site field in the same
-// transaction, because that field rewrites the primary slot on every save.
-func (r *Repo) AdoptIntoDestination(targetID, destID string, clearField func(*Settings)) (OffsiteTarget, error) {
+// its repository, retention and copy rules. For the target in the primary
+// slot, settle brings the domain's off-site settings in line in the same
+// transaction, because they rewrite the primary slot on every save.
+func (r *Repo) AdoptIntoDestination(targetID, destID string, settle func(*Settings)) (OffsiteTarget, error) {
 	r.settingsMu.Lock()
 	defer r.settingsMu.Unlock()
 	var out OffsiteTarget
@@ -363,42 +363,119 @@ func (r *Repo) AdoptIntoDestination(targetID, destID string, clearField func(*Se
 		if n > 0 {
 			return ErrDomainHasDestinationTarget
 		}
-		primary := t.SortOrder == 0
-		if primary {
-			if err := tx.QueryRow(`SELECT COALESCE(MAX(sort_order), 0) + 1 FROM offsite_targets WHERE role = ? AND domain = ?`,
-				RoleOffsite, t.Domain).Scan(&t.SortOrder); err != nil {
-				return err
-			}
-		}
-		t.DestinationID = d.ID
-		t.Name, t.CredsRef, t.StorageClass, t.Immutable, t.Provider = d.Name, d.CredsRef, d.StorageClass, d.Immutable, d.Provider
-		if _, err := tx.Exec(`UPDATE offsite_targets SET destination_id = ?, name = ?, creds_ref = ?, storage_class = ?,
-			  immutable = ?, provider = ?, sort_order = ?
-			WHERE id = ? AND role = ?`,
-			t.DestinationID, t.Name, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Provider, t.SortOrder,
-			t.ID, RoleOffsite); err != nil {
+		if out, err = followDestinationTx(tx, t, d); err != nil {
 			return err
 		}
-		if err := mirrorTx(tx, t, false); err != nil {
-			return err
+		if t.SortOrder == 0 && settle != nil {
+			return settleTx(tx, settle)
 		}
-		if primary && clearField != nil {
-			s, err := getSettings(tx)
-			if err != nil {
-				return err
-			}
-			clearField(&s)
-			if err := updateSettings(tx, s); err != nil {
-				return err
-			}
-		}
-		out, err = offsiteTargetTx(tx, t.ID)
-		return err
+		return nil
 	})
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("AdoptIntoDestination: %w", err)
 	}
 	return out, nil
+}
+
+// PrimaryFromDestination makes location, the destination's folder for the
+// domain, the domain's primary off-site target. The row in the primary slot
+// moves there and follows the destination; a domain without one gets a new
+// row. settle writes the domain's off-site field and append-only flag in the
+// same transaction, because a settings save rewrites the primary slot from
+// them.
+func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle func(*Settings)) (OffsiteTarget, error) {
+	if strings.TrimSpace(location) == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+	var out OffsiteTarget
+	err := r.inTx(func(tx *sql.Tx) error {
+		d, err := destinationTx(tx, destID)
+		if err != nil {
+			return err
+		}
+		t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+` FROM offsite_targets
+			WHERE domain = ? AND role = ? AND sort_order = 0 ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite))
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			t = OffsiteTarget{ID: newID(), Domain: domain, Role: RoleOffsite, CreatedAt: time.Now().Unix()}
+			if _, err := tx.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order)
+				VALUES (?, ?, ?, ?, ?, 1, ?, 0)`, t.ID, domain, d.Name, location, RoleOffsite, t.CreatedAt); err != nil {
+				return err
+			}
+		case err != nil:
+			return err
+		case t.DestinationID == destID:
+		case t.DestinationID != "":
+			if _, err := tx.Exec(`UPDATE offsite_targets SET destination_id = '' WHERE id = ? AND role = ?`, t.ID, RoleOffsite); err != nil {
+				return err
+			}
+			t.DestinationID = ""
+		}
+		if t.DestinationID == "" {
+			var n int
+			if err := tx.QueryRow(`SELECT count(*) FROM offsite_targets WHERE role = ? AND destination_id = ? AND domain = ?`,
+				RoleOffsite, destID, domain).Scan(&n); err != nil {
+				return err
+			}
+			if n > 0 {
+				return ErrDomainHasDestinationTarget
+			}
+		}
+		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, enabled = 1 WHERE id = ? AND role = ?`,
+			location, t.ID, RoleOffsite); err != nil {
+			return err
+		}
+		t.DestinationID = ""
+		if out, err = followDestinationTx(tx, t, d); err != nil {
+			return err
+		}
+		return settleTx(tx, settle)
+	})
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("PrimaryFromDestination: %w", err)
+	}
+	return out, nil
+}
+
+// followDestinationTx hangs t on d: it takes d's mirrored fields, and so does
+// its direct repository.
+func followDestinationTx(tx *sql.Tx, t, d OffsiteTarget) (OffsiteTarget, error) {
+	if t.DestinationID != "" {
+		return OffsiteTarget{}, ErrTargetFollowsDestination
+	}
+	t.DestinationID = d.ID
+	t.Name, t.CredsRef, t.StorageClass, t.Immutable, t.Provider = d.Name, d.CredsRef, d.StorageClass, d.Immutable, d.Provider
+	if _, err := tx.Exec(`UPDATE offsite_targets SET destination_id = ?, name = ?, creds_ref = ?, storage_class = ?,
+		  immutable = ?, provider = ?
+		WHERE id = ? AND role = ?`,
+		t.DestinationID, t.Name, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Provider,
+		t.ID, RoleOffsite); err != nil {
+		return OffsiteTarget{}, err
+	}
+	if err := mirrorTx(tx, t, false); err != nil {
+		return OffsiteTarget{}, err
+	}
+	return offsiteTargetTx(tx, t.ID)
+}
+
+func settleTx(tx *sql.Tx, settle func(*Settings)) error {
+	s, err := getSettings(tx)
+	if err != nil {
+		return err
+	}
+	settle(&s)
+	return updateSettings(tx, s)
+}
+
+// DetachFromDestination unhooks a target from the destination it follows.
+// The fields it took from the destination stay until its next save.
+func (r *Repo) DetachFromDestination(id string) error {
+	if _, err := r.db.Exec(`UPDATE offsite_targets SET destination_id = '' WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+		return fmt.Errorf("DetachFromDestination: %w", err)
+	}
+	return nil
 }
 
 // DeleteDestinationIfUnused removes a destination that no domain target is

@@ -67,7 +67,7 @@ const RULES: Rule[] = [
   // A list that fetches its next page grows by the same plus as one that gains
   // an entry.
   [/loadMore/i, () => <IconAdd />],
-  [/edit|rename|editSet/i, () => <IconPencil />],
+  [/edit|rename|editSet|retype/i, () => <IconPencil />],
   [/save|apply/i, () => <IconSave />],
 
   // Selection. "Exclude all" and "Include all" are clear and select all under
@@ -89,7 +89,7 @@ const RULES: Rule[] = [
 
   // Connections, above the probing rules so recovery.connectPreview, which
   // connects first and previews after, gets the link.
-  [/connect|pair|link|reconnect|adopt\.take/i, () => <IconLink />],
+  [/connect|pair|link|reconnect|adopt\.take|primary\.use/i, () => <IconLink />],
 
   // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
   // is on screen, so they take the same check.

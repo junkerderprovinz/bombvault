@@ -26,10 +26,8 @@ const DOMAIN_LABEL: Record<string, TranslationKey> = {
 
 const FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
 
-/** The destinations, each set up once, and the wizard that adds one.
- *  onFieldCleared hears of a domain whose off-site field a takeover emptied,
- *  so the page does not save the old value back. */
-export function DestinationsCard({ hueIndex, onFieldCleared }: { hueIndex?: number; onFieldCleared?: (domain: string) => void }) {
+/** The destinations, each set up once, and the wizard that adds one. */
+export function DestinationsCard({ hueIndex }: { hueIndex?: number }) {
   const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -41,15 +39,13 @@ export function DestinationsCard({ hueIndex, onFieldCleared }: { hueIndex?: numb
   async function adopt(d: Destination, a: AdoptableTarget) {
     const fill = (s: string) =>
       s.replaceAll("{target}", () => a.name).replaceAll("{domain}", () => domainLabel(a.domain)).replaceAll("{name}", () => d.name);
-    const ask = fill(t("dest.adopt.ask")) + (a.primary ? ` ${fill(t("dest.adopt.askPrimary"))}` : "");
-    if (!(await confirm(ask, { confirmKey: "dest.adopt.take" }))) return;
+    if (!(await confirm(fill(t("dest.adopt.ask")), { confirmKey: "dest.adopt.take" }))) return;
     const r = await adoptIntoDestination(d.id, a.id).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
     if (!r.ok) {
       push(r.error ?? t("settings.error"), "fail");
       return;
     }
     push(fill(t("dest.adopted")), "success");
-    if (a.primary) onFieldCleared?.(a.domain);
     destinationsChanged();
     offsiteTargetsChanged();
   }

@@ -126,7 +126,7 @@ func TestAnUnusedDestinationCanMoveAndGo(t *testing.T) {
 	}
 }
 
-func TestAdoptingThePrimaryKeepsItsRepositoryAndLeavesTheFieldSlot(t *testing.T) {
+func TestAdoptingThePrimaryKeepsItsRepositoryAndItsSlot(t *testing.T) {
 	r := newRepo(t)
 	s, err := r.GetSettings()
 	if err != nil {
@@ -141,26 +141,92 @@ func TestAdoptingThePrimaryKeepsItsRepositoryAndLeavesTheFieldSlot(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	d := saveDestination(t, r, store.OffsiteTarget{Name: "QNAP", Repo: "s3:http://nas:9000/bv/dxp", CredsRef: "c1", Provider: "s3"})
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "QNAP", Repo: "s3:http://nas:9000/bv/dxp", CredsRef: "c1", Provider: "s3", Immutable: true})
 
-	got, err := r.AdoptIntoDestination(primary.ID, d.ID, func(s *store.Settings) { s.ContainersOffsite = "" })
+	got, err := r.AdoptIntoDestination(primary.ID, d.ID, func(s *store.Settings) { s.ContainersOffsiteImmutable = true })
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.ID != primary.ID || got.Repo != primary.Repo || got.RetentionKeepDaily != 9 {
-		t.Fatalf("adopted = %+v, want the same target on its own repository with its retention", got)
+	if got.ID != primary.ID || got.Repo != primary.Repo || got.RetentionKeepDaily != 9 || got.SortOrder != 0 {
+		t.Fatalf("adopted = %+v, want the same primary on its own repository with its retention", got)
 	}
-	if got.DestinationID != d.ID || got.Name != "QNAP" || got.CredsRef != "c1" || got.Provider != "s3" {
+	if got.DestinationID != d.ID || got.Name != "QNAP" || got.CredsRef != "c1" || got.Provider != "s3" || !got.Immutable {
 		t.Fatalf("adopted = %+v, want the destination's fields", got)
 	}
-	if got.SortOrder == 0 {
-		t.Fatal("the adopted target stayed in the slot of the settings field")
-	}
-	if s, _ := r.GetSettings(); s.ContainersOffsite != "" {
-		t.Fatalf("containers off-site field = %q, want it cleared", s.ContainersOffsite)
+	if s, _ := r.GetSettings(); s.ContainersOffsite != primary.Repo || !s.ContainersOffsiteImmutable {
+		t.Fatalf("containers off-site field = %q, append-only %v, want the field kept and the flag settled", s.ContainersOffsite, s.ContainersOffsiteImmutable)
 	}
 	if _, err := r.AdoptIntoDestination(primary.ID, d.ID, nil); !errors.Is(err, store.ErrTargetFollowsDestination) {
 		t.Fatalf("adopting again: %v, want ErrTargetFollowsDestination", err)
+	}
+}
+
+func TestThePrimaryMovesIntoTheFolderOfADestination(t *testing.T) {
+	r := newRepo(t)
+	primary, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Primary",
+		Repo: "rest:http://old:8000/vms", Enabled: true, CredsRef: "own", RetentionKeepDaily: 9})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "Mani", Repo: "s3:http://nas:9000/bv", CredsRef: "c1", Provider: "s3"})
+
+	got, err := r.PrimaryFromDestination(d.ID, "vms", "s3:http://nas:9000/bv/vms", func(s *store.Settings) { s.VMsOffsite = "s3:http://nas:9000/bv/vms" })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != primary.ID || got.SortOrder != 0 || !got.Enabled || got.Repo != "s3:http://nas:9000/bv/vms" || got.RetentionKeepDaily != 9 {
+		t.Fatalf("primary = %+v, want the same row in the primary slot at the destination's folder", got)
+	}
+	if got.DestinationID != d.ID || got.Name != "Mani" || got.CredsRef != "c1" {
+		t.Fatalf("primary = %+v, want the destination's fields", got)
+	}
+	if s, _ := r.GetSettings(); s.VMsOffsite != got.Repo {
+		t.Fatalf("vms off-site field = %q, want %q", s.VMsOffsite, got.Repo)
+	}
+}
+
+func TestADomainWithoutAPrimaryGetsOneFromADestination(t *testing.T) {
+	r := newRepo(t)
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "B2", Repo: "rclone:b2:bv"})
+
+	got, err := r.PrimaryFromDestination(d.ID, "flash", "rclone:b2:bv/flash", func(*store.Settings) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	field, ok, err := r.FieldOffsiteTarget("flash")
+	if err != nil || !ok || field.ID != got.ID || field.DestinationID != d.ID || !field.Enabled {
+		t.Fatalf("field target = %+v, %v, %v, want the new primary following B2", field, ok, err)
+	}
+}
+
+func TestThePrimaryCanSwitchFromOneDestinationToAnother(t *testing.T) {
+	r := newRepo(t)
+	a := saveDestination(t, r, store.OffsiteTarget{Name: "A", Repo: "rclone:a:bv"})
+	b := saveDestination(t, r, store.OffsiteTarget{Name: "B", Repo: "rclone:b:bv"})
+	first, err := r.PrimaryFromDestination(a.ID, "zfs", "rclone:a:bv/zfs", func(*store.Settings) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.PrimaryFromDestination(b.ID, "zfs", "rclone:b:bv/zfs", func(*store.Settings) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != first.ID || got.DestinationID != b.ID || got.Repo != "rclone:b:bv/zfs" {
+		t.Fatalf("primary = %+v, want the same row following B", got)
+	}
+	if left, err := r.DestinationTargets(a.ID); err != nil || len(left) != 0 {
+		t.Fatalf("targets of A = %+v, %v, want none", left, err)
+	}
+}
+
+func TestThePrimaryCannotTakeADestinationTheDomainAlreadyCopiesTo(t *testing.T) {
+	r := newRepo(t)
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "B2", Repo: "rclone:b2:bv"})
+	if _, _, err := r.EnsureDestinationTarget(d.ID, "files", "rclone:b2:bv/files"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.PrimaryFromDestination(d.ID, "files", "rclone:b2:bv/files", func(*store.Settings) {}); !errors.Is(err, store.ErrDomainHasDestinationTarget) {
+		t.Fatalf("PrimaryFromDestination: %v, want ErrDomainHasDestinationTarget", err)
 	}
 }
 

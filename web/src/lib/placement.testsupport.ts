@@ -289,6 +289,12 @@ const DEFAULTS: Record<string, Reply> = {
   createOffsiteTarget: (...args) => ({ ok: true, target: { ...(args[0] as object), id: "t-new", createdAt: 1 } }),
   listDestinations: () => ({ ok: true, destinations: [] }),
   destinationForDomain: (...args) => ({ ok: true, created: true, target: { id: "t-new", domain: args[1], destinationId: args[0] } }),
+  primaryFromDestination: (...args) => ({
+    ok: true,
+    location: `rclone:b2:bv/${args[1] as string}`,
+    immutable: true,
+    target: { id: "t-field", domain: args[1], destinationId: args[0], sortOrder: 0 },
+  }),
   updateOffsiteTarget: (...args) => ({ ok: true, target: args[1], warnings: [] }),
   acceptMeshOffer: () => ({ ok: true }),
   getSettings: () => ({ ok: true, platform: "unraid", hostMountRoot: "/host/user" }),

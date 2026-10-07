@@ -5765,6 +5765,25 @@ export function destinationForDomain(
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/domains/${domain}`, { method: "POST" });
 }
 
+/** Puts the domain's primary off-site copy into the destination's folder for
+ *  it. location and immutable are the domain's off-site field and append-only
+ *  flag as the settings now hold them. */
+export function primaryFromDestination(
+  id: string,
+  domain: OffsiteDomain
+): Promise<OkEnvelope & { target?: OffsiteTarget; location?: string; immutable?: boolean }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/primary/${domain}`, { method: "POST" });
+}
+
+/** The folder a destination keeps for a domain, as the server names it. The
+ *  self-backup's folder is selfbackup, because config at the root of a
+ *  rest-server is that server's own config file. */
+export function destinationFolder(d: Destination, domain: OffsiteDomain): string {
+  const base = d.repo.trim().replace(/\/+$/, "");
+  const folder = domain === "config" ? "selfbackup" : domain;
+  return base.endsWith(":") ? base + folder : `${base}/${folder}`;
+}
+
 export type AnomalySeverity = "critical" | "warning" | "info";
 export type AnomalyState = "open" | "resolved" | "acknowledged" | "expected";
 export type AnomalyDetector =

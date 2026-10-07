@@ -1052,7 +1052,7 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// Mirror the imported off-site config into the primary off-site target rows and
 	// re-arm the scheduler, exactly like a settings save, so the imported schedules
 	// take effect. The scheduler may be absent in a stripped test wiring — guard it.
-	s, err := h.store.GetSettings()
+	s, err := h.svc.settleLinkedPrimaries()
 	if err != nil {
 		return err
 	}

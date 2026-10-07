@@ -2666,6 +2666,23 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 	return false
 }
 
+func setOffsiteImmutableInSettings(s *store.Settings, domain string, immutable bool) {
+	switch domain {
+	case "containers":
+		s.ContainersOffsiteImmutable = immutable
+	case "vms":
+		s.VMsOffsiteImmutable = immutable
+	case "flash":
+		s.FlashOffsiteImmutable = immutable
+	case "config":
+		s.ConfigOffsiteImmutable = immutable
+	case "files":
+		s.FilesOffsiteImmutable = immutable
+	case zfsDomain:
+		s.ZFSOffsiteImmutable = immutable
+	}
+}
+
 // The refusals for a destructive operation against a repository flagged
 // append-only: the whole point of the flag is that credentials on this box
 // cannot delete history, so BombVault does not even try.

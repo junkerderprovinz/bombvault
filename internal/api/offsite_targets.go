@@ -39,7 +39,9 @@ func validOffsiteDomain(domain string) bool {
 //
 // The storage class comes from the cloud credentials. If they cannot be
 // decoded it stays empty, which offsiteModeForTarget treats as the global
-// class.
+// class. A primary that follows a destination takes name, storage class,
+// append-only flag and provider from it instead, and stops following it once
+// the field names another location or none.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
@@ -57,6 +59,12 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	}
 
 	repo := offsiteRepoFromSettings(domain, settings)
+	if primary != nil && primary.DestinationID != "" && primary.Repo != repo {
+		if err := s.store.DetachFromDestination(primary.ID); err != nil {
+			return err
+		}
+		primary.DestinationID = ""
+	}
 	if repo == "" {
 		if primary == nil || !primary.Enabled {
 			return nil
@@ -84,9 +92,53 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		t.ID = primary.ID
 		t.CreatedAt = primary.CreatedAt
 		t.CredsRef = primary.CredsRef
+		if primary.DestinationID != "" {
+			t.Name, t.StorageClass, t.Immutable, t.Provider = primary.Name, primary.StorageClass, primary.Immutable, primary.Provider
+		}
 	}
 	_, err = s.store.UpsertOffsiteTarget(t)
 	return err
+}
+
+// linkedPrimaries returns, by domain, each primary off-site target that
+// follows a destination.
+func (s *Service) linkedPrimaries() (map[string]store.OffsiteTarget, error) {
+	out := map[string]store.OffsiteTarget{}
+	for _, d := range offsiteConfigDomains {
+		t, ok, err := s.store.FieldOffsiteTarget(d)
+		if err != nil {
+			return nil, err
+		}
+		if ok && t.DestinationID != "" {
+			out[d] = t
+		}
+	}
+	return out, nil
+}
+
+// pinLinkedPrimaries gives the off-site settings of each domain whose field
+// still names a primary that follows a destination the append-only flag of
+// that destination. The flag decides on pruning, so a stale form must not
+// switch it off behind the destination's back.
+func pinLinkedPrimaries(settings *store.Settings, linked map[string]store.OffsiteTarget) {
+	for d, t := range linked {
+		if offsiteRepoFromSettings(d, *settings) == t.Repo {
+			setOffsiteImmutableInSettings(settings, d, t.Immutable)
+		}
+	}
+}
+
+// settleLinkedPrimaries pins the stored off-site settings to the destinations
+// their primaries follow, after a destination's append-only flag changed.
+func (s *Service) settleLinkedPrimaries() (store.Settings, error) {
+	linked, err := s.linkedPrimaries()
+	if err != nil {
+		return store.Settings{}, err
+	}
+	return s.store.MutateSettings(func(st *store.Settings) error {
+		pinLinkedPrimaries(st, linked)
+		return nil
+	})
 }
 
 // rejectAdoptionOverOwnSettings refuses off-site settings under which

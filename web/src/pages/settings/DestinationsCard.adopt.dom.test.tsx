@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
-// A target typed in by hand under a destination is offered for takeover, and
-// taking over a domain's primary tells the page its off-site field is empty,
-// so a later save does not write the old value back.
+// A target typed in by hand under a destination is offered for takeover,
+// and nothing changes until the takeover is confirmed.
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { en } from "../../lib/i18n";
@@ -51,31 +50,27 @@ afterEach(() => {
 });
 
 describe("DestinationsCard takeover", () => {
-  it("takes over a primary under the destination and reports the cleared field", async () => {
+  it("takes over a primary under the destination", async () => {
     listDestinations.mockResolvedValue({ ok: true, destinations: [qnap] });
     adoptIntoDestination.mockResolvedValue({ ok: true });
     confirm.mockResolvedValue(true);
-    const cleared = vi.fn();
-    render(<DestinationsCard onFieldCleared={cleared} />);
+    render(<DestinationsCard />);
 
     expect(await screen.findByText(en["dest.adopt.title"])).toBeTruthy();
     expect(screen.getByText("s3:http://nas:9000/bv/dxp/container")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: en["dest.adopt.take"] }));
 
     await waitFor(() => expect(adoptIntoDestination).toHaveBeenCalledWith("d1", "t1"));
-    expect(String(confirm.mock.calls[0][0])).toContain("BombVault empties the off-site field of Containers");
-    expect(cleared).toHaveBeenCalledWith("containers");
+    expect(String(confirm.mock.calls[0][0])).toContain("Let Primary (Containers) follow QNAP?");
   });
 
   it("leaves everything alone when the takeover is not confirmed", async () => {
     listDestinations.mockResolvedValue({ ok: true, destinations: [qnap] });
     confirm.mockResolvedValue(false);
-    const cleared = vi.fn();
-    render(<DestinationsCard onFieldCleared={cleared} />);
+    render(<DestinationsCard />);
 
     fireEvent.click(await screen.findByRole("button", { name: en["dest.adopt.take"] }));
     await waitFor(() => expect(confirm).toHaveBeenCalled());
     expect(adoptIntoDestination).not.toHaveBeenCalled();
-    expect(cleared).not.toHaveBeenCalled();
   });
 });

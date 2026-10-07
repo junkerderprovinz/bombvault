@@ -105,9 +105,19 @@ func (s *Service) AdoptIntoDestination(ctx context.Context, destID, targetID str
 	if t.Immutable && !d.Immutable {
 		return store.OffsiteTarget{}, fmt.Errorf("this target is append-only and %s is not: switch on append-only for %s first", d.Name, d.Name)
 	}
+	if err := s.destinationOpens(ctx, d, t); err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	domain := t.Domain
+	return s.store.AdoptIntoDestination(t.ID, d.ID, func(st *store.Settings) { setOffsiteImmutableInSettings(st, domain, d.Immutable) })
+}
+
+// destinationOpens checks that the sign-in of d opens the repository t
+// already holds.
+func (s *Service) destinationOpens(ctx context.Context, d, t store.OffsiteTarget) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return store.OffsiteTarget{}, err
+		return err
 	}
 	probe := t
 	probe.CredsRef, probe.StorageClass = d.CredsRef, d.StorageClass
@@ -117,10 +127,45 @@ func (s *Service) AdoptIntoDestination(ctx context.Context, destID, targetID str
 		if err != nil {
 			why = fmt.Errorf("%w: %s", why, scrubError(err))
 		}
-		return store.OffsiteTarget{}, why
+		return why
 	}
-	domain := t.Domain
-	return s.store.AdoptIntoDestination(t.ID, d.ID, func(st *store.Settings) { setOffsiteRepoInSettings(st, domain, "") })
+	return nil
+}
+
+// PrimaryFromDestination makes the folder a destination keeps for the domain
+// the domain's primary off-site target. When the primary is already there, the
+// destination's sign-in has to open the repository it holds, as for a
+// takeover.
+func (s *Service) PrimaryFromDestination(ctx context.Context, d store.OffsiteTarget, domain string) (store.OffsiteTarget, store.Settings, error) {
+	loc := destinationLocation(d.Repo, domain)
+	primary, ok, err := s.store.FieldOffsiteTarget(domain)
+	if err != nil {
+		return store.OffsiteTarget{}, store.Settings{}, err
+	}
+	if ok && primary.Enabled && primary.Repo == loc && primary.DestinationID != d.ID {
+		if primary.Immutable && !d.Immutable {
+			return store.OffsiteTarget{}, store.Settings{}, fmt.Errorf("this off-site copy is append-only and %s is not: switch on append-only for %s first", d.Name, d.Name)
+		}
+		if err := s.destinationOpens(ctx, d, primary); err != nil {
+			return store.OffsiteTarget{}, store.Settings{}, err
+		}
+	}
+	if _, err := s.store.PrimaryFromDestination(d.ID, domain, loc, func(st *store.Settings) {
+		setOffsiteRepoInSettings(st, domain, loc)
+		setOffsiteImmutableInSettings(st, domain, d.Immutable)
+	}); err != nil {
+		return store.OffsiteTarget{}, store.Settings{}, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return store.OffsiteTarget{}, store.Settings{}, err
+	}
+	// The sync fills in the retention and limits the settings give the primary.
+	if err := s.syncPrimaryOffsiteTarget(domain, settings); err != nil {
+		return store.OffsiteTarget{}, store.Settings{}, err
+	}
+	t, _, err := s.store.FieldOffsiteTarget(domain)
+	return t, settings, err
 }
 
 // draftRequest is a destination as the wizard has it before saving.
@@ -634,6 +679,16 @@ func (h *Handler) handleUpdateDestination(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// A primary that follows the destination carries its append-only flag in
+	// the settings as well, and the scheduler reads it there.
+	s, err := h.svc.settleLinkedPrimaries()
+	if err == nil {
+		err = h.scheduler.ReloadWithGates(s, h.dueGates())
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
+		return
+	}
 	h.answerDestination(w, saved)
 }
 
@@ -698,7 +753,7 @@ func (h *Handler) handleAdoptIntoDestination(w http.ResponseWriter, r *http.Requ
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// Taking over a primary empties the domain's off-site field, which the
+	// Taking over a primary sets the domain's append-only flag, which the
 	// scheduler reads.
 	if s, err := h.store.GetSettings(); err == nil {
 		if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
@@ -712,6 +767,55 @@ func (h *Handler) handleAdoptIntoDestination(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	h.answerDestination(w, d)
+}
+
+// handlePrimaryFromDestination puts a domain's primary off-site copy into the
+// folder a destination keeps for the domain. The answer carries the off-site
+// field and append-only flag as the settings form shows them.
+// POST /api/offsite/destinations/{id}/primary/{domain}
+func (h *Handler) handlePrimaryFromDestination(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	if !validOffsiteDomain(domain) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": invalidOffsiteDomain})
+		return
+	}
+	d, ok, err := h.store.GetDestination(r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !ok {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": store.ErrNotDestination.Error()})
+		return
+	}
+	t := store.OffsiteTarget{Domain: domain, Repo: destinationLocation(d.Repo, domain)}
+	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	primary, _, err := h.store.FieldOffsiteTarget(domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.nestedTargetLocation(primary.ID, t); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	stored, s, err := h.svc.PrimaryFromDestination(r.Context(), d, domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"target":    offsiteTargetToView(stored),
+		"location":  scrubRepoLocation(offsiteRepoFromSettings(domain, s)),
+		"immutable": offsiteImmutableFor(domain, s),
+	}))
 }
 
 func (h *Handler) answerDestination(w http.ResponseWriter, d store.OffsiteTarget) {

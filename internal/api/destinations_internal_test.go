@@ -265,16 +265,88 @@ func TestAHandTypedPrimaryUnderADestinationIsOfferedAndTakenOver(t *testing.T) {
 	if err != nil || len(v.Adoptable) != 0 || !slices.Equal(v.Domains, []string{"containers"}) {
 		t.Fatalf("after adoption: domains %v, adoptable %+v, %v", v.Domains, v.Adoptable, err)
 	}
-	if s, _ := st.GetSettings(); s.ContainersOffsite != "" {
-		t.Fatalf("containers off-site field = %q, want it cleared", s.ContainersOffsite)
+	s, err := st.GetSettings()
+	if err != nil || s.ContainersOffsite != repo {
+		t.Fatalf("containers off-site field = %q, %v, want it kept", s.ContainersOffsite, err)
 	}
-	if got := svc.offsiteReplicationTargets("containers", store.Settings{}); len(got) != 1 || got[0].Repo != repo {
-		t.Fatalf("replication targets = %+v, want the adopted target on its repository", got)
+	if err := svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
 	}
-	// A page that still holds the old field must not turn the target back
-	// into the primary.
-	if msg, err := svc.rejectAdoptionOverOwnSettings(store.Settings{ContainersOffsite: repo}); err != nil || !strings.Contains(msg, "follows a destination") {
-		t.Fatalf("saving the old field again: %q, %v", msg, err)
+	got, _, err := st.FieldOffsiteTarget("containers")
+	if err != nil || got.ID != primary.ID || got.DestinationID != d.ID || got.Name != "QNAP" {
+		t.Fatalf("primary after a settings save = %+v, %v, want it still following QNAP", got, err)
+	}
+}
+
+func TestAPrimaryStopsFollowingItsDestinationWhenTheFieldMoves(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	d, err := st.SaveDestination(store.OffsiteTarget{Name: "B2", Repo: "rclone:b2:bv", Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := svc.PrimaryFromDestination(context.Background(), d, "vms"); err != nil {
+		t.Fatal(err)
+	}
+	s, err := st.MutateSettings(func(s *store.Settings) error { s.VMsOffsite = "rest:http://other:8000/vms"; return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.syncPrimaryOffsiteTarget("vms", s); err != nil {
+		t.Fatal(err)
+	}
+	got, _, err := st.FieldOffsiteTarget("vms")
+	if err != nil || got.DestinationID != "" || got.Name != "Primary" || got.Repo != "rest:http://other:8000/vms" {
+		t.Fatalf("primary = %+v, %v, want a hand-typed primary on the new location", got, err)
+	}
+	if v, err := svc.destinationView(d); err != nil || len(v.Domains) != 0 {
+		t.Fatalf("B2 used by %v, %v, want no domain", v.Domains, err)
+	}
+}
+
+func TestThePrimaryTakesTheFolderADestinationKeepsForTheDomain(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	d, err := st.SaveDestination(store.OffsiteTarget{Name: "Mani", Repo: "s3:http://nas:9000/bv", CredsRef: "c1", Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, s, err := svc.PrimaryFromDestination(context.Background(), d, "config")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "s3:http://nas:9000/bv/selfbackup"
+	if s.ConfigOffsite != want || !s.ConfigOffsiteImmutable {
+		t.Fatalf("self-backup off-site field = %q, append-only %v, want %q and on", s.ConfigOffsite, s.ConfigOffsiteImmutable, want)
+	}
+	if got.Repo != want || got.SortOrder != 0 || got.DestinationID != d.ID || got.CredsRef != "c1" || !got.Immutable {
+		t.Fatalf("primary = %+v, want it in the destination's folder following Mani", got)
+	}
+	if v, err := svc.destinationView(d); err != nil || !slices.Equal(v.Domains, []string{"config"}) {
+		t.Fatalf("Mani used by %v, %v, want the self-backup", v.Domains, err)
+	}
+}
+
+func TestAStaleFormCannotSwitchOffTheAppendOnlyFlagOfALinkedPrimary(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	d, err := st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: "rest:http://box:8000/bv", Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := svc.PrimaryFromDestination(context.Background(), d, "flash"); err != nil {
+		t.Fatal(err)
+	}
+	linked, err := svc.linkedPrimaries()
+	if err != nil {
+		t.Fatal(err)
+	}
+	form := store.Settings{FlashOffsite: "rest:http://box:8000/bv/flash"}
+	pinLinkedPrimaries(&form, linked)
+	if !form.FlashOffsiteImmutable {
+		t.Fatal("the form switched off the append-only flag of a primary that follows an append-only destination")
+	}
+	typed := store.Settings{FlashOffsite: "rest:http://elsewhere:8000/flash"}
+	pinLinkedPrimaries(&typed, linked)
+	if typed.FlashOffsiteImmutable {
+		t.Fatal("a primary typed in elsewhere took the destination's flag")
 	}
 }
 
