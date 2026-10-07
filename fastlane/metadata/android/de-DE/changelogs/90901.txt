@@ -1,0 +1,1 @@
+Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort kann die primäre Off-site-Kopie eines Bereichs mit BombVault 9.9.1 ein Ziel verwenden.

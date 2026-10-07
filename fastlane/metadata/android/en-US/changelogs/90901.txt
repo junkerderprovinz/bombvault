@@ -1,0 +1,1 @@
+The app itself is unchanged. Dashboards come from your server, where BombVault 9.9.1 lets a domain's primary off-site copy use a destination.
