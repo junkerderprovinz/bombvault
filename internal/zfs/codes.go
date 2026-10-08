@@ -63,6 +63,12 @@ var AllCodes = []string{
 	"new-dataset-not-visible",
 	"set-properties-failed",
 	"set-limits-failed",
+
+	// Replica
+	"resume-token-stale",
+	"target-changed",
+	"no-common-base",
+	"encryption-mismatch",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their

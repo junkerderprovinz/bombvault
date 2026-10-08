@@ -35,6 +35,21 @@ func TestClassify(t *testing.T) {
 		{"no route", "ssh: connect to host 192.168.1.9 port 22: No route to host", exitStatus(255), "ssh-unreachable"},
 		{"unknown name", "ssh: Could not resolve hostname nas.lan: Name or service not known", exitStatus(255), "ssh-unreachable"},
 		{"anything else", "cannot hold snapshot: out of space", exitStatus(1), "zfs-error"},
+
+		// What OpenZFS 2.4.3 prints on the replica path, wrapped lines included.
+		{"stale token", "cannot resume send: 'bvrsrc/item/child@bombvault-replica-20261009130000' used in the initial send no longer exists", exitStatus(255), "resume-token-stale"},
+		{"corrupt token", "cannot resume send: resume token is corrupt (incorrect checksum)", exitStatus(255), "resume-token-stale"},
+		{"replica written to", "cannot receive incremental stream: destination tank/r/cache/appdata has been modified\nsince most recent snapshot", exitStatus(1), "target-changed"},
+		{"base missing on the target", "cannot receive incremental stream: most recent snapshot of tank/r/cache/appdata does not\nmatch incremental source", exitStatus(1), "no-common-base"},
+		{"base missing on the source", "warning: cannot send 'cache/appdata@bombvault-replica-20261009140000': incremental source (cache/appdata#bombvault-replica-20261001000000) does not exist", exitStatus(1), "no-common-base"},
+		{"raw onto plain", "cannot receive incremental stream: cannot perform raw receive on top of existing unencrypted dataset", exitStatus(1), "encryption-mismatch"},
+		{"plain onto raw", "cannot receive incremental stream: inherited key must be loaded", exitStatus(1), "encryption-mismatch"},
+		{"encrypted sent without -w", "warning: cannot send 'cache/vault@bombvault-replica-20261009170000': source key must be loaded", exitStatus(1), "encryption-mismatch"},
+		{"full stream onto a replica", "cannot receive new filesystem stream: destination 'tank/r/cache/vm' exists\nmust specify -F to overwrite it", exitStatus(1), "dataset-exists"},
+		{"held twice", "cannot hold snapshot 'cache/appdata@bombvault-replica-20261009100000': tag already exists on this dataset", exitStatus(1), "exists"},
+		{"bookmarked twice", "cannot create bookmark 'cache/appdata#bombvault-replica-20261009120000': bookmark exists", exitStatus(1), "exists"},
+		{"released twice", "cannot release hold from snapshot 'cache/appdata@bombvault-replica-20261009100000': no such tag on this dataset", exitStatus(1), "not-found"},
+		{"parent of the target missing", "cannot open 'tank/r/bottich/cache': dataset does not exist\ncannot receive new filesystem stream: unable to restore to destination", exitStatus(1), "not-found"},
 		{"no stderr at all", "", errors.New("context deadline exceeded"), "zfs-error"},
 	}
 	for _, c := range cases {
@@ -58,6 +73,18 @@ func TestIsBusyAndIsNotFound(t *testing.T) {
 	}
 	if IsNotFound(busy) || IsNotFound(other) || IsNotFound(nil) {
 		t.Error("IsNotFound is true for a failure that left something behind")
+	}
+}
+
+func TestIsExistsTakesARepeatedHoldOrBookmarkAsDone(t *testing.T) {
+	held := &CmdError{Code: Classify("cannot hold snapshot 'x@y': tag already exists on this dataset", exitStatus(1))}
+	marked := &CmdError{Code: Classify("cannot create bookmark 'x#y': bookmark exists", exitStatus(1))}
+	other := &CmdError{Code: Classify("cannot hold snapshot: out of space", exitStatus(1))}
+	if !IsExists(held) || !IsExists(marked) {
+		t.Error("IsExists missed a hold or bookmark that was already there")
+	}
+	if IsExists(other) || IsExists(nil) {
+		t.Error("IsExists is true for a failure")
 	}
 }
 

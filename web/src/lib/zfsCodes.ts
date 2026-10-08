@@ -73,6 +73,10 @@ export const ZFS_CODE_KEY = {
   "new-dataset-not-visible": "zfs.code.new-dataset-not-visible",
   "set-properties-failed": "zfs.code.set-properties-failed",
   "set-limits-failed": "zfs.code.set-limits-failed",
+  "resume-token-stale": "zfs.code.resume-token-stale",
+  "target-changed": "zfs.code.target-changed",
+  "no-common-base": "zfs.code.no-common-base",
+  "encryption-mismatch": "zfs.code.encryption-mismatch",
 } as const satisfies Record<string, TranslationKey>;
 
 export type ZFSReasonCode = keyof typeof ZFS_CODE_KEY;

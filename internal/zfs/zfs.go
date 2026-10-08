@@ -54,6 +54,16 @@ type SnapshotEntry struct {
 	Used     int64
 }
 
+// ReplicaPoint is one snapshot or bookmark of a single dataset. The guid is
+// what a snapshot and its received copy share; createtxg only orders the
+// points of one side.
+type ReplicaPoint struct {
+	Name      string
+	Bookmark  bool
+	GUID      uint64
+	CreateTxg uint64
+}
+
 // MemberCode decides whether one tree entry can be read, from its properties
 // and the item's exclusions. "" means readable; anything else is a member code
 // the page turns into a sentence. Mount visibility is checked separately,
@@ -144,9 +154,10 @@ const (
 type exitCoder interface{ ExitCode() int }
 
 // Classify maps a failed zfs call to a reason code, from the exit status and
-// what the tools wrote to stderr.
+// what the tools wrote to stderr. zfs receive wraps its longer messages onto a
+// second line, so the text is matched with its whitespace folded.
 func Classify(stderr string, err error) string {
-	low := strings.ToLower(stderr)
+	low := strings.Join(strings.Fields(strings.ToLower(stderr)), " ")
 	exit := -1
 	var ec exitCoder
 	if errors.As(err, &ec) {
@@ -168,12 +179,30 @@ func Classify(stderr string, err error) string {
 	switch {
 	case exit == 127, strings.Contains(low, "command not found"):
 		return "zfs-not-found"
+	// zfs send -t exits 255 like ssh itself does, which is why the ssh
+	// branch above only returns on ssh's own words.
+	case strings.Contains(low, "cannot resume send"):
+		return "resume-token-stale"
+	case strings.Contains(low, "has been modified since most recent snapshot"):
+		return "target-changed"
+	case strings.Contains(low, "does not match incremental source"),
+		strings.Contains(low, "incremental source (") && strings.Contains(low, ") does not exist"):
+		return "no-common-base"
+	case strings.Contains(low, "raw receive on top of existing unencrypted dataset"),
+		strings.Contains(low, "inherited key must be loaded"),
+		strings.Contains(low, "source key must be loaded"):
+		return "encryption-mismatch"
+	case strings.Contains(low, "must specify -f to overwrite it"):
+		return "dataset-exists"
 	case strings.Contains(low, "dataset is busy"), strings.Contains(low, "pool or dataset is busy"):
 		return codeBusy
 	case strings.Contains(low, "dataset does not exist"),
-		strings.Contains(low, "could not find any snapshots to destroy"):
+		strings.Contains(low, "could not find any snapshots to destroy"),
+		strings.Contains(low, "no such tag on this dataset"):
 		return codeNotFound
-	case strings.Contains(low, "dataset already exists"):
+	case strings.Contains(low, "dataset already exists"),
+		strings.Contains(low, "tag already exists on this dataset"),
+		strings.Contains(low, "bookmark exists"):
 		return codeExists
 	case strings.Contains(low, "permission denied"):
 		return "zfs-permission"
@@ -188,6 +217,10 @@ func IsBusy(err error) bool { return hasCode(err, codeBusy) }
 // IsNotFound reports whether the dataset or the snapshot was already gone,
 // which a destroy treats as done.
 func IsNotFound(err error) bool { return hasCode(err, codeNotFound) }
+
+// IsExists reports whether a snapshot, hold or bookmark was already there,
+// which a replica run that is picking up after an interruption treats as done.
+func IsExists(err error) bool { return hasCode(err, codeExists) }
 
 func hasCode(err error, code string) bool {
 	var ce *CmdError
