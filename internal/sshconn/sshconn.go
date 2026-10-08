@@ -2,7 +2,8 @@
 // TrueNAS Scale, or a generic Docker host running libvirtd), used for virsh
 // over qemu+ssh:// and for copying NVRAM files. No libvirt path is
 // bind-mounted, so the container cannot interfere with the host's own VM
-// manager.
+// manager. A Conn from NewIsolated reaches any other host, such as the target
+// of a ZFS replica, with a key of its own.
 package sshconn
 
 import (
@@ -27,6 +28,7 @@ type Conn struct {
 
 	// explicitURI replaces the URI VirshURI would build; see VirshURI.
 	explicitURI string
+	isolated    bool // set by NewIsolated
 }
 
 // New returns a Conn that keeps its key under dataDir/ssh. An empty port
@@ -37,6 +39,16 @@ func New(host, user, port, dataDir, explicitURI string) *Conn {
 		port = "22"
 	}
 	return &Conn{Host: host, User: user, Port: port, dir: filepath.Join(dataDir, "ssh"), explicitURI: explicitURI}
+}
+
+// NewIsolated returns a Conn to a host other than the libvirt one, keeping its
+// own key and known_hosts in keyDir. It reads no ssh config file, so the
+// identity WriteSSHConfig sets up for every host never reaches it.
+func NewIsolated(host, user, port, keyDir string) *Conn {
+	if port == "" {
+		port = "22"
+	}
+	return &Conn{Host: host, User: user, Port: port, dir: keyDir, isolated: true}
 }
 
 func (c *Conn) keyPath() string        { return filepath.Join(c.dir, "id_ed25519") }
@@ -86,15 +98,20 @@ func (c *Conn) VirshURI() string {
 // ConnectTimeout fails fast when the host is unreachable, for example from a
 // macvlan/br0 container that cannot route to it.
 func (c *Conn) sshArgs() []string {
-	return []string{
+	var args []string
+	if c.isolated {
+		// IdentitiesOnly keeps an agent's keys out as well.
+		args = []string{"-F", "none", "-o", "IdentitiesOnly=yes"}
+	}
+	return append(args,
 		"-i", c.keyPath(),
 		"-p", c.Port,
 		"-o", "BatchMode=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "ConnectTimeout=10",
-		"-o", "UserKnownHostsFile=" + c.knownHostsPath(),
-		c.User + "@" + c.Host,
-	}
+		"-o", "UserKnownHostsFile="+c.knownHostsPath(),
+		c.User+"@"+c.Host,
+	)
 }
 
 // shellQuote single-quotes s for the remote shell. OpenSSH joins the remote
@@ -132,7 +149,10 @@ var ErrForeignSSHConfig = errors.New("an ssh config BombVault did not write is i
 // The file is one Host * block, so it would redirect every ssh call of the
 // account. In the container that account is BombVault's own, but run on a
 // desktop it is a person's, which is why a file someone else wrote is never
-// replaced.
+// replaced. It stays Host * because restic's sftp backend and the SFTP free
+// space probe start plain ssh too, and the docs tell users to authorize this
+// key on their SFTP targets. A Conn to another host is built with NewIsolated
+// instead, which reads no config at all.
 func (c *Conn) WriteSSHConfig() error {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {

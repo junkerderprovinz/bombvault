@@ -85,3 +85,31 @@ func TestShellQuote(t *testing.T) {
 		}
 	}
 }
+
+func TestIsolatedConnKeepsAKeyOfItsOwn(t *testing.T) {
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+	dataDir := t.TempDir()
+	host := New("192.168.1.10", "root", "1004", dataDir, "")
+	replica := NewIsolated("backup.lan", "root", "22", filepath.Join(dataDir, "ssh-replica", "t1"))
+	for _, c := range []*Conn{host, replica} {
+		if err := c.EnsureKey(); err != nil {
+			t.Fatalf("EnsureKey: %v", err)
+		}
+	}
+	hostPub, err := host.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	replicaPub, err := replica.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hostPub == replicaPub {
+		t.Fatal("the replica Conn reuses the libvirt host's key")
+	}
+	if _, err := os.Stat(filepath.Join(dataDir, "ssh-replica", "t1", "id_ed25519")); err != nil {
+		t.Errorf("the replica key is not in its own directory: %v", err)
+	}
+}
