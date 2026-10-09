@@ -1,0 +1,173 @@
+// @vitest-environment jsdom
+// The card where a ZFS item picks its replica. It has to say plainly where the
+// replica stands, send exactly the rule someone set, and never offer a run for
+// a target that pulls on its own.
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { I18nProvider, en } from "../../../lib/i18n";
+import { ToastProvider } from "../../../lib/toast";
+import type { ProgressMap } from "../../../lib/progress";
+import type { ZFSReplica, ZFSReplicaPatch } from "../../../lib/api";
+import { group, replica, server } from "./replica.testsupport";
+
+let current: ZFSReplica;
+let progress: ProgressMap = {};
+const patches: ZFSReplicaPatch[] = [];
+let runs = 0;
+
+vi.mock("../../../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../lib/api")>();
+  return {
+    ...actual,
+    getZFSReplica: () => Promise.resolve(current),
+    listZFSReplicaServers: () => Promise.resolve([server(), server({ id: "off", name: "Old box", enabled: false })]),
+    getGroup: () => Promise.resolve(group()),
+    patchZFSReplica: (_id: string, patch: ZFSReplicaPatch) => {
+      patches.push(patch);
+      current = { ...current, ...patch };
+      return Promise.resolve({ ok: true });
+    },
+    runZFSReplica: () => {
+      runs += 1;
+      return Promise.resolve({ ok: true, runId: "r1" });
+    },
+  };
+});
+
+vi.mock("../../../lib/progress", () => ({ useProgress: () => progress }));
+
+const { ReplicaCard } = await import("./ReplicaCard");
+
+function renderCard() {
+  return render(
+    <I18nProvider>
+      <ToastProvider>
+        <ReplicaCard itemId="zfs1" name="cache/appdata" />
+      </ToastProvider>
+    </I18nProvider>,
+  );
+}
+
+beforeEach(() => {
+  current = replica();
+  progress = {};
+  patches.length = 0;
+  runs = 0;
+  localStorage.clear();
+});
+
+afterEach(cleanup);
+
+describe("replica card", () => {
+  it("offers only the targets that can take a replica, plus none", async () => {
+    renderCard();
+    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
+    const names = within(picker).getAllByRole("radio").map((r) => r.textContent);
+    expect(names).toEqual([en["zfs.replica.targetNone"], "Backup-NAS", "tower-2"]);
+  });
+
+  it("says when a replica has never run", async () => {
+    current = replica({ state: "never", lastRun: "", snapshots: [], members: replica().members.map((m) => ({ ...m, state: "never" })) });
+    renderCard();
+    expect(await screen.findByText(en["zfs.replica.state.never"])).toBeTruthy();
+    expect(screen.getAllByText(en["zfs.replica.member.never"])).toHaveLength(2);
+    expect(screen.queryByText(/^Last run/)).toBeNull();
+  });
+
+  it("names when a current replica ran and what it sent", async () => {
+    renderCard();
+    expect(await screen.findByText("Replicated 2 hours ago")).toBeTruthy();
+    expect(screen.getAllByText(en["zfs.replica.member.ok"])).toHaveLength(2);
+    expect(screen.getByText("Last run 2 hours ago: 118.0 MB sent in 42s.")).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.volume"])).toBeTruthy();
+    expect(screen.getByText("to backup/bombvault-replica/tower/cache/appdata")).toBeTruthy();
+  });
+
+  it("shows a run in progress and holds the button until it ends", async () => {
+    progress = { "zfs-replica:zfs1": { phase: "replicate", percent: 10, active: true, lastSeen: Date.now() } };
+    renderCard();
+    expect(await screen.findAllByText(en["zfs.replica.state.running"])).not.toHaveLength(0);
+    const button = screen.getByRole("button", { name: en["zfs.replica.replicateNow"] }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
+
+  it("puts the reason of a failed dataset in its own words", async () => {
+    current = replica({
+      state: "failed",
+      code: "no-common-base",
+      members: [{ ...replica().members[0], state: "failed", code: "no-common-base" }],
+    });
+    renderCard();
+    expect(await screen.findByText(en["zfs.replica.state.failed"])).toBeTruthy();
+    expect(screen.getByText(en["zfs.code.no-common-base"])).toBeTruthy();
+  });
+
+  it("leaves the plan to an instance that pulls and offers no run", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "waiting" });
+    renderCard();
+    expect(await screen.findByText("Waiting for tower-2")).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.peerFetches"].replace("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+    expect(screen.queryByRole("radiogroup", { name: en["zfs.replica.keepTarget"] })).toBeNull();
+  });
+
+  it("sends a preset as it is picked", async () => {
+    renderCard();
+    const keep = await screen.findByRole("radiogroup", { name: en["zfs.replica.keepTarget"] });
+    expect(screen.getByText("7 daily, 3 weekly")).toBeTruthy();
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(within(keep).getByRole("radio", { name: en["zfs.replica.keep.long"] }));
+      expect(screen.getByText("14 daily, 8 weekly, 12 monthly, 3 yearly")).toBeTruthy();
+      expect(screen.queryByLabelText(en["zfs.replica.keep.daily"])).toBeNull();
+      await act(async () => vi.advanceTimersByTime(1000));
+    } finally {
+      vi.useRealTimers();
+    }
+    await waitFor(() => expect(patches).toEqual([{ keep: { preset: "long", own: [0, 7, 3, 0, 0] } }]));
+  });
+
+  it("sends own numbers once the typing stops", async () => {
+    renderCard();
+    const days = (await screen.findByLabelText(en["zfs.replica.keep.daily"])) as HTMLInputElement;
+    vi.useFakeTimers();
+    try {
+      fireEvent.change(days, { target: { value: "1" } });
+      fireEvent.change(days, { target: { value: "14" } });
+      expect(patches).toEqual([]);
+      await act(async () => vi.advanceTimersByTime(1000));
+    } finally {
+      vi.useRealTimers();
+    }
+    await waitFor(() => expect(patches).toEqual([{ keep: { preset: "own", own: [0, 14, 3, 0, 0] } }]));
+  });
+
+  it("switches to an own plan and shows the schedule editor", async () => {
+    renderCard();
+    const when = await screen.findByRole("radiogroup", { name: en["zfs.replica.when"] });
+    fireEvent.click(within(when).getByRole("radio", { name: en["zfs.replica.ownPlan"] }));
+    await waitFor(() => expect(patches).toEqual([{ afterBackup: false }]));
+    expect(screen.getByRole("group", { name: en["zfs.replica.plan"] })).toBeTruthy();
+  });
+
+  it("points the replica at another target", async () => {
+    renderCard();
+    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
+    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2" }));
+    await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
+  });
+
+  it("starts a run on request", async () => {
+    renderCard();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] }));
+    await waitFor(() => expect(runs).toBe(1));
+  });
+
+  it("hides everything but the picker while there is no target", async () => {
+    current = replica({ target: { kind: "none", id: "" }, state: "never" });
+    renderCard();
+    await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
+    expect(screen.queryByText(en["zfs.replica.members"])).toBeNull();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+});
