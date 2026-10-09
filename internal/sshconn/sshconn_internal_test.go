@@ -307,7 +307,7 @@ func TestIsolatedConnReadsNoConfigAndOffersOnlyItsOwnKey(t *testing.T) {
 	dataDir := t.TempDir()
 	host := New("192.168.1.10", "root", "1004", dataDir, "")
 	keyDir := filepath.Join(dataDir, "ssh-replica", "t1")
-	c := NewIsolated("backup.lan", "replica", "", keyDir)
+	c := NewIsolated("backup.lan", "replica", "", keyDir, "")
 
 	args := c.sshArgs()
 	if len(args) < 4 || args[0] != "-F" || args[1] != "none" {
@@ -337,13 +337,28 @@ func TestIsolatedConnReadsNoConfigAndOffersOnlyItsOwnKey(t *testing.T) {
 	}
 }
 
+func TestIsolatedConnsShareAKeyAndPinTheirHostsApart(t *testing.T) {
+	keyDir := filepath.Join(t.TempDir(), "ssh-replica")
+	a := NewIsolated("a.lan", "root", "", keyDir, filepath.Join(keyDir, "s1", "known_hosts"))
+	b := NewIsolated("b.lan", "root", "", keyDir, filepath.Join(keyDir, "s2", "known_hosts"))
+	if a.keyPath() != b.keyPath() {
+		t.Errorf("keys %q and %q differ, want one shared key", a.keyPath(), b.keyPath())
+	}
+	if a.knownHostsPath() == b.knownHostsPath() {
+		t.Errorf("both hosts pin into %q", a.knownHostsPath())
+	}
+	if !strings.Contains(strings.Join(a.sshArgs(), " "), "UserKnownHostsFile="+a.knownHostsPath()) {
+		t.Errorf("sshArgs do not use the host's own known_hosts: %v", a.sshArgs())
+	}
+}
+
 // TestIsolatedConnResolvesToItsOwnKeyOnly asks the real ssh client what it
 // would use, so a default key file or an agent cannot slip in next to -i.
 func TestIsolatedConnResolvesToItsOwnKeyOnly(t *testing.T) {
 	if _, err := exec.LookPath(sshBinary); err != nil {
 		t.Skip("ssh not available")
 	}
-	c := NewIsolated("backup.lan", "replica", "2222", filepath.Join(t.TempDir(), "ssh-replica", "t1"))
+	c := NewIsolated("backup.lan", "replica", "2222", filepath.Join(t.TempDir(), "ssh-replica", "t1"), "")
 	// ssh drops an -i file that is not there and falls back to the defaults,
 	// so the key has to exist as it does after EnsureKey.
 	if err := os.MkdirAll(c.dir, 0o700); err != nil {
