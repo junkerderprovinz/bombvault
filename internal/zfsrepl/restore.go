@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,12 +14,34 @@ import (
 // RestoreName is the dataset BringBack lands the root of dataset in when it
 // starts at at: next to it as <dataset>-bombvault-restore-<unix nanoseconds>,
 // the landing name every other ZFS restore in BombVault uses. A pool's top
-// dataset has nothing next to it, so its copy lands inside the pool.
+// dataset has nothing next to it, so its copy lands inside the pool, where
+// the entry's runs and cleans leave it alone.
 func RestoreName(dataset string, at time.Time) string {
 	if !strings.Contains(dataset, "/") {
 		return fmt.Sprintf("%s/bombvault-restore-%d", dataset, at.UnixNano())
 	}
 	return fmt.Sprintf("%s-bombvault-restore-%d", dataset, at.UnixNano())
+}
+
+// restoreLandingRe matches the last part of a RestoreName, and of the landing
+// name every other ZFS restore in BombVault uses.
+var restoreLandingRe = regexp.MustCompile(`(^|-)bombvault-restore-[0-9]+$`)
+
+// restoreLanding reports whether dataset lies in a tree a restore landed below
+// root. A pool root's own bring back lands there, and so does the restore of an
+// entry nested in it; neither is part of the entry, and replicating it would
+// send the restored data back and destroy the snapshot it was restored from.
+func restoreLanding(dataset, root string) bool {
+	rest, ok := strings.CutPrefix(dataset, root+"/")
+	if !ok {
+		return false
+	}
+	for _, part := range strings.Split(rest, "/") {
+		if restoreLandingRe.MatchString(part) {
+			return true
+		}
+	}
+	return false
 }
 
 // Restore is one replica snapshot of an entry's tree to bring back to the

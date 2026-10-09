@@ -120,3 +120,36 @@ func TestReleaseHoldsLetsTheTreeBeDestroyed(t *testing.T) {
 		t.Errorf("destroy after the release: %v", err)
 	}
 }
+
+func TestATreeBroughtBackIntoAPoolRootIsNoMemberOfIt(t *testing.T) {
+	r := newRig(t)
+	r.entry.Root = "cache"
+	first := r.run()
+	r.ok(first)
+	got, err := BringBack(context.Background(), r.dst, r.src, Restore{
+		Replica: base + "/cache", Snapshot: first.Snapshot, Dataset: "cache", Now: time.Now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	landed := []string{got.Root, got.Root + "/appdata", got.Root + "/appdata/plex"}
+
+	res := r.run()
+	r.ok(res)
+	for _, m := range res.Members {
+		if strings.Contains(m.Dataset, "bombvault-restore-") {
+			t.Errorf("the run replicated %s", m.Dataset)
+		}
+	}
+	if err := Clean(context.Background(), r.src, "cache", nil); err != nil {
+		t.Fatal(err)
+	}
+	for _, ds := range landed {
+		if snaps := r.src.snapNames(ds); !slices.Equal(snaps, []string{first.Snapshot}) {
+			t.Errorf("%s holds %q, want only the snapshot it was brought back from", ds, snaps)
+		}
+		if marks := r.src.markNames(ds); marks != nil {
+			t.Errorf("%s got the bookmarks %q", ds, marks)
+		}
+	}
+}
