@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Dans ce sens, le BombVault qui détient l'élément détient aussi une clé qui peut écrire sur le serveur.
 
-### Rapatriement par un autre BombVault {#replica-pull}
+### Envoi vers une instance appairée {#replica-receive}
 
-Dans l'autre sens, un BombVault appairé rapatrie lui-même le réplica. La source n'a alors aucune clé qui peut écrire ou supprimer sur la copie, donc la copie survit à une source dont quelqu'un a pris le contrôle.
+Un BombVault appairé peut recevoir lui-même le réplica. Personne n'obtient d'accès SSH à l'autre hôte, et aucune clé n'entre dans un fichier `authorized_keys`.
 
-1. Sur l'instance qui doit détenir la copie, ouvrez **Instances**, puis **Fetch**, appuyez sur **Add source** et choisissez **ZFS datasets**.
-2. Choisissez l'instance appairée et ses éléments ZFS. Choisissez ensuite le pool et la racine sur ce serveur, le plan et le nombre d'instantanés à garder.
-3. L'enregistrement interroge la source. L'élément y affiche la demande, et rien ne se passe tant que quelqu'un n'a pas appuyé sur **Allow**.
+1. Dans la carte **Replica** de l'élément, choisissez l'instance appairée comme cible. La carte affiche **Waiting for approval** tant qu'elle n'a pas répondu.
+2. Sur l'instance qui reçoit, ouvrez **Instances**, puis **Receive**. La carte **ZFS** liste la demande. Choisissez le pool et la racine sur ce serveur ainsi que le nombre d'instantanés à garder, puis appuyez sur **Allow** ou **Decline**.
+3. Après **Allow**, la source envoie selon son propre plan, comme pour toute autre cible.
 
-Ensuite, la source ajoute une clé pour l'autre instance. La clé peut seulement envoyer les instantanés de cet élément et créer ses propres instantanés de réplica. Elle ne peut rien supprimer et ne voit rien d'autre. **Revoke access** dans la carte **Replica** de l'élément retire la clé à tout moment. Ce que l'autre instance détient déjà reste chez elle.
+L'instance qui reçoit n'accepte que ce que l'approbation couvre : les jeux de données de l'élément, dans sa propre racine. Elle exécute elle-même `zfs receive`, et la source n'a aucun moyen d'y supprimer ou d'y annuler quoi que ce soit. La copie survit donc à une source dont quelqu'un a pris le contrôle. L'instance qui reçoit garde sa propre rétention. La source se contente de suggérer une règle dans sa demande.
 
-L'instance qui rapatrie s'exécute selon son propre plan et fait elle-même le ménage. Le plan et la rétention se règlent de son côté.
+**Revoke access** sur l'instance qui reçoit met fin à l'approbation à tout moment et en informe la source, qui indique alors que l'approbation a été retirée et s'arrête. Ce que l'instance qui reçoit détient déjà reste chez elle. Une demande refusée reste refusée. Des jeux de données supplémentaires, ou une demande après une révocation, redemandent une approbation.
 
 ### Où atterrissent les données {#replica-target}
 

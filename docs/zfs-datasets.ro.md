@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 În această direcție, BombVault-ul care deține elementul deține și o cheie care poate scrie pe server.
 
-### Preluare de către alt BombVault {#replica-pull}
+### Trimitere către o instanță împerecheată {#replica-receive}
 
-În sens invers, un BombVault împerecheat preia singur replica. Sursa nu are atunci nicio cheie care poate scrie sau șterge pe copie, așa că copia supraviețuiește unei surse preluate de altcineva.
+Un BombVault împerecheat poate primi singur replica. Nimeni nu primește acces SSH la celălalt host și nicio cheie nu ajunge într-un fișier `authorized_keys`.
 
-1. Pe instanța care trebuie să dețină copia, deschide **Instanțe**, apoi **Preluare**, apasă **Adaugă sursă** și alege **Seturi de date ZFS**.
-2. Alege instanța împerecheată și elementele ei ZFS. Apoi alege pool-ul și rădăcina pe acest server, planul și câte instantanee rămân.
-3. La salvare se întreabă sursa. Elementul de acolo arată cererea, și nu se întâmplă nimic până când cineva apasă **Permite**.
+1. În cardul **Replica** al elementului, alege instanța împerecheată ca țintă. Cardul arată **Așteaptă aprobarea** până când răspunde.
+2. Pe instanța care primește, deschide **Instanțe**, apoi **Primire**. Cardul **ZFS** listează cererea. Alege pool-ul și rădăcina pe acel server și câte instantanee rămân, apoi apasă **Permite** sau **Refuză**.
+3. După **Permite**, sursa trimite după propriul plan, ca la orice altă țintă.
 
-După aceea, sursa adaugă o cheie pentru cealaltă instanță. Cheia poate doar să trimită instantaneele acestui element și să creeze propriile instantanee de replică. Nu poate șterge nimic și nu vede nimic altceva. **Revoke access** în cardul **Replica** al elementului scoate cheia oricând. Ce deține deja cealaltă instanță rămâne acolo.
+Instanța care primește acceptă doar ce acoperă aprobarea: seturile de date ale elementului, în propria rădăcină. Ea rulează singură `zfs receive`, iar sursa nu are cum să șteargă sau să dea înapoi ceva acolo. Așa că copia supraviețuiește unei surse preluate de altcineva. Instanța care primește își păstrează propria retenție. Sursa doar sugerează o regulă atunci când trimite cererea.
 
-Instanța care preia rulează după planul ei și își face singură curățenia. Planul și retenția se setează pe partea ei.
+**Revoke access** pe instanța care primește încheie oricând aprobarea și anunță sursa, care arată atunci că aprobarea a fost retrasă și se oprește. Ce deține deja instanța care primește rămâne acolo. O cerere refuzată rămâne refuzată. Mai multe seturi de date, sau o cerere după o revocare, întreabă din nou.
 
 ### Unde ajung datele {#replica-target}
 

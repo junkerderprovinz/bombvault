@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Tässä suunnassa kohteen omistava BombVault pitää myös avainta, jolla voi kirjoittaa palvelimelle.
 
-### Toisen BombVaultin nouto {#replica-pull}
+### Lähetys pariliitetylle instanssille {#replica-receive}
 
-Toisinpäin pariliitetty BombVault hakee replikan itse. Lähteellä ei silloin ole avainta, jolla voisi kirjoittaa kopioon tai poistaa siitä, joten kopio säilyy, vaikka joku olisi vallannut lähteen.
+Pariliitetty BombVault voi vastaanottaa replikan itse. Kukaan ei saa SSH-pääsyä toiselle isännälle, eikä mikään avain mene `authorized_keys`-tiedostoon.
 
-1. Avaa instanssissa, jonka pitää säilyttää kopio, **Instances**, sitten **Fetch**, paina **Add source** ja valitse **ZFS datasets**.
-2. Valitse pariliitetty instanssi ja sen ZFS-kohteet. Valitse sitten tämän palvelimen pooli ja juuri, aikataulu ja kuinka monta tilannevedosta jää.
-3. Tallennus kysyy lähteeltä. Siellä kohde näyttää pyynnön, eikä mitään tapahdu ennen kuin joku painaa **Allow**.
+1. Valitse kohteen **Replica**-kortissa kohteeksi pariliitetty instanssi. Kortti näyttää tilan **Waiting for approval**, kunnes instanssi vastaa.
+2. Avaa vastaanottavassa instanssissa **Instances**, sitten **Receive**. **ZFS**-kortti luettelee pyynnön. Valitse sen palvelimen pooli ja juuri sekä kuinka monta tilannevedosta jää, ja paina **Allow** tai **Decline**.
+3. **Allow**-painalluksen jälkeen lähde lähettää oman aikataulunsa mukaan, kuten mihin tahansa muuhun kohteeseen.
 
-Sen jälkeen lähde lisää avaimen toiselle instanssille. Avaimella voi vain lähettää tämän kohteen tilannevedoksia ja luoda omia replika-tilannevedoksia. Sillä ei voi poistaa mitään eikä nähdä mitään muuta. **Revoke access** kohteen kortissa **Replica** poistaa avaimen milloin tahansa. Se, mitä toinen instanssi jo pitää hallussaan, jää sinne.
+Vastaanottava instanssi hyväksyy vain sen, minkä hyväksyntä kattaa: kohteen tietojoukot omaan juureensa. Se ajaa komennon `zfs receive` itse, eikä lähteellä ole mitään keinoa poistaa tai palauttaa siellä mitään. Kopio säilyy siis, vaikka joku olisi vallannut lähteen. Vastaanottava instanssi pitää oman säilytyksensä. Lähde ehdottaa sääntöä vain pyynnössään.
 
-Hakeva instanssi ajaa oman aikataulunsa mukaan ja siivoaa itse. Aikataulu ja säilytys asetetaan sen puolella.
+**Revoke access** vastaanottavassa instanssissa päättää hyväksynnän milloin tahansa ja kertoo siitä lähteelle, joka näyttää sitten hyväksynnän peruutetuksi ja lopettaa. Se, mitä vastaanottava instanssi jo pitää hallussaan, jää sinne. Hylätty pyyntö pysyy hylättynä. Lisää tietojoukkoja tai pyyntö peruutuksen jälkeen kysyvät uudelleen.
 
 ### Mihin data päätyy {#replica-target}
 

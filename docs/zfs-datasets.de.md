@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In dieser Richtung hält das BombVault, das das Element besitzt, auch einen Schlüssel, der auf dem Server schreiben kann.
 
-### Von einem anderen BombVault abholen lassen {#replica-pull}
+### An eine gekoppelte Instanz senden {#replica-receive}
 
-Andersherum holt ein gekoppeltes BombVault die Replik selbst ab. Die Quelle hat dann keinen Schlüssel, der auf der Kopie schreiben oder löschen kann. Die Kopie übersteht also auch eine Quelle, die jemand übernommen hat.
+Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-Zugang zum anderen Host, und es landet kein Schlüssel in einer Datei `authorized_keys`.
 
-1. Öffne auf der Instanz, die die Kopie halten soll, **Instanzen**, dann **Abholen**, drück **Quelle hinzufügen** und wähl **ZFS-Datasets**.
-2. Wähl die gekoppelte Instanz und ihre ZFS-Elemente. Dann wählst du Pool und Wurzel auf diesem Server, den Plan und wie viele Snapshots bleiben.
-3. Beim Speichern fragt dieser Server bei der Quelle nach. Das Element dort zeigt die Anfrage, und nichts passiert, bis jemand **Erlauben** drückt.
+1. Wähl in der Karte **Replik** des Elements die gekoppelte Instanz als Ziel. Die Karte zeigt **Wartet auf Freigabe**, bis sie antwortet.
+2. Öffne auf der empfangenden Instanz **Instanzen**, dann **Empfangen**. Die Karte **ZFS** listet die Anfrage. Wähl Pool und Wurzel auf diesem Server und wie viele Snapshots bleiben, und drück dann **Erlauben** oder **Ablehnen**.
+3. Nach **Erlauben** sendet die Quelle nach ihrem eigenen Plan, wie bei jedem anderen Ziel.
 
-Danach legt die Quelle einen Schlüssel für die andere Instanz an. Der Schlüssel darf nur die Snapshots dieses Elements senden und eigene Replik-Snapshots anlegen. Er kann nichts löschen und sieht nichts anderes. **Freigabe entziehen** in der Karte **Replik** des Elements entfernt den Schlüssel jederzeit. Was die andere Instanz schon hat, bleibt dort.
+Die empfangende Instanz nimmt nur an, was die Freigabe abdeckt: die Datasets des Elements, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle kann dort nichts löschen oder zurückrollen. Die Kopie übersteht also auch eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt bei der Anfrage nur eine Regel vor.
 
-Die abholende Instanz läuft nach ihrem eigenen Plan und räumt selbst auf. Plan und Aufbewahrung stellst du auf ihrer Seite ein.
+**Freigabe entziehen** auf der empfangenden Instanz beendet die Freigabe jederzeit und sagt es der Quelle, die dann anzeigt, dass die Freigabe zurückgezogen wurde, und aufhört. Was die empfangende Instanz schon hat, bleibt dort. Eine abgelehnte Anfrage bleibt abgelehnt. Für weitere Datasets oder nach einem Entzug fragt die Quelle erneut an.
 
 ### Wo die Daten landen {#replica-target}
 

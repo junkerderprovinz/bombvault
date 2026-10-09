@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In this direction the BombVault that holds the item also holds a key that can write on the server.
 
-### Pull by another BombVault {#replica-pull}
+### Send to a paired instance {#replica-receive}
 
-The other way round, a paired BombVault fetches the replica itself. The source then has no key that can write or delete on the copy, so the copy survives a source that someone has taken over.
+A paired BombVault can receive the replica itself. Nobody gets SSH access to the other host, and no key goes into an `authorized_keys` file.
 
-1. On the instance that should hold the copy, open **Instances**, then **Fetch**, press **Add source** and pick **ZFS datasets**.
-2. Pick the paired instance and its ZFS items. Then pick the pool and root on this server, the plan and how many snapshots stay.
-3. Saving asks the source. The item there shows the request, and nothing happens until someone presses **Allow**.
+1. In the **Replica** card of the item, pick the paired instance as the target. The card shows **Waiting for approval** until it answers.
+2. On the receiving instance, open **Instances**, then **Receive**. The **ZFS** card lists the request. Pick the pool and root on that server and how many snapshots stay, then press **Allow** or **Decline**.
+3. After **Allow** the source sends by its own plan, like for any other target.
 
-After that the source adds a key for the other instance. The key can only send this item's snapshots and create its own replica snapshots. It cannot delete anything and cannot see anything else. **Revoke access** in the item's **Replica** card removes the key at any time. What the other instance already holds stays there.
+The receiving instance accepts only what the approval covers: the item's datasets, into its own root. It runs `zfs receive` itself, and the source has no way to delete or roll back anything there. So the copy survives a source that someone has taken over. The receiving instance keeps its own retention. The source only suggests a rule when it asks.
 
-The fetching instance runs by its own plan and prunes itself. Plan and retention are set on its side.
+**Revoke access** on the receiving instance ends the approval at any time and tells the source, which then shows that the approval was withdrawn and stops. What the receiving instance already holds stays there. A declined request stays declined. More datasets, or a request after a revoke, ask again.
 
 ### Where the data lands {#replica-target}
 

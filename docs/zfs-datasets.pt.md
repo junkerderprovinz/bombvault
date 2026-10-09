@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Neste sentido, o BombVault que detém o elemento também detém uma chave que pode escrever no servidor.
 
-### Recolha por outro BombVault {#replica-pull}
+### Enviar para uma instância emparelhada {#replica-receive}
 
-No sentido contrário, um BombVault emparelhado vai buscar a réplica por si. A origem não tem então nenhuma chave que possa escrever ou apagar na cópia, por isso a cópia sobrevive a uma origem que alguém tenha tomado.
+Um BombVault emparelhado pode receber a réplica ele próprio. Ninguém recebe acesso SSH ao outro anfitrião, e nenhuma chave vai para um ficheiro `authorized_keys`.
 
-1. Na instância que deve guardar a cópia, abra **Instâncias**, depois **Recolha**, carregue em **Adicionar origem** e escolha **Conjuntos de dados ZFS**.
-2. Escolha a instância emparelhada e os seus elementos ZFS. Depois escolha o pool e a raiz neste servidor, o plano e quantos instantâneos ficam.
-3. Ao guardar, é feito um pedido à origem. O elemento aí mostra o pedido, e nada acontece até alguém carregar em **Permitir**.
+1. No cartão **Replica** do elemento, escolha a instância emparelhada como destino. O cartão mostra **A aguardar aprovação** até ela responder.
+2. Na instância recetora, abra **Instâncias** e depois **Receção**. O cartão **ZFS** lista o pedido. Escolha o pool e a raiz nesse servidor e quantos instantâneos ficam, e carregue em **Permitir** ou **Recusar**.
+3. Depois de **Permitir**, a origem envia segundo o seu próprio plano, como para qualquer outro destino.
 
-Depois disso, a origem adiciona uma chave para a outra instância. A chave só pode enviar os instantâneos deste elemento e criar os seus próprios instantâneos de réplica. Não pode apagar nada e não vê mais nada. **Revoke access** no cartão **Replica** do elemento remove a chave a qualquer momento. O que a outra instância já tem fica lá.
+A instância recetora aceita apenas o que a aprovação cobre: os conjuntos de dados do elemento, na sua própria raiz. É ela que executa `zfs receive`, e a origem não tem forma de apagar nem de reverter nada aí. Por isso a cópia sobrevive a uma origem que alguém tenha tomado. A instância recetora mantém a sua própria retenção. A origem só sugere uma regra quando faz o pedido.
 
-A instância que recolhe corre segundo o seu próprio plano e faz ela própria a limpeza. O plano e a retenção são definidos do lado dela.
+**Revoke access** na instância recetora termina a aprovação a qualquer momento e avisa a origem, que então mostra que a aprovação foi retirada e para. O que a instância recetora já tem fica lá. Um pedido recusado continua recusado. Mais conjuntos de dados, ou um pedido depois de uma revogação, voltam a perguntar.
 
 ### Onde ficam os dados {#replica-target}
 

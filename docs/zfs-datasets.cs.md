@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 V tomto směru drží BombVault, který položku vlastní, také klíč, který může na server zapisovat.
 
-### Stažení jiným BombVaultem {#replica-pull}
+### Odeslání spárované instanci {#replica-receive}
 
-Opačně si spárovaný BombVault repliku stáhne sám. Zdroj pak nemá žádný klíč, který by mohl na kopii zapisovat nebo z ní mazat, takže kopie přežije i zdroj, který někdo převzal.
+Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH k druhému hostiteli a do souboru `authorized_keys` se nepřidává žádný klíč.
 
-1. Na instanci, která má kopii držet, otevřete **Instance**, pak **Stažení**, stiskněte **Add source** a vyberte **Datové sady ZFS**.
-2. Vyberte spárovanou instanci a její položky ZFS. Potom vyberte pool a kořen na tomto serveru, plán a kolik snímků zůstane.
-3. Uložení se zeptá zdroje. Položka tam ukáže žádost a nic se neděje, dokud někdo nestiskne **Allow**.
+1. Na kartě **Replica** položky vyberte jako cíl spárovanou instanci. Karta ukazuje **Čeká na schválení**, dokud neodpoví.
+2. Na přijímající instanci otevřete **Instance**, pak **Příjem**. Karta **ZFS** vypíše žádost. Vyberte pool a kořen na tom serveru a kolik snímků zůstane, potom stiskněte **Allow** nebo **Decline**.
+3. Po **Allow** zdroj odesílá podle vlastního plánu, jako u každého jiného cíle.
 
-Poté zdroj přidá klíč pro druhou instanci. Klíč umí jen posílat snímky této položky a vytvářet vlastní snímky repliky. Nemůže nic smazat a nic dalšího nevidí. **Revoke access** na kartě **Replica** položky klíč kdykoli odebere. Co druhá instance už má, tam zůstane.
+Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo.
 
-Stahující instance běží podle vlastního plánu a čistí se sama. Plán a uchovávání se nastavují na její straně.
+**Revoke access** na přijímající instanci kdykoli ukončí schválení a oznámí to zdroji, který pak zobrazí, že schválení bylo odvoláno, a přestane odesílat. Co přijímající instance už má, tam zůstane. Zamítnutá žádost zůstává zamítnutá. Další datové sady nebo žádost po odvolání se ptají znovu.
 
 ### Kam data přijdou {#replica-target}
 

@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 W tym kierunku BombVault, który przechowuje element, ma też klucz pozwalający pisać na serwerze.
 
-### Pobieranie przez inny BombVault {#replica-pull}
+### Wysyłanie do sparowanej instancji {#replica-receive}
 
-W drugą stronę sparowany BombVault sam pobiera replikę. Źródło nie ma wtedy klucza, który mógłby zapisywać lub usuwać dane w kopii, więc kopia przetrwa przejęcie źródła przez kogoś innego.
+Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH do drugiego hosta i żaden klucz nie trafia do pliku `authorized_keys`.
 
-1. Na instancji, która ma przechowywać kopię, otwórz **Instancje**, potem **Pobieranie**, naciśnij **Dodaj źródło** i wybierz **Zbiory danych ZFS**.
-2. Wybierz sparowaną instancję i jej elementy ZFS. Następnie wybierz pulę i katalog główny na tym serwerze, harmonogram i liczbę migawek, które zostają.
-3. Zapisanie wysyła zapytanie do źródła. Element tam pokazuje prośbę i nic się nie dzieje, dopóki ktoś nie naciśnie **Zezwól**.
+1. Na karcie **Replica** elementu wybierz sparowaną instancję jako cel. Karta pokazuje **Czeka na zatwierdzenie**, dopóki instancja nie odpowie.
+2. Na instancji odbierającej otwórz **Instancje**, potem **Odbieranie**. Karta **ZFS** wyświetla prośbę. Wybierz pulę i katalog główny na tym serwerze oraz liczbę migawek, które zostają, potem naciśnij **Zezwól** albo **Odrzuć**.
+3. Po **Zezwól** źródło wysyła według własnego harmonogramu, jak do każdego innego celu.
 
-Potem źródło dodaje klucz dla drugiej instancji. Klucz może tylko wysyłać migawki tego elementu i tworzyć własne migawki repliki. Nie może niczego usunąć ani zobaczyć niczego innego. **Revoke access** na karcie **Replica** elementu usuwa klucz w każdej chwili. To, co druga instancja już ma, zostaje u niej.
+Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę.
 
-Pobierająca instancja działa według własnego harmonogramu i sama porządkuje migawki. Harmonogram i retencję ustawia się po jej stronie.
+**Revoke access** na instancji odbierającej w każdej chwili kończy zatwierdzenie i informuje o tym źródło, które pokazuje wtedy, że zatwierdzenie wycofano, i przestaje wysyłać. To, co instancja odbierająca już ma, zostaje u niej. Odrzucona prośba pozostaje odrzucona. Dodatkowe zbiory danych albo prośba po cofnięciu dostępu wymagają ponownego pytania.
 
 ### Gdzie trafiają dane {#replica-target}
 

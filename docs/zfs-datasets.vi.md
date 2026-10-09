@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Theo chiều này, BombVault giữ mục cũng giữ một khóa có thể ghi trên máy chủ.
 
-### Kéo về bởi BombVault khác {#replica-pull}
+### Gửi sang phiên bản đã ghép đôi {#replica-receive}
 
-Theo chiều ngược lại, một BombVault đã ghép đôi tự lấy bản nhân bản về. Khi đó nguồn không có khóa nào có thể ghi hoặc xóa trên bản sao, nên bản sao vẫn còn nguyên dù ai đó đã chiếm quyền nguồn.
+Một BombVault đã ghép đôi có thể tự nhận bản nhân bản. Không ai được truy cập SSH vào máy chủ kia và không có khóa nào được thêm vào tệp `authorized_keys`.
 
-1. Trên phiên bản sẽ giữ bản sao, mở **Phiên bản**, rồi **Fetch**, nhấn **Add source** và chọn **ZFS datasets**.
-2. Chọn phiên bản đã ghép đôi và các mục ZFS của nó. Sau đó chọn pool và gốc trên máy chủ này, lịch chạy và số ảnh chụp giữ lại.
-3. Khi lưu, nó gửi yêu cầu tới nguồn. Mục ở đó hiện yêu cầu, và không có gì xảy ra cho đến khi ai đó nhấn **Cho phép**.
+1. Trong thẻ **Replica** của mục, chọn phiên bản đã ghép đôi làm đích. Thẻ hiện **Đang chờ phê duyệt** cho đến khi phiên bản kia trả lời.
+2. Trên phiên bản nhận, mở **Phiên bản**, rồi **Receive**. Thẻ **ZFS** liệt kê yêu cầu. Chọn pool và gốc trên máy chủ đó cùng số ảnh chụp giữ lại, rồi nhấn **Cho phép** hoặc **Từ chối**.
+3. Sau **Cho phép**, nguồn gửi theo lịch của chính nó, như với mọi đích khác.
 
-Sau đó nguồn thêm một khóa cho phiên bản kia. Khóa chỉ có thể gửi ảnh chụp của mục này và tạo ảnh chụp nhân bản của chính nó. Nó không thể xóa gì và không thấy gì khác. **Revoke access** trong thẻ **Replica** của mục gỡ khóa bất cứ lúc nào. Những gì phiên bản kia đã có vẫn ở lại đó.
+Phiên bản nhận chỉ chấp nhận những gì sự phê duyệt bao gồm: các tập dữ liệu của mục, vào gốc của chính nó. Nó tự chạy `zfs receive`, và nguồn không có cách nào xóa hay hoàn tác bất cứ thứ gì ở đó. Vì vậy bản sao vẫn còn nguyên dù ai đó đã chiếm quyền nguồn. Phiên bản nhận tự quản lý thời gian lưu giữ. Nguồn chỉ gợi ý một quy tắc khi gửi yêu cầu.
 
-Phiên bản lấy về chạy theo lịch của chính nó và tự dọn. Lịch và thời gian lưu giữ được đặt ở phía của nó.
+**Revoke access** trên phiên bản nhận kết thúc sự phê duyệt bất cứ lúc nào và báo cho nguồn, nguồn khi đó hiện rằng phê duyệt đã bị rút lại và dừng gửi. Những gì phiên bản nhận đã có vẫn ở lại đó. Yêu cầu bị từ chối vẫn là bị từ chối. Muốn thêm tập dữ liệu, hoặc yêu cầu lại sau khi thu hồi, cần gửi yêu cầu mới.
 
 ### Dữ liệu nằm ở đâu {#replica-target}
 
