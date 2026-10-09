@@ -149,7 +149,7 @@ Instanța care preia rulează după planul ei și își face singură curățeni
 
 Fiecare set de date ajunge la `<root>/<server>/<pool>/<path>`. Dosarul serverului este numele instanței sursă, fixat la primul transfer, deci două servere cu același nume de pool nu se încurcă niciodată. De exemplu, `cache/appdata` al unui server numit `tower` ajunge la `backup/bombvault-replica/tower/cache/appdata`.
 
-Copia de pe țintă este doar în citire și nu este montată, deci nu acoperă niciodată nimic pe acel server. Proprietățile ZFS merg cu ea, cu excepția punctului de montare, `sharenfs` și `sharesmb`.
+Copia de pe țintă este doar în citire și nu este montată, deci nu acoperă niciodată nimic pe acel server. Proprietățile ZFS merg cu ea, cu excepția punctului de montare, `sharenfs` și `sharesmb`. Nici rezervările `reservation` și `refreservation` nu sunt preluate, așa că copia ocupă doar spațiul de care au nevoie datele ei.
 
 ### Ce intră {#replica-contents}
 

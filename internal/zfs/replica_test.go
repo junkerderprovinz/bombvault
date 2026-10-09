@@ -187,32 +187,32 @@ func TestReceiveArgs(t *testing.T) {
 		{
 			"first filesystem stream",
 			ReceiveSpec{Target: target, Full: true},
-			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 		{
 			"first stream over an empty parent BombVault created",
 			ReceiveSpec{Target: target, Full: true, Replace: true},
-			[]string{"zfs", "receive", "-s", "-u", "-F", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-F", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 		{
 			"first volume stream",
 			ReceiveSpec{Target: target + "/vm", Full: true, Volume: true},
-			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", target + "/vm"},
+			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-x", "reservation", "-x", "refreservation", target + "/vm"},
 		},
 		{
 			"incremental",
 			ReceiveSpec{Target: target},
-			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 		{
 			"incremental into a volume",
 			ReceiveSpec{Target: target + "/vm", Volume: true},
-			[]string{"zfs", "receive", "-s", "-u", target + "/vm"},
+			[]string{"zfs", "receive", "-s", "-u", "-x", "reservation", "-x", "refreservation", target + "/vm"},
 		},
 		{
 			"incremental over a changed replica",
 			ReceiveSpec{Target: target, Rollback: true},
-			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 	}
 	for _, c := range cases {

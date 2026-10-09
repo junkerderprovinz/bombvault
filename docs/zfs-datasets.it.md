@@ -149,7 +149,7 @@ L'istanza che preleva viene eseguita con il proprio piano e fa pulizia da sola. 
 
 Ogni dataset finisce in `<root>/<server>/<pool>/<path>`. La cartella del server è il nome dell'istanza sorgente, fissato al primo trasferimento, così due server con lo stesso nome di pool non si ostacolano mai. Per esempio, `cache/appdata` di un server chiamato `tower` finisce in `backup/bombvault-replica/tower/cache/appdata`.
 
-La copia sulla destinazione è di sola lettura e non montata, quindi non copre mai nulla su quel server. Le proprietà ZFS viaggiano con essa, tranne il mountpoint e `sharenfs` e `sharesmb`.
+La copia sulla destinazione è di sola lettura e non montata, quindi non copre mai nulla su quel server. Le proprietà ZFS viaggiano con essa, tranne il mountpoint e `sharenfs` e `sharesmb`. Anche le riserve `reservation` e `refreservation` restano indietro, quindi la copia occupa solo lo spazio di cui hanno bisogno i suoi dati.
 
 ### Cosa entra {#replica-contents}
 

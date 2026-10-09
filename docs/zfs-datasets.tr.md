@@ -149,7 +149,7 @@ Bundan sonra kaynak diğer örnek için bir anahtar ekler. Anahtar yalnızca bu 
 
 Her veri kümesi `<root>/<server>/<pool>/<path>` konumuna iner. Sunucu klasörü kaynak örneğin adıdır ve ilk aktarımda sabitlenir, bu yüzden havuz adı aynı olan iki sunucu birbirine karışmaz. Örneğin `tower` adlı bir sunucunun `cache/appdata` veri kümesi `backup/bombvault-replica/tower/cache/appdata` konumunda biter.
 
-Hedefteki kopya salt okunurdur ve bağlanmaz, bu yüzden o sunucuda hiçbir şeyi örtmez. ZFS özellikleri, bağlama noktası ile `sharenfs` ve `sharesmb` dışında birlikte gider.
+Hedefteki kopya salt okunurdur ve bağlanmaz, bu yüzden o sunucuda hiçbir şeyi örtmez. ZFS özellikleri, bağlama noktası ile `sharenfs` ve `sharesmb` dışında birlikte gider. `reservation` ve `refreservation` ayırmaları da gitmez, bu yüzden kopya yalnızca verilerinin ihtiyaç duyduğu yeri kaplar.
 
 ### Neler dahil {#replica-contents}
 

@@ -149,7 +149,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 각 데이터세트는 `<root>/<server>/<pool>/<path>`에 놓입니다. server 폴더는 원본 인스턴스의 이름이며 첫 전송 때 고정됩니다. 그래서 풀 이름이 같은 두 서버가 서로 겹치지 않습니다. 예를 들어 `tower`라는 서버의 `cache/appdata`는 `backup/bombvault-replica/tower/cache/appdata`에 놓입니다.
 
-대상의 사본은 읽기 전용이며 마운트되지 않으므로, 그 서버의 어떤 것도 가리지 않습니다. ZFS 속성도 함께 전달되지만 마운트 지점, `sharenfs`, `sharesmb`는 제외됩니다.
+대상의 사본은 읽기 전용이며 마운트되지 않으므로, 그 서버의 어떤 것도 가리지 않습니다. ZFS 속성도 함께 전달되지만 마운트 지점, `sharenfs`, `sharesmb`는 제외됩니다. 예약(`reservation`, `refreservation`)도 전달되지 않으므로 사본은 데이터에 필요한 공간만 차지합니다.
 
 ### 포함되는 것 {#replica-contents}
 

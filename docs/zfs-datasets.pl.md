@@ -149,7 +149,7 @@ Pobierająca instancja działa według własnego harmonogramu i sama porządkuje
 
 Każdy zbiór danych trafia do `<root>/<server>/<pool>/<path>`. Folder serwera to nazwa instancji źródłowej, ustalona przy pierwszym transferze, więc dwa serwery z taką samą nazwą puli nigdy sobie nie przeszkadzają. Na przykład `cache/appdata` serwera o nazwie `tower` trafia do `backup/bombvault-replica/tower/cache/appdata`.
 
-Kopia na celu jest tylko do odczytu i nie jest zamontowana, więc niczego na tym serwerze nie przykrywa. Właściwości ZFS są przesyłane razem z danymi, z wyjątkiem punktu montowania oraz `sharenfs` i `sharesmb`.
+Kopia na celu jest tylko do odczytu i nie jest zamontowana, więc niczego na tym serwerze nie przykrywa. Właściwości ZFS są przesyłane razem z danymi, z wyjątkiem punktu montowania oraz `sharenfs` i `sharesmb`. Rezerwacje `reservation` i `refreservation` również zostają po stronie źródła, więc kopia zajmuje tylko tyle miejsca, ile potrzebują jej dane.
 
 ### Co jest uwzględnione {#replica-contents}
 

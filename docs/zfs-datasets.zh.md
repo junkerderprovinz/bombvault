@@ -149,7 +149,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 每个数据集存放在 `<root>/<server>/<pool>/<path>`。服务器文件夹是源实例的名称，在首次传输时确定，因此两台存储池同名的服务器不会互相干扰。例如，名为 `tower` 的服务器上的 `cache/appdata` 最终位于 `backup/bombvault-replica/tower/cache/appdata`。
 
-目标上的拷贝是只读的，也不会被挂载，所以不会覆盖那台服务器上的任何内容。ZFS 属性会一并传输，但挂载点、`sharenfs` 和 `sharesmb` 除外。
+目标上的拷贝是只读的，也不会被挂载，所以不会覆盖那台服务器上的任何内容。ZFS 属性会一并传输，但挂载点、`sharenfs` 和 `sharesmb` 除外。预留（`reservation` 和 `refreservation`）也不会传输，所以拷贝只占用其数据所需的空间。
 
 ### 包含什么 {#replica-contents}
 

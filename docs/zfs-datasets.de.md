@@ -149,7 +149,7 @@ Die abholende Instanz läuft nach ihrem eigenen Plan und räumt selbst auf. Plan
 
 Jedes Dataset landet unter `<Wurzel>/<Server>/<Pool>/<Pfad>`. Der Serverordner ist der Name der Quell-Instanz, festgelegt bei der ersten Übertragung. So kommen sich zwei Server mit gleichem Pool-Namen nie in die Quere. Zum Beispiel liegt `cache/appdata` eines Servers namens `tower` unter `backup/bombvault-replica/tower/cache/appdata`.
 
-Die Kopie auf dem Ziel ist schreibgeschützt und nicht eingehängt, damit sie dort nichts überdeckt. ZFS-Eigenschaften werden mitgenommen, außer dem Einhängepunkt sowie `sharenfs` und `sharesmb`.
+Die Kopie auf dem Ziel ist schreibgeschützt und nicht eingehängt, damit sie dort nichts überdeckt. ZFS-Eigenschaften werden mitgenommen, außer dem Einhängepunkt sowie `sharenfs` und `sharesmb`. Auch die Reservierungen `reservation` und `refreservation` bleiben zurück, die Kopie belegt also nur den Platz, den ihre Daten brauchen.
 
 ### Was hineinkommt {#replica-contents}
 

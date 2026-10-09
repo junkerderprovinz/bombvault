@@ -149,7 +149,7 @@ Phiên bản lấy về chạy theo lịch của chính nó và tự dọn. Lị
 
 Mỗi tập dữ liệu nằm tại `<root>/<server>/<pool>/<path>`. Thư mục máy chủ là tên của phiên bản nguồn, được cố định ở lần truyền đầu, nên hai máy chủ có cùng tên pool không bao giờ lẫn vào nhau. Ví dụ, `cache/appdata` của máy chủ tên `tower` kết thúc tại `backup/bombvault-replica/tower/cache/appdata`.
 
-Bản sao trên đích ở chế độ chỉ đọc và không được gắn kết, nên nó không che phủ gì trên máy chủ đó. Các thuộc tính ZFS được mang theo, trừ điểm gắn kết, `sharenfs` và `sharesmb`.
+Bản sao trên đích ở chế độ chỉ đọc và không được gắn kết, nên nó không che phủ gì trên máy chủ đó. Các thuộc tính ZFS được mang theo, trừ điểm gắn kết, `sharenfs` và `sharesmb`. Các phần đặt trước `reservation` và `refreservation` cũng không được mang theo, nên bản sao chỉ chiếm dung lượng mà dữ liệu của nó cần.
 
 ### Những gì được đưa vào {#replica-contents}
 

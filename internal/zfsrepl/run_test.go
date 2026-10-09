@@ -126,7 +126,7 @@ func TestFirstRunSendsEveryMemberInFull(t *testing.T) {
 			t.Errorf("full send of %s = %q", ds, send)
 		}
 		recv := callFor(t, r.dst, "receive", base+"/"+ds)
-		for _, want := range [][]string{{"-s", "-u"}, {"-o", "readonly=on"}, {"-o", "canmount=noauto"}, {"-x", "mountpoint"}, {"-x", "sharenfs"}, {"-x", "sharesmb"}} {
+		for _, want := range [][]string{{"-s", "-u"}, {"-o", "readonly=on"}, {"-o", "canmount=noauto"}, {"-x", "mountpoint"}, {"-x", "sharenfs"}, {"-x", "sharesmb"}, {"-x", "reservation"}, {"-x", "refreservation"}} {
 			if !hasSeq(recv, want...) {
 				t.Errorf("receive into %s lacks %q: %q", ds, want, recv)
 			}
@@ -512,7 +512,7 @@ func TestAnEncryptedMemberTravelsRaw(t *testing.T) {
 	}
 }
 
-func TestAVolumeLandsWithoutFilesystemProperties(t *testing.T) {
+func TestAVolumeLandsWithoutFilesystemPropertiesOrReservations(t *testing.T) {
 	r := newRig(t)
 	r.src.add("cache/appdata/vm", "volume", false)
 	res := r.run()
@@ -521,7 +521,8 @@ func TestAVolumeLandsWithoutFilesystemProperties(t *testing.T) {
 		t.Error("the member is not marked as a volume")
 	}
 	recv := callFor(t, r.dst, "receive", base+"/cache/appdata/vm")
-	if !hasSeq(recv, "-o", "readonly=on") || slices.Contains(recv, "canmount=noauto") || slices.Contains(recv, "-x") {
+	if !hasSeq(recv, "-o", "readonly=on") || slices.Contains(recv, "canmount=noauto") || slices.Contains(recv, "mountpoint") ||
+		!hasSeq(recv, "-x", "reservation", "-x", "refreservation") {
 		t.Errorf("receive of a volume = %q", recv)
 	}
 	if r.dst.get(base+"/cache/appdata/vm").typ != "volume" {

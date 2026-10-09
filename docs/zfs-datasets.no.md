@@ -149,7 +149,7 @@ Den hentende instansen kjører etter sin egen plan og rydder selv. Plan og oppbe
 
 Hvert datasett havner i `<root>/<server>/<pool>/<path>`. Servermappen er navnet på kildeinstansen, fastsatt ved første overføring, så to servere med samme poolnavn aldri kommer i veien for hverandre. For eksempel havner `cache/appdata` fra en server som heter `tower` i `backup/bombvault-replica/tower/cache/appdata`.
 
-Kopien på målet er skrivebeskyttet og ikke montert, så den dekker aldri noe på den serveren. ZFS-egenskaper følger med, bortsett fra monteringspunktet og `sharenfs` og `sharesmb`.
+Kopien på målet er skrivebeskyttet og ikke montert, så den dekker aldri noe på den serveren. ZFS-egenskaper følger med, bortsett fra monteringspunktet og `sharenfs` og `sharesmb`. Reservasjonene `reservation` og `refreservation` blir også igjen, så kopien tar bare den plassen dataene trenger.
 
 ### Hva som tas med {#replica-contents}
 

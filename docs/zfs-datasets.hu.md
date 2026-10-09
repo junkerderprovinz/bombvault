@@ -149,7 +149,7 @@ A lehúzó példány a saját ütemezése szerint fut, és maga takarít. Az üt
 
 Minden adatkészlet ide kerül: `<root>/<server>/<pool>/<path>`. A kiszolgálómappa a forráspéldány neve, amely az első átvitelkor rögzül, így két azonos poolnevű kiszolgáló soha nem kerül egymás útjába. Például egy `tower` nevű kiszolgáló `cache/appdata` adatkészlete a `backup/bombvault-replica/tower/cache/appdata` helyre kerül.
 
-A másolat a célon csak olvasható és nincs csatolva, így soha nem takar el semmit azon a kiszolgálón. A ZFS-tulajdonságok vele utaznak, kivéve a csatolási pontot, a `sharenfs`-t és a `sharesmb`-t.
+A másolat a célon csak olvasható és nincs csatolva, így soha nem takar el semmit azon a kiszolgálón. A ZFS-tulajdonságok vele utaznak, kivéve a csatolási pontot, a `sharenfs`-t és a `sharesmb`-t. A foglalások (`reservation` és `refreservation`) sem mennek át, így a másolat csak annyi helyet foglal, amennyit az adatai igényelnek.
 
 ### Mi kerül bele {#replica-contents}
 

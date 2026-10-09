@@ -149,7 +149,7 @@ De ophalende instantie draait volgens haar eigen schema en ruimt zelf op. Schema
 
 Elke dataset komt terecht op `<root>/<server>/<pool>/<path>`. De servermap is de naam van de broninstantie, vastgelegd bij de eerste overdracht, zodat twee servers met dezelfde poolnaam elkaar nooit in de weg zitten. `cache/appdata` van een server met de naam `tower` komt bijvoorbeeld terecht op `backup/bombvault-replica/tower/cache/appdata`.
 
-De kopie op het doel is alleen-lezen en niet gemount, dus ze bedekt nooit iets op die server. ZFS-eigenschappen reizen mee, behalve het mountpoint en `sharenfs` en `sharesmb`.
+De kopie op het doel is alleen-lezen en niet gemount, dus ze bedekt nooit iets op die server. ZFS-eigenschappen reizen mee, behalve het mountpoint en `sharenfs` en `sharesmb`. Ook de reserveringen `reservation` en `refreservation` blijven achter, zodat de kopie alleen de ruimte inneemt die haar data nodig heeft.
 
 ### Wat erin zit {#replica-contents}
 

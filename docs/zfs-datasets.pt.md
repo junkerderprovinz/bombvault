@@ -149,7 +149,7 @@ A instância que recolhe corre segundo o seu próprio plano e faz ela própria a
 
 Cada conjunto de dados fica em `<root>/<server>/<pool>/<path>`. A pasta do servidor é o nome da instância de origem, fixado na primeira transferência, por isso dois servidores com o mesmo nome de pool nunca se atropelam. Por exemplo, `cache/appdata` de um servidor chamado `tower` acaba em `backup/bombvault-replica/tower/cache/appdata`.
 
-A cópia no destino é só de leitura e não está montada, por isso nunca cobre nada nesse servidor. As propriedades ZFS seguem juntas, exceto o ponto de montagem, `sharenfs` e `sharesmb`.
+A cópia no destino é só de leitura e não está montada, por isso nunca cobre nada nesse servidor. As propriedades ZFS seguem juntas, exceto o ponto de montagem, `sharenfs` e `sharesmb`. As reservas `reservation` e `refreservation` também ficam de fora, por isso a cópia só ocupa o espaço de que os seus dados precisam.
 
 ### O que entra {#replica-contents}
 

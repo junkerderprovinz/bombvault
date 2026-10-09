@@ -49,6 +49,11 @@ type ReceiveSpec struct {
 // shares itself there.
 var receivedLocalProps = []string{"mountpoint", "sharenfs", "sharesmb"}
 
+// receivedSpaceProps are the space the source sets aside for a dataset or
+// volume, which its replica must not claim from the receiving host's pool. zfs
+// drops them from a stream when they are excluded, since they do not inherit.
+var receivedSpaceProps = []string{"reservation", "refreservation"}
+
 // replicaMember checks a dataset and replica snapshot name pair for any
 // builder below. The dataset may be a descendant read off the host or a path
 // on the target, so the replica name limit applies instead of the root's.
@@ -136,8 +141,8 @@ func dryRun(send []string) []string {
 }
 
 // ReceiveArgs takes a stream into the target, resumably and unmounted. zfs
-// refuses canmount on a volume and only warns about the excluded properties,
-// so a volume gets neither.
+// refuses canmount on a volume and only warns about the local properties, so a
+// volume gets neither; the reservations stay behind for both.
 func ReceiveArgs(r ReceiveSpec) ([]string, error) {
 	if err := receiveTarget(r.Target); err != nil {
 		return nil, err
@@ -161,6 +166,7 @@ func ReceiveArgs(r ReceiveSpec) ([]string, error) {
 	if !r.Volume {
 		args = appendExcluded(args, receivedLocalProps)
 	}
+	args = appendExcluded(args, receivedSpaceProps)
 	return append(args, r.Target), nil
 }
 
