@@ -187,10 +187,43 @@ func ParseEstimate(out string) (int64, error) {
 	return 0, errors.New("zfs send -nvP printed no size line")
 }
 
-// ParseResumeToken reads ResumeTokenArgs' output. "-" is what zfs prints when
+// ParseDatasetState reads the output of DatasetStateArgs. Every property has
+// to be there, so a dataset whose state could not be read in full is never
+// taken for one without a resume token.
+func ParseDatasetState(out string) (DatasetState, error) {
+	var s DatasetState
+	seen := 0
+	for _, line := range splitLines(out) {
+		prop, value, ok := strings.Cut(line, "\t")
+		if !ok {
+			return DatasetState{}, fmt.Errorf("zfs get %s: %q has no value", stateProps, line)
+		}
+		switch prop {
+		case "type":
+			s.Type = value
+		case "encryption":
+			s.Encryption = value
+		case "receive_resume_token":
+			tok, err := parseResumeToken(value)
+			if err != nil {
+				return DatasetState{}, err
+			}
+			s.ResumeToken = tok
+		default:
+			return DatasetState{}, fmt.Errorf("zfs get %s: unexpected property %q", stateProps, prop)
+		}
+		seen++
+	}
+	if seen != 3 {
+		return DatasetState{}, fmt.Errorf("zfs get %s: %d properties, want 3", stateProps, seen)
+	}
+	return s, nil
+}
+
+// parseResumeToken reads receive_resume_token. "-" is what zfs prints when
 // nothing is waiting to be resumed, and that comes back as "".
-func ParseResumeToken(out string) (string, error) {
-	tok := strings.TrimSpace(out)
+func parseResumeToken(value string) (string, error) {
+	tok := strings.TrimSpace(value)
 	if tok == "-" {
 		return "", nil
 	}

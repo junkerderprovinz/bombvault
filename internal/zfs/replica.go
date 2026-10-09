@@ -8,6 +8,8 @@ import (
 // replicaListProps are what base resolution compares across the two hosts.
 const replicaListProps = "name,guid,createtxg"
 
+const stateProps = "type,encryption,receive_resume_token"
+
 // resumeTokenRe is the shape zfs prints for receive_resume_token: a version,
 // a checksum, the payload length and the compressed payload, all in hex.
 var resumeTokenRe = regexp.MustCompile(`^[0-9]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$`)
@@ -19,8 +21,7 @@ type SendSpec struct {
 	// Base is the replica snapshot or bookmark the stream starts from, or ""
 	// for a full stream.
 	Base string
-	// FromBookmark starts from Member#Base. zfs refuses -I from a bookmark,
-	// so such a stream carries only the change up to Snap.
+	// FromBookmark starts from Member#Base instead of Member@Base.
 	FromBookmark bool
 	// Raw sends an encrypted member as it lies on disk, so the target never
 	// holds its key and later incrementals stay raw.
@@ -37,7 +38,15 @@ type ReceiveSpec struct {
 	// Rollback throws away whatever changed on the replica since its newest
 	// snapshot. It only applies to an incremental.
 	Rollback bool
+	// Replace lets a full stream land on an empty parent BombVault created
+	// earlier for another entry, which is what a pool root finds at its path.
+	Replace bool
 }
+
+// receivedLocalProps are the properties a filesystem stream never sets on the
+// receiving host, so a replica neither mounts over the target's own data nor
+// shares itself there.
+var receivedLocalProps = []string{"mountpoint", "sharenfs", "sharesmb"}
 
 // replicaMember checks a dataset and replica snapshot name pair for any
 // builder below. The dataset may be a descendant read off the host or a path
@@ -67,27 +76,29 @@ func ReplicaSnapshotArgs(root, snap string) ([]string, error) {
 	return []string{zfsBinary, "snapshot", "-r", root + "@" + snap}, nil
 }
 
-// SendArgs streams one member. Members go one by one rather than with -R,
-// which would also send the children the item excludes.
+// SendArgs streams one member with its properties. Members go one by one
+// rather than with -R, which would also send the children the item excludes.
+// An increment is always -i: -I would carry every foreign snapshot in between,
+// which the target's retention never prunes, and a bookmark only takes -i.
 func SendArgs(s SendSpec) ([]string, error) {
 	if err := replicaMember(s.Member, s.Snap); err != nil {
 		return nil, err
 	}
 	args := []string{zfsBinary, "send"}
 	if s.Raw {
-		args = append(args, "-w")
+		args = append(args, "-w", "-p")
 	} else {
-		args = append(args, "-c", "-L", "-e")
+		args = append(args, "-c", "-L", "-e", "-p")
 	}
 	if s.Base != "" {
 		if !IsReplicaSnapshot(s.Base) {
 			return nil, &NameError{Code: "invalid-name", Reason: "not a replica snapshot name: " + s.Base}
 		}
+		from := "@" + s.Base
 		if s.FromBookmark {
-			args = append(args, "-i", "#"+s.Base)
-		} else {
-			args = append(args, "-I", "@"+s.Base)
+			from = "#" + s.Base
 		}
+		args = append(args, "-i", from)
 	}
 	return append(args, s.Member+"@"+s.Snap), nil
 }
@@ -123,22 +134,21 @@ func dryRun(send []string) []string {
 	return append([]string{send[0], send[1], "-n", "-v", "-P"}, send[2:]...)
 }
 
-// ReceiveArgs takes a stream into the target, resumably and unmounted. A
-// received mountpoint is never applied, so a replica cannot mount over one of
-// the target's own shares. Volumes have neither property and zfs refuses
-// canmount on them.
+// ReceiveArgs takes a stream into the target, resumably and unmounted. zfs
+// refuses canmount on a volume and only warns about the excluded properties,
+// so a volume gets neither.
 func ReceiveArgs(r ReceiveSpec) ([]string, error) {
-	if err := validateNameChars(r.Target); err != nil {
+	if err := receiveTarget(r.Target); err != nil {
 		return nil, err
-	}
-	if !ReplicaNameFits(r.Target) {
-		return nil, &NameError{Code: "name-too-long", Reason: "dataset name is too long for a replica snapshot of it: " + r.Target}
 	}
 	if r.Full && r.Rollback {
 		return nil, fmt.Errorf("zfs: a full receive into %q cannot roll anything back", r.Target)
 	}
+	if r.Replace && !r.Full {
+		return nil, fmt.Errorf("zfs: only a full receive into %q can replace it", r.Target)
+	}
 	args := []string{zfsBinary, "receive", "-s", "-u"}
-	if r.Rollback {
+	if r.Rollback || r.Replace {
 		args = append(args, "-F")
 	}
 	if r.Full {
@@ -148,9 +158,50 @@ func ReceiveArgs(r ReceiveSpec) ([]string, error) {
 		}
 	}
 	if !r.Volume {
-		args = append(args, "-x", "mountpoint")
+		args = appendExcluded(args, receivedLocalProps)
 	}
 	return append(args, r.Target), nil
+}
+
+// RestoreReceiveArgs lands a replica snapshot as a new dataset that behaves
+// like any other: writable, mounting where its parent says. It is not
+// resumable, so a cut stream leaves nothing behind.
+func RestoreReceiveArgs(target string, volume bool) ([]string, error) {
+	if err := receiveTarget(target); err != nil {
+		return nil, err
+	}
+	args := appendExcluded([]string{zfsBinary, "receive", "-u"}, []string{"readonly"})
+	if !volume {
+		args = appendExcluded(args, append([]string{"canmount"}, receivedLocalProps...))
+	}
+	return append(args, target), nil
+}
+
+func receiveTarget(target string) error {
+	if err := validateNameChars(target); err != nil {
+		return err
+	}
+	if !ReplicaNameFits(target) {
+		return &NameError{Code: "name-too-long", Reason: "dataset name is too long for a replica snapshot of it: " + target}
+	}
+	return nil
+}
+
+func appendExcluded(args, props []string) []string {
+	for _, p := range props {
+		args = append(args, "-x", p)
+	}
+	return args
+}
+
+// CreateParentArgs makes one level of the path a replica lands under. It never
+// mounts and holds no data of its own; -p makes a level that appeared in the
+// meantime a success.
+func CreateParentArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off", dataset}, nil
 }
 
 // AbortReceiveArgs drops the partial state of an interrupted receive whose
@@ -220,10 +271,12 @@ func ReplicaPointsArgs(dataset string) ([]string, error) {
 	return []string{zfsBinary, "list", "-H", "-p", "-t", "snapshot,bookmark", "-o", replicaListProps, "-s", "createtxg", "-d", "1", dataset}, nil
 }
 
-// ResumeTokenArgs reads the token an interrupted receive -s left on target.
-func ResumeTokenArgs(target string) ([]string, error) {
-	if err := validateNameChars(target); err != nil {
+// DatasetStateArgs reads what a replica run needs to know about one dataset
+// before it streams: its type, its encryption and the token an interrupted
+// receive -s left on it. A dataset that does not exist fails as not-found.
+func DatasetStateArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
 		return nil, err
 	}
-	return []string{zfsBinary, "get", "-H", "-p", "-o", "value", "receive_resume_token", target}, nil
+	return []string{zfsBinary, "get", "-H", "-p", "-o", "property,value", stateProps, dataset}, nil
 }

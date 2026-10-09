@@ -55,32 +55,32 @@ func TestSendArgs(t *testing.T) {
 		{
 			"full",
 			SendSpec{Member: "cache/appdata", Snap: replicaSnap},
-			[]string{"zfs", "send", "-c", "-L", "-e", "cache/appdata@" + replicaSnap},
+			[]string{"zfs", "send", "-c", "-L", "-e", "-p", "cache/appdata@" + replicaSnap},
 		},
 		{
 			"full raw",
 			SendSpec{Member: "cache/appdata/vault", Snap: replicaSnap, Raw: true},
-			[]string{"zfs", "send", "-w", "cache/appdata/vault@" + replicaSnap},
+			[]string{"zfs", "send", "-w", "-p", "cache/appdata/vault@" + replicaSnap},
 		},
 		{
-			"from a snapshot, with what lies between",
+			"from a snapshot, without what lies between",
 			SendSpec{Member: "cache/appdata", Snap: replicaSnap, Base: replicaBase},
-			[]string{"zfs", "send", "-c", "-L", "-e", "-I", "@" + replicaBase, "cache/appdata@" + replicaSnap},
+			[]string{"zfs", "send", "-c", "-L", "-e", "-p", "-i", "@" + replicaBase, "cache/appdata@" + replicaSnap},
 		},
 		{
 			"from a bookmark",
 			SendSpec{Member: "cache/appdata", Snap: replicaSnap, Base: replicaBase, FromBookmark: true},
-			[]string{"zfs", "send", "-c", "-L", "-e", "-i", "#" + replicaBase, "cache/appdata@" + replicaSnap},
+			[]string{"zfs", "send", "-c", "-L", "-e", "-p", "-i", "#" + replicaBase, "cache/appdata@" + replicaSnap},
 		},
 		{
 			"raw from a bookmark",
 			SendSpec{Member: "cache/appdata/vault", Snap: replicaSnap, Base: replicaBase, FromBookmark: true, Raw: true},
-			[]string{"zfs", "send", "-w", "-i", "#" + replicaBase, "cache/appdata/vault@" + replicaSnap},
+			[]string{"zfs", "send", "-w", "-p", "-i", "#" + replicaBase, "cache/appdata/vault@" + replicaSnap},
 		},
 		{
 			"a name with a space",
 			SendSpec{Member: "cache/Media Files", Snap: replicaSnap},
-			[]string{"zfs", "send", "-c", "-L", "-e", "cache/Media Files@" + replicaSnap},
+			[]string{"zfs", "send", "-c", "-L", "-e", "-p", "cache/Media Files@" + replicaSnap},
 		},
 	}
 	for _, c := range cases {
@@ -145,7 +145,7 @@ func TestEstimateArgsAreADryRunOfTheSameStream(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"zfs", "send", "-n", "-v", "-P", "-c", "-L", "-e", "-i", "#" + replicaBase, "cache/appdata@" + replicaSnap}
+	want := []string{"zfs", "send", "-n", "-v", "-P", "-c", "-L", "-e", "-p", "-i", "#" + replicaBase, "cache/appdata@" + replicaSnap}
 	if !equalArgs(got, want) {
 		t.Fatalf("EstimateArgs = %q, want %q", got, want)
 	}
@@ -187,7 +187,12 @@ func TestReceiveArgs(t *testing.T) {
 		{
 			"first filesystem stream",
 			ReceiveSpec{Target: target, Full: true},
-			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", target},
+			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+		},
+		{
+			"first stream over an empty parent BombVault created",
+			ReceiveSpec{Target: target, Full: true, Replace: true},
+			[]string{"zfs", "receive", "-s", "-u", "-F", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
 		},
 		{
 			"first volume stream",
@@ -197,7 +202,7 @@ func TestReceiveArgs(t *testing.T) {
 		{
 			"incremental",
 			ReceiveSpec{Target: target},
-			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", target},
+			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
 		},
 		{
 			"incremental into a volume",
@@ -207,7 +212,7 @@ func TestReceiveArgs(t *testing.T) {
 		{
 			"incremental over a changed replica",
 			ReceiveSpec{Target: target, Rollback: true},
-			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", target},
+			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
 		},
 	}
 	for _, c := range cases {
@@ -225,10 +230,48 @@ func TestReceiveArgs(t *testing.T) {
 	if args, err := ReceiveArgs(ReceiveSpec{Target: target, Full: true, Rollback: true}); err == nil || args != nil {
 		t.Errorf("ReceiveArgs rolled back on a full stream: %q, %v", args, err)
 	}
+	if args, err := ReceiveArgs(ReceiveSpec{Target: target, Replace: true}); err == nil || args != nil {
+		t.Errorf("ReceiveArgs replaced a dataset with an incremental: %q, %v", args, err)
+	}
 	for _, bad := range []string{"", "tank/../x", "-tank", "tank/x@snap"} {
 		if args, err := ReceiveArgs(ReceiveSpec{Target: bad}); err == nil || args != nil {
 			t.Errorf("ReceiveArgs took target %q: %q, %v", bad, args, err)
 		}
+	}
+}
+
+func TestRestoreReceiveArgsLandAWritableDataset(t *testing.T) {
+	const target = "cache/appdata-bombvault-restore-1760000000000000000"
+	got, err := RestoreReceiveArgs(target, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zfs", "receive", "-u", "-x", "readonly", "-x", "canmount", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target}
+	if !equalArgs(got, want) {
+		t.Fatalf("RestoreReceiveArgs = %q, want %q", got, want)
+	}
+	got, err = RestoreReceiveArgs(target, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "receive", "-u", "-x", "readonly", target}; !equalArgs(got, want) {
+		t.Fatalf("RestoreReceiveArgs of a volume = %q, want %q", got, want)
+	}
+	if args, err := RestoreReceiveArgs("cache/x@y", false); err == nil || args != nil {
+		t.Errorf("RestoreReceiveArgs took a snapshot: %q, %v", args, err)
+	}
+}
+
+func TestCreateParentArgsNeverMount(t *testing.T) {
+	got, err := CreateParentArgs("tank/bombvault-replica/bottich")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "create", "-p", "-u", "-o", "canmount=off", "tank/bombvault-replica/bottich"}; !equalArgs(got, want) {
+		t.Fatalf("CreateParentArgs = %q, want %q", got, want)
+	}
+	if args, err := CreateParentArgs("tank/../x"); err == nil || args != nil {
+		t.Errorf("CreateParentArgs took a traversal: %q, %v", args, err)
 	}
 }
 
@@ -324,7 +367,9 @@ func TestReplicaBuildersEmitDashROnlyOnTheSourceTreeSnapshot(t *testing.T) {
 		must(BookmarkArgs("cache/appdata", replicaSnap)),
 		must(DestroyReplicaArgs("tank/r/cache/appdata", replicaSnap)),
 		must(ReplicaPointsArgs("cache/appdata")),
-		must(ResumeTokenArgs("tank/r/cache/appdata")),
+		must(DatasetStateArgs("tank/r/cache/appdata")),
+		must(RestoreReceiveArgs("cache/appdata-bombvault-restore-1", false)),
+		must(CreateParentArgs("tank/r/bottich")),
 	}
 	for _, args := range all {
 		for _, a := range args {
@@ -350,20 +395,20 @@ func TestReplicaListingArgs(t *testing.T) {
 	if !equalArgs(got, want) {
 		t.Fatalf("ReplicaPointsArgs = %q, want %q", got, want)
 	}
-	got, err = ResumeTokenArgs("tank/r/cache/appdata")
+	got, err = DatasetStateArgs("tank/r/cache/appdata")
 	if err != nil {
 		t.Fatal(err)
 	}
-	want = []string{"zfs", "get", "-H", "-p", "-o", "value", "receive_resume_token", "tank/r/cache/appdata"}
+	want = []string{"zfs", "get", "-H", "-p", "-o", "property,value", "type,encryption,receive_resume_token", "tank/r/cache/appdata"}
 	if !equalArgs(got, want) {
-		t.Fatalf("ResumeTokenArgs = %q, want %q", got, want)
+		t.Fatalf("DatasetStateArgs = %q, want %q", got, want)
 	}
 	for _, bad := range []string{"", "a@b", "a/../b"} {
 		if args, err := ReplicaPointsArgs(bad); err == nil || args != nil {
 			t.Errorf("ReplicaPointsArgs took %q: %q, %v", bad, args, err)
 		}
-		if args, err := ResumeTokenArgs(bad); err == nil || args != nil {
-			t.Errorf("ResumeTokenArgs took %q: %q, %v", bad, args, err)
+		if args, err := DatasetStateArgs(bad); err == nil || args != nil {
+			t.Errorf("DatasetStateArgs took %q: %q, %v", bad, args, err)
 		}
 	}
 }

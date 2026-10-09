@@ -64,6 +64,18 @@ type ReplicaPoint struct {
 	CreateTxg uint64
 }
 
+// DatasetState is what a replica run reads about one dataset on either host.
+// Encryption is "off" for a dataset without; ResumeToken is "" when no
+// interrupted receive is waiting.
+type DatasetState struct {
+	Type        string
+	Encryption  string
+	ResumeToken string
+}
+
+// Encrypted reports whether the dataset has to travel as a raw stream.
+func (s DatasetState) Encrypted() bool { return s.Encryption != "off" }
+
 // MemberCode decides whether one tree entry can be read, from its properties
 // and the item's exclusions. "" means readable; anything else is a member code
 // the page turns into a sentence. Mount visibility is checked separately,
