@@ -1030,3 +1030,37 @@ func TestAServerMovedElsewhereStartsItsItemsFromScratch(t *testing.T) {
 		t.Errorf("run into another instance's folder = %v, want target-owned", err)
 	}
 }
+
+func TestDetachingAServerWaitsForEveryItemOrTouchesNone(t *testing.T) {
+	r := newReplicaRig(t)
+	r.host.tree = []string{"cache/appdata"}
+	r.host.points["cache/appdata"] = "cache/appdata@" + replicaSnap + "\t7\t10\n"
+	second := zfsSeedItem(t, r.st, "cache/system")
+	if err := r.st.SetZFSReplicaTarget(second.ID, store.ZFSReplicaTargetServer, r.srv.ID); err != nil {
+		t.Fatal(err)
+	}
+	unlock, _ := r.s.lockZFSReplica(second.ID)
+	err := r.s.DeleteZFSReplicaServer(context.Background(), r.srv.ID, true)
+	unlock()
+	if !errors.Is(err, errZFSReplicaBusy) {
+		t.Fatalf("detach while an item replicates = %v, want busy", err)
+	}
+	if calls := r.host.did("destroy"); calls != nil {
+		t.Errorf("a refused detach cleaned an item: %q", calls)
+	}
+	if r.s.zfsReplicaRunning(r.item.ID) {
+		t.Error("a refused detach kept a lock")
+	}
+
+	if err := r.s.DeleteZFSReplicaServer(context.Background(), r.srv.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{r.item.ID, second.ID} {
+		if d, _ := r.st.GetZFSDataset(id); d.Replica.TargetKind != store.ZFSReplicaTargetNone {
+			t.Errorf("%s still replicates to %+v", d.Dataset, d.Replica)
+		}
+		if r.s.zfsReplicaRunning(id) {
+			t.Errorf("the detach kept the lock of %s", id)
+		}
+	}
+}

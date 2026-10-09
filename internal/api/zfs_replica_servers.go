@@ -194,19 +194,19 @@ func (s *Service) DeleteZFSReplicaServer(ctx context.Context, id string, detach 
 	if len(users[id]) > 0 && !detach {
 		return zfsRefuse("in-use", strings.Join(users[id], ", "))
 	}
+	// The locks hold until the items point nowhere, or a run started after its
+	// item's clean would leave held snapshots nothing removes.
+	unlock, ok := s.lockZFSReplicas(users[id])
+	if !ok {
+		return errZFSReplicaBusy
+	}
+	defer unlock()
 	for _, item := range users[id] {
-		unlock, ok := s.lockZFSReplica(item)
-		if !ok {
-			return errZFSReplicaBusy
-		}
 		d, err := s.store.GetZFSDataset(item)
-		if err == nil {
-			s.cleanZFSReplicaSource(ctx, d)
-		}
-		unlock()
 		if err != nil {
 			return err
 		}
+		s.cleanZFSReplicaSource(ctx, d)
 	}
 	if err := s.store.DeleteZFSReplicaServer(id); err != nil {
 		return err
