@@ -6,10 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../../../lib/i18n";
 import { ToastProvider } from "../../../lib/toast";
-import type { ZFSReplicaServer, ZFSReplicaServerPatch } from "../../../lib/api";
+import type { ZFSReplica, ZFSReplicaServer, ZFSReplicaServerPatch } from "../../../lib/api";
 import { group, replica, server } from "./replica.testsupport";
 
 let servers: ZFSReplicaServer[];
+let current: ZFSReplica;
 const deleted: string[] = [];
 const patched: ZFSReplicaServerPatch[] = [];
 
@@ -19,7 +20,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     ...actual,
     listZFSReplicaServers: () => Promise.resolve(servers),
     getGroup: () => Promise.resolve(group()),
-    getZFSReplica: () => Promise.resolve(replica()),
+    getZFSReplica: () => Promise.resolve(current),
     listZFSDatasets: () =>
       Promise.resolve({ ok: true, datasets: [{ id: "zfs1", dataset: "cache/appdata" }] }),
     patchZFSReplicaServer: (_id: string, patch: ZFSReplicaServerPatch) => {
@@ -51,6 +52,7 @@ function renderList() {
 
 beforeEach(() => {
   servers = [server({ usedBy: ["zfs1"] }), server({ id: "old", name: "Old box", enabled: false })];
+  current = replica();
   deleted.length = 0;
   patched.length = 0;
   localStorage.clear();
@@ -81,6 +83,15 @@ describe("ZFS servers", () => {
     expect(screen.getByText("root@192.168.1.30:22")).toBeTruthy();
     expect(screen.getByText("backup/bombvault-replica/tower/cache/appdata")).toBeTruthy();
     expect(screen.getByText("Replicated 2 hours ago")).toBeTruthy();
+  });
+
+  it("shows where an entry's copy really lives, under the folder the server keeps for it", async () => {
+    const path = "backup/bombvault-replica/Tower-B-ro/cache/appdata";
+    current = replica({ members: [{ ...replica().members[0], targetPath: path }] });
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: /Backup-NAS/ }));
+    expect(await screen.findByText(path)).toBeTruthy();
+    expect(screen.queryByText("backup/bombvault-replica/tower/cache/appdata")).toBeNull();
   });
 
   it("switches a server off from its page", async () => {
