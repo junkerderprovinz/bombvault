@@ -65,7 +65,7 @@ func (s *Service) zfsSlotFor(w http.ResponseWriter, r *http.Request) (store.ZFSR
 // slot was not allowed for.
 func zfsSlotTarget(w http.ResponseWriter, slot store.ZFSReceiveSlot, member string) (string, bool) {
 	if !slices.Contains(slot.Members, member) {
-		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "code": "zfs-permission", "error": "that dataset is not part of this receive slot"})
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "code": "peer-waiting", "error": "that dataset is not part of this receive slot"})
 		return "", false
 	}
 	return slot.Base() + "/" + member, true
@@ -186,7 +186,8 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 		zfsSlotFail(w, &zfsrepl.Refusal{Code: "zfs-error", Detail: "the body is not a send stream", Err: err})
 		return
 	}
-	if _, snap, _ := strings.Cut(begin.Snapshot, "@"); !zfs.IsReplicaSnapshot(snap) {
+	_, snap, _ := strings.Cut(begin.Snapshot, "@")
+	if !zfs.IsReplicaSnapshot(snap) {
 		zfsSlotFail(w, &zfsrepl.Refusal{Code: "invalid-name", Detail: begin.Snapshot + " is not a replica snapshot"})
 		return
 	}
@@ -202,7 +203,7 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	n := counted.n.Load()
-	if err := s.store.RecordZFSReceived(slot.ID, n); err != nil {
+	if err := s.store.RecordZFSReceived(slot.ID, snap, n); err != nil {
 		log.Printf("zfs receive: %v", err)
 	}
 	pruned := zfsSlotPrune(context.WithoutCancel(ctx), host, slot, target)

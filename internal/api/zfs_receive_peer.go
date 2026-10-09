@@ -69,7 +69,7 @@ func (s *Service) askZFSReceive(ctx context.Context, item store.ZFSDataset, rene
 	}
 	var ans peerZFSReceiveAnswer
 	if err := s.callMember(ctx, item.Replica.TargetID, http.MethodPost, "/api/group/peer/zfs-receive", req, &ans); err != nil {
-		return store.ZFSReplicaPeer{}, err
+		return store.ZFSReplicaPeer{}, &zfsrepl.Refusal{Code: "peer-unreachable", Detail: "the receiving instance did not answer the request", Err: err}
 	}
 	peer := store.ZFSReplicaPeer{State: ans.State}
 	switch ans.State {
@@ -100,16 +100,16 @@ func (s *Service) zfsReplicaPeerEnd(ctx context.Context, item store.ZFSDataset) 
 	peer, err := s.askZFSReceive(ctx, item, false)
 	if err != nil {
 		if item.Replica.Peer.State != store.ZFSReceiveAllowed {
-			return nil, &zfsrepl.Refusal{Code: "not-reached", Detail: "the receiving instance did not answer", Err: err}
+			return nil, err
 		}
 		log.Printf("zfs replica: asking the receiving instance of %s failed, using the slot it allowed: %v", item.Dataset, err)
 		peer = item.Replica.Peer
 	}
-	if peer.State != store.ZFSReceiveAllowed {
-		return nil, &zfsrepl.Refusal{Code: "zfs-permission", Detail: "the receiving instance has not allowed this item (" + peer.State + ")"}
+	if code := zfsPeerStateCode(peer.State); code != "" {
+		return nil, &zfsrepl.Refusal{Code: code, Detail: "the receiving instance has not allowed this item (" + peer.State + ")"}
 	}
 	if peer.URL == "" {
-		return nil, &zfsrepl.Refusal{Code: "not-reached", Detail: "the receiving instance did not say where it answers"}
+		return nil, &zfsrepl.Refusal{Code: "peer-unreachable", Detail: "the receiving instance did not say where it answers"}
 	}
 	token, err := secret.Decrypt(s.cfg.AppKey, peer.TokenEnc)
 	if err != nil {
@@ -145,6 +145,20 @@ func (s *Service) zfsReplicaPeerState(item store.ZFSDataset) string {
 		return ""
 	}
 	return item.Replica.Peer.State
+}
+
+// zfsPeerStateCode is the reason code a run stops with while the receiving
+// instance holds the request in state, "" once it is allowed.
+func zfsPeerStateCode(state string) string {
+	switch state {
+	case store.ZFSReceiveAllowed:
+		return ""
+	case store.ZFSReceiveRefused:
+		return "peer-refused"
+	case store.ZFSReceiveRevoked:
+		return "peer-revoked"
+	}
+	return "peer-waiting"
 }
 
 // peerEndClient talks to a receiving instance. A stream runs for as long as
@@ -257,7 +271,7 @@ func (e *peerEnd) Run(ctx context.Context, args []string) (string, error) {
 		}
 		return "", e.result(args, resp)
 	}
-	return "", &zfsrepl.Refusal{Code: "zfs-permission", Detail: "the receiving instance does this itself: " + strings.Join(args, " ")}
+	return "", &zfsrepl.Refusal{Code: "zfs-error", Detail: "the receiving instance does this itself: " + strings.Join(args, " ")}
 }
 
 // view is one member as the slot sees it. A member the slot does not hold
@@ -328,7 +342,7 @@ func (e *peerEnd) Send(ctx context.Context, args []string) (io.ReadCloser, func(
 	ds, snap, _ := strings.Cut(args[len(args)-1], "@")
 	m, ok := e.member(ds)
 	if !ok {
-		return nil, nil, &zfsrepl.Refusal{Code: "zfs-permission", Detail: ds + " is not part of the receive slot"}
+		return nil, nil, &zfsrepl.Refusal{Code: "peer-waiting", Detail: ds + " is not part of the receive slot"}
 	}
 	resp, err := e.do(ctx, args, http.MethodGet, "/members/"+url.PathEscape(m)+"/send?snapshot="+url.QueryEscape(snap), nil)
 	if err != nil {
@@ -352,7 +366,7 @@ func (e *peerEnd) Send(ctx context.Context, args []string) (io.ReadCloser, func(
 func (e *peerEnd) Receive(ctx context.Context, args []string, stream io.Reader) error {
 	m, ok := e.member(args[len(args)-1])
 	if !ok {
-		return &zfsrepl.Refusal{Code: "zfs-permission", Detail: args[len(args)-1] + " is not part of the receive slot"}
+		return &zfsrepl.Refusal{Code: "peer-waiting", Detail: args[len(args)-1] + " is not part of the receive slot"}
 	}
 	resp, err := e.do(ctx, args, http.MethodPut, "/members/"+url.PathEscape(m), stream)
 	if err != nil {
@@ -377,7 +391,7 @@ func (e *peerEnd) do(ctx context.Context, args []string, method, path string, bo
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, &zfsrepl.Refusal{Code: "not-reached", Detail: "the receiving instance is not reachable", Err: err}
+		return nil, &zfsrepl.Refusal{Code: "peer-unreachable", Detail: "the receiving instance is not reachable", Err: err}
 	}
 	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusNotFound {
 		defer resp.Body.Close() //nolint:errcheck // nothing to do about a failed close of a read body
@@ -390,8 +404,13 @@ func (e *peerEnd) do(ctx context.Context, args []string, method, path string, bo
 		if out.State == store.ZFSReceiveRevoked {
 			e.revoked()
 		}
-		if out.Code == "" {
-			out.Code = "zfs-permission"
+		// A slot or token the receiving instance does not know is as good as
+		// revoked until the next request fetches a new one.
+		switch {
+		case out.State != "":
+			out.Code = zfsPeerStateCode(out.State)
+		case out.Code == "":
+			out.Code = "peer-revoked"
 		}
 		return nil, slotError(args, out.Code, out.Error)
 	}

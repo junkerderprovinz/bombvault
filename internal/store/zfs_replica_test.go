@@ -147,6 +147,32 @@ func TestAnotherReplicaTargetStartsFromScratch(t *testing.T) {
 	}
 }
 
+func TestTheReplicaFolderIsFixedOnceAndOutlivesTheTarget(t *testing.T) {
+	_, r := zfsStore(t)
+	d := aZFSDataset(t, r, "cache/appdata")
+	a := aReplicaServer(t, r, "attic")
+	if err := r.SetZFSReplicaTarget(d.ID, store.ZFSReplicaTargetServer, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	for _, folder := range []string{"bottich", "tower"} {
+		if err := r.FixZFSReplicaFolder(d.ID, folder); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, kind := range []string{store.ZFSReplicaTargetNone, store.ZFSReplicaTargetServer} {
+		id := ""
+		if kind == store.ZFSReplicaTargetServer {
+			id = a.ID
+		}
+		if err := r.SetZFSReplicaTarget(d.ID, kind, id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got, _ := r.GetZFSDataset(d.ID); got.Replica.Folder != "bottich" {
+		t.Fatalf("folder after a second fix and switching off and on = %q, want the first one", got.Replica.Folder)
+	}
+}
+
 func TestZFSReplicaServerRoundTripKeepsItsKeyDirectory(t *testing.T) {
 	_, r := zfsStore(t)
 	made, err := r.CreateZFSReplicaServer(store.ZFSReplicaServer{

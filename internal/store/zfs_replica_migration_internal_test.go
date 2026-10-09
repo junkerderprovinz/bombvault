@@ -1,6 +1,7 @@
 package store
 
 import (
+	"database/sql"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -41,9 +42,43 @@ func TestReplicaMigrationsKeepItems(t *testing.T) {
 			t.Fatalf("%s.%s defaults to %s, want DefaultZFSReplicaKeep %s", col.table, col.column, def, want)
 		}
 	}
+	assertReplicaSchema(t, db)
+}
+
+func TestAFreshDatabaseNumbersTheReplicaBlockWithoutGaps(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	applied := appliedVersions(t, db)
+	want := []string{"zfs_replica_servers", "zfs_datasets_replica", "zfs_replica_state", "zfs_replica_runs", "zfs_receive_slots"}
+	for i, name := range want {
+		if got := applied[zfsReplicaMigration+i]; got != name {
+			t.Errorf("v%d = %q, want %q", zfsReplicaMigration+i, got, name)
+		}
+	}
+	for v := zfsReplicaMigration + len(want); v < zfsReplicaMigration+10; v++ {
+		if name, ok := applied[v]; ok {
+			t.Errorf("v%d = %q, after the last replica migration", v, name)
+		}
+	}
+	assertReplicaSchema(t, db)
+}
+
+// assertReplicaSchema checks every table and column the replica reads.
+func assertReplicaSchema(t *testing.T, db *sql.DB) {
+	t.Helper()
 	for _, table := range []string{"zfs_replica_servers", "zfs_replica_state", "zfs_replica_runs", "zfs_receive_slots"} {
 		if !hasTable(t, db, table) {
-			t.Fatalf("%s missing after the upgrade", table)
+			t.Fatalf("%s missing", table)
+		}
+	}
+	for _, col := range []struct{ table, column string }{
+		{"zfs_datasets", "replica_target_kind"}, {"zfs_datasets", "replica_peer_pin"}, {"zfs_datasets", "replica_folder"},
+		{"zfs_receive_slots", "bytes"}, {"zfs_receive_slots", "last_snapshot"},
+	} {
+		if !hasColumn(t, db, col.table, col.column) {
+			t.Errorf("%s.%s missing", col.table, col.column)
 		}
 	}
 }

@@ -154,13 +154,14 @@ type zfsReplicaTarget struct {
 	// base is <root>/<server folder> on a ZFS server. For a paired instance it
 	// is the server folder alone, and the receiving side puts it under the
 	// root it chose.
-	base   string
+	base string
+	// folder is the server folder, which the item keeps once a member landed.
+	folder string
 	server *store.ZFSReplicaServer
 }
 
 // zfsReplicaTargetFor resolves the end an item sends to and where its
-// members land there. A member that landed before keeps its folder, so a
-// renamed instance goes on writing where it started.
+// members land there.
 func (s *Service) zfsReplicaTargetFor(ctx context.Context, d store.ZFSDataset) (zfsReplicaTarget, error) {
 	folder, err := s.zfsReplicaFolder(d)
 	if err != nil {
@@ -182,28 +183,23 @@ func (s *Service) zfsReplicaTargetFor(ctx context.Context, d store.ZFSDataset) (
 		if err != nil {
 			return zfsReplicaTarget{}, err
 		}
-		return zfsReplicaTarget{end: end, base: srv.Root + "/" + folder, server: &srv}, nil
+		return zfsReplicaTarget{end: end, base: srv.Root + "/" + folder, folder: folder, server: &srv}, nil
 	case store.ZFSReplicaTargetPeer:
 		end, err := s.zfsReplicaPeerEnd(ctx, d)
 		if err != nil {
 			return zfsReplicaTarget{}, err
 		}
-		return zfsReplicaTarget{end: end, base: folder}, nil
+		return zfsReplicaTarget{end: end, base: folder, folder: folder}, nil
 	}
 	return zfsReplicaTarget{}, zfsRefuse("replica-off", d.Dataset)
 }
 
-// zfsReplicaFolder is the folder the item's members land in below the
-// target's root: the one an earlier run used, or this instance's name.
+// zfsReplicaFolder is the folder the item's members land in below a target's
+// root: the one fixed when its first member arrived, before that this
+// instance's name.
 func (s *Service) zfsReplicaFolder(d store.ZFSDataset) (string, error) {
-	st, ok, err := s.store.GetZFSReplicaState(d.ID, d.Dataset)
-	if err != nil {
-		return "", err
-	}
-	if ok {
-		if base, cut := strings.CutSuffix(st.TargetPath, "/"+d.Dataset); cut {
-			return base[strings.LastIndexByte(base, '/')+1:], nil
-		}
+	if d.Replica.Folder != "" {
+		return d.Replica.Folder, nil
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -212,8 +208,9 @@ func (s *Service) zfsReplicaFolder(d store.ZFSDataset) (string, error) {
 	return zfsReplicaFolderName(instanceDisplayName(settings)), nil
 }
 
-// zfsReplicaFolderName turns an instance name into one dataset name
-// component. Characters ZFS does not take become dashes.
+// zfsReplicaFolderName turns an instance name into the one dataset name
+// component its members land under, on a ZFS server and on a receiving
+// instance alike. Characters ZFS does not take become dashes.
 func zfsReplicaFolderName(name string) string {
 	folder := strings.Map(func(r rune) rune {
 		switch {

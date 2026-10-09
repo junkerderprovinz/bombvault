@@ -82,6 +82,10 @@ export const ZFS_CODE_KEY = {
   "replica-off": "zfs.code.replica-off",
   "server-disabled": "zfs.code.server-disabled",
   "domain-off": "zfs.code.domain-off",
+  "peer-waiting": "zfs.code.peer-waiting",
+  "peer-refused": "zfs.code.peer-refused",
+  "peer-revoked": "zfs.code.peer-revoked",
+  "peer-unreachable": "zfs.code.peer-unreachable",
 } as const satisfies Record<string, TranslationKey>;
 
 export type ZFSReasonCode = keyof typeof ZFS_CODE_KEY;

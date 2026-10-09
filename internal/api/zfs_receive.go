@@ -214,7 +214,7 @@ func unixRFC3339(sec int64) string {
 func (h *Handler) handleListZFSReceive(w http.ResponseWriter, _ *http.Request) {
 	slots, err := h.store.ListZFSReceiveSlots()
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
 		return
 	}
 	out := make([]zfsReceiveView, 0, len(slots))
@@ -259,7 +259,7 @@ func (h *Handler) handleDecideZFSReceive(w http.ResponseWriter, r *http.Request)
 	case "allow":
 		d, err = h.svc.zfsReceiveAllow(r.Context(), slot, body.Pool, body.Root, body.Keep)
 		if err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
+			zfsReplicaFail(w, err)
 			return
 		}
 	case "refuse":
@@ -276,7 +276,7 @@ func (h *Handler) handleDecideZFSReceive(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		zfsReplicaFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, zfsReceiveAnswer{OK: true, zfsReceiveView: zfsReceiveViewOf(slot)})

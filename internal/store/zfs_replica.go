@@ -65,6 +65,11 @@ type ZFSReplica struct {
 	// Peer is what the receiving instance of a peer target answered. Only
 	// SetZFSReplicaPeer writes it, and a new target clears it.
 	Peer ZFSReplicaPeer
+	// Folder is the folder below a target's root that the members land in,
+	// fixed by the first member that arrived. Neither a new target nor
+	// switching the replica off clears it, so a renamed instance goes on
+	// writing where it started.
+	Folder string
 }
 
 // ZFSReplicaPeer is a peer target's answer to this instance's request: its
@@ -334,6 +339,15 @@ func (r *Repo) SetZFSReplicaPeer(id string, p ZFSReplicaPeer) error {
 	return r.updateZFSDataset("SetZFSReplicaPeer", id, `UPDATE zfs_datasets SET replica_peer_state = ?,
 		replica_peer_slot = ?, replica_peer_token_enc = ?, replica_peer_base = ?, replica_peer_url = ?, replica_peer_pin = ?
 		WHERE id = ?`, p.State, p.Slot, notNullBlob(p.TokenEnc), p.Base, p.URL, p.Pin, id)
+}
+
+// FixZFSReplicaFolder records the folder the item's members land in, unless
+// one is fixed already.
+func (r *Repo) FixZFSReplicaFolder(id, folder string) error {
+	if _, err := r.db.Exec(`UPDATE zfs_datasets SET replica_folder = ? WHERE id = ? AND replica_folder = ''`, folder, id); err != nil {
+		return fmt.Errorf("FixZFSReplicaFolder: %w", err)
+	}
+	return nil
 }
 
 // SetZFSReplicaAfterBackup switches between replicating after each backup and

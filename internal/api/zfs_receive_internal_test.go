@@ -144,8 +144,8 @@ func (r *receiveRig) run(t *testing.T, end zfsrepl.End) zfsrepl.Result {
 func TestASourceWaitsUntilTheReceivingInstanceAllows(t *testing.T) {
 	r := newReceiveRig(t)
 	_, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t))
-	if zfsrepl.Code(err) != "zfs-permission" {
-		t.Fatalf("an End before any answer = %v, want a zfs-permission refusal", err)
+	if zfsrepl.Code(err) != "peer-waiting" {
+		t.Fatalf("an End before any answer = %v, want peer-waiting", err)
 	}
 	if got := r.src.svc.zfsReplicaPeerState(r.item(t)); got != store.ZFSReceiveAsked {
 		t.Fatalf("peer state = %q, want asked", got)
@@ -210,9 +210,18 @@ func TestAFullRunLandsUnderTheReceiversRootAndItPrunesItself(t *testing.T) {
 	if last := receives[len(receives)-1]; !slices.Contains(last, "-F") {
 		t.Errorf("the increment onto the newest snapshot was received with %q, want -F", last)
 	}
+	for _, argv := range receives {
+		if !slices.Contains(argv, "reservation") || !slices.Contains(argv, "refreservation") {
+			t.Errorf("%q takes the source's reservations into this pool", argv)
+		}
+	}
+	var sent int64
+	for _, m := range second.Members {
+		sent += m.Bytes
+	}
 	slot := r.request(t)
-	if slot["lastReceived"] == "" || slot["bytes"].(float64) <= 0 {
-		t.Errorf("the slot did not note the stream: %v", slot)
+	if sent == 0 || slot["lastReceived"] == "" || int64(slot["bytes"].(float64)) != sent {
+		t.Errorf("the slot noted %v, want the %d bytes of every member of the last run", slot, sent)
 	}
 }
 
@@ -254,10 +263,16 @@ func TestRevokingASlotStopsTheSourceUntilItAsksAgain(t *testing.T) {
 	if out := r.decide(t, map[string]any{"decision": "revoke"}); out["ok"] != true || out["state"] != store.ZFSReceiveRevoked {
 		t.Fatalf("revoke = %v", out)
 	}
-	if _, err := zfsrepl.Run(context.Background(), r.srcEnd(), end, zfsrepl.Entry{
+	cut, err := zfsrepl.Run(context.Background(), r.srcEnd(), end, zfsrepl.Entry{
 		Root: "cache/appdata", TargetBase: "tower", Now: func() time.Time { return r.now },
-	}); err != nil {
+	})
+	if err != nil {
 		t.Fatal(err)
+	}
+	for _, m := range cut.Members {
+		if m.Code != "peer-revoked" {
+			t.Fatalf("%s after the revoke failed with %q, want peer-revoked", m.Dataset, m.Code)
+		}
 	}
 	if got := r.item(t).Replica.Peer; got.State != store.ZFSReceiveRevoked || got.TokenEnc != nil {
 		t.Fatalf("the source after a refused stream = %+v, want it to know the slot is revoked", got)
@@ -266,8 +281,8 @@ func TestRevokingASlotStopsTheSourceUntilItAsksAgain(t *testing.T) {
 		t.Fatalf("the revoke took the received data: %q", got)
 	}
 
-	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "zfs-permission" {
-		t.Fatalf("a run after the revoke = %v, want a refusal", err)
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-revoked" {
+		t.Fatalf("a run after the revoke = %v, want peer-revoked", err)
 	}
 	if r.request(t)["state"] != store.ZFSReceiveRevoked {
 		t.Fatal("a run asking after the revoke reopened the request")
@@ -277,6 +292,34 @@ func TestRevokingASlotStopsTheSourceUntilItAsksAgain(t *testing.T) {
 	}
 	if got := r.request(t)["state"]; got != store.ZFSReceiveAsked {
 		t.Fatalf("asking anew from the source left the request %v", got)
+	}
+}
+
+func TestASourceNamesARefusalAndASilentReceiver(t *testing.T) {
+	r := newReceiveRig(t)
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-waiting" {
+		t.Fatalf("an End before any answer = %v, want peer-waiting", err)
+	}
+	if out := r.decide(t, map[string]any{"decision": "refuse"}); out["ok"] != true {
+		t.Fatalf("refuse = %v", out)
+	}
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-refused" {
+		t.Fatalf("an End after the refusal = %v, want peer-refused", err)
+	}
+
+	r = newReceiveRig(t)
+	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
+	r.srv.Close()
+	res, err := zfsrepl.Run(context.Background(), r.srcEnd(), end, zfsrepl.Entry{
+		Root: "cache/appdata", TargetBase: "tower", Now: func() time.Time { return r.now },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range res.Members {
+		if m.Code != "peer-unreachable" {
+			t.Fatalf("%s with the receiver gone failed with %q, want peer-unreachable", m.Dataset, m.Code)
+		}
 	}
 }
 

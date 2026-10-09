@@ -108,7 +108,12 @@ func (s *Service) ZFSReplicaView(ctx context.Context, id string) (ZFSReplicaView
 	if rep.TargetKind != store.ZFSReplicaTargetNone && !running {
 		v.Snapshots = s.zfsReplicaSnapshotViews(ctx, d)
 	}
+	// Listing a peer target's snapshots asks that instance first, which may
+	// have brought a new answer.
 	if rep.TargetKind == store.ZFSReplicaTargetPeer {
+		if fresh, err := s.store.GetZFSDataset(id); err == nil {
+			d = fresh
+		}
 		v.PeerState = s.zfsReplicaPeerState(d)
 	}
 	return v, nil
@@ -182,12 +187,12 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 // its target, newest first.
 func (s *Service) zfsReplicaSnapshotViews(ctx context.Context, d store.ZFSDataset) []ZFSReplicaSnapshotView {
 	out := []ZFSReplicaSnapshotView{}
-	tgt, err := s.zfsReplicaTargetFor(ctx, d)
+	qctx, cancel := context.WithTimeout(ctx, zfsReplicaQuickTimeout)
+	defer cancel()
+	tgt, err := s.zfsReplicaTargetFor(qctx, d)
 	if err != nil {
 		return out
 	}
-	qctx, cancel := context.WithTimeout(ctx, zfsReplicaQuickTimeout)
-	defer cancel()
 	snaps, err := zfsReplicaSnapshotsOn(qctx, tgt.end, tgt.base+"/"+d.Dataset)
 	if err != nil {
 		if !zfs.IsNotFound(err) {

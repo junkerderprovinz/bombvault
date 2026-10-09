@@ -143,7 +143,7 @@ func TestTheSourceFolderStaysWhenTheSourceIsRenamed(t *testing.T) {
 	}
 }
 
-func TestReceiveSlotsNoteTheLastStreamAndKeepTheirOwnRule(t *testing.T) {
+func TestReceiveSlotsAddUpTheLastRunAndKeepTheirOwnRule(t *testing.T) {
 	_, r := zfsStore(t)
 	first, err := r.AskZFSReceive(aReceiveAsk("cache/appdata"), false)
 	if err != nil {
@@ -154,8 +154,12 @@ func TestReceiveSlotsNoteTheLastStreamAndKeepTheirOwnRule(t *testing.T) {
 	if _, err := r.AskZFSReceive(other, false); err != nil {
 		t.Fatal(err)
 	}
-	for _, n := range []int64{100, 50} {
-		if err := r.RecordZFSReceived(first.ID, n); err != nil {
+	const run1, run2 = "bombvault-replica-20261009030000", "bombvault-replica-20261010030000"
+	for _, s := range []struct {
+		snap string
+		n    int64
+	}{{run1, 100}, {run1, 7}, {run2, 40}, {run1, 3}, {run2, 7}} {
+		if err := r.RecordZFSReceived(first.ID, s.snap, s.n); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -170,8 +174,8 @@ func TestReceiveSlotsNoteTheLastStreamAndKeepTheirOwnRule(t *testing.T) {
 		t.Fatalf("ListZFSReceiveSlots = %+v, %v", all, err)
 	}
 	got, _, _ := r.GetZFSReceiveSlot(first.ID)
-	if got.Bytes != 50 || got.LastReceived == 0 || got.Keep.Preset != "long" {
-		t.Fatalf("slot after two streams = %+v", got)
+	if got.Bytes != 50 || got.LastSnapshot != run2 || got.LastReceived == 0 || got.Keep.Preset != "long" {
+		t.Fatalf("slot after two runs = %+v, want the 50 bytes of the second", got)
 	}
 }
 

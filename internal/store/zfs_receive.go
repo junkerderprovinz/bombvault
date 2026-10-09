@@ -56,9 +56,11 @@ type ZFSReceiveSlot struct {
 	State     string
 	AskedAt   int64
 	DecidedAt int64
-	// LastReceived is when a stream last landed, and Bytes how large it was.
+	// LastReceived is when a stream last landed. Bytes adds up the streams of
+	// the newest run, the one whose replica snapshot is LastSnapshot.
 	LastReceived int64
 	Bytes        int64
+	LastSnapshot string
 }
 
 // Base is the dataset the slot's members land under.
@@ -75,7 +77,7 @@ type ZFSReceiveDecision struct {
 }
 
 const zfsReceiveSlotCols = `id, peer_id, peer_name, item_id, dataset, source_server, members, proposed_keep,
-	pool, root, keep, token_enc, state, asked_at, decided_at, last_received, bytes`
+	pool, root, keep, token_enc, state, asked_at, decided_at, last_received, bytes, last_snapshot`
 
 // AskZFSReceive records a source's request for one of its items and returns
 // the slot as it now stands. A request for the members the slot already
@@ -142,7 +144,7 @@ func insertZFSReceiveSlot(tx *sql.Tx, s ZFSReceiveSlot) (ZFSReceiveSlot, error) 
 		return ZFSReceiveSlot{}, err
 	}
 	_, err = tx.Exec(`INSERT INTO zfs_receive_slots (`+zfsReceiveSlotCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, x'', ?, ?, 0, 0, 0)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, x'', ?, ?, 0, 0, 0, '')`,
 		s.ID, s.PeerID, s.PeerName, s.ItemID, s.Dataset, s.SourceServer, members, proposed,
 		s.Pool, s.Root, keep, s.State, s.AskedAt)
 	return s, err
@@ -219,10 +221,16 @@ func (r *Repo) SetZFSReceiveKeep(id string, keep ZFSReplicaKeep) error {
 	return nil
 }
 
-// RecordZFSReceived notes a stream of n bytes that landed through the slot.
-func (r *Repo) RecordZFSReceived(id string, n int64) error {
-	if _, err := r.db.Exec(`UPDATE zfs_receive_slots SET last_received = ?, bytes = ? WHERE id = ?`,
-		time.Now().Unix(), n, id); err != nil {
+// RecordZFSReceived notes a stream of n bytes up to the replica snapshot snap
+// that landed through the slot. Every member of a run carries the same
+// snapshot, so a newer one starts the count of a new run and the others add
+// to it; a resumed stream of an older run counts toward the current one.
+func (r *Repo) RecordZFSReceived(id, snap string, n int64) error {
+	if _, err := r.db.Exec(`UPDATE zfs_receive_slots SET last_received = ?,
+		bytes = CASE WHEN ? > last_snapshot THEN ? ELSE bytes + ? END,
+		last_snapshot = max(last_snapshot, ?)
+		WHERE id = ?`,
+		time.Now().Unix(), snap, n, n, snap, id); err != nil {
 		return fmt.Errorf("RecordZFSReceived: %w", err)
 	}
 	return nil
@@ -265,7 +273,7 @@ func scanZFSReceiveSlot(sc scanner) (ZFSReceiveSlot, error) {
 	var members, proposed, keep string
 	var token []byte
 	err := sc.Scan(&s.ID, &s.PeerID, &s.PeerName, &s.ItemID, &s.Dataset, &s.SourceServer, &members, &proposed,
-		&s.Pool, &s.Root, &keep, &token, &s.State, &s.AskedAt, &s.DecidedAt, &s.LastReceived, &s.Bytes)
+		&s.Pool, &s.Root, &keep, &token, &s.State, &s.AskedAt, &s.DecidedAt, &s.LastReceived, &s.Bytes, &s.LastSnapshot)
 	if err != nil {
 		return ZFSReceiveSlot{}, err
 	}

@@ -197,11 +197,17 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 	for _, p := range entry.Placeholders {
 		placeholder[p] = true
 	}
-	last := time.Now()
+	last, fixed := time.Now(), d.Replica.Folder != ""
 	entry.Finished = func(m zfsrepl.MemberResult) {
 		now := time.Now()
 		s.recordZFSReplicaMember(d, runID, m, now.Sub(last), placeholder[m.Target])
 		last = now
+		if m.Code == "" && !fixed {
+			fixed = true
+			if err := s.store.FixZFSReplicaFolder(d.ID, tgt.folder); err != nil {
+				log.Printf("api: zfs replica: fixing the folder of %s failed: %v", d.Dataset, err)
+			}
+		}
 	}
 
 	res, err := s.zfsReplicaEngine()(ctx, src, tgt.end, entry)

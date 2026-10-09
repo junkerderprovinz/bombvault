@@ -2720,6 +2720,8 @@ CREATE INDEX IF NOT EXISTS offsite_targets_destination ON offsite_targets(destin
 		// How each ZFS item replicates. The keep default is DefaultZFSReplicaKeep.
 		// The replica_peer_ columns hold what the receiving instance of a peer
 		// target answered; its slot token is sealed with the APP_KEY.
+		// replica_folder is kept apart from zfs_replica_state, which a new
+		// target or a switch-off drops.
 		version:          zfsReplicaMigration + 1,
 		name:             "zfs_datasets_replica",
 		alreadySatisfied: columnPresent("zfs_datasets", "replica_target_kind"),
@@ -2733,7 +2735,8 @@ ALTER TABLE zfs_datasets ADD COLUMN replica_peer_slot      TEXT    NOT NULL DEFA
 ALTER TABLE zfs_datasets ADD COLUMN replica_peer_token_enc BLOB    NOT NULL DEFAULT x'';
 ALTER TABLE zfs_datasets ADD COLUMN replica_peer_base      TEXT    NOT NULL DEFAULT '';
 ALTER TABLE zfs_datasets ADD COLUMN replica_peer_url       TEXT    NOT NULL DEFAULT '';
-ALTER TABLE zfs_datasets ADD COLUMN replica_peer_pin       TEXT    NOT NULL DEFAULT '';`,
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_pin       TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_folder         TEXT    NOT NULL DEFAULT '';`,
 	},
 	{
 		// Where each member of a replicated item stands on its target. A ZFS
@@ -2800,6 +2803,7 @@ CREATE INDEX IF NOT EXISTS idx_zfs_replica_runs_item ON zfs_replica_runs(item_id
   decided_at    INTEGER NOT NULL DEFAULT 0,
   last_received INTEGER NOT NULL DEFAULT 0,
   bytes         INTEGER NOT NULL DEFAULT 0,
+  last_snapshot TEXT    NOT NULL DEFAULT '',
   UNIQUE (peer_id, item_id)
 );`,
 	},

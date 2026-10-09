@@ -305,19 +305,34 @@ func TestARunRecordsItsMembersAndWhereEachStands(t *testing.T) {
 
 func TestARenamedInstanceKeepsWritingIntoItsFirstFolder(t *testing.T) {
 	r := newReplicaRig(t)
-	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
-		t.Fatal(err)
+	ctx := context.Background()
+	landsUnder := func() string {
+		t.Helper()
+		if err := r.s.ReplicateZFSDataset(ctx, r.item.ID); err != nil {
+			t.Fatal(err)
+		}
+		return r.entries[len(r.entries)-1].TargetBase
 	}
+	landsUnder()
 	settings, _ := r.st.GetSettings()
 	settings.InstanceName = "tower"
 	if err := r.st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
-		t.Fatal(err)
+	if got := landsUnder(); got != "tank/bombvault-replica/bottich" {
+		t.Errorf("the run after the rename lands under %q", got)
 	}
-	if got := r.entries[1].TargetBase; got != "tank/bombvault-replica/bottich" {
-		t.Errorf("second run lands under %q", got)
+
+	for _, target := range []zfsReplicaTargetExport{{Kind: store.ZFSReplicaTargetNone}, {Kind: store.ZFSReplicaTargetServer, ID: r.srv.ID}} {
+		if err := r.s.PatchZFSReplica(ctx, r.item.ID, ZFSReplicaPatch{Target: &target}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if states, _ := r.st.ListZFSReplicaStates(r.item.ID); len(states) != 0 {
+		t.Fatalf("switching off kept the member state %+v", states)
+	}
+	if got := landsUnder(); got != "tank/bombvault-replica/bottich" {
+		t.Errorf("the run after switching off and on again lands under %q", got)
 	}
 }
 
