@@ -165,6 +165,9 @@ func TestImportRefusesAReplicaBlockAFormWouldRefuse(t *testing.T) {
 		"cadence that does not parse": func(r *zfsReplicaExport) {
 			r.Items[0].Cadence = "sometimes"
 		},
+		"cadence every few days": func(r *zfsReplicaExport) {
+			r.Items[0].Cadence = "everyN 3 03:00"
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			exp := base

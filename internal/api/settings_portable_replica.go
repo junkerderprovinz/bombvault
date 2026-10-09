@@ -5,7 +5,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -134,10 +133,10 @@ func zfsReplicaItemRefusal(target zfsReplicaTargetExport, cadence string, keep s
 			return "a keep count is negative"
 		}
 	}
-	if cadence != "" {
-		if _, err := schedule.ParseCadence(cadence); err != nil {
-			return "invalid cadence: " + scrubError(err)
-		}
+	// The scheduler gives an item no entry of its own for everyN, so such a
+	// replica would never run.
+	if err := zfsValidateCadence(cadence); err != nil {
+		return "cadence: " + scrubError(err)
 	}
 	return ""
 }

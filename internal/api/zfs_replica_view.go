@@ -267,9 +267,6 @@ func (s *Service) PatchZFSReplica(ctx context.Context, id string, p ZFSReplicaPa
 	if msg := zfsReplicaItemRefusal(target, cadence, keep, ids); msg != "" {
 		return fmt.Errorf("the replica %s", msg)
 	}
-	if err := zfsValidateCadence(cadence); err != nil {
-		return err
-	}
 
 	moved := target.Kind != rep.TargetKind || target.ID != rep.TargetID
 	if moved {
