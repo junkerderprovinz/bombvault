@@ -153,7 +153,7 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
           </div>
           <span className="text-caption text-carbon-textMuted">
             <bdi dir="ltr">
-              {t("zfs.replica.server.example").replace("{path}", () => examplePath(server.root, ownName))}
+              {t("zfs.replica.server.example").replace("{path}", () => examplePath(server.root, server.folder || ownName))}
             </bdi>
           </span>
         </div>

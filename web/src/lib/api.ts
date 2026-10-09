@@ -4445,6 +4445,8 @@ export interface ZFSReplicaServer {
   sizeBytes: number;
   /** The ZFS items that replicate here, by id. */
   usedBy: string[];
+  /** The folder below root this instance's items land in. */
+  folder: string;
 }
 
 export interface ZFSReplicaServerInput {

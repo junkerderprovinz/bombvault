@@ -295,6 +295,12 @@ describe("replica card", () => {
     expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
   });
 
+  it("gives the reason the server names for a waiting replica", async () => {
+    current = replica({ state: "waiting", code: "server-disabled" });
+    renderCard();
+    expect(await screen.findByLabelText(en["zfs.code.server-disabled"])).toBeTruthy();
+  });
+
   it("holds the run button while a bring back has the replica", async () => {
     progress = { "zfs-replica-restore:zfs1": { phase: "replicate", percent: 10, active: true, lastSeen: Date.now() } };
     renderCard();

@@ -94,6 +94,13 @@ describe("ZFS servers", () => {
     expect(screen.queryByText("backup/bombvault-replica/tower/cache/appdata")).toBeNull();
   });
 
+  it("builds the example path from the folder the server reports", async () => {
+    servers = [server({ usedBy: [], folder: "Tower-B-ro" })];
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: /Backup-NAS/ }));
+    expect(await screen.findByText("for example backup/bombvault-replica/Tower-B-ro/tank/appdata")).toBeTruthy();
+  });
+
   it("switches a server off from its page", async () => {
     renderList();
     fireEvent.click(await screen.findByRole("button", { name: /Backup-NAS/ }));
