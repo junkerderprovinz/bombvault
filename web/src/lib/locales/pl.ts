@@ -2132,6 +2132,7 @@ const pl: Partial<Translations> = {
   "zfs.replica.add.added": "{name} jest skonfigurowany. Wybierz go przy pozycji ZFS w sekcji Replika.",
   "zfs.replica.planOn": "Replika na {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 niespełnione: replika nie jest kopią zapasową",
   "zfs.replica.peer.asked": "Czeka, aż {peer} zezwoli",
   "zfs.replica.peer.askedText": "{peer} pokazuje prośbę w Instancje › Odbiornik. Nic nie zostanie wysłane, dopóki ktoś tam nie kliknie Zezwól.",
   "zfs.replica.peer.allowedText": "Instancja {peer} zezwoliła na replikę. Odbiera ją do własnej puli i sama decyduje, ile migawek zostaje.",

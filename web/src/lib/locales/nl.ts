@@ -2134,6 +2134,7 @@ const nl: Partial<Translations> = {
   "zfs.replica.add.added": "{name} is ingesteld. Kies het bij een ZFS-item onder Replica.",
   "zfs.replica.planOn": "Replica op {target}.",
   "zfs.replica.planSeen": "Replica {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 niet behaald: een replica is geen back-up",
   "zfs.replica.peer.asked": "Wacht tot {peer} het toestaat",
   "zfs.replica.peer.askedText": "{peer} toont het verzoek onder Instanties › Ontvanger. Er wordt niets verstuurd tot iemand daar op Toestaan klikt.",
   "zfs.replica.peer.allowedText": "{peer} heeft de replica toegestaan. Ze ontvangt hem in een eigen pool en beslist daar hoeveel snapshots blijven staan.",

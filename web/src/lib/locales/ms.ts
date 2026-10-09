@@ -2510,6 +2510,7 @@ const ms: Partial<Translations> = {
   "zfs.replica.add.added": "{name} sudah disediakan. Pilihnya pada entri ZFS di bawah Replika.",
   "zfs.replica.planOn": "Replika pada {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 tidak dipenuhi: replika bukan sandaran",
   "zfs.replica.peer.asked": "Menunggu {peer} membenarkan",
   "zfs.replica.peer.askedText": "{peer} menunjukkan permintaan di bawah Instans › Penerima. Tiada apa dihantar sehingga seseorang di sana mengklik Benarkan.",
   "zfs.replica.peer.allowedText": "{peer} telah membenarkan replika. Ia menerimanya ke dalam pool miliknya sendiri dan memutuskan di sana berapa banyak syot kilat yang kekal.",

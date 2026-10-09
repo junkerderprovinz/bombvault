@@ -2510,6 +2510,7 @@ const lv: Partial<Translations> = {
   "zfs.replica.add.added": "{name} ir iestatīts. Izvēlies to ZFS ierakstā sadaļā Replika.",
   "zfs.replica.planOn": "Replika uz {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 nav izpildīts: replika nav dublējums",
   "zfs.replica.peer.asked": "Gaida, kamēr {peer} to atļaus",
   "zfs.replica.peer.askedText": "{peer} rāda pieprasījumu sadaļā Instances › Uztvērējs. Nekas netiek sūtīts, kamēr kāds tur nenoklikšķina uz Atļaut.",
   "zfs.replica.peer.allowedText": "{peer} atļāva repliku. Tā to saņem savā kopnē un tur pati izlemj, cik momentuzņēmumu paliek.",

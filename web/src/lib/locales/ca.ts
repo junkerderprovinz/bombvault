@@ -2510,6 +2510,7 @@ const ca: Partial<Translations> = {
   "zfs.replica.add.added": "{name} està configurat. Tria'l en un element ZFS, a Rèplica.",
   "zfs.replica.planOn": "Rèplica a {target}.",
   "zfs.replica.planSeen": "Rèplica {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 no complert: una rèplica no és una còpia de seguretat",
   "zfs.replica.peer.asked": "Esperant que {peer} ho permeti",
   "zfs.replica.peer.askedText": "{peer} mostra la sol·licitud a Instàncies › Receptor. No s'envia res fins que algú allà faci clic a Permet.",
   "zfs.replica.peer.allowedText": "{peer} ha permès la rèplica. La rep en un pool propi i hi decideix quantes instantànies es queden.",

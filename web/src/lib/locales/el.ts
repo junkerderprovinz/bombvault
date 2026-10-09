@@ -2137,6 +2137,7 @@ const el: Partial<Translations> = {
   "zfs.replica.add.added": "Το {name} ρυθμίστηκε. Διάλεξέ το σε μια εγγραφή ZFS στη Ρεπλίκα.",
   "zfs.replica.planOn": "Ρεπλίκα στο {target}.",
   "zfs.replica.planSeen": "Ρεπλίκα {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 δεν πληρείται: μια ρεπλίκα δεν είναι αντίγραφο ασφαλείας",
   "zfs.replica.peer.asked": "Αναμονή να το επιτρέψει το {peer}",
   "zfs.replica.peer.askedText": "Το {peer} δείχνει το αίτημα στο Στιγμιότυπα › Δέκτης. Τίποτα δεν στέλνεται μέχρι κάποιος εκεί να πατήσει Επιτρέπεται.",
   "zfs.replica.peer.allowedText": "Το {peer} επέτρεψε τη ρεπλίκα. Τη λαμβάνει σε δικό του pool και αποφασίζει εκεί πόσα στιγμιότυπα μένουν.",

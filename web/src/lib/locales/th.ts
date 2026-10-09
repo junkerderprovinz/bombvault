@@ -2140,6 +2140,7 @@ const th: Partial<Translations> = {
   "zfs.replica.add.added": "ตั้งค่า {name} แล้ว เลือกมันในรายการ ZFS ใต้เรพลิกา",
   "zfs.replica.planOn": "เรพลิกาบน {target}",
   "zfs.replica.planSeen": "เรพลิกา {when}",
+  "zfs.replica.rule321NoBackup": "ไม่เป็นไปตามกฎ 3-2-1: เรพลิกาไม่ใช่การสำรองข้อมูล",
   "zfs.replica.peer.asked": "รอ {peer} อนุญาต",
   "zfs.replica.peer.askedText": "{peer} แสดงคำขอไว้ที่ อินสแตนซ์ › ตัวรับ จะไม่มีอะไรถูกส่งจนกว่าจะมีคนที่นั่นกดอนุญาต",
   "zfs.replica.peer.allowedText": "{peer} อนุญาตเรพลิกาแล้ว โดยรับเข้าพูลของตัวเองและตัดสินใจที่นั่นว่าจะเก็บสแนปช็อตไว้กี่รายการ",

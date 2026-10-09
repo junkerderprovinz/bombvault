@@ -2510,6 +2510,7 @@ const bg: Partial<Translations> = {
   "zfs.replica.add.added": "{name} е настроен. Избери го в ZFS запис под Реплика.",
   "zfs.replica.planOn": "Реплика към {target}.",
   "zfs.replica.planSeen": "Реплика {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 не е изпълнено: репликата не е резервно копие",
   "zfs.replica.peer.asked": "Изчаква се {peer} да разреши",
   "zfs.replica.peer.askedText": "{peer} показва заявката в Инстанции › Приемник. Нищо не се изпраща, докато някой там не натисне Разреши.",
   "zfs.replica.peer.allowedText": "{peer} разреши репликата. Тя пристига в собствен пул там и {peer} сам решава колко моментни снимки остават.",

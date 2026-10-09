@@ -2135,6 +2135,7 @@ const cs: Partial<Translations> = {
   "zfs.replica.add.added": "{name} je nastaven. Vyber ho u položky ZFS v části Replika.",
   "zfs.replica.planOn": "Replika na {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 nesplněno: replika není záloha",
   "zfs.replica.peer.asked": "Čeká se, až {peer} povolí",
   "zfs.replica.peer.askedText": "{peer} zobrazí žádost v sekci Instance › Přijímač. Nic se neodešle, dokud tam někdo neklikne na Povolit.",
   "zfs.replica.peer.allowedText": "Instance {peer} repliku povolila. Přijímá ji do vlastního poolu a sama tam rozhoduje, kolik snímků zůstane.",

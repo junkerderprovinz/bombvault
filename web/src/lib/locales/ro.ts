@@ -2140,6 +2140,7 @@ const ro: Partial<Translations> = {
   "zfs.replica.add.added": "{name} este configurat. Alege-l la un element ZFS, la Replică.",
   "zfs.replica.planOn": "Replică pe {target}.",
   "zfs.replica.planSeen": "Replică {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 neîndeplinită: o replică nu este o copie de siguranță",
   "zfs.replica.peer.asked": "Se așteaptă ca {peer} să permită",
   "zfs.replica.peer.askedText": "{peer} afișează cererea la Instanțe › Receptor. Nu se trimite nimic până când cineva de acolo nu apasă Permite.",
   "zfs.replica.peer.allowedText": "{peer} a permis replica. O primește într-un pool propriu și decide acolo câte instantanee rămân.",

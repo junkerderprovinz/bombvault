@@ -2137,6 +2137,7 @@ const he: Partial<Translations> = {
   "zfs.replica.add.added": "{name} הוגדר. בחר אותו ברשומת ZFS תחת רפליקה.",
   "zfs.replica.planOn": "רפליקה ב-{target}.",
   "zfs.replica.planSeen": "רפליקה {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 לא מתקיים: רפליקה אינה גיבוי",
   "zfs.replica.peer.asked": "ממתין שהמופע {peer} יאשר",
   "zfs.replica.peer.askedText": "{peer} מציג את הבקשה תחת מופעים › מקלט. שום דבר לא נשלח עד שמישהו שם לוחץ על אשר.",
   "zfs.replica.peer.allowedText": "{peer} אישר את הרפליקה. הוא מקבל אותה לבריכה משלו ומחליט שם כמה תצלומים נשארים.",

@@ -2510,6 +2510,7 @@ const fa: Partial<Translations> = {
   "zfs.replica.add.added": "{name} آماده شد. آن را در یک مورد ZFS زیر ریپلیکا انتخاب کن.",
   "zfs.replica.planOn": "ریپلیکا روی {target}.",
   "zfs.replica.planSeen": "ریپلیکا {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 برآورده نشد: ریپلیکا پشتیبان نیست",
   "zfs.replica.peer.asked": "در انتظار اجازهٔ {peer}",
   "zfs.replica.peer.askedText": "{peer} درخواست را زیر نمونه‌ها › گیرنده نشان می‌دهد. تا وقتی کسی آنجا روی اجازه دادن نزند چیزی فرستاده نمی‌شود.",
   "zfs.replica.peer.allowedText": "{peer} اجازهٔ ریپلیکا را داد. آن را در استخر خودش دریافت می‌کند و همان‌جا تصمیم می‌گیرد چند اسنپ‌شات بماند.",

@@ -2510,6 +2510,7 @@ const hr: Partial<Translations> = {
   "zfs.replica.add.added": "{name} je postavljen. Odaberi ga na ZFS stavki pod Replika.",
   "zfs.replica.planOn": "Replika na {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 nije ispunjeno: replika nije sigurnosna kopija",
   "zfs.replica.peer.asked": "Čeka da {peer} dopusti",
   "zfs.replica.peer.askedText": "{peer} prikazuje zahtjev pod Instance › Prijamnik. Ništa se ne šalje dok netko ondje ne klikne Dopusti.",
   "zfs.replica.peer.allowedText": "Instanca {peer} je dopustila repliku. Prima je u vlastiti bazen i ondje sama odlučuje koliko snimaka ostaje.",

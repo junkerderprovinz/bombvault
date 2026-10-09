@@ -2137,6 +2137,7 @@ const pt: Partial<Translations> = {
   "zfs.replica.add.added": "{name} está configurado. Escolhe-o num item ZFS, em Réplica.",
   "zfs.replica.planOn": "Réplica em {target}.",
   "zfs.replica.planSeen": "Réplica {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 não cumprido: uma réplica não é um backup",
   "zfs.replica.peer.asked": "À espera de que {peer} permita",
   "zfs.replica.peer.askedText": "{peer} mostra o pedido em Instâncias › Recetor. Nada é enviado até alguém lá clicar em Permitir.",
   "zfs.replica.peer.allowedText": "{peer} permitiu a réplica. Recebe-a num pool próprio e decide lá quantos instantâneos ficam.",

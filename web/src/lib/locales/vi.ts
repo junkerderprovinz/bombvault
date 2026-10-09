@@ -2128,6 +2128,7 @@ const vi: Partial<Translations> = {
   "zfs.replica.add.added": "{name} đã được thiết lập. Hãy chọn nó ở một mục ZFS, phần Bản nhân bản.",
   "zfs.replica.planOn": "Bản nhân bản trên {target}.",
   "zfs.replica.planSeen": "Bản nhân bản {when}",
+  "zfs.replica.rule321NoBackup": "Không đáp ứng quy tắc 3-2-1: bản nhân bản không phải là bản sao lưu",
   "zfs.replica.peer.asked": "Đang chờ {peer} cho phép",
   "zfs.replica.peer.askedText": "{peer} hiển thị yêu cầu trong Phiên bản › Bộ nhận. Không có gì được gửi cho đến khi ai đó ở đó bấm Cho phép.",
   "zfs.replica.peer.allowedText": "{peer} đã cho phép bản nhân bản. Nó nhận vào pool riêng và tự quyết định ở đó giữ lại bao nhiêu ảnh chụp.",

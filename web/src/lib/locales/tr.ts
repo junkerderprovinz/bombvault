@@ -2137,6 +2137,7 @@ const tr: Partial<Translations> = {
   "zfs.replica.add.added": "{name} kuruldu. Onu bir ZFS kaydında Replika altından seç.",
   "zfs.replica.planOn": "{target} üzerinde replika.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 karşılanmıyor: replika bir yedek değildir",
   "zfs.replica.peer.asked": "{peer} örneğinin izin vermesi bekleniyor",
   "zfs.replica.peer.askedText": "{peer}, isteği Örnekler › Alıcı altında gösterir. Orada biri İzin ver'e tıklayana kadar hiçbir şey gönderilmez.",
   "zfs.replica.peer.allowedText": "{peer} replikaya izin verdi. Onu kendi havuzuna alır ve orada kaç anlık görüntünün kalacağına kendisi karar verir.",

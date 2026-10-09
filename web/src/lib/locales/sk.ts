@@ -2510,6 +2510,7 @@ const sk: Partial<Translations> = {
   "zfs.replica.add.added": "{name} je nastavený. Vyber ho pri položke ZFS v časti Replika.",
   "zfs.replica.planOn": "Replika na {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 nesplnené: replika nie je záloha",
   "zfs.replica.peer.asked": "Čaká sa, kým {peer} povolí",
   "zfs.replica.peer.askedText": "{peer} zobrazí žiadosť v sekcii Inštancie › Prijímač. Nič sa neodošle, kým tam niekto neklikne na Povoliť.",
   "zfs.replica.peer.allowedText": "Inštancia {peer} repliku povolila. Prijíma ju do vlastného poolu a sama tam rozhoduje, koľko snímok zostane.",

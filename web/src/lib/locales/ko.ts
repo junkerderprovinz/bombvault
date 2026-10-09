@@ -2128,6 +2128,7 @@ const ko: Partial<Translations> = {
   "zfs.replica.add.added": "{name} 설정이 끝났습니다. ZFS 항목의 복제본에서 선택하세요.",
   "zfs.replica.planOn": "{target}(으)로의 복제본.",
   "zfs.replica.planSeen": "복제본 {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 미충족: 복제본은 백업이 아닙니다",
   "zfs.replica.peer.asked": "{peer}의 허용을 기다리는 중",
   "zfs.replica.peer.askedText": "{peer}은(는) 인스턴스 › 수신기에서 요청을 보여 줍니다. 그쪽에서 누군가 허용을 누르기 전에는 아무것도 보내지 않습니다.",
   "zfs.replica.peer.allowedText": "{peer}이(가) 복제본을 허용했습니다. 자체 풀로 받고, 남길 스냅샷 수도 그쪽에서 정합니다.",

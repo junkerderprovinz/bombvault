@@ -2137,6 +2137,7 @@ const no: Partial<Translations> = {
   "zfs.replica.add.added": "{name} er satt opp. Velg den på et ZFS-element under Replika.",
   "zfs.replica.planOn": "Replika på {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 ikke oppfylt: en replika er ikke en sikkerhetskopi",
   "zfs.replica.peer.asked": "Venter på at {peer} tillater det",
   "zfs.replica.peer.askedText": "{peer} viser forespørselen under Instanser › Mottaker. Ingenting sendes før noen der klikker på Tillat.",
   "zfs.replica.peer.allowedText": "{peer} har tillatt replikaen. Den tar imot i sin egen pool og bestemmer selv der hvor mange snapshots som blir.",

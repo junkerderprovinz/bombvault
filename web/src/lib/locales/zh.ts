@@ -2128,6 +2128,7 @@ const zh: Partial<Translations> = {
   "zfs.replica.add.added": "{name} 已设置好。请在 ZFS 条目的副本下选择它。",
   "zfs.replica.planOn": "复制到 {target} 的副本。",
   "zfs.replica.planSeen": "副本 {when}",
+  "zfs.replica.rule321NoBackup": "不满足 3-2-1：副本不是备份",
   "zfs.replica.peer.asked": "等待 {peer} 允许",
   "zfs.replica.peer.askedText": "{peer} 会在“实例 › 接收端”下显示这个请求。在那边有人点击允许之前，不会发送任何内容。",
   "zfs.replica.peer.allowedText": "{peer} 已允许这个副本。它把副本接收到自己的存储池中，并在那里决定保留多少个快照。",

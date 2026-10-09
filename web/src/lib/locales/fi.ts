@@ -2137,6 +2137,7 @@ const fi: Partial<Translations> = {
   "zfs.replica.add.added": "{name} on otettu käyttöön. Valitse se ZFS-merkinnässä kohdassa Replika.",
   "zfs.replica.planOn": "Replika kohteessa {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 ei täyty: replika ei ole varmuuskopio",
   "zfs.replica.peer.asked": "Odotetaan, että {peer} sallii sen",
   "zfs.replica.peer.askedText": "{peer} näyttää pyynnön kohdassa Ilmentymät › Vastaanotin. Mitään ei lähetetä, ennen kuin joku siellä napsauttaa Salli.",
   "zfs.replica.peer.allowedText": "{peer} salli replikan. Se vastaanottaa sen omaan pooliinsa ja päättää siellä itse, montako tilannevedosta jää.",

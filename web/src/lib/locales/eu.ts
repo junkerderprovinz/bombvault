@@ -2510,6 +2510,7 @@ const eu: Partial<Translations> = {
   "zfs.replica.add.added": "{name} konfiguratuta dago. Aukeratu ZFS sarrera batean, Erreplika atalean.",
   "zfs.replica.planOn": "Erreplika hemen: {target}.",
   "zfs.replica.planSeen": "Erreplika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 bete gabe: erreplika ez da babeskopia",
   "zfs.replica.peer.asked": "{peer} instantziak baimentzearen zain",
   "zfs.replica.peer.askedText": "{peer} instantziak eskaera Instantziak › Hartzailea atalean erakusten du. Ez da ezer bidaltzen hango norbaitek Baimendu sakatu arte.",
   "zfs.replica.peer.allowedText": "{peer} instantziak erreplika baimendu du. Bere pool propioan jasotzen du eta han erabakitzen du zenbat argazki geratzen diren.",

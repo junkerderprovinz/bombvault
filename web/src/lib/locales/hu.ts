@@ -2140,6 +2140,7 @@ const hu: Partial<Translations> = {
   "zfs.replica.add.added": "{name} be van állítva. Válaszd ki egy ZFS-tételnél a Replika résznél.",
   "zfs.replica.planOn": "Replika ide: {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 nem teljesül: a replika nem biztonsági mentés",
   "zfs.replica.peer.asked": "Várakozás, hogy {peer} engedélyezze",
   "zfs.replica.peer.askedText": "{peer} a kérést a Példányok › Fogadó alatt mutatja. Semmi nem megy el, amíg valaki ott nem kattint az Engedélyezésre.",
   "zfs.replica.peer.allowedText": "{peer} engedélyezte a replikát. A saját pooljába fogadja, és ott maga dönti el, hány pillanatkép marad.",

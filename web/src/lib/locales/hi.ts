@@ -2510,6 +2510,7 @@ const hi: Partial<Translations> = {
   "zfs.replica.add.added": "{name} तैयार है। उसे किसी ZFS एंट्री में रेप्लिका के नीचे चुनें।",
   "zfs.replica.planOn": "{target} पर रेप्लिका।",
   "zfs.replica.planSeen": "रेप्लिका {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 पूरा नहीं: रेप्लिका बैकअप नहीं है",
   "zfs.replica.peer.asked": "{peer} की अनुमति का इंतज़ार",
   "zfs.replica.peer.askedText": "{peer} अनुरोध को इंस्टेंस › रिसीवर में दिखाता है। जब तक वहाँ कोई अनुमति दें पर क्लिक नहीं करता, कुछ नहीं भेजा जाता।",
   "zfs.replica.peer.allowedText": "{peer} ने रेप्लिका की अनुमति दी। वह इसे अपने खुद के पूल में प्राप्त करता है और वहीं तय करता है कि कितने स्नैपशॉट रहें।",

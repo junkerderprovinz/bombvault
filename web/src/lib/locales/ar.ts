@@ -2140,6 +2140,7 @@ const ar: Partial<Translations> = {
   "zfs.replica.add.added": "تم إعداد {name}. اختره في عنصر ZFS ضمن النسخة المتماثلة.",
   "zfs.replica.planOn": "نسخة متماثلة على {target}.",
   "zfs.replica.planSeen": "نسخة متماثلة {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 غير مستوفى: النسخة المتماثلة ليست نسخة احتياطية",
   "zfs.replica.peer.asked": "في انتظار أن يسمح {peer}",
   "zfs.replica.peer.askedText": "يعرض {peer} الطلب تحت المثيلات › المستقبِل. لا يُرسل شيء إلى أن ينقر أحد هناك على سماح.",
   "zfs.replica.peer.allowedText": "سمح {peer} بالنسخة المتماثلة. يستقبلها في مجمّع خاص به ويقرر هناك عدد اللقطات التي تبقى.",

@@ -2137,6 +2137,7 @@ const sv: Partial<Translations> = {
   "zfs.replica.add.added": "{name} är inställd. Välj den på en ZFS-post under Replik.",
   "zfs.replica.planOn": "Replik på {target}.",
   "zfs.replica.planSeen": "Replik {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 inte uppfylld: en replik är ingen säkerhetskopia",
   "zfs.replica.peer.asked": "Väntar på att {peer} ska tillåta det",
   "zfs.replica.peer.askedText": "{peer} visar förfrågan under Instanser › Mottagare. Inget skickas förrän någon där klickar på Tillåt.",
   "zfs.replica.peer.allowedText": "{peer} har tillåtit repliken. Den tar emot i en egen pool och bestämmer själv där hur många ögonblicksbilder som blir kvar.",

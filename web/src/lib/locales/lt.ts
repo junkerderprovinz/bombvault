@@ -2510,6 +2510,7 @@ const lt: Partial<Translations> = {
   "zfs.replica.add.added": "{name} nustatytas. Pasirink jį ZFS įraše skiltyje Replika.",
   "zfs.replica.planOn": "Replika į {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 neįvykdyta: replika nėra atsarginė kopija",
   "zfs.replica.peer.asked": "Laukiama, kol {peer} tai leis",
   "zfs.replica.peer.askedText": "{peer} rodo užklausą skiltyje Egzemplioriai › Imtuvas. Niekas nesiunčiama, kol kas nors ten nepaspaudžia Leisti.",
   "zfs.replica.peer.allowedText": "{peer} leido repliką. Jis ją priima į savo telkinį ir ten pats sprendžia, kiek momentinių kopijų lieka.",

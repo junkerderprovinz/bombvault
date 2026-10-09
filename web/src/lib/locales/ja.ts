@@ -2128,6 +2128,7 @@ const ja: Partial<Translations> = {
   "zfs.replica.add.added": "{name} を設定しました。ZFS 項目のレプリカで選んでください。",
   "zfs.replica.planOn": "{target} へのレプリカ。",
   "zfs.replica.planSeen": "レプリカ {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 未達成：レプリカはバックアップではありません",
   "zfs.replica.peer.asked": "{peer} の許可を待っています",
   "zfs.replica.peer.askedText": "{peer} は「インスタンス › レシーバー」にリクエストを表示します。向こうで誰かが「許可」を押すまで、何も送信されません。",
   "zfs.replica.peer.allowedText": "{peer} がレプリカを許可しました。自分のプールに受信し、残すスナップショットの数も向こうで決めます。",

@@ -2510,6 +2510,7 @@ const id: Partial<Translations> = {
   "zfs.replica.add.added": "{name} sudah disiapkan. Pilih di entri ZFS pada Replika.",
   "zfs.replica.planOn": "Replika di {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 tidak terpenuhi: replika bukan backup",
   "zfs.replica.peer.asked": "Menunggu {peer} mengizinkan",
   "zfs.replica.peer.askedText": "{peer} menampilkan permintaan di Instansi › Penerima. Tidak ada yang dikirim sampai seseorang di sana mengklik Izinkan.",
   "zfs.replica.peer.allowedText": "{peer} mengizinkan replika. Ia menerimanya ke pool miliknya sendiri dan memutuskan di sana berapa snapshot yang tetap ada.",

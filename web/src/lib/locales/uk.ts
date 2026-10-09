@@ -2132,6 +2132,7 @@ const uk: Partial<Translations> = {
   "zfs.replica.add.added": "{name} налаштовано. Вибери його в записі ZFS у розділі Репліка.",
   "zfs.replica.planOn": "Репліка на {target}.",
   "zfs.replica.planSeen": "Репліка {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 не дотримано: репліка не є резервною копією",
   "zfs.replica.peer.asked": "Чекаємо, поки {peer} дозволить",
   "zfs.replica.peer.askedText": "{peer} показує запит у розділі Екземпляри › Приймач. Нічого не надсилається, доки там хтось не натисне «Дозволити».",
   "zfs.replica.peer.allowedText": "{peer} дозволив репліку. Він приймає її у власний пул і сам вирішує там, скільки знімків залишається.",

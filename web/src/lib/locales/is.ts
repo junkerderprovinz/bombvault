@@ -2510,6 +2510,7 @@ const is: Partial<Translations> = {
   "zfs.replica.add.added": "{name} er sett upp. Veldu það á ZFS-atriði undir Eftirmynd.",
   "zfs.replica.planOn": "Eftirmynd á {target}.",
   "zfs.replica.planSeen": "Eftirmynd {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 ekki uppfyllt: eftirmynd er ekki afrit",
   "zfs.replica.peer.asked": "Bíð eftir að {peer} leyfi það",
   "zfs.replica.peer.askedText": "{peer} sýnir beiðnina undir Tilvik › Móttakandi. Ekkert er sent fyrr en einhver þar smellir á Leyfa.",
   "zfs.replica.peer.allowedText": "{peer} leyfði eftirmyndina. Það tekur við henni í eigið diskasafn og ákveður þar hve margar skyndimyndir verða eftir.",

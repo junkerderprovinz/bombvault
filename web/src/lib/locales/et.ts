@@ -2510,6 +2510,7 @@ const et: Partial<Translations> = {
   "zfs.replica.add.added": "{name} on seadistatud. Vali see ZFS-kirjel jaotises Replika.",
   "zfs.replica.planOn": "Replika siin: {target}.",
   "zfs.replica.planSeen": "Replika {when}",
+  "zfs.replica.rule321NoBackup": "3-2-1 täitmata: replika ei ole varukoopia",
   "zfs.replica.peer.asked": "Ootab, et {peer} selle lubaks",
   "zfs.replica.peer.askedText": "{peer} näitab taotlust jaotises Eksemplarid › Vastuvõtja. Midagi ei saadeta, kuni keegi seal klõpsab nupul Luba.",
   "zfs.replica.peer.allowedText": "{peer} lubas replika. See võtab selle vastu oma kogumisse ja otsustab seal ise, mitu hetktõmmist alles jääb.",
