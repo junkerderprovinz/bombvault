@@ -96,11 +96,10 @@ func (s *Service) ZFSReplicaView(ctx context.Context, id string) (ZFSReplicaView
 		}
 	}
 	running := s.zfsReplicaRunning(id)
-	switch {
-	case running:
+	if running {
 		v.State = zfsReplicaRunning
-	case s.zfsReplicaRunRefusal(d) != nil && rep.TargetKind != store.ZFSReplicaTargetNone:
-		v.State = zfsReplicaWaiting
+	} else if err := s.zfsReplicaRunRefusal(d); err != nil && rep.TargetKind != store.ZFSReplicaTargetNone {
+		v.State, v.Code = zfsReplicaWaiting, zfsReplicaCode(err)
 	}
 	if v.Members, err = s.zfsReplicaMemberViews(d, run, hasRun, running); err != nil {
 		return ZFSReplicaView{}, err

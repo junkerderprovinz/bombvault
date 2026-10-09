@@ -1064,3 +1064,22 @@ func TestDetachingAServerWaitsForEveryItemOrTouchesNone(t *testing.T) {
 		}
 	}
 }
+
+func TestAWaitingReplicaSaysWhatItWaitsFor(t *testing.T) {
+	r := newReplicaRig(t)
+	r.srv.Enabled = false
+	if err := r.st.UpdateZFSReplicaServer(r.srv); err != nil {
+		t.Fatal(err)
+	}
+	if _, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", ""); v["state"] != "waiting" || v["code"] != "server-disabled" {
+		t.Errorf("view = %v %v, want waiting for server-disabled", v["state"], v["code"])
+	}
+	settings, _ := r.st.GetSettings()
+	settings.ZFSEnabled = false
+	if err := r.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", ""); v["state"] != "waiting" || v["code"] != "domain-off" {
+		t.Errorf("view = %v %v, want waiting for domain-off", v["state"], v["code"])
+	}
+}
