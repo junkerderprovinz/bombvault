@@ -21,6 +21,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
+	"github.com/junkerderprovinz/bombvault/internal/zfsrepl"
 )
 
 // zfsReceiveBodyMax caps a request over the group. A member list of a few
@@ -325,6 +326,20 @@ func (s *Service) zfsReceiveAllow(ctx context.Context, slot store.ZFSReceiveSlot
 	}
 	if _, err := zfsEndState(ctx, host, pool); err != nil {
 		return d, fmt.Errorf("pool %s: %w", pool, err)
+	}
+	if err := zfsFolderFree(ctx, host, slot.Base(), slot.PeerID); err != nil {
+		return d, err
+	}
+	// Another source allowed into the same folder may not have sent yet, so
+	// its folder carries no mark to find.
+	slots, err := s.store.ListZFSReceiveSlots()
+	if err != nil {
+		return d, err
+	}
+	for _, o := range slots {
+		if o.State == store.ZFSReceiveAllowed && o.PeerID != slot.PeerID && o.Base() == slot.Base() {
+			return d, &zfsrepl.Refusal{Code: "target-owned", Detail: slot.Base() + " is the folder of another allowed instance"}
+		}
 	}
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {

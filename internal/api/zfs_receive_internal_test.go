@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -400,11 +401,11 @@ func TestAReceiverSwitchedOffTurnsRequestsAwayUntilItIsOn(t *testing.T) {
 
 func TestAFolderOfAnotherInstanceTakesNothing(t *testing.T) {
 	r := newReceiveRig(t)
+	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
 	r.dstPool.ds[receiveRoot] = newFakeDataset("filesystem")
 	stranger := newFakeDataset("filesystem")
 	stranger.props[zfs.SourceProperty] = "0123456789abcdef"
 	r.dstPool.ds[receiveRoot+"/tower"] = stranger
-	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
 
 	res, err := zfsrepl.Run(context.Background(), r.srcEnd(), end, zfsrepl.Entry{
 		Root: "cache/appdata", TargetBase: "tower", Now: func() time.Time { return r.now },
@@ -413,12 +414,121 @@ func TestAFolderOfAnotherInstanceTakesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, m := range res.Members {
-		if m.Code != "dataset-exists" {
-			t.Errorf("%s: code %q, want dataset-exists", m.Dataset, m.Code)
+		if m.Code != "target-owned" {
+			t.Errorf("%s: code %q, want target-owned", m.Dataset, m.Code)
 		}
 	}
 	if r.dstPool.dataset(receiveRoot+"/tower/cache") != nil {
 		t.Fatal("something landed in the other instance's folder")
+	}
+}
+
+// askSlot records a request of instance peer, named tower, for dataset
+// straight through the peer route and returns the slot's id.
+func askSlot(t *testing.T, in *instance, peer, dataset string) string {
+	t.Helper()
+	item := strings.Repeat(peer[:1], 32)
+	body, _ := json.Marshal(peerZFSReceiveRequest{
+		InstanceID: peer, Name: "tower", Item: item, Dataset: dataset,
+		Members: []string{dataset}, Keep: store.DefaultZFSReplicaKeep,
+	})
+	status, raw := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body})
+	if status != http.StatusOK {
+		t.Fatalf("ask = %d %s", status, raw)
+	}
+	slots, err := in.st.ListZFSReceiveSlots()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range slots {
+		if s.PeerID == peer && s.ItemID == item {
+			return s.ID
+		}
+	}
+	t.Fatalf("no slot for %s: %s", peer, raw)
+	return ""
+}
+
+func allowSlot(t *testing.T, in *instance, id string) map[string]any {
+	t.Helper()
+	_, out := in.do(t, http.MethodPost, "/api/zfs/receive/requests/"+id, map[string]any{
+		"decision": "allow", "pool": "tank", "root": receiveRoot,
+	})
+	return out
+}
+
+func TestTwoSourcesOfOneNameCannotBothBeAllowedIntoOneFolder(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pool := newFakePool(&atomic.Uint64{}, "tank")
+	in.svc.SetZFSHost(zfs.NewSSHHost(pool))
+	in.svc.SetHostSSH(pool)
+	switchReceiver(t, in, true)
+
+	first, second := askSlot(t, in, "0a0a0a0a", "cache/appdata"), askSlot(t, in, "0b0b0b0b", "cache/appdata")
+	if out := allowSlot(t, in, first); out["ok"] != true {
+		t.Fatalf("allowing the first = %v", out)
+	}
+	if out := allowSlot(t, in, second); out["ok"] != false || out["code"] != "target-owned" {
+		t.Fatalf("allowing a second source into %s/tower = %v, want target-owned", receiveRoot, out)
+	}
+
+	third := askSlot(t, in, "0c0c0c0c", "cache/system")
+	pool.ds[receiveRoot] = newFakeDataset("filesystem")
+	pool.ds[receiveRoot+"/tower"] = newFakeDataset("filesystem")
+	pool.ds[receiveRoot+"/tower"].props[zfs.SourceProperty] = "0d0d0d0d"
+	if out := allowSlot(t, in, third); out["ok"] != false || out["code"] != "target-owned" {
+		t.Fatalf("allowing a source into a folder another instance marked = %v, want target-owned", out)
+	}
+}
+
+func TestASlotReachesNothingInAFolderOfAnotherInstance(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pool := newFakePool(&atomic.Uint64{}, "tank")
+	in.svc.SetZFSHost(zfs.NewSSHHost(pool))
+	in.svc.SetHostSSH(pool)
+	switchReceiver(t, in, true)
+	id := askSlot(t, in, "0b0b0b0b", "cache/appdata")
+	if out := allowSlot(t, in, id); out["ok"] != true {
+		t.Fatalf("allow = %v", out)
+	}
+	slot, _, _ := in.st.GetZFSReceiveSlot(id)
+	token, err := secret.Decrypt(in.appKey, slot.TokenEnc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Another instance called tower streamed into the folder after the allow.
+	for _, ds := range []string{receiveRoot, receiveRoot + "/tower", receiveRoot + "/tower/cache", receiveRoot + "/tower/cache/appdata"} {
+		pool.ds[ds] = newFakeDataset("filesystem")
+		if ds != receiveRoot {
+			pool.ds[ds].props[zfs.SourceProperty] = "0a0a0a0a"
+		}
+	}
+	target := receiveRoot + "/tower/cache/appdata"
+	const snap = "bombvault-replica-20261009030000"
+	pool.ds[target].snaps = []fakeSnap{{snap, 11, 1}}
+
+	member := "/api/zfs/receive/" + id + "/members/cache%2Fappdata"
+	increment := append(streamRecord("cache/appdata@bombvault-replica-20261010030000", 12, 11, false), fakeTrailer...)
+	for _, call := range []struct {
+		method, path string
+		body         []byte
+	}{
+		{http.MethodGet, "/api/zfs/receive/" + id + "/points", nil},
+		{http.MethodGet, member + "/send?snapshot=" + snap, nil},
+		{http.MethodPost, member + "/abort", nil},
+		{http.MethodPut, member, increment},
+	} {
+		req := httptest.NewRequest(call.method, call.path, bytes.NewReader(call.body))
+		req.Header.Set("Authorization", "Bearer "+string(token))
+		w := httptest.NewRecorder()
+		in.router.ServeHTTP(w, req)
+		if !strings.Contains(w.Body.String(), `"code":"target-owned"`) {
+			t.Errorf("%s %s = %d %.200s, want target-owned", call.method, call.path, w.Code, w.Body)
+		}
+	}
+	if got := pool.snapNames(target); !slices.Equal(got, []string{snap}) {
+		t.Fatalf("the other instance's replica holds %q, want only %s", got, snap)
 	}
 }
 

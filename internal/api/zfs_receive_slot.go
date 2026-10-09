@@ -36,6 +36,40 @@ func (s *Service) zfsReceiveHost() (zfsrepl.End, error) {
 	return zfsrepl.NewSSHEnd(host, s.ssh), nil
 }
 
+// zfsSlotHost is the host as slot may use it: only while the slot's folder is
+// missing or carries the slot's source. A folder with another mark belongs to
+// an instance that took the same name, and the slot reaches nothing below it.
+func (s *Service) zfsSlotHost(ctx context.Context, slot store.ZFSReceiveSlot) (zfsrepl.End, error) {
+	host, err := s.zfsReceiveHost()
+	if err != nil {
+		return nil, err
+	}
+	if err := zfsFolderFree(ctx, host, slot.Base(), slot.PeerID); err != nil {
+		return nil, err
+	}
+	return host, nil
+}
+
+// zfsFolderFree refuses folder for the members of source unless it does not
+// exist yet or carries source as its own.
+func zfsFolderFree(ctx context.Context, host zfsrepl.End, folder, source string) error {
+	_, err := zfsEndState(ctx, host, folder)
+	if zfs.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	own, err := zfsOwnedBy(ctx, host, folder, source)
+	if err != nil {
+		return err
+	}
+	if !own {
+		return &zfsrepl.Refusal{Code: "target-owned", Detail: folder + " belongs to another instance"}
+	}
+	return nil
+}
+
 // zfsSlotFor answers the request itself unless it carries the token of the
 // allowed slot its path names.
 func (s *Service) zfsSlotFor(w http.ResponseWriter, r *http.Request) (store.ZFSReceiveSlot, bool) {
@@ -119,7 +153,7 @@ func (s *Service) handleZFSSlotPoints(w http.ResponseWriter, r *http.Request) {
 		}
 		members = []string{m}
 	}
-	host, err := s.zfsReceiveHost()
+	host, err := s.zfsSlotHost(r.Context(), slot)
 	if err != nil {
 		zfsSlotFail(w, err)
 		return
@@ -183,7 +217,7 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 	}
 	defer s.zfsReceiveBusy.Delete(slot.ID)
 
-	host, err := s.zfsReceiveHost()
+	host, err := s.zfsSlotHost(r.Context(), slot)
 	if err != nil {
 		zfsSlotFail(w, err)
 		return
@@ -266,9 +300,7 @@ func zfsSlotReceiveArgs(ctx context.Context, host zfsrepl.End, slot store.ZFSRec
 }
 
 // zfsSlotParents creates what is missing of dir and above, top down. Levels
-// from the source's folder down are marked as the source's; a folder that
-// exists without that mark belongs to another instance that took the same
-// name, and nothing lands in it.
+// from the source's folder down are marked as the source's.
 func zfsSlotParents(ctx context.Context, host zfsrepl.End, slot store.ZFSReceiveSlot, dir string) error {
 	base := slot.Base()
 	var levels []string
@@ -283,16 +315,6 @@ func zfsSlotParents(ctx context.Context, host zfsrepl.End, slot store.ZFSReceive
 		}
 		_, err := zfsEndState(ctx, host, level)
 		if err == nil {
-			if level != base {
-				continue
-			}
-			own, err := zfsOwnedBy(ctx, host, base, slot.PeerID)
-			if err != nil {
-				return err
-			}
-			if !own {
-				return &zfsrepl.Refusal{Code: "dataset-exists", Detail: base + " belongs to another instance"}
-			}
 			continue
 		}
 		if !zfs.IsNotFound(err) {
@@ -357,7 +379,7 @@ func (s *Service) handleZFSSlotAbort(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer s.zfsReceiveBusy.Delete(slot.ID)
-	host, err := s.zfsReceiveHost()
+	host, err := s.zfsSlotHost(r.Context(), slot)
 	if err != nil {
 		zfsSlotFail(w, err)
 		return
@@ -397,7 +419,7 @@ func (s *Service) handleZFSSlotSend(w http.ResponseWriter, r *http.Request) {
 		zfsSlotFail(w, &zfsrepl.Refusal{Code: "invalid-name", Detail: "not a replica snapshot name"})
 		return
 	}
-	host, err := s.zfsReceiveHost()
+	host, err := s.zfsSlotHost(r.Context(), slot)
 	if err != nil {
 		zfsSlotFail(w, err)
 		return
