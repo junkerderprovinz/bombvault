@@ -88,7 +88,9 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		return m
 	}
 	r.clear(context.WithoutCancel(ctx), m.Dataset, src)
-	m.Pruned = r.prune(ctx, m.Target, tgt)
+	if _, self := r.dst.(SelfPruning); !self {
+		m.Pruned = r.prune(ctx, m.Target, tgt)
+	}
 	return m
 }
 

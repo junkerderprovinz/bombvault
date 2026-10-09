@@ -280,3 +280,32 @@ func DatasetStateArgs(dataset string) ([]string, error) {
 	}
 	return []string{zfsBinary, "get", "-H", "-p", "-o", "property,value", stateProps, dataset}, nil
 }
+
+// SourceProperty is the user property a receiving host sets on the parents it
+// creates for a source instance, holding that instance's id. A folder that
+// carries another id belongs to someone else.
+const SourceProperty = "bombvault:source"
+
+var sourceIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]{0,63}$`)
+
+// CreateOwnedParentArgs makes one level under a source's folder on the
+// receiving host, marked with SourceProperty as that source's.
+func CreateOwnedParentArgs(dataset, source string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	if !sourceIDRe.MatchString(source) {
+		return nil, fmt.Errorf("zfs: not an instance id: %.40q", source)
+	}
+	return []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off", "-o", SourceProperty + "=" + source, dataset}, nil
+}
+
+// SourcePropertyArgs reads SourceProperty as set on the dataset itself, so a
+// value inherited from a parent or received with a stream does not count. zfs
+// prints "-" when it is not set there.
+func SourcePropertyArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "get", "-H", "-p", "-s", "local", "-o", "value", SourceProperty, dataset}, nil
+}

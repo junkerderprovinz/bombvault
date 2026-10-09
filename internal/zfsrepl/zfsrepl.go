@@ -25,6 +25,12 @@ type End interface {
 	Receive(ctx context.Context, args []string, stream io.Reader) error
 }
 
+// SelfPruning is an End that applies its own retention after each receive. A
+// run never prunes such a target, whatever Entry.Keep says.
+type SelfPruning interface {
+	PrunesItself()
+}
+
 // Entry is one ZFS item to replicate: its root, every dataset and volume below
 // it that is not excluded, and where they land on the target.
 type Entry struct {
