@@ -341,12 +341,15 @@ const (
 // ReapInterruptedRuns marks every run still in 'running' as failed and returns
 // how many it changed. It runs once at startup: BombVault is a single process,
 // so such a run was orphaned by a crash or an update. The finished_at it
-// writes is the restart time, not the end of the work.
+// writes is the restart time, not the end of the work. A ZFS replica run's
+// reason ends in the reason code its card reads.
 func (r *Repo) ReapInterruptedRuns() (int64, error) {
 	res, err := r.db.Exec(`
 		UPDATE runs
-		SET status = 'failed', finished_at = ?, error = ?
-		WHERE status = 'running'`, time.Now().Unix(), ReasonInterrupted)
+		SET status = 'failed', finished_at = ?,
+			error = CASE WHEN kind = ? THEN ? ELSE ? END
+		WHERE status = 'running'`, time.Now().Unix(),
+		ZFSReplicaRunKind, ReasonInterrupted+" [interrupted]", ReasonInterrupted)
 	if err != nil {
 		return 0, fmt.Errorf("ReapInterruptedRuns: %w", err)
 	}
