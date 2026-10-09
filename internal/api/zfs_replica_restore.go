@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,8 +16,9 @@ import (
 )
 
 // ZFSReplicaRestoreAck is what a bring back answers before it runs: its run,
-// the root of the tree it lands in, and whether that root stays unmounted
-// because it arrives encrypted and its key has to be loaded first.
+// the root of the tree it lands in, and whether any dataset of that tree
+// stays locked because it arrives encrypted and its key has to be loaded
+// first.
 type ZFSReplicaRestoreAck struct {
 	RunID     string `json:"runId"`
 	Dataset   string `json:"dataset"`
@@ -112,7 +114,7 @@ func (s *Service) prepareZFSReplicaRestore(ctx context.Context, d store.ZFSDatas
 	if !found {
 		return ack, nil, nil, "", zfsRefuse("not-found", replica+"@"+snapshot)
 	}
-	args, err := zfs.DatasetStateArgs(replica)
+	args, err := zfs.TreeArgs(replica)
 	if err != nil {
 		return ack, nil, nil, "", err
 	}
@@ -120,11 +122,11 @@ func (s *Service) prepareZFSReplicaRestore(ctx context.Context, d store.ZFSDatas
 	if err != nil {
 		return ack, nil, nil, "", err
 	}
-	st, err := zfs.ParseDatasetState(out)
+	tree, err := zfs.ParseTree(out, replica)
 	if err != nil {
 		return ack, nil, nil, "", err
 	}
-	ack.KeyNeeded = st.Encrypted()
+	ack.KeyNeeded = slices.ContainsFunc(tree, func(e zfs.ListEntry) bool { return e.Encryption != "off" })
 	return ack, tgt.end, to, replica, nil
 }
 

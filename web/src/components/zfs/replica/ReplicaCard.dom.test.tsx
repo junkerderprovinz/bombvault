@@ -139,6 +139,31 @@ describe("replica card", () => {
     expect(screen.queryByRole("button", { name: en["zfs.replica.peer.askAgain"] })).toBeNull();
   });
 
+  it("says when the paired instance has receiving switched off", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "off" });
+    renderCard();
+    expect(await screen.findByText("Receiving is switched off on tower-2")).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.peer.offText"].replace("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("says in German when the paired instance has receiving switched off", async () => {
+    localStorage.setItem("bv-lang", "de");
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "off" });
+    renderCard();
+    expect(await screen.findByText("Empfangen ist bei tower-2 ausgeschaltet")).toBeTruthy();
+  });
+
+  it("says a dataset a restart cut off is picked up by the next run", async () => {
+    current = replica({
+      state: "failed",
+      code: "interrupted",
+      members: [{ ...replica().members[0], state: "failed", code: "interrupted" }],
+    });
+    renderCard();
+    expect(await screen.findByText(en["zfs.code.interrupted"])).toBeTruthy();
+  });
+
   it("asks a paired instance again after it revoked the permission", async () => {
     current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "revoked" });
     renderCard();

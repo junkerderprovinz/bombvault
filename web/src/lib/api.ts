@@ -4509,6 +4509,10 @@ export interface ZFSReplicaMember {
 /** Where a request to receive a replica stands on the receiving instance. */
 export type ZFSReceiveState = "asked" | "allowed" | "refused" | "revoked";
 
+/** What a source learned of its request: the slot's state, or "off" while the
+ *  receiving instance has its Receiver module switched off. */
+export type ZFSPeerState = ZFSReceiveState | "off";
+
 /** One ZFS item's replica. */
 export interface ZFSReplica {
   target: ZFSReplicaTarget;
@@ -4524,7 +4528,7 @@ export interface ZFSReplica {
   snapshots: ZFSReplicaSnapshot[];
   members: ZFSReplicaMember[];
   /** What the paired instance answered; empty for any other target. */
-  peerState: ZFSReceiveState | "";
+  peerState: ZFSPeerState | "";
 }
 
 export interface ZFSReplicaPatch {

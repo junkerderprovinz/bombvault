@@ -39,6 +39,7 @@ func TestClassify(t *testing.T) {
 		// What OpenZFS 2.4.3 prints on the replica path, wrapped lines included.
 		{"stale token", "cannot resume send: 'bvrsrc/item/child@bombvault-replica-20261009130000' used in the initial send no longer exists", exitStatus(255), "resume-token-stale"},
 		{"corrupt token", "cannot resume send: resume token is corrupt (incorrect checksum)", exitStatus(255), "resume-token-stale"},
+		{"stream cut off", "cannot receive incremental stream: checksum mismatch or incomplete stream.\nPartially received snapshot is saved.\nA resuming stream can be generated on the sending system by running:\n    zfs send -t 1-10a9ac2c5f-d0-789c63", exitStatus(1), "stream-cut"},
 		{"replica written to", "cannot receive incremental stream: destination tank/r/cache/appdata has been modified\nsince most recent snapshot", exitStatus(1), "target-changed"},
 		{"base missing on the target", "cannot receive incremental stream: most recent snapshot of tank/r/cache/appdata does not\nmatch incremental source", exitStatus(1), "no-common-base"},
 		{"base missing on the source", "warning: cannot send 'cache/appdata@bombvault-replica-20261009140000': incremental source (cache/appdata#bombvault-replica-20261001000000) does not exist", exitStatus(1), "no-common-base"},

@@ -37,6 +37,7 @@ func TestAllCodesAreUniqueKebabCase(t *testing.T) {
 		"resume-token-stale", "target-changed", "no-common-base", "encryption-mismatch",
 		"in-use", "target-owned", "replica-off", "server-disabled", "domain-off",
 		"peer-waiting", "peer-refused", "peer-revoked", "peer-unreachable",
+		"receive-off", "stream-cut", "interrupted",
 	}
 	if len(AllCodes) != len(want) {
 		t.Fatalf("AllCodes has %d entries, want %d", len(AllCodes), len(want))

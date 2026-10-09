@@ -78,6 +78,9 @@ var AllCodes = []string{
 	"peer-refused",
 	"peer-revoked",
 	"peer-unreachable",
+	"receive-off",
+	"stream-cut",
+	"interrupted",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their

@@ -195,6 +195,8 @@ func Classify(stderr string, err error) string {
 	// branch above only returns on ssh's own words.
 	case strings.Contains(low, "cannot resume send"):
 		return "resume-token-stale"
+	case strings.Contains(low, "partially received snapshot is saved"):
+		return "stream-cut"
 	case strings.Contains(low, "has been modified since most recent snapshot"):
 		return "target-changed"
 	case strings.Contains(low, "does not match incremental source"),

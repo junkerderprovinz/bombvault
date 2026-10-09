@@ -58,6 +58,15 @@ func (s *Service) zfsSlotFor(w http.ResponseWriter, r *http.Request) (store.ZFSR
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "wrong token for this receive slot"})
 		return slot, false
 	}
+	on, err := s.receiverOn()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
+		return slot, false
+	}
+	if !on {
+		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "state": store.ZFSReceiveOff, "error": "receiving is switched off on this instance"})
+		return slot, false
+	}
 	return slot, true
 }
 

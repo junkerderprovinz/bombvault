@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { patchZFSReplica, runZFSReplica } from "../../../lib/api";
 import type {
-  ZFSReceiveState,
+  ZFSPeerState,
   ZFSReplica,
   ZFSReplicaMember,
   ZFSReplicaPatch,
@@ -35,7 +35,8 @@ const PEER_SENTENCE = {
   allowed: "zfs.replica.peer.allowedText",
   refused: "zfs.replica.peer.refusedText",
   revoked: "zfs.replica.peer.revokedText",
-} as const satisfies Record<ZFSReceiveState, TranslationKey>;
+  off: "zfs.replica.peer.offText",
+} as const satisfies Record<ZFSPeerState, TranslationKey>;
 
 function targetId(target: ZFSReplicaTarget): string {
   return target.kind === "none" ? NONE : `${target.kind}:${target.id}`;

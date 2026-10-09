@@ -35,7 +35,8 @@ type replicaHost struct {
 	tree   []string
 	pools  string
 	fail   error
-	raw    bool
+	// locked are the encrypted datasets.
+	locked map[string]bool
 }
 
 func newReplicaHost() *replicaHost {
@@ -59,7 +60,7 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 		return owner + "\n", nil
 	case args[1] == "get":
 		enc := "off"
-		if h.raw {
+		if h.locked[last] {
 			enc = "aes-256-gcm"
 		}
 		return "type\tfilesystem\nencryption\t" + enc + "\nreceive_resume_token\t-\n", nil
@@ -70,7 +71,11 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 	case args[1] == "list":
 		var b strings.Builder
 		for _, name := range h.tree {
-			fmt.Fprintf(&b, "%s\tfilesystem\t/mnt/%s\tyes\ton\toff\t-\thidden\t1024\t1024\n", name, name)
+			enc := "off"
+			if h.locked[name] {
+				enc = "aes-256-gcm"
+			}
+			fmt.Fprintf(&b, "%s\tfilesystem\t/mnt/%s\tyes\ton\t%s\t-\thidden\t1024\t1024\n", name, name, enc)
 		}
 		return b.String(), nil
 	}
@@ -578,6 +583,7 @@ func TestARestoreBringsTheTreeBackAndMountsWhatIsNotEncrypted(t *testing.T) {
 	}
 	replica := "tank/bombvault-replica/bottich/cache/appdata"
 	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.tree = []string{replica, replica + "/plex"}
 	var asked zfsrepl.Restore
 	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
 		asked = rs
@@ -628,7 +634,8 @@ func TestAnEncryptedRootIsAnnouncedAsNeedingItsKey(t *testing.T) {
 	}
 	replica := "tank/bombvault-replica/bottich/cache/appdata"
 	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
-	r.server.raw = true
+	r.server.tree = []string{replica}
+	r.server.locked = map[string]bool{replica: true}
 	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
 		root := zfsrepl.RestoreName(rs.Dataset, rs.Now())
 		return zfsrepl.Restored{Root: root, Members: []zfsrepl.RestoredMember{{Dataset: root, Encrypted: true}}}, nil
@@ -641,6 +648,26 @@ func TestAnEncryptedRootIsAnnouncedAsNeedingItsKey(t *testing.T) {
 	if mounts := r.host.did("mount"); mounts != nil {
 		t.Errorf("an encrypted root was mounted: %q", mounts)
 	}
+}
+
+func TestAnEncryptedChildUnderAPlainRootIsAnnouncedAsNeedingItsKey(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.tree = []string{replica, replica + "/plex", replica + "/vault"}
+	r.server.locked = map[string]bool{replica + "/vault": true}
+	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
+		root := zfsrepl.RestoreName(rs.Dataset, rs.Now())
+		return zfsrepl.Restored{Root: root, Members: []zfsrepl.RestoredMember{{Dataset: root}, {Dataset: root + "/vault", Encrypted: true}}}, nil
+	}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"`+replicaSnap+`"}`)
+	if m["ok"] != true || m["keyNeeded"] != true {
+		t.Fatalf("restore = %v, want keyNeeded for the encrypted child", m)
+	}
+	r.s.replica.work.Wait()
 }
 
 func TestWithTheZFSDomainOffNoReplicaRuns(t *testing.T) {
@@ -713,5 +740,71 @@ func TestACurrentReplicaIsTheZFSCopyOffThePremisesButNoBackup(t *testing.T) {
 	lines := r.s.zfsReplicaDigestLines(now, settings)
 	if len(lines) != 1 || !strings.Contains(lines[0], "cache/appdata: current") {
 		t.Errorf("digest lines = %q", lines)
+	}
+}
+
+// replicaMembers reads the members of the item's replica view by dataset.
+func (r *replicaRig) replicaMembers() (map[string]any, map[string]map[string]any) {
+	r.t.Helper()
+	_, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", "")
+	members := map[string]map[string]any{}
+	list, _ := v["members"].([]any)
+	for _, m := range list {
+		mm, _ := m.(map[string]any)
+		members[mm["dataset"].(string)] = mm
+	}
+	return v, members
+}
+
+func TestARunCutShortByARestartLeavesItsUnfinishedMembersWaitingToResume(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	runID, err := r.st.StartRun(r.item.ID, store.ZFSReplicaRunKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.st.AddZFSReplicaRunMember(store.ZFSReplicaRunMember{
+		RunID: runID, ItemID: r.item.ID, Dataset: "cache/appdata", Snapshot: replicaSnap, FinishedAt: time.Now().Unix(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.st.ReapInterruptedRuns(); err != nil {
+		t.Fatal(err)
+	}
+
+	v, members := r.replicaMembers()
+	if v["state"] != "failed" || v["code"] != "interrupted" {
+		t.Errorf("replica = %v %v, want failed with interrupted", v["state"], v["code"])
+	}
+	if m := members["cache/appdata"]; m["state"] != "ok" {
+		t.Errorf("the member that finished = %v", m)
+	}
+	if m := members["cache/appdata/plex"]; m["state"] != "failed" || m["code"] != "interrupted" {
+		t.Errorf("the member the restart cut off = %v, want it waiting to resume", m)
+	}
+}
+
+func TestARunStoppedByAShutdownEndsWithItsReasonCode(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.run = func(ctx context.Context, _, _ zfsrepl.End, e zfsrepl.Entry) (zfsrepl.Result, error) {
+		m := zfsrepl.MemberResult{Dataset: e.Root, Target: e.TargetBase + "/" + e.Root, Snapshot: replicaSnap, GUID: 1 << 63}
+		e.Finished(m)
+		r.s.EndDetachedWork()
+		<-ctx.Done()
+		return zfsrepl.Result{Snapshot: replicaSnap, Members: []zfsrepl.MemberResult{m}}, ctx.Err()
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err == nil {
+		t.Fatal("a run the shutdown stopped succeeded")
+	}
+	if run := r.lastRun(); run.Status != "cancelled" || zfsRunCode(run.Error) != "interrupted" {
+		t.Errorf("run = %s %q, want cancelled with interrupted", run.Status, run.Error)
+	}
+	if _, members := r.replicaMembers(); members["cache/appdata/plex"]["code"] != "interrupted" {
+		t.Errorf("the member the shutdown cut off = %v", members["cache/appdata/plex"])
 	}
 }

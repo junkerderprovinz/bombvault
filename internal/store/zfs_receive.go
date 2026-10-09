@@ -16,6 +16,9 @@ const (
 	ZFSReceiveAllowed = "allowed"
 	ZFSReceiveRefused = "refused"
 	ZFSReceiveRevoked = "revoked"
+	// ZFSReceiveOff is only ever a source's: its receiving instance has the
+	// Receiver module switched off and keeps no request meanwhile.
+	ZFSReceiveOff = "off"
 )
 
 // ErrZFSReceiveMove is returned when a slot cannot take the asked-for answer

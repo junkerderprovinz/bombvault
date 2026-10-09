@@ -73,7 +73,7 @@ func (s *Service) askZFSReceive(ctx context.Context, item store.ZFSDataset, rene
 	}
 	peer := store.ZFSReplicaPeer{State: ans.State}
 	switch ans.State {
-	case store.ZFSReceiveAsked, store.ZFSReceiveRefused, store.ZFSReceiveRevoked:
+	case store.ZFSReceiveAsked, store.ZFSReceiveRefused, store.ZFSReceiveRevoked, store.ZFSReceiveOff:
 	case store.ZFSReceiveAllowed:
 		if !validRunID(ans.Slot) || ans.Token == "" || zfs.ValidateDatasetName(ans.Base) != nil {
 			return store.ZFSReplicaPeer{}, errMemberUnreadable
@@ -157,6 +157,8 @@ func zfsPeerStateCode(state string) string {
 		return "peer-refused"
 	case store.ZFSReceiveRevoked:
 		return "peer-revoked"
+	case store.ZFSReceiveOff:
+		return "receive-off"
 	}
 	return "peer-waiting"
 }

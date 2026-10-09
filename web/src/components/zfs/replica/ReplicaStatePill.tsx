@@ -26,6 +26,8 @@ export function ReplicaStatePill({
         return <Badge tone="warn">{t("zfs.replica.peer.refused").replaceAll("{peer}", () => peerName)}</Badge>;
       case "revoked":
         return <Badge tone="warn">{t("zfs.replica.peer.revoked").replaceAll("{peer}", () => peerName)}</Badge>;
+      case "off":
+        return <Badge tone="warn">{t("zfs.replica.peer.off").replaceAll("{peer}", () => peerName)}</Badge>;
     }
   }
   if (running) return <Badge tone="active">{t("zfs.replica.state.running")}</Badge>;

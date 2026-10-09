@@ -37,6 +37,9 @@ type fakeHost struct {
 	// refuseReceive makes a receive into a dataset fail with this stderr after
 	// reading only the header, which leaves the send blocked on its pipe.
 	refuseReceive map[string]string
+	// killReceive makes a receive into a dataset die after that many payload
+	// bytes, keeping the partial state a killed zfs receive -s leaves.
+	killReceive map[string]int
 }
 
 // fakeWorld hands out guids that are unique across both hosts, as they are in
@@ -78,6 +81,7 @@ func newFakeHost(w *fakeWorld) *fakeHost {
 		cutAfter:      map[string]int{},
 		failSendWait:  map[string]bool{},
 		refuseReceive: map[string]string{},
+		killReceive:   map[string]int{},
 	}
 }
 
@@ -541,9 +545,23 @@ func (h *fakeHost) Receive(_ context.Context, args []string, stream io.Reader) e
 		return fail(args, 1, "%s", stderr)
 	}
 	d, err := h.checkReceive(args, target, hd, force)
+	kill, kills := h.killReceive[target]
 	h.mu.Unlock()
 	if err != nil {
 		return err
+	}
+	if kills {
+		got, _ := io.ReadFull(br, make([]byte, kill))
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		if d == nil {
+			d = &fakeDS{typ: "filesystem", encrypted: hd.Raw, holds: map[string]bool{}, props: map[string]string{}}
+			h.ds[target] = d
+		}
+		resume := hd
+		resume.Offset += got
+		d.token = encodeToken(resume)
+		return fail(args, 137, "")
 	}
 
 	body, readErr := io.ReadAll(br)

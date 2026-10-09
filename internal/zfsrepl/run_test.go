@@ -294,7 +294,7 @@ func TestACutStreamIsResumedOnTheNextRun(t *testing.T) {
 	r.src.cutAfter["cache/appdata"] = 3000
 	cut := r.run()
 	m := member(t, cut, "cache/appdata")
-	if m.Code == "" || r.dst.get(rootTarget).token == "" {
+	if m.Code != "stream-cut" || r.dst.get(rootTarget).token == "" {
 		t.Fatalf("the cut stream: code %q, token %q", m.Code, r.dst.get(rootTarget).token)
 	}
 	if !slices.Contains(r.src.snapNames("cache/appdata"), cut.Snapshot) {
@@ -315,6 +315,27 @@ func TestACutStreamIsResumedOnTheNextRun(t *testing.T) {
 	}
 	if got := r.dst.snapNames(rootTarget); len(got) != 3 || got[1] != cut.Snapshot || got[2] != next.Snapshot {
 		t.Errorf("target snapshots = %q", got)
+	}
+}
+
+func TestAReceiveKilledMidStreamIsReportedAsCutAndResumed(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	r.src.payload["cache/appdata"] = 8192
+	r.dst.killReceive[rootTarget] = 3000
+	cut := r.run()
+	if m := member(t, cut, "cache/appdata"); m.Code != "stream-cut" {
+		t.Fatalf("code = %q, err %v, want stream-cut", m.Code, m.Err)
+	}
+	if !slices.Contains(r.src.snapNames("cache/appdata"), cut.Snapshot) {
+		t.Fatal("the source dropped the snapshot the target can still resume towards")
+	}
+
+	delete(r.dst.killReceive, rootTarget)
+	next := r.run()
+	r.ok(next)
+	if m := member(t, next, "cache/appdata"); !m.Resumed || m.Base != cut.Snapshot {
+		t.Fatalf("resumed %v, base %q, want a resume and then an increment from %s", m.Resumed, m.Base, cut.Snapshot)
 	}
 }
 

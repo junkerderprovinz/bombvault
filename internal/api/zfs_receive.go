@@ -92,6 +92,16 @@ func (s *Service) handlePeerZFSReceive(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	on, err := s.receiverOn()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// A request nobody here can see would wait for good.
+	if !on {
+		writeJSON(w, http.StatusOK, peerZFSReceiveAnswer{OK: true, State: store.ZFSReceiveOff})
+		return
+	}
 	slot, err := s.store.AskZFSReceive(store.ZFSReceiveSlot{
 		PeerID: in.InstanceID, PeerName: in.Name, ItemID: in.Item, Dataset: in.Dataset,
 		SourceServer: zfsReplicaFolderName(in.Name), Members: in.Members, ProposedKeep: in.Keep,
@@ -110,6 +120,13 @@ func (s *Service) handlePeerZFSReceive(w http.ResponseWriter, r *http.Request) {
 		ans.Slot, ans.Token, ans.Base, ans.Pin = slot.ID, string(token), slot.Base(), s.tlsPin()
 	}
 	writeJSON(w, http.StatusOK, ans)
+}
+
+// receiverOn reports whether this instance has the Receiver module switched
+// on, without which it takes no replica.
+func (s *Service) receiverOn() (bool, error) {
+	settings, err := s.store.GetSettings()
+	return settings.ReceiverEnabled, err
 }
 
 func peerZFSReceiveRefusal(in peerZFSReceiveRequest) string {

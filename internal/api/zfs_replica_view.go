@@ -161,6 +161,20 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 			}
 		}
 	}
+	// A run cut short by BombVault stopping never said how the members after
+	// its last finished one fared, and the one it was sending may have a
+	// partial receive waiting on the target.
+	if hasRun && zfsRunCode(run.Error) == "interrupted" {
+		finished := map[string]bool{}
+		for _, rm := range run.Members {
+			finished[rm.Dataset] = true
+		}
+		for name, m := range byName {
+			if !finished[name] {
+				m.State, m.Code = zfsReplicaFailed, "interrupted"
+			}
+		}
+	}
 	base := ""
 	if d.Replica.TargetKind == store.ZFSReplicaTargetServer {
 		if srv, ok, err := s.store.GetZFSReplicaServer(d.Replica.TargetID); err == nil && ok {

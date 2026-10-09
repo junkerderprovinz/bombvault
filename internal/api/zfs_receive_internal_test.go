@@ -48,6 +48,7 @@ func newReceiveRig(t *testing.T) *receiveRig {
 		side.in.svc.SetZFSHost(zfs.NewSSHHost(side.pool))
 		side.in.svc.SetHostSSH(side.pool)
 	}
+	switchReceiver(t, r.dst, true)
 	r.srv = httptest.NewServer(r.dst.router)
 	t.Cleanup(r.srv.Close)
 	if err := r.dst.st.SetGroupDirectURL(r.srv.URL, true); err != nil {
@@ -64,6 +65,17 @@ func newReceiveRig(t *testing.T) *receiveRig {
 	}
 	r.itemID = item.ID
 	return r
+}
+
+// switchReceiver turns the Receiver module of in on or off.
+func switchReceiver(t *testing.T, in *instance, on bool) {
+	t.Helper()
+	if _, err := in.st.MutateSettings(func(s *store.Settings) error {
+		s.ReceiverEnabled = on
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func (r *receiveRig) item(t *testing.T) store.ZFSDataset {
@@ -323,6 +335,43 @@ func TestASourceNamesARefusalAndASilentReceiver(t *testing.T) {
 	}
 }
 
+func TestAReceiverSwitchedOffTurnsRequestsAwayUntilItIsOn(t *testing.T) {
+	r := newReceiveRig(t)
+	switchReceiver(t, r.dst, false)
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "receive-off" {
+		t.Fatalf("an End while receiving is off = %v, want receive-off", err)
+	}
+	if got := r.src.svc.zfsReplicaPeerState(r.item(t)); got != store.ZFSReceiveOff {
+		t.Fatalf("peer state = %q, want off", got)
+	}
+	if slots, _ := r.dst.st.ListZFSReceiveSlots(); len(slots) != 0 {
+		t.Fatalf("the switched off receiver kept %d requests", len(slots))
+	}
+
+	switchReceiver(t, r.dst, true)
+	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
+	r.run(t, end)
+
+	switchReceiver(t, r.dst, false)
+	cut, err := zfsrepl.Run(context.Background(), r.srcEnd(), end, zfsrepl.Entry{
+		Root: "cache/appdata", TargetBase: "tower", Now: func() time.Time { return r.now },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range cut.Members {
+		if m.Code != "receive-off" {
+			t.Fatalf("%s into an allowed slot with receiving off failed with %q, want receive-off", m.Dataset, m.Code)
+		}
+	}
+	switchReceiver(t, r.dst, true)
+	end, err = r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t))
+	if err != nil {
+		t.Fatalf("an End once receiving is on again: %v", err)
+	}
+	r.run(t, end)
+}
+
 func TestAFolderOfAnotherInstanceTakesNothing(t *testing.T) {
 	r := newReceiveRig(t)
 	r.dstPool.ds[receiveRoot] = newFakeDataset("filesystem")
@@ -353,6 +402,7 @@ func receiveSlots(t *testing.T, in *instance, pool *fakePool) (ids, tokens []str
 	t.Helper()
 	in.svc.SetZFSHost(zfs.NewSSHHost(pool))
 	in.svc.SetHostSSH(pool)
+	switchReceiver(t, in, true)
 	for i, ds := range []string{"cache/appdata", "cache/system"} {
 		body, _ := json.Marshal(peerZFSReceiveRequest{
 			InstanceID: "0a0a0a0a", Name: "tower", Item: strings.Repeat(string(rune('a'+i)), 32), Dataset: ds,
@@ -437,6 +487,7 @@ func TestASlotAnswersOnlyItsOwnTokenAndMembers(t *testing.T) {
 
 func TestTheReceiveRouteRefusesARequestItCannotHonour(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	switchReceiver(t, in, true)
 	good := peerZFSReceiveRequest{InstanceID: "0a0a0a0a", Name: "tower", Item: strings.Repeat("a", 32),
 		Dataset: "cache/appdata", Members: []string{"cache/appdata"}, Keep: store.DefaultZFSReplicaKeep}
 	for name, spoil := range map[string]func(*peerZFSReceiveRequest){

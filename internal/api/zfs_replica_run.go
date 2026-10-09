@@ -374,6 +374,10 @@ func (s *Service) finishZFSReplicaRun(ctx context.Context, d store.ZFSDataset, r
 	status, msg := "success", ""
 	switch {
 	case runErr == nil:
+	case ctx.Err() != nil && s.StopContext().Err() != nil:
+		status, msg = "cancelled", zfsRefusalSentence("replica", d.Dataset, &backup.ZFSRefusal{
+			Code: "interrupted", Detail: "BombVault was shut down",
+		})
 	case ctx.Err() != nil:
 		status, msg = "cancelled", "cancelled"
 	default:

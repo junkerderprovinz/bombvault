@@ -99,8 +99,12 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		if ctx.Err() != nil {
 			m.Code = "not-reached"
 		}
+		// However the stream ended, a partial receive left on the target is
+		// what the next run resumes.
+		if r.keepOrDrop(context.WithoutCancel(ctx), m) {
+			m.Code = "stream-cut"
+		}
 		log.Printf("zfs replica: %s to %s failed: %v", m.Dataset, m.Target, err)
-		r.keepOrDrop(context.WithoutCancel(ctx), m)
 		return m
 	}
 	r.clear(context.WithoutCancel(ctx), m.Dataset, src)
@@ -313,20 +317,21 @@ func (r *run) anchor(ctx context.Context, dataset, snap string) error {
 
 // keepOrDrop decides about a failed member's new snapshot on the source. It
 // stays while the target holds it or may still resume towards it, and goes
-// otherwise, so a member that keeps failing does not pile up snapshots.
-func (r *run) keepOrDrop(ctx context.Context, m MemberResult) {
+// otherwise, so a member that keeps failing does not pile up snapshots. It
+// reports whether the target holds a partial receive.
+func (r *run) keepOrDrop(ctx context.Context, m MemberResult) (resumable bool) {
 	view, err := r.view(ctx, m.Target)
 	if err != nil {
 		log.Printf("zfs replica: keeping %s@%s, the target could not be read: %v", m.Dataset, r.snap, err)
-		return
+		return false
 	}
 	if view.token != "" {
-		return
+		return true
 	}
-	if _, ok := find(view.snaps, r.snap); ok {
-		return
+	if _, ok := find(view.snaps, r.snap); !ok {
+		r.destroyNew(ctx, m.Dataset)
 	}
-	r.destroyNew(ctx, m.Dataset)
+	return false
 }
 
 // sweepExcluded removes this entry's replica snapshots from an excluded

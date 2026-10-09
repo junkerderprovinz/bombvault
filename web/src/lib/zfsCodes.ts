@@ -86,6 +86,9 @@ export const ZFS_CODE_KEY = {
   "peer-refused": "zfs.code.peer-refused",
   "peer-revoked": "zfs.code.peer-revoked",
   "peer-unreachable": "zfs.code.peer-unreachable",
+  "receive-off": "zfs.code.receive-off",
+  "stream-cut": "zfs.code.stream-cut",
+  interrupted: "zfs.code.interrupted",
 } as const satisfies Record<string, TranslationKey>;
 
 export type ZFSReasonCode = keyof typeof ZFS_CODE_KEY;
