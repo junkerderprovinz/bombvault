@@ -288,9 +288,9 @@ func (c *Conn) WriteFile(ctx context.Context, path string, data []byte) error {
 // after reading, whether reading succeeded or not, to reap ssh and get its
 // exit status.
 func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error) {
-	cmd := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	stderr := &cappedBuffer{max: captureStderrLimit}
+	cmd.Stderr = stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, nil, fmt.Errorf("sshconn: stdout pipe for %q: %w", args[0], err)
@@ -300,26 +300,45 @@ func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser
 	}
 	wait := func() error {
 		if err := cmd.Wait(); err != nil {
-			return fmt.Errorf("sshconn: run %q: %s", args[0], strings.TrimSpace(stderr.String()))
+			return &RemoteError{Cmd: args[0], Stderr: strings.TrimSpace(stderr.buf.String()), Err: err}
 		}
 		return nil
 	}
 	return stdout, wait, nil
 }
 
+// stdinWaitDelay bounds how long RunWithStdin waits for its stdin copy once
+// the remote command is gone. The copy can sit in a read of a stream that has
+// stalled, and nothing reads what it would write anyway.
+const stdinWaitDelay = 5 * time.Second
+
 // RunWithStdin runs a command on the host over SSH with stdin streamed from rd,
 // such as a restic dump piped into `zfs receive`. It is the restore-side
 // counterpart of StreamCommand and blocks until the remote command exits.
 func (c *Conn) RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error {
-	cmd := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
 	cmd.Stdin = rd
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	cmd.WaitDelay = stdinWaitDelay
+	stderr := &cappedBuffer{max: captureStderrLimit}
+	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil { // stdout is discarded
-		return fmt.Errorf("sshconn: run %q: %s", args[0], strings.TrimSpace(stderr.String()))
+		return &RemoteError{Cmd: args[0], Stderr: strings.TrimSpace(stderr.buf.String()), Err: err}
 	}
 	return nil
 }
+
+// RemoteError is how a streamed command failed. Err keeps the exit status,
+// which tells a failing remote command from ssh itself failing, and Stderr is
+// what either of them said.
+type RemoteError struct {
+	Cmd    string
+	Stderr string
+	Err    error
+}
+
+func (e *RemoteError) Error() string { return fmt.Sprintf("sshconn: run %q: %s", e.Cmd, e.Stderr) }
+
+func (e *RemoteError) Unwrap() error { return e.Err }
 
 // Test verifies the SSH path reaches libvirt: runs `virsh -c <uri> list --all`.
 func (c *Conn) Test(ctx context.Context) error {

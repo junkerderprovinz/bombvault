@@ -3,6 +3,7 @@ package sshconn
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -258,6 +259,48 @@ func TestRunCaptureKeepsStdoutAndStderrApart(t *testing.T) {
 	if stderr != "err-line" {
 		t.Errorf("stderr = %q", stderr)
 	}
+}
+
+// TestStreamsReportTheRemoteExitAndStderr fails the way zfs send -t does on a
+// stale token, which exits 255 like ssh itself; only the text tells them apart.
+func TestStreamsReportTheRemoteExitAndStderr(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell")
+	}
+	script := filepath.Join(t.TempDir(), "fake-ssh")
+	body := "#!/bin/sh\ncat >/dev/null\necho \"cannot resume send: 'a@b' used in the initial send no longer exists\" >&2\nexit 255\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: an executable stand-in for ssh
+		t.Fatal(err)
+	}
+	old := sshBinary
+	sshBinary = script
+	t.Cleanup(func() { sshBinary = old })
+	c := testConn(t)
+
+	check := func(name string, err error) {
+		t.Helper()
+		var re *RemoteError
+		if !errors.As(err, &re) {
+			t.Fatalf("%s: err = %v, want a RemoteError", name, err)
+		}
+		if !strings.HasPrefix(re.Stderr, "cannot resume send") {
+			t.Errorf("%s: stderr = %q", name, re.Stderr)
+		}
+		var exit *exec.ExitError
+		if !errors.As(err, &exit) || exit.ExitCode() != 255 {
+			t.Errorf("%s: the exit status is lost: %v", name, err)
+		}
+	}
+
+	rc, wait, err := c.StreamCommand(context.Background(), "zfs", "send", "-t", "1-ab-12-cd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(io.Discard, rc); err != nil {
+		t.Fatal(err)
+	}
+	check("StreamCommand", wait())
+	check("RunWithStdin", c.RunWithStdin(context.Background(), strings.NewReader("stream"), "zfs", "receive", "tank/x"))
 }
 
 func TestIsolatedConnReadsNoConfigAndOffersOnlyItsOwnKey(t *testing.T) {
