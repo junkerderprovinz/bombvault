@@ -63,7 +63,6 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 		defer cancel()
 		key := zfsReplicaRestoreKey(id)
 		s.registerCancel(key, cancel)
-		defer s.unregisterCancel(key)
 
 		_, startedAt := s.progBegin(rctx, key, zfsReplicaPhase)
 		warn, err := s.restoreZFSReplica(rctx, from, to, zfsrepl.Restore{
@@ -73,7 +72,7 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 			Now:      func() time.Time { return at },
 			Progress: s.zfsReplicaRestoreProgress(key, startedAt),
 		})
-		s.progEnd(key, zfsReplicaPhase, err == nil, startedAt)
+		s.unregisterCancel(key)
 		switch {
 		case err != nil:
 			log.Printf("api: zfs replica restore: %s@%s failed: %v", replica, snapshot, err)
@@ -91,6 +90,10 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 		default:
 			s.finishRestoreRun(ack.RunID, snapshot, nil)
 		}
+		// As with a run, the item is free and its row closed before the bar
+		// ends.
+		unlock()
+		s.progEnd(key, zfsReplicaPhase, err == nil, startedAt)
 	}()
 	return ack, nil
 }

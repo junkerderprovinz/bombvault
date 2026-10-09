@@ -1083,3 +1083,26 @@ func TestAWaitingReplicaSaysWhatItWaitsFor(t *testing.T) {
 		t.Errorf("view = %v %v, want waiting for domain-off", v["state"], v["code"])
 	}
 }
+
+func TestAReplicaIsDoneOnceItsBarEnds(t *testing.T) {
+	r := newReplicaRig(t)
+	r.s.progress = progress.NewStore()
+	events, stop := r.s.progress.Subscribe()
+	defer stop()
+	if _, err := r.s.StartZFSReplica(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	for e := range events {
+		if e.Key != zfsReplicaProgressKey(r.item.ID) || e.Active {
+			continue
+		}
+		if r.s.zfsReplicaRunning(r.item.ID) {
+			t.Error("the item still runs after its bar ended")
+		}
+		if run := r.lastRun(); run.Status != "success" {
+			t.Errorf("run after the bar ended = %s, want success", run.Status)
+		}
+		break
+	}
+	r.s.replica.work.Wait()
+}

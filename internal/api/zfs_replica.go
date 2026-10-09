@@ -45,7 +45,8 @@ type zfsReplicaRuntime struct {
 }
 
 // lockZFSReplica takes the item's replica lock, or reports that a run or a
-// restore holds it.
+// restore holds it. The release may be called again, which does nothing, so
+// a run can let go before its last step and still defer it.
 func (s *Service) lockZFSReplica(id string) (func(), bool) {
 	rt := &s.replica
 	rt.mu.Lock()
@@ -57,10 +58,13 @@ func (s *Service) lockZFSReplica(id string) (func(), bool) {
 		rt.running = map[string]bool{}
 	}
 	rt.running[id] = true
+	var once sync.Once
 	return func() {
-		rt.mu.Lock()
-		delete(rt.running, id)
-		rt.mu.Unlock()
+		once.Do(func() {
+			rt.mu.Lock()
+			delete(rt.running, id)
+			rt.mu.Unlock()
+		})
 	}, true
 }
 

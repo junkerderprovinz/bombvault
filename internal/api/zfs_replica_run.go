@@ -93,7 +93,7 @@ func (s *Service) StartZFSReplica(ctx context.Context, id string) (string, error
 		defer s.replica.work.Done()
 		defer unlock()
 		defer s.recoverOperation("zfs replica: "+d.Dataset, nil, nil)
-		if err := s.replicateZFS(context.WithoutCancel(ctx), d, runID); err != nil {
+		if err := s.replicateZFS(context.WithoutCancel(ctx), d, runID, unlock); err != nil {
 			log.Printf("api: zfs replica: %s failed: %v", d.Dataset, err)
 		}
 	}()
@@ -125,7 +125,7 @@ func (s *Service) ReplicateZFSDataset(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return s.replicateZFS(ctx, d, runID)
+	return s.replicateZFS(ctx, d, runID, unlock)
 }
 
 // replicateAfterZFSBackup starts the replica a successful backup is followed
@@ -146,19 +146,23 @@ func (s *Service) replicateAfterZFSBackup(ctx context.Context, d store.ZFSDatase
 }
 
 // replicateZFS is one run of an item whose replica lock the caller holds,
-// from the run row to the notification.
-func (s *Service) replicateZFS(ctx context.Context, d store.ZFSDataset, runID string) error {
+// from the run row to the notification. It releases the lock once the row is
+// closed.
+func (s *Service) replicateZFS(ctx context.Context, d store.ZFSDataset, runID string, unlock func()) error {
 	key := zfsReplicaProgressKey(d.ID)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	defer context.AfterFunc(s.StopContext(), cancel)()
 	s.registerCancel(key, cancel)
-	defer s.unregisterCancel(key)
 
 	_, startedAt := s.progBegin(ctx, key, zfsReplicaPhase)
 	res, err := s.runZFSReplica(ctx, d, runID, key, startedAt)
-	s.progEnd(key, zfsReplicaPhase, err == nil, startedAt)
+	s.unregisterCancel(key)
 	s.finishZFSReplicaRun(ctx, d, runID, res, err)
+	// A page reloads the replica when its bar ends and must not find it
+	// running then, and the notification may wait on a slow channel.
+	unlock()
+	s.progEnd(key, zfsReplicaPhase, err == nil, startedAt)
 	s.notifyZFSReplica(d, res, err)
 	return err
 }
