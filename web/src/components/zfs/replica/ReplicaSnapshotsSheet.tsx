@@ -13,7 +13,7 @@ import { Button } from "../../Button";
 import { CopyBlock } from "../../CopyBlock";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
-import { cloneCommand, rootMember, takeoverCommand, unixOf } from "./replicaModel";
+import { cloneCommand, restorePreview, rootMember, takeoverCommand, unixOf } from "./replicaModel";
 
 /** ReplicaSnapshotsSheet lists the snapshots a replica keeps on its target,
  *  hands out the commands to use one there, and brings one back here as a
@@ -51,7 +51,7 @@ export function ReplicaSnapshotsSheet({
     const question = `${t("zfs.replica.restoreQuestion")} ${t("zfs.replica.restoreText")
       .replace("{when}", () => when)
       .replace("{target}", () => targetName)
-      .replace("{fresh}", () => `${name}-bombvault-restore-…`)
+      .replace("{fresh}", () => restorePreview(name))
       .replace("{name}", () => name)}`;
     if (!(await confirm(question, { confirmKey: "zfs.replica.restoreConfirm" }))) return;
     setStarting(true);

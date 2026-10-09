@@ -7,12 +7,15 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { I18nProvider, countText, en } from "../../../lib/i18n";
 import { ToastProvider } from "../../../lib/toast";
 import type { ZFSReplica } from "../../../lib/api";
+import type { ProgressMap } from "../../../lib/progress";
 import { group, replica, server } from "./replica.testsupport";
 
 let current: ZFSReplica;
 const restores: string[] = [];
 let keyNeeded = false;
-let progress: Record<string, { active: boolean }> = {};
+let progress: ProgressMap = {};
+// Set to hold the answer to a bring back until the test lets it go.
+let holdRestore: Promise<void> | null = null;
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
@@ -21,12 +24,22 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     getZFSReplica: () => Promise.resolve(current),
     listZFSReplicaServers: () => Promise.resolve([server()]),
     getGroup: () => Promise.resolve(group()),
-    restoreZFSReplica: (_id: string, snapshot: string) => {
+    restoreZFSReplica: async (_id: string, snapshot: string) => {
       restores.push(snapshot);
-      return Promise.resolve({ ok: true, runId: "r2", dataset: "cache/appdata-bombvault-restore-1760003000", keyNeeded });
+      if (holdRestore) await holdRestore;
+      return { ok: true, runId: "r2", dataset: "cache/appdata-bombvault-restore-1760003000", keyNeeded };
     },
   };
 });
+
+const RESTORE_KEY = "zfs-replica-restore:zfs1";
+
+function restoreFrame(state: "running" | "done" | "failed"): ProgressMap {
+  const percent = state === "running" ? 40 : state === "done" ? 100 : 0;
+  return {
+    [RESTORE_KEY]: { phase: "replicate", percent, active: true, finished: state === "running" ? undefined : true, lastSeen: Date.now() },
+  };
+}
 
 vi.mock("../../../lib/progress", () => ({ useProgress: () => progress }));
 
@@ -50,6 +63,7 @@ beforeEach(() => {
   current = replica();
   restores.length = 0;
   keyNeeded = false;
+  holdRestore = null;
   progress = {};
   localStorage.clear();
 });
@@ -124,16 +138,70 @@ describe("replica storage row", () => {
     const done = en["zfs.replica.restoredLocked"]
       .replace("{fresh}", "cache/appdata-bombvault-restore-1760003000")
       .replace("{name}", "cache/appdata");
-    progress = { "zfs-replica:zfs1": { active: true } };
+    progress = { "zfs-replica:zfs1": { phase: "replicate", percent: 100, active: true, finished: true, lastSeen: Date.now() } };
     rerender(row());
     progress = {};
     rerender(row());
     expect(screen.queryByText(done)).toBeNull();
 
-    progress = { "zfs-replica-restore:zfs1": { active: true } };
+    progress = restoreFrame("running");
+    rerender(row());
+    progress = restoreFrame("done");
     rerender(row());
     progress = {};
     rerender(row());
     expect(await screen.findByText(done)).toBeTruthy();
+  });
+
+  it("says a bring back failed instead of reporting it done", async () => {
+    const { rerender } = renderRow();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.restore"] }));
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.restoreConfirm"] }));
+    await screen.findByText("Bringing back: cache/appdata-bombvault-restore-1760003000");
+
+    progress = restoreFrame("running");
+    rerender(row());
+    progress = restoreFrame("failed");
+    rerender(row());
+    progress = {};
+    rerender(row());
+    expect(await screen.findByText("Bringing back cache/appdata from Backup-NAS failed. cache/appdata itself stays as it is.")).toBeTruthy();
+    expect(screen.queryByText(/^Done:/)).toBeNull();
+  });
+
+  it("reports a bring back whose progress showed up before the request was answered", async () => {
+    let release = () => undefined as void;
+    holdRestore = new Promise<void>((resolve) => (release = resolve));
+    const { rerender } = renderRow();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.restore"] }));
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.restoreConfirm"] }));
+    await waitFor(() => expect(restores).toHaveLength(1));
+
+    progress = restoreFrame("running");
+    rerender(row());
+    release();
+    await screen.findByText("Bringing back: cache/appdata-bombvault-restore-1760003000");
+
+    progress = restoreFrame("done");
+    rerender(row());
+    progress = {};
+    rerender(row());
+    expect(await screen.findByText("Done: cache/appdata is back as cache/appdata-bombvault-restore-1760003000.")).toBeTruthy();
+  });
+
+  it("names the dataset a pool's top entry comes back as inside the pool", async () => {
+    current = replica({ members: [{ ...replica().members[0], dataset: "tank", targetPath: "backup/bombvault-replica/tower/tank" }] });
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <ReplicaPlaceRow itemId="zfs1" name="tank" />
+        </ToastProvider>
+      </I18nProvider>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.restore"] }));
+    expect(await screen.findByText(/creates it here as tank\/bombvault-restore-…\./)).toBeTruthy();
   });
 });

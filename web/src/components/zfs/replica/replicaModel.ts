@@ -94,6 +94,13 @@ export function takeoverCommand(targetPath: string): string {
   return `zfs inherit -r readonly ${targetPath} && zfs inherit -r canmount ${targetPath} && zfs mount -a`;
 }
 
+/** restorePreview is the dataset a bring back creates, as the question names
+ *  it before the time stamp is known. It follows zfsrepl.RestoreName: beside
+ *  the item, or inside the pool for a pool's top dataset. */
+export function restorePreview(dataset: string): string {
+  return dataset.includes("/") ? `${dataset}-bombvault-restore-…` : `${dataset}/bombvault-restore-…`;
+}
+
 /** The delegation a user other than root needs on the receiving pool. */
 export function allowLine(user: string): string {
   return `zfs allow ${user} receive,create,mount,rollback,destroy,userprop <pool>`;
