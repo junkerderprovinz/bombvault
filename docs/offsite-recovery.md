@@ -67,6 +67,8 @@ Turning Local off for an item, so that a target without a direct repository beco
 
 A named repository can be marked **Off the premises** on the Repositories card. Remote repositories start marked; switch it off for a rest-server in the same building. The mark only counts sites and 3-2-1 on the cards. It changes no copy.
 
+A ZFS replica is a copy off the premises, but not a backup with history. It keeps only the snapshots you set, and old versions and single files still come from the backups. It travels over SSH from one ZFS server to another and not over the pairing group. See [Replica](zfs-datasets.md#replica).
+
 ### After a rebuild
 
 Copy choices live in BombVault's own settings. After a rebuild through Discover backups without a restored `/config` they are gone, and copying everything would send the items you had left out to B2 again. Off-site replication of every rebuilt domain therefore pauses. The Dashboard shows it in amber, and Placement defaults offers **Confirm default** with a preview of what the next run copies and the names in the backups that have no entry, which you can leave out there. Only the confirmation ends the pause; importing a settings file brings back rules and defaults but does not end it.
