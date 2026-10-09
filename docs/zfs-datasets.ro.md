@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 În această direcție, BombVault-ul care deține elementul deține și o cheie care poate scrie pe server.
 
+BombVault reține cheia de gazdă pe care serverul o arată la prima conexiune și mai târziu refuză orice altă cheie. Dacă serverul a fost reinstalat, apasă **Uită cheia de gazdă** pe pagina serverului, iar conexiunea următoare va reține cheia nouă.
+
 ### Trimitere către o instanță împerecheată {#replica-receive}
 
 Un BombVault împerecheat poate primi singur replica. Nimeni nu primește acces SSH la celălalt host și nicio cheie nu ajunge într-un fișier `authorized_keys`.
@@ -144,6 +146,8 @@ Un BombVault împerecheat poate primi singur replica. Nimeni nu primește acces 
 Instanța care primește acceptă doar ce acoperă aprobarea: seturile de date ale elementului, în propria rădăcină. Ea rulează singură `zfs receive`, iar sursa nu are cum să șteargă sau să dea înapoi ceva acolo. Așa că copia supraviețuiește unei surse preluate de altcineva. Instanța care primește își păstrează propria retenție. Sursa doar sugerează o regulă atunci când trimite cererea.
 
 **Revoke access** pe instanța care primește încheie oricând aprobarea și anunță sursa, care arată atunci că aprobarea a fost retrasă și se oprește. Ce deține deja instanța care primește rămâne acolo. O cerere refuzată rămâne refuzată. Mai multe seturi de date, sau o cerere după o revocare, întreabă din nou.
+
+Instanța care primește trebuie să răspundă prin HTTPS. La o adresă http simplă sursa nu trimite nimic, pentru că tokenul și datele ar trece prin rețea necriptate. Fiecare transfer lasă în plus liberă o zecime din pool-ul care primește și se oprește înainte să se atingă de ea, așa că o singură sursă nu poate umple pool-ul serverului care primește.
 
 ### Unde ajung datele {#replica-target}
 

@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 I denne retning har den BombVault, der ejer elementet, også en nøgle, der kan skrive på serveren.
 
+BombVault gemmer den værtsnøgle, serveren viser ved første forbindelse, og afviser senere en anden. Hvis serveren er geninstalleret, så tryk på **Forget host key** på serverens side, så gemmer næste forbindelse den nye nøgle.
+
 ### Send til en parret instans {#replica-receive}
 
 En parret BombVault kan modtage replikaen selv. Ingen får SSH-adgang til den anden vært, og der kommer ingen nøgle i en `authorized_keys`-fil.
@@ -144,6 +146,8 @@ En parret BombVault kan modtage replikaen selv. Ingen får SSH-adgang til den an
 Den modtagende instans accepterer kun det, godkendelsen dækker: elementets datasæt, ind i dens egen rod. Den kører selv `zfs receive`, og kilden kan ikke slette eller rulle noget tilbage dér. Kopien overlever altså en kilde, som nogen har overtaget. Den modtagende instans beholder sin egen opbevaring. Kilden foreslår kun en regel, når den spørger.
 
 **Revoke access** på den modtagende instans afslutter godkendelsen når som helst og giver kilden besked, som så viser, at godkendelsen er trukket tilbage, og stopper. Det, den modtagende instans allerede har, bliver liggende. En afvist anmodning forbliver afvist. Flere datasæt, eller en anmodning efter en tilbagekaldelse, spørger igen.
+
+Den modtagende instans skal svare over HTTPS. Til en ren http-adresse sender kilden ingenting, fordi tokenet og dataene ellers ville gå ukrypteret over nettet. Hver overførsel lader desuden en tiendedel af den modtagende pool være fri og stopper, før den ville tage af den, så én kilde ikke kan fylde den modtagende servers pool.
 
 ### Hvor dataene havner {#replica-target}
 

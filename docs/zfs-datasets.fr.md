@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Dans ce sens, le BombVault qui détient l'élément détient aussi une clé qui peut écrire sur le serveur.
 
+BombVault enregistre la clé d'hôte que le serveur présente à la première connexion et en refuse ensuite toute autre. Si le serveur a été réinstallé, cliquez sur **Forget host key** sur la page du serveur, et la connexion suivante enregistrera la nouvelle clé.
+
 ### Envoi vers une instance appairée {#replica-receive}
 
 Un BombVault appairé peut recevoir lui-même le réplica. Personne n'obtient d'accès SSH à l'autre hôte, et aucune clé n'entre dans un fichier `authorized_keys`.
@@ -144,6 +146,8 @@ Un BombVault appairé peut recevoir lui-même le réplica. Personne n'obtient d'
 L'instance qui reçoit n'accepte que ce que l'approbation couvre : les jeux de données de l'élément, dans sa propre racine. Elle exécute elle-même `zfs receive`, et la source n'a aucun moyen d'y supprimer ou d'y annuler quoi que ce soit. La copie survit donc à une source dont quelqu'un a pris le contrôle. L'instance qui reçoit garde sa propre rétention. La source se contente de suggérer une règle dans sa demande.
 
 **Revoke access** sur l'instance qui reçoit met fin à l'approbation à tout moment et en informe la source, qui indique alors que l'approbation a été retirée et s'arrête. Ce que l'instance qui reçoit détient déjà reste chez elle. Une demande refusée reste refusée. Des jeux de données supplémentaires, ou une demande après une révocation, redemandent une approbation.
+
+L'instance qui reçoit doit répondre en HTTPS. La source n'envoie rien à une adresse http simple, car le jeton et les données traverseraient le réseau sans chiffrement. Chaque transfert laisse aussi libre un dixième du pool qui reçoit et s'arrête avant d'y toucher, si bien qu'une seule source ne peut pas remplir le pool du serveur qui reçoit.
 
 ### Où atterrissent les données {#replica-target}
 

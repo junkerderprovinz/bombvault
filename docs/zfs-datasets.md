@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In this direction the BombVault that holds the item also holds a key that can write on the server.
 
+BombVault pins the host key the server shows on the first connection and refuses a different one later. If the server was reinstalled, press **Forget host key** on the server's page, and the next connection pins the new key.
+
 ### Send to a paired instance {#replica-receive}
 
 A paired BombVault can receive the replica itself. Nobody gets SSH access to the other host, and no key goes into an `authorized_keys` file.
@@ -144,6 +146,8 @@ A paired BombVault can receive the replica itself. Nobody gets SSH access to the
 The receiving instance accepts only what the approval covers: the item's datasets, into its own root. It runs `zfs receive` itself, and the source has no way to delete or roll back anything there. So the copy survives a source that someone has taken over. The receiving instance keeps its own retention. The source only suggests a rule when it asks.
 
 **Revoke access** on the receiving instance ends the approval at any time and tells the source, which then shows that the approval was withdrawn and stops. What the receiving instance already holds stays there. A declined request stays declined. More datasets, or a request after a revoke, ask again.
+
+The receiving instance has to answer over HTTPS. The source sends nothing to a plain http address, since the token and the data would cross the network unencrypted. Each transfer also leaves a tenth of the receiving pool free and stops before it would eat into it, so one source cannot fill the pool of the receiving server.
 
 ### Where the data lands {#replica-target}
 

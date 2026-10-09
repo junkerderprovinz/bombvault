@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Neste sentido, o BombVault que detém o elemento também detém uma chave que pode escrever no servidor.
 
+O BombVault guarda a chave de anfitrião que o servidor mostra na primeira ligação e depois recusa qualquer outra. Se o servidor foi reinstalado, carregue em **Esquecer chave de anfitrião** na página do servidor, e a ligação seguinte guarda a nova chave.
+
 ### Enviar para uma instância emparelhada {#replica-receive}
 
 Um BombVault emparelhado pode receber a réplica ele próprio. Ninguém recebe acesso SSH ao outro anfitrião, e nenhuma chave vai para um ficheiro `authorized_keys`.
@@ -144,6 +146,8 @@ Um BombVault emparelhado pode receber a réplica ele próprio. Ninguém recebe a
 A instância recetora aceita apenas o que a aprovação cobre: os conjuntos de dados do elemento, na sua própria raiz. É ela que executa `zfs receive`, e a origem não tem forma de apagar nem de reverter nada aí. Por isso a cópia sobrevive a uma origem que alguém tenha tomado. A instância recetora mantém a sua própria retenção. A origem só sugere uma regra quando faz o pedido.
 
 **Revoke access** na instância recetora termina a aprovação a qualquer momento e avisa a origem, que então mostra que a aprovação foi retirada e para. O que a instância recetora já tem fica lá. Um pedido recusado continua recusado. Mais conjuntos de dados, ou um pedido depois de uma revogação, voltam a perguntar.
+
+A instância recetora tem de responder por HTTPS. Para um endereço http simples a origem não envia nada, porque o token e os dados atravessariam a rede sem cifra. Cada transferência deixa ainda livre um décimo do pool recetor e para antes de lhe tocar, por isso uma única origem não consegue encher o pool do servidor recetor.
 
 ### Onde ficam os dados {#replica-target}
 

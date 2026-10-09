@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Ebben az irányban az elemet tároló BombVault olyan kulcsot is tárol, amellyel írni lehet a kiszolgálón.
 
+A BombVault az első kapcsolódáskor elmenti a kiszolgáló által mutatott gazdagépkulcsot, és később minden mást elutasít. Ha a kiszolgálót újratelepítették, nyomd meg a kiszolgáló oldalán a **Forget host key** gombot, és a következő kapcsolat elmenti az új kulcsot.
+
 ### Küldés párosított példányra {#replica-receive}
 
 Egy párosított BombVault maga is fogadhatja a replikát. Senki nem kap SSH-hozzáférést a másik gazdához, és egyetlen kulcs sem kerül egy `authorized_keys` fájlba.
@@ -144,6 +146,8 @@ Egy párosított BombVault maga is fogadhatja a replikát. Senki nem kap SSH-hoz
 A fogadó példány csak azt fogadja el, amit a jóváhagyás lefed: az elem adatkészleteit, a saját gyökerébe. Maga futtatja a `zfs receive` parancsot, és a forrásnak nincs módja arra, hogy ott bármit töröljön vagy visszagörgessen. A másolat így akkor is túléli, ha valaki átvette a forrás feletti irányítást. A fogadó példány a saját megőrzését alkalmazza. A forrás csak javasol egy szabályt, amikor kéri a küldést.
 
 A fogadó példányon a **Revoke access** bármikor megszünteti a jóváhagyást, és értesíti a forrást, amely ekkor jelzi, hogy a jóváhagyást visszavonták, és leáll. Amit a fogadó példány már tart, az ott marad. Az elutasított kérés elutasított marad. További adatkészletek, vagy egy visszavonás utáni kérés újra jóváhagyást kérnek.
+
+A fogadó példánynak HTTPS-en kell válaszolnia. Sima http-címre a forrás semmit nem küld, mert a token és az adatok titkosítatlanul mennének át a hálózaton. Minden átvitel ráadásul szabadon hagyja a fogadó pool egytizedét, és leáll, mielőtt hozzányúlna, így egyetlen forrás sem töltheti meg a fogadó kiszolgáló poolját.
 
 ### Hová kerülnek az adatok {#replica-target}
 

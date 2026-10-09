@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Bu yönde, öğeyi tutan BombVault sunucuda yazabilen bir anahtarı da tutar.
 
+BombVault, sunucunun ilk bağlantıda gösterdiği ana makine anahtarını kaydeder ve sonra başka her anahtarı reddeder. Sunucu yeniden kurulduysa sunucunun sayfasında **Ana makine anahtarını unut** düğmesine basın; sonraki bağlantı yeni anahtarı kaydeder.
+
 ### Eşleştirilmiş bir örneğe gönderme {#replica-receive}
 
 Eşleştirilmiş bir BombVault replikayı kendisi alabilir. Kimse diğer ana makineye SSH erişimi kazanmaz ve hiçbir anahtar `authorized_keys` dosyasına girmez.
@@ -144,6 +146,8 @@ Eşleştirilmiş bir BombVault replikayı kendisi alabilir. Kimse diğer ana mak
 Alan örnek yalnızca onayın kapsadığını kabul eder: öğenin veri kümelerini, kendi köküne. `zfs receive` komutunu kendisi çalıştırır ve kaynağın orada bir şeyi silme ya da geri alma yolu yoktur. Bu yüzden kaynağı biri ele geçirse bile kopya korunur. Alan örnek kendi saklama kuralını uygular. Kaynak, istek gönderirken yalnızca bir kural önerir.
 
 Alan örnekteki **Revoke access** onayı istediğiniz zaman sona erdirir ve kaynağa bildirir. Kaynak onayın geri çekildiğini gösterir ve durur. Alan örneğin zaten elinde olanlar orada kalır. Reddedilen bir istek reddedilmiş kalır. Daha fazla veri kümesi için ya da bir iptalden sonra yeniden istek gerekir.
+
+Alan örnek HTTPS üzerinden yanıt vermelidir. Kaynak düz bir http adresine hiçbir şey göndermez, çünkü belirteç ve veriler ağdan şifrelenmeden geçerdi. Her aktarım ayrıca alan havuzun onda birini boş bırakır ve o kısma dokunmadan durur; böylece tek bir kaynak alan sunucunun havuzunu dolduramaz.
 
 ### Verinin indiği yer {#replica-target}
 

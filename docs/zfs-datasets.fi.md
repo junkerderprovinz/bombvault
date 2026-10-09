@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Tässä suunnassa kohteen omistava BombVault pitää myös avainta, jolla voi kirjoittaa palvelimelle.
 
+BombVault tallentaa isäntäavaimen, jonka palvelin näyttää ensimmäisellä yhteydellä, ja hylkää myöhemmin muut. Jos palvelin on asennettu uudelleen, paina palvelimen sivulla **Forget host key**, niin seuraava yhteys tallentaa uuden avaimen.
+
 ### Lähetys pariliitetylle instanssille {#replica-receive}
 
 Pariliitetty BombVault voi vastaanottaa replikan itse. Kukaan ei saa SSH-pääsyä toiselle isännälle, eikä mikään avain mene `authorized_keys`-tiedostoon.
@@ -144,6 +146,8 @@ Pariliitetty BombVault voi vastaanottaa replikan itse. Kukaan ei saa SSH-pääsy
 Vastaanottava instanssi hyväksyy vain sen, minkä hyväksyntä kattaa: kohteen tietojoukot omaan juureensa. Se ajaa komennon `zfs receive` itse, eikä lähteellä ole mitään keinoa poistaa tai palauttaa siellä mitään. Kopio säilyy siis, vaikka joku olisi vallannut lähteen. Vastaanottava instanssi pitää oman säilytyksensä. Lähde ehdottaa sääntöä vain pyynnössään.
 
 **Revoke access** vastaanottavassa instanssissa päättää hyväksynnän milloin tahansa ja kertoo siitä lähteelle, joka näyttää sitten hyväksynnän peruutetuksi ja lopettaa. Se, mitä vastaanottava instanssi jo pitää hallussaan, jää sinne. Hylätty pyyntö pysyy hylättynä. Lisää tietojoukkoja tai pyyntö peruutuksen jälkeen kysyvät uudelleen.
+
+Vastaanottavan instanssin on vastattava HTTPS:n kautta. Pelkkään http-osoitteeseen lähde ei lähetä mitään, koska tunniste ja tiedot kulkisivat verkossa salaamattomina. Jokainen siirto jättää lisäksi kymmenesosan vastaanottavasta poolista vapaaksi ja pysähtyy ennen kuin alkaisi käyttää sitä, joten yksi lähde ei voi täyttää vastaanottavan palvelimen poolia.
 
 ### Mihin data päätyy {#replica-target}
 

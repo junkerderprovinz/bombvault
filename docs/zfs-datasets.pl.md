@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 W tym kierunku BombVault, który przechowuje element, ma też klucz pozwalający pisać na serwerze.
 
+BombVault zapamiętuje klucz hosta, który serwer pokazuje przy pierwszym połączeniu, a później odrzuca każdy inny. Jeśli serwer został zainstalowany na nowo, naciśnij **Zapomnij klucz hosta** na stronie serwera, a następne połączenie zapamięta nowy klucz.
+
 ### Wysyłanie do sparowanej instancji {#replica-receive}
 
 Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH do drugiego hosta i żaden klucz nie trafia do pliku `authorized_keys`.
@@ -144,6 +146,8 @@ Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH d
 Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę.
 
 **Revoke access** na instancji odbierającej w każdej chwili kończy zatwierdzenie i informuje o tym źródło, które pokazuje wtedy, że zatwierdzenie wycofano, i przestaje wysyłać. To, co instancja odbierająca już ma, zostaje u niej. Odrzucona prośba pozostaje odrzucona. Dodatkowe zbiory danych albo prośba po cofnięciu dostępu wymagają ponownego pytania.
+
+Instancja odbierająca musi odpowiadać przez HTTPS. Na zwykły adres http źródło nic nie wysyła, bo token i dane szłyby przez sieć niezaszyfrowane. Każdy transfer zostawia też wolną jedną dziesiątą puli odbierającej i zatrzymuje się, zanim by ją naruszył, więc jedno źródło nie zapełni puli serwera odbierającego.
 
 ### Gdzie trafiają dane {#replica-target}
 

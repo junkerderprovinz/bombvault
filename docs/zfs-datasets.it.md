@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In questa direzione il BombVault che tiene l'elemento tiene anche una chiave che può scrivere sul server.
 
+BombVault memorizza la chiave host che il server mostra alla prima connessione e in seguito ne rifiuta qualsiasi altra. Se il server è stato reinstallato, premi **Forget host key** nella pagina del server e la connessione successiva memorizza la nuova chiave.
+
 ### Invio a un'istanza abbinata {#replica-receive}
 
 Un BombVault abbinato può ricevere la replica da sé. Nessuno ottiene accesso SSH all'altro host e nessuna chiave finisce in un file `authorized_keys`.
@@ -144,6 +146,8 @@ Un BombVault abbinato può ricevere la replica da sé. Nessuno ottiene accesso S
 L'istanza che riceve accetta solo ciò che l'approvazione copre: i dataset dell'elemento, nella propria radice. Esegue `zfs receive` da sola, e la sorgente non ha modo di eliminare o ripristinare nulla lì. Così la copia sopravvive a una sorgente di cui qualcuno ha preso il controllo. L'istanza che riceve tiene la propria conservazione. La sorgente suggerisce una regola solo quando fa la richiesta.
 
 **Revoke access** sull'istanza che riceve termina l'approvazione in qualsiasi momento e lo comunica alla sorgente, che allora mostra che l'approvazione è stata ritirata e si ferma. Ciò che l'istanza che riceve ha già resta lì. Una richiesta rifiutata resta rifiutata. Altri dataset, o una richiesta dopo una revoca, chiedono di nuovo.
+
+L'istanza che riceve deve rispondere in HTTPS. A un indirizzo http semplice la sorgente non invia nulla, perché il token e i dati attraverserebbero la rete senza cifratura. Ogni trasferimento lascia inoltre libero un decimo del pool che riceve e si ferma prima di intaccarlo, così una sola sorgente non può riempire il pool del server che riceve.
 
 ### Dove finiscono i dati {#replica-target}
 

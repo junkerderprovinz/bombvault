@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 I denne retningen har BombVault-en som eier elementet også en nøkkel som kan skrive på serveren.
 
+BombVault lagrer vertsnøkkelen serveren viser ved første tilkobling, og avviser senere alle andre. Hvis serveren er installert på nytt, trykk **Glem vertsnøkkel** på serverens side, så lagrer neste tilkobling den nye nøkkelen.
+
 ### Sending til en paret instans {#replica-receive}
 
 En paret BombVault kan ta imot replikaen selv. Ingen får SSH-tilgang til den andre verten, og ingen nøkkel havner i en `authorized_keys`-fil.
@@ -144,6 +146,8 @@ En paret BombVault kan ta imot replikaen selv. Ingen får SSH-tilgang til den an
 Den mottakende instansen godtar bare det godkjenningen dekker: elementets datasett, inn i sin egen rot. Den kjører `zfs receive` selv, og kilden har ingen måte å slette eller rulle tilbake noe der på. Derfor overlever kopien en kilde som noen har tatt over. Den mottakende instansen har sin egen oppbevaring. Kilden foreslår bare en regel når den ber om godkjenning.
 
 **Revoke access** på den mottakende instansen avslutter godkjenningen når som helst og forteller det til kilden, som da viser at godkjenningen er trukket tilbake og stopper. Det den mottakende instansen allerede har, blir liggende. En avslått forespørsel forblir avslått. Flere datasett, eller en forespørsel etter en tilbaketrekking, spør på nytt.
+
+Den mottakende instansen må svare over HTTPS. Til en vanlig http-adresse sender kilden ingenting, fordi tokenet og dataene ellers ville gått ukryptert over nettet. Hver overføring lar dessuten en tidel av den mottakende poolen stå ledig og stopper før den ville tatt av den, så én kilde kan ikke fylle poolen til den mottakende serveren.
 
 ### Hvor dataene havner {#replica-target}
 

@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In deze richting heeft de BombVault die het item beheert ook een sleutel waarmee op de server kan worden geschreven.
 
+BombVault legt bij de eerste verbinding de hostsleutel vast die de server laat zien en weigert later elke andere. Is de server opnieuw geïnstalleerd, druk dan op de pagina van de server op **Hostsleutel vergeten**; de volgende verbinding legt de nieuwe sleutel vast.
+
 ### Versturen naar een gekoppelde instantie {#replica-receive}
 
 Een gekoppelde BombVault kan de replica zelf ontvangen. Niemand krijgt SSH-toegang tot de andere host en er komt geen sleutel in een `authorized_keys`-bestand.
@@ -144,6 +146,8 @@ Een gekoppelde BombVault kan de replica zelf ontvangen. Niemand krijgt SSH-toega
 De ontvangende instantie accepteert alleen wat de goedkeuring dekt: de datasets van het item, in haar eigen root. Ze voert zelf `zfs receive` uit en de bron kan daar niets verwijderen of terugdraaien. Zo overleeft de kopie een bron die iemand heeft overgenomen. De ontvangende instantie houdt haar eigen retentie aan. De bron stelt alleen een regel voor wanneer ze het verzoek doet.
 
 **Revoke access** op de ontvangende instantie beëindigt de goedkeuring op elk moment en meldt dat aan de bron, die dan toont dat de goedkeuring is ingetrokken en stopt. Wat de ontvangende instantie al heeft, blijft daar staan. Een afgewezen verzoek blijft afgewezen. Meer datasets, of een verzoek na een intrekking, vragen opnieuw om goedkeuring.
+
+De ontvangende instantie moet via HTTPS antwoorden. Naar een gewoon http-adres stuurt de bron niets, omdat het token en de data dan onversleuteld over het netwerk zouden gaan. Elke overdracht laat bovendien een tiende van de ontvangende pool vrij en stopt voordat ze daaraan zou komen, zodat één bron de pool van de ontvangende server niet kan vullen.
 
 ### Waar de data terechtkomt {#replica-target}
 

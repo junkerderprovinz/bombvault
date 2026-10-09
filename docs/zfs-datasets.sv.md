@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 I den här riktningen har BombVault som äger objektet också en nyckel som kan skriva på servern.
 
+BombVault sparar värdnyckeln som servern visar vid första anslutningen och avvisar senare alla andra. Om servern har installerats om, tryck på **Glöm värdnyckel** på serverns sida, så sparar nästa anslutning den nya nyckeln.
+
 ### Skicka till en parkopplad instans {#replica-receive}
 
 Ett parkopplat BombVault kan ta emot repliken själv. Ingen får SSH-åtkomst till den andra värden, och ingen nyckel hamnar i en `authorized_keys`-fil.
@@ -144,6 +146,8 @@ Ett parkopplat BombVault kan ta emot repliken själv. Ingen får SSH-åtkomst ti
 Den mottagande instansen tar bara emot det som godkännandet täcker: objektets datauppsättningar, in i sin egen rot. Den kör `zfs receive` själv, och källan har inget sätt att ta bort eller återställa något där. Därför överlever kopian en källa som någon har tagit över. Den mottagande instansen har sin egen lagringstid. Källan föreslår bara en regel när den skickar begäran.
 
 **Revoke access** på den mottagande instansen avslutar godkännandet när som helst och meddelar källan, som då visar att godkännandet har återkallats och slutar. Det som den mottagande instansen redan har blir kvar där. En avvisad begäran förblir avvisad. Fler datauppsättningar, eller en begäran efter ett återkallande, frågar igen.
+
+Den mottagande instansen måste svara över HTTPS. Till en vanlig http-adress skickar källan ingenting, eftersom token och data annars skulle gå okrypterade över nätet. Varje överföring lämnar dessutom en tiondel av den mottagande poolen fri och stannar innan den skulle ta av den, så en enda källa kan inte fylla den mottagande serverns pool.
 
 ### Var datan hamnar {#replica-target}
 

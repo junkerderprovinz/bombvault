@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In dieser Richtung hält das BombVault, das das Element besitzt, auch einen Schlüssel, der auf dem Server schreiben kann.
 
+BombVault speichert beim ersten Verbinden den Host-Schlüssel des Servers und lehnt später einen anderen ab. Wurde der Server neu aufgesetzt, drück auf der Seite des Servers **Host-Schlüssel vergessen**, dann speichert die nächste Verbindung den neuen Schlüssel.
+
 ### An eine gekoppelte Instanz senden {#replica-receive}
 
 Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-Zugang zum anderen Host, und es landet kein Schlüssel in einer Datei `authorized_keys`.
@@ -144,6 +146,8 @@ Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-
 Die empfangende Instanz nimmt nur an, was die Freigabe abdeckt: die Datasets des Elements, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle kann dort nichts löschen oder zurückrollen. Die Kopie übersteht also auch eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt bei der Anfrage nur eine Regel vor.
 
 **Freigabe entziehen** auf der empfangenden Instanz beendet die Freigabe jederzeit und sagt es der Quelle, die dann anzeigt, dass die Freigabe zurückgezogen wurde, und aufhört. Was die empfangende Instanz schon hat, bleibt dort. Eine abgelehnte Anfrage bleibt abgelehnt. Für weitere Datasets oder nach einem Entzug fragt die Quelle erneut an.
+
+Die empfangende Instanz muss über HTTPS antworten. An eine reine http-Adresse schickt die Quelle nichts, weil Token und Daten sonst unverschlüsselt übers Netz gingen. Jede Übertragung lässt außerdem ein Zehntel des empfangenden Pools frei und hört auf, bevor sie es anbrechen würde. So kann eine einzelne Quelle den Pool des empfangenden Servers nicht füllen.
 
 ### Wo die Daten landen {#replica-target}
 

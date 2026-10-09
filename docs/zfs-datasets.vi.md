@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Theo chiều này, BombVault giữ mục cũng giữ một khóa có thể ghi trên máy chủ.
 
+BombVault lưu khóa host mà máy chủ đưa ra ở lần kết nối đầu tiên và về sau từ chối mọi khóa khác. Nếu máy chủ được cài lại, hãy bấm **Quên khóa host** trên trang của máy chủ, lần kết nối tiếp theo sẽ lưu khóa mới.
+
 ### Gửi sang phiên bản đã ghép đôi {#replica-receive}
 
 Một BombVault đã ghép đôi có thể tự nhận bản nhân bản. Không ai được truy cập SSH vào máy chủ kia và không có khóa nào được thêm vào tệp `authorized_keys`.
@@ -144,6 +146,8 @@ Một BombVault đã ghép đôi có thể tự nhận bản nhân bản. Không
 Phiên bản nhận chỉ chấp nhận những gì sự phê duyệt bao gồm: các tập dữ liệu của mục, vào gốc của chính nó. Nó tự chạy `zfs receive`, và nguồn không có cách nào xóa hay hoàn tác bất cứ thứ gì ở đó. Vì vậy bản sao vẫn còn nguyên dù ai đó đã chiếm quyền nguồn. Phiên bản nhận tự quản lý thời gian lưu giữ. Nguồn chỉ gợi ý một quy tắc khi gửi yêu cầu.
 
 **Revoke access** trên phiên bản nhận kết thúc sự phê duyệt bất cứ lúc nào và báo cho nguồn, nguồn khi đó hiện rằng phê duyệt đã bị rút lại và dừng gửi. Những gì phiên bản nhận đã có vẫn ở lại đó. Yêu cầu bị từ chối vẫn là bị từ chối. Muốn thêm tập dữ liệu, hoặc yêu cầu lại sau khi thu hồi, cần gửi yêu cầu mới.
+
+Phiên bản nhận phải trả lời qua HTTPS. Nguồn không gửi gì đến một địa chỉ http thường, vì token và dữ liệu sẽ đi qua mạng mà không được mã hóa. Mỗi lần truyền cũng chừa trống một phần mười pool nhận và dừng trước khi đụng tới phần đó, nên một nguồn không thể làm đầy pool của máy chủ nhận.
 
 ### Dữ liệu nằm ở đâu {#replica-target}
 

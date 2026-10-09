@@ -133,6 +133,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 V tomto směru drží BombVault, který položku vlastní, také klíč, který může na server zapisovat.
 
+BombVault si při prvním připojení uloží klíč hostitele, který server ukáže, a jiný později odmítne. Pokud byl server přeinstalován, stiskněte na stránce serveru **Forget host key** a příští připojení uloží nový klíč.
+
 ### Odeslání spárované instanci {#replica-receive}
 
 Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH k druhému hostiteli a do souboru `authorized_keys` se nepřidává žádný klíč.
@@ -144,6 +146,8 @@ Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH
 Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo.
 
 **Revoke access** na přijímající instanci kdykoli ukončí schválení a oznámí to zdroji, který pak zobrazí, že schválení bylo odvoláno, a přestane odesílat. Co přijímající instance už má, tam zůstane. Zamítnutá žádost zůstává zamítnutá. Další datové sady nebo žádost po odvolání se ptají znovu.
+
+Přijímající instance musí odpovídat přes HTTPS. Na prostou adresu http zdroj nic neposílá, protože token a data by šly po síti nešifrované. Každý přenos navíc nechává desetinu přijímajícího poolu volnou a skončí dřív, než by ji začal zabírat, takže jeden zdroj nemůže zaplnit pool přijímajícího serveru.
 
 ### Kam data přijdou {#replica-target}
 
