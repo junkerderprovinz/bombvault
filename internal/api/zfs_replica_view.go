@@ -297,12 +297,16 @@ func (s *Service) PatchZFSReplica(ctx context.Context, id string, p ZFSReplicaPa
 			return err
 		}
 	}
-	// The same peer target again is how the page asks a second time.
+	// The same peer target again is how the page asks a second time. The edit
+	// is stored by now, and a peer that does not answer is asked again by the
+	// next run, so its failure does not fail the edit.
 	if target.Kind == store.ZFSReplicaTargetPeer && (p.Target != nil || p.Keep != nil) {
 		if d, err = s.store.GetZFSDataset(id); err != nil {
 			return err
 		}
-		return s.zfsReplicaPeerRequest(ctx, d)
+		if err := s.zfsReplicaPeerRequest(ctx, d); err != nil {
+			log.Printf("api: zfs replica: asking the receiving instance of %s failed: %v", d.Dataset, err)
+		}
 	}
 	return nil
 }

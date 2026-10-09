@@ -901,3 +901,17 @@ func TestAPanickingBringBackFailsOnlyItsOwnRun(t *testing.T) {
 		t.Errorf("the backup running beside it = %+v, want it untouched", backup)
 	}
 }
+
+func TestAPeerThatDoesNotAnswerStillTakesTheReplicaEdit(t *testing.T) {
+	r := newReplicaRig(t)
+	r.host.tree = []string{"cache/appdata"}
+	_, m, _ := r.call(http.MethodPatch, "/api/zfs/datasets/"+r.item.ID+"/replica",
+		`{"target":{"kind":"peer","id":"peer-offline"},"afterBackup":false,"cadence":"daily 03:00"}`)
+	if m["ok"] != true {
+		t.Fatalf("patch = %v, want the stored edit answered as one", m)
+	}
+	d, _ := r.st.GetZFSDataset(r.item.ID)
+	if d.Replica.TargetKind != store.ZFSReplicaTargetPeer || d.Replica.AfterBackup || d.Replica.Cadence != "daily 03:00" {
+		t.Errorf("replica = %+v", d.Replica)
+	}
+}
