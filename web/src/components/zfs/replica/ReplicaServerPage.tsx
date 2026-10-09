@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 
-import { deleteZFSReplicaServer, listZFSDatasets, patchZFSReplicaServer, testZFSReplicaServer } from "../../../lib/api";
+import {
+  deleteZFSReplicaServer,
+  forgetZFSReplicaHostKey,
+  listZFSDatasets,
+  patchZFSReplicaServer,
+  testZFSReplicaServer,
+} from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
 import { useConfirm } from "../../../lib/useConfirm";
 import { useTestVerdict } from "../../../lib/useTestVerdict";
@@ -11,6 +17,7 @@ import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { InfoBubble } from "../../InfoBubble";
 import { TestButton, VerdictLine } from "../../TestButton";
+import { IconKeyRevoke } from "../../glyphs";
 import { IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaStatePill } from "./ReplicaStatePill";
@@ -62,6 +69,7 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
   const [datasets, setDatasets] = useState<ReadonlyMap<string, string>>(new Map());
   const [editing, setEditing] = useState(false);
   const [enabledBusy, setEnabledBusy] = useState(false);
+  const [forgetting, setForgetting] = useState(false);
   const server = servers.find((s) => s.id === serverId);
   const check = useTestVerdict([server?.host, server?.user, server?.port], t("common.networkError"));
 
@@ -94,6 +102,23 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
       return r.ok ? { ok: true } : { ok: false, reason: testFailure(t, r) };
     });
   }
+
+  const forgetHostKey = async () => {
+    const question = `${t("zfs.replica.server.forgetHostKeyQuestion").replace("{name}", () => server.name)} ${t(
+      "zfs.replica.server.forgetHostKeyText",
+    )}`;
+    if (!(await confirm(question, { confirmKey: "zfs.replica.server.forgetHostKeyConfirm" }))) return;
+    setForgetting(true);
+    try {
+      const res = await forgetZFSReplicaHostKey(serverId);
+      if (res.ok) push(t("zfs.replica.server.hostKeyForgotten"), "success");
+      else push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setForgetting(false);
+    }
+  };
 
   const remove = async () => {
     const question = `${t("zfs.replica.server.removeQuestion").replace("{name}", () => server.name)} ${t(
@@ -165,7 +190,17 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
           disabled={enabledBusy}
         />
         <VerdictLine verdict={check.verdict} />
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            label={t("zfs.replica.server.forgetHostKey")}
+            labelKey="zfs.replica.server.forgetHostKey"
+            glyph={<IconKeyRevoke />}
+            tone="neutral"
+            hint={t("zfs.replica.server.forgetHostKeyHint")}
+            onClick={() => void forgetHostKey()}
+            disabled={forgetting}
+            busy={forgetting}
+          />
           <TestButton
             label={t("zfs.replica.server.test")}
             labelKey="zfs.replica.server.test"

@@ -13,6 +13,7 @@ let servers: ZFSReplicaServer[];
 let current: ZFSReplica;
 const deleted: string[] = [];
 const patched: ZFSReplicaServerPatch[] = [];
+const forgotten: string[] = [];
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
@@ -26,6 +27,10 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     patchZFSReplicaServer: (_id: string, patch: ZFSReplicaServerPatch) => {
       patched.push(patch);
       servers = servers.map((s) => ({ ...s, ...patch }));
+      return Promise.resolve({ ok: true });
+    },
+    forgetZFSReplicaHostKey: (id: string) => {
+      forgotten.push(id);
       return Promise.resolve({ ok: true });
     },
     deleteZFSReplicaServer: (id: string, detach: boolean) => {
@@ -55,6 +60,7 @@ beforeEach(() => {
   current = replica();
   deleted.length = 0;
   patched.length = 0;
+  forgotten.length = 0;
   localStorage.clear();
 });
 
@@ -106,6 +112,17 @@ describe("ZFS servers", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Backup-NAS/ }));
     fireEvent.click(await screen.findByRole("switch", { name: en["zfs.replica.server.enabled"] }));
     await waitFor(() => expect(patched).toEqual([{ enabled: false }]));
+  });
+
+  it("forgets a server's host key only once the question is answered", async () => {
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: /Backup-NAS/ }));
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.server.forgetHostKey"] }));
+    expect(await screen.findByText(/^Forget the host key of Backup-NAS\? The next connection pins/)).toBeTruthy();
+    expect(forgotten).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.server.forgetHostKeyConfirm"] }));
+    await waitFor(() => expect(forgotten).toEqual(["nas"]));
+    expect(await screen.findByText(en["zfs.replica.server.hostKeyForgotten"])).toBeTruthy();
   });
 
   it("detaches the items that use a server it removes", async () => {

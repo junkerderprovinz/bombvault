@@ -13,6 +13,7 @@ let requests: ZFSReceiveRequest[] = [];
 let pools: ZFSReplicaPool[] = [];
 const decisions: [string, ZFSReceiveDecision][] = [];
 const keeps: [string, ZFSReplicaKeep][] = [];
+let decide: () => { ok: boolean; code?: string } = () => ({ ok: true });
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
@@ -22,7 +23,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     listZFSLocalPools: () => Promise.resolve(pools),
     decideZFSReceiveRequest: (id: string, decision: ZFSReceiveDecision) => {
       decisions.push([id, decision]);
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(decide());
     },
     patchZFSReceiveRequest: (id: string, keep: ZFSReplicaKeep) => {
       keeps.push([id, keep]);
@@ -52,6 +53,7 @@ beforeEach(() => {
     { name: "backup", sizeBytes: 4 * TB, freeBytes: 2 * TB },
   ];
   decisions.length = 0;
+  decide = () => ({ ok: true });
   keeps.length = 0;
   localStorage.clear();
 });
@@ -101,11 +103,32 @@ describe("receiving a ZFS replica", () => {
       expect(decisions).toEqual([
         [
           "rq1",
-          { decision: "allow", pool: "backup", root: "backup/from-tower", keep: { preset: "long", own: [0, 14, 8, 0, 0] } },
+          {
+            decision: "allow",
+            pool: "backup",
+            root: "backup/from-tower",
+            keep: { preset: "long", own: [0, 14, 8, 0, 0] },
+            item: "cache/appdata",
+            members: ["cache/appdata", "cache/appdata/vm-disk"],
+          },
         ],
       ]),
     );
     expect(await screen.findByText("tower-2 may send cache/appdata here now.")).toBeTruthy();
+  });
+
+  it("reads the requests again and says so when the source asked for more since they were shown", async () => {
+    renderCard();
+    await screen.findByText("tower-2 wants to replicate cache/appdata here");
+    const members = ["cache/appdata", "cache/appdata/vm-disk", "cache/appdata/media"];
+    decide = () => {
+      requests = [receiveRequest({ members })];
+      return { ok: false, code: "request-changed" };
+    };
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.receive.allow"] }));
+    expect(await screen.findByText(en["zfs.code.request-changed"])).toBeTruthy();
+    const list = screen.getByRole("list", { name: en["zfs.replica.members"] });
+    await waitFor(() => expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(members));
   });
 
   it("declines without asking for a pool", async () => {

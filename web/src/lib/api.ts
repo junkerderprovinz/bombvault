@@ -4590,6 +4590,12 @@ export function testZFSReplicaServer(id: string): Promise<ZFSReplicaTestResult> 
   return fetchJSON(`/api/zfs/replica/servers/${encodeURIComponent(id)}/test`, { method: "POST" });
 }
 
+/** POST /api/zfs/replica/servers/{id}/forget-host-key: drop the host key
+ *  pinned for a server, so the next connection pins the one it presents. */
+export function forgetZFSReplicaHostKey(id: string): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/replica/servers/${encodeURIComponent(id)}/forget-host-key`, { method: "POST" });
+}
+
 /** GET /api/zfs/datasets/{id}/replica. */
 export function getZFSReplica(id: string): Promise<ZFSReplica> {
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica`);
@@ -4646,8 +4652,11 @@ export interface ZFSReceiveRequest {
   bytes: number;
 }
 
+/** An allow names the item and members exactly as the request it answers
+ *  showed them, and is refused with "request-changed" when the source has
+ *  asked for others since. */
 export type ZFSReceiveDecision =
-  | { decision: "allow"; pool: string; root: string; keep: ZFSReplicaKeep }
+  | { decision: "allow"; pool: string; root: string; keep: ZFSReplicaKeep; item: string; members: string[] }
   | { decision: "refuse" }
   | { decision: "revoke" };
 

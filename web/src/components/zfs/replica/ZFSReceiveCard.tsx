@@ -33,6 +33,13 @@ function useAnswer(onDone: () => void) {
     async (send: () => Promise<{ ok: boolean; code?: string; error?: string }>): Promise<boolean> => {
       try {
         const res = await send();
+        if (res.code === "request-changed") {
+          // The request on screen is out of date; reading the list again
+          // shows what the source asks for now.
+          push(zfsCodeSentence(t, res.code), "warn");
+          onDone();
+          return false;
+        }
         if (!res.ok) {
           push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
           return false;
@@ -109,7 +116,7 @@ function AskedRequest({
     if (!shownRoot.trim()) return setError(t("zfs.replica.add.needRoot"));
     setError(null);
     void decide(
-      { decision: "allow", pool: shownPool, root: shownRoot.trim(), keep },
+      { decision: "allow", pool: shownPool, root: shownRoot.trim(), keep, item: request.item, members: request.members },
       t("zfs.receive.accepted").replaceAll("{peer}", () => sender).replaceAll("{name}", () => request.item),
     );
   }
