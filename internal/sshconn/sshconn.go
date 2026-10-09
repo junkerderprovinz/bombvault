@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -63,6 +64,11 @@ func (c *Conn) knownHostsPath() string {
 	return filepath.Join(c.dir, "known_hosts")
 }
 
+// keygen serialises key creation. Isolated Conns share a key directory, and
+// two ssh-keygen runs into one path can leave a private key and a public key
+// from different runs.
+var keygen sync.Mutex
+
 // EnsureKey generates an ed25519 keypair on first use and reuses it
 // thereafter. It also creates the directory known_hosts goes in, since ssh
 // does not and would then pin nothing.
@@ -73,6 +79,8 @@ func (c *Conn) EnsureKey() error {
 	if err := os.MkdirAll(filepath.Dir(c.knownHostsPath()), 0o700); err != nil {
 		return fmt.Errorf("sshconn: mkdir: %w", err)
 	}
+	keygen.Lock()
+	defer keygen.Unlock()
 	if _, err := os.Stat(c.keyPath()); err == nil {
 		return nil
 	}
