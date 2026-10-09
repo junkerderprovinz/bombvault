@@ -412,6 +412,50 @@ func TestAFailedResumeDropsTheNewSnapshotAndKeepsTheOneItResumesTowards(t *testi
 	}
 }
 
+func TestAResumeTokenThatIsNotTheMembersOwnIsDroppedUnsent(t *testing.T) {
+	cases := []struct {
+		name  string
+		token func(vault fakePoint) streamHeader
+	}{
+		{"another dataset", func(vault fakePoint) streamHeader {
+			return streamHeader{Dataset: "cache/appdata/vault", Snap: vault.name, GUID: vault.guid, Raw: true, Size: 4096}
+		}},
+		{"an encrypted member without the raw flag", func(vault fakePoint) streamHeader {
+			return streamHeader{Dataset: "cache/appdata/vault", Snap: vault.name, GUID: vault.guid, Size: 4096}
+		}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := newRig(t)
+			r.src.add("cache/appdata/vault", "filesystem", true)
+			first := r.run()
+			r.ok(first)
+			target := rootTarget
+			if c.name != "another dataset" {
+				target = base + "/cache/appdata/vault"
+			}
+			r.dst.get(target).token = encodeToken(c.token(r.src.get("cache/appdata/vault").snaps[0]))
+			r.src.resetCalls()
+			r.dst.resetCalls()
+
+			res := r.run()
+			r.ok(res)
+			for _, s := range streamsOf(r.src) {
+				if slices.Contains(s, "-t") {
+					t.Errorf("the source streamed the target's token: %q", s)
+				}
+			}
+			if !slices.ContainsFunc(r.dst.callsOf("receive"), func(c []string) bool { return hasSeq(c, "receive", "-A", target) }) {
+				t.Errorf("the partial state was not dropped: %q", r.dst.callsOf("receive"))
+			}
+			ds := strings.TrimPrefix(target, base+"/")
+			if m := member(t, res, ds); m.Resumed || m.Base != first.Snapshot {
+				t.Errorf("%s = %+v, want an increment from %s", ds, m, first.Snapshot)
+			}
+		})
+	}
+}
+
 func TestAStaleTokenIsAbortedAndTheMemberCarriesOn(t *testing.T) {
 	r := newRig(t)
 	first := r.run()

@@ -475,7 +475,20 @@ func (h *fakeHost) estimate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("full\t%s@%s\t%d\nsize\t%d\n", hd.Dataset, hd.Snap, hd.Size-hd.Offset, hd.Size-hd.Offset), nil
+	var b strings.Builder
+	if index(args, "-t") >= 0 {
+		b.WriteString("resume token contents:\nnvlist version: 0\n")
+		if hd.FromGUID != 0 {
+			fmt.Fprintf(&b, "\tfromguid = 0x%x\n", hd.FromGUID)
+		}
+		fmt.Fprintf(&b, "\tobject = 0x2\n\toffset = 0x%x\n\tbytes = 0x%x\n\ttoguid = 0x%x\n\ttoname = %s@%s\n\tembedok = 1\n\tcompressok = 1\n",
+			hd.Offset, hd.Offset, hd.GUID, hd.Dataset, hd.Snap)
+		if hd.Raw {
+			b.WriteString("\trawok = 1\n")
+		}
+	}
+	fmt.Fprintf(&b, "full\t%s@%s\t%d\nsize\t%d\n", hd.Dataset, hd.Snap, hd.Size-hd.Offset, hd.Size-hd.Offset)
+	return b.String(), nil
 }
 
 func (h *fakeHost) Send(ctx context.Context, args []string) (io.ReadCloser, func() error, error) {

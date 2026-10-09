@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -174,7 +175,7 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 	if err != nil {
 		return nil, nil, false, err
 	}
-	n, err := r.stream(ctx, m.Dataset, sendArgs, recvArgs, estArgs)
+	n, err := r.stream(ctx, m.Dataset, sendArgs, recvArgs, estimate(ctx, r.src, estArgs))
 	m.Bytes += n
 	if err != nil {
 		return nil, nil, true, err
@@ -191,8 +192,9 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 }
 
 // resume finishes the stream an earlier run left on the target. A token whose
-// snapshot is gone from the source is dropped with receive -A, and the
-// member carries on from what the target holds then.
+// snapshot is gone from the source, or that does not stand for a stream of this
+// member, is dropped with receive -A, and the member carries on from what the
+// target holds then.
 func (r *run) resume(ctx context.Context, m *MemberResult, view targetView, src []zfs.ReplicaPoint) (targetView, error) {
 	sendArgs, err := zfs.ResumeSendArgs(view.token)
 	if err != nil {
@@ -206,22 +208,37 @@ func (r *run) resume(ctx context.Context, m *MemberResult, view targetView, src 
 	if err != nil {
 		return view, err
 	}
-	n, err := r.stream(ctx, m.Dataset, sendArgs, recvArgs, estArgs)
-	m.Bytes += n
+	// The target hands out the token, so the source reads what it stands for
+	// before it sends anything: another dataset, or an encrypted member without
+	// the raw flag, would stream data the target must never see.
+	out, err := r.src.Run(ctx, estArgs)
+	foreign := ""
+	if err == nil {
+		if foreign = tokenMismatch(out, *m, src); foreign == "" {
+			total, _ := zfs.ParseEstimate(out)
+			var n int64
+			n, err = r.stream(ctx, m.Dataset, sendArgs, recvArgs, total)
+			m.Bytes += n
+		}
+	}
 	switch {
+	case foreign != "":
+		log.Printf("zfs replica: the interrupted stream into %s is no stream of %s, dropping it: %s", m.Target, m.Dataset, foreign)
 	case err == nil:
 		m.Resumed = true
 	case Code(err) == "resume-token-stale":
 		log.Printf("zfs replica: the interrupted stream into %s cannot be resumed, dropping it: %v", m.Target, err)
-		abort, aerr := zfs.AbortReceiveArgs(m.Target)
-		if aerr != nil {
-			return view, aerr
-		}
-		if _, aerr := r.dst.Run(ctx, abort); aerr != nil {
-			return view, aerr
-		}
 	default:
 		return view, err
+	}
+	if !m.Resumed {
+		abort, err := zfs.AbortReceiveArgs(m.Target)
+		if err != nil {
+			return view, err
+		}
+		if _, err := r.dst.Run(ctx, abort); err != nil {
+			return view, err
+		}
 	}
 	if view, err = r.view(ctx, m.Target); err != nil {
 		return view, err
@@ -238,6 +255,35 @@ func (r *run) resume(ctx context.Context, m *MemberResult, view targetView, src 
 		}
 	}
 	return view, nil
+}
+
+// tokenMismatch reads the token's contents off a resumed dry run and says why
+// they are not a stream of m towards one of its replica snapshots, "" when they
+// are.
+func tokenMismatch(out string, m MemberResult, src []zfs.ReplicaPoint) string {
+	fields := map[string]string{}
+	for _, line := range strings.Split(out, "\n") {
+		if k, v, ok := strings.Cut(strings.TrimSpace(line), " = "); ok {
+			fields[k] = v
+		}
+	}
+	ds, snap, _ := strings.Cut(fields["toname"], "@")
+	if ds != m.Dataset || !zfs.IsReplicaSnapshot(snap) {
+		return "it continues " + strconv.Quote(fields["toname"])
+	}
+	to, ok := find(src, snap)
+	if !ok || to.Bookmark || "0x"+strconv.FormatUint(to.GUID, 16) != fields["toguid"] {
+		return "its guid is not that of " + m.Dataset + "@" + snap
+	}
+	if from, ok := fields["fromguid"]; ok && !slices.ContainsFunc(src, func(p zfs.ReplicaPoint) bool {
+		return zfs.IsReplicaSnapshot(p.Name) && "0x"+strconv.FormatUint(p.GUID, 16) == from
+	}) {
+		return "it starts from no replica snapshot of " + m.Dataset
+	}
+	if _, raw := fields["rawok"]; raw != m.Raw {
+		return "its raw flag does not match the member's encryption"
+	}
+	return ""
 }
 
 type targetView struct {

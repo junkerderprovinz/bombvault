@@ -8,8 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
-func (r *run) stream(ctx context.Context, member string, sendArgs, recvArgs, estArgs []string) (int64, error) {
-	total := estimate(ctx, r.src, estArgs)
+func (r *run) stream(ctx context.Context, member string, sendArgs, recvArgs []string, total int64) (int64, error) {
 	var report func(int64)
 	if r.e.Progress != nil {
 		report = func(done int64) { r.e.Progress(member, done, total) }
