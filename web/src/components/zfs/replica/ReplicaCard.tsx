@@ -246,6 +246,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
             labelKey="zfs.replica.addServer"
             tone="neutral"
             variant="icon"
+            className="glim-btn-wrap"
             onClick={() => setAdding(true)}
           />
         </div>
