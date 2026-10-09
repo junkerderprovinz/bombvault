@@ -399,6 +399,9 @@ func TestFailedMembersFailTheRunAndKeepTheirState(t *testing.T) {
 	if zfsReplicaCode(err) != "no-common-base" {
 		t.Fatalf("run = %v, want no-common-base", err)
 	}
+	if run := r.lastRun(); run.Status != "failed" || !strings.Contains(run.Error, "failed: cache/appdata") || strings.Contains(run.Error, "[path]") {
+		t.Errorf("run = %s %q, want the failed dataset named", run.Status, run.Error)
+	}
 	if st, ok, _ := r.st.GetZFSReplicaState(r.item.ID, "cache/appdata"); !ok || st.SourceBase != replicaSnap {
 		t.Errorf("the failed member lost its state: %+v", st)
 	}
