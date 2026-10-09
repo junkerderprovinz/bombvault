@@ -13,7 +13,7 @@ import {
   testPullSource,
   runPullSource,
 } from "../lib/api";
-import type { PullSourceView, PullSourceInput } from "../lib/api";
+import type { PullSourceKind, PullSourceView, PullSourceInput } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
@@ -32,6 +32,9 @@ import { Button } from "../components/Button";
 import { TestButton, VerdictLine } from "../components/TestButton";
 import { useTestVerdict } from "../lib/useTestVerdict";
 import { ToggleRow } from "./settings/shared";
+import { PullKindField, PullZfsFields, type PullZfsValue } from "../components/zfs/replica/PullZfsFields";
+import { DEFAULT_KEEP } from "../components/zfs/replica/replicaModel";
+import { useGroup } from "../components/zfs/replica/replicaStore";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -57,8 +60,11 @@ function PullSourceCard({
   onEdit: () => void;
 }) {
   const { push } = useToast();
+  const group = useGroup();
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const zfs = source.kind === "zfs";
+  const peer = group?.members.find((m) => m.id === source.memberId)?.name || source.memberId;
 
   async function handlePull() {
     setBusy(true);
@@ -91,7 +97,9 @@ function PullSourceCard({
 
   // A pull is something that happened, so the badge reports the last result
   // rather than a probe run now.
-  const verdict = !source.enabled
+  const verdict = source.state === "asked"
+    ? { label: t("zfs.replica.pull.waiting").replace("{peer}", () => peer), tone: "neutral" as const }
+    : !source.enabled
     ? { label: t("pull.pullingOff"), tone: "neutral" as const }
     : source.lastPullOk === null
       ? { label: t("pull.neverPulled"), tone: "neutral" as const }
@@ -109,7 +117,7 @@ function PullSourceCard({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-carbon-text">{source.name}</span>
             <Badge tone={verdict.tone}>{verdict.label}</Badge>
-            <Badge tone="neutral">{t(`nav.${source.domain}` as never)}</Badge>
+            <Badge tone="neutral">{zfs ? t("zfs.title") : t(`nav.${source.domain}` as never)}</Badge>
             {source.needsPairing && (
               <Badge tone="warn">
                 {t("pairing.pairAgain")}
@@ -120,7 +128,7 @@ function PullSourceCard({
           {/* A repository address is not prose; an RTL interface must not
               reorder it. */}
           <p className="mt-1 text-xs text-carbon-textMuted break-all" dir="ltr">
-            {source.repo}
+            {zfs ? `${(source.datasets ?? []).join(", ")} → ${source.root ?? ""}` : source.repo}
           </p>
         </div>
         <div className="text-end text-xs text-carbon-textMuted shrink-0 max-md:text-start">
@@ -215,6 +223,14 @@ function PullDialog({
   const credSets = useCloudCredSets();
   const [limitDownload, setLimitDownload] = useState(initial?.limitDownload ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
+  const [kind, setKind] = useState<PullSourceKind>(initial?.kind ?? "restic");
+  const [zfsFields, setZfsFields] = useState<PullZfsValue>({
+    datasets: initial?.datasets ?? [],
+    pool: initial?.pool ?? "",
+    root: initial?.root ?? "",
+    keep: initial?.keep ?? DEFAULT_KEEP,
+  });
+  const group = useGroup();
   const [saving, setSaving] = useState(false);
   const [shake, setShake] = useState(0);
 
@@ -222,7 +238,20 @@ function PullDialog({
   // An edit of a paired source may keep its pairing; a new source, or one from
   // before pairing, needs its instance.
   const keepPairing = editing && !initial.needsPairing;
-  const canSave = name.trim() !== "" && repo.trim() !== "" && (memberId !== "" || keepPairing) && !saving;
+  const zfs = kind === "zfs";
+  const peerName = group?.members.find((m) => m.id === (memberId || initial?.memberId))?.name ?? "";
+  const canSave =
+    name.trim() !== "" &&
+    (zfs ? zfsFields.datasets.length > 0 && zfsFields.root.trim() !== "" : repo.trim() !== "") &&
+    (memberId !== "" || keepPairing) &&
+    !saving;
+
+  function pickKind(next: PullSourceKind) {
+    setKind(next);
+    if (next === "zfs" && name.trim() === "" && peerName) {
+      setName(t("zfs.replica.pull.defaultName").replace("{peer}", () => peerName));
+    }
+  }
 
   async function handleSave() {
     if (!canSave) {
@@ -241,6 +270,7 @@ function PullDialog({
       limitUpload: initial?.limitUpload ?? 0,
       enabled,
       sortOrder: initial?.sortOrder ?? 0,
+      ...(zfs && { kind, domain: "zfs", repo: "", ...zfsFields, root: zfsFields.root.trim() }),
     };
     try {
       const res = editing ? await updatePullSource(initial.id, body) : await createPullSource(body);
@@ -279,6 +309,8 @@ function PullDialog({
           onClick={(e) => e.stopPropagation()}
           className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
         >
+          {!editing && <PullKindField kind={kind} onChange={pickKind} />}
+
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">{t("pull.name")}</label>
             <input
@@ -301,55 +333,61 @@ function PullDialog({
             onPickLocation={setRepo}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.repoLocation")}
-              <InfoBubble tip={t("pull.repoLocationHint")} />
-            </span>
-            <input
-              type="text"
-              value={repo}
-              onChange={(e) => setRepo(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              placeholder="rest:http://192.168.1.9:8000/their-containers"
-              className={inputCls}
-            />
-          </div>
+          {zfs && <PullZfsFields peerName={peerName} value={zfsFields} onChange={setZfsFields} />}
 
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("offsite.targets.credsLabel")}
-              <InfoBubble tip={t("pull.credsHint")} />
-            </span>
-            <SelectField
-              value={credsRef}
-              onChange={setCredsRef}
-              label={t("offsite.targets.credsLabel")}
-              options={[
-                // Unlike on an off-site target, "" is not the shared default: a
-                // pull never falls back to this box's credentials.
-                { value: "", label: t("pull.credsNone") },
-                ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
-              ]}
-              className={inputCls}
-            />
-          </div>
+          {!zfs && (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                  {t("pull.repoLocation")}
+                  <InfoBubble tip={t("pull.repoLocationHint")} />
+                </span>
+                <input
+                  type="text"
+                  value={repo}
+                  onChange={(e) => setRepo(e.target.value)}
+                  spellCheck={false}
+                  autoComplete="off"
+                  dir="ltr"
+                  placeholder="rest:http://192.168.1.9:8000/their-containers"
+                  className={inputCls}
+                />
+              </div>
 
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.domain")}
-              <InfoBubble tip={t("pull.domainHint")} />
-            </span>
-            <SelectField
-              value={domain}
-              onChange={setDomain}
-              label={t("pull.domain")}
-              options={DOMAINS.map((d) => ({ value: d, label: t(`nav.${d}` as never) }))}
-              className={inputCls}
-            />
-          </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                  {t("offsite.targets.credsLabel")}
+                  <InfoBubble tip={t("pull.credsHint")} />
+                </span>
+                <SelectField
+                  value={credsRef}
+                  onChange={setCredsRef}
+                  label={t("offsite.targets.credsLabel")}
+                  options={[
+                    // Unlike on an off-site target, "" is not the shared default: a
+                    // pull never falls back to this box's credentials.
+                    { value: "", label: t("pull.credsNone") },
+                    ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
+                  ]}
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                  {t("pull.domain")}
+                  <InfoBubble tip={t("pull.domainHint")} />
+                </span>
+                <SelectField
+                  value={domain}
+                  onChange={setDomain}
+                  label={t("pull.domain")}
+                  options={DOMAINS.map((d) => ({ value: d, label: t(`nav.${d}` as never) }))}
+                  className={inputCls}
+                />
+              </div>
+            </>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
@@ -367,15 +405,17 @@ function PullDialog({
             />
           </div>
 
-          <div className="flex flex-col gap-1.5 max-w-48">
-            <label className="text-xs text-carbon-textSub">{t("pull.limitDownload")}</label>
-            <NumberField
-              min={0}
-              value={limitDownload}
-              onChange={(e) => setLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
-              className={inputCls}
-            />
-          </div>
+          {!zfs && (
+            <div className="flex flex-col gap-1.5 max-w-48">
+              <label className="text-xs text-carbon-textSub">{t("pull.limitDownload")}</label>
+              <NumberField
+                min={0}
+                value={limitDownload}
+                onChange={(e) => setLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                className={inputCls}
+              />
+            </div>
+          )}
 
           <ToggleRow
             label={t("pull.pullFrom")}
