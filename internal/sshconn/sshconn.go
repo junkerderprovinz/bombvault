@@ -114,8 +114,11 @@ func (c *Conn) VirshURI() string {
 func (c *Conn) sshArgs() []string {
 	var args []string
 	if c.isolated {
-		// IdentitiesOnly keeps an agent's keys out as well.
-		args = []string{"-F", "none", "-o", "IdentitiesOnly=yes"}
+		// IdentitiesOnly keeps an agent's keys out as well. A replica stream
+		// has no deadline, so a host that drops off mid-stream has to end it
+		// within a minute rather than when TCP gives up hours later.
+		args = []string{"-F", "none", "-o", "IdentitiesOnly=yes",
+			"-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=4"}
 	}
 	return append(args,
 		"-i", c.keyPath(),

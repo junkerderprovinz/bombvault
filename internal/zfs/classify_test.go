@@ -34,6 +34,7 @@ func TestClassify(t *testing.T) {
 		{"port closed", "ssh: connect to host nas.lan port 22: Connection refused", exitStatus(255), "ssh-unreachable"},
 		{"no route", "ssh: connect to host 192.168.1.9 port 22: No route to host", exitStatus(255), "ssh-unreachable"},
 		{"unknown name", "ssh: Could not resolve hostname nas.lan: Name or service not known", exitStatus(255), "ssh-unreachable"},
+		{"host fell silent", "Timeout, server nas.lan not responding.", exitStatus(255), "ssh-unreachable"},
 		{"anything else", "cannot hold snapshot: out of space", exitStatus(1), "zfs-error"},
 
 		// What OpenZFS 2.4.3 prints on the replica path, wrapped lines included.

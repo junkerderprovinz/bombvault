@@ -337,6 +337,16 @@ func TestIsolatedConnReadsNoConfigAndOffersOnlyItsOwnKey(t *testing.T) {
 	}
 }
 
+func TestIsolatedConnGivesUpOnAHostThatFallsSilent(t *testing.T) {
+	c := NewIsolated("backup.lan", "replica", "", t.TempDir(), "")
+	joined := strings.Join(c.sshArgs(), " ")
+	for _, want := range []string{"ServerAliveInterval=15", "ServerAliveCountMax=4"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("sshArgs lacks %q: %s", want, joined)
+		}
+	}
+}
+
 func TestIsolatedConnsShareAKeyAndPinTheirHostsApart(t *testing.T) {
 	keyDir := filepath.Join(t.TempDir(), "ssh-replica")
 	a := NewIsolated("a.lan", "root", "", keyDir, filepath.Join(keyDir, "s1", "known_hosts"))

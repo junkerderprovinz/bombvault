@@ -184,7 +184,8 @@ func Classify(stderr string, err error) string {
 			strings.Contains(low, "connection timed out"),
 			strings.Contains(low, "operation timed out"),
 			strings.Contains(low, "no route to host"),
-			strings.Contains(low, "could not resolve"):
+			strings.Contains(low, "could not resolve"),
+			strings.Contains(low, "timeout, server"):
 			return "ssh-unreachable"
 		}
 	}
