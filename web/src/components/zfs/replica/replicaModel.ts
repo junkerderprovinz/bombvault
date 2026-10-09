@@ -10,6 +10,7 @@ import type {
 } from "../../../lib/api";
 import { humanBytes } from "../../../lib/forecast";
 import type { TranslationKey } from "../../../lib/i18n";
+import { zfsCodeSentence } from "../../../lib/zfsCodes";
 
 type Translate = (key: TranslationKey, n?: number) => string;
 
@@ -94,6 +95,20 @@ export function takeoverCommand(targetPath: string): string {
   return `zfs inherit -r readonly ${targetPath} && zfs inherit -r canmount ${targetPath} && zfs mount -a`;
 }
 
+/** restorePreview is the dataset a bring back creates, as the question names
+ *  it before the time stamp is known. It follows zfsrepl.RestoreName: beside
+ *  the item, or inside the pool for a pool's top dataset. */
+export function restorePreview(dataset: string): string {
+  return dataset.includes("/") ? `${dataset}-bombvault-restore-…` : `${dataset}/bombvault-restore-…`;
+}
+
+/** testFailure words a failed connection test. A check of the host, user or
+ *  port answers with the generic code, and its own text says more. */
+export function testFailure(t: Translate, result: { code: string; error?: string }): string {
+  if ((result.code === "" || result.code === "zfs-error") && result.error) return result.error;
+  return zfsCodeSentence(t, result.code);
+}
+
 /** The delegation a user other than root needs on the receiving pool. */
 export function allowLine(user: string): string {
   return `zfs allow ${user} receive,create,mount,rollback,destroy,userprop <pool>`;
@@ -138,6 +153,14 @@ export function rootMember(replica: ZFSReplica, dataset: string) {
  *  has taken the permission back, so nothing can be sent there. */
 export function peerHolds(replica: ZFSReplica): boolean {
   return replica.target.kind === "peer" && replica.peerState !== "allowed";
+}
+
+/** waitingCode is why a replica in state "waiting" does not run: its ZFS
+ *  server is switched off, or else the ZFS domain is. */
+export function waitingCode(replica: ZFSReplica, servers: readonly ZFSReplicaServer[]): "server-disabled" | "domain-off" {
+  const { kind, id } = replica.target;
+  const server = kind === "server" ? servers.find((s) => s.id === id) : undefined;
+  return server && !server.enabled ? "server-disabled" : "domain-off";
 }
 
 export function isRunning(state: ZFSReplicaState, progressActive: boolean): boolean {

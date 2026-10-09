@@ -14,13 +14,16 @@ import { TestButton, VerdictLine } from "../../TestButton";
 import { IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaStatePill } from "./ReplicaStatePill";
-import { examplePath, isRunning, serverFree, targetName } from "./replicaModel";
+import { examplePath, isRunning, rootMember, serverFree, targetName, testFailure } from "./replicaModel";
 import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
 
-function EntryRow({ itemId, dataset, path }: { itemId: string; dataset: string; path: string }) {
+function EntryRow({ itemId, dataset }: { itemId: string; dataset: string }) {
   const { replica, progressActive } = useReplica(itemId);
   const { servers } = useReplicaServers();
   const group = useGroup();
+  // The server names the folder, which keeps the name of the first run and
+  // has the characters ZFS refuses replaced.
+  const path = replica ? rootMember(replica, dataset)?.targetPath : undefined;
   return (
     <li className="flex items-center gap-3 flex-wrap">
       <span className="text-carbon-textSub" aria-hidden="true">
@@ -30,9 +33,11 @@ function EntryRow({ itemId, dataset, path }: { itemId: string; dataset: string; 
         <span dir="ltr" className="text-sm text-carbon-text text-start wrap-anywhere">
           {dataset}
         </span>
-        <span dir="ltr" className="font-mono text-caption text-carbon-textMuted text-start wrap-anywhere">
-          {path}
-        </span>
+        {path && (
+          <span dir="ltr" className="font-mono text-caption text-carbon-textMuted text-start wrap-anywhere">
+            {path}
+          </span>
+        )}
       </div>
       {replica && (
         <ReplicaStatePill
@@ -86,7 +91,7 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
   function test() {
     void check.run(async () => {
       const r = await testZFSReplicaServer(serverId);
-      return r.ok ? { ok: true } : { ok: false, reason: zfsCodeSentence(t, r.code) };
+      return r.ok ? { ok: true } : { ok: false, reason: testFailure(t, r) };
     });
   }
 
@@ -177,7 +182,7 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
         ) : (
           <ul aria-label={t("zfs.replica.server.entries")} className="flex flex-col gap-2">
             {users.map((u) => (
-              <EntryRow key={u.id} itemId={u.id} dataset={u.dataset} path={`${server.root}/${ownName}/${u.dataset}`} />
+              <EntryRow key={u.id} itemId={u.id} dataset={u.dataset} />
             ))}
           </ul>
         )}

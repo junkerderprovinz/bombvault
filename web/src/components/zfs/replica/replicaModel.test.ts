@@ -6,6 +6,7 @@ import {
   DEFAULT_KEEP,
   keepCounts,
   keepSummary,
+  restorePreview,
   takeoverCommand,
   targetRoot,
   withOwnCount,
@@ -53,5 +54,12 @@ describe("target commands", () => {
 
   it("delegate only what a receive needs to a user other than root", () => {
     expect(allowLine("bv")).toBe("zfs allow bv receive,create,mount,rollback,destroy,userprop <pool>");
+  });
+});
+
+describe("bring back", () => {
+  it("names the new dataset beside the item, or inside the pool for a pool's top dataset", () => {
+    expect(restorePreview("cache/appdata")).toBe("cache/appdata-bombvault-restore-…");
+    expect(restorePreview("tank")).toBe("tank/bombvault-restore-…");
   });
 });

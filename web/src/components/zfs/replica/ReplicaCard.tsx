@@ -16,7 +16,7 @@ import { useToast } from "../../../lib/toast";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Badge } from "../../Badge";
 import { Button } from "../../Button";
-import { CadenceBuilder } from "../../CadenceBuilder";
+import { CadenceBuilder, EXACT_CADENCE_MODES } from "../../CadenceBuilder";
 import { InfoBubble } from "../../InfoBubble";
 import { Selector } from "../../Selector";
 import { IconFleet, IconZFS } from "../../navGlyphs";
@@ -86,17 +86,19 @@ function MemberState({ member, replica, running, t }: { member: ZFSReplicaMember
 export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) {
   const { t } = useT();
   const { push } = useToast();
-  const { replica, reload, progressActive } = useReplica(itemId);
+  const { replica, reload, progressActive, restoreActive } = useReplica(itemId);
   const { servers, reload: reloadServers } = useReplicaServers();
   const group = useGroup();
   const [draft, setDraft] = useState<ZFSReplicaPatch>({});
   const [adding, setAdding] = useState(false);
   const [starting, setStarting] = useState(false);
   const { debouncedSave } = useDebouncedSave();
+  const pending = useRef<ZFSReplicaPatch>({});
   const watched = useRef<{ first: boolean; seen: boolean } | null>(null);
 
-  // A fresh answer from the server replaces whatever was shown ahead of it.
-  useEffect(() => setDraft({}), [replica]);
+  // A fresh answer from the server replaces whatever was shown ahead of it,
+  // apart from the edits still waiting to be sent.
+  useEffect(() => setDraft({ ...pending.current }), [replica]);
 
   const running = replica ? isRunning(replica.state, progressActive) : false;
   const shownName = replica ? targetName(replica, servers, group?.members ?? []) : "";
@@ -130,20 +132,34 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
       if (!res.ok) {
         push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
         setDraft({});
-        return false;
       }
-      reload();
-      return true;
+      return res.ok;
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       setDraft({});
       return false;
+    } finally {
+      // A refusal can come after part of the change is stored, such as a
+      // new target whose paired instance did not answer.
+      reload();
     }
   }
 
   function change(patch: ZFSReplicaPatch) {
     setDraft((d) => ({ ...d, ...patch }));
     void save(patch);
+  }
+
+  // Edits made while typing go out together once it stops, so one field
+  // never drops the other's pending save.
+  function changeSoon(patch: ZFSReplicaPatch) {
+    setDraft((d) => ({ ...d, ...patch }));
+    pending.current = { ...pending.current, ...patch };
+    debouncedSave(() => {
+      const queued = pending.current;
+      pending.current = {};
+      void save(queued);
+    });
   }
 
   async function pickTarget(id: string) {
@@ -268,10 +284,8 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               <CadenceBuilder
                 label={t("zfs.replica.plan")}
                 value={view.cadence}
-                onChange={(cadence) => {
-                  setDraft((d) => ({ ...d, cadence }));
-                  debouncedSave(() => void save({ cadence }));
-                }}
+                modes={EXACT_CADENCE_MODES}
+                onChange={(cadence) => changeSoon({ cadence })}
               />
             </Row>
           )}
@@ -282,10 +296,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               label={peer ? t("zfs.replica.peer.keep").replaceAll("{peer}", () => shownName) : t("zfs.replica.keepTarget")}
               hint={peer ? t("zfs.replica.peer.keepHint").replaceAll("{peer}", () => shownName) : t("zfs.replica.keepTargetHint")}
               keep={view.keep}
-              onChange={(keep) => {
-                setDraft((d) => ({ ...d, keep }));
-                debouncedSave(() => void save({ keep }));
-              }}
+              onChange={(keep) => changeSoon({ keep })}
             />
           )}
         </>
@@ -312,10 +323,12 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
                     )}
                   </span>
                   <span className="text-caption text-carbon-textMuted">
-                    <bdi dir="ltr">{t("zfs.replica.memberPath").replace("{path}", () => m.targetPath)}</bdi>
+                    {/* A paired instance picks its own pool and root, so
+                        the path this side knows is not where the copy is. */}
+                    {!peer && <bdi dir="ltr">{t("zfs.replica.memberPath").replace("{path}", () => m.targetPath)}</bdi>}
                     {m.state === "ok" && m.lastBytes > 0 && (
                       <>
-                        {" · "}
+                        {!peer && " · "}
                         <span className="glim-num">
                           {t("zfs.replica.memberAdded").replace("{size}", () => humanBytes(m.lastBytes))}
                         </span>
@@ -339,15 +352,15 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         </p>
       )}
 
-      {hasTarget && !peerHolds(view) && (
+      {hasTarget && !peerHolds(view) && view.state !== "waiting" && (
         <div className="flex justify-end">
           <Button
             label={t("zfs.replica.replicateNow")}
             labelKey="zfs.replica.replicateNow"
             tone="accent"
             onClick={() => void replicateNow()}
-            disabled={running || starting}
-            busy={running || starting}
+            disabled={running || starting || restoreActive}
+            busy={running || starting || restoreActive}
           />
         </div>
       )}

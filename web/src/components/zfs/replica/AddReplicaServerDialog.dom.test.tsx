@@ -105,6 +105,16 @@ describe("adding a ZFS server", () => {
     expect(screen.getByText(en["zfs.replica.add.testFirst"])).toBeTruthy();
   });
 
+  it("passes on what the server said when it has no reason code for it", async () => {
+    const said = "the ZFS server needs a host and a user without spaces and a port between 1 and 65535";
+    testAnswer = { ok: false, code: "zfs-error", error: said, pools: [] };
+    renderDialog();
+    fireEvent.change(address(), { target: { value: "nas box" } });
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.server.test"] }));
+    expect(await screen.findByText(said)).toBeTruthy();
+    expect(screen.queryByText(en["zfs.code.zfs-error"])).toBeNull();
+  });
+
   it("tests, picks a pool and adds the server under its root", async () => {
     renderDialog();
     fireEvent.change(address(), { target: { value: "192.168.1.30" } });

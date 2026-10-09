@@ -59,6 +59,7 @@ import { ZFSMemberList, zfsMemberActionable } from "./ZFSMemberList";
 import { ReplicaCard } from "./replica/ReplicaCard";
 import { ReplicaPlaceRow } from "./replica/ReplicaPlaceRow";
 import { ReplicaPlanLine } from "./replica/ReplicaPlanLine";
+import { ZFSSitesLine } from "./ZFSSitesLine";
 import { ZFSRestorePanel } from "./ZFSRestorePanel";
 
 type T = ReturnType<typeof useT>["t"];
@@ -858,6 +859,7 @@ export function ZFSDatasetRow({
         {t("zfs.repoEffective").replace("{repo}", item.repoEffective)}
       </p>
       <ReplicaPlanLine itemId={item.id} />
+      <ZFSSitesLine item={item} />
       <ReplicaPlaceRow itemId={item.id} name={item.dataset} />
 
       {item.stopContainers.length > 0 && (

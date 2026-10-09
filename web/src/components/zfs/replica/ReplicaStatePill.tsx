@@ -1,8 +1,11 @@
 import type { ZFSReplica } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
+import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Badge } from "../../Badge";
-import { unixOf } from "./replicaModel";
+import { InfoBubble } from "../../InfoBubble";
+import { unixOf, waitingCode } from "./replicaModel";
+import { useReplicaServers } from "./replicaStore";
 
 /** ReplicaStatePill says where an item's replica stands, in the words the
  *  card, the server page and the storage row share. A paired instance that
@@ -18,6 +21,7 @@ export function ReplicaStatePill({
   peerName: string;
 }) {
   const { t } = useT();
+  const { servers } = useReplicaServers();
   if (replica.target.kind === "peer") {
     switch (replica.peerState) {
       case "asked":
@@ -41,7 +45,12 @@ export function ReplicaStatePill({
     case "failed":
       return <Badge tone="fail">{t("zfs.replica.state.failed")}</Badge>;
     case "waiting":
-      return <Badge tone="neutral">{t("zfs.replica.state.waiting").replaceAll("{peer}", () => peerName)}</Badge>;
+      return (
+        <span className="inline-flex items-center gap-1">
+          <Badge tone="neutral">{t("zfs.replica.state.waiting")}</Badge>
+          <InfoBubble tip={zfsCodeSentence(t, waitingCode(replica, servers))} />
+        </span>
+      );
     default:
       return <Badge tone="neutral">{t("zfs.replica.state.never")}</Badge>;
   }

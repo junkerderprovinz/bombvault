@@ -14,6 +14,9 @@ let current: ZFSReplica;
 let progress: ProgressMap = {};
 const patches: ZFSReplicaPatch[] = [];
 let runs = 0;
+// What a PATCH answers. The store keeps the change either way, as the server
+// does when only the request to a paired instance fails.
+let patchAnswer: { ok: boolean; code?: string } = { ok: true };
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
@@ -25,7 +28,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     patchZFSReplica: (_id: string, patch: ZFSReplicaPatch) => {
       patches.push(patch);
       current = { ...current, ...patch };
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(patchAnswer);
     },
     runZFSReplica: () => {
       runs += 1;
@@ -53,6 +56,7 @@ beforeEach(() => {
   progress = {};
   patches.length = 0;
   runs = 0;
+  patchAnswer = { ok: true };
   localStorage.clear();
 });
 
@@ -128,6 +132,18 @@ describe("replica card", () => {
     expect(screen.getByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeTruthy();
     expect(screen.queryByRole("radiogroup", { name: "Suggested to tower-2" })).toBeNull();
     expect(screen.getByRole("radiogroup", { name: en["zfs.replica.when"] })).toBeTruthy();
+  });
+
+  it("shows no path for a paired instance, whose pool and folder are its own", async () => {
+    current = replica({
+      target: { kind: "peer", id: "peer-1" },
+      peerState: "allowed",
+      members: replica().members.map((m) => ({ ...m, targetPath: `tower/${m.dataset}` })),
+    });
+    renderCard();
+    expect(await screen.findByText("cache/appdata")).toBeTruthy();
+    expect(screen.queryAllByText(/^to /)).toHaveLength(0);
+    expect(screen.getByText("+31.0 MB in the last run")).toBeTruthy();
   });
 
   it("says a paired instance declined and offers neither a run nor a new request", async () => {
@@ -226,6 +242,64 @@ describe("replica card", () => {
     renderCard();
     fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] }));
     await waitFor(() => expect(runs).toBe(1));
+  });
+
+  it("shows what the server holds after a change it stored but answered with a refusal", async () => {
+    patchAnswer = { ok: false, code: "peer-unreachable" };
+    renderCard();
+    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
+    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2" }));
+    expect(await screen.findByText(en["zfs.code.peer-unreachable"])).toBeTruthy();
+    await waitFor(() =>
+      expect(within(picker).getByRole("radio", { name: "tower-2" }).getAttribute("aria-checked")).toBe("true"),
+    );
+  });
+
+  it("sends a schedule and a keep rule edited close together in one save", async () => {
+    current = replica({ afterBackup: false, cadence: "daily 03:00" });
+    renderCard();
+    const keep = await screen.findByRole("radiogroup", { name: en["zfs.replica.keepTarget"] });
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByRole("tab", { name: en["cadence.weekly"] }));
+      fireEvent.click(within(keep).getByRole("radio", { name: en["zfs.replica.keep.long"] }));
+      await act(async () => vi.advanceTimersByTime(1000));
+    } finally {
+      vi.useRealTimers();
+    }
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].cadence).toMatch(/^weekly/);
+    expect(patches[0].keep?.preset).toBe("long");
+  });
+
+  it("offers no interval in days for its own plan, which a replica cannot keep", async () => {
+    current = replica({ afterBackup: false, cadence: "daily 03:00" });
+    renderCard();
+    await screen.findByRole("group", { name: en["zfs.replica.plan"] });
+    expect(screen.queryByRole("tab", { name: en["cadence.everyN"] })).toBeNull();
+  });
+
+  it("says why the replica waits and offers no run while ZFS backups are off", async () => {
+    current = replica({ state: "waiting" });
+    renderCard();
+    expect(await screen.findByText(en["zfs.replica.state.waiting"])).toBeTruthy();
+    expect(screen.getByLabelText(en["zfs.code.domain-off"])).toBeTruthy();
+    expect(screen.queryByText(/Waiting for/)).toBeNull();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("names a switched-off server as the reason the replica waits", async () => {
+    current = replica({ target: { kind: "server", id: "off" }, state: "waiting" });
+    renderCard();
+    expect(await screen.findByLabelText(en["zfs.code.server-disabled"])).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("holds the run button while a bring back has the replica", async () => {
+    progress = { "zfs-replica-restore:zfs1": { phase: "replicate", percent: 10, active: true, lastSeen: Date.now() } };
+    renderCard();
+    const button = (await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] })) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
   });
 
   it("hides everything but the picker while there is no target", async () => {

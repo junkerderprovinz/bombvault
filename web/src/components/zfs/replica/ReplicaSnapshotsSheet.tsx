@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 
 import { restoreZFSReplica } from "../../../lib/api";
 import type { ZFSReplica } from "../../../lib/api";
-import { useT } from "../../../lib/i18n";
+import { useT, type TranslationKey } from "../../../lib/i18n";
 import { formatTs } from "../../../lib/reltime";
 import { useConfirm } from "../../../lib/useConfirm";
 import { useToast } from "../../../lib/toast";
@@ -13,7 +13,7 @@ import { Button } from "../../Button";
 import { CopyBlock } from "../../CopyBlock";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
-import { cloneCommand, rootMember, takeoverCommand, unixOf } from "./replicaModel";
+import { cloneCommand, restorePreview, rootMember, takeoverCommand, unixOf } from "./replicaModel";
 
 /** ReplicaSnapshotsSheet lists the snapshots a replica keeps on its target,
  *  hands out the commands to use one there, and brings one back here as a
@@ -45,13 +45,18 @@ export function ReplicaSnapshotsSheet({
   const member = rootMember(replica, name);
   const snapshot = replica.snapshots.find((s) => s.name === picked) ?? replica.snapshots[0];
   const heading = t("zfs.replica.sheet.title").replace("{name}", () => name).replace("{target}", () => targetName);
+  // A paired instance keeps the copy under a pool and root of its own
+  // choosing, so the names here would be wrong there.
+  const onPeer = replica.target.kind === "peer";
+  const forPeer = (key: TranslationKey) =>
+    t(key).replaceAll("{peer}", () => targetName);
 
   async function bringBack() {
     const when = formatTs(unixOf(snapshot.created));
     const question = `${t("zfs.replica.restoreQuestion")} ${t("zfs.replica.restoreText")
       .replace("{when}", () => when)
       .replace("{target}", () => targetName)
-      .replace("{fresh}", () => `${name}-bombvault-restore-…`)
+      .replace("{fresh}", () => restorePreview(name))
       .replace("{name}", () => name)}`;
     if (!(await confirm(question, { confirmKey: "zfs.replica.restoreConfirm" }))) return;
     setStarting(true);
@@ -82,7 +87,7 @@ export function ReplicaSnapshotsSheet({
           <h2 className="flex items-center px-5">
             <Badge tone="heading" size="heading" wrap>
               {heading}
-              <InfoBubble tip={t("zfs.replica.sheet.hint")} onAccent />
+              <InfoBubble tip={onPeer ? forPeer("zfs.replica.sheet.peerHint") : t("zfs.replica.sheet.hint")} onAccent />
             </Badge>
           </h2>
           <div
@@ -92,14 +97,22 @@ export function ReplicaSnapshotsSheet({
             onClick={(e) => e.stopPropagation()}
             className="flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl"
           >
-            <p dir="ltr" className="font-mono text-xs text-carbon-textMuted text-start wrap-anywhere">
-              {member.targetPath}
-            </p>
+            {!onPeer && (
+              <p dir="ltr" className="font-mono text-xs text-carbon-textMuted text-start wrap-anywhere">
+                {member.targetPath}
+              </p>
+            )}
 
             <div className="flex flex-col gap-1.5">
               <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
                 {t("zfs.replica.sheet.snapshot")}
-                <InfoBubble tip={t("zfs.replica.sheet.snapshotHint", replica.snapshots.length)} />
+                <InfoBubble
+                  tip={
+                    onPeer
+                      ? forPeer("zfs.replica.sheet.snapshotHintPeer")
+                      : t("zfs.replica.sheet.snapshotHint", replica.snapshots.length)
+                  }
+                />
               </span>
               <SelectField
                 value={snapshot.name}
@@ -110,17 +123,23 @@ export function ReplicaSnapshotsSheet({
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.sheet.clone")}</span>
-              <p className="text-xs text-carbon-textSub">{t("zfs.replica.sheet.cloneHint")}</p>
-              <CopyBlock text={cloneCommand(member.targetPath, name, snapshot.name)} />
-            </div>
+            {onPeer ? (
+              <p className="text-xs text-carbon-textSub">{forPeer("zfs.replica.sheet.peerCommands")}</p>
+            ) : (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.sheet.clone")}</span>
+                  <p className="text-xs text-carbon-textSub">{t("zfs.replica.sheet.cloneHint")}</p>
+                  <CopyBlock text={cloneCommand(member.targetPath, name, snapshot.name)} />
+                </div>
 
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.sheet.takeover")}</span>
-              <p className="text-xs text-carbon-textSub">{t("zfs.replica.sheet.takeoverHint")}</p>
-              <CopyBlock text={takeoverCommand(member.targetPath)} />
-            </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.sheet.takeover")}</span>
+                  <p className="text-xs text-carbon-textSub">{t("zfs.replica.sheet.takeoverHint")}</p>
+                  <CopyBlock text={takeoverCommand(member.targetPath)} />
+                </div>
+              </>
+            )}
 
             <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={onClose} />

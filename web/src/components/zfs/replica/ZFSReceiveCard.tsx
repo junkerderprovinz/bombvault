@@ -224,7 +224,7 @@ function ReceiveSlot({ request, onChanged }: { request: ZFSReceiveRequest; onCha
   }
 
   async function revoke() {
-    const question = `${t("zfs.receive.revokeQuestion")} ${t("zfs.receive.revokeText")}`.replaceAll("{peer}", sender);
+    const question = `${t("zfs.receive.revokeQuestion")} ${t("zfs.receive.revokeText")}`.replaceAll("{peer}", () => sender);
     if (!(await confirm(question, { confirmKey: "zfs.receive.revokeConfirm" }))) return;
     setRevoking(true);
     if (await answer(() => decideZFSReceiveRequest(request.id, { decision: "revoke" }))) {

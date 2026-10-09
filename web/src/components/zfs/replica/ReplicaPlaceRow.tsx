@@ -10,31 +10,45 @@ import { ReplicaStatePill } from "./ReplicaStatePill";
 import { isRunning, peerHolds, targetName } from "./replicaModel";
 import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
 
+interface Restoring {
+  dataset: string;
+  keyNeeded: boolean;
+  target: string;
+  seen: boolean;
+  ok?: boolean;
+}
+
 /** ReplicaPlaceRow is the replica among an item's storage locations: where it
  *  lives, how many snapshots it keeps there, and the way into them. */
 export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string }) {
   const { t } = useT();
   const { push } = useToast();
-  const { replica, progressActive, restoreActive } = useReplica(itemId);
+  const { replica, progressActive, restore } = useReplica(itemId);
   const { servers } = useReplicaServers();
   const group = useGroup();
   const [open, setOpen] = useState(false);
-  const restoring = useRef<{ dataset: string; keyNeeded: boolean; seen: boolean } | null>(null);
+  const restoring = useRef<Restoring | null>(null);
 
-  // The end of the bring back's progress is the moment the new dataset is
-  // there to look at.
+  // The bring back's last frame says whether it worked, and once its progress
+  // is gone the new dataset is there to look at. Its first frame can arrive
+  // before the request is answered.
   useEffect(() => {
     const r = restoring.current;
     if (!r) return;
-    if (restoreActive) {
+    if (restore) {
       r.seen = true;
+      r.ok = restore.finished ? restore.percent >= 100 : undefined;
       return;
     }
     if (!r.seen) return;
     restoring.current = null;
-    const key = r.keyNeeded ? "zfs.replica.restoredLocked" : "zfs.replica.restored";
-    push(t(key).replace("{fresh}", () => r.dataset).replace("{name}", () => name), "success");
-  }, [restoreActive, name, push, t]);
+    if (r.ok === false) {
+      push(t("zfs.replica.restoreFailed").replaceAll("{name}", () => name).replace("{target}", () => r.target), "fail");
+    } else if (r.ok) {
+      const key = r.keyNeeded ? "zfs.replica.restoredLocked" : "zfs.replica.restored";
+      push(t(key).replace("{fresh}", () => r.dataset).replace("{name}", () => name), "success");
+    }
+  }, [restore, name, push, t]);
 
   if (!replica || replica.target.kind === "none") return null;
   const shownName = targetName(replica, servers, group?.members ?? []);
@@ -74,7 +88,7 @@ export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string
           replica={replica}
           onClose={() => setOpen(false)}
           onRestoring={(dataset, keyNeeded) => {
-            restoring.current = { dataset, keyNeeded, seen: false };
+            restoring.current = { dataset, keyNeeded, target: shownName, seen: restore !== undefined };
           }}
         />
       )}

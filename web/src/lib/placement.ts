@@ -344,6 +344,13 @@ export interface StatusLine {
   tone: "normal" | "warn" | "unconfirmed" | "muted";
 }
 
+export const STATUS_TONE_CLASS: Record<StatusLine["tone"], string> = {
+  normal: "text-carbon-textSub",
+  warn: "text-statusFail",
+  unconfirmed: "text-statusWarn",
+  muted: "text-carbon-textMuted",
+};
+
 const WHERE: Record<Exclude<PlanKind, "paused" | "not-backed-up">, TranslationKey> = {
   home: "placement.planHome",
   "stays-domain": "placement.planStays",
@@ -390,23 +397,38 @@ const RULE_321: Record<PlacementObserved["rule321"], { key: TranslationKey; tone
   unconfirmed: { key: "placement.rule321Unconfirmed", tone: "unconfirmed" },
 };
 
+function sitesLine(t: T, sites: number): StatusLine {
+  return {
+    text: sites === 1 ? t("placement.sitesOne") : t("placement.sites").replace("{n}", String(sites)),
+    tone: "normal",
+  };
+}
+
+function ruleLine(t: T, rule321: PlacementObserved["rule321"]): StatusLine {
+  const rule = RULE_321[rule321];
+  return { text: t(rule.key), tone: rule.tone };
+}
+
 export function observedLine(t: T, observed: PlacementObserved): StatusLine[] {
   if (observed.noBackup) return [{ text: t("placement.noBackup"), tone: "muted" }];
-  const lines: StatusLine[] = [
-    {
-      text:
-        observed.sites === 1
-          ? t("placement.sitesOne")
-          : t("placement.sites").replace("{n}", String(observed.sites)),
-      tone: "normal",
-    },
-  ];
+  const lines: StatusLine[] = [sitesLine(t, observed.sites)];
   for (const p of observed.places) {
     if (p.place !== "local") lines.push(placeLine(t, p));
   }
-  const rule = RULE_321[observed.rule321];
-  lines.push({ text: t(rule.key), tone: rule.tone });
+  lines.push(ruleLine(t, observed.rule321));
   return lines;
+}
+
+/** zfsObservedLine is a ZFS entry's 3-2-1 line. The server counts a current
+ *  replica as a site off the premises, but a replica is no backup, so an
+ *  entry with nothing else says so. */
+export function zfsObservedLine(
+  t: T,
+  item: { sites: number; rule321: PlacementObserved["rule321"]; lastBackup: number }
+): StatusLine[] {
+  if (item.lastBackup > 0) return [sitesLine(t, item.sites), ruleLine(t, item.rule321)];
+  if (item.sites <= 1) return [{ text: t("placement.noBackup"), tone: "muted" }];
+  return [sitesLine(t, item.sites), { text: t("zfs.replica.rule321NoBackup"), tone: "warn" }];
 }
 
 // Dates follow the browser's locale, as formatTs and every other date in the app do.
