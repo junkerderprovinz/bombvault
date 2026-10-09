@@ -92,7 +92,7 @@ func (s *Service) StartZFSReplica(ctx context.Context, id string) (string, error
 	go func() {
 		defer s.replica.work.Done()
 		defer unlock()
-		defer s.recoverOperation("zfs replica: "+d.Dataset, nil, func(msg string) { s.failStuckRun(id, msg) })
+		defer s.recoverOperation("zfs replica: "+d.Dataset, nil, nil)
 		if err := s.replicateZFS(context.WithoutCancel(ctx), d, runID); err != nil {
 			log.Printf("api: zfs replica: %s failed: %v", d.Dataset, err)
 		}
@@ -165,7 +165,10 @@ func (s *Service) replicateZFS(ctx context.Context, d store.ZFSDataset, runID st
 
 // runZFSReplica resolves both ends and runs the engine. The error is the
 // run's verdict: a refusal before any member, or the members that failed.
-func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, key string, startedAt int64) (zfsrepl.Result, error) {
+func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, key string, startedAt int64) (res zfsrepl.Result, err error) {
+	// A panic fails this run like any other error, so its row and its bar end
+	// on every path that starts one.
+	defer s.recoverOperation("zfs replica: "+d.Dataset, &err, nil)
 	src, err := s.zfsReplicaHostEnd()
 	if err != nil {
 		return zfsrepl.Result{}, err
@@ -210,7 +213,7 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 		}
 	}
 
-	res, err := s.zfsReplicaEngine()(ctx, src, tgt.end, entry)
+	res, err = s.zfsReplicaEngine()(ctx, src, tgt.end, entry)
 	if err != nil {
 		return res, err
 	}

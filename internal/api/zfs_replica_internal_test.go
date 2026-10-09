@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -832,5 +833,71 @@ func TestARestoreThatFailsPartwayNamesWhatLanded(t *testing.T) {
 	if len(runs) != 1 || runs[0].Status != "failed" || zfsRunCode(runs[0].Error) != "ssh-unreachable" ||
 		!strings.Contains(runs[0].Error, root+", "+root+"/plex") {
 		t.Errorf("restore run = %+v, want a failure naming what landed", runs)
+	}
+}
+
+func TestAPanickingReplicaFailsOnlyItsOwnRunAndEndsItsBar(t *testing.T) {
+	r := newReplicaRig(t)
+	r.s.progress = progress.NewStore()
+	r.result = func(zfsrepl.Entry) (zfsrepl.Result, error) { panic("boom") }
+	backupID, err := r.st.StartRun(r.item.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := r.s.StartZFSReplica(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.work.Wait()
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err == nil {
+		t.Error("a scheduled replica that panicked succeeded")
+	}
+	r.s.replicateAfterZFSBackup(context.Background(), r.item)
+	r.s.replica.work.Wait()
+
+	runs, _ := r.st.RecentRunsOfKind(r.item.ID, store.ZFSReplicaRunKind, 10)
+	if len(runs) != 3 {
+		t.Fatalf("%d replica runs, want 3", len(runs))
+	}
+	for _, run := range runs {
+		if run.Status != "failed" {
+			t.Errorf("replica run = %s %q, want failed", run.Status, run.Error)
+		}
+	}
+	if backup, _ := r.st.GetRun(backupID); backup.Status != "running" {
+		t.Errorf("the backup running beside it = %+v, want it untouched", backup)
+	}
+	for _, e := range r.s.progress.Snapshot() {
+		if e.Key == zfsReplicaProgressKey(r.item.ID) && e.Active {
+			t.Errorf("the replica bar is still active: %+v", e)
+		}
+	}
+}
+
+func TestAPanickingBringBackFailsOnlyItsOwnRun(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.tree = []string{replica}
+	r.s.replica.bringBack = func(context.Context, zfsrepl.End, zfsrepl.End, zfsrepl.Restore) (zfsrepl.Restored, error) {
+		panic("boom")
+	}
+	backupID, err := r.st.StartRun(r.item.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ack, err := r.s.StartZFSReplicaRestore(context.Background(), r.item.ID, replicaSnap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.work.Wait()
+	if run, _ := r.st.GetRun(ack.RunID); run.Status != "failed" {
+		t.Errorf("restore run = %s %q, want failed", run.Status, run.Error)
+	}
+	if backup, _ := r.st.GetRun(backupID); backup.Status != "running" {
+		t.Errorf("the backup running beside it = %+v, want it untouched", backup)
 	}
 }
