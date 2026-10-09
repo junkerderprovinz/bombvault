@@ -2459,7 +2459,7 @@ const id: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Selesai: {fresh} berada di samping {name}. Ia tiba terenkripsi dan tetap tidak di-mount sampai kuncinya dimuat.",
   "zfs.replica.servers.title": "Server ZFS",
   "zfs.replica.servers.hint": "Tujuan untuk replika ZFS. Entri ZFS yang memilih salah satunya mengirim salinan yang persis sama sampai ke tingkat blok. Tidak ada cadangan yang disimpan di sini.",
-  "zfs.replica.servers.empty": "Belum ada server ZFS. Tambahkan satu lewat “Tambah tujuan” › Server ZFS, lalu setiap entri ZFS bisa mengirim replika ke sana.",
+  "zfs.replica.servers.empty": "Belum ada server ZFS. Tambahkan satu lewat Instansi › Server ZFS, lalu setiap entri ZFS bisa mengirim replika ke sana.",
   "zfs.replica.servers.inUse": "{n} dipakai",
   "zfs.replica.servers.unused": "tidak dipakai",
   "zfs.replica.servers.off": "Mati",

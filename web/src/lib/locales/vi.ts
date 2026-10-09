@@ -2077,7 +2077,7 @@ const vi: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Xong: {fresh} nằm cạnh {name}. Nó đến ở dạng mã hóa và chưa được gắn kết cho đến khi khóa của nó được nạp.",
   "zfs.replica.servers.title": "Máy chủ ZFS",
   "zfs.replica.servers.hint": "Các đích cho bản nhân bản ZFS. Mục ZFS nào chọn một máy chủ sẽ gửi tới đó một bản sao khớp từng khối. Không có bản sao lưu nào được lưu ở đây.",
-  "zfs.replica.servers.empty": "Chưa có máy chủ ZFS nào. Thêm một máy chủ qua “Thêm đích” › Máy chủ ZFS, rồi mỗi mục ZFS có thể gửi bản nhân bản tới đó.",
+  "zfs.replica.servers.empty": "Chưa có máy chủ ZFS nào. Thêm một máy chủ qua Phiên bản › Máy chủ ZFS, rồi mỗi mục ZFS có thể gửi bản nhân bản tới đó.",
   "zfs.replica.servers.inUse": "{n} đang dùng",
   "zfs.replica.servers.unused": "không dùng",
   "zfs.replica.servers.off": "Tắt",

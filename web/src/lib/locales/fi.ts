@@ -2086,7 +2086,7 @@ const fi: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Valmis: {fresh} on tietojoukon {name} vieressä. Se saapui salattuna ja pysyy liittämättä, kunnes sen avain on ladattu.",
   "zfs.replica.servers.title": "ZFS-palvelin",
   "zfs.replica.servers.hint": "ZFS-replikan kohteet. ZFS-merkintä, joka valitsee sellaisen, lähettää sille lohkotarkan kopion. Tänne ei tule varmuuskopioita.",
-  "zfs.replica.servers.empty": "Ei vielä ZFS-palvelinta. Lisää sellainen kohdasta \"Lisää kohde\" › ZFS-palvelimet, jolloin jokainen ZFS-merkintä voi lähettää sinne replikan.",
+  "zfs.replica.servers.empty": "Ei vielä ZFS-palvelinta. Lisää sellainen kohdasta Ilmentymät › ZFS-palvelimet, jolloin jokainen ZFS-merkintä voi lähettää sinne replikan.",
   "zfs.replica.servers.inUse": "{n} käytössä",
   "zfs.replica.servers.unused": "ei käytössä",
   "zfs.replica.servers.off": "Pois",

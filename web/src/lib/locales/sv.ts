@@ -2086,7 +2086,7 @@ const sv: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Klart: {fresh} ligger bredvid {name}. Den kom krypterad och förblir omonterad tills dess nyckel har lästs in.",
   "zfs.replica.servers.title": "ZFS-server",
   "zfs.replica.servers.hint": "Mål för ZFS-repliken. En ZFS-post som väljer en skickar en blockexakt kopia dit. Här hamnar inga säkerhetskopior.",
-  "zfs.replica.servers.empty": "Ingen ZFS-server än. Lägg till en via \"Lägg till mål\" › ZFS-servrar, så kan varje ZFS-post skicka en replik dit.",
+  "zfs.replica.servers.empty": "Ingen ZFS-server än. Lägg till en via Instanser › ZFS-servrar, så kan varje ZFS-post skicka en replik dit.",
   "zfs.replica.servers.inUse": "{n} används",
   "zfs.replica.servers.unused": "används inte",
   "zfs.replica.servers.off": "Av",

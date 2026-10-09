@@ -2089,7 +2089,7 @@ const th: Partial<Translations> = {
   "zfs.replica.restoredLocked": "เสร็จแล้ว: {fresh} อยู่ข้าง {name} ข้อมูลมาถึงแบบเข้ารหัส และจะไม่ถูกเมานต์จนกว่าจะโหลดคีย์",
   "zfs.replica.servers.title": "เซิร์ฟเวอร์ ZFS",
   "zfs.replica.servers.hint": "ปลายทางของเรพลิกา ZFS รายการ ZFS ที่เลือกเซิร์ฟเวอร์ไหนจะส่งสำเนาที่ตรงกันทุกบล็อกไปที่นั่น ไม่มีข้อมูลสำรองถูกเก็บไว้ที่นี่",
-  "zfs.replica.servers.empty": "ยังไม่มีเซิร์ฟเวอร์ ZFS เพิ่มได้ผ่าน «เพิ่มปลายทาง» › เซิร์ฟเวอร์ ZFS จากนั้นทุกรายการ ZFS จะส่งเรพลิกาไปที่นั่นได้",
+  "zfs.replica.servers.empty": "ยังไม่มีเซิร์ฟเวอร์ ZFS เพิ่มได้ผ่าน อินสแตนซ์ › เซิร์ฟเวอร์ ZFS จากนั้นทุกรายการ ZFS จะส่งเรพลิกาไปที่นั่นได้",
   "zfs.replica.servers.inUse": "ใช้อยู่ {n}",
   "zfs.replica.servers.unused": "ไม่ได้ใช้",
   "zfs.replica.servers.off": "ปิด",

@@ -2459,7 +2459,7 @@ const ca: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Fet: {fresh} és al costat de {name}. Ha arribat xifrat i queda sense muntar fins que se'n carregui la clau.",
   "zfs.replica.servers.title": "Servidor ZFS",
   "zfs.replica.servers.hint": "Destinacions de la rèplica ZFS. Un element ZFS que en tria una li envia una còpia exacta, bloc per bloc. Aquí no arriba cap còpia de seguretat.",
-  "zfs.replica.servers.empty": "Encara no hi ha cap servidor ZFS. Afegeix-ne un des de «Afegeix una ubicació d'emmagatzematge» › Servidors ZFS i cada element ZFS hi podrà enviar una rèplica.",
+  "zfs.replica.servers.empty": "Encara no hi ha cap servidor ZFS. Afegeix-ne un des de Instàncies › Servidors ZFS i cada element ZFS hi podrà enviar una rèplica.",
   "zfs.replica.servers.inUse": "{n} en ús",
   "zfs.replica.servers.unused": "sense ús",
   "zfs.replica.servers.off": "Desactivat",

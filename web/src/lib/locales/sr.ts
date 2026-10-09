@@ -2443,7 +2443,7 @@ const sr: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Готово: {fresh} је поред {name}. Стигао је шифрован и остаје немонтиран док се не учита његов кључ.",
   "zfs.replica.servers.title": "ZFS сервер",
   "zfs.replica.servers.hint": "Циљеви за ZFS реплику. ZFS ставка која изабере један од њих шаље му копију идентичну на нивоу блокова. Копије се овде не чувају.",
-  "zfs.replica.servers.empty": "Још нема ZFS сервера. Додај један преко „Додај одредиште“ › ZFS сервери, па свака ZFS ставка може тамо да шаље реплику.",
+  "zfs.replica.servers.empty": "Још нема ZFS сервера. Додај један преко Инстанце › ZFS сервери, па свака ZFS ставка може тамо да шаље реплику.",
   "zfs.replica.servers.inUse": "у употреби: {n}",
   "zfs.replica.servers.unused": "није у употреби",
   "zfs.replica.servers.off": "Искључено",

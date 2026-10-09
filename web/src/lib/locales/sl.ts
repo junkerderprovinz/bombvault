@@ -2443,7 +2443,7 @@ const sl: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Končano: {fresh} je ob {name}. Prispel je šifriran in ostane nepriklopljen, dokler se ne naloži njegov ključ.",
   "zfs.replica.servers.title": "Strežnik ZFS",
   "zfs.replica.servers.hint": "Cilji za repliko ZFS. Vnos ZFS, ki izbere enega, mu pošlje bločno natančno kopijo. Varnostne kopije se sem ne shranjujejo.",
-  "zfs.replica.servers.empty": "Še ni strežnika ZFS. Dodaj ga prek „Dodaj mesto shranjevanja“ › Strežniki ZFS, nato lahko vsak vnos ZFS tja pošilja repliko.",
+  "zfs.replica.servers.empty": "Še ni strežnika ZFS. Dodaj ga prek Primerki › Strežniki ZFS, nato lahko vsak vnos ZFS tja pošilja repliko.",
   "zfs.replica.servers.inUse": "{n} v uporabi",
   "zfs.replica.servers.unused": "ni v uporabi",
   "zfs.replica.servers.off": "Izklopljeno",

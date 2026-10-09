@@ -2459,7 +2459,7 @@ const eu: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Eginda: {fresh} {name}ren ondoan dago. Zifratuta iritsi da eta muntatu gabe geratzen da bere gakoa kargatu arte.",
   "zfs.replica.servers.title": "ZFS zerbitzaria",
   "zfs.replica.servers.hint": "ZFS erreplikaren helmugak. Bat aukeratzen duen ZFS sarrera batek kopia zehatza bidaltzen dio, bloke mailakoa. Hemen ez da babeskopiarik gordetzen.",
-  "zfs.replica.servers.empty": "Oraindik ez dago ZFS zerbitzaririk. Gehitu bat \"Gehitu biltegiratze-kokalekua\" › ZFS zerbitzariak bidez, eta orduan ZFS sarrera bakoitzak erreplika bat bidal diezaioke.",
+  "zfs.replica.servers.empty": "Oraindik ez dago ZFS zerbitzaririk. Gehitu bat Instantziak › ZFS zerbitzariak bidez, eta orduan ZFS sarrera bakoitzak erreplika bat bidal diezaioke.",
   "zfs.replica.servers.inUse": "{n} erabilita",
   "zfs.replica.servers.unused": "erabili gabe",
   "zfs.replica.servers.off": "Desaktibatuta",

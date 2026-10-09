@@ -2089,7 +2089,7 @@ const ro: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Gata: {fresh} se află lângă {name}. A sosit criptat și rămâne nemontat până când i se încarcă cheia.",
   "zfs.replica.servers.title": "Server ZFS",
   "zfs.replica.servers.hint": "Destinații pentru replica ZFS. Un element ZFS care alege unul îi trimite o copie exactă, bloc cu bloc. Aici nu ajung copii de rezervă.",
-  "zfs.replica.servers.empty": "Încă niciun server ZFS. Adaugă unul prin „Adaugă locație de stocare” › Servere ZFS, apoi fiecare element ZFS poate trimite acolo o replică.",
+  "zfs.replica.servers.empty": "Încă niciun server ZFS. Adaugă unul prin Instanțe › Servere ZFS, apoi fiecare element ZFS poate trimite acolo o replică.",
   "zfs.replica.servers.inUse": "{n} în uz",
   "zfs.replica.servers.unused": "nefolosit",
   "zfs.replica.servers.off": "Oprit",

@@ -2086,7 +2086,7 @@ const tr: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Bitti: {fresh}, {name} kaydının yanında duruyor. Şifreli olarak geldi ve anahtarı yüklenene kadar bağlanmadan kalır.",
   "zfs.replica.servers.title": "ZFS sunucusu",
   "zfs.replica.servers.hint": "ZFS replikası için hedefler. Birini seçen bir ZFS kaydı ona blok blok aynı bir kopya gönderir. Buraya yedek düşmez.",
-  "zfs.replica.servers.empty": "Henüz ZFS sunucusu yok. “Hedef ekle” › ZFS sunucuları üzerinden bir tane ekle, sonra her ZFS kaydı oraya replika gönderebilir.",
+  "zfs.replica.servers.empty": "Henüz ZFS sunucusu yok. Örnekler › ZFS sunucuları üzerinden bir tane ekle, sonra her ZFS kaydı oraya replika gönderebilir.",
   "zfs.replica.servers.inUse": "{n} kullanımda",
   "zfs.replica.servers.unused": "kullanımda değil",
   "zfs.replica.servers.off": "Kapalı",

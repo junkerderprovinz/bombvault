@@ -2086,7 +2086,7 @@ const he: Partial<Translations> = {
   "zfs.replica.restoredLocked": "בוצע: {fresh} נמצא לצד {name}. הוא הגיע מוצפן ונשאר לא מעוגן עד שהמפתח שלו נטען.",
   "zfs.replica.servers.title": "שרת ZFS",
   "zfs.replica.servers.hint": "יעדים לרפליקת ה-ZFS. רשומת ZFS שבוחרת אחד מהם שולחת אליו עותק זהה בלוק אחר בלוק. גיבויים לא נשמרים כאן.",
-  "zfs.replica.servers.empty": "עדיין אין שרת ZFS. הוסף אחד דרך «הוסף יעד» › שרתי ZFS, ואז כל רשומת ZFS יכולה לשלוח אליו רפליקה.",
+  "zfs.replica.servers.empty": "עדיין אין שרת ZFS. הוסף אחד דרך מופעים › שרתי ZFS, ואז כל רשומת ZFS יכולה לשלוח אליו רפליקה.",
   "zfs.replica.servers.inUse": "{n} בשימוש",
   "zfs.replica.servers.unused": "לא בשימוש",
   "zfs.replica.servers.off": "כבוי",

@@ -2459,7 +2459,7 @@ const lv: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Gatavs: {fresh} atrodas blakus {name}. Tas ieradās šifrēts un paliek nemontēts, līdz tiek ielādēta tā atslēga.",
   "zfs.replica.servers.title": "ZFS serveris",
   "zfs.replica.servers.hint": "ZFS replikas mērķi. ZFS ieraksts, kas izvēlas vienu, tam sūta blokiem precīzu kopiju. Šeit rezerves kopijas nenonāk.",
-  "zfs.replica.servers.empty": "ZFS servera vēl nav. Pievieno vienu caur \"Pievienot mērķi\" › ZFS serveri, tad katrs ZFS ieraksts varēs turp sūtīt replikas.",
+  "zfs.replica.servers.empty": "ZFS servera vēl nav. Pievieno vienu caur Instances › ZFS serveri, tad katrs ZFS ieraksts varēs turp sūtīt replikas.",
   "zfs.replica.servers.inUse": "{n} lietošanā",
   "zfs.replica.servers.unused": "netiek lietots",
   "zfs.replica.servers.off": "Izslēgts",

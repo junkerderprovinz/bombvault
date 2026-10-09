@@ -2081,7 +2081,7 @@ const ru: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Готово: {fresh} лежит рядом с {name}. Он пришёл зашифрованным и останется несмонтированным, пока не загружен его ключ.",
   "zfs.replica.servers.title": "Сервер ZFS",
   "zfs.replica.servers.hint": "Цели для реплики ZFS. Запись ZFS, выбравшая один из них, отправляет туда точную на уровне блоков копию. Копии сюда не попадают.",
-  "zfs.replica.servers.empty": "Серверов ZFS пока нет. Добавь один через «Добавить место назначения» › Серверы ZFS, и тогда каждая запись ZFS сможет отправлять туда реплику.",
+  "zfs.replica.servers.empty": "Серверов ZFS пока нет. Добавь один через Экземпляры › Серверы ZFS, и тогда каждая запись ZFS сможет отправлять туда реплику.",
   "zfs.replica.servers.inUse": "используется: {n}",
   "zfs.replica.servers.unused": "не используется",
   "zfs.replica.servers.off": "Выкл.",

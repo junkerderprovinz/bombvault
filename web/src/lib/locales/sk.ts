@@ -2459,7 +2459,7 @@ const sk: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Hotovo: {fresh} leží vedľa {name}. Dorazila šifrovaná a zostane nepripojená, kým sa nenačíta jej kľúč.",
   "zfs.replica.servers.title": "Server ZFS",
   "zfs.replica.servers.hint": "Ciele pre repliku ZFS. Položka ZFS, ktorá si jeden vyberie, naň pošle blokovo presnú kópiu. Neukladajú sa sem žiadne zálohy.",
-  "zfs.replica.servers.empty": "Zatiaľ žiadny server ZFS. Pridaj ho cez „Pridať úložné miesto“ › Servery ZFS, potom naň môže každá položka ZFS posielať repliku.",
+  "zfs.replica.servers.empty": "Zatiaľ žiadny server ZFS. Pridaj ho cez Inštancie › Servery ZFS, potom naň môže každá položka ZFS posielať repliku.",
   "zfs.replica.servers.inUse": "{n} v používaní",
   "zfs.replica.servers.unused": "nepoužíva sa",
   "zfs.replica.servers.off": "Vypnuté",

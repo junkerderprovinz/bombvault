@@ -2081,7 +2081,7 @@ const uk: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Готово: {fresh} лежить поруч із {name}. Він прибув зашифрованим і лишається незмонтованим, доки не завантажено його ключ.",
   "zfs.replica.servers.title": "Сервер ZFS",
   "zfs.replica.servers.hint": "Цілі для репліки ZFS. Запис ZFS, що вибрав один із них, надсилає туди точну на рівні блоків копію. Копії сюди не потрапляють.",
-  "zfs.replica.servers.empty": "Серверів ZFS поки немає. Додай один через «Додати місце призначення» › Сервери ZFS, і тоді кожен запис ZFS зможе надсилати туди репліку.",
+  "zfs.replica.servers.empty": "Серверів ZFS поки немає. Додай один через Екземпляри › Сервери ZFS, і тоді кожен запис ZFS зможе надсилати туди репліку.",
   "zfs.replica.servers.inUse": "використовується: {n}",
   "zfs.replica.servers.unused": "не використовується",
   "zfs.replica.servers.off": "Вимк.",

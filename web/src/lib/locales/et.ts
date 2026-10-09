@@ -2459,7 +2459,7 @@ const et: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Valmis: {fresh} asub kõrval: {name}. See saabus krüptituna ja jääb haakimata, kuni selle võti on laaditud.",
   "zfs.replica.servers.title": "ZFS-server",
   "zfs.replica.servers.hint": "ZFS-i replika sihtkohad. ZFS-kirje, mis ühe valib, saadab sinna plokkidepõhiselt täpse koopia. Siia varukoopiaid ei satu.",
-  "zfs.replica.servers.empty": "ZFS-serverit veel pole. Lisa üks valikust \"Lisa sihtkoht\" › ZFS-serverid, siis saab iga ZFS-kirje sinna replika saata.",
+  "zfs.replica.servers.empty": "ZFS-serverit veel pole. Lisa üks valikust Eksemplarid › ZFS-serverid, siis saab iga ZFS-kirje sinna replika saata.",
   "zfs.replica.servers.inUse": "{n} kasutusel",
   "zfs.replica.servers.unused": "ei kasutata",
   "zfs.replica.servers.off": "Väljas",

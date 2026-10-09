@@ -2083,7 +2083,7 @@ const nl: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Klaar: {fresh} staat naast {name}. Het kwam versleuteld aan en blijft ontkoppeld tot de sleutel geladen is.",
   "zfs.replica.servers.title": "ZFS-server",
   "zfs.replica.servers.hint": "Doelen voor de ZFS-replica. Een ZFS-item dat er een kiest, stuurt er een blokgetrouwe kopie naartoe. Er komen hier geen back-ups terecht.",
-  "zfs.replica.servers.empty": "Nog geen ZFS-server. Voeg er een toe via \"Opslaglocatie toevoegen\" › ZFS-servers, dan kan elk ZFS-item er een replica naartoe sturen.",
+  "zfs.replica.servers.empty": "Nog geen ZFS-server. Voeg er een toe via Instanties › ZFS-servers, dan kan elk ZFS-item er een replica naartoe sturen.",
   "zfs.replica.servers.inUse": "{n} in gebruik",
   "zfs.replica.servers.unused": "niet in gebruik",
   "zfs.replica.servers.off": "Uit",

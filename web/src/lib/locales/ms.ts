@@ -2459,7 +2459,7 @@ const ms: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Selesai: {fresh} berada di sebelah {name}. Ia tiba dalam keadaan disulitkan dan kekal tidak dilekapkan sehingga kuncinya dimuatkan.",
   "zfs.replica.servers.title": "Pelayan ZFS",
   "zfs.replica.servers.hint": "Sasaran untuk replika ZFS. Entri ZFS yang memilih satu menghantar salinan tepat sehingga ke blok kepadanya. Tiada sandaran disimpan di sini.",
-  "zfs.replica.servers.empty": "Belum ada pelayan ZFS. Tambahkan satu melalui \"Tambah lokasi storan\" › Pelayan ZFS, kemudian setiap entri ZFS boleh menghantar replika ke sana.",
+  "zfs.replica.servers.empty": "Belum ada pelayan ZFS. Tambahkan satu melalui Instans › Pelayan ZFS, kemudian setiap entri ZFS boleh menghantar replika ke sana.",
   "zfs.replica.servers.inUse": "{n} digunakan",
   "zfs.replica.servers.unused": "tidak digunakan",
   "zfs.replica.servers.off": "Mati",

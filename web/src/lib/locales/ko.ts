@@ -2077,7 +2077,7 @@ const ko: Partial<Translations> = {
   "zfs.replica.restoredLocked": "완료: {fresh}이(가) {name} 옆에 만들어졌습니다. 암호화된 채로 도착했으므로 키를 불러올 때까지 마운트되지 않습니다.",
   "zfs.replica.servers.title": "ZFS 서버",
   "zfs.replica.servers.hint": "ZFS 복제본의 대상입니다. 이 중 하나를 고른 ZFS 항목은 블록 단위로 똑같은 복사본을 보냅니다. 여기에는 백업이 저장되지 않습니다.",
-  "zfs.replica.servers.empty": "아직 ZFS 서버가 없습니다. 「대상 추가」 › ZFS 서버에서 하나를 추가하면 모든 ZFS 항목이 그곳으로 복제본을 보낼 수 있습니다.",
+  "zfs.replica.servers.empty": "아직 ZFS 서버가 없습니다. 인스턴스 › ZFS 서버에서 하나를 추가하면 모든 ZFS 항목이 그곳으로 복제본을 보낼 수 있습니다.",
   "zfs.replica.servers.inUse": "{n}개 사용 중",
   "zfs.replica.servers.unused": "사용 안 함",
   "zfs.replica.servers.off": "꺼짐",

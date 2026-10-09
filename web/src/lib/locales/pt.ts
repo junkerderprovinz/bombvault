@@ -2086,7 +2086,7 @@ const pt: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Concluído: {fresh} está ao lado de {name}. Chegou cifrado e fica por montar até a sua chave ser carregada.",
   "zfs.replica.servers.title": "Servidor ZFS",
   "zfs.replica.servers.hint": "Destinos da réplica ZFS. Um item ZFS que escolha um envia-lhe uma cópia exata, bloco a bloco. Aqui não chega nenhuma cópia de segurança.",
-  "zfs.replica.servers.empty": "Ainda não há servidor ZFS. Adiciona um em «Adicionar localização de armazenamento» › Servidores ZFS e cada item ZFS pode enviar-lhe uma réplica.",
+  "zfs.replica.servers.empty": "Ainda não há servidor ZFS. Adiciona um em Instâncias › Servidores ZFS e cada item ZFS pode enviar-lhe uma réplica.",
   "zfs.replica.servers.inUse": "{n} em uso",
   "zfs.replica.servers.unused": "sem uso",
   "zfs.replica.servers.off": "Desligado",

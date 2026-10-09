@@ -2459,7 +2459,7 @@ const is: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Lokið: {fresh} liggur við hliðina á {name}. Það kom dulkóðað og er ótengt þar til lykill þess er hlaðinn.",
   "zfs.replica.servers.title": "ZFS-þjónn",
   "zfs.replica.servers.hint": "Áfangastaðir fyrir ZFS-eftirmyndina. ZFS-atriði sem velur einn sendir honum blokkarnákvæmt afrit. Engin afrit lenda hér.",
-  "zfs.replica.servers.empty": "Enginn ZFS-þjónn enn. Bættu einum við í gegnum \"Bæta við áfangastað\" › ZFS-þjónar, þá getur hvert ZFS-atriði sent eftirmynd þangað.",
+  "zfs.replica.servers.empty": "Enginn ZFS-þjónn enn. Bættu einum við í gegnum Tilvik › ZFS-þjónar, þá getur hvert ZFS-atriði sent eftirmynd þangað.",
   "zfs.replica.servers.inUse": "{n} í notkun",
   "zfs.replica.servers.unused": "ekki í notkun",
   "zfs.replica.servers.off": "Slökkt",

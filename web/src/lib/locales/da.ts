@@ -2086,7 +2086,7 @@ const da: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Færdig: {fresh} ligger ved siden af {name}. Det kom krypteret og forbliver afmonteret, indtil dets nøgle er indlæst.",
   "zfs.replica.servers.title": "ZFS-server",
   "zfs.replica.servers.hint": "Mål for ZFS-replikaen. Et ZFS-element, der vælger en, sender den en blokeksakt kopi. Her lander ingen sikkerhedskopier.",
-  "zfs.replica.servers.empty": "Ingen ZFS-server endnu. Tilføj en via \"Tilføj destination\" › ZFS-servere, så kan hvert ZFS-element sende en replika dertil.",
+  "zfs.replica.servers.empty": "Ingen ZFS-server endnu. Tilføj en via Instanser › ZFS-servere, så kan hvert ZFS-element sende en replika dertil.",
   "zfs.replica.servers.inUse": "{n} i brug",
   "zfs.replica.servers.unused": "ikke i brug",
   "zfs.replica.servers.off": "Slukket",
