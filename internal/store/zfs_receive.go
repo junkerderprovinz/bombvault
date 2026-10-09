@@ -69,14 +69,22 @@ type ZFSReceiveSlot struct {
 // Base is the dataset the slot's members land under.
 func (s ZFSReceiveSlot) Base() string { return s.Root + "/" + s.SourceServer }
 
+// ErrZFSReceiveChanged is returned when an allow names other members than the
+// slot asks for by now: the source asked again while the person looked.
+var ErrZFSReceiveChanged = errors.New("the receive request changed since it was shown")
+
 // ZFSReceiveDecision is a person's answer to a slot. Pool, Root, Keep and
-// TokenEnc belong to an allow.
+// TokenEnc belong to an allow. Dataset and Members, when set, are the request
+// as the person was shown it, and the allow only goes through while the slot
+// still asks for exactly that.
 type ZFSReceiveDecision struct {
 	State    string
 	Pool     string
 	Root     string
 	Keep     ZFSReplicaKeep
 	TokenEnc []byte
+	Dataset  string
+	Members  []string
 }
 
 const zfsReceiveSlotCols = `id, peer_id, peer_name, item_id, dataset, source_server, members, proposed_keep,
@@ -124,6 +132,10 @@ func (r *Repo) AskZFSReceive(ask ZFSReceiveSlot, renew bool) (ZFSReceiveSlot, er
 		return ZFSReceiveSlot{}, fmt.Errorf("AskZFSReceive: %w", err)
 	}
 	return out, nil
+}
+
+func sameMembers(a, b []string) bool {
+	return len(a) == len(b) && subset(a, b) && subset(b, a)
 }
 
 func subset(list, of []string) bool {
@@ -195,6 +207,9 @@ func (r *Repo) DecideZFSReceive(id string, d ZFSReceiveDecision) (ZFSReceiveSlot
 		}
 		if !slices.Contains(zfsReceiveMoves[d.State], s.State) {
 			return fmt.Errorf("DecideZFSReceive %s to %s: %w", s.State, d.State, ErrZFSReceiveMove)
+		}
+		if d.Members != nil && (d.Dataset != s.Dataset || !sameMembers(d.Members, s.Members)) {
+			return fmt.Errorf("DecideZFSReceive %s: %w", id, ErrZFSReceiveChanged)
 		}
 		s.State, s.DecidedAt, s.TokenEnc = d.State, time.Now().Unix(), nil
 		if d.State == ZFSReceiveAllowed {

@@ -116,9 +116,15 @@ func (r *receiveRig) request(t *testing.T) map[string]any {
 	return list[0]
 }
 
+// decide answers the only request the way its page does, with an allow
+// naming the item and members the page shows.
 func (r *receiveRig) decide(t *testing.T, body map[string]any) map[string]any {
 	t.Helper()
-	id, _ := r.request(t)["id"].(string)
+	req := r.request(t)
+	if body["decision"] == "allow" {
+		body["item"], body["members"] = req["item"], req["members"]
+	}
+	id, _ := req["id"].(string)
 	_, out := r.dst.do(t, http.MethodPost, "/api/zfs/receive/requests/"+id, body)
 	return out
 }
@@ -322,6 +328,32 @@ func TestRevokingASlotStopsTheSourceUntilItAsksAgain(t *testing.T) {
 	}
 }
 
+func TestAnAllowCoversOnlyTheMembersThePageShowed(t *testing.T) {
+	r := newReceiveRig(t)
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-waiting" {
+		t.Fatalf("an End before any answer = %v, want peer-waiting", err)
+	}
+	shown := r.request(t)
+	r.srcPool.ds["cache/appdata/media"] = newFakeDataset("filesystem")
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-waiting" {
+		t.Fatalf("asking again for more = %v, want peer-waiting", err)
+	}
+
+	id, _ := shown["id"].(string)
+	_, out := r.dst.do(t, http.MethodPost, "/api/zfs/receive/requests/"+id, map[string]any{
+		"decision": "allow", "pool": "tank", "root": receiveRoot, "item": shown["item"], "members": shown["members"],
+	})
+	if msg, _ := out["error"].(string); !strings.Contains(msg, "asked for other datasets") || r.request(t)["state"] != store.ZFSReceiveAsked {
+		t.Fatalf("an allow of the members shown before the source asked for more = %v, want it refused", out)
+	}
+	if out := r.decide(t, map[string]any{"decision": "allow", "pool": "tank", "root": receiveRoot}); out["ok"] != true {
+		t.Fatalf("an allow of what the page shows now = %v", out)
+	}
+	if members, _ := r.request(t)["members"].([]any); len(members) != 3 {
+		t.Fatalf("the allowed slot holds %v, want the three members shown", members)
+	}
+}
+
 func TestASourceNamesARefusalAndASilentReceiver(t *testing.T) {
 	r := newReceiveRig(t)
 	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-waiting" {
@@ -451,8 +483,12 @@ func askSlot(t *testing.T, in *instance, peer, dataset string) string {
 
 func allowSlot(t *testing.T, in *instance, id string) map[string]any {
 	t.Helper()
+	slot, _, err := in.st.GetZFSReceiveSlot(id)
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, out := in.do(t, http.MethodPost, "/api/zfs/receive/requests/"+id, map[string]any{
-		"decision": "allow", "pool": "tank", "root": receiveRoot,
+		"decision": "allow", "pool": "tank", "root": receiveRoot, "item": slot.Dataset, "members": slot.Members,
 	})
 	return out
 }
@@ -557,7 +593,7 @@ func receiveSlots(t *testing.T, in *instance, pool *fakePool) (ids, tokens []str
 	slices.SortFunc(slots, func(a, b store.ZFSReceiveSlot) int { return strings.Compare(a.Dataset, b.Dataset) })
 	for _, s := range slots {
 		if code, out := in.do(t, http.MethodPost, "/api/zfs/receive/requests/"+s.ID, map[string]any{
-			"decision": "allow", "pool": "tank", "root": receiveRoot,
+			"decision": "allow", "pool": "tank", "root": receiveRoot, "item": s.Dataset, "members": s.Members,
 		}); code != http.StatusOK || out["ok"] != true {
 			t.Fatalf("allow: %d %v", code, out)
 		}

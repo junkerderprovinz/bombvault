@@ -258,11 +258,15 @@ func (h *Handler) handleDecideZFSReceive(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid request id"})
 		return
 	}
+	// An allow names the item and members the page showed, since the source
+	// can ask for more while a person looks.
 	var body struct {
 		Decision string                `json:"decision"`
 		Pool     string                `json:"pool"`
 		Root     string                `json:"root"`
 		Keep     *store.ZFSReplicaKeep `json:"keep"`
+		Item     string                `json:"item"`
+		Members  []string              `json:"members"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -275,11 +279,16 @@ func (h *Handler) handleDecideZFSReceive(w http.ResponseWriter, r *http.Request)
 	d := store.ZFSReceiveDecision{}
 	switch body.Decision {
 	case "allow":
+		if len(body.Members) == 0 {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "an allow names the members it was shown"})
+			return
+		}
 		d, err = h.svc.zfsReceiveAllow(r.Context(), slot, body.Pool, body.Root, body.Keep)
 		if err != nil {
 			zfsReplicaFail(w, err)
 			return
 		}
+		d.Dataset, d.Members = body.Item, body.Members
 	case "refuse":
 		d.State = store.ZFSReceiveRefused
 	case "revoke":
@@ -291,6 +300,10 @@ func (h *Handler) handleDecideZFSReceive(w http.ResponseWriter, r *http.Request)
 	slot, err = h.store.DecideZFSReceive(id, d)
 	if errors.Is(err, store.ErrZFSReceiveMove) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the request cannot take that answer from where it stands"})
+		return
+	}
+	if errors.Is(err, store.ErrZFSReceiveChanged) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the source asked for other datasets since the request was shown"})
 		return
 	}
 	if err != nil {
