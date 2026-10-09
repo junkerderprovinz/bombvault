@@ -216,7 +216,7 @@ func (s *Service) cleanZFSReplicaSource(ctx context.Context, d store.ZFSDataset)
 	}
 	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), zfsReplicaCleanTimeout)
 	defer cancel()
-	if err := zfsrepl.Clean(cctx, end, d.Dataset); err != nil {
+	if err := zfsrepl.Clean(cctx, end, d.Dataset, d.ExcludedChildren); err != nil {
 		log.Printf("api: zfs replica: removing the replica snapshots of %s failed: %v", d.Dataset, err)
 	}
 }

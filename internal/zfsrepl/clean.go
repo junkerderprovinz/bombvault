@@ -9,40 +9,43 @@ import (
 
 // Clean removes what replicating left on the source tree under root but one
 // bookmark per dataset, the newest, from which a later run can continue the
-// copy kept on the target. Excluded datasets are cleaned too, since the item
-// may have excluded less earlier. It tries every point and reports what failed.
-func Clean(ctx context.Context, source End, root string) error {
+// copy kept on the target. Datasets the item excludes are cleaned too, since
+// it may have excluded less earlier, but none of their snapshots was sent, so
+// they keep only a bookmark they already have. It tries every point and
+// reports what failed.
+func Clean(ctx context.Context, source End, root string, excludes []string) error {
 	tree, err := listTree(ctx, source, root)
 	if err != nil {
 		return err
 	}
 	var errs []error
 	for _, d := range tree {
-		if err := cleanDataset(ctx, source, d.Name); err != nil {
+		if err := cleanDataset(ctx, source, d.Name, !excluded(d.Name, excludes)); err != nil {
 			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)
 }
 
-func cleanDataset(ctx context.Context, source End, dataset string) error {
+func cleanDataset(ctx context.Context, source End, dataset string, sent bool) error {
 	pts, err := points(ctx, source, dataset)
 	if err != nil {
 		return err
 	}
-	var replica []zfs.ReplicaPoint
+	var replica, bases []zfs.ReplicaPoint
 	for _, p := range pts {
-		if zfs.IsReplicaSnapshot(p.Name) {
-			replica = append(replica, p)
+		if !zfs.IsReplicaSnapshot(p.Name) {
+			continue
+		}
+		replica = append(replica, p)
+		if sent || p.Bookmark {
+			bases = append(bases, p)
 		}
 	}
-	newest, ok := newestPoint(replica)
-	if !ok {
-		return nil
-	}
+	newest, keep := newestPoint(bases)
 	// The newest state may still be a snapshot alone, when the run that took
 	// it stopped before its bookmark.
-	if !newest.Bookmark {
+	if keep && !newest.Bookmark {
 		if err := bookmarkOn(ctx, source, dataset, newest.Name); err != nil {
 			return err
 		}
@@ -50,7 +53,7 @@ func cleanDataset(ctx context.Context, source End, dataset string) error {
 	var errs []error
 	for _, p := range replica {
 		if p.Bookmark {
-			if p.Name == newest.Name {
+			if keep && p.Name == newest.Name {
 				continue
 			}
 			if err := destroyBookmark(ctx, source, dataset, p.Name); err != nil {
