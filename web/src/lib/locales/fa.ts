@@ -2406,7 +2406,7 @@ const fa: Partial<Translations> = {
   "zfs.replica.state.running": "در حال ریپلیکا",
   "zfs.replica.state.ok": "ریپلیکا شد {when}",
   "zfs.replica.state.failed": "ریپلیکا ناموفق بود",
-  "zfs.replica.state.waiting": "در انتظار {peer}",
+  "zfs.replica.state.waiting": "در انتظار",
   "zfs.replica.state.never": "هرگز ریپلیکا نشده",
   "zfs.replica.member.ok": "به‌روز",
   "zfs.replica.member.waiting": "در انتظار",

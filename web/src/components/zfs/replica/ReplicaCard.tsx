@@ -86,7 +86,7 @@ function MemberState({ member, replica, running, t }: { member: ZFSReplicaMember
 export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) {
   const { t } = useT();
   const { push } = useToast();
-  const { replica, reload, progressActive } = useReplica(itemId);
+  const { replica, reload, progressActive, restoreActive } = useReplica(itemId);
   const { servers, reload: reloadServers } = useReplicaServers();
   const group = useGroup();
   const [draft, setDraft] = useState<ZFSReplicaPatch>({});
@@ -350,15 +350,15 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         </p>
       )}
 
-      {hasTarget && !peerHolds(view) && (
+      {hasTarget && !peerHolds(view) && view.state !== "waiting" && (
         <div className="flex justify-end">
           <Button
             label={t("zfs.replica.replicateNow")}
             labelKey="zfs.replica.replicateNow"
             tone="accent"
             onClick={() => void replicateNow()}
-            disabled={running || starting}
-            busy={running || starting}
+            disabled={running || starting || restoreActive}
+            busy={running || starting || restoreActive}
           />
         </div>
       )}

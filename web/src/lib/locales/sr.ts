@@ -2390,7 +2390,7 @@ const sr: Partial<Translations> = {
   "zfs.replica.state.running": "Реплицира се",
   "zfs.replica.state.ok": "Реплицирано {when}",
   "zfs.replica.state.failed": "Репликација није успела",
-  "zfs.replica.state.waiting": "Чека се: {peer}",
+  "zfs.replica.state.waiting": "Чека",
   "zfs.replica.state.never": "Још није реплицирано",
   "zfs.replica.member.ok": "Ажурно",
   "zfs.replica.member.waiting": "Чека",

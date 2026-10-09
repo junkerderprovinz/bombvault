@@ -2406,7 +2406,7 @@ const lt: Partial<Translations> = {
   "zfs.replica.state.running": "Replikuojama",
   "zfs.replica.state.ok": "Replikuota {when}",
   "zfs.replica.state.failed": "Replikuoti nepavyko",
-  "zfs.replica.state.waiting": "Laukiama: {peer}",
+  "zfs.replica.state.waiting": "Laukiama",
   "zfs.replica.state.never": "Dar niekada nereplikuota",
   "zfs.replica.member.ok": "Atnaujinta",
   "zfs.replica.member.waiting": "Laukiama",

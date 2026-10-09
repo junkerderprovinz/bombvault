@@ -2024,7 +2024,7 @@ const zh: Partial<Translations> = {
   "zfs.replica.state.running": "正在复制",
   "zfs.replica.state.ok": "已于{when}复制",
   "zfs.replica.state.failed": "副本失败",
-  "zfs.replica.state.waiting": "等待 {peer}",
+  "zfs.replica.state.waiting": "等待中",
   "zfs.replica.state.never": "从未复制",
   "zfs.replica.member.ok": "已是最新",
   "zfs.replica.member.waiting": "等待中",

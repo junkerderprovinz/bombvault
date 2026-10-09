@@ -2028,7 +2028,7 @@ const uk: Partial<Translations> = {
   "zfs.replica.state.running": "Реплікується",
   "zfs.replica.state.ok": "Репліковано {when}",
   "zfs.replica.state.failed": "Реплікація не вдалася",
-  "zfs.replica.state.waiting": "Очікування: {peer}",
+  "zfs.replica.state.waiting": "Очікування",
   "zfs.replica.state.never": "Ще не реплікувалося",
   "zfs.replica.member.ok": "Актуально",
   "zfs.replica.member.waiting": "Очікування",

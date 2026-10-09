@@ -2033,7 +2033,7 @@ const fi: Partial<Translations> = {
   "zfs.replica.state.running": "Replikoidaan",
   "zfs.replica.state.ok": "Replikoitu {when}",
   "zfs.replica.state.failed": "Replikointi epäonnistui",
-  "zfs.replica.state.waiting": "Odottaa: {peer}",
+  "zfs.replica.state.waiting": "Odottaa",
   "zfs.replica.state.never": "Ei koskaan replikoitu",
   "zfs.replica.member.ok": "Ajan tasalla",
   "zfs.replica.member.waiting": "Odottaa",

@@ -2406,7 +2406,7 @@ const eu: Partial<Translations> = {
   "zfs.replica.state.running": "Erreplikatzen",
   "zfs.replica.state.ok": "Erreplikatuta {when}",
   "zfs.replica.state.failed": "Erreplikak huts egin du",
-  "zfs.replica.state.waiting": "{peer} zain",
+  "zfs.replica.state.waiting": "Zain",
   "zfs.replica.state.never": "Ez da inoiz erreplikatu",
   "zfs.replica.member.ok": "Eguneratuta",
   "zfs.replica.member.waiting": "Zain",

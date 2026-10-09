@@ -2030,7 +2030,7 @@ const nl: Partial<Translations> = {
   "zfs.replica.state.running": "Bezig met repliceren",
   "zfs.replica.state.ok": "Gerepliceerd {when}",
   "zfs.replica.state.failed": "Replica mislukt",
-  "zfs.replica.state.waiting": "Wacht op {peer}",
+  "zfs.replica.state.waiting": "Wacht",
   "zfs.replica.state.never": "Nooit gerepliceerd",
   "zfs.replica.member.ok": "Bijgewerkt",
   "zfs.replica.member.waiting": "Wacht",

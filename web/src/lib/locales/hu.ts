@@ -2036,7 +2036,7 @@ const hu: Partial<Translations> = {
   "zfs.replica.state.running": "Replikálás folyamatban",
   "zfs.replica.state.ok": "Replikálva {when}",
   "zfs.replica.state.failed": "A replikálás nem sikerült",
-  "zfs.replica.state.waiting": "Várakozás erre: {peer}",
+  "zfs.replica.state.waiting": "Várakozik",
   "zfs.replica.state.never": "Még nem replikálta",
   "zfs.replica.member.ok": "Naprakész",
   "zfs.replica.member.waiting": "Várakozik",

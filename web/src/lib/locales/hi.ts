@@ -2406,7 +2406,7 @@ const hi: Partial<Translations> = {
   "zfs.replica.state.running": "रेप्लिका बन रही है",
   "zfs.replica.state.ok": "रेप्लिका बनी {when}",
   "zfs.replica.state.failed": "रेप्लिका विफल रही",
-  "zfs.replica.state.waiting": "{peer} की प्रतीक्षा में",
+  "zfs.replica.state.waiting": "प्रतीक्षा में",
   "zfs.replica.state.never": "रेप्लिका कभी नहीं बनी",
   "zfs.replica.member.ok": "अप टू डेट",
   "zfs.replica.member.waiting": "प्रतीक्षा में",

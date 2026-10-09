@@ -2024,7 +2024,7 @@ const ja: Partial<Translations> = {
   "zfs.replica.state.running": "複製中",
   "zfs.replica.state.ok": "{when}に複製済み",
   "zfs.replica.state.failed": "レプリカに失敗しました",
-  "zfs.replica.state.waiting": "{peer} を待っています",
+  "zfs.replica.state.waiting": "待機中",
   "zfs.replica.state.never": "まだ複製していません",
   "zfs.replica.member.ok": "最新",
   "zfs.replica.member.waiting": "待機中",

@@ -147,6 +147,14 @@ export function peerHolds(replica: ZFSReplica): boolean {
   return replica.target.kind === "peer" && replica.peerState !== "allowed";
 }
 
+/** waitingCode is why a replica in state "waiting" does not run: its ZFS
+ *  server is switched off, or else the ZFS domain is. */
+export function waitingCode(replica: ZFSReplica, servers: readonly ZFSReplicaServer[]): "server-disabled" | "domain-off" {
+  const { kind, id } = replica.target;
+  const server = kind === "server" ? servers.find((s) => s.id === id) : undefined;
+  return server && !server.enabled ? "server-disabled" : "domain-off";
+}
+
 export function isRunning(state: ZFSReplicaState, progressActive: boolean): boolean {
   return state === "running" || progressActive;
 }

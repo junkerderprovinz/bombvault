@@ -2036,7 +2036,7 @@ const th: Partial<Translations> = {
   "zfs.replica.state.running": "กำลังทำเรพลิกา",
   "zfs.replica.state.ok": "ทำเรพลิกาเมื่อ {when}",
   "zfs.replica.state.failed": "เรพลิกาล้มเหลว",
-  "zfs.replica.state.waiting": "รอ {peer}",
+  "zfs.replica.state.waiting": "กำลังรอ",
   "zfs.replica.state.never": "ยังไม่เคยทำเรพลิกา",
   "zfs.replica.member.ok": "ทันสมัยแล้ว",
   "zfs.replica.member.waiting": "กำลังรอ",

@@ -2406,7 +2406,7 @@ const et: Partial<Translations> = {
   "zfs.replica.state.running": "Replikeerib",
   "zfs.replica.state.ok": "Replikeeritud {when}",
   "zfs.replica.state.failed": "Replikeerimine ebaõnnestus",
-  "zfs.replica.state.waiting": "Ootab: {peer}",
+  "zfs.replica.state.waiting": "Ootab",
   "zfs.replica.state.never": "Pole kunagi replikeeritud",
   "zfs.replica.member.ok": "Ajakohane",
   "zfs.replica.member.waiting": "Ootab",

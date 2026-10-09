@@ -2033,7 +2033,7 @@ const tr: Partial<Translations> = {
   "zfs.replica.state.running": "Çoğaltılıyor",
   "zfs.replica.state.ok": "Çoğaltıldı {when}",
   "zfs.replica.state.failed": "Replika başarısız oldu",
-  "zfs.replica.state.waiting": "{peer} bekleniyor",
+  "zfs.replica.state.waiting": "Bekliyor",
   "zfs.replica.state.never": "Hiç çoğaltılmadı",
   "zfs.replica.member.ok": "Güncel",
   "zfs.replica.member.waiting": "Bekliyor",

@@ -2036,7 +2036,7 @@ const ar: Partial<Translations> = {
   "zfs.replica.state.running": "جارٍ النسخ المتماثل",
   "zfs.replica.state.ok": "نُسخ {when}",
   "zfs.replica.state.failed": "فشلت النسخة المتماثلة",
-  "zfs.replica.state.waiting": "في انتظار {peer}",
+  "zfs.replica.state.waiting": "في الانتظار",
   "zfs.replica.state.never": "لم يُنسخ بعد",
   "zfs.replica.member.ok": "محدّث",
   "zfs.replica.member.waiting": "في الانتظار",

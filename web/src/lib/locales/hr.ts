@@ -2406,7 +2406,7 @@ const hr: Partial<Translations> = {
   "zfs.replica.state.running": "Replicira se",
   "zfs.replica.state.ok": "Replicirano {when}",
   "zfs.replica.state.failed": "Replikacija nije uspjela",
-  "zfs.replica.state.waiting": "Čeka {peer}",
+  "zfs.replica.state.waiting": "Čeka",
   "zfs.replica.state.never": "Još nije replicirano",
   "zfs.replica.member.ok": "Ažurno",
   "zfs.replica.member.waiting": "Čeka",

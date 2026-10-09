@@ -2406,7 +2406,7 @@ const is: Partial<Translations> = {
   "zfs.replica.state.running": "Afritar",
   "zfs.replica.state.ok": "Afritað {when}",
   "zfs.replica.state.failed": "Afritun mistókst",
-  "zfs.replica.state.waiting": "Bíður eftir {peer}",
+  "zfs.replica.state.waiting": "Bíður",
   "zfs.replica.state.never": "Aldrei afritað",
   "zfs.replica.member.ok": "Uppfært",
   "zfs.replica.member.waiting": "Bíður",

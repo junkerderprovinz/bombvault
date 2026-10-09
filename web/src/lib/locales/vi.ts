@@ -2024,7 +2024,7 @@ const vi: Partial<Translations> = {
   "zfs.replica.state.running": "Đang nhân bản",
   "zfs.replica.state.ok": "Đã nhân bản {when}",
   "zfs.replica.state.failed": "Nhân bản thất bại",
-  "zfs.replica.state.waiting": "Đang chờ {peer}",
+  "zfs.replica.state.waiting": "Đang chờ",
   "zfs.replica.state.never": "Chưa nhân bản lần nào",
   "zfs.replica.member.ok": "Đã cập nhật",
   "zfs.replica.member.waiting": "Đang chờ",

@@ -2033,7 +2033,7 @@ const he: Partial<Translations> = {
   "zfs.replica.state.running": "משכפל",
   "zfs.replica.state.ok": "שוכפל {when}",
   "zfs.replica.state.failed": "הרפליקה נכשלה",
-  "zfs.replica.state.waiting": "ממתין ל-{peer}",
+  "zfs.replica.state.waiting": "ממתין",
   "zfs.replica.state.never": "טרם שוכפל",
   "zfs.replica.member.ok": "מעודכן",
   "zfs.replica.member.waiting": "ממתין",

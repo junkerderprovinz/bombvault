@@ -2033,7 +2033,7 @@ const el: Partial<Translations> = {
   "zfs.replica.state.running": "Αναπαράγεται",
   "zfs.replica.state.ok": "Αναπαράχθηκε {when}",
   "zfs.replica.state.failed": "Η ρεπλίκα απέτυχε",
-  "zfs.replica.state.waiting": "Αναμονή για {peer}",
+  "zfs.replica.state.waiting": "Αναμονή",
   "zfs.replica.state.never": "Δεν έχει αναπαραχθεί ποτέ",
   "zfs.replica.member.ok": "Ενημερωμένο",
   "zfs.replica.member.waiting": "Αναμονή",

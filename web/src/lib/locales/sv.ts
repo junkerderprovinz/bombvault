@@ -2033,7 +2033,7 @@ const sv: Partial<Translations> = {
   "zfs.replica.state.running": "Replikerar",
   "zfs.replica.state.ok": "Replikerad {when}",
   "zfs.replica.state.failed": "Replikeringen misslyckades",
-  "zfs.replica.state.waiting": "Väntar på {peer}",
+  "zfs.replica.state.waiting": "Väntar",
   "zfs.replica.state.never": "Aldrig replikerad",
   "zfs.replica.member.ok": "Aktuell",
   "zfs.replica.member.waiting": "Väntar",

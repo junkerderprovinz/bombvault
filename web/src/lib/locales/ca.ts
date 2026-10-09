@@ -2406,7 +2406,7 @@ const ca: Partial<Translations> = {
   "zfs.replica.state.running": "S'està replicant",
   "zfs.replica.state.ok": "Replicat {when}",
   "zfs.replica.state.failed": "La rèplica ha fallat",
-  "zfs.replica.state.waiting": "Esperant {peer}",
+  "zfs.replica.state.waiting": "En espera",
   "zfs.replica.state.never": "Mai replicat",
   "zfs.replica.member.ok": "Al dia",
   "zfs.replica.member.waiting": "En espera",

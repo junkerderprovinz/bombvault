@@ -2028,7 +2028,7 @@ const pl: Partial<Translations> = {
   "zfs.replica.state.running": "Replikowanie",
   "zfs.replica.state.ok": "Zreplikowano {when}",
   "zfs.replica.state.failed": "Replikacja się nie udała",
-  "zfs.replica.state.waiting": "Czeka na {peer}",
+  "zfs.replica.state.waiting": "Czeka",
   "zfs.replica.state.never": "Jeszcze nie replikowano",
   "zfs.replica.member.ok": "Aktualne",
   "zfs.replica.member.waiting": "Czeka",

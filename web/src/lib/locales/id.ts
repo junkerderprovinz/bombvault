@@ -2406,7 +2406,7 @@ const id: Partial<Translations> = {
   "zfs.replica.state.running": "Sedang direplikasi",
   "zfs.replica.state.ok": "Direplikasi {when}",
   "zfs.replica.state.failed": "Replika gagal",
-  "zfs.replica.state.waiting": "Menunggu {peer}",
+  "zfs.replica.state.waiting": "Menunggu",
   "zfs.replica.state.never": "Belum pernah direplikasi",
   "zfs.replica.member.ok": "Terbaru",
   "zfs.replica.member.waiting": "Menunggu",

@@ -2024,7 +2024,7 @@ const ko: Partial<Translations> = {
   "zfs.replica.state.running": "복제 중",
   "zfs.replica.state.ok": "{when} 복제됨",
   "zfs.replica.state.failed": "복제 실패",
-  "zfs.replica.state.waiting": "{peer} 대기 중",
+  "zfs.replica.state.waiting": "대기 중",
   "zfs.replica.state.never": "아직 복제된 적 없음",
   "zfs.replica.member.ok": "최신 상태",
   "zfs.replica.member.waiting": "대기 중",

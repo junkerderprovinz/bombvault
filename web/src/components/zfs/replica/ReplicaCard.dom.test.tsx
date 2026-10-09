@@ -267,6 +267,29 @@ describe("replica card", () => {
     expect(screen.queryByRole("tab", { name: en["cadence.everyN"] })).toBeNull();
   });
 
+  it("says why the replica waits and offers no run while ZFS backups are off", async () => {
+    current = replica({ state: "waiting" });
+    renderCard();
+    expect(await screen.findByText(en["zfs.replica.state.waiting"])).toBeTruthy();
+    expect(screen.getByLabelText(en["zfs.code.domain-off"])).toBeTruthy();
+    expect(screen.queryByText(/Waiting for/)).toBeNull();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("names a switched-off server as the reason the replica waits", async () => {
+    current = replica({ target: { kind: "server", id: "off" }, state: "waiting" });
+    renderCard();
+    expect(await screen.findByLabelText(en["zfs.code.server-disabled"])).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+  });
+
+  it("holds the run button while a bring back has the replica", async () => {
+    progress = { "zfs-replica-restore:zfs1": { phase: "replicate", percent: 10, active: true, lastSeen: Date.now() } };
+    renderCard();
+    const button = (await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] })) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
+
   it("hides everything but the picker while there is no target", async () => {
     current = replica({ target: { kind: "none", id: "" }, state: "never" });
     renderCard();

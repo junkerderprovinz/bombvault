@@ -2036,7 +2036,7 @@ const ro: Partial<Translations> = {
   "zfs.replica.state.running": "Se replică",
   "zfs.replica.state.ok": "Replicat {when}",
   "zfs.replica.state.failed": "Replicarea a eșuat",
-  "zfs.replica.state.waiting": "Se așteaptă {peer}",
+  "zfs.replica.state.waiting": "În așteptare",
   "zfs.replica.state.never": "Încă nereplicat",
   "zfs.replica.member.ok": "La zi",
   "zfs.replica.member.waiting": "În așteptare",
