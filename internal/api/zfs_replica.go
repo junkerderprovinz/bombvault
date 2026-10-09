@@ -41,7 +41,7 @@ type zfsReplicaRuntime struct {
 	hostEnd   func() (zfsrepl.End, error)
 	serverEnd func(srv store.ZFSReplicaServer, knownHosts string) (zfsrepl.End, error)
 	run       func(ctx context.Context, source, target zfsrepl.End, e zfsrepl.Entry) (zfsrepl.Result, error)
-	bringBack func(ctx context.Context, from, to zfsrepl.End, r zfsrepl.Restore) (string, error)
+	bringBack func(ctx context.Context, from, to zfsrepl.End, r zfsrepl.Restore) (zfsrepl.Restored, error)
 }
 
 // lockZFSReplica takes the item's replica lock, or reports that a run or a
@@ -141,7 +141,7 @@ func (s *Service) zfsReplicaEngine() func(context.Context, zfsrepl.End, zfsrepl.
 	return zfsrepl.Run
 }
 
-func (s *Service) zfsReplicaBringBack() func(context.Context, zfsrepl.End, zfsrepl.End, zfsrepl.Restore) (string, error) {
+func (s *Service) zfsReplicaBringBack() func(context.Context, zfsrepl.End, zfsrepl.End, zfsrepl.Restore) (zfsrepl.Restored, error) {
 	if s.replica.bringBack != nil {
 		return s.replica.bringBack
 	}

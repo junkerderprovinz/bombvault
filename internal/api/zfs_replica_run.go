@@ -56,6 +56,19 @@ func (s *Service) zfsReplicaStartRefusal(d store.ZFSDataset) error {
 	return nil
 }
 
+// zfsReplicaRunRefusal is zfsReplicaStartRefusal for a run, which also needs
+// the ZFS domain switched on. A bring back does not.
+func (s *Service) zfsReplicaRunRefusal(d store.ZFSDataset) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	if !settings.ZFSEnabled {
+		return zfsRefuse("domain-off", d.Dataset)
+	}
+	return s.zfsReplicaStartRefusal(d)
+}
+
 // StartZFSReplica starts one item's replica run in the background and
 // answers with the id of its run row.
 func (s *Service) StartZFSReplica(ctx context.Context, id string) (string, error) {
@@ -63,7 +76,7 @@ func (s *Service) StartZFSReplica(ctx context.Context, id string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("zfs replica: load dataset: %w", err)
 	}
-	if err := s.zfsReplicaStartRefusal(d); err != nil {
+	if err := s.zfsReplicaRunRefusal(d); err != nil {
 		return "", err
 	}
 	unlock, ok := s.lockZFSReplica(id)
@@ -98,7 +111,7 @@ func (s *Service) ReplicateZFSDataset(ctx context.Context, id string) error {
 	if !d.Enabled {
 		return nil
 	}
-	if err := s.zfsReplicaStartRefusal(d); err != nil {
+	if err := s.zfsReplicaRunRefusal(d); err != nil {
 		log.Printf("api: zfs replica: %s skipped: %v", d.Dataset, err)
 		return nil
 	}
@@ -253,7 +266,7 @@ func (s *Service) zfsReplicaProgress(key string, startedAt int64) func(member st
 			return
 		}
 		pct := min(float64(done)/float64(total)*100, 100)
-		if member == current && pct < 100 && pct-last < 1 {
+		if member == current && pct < 100 && pct >= last && pct-last < 1 {
 			return
 		}
 		current, last = member, pct

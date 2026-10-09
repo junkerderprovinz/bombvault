@@ -257,7 +257,7 @@ func TestDeletingAServerInUseNeedsDetachAndCleansTheItems(t *testing.T) {
 	if d, _ := r.st.GetZFSDataset(r.item.ID); d.Replica.TargetKind != store.ZFSReplicaTargetNone {
 		t.Errorf("the item still replicates to %+v", d.Replica)
 	}
-	if len(r.host.did("release")) != 1 || len(r.host.did("destroy")) != 2 {
+	if len(r.host.did("release")) != 1 || len(r.host.did("destroy")) != 1 {
 		t.Errorf("source cleanup = release %q, destroy %q", r.host.did("release"), r.host.did("destroy"))
 	}
 }
@@ -471,7 +471,7 @@ func TestSwitchingTheReplicaOffCleansTheSourceAndKeepsTheTarget(t *testing.T) {
 	for _, c := range r.host.did("destroy") {
 		destroyed = append(destroyed, c[len(c)-1])
 	}
-	want := []string{"cache/appdata@" + replicaSnap, "cache/appdata#" + replicaSnap, "cache/appdata/plex#bombvault-replica-20261008030000"}
+	want := []string{"cache/appdata@" + replicaSnap}
 	if !slices.Equal(destroyed, want) {
 		t.Errorf("destroyed %q, want %q", destroyed, want)
 	}
@@ -494,8 +494,9 @@ func TestRemovingAnEntryCleansItsReplicaFromTheSource(t *testing.T) {
 	if _, err := r.s.deleteZFSDatasetLocked(context.Background(), r.item.ID, false); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.host.did("release")) != 1 || len(r.host.did("destroy")) != 1 {
-		t.Errorf("release %q, destroy %q", r.host.did("release"), r.host.did("destroy"))
+	if len(r.host.did("release")) != 1 || len(r.host.did("destroy")) != 1 || len(r.host.did("bookmark")) != 1 {
+		t.Errorf("release %q, destroy %q, bookmark %q, want the snapshot kept as a bookmark",
+			r.host.did("release"), r.host.did("destroy"), r.host.did("bookmark"))
 	}
 }
 
@@ -555,42 +556,91 @@ func TestTheViewListsTheSnapshotsOnTheTargetNewestFirst(t *testing.T) {
 	}
 }
 
-func TestARestoreLandsNextToTheRootAndMountsUnlessEncrypted(t *testing.T) {
-	for _, encrypted := range []bool{false, true} {
-		r := newReplicaRig(t)
-		if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
-			t.Fatal(err)
-		}
-		replica := "tank/bombvault-replica/bottich/cache/appdata"
-		r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
-		r.server.raw = encrypted
-		var asked zfsrepl.Restore
-		r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (string, error) {
-			asked = rs
-			return zfsrepl.RestoreName(rs.Dataset, rs.Now()), nil
-		}
+func TestARestoreBringsTheTreeBackAndMountsWhatIsNotEncrypted(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	var asked zfsrepl.Restore
+	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
+		asked = rs
+		root := zfsrepl.RestoreName(rs.Dataset, rs.Now())
+		return zfsrepl.Restored{
+			Root: root,
+			Members: []zfsrepl.RestoredMember{
+				{Dataset: root},
+				{Dataset: root + "/vault", Encrypted: true},
+				{Dataset: root + "/vm", Volume: true},
+				{Dataset: root + "/plex"},
+			},
+			Skipped: []string{replica + "/later"},
+		}, nil
+	}
 
-		_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"bombvault-replica-20261001030000"}`)
-		if m["ok"] != false || m["code"] != "not-found" {
-			t.Errorf("a snapshot the target lacks = %v", m)
-		}
-		_, m, _ = r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"`+replicaSnap+`"}`)
-		dataset, _ := m["dataset"].(string)
-		if m["ok"] != true || m["runId"] == "" || !strings.HasPrefix(dataset, "cache/appdata-bombvault-restore-") || m["keyNeeded"] != encrypted {
-			t.Fatalf("restore = %v", m)
-		}
-		r.s.replica.work.Wait()
-		if asked.Replica != replica || asked.Snapshot != replicaSnap || zfsrepl.RestoreName("cache/appdata", asked.Now()) != dataset {
-			t.Errorf("bring back = %+v", asked)
-		}
-		mounts := r.host.did("mount")
-		if encrypted != (len(mounts) == 0) {
-			t.Errorf("encrypted %v: mounts %q", encrypted, mounts)
-		}
-		runs, _ := r.st.RecentRunsOfKind(r.item.ID, "restore", 1)
-		if len(runs) != 1 || runs[0].Status != "success" || (encrypted && !strings.Contains(runs[0].Error, "key")) {
-			t.Errorf("restore run = %+v", runs)
-		}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"bombvault-replica-20261001030000"}`)
+	if m["ok"] != false || m["code"] != "not-found" {
+		t.Errorf("a snapshot the target lacks = %v", m)
+	}
+	_, m, _ = r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"`+replicaSnap+`"}`)
+	root, _ := m["dataset"].(string)
+	if m["ok"] != true || m["runId"] == "" || !strings.HasPrefix(root, "cache/appdata-bombvault-restore-") || m["keyNeeded"] != false {
+		t.Fatalf("restore = %v", m)
+	}
+	r.s.replica.work.Wait()
+	if asked.Replica != replica || asked.Snapshot != replicaSnap || zfsrepl.RestoreName("cache/appdata", asked.Now()) != root {
+		t.Errorf("bring back = %+v", asked)
+	}
+	var mounted []string
+	for _, c := range r.host.did("mount") {
+		mounted = append(mounted, c[len(c)-1])
+	}
+	if want := []string{root, root + "/plex"}; !slices.Equal(mounted, want) {
+		t.Errorf("mounted %q, want %q", mounted, want)
+	}
+	runs, _ := r.st.RecentRunsOfKind(r.item.ID, "restore", 1)
+	if len(runs) != 1 || runs[0].Status != "success" ||
+		!strings.Contains(runs[0].Error, root+"/vault") || !strings.Contains(runs[0].Error, replica+"/later") {
+		t.Errorf("restore run = %+v, want a success naming the locked and the left out member", runs)
+	}
+}
+
+func TestAnEncryptedRootIsAnnouncedAsNeedingItsKey(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.raw = true
+	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
+		root := zfsrepl.RestoreName(rs.Dataset, rs.Now())
+		return zfsrepl.Restored{Root: root, Members: []zfsrepl.RestoredMember{{Dataset: root, Encrypted: true}}}, nil
+	}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"`+replicaSnap+`"}`)
+	if m["ok"] != true || m["keyNeeded"] != true {
+		t.Fatalf("restore = %v, want keyNeeded", m)
+	}
+	r.s.replica.work.Wait()
+	if mounts := r.host.did("mount"); mounts != nil {
+		t.Errorf("an encrypted root was mounted: %q", mounts)
+	}
+}
+
+func TestWithTheZFSDomainOffNoReplicaRuns(t *testing.T) {
+	r := newReplicaRig(t)
+	settings, _ := r.st.GetSettings()
+	settings.ZFSEnabled = false
+	if err := r.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/run", "")
+	if m["ok"] != false || m["code"] != "domain-off" {
+		t.Errorf("run = %v, want domain-off", m)
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil || len(r.entries) != 0 {
+		t.Errorf("a scheduled replica ran with the domain off: %v, %d runs", err, len(r.entries))
 	}
 }
 

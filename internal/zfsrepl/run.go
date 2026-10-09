@@ -214,7 +214,7 @@ func (r *run) resume(ctx context.Context, m *MemberResult, view targetView, src 
 	if m.Resumed {
 		if last, ok := newestReplica(view.snaps); ok {
 			if p, ok := find(src, last.Name); ok && p.GUID == last.GUID {
-				if err := r.bookmark(ctx, m.Dataset, last.Name); err != nil {
+				if err := bookmarkOn(ctx, r.src, m.Dataset, last.Name); err != nil {
 					log.Printf("zfs replica: bookmarking %s@%s failed: %v", m.Dataset, last.Name, err)
 				}
 			}
@@ -288,19 +288,10 @@ func (r *run) landed(ctx context.Context, target string, sent zfs.ReplicaPoint) 
 // anchor makes the member's new snapshot the base of its next run: a bookmark
 // that survives the snapshot, and a hold so nobody destroys it by accident.
 func (r *run) anchor(ctx context.Context, dataset, snap string) error {
-	if err := r.bookmark(ctx, dataset, snap); err != nil {
+	if err := bookmarkOn(ctx, r.src, dataset, snap); err != nil {
 		return err
 	}
 	args, err := zfs.HoldArgs(dataset, snap)
-	if err != nil {
-		return err
-	}
-	_, err = r.src.Run(ctx, args)
-	return ignore(err, zfs.IsExists)
-}
-
-func (r *run) bookmark(ctx context.Context, dataset, snap string) error {
-	args, err := zfs.BookmarkArgs(dataset, snap)
 	if err != nil {
 		return err
 	}
