@@ -175,4 +175,12 @@ describe("receiving a ZFS replica", () => {
     await waitFor(() => expect(decisions).toEqual([["rq1", { decision: "revoke" }]]));
     expect(await screen.findByText(en["zfs.receive.revoked"])).toBeTruthy();
   });
+
+  it("asks about an instance whose name holds a dollar sign exactly as it is named", async () => {
+    requests = [receiveRequest({ state: "allowed", peerName: "Lab$&", root: "tank/bombvault-replica" })];
+    renderCard();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.receive.revoke"] }));
+    const asked = "Revoke access for Lab$&? Lab$& can then send nothing more here";
+    expect(await screen.findByText((text) => text.startsWith(asked))).toBeTruthy();
+  });
 });
