@@ -25,7 +25,8 @@ const zfsReplicaListTimeout = 5 * time.Second
 const zfsReplicaCleanTimeout = 2 * time.Minute
 
 // ZFSReplicaServerView is a ZFS server as the settings show it, with the
-// size of its pool as it last answered and the items replicating there.
+// size of its pool as it last answered, the items replicating there and the
+// folder below Root their members land in.
 type ZFSReplicaServerView struct {
 	ID        string   `json:"id"`
 	Name      string   `json:"name"`
@@ -38,13 +39,14 @@ type ZFSReplicaServerView struct {
 	FreeBytes int64    `json:"freeBytes"`
 	SizeBytes int64    `json:"sizeBytes"`
 	UsedBy    []string `json:"usedBy"`
+	Folder    string   `json:"folder"`
 }
 
 func (v ZFSReplicaServerView) fields() map[string]any {
 	return map[string]any{
 		"id": v.ID, "name": v.Name, "host": v.Host, "user": v.User, "port": v.Port,
 		"pool": v.Pool, "root": v.Root, "enabled": v.Enabled,
-		"freeBytes": v.FreeBytes, "sizeBytes": v.SizeBytes, "usedBy": v.UsedBy,
+		"freeBytes": v.FreeBytes, "sizeBytes": v.SizeBytes, "usedBy": v.UsedBy, "folder": v.Folder,
 	}
 }
 
@@ -69,7 +71,24 @@ func (s *Service) zfsReplicaServerView(srv store.ZFSReplicaServer, users []strin
 		ID: srv.ID, Name: srv.Name, Host: srv.Host, User: srv.User, Port: srv.Port,
 		Pool: srv.Pool, Root: srv.Root, Enabled: srv.Enabled,
 		FreeBytes: pool.FreeBytes, SizeBytes: pool.SizeBytes, UsedBy: users,
+		Folder: s.zfsReplicaServerFolder(users),
 	}
+}
+
+// zfsReplicaServerFolder is the folder this instance's items land in on a
+// server: the one the first of them fixed, or what zfsReplicaFolder gives an
+// item that has not landed anywhere yet.
+func (s *Service) zfsReplicaServerFolder(users []string) string {
+	for _, id := range users {
+		if d, err := s.store.GetZFSDataset(id); err == nil && d.Replica.Folder != "" {
+			return d.Replica.Folder
+		}
+	}
+	folder, err := s.zfsReplicaFolder(store.ZFSDataset{})
+	if err != nil {
+		log.Printf("api: zfs replica: reading the instance name for the server folder failed: %v", err)
+	}
+	return folder
 }
 
 // ListZFSReplicaServers returns every server. The enabled ones are asked for

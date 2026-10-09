@@ -1106,3 +1106,21 @@ func TestAReplicaIsDoneOnceItsBarEnds(t *testing.T) {
 	}
 	r.s.replica.work.Wait()
 }
+
+func TestTheServerListSaysWhichFolderThisInstanceLandsIn(t *testing.T) {
+	r := newReplicaRig(t)
+	folder := func() any {
+		_, _, list := r.call(http.MethodGet, "/api/zfs/replica/servers", "")
+		srv, _ := list[0].(map[string]any)
+		return srv["folder"]
+	}
+	if got := folder(); got != "bottich" {
+		t.Errorf("folder before any run = %v, want the instance name", got)
+	}
+	if err := r.st.FixZFSReplicaFolder(r.item.ID, "first-name"); err != nil {
+		t.Fatal(err)
+	}
+	if got := folder(); got != "first-name" {
+		t.Errorf("folder = %v, want the one the item fixed", got)
+	}
+}
