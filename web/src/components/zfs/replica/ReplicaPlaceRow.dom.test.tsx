@@ -62,11 +62,18 @@ describe("replica storage row", () => {
     expect(screen.getByText(countText(en["zfs.replica.snapshots"], "en", 2))).toBeTruthy();
   });
 
-  it("says a pulling instance is still waiting instead of offering snapshots", async () => {
-    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "waiting", snapshots: [] });
+  it("says a paired instance has not allowed it yet instead of offering snapshots", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "asked", snapshots: [] });
     renderRow();
-    expect(await screen.findByText("Waiting for tower-2")).toBeTruthy();
+    expect(await screen.findByText("Waiting for tower-2 to allow it")).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["zfs.replica.view"] })).toBeNull();
+  });
+
+  it("names a revoke even though the last run went through", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "revoked" });
+    renderRow();
+    expect(await screen.findByText("Access revoked by tower-2")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["zfs.replica.view"] })).toBeTruthy();
   });
 
   it("hands out the clone and takeover commands with the real names", async () => {

@@ -1,4 +1,4 @@
-import type { GroupState, ZFSReplica, ZFSReplicaServer } from "../../../lib/api";
+import type { GroupState, ZFSReceiveRequest, ZFSReplica, ZFSReplicaServer } from "../../../lib/api";
 
 export function replica(overrides: Partial<ZFSReplica> = {}): ZFSReplica {
   return {
@@ -33,7 +33,7 @@ export function replica(overrides: Partial<ZFSReplica> = {}): ZFSReplica {
         lastBytes: 0,
       },
     ],
-    grants: [],
+    peerState: "",
     ...overrides,
   };
 }
@@ -68,5 +68,26 @@ export function group(): GroupState {
     memberSeen: true,
     selfAddress: "",
     selfAddressManual: false,
+  };
+}
+
+export function receiveRequest(overrides: Partial<ZFSReceiveRequest> = {}): ZFSReceiveRequest {
+  return {
+    id: "rq1",
+    peer: "peer-1",
+    peerName: "tower-2",
+    sourceServer: "tower-2",
+    item: "cache/appdata",
+    members: ["cache/appdata", "cache/appdata/vm-disk"],
+    proposedKeep: { preset: "own", own: [0, 14, 8, 0, 0] },
+    state: "asked",
+    pool: "",
+    root: "",
+    keep: { preset: "own", own: [0, 7, 3, 0, 0] },
+    askedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+    decidedAt: "",
+    lastReceived: "",
+    bytes: 0,
+    ...overrides,
   };
 }
