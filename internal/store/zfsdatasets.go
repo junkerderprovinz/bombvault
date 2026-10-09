@@ -120,7 +120,8 @@ const zfsDatasetColumns = `id, dataset, enabled, excludes, excluded_children, sc
 	stop_containers, restart_pending, hook_container, pre_snapshot, post_snapshot,
 	last_check_code, last_check_detail, last_check_at, last_host_mountpoint,
 	leftover_count, leftover_checked_at, created_at,
-	replica_target_kind, replica_target_id, replica_after_backup, replica_cadence, replica_keep`
+	replica_target_kind, replica_target_id, replica_after_backup, replica_cadence, replica_keep,
+	replica_peer_state, replica_peer_slot, replica_peer_token_enc, replica_peer_base, replica_peer_url, replica_peer_pin`
 
 // CreateZFSDataset inserts a new item. An empty ID is assigned via newID(); a
 // dataset that is already an item fails (dataset is UNIQUE). A new item does
@@ -366,9 +367,6 @@ func (r *Repo) DeleteZFSDataset(id string) error {
 	}
 	if err := deleteZFSReplicaRows(tx, id); err != nil {
 		return fmt.Errorf("DeleteZFSDataset replica: %w", err)
-	}
-	if err := del("replica grants", `DELETE FROM zfs_replica_grants WHERE item_id = ?`, id); err != nil {
-		return err
 	}
 	if err := del("runs", `DELETE FROM runs WHERE target_id = ?`, id); err != nil {
 		return err
@@ -919,11 +917,13 @@ func scanZFSDataset(s scanner) (ZFSDataset, error) {
 	var d ZFSDataset
 	var excludes, children, stop, pending, keep string
 	var enabled, afterBackup int
+	var peerToken []byte
 	err := s.Scan(&d.ID, &d.Dataset, &enabled, &excludes, &children, &d.ScheduleCadence, &d.Repo,
 		&stop, &pending, &d.HookContainer, &d.PreSnapshot, &d.PostSnapshot,
 		&d.LastCheckCode, &d.LastCheckDetail, &d.LastCheckAt, &d.LastHostMountpoint,
 		&d.LeftoverCount, &d.LeftoverCheckedAt, &d.CreatedAt,
-		&d.Replica.TargetKind, &d.Replica.TargetID, &afterBackup, &d.Replica.Cadence, &keep)
+		&d.Replica.TargetKind, &d.Replica.TargetID, &afterBackup, &d.Replica.Cadence, &keep,
+		&d.Replica.Peer.State, &d.Replica.Peer.Slot, &peerToken, &d.Replica.Peer.Base, &d.Replica.Peer.URL, &d.Replica.Peer.Pin)
 	if err != nil {
 		return ZFSDataset{}, fmt.Errorf("scanZFSDataset: %w", err)
 	}
@@ -931,6 +931,9 @@ func scanZFSDataset(s scanner) (ZFSDataset, error) {
 		return ZFSDataset{}, fmt.Errorf("scanZFSDataset unmarshal replica_keep: %w", err)
 	}
 	d.Replica.AfterBackup = afterBackup != 0
+	if len(peerToken) > 0 {
+		d.Replica.Peer.TokenEnc = peerToken
+	}
 	for _, list := range []struct {
 		column string
 		raw    string

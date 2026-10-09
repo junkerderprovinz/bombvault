@@ -11,7 +11,8 @@ import (
 )
 
 // seedReplica gives an instance a ZFS server with its own key directory, an
-// item replicating there and an allowed pull grant on that item.
+// item replicating there, an allowed receive slot for another instance and a
+// second item with the answer of its peer target.
 func seedReplica(t *testing.T, st *store.Repo) (store.ZFSReplicaServer, store.ZFSDataset) {
 	t.Helper()
 	server, err := st.CreateZFSReplicaServer(store.ZFSReplicaServer{
@@ -37,29 +38,45 @@ func seedReplica(t *testing.T, st *store.Repo) (store.ZFSReplicaServer, store.ZF
 	if err := st.SetZFSReplicaKeep(item.ID, store.ZFSReplicaKeep{Preset: "short"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := st.AskZFSReplicaGrant(store.ZFSReplicaGrant{
-		ItemID: item.ID, PeerID: "peer-b", Fingerprint: "SHA256:grantprint", KeyLine: "ssh-ed25519 AAAAgrantedkey mani",
+	slot, err := st.AskZFSReceive(store.ZFSReceiveSlot{
+		PeerID: "peer-b", PeerName: "barn", ItemID: "their-item", Dataset: "tank/photos", SourceServer: "barn",
+		Members: []string{"tank/photos"},
+	}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.DecideZFSReceive(slot.ID, store.ZFSReceiveDecision{
+		State: store.ZFSReceiveAllowed, Pool: "tank", Root: "tank/slotroot", TokenEnc: []byte("slottoken"),
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := st.DecideZFSReplicaGrant(item.ID, "peer-b", store.ZFSGrantAllowed); err != nil {
+	peered, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/system", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetZFSReplicaTarget(peered.ID, store.ZFSReplicaTargetPeer, "peer-b"); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetZFSReplicaPeer(peered.ID, store.ZFSReplicaPeer{
+		State: store.ZFSReceiveAllowed, Slot: "peerslot", TokenEnc: []byte("peertoken"), Base: "tank/peerbase", URL: "https://10.0.0.9:3443",
+	}); err != nil {
 		t.Fatal(err)
 	}
 	return server, item
 }
 
-func TestExportImportCarriesZFSServersAndReplicaSettingsButNoKeysOrGrants(t *testing.T) {
+func TestExportImportCarriesZFSServersAndReplicaSettingsButNoKeysOrSlots(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
 	server, _ := seedReplica(t, srcStore)
 
 	body, exp := doExport(t, src, "?includeCredentials=true")
-	for _, secret := range []string{"hidden-key-dir", "AAAAgrantedkey", "grantprint", "peer-b"} {
+	for _, secret := range []string{"hidden-key-dir", "slotroot", "slottoken", "peerslot", "peertoken", "peerbase", "10.0.0.9"} {
 		if bytes.Contains(body, []byte(secret)) {
 			t.Fatalf("the export carries %q", secret)
 		}
 	}
-	if exp.ZFSReplica == nil || len(exp.ZFSReplica.Servers) != 1 || len(exp.ZFSReplica.Items) != 1 {
+	if exp.ZFSReplica == nil || len(exp.ZFSReplica.Servers) != 1 || len(exp.ZFSReplica.Items) != 2 {
 		t.Fatalf("export replica block = %+v", exp.ZFSReplica)
 	}
 
@@ -94,8 +111,8 @@ func TestExportImportCarriesZFSServersAndReplicaSettingsButNoKeysOrGrants(t *tes
 	if !reflect.DeepEqual(d.Replica, want) {
 		t.Fatalf("imported replica = %+v, want %+v", d.Replica, want)
 	}
-	if grants, err := dstStore.ListZFSReplicaGrants(item.ID); err != nil || len(grants) != 0 {
-		t.Fatalf("grants after the import = %+v, %v; want none", grants, err)
+	if slots, err := dstStore.ListZFSReceiveSlots(); err != nil || len(slots) != 0 {
+		t.Fatalf("receive slots after the import = %+v, %v; want none", slots, err)
 	}
 }
 
