@@ -150,7 +150,8 @@ func zfsReplicaRefusal(exp settingsExport) string {
 	}
 	ids := map[string]bool{}
 	for i, s := range rep.Servers {
-		if strings.TrimSpace(s.ID) == "" || ids[s.ID] {
+		// The id names the server's known_hosts directory.
+		if !validResourceName(s.ID) || ids[s.ID] {
 			return fmt.Sprintf("ZFS server #%d: needs an id of its own", i+1)
 		}
 		ids[s.ID] = true
