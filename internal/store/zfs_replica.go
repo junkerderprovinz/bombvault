@@ -210,8 +210,8 @@ func (r *Repo) UpdateZFSReplicaServer(s ZFSReplicaServer) error {
 	})
 }
 
-// ZFSReplicaServerMoved reports whether s points at another place than was:
-// another host, port, pool or root.
+// ZFSReplicaServerMoved reports whether s points at another host, port, pool
+// or root than was.
 func ZFSReplicaServerMoved(was, s ZFSReplicaServer) bool {
 	return was.Host != s.Host || was.Port != s.Port || was.Pool != s.Pool || was.Root != s.Root
 }
