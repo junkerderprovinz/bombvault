@@ -695,6 +695,7 @@ type Scheduler struct {
 	listFileSetsFn ListFileSetsFunc
 	backupZFS      BackupFunc
 	listZFSFn      ListZFSDatasetsFunc
+	replicaZFS     BackupFunc
 	backupFlash    func() error
 	configJob      func() error
 	replicateOffFn func(domain string) error
@@ -1631,6 +1632,9 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		if err := s.registerPerItemEntries(); err != nil {
 			return err
 		}
+	}
+	if err := s.registerZFSReplicaEntries(settings); err != nil {
+		return err
 	}
 
 	return nil
