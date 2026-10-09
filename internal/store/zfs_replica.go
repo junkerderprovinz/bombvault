@@ -182,19 +182,51 @@ func (r *Repo) CreateZFSReplicaServer(s ZFSReplicaServer) (ZFSReplicaServer, err
 }
 
 // UpdateZFSReplicaServer writes everything the dialog edits on the server
-// with s.ID. A missing server gives sql.ErrNoRows.
+// with s.ID. A server that now points at another host, port, pool or root is
+// another place, so the items replicating there forget where they stood. A
+// missing server gives sql.ErrNoRows.
 func (r *Repo) UpdateZFSReplicaServer(s ZFSReplicaServer) error {
-	res, err := r.db.Exec(`UPDATE zfs_replica_servers
-		SET name = ?, host = ?, ssh_user = ?, port = ?, pool = ?, root = ?, enabled = ?
-		WHERE id = ?`,
-		s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), s.ID)
+	return r.inTx(func(tx *sql.Tx) error {
+		moved, err := zfsReplicaServerMoved(tx, s)
+		if err != nil {
+			return fmt.Errorf("UpdateZFSReplicaServer: %w", err)
+		}
+		res, err := tx.Exec(`UPDATE zfs_replica_servers
+			SET name = ?, host = ?, ssh_user = ?, port = ?, pool = ?, root = ?, enabled = ?
+			WHERE id = ?`,
+			s.Name, s.Host, s.User, s.Port, s.Pool, s.Root, boolInt(s.Enabled), s.ID)
+		if err != nil {
+			return fmt.Errorf("UpdateZFSReplicaServer: %w", err)
+		}
+		if n, _ := res.RowsAffected(); n == 0 {
+			return fmt.Errorf("UpdateZFSReplicaServer %q: %w", s.ID, sql.ErrNoRows)
+		}
+		if moved {
+			if err := forgetZFSReplicaServerPlace(tx, s.ID); err != nil {
+				return fmt.Errorf("UpdateZFSReplicaServer: %w", err)
+			}
+		}
+		return nil
+	})
+}
+
+// ZFSReplicaServerMoved reports whether s points at another place than was:
+// another host, port, pool or root.
+func ZFSReplicaServerMoved(was, s ZFSReplicaServer) bool {
+	return was.Host != s.Host || was.Port != s.Port || was.Pool != s.Pool || was.Root != s.Root
+}
+
+// zfsReplicaServerMoved compares s with the stored server of its id. One that
+// is not stored yet has not moved.
+func zfsReplicaServerMoved(tx *sql.Tx, s ZFSReplicaServer) (bool, error) {
+	was, err := scanZFSReplicaServer(tx.QueryRow(`SELECT `+zfsReplicaServerCols+` FROM zfs_replica_servers WHERE id = ?`, s.ID))
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
 	if err != nil {
-		return fmt.Errorf("UpdateZFSReplicaServer: %w", err)
+		return false, err
 	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return fmt.Errorf("UpdateZFSReplicaServer %q: %w", s.ID, sql.ErrNoRows)
-	}
-	return nil
+	return ZFSReplicaServerMoved(was, s), nil
 }
 
 // SetZFSReplicaServerKeyDir writes where the server's key and known_hosts
@@ -385,9 +417,10 @@ func (r *Repo) SetZFSReplicaKeep(id string, keep ZFSReplicaKeep) error {
 }
 
 // ImportZFSReplica writes the replica part of a settings file in one
-// transaction. Servers keep this instance's key directory, servers the file
-// does not carry are deleted as DeleteZFSReplicaServer does, and an item
-// whose root dataset is not an item here is skipped.
+// transaction. Servers keep this instance's key directory, a server that moved
+// is treated as UpdateZFSReplicaServer treats it, servers the file does not
+// carry are deleted as DeleteZFSReplicaServer does, and an item whose root
+// dataset is not an item here is skipped.
 func (r *Repo) ImportZFSReplica(in ZFSReplicaImport) error {
 	now := time.Now().Unix()
 	return r.inTx(func(tx *sql.Tx) error {
@@ -397,7 +430,16 @@ func (r *Repo) ImportZFSReplica(in ZFSReplicaImport) error {
 			if created == 0 {
 				created = now
 			}
-			_, err := tx.Exec(`INSERT INTO zfs_replica_servers (`+zfsReplicaServerCols+`)
+			moved, err := zfsReplicaServerMoved(tx, s)
+			if err != nil {
+				return fmt.Errorf("ImportZFSReplica server %s: %w", s.ID, err)
+			}
+			if moved {
+				if err := forgetZFSReplicaServerPlace(tx, s.ID); err != nil {
+					return fmt.Errorf("ImportZFSReplica server %s: %w", s.ID, err)
+				}
+			}
+			_, err = tx.Exec(`INSERT INTO zfs_replica_servers (`+zfsReplicaServerCols+`)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?)
 				ON CONFLICT(id) DO UPDATE SET
 					name = excluded.name, host = excluded.host, ssh_user = excluded.ssh_user,

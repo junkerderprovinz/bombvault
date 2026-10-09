@@ -129,7 +129,8 @@ func (s *Service) CreateZFSReplicaServer(srv store.ZFSReplicaServer) (ZFSReplica
 }
 
 // PatchZFSReplicaServer applies an edit. A server reached at another address
-// is another machine, so the host key pinned for it goes.
+// is another machine, so the host key pinned for it goes. A move to another
+// place is refused while one of its items replicates or restores.
 func (s *Service) PatchZFSReplicaServer(id string, p ZFSReplicaServerPatch) (ZFSReplicaServerView, error) {
 	srv, ok, err := s.store.GetZFSReplicaServer(id)
 	if err != nil {
@@ -156,15 +157,24 @@ func (s *Service) PatchZFSReplicaServer(id string, p ZFSReplicaServerPatch) (ZFS
 	if err := zfsReplicaServerRefusalErr(srv); err != nil {
 		return ZFSReplicaServerView{}, err
 	}
+	users, err := s.store.ZFSReplicaServerUsers()
+	if err != nil {
+		return ZFSReplicaServerView{}, err
+	}
+	// Moved elsewhere, the items there forget where they stood, which a run
+	// still writing it must not undo.
+	if store.ZFSReplicaServerMoved(was, srv) {
+		unlock, ok := s.lockZFSReplicas(users[id])
+		if !ok {
+			return ZFSReplicaServerView{}, errZFSReplicaBusy
+		}
+		defer unlock()
+	}
 	if err := s.store.UpdateZFSReplicaServer(srv); err != nil {
 		return ZFSReplicaServerView{}, err
 	}
 	if srv.Host != was.Host || srv.Port != was.Port {
 		s.removeZFSReplicaKnownHosts(id)
-	}
-	users, err := s.store.ZFSReplicaServerUsers()
-	if err != nil {
-		return ZFSReplicaServerView{}, err
 	}
 	return s.zfsReplicaServerView(srv, users[id]), nil
 }

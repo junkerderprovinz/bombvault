@@ -997,3 +997,36 @@ func TestASuccessToAnEarlierTargetIsNoCurrentReplica(t *testing.T) {
 		t.Error("a success to the new target does not count")
 	}
 }
+
+func TestAServerMovedElsewhereStartsItsItemsFromScratch(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"name":"renamed"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, ok, _ := r.st.GetZFSReplicaState(r.item.ID, "cache/appdata"); !ok {
+		t.Fatal("a new name made the item forget where it stands")
+	}
+
+	unlock, _ := r.s.lockZFSReplica(r.item.ID)
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"root":"tank/elsewhere"}`); m["ok"] != false {
+		t.Errorf("a move while the item replicates = %v, want it refused", m)
+	}
+	unlock()
+	if srv, _, _ := r.st.GetZFSReplicaServer(r.srv.ID); srv.Root != r.srv.Root {
+		t.Fatalf("a refused move changed the root to %s", srv.Root)
+	}
+
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"root":"tank/elsewhere"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if states, _ := r.st.ListZFSReplicaStates(r.item.ID); len(states) != 0 {
+		t.Errorf("states after the move = %+v, want none", states)
+	}
+	r.server.owners["tank/elsewhere/bottich"] = "someone-else"
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); zfsReplicaCode(err) != "target-owned" {
+		t.Errorf("run into another instance's folder = %v, want target-owned", err)
+	}
+}

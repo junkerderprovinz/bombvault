@@ -64,6 +64,26 @@ func (s *Service) lockZFSReplica(id string) (func(), bool) {
 	}, true
 }
 
+// lockZFSReplicas takes the replica locks of every item in ids, or none of
+// them when a run or a restore holds one.
+func (s *Service) lockZFSReplicas(ids []string) (func(), bool) {
+	var unlocks []func()
+	release := func() {
+		for _, unlock := range unlocks {
+			unlock()
+		}
+	}
+	for _, id := range ids {
+		unlock, ok := s.lockZFSReplica(id)
+		if !ok {
+			release()
+			return nil, false
+		}
+		unlocks = append(unlocks, unlock)
+	}
+	return release, true
+}
+
 func (s *Service) zfsReplicaRunning(id string) bool {
 	s.replica.mu.Lock()
 	defer s.replica.mu.Unlock()
