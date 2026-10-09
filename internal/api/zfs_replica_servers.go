@@ -159,7 +159,7 @@ func (s *Service) PatchZFSReplicaServer(id string, p ZFSReplicaServerPatch) (ZFS
 	if err := s.store.UpdateZFSReplicaServer(srv); err != nil {
 		return ZFSReplicaServerView{}, err
 	}
-	if srv.Host != was.Host || srv.Port != was.Port || srv.User != was.User {
+	if srv.Host != was.Host || srv.Port != was.Port {
 		s.removeZFSReplicaKnownHosts(id)
 	}
 	users, err := s.store.ZFSReplicaServerUsers()

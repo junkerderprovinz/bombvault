@@ -8,7 +8,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -913,5 +915,28 @@ func TestAPeerThatDoesNotAnswerStillTakesTheReplicaEdit(t *testing.T) {
 	d, _ := r.st.GetZFSDataset(r.item.ID)
 	if d.Replica.TargetKind != store.ZFSReplicaTargetPeer || d.Replica.AfterBackup || d.Replica.Cadence != "daily 03:00" {
 		t.Errorf("replica = %+v", d.Replica)
+	}
+}
+
+func TestAServerForgetsItsHostKeyOnlyWhenItsAddressChanges(t *testing.T) {
+	r := newReplicaRig(t)
+	pin := r.s.zfsReplicaKnownHosts(r.srv.ID)
+	if err := os.MkdirAll(filepath.Dir(pin), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(pin, []byte("backup.lan ssh-ed25519 AAAA\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"user":"replica"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, err := os.Stat(pin); err != nil {
+		t.Errorf("a new user on the same host dropped the pinned key: %v", err)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"host":"other.lan"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, err := os.Stat(pin); !os.IsNotExist(err) {
+		t.Errorf("another host kept the pinned key: %v", err)
 	}
 }
