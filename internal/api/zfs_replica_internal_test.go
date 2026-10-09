@@ -940,3 +940,30 @@ func TestAServerForgetsItsHostKeyOnlyWhenItsAddressChanges(t *testing.T) {
 		t.Errorf("another host kept the pinned key: %v", err)
 	}
 }
+
+func TestAServerIDNeverReachesTheReplicaKey(t *testing.T) {
+	r := newReplicaRig(t)
+	srv, err := r.st.CreateZFSReplicaServer(store.ZFSReplicaServer{
+		ID: "id_ed25519", Name: "odd", Host: "odd.lan", User: "root", Port: 22, Pool: "tank", Root: "tank/r", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := filepath.Join(r.s.zfsReplicaKeyDir(), "id_ed25519")
+	if err := os.MkdirAll(r.s.zfsReplicaKeyDir(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(key, []byte("private"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	host := "new.lan"
+	if _, err := r.s.PatchZFSReplicaServer(srv.ID, ZFSReplicaServerPatch{Host: &host}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.s.DeleteZFSReplicaServer(context.Background(), srv.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(key); err != nil {
+		t.Errorf("forgetting the host key of server %s took the replica key: %v", srv.ID, err)
+	}
+}

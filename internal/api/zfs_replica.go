@@ -85,12 +85,14 @@ func (s *Service) knownZFSReplicaPool(serverID string) zfs.Pool {
 	return s.replica.pools[serverID]
 }
 
-// zfsReplicaKeyDir holds the one key this instance offers every ZFS server,
-// and below it one known_hosts per server.
+// zfsReplicaKeyDir holds the one key this instance offers every ZFS server.
 func (s *Service) zfsReplicaKeyDir() string { return filepath.Join(s.cfg.DataDir, "ssh-replica") }
 
+// zfsReplicaKnownHosts is the host key pinned for one server. It lives in a
+// directory of its own below hosts, so whatever a server id says it cannot
+// name the key files and forgetting the pin cannot remove them.
 func (s *Service) zfsReplicaKnownHosts(serverID string) string {
-	return filepath.Join(s.zfsReplicaKeyDir(), serverID, "known_hosts")
+	return filepath.Join(s.zfsReplicaKeyDir(), "hosts", serverID, "known_hosts")
 }
 
 // ZFSReplicaPublicKey returns the line a ZFS server has to put into
