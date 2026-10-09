@@ -57,8 +57,14 @@ func newReceiveRig(t *testing.T) *receiveRig {
 		side.in.svc.SetHostSSH(side.pool)
 	}
 	switchReceiver(t, r.dst, true)
-	r.srv = httptest.NewServer(r.dst.router)
+	r.srv = httptest.NewUnstartedServer(r.dst.router)
+	r.srv.StartTLS()
 	t.Cleanup(r.srv.Close)
+	// The receiving instance hands out the pin of the key it serves.
+	served := servedCertificate.Load()
+	servedCertificate.Store(&r.srv.TLS.Certificates[0])
+	t.Cleanup(func() { servedCertificate.Store(served) })
+	r.dst.svc.cfg.HTTPOnly = false
 	if err := r.dst.st.SetGroupDirectURL(r.srv.URL, true); err != nil {
 		t.Fatal(err)
 	}
@@ -340,6 +346,18 @@ func TestASourceNamesARefusalAndASilentReceiver(t *testing.T) {
 		if m.Code != "peer-unreachable" {
 			t.Fatalf("%s with the receiver gone failed with %q, want peer-unreachable", m.Dataset, m.Code)
 		}
+	}
+}
+
+func TestASourceSendsNothingToAReceiverOnPlainHTTP(t *testing.T) {
+	r := newReceiveRig(t)
+	r.allowed(t, [5]int{0, 7, 3, 0, 0})
+	plain := "http://" + strings.TrimPrefix(r.srv.URL, "https://")
+	if err := r.dst.st.SetGroupDirectURL(plain, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-insecure" {
+		t.Fatalf("an End for a receiver at %s = %v, want peer-insecure", plain, err)
 	}
 }
 

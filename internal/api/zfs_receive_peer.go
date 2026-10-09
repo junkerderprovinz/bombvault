@@ -112,6 +112,9 @@ func (s *Service) zfsReplicaPeerEnd(ctx context.Context, item store.ZFSDataset) 
 	if err != nil || u.Hostname() == "" {
 		return nil, &zfsrepl.Refusal{Code: "peer-unreachable", Detail: "the receiving instance did not say where it answers"}
 	}
+	if u.Scheme != "https" {
+		return nil, &zfsrepl.Refusal{Code: "peer-insecure", Detail: "the receiving instance answers at " + peer.URL + ", where the slot token and the data would travel unencrypted"}
+	}
 	token, err := secret.Decrypt(s.cfg.AppKey, peer.TokenEnc)
 	if err != nil {
 		return nil, errors.New("the stored slot token could not be opened")

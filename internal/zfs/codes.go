@@ -78,6 +78,7 @@ var AllCodes = []string{
 	"peer-refused",
 	"peer-revoked",
 	"peer-unreachable",
+	"peer-insecure",
 	"receive-off",
 	"stream-cut",
 	"interrupted",
