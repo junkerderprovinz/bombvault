@@ -7,11 +7,12 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
-// Clean removes what replicating left on the source tree under root but one
-// bookmark per dataset, the newest, from which a later run can continue the
-// copy kept on the target. Datasets the item excludes are cleaned too, since
-// it may have excluded less earlier, but none of their snapshots was sent, so
-// they keep only a bookmark they already have. It tries every point and
+// Clean removes what replicating left on the source tree under root but the
+// bookmarks a later run can continue the copy kept on the target from: the
+// newest bookmark of each dataset, and one for every replica snapshot taken
+// after it. Datasets the item excludes are cleaned too, since it may have
+// excluded less earlier, but none of their snapshots was sent, so they keep
+// only the newest bookmark they already have. It tries every point and
 // reports what failed.
 func Clean(ctx context.Context, source End, root string, excludes []string) error {
 	tree, err := listTree(ctx, source, root)
@@ -20,6 +21,9 @@ func Clean(ctx context.Context, source End, root string, excludes []string) erro
 	}
 	var errs []error
 	for _, d := range tree {
+		if restoreLanding(d.Name, root) {
+			continue
+		}
 		if err := cleanDataset(ctx, source, d.Name, !excluded(d.Name, excludes)); err != nil {
 			errs = append(errs, err)
 		}
@@ -32,28 +36,40 @@ func cleanDataset(ctx context.Context, source End, dataset string, sent bool) er
 	if err != nil {
 		return err
 	}
-	var replica, bases []zfs.ReplicaPoint
+	var replica []zfs.ReplicaPoint
+	var mark zfs.ReplicaPoint
+	marked := false
 	for _, p := range pts {
 		if !zfs.IsReplicaSnapshot(p.Name) {
 			continue
 		}
 		replica = append(replica, p)
-		if sent || p.Bookmark {
-			bases = append(bases, p)
+		if p.Bookmark && (!marked || p.CreateTxg > mark.CreateTxg) {
+			mark, marked = p, true
 		}
 	}
-	newest, keep := newestPoint(bases)
-	// The newest state may still be a snapshot alone, when the run that took
-	// it stopped before its bookmark.
-	if keep && !newest.Bookmark {
-		if err := bookmarkOn(ctx, source, dataset, newest.Name); err != nil {
-			return err
+	keep := map[string]bool{}
+	if marked {
+		keep[mark.Name] = true
+	}
+	// A run bookmarks a snapshot only once the target holds it, so the newest
+	// bookmark is a base the target shares. A snapshot after it may have
+	// arrived there or never left, and as a bookmark it costs nothing.
+	if sent {
+		for _, p := range replica {
+			if p.Bookmark || (marked && p.CreateTxg <= mark.CreateTxg) {
+				continue
+			}
+			if err := bookmarkOn(ctx, source, dataset, p.Name); err != nil {
+				return err
+			}
+			keep[p.Name] = true
 		}
 	}
 	var errs []error
 	for _, p := range replica {
 		if p.Bookmark {
-			if keep && p.Name == newest.Name {
+			if keep[p.Name] {
 				continue
 			}
 			if err := destroyBookmark(ctx, source, dataset, p.Name); err != nil {
@@ -74,19 +90,6 @@ func cleanDataset(ctx context.Context, source End, dataset string, sent bool) er
 		}
 	}
 	return errors.Join(errs...)
-}
-
-// newestPoint is the replica point with the highest createtxg, the bookmark
-// where a snapshot and its bookmark share one.
-func newestPoint(pts []zfs.ReplicaPoint) (zfs.ReplicaPoint, bool) {
-	var last zfs.ReplicaPoint
-	found := false
-	for _, p := range pts {
-		if !found || p.CreateTxg > last.CreateTxg || (p.CreateTxg == last.CreateTxg && p.Bookmark) {
-			last, found = p, true
-		}
-	}
-	return last, found
 }
 
 func bookmarkOn(ctx context.Context, end End, dataset, snap string) error {

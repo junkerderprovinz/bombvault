@@ -1,11 +1,11 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"unicode"
 
-	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -134,10 +134,10 @@ func zfsReplicaItemRefusal(target zfsReplicaTargetExport, cadence string, keep s
 			return "a keep count is negative"
 		}
 	}
-	if cadence != "" {
-		if _, err := schedule.ParseCadence(cadence); err != nil {
-			return "invalid cadence: " + scrubError(err)
-		}
+	// The scheduler gives an item no entry of its own for everyN, so such a
+	// replica would never run.
+	if err := zfsValidateCadence(cadence); err != nil {
+		return "cadence: " + scrubError(err)
 	}
 	return ""
 }
@@ -211,5 +211,52 @@ func (h *Handler) applyImportedZFSReplica(exp settingsExport) error {
 			AfterBackup: it.AfterBackup, Cadence: it.Cadence, Keep: it.Keep,
 		}
 	}
-	return h.store.ImportZFSReplica(in)
+	return h.svc.importZFSReplica(in)
+}
+
+// importZFSReplica writes an imported replica block the way the forms would:
+// every item it gives another target, or whose server it drops or moves, has
+// its replica lock taken first, and leaving a target cleans the item's tree.
+func (s *Service) importZFSReplica(in store.ZFSReplicaImport) error {
+	items, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return err
+	}
+	servers, err := s.store.ListZFSReplicaServers()
+	if err != nil {
+		return err
+	}
+	incoming := make(map[string]store.ZFSReplicaServer, len(in.Servers))
+	for _, srv := range in.Servers {
+		incoming[srv.ID] = srv
+	}
+	elsewhere := map[string]bool{}
+	for _, srv := range servers {
+		next, kept := incoming[srv.ID]
+		elsewhere[srv.ID] = !kept || store.ZFSReplicaServerMoved(srv, next)
+	}
+	var touched []string
+	var leaving []store.ZFSDataset
+	for _, d := range items {
+		cur := d.Replica
+		next, inFile := in.Items[d.Dataset]
+		retarget := inFile && (next.TargetKind != cur.TargetKind || next.TargetID != cur.TargetID)
+		onServer := cur.TargetKind == store.ZFSReplicaTargetServer
+		_, kept := incoming[cur.TargetID]
+		if retarget || (onServer && elsewhere[cur.TargetID]) {
+			touched = append(touched, d.ID)
+		}
+		if cur.TargetKind != store.ZFSReplicaTargetNone && (retarget || (onServer && !kept)) {
+			leaving = append(leaving, d)
+		}
+	}
+	unlock, ok := s.lockZFSReplicas(touched)
+	if !ok {
+		return errZFSReplicaBusy
+	}
+	defer unlock()
+	for _, d := range leaving {
+		s.cleanZFSReplicaSource(context.Background(), d)
+	}
+	return s.store.ImportZFSReplica(in)
 }

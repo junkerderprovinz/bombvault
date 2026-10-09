@@ -8,7 +8,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -16,6 +18,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -806,5 +809,318 @@ func TestARunStoppedByAShutdownEndsWithItsReasonCode(t *testing.T) {
 	}
 	if _, members := r.replicaMembers(); members["cache/appdata/plex"]["code"] != "interrupted" {
 		t.Errorf("the member the shutdown cut off = %v", members["cache/appdata/plex"])
+	}
+}
+
+func TestARestoreThatFailsPartwayNamesWhatLanded(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.tree = []string{replica, replica + "/plex", replica + "/vault"}
+	var root string
+	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
+		root = zfsrepl.RestoreName(rs.Dataset, rs.Now())
+		got := zfsrepl.Restored{Root: root, Members: []zfsrepl.RestoredMember{{Dataset: root}, {Dataset: root + "/plex"}}}
+		return got, &zfs.CmdError{Code: "ssh-unreachable", Stderr: "client_loop: send disconnect: Broken pipe"}
+	}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"`+replicaSnap+`"}`)
+	if m["ok"] != true {
+		t.Fatalf("restore = %v", m)
+	}
+	r.s.replica.work.Wait()
+	runs, _ := r.st.RecentRunsOfKind(r.item.ID, "restore", 1)
+	if len(runs) != 1 || runs[0].Status != "failed" || zfsRunCode(runs[0].Error) != "ssh-unreachable" ||
+		!strings.Contains(runs[0].Error, root+", "+root+"/plex") {
+		t.Errorf("restore run = %+v, want a failure naming what landed", runs)
+	}
+}
+
+func TestAPanickingReplicaFailsOnlyItsOwnRunAndEndsItsBar(t *testing.T) {
+	r := newReplicaRig(t)
+	r.s.progress = progress.NewStore()
+	r.result = func(zfsrepl.Entry) (zfsrepl.Result, error) { panic("boom") }
+	backupID, err := r.st.StartRun(r.item.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := r.s.StartZFSReplica(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.work.Wait()
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err == nil {
+		t.Error("a scheduled replica that panicked succeeded")
+	}
+	r.s.replicateAfterZFSBackup(context.Background(), r.item)
+	r.s.replica.work.Wait()
+
+	runs, _ := r.st.RecentRunsOfKind(r.item.ID, store.ZFSReplicaRunKind, 10)
+	if len(runs) != 3 {
+		t.Fatalf("%d replica runs, want 3", len(runs))
+	}
+	for _, run := range runs {
+		if run.Status != "failed" {
+			t.Errorf("replica run = %s %q, want failed", run.Status, run.Error)
+		}
+	}
+	if backup, _ := r.st.GetRun(backupID); backup.Status != "running" {
+		t.Errorf("the backup running beside it = %+v, want it untouched", backup)
+	}
+	for _, e := range r.s.progress.Snapshot() {
+		if e.Key == zfsReplicaProgressKey(r.item.ID) && e.Active {
+			t.Errorf("the replica bar is still active: %+v", e)
+		}
+	}
+}
+
+func TestAPanickingBringBackFailsOnlyItsOwnRun(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.tree = []string{replica}
+	r.s.replica.bringBack = func(context.Context, zfsrepl.End, zfsrepl.End, zfsrepl.Restore) (zfsrepl.Restored, error) {
+		panic("boom")
+	}
+	backupID, err := r.st.StartRun(r.item.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ack, err := r.s.StartZFSReplicaRestore(context.Background(), r.item.ID, replicaSnap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.work.Wait()
+	if run, _ := r.st.GetRun(ack.RunID); run.Status != "failed" {
+		t.Errorf("restore run = %s %q, want failed", run.Status, run.Error)
+	}
+	if backup, _ := r.st.GetRun(backupID); backup.Status != "running" {
+		t.Errorf("the backup running beside it = %+v, want it untouched", backup)
+	}
+}
+
+func TestAPeerThatDoesNotAnswerStillTakesTheReplicaEdit(t *testing.T) {
+	r := newReplicaRig(t)
+	r.host.tree = []string{"cache/appdata"}
+	_, m, _ := r.call(http.MethodPatch, "/api/zfs/datasets/"+r.item.ID+"/replica",
+		`{"target":{"kind":"peer","id":"peer-offline"},"afterBackup":false,"cadence":"daily 03:00"}`)
+	if m["ok"] != true {
+		t.Fatalf("patch = %v, want the stored edit answered as one", m)
+	}
+	d, _ := r.st.GetZFSDataset(r.item.ID)
+	if d.Replica.TargetKind != store.ZFSReplicaTargetPeer || d.Replica.AfterBackup || d.Replica.Cadence != "daily 03:00" {
+		t.Errorf("replica = %+v", d.Replica)
+	}
+}
+
+func TestAServerForgetsItsHostKeyOnlyWhenItsAddressChanges(t *testing.T) {
+	r := newReplicaRig(t)
+	pin := r.s.zfsReplicaKnownHosts(r.srv.ID)
+	if err := os.MkdirAll(filepath.Dir(pin), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(pin, []byte("backup.lan ssh-ed25519 AAAA\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"user":"replica"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, err := os.Stat(pin); err != nil {
+		t.Errorf("a new user on the same host dropped the pinned key: %v", err)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"host":"other.lan"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, err := os.Stat(pin); !os.IsNotExist(err) {
+		t.Errorf("another host kept the pinned key: %v", err)
+	}
+}
+
+func TestAServerIDNeverReachesTheReplicaKey(t *testing.T) {
+	r := newReplicaRig(t)
+	srv, err := r.st.CreateZFSReplicaServer(store.ZFSReplicaServer{
+		ID: "id_ed25519", Name: "odd", Host: "odd.lan", User: "root", Port: 22, Pool: "tank", Root: "tank/r", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := filepath.Join(r.s.zfsReplicaKeyDir(), "id_ed25519")
+	if err := os.MkdirAll(r.s.zfsReplicaKeyDir(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(key, []byte("private"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	host := "new.lan"
+	if _, err := r.s.PatchZFSReplicaServer(srv.ID, ZFSReplicaServerPatch{Host: &host}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.s.DeleteZFSReplicaServer(context.Background(), srv.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(key); err != nil {
+		t.Errorf("forgetting the host key of server %s took the replica key: %v", srv.ID, err)
+	}
+}
+
+func TestASuccessToAnEarlierTargetIsNoCurrentReplica(t *testing.T) {
+	r := newReplicaRig(t)
+	settings, _ := r.st.GetSettings()
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	other, err := r.st.CreateZFSReplicaServer(store.ZFSReplicaServer{
+		Name: "second", Host: "two.lan", User: "root", Port: 22, Pool: "pool", Root: "pool/r", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.s.PatchZFSReplica(context.Background(), r.item.ID, ZFSReplicaPatch{
+		Target: &zfsReplicaTargetExport{Kind: store.ZFSReplicaTargetServer, ID: other.ID},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	d, _ := r.st.GetZFSDataset(r.item.ID)
+	now := time.Now().Unix()
+	if lastOK, current := r.s.zfsReplicaCurrency(now, d, settings); current || lastOK != 0 {
+		t.Errorf("currency = %d, %v, want nothing on a target that holds nothing yet", lastOK, current)
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, current := r.s.zfsReplicaCurrency(now, d, settings); !current {
+		t.Error("a success to the new target does not count")
+	}
+}
+
+func TestAServerMovedElsewhereStartsItsItemsFromScratch(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"name":"renamed"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, ok, _ := r.st.GetZFSReplicaState(r.item.ID, "cache/appdata"); !ok {
+		t.Fatal("a new name made the item forget where it stands")
+	}
+
+	unlock, _ := r.s.lockZFSReplica(r.item.ID)
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"root":"tank/elsewhere"}`); m["ok"] != false {
+		t.Errorf("a move while the item replicates = %v, want it refused", m)
+	}
+	unlock()
+	if srv, _, _ := r.st.GetZFSReplicaServer(r.srv.ID); srv.Root != r.srv.Root {
+		t.Fatalf("a refused move changed the root to %s", srv.Root)
+	}
+
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"root":"tank/elsewhere"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if states, _ := r.st.ListZFSReplicaStates(r.item.ID); len(states) != 0 {
+		t.Errorf("states after the move = %+v, want none", states)
+	}
+	r.server.owners["tank/elsewhere/bottich"] = "someone-else"
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); zfsReplicaCode(err) != "target-owned" {
+		t.Errorf("run into another instance's folder = %v, want target-owned", err)
+	}
+}
+
+func TestDetachingAServerWaitsForEveryItemOrTouchesNone(t *testing.T) {
+	r := newReplicaRig(t)
+	r.host.tree = []string{"cache/appdata"}
+	r.host.points["cache/appdata"] = "cache/appdata@" + replicaSnap + "\t7\t10\n"
+	second := zfsSeedItem(t, r.st, "cache/system")
+	if err := r.st.SetZFSReplicaTarget(second.ID, store.ZFSReplicaTargetServer, r.srv.ID); err != nil {
+		t.Fatal(err)
+	}
+	unlock, _ := r.s.lockZFSReplica(second.ID)
+	err := r.s.DeleteZFSReplicaServer(context.Background(), r.srv.ID, true)
+	unlock()
+	if !errors.Is(err, errZFSReplicaBusy) {
+		t.Fatalf("detach while an item replicates = %v, want busy", err)
+	}
+	if calls := r.host.did("destroy"); calls != nil {
+		t.Errorf("a refused detach cleaned an item: %q", calls)
+	}
+	if r.s.zfsReplicaRunning(r.item.ID) {
+		t.Error("a refused detach kept a lock")
+	}
+
+	if err := r.s.DeleteZFSReplicaServer(context.Background(), r.srv.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{r.item.ID, second.ID} {
+		if d, _ := r.st.GetZFSDataset(id); d.Replica.TargetKind != store.ZFSReplicaTargetNone {
+			t.Errorf("%s still replicates to %+v", d.Dataset, d.Replica)
+		}
+		if r.s.zfsReplicaRunning(id) {
+			t.Errorf("the detach kept the lock of %s", id)
+		}
+	}
+}
+
+func TestAWaitingReplicaSaysWhatItWaitsFor(t *testing.T) {
+	r := newReplicaRig(t)
+	r.srv.Enabled = false
+	if err := r.st.UpdateZFSReplicaServer(r.srv); err != nil {
+		t.Fatal(err)
+	}
+	if _, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", ""); v["state"] != "waiting" || v["code"] != "server-disabled" {
+		t.Errorf("view = %v %v, want waiting for server-disabled", v["state"], v["code"])
+	}
+	settings, _ := r.st.GetSettings()
+	settings.ZFSEnabled = false
+	if err := r.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", ""); v["state"] != "waiting" || v["code"] != "domain-off" {
+		t.Errorf("view = %v %v, want waiting for domain-off", v["state"], v["code"])
+	}
+}
+
+func TestAReplicaIsDoneOnceItsBarEnds(t *testing.T) {
+	r := newReplicaRig(t)
+	r.s.progress = progress.NewStore()
+	events, stop := r.s.progress.Subscribe()
+	defer stop()
+	if _, err := r.s.StartZFSReplica(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	for e := range events {
+		if e.Key != zfsReplicaProgressKey(r.item.ID) || e.Active {
+			continue
+		}
+		if r.s.zfsReplicaRunning(r.item.ID) {
+			t.Error("the item still runs after its bar ended")
+		}
+		if run := r.lastRun(); run.Status != "success" {
+			t.Errorf("run after the bar ended = %s, want success", run.Status)
+		}
+		break
+	}
+	r.s.replica.work.Wait()
+}
+
+func TestTheServerListSaysWhichFolderThisInstanceLandsIn(t *testing.T) {
+	r := newReplicaRig(t)
+	folder := func() any {
+		_, _, list := r.call(http.MethodGet, "/api/zfs/replica/servers", "")
+		srv, _ := list[0].(map[string]any)
+		return srv["folder"]
+	}
+	if got := folder(); got != "bottich" {
+		t.Errorf("folder before any run = %v, want the instance name", got)
+	}
+	if err := r.st.FixZFSReplicaFolder(r.item.ID, "first-name"); err != nil {
+		t.Fatal(err)
+	}
+	if got := folder(); got != "first-name" {
+		t.Errorf("folder = %v, want the one the item fixed", got)
 	}
 }

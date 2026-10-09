@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -59,12 +58,11 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 	go func() {
 		defer s.replica.work.Done()
 		defer unlock()
-		defer s.recoverOperation("zfs replica restore: "+d.Dataset, nil, func(msg string) { s.failStuckRun(id, msg) })
+		defer s.recoverOperation("zfs replica restore: "+d.Dataset, nil, nil)
 		rctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 		defer cancel()
 		key := zfsReplicaRestoreKey(id)
 		s.registerCancel(key, cancel)
-		defer s.unregisterCancel(key)
 
 		_, startedAt := s.progBegin(rctx, key, zfsReplicaPhase)
 		warn, err := s.restoreZFSReplica(rctx, from, to, zfsrepl.Restore{
@@ -74,18 +72,28 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 			Now:      func() time.Time { return at },
 			Progress: s.zfsReplicaRestoreProgress(key, startedAt),
 		})
-		s.progEnd(key, zfsReplicaPhase, err == nil, startedAt)
+		s.unregisterCancel(key)
 		switch {
 		case err != nil:
 			log.Printf("api: zfs replica restore: %s@%s failed: %v", replica, snapshot, err)
-			s.finishRestoreRun(ack.RunID, "", errors.New(zfsRefusalSentence("replica restore", d.Dataset, &backup.ZFSRefusal{
-				Code: zfsReplicaCode(err), Detail: zfsDetail(zfsReplicaDetail(err)),
-			})))
+			detail := zfsDetail(zfsReplicaDetail(err))
+			if warn != "" {
+				detail += "; " + warn
+			}
+			// The dataset names are the message, and the run error scrubber
+			// would turn each of them into [path].
+			s.finishRestoreRun(ack.RunID, "", &backup.ZFSRefusal{Detail: zfsRefusalSentence("replica restore", d.Dataset, &backup.ZFSRefusal{
+				Code: zfsReplicaCode(err), Detail: detail,
+			})})
 		case warn != "":
 			s.finishRestoreRunWarn(ack.RunID, snapshot, warn)
 		default:
 			s.finishRestoreRun(ack.RunID, snapshot, nil)
 		}
+		// As with a run, the item is free and its row closed before the bar
+		// ends.
+		unlock()
+		s.progEnd(key, zfsReplicaPhase, err == nil, startedAt)
 	}()
 	return ack, nil
 }
@@ -134,11 +142,20 @@ func (s *Service) prepareZFSReplicaRestore(ctx context.Context, d store.ZFSDatas
 // first. A member that arrived encrypted stays unmounted until someone loads
 // its key, a member left out had no such snapshot, and a mount that fails
 // leaves the data where it is, so all three come back as a warning on a run
-// that worked.
-func (s *Service) restoreZFSReplica(ctx context.Context, from, to zfsrepl.End, r zfsrepl.Restore) (string, error) {
+// that worked. A bring back that fails partway names in the warning what
+// landed before, which stays there unmounted.
+func (s *Service) restoreZFSReplica(ctx context.Context, from, to zfsrepl.End, r zfsrepl.Restore) (warn string, err error) {
+	defer s.recoverOperation("zfs replica restore: "+r.Dataset, &err, nil)
 	got, err := s.zfsReplicaBringBack()(ctx, from, to, r)
 	if err != nil {
-		return "", err
+		if len(got.Members) == 0 {
+			return "", err
+		}
+		landed := make([]string, 0, len(got.Members))
+		for _, m := range got.Members {
+			landed = append(landed, m.Dataset)
+		}
+		return "what had landed stays unmounted: " + strings.Join(landed, ", "), err
 	}
 	var locked, failed []string
 	for _, m := range got.Members {
@@ -157,20 +174,20 @@ func (s *Service) restoreZFSReplica(ctx context.Context, from, to zfsrepl.End, r
 			}
 		}
 	}
-	var warn []string
+	var notes []string
 	if len(locked) > 0 {
-		warn = append(warn, "stays unmounted until its encryption key is loaded: "+strings.Join(locked, ", "))
+		notes = append(notes, "stays unmounted until its encryption key is loaded: "+strings.Join(locked, ", "))
 	}
 	if len(failed) > 0 {
-		warn = append(warn, "could not be mounted: "+strings.Join(failed, ", "))
+		notes = append(notes, "could not be mounted: "+strings.Join(failed, ", "))
 	}
 	if len(got.Skipped) > 0 {
-		warn = append(warn, "has no snapshot "+r.Snapshot+" and was left out: "+strings.Join(got.Skipped, ", "))
+		notes = append(notes, "has no snapshot "+r.Snapshot+" and was left out: "+strings.Join(got.Skipped, ", "))
 	}
-	if len(warn) == 0 {
+	if len(notes) == 0 {
 		return "", nil
 	}
-	return "restored to " + got.Root + "; " + strings.Join(warn, "; "), nil
+	return "restored to " + got.Root + "; " + strings.Join(notes, "; "), nil
 }
 
 func (s *Service) zfsReplicaRestoreProgress(key string, startedAt int64) func(done, total int64) {

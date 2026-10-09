@@ -45,7 +45,8 @@ type zfsReplicaRuntime struct {
 }
 
 // lockZFSReplica takes the item's replica lock, or reports that a run or a
-// restore holds it.
+// restore holds it. The release may be called again, which does nothing, so
+// a run can let go before its last step and still defer it.
 func (s *Service) lockZFSReplica(id string) (func(), bool) {
 	rt := &s.replica
 	rt.mu.Lock()
@@ -57,11 +58,34 @@ func (s *Service) lockZFSReplica(id string) (func(), bool) {
 		rt.running = map[string]bool{}
 	}
 	rt.running[id] = true
+	var once sync.Once
 	return func() {
-		rt.mu.Lock()
-		delete(rt.running, id)
-		rt.mu.Unlock()
+		once.Do(func() {
+			rt.mu.Lock()
+			delete(rt.running, id)
+			rt.mu.Unlock()
+		})
 	}, true
+}
+
+// lockZFSReplicas takes the replica locks of every item in ids, or none of
+// them when a run or a restore holds one.
+func (s *Service) lockZFSReplicas(ids []string) (func(), bool) {
+	var unlocks []func()
+	release := func() {
+		for _, unlock := range unlocks {
+			unlock()
+		}
+	}
+	for _, id := range ids {
+		unlock, ok := s.lockZFSReplica(id)
+		if !ok {
+			release()
+			return nil, false
+		}
+		unlocks = append(unlocks, unlock)
+	}
+	return release, true
 }
 
 func (s *Service) zfsReplicaRunning(id string) bool {
@@ -85,12 +109,14 @@ func (s *Service) knownZFSReplicaPool(serverID string) zfs.Pool {
 	return s.replica.pools[serverID]
 }
 
-// zfsReplicaKeyDir holds the one key this instance offers every ZFS server,
-// and below it one known_hosts per server.
+// zfsReplicaKeyDir holds the one key this instance offers every ZFS server.
 func (s *Service) zfsReplicaKeyDir() string { return filepath.Join(s.cfg.DataDir, "ssh-replica") }
 
+// zfsReplicaKnownHosts is the host key pinned for one server. It lives in a
+// directory of its own below hosts, so whatever a server id says it cannot
+// name the key files and forgetting the pin cannot remove them.
 func (s *Service) zfsReplicaKnownHosts(serverID string) string {
-	return filepath.Join(s.zfsReplicaKeyDir(), serverID, "known_hosts")
+	return filepath.Join(s.zfsReplicaKeyDir(), "hosts", serverID, "known_hosts")
 }
 
 // ZFSReplicaPublicKey returns the line a ZFS server has to put into

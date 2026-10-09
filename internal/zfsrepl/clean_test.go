@@ -5,6 +5,9 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 func replicaNames(names []string) []string {
@@ -49,16 +52,43 @@ func TestCleanLeavesOnlyTheNewestBookmarkAndKeepsTheTarget(t *testing.T) {
 	}
 }
 
-func TestCleanBookmarksANewestSnapshotThatHasNone(t *testing.T) {
+func TestCleanKeepsTheNewestBookmarkAndBookmarksTheSnapshotsAfterIt(t *testing.T) {
 	r := newRig(t)
-	r.ok(r.run())
+	first := r.run()
+	r.ok(first)
 	r.src.snapshot("cache/appdata", "bombvault-replica-20261020030000")
 
 	if err := Clean(context.Background(), r.src, "cache/appdata", nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := r.src.markNames("cache/appdata"); !slices.Equal(got, []string{"bombvault-replica-20261020030000"}) {
-		t.Errorf("bookmarks = %q, want the newest state kept as one", got)
+	if got := r.src.markNames("cache/appdata"); !slices.Equal(got, []string{first.Snapshot, "bombvault-replica-20261020030000"}) {
+		t.Errorf("bookmarks = %q, want the one the target holds and the newer state", got)
+	}
+}
+
+func TestAfterACleanAnUnsentSnapshotDoesNotCostTheCommonBase(t *testing.T) {
+	r := newRig(t)
+	first := r.run()
+	r.ok(first)
+	// BombVault stopped right after the recursive snapshot of the next run.
+	args, err := zfs.ReplicaSnapshotArgs("cache/appdata", zfs.ReplicaSnapshotName(r.now))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.src.Run(context.Background(), args); err != nil {
+		t.Fatal(err)
+	}
+	r.now = r.now.Add(24 * time.Hour)
+	if err := Clean(context.Background(), r.src, "cache/appdata", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	res := r.run()
+	r.ok(res)
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if m := member(t, res, ds); m.Base != first.Snapshot || !m.FromBookmark {
+			t.Errorf("%s = %+v, want an increment from the bookmark the target shares", ds, m)
+		}
 	}
 }
 

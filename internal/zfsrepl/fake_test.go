@@ -40,6 +40,9 @@ type fakeHost struct {
 	// killReceive makes a receive into a dataset die after that many payload
 	// bytes, keeping the partial state a killed zfs receive -s leaves.
 	killReceive map[string]int
+	// unreachable makes every command fail the way ssh does when the host
+	// does not answer.
+	unreachable bool
 }
 
 // fakeWorld hands out guids that are unique across both hosts, as they are in
@@ -182,6 +185,9 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 	h.record(args)
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if h.unreachable {
+		return "", fail(args, 255, "ssh: connect to host backup.lan port 22: Connection refused")
+	}
 	last := args[len(args)-1]
 	switch args[1] {
 	case "list":
@@ -469,7 +475,20 @@ func (h *fakeHost) estimate(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("full\t%s@%s\t%d\nsize\t%d\n", hd.Dataset, hd.Snap, hd.Size-hd.Offset, hd.Size-hd.Offset), nil
+	var b strings.Builder
+	if index(args, "-t") >= 0 {
+		b.WriteString("resume token contents:\nnvlist version: 0\n")
+		if hd.FromGUID != 0 {
+			fmt.Fprintf(&b, "\tfromguid = 0x%x\n", hd.FromGUID)
+		}
+		fmt.Fprintf(&b, "\tobject = 0x2\n\toffset = 0x%x\n\tbytes = 0x%x\n\ttoguid = 0x%x\n\ttoname = %s@%s\n\tembedok = 1\n\tcompressok = 1\n",
+			hd.Offset, hd.Offset, hd.GUID, hd.Dataset, hd.Snap)
+		if hd.Raw {
+			b.WriteString("\trawok = 1\n")
+		}
+	}
+	fmt.Fprintf(&b, "full\t%s@%s\t%d\nsize\t%d\n", hd.Dataset, hd.Snap, hd.Size-hd.Offset, hd.Size-hd.Offset)
+	return b.String(), nil
 }
 
 func (h *fakeHost) Send(ctx context.Context, args []string) (io.ReadCloser, func() error, error) {
