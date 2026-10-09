@@ -61,6 +61,9 @@ type ZFSDataset struct {
 	LeftoverCount     int
 	LeftoverCheckedAt int64
 	CreatedAt         int64
+	// Replica is how the item replicates to a second ZFS host. Its setters
+	// own it.
+	Replica ZFSReplica
 }
 
 // ZFSMember is one dataset of an item's tree as the last preflight or run found
@@ -116,10 +119,12 @@ type ZFSSafetySnapshot struct {
 const zfsDatasetColumns = `id, dataset, enabled, excludes, excluded_children, schedule_cadence, repo,
 	stop_containers, restart_pending, hook_container, pre_snapshot, post_snapshot,
 	last_check_code, last_check_detail, last_check_at, last_host_mountpoint,
-	leftover_count, leftover_checked_at, created_at`
+	leftover_count, leftover_checked_at, created_at,
+	replica_target_kind, replica_target_id, replica_after_backup, replica_cadence, replica_keep`
 
 // CreateZFSDataset inserts a new item. An empty ID is assigned via newID(); a
-// dataset that is already an item fails (dataset is UNIQUE).
+// dataset that is already an item fails (dataset is UNIQUE). A new item does
+// not replicate, whatever d.Replica says.
 func (r *Repo) CreateZFSDataset(d ZFSDataset) (ZFSDataset, error) {
 	if d.ID == "" {
 		d.ID = newID()
@@ -127,6 +132,7 @@ func (r *Repo) CreateZFSDataset(d ZFSDataset) (ZFSDataset, error) {
 	if d.CreatedAt == 0 {
 		d.CreatedAt = time.Now().Unix()
 	}
+	d.Replica = DefaultZFSReplica()
 	excludes, err := marshalList(d.Excludes)
 	if err != nil {
 		return ZFSDataset{}, fmt.Errorf("CreateZFSDataset marshal excludes: %w", err)
@@ -356,6 +362,12 @@ func (r *Repo) DeleteZFSDataset(id string) error {
 		return err
 	}
 	if err := del("safety snapshots", `DELETE FROM zfs_safety_snapshots WHERE item_id = ?`, id); err != nil {
+		return err
+	}
+	if err := deleteZFSReplicaRows(tx, id); err != nil {
+		return fmt.Errorf("DeleteZFSDataset replica: %w", err)
+	}
+	if err := del("replica grants", `DELETE FROM zfs_replica_grants WHERE item_id = ?`, id); err != nil {
 		return err
 	}
 	if err := del("runs", `DELETE FROM runs WHERE target_id = ?`, id); err != nil {
@@ -905,15 +917,20 @@ func knownZFSMembers(tx *sql.Tx, itemID string) (map[string]ZFSMember, error) {
 
 func scanZFSDataset(s scanner) (ZFSDataset, error) {
 	var d ZFSDataset
-	var excludes, children, stop, pending string
-	var enabled int
+	var excludes, children, stop, pending, keep string
+	var enabled, afterBackup int
 	err := s.Scan(&d.ID, &d.Dataset, &enabled, &excludes, &children, &d.ScheduleCadence, &d.Repo,
 		&stop, &pending, &d.HookContainer, &d.PreSnapshot, &d.PostSnapshot,
 		&d.LastCheckCode, &d.LastCheckDetail, &d.LastCheckAt, &d.LastHostMountpoint,
-		&d.LeftoverCount, &d.LeftoverCheckedAt, &d.CreatedAt)
+		&d.LeftoverCount, &d.LeftoverCheckedAt, &d.CreatedAt,
+		&d.Replica.TargetKind, &d.Replica.TargetID, &afterBackup, &d.Replica.Cadence, &keep)
 	if err != nil {
 		return ZFSDataset{}, fmt.Errorf("scanZFSDataset: %w", err)
 	}
+	if err := json.Unmarshal([]byte(keep), &d.Replica.Keep); err != nil {
+		return ZFSDataset{}, fmt.Errorf("scanZFSDataset unmarshal replica_keep: %w", err)
+	}
+	d.Replica.AfterBackup = afterBackup != 0
 	for _, list := range []struct {
 		column string
 		raw    string

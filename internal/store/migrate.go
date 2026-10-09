@@ -2697,6 +2697,109 @@ CREATE INDEX IF NOT EXISTS offsite_targets_destination ON offsite_targets(destin
   created_at   INTEGER NOT NULL DEFAULT 0
 );`,
 	},
+	{
+		// The ZFS hosts that items replicate to with zfs send and receive.
+		// key_dir holds the connection's own key and known_hosts and belongs to
+		// this instance, so the settings export leaves it out.
+		version: zfsReplicaMigration,
+		name:    "zfs_replica_servers",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_servers (
+  id         TEXT    PRIMARY KEY,
+  name       TEXT    NOT NULL DEFAULT '',
+  host       TEXT    NOT NULL DEFAULT '',
+  ssh_user   TEXT    NOT NULL DEFAULT 'root',
+  port       INTEGER NOT NULL DEFAULT 22,
+  pool       TEXT    NOT NULL DEFAULT '',
+  root       TEXT    NOT NULL DEFAULT '',
+  enabled    INTEGER NOT NULL DEFAULT 1,
+  key_dir    TEXT    NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
+		// How each ZFS item replicates. The keep default is DefaultZFSReplicaKeep.
+		version:          zfsReplicaMigration + 1,
+		name:             "zfs_datasets_replica",
+		alreadySatisfied: columnPresent("zfs_datasets", "replica_target_kind"),
+		sql: `ALTER TABLE zfs_datasets ADD COLUMN replica_target_kind  TEXT    NOT NULL DEFAULT 'none';
+ALTER TABLE zfs_datasets ADD COLUMN replica_target_id    TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_after_backup INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE zfs_datasets ADD COLUMN replica_cadence      TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_keep         TEXT    NOT NULL DEFAULT '{"preset":"own","own":[0,7,3,0,0]}';`,
+	},
+	{
+		// Where each member of a replicated item stands on its target. item_id
+		// is a ZFS item when this instance sends and a pull source when it
+		// fetches. A ZFS guid is an unsigned 64-bit number, more than an
+		// INTEGER column holds, so the guids are text.
+		version: zfsReplicaMigration + 2,
+		name:    "zfs_replica_state",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_state (
+  item_id        TEXT    NOT NULL,
+  dataset        TEXT    NOT NULL,
+  target_path    TEXT    NOT NULL DEFAULT '',
+  volume         INTEGER NOT NULL DEFAULT 0,
+  source_base    TEXT    NOT NULL DEFAULT '',
+  source_guid    TEXT    NOT NULL DEFAULT '',
+  target_base    TEXT    NOT NULL DEFAULT '',
+  target_guid    TEXT    NOT NULL DEFAULT '',
+  created_parent INTEGER NOT NULL DEFAULT 0,
+  updated_at     INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (item_id, dataset)
+);`,
+	},
+	{
+		// One row per member per replica run, next to the runs row of kind
+		// replica.
+		version: zfsReplicaMigration + 3,
+		name:    "zfs_replica_runs",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_runs (
+  run_id      TEXT    NOT NULL,
+  item_id     TEXT    NOT NULL,
+  dataset     TEXT    NOT NULL,
+  base        TEXT    NOT NULL DEFAULT '',
+  snapshot    TEXT    NOT NULL DEFAULT '',
+  bytes       INTEGER NOT NULL DEFAULT 0,
+  seconds     INTEGER NOT NULL DEFAULT 0,
+  resumed     INTEGER NOT NULL DEFAULT 0,
+  code        TEXT    NOT NULL DEFAULT '',
+  finished_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (run_id, dataset)
+);
+CREATE INDEX IF NOT EXISTS idx_zfs_replica_runs_item ON zfs_replica_runs(item_id);`,
+	},
+	{
+		// The pull requests other instances sent for this instance's ZFS items
+		// and how they were answered. key_line is written into authorized_keys
+		// on an allow and taken out again on a revoke.
+		version: zfsReplicaMigration + 4,
+		name:    "zfs_replica_grants",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_grants (
+  item_id     TEXT    NOT NULL,
+  peer_id     TEXT    NOT NULL,
+  fingerprint TEXT    NOT NULL DEFAULT '',
+  key_line    TEXT    NOT NULL DEFAULT '',
+  roots       TEXT    NOT NULL DEFAULT '[]',
+  state       TEXT    NOT NULL DEFAULT 'asked',
+  asked_at    INTEGER NOT NULL DEFAULT 0,
+  decided_at  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (item_id, peer_id)
+);`,
+	},
+	{
+		// A pull source fetches restic snapshots or a ZFS replica of the
+		// source's items. The zfs_ columns and grant_state mean nothing to a
+		// restic one.
+		version:          zfsReplicaMigration + 5,
+		name:             "pull_sources_zfs",
+		alreadySatisfied: columnPresent("pull_sources", "kind"),
+		sql: `ALTER TABLE pull_sources ADD COLUMN kind         TEXT NOT NULL DEFAULT 'restic';
+ALTER TABLE pull_sources ADD COLUMN zfs_datasets TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE pull_sources ADD COLUMN zfs_pool     TEXT NOT NULL DEFAULT '';
+ALTER TABLE pull_sources ADD COLUMN zfs_root     TEXT NOT NULL DEFAULT '';
+ALTER TABLE pull_sources ADD COLUMN zfs_keep     TEXT NOT NULL DEFAULT '{"preset":"own","own":[0,7,3,0,0]}';
+ALTER TABLE pull_sources ADD COLUMN grant_state  TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2789,6 +2892,9 @@ const destinationMigration = 280
 // receiverServerMigration numbers the rest-server a receiving instance sets
 // up for its group, 290 to 299.
 const receiverServerMigration = 290
+
+// zfsReplicaMigration numbers the ZFS replica, 300 to 309.
+const zfsReplicaMigration = 300
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
