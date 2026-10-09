@@ -5215,6 +5215,11 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     automation. Every route but the OpenAPI description demands an API token
 //     inside serveAPIV1, with or without a login password. The token routes
 //     under /api/tokens stay session-protected.)
+//   - the receive slot routes under /api/zfs/receive/<slot>/  (another
+//     instance streams a ZFS replica through them. Each one demands the
+//     slot's bearer token and refuses anything outside the slot; the
+//     requests a person answers under /api/zfs/receive/requests stay
+//     session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -5282,7 +5287,7 @@ func authGatePublicPath(path string) bool {
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
 		return true
 	}
-	return strings.HasPrefix(path, apiV1Prefix)
+	return strings.HasPrefix(path, apiV1Prefix) || zfsReceiveSlotPath(path)
 }
 
 // ---------------------------------------------------------------------------

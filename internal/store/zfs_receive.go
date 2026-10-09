@@ -56,8 +56,7 @@ type ZFSReceiveSlot struct {
 	State     string
 	AskedAt   int64
 	DecidedAt int64
-	// LastReceived is when a stream last landed, and Bytes how many arrived
-	// over the slot's life.
+	// LastReceived is when a stream last landed, and Bytes how large it was.
 	LastReceived int64
 	Bytes        int64
 }
@@ -82,7 +81,9 @@ const zfsReceiveSlotCols = `id, peer_id, peer_name, item_id, dataset, source_ser
 // the slot as it now stands. A request for the members the slot already
 // holds, or for fewer, keeps the answer it has, so a refusal stands and an
 // allowed slot narrows; more members wait for a person again. A revoked slot
-// stays revoked unless renew says a person on the source asked anew.
+// stays revoked unless renew says a person on the source asked anew. Until a
+// person first answers, the keep follows the proposal; after that the keep
+// is this side's.
 func (r *Repo) AskZFSReceive(ask ZFSReceiveSlot, renew bool) (ZFSReceiveSlot, error) {
 	var out ZFSReceiveSlot
 	err := r.inTx(func(tx *sql.Tx) error {
@@ -106,7 +107,9 @@ func (r *Repo) AskZFSReceive(ask ZFSReceiveSlot, renew bool) (ZFSReceiveSlot, er
 		default:
 			out.Dataset, out.Members, out.ProposedKeep = ask.Dataset, ask.Members, ask.ProposedKeep
 			out.State, out.TokenEnc, out.DecidedAt = ZFSReceiveAsked, nil, 0
-			if prev.State != ZFSReceiveAsked {
+			if prev.State == ZFSReceiveAsked {
+				out.Keep = ask.ProposedKeep
+			} else {
 				out.AskedAt = time.Now().Unix()
 			}
 		}
@@ -218,7 +221,7 @@ func (r *Repo) SetZFSReceiveKeep(id string, keep ZFSReplicaKeep) error {
 
 // RecordZFSReceived notes a stream of n bytes that landed through the slot.
 func (r *Repo) RecordZFSReceived(id string, n int64) error {
-	if _, err := r.db.Exec(`UPDATE zfs_receive_slots SET last_received = ?, bytes = bytes + ? WHERE id = ?`,
+	if _, err := r.db.Exec(`UPDATE zfs_receive_slots SET last_received = ?, bytes = ? WHERE id = ?`,
 		time.Now().Unix(), n, id); err != nil {
 		return fmt.Errorf("RecordZFSReceived: %w", err)
 	}

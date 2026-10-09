@@ -288,13 +288,17 @@ const SourceProperty = "bombvault:source"
 
 var sourceIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]{0,63}$`)
 
+// ValidSourceID reports whether id can stand in SourceProperty: an instance id
+// of the group, which never starts with a dash.
+func ValidSourceID(id string) bool { return sourceIDRe.MatchString(id) }
+
 // CreateOwnedParentArgs makes one level under a source's folder on the
 // receiving host, marked with SourceProperty as that source's.
 func CreateOwnedParentArgs(dataset, source string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {
 		return nil, err
 	}
-	if !sourceIDRe.MatchString(source) {
+	if !ValidSourceID(source) {
 		return nil, fmt.Errorf("zfs: not an instance id: %.40q", source)
 	}
 	return []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off", "-o", SourceProperty + "=" + source, dataset}, nil

@@ -143,7 +143,7 @@ func TestTheSourceFolderStaysWhenTheSourceIsRenamed(t *testing.T) {
 	}
 }
 
-func TestReceiveSlotsCountWhatArrivedAndKeepTheirOwnRule(t *testing.T) {
+func TestReceiveSlotsNoteTheLastStreamAndKeepTheirOwnRule(t *testing.T) {
 	_, r := zfsStore(t)
 	first, err := r.AskZFSReceive(aReceiveAsk("cache/appdata"), false)
 	if err != nil {
@@ -170,8 +170,8 @@ func TestReceiveSlotsCountWhatArrivedAndKeepTheirOwnRule(t *testing.T) {
 		t.Fatalf("ListZFSReceiveSlots = %+v, %v", all, err)
 	}
 	got, _, _ := r.GetZFSReceiveSlot(first.ID)
-	if got.Bytes != 150 || got.LastReceived == 0 || got.Keep.Preset != "long" {
-		t.Fatalf("slot after two receives = %+v", got)
+	if got.Bytes != 50 || got.LastReceived == 0 || got.Keep.Preset != "long" {
+		t.Fatalf("slot after two streams = %+v", got)
 	}
 }
 
@@ -201,5 +201,23 @@ func TestAPeerAnswerStaysUntilTheTargetChanges(t *testing.T) {
 	}
 	if err := r.SetZFSReplicaPeer("nobody", peer); err == nil {
 		t.Fatal("SetZFSReplicaPeer on a missing item succeeded")
+	}
+}
+
+func TestTheKeepFollowsTheProposalUntilAPersonAnswers(t *testing.T) {
+	_, r := zfsStore(t)
+	ask := aReceiveAsk("cache/appdata")
+	s, err := r.AskZFSReceive(ask, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ask.ProposedKeep = store.ZFSReplicaKeep{Preset: "long"}
+	if again, _ := r.AskZFSReceive(ask, false); again.Keep.Preset != "long" || again.ProposedKeep.Preset != "long" {
+		t.Fatalf("an asked slot after a new proposal = %+v, want its keep to follow", again)
+	}
+	allow(t, r, s.ID)
+	ask.ProposedKeep = store.ZFSReplicaKeep{Preset: "short"}
+	if again, _ := r.AskZFSReceive(ask, false); again.Keep != store.DefaultZFSReplicaKeep {
+		t.Fatalf("an allowed slot after a new proposal keeps %+v, want this side's rule", again.Keep)
 	}
 }
