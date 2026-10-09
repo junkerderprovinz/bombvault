@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 예전 상태를 보려면 대상 서버에서 스냅샷을 복제(clone)합니다. 클론은 무언가 바뀌기 전까지 공간을 쓰지 않으며, 복제본은 그대로 유지됩니다.
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 원본이 고장 나면, 대상 서버에서 사본을 쓰기 가능한 일반 데이터세트로 바꿉니다.

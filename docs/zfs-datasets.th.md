@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 หากต้องการดูสถานะเก่า ให้โคลนสแนปช็อตบนปลายทาง โคลนไม่ใช้พื้นที่จนกว่าจะมีอะไรเปลี่ยน และสำเนาจำลองไม่ถูกแตะต้อง:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 หากต้นทางเสีย ให้เปลี่ยนสำเนาบนปลายทางเป็นชุดข้อมูลปกติที่เขียนได้:

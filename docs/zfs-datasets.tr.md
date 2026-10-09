@@ -172,7 +172,7 @@ Kaynakta BombVault yalnızca en son replika anlık görüntüsünü ve gönderdi
 Eski bir duruma bakmak için hedefte bir anlık görüntüyü klonlayın. Bir klon, bir şey değişene kadar yer kaplamaz ve replika olduğu gibi kalır:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Kaynak çökerse kopyayı hedefte normal, yazılabilir bir veri kümesine çevirin:

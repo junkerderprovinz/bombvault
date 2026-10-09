@@ -172,7 +172,7 @@ Abre la pestaña **Copias de seguridad** del elemento y haz clic en la fila de l
 Para ver un estado antiguo, clona una instantánea en el destino. Un clon no ocupa espacio hasta que algo cambia, y la réplica queda intacta:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Si el origen falla, convierte la copia en un conjunto de datos normal y escribible en el destino:

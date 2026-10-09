@@ -172,7 +172,7 @@ Ouvrez l'onglet **Sauvegardes** de l'élément et cliquez sur la ligne du répli
 Pour regarder un ancien état, clonez un instantané sur la cible. Un clone ne prend aucune place tant que rien ne change, et le réplica reste intact :
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Si la source tombe en panne, transformez la copie en jeu de données normal, accessible en écriture, sur la cible :

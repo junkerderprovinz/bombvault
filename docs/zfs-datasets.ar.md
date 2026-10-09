@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 لإلقاء نظرة على حالة قديمة، استنسخ لقطة على الهدف. لا يأخذ الاستنساخ مساحة حتى يتغير شيء، وتبقى النسخة المتماثلة دون مساس:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 إذا تعطل المصدر، حوّل النسخة على الهدف إلى مجموعة بيانات عادية قابلة للكتابة:

@@ -172,7 +172,7 @@ En krypterad datauppsättning skickas rå. Den förblir krypterad på målet, oc
 För att titta på ett gammalt tillstånd klonar du en ögonblicksbild på målet. En klon tar ingen plats förrän något ändras, och repliken förblir orörd:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Om källan går sönder gör du kopian på målet till en vanlig, skrivbar datauppsättning:

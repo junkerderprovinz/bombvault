@@ -172,7 +172,7 @@ Open het tabblad **Back-ups** van het item en klik op de replicarij op de kaart 
 Om een oude stand te bekijken, kloon je een snapshot op het doel. Een kloon neemt geen ruimte in totdat er iets verandert, en de replica blijft onaangeraakt:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Als de bron uitvalt, maak je van de kopie op het doel een gewone, beschrijfbare dataset:

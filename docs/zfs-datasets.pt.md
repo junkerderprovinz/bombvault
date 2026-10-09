@@ -172,7 +172,7 @@ Abra o separador **Backups** do elemento e clique na linha da réplica no cartã
 Para ver um estado antigo, clone um instantâneo no destino. Um clone não ocupa espaço até algo mudar, e a réplica fica intacta:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Se a origem falhar, transforme a cópia num conjunto de dados normal e gravável no destino:

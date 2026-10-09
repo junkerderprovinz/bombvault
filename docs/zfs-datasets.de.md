@@ -172,7 +172,7 @@ Ein verschlüsseltes Dataset wird roh gesendet. Es bleibt auf dem Ziel verschlü
 Um einen älteren Stand anzusehen, klone einen Snapshot auf dem Ziel. Ein Klon braucht keinen Platz, bis sich etwas ändert, und die Replik bleibt unberührt:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Fällt die Quelle aus, machst du die Kopie auf dem Ziel zu einem normalen, beschreibbaren Dataset:

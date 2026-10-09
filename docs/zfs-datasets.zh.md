@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 要查看旧的状态，可在目标上克隆一个快照。克隆在有内容变化之前不占用空间，副本保持不变：
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 如果源端出了故障，可在目标上把拷贝变成普通的、可写的数据集：

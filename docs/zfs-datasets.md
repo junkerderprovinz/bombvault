@@ -172,7 +172,7 @@ Open the item's **Backups** tab and click the replica row in the **Storage locat
 To look at an old state, clone a snapshot on the target. A clone takes no space until something changes, and the replica stays untouched:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 If the source fails, turn the copy into a normal, writable dataset on the target:

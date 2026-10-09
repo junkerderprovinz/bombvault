@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 Чтобы посмотреть старое состояние, клонируйте снимок на целевом сервере. Клон не занимает места, пока что-то не изменится, а реплика остаётся нетронутой:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Если источник вышел из строя, превратите копию на целевом сервере в обычный набор данных с записью:

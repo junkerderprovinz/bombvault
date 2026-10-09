@@ -172,7 +172,7 @@ Avaa kohteen välilehti **Varmuuskopiot** ja napsauta replikariviä kortissa **S
 Vanhaa tilaa voi katsoa kloonaamalla tilannevedoksen kohdepalvelimella. Klooni ei vie tilaa ennen kuin jokin muuttuu, ja replika pysyy koskemattomana:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Jos lähde pettää, muuta kopio tavalliseksi, kirjoitettavaksi tietojoukoksi kohdepalvelimella:

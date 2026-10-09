@@ -172,7 +172,7 @@ Nyisd meg az elem **Biztonsági mentések** lapját, és kattints a replika sor�
 Egy régi állapot megtekintéséhez klónozz egy pillanatképet a célon. A klón addig nem foglal helyet, amíg valami meg nem változik, és a replika érintetlen marad:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Ha a forrás meghibásodik, tedd a másolatot normális, írható adatkészletté a célon:

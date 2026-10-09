@@ -172,7 +172,7 @@ Et krypteret datasæt sendes råt. Det forbliver krypteret på målet, og målet
 For at se en gammel tilstand kloner du et snapshot på målet. En klon fylder intet, før noget ændres, og replikaen forbliver urørt:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Hvis kilden svigter, gør du kopien på målet til et almindeligt datasæt, der kan skrives til:

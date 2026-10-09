@@ -172,7 +172,7 @@ Apri la scheda **Backup** dell'elemento e clicca sulla riga della replica nella 
 Per guardare uno stato vecchio, clona uno snapshot sulla destinazione. Un clone non occupa spazio finché qualcosa non cambia, e la replica resta intatta:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Se la sorgente si guasta, trasforma la copia in un dataset normale e scrivibile sulla destinazione:

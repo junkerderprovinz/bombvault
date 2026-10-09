@@ -172,7 +172,7 @@ Otevřete záložku **Zálohy** položky a klikněte na řádek repliky na kart�
 Chcete-li se podívat na starý stav, naklonujte snímek na cíli. Klon nezabírá místo, dokud se něco nezmění, a replika zůstane nedotčená:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Pokud zdroj selže, změňte kopii na cíli na normální zapisovatelnou datovou sadu:

@@ -172,7 +172,7 @@ Otwórz kartę **Kopie zapasowe** elementu i kliknij wiersz repliki na karcie **
 Aby obejrzeć dawny stan, sklonuj migawkę na celu. Klon nie zajmuje miejsca, dopóki coś się nie zmieni, a replika pozostaje nietknięta:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Jeśli źródło ulegnie awarii, zamień kopię na celu w zwykły zbiór danych z możliwością zapisu:

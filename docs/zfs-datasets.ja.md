@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 古い状態を見るには、送り先でスナップショットをクローンします。クローンは何かが変わるまで容量を使わず、レプリカには手が加わりません。
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 送り元が故障したら、送り先でコピーを通常の書き込み可能なデータセットに変えます。

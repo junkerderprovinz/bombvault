@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 כדי להסתכל על מצב ישן, צור שכפול (clone) של תצלום ביעד. שכפול לא תופס מקום עד שמשהו משתנה, והרפליקה נשארת ללא נגיעה:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 אם המקור נכשל, הפוך את העותק ביעד למערך נתונים רגיל שאפשר לכתוב בו:

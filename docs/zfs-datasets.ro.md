@@ -172,7 +172,7 @@ Deschide fila **Copii de rezervă** a elementului și fă clic pe rândul replic
 Ca să vezi o stare veche, clonează un instantaneu pe țintă. O clonă nu ocupă spațiu până nu se schimbă ceva, iar replica rămâne neatinsă:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Dacă sursa cedează, transformă copia într-un set de date obișnuit, care poate fi scris, pe țintă:

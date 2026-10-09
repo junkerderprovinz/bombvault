@@ -172,7 +172,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 Για να δείτε μια παλιά κατάσταση, κλωνοποιήστε ένα στιγμιότυπο στον προορισμό. Ένας κλώνος δεν καταλαμβάνει χώρο μέχρι να αλλάξει κάτι και η ρεπλίκα μένει ανέγγιχτη:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Αν η πηγή χαλάσει, μετατρέψτε το αντίγραφο στον προορισμό σε κανονικό σύνολο δεδομένων με δυνατότητα εγγραφής:

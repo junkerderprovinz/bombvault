@@ -172,7 +172,7 @@ Mở tab **Bản sao lưu** của mục và nhấp vào dòng bản nhân bản 
 Để xem một trạng thái cũ, hãy clone một ảnh chụp trên đích. Bản clone không tốn dung lượng cho đến khi có gì thay đổi, và bản nhân bản vẫn nguyên vẹn:
 
 ```
-zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
 ```
 
 Nếu nguồn hỏng, hãy biến bản sao trên đích thành một tập dữ liệu bình thường, ghi được:
