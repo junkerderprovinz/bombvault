@@ -262,16 +262,26 @@ func TestRestoreReceiveArgsLandAWritableDataset(t *testing.T) {
 	}
 }
 
-func TestCreateParentArgsNeverMount(t *testing.T) {
-	got, err := CreateParentArgs("tank/bombvault-replica/bottich")
+func TestCreateParentArgsNeverMountAndCarryTheOwner(t *testing.T) {
+	got, err := CreateParentArgs("tank/bombvault-replica/bottich", "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if want := []string{"zfs", "create", "-p", "-u", "-o", "canmount=off", "tank/bombvault-replica/bottich"}; !equalArgs(got, want) {
 		t.Fatalf("CreateParentArgs = %q, want %q", got, want)
 	}
-	if args, err := CreateParentArgs("tank/../x"); err == nil || args != nil {
+	got, err = CreateParentArgs("tank/bombvault-replica/bottich", "4f2a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "create", "-p", "-u", "-o", "canmount=off", "-o", "bombvault:source=4f2a", "tank/bombvault-replica/bottich"}; !equalArgs(got, want) {
+		t.Fatalf("CreateParentArgs with an owner = %q, want %q", got, want)
+	}
+	if args, err := CreateParentArgs("tank/../x", ""); err == nil || args != nil {
 		t.Errorf("CreateParentArgs took a traversal: %q, %v", args, err)
+	}
+	if args, err := CreateParentArgs("tank/x", "a b"); err == nil || args != nil {
+		t.Errorf("CreateParentArgs took the owner %q: %q, %v", "a b", args, err)
 	}
 }
 
@@ -369,7 +379,10 @@ func TestReplicaBuildersEmitDashROnlyOnTheSourceTreeSnapshot(t *testing.T) {
 		must(ReplicaPointsArgs("cache/appdata")),
 		must(DatasetStateArgs("tank/r/cache/appdata")),
 		must(RestoreReceiveArgs("cache/appdata-bombvault-restore-1", false)),
-		must(CreateParentArgs("tank/r/bottich")),
+		must(CreateParentArgs("tank/r/bottich", "4f2a")),
+		must(DestroyReplicaBookmarkArgs("cache/appdata", replicaSnap)),
+		must(SourcePropArgs("tank/r/bottich")),
+		must(SetSourcePropArgs("tank/r/bottich", "4f2a")),
 	}
 	for _, args := range all {
 		for _, a := range args {
@@ -380,8 +393,8 @@ func TestReplicaBuildersEmitDashROnlyOnTheSourceTreeSnapshot(t *testing.T) {
 				t.Errorf("%q carries -r", args)
 			}
 		}
-		if args[1] == "destroy" && !strings.Contains(args[len(args)-1], "@") {
-			t.Errorf("destroy argv without a snapshot: %q", args)
+		if args[1] == "destroy" && !strings.ContainsAny(args[len(args)-1], "@#") {
+			t.Errorf("destroy argv without a snapshot or bookmark: %q", args)
 		}
 	}
 }
@@ -410,5 +423,84 @@ func TestReplicaListingArgs(t *testing.T) {
 		if args, err := DatasetStateArgs(bad); err == nil || args != nil {
 			t.Errorf("DatasetStateArgs took %q: %q, %v", bad, args, err)
 		}
+	}
+}
+
+func TestDestroyReplicaBookmarkArgsOnlyReplicaNames(t *testing.T) {
+	got, err := DestroyReplicaBookmarkArgs("cache/appdata", replicaSnap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "destroy", "cache/appdata#" + replicaSnap}; !equalArgs(got, want) {
+		t.Fatalf("DestroyReplicaBookmarkArgs = %q, want %q", got, want)
+	}
+	for _, snap := range foreignSnaps {
+		if args, err := DestroyReplicaBookmarkArgs("cache/appdata", snap); err == nil || args != nil {
+			t.Errorf("DestroyReplicaBookmarkArgs took %q: %q, %v", snap, args, err)
+		}
+	}
+}
+
+func TestSourcePropReadsOnlyALocalValue(t *testing.T) {
+	got, err := SourcePropArgs("tank/r/bottich")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zfs", "get", "-H", "-p", "-o", "value", "-s", "local", "bombvault:source", "tank/r/bottich"}
+	if !equalArgs(got, want) {
+		t.Fatalf("SourcePropArgs = %q, want %q", got, want)
+	}
+	for out, want := range map[string]string{"": "", "-\n": "", "4f2a\n": "4f2a"} {
+		if got := ParseSourceProp(out); got != want {
+			t.Errorf("ParseSourceProp(%q) = %q, want %q", out, got, want)
+		}
+	}
+
+	got, err = SetSourcePropArgs("tank/r/bottich", "4f2a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "set", "bombvault:source=4f2a", "tank/r/bottich"}; !equalArgs(got, want) {
+		t.Fatalf("SetSourcePropArgs = %q, want %q", got, want)
+	}
+	for _, id := range []string{"", "a b", "a=b", "-x"} {
+		if args, err := SetSourcePropArgs("tank/r/bottich", id); err == nil || args != nil {
+			t.Errorf("SetSourcePropArgs took the id %q: %q, %v", id, args, err)
+		}
+	}
+	if args, err := SetSourcePropArgs("tank/../r", "4f2a"); err == nil || args != nil {
+		t.Errorf("SetSourcePropArgs took a traversal: %q, %v", args, err)
+	}
+}
+
+func TestParsePoolsAddsUsedToFree(t *testing.T) {
+	pools, err := ParsePools("tank\t1000\t3000\nbv95demo\t0\t-\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Pool{{"tank", 4000, 3000}, {"bv95demo", 0, 0}}
+	if len(pools) != len(want) || pools[0] != want[0] || pools[1] != want[1] {
+		t.Fatalf("ParsePools = %+v, want %+v", pools, want)
+	}
+	for _, bad := range []string{"tank\t1000\n", "tank/child\t1\t2\n", "tank\tx\t2\n"} {
+		if _, err := ParsePools(bad); err == nil {
+			t.Errorf("ParsePools took %q", bad)
+		}
+	}
+	if want := []string{"zfs", "list", "-H", "-p", "-d", "0", "-o", "name,used,available"}; !equalArgs(PoolsArgs(), want) {
+		t.Errorf("PoolsArgs = %q, want %q", PoolsArgs(), want)
+	}
+}
+
+func TestMountArgs(t *testing.T) {
+	got, err := MountArgs("cache/appdata-bombvault-restore-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "mount", "cache/appdata-bombvault-restore-1"}; !equalArgs(got, want) {
+		t.Fatalf("MountArgs = %q, want %q", got, want)
+	}
+	if args, err := MountArgs("-a"); err == nil || args != nil {
+		t.Errorf("MountArgs took a flag: %q, %v", args, err)
 	}
 }

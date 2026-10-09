@@ -3,6 +3,7 @@ package zfs
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // replicaListProps are what base resolution compares across the two hosts.
@@ -196,12 +197,20 @@ func appendExcluded(args, props []string) []string {
 
 // CreateParentArgs makes one level of the path a replica lands under. It never
 // mounts and holds no data of its own; -p makes a level that appeared in the
-// meantime a success.
-func CreateParentArgs(dataset string) ([]string, error) {
+// meantime a success. A non-empty owner is set as ReplicaSourceProp in the
+// same step, so no parent exists unmarked.
+func CreateParentArgs(dataset, owner string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {
 		return nil, err
 	}
-	return []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off", dataset}, nil
+	args := []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off"}
+	if owner != "" {
+		if !instanceIDRe.MatchString(owner) {
+			return nil, fmt.Errorf("zfs: %q is not an instance id", owner)
+		}
+		args = append(args, "-o", ReplicaSourceProp+"="+owner)
+	}
+	return append(args, dataset), nil
 }
 
 // AbortReceiveArgs drops the partial state of an interrupted receive whose
@@ -279,4 +288,96 @@ func DatasetStateArgs(dataset string) ([]string, error) {
 		return nil, err
 	}
 	return []string{zfsBinary, "get", "-H", "-p", "-o", "property,value", stateProps, dataset}, nil
+}
+
+// DestroyReplicaBookmarkArgs removes one replica bookmark of a source member,
+// once no snapshot on the target shares its guid, so that it cannot be a
+// base.
+func DestroyReplicaBookmarkArgs(dataset, name string) ([]string, error) {
+	if err := replicaMember(dataset, name); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "destroy", dataset + "#" + name}, nil
+}
+
+// ReplicaSourceProp is the user property BombVault sets on every dataset it
+// creates on a target, holding the id of the instance that created it. A
+// second instance that happens to go by the same name finds the folder taken.
+const ReplicaSourceProp = "bombvault:source"
+
+var instanceIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]*$`)
+
+// SourcePropArgs reads ReplicaSourceProp where it is set on dataset itself.
+// The property is inherited by everything below, which says nothing about who
+// created those, so an inherited value prints nothing.
+func SourcePropArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "get", "-H", "-p", "-o", "value", "-s", "local", ReplicaSourceProp, dataset}, nil
+}
+
+// ParseSourceProp reads the output of SourcePropArgs, "" where the property is
+// not set on the dataset itself.
+func ParseSourceProp(out string) string {
+	v := strings.TrimSpace(out)
+	if v == "-" {
+		return ""
+	}
+	return v
+}
+
+// SetSourcePropArgs marks dataset as created by the instance with the given
+// id.
+func SetSourcePropArgs(dataset, instanceID string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	if !instanceIDRe.MatchString(instanceID) {
+		return nil, fmt.Errorf("zfs: %q is not an instance id", instanceID)
+	}
+	return []string{zfsBinary, "set", ReplicaSourceProp + "=" + instanceID, dataset}, nil
+}
+
+// MountArgs mounts a filesystem where its mountpoint property says.
+func MountArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "mount", dataset}, nil
+}
+
+// Pool is one pool as PoolsArgs reports it. Size is what its top dataset holds
+// plus what is still free there, which is what a replica can fill.
+type Pool struct {
+	Name      string `json:"name"`
+	SizeBytes int64  `json:"sizeBytes"`
+	FreeBytes int64  `json:"freeBytes"`
+}
+
+// PoolsArgs lists the top dataset of every pool on a host.
+func PoolsArgs() []string {
+	return []string{zfsBinary, "list", "-H", "-p", "-d", "0", "-o", "name,used,available"}
+}
+
+// ParsePools reads the listing of PoolsArgs.
+func ParsePools(out string) ([]Pool, error) {
+	lines := splitLines(out)
+	pools := make([]Pool, 0, len(lines))
+	for _, line := range lines {
+		f := strings.Split(line, "\t")
+		if len(f) != 3 || strings.Contains(f[0], "/") {
+			return nil, fmt.Errorf("zfs list of the pools: %q is not a pool line", line)
+		}
+		used, err := parseNum(f[1])
+		if err != nil {
+			return nil, fmt.Errorf("zfs list of the pools: used of %q: %w", f[0], err)
+		}
+		free, err := parseNum(f[2])
+		if err != nil {
+			return nil, fmt.Errorf("zfs list of the pools: available of %q: %w", f[0], err)
+		}
+		pools = append(pools, Pool{Name: f[0], SizeBytes: used + free, FreeBytes: free})
+	}
+	return pools, nil
 }

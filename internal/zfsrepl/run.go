@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -51,9 +52,9 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 			r.destroyNew(cleanup, d.Name)
 		case ctx.Err() != nil:
 			r.destroyNew(cleanup, d.Name)
-			res.Members = append(res.Members, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "not-reached", Err: ctx.Err()})
+			r.finished(&res, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "not-reached", Err: ctx.Err()})
 		default:
-			res.Members = append(res.Members, r.member(ctx, d))
+			r.finished(&res, r.member(ctx, d))
 		}
 	}
 	res.Created = r.created
@@ -69,6 +70,13 @@ type run struct {
 }
 
 func (r *run) target(dataset string) string { return r.e.TargetBase + "/" + dataset }
+
+func (r *run) finished(res *Result, m MemberResult) {
+	res.Members = append(res.Members, m)
+	if r.e.Finished != nil {
+		r.e.Finished(m)
+	}
+}
 
 func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 	m := MemberResult{
@@ -89,6 +97,7 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 	}
 	r.clear(context.WithoutCancel(ctx), m.Dataset, src)
 	m.Pruned = r.prune(ctx, m.Target, tgt)
+	r.pruneBookmarks(context.WithoutCancel(ctx), m.Dataset, src, tgt, m.Pruned)
 	return m
 }
 
@@ -250,7 +259,7 @@ func (r *run) ensureParents(ctx context.Context, dataset string) error {
 		missing = append(missing, d)
 	}
 	for i := len(missing) - 1; i >= 0; i-- {
-		args, err := zfs.CreateParentArgs(missing[i])
+		args, err := zfs.CreateParentArgs(missing[i], r.e.Owner)
 		if err != nil {
 			return err
 		}
@@ -369,6 +378,35 @@ func (r *run) prune(ctx context.Context, target string, snaps []zfs.ReplicaPoint
 		pruned = append(pruned, name)
 	}
 	return pruned
+}
+
+// pruneBookmarks destroys the source's replica bookmarks that no snapshot left
+// on the target shares a guid with, since only such a pair can be the base of
+// an increment. The run's own bookmark is newer than src and always stays.
+func (r *run) pruneBookmarks(ctx context.Context, dataset string, src, tgt []zfs.ReplicaPoint, pruned []string) {
+	kept := make(map[uint64]bool, len(tgt))
+	for _, p := range tgt {
+		if !slices.Contains(pruned, p.Name) {
+			kept[p.GUID] = true
+		}
+	}
+	for _, p := range src {
+		if !p.Bookmark || p.Name == r.snap || !zfs.IsReplicaSnapshot(p.Name) || kept[p.GUID] {
+			continue
+		}
+		if err := destroyBookmark(ctx, r.src, dataset, p.Name); err != nil {
+			log.Printf("zfs replica: removing the bookmark %s#%s failed: %v", dataset, p.Name, err)
+		}
+	}
+}
+
+func destroyBookmark(ctx context.Context, end End, dataset, name string) error {
+	args, err := zfs.DestroyReplicaBookmarkArgs(dataset, name)
+	if err != nil {
+		return err
+	}
+	_, err = end.Run(ctx, args)
+	return ignore(err, zfs.IsNotFound)
 }
 
 // commonBase picks the newest replica point of the source whose guid the

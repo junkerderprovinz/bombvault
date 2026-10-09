@@ -49,6 +49,7 @@ func TestClassify(t *testing.T) {
 		{"held twice", "cannot hold snapshot 'cache/appdata@bombvault-replica-20261009100000': tag already exists on this dataset", exitStatus(1), "exists"},
 		{"bookmarked twice", "cannot create bookmark 'cache/appdata#bombvault-replica-20261009120000': bookmark exists", exitStatus(1), "exists"},
 		{"released twice", "cannot release hold from snapshot 'cache/appdata@bombvault-replica-20261009100000': no such tag on this dataset", exitStatus(1), "not-found"},
+		{"bookmark gone", "bookmark 'cache/appdata#bombvault-replica-20261009100000' does not exist.", exitStatus(1), "not-found"},
 		{"parent of the target missing", "cannot open 'tank/r/bottich/cache': dataset does not exist\ncannot receive new filesystem stream: unable to restore to destination", exitStatus(1), "not-found"},
 		{"no stderr at all", "", errors.New("context deadline exceeded"), "zfs-error"},
 	}

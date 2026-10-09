@@ -69,6 +69,10 @@ var AllCodes = []string{
 	"target-changed",
 	"no-common-base",
 	"encryption-mismatch",
+	"in-use",
+	"target-owned",
+	"replica-off",
+	"server-disabled",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their

@@ -209,6 +209,7 @@ func Classify(stderr string, err error) string {
 	case strings.Contains(low, "dataset is busy"), strings.Contains(low, "pool or dataset is busy"):
 		return codeBusy
 	case strings.Contains(low, "dataset does not exist"),
+		strings.HasPrefix(low, "bookmark '") && strings.HasSuffix(low, "does not exist."),
 		strings.Contains(low, "could not find any snapshots to destroy"),
 		strings.Contains(low, "no such tag on this dataset"):
 		return codeNotFound

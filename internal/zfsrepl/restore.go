@@ -13,6 +13,12 @@ import (
 // every other ZFS restore in BombVault uses.
 const restoreSuffix = "-bombvault-restore-"
 
+// RestoreName is the dataset BringBack lands a snapshot of dataset in when it
+// starts at at.
+func RestoreName(dataset string, at time.Time) string {
+	return fmt.Sprintf("%s%s%d", dataset, restoreSuffix, at.UnixNano())
+}
+
 // Restore is one replica snapshot to bring back to the host it came from.
 type Restore struct {
 	// Replica is the dataset on the host that keeps the replica.
@@ -42,7 +48,7 @@ func BringBack(ctx context.Context, from, to End, r Restore) (string, error) {
 	if !ok || want.Bookmark {
 		return "", &Refusal{Code: "not-found", Detail: r.Replica + "@" + r.Snapshot}
 	}
-	dest := fmt.Sprintf("%s%s%d", r.Dataset, restoreSuffix, r.Now().UnixNano())
+	dest := RestoreName(r.Dataset, r.Now())
 	send := zfs.SendSpec{Member: r.Replica, Snap: r.Snapshot, Raw: st.Encrypted()}
 	sendArgs, err := zfs.SendArgs(send)
 	if err != nil {

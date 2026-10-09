@@ -171,6 +171,31 @@ func TestParentsAreCreatedTopDownAndNeverMount(t *testing.T) {
 	}
 }
 
+func TestEveryCreatedParentCarriesTheOwner(t *testing.T) {
+	r := newRig(t)
+	r.entry.Owner = "4f2a"
+	res := r.run()
+	r.ok(res)
+	for _, ds := range res.Created {
+		if got := r.dst.get(ds).props["bombvault:source"]; got != "4f2a" {
+			t.Errorf("%s is marked %q, want the owner", ds, got)
+		}
+	}
+	if got := r.dst.get(rootTarget).props["bombvault:source"]; got != "" {
+		t.Errorf("the received root is marked %q itself", got)
+	}
+}
+
+func TestFinishedHearsEveryMemberBeforeRunReturns(t *testing.T) {
+	r := newRig(t)
+	var heard []string
+	r.entry.Finished = func(m MemberResult) { heard = append(heard, m.Dataset+":"+m.Code) }
+	r.ok(r.run())
+	if want := []string{"cache/appdata:", "cache/appdata/plex:"}; !slices.Equal(heard, want) {
+		t.Errorf("Finished heard %q, want %q", heard, want)
+	}
+}
+
 func TestAPoolRootReplacesThePlaceholderItsPathHolds(t *testing.T) {
 	r := newRig(t)
 	r.ok(r.run())
@@ -613,5 +638,22 @@ func TestATreeWithANameTooLongForTheReplicaTakesNoSnapshot(t *testing.T) {
 	}
 	if r.src.callsOf("snapshot") != nil {
 		t.Error("the snapshot was taken anyway")
+	}
+}
+
+func TestBookmarksGoOnceTheTargetPrunedTheirSnapshot(t *testing.T) {
+	r := newRig(t)
+	r.entry.Keep = store.RetentionKeep{KeepLast: 2}
+	var runs []Result
+	for range 4 {
+		res := r.run()
+		r.ok(res)
+		runs = append(runs, res)
+	}
+	want := []string{runs[2].Snapshot, runs[3].Snapshot}
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if got := r.src.markNames(ds); !slices.Equal(got, want) {
+			t.Errorf("%s bookmarks = %q, want %q", ds, got, want)
+		}
 	}
 }
