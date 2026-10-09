@@ -14,6 +14,9 @@ let current: ZFSReplica;
 let progress: ProgressMap = {};
 const patches: ZFSReplicaPatch[] = [];
 let runs = 0;
+// What a PATCH answers. The store keeps the change either way, as the server
+// does when only the request to a paired instance fails.
+let patchAnswer: { ok: boolean; code?: string } = { ok: true };
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
@@ -25,7 +28,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     patchZFSReplica: (_id: string, patch: ZFSReplicaPatch) => {
       patches.push(patch);
       current = { ...current, ...patch };
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(patchAnswer);
     },
     runZFSReplica: () => {
       runs += 1;
@@ -53,6 +56,7 @@ beforeEach(() => {
   progress = {};
   patches.length = 0;
   runs = 0;
+  patchAnswer = { ok: true };
   localStorage.clear();
 });
 
@@ -226,6 +230,41 @@ describe("replica card", () => {
     renderCard();
     fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.replicateNow"] }));
     await waitFor(() => expect(runs).toBe(1));
+  });
+
+  it("shows what the server holds after a change it stored but answered with a refusal", async () => {
+    patchAnswer = { ok: false, code: "peer-unreachable" };
+    renderCard();
+    const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
+    fireEvent.click(within(picker).getByRole("radio", { name: "tower-2" }));
+    expect(await screen.findByText(en["zfs.code.peer-unreachable"])).toBeTruthy();
+    await waitFor(() =>
+      expect(within(picker).getByRole("radio", { name: "tower-2" }).getAttribute("aria-checked")).toBe("true"),
+    );
+  });
+
+  it("sends a schedule and a keep rule edited close together in one save", async () => {
+    current = replica({ afterBackup: false, cadence: "daily 03:00" });
+    renderCard();
+    const keep = await screen.findByRole("radiogroup", { name: en["zfs.replica.keepTarget"] });
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByRole("tab", { name: en["cadence.weekly"] }));
+      fireEvent.click(within(keep).getByRole("radio", { name: en["zfs.replica.keep.long"] }));
+      await act(async () => vi.advanceTimersByTime(1000));
+    } finally {
+      vi.useRealTimers();
+    }
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].cadence).toMatch(/^weekly/);
+    expect(patches[0].keep?.preset).toBe("long");
+  });
+
+  it("offers no interval in days for its own plan, which a replica cannot keep", async () => {
+    current = replica({ afterBackup: false, cadence: "daily 03:00" });
+    renderCard();
+    await screen.findByRole("group", { name: en["zfs.replica.plan"] });
+    expect(screen.queryByRole("tab", { name: en["cadence.everyN"] })).toBeNull();
   });
 
   it("hides everything but the picker while there is no target", async () => {
