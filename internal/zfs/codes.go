@@ -73,6 +73,7 @@ var AllCodes = []string{
 	"target-owned",
 	"replica-off",
 	"server-disabled",
+	"domain-off",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their

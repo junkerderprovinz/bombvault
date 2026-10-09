@@ -81,6 +81,7 @@ export const ZFS_CODE_KEY = {
   "target-owned": "zfs.code.target-owned",
   "replica-off": "zfs.code.replica-off",
   "server-disabled": "zfs.code.server-disabled",
+  "domain-off": "zfs.code.domain-off",
 } as const satisfies Record<string, TranslationKey>;
 
 export type ZFSReasonCode = keyof typeof ZFS_CODE_KEY;

@@ -35,7 +35,7 @@ func TestAllCodesAreUniqueKebabCase(t *testing.T) {
 		"safety-snapshot-failed", "safety-name-too-long",
 		"dataset-exists", "create-failed", "new-dataset-not-visible", "set-properties-failed", "set-limits-failed",
 		"resume-token-stale", "target-changed", "no-common-base", "encryption-mismatch",
-		"in-use", "target-owned", "replica-off", "server-disabled",
+		"in-use", "target-owned", "replica-off", "server-disabled", "domain-off",
 	}
 	if len(AllCodes) != len(want) {
 		t.Fatalf("AllCodes has %d entries, want %d", len(AllCodes), len(want))
