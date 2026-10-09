@@ -187,32 +187,32 @@ func TestReceiveArgs(t *testing.T) {
 		{
 			"first filesystem stream",
 			ReceiveSpec{Target: target, Full: true},
-			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 		{
 			"first stream over an empty parent BombVault created",
 			ReceiveSpec{Target: target, Full: true, Replace: true},
-			[]string{"zfs", "receive", "-s", "-u", "-F", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-F", "-o", "readonly=on", "-o", "canmount=noauto", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 		{
 			"first volume stream",
 			ReceiveSpec{Target: target + "/vm", Full: true, Volume: true},
-			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", target + "/vm"},
+			[]string{"zfs", "receive", "-s", "-u", "-o", "readonly=on", "-x", "reservation", "-x", "refreservation", target + "/vm"},
 		},
 		{
 			"incremental",
 			ReceiveSpec{Target: target},
-			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 		{
 			"incremental into a volume",
 			ReceiveSpec{Target: target + "/vm", Volume: true},
-			[]string{"zfs", "receive", "-s", "-u", target + "/vm"},
+			[]string{"zfs", "receive", "-s", "-u", "-x", "reservation", "-x", "refreservation", target + "/vm"},
 		},
 		{
 			"incremental over a changed replica",
 			ReceiveSpec{Target: target, Rollback: true},
-			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", target},
+			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 	}
 	for _, c := range cases {
@@ -262,16 +262,28 @@ func TestRestoreReceiveArgsLandAWritableDataset(t *testing.T) {
 	}
 }
 
-func TestCreateParentArgsNeverMount(t *testing.T) {
-	got, err := CreateParentArgs("tank/bombvault-replica/bottich")
+func TestCreateParentArgsNeverMountAndCarryTheOwner(t *testing.T) {
+	got, err := CreateParentArgs("tank/bombvault-replica/bottich", "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if want := []string{"zfs", "create", "-p", "-u", "-o", "canmount=off", "tank/bombvault-replica/bottich"}; !equalArgs(got, want) {
 		t.Fatalf("CreateParentArgs = %q, want %q", got, want)
 	}
-	if args, err := CreateParentArgs("tank/../x"); err == nil || args != nil {
+	got, err = CreateParentArgs("tank/bombvault-replica/bottich", "4f2a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "create", "-p", "-u", "-o", "canmount=off", "-o", "bombvault:source=4f2a", "tank/bombvault-replica/bottich"}; !equalArgs(got, want) {
+		t.Fatalf("CreateParentArgs with an owner = %q, want %q", got, want)
+	}
+	if args, err := CreateParentArgs("tank/../x", ""); err == nil || args != nil {
 		t.Errorf("CreateParentArgs took a traversal: %q, %v", args, err)
+	}
+	for _, owner := range []string{"a b", "x=y", "-o", "a.b"} {
+		if args, err := CreateParentArgs("tank/x", owner); err == nil || args != nil {
+			t.Errorf("CreateParentArgs took the owner %q: %q, %v", owner, args, err)
+		}
 	}
 }
 
@@ -369,7 +381,9 @@ func TestReplicaBuildersEmitDashROnlyOnTheSourceTreeSnapshot(t *testing.T) {
 		must(ReplicaPointsArgs("cache/appdata")),
 		must(DatasetStateArgs("tank/r/cache/appdata")),
 		must(RestoreReceiveArgs("cache/appdata-bombvault-restore-1", false)),
-		must(CreateParentArgs("tank/r/bottich")),
+		must(CreateParentArgs("tank/r/bottich", "4f2a")),
+		must(DestroyReplicaBookmarkArgs("cache/appdata", replicaSnap)),
+		must(SourcePropertyArgs("tank/r/bottich")),
 	}
 	for _, args := range all {
 		for _, a := range args {
@@ -380,8 +394,8 @@ func TestReplicaBuildersEmitDashROnlyOnTheSourceTreeSnapshot(t *testing.T) {
 				t.Errorf("%q carries -r", args)
 			}
 		}
-		if args[1] == "destroy" && !strings.Contains(args[len(args)-1], "@") {
-			t.Errorf("destroy argv without a snapshot: %q", args)
+		if args[1] == "destroy" && !strings.ContainsAny(args[len(args)-1], "@#") {
+			t.Errorf("destroy argv without a snapshot or bookmark: %q", args)
 		}
 	}
 }
@@ -410,5 +424,71 @@ func TestReplicaListingArgs(t *testing.T) {
 		if args, err := DatasetStateArgs(bad); err == nil || args != nil {
 			t.Errorf("DatasetStateArgs took %q: %q, %v", bad, args, err)
 		}
+	}
+}
+
+func TestDestroyReplicaBookmarkArgsOnlyReplicaNames(t *testing.T) {
+	got, err := DestroyReplicaBookmarkArgs("cache/appdata", replicaSnap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "destroy", "cache/appdata#" + replicaSnap}; !equalArgs(got, want) {
+		t.Fatalf("DestroyReplicaBookmarkArgs = %q, want %q", got, want)
+	}
+	for _, snap := range foreignSnaps {
+		if args, err := DestroyReplicaBookmarkArgs("cache/appdata", snap); err == nil || args != nil {
+			t.Errorf("DestroyReplicaBookmarkArgs took %q: %q, %v", snap, args, err)
+		}
+	}
+}
+
+func TestSourcePropertyReadsOnlyALocalValue(t *testing.T) {
+	got, err := SourcePropertyArgs("tank/r/bottich")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zfs", "get", "-H", "-p", "-s", "local", "-o", "value", "bombvault:source", "tank/r/bottich"}
+	if !equalArgs(got, want) {
+		t.Fatalf("SourcePropertyArgs = %q, want %q", got, want)
+	}
+	for out, want := range map[string]string{"": "", "-\n": "", "4f2a\n": "4f2a"} {
+		if got := ParseSourceProperty(out); got != want {
+			t.Errorf("ParseSourceProperty(%q) = %q, want %q", out, got, want)
+		}
+	}
+	if args, err := SourcePropertyArgs("tank/../r"); err == nil || args != nil {
+		t.Errorf("SourcePropertyArgs took a traversal: %q, %v", args, err)
+	}
+}
+
+func TestParsePoolsAddsUsedToFree(t *testing.T) {
+	pools, err := ParsePools("tank\t1000\t3000\nbv95demo\t0\t-\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Pool{{"tank", 4000, 3000}, {"bv95demo", 0, 0}}
+	if len(pools) != len(want) || pools[0] != want[0] || pools[1] != want[1] {
+		t.Fatalf("ParsePools = %+v, want %+v", pools, want)
+	}
+	for _, bad := range []string{"tank\t1000\n", "tank/child\t1\t2\n", "tank\tx\t2\n"} {
+		if _, err := ParsePools(bad); err == nil {
+			t.Errorf("ParsePools took %q", bad)
+		}
+	}
+	if want := []string{"zfs", "list", "-H", "-p", "-d", "0", "-o", "name,used,available"}; !equalArgs(PoolsArgs(), want) {
+		t.Errorf("PoolsArgs = %q, want %q", PoolsArgs(), want)
+	}
+}
+
+func TestMountArgs(t *testing.T) {
+	got, err := MountArgs("cache/appdata-bombvault-restore-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "mount", "cache/appdata-bombvault-restore-1"}; !equalArgs(got, want) {
+		t.Fatalf("MountArgs = %q, want %q", got, want)
+	}
+	if args, err := MountArgs("-a"); err == nil || args != nil {
+		t.Errorf("MountArgs took a flag: %q, %v", args, err)
 	}
 }

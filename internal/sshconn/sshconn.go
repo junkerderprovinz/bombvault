@@ -28,7 +28,8 @@ type Conn struct {
 
 	// explicitURI replaces the URI VirshURI would build; see VirshURI.
 	explicitURI string
-	isolated    bool // set by NewIsolated
+	isolated    bool   // set by NewIsolated
+	knownHosts  string // set by NewIsolated; empty means dir/known_hosts
 }
 
 // New returns a Conn that keeps its key under dataDir/ssh. An empty port
@@ -41,22 +42,35 @@ func New(host, user, port, dataDir, explicitURI string) *Conn {
 	return &Conn{Host: host, User: user, Port: port, dir: filepath.Join(dataDir, "ssh"), explicitURI: explicitURI}
 }
 
-// NewIsolated returns a Conn to a host other than the libvirt one, keeping its
-// own key and known_hosts in keyDir. It reads no ssh config file, so the
-// identity WriteSSHConfig sets up for every host never reaches it.
-func NewIsolated(host, user, port, keyDir string) *Conn {
+// NewIsolated returns a Conn to a host other than the libvirt one, with its
+// own key in keyDir and the host keys it pinned in the file knownHosts.
+// Several hosts can share one key that way and still pin each host apart. It
+// reads no ssh config file, so the identity WriteSSHConfig sets up for every
+// host never reaches it.
+func NewIsolated(host, user, port, keyDir, knownHosts string) *Conn {
 	if port == "" {
 		port = "22"
 	}
-	return &Conn{Host: host, User: user, Port: port, dir: keyDir, isolated: true}
+	return &Conn{Host: host, User: user, Port: port, dir: keyDir, isolated: true, knownHosts: knownHosts}
 }
 
-func (c *Conn) keyPath() string        { return filepath.Join(c.dir, "id_ed25519") }
-func (c *Conn) knownHostsPath() string { return filepath.Join(c.dir, "known_hosts") }
+func (c *Conn) keyPath() string { return filepath.Join(c.dir, "id_ed25519") }
 
-// EnsureKey generates an ed25519 keypair on first use and reuses it thereafter.
+func (c *Conn) knownHostsPath() string {
+	if c.knownHosts != "" {
+		return c.knownHosts
+	}
+	return filepath.Join(c.dir, "known_hosts")
+}
+
+// EnsureKey generates an ed25519 keypair on first use and reuses it
+// thereafter. It also creates the directory known_hosts goes in, since ssh
+// does not and would then pin nothing.
 func (c *Conn) EnsureKey() error {
 	if err := os.MkdirAll(c.dir, 0o700); err != nil {
+		return fmt.Errorf("sshconn: mkdir: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(c.knownHostsPath()), 0o700); err != nil {
 		return fmt.Errorf("sshconn: mkdir: %w", err)
 	}
 	if _, err := os.Stat(c.keyPath()); err == nil {

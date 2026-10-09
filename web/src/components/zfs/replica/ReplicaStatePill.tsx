@@ -5,7 +5,8 @@ import { Badge } from "../../Badge";
 import { unixOf } from "./replicaModel";
 
 /** ReplicaStatePill says where an item's replica stands, in the words the
- *  card, the server page and the storage row share. */
+ *  card, the server page and the storage row share. A paired instance that
+ *  has not allowed the replica outranks the state of the runs. */
 export function ReplicaStatePill({
   replica,
   running,
@@ -13,10 +14,20 @@ export function ReplicaStatePill({
 }: {
   replica: ZFSReplica;
   running: boolean;
-  /** The pulling instance a waiting replica waits for. */
+  /** The receiving instance of a peer target. */
   peerName: string;
 }) {
   const { t } = useT();
+  if (replica.target.kind === "peer") {
+    switch (replica.peerState) {
+      case "asked":
+        return <Badge tone="neutral">{t("zfs.replica.peer.asked").replace("{peer}", () => peerName)}</Badge>;
+      case "refused":
+        return <Badge tone="warn">{t("zfs.replica.peer.refused").replace("{peer}", () => peerName)}</Badge>;
+      case "revoked":
+        return <Badge tone="warn">{t("zfs.replica.peer.revoked").replace("{peer}", () => peerName)}</Badge>;
+    }
+  }
   if (running) return <Badge tone="active">{t("zfs.replica.state.running")}</Badge>;
   switch (replica.state) {
     case "ok":

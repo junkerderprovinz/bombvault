@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { patchZFSReplica, runZFSReplica } from "../../../lib/api";
-import type { ZFSReplica, ZFSReplicaMember, ZFSReplicaPatch, ZFSReplicaTarget } from "../../../lib/api";
+import type {
+  ZFSReceiveState,
+  ZFSReplica,
+  ZFSReplicaMember,
+  ZFSReplicaPatch,
+  ZFSReplicaTarget,
+} from "../../../lib/api";
 import { humanBytes } from "../../../lib/forecast";
-import { useT } from "../../../lib/i18n";
+import { useT, type TranslationKey } from "../../../lib/i18n";
 import { formatDuration, relativeTime } from "../../../lib/reltime";
 import { useDebouncedSave } from "../../../lib/useDebouncedSave";
 import { useToast } from "../../../lib/toast";
@@ -15,15 +21,21 @@ import { InfoBubble } from "../../InfoBubble";
 import { Selector } from "../../Selector";
 import { IconFleet, IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
-import { ReplicaGrantRows } from "./ReplicaGrantNote";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { ReplicaStatePill } from "./ReplicaStatePill";
-import { isRunning, targetName, unixOf } from "./replicaModel";
+import { isRunning, peerHolds, targetName, unixOf } from "./replicaModel";
 import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
 
 type T = ReturnType<typeof useT>["t"];
 
 const NONE = "none";
+
+const PEER_SENTENCE = {
+  asked: "zfs.replica.peer.askedText",
+  allowed: "zfs.replica.peer.allowedText",
+  refused: "zfs.replica.peer.refusedText",
+  revoked: "zfs.replica.peer.revokedText",
+} as const satisfies Record<ZFSReceiveState, TranslationKey>;
 
 function targetId(target: ZFSReplicaTarget): string {
   return target.kind === "none" ? NONE : `${target.kind}:${target.id}`;
@@ -140,13 +152,21 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     if (!(await save({ target }))) return;
     if (target.kind === "peer") {
       const peer = group?.members.find((m) => m.id === target.id)?.name || target.id;
-      push(t("zfs.replica.peerPicked").replace("{peer}", () => peer), "success");
+      push(t("zfs.replica.peer.requested").replace("{peer}", () => peer), "success");
     } else if (target.kind === "server") {
       const server = servers.find((s) => s.id === target.id)?.name ?? target.id;
       push(
         t("zfs.replica.serverPicked").replace("{name}", () => name).replace("{target}", () => server),
         "success",
       );
+    }
+  }
+
+  // After a revoke the same target goes out as a new request, which the
+  // receiving instance asks about again.
+  async function askAgain() {
+    if (await save({ target: view.target })) {
+      push(t("zfs.replica.peer.requested").replace("{peer}", () => shownName), "success");
     }
   }
 
@@ -212,11 +232,23 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         </div>
       </Row>
 
-      {hasTarget && peer && (
-        <p className="text-xs text-carbon-textSub">{t("zfs.replica.peerFetches").replace("{peer}", () => shownName)}</p>
+      {peer && view.peerState !== "" && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <p className="flex-1 min-w-0 text-xs text-carbon-textSub">
+            {t(PEER_SENTENCE[view.peerState]).replace("{peer}", () => shownName)}
+          </p>
+          {view.peerState === "revoked" && (
+            <Button
+              label={t("zfs.replica.peer.askAgain")}
+              labelKey="zfs.replica.peer.askAgain"
+              tone="neutral"
+              onClick={() => void askAgain()}
+            />
+          )}
+        </div>
       )}
 
-      {hasTarget && !peer && (
+      {hasTarget && (
         <>
           <Row label={t("zfs.replica.when")} hint={t("zfs.replica.whenHint")}>
             <Selector
@@ -242,15 +274,19 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               />
             </Row>
           )}
-          <ReplicaKeepField
-            label={t("zfs.replica.keepTarget")}
-            hint={t("zfs.replica.keepTargetHint")}
-            keep={view.keep}
-            onChange={(keep) => {
-              setDraft((d) => ({ ...d, keep }));
-              debouncedSave(() => void save({ keep }));
-            }}
-          />
+          {/* A paired instance runs its own retention; until it has
+              allowed the replica, the rule here is what it is offered. */}
+          {(!peer || view.peerState !== "allowed") && (
+            <ReplicaKeepField
+              label={peer ? t("zfs.replica.peer.keep").replace("{peer}", () => shownName) : t("zfs.replica.keepTarget")}
+              hint={peer ? t("zfs.replica.peer.keepHint").replace("{peer}", () => shownName) : t("zfs.replica.keepTargetHint")}
+              keep={view.keep}
+              onChange={(keep) => {
+                setDraft((d) => ({ ...d, keep }));
+                debouncedSave(() => void save({ keep }));
+              }}
+            />
+          )}
         </>
       )}
 
@@ -302,9 +338,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         </p>
       )}
 
-      <ReplicaGrantRows itemId={itemId} grants={view.grants} />
-
-      {hasTarget && !peer && (
+      {hasTarget && !peerHolds(view) && (
         <div className="flex justify-end">
           <Button
             label={t("zfs.replica.replicateNow")}

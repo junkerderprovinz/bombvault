@@ -4059,6 +4059,10 @@ export interface ZFSDatasetView {
   safetyOldestAt: number;
   members: ZFSMemberView[];
   effectiveSchedule: EffectiveSchedule;
+  /** The 3-2-1 verdict PlacementObserved gives the other domains, with a
+   *  current replica counted as a copy off the premises. */
+  sites: number;
+  rule321: PlacementObserved["rule321"];
 }
 
 export interface ListZFSDatasetsResponse extends OkEnvelope {
@@ -4467,7 +4471,7 @@ export interface ZFSReplicaTestResult extends OkEnvelope {
 }
 
 /** Where a replica goes: a ZFS server BombVault sends to, or a paired
- *  instance that pulls. */
+ *  instance that receives into a pool of its own. */
 export interface ZFSReplicaTarget {
   kind: "server" | "peer" | "none";
   id: string;
@@ -4502,17 +4506,8 @@ export interface ZFSReplicaMember {
   lastBytes: number;
 }
 
-export type ZFSReplicaGrantState = "asked" | "allowed" | "refused" | "revoked";
-
-/** A paired instance's request to pull this item, and what became of it. */
-export interface ZFSReplicaGrant {
-  /** The asking instance's id in the pairing group. */
-  peer: string;
-  fingerprint: string;
-  state: ZFSReplicaGrantState;
-  askedAt: string;
-  decidedAt: string;
-}
+/** Where a request to receive a replica stands on the receiving instance. */
+export type ZFSReceiveState = "asked" | "allowed" | "refused" | "revoked";
 
 /** One ZFS item's replica. */
 export interface ZFSReplica {
@@ -4528,7 +4523,8 @@ export interface ZFSReplica {
   /** Newest first. */
   snapshots: ZFSReplicaSnapshot[];
   members: ZFSReplicaMember[];
-  grants: ZFSReplicaGrant[];
+  /** What the paired instance answered; empty for any other target. */
+  peerState: ZFSReceiveState | "";
 }
 
 export interface ZFSReplicaPatch {
@@ -4608,27 +4604,71 @@ export function runZFSReplica(id: string): Promise<ZFSCodedEnvelope & { runId?: 
 }
 
 /** POST /api/zfs/datasets/{id}/replica/restore: send a snapshot back into a
- *  new dataset next to the item's root, never over it. */
+ *  new dataset next to the item's root, never over it, reporting on the
+ *  "zfs-replica-restore:<id>" progress key. keyNeeded says the copy arrives
+ *  encrypted and stays unmounted until its key is loaded. */
 export function restoreZFSReplica(
   id: string,
   snapshot: string
-): Promise<ZFSCodedEnvelope & { runId?: string; dataset?: string }> {
+): Promise<ZFSCodedEnvelope & { runId?: string; dataset?: string; keyNeeded?: boolean }> {
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/restore`, {
     method: "POST",
     body: JSON.stringify({ snapshot }),
   });
 }
 
-/** POST /api/zfs/datasets/{id}/replica/grants/{peer}. */
-export function decideZFSReplicaGrant(
-  id: string,
-  peer: string,
-  decision: "allow" | "refuse" | "revoke"
-): Promise<ZFSCodedEnvelope> {
-  return fetchJSON(
-    `/api/zfs/datasets/${encodeURIComponent(id)}/replica/grants/${encodeURIComponent(peer)}`,
-    { method: "POST", body: JSON.stringify({ decision }) }
-  );
+/** A paired instance's request to send a replica here, and the slot it gets
+ *  once allowed. */
+export interface ZFSReceiveRequest {
+  id: string;
+  /** The sending instance's id in the pairing group. */
+  peer: string;
+  peerName: string;
+  /** The folder name below the root, fixed at the first transfer. */
+  sourceServer: string;
+  /** The sending instance's ZFS item, by its root dataset. */
+  item: string;
+  members: string[];
+  proposedKeep: ZFSReplicaKeep;
+  state: ZFSReceiveState;
+  pool: string;
+  root: string;
+  keep: ZFSReplicaKeep;
+  askedAt: string;
+  decidedAt: string;
+  lastReceived: string;
+  bytes: number;
+}
+
+export type ZFSReceiveDecision =
+  | { decision: "allow"; pool: string; root: string; keep: ZFSReplicaKeep }
+  | { decision: "refuse" }
+  | { decision: "revoke" };
+
+/** GET /api/zfs/receive/requests. */
+export function listZFSReceiveRequests(): Promise<ZFSReceiveRequest[]> {
+  return fetchJSON("/api/zfs/receive/requests");
+}
+
+/** POST /api/zfs/receive/requests/{id}. */
+export function decideZFSReceiveRequest(id: string, decision: ZFSReceiveDecision): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/receive/requests/${encodeURIComponent(id)}`, {
+    method: "POST",
+    body: JSON.stringify(decision),
+  });
+}
+
+/** PATCH /api/zfs/receive/requests/{id}: what an allowed slot keeps. */
+export function patchZFSReceiveRequest(id: string, keep: ZFSReplicaKeep): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/receive/requests/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ keep }),
+  });
+}
+
+/** GET /api/zfs/replica/local-pools, the pools of this server. */
+export function listZFSLocalPools(): Promise<ZFSReplicaPool[]> {
+  return fetchJSON("/api/zfs/replica/local-pools");
 }
 
 // ---------------------------------------------------------------------------
@@ -4973,20 +5013,7 @@ export interface PullSourceView {
   memberId: string;
   /** Set up before pairing existed: pair it with its instance again. */
   needsPairing: boolean;
-  /** "zfs" fetches a replica of the member's ZFS items instead of its
-   *  restic snapshots. */
-  kind: PullSourceKind;
-  /** A ZFS source: the member's ZFS items, and the pool and root they land
-   *  under on this server. */
-  datasets?: string[];
-  pool?: string;
-  root?: string;
-  keep?: ZFSReplicaKeep;
-  /** "asked" until the member allows the fetch. */
-  state?: "" | "asked";
 }
-
-export type PullSourceKind = "restic" | "zfs";
 
 /** The create/update request body. Naming a member pairs the source with it;
  *  on PUT an empty memberId keeps the stored password. */
@@ -5001,11 +5028,6 @@ export interface PullSourceInput {
   limitUpload: number;
   enabled: boolean;
   sortOrder: number;
-  kind?: PullSourceKind;
-  datasets?: string[];
-  pool?: string;
-  root?: string;
-  keep?: ZFSReplicaKeep;
 }
 
 /** GET /api/pull/sources - every configured source. */

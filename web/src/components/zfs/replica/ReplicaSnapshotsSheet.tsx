@@ -32,8 +32,9 @@ export function ReplicaSnapshotsSheet({
   targetName: string;
   replica: ZFSReplica;
   onClose: () => void;
-  /** Called with the dataset the restore creates, once it has started. */
-  onRestoring: (dataset: string) => void;
+  /** Called with the dataset the restore creates once it has started, and
+   *  whether it stays unmounted until its key is loaded. */
+  onRestoring: (dataset: string, keyNeeded: boolean) => void;
 }) {
   const { t } = useT();
   const { push } = useToast();
@@ -62,7 +63,7 @@ export function ReplicaSnapshotsSheet({
       }
       const fresh = res.dataset ?? "";
       push(t("zfs.replica.restoring").replace("{fresh}", () => fresh), "success");
-      onRestoring(fresh);
+      onRestoring(fresh, res.keyNeeded === true);
       onClose();
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.restoreFailed"), "fail");

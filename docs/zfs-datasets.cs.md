@@ -149,7 +149,7 @@ Přijímající instance přijme jen to, co schválení pokrývá: datové sady 
 
 Každá datová sada skončí v `<root>/<server>/<pool>/<path>`. Složka serveru je název zdrojové instance, ustálený při prvním přenosu, takže si dva servery se stejným názvem poolu nikdy nepřekážejí. Například `cache/appdata` serveru s názvem `tower` skončí v `backup/bombvault-replica/tower/cache/appdata`.
 
-Kopie na cíli je jen pro čtení a není připojená, takže nikdy nic na tom serveru nepřekryje. Vlastnosti ZFS putují s ní, kromě přípojného bodu, `sharenfs` a `sharesmb`.
+Kopie na cíli je jen pro čtení a není připojená, takže nikdy nic na tom serveru nepřekryje. Vlastnosti ZFS putují s ní, kromě přípojného bodu, `sharenfs` a `sharesmb`. Rezervace `reservation` a `refreservation` také zůstávají, kopie tak zabere jen místo, které potřebují její data.
 
 ### Co se zahrnuje {#replica-contents}
 

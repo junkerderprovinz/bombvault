@@ -92,7 +92,7 @@ func TestIsolatedConnKeepsAKeyOfItsOwn(t *testing.T) {
 	}
 	dataDir := t.TempDir()
 	host := New("192.168.1.10", "root", "1004", dataDir, "")
-	replica := NewIsolated("backup.lan", "root", "22", filepath.Join(dataDir, "ssh-replica", "t1"))
+	replica := NewIsolated("backup.lan", "root", "22", filepath.Join(dataDir, "ssh-replica", "t1"), "")
 	for _, c := range []*Conn{host, replica} {
 		if err := c.EnsureKey(); err != nil {
 			t.Fatalf("EnsureKey: %v", err)

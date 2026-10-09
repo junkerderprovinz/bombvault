@@ -9,7 +9,6 @@ import {
   testZFSReplicaServer,
 } from "../../../lib/api";
 import type { ZFSCodedEnvelope, ZFSReplicaPool, ZFSReplicaServer } from "../../../lib/api";
-import { humanBytes } from "../../../lib/forecast";
 import { useT } from "../../../lib/i18n";
 import { tLtr } from "../../../lib/ltrFragments";
 import { useToast } from "../../../lib/toast";
@@ -23,7 +22,7 @@ import { NumberField } from "../../NumberField";
 import { Selector } from "../../Selector";
 import { TestButton, VerdictLine } from "../../TestButton";
 import { IconZFS } from "../../navGlyphs";
-import { allowLine, examplePath } from "./replicaModel";
+import { allowLine, defaultRoot, examplePath, poolLabel } from "./replicaModel";
 import { useGroup } from "./replicaStore";
 
 const inputCls = "w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
@@ -118,7 +117,7 @@ export function AddReplicaServerDialog({
 
   function pickPool(next: string) {
     setPool(next);
-    setRoot(`${next}/bombvault-replica`);
+    setRoot(defaultRoot(next));
   }
 
   async function save() {
@@ -153,9 +152,7 @@ export function AddReplicaServerDialog({
   const heading = server ? t("zfs.replica.server.edit") : t("zfs.replica.addServer");
   const poolItems = (pools.length > 0 ? pools : pool ? [{ name: pool, sizeBytes: 0, freeBytes: 0 }] : []).map((p) => ({
     id: p.name,
-    label: p.sizeBytes
-      ? t("zfs.replica.add.pool").replace("{pool}", () => p.name).replace("{free}", () => humanBytes(p.freeBytes))
-      : p.name,
+    label: poolLabel(t, p),
     icon: <IconZFS />,
   }));
 

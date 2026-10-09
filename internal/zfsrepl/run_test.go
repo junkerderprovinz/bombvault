@@ -126,7 +126,7 @@ func TestFirstRunSendsEveryMemberInFull(t *testing.T) {
 			t.Errorf("full send of %s = %q", ds, send)
 		}
 		recv := callFor(t, r.dst, "receive", base+"/"+ds)
-		for _, want := range [][]string{{"-s", "-u"}, {"-o", "readonly=on"}, {"-o", "canmount=noauto"}, {"-x", "mountpoint"}, {"-x", "sharenfs"}, {"-x", "sharesmb"}} {
+		for _, want := range [][]string{{"-s", "-u"}, {"-o", "readonly=on"}, {"-o", "canmount=noauto"}, {"-x", "mountpoint"}, {"-x", "sharenfs"}, {"-x", "sharesmb"}, {"-x", "reservation"}, {"-x", "refreservation"}} {
 			if !hasSeq(recv, want...) {
 				t.Errorf("receive into %s lacks %q: %q", ds, want, recv)
 			}
@@ -168,6 +168,31 @@ func TestParentsAreCreatedTopDownAndNeverMount(t *testing.T) {
 	r.ok(r.run())
 	if c := r.dst.callsOf("create"); c != nil {
 		t.Errorf("a second run created parents again: %q", c)
+	}
+}
+
+func TestEveryCreatedParentCarriesTheOwner(t *testing.T) {
+	r := newRig(t)
+	r.entry.Owner = "4f2a"
+	res := r.run()
+	r.ok(res)
+	for _, ds := range res.Created {
+		if got := r.dst.get(ds).props["bombvault:source"]; got != "4f2a" {
+			t.Errorf("%s is marked %q, want the owner", ds, got)
+		}
+	}
+	if got := r.dst.get(rootTarget).props["bombvault:source"]; got != "" {
+		t.Errorf("the received root is marked %q itself", got)
+	}
+}
+
+func TestFinishedHearsEveryMemberBeforeRunReturns(t *testing.T) {
+	r := newRig(t)
+	var heard []string
+	r.entry.Finished = func(m MemberResult) { heard = append(heard, m.Dataset+":"+m.Code) }
+	r.ok(r.run())
+	if want := []string{"cache/appdata:", "cache/appdata/plex:"}; !slices.Equal(heard, want) {
+		t.Errorf("Finished heard %q, want %q", heard, want)
 	}
 }
 
@@ -487,7 +512,7 @@ func TestAnEncryptedMemberTravelsRaw(t *testing.T) {
 	}
 }
 
-func TestAVolumeLandsWithoutFilesystemProperties(t *testing.T) {
+func TestAVolumeLandsWithoutFilesystemPropertiesOrReservations(t *testing.T) {
 	r := newRig(t)
 	r.src.add("cache/appdata/vm", "volume", false)
 	res := r.run()
@@ -496,7 +521,8 @@ func TestAVolumeLandsWithoutFilesystemProperties(t *testing.T) {
 		t.Error("the member is not marked as a volume")
 	}
 	recv := callFor(t, r.dst, "receive", base+"/cache/appdata/vm")
-	if !hasSeq(recv, "-o", "readonly=on") || slices.Contains(recv, "canmount=noauto") || slices.Contains(recv, "-x") {
+	if !hasSeq(recv, "-o", "readonly=on") || slices.Contains(recv, "canmount=noauto") || slices.Contains(recv, "mountpoint") ||
+		!hasSeq(recv, "-x", "reservation", "-x", "refreservation") {
 		t.Errorf("receive of a volume = %q", recv)
 	}
 	if r.dst.get(base+"/cache/appdata/vm").typ != "volume" {
@@ -521,6 +547,27 @@ func TestExcludedChildrenAreNotSentAndKeepNoSnapshot(t *testing.T) {
 		if r.dst.get(base+"/"+ds) != nil {
 			t.Errorf("%s reached the target", ds)
 		}
+	}
+}
+
+func TestARunRemovesWhatAnInterruptedRunLeftOnAnExcludedDataset(t *testing.T) {
+	r := newRig(t)
+	r.src.add("cache/appdata/tmp", "filesystem", false)
+	r.entry.Excluded = []string{"cache/appdata/tmp"}
+	r.ok(r.run())
+
+	// A run that died early left its recursive snapshot everywhere, and
+	// another entry left one of its own on the excluded dataset.
+	stopped := zfs.ReplicaSnapshotName(r.now.Add(-time.Hour))
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex", "cache/appdata/tmp"} {
+		r.src.snapshot(ds, stopped)
+	}
+	foreign := zfs.ReplicaSnapshotName(r.now.Add(-2 * time.Hour))
+	r.src.snapshot("cache/appdata/tmp", foreign)
+
+	r.ok(r.run())
+	if got := r.src.snapNames("cache/appdata/tmp"); !slices.Equal(got, []string{foreign}) {
+		t.Errorf("cache/appdata/tmp keeps %q, want only %q", got, foreign)
 	}
 }
 
@@ -613,5 +660,22 @@ func TestATreeWithANameTooLongForTheReplicaTakesNoSnapshot(t *testing.T) {
 	}
 	if r.src.callsOf("snapshot") != nil {
 		t.Error("the snapshot was taken anyway")
+	}
+}
+
+func TestBookmarksGoOnceTheTargetPrunedTheirSnapshot(t *testing.T) {
+	r := newRig(t)
+	r.entry.Keep = store.RetentionKeep{KeepLast: 2}
+	var runs []Result
+	for range 4 {
+		res := r.run()
+		r.ok(res)
+		runs = append(runs, res)
+	}
+	want := []string{runs[2].Snapshot, runs[3].Snapshot}
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if got := r.src.markNames(ds); !slices.Equal(got, want) {
+			t.Errorf("%s bookmarks = %q, want %q", ds, got, want)
+		}
 	}
 }

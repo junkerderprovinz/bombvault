@@ -4,6 +4,7 @@ import type {
   ZFSReplicaKeep,
   ZFSReplicaKeepCounts,
   ZFSReplicaKeepPreset,
+  ZFSReplicaPool,
   ZFSReplicaServer,
   ZFSReplicaState,
 } from "../../../lib/api";
@@ -68,6 +69,12 @@ export function replicaProgressKey(itemId: string): string {
   return `zfs-replica:${itemId}`;
 }
 
+/** replicaRestoreKey is the progress key a bring back reports on, apart from
+ *  the item's replica runs. */
+export function replicaRestoreKey(itemId: string): string {
+  return `zfs-replica-restore:${itemId}`;
+}
+
 /** targetRoot is the root above a copy's server folder. A copy lives at
  *  <root>/<server>/<source dataset>, so the path minus the dataset and the
  *  server folder is the root. */
@@ -93,8 +100,20 @@ export function allowLine(user: string): string {
 }
 
 /** An example path below a root, for the hint beside the root field. */
-export function examplePath(root: string, serverName: string): string {
-  return `${root}/${serverName}/tank/appdata`;
+export function examplePath(root: string, serverName: string, dataset = "tank/appdata"): string {
+  return `${root}/${serverName}/${dataset}`;
+}
+
+/** The root a pool offers before anyone types one. */
+export function defaultRoot(pool: string): string {
+  return pool ? `${pool}/bombvault-replica` : "";
+}
+
+/** A pool as a picker shows it, with its free space once it is known. */
+export function poolLabel(t: Translate, pool: ZFSReplicaPool): string {
+  return pool.sizeBytes
+    ? t("zfs.replica.add.pool").replace("{pool}", () => pool.name).replace("{free}", () => humanBytes(pool.freeBytes))
+    : pool.name;
 }
 
 /** The name a target goes by on screen: the server's name, or the paired
@@ -113,6 +132,12 @@ export function targetName(
 /** The member a sheet and the clone command speak about: the item's root. */
 export function rootMember(replica: ZFSReplica, dataset: string) {
   return replica.members.find((m) => m.dataset === dataset) ?? replica.members[0];
+}
+
+/** peerHolds is true while a paired instance has not allowed the replica, or
+ *  has taken the permission back, so nothing can be sent there. */
+export function peerHolds(replica: ZFSReplica): boolean {
+  return replica.target.kind === "peer" && replica.peerState !== "allowed";
 }
 
 export function isRunning(state: ZFSReplicaState, progressActive: boolean): boolean {

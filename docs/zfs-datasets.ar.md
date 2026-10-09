@@ -149,7 +149,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 تستقر كل مجموعة بيانات في `<root>/<server>/<pool>/<path>`. مجلد الخادم هو اسم مثيل المصدر، ويُثبت عند النقل الأول، فلا يتعارض خادمان لهما اسم المجمع نفسه أبداً. مثلاً يستقر `cache/appdata` من خادم اسمه `tower` في `backup/bombvault-replica/tower/cache/appdata`.
 
-النسخة على الهدف للقراءة فقط وغير مركّبة، فلا تغطي أي شيء على ذلك الخادم أبداً. تنتقل خصائص ZFS معها، ما عدا نقطة التركيب و`sharenfs` و`sharesmb`.
+النسخة على الهدف للقراءة فقط وغير مركّبة، فلا تغطي أي شيء على ذلك الخادم أبداً. تنتقل خصائص ZFS معها، ما عدا نقطة التركيب و`sharenfs` و`sharesmb`. وتبقى الحجوزات `reservation` و`refreservation` أيضاً، فلا تشغل النسخة إلا المساحة التي تحتاجها بياناتها.
 
 ### ما الذي يدخل {#replica-contents}
 

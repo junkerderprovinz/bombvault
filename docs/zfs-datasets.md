@@ -149,7 +149,7 @@ The receiving instance accepts only what the approval covers: the item's dataset
 
 Each dataset lands at `<root>/<server>/<pool>/<path>`. The server folder is the name of the source instance, fixed at the first transfer, so two servers with the same pool name never get in each other's way. For example, `cache/appdata` of a server called `tower` ends up at `backup/bombvault-replica/tower/cache/appdata`.
 
-The copy on the target is read-only and not mounted, so it never covers anything on that server. ZFS properties travel along, except the mountpoint and `sharenfs` and `sharesmb`.
+The copy on the target is read-only and not mounted, so it never covers anything on that server. ZFS properties travel along, except the mountpoint and `sharenfs` and `sharesmb`. The reservations `reservation` and `refreservation` stay behind as well, so the copy only takes the space its data needs.
 
 ### What goes in {#replica-contents}
 

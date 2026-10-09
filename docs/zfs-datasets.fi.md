@@ -149,7 +149,7 @@ Vastaanottava instanssi hyväksyy vain sen, minkä hyväksyntä kattaa: kohteen 
 
 Jokainen tietojoukko päätyy polkuun `<root>/<server>/<pool>/<path>`. Palvelinkansio on lähdeinstanssin nimi, joka lukitaan ensimmäisessä siirrossa, joten kaksi palvelinta, joilla on sama poolin nimi, eivät koskaan joudu toistensa tielle. Esimerkiksi palvelimen `tower` tietojoukko `cache/appdata` päätyy polkuun `backup/bombvault-replica/tower/cache/appdata`.
 
-Kopio kohdepalvelimella on vain luettavissa eikä liitettynä, joten se ei koskaan peitä mitään kyseisellä palvelimella. ZFS-ominaisuudet siirtyvät mukana, paitsi liitospiste sekä `sharenfs` ja `sharesmb`.
+Kopio kohdepalvelimella on vain luettavissa eikä liitettynä, joten se ei koskaan peitä mitään kyseisellä palvelimella. ZFS-ominaisuudet siirtyvät mukana, paitsi liitospiste sekä `sharenfs` ja `sharesmb`. Myös varaukset `reservation` ja `refreservation` jäävät pois, joten kopio vie vain sen tilan, jonka sen data tarvitsee.
 
 ### Mitä mukaan tulee {#replica-contents}
 

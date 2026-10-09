@@ -149,7 +149,7 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 各データセットは `<root>/<server>/<pool>/<path>` に置かれます。server フォルダーは送り元インスタンスの名前で、最初の転送のときに固定されます。このため、プール名が同じ 2 台のサーバーが互いに干渉することはありません。たとえば、`tower` というサーバーの `cache/appdata` は `backup/bombvault-replica/tower/cache/appdata` に置かれます。
 
-送り先のコピーは読み取り専用で、マウントされないため、そのサーバー上の何かを覆い隠すことはありません。ZFS のプロパティも一緒に送られますが、マウントポイント、`sharenfs`、`sharesmb` は除きます。
+送り先のコピーは読み取り専用で、マウントされないため、そのサーバー上の何かを覆い隠すことはありません。ZFS のプロパティも一緒に送られますが、マウントポイント、`sharenfs`、`sharesmb` は除きます。予約（`reservation` と `refreservation`）も送られないため、コピーはデータに必要な容量だけを使います。
 
 ### 含まれるもの {#replica-contents}
 

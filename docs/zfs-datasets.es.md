@@ -149,7 +149,7 @@ La instancia receptora solo acepta lo que cubre la aprobación: los conjuntos de
 
 Cada conjunto de datos acaba en `<root>/<server>/<pool>/<path>`. La carpeta del servidor es el nombre de la instancia de origen, fijado en la primera transferencia, así que dos servidores con el mismo nombre de pool nunca se estorban. Por ejemplo, `cache/appdata` de un servidor llamado `tower` acaba en `backup/bombvault-replica/tower/cache/appdata`.
 
-La copia en el destino es de solo lectura y no está montada, así que nunca tapa nada de ese servidor. Las propiedades de ZFS viajan con ella, salvo el punto de montaje, `sharenfs` y `sharesmb`.
+La copia en el destino es de solo lectura y no está montada, así que nunca tapa nada de ese servidor. Las propiedades de ZFS viajan con ella, salvo el punto de montaje, `sharenfs` y `sharesmb`. Las reservas `reservation` y `refreservation` tampoco viajan, así que la copia solo ocupa el espacio que necesitan sus datos.
 
 ### Qué se incluye {#replica-contents}
 

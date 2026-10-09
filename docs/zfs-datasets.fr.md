@@ -149,7 +149,7 @@ L'instance qui reçoit n'accepte que ce que l'approbation couvre : les jeux de d
 
 Chaque jeu de données atterrit dans `<root>/<server>/<pool>/<path>`. Le dossier du serveur est le nom de l'instance source, fixé au premier transfert, si bien que deux serveurs avec le même nom de pool ne se gênent jamais. Par exemple, `cache/appdata` d'un serveur nommé `tower` aboutit dans `backup/bombvault-replica/tower/cache/appdata`.
 
-La copie sur la cible est en lecture seule et non montée, donc elle ne recouvre jamais rien sur ce serveur. Les propriétés ZFS suivent, sauf le point de montage, `sharenfs` et `sharesmb`.
+La copie sur la cible est en lecture seule et non montée, donc elle ne recouvre jamais rien sur ce serveur. Les propriétés ZFS suivent, sauf le point de montage, `sharenfs` et `sharesmb`. Les réservations `reservation` et `refreservation` restent aussi en place, la copie n'occupe donc que l'espace dont ses données ont besoin.
 
 ### Ce qui est inclus {#replica-contents}
 

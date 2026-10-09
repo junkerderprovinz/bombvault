@@ -3,6 +3,7 @@ package zfs
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // replicaListProps are what base resolution compares across the two hosts.
@@ -47,6 +48,11 @@ type ReceiveSpec struct {
 // receiving host, so a replica neither mounts over the target's own data nor
 // shares itself there.
 var receivedLocalProps = []string{"mountpoint", "sharenfs", "sharesmb"}
+
+// receivedSpaceProps are the space the source sets aside for a dataset or
+// volume, which its replica must not claim from the receiving host's pool. zfs
+// drops them from a stream when they are excluded, since they do not inherit.
+var receivedSpaceProps = []string{"reservation", "refreservation"}
 
 // replicaMember checks a dataset and replica snapshot name pair for any
 // builder below. The dataset may be a descendant read off the host or a path
@@ -135,8 +141,8 @@ func dryRun(send []string) []string {
 }
 
 // ReceiveArgs takes a stream into the target, resumably and unmounted. zfs
-// refuses canmount on a volume and only warns about the excluded properties,
-// so a volume gets neither.
+// refuses canmount on a volume and only warns about the local properties, so a
+// volume gets neither; the reservations stay behind for both.
 func ReceiveArgs(r ReceiveSpec) ([]string, error) {
 	if err := receiveTarget(r.Target); err != nil {
 		return nil, err
@@ -160,6 +166,7 @@ func ReceiveArgs(r ReceiveSpec) ([]string, error) {
 	if !r.Volume {
 		args = appendExcluded(args, receivedLocalProps)
 	}
+	args = appendExcluded(args, receivedSpaceProps)
 	return append(args, r.Target), nil
 }
 
@@ -196,12 +203,20 @@ func appendExcluded(args, props []string) []string {
 
 // CreateParentArgs makes one level of the path a replica lands under. It never
 // mounts and holds no data of its own; -p makes a level that appeared in the
-// meantime a success.
-func CreateParentArgs(dataset string) ([]string, error) {
+// meantime a success. A non-empty owner is set as SourceProperty in the same
+// step, so a parent of that owner never exists unmarked.
+func CreateParentArgs(dataset, owner string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {
 		return nil, err
 	}
-	return []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off", dataset}, nil
+	args := []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off"}
+	if owner != "" {
+		if !ValidSourceID(owner) {
+			return nil, fmt.Errorf("zfs: not an instance id: %.40q", owner)
+		}
+		args = append(args, "-o", SourceProperty+"="+owner)
+	}
+	return append(args, dataset), nil
 }
 
 // AbortReceiveArgs drops the partial state of an interrupted receive whose
@@ -279,4 +294,88 @@ func DatasetStateArgs(dataset string) ([]string, error) {
 		return nil, err
 	}
 	return []string{zfsBinary, "get", "-H", "-p", "-o", "property,value", stateProps, dataset}, nil
+}
+
+// DestroyReplicaBookmarkArgs removes one replica bookmark of a source member,
+// once no snapshot on the target shares its guid, so that it cannot be a
+// base.
+func DestroyReplicaBookmarkArgs(dataset, name string) ([]string, error) {
+	if err := replicaMember(dataset, name); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "destroy", dataset + "#" + name}, nil
+}
+
+// SourceProperty is the user property set on every parent BombVault creates
+// for a replica, holding the id of the instance whose members land below it.
+// A folder that carries another id belongs to someone else, even when that
+// instance goes by the same name.
+const SourceProperty = "bombvault:source"
+
+var sourceIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]{0,63}$`)
+
+// ValidSourceID reports whether id can stand in SourceProperty: an instance id
+// of the group, which never starts with a dash.
+func ValidSourceID(id string) bool { return sourceIDRe.MatchString(id) }
+
+// SourcePropertyArgs reads SourceProperty as set on the dataset itself, so a
+// value inherited from a parent or received with a stream does not count.
+func SourcePropertyArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "get", "-H", "-p", "-s", "local", "-o", "value", SourceProperty, dataset}, nil
+}
+
+// ParseSourceProperty reads the output of SourcePropertyArgs, "" where the
+// property is not set on the dataset itself.
+func ParseSourceProperty(out string) string {
+	v := strings.TrimSpace(out)
+	if v == "-" {
+		return ""
+	}
+	return v
+}
+
+// MountArgs mounts a filesystem where its mountpoint property says.
+func MountArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "mount", dataset}, nil
+}
+
+// Pool is one pool as PoolsArgs reports it. Size is what its top dataset holds
+// plus what is still free there, which is what a replica can fill.
+type Pool struct {
+	Name      string `json:"name"`
+	SizeBytes int64  `json:"sizeBytes"`
+	FreeBytes int64  `json:"freeBytes"`
+}
+
+// PoolsArgs lists the top dataset of every pool on a host.
+func PoolsArgs() []string {
+	return []string{zfsBinary, "list", "-H", "-p", "-d", "0", "-o", "name,used,available"}
+}
+
+// ParsePools reads the listing of PoolsArgs.
+func ParsePools(out string) ([]Pool, error) {
+	lines := splitLines(out)
+	pools := make([]Pool, 0, len(lines))
+	for _, line := range lines {
+		f := strings.Split(line, "\t")
+		if len(f) != 3 || strings.Contains(f[0], "/") {
+			return nil, fmt.Errorf("zfs list of the pools: %q is not a pool line", line)
+		}
+		used, err := parseNum(f[1])
+		if err != nil {
+			return nil, fmt.Errorf("zfs list of the pools: used of %q: %w", f[0], err)
+		}
+		free, err := parseNum(f[2])
+		if err != nil {
+			return nil, fmt.Errorf("zfs list of the pools: available of %q: %w", f[0], err)
+		}
+		pools = append(pools, Pool{Name: f[0], SizeBytes: used + free, FreeBytes: free})
+	}
+	return pools, nil
 }

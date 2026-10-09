@@ -16,28 +16,8 @@ const (
 	ZFSReplicaTargetPeer   = "peer"
 )
 
-// The answers a pull request can have. A zfs pull source mirrors the one the
-// source gave.
-const (
-	ZFSGrantAsked   = "asked"
-	ZFSGrantAllowed = "allowed"
-	ZFSGrantRefused = "refused"
-	ZFSGrantRevoked = "revoked"
-)
-
 // ZFSReplicaRunKind is the runs.kind of a replica run.
 const ZFSReplicaRunKind = "replica"
-
-// ErrZFSGrantMove is returned when a grant cannot take the asked-for answer
-// from the one it has.
-var ErrZFSGrantMove = errors.New("the grant cannot move to that state")
-
-// zfsGrantMoves lists, for each answer, the states it can be given from.
-var zfsGrantMoves = map[string][]string{
-	ZFSGrantAllowed: {ZFSGrantAsked},
-	ZFSGrantRefused: {ZFSGrantAsked},
-	ZFSGrantRevoked: {ZFSGrantAllowed},
-}
 
 // ZFSReplicaKeep is what an item keeps on its target: a preset, or with
 // preset "own" the counts in Own as latest, daily, weekly, monthly, yearly.
@@ -74,7 +54,7 @@ func (k ZFSReplicaKeep) Counts() (RetentionKeep, bool) {
 type ZFSReplica struct {
 	// TargetKind is one of the ZFSReplicaTarget kinds. TargetID names a
 	// ZFSReplicaServer for a server and the pairing member id of the instance
-	// that pulls for a peer.
+	// that receives for a peer.
 	TargetKind string
 	TargetID   string
 	// AfterBackup runs the replica after each backup of the item. Without it
@@ -82,6 +62,31 @@ type ZFSReplica struct {
 	AfterBackup bool
 	Cadence     string
 	Keep        ZFSReplicaKeep
+	// Peer is what the receiving instance of a peer target answered. Only
+	// SetZFSReplicaPeer writes it, and a new target clears it.
+	Peer ZFSReplicaPeer
+	// Folder is the folder below a target's root that the members land in,
+	// fixed by the first member that arrived. Neither a new target nor
+	// switching the replica off clears it, so a renamed instance goes on
+	// writing where it started.
+	Folder string
+}
+
+// ZFSReplicaPeer is a peer target's answer to this instance's request: its
+// state and, once allowed, the receive slot the streams go to.
+type ZFSReplicaPeer struct {
+	// State is one of the ZFSReceive states, empty before the first answer.
+	State string
+	Slot  string
+	// TokenEnc is the slot's bearer token sealed with the APP_KEY.
+	TokenEnc []byte
+	// Base is where the members land there, <root>/<server name>, and URL
+	// where that instance answers the slot routes.
+	Base string
+	URL  string
+	// Pin is the SHA-256 of the public key that instance serves TLS with, in
+	// hex, and empty when it serves plain HTTP.
+	Pin string
 }
 
 // DefaultZFSReplica is the setting of an item that has never been given one.
@@ -147,21 +152,6 @@ type ZFSReplicaRunMember struct {
 type ZFSReplicaRun struct {
 	Run
 	Members []ZFSReplicaRunMember
-}
-
-// ZFSReplicaGrant is another instance's request to pull a ZFS item of this
-// one, and its answer.
-type ZFSReplicaGrant struct {
-	ItemID      string
-	PeerID      string
-	Fingerprint string
-	// KeyLine is the receiver's public key as it arrived, without the
-	// restrictions the source puts in front of it.
-	KeyLine   string
-	Roots     []string
-	State     string
-	AskedAt   int64
-	DecidedAt int64
 }
 
 // ZFSReplicaImport is the replica part of a settings file: the servers, and
@@ -308,9 +298,10 @@ func scanZFSReplicaServer(s scanner) (ZFSReplicaServer, error) {
 	return srv, nil
 }
 
-// SetZFSReplicaTarget points the item at a server, at the instance that pulls
-// it, or with ZFSReplicaTargetNone at nothing. A different target starts from
-// scratch, so the item's member state is dropped with the old one.
+// SetZFSReplicaTarget points the item at a server, at the instance that
+// receives it, or with ZFSReplicaTargetNone at nothing. A different target
+// starts from scratch, so the item's member state and the answer of an old
+// peer target are dropped with it.
 func (r *Repo) SetZFSReplicaTarget(id, kind, targetID string) error {
 	return r.inTx(func(tx *sql.Tx) error {
 		return setZFSReplicaTarget(tx, "SetZFSReplicaTarget", id, kind, targetID)
@@ -333,9 +324,28 @@ func setZFSReplicaTarget(tx *sql.Tx, label, id, kind, targetID string) error {
 	if _, err := tx.Exec(`DELETE FROM zfs_replica_state WHERE item_id = ?`, id); err != nil {
 		return fmt.Errorf("%s state: %w", label, err)
 	}
-	if _, err := tx.Exec(`UPDATE zfs_datasets SET replica_target_kind = ?, replica_target_id = ? WHERE id = ?`,
-		kind, targetID, id); err != nil {
+	if _, err := tx.Exec(`UPDATE zfs_datasets SET replica_target_kind = ?, replica_target_id = ?,
+		replica_peer_state = '', replica_peer_slot = '', replica_peer_token_enc = x'',
+		replica_peer_base = '', replica_peer_url = '', replica_peer_pin = ''
+		WHERE id = ?`, kind, targetID, id); err != nil {
 		return fmt.Errorf("%s: %w", label, err)
+	}
+	return nil
+}
+
+// SetZFSReplicaPeer records what the receiving instance of the item's peer
+// target answered.
+func (r *Repo) SetZFSReplicaPeer(id string, p ZFSReplicaPeer) error {
+	return r.updateZFSDataset("SetZFSReplicaPeer", id, `UPDATE zfs_datasets SET replica_peer_state = ?,
+		replica_peer_slot = ?, replica_peer_token_enc = ?, replica_peer_base = ?, replica_peer_url = ?, replica_peer_pin = ?
+		WHERE id = ?`, p.State, p.Slot, notNullBlob(p.TokenEnc), p.Base, p.URL, p.Pin, id)
+}
+
+// FixZFSReplicaFolder records the folder the item's members land in, unless
+// one is fixed already.
+func (r *Repo) FixZFSReplicaFolder(id, folder string) error {
+	if _, err := r.db.Exec(`UPDATE zfs_datasets SET replica_folder = ? WHERE id = ? AND replica_folder = ''`, folder, id); err != nil {
+		return fmt.Errorf("FixZFSReplicaFolder: %w", err)
 	}
 	return nil
 }
@@ -563,8 +573,8 @@ func (r *Repo) ListZFSReplicaRunMembers(runID string) ([]ZFSReplicaRunMember, er
 	return out, rows.Err()
 }
 
-// LatestZFSReplicaRun returns the newest replica run of an item or pull
-// source, a running one included, or false when it has none.
+// LatestZFSReplicaRun returns the newest replica run of an item, a running one
+// included, or false when it has none.
 func (r *Repo) LatestZFSReplicaRun(itemID string) (ZFSReplicaRun, bool, error) {
 	run, err := scanRun(r.db.QueryRow(`SELECT `+runCols+` FROM runs
 		WHERE target_id = ? AND kind = ?
@@ -582,143 +592,11 @@ func (r *Repo) LatestZFSReplicaRun(itemID string) (ZFSReplicaRun, bool, error) {
 	return ZFSReplicaRun{Run: run, Members: members}, true, nil
 }
 
-// deleteZFSReplicaRows drops the member state and run detail kept under an
-// item or pull source id.
+// deleteZFSReplicaRows drops the member state and run detail of an item.
 func deleteZFSReplicaRows(tx *sql.Tx, itemID string) error {
 	if _, err := tx.Exec(`DELETE FROM zfs_replica_state WHERE item_id = ?`, itemID); err != nil {
 		return err
 	}
 	_, err := tx.Exec(`DELETE FROM zfs_replica_runs WHERE item_id = ?`, itemID)
 	return err
-}
-
-const zfsReplicaGrantCols = `item_id, peer_id, fingerprint, key_line, roots, state, asked_at, decided_at`
-
-// AskZFSReplicaGrant records a pull request and returns the grant as it now
-// stands next to the one it replaced, whose State is empty when there was
-// none. A request for the same key and roots keeps the answer it already
-// has, unless that answer was a revoke; anything else waits for a person
-// again. The caller takes a replaced allowed key out of authorized_keys.
-func (r *Repo) AskZFSReplicaGrant(g ZFSReplicaGrant) (ZFSReplicaGrant, ZFSReplicaGrant, error) {
-	var now, before ZFSReplicaGrant
-	err := r.inTx(func(tx *sql.Tx) error {
-		prev, err := scanZFSReplicaGrant(tx.QueryRow(`SELECT `+zfsReplicaGrantCols+`
-			FROM zfs_replica_grants WHERE item_id = ? AND peer_id = ?`, g.ItemID, g.PeerID))
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-		case err != nil:
-			return err
-		default:
-			before = prev
-		}
-		if before.State != "" && before.State != ZFSGrantRevoked &&
-			before.KeyLine == g.KeyLine && slices.Equal(before.Roots, g.Roots) {
-			now = before
-			return nil
-		}
-		roots, err := marshalList(g.Roots)
-		if err != nil {
-			return fmt.Errorf("AskZFSReplicaGrant marshal: %w", err)
-		}
-		now = g
-		now.State, now.DecidedAt = ZFSGrantAsked, 0
-		if now.AskedAt == 0 {
-			now.AskedAt = time.Now().Unix()
-		}
-		_, err = tx.Exec(`INSERT OR REPLACE INTO zfs_replica_grants (`+zfsReplicaGrantCols+`)
-			VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
-			now.ItemID, now.PeerID, now.Fingerprint, now.KeyLine, roots, now.State, now.AskedAt)
-		if err != nil {
-			return fmt.Errorf("AskZFSReplicaGrant: %w", err)
-		}
-		return nil
-	})
-	if err != nil {
-		return ZFSReplicaGrant{}, ZFSReplicaGrant{}, err
-	}
-	return now, before, nil
-}
-
-// DecideZFSReplicaGrant gives a grant its answer: allowed or refused for an
-// asked one, revoked for an allowed one. Any other move gives
-// ErrZFSGrantMove, a missing grant sql.ErrNoRows.
-func (r *Repo) DecideZFSReplicaGrant(itemID, peerID, state string) (ZFSReplicaGrant, error) {
-	var g ZFSReplicaGrant
-	err := r.inTx(func(tx *sql.Tx) error {
-		var err error
-		g, err = scanZFSReplicaGrant(tx.QueryRow(`SELECT `+zfsReplicaGrantCols+`
-			FROM zfs_replica_grants WHERE item_id = ? AND peer_id = ?`, itemID, peerID))
-		if err != nil {
-			return err
-		}
-		if !slices.Contains(zfsGrantMoves[state], g.State) {
-			return fmt.Errorf("DecideZFSReplicaGrant %s to %s: %w", g.State, state, ErrZFSGrantMove)
-		}
-		g.State, g.DecidedAt = state, time.Now().Unix()
-		_, err = tx.Exec(`UPDATE zfs_replica_grants SET state = ?, decided_at = ? WHERE item_id = ? AND peer_id = ?`,
-			g.State, g.DecidedAt, itemID, peerID)
-		return err
-	})
-	if err != nil {
-		return ZFSReplicaGrant{}, err
-	}
-	return g, nil
-}
-
-// GetZFSReplicaGrant returns one peer's grant for one item, or false when the
-// peer never asked.
-func (r *Repo) GetZFSReplicaGrant(itemID, peerID string) (ZFSReplicaGrant, bool, error) {
-	g, err := scanZFSReplicaGrant(r.db.QueryRow(`SELECT `+zfsReplicaGrantCols+`
-		FROM zfs_replica_grants WHERE item_id = ? AND peer_id = ?`, itemID, peerID))
-	if errors.Is(err, sql.ErrNoRows) {
-		return ZFSReplicaGrant{}, false, nil
-	}
-	if err != nil {
-		return ZFSReplicaGrant{}, false, err
-	}
-	return g, true, nil
-}
-
-// ListZFSReplicaGrants returns an item's grants, oldest request first.
-func (r *Repo) ListZFSReplicaGrants(itemID string) ([]ZFSReplicaGrant, error) {
-	return r.zfsReplicaGrants("ListZFSReplicaGrants", `SELECT `+zfsReplicaGrantCols+`
-		FROM zfs_replica_grants WHERE item_id = ? ORDER BY asked_at, peer_id`, itemID)
-}
-
-// AllowedZFSReplicaGrants returns every allowed grant, the keys
-// authorized_keys has to hold.
-func (r *Repo) AllowedZFSReplicaGrants() ([]ZFSReplicaGrant, error) {
-	return r.zfsReplicaGrants("AllowedZFSReplicaGrants", `SELECT `+zfsReplicaGrantCols+`
-		FROM zfs_replica_grants WHERE state = ? ORDER BY item_id, peer_id`, ZFSGrantAllowed)
-}
-
-func (r *Repo) zfsReplicaGrants(label, query string, args ...any) ([]ZFSReplicaGrant, error) {
-	rows, err := r.db.Query(query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", label, err)
-	}
-	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
-
-	var out []ZFSReplicaGrant
-	for rows.Next() {
-		g, err := scanZFSReplicaGrant(rows)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, g)
-	}
-	return out, rows.Err()
-}
-
-func scanZFSReplicaGrant(s scanner) (ZFSReplicaGrant, error) {
-	var g ZFSReplicaGrant
-	var roots string
-	err := s.Scan(&g.ItemID, &g.PeerID, &g.Fingerprint, &g.KeyLine, &roots, &g.State, &g.AskedAt, &g.DecidedAt)
-	if err != nil {
-		return ZFSReplicaGrant{}, fmt.Errorf("scanZFSReplicaGrant: %w", err)
-	}
-	if err := json.Unmarshal([]byte(roots), &g.Roots); err != nil {
-		return ZFSReplicaGrant{}, fmt.Errorf("scanZFSReplicaGrant unmarshal roots: %w", err)
-	}
-	return g, nil
 }

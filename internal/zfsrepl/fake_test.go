@@ -221,7 +221,14 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 		if h.ds[parent] == nil {
 			return "", fail(args, 1, "cannot create '%s': parent does not exist", last)
 		}
-		h.ds[last] = &fakeDS{typ: "filesystem", holds: map[string]bool{}, props: map[string]string{"canmount": "off"}}
+		d := &fakeDS{typ: "filesystem", holds: map[string]bool{}, props: map[string]string{}}
+		for i, a := range args {
+			if a == "-o" {
+				k, v, _ := strings.Cut(args[i+1], "=")
+				d.props[k] = v
+			}
+		}
+		h.ds[last] = d
 		return "", nil
 	case "bookmark":
 		ds, snap, _ := strings.Cut(args[2], "@")
@@ -315,6 +322,14 @@ func (h *fakeHost) points(args []string, name string) (string, error) {
 
 func (h *fakeHost) destroy(args []string) error {
 	target := args[len(args)-1]
+	if ds, mark, ok := strings.Cut(target, "#"); ok {
+		d := h.ds[ds]
+		if d == nil || !hasPoint(d.marks, mark) {
+			return fail(args, 1, "bookmark '%s' does not exist.", target)
+		}
+		d.marks = without(d.marks, mark)
+		return nil
+	}
 	ds, snap, _ := strings.Cut(target, "@")
 	names := []string{ds}
 	if args[2] == "-r" {

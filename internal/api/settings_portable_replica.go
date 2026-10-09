@@ -12,8 +12,9 @@ import (
 
 // zfsReplicaExport is the replica part of a settings file: the ZFS servers
 // and how each ZFS item replicates, keyed by its root dataset because item
-// ids differ between instances. Keys stay on the instance, and pull grants
-// are answers a person gave on this host, so neither travels.
+// ids differ between instances. Keys stay on the instance, and neither the
+// receive slots a person allowed here nor a peer target's answer travels: a
+// peer target asks again from the instance the file is applied to.
 type zfsReplicaExport struct {
 	Servers []zfsReplicaServerExport `json:"servers"`
 	Items   []zfsReplicaItemExport   `json:"items"`
@@ -150,7 +151,8 @@ func zfsReplicaRefusal(exp settingsExport) string {
 	}
 	ids := map[string]bool{}
 	for i, s := range rep.Servers {
-		if strings.TrimSpace(s.ID) == "" || ids[s.ID] {
+		// The id names the server's known_hosts directory.
+		if !validResourceName(s.ID) || ids[s.ID] {
 			return fmt.Sprintf("ZFS server #%d: needs an id of its own", i+1)
 		}
 		ids[s.ID] = true

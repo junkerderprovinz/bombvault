@@ -11,6 +11,8 @@ import { group, replica, server } from "./replica.testsupport";
 
 let current: ZFSReplica;
 const restores: string[] = [];
+let keyNeeded = false;
+let progress: Record<string, { active: boolean }> = {};
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
@@ -21,28 +23,34 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     getGroup: () => Promise.resolve(group()),
     restoreZFSReplica: (_id: string, snapshot: string) => {
       restores.push(snapshot);
-      return Promise.resolve({ ok: true, runId: "r2", dataset: "cache/appdata-bombvault-restore-1760003000" });
+      return Promise.resolve({ ok: true, runId: "r2", dataset: "cache/appdata-bombvault-restore-1760003000", keyNeeded });
     },
   };
 });
 
-vi.mock("../../../lib/progress", () => ({ useProgress: () => ({}) }));
+vi.mock("../../../lib/progress", () => ({ useProgress: () => progress }));
 
 const { ReplicaPlaceRow } = await import("./ReplicaPlaceRow");
 
-function renderRow() {
-  return render(
+function row() {
+  return (
     <I18nProvider>
       <ToastProvider>
         <ReplicaPlaceRow itemId="zfs1" name="cache/appdata" />
       </ToastProvider>
-    </I18nProvider>,
+    </I18nProvider>
   );
+}
+
+function renderRow() {
+  return render(row());
 }
 
 beforeEach(() => {
   current = replica();
   restores.length = 0;
+  keyNeeded = false;
+  progress = {};
   localStorage.clear();
 });
 
@@ -62,11 +70,18 @@ describe("replica storage row", () => {
     expect(screen.getByText(countText(en["zfs.replica.snapshots"], "en", 2))).toBeTruthy();
   });
 
-  it("says a pulling instance is still waiting instead of offering snapshots", async () => {
-    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "waiting", snapshots: [] });
+  it("says a paired instance has not allowed it yet instead of offering snapshots", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "asked", snapshots: [] });
     renderRow();
-    expect(await screen.findByText("Waiting for tower-2")).toBeTruthy();
+    expect(await screen.findByText("Waiting for tower-2 to allow it")).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["zfs.replica.view"] })).toBeNull();
+  });
+
+  it("names a revoke even though the last run went through", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "revoked" });
+    renderRow();
+    expect(await screen.findByText("Access revoked by tower-2")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["zfs.replica.view"] })).toBeTruthy();
   });
 
   it("hands out the clone and takeover commands with the real names", async () => {
@@ -96,5 +111,29 @@ describe("replica storage row", () => {
     await waitFor(() => expect(restores).toEqual(["bombvault-replica-20261005014000"]));
     expect(await screen.findByText("Bringing back: cache/appdata-bombvault-restore-1760003000")).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "Replica of cache/appdata on Backup-NAS" })).toBeNull();
+  });
+
+  it("says when the bring back ends that an encrypted copy waits for its key", async () => {
+    keyNeeded = true;
+    const { rerender } = renderRow();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.restore"] }));
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.restoreConfirm"] }));
+    await screen.findByText("Bringing back: cache/appdata-bombvault-restore-1760003000");
+
+    const done = en["zfs.replica.restoredLocked"]
+      .replace("{fresh}", "cache/appdata-bombvault-restore-1760003000")
+      .replace("{name}", "cache/appdata");
+    progress = { "zfs-replica:zfs1": { active: true } };
+    rerender(row());
+    progress = {};
+    rerender(row());
+    expect(screen.queryByText(done)).toBeNull();
+
+    progress = { "zfs-replica-restore:zfs1": { active: true } };
+    rerender(row());
+    progress = {};
+    rerender(row());
+    expect(await screen.findByText(done)).toBeTruthy();
   });
 });

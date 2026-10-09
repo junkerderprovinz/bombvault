@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -35,9 +36,18 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 		return Result{}, &Refusal{Code: "snapshot-failed", Detail: e.Root + "@" + snap, Err: err}
 	}
 
-	r := &run{src: source, dst: target, e: e, snap: snap, placeholders: map[string]bool{}}
+	r := &run{src: source, dst: target, e: e, snap: snap, placeholders: map[string]bool{}, own: map[string]bool{snap: true}}
 	for _, p := range e.Placeholders {
 		r.placeholders[p] = true
+	}
+	// Every snapshot of this entry is on its root, so the names there tell
+	// its own leftovers on an excluded dataset from another entry's.
+	if pts, err := points(ctx, source, e.Root); err == nil {
+		for _, p := range snapshots(pts) {
+			if zfs.IsReplicaSnapshot(p.Name) {
+				r.own[p.Name] = true
+			}
+		}
 	}
 	// Whatever the run leaves on the source has to go although it was
 	// cancelled, or every cancelled run adds a snapshot that pins blocks.
@@ -45,15 +55,13 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 	res := Result{Snapshot: snap}
 	for _, d := range tree {
 		switch {
-		// An excluded dataset may be another entry's member, so only the
-		// snapshot this run took there goes.
 		case excluded(d.Name, e.Excluded):
-			r.destroyNew(cleanup, d.Name)
+			r.sweepExcluded(cleanup, d.Name)
 		case ctx.Err() != nil:
 			r.destroyNew(cleanup, d.Name)
-			res.Members = append(res.Members, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "not-reached", Err: ctx.Err()})
+			r.finished(&res, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "not-reached", Err: ctx.Err()})
 		default:
-			res.Members = append(res.Members, r.member(ctx, d))
+			r.finished(&res, r.member(ctx, d))
 		}
 	}
 	res.Created = r.created
@@ -66,9 +74,17 @@ type run struct {
 	snap         string
 	placeholders map[string]bool
 	created      []string
+	own          map[string]bool
 }
 
 func (r *run) target(dataset string) string { return r.e.TargetBase + "/" + dataset }
+
+func (r *run) finished(res *Result, m MemberResult) {
+	res.Members = append(res.Members, m)
+	if r.e.Finished != nil {
+		r.e.Finished(m)
+	}
+}
 
 func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 	m := MemberResult{
@@ -88,7 +104,12 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		return m
 	}
 	r.clear(context.WithoutCancel(ctx), m.Dataset, src)
-	m.Pruned = r.prune(ctx, m.Target, tgt)
+	// A target that prunes itself does so after this receive, so a bookmark
+	// whose snapshot it drops now goes with the next run.
+	if _, self := r.dst.(SelfPruning); !self {
+		m.Pruned = r.prune(ctx, m.Target, tgt)
+	}
+	r.pruneBookmarks(context.WithoutCancel(ctx), m.Dataset, src, tgt, m.Pruned)
 	return m
 }
 
@@ -205,7 +226,7 @@ func (r *run) resume(ctx context.Context, m *MemberResult, view targetView, src 
 	if m.Resumed {
 		if last, ok := newestReplica(view.snaps); ok {
 			if p, ok := find(src, last.Name); ok && p.GUID == last.GUID {
-				if err := r.bookmark(ctx, m.Dataset, last.Name); err != nil {
+				if err := bookmarkOn(ctx, r.src, m.Dataset, last.Name); err != nil {
 					log.Printf("zfs replica: bookmarking %s@%s failed: %v", m.Dataset, last.Name, err)
 				}
 			}
@@ -250,7 +271,7 @@ func (r *run) ensureParents(ctx context.Context, dataset string) error {
 		missing = append(missing, d)
 	}
 	for i := len(missing) - 1; i >= 0; i-- {
-		args, err := zfs.CreateParentArgs(missing[i])
+		args, err := zfs.CreateParentArgs(missing[i], r.e.Owner)
 		if err != nil {
 			return err
 		}
@@ -279,19 +300,10 @@ func (r *run) landed(ctx context.Context, target string, sent zfs.ReplicaPoint) 
 // anchor makes the member's new snapshot the base of its next run: a bookmark
 // that survives the snapshot, and a hold so nobody destroys it by accident.
 func (r *run) anchor(ctx context.Context, dataset, snap string) error {
-	if err := r.bookmark(ctx, dataset, snap); err != nil {
+	if err := bookmarkOn(ctx, r.src, dataset, snap); err != nil {
 		return err
 	}
 	args, err := zfs.HoldArgs(dataset, snap)
-	if err != nil {
-		return err
-	}
-	_, err = r.src.Run(ctx, args)
-	return ignore(err, zfs.IsExists)
-}
-
-func (r *run) bookmark(ctx context.Context, dataset, snap string) error {
-	args, err := zfs.BookmarkArgs(dataset, snap)
 	if err != nil {
 		return err
 	}
@@ -315,6 +327,31 @@ func (r *run) keepOrDrop(ctx context.Context, m MemberResult) {
 		return
 	}
 	r.destroyNew(ctx, m.Dataset)
+}
+
+// sweepExcluded removes this entry's replica snapshots from an excluded
+// dataset, the run's own and any a run that stopped early left there. Another
+// entry's names stay, and so does a held one: the base of a dataset this entry
+// replicated before it was excluded.
+func (r *run) sweepExcluded(ctx context.Context, dataset string) {
+	pts, err := points(ctx, r.src, dataset)
+	if err != nil {
+		log.Printf("zfs replica: listing the snapshots of %s failed: %v", dataset, err)
+		r.destroyNew(ctx, dataset)
+		return
+	}
+	for _, p := range snapshots(pts) {
+		if !r.own[p.Name] {
+			continue
+		}
+		args, err := zfs.DestroyReplicaArgs(dataset, p.Name)
+		if err == nil {
+			_, err = r.src.Run(ctx, args)
+		}
+		if err = ignore(err, func(err error) bool { return zfs.IsNotFound(err) || zfs.IsBusy(err) }); err != nil {
+			log.Printf("zfs replica: removing %s@%s failed: %v", dataset, p.Name, err)
+		}
+	}
 }
 
 func (r *run) destroyNew(ctx context.Context, dataset string) {
@@ -369,6 +406,35 @@ func (r *run) prune(ctx context.Context, target string, snaps []zfs.ReplicaPoint
 		pruned = append(pruned, name)
 	}
 	return pruned
+}
+
+// pruneBookmarks destroys the source's replica bookmarks that no snapshot left
+// on the target shares a guid with, since only such a pair can be the base of
+// an increment. The run's own bookmark is newer than src and always stays.
+func (r *run) pruneBookmarks(ctx context.Context, dataset string, src, tgt []zfs.ReplicaPoint, pruned []string) {
+	kept := make(map[uint64]bool, len(tgt))
+	for _, p := range tgt {
+		if !slices.Contains(pruned, p.Name) {
+			kept[p.GUID] = true
+		}
+	}
+	for _, p := range src {
+		if !p.Bookmark || p.Name == r.snap || !zfs.IsReplicaSnapshot(p.Name) || kept[p.GUID] {
+			continue
+		}
+		if err := destroyBookmark(ctx, r.src, dataset, p.Name); err != nil {
+			log.Printf("zfs replica: removing the bookmark %s#%s failed: %v", dataset, p.Name, err)
+		}
+	}
+}
+
+func destroyBookmark(ctx context.Context, end End, dataset, name string) error {
+	args, err := zfs.DestroyReplicaBookmarkArgs(dataset, name)
+	if err != nil {
+		return err
+	}
+	_, err = end.Run(ctx, args)
+	return ignore(err, zfs.IsNotFound)
 }
 
 // commonBase picks the newest replica point of the source whose guid the

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The card where a ZFS item picks its replica. It has to say plainly where the
-// replica stands, send exactly the rule someone set, and never offer a run for
-// a target that pulls on its own.
+// replica stands, send exactly the rule someone set, and never offer a run to
+// a paired instance that has not allowed it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { I18nProvider, en } from "../../../lib/i18n";
@@ -102,13 +102,45 @@ describe("replica card", () => {
     expect(screen.getByText(en["zfs.code.no-common-base"])).toBeTruthy();
   });
 
-  it("leaves the plan to an instance that pulls and offers no run", async () => {
-    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "waiting" });
+  it("sends nothing to a paired instance that has not allowed it yet", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "asked" });
     renderCard();
-    expect(await screen.findByText("Waiting for tower-2")).toBeTruthy();
-    expect(screen.getByText(en["zfs.replica.peerFetches"].replace("{peer}", "tower-2"))).toBeTruthy();
+    expect(await screen.findByText("Waiting for tower-2 to allow it")).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.peer.askedText"].replace("{peer}", "tower-2"))).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+    // The rule here is only what the receiving instance is offered.
+    expect(screen.getByRole("radiogroup", { name: "Suggested to tower-2" })).toBeTruthy();
     expect(screen.queryByRole("radiogroup", { name: en["zfs.replica.keepTarget"] })).toBeNull();
+  });
+
+  it("runs to a paired instance that allowed it and leaves the keep rule to it", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "allowed" });
+    renderCard();
+    expect(await screen.findByText(en["zfs.replica.peer.allowedText"].replace("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.getByText("Replicated 2 hours ago")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeTruthy();
+    expect(screen.queryByRole("radiogroup", { name: "Suggested to tower-2" })).toBeNull();
+    expect(screen.getByRole("radiogroup", { name: en["zfs.replica.when"] })).toBeTruthy();
+  });
+
+  it("says a paired instance declined and offers neither a run nor a new request", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "refused" });
+    renderCard();
+    expect(await screen.findByText("Declined by tower-2")).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.peer.refusedText"].replace("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.peer.askAgain"] })).toBeNull();
+  });
+
+  it("asks a paired instance again after it revoked the permission", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "revoked" });
+    renderCard();
+    expect(await screen.findByText("Access revoked by tower-2")).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.peer.revokedText"].replace("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["zfs.replica.replicateNow"] })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.peer.askAgain"] }));
+    await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
+    expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
   });
 
   it("sends a preset as it is picked", async () => {
@@ -155,6 +187,7 @@ describe("replica card", () => {
     const picker = await screen.findByRole("radiogroup", { name: en["zfs.replica.target"] });
     fireEvent.click(within(picker).getByRole("radio", { name: "tower-2" }));
     await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
+    expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
   });
 
   it("starts a run on request", async () => {

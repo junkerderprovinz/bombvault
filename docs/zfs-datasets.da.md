@@ -149,7 +149,7 @@ Den modtagende instans accepterer kun det, godkendelsen dækker: elementets data
 
 Hvert datasæt havner i `<root>/<server>/<pool>/<path>`. Servermappen er kildeinstansens navn, fastlagt ved den første overførsel, så to servere med samme poolnavn aldrig kommer i vejen for hinanden. For eksempel havner `cache/appdata` fra en server ved navn `tower` i `backup/bombvault-replica/tower/cache/appdata`.
 
-Kopien på målet er skrivebeskyttet og ikke monteret, så den aldrig dækker noget på den server. ZFS-egenskaber følger med, bortset fra monteringspunktet, `sharenfs` og `sharesmb`.
+Kopien på målet er skrivebeskyttet og ikke monteret, så den aldrig dækker noget på den server. ZFS-egenskaber følger med, bortset fra monteringspunktet, `sharenfs` og `sharesmb`. Reservationerne `reservation` og `refreservation` bliver også tilbage, så kopien kun optager den plads, dens data kræver.
 
 ### Hvad der kommer med {#replica-contents}
 
