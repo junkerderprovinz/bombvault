@@ -303,7 +303,7 @@ func (h *Handler) handleDecideZFSReceive(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrZFSReceiveChanged) {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the source asked for other datasets since the request was shown"})
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "request-changed", "error": "the source asked for other datasets since the request was shown"})
 		return
 	}
 	if err != nil {

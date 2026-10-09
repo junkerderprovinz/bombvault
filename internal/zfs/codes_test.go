@@ -36,7 +36,7 @@ func TestAllCodesAreUniqueKebabCase(t *testing.T) {
 		"dataset-exists", "create-failed", "new-dataset-not-visible", "set-properties-failed", "set-limits-failed",
 		"resume-token-stale", "target-changed", "no-common-base", "encryption-mismatch",
 		"in-use", "target-owned", "replica-off", "server-disabled", "domain-off",
-		"peer-waiting", "peer-refused", "peer-revoked", "peer-unreachable", "peer-insecure",
+		"peer-waiting", "peer-refused", "peer-revoked", "peer-unreachable", "peer-insecure", "request-changed",
 		"receive-off", "stream-cut", "interrupted",
 	}
 	if len(AllCodes) != len(want) {

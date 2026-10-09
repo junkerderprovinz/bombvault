@@ -80,6 +80,7 @@ var AllCodes = []string{
 	"peer-revoked",
 	"peer-unreachable",
 	"peer-insecure",
+	"request-changed",
 	"receive-off",
 	"stream-cut",
 	"interrupted",

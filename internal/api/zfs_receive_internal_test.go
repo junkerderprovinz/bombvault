@@ -355,7 +355,7 @@ func TestAnAllowCoversOnlyTheMembersThePageShowed(t *testing.T) {
 	_, out := r.dst.do(t, http.MethodPost, "/api/zfs/receive/requests/"+id, map[string]any{
 		"decision": "allow", "pool": "tank", "root": receiveRoot, "item": shown["item"], "members": shown["members"],
 	})
-	if msg, _ := out["error"].(string); !strings.Contains(msg, "asked for other datasets") || r.request(t)["state"] != store.ZFSReceiveAsked {
+	if out["code"] != "request-changed" || r.request(t)["state"] != store.ZFSReceiveAsked {
 		t.Fatalf("an allow of the members shown before the source asked for more = %v, want it refused", out)
 	}
 	if out := r.decide(t, map[string]any{"decision": "allow", "pool": "tank", "root": receiveRoot}); out["ok"] != true {
