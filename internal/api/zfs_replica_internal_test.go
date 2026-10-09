@@ -959,6 +959,55 @@ func TestAServerForgetsItsHostKeyOnlyWhenItsAddressChanges(t *testing.T) {
 	}
 }
 
+func TestForgettingAHostKeyRemovesOnlyThatServersPin(t *testing.T) {
+	r := newReplicaRig(t)
+	other, err := r.st.CreateZFSReplicaServer(store.ZFSReplicaServer{
+		Name: "other", Host: "other.lan", User: "root", Port: 22, Pool: "tank", Root: "tank/r", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pin, otherPin := r.s.zfsReplicaKnownHosts(r.srv.ID), r.s.zfsReplicaKnownHosts(other.ID)
+	for _, p := range []string{pin, otherPin} {
+		if err := os.MkdirAll(filepath.Dir(p), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte("backup.lan ssh-ed25519 AAAA\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	key := filepath.Join(r.s.zfsReplicaKeyDir(), "id_ed25519")
+	if err := os.WriteFile(key, []byte("private"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	unlock, _ := r.s.lockZFSReplica(r.item.ID)
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/replica/servers/"+r.srv.ID+"/forget-host-key", "")
+	unlock()
+	if m["ok"] != false {
+		t.Errorf("forget while an item replicates = %v, want refused", m)
+	}
+	if _, err := os.Stat(pin); err != nil {
+		t.Errorf("a refused forget removed the pin: %v", err)
+	}
+
+	if _, m, _ = r.call(http.MethodPost, "/api/zfs/replica/servers/"+r.srv.ID+"/forget-host-key", ""); m["ok"] != true {
+		t.Fatalf("forget = %v", m)
+	}
+	if _, err := os.Stat(pin); !os.IsNotExist(err) {
+		t.Errorf("the server kept its pinned key: %v", err)
+	}
+	for _, p := range []string{otherPin, key} {
+		if _, err := os.Stat(p); err != nil {
+			t.Errorf("forgetting one server's key took %s: %v", p, err)
+		}
+	}
+	_, m, _ = r.call(http.MethodPost, "/api/zfs/replica/servers/0123456789abcdef0123456789abcdef/forget-host-key", "")
+	if m["ok"] != false || m["code"] != "not-found" {
+		t.Errorf("forget on a server that does not exist = %v, want not-found", m)
+	}
+}
+
 func TestAServerIDNeverReachesTheReplicaKey(t *testing.T) {
 	r := newReplicaRig(t)
 	srv, err := r.st.CreateZFSReplicaServer(store.ZFSReplicaServer{

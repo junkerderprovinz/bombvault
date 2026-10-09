@@ -234,6 +234,29 @@ func (s *Service) DeleteZFSReplicaServer(ctx context.Context, id string, detach 
 	return nil
 }
 
+// ForgetZFSReplicaHostKey removes the host key pinned for a server, so the
+// next connection pins the key the server then presents. Like a move of the
+// server, it is refused while one of its items replicates or restores.
+func (s *Service) ForgetZFSReplicaHostKey(id string) error {
+	_, ok, err := s.store.GetZFSReplicaServer(id)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return zfsRefuse("not-found", id)
+	}
+	users, err := s.store.ZFSReplicaServerUsers()
+	if err != nil {
+		return err
+	}
+	unlock, ok := s.lockZFSReplicas(users[id])
+	if !ok {
+		return errZFSReplicaBusy
+	}
+	defer unlock()
+	return os.RemoveAll(filepath.Dir(s.zfsReplicaKnownHosts(id)))
+}
+
 // cleanZFSReplicaSource removes the replica snapshots and bookmarks from an
 // item's tree. What it cannot remove is logged: the setting changes either
 // way, and the leftovers are BombVault's own names a later clean finds again.

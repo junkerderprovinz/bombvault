@@ -21,6 +21,7 @@ func (h *Handler) registerZFSReplicaRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /api/zfs/replica/servers/{id}", h.handlePatchZFSReplicaServer)
 	mux.HandleFunc("DELETE /api/zfs/replica/servers/{id}", h.handleDeleteZFSReplicaServer)
 	mux.HandleFunc("POST /api/zfs/replica/servers/{id}/test", h.handleTestZFSReplicaServer)
+	mux.HandleFunc("POST /api/zfs/replica/servers/{id}/forget-host-key", h.handleForgetZFSReplicaHostKey)
 	mux.HandleFunc("GET /api/zfs/datasets/{id}/replica", h.handleGetZFSReplica)
 	mux.HandleFunc("PATCH /api/zfs/datasets/{id}/replica", h.handlePatchZFSReplica)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/run", h.handleRunZFSReplica)
@@ -143,6 +144,19 @@ func (h *Handler) handleTestZFSReplicaServer(w http.ResponseWriter, r *http.Requ
 	}
 	pools, err := h.svc.TestZFSReplicaServer(r.Context(), id)
 	writeZFSReplicaTest(w, pools, err)
+}
+
+// POST /api/zfs/replica/servers/{id}/forget-host-key
+func (h *Handler) handleForgetZFSReplicaHostKey(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.zfsIDParam(w, r)
+	if !ok {
+		return
+	}
+	if err := h.svc.ForgetZFSReplicaHostKey(id); err != nil {
+		zfsReplicaFail(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 func writeZFSReplicaTest(w http.ResponseWriter, pools []zfs.Pool, err error) {
