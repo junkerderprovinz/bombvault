@@ -967,3 +967,33 @@ func TestAServerIDNeverReachesTheReplicaKey(t *testing.T) {
 		t.Errorf("forgetting the host key of server %s took the replica key: %v", srv.ID, err)
 	}
 }
+
+func TestASuccessToAnEarlierTargetIsNoCurrentReplica(t *testing.T) {
+	r := newReplicaRig(t)
+	settings, _ := r.st.GetSettings()
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	other, err := r.st.CreateZFSReplicaServer(store.ZFSReplicaServer{
+		Name: "second", Host: "two.lan", User: "root", Port: 22, Pool: "pool", Root: "pool/r", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.s.PatchZFSReplica(context.Background(), r.item.ID, ZFSReplicaPatch{
+		Target: &zfsReplicaTargetExport{Kind: store.ZFSReplicaTargetServer, ID: other.ID},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	d, _ := r.st.GetZFSDataset(r.item.ID)
+	now := time.Now().Unix()
+	if lastOK, current := r.s.zfsReplicaCurrency(now, d, settings); current || lastOK != 0 {
+		t.Errorf("currency = %d, %v, want nothing on a target that holds nothing yet", lastOK, current)
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, current := r.s.zfsReplicaCurrency(now, d, settings); !current {
+		t.Error("a success to the new target does not count")
+	}
+}

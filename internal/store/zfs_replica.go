@@ -275,14 +275,24 @@ func (r *Repo) DeleteZFSReplicaServer(id string) error {
 }
 
 func detachZFSReplicaServer(tx *sql.Tx, id string) error {
-	if _, err := tx.Exec(`DELETE FROM zfs_replica_state WHERE item_id IN (
-		SELECT id FROM zfs_datasets WHERE replica_target_kind = ? AND replica_target_id = ?)`,
-		ZFSReplicaTargetServer, id); err != nil {
+	if err := forgetZFSReplicaServerPlace(tx, id); err != nil {
 		return err
 	}
 	_, err := tx.Exec(`UPDATE zfs_datasets SET replica_target_kind = ?, replica_target_id = ''
 		WHERE replica_target_kind = ? AND replica_target_id = ?`,
 		ZFSReplicaTargetNone, ZFSReplicaTargetServer, id)
+	return err
+}
+
+// forgetZFSReplicaServerPlace drops where the items replicating to a server
+// stand there and what their runs there did, for a server that goes away or
+// now points at another place.
+func forgetZFSReplicaServerPlace(tx *sql.Tx, id string) error {
+	const items = `SELECT id FROM zfs_datasets WHERE replica_target_kind = ? AND replica_target_id = ?`
+	if _, err := tx.Exec(`DELETE FROM zfs_replica_state WHERE item_id IN (`+items+`)`, ZFSReplicaTargetServer, id); err != nil {
+		return err
+	}
+	_, err := tx.Exec(`DELETE FROM zfs_replica_runs WHERE item_id IN (`+items+`)`, ZFSReplicaTargetServer, id)
 	return err
 }
 
@@ -300,8 +310,8 @@ func scanZFSReplicaServer(s scanner) (ZFSReplicaServer, error) {
 
 // SetZFSReplicaTarget points the item at a server, at the instance that
 // receives it, or with ZFSReplicaTargetNone at nothing. A different target
-// starts from scratch, so the item's member state and the answer of an old
-// peer target are dropped with it.
+// starts from scratch, so the item's member state, what its runs to the old
+// target did and the answer of an old peer target are dropped with it.
 func (r *Repo) SetZFSReplicaTarget(id, kind, targetID string) error {
 	return r.inTx(func(tx *sql.Tx) error {
 		return setZFSReplicaTarget(tx, "SetZFSReplicaTarget", id, kind, targetID)
@@ -321,7 +331,7 @@ func setZFSReplicaTarget(tx *sql.Tx, label, id, kind, targetID string) error {
 	if oldKind == kind && oldID == targetID {
 		return nil
 	}
-	if _, err := tx.Exec(`DELETE FROM zfs_replica_state WHERE item_id = ?`, id); err != nil {
+	if err := deleteZFSReplicaRows(tx, id); err != nil {
 		return fmt.Errorf("%s state: %w", label, err)
 	}
 	if _, err := tx.Exec(`UPDATE zfs_datasets SET replica_target_kind = ?, replica_target_id = ?,
@@ -590,6 +600,21 @@ func (r *Repo) LatestZFSReplicaRun(itemID string) (ZFSReplicaRun, bool, error) {
 		return ZFSReplicaRun{}, false, err
 	}
 	return ZFSReplicaRun{Run: run, Members: members}, true, nil
+}
+
+// LastZFSReplicaSuccess returns when the item's last successful replica run to
+// its current target finished, 0 when there is none. A new target drops the
+// member detail of the runs before it, so a run without any went elsewhere.
+func (r *Repo) LastZFSReplicaSuccess(itemID string) (int64, error) {
+	var at sql.NullInt64
+	err := r.db.QueryRow(`SELECT MAX(finished_at) FROM runs
+		WHERE target_id = ? AND kind = ? AND status = 'success' AND finished_at IS NOT NULL`+sanePastStamp+`
+		AND EXISTS (SELECT 1 FROM zfs_replica_runs m WHERE m.run_id = runs.id)`,
+		itemID, ZFSReplicaRunKind, saneStampCutoff()).Scan(&at)
+	if err != nil {
+		return 0, fmt.Errorf("LastZFSReplicaSuccess: %w", err)
+	}
+	return at.Int64, nil
 }
 
 // deleteZFSReplicaRows drops the member state and run detail of an item.

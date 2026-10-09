@@ -30,14 +30,15 @@ func zfsReplicaPeriod(d store.ZFSDataset, settings store.Settings) int64 {
 	return cadencePeriodSeconds(d.Replica.Cadence)
 }
 
-// zfsReplicaCurrency is when the item's replica last succeeded and whether
-// that is recent enough to count: within twice its period, the rule backups
-// go by, or without a period at least as new as the last backup.
+// zfsReplicaCurrency is when the item's replica last succeeded on its current
+// target and whether that is recent enough to count: within twice its period,
+// the rule backups go by, or without a period at least as new as the last
+// backup.
 func (s *Service) zfsReplicaCurrency(now int64, d store.ZFSDataset, settings store.Settings) (lastOK int64, current bool) {
 	if d.Replica.TargetKind == store.ZFSReplicaTargetNone {
 		return 0, false
 	}
-	lastOK, err := s.store.LastSuccessOfKind(d.ID, store.ZFSReplicaRunKind)
+	lastOK, err := s.store.LastZFSReplicaSuccess(d.ID)
 	if err != nil {
 		log.Printf("api: zfs replica: reading the last replica of %s failed: %v", d.Dataset, err)
 		return 0, false
