@@ -36,9 +36,18 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 		return Result{}, &Refusal{Code: "snapshot-failed", Detail: e.Root + "@" + snap, Err: err}
 	}
 
-	r := &run{src: source, dst: target, e: e, snap: snap, placeholders: map[string]bool{}}
+	r := &run{src: source, dst: target, e: e, snap: snap, placeholders: map[string]bool{}, own: map[string]bool{snap: true}}
 	for _, p := range e.Placeholders {
 		r.placeholders[p] = true
+	}
+	// Every snapshot of this entry is on its root, so the names there tell
+	// its own leftovers on an excluded dataset from another entry's.
+	if pts, err := points(ctx, source, e.Root); err == nil {
+		for _, p := range snapshots(pts) {
+			if zfs.IsReplicaSnapshot(p.Name) {
+				r.own[p.Name] = true
+			}
+		}
 	}
 	// Whatever the run leaves on the source has to go although it was
 	// cancelled, or every cancelled run adds a snapshot that pins blocks.
@@ -46,10 +55,8 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 	res := Result{Snapshot: snap}
 	for _, d := range tree {
 		switch {
-		// An excluded dataset may be another entry's member, so only the
-		// snapshot this run took there goes.
 		case excluded(d.Name, e.Excluded):
-			r.destroyNew(cleanup, d.Name)
+			r.sweepExcluded(cleanup, d.Name)
 		case ctx.Err() != nil:
 			r.destroyNew(cleanup, d.Name)
 			r.finished(&res, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "not-reached", Err: ctx.Err()})
@@ -67,6 +74,7 @@ type run struct {
 	snap         string
 	placeholders map[string]bool
 	created      []string
+	own          map[string]bool
 }
 
 func (r *run) target(dataset string) string { return r.e.TargetBase + "/" + dataset }
@@ -319,6 +327,31 @@ func (r *run) keepOrDrop(ctx context.Context, m MemberResult) {
 		return
 	}
 	r.destroyNew(ctx, m.Dataset)
+}
+
+// sweepExcluded removes this entry's replica snapshots from an excluded
+// dataset, the run's own and any a run that stopped early left there. Another
+// entry's names stay, and so does a held one: the base of a dataset this entry
+// replicated before it was excluded.
+func (r *run) sweepExcluded(ctx context.Context, dataset string) {
+	pts, err := points(ctx, r.src, dataset)
+	if err != nil {
+		log.Printf("zfs replica: listing the snapshots of %s failed: %v", dataset, err)
+		r.destroyNew(ctx, dataset)
+		return
+	}
+	for _, p := range snapshots(pts) {
+		if !r.own[p.Name] {
+			continue
+		}
+		args, err := zfs.DestroyReplicaArgs(dataset, p.Name)
+		if err == nil {
+			_, err = r.src.Run(ctx, args)
+		}
+		if err = ignore(err, func(err error) bool { return zfs.IsNotFound(err) || zfs.IsBusy(err) }); err != nil {
+			log.Printf("zfs replica: removing %s@%s failed: %v", dataset, p.Name, err)
+		}
+	}
 }
 
 func (r *run) destroyNew(ctx context.Context, dataset string) {

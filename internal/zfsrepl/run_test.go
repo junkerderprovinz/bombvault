@@ -550,6 +550,27 @@ func TestExcludedChildrenAreNotSentAndKeepNoSnapshot(t *testing.T) {
 	}
 }
 
+func TestARunRemovesWhatAnInterruptedRunLeftOnAnExcludedDataset(t *testing.T) {
+	r := newRig(t)
+	r.src.add("cache/appdata/tmp", "filesystem", false)
+	r.entry.Excluded = []string{"cache/appdata/tmp"}
+	r.ok(r.run())
+
+	// A run that died early left its recursive snapshot everywhere, and
+	// another entry left one of its own on the excluded dataset.
+	stopped := zfs.ReplicaSnapshotName(r.now.Add(-time.Hour))
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex", "cache/appdata/tmp"} {
+		r.src.snapshot(ds, stopped)
+	}
+	foreign := zfs.ReplicaSnapshotName(r.now.Add(-2 * time.Hour))
+	r.src.snapshot("cache/appdata/tmp", foreign)
+
+	r.ok(r.run())
+	if got := r.src.snapNames("cache/appdata/tmp"); !slices.Equal(got, []string{foreign}) {
+		t.Errorf("cache/appdata/tmp keeps %q, want only %q", got, foreign)
+	}
+}
+
 func TestAnExcludedDatasetKeepsTheBaseOfItsOwnEntry(t *testing.T) {
 	r := newRig(t)
 	first := r.run()
