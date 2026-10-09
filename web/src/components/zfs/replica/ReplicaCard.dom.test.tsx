@@ -4,7 +4,7 @@
 // a paired instance that has not allowed it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { I18nProvider, en } from "../../../lib/i18n";
+import { I18nProvider, de, en } from "../../../lib/i18n";
 import { ToastProvider } from "../../../lib/toast";
 import type { ProgressMap } from "../../../lib/progress";
 import type { ZFSReplica, ZFSReplicaPatch } from "../../../lib/api";
@@ -111,6 +111,13 @@ describe("replica card", () => {
     // The rule here is only what the receiving instance is offered.
     expect(screen.getByRole("radiogroup", { name: "Suggested to tower-2" })).toBeTruthy();
     expect(screen.queryByRole("radiogroup", { name: en["zfs.replica.keepTarget"] })).toBeNull();
+  });
+
+  it("names the paired instance wherever a language repeats it", async () => {
+    localStorage.setItem("bv-lang", "de");
+    current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "allowed" });
+    renderCard();
+    expect(await screen.findByText(de["zfs.replica.peer.allowedText"].replaceAll("{peer}", "tower-2"))).toBeTruthy();
   });
 
   it("runs to a paired instance that allowed it and leaves the keep rule to it", async () => {

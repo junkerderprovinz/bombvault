@@ -152,7 +152,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     if (!(await save({ target }))) return;
     if (target.kind === "peer") {
       const peer = group?.members.find((m) => m.id === target.id)?.name || target.id;
-      push(t("zfs.replica.peer.requested").replace("{peer}", () => peer), "success");
+      push(t("zfs.replica.peer.requested").replaceAll("{peer}", () => peer), "success");
     } else if (target.kind === "server") {
       const server = servers.find((s) => s.id === target.id)?.name ?? target.id;
       push(
@@ -166,7 +166,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
   // receiving instance asks about again.
   async function askAgain() {
     if (await save({ target: view.target })) {
-      push(t("zfs.replica.peer.requested").replace("{peer}", () => shownName), "success");
+      push(t("zfs.replica.peer.requested").replaceAll("{peer}", () => shownName), "success");
     }
   }
 
@@ -235,7 +235,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
       {peer && view.peerState !== "" && (
         <div className="flex items-center gap-3 flex-wrap">
           <p className="flex-1 min-w-0 text-xs text-carbon-textSub">
-            {t(PEER_SENTENCE[view.peerState]).replace("{peer}", () => shownName)}
+            {t(PEER_SENTENCE[view.peerState]).replaceAll("{peer}", () => shownName)}
           </p>
           {view.peerState === "revoked" && (
             <Button
@@ -278,8 +278,8 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               allowed the replica, the rule here is what it is offered. */}
           {(!peer || view.peerState !== "allowed") && (
             <ReplicaKeepField
-              label={peer ? t("zfs.replica.peer.keep").replace("{peer}", () => shownName) : t("zfs.replica.keepTarget")}
-              hint={peer ? t("zfs.replica.peer.keepHint").replace("{peer}", () => shownName) : t("zfs.replica.keepTargetHint")}
+              label={peer ? t("zfs.replica.peer.keep").replaceAll("{peer}", () => shownName) : t("zfs.replica.keepTarget")}
+              hint={peer ? t("zfs.replica.peer.keepHint").replaceAll("{peer}", () => shownName) : t("zfs.replica.keepTargetHint")}
               keep={view.keep}
               onChange={(keep) => {
                 setDraft((d) => ({ ...d, keep }));

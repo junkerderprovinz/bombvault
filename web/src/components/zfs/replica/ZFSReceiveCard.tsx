@@ -110,7 +110,7 @@ function AskedRequest({
     setError(null);
     void decide(
       { decision: "allow", pool: shownPool, root: shownRoot.trim(), keep },
-      t("zfs.receive.accepted").replace("{peer}", () => sender).replace("{name}", () => request.item),
+      t("zfs.receive.accepted").replaceAll("{peer}", () => sender).replaceAll("{name}", () => request.item),
     );
   }
 
@@ -118,8 +118,8 @@ function AskedRequest({
     <div className="flex flex-col gap-3 rounded-card bg-carbon-background p-3">
       <div className="flex flex-col gap-0.5">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-carbon-text">
-          {t("zfs.receive.asked").replace("{peer}", () => sender).replace("{name}", () => request.item)}
-          <InfoBubble tip={t("zfs.receive.askedHint").replace("{peer}", () => sender)} />
+          {t("zfs.receive.asked").replaceAll("{peer}", () => sender).replaceAll("{name}", () => request.item)}
+          <InfoBubble tip={t("zfs.receive.askedHint").replaceAll("{peer}", () => sender)} />
         </span>
         <span className="text-xs text-carbon-textMuted">
           {t("zfs.receive.askedAt").replace("{when}", () => relativeTime(t, unixOf(request.askedAt)))}
@@ -183,7 +183,7 @@ function AskedRequest({
           label={t("zfs.receive.decline")}
           labelKey="zfs.receive.decline"
           tone="neutral"
-          onClick={() => void decide({ decision: "refuse" }, t("zfs.receive.declined").replace("{peer}", () => sender))}
+          onClick={() => void decide({ decision: "refuse" }, t("zfs.receive.declined").replaceAll("{peer}", () => sender))}
           disabled={busy !== ""}
           busy={busy === "refuse"}
         />
@@ -244,8 +244,8 @@ function ReceiveSlot({ request, onChanged }: { request: ZFSReceiveRequest; onCha
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0 flex flex-col gap-0.5">
           <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-            {t("zfs.receive.allowed").replace("{peer}", () => sender).replace("{name}", () => request.item)}
-            <InfoBubble tip={t("zfs.receive.allowedHint").replace("{peer}", () => sender)} />
+            {t("zfs.receive.allowed").replaceAll("{peer}", () => sender).replaceAll("{name}", () => request.item)}
+            <InfoBubble tip={t("zfs.receive.allowedHint").replaceAll("{peer}", () => sender)} />
           </span>
           <bdi dir="ltr" className="font-mono text-caption text-carbon-textMuted text-start wrap-anywhere">
             {`${request.root}/${request.sourceServer}`}

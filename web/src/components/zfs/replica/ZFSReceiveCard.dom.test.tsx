@@ -80,6 +80,12 @@ describe("receiving a ZFS replica", () => {
     expect(screen.getByText("14 daily, 8 weekly")).toBeTruthy();
   });
 
+  it("names the asking instance every time the hint mentions it", async () => {
+    renderCard();
+    await screen.findByText("tower-2 wants to replicate cache/appdata here");
+    expect(screen.getByLabelText(en["zfs.receive.askedHint"].replaceAll("{peer}", "tower-2"))).toBeTruthy();
+  });
+
   it("allows with the pool, root and keep rule on screen", async () => {
     renderCard();
     const poolPicker = await screen.findByRole("radiogroup", { name: en["zfs.receive.pool"] });

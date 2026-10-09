@@ -21,11 +21,11 @@ export function ReplicaStatePill({
   if (replica.target.kind === "peer") {
     switch (replica.peerState) {
       case "asked":
-        return <Badge tone="neutral">{t("zfs.replica.peer.asked").replace("{peer}", () => peerName)}</Badge>;
+        return <Badge tone="neutral">{t("zfs.replica.peer.asked").replaceAll("{peer}", () => peerName)}</Badge>;
       case "refused":
-        return <Badge tone="warn">{t("zfs.replica.peer.refused").replace("{peer}", () => peerName)}</Badge>;
+        return <Badge tone="warn">{t("zfs.replica.peer.refused").replaceAll("{peer}", () => peerName)}</Badge>;
       case "revoked":
-        return <Badge tone="warn">{t("zfs.replica.peer.revoked").replace("{peer}", () => peerName)}</Badge>;
+        return <Badge tone="warn">{t("zfs.replica.peer.revoked").replaceAll("{peer}", () => peerName)}</Badge>;
     }
   }
   if (running) return <Badge tone="active">{t("zfs.replica.state.running")}</Badge>;
@@ -39,7 +39,7 @@ export function ReplicaStatePill({
     case "failed":
       return <Badge tone="fail">{t("zfs.replica.state.failed")}</Badge>;
     case "waiting":
-      return <Badge tone="neutral">{t("zfs.replica.state.waiting").replace("{peer}", () => peerName)}</Badge>;
+      return <Badge tone="neutral">{t("zfs.replica.state.waiting").replaceAll("{peer}", () => peerName)}</Badge>;
     default:
       return <Badge tone="neutral">{t("zfs.replica.state.never")}</Badge>;
   }
