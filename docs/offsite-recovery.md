@@ -67,7 +67,7 @@ Turning Local off for an item, so that a target without a direct repository beco
 
 A named repository can be marked **Off the premises** on the Repositories card. Remote repositories start marked; switch it off for a rest-server in the same building. The mark only counts sites and 3-2-1 on the cards. It changes no copy.
 
-A ZFS replica is a copy off the premises, but not a backup with history. It keeps only the snapshots you set, and old versions and single files still come from the backups. It travels over SSH from one ZFS server to another and not over the pairing group. See [Replica](zfs-datasets.md#replica).
+A ZFS replica is a copy off the premises, but not a backup with history. It keeps only the snapshots you set, and old versions and single files still come from the backups. It goes from one ZFS server straight to the other, over SSH to a ZFS server or to the receive endpoint of a paired instance. The pairing group only carries the request. See [Replica](zfs-datasets.md#replica).
 
 ### After a rebuild
 

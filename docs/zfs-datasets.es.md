@@ -114,7 +114,7 @@ Actívala en la tarjeta **Replica** de los ajustes del elemento. Allí eliges ad
 
 Cualquier máquina con ZFS y SSH puede recibir, por ejemplo un segundo Unraid o un TrueNAS. BombVault no tiene por qué ejecutarse allí.
 
-1. En **Ajustes, Storage locations** abre **Add storage location** y elige **ZFS server**.
+1. Abre **Instancias, Servidores ZFS** y haz clic en **Añadir servidor ZFS**.
 2. Introduce dirección, usuario y puerto. El diálogo muestra la clave pública de BombVault. Añádela al `~/.ssh/authorized_keys` del usuario en el servidor. En Unraid está en **Settings, Users, root, SSH keys**.
 3. Prueba la conexión. El diálogo enumera entonces los pools del servidor. Elige uno y define la raíz, que por defecto es `<pool>/bombvault-replica`.
 4. Elige el nuevo servidor en la tarjeta **Replica** del elemento.
@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 En esta dirección, el BombVault que contiene el elemento también tiene una clave que puede escribir en el servidor.
 
-### Recogida por otro BombVault {#replica-pull}
+### Envío a una instancia emparejada {#replica-receive}
 
-A la inversa, un BombVault emparejado recoge la réplica por sí mismo. Entonces el origen no tiene ninguna clave que pueda escribir o borrar en la copia, así que la copia sobrevive aunque alguien se haga con el origen.
+Un BombVault emparejado puede recibir la réplica él mismo. Nadie obtiene acceso SSH al otro host y ninguna clave entra en un archivo `authorized_keys`.
 
-1. En la instancia que debe guardar la copia, abre **Instancias**, luego **Recogida**, pulsa **Add source** y elige **Conjuntos de datos ZFS**.
-2. Elige la instancia emparejada y sus elementos ZFS. Después elige el pool y la raíz de este servidor, la programación y cuántas instantáneas se quedan.
-3. Al guardar se consulta al origen. El elemento de allí muestra la solicitud, y no ocurre nada hasta que alguien pulse **Allow**.
+1. En la tarjeta **Replica** del elemento, elige la instancia emparejada como destino. La tarjeta muestra **Esperando aprobación** hasta que responda.
+2. En la instancia receptora, abre **Instancias**, luego **Recepción**. La tarjeta **ZFS** enumera la solicitud. Elige el pool y la raíz de ese servidor y cuántas instantáneas se quedan, y pulsa **Allow** o **Decline**.
+3. Tras **Allow**, el origen envía según su propia programación, como a cualquier otro destino.
 
-Después, el origen añade una clave para la otra instancia. La clave solo puede enviar las instantáneas de este elemento y crear sus propias instantáneas de réplica. No puede borrar nada ni ver nada más. **Revoke access** en la tarjeta **Replica** del elemento retira la clave en cualquier momento. Lo que la otra instancia ya tiene se queda donde está.
+La instancia receptora solo acepta lo que cubre la aprobación: los conjuntos de datos del elemento, en su propia raíz. Ejecuta `zfs receive` ella misma, y el origen no puede borrar ni revertir nada allí. Por eso la copia sobrevive aunque alguien se haga con el origen. La instancia receptora mantiene su propia retención. El origen solo sugiere una regla cuando hace la solicitud.
 
-La instancia que recoge se ejecuta según su propia programación y se poda a sí misma. La programación y la retención se definen en su lado.
+**Revoke access** en la instancia receptora termina la aprobación en cualquier momento y se lo comunica al origen, que entonces muestra que la aprobación se retiró y se detiene. Lo que la instancia receptora ya tiene se queda donde está. Una solicitud rechazada sigue rechazada. Más conjuntos de datos, o una solicitud tras una revocación, vuelven a pedir aprobación.
 
 ### Dónde acaban los datos {#replica-target}
 

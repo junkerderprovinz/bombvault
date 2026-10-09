@@ -114,7 +114,7 @@ Attivala nella scheda **Replica** delle impostazioni dell'elemento. Lì scegli d
 
 Qualsiasi macchina con ZFS e SSH può ricevere, per esempio un secondo Unraid o un TrueNAS. BombVault non deve girare lì.
 
-1. In **Impostazioni, Storage locations** apri **Add storage location** e scegli **ZFS server**.
+1. Apri **Istanze, Server ZFS** e clicca su **Aggiungi server ZFS**.
 2. Inserisci indirizzo, utente e porta. La finestra mostra la chiave pubblica di BombVault. Aggiungila al file `~/.ssh/authorized_keys` dell'utente sul server. Su Unraid si trova in **Settings, Users, root, SSH keys**.
 3. Prova la connessione. La finestra elenca poi i pool del server. Scegline uno e imposta la radice, che di default è `<pool>/bombvault-replica`.
 4. Scegli il nuovo server nella scheda **Replica** dell'elemento.
@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In questa direzione il BombVault che tiene l'elemento tiene anche una chiave che può scrivere sul server.
 
-### Prelievo da un altro BombVault {#replica-pull}
+### Invio a un'istanza abbinata {#replica-receive}
 
-Nell'altro senso, un BombVault abbinato preleva la replica da sé. La sorgente non ha allora nessuna chiave che possa scrivere o eliminare sulla copia, così la copia sopravvive a una sorgente di cui qualcuno ha preso il controllo.
+Un BombVault abbinato può ricevere la replica da sé. Nessuno ottiene accesso SSH all'altro host e nessuna chiave finisce in un file `authorized_keys`.
 
-1. Sull'istanza che deve tenere la copia apri **Instances**, poi **Fetch**, premi **Add source** e scegli **ZFS datasets**.
-2. Scegli l'istanza abbinata e i suoi elementi ZFS. Poi scegli il pool e la radice su questo server, il piano e quanti snapshot restano.
-3. Il salvataggio interroga la sorgente. L'elemento lì mostra la richiesta, e non succede nulla finché qualcuno non preme **Allow**.
+1. Nella scheda **Replica** dell'elemento scegli l'istanza abbinata come destinazione. La scheda mostra **In attesa di approvazione** finché non risponde.
+2. Sull'istanza che riceve apri **Instances**, poi **Ricevi**. La scheda **ZFS** elenca la richiesta. Scegli il pool e la radice su quel server e quanti snapshot restano, poi premi **Allow** o **Decline**.
+3. Dopo **Allow** la sorgente invia secondo il proprio piano, come per qualsiasi altra destinazione.
 
-Dopo di che la sorgente aggiunge una chiave per l'altra istanza. La chiave può solo inviare gli snapshot di questo elemento e creare i propri snapshot di replica. Non può eliminare nulla e non può vedere nient'altro. **Revoke access** nella scheda **Replica** dell'elemento toglie la chiave in qualsiasi momento. Ciò che l'altra istanza ha già resta lì.
+L'istanza che riceve accetta solo ciò che l'approvazione copre: i dataset dell'elemento, nella propria radice. Esegue `zfs receive` da sola, e la sorgente non ha modo di eliminare o ripristinare nulla lì. Così la copia sopravvive a una sorgente di cui qualcuno ha preso il controllo. L'istanza che riceve tiene la propria conservazione. La sorgente suggerisce una regola solo quando fa la richiesta.
 
-L'istanza che preleva viene eseguita con il proprio piano e fa pulizia da sola. Piano e conservazione si impostano dal suo lato.
+**Revoke access** sull'istanza che riceve termina l'approvazione in qualsiasi momento e lo comunica alla sorgente, che allora mostra che l'approvazione è stata ritirata e si ferma. Ciò che l'istanza che riceve ha già resta lì. Una richiesta rifiutata resta rifiutata. Altri dataset, o una richiesta dopo una revoca, chiedono di nuovo.
 
 ### Dove finiscono i dati {#replica-target}
 

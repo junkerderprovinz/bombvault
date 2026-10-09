@@ -114,7 +114,7 @@ Schakel haar in op de kaart **Replica** in de instellingen van het item. Daar ki
 
 Elke machine met ZFS en SSH kan ontvangen, bijvoorbeeld een tweede Unraid of een TrueNAS. BombVault hoeft daar niet te draaien.
 
-1. Open onder **Instellingen, Storage locations** de optie **Add storage location** en kies **ZFS server**.
+1. Open **Instanties, ZFS-servers** en klik op **ZFS-server toevoegen**.
 2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Settings, Users, root, SSH keys**.
 3. Test de verbinding. Het venster toont dan de pools van de server. Kies er een en stel de root in, die standaard `<pool>/bombvault-replica` is.
 4. Kies de nieuwe server op de kaart **Replica** van het item.
@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 In deze richting heeft de BombVault die het item beheert ook een sleutel waarmee op de server kan worden geschreven.
 
-### Ophalen door een andere BombVault {#replica-pull}
+### Versturen naar een gekoppelde instantie {#replica-receive}
 
-Andersom haalt een gekoppelde BombVault de replica zelf op. De bron heeft dan geen sleutel waarmee op de kopie kan worden geschreven of gewist, dus de kopie overleeft een bron die iemand heeft overgenomen.
+Een gekoppelde BombVault kan de replica zelf ontvangen. Niemand krijgt SSH-toegang tot de andere host en er komt geen sleutel in een `authorized_keys`-bestand.
 
-1. Open op de instantie die de kopie moet bewaren **Instanties**, dan **Ophalen**, druk op **Bron toevoegen** en kies **ZFS-datasets**.
-2. Kies de gekoppelde instantie en haar ZFS-items. Kies daarna de pool en root op deze server, het schema en hoeveel snapshots blijven.
-3. Bij het opslaan wordt de bron gevraagd. Het item daar toont het verzoek, en er gebeurt niets totdat iemand op **Toestaan** drukt.
+1. Kies op de kaart **Replica** van het item de gekoppelde instantie als doel. De kaart toont **Wacht op goedkeuring** totdat die antwoordt.
+2. Open op de ontvangende instantie **Instanties**, dan **Ontvangen**. De kaart **ZFS** toont het verzoek. Kies de pool en root op die server en hoeveel snapshots blijven, en druk dan op **Toestaan** of **Afwijzen**.
+3. Na **Toestaan** verstuurt de bron volgens haar eigen schema, net als bij elk ander doel.
 
-Daarna voegt de bron een sleutel toe voor de andere instantie. De sleutel kan alleen de snapshots van dit item versturen en eigen replica-snapshots maken. Hij kan niets verwijderen en niets anders zien. **Revoke access** op de kaart **Replica** van het item verwijdert de sleutel op elk moment. Wat de andere instantie al heeft, blijft daar staan.
+De ontvangende instantie accepteert alleen wat de goedkeuring dekt: de datasets van het item, in haar eigen root. Ze voert zelf `zfs receive` uit en de bron kan daar niets verwijderen of terugdraaien. Zo overleeft de kopie een bron die iemand heeft overgenomen. De ontvangende instantie houdt haar eigen retentie aan. De bron stelt alleen een regel voor wanneer ze het verzoek doet.
 
-De ophalende instantie draait volgens haar eigen schema en ruimt zelf op. Schema en retentie stel je aan haar kant in.
+**Revoke access** op de ontvangende instantie beëindigt de goedkeuring op elk moment en meldt dat aan de bron, die dan toont dat de goedkeuring is ingetrokken en stopt. Wat de ontvangende instantie al heeft, blijft daar staan. Een afgewezen verzoek blijft afgewezen. Meer datasets, of een verzoek na een intrekking, vragen opnieuw om goedkeuring.
 
 ### Waar de data terechtkomt {#replica-target}
 

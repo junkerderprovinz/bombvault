@@ -114,7 +114,7 @@ Kapcsold be az elem beállításainak **Replica** kártyáján. Ott választod k
 
 Bármely gép fogadhat, amelyen van ZFS és SSH, például egy második Unraid vagy egy TrueNAS. A BombVaultnak nem kell ott futnia.
 
-1. A **Beállítások, Storage locations** alatt nyisd meg az **Add storage location** részt, és válaszd a **ZFS server** lehetőséget.
+1. Nyisd meg a **Példányok, ZFS-kiszolgálók** lapot, és kattints a **ZFS-kiszolgáló hozzáadása** gombra.
 2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Settings, Users, root, SSH keys** alatt van.
 3. Teszteld a kapcsolatot. A párbeszédablak ezután felsorolja a kiszolgáló poolait. Válassz egyet, és add meg a gyökeret, amelynek alapértéke `<pool>/bombvault-replica`.
 4. Válaszd ki az új kiszolgálót az elem **Replica** kártyáján.
@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Ebben az irányban az elemet tároló BombVault olyan kulcsot is tárol, amellyel írni lehet a kiszolgálón.
 
-### Lehúzás egy másik BombVault által {#replica-pull}
+### Küldés párosított példányra {#replica-receive}
 
-Fordított irányban egy párosított BombVault maga húzza le a replikát. A forrásnak ekkor nincs olyan kulcsa, amellyel írni vagy törölni lehetne a másolaton, így a másolat túléli azt, ha valaki átvette a forrás feletti irányítást.
+Egy párosított BombVault maga is fogadhatja a replikát. Senki nem kap SSH-hozzáférést a másik gazdához, és egyetlen kulcs sem kerül egy `authorized_keys` fájlba.
 
-1. Azon a példányon, amelynek a másolatot kell tartania, nyisd meg az **Instances** részt, majd a **Fetch** lapot, nyomd meg az **Add source** gombot, és válaszd a **ZFS datasets** lehetőséget.
-2. Válaszd ki a párosított példányt és a ZFS-elemeit. Ezután válaszd ki a poolt és a gyökeret ezen a kiszolgálón, az ütemezést és azt, hány pillanatkép maradjon.
-3. A mentés megkérdezi a forrást. Az elem ott megmutatja a kérést, és addig nem történik semmi, amíg valaki meg nem nyomja az **Allow** gombot.
+1. Az elem **Replica** kártyáján válaszd célnak a párosított példányt. A kártya **Waiting for approval** állapotot mutat, amíg a példány nem válaszol.
+2. A fogadó példányon nyisd meg az **Instances** részt, majd a **Receive** lapot. A **ZFS** kártya felsorolja a kérést. Válaszd ki a poolt és a gyökeret azon a kiszolgálón, és hogy hány pillanatkép maradjon, majd nyomd meg az **Allow** vagy a **Decline** gombot.
+3. Az **Allow** után a forrás a saját ütemezése szerint küld, mint bármelyik másik célra.
 
-Ezután a forrás hozzáad egy kulcsot a másik példánynak. A kulcs csak ennek az elemnek a pillanatképeit tudja elküldeni, és saját replika-pillanatképeket létrehozni. Semmit nem tud törölni, és semmi mást nem lát. Az elem **Replica** kártyáján a **Revoke access** bármikor eltávolítja a kulcsot. Amit a másik példány már tart, az ott marad.
+A fogadó példány csak azt fogadja el, amit a jóváhagyás lefed: az elem adatkészleteit, a saját gyökerébe. Maga futtatja a `zfs receive` parancsot, és a forrásnak nincs módja arra, hogy ott bármit töröljön vagy visszagörgessen. A másolat így akkor is túléli, ha valaki átvette a forrás feletti irányítást. A fogadó példány a saját megőrzését alkalmazza. A forrás csak javasol egy szabályt, amikor kéri a küldést.
 
-A lehúzó példány a saját ütemezése szerint fut, és maga takarít. Az ütemezést és a megőrzést az ő oldalán kell beállítani.
+A fogadó példányon a **Revoke access** bármikor megszünteti a jóváhagyást, és értesíti a forrást, amely ekkor jelzi, hogy a jóváhagyást visszavonták, és leáll. Amit a fogadó példány már tart, az ott marad. Az elutasított kérés elutasított marad. További adatkészletek, vagy egy visszavonás utáni kérés újra jóváhagyást kérnek.
 
 ### Hová kerülnek az adatok {#replica-target}
 

@@ -114,7 +114,7 @@ Replika yedeğin yerini hiçbir zaman almaz. Eski sürümler, tek tek dosyalar v
 
 ZFS ve SSH olan her makine alabilir, örneğin ikinci bir Unraid veya bir TrueNAS. BombVault'un orada çalışması gerekmez.
 
-1. **Settings, Storage locations** altında **Add storage location**'ı açın ve **ZFS server**'ı seçin.
+1. **Örnekler, ZFS sunucuları** bölümünü açın ve **ZFS sunucusu ekle**'ye tıklayın.
 2. Adresi, kullanıcıyı ve portu girin. Pencere BombVault'un genel anahtarını gösterir. Onu sunucuda kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin. Unraid'de bu **Settings, Users, root, SSH keys** altındadır.
 3. Bağlantıyı sınayın. Pencere ardından sunucunun havuzlarını listeler. Birini seçin ve varsayılanı `<pool>/bombvault-replica` olan kökü belirleyin.
 4. Öğenin **Replica** kartında yeni sunucuyu seçin.
@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 Bu yönde, öğeyi tutan BombVault sunucuda yazabilen bir anahtarı da tutar.
 
-### Başka bir BombVault'un çekmesi {#replica-pull}
+### Eşleştirilmiş bir örneğe gönderme {#replica-receive}
 
-Ters yönde, eşleştirilmiş bir BombVault replikayı kendisi çeker. Kaynakta kopya üzerinde yazabilen ya da silebilen bir anahtar olmaz, bu yüzden kaynağı biri ele geçirse bile kopya korunur.
+Eşleştirilmiş bir BombVault replikayı kendisi alabilir. Kimse diğer ana makineye SSH erişimi kazanmaz ve hiçbir anahtar `authorized_keys` dosyasına girmez.
 
-1. Kopyayı tutacak örnekte **Örnekler**'i, ardından **Fetch**'i açın, **Add source**'a basın ve **ZFS datasets**'i seçin.
-2. Eşleştirilmiş örneği ve onun ZFS öğelerini seçin. Sonra bu sunucuda havuzu ve kökü, planı ve kaç anlık görüntünün kalacağını seçin.
-3. Kaydetmek kaynağa sorar. Oradaki öğe isteği gösterir ve biri **İzin ver**'e basana kadar hiçbir şey olmaz.
+1. Öğenin **Replica** kartında hedef olarak eşleştirilmiş örneği seçin. Kart, örnek yanıt verene kadar **Onay bekleniyor** gösterir.
+2. Alan örnekte **Örnekler**'i, ardından **Receive**'i açın. **ZFS** kartı isteği listeler. O sunucuda havuzu ve kökü, ayrıca kaç anlık görüntünün kalacağını seçin, sonra **İzin ver**'e veya **Reddet**'e basın.
+3. **İzin ver**'den sonra kaynak, başka herhangi bir hedefte olduğu gibi kendi planına göre gönderir.
 
-Bundan sonra kaynak diğer örnek için bir anahtar ekler. Anahtar yalnızca bu öğenin anlık görüntülerini gönderebilir ve kendi replika anlık görüntülerini oluşturabilir. Hiçbir şeyi silemez ve başka hiçbir şeyi göremez. Öğenin **Replica** kartındaki **Revoke access** anahtarı istediğiniz zaman kaldırır. Diğer örneğin zaten elinde olanlar orada kalır.
+Alan örnek yalnızca onayın kapsadığını kabul eder: öğenin veri kümelerini, kendi köküne. `zfs receive` komutunu kendisi çalıştırır ve kaynağın orada bir şeyi silme ya da geri alma yolu yoktur. Bu yüzden kaynağı biri ele geçirse bile kopya korunur. Alan örnek kendi saklama kuralını uygular. Kaynak, istek gönderirken yalnızca bir kural önerir.
 
-Çeken örnek kendi planına göre çalışır ve kendi kendini budar. Plan ve saklama onun tarafında belirlenir.
+Alan örnekteki **Revoke access** onayı istediğiniz zaman sona erdirir ve kaynağa bildirir. Kaynak onayın geri çekildiğini gösterir ve durur. Alan örneğin zaten elinde olanlar orada kalır. Reddedilen bir istek reddedilmiş kalır. Daha fazla veri kümesi için ya da bir iptalden sonra yeniden istek gerekir.
 
 ### Verinin indiği yer {#replica-target}
 

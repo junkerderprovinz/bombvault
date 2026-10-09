@@ -114,7 +114,7 @@ Slå den på i kortet **Replica** i elementets innstillinger. Der velger du hvor
 
 Alle maskiner med ZFS og SSH kan ta imot, for eksempel en andre Unraid eller en TrueNAS. BombVault trenger ikke å kjøre der.
 
-1. Under **Innstillinger, Storage locations** åpner du **Add storage location** og velger **ZFS server**.
+1. Åpne **Instanser, ZFS-servere** og klikk på **Legg til ZFS-server**.
 2. Skriv inn adresse, bruker og port. Dialogen viser BombVaults offentlige nøkkel. Legg den til i brukerens `~/.ssh/authorized_keys` på serveren. På Unraid finner du det under **Settings, Users, root, SSH keys**.
 3. Test tilkoblingen. Dialogen lister deretter poolene på serveren. Velg en og angi roten, som som standard er `<pool>/bombvault-replica`.
 4. Velg den nye serveren i kortet **Replica** på elementet.
@@ -133,17 +133,17 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 I denne retningen har BombVault-en som eier elementet også en nøkkel som kan skrive på serveren.
 
-### Henting fra en annen BombVault {#replica-pull}
+### Sending til en paret instans {#replica-receive}
 
-Motsatt henter en paret BombVault replikaen selv. Kilden har da ingen nøkkel som kan skrive eller slette på kopien, så kopien overlever en kilde som noen har tatt over.
+En paret BombVault kan ta imot replikaen selv. Ingen får SSH-tilgang til den andre verten, og ingen nøkkel havner i en `authorized_keys`-fil.
 
-1. På instansen som skal holde kopien åpner du **Instanser**, deretter **Henting**, trykker **Legg til kilde** og velger **ZFS-datasett**.
-2. Velg den parede instansen og ZFS-elementene dens. Velg deretter pool og rot på denne serveren, planen og hvor mange øyeblikksbilder som blir igjen.
-3. Ved lagring spørres kilden. Elementet der viser forespørselen, og ingenting skjer før noen trykker **Tillat**.
+1. I kortet **Replica** på elementet velger du den parede instansen som mål. Kortet viser **Venter på godkjenning** til den svarer.
+2. På den mottakende instansen åpner du **Instanser**, deretter **Mottak**. Kortet **ZFS** viser forespørselen. Velg pool og rot på den serveren og hvor mange øyeblikksbilder som blir igjen, og trykk så **Tillat** eller **Avslå**.
+3. Etter **Tillat** sender kilden etter sin egen plan, som for ethvert annet mål.
 
-Etter det legger kilden til en nøkkel for den andre instansen. Nøkkelen kan bare sende dette elementets øyeblikksbilder og lage sine egne replika-øyeblikksbilder. Den kan ikke slette noe og kan ikke se noe annet. **Revoke access** i elementets kort **Replica** fjerner nøkkelen når som helst. Det den andre instansen allerede har, blir liggende.
+Den mottakende instansen godtar bare det godkjenningen dekker: elementets datasett, inn i sin egen rot. Den kjører `zfs receive` selv, og kilden har ingen måte å slette eller rulle tilbake noe der på. Derfor overlever kopien en kilde som noen har tatt over. Den mottakende instansen har sin egen oppbevaring. Kilden foreslår bare en regel når den ber om godkjenning.
 
-Den hentende instansen kjører etter sin egen plan og rydder selv. Plan og oppbevaring stilles inn på dens side.
+**Revoke access** på den mottakende instansen avslutter godkjenningen når som helst og forteller det til kilden, som da viser at godkjenningen er trukket tilbake og stopper. Det den mottakende instansen allerede har, blir liggende. En avslått forespørsel forblir avslått. Flere datasett, eller en forespørsel etter en tilbaketrekking, spør på nytt.
 
 ### Hvor dataene havner {#replica-target}
 
