@@ -2,7 +2,7 @@
 
 Siden **ZFS** tar sikkerhetskopi av ZFS-datasett. Et element er ett datasett sammen med alle datasett under det. For hver sikkerhetskopi tar BombVault ett ZFS-øyeblikksbilde av hele treet, slik at hvert datasett i det fanges i samme øyeblikk. Deretter leser det filene i hvert datasett fra det øyeblikksbildet, lagrer dem med restic på samme måte som en mappe og fjerner øyeblikksbildet rett etterpå. Sikkerhetskopiene er deduplisert, du kan bla gjennom hver av dem, og enkeltfiler kan gjenopprettes.
 
-BombVault bruker aldri `zfs send` for datasett, ruller aldri et datasett tilbake og sletter aldri et.
+Sikkerhetskopien sender aldri en strøm inn i restic og ruller aldri et datasett tilbake. BombVault sletter bare øyeblikksbilder det har laget selv. Den valgfrie [replikaen](#replica) er det eneste stedet som bruker `zfs send`: den kopierer datasettene til en andre ZFS-server og rører ikke sikkerhetskopien.
 
 ## Krav {#requirements}
 
@@ -102,6 +102,89 @@ For å gjenopprette til en ny pool oppretter du poolen og gjenoppretter hvert da
 
 Et kryptert datasett sikkerhetskopieres bare mens nøkkelen er lastet. Ellers hoppes det over med en advarsel; last nøkkelen med `zfs load-key` og monter datasettet. BombVault leser dataene dekryptert og lagrer dem i restics repository, som er kryptert. Har du slått av kryptering i BombVault, er ikke det repositoryet kryptert.
 
+## Replika {#replica}
+
+En replika er en kopi av datasettene til et element på en andre ZFS-server. BombVault holder den oppdatert med `zfs send` og `zfs receive`. Første kjøring sender alt, etter det reiser bare de endrede blokkene. På den andre serveren kan du montere kopien med en gang.
+
+En replika erstatter aldri sikkerhetskopien. Eldre versjoner, enkeltfiler og sjekken kommer fortsatt fra sikkerhetskopiene, og replikaen beholder bare så mange øyeblikksbilder som du stiller inn. En oppdatert replika teller som en kopi utenfor stedet, men et element med replika og uten sikkerhetskopi forblir oransje.
+
+Slå den på i kortet **Replica** i elementets innstillinger. Der velger du hvor replikaen skal, når den kjører (**After every backup** eller **Own plan**) og hvor mange øyeblikksbilder som blir igjen på målet. Kortet viser hvert datasett og hvert volum med status, og **Replikér nå** starter en kjøring. En replikakjøring har sin egen lås, så en lang første overføring aldri holder tilbake sikkerhetskopiene.
+
+### Send til en ZFS-server {#replica-push}
+
+Alle maskiner med ZFS og SSH kan ta imot, for eksempel en andre Unraid eller en TrueNAS. BombVault trenger ikke å kjøre der.
+
+1. Under **Innstillinger, Storage locations** åpner du **Add storage location** og velger **ZFS server**.
+2. Skriv inn adresse, bruker og port. Dialogen viser BombVaults offentlige nøkkel. Legg den til i brukerens `~/.ssh/authorized_keys` på serveren. På Unraid finner du det under **Settings, Users, root, SSH keys**.
+3. Test tilkoblingen. Dialogen lister deretter poolene på serveren. Velg en og angi roten, som som standard er `<pool>/bombvault-replica`.
+4. Velg den nye serveren i kortet **Replica** på elementet.
+
+Med root trengs ingenting mer. En egen bruker trenger disse rettighetene på poolen til målet, som dialogen også viser:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+På kilden trenger samme type bruker disse rettighetene på elementets øverste datasett:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+I denne retningen har BombVault-en som eier elementet også en nøkkel som kan skrive på serveren.
+
+### Henting fra en annen BombVault {#replica-pull}
+
+Motsatt henter en paret BombVault replikaen selv. Kilden har da ingen nøkkel som kan skrive eller slette på kopien, så kopien overlever en kilde som noen har tatt over.
+
+1. På instansen som skal holde kopien åpner du **Instanser**, deretter **Henting**, trykker **Legg til kilde** og velger **ZFS-datasett**.
+2. Velg den parede instansen og ZFS-elementene dens. Velg deretter pool og rot på denne serveren, planen og hvor mange øyeblikksbilder som blir igjen.
+3. Ved lagring spørres kilden. Elementet der viser forespørselen, og ingenting skjer før noen trykker **Tillat**.
+
+Etter det legger kilden til en nøkkel for den andre instansen. Nøkkelen kan bare sende dette elementets øyeblikksbilder og lage sine egne replika-øyeblikksbilder. Den kan ikke slette noe og kan ikke se noe annet. **Revoke access** i elementets kort **Replica** fjerner nøkkelen når som helst. Det den andre instansen allerede har, blir liggende.
+
+Den hentende instansen kjører etter sin egen plan og rydder selv. Plan og oppbevaring stilles inn på dens side.
+
+### Hvor dataene havner {#replica-target}
+
+Hvert datasett havner i `<root>/<server>/<pool>/<path>`. Servermappen er navnet på kildeinstansen, fastsatt ved første overføring, så to servere med samme poolnavn aldri kommer i veien for hverandre. For eksempel havner `cache/appdata` fra en server som heter `tower` i `backup/bombvault-replica/tower/cache/appdata`.
+
+Kopien på målet er skrivebeskyttet og ikke montert, så den dekker aldri noe på den serveren. ZFS-egenskaper følger med, bortsett fra monteringspunktet og `sharenfs` og `sharesmb`.
+
+### Hva som tas med {#replica-contents}
+
+Alt elementet sikkerhetskopierer tas med, og volumene under det også, som sikkerhetskopien hopper over. Et underordnet datasett du har slått av i elementet, blir utelatt. Alle datasett i en kjøring kommer fra ett øyeblikksbilde, som i sikkerhetskopien.
+
+### Hvor lenge øyeblikksbilder blir liggende {#replica-retention}
+
+På målet beholder en ny replika 7 daglige og 3 ukentlige øyeblikksbilder. Velg heller **Short**, **Balanced** eller **Long**, eller angi **Custom values**. Bare øyeblikksbilder som heter `bombvault-replica-<14 digits>` blir noen gang fjernet der, og aldri det nyeste som begge sider deler.
+
+På kilden beholder BombVault bare det siste replika-øyeblikksbildet, pluss et bokmerke for hver tilstand det har sendt. Bokmerker koster ingen plass. Neste overføring starter fra dem.
+
+### Krypterte datasett i en replika {#replica-encryption}
+
+Et kryptert datasett sendes raw. Det forblir kryptert på målet, og målet ser aldri nøkkelen. Ta godt vare på nøkkelen: du trenger den for å åpne kopien etter en gjenoppretting, og en replika uten den er uleselig.
+
+### Bruke replikaen {#replica-use}
+
+Åpne fanen **Sikkerhetskopier** på elementet og klikk på replikaraden i kortet **Storage locations**. Arket lister øyeblikksbildene på målet og viser kommandoene med dine egne navn.
+
+For å se på en gammel tilstand kloner du et øyeblikksbilde på målet. En klone tar ingen plass før noe endres, og replikaen blir urørt:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+```
+
+Hvis kilden svikter, gjør du kopien på målet om til et vanlig, skrivbart datasett:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault slutter etterpå å replikere til det datasettet, helt til du starter en ny første kjøring.
+
+For å få en tilstand tilbake til kilden trykker du **Bring back as a new dataset** i arket. BombVault sender øyeblikksbildet til et nytt datasett ved siden av originalen, med navnet `<dataset>-bombvault-restore-` pluss et tidsstempel. Originalen blir aldri overskrevet.
+
 ## Gjenværende øyeblikksbilder {#leftover-snapshots}
 
 Øyeblikksbildet av en sikkerhetskopi heter `<dataset>@bombvault-<14 sifre>`, for eksempel `cache/appdata@bombvault-20260924021500` (UTC). BombVault fjerner det rett etter sikkerhetskopien. Mislykkes det, for eksempel fordi datasettet er opptatt eller BombVault ble stoppet, fjerner BombVault det:
@@ -116,6 +199,8 @@ Bare navn som er nøyaktig `bombvault-` pluss 14 sifre, fjernes. Sikkerhetsøyeb
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Øyeblikksbildet til en replika heter `<dataset>@bombvault-replica-<14 digits>` og er ikke en rest. Det blir liggende på kilden til neste replikakjøring erstatter det, og på målet så lenge oppbevaringen beholder det. Ryddeprosessen rører det aldri, fordi den bare treffer `bombvault-` etterfulgt av nøyaktig 14 sifre.
 
 ## Avvik {#anomalies}
 

@@ -2,7 +2,7 @@
 
 Sidan **ZFS** säkerhetskopierar ZFS-datauppsättningar. Ett objekt är en datauppsättning tillsammans med alla datauppsättningar under den. För varje säkerhetskopia tar BombVault en enda ZFS-ögonblicksbild av hela trädet, så att varje datauppsättning i det fångas i samma ögonblick. Sedan läser det filerna i varje datauppsättning från den ögonblicksbilden, lagrar dem med restic på samma sätt som en mapp och tar bort ögonblicksbilden direkt efteråt. Säkerhetskopiorna är deduplicerade, du kan bläddra i var och en av dem, och enskilda filer kan återställas.
 
-BombVault använder aldrig `zfs send` för datauppsättningar, rullar aldrig tillbaka en datauppsättning och förstör aldrig någon.
+Säkerhetskopian skickar aldrig en ström in i restic och rullar aldrig tillbaka en datauppsättning. BombVault förstör bara ögonblicksbilder som det själv har skapat. Den valfria [repliken](#replica) är det enda som använder `zfs send`: den kopierar datauppsättningarna till en andra ZFS-server och rör inte säkerhetskopian.
 
 ## Krav {#requirements}
 
@@ -102,6 +102,89 @@ För att återställa till en ny pool skapar du poolen och återställer varje d
 
 En krypterad datauppsättning säkerhetskopieras bara medan dess nyckel är laddad. Annars hoppas den över med en varning; ladda nyckeln med `zfs load-key` och montera datauppsättningen. BombVault läser data dekrypterat och lagrar det i restics repository, som är krypterat. Har du stängt av kryptering i BombVault är det repositoryt inte krypterat.
 
+## Replik {#replica}
+
+En replik är en kopia av ett objekts datauppsättningar på en andra ZFS-server. BombVault håller den aktuell med `zfs send` och `zfs receive`. Första körningen skickar allt, sedan skickas bara de ändrade blocken. På den andra servern kan du montera kopian direkt.
+
+En replik ersätter aldrig säkerhetskopian. Äldre versioner, enskilda filer och kontrollen kommer fortfarande från säkerhetskopiorna, och repliken behåller bara så många ögonblicksbilder som du anger. En aktuell replik räknas som en kopia utanför platsen, men ett objekt med replik och utan säkerhetskopia förblir orange.
+
+Slå på den i kortet **Replica** i objektets inställningar. Där väljer du vart repliken går, när den körs (**After every backup** eller **Own plan**) och hur många ögonblicksbilder som blir kvar på målet. Kortet listar varje datauppsättning och volym med dess status, och **Replicate now** startar en körning. En replikkörning har ett eget lås, så en lång första överföring håller aldrig upp säkerhetskopiorna.
+
+### Skicka till en ZFS-server {#replica-push}
+
+Vilken maskin som helst med ZFS och SSH kan ta emot, till exempel en andra Unraid eller en TrueNAS. BombVault behöver inte köra där.
+
+1. Under **Inställningar, Storage locations** öppnar du **Add storage location** och väljer **ZFS server**.
+2. Ange adress, användare och port. Dialogen visar BombVaults publika nyckel. Lägg till den i användarens `~/.ssh/authorized_keys` på servern. På Unraid finns det under **Settings, Users, root, SSH keys**.
+3. Testa anslutningen. Dialogen listar sedan serverns pooler. Välj en och ange roten, som som standard är `<pool>/bombvault-replica`.
+4. Välj den nya servern i kortet **Replica** på objektet.
+
+Med root behövs inget mer. En egen användare behöver de här behörigheterna på målets pool, som dialogen också visar:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+På källan behöver samma sorts användare de här på objektets översta datauppsättning:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+I den här riktningen har BombVault som äger objektet också en nyckel som kan skriva på servern.
+
+### Hämtning av ett annat BombVault {#replica-pull}
+
+Åt andra hållet hämtar ett parkopplat BombVault repliken själv. Källan har då ingen nyckel som kan skriva eller ta bort på kopian, så kopian överlever en källa som någon har tagit över.
+
+1. På instansen som ska ha kopian öppnar du **Instanser**, sedan **Hämtning**, trycker på **Lägg till källa** och väljer **ZFS-datauppsättningar**.
+2. Välj den parkopplade instansen och dess ZFS-objekt. Välj sedan pool och rot på den här servern, schemat och hur många ögonblicksbilder som blir kvar.
+3. Vid sparandet skickas en fråga till källan. Objektet där visar begäran, och ingenting händer förrän någon trycker på **Tillåt**.
+
+Därefter lägger källan till en nyckel för den andra instansen. Nyckeln kan bara skicka det här objektets ögonblicksbilder och skapa egna replikögonblicksbilder. Den kan inte ta bort något och ser ingenting annat. **Revoke access** i objektets kort **Replica** tar bort nyckeln när som helst. Det som den andra instansen redan har blir kvar där.
+
+Den hämtande instansen kör enligt sitt eget schema och rensar själv. Schema och lagringstid ställs in på dess sida.
+
+### Var datan hamnar {#replica-target}
+
+Varje datauppsättning hamnar i `<root>/<server>/<pool>/<path>`. Servermappen är källinstansens namn, som fastställs vid den första överföringen, så två servrar med samma poolnamn kommer aldrig i vägen för varandra. Till exempel hamnar `cache/appdata` på en server som heter `tower` i `backup/bombvault-replica/tower/cache/appdata`.
+
+Kopian på målet är skrivskyddad och inte monterad, så den täcker aldrig något på den servern. ZFS-egenskaper följer med, utom monteringspunkten, `sharenfs` och `sharesmb`.
+
+### Vad som ingår {#replica-contents}
+
+Allt som objektet säkerhetskopierar ingår, och volymerna under det också, som säkerhetskopian hoppar över. En underliggande datauppsättning som du har stängt av i objektet lämnas utanför. Alla datauppsättningar i en körning kommer från en enda ögonblicksbild, som i säkerhetskopian.
+
+### Hur länge ögonblicksbilderna blir kvar {#replica-retention}
+
+På målet behåller en ny replik 7 dagliga och 3 veckovisa ögonblicksbilder. Välj i stället **Short**, **Balanced** eller **Long**, eller ange **Custom values**. Bara ögonblicksbilder med namnet `bombvault-replica-<14 digits>` tas någonsin bort där, och aldrig den nyaste som båda sidor delar.
+
+På källan behåller BombVault bara den senaste replikögonblicksbilden, plus ett bokmärke för varje tillstånd som har skickats. Bokmärken tar ingen plats. Nästa överföring utgår från dem.
+
+### Krypterade datauppsättningar i en replik {#replica-encryption}
+
+En krypterad datauppsättning skickas rå. Den förblir krypterad på målet, och målet ser aldrig nyckeln. Förvara nyckeln säkert: du behöver den för att öppna kopian efter en återställning, och en replik utan den går inte att läsa.
+
+### Använda repliken {#replica-use}
+
+Öppna fliken **Säkerhetskopior** på objektet och klicka på replikraden i kortet **Storage locations**. Bladet listar ögonblicksbilderna på målet och visar kommandona med dina riktiga namn.
+
+För att titta på ett gammalt tillstånd klonar du en ögonblicksbild på målet. En klon tar ingen plats förrän något ändras, och repliken förblir orörd:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+```
+
+Om källan går sönder gör du kopian på målet till en vanlig, skrivbar datauppsättning:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+Efteråt slutar BombVault att replikera till den datauppsättningen, tills du startar en ny första körning.
+
+För att få tillbaka ett tillstånd till källan trycker du på **Bring back as a new dataset** i bladet. BombVault skickar ögonblicksbilden till en ny datauppsättning bredvid originalet, med namnet `<dataset>-bombvault-restore-` plus en tidsstämpel. Det skriver aldrig över originalet.
+
 ## Kvarlämnade ögonblicksbilder {#leftover-snapshots}
 
 Ögonblicksbilden av en säkerhetskopia heter `<dataset>@bombvault-<14 siffror>`, till exempel `cache/appdata@bombvault-20260924021500` (UTC). BombVault tar bort den direkt efter säkerhetskopian. Om det misslyckas, till exempel för att datauppsättningen är upptagen eller BombVault stoppades, tar BombVault bort den:
@@ -116,6 +199,8 @@ Bara namn som exakt är `bombvault-` plus 14 siffror tas bort. Säkerhetsögonbl
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Ögonblicksbilden av en replik heter `<dataset>@bombvault-replica-<14 digits>` och är ingen kvarlämning. Den blir kvar på källan tills nästa replikkörning ersätter den, och på målet så länge lagringstiden behåller den. Städaren rör den aldrig, eftersom den bara matchar `bombvault-` följt av exakt 14 siffror.
 
 ## Avvikelser {#anomalies}
 

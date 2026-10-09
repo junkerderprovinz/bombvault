@@ -2,7 +2,7 @@
 
 De pagina **ZFS** maakt back-ups van ZFS-datasets. Een item is één dataset samen met elke dataset eronder. Voor elke back-up maakt BombVault één ZFS-snapshot van de hele boom, zodat elke dataset erin op hetzelfde moment wordt vastgelegd. Daarna leest het de bestanden van elke dataset uit die snapshot, slaat ze met restic op zoals het een map opslaat en verwijdert de snapshot meteen daarna. De back-ups zijn gededupliceerd, je kunt elke back-up doorbladeren en losse bestanden kunnen worden teruggezet.
 
-BombVault gebruikt nooit `zfs send` voor datasets, zet nooit een dataset terug naar een eerdere stand en vernietigt er nooit een.
+De back-up stuurt nooit een stream naar restic en zet nooit een dataset terug naar een eerdere stand. BombVault vernietigt alleen snapshots die het zelf heeft gemaakt. De optionele [replica](#replica) is de enige plek die `zfs send` gebruikt: ze kopieert de datasets naar een tweede ZFS-server en raakt de back-up niet aan.
 
 ## Vereisten {#requirements}
 
@@ -102,6 +102,89 @@ Om op een nieuwe pool terug te zetten, maak je de pool aan en zet je elke datase
 
 Een versleutelde dataset wordt alleen geback-upt zolang zijn sleutel geladen is. Anders wordt hij overgeslagen met een waarschuwing; laad de sleutel met `zfs load-key` en mount de dataset. BombVault leest de data ontsleuteld en slaat ze op in de repository van restic, die versleuteld is. Heb je versleuteling in BombVault uitgeschakeld, dan is die repository dat niet.
 
+## Replica {#replica}
+
+Een replica is een kopie van de datasets van een item op een tweede ZFS-server. BombVault houdt ze actueel met `zfs send` en `zfs receive`. De eerste keer wordt alles verstuurd, daarna reizen alleen de gewijzigde blokken mee. Op de andere server kun je de kopie meteen mounten.
+
+Een replica vervangt de back-up nooit. Oudere versies, losse bestanden en de controle komen nog steeds uit de back-ups, en de replica bewaart maar zoveel snapshots als je instelt. Een actuele replica telt als kopie buiten de locatie, maar een item met een replica en zonder back-up blijft oranje.
+
+Schakel haar in op de kaart **Replica** in de instellingen van het item. Daar kies je waarheen de replica gaat, wanneer ze draait (**After every backup** of **Own plan**) en hoeveel snapshots er op het doel blijven. De kaart toont elke dataset en elk volume met zijn status, en **Nu repliceren** start een run. Een replica-run heeft een eigen vergrendeling, zodat een lange eerste overdracht de back-ups nooit ophoudt.
+
+### Naar een ZFS-server sturen {#replica-push}
+
+Elke machine met ZFS en SSH kan ontvangen, bijvoorbeeld een tweede Unraid of een TrueNAS. BombVault hoeft daar niet te draaien.
+
+1. Open onder **Instellingen, Storage locations** de optie **Add storage location** en kies **ZFS server**.
+2. Voer adres, gebruiker en poort in. Het venster toont de publieke sleutel van BombVault. Voeg die toe aan de `~/.ssh/authorized_keys` van de gebruiker op de server. Op Unraid staat dat onder **Settings, Users, root, SSH keys**.
+3. Test de verbinding. Het venster toont dan de pools van de server. Kies er een en stel de root in, die standaard `<pool>/bombvault-replica` is.
+4. Kies de nieuwe server op de kaart **Replica** van het item.
+
+Met root is verder niets nodig. Een eigen gebruiker heeft deze rechten nodig op de pool van het doel, die het venster ook toont:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Aan de bronkant heeft dezelfde soort gebruiker deze rechten nodig op de bovenste dataset van het item:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+In deze richting heeft de BombVault die het item beheert ook een sleutel waarmee op de server kan worden geschreven.
+
+### Ophalen door een andere BombVault {#replica-pull}
+
+Andersom haalt een gekoppelde BombVault de replica zelf op. De bron heeft dan geen sleutel waarmee op de kopie kan worden geschreven of gewist, dus de kopie overleeft een bron die iemand heeft overgenomen.
+
+1. Open op de instantie die de kopie moet bewaren **Instanties**, dan **Ophalen**, druk op **Bron toevoegen** en kies **ZFS-datasets**.
+2. Kies de gekoppelde instantie en haar ZFS-items. Kies daarna de pool en root op deze server, het schema en hoeveel snapshots blijven.
+3. Bij het opslaan wordt de bron gevraagd. Het item daar toont het verzoek, en er gebeurt niets totdat iemand op **Toestaan** drukt.
+
+Daarna voegt de bron een sleutel toe voor de andere instantie. De sleutel kan alleen de snapshots van dit item versturen en eigen replica-snapshots maken. Hij kan niets verwijderen en niets anders zien. **Revoke access** op de kaart **Replica** van het item verwijdert de sleutel op elk moment. Wat de andere instantie al heeft, blijft daar staan.
+
+De ophalende instantie draait volgens haar eigen schema en ruimt zelf op. Schema en retentie stel je aan haar kant in.
+
+### Waar de data terechtkomt {#replica-target}
+
+Elke dataset komt terecht op `<root>/<server>/<pool>/<path>`. De servermap is de naam van de broninstantie, vastgelegd bij de eerste overdracht, zodat twee servers met dezelfde poolnaam elkaar nooit in de weg zitten. `cache/appdata` van een server met de naam `tower` komt bijvoorbeeld terecht op `backup/bombvault-replica/tower/cache/appdata`.
+
+De kopie op het doel is alleen-lezen en niet gemount, dus ze bedekt nooit iets op die server. ZFS-eigenschappen reizen mee, behalve het mountpoint en `sharenfs` en `sharesmb`.
+
+### Wat erin zit {#replica-contents}
+
+Alles wat het item back-upt, gaat erin, en ook de volumes eronder, die de back-up overslaat. Een onderliggende dataset die je in het item hebt uitgeschakeld, blijft erbuiten. Alle datasets van een run komen uit één snapshot, net als bij de back-up.
+
+### Hoe lang snapshots blijven {#replica-retention}
+
+Op het doel bewaart een nieuwe replica 7 dagelijkse en 3 wekelijkse snapshots. Kies in plaats daarvan **Short**, **Balanced** of **Long**, of stel **Custom values** in. Alleen snapshots met de naam `bombvault-replica-<14 digits>` worden daar ooit verwijderd, en nooit de nieuwste die beide kanten delen.
+
+Aan de bronkant bewaart BombVault alleen de laatste replica-snapshot, plus een bookmark voor elke verstuurde stand. Bookmarks kosten geen ruimte. De volgende overdracht begint daarvandaan.
+
+### Versleutelde datasets in een replica {#replica-encryption}
+
+Een versleutelde dataset wordt raw verstuurd. Hij blijft op het doel versleuteld en het doel ziet de sleutel nooit. Bewaar de sleutel goed: je hebt hem nodig om de kopie na een herstel te openen, en een replica zonder sleutel is onleesbaar.
+
+### De replica gebruiken {#replica-use}
+
+Open het tabblad **Back-ups** van het item en klik op de replicarij op de kaart **Storage locations**. Het blad toont de snapshots op het doel en de commando's met je echte namen.
+
+Om een oude stand te bekijken, kloon je een snapshot op het doel. Een kloon neemt geen ruimte in totdat er iets verandert, en de replica blijft onaangeraakt:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+```
+
+Als de bron uitvalt, maak je van de kopie op het doel een gewone, beschrijfbare dataset:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault stopt daarna met repliceren naar die dataset, totdat je een nieuwe eerste run start.
+
+Om een stand terug te brengen naar de bron, druk je in het blad op **Bring back as a new dataset**. BombVault stuurt de snapshot naar een nieuwe dataset naast het origineel, met de naam `<dataset>-bombvault-restore-` plus een tijdstempel. Het origineel wordt nooit overschreven.
+
 ## Achtergebleven snapshots {#leftover-snapshots}
 
 De snapshot van een back-up heet `<dataset>@bombvault-<14 cijfers>`, bijvoorbeeld `cache/appdata@bombvault-20260924021500` (UTC). BombVault verwijdert hem direct na de back-up. Lukt dat niet, bijvoorbeeld omdat de dataset bezet is of BombVault werd gestopt, dan verwijdert BombVault hem:
@@ -116,6 +199,8 @@ Alleen namen die precies `bombvault-` plus 14 cijfers zijn, worden verwijderd. V
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+De snapshot van een replica heet `<dataset>@bombvault-replica-<14 digits>` en is geen restant. Hij blijft op de bron staan totdat de volgende replica-run hem vervangt, en op het doel zolang de retentie hem bewaart. De opruimer raakt hem nooit aan, omdat die alleen `bombvault-` gevolgd door precies 14 cijfers herkent.
 
 ## Anomalieën {#anomalies}
 

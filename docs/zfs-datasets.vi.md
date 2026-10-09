@@ -2,7 +2,7 @@
 
 Trang **ZFS** sao lưu các tập dữ liệu ZFS. Một mục là một tập dữ liệu cùng với mọi tập dữ liệu nằm dưới nó. Với mỗi lần sao lưu, BombVault chụp một ảnh chụp ZFS duy nhất của cả cây, nên mọi tập dữ liệu trong đó được ghi lại ở cùng một thời điểm. Sau đó nó đọc tệp của từng tập dữ liệu từ ảnh chụp đó, lưu bằng restic giống như lưu một thư mục, và xóa ảnh chụp ngay sau đó. Các bản sao lưu được khử trùng lặp, bạn có thể duyệt từng bản, và có thể khôi phục từng tệp riêng lẻ.
 
-BombVault không bao giờ dùng `zfs send` cho tập dữ liệu, không bao giờ quay lui một tập dữ liệu và không bao giờ hủy tập dữ liệu nào.
+Bản sao lưu không bao giờ gửi luồng vào restic và không bao giờ hoàn nguyên một tập dữ liệu. BombVault chỉ hủy những ảnh chụp do chính nó tạo. [Bản nhân bản](#replica) tùy chọn là nơi duy nhất dùng `zfs send`: nó sao chép các tập dữ liệu sang một máy chủ ZFS thứ hai và không động đến bản sao lưu.
 
 ## Yêu cầu {#requirements}
 
@@ -102,6 +102,89 @@ Không có trong bản sao lưu:
 
 Tập dữ liệu được mã hóa chỉ được sao lưu khi khóa của nó đã được nạp. Nếu không, nó bị bỏ qua kèm cảnh báo; hãy nạp khóa bằng `zfs load-key` và gắn kết tập dữ liệu. BombVault đọc dữ liệu đã giải mã và lưu vào kho của restic, vốn được mã hóa. Nếu bạn đã tắt mã hóa trong BombVault thì kho đó không được mã hóa.
 
+## Bản nhân bản {#replica}
+
+Bản nhân bản là bản sao các tập dữ liệu của một mục trên máy chủ ZFS thứ hai. BombVault giữ nó luôn mới bằng `zfs send` và `zfs receive`. Lần chạy đầu gửi toàn bộ, sau đó chỉ các khối đã thay đổi được truyền đi. Trên máy chủ kia bạn có thể gắn kết bản sao ngay.
+
+Bản nhân bản không bao giờ thay thế bản sao lưu. Các phiên bản cũ, từng tệp và việc kiểm tra vẫn lấy từ các bản sao lưu, và bản nhân bản chỉ giữ số ảnh chụp bạn đặt. Một bản nhân bản mới được tính là bản sao off-site, nhưng mục có bản nhân bản mà không có bản sao lưu vẫn ở màu cam.
+
+Bật nó trong thẻ **Replica** trong phần cài đặt của mục. Ở đó bạn chọn nơi đặt bản nhân bản, khi nào nó chạy (**After every backup** hoặc **Own plan**) và số ảnh chụp giữ lại ở đích. Thẻ liệt kê mọi tập dữ liệu và volume cùng trạng thái, còn **Sao chép ngay** bắt đầu một lần chạy. Mỗi lần chạy nhân bản có khóa riêng, nên lần truyền đầu tiên kéo dài không bao giờ làm chậm các bản sao lưu.
+
+### Đẩy sang máy chủ ZFS {#replica-push}
+
+Bất kỳ máy nào có ZFS và SSH đều nhận được, ví dụ một Unraid thứ hai hoặc TrueNAS. BombVault không cần chạy ở đó.
+
+1. Trong **Settings, Storage locations** mở **Add storage location** và chọn **ZFS server**.
+2. Nhập địa chỉ, người dùng và cổng. Hộp thoại hiện khóa công khai của BombVault. Thêm nó vào `~/.ssh/authorized_keys` của người dùng trên máy chủ. Trên Unraid nó nằm ở **Settings, Users, root, SSH keys**.
+3. Thử kết nối. Hộp thoại sau đó liệt kê các pool của máy chủ. Chọn một pool và đặt gốc, mặc định là `<pool>/bombvault-replica`.
+4. Chọn máy chủ mới trong thẻ **Replica** của mục.
+
+Với root thì không cần gì thêm. Một người dùng riêng cần các quyền sau trên pool của đích, hộp thoại cũng hiển thị chúng:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Ở nguồn, người dùng cùng loại cần các quyền sau trên tập dữ liệu trên cùng của mục:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+Theo chiều này, BombVault giữ mục cũng giữ một khóa có thể ghi trên máy chủ.
+
+### Kéo về bởi BombVault khác {#replica-pull}
+
+Theo chiều ngược lại, một BombVault đã ghép đôi tự lấy bản nhân bản về. Khi đó nguồn không có khóa nào có thể ghi hoặc xóa trên bản sao, nên bản sao vẫn còn nguyên dù ai đó đã chiếm quyền nguồn.
+
+1. Trên phiên bản sẽ giữ bản sao, mở **Phiên bản**, rồi **Fetch**, nhấn **Add source** và chọn **ZFS datasets**.
+2. Chọn phiên bản đã ghép đôi và các mục ZFS của nó. Sau đó chọn pool và gốc trên máy chủ này, lịch chạy và số ảnh chụp giữ lại.
+3. Khi lưu, nó gửi yêu cầu tới nguồn. Mục ở đó hiện yêu cầu, và không có gì xảy ra cho đến khi ai đó nhấn **Cho phép**.
+
+Sau đó nguồn thêm một khóa cho phiên bản kia. Khóa chỉ có thể gửi ảnh chụp của mục này và tạo ảnh chụp nhân bản của chính nó. Nó không thể xóa gì và không thấy gì khác. **Revoke access** trong thẻ **Replica** của mục gỡ khóa bất cứ lúc nào. Những gì phiên bản kia đã có vẫn ở lại đó.
+
+Phiên bản lấy về chạy theo lịch của chính nó và tự dọn. Lịch và thời gian lưu giữ được đặt ở phía của nó.
+
+### Dữ liệu nằm ở đâu {#replica-target}
+
+Mỗi tập dữ liệu nằm tại `<root>/<server>/<pool>/<path>`. Thư mục máy chủ là tên của phiên bản nguồn, được cố định ở lần truyền đầu, nên hai máy chủ có cùng tên pool không bao giờ lẫn vào nhau. Ví dụ, `cache/appdata` của máy chủ tên `tower` kết thúc tại `backup/bombvault-replica/tower/cache/appdata`.
+
+Bản sao trên đích ở chế độ chỉ đọc và không được gắn kết, nên nó không che phủ gì trên máy chủ đó. Các thuộc tính ZFS được mang theo, trừ điểm gắn kết, `sharenfs` và `sharesmb`.
+
+### Những gì được đưa vào {#replica-contents}
+
+Mọi thứ mục sao lưu đều được đưa vào, cả các volume bên dưới mà bản sao lưu bỏ qua. Một tập con bạn đã tắt trong mục thì bị loại ra. Mọi tập dữ liệu của một lần chạy đều lấy từ một ảnh chụp, như trong bản sao lưu.
+
+### Ảnh chụp được giữ bao lâu {#replica-retention}
+
+Ở đích, một bản nhân bản mới giữ 7 ảnh chụp hằng ngày và 3 ảnh chụp hằng tuần. Hãy chọn **Short**, **Cân bằng** hoặc **Long**, hoặc đặt **Custom values**. Chỉ các ảnh chụp tên `bombvault-replica-<14 digits>` mới bị xóa ở đó, và không bao giờ xóa ảnh chụp mới nhất mà cả hai phía cùng có.
+
+Ở nguồn, BombVault chỉ giữ ảnh chụp nhân bản mới nhất, cùng một bookmark cho mỗi trạng thái đã gửi. Bookmark không tốn dung lượng. Lần truyền tiếp theo bắt đầu từ chúng.
+
+### Tập dữ liệu mã hóa trong bản nhân bản {#replica-encryption}
+
+Một tập dữ liệu mã hóa được gửi ở dạng thô. Nó vẫn được mã hóa ở đích, và đích không bao giờ thấy khóa. Hãy giữ khóa an toàn: bạn cần nó để mở bản sao sau khi khôi phục, và bản nhân bản thiếu khóa thì không đọc được.
+
+### Dùng bản nhân bản {#replica-use}
+
+Mở tab **Bản sao lưu** của mục và nhấp vào dòng bản nhân bản trong thẻ **Storage locations**. Trang liệt kê các ảnh chụp ở đích và hiện các lệnh với tên thật của bạn.
+
+Để xem một trạng thái cũ, hãy clone một ảnh chụp trên đích. Bản clone không tốn dung lượng cho đến khi có gì thay đổi, và bản nhân bản vẫn nguyên vẹn:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+```
+
+Nếu nguồn hỏng, hãy biến bản sao trên đích thành một tập dữ liệu bình thường, ghi được:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+Sau đó BombVault ngừng nhân bản sang tập dữ liệu đó, cho đến khi bạn bắt đầu một lần chạy đầu tiên mới.
+
+Để đưa một trạng thái về nguồn, nhấn **Bring back as a new dataset** trong trang. BombVault gửi ảnh chụp vào một tập dữ liệu mới cạnh bản gốc, tên là `<dataset>-bombvault-restore-` cộng với dấu thời gian. Nó không bao giờ ghi đè lên bản gốc.
+
 ## Ảnh chụp còn sót lại {#leftover-snapshots}
 
 Ảnh chụp của một bản sao lưu có tên `<dataset>@bombvault-<14 chữ số>`, ví dụ `cache/appdata@bombvault-20260924021500` (UTC). BombVault xóa nó ngay sau khi sao lưu. Nếu việc đó thất bại, chẳng hạn vì tập dữ liệu đang bận hoặc BombVault bị dừng, BombVault sẽ xóa nó:
@@ -116,6 +199,8 @@ Chỉ những tên khớp chính xác với `bombvault-` cộng 14 chữ số m�
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Ảnh chụp của một bản nhân bản có tên `<dataset>@bombvault-replica-<14 digits>` và không phải là ảnh chụp còn sót lại. Nó ở lại trên nguồn cho đến khi lần chạy nhân bản tiếp theo thay thế nó, và ở đích chừng nào việc lưu giữ còn giữ nó. Trình dọn dẹp không bao giờ động đến nó, vì nó chỉ khớp với `bombvault-` theo sau là đúng 14 chữ số.
 
 ## Bất thường {#anomalies}
 

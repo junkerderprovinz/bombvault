@@ -2,7 +2,7 @@
 
 La page **ZFS** sauvegarde des jeux de données ZFS. Un élément est un jeu de données avec tous les jeux de données situés en dessous. Pour chaque sauvegarde, BombVault prend un seul instantané ZFS de toute l'arborescence, si bien que chaque jeu de données qu'elle contient est capturé au même instant. Il lit ensuite les fichiers de chaque jeu de données depuis cet instantané, les stocke avec restic de la même façon qu'un dossier, puis supprime l'instantané aussitôt. Les sauvegardes sont dédupliquées, chacune peut être parcourue et des fichiers isolés peuvent être restaurés.
 
-BombVault n'utilise jamais `zfs send` pour les jeux de données, ne fait jamais revenir un jeu de données en arrière et n'en détruit jamais un.
+La sauvegarde n'envoie jamais de flux dans restic et ne fait jamais revenir un jeu de données en arrière. BombVault ne détruit que les instantanés qu'il a créés lui-même. Le [réplica](#replica) facultatif est le seul endroit qui utilise `zfs send` : il copie les jeux de données vers un second serveur ZFS et ne touche pas à la sauvegarde.
 
 ## Prérequis {#requirements}
 
@@ -102,6 +102,89 @@ Pour restaurer sur un nouveau pool, créez le pool et restaurez chaque jeu de do
 
 Un jeu de données chiffré n'est sauvegardé que tant que sa clé est chargée. Sinon, il est ignoré avec un avertissement ; chargez la clé avec `zfs load-key` et montez le jeu de données. BombVault lit les données déchiffrées et les stocke dans le dépôt de restic, qui est chiffré. Si vous avez désactivé le chiffrement dans BombVault, ce dépôt ne l'est pas.
 
+## Réplica {#replica}
+
+Un réplica est une copie des jeux de données d'un élément sur un second serveur ZFS. BombVault le tient à jour avec `zfs send` et `zfs receive`. La première exécution envoie tout, ensuite seuls les blocs modifiés circulent. Sur l'autre serveur, vous pouvez monter la copie tout de suite.
+
+Un réplica ne remplace jamais la sauvegarde. Les anciennes versions, les fichiers isolés et la vérification viennent toujours des sauvegardes, et le réplica ne garde que le nombre d'instantanés que vous fixez. Un réplica à jour compte comme une copie hors site, mais un élément avec un réplica et sans sauvegarde reste orange.
+
+Activez-le dans la carte **Replica** des réglages de l'élément. Vous y choisissez où va le réplica, quand il s'exécute (**After every backup** ou **Own plan**) et combien d'instantanés restent sur la cible. La carte liste chaque jeu de données et chaque volume avec son état, et **Replicate now** lance une exécution. Une exécution de réplica a son propre verrou, si bien qu'un long premier transfert ne retarde jamais les sauvegardes.
+
+### Envoi vers un serveur ZFS {#replica-push}
+
+N'importe quelle machine avec ZFS et SSH peut recevoir, par exemple un second Unraid ou un TrueNAS. BombVault n'a pas besoin d'y tourner.
+
+1. Sous **Paramètres, Storage locations**, ouvrez **Add storage location** et choisissez **ZFS server**.
+2. Saisissez l'adresse, l'utilisateur et le port. La boîte de dialogue affiche la clé publique de BombVault. Ajoutez-la au fichier `~/.ssh/authorized_keys` de l'utilisateur sur le serveur. Sur Unraid, cela se trouve sous **Settings, Users, root, SSH keys**.
+3. Testez la connexion. La boîte de dialogue liste ensuite les pools du serveur. Choisissez-en un et réglez la racine, qui vaut par défaut `<pool>/bombvault-replica`.
+4. Choisissez le nouveau serveur dans la carte **Replica** de l'élément.
+
+Avec root, rien d'autre n'est nécessaire. Un utilisateur dédié a besoin de ces permissions sur le pool de la cible, que la boîte de dialogue affiche aussi :
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Sur la source, un utilisateur du même genre a besoin de celles-ci sur le jeu de données supérieur de l'élément :
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+Dans ce sens, le BombVault qui détient l'élément détient aussi une clé qui peut écrire sur le serveur.
+
+### Rapatriement par un autre BombVault {#replica-pull}
+
+Dans l'autre sens, un BombVault appairé rapatrie lui-même le réplica. La source n'a alors aucune clé qui peut écrire ou supprimer sur la copie, donc la copie survit à une source dont quelqu'un a pris le contrôle.
+
+1. Sur l'instance qui doit détenir la copie, ouvrez **Instances**, puis **Fetch**, appuyez sur **Add source** et choisissez **ZFS datasets**.
+2. Choisissez l'instance appairée et ses éléments ZFS. Choisissez ensuite le pool et la racine sur ce serveur, le plan et le nombre d'instantanés à garder.
+3. L'enregistrement interroge la source. L'élément y affiche la demande, et rien ne se passe tant que quelqu'un n'a pas appuyé sur **Allow**.
+
+Ensuite, la source ajoute une clé pour l'autre instance. La clé peut seulement envoyer les instantanés de cet élément et créer ses propres instantanés de réplica. Elle ne peut rien supprimer et ne voit rien d'autre. **Revoke access** dans la carte **Replica** de l'élément retire la clé à tout moment. Ce que l'autre instance détient déjà reste chez elle.
+
+L'instance qui rapatrie s'exécute selon son propre plan et fait elle-même le ménage. Le plan et la rétention se règlent de son côté.
+
+### Où atterrissent les données {#replica-target}
+
+Chaque jeu de données atterrit dans `<root>/<server>/<pool>/<path>`. Le dossier du serveur est le nom de l'instance source, fixé au premier transfert, si bien que deux serveurs avec le même nom de pool ne se gênent jamais. Par exemple, `cache/appdata` d'un serveur nommé `tower` aboutit dans `backup/bombvault-replica/tower/cache/appdata`.
+
+La copie sur la cible est en lecture seule et non montée, donc elle ne recouvre jamais rien sur ce serveur. Les propriétés ZFS suivent, sauf le point de montage, `sharenfs` et `sharesmb`.
+
+### Ce qui est inclus {#replica-contents}
+
+Tout ce que l'élément sauvegarde est inclus, ainsi que les volumes en dessous, que la sauvegarde ignore. Un jeu de données enfant que vous avez désactivé dans l'élément reste exclu. Tous les jeux de données d'une exécution proviennent d'un seul instantané, comme dans la sauvegarde.
+
+### Combien de temps les instantanés restent {#replica-retention}
+
+Sur la cible, un nouveau réplica garde 7 instantanés quotidiens et 3 hebdomadaires. Choisissez plutôt **Short**, **Balanced** ou **Long**, ou réglez **Custom values**. Seuls les instantanés nommés `bombvault-replica-<14 chiffres>` y sont supprimés, et jamais le plus récent que les deux côtés partagent.
+
+Sur la source, BombVault ne garde que le dernier instantané de réplica, plus un signet pour chaque état envoyé. Les signets ne coûtent pas d'espace. Le transfert suivant part de là.
+
+### Jeux de données chiffrés dans un réplica {#replica-encryption}
+
+Un jeu de données chiffré est envoyé brut. Il reste chiffré sur la cible, et la cible ne voit jamais la clé. Gardez bien la clé : vous en avez besoin pour ouvrir la copie après une restauration, et un réplica sans elle est illisible.
+
+### Utiliser le réplica {#replica-use}
+
+Ouvrez l'onglet **Sauvegardes** de l'élément et cliquez sur la ligne du réplica dans la carte **Storage locations**. La feuille liste les instantanés sur la cible et montre les commandes avec vos vrais noms.
+
+Pour regarder un ancien état, clonez un instantané sur la cible. Un clone ne prend aucune place tant que rien ne change, et le réplica reste intact :
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/klon-appdata
+```
+
+Si la source tombe en panne, transformez la copie en jeu de données normal, accessible en écriture, sur la cible :
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+Ensuite, BombVault cesse de répliquer vers ce jeu de données, jusqu'à ce que vous lanciez une nouvelle première exécution.
+
+Pour ramener un état sur la source, appuyez sur **Bring back as a new dataset** dans la feuille. BombVault envoie l'instantané dans un nouveau jeu de données à côté de l'original, nommé `<dataset>-bombvault-restore-` suivi d'un horodatage. Il n'écrit jamais par-dessus l'original.
+
 ## Instantanés restants {#leftover-snapshots}
 
 L'instantané d'une sauvegarde s'appelle `<dataset>@bombvault-<14 chiffres>`, par exemple `cache/appdata@bombvault-20260924021500` (UTC). BombVault le supprime juste après la sauvegarde. Si cela échoue, par exemple parce que le jeu de données est occupé ou que BombVault a été arrêté, BombVault le supprime :
@@ -116,6 +199,8 @@ Seuls les noms qui correspondent exactement à `bombvault-` suivi de 14 chiffres
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+L'instantané d'un réplica s'appelle `<dataset>@bombvault-replica-<14 chiffres>` et n'est pas un reste. Il reste sur la source jusqu'à ce que l'exécution de réplica suivante le remplace, et sur la cible tant que la rétention le garde. Le nettoyeur n'y touche jamais, car il ne correspond qu'à `bombvault-` suivi d'exactement 14 chiffres.
 
 ## Anomalies {#anomalies}
 
