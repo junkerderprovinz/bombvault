@@ -1,7 +1,7 @@
-// The replica card, the storage row, the grant note and the plan line of one
-// ZFS item all read the same answer, and a decision in one of them has to show
-// in the others. So every answer is held once per key for as long as anything
-// on screen reads it.
+// The replica card, the storage row and the plan line of one ZFS item all
+// read the same answer, and a change in one of them has to show in the
+// others. So every answer is held once per key for as long as anything on
+// screen reads it.
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { getGroup, getZFSReplica, listZFSReplicaServers } from "../../../lib/api";
@@ -82,7 +82,7 @@ export function useReplicaServers(): { servers: ZFSReplicaServer[]; loaded: bool
   return { servers: value ?? [], loaded: value !== undefined, reload };
 }
 
-/** The pairing group: the instances a replica can be pulled by, and this
+/** The pairing group: the instances a replica can be sent to, and this
  *  instance's own name, which names its folder on every target. */
 export function useGroup(): GroupState | null | undefined {
   return useGroupResource("group").value;

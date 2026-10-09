@@ -7,7 +7,7 @@ import { Button } from "../../Button";
 import { IconFleet, IconZFS } from "../../navGlyphs";
 import { ReplicaSnapshotsSheet } from "./ReplicaSnapshotsSheet";
 import { ReplicaStatePill } from "./ReplicaStatePill";
-import { isRunning, targetName } from "./replicaModel";
+import { isRunning, peerHolds, targetName } from "./replicaModel";
 import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
 
 /** ReplicaPlaceRow is the replica among an item's storage locations: where it
@@ -50,7 +50,7 @@ export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string
         <span className="text-caption text-carbon-textMuted">{t("zfs.replica.place")}</span>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        {(running || replica.state !== "ok") && (
+        {(running || replica.state !== "ok" || peerHolds(replica)) && (
           <ReplicaStatePill replica={replica} running={running} peerName={shownName} />
         )}
         {count > 0 && (

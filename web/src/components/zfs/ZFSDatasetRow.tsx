@@ -57,7 +57,6 @@ import { IconBackupNow, IconPencil, IconTrash } from "../Sidebar";
 import { ToggleRow } from "../../pages/settings/shared";
 import { ZFSMemberList, zfsMemberActionable } from "./ZFSMemberList";
 import { ReplicaCard } from "./replica/ReplicaCard";
-import { ReplicaGrantNote } from "./replica/ReplicaGrantNote";
 import { ReplicaPlaceRow } from "./replica/ReplicaPlaceRow";
 import { ReplicaPlanLine } from "./replica/ReplicaPlanLine";
 import { ZFSRestorePanel } from "./ZFSRestorePanel";
@@ -766,7 +765,6 @@ export function ZFSDatasetRow({
         progress?.active ? "glim-active" : ""
       }`}
     >
-      <ReplicaGrantNote itemId={item.id} name={item.dataset} />
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

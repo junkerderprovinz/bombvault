@@ -143,7 +143,7 @@ const RULES: Rule[] = [
   // Places and configuration, last because they are the vaguest.
   [/folder|path|directory/i, () => <IconFolder />],
   [/settings|config|setup|wizard|options/i, () => <IconGear />],
-  [/refresh|reload|retry|tryAgain|rotate/i, () => <IconRefresh />],
+  [/refresh|reload|retry|tryAgain|askAgain|rotate/i, () => <IconRefresh />],
 ];
 
 /**
