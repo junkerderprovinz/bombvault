@@ -96,7 +96,11 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		return m
 	}
 	r.clear(context.WithoutCancel(ctx), m.Dataset, src)
-	m.Pruned = r.prune(ctx, m.Target, tgt)
+	// A target that prunes itself does so after this receive, so a bookmark
+	// whose snapshot it drops now goes with the next run.
+	if _, self := r.dst.(SelfPruning); !self {
+		m.Pruned = r.prune(ctx, m.Target, tgt)
+	}
 	r.pruneBookmarks(context.WithoutCancel(ctx), m.Dataset, src, tgt, m.Pruned)
 	return m
 }

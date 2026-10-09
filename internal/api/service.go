@@ -276,6 +276,9 @@ type Service struct {
 	// receiverMu keeps two partners asking for a login at once from
 	// rewriting the receiver's htpasswd file over each other.
 	receiverMu sync.Mutex
+	// zfsReceiveBusy holds the ids of the receive slots a stream is landing
+	// through, so a second stream into the same slot waits its turn.
+	zfsReceiveBusy sync.Map
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;

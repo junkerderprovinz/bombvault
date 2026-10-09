@@ -25,6 +25,12 @@ type End interface {
 	Receive(ctx context.Context, args []string, stream io.Reader) error
 }
 
+// SelfPruning is an End that applies its own retention after each receive. A
+// run never prunes such a target, whatever Entry.Keep says.
+type SelfPruning interface {
+	PrunesItself()
+}
+
 // Entry is one ZFS item to replicate: its root, every dataset and volume below
 // it that is not excluded, and where they land on the target.
 type Entry struct {
@@ -37,7 +43,7 @@ type Entry struct {
 	// They are the only datasets a first full stream may overwrite.
 	Placeholders []string
 	// Owner is the instance id every parent this run creates is marked with,
-	// as zfs.ReplicaSourceProp. Empty marks nothing.
+	// as zfs.SourceProperty. Empty marks nothing.
 	Owner string
 	// Keep is the target's retention over the replica snapshots. All zero
 	// keeps every one.

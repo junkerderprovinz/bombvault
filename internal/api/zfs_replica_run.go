@@ -240,7 +240,7 @@ func (s *Service) claimZFSReplicaFolder(ctx context.Context, end zfsrepl.End, d 
 // zfsReplicaOwner reads who created dataset on a target, "" for a dataset
 // nobody marked or that does not exist.
 func zfsReplicaOwner(ctx context.Context, end zfsrepl.End, dataset string) (string, error) {
-	args, err := zfs.SourcePropArgs(dataset)
+	args, err := zfs.SourcePropertyArgs(dataset)
 	if err != nil {
 		return "", err
 	}
@@ -251,7 +251,7 @@ func zfsReplicaOwner(ctx context.Context, end zfsrepl.End, dataset string) (stri
 	if err != nil {
 		return "", err
 	}
-	return zfs.ParseSourceProp(out), nil
+	return zfs.ParseSourceProperty(out), nil
 }
 
 // zfsReplicaProgress publishes how far the member being sent is. Members go

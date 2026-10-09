@@ -51,7 +51,7 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 	}
 	last := args[len(args)-1]
 	switch {
-	case slices.Contains(args, zfs.ReplicaSourceProp):
+	case slices.Contains(args, zfs.SourceProperty):
 		owner, ok := h.owners[last]
 		if !ok {
 			return "", &zfs.CmdError{Args: args, Code: "not-found"}

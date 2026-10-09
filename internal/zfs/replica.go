@@ -197,18 +197,18 @@ func appendExcluded(args, props []string) []string {
 
 // CreateParentArgs makes one level of the path a replica lands under. It never
 // mounts and holds no data of its own; -p makes a level that appeared in the
-// meantime a success. A non-empty owner is set as ReplicaSourceProp in the
-// same step, so no parent exists unmarked.
+// meantime a success. A non-empty owner is set as SourceProperty in the same
+// step, so a parent of that owner never exists unmarked.
 func CreateParentArgs(dataset, owner string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {
 		return nil, err
 	}
 	args := []string{zfsBinary, "create", "-p", "-u", "-o", "canmount=off"}
 	if owner != "" {
-		if !instanceIDRe.MatchString(owner) {
-			return nil, fmt.Errorf("zfs: %q is not an instance id", owner)
+		if !ValidSourceID(owner) {
+			return nil, fmt.Errorf("zfs: not an instance id: %.40q", owner)
 		}
-		args = append(args, "-o", ReplicaSourceProp+"="+owner)
+		args = append(args, "-o", SourceProperty+"="+owner)
 	}
 	return append(args, dataset), nil
 }
@@ -300,43 +300,35 @@ func DestroyReplicaBookmarkArgs(dataset, name string) ([]string, error) {
 	return []string{zfsBinary, "destroy", dataset + "#" + name}, nil
 }
 
-// ReplicaSourceProp is the user property BombVault sets on every dataset it
-// creates on a target, holding the id of the instance that created it. A
-// second instance that happens to go by the same name finds the folder taken.
-const ReplicaSourceProp = "bombvault:source"
+// SourceProperty is the user property set on every parent BombVault creates
+// for a replica, holding the id of the instance whose members land below it.
+// A folder that carries another id belongs to someone else, even when that
+// instance goes by the same name.
+const SourceProperty = "bombvault:source"
 
-var instanceIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]*$`)
+var sourceIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]{0,63}$`)
 
-// SourcePropArgs reads ReplicaSourceProp where it is set on dataset itself.
-// The property is inherited by everything below, which says nothing about who
-// created those, so an inherited value prints nothing.
-func SourcePropArgs(dataset string) ([]string, error) {
+// ValidSourceID reports whether id can stand in SourceProperty: an instance id
+// of the group, which never starts with a dash.
+func ValidSourceID(id string) bool { return sourceIDRe.MatchString(id) }
+
+// SourcePropertyArgs reads SourceProperty as set on the dataset itself, so a
+// value inherited from a parent or received with a stream does not count.
+func SourcePropertyArgs(dataset string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {
 		return nil, err
 	}
-	return []string{zfsBinary, "get", "-H", "-p", "-o", "value", "-s", "local", ReplicaSourceProp, dataset}, nil
+	return []string{zfsBinary, "get", "-H", "-p", "-s", "local", "-o", "value", SourceProperty, dataset}, nil
 }
 
-// ParseSourceProp reads the output of SourcePropArgs, "" where the property is
-// not set on the dataset itself.
-func ParseSourceProp(out string) string {
+// ParseSourceProperty reads the output of SourcePropertyArgs, "" where the
+// property is not set on the dataset itself.
+func ParseSourceProperty(out string) string {
 	v := strings.TrimSpace(out)
 	if v == "-" {
 		return ""
 	}
 	return v
-}
-
-// SetSourcePropArgs marks dataset as created by the instance with the given
-// id.
-func SetSourcePropArgs(dataset, instanceID string) ([]string, error) {
-	if err := validateNameChars(dataset); err != nil {
-		return nil, err
-	}
-	if !instanceIDRe.MatchString(instanceID) {
-		return nil, fmt.Errorf("zfs: %q is not an instance id", instanceID)
-	}
-	return []string{zfsBinary, "set", ReplicaSourceProp + "=" + instanceID, dataset}, nil
 }
 
 // MountArgs mounts a filesystem where its mountpoint property says.

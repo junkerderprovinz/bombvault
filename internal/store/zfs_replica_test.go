@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
-	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -327,89 +326,6 @@ func TestLatestZFSReplicaRunIsTheNewestReplicaRunEvenWhileItRuns(t *testing.T) {
 	}
 }
 
-func TestZFSReplicaGrantAnswers(t *testing.T) {
-	_, r := zfsStore(t)
-	ask := store.ZFSReplicaGrant{ItemID: "item", PeerID: "peer", Fingerprint: "SHA256:aaa",
-		KeyLine: "ssh-ed25519 AAAA mani", Roots: []string{"cache/appdata"}}
-
-	now, before, err := r.AskZFSReplicaGrant(ask)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if now.State != store.ZFSGrantAsked || now.AskedAt == 0 || before.State != "" {
-		t.Fatalf("a first request = %+v, before %+v", now, before)
-	}
-	if _, err := r.DecideZFSReplicaGrant("item", "peer", store.ZFSGrantRevoked); !errors.Is(err, store.ErrZFSGrantMove) {
-		t.Fatalf("revoking an open request = %v, want ErrZFSGrantMove", err)
-	}
-	allowed, err := r.DecideZFSReplicaGrant("item", "peer", store.ZFSGrantAllowed)
-	if err != nil || allowed.State != store.ZFSGrantAllowed || allowed.DecidedAt == 0 || allowed.KeyLine != ask.KeyLine {
-		t.Fatalf("allow = %+v, %v", allowed, err)
-	}
-
-	if now, _, _ := r.AskZFSReplicaGrant(ask); now.State != store.ZFSGrantAllowed {
-		t.Fatalf("the same request again moved an allowed grant to %s", now.State)
-	}
-	wider := ask
-	wider.Roots = []string{"cache"}
-	now, before, err = r.AskZFSReplicaGrant(wider)
-	if err != nil || now.State != store.ZFSGrantAsked || now.DecidedAt != 0 || before.State != store.ZFSGrantAllowed {
-		t.Fatalf("wider roots = %+v before %+v, %v; want a new request that names the allowed one", now, before, err)
-	}
-
-	if _, err := r.DecideZFSReplicaGrant("item", "peer", store.ZFSGrantRefused); err != nil {
-		t.Fatal(err)
-	}
-	if now, _, _ := r.AskZFSReplicaGrant(wider); now.State != store.ZFSGrantRefused {
-		t.Fatalf("asking again for a refused key and roots gave %s, want the refusal to stand", now.State)
-	}
-	newKey := wider
-	newKey.KeyLine, newKey.Fingerprint = "ssh-ed25519 BBBB mani", "SHA256:bbb"
-	if now, _, _ := r.AskZFSReplicaGrant(newKey); now.State != store.ZFSGrantAsked {
-		t.Fatalf("a new key after a refusal gave %s, want a new request", now.State)
-	}
-	if _, err := r.DecideZFSReplicaGrant("item", "peer", store.ZFSGrantAllowed); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := r.DecideZFSReplicaGrant("item", "peer", store.ZFSGrantRevoked); err != nil {
-		t.Fatal(err)
-	}
-	if now, _, _ := r.AskZFSReplicaGrant(newKey); now.State != store.ZFSGrantAsked {
-		t.Fatalf("asking after a revoke gave %s, want a new request", now.State)
-	}
-
-	if _, err := r.DecideZFSReplicaGrant("item", "nobody", store.ZFSGrantAllowed); !errors.Is(err, sql.ErrNoRows) {
-		t.Fatalf("deciding a missing grant = %v, want sql.ErrNoRows", err)
-	}
-	if _, ok, err := r.GetZFSReplicaGrant("item", "nobody"); ok || err != nil {
-		t.Fatalf("GetZFSReplicaGrant(missing) = %v, %v", ok, err)
-	}
-}
-
-func TestAllowedZFSReplicaGrantsListOnlyAllowedKeys(t *testing.T) {
-	_, r := zfsStore(t)
-	for _, peer := range []string{"p1", "p2", "p3"} {
-		if _, _, err := r.AskZFSReplicaGrant(store.ZFSReplicaGrant{ItemID: "item", PeerID: peer, KeyLine: "ssh-ed25519 " + peer}); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if _, err := r.DecideZFSReplicaGrant("item", "p1", store.ZFSGrantAllowed); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := r.DecideZFSReplicaGrant("item", "p2", store.ZFSGrantRefused); err != nil {
-		t.Fatal(err)
-	}
-
-	all, err := r.ListZFSReplicaGrants("item")
-	if err != nil || len(all) != 3 {
-		t.Fatalf("ListZFSReplicaGrants = %d, %v; want 3", len(all), err)
-	}
-	allowed, err := r.AllowedZFSReplicaGrants()
-	if err != nil || len(allowed) != 1 || allowed[0].PeerID != "p1" || allowed[0].KeyLine != "ssh-ed25519 p1" {
-		t.Fatalf("AllowedZFSReplicaGrants = %+v, %v; want p1 alone", allowed, err)
-	}
-}
-
 func TestDeleteZFSDatasetRemovesItsReplicaRows(t *testing.T) {
 	db, r := zfsStore(t)
 	doomed, kept := aZFSDataset(t, r, "cache/appdata"), aZFSDataset(t, r, "cache/system")
@@ -418,14 +334,11 @@ func TestDeleteZFSDatasetRemovesItsReplicaRows(t *testing.T) {
 		if err := r.AddZFSReplicaRunMember(store.ZFSReplicaRunMember{RunID: "run-" + d.ID, ItemID: d.ID, Dataset: d.Dataset}); err != nil {
 			t.Fatal(err)
 		}
-		if _, _, err := r.AskZFSReplicaGrant(store.ZFSReplicaGrant{ItemID: d.ID, PeerID: "peer"}); err != nil {
-			t.Fatal(err)
-		}
 	}
 	if err := r.DeleteZFSDataset(doomed.ID); err != nil {
 		t.Fatal(err)
 	}
-	for _, table := range []string{"zfs_replica_state", "zfs_replica_runs", "zfs_replica_grants"} {
+	for _, table := range []string{"zfs_replica_state", "zfs_replica_runs"} {
 		var gone, left int
 		if err := db.QueryRow(`SELECT count(*) FROM `+table+` WHERE item_id = ?`, doomed.ID).Scan(&gone); err != nil {
 			t.Fatal(err)
@@ -487,59 +400,5 @@ func TestImportZFSReplicaReplacesServersAndAppliesItemsByDataset(t *testing.T) {
 	}
 	if _, err := r.GetZFSDatasetByName("cache/gone"); err == nil {
 		t.Fatal("the import created an item for a dataset this instance does not have")
-	}
-}
-
-func TestAZFSPullSourceNeedsNoRepositoryAndKeepsItsFields(t *testing.T) {
-	_, r := zfsStore(t)
-	restic, err := r.CreatePullSource(store.PullSource{Name: "restic", Repo: "rest:http://x:8000/c"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, _, _ := r.GetPullSource(restic.ID); got.Kind != store.PullSourceRestic || got.ZFSKeep != store.DefaultZFSReplicaKeep {
-		t.Fatalf("a pull source made without a kind = %s keep %+v, want restic with the default keep", got.Kind, got.ZFSKeep)
-	}
-
-	made, err := r.CreatePullSource(store.PullSource{
-		Name: "tower", MemberID: "member-b", Kind: store.PullSourceZFS, Cadence: "daily 04:00", Enabled: true,
-		ZFSDatasets: []string{"item-1", "item-2"}, ZFSPool: "tank", ZFSRoot: "tank/bombvault-replica",
-	})
-	if err != nil {
-		t.Fatalf("a zfs pull source without a repository: %v", err)
-	}
-	if err := r.SetPullSourceGrantState(made.ID, store.ZFSGrantAsked); err != nil {
-		t.Fatal(err)
-	}
-	got, ok, err := r.GetPullSource(made.ID)
-	if err != nil || !ok {
-		t.Fatal(err)
-	}
-	if got.Kind != store.PullSourceZFS || !slices.Equal(got.ZFSDatasets, []string{"item-1", "item-2"}) ||
-		got.ZFSPool != "tank" || got.ZFSRoot != "tank/bombvault-replica" ||
-		got.ZFSKeep != store.DefaultZFSReplicaKeep || got.GrantState != store.ZFSGrantAsked {
-		t.Fatalf("zfs pull source = %+v", got)
-	}
-
-	got.ZFSKeep = store.ZFSReplicaKeep{Preset: "short"}
-	got.ZFSDatasets = []string{"item-1"}
-	got.GrantState = store.ZFSGrantRefused
-	if err := r.UpdatePullSource(got); err != nil {
-		t.Fatal(err)
-	}
-	after, _, _ := r.GetPullSource(made.ID)
-	if after.ZFSKeep.Preset != "short" || len(after.ZFSDatasets) != 1 || after.GrantState != store.ZFSGrantAsked {
-		t.Fatalf("after the update = %+v, want the new keep and datasets with the answer untouched", after)
-	}
-
-	if _, err := r.CreatePullSource(store.PullSource{Kind: store.PullSourceRestic}); !errors.Is(err, store.ErrEmptyPullRepo) {
-		t.Fatalf("a restic pull source without a repository = %v, want ErrEmptyPullRepo", err)
-	}
-
-	aReplicaState(t, r, made.ID, "cache/appdata")
-	if err := r.DeletePullSource(made.ID); err != nil {
-		t.Fatal(err)
-	}
-	if n := replicaStates(t, r, made.ID); n != 0 {
-		t.Fatalf("a deleted pull source left %d member states", n)
 	}
 }
