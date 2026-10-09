@@ -2089,7 +2089,7 @@ const ar: Partial<Translations> = {
   "zfs.replica.restoredLocked": "تم: {fresh} بجانب {name}. وصلت مشفّرة وتبقى غير مركّبة حتى يُحمَّل مفتاحها.",
   "zfs.replica.servers.title": "خادم ZFS",
   "zfs.replica.servers.hint": "أهداف النسخة المتماثلة لـ ZFS. عنصر ZFS الذي يختار أحدها يرسل إليه نسخة مطابقة كتلةً بكتلة. لا تُحفظ هنا نسخ احتياطية.",
-  "zfs.replica.servers.empty": "لا يوجد خادم ZFS بعد. أضف واحداً عبر «إضافة وجهة» › خوادم ZFS، ثم يستطيع كل عنصر ZFS إرسال نسخة متماثلة إليه.",
+  "zfs.replica.servers.empty": "لا يوجد خادم ZFS بعد. أضف واحداً عبر المثيلات › خوادم ZFS، ثم يستطيع كل عنصر ZFS إرسال نسخة متماثلة إليه.",
   "zfs.replica.servers.inUse": "{n} قيد الاستخدام",
   "zfs.replica.servers.unused": "غير مستخدم",
   "zfs.replica.servers.off": "متوقف",

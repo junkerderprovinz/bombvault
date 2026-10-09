@@ -2089,7 +2089,7 @@ const hu: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Kész: {fresh} ott van a(z) {name} mellett. Titkosítva érkezett, és amíg a kulcsa nincs betöltve, nem lesz csatolva.",
   "zfs.replica.servers.title": "ZFS-kiszolgáló",
   "zfs.replica.servers.hint": "A ZFS-replika céljai. Az a ZFS-tétel, amelyik kiválaszt egyet, blokkpontos másolatot küld rá. Mentések ide nem kerülnek.",
-  "zfs.replica.servers.empty": "Még nincs ZFS-kiszolgáló. Adj hozzá egyet a „Tárolóhely hozzáadása” › ZFS-kiszolgálók menüben, utána minden ZFS-tétel küldhet oda replikát.",
+  "zfs.replica.servers.empty": "Még nincs ZFS-kiszolgáló. Adj hozzá egyet a Példányok › ZFS-kiszolgálók menüben, utána minden ZFS-tétel küldhet oda replikát.",
   "zfs.replica.servers.inUse": "{n} használatban",
   "zfs.replica.servers.unused": "nincs használatban",
   "zfs.replica.servers.off": "Ki",

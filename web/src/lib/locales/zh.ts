@@ -2077,7 +2077,7 @@ const zh: Partial<Translations> = {
   "zfs.replica.restoredLocked": "完成：{fresh} 就在 {name} 旁边。它以加密形式到达，在加载密钥之前不会挂载。",
   "zfs.replica.servers.title": "ZFS 服务器",
   "zfs.replica.servers.hint": "ZFS 副本的目标。选了其中一台的 ZFS 条目会向它发送逐块完整拷贝。这里不保存备份。",
-  "zfs.replica.servers.empty": "还没有 ZFS 服务器。通过“添加目标” › ZFS 服务器添加一台，之后每个 ZFS 条目都可以向那里发送副本。",
+  "zfs.replica.servers.empty": "还没有 ZFS 服务器。通过实例 › ZFS 服务器添加一台，之后每个 ZFS 条目都可以向那里发送副本。",
   "zfs.replica.servers.inUse": "{n} 个在使用",
   "zfs.replica.servers.unused": "未使用",
   "zfs.replica.servers.off": "关",

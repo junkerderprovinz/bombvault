@@ -2459,7 +2459,7 @@ const fa: Partial<Translations> = {
   "zfs.replica.restoredLocked": "انجام شد: {fresh} کنار {name} است. رمزگذاری‌شده رسید و تا وقتی کلیدش بارگذاری نشود مانت نمی‌شود.",
   "zfs.replica.servers.title": "سرور ZFS",
   "zfs.replica.servers.hint": "مقصدهای ریپلیکای ZFS. مورد ZFS که یکی را انتخاب کند، یک رونوشت بلوک‌به‌بلوک به آن می‌فرستد. هیچ پشتیبانی اینجا ذخیره نمی‌شود.",
-  "zfs.replica.servers.empty": "هنوز سرور ZFS نیست. یکی را از «افزودن مقصد» › سرورهای ZFS اضافه کن، بعد هر مورد ZFS می‌تواند آنجا ریپلیکا بفرستد.",
+  "zfs.replica.servers.empty": "هنوز سرور ZFS نیست. یکی را از نمونه‌ها › سرورهای ZFS اضافه کن، بعد هر مورد ZFS می‌تواند آنجا ریپلیکا بفرستد.",
   "zfs.replica.servers.inUse": "{n} در حال استفاده",
   "zfs.replica.servers.unused": "استفاده نمی‌شود",
   "zfs.replica.servers.off": "خاموش",

@@ -2077,7 +2077,7 @@ const ja: Partial<Translations> = {
   "zfs.replica.restoredLocked": "完了: {fresh} が {name} の隣にできました。暗号化されたまま届いたため、鍵を読み込むまでマウントされません。",
   "zfs.replica.servers.title": "ZFS サーバー",
   "zfs.replica.servers.hint": "ZFS レプリカの送信先です。これを選んだ ZFS 項目は、ブロック単位でそのままの複製を送ります。ここにバックアップは保存されません。",
-  "zfs.replica.servers.empty": "ZFS サーバーはまだありません。「保存先を追加」 › ZFS サーバーから追加すると、すべての ZFS 項目がそこへレプリカを送れます。",
+  "zfs.replica.servers.empty": "ZFS サーバーはまだありません。インスタンス › ZFS サーバーから追加すると、すべての ZFS 項目がそこへレプリカを送れます。",
   "zfs.replica.servers.inUse": "{n} 件で使用中",
   "zfs.replica.servers.unused": "未使用",
   "zfs.replica.servers.off": "オフ",

@@ -2459,7 +2459,7 @@ const lt: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Baigta: {fresh} yra šalia {name}. Jis atkeliavo užšifruotas ir liks neprijungtas, kol nebus įkeltas jo raktas.",
   "zfs.replica.servers.title": "ZFS serveris",
   "zfs.replica.servers.hint": "ZFS replikos paskirties vietos. ZFS įrašas, pasirinkęs vieną, siunčia jai blokų lygiu tikslią kopiją. Čia atsarginės kopijos nepatenka.",
-  "zfs.replica.servers.empty": "ZFS serverio dar nėra. Pridėk jį per \"Pridėti paskirties vietą\" › ZFS serveriai, tada kiekvienas ZFS įrašas galės ten siųsti replikas.",
+  "zfs.replica.servers.empty": "ZFS serverio dar nėra. Pridėk jį per Egzemplioriai › ZFS serveriai, tada kiekvienas ZFS įrašas galės ten siųsti replikas.",
   "zfs.replica.servers.inUse": "naudojama: {n}",
   "zfs.replica.servers.unused": "nenaudojama",
   "zfs.replica.servers.off": "Išjungta",

@@ -2081,7 +2081,7 @@ const pl: Partial<Translations> = {
   "zfs.replica.restoredLocked": "Gotowe: {fresh} leży obok {name}. Dotarł zaszyfrowany i pozostaje niezamontowany, dopóki nie zostanie wczytany jego klucz.",
   "zfs.replica.servers.title": "Serwer ZFS",
   "zfs.replica.servers.hint": "Cele dla repliki ZFS. Pozycja ZFS, która wybierze jeden z nich, wysyła tam kopię co do bloku. Nie trafiają tu żadne kopie zapasowe.",
-  "zfs.replica.servers.empty": "Nie ma jeszcze serwera ZFS. Dodaj go przez „Dodaj miejsce przechowywania” › Serwery ZFS, a każda pozycja ZFS będzie mogła wysyłać tam replikę.",
+  "zfs.replica.servers.empty": "Nie ma jeszcze serwera ZFS. Dodaj go przez Instancje › Serwery ZFS, a każda pozycja ZFS będzie mogła wysyłać tam replikę.",
   "zfs.replica.servers.inUse": "{n} w użyciu",
   "zfs.replica.servers.unused": "nieużywany",
   "zfs.replica.servers.off": "Wyłączony",

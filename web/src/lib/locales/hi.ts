@@ -2459,7 +2459,7 @@ const hi: Partial<Translations> = {
   "zfs.replica.restoredLocked": "हो गया: {fresh} अब {name} के बगल में है। यह एन्क्रिप्टेड पहुँचा है और इसकी कुंजी लोड होने तक माउंट नहीं होगा।",
   "zfs.replica.servers.title": "ZFS सर्वर",
   "zfs.replica.servers.hint": "ZFS रेप्लिका के टारगेट। जो ZFS एंट्री इनमें से कोई चुनती है, वह उसे ब्लॉक-दर-ब्लॉक हूबहू कॉपी भेजती है। यहाँ कोई बैकअप नहीं रखा जाता।",
-  "zfs.replica.servers.empty": "अभी कोई ZFS सर्वर नहीं है। «गंतव्य जोड़ें» › ZFS सर्वर से एक जोड़ें, फिर हर ZFS एंट्री वहाँ रेप्लिका भेज सकती है।",
+  "zfs.replica.servers.empty": "अभी कोई ZFS सर्वर नहीं है। इंस्टेंस › ZFS सर्वर से एक जोड़ें, फिर हर ZFS एंट्री वहाँ रेप्लिका भेज सकती है।",
   "zfs.replica.servers.inUse": "{n} उपयोग में",
   "zfs.replica.servers.unused": "उपयोग में नहीं",
   "zfs.replica.servers.off": "बंद",
