@@ -31,6 +31,7 @@ func TestClassify(t *testing.T) {
 		{"no zfs, no message", "", exitStatus(127), "zfs-not-found"},
 		{"unprivileged user", "cannot create snapshots in 'cache/appdata': permission denied", exitStatus(1), "zfs-permission"},
 		{"key rejected", "root@nas.lan: Permission denied (publickey,password).", exitStatus(255), "ssh-auth"},
+		{"host key changed", "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\nHost key for nas.lan has changed and you have requested strict checking.\nHost key verification failed.", exitStatus(255), "ssh-hostkey"},
 		{"port closed", "ssh: connect to host nas.lan port 22: Connection refused", exitStatus(255), "ssh-unreachable"},
 		{"no route", "ssh: connect to host 192.168.1.9 port 22: No route to host", exitStatus(255), "ssh-unreachable"},
 		{"unknown name", "ssh: Could not resolve hostname nas.lan: Name or service not known", exitStatus(255), "ssh-unreachable"},

@@ -11,6 +11,7 @@ var AllCodes = []string{
 	"host-fallback",
 	"ssh-unreachable",
 	"ssh-auth",
+	"ssh-hostkey",
 	"zfs-not-found",
 	"zfs-permission",
 	"uri-mismatch",

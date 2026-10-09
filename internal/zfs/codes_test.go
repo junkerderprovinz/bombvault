@@ -22,7 +22,7 @@ func TestAllCodesAreUniqueKebabCase(t *testing.T) {
 
 	want := []string{
 		"ok", "ssh-missing", "host-placeholder", "host-fallback", "ssh-unreachable",
-		"ssh-auth", "zfs-not-found", "zfs-permission", "uri-mismatch", "zfs-error",
+		"ssh-auth", "ssh-hostkey", "zfs-not-found", "zfs-permission", "uri-mismatch", "zfs-error",
 		"propagation-missing",
 		"invalid-name", "name-too-long", "invalid-exclude", "not-found", "not-filesystem",
 		"overlaps-item", "docker-storage", "nothing-readable", "snapshot-failed",

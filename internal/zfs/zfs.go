@@ -180,6 +180,8 @@ func Classify(stderr string, err error) string {
 		switch {
 		case strings.Contains(low, "permission denied (publickey"):
 			return "ssh-auth"
+		case strings.Contains(low, "host key verification failed"):
+			return "ssh-hostkey"
 		case strings.Contains(low, "connection refused"),
 			strings.Contains(low, "connection timed out"),
 			strings.Contains(low, "operation timed out"),
