@@ -347,7 +347,7 @@ func TestAnAllowCoversOnlyTheMembersThePageShowed(t *testing.T) {
 		t.Fatalf("an allow of the members shown before the source asked for more = %v, want it refused", out)
 	}
 	if out := r.decide(t, map[string]any{"decision": "allow", "pool": "tank", "root": receiveRoot}); out["ok"] != true {
-		t.Fatalf("an allow of what the page shows now = %v", out)
+		t.Fatalf("an allow of what the page shows after the second request = %v", out)
 	}
 	if members, _ := r.request(t)["members"].([]any); len(members) != 3 {
 		t.Fatalf("the allowed slot holds %v, want the three members shown", members)

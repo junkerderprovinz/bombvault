@@ -69,8 +69,8 @@ type ZFSReceiveSlot struct {
 // Base is the dataset the slot's members land under.
 func (s ZFSReceiveSlot) Base() string { return s.Root + "/" + s.SourceServer }
 
-// ErrZFSReceiveChanged is returned when an allow names other members than the
-// slot asks for by now: the source asked again while the person looked.
+// ErrZFSReceiveChanged is returned when an allow names other members than
+// the slot asks for: the source asked again while the person looked.
 var ErrZFSReceiveChanged = errors.New("the receive request changed since it was shown")
 
 // ZFSReceiveDecision is a person's answer to a slot. Pool, Root, Keep and
