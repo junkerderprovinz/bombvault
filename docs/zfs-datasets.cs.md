@@ -114,7 +114,7 @@ Zapnete ji na kartě **Replica** v nastavení položky. Tam vyberete, kam replik
 
 Přijímat může každý stroj se ZFS a SSH, například druhý Unraid nebo TrueNAS. BombVault tam běžet nemusí.
 
-1. V **Nastavení, Storage locations** otevřete **Add storage location** a vyberte **ZFS server**.
+1. Otevřete **Instance, Servery ZFS** a klikněte na **Přidat server ZFS**.
 2. Zadejte adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidejte ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Settings, Users, root, SSH keys**.
 3. Otestujte spojení. Dialog pak vypíše pooly serveru. Vyberte jeden a nastavte kořen, který je ve výchozím stavu `<pool>/bombvault-replica`.
 4. Vyberte nový server na kartě **Replica** položky.

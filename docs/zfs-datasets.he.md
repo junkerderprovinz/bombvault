@@ -114,7 +114,7 @@ BombVault שומר עם כל גיבוי את מאפייני ה-ZFS שהוגדר�
 
 כל מכונה עם ZFS ו-SSH יכולה לקבל, למשל Unraid שני או TrueNAS. BombVault לא חייב לרוץ שם.
 
-1. תחת **הגדרות, Storage locations** פתח את **Add storage location** ובחר **ZFS server**.
+1. פתח את **מופעים, שרתי ZFS** ולחץ על **הוסף שרת ZFS**.
 2. הזן כתובת, משתמש ופורט. החלון מציג את המפתח הציבורי של BombVault. הוסף אותו ל-`~/.ssh/authorized_keys` של המשתמש בשרת. ב-Unraid זה נמצא תחת **Settings, Users, root, SSH keys**.
 3. בדוק את החיבור. החלון מפרט אז את המאגרים של השרת. בחר אחד וקבע את השורש, שברירת המחדל שלו היא `<pool>/bombvault-replica`.
 4. בחר את השרת החדש בכרטיס **Replica** של הפריט.

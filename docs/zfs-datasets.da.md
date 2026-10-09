@@ -114,7 +114,7 @@ Slå den til på kortet **Replica** i elementets indstillinger. Der vælger du, 
 
 Enhver maskine med ZFS og SSH kan modtage, for eksempel en anden Unraid eller en TrueNAS. BombVault behøver ikke køre dér.
 
-1. Under **Indstillinger, Storage locations** åbner du **Add storage location** og vælger **ZFS server**.
+1. Åbn **Instanser, ZFS-servere** og klik på **Tilføj ZFS-server**.
 2. Angiv adresse, bruger og port. Dialogen viser BombVaults offentlige nøgle. Føj den til brugerens `~/.ssh/authorized_keys` på serveren. På Unraid findes det under **Settings, Users, root, SSH keys**.
 3. Test forbindelsen. Dialogen oplister derefter serverens pools. Vælg én og angiv roden, som som standard er `<pool>/bombvault-replica`.
 4. Vælg den nye server på elementets kort **Replica**.

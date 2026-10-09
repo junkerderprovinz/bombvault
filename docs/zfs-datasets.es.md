@@ -114,7 +114,7 @@ Actívala en la tarjeta **Replica** de los ajustes del elemento. Allí eliges ad
 
 Cualquier máquina con ZFS y SSH puede recibir, por ejemplo un segundo Unraid o un TrueNAS. BombVault no tiene por qué ejecutarse allí.
 
-1. En **Ajustes, Storage locations** abre **Add storage location** y elige **ZFS server**.
+1. Abre **Instancias, Servidores ZFS** y haz clic en **Añadir servidor ZFS**.
 2. Introduce dirección, usuario y puerto. El diálogo muestra la clave pública de BombVault. Añádela al `~/.ssh/authorized_keys` del usuario en el servidor. En Unraid está en **Settings, Users, root, SSH keys**.
 3. Prueba la conexión. El diálogo enumera entonces los pools del servidor. Elige uno y define la raíz, que por defecto es `<pool>/bombvault-replica`.
 4. Elige el nuevo servidor en la tarjeta **Replica** del elemento.
