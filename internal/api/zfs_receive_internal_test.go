@@ -832,3 +832,52 @@ func TestASlotTakesOneSnapshotPerStream(t *testing.T) {
 		t.Fatalf("a stream of two snapshots = %d %s, want it refused", w.Code, w.Body)
 	}
 }
+
+func TestASlotLeavesATenthOfThePoolFree(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pool := newFakePool(&atomic.Uint64{}, "tank")
+	in.svc.SetZFSHost(zfs.NewSSHHost(pool))
+	in.svc.SetHostSSH(pool)
+	switchReceiver(t, in, true)
+	id := askSlot(t, in, "0b0b0b0b", "cache/appdata")
+	if out := allowSlot(t, in, id); out["ok"] != true {
+		t.Fatalf("allow = %v", out)
+	}
+	slot, _, _ := in.st.GetZFSReceiveSlot(id)
+	token, err := secret.Decrypt(in.appKey, slot.TokenEnc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream := fakeStream(streamRecord("cache/appdata@bombvault-replica-20261010030000", 13, 0, false))
+	put := func() string {
+		req := httptest.NewRequest(http.MethodPut, "/api/zfs/receive/"+id+"/members/cache%2Fappdata", bytes.NewReader(stream))
+		req.Header.Set("Authorization", "Bearer "+string(token))
+		w := httptest.NewRecorder()
+		in.router.ServeHTTP(w, req)
+		return w.Body.String()
+	}
+
+	// A tenth of the ten terabytes stays free, and the stream is a few
+	// kilobytes too large for what is left above it.
+	pool.free["tank"] = 1<<40 + int64(len(stream)) - 1
+	if got := put(); !strings.Contains(got, `"code":"not-enough-space"`) {
+		t.Fatalf("a stream larger than the room above the headroom = %s, want not-enough-space", got)
+	}
+	if got := pool.snapNames(receiveRoot + "/tower/cache/appdata"); len(got) != 0 {
+		t.Fatalf("the cut stream landed %q", got)
+	}
+
+	pool.free["tank"] = 1 << 40
+	before := len(pool.callsOf("receive"))
+	if got := put(); !strings.Contains(got, `"code":"not-enough-space"`) {
+		t.Fatalf("a stream into a pool down to its headroom = %s, want not-enough-space", got)
+	}
+	if len(pool.callsOf("receive")) != before {
+		t.Fatal("a stream into a pool down to its headroom was started")
+	}
+
+	pool.free["tank"] = 1<<40 + int64(len(stream))
+	if got := put(); !strings.Contains(got, `"ok":true`) {
+		t.Fatalf("a stream that fits = %s", got)
+	}
+}

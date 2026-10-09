@@ -29,6 +29,9 @@ type fakePool struct {
 	txg   uint64
 	ds    map[string]*fakeDataset
 	calls [][]string
+	// free is what each pool of ten terabytes has left, half of it where it
+	// is not set.
+	free map[string]int64
 }
 
 type fakeDataset struct {
@@ -45,7 +48,7 @@ type fakeSnap struct {
 }
 
 func newFakePool(guids *atomic.Uint64, datasets ...string) *fakePool {
-	p := &fakePool{guids: guids, ds: map[string]*fakeDataset{}}
+	p := &fakePool{guids: guids, ds: map[string]*fakeDataset{}, free: map[string]int64{}}
 	for _, d := range datasets {
 		p.ds[d] = newFakeDataset("filesystem")
 	}
@@ -108,6 +111,9 @@ func (p *fakePool) run(args []string) (string, string) {
 	last := args[len(args)-1]
 	switch args[1] {
 	case "list":
+		if slices.Equal(args, zfs.PoolsArgs()) {
+			return p.pools(), ""
+		}
 		if slices.Contains(args, "-r") {
 			return p.tree(last)
 		}
@@ -206,6 +212,21 @@ func (p *fakePool) tree(root string) (string, string) {
 		fmt.Fprintf(&b, "%s\t%s\t/mnt/%s\tyes\ton\toff\t-\thidden\t1024\t1024\n", name, p.ds[name].typ, name)
 	}
 	return b.String(), ""
+}
+
+func (p *fakePool) pools() string {
+	var b strings.Builder
+	for name := range p.ds {
+		if strings.Contains(name, "/") {
+			continue
+		}
+		free, ok := p.free[name]
+		if !ok {
+			free = 5 << 40
+		}
+		fmt.Fprintf(&b, "%s\t%d\t%d\n", name, 10<<40-free, free)
+	}
+	return b.String()
 }
 
 func (p *fakePool) points(name string) (string, string) {

@@ -235,16 +235,27 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 		zfsSlotFail(w, &zfsrepl.Refusal{Code: "invalid-name", Detail: begin.Snapshot + " is not a replica snapshot"})
 		return
 	}
+	room, err := zfsSlotRoom(ctx, host, slot.Pool)
+	if err == nil && room <= 0 {
+		err = &zfsrepl.Refusal{Code: "not-enough-space", Detail: "pool " + slot.Pool + " is down to the space this instance keeps free"}
+	}
+	if err != nil {
+		zfsSlotFail(w, err)
+		return
+	}
 	args, err := zfsSlotReceiveArgs(ctx, host, slot, target, begin)
 	if err != nil {
 		zfsSlotFail(w, err)
 		return
 	}
 	one := zfs.NewSnapshotStream(stream)
-	counted := &byteCounter{r: one}
+	counted := &byteCounter{r: one, room: room}
 	err = host.Receive(ctx, args, counted)
 	if refused := one.Refused(); refused != nil {
 		err = &zfsrepl.Refusal{Code: "zfs-error", Detail: "the stream carries more than the snapshot it starts with", Err: refused}
+	}
+	if counted.full.Load() {
+		err = &zfsrepl.Refusal{Code: "not-enough-space", Detail: "the stream outgrew the space pool " + slot.Pool + " has above what this instance keeps free"}
 	}
 	if err != nil {
 		log.Printf("zfs receive: %s from %s failed: %v", target, slot.PeerName, err)
@@ -506,14 +517,53 @@ func zfsOwnedBy(ctx context.Context, end zfsrepl.End, dataset, source string) (b
 	return who == source, err
 }
 
-// byteCounter counts what a receive read of its stream.
-type byteCounter struct {
-	r io.Reader
-	n atomic.Int64
+// zfsReceiveHeadroom is the part of a pool, one in this many, that streams
+// into a slot leave free. The host goes on writing its own data to the pool,
+// and ZFS slows down badly once a pool runs nearly full.
+const zfsReceiveHeadroom = 10
+
+// zfsSlotRoom is how many bytes a stream into pool may bring before the pool
+// drops below its headroom. A stream lands about as large as it travels,
+// since the source sends blocks compressed or raw as they lie on its disk.
+func zfsSlotRoom(ctx context.Context, host zfsrepl.End, pool string) (int64, error) {
+	out, err := host.Run(ctx, zfs.PoolsArgs())
+	if err != nil {
+		return 0, err
+	}
+	pools, err := zfs.ParsePools(out)
+	if err != nil {
+		return 0, err
+	}
+	for _, p := range pools {
+		if p.Name == pool {
+			return p.FreeBytes - p.SizeBytes/zfsReceiveHeadroom, nil
+		}
+	}
+	return 0, &zfsrepl.Refusal{Code: "not-found", Detail: "pool " + pool + " is not on this host"}
 }
 
+// byteCounter counts what a receive read of its stream and cuts the stream
+// off once it brought more than room bytes.
+type byteCounter struct {
+	r    io.Reader
+	room int64
+	n    atomic.Int64
+	full atomic.Bool
+}
+
+var errSlotFull = errors.New("the stream outgrew the room left in the pool")
+
 func (c *byteCounter) Read(p []byte) (int, error) {
+	if c.full.Load() {
+		return 0, errSlotFull
+	}
+	if left := c.room - c.n.Load() + 1; int64(len(p)) > left {
+		p = p[:left]
+	}
 	n, err := c.r.Read(p)
-	c.n.Add(int64(n))
+	if c.n.Add(int64(n)) > c.room {
+		c.full.Store(true)
+		return 0, errSlotFull
+	}
 	return n, err
 }
