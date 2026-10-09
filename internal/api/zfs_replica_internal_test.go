@@ -808,3 +808,29 @@ func TestARunStoppedByAShutdownEndsWithItsReasonCode(t *testing.T) {
 		t.Errorf("the member the shutdown cut off = %v", members["cache/appdata/plex"])
 	}
 }
+
+func TestARestoreThatFailsPartwayNamesWhatLanded(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	replica := "tank/bombvault-replica/bottich/cache/appdata"
+	r.server.points[replica] = replica + "@" + replicaSnap + "\t7\t10\n"
+	r.server.tree = []string{replica, replica + "/plex", replica + "/vault"}
+	var root string
+	r.s.replica.bringBack = func(_ context.Context, _, _ zfsrepl.End, rs zfsrepl.Restore) (zfsrepl.Restored, error) {
+		root = zfsrepl.RestoreName(rs.Dataset, rs.Now())
+		got := zfsrepl.Restored{Root: root, Members: []zfsrepl.RestoredMember{{Dataset: root}, {Dataset: root + "/plex"}}}
+		return got, &zfs.CmdError{Code: "ssh-unreachable", Stderr: "client_loop: send disconnect: Broken pipe"}
+	}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/restore", `{"snapshot":"`+replicaSnap+`"}`)
+	if m["ok"] != true {
+		t.Fatalf("restore = %v", m)
+	}
+	r.s.replica.work.Wait()
+	runs, _ := r.st.RecentRunsOfKind(r.item.ID, "restore", 1)
+	if len(runs) != 1 || runs[0].Status != "failed" || zfsRunCode(runs[0].Error) != "ssh-unreachable" ||
+		!strings.Contains(runs[0].Error, root+", "+root+"/plex") {
+		t.Errorf("restore run = %+v, want a failure naming what landed", runs)
+	}
+}

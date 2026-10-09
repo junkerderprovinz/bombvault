@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -78,9 +77,15 @@ func (s *Service) StartZFSReplicaRestore(ctx context.Context, id, snapshot strin
 		switch {
 		case err != nil:
 			log.Printf("api: zfs replica restore: %s@%s failed: %v", replica, snapshot, err)
-			s.finishRestoreRun(ack.RunID, "", errors.New(zfsRefusalSentence("replica restore", d.Dataset, &backup.ZFSRefusal{
-				Code: zfsReplicaCode(err), Detail: zfsDetail(zfsReplicaDetail(err)),
-			})))
+			detail := zfsDetail(zfsReplicaDetail(err))
+			if warn != "" {
+				detail += "; " + warn
+			}
+			// The dataset names are the message, and the run error scrubber
+			// would turn each of them into [path].
+			s.finishRestoreRun(ack.RunID, "", &backup.ZFSRefusal{Detail: zfsRefusalSentence("replica restore", d.Dataset, &backup.ZFSRefusal{
+				Code: zfsReplicaCode(err), Detail: detail,
+			})})
 		case warn != "":
 			s.finishRestoreRunWarn(ack.RunID, snapshot, warn)
 		default:
@@ -134,11 +139,19 @@ func (s *Service) prepareZFSReplicaRestore(ctx context.Context, d store.ZFSDatas
 // first. A member that arrived encrypted stays unmounted until someone loads
 // its key, a member left out had no such snapshot, and a mount that fails
 // leaves the data where it is, so all three come back as a warning on a run
-// that worked.
+// that worked. A bring back that fails partway names in the warning what
+// landed before, which stays there unmounted.
 func (s *Service) restoreZFSReplica(ctx context.Context, from, to zfsrepl.End, r zfsrepl.Restore) (string, error) {
 	got, err := s.zfsReplicaBringBack()(ctx, from, to, r)
 	if err != nil {
-		return "", err
+		if len(got.Members) == 0 {
+			return "", err
+		}
+		landed := make([]string, 0, len(got.Members))
+		for _, m := range got.Members {
+			landed = append(landed, m.Dataset)
+		}
+		return "what had landed stays unmounted: " + strings.Join(landed, ", "), err
 	}
 	var locked, failed []string
 	for _, m := range got.Members {
