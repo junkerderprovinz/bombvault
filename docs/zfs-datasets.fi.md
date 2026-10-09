@@ -2,7 +2,7 @@
 
 **ZFS**-sivu varmuuskopioi ZFS-tietojoukkoja. Kohde on yksi tietojoukko yhdessä kaikkien sen alla olevien tietojoukkojen kanssa. Jokaista varmuuskopiota varten BombVault ottaa koko puusta yhden ZFS-tilannevedoksen, joten jokainen sen tietojoukko tallentuu samalta hetkeltä. Sen jälkeen se lukee kunkin tietojoukon tiedostot tästä tilannevedoksesta, tallentaa ne resticillä samalla tavalla kuin kansion ja poistaa tilannevedoksen heti perään. Varmuuskopiot on deduplikoitu, jokaista voi selata, ja yksittäisiä tiedostoja voi palauttaa.
 
-BombVault ei koskaan käytä tietojoukoille komentoa `zfs send`, ei koskaan palauta tietojoukkoa aiempaan tilaan eikä koskaan tuhoa yhtäkään.
+Varmuuskopio ei koskaan syötä datavirtaa resticiin eikä koskaan palauta tietojoukkoa aiempaan tilaan. BombVault tuhoaa vain tilannevedoksia, jotka se on itse luonut. Valinnainen [replika](#replica) on ainoa paikka, jossa käytetään komentoa `zfs send`: se kopioi tietojoukot toiselle ZFS-palvelimelle eikä koske varmuuskopioon.
 
 ## Vaatimukset {#requirements}
 
@@ -102,6 +102,89 @@ Palauttaaksesi uuteen pooliin luo pool ja palauta jokainen tietojoukko uuteen ti
 
 Salattu tietojoukko varmuuskopioidaan vain, kun sen avain on ladattu. Muuten se ohitetaan varoituksen kera; lataa avain komennolla `zfs load-key` ja liitä tietojoukko. BombVault lukee tiedot purettuina ja tallentaa ne resticin repoon, joka on salattu. Jos olet poistanut salauksen käytöstä BombVaultissa, tuo repo ei ole salattu.
 
+## Replika {#replica}
+
+Replika on kohteen tietojoukkojen kopio toisella ZFS-palvelimella. BombVault pitää sen ajan tasalla komennoilla `zfs send` ja `zfs receive`. Ensimmäinen ajo lähettää kaiken, sen jälkeen siirtyvät vain muuttuneet lohkot. Toisella palvelimella kopion voi liittää heti.
+
+Replika ei koskaan korvaa varmuuskopiota. Vanhemmat versiot, yksittäiset tiedostot ja tarkistus tulevat edelleen varmuuskopioista, ja replika säilyttää vain niin monta tilannevedosta kuin asetat. Ajan tasalla oleva replika lasketaan kopioksi toimipaikan ulkopuolella, mutta kohde, jolla on replika mutta ei varmuuskopiota, pysyy oranssina.
+
+Ota se käyttöön kohteen asetusten kortissa **Replica**. Siellä valitset, minne replika menee, milloin se ajetaan (**After every backup** tai **Own plan**) ja kuinka monta tilannevedosta jää kohdepalvelimelle. Kortti luettelee jokaisen tietojoukon ja taltion tiloineen, ja **Replicate now** käynnistää ajon. Replika-ajolla on oma lukkonsa, joten pitkä ensimmäinen siirto ei koskaan hidasta varmuuskopioita.
+
+### Lähetys ZFS-palvelimelle {#replica-push}
+
+Mikä tahansa kone, jossa on ZFS ja SSH, voi vastaanottaa, esimerkiksi toinen Unraid tai TrueNAS. BombVaultin ei tarvitse toimia siellä.
+
+1. Avaa kohdassa **Asetukset, Storage locations** **Add storage location** ja valitse **ZFS server**.
+2. Anna osoite, käyttäjä ja portti. Ikkuna näyttää BombVaultin julkisen avaimen. Lisää se käyttäjän tiedostoon `~/.ssh/authorized_keys` palvelimella. Unraidissa se on kohdassa **Settings, Users, root, SSH keys**.
+3. Testaa yhteys. Ikkuna luettelee sitten palvelimen poolit. Valitse yksi ja aseta juuri, jonka oletus on `<pool>/bombvault-replica`.
+4. Valitse uusi palvelin kohteen kortissa **Replica**.
+
+Rootilla muuta ei tarvita. Omalla käyttäjällä tarvitaan nämä oikeudet kohdepalvelimen poolissa, jotka ikkuna myös näyttää:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Lähteellä samanlainen käyttäjä tarvitsee nämä kohteen ylimmällä tietojoukolla:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+Tässä suunnassa kohteen omistava BombVault pitää myös avainta, jolla voi kirjoittaa palvelimelle.
+
+### Toisen BombVaultin nouto {#replica-pull}
+
+Toisinpäin pariliitetty BombVault hakee replikan itse. Lähteellä ei silloin ole avainta, jolla voisi kirjoittaa kopioon tai poistaa siitä, joten kopio säilyy, vaikka joku olisi vallannut lähteen.
+
+1. Avaa instanssissa, jonka pitää säilyttää kopio, **Instances**, sitten **Fetch**, paina **Add source** ja valitse **ZFS datasets**.
+2. Valitse pariliitetty instanssi ja sen ZFS-kohteet. Valitse sitten tämän palvelimen pooli ja juuri, aikataulu ja kuinka monta tilannevedosta jää.
+3. Tallennus kysyy lähteeltä. Siellä kohde näyttää pyynnön, eikä mitään tapahdu ennen kuin joku painaa **Allow**.
+
+Sen jälkeen lähde lisää avaimen toiselle instanssille. Avaimella voi vain lähettää tämän kohteen tilannevedoksia ja luoda omia replika-tilannevedoksia. Sillä ei voi poistaa mitään eikä nähdä mitään muuta. **Revoke access** kohteen kortissa **Replica** poistaa avaimen milloin tahansa. Se, mitä toinen instanssi jo pitää hallussaan, jää sinne.
+
+Hakeva instanssi ajaa oman aikataulunsa mukaan ja siivoaa itse. Aikataulu ja säilytys asetetaan sen puolella.
+
+### Mihin data päätyy {#replica-target}
+
+Jokainen tietojoukko päätyy polkuun `<root>/<server>/<pool>/<path>`. Palvelinkansio on lähdeinstanssin nimi, joka lukitaan ensimmäisessä siirrossa, joten kaksi palvelinta, joilla on sama poolin nimi, eivät koskaan joudu toistensa tielle. Esimerkiksi palvelimen `tower` tietojoukko `cache/appdata` päätyy polkuun `backup/bombvault-replica/tower/cache/appdata`.
+
+Kopio kohdepalvelimella on vain luettavissa eikä liitettynä, joten se ei koskaan peitä mitään kyseisellä palvelimella. ZFS-ominaisuudet siirtyvät mukana, paitsi liitospiste sekä `sharenfs` ja `sharesmb`.
+
+### Mitä mukaan tulee {#replica-contents}
+
+Mukaan tulee kaikki, minkä kohde varmuuskopioi, sekä sen alla olevat taltiot, jotka varmuuskopio ohittaa. Alatietojoukko, jonka olet kytkenyt kohteessa pois, jää pois. Kaikki ajon tietojoukot tulevat yhdestä tilannevedoksesta, kuten varmuuskopiossa.
+
+### Kuinka kauan tilannevedokset säilyvät {#replica-retention}
+
+Kohdepalvelimella uusi replika säilyttää 7 päivittäistä ja 3 viikoittaista tilannevedosta. Valitse sen sijaan **Short**, **Balanced** tai **Long**, tai aseta **Custom values**. Siellä poistetaan vain tilannevedoksia, joiden nimi on `bombvault-replica-<14 numeroa>`, eikä koskaan uusinta, jonka molemmat puolet jakavat.
+
+Lähteellä BombVault säilyttää vain viimeisimmän replika-tilannevedoksen sekä kirjanmerkin jokaiselle lähettämälleen tilalle. Kirjanmerkit eivät vie tilaa. Seuraava siirto alkaa niistä.
+
+### Salatut tietojoukot replikassa {#replica-encryption}
+
+Salattu tietojoukko lähetetään raakamuodossa. Se pysyy salattuna kohdepalvelimella, eikä kohdepalvelin koskaan näe avainta. Säilytä avain turvallisesti: tarvitset sitä kopion avaamiseen palautuksen jälkeen, ja replika ilman avainta on lukukelvoton.
+
+### Replikan käyttö {#replica-use}
+
+Avaa kohteen välilehti **Varmuuskopiot** ja napsauta replikariviä kortissa **Storage locations**. Paneeli luettelee kohdepalvelimen tilannevedokset ja näyttää komennot oikeine nimineen.
+
+Vanhaa tilaa voi katsoa kloonaamalla tilannevedoksen kohdepalvelimella. Klooni ei vie tilaa ennen kuin jokin muuttuu, ja replika pysyy koskemattomana:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Jos lähde pettää, muuta kopio tavalliseksi, kirjoitettavaksi tietojoukoksi kohdepalvelimella:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault lopettaa sen jälkeen replikoinnin kyseiseen tietojoukkoon, kunnes aloitat uuden ensimmäisen ajon.
+
+Jos haluat palauttaa tilan lähteelle, paina paneelissa **Bring back as a new dataset**. BombVault lähettää tilannevedoksen uuteen tietojoukkoon alkuperäisen viereen, ja sen nimi on `<dataset>-bombvault-restore-` ja aikaleima. Se ei koskaan kirjoita alkuperäisen päälle.
+
 ## Jäljelle jääneet tilannevedokset {#leftover-snapshots}
 
 Varmuuskopion tilannevedoksen nimi on `<dataset>@bombvault-<14 numeroa>`, esimerkiksi `cache/appdata@bombvault-20260924021500` (UTC). BombVault poistaa sen heti varmuuskopion jälkeen. Jos se epäonnistuu, esimerkiksi koska tietojoukko on varattu tai BombVault pysäytettiin, BombVault poistaa sen:
@@ -116,6 +199,8 @@ Vain nimet, jotka ovat täsmälleen `bombvault-` ja 14 numeroa, poistetaan. Turv
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Replikan tilannevedoksen nimi on `<dataset>@bombvault-replica-<14 numeroa>`, eikä se ole jäännös. Se pysyy lähteellä, kunnes seuraava replika-ajo korvaa sen, ja kohdepalvelimella niin kauan kuin säilytys pitää sen. Siivooja ei koskaan koske siihen, koska se vastaa vain nimiä, joissa `bombvault-` seuraa täsmälleen 14 numeroa.
 
 ## Poikkeamat {#anomalies}
 

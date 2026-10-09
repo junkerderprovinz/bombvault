@@ -2,7 +2,7 @@
 
 **ZFS** 页面用于备份 ZFS 数据集。一个对象是一个数据集连同它下面的所有数据集。每次备份时，BombVault 只为整棵树创建一个 ZFS 快照，因此其中每个数据集都记录的是同一时刻的状态。随后它从这个快照中读取每个数据集的文件，像保存文件夹一样用 restic 保存，并在完成后立即删除快照。备份经过去重，每一份都可以浏览，也可以还原单个文件。
 
-BombVault 从不对数据集使用 `zfs send`，从不回滚数据集，也从不销毁任何数据集。
+备份从不向 restic 发送数据流，也从不回滚数据集。BombVault 只销毁它自己创建的快照。可选的[副本](#replica)是唯一使用 `zfs send` 的地方：它把数据集复制到第二台 ZFS 服务器，不触碰备份。
 
 ## 前提条件 {#requirements}
 
@@ -102,6 +102,89 @@ BombVault 每次备份都会保存每个数据集在本地设置的 ZFS 属性�
 
 加密数据集只有在其密钥已加载时才会被备份。否则会被跳过并给出警告；请用 `zfs load-key` 加载密钥并挂载数据集。BombVault 以解密后的形式读取数据，并保存到经过加密的 restic 仓库中。如果您在 BombVault 中关闭了加密，这个仓库就不是加密的。
 
+## 副本 {#replica}
+
+副本是一个对象的数据集在第二台 ZFS 服务器上的拷贝。BombVault 用 `zfs send` 和 `zfs receive` 让它保持最新。第一次运行发送全部内容，之后只传输变化的块。在另一台服务器上，您可以直接挂载这份拷贝。
+
+副本从不取代备份。旧版本、单个文件和检查仍然来自备份，副本只保留您设定数量的快照。最新的副本算作一份异地拷贝，但只有副本而没有备份的对象仍然显示为橙色。
+
+在对象设置的 **Replica** 卡片中开启它。在那里选择副本存放的位置、运行时间（**After every backup** 或 **Own plan**）以及目标上保留多少快照。卡片列出每个数据集和卷及其状态，**立即复制**会开始一次运行。副本运行有自己的锁，所以耗时很长的首次传输不会拖住备份。
+
+### 推送到 ZFS 服务器 {#replica-push}
+
+任何装有 ZFS 和 SSH 的机器都可以接收，例如第二台 Unraid 或 TrueNAS。BombVault 不必在那里运行。
+
+1. 在 **Settings, Storage locations** 下打开 **Add storage location**，选择 **ZFS server**。
+2. 输入地址、用户和端口。对话框会显示 BombVault 的公钥。把它加入服务器上该用户的 `~/.ssh/authorized_keys`。在 Unraid 上，它位于 **Settings, Users, root, SSH keys**。
+3. 测试连接。对话框随后列出服务器的存储池。选择一个并设置根路径，默认是 `<pool>/bombvault-replica`。
+4. 在对象的 **Replica** 卡片中选择新服务器。
+
+使用 root 时不需要其他设置。独立用户需要在目标的存储池上拥有这些权限，对话框也会显示它们：
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+在源端，同类用户需要在对象的顶层数据集上拥有这些权限：
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+在这个方向上，保存该对象的 BombVault 也持有一把可以写入该服务器的密钥。
+
+### 由另一个 BombVault 拉取 {#replica-pull}
+
+反过来，由已配对的 BombVault 自己取回副本。这样源端没有可以写入或删除拷贝的密钥，所以即使源端被人接管，拷贝也能保全。
+
+1. 在要保存拷贝的实例上，打开**实例**，再打开 **Fetch**，点击 **Add source** 并选择 **ZFS datasets**。
+2. 选择已配对的实例及其 ZFS 对象。然后选择这台服务器上的存储池和根路径、计划以及保留的快照数量。
+3. 保存时会询问源端。那里的对象会显示这个请求，在有人点击**允许**之前什么都不会发生。
+
+之后源端会为另一个实例添加一把密钥。这把密钥只能发送该对象的快照并创建它自己的副本快照。它不能删除任何东西，也看不到其他任何内容。对象的 **Replica** 卡片中的 **Revoke access** 可随时移除这把密钥。另一个实例已经拥有的内容会留在那里。
+
+拉取的实例按自己的计划运行并自行清理。计划和保留策略在它那一侧设置。
+
+### 数据存放在哪里 {#replica-target}
+
+每个数据集存放在 `<root>/<server>/<pool>/<path>`。服务器文件夹是源实例的名称，在首次传输时确定，因此两台存储池同名的服务器不会互相干扰。例如，名为 `tower` 的服务器上的 `cache/appdata` 最终位于 `backup/bombvault-replica/tower/cache/appdata`。
+
+目标上的拷贝是只读的，也不会被挂载，所以不会覆盖那台服务器上的任何内容。ZFS 属性会一并传输，但挂载点、`sharenfs` 和 `sharesmb` 除外。
+
+### 包含什么 {#replica-contents}
+
+对象备份的所有内容都会包含，其下备份会跳过的卷也包含在内。您在对象中关闭的子数据集不包含。一次运行的所有数据集都来自同一个快照，与备份相同。
+
+### 快照保留多久 {#replica-retention}
+
+在目标上，新副本保留 7 个每日快照和 3 个每周快照。也可以改选 **Short**、**均衡** 或 **Long**，或者设置 **Custom values**。那里只会删除名为 `bombvault-replica-<14 digits>` 的快照，并且永远不会删除双方共有的最新一个。
+
+在源端，BombVault 只保留最新的副本快照，外加每个已发送状态的一个书签。书签不占用空间。下一次传输从它们开始。
+
+### 副本中的加密数据集 {#replica-encryption}
+
+加密数据集以原始方式发送。它在目标上保持加密，目标永远看不到密钥。请妥善保管密钥：恢复后要打开拷贝需要它，没有密钥的副本无法读取。
+
+### 使用副本 {#replica-use}
+
+打开对象的**备份**标签页，点击 **Storage locations** 卡片中的副本行。弹出页面会列出目标上的快照，并用您的真实名称显示命令。
+
+要查看旧的状态，可在目标上克隆一个快照。克隆在有内容变化之前不占用空间，副本保持不变：
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+如果源端出了故障，可在目标上把拷贝变成普通的、可写的数据集：
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+之后 BombVault 会停止向该数据集复制，直到您开始新的首次运行。
+
+要把某个状态取回源端，请在弹出页面中点击 **Bring back as a new dataset**。BombVault 会把快照发送到原数据集旁边的一个新数据集，名称是 `<dataset>-bombvault-restore-` 加上时间戳。它从不写入原数据集。
+
 ## 遗留的快照 {#leftover-snapshots}
 
 备份快照的名称为 `<dataset>@bombvault-<14 位数字>`，例如 `cache/appdata@bombvault-20260924021500`（UTC）。BombVault 会在备份完成后立即删除它。如果删除失败，例如因为数据集正忙或 BombVault 被停止，BombVault 会在以下时机删除它：
@@ -116,6 +199,8 @@ BombVault 每次备份都会保存每个数据集在本地设置的 ZFS 属性�
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+副本的快照名为 `<dataset>@bombvault-replica-<14 digits>`，不属于遗留快照。它在源端保留到下一次副本运行将其替换，在目标上则保留到保留策略不再需要它。清理程序从不触碰它，因为它只匹配 `bombvault-` 后面恰好跟 14 位数字的名称。
 
 ## 异常 {#anomalies}
 
