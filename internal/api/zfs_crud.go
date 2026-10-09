@@ -350,14 +350,14 @@ func (s *Service) deleteZFSDatasetLocked(ctx context.Context, id string, removeS
 	if err != nil {
 		return ZFSDeleteResult{}, fmt.Errorf("zfs: load dataset: %w", err)
 	}
-	if d.Replica.TargetKind != store.ZFSReplicaTargetNone {
-		unlock, ok := s.lockZFSReplica(id)
-		if !ok {
-			return ZFSDeleteResult{}, errZFSReplicaBusy
-		}
-		defer unlock()
-		s.cleanZFSReplicaSource(ctx, d)
+	// A replica switched off while the host was out of reach kept its
+	// snapshots, so the clean does not ask for a target.
+	unlock, ok := s.lockZFSReplica(id)
+	if !ok {
+		return ZFSDeleteResult{}, errZFSReplicaBusy
 	}
+	defer unlock()
+	s.cleanZFSReplicaSource(ctx, d)
 	var res ZFSDeleteResult
 	safety, sErr := s.store.ListZFSSafetySnapshots(id)
 	if sErr != nil {

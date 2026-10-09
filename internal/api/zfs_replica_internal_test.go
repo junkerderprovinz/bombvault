@@ -526,6 +526,21 @@ func TestRemovingAnEntryCleansItsReplicaFromTheSource(t *testing.T) {
 	}
 }
 
+func TestRemovingAnEntryWithoutATargetStillCleansWhatItsReplicaLeft(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.st.SetZFSReplicaTarget(r.item.ID, store.ZFSReplicaTargetNone, ""); err != nil {
+		t.Fatal(err)
+	}
+	r.host.tree = []string{"cache/appdata"}
+	r.host.points["cache/appdata"] = "cache/appdata@" + replicaSnap + "\t7\t10\n"
+	if _, err := r.s.deleteZFSDatasetLocked(context.Background(), r.item.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if len(r.host.did("release")) != 1 || len(r.host.did("destroy")) != 1 {
+		t.Errorf("release %q, destroy %q, want the held snapshot gone", r.host.did("release"), r.host.did("destroy"))
+	}
+}
+
 func TestPatchValidatesBeforeItWrites(t *testing.T) {
 	r := newReplicaRig(t)
 	for _, body := range []string{
