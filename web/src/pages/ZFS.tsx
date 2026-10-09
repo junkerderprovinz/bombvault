@@ -14,6 +14,7 @@ import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
 import { ZFSAddDialog } from "../components/zfs/ZFSAddDialog";
 import { ZFSConnectionCard } from "../components/zfs/ZFSConnectionCard";
 import { ZFSDatasetRow } from "../components/zfs/ZFSDatasetRow";
+import { ReplicaServers } from "../components/zfs/replica/ReplicaServers";
 import { backupZFSAll, discoverZFS, getSettings, listZFSDatasets, zfsHostDatasets } from "../lib/api";
 import type { ZFSDatasetView, ZFSHostDataset } from "../lib/api";
 import { hueVars } from "../lib/appearance";
@@ -175,6 +176,7 @@ export function ZFS() {
       </div>
 
       <ZFSConnectionCard />
+      <ReplicaServers />
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error !== null && <p className="text-sm text-statusFail">{error}</p>}

@@ -26,6 +26,7 @@ const base: PullSourceView = {
   sortOrder: 0,
   memberId: "member-1",
   needsPairing: false,
+  kind: "restic",
 };
 
 let rows: PullSourceView[] = [base];
