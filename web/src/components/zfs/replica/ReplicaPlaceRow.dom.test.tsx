@@ -110,6 +110,22 @@ describe("replica storage row", () => {
     expect(screen.getByText(/^zfs inherit -r readonly backup\/bombvault-replica\/tower\/cache\/appdata/)).toBeTruthy();
   });
 
+  it("sends someone to the paired instance for commands that only work there", async () => {
+    current = replica({
+      target: { kind: "peer", id: "peer-1" },
+      peerState: "allowed",
+      members: replica().members.map((m) => ({ ...m, targetPath: `tower/${m.dataset}` })),
+    });
+    renderRow();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
+    expect(screen.getByRole("dialog", { name: "Replica of cache/appdata on tower-2" })).toBeTruthy();
+    expect(screen.getByText(en["zfs.replica.sheet.peerCommands"].replaceAll("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.getByLabelText(en["zfs.replica.sheet.peerHint"].replaceAll("{peer}", "tower-2"))).toBeTruthy();
+    expect(screen.queryByText(/^zfs (clone|inherit)/)).toBeNull();
+    expect(screen.queryByText("tower/cache/appdata")).toBeNull();
+    expect(screen.getByRole("button", { name: en["zfs.replica.restore"] })).toBeTruthy();
+  });
+
   it("brings the picked snapshot back as a new dataset after the question", async () => {
     renderRow();
     fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));

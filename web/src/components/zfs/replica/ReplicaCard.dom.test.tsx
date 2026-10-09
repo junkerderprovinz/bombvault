@@ -134,6 +134,18 @@ describe("replica card", () => {
     expect(screen.getByRole("radiogroup", { name: en["zfs.replica.when"] })).toBeTruthy();
   });
 
+  it("shows no path for a paired instance, whose pool and folder are its own", async () => {
+    current = replica({
+      target: { kind: "peer", id: "peer-1" },
+      peerState: "allowed",
+      members: replica().members.map((m) => ({ ...m, targetPath: `tower/${m.dataset}` })),
+    });
+    renderCard();
+    expect(await screen.findByText("cache/appdata")).toBeTruthy();
+    expect(screen.queryAllByText(/^to /)).toHaveLength(0);
+    expect(screen.getByText("+31.0 MB in the last run")).toBeTruthy();
+  });
+
   it("says a paired instance declined and offers neither a run nor a new request", async () => {
     current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "refused" });
     renderCard();

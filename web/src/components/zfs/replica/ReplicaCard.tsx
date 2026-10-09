@@ -323,10 +323,12 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
                     )}
                   </span>
                   <span className="text-caption text-carbon-textMuted">
-                    <bdi dir="ltr">{t("zfs.replica.memberPath").replace("{path}", () => m.targetPath)}</bdi>
+                    {/* A paired instance picks its own pool and root, so
+                        the path this side knows is not where the copy is. */}
+                    {!peer && <bdi dir="ltr">{t("zfs.replica.memberPath").replace("{path}", () => m.targetPath)}</bdi>}
                     {m.state === "ok" && m.lastBytes > 0 && (
                       <>
-                        {" · "}
+                        {!peer && " · "}
                         <span className="glim-num">
                           {t("zfs.replica.memberAdded").replace("{size}", () => humanBytes(m.lastBytes))}
                         </span>
