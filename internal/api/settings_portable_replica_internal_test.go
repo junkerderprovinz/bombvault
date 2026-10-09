@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfsrepl"
 )
 
 // seedReplica gives an instance a ZFS server with its own key directory, an
@@ -189,5 +190,41 @@ func TestImportRefusesAReplicaBlockAFormWouldRefuse(t *testing.T) {
 				t.Fatalf("a refused import wrote %d servers", len(servers))
 			}
 		})
+	}
+}
+
+func TestAnImportThatDropsAServerCleansItsItemsAndWaitsForTheirRuns(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	server, item := seedReplica(t, dstStore)
+	host := newReplicaHost()
+	host.tree = []string{"cache/appdata"}
+	host.points["cache/appdata"] = "cache/appdata@" + replicaSnap + "\t7\t10\n"
+	dst.svc.replica.hostEnd = func() (zfsrepl.End, error) { return host, nil }
+
+	unlock, _ := dst.svc.lockZFSReplica(item.ID)
+	env := doImport(t, dst, body, "?apply=true")
+	unlock()
+	if env["ok"] != false {
+		t.Fatalf("an import while the item replicates = %v, want it refused", env)
+	}
+	if _, ok, _ := dstStore.GetZFSReplicaServer(server.ID); !ok {
+		t.Fatal("a refused import deleted the server")
+	}
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	if d, _ := dstStore.GetZFSDataset(item.ID); d.Replica.TargetKind != store.ZFSReplicaTargetNone {
+		t.Fatalf("the item still replicates to %+v", d.Replica)
+	}
+	if calls := host.did("destroy"); len(calls) != 1 {
+		t.Errorf("source cleanup = %q, want the item's replica snapshot removed", calls)
+	}
+	if dst.svc.zfsReplicaRunning(item.ID) {
+		t.Error("the import kept the item's lock")
 	}
 }
