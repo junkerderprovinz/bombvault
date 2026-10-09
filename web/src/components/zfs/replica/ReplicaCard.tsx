@@ -230,7 +230,9 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
         aside={hasTarget && <ReplicaStatePill replica={view} running={running} peerName={shownName} />}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="min-w-0 flex-1">
+          {/* Without a floor the strip gives up its width to the button
+              beside it and cuts the names short; with one the button wraps. */}
+          <div className="min-w-[min(12rem,100%)] flex-1">
             <Selector
               label={t("zfs.replica.target")}
               items={targets}
