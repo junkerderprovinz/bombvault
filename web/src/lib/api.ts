@@ -4059,6 +4059,10 @@ export interface ZFSDatasetView {
   safetyOldestAt: number;
   members: ZFSMemberView[];
   effectiveSchedule: EffectiveSchedule;
+  /** The 3-2-1 verdict PlacementObserved gives the other domains, with a
+   *  current replica counted as a copy off the premises. */
+  sites: number;
+  rule321: PlacementObserved["rule321"];
 }
 
 export interface ListZFSDatasetsResponse extends OkEnvelope {
@@ -4600,11 +4604,13 @@ export function runZFSReplica(id: string): Promise<ZFSCodedEnvelope & { runId?: 
 }
 
 /** POST /api/zfs/datasets/{id}/replica/restore: send a snapshot back into a
- *  new dataset next to the item's root, never over it. */
+ *  new dataset next to the item's root, never over it, reporting on the
+ *  "zfs-replica-restore:<id>" progress key. keyNeeded says the copy arrives
+ *  encrypted and stays unmounted until its key is loaded. */
 export function restoreZFSReplica(
   id: string,
   snapshot: string
-): Promise<ZFSCodedEnvelope & { runId?: string; dataset?: string }> {
+): Promise<ZFSCodedEnvelope & { runId?: string; dataset?: string; keyNeeded?: boolean }> {
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/restore`, {
     method: "POST",
     body: JSON.stringify({ snapshot }),

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { getGroup, getZFSReplica, listZFSReplicaServers } from "../../../lib/api";
 import type { GroupState, ZFSReplica, ZFSReplicaServer } from "../../../lib/api";
 import { useProgress } from "../../../lib/progress";
-import { replicaProgressKey } from "./replicaModel";
+import { replicaProgressKey, replicaRestoreKey } from "./replicaModel";
 
 interface Entry<V> {
   value: V | undefined;
@@ -61,20 +61,23 @@ const useServersResource = sharedResource(() => listZFSReplicaServers());
 const useGroupResource = sharedResource<GroupState | null>(() => getGroup().then((g) => (g.ok ? g : null)));
 
 /** useReplica is one item's replica, read again when a run on its progress
- *  key ends. */
+ *  key ends. restoreActive is a bring back in flight. */
 export function useReplica(itemId: string): {
   replica: ZFSReplica | undefined;
   reload: () => void;
   progressActive: boolean;
+  restoreActive: boolean;
 } {
   const { value, reload } = useReplicaResource(itemId);
-  const progressActive = useProgress()[replicaProgressKey(itemId)]?.active ?? false;
+  const progress = useProgress();
+  const progressActive = progress[replicaProgressKey(itemId)]?.active ?? false;
+  const restoreActive = progress[replicaRestoreKey(itemId)]?.active ?? false;
   const wasActive = useRef(progressActive);
   useEffect(() => {
     if (wasActive.current && !progressActive) reload();
     wasActive.current = progressActive;
   }, [progressActive, reload]);
-  return { replica: value, reload, progressActive };
+  return { replica: value, reload, progressActive, restoreActive };
 }
 
 export function useReplicaServers(): { servers: ZFSReplicaServer[]; loaded: boolean; reload: () => void } {

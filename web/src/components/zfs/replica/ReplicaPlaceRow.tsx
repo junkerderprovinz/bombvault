@@ -15,25 +15,26 @@ import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
 export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string }) {
   const { t } = useT();
   const { push } = useToast();
-  const { replica, progressActive } = useReplica(itemId);
+  const { replica, progressActive, restoreActive } = useReplica(itemId);
   const { servers } = useReplicaServers();
   const group = useGroup();
   const [open, setOpen] = useState(false);
-  const restoring = useRef<{ dataset: string; seen: boolean } | null>(null);
+  const restoring = useRef<{ dataset: string; keyNeeded: boolean; seen: boolean } | null>(null);
 
-  // The restore runs on the replica's progress key; its end is the moment
-  // the new dataset is there to look at.
+  // The end of the bring back's progress is the moment the new dataset is
+  // there to look at.
   useEffect(() => {
     const r = restoring.current;
     if (!r) return;
-    if (progressActive) {
+    if (restoreActive) {
       r.seen = true;
       return;
     }
     if (!r.seen) return;
     restoring.current = null;
-    push(t("zfs.replica.restored").replace("{fresh}", () => r.dataset).replace("{name}", () => name), "success");
-  }, [progressActive, name, push, t]);
+    const key = r.keyNeeded ? "zfs.replica.restoredLocked" : "zfs.replica.restored";
+    push(t(key).replace("{fresh}", () => r.dataset).replace("{name}", () => name), "success");
+  }, [restoreActive, name, push, t]);
 
   if (!replica || replica.target.kind === "none") return null;
   const shownName = targetName(replica, servers, group?.members ?? []);
@@ -72,8 +73,8 @@ export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string
           targetName={shownName}
           replica={replica}
           onClose={() => setOpen(false)}
-          onRestoring={(dataset) => {
-            restoring.current = { dataset, seen: false };
+          onRestoring={(dataset, keyNeeded) => {
+            restoring.current = { dataset, keyNeeded, seen: false };
           }}
         />
       )}

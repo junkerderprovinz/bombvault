@@ -69,6 +69,12 @@ export function replicaProgressKey(itemId: string): string {
   return `zfs-replica:${itemId}`;
 }
 
+/** replicaRestoreKey is the progress key a bring back reports on, apart from
+ *  the item's replica runs. */
+export function replicaRestoreKey(itemId: string): string {
+  return `zfs-replica-restore:${itemId}`;
+}
+
 /** targetRoot is the root above a copy's server folder. A copy lives at
  *  <root>/<server>/<source dataset>, so the path minus the dataset and the
  *  server folder is the root. */
