@@ -93,7 +93,7 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		Volume:  d.Type == "volume",
 		Raw:     d.Encryption != "off",
 	}
-	src, tgt, err := r.replicate(ctx, &m)
+	src, tgt, sent, err := r.replicate(ctx, &m)
 	if err != nil {
 		m.Code, m.Err = Code(err), err
 		if ctx.Err() != nil {
@@ -101,7 +101,7 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		}
 		// However the stream ended, a partial receive left on the target is
 		// what the next run resumes.
-		if r.keepOrDrop(context.WithoutCancel(ctx), m) {
+		if r.keepOrDrop(context.WithoutCancel(ctx), m, sent) {
 			m.Code = "stream-cut"
 		}
 		log.Printf("zfs replica: %s to %s failed: %v", m.Dataset, m.Target, err)
@@ -118,24 +118,25 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 }
 
 // replicate brings one member up to the run's snapshot and returns the replica
-// points both sides had for the housekeeping after it.
-func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.ReplicaPoint, err error) {
+// points both sides had for the housekeeping after it. sent reports whether
+// the stream towards the snapshot started, also when it then failed.
+func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.ReplicaPoint, sent bool, err error) {
 	if src, err = points(ctx, r.src, m.Dataset); err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	fresh, ok := find(src, r.snap)
 	if !ok {
-		return nil, nil, &Refusal{Code: "snapshot-failed", Detail: m.Dataset + "@" + r.snap + " is not on the source"}
+		return nil, nil, false, &Refusal{Code: "snapshot-failed", Detail: m.Dataset + "@" + r.snap + " is not on the source"}
 	}
 	m.GUID = fresh.GUID
 
 	view, err := r.view(ctx, m.Target)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	if view.token != "" {
 		if view, err = r.resume(ctx, m, view, src); err != nil {
-			return nil, nil, err
+			return nil, nil, false, err
 		}
 	}
 
@@ -146,7 +147,7 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 		recv.Full = true
 		if m.Dataset == r.e.Root {
 			if err := r.ensureParents(ctx, path.Dir(m.Target)); err != nil {
-				return nil, nil, err
+				return nil, nil, false, err
 			}
 		}
 	case base != nil:
@@ -157,36 +158,36 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 	case len(view.snaps) == 0 && r.placeholders[m.Target]:
 		recv.Full, recv.Replace = true, true
 	default:
-		return nil, nil, &Refusal{Code: "no-common-base", Detail: m.Target + " shares no replica snapshot with " + m.Dataset}
+		return nil, nil, false, &Refusal{Code: "no-common-base", Detail: m.Target + " shares no replica snapshot with " + m.Dataset}
 	}
 	m.Base, m.FromBookmark = send.Base, send.FromBookmark
 
 	sendArgs, err := zfs.SendArgs(send)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	estArgs, err := zfs.EstimateArgs(send)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	recvArgs, err := zfs.ReceiveArgs(recv)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	n, err := r.stream(ctx, m.Dataset, sendArgs, recvArgs, estArgs)
 	m.Bytes += n
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, true, err
 	}
 
 	if tgt, err = r.landed(ctx, m.Target, fresh); err != nil {
-		return nil, nil, err
+		return nil, nil, true, err
 	}
 	m.Snapshot = r.snap
 	if err := r.anchor(ctx, m.Dataset, r.snap); err != nil {
-		return nil, nil, err
+		return nil, nil, true, err
 	}
-	return src, tgt, nil
+	return src, tgt, true, nil
 }
 
 // resume finishes the stream an earlier run left on the target. A token whose
@@ -316,19 +317,25 @@ func (r *run) anchor(ctx context.Context, dataset, snap string) error {
 }
 
 // keepOrDrop decides about a failed member's new snapshot on the source. It
-// stays while the target holds it or may still resume towards it, and goes
-// otherwise, so a member that keeps failing does not pile up snapshots. It
-// reports whether the target holds a partial receive.
-func (r *run) keepOrDrop(ctx context.Context, m MemberResult) (resumable bool) {
+// stays while the target holds it or may still resume towards it, which only
+// a stream that started towards it can have left, and goes otherwise, so a
+// member that keeps failing does not pile up snapshots. It reports whether the
+// target holds a partial receive.
+func (r *run) keepOrDrop(ctx context.Context, m MemberResult, sent bool) (resumable bool) {
+	if !sent {
+		r.destroyNew(ctx, m.Dataset)
+	}
 	view, err := r.view(ctx, m.Target)
 	if err != nil {
-		log.Printf("zfs replica: keeping %s@%s, the target could not be read: %v", m.Dataset, r.snap, err)
+		if sent {
+			log.Printf("zfs replica: keeping %s@%s, the target could not be read: %v", m.Dataset, r.snap, err)
+		}
 		return false
 	}
 	if view.token != "" {
 		return true
 	}
-	if _, ok := find(view.snaps, r.snap); !ok {
+	if _, ok := find(view.snaps, r.snap); sent && !ok {
 		r.destroyNew(ctx, m.Dataset)
 	}
 	return false

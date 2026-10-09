@@ -40,6 +40,9 @@ type fakeHost struct {
 	// killReceive makes a receive into a dataset die after that many payload
 	// bytes, keeping the partial state a killed zfs receive -s leaves.
 	killReceive map[string]int
+	// unreachable makes every command fail the way ssh does when the host
+	// does not answer.
+	unreachable bool
 }
 
 // fakeWorld hands out guids that are unique across both hosts, as they are in
@@ -182,6 +185,9 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 	h.record(args)
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if h.unreachable {
+		return "", fail(args, 255, "ssh: connect to host backup.lan port 22: Connection refused")
+	}
 	last := args[len(args)-1]
 	switch args[1] {
 	case "list":

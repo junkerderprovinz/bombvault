@@ -368,6 +368,50 @@ func TestACutFirstStreamIsResumedRatherThanSentAgain(t *testing.T) {
 	}
 }
 
+func TestRunsAgainstAnUnreachableTargetLeaveNoSnapshotsBehind(t *testing.T) {
+	r := newRig(t)
+	first := r.run()
+	r.ok(first)
+	r.dst.unreachable = true
+	for range 3 {
+		res := r.run()
+		if m := member(t, res, "cache/appdata"); m.Code == "" {
+			t.Fatalf("a run against an unreachable target succeeded: %+v", m)
+		}
+	}
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if got := r.src.snapNames(ds); !slices.Equal(got, []string{first.Snapshot}) {
+			t.Errorf("%s snapshots = %q, want only the base", ds, got)
+		}
+	}
+}
+
+func TestAFailedResumeDropsTheNewSnapshotAndKeepsTheOneItResumesTowards(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	r.src.payload["cache/appdata"] = 8192
+	r.src.cutAfter["cache/appdata"] = 3000
+	cut := r.run()
+	delete(r.src.cutAfter, "cache/appdata")
+	r.dst.refuseReceive[rootTarget] = "cannot receive: permission denied"
+
+	failed := r.run()
+	if m := member(t, failed, "cache/appdata"); m.Code != "stream-cut" {
+		t.Fatalf("code = %q, err %v, want stream-cut", m.Code, m.Err)
+	}
+	got := r.src.snapNames("cache/appdata")
+	if slices.Contains(got, failed.Snapshot) || !slices.Contains(got, cut.Snapshot) {
+		t.Fatalf("source snapshots = %q, want %s kept and %s gone", got, cut.Snapshot, failed.Snapshot)
+	}
+
+	delete(r.dst.refuseReceive, rootTarget)
+	next := r.run()
+	r.ok(next)
+	if m := member(t, next, "cache/appdata"); !m.Resumed || m.Base != cut.Snapshot {
+		t.Errorf("resumed %v, base %q, want a resume and then an increment from %s", m.Resumed, m.Base, cut.Snapshot)
+	}
+}
+
 func TestAStaleTokenIsAbortedAndTheMemberCarriesOn(t *testing.T) {
 	r := newRig(t)
 	first := r.run()
