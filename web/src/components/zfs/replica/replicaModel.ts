@@ -10,6 +10,7 @@ import type {
 } from "../../../lib/api";
 import { humanBytes } from "../../../lib/forecast";
 import type { TranslationKey } from "../../../lib/i18n";
+import { zfsCodeSentence } from "../../../lib/zfsCodes";
 
 type Translate = (key: TranslationKey, n?: number) => string;
 
@@ -99,6 +100,13 @@ export function takeoverCommand(targetPath: string): string {
  *  the item, or inside the pool for a pool's top dataset. */
 export function restorePreview(dataset: string): string {
   return dataset.includes("/") ? `${dataset}-bombvault-restore-…` : `${dataset}/bombvault-restore-…`;
+}
+
+/** testFailure words a failed connection test. A check of the host, user or
+ *  port answers with the generic code, and its own text says more. */
+export function testFailure(t: Translate, result: { code: string; error?: string }): string {
+  if ((result.code === "" || result.code === "zfs-error") && result.error) return result.error;
+  return zfsCodeSentence(t, result.code);
 }
 
 /** The delegation a user other than root needs on the receiving pool. */

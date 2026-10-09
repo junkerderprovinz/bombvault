@@ -14,7 +14,7 @@ import { TestButton, VerdictLine } from "../../TestButton";
 import { IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaStatePill } from "./ReplicaStatePill";
-import { examplePath, isRunning, rootMember, serverFree, targetName } from "./replicaModel";
+import { examplePath, isRunning, rootMember, serverFree, targetName, testFailure } from "./replicaModel";
 import { useGroup, useReplica, useReplicaServers } from "./replicaStore";
 
 function EntryRow({ itemId, dataset }: { itemId: string; dataset: string }) {
@@ -91,7 +91,7 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
   function test() {
     void check.run(async () => {
       const r = await testZFSReplicaServer(serverId);
-      return r.ok ? { ok: true } : { ok: false, reason: zfsCodeSentence(t, r.code) };
+      return r.ok ? { ok: true } : { ok: false, reason: testFailure(t, r) };
     });
   }
 

@@ -22,7 +22,7 @@ import { NumberField } from "../../NumberField";
 import { Selector } from "../../Selector";
 import { TestButton, VerdictLine } from "../../TestButton";
 import { IconZFS } from "../../navGlyphs";
-import { allowLine, defaultRoot, examplePath, poolLabel } from "./replicaModel";
+import { allowLine, defaultRoot, examplePath, poolLabel, testFailure } from "./replicaModel";
 import { useGroup } from "./replicaStore";
 
 const inputCls = "w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
@@ -99,7 +99,7 @@ export function AddReplicaServerDialog({
     setError(null);
     void check.run(async () => {
       const r = await testZFSReplicaConnection(host.trim(), login, port);
-      if (!r.ok) return { ok: false, reason: zfsCodeSentence(t, r.code) };
+      if (!r.ok) return { ok: false, reason: testFailure(t, r) };
       setPools(r.pools);
       if (!name.trim()) setName(host.trim());
       return { ok: true };
