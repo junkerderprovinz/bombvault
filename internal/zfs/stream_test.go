@@ -3,11 +3,14 @@ package zfs
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"encoding/binary"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -145,5 +148,83 @@ func TestReadStreamBeginRefusesACompoundStreamItCannotFollow(t *testing.T) {
 		if got, err := ReadStreamBegin(bufio.NewReader(bytes.NewReader(stream))); err == nil {
 			t.Errorf("%s: ReadStreamBegin accepted it: %+v", name, got)
 		}
+	}
+}
+
+// readStream reads one of the whole streams in testdata, sent from OpenZFS
+// 2.4.3 with the flags its name gives.
+func readStream(t *testing.T, name string) []byte {
+	t.Helper()
+	f, err := os.Open(filepath.Join("testdata", name+".stream.gz")) //nolint:gosec // G304: a fixture the test names
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close() //nolint:errcheck // a read-only fixture
+	zr, err := gzip.NewReader(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := io.ReadAll(zr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
+}
+
+func TestSnapshotStreamPassesEveryRecordOfOneSnapshot(t *testing.T) {
+	// send-p and send-p-volume are zfs send -c -L -e -p, send-w-p a raw
+	// stream of an encrypted dataset, send-plain one without any flag and
+	// send-t its resumption.
+	for _, name := range []string{"send-p", "send-p-volume", "send-w-p", "send-plain", "send-t"} {
+		stream := readStream(t, name)
+		s := NewSnapshotStream(bytes.NewReader(stream))
+		got, err := io.ReadAll(s)
+		if err != nil || s.Refused() != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+		if !bytes.Equal(got, stream) {
+			t.Errorf("%s: passed %d of %d bytes", name, len(got), len(stream))
+		}
+	}
+}
+
+func TestSnapshotStreamStopsBeforeASecondSnapshot(t *testing.T) {
+	// zfs send -p -I from the first of three snapshots: one substream to the
+	// second snapshot, then one to the third.
+	stream := readStream(t, "send-p-I")
+	s := NewSnapshotStream(bytes.NewReader(stream))
+	got, err := io.ReadAll(s)
+	if err == nil || s.Refused() == nil {
+		t.Fatal("a stream of two snapshots passed")
+	}
+	rest := stream[len(got):]
+	if !bytes.HasPrefix(stream, got) || len(rest) < streamBeginLen || !isBegin(binary.LittleEndian, rest) {
+		t.Fatalf("passed %d bytes, want everything before the second begin record", len(got))
+	}
+	if b := parseBegin(binary.LittleEndian, rest); !strings.HasSuffix(b.Snapshot, "@bombvault-replica-20261011030000") {
+		t.Fatalf("stopped before %s, want the substream to the third snapshot", b.Snapshot)
+	}
+}
+
+func TestSnapshotStreamRefusesWhatFollowsTheEnd(t *testing.T) {
+	for _, name := range []string{"send-p", "send-plain"} {
+		stream := append(readStream(t, name), "more"...)
+		s := NewSnapshotStream(bytes.NewReader(stream))
+		if _, err := io.ReadAll(s); err == nil || s.Refused() == nil {
+			t.Errorf("%s: bytes after the end passed", name)
+		}
+	}
+}
+
+func TestSnapshotStreamPassesACutStreamOnWithoutRefusing(t *testing.T) {
+	stream := readStream(t, "send-p")
+	cut := stream[:len(stream)/2]
+	s := NewSnapshotStream(bytes.NewReader(cut))
+	got, err := io.ReadAll(s)
+	if !errors.Is(err, io.ErrUnexpectedEOF) || s.Refused() != nil {
+		t.Fatalf("a cut stream ended with %v, refused %v; want it short and not refused", err, s.Refused())
+	}
+	if !bytes.HasPrefix(cut, got) || len(cut)-len(got) >= streamBeginLen {
+		t.Fatalf("passed %d of the %d bytes that came", len(got), len(cut))
 	}
 }

@@ -509,7 +509,7 @@ func TestASlotReachesNothingInAFolderOfAnotherInstance(t *testing.T) {
 	pool.ds[target].snaps = []fakeSnap{{snap, 11, 1}}
 
 	member := "/api/zfs/receive/" + id + "/members/cache%2Fappdata"
-	increment := append(streamRecord("cache/appdata@bombvault-replica-20261010030000", 12, 11, false), fakeTrailer...)
+	increment := fakeStream(streamRecord("cache/appdata@bombvault-replica-20261010030000", 12, 11, false))
 	for _, call := range []struct {
 		method, path string
 		body         []byte
@@ -791,5 +791,44 @@ func TestAnIncrementFromAnOlderBaseIsNeverRolledBackOnto(t *testing.T) {
 	}
 	if _, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{ToGUID: 13}); zfsrepl.Code(err) != "dataset-exists" {
 		t.Fatalf("a full stream onto a replica with snapshots = %v, want dataset-exists", err)
+	}
+}
+
+func TestASlotTakesOneSnapshotPerStream(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pool := newFakePool(&atomic.Uint64{}, "tank")
+	in.svc.SetZFSHost(zfs.NewSSHHost(pool))
+	in.svc.SetHostSSH(pool)
+	switchReceiver(t, in, true)
+	id := askSlot(t, in, "0b0b0b0b", "cache/appdata")
+	if out := allowSlot(t, in, id); out["ok"] != true {
+		t.Fatalf("allow = %v", out)
+	}
+	slot, _, _ := in.st.GetZFSReceiveSlot(id)
+	token, err := secret.Decrypt(in.appKey, slot.TokenEnc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, ds := range []string{receiveRoot, receiveRoot + "/tower", receiveRoot + "/tower/cache", receiveRoot + "/tower/cache/appdata"} {
+		pool.ds[ds] = newFakeDataset("filesystem")
+		if ds != receiveRoot {
+			pool.ds[ds].props[zfs.SourceProperty] = "0b0b0b0b"
+		}
+	}
+	target := receiveRoot + "/tower/cache/appdata"
+	pool.ds[target].snaps = []fakeSnap{{"bombvault-replica-20261008030000", 11, 1}, {"bombvault-replica-20261009030000", 12, 2}}
+
+	// The first stream builds on the newest snapshot and earns -F; the
+	// second one would take that -F back to the older one.
+	stream := slices.Concat(
+		fakeStream(streamRecord("cache/appdata@bombvault-replica-20261010030000", 13, 12, false)),
+		fakeStream(streamRecord("cache/appdata@bombvault-replica-20261011030000", 14, 11, false)),
+	)
+	req := httptest.NewRequest(http.MethodPut, "/api/zfs/receive/"+id+"/members/cache%2Fappdata", bytes.NewReader(stream))
+	req.Header.Set("Authorization", "Bearer "+string(token))
+	w := httptest.NewRecorder()
+	in.router.ServeHTTP(w, req)
+	if !strings.Contains(w.Body.String(), `"ok":false`) || !strings.Contains(w.Body.String(), "the stream carries more than the snapshot it starts with") {
+		t.Fatalf("a stream of two snapshots = %d %s, want it refused", w.Code, w.Body)
 	}
 }

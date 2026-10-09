@@ -198,7 +198,8 @@ func zfsSlotMemberView(ctx context.Context, host zfsrepl.End, slot store.ZFSRece
 }
 
 // handleZFSSlotReceive takes one member's stream into this host. The flags
-// are this side's own choice from what the stream and the target say, so a
+// are this side's own choice from what the stream and the target say, and the
+// stream carries no more than the one snapshot they were chosen for, so a
 // source can add snapshots but never roll back or replace anything that is
 // not its own.
 // PUT /api/zfs/receive/{slot}/members/{member}
@@ -239,8 +240,13 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 		zfsSlotFail(w, err)
 		return
 	}
-	counted := &byteCounter{r: stream}
-	if err := host.Receive(ctx, args, counted); err != nil {
+	one := zfs.NewSnapshotStream(stream)
+	counted := &byteCounter{r: one}
+	err = host.Receive(ctx, args, counted)
+	if refused := one.Refused(); refused != nil {
+		err = &zfsrepl.Refusal{Code: "zfs-error", Detail: "the stream carries more than the snapshot it starts with", Err: refused}
+	}
+	if err != nil {
 		log.Printf("zfs receive: %s from %s failed: %v", target, slot.PeerName, err)
 		zfsSlotFail(w, err)
 		return

@@ -19,8 +19,8 @@ import (
 
 // fakePool is a host that owns ZFS pools and answers the argv the zfs builders
 // emit, over the two transports an instance reaches its host by: the commands
-// a zfs.SSHHost runs and the streams of a HostSSH. A stream is a real leading
-// record, a payload and a trailer, so a cut one shows.
+// a zfs.SSHHost runs and the streams of a HostSSH. A stream is a begin record,
+// one write and an end record, so a cut one shows.
 type fakePool struct {
 	HostSSH
 	guids *atomic.Uint64
@@ -43,8 +43,6 @@ type fakeSnap struct {
 	name      string
 	guid, txg uint64
 }
-
-const fakeTrailer = "\nEND\n"
 
 func newFakePool(guids *atomic.Uint64, datasets ...string) *fakePool {
 	p := &fakePool{guids: guids, ds: map[string]*fakeDataset{}}
@@ -242,6 +240,20 @@ func streamRecord(name string, to, from uint64, volume bool) []byte {
 	return b
 }
 
+// fakeRecord is a little-endian record header of type typ whose write size,
+// where it has one, is size.
+func fakeRecord(typ uint32, size uint64) []byte {
+	b := make([]byte, 312)
+	binary.LittleEndian.PutUint32(b, typ)
+	binary.LittleEndian.PutUint64(b[32:], size)
+	return b
+}
+
+// fakeStream is the whole stream that begin starts.
+func fakeStream(begin []byte) []byte {
+	return slices.Concat(begin, fakeRecord(3, 4096), bytes.Repeat([]byte("x"), 4096), fakeRecord(5, 0))
+}
+
 func (p *fakePool) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error) {
 	p.mu.Lock()
 	p.calls = append(p.calls, slices.Clone(args))
@@ -258,8 +270,7 @@ func (p *fakePool) StreamCommand(ctx context.Context, args ...string) (io.ReadCl
 	stop := context.AfterFunc(ctx, func() { _ = pw.CloseWithError(ctx.Err()) })
 	go func() {
 		defer stop()
-		stream := append(append(record, bytes.Repeat([]byte("x"), 4096)...), fakeTrailer...)
-		if _, err := pw.Write(stream); err != nil {
+		if _, err := pw.Write(fakeStream(record)); err != nil {
 			done <- &sshconn.RemoteError{Stderr: "killed", Err: fakeExit(255)}
 			return
 		}
@@ -305,7 +316,7 @@ func (p *fakePool) RunWithStdin(_ context.Context, rd io.Reader, args ...string)
 		return &sshconn.RemoteError{Stderr: "cannot receive: invalid stream (bad magic number)", Err: fakeExit(1)}
 	}
 	body, err := io.ReadAll(br)
-	if err != nil || !bytes.HasSuffix(body, []byte(fakeTrailer)) {
+	if err != nil || !bytes.HasSuffix(body, fakeRecord(5, 0)) {
 		return &sshconn.RemoteError{Stderr: "cannot receive: checksum mismatch or incomplete stream", Err: fakeExit(1)}
 	}
 	p.mu.Lock()
