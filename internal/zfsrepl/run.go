@@ -56,7 +56,7 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 	res := Result{Snapshot: snap}
 	for _, d := range tree {
 		switch {
-		case restoreLanding(d.Name, e.Root):
+		case RestoreLanding(d.Name, e.Root):
 			r.destroyNew(cleanup, d.Name)
 		case excluded(d.Name, e.Excluded):
 			r.sweepExcluded(cleanup, d.Name)

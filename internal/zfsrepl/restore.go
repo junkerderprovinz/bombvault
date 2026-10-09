@@ -27,11 +27,11 @@ func RestoreName(dataset string, at time.Time) string {
 // name every other ZFS restore in BombVault uses.
 var restoreLandingRe = regexp.MustCompile(`(^|-)bombvault-restore-[0-9]+$`)
 
-// restoreLanding reports whether dataset lies in a tree a restore landed below
+// RestoreLanding reports whether dataset lies in a tree a restore landed below
 // root. A pool root's own bring back lands there, and so does the restore of an
 // entry nested in it; neither is part of the entry, and replicating it would
 // send the restored data back and destroy the snapshot it was restored from.
-func restoreLanding(dataset, root string) bool {
+func RestoreLanding(dataset, root string) bool {
 	rest, ok := strings.CutPrefix(dataset, root+"/")
 	if !ok {
 		return false

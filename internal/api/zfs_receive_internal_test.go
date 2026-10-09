@@ -209,6 +209,18 @@ func TestASourceWaitsUntilTheReceivingInstanceAllows(t *testing.T) {
 	}
 }
 
+func TestARequestLeavesOutTheTreesARestoreLandedIn(t *testing.T) {
+	r := newReceiveRig(t)
+	r.srcPool.ds["cache/appdata/db-bombvault-restore-1760000000000000000"] = newFakeDataset("filesystem")
+	r.srcPool.ds["cache/appdata/db-bombvault-restore-1760000000000000000/logs"] = newFakeDataset("filesystem")
+	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-waiting" {
+		t.Fatalf("an End before any answer = %v, want peer-waiting", err)
+	}
+	if members, _ := r.request(t)["members"].([]any); len(members) != 2 || members[0] != "cache/appdata" || members[1] != "cache/appdata/db" {
+		t.Fatalf("members = %v, want the entry without the restored tree", members)
+	}
+}
+
 func TestAFullRunLandsUnderTheReceiversRootAndItPrunesItself(t *testing.T) {
 	r := newReceiveRig(t)
 	end := r.allowed(t, [5]int{1, 0, 0, 0, 0})

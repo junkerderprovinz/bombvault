@@ -23,7 +23,8 @@ import (
 )
 
 // zfsReplicaMembers lists the datasets and volumes of item that replicate:
-// its tree on this host without the children it excludes.
+// its tree on this host without the children it excludes and without the
+// trees a restore landed in, which a run leaves out as well.
 func (s *Service) zfsReplicaMembers(ctx context.Context, item store.ZFSDataset) ([]string, error) {
 	if s.zfs == nil {
 		return nil, &zfsrepl.Refusal{Code: "ssh-missing", Detail: "this instance has no SSH connection to its host"}
@@ -34,7 +35,7 @@ func (s *Service) zfsReplicaMembers(ctx context.Context, item store.ZFSDataset) 
 	}
 	var members []string
 	for _, e := range tree {
-		excluded := false
+		excluded := zfsrepl.RestoreLanding(e.Name, item.Dataset)
 		for _, ex := range item.ExcludedChildren {
 			excluded = excluded || e.Name == ex || zfs.DescendantOf(e.Name, ex)
 		}

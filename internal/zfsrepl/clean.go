@@ -21,7 +21,7 @@ func Clean(ctx context.Context, source End, root string, excludes []string) erro
 	}
 	var errs []error
 	for _, d := range tree {
-		if restoreLanding(d.Name, root) {
+		if RestoreLanding(d.Name, root) {
 			continue
 		}
 		if err := cleanDataset(ctx, source, d.Name, !excluded(d.Name, excludes)); err != nil {
