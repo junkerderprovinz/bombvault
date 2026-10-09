@@ -108,7 +108,8 @@ func (s *Service) zfsReplicaPeerEnd(ctx context.Context, item store.ZFSDataset) 
 	if code := zfsPeerStateCode(peer.State); code != "" {
 		return nil, &zfsrepl.Refusal{Code: code, Detail: "the receiving instance has not allowed this item (" + peer.State + ")"}
 	}
-	if peer.URL == "" {
+	u, err := url.Parse(peer.URL)
+	if err != nil || u.Hostname() == "" {
 		return nil, &zfsrepl.Refusal{Code: "peer-unreachable", Detail: "the receiving instance did not say where it answers"}
 	}
 	token, err := secret.Decrypt(s.cfg.AppKey, peer.TokenEnc)
@@ -117,7 +118,7 @@ func (s *Service) zfsReplicaPeerEnd(ctx context.Context, item store.ZFSDataset) 
 	}
 	return &peerEnd{
 		url: peer.URL + "/api/zfs/receive/" + peer.Slot, token: string(token),
-		root: item.Dataset, hc: peerEndClient(peer.Pin),
+		root: item.Dataset, hc: peerEndClient(u.Hostname(), peer.Pin),
 		revoked: func() {
 			if err := s.store.SetZFSReplicaPeer(item.ID, store.ZFSReplicaPeer{State: store.ZFSReceiveRevoked}); err != nil {
 				log.Printf("zfs replica: %v", err)
@@ -163,24 +164,25 @@ func zfsPeerStateCode(state string) string {
 	return "peer-waiting"
 }
 
-// peerEndClient talks to a receiving instance. A stream runs for as long as
-// its data takes, so only connecting is bounded.
-func peerEndClient(pin string) *http.Client {
+// peerEndClient talks to the receiving instance at host. A stream runs for as
+// long as its data takes, so only connecting is bounded.
+func peerEndClient(host, pin string) *http.Client {
 	return &http.Client{
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 		Transport: &http.Transport{
 			DialContext:         (&net.Dialer{Timeout: 15 * time.Second}).DialContext,
 			TLSHandshakeTimeout: 15 * time.Second,
-			TLSClientConfig:     pinnedTLS(pin),
+			TLSClientConfig:     pinnedTLS(host, pin, nil),
 		},
 	}
 }
 
 // pinnedTLS accepts the receiving instance's own self-signed certificate by
 // the key pin it handed out over the group, and anything else only with a
-// chain the system trusts, which is what a reverse proxy in front of it
-// serves.
-func pinnedTLS(pin string) *tls.Config {
+// chain that roots (the system's when nil) trust for host, which is what a
+// reverse proxy in front of it serves. A proxy is reached by name, so at an
+// IP address with a pin only the pin counts.
+func pinnedTLS(host, pin string, roots *x509.CertPool) *tls.Config {
 	return &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: true, //nolint:gosec // G402: VerifyConnection checks the pin or the chain
@@ -192,11 +194,14 @@ func pinnedTLS(pin string) *tls.Config {
 			if pin != "" && spkiPin(leaf) == pin {
 				return nil
 			}
+			if pin != "" && net.ParseIP(host) != nil {
+				return errors.New("the receiving instance answered with another key than the one it handed out")
+			}
 			pool := x509.NewCertPool()
 			for _, c := range cs.PeerCertificates[1:] {
 				pool.AddCert(c)
 			}
-			_, err := leaf.Verify(x509.VerifyOptions{DNSName: cs.ServerName, Intermediates: pool})
+			_, err := leaf.Verify(x509.VerifyOptions{DNSName: host, Roots: roots, Intermediates: pool})
 			return err
 		},
 	}

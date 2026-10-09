@@ -2,7 +2,15 @@ package api
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -547,15 +555,88 @@ func TestPinnedTLSTakesTheReceiversKeyAndNothingElse(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
 	t.Cleanup(srv.Close)
 	pin := spkiPin(srv.Certificate())
-	resp, err := peerEndClient(pin).Get(srv.URL)
+	resp, err := peerEndClient("127.0.0.1", pin).Get(srv.URL)
 	if err != nil {
 		t.Fatalf("the pinned key was refused: %v", err)
 	}
 	_ = resp.Body.Close()
 	for name, pin := range map[string]string{"another pin": strings.Repeat("0", 64), "no pin": ""} {
-		if resp, err := peerEndClient(pin).Get(srv.URL); err == nil {
+		if resp, err := peerEndClient("127.0.0.1", pin).Get(srv.URL); err == nil {
 			_ = resp.Body.Close()
 			t.Errorf("%s: a self-signed certificate was taken", name)
+		}
+	}
+}
+
+// chainCert issues a certificate for names under a fresh CA and returns it
+// with a pool that trusts the CA.
+func chainCert(t *testing.T, names ...string) (*x509.Certificate, *x509.CertPool) {
+	t.Helper()
+	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	caTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: "test root"},
+		NotBefore: time.Now().Add(-time.Hour), NotAfter: time.Now().Add(time.Hour),
+		IsCA: true, BasicConstraintsValid: true, KeyUsage: x509.KeyUsageCertSign,
+	}
+	caDER, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ca, err := x509.ParseCertificate(caDER)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(2), NotBefore: caTmpl.NotBefore, NotAfter: caTmpl.NotAfter,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+	for _, n := range names {
+		if ip := net.ParseIP(n); ip != nil {
+			tmpl.IPAddresses = append(tmpl.IPAddresses, ip)
+		} else {
+			tmpl.DNSNames = append(tmpl.DNSNames, n)
+		}
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca, &key.PublicKey, caKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	leaf, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatal(err)
+	}
+	roots := x509.NewCertPool()
+	roots.AddCert(ca)
+	return leaf, roots
+}
+
+func TestPinnedTLSChecksAChainAgainstTheHostItDialled(t *testing.T) {
+	leaf, roots := chainCert(t, "proxy.example", "192.168.1.10")
+	other := strings.Repeat("0", 64)
+	for _, c := range []struct {
+		host, pin string
+		ok        bool
+	}{
+		{"proxy.example", "", true},
+		{"proxy.example", other, true},
+		{"elsewhere.example", "", false},
+		{"elsewhere.example", other, false},
+		{"192.168.1.10", "", true},
+		{"192.168.1.11", "", false},
+		{"192.168.1.10", other, false},
+	} {
+		// crypto/tls leaves ServerName empty for an IP address, so the check
+		// must not lean on it.
+		err := pinnedTLS(c.host, c.pin, roots).VerifyConnection(tls.ConnectionState{PeerCertificates: []*x509.Certificate{leaf}})
+		if (err == nil) != c.ok {
+			t.Errorf("a chain for proxy.example and 192.168.1.10 dialled as %s with pin %q: %v, want accepted %v", c.host, c.pin, err, c.ok)
 		}
 	}
 }
