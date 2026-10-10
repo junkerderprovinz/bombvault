@@ -4,7 +4,6 @@
 // write without the safety snapshot unless that was answered twice.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { AdvancedProvider } from "../../lib/advanced";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type {
@@ -134,11 +133,9 @@ function hostEntry(overrides: Partial<ZFSHostDataset>): ZFSHostDataset {
 function renderPanel(view = item(), host = new Map<string, ZFSHostDataset>()) {
   return render(
     <I18nProvider>
-      <AdvancedProvider>
-        <ToastProvider>
-          <ZFSRestorePanel item={view} host={host} hostMountRoot="/host" restoreFolder="user/restore" />
-        </ToastProvider>
-      </AdvancedProvider>
+      <ToastProvider>
+        <ZFSRestorePanel item={view} host={host} hostMountRoot="/host" restoreFolder="user/restore" />
+      </ToastProvider>
     </I18nProvider>,
   );
 }
@@ -188,19 +185,10 @@ describe("ZFS restore panel", () => {
     expect(text.indexOf(en["zfs.restore.dataset"])).toBeLessThan(text.indexOf(en["zfs.restore.inPlace"]));
   });
 
-  it("keeps selecting files, the whole tree and the source out of basic mode", async () => {
+  it("offers selecting files, the whole tree and the source", async () => {
     await openPanel();
     expect(modeTab(en["zfs.restore.inPlace"])).toBeTruthy();
     expect(modeTab(en["zfs.restore.toFolder"])).toBeTruthy();
-    expect(screen.queryByRole("tab", { name: en["zfs.restore.selectFiles"] })).toBeNull();
-    expect(screen.queryByRole("tab", { name: en["source.local"] })).toBeNull();
-    fireEvent.click(screen.getByRole("combobox", { name: en["zfs.restore.dataset"] }));
-    expect(screen.queryByRole("option", { name: en["zfs.restore.wholeTree"] })).toBeNull();
-  });
-
-  it("adds them in advanced mode", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
-    await openPanel();
     expect(modeTab(en["zfs.restore.selectFiles"])).toBeTruthy();
     expect(screen.getByRole("tab", { name: en["source.local"] })).toBeTruthy();
     fireEvent.click(screen.getByRole("combobox", { name: en["zfs.restore.dataset"] }));
@@ -208,7 +196,6 @@ describe("ZFS restore panel", () => {
   });
 
   it("gives each destination its own glyph", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
     await openPanel();
     const keys = ["zfs.restore.inPlace", "zfs.restore.newDataset", "zfs.restore.toFolder", "zfs.restore.selectFiles"];
     const glyphs = keys.map((k) => modeTab(en[k]).querySelector("svg")?.innerHTML);
@@ -223,7 +210,6 @@ describe("ZFS restore panel", () => {
   });
 
   it("restores the whole tree into a folder only, without calling the dataset missing", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
     await openPanel();
     fireEvent.click(screen.getByRole("combobox", { name: en["zfs.restore.dataset"] }));
     fireEvent.click(screen.getByRole("option", { name: en["zfs.restore.wholeTree"] }));
@@ -425,7 +411,6 @@ describe("ZFS restore panel", () => {
 // jsdom lays nothing out, so this pins the class the phone layout rests on.
 describe("ZFS restore panel at phone width", () => {
   it("moves the source switch under its label when the two do not fit", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
     await openPanel();
     const toggle = screen.getByRole("tablist", { name: en["source.label"] }).parentElement!;
     expect(toggle.className).toContain("basis-64");

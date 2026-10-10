@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { deleteBackupsZFSDataset, listContainers, patchZFSDataset, probeZFSDataset } from "../../lib/api";
 import type { AnomalyItem, AnomalySeriesInfo, Container, ZFSDatasetPatch, ZFSDatasetView } from "../../lib/api";
-import { useAdvanced } from "../../lib/advanced";
 import { useT } from "../../lib/i18n";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
@@ -35,7 +34,6 @@ export function ZFSItemSettings({
   anomalyEnabled: boolean;
   series: ReadonlyMap<string, AnomalySeriesInfo>;
 }) {
-  const { advanced } = useAdvanced();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [excluded, setExcluded] = useState(new Set(item.excludedChildren));
@@ -210,74 +208,70 @@ export function ZFSItemSettings({
 
       <ReplicaCard itemId={item.id} name={item.dataset} />
 
-      {advanced && (
-        <>
-          <ZFSExcludesEditor item={item} t={t} onSaved={onChanged} />
+      <ZFSExcludesEditor item={item} t={t} onSaved={onChanged} />
 
-          <div className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("zfs.hookContainer")}
-              <InfoBubble tip={t("zfs.hooksHint")} />
-            </span>
-            <SelectField
-              value={item.hookContainer}
-              label={t("zfs.hookContainer")}
-              onChange={(name) => void save({ hookContainer: name, preSnapshot: pre, postSnapshot: post })}
-              disabled={busy}
-              className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text"
-              options={[
-                { value: "", label: t("zfs.hookContainerNone") },
-                ...containers.filter((c) => !c.self).map((c) => ({ value: c.name, label: c.name })),
-              ]}
-            />
-            <label className="flex flex-col gap-1 text-sm text-carbon-text">
-              {t("zfs.preSnapshot")}
-              <input
-                dir="ltr"
-                value={pre}
-                onChange={(e) => {
-                  setPre(e.target.value);
-                  saveHooks(e.target.value, post);
-                }}
-                disabled={item.hookContainer === ""}
-                className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-carbon-text">
-              {t("zfs.postSnapshot")}
-              <input
-                dir="ltr"
-                value={post}
-                onChange={(e) => {
-                  setPost(e.target.value);
-                  saveHooks(pre, e.target.value);
-                }}
-                disabled={item.hookContainer === ""}
-                className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
-              />
-            </label>
-          </div>
+      <div className="flex flex-col gap-1">
+        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+          {t("zfs.hookContainer")}
+          <InfoBubble tip={t("zfs.hooksHint")} />
+        </span>
+        <SelectField
+          value={item.hookContainer}
+          label={t("zfs.hookContainer")}
+          onChange={(name) => void save({ hookContainer: name, preSnapshot: pre, postSnapshot: post })}
+          disabled={busy}
+          className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text"
+          options={[
+            { value: "", label: t("zfs.hookContainerNone") },
+            ...containers.filter((c) => !c.self).map((c) => ({ value: c.name, label: c.name })),
+          ]}
+        />
+        <label className="flex flex-col gap-1 text-sm text-carbon-text">
+          {t("zfs.preSnapshot")}
+          <input
+            dir="ltr"
+            value={pre}
+            onChange={(e) => {
+              setPre(e.target.value);
+              saveHooks(e.target.value, post);
+            }}
+            disabled={item.hookContainer === ""}
+            className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-carbon-text">
+          {t("zfs.postSnapshot")}
+          <input
+            dir="ltr"
+            value={post}
+            onChange={(e) => {
+              setPost(e.target.value);
+              saveHooks(pre, e.target.value);
+            }}
+            disabled={item.hookContainer === ""}
+            className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
+          />
+        </label>
+      </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              label={t("zfs.probe")}
-              labelKey="zfs.probe"
-              tone="neutral"
-              onClick={() => void handleProbe()}
-              disabled={probing}
-              busy={probing}
-              title={probing ? t("zfs.probing") : undefined}
-            />
-            <Button
-              label={t("snapshots.deleteAll")}
-              labelKey="snapshots.deleteAll"
-              tone="subtle"
-              onClick={() => void handleDeleteBackups()}
-              className="ms-auto"
-            />
-          </div>
-        </>
-      )}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          label={t("zfs.probe")}
+          labelKey="zfs.probe"
+          tone="neutral"
+          onClick={() => void handleProbe()}
+          disabled={probing}
+          busy={probing}
+          title={probing ? t("zfs.probing") : undefined}
+        />
+        <Button
+          label={t("snapshots.deleteAll")}
+          labelKey="snapshots.deleteAll"
+          tone="subtle"
+          onClick={() => void handleDeleteBackups()}
+          className="ms-auto"
+        />
+      </div>
       {confirmDialog}
     </div>
   );

@@ -29,7 +29,6 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
@@ -362,9 +361,6 @@ function FileSetRestoreControl({
   // Without a path the server cannot restore in place, so only a folder works.
   const noPath = set.path === "";
   const [dest, setDest] = useState<RestoreDest>(noPath ? "folder" : "original");
-  // Selecting files is an advanced option. The flag is read here because the
-  // Selector takes a flat items list that an <Advanced> wrapper cannot filter.
-  const { advanced } = useAdvanced();
   // Seeded from the global default restore folder, as in the container panel.
   const [targetPath, setTargetPath] = useState(restoreFolder);
 
@@ -417,7 +413,7 @@ function FileSetRestoreControl({
   const destItems: SelectorItem[] = [
     { id: "original", label: t("files.restoreOriginal"), disabled: noPath, title: noPath ? t("files.noPathHint") : undefined },
     { id: "folder", label: t("files.restoreToFolder") },
-    ...(advanced ? [{ id: "select", label: t("files.restoreSelectFiles") }] : []),
+    { id: "select", label: t("files.restoreSelectFiles") },
   ];
 
   return (
