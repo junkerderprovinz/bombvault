@@ -34,7 +34,9 @@ describe("the list renders one layout", () => {
   // A block hidden by a stylesheet is a second copy of every row in the DOM,
   // with state that can drift from the copy in view.
   it.each(["max-md:hidden", "md:hidden"])("hides nothing by width with %s", (needle) => {
-    const found = [["Backups.tsx", page], ...Object.entries(parts)].filter(([, src]) => src.includes(needle)).map(([f]) => f);
+    const found = [["Backups.tsx", page], ...Object.entries(parts)]
+      .filter(([, src]) => src.includes(needle))
+      .map(([f]) => f);
     expect(found, `a phone and a desktop copy of the same block: ${found.join(", ")}`).toEqual([]);
   });
 

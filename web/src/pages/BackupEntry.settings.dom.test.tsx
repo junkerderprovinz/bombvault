@@ -198,10 +198,13 @@ describe("the cards of each kind", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
-  it("says of a folder set without a folder that it has none", async () => {
+  it("says of a folder set without a folder that it has none, and offers no folders to choose", async () => {
     serveEntries(mocks, { fileSets: [fileSetView({ path: "" })] });
     await renderSettings(`files/${SET_ID}`);
     expect(within(card(en["files.path"])).getByText(en["files.noPath"])).toBeTruthy();
+    expect(screen.getByLabelText(en["files.noPathHint"])).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["files.foldersToggle"] })).toBeNull();
+    expect(screen.queryByRole("tree")).toBeNull();
   });
 
   it("gives a ZFS entry its datasets and no storage location bar", async () => {
@@ -248,6 +251,15 @@ describe("the schedule", () => {
 });
 
 describe("the storage locations", () => {
+  it.each([
+    ["a container", "container/immich"],
+    ["a VM", "vm/win11"],
+    ["a folder set", `files/${SET_ID}`],
+  ])("give %s the bar that places its backups", async (_, entry) => {
+    await renderSettings(entry);
+    expect(await screen.findByRole("group", { name: en["placement.title"] })).toBeTruthy();
+  });
+
   it("say that an entry follows the default", async () => {
     await renderSettings("container/immich");
     expect(await screen.findByText(en["placement.followsDefault"])).toBeTruthy();

@@ -190,6 +190,74 @@ describe("the stack window", () => {
     expect(win().getAllByRole("radio")).toHaveLength(2);
   });
 
+  it("names the member whose check failed and a folder another container uses", async () => {
+    const plan = (shared: { path: string; containers: string[] }[]) => ({
+      inPlace: true,
+      added: 1,
+      changed: 0,
+      unchanged: 0,
+      extra: 0,
+      files: [],
+      listCapped: false,
+      partial: false,
+      missing: false,
+      definition: [],
+      shared,
+    });
+    calls.checkRestore.mockResolvedValue({
+      ok: true,
+      ready: false,
+      checks: null,
+      members: [
+        {
+          name: "immich",
+          ready: true,
+          checks: PASSED,
+          plan: plan([{ path: "/mnt/user/appdata/immich", containers: ["immich-ml"] }]),
+        },
+        {
+          name: "immich_postgres",
+          ready: false,
+          checks: [PASSED[0], { id: "space", status: "fail", reason: "short", need: 1000, free: 100 }],
+          plan: plan([]),
+        },
+      ],
+    });
+    await open();
+    await press("Next");
+    expect(await win().findByText("/mnt/user/appdata/immich is also used by immich-ml.")).toBeTruthy();
+    const reason = en["restoreCheck.blockedMember"]
+      .replace("{name}", "immich_postgres")
+      .replace("{line}", en["restoreCheck.line.space"]);
+    const start = win().getByRole("button", { name: "Restore stack" }) as HTMLButtonElement;
+    expect(start.disabled).toBe(true);
+    // A disabled button gets no hover, so the box around it shows the reason.
+    fireEvent.mouseEnter(start.parentElement!);
+    expect(screen.getByRole("tooltip").textContent).toContain(reason);
+    expect(calls.restoreStack).not.toHaveBeenCalled();
+  });
+
+  it("does not look for the project folder in a local restore", async () => {
+    await open();
+    await press("Next");
+    await waitFor(() => expect((win().getByRole("button", { name: "Restore stack" }) as HTMLButtonElement).disabled).toBe(false));
+    await press("Restore stack");
+    expect(calls.restoreStack).toHaveBeenCalledWith("immich", true, true, "local", undefined);
+    expect(calls.getStackDir).not.toHaveBeenCalled();
+  });
+
+  it("restores nothing when the window is left at the question about the project folder", async () => {
+    calls.listOffsiteTargets.mockResolvedValue({ ok: true, targets: [{ id: "t1", name: "Storage Box", repo: "sftp:box", enabled: true }] });
+    calls.getStackDir.mockResolvedValue({ ok: true, found: false });
+    await open();
+    fireEvent.click(await win().findByRole("tab", { name: "Off-site" }));
+    await press("Next");
+    expect(win().getByText(/^The project folder is not in Storage Box./)).toBeTruthy();
+    await press("Cancel");
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(calls.restoreStack).not.toHaveBeenCalled();
+  });
+
   it("asks about the project folder when the off-site source does not hold it", async () => {
     calls.listOffsiteTargets.mockResolvedValue({ ok: true, targets: [{ id: "t1", name: "Storage Box", repo: "sftp:box", enabled: true }] });
     calls.getStackDir.mockResolvedValue({ ok: true, found: false });

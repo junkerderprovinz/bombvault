@@ -1,0 +1,631 @@
+// @vitest-environment jsdom
+/**
+ * The page of a ZFS entry.
+ *
+ * A ZFS item is a root dataset and the tree below it. Its head says what the
+ * last check and the last run made of the tree, its settings hold the tree
+ * and what surrounds a snapshot, and a run opens on what happened to each
+ * dataset. The api client is faked, so a control that writes nothing or calls
+ * another endpoint shows here.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+
+import type {
+  AnomalyItem,
+  AnomalySeriesInfo,
+  AnomalyView,
+  Run,
+  ZFSDatasetView,
+  ZFSMemberView,
+  ZFSRestorePoint,
+  ZFSRunDetail,
+  ZFSSafetySnapshot,
+} from "../lib/api";
+import { ENTRY_ROUTE } from "../lib/backupEntry";
+import { I18nProvider, countText, en } from "../lib/i18n";
+import { isolateLtr } from "../lib/ltrFragments";
+import { placementChanged } from "../lib/placementEvents";
+import { AnomalyProvider } from "../lib/useAnomalies";
+import { TANK, ZFS_ID, backupRun, serveEntries, watched, zfsView } from "./backupEntry.testsupport";
+
+vi.mock("../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/api")>();
+  return {
+    ...actual,
+    listItems: vi.fn(),
+    listContainers: vi.fn(),
+    listVMs: vi.fn(),
+    listFileSets: vi.fn(),
+    listZFSDatasets: vi.fn(),
+    listItemRuns: vi.fn(),
+    listRuns: vi.fn(),
+    listRepos: vi.fn(),
+    getSettings: vi.fn(),
+    getAnomalies: vi.fn(),
+    getAnomalySummary: vi.fn(),
+    getAnomalyItems: vi.fn(),
+    getAnomalyItemSeries: vi.fn(),
+    getItemChecks: vi.fn(),
+    getSizeBreakdown: vi.fn(),
+    getZFSReplica: vi.fn(),
+    zfsHostDatasets: vi.fn(),
+    zfsRestorePoints: vi.fn(),
+    zfsRunMembers: vi.fn(),
+    listZFSSafetySnapshots: vi.fn(),
+    deleteZFSSafetySnapshot: vi.fn(),
+    patchZFSDataset: vi.fn(),
+    deleteZFSDataset: vi.fn(),
+    sweepZFSDataset: vi.fn(),
+    probeZFSDataset: vi.fn(),
+  };
+});
+
+const pushed: { message: string; severity?: string }[] = [];
+vi.mock("../lib/toast", () => ({
+  useToast: () => ({ push: (message: string, severity?: string) => pushed.push({ message, severity }) }),
+}));
+
+const api = await import("../lib/api");
+const mocks = {
+  listItems: vi.mocked(api.listItems),
+  listContainers: vi.mocked(api.listContainers),
+  listVMs: vi.mocked(api.listVMs),
+  listFileSets: vi.mocked(api.listFileSets),
+  listZFSDatasets: vi.mocked(api.listZFSDatasets),
+  listItemRuns: vi.mocked(api.listItemRuns),
+  getSettings: vi.mocked(api.getSettings),
+};
+const getAnomalies = vi.mocked(api.getAnomalies);
+const getAnomalySummary = vi.mocked(api.getAnomalySummary);
+const getAnomalyItems = vi.mocked(api.getAnomalyItems);
+const zfsRestorePoints = vi.mocked(api.zfsRestorePoints);
+const zfsRunMembers = vi.mocked(api.zfsRunMembers);
+const listZFSSafetySnapshots = vi.mocked(api.listZFSSafetySnapshots);
+const deleteZFSSafetySnapshot = vi.mocked(api.deleteZFSSafetySnapshot);
+const patchZFSDataset = vi.mocked(api.patchZFSDataset);
+const deleteZFSDataset = vi.mocked(api.deleteZFSDataset);
+const sweepZFSDataset = vi.mocked(api.sweepZFSDataset);
+const probeZFSDataset = vi.mocked(api.probeZFSDataset);
+
+const { BackupEntryPage } = await import("./BackupEntry");
+
+window.matchMedia = ((query: string) => ({
+  matches: true,
+  media: query,
+  onchange: null,
+  addListener: () => {},
+  removeListener: () => {},
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => false,
+})) as unknown as typeof window.matchMedia;
+
+class NoopEventSource {
+  onmessage: unknown = null;
+  close() {}
+}
+
+const ROOT = "tank/appdata";
+const CHILD = "tank/appdata/plex";
+const PATH = `/backups/zfs/${ZFS_ID}`;
+
+function Elsewhere() {
+  const { pathname, search } = useLocation();
+  return <p>{`at ${pathname}${search}`}</p>;
+}
+
+async function renderPage(search = "") {
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <MemoryRouter initialEntries={[`${PATH}${search}`]}>
+          <AnomalyProvider>
+            <Routes>
+              <Route path={ENTRY_ROUTE} element={<BackupEntryPage />} />
+              <Route path="*" element={<Elsewhere />} />
+            </Routes>
+          </AnomalyProvider>
+        </MemoryRouter>
+      </I18nProvider>
+    );
+  });
+}
+
+async function press(el: HTMLElement) {
+  await act(async () => {
+    fireEvent.click(el);
+  });
+}
+
+const button = (name: string) => screen.getByRole("button", { name });
+const card = (title: string) => screen.getByRole("heading", { level: 2, name: new RegExp(`^${title}`) }).parentElement!;
+const runRows = () => screen.queryAllByTestId("entry-run");
+
+async function confirmWith(name: string) {
+  await press(within(await screen.findByRole("dialog")).getByRole("button", { name }));
+}
+
+function member(over: Partial<ZFSMemberView> = {}): ZFSMemberView {
+  return {
+    dataset: ROOT,
+    relPath: "",
+    hostMountpoint: "/mnt/tank/appdata",
+    outcome: "backed-up",
+    isNew: false,
+    usedByDataset: 4096,
+    lastBackupAt: 1_700_000_000,
+    ...over,
+  };
+}
+
+const plex = (over: Partial<ZFSMemberView> = {}) =>
+  member({ dataset: CHILD, relPath: "plex", hostMountpoint: "/mnt/tank/appdata/plex", ...over });
+
+// An encrypted dataset whose key is not loaded, which a run skips.
+const LOCKED = member({ dataset: "tank/appdata/enc", relPath: "enc", outcome: "key-not-loaded" });
+
+/** Serves the entry with this dataset, and with the last run status the list knows. */
+function serve(dataset: Partial<ZFSDatasetView> = {}, runs: Run[] = []) {
+  serveEntries(mocks, {
+    items: [{ ...TANK, lastRunStatus: dataset.lastRunStatus ?? "success" }],
+    datasets: [zfsView(dataset)],
+    runs,
+  });
+}
+
+function zfsRun(id: string, over: Partial<Run> = {}): Run {
+  return backupRun(id, 0, { domain: "zfs", target: ROOT, targetId: ZFS_ID, ...over });
+}
+
+function outcome(dataset: string, what: string, over: Partial<ZFSRunDetail["members"][number]> = {}) {
+  return {
+    dataset,
+    outcome: what,
+    resticSnapshot: "",
+    isNew: false,
+    bytesAdded: 0,
+    filesNew: 0,
+    filesChanged: 0,
+    filesUnmodified: 0,
+    durationMs: 0,
+    ...over,
+  };
+}
+
+async function openRun(detail: Partial<ZFSRunDetail>) {
+  zfsRunMembers.mockResolvedValue({ ok: true, members: [], windowSeconds: -1, ...detail } as ZFSRunDetail);
+  await renderPage("?tab=verify");
+  await press(runRows()[0]);
+  return within(await screen.findByRole("dialog"));
+}
+
+beforeEach(() => {
+  pushed.length = 0;
+  localStorage.clear();
+  vi.stubGlobal("EventSource", NoopEventSource);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({ ok: true, json: async () => ({ ok: false }) }))
+  );
+  serve();
+  vi.mocked(api.listRuns).mockResolvedValue({ ok: true, runs: [] });
+  vi.mocked(api.listRepos).mockResolvedValue({ ok: true, repos: [] } as never);
+  getAnomalies.mockResolvedValue({ ok: true, anomalies: [], nextCursor: "" });
+  getAnomalySummary.mockResolvedValue({ ok: false });
+  getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
+  vi.mocked(api.getAnomalyItemSeries).mockResolvedValue({ ok: true, series: [] });
+  vi.mocked(api.getItemChecks).mockResolvedValue({ ok: true, items: [] });
+  vi.mocked(api.getSizeBreakdown).mockResolvedValue({
+    ok: true,
+    breakdown: { state: "none", path: "", size: 0, files: 0, added: 0, children: [] },
+  });
+  vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
+  vi.mocked(api.zfsHostDatasets).mockResolvedValue({ ok: false, available: false } as never);
+  zfsRestorePoints.mockResolvedValue({ ok: true, points: [] } as never);
+  zfsRunMembers.mockResolvedValue({ ok: true, members: [], windowSeconds: -1 } as ZFSRunDetail);
+  listZFSSafetySnapshots.mockResolvedValue({ ok: true, snapshots: [] } as never);
+  deleteZFSSafetySnapshot.mockResolvedValue({ ok: true } as never);
+  patchZFSDataset.mockResolvedValue({ ok: true } as never);
+  deleteZFSDataset.mockResolvedValue({ ok: true } as never);
+  sweepZFSDataset.mockResolvedValue({ ok: true, remaining: 0 } as never);
+  probeZFSDataset.mockResolvedValue({ ok: true } as never);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
+
+describe("the head of a ZFS entry", () => {
+  it("names the root, where it is mounted and what can be done with it", async () => {
+    await renderPage();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(ROOT);
+    expect(screen.getByText("/mnt/tank/appdata")).toBeTruthy();
+    const corner = within(screen.getByTestId("page-actions"));
+    expect(corner.getByRole("button", { name: en["containers.backupNow"] })).toBeTruthy();
+    expect(button(en["zfs.removeMissing"])).toBeTruthy();
+  });
+
+  it("shows the failed run and not the check that says everything is fine", async () => {
+    serve({ lastRunStatus: "failed", lastCheckCode: "ok" });
+    await renderPage();
+    expect(screen.getByText(en["entry.retryNote"], { exact: false })).toBeTruthy();
+    expect(screen.queryByText(en["zfs.code.nothing-readable"])).toBeNull();
+  });
+
+  it("names the reason beside a run the check refused", async () => {
+    serve({ lastRunStatus: "failed", lastCheckCode: "nothing-readable" });
+    await renderPage();
+    expect(screen.getByText(en["entry.retryNote"], { exact: false })).toBeTruthy();
+    expect(screen.getByText(en["zfs.code.nothing-readable"])).toBeTruthy();
+  });
+
+  it("says an item was never checked instead of calling its state unknown", async () => {
+    serve({ lastCheckCode: "", lastCheckAt: 0 });
+    await renderPage();
+    expect(screen.getByText(en["zfs.notChecked"])).toBeTruthy();
+    expect(screen.queryByText(/Unknown state/)).toBeNull();
+  });
+
+  it("counts the datasets a run skips and names them", async () => {
+    serve({ members: [member(), plex({ isNew: true }), LOCKED] });
+    await renderPage();
+    expect(screen.getByText(countText(en["zfs.skippedCount"], "en", 1))).toBeTruthy();
+    expect(screen.getByLabelText("tank/appdata/enc")).toBeTruthy();
+  });
+
+  it("names the containers an interrupted snapshot left stopped", async () => {
+    serve({ restartPending: ["plex", "sonarr"] });
+    await renderPage();
+    expect(screen.getByText(en["zfs.restartPending"].replace("{names}", "plex, sonarr"))).toBeTruthy();
+    expect(screen.getByLabelText(en["zfs.restartPendingHint"])).toBeTruthy();
+  });
+
+  it("sweeps the leftover snapshots from its own note", async () => {
+    serve({ leftoverCount: 3 });
+    await renderPage();
+    expect(screen.getByText(countText(en["zfs.leftovers"], "en", 3))).toBeTruthy();
+    await press(button(en["zfs.removeLeftovers"]));
+    expect(sweepZFSDataset).toHaveBeenCalledWith(ZFS_ID);
+    expect(pushed).toContainEqual({ message: en["zfs.sweepDone"], severity: "success" });
+  });
+
+  it("says that the root is gone, with the way to remove the item beside it", async () => {
+    serve({ lastCheckCode: "not-found", lastRunStatus: "" });
+    await renderPage();
+    expect(screen.getByText(en["zfs.code.not-found"])).toBeTruthy();
+    expect(button(en["zfs.removeMissing"])).toBeTruthy();
+  });
+});
+
+describe("removing a ZFS entry", () => {
+  it("leaves for the list and says how many safety snapshots stayed behind", async () => {
+    serve({ safetyCount: 2 });
+    deleteZFSDataset.mockResolvedValue({ ok: true, safetyRemaining: 2 } as never);
+    await renderPage();
+    await press(button(en["zfs.removeMissing"]));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("switch", { name: en["zfs.deleteSafetyToo"] })).toBeTruthy();
+    await press(within(dialog).getByRole("button", { name: en["zfs.removeMissing"] }));
+    await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, false));
+    expect(pushed).toContainEqual({ message: countText(en["zfs.deleteKeptSafety"], "en", 2), severity: "warn" });
+    expect(await screen.findByText("at /backups?kind=zfs")).toBeTruthy();
+  });
+
+  it("takes the safety snapshots along when asked", async () => {
+    serve({ safetyCount: 2 });
+    await renderPage();
+    await press(button(en["zfs.removeMissing"]));
+    const dialog = await screen.findByRole("dialog");
+    await press(within(dialog).getByRole("switch", { name: en["zfs.deleteSafetyToo"] }));
+    await press(within(dialog).getByRole("button", { name: en["zfs.removeMissing"] }));
+    await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, true));
+  });
+
+  it("says why a removal the server turned away did nothing", async () => {
+    deleteZFSDataset.mockRejectedValue(new api.ApiError(409, "HTTP 409 Conflict"));
+    await renderPage();
+    await press(button(en["zfs.removeMissing"]));
+    await confirmWith(en["zfs.removeMissing"]);
+    await waitFor(() => expect(pushed).toContainEqual({ message: "HTTP 409 Conflict", severity: "fail" }));
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(ROOT);
+  });
+});
+
+describe("the backups of a ZFS entry", () => {
+  it("count the sites the server counted the replica into", async () => {
+    serve({ sites: 2, rule321: "met" });
+    await renderPage();
+    expect(screen.getByText(en["placement.rule321Met"])).toBeTruthy();
+    expect(screen.getByText("At 2 sites")).toBeTruthy();
+  });
+
+  it("are restored from the panel of the tree", async () => {
+    await renderPage();
+    await press(button(en["snapshots.title"]));
+    expect(
+      await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) })
+    ).toBeTruthy();
+    expect(zfsRestorePoints).toHaveBeenCalledWith(ZFS_ID, expect.anything());
+  });
+});
+
+describe("the settings of a ZFS entry", () => {
+  async function renderSettings() {
+    await renderPage("?tab=settings");
+    return within(card(en["entry.settings.zfs"]));
+  }
+
+  it("offer the child datasets, the excludes, the commands and the check", async () => {
+    const settings = await renderSettings();
+    expect(settings.getByText(en["zfs.children"])).toBeTruthy();
+    expect(settings.getByText(en["zfs.excludes"])).toBeTruthy();
+    expect(settings.getByText(en["zfs.preSnapshot"])).toBeTruthy();
+    await press(settings.getByRole("button", { name: en["zfs.probe"] }));
+    expect(probeZFSDataset).toHaveBeenCalledWith(ZFS_ID);
+  });
+
+  it("use no native select", async () => {
+    await renderSettings();
+    expect(document.querySelector("select")).toBeNull();
+  });
+
+  it("mark a dataset the next run picks up and say why another is skipped", async () => {
+    serve({ members: [member(), plex({ isNew: true }), LOCKED] });
+    const settings = await renderSettings();
+    expect(settings.getByText(en["zfs.member.new"])).toBeTruthy();
+    expect(settings.getByText(en["zfs.code.key-not-loaded"])).toBeTruthy();
+  });
+
+  it("take snapshot commands only once a container is chosen to run them in", async () => {
+    const settings = await renderSettings();
+    const place = settings.getByRole("combobox", { name: en["zfs.hookContainer"] });
+    expect(place.textContent).toContain(en["zfs.hookContainerNone"]);
+    expect((settings.getByLabelText(en["zfs.preSnapshot"]) as HTMLInputElement).disabled).toBe(true);
+    expect((settings.getByLabelText(en["zfs.postSnapshot"]) as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it("offer the commands of an item that has a container for them", async () => {
+    serve({ hookContainer: "postgres", preSnapshot: "pg_backup_start" });
+    const settings = await renderSettings();
+    expect((settings.getByLabelText(en["zfs.preSnapshot"]) as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it("exclude a child through the tree", async () => {
+    serve({ members: [member(), plex()] });
+    const settings = await renderSettings();
+    const tree = settings.getByRole("group", { name: en["zfs.children"] });
+    await press(within(tree).getByRole("switch", { name: CHILD }));
+    expect(patchZFSDataset).toHaveBeenCalledWith(ZFS_ID, { excludedChildren: [CHILD] });
+  });
+});
+
+describe("the safety snapshots of a ZFS entry", () => {
+  const SNAPSHOT: ZFSSafetySnapshot = {
+    dataset: ROOT,
+    name: "bombvault-prerestore-20260101120000",
+    createdAt: 1_700_000_000,
+    usedBytes: 2048,
+  };
+  const title = countText(en["zfs.safety.title"], "en", 1);
+
+  async function openList() {
+    listZFSSafetySnapshots.mockResolvedValue({ ok: true, snapshots: [SNAPSHOT] } as never);
+    await renderPage("?tab=settings");
+    await press(button(title));
+    return screen.findByRole("list", { name: title });
+  }
+
+  it("are listed and deleted one at a time", async () => {
+    serve({ safetyCount: 1 });
+    const list = await openList();
+    expect(listZFSSafetySnapshots).toHaveBeenCalledWith(ZFS_ID);
+    expect(within(list).getByText(/bombvault-prerestore-20260101120000/)).toBeTruthy();
+    await press(within(list).getByRole("button", { name: en["common.delete"] }));
+    await confirmWith(en["common.delete"]);
+    await waitFor(() => expect(deleteZFSSafetySnapshot).toHaveBeenCalledWith(ZFS_ID, ROOT, SNAPSHOT.name));
+  });
+
+  it("drop their count and the age warning once the last one is gone", async () => {
+    serve({ safetyCount: 1, safetyOldestAt: 1_600_000_000 });
+    deleteZFSSafetySnapshot.mockImplementation((async () => {
+      serve({ safetyCount: 0, safetyOldestAt: 0 });
+      return { ok: true };
+    }) as never);
+    const list = await openList();
+    expect(screen.getByText(en["zfs.safety.old"])).toBeTruthy();
+    await press(within(list).getByRole("button", { name: en["common.delete"] }));
+    await confirmWith(en["common.delete"]);
+    await waitFor(() => expect(screen.queryByText(en["zfs.safety.old"])).toBeNull());
+    expect(screen.queryByText(title)).toBeNull();
+  });
+});
+
+describe("a run of a ZFS entry", () => {
+  it("names the window it held the applications for", async () => {
+    serve({}, [zfsRun("r1")]);
+    const run = await openRun({
+      windowSeconds: 7,
+      members: [outcome(ROOT, "backed-up", { resticSnapshot: "abc", bytesAdded: 1024, filesNew: 2 })],
+    });
+    expect(zfsRunMembers).toHaveBeenCalledWith("r1");
+    expect(await run.findByText(en["zfs.window"].replace("{seconds}", "7"))).toBeTruthy();
+  });
+
+  it("hides the window when it stopped nothing", async () => {
+    serve({}, [zfsRun("r2")]);
+    const run = await openRun({ windowSeconds: -1, members: [outcome(ROOT, "backed-up")] });
+    await run.findByText(ROOT);
+    expect(run.queryByText(/Containers were stopped for/)).toBeNull();
+  });
+
+  it("names where a dataset it could not see is mounted", async () => {
+    serve({ members: [member(), plex()] }, [zfsRun("r3")]);
+    const run = await openRun({ members: [outcome(CHILD, "not-visible"), outcome("tank/appdata/gone", "not-visible")] });
+    expect(
+      await run.findByText(en["zfs.code.not-visible"].replace("{path}", "/mnt/tank/appdata/plex"))
+    ).toBeTruthy();
+    expect(run.getByText(en["zfs.notVisibleNoPath"])).toBeTruthy();
+  });
+
+  it("says why it failed before it read any dataset, and prints the command's output once", async () => {
+    serve({ lastRunStatus: "failed" }, [
+      zfsRun("r4", { status: "failed", snapshotId: "", error: "pre-snapshot-failed: hook exited 1: about to fail" }),
+    ]);
+    const run = await openRun({ hookDetail: "hook exited 1: about to fail" });
+    expect(await run.findByText(en["zfs.code.pre-snapshot-failed"])).toBeTruthy();
+    expect(run.getAllByText(/about to fail/)).toHaveLength(1);
+  });
+
+  it("is called cancelled and not failed when it was cancelled", async () => {
+    serve({ lastRunStatus: "cancelled" }, [
+      zfsRun("r5", { status: "cancelled", snapshotId: "", error: "cancelled by the user" }),
+    ]);
+    const run = await openRun({ members: [outcome(ROOT, "not-reached")] });
+    expect(within(runRows()[0]).getByText(en["run.statusCancelled"])).toBeTruthy();
+    expect(screen.queryByText(en["run.statusFailed"])).toBeNull();
+    expect(await run.findByText(en["runReason.cancelled"])).toBeTruthy();
+  });
+
+  it("names the dataset it hung on and says what to check", async () => {
+    serve({ lastRunStatus: "failed" }, [
+      zfsRun("r6", {
+        status: "failed",
+        snapshotId: "",
+        error: "stopped by the stall guard after 2 hours without progress while reading tank/appdata",
+      }),
+    ]);
+    const run = await openRun({ members: [outcome(ROOT, "stalled")] });
+    expect(await run.findByText(en["zfs.code.stalled"])).toBeTruthy();
+    expect(run.getByLabelText(en["zfs.fix.stalled"])).toBeTruthy();
+  });
+
+  it("is listed once it has finished, without the page being opened again", async () => {
+    serve({}, [zfsRun("r1")]);
+    await renderPage("?tab=verify");
+    expect(runRows()).toHaveLength(1);
+    serve({}, [zfsRun("r2"), zfsRun("r1")]);
+    act(() => placementChanged());
+    await waitFor(() => expect(runRows()).toHaveLength(2));
+  });
+});
+
+function series(part: string, over: Partial<AnomalySeriesInfo> = {}): AnomalySeriesInfo {
+  return {
+    part,
+    learning: { samples: 10, needed: 10 },
+    typical: { sourceBytes: 20 * 1024 ** 3, resticMs: 60_000 },
+    open: { critical: 0, warning: 0, info: 0 },
+    retentionHeld: false,
+    ...over,
+  };
+}
+
+function watchedTree(): AnomalyItem {
+  return watched({
+    targetId: ZFS_ID,
+    domain: "zfs",
+    name: ROOT,
+    datasets: [series(ROOT), series(CHILD, { open: { critical: 1, warning: 0, info: 0 }, retentionHeld: true })],
+    retentionHeld: true,
+  });
+}
+
+function point(stamp: string, time: number, childSnapshot: string): ZFSRestorePoint {
+  return {
+    stamp,
+    time,
+    members: [
+      { dataset: ROOT, relPath: "", snapshotId: `${stamp}-root`, outcome: "backed-up" },
+      { dataset: CHILD, relPath: "plex", snapshotId: childSnapshot, outcome: "backed-up" },
+    ],
+  };
+}
+
+const EMPTIED_AT = 1_789_086_400;
+const GOOD_AT = 1_789_000_000;
+const localTime = (at: number) => new Date(at * 1000).toLocaleString();
+
+describe("what anomaly detection knows about a ZFS entry", () => {
+  beforeEach(() => {
+    serve({ members: [member(), plex()] });
+    getAnomalySummary.mockResolvedValue({ ok: true, summary: { enabled: true, generation: 1 } } as never);
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [watchedTree()] });
+    zfsRestorePoints.mockResolvedValue({
+      ok: true,
+      points: [
+        point("bombvault-20260921030000", EMPTIED_AT, "child-emptied"),
+        point("bombvault-20260920030000", GOOD_AT, "child-good"),
+      ],
+    } as never);
+  });
+
+  const badge = (name: string, n: number) => en["anomaly.itemBadgeAria"].replace("{name}", name).replace("{n}", String(n));
+
+  it("marks the dataset a finding is about in the tree, and no other", async () => {
+    await renderPage("?tab=settings");
+    const tree = within(card(en["entry.settings.zfs"]));
+    const line = (await tree.findByRole("link", { name: badge(CHILD, 1) })).closest("li") as HTMLElement;
+    expect(within(line).getByText(en["anomaly.retentionPaused"])).toBeTruthy();
+    expect(tree.queryByRole("link", { name: badge(ROOT, 0) })).toBeNull();
+  });
+
+  it("offers the item's own sensitivity on the Verify tab", async () => {
+    await renderPage("?tab=verify");
+    expect(
+      await within(card(en["anomaly.title"])).findByRole("combobox", { name: en["anomaly.items.sensitivity"] })
+    ).toBeTruthy();
+  });
+
+  it("opens the restore on the dataset's last good backup and marks the emptied one", async () => {
+    const finding = {
+      id: "an-1",
+      detector: "source",
+      metric: "source_bytes_shrink",
+      severity: "critical",
+      state: "open",
+      scopeKind: "zfsds",
+      scopeId: CHILD,
+      targetId: ZFS_ID,
+      domain: "zfs",
+      name: ROOT,
+      part: CHILD,
+      runId: "r2",
+      lastRunId: "r2",
+      lastRunAt: EMPTIED_AT,
+      lastGood: { runId: "r1", snapshotId: "child-good", at: GOOD_AT },
+      flaggedSnapshots: ["child-emptied"],
+    } as unknown as AnomalyView;
+    getAnomalies.mockResolvedValue({ ok: true, anomalies: [finding], nextCursor: "" });
+    await renderPage(`?restore=child-good&dataset=${encodeURIComponent(CHILD)}`);
+
+    const panel = await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) });
+    const pointField = await within(panel).findByRole("combobox", { name: en["zfs.restore.point"] });
+    expect(pointField.textContent).toContain(localTime(GOOD_AT));
+    expect(within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] }).textContent).toContain(CHILD);
+    expect(within(panel).queryByText(en["anomaly.snapshotFlagged"])).toBeNull();
+
+    await press(pointField);
+    await press(
+      await screen.findByRole("option", {
+        name: new RegExp(localTime(EMPTIED_AT).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      })
+    );
+    expect(await within(panel).findByText(en["anomaly.snapshotFlagged"])).toBeTruthy();
+  });
+
+  it("says that the linked backup is gone and opens on the nearest one", async () => {
+    await renderPage(`?restore=child-pruned&at=1788990000&dataset=${encodeURIComponent(CHILD)}`);
+
+    const panel = await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) });
+    const pointField = await within(panel).findByRole("combobox", { name: en["zfs.restore.point"] });
+    expect(pointField.textContent).toContain(localTime(GOOD_AT));
+    expect(within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] }).textContent).toContain(CHILD);
+    const notice = within(panel).getByRole("status");
+    expect(notice.textContent).toContain(en["restore.missingPoint"].replace("{date}", isolateLtr(localTime(1_788_990_000))));
+    expect(notice.textContent).toContain(en["restore.nearestPoint"].replace("{date}", isolateLtr(localTime(GOOD_AT))));
+  });
+});
