@@ -144,6 +144,18 @@ func EffectiveZFSDatasetSchedule(d store.ZFSDataset, s store.Settings) Effective
 	return effectiveItemSchedule(s.ZFSEnabled, d.Enabled, d.ScheduleCadence, s.ZFSSchedule, s)
 }
 
+// EffectiveFlashSchedule computes the outcome for the flash backup. Flash and
+// the configuration backup are one item each, so neither has a pause switch or
+// a cadence below the domain's.
+func EffectiveFlashSchedule(s store.Settings) EffectiveSchedule {
+	return effectiveItemSchedule(s.FlashEnabled, true, "", s.FlashSchedule, s)
+}
+
+// EffectiveConfigSchedule computes the outcome for the configuration backup.
+func EffectiveConfigSchedule(s store.Settings) EffectiveSchedule {
+	return effectiveItemSchedule(s.ConfigEnabled, true, "", s.ConfigSchedule, s)
+}
+
 // PausedByOverride reports whether an item's own schedule override switches its
 // backups off, the operator's pause. EffectiveSchedule collapses that into
 // EffectiveNone together with a disabled domain and an excluded item, so the

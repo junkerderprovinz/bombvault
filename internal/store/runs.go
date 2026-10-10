@@ -18,7 +18,9 @@ type Run struct {
 	FinishedAt *int64 `json:"finishedAt"`
 	SnapshotID string `json:"snapshotId"`
 	Bytes      int64  `json:"bytes"`
-	Error      string `json:"error"`
+	// SourceBytes is how much restic read, nil for a run that measured nothing.
+	SourceBytes *int64 `json:"sourceBytes"`
+	Error       string `json:"error"`
 	// Acknowledged is set once the user dismisses this failed run from the
 	// dashboard error panel, which takes it out of the failure badge.
 	Acknowledged bool `json:"acknowledged"`
@@ -39,7 +41,7 @@ type Run struct {
 
 // runCols is the column list of every full run query, in the order scanRun
 // reads them.
-const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary`
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes`
 
 // RunMeta is what a caller knows about a run beyond its target and kind: the
 // pass it belongs to and who asked for it.
@@ -860,12 +862,12 @@ func (r *Repo) RunCountsOfKind(kind string) (map[string]map[string]int, error) {
 
 func scanRun(s scanner) (Run, error) {
 	var run Run
-	var finishedAt, bytes sql.NullInt64
+	var finishedAt, bytes, sourceBytes sql.NullInt64
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
-		&run.StartedVia, &run.StartedViaKey, &run.Load,
+		&run.StartedVia, &run.StartedViaKey, &run.Load, &sourceBytes,
 	)
 	if err != nil {
 		return Run{}, err
@@ -876,6 +878,7 @@ func scanRun(s scanner) (Run, error) {
 	if bytes.Valid {
 		run.Bytes = bytes.Int64
 	}
+	run.SourceBytes = nullableInt(sourceBytes)
 	if snapID.Valid {
 		run.SnapshotID = snapID.String
 	}
@@ -1515,6 +1518,88 @@ func (r *Repo) LastRunsOfKind(kind string) (map[string]Run, error) {
 			return nil, fmt.Errorf("LastRunsOfKind: %w", sErr)
 		}
 		out[run.TargetID] = run
+	}
+	return out, rows.Err()
+}
+
+// RunBrief is as much of a run as a list of items shows.
+type RunBrief struct {
+	ID        string `json:"id"`
+	Kind      string `json:"kind"`
+	Status    string `json:"status"`
+	StartedAt int64  `json:"startedAt"`
+}
+
+// recentRunsByTargetQuery reads the newest runs of each target and kind off
+// idx_runs_target_kind_started, and its window picks a target's newest among
+// those. A window over the bare table would read every run there is.
+const recentRunsByTargetQuery = `
+	SELECT target_id, id, kind, status, started_at
+	FROM (
+		SELECT r.target_id, r.id, r.kind, r.status, r.started_at,
+		       row_number() OVER (PARTITION BY r.target_id ORDER BY r.started_at DESC, r.rowid DESC) AS rank
+		FROM (SELECT DISTINCT target_id, kind FROM runs) AS series
+		JOIN runs AS r ON r.rowid IN (
+			SELECT rowid FROM runs
+			WHERE target_id = series.target_id AND kind = series.kind
+			ORDER BY started_at DESC, rowid DESC
+			LIMIT ?)
+	)
+	WHERE rank <= ?
+	ORDER BY target_id, rank`
+
+// RecentRunsByTarget returns every target's newest perTarget runs of any kind,
+// newest first, so a list of items costs one query rather than one per item.
+// Ties on started_at fall to the row written last.
+func (r *Repo) RecentRunsByTarget(perTarget int) (map[string][]RunBrief, error) {
+	rows, err := r.db.Query(recentRunsByTargetQuery, perTarget, perTarget)
+	if err != nil {
+		return nil, fmt.Errorf("RecentRunsByTarget: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string][]RunBrief{}
+	for rows.Next() {
+		var target string
+		var run RunBrief
+		if sErr := rows.Scan(&target, &run.ID, &run.Kind, &run.Status, &run.StartedAt); sErr != nil {
+			return nil, fmt.Errorf("RecentRunsByTarget: %w", sErr)
+		}
+		out[target] = append(out[target], run)
+	}
+	return out, rows.Err()
+}
+
+const latestSourceBytesByTargetQuery = `
+	SELECT target_id, source_bytes
+	FROM (
+		SELECT series.target_id, (
+			SELECT source_bytes FROM runs
+			WHERE target_id = series.target_id AND kind = 'backup'
+			  AND status = 'success' AND source_bytes IS NOT NULL
+			ORDER BY started_at DESC, rowid DESC
+			LIMIT 1) AS source_bytes
+		FROM (SELECT DISTINCT target_id FROM runs) AS series
+	)
+	WHERE source_bytes IS NOT NULL`
+
+// LatestSourceBytesByTarget returns how much each target's newest successful
+// backup with a measurement read. A target without one is absent.
+func (r *Repo) LatestSourceBytesByTarget() (map[string]int64, error) {
+	rows, err := r.db.Query(latestSourceBytesByTargetQuery)
+	if err != nil {
+		return nil, fmt.Errorf("LatestSourceBytesByTarget: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string]int64{}
+	for rows.Next() {
+		var target string
+		var bytes int64
+		if sErr := rows.Scan(&target, &bytes); sErr != nil {
+			return nil, fmt.Errorf("LatestSourceBytesByTarget: %w", sErr)
+		}
+		out[target] = bytes
 	}
 	return out, rows.Err()
 }

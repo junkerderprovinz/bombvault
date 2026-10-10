@@ -154,3 +154,32 @@ func TestItemOverrideIgnoredWhenPerItemSchedulesIsOff(t *testing.T) {
 	wantKind(t, c, EffectiveDomain, "container, override ignored")
 	wantKind(t, v, EffectiveDomain, "vm, override ignored")
 }
+
+func TestFlashAndConfigFollowTheirKindAndBackupEverything(t *testing.T) {
+	off := store.Settings{FlashSchedule: "daily 02:00", ConfigSchedule: "daily 02:00", EverythingSchedule: "daily 05:00"}
+	if got := EffectiveFlashSchedule(off); got.Kind != EffectiveNone || got.Reason != NoneDomainOff {
+		t.Fatalf("flash with its kind off: got %+v", got)
+	}
+	if got := EffectiveConfigSchedule(off); got.Kind != EffectiveNone || got.Reason != NoneDomainOff {
+		t.Fatalf("config with its kind off: got %+v", got)
+	}
+
+	// Per-item schedules are on and change nothing: neither has an override.
+	s := store.Settings{
+		FlashEnabled: true, ConfigEnabled: true, PerItemSchedules: true,
+		FlashSchedule: "off", ConfigSchedule: "weekly sun 03:00", EverythingSchedule: "daily 05:00",
+	}
+	want := EffectiveSchedule{Kind: EffectiveEverything, Spec: "daily 05:00"}
+	if got := EffectiveFlashSchedule(s); got != want {
+		t.Fatalf("flash without a cadence of its kind: got %+v, want %+v", got, want)
+	}
+	want = EffectiveSchedule{Kind: EffectiveBoth, Spec: "weekly sun 03:00", AlsoSpec: "daily 05:00"}
+	if got := EffectiveConfigSchedule(s); got != want {
+		t.Fatalf("config with both cadences: got %+v, want %+v", got, want)
+	}
+
+	s.EverythingSchedule = "off"
+	if got := EffectiveFlashSchedule(s); got.Kind != EffectiveNone || got.Reason != NoneScheduleOff {
+		t.Fatalf("flash with every cadence off: got %+v", got)
+	}
+}
