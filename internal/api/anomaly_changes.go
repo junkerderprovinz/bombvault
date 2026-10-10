@@ -354,7 +354,7 @@ func (s *Service) diffBackups(ctx context.Context, pair changePair) (string, Cha
 	it := pair.item
 	kinds := map[string]changeKind{}
 	partial := false
-	err := s.engine.DiffStream(ctx, it.repo, pair.from.SnapshotID, pair.to.SnapshotID, it.mode, func(c restic.DiffChange) {
+	_, err := s.engine.DiffStream(ctx, it.repo, pair.from.SnapshotID, pair.to.SnapshotID, it.mode, func(c restic.DiffChange) {
 		if strings.HasSuffix(c.Path, "/") {
 			return
 		}

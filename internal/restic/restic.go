@@ -382,10 +382,8 @@ type StatsResult struct {
 	FileCount int64 `json:"total_file_count"`
 }
 
-// DiffResult holds the summary we extract from `restic diff --json`: its final
-// "statistics" object. The per-file "change" lines are ignored — the headline
-// counts (files added/removed/changed) and the added/removed byte totals are
-// what the UI shows.
+// DiffResult is the totals of a restic diff: files added, removed and changed,
+// and the bytes of the data only one of the two snapshots holds.
 type DiffResult struct {
 	AddedFiles   int   `json:"addedFiles"`
 	RemovedFiles int   `json:"removedFiles"`
@@ -2717,19 +2715,6 @@ func (r Restic) StatsRestoreSize(ctx context.Context, repo, snapshotID string, m
 	return int(res.FileCount), res.TotalSize, nil
 }
 
-// Diff compares two snapshots (`restic diff --json snap1 snap2`) and returns the
-// parsed summary. restic streams one JSON object per line: many "change" lines
-// then a final "statistics" object — we keep only the statistics, mapping its
-// added/removed file counts + byte totals and its changed_files count into a
-// DiffResult. Buffered (like Snapshots/Stats), not the streaming progress path.
-func (r Restic) Diff(ctx context.Context, repo, snap1, snap2 string, m Mode) (DiffResult, error) {
-	out, err := r.run(ctx, DiffArgs(repo, snap1, snap2, m), m)
-	if err != nil {
-		return DiffResult{}, err
-	}
-	return parseDiffStatistics(out)
-}
-
 // Tag adds and removes tags on snapshots. restic writes each one anew under a
 // different id and keeps the first id as its original.
 func (r Restic) Tag(ctx context.Context, repo string, snapIDs, add, remove []string, m Mode) error {
@@ -2962,32 +2947,6 @@ type diffStatistics struct {
 	ChangedFiles int      `json:"changed_files"`
 	Added        diffStat `json:"added"`
 	Removed      diffStat `json:"removed"`
-}
-
-// parseDiffStatistics scans lines of restic --json diff output for the final
-// "statistics" object and maps it into a DiffResult. Per-file "change" lines are
-// ignored — only the summary statistics are surfaced.
-func parseDiffStatistics(data []byte) (DiffResult, error) {
-	for _, line := range bytes.Split(data, []byte("\n")) {
-		line = bytes.TrimSpace(line)
-		if len(line) == 0 {
-			continue
-		}
-		var s diffStatistics
-		if err := json.Unmarshal(line, &s); err != nil {
-			continue // skip non-JSON / per-file change lines
-		}
-		if s.MessageType == "statistics" {
-			return DiffResult{
-				AddedFiles:   s.Added.Files,
-				RemovedFiles: s.Removed.Files,
-				ChangedFiles: s.ChangedFiles,
-				AddedBytes:   int64(s.Added.Bytes),
-				RemovedBytes: int64(s.Removed.Bytes),
-			}, nil
-		}
-	}
-	return DiffResult{}, fmt.Errorf("restic diff: no statistics line in output")
 }
 
 // summarySince parses a finished backup's summary and records how long restic

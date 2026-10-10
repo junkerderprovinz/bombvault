@@ -465,7 +465,9 @@ type placementEngine struct {
 	deletes       []forgetIDsCall
 	prunes        []string
 	tags          []tagCall
-	ensured       []string // Init calls: the repositories EnsureRepo had to create
+	diffs         []string                       // "from->to" of each DiffStream call
+	diffChanges   map[string][]restic.DiffChange // what a DiffStream call reports, by "from->to"
+	ensured       []string                       // Init calls: the repositories EnsureRepo had to create
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
@@ -622,6 +624,20 @@ func (e *placementEngine) ForgetPreview(_ context.Context, repo string, _ restic
 }
 
 func (e *placementEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
+
+// DiffStream reports the changes set for the pair and counts each as a changed
+// file of ten new bytes.
+func (e *placementEngine) DiffStream(_ context.Context, _, from, to string, _ restic.Mode, onChange func(restic.DiffChange)) (restic.DiffResult, error) {
+	e.mu.Lock()
+	pair := from + "->" + to
+	e.diffs = append(e.diffs, pair)
+	changes := e.diffChanges[pair]
+	e.mu.Unlock()
+	for _, c := range changes {
+		onChange(c)
+	}
+	return restic.DiffResult{ChangedFiles: len(changes), AddedBytes: int64(10 * len(changes))}, nil
+}
 
 // Tag changes the tags of the named snapshots where they lie. restic would
 // also give each a new id, which no caller of the fake reads.

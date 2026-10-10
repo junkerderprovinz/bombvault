@@ -223,7 +223,7 @@ func (s *Service) computeBreakdown(job breakdownJob) (string, error) {
 	if prev != nil {
 		row.ParentID = prev.ID
 		changed = map[string]struct{}{}
-		err := s.engine.DiffStream(ctx, it.repo, prev.ID, newest.ID, it.mode, func(c restic.DiffChange) {
+		_, err := s.engine.DiffStream(ctx, it.repo, prev.ID, newest.ID, it.mode, func(c restic.DiffChange) {
 			// A folder, a removed file or one whose metadata alone changed
 			// adds no data.
 			if strings.HasSuffix(c.Path, "/") || !strings.ContainsAny(c.Modifier, "+MT") {

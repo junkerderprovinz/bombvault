@@ -4297,7 +4297,7 @@ func TestDiffSnapshots(t *testing.T) {
 	ctx := context.Background()
 
 	// Bad snapshot id is rejected before any restic call.
-	if _, err := svc.DiffSnapshots(ctx, "plex", "local", "not-hex!", "cccc3333"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+	if _, err := svc.DiffBackups(ctx, "containers", "plex", "local", "not-hex!", "cccc3333"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
 		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
 	}
 	if len(eng.diffPairs) != 0 {
@@ -4305,7 +4305,7 @@ func TestDiffSnapshots(t *testing.T) {
 	}
 
 	// A foreign snapshot (sonarr's) must not be diffable through plex's route.
-	if _, err := svc.DiffSnapshots(ctx, "plex", "local", "aaaa1111", "bbbb2222"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+	if _, err := svc.DiffBackups(ctx, "containers", "plex", "local", "aaaa1111", "bbbb2222"); err == nil || !strings.Contains(err.Error(), "does not belong") {
 		t.Fatalf("foreign snapshot must be refused, got %v", err)
 	}
 	if len(eng.diffPairs) != 0 {
@@ -4313,11 +4313,11 @@ func TestDiffSnapshots(t *testing.T) {
 	}
 
 	// Happy path: both snapshots belong to plex → diff runs and the summary is returned.
-	got, err := svc.DiffSnapshots(ctx, "plex", "local", "aaaa1111", "cccc3333")
+	got, err := svc.DiffBackups(ctx, "containers", "plex", "local", "aaaa1111", "cccc3333")
 	if err != nil {
-		t.Fatalf("DiffSnapshots: %v", err)
+		t.Fatalf("DiffBackups: %v", err)
 	}
-	if got != eng.diffResult {
+	if got.DiffResult != eng.diffResult {
 		t.Fatalf("diff result = %+v, want %+v", got, eng.diffResult)
 	}
 	if len(eng.diffPairs) != 1 || eng.diffPairs[0] != "aaaa1111->cccc3333" {
@@ -5553,8 +5553,8 @@ type fakeResticEngine struct {
 	diffCalls     int
 	statsCalls    []string // --mode value of each Stats call
 	statsErr      error
-	diffResult    restic.DiffResult // returned by Diff
-	diffPairs     []string          // "snap1->snap2" of each Diff call
+	diffResult    restic.DiffResult // returned by DiffStream
+	diffPairs     []string          // "snap1->snap2" of each DiffStream call
 	taggedSnaps   []string          // "snapID:tag,tag" of each Tag call
 	callLog       []string          // ordered method-call log (Unlock/Tag/CheckData/RestoreInclude) for ordering assertions
 	forgetPruned  bool              // prune flag of the last Forget call
@@ -5941,12 +5941,13 @@ func (f *fakeResticEngine) LsStreamNoLock(_ context.Context, _, _ string, _ rest
 	return nil
 }
 
-func (f *fakeResticEngine) DiffStream(_ context.Context, _, _, _ string, _ restic.Mode, onChange func(restic.DiffChange)) error {
+func (f *fakeResticEngine) DiffStream(_ context.Context, _, snap1, snap2 string, _ restic.Mode, onChange func(restic.DiffChange)) (restic.DiffResult, error) {
 	f.diffCalls++
+	f.diffPairs = append(f.diffPairs, snap1+"->"+snap2)
 	for _, c := range f.diffChanges {
 		onChange(c)
 	}
-	return nil
+	return f.diffResult, nil
 }
 
 // LsPath reads lsPathEntries rather than lsEntries: many tests set lsEntries
@@ -6121,11 +6122,6 @@ func (f *fakeResticEngine) StatsRestoreSize(_ context.Context, _, _ string, _ re
 		bytes = f.statsRestoreBytes // force a verification mismatch
 	}
 	return files, bytes, nil
-}
-
-func (f *fakeResticEngine) Diff(_ context.Context, _, snap1, snap2 string, _ restic.Mode) (restic.DiffResult, error) {
-	f.diffPairs = append(f.diffPairs, snap1+"->"+snap2)
-	return f.diffResult, nil
 }
 
 func (f *fakeResticEngine) ImportDir(context.Context, string, string, []string, time.Time, restic.Mode) (restic.Summary, error) {

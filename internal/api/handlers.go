@@ -1788,20 +1788,12 @@ func (h *Handler) handleDiff(w http.ResponseWriter, r *http.Request) {
 	}
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
-	d, err := h.svc.DiffSnapshots(r.Context(), name, sourceParam(r), from, to)
+	d, err := h.svc.DiffBackups(r.Context(), "containers", name, sourceParam(r), from, to)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"diff": map[string]any{
-			"addedFiles":   d.AddedFiles,
-			"removedFiles": d.RemovedFiles,
-			"changedFiles": d.ChangedFiles,
-			"addedBytes":   d.AddedBytes,
-			"removedBytes": d.RemovedBytes,
-		},
-	}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"diff": d.DiffResult}))
 }
 
 // handleTagSnapshot adds tags to one of a container's snapshots (restic tag).

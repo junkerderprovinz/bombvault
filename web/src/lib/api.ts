@@ -3317,6 +3317,42 @@ export function tagBackup(
   });
 }
 
+/** One path that differs between two backups. part names the dataset of a ZFS
+ *  run or the zvol disk of a VM it lies in. modifier is "+" for added, "-" for
+ *  removed, and a combination of "M", "T" and "U" for a path in both. */
+export interface BackupChange {
+  part?: string;
+  path: string;
+  modifier: string;
+}
+
+/** What changed from one backup of an entry to a later one. changes holds at
+ *  most 500 paths and truncated says more exist; the totals count all of them.
+ *  onlyBefore and onlyAfter name datasets or disks one of the two backups lacks.
+ *  disks marks a VM: the paths are disk images, a changed-block backup counts
+ *  segments where others count files, and only the bytes say how much of the
+ *  disks differs. */
+export interface BackupDiff extends SnapshotDiff {
+  changes: BackupChange[];
+  truncated?: boolean;
+  onlyBefore?: string[];
+  onlyAfter?: string[];
+  disks?: boolean;
+}
+
+/** Compares two backups of an entry. from and to are snapshot ids of the same
+ *  source; for a ZFS run any of its datasets' ids names the run. */
+export function diffBackups(
+  domain: BackupDomain,
+  key: string,
+  from: string,
+  to: string,
+  source?: string
+): Promise<OkEnvelope & { diff?: BackupDiff }> {
+  const qs = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${srcParam(source, "&")}`;
+  return fetchJSON(`${backupPath(domain, key)}/diff${qs}`);
+}
+
 /** Whether a compose project's folder has a snapshot at a source. */
 export function getStackDir(project: string, source: string): Promise<OkEnvelope & { found?: boolean; time?: string }> {
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);

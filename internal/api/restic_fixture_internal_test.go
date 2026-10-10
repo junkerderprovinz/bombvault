@@ -86,6 +86,14 @@ func (f *resticFixture) write(dir string, files map[string]string) {
 	}
 }
 
+// remove deletes one file of the source folder dir.
+func (f *resticFixture) remove(dir, name string) {
+	f.t.Helper()
+	if err := os.Remove(filepath.Join(filepath.FromSlash(f.root), "src", filepath.FromSlash(dir), filepath.FromSlash(name))); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 // repoOf is the domain's own repository and the mode that opens it.
 func (f *resticFixture) repoOf(domain string) (string, restic.Mode) {
 	f.t.Helper()

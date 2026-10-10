@@ -163,10 +163,10 @@ type ResticEngine interface {
 	// see restic.LsStream's own doc comment.
 	LsStream(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
 	// LsStreamNoLock is LsStream without a repository lock, and DiffStream
-	// hands over the paths two snapshots differ in. The size breakdown reads
-	// both beside running backups.
+	// hands over the paths two snapshots differ in and returns the totals.
+	// Neither takes a lock, so both run beside backups.
 	LsStreamNoLock(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
-	DiffStream(ctx context.Context, repo, snap1, snap2 string, mode restic.Mode, onChange func(restic.DiffChange)) error
+	DiffStream(ctx context.Context, repo, snap1, snap2 string, mode restic.Mode, onChange func(restic.DiffChange)) (restic.DiffResult, error)
 	// LsPath lists one directory's own node plus its direct children, scoped to
 	// dirPath (a subtree root) — used to read back a restored directory's
 	// original owner/mode after a remapped restore, since restic's restorer
@@ -216,9 +216,6 @@ type ResticEngine interface {
 	// RestorePreview runs one restore step as a dry run and reports each
 	// file it would write, replace, leave or find beyond the snapshot.
 	RestorePreview(ctx context.Context, repo string, step restic.PreviewStep, m restic.Mode, onItem func(restic.PreviewItem)) error
-	// Diff compares two snapshots (restic diff --json) and returns the summary
-	// counts + byte totals (what changed between two backups).
-	Diff(ctx context.Context, repo, snap1, snap2 string, m restic.Mode) (restic.DiffResult, error)
 	// Tag adds and removes tags on snapshots in one restic call. The caller
 	// has refused any tag restic would split at a comma.
 	Tag(ctx context.Context, repo string, snapIDs, add, remove []string, m restic.Mode) error
@@ -10032,48 +10029,6 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 		}
 	}()
 	return plan.target, true, nil
-}
-
-// DiffSnapshots compares two of a container's snapshots (restic diff) and
-// returns the summary of what changed between them (files added/removed/changed,
-// bytes added/removed).
-//
-// SEC: both snapshot ids pass the strict hex guard (backup.ValidSnapshotID), and
-// BOTH must belong to the named container (tag-scoped via Snapshots, like
-// RestoreContainerToPath/ListSnapshotFiles), so one container's snapshots can't
-// be diffed through another's route. The repo+mode are resolved for the source.
-func (s *Service) DiffSnapshots(ctx context.Context, name, source, snap1, snap2 string) (restic.DiffResult, error) {
-	if !validResourceName(name) {
-		return restic.DiffResult{}, errors.New("invalid container name")
-	}
-	if source != "local" && !isOffsiteSource(source) {
-		return restic.DiffResult{}, errors.New("invalid source (must be local or offsite)")
-	}
-	if !backup.ValidSnapshotID(snap1) || !backup.ValidSnapshotID(snap2) {
-		return restic.DiffResult{}, backup.ErrInvalidSnapshotID
-	}
-
-	// Scope to the named container: BOTH snapshots must be among ITS snapshots.
-	snaps, err := s.Snapshots(ctx, name, source)
-	if err != nil {
-		return restic.DiffResult{}, err
-	}
-	if !snapshotBelongs(snaps, snap1) {
-		return restic.DiffResult{}, fmt.Errorf("snapshot %s does not belong to this container", snap1)
-	}
-	if !snapshotBelongs(snaps, snap2) {
-		return restic.DiffResult{}, fmt.Errorf("snapshot %s does not belong to this container", snap2)
-	}
-
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return restic.DiffResult{}, fmt.Errorf("read settings: %w", err)
-	}
-	repo, err := s.containerRepoForName(settings, name, source)
-	if err != nil {
-		return restic.DiffResult{}, err
-	}
-	return s.engine.Diff(ctx, repo, snap1, snap2, s.repoModeFor(settings, "containers", source, repo))
 }
 
 // snapshotBelongs reports whether id (exact or unique prefix) is present in the

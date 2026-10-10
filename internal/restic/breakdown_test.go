@@ -62,8 +62,12 @@ func TestDiffStreamAndLsAgreeOnPaths(t *testing.T) {
 	second := backup()
 
 	var changes []DiffChange
-	if err := r.DiffStream(ctx, repo, first, second, m, func(c DiffChange) { changes = append(changes, c) }); err != nil {
+	total, err := r.DiffStream(ctx, repo, first, second, m, func(c DiffChange) { changes = append(changes, c) })
+	if err != nil {
 		t.Fatal(err)
+	}
+	if total.AddedFiles != 1 || total.ChangedFiles != 1 || total.RemovedFiles != 0 || total.AddedBytes == 0 {
+		t.Fatalf("totals %+v, want one file added and one changed", total)
 	}
 	listed := map[string]FileEntry{}
 	if err := r.LsStreamNoLock(ctx, repo, second, m, func(e FileEntry) { listed[e.Path] = e }); err != nil {
