@@ -64,6 +64,9 @@ type RestoreCheckRequest struct {
 	// Network is the network a foreign container is restored onto when this
 	// host lacks its own.
 	Network string `json:"network"`
+	// Target is "beside" for a container, VM or file set restored next to the
+	// original, and empty for the restore its endpoint does otherwise.
+	Target string `json:"target"`
 }
 
 // Check line ids, statuses and the reasons the page turns into sentences.
@@ -148,6 +151,10 @@ type restoreScope struct {
 	// segments. restic has no dry run for that, so the plan names each file
 	// and counts it at the most it can take.
 	images []backup.VMRestoreImage
+	// beside is where a restore next to the original puts its copy.
+	beside *BesidePlan
+	// extraFiles are small files the restore writes itself, as container paths.
+	extraFiles []string
 }
 
 // CheckRestore runs the pre-flight checks for a restore and, when they get
@@ -161,6 +168,13 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		checkZFS, checkForeign, checkFlash, checkConfig, checkDBImport:
 	default:
 		return RestoreCheck{}, fmt.Errorf("unknown restore kind %q", req.Kind)
+	}
+	beside, err := restoreTarget(req.Target)
+	if err != nil {
+		return RestoreCheck{}, err
+	}
+	if beside && req.Kind != checkContainer && req.Kind != checkVM && req.Kind != checkFileSet {
+		return RestoreCheck{}, fmt.Errorf("a %s restore has no target %q", req.Kind, req.Target)
 	}
 	var out RestoreCheck
 	ref, err := s.restoreCheckRepo(req)
@@ -216,6 +230,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 	if !scope.download {
 		s.definitionChanges(ctx, scope, &plan)
 		plan.Shared = s.sharedFolders(ctx, scope)
+		plan.Beside = scope.beside
 		out.Plan = &plan
 	}
 	out.Ready = true
@@ -353,6 +368,13 @@ func (s *Service) restoreCheckRepo(req RestoreCheckRequest) (repoRef, error) {
 func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest) (restoreScope, error) {
 	switch req.Kind {
 	case checkContainer:
+		if req.Target == targetBeside {
+			plan, err := s.prepareRestoreBeside(ctx, req.Name, req.SnapshotID, req.Source)
+			if err != nil {
+				return restoreScope{}, err
+			}
+			return besideContainerScope(plan, req.Name), nil
+		}
 		plan, err := s.prepareRestore(ctx, req.Name, req.SnapshotID, true, req.Source)
 		if err != nil {
 			return restoreScope{}, err
@@ -381,12 +403,26 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			steps: []restic.PreviewStep{{SnapshotID: plan.snapshotID, Target: plan.target, Include: "/"}},
 		}, nil
 	case checkVM:
+		if req.Target == targetBeside {
+			plan, err := s.prepareRestoreVMBeside(ctx, req.Name, req.SnapshotID, req.Source)
+			if err != nil {
+				return restoreScope{}, err
+			}
+			return s.besideVMScope(plan), nil
+		}
 		plan, err := s.prepareRestoreVM(ctx, req.Name, req.SnapshotID, true, req.Source)
 		if err != nil {
 			return restoreScope{}, err
 		}
 		return vmScope(plan, req.Name), nil
 	case checkFileSet:
+		if req.Target == targetBeside {
+			plan, err := s.prepareRestoreFileSetBeside(ctx, req.Name, req.SnapshotID, req.Source)
+			if err != nil {
+				return restoreScope{}, err
+			}
+			return s.besideFileSetScope(plan), nil
+		}
 		plan, err := s.prepareRestoreFileSet(ctx, req.Name, req.SnapshotID, req.Source, req.TargetPath, true)
 		if err != nil {
 			return restoreScope{}, err

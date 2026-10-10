@@ -59,6 +59,9 @@ type RestorePlan struct {
 	Missing    bool               `json:"missing"`
 	Definition []DefinitionChange `json:"definition"`
 	Shared     []SharedFolder     `json:"shared"`
+	// Beside is set for a restore next to the original and says where its
+	// copy goes.
+	Beside *BesidePlan `json:"beside,omitempty"`
 }
 
 // PlanFile is one host path of the plan and how the restore changes it.
@@ -184,6 +187,10 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 			add(s.toHostPath(img.Target), changeAdded)
 		}
 		need[path.Dir(img.Target)] += blockImageCeiling(img.Disk)
+	}
+	for _, f := range sc.extraFiles {
+		plan.Added++
+		add(s.toHostPath(f), changeAdded)
 	}
 	return plan, need, nil
 }

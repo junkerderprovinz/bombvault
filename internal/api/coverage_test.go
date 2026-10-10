@@ -395,3 +395,42 @@ func TestCoverageCountsZFSItemsBackupEverythingReaches(t *testing.T) {
 	}
 	t.Fatalf("the report has no ZFS domain: %v", domains)
 }
+
+func TestCoverageLeavesOutACopyRestoredNextToItsOriginalUntilItHasAnEntry(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{Name: "plex"},
+		{Name: "plex-restored", Labels: map[string]string{"bombvault.restored-from": "plex"}},
+		{Name: "sonarr-restored", Labels: map[string]string{"bombvault.restored-from": "sonarr"}},
+	}}
+	h, st, _ := newTestRouterSvc(t, d, &fakeResticEngine{})
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	// The second copy was given an entry and taken out of the schedule again.
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "sonarr-restored"}); err != nil {
+		t.Fatal(err)
+	}
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersEnabled = true
+	s.ContainersSchedule = "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/coverage", "")
+
+	names := coverageNames(t, m)
+	if names["plex-restored"] {
+		t.Fatalf("a copy nobody has set up is no open task, got %v", names)
+	}
+	if !names["sonarr-restored"] {
+		t.Fatalf("a copy with an entry of its own counts like any container, got %v", names)
+	}
+	report, _ := m["coverage"].(map[string]any)
+	if total, _ := report["total"].(float64); total != 2 {
+		t.Fatalf("total = %v, want plex and the copy that has an entry", report["total"])
+	}
+}

@@ -510,3 +510,20 @@ func TestItemRoutesRequireSession(t *testing.T) {
 		}
 	}
 }
+
+func TestListItemsNamesTheOriginalOfARestoredCopy(t *testing.T) {
+	restored := liveContainer("plex-restored")
+	restored.Labels = map[string]string{"bombvault.restored-from": "plex"}
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex"), restored}}
+	h, st, _ := newItemsRouter(t, docker, listVMsVirsh{})
+	enableEveryKind(t, st, nil)
+
+	rows, _ := listItems(t, h)
+
+	if got := rows["container/plex-restored"]["restoredFrom"]; got != "plex" {
+		t.Fatalf("restoredFrom = %v, want plex", got)
+	}
+	if _, set := rows["container/plex"]["restoredFrom"]; set {
+		t.Fatal("the original is no copy of anything")
+	}
+}

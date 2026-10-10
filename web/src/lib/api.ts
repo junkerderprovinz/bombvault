@@ -888,7 +888,9 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
  * the browser/proxy dropping the request. Watch the "container:<name>" SSE
  * progress key + the recorded run (kind "restore") for the outcome.
  * withoutRuntime recreates the container without its GPU request and runtime,
- * the retry after this host refused them.
+ * the retry after this host refused them. With target "beside" the original is
+ * left alone: the snapshot goes into new folders next to its appdata and a
+ * second, stopped container is created on them, as the check's plan describes.
  */
 export function restore(
   name: string,
@@ -896,11 +898,12 @@ export function restore(
   confirm: boolean,
   source?: string,
   leaveStopped?: boolean,
-  withoutRuntime?: boolean
+  withoutRuntime?: boolean,
+  opts?: RestoreOptions
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm, leaveStopped, withoutRuntime }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped, withoutRuntime, ...opts }),
   });
 }
 
@@ -916,6 +919,17 @@ export function cancelRestore(key: string): Promise<{ ok: boolean; cancelled: bo
     method: "POST",
     body: JSON.stringify({ key }),
   });
+}
+
+/** Where a container, VM or folder set restore puts what it restores, when
+ *  that is not the original's place: "beside" creates a copy next to the
+ *  original and changes nothing that is there. */
+export type RestoreTarget = "beside";
+
+/** The choices the restore of a container, a VM or a folder set takes beyond
+ *  its snapshot. */
+export interface RestoreOptions {
+  target?: RestoreTarget;
 }
 
 /** The restore a check describes, with what that restore's own endpoint takes. */
@@ -948,6 +962,8 @@ export interface RestoreCheckRequest {
   wholeTree?: boolean;
   /** The network a foreign container goes onto when this host lacks its own. */
   network?: string;
+  /** Kinds "container", "vm" and "fileSet" only. */
+  target?: RestoreTarget;
 }
 
 export type CheckLineId = "repository" | "key" | "snapshot" | "space" | "network";
@@ -986,6 +1002,33 @@ export interface RestorePlan {
   missing: boolean;
   definition: DefinitionChange[];
   shared: { path: string; containers: string[] }[];
+  /** Set for a restore with target "beside". */
+  beside?: BesidePlan;
+}
+
+/** Where a restore next to the original puts its copy. Paths are host paths. */
+export interface BesidePlan {
+  /** The container the restore creates, or else its first new folder. */
+  name: string;
+  folders: { original: string; copy: string }[];
+  /** Set when the restore also creates a stopped container. */
+  container?: BesideContainer;
+}
+
+/** How the container a restore creates differs from the original, apart from
+ *  its name and folders. */
+export interface BesideContainer {
+  /** copy is "" when Docker picks the host port once the copy starts. */
+  ports: { container: string; original: string; copy: string }[];
+  /** Writable volumes the copy mounts together with the original, because the
+   *  backup holds nothing of them. */
+  shared: string[];
+  /** The address the original keeps. The copy gets none. */
+  fixedIp?: string;
+  /** The original's restart policy. The copy has none, so Docker never starts
+   *  it by itself. */
+  restart?: string;
+  hostNetwork?: boolean;
 }
 
 /** The check of one container of a stack restore. */
@@ -3421,6 +3464,9 @@ export interface BackupItem {
   installed?: boolean;
   /** True for BombVault's own container, which cannot back itself up. */
   self?: boolean;
+  /** Containers: the container this one is a copy of, when a restore created
+   *  it next to that one. Such a copy is no open task until it has an entry. */
+  restoredFrom?: string;
   /** True while the kind is switched off in the settings. Flash and config
    *  are not listed at all then. */
   kindDisabled?: boolean;
@@ -3695,17 +3741,20 @@ export function listVMSnapshots(name: string, source?: string): Promise<ListSnap
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
-/** Start a VM restore. ASYNC — see restore; watch "vm:<name>" over SSE. */
+/** Start a VM restore, detached like restore; watch "vm:<name>" over SSE. With
+ *  target "beside" the disks go into new folders next to the ones they live
+ *  in, and libvirt is asked nothing. */
 export function restoreVM(
   name: string,
   snapshotId: string,
   confirm: boolean,
   source?: string,
-  leaveStopped?: boolean
+  leaveStopped?: boolean,
+  opts?: RestoreOptions
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, confirm, leaveStopped }),
+    body: JSON.stringify({ snapshotId, confirm, leaveStopped, ...opts }),
   });
 }
 
@@ -4080,17 +4129,20 @@ export function fileSetSnapshots(id: string, source?: string): Promise<ListSnaps
  * snapshot into that folder under the host mount (non-destructive, FolderBrowser
  * convention). ASYNC (see restore): the ack carries the resolved target; watch
  * the "files:<name>" SSE key + the recorded run (kind "restore") for the outcome.
+ * With target "beside" and an empty targetPath the snapshot goes into a new
+ * folder next to the set's own, which the ack names.
  */
 export function restoreFileSet(
   id: string,
   snapshotId: string,
   confirm: boolean,
   targetPath = "",
-  source?: string
+  source?: string,
+  opts?: RestoreOptions
 ): Promise<OkEnvelope & { started?: boolean; target?: string }> {
   return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, targetPath, confirm }),
+    body: JSON.stringify({ snapshotId, targetPath, confirm, ...opts }),
   });
 }
 

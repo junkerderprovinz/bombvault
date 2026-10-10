@@ -7664,6 +7664,9 @@ type containerRestorePlan struct {
 	inspect        model.Inspect
 	templateXML    string
 	withoutRuntime bool
+	// beside is set for a restore next to the original: restoreDirs then lead
+	// into the copy's folders and inspect is the copy's definition.
+	beside *containerBeside
 }
 
 // Restore runs a full container restore. The recreate profile is taken from the
@@ -8129,18 +8132,25 @@ func (s *Service) CancelRun(key string) bool {
 // concurrently with a backup or another restore (they contend on repo locks and
 // container stop/start). Returns (false, nil) when one is already running.
 //
-// withoutRuntime recreates the container without its GPU request and runtime,
-// the retry the restore panel offers when this host lacks them.
-func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, leaveStopped, withoutRuntime bool) (bool, error) {
+// opts.WithoutRuntime recreates the container without its GPU request and
+// runtime, the retry the restore panel offers when this host lacks them.
+// opts.Beside restores a stopped copy next to the original instead.
+func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source string, opts RestoreOptions) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	plan, err := s.prepareRestore(ctx, name, snapshotID, true, source)
+	var plan containerRestorePlan
+	var err error
+	if opts.Beside {
+		plan, err = s.prepareRestoreBeside(ctx, name, snapshotID, source)
+	} else {
+		plan, err = s.prepareRestore(ctx, name, snapshotID, true, source)
+	}
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
 	}
-	plan.withoutRuntime = withoutRuntime
+	plan.withoutRuntime = opts.WithoutRuntime
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns), capped by restoreTimeout (see its comment
 	// for why the restore cap is far more generous than the backup one).
@@ -8157,7 +8167,13 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 		defer cancel()
 		s.registerCancel(key, cancel)
 		defer s.unregisterCancel(key)
-		if rerr := s.executeRestore(rctx, name, plan, leaveStopped); rerr != nil {
+		var rerr error
+		if plan.beside != nil {
+			rerr = s.executeRestoreBeside(rctx, name, plan)
+		} else {
+			rerr = s.executeRestore(rctx, name, plan, opts.LeaveStopped)
+		}
+		if rerr != nil {
 			log.Printf("api: restore: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
@@ -12661,6 +12677,9 @@ type vmRestorePlan struct {
 	blockDisks []backup.VMRestoreBlockDisk
 	// images are the disks of a changed-block snapshot and where each goes.
 	images []backup.VMRestoreImage
+	// beside is set for a restore next to the original, which uses it in place
+	// of the fields above that say where a disk goes.
+	beside *vmBeside
 }
 
 // prepareRestoreVM performs ALL of a VM restore's validation and resolution
@@ -13492,12 +13511,19 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 // published under "vm:<name>" and the orchestrator records the run.
 //
 // Shares batchActive with backups and the other restores; returns (false, nil)
-// when one is already running.
-func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source string, leaveStopped bool) (bool, error) {
+// when one is already running. opts.Beside restores the disks into new folders
+// next to the ones they live in and leaves the VM alone.
+func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source string, opts RestoreOptions) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	plan, err := s.prepareRestoreVM(ctx, name, snapshotID, true, source)
+	var plan vmRestorePlan
+	var err error
+	if opts.Beside {
+		plan, err = s.prepareRestoreVMBeside(ctx, name, snapshotID, source)
+	} else {
+		plan, err = s.prepareRestoreVM(ctx, name, snapshotID, true, source)
+	}
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
@@ -13515,7 +13541,13 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 		defer cancel()
 		s.registerCancel(key, cancel)
 		defer s.unregisterCancel(key)
-		if rerr := s.executeRestoreVM(rctx, name, plan, leaveStopped); rerr != nil {
+		var rerr error
+		if plan.beside != nil {
+			rerr = s.executeRestoreVMBeside(rctx, name, plan)
+		} else {
+			rerr = s.executeRestoreVM(rctx, name, plan, opts.LeaveStopped)
+		}
+		if rerr != nil {
 			log.Printf("api: restore vm: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
@@ -14471,6 +14503,9 @@ type fileSetRestorePlan struct {
 	inPlace    string // in-place: the set's resolved source path (engine.RestorePath); "" = to-folder
 	target     string // to-folder: the resolved alternate folder under the host mount ("" = in-place)
 	subtree    string // to-folder: the SNAPSHOT's own tree node covering ALL its recorded paths - the <id>:<subtree> restore root ("" = path-less snapshot or roots with no shared ancestor -> whole-tree fallback)
+	// beside is set for a restore next to the set's folder: target then lies
+	// in the copy this names, which the restore creates.
+	beside *besideRoot
 }
 
 // prepareRestoreFileSet performs ALL of a file-set restore's validation and
@@ -14635,12 +14670,23 @@ func (s *Service) runRestoreFileSet(ctx context.Context, plan fileSetRestorePlan
 // restic error text — lands in the run history.
 //
 // Shares batchActive with backups and the other restores; returns
-// ("", false, nil) when one is already running.
-func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, source, targetSubPath string, confirm bool) (string, bool, error) {
+// ("", false, nil) when one is already running. opts.Beside restores into a
+// new folder next to the set's own, which the ack then names, and takes no
+// targetSubPath.
+func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, source, targetSubPath string, confirm bool, opts RestoreOptions) (string, bool, error) {
+	if opts.Beside && strings.TrimSpace(targetSubPath) != "" {
+		return "", false, errors.New("a restore next to the original takes no target folder")
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return "", false, nil
 	}
-	plan, err := s.prepareRestoreFileSet(ctx, id, snapshotID, source, targetSubPath, confirm)
+	var plan fileSetRestorePlan
+	var err error
+	if opts.Beside {
+		plan, err = s.prepareRestoreFileSetBeside(ctx, id, snapshotID, source)
+	} else {
+		plan, err = s.prepareRestoreFileSet(ctx, id, snapshotID, source, targetSubPath, confirm)
+	}
 	if err != nil {
 		s.batchActive.Store(false)
 		return "", false, err
@@ -14664,11 +14710,21 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		defer s.unregisterCancel(rkey)
 		runID = s.beginRestoreRunForTarget(plan.setID)
 		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
-		rerr := s.runRestoreFileSet(pctx, plan)
+		undo := func() {}
+		var rerr error
+		if plan.beside != nil {
+			undo, rerr = s.runRestoreFileSetBeside(pctx, plan)
+		} else {
+			rerr = s.runRestoreFileSet(pctx, plan)
+		}
 		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt); err != nil {
+			undo()
 			log.Printf("api: restore file set: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
+	if plan.beside != nil {
+		return plan.beside.copy, true, nil
+	}
 	return plan.target, true, nil
 }
 

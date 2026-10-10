@@ -1424,18 +1424,27 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		Confirm        bool   `json:"confirm"`
 		LeaveStopped   bool   `json:"leaveStopped"`
 		WithoutRuntime bool   `json:"withoutRuntime"`
+		Target         string `json:"target"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	beside, err := restoreTarget(body.Target)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	// Confirmation is guarded here so an unconfirmed request fails synchronously
 	// with the familiar sentinel (the sync service core re-checks it for the
 	// stack-restore path — defense-in-depth).
-	if !body.Confirm {
+	// A restore next to the original replaces nothing and needs none.
+	if !body.Confirm && !beside {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
-	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped, body.WithoutRuntime)
+	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
+		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside,
+	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -5405,17 +5414,26 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		SnapshotID   string `json:"snapshotId"`
 		Confirm      bool   `json:"confirm"`
 		LeaveStopped bool   `json:"leaveStopped"`
+		Target       string `json:"target"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	beside, err := restoreTarget(body.Target)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	// Confirmation is guarded here so an unconfirmed request fails synchronously
 	// with the familiar sentinel (the sync service core re-checks it).
-	if !body.Confirm {
+	// A restore next to the original replaces nothing and needs none.
+	if !body.Confirm && !beside {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
 	}
-	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
+	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
+		LeaveStopped: body.LeaveStopped, Beside: beside,
+	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -6418,11 +6436,17 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 		SnapshotID string `json:"snapshotId"`
 		TargetPath string `json:"targetPath"`
 		Confirm    bool   `json:"confirm"`
+		Target     string `json:"target"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm)
+	beside, err := restoreTarget(body.Target)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return

@@ -166,8 +166,13 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings) 
 		if c.Name == "" || (self != "" && c.Name == self) {
 			continue
 		}
-		out.Total++
 		row, known := rows[c.Name]
+		// A copy that a restore put next to its original is there to be looked
+		// at. It counts once it has an entry of its own.
+		if !known && c.Labels[restoredFromLabel] != "" {
+			continue
+		}
+		out.Total++
 		if !known {
 			out.Unprotected = append(out.Unprotected, CoverageItem{
 				Name: c.Name, Reason: CoverageNotSetUp, NeverBackedUp: true,
