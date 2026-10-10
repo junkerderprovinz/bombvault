@@ -579,7 +579,7 @@ const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
 // `names` holds raw libvirt names, which the backend stores and matches on.
 // `displayByLibvirtName` maps them back to the readable name for display and
 // for the name-order tiebreak.
-function VMBackupOrderPanel({
+export function VMBackupOrderPanel({
   vms,
   t,
   hueIndex,
@@ -803,7 +803,7 @@ function VMBackupOrderPanel({
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 pointer-coarse:p-2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
@@ -813,7 +813,7 @@ function VMBackupOrderPanel({
                     tip={t("backupOrder.moveDown")}
                     onClick={() => move(i, 1)}
                     disabled={i === names.length - 1 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 pointer-coarse:p-2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
