@@ -8,24 +8,10 @@ import { useToast } from "../../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
-// StopContainersEditor edits the list of OTHER containers to stop during this
-// container's backup (e.g. a database). Collapsible; `open` is controlled by
-// the caller — see HooksEditor's own comment.
-//
-// REWORKED (jdp, live review: "Können wir da nicht eine Dropdownliste aller
-// installierten Container machen? Also dass es automatisch alle installierten
-// Container auflistet, die man dann auswählen kann."): this used to be a
-// free-text `<textarea>`, one hand-typed container name per line — no
-// validation against what is actually installed, a typo just silently never
-// matched anything at backup time. Replaced with a proper multi-select: a
-// dropdown/listbox populated from `installedContainers`, the SAME container
-// list ContainerRow's own caller (Containers()) already fetches to render
-// every row on this page — no second API call. Custom listbox, not a native
-// `<select multiple>` (illegible checkbox-free multi-select UI, no per-row
-// icon/status room) — same "escape hatch" precedent as Settings.tsx's
-// LanguageCard dropdown (role="listbox", outside-click/Escape-to-close), here
-// extended to `aria-multiselectable="true"` with a real checkbox per row
-// instead of LanguageCard's single-select radio-like rows.
+// StopContainersEditor picks the other containers to stop during this
+// container's backup, a database for instance. The caller controls `open`.
+// The choices come from the installed containers, so a name cannot be typed
+// in a way that never matches at backup time.
 export function StopContainersEditor({
   name,
   initial,
@@ -35,72 +21,43 @@ export function StopContainersEditor({
 }: {
   name: string;
   initial: string[];
-  /** Every INSTALLED container on this BombVault instance, as already
-   *  fetched once by Containers() for rendering the row list — threaded
-   *  through ContainerRow rather than a second `listContainers()` call here. */
+  /** Every installed container, as the page already fetched it for its rows. */
   installedContainers: Container[];
   open: boolean;
   t: T;
 }) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initial));
   const [pickerOpen, setPickerOpen] = useState(false);
-  // The BUTTON itself, not its wrapper: DropdownListbox sizes the portalled
-  // panel to whatever this ref measures, and the wrapper below is a flex
-  // ITEM of this editor's `flex flex-col` box — `inline-block` gets
-  // blockified and stretched to the card's full content width there, so
-  // measuring the wrapper handed the panel a ~970px width instead of the
-  // button's own 256px (caught by measuring it live, not by reading the
-  // markup). It also keeps the outside-click exemption tight: only the
-  // button is exempt, which is all that needs to be.
+  // On the button, not its wrapper: DropdownListbox sizes the portalled panel
+  // to what this ref measures, and the wrapper is a flex item that stretches
+  // to the card's full width.
   const pickerRef = useRef<HTMLButtonElement>(null);
   const { push } = useToast();
-  // Live-save conversion (jdp, live review — see HooksEditor's own header
-  // comment for the full "why" across all four editors): each listbox row is
-  // a discrete boolean pick (same shape as FoldersEditor's mount checkboxes),
-  // so rowBusy/rowShake below are that identical per-key busy/shake map, keyed
-  // by candidate container name instead of mount source.
   const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
   const [rowShake, setRowShake] = useState<Record<string, number>>({});
 
-  // Re-seed whenever the SAVED value changes underneath this editor (e.g. a
-  // fresh `listContainers()` reload after Discover) — the same "derived from
-  // props but independently editable until the next save" shape
-  // UpdateAfterBackupRow's own `initial`-seeded toggle already uses.
-  //
-  // Keyed on the CONTENT, not the array's identity. The call site passes
-  // `container.stopContainers ?? []`, and the API returns null for any
-  // container that has no target row yet, so that fallback minted a BRAND NEW
-  // array on every parent render — and this effect then reset the selection to
-  // empty each time. What made it costly rather than merely annoying: the next
-  // toggle saves the visible set, and the server replaces the stored list
-  // wholesale, so a user who ticked three containers and then triggered any
-  // parent re-render silently saved a list with only the fourth in it.
+  // Re-seed when the saved value changes underneath this editor, after a
+  // reload for instance. Keyed on the content, not the array's identity: the
+  // call site passes `container.stopContainers ?? []`, a new array on every
+  // parent render, and re-seeding from it would drop the picks made since the
+  // last reload. The next toggle would then store the shortened list.
   const initialKey = JSON.stringify(initial);
   useEffect(() => {
     setSelected(new Set(JSON.parse(initialKey) as string[]));
   }, [initialKey]);
 
-  // Candidates: every OTHER installed container — excludes this row's own
-  // container (a container can't stop itself) and BombVault's own container
-  // (the established "BombVault's own container never appears in
-  // schedule-member lists" rule, Settings.tsx's ContainersSection).
+  // A container cannot stop itself, and BombVault's own container is never
+  // offered.
   const candidates = installedContainers
     .filter((c) => c.name !== name && !c.self)
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 
-  // A previously-saved name that no longer matches an installed container
-  // (uninstalled since, renamed, or a leftover from the old free-text field)
-  // still needs to stay visible and removable — silently dropping it on the
-  // next save would be data loss the user never asked for. Marked inline
-  // with the existing `containers.notInstalled` badge text rather than a
-  // second bespoke "stale" label.
+  // A saved name that matches no installed container stays visible and
+  // removable, marked as not installed. Dropping it on the next save would
+  // lose data the user never asked to lose.
   const candidateNames = new Set(candidates.map((c) => c.name));
   const installedNames = new Set(installedContainers.map((c) => c.name));
 
-  // Discrete boolean toggle — optimistic flip, immediate save, revert +
-  // `.glim-shake` (keyed by container name) on failure. Same shape as
-  // SettingsPage's toggleDomainEnabled/FoldersEditor's own mount-checkbox
-  // `toggle` — see this component's own top-level comment.
   async function toggle(n: string) {
     const wasSelected = selected.has(n);
     const next = new Set(selected);
@@ -136,15 +93,6 @@ export function StopContainersEditor({
     }
   }
 
-  // Outside-click / Escape / scroll dismissal is deliberately NOT wired up
-  // here any more: it moved into DropdownListbox along with the panel itself
-  // (see that component's header for the clipping bug that forced the panel
-  // out of this card and into a portal). A second copy left behind here would
-  // have been actively wrong — the old handler asked "is the mousedown inside
-  // `pickerRef`", which a portalled option button no longer is, so it would
-  // have unmounted the list on mousedown and the option's own click would
-  // never have landed.
-
   if (!open) return null;
 
   const sortedSelected = [...selected].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
@@ -152,15 +100,8 @@ export function StopContainersEditor({
   return (
     <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
-      {/* Picker trigger deliberately stays plain `bg-carbon-surface2` (not
-          rainbow-hued): every other VALUE picker in this app (this same
-          file's own offsite-target `<select>`, the Language/Theme card
-          dropdowns, FolderBrowser's text field) is plain neutral chrome —
-          rainbow hue in this app marks a genuine ACTION control (FoldersEditor's
-          own "Hinzufügen" icon badge is that pattern's live example), never a
-          value-holding input/picker. This editor's own former Save badge is
-          gone entirely (live-save conversion, see this component's own
-          top-level comment) — every row below now persists itself. */}
+      {/* Neutral chrome: the hue marks controls that act, and this one holds
+          a value. */}
       <div className="inline-block">
         <button
           ref={pickerRef}
@@ -175,12 +116,9 @@ export function StopContainersEditor({
             <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
           </svg>
         </button>
-        {/* Portalled, not `absolute` inside this card: ContainerRow's own
-            wrapper is `relative overflow-hidden` (ProgressBar needs that
-            clip), which hard-clipped this panel at the card's bottom edge no
-            matter what z-index it carried — jdp, live review: "Sie soll über
-            die Card hinausgehen und voll angezeigt werden." See
-            DropdownListbox.tsx for the full root cause. */}
+        {/* Portalled: the container card clips its overflow for the progress
+            bar, which would cut a panel positioned inside it off at the
+            card's bottom edge. */}
         <DropdownListbox
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
@@ -196,8 +134,8 @@ export function StopContainersEditor({
               const checked = selected.has(c.name);
               return (
                 <button
-                  // Keyed by name PLUS its own shake nonce — see
-                  // FoldersEditor's identical mount-row key comment.
+                  // The shake count in the key remounts the row, which
+                  // replays the animation.
                   key={`${c.name}-${rowShake[c.name] ?? 0}`}
                   type="button"
                   role="option"
@@ -213,9 +151,8 @@ export function StopContainersEditor({
                 </button>
               );
             })}
-            {/* Stale entries: a previously-saved name no longer among the
-                installed candidates above — still listed (so it stays
-                removable) but marked with the existing notInstalled label. */}
+            {/* Saved names that are not among the candidates, listed so they
+                stay removable. */}
             {sortedSelected.filter((n) => !candidateNames.has(n)).map((n) => (
               <button
                 key={`${n}-${rowShake[n] ?? 0}`}
