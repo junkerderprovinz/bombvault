@@ -17,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // timelinePlace is one place an item's backups can lie at.
@@ -40,11 +41,15 @@ type timelineMark struct {
 	Incomplete  bool     `json:"incomplete,omitempty"` // a VM run whose disk snapshots are not all here
 }
 
-// timelineRow is one backup, keyed by restic.Identity, with a mark for every
-// place that holds it.
+// timelineRow is one backup with a mark for every place that holds it. Its key
+// is the restic.Identity of its snapshot, or the stamp of a ZFS run, whose mark
+// lists the snapshots of all its datasets.
 type timelineRow struct {
-	Key    string         `json:"key"`
-	Time   string         `json:"time"`
+	Key  string `json:"key"`
+	Time string `json:"time"`
+	// Size is what restic read for the backup, before deduplication and
+	// compression. It is absent where neither a run nor the snapshot recorded it.
+	Size   *int64         `json:"size,omitempty"`
 	Places []timelineMark `json:"places"`
 }
 
@@ -60,6 +65,10 @@ type timelineItem struct {
 	homeID       string   // named repository id, "" for the domain path
 	zvolDevs     []string // disks a restore of the VM looks up by their own snapshot
 	diskPrefixes []string // vm:<name>:zvol: for a VM's name and each of its former names
+	zfsRoot      string   // root dataset of a ZFS entry
+	// zfsRuns is what each recorded run of a ZFS entry did to each dataset,
+	// by the run's stamp.
+	zfsRuns map[string]map[string]string
 }
 
 // placeRef is a place with what it takes to list it; openErr says why its
@@ -75,6 +84,13 @@ type placeRef struct {
 func (s *Service) timelineItemFor(domain, key string) (timelineItem, error) {
 	if domain == "flash" || domain == "config" {
 		return timelineItem{domain: domain}, nil
+	}
+	if domain == zfsDomain {
+		d, err := s.store.GetZFSDataset(key)
+		if err != nil {
+			return timelineItem{}, fmt.Errorf("load dataset: %w", err)
+		}
+		return timelineItem{domain: domain, homeID: d.Repo, zfsRoot: d.Dataset, zfsRuns: s.zfsRunOutcomes(d.ID)}, nil
 	}
 	ref := store.ItemRef{Domain: domain, Key: key}
 	identity, err := s.itemIdentity(ref)
@@ -232,6 +248,15 @@ func (s *Service) ownedAt(ctx context.Context, it timelineItem, p placeRef) ([]r
 	if err != nil {
 		return nil, err
 	}
+	if it.zfsRoot != "" {
+		var own []restic.Snapshot
+		for _, snap := range all {
+			if _, member := zfsSnapshotDataset(snap, it.zfsRoot); member {
+				own = append(own, snap)
+			}
+		}
+		return own, nil
+	}
 	if it.identity == "" {
 		return all, nil
 	}
@@ -265,6 +290,9 @@ func (s *Service) readPlace(ctx context.Context, it timelineItem, p placeRef) (t
 // are no rows of their own; two snapshots of one key, as restic leaves after
 // copying a re-tagged snapshot again, share a mark.
 func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow {
+	if it.zfsRoot != "" {
+		return zfsRowsAt(it, place, own)
+	}
 	rows := []timelineRow{}
 	index := map[string]int{}
 	for _, snap := range newestFirst(own) {
@@ -277,13 +305,101 @@ func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow 
 			continue
 		}
 		index[key] = len(rows)
-		rows = append(rows, timelineRow{Key: key, Time: snap.Time, Places: []timelineMark{{
+		row := timelineRow{Key: key, Time: snap.Time, Places: []timelineMark{{
 			Place:       place,
 			SnapshotIDs: []string{snap.ID},
 			Tags:        append([]string{}, snap.Tags...),
 			Incomplete:  it.incomplete(snap, own),
-		}}})
+		}}}
+		if !row.Places[0].Incomplete {
+			row.Size = recordedSize(append(it.disksOf(snap, own), snap))
+		}
+		rows = append(rows, row)
 	}
+	return rows
+}
+
+// disksOf returns the zvol disk snapshots a VM run wrote beside its own.
+func (it timelineItem) disksOf(run restic.Snapshot, own []restic.Snapshot) []restic.Snapshot {
+	group := vmRunTag(own, run.ID)
+	if group == "" {
+		return nil
+	}
+	var disks []restic.Snapshot
+	for _, snap := range own {
+		if it.isDisk(snap) && slices.Contains(snap.Tags, group) {
+			disks = append(disks, snap)
+		}
+	}
+	return disks
+}
+
+// recordedSize adds up what restic recorded as read on each snapshot. It is nil
+// when one of them carries no summary, as those written before restic 0.17.
+func recordedSize(snaps []restic.Snapshot) *int64 {
+	var total int64
+	for _, snap := range snaps {
+		if snap.Summary == nil {
+			return nil
+		}
+		total += clampToInt64(snap.Summary.TotalBytesProcessed)
+	}
+	return &total
+}
+
+// zfsRowsAt groups one place's snapshots by the run that wrote them, the root
+// dataset first. A run counts as incomplete at a place that lacks a dataset
+// the run backed up.
+func zfsRowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow {
+	rows := []timelineRow{}
+	index := map[string]int{}
+	held := map[string][]string{}
+	members := map[string][]restic.Snapshot{}
+	byDataset := slices.Clone(own)
+	slices.SortStableFunc(byDataset, func(a, b restic.Snapshot) int {
+		da, _ := zfsSnapshotDataset(a, it.zfsRoot)
+		db, _ := zfsSnapshotDataset(b, it.zfsRoot)
+		return cmp.Compare(da, db)
+	})
+	for _, snap := range byDataset {
+		stamp, ok := zfsStampOf(snap)
+		if !ok {
+			continue
+		}
+		i, seen := index[stamp]
+		if !seen {
+			i = len(rows)
+			index[stamp] = i
+			at, _ := zfs.StampTime(stamp)
+			rows = append(rows, timelineRow{Key: stamp, Time: at.Format(time.RFC3339), Places: []timelineMark{{
+				Place: place, SnapshotIDs: []string{}, Tags: []string{},
+			}}})
+		}
+		mark := &rows[i].Places[0]
+		mark.SnapshotIDs = append(mark.SnapshotIDs, snap.ID)
+		for _, tag := range snap.Tags {
+			if !slices.Contains(mark.Tags, tag) {
+				mark.Tags = append(mark.Tags, tag)
+			}
+		}
+		dataset, _ := zfsSnapshotDataset(snap, it.zfsRoot)
+		// A dataset copied again after a tag lies here twice and counts once.
+		if !slices.Contains(held[stamp], dataset) {
+			held[stamp] = append(held[stamp], dataset)
+			members[stamp] = append(members[stamp], snap)
+		}
+	}
+	for i, row := range rows {
+		for dataset, outcome := range it.zfsRuns[row.Key] {
+			if outcome == outcomeBackedUp && !slices.Contains(held[row.Key], dataset) {
+				rows[i].Places[0].Incomplete = true
+			}
+		}
+		if !rows[i].Places[0].Incomplete {
+			rows[i].Size = recordedSize(members[row.Key])
+		}
+	}
+	slices.SortFunc(rows, func(a, b timelineRow) int { return cmp.Compare(b.Key, a.Key) })
 	return rows
 }
 
@@ -313,6 +429,9 @@ func mergeRows(parts [][]timelineRow) []timelineRow {
 		for _, r := range rows {
 			if i, ok := index[r.Key]; ok {
 				out[i].Places = append(out[i].Places, r.Places...)
+				if out[i].Size == nil {
+					out[i].Size = r.Size
+				}
 				continue
 			}
 			index[r.Key] = len(out)
@@ -346,7 +465,36 @@ func (s *Service) Timeline(ctx context.Context, domain, key string) (timeline, e
 		parts = append(parts, rows)
 	}
 	out.Rows = mergeRows(parts)
+	measured, err := s.measuredSizes(domain, key)
+	if err != nil {
+		return timeline{}, err
+	}
+	withMeasuredSizes(out.Rows, measured)
 	return out, nil
+}
+
+// measuredSizes is what the item's runs read, by the key of the timeline row
+// each of them wrote.
+func (s *Service) measuredSizes(domain, key string) (map[string]int64, error) {
+	if domain == zfsDomain {
+		return s.store.ZFSBackupSizesByStamp(key)
+	}
+	id, err := s.runTargetID(domain, key)
+	if err != nil || id == "" {
+		return nil, err
+	}
+	return s.store.BackupSizesBySnapshot(id)
+}
+
+// withMeasuredSizes puts what a run measured in place of what the snapshots
+// say. The two agree where both exist; the run also knows the size of a backup
+// restic wrote no summary for.
+func withMeasuredSizes(rows []timelineRow, measured map[string]int64) {
+	for i, row := range rows {
+		if size, ok := measured[row.Key]; ok {
+			rows[i].Size = &size
+		}
+	}
 }
 
 // TimelinePlace reads one place of an item's timeline; its rows carry only that
@@ -371,13 +519,19 @@ func (s *Service) TimelinePlace(ctx context.Context, domain, key, place string) 
 		p = s.targetPlace(settings, t)
 	}
 	tp, rows := s.readPlace(ctx, it, p)
+	measured, err := s.measuredSizes(domain, key)
+	if err != nil {
+		return timelinePlace{}, nil, err
+	}
+	withMeasuredSizes(rows, measured)
 	return tp, rows, nil
 }
 
 // timelineDomains are the domains that carry a timeline: the three that carry
-// copy rules and named repositories, plus flash and config, whose repository
-// is a single path.
-var timelineDomains = []string{"containers", "vms", "files", "flash", "config"}
+// copy rules and named repositories, flash and config, whose repository is a
+// single path, and ZFS, whose entries each write to the domain repository or
+// one of their own.
+var timelineDomains = []string{"containers", "vms", "files", "flash", "config", zfsDomain}
 
 // validTimelinePlace reports whether place is "local" or "offsite:" followed
 // by a well-formed target id.
@@ -449,9 +603,17 @@ type otherPlace struct {
 }
 
 // rowIDs is what one place holds of a row: its snapshots and, for a VM, the
-// disk snapshots of those runs.
+// disk snapshots of those runs. A ZFS row is every dataset of its run.
 func (it timelineItem) rowIDs(own []restic.Snapshot, rowKey string) []string {
 	var ids, runs []string
+	if it.zfsRoot != "" {
+		for _, snap := range own {
+			if stamp, ok := zfsStampOf(snap); ok && stamp == rowKey {
+				ids = append(ids, snap.ID)
+			}
+		}
+		return ids
+	}
 	for _, snap := range own {
 		if it.isDisk(snap) || restic.Identity(snap) != rowKey {
 			continue
@@ -596,7 +758,11 @@ func (h *Handler) timelineRowParams(w http.ResponseWriter, r *http.Request) (dom
 		return "", "", "", false
 	}
 	rowKey = r.PathValue("key")
-	if !backup.ValidSnapshotID(rowKey) {
+	valid := backup.ValidSnapshotID
+	if domain == zfsDomain {
+		valid = zfs.IsBombVaultSnapshot
+	}
+	if !valid(rowKey) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid backup key"})
 		return "", "", "", false
 	}

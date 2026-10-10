@@ -27,6 +27,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // placementFixture is a Service and a Handler over an in-memory store, with a
@@ -313,6 +314,51 @@ func (f *placementFixture) fileSet(name, repoID string) store.FileSet {
 	return fs
 }
 
+// zfsItem adds a ZFS entry for the root dataset and returns it with the
+// location of the domain repository its runs are written to.
+func (f *placementFixture) zfsItem(dataset string) (store.ZFSDataset, string) {
+	f.t.Helper()
+	d, err := f.st.CreateZFSDataset(store.ZFSDataset{Dataset: dataset, Enabled: true})
+	if err != nil {
+		f.t.Fatalf("zfs entry %s: %v", dataset, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return d, f.localRepo(settings.ZFSPath)
+}
+
+// zfsRun records a run of a ZFS entry that backed up the given datasets.
+func (f *placementFixture) zfsRun(itemID, stamp string, datasets ...string) {
+	f.t.Helper()
+	id, err := f.st.StartRun(itemID, "backup")
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if err := f.st.RecordZFSRun(id, itemID, stamp, -1, ""); err != nil {
+		f.t.Fatal(err)
+	}
+	for _, dataset := range datasets {
+		if err := f.st.AddZFSRunMember(store.ZFSRunMember{RunID: id, Dataset: dataset, Outcome: outcomeBackedUp}); err != nil {
+			f.t.Fatal(err)
+		}
+	}
+	if err := f.st.FinishRun(id, "success", "", 0, ""); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
+// zfsSnap is the snapshot one run wrote for one dataset, read from the host
+// snapshot stamp names.
+func zfsSnap(id, dataset, stamp string) restic.Snapshot {
+	at, _ := zfs.StampTime(stamp)
+	return restic.Snapshot{
+		ID: id, Time: at.Format(time.RFC3339), Tags: []string{"zfs:" + dataset},
+		Paths: []string{"/host/" + dataset + "/.zfs/snapshot/" + stamp},
+	}
+}
+
 func (f *placementFixture) rule(domain, identity string, skip ...string) {
 	f.t.Helper()
 	if err := f.st.SetCopyRule(domain, identity, skip); err != nil {
@@ -374,22 +420,27 @@ func (f *placementFixture) hold(location string, snaps ...restic.Snapshot) {
 // but 200 fails the test.
 func (f *placementFixture) do(method, path string, body any) map[string]any {
 	f.t.Helper()
+	return doJSON(f.t, f.h, method, path, body)
+}
+
+func doJSON(t *testing.T, h *Handler, method, path string, body any) map[string]any {
+	t.Helper()
 	var rd io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
 		if err != nil {
-			f.t.Fatal(err)
+			t.Fatal(err)
 		}
 		rd = bytes.NewReader(b)
 	}
 	rec := httptest.NewRecorder()
-	f.h.Router().ServeHTTP(rec, jsonReq(method, path, rd))
+	h.Router().ServeHTTP(rec, jsonReq(method, path, rd))
 	if rec.Code != http.StatusOK {
-		f.t.Fatalf("%s %s = %d: %s", method, path, rec.Code, rec.Body.String())
+		t.Fatalf("%s %s = %d: %s", method, path, rec.Code, rec.Body.String())
 	}
 	var out map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
-		f.t.Fatalf("%s %s: %v", method, path, err)
+		t.Fatalf("%s %s: %v", method, path, err)
 	}
 	return out
 }
@@ -433,7 +484,11 @@ type placementEngine struct {
 	forgets       []forgetCall
 	deletes       []forgetIDsCall
 	prunes        []string
-	ensured       []string // Init calls: the repositories EnsureRepo had to create
+	tags          []tagCall
+	diffs         []string                       // "from->to" of each DiffStream call
+	diffChanges   map[string][]restic.DiffChange // what a DiffStream call reports, by "from->to"
+	files         map[string][]restic.FileEntry  // what a snapshot lists, by its id
+	ensured       []string                       // Init calls: the repositories EnsureRepo had to create
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
@@ -454,6 +509,12 @@ type forgetCall struct {
 type forgetIDsCall struct {
 	Repo string
 	IDs  []string
+}
+
+type tagCall struct {
+	Repo        string
+	IDs         []string
+	Add, Remove []string
 }
 
 func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -584,6 +645,47 @@ func (e *placementEngine) ForgetPreview(_ context.Context, repo string, _ restic
 }
 
 func (e *placementEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
+
+// DiffStream reports the changes set for the pair and counts each as a changed
+// file of ten new bytes.
+func (e *placementEngine) DiffStream(_ context.Context, _, from, to string, _ restic.Mode, onChange func(restic.DiffChange)) (restic.DiffResult, error) {
+	e.mu.Lock()
+	pair := from + "->" + to
+	e.diffs = append(e.diffs, pair)
+	changes := e.diffChanges[pair]
+	e.mu.Unlock()
+	for _, c := range changes {
+		onChange(c)
+	}
+	return restic.DiffResult{ChangedFiles: len(changes), AddedBytes: int64(10 * len(changes))}, nil
+}
+
+func (e *placementEngine) LsStreamNoLock(_ context.Context, _, id string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	e.mu.Lock()
+	entries := e.files[id]
+	e.mu.Unlock()
+	for _, entry := range entries {
+		onEntry(entry)
+	}
+	return nil
+}
+
+// Tag changes the tags of the named snapshots where they lie. restic would
+// also give each a new id, which no caller of the fake reads.
+func (e *placementEngine) Tag(_ context.Context, repo string, ids, add, remove []string, _ restic.Mode) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	key := filepath.ToSlash(repo)
+	e.tags = append(e.tags, tagCall{Repo: key, IDs: slices.Clone(ids), Add: add, Remove: remove})
+	for i, sn := range e.snaps[key] {
+		if !slices.Contains(ids, sn.ID) {
+			continue
+		}
+		tags := slices.DeleteFunc(slices.Clone(sn.Tags), func(t string) bool { return slices.Contains(remove, t) })
+		e.snaps[key][i].Tags = append(tags, add...)
+	}
+	return nil
+}
 
 func (e *placementEngine) Stats(context.Context, string, string, restic.Mode) (restic.StatsResult, error) {
 	return restic.StatsResult{}, nil

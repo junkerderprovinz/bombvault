@@ -636,6 +636,14 @@ func TestDumpZipArgsEncrypted(t *testing.T) {
 	}
 }
 
+func TestDumpTarArgsDifferFromTheZipInTheFormatAlone(t *testing.T) {
+	got := DumpTarArgs("/repo", "abc123", "/host/user", Mode{Encrypted: true})
+	want := []string{"-r", "/repo", "dump", "-a", "tar", "--", "abc123:/host/user", "/"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestDumpZipArgsNoPassword(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: false})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--insecure-no-password", "--", "abc123:/host/boot", "/"}
@@ -1001,17 +1009,24 @@ func TestDiffArgs(t *testing.T) {
 	})
 }
 
-func TestTagAddArgs(t *testing.T) {
+func TestTagArgs(t *testing.T) {
 	t.Run("encrypted, one tag per --add, id after --", func(t *testing.T) {
-		got := TagAddArgs("/repo", "aaaa1111", []string{"keep", "milestone"}, Mode{Encrypted: true})
+		got := TagArgs("/repo", []string{"aaaa1111"}, []string{"keep", "milestone"}, nil, Mode{Encrypted: true})
 		want := []string{"-r", "/repo", "tag", "--add", "keep", "--add", "milestone", "--", "aaaa1111"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
 	t.Run("unencrypted adds insecure flag", func(t *testing.T) {
-		got := TagAddArgs("/repo", "aaaa1111", []string{"keep"}, Mode{Encrypted: false})
+		got := TagArgs("/repo", []string{"aaaa1111"}, []string{"keep"}, nil, Mode{Encrypted: false})
 		want := []string{"-r", "/repo", "tag", "--insecure-no-password", "--add", "keep", "--", "aaaa1111"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("removes and adds in one call over several snapshots", func(t *testing.T) {
+		got := TagArgs("/repo", []string{"aaaa1111", "bbbb2222"}, []string{"new"}, []string{"old"}, Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "tag", "--add", "new", "--remove", "old", "--", "aaaa1111", "bbbb2222"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}

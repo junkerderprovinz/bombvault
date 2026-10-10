@@ -43,23 +43,36 @@ type DiffChange struct {
 	Modifier string `json:"modifier"`
 }
 
-// DiffStream runs restic diff between two snapshots and hands each change to
-// onChange as it is read. restic only descends into trees that differ, so a
-// small change costs little however large the snapshots are.
-func (r Restic) DiffStream(ctx context.Context, repo, snap1, snap2 string, m Mode, onChange func(DiffChange)) error {
+// DiffStream runs restic diff between two snapshots, hands each change to
+// onChange as it is read and returns the totals restic prints at the end.
+// restic only descends into trees that differ, so a small change costs little
+// however large the snapshots are.
+func (r Restic) DiffStream(ctx context.Context, repo, snap1, snap2 string, m Mode, onChange func(DiffChange)) (DiffResult, error) {
 	args := DiffArgs(repo, snap1, snap2, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
+	var total DiffResult
 	err := streamLines(cmd, args, func(line []byte) {
-		var c struct {
-			MessageType string `json:"message_type"`
+		var l struct {
 			DiffChange
+			diffStatistics
 		}
-		if json.Unmarshal(bytes.TrimSpace(line), &c) != nil || c.MessageType != "change" {
+		if json.Unmarshal(bytes.TrimSpace(line), &l) != nil {
 			return
 		}
-		onChange(c.DiffChange)
+		switch l.MessageType {
+		case "change":
+			onChange(l.DiffChange)
+		case "statistics":
+			total = DiffResult{
+				AddedFiles:   l.Added.Files,
+				RemovedFiles: l.Removed.Files,
+				ChangedFiles: l.ChangedFiles,
+				AddedBytes:   l.Added.Bytes,
+				RemovedBytes: l.Removed.Bytes,
+			}
+		}
 	})
-	return ctxCancelErr(ctx, args, err)
+	return total, ctxCancelErr(ctx, args, err)
 }

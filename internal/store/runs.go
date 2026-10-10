@@ -1603,3 +1603,48 @@ func (r *Repo) LatestSourceBytesByTarget() (map[string]int64, error) {
 	}
 	return out, rows.Err()
 }
+
+// BackupSizesBySnapshot returns what each measured backup or import of
+// targetID read, by the id of the snapshot it wrote.
+func (r *Repo) BackupSizesBySnapshot(targetID string) (map[string]int64, error) {
+	rows, err := r.db.Query(`
+		SELECT snapshot_id, source_bytes
+		FROM runs
+		WHERE target_id = ? AND kind IN ('backup', 'import')
+			AND snapshot_id IS NOT NULL AND snapshot_id <> '' AND source_bytes IS NOT NULL`, targetID)
+	if err != nil {
+		return nil, fmt.Errorf("BackupSizesBySnapshot: %w", err)
+	}
+	return scanSizes(rows, "BackupSizesBySnapshot")
+}
+
+// ZFSBackupSizesByStamp returns what each run of a ZFS entry read over all the
+// datasets it backed up, by the run's stamp. A run with a dataset that was not
+// measured is absent, so a sum never undercounts.
+func (r *Repo) ZFSBackupSizesByStamp(itemID string) (map[string]int64, error) {
+	rows, err := r.db.Query(`
+		SELECT z.snapshot_name, SUM(m.source_bytes)
+		FROM zfs_runs z
+		JOIN zfs_run_members m ON m.run_id = z.run_id
+		WHERE z.item_id = ? AND m.restic_snapshot <> ''
+		GROUP BY z.snapshot_name
+		HAVING COUNT(*) = COUNT(m.source_bytes)`, itemID)
+	if err != nil {
+		return nil, fmt.Errorf("ZFSBackupSizesByStamp: %w", err)
+	}
+	return scanSizes(rows, "ZFSBackupSizesByStamp")
+}
+
+func scanSizes(rows *sql.Rows, label string) (map[string]int64, error) {
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string]int64{}
+	for rows.Next() {
+		var key string
+		var bytes int64
+		if err := rows.Scan(&key, &bytes); err != nil {
+			return nil, fmt.Errorf("%s: %w", label, err)
+		}
+		out[key] = bytes
+	}
+	return out, rows.Err()
+}

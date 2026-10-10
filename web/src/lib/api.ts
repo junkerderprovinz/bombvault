@@ -3284,7 +3284,11 @@ export interface RefusalTarget {
   name: string;
 }
 
-export type TimelineDomain = PlacementDomain | "flash" | "config";
+/** The kinds of entry with a timeline. key is a container or VM name, the id
+ *  of a folder set or ZFS entry, and the domain itself for flash and config. A
+ *  ZFS row is one run: its key is the run's stamp and each mark lists the
+ *  snapshots of every dataset the run wrote. */
+export type TimelineDomain = PlacementDomain | "flash" | "config" | "zfs";
 
 export interface TimelinePlace {
   place: string;
@@ -3309,6 +3313,11 @@ export interface TimelineMark {
 export interface TimelineRow {
   key: string;
   time: string;
+  /** Bytes restic read for the backup, before deduplication and compression:
+   *  what its run measured, else what restic 0.17 or later recorded on the
+   *  snapshots. Absent where neither exists, and for a VM or ZFS run of which
+   *  no place read holds every disk or dataset. */
+  size?: number;
   places: TimelineMark[];
 }
 
@@ -3368,6 +3377,125 @@ export function deleteTimelineRow(
   return fetchJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}`, {
     method: "DELETE",
     body: JSON.stringify({ places }),
+  });
+}
+
+function backupPath(domain: TimelineDomain, key: string): string {
+  return `/api/items/${encodeURIComponent(domain)}/${encodeURIComponent(key)}`;
+}
+
+/** Adds tags to one backup of an entry and removes others in the same step.
+ *  restic writes the backup anew under another id; the key of its timeline row
+ *  stays. A ZFS run is tagged on every dataset it wrote. */
+export function tagBackup(
+  domain: TimelineDomain,
+  key: string,
+  snapshotId: string,
+  tags: string[],
+  remove: string[] = [],
+  source?: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`${backupPath(domain, key)}/tag${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, tags, remove }),
+  });
+}
+
+/** One path that differs between two backups. part names the dataset of a ZFS
+ *  run or the zvol disk of a VM it lies in. modifier is "+" for added, "-" for
+ *  removed, and a combination of "M", "T" and "U" for a path in both. */
+export interface BackupChange {
+  part?: string;
+  path: string;
+  modifier: string;
+}
+
+/** What changed from one backup of an entry to a later one. changes holds at
+ *  most 500 paths and truncated says more exist; the totals count all of them.
+ *  onlyBefore and onlyAfter name datasets or disks one of the two backups lacks.
+ *  disks marks a VM: the paths are disk images, a changed-block backup counts
+ *  segments where others count files, and only the bytes say how much of the
+ *  disks differs. */
+export interface BackupDiff extends SnapshotDiff {
+  changes: BackupChange[];
+  truncated?: boolean;
+  onlyBefore?: string[];
+  onlyAfter?: string[];
+  disks?: boolean;
+}
+
+/** Compares two backups of an entry. from and to are snapshot ids of the same
+ *  source; for a ZFS run any of its datasets' ids names the run. */
+export function diffBackups(
+  domain: TimelineDomain,
+  key: string,
+  from: string,
+  to: string,
+  source?: string
+): Promise<OkEnvelope & { diff?: BackupDiff }> {
+  const qs = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${srcParam(source, "&")}`;
+  return fetchJSON(`${backupPath(domain, key)}/diff${qs}`);
+}
+
+/** What to export of an entry's stored backups. tar and zip write the backup
+ *  snapshotId names as archives; repository copies it, or with no snapshotId
+ *  every backup of the entry, into a restic repository of its own. folder lies
+ *  below the host mount; empty is the export folder beside the repositories. */
+export interface ExportRequest {
+  form: "tar" | "zip" | "repository";
+  snapshotId?: string;
+  folder?: string;
+}
+
+/** The folder on the host and the files an export writes. A ZFS run gives one
+ *  archive per dataset and a VM run one more file per zvol disk; the repository
+ *  form names its folder, which has to be absent or empty. */
+export interface ExportPreview {
+  folder: string;
+  files: string[];
+  /** Files of the same name the export overwrites. */
+  replaces: string[];
+  /** How many backups the repository form copies. */
+  backups?: number;
+  /** What the archives hold before compression, absent when not known. */
+  bytes?: number;
+  /** "age": archives sealed for the export recipients of the settings.
+   *  "password": a repository that opens with this instance's restic password,
+   *  which the recovery kit shows. "none": plain archives, or a repository
+   *  without a password because encryption is off. */
+  encryption: "age" | "password" | "none";
+  /** The archive of a changed-block VM backup: each disk as numbered segment
+   *  files, which give the image when joined in order, beside their manifest. */
+  segments?: boolean;
+  /** The progress key of the running export, also what cancels it. */
+  key: string;
+}
+
+/** Names the folder and the files an export would write, and writes nothing. */
+export function previewBackupExport(
+  domain: TimelineDomain,
+  key: string,
+  request: ExportRequest,
+  source?: string
+): Promise<OkEnvelope & { export?: ExportPreview }> {
+  return fetchJSON(`${backupPath(domain, key)}/export/preview${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+/** Starts an export on the server. It runs as a run of kind "export" on the
+ *  entry and reports progress under the preview's key: a percentage for a tar
+ *  and a repository, bytes for a zip. */
+export function exportBackup(
+  domain: TimelineDomain,
+  key: string,
+  request: ExportRequest,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean; export?: ExportPreview }> {
+  return fetchJSON(`${backupPath(domain, key)}/export${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify(request),
   });
 }
 
@@ -3460,10 +3588,12 @@ export interface SizeBreakdown {
   other?: { count: number; size: number; files: number; added: number };
 }
 
-export type BreakdownDomain = "containers" | "vms" | "files";
+export type BreakdownDomain = "containers" | "vms" | "files" | "flash" | "config" | "zfs";
 
 /** GET /api/breakdown: the size by folder of an item's newest backup. item is
- *  a container or VM name, or a folder set's id. The first call starts the
+ *  a container or VM name, the id of a folder set or ZFS entry, and empty for
+ *  flash and config. A ZFS breakdown is one tree over every dataset of the
+ *  newest run, and its snapshot is the run's stamp. The first call starts the
  *  work and answers with state "running". */
 export function getSizeBreakdown(
   domain: BreakdownDomain,

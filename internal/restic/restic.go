@@ -338,11 +338,9 @@ func Identity(s Snapshot) string {
 // was replicated keeps the same Original, matches the existing copy here, and is
 // left out, so the destination's tags never catch up.
 //
-// Nothing is lost by it - the tree is identical, and this package's only tag
-// writer is BombVault's own TagSnapshot - but it is a real narrowing of what
-// used to be a guarantee, and a caller that assumes "can only ever over-supply"
-// would be assuming something no longer true. A source whose ids cannot be read
-// is still handed over whole.
+// Nothing is lost by it: the tree is identical, and the only tag writer is
+// BombVault's own TagBackup. A caller still cannot assume the set only ever
+// over-supplies. A source whose ids cannot be read is handed over whole.
 //
 // The domain's OWN repository is still copied with snapshotIDs nil: everything
 // in it belongs to that domain, so there is nothing to narrow.
@@ -384,10 +382,8 @@ type StatsResult struct {
 	FileCount int64 `json:"total_file_count"`
 }
 
-// DiffResult holds the summary we extract from `restic diff --json`: its final
-// "statistics" object. The per-file "change" lines are ignored — the headline
-// counts (files added/removed/changed) and the added/removed byte totals are
-// what the UI shows.
+// DiffResult is the totals of a restic diff: files added, removed and changed,
+// and the bytes of the data only one of the two snapshots holds.
 type DiffResult struct {
 	AddedFiles   int   `json:"addedFiles"`
 	RemovedFiles int   `json:"removedFiles"`
@@ -590,8 +586,18 @@ func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, po
 // snapshot selector + path go after -- (arg-injection guard); callers also
 // validate the id against the repo's snapshot list.
 func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
+	return dumpArchiveArgs(repo, "zip", snapshotID, subfolder, m)
+}
+
+// DumpTarArgs is DumpZipArgs for a tar, which keeps owners, modes, links and
+// extended attributes where a zip keeps names, times and contents.
+func DumpTarArgs(repo, snapshotID, subfolder string, m Mode) []string {
+	return dumpArchiveArgs(repo, "tar", snapshotID, subfolder, m)
+}
+
+func dumpArchiveArgs(repo, format, snapshotID, subfolder string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "dump", "-a", "zip")
+	args = append(args, "dump", "-a", format)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -1005,21 +1011,24 @@ func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
 	return args
 }
 
-// TagAddArgs returns the argv slice for `restic tag --add <tag> <snapID>`. One
-// --add per tag is emitted; the snapshot id goes after -- (arg-injection guard),
-// and callers validate the id as hex + scope it to the target first. restic tags
-// are comma-separated, so callers must reject commas/control chars in tags.
-func TagAddArgs(repo, snapID string, tags []string, m Mode) []string {
+// TagArgs returns the argv for `restic tag`, adding and removing tags on the
+// given snapshots in one rewrite. The ids follow the `--` separator, so none
+// can be read as a flag. restic separates tags by commas, so the caller refuses
+// a tag with one.
+func TagArgs(repo string, snapIDs, add, remove []string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, "tag")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	for _, tag := range tags {
+	for _, tag := range add {
 		args = append(args, "--add", tag)
 	}
-	args = append(args, "--", snapID)
-	return args
+	for _, tag := range remove {
+		args = append(args, "--remove", tag)
+	}
+	args = append(args, "--")
+	return append(args, snapIDs...)
 }
 
 // ForgetArgs returns the argv slice for `restic forget` of specific snapshot IDs,
@@ -2410,7 +2419,17 @@ func (r Restic) RestoreVerify(ctx context.Context, repo, snapshotID string, file
 // restore hits on an Unraid /mnt/user (FUSE) share, and the file drops straight
 // into the Unraid USB creator.
 func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
-	args := DumpZipArgs(repo, snapshotID, subfolder, m)
+	return r.dumpArchive(ctx, DumpZipArgs(repo, snapshotID, subfolder, m), w, m)
+}
+
+// DumpTar streams the snapshot subtree rooted at subfolder as a tar into w.
+// restic writes the archive as it reads the repository, so nothing is unpacked
+// to disk on the way.
+func (r Restic) DumpTar(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
+	return r.dumpArchive(ctx, DumpTarArgs(repo, snapshotID, subfolder, m), w, m)
+}
+
+func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m Mode) error {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
@@ -2716,26 +2735,13 @@ func (r Restic) StatsRestoreSize(ctx context.Context, repo, snapshotID string, m
 	return int(res.FileCount), res.TotalSize, nil
 }
 
-// Diff compares two snapshots (`restic diff --json snap1 snap2`) and returns the
-// parsed summary. restic streams one JSON object per line: many "change" lines
-// then a final "statistics" object — we keep only the statistics, mapping its
-// added/removed file counts + byte totals and its changed_files count into a
-// DiffResult. Buffered (like Snapshots/Stats), not the streaming progress path.
-func (r Restic) Diff(ctx context.Context, repo, snap1, snap2 string, m Mode) (DiffResult, error) {
-	out, err := r.run(ctx, DiffArgs(repo, snap1, snap2, m), m)
-	if err != nil {
-		return DiffResult{}, err
-	}
-	return parseDiffStatistics(out)
-}
-
-// TagAdd adds tags to a snapshot (`restic tag --add`). An empty tag list is a
-// no-op (nothing to add).
-func (r Restic) TagAdd(ctx context.Context, repo, snapID string, tags []string, m Mode) error {
-	if len(tags) == 0 {
+// Tag adds and removes tags on snapshots. restic writes each one anew under a
+// different id and keeps the first id as its original.
+func (r Restic) Tag(ctx context.Context, repo string, snapIDs, add, remove []string, m Mode) error {
+	if len(add)+len(remove) == 0 {
 		return nil
 	}
-	_, err := r.run(ctx, TagAddArgs(repo, snapID, tags, m), m)
+	_, err := r.run(ctx, TagArgs(repo, snapIDs, add, remove, m), m)
 	return err
 }
 
@@ -2961,32 +2967,6 @@ type diffStatistics struct {
 	ChangedFiles int      `json:"changed_files"`
 	Added        diffStat `json:"added"`
 	Removed      diffStat `json:"removed"`
-}
-
-// parseDiffStatistics scans lines of restic --json diff output for the final
-// "statistics" object and maps it into a DiffResult. Per-file "change" lines are
-// ignored — only the summary statistics are surfaced.
-func parseDiffStatistics(data []byte) (DiffResult, error) {
-	for _, line := range bytes.Split(data, []byte("\n")) {
-		line = bytes.TrimSpace(line)
-		if len(line) == 0 {
-			continue
-		}
-		var s diffStatistics
-		if err := json.Unmarshal(line, &s); err != nil {
-			continue // skip non-JSON / per-file change lines
-		}
-		if s.MessageType == "statistics" {
-			return DiffResult{
-				AddedFiles:   s.Added.Files,
-				RemovedFiles: s.Removed.Files,
-				ChangedFiles: s.ChangedFiles,
-				AddedBytes:   int64(s.Added.Bytes),
-				RemovedBytes: int64(s.Removed.Bytes),
-			}, nil
-		}
-	}
-	return DiffResult{}, fmt.Errorf("restic diff: no statistics line in output")
 }
 
 // summarySince parses a finished backup's summary and records how long restic
