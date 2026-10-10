@@ -1210,6 +1210,16 @@ func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false, StartedAt: startedAt})
 }
 
+// backupStep returns the hook a backup calls at each of its steps, which moves
+// the progress entry under key there.
+func (s *Service) backupStep(key string) func(string) {
+	return func(step string) {
+		if s.progress != nil {
+			s.progress.SetStep(key, step)
+		}
+	}
+}
+
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
 // derives the password from APP_KEY; OFF uses a password-less repo.
 func (s *Service) ModeFor(settings store.Settings) restic.Mode {
@@ -5987,6 +5997,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		DBDumper:     dumper,
 		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
 		Committed:    func() { s.commitBackup(pkey, startedAt) },
+		Step:         s.backupStep(pkey),
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
@@ -12597,6 +12608,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// stands down.
 	orchestrated = true
 	bctx, startedAt := s.progBegin(ctx, vkey, "backup")
+	deps.Step = s.backupStep(vkey)
 	var sum backup.Summary
 	classic := true
 	if blockPlan.host != nil {
@@ -13408,15 +13420,10 @@ func (s *Service) dirNonEmptyFn() func(string) bool {
 	return dirNonEmpty
 }
 
-// foreignVMDestBase resolves the destination base directory (a container path)
-// for a cross-instance VM restore's disks. Resolution order, NEVER the source
-// pool: an explicit target subpath (the request Target) wins; else the configured
-// RestoreFolder (the settings default restore location); else the platform's
-// conventional local VM domains location under the host mount (see
-// platform.Platform.ForeignVMDestBase — Unraid's "user/domains" share;
-// generic's identity default). Target/RestoreFolder are relative subpaths
-// validated by paths.Resolve (no absolute path, no traversal), exactly like
-// the file-set to-folder restore.
+// foreignVMDestBase resolves the folder, as a container path, that the disks
+// of a VM from another instance are restored into: the request's target, else
+// the restore folder of the VMs section, else the platform's place for VM
+// disks under the host mount. It is never the pool the VM came from.
 func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -13425,20 +13432,14 @@ func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read settings: %w", err)
 	}
-	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+	if sub := settings.RestoreFolderFor("vms"); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
 	return s.platformFn().ForeignVMDestBase(path.Clean(s.cfg.HostMountRoot)), nil
 }
 
-// foreignContainerDestBase resolves the destination base directory (a container
-// path) a cross-instance container restore remaps appdata INTO — the container
-// counterpart of foreignVMDestBase (#125). Resolution order, NEVER the source
-// pool: an explicit request Target wins; else the configured RestoreFolder; else
-// the platform's conventional local appdata location under the host mount (see
-// platform.Platform.ForeignContainerDestBase — Unraid's "user/appdata" share;
-// generic's identity default). Target / RestoreFolder are relative subpaths
-// validated by paths.Resolve (no absolute path, no traversal).
+// foreignContainerDestBase is foreignVMDestBase for the appdata of a container
+// from another instance (#125).
 func (s *Service) foreignContainerDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -13447,7 +13448,7 @@ func (s *Service) foreignContainerDestBase(target string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read settings: %w", err)
 	}
-	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+	if sub := settings.RestoreFolderFor("containers"); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
 	return s.platformFn().ForeignContainerDestBase(path.Clean(s.cfg.HostMountRoot)), nil
@@ -17538,6 +17539,26 @@ func (s *Service) RcloneRemotes() ([]string, error) {
 		return nil, err
 	}
 	return parseRcloneRemotes(string(plain)), nil
+}
+
+// RcloneSections returns the remotes of the stored rclone config, each with
+// its type and the options that hold no secret. Which options do is rclone's
+// own description of its backends, so while that cannot be read every value
+// stays hidden.
+func (s *Service) RcloneSections(ctx context.Context) ([]remotes.Section, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	conf, err := s.decodeRcloneConf(settings)
+	if err != nil {
+		return nil, err
+	}
+	backends, err := s.remotes().Backends(ctx)
+	if err != nil {
+		log.Printf("api: rclone does not describe its backends, so the options of its remotes stay hidden: %v", err)
+	}
+	return remotes.Redact(conf, backends), nil
 }
 
 // decodeRcloneConf returns the decrypted rclone config text stored in settings

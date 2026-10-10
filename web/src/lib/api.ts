@@ -226,6 +226,15 @@ export interface Settings {
   filesPath: string;
   zfsPath: string;
   restoreFolder: string;
+  /** Gives every section a subfolder of restoreFolder named after it. Left out
+   *  of a save, the stored switch stays. */
+  restoreFolderPerSection?: boolean;
+  /** The sections that restore into a folder of their own. An empty folder
+   *  puts its section back on the shared one. */
+  restoreFolderOverrides?: Partial<Record<OffsiteDomain, string>>;
+  /** Where a restore of each section into the restore folder lands, worked
+   *  out by the server from the three fields above. A save ignores it. */
+  restoreFolders?: Partial<Record<OffsiteDomain, string>>;
   // Flash zip export (#28): after each flash backup, also write the snapshot out
   // as a plain .zip to this folder for off-server sync. Keep=0 → a single
   // flash-latest.zip that's overwritten; Keep=N → keep the newest N timestamped
@@ -3381,6 +3390,27 @@ export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
   return fetchJSON("/api/rclone");
 }
 
+/** One setting of an rclone remote. `hidden` means the config holds a value
+ *  the server keeps to itself: a secret, or a setting it cannot tell from one. */
+export interface RcloneOption {
+  name: string;
+  value?: string;
+  hidden?: boolean;
+}
+
+/** One remote of the rclone config: its section without the secrets. */
+export interface RcloneSection {
+  name: string;
+  type: string;
+  options: RcloneOption[];
+}
+
+/** GET /api/rclone, read for the sections of the config. A location at
+ *  "rclone:<name>:<path>" uses the section called <name>. */
+export function getRcloneSections(): Promise<OkEnvelope & { sections?: RcloneSection[] }> {
+  return fetchJSON("/api/rclone");
+}
+
 /** POST /api/rclone — store the rclone config (encrypted). Empty conf clears it. */
 export function setRclone(conf: string): Promise<OkEnvelope> {
   return fetchJSON("/api/rclone", {
@@ -3532,6 +3562,13 @@ export function listItemRuns(kind: BackupItemKind, key: string, limit?: number):
  */
 export function ackRuns(body: { ids?: string[]; all?: boolean }): Promise<{ ok: boolean; count?: number }> {
   return fetchJSON("/api/runs/ack", { method: "POST", body: JSON.stringify(body) });
+}
+
+/** POST /api/runs/ack for failed off-site copies, named by the target they
+ *  failed at (`targetId` of a location's section). A copy that fails
+ *  afterwards counts again. Returns how many failed copies it acknowledged. */
+export function ackFailedCopies(targetIds: string[]): Promise<{ ok: boolean; count?: number }> {
+  return fetchJSON("/api/runs/ack", { method: "POST", body: JSON.stringify({ copyTargets: targetIds }) });
 }
 
 /** GET /api/status — per-domain RPO (protection) status for the dashboard. */
@@ -6362,8 +6399,82 @@ export function updateDestination(
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(edit) });
 }
 
+/** A change to how a saved destination is reached. `settings` holds the
+ *  wizard's fields and is a patch: a field left out stays as stored, and an
+ *  empty one is removed unless the server does not show its value (a password,
+ *  a key), which only a new value replaces. `dir` is the bucket or folder. */
+export interface DestinationConnectionEdit {
+  settings?: Record<string, string>;
+  dir?: string;
+}
+
+/** PUT /api/offsite/destinations/{id}/connection. The server tests the changed
+ *  connection before it saves. A destination that holds backups keeps its
+ *  address, bucket and folder (code "destination-holds-backups"), and every
+ *  repository it holds has to open through the change ("backups-not-there"). */
+export function updateDestinationConnection(
+  id: string,
+  edit: DestinationConnectionEdit
+): Promise<OkEnvelope & { destination?: Destination; warnings?: SaveWarning[] }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/connection`, {
+    method: "PUT",
+    body: JSON.stringify(edit),
+  });
+}
+
 export function deleteDestination(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** A target's direct repository in a removal. `kept` means an entry or a
+ *  default still backs up to it, so it stays as a repository of its own. */
+export interface RemovalDirect {
+  repoId: string;
+  name: string;
+  items: number;
+  defaultDomains: string[];
+  kept: boolean;
+}
+
+/** One section's part of a destination that is about to be removed. `entries`
+ *  and `backups` are what the last listing of its repository there found, at
+ *  `listedAt` (0 for never). `primary` is the section's built-in off-site
+ *  copy, whose settings field is cleared with it. */
+export interface RemovalSection {
+  domain: OffsiteDomain;
+  targetId: string;
+  repo: string;
+  primary: boolean;
+  appendOnly: boolean;
+  entries: number;
+  backups: number;
+  listedAt: number;
+  lastCopyAt: number;
+  direct?: RemovalDirect;
+}
+
+/** What removing a destination detaches. The backups there stay as they are. */
+export interface DestinationRemoval {
+  sections: RemovalSection[];
+}
+
+/** GET /api/offsite/destinations/{id}/removal. */
+export function previewDestinationRemoval(id: string): Promise<OkEnvelope & { removal?: DestinationRemoval }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`);
+}
+
+/** POST /api/offsite/destinations/{id}/removal: removes a destination that
+ *  sections still copy to and leaves the data there. `expect` is the preview
+ *  that was shown; when the sections changed since, the answer has code
+ *  "stale" and carries them as they are. */
+export function removeDestination(
+  id: string,
+  expect: DestinationRemoval
+): Promise<OkEnvelope & { removal?: DestinationRemoval }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`, {
+    method: "POST",
+    body: JSON.stringify({ expect }),
+  });
 }
 
 /** Hangs a target typed in by hand on the destination its repository lies
@@ -6446,8 +6557,9 @@ export interface StorageLocationSection {
   limitDownload: number;
   /** The settings the section holds itself instead of taking the location's. */
   own: FollowedSetting[];
-  /** `at` is when the last copy that succeeded began, 0 when none has. */
-  lastCopy?: { at: number; ok: boolean; failingSince?: number };
+  /** `at` is when the last copy that succeeded began, 0 when none has.
+   *  `acknowledged` means every copy that failed since was dismissed. */
+  lastCopy?: { at: number; ok: boolean; failingSince?: number; acknowledged?: boolean };
   lastTamper?: { domain: string; at: number; protected: boolean; detail: string };
 }
 

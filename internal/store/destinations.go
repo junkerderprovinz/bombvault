@@ -543,6 +543,73 @@ func (r *Repo) DetachFromDestination(id string) error {
 	return nil
 }
 
+// RemoveDestination deletes a destination together with the domain targets
+// derived from it. A direct repository that an item or a default still backs
+// up to stays as a named repository of its own; one nothing uses goes with
+// its target. settle gets the domains whose primary off-site target was among
+// them and clears their off-site settings in the same transaction, because a
+// settings save writes the primary slot again from them.
+func (r *Repo) RemoveDestination(id string, settle func(s *Settings, primaries []string)) error {
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+	err := r.inTx(func(tx *sql.Tx) error {
+		if _, err := destinationTx(tx, id); err != nil {
+			return err
+		}
+		derived, err := destinationTargetsQ(tx, id)
+		if err != nil {
+			return err
+		}
+		var primaries []string
+		for _, t := range derived {
+			if t.SortOrder == 0 {
+				primaries = append(primaries, t.Domain)
+			}
+			if err := dropUnusedDirectTx(tx, t.ID); err != nil {
+				return err
+			}
+			if err := deleteTargetKeepingDirectTx(tx, t.ID); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleDestination); err != nil {
+			return err
+		}
+		if len(primaries) == 0 {
+			return nil
+		}
+		return settleTx(tx, func(s *Settings) { settle(s, primaries) })
+	})
+	if err != nil {
+		return fmt.Errorf("RemoveDestination: %w", err)
+	}
+	return nil
+}
+
+// dropUnusedDirectTx deletes a target's direct repository when no item and no
+// default backs up to it.
+func dropUnusedDirectTx(tx *sql.Tx, targetID string) error {
+	var direct string
+	err := tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
+		RoleRepo, targetID).Scan(&direct)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	var items int
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, direct, direct, direct, direct).Scan(&items); err != nil {
+		return err
+	}
+	defaults, err := placementDomainsUsingRepoTx(tx, direct)
+	if err != nil || items > 0 || len(defaults) > 0 {
+		return err
+	}
+	_, err = tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, direct, RoleRepo)
+	return err
+}
+
 // DeleteDestinationIfUnused removes a destination that no domain target is
 // derived from any more.
 func (r *Repo) DeleteDestinationIfUnused(id string) error {

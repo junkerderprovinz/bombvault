@@ -2876,6 +2876,30 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
        '', 'allowed', min(ps.created_at), min(ps.created_at), 'upgrade'
   FROM pull_sources ps WHERE ps.member_id <> '' GROUP BY ps.member_id;`,
 	},
+	{
+		// A subfolder of the restore folder per section. Off leaves every
+		// restore in the one folder it went to before.
+		version:          restoreFolderMigration,
+		name:             "settings_restore_folder_per_section",
+		alreadySatisfied: columnPresent("settings", "restore_folder_per_section"),
+		sql:              `ALTER TABLE settings ADD COLUMN restore_folder_per_section INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// A restore folder of its own per section. Empty leaves every section
+		// on the shared one.
+		version:          restoreFolderMigration + 1,
+		name:             "settings_restore_folder_overrides",
+		alreadySatisfied: columnPresent("settings", "restore_folder_overrides"),
+		sql:              `ALTER TABLE settings ADD COLUMN restore_folder_overrides TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// A failed copy somebody has seen and dismissed, as runs carry it for
+		// a failed backup.
+		version:          restoreFolderMigration + 2,
+		name:             "offsite_runs_acknowledged",
+		alreadySatisfied: columnPresent("offsite_runs", "acknowledged"),
+		sql:              `ALTER TABLE offsite_runs ADD COLUMN acknowledged INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2978,6 +3002,10 @@ const locationMigration = 305
 // roleRequestMigration numbers the requests between paired instances for the
 // roles Receiver and Fetcher, 310 to 314.
 const roleRequestMigration = 310
+
+// restoreFolderMigration numbers the restore folder per section, 325 and 326,
+// and the acknowledgement of a failed copy, 327.
+const restoreFolderMigration = 325
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

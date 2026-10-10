@@ -13,6 +13,9 @@ import (
 // The MCP tests exercise the server itself, so the test binary runs with it
 // switched on whatever the shipped value is.
 func TestMain(m *testing.M) {
+	if os.Getenv(fakeRcloneEnv) != "" {
+		os.Exit(runFakeRclone(os.Args[1:]))
+	}
 	mcpShipped = true
 	os.Exit(m.Run())
 }

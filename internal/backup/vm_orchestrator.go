@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 // parentDirs returns the deduplicated parent directories of the given absolute
@@ -154,6 +156,9 @@ type VMBackupDeps struct {
 	// "shut off" state before calling Destroy. 0 = use default (18 × 5s = 90s).
 	// Set to 1 in tests for instant timeout.
 	ShutdownTimeout int
+	// Step is called with progress.StepStop, StepRead and StepStart as a
+	// graceful backup of a running VM reaches each of them.
+	Step func(step string)
 
 	// BlockDisks are the domain's block-device-backed (zvol) disks — additive
 	// to DiskPaths above (see virshcli.DomainInfo.BlockDisks's doc comment) —
@@ -433,6 +438,7 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			if !wasRunning {
 				return
 			}
+			atStep(d.Step, progress.StepStart)
 			// The guest goes on shutting down after a cancel. Starting it while
 			// it is still up does nothing, and it would then stay off.
 			if shuttingDown {
@@ -447,6 +453,7 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 
 		// Graceful shutdown + poll until "shut off".
 		if wasRunning {
+			atStep(d.Step, progress.StepStop)
 			if backupErr = d.VM.Shutdown(restartCtx, d.Name); backupErr != nil {
 				backupErr = fmt.Errorf("vm backup: shutdown: %w", backupErr)
 				return
@@ -468,6 +475,9 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		}
 
 		tags := withRunTag(withFormerNames([]string{"vm:" + d.Name, "p2"}, d.FormerNames), d.RunTag)
+		if wasRunning {
+			atStep(d.Step, progress.StepRead)
+		}
 		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 		if backupErr != nil {
 			backupErr = fmt.Errorf("vm backup: restic: %w", backupErr)

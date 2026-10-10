@@ -21,11 +21,13 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/compose"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -249,6 +251,9 @@ type BackupDeps struct {
 	// containers are started again. A cancel from there on could not undo the
 	// backup, so the caller stops offering one.
 	Committed func()
+	// Step is called with progress.StepStop, StepRead and StepStart as a backup
+	// that stops something reaches each of them.
+	Step func(step string)
 	// StopContainers are OTHER containers to stop for the duration of this
 	// backup (e.g. a database) and restart afterwards. Each carries its own
 	// WasRunning: a dependency that was already stopped is left untouched
@@ -511,6 +516,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// backup flow), so we re-wait for the target to be Running afterwards so the
 		// netns dependents don't start against a torn-down target (bostafari, #119).
 		defer func() {
+			if d.WasRunning || len(stoppedDeps) > 0 {
+				atStep(d.Step, progress.StepStart)
+			}
 			targetUp := false
 			if d.WasRunning {
 				if startErr := d.Docker.Start(restartCtx, d.ContainerRef); startErr != nil {
@@ -542,6 +550,10 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// The stops run on restartCtx: a cancel only aborts the request, the
 		// daemon still finishes the stop, and a restart issued before that
 		// finds the container running and leaves it to go down for good.
+		stops := d.WasRunning || slices.ContainsFunc(d.StopContainers, func(c StopContainer) bool { return c.WasRunning })
+		if stops {
+			atStep(d.Step, progress.StepStop)
+		}
 		if d.WasRunning {
 			if backupErr = d.Docker.Stop(restartCtx, d.ContainerRef, stopTimeout); backupErr != nil {
 				backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
@@ -578,6 +590,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// recreated on restore. We just skip restic — handing it zero/absent paths
 		// fails with "Fatal: all source directories do not exist".
 		if len(d.AppdataPaths) > 0 {
+			if stops {
+				atStep(d.Step, progress.StepRead)
+			}
 			summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, d.AppdataPaths, tags, d.Excludes...)
 			if backupErr != nil {
 				return
@@ -635,6 +650,13 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
 	return summary, nil
+}
+
+// atStep tells the caller of a backup which step it has reached.
+func atStep(report func(string), step string) {
+	if report != nil {
+		report(step)
+	}
 }
 
 // DockerHealth is the part of Docker an ordered restart needs, so a caller

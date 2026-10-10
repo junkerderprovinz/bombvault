@@ -2,6 +2,7 @@ package progress_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -148,5 +149,56 @@ func TestStoreCancelUnsubscribes(t *testing.T) {
 	cancel()
 	if _, ok := <-ch; ok {
 		t.Fatal("channel should be closed after cancel")
+	}
+}
+
+func TestSetStepRepublishesTheLatestEventWithTheStep(t *testing.T) {
+	s := progress.NewStore()
+	s.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: 40, Active: true, StartedAt: 7, Stage: "dbdump", Bytes: 512})
+	ch, cancel := s.Subscribe()
+	defer cancel()
+
+	s.SetStep("container:plex", progress.StepStop)
+
+	want := progress.Event{Key: "container:plex", Phase: "backup", Percent: 40, Active: true, StartedAt: 7, Step: progress.StepStop}
+	if got := <-ch; got != want {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
+func TestAKeyKeepsItsStepUntilItsRunEnds(t *testing.T) {
+	s := progress.NewStore()
+	ch, cancel := s.Subscribe()
+	defer cancel()
+	s.Publish(progress.Event{Key: "vm:win", Phase: "backup", Active: true})
+	s.SetStep("vm:win", progress.StepRead)
+	s.Publish(progress.Event{Key: "vm:win", Phase: "backup", Percent: 55, Active: true})
+	s.Publish(progress.Event{Key: "vm:win", Phase: "backup", Percent: 100, Active: false})
+	s.Publish(progress.Event{Key: "vm:win", Phase: "backup", Active: true})
+
+	var steps []string
+	for range 5 {
+		steps = append(steps, (<-ch).Step)
+	}
+	want := []string{"", progress.StepRead, progress.StepRead, "", ""}
+	if !slices.Equal(steps, want) {
+		t.Fatalf("steps = %q, want %q", steps, want)
+	}
+}
+
+func TestSetStepWithoutARunPublishesNothing(t *testing.T) {
+	s := progress.NewStore()
+	ch, cancel := s.Subscribe()
+	defer cancel()
+
+	s.SetStep("container:plex", progress.StepStop)
+
+	select {
+	case got := <-ch:
+		t.Fatalf("published %+v for a key nothing runs under", got)
+	default:
+	}
+	if snap := s.Snapshot(); len(snap) != 0 {
+		t.Fatalf("snapshot = %+v, want it empty", snap)
 	}
 }

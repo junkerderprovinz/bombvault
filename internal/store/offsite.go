@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -266,16 +267,61 @@ func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (Off
 // none. A run that failed because the copy rules could not be read says nothing
 // about the target and is left out.
 func (r *Repo) FirstOffsiteFailureAfter(targetID string, since int64) (int64, error) {
+	return r.firstOffsiteFailureAfter(targetID, since, "")
+}
+
+// FirstUnacknowledgedOffsiteFailureAfter is FirstOffsiteFailureAfter over the
+// failed runs nobody has acknowledged.
+func (r *Repo) FirstUnacknowledgedOffsiteFailureAfter(targetID string, since int64) (int64, error) {
+	return r.firstOffsiteFailureAfter(targetID, since, " AND acknowledged = 0")
+}
+
+func (r *Repo) firstOffsiteFailureAfter(targetID string, since int64, also string) (int64, error) {
 	var at sql.NullInt64
+	//nolint:gosec // G202: also is one of the two fixed clauses above; every value travels as a parameter.
 	err := r.db.QueryRow(`
 		SELECT MIN(started_at) FROM offsite_runs
 		 WHERE offsite_target_id = ? AND started_at > ?
 		   AND started_at > (SELECT COALESCE(MAX(started_at), 0) FROM offsite_runs
 		                      WHERE offsite_target_id = ? AND finished_at IS NOT NULL AND ok = 1)
-		   AND finished_at IS NOT NULL AND ok = 0 AND error <> ?`,
+		   AND finished_at IS NOT NULL AND ok = 0 AND error <> ?`+also,
 		targetID, since, targetID, ReasonCopyRulesUnreadable).Scan(&at)
 	if err != nil {
 		return 0, fmt.Errorf("FirstOffsiteFailureAfter: %w", err)
 	}
 	return at.Int64, nil
+}
+
+// AcknowledgeFailedCopies marks the failed copies to the given targets as
+// acknowledged and returns how many runs that were. A copy that fails
+// afterwards is a new run and counts again.
+func (r *Repo) AcknowledgeFailedCopies(targetIDs []string) (int64, error) {
+	if len(targetIDs) == 0 {
+		return 0, nil
+	}
+	args := make([]any, len(targetIDs))
+	for i, id := range targetIDs {
+		args[i] = id
+	}
+	//nolint:gosec // G202: only "?" placeholders are concatenated; the ids travel as parameters.
+	res, err := r.db.Exec(`UPDATE offsite_runs SET acknowledged = 1
+		WHERE finished_at IS NOT NULL AND ok = 0 AND acknowledged = 0
+		  AND offsite_target_id IN (?`+strings.Repeat(", ?", len(targetIDs)-1)+`)`, args...)
+	if err != nil {
+		return 0, fmt.Errorf("AcknowledgeFailedCopies: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}
+
+// AcknowledgeAllFailedCopies acknowledges every failed copy not yet
+// acknowledged and returns how many runs that were.
+func (r *Repo) AcknowledgeAllFailedCopies() (int64, error) {
+	res, err := r.db.Exec(`UPDATE offsite_runs SET acknowledged = 1
+		WHERE finished_at IS NOT NULL AND ok = 0 AND acknowledged = 0`)
+	if err != nil {
+		return 0, fmt.Errorf("AcknowledgeAllFailedCopies: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
 }

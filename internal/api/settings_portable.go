@@ -1476,6 +1476,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FilesPath = importedLocation(existing.FilesPath, v.FilesPath)
 	out.ZFSPath = importedLocation(existing.ZFSPath, v.ZFSPath)
 	out.RestoreFolder = v.RestoreFolder
+	applyRestoreFolders(&out, v)
 	// Off-site locations, via importedLocation: a location the plain export
 	// stripped a credential out of never overwrites a working one here.
 	out.ContainersOffsite = importedLocation(existing.ContainersOffsite, v.ContainersOffsite)
