@@ -14,7 +14,7 @@ func TestEveryAppendOnlyFlagGetsItsOwnSentence(t *testing.T) {
 		want error
 		card string
 	}{
-		{appendOnlyNamedRepo, errOffsiteAppendOnly, "Settings, Storage, Repositories"},
+		{appendOnlyNamedRepo, errOffsiteAppendOnly, "Settings, Storage locations, Repositories"},
 		{appendOnlyPrimaryRemote, errAppendOnlyPrimaryRemote, "Remote safety settings"},
 		{appendOnlyUnreadable, errAppendOnlyUnknown, "could not be read"},
 	}
