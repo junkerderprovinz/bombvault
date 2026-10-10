@@ -361,7 +361,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "tile.restore.folders",
       hint: "tile.restore.foldersHint",
-      rows: [{ key: "settings.restoreFolder", hint: "settings.restoreFolderHint" }],
+      rows: [
+        { key: "settings.restoreFolder", hint: "settings.restoreFolderHint" },
+        { key: "tile.restore.perSection", hint: "tile.restore.perSectionHint" },
+        { key: "tile.restore.exception" },
+      ],
     },
     {
       title: "settings.registriesTitle",
