@@ -21,7 +21,7 @@ func bootV900(t *testing.T, db *sql.DB) {
 	defer func() { migrations = all }()
 	var v900 []migration
 	for _, m := range all {
-		if !isPlacementMigration(m.version) {
+		if m.version <= 153 && !isPlacementMigration(m.version) {
 			v900 = append(v900, m)
 		}
 	}

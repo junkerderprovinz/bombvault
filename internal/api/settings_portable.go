@@ -757,6 +757,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 		if strings.TrimSpace(tv.Repo) == "" {
 			return fmt.Sprintf("destination #%d (%s): needs a location", i+1, tv.Name)
 		}
+		if _, err := restic.ParseCompression(tv.Compression); err != nil {
+			return fmt.Sprintf("destination #%d (%s): %s", i+1, tv.Name, err)
+		}
 	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
 	// settings save enforces), so an apply cannot install an un-runnable schedule.
@@ -1172,6 +1175,13 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 				return err
 			} else if ok {
 				t.DestinationID = id
+				// A name this version does not know is left out, and the save
+				// keeps every setting the row differs in anyway.
+				for _, name := range tv.Own {
+					if own, err := parseOwnSettings([]string{name}); err == nil {
+						t.Own |= own
+					}
+				}
 			}
 		}
 		saved, err := h.store.UpsertOffsiteTarget(t)
@@ -1195,29 +1205,35 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 
 // importDestinations writes the file's destinations under their own ids, a
 // redacted location giving way to the one stored here. A destination whose
-// location holds repositories here keeps it, and the log says so.
+// location holds repositories here keeps it, and the log says so. A file
+// older than a destination's keep-policy, compression, limits and switches
+// says nothing about them: a destination known here keeps its own, a new one
+// starts switched on and off the premises.
 func (h *Handler) importDestinations(views []offsiteTargetView) error {
 	stored, err := h.store.ListDestinations()
 	if err != nil {
 		return err
 	}
-	byID := make(map[string]string, len(stored))
+	byID := make(map[string]store.OffsiteTarget, len(stored))
 	for _, d := range stored {
-		byID[d.ID] = d.Repo
+		byID[d.ID] = d
 	}
 	ds := make([]store.OffsiteTarget, len(views))
 	for i, v := range views {
 		id := strings.TrimSpace(v.ID)
-		ds[i] = store.OffsiteTarget{
-			ID:           id,
-			Name:         strings.TrimSpace(v.Name),
-			Repo:         importedLocation(byID[id], strings.TrimSpace(v.Repo)),
-			CredsRef:     v.CredsRef,
-			StorageClass: strings.ToUpper(strings.TrimSpace(v.StorageClass)),
-			Immutable:    v.Immutable,
-			Provider:     v.Provider,
-			CreatedAt:    v.CreatedAt,
+		old, known := byID[id]
+		d := v.toStoreTarget()
+		switch {
+		case v.OffPremises != nil:
+		case known:
+			d = old
+		default:
+			d = store.OffsiteTarget{Enabled: true, OffPremises: true}
 		}
+		d.ID, d.Name, d.Repo = id, strings.TrimSpace(v.Name), importedLocation(old.Repo, strings.TrimSpace(v.Repo))
+		d.CredsRef, d.StorageClass, d.Immutable = v.CredsRef, strings.ToUpper(strings.TrimSpace(v.StorageClass)), v.Immutable
+		d.Provider, d.CreatedAt = v.Provider, v.CreatedAt
+		ds[i] = d
 	}
 	kept, err := h.store.ImportDestinations(ds)
 	if err != nil {

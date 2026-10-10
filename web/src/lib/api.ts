@@ -2556,7 +2556,15 @@ export interface OffsiteTarget {
   /** The destination this target sits under, when it was derived from one. */
   destinationId?: string;
   provider?: string;
+  /** The settings a derived target holds itself instead of taking them from
+   *  its destination. Read-only: a save keeps what is stored, and
+   *  updateOffsiteTarget's follow gives settings back. */
+  own?: FollowedSetting[];
 }
+
+/** A setting a target derived from a destination takes from it unless it
+ *  holds a value of its own. */
+export type FollowedSetting = "retention" | "compression" | "limits" | "enabled";
 
 /** A named repository (#204): a location written down once in Settings and then
  *  PICKED by individual containers, VMs and folder sets, instead of typed into
@@ -2659,11 +2667,15 @@ export function createOffsiteTarget(
 export function updateOffsiteTarget(
   id: string,
   target: OffsiteTarget,
-  alsoExclude?: NewTargetExclusion
+  alsoExclude?: NewTargetExclusion,
+  /** Followed settings a derived target takes from its destination again,
+   *  whatever the target carries for them. Without it the target keeps every
+   *  one it is saved with another value for than the destination's. */
+  follow?: FollowedSetting[]
 ): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
+    body: JSON.stringify({ ...target, ...(alsoExclude ? { alsoExclude } : {}), ...(follow ? { follow } : {}) }),
   });
 }
 
@@ -5967,6 +5979,29 @@ export interface Destination {
   domains: string[];
   /** Targets typed in by hand whose repositories lie under it. */
   adoptable?: AdoptableTarget[];
+  /** The keep-policy, compression, limits and switch its domain targets take
+   *  unless they hold their own. */
+  retention: RetentionKeep;
+  compression: Compression;
+  limitUpload: number;
+  limitDownload: number;
+  enabled: boolean;
+  /** Counts as a site of its own. */
+  offPremises: boolean;
+}
+
+/** What can change on a saved destination. A setting that is left out stays
+ *  as it is. */
+export interface DestinationEdit {
+  name: string;
+  storageClass: string;
+  immutable: boolean;
+  retention?: RetentionKeep;
+  compression?: Compression;
+  limitUpload?: number;
+  limitDownload?: number;
+  enabled?: boolean;
+  offPremises?: boolean;
 }
 
 export interface AdoptableTarget {
@@ -5986,10 +6021,12 @@ export function createDestination(d: DestinationDraft): Promise<OkEnvelope & { d
   return fetchJSON("/api/offsite/destinations", { method: "POST", body: JSON.stringify(d) });
 }
 
+/** PUT /api/offsite/destinations/{id}. warnings say what the change means for
+ *  the direct repositories of its domain targets. */
 export function updateDestination(
   id: string,
-  edit: { name: string; storageClass: string; immutable: boolean }
-): Promise<OkEnvelope & { destination?: Destination }> {
+  edit: DestinationEdit
+): Promise<OkEnvelope & { destination?: Destination; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(edit) });
 }
 
@@ -6075,6 +6112,8 @@ export interface StorageLocationSection {
   compression: Compression;
   limitUpload: number;
   limitDownload: number;
+  /** The settings the section holds itself instead of taking the location's. */
+  own: FollowedSetting[];
   /** `at` is when the last copy that succeeded began, 0 when none has. */
   lastCopy?: { at: number; ok: boolean; failingSince?: number };
   lastTamper?: { domain: string; at: number; protected: boolean; detail: string };

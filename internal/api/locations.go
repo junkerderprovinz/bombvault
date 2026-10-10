@@ -88,8 +88,11 @@ type locationSection struct {
 	Compression   string              `json:"compression"`
 	LimitUpload   int                 `json:"limitUpload"`
 	LimitDownload int                 `json:"limitDownload"`
-	LastCopy      *copyState          `json:"lastCopy,omitempty"`
-	LastTamper    *store.TamperTest   `json:"lastTamper,omitempty"`
+	// Own names the settings the section holds itself instead of taking the
+	// location's: retention, compression, limits, enabled.
+	Own        []string          `json:"own"`
+	LastCopy   *copyState        `json:"lastCopy,omitempty"`
+	LastTamper *store.TamperTest `json:"lastTamper,omitempty"`
 }
 
 // copyState is when a target last took a copy and whether one failed since.
@@ -382,6 +385,7 @@ func (b *locationBuilder) pathSection(domain, raw string) locationSection {
 		Domain: domain, Use: useHome, Where: scrubRepoLocation(raw), Enabled: domainEnabled(b.settings, domain),
 		Retention:   localKeep(b.settings, domain),
 		Compression: normalizedCompression(b.settings.CompressionFor(domain)),
+		Own:         b.ownLocalKeep(domain),
 	}
 	if !restic.IsRemoteRepo(raw) {
 		return sec
@@ -410,7 +414,7 @@ func (b *locationBuilder) repoLocation(r store.OffsiteTarget, domains []string) 
 		loc.Sections = append(loc.Sections, locationSection{
 			Domain: domain, Use: useHome, RepoID: r.ID, Where: loc.Where, Enabled: r.Enabled, Immutable: r.Immutable,
 			Retention: localKeep(b.settings, domain), Compression: loc.Compression,
-			LimitUpload: r.LimitUpload, LimitDownload: r.LimitDownload,
+			LimitUpload: r.LimitUpload, LimitDownload: r.LimitDownload, Own: b.ownLocalKeep(domain),
 		})
 	}
 	if repo, err := b.s.resolveRepo(r.Repo); err == nil {
@@ -423,11 +427,14 @@ func (b *locationBuilder) repoLocation(r store.OffsiteTarget, domains []string) 
 // destinationLocation is a destination with the targets derived from it, one
 // section per domain.
 func (b *locationBuilder) destinationLocation(d store.OffsiteTarget) storageLocation {
+	keep := targetKeep(d)
 	loc := storageLocation{
 		ID: locationDestination + ":" + d.ID, Object: locationDestination, Kind: "offsite",
 		Provider: d.Provider, Mark: providerMark(d.Provider), Backend: backendOf(d.Repo),
 		Name: d.Name, Where: scrubRepoLocation(d.Repo), CredsRef: d.CredsRef,
-		Enabled: true, OffPremises: true,
+		Enabled: d.Enabled, OffPremises: d.OffPremises,
+		Retention: &keep, Compression: normalizedCompression(d.Compression),
+		LimitUpload: &d.LimitUpload, LimitDownload: &d.LimitDownload,
 		Protection: locationProtection{Immutable: d.Immutable, Testable: backendOf(d.Repo) == "rest"},
 	}
 	if repo, err := b.s.resolveRepo(d.Repo); err == nil {
@@ -478,13 +485,18 @@ func (b *locationBuilder) leftover(t store.OffsiteTarget) bool {
 }
 
 // addTarget adds a target's copy to loc and, when the target has a direct
-// repository, the home that repository is.
+// repository, the home that repository is. A target that is a location by
+// itself has nothing to deviate from.
 func (b *locationBuilder) addTarget(loc *storageLocation, t store.OffsiteTarget) {
+	own := []string{}
+	if t.DestinationID != "" {
+		own = keptSettings(t)
+	}
 	loc.Sections = append(loc.Sections, locationSection{
 		Domain: t.Domain, Use: useCopy, TargetID: t.ID, Where: scrubRepoLocation(t.Repo),
 		Enabled: t.Enabled, Primary: t.SortOrder == 0, Immutable: t.Immutable,
 		Retention: targetKeep(t), Compression: normalizedCompression(t.Compression),
-		LimitUpload: t.LimitUpload, LimitDownload: t.LimitDownload,
+		LimitUpload: t.LimitUpload, LimitDownload: t.LimitDownload, Own: own,
 		LastCopy: b.lastCopy(t), LastTamper: b.lastTamper(t.Domain, t.ID),
 	})
 	if repo, err := b.s.resolveRepo(t.Repo); err == nil {
@@ -498,11 +510,20 @@ func (b *locationBuilder) addTarget(loc *storageLocation, t store.OffsiteTarget)
 		Domain: t.Domain, Use: useHome, TargetID: t.ID, RepoID: direct.ID, Where: scrubRepoLocation(direct.Repo),
 		Enabled: direct.Enabled, Immutable: direct.Immutable,
 		Retention: targetKeep(direct), Compression: normalizedCompression(direct.Compression),
-		LimitUpload: direct.LimitUpload, LimitDownload: direct.LimitDownload,
+		LimitUpload: direct.LimitUpload, LimitDownload: direct.LimitDownload, Own: own,
 	})
 	if repo, err := b.s.resolveRepo(direct.Repo); err == nil {
 		loc.volumes = append(loc.volumes, repo)
 	}
+}
+
+// ownLocalKeep names retention for a domain whose local keep-policy is its
+// own and not the shared one.
+func (b *locationBuilder) ownLocalKeep(domain string) []string {
+	if _, own := b.settings.OwnRetention()[domain]; own {
+		return []string{ownSettingNames[store.OwnRetention]}
+	}
+	return []string{}
 }
 
 func targetKeep(t store.OffsiteTarget) store.RetentionKeep {

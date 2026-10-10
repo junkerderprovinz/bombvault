@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"maps"
 	"net/http"
 	"os"
@@ -28,6 +29,15 @@ type destinationView struct {
 	Immutable    bool     `json:"immutable"`
 	CreatedAt    int64    `json:"createdAt"`
 	Domains      []string `json:"domains"`
+	// Retention, Compression, the limits and Enabled are what the domain
+	// targets take that keep none of their own.
+	Retention     store.RetentionKeep `json:"retention"`
+	Compression   string              `json:"compression"`
+	LimitUpload   int                 `json:"limitUpload"`
+	LimitDownload int                 `json:"limitDownload"`
+	Enabled       bool                `json:"enabled"`
+	// OffPremises counts the destination as a site of its own.
+	OffPremises bool `json:"offPremises"`
 	// Adoptable are the targets typed in by hand whose repositories lie
 	// under the destination.
 	Adoptable []adoptableTarget `json:"adoptable"`
@@ -66,6 +76,9 @@ func (s *Service) destinationView(d store.OffsiteTarget) (destinationView, error
 		ID: d.ID, Name: d.Name, Provider: d.Provider, Mark: providerMark(d.Provider), Repo: scrubRepoLocation(d.Repo),
 		CredsRef: d.CredsRef, StorageClass: d.StorageClass, Immutable: d.Immutable,
 		CreatedAt: d.CreatedAt, Domains: domains, Adoptable: adoptable,
+		Retention: targetKeep(d), Compression: normalizedCompression(d.Compression),
+		LimitUpload: d.LimitUpload, LimitDownload: d.LimitDownload,
+		Enabled: d.Enabled, OffPremises: d.OffPremises,
 	}, nil
 }
 
@@ -641,15 +654,53 @@ func (h *Handler) handleCreateDestination(w http.ResponseWriter, r *http.Request
 	h.answerDestination(w, d)
 }
 
-// destinationEdit is what can change on a destination after it is saved.
+// destinationEdit is what can change on a destination after it is saved. A
+// setting behind a pointer stays as it is when the body leaves it out.
 type destinationEdit struct {
-	Name         string `json:"name"`
-	StorageClass string `json:"storageClass"`
-	Immutable    bool   `json:"immutable"`
+	Name          string               `json:"name"`
+	StorageClass  string               `json:"storageClass"`
+	Immutable     bool                 `json:"immutable"`
+	Retention     *store.RetentionKeep `json:"retention"`
+	Compression   *string              `json:"compression"`
+	LimitUpload   *int                 `json:"limitUpload"`
+	LimitDownload *int                 `json:"limitDownload"`
+	Enabled       *bool                `json:"enabled"`
+	OffPremises   *bool                `json:"offPremises"`
+}
+
+// apply writes the edit's optional settings into d.
+func (e destinationEdit) apply(d *store.OffsiteTarget) error {
+	if e.Retention != nil {
+		k := clampKeep(*e.Retention)
+		d.RetentionKeepLast, d.RetentionKeepDaily, d.RetentionKeepWeekly = k.KeepLast, k.KeepDaily, k.KeepWeekly
+		d.RetentionKeepMonthly, d.RetentionKeepYearly = k.KeepMonthly, k.KeepYearly
+	}
+	if e.Compression != nil {
+		mode := strings.ToLower(strings.TrimSpace(*e.Compression))
+		if _, err := restic.ParseCompression(mode); err != nil {
+			return err
+		}
+		d.Compression = mode
+	}
+	if e.LimitUpload != nil {
+		d.LimitUpload = max(0, *e.LimitUpload)
+	}
+	if e.LimitDownload != nil {
+		d.LimitDownload = max(0, *e.LimitDownload)
+	}
+	if e.Enabled != nil {
+		d.Enabled = *e.Enabled
+	}
+	if e.OffPremises != nil {
+		d.OffPremises = *e.OffPremises
+	}
+	return nil
 }
 
 // handleUpdateDestination renames a destination or changes its storage class
-// or append-only flag, for every domain that copies to it.
+// or append-only flag, for every domain that copies to it. Its keep-policy,
+// compression, limits and switch reach the domain targets that keep none of
+// their own. The answer lists what the change means for direct repositories.
 // PUT /api/offsite/destinations/{id}
 func (h *Handler) handleUpdateDestination(w http.ResponseWriter, r *http.Request) {
 	d, ok, err := h.store.GetDestination(r.PathValue("id"))
@@ -674,11 +725,21 @@ func (h *Handler) handleUpdateDestination(w http.ResponseWriter, r *http.Request
 		d.Name = name
 	}
 	d.StorageClass, d.Immutable = class, e.Immutable
+	if err := e.apply(&d); err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	before, err := h.store.DestinationTargets(d.ID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	saved, err := h.store.SaveDestination(d)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	warnings := h.svc.destinationSaveWarnings(before)
 	// A primary that follows the destination carries its append-only flag in
 	// the settings as well, and the scheduler reads it there.
 	s, err := h.svc.settleLinkedPrimaries()
@@ -689,7 +750,31 @@ func (h *Handler) handleUpdateDestination(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	h.answerDestination(w, saved)
+	v, err := h.svc.destinationView(saved)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"destination": v, "warnings": warnings}))
+}
+
+// destinationSaveWarnings is what a saved destination means for the direct
+// repositories of its domain targets. before holds those targets as they were.
+// The save stands either way, so a failed read is logged, not returned.
+func (s *Service) destinationSaveWarnings(before []store.OffsiteTarget) []saveWarning {
+	out := []saveWarning{}
+	for _, was := range before {
+		is, ok, err := s.store.GetOffsiteTarget(was.ID)
+		if err == nil && ok {
+			var ws []saveWarning
+			ws, err = s.directSaveWarnings(was, is)
+			out = append(out, ws...)
+		}
+		if err != nil {
+			log.Printf("api: target %s: could not check its direct repository after its destination was saved: %v", was.ID, err) //nolint:gosec // G706: the id is store-generated
+		}
+	}
+	return out
 }
 
 // handleDeleteDestination removes a destination no domain copies to.
