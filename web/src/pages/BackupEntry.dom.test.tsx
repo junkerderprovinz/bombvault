@@ -55,6 +55,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     deleteFileSet: vi.fn(),
     deleteBackups: vi.fn(),
     takeOverContainer: vi.fn(),
+    getZFSReplica: vi.fn(),
   };
 });
 
@@ -190,6 +191,7 @@ beforeEach(() => {
   getAnomalySummary.mockResolvedValue({ ok: false });
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   listSnapshots.mockResolvedValue({ ok: true, snapshots: [] });
+  vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   for (const call of [setInclude, patchFileSet, deleteFileSet, deleteBackups]) call.mockResolvedValue({ ok: true });
   for (const call of [backupNow, backupVMNow, backupFlashNow]) call.mockResolvedValue({ ok: true, started: true });
 });

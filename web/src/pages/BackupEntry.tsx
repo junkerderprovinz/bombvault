@@ -1,10 +1,13 @@
 // The page of one backup entry, whatever its kind: what is backed up, how it
 // is doing, and under three tabs its backups, its settings and the checks
 // that say whether the backups are any good.
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { entryName } from "../components/backups/kinds";
 import { Button } from "../components/Button";
+import type { OpenBackup } from "../components/entry/BackupList";
+import { BackupsTab, ZFSBackupsTab } from "../components/entry/BackupsTab";
 import { EntryCorner, EntryHeadActions } from "../components/entry/EntryActions";
 import { EntryHead } from "../components/entry/EntryHead";
 import { KindHead } from "../components/entry/KindHead";
@@ -15,16 +18,19 @@ import { PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
 import { Selector } from "../components/Selector";
-import type { Run } from "../lib/api";
+import type { Run, TimelineRow } from "../lib/api";
 import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, isEntryKind, type EntryKind } from "../lib/backupEntry";
 import { isGone, itemProgressKey } from "../lib/backupList";
 import { ENTRY_TABS, entryTabPath, parseEntryTab, type Entry, type EntryTab } from "../lib/entry";
 import { useT, type TranslationKey } from "../lib/i18n";
+import { readRestoreRequest } from "../lib/restoreRequest";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useProgress } from "../lib/progress";
 import { RunReasonText } from "../lib/runReason";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useEntry } from "../lib/useEntry";
+import { useTimeline } from "../lib/useTimeline";
+import { hueCounter } from "./settings/shared";
 import { containerTakeover, vmTakeover } from "../lib/useTakeOver";
 
 const TAB_LABEL: Record<EntryTab, TranslationKey> = {
@@ -107,7 +113,39 @@ function Loaded({
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const gone = isGone(item);
   const self = detail.kind === "container" && detail.container.self === true;
-  const lastFailure = item.lastRunStatus === "failed" ? runs.find((run) => run.kind === "backup" && run.status === "failed") : undefined;
+  const lastFailure =
+    item.lastRunStatus === "failed" ? runs.find((run) => run.kind === "backup" && run.status === "failed") : undefined;
+  // A finding's restore link is read once. It stays in the address, and the
+  // backup it opened must not open again with every change of tab.
+  const [request] = useState(() => readRestoreRequest(location.search));
+  const nextHue = hueCounter();
+
+  // Read here and not in the tab, so the head can open the newest backup and
+  // a change of tab reads nothing again. A ZFS entry has no timeline and
+  // leaves the hook closed.
+  const domain = ENTRY_KIND[item.kind].timelineDomain;
+  const read = useTimeline(domain ?? "containers", item.key, domain !== undefined && !self);
+  const timeline = { ...read, domain: domain ?? "containers" };
+  const reloadTimeline = read.reload;
+  const [opened, setOpened] = useState<OpenBackup | null>(
+    request.snapshot && !request.dump ? { key: request.snapshot } : null
+  );
+
+  const active = progress?.active === true;
+  const wasActive = useRef(false);
+  useEffect(() => {
+    if (wasActive.current && !active) reloadTimeline();
+    wasActive.current = active;
+  }, [active, reloadTimeline]);
+
+  const tabPath = (next: EntryTab) => entryTabPath(item.kind, item.key, next, location.search);
+  const newest: TimelineRow | undefined = read.rows[0];
+  const openNewest = newest
+    ? () => {
+        if (tab !== "backups") navigate(tabPath("backups"), { replace: true });
+        setOpened({ key: newest.key });
+      }
+    : undefined;
 
   return (
     <>
@@ -121,7 +159,12 @@ function Loaded({
           anomaly={anomaly}
           anomalyEnabled={anomalyEnabled}
           actions={
-            <EntryHeadActions entry={entry} onChanged={reload} onRemoved={() => navigate(entryListPath(item.kind), { replace: true })} />
+            <EntryHeadActions
+              entry={entry}
+              onChanged={reload}
+              onRemoved={() => navigate(entryListPath(item.kind), { replace: true })}
+              onDownloadNewest={openNewest}
+            />
           }
         />
         {self && <Note>{t("backups.selfNote")}</Note>}
@@ -139,7 +182,7 @@ function Loaded({
         {gone && <Note>{t(item.kind === "vm" ? "entry.gone.vm" : "entry.gone.container")}</Note>}
         {!self && <KindHead entry={entry} tab={tab} onChanged={reload} />}
         {!self && (
-          <div className="mt-2 flex">
+          <div className="mt-2 max-w-xl">
             <Selector
               items={ENTRY_TABS.map((id) => {
                 const Glyph = TAB_GLYPH[id];
@@ -148,20 +191,35 @@ function Loaded({
               label={name}
               select="one"
               size="lg"
-              inline
+              fit
               active={tab}
               // Replaced, so Back leaves the entry instead of walking its tabs.
-              onChange={(id) =>
-                navigate(entryTabPath(item.kind, item.key, id as EntryTab, location.search), { replace: true })
-              }
+              onChange={(id) => navigate(tabPath(id as EntryTab), { replace: true })}
             />
           </div>
         )}
       </div>
 
+      {!self &&
+        tab === "backups" &&
+        (detail.kind === "zfs" ? (
+          <ZFSBackupsTab entry={entry} dataset={detail.dataset} runs={runs} request={request} nextHue={nextHue} />
+        ) : (
+          <BackupsTab
+            entry={entry}
+            name={name}
+            runs={runs}
+            timeline={timeline}
+            opened={opened}
+            onOpen={setOpened}
+            request={request}
+            nextHue={nextHue}
+          />
+        ))}
+
       {!self && (
         <PageActions>
-          <EntryCorner entry={entry} onChanged={reload} />
+          <EntryCorner entry={entry} onChanged={reload} onRestoreNewest={openNewest} />
         </PageActions>
       )}
     </>

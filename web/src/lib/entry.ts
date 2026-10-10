@@ -2,7 +2,17 @@
 // open, what the line under the name says, and how the runs of the last two
 // weeks become the bars of the history.
 
-import type { BackupItem, Container, FileSetView, PlacementView, Run, Settings, VM, ZFSDatasetView } from "./api";
+import type {
+  BackupItem,
+  Container,
+  FileSetView,
+  PlacementView,
+  Run,
+  Settings,
+  TimelineRow,
+  VM,
+  ZFSDatasetView,
+} from "./api";
 import { entryPath, type EntryKind } from "./backupEntry";
 import { inSchedule, isGone, protection } from "./backupList";
 
@@ -154,4 +164,18 @@ export function historyDays(runs: Run[], isFlagged: (run: Run) => boolean, now =
 export function barHeight(bytes: number, largest: number): number {
   if (largest <= 0) return 8;
   return Math.max(8, Math.round((Math.sqrt(bytes) / Math.sqrt(largest)) * 100));
+}
+
+function holds(row: TimelineRow, snapshotId: string): boolean {
+  return row.key === snapshotId || row.places.some((mark) => mark.snapshotIds.includes(snapshotId));
+}
+
+/** rowOfRun is the row of the backup list a run wrote. A copy at a target
+ *  carries an id of its own, so every id of the row is looked at. */
+export function rowOfRun(rows: TimelineRow[], run: Run): TimelineRow | undefined {
+  return run.snapshotId === "" ? undefined : rows.find((row) => holds(row, run.snapshotId));
+}
+
+export function runOfRow(runs: Run[], row: TimelineRow): Run | undefined {
+  return runs.find((run) => run.snapshotId !== "" && holds(row, run.snapshotId));
 }

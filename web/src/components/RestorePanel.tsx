@@ -283,7 +283,7 @@ interface RestorePanelProps {
 // definition, since a config-only backup has no snapshot to restore. The
 // backend turns a restore of "latest" into a recreate. The POST only
 // acknowledges the start; the result comes from the recorded run.
-function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
+export function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
   const cancelledRef = useRef(false);
   const withoutRuntimeRef = useRef(false);
   const { state, fire, isPending } = useBackupWatch({
@@ -441,10 +441,30 @@ function snapLabel(snap: Snapshot): string {
   return `${snap.id.slice(0, 8)} · ${new Date(snap.time).toLocaleString()}`;
 }
 
-// CompareSnapshots shows what changed between two snapshots (restic diff),
-// starting with the newest pair.
+// CompareSnapshots puts the comparison behind a button that folds it out.
 function CompareSnapshots({ containerName, t }: { containerName: string; t: T }) {
   const [open, setOpen] = useState(false);
+  return (
+    <div className="py-2 border-b border-carbon-border">
+      <Button
+        label={t("snapshot.compare")}
+        labelKey="snapshot.compare"
+        tone="neutral"
+        onClick={() => setOpen((p) => !p)}
+        glyph={<IconDisclosure open={open} />}
+      />
+      {open && (
+        <div className="mt-2">
+          <CompareSnapshotsForm containerName={containerName} t={t} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** CompareSnapshotsForm shows what changed between two snapshots (restic
+ *  diff), starting with the newest pair. */
+export function CompareSnapshotsForm({ containerName, t }: { containerName: string; t: T }) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -456,11 +476,9 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
   // stays as well, for the reason the comment above run() gives.
   const [shake, setShake] = useState(0);
 
-  // renderActions only ever gets one picked mark at a time, so compare reads
-  // its own snapshot list at the container's own location once it opens, and
-  // seeds the default pair (older "from" → newer "to") from what comes back.
+  // Compare reads its own snapshot list at the container's own location and
+  // seeds the pair from it, the older one first.
   useEffect(() => {
-    if (!open) return;
     listSnapshots(containerName, "local")
       .then((res) => {
         const list = res.ok ? (res.snapshots ?? []) : [];
@@ -471,7 +489,7 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
         setError(null);
       })
       .catch(() => setSnapshots([]));
-  }, [open, containerName]);
+  }, [containerName]);
 
   // A compare result is a value the reader works through at their own pace,
   // not a completion ping, so `diff` stays inline where ExportButton and the
@@ -515,58 +533,47 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
     "rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well max-w-[16rem] truncate";
 
   return (
-    <div className="py-2 border-b border-carbon-border">
-      <Button
-        label={t("snapshot.compare")}
-        labelKey="snapshot.compare"
-        tone="neutral"
-        onClick={() => setOpen((p) => !p)}
-        glyph={<IconDisclosure open={open} />}
-      />
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-surface2 p-2 flex flex-col gap-2">
-          <p className="text-caption text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <SelectField
-              value={from}
-              onChange={setFrom}
-              label={t("snapshot.compareFrom")}
-              options={snapshots.map((s) => ({ value: s.id, label: snapLabel(s) }))}
-              disabled={loading}
-              className={selectCls}
-            />
-            {/* The arrow follows reading order, so it flips under RTL.
-                inline-block lets the scale apply to the glyph itself. */}
-            <span className="inline-block text-xs text-carbon-textMuted rtl:-scale-x-100">→</span>
-            <SelectField
-              value={to}
-              onChange={setTo}
-              label={t("snapshot.compareTo")}
-              options={snapshots.map((s) => ({ value: s.id, label: snapLabel(s) }))}
-              disabled={loading}
-              className={selectCls}
-            />
-            <Button
-              key={shake}
-              label={t("snapshot.compare")}
-              labelKey="snapshot.compare"
-              tone="accent"
-              onClick={() => void run()}
-              disabled={loading || !from || !to || from === to}
-              busy={loading}
-              title={loading ? "…" : undefined}
-              className={shake ? "glim-shake" : ""}
-            />
-          </div>
-          {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
-          {diff && (
-            <p className="text-xs text-carbon-text font-mono wrap-break-word" title={summary}>
-              <span className="text-statusOk">+{diff.addedFiles}</span> {t("snapshot.added")} ({humanBytes(diff.addedBytes)}),{" "}
-              <span className="text-carbon-textSub">~{diff.changedFiles}</span> {t("snapshot.changed")},{" "}
-              <span className="text-statusFail">-{diff.removedFiles}</span> {t("snapshot.removed")} ({humanBytes(diff.removedBytes)})
-            </p>
-          )}
-        </div>
+    <div className="rounded-card bg-carbon-surface2 p-2 flex flex-col gap-2">
+      <p className="text-caption text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <SelectField
+          value={from}
+          onChange={setFrom}
+          label={t("snapshot.compareFrom")}
+          options={snapshots.map((s) => ({ value: s.id, label: snapLabel(s) }))}
+          disabled={loading}
+          className={selectCls}
+        />
+        {/* The arrow follows reading order, so it flips under RTL.
+            inline-block lets the scale apply to the glyph itself. */}
+        <span className="inline-block text-xs text-carbon-textMuted rtl:-scale-x-100">→</span>
+        <SelectField
+          value={to}
+          onChange={setTo}
+          label={t("snapshot.compareTo")}
+          options={snapshots.map((s) => ({ value: s.id, label: snapLabel(s) }))}
+          disabled={loading}
+          className={selectCls}
+        />
+        <Button
+          key={shake}
+          label={t("snapshot.compare")}
+          labelKey="snapshot.compare"
+          tone="accent"
+          onClick={() => void run()}
+          disabled={loading || !from || !to || from === to}
+          busy={loading}
+          title={loading ? "…" : undefined}
+          className={shake ? "glim-shake" : ""}
+        />
+      </div>
+      {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
+      {diff && (
+        <p className="text-xs text-carbon-text font-mono wrap-break-word" title={summary}>
+          <span className="text-statusOk">+{diff.addedFiles}</span> {t("snapshot.added")} ({humanBytes(diff.addedBytes)}),{" "}
+          <span className="text-carbon-textSub">~{diff.changedFiles}</span> {t("snapshot.changed")},{" "}
+          <span className="text-statusFail">-{diff.removedFiles}</span> {t("snapshot.removed")} ({humanBytes(diff.removedBytes)})
+        </p>
       )}
     </div>
   );
@@ -668,7 +675,7 @@ function SnapshotTags({
 // RestoreMode selects which of the three restore flows the inline panel shows.
 type RestoreMode = "inPlace" | "files" | "toFolder";
 
-function SnapshotActions({
+export function SnapshotActions({
   pick,
   containerName,
   aliases,

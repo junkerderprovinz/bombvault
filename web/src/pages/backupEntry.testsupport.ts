@@ -9,6 +9,8 @@ import type {
   PlacementView,
   Run,
   Settings,
+  TimelinePlace,
+  TimelineRow,
   VM,
   ZFSDatasetView,
 } from "../lib/api";
@@ -286,4 +288,37 @@ export function serveEntries(mocks: EntryMocks, staged: Staged = {}): void {
     hostMountRoot: "/host/user",
     platform: "unraid",
   });
+}
+
+const LOCAL: TimelinePlace = {
+  place: "local",
+  label: "",
+  kind: "home",
+  remote: false,
+  enabled: true,
+  appendOnly: false,
+  state: "read",
+};
+
+export const BOX: TimelinePlace = {
+  place: "offsite:t1",
+  label: "Storage Box",
+  kind: "target",
+  remote: true,
+  enabled: true,
+  appendOnly: false,
+  state: "unchecked",
+};
+
+/** timelineOf is the timeline the successful runs left: one row each at the
+ *  local place, and the given further places not read yet. */
+export function timelineOf(runs: Run[], more: TimelinePlace[] = []) {
+  const rows: TimelineRow[] = runs
+    .filter((run) => run.status === "success")
+    .map((run) => ({
+      key: run.snapshotId,
+      time: new Date((run.finishedAt ?? run.startedAt) * 1000).toISOString(),
+      places: [{ place: "local", snapshotIds: [run.snapshotId], tags: [] }],
+    }));
+  return { ok: true, places: [LOCAL, ...more], rows };
 }
