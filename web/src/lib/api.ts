@@ -765,6 +765,28 @@ export function getVersions(): Promise<OkEnvelope & { versions: ComponentVersion
   return fetchJSON("/api/versions");
 }
 
+export type UpdateCheck = {
+  current: string;
+  latest: string;
+  updateAvailable: boolean;
+  releaseUrl: string;
+};
+
+/** Why an update check could not run, the `code` of its refusal. A dev build
+ *  has no version to compare and asks nobody. */
+export type UpdateCheckRefusal = "dev-build" | "offline" | "rate-limited" | "bad-response";
+
+/**
+ * POST /api/update-check asks GitHub for the newest BombVault release. The
+ * server makes that call for this request and at no other time, so the page
+ * sends it only when the person presses the button.
+ */
+export function checkForUpdate(): Promise<
+  Omit<OkEnvelope, "code"> & { code?: UpdateCheckRefusal; update?: UpdateCheck }
+> {
+  return fetchJSON("/api/update-check", { method: "POST" });
+}
+
 /**
  * Poll the lightest endpoint (GET /api/health) until BombVault is reachable
  * again after it restarts itself to apply a config restore (Recovery tab). It
