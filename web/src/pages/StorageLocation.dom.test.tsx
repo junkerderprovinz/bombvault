@@ -446,10 +446,20 @@ describe("a folder on this host", () => {
   it("has only the cards a folder has", async () => {
     await renderPage("path:abc");
 
-    expect(cardTitles()).toEqual(["Connection", "How long to keep", "Rules per section"]);
+    expect(cardTitles()).toEqual(["Connection", "Delete protection", "How long to keep", "Rules per section"]);
     expect(screen.getByText("Local folder · Used by Containers and VMs")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Test connection" })).toBeNull();
     expect(getStorageLocation).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows delete protection without a switch and says why", async () => {
+    await renderPage("path:abc");
+
+    const protection = card("Delete protection");
+    expect(within(protection).queryByRole("switch")).toBeNull();
+    expect(within(protection).getByText("Delete protection (append-only)")).toBeTruthy();
+    expect(within(protection).getByLabelText(/A folder on this server cannot refuse deletion/)).toBeTruthy();
+    expect(within(protection).queryByText("Who prunes")).toBeNull();
   });
 
   it("saves the shared local rule into the settings, without a question and without the switch for one", async () => {
@@ -494,7 +504,22 @@ describe("a named repository", () => {
     expect(within(card("How long to keep")).getByText("Balanced")).toBeTruthy();
   });
 
-  it("saves delete protection through the repository's route", async () => {
+  it("has no switch to protect a repository in a folder of this host", async () => {
+    await renderPage("repo:archive");
+
+    expect(within(card("Delete protection")).queryByRole("switch")).toBeNull();
+  });
+
+  it("can switch off the protection a local repository already carries, through the repository's route", async () => {
+    stage({ ...ARCHIVE, protection: { immutable: true, testable: false } }, []);
+    await renderPage("repo:archive");
+
+    await click(within(card("Delete protection")).getByRole("switch", { name: "Delete protection (append-only)" }));
+    expect(updateRepo).toHaveBeenCalledWith("archive", { immutable: false });
+  });
+
+  it("saves delete protection of a remote repository through the repository's route", async () => {
+    stage({ ...ARCHIVE, kind: "offsite", backend: "sftp", where: "sftp:nas:/archive" }, []);
     await renderPage("repo:archive");
 
     await click(within(card("Delete protection")).getByRole("switch", { name: "Delete protection (append-only)" }));

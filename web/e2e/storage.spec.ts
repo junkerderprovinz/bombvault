@@ -252,14 +252,17 @@ test.describe("on the desktop", () => {
     expect((staged.writes[0].body as { follow: string[] }).follow).toHaveLength(1);
   });
 
-  test("a folder on this host has no copies, credentials or delete protection to set", async ({ page }) => {
+  test("a folder on this host has no copies or credentials, and no switch for delete protection", async ({ page }) => {
     await stageStorage(page, 1280);
     await page.goto(locationUrl(LOCAL.id));
     await expect(page.getByText("Wie lange aufheben", { exact: true })).toBeVisible();
     await expect(page.getByText("Verbindung", { exact: true })).toBeVisible();
-    for (const absent of ["Kopieren", "Zugangsdaten", "Löschschutz", "rclone.conf"]) {
+    for (const absent of ["Kopieren", "Zugangsdaten", "rclone.conf"]) {
       await expect(page.getByText(absent, { exact: true })).toHaveCount(0);
     }
+    await expect(page.getByText("Löschschutz (append-only)", { exact: true })).toBeVisible();
+    await expect(page.getByRole("switch", { name: "Löschschutz (append-only)" })).toHaveCount(0);
+    await expect(page.getByLabel(/Ein Ordner auf diesem Server kann das Löschen nicht verweigern/)).toBeVisible();
   });
 
   test("the tamper test runs against the location's own target", async ({ page }) => {

@@ -31,7 +31,9 @@ function pruner(immutable: boolean, keepsAll: boolean): { tone: keyof typeof NOT
 /**
  * ProtectionCard holds the delete protection of a location: the switch, a
  * picture of what it does, and for a rest-server the test that proves the far
- * side refuses a delete.
+ * side refuses a delete. A folder on this host cannot refuse anything to
+ * whoever holds BombVault, so it gets no switch to turn on, only the one that
+ * turns an earlier protection off.
  */
 export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdit; provider?: Provider; hueIndex: number }) {
   const { t, lang } = useT();
@@ -71,13 +73,17 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
     <Card title={t("storage.protected")} hueIndex={hueIndex}>
       <LockScene place={location} locked={immutable} />
       <Rows>
-        <SettingRow label={t("storage.lock.toggle")} hint={t(local ? "storage.lock.localHint" : "dest.immutableHint")}>
-          {can("immutable") ? (
-            <Toggle hideLabel label={t("storage.lock.toggle")} checked={immutable} disabled={busy} onChange={toggle} />
-          ) : (
-            <span className="text-sm text-carbon-textSub">{t(immutable ? "storage.on" : "storage.off")}</span>
-          )}
-        </SettingRow>
+        {local && !immutable ? (
+          <SettingRow label={t("storage.lock.toggle")} hint={t("storage.lock.localNone")} />
+        ) : (
+          <SettingRow label={t("storage.lock.toggle")} hint={t(local ? "storage.lock.localHint" : "dest.immutableHint")}>
+            {can("immutable") ? (
+              <Toggle hideLabel label={t("storage.lock.toggle")} checked={immutable} disabled={busy} onChange={toggle} />
+            ) : (
+              <span className="text-sm text-carbon-textSub">{t(immutable ? "storage.on" : "storage.off")}</span>
+            )}
+          </SettingRow>
+        )}
 
         {immutable && testable && targets.length > 0 && (
           <SettingRow
