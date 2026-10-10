@@ -1,0 +1,1 @@
+The app itself is unchanged. Dashboards come from your server, where BombVault 10.0.0 brings a new interface.

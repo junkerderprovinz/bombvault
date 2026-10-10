@@ -1,0 +1,1 @@
+Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort bringt BombVault 10.0.0 eine neue Oberfläche.
