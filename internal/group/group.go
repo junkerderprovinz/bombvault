@@ -528,7 +528,7 @@ func (m *Manager) Call(ctx context.Context, memberID, method, path string, body 
 	if k == nil {
 		return 0, nil, ErrNotMember
 	}
-	call := relay.ProxyCall{Method: method, Path: path, Body: body}
+	call := relay.ProxyCall{Method: method, Path: path, Body: body, Sender: self}
 
 	var directErr error
 	tried := map[string]bool{}
@@ -584,7 +584,7 @@ func (m *Manager) Probe(ctx context.Context, addr string) (Hello, error) {
 	if err != nil {
 		return Hello{}, err
 	}
-	call := relay.ProxyCall{Method: http.MethodGet, Path: ProbePath, Body: intro}
+	call := relay.ProxyCall{Method: http.MethodGet, Path: ProbePath, Body: intro, Sender: self}
 	res, err := m.callDirect(ctx, k, self, discovery.Peer{ID: ProbeTarget, URL: addr, Name: addr}, call)
 	if err != nil {
 		return Hello{}, err
@@ -931,6 +931,13 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
+	// The handler learns who called from the signed header, so a sealed
+	// sender has to agree with it.
+	if call.Sender != "" && call.Sender != sender {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	call.Sender = sender
 	if target == ProbeTarget {
 		if call.Path != ProbePath {
 			http.Error(w, "forbidden", http.StatusForbidden)

@@ -124,7 +124,7 @@ func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, e
 	case memberID == "" && isCreate:
 		return store.ReceivedRepo{}, "choose the instance that sends these copies"
 	case memberID != "":
-		enc, err := h.svc.pairedPassword(ctx, memberID)
+		enc, err := h.svc.pairedPassword(ctx, memberID, store.RoleReceiver)
 		if err != nil {
 			return store.ReceivedRepo{}, scrubError(err)
 		}

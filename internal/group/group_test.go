@@ -279,6 +279,32 @@ func TestDirectCallIsRefusedUnlessSignedFreshAndNew(t *testing.T) {
 	}
 }
 
+func TestACallTellsTheHandlerWhoSentIt(t *testing.T) {
+	var got atomic.Value
+	sender := func(_ context.Context, call relay.ProxyCall) (int, []byte) {
+		got.Store(call.Sender)
+		return http.StatusOK, nil
+	}
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, sender)
+	a.disc.Observe(pb)
+	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err != nil {
+		t.Fatal(err)
+	}
+	if got.Load() != "id-a" {
+		t.Fatalf("the handler saw sender %q, want id-a", got.Load())
+	}
+
+	good := PeerAuthKey(testSecret)
+	if code := signedPost(t, pb.URL, good, "id-old", time.Now(), sealedFor(t, "id-b")); code != http.StatusOK || got.Load() != "id-old" {
+		t.Fatalf("a call sealed without a sender got HTTP %d and sender %q, want the signed header's", code, got.Load())
+	}
+	forged := sealedCall(t, "id-b", relay.ProxyCall{Method: "GET", Path: "/api/group/peer/status", Sender: "id-c"})
+	if code := signedPost(t, pb.URL, good, "id-a", time.Now(), forged); code != http.StatusForbidden {
+		t.Fatalf("a call sealed in another member's name got HTTP %d, want 403", code)
+	}
+}
+
 func TestOutsideAGroupTheDirectRouteDoesNotExist(t *testing.T) {
 	_, pb := member(t, "id-b", "Attic", nil, echo)
 	if code := signedPost(t, pb.URL, PeerAuthKey(testSecret), "id-a", time.Now(), sealedFor(t, "id-b")); code != http.StatusNotFound {

@@ -454,7 +454,8 @@ func askPeerReceiver(t *testing.T, f *receiverFixture, req peerReceiverRequest) 
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
-	f.svc.handlePeerReceiver(w, httptest.NewRequest(http.MethodPost, "/api/group/peer/receiver", strings.NewReader(string(body))))
+	r := httptest.NewRequest(http.MethodPost, "/api/group/peer/receiver", strings.NewReader(string(body)))
+	f.svc.handlePeerReceiver(w, r.WithContext(context.WithValue(r.Context(), peerSenderKey{}, req.InstanceID)))
 	var ans peerReceiverAnswer
 	if err := json.Unmarshal(w.Body.Bytes(), &ans); err != nil || !ans.OK {
 		t.Fatalf("answer %s: %v", w.Body.String(), err)
@@ -488,6 +489,12 @@ func TestAMemberOffersItsReceiverOnlyWhileTheContainerIsThere(t *testing.T) {
 func TestEachPartnerGetsALoginOfItsOwn(t *testing.T) {
 	f := newReceiverFixture(t)
 	receiverWithOutsider(t, f)
+	for _, member := range []string{"m-attic", "m-barn"} {
+		grant := store.RoleRequest{Direction: store.RoleRequestIn, MemberID: member, Role: store.RoleReceiver, Sections: allRoleSections}
+		if err := f.st.GrantRoleRequest(grant); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	attic := askPeerReceiver(t, f, peerReceiverRequest{InstanceID: "m-attic", Name: "attic", Login: true}).Receiver
 	barn := askPeerReceiver(t, f, peerReceiverRequest{InstanceID: "m-barn", Name: "Attic!", Login: true}).Receiver
@@ -589,6 +596,17 @@ func TestAPairedMembersReceiverReachesTheDestinationWizard(t *testing.T) {
 	if err := b.st.SaveReceiverServer(rs); err != nil {
 		t.Fatal(err)
 	}
+	if _, out := a.do(t, http.MethodPost, "/api/offsite/group-receivers/"+b.id(t)+"/login", nil); out["ok"] != false {
+		t.Fatalf("a login before attic allowed cellar as a sender: %v", out)
+	}
+	asked, ok := roleWith(t, b, store.RoleRequestIn, a, store.RoleReceiver)
+	if !ok || asked.State != store.RoleAsked {
+		t.Fatalf("asking for a login left the request %+v, %v on attic; want it waiting", asked, ok)
+	}
+	if logins, _ := b.st.ListReceiverLogins(); len(logins) != 0 {
+		t.Fatal("a member got a login before a person allowed it")
+	}
+	answerRole(t, b, asked.ID, store.RoleAllowed)
 	_, out = a.do(t, http.MethodPost, "/api/offsite/group-receivers/"+b.id(t)+"/login", nil)
 	login, _ := out["login"].(map[string]any)
 	if out["ok"] != true || login["url"] != "http://192.168.1.20:8001/cellar" || login["user"] != "cellar" || login["password"] == "" {
