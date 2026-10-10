@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { adoptIntoDestination, deleteDestination, updateDestination, type AdoptableTarget, type Destination } from "../../lib/api";
+import { deleteDestination, updateDestination, type AdoptableTarget, type Destination } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
-import { destinationsChanged, useDestinations } from "../../lib/useDestinations";
+import { adoptTarget, destinationsChanged, useDestinations } from "../../lib/useDestinations";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
@@ -40,14 +40,12 @@ export function DestinationsCard({ hueIndex }: { hueIndex?: number }) {
     const fill = (s: string) =>
       s.replaceAll("{target}", () => a.name).replaceAll("{domain}", () => domainLabel(a.domain)).replaceAll("{name}", () => d.name);
     if (!(await confirm(fill(t("dest.adopt.ask")), { confirmKey: "dest.adopt.take" }))) return;
-    const r = await adoptIntoDestination(d.id, a.id).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
+    const r = await adoptTarget(d.id, a.id);
     if (!r.ok) {
       push(r.error ?? t("settings.error"), "fail");
       return;
     }
     push(fill(t("dest.adopted")), "success");
-    destinationsChanged();
-    offsiteTargetsChanged();
   }
 
   async function remove(d: Destination) {

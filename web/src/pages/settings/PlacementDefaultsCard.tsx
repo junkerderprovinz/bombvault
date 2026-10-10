@@ -3,52 +3,29 @@ import { Link } from "react-router-dom";
 import { Card, ToggleRow } from "./shared";
 import { Button } from "../../components/Button";
 import { HUE_OFFSET } from "../../components/Selector";
-import { DirectRepoDialog } from "../../components/placement/DirectRepoDialog";
 import { itemName, NewTargetPreviewLines } from "../../components/placement/NewTargetQuestion";
 import { PlacementBar } from "../../components/placement/PlacementBar";
 import { UploadLines } from "../../components/placement/PlacementRow";
+import { useDefaultWrites } from "../../components/placement/useDefaultWrites";
 import {
   applyPlacementDefault,
   confirmPlacementDefault,
   getApplyDefaultPreview,
   getConfirmPreview,
-  previewPlacementDefault,
-  putPlacementDefault,
-  type DefaultChange,
-  type DefaultImpact,
   type DefaultRow,
-  type OkEnvelope,
   type PlacementDomain,
   type PlacementOptions,
-  type SendToOption,
   type TargetPreviewRow,
   type UnmatchedName,
   type UploadEstimate,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import {
-  defaultChangeOf,
-  defaultView,
-  domainLabel,
-  formatList,
-  newTargetRefused,
-  stepForLocal,
-  stepForNewTarget,
-  stepForTarget,
-  viewHomeLabel,
-  type PlacementStep,
-} from "../../lib/placement";
-import { blockedText, tickDestination, useNewDestinations } from "../../lib/placementButtons";
-import { placementErrorText } from "../../lib/placementCodes";
+import { domainLabel, formatList, stepForLocal, stepForTarget } from "../../lib/placement";
+import { useNewDestinations } from "../../lib/placementButtons";
 import { placementChanged } from "../../lib/placementEvents";
 import { useToast } from "../../lib/toast";
-import { useConfirm } from "../../lib/useConfirm";
-import { useHostLabel } from "../../lib/useHostLabel";
-import { useNamedRepos } from "../../lib/useNamedRepos";
 import { usePlacementDefaults } from "../../lib/usePlacementDefaults";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
-
-type T = ReturnType<typeof useT>["t"];
 
 const COUNT_KEYS: [keyof DefaultRow["counts"], TranslationKey][] = [
   ["follow", "placementDefaults.countFollow"],
@@ -56,37 +33,6 @@ const COUNT_KEYS: [keyof DefaultRow["counts"], TranslationKey][] = [
   ["open", "placementDefaults.countOpen"],
   ["chosenNoRun", "placementDefaults.countChosenNoRun"],
 ];
-
-// Only containers have project folders, so only their questions name them.
-function impactLines(t: T, lang: string, domain: PlacementDomain, impact: DefaultImpact, home: string): string[] {
-  const containers = domain === "containers";
-  const uncheckable = (names: string[]) => t("placement.uncheckable").replace("{list}", () => formatList(lang, names));
-  const lines: string[] = [];
-  for (const d of impact.dropped) {
-    lines.push(
-      d.unknown
-        ? t(containers ? "placementDefaults.dropAskUnknownContainers" : "placementDefaults.dropAskUnknown").replace(/\{target\}/g, () => d.name).replace("{n}", String(d.items))
-        : t(containers ? "placementDefaults.dropAskContainers" : "placementDefaults.dropAsk")
-            .replace("{target}", () => d.name)
-            .replace("{n}", String(d.items))
-            .replace("{copies}", String(d.snapshots))
-    );
-    if (d.uncheckable.length > 0) lines.push(uncheckable(d.uncheckable));
-  }
-  for (const a of impact.added) {
-    lines.push(
-      t(containers ? "placementDefaults.addAskContainers" : "placementDefaults.addAsk")
-        .replace("{target}", () => a.name)
-        .replace("{n}", String(a.items))
-        .replace("{snapshots}", String(a.snapshots))
-    );
-    if (a.uncheckable.length > 0) lines.push(uncheckable(a.uncheckable));
-  }
-  if (impact.openTakeHome > 0) {
-    lines.push(t("placementDefaults.openTakeHome").replace("{home}", () => home).replace("{n}", String(impact.openTakeHome)));
-  }
-  return lines;
-}
 
 // sumUploads adds up per target what all candidates would upload.
 function sumUploads(uploads: UploadEstimate[]): UploadEstimate[] {
@@ -151,88 +97,15 @@ function ConfirmLines({
 function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: PlacementOptions; hueOffset: number }) {
   const { t, lang } = useT();
   const { push } = useToast();
-  const host = useHostLabel();
-  const repos = useNamedRepos();
-  const { confirm, confirmDialog } = useConfirm();
-  const [direct, setDirect] = useState<{ target: SendToOption; skip: string[] } | null>(null);
+  const writes = useDefaultWrites();
+  const { host, busy, shake, confirm, fail, guarded } = writes;
   const destinations = useNewDestinations(row.domain, options);
-  const [busy, setBusy] = useState(false);
-  const [shake, setShake] = useState(0);
   const domain = domainLabel(t, row.domain);
-  const labelOf = (id: string) => {
-    const r = repos.find((x) => x.id === id);
-    return { repoLabel: r?.name ?? id, repoDirectOf: r?.directOf };
-  };
-  const view = { ...defaultView(row, options), ...labelOf(row.home) };
-  const homeName = (id: string) => viewHomeLabel(t, host, { ...view, repo: id, ...labelOf(id), repoOff: false }, options);
+  const ctx = writes.context(row, options);
+  const { view } = ctx;
 
-  function fail(res: OkEnvelope) {
-    push(placementErrorText(t, lang, res, "settings.error"), "fail");
-    setShake((n) => n + 1);
-  }
-
-  function unreachable(err: unknown) {
-    fail({ ok: false, error: err instanceof Error ? err.message : undefined });
-  }
-
-  // agreed asks when a change moves the location or changes what a target
-  // receives. A change that does neither is saved without a question.
-  async function agreed(impact: DefaultImpact, home: string | undefined): Promise<boolean> {
-    const lines = impactLines(t, lang, row.domain, impact, homeName(home ?? row.home));
-    const lead =
-      home !== undefined
-        ? t("placementDefaults.confirmHome").replace("{domain}", () => domain).replace("{home}", () => homeName(home))
-        : lines.shift();
-    if (lead === undefined) return true;
-    const extra =
-      lines.length > 0 ? (
-        <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
-          {lines.map((line, i) => (
-            <p key={i}>{line}</p>
-          ))}
-        </div>
-      ) : undefined;
-    return confirm(
-      lead,
-      home !== undefined
-        ? { extra, confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome", cancelTone: "neutral" }
-        : { extra, cancelTone: "neutral" }
-    );
-  }
-
-  async function change(next: DefaultChange) {
-    const home = next.home !== undefined && next.home !== row.home ? next.home : undefined;
-    setBusy(true);
-    try {
-      const preview = await previewPlacementDefault(row.domain, next);
-      if (!preview.ok || !preview.impact) {
-        fail(preview);
-        return;
-      }
-      let impact = preview.impact;
-      for (;;) {
-        if (!(await agreed(impact, home))) return;
-        const res = await putPlacementDefault(row.domain, next, impact);
-        if (res.ok) {
-          placementChanged();
-          return;
-        }
-        if (res.code !== "stale" || !res.impact) {
-          fail(res);
-          return;
-        }
-        impact = res.impact;
-      }
-    } catch (err) {
-      unreachable(err);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function apply() {
-    setBusy(true);
-    try {
+  function apply() {
+    return guarded(async () => {
       const preview = await getApplyDefaultPreview(row.domain);
       if (!preview.ok) {
         fail(preview);
@@ -262,23 +135,17 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       if (!(await confirm(t("placementDefaults.applyAsk").replace("{n}", String(reset.length)), { extra, cancelTone: "neutral" }))) return;
       const res = await applyPlacementDefault(row.domain, reset.map((c) => c.key));
       if (!res.ok) {
-        push(res.code === "domain-busy" ? t("placementDefaults.applyBusy") : placementErrorText(t, lang, res, "settings.error"), "fail");
-        setShake((n) => n + 1);
+        fail(res, res.code === "domain-busy" ? t("placementDefaults.applyBusy") : undefined);
         return;
       }
       const changed = (res.kept ?? []).filter((k) => k.reason === "changed");
       if (changed.length > 0) push(t("placementDefaults.applyKeptChanged").replace("{list}", () => names(changed)), "warn");
       placementChanged();
-    } catch (err) {
-      unreachable(err);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  async function confirmDefault() {
-    setBusy(true);
-    try {
+  function confirmDefault() {
+    return guarded(async () => {
       const preview = await getConfirmPreview(row.domain);
       if (!preview.ok) {
         fail(preview);
@@ -302,38 +169,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       }
       push(t("placementDefaults.confirmed"), "success");
       placementChanged();
-    } catch (err) {
-      unreachable(err);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function run(step: PlacementStep) {
-    if (step.kind === "blocked") {
-      push(blockedText(t, step, viewHomeLabel(t, host, view, options)), "warn");
-      setShake((n) => n + 1);
-      return;
-    }
-    if (step.kind === "direct") {
-      setDirect({ target: step.target, skip: step.skip ?? ["*"] });
-      return;
-    }
-    const next = defaultChangeOf(step);
-    if (next) void change(next);
-  }
-
-  async function addDestination(id: string) {
-    const refused = newTargetRefused(view);
-    if (refused) return run(refused);
-    setBusy(true);
-    const made = await tickDestination(id, row.domain);
-    setBusy(false);
-    if ("error" in made) {
-      fail(made.error);
-      return;
-    }
-    run(stepForNewTarget(made.targetId, view, options));
+    });
   }
 
   const counts = COUNT_KEYS.filter(([k]) => row.counts[k] > 0)
@@ -342,7 +178,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
 
   return (
     <>
-      {confirmDialog}
+      {writes.dialogs}
       {row.paused && (
         <div className="flex flex-col gap-0.5">
           <p className="text-xs text-statusWarn">{t("placementDefaults.paused")}</p>
@@ -363,11 +199,11 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
           hueOffset={hueOffset}
           disabled={busy}
           destinations={destinations}
-          onLocal={(on) => run(stepForLocal(on, view, options, t, host))}
-          onTarget={(id, on) => run(stepForTarget(id, on, view, options, t))}
-          onDestination={(id) => void addDestination(id)}
+          onLocal={(on) => writes.run(ctx, stepForLocal(on, view, options, t, host))}
+          onTarget={(id, on) => writes.run(ctx, stepForTarget(id, on, view, options, t))}
+          onDestination={(id) => void writes.addDestination(ctx, id)}
           onHome={(id) => {
-            if (id !== row.home) void change({ home: id });
+            if (id !== row.home) void writes.change(ctx, { home: id });
           }}
         />
       </div>
@@ -391,17 +227,6 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
           />
         )}
       </div>
-      {direct && (
-        <DirectRepoDialog
-          target={{ id: direct.target.targetId, name: direct.target.name }}
-          mode="create"
-          onClose={() => setDirect(null)}
-          onDone={(result) => {
-            setDirect(null);
-            if (result.kind === "created") void change({ home: result.repo.id, skip: direct.skip });
-          }}
-        />
-      )}
     </>
   );
 }

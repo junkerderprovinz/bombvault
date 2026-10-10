@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { listGroupReceivers, type GroupReceiver } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { IconShieldOn } from "../glyphs";
-import { Badge } from "../Badge";
-import { InfoBubble } from "../InfoBubble";
 import { ReadmeButton } from "../ReadmeButton";
+import { ProviderGroupHeading } from "./ProviderPicker";
 
 /** Where a receiver's address points, without the scheme and the login. */
 function shownAddress(url: string): string {
@@ -20,9 +19,19 @@ function shownAddress(url: string): string {
  * picking one fills in the rest-server form for it. Shows nothing outside a
  * group or when no member runs one.
  */
-export function GroupReceiverPicker({ picked, onPick }: { picked?: string; onPick: (r: GroupReceiver) => void }) {
+export function GroupReceiverPicker({
+  picked,
+  onPick,
+  matches = () => true,
+}: {
+  picked?: string;
+  onPick: (r: GroupReceiver) => void;
+  /** Narrows the receivers to the ones a search asks for. */
+  matches?: (name: string) => boolean;
+}) {
   const { t } = useT();
-  const [receivers, setReceivers] = useState<GroupReceiver[]>([]);
+  const [all, setReceivers] = useState<GroupReceiver[]>([]);
+  const receivers = all.filter((r) => matches(r.name));
 
   useEffect(() => {
     let alive = true;
@@ -38,13 +47,11 @@ export function GroupReceiverPicker({ picked, onPick }: { picked?: string; onPic
 
   return (
     <section className="flex flex-col gap-2">
-      <h4 className="flex flex-wrap items-center gap-2 text-sm font-semibold text-carbon-text">
-        {t("dest.group.fromGroup")}
-        <Badge tone="ok" size="small">
-          {t("dest.fit.best")}
-        </Badge>
-        <InfoBubble tip={t("dest.groupTip.fromGroup")} />
-      </h4>
+      <ProviderGroupHeading
+        title={t("dest.group.fromGroup")}
+        fit={{ label: t("dest.fit.best"), tone: "ok" }}
+        tip={t("dest.groupTip.fromGroup")}
+      />
       <ul className="glim-provider-pick">
         {receivers.map((r) => (
           <li key={r.memberId}>
