@@ -219,9 +219,9 @@ type ResticEngine interface {
 	// Diff compares two snapshots (restic diff --json) and returns the summary
 	// counts + byte totals (what changed between two backups).
 	Diff(ctx context.Context, repo, snap1, snap2 string, m restic.Mode) (restic.DiffResult, error)
-	// TagAdd adds tags to a snapshot (restic tag --add). Tags must be
-	// pre-sanitised by the caller (restic tags are comma-separated).
-	TagAdd(ctx context.Context, repo, snapID string, tags []string, m restic.Mode) error
+	// Tag adds and removes tags on snapshots in one restic call. The caller
+	// has refused any tag restic would split at a comma.
+	Tag(ctx context.Context, repo string, snapIDs, add, remove []string, m restic.Mode) error
 }
 
 // compile-time check: the real adapter satisfies the seam.
@@ -10076,68 +10076,6 @@ func (s *Service) DiffSnapshots(ctx context.Context, name, source, snap1, snap2 
 	return s.engine.Diff(ctx, repo, snap1, snap2, s.repoModeFor(settings, "containers", source, repo))
 }
 
-// TagSnapshot adds tags to one of a container's snapshots (restic tag --add).
-//
-// SEC: the snapshot id passes the strict hex guard and must belong to the named
-// container (tag-scoped via Snapshots). Tags are sanitised — trimmed, empties
-// dropped, and any tag with a comma or control character rejected (restic tags
-// are comma-separated, so a comma would silently split into two tags). An empty
-// resulting tag set is a no-op.
-func (s *Service) TagSnapshot(ctx context.Context, name, source, snapID string, addTags []string) error {
-	if !validResourceName(name) {
-		return errors.New("invalid container name")
-	}
-	if source != "local" && !isOffsiteSource(source) {
-		return errors.New("invalid source (must be local or offsite)")
-	}
-	if !backup.ValidSnapshotID(snapID) {
-		return backup.ErrInvalidSnapshotID
-	}
-	tags, err := sanitizeTags(addTags)
-	if err != nil {
-		return err
-	}
-	if len(tags) == 0 {
-		return nil // nothing to add
-	}
-
-	// Scope to the named container: the snapshot must be among ITS snapshots.
-	snaps, err := s.Snapshots(ctx, name, source)
-	if err != nil {
-		return err
-	}
-	if !snapshotBelongs(snaps, snapID) {
-		return fmt.Errorf("snapshot %s does not belong to this container", snapID)
-	}
-
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
-	}
-	repo, err := s.containerRepoForName(settings, name, source)
-	if err != nil {
-		return err
-	}
-	mode := s.repoModeFor(settings, "containers", source, repo)
-	// Serialize against a live backup/prune on this repo: restic tag takes an
-	// exclusive lock, so run it under the domain lock like the other maintenance
-	// ops, and report a clean busy instead of colliding on restic's repo lock.
-	unlock, ok := s.tryLockDomainFor("containers", "tag")
-	if !ok {
-		return errDomainBusy
-	}
-	defer unlock()
-	// unlockStale clears a genuine stale orphan (dead PID on this host) left by a
-	// crashed run before taking restic's exclusive tag lock — the off-site repo can
-	// carry a lock left by an interrupted off-site op (replication copy / integrity
-	// check), and `restic tag` would otherwise fail with "repository is already
-	// locked". Every other repo-mutating path (backups, PruneDomain, DeleteSnapshot)
-	// does this; TagSnapshot was missing it, which made adding a tag on the off-site
-	// repo fail (bug #29).
-	s.unlockStale(ctx, repo, mode)
-	return s.engine.TagAdd(ctx, repo, snapID, tags, mode)
-}
-
 // snapshotBelongs reports whether id (exact or unique prefix) is present in the
 // already-tag-scoped snapshot list — the access-control check shared by the
 // diff/tag/restore-to-path routes.
@@ -10297,7 +10235,13 @@ func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, b
 var reservedTagPrefixes = []string{
 	"container:", "vm:", "fileset:", "stack:", "vmrun:", "formerly:",
 	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:", "zfs:",
+	appdataImportTagPrefix, "blocks-partial:", "bv:",
 }
+
+// reservedTags are the whole tags BombVault reads a meaning from: retention
+// keeps an imported snapshot, and a VM restore reads the disk layout from the
+// blocks tag. Setting or clearing one by hand would change what a snapshot is.
+var reservedTags = []string{restic.ImportedTag, backup.BlocksTag, "live", "p1", "p2"}
 
 // tagValueError reports why a string cannot be a restic tag. restic stores tags
 // as a comma-separated list, so a comma would split one tag into two; control
@@ -10331,6 +10275,9 @@ func sanitizeTags(in []string) ([]string, error) {
 			if strings.HasPrefix(tag, prefix) {
 				return nil, fmt.Errorf("invalid tag %q: this prefix is reserved for BombVault", tag)
 			}
+		}
+		if slices.Contains(reservedTags, tag) {
+			return nil, fmt.Errorf("invalid tag %q: this tag is reserved for BombVault", tag)
 		}
 		out = append(out, tag)
 	}

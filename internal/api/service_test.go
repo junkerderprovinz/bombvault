@@ -4259,7 +4259,7 @@ func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
 }
 
 // diffTagTestService builds a service with an initialised containers repo and the
-// given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
+// given snapshots, so a diff or a tag reaches the fake engine.
 func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
 	t.Helper()
 	dir := t.TempDir()
@@ -4338,7 +4338,7 @@ func TestTagSnapshot(t *testing.T) {
 	ctx := context.Background()
 
 	// Bad snapshot id is rejected before any restic call.
-	if err := svc.TagSnapshot(ctx, "plex", "local", "not-hex!", []string{"keep"}); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+	if err := svc.TagBackup(ctx, "containers", "plex", "local", "not-hex!", []string{"keep"}, nil); !errors.Is(err, backup.ErrInvalidSnapshotID) {
 		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
 	}
 	if len(eng.taggedSnaps) != 0 {
@@ -4346,7 +4346,7 @@ func TestTagSnapshot(t *testing.T) {
 	}
 
 	// A tag containing a comma is refused (would split into two restic tags).
-	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"a,b"}); err == nil || !strings.Contains(err.Error(), "comma") {
+	if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{"a,b"}, nil); err == nil || !strings.Contains(err.Error(), "comma") {
 		t.Fatalf("comma tag must be refused, got %v", err)
 	}
 	if len(eng.taggedSnaps) != 0 {
@@ -4355,8 +4355,8 @@ func TestTagSnapshot(t *testing.T) {
 
 	// A tag under one of BombVault's own prefixes is refused: it would place the
 	// snapshot in an item's retention series or in its rename history.
-	for _, tag := range []string{"container:other", "dbdump:plex", "formerly:plex-old", "zfs:cache/appdata"} {
-		if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{tag}); err == nil || !strings.Contains(err.Error(), "reserved") {
+	for _, tag := range []string{"container:other", "dbdump:plex", "formerly:plex-old", "zfs:cache/appdata", "imported", "blocks", "bv:direct"} {
+		if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{tag}, nil); err == nil || !strings.Contains(err.Error(), "reserved") {
 			t.Fatalf("%q must be refused as reserved, got %v", tag, err)
 		}
 	}
@@ -4365,20 +4365,17 @@ func TestTagSnapshot(t *testing.T) {
 	}
 
 	// Happy path: tags are trimmed, empties dropped, the snapshot is tagged.
-	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"  keep  ", "", "milestone"}); err != nil {
-		t.Fatalf("TagSnapshot: %v", err)
+	if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{"  keep  ", "", "milestone"}, nil); err != nil {
+		t.Fatalf("TagBackup: %v", err)
 	}
 	if len(eng.taggedSnaps) != 1 || eng.taggedSnaps[0] != "aaaa1111:keep,milestone" {
 		t.Fatalf("expected aaaa1111 tagged keep,milestone, got %v", eng.taggedSnaps)
 	}
 }
 
-// TestTagSnapshotUnlocksStaleLockBeforeTag pins bug #29's fix: TagSnapshot must
-// self-heal a stale restic lock (via unlockStale → Unlock) BEFORE taking restic's
-// exclusive tag lock, otherwise a lock left on the off-site repo by an interrupted
-// off-site op makes `restic tag` fail with "repository is already locked". The
-// engine records an ordered call log, and we assert Unlock precedes TagAdd on the
-// resolved repo.
+// A lock an interrupted off-site copy or check left behind makes `restic tag`
+// fail with "repository is already locked" (#29), so a tag clears stale locks
+// before it takes its own.
 func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "aaaa1111", Tags: []string{"container:plex"}},
@@ -4386,12 +4383,10 @@ func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
 	svc := diffTagTestService(t, eng)
 	ctx := context.Background()
 
-	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"keep"}); err != nil {
-		t.Fatalf("TagSnapshot: %v", err)
+	if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{"keep"}, nil); err != nil {
+		t.Fatalf("TagBackup: %v", err)
 	}
 
-	// Both calls must have happened, in the order Unlock → TagAdd (the stale-lock
-	// clear must precede the exclusive tag lock).
 	unlockIdx, tagIdx := -1, -1
 	for i, call := range eng.callLog {
 		switch call {
@@ -4399,20 +4394,20 @@ func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
 			if unlockIdx == -1 {
 				unlockIdx = i
 			}
-		case "TagAdd":
+		case "Tag":
 			if tagIdx == -1 {
 				tagIdx = i
 			}
 		}
 	}
 	if unlockIdx == -1 {
-		t.Fatalf("TagSnapshot must clear a stale lock (Unlock) before tagging; call log = %v", eng.callLog)
+		t.Fatalf("a stale lock is not cleared before tagging; call log = %v", eng.callLog)
 	}
 	if tagIdx == -1 {
-		t.Fatalf("TagSnapshot must tag the snapshot (TagAdd); call log = %v", eng.callLog)
+		t.Fatalf("the snapshot was not tagged; call log = %v", eng.callLog)
 	}
 	if unlockIdx > tagIdx {
-		t.Fatalf("Unlock must precede TagAdd, got call log %v", eng.callLog)
+		t.Fatalf("Unlock came after Tag, got call log %v", eng.callLog)
 	}
 
 	// The stale-unlock is a plain (non-remove-all) unlock on the resolved repo.
@@ -4421,12 +4416,8 @@ func TestTagSnapshotUnlocksStaleLockBeforeTag(t *testing.T) {
 	}
 }
 
-// TestTagSnapshotBusyWhileDomainLocked pins issue #96: `restic tag` is an
-// exclusive-lock write, so TagSnapshot must serialize under the "containers"
-// domain lock like the other maintenance ops (verify/prune/delete) instead of
-// racing a live backup/restore straight into restic's own lock. With the domain
-// lock held by an in-flight (blocked) restore, TagSnapshot must fail fast with
-// the busy error and must never reach the engine's TagAdd.
+// `restic tag` takes an exclusive lock (#96). While a restore holds the domain
+// lock, a tag answers busy at once and leaves the repository alone.
 func TestTagSnapshotBusyWhileDomainLocked(t *testing.T) {
 	eng := &fakeResticEngine{
 		blockRestore:   make(chan struct{}),
@@ -4445,11 +4436,11 @@ func TestTagSnapshotBusyWhileDomainLocked(t *testing.T) {
 		t.Fatal("restore never reached the engine")
 	}
 
-	if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{"keep"}); err == nil || !strings.Contains(err.Error(), "currently running") {
-		t.Fatalf("TagSnapshot on a busy domain must return the busy error, got %v", err)
+	if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{"keep"}, nil); err == nil || !strings.Contains(err.Error(), "currently running") {
+		t.Fatalf("a tag on a busy domain returned %v, want the busy error", err)
 	}
 	if len(eng.taggedSnaps) != 0 {
-		t.Fatalf("a busy TagSnapshot must never reach TagAdd, got %v", eng.taggedSnaps)
+		t.Fatalf("a tag on a busy domain reached the engine: %v", eng.taggedSnaps)
 	}
 
 	close(eng.blockRestore)   // let the restore finish
@@ -5564,8 +5555,8 @@ type fakeResticEngine struct {
 	statsErr      error
 	diffResult    restic.DiffResult // returned by Diff
 	diffPairs     []string          // "snap1->snap2" of each Diff call
-	taggedSnaps   []string          // "snapID:tag,tag" of each TagAdd call
-	callLog       []string          // ordered method-call log (Unlock/TagAdd/CheckData/RestoreInclude) for ordering assertions
+	taggedSnaps   []string          // "snapID:tag,tag" of each Tag call
+	callLog       []string          // ordered method-call log (Unlock/Tag/CheckData/RestoreInclude) for ordering assertions
 	forgetPruned  bool              // prune flag of the last Forget call
 	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
 	// (non-zero) overrides the byte total it reports so a test can force a
@@ -6141,9 +6132,9 @@ func (f *fakeResticEngine) ImportDir(context.Context, string, string, []string, 
 	return restic.Summary{}, errors.New("fakeResticEngine does not import")
 }
 
-func (f *fakeResticEngine) TagAdd(_ context.Context, _, snapID string, tags []string, _ restic.Mode) error {
-	f.taggedSnaps = append(f.taggedSnaps, snapID+":"+strings.Join(tags, ","))
-	f.callLog = append(f.callLog, "TagAdd")
+func (f *fakeResticEngine) Tag(_ context.Context, _ string, snapIDs, add, _ []string, _ restic.Mode) error {
+	f.taggedSnaps = append(f.taggedSnaps, strings.Join(snapIDs, "+")+":"+strings.Join(add, ","))
+	f.callLog = append(f.callLog, "Tag")
 	return nil
 }
 
@@ -9182,7 +9173,7 @@ func TestTagSnapshotRefusesReservedPrefixes(t *testing.T) {
 		"dbname:x", "container:y", "vm:y", "fileset:y", "stack:z", "vmrun:1",
 	}
 	for _, tag := range reserved {
-		err := svc.TagSnapshot(context.Background(), "plex", "local", "aaaa1111", []string{tag})
+		err := svc.TagBackup(context.Background(), "containers", "plex", "local", "aaaa1111", []string{tag}, nil)
 		if err == nil || !strings.Contains(err.Error(), "reserved") {
 			t.Errorf("tag %q was accepted (%v), want a refusal naming the reserved prefix", tag, err)
 		}
@@ -9190,7 +9181,7 @@ func TestTagSnapshotRefusesReservedPrefixes(t *testing.T) {
 	if len(eng.taggedSnaps) != 0 {
 		t.Fatalf("a refused tag must not reach the engine, got %v", eng.taggedSnaps)
 	}
-	if err := svc.TagSnapshot(context.Background(), "plex", "local", "aaaa1111", []string{"keep"}); err != nil {
+	if err := svc.TagBackup(context.Background(), "containers", "plex", "local", "aaaa1111", []string{"keep"}, nil); err != nil {
 		t.Fatalf("an ordinary tag must still be accepted: %v", err)
 	}
 }

@@ -437,7 +437,7 @@ func foreignItems(m map[string][]restic.Snapshot) []ForeignItem {
 //
 // The foreign repo is only ever READ here — snapshot listings, def files and
 // the restic restore itself. EnsureRepo, applyRetention, Forget*, Prune,
-// TagAdd and makeRepoReadable all belong to OUR OWN repos' lifecycle and are
+// Tag and makeRepoReadable all belong to our own repos' lifecycle and are
 // never called against sess.repo. Container/VM definitions decrypt with the
 // SESSION's foreign APP_KEY (never s.cfg.AppKey); the restore is validated
 // against the decrypted recipe FIRST and the recipe is adopted LOCALLY

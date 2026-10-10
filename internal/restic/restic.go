@@ -338,11 +338,9 @@ func Identity(s Snapshot) string {
 // was replicated keeps the same Original, matches the existing copy here, and is
 // left out, so the destination's tags never catch up.
 //
-// Nothing is lost by it - the tree is identical, and this package's only tag
-// writer is BombVault's own TagSnapshot - but it is a real narrowing of what
-// used to be a guarantee, and a caller that assumes "can only ever over-supply"
-// would be assuming something no longer true. A source whose ids cannot be read
-// is still handed over whole.
+// Nothing is lost by it: the tree is identical, and the only tag writer is
+// BombVault's own TagBackup. A caller still cannot assume the set only ever
+// over-supplies. A source whose ids cannot be read is handed over whole.
 //
 // The domain's OWN repository is still copied with snapshotIDs nil: everything
 // in it belongs to that domain, so there is nothing to narrow.
@@ -1005,21 +1003,24 @@ func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
 	return args
 }
 
-// TagAddArgs returns the argv slice for `restic tag --add <tag> <snapID>`. One
-// --add per tag is emitted; the snapshot id goes after -- (arg-injection guard),
-// and callers validate the id as hex + scope it to the target first. restic tags
-// are comma-separated, so callers must reject commas/control chars in tags.
-func TagAddArgs(repo, snapID string, tags []string, m Mode) []string {
+// TagArgs returns the argv for `restic tag`, adding and removing tags on the
+// given snapshots in one rewrite. The ids follow the `--` separator, so none
+// can be read as a flag. restic separates tags by commas, so the caller refuses
+// a tag with one.
+func TagArgs(repo string, snapIDs, add, remove []string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, "tag")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	for _, tag := range tags {
+	for _, tag := range add {
 		args = append(args, "--add", tag)
 	}
-	args = append(args, "--", snapID)
-	return args
+	for _, tag := range remove {
+		args = append(args, "--remove", tag)
+	}
+	args = append(args, "--")
+	return append(args, snapIDs...)
 }
 
 // ForgetArgs returns the argv slice for `restic forget` of specific snapshot IDs,
@@ -2729,13 +2730,13 @@ func (r Restic) Diff(ctx context.Context, repo, snap1, snap2 string, m Mode) (Di
 	return parseDiffStatistics(out)
 }
 
-// TagAdd adds tags to a snapshot (`restic tag --add`). An empty tag list is a
-// no-op (nothing to add).
-func (r Restic) TagAdd(ctx context.Context, repo, snapID string, tags []string, m Mode) error {
-	if len(tags) == 0 {
+// Tag adds and removes tags on snapshots. restic writes each one anew under a
+// different id and keeps the first id as its original.
+func (r Restic) Tag(ctx context.Context, repo string, snapIDs, add, remove []string, m Mode) error {
+	if len(add)+len(remove) == 0 {
 		return nil
 	}
-	_, err := r.run(ctx, TagAddArgs(repo, snapID, tags, m), m)
+	_, err := r.run(ctx, TagArgs(repo, snapIDs, add, remove, m), m)
 	return err
 }
 

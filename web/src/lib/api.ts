@@ -3291,6 +3291,32 @@ export function deleteTimelineRow(
   });
 }
 
+/** The kinds of entry whose backups can be marked, compared and exported one
+ *  by one. key is a container or VM name, the id of a folder set or ZFS entry,
+ *  and the domain itself for flash and config. */
+export type BackupDomain = TimelineDomain | "zfs";
+
+function backupPath(domain: BackupDomain, key: string): string {
+  return `/api/items/${encodeURIComponent(domain)}/${encodeURIComponent(key)}`;
+}
+
+/** Adds tags to one backup of an entry and removes others in the same step.
+ *  restic writes the backup anew under another id; the key of its timeline row
+ *  stays. A ZFS run is tagged on every dataset it wrote. */
+export function tagBackup(
+  domain: BackupDomain,
+  key: string,
+  snapshotId: string,
+  tags: string[],
+  remove: string[] = [],
+  source?: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`${backupPath(domain, key)}/tag${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ snapshotId, tags, remove }),
+  });
+}
+
 /** Whether a compose project's folder has a snapshot at a source. */
 export function getStackDir(project: string, source: string): Promise<OkEnvelope & { found?: boolean; time?: string }> {
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);

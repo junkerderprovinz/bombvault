@@ -99,7 +99,7 @@ func (f *foreignRecordingEngine) anyModeHasEnv() bool {
 func (f *foreignRecordingEngine) calledForbidden() []string {
 	forbidden := map[string]bool{
 		"Init": true, "Forget": true, "ForgetPolicy": true, "Prune": true,
-		"TagAdd": true, "Backup": true, "Copy": true,
+		"Tag": true, "Backup": true, "Copy": true,
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -287,8 +287,8 @@ func (f *foreignRecordingEngine) Prune(_ context.Context, _ string, _ restic.Mod
 	return nil
 }
 
-func (f *foreignRecordingEngine) TagAdd(_ context.Context, _, _ string, _ []string, _ restic.Mode) error {
-	f.record("TagAdd")
+func (f *foreignRecordingEngine) Tag(_ context.Context, _ string, _, _, _ []string, _ restic.Mode) error {
+	f.record("Tag")
 	return nil
 }
 
@@ -374,7 +374,7 @@ func TestOpenForeignLeavesSettingsUntouched(t *testing.T) {
 
 // TestOpenForeignIsReadOnly pins guarantee #2: opening a foreign repo performs
 // ONLY read probes and listings — never Init, Forget, ForgetPolicy, Prune,
-// TagAdd, Backup, or Copy (an Init would create an empty repository on someone
+// Tag, Backup, or Copy (an Init would create an empty repository on someone
 // else's storage; the others would mutate their backups).
 func TestOpenForeignIsReadOnly(t *testing.T) {
 	eng := &foreignRecordingEngine{

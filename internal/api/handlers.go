@@ -1818,7 +1818,7 @@ func (h *Handler) handleTagSnapshot(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.TagSnapshot(r.Context(), name, sourceParam(r), body.SnapshotID, body.Tags); err != nil {
+	if err := h.svc.TagBackup(r.Context(), "containers", name, sourceParam(r), body.SnapshotID, body.Tags, nil); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
