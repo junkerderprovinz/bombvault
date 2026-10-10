@@ -3650,7 +3650,6 @@ const ro: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Programare, cele programate primele",
   "backups.sort.pausedFirst": "Programare, cele întrerupte primele",
   "backups.search": "Caută",
-  "backups.searchPlaceholder": "Caută după nume",
   "backups.status.notProtected": "Neprotejat",
   "backups.status.waiting": "Așteaptă prima copie de rezervă",
   "backups.status.anomalies": "one={n} anomalie|few={n} anomalii|other={n} de anomalii",

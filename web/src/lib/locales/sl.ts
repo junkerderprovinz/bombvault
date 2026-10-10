@@ -3639,7 +3639,6 @@ const sl: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Urnik, načrtovane najprej",
   "backups.sort.pausedFirst": "Urnik, zaustavljene najprej",
   "backups.search": "Išči",
-  "backups.searchPlaceholder": "Išči po imenu",
   "backups.status.notProtected": "Ni zaščiteno",
   "backups.status.waiting": "Čaka na prvo kopijo",
   "backups.status.anomalies": "one={n} anomalija|two={n} anomaliji|few={n} anomalije|other={n} anomalij",

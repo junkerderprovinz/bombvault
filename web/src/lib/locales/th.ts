@@ -3650,7 +3650,6 @@ const th: Partial<Translations> = {
   "backups.sort.scheduledFirst": "ตารางเวลา ที่ตั้งเวลาไว้ก่อน",
   "backups.sort.pausedFirst": "ตารางเวลา ที่หยุดชั่วคราวก่อน",
   "backups.search": "ค้นหา",
-  "backups.searchPlaceholder": "ค้นหาตามชื่อ",
   "backups.status.notProtected": "ไม่ได้รับการป้องกัน",
   "backups.status.waiting": "รอการสำรองข้อมูลครั้งแรก",
   "backups.status.anomalies": "ความผิดปกติ {n} รายการ",

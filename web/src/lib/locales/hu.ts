@@ -3650,7 +3650,6 @@ const hu: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Ütemezés, az ütemezettek elöl",
   "backups.sort.pausedFirst": "Ütemezés, a szüneteltetettek elöl",
   "backups.search": "Keresés",
-  "backups.searchPlaceholder": "Keresés név szerint",
   "backups.status.notProtected": "Nincs védve",
   "backups.status.waiting": "Az első mentésre vár",
   "backups.status.anomalies": "{n} anomália",

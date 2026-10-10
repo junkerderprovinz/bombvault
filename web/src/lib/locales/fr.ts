@@ -3647,7 +3647,6 @@ const fr: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Planning, planifiées d'abord",
   "backups.sort.pausedFirst": "Planning, en pause d'abord",
   "backups.search": "Rechercher",
-  "backups.searchPlaceholder": "Rechercher par nom",
   "backups.status.notProtected": "Non protégé",
   "backups.status.waiting": "En attente de la première sauvegarde",
   "backups.status.anomalies": "one={n} anomalie|many={n} d'anomalies|other={n} anomalies",

@@ -3655,7 +3655,6 @@ const et: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Ajakava, ajastatud ees",
   "backups.sort.pausedFirst": "Ajakava, peatatud ees",
   "backups.search": "Otsi",
-  "backups.searchPlaceholder": "Otsi nime järgi",
   "backups.status.notProtected": "Kaitsmata",
   "backups.status.waiting": "Ootab esimest varundust",
   "backups.status.anomalies": "one={n} kõrvalekalle|other={n} kõrvalekallet",

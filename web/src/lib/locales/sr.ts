@@ -3639,7 +3639,6 @@ const sr: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Распоред, прво заказано",
   "backups.sort.pausedFirst": "Распоред, прво паузирано",
   "backups.search": "Претражи",
-  "backups.searchPlaceholder": "Претражи по имену",
   "backups.status.notProtected": "Није заштићено",
   "backups.status.waiting": "Чека прву копију",
   "backups.status.anomalies": "one={n} аномалија|few={n} аномалије|other={n} аномалија",

@@ -3645,7 +3645,6 @@ const cs: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Plán, naplánované první",
   "backups.sort.pausedFirst": "Plán, pozastavené první",
   "backups.search": "Hledat",
-  "backups.searchPlaceholder": "Hledat podle názvu",
   "backups.status.notProtected": "Nechráněno",
   "backups.status.waiting": "Čeká na první zálohu",
   "backups.status.anomalies": "one={n} anomálie|few={n} anomálie|many={n} anomálie|other={n} anomálií",

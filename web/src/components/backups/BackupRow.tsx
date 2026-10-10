@@ -17,14 +17,19 @@ import { humanBytes } from "../../lib/forecast";
 import type { TranslationKey } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
 import { formatRecent } from "../../lib/reltime";
+import { runReason } from "../../lib/runReason";
+import { useLongPress } from "../../lib/useLongPress";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { BackupCancelButton } from "../BackupCancelButton";
 import { Badge } from "../Badge";
+import { changeLines } from "../ContainerChangeNotice";
 import type { ScheduleSentence } from "../EffectiveScheduleLine";
 import { InfoBubble } from "../InfoBubble";
 import { IconAnomalies } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
+import { TAKEOVER_REASONS } from "../RenameTakeoverRow";
 import { KindGlyph, kindHue } from "./kinds";
+import { SelectMark } from "./SelectMark";
 
 type T = (key: TranslationKey, n?: number) => string;
 
@@ -36,6 +41,7 @@ const GLYPH_TILE =
 const STATUS_WIDTH = "w-[9.5rem] @max-[36rem]:w-auto @max-[36rem]:max-w-[9.5rem]";
 const NAME =
   "min-w-0 truncate text-sm font-semibold text-carbon-text @max-[36rem]:whitespace-normal @max-[36rem]:wrap-anywhere";
+const IP_COLUMN = "min-w-[7.5rem] flex-none text-end text-xs tabular-nums text-carbon-textMuted @max-[36rem]:hidden";
 
 const STRIP_TONE: Record<RunTone, string> = {
   ok: "bg-statusOkSolid",
@@ -95,6 +101,13 @@ function loudAnomalies(anomaly: AnomalyItem | undefined): number {
   return open.critical + open.warning;
 }
 
+interface RowFacts {
+  sentences: string[];
+  /** A fact that asks for a look colours the bubble: a container that changed
+   *  since its backup, or an entry that looks like a renamed one. */
+  tone: "warn" | "accent" | "plain";
+}
+
 /** Everything a row knows besides its status, as sentences for the bubble
  *  beside its name. */
 function rowFacts({
@@ -113,22 +126,35 @@ function rowFacts({
   scheduleSentence: (item: BackupItem) => ScheduleSentence | null;
   t: T;
   lang: string;
-}): string[] {
+}): RowFacts {
   const facts: string[] = [];
   const gone = isGone(item);
+  const changes = gone ? [] : changeLines(item.changedSinceBackup, t);
+  const tone = changes.length > 0 ? "warn" : item.renameFrom ? "accent" : "plain";
+
+  if (item.renameFrom) {
+    const reason = TAKEOVER_REASONS[item.renameReason ?? ""];
+    const looksLike = t("takeover.looksLike").replace("{old}", item.renameFrom);
+    facts.push(`${reason ? `${looksLike}: ${t(reason)}` : looksLike}. ${t("backups.fact.takeOver")}`);
+  }
+  if (item.formerNames?.length) {
+    facts.push(t("backups.fact.renamed").replace("{names}", item.formerNames.join(", ")));
+  }
+  if (changes.length > 0) facts.push(`${t("changeNotice.badge")}: ${changes.join(", ")}.`);
   if (!gone && item.kind === "container" && ["exited", "created", "dead"].includes(item.state ?? "")) {
     facts.push(t("backups.fact.stopped"));
   }
   if (!gone && item.kind === "vm" && /^shut ?off$/.test(item.state ?? "")) facts.push(t("backups.fact.vmOff"));
-  if (running || gone) return facts;
+  if (running || gone) return { sentences: facts, tone };
 
   const state = protection(item);
   const failed = item.lastRunStatus === "failed";
   if (failed && state === "ok") {
     facts.push(`${t("backups.fact.lastGood").replace("{when}", formatRecent(item.lastBackup, lang))}.`);
   }
+  if (failed && item.lastRunError) facts.push(runReason(item.lastRunError, t));
   if (failed && loudAnomalies(anomaly) > 0) facts.push(t("backups.fact.anomalyOpen"));
-  if (state === "pending") facts.push(`${t("backups.fact.nextRun")}.`);
+  if (state === "pending" && !item.renameFrom) facts.push(`${t("backups.fact.nextRun")}.`);
 
   const learning = anomaly?.learning;
   if (state === "ok" && anomalyEnabled && anomaly?.scheduled && learning && !learning.noData && learning.samples < learning.needed) {
@@ -137,14 +163,20 @@ function rowFacts({
 
   if (!inSchedule(item)) {
     facts.push(`${t("schedule.paused")}.`);
-    return facts;
+    return { sentences: facts, tone };
   }
   // The schedule every entry follows unless something says otherwise is not
   // worth a bubble on every row.
   const schedule = item.effectiveSchedule.kind === "everything" ? null : scheduleSentence(item);
   if (schedule) facts.push(`${schedule.text}.`);
-  return facts;
+  return { sentences: facts, tone };
 }
+
+const BUBBLE_TONE: Record<RowFacts["tone"], string> = {
+  warn: "text-statusWarn",
+  accent: "text-accentText",
+  plain: "",
+};
 
 function Status({ children, tone }: { children: ReactNode; tone: "fail" | "warn" | "neutral" }) {
   return (
@@ -157,7 +189,8 @@ function Status({ children, tone }: { children: ReactNode; tone: "fail" | "warn"
 /**
  * BackupRow is one entry of the Backups list: the glyph of its kind, its name
  * with what else there is to say about it in a bubble, its last runs and the
- * one state that matters most. The whole row opens the entry.
+ * one state that matters most. A plain click opens the entry. The page says
+ * through onClick when a click picks the row instead.
  */
 export function BackupRow({
   item,
@@ -167,6 +200,13 @@ export function BackupRow({
   anomaly,
   anomalyEnabled,
   scheduleSentence,
+  picked,
+  selecting,
+  showIp,
+  onClick,
+  onPick,
+  onMenu,
+  onLongPress,
   t,
   lang,
 }: {
@@ -177,10 +217,20 @@ export function BackupRow({
   anomaly: AnomalyItem | undefined;
   anomalyEnabled: boolean;
   scheduleSentence: (item: BackupItem) => ScheduleSentence | null;
+  picked: boolean;
+  /** Rows are being picked, so every row shows its mark. */
+  selecting: boolean;
+  showIp: boolean;
+  /** Answers true when the click picked rows and must not open the entry. */
+  onClick: (e: MouseEvent) => boolean;
+  onPick: (next: boolean) => void;
+  onMenu: (e: MouseEvent) => void;
+  onLongPress: () => void;
   t: T;
   lang: string;
 }) {
   const navigate = useNavigate();
+  const press = useLongPress(onLongPress);
   const target = entryTarget(item);
   const running = runsNow(progress);
   const facts = rowFacts({ item, running, anomaly, anomalyEnabled, scheduleSentence, t, lang });
@@ -234,27 +284,64 @@ export function BackupRow({
     );
   }
 
+  // The tap that ends a long press has already picked the row.
+  const taken = (e: MouseEvent) => press.took() || onClick(e);
+  const mark = <SelectMark checked={picked} label={t("common.selectItem").replace("{name}", name)} onChange={onPick} />;
+
   return (
     <li
       data-testid="backup-row"
-      onClick={() => navigate(target)}
+      data-picked={picked || undefined}
+      onClick={(e) => {
+        if (!taken(e)) navigate(target);
+      }}
+      // Shift+click would otherwise mark the text between the two rows.
+      onMouseDown={(e) => {
+        if (e.shiftKey) e.preventDefault();
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (!press.byTouch()) onMenu(e);
+      }}
+      {...press.handlers}
       style={hueVars(kindHue(item.kind)) as CSSProperties}
-      className={`glim-hue cursor-pointer rounded-control hover:bg-carbon-hover ${ROW}${dim ? " opacity-55" : ""}`}
+      className={`group glim-hue relative cursor-pointer rounded-control pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none] ${ROW} ${
+        picked
+          ? "bg-accentSoft shadow-[inset_3px_0_0_var(--accent)] rtl:shadow-[inset_-3px_0_0_var(--accent)]"
+          : "hover:bg-carbon-hover"
+      }${dim ? " opacity-55" : ""}`}
     >
+      {selecting ? (
+        mark
+      ) : (
+        // Until a row is picked, the mark waits in the card's margin beside
+        // the row under the pointer, so no row moves when it appears.
+        <span className="absolute -start-[19px] top-1/2 hidden -translate-y-1/2 pointer-fine:group-hover:flex pointer-fine:group-focus-within:flex">
+          {mark}
+        </span>
+      )}
       <span className={`glim-row-glyph ${GLYPH_TILE}`}>
         <KindGlyph kind={item.kind} />
       </span>
       <span className="flex min-w-0 flex-1 items-center gap-2">
-        <Link to={target} onClick={keepInRow} className={NAME}>
+        <Link
+          to={target}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (taken(e)) e.preventDefault();
+          }}
+          className={NAME}
+        >
           {name}
         </Link>
-        {facts.length > 0 && (
-          <span className="flex" onClick={keepInRow}>
-            <InfoBubble tip={facts.join(" ")} />
+        {facts.sentences.length > 0 && (
+          <span className={`flex ${BUBBLE_TONE[facts.tone]}`} onClick={keepInRow}>
+            <InfoBubble tip={facts.sentences.join(" ")} onAccent={facts.tone !== "plain"} />
           </span>
         )}
       </span>
       <span className="ms-auto flex flex-none items-center gap-2">
+        {showIp && <span className={IP_COLUMN}>{item.ip}</span>}
         <RunStrip tones={tones} t={t} />
         {cell}
       </span>
@@ -266,14 +353,27 @@ export function BackupRow({
  * SelfRow is BombVault's own container. It stands in the list so nobody looks
  * for it, and says why it has no backup instead of leading anywhere.
  */
-export function SelfRow({ item, t }: { item: BackupItem; t: T }) {
+export function SelfRow({
+  item,
+  selecting,
+  showIp,
+  t,
+}: {
+  item: BackupItem;
+  /** Keeps the name in line with the rows that show a mark. */
+  selecting: boolean;
+  showIp: boolean;
+  t: T;
+}) {
   return (
     <li data-testid="backup-self-row" className={`${ROW} opacity-70`}>
+      {selecting && <span className="w-[18px] flex-none" />}
       <span className={`${GLYPH_TILE} text-carbon-textSub`}>
         <KindGlyph kind={item.kind} />
       </span>
       <span className={`flex-1 ${NAME}`}>{item.name}</span>
       <span className="ms-auto flex flex-none items-center gap-2">
+        {showIp && <span className={IP_COLUMN}>{item.ip}</span>}
         <Badge tone="neutral" size="large" className="whitespace-nowrap">
           {t("backups.status.self")}
           <InfoBubble tip={t("backups.selfNote")} />

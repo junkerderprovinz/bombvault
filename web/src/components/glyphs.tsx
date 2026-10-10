@@ -95,6 +95,15 @@ export function IconPlay() {
   );
 }
 
+/** Pause. */
+export function IconPause() {
+  return (
+    <G box="0 0 14 14">
+      <path fillRule="evenodd" d="M0 1.5C0 0.671573 0.671573 0 1.5 0H4c0.82843 0 1.5 0.671573 1.5 1.5v11c0 0.8284 -0.67157 1.5 -1.5 1.5H1.5C0.671573 14 0 13.3284 0 12.5v-11ZM10 0c-0.82843 0 -1.5 0.671573 -1.5 1.5v11c0 0.8284 0.67157 1.5 1.5 1.5h2.5c0.8284 0 1.5 -0.6716 1.5 -1.5v-11c0 -0.828427 -0.6716 -1.5 -1.5 -1.5H10Z" clipRule="evenodd" />
+    </G>
+  );
+}
+
 /** Stop, abort. */
 export function IconStop() {
   return (

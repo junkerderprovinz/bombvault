@@ -6,7 +6,7 @@ import { InfoBubble } from "./InfoBubble";
 
 type T = ReturnType<typeof useT>["t"];
 
-const REASONS: Record<string, TranslationKey> = {
+export const TAKEOVER_REASONS: Record<string, TranslationKey> = {
   "docker-id": "takeover.reason.dockerId",
   "appdata-bind": "takeover.reason.appdataBind",
   "compose-service": "takeover.reason.composeService",
@@ -82,7 +82,7 @@ export function RenameTakeoverRow({
 
   if (dismissed) return null;
 
-  const facts = [REASONS[reason] && t(REASONS[reason]), backups !== null && backupCountText(t, backups)]
+  const facts = [TAKEOVER_REASONS[reason] && t(TAKEOVER_REASONS[reason]), backups !== null && backupCountText(t, backups)]
     .filter(Boolean)
     .join(", ");
 

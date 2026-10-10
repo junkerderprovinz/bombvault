@@ -30,6 +30,15 @@ describe("item calls", () => {
     ]);
   });
 
+  it("starts a batch of VMs by their libvirt names", async () => {
+    const { backupVMsAll } = await import("./api");
+    await backupVMsAll(["win11", "1_debian"]);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/vms/backup-all");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ names: ["win11", "1_debian"] });
+  });
+
   it("leaves the unfiltered run list as it was", async () => {
     const { listRuns } = await import("./api");
     await listRuns();

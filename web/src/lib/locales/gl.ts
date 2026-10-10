@@ -3655,7 +3655,6 @@ const gl: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Planificación, primeiro as programadas",
   "backups.sort.pausedFirst": "Planificación, primeiro as en pausa",
   "backups.search": "Buscar",
-  "backups.searchPlaceholder": "Buscar por nome",
   "backups.status.notProtected": "Sen protección",
   "backups.status.waiting": "Esperando a primeira copia",
   "backups.status.anomalies": "one={n} anomalía|other={n} anomalías",

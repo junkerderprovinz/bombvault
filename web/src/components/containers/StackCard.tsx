@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { listRuns, restoreStack, getStackDir } from "../../lib/api";
-import type { Container, Run } from "../../lib/api";
+import { useRef, useState, type CSSProperties } from "react";
+import { getStackDir } from "../../lib/api";
+import type { Container } from "../../lib/api";
 import { IconTipButton } from "../IconTipButton";
 import { useT } from "../../lib/i18n";
 import { RestoreCancelButton } from "../RestoreCancelButton";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../SourceToggle";
 import { Button } from "../Button";
-import { useProgress } from "../../lib/progress";
 import { useConfirm } from "../../lib/useConfirm";
 import { offsiteTargetLabel, useOffsiteTargets } from "../../lib/useOffsiteTargets";
 import { useHostLabel } from "../../lib/useHostLabel";
@@ -15,9 +14,9 @@ import { hueVars } from "../../lib/appearance";
 import { useToast } from "../../lib/toast";
 import { Toggle } from "../Toggle";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
+import { stackRestoreQuestion, useStackRestore } from "../../lib/useStackRestore";
 import { RestoreCheckPanel } from "../restore/RestoreCheckPanel";
 import { RuntimeRetry } from "../restore/RuntimeRetry";
-import { isRuntimeRefusal } from "../../lib/runReason";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -26,25 +25,9 @@ export interface StackGroup {
   members: Container[];
 }
 
-/** Joins names the way the reader's language joins a list, "a, b and c". */
-function listSeparated(lang: string, names: string[]): string {
-  return new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(names);
-}
-
-// Grace after the last member goes inactive before a stack restore is treated as
-// finished. Comfortably longer than the per-member progress linger (~800ms) plus
-// the gap before the next member starts, so the cancel button doesn't flicker out
-// between sequential members.
-const STACK_DONE_GRACE_MS = 8000;
-
-// How often a stack card reads the run history for its members' outcomes.
-const STACK_RUNS_POLL_MS = 2000;
-
-// StackCard is one compose stack: its name, its members and a collapsible
-// "Restore stack" action that restores every member stopped, then optionally
-// starts them in dependency order. The server runs the restore detached and
-// its answer carries no member results, so the card shows a "restore started"
-// note and reads the per-member outcomes from the run history.
+/** StackCard is one compose stack: its name, its members and a "Restore
+ *  stack" action that restores every member stopped and can then start them
+ *  in dependency order. */
 export function StackCard({
   group,
   onRestored,
@@ -54,10 +37,7 @@ export function StackCard({
   group: StackGroup;
   onRestored: () => void;
   t: T;
-  /** Rainbow position of this card among the stacks rendered together. It
-   *  counts separately from the container rows and from the page-wide
-   *  sequence the panel heading takes, as every headed list on this page
-   *  does. */
+  /** Rainbow position of this card among the stacks rendered together. */
   index: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -66,10 +46,9 @@ export function StackCard({
   const [busy, setBusy] = useState(false);
   const { lang } = useT();
   const { push } = useToast();
-  // Read through a ref rather than the hook value directly: run() reads this
-  // after its own await (the restore confirm, then getStackDir), by which
-  // point a slow-to-load target list may have caught up. Closing over the
-  // hook value itself would freeze it at the render that owned the click.
+  // run() reads both after its own awaits, by which time a slow target list
+  // may have arrived. The values of the render that owned the click would be
+  // stale.
   const host = useHostLabel();
   const hostRef = useRef(host);
   hostRef.current = host;
@@ -77,93 +56,20 @@ export function StackCard({
   const targetsRef = useRef(targets);
   targetsRef.current = targets;
   const [shake, setShake] = useState(0);
-  const [started, setStarted] = useState(false);
-  // The restore runs its members detached, so their outcomes are read back
-  // from the run history, counting only runs newer than watchFrom holds. A
-  // member Docker refused for its GPU or runtime is offered again without them.
-  const [watchFrom, setWatchFrom] = useState<Set<string> | null>(null);
-  const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
-  // A stack restore has no progress entry of its own: members are restored one
-  // by one under their "container:<name>" keys, and `finished` is derived from
-  // those. Cancelling targets the synthetic "stack:<project>" key, which aborts
-  // the member loop at the current member.
-  const [finished, setFinished] = useState(false);
-  const progress = useProgress();
-  const anyMemberActive =
-    started &&
-    group.members.some((m) => {
-      const p = progress[`container:${m.name}`];
-      return !!p && p.active && p.phase === "restore";
-    });
-  // Once a member has been active the cancel button stays up through the gaps
-  // between sequential members. The restore counts as finished only after no
-  // member has been active for the grace window.
-  const sawActive = useRef(false);
+  const { started, finished, runtimeRefused, start } = useStackRestore(
+    group.project,
+    group.members.map((m) => m.name)
+  );
   const { confirm, confirmDialog } = useConfirm();
-  useEffect(() => {
-    if (!started) return;
-    if (anyMemberActive) {
-      sawActive.current = true;
-      return; // the next member started; the cleanup dropped the pending timer
-    }
-    if (!sawActive.current) return; // nothing has run yet: don't finish early
-    const timer = setTimeout(() => {
-      sawActive.current = false;
-      setStarted(false); // reset so a later single-member restore can't resurrect
-      setFinished(true); //   the stack cancel button
-    }, STACK_DONE_GRACE_MS);
-    return () => clearTimeout(timer);
-  }, [started, anyMemberActive]);
-
-  const memberNames = group.members.map((m) => m.name).join(",");
-  useEffect(() => {
-    if (!watchFrom) return;
-    const names = new Set(memberNames.split(","));
-    let alive = true;
-    let timer: ReturnType<typeof setTimeout>;
-    const poll = async () => {
-      const res = await listRuns().catch(() => null);
-      if (!alive) return;
-      // The list is newest first, so the first run of a member is its latest.
-      const latest = new Map<string, Run>();
-      for (const r of res?.runs ?? []) {
-        if (r.kind === "restore" && r.domain === "container" && names.has(r.target) && !watchFrom.has(r.id) && !latest.has(r.target)) {
-          latest.set(r.target, r);
-        }
-      }
-      const done = [...latest.values()].filter((r) => r.status !== "running");
-      if (done.length === names.size || done.some((r) => r.status === "cancelled") || finished) {
-        setRuntimeRefused(done.filter((r) => isRuntimeRefusal(r.error)).map((r) => r.target));
-        setWatchFrom(null);
-        return;
-      }
-      timer = setTimeout(() => void poll(), STACK_RUNS_POLL_MS);
-    };
-    timer = setTimeout(() => void poll(), STACK_RUNS_POLL_MS);
-    return () => {
-      alive = false;
-      clearTimeout(timer);
-    };
-  }, [watchFrom, finished, memberNames]);
 
   async function run() {
-    // A member whose data folder is copied while the stack runs comes back as
-    // files that may not start, so the question names it.
-    const live = group.members.filter((m) => m.dbDataCoverage === "live").map((m) => m.name);
-    const question = live.length
-      ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn", live.length).replace("{names}", listSeparated(lang, live))}`
-      : t("stack.restoreConfirm");
     setBusy(true);
     const check = await checkRestoreOnce({ kind: "stack", name: group.project, source });
     setBusy(false);
     const refusal = restoreBlockReason(check, t);
     const extra = <RestoreCheckPanel check={check} t={t} />;
-    if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
-    setRuntimeRefused([]);
+    if (!(await confirm(stackRestoreQuestion(group.members, t, lang), { extra, confirmBlocked: refusal }))) return;
     setBusy(true);
-    setStarted(false);
-    setFinished(false);
-    sawActive.current = false;
     try {
       let stackDirSource: string | undefined;
       if (isOffsiteSource(source)) {
@@ -184,12 +90,9 @@ export function StackCard({
           stackDirSource = "local";
         }
       }
-      const before = await listRuns().catch(() => null);
-      const res = await restoreStack(group.project, startInOrder, true, source, stackDirSource);
+      const res = await start({ source, startInOrder, stackDirSource });
       if (res.ok) {
-        setStarted(true);
-        setWatchFrom(new Set((before?.runs ?? []).map((r) => r.id)));
-        onRestored(); // refresh the main list so run-state/orphan rows update
+        onRestored();
       } else {
         push(res.error ?? t("settings.error"), "fail");
         setShake((n) => n + 1);

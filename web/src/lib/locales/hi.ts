@@ -3655,7 +3655,6 @@ const hi: Partial<Translations> = {
   "backups.sort.scheduledFirst": "शेड्यूल, निर्धारित पहले",
   "backups.sort.pausedFirst": "शेड्यूल, रुके हुए पहले",
   "backups.search": "खोजें",
-  "backups.searchPlaceholder": "नाम से खोजें",
   "backups.status.notProtected": "सुरक्षित नहीं",
   "backups.status.waiting": "पहले बैकअप की प्रतीक्षा",
   "backups.status.anomalies": "{n} विसंगति",

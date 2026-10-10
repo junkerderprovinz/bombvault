@@ -3638,7 +3638,6 @@ const ko: Partial<Translations> = {
   "backups.sort.scheduledFirst": "일정, 예약된 것 먼저",
   "backups.sort.pausedFirst": "일정, 일시 중지된 것 먼저",
   "backups.search": "검색",
-  "backups.searchPlaceholder": "이름으로 검색",
   "backups.status.notProtected": "보호되지 않음",
   "backups.status.waiting": "첫 백업 대기 중",
   "backups.status.anomalies": "이상 징후 {n}개",

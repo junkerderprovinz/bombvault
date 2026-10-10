@@ -3655,7 +3655,6 @@ const fa: Partial<Translations> = {
   "backups.sort.scheduledFirst": "زمان‌بندی، زمان‌بندی‌شده‌ها ابتدا",
   "backups.sort.pausedFirst": "زمان‌بندی، متوقف‌شده‌ها ابتدا",
   "backups.search": "جست‌وجو",
-  "backups.searchPlaceholder": "جست‌وجو بر اساس نام",
   "backups.status.notProtected": "محافظت‌نشده",
   "backups.status.waiting": "در انتظار نخستین پشتیبان",
   "backups.status.anomalies": "{n} ناهنجاری",

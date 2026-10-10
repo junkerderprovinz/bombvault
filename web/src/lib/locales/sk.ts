@@ -3655,7 +3655,6 @@ const sk: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Plán, naplánované prvé",
   "backups.sort.pausedFirst": "Plán, pozastavené prvé",
   "backups.search": "Hľadať",
-  "backups.searchPlaceholder": "Hľadať podľa názvu",
   "backups.status.notProtected": "Nechránené",
   "backups.status.waiting": "Čaká na prvú zálohu",
   "backups.status.anomalies": "one={n} anomália|few={n} anomálie|many={n} anomálie|other={n} anomálií",

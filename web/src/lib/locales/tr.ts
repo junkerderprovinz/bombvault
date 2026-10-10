@@ -3647,7 +3647,6 @@ const tr: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Zamanlama, zamanlananlar önce",
   "backups.sort.pausedFirst": "Zamanlama, duraklatılanlar önce",
   "backups.search": "Ara",
-  "backups.searchPlaceholder": "Ada göre ara",
   "backups.status.notProtected": "Korumasız",
   "backups.status.waiting": "İlk yedek bekleniyor",
   "backups.status.anomalies": "one={n} anormallik|other={n} anormallik",

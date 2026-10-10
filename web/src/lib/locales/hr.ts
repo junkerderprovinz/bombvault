@@ -3655,7 +3655,6 @@ const hr: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Raspored, zakazano prvo",
   "backups.sort.pausedFirst": "Raspored, pauzirano prvo",
   "backups.search": "Traži",
-  "backups.searchPlaceholder": "Traži po nazivu",
   "backups.status.notProtected": "Nije zaštićeno",
   "backups.status.waiting": "Čeka prvu sigurnosnu kopiju",
   "backups.status.anomalies": "one={n} anomalija|few={n} anomalije|other={n} anomalija",

@@ -3655,7 +3655,6 @@ const lv: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Grafiks, ieplānotās vispirms",
   "backups.sort.pausedFirst": "Grafiks, apturētās vispirms",
   "backups.search": "Meklēt",
-  "backups.searchPlaceholder": "Meklēt pēc nosaukuma",
   "backups.status.notProtected": "Nav aizsargāts",
   "backups.status.waiting": "Gaida pirmo kopiju",
   "backups.status.anomalies": "zero={n} anomāliju|one={n} anomālija|other={n} anomālijas",

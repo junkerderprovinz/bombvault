@@ -3655,7 +3655,6 @@ const is: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Tímaáætlun, áætluð fyrst",
   "backups.sort.pausedFirst": "Tímaáætlun, í hléi fyrst",
   "backups.search": "Leita",
-  "backups.searchPlaceholder": "Leita eftir nafni",
   "backups.status.notProtected": "Ekki varið",
   "backups.status.waiting": "Bíður eftir fyrsta afriti",
   "backups.status.anomalies": "one={n} frávik|other={n} frávik",

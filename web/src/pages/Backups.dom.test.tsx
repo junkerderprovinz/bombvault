@@ -4,8 +4,9 @@
  *
  * One list stands for six kinds of entry, so each has to land under the right
  * tile with the right status, and whatever the list offers has to reach the
- * call of the kind it is about. Only EventSource is faked for the progress
- * stream, because jsdom has none.
+ * call of the kind it is about. EventSource is faked for the progress stream,
+ * because jsdom has none, and the windows the page opens are stand-ins: each
+ * has tests of its own.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
@@ -15,6 +16,7 @@ import { I18nProvider, en } from "../lib/i18n";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 import { formatRecent } from "../lib/reltime";
+import { RESTORE_NO_RUNTIME } from "../lib/runReason";
 import type { AnomalyItem, AnomalyView, BackupItem, BackupItemKind, Settings } from "../lib/api";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -29,11 +31,37 @@ vi.mock("../lib/api", async (importOriginal) => {
     discoverAll: vi.fn(),
     backupEverythingNow: vi.fn(),
     backupAll: vi.fn(),
+    backupVMsAll: vi.fn(),
     backupFilesAll: vi.fn(),
     backupZFSAll: vi.fn(),
     backupFlashNow: vi.fn(),
+    backupNow: vi.fn(),
+    backupVMNow: vi.fn(),
+    cancelBackup: vi.fn(),
+    setInclude: vi.fn(),
+    setVMInclude: vi.fn(),
+    patchFileSet: vi.fn(),
+    restore: vi.fn(),
+    restoreVM: vi.fn(),
+    zfsConnection: vi.fn(),
   };
 });
+
+vi.mock("../lib/backupWatch", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/backupWatch")>()),
+  fireAndWaitRun: vi.fn(),
+}));
+
+vi.mock("../components/backups/AddWindow", () => ({
+  AddWindow: ({ start }: { start: string }) => <div data-testid="add-window">{start}</div>,
+}));
+vi.mock("../components/backups/StackWindow", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../components/backups/StackWindow")>()),
+  StackWindow: ({ initial }: { initial: string }) => <div data-testid="stack-window">{initial}</div>,
+}));
+vi.mock("../components/backups/ZFSConnectionWindow", () => ({
+  ZFSConnectionWindow: () => <div data-testid="zfs-window" />,
+}));
 
 const pushed: { message: string; severity?: string }[] = [];
 vi.mock("../lib/toast", () => ({
@@ -49,8 +77,19 @@ const getAnomalyItems = vi.mocked(api.getAnomalyItems);
 const discoverAll = vi.mocked(api.discoverAll);
 const backupEverythingNow = vi.mocked(api.backupEverythingNow);
 const backupAll = vi.mocked(api.backupAll);
+const backupVMsAll = vi.mocked(api.backupVMsAll);
 const backupFilesAll = vi.mocked(api.backupFilesAll);
 const backupFlashNow = vi.mocked(api.backupFlashNow);
+const backupNow = vi.mocked(api.backupNow);
+const backupVMNow = vi.mocked(api.backupVMNow);
+const cancelBackup = vi.mocked(api.cancelBackup);
+const setInclude = vi.mocked(api.setInclude);
+const setVMInclude = vi.mocked(api.setVMInclude);
+const patchFileSet = vi.mocked(api.patchFileSet);
+const restore = vi.mocked(api.restore);
+const restoreVM = vi.mocked(api.restoreVM);
+const zfsConnection = vi.mocked(api.zfsConnection);
+const fireAndWaitRun = vi.mocked((await import("../lib/backupWatch")).fireAndWaitRun);
 
 const { Backups } = await import("./Backups");
 
@@ -195,6 +234,32 @@ async function press(el: HTMLElement) {
   });
 }
 
+const picked = () => rows().filter((r) => r.hasAttribute("data-picked")).map((r) => within(r).getByRole("link").textContent);
+const bar = () => screen.queryByTestId("bulk-bar");
+const barButton = (name: string) => within(bar()!).getByRole("button", { name });
+const menuItems = () => screen.queryAllByRole("menuitem").map((item) => item.textContent);
+
+async function click(el: HTMLElement, keys: { ctrlKey?: boolean; shiftKey?: boolean } = {}) {
+  await act(async () => {
+    fireEvent.click(el, keys);
+  });
+}
+
+async function rightClick(el: HTMLElement) {
+  await act(async () => {
+    fireEvent.pointerDown(el, { pointerType: "mouse", button: 2 });
+    fireEvent.contextMenu(el, { clientX: 40, clientY: 60 });
+  });
+}
+
+async function chooseFromMenu(name: string) {
+  await press(screen.getByRole("menuitem", { name }));
+}
+
+async function openMore() {
+  await press(action("More")!);
+}
+
 const MIXED = [
   entry({ key: "plex" }),
   entry({ key: "gitea", lastBackup: 0, lastRunStatus: "", included: false }),
@@ -205,6 +270,9 @@ const MIXED = [
   entry({ kind: "flash", key: "flash", name: "flash", state: undefined, installed: undefined }),
   entry({ kind: "config", key: "config", name: "config", state: undefined, installed: undefined }),
 ];
+
+// Two backed-up containers of one compose project.
+const STACK = [entry({ key: "immich", stack: "immich" }), entry({ key: "immich_postgres", stack: "immich" })];
 
 beforeEach(() => {
   desktop = true;
@@ -219,6 +287,7 @@ beforeEach(() => {
   getAnomalySummary.mockResolvedValue({ ok: true, summary: { enabled: true, generation: 1 } } as never);
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   getAnomalies.mockResolvedValue({ ok: true, anomalies: [], nextCursor: "" });
+  zfsConnection.mockReturnValue(new Promise(() => {}));
   serve(MIXED);
 });
 
@@ -343,7 +412,8 @@ describe("a row", () => {
   it("has no bubble when it follows the common schedule and nothing is up", async () => {
     serve([entry({ key: "plex" })]);
     await renderPage();
-    expect(within(row("plex")).queryByLabelText(/./)?.getAttribute("role")).toBe("img");
+    const labelled = within(row("plex")).queryAllByLabelText(/./);
+    expect(labelled.map((el) => el.getAttribute("role"))).toEqual(["checkbox", "img"]);
   });
 
   it("draws the last runs and says in words what the squares show", async () => {
@@ -476,7 +546,7 @@ describe("filter, sort and search", () => {
     expect(screen.getByRole("button", { name: "Size, smallest first" })).toBeTruthy();
   });
 
-  it("offer every order in both directions", async () => {
+  it("offer every order, in both directions where it has two", async () => {
     await renderPage();
     await press(screen.getByRole("button", { name: "Name A to Z" }));
     expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
@@ -484,6 +554,7 @@ describe("filter, sort and search", () => {
       "Name Z to A",
       "Status, problems first",
       "Status, problems last",
+      "IP",
       "Last backup, newest first",
       "Last backup, oldest first",
       "Size, largest first",
@@ -610,7 +681,8 @@ describe("the page actions", () => {
       directRepos: [],
     });
     await renderPage();
-    await press(action("Discover backups")!);
+    await openMore();
+    await chooseFromMenu("Discover backups");
     expect(pushed).toEqual([
       { message: "Not everything was searched: Backblaze B2", severity: "warn" },
       { message: "Storage locations searched: 3 new entries found.", severity: "success" },
@@ -622,8 +694,10 @@ describe("the page actions", () => {
     const none = { containers: 0, vms: 0, files: 0, zfs: 0, skipped: [], skippedNeedsAction: false, paused: [], leftOpen: [], directRepos: [] };
     discoverAll.mockResolvedValueOnce(none).mockResolvedValueOnce({ ...none, error: "wrong key" });
     await renderPage();
-    await press(action("Discover backups")!);
-    await press(action("Discover backups")!);
+    for (let i = 0; i < 2; i++) {
+      await openMore();
+      await chooseFromMenu("Discover backups");
+    }
     expect(pushed).toEqual([
       { message: "Storage locations searched: nothing new found.", severity: "success" },
       { message: "wrong key", severity: "fail" },
@@ -673,9 +747,11 @@ describe("the page actions", () => {
     expect(pushed).toEqual([{ message: en["backups.nothingScheduled"], severity: "warn" }]);
   });
 
-  it("offer no batch where the server has none: VMs and what is not installed", async () => {
+  it("back up the VMs through their own batch, and offer none for what is not installed", async () => {
+    backupVMsAll.mockResolvedValue({ ok: true });
     await renderPage("/backups?kind=vm");
-    expect(action("Back up all now")).toBeNull();
+    await press(action("Back up all now")!);
+    expect(backupVMsAll).toHaveBeenCalledWith(["win11"]);
     await press(tile("Not installed"));
     expect(action("Back up all now")).toBeNull();
     expect(action("Back up everything now")).toBeNull();
@@ -687,20 +763,24 @@ describe("the page actions", () => {
     expect((action("Back up everything now") as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("add where the chosen kind is added today, under the kind's own word", async () => {
+  it("open the add window on the chosen kind, under the kind's own word, and on the choice elsewhere", async () => {
     await renderPage();
+    await press(action("Add")!);
+    expect(screen.getByTestId("add-window").textContent).toBe("choose");
     await press(tile("ZFS"));
-    expect(action("Add dataset")).toBeTruthy();
+    await press(action("Add dataset")!);
+    expect(screen.getByTestId("add-window").textContent).toBe("zfs");
     await press(tile("Folders"));
     await press(action("Add folder")!);
-    expect(screen.getByText("at /files")).toBeTruthy();
+    expect(screen.getByTestId("add-window").textContent).toBe("files");
+    expect(screen.queryByText(/^at /)).toBeNull();
   });
 
   it("offer no Add when neither folders nor ZFS are switched on", async () => {
     getSettings.mockResolvedValue({ ok: true, settings: { ...ALL_ON, filesEnabled: false, zfsEnabled: false } as Settings });
     await renderPage();
     expect(action("Add")).toBeNull();
-    expect(action("Discover backups")).toBeTruthy();
+    expect(action("More")).toBeTruthy();
   });
 
   it("make Add the one filled accent of the corner", async () => {
@@ -709,6 +789,567 @@ describe("the page actions", () => {
       .getAllByRole("button")
       .filter((b) => b.className.includes("bg-accent"));
     expect(accents.map((b) => b.textContent)).toEqual(["Add"]);
+  });
+});
+
+describe("picking rows", () => {
+  it("adds a row with Ctrl+click and opens nothing", async () => {
+    await renderPage();
+    expect(bar()).toBeNull();
+    await click(row("plex"), { ctrlKey: true });
+    await click(row("Documents"), { ctrlKey: true });
+    expect(picked()).toEqual(["Documents", "plex"]);
+    expect(bar()!.textContent).toContain("2 selected");
+    expect(screen.queryByText(/^at /)).toBeNull();
+    await click(row("plex"), { ctrlKey: true });
+    expect(picked()).toEqual(["Documents"]);
+  });
+
+  it("picks the range from the row picked last with Shift+click", async () => {
+    await renderPage();
+    await click(row("Documents"), { ctrlKey: true });
+    await click(row("Unraid flash"), { shiftKey: true });
+    expect(picked()).toEqual(["Documents", "gitea", "plex", "Unraid flash"]);
+  });
+
+  it("picks every row in view with Ctrl+A and lets go with Escape", async () => {
+    await renderPage("/backups?kind=container");
+    await act(async () => {
+      fireEvent.keyDown(document.body, { key: "a", ctrlKey: true });
+    });
+    expect(picked()).toEqual(["gitea", "plex", "pihole"]);
+    expect(within(bar()!).getByRole("checkbox", { name: "Select all" }).getAttribute("aria-checked")).toBe("true");
+    await act(async () => {
+      fireEvent.keyDown(document.body, { key: "Escape" });
+    });
+    expect(bar()).toBeNull();
+    expect(picked()).toEqual([]);
+  });
+
+  it("leaves Ctrl+A to a field that is being typed in", async () => {
+    await renderPage();
+    await press(screen.getByRole("button", { name: "Search" }));
+    const field = screen.getByRole("searchbox", { name: "Search" });
+    field.focus();
+    await act(async () => {
+      fireEvent.keyDown(field, { key: "a", ctrlKey: true });
+    });
+    expect(bar()).toBeNull();
+  });
+
+  it("picks with a plain click once rows are being picked, on the name as well", async () => {
+    await renderPage();
+    await click(within(row("plex")).getByRole("checkbox", { name: "Select plex" }));
+    await click(row("gitea"));
+    await click(within(row("Documents")).getByRole("link"));
+    expect(picked()).toEqual(["Documents", "gitea", "plex"]);
+    expect(screen.queryByText(/^at /)).toBeNull();
+  });
+
+  it("picks and clears every row through the mark in the bar", async () => {
+    await renderPage();
+    await click(row("plex"), { ctrlKey: true });
+    await click(within(bar()!).getByRole("checkbox", { name: "Select all" }));
+    expect(picked()).toHaveLength(7);
+    await click(within(bar()!).getByRole("checkbox", { name: "Select all" }));
+    expect(picked()).toEqual([]);
+    expect(bar()).toBeNull();
+  });
+
+  it("drops a picked row that the search hides, so nothing acts on what is out of view", async () => {
+    await renderPage();
+    await click(row("plex"), { ctrlKey: true });
+    await click(row("Documents"), { ctrlKey: true });
+    await press(screen.getByRole("button", { name: "Search" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), { target: { value: "doc" } });
+    expect(bar()!.textContent).toContain("1 selected");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), { target: { value: "" } });
+    expect(picked()).toEqual(["Documents"]);
+  });
+
+  it("starts with a long press of a finger, and the tap that ends it opens nothing", async () => {
+    vi.useFakeTimers();
+    try {
+      await renderPage();
+      const plex = row("plex");
+      await act(async () => {
+        fireEvent.pointerDown(plex, { pointerType: "touch", clientX: 10, clientY: 10 });
+        await vi.advanceTimersByTimeAsync(600);
+        fireEvent.pointerUp(plex, { pointerType: "touch" });
+        fireEvent.click(plex);
+      });
+      expect(picked()).toEqual(["plex"]);
+      expect(screen.queryByText(/^at /)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("takes a finger that moves for scrolling", async () => {
+    vi.useFakeTimers();
+    try {
+      await renderPage();
+      const plex = row("plex");
+      await act(async () => {
+        fireEvent.pointerDown(plex, { pointerType: "touch", clientX: 10, clientY: 10 });
+        fireEvent.pointerMove(plex, { pointerType: "touch", clientX: 10, clientY: 60 });
+        await vi.advanceTimersByTimeAsync(600);
+      });
+      expect(bar()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("has no mark for BombVault's own container", async () => {
+    await renderPage();
+    expect(within(screen.getByTestId("backup-self-row")).queryByRole("checkbox")).toBeNull();
+  });
+});
+
+describe("the bar above picked rows", () => {
+  async function pick(...names: string[]) {
+    for (const name of names) await click(row(name), { ctrlKey: true });
+  }
+
+  it("backs up one batch per kind and leaves out what is gone", async () => {
+    backupAll.mockResolvedValue({ ok: true });
+    await renderPage("/backups?kind=container");
+    await pick("plex", "gitea", "pihole");
+    await press(barButton("Back up selected"));
+    expect(backupAll).toHaveBeenCalledWith(["gitea", "plex"]);
+    expect(pushed).toEqual([{ message: `${en["containers.batchStarted"]} 1 skipped`, severity: "success" }]);
+  });
+
+  it("starts the next kind once the batch before it has let go of the server", async () => {
+    vi.useFakeTimers();
+    try {
+      backupAll.mockResolvedValue({ ok: true });
+      backupVMsAll.mockRejectedValueOnce(new api.ApiError(409, "busy")).mockResolvedValue({ ok: true });
+      await renderPage();
+      await pick("plex", "Windows 11");
+      await press(barButton("Back up selected"));
+      expect(backupVMsAll).toHaveBeenCalledTimes(1);
+      expect(pushed).toEqual([{ message: en["backups.batch.startedInTurn"], severity: "success" }]);
+      expect(screen.getByTestId("batch-note").textContent).toContain("0 of 2");
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+      expect(backupVMsAll).toHaveBeenCalledTimes(2);
+      expect(backupVMsAll).toHaveBeenLastCalledWith(["win11"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("says a backup is already running and starts nothing more", async () => {
+    backupAll.mockRejectedValue(new api.ApiError(409, "busy"));
+    await renderPage();
+    await pick("plex", "Windows 11");
+    await press(barButton("Back up selected"));
+    expect(backupVMsAll).not.toHaveBeenCalled();
+    expect(pushed).toEqual([{ message: en["containers.batchAlreadyRunning"], severity: "warn" }]);
+    expect(screen.queryByTestId("batch-note")).toBeNull();
+  });
+
+  it("says so when nothing picked can be backed up", async () => {
+    await renderPage();
+    await pick("pihole");
+    await press(barButton("Back up selected"));
+    expect(backupAll).not.toHaveBeenCalled();
+    expect(pushed).toEqual([{ message: en["backups.batch.nothing"], severity: "warn" }]);
+  });
+
+  it("pauses and resumes each entry through the call of its kind", async () => {
+    setInclude.mockResolvedValue({ ok: true });
+    setVMInclude.mockResolvedValue({ ok: true });
+    patchFileSet.mockResolvedValue({ ok: true });
+    await renderPage();
+    await pick("plex", "Windows 11", "Documents", "Unraid flash");
+    await press(barButton("Pause schedule"));
+    expect(setInclude).toHaveBeenCalledWith("plex", false);
+    expect(setVMInclude).toHaveBeenCalledWith("win11", false);
+    expect(patchFileSet).toHaveBeenCalledWith("f1", { enabled: false });
+    // The flash drive has no switch of its own and is not counted.
+    expect(pushed).toEqual([{ message: "Schedule for 3 items paused", severity: "success" }]);
+    expect(listItems).toHaveBeenCalledTimes(2);
+
+    await press(barButton("Resume schedule"));
+    expect(setInclude).toHaveBeenLastCalledWith("plex", true);
+    expect(pushed.at(-1)?.message).toBe("Schedule for 3 items is running again");
+  });
+
+  it("says a save failed instead of claiming the pause", async () => {
+    setInclude.mockResolvedValue({ ok: false, error: "locked" });
+    await renderPage();
+    await pick("plex");
+    await press(barButton("Pause schedule"));
+    expect(pushed).toEqual([{ message: en["schedule.updateFailed"], severity: "fail" }]);
+  });
+
+  it("restores the newest backup of containers and VMs after asking, one after the other", async () => {
+    fireAndWaitRun.mockResolvedValue({ ok: true });
+    await renderPage();
+    await pick("plex", "Windows 11", "Documents");
+    await press(barButton("Restore newest snapshot"));
+    expect(fireAndWaitRun).not.toHaveBeenCalled();
+    expect(screen.getByText(`${en["backups.restore.confirm"]} ${en["backups.restore.alsoVMs"]}`)).toBeTruthy();
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: "Restore" }));
+    // The folder set is not restored from here: it needs a folder to go to.
+    expect(fireAndWaitRun).toHaveBeenCalledTimes(2);
+    fireAndWaitRun.mock.calls[0][0].start();
+    fireAndWaitRun.mock.calls[1][0].start();
+    expect(restore).toHaveBeenCalledWith("plex", "latest", true);
+    expect(restoreVM).toHaveBeenCalledWith("win11", "latest", true);
+    expect(pushed).toEqual([{ message: "2 ok, 0 failed", severity: "success" }]);
+  });
+
+  it("offers a container Docker could not recreate again without its GPU", async () => {
+    fireAndWaitRun.mockResolvedValue({ ok: false, error: RESTORE_NO_RUNTIME });
+    await renderPage();
+    await pick("plex");
+    await press(barButton("Restore newest snapshot"));
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: "Restore" }));
+    expect(pushed).toEqual([{ message: "0 ok, 1 failed", severity: "warn" }]);
+    const retry = within(screen.getByTestId("runtime-retry"));
+    expect(retry.getByText(en["restore.noRuntimeList"].replace("{names}", "plex"))).toBeTruthy();
+    expect(retry.getByRole("button", { name: "Restore without GPU and runtime" })).toBeTruthy();
+  });
+
+  it("offers no restore when nothing picked can be restored together", async () => {
+    await renderPage();
+    await pick("Documents", "gitea");
+    expect(within(bar()!).queryByRole("button", { name: "Restore newest snapshot" })).toBeNull();
+  });
+
+  it("holds backup and restore back while something runs, and says what", async () => {
+    await renderPage();
+    await pick("plex");
+    progress({ key: "vm:win11", phase: "backup", percent: 5, active: true });
+    expect((barButton("Back up selected") as HTMLButtonElement).disabled).toBe(true);
+    expect((barButton("Restore newest snapshot") as HTMLButtonElement).disabled).toBe(true);
+    expect((barButton("Pause schedule") as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("ends the picking with Done", async () => {
+    await renderPage();
+    await pick("plex");
+    await press(barButton("Done"));
+    expect(bar()).toBeNull();
+    expect(picked()).toEqual([]);
+  });
+});
+
+describe("a right click on a row", () => {
+  it("offers what can be done with that entry", async () => {
+    await renderPage();
+    await rightClick(row("plex"));
+    expect(screen.getByRole("menu", { name: "plex" })).toBeTruthy();
+    expect(menuItems()).toEqual(["Back up now", "Pause schedule", "Restore newest snapshot", "Open", "Select"]);
+  });
+
+  it("offers a paused entry its schedule back and a folder set no restore", async () => {
+    await renderPage();
+    await rightClick(row("gitea"));
+    expect(menuItems()).toEqual(["Back up now", "Resume schedule", "Open", "Select"]);
+    await act(async () => {
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    });
+    expect(screen.queryByRole("menu")).toBeNull();
+    await rightClick(row("Documents"));
+    expect(menuItems()).toEqual(["Back up now", "Pause schedule", "Open", "Select"]);
+  });
+
+  it("offers an entry that is gone no backup, and the flash drive no schedule", async () => {
+    await renderPage();
+    await rightClick(row("pihole"));
+    expect(menuItems()).toEqual(["Pause schedule", "Restore newest snapshot", "Open", "Select"]);
+    await act(async () => {
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    });
+    await rightClick(row("Unraid flash"));
+    expect(menuItems()).toEqual(["Back up now", "Open", "Select"]);
+  });
+
+  it("asks once before a container is stopped for its backup", async () => {
+    backupNow.mockResolvedValue({ ok: true, started: true });
+    await renderPage();
+    await rightClick(row("plex"));
+    await chooseFromMenu("Back up now");
+    expect(backupNow).not.toHaveBeenCalled();
+    expect(screen.getByText(en["containers.stopWarning"])).toBeTruthy();
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: "Back up now" }));
+    expect(backupNow).toHaveBeenCalledWith("plex");
+
+    await rightClick(row("plex"));
+    await chooseFromMenu("Back up now");
+    expect(backupNow).toHaveBeenCalledTimes(2);
+  });
+
+  it("backs up a VM without asking and passes a refusal on", async () => {
+    backupVMNow.mockResolvedValue({ ok: false, error: "a backup is already running" });
+    await renderPage();
+    await rightClick(row("Windows 11"));
+    await chooseFromMenu("Back up now");
+    expect(backupVMNow).toHaveBeenCalledWith("win11");
+    expect(pushed).toEqual([{ message: "a backup is already running", severity: "warn" }]);
+  });
+
+  it("cancels a running backup after asking", async () => {
+    cancelBackup.mockResolvedValue({ ok: true, cancelled: true });
+    await renderPage();
+    progress({ key: "container:plex", phase: "backup", percent: 20, active: true });
+    await rightClick(row("plex"));
+    expect(menuItems()[0]).toBe("Cancel backup");
+    await chooseFromMenu("Cancel backup");
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    expect(cancelBackup).toHaveBeenCalledWith("container:plex");
+  });
+
+  it("pauses the one entry and names it", async () => {
+    setInclude.mockResolvedValue({ ok: true });
+    await renderPage();
+    await rightClick(row("plex"));
+    await chooseFromMenu("Pause schedule");
+    expect(setInclude).toHaveBeenCalledWith("plex", false);
+    expect(pushed).toEqual([{ message: "Schedule for plex paused", severity: "success" }]);
+  });
+
+  it("opens the entry and picks it", async () => {
+    await renderPage();
+    await rightClick(row("Documents"));
+    await chooseFromMenu("Select");
+    expect(picked()).toEqual(["Documents"]);
+    await rightClick(row("plex"));
+    await chooseFromMenu("Open");
+    expect(screen.getByText("at /containers")).toBeTruthy();
+  });
+
+  it("acts on the whole selection when the row is part of it", async () => {
+    backupAll.mockResolvedValue({ ok: true });
+    backupFilesAll.mockResolvedValue({ ok: true });
+    await renderPage();
+    await click(row("plex"), { ctrlKey: true });
+    await click(row("Documents"), { ctrlKey: true });
+    await rightClick(row("plex"));
+    expect(screen.getByRole("menu").textContent).toContain("2 selected");
+    expect(menuItems()).toEqual(["Back up selected", "Pause schedule", "Clear selection"]);
+    await chooseFromMenu("Back up selected");
+    expect(backupAll).toHaveBeenCalledWith(["plex"]);
+    expect(backupFilesAll).toHaveBeenCalledWith(["f1"]);
+
+    await rightClick(row("Documents"));
+    await chooseFromMenu("Clear selection");
+    expect(picked()).toEqual([]);
+  });
+
+  it("stays on the one row when another one is picked", async () => {
+    await renderPage();
+    await click(row("plex"), { ctrlKey: true });
+    await click(row("Documents"), { ctrlKey: true });
+    await rightClick(row("gitea"));
+    expect(screen.getByRole("menu", { name: "gitea" })).toBeTruthy();
+    expect(menuItems()).toContain("Open");
+  });
+
+  it("leaves a finger's long press to the selection", async () => {
+    await renderPage();
+    await act(async () => {
+      fireEvent.pointerDown(row("plex"), { pointerType: "touch" });
+      fireEvent.contextMenu(row("plex"));
+    });
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+});
+
+describe("the More menu", () => {
+  it("holds the rare actions, and the ZFS connection only while ZFS is on", async () => {
+    serve([...MIXED, ...STACK]);
+    await renderPage();
+    await openMore();
+    expect(screen.getByRole("menu", { name: "More" })).toBeTruthy();
+    expect(menuItems()).toEqual(["Select", "Discover backups", "Restore stack", "ZFS connection to this server"]);
+
+    cleanup();
+    getSettings.mockResolvedValue({ ok: true, settings: { ...ALL_ON, zfsEnabled: false } as Settings });
+    serve(MIXED);
+    await renderPage();
+    await openMore();
+    // No stack is backed up here either, so there is none to restore.
+    expect(menuItems()).toEqual(["Select", "Discover backups"]);
+  });
+
+  it("starts picking with no row picked yet and says how", async () => {
+    await renderPage();
+    await openMore();
+    await chooseFromMenu("Select");
+    expect(bar()!.textContent).toContain(en["backups.select.hint"]);
+    expect(within(bar()!).queryByRole("button", { name: "Back up selected" })).toBeNull();
+    await click(row("plex"));
+    expect(picked()).toEqual(["plex"]);
+  });
+
+  it("opens the windows for a stack and for the ZFS connection", async () => {
+    serve([...MIXED, ...STACK]);
+    await renderPage();
+    await openMore();
+    await chooseFromMenu("Restore stack");
+    expect(screen.getByTestId("stack-window").textContent).toBe("immich");
+    await openMore();
+    await chooseFromMenu("ZFS connection to this server");
+    expect(screen.getByTestId("zfs-window")).toBeTruthy();
+  });
+});
+
+describe("the notes above the list", () => {
+  const DATABASE = entry({ key: "immich_postgres", dbTier: "curated" });
+
+  it("explain the database dumps once and lead to the first database", async () => {
+    serve([...MIXED, DATABASE, entry({ key: "db-off", dbTier: "curated", dbDumpOff: true })]);
+    await renderPage();
+    const note = within(screen.getByTestId("dump-intro"));
+    expect(note.getByRole("link", { name: "immich_postgres" }).getAttribute("href")).toBe("/containers");
+    await press(note.getByRole("button", { name: "Got it" }));
+    expect(screen.queryByTestId("dump-intro")).toBeNull();
+
+    cleanup();
+    await renderPage();
+    expect(screen.queryByTestId("dump-intro")).toBeNull();
+  });
+
+  it("keep the dumps to the tiles that show containers, and say nothing while dumps are off", async () => {
+    serve([...MIXED, DATABASE]);
+    await renderPage("/backups?kind=vm");
+    expect(screen.queryByTestId("dump-intro")).toBeNull();
+    await press(tile("Containers"));
+    expect(screen.getByTestId("dump-intro")).toBeTruthy();
+
+    cleanup();
+    serve([...MIXED, { ...DATABASE, dbDumpsGlobalOff: true }]);
+    await renderPage();
+    expect(screen.queryByTestId("dump-intro")).toBeNull();
+  });
+
+  it("show a batch that runs on the server, whoever started it", async () => {
+    await renderPage();
+    expect(screen.queryByTestId("batch-note")).toBeNull();
+    progress({ key: "batch:containers", phase: "backup", percent: 40, active: true });
+    expect(screen.getByTestId("batch-note").textContent).toBe("Batch backup running40 %");
+    progress({ key: "batch:containers", phase: "backup", percent: 100, active: false });
+    expect(screen.queryByTestId("batch-note")).toBeNull();
+  });
+
+  it("count the entries of a batch this page started", async () => {
+    backupAll.mockResolvedValue({ ok: true });
+    serve([entry({ key: "plex" }), entry({ key: "sonarr" }), entry({ key: "radarr" }), entry({ key: "lidarr" })]);
+    await renderPage("/backups?kind=container");
+    await press(action("Back up all now")!);
+    progress({ key: "batch:containers", phase: "backup", percent: 50, active: true });
+    expect(screen.getByTestId("batch-note").textContent).toBe("Batch backup running50 %2 of 4");
+  });
+
+  it("put a ZFS connection that is down above the ZFS entries, and lead to it", async () => {
+    zfsConnection.mockResolvedValue({ ok: true, code: "ssh-auth", target: "root@tower", uriTarget: "", version: "", detail: "" } as never);
+    await renderPage("/backups?kind=zfs");
+    const note = within(screen.getByTestId("zfs-down"));
+    await press(note.getByRole("button", { name: "View connection" }));
+    expect(screen.getByTestId("zfs-window")).toBeTruthy();
+  });
+
+  it("say nothing about a ZFS connection that works, and do not ask on other tiles", async () => {
+    zfsConnection.mockResolvedValue({ ok: true, code: "ok", target: "root@tower", uriTarget: "", version: "2.2", detail: "" } as never);
+    await renderPage();
+    expect(zfsConnection).not.toHaveBeenCalled();
+    await press(tile("ZFS"));
+    expect(zfsConnection).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("zfs-down")).toBeNull();
+  });
+});
+
+describe("stacks", () => {
+  it("are listed under the containers with a way to restore each", async () => {
+    serve([...MIXED, ...STACK]);
+    await renderPage();
+    expect(screen.queryByTestId("stacks")).toBeNull();
+    await press(tile("Containers"));
+    const stacks = within(screen.getByTestId("stacks"));
+    expect(stacks.getByText("2 containers · immich, immich_postgres")).toBeTruthy();
+    await press(stacks.getByRole("button", { name: "Restore stack" }));
+    expect(screen.getByTestId("stack-window").textContent).toBe("immich");
+  });
+
+  it("need two backed-up containers, of which one may be gone", async () => {
+    serve([
+      entry({ key: "a", stack: "pair" }),
+      entry({ key: "b", stack: "pair", installed: false, state: undefined }),
+      entry({ key: "c", stack: "fresh" }),
+      entry({ key: "d", stack: "fresh", lastBackup: 0, lastRunStatus: "" }),
+    ]);
+    await renderPage("/backups?kind=container");
+    expect(screen.getByTestId("stacks").textContent).toContain("pair");
+    expect(screen.getByTestId("stacks").textContent).not.toContain("fresh");
+  });
+});
+
+describe("what a row knows about a container or VM", () => {
+  it("points at the entry it looks renamed from", async () => {
+    serve([entry({ key: "radarr", lastBackup: 0, lastRunStatus: "", renameFrom: "radarr-movies", renameReason: "appdata-bind" })]);
+    await renderPage();
+    const said = within(row("radarr")).getByLabelText(/^Looks like radarr-movies/).getAttribute("aria-label")!;
+    expect(said).toBe("Looks like radarr-movies: same appdata folders. Open the entry to take it over.");
+  });
+
+  it("names former names and what changed since the backup", async () => {
+    serve([
+      entry({
+        key: "vaultwarden",
+        formerNames: ["bitwarden", "bw"],
+        changedSinceBackup: [{ field: "port", change: "removed", name: "8920/tcp" }],
+      }),
+    ]);
+    await renderPage();
+    const said = within(row("vaultwarden")).getByLabelText(/^Renamed/).getAttribute("aria-label")!;
+    expect(said).toBe("Renamed, formerly: bitwarden, bw. Changed since backup: Port 8920/tcp is new.");
+  });
+
+  it("says why the last backup failed", async () => {
+    serve([entry({ key: "plex", lastRunStatus: "failed", lastRunError: "the repository is locked" })]);
+    await renderPage();
+    expect(within(row("plex")).getByLabelText(/the repository is locked/)).toBeTruthy();
+  });
+
+  it("is found by its image, its address and a former name", async () => {
+    serve([
+      entry({ key: "plex", image: "linuxserver/plex:latest", ip: "192.168.20.31" }),
+      entry({ key: "vaultwarden", formerNames: ["bitwarden"] }),
+      entry({ key: "other" }),
+    ]);
+    await renderPage();
+    await press(screen.getByRole("button", { name: "Search" }));
+    const field = screen.getByRole("searchbox", { name: "Search" });
+    expect(field.getAttribute("placeholder")).toBe("Name, image or IP");
+    for (const [query, found] of [
+      ["linuxserver", "plex"],
+      ["20.31", "plex"],
+      ["bitw", "vaultwarden"],
+    ]) {
+      fireEvent.change(field, { target: { value: query } });
+      expect(rowNames()).toEqual([found]);
+    }
+  });
+
+  it("stands by its address when the list is sorted by it, and shows the address", async () => {
+    serve([
+      entry({ key: "b", ip: "192.168.20.100" }),
+      entry({ key: "a", ip: "192.168.20.9" }),
+      entry({ kind: "files", key: "f1", name: "Documents", state: undefined, installed: undefined }),
+    ]);
+    await renderPage();
+    expect(row("a").textContent).not.toContain("192.168.20.9");
+    await press(screen.getByRole("button", { name: "Name A to Z" }));
+    await press(screen.getByRole("option", { name: "IP" }));
+    expect(rowNames()).toEqual(["a", "b", "Documents"]);
+    expect(row("a").textContent).toContain("192.168.20.9");
   });
 });
 

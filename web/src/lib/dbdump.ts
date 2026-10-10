@@ -106,7 +106,9 @@ export function updateWarnKey(
  * whose dump runs. A dump switched off for every container, or for one on its
  * card or by its label, is not news to whoever did it.
  */
-export function introDatabases(containers: Container[]): Container[] {
+export function introDatabases<
+  C extends Partial<Pick<Container, "dbTier" | "dbDumpOff" | "dbDumpLabelOff" | "dbDumpsGlobalOff">>,
+>(containers: C[]): C[] {
   if (containers.some((c) => c.dbDumpsGlobalOff)) return [];
   return containers.filter((c) => c.dbTier === "curated" && !c.dbDumpOff && !c.dbDumpLabelOff);
 }

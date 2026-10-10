@@ -3655,7 +3655,6 @@ const lt: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Tvarkaraštis, suplanuotos pirma",
   "backups.sort.pausedFirst": "Tvarkaraštis, pristabdytos pirma",
   "backups.search": "Ieškoti",
-  "backups.searchPlaceholder": "Ieškoti pagal pavadinimą",
   "backups.status.notProtected": "Neapsaugota",
   "backups.status.waiting": "Laukiama pirmos kopijos",
   "backups.status.anomalies": "one={n} anomalija|few={n} anomalijos|many={n} anomalijos|other={n} anomalijų",

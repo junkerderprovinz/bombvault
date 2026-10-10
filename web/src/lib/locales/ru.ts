@@ -3642,7 +3642,6 @@ const ru: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Расписание, сначала запланированные",
   "backups.sort.pausedFirst": "Расписание, сначала приостановленные",
   "backups.search": "Поиск",
-  "backups.searchPlaceholder": "Поиск по имени",
   "backups.status.notProtected": "Не защищено",
   "backups.status.waiting": "Ожидает первой копии",
   "backups.status.anomalies": "one={n} аномалия|few={n} аномалии|many={n} аномалий|other={n} аномалии",

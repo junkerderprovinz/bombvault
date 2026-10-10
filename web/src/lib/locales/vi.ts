@@ -3638,7 +3638,6 @@ const vi: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Lịch trình, đã lên lịch trước",
   "backups.sort.pausedFirst": "Lịch trình, đang tạm dừng trước",
   "backups.search": "Tìm kiếm",
-  "backups.searchPlaceholder": "Tìm theo tên",
   "backups.status.notProtected": "Chưa được bảo vệ",
   "backups.status.waiting": "Đang chờ bản sao lưu đầu tiên",
   "backups.status.anomalies": "{n} điểm bất thường",

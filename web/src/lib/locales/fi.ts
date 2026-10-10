@@ -3647,7 +3647,6 @@ const fi: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Aikataulu, aikataulutetut ensin",
   "backups.sort.pausedFirst": "Aikataulu, keskeytetyt ensin",
   "backups.search": "Hae",
-  "backups.searchPlaceholder": "Hae nimellä",
   "backups.status.notProtected": "Suojaamaton",
   "backups.status.waiting": "Odottaa ensimmäistä varmuuskopiota",
   "backups.status.anomalies": "one={n} poikkeama|other={n} poikkeamaa",

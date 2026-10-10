@@ -3655,7 +3655,6 @@ const eu: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Egutegia, programatuak lehenik",
   "backups.sort.pausedFirst": "Egutegia, pausatuak lehenik",
   "backups.search": "Bilatu",
-  "backups.searchPlaceholder": "Bilatu izenez",
   "backups.status.notProtected": "Babesik gabe",
   "backups.status.waiting": "Lehen babeskopiaren zain",
   "backups.status.anomalies": "{n} anomalia",

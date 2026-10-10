@@ -3647,7 +3647,6 @@ const da: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Tidsplan, planlagte først",
   "backups.sort.pausedFirst": "Tidsplan, pausede først",
   "backups.search": "Søg",
-  "backups.searchPlaceholder": "Søg efter navn",
   "backups.status.notProtected": "Ikke beskyttet",
   "backups.status.waiting": "Venter på første sikkerhedskopi",
   "backups.status.anomalies": "one={n} afvigelse|other={n} afvigelser",

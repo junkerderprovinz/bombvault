@@ -3655,7 +3655,6 @@ const id: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Jadwal, yang terjadwal dulu",
   "backups.sort.pausedFirst": "Jadwal, yang dijeda dulu",
   "backups.search": "Cari",
-  "backups.searchPlaceholder": "Cari berdasarkan nama",
   "backups.status.notProtected": "Tidak terlindungi",
   "backups.status.waiting": "Menunggu cadangan pertama",
   "backups.status.anomalies": "{n} anomali",

@@ -79,8 +79,6 @@ const KNOWN_ORPHANS = new Set([
   "restore.preview",
   "restore.toFolder",
   "stack.restored",
-  "stack.memberRestored",
-  "stack.memberStarted",
   "run.statusSuccess",
   "run.statusFailed",
   "run.colKind",

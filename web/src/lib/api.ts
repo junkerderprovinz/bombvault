@@ -413,6 +413,8 @@ export interface GetSettingsResponse {
   settings: Settings;
   /** The resolved host mount root (e.g. "/host/user"), sourced from cfg.HostMountRoot. */
   hostMountRoot: string;
+  /** What the host calls the folder mounted there (e.g. "/mnt"). */
+  hostSourceRoot?: string;
   /** The detected/overridden platform BombVault is running on ("unraid" |
    *  "generic" | "truenas"), sourced from internal/platform's Platform.Kind().
    *  Read-only host-environment info, not a setting the UI can change — used
@@ -3386,7 +3388,7 @@ export type BackupItemKind = "container" | "vm" | "files" | "zfs" | "flash" | "c
 /** One run in the strip of a BackupItem. */
 export interface BackupItemRun {
   id: string;
-  /** What ran: "backup", "dbdump", "restore" and so on. */
+  /** What ran: "backup", "import" or "restore". */
   kind: string;
   status: string;
   startedAt: number;
@@ -3411,6 +3413,8 @@ export interface BackupItem {
   lastBackup: number;
   /** Status of the last finished backup, "" for none. */
   lastRunStatus: string;
+  /** Why that backup failed, as its run recorded it. Absent unless it did. */
+  lastRunError?: string;
   /** What the newest measured backup read, null before the first. */
   sourceBytes: number | null;
   /** Containers and VMs: what Docker or libvirt reports. Absent when the host
@@ -3424,7 +3428,27 @@ export interface BackupItem {
   /** True while the kind is switched off in the settings. Flash and config
    *  are not listed at all then. */
   kindDisabled?: boolean;
-  /** The newest fourteen runs of any kind, newest first. */
+  /** Containers: the address, the image and the compose project. A container
+   *  that is gone has no address and names the image and project of its
+   *  stored definition. */
+  ip?: string;
+  image?: string;
+  stack?: string;
+  /** Live containers recognised as a database server, as on a Container. */
+  dbTier?: Container["dbTier"];
+  dbDumpOff?: boolean;
+  dbDumpLabelOff?: boolean;
+  dbDumpsGlobalOff?: boolean;
+  dbDataCoverage?: DbDataCoverage;
+  /** Containers and VMs: the names the entry had before, oldest link first. */
+  formerNames?: string[];
+  /** Live containers: how they differ from their last good backup. */
+  changedSinceBackup?: ContainerChange[];
+  /** Live containers and VMs without a backup of their own: the not-installed
+   *  entry they look renamed from, and the code of what gave it away. */
+  renameFrom?: string;
+  renameReason?: string;
+  /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
 
@@ -3688,6 +3712,15 @@ export function listVMs(): Promise<ListVMsResponse> {
 export function backupVMNow(name: string): Promise<BackupResponse> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}/backup`, {
     method: "POST",
+  });
+}
+
+/** POST /api/vms/backup-all: a batch backup of the named VMs that runs on the
+ *  server, like backupAll. `names` are libvirt names. */
+export function backupVMsAll(names: string[]): Promise<OkEnvelope & { started?: number }> {
+  return fetchJSON("/api/vms/backup-all", {
+    method: "POST",
+    body: JSON.stringify({ names }),
   });
 }
 

@@ -3647,7 +3647,6 @@ const he: Partial<Translations> = {
   "backups.sort.scheduledFirst": "לוח זמנים, המתוזמנים קודם",
   "backups.sort.pausedFirst": "לוח זמנים, המושהים קודם",
   "backups.search": "חיפוש",
-  "backups.searchPlaceholder": "חיפוש לפי שם",
   "backups.status.notProtected": "לא מוגן",
   "backups.status.waiting": "ממתין לגיבוי הראשון",
   "backups.status.anomalies": "one=חריגה אחת|two=שתי חריגות|other={n} חריגות",

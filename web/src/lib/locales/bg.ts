@@ -3655,7 +3655,6 @@ const bg: Partial<Translations> = {
   "backups.sort.scheduledFirst": "График, първо планираните",
   "backups.sort.pausedFirst": "График, първо спрените",
   "backups.search": "Търсене",
-  "backups.searchPlaceholder": "Търсене по име",
   "backups.status.notProtected": "Не е защитено",
   "backups.status.waiting": "Чака първото архивиране",
   "backups.status.anomalies": "one={n} аномалия|other={n} аномалии",

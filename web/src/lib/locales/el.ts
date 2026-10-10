@@ -3647,7 +3647,6 @@ const el: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Χρονοδιάγραμμα, πρώτα τα προγραμματισμένα",
   "backups.sort.pausedFirst": "Χρονοδιάγραμμα, πρώτα αυτά σε παύση",
   "backups.search": "Αναζήτηση",
-  "backups.searchPlaceholder": "Αναζήτηση με όνομα",
   "backups.status.notProtected": "Δεν προστατεύεται",
   "backups.status.waiting": "Αναμονή για το πρώτο αντίγραφο",
   "backups.status.anomalies": "one={n} ανωμαλία|other={n} ανωμαλίες",

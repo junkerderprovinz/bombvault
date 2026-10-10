@@ -3638,7 +3638,6 @@ const ja: Partial<Translations> = {
   "backups.sort.scheduledFirst": "スケジュール、スケジュール済みを先に",
   "backups.sort.pausedFirst": "スケジュール、停止中を先に",
   "backups.search": "検索",
-  "backups.searchPlaceholder": "名前で検索",
   "backups.status.notProtected": "未保護",
   "backups.status.waiting": "最初のバックアップを待機中",
   "backups.status.anomalies": "異常 {n} 件",

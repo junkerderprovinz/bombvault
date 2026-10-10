@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { createFileSet, createDirectRepo, patchFileSet } from "../../lib/api";
+import { patchFileSet } from "../../lib/api";
 import type { FileSetView, OkEnvelope } from "../../lib/api";
 import { PlacementDraft, type PlacementDraftValue } from "../placement/PlacementDraft";
 import { placementErrorText } from "../../lib/placementCodes";
-import { reposChanged } from "../../lib/useNamedRepos";
+import { createPlacedFileSet } from "./createPlacedFileSet";
 import { FolderBrowser } from "../FolderBrowser";
 import { useT } from "../../lib/i18n";
 import { Badge } from "../Badge";
@@ -53,26 +53,13 @@ export function FileSetDialog({
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
 
-  // A remembered direct repository is made before the set. If the set then
-  // fails, the draft keeps the new id so a second try does not make another.
-  async function createSet(excludes: string[]): Promise<OkEnvelope & { id?: string }> {
-    let home = placement.home;
-    if (home && "direct" in home) {
-      const made = await createDirectRepo(home.direct.targetId, home.direct.name, home.direct.location);
-      if (!made.ok || !made.repo) return { ok: false, error: placementErrorText(t, lang, made, "settings.error") };
-      reposChanged();
-      const created = { repo: made.repo.id };
-      setPlacement((prev) => ({ ...prev, home: created }));
-      home = created;
-    }
-    return createFileSet({
-      name: name.trim(),
-      path: path.trim(),
-      excludes,
-      enabled,
-      ...(home ? { repo: home.repo } : {}),
-      ...(placement.copies ? { copies: placement.copies } : {}),
-    });
+  function createSet(excludes: string[]): Promise<OkEnvelope & { id?: string }> {
+    return createPlacedFileSet(
+      { name: name.trim(), path: path.trim(), excludes, enabled },
+      placement,
+      (repo) => setPlacement((prev) => ({ ...prev, home: { repo } })),
+      (refused) => placementErrorText(t, lang, refused, "settings.error")
+    );
   }
 
   // The dialog closes on success, so every outcome is reported as a toast.

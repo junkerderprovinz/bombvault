@@ -3647,7 +3647,6 @@ const sv: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Schema, schemalagda först",
   "backups.sort.pausedFirst": "Schema, pausade först",
   "backups.search": "Sök",
-  "backups.searchPlaceholder": "Sök efter namn",
   "backups.status.notProtected": "Inte skyddad",
   "backups.status.waiting": "Väntar på första säkerhetskopian",
   "backups.status.anomalies": "one={n} avvikelse|other={n} avvikelser",

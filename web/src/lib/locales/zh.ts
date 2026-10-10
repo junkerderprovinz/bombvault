@@ -3638,7 +3638,6 @@ const zh: Partial<Translations> = {
   "backups.sort.scheduledFirst": "计划，已计划优先",
   "backups.sort.pausedFirst": "计划，已暂停优先",
   "backups.search": "搜索",
-  "backups.searchPlaceholder": "按名称搜索",
   "backups.status.notProtected": "未受保护",
   "backups.status.waiting": "等待首次备份",
   "backups.status.anomalies": "{n} 个异常",

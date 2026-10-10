@@ -3642,7 +3642,6 @@ const uk: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Розклад, спочатку заплановані",
   "backups.sort.pausedFirst": "Розклад, спочатку призупинені",
   "backups.search": "Пошук",
-  "backups.searchPlaceholder": "Пошук за іменем",
   "backups.status.notProtected": "Не захищено",
   "backups.status.waiting": "Очікує першої копії",
   "backups.status.anomalies": "one={n} аномалія|few={n} аномалії|many={n} аномалій|other={n} аномалії",

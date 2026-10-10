@@ -26,16 +26,22 @@ function changeText(c: ContainerChange, t: T): string {
   return key ? t(key).replace("{name}", c.name || c.backup || c.now || "") : "";
 }
 
+/** changeLines words the first few changes and counts the rest. */
+export function changeLines(changes: ContainerChange[] | undefined, t: T): string[] {
+  const lines = (changes ?? []).map((c) => changeText(c, t)).filter(Boolean);
+  const listed = lines.slice(0, LISTED);
+  if (lines.length > LISTED) listed.push(t("changeNotice.more", lines.length - LISTED));
+  return listed;
+}
+
 /**
  * ContainerChangeNotice is the mark beside a container's name when it was
  * recreated with other settings since its last good backup. It only informs:
  * nothing is blocked, and it goes away with the next backup.
  */
 export function ContainerChangeNotice({ changes, t }: { changes?: ContainerChange[]; t: T }) {
-  const lines = (changes ?? []).map((c) => changeText(c, t)).filter(Boolean);
-  if (lines.length === 0) return null;
-  const listed = lines.slice(0, LISTED);
-  if (lines.length > LISTED) listed.push(t("changeNotice.more", lines.length - LISTED));
+  const listed = changeLines(changes, t);
+  if (listed.length === 0) return null;
   return (
     <span className="inline-flex items-center gap-1">
       <Badge tone="warn" size="small" shape="pill" className="whitespace-nowrap">

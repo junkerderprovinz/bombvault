@@ -3650,7 +3650,6 @@ const ar: Partial<Translations> = {
   "backups.sort.scheduledFirst": "الجدول، المجدولة أولًا",
   "backups.sort.pausedFirst": "الجدول، المتوقفة أولًا",
   "backups.search": "بحث",
-  "backups.searchPlaceholder": "ابحث بالاسم",
   "backups.status.notProtected": "غير محمي",
   "backups.status.waiting": "في انتظار النسخة الأولى",
   "backups.status.anomalies": "zero=لا حالات شاذة|one=حالة شاذة واحدة|two=حالتان شاذتان|few={n} حالات شاذة|many={n} حالة شاذة|other={n} حالة شاذة",

@@ -3,18 +3,24 @@ import type { BackupItem, BackupItemRun } from "./api";
 import {
   DEFAULT_VIEW,
   NOT_INSTALLED,
-  addTarget,
+  addStart,
+  batchParts,
+  canBackUp,
   entriesOf,
   entryTarget,
   filterEntries,
+  itemId,
   itemProgressKey,
   listedItems,
   parseTile,
   protection,
+  rangeIds,
+  restoresInBulk,
   rowStatus,
   runStrip,
   showsSelf,
   sortItems,
+  stacksOf,
   tileEntries,
   tilePath,
   type ListView,
@@ -95,12 +101,12 @@ describe("where things lead", () => {
     expect(entryTarget(item({ kind: "config" }))).toBe("/config");
   });
 
-  it("adds on the page of the chosen kind, else on the first kind that is added by hand and switched on", () => {
-    expect(addTarget("zfs", { files: true, zfs: true })).toBe("/zfs");
-    expect(addTarget("files", {})).toBe("/files");
-    expect(addTarget("all", { files: true, zfs: true })).toBe("/files");
-    expect(addTarget("container", { zfs: true })).toBe("/zfs");
-    expect(addTarget("all", { container: true })).toBeNull();
+  it("adds the chosen tile's kind, offers the choice elsewhere and nothing while neither kind is on", () => {
+    expect(addStart("zfs", { files: true, zfs: true })).toBe("zfs");
+    expect(addStart("files", {})).toBe("files");
+    expect(addStart("all", { files: true, zfs: true })).toBe("choose");
+    expect(addStart("container", { zfs: true })).toBe("choose");
+    expect(addStart("all", { container: true })).toBeNull();
   });
 
   it("finds a running backup under the key the server reports it by", () => {
@@ -212,6 +218,27 @@ describe("filtering", () => {
     expect(left(DEFAULT_VIEW, "  DOC ")).toEqual(["Documents"]);
   });
 
+  it("by a search in the image, the address and the former names", () => {
+    const found = (query: string) =>
+      names(
+        filterEntries(
+          [
+            item({ name: "plex", image: "linuxserver/plex:latest", ip: "192.168.20.31" }),
+            item({ name: "vaultwarden", formerNames: ["bitwarden"] }),
+            item({ name: "plain" }),
+          ],
+          "all",
+          DEFAULT_VIEW,
+          query,
+          (i) => i.name
+        )
+      );
+    expect(found("LinuxServer")).toEqual(["plex"]);
+    expect(found("20.31")).toEqual(["plex"]);
+    expect(found("bitw")).toEqual(["vaultwarden"]);
+    expect(found("p")).toEqual(["plex", "plain"]);
+  });
+
   it("inside the chosen tile only", () => {
     expect(names(filterEntries(entries, "files", DEFAULT_VIEW, "", (i) => i.name))).toEqual(["Documents"]);
   });
@@ -250,6 +277,17 @@ describe("sorting", () => {
     expect(sorted(items, "size")).toEqual(["mid", "old", "new"]);
   });
 
+  it("by address as numbers, with what has none last", () => {
+    const items = [
+      item({ name: "ten", ip: "192.168.20.10" }),
+      item({ name: "none" }),
+      item({ name: "nine", ip: "192.168.20.9" }),
+      item({ name: "other-net", ip: "10.0.0.200" }),
+    ];
+    expect(sorted(items, "ip")).toEqual(["other-net", "nine", "ten", "none"]);
+    expect(sorted(items, "ip", true)).toEqual(["none", "ten", "nine", "other-net"]);
+  });
+
   it("by schedule, with what never runs last and equal schedules side by side", () => {
     const at = (spec: string) => ({ kind: "domain" as const, spec, alsoSpec: "" });
     const items = [
@@ -284,5 +322,86 @@ describe("BombVault's own container", () => {
     expect(showsSelf(self, "all", { ...DEFAULT_VIEW, installed: "notInstalled" }, "")).toBe(false);
     expect(showsSelf(self, "all", { ...DEFAULT_VIEW, installed: "installed" }, "")).toBe(true);
     expect(showsSelf(self, "all", DEFAULT_VIEW, "plex")).toBe(false);
+  });
+});
+
+describe("picking a range", () => {
+  const order = ["a", "b", "c", "d", "e"];
+
+  it("takes every row between the one picked last and the clicked one, in either direction", () => {
+    expect(rangeIds(order, "b", "d")).toEqual(["b", "c", "d"]);
+    expect(rangeIds(order, "d", "b")).toEqual(["b", "c", "d"]);
+    expect(rangeIds(order, "c", "c")).toEqual(["c"]);
+  });
+
+  it("is the clicked row alone without a row picked before, or with one that is out of view", () => {
+    expect(rangeIds(order, null, "d")).toEqual(["d"]);
+    expect(rangeIds(order, "gone", "d")).toEqual(["d"]);
+  });
+
+  it("tells a container from a VM of the same name", () => {
+    expect(itemId(item({ key: "debian" }))).not.toBe(itemId(item({ kind: "vm", key: "debian" })));
+  });
+});
+
+describe("acting on several entries", () => {
+  it("backs up what is installed, not BombVault itself and nothing of a kind that is off", () => {
+    expect(canBackUp(item())).toBe(true);
+    expect(canBackUp(item({ installed: false }))).toBe(false);
+    expect(canBackUp(item({ self: true }))).toBe(false);
+    expect(canBackUp(item({ kindDisabled: true }))).toBe(false);
+    expect(canBackUp(item({ kind: "files", installed: undefined }))).toBe(true);
+  });
+
+  it("restores the newest backup of containers and VMs only, gone ones included", () => {
+    expect(restoresInBulk(item({ installed: false }))).toBe(true);
+    expect(restoresInBulk(item({ kind: "vm" }))).toBe(true);
+    expect(restoresInBulk(item({ lastBackup: 0 }))).toBe(false);
+    expect(restoresInBulk(item({ kind: "files" }))).toBe(false);
+    expect(restoresInBulk(item({ kind: "flash" }))).toBe(false);
+  });
+
+  it("splits a selection into one batch per kind, each with the keys of its routes", () => {
+    const parts = batchParts([
+      item({ key: "plex" }),
+      item({ kind: "vm", key: "win11", name: "Windows 11" }),
+      item({ key: "gitea" }),
+      item({ kind: "files", key: "f1", name: "Documents" }),
+    ]);
+    expect(parts).toEqual([
+      { kind: "container", keys: ["plex", "gitea"] },
+      { kind: "vm", keys: ["win11"] },
+      { kind: "files", keys: ["f1"] },
+    ]);
+  });
+});
+
+describe("stacks", () => {
+  const member = (name: string, over: Partial<BackupItem> = {}) => item({ key: name, name, stack: "immich", ...over });
+
+  it("are the compose projects with two or more backed-up containers, by name", () => {
+    const stacks = stacksOf(
+      [
+        member("immich_redis"),
+        member("immich"),
+        member("zeta-app", { stack: "zeta" }),
+        member("zeta-db", { stack: "zeta" }),
+        member("lonely", { stack: "solo" }),
+        item({ name: "no-stack" }),
+        item({ kind: "vm", name: "vm", stack: "immich" }),
+      ],
+      "en"
+    );
+    expect(stacks.map((s) => [s.project, names(s.members)])).toEqual([
+      ["immich", ["immich", "immich_redis"]],
+      ["zeta", ["zeta-app", "zeta-db"]],
+    ]);
+  });
+
+  it("count a container that is gone, and not one that was never backed up", () => {
+    const gone = member("immich_postgres", { installed: false, lastBackup: 0 });
+    const fresh = member("immich_ml", { lastBackup: 0 });
+    expect(names(stacksOf([member("immich"), gone, fresh], "en")[0].members)).toEqual(["immich", "immich_postgres"]);
+    expect(stacksOf([member("immich"), fresh], "en")).toEqual([]);
   });
 });

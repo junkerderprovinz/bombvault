@@ -3655,7 +3655,6 @@ const ca: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Planificació, primer les planificades",
   "backups.sort.pausedFirst": "Planificació, primer les en pausa",
   "backups.search": "Cerca",
-  "backups.searchPlaceholder": "Cerca per nom",
   "backups.status.notProtected": "Sense protecció",
   "backups.status.waiting": "Esperant la primera còpia",
   "backups.status.anomalies": "one={n} anomalia|many={n} d'anomalies|other={n} anomalies",

@@ -3644,7 +3644,6 @@ const nl: Partial<Translations> = {
   "backups.sort.scheduledFirst": "Planning, geplande eerst",
   "backups.sort.pausedFirst": "Planning, gepauzeerde eerst",
   "backups.search": "Zoeken",
-  "backups.searchPlaceholder": "Zoeken op naam",
   "backups.status.notProtected": "Niet beschermd",
   "backups.status.waiting": "Wacht op de eerste back-up",
   "backups.status.anomalies": "one={n} anomalie|other={n} anomalieën",

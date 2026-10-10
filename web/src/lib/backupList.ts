@@ -33,13 +33,23 @@ export function entryTarget(item: BackupItem): string {
   return ENTRY_KIND[item.kind].legacyPath;
 }
 
-/** addTarget is the page on which something is added, or null when nothing
- *  can be. Folder sets and ZFS datasets are the two kinds added by hand, each
- *  on the page of its kind. */
-export function addTarget(tile: Tile, enabled: Partial<Record<EntryKind, boolean>>): string | null {
-  if (tile === "files" || tile === "zfs") return ENTRY_KIND[tile].legacyPath;
-  const kind = (["files", "zfs"] as const).find((k) => enabled[k]);
-  return kind ? ENTRY_KIND[kind].legacyPath : null;
+/** The two kinds added by hand. Every other kind is found on the server. */
+export const ADDED_KINDS = ["files", "zfs"] as const satisfies readonly EntryKind[];
+
+export type AddedKind = (typeof ADDED_KINDS)[number];
+
+/**
+ * addStart is what the Add action opens: the form of the tile's kind, the
+ * choice between the two, or nothing when neither kind is switched on.
+ */
+export function addStart(tile: Tile, enabled: Partial<Record<EntryKind, boolean>>): AddedKind | "choose" | null {
+  if (tile === "files" || tile === "zfs") return tile;
+  return ADDED_KINDS.some((kind) => enabled[kind]) ? "choose" : null;
+}
+
+/** itemId names an entry among all kinds, as a selection and a list key do. */
+export function itemId(item: BackupItem): string {
+  return `${item.kind}:${item.key}`;
 }
 
 /** The key a running backup or restore of the item reports under. Containers
@@ -122,9 +132,8 @@ export type RunTone = "ok" | "warn" | "fail" | "none";
 
 export const STRIP_LENGTH = 14;
 
-// A database dump belongs to the backup it precedes and a restore changes
-// nothing in the repository, so neither takes a square. The newest square is
-// then the run lastRunStatus speaks about.
+// A restore changes nothing in the repository, so it takes no square. The
+// newest square is then the run lastRunStatus speaks about.
 const STRIP_KINDS = new Set(["backup", "import"]);
 
 /**
@@ -149,14 +158,14 @@ export const SCHEDULE_FILTERS = ["all", "scheduled", "paused"] as const;
 export const BACKUP_FILTERS = ["all", "backedUp", "never"] as const;
 export const INSTALLED_FILTERS = ["all", "installed", "notInstalled"] as const;
 
-export const SORT_FIELDS = ["name", "status", "lastBackup", "size", "schedule"] as const;
+export const SORT_FIELDS = ["name", "status", "ip", "lastBackup", "size", "schedule"] as const;
 
 export type SortField = (typeof SORT_FIELDS)[number];
 
 export interface ListSort {
   field: SortField;
-  /** Each field has a natural order: A to Z, problems first, newest first,
-   *  largest first, scheduled first. */
+  /** Each field has a natural order: A to Z, problems first, lowest address
+   *  first, newest first, largest first, scheduled first. */
   reversed: boolean;
 }
 
@@ -244,10 +253,20 @@ function compareSchedule(a: BackupItem, b: BackupItem): number {
   return spec(a).localeCompare(spec(b));
 }
 
+// An address orders by its numbers, so .9 stands before .10. Entries without
+// one, which is every kind but a running container, come last.
+function ipRank(item: BackupItem): number {
+  const parts = (item.ip ?? "").split(".").map(Number);
+  if (parts.length !== 4 || parts.some(Number.isNaN)) return Number.MAX_SAFE_INTEGER;
+  return parts.reduce((sum, part) => sum * 256 + part, 0);
+}
+
 function compare(a: BackupItem, b: BackupItem, field: Exclude<SortField, "name">, ctx: SortContext): number {
   switch (field) {
     case "status":
       return statusRank(a, ctx) - statusRank(b, ctx);
+    case "ip":
+      return ipRank(a) - ipRank(b);
     case "lastBackup":
       return b.lastBackup - a.lastBackup;
     case "size":
@@ -281,9 +300,9 @@ export function filterEntries(
   nameOf: (item: BackupItem) => string
 ): BackupItem[] {
   const q = query.trim().toLowerCase();
-  return tileEntries(entries, tile).filter(
-    (item) => matchesView(item, view) && (q === "" || nameOf(item).toLowerCase().includes(q))
-  );
+  const found = (item: BackupItem) =>
+    [nameOf(item), item.image, item.ip, ...(item.formerNames ?? [])].some((text) => text?.toLowerCase().includes(q));
+  return tileEntries(entries, tile).filter((item) => matchesView(item, view) && (q === "" || found(item)));
 }
 
 /**
@@ -295,4 +314,62 @@ export function showsSelf(self: BackupItem | undefined, tile: Tile, view: ListVi
   if (!self || (tile !== "all" && tile !== "container")) return false;
   if (view.schedule !== "all" || view.backup !== "all" || view.installed === "notInstalled") return false;
   return self.name.toLowerCase().includes(query.trim().toLowerCase());
+}
+
+/**
+ * rangeIds is what a Shift+click picks: every row from the one picked last to
+ * the clicked one, in the order the list shows them. Without a row picked
+ * before, or with one that is out of view, it is the clicked row alone.
+ */
+export function rangeIds(order: string[], anchor: string | null, id: string): string[] {
+  const to = order.indexOf(id);
+  const from = anchor === null ? -1 : order.indexOf(anchor);
+  if (from < 0 || to < 0) return [id];
+  return order.slice(Math.min(from, to), Math.max(from, to) + 1);
+}
+
+/** canBackUp is false for what a backup would only skip or refuse. */
+export function canBackUp(item: BackupItem): boolean {
+  return !isGone(item) && !item.self && !item.kindDisabled;
+}
+
+/** The kinds whose newest backup can be restored for several entries at once. */
+export function restoresInBulk(item: BackupItem): boolean {
+  return (item.kind === "container" || item.kind === "vm") && item.lastBackup > 0 && !item.kindDisabled;
+}
+
+export interface BatchPart {
+  kind: EntryKind;
+  keys: string[];
+}
+
+/** batchParts splits entries into the batches the server runs, one per kind. */
+export function batchParts(items: BackupItem[]): BatchPart[] {
+  const parts = new Map<EntryKind, string[]>();
+  for (const item of items) parts.set(item.kind, [...(parts.get(item.kind) ?? []), item.key]);
+  return [...parts].map(([kind, keys]) => ({ kind, keys }));
+}
+
+export interface StackGroup {
+  project: string;
+  members: BackupItem[];
+}
+
+/**
+ * stacksOf groups the backed-up containers by their compose project and keeps
+ * the projects with two or more of them. A container that is gone counts, so
+ * a stack wiped from the server can still come back as one.
+ */
+export function stacksOf(items: BackupItem[], lang: string): StackGroup[] {
+  const collator = new Intl.Collator(lang, { numeric: true, sensitivity: "base" });
+  const byProject = new Map<string, BackupItem[]>();
+  for (const item of items) {
+    if (item.kind !== "container" || !item.stack) continue;
+    if (!isGone(item) && item.lastBackup === 0) continue;
+    byProject.set(item.stack, [...(byProject.get(item.stack) ?? []), item]);
+  }
+  return [...byProject]
+    .filter(([, members]) => members.length > 1)
+    .map(([project, members]) => ({ project, members: members.sort((a, b) => collator.compare(a.name, b.name)) }))
+    .sort((a, b) => collator.compare(a.project, b.project));
 }
