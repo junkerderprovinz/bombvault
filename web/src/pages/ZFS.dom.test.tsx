@@ -145,6 +145,8 @@ function item(overrides: Partial<ZFSDatasetView>): ZFSDatasetView {
     safetyOldestAt: 0,
     members: [member({})],
     effectiveSchedule: { kind: "domain", spec: "0 3 * * *", alsoSpec: "" },
+    sites: 1,
+    rule321: "one-copy",
     ...overrides,
   };
 }
@@ -184,6 +186,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ZFS page", () => {
+  it("gives the entry the 3-2-1 verdict the server counted its replica into", async () => {
+    items = [item({ sites: 2, rule321: "met" })];
+    await renderWithItems();
+    expect(screen.getByText(en["placement.rule321Met"])).toBeTruthy();
+    expect(screen.getByText("At 2 sites")).toBeTruthy();
+  });
+
   it("builds the card from the root name, its mountpoint and the shared tiles", async () => {
     await renderWithItems();
     expect(screen.getByText("/mnt/cache/appdata")).toBeTruthy();

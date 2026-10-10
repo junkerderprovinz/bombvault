@@ -33,6 +33,7 @@ import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { MemberField } from "./instances/MemberField";
 import { ReceiverServerCard } from "./receiver/ReceiverServerCard";
+import { ZFSReceiveCard } from "../components/zfs/replica/ZFSReceiveCard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
@@ -664,6 +665,8 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
           ))}
         </div>
       )}
+
+      <ZFSReceiveCard />
 
       {dialog !== null && (
         <ReceiverDialog

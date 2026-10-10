@@ -39,7 +39,7 @@ func (h *SSHHost) Binary() string {
 // Version returns what the host's zfs reports, the cheapest proof that the
 // whole path works.
 func (h *SSHHost) Version(ctx context.Context) (string, error) {
-	return h.run(ctx, VersionArgs())
+	return h.Run(ctx, VersionArgs())
 }
 
 // Tree lists one item's tree, root first.
@@ -96,7 +96,7 @@ func (h *SSHHost) SnapshotRecursive(ctx context.Context, root, snap string) erro
 	if err != nil {
 		return err
 	}
-	_, err = h.run(ctx, args)
+	_, err = h.Run(ctx, args)
 	return err
 }
 
@@ -106,7 +106,7 @@ func (h *SSHHost) DestroyRecursive(ctx context.Context, root, snap string) error
 	if err != nil {
 		return err
 	}
-	_, err = h.run(ctx, args)
+	_, err = h.Run(ctx, args)
 	return err
 }
 
@@ -116,7 +116,7 @@ func (h *SSHHost) SnapshotSafety(ctx context.Context, dataset, snap string) erro
 	if err != nil {
 		return err
 	}
-	_, err = h.run(ctx, args)
+	_, err = h.Run(ctx, args)
 	return err
 }
 
@@ -126,7 +126,7 @@ func (h *SSHHost) DestroySafety(ctx context.Context, dataset, snap string) error
 	if err != nil {
 		return err
 	}
-	_, err = h.run(ctx, args)
+	_, err = h.Run(ctx, args)
 	return err
 }
 
@@ -167,7 +167,7 @@ func (h *SSHHost) Create(ctx context.Context, dataset string, p Properties) erro
 	if err != nil {
 		return err
 	}
-	_, err = h.run(ctx, args)
+	_, err = h.Run(ctx, args)
 	return err
 }
 
@@ -177,24 +177,24 @@ func (h *SSHHost) SetProperties(ctx context.Context, dataset string, p Propertie
 	if err != nil || args == nil {
 		return err
 	}
-	_, err = h.run(ctx, args)
+	_, err = h.Run(ctx, args)
 	return err
 }
 
 // runCapped runs a listing. A listing the transport cut would parse into a
 // tree with datasets silently missing, so it is refused whole.
 func (h *SSHHost) runCapped(ctx context.Context, args []string) (string, error) {
-	out, err := h.run(ctx, args)
+	out, err := h.Run(ctx, args)
 	if errors.Is(err, sshconn.ErrStdoutCut) {
 		return "", &CmdError{Args: args, Code: "zfs-error", Stderr: "dataset listing is larger than the 16 MiB limit", Err: err}
 	}
 	return out, err
 }
 
-// run sends a zfs argv to the host. A host that answers "command not found"
-// gets one retry under /usr/sbin, and a binary that worked is kept for the
-// rest of the process.
-func (h *SSHHost) run(ctx context.Context, args []string) (string, error) {
+// Run sends a zfs argv to the host and returns its stdout. A host that answers
+// "command not found" gets one retry under /usr/sbin, and a binary that worked
+// is kept for the rest of the process.
+func (h *SSHHost) Run(ctx context.Context, args []string) (string, error) {
 	argv := withBinary(args, h.Binary())
 	stdout, stderr, err := h.r.RunCapture(ctx, argv...)
 	if err == nil {
@@ -210,6 +210,10 @@ func (h *SSHHost) run(ctx context.Context, args []string) (string, error) {
 	}
 	return "", &CmdError{Args: argv, Stderr: stderr, Code: Classify(stderr, err), Err: err}
 }
+
+// Argv is args with the zfs binary this host answered to, for a command that
+// goes out as a stream rather than through Run.
+func (h *SSHHost) Argv(args []string) []string { return withBinary(args, h.Binary()) }
 
 // withBinary replaces the argv[0] the builders emit with the one that works on
 // this host.

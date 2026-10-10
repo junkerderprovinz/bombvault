@@ -2,17 +2,10 @@ import { Fragment, useState } from "react";
 import { Button } from "../Button";
 import type { ItemRef, PlacementView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { observedLine, planLines, stackNoteText, type StatusLine } from "../../lib/placement";
+import { observedLine, planLines, STATUS_TONE_CLASS, stackNoteText } from "../../lib/placement";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { OffsiteRemovalDialog } from "./OffsiteRemovalDialog";
-
-const TONE_CLASS: Record<StatusLine["tone"], string> = {
-  normal: "text-carbon-textSub",
-  warn: "text-statusFail",
-  unconfirmed: "text-statusWarn",
-  muted: "text-carbon-textMuted",
-};
 
 /** PlacementStatus is the result line under a card's placement bar: where the
  *  next backup goes, where its copies actually are, and what a target still
@@ -39,7 +32,7 @@ export function PlacementStatus({
   return (
     <div className="flex flex-col gap-1 text-xs">
       {plan.map((line, i) => (
-        <p key={i} className={TONE_CLASS[line.tone]}>
+        <p key={i} className={STATUS_TONE_CLASS[line.tone]}>
           {line.text}
         </p>
       ))}
@@ -48,7 +41,7 @@ export function PlacementStatus({
           {observed.map((line, i) => (
             <Fragment key={i}>
               {i > 0 && <span className="text-carbon-textMuted"> · </span>}
-              <span className={TONE_CLASS[line.tone]}>{line.text}</span>
+              <span className={STATUS_TONE_CLASS[line.tone]}>{line.text}</span>
             </Fragment>
           ))}
         </p>

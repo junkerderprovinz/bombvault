@@ -2,7 +2,7 @@
 
 Pagina **ZFS** face copii de rezervă ale seturilor de date ZFS. Un element este un set de date împreună cu toate seturile de date de sub el. Pentru fiecare copie, BombVault face un singur instantaneu ZFS al întregului arbore, așa că fiecare set de date din el este surprins în același moment. Apoi citește fișierele fiecărui set de date din acel instantaneu, le stochează cu restic la fel ca pe un dosar și elimină instantaneul imediat după. Copiile sunt deduplicate, le poți răsfoi pe fiecare, iar fișierele individuale pot fi restaurate.
 
-BombVault nu folosește niciodată `zfs send` pentru seturi de date, nu readuce niciodată un set de date la o stare anterioară și nu distruge niciodată vreunul.
+Copia nu trimite niciodată un flux în restic și nu readuce niciodată un set de date la o stare anterioară. BombVault distruge doar instantanee create chiar de el. [Replica](#replica) opțională este singurul loc care folosește `zfs send`: copiază seturile de date pe un al doilea server ZFS și nu atinge copia de rezervă.
 
 ## Cerințe {#requirements}
 
@@ -102,6 +102,93 @@ Pentru a restaura pe un pool nou, creează poolul și restaurează fiecare set d
 
 Un set de date criptat este salvat doar cât timp cheia lui este încărcată. Altfel este sărit cu un avertisment; încarcă cheia cu `zfs load-key` și montează setul de date. BombVault citește datele decriptate și le stochează în depozitul restic, care este criptat. Dacă ai dezactivat criptarea în BombVault, acel depozit nu este criptat.
 
+## Replică {#replica}
+
+O replică este o copie a seturilor de date ale unui element pe un al doilea server ZFS. BombVault o ține la zi cu `zfs send` și `zfs receive`. Prima rulare trimite tot, după aceea circulă doar blocurile modificate. Pe celălalt server poți monta copia imediat.
+
+O replică nu înlocuiește niciodată copia de rezervă. Versiunile vechi, fișierele individuale și verificarea vin tot din copiile de rezervă, iar replica păstrează doar câte instantanee setezi. O replică la zi se numără ca o copie în afara locației, dar un element cu replică și fără copie de rezervă rămâne portocaliu.
+
+Pornește-o în cardul **Replica** din setările elementului. Acolo alegi unde merge replica, când rulează (**After every backup** sau **Own plan**) și câte instantanee rămân pe țintă. Cardul listează fiecare set de date și volum cu starea lui, iar **Replicate now** pornește o rulare. O rulare de replică are o blocare proprie, deci un prim transfer lung nu întârzie niciodată copiile de rezervă.
+
+### Trimitere către un server ZFS {#replica-push}
+
+Orice mașină cu ZFS și SSH poate primi, de exemplu un al doilea Unraid sau un TrueNAS. BombVault nu trebuie să ruleze acolo.
+
+1. Deschide **Instanțe, Servere ZFS** și apasă **Adaugă server ZFS**.
+2. Introdu adresa, utilizatorul și portul. Dialogul arată cheia publică a lui BombVault. Adaugă-o în `~/.ssh/authorized_keys` al utilizatorului pe server. Pe Unraid se află la **Settings, Users, root, SSH keys**.
+3. Testează conexiunea. Dialogul listează apoi pool-urile serverului. Alege unul și setează rădăcina, care implicit este `<pool>/bombvault-replica`.
+4. Alege noul server în cardul **Replica** al elementului.
+
+Cu root nu mai trebuie nimic. Un utilizator propriu are nevoie de aceste permisiuni pe pool-ul țintei, pe care le arată și dialogul:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Pe sursă, același fel de utilizator are nevoie de acestea pe setul de date de sus al elementului:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+În această direcție, BombVault-ul care deține elementul deține și o cheie care poate scrie pe server.
+
+BombVault reține cheia de gazdă pe care serverul o arată la prima conexiune și mai târziu refuză orice altă cheie. Dacă serverul a fost reinstalat, apasă **Uită cheia de gazdă** pe pagina serverului, iar conexiunea următoare va reține cheia nouă.
+
+### Trimitere către o instanță împerecheată {#replica-receive}
+
+Un BombVault împerecheat poate primi singur replica. Nimeni nu primește acces SSH la celălalt host și nicio cheie nu ajunge într-un fișier `authorized_keys`.
+
+1. În cardul **Replica** al elementului, alege instanța împerecheată ca țintă. Cardul arată **Așteaptă aprobarea** până când răspunde.
+2. Pe instanța care primește, deschide **Instanțe**, apoi **Primire**. Cardul **ZFS** listează cererea. Alege pool-ul și rădăcina pe acel server și câte instantanee rămân, apoi apasă **Permite** sau **Refuză**.
+3. După **Permite**, sursa trimite după propriul plan, ca la orice altă țintă.
+
+Instanța care primește acceptă doar ce acoperă aprobarea: seturile de date ale elementului, în propria rădăcină. Ea rulează singură `zfs receive`, iar sursa nu are cum să șteargă sau să dea înapoi ceva acolo. Așa că copia supraviețuiește unei surse preluate de altcineva. Instanța care primește își păstrează propria retenție. Sursa doar sugerează o regulă atunci când trimite cererea.
+
+**Revoke access** pe instanța care primește încheie oricând aprobarea și anunță sursa, care arată atunci că aprobarea a fost retrasă și se oprește. Ce deține deja instanța care primește rămâne acolo. O cerere refuzată rămâne refuzată. Mai multe seturi de date, sau o cerere după o revocare, întreabă din nou.
+
+Instanța care primește trebuie să răspundă prin HTTPS. La o adresă http simplă sursa nu trimite nimic, pentru că tokenul și datele ar trece prin rețea necriptate. Fiecare transfer lasă în plus liberă o zecime din pool-ul care primește și se oprește înainte să se atingă de ea, așa că o singură sursă nu poate umple pool-ul serverului care primește.
+
+### Unde ajung datele {#replica-target}
+
+Fiecare set de date ajunge la `<root>/<server>/<pool>/<path>`. Dosarul serverului este numele instanței sursă, fixat la primul transfer, deci două servere cu același nume de pool nu se încurcă niciodată. De exemplu, `cache/appdata` al unui server numit `tower` ajunge la `backup/bombvault-replica/tower/cache/appdata`.
+
+Copia de pe țintă este doar în citire și nu este montată, deci nu acoperă niciodată nimic pe acel server. Proprietățile ZFS merg cu ea, cu excepția punctului de montare, `sharenfs` și `sharesmb`. Nici rezervările `reservation` și `refreservation` nu sunt preluate, așa că copia ocupă doar spațiul de care au nevoie datele ei.
+
+### Ce intră {#replica-contents}
+
+Intră tot ce salvează elementul, plus volumele de sub el, pe care copia de rezervă le sare. Un set de date copil pe care l-ai dezactivat în element rămâne pe dinafară. Toate seturile de date ale unei rulări vin dintr-un singur instantaneu, ca la copia de rezervă.
+
+### Cât rămân instantaneele {#replica-retention}
+
+Pe țintă, o replică nouă păstrează 7 instantanee zilnice și 3 săptămânale. Alege în loc **Short**, **Balanced** sau **Long**, sau setează **Custom values**. Acolo se șterg doar instantaneele numite `bombvault-replica-<14 digits>`, și niciodată cel mai nou pe care îl au în comun ambele părți.
+
+Pe sursă, BombVault păstrează doar ultimul instantaneu de replică, plus un semn de carte pentru fiecare stare trimisă. Semnele de carte nu ocupă spațiu. Următorul transfer pornește de la ele.
+
+### Seturi de date criptate într-o replică {#replica-encryption}
+
+Un set de date criptat se trimite brut. Rămâne criptat pe țintă, iar ținta nu vede niciodată cheia. Ține cheia în siguranță: ai nevoie de ea ca să deschizi copia după o restaurare, iar o replică fără ea nu se poate citi.
+
+### Folosirea replicii {#replica-use}
+
+Deschide fila **Copii de rezervă** a elementului și fă clic pe rândul replicii din cardul **Storage locations**. Foaia listează instantaneele de pe țintă și arată comenzile cu numele tale reale.
+
+Ca să vezi o stare veche, clonează un instantaneu pe țintă. O clonă nu ocupă spațiu până nu se schimbă ceva, iar replica rămâne neatinsă:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Dacă sursa cedează, transformă copia într-un set de date obișnuit, care poate fi scris, pe țintă:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+După aceea, BombVault nu mai replică pe acel set de date, până pornești o nouă primă rulare.
+
+Ca să aduci o stare înapoi pe sursă, apasă **Bring back as a new dataset** în foaie. BombVault trimite instantaneul într-un set de date nou, lângă cel original, cu numele `<dataset>-bombvault-restore-` plus o marcă de timp. Nu scrie niciodată peste original.
+
 ## Instantanee rămase {#leftover-snapshots}
 
 Instantaneul unei copii se numește `<dataset>@bombvault-<14 cifre>`, de exemplu `cache/appdata@bombvault-20260924021500` (UTC). BombVault îl elimină imediat după copie. Dacă asta nu reușește, de exemplu pentru că setul de date e ocupat sau BombVault a fost oprit, BombVault îl elimină:
@@ -116,6 +203,8 @@ Sunt eliminate doar numele care corespund exact cu `bombvault-` plus 14 cifre. I
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Instantaneul unei replici se numește `<dataset>@bombvault-replica-<14 digits>` și nu este o rămășiță. Rămâne pe sursă până când următoarea rulare de replică îl înlocuiește, iar pe țintă cât timp îl păstrează retenția. Curățătorul nu îl atinge niciodată, pentru că se potrivește doar cu `bombvault-` urmat de exact 14 cifre.
 
 ## Anomalii {#anomalies}
 

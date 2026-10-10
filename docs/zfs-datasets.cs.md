@@ -2,7 +2,7 @@
 
 Stránka **ZFS** zálohuje datové sady ZFS. Položka je jedna datová sada spolu se všemi datovými sadami pod ní. Pro každou zálohu pořídí BombVault jediný snímek ZFS celého stromu, takže každá datová sada v něm je zachycena ve stejném okamžiku. Poté z tohoto snímku přečte soubory každé datové sady, uloží je pomocí resticu stejně jako složku a snímek hned potom odstraní. Zálohy jsou deduplikované, každou z nich můžete procházet a lze obnovit jednotlivé soubory.
 
-BombVault pro datové sady nikdy nepoužívá `zfs send`, nikdy datovou sadu nevrací do dřívějšího stavu a nikdy žádnou nezničí.
+Záloha nikdy neposílá proud do restic a nikdy nevrací datovou sadu do dřívějšího stavu. BombVault ničí jen snímky, které sám vytvořil. Volitelná [replika](#replica) je jediné místo, které používá `zfs send`: kopíruje datové sady na druhý server ZFS a zálohy se nedotýká.
 
 ## Požadavky {#requirements}
 
@@ -102,6 +102,93 @@ Pro obnovu na nový pool vytvoř pool a obnov každou datovou sadu do nové dato
 
 Šifrovaná datová sada se zálohuje, jen dokud je její klíč načtený. Jinak se přeskočí s varováním; načtěte klíč pomocí `zfs load-key` a datovou sadu připojte. BombVault čte data dešifrovaná a ukládá je do repozitáře resticu, který je šifrovaný. Pokud jste šifrování v BombVaultu vypnuli, tento repozitář šifrovaný není.
 
+## Replika {#replica}
+
+Replika je kopie datových sad položky na druhém serveru ZFS. BombVault ji udržuje aktuální pomocí `zfs send` a `zfs receive`. První běh pošle všechno, potom putují jen změněné bloky. Na druhém serveru můžete kopii hned připojit.
+
+Replika nikdy nenahrazuje zálohu. Starší verze, jednotlivé soubory i kontrola se dál berou ze záloh a replika drží jen tolik snímků, kolik nastavíte. Aktuální replika se počítá jako kopie mimo lokalitu, ale položka s replikou a bez zálohy zůstává oranžová.
+
+Zapnete ji na kartě **Replica** v nastavení položky. Tam vyberete, kam replika půjde, kdy se spouští (**After every backup** nebo **Own plan**) a kolik snímků zůstane na cíli. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat nyní** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
+
+### Odeslání na server ZFS {#replica-push}
+
+Přijímat může každý stroj se ZFS a SSH, například druhý Unraid nebo TrueNAS. BombVault tam běžet nemusí.
+
+1. Otevřete **Instance, Servery ZFS** a klikněte na **Přidat server ZFS**.
+2. Zadejte adresu, uživatele a port. Dialog ukáže veřejný klíč BombVaultu. Přidejte ho do `~/.ssh/authorized_keys` uživatele na serveru. V Unraidu je to v **Settings, Users, root, SSH keys**.
+3. Otestujte spojení. Dialog pak vypíše pooly serveru. Vyberte jeden a nastavte kořen, který je ve výchozím stavu `<pool>/bombvault-replica`.
+4. Vyberte nový server na kartě **Replica** položky.
+
+S rootem není potřeba nic dalšího. Vlastní uživatel potřebuje tato oprávnění na poolu cíle, která dialog také ukazuje:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Na zdroji potřebuje stejný druh uživatele tato oprávnění na nejvyšší datové sadě položky:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+V tomto směru drží BombVault, který položku vlastní, také klíč, který může na server zapisovat.
+
+BombVault si při prvním připojení uloží klíč hostitele, který server ukáže, a jiný později odmítne. Pokud byl server přeinstalován, stiskněte na stránce serveru **Forget host key** a příští připojení uloží nový klíč.
+
+### Odeslání spárované instanci {#replica-receive}
+
+Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH k druhému hostiteli a do souboru `authorized_keys` se nepřidává žádný klíč.
+
+1. Na kartě **Replica** položky vyberte jako cíl spárovanou instanci. Karta ukazuje **Čeká na schválení**, dokud neodpoví.
+2. Na přijímající instanci otevřete **Instance**, pak **Příjem**. Karta **ZFS** vypíše žádost. Vyberte pool a kořen na tom serveru a kolik snímků zůstane, potom stiskněte **Allow** nebo **Decline**.
+3. Po **Allow** zdroj odesílá podle vlastního plánu, jako u každého jiného cíle.
+
+Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo.
+
+**Revoke access** na přijímající instanci kdykoli ukončí schválení a oznámí to zdroji, který pak zobrazí, že schválení bylo odvoláno, a přestane odesílat. Co přijímající instance už má, tam zůstane. Zamítnutá žádost zůstává zamítnutá. Další datové sady nebo žádost po odvolání se ptají znovu.
+
+Přijímající instance musí odpovídat přes HTTPS. Na prostou adresu http zdroj nic neposílá, protože token a data by šly po síti nešifrované. Každý přenos navíc nechává desetinu přijímajícího poolu volnou a skončí dřív, než by ji začal zabírat, takže jeden zdroj nemůže zaplnit pool přijímajícího serveru.
+
+### Kam data přijdou {#replica-target}
+
+Každá datová sada skončí v `<root>/<server>/<pool>/<path>`. Složka serveru je název zdrojové instance, ustálený při prvním přenosu, takže si dva servery se stejným názvem poolu nikdy nepřekážejí. Například `cache/appdata` serveru s názvem `tower` skončí v `backup/bombvault-replica/tower/cache/appdata`.
+
+Kopie na cíli je jen pro čtení a není připojená, takže nikdy nic na tom serveru nepřekryje. Vlastnosti ZFS putují s ní, kromě přípojného bodu, `sharenfs` a `sharesmb`. Rezervace `reservation` a `refreservation` také zůstávají, kopie tak zabere jen místo, které potřebují její data.
+
+### Co se zahrnuje {#replica-contents}
+
+Zahrnuje se všechno, co položka zálohuje, a také svazky pod ní, které záloha přeskakuje. Podřízená datová sada, kterou jste v položce vypnuli, zůstane venku. Všechny datové sady jednoho běhu pocházejí z jednoho snímku, stejně jako u zálohy.
+
+### Jak dlouho snímky zůstávají {#replica-retention}
+
+Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vyberte **Short**, **Balanced** nebo **Long**, nebo nastavte **Custom values**. Odstraňují se tam jen snímky pojmenované `bombvault-replica-<14 digits>`, a nikdy ne nejnovější, který mají obě strany společný.
+
+Na zdroji drží BombVault jen poslední snímek repliky a k tomu záložku pro každý odeslaný stav. Záložky nezabírají místo. Další přenos od nich vychází.
+
+### Šifrované datové sady v replice {#replica-encryption}
+
+Šifrovaná datová sada se posílá surově. Na cíli zůstává šifrovaná a cíl klíč nikdy nevidí. Klíč dobře uschovejte: potřebujete ho k otevření kopie po obnově a replika bez něj je nečitelná.
+
+### Použití repliky {#replica-use}
+
+Otevřete záložku **Zálohy** položky a klikněte na řádek repliky na kartě **Storage locations**. List vypíše snímky na cíli a ukáže příkazy s vašimi skutečnými názvy.
+
+Chcete-li se podívat na starý stav, naklonujte snímek na cíli. Klon nezabírá místo, dokud se něco nezmění, a replika zůstane nedotčená:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Pokud zdroj selže, změňte kopii na cíli na normální zapisovatelnou datovou sadu:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault pak do této datové sady přestane replikovat, dokud nespustíte nový první běh.
+
+Chcete-li stav vrátit na zdroj, stiskněte v listu **Bring back as a new dataset**. BombVault pošle snímek do nové datové sady vedle originálu, pojmenované `<dataset>-bombvault-restore-` plus časové razítko. Originál nikdy nepřepisuje.
+
 ## Zbylé snímky {#leftover-snapshots}
 
 Snímek zálohy se jmenuje `<dataset>@bombvault-<14 číslic>`, například `cache/appdata@bombvault-20260924021500` (UTC). BombVault ho odstraní hned po záloze. Pokud se to nepovede, například protože je datová sada zaneprázdněná nebo byl BombVault zastaven, odstraní ho BombVault:
@@ -116,6 +203,8 @@ Odstraňují se jen názvy, které přesně odpovídají `bombvault-` plus 14 č
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Snímek repliky se jmenuje `<dataset>@bombvault-replica-<14 digits>` a není zbytkem. Zůstává na zdroji, dokud ho další běh repliky nenahradí, a na cíli, dokud ho uchovávání drží. Úklid se ho nikdy nedotkne, protože odpovídá jen `bombvault-` následovanému přesně 14 číslicemi.
 
 ## Anomálie {#anomalies}
 

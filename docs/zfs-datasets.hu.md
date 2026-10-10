@@ -2,7 +2,7 @@
 
 A **ZFS** oldal ZFS-adatkészletekről készít mentést. Egy elem egy adatkészlet az alatta lévő összes adatkészlettel együtt. Minden mentéshez a BombVault egyetlen ZFS-pillanatképet készít a teljes fáról, így a benne lévő összes adatkészlet ugyanabban a pillanatban kerül rögzítésre. Ezután ebből a pillanatképből beolvassa az egyes adatkészletek fájljait, a resticcel ugyanúgy tárolja őket, mint egy mappát, majd rögtön eltávolítja a pillanatképet. A mentések deduplikáltak, mindegyik böngészhető, és egyes fájlok is visszaállíthatók.
 
-A BombVault adatkészletekhez soha nem használ `zfs send`-et, soha nem görget vissza adatkészletet, és soha nem töröl egyet sem.
+A mentés soha nem küld adatfolyamot a restic felé, és soha nem görget vissza adatkészletet. A BombVault csak olyan pillanatképeket töröl, amelyeket maga hozott létre. A nem kötelező [replika](#replica) az egyetlen hely, amely `zfs send`-et használ: az adatkészleteket egy második ZFS-kiszolgálóra másolja, és nem nyúl a mentéshez.
 
 ## Követelmények {#requirements}
 
@@ -102,6 +102,93 @@ Nincs a mentésben:
 
 Egy titkosított adatkészletet csak akkor ment, amíg a kulcsa be van töltve. Egyébként figyelmeztetéssel kimarad; töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet. A BombVault visszafejtve olvassa az adatokat, és a restic tárolójában tárolja őket, amely titkosított. Ha kikapcsoltad a titkosítást a BombVaultban, az a tároló nem titkosított.
 
+## Replika {#replica}
+
+A replika egy elem adatkészleteinek másolata egy második ZFS-kiszolgálón. A BombVault a `zfs send` és a `zfs receive` segítségével tartja naprakészen. Az első futás mindent elküld, utána csak a megváltozott blokkok utaznak. A másik kiszolgálón a másolatot azonnal csatolhatod.
+
+A replika soha nem helyettesíti a mentést. A régebbi verziók, az egyes fájlok és az ellenőrzés továbbra is a mentésekből származnak, a replika pedig csak annyi pillanatképet tart meg, amennyit beállítasz. Egy naprakész replika telephelyen kívüli másolatnak számít, de a replikával rendelkező, mentés nélküli elem narancssárga marad.
+
+Kapcsold be az elem beállításainak **Replica** kártyáján. Ott választod ki, hová kerüljön a replika, mikor fusson (**After every backup** vagy **Own plan**), és hány pillanatkép maradjon a célon. A kártya felsorolja az összes adatkészletet és kötetet az állapotukkal, a **Replicate now** pedig elindít egy futást. A replikafutásnak saját zárja van, így egy hosszú első átvitel soha nem tartja fel a mentéseket.
+
+### Küldés ZFS-kiszolgálóra {#replica-push}
+
+Bármely gép fogadhat, amelyen van ZFS és SSH, például egy második Unraid vagy egy TrueNAS. A BombVaultnak nem kell ott futnia.
+
+1. Nyisd meg a **Példányok, ZFS-kiszolgálók** lapot, és kattints a **ZFS-kiszolgáló hozzáadása** gombra.
+2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Settings, Users, root, SSH keys** alatt van.
+3. Teszteld a kapcsolatot. A párbeszédablak ezután felsorolja a kiszolgáló poolait. Válassz egyet, és add meg a gyökeret, amelynek alapértéke `<pool>/bombvault-replica`.
+4. Válaszd ki az új kiszolgálót az elem **Replica** kártyáján.
+
+Rootként semmi más nem kell. Saját felhasználónak ezekre a jogosultságokra van szüksége a cél poolján, amelyeket a párbeszédablak szintén megmutat:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+A forráson ugyanilyen felhasználónak ezekre van szüksége az elem legfelső adatkészletén:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+Ebben az irányban az elemet tároló BombVault olyan kulcsot is tárol, amellyel írni lehet a kiszolgálón.
+
+A BombVault az első kapcsolódáskor elmenti a kiszolgáló által mutatott gazdagépkulcsot, és később minden mást elutasít. Ha a kiszolgálót újratelepítették, nyomd meg a kiszolgáló oldalán a **Forget host key** gombot, és a következő kapcsolat elmenti az új kulcsot.
+
+### Küldés párosított példányra {#replica-receive}
+
+Egy párosított BombVault maga is fogadhatja a replikát. Senki nem kap SSH-hozzáférést a másik gazdához, és egyetlen kulcs sem kerül egy `authorized_keys` fájlba.
+
+1. Az elem **Replica** kártyáján válaszd célnak a párosított példányt. A kártya **Waiting for approval** állapotot mutat, amíg a példány nem válaszol.
+2. A fogadó példányon nyisd meg az **Instances** részt, majd a **Receive** lapot. A **ZFS** kártya felsorolja a kérést. Válaszd ki a poolt és a gyökeret azon a kiszolgálón, és hogy hány pillanatkép maradjon, majd nyomd meg az **Allow** vagy a **Decline** gombot.
+3. Az **Allow** után a forrás a saját ütemezése szerint küld, mint bármelyik másik célra.
+
+A fogadó példány csak azt fogadja el, amit a jóváhagyás lefed: az elem adatkészleteit, a saját gyökerébe. Maga futtatja a `zfs receive` parancsot, és a forrásnak nincs módja arra, hogy ott bármit töröljön vagy visszagörgessen. A másolat így akkor is túléli, ha valaki átvette a forrás feletti irányítást. A fogadó példány a saját megőrzését alkalmazza. A forrás csak javasol egy szabályt, amikor kéri a küldést.
+
+A fogadó példányon a **Revoke access** bármikor megszünteti a jóváhagyást, és értesíti a forrást, amely ekkor jelzi, hogy a jóváhagyást visszavonták, és leáll. Amit a fogadó példány már tart, az ott marad. Az elutasított kérés elutasított marad. További adatkészletek, vagy egy visszavonás utáni kérés újra jóváhagyást kérnek.
+
+A fogadó példánynak HTTPS-en kell válaszolnia. Sima http-címre a forrás semmit nem küld, mert a token és az adatok titkosítatlanul mennének át a hálózaton. Minden átvitel ráadásul szabadon hagyja a fogadó pool egytizedét, és leáll, mielőtt hozzányúlna, így egyetlen forrás sem töltheti meg a fogadó kiszolgáló poolját.
+
+### Hová kerülnek az adatok {#replica-target}
+
+Minden adatkészlet ide kerül: `<root>/<server>/<pool>/<path>`. A kiszolgálómappa a forráspéldány neve, amely az első átvitelkor rögzül, így két azonos poolnevű kiszolgáló soha nem kerül egymás útjába. Például egy `tower` nevű kiszolgáló `cache/appdata` adatkészlete a `backup/bombvault-replica/tower/cache/appdata` helyre kerül.
+
+A másolat a célon csak olvasható és nincs csatolva, így soha nem takar el semmit azon a kiszolgálón. A ZFS-tulajdonságok vele utaznak, kivéve a csatolási pontot, a `sharenfs`-t és a `sharesmb`-t. A foglalások (`reservation` és `refreservation`) sem mennek át, így a másolat csak annyi helyet foglal, amennyit az adatai igényelnek.
+
+### Mi kerül bele {#replica-contents}
+
+Minden bekerül, amit az elem ment, és az alatta lévő kötetek is, amelyeket a mentés kihagy. Az a gyermek-adatkészlet, amelyet az elemben kikapcsoltál, kimarad. Egy futás összes adatkészlete egyetlen pillanatképből származik, mint a mentésnél.
+
+### Meddig maradnak meg a pillanatképek {#replica-retention}
+
+A célon egy új replika 7 napi és 3 heti pillanatképet tart meg. Válaszd inkább a **Short**, **Balanced** vagy **Long** lehetőséget, vagy állítsd be a **Custom values** értékeket. Ott csak a `bombvault-replica-<14 számjegy>` nevű pillanatképek törlődnek, és soha nem a legújabb, amelyen mindkét oldal osztozik.
+
+A forráson a BombVault csak a legutóbbi replika-pillanatképet tartja meg, plusz egy könyvjelzőt minden elküldött állapothoz. A könyvjelzők nem foglalnak helyet. A következő átvitel ezekből indul.
+
+### Titkosított adatkészletek replikában {#replica-encryption}
+
+A titkosított adatkészlet nyers formában megy át. A célon titkosított marad, és a cél soha nem látja a kulcsot. Őrizd meg a kulcsot: szükséged lesz rá a másolat megnyitásához egy visszaállítás után, és a kulcs nélküli replika olvashatatlan.
+
+### A replika használata {#replica-use}
+
+Nyisd meg az elem **Biztonsági mentések** lapját, és kattints a replika sorára a **Storage locations** kártyán. A lap felsorolja a cél pillanatképeit, és megmutatja a parancsokat a valódi neveiddel.
+
+Egy régi állapot megtekintéséhez klónozz egy pillanatképet a célon. A klón addig nem foglal helyet, amíg valami meg nem változik, és a replika érintetlen marad:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Ha a forrás meghibásodik, tedd a másolatot normális, írható adatkészletté a célon:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+A BombVault ezután leáll a replikálással erre az adatkészletre, amíg új első futást nem indítasz.
+
+Egy állapot forrásra való visszahozásához nyomd meg a **Bring back as a new dataset** gombot a lapon. A BombVault a pillanatképet egy új adatkészletbe küldi az eredeti mellé, amelynek neve `<dataset>-bombvault-restore-` és egy időbélyeg. Az eredetit soha nem írja felül.
+
 ## Megmaradt pillanatképek {#leftover-snapshots}
 
 Egy mentés pillanatképének neve `<dataset>@bombvault-<14 számjegy>`, például `cache/appdata@bombvault-20260924021500` (UTC). A BombVault közvetlenül a mentés után eltávolítja. Ha ez nem sikerül, például mert az adatkészlet foglalt, vagy a BombVaultot leállították, a BombVault eltávolítja:
@@ -116,6 +203,8 @@ Csak azok a nevek törlődnek, amelyek pontosan `bombvault-` és 14 számjegy. A
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+A replika pillanatképének neve `<dataset>@bombvault-replica-<14 számjegy>`, és nem maradék. A forráson addig marad, amíg a következő replikafutás le nem cseréli, a célon pedig addig, amíg a megőrzés tartja. A takarító soha nem nyúl hozzá, mert csak a `bombvault-` utáni pontosan 14 számjegyre illeszkedik.
 
 ## Anomáliák {#anomalies}
 

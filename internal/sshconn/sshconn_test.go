@@ -4,7 +4,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -83,5 +85,66 @@ func TestShellQuote(t *testing.T) {
 		if got := shellQuote(in); got != want {
 			t.Errorf("shellQuote(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestIsolatedConnKeepsAKeyOfItsOwn(t *testing.T) {
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+	dataDir := t.TempDir()
+	host := New("192.168.1.10", "root", "1004", dataDir, "")
+	replica := NewIsolated("backup.lan", "root", "22", filepath.Join(dataDir, "ssh-replica", "t1"), "")
+	for _, c := range []*Conn{host, replica} {
+		if err := c.EnsureKey(); err != nil {
+			t.Fatalf("EnsureKey: %v", err)
+		}
+	}
+	hostPub, err := host.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	replicaPub, err := replica.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hostPub == replicaPub {
+		t.Fatal("the replica Conn reuses the libvirt host's key")
+	}
+	if _, err := os.Stat(filepath.Join(dataDir, "ssh-replica", "t1", "id_ed25519")); err != nil {
+		t.Errorf("the replica key is not in its own directory: %v", err)
+	}
+}
+
+func TestConnsSharingAKeyDirCreateOneKeyAtOnce(t *testing.T) {
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+	dir := t.TempDir()
+	conns := make([]*Conn, 8)
+	for i := range conns {
+		conns[i] = NewIsolated("backup.lan", "replica", "", dir, filepath.Join(dir, "known_hosts", strconv.Itoa(i)))
+	}
+	var wg sync.WaitGroup
+	errs := make([]error, len(conns))
+	for i, c := range conns {
+		wg.Go(func() { errs[i] = c.EnsureKey() })
+	}
+	wg.Wait()
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("EnsureKey %d: %v", i, err)
+		}
+	}
+	derived, err := exec.Command("ssh-keygen", "-y", "-f", conns[0].keyPath()).Output() //nolint:gosec // G204: the key the test just made
+	if err != nil {
+		t.Fatal(err)
+	}
+	pub, err := conns[0].PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := strings.Fields(string(derived)); len(want) < 2 || !strings.HasPrefix(pub, want[0]+" "+want[1]) {
+		t.Fatalf("the public key %q does not belong to the private key (%q)", pub, derived)
 	}
 }

@@ -267,6 +267,7 @@ type Service struct {
 	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
 	zfsHostMu   sync.Mutex
 	zfsHostLast *zfsHostListing
+	replica     zfsReplicaRuntime
 	// rclone runs against the instance's own config file; rcloneConfMu keeps
 	// two edits of that file from dropping each other's remote.
 	rcloneOnce   sync.Once
@@ -275,6 +276,9 @@ type Service struct {
 	// receiverMu keeps two partners asking for a login at once from
 	// rewriting the receiver's htpasswd file over each other.
 	receiverMu sync.Mutex
+	// zfsReceiveBusy holds the ids of the receive slots a stream is landing
+	// through, so a second stream into the same slot waits its turn.
+	zfsReceiveBusy sync.Map
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
@@ -2787,6 +2791,9 @@ type DomainStatusEntry struct {
 	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
 	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
+	// ReplicaState is the ZFS replica line of the scorecard: "" with no item
+	// replicating, "ok", "stale" or "failed".
+	ReplicaState string `json:"replicaState,omitempty"`
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -3251,6 +3258,17 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			drillPeriod:       drillPeriod,
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
+		// Without a restic off-site, current replicas of every ZFS item are the
+		// domain's copy off the premises, and their age is its currency.
+		var replicaState string
+		if d.name == zfsDomain {
+			replicaState = s.zfsReplicaDomainState(now, settings)
+			if at, period, ok := s.zfsReplicaCoverage(now, settings); ok && !offsiteConfigured {
+				offsiteConfigured, offPremisesCovered = true, true
+				lastReplicationAt, lastReplicationOK = at, true
+				in.offsiteConfigured, in.lastReplicationAt, in.offsitePeriod = true, at, period
+			}
+		}
 		// protection (the chip) and checks (each row) are derived from the SAME
 		// protInputs. Tamper/Replication rows mirror the chip's red/amber branches
 		// exactly. The Drill row additionally honors the latest drill's OUTCOME (a
@@ -3296,6 +3314,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			DrillState:            checks.Drill,
 			EncryptionOn:          settings.EncryptionEnabled,
 			PruneStrategySet:      pruneStrategySet,
+			ReplicaState:          replicaState,
 		})
 		if d.name == "containers" {
 			out[len(out)-1].LastStartTest = lastStartTest

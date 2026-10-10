@@ -15,6 +15,13 @@ const (
 	// restore. It is a different prefix so the sweeper leaves it alone; the
 	// user deletes it.
 	PreRestorePrefix = "bombvault-prerestore-"
+	// ReplicaPrefix marks the snapshots and bookmarks a replica run keeps as
+	// the base of the next one. The sweeper and the backup's recursive destroy
+	// match only SnapshotPrefix followed by digits, so they never reach it.
+	ReplicaPrefix = "bombvault-replica-"
+	// ReplicaHoldTag is the hold on the source's replica snapshot, so nobody
+	// destroys the base of the next incremental by accident.
+	ReplicaHoldTag = "bombvault-replica"
 
 	// MaxSnapshotNameLen is ZFS's limit for "<dataset>@<snapshot>".
 	MaxSnapshotNameLen = 255
@@ -34,6 +41,7 @@ const (
 var (
 	snapshotRe   = regexp.MustCompile(`^bombvault-[0-9]{14}$`)
 	preRestoreRe = regexp.MustCompile(`^bombvault-prerestore-[0-9]{14}$`)
+	replicaRe    = regexp.MustCompile(`^bombvault-replica-[0-9]{14}$`)
 )
 
 // NameError says why a name was refused. Code is a reason code of the ZFS
@@ -123,6 +131,13 @@ func PreRestoreNameFits(name string) bool {
 	return len(name)+1+len(PreRestorePrefix)+stampLen <= MaxSnapshotNameLen
 }
 
+// ReplicaNameFits reports whether a replica snapshot or bookmark of name stays
+// inside ZFS's 255 byte limit. Its prefix is longer than a backup's, so a
+// member a backup can read may still be too long to replicate.
+func ReplicaNameFits(name string) bool {
+	return len(name)+1+len(ReplicaPrefix)+stampLen <= MaxSnapshotNameLen
+}
+
 // SnapshotName is the host snapshot name for a backup taken at now.
 func SnapshotName(now time.Time) string {
 	return SnapshotPrefix + now.UTC().Format(stampLayout)
@@ -131,6 +146,11 @@ func SnapshotName(now time.Time) string {
 // PreRestoreSnapshotName is the safety snapshot name for a restore started at now.
 func PreRestoreSnapshotName(now time.Time) string {
 	return PreRestorePrefix + now.UTC().Format(stampLayout)
+}
+
+// ReplicaSnapshotName is the replica snapshot name for a run started at now.
+func ReplicaSnapshotName(now time.Time) string {
+	return ReplicaPrefix + now.UTC().Format(stampLayout)
 }
 
 // StampTime is the UTC instant the 14 digit stamp at the end of a BombVault
@@ -152,6 +172,11 @@ func IsBombVaultSnapshot(snap string) bool { return snapshotRe.MatchString(snap)
 
 // IsPreRestoreSnapshot reports whether snap is a safety snapshot.
 func IsPreRestoreSnapshot(snap string) bool { return preRestoreRe.MatchString(snap) }
+
+// IsReplicaSnapshot reports whether snap is a snapshot or bookmark name a
+// replica run took. Every replica builder that destroys, holds or sends passes
+// through here.
+func IsReplicaSnapshot(snap string) bool { return replicaRe.MatchString(snap) }
 
 // StampFromPath returns the snapshot name at the end of a restic snapshot's
 // first path, which is the directory a run read: .../.zfs/snapshot/bombvault-<ts>.

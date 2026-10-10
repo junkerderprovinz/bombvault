@@ -24,6 +24,7 @@ import {
   stepForReset,
   stepForTarget,
   viewHomeLabel,
+  zfsObservedLine,
 } from "./placement";
 import { blockedText } from "./placementButtons";
 import {
@@ -554,5 +555,27 @@ describe("stackNoteText", () => {
     expect(stackNoteText(tEn, "en", "Unraid", stackNote({ targets: [] }))).toBe(
       "Project folder immich: on Unraid, not copied (follows the containers default)"
     );
+  });
+});
+
+describe("zfsObservedLine", () => {
+  it("counts a current replica as the second site", () => {
+    expect(zfsObservedLine(tEn, { sites: 2, rule321: "met", lastBackup: 1_758_170_400 })).toEqual([
+      { text: "At 2 sites", tone: "normal" },
+      { text: "3-2-1 met", tone: "normal" },
+    ]);
+  });
+
+  it("says a replica alone is no backup", () => {
+    expect(zfsObservedLine(tEn, { sites: 2, rule321: "one-copy", lastBackup: 0 })).toEqual([
+      { text: "At 2 sites", tone: "normal" },
+      { text: "3-2-1 not met: a replica is not a backup", tone: "warn" },
+    ]);
+  });
+
+  it("says there is no backup when nothing has left the host", () => {
+    expect(zfsObservedLine(tEn, { sites: 1, rule321: "one-copy", lastBackup: 0 })).toEqual([
+      { text: "No backup yet.", tone: "muted" },
+    ]);
   });
 });

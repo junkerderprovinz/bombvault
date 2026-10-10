@@ -56,6 +56,10 @@ import { SelectField } from "../SelectField";
 import { IconBackupNow, IconPencil, IconTrash } from "../Sidebar";
 import { ToggleRow } from "../../pages/settings/shared";
 import { ZFSMemberList, zfsMemberActionable } from "./ZFSMemberList";
+import { ReplicaCard } from "./replica/ReplicaCard";
+import { ReplicaPlaceRow } from "./replica/ReplicaPlaceRow";
+import { ReplicaPlanLine } from "./replica/ReplicaPlanLine";
+import { ZFSSitesLine } from "./ZFSSitesLine";
 import { ZFSRestorePanel } from "./ZFSRestorePanel";
 
 type T = ReturnType<typeof useT>["t"];
@@ -552,6 +556,8 @@ function ZFSItemSettings({
 
       <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
+      <ReplicaCard itemId={item.id} name={item.dataset} />
+
       {advanced && (
         <>
           <ZFSExcludesEditor item={item} t={t} onSaved={onChanged} />
@@ -852,6 +858,9 @@ export function ZFSDatasetRow({
       <p className="text-xs text-carbon-textMuted">
         {t("zfs.repoEffective").replace("{repo}", item.repoEffective)}
       </p>
+      <ReplicaPlanLine itemId={item.id} />
+      <ZFSSitesLine item={item} />
+      <ReplicaPlaceRow itemId={item.id} name={item.dataset} />
 
       {item.stopContainers.length > 0 && (
         <p className="text-xs text-carbon-textMuted">
