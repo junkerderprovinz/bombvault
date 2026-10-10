@@ -18,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/sizetree"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // States of a size breakdown.
@@ -31,12 +32,12 @@ const (
 // breakdownTimeout bounds one breakdown, the diff and the listing together.
 const breakdownTimeout = 10 * time.Minute
 
-// breakdownDomains are the domains whose items have a breakdown. ZFS already
-// has its sizes per dataset; flash and the configuration are one small folder.
+// breakdownDomains are the domains the get_size_breakdown tool answers for.
+// The route takes flash, config and ZFS as well.
 var breakdownDomains = []string{"containers", "vms", "files"}
 
 // errBreakdownDomain refuses a domain without breakdowns.
-var errBreakdownDomain = errors.New("a size breakdown exists for containers, VMs and folder sets")
+var errBreakdownDomain = errors.New("no size breakdown exists for this domain")
 
 // breakdowns is the one worker that computes breakdowns, one at a time, so
 // several open panels never run several listings against the repository.
@@ -50,8 +51,8 @@ type breakdowns struct {
 
 type breakdownJob struct{ domain, targetID string }
 
-// breakdownItem is an item with a breakdown: its row id, its name and where
-// its backups are.
+// breakdownItem is an item with a breakdown: the id its runs carry, its name
+// and where its backups are. A ZFS entry's name is its root dataset.
 type breakdownItem struct {
 	domain, id, name string
 	repo             string
@@ -98,6 +99,22 @@ func (s *Service) breakdownItem(domain, item string) (breakdownItem, error) {
 		if err != nil {
 			return it, err
 		}
+	case "flash", "config":
+		it.id, it.name = domainRunTargetID(domain), domain
+		it.repo, err = s.repoFor(settings, domain, "local")
+		if err != nil {
+			return it, err
+		}
+	case zfsDomain:
+		d, err := s.store.GetZFSDataset(item)
+		if err != nil {
+			return it, errors.New("BombVault has no ZFS entry with this id")
+		}
+		it.id, it.name = d.ID, d.Dataset
+		it.repo, err = s.zfsDatasetRepoPath(settings, d)
+		if err != nil {
+			return it, err
+		}
 	default:
 		return it, errBreakdownDomain
 	}
@@ -131,25 +148,85 @@ func (s *Service) itemSnapshots(ctx context.Context, it breakdownItem) ([]restic
 		return s.Snapshots(ctx, it.name, "local")
 	case "vms":
 		return s.SnapshotsVM(ctx, it.name, "local")
+	case "flash":
+		return s.SnapshotsFlash(ctx, "local")
+	case "config":
+		return s.SnapshotsConfig(ctx, "local")
+	case zfsDomain:
+		d, err := s.store.GetZFSDataset(it.id)
+		if err != nil {
+			return nil, err
+		}
+		return s.zfsItemSnapshots(ctx, d, "local")
 	default:
 		return s.SnapshotsFileSet(ctx, it.id, "local")
 	}
 }
 
-// newestSnapshots returns the item's newest backup and the one before it.
-func (s *Service) newestSnapshots(ctx context.Context, it breakdownItem) (newest, prev *restic.Snapshot, err error) {
+// breakdownPart is one snapshot of the backup a breakdown reads, the snapshot
+// it is compared with, and where its tree hangs below the breakdown's root.
+type breakdownPart struct {
+	snap   restic.Snapshot
+	prev   *restic.Snapshot
+	prefix string
+}
+
+// breakdownBackup is an item's newest backup. key is what its breakdown is
+// stored under and label what the panel shows for it: a snapshot id and its
+// short form, or the stamp of a ZFS run.
+type breakdownBackup struct {
+	key, label, time, root string
+	parts                  []breakdownPart
+}
+
+// newestBackup returns the item's newest backup, compared with the one before
+// it, or nil while there is none.
+func (s *Service) newestBackup(ctx context.Context, it breakdownItem) (*breakdownBackup, error) {
 	snaps, err := s.itemSnapshots(ctx, it)
 	if err != nil || len(snaps) == 0 {
-		return nil, nil, err
+		return nil, err
 	}
 	slices.SortStableFunc(snaps, func(a, b restic.Snapshot) int {
 		return parseSnapshotTime(b.Time).Compare(parseSnapshotTime(a.Time))
 	})
-	newest = &snaps[0]
-	if len(snaps) > 1 {
-		prev = &snaps[1]
+	if it.domain == zfsDomain {
+		return zfsNewestBackup(it.name, snaps), nil
 	}
-	return newest, prev, nil
+	part := breakdownPart{snap: snaps[0]}
+	if len(snaps) > 1 {
+		part.prev = &snaps[1]
+	}
+	return &breakdownBackup{
+		key: snaps[0].ID, label: shortID(snaps[0].ID), time: snaps[0].Time,
+		root: sizetree.CommonRoot(snaps[0].Paths), parts: []breakdownPart{part},
+	}, nil
+}
+
+// zfsNewestBackup is the newest run of a ZFS entry out of its snapshots, newest
+// first. Every dataset is a part of one tree, each below the root where its
+// name puts it, and is compared with its own snapshot of an earlier run.
+func zfsNewestBackup(root string, snaps []restic.Snapshot) *breakdownBackup {
+	var b *breakdownBackup
+	for _, snap := range snaps {
+		stamp, stamped := zfsStampOf(snap)
+		dataset, member := zfsSnapshotDataset(snap, root)
+		if !stamped || !member {
+			continue
+		}
+		if b == nil {
+			at, _ := zfs.StampTime(stamp)
+			b = &breakdownBackup{key: stamp, label: stamp, time: at.Format(time.RFC3339), root: "/"}
+		}
+		prefix := zfsRelPath(root, dataset)
+		i := slices.IndexFunc(b.parts, func(p breakdownPart) bool { return p.prefix == prefix })
+		switch {
+		case stamp == b.key && i < 0:
+			b.parts = append(b.parts, breakdownPart{snap: snap, prefix: prefix})
+		case stamp != b.key && i >= 0 && b.parts[i].prev == nil:
+			b.parts[i].prev = &snap
+		}
+	}
+	return b
 }
 
 func breakdownKey(targetID, snapshotID string) string { return targetID + "/" + snapshotID }
@@ -210,41 +287,57 @@ func (s *Service) computeBreakdown(job breakdownJob) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	newest, prev, err := s.newestSnapshots(ctx, it)
+	newest, err := s.newestBackup(ctx, it)
 	if err != nil || newest == nil {
 		return "", err
 	}
-	key := breakdownKey(it.id, newest.ID)
-	if _, ok, err := s.store.GetSizeBreakdown(it.id, newest.ID); err != nil || ok {
+	key := breakdownKey(it.id, newest.key)
+	if _, ok, err := s.store.GetSizeBreakdown(it.id, newest.key); err != nil || ok {
 		return key, err
 	}
-	row := store.SizeBreakdown{TargetID: it.id, SnapshotID: newest.ID, Domain: it.domain, CreatedAt: time.Now().Unix()}
+	row := store.SizeBreakdown{TargetID: it.id, SnapshotID: newest.key, Domain: it.domain, CreatedAt: time.Now().Unix()}
 	var changed map[string]struct{}
-	if prev != nil {
-		row.ParentID = prev.ID
-		changed = map[string]struct{}{}
-		_, err := s.engine.DiffStream(ctx, it.repo, prev.ID, newest.ID, it.mode, func(c restic.DiffChange) {
+	note := func(p string) {
+		if len(changed) >= sizetree.MaxChanged {
+			row.Partial = true
+			return
+		}
+		changed[p] = struct{}{}
+	}
+	for _, part := range newest.parts {
+		if part.prev == nil {
+			continue
+		}
+		if changed == nil {
+			row.ParentID = part.prev.ID
+			changed = map[string]struct{}{}
+		}
+		_, err := s.engine.DiffStream(ctx, it.repo, part.prev.ID, part.snap.ID, it.mode, func(c restic.DiffChange) {
 			// A folder, a removed file or one whose metadata alone changed
 			// adds no data.
 			if strings.HasSuffix(c.Path, "/") || !strings.ContainsAny(c.Modifier, "+MT") {
 				return
 			}
-			if len(changed) >= sizetree.MaxChanged {
-				row.Partial = true
-				return
-			}
-			changed[path.Clean(c.Path)] = struct{}{}
+			note(path.Join(part.prefix, c.Path))
 		})
 		if err != nil {
 			return key, fmt.Errorf("compare with the backup before: %w", err)
 		}
 	}
-	b := sizetree.NewBuilder(sizetree.CommonRoot(newest.Paths), changed)
-	err = s.engine.LsStreamNoLock(ctx, it.repo, newest.ID, it.mode, func(e restic.FileEntry) {
-		b.Add(e.Path, e.Type, e.Size)
-	})
-	if err != nil {
-		return key, fmt.Errorf("list the backup: %w", err)
+	b := sizetree.NewBuilder(newest.root, changed)
+	for _, part := range newest.parts {
+		// A dataset the earlier runs did not hold is new as a whole.
+		fresh := changed != nil && part.prev == nil
+		err = s.engine.LsStreamNoLock(ctx, it.repo, part.snap.ID, it.mode, func(e restic.FileEntry) {
+			p := path.Join(part.prefix, e.Path)
+			if fresh && e.Type != "dir" {
+				note(p)
+			}
+			b.Add(p, e.Type, e.Size)
+		})
+		if err != nil {
+			return key, fmt.Errorf("list the backup: %w", err)
+		}
 	}
 	tree, err := json.Marshal(b.Tree())
 	if err != nil {
@@ -275,7 +368,8 @@ type BreakdownEntry struct {
 	Open bool `json:"open,omitempty"`
 }
 
-// BreakdownView is one folder of an item's newest backup. Size is what its
+// BreakdownView is one folder of an item's newest backup. A ZFS run shows as
+// one tree with every dataset where its name puts it. Size is what its
 // files take in the backup before deduplication and compression; Added is
 // the part the latest backup brought in new or changed. First means there
 // was no earlier backup, so all of it counts as added.
@@ -300,9 +394,6 @@ type BreakdownView struct {
 // one failed.
 func (s *Service) SizeBreakdown(ctx context.Context, domain, item, rel string, retry bool) (BreakdownView, error) {
 	view := BreakdownView{Path: rel, Children: []BreakdownEntry{}}
-	if !slices.Contains(breakdownDomains, domain) {
-		return view, errBreakdownDomain
-	}
 	it, err := s.breakdownItem(domain, item)
 	if err != nil {
 		return view, err
@@ -311,7 +402,7 @@ func (s *Service) SizeBreakdown(ctx context.Context, domain, item, rel string, r
 		view.State = breakdownRunning
 		return view, nil
 	}
-	newest, _, err := s.newestSnapshots(ctx, it)
+	newest, err := s.newestBackup(ctx, it)
 	if err != nil {
 		return view, err
 	}
@@ -319,13 +410,13 @@ func (s *Service) SizeBreakdown(ctx context.Context, domain, item, rel string, r
 		view.State = breakdownNone
 		return view, nil
 	}
-	view.Snapshot, view.Time = shortID(newest.ID), newest.Time
-	row, ok, err := s.store.GetSizeBreakdown(it.id, newest.ID)
+	view.Snapshot, view.Time = newest.label, newest.time
+	row, ok, err := s.store.GetSizeBreakdown(it.id, newest.key)
 	if err != nil {
 		return view, err
 	}
 	if !ok {
-		key := breakdownKey(it.id, newest.ID)
+		key := breakdownKey(it.id, newest.key)
 		s.breakdowns.mu.Lock()
 		msg, failed := s.breakdowns.failed[key]
 		if failed && retry {
@@ -350,6 +441,9 @@ func (s *Service) SizeBreakdown(ctx context.Context, domain, item, rel string, r
 	}
 	view.State, view.First, view.Partial = breakdownReady, row.ParentID == "", row.Partial
 	view.Root = s.toHostPath(tree.Root)
+	if domain == zfsDomain {
+		view.Root = path.Join(it.name, tree.Root)
+	}
 	view.Size, view.Files, view.Added, view.Other = node.Size, node.Files, node.Added, node.Other
 	for _, c := range node.Children {
 		_, open := tree.Nodes[joinRel(rel, c.Name)]
@@ -366,8 +460,9 @@ func joinRel(a, b string) string {
 }
 
 // handleSizeBreakdown answers GET /api/breakdown?domain=&item=&path=&retry=1.
-// item is the name of a container or VM and the id of a folder set; path is
-// a folder of the breakdown, empty for its top.
+// item is the name of a container or VM, the id of a folder set or ZFS entry,
+// and nothing for flash and config; path is a folder of the breakdown, empty
+// for its top.
 func (h *Handler) handleSizeBreakdown(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	view, err := h.svc.SizeBreakdown(r.Context(), q.Get("domain"), q.Get("item"), q.Get("path"), q.Get("retry") == "1")

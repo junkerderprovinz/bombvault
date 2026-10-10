@@ -329,6 +329,26 @@ func (f *placementFixture) zfsItem(dataset string) (store.ZFSDataset, string) {
 	return d, f.localRepo(settings.ZFSPath)
 }
 
+// zfsRun records a run of a ZFS entry that backed up the given datasets.
+func (f *placementFixture) zfsRun(itemID, stamp string, datasets ...string) {
+	f.t.Helper()
+	id, err := f.st.StartRun(itemID, "backup")
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if err := f.st.RecordZFSRun(id, itemID, stamp, -1, ""); err != nil {
+		f.t.Fatal(err)
+	}
+	for _, dataset := range datasets {
+		if err := f.st.AddZFSRunMember(store.ZFSRunMember{RunID: id, Dataset: dataset, Outcome: outcomeBackedUp}); err != nil {
+			f.t.Fatal(err)
+		}
+	}
+	if err := f.st.FinishRun(id, "success", "", 0, ""); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 // zfsSnap is the snapshot one run wrote for one dataset, read from the host
 // snapshot stamp names.
 func zfsSnap(id, dataset, stamp string) restic.Snapshot {
@@ -467,6 +487,7 @@ type placementEngine struct {
 	tags          []tagCall
 	diffs         []string                       // "from->to" of each DiffStream call
 	diffChanges   map[string][]restic.DiffChange // what a DiffStream call reports, by "from->to"
+	files         map[string][]restic.FileEntry  // what a snapshot lists, by its id
 	ensured       []string                       // Init calls: the repositories EnsureRepo had to create
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
@@ -637,6 +658,16 @@ func (e *placementEngine) DiffStream(_ context.Context, _, from, to string, _ re
 		onChange(c)
 	}
 	return restic.DiffResult{ChangedFiles: len(changes), AddedBytes: int64(10 * len(changes))}, nil
+}
+
+func (e *placementEngine) LsStreamNoLock(_ context.Context, _, id string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	e.mu.Lock()
+	entries := e.files[id]
+	e.mu.Unlock()
+	for _, entry := range entries {
+		onEntry(entry)
+	}
+	return nil
 }
 
 // Tag changes the tags of the named snapshots where they lie. restic would

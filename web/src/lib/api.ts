@@ -3204,7 +3204,11 @@ export interface RefusalTarget {
   name: string;
 }
 
-export type TimelineDomain = PlacementDomain | "flash" | "config";
+/** The kinds of entry with a timeline. key is a container or VM name, the id
+ *  of a folder set or ZFS entry, and the domain itself for flash and config. A
+ *  ZFS row is one run: its key is the run's stamp and each mark lists the
+ *  snapshots of every dataset the run wrote. */
+export type TimelineDomain = PlacementDomain | "flash" | "config" | "zfs";
 
 export interface TimelinePlace {
   place: string;
@@ -3291,12 +3295,7 @@ export function deleteTimelineRow(
   });
 }
 
-/** The kinds of entry whose backups can be marked, compared and exported one
- *  by one. key is a container or VM name, the id of a folder set or ZFS entry,
- *  and the domain itself for flash and config. */
-export type BackupDomain = TimelineDomain | "zfs";
-
-function backupPath(domain: BackupDomain, key: string): string {
+function backupPath(domain: TimelineDomain, key: string): string {
   return `/api/items/${encodeURIComponent(domain)}/${encodeURIComponent(key)}`;
 }
 
@@ -3304,7 +3303,7 @@ function backupPath(domain: BackupDomain, key: string): string {
  *  restic writes the backup anew under another id; the key of its timeline row
  *  stays. A ZFS run is tagged on every dataset it wrote. */
 export function tagBackup(
-  domain: BackupDomain,
+  domain: TimelineDomain,
   key: string,
   snapshotId: string,
   tags: string[],
@@ -3343,7 +3342,7 @@ export interface BackupDiff extends SnapshotDiff {
 /** Compares two backups of an entry. from and to are snapshot ids of the same
  *  source; for a ZFS run any of its datasets' ids names the run. */
 export function diffBackups(
-  domain: BackupDomain,
+  domain: TimelineDomain,
   key: string,
   from: string,
   to: string,
@@ -3421,10 +3420,12 @@ export interface SizeBreakdown {
   other?: { count: number; size: number; files: number; added: number };
 }
 
-export type BreakdownDomain = "containers" | "vms" | "files";
+export type BreakdownDomain = "containers" | "vms" | "files" | "flash" | "config" | "zfs";
 
 /** GET /api/breakdown: the size by folder of an item's newest backup. item is
- *  a container or VM name, or a folder set's id. The first call starts the
+ *  a container or VM name, the id of a folder set or ZFS entry, and empty for
+ *  flash and config. A ZFS breakdown is one tree over every dataset of the
+ *  newest run, and its snapshot is the run's stamp. The first call starts the
  *  work and answers with state "running". */
 export function getSizeBreakdown(
   domain: BreakdownDomain,

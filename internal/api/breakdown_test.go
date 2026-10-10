@@ -127,9 +127,9 @@ func TestSizeBreakdownReportsAFailureAndTriesAgainOnRequest(t *testing.T) {
 
 func TestSizeBreakdownRefusesOtherDomains(t *testing.T) {
 	h, _ := breakdownRouter(t, &fakeResticEngine{})
-	_, m := doJSON(t, h, http.MethodGet, "/api/breakdown?domain=flash", "")
+	_, m := doJSON(t, h, http.MethodGet, "/api/breakdown?domain=stacks", "")
 	if m["ok"] != false {
-		t.Fatalf("flash = %v", m)
+		t.Fatalf("stacks = %v", m)
 	}
 }
 
