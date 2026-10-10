@@ -3,8 +3,8 @@
 // targets reads as one row while a failed database dump never reads as the
 // container's backup, and lets the user acknowledge a group or every failure
 // at once.
-// After an acknowledge it reloads and calls onChanged so the parent can
-// refresh its count.
+// After an acknowledge it reloads and announces the change, so that whoever
+// counts the failures reads them again.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -51,14 +51,7 @@ interface ErrorGroup {
   viaLabels: string[]; // the MCP keys or API tokens behind the members, without the purged ones
 }
 
-export function ErrorDetailPanel({
-  onClose,
-  onChanged,
-}: {
-  onClose: () => void;
-  /** Called after a successful acknowledge so the parent can refetch its count. */
-  onChanged?: () => void;
-}) {
+export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
   const { t } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,7 +155,6 @@ export function ErrorDetailPanel({
     ackRuns(body)
       .then(() => {
         load();
-        onChanged?.();
         window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
       })
       .catch(() => {

@@ -1,7 +1,6 @@
 import type { CoverageReport } from "../../lib/api";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
-import { unprotectedEntries } from "../../lib/attention";
 import type { Tally } from "../../lib/protectionTally";
 import { zfsCodeSentence, zfsFixKey } from "../../lib/zfsCodes";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -48,7 +47,9 @@ export function CoverageCard({
     return fix ? `${zfsCodeSentence(t, code)} ${tLtr(t, fix)}` : zfsCodeSentence(t, code);
   }
 
-  const rows = unprotectedEntries(coverage);
+  const rows = (coverage?.domains ?? [])
+    .filter((d) => d.enabled)
+    .flatMap((d) => d.unprotected.map((i) => ({ ...i, domain: d.domain })));
 
   return (
     <Card title={t("coverage.title")} hint={t("overview.coverage.hint")} hueIndex={hueIndex}>

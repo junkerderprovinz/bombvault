@@ -7,7 +7,7 @@ import { useIsDesktop } from "../lib/useMediaQuery";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { AnomalyProvider } from "../lib/useAnomalies";
-import { AttentionProvider } from "../lib/attention";
+import { AttentionProvider } from "../lib/attentionProvider";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
 
 // The last BombVault version this browser has seen. The "What's new" dialog

@@ -225,7 +225,7 @@ function AnomalyRow({ finding, t, lang }: { finding: AnomalyView; t: T; lang: st
   );
 }
 
-function RecoveryKitRow({ t, onStored }: { t: T; onStored: () => void }) {
+function RecoveryKitRow({ t }: { t: T }) {
   const { push } = useToast();
   const [storing, setStoring] = useState(false);
   // What the server answered instead of the kit, such as its refusal while
@@ -236,13 +236,9 @@ function RecoveryKitRow({ t, onStored }: { t: T; onStored: () => void }) {
     setStoring(true);
     ackRecoveryKit()
       .then((res) => {
-        if (!res.ok) {
-          push(res.error ?? t("common.saveFailed"), "fail");
-          return;
-        }
-        onStored();
-        // The layout holds the settings the navigation counts the kit from.
-        window.dispatchEvent(new Event("bv:settings-changed"));
+        // The row stands for a setting the layout holds, and leaves with it.
+        if (res.ok) window.dispatchEvent(new Event("bv:settings-changed"));
+        else push(res.error ?? t("common.saveFailed"), "fail");
       })
       .catch((err) => push(err instanceof Error ? err.message : t("common.saveFailed"), "fail"))
       .finally(() => setStoring(false));
@@ -290,7 +286,6 @@ export function NeedsCard({
   hueIndex,
   onErrors,
   onItemsChanged,
-  onKitStored,
 }: {
   needs: Need[];
   hueIndex?: number;
@@ -298,7 +293,6 @@ export function NeedsCard({
   onErrors: () => void;
   /** An entry was taken into the schedule. */
   onItemsChanged: () => void;
-  onKitStored: () => void;
 }) {
   const { t, lang } = useT();
   return (
@@ -323,7 +317,7 @@ export function NeedsCard({
               case "anomaly":
                 return <AnomalyRow key={`finding:${need.finding.id}`} finding={need.finding} t={t} lang={lang} />;
               case "recoveryKit":
-                return <RecoveryKitRow key="kit" t={t} onStored={onKitStored} />;
+                return <RecoveryKitRow key="kit" t={t} />;
             }
           })}
         </ul>

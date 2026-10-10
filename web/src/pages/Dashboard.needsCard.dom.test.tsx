@@ -17,7 +17,6 @@ vi.mock("../lib/api", async (importOriginal) => {
 
 const onErrors = vi.fn();
 const onItemsChanged = vi.fn();
-const onKitStored = vi.fn();
 
 beforeEach(() => {
   resetServer();
@@ -27,7 +26,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 function renderCard(needs: Need[]) {
-  render(inApp(<NeedsCard needs={needs} onErrors={onErrors} onItemsChanged={onItemsChanged} onKitStored={onKitStored} />));
+  render(inApp(<NeedsCard needs={needs} onErrors={onErrors} onItemsChanged={onItemsChanged} />));
 }
 
 const called = (name: string) => server.calls.filter((c) => c.name === name).map((c) => c.args);
@@ -123,17 +122,20 @@ describe("NeedsCard", () => {
   });
 
   it("downloads the recovery kit and takes the word that it is stored", async () => {
+    const settingsChanged = vi.fn();
+    window.addEventListener("bv:settings-changed", settingsChanged);
     renderCard([{ is: "recoveryKit" }]);
     const row = within(screen.getByTestId("need-recovery-kit"));
 
     fireEvent.click(row.getByRole("button", { name: en["dbdump.download"] }));
     await act(async () => {});
     expect(called("downloadRecoveryKit")).toHaveLength(1);
-    expect(onKitStored).not.toHaveBeenCalled();
+    expect(settingsChanged).not.toHaveBeenCalled();
 
     fireEvent.click(row.getByRole("button", { name: en["recovery.stored"] }));
     await act(async () => {});
     expect(called("ackRecoveryKit")).toHaveLength(1);
-    expect(onKitStored).toHaveBeenCalledOnce();
+    expect(settingsChanged).toHaveBeenCalledOnce();
+    window.removeEventListener("bv:settings-changed", settingsChanged);
   });
 });

@@ -9,19 +9,17 @@ import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { Button } from "../components/Button";
 import { IconRefresh } from "../components/glyphs";
-import { getCoverage, getScheduleNext, getSettings, getStatus, listRuns } from "../lib/api";
+import { getCoverage, getScheduleNext, getStatus, listRuns } from "../lib/api";
 import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
+import { useAttention } from "../lib/attention";
 import type { EntryKind } from "../lib/backupEntry";
 import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
-import { isFreshInstall } from "../lib/freshInstall";
 import { useT } from "../lib/i18n";
-import { needsOf } from "../lib/needs";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
-import { useProgress } from "../lib/progress";
+import { anyActive, useProgress } from "../lib/progress";
 import { tallyEntries } from "../lib/protectionTally";
 import { failedRunsNeedingAttention } from "../lib/runFailures";
-import { useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
-import { useBackupItems } from "../lib/useBackupItems";
+import { useAnomalySummary } from "../lib/useAnomalies";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { AnomaliesBlock } from "./overview/AnomaliesCard";
 import { OVERVIEW_CARDS, OVERVIEW_MIGRATION, PHONE_ORDER } from "./overview/cards";
@@ -45,9 +43,8 @@ import { SummaryTier } from "./overview/SummaryTier";
 import { TargetsCard } from "./overview/TargetsCard";
 import { useTrialRestore } from "./overview/useTrialRestore";
 
-// The activity log polls the same two endpoints at these rates. Two readers of
-// one endpoint at different rates can show two answers.
-const RUNS_POLL_MS = 10000;
+// The activity log reads the schedule at this rate, and two readers of one
+// endpoint at different rates can show two answers.
 const SCHEDULE_POLL_MS = 30000;
 
 const CARD = Object.fromEntries(OVERVIEW_CARDS.map((card) => [card.id, card]));
@@ -61,9 +58,8 @@ export function Dashboard() {
   const { t, lang } = useT();
   const isDesktop = useIsDesktop();
   const progress = useProgress();
-  const backupItems = useBackupItems();
+  const { needs, items: backupItems, runs, runsReady, runsFailed, refreshRuns } = useAttention();
   const anomalySummary = useAnomalySummary().summary;
-  const openAnomalies = useOpenAnomalies().list;
   const trial = useTrialRestore(t("verify.failed"));
 
   // The run window is opened by a row of the history, by the status head
@@ -148,23 +144,14 @@ export function Dashboard() {
     };
   }, []);
 
-  const [runs, setRuns] = useState<Run[]>([]);
-  const [runsReady, setRunsReady] = useState(false);
-  const [runsFailed, setRunsFailed] = useState(false);
-  const refreshRuns = useCallback(() => {
-    listRuns()
-      .then((res) => {
-        if (res.ok) setRuns(res.runs ?? []);
-        setRunsFailed(!res.ok);
-      })
-      .catch(() => setRunsFailed(true))
-      .finally(() => setRunsReady(true));
-  }, []);
+  // The stream reports the end of a run before the next poll would. Reading
+  // the runs then also brings the entries up to date.
+  const running = anyActive(progress).active;
+  const wasRunning = useRef(running);
   useEffect(() => {
-    refreshRuns();
-    const id = setInterval(refreshRuns, RUNS_POLL_MS);
-    return () => clearInterval(id);
-  }, [refreshRuns]);
+    if (wasRunning.current && !running) refreshRuns();
+    wasRunning.current = running;
+  }, [running, refreshRuns]);
 
   // The window shows the freshest record of its run. A finished record wins
   // whichever feed carries it. Before that the watch's record wins while the
@@ -228,22 +215,6 @@ export function Dashboard() {
     }
     setFreshDismissed(true);
   };
-  const freshShown = !statusLoading && !freshDismissed && isFreshInstall(statusDomains);
-
-  // The recovery kit is due while encryption is on and nobody has confirmed
-  // that the kit is stored.
-  const [kitOpen, setKitOpen] = useState(false);
-  useEffect(() => {
-    let active = true;
-    getSettings()
-      .then((res) => {
-        if (active && res.ok) setKitOpen(res.settings.encryptionEnabled && !res.settings.recoveryKitAck);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
 
   // A day picked in the calendar and a run linked as ?run=<id> both narrow
   // the log, so either one turns the history card to its log.
@@ -285,12 +256,6 @@ export function Dashboard() {
   const { items } = backupItems;
   const tally = tallyEntries(items);
   const sections = sectionsOf(statusDomains, items, progress, trial.running);
-  const needs = needsOf({
-    items,
-    runs,
-    anomalies: anomalySummary?.enabled ? openAnomalies : [],
-    kitDue: kitOpen && !freshShown,
-  });
   const liveRun = liveRunOf(progress);
   const nextFire = nextBackupFireAt(scheduleNext, statusDomains).ms;
   const ready = !statusLoading && backupItems.loaded;
@@ -311,7 +276,6 @@ export function Dashboard() {
           hueIndex={hue}
           onErrors={() => setErrorsOpen(true)}
           onItemsChanged={backupItems.reload}
-          onKitStored={() => setKitOpen(false)}
         />
       ),
     },
@@ -527,7 +491,7 @@ export function Dashboard() {
           }}
         />
       )}
-      {errorsOpen && <ErrorDetailPanel onClose={() => setErrorsOpen(false)} onChanged={refreshRuns} />}
+      {errorsOpen && <ErrorDetailPanel onClose={() => setErrorsOpen(false)} />}
       {section && <ProtectionWindow section={section} trial={trial} t={t} onClose={() => setOpenSection(null)} />}
 
       <PageActions>

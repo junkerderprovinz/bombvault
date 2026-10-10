@@ -227,7 +227,10 @@ export function stagedApi<M extends object>(actual: M): M {
     backupEverythingNow: record("backupEverythingNow", { ok: true, started: true }),
     backupNow: record("backupNow"),
     setInclude: record("setInclude"),
-    ackRecoveryKit: record("ackRecoveryKit"),
+    ackRecoveryKit: (...args: unknown[]) => {
+      server.kitDue = false;
+      return record("ackRecoveryKit")(...args);
+    },
     downloadRecoveryKit: record("downloadRecoveryKit", null),
     runDrill: record("runDrill", { ok: true, drill: { ok: true } }),
   };

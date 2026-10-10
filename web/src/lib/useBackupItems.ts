@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { listItems, type BackupItem } from "./api";
 import { listedItems } from "./backupList";
-import { anyActive, useProgress } from "./progress";
 
 export interface BackupItems {
   items: BackupItem[];
@@ -13,9 +12,9 @@ export interface BackupItems {
 }
 
 /**
- * useBackupItems reads GET /api/items and keeps it current: it reads again
- * when a run ends and when a setting changes what is backed up. It never
- * polls, because listing the VMs costs the server a round trip to libvirt.
+ * useBackupItems reads GET /api/items, and reads it again when a setting
+ * changes what is backed up. It never polls, because listing the VMs costs the
+ * server a round trip to libvirt.
  */
 export function useBackupItems(): BackupItems {
   const [state, setState] = useState({ items: [] as BackupItem[], loaded: false, failed: false });
@@ -42,12 +41,5 @@ export function useBackupItems(): BackupItems {
     return () => window.removeEventListener("bv:settings-changed", reload);
   }, [reload]);
 
-  const running = anyActive(useProgress()).active;
-  const wasRunning = useRef(running);
-  useEffect(() => {
-    if (wasRunning.current && !running) reload();
-    wasRunning.current = running;
-  }, [running, reload]);
-
-  return { ...state, reload };
+  return useMemo(() => ({ ...state, reload }), [state, reload]);
 }

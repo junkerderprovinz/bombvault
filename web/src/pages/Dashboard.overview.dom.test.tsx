@@ -3,7 +3,7 @@
 // layout somebody arranged, what the customize mode does, what the status
 // head says, and how a phone lays the same cards out.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
@@ -329,6 +329,20 @@ describe("the status head", () => {
     expect(within(cell("needs")).getAllByRole("listitem")).toHaveLength(4);
   });
 
+  it("takes the recovery kit off the list once it is stored", async () => {
+    server.domains = [domain()];
+    server.items = [item()];
+    server.kitDue = true;
+    await renderPage();
+    expect(head().getByText("1 thing needs you")).toBeTruthy();
+
+    fireEvent.click(within(cell("needs")).getByRole("button", { name: en["recovery.stored"] }));
+    await act(async () => {});
+
+    expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
+    expect(shownCards()).not.toContain("needs");
+  });
+
   it("keeps findings out of the count while detection is off", async () => {
     server.domains = [domain()];
     server.items = [item()];
@@ -356,6 +370,21 @@ describe("the status head", () => {
 
     act(() => stream.send({ key: "container:plex", phase: "backup", percent: 100, active: true, committed: true }));
     expect(station()).toBe(en["overview.station.start"]);
+  });
+
+  it("brings the entries up to date when the run has ended", async () => {
+    server.domains = [domain()];
+    server.items = [item({ lastBackup: 0, lastRunStatus: "" })];
+    await renderPage();
+    expect(head().getByText(new RegExp(ratio(0, 1)))).toBeTruthy();
+    const stream = FakeEventSource.last!;
+
+    act(() => stream.send({ key: "container:plex", phase: "backup", percent: 40, active: true }));
+    server.runs = [run({ id: "r1" })];
+    server.items = [item()];
+    act(() => stream.send({ key: "container:plex", phase: "backup", percent: 100, active: false }));
+
+    await waitFor(() => expect(head().getByText(new RegExp(ratio(1, 1)))).toBeTruthy(), { timeout: 3000 });
   });
 
   it("follows an off-site copy at the last station", async () => {

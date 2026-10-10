@@ -7,19 +7,19 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { Sidebar } from "./Sidebar";
-import { AttentionProvider } from "../lib/attention";
+import { AttentionProvider } from "../lib/attentionProvider";
 import { setLabelMode } from "../lib/controls";
 import { I18nProvider, en } from "../lib/i18n";
-import type { Run, Settings } from "../lib/api";
+import type { BackupItem, Run, Settings } from "../lib/api";
 
 vi.mock("../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../lib/api")>("../lib/api");
-  return { ...actual, listRuns: vi.fn(), getCoverage: vi.fn() };
+  return { ...actual, listRuns: vi.fn(), listItems: vi.fn() };
 });
 
 const api = await import("../lib/api");
 const listRuns = vi.mocked(api.listRuns);
-const getCoverage = vi.mocked(api.getCoverage);
+const listItems = vi.mocked(api.listItems);
 
 function failedRun(targetId: string): Run {
   return {
@@ -37,6 +37,21 @@ function failedRun(targetId: string): Run {
     domain: "container",
   };
 }
+
+/** A container no schedule reaches and that has no backup. */
+const paperless: BackupItem = {
+  kind: "container",
+  key: "paperless",
+  name: "paperless",
+  included: false,
+  paused: false,
+  effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+  lastBackup: 0,
+  lastRunStatus: "",
+  sourceBytes: 1,
+  installed: true,
+  runs: [],
+};
 
 const kitDue = { encryptionEnabled: true, recoveryKitAck: false } as Settings;
 const calm = { encryptionEnabled: true, recoveryKitAck: true } as Settings;
@@ -63,22 +78,7 @@ async function overviewCount(n: number): Promise<HTMLElement> {
 beforeEach(() => {
   localStorage.clear();
   listRuns.mockReset().mockResolvedValue({ ok: true, runs: [failedRun("gitea"), failedRun("immich")] });
-  getCoverage.mockReset().mockResolvedValue({
-    ok: true,
-    coverage: {
-      domains: [
-        {
-          domain: "containers",
-          enabled: true,
-          total: 4,
-          protected: 3,
-          unprotected: [{ name: "paperless", reason: "not-set-up", neverBackedUp: true }],
-        },
-      ],
-      total: 4,
-      protected: 3,
-    },
-  });
+  listItems.mockReset().mockResolvedValue({ ok: true, items: [paperless], unlisted: [] });
 });
 
 afterEach(cleanup);
@@ -91,9 +91,9 @@ describe("the count on Overview", () => {
 
   it("is absent while nothing needs the person", async () => {
     listRuns.mockResolvedValue({ ok: true, runs: [] });
-    getCoverage.mockResolvedValue({ ok: true, coverage: { domains: [], total: 0, protected: 0 } });
+    listItems.mockResolvedValue({ ok: true, items: [], unlisted: [] });
     renderRail(calm);
-    await vi.waitFor(() => expect(getCoverage).toHaveBeenCalled());
+    await vi.waitFor(() => expect(listItems).toHaveBeenCalled());
     expect(screen.getByRole("link", { name: en["nav.overview"] }).textContent).toBe(en["nav.overview"]);
   });
 
