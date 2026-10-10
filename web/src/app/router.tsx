@@ -4,13 +4,8 @@ import { Dashboard } from "../pages/Dashboard";
 import { Anomalies } from "../pages/Anomalies";
 import { BackupEntryPage } from "../pages/BackupEntry";
 import { Backups } from "../pages/Backups";
-import { Containers } from "../pages/Containers";
-import { VMs } from "../pages/VMs";
-import { Flash } from "../pages/Flash";
-import { Config } from "../pages/Config";
-import { Files } from "../pages/Files";
-import { ZFS } from "../pages/ZFS";
 import { Instances } from "../pages/Instances";
+import { KindRedirect } from "../pages/KindRedirect";
 import { ZFSServer } from "../pages/ZFSServer";
 import { StoragePage } from "../pages/Storage";
 import { StorageLocationPage } from "../pages/StorageLocation";
@@ -18,7 +13,7 @@ import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
-import { ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
+import { ENTRY_KIND, ENTRY_KINDS, ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -40,12 +35,11 @@ export function AppRouter() {
               <Route path="/anomalies" element={<Anomalies />} />
               <Route path={ENTRY_LIST_PATH} element={<Backups />} />
               <Route path={ENTRY_ROUTE} element={<BackupEntryPage />} />
-              <Route path="/containers" element={<Containers />} />
-              <Route path="/vms" element={<VMs />} />
-              <Route path="/flash" element={<Flash />} />
-              <Route path="/config" element={<Config />} />
-              <Route path="/files" element={<Files />} />
-              <Route path="/zfs" element={<ZFS />} />
+              {/* A link to a kind's own page leads to the list of that kind,
+                  or to the entry it names. */}
+              {ENTRY_KINDS.map((kind) => (
+                <Route key={kind} path={ENTRY_KIND[kind].legacyPath} element={<KindRedirect kind={kind} />} />
+              ))}
               <Route path="/instances" element={<Instances />} />
               <Route path="/instances/zfs/:id" element={<ZFSServer />} />
               {/* Bookmarks, release notes and support answers link to
