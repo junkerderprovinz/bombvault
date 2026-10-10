@@ -23,6 +23,7 @@ function read(path: string): string {
 // Editors and panels that live beside a page rather than in it.
 const EDITOR_DIRS: Record<string, string> = {
   "src/pages/Containers.tsx": "src/components/containers",
+  "src/pages/VMs.tsx": "src/components/vms",
 };
 
 /** The page together with the components it was split into. */
@@ -73,7 +74,7 @@ describe("the bulk-action bars carry a palette position", () => {
   ];
 
   it.each(CASES)("%s: %s takes BULK_HUE.%s", (page, labelKey, hue) => {
-    const block = buttonBlock(read(page), labelKey);
+    const block = buttonBlock(readWithEditors(page), labelKey);
     expect(block).not.toBeNull();
     expect(block).toContain(`hueIndex={BULK_HUE.${hue}}`);
   });
@@ -81,9 +82,9 @@ describe("the bulk-action bars carry a palette position", () => {
   it("gives the same action the same colour on every page", () => {
     // Positions are keyed to the action, not counted per page, so "Back up
     // selected" has one colour everywhere.
-    const containers = buttonBlock(read("src/pages/Containers.tsx"), "containers.backupSelected");
-    const vms = buttonBlock(read("src/pages/VMs.tsx"), "vms.backupSelected");
-    const files = buttonBlock(read("src/pages/Files.tsx"), "files.backupAll");
+    const containers = buttonBlock(readWithEditors("src/pages/Containers.tsx"), "containers.backupSelected");
+    const vms = buttonBlock(readWithEditors("src/pages/VMs.tsx"), "vms.backupSelected");
+    const files = buttonBlock(readWithEditors("src/pages/Files.tsx"), "files.backupAll");
     for (const block of [containers, vms, files]) {
       expect(block).toContain("hueIndex={BULK_HUE.backup}");
     }
