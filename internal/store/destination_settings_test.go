@@ -1,6 +1,8 @@
 package store_test
 
 import (
+	"errors"
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -218,5 +220,52 @@ func TestAValueOfItsOwnOutlivesADestinationThatCatchesUp(t *testing.T) {
 	}
 	if got := targetByID(t, r, target.ID); got.RetentionKeepDaily != 5 {
 		t.Fatalf("keep daily = %d, want the target's own 5 after the destination passed through it", got.RetentionKeepDaily)
+	}
+}
+
+func TestRemoveDestinationTakesItsTargetsAndNamesThePrimariesItHeld(t *testing.T) {
+	r := newRepo(t)
+	d, err := r.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: "rest:https://box:8000/bv"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := r.SaveDestination(store.OffsiteTarget{Name: "Other", Repo: "rest:https://other:8000/bv"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vms, _, err := r.EnsureDestinationTarget(d.ID, "vms", "rest:https://box:8000/bv/vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.PrimaryFromDestination(d.ID, "flash", "rest:https://box:8000/bv/flash", func(*store.Settings) {}); err != nil {
+		t.Fatal(err)
+	}
+	stays, _, err := r.EnsureDestinationTarget(other.ID, "vms", "rest:https://other:8000/bv/vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var primaries []string
+	if err := r.RemoveDestination(d.ID, func(_ *store.Settings, domains []string) { primaries = domains }); err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(primaries, []string{"flash"}) {
+		t.Fatalf("primaries = %v, want flash alone", primaries)
+	}
+	if _, ok, _ := r.GetDestination(d.ID); ok {
+		t.Fatal("the destination is still there")
+	}
+	if _, ok, _ := r.GetOffsiteTarget(vms.ID); ok {
+		t.Fatal("its target for vms is still there")
+	}
+	if flash, _ := r.OffsiteTargetsForDomain("flash"); len(flash) != 0 {
+		t.Fatalf("flash still has %+v", flash)
+	}
+	if _, ok, _ := r.GetOffsiteTarget(stays.ID); !ok {
+		t.Fatal("the removal took a target of another destination")
+	}
+	if err := r.RemoveDestination(d.ID, nil); !errors.Is(err, store.ErrNotDestination) {
+		t.Fatalf("removing it again: %v, want it reported as unknown", err)
 	}
 }

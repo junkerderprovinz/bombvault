@@ -6339,6 +6339,57 @@ export function deleteDestination(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
+/** A target's direct repository in a removal. `kept` means an entry or a
+ *  default still backs up to it, so it stays as a repository of its own. */
+export interface RemovalDirect {
+  repoId: string;
+  name: string;
+  items: number;
+  defaultDomains: string[];
+  kept: boolean;
+}
+
+/** One section's part of a destination that is about to be removed. `entries`
+ *  and `backups` are what the last listing of its repository there found, at
+ *  `listedAt` (0 for never). `primary` is the section's built-in off-site
+ *  copy, whose settings field is cleared with it. */
+export interface RemovalSection {
+  domain: OffsiteDomain;
+  targetId: string;
+  repo: string;
+  primary: boolean;
+  appendOnly: boolean;
+  entries: number;
+  backups: number;
+  listedAt: number;
+  lastCopyAt: number;
+  direct?: RemovalDirect;
+}
+
+/** What removing a destination detaches. The backups there stay as they are. */
+export interface DestinationRemoval {
+  sections: RemovalSection[];
+}
+
+/** GET /api/offsite/destinations/{id}/removal. */
+export function previewDestinationRemoval(id: string): Promise<OkEnvelope & { removal?: DestinationRemoval }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`);
+}
+
+/** POST /api/offsite/destinations/{id}/removal: removes a destination that
+ *  sections still copy to and leaves the data there. `expect` is the preview
+ *  that was shown; when the sections changed since, the answer has code
+ *  "stale" and carries them as they are. */
+export function removeDestination(
+  id: string,
+  expect: DestinationRemoval
+): Promise<OkEnvelope & { removal?: DestinationRemoval }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`, {
+    method: "POST",
+    body: JSON.stringify({ expect }),
+  });
+}
+
 /** Hangs a target typed in by hand on the destination its repository lies
  *  under, keeping the repository. */
 export function adoptIntoDestination(id: string, targetId: string): Promise<OkEnvelope & { destination?: Destination }> {

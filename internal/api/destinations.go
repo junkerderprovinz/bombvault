@@ -530,14 +530,7 @@ func (s *Service) DeleteDestination(id string) error {
 	if err := s.store.DeleteDestinationIfUnused(id); err != nil {
 		return err
 	}
-	if remote, ok := strings.CutPrefix(d.Repo, "rclone:"); ok {
-		if name, _, ok := strings.Cut(remote, ":"); ok {
-			s.removeRcloneRemote(name)
-		}
-	}
-	if d.CredsRef != "" {
-		s.removeCredSet(d.CredsRef)
-	}
+	s.dropDestinationSignIn(d)
 	return nil
 }
 

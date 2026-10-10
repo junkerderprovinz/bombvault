@@ -912,26 +912,29 @@ func (r *Repo) GetOffsiteTarget(id string) (OffsiteTarget, bool, error) {
 // plain named repository, labelled lost and, at a remote location, off the
 // premises.
 func (r *Repo) DeleteOffsiteTarget(id string) error {
-	err := r.inTx(func(tx *sql.Tx) error {
-		// A direct repository without a name of its own went by its target, so
-		// it keeps that name, or its location when the target had none.
-		//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
-		if _, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
-			  off_premises = (`+remoteLocation("repo")+`),
-			  name = CASE WHEN name <> '' THEN name
-			              ELSE COALESCE(NULLIF((SELECT t.name FROM offsite_targets t WHERE t.id = ? AND t.role = ?), ''), repo) END
-			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
-			return err
-		}
-		return deleteTargetObservationsTx(tx, id)
-	})
-	if err != nil {
+	if err := r.inTx(func(tx *sql.Tx) error { return deleteTargetKeepingDirectTx(tx, id) }); err != nil {
 		return fmt.Errorf("DeleteOffsiteTarget: %w", err)
 	}
 	return nil
+}
+
+// deleteTargetKeepingDirectTx removes a target and its observations and turns
+// its direct repository into a named repository of its own.
+func deleteTargetKeepingDirectTx(tx *sql.Tx, id string) error {
+	// A direct repository without a name of its own went by its target, so
+	// it keeps that name, or its location when the target had none.
+	//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
+	if _, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
+		  off_premises = (`+remoteLocation("repo")+`),
+		  name = CASE WHEN name <> '' THEN name
+		              ELSE COALESCE(NULLIF((SELECT t.name FROM offsite_targets t WHERE t.id = ? AND t.role = ?), ''), repo) END
+		WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+		return err
+	}
+	return deleteTargetObservationsTx(tx, id)
 }
 
 // TargetUse is what keeps an offsite target from being deleted in the Off-site tab.
