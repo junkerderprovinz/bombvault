@@ -113,3 +113,13 @@ it("takes back a server choice the server refused, so the next save leaves it ou
   });
   expect(saved.at(-1)).toMatchObject({ enabled: true, mediaServers: ["plex"], mediaServersAuto: true });
 });
+
+it("marks the chosen servers in the list without a checkbox", async () => {
+  await renderCard();
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: en["streaming.pick"] }));
+  });
+  expect(screen.getByRole("option", { name: /plex/ }).getAttribute("aria-selected")).toBe("true");
+  expect(screen.getByRole("option", { name: /jellyfin/ }).getAttribute("aria-selected")).toBe("false");
+  expect(document.querySelector('input[type="checkbox"]')).toBeNull();
+});

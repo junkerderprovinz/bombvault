@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { SelectDot } from "../../components/backups/SelectMark";
 import { Button } from "../../components/Button";
 import { DropdownListbox } from "../../components/DropdownListbox";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -66,7 +67,7 @@ export function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"];
                       checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                     }`}
                   >
-                    <input type="checkbox" checked={checked} readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
+                    <SelectDot checked={checked} />
                     <span className="min-w-0 flex-1 truncate">{c.name}</span>
                     {c.hostNetwork && <span className="shrink-0 text-caption text-statusWarn">{t("streaming.hostNetwork")}</span>}
                   </button>
