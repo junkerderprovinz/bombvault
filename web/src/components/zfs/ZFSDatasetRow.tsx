@@ -39,7 +39,7 @@ type T = ReturnType<typeof useT>["t"];
 
 // Codes that mean the last look at this item found nothing usable, as opposed
 // to one dataset of the tree the reader could mount or unlock.
-const RED_CODES = new Set([
+export const RED_CODES = new Set([
   "not-found",
   "not-filesystem",
   "nothing-readable",
@@ -83,7 +83,7 @@ function ZFSBackupButton({ item, t, onDone, running }: {
 
 /** The extra switch in the delete confirm. It owns its state and reports
  *  through `sink`, because the dialog keeps the node it was handed. */
-function DeleteSafetyToggle({ label, sink }: { label: string; sink: { current: boolean } }) {
+export function DeleteSafetyToggle({ label, sink }: { label: string; sink: { current: boolean } }) {
   const [on, setOn] = useState(false);
   return (
     <ToggleRow
@@ -111,7 +111,7 @@ function zfsRunReason(t: T, raw: string, hookDetail: string): ReactNode {
   );
 }
 
-function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t: T }) {
+export function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t: T }) {
   const [detail, setDetail] = useState<ZFSRunDetail | null>(null);
   const runId = run.id;
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { exportVM } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { IconDownload } from "../Sidebar";
-import { Button } from "../Button";
+import { Button, type ButtonTone } from "../Button";
 import { groupStage } from "../../lib/controls";
 import { useToast } from "../../lib/toast";
 
@@ -11,7 +11,7 @@ type T = ReturnType<typeof useT>["t"];
 // VMExportButton keeps its result inline as well as toasting a failure, like
 // Containers.tsx's ExportButton: the destination path is something to copy
 // down, not a passing notice.
-export function VMExportButton({ name, t }: { name: string; t: T }) {
+export function VMExportButton({ name, t, tone = "accent" }: { name: string; t: T; tone?: ButtonTone }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
   const { push } = useToast();
@@ -49,7 +49,7 @@ export function VMExportButton({ name, t }: { name: string; t: T }) {
         label={t("export.button")}
         labelKey="export.button"
         glyph={<IconDownload />}
-        tone="accent"
+        tone={tone}
         // Shares its width stage with the backup button beside it.
         stage={groupStage([t("containers.backupNow"), t("export.button")])}
         onClick={() => void run()}

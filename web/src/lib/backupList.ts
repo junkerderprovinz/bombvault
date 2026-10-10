@@ -3,7 +3,7 @@
 // list is filtered and ordered.
 
 import type { BackupItem } from "./api";
-import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, progressKey, type EntryKind } from "./backupEntry";
+import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, entryPath, progressKey, type EntryKind } from "./backupEntry";
 import type { ProgressState } from "./progress";
 
 /** The kinds with a tile of their own, in the order the tiles stand. The
@@ -28,9 +28,9 @@ export function tilePath(tile: Tile): string {
   return entryListPath(tile);
 }
 
-/** entryTarget is where a row leads: the page of the entry's kind. */
+/** entryTarget is where a row leads: the page of its entry. */
 export function entryTarget(item: BackupItem): string {
-  return ENTRY_KIND[item.kind].legacyPath;
+  return entryPath(item.kind, item.key);
 }
 
 /** addTarget is the page on which something is added, or null when nothing

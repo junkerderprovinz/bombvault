@@ -17,9 +17,11 @@ interface PauseButtonProps {
   save: (include: boolean) => Promise<OkEnvelope>;
   /** Called with the stored value once the save succeeded. */
   onSaved?: (include: boolean) => void;
+  /** Sizes the button for the action corner of a page. */
+  corner?: boolean;
 }
 
-export function PauseButton({ paused, save, onSaved }: PauseButtonProps) {
+export function PauseButton({ paused, save, onSaved, corner = false }: PauseButtonProps) {
   const { t } = useT();
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
@@ -53,11 +55,11 @@ export function PauseButton({ paused, save, onSaved }: PauseButtonProps) {
       label={paused ? t("schedule.resume") : t("schedule.pause")}
       labelKey={paused ? "schedule.resume" : "schedule.pause"}
       glyph={undefined}
-      tone="neutral"
+      tone={corner ? "subtle" : "neutral"}
       onClick={() => void handleClick()}
       disabled={busy}
       busy={busy}
-      className={shake ? "glim-shake" : ""}
+      className={`${corner ? "glim-btn-key" : ""}${shake ? " glim-shake" : ""}`}
     />
   );
 }

@@ -89,10 +89,10 @@ describe("what the list holds", () => {
 });
 
 describe("where things lead", () => {
-  it("opens the page of the entry's kind", () => {
-    expect(entryTarget(item())).toBe("/containers");
-    expect(entryTarget(item({ kind: "zfs" }))).toBe("/zfs");
-    expect(entryTarget(item({ kind: "config" }))).toBe("/config");
+  it("opens the page of the entry", () => {
+    expect(entryTarget(item({ key: "my app" }))).toBe("/backups/container/my%20app");
+    expect(entryTarget(item({ kind: "zfs", key: "0123abcd" }))).toBe("/backups/zfs/0123abcd");
+    expect(entryTarget(item({ kind: "config", key: "config" }))).toBe("/backups/config/config");
   });
 
   it("adds on the page of the chosen kind, else on the first kind that is added by hand and switched on", () => {

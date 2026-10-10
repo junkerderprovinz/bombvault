@@ -14,6 +14,7 @@ import type {
 } from "./api";
 import type { TranslationKey } from "./i18n";
 import type { BadgeTone } from "../components/Badge";
+import { entryKey, entryPath, kindOfDomain } from "./backupEntry";
 import { dbDumpNameOf, isDbDumpIdentity } from "./dbdump";
 import { humanBytes } from "./forecast";
 import { isolateLtr } from "./ltrFragments";
@@ -422,32 +423,20 @@ export function anomalyShortLine(
   }
 }
 
-/** The item's own page, for the links out of a finding. */
-const DOMAIN_PATH: Record<string, string> = {
-  container: "/containers",
-  containers: "/containers",
-  vm: "/vms",
-  vms: "/vms",
-  files: "/files",
-  zfs: "/zfs",
-  flash: "/flash",
-  config: "/config",
-};
-
-export function anomalyItemPath(a: { domain: string }): string | undefined {
-  return DOMAIN_PATH[a.domain];
+/** The page of the entry a finding or a watched item is about. */
+export function anomalyItemPath(a: { domain: string; name: string; targetId: string }): string | undefined {
+  const kind = kindOfDomain(a.domain);
+  return kind && entryPath(kind, entryKey(kind, { name: a.name, id: a.targetId }));
 }
 
 /**
- * anomalyRestorePath opens the item's page on the last good backup of a
- * finding about lost data. The item names the row on a page that lists many;
- * flash and config have no name and need none.
+ * anomalyRestorePath opens the entry's page on the last good backup of a
+ * finding about lost data.
  */
 export function anomalyRestorePath(a: AnomalyView): string | null {
-  const itemPath = DOMAIN_PATH[a.domain];
+  const itemPath = anomalyItemPath(a);
   if (!itemPath || !a.lastGood) return null;
   const params = new URLSearchParams({ restore: a.lastGood.snapshotId, at: String(a.lastGood.at) });
-  if (a.name) params.set("item", a.name);
   if (a.scopeKind === "zfsds") params.set("dataset", a.part);
   if (a.scopeKind === "dump") params.set("dump", "1");
   return `${itemPath}?${params.toString()}`;

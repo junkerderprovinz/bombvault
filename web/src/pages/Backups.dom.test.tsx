@@ -365,10 +365,10 @@ describe("a row", () => {
     expect(within(row("new")).getByRole("img").getAttribute("aria-label")).toBe("No runs yet");
   });
 
-  it("opens the page of its kind from anywhere on it", async () => {
+  it("opens the page of its entry from anywhere on it", async () => {
     await renderPage();
     await press(within(row("Documents")).getByRole("img"));
-    expect(screen.getByText("at /files")).toBeTruthy();
+    expect(screen.getByText("at /backups/files/f1")).toBeTruthy();
   });
 
   it("stays put when its bubble is pressed", async () => {
