@@ -100,9 +100,11 @@ NAV = [
     "IconTabOffsite",
     "IconNotifications",
     "IconTabIntegrity",
+    "IconTabRecovery",
     "IconTabSecurity",
     "IconTabApps",
     "IconTabSystem",
+    "IconDiagnostics",
 ]
 
 # Glyphs that point along the reading direction, so a right-to-left layout
