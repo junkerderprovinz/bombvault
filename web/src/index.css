@@ -172,6 +172,42 @@
   margin-top: 11px;
 }
 
+/* Page actions (components/PageActions.tsx) stick to the bottom of the
+   scroller. A page that has them fills the scroller's height, so they rest at
+   its bottom edge on a page shorter than the window too. Their buttons float
+   over the rows and are raised like a card. */
+.glim-page-enter > :has(> .glim-page-actions) {
+  flex-grow: 1;
+}
+.glim-page-actions .glim-btn {
+  box-shadow: var(--elevation), var(--hairline);
+}
+/* A toast rises above the page actions, or it would lie on the button that
+   raised it. PageActions reports how far up it reaches. */
+.glim-toasts {
+  padding-bottom: calc(1rem + var(--page-actions-clearance, 0px));
+}
+
+/* The glyph tile of a list row (components/backups/BackupRow.tsx). It takes
+   the row's ink, which rainbow turns into the row's hue, and fills with the
+   accent while the row is hovered or holds the focus. Reactive mode rests the
+   glyph like every other item glyph. */
+.glim-row-glyph {
+  color: var(--accent-text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glim-row-glyph {
+    transition: background-color var(--motion-control-dur, 150ms) ease, color var(--motion-control-dur, 150ms) ease;
+  }
+}
+.glim-hue:is(:hover, :focus-within) > .glim-row-glyph {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+[data-rainbow="reactive"] .glim-hue:not(:hover, :focus-within) > .glim-row-glyph {
+  color: var(--carbon-text-muted);
+}
+
 /* The one raised surface, from GlimStone. Never nested: one elevation. */
 .glim-card {
   background-color: var(--carbon-surface);

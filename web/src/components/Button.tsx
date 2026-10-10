@@ -82,6 +82,7 @@ export function Button({
   ariaControls,
   stage: stageOverride,
   keepLabel = false,
+  glyphOnly = false,
   hint,
   ref,
 }: {
@@ -133,6 +134,10 @@ export function Button({
    *  than an action, such as a directory row in the folder browser, where a
    *  column of identical folder glyphs would be unreadable. */
   keepLabel?: boolean;
+  /** Shows the glyph alone in every mode, for a control whose place leaves no
+   *  room for words, such as a page action on a phone. The label stays its
+   *  accessible name and tooltip. */
+  glyphOnly?: boolean;
   /** What the button does beyond its label, or why it is unavailable, as an
    *  (i) inside the button; see HintSlot. A button showing its glyph alone has
    *  no room for one, so there the explanation joins the button's own bubble. */
@@ -154,9 +159,11 @@ export function Button({
       ? hasGlyph
         ? "textGlyph"
         : "text"
-      : hidesLabel(mode) && !hasGlyph
+      : (glyphOnly || hidesLabel(mode)) && !hasGlyph
         ? "text"
-        : mode;
+        : glyphOnly
+          ? "glyph"
+          : mode;
   const reactive = effective === "reactive";
   // Reactive words appear on hover, a CSS state, so at rest it is a hiding mode.
   const showText = effective !== "glyph" && !reactive;

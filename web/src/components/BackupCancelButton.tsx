@@ -27,12 +27,15 @@ export function BackupCancelButton({
   name,
   t,
   onCancelled,
+  compact = false,
 }: {
   /** The exact progress key the backend registered this backup under. */
   cancelKey: string;
   /** Human name substituted into the confirmation ({name}). */
   name: string;
   t: T;
+  /** A square with the glyph alone, for a list row. */
+  compact?: boolean;
   /** Called once the server accepted the cancellation, so the card can stop
    *  presenting the run as in progress before the next poll arrives. */
   onCancelled?: () => void;
@@ -88,6 +91,8 @@ export function BackupCancelButton({
           label={t("backup.cancel")}
           labelKey="backup.cancel"
           tone="neutral"
+          variant={compact ? "icon" : "default"}
+          glyphOnly={compact}
           onClick={() => void handle()}
           disabled={cancelling}
           busy={cancelling}

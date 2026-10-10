@@ -153,7 +153,7 @@ export interface ToastViewportProps {
 // off each card's shadow and the start of its slide-in.
 export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur }: ToastViewportProps) {
   return (
-    <div className="pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">
+    <div className="glim-toasts pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">
       {toasts.map((t) => (
         <ToastCard
           key={t.id}
