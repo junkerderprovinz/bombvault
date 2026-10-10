@@ -1,23 +1,22 @@
 // PhraseCard is where an instance joins a group. Outside one it offers two
 // tiles: generate a phrase, or enter one that already exists, each opening a
-// window. Inside one it shows who is there, and when nobody has come after a
-// minute it offers the two ways out, in the same two windows.
+// window. Inside one it holds the way back to the words and out of the group,
+// and when nobody has come after a minute it offers the two ways on, in the
+// same two windows. Who is in the group stands in the card below it.
 import { useEffect, useState, type ReactNode } from "react";
 import { Card, useOpenPasswordField } from "../shared";
-import { Badge, type BadgeTone } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
 import { IconDisclosure } from "../../../components/IconDisclosure";
 import { IconEye, IconRefresh, IconSignOut } from "../../../components/glyphs";
-import { IconCheck, IconClose, IconCopy, IconFleet } from "../../../components/navGlyphs";
+import { IconCheck, IconClose, IconCopy } from "../../../components/navGlyphs";
 import {
   createPhrase,
   joinGroup,
   leaveGroup,
   probeAddress,
   showPhrase,
-  type GroupMember,
   type GroupState,
   type PhraseRefusal,
 } from "../../../lib/api";
@@ -29,7 +28,7 @@ import { PairingWindow } from "./PairingWindow";
 import { usePhraseEntry } from "./PhraseInput";
 import { WordSlots } from "./WordSlots";
 import { PhraseGlyph } from "./pairingArt";
-import { STAGE_BADGE, clock, pairStage } from "./pairStage";
+import type { PairStage } from "./pairStage";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -60,7 +59,7 @@ function hostOf(url: string): string {
 
 /** useJoinedAgo counts on from the seconds the server last reported, so the
  *  search timer runs and the minute passes between two reloads of the group. */
-function useJoinedAgo(group: GroupState): number {
+export function useJoinedAgo(group: GroupState): number {
   const [base, setBase] = useState({ ago: group.joinedAgo, at: Date.now() });
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -75,45 +74,6 @@ function useJoinedAgo(group: GroupState): number {
     return () => clearInterval(id);
   }, [waiting]);
   return base.ago + Math.max(0, Math.floor((now - base.at) / 1000));
-}
-
-/** Row is one instance of the group: a glyph, its name and what to say about
- *  it. Rows share one height, so one without a badge lines up with the rest. */
-function Row({ name, mark, badge }: { name: string; mark?: string; badge?: ReactNode }) {
-  return (
-    <li className="flex h-11 items-center gap-2.5 rounded-control bg-carbon-surface2 px-3">
-      <span className="shrink-0 text-carbon-textMuted [&>svg]:h-4.5 [&>svg]:w-4.5">
-        <IconFleet />
-      </span>
-      <span className="min-w-0 truncate text-sm font-semibold text-carbon-text">{name}</span>
-      {mark && <span className="shrink-0 text-caption font-semibold uppercase tracking-widest text-carbon-textMuted">{mark}</span>}
-      {badge && <span className="ms-auto shrink-0">{badge}</span>}
-    </li>
-  );
-}
-
-function MemberRow({ m, t }: { m: GroupMember; t: T }) {
-  return (
-    <Row
-      name={m.name || m.id}
-      mark={m.kind === "android" ? t("fleet.kindAndroid") : undefined}
-      badge={<Badge tone={m.direct ? "ok" : "neutral"}>{m.direct ? t("pairing.direct") : t("pairing.viaRelay")}</Badge>}
-    />
-  );
-}
-
-function WaitRow({ text, seconds }: { text: string; seconds?: number }) {
-  return (
-    <div className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-carbon-textSub">
-      <span className="flex shrink-0 gap-1" aria-hidden="true">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="glim-wait-dot h-1.5 w-1.5 rounded-full bg-accentText" style={{ animationDelay: `${i * 200}ms` }} />
-        ))}
-      </span>
-      <span className="text-sm">{text}</span>
-      {seconds !== undefined && <span className="ms-auto text-xs tabular-nums text-carbon-textMuted">{clock(seconds)}</span>}
-    </div>
-  );
 }
 
 /** RelayDownLine says in one line that the relay cannot be reached, and opens
@@ -273,12 +233,17 @@ function CloseButton({ onClose, t }: { onClose: () => void; t: T }) {
 
 export function PhraseCard({
   group,
+  stage,
+  onCreatedHere,
   onGroup,
   onRefresh,
   t,
   hueIndex,
 }: {
   group: GroupState;
+  stage: PairStage;
+  /** Tells the page whether the group this instance is in was made here. */
+  onCreatedHere: (created: boolean) => void;
   onGroup: (g: GroupState) => void;
   /** Asks the server for the group again, for "Check again". */
   onRefresh: () => void;
@@ -288,7 +253,6 @@ export function PhraseCard({
   const { push } = useToast();
   const openPasswordField = useOpenPasswordField();
   const [phrase, setPhrase] = useState<string | null>(null);
-  const [createdHere, setCreatedHere] = useState(false);
   // The window over the card: the words to read out, the field for the words
   // of a first instance, or the field for another group's words.
   const [shown, setShown] = useState<"words" | "enter" | "join" | null>(null);
@@ -298,9 +262,6 @@ export function PhraseCard({
   const [shake, setShake] = useState(0);
   const [copies, setCopies] = useState(0);
   const reveal = useReveal();
-  const joinedAgo = useJoinedAgo(group);
-
-  const stage = pairStage(group, joinedAgo, createdHere);
   const shakeCls = shake ? "glim-shake" : "";
 
   async function run(action: () => Promise<void>) {
@@ -322,7 +283,7 @@ export function PhraseCard({
 
   function forget() {
     setPhrase(null);
-    setCreatedHere(false);
+    onCreatedHere(false);
     setConfirmLeave(false);
     setCopies(0);
   }
@@ -332,7 +293,7 @@ export function PhraseCard({
       const res = await createPhrase();
       if (res.ok && res.phrase) {
         setPhrase(res.phrase);
-        setCreatedHere(true);
+        onCreatedHere(true);
         if (res.group) onGroup(res.group);
         setShown("words");
       } else {
@@ -469,17 +430,6 @@ export function PhraseCard({
     <Button label={t("pairing.leave")} labelKey="pairing.leave" glyph={<IconSignOut />} tone="neutral" onClick={() => setConfirmLeave(true)} />
   );
 
-  /** stateRow puts the pairing state at the end of the card's first line,
-   *  after what there is to say about it. */
-  const stateRow = (tone: BadgeTone, text: string, lead?: string) => (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-      {lead && <p className="min-w-0 flex-[1_1_16rem] text-sm text-carbon-textSub">{lead}</p>}
-      <span className="ms-auto" data-testid="pair-state">
-        <Badge tone={tone}>{text}</Badge>
-      </span>
-    </div>
-  );
-
   const enterTip = t("pairing.enterTip").replace(
     "{path}",
     [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "),
@@ -613,7 +563,7 @@ export function PhraseCard({
   } else if (stage === "alone") {
     body = (
       <>
-        {stateRow(STAGE_BADGE.alone.tone, t(STAGE_BADGE.alone.key), t("pairing.aloneLead"))}
+        <p className="text-sm text-carbon-textSub">{t("pairing.aloneLead")}</p>
         {noPasswordNote}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Choice
@@ -639,10 +589,8 @@ export function PhraseCard({
       </>
     );
   } else {
-    const badge = STAGE_BADGE[stage];
     body = (
       <>
-        {stateRow(badge.tone, t(badge.key))}
         {noPasswordNote}
         {relayHint}
         {stage === "new" && (
@@ -661,26 +609,20 @@ export function PhraseCard({
             <NextStep t={t} />
           </>
         )}
-        <div className="flex flex-col gap-2">
-          <ul className="flex flex-col gap-2" data-testid="members">
-            <Row name={group.name} mark={t("instances.thisInstance")} />
-            {group.members.map((m) => (
-              <MemberRow key={m.id} m={m} t={t} />
-            ))}
-          </ul>
-          {stage === "new" ? (
-            <WaitRow text={t("pairing.waitNext")} />
-          ) : stage !== "paired" ? (
-            <WaitRow text={t("pairing.searching")} seconds={stage === "searching" ? joinedAgo : undefined} />
-          ) : null}
-        </div>
+        {stage !== "new" && (
+          <p className="text-sm text-carbon-textSub">{t(stage === "paired" ? "pairing.pairedHint" : "pairing.searchingHint")}</p>
+        )}
         {foot}
       </>
     );
   }
 
   return (
-    <Card title={t("pairing.phraseTitle")} hint={t("pairing.phraseHint")} hueIndex={hueIndex}>
+    <Card
+      title={t("pairing.phraseTitle")}
+      hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`}
+      hueIndex={hueIndex}
+    >
       <div className="flex flex-col gap-4.5" data-stage={stage}>
         {body}
       </div>

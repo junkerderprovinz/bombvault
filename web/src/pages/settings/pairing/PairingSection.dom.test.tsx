@@ -1,18 +1,25 @@
 // @vitest-environment jsdom
-// The Pairing tab of Settings: one sentence on what pairing does, three
-// numbered step cards, the phrase card and the relay card. The phrase card
-// offers two tiles, generate or enter a phrase, each opening a window; the
-// entry window checks typed words against the word list as they arrive, and
-// after a minute alone the card offers the same two windows as the way out.
+// The Pairing page of Settings: three numbered step cards that play one
+// scene, the phrase card, the list of who is in the group, the card that
+// names this instance, and the relay card with its four routes. The phrase
+// card offers two tiles, generate or enter a phrase, each opening a window;
+// the entry window checks typed words against the word list as they arrive,
+// and after a minute alone the card offers the same two windows as the way
+// out.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import { I18nProvider, en, useT } from "../../../lib/i18n";
-import type { GroupState, RelayMode } from "../../../lib/api";
+import type { GroupState, MemberRoles, RelayMode, ZFSReplicaServer } from "../../../lib/api";
+import { server } from "../../../components/zfs/replica/replica.testsupport";
+import { memberRoles, roleRequest, roleSide } from "../../instances/instances.testsupport";
 import { checkPhrase, splitPhrase } from "../../../lib/phraseWords";
 import { LOGIN_PASSWORD_FIELD } from "../shared";
 
 let group: GroupState;
+let zfs: boolean;
+let roles: MemberRoles[];
+let servers: ZFSReplicaServer[];
 const relayCalls: Array<Record<string, unknown>> = [];
 const joined: string[] = [];
 let joinAnswer: Record<string, unknown> = {};
@@ -57,6 +64,9 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getGroup: () => Promise.resolve(group),
+    listRoles: () => Promise.resolve({ ok: true, members: roles, self: { receiver: [], fetcher: [], zfs: [] } }),
+    listZFSReplicaServers: () => Promise.resolve(servers),
+    getZFSReplicaKey: () => Promise.resolve({ publicKey: "ssh-ed25519 AAAA bombvault" }),
     setRelay: (patch: { mode?: RelayMode; url?: string; serve?: boolean }) => {
       relayCalls.push(patch);
       group = { ...group, relay: { ...group.relay, ...patch } };
@@ -98,7 +108,14 @@ const { pairStage } = await import("./pairStage");
 function Tab() {
   const { t } = useT();
   let hue = 0;
-  return <PairingSection t={t} nextHue={() => hue++} />;
+  return (
+    <PairingSection
+      t={t}
+      nextHue={() => hue++}
+      zfs={zfs}
+      instanceCard={(address) => <div data-testid="instance-card">{address}</div>}
+    />
+  );
 }
 
 let router: ReturnType<typeof createMemoryRouter>;
@@ -120,6 +137,10 @@ async function renderTab() {
   await act(async () => {
     render(<RouterProvider router={router} />);
   });
+}
+
+function phraseCard(): HTMLElement {
+  return document.querySelector("[data-stage]")!.closest(".glim-notch-card") as HTMLElement;
 }
 
 function stage(): string | null {
@@ -144,6 +165,9 @@ function pairButton(): HTMLButtonElement {
 
 beforeEach(() => {
   group = makeGroup();
+  zfs = false;
+  roles = [];
+  servers = [];
   relayCalls.length = 0;
   joined.length = 0;
   joinAnswer = {};
@@ -161,20 +185,44 @@ afterEach(() => {
 });
 
 describe("step cards", () => {
-  it("open with what pairing does in one sentence", async () => {
-    await renderTab();
-    expect(screen.getByText(en["pairing.lead"], { exact: false })).not.toBeNull();
-  });
-
   it("number the three steps and name the button they refer to", async () => {
     await renderTab();
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings.slice(0, 3)).toEqual([
       `1${en["pairing.step1Title"]}`,
-      `2${en["pairing.step2Title"]}`,
+      `2${en["pairing.stepOtherTitle"]}`,
       `3${en["pairing.step3Title"]}`,
     ]);
     expect(screen.getByText(en["pairing.enter"], { selector: "strong" })).not.toBeNull();
+  });
+
+  it("draw one scene over the three cards: generate and copy, enter and paste, paired", async () => {
+    await renderTab();
+    const pictures = [...document.querySelectorAll<SVGSVGElement>("svg[data-step]")];
+    expect(pictures.map((svg) => svg.getAttribute("data-step"))).toEqual(["1", "2", "3"]);
+    const texts = pictures.map((svg) => [...svg.querySelectorAll("text")].map((node) => node.textContent));
+    expect(texts[0]).toEqual(expect.arrayContaining([en["pairing.create"], en["common.copy"], en["common.copied"], "anchor", "lunar"]));
+    expect(texts[1]).toEqual(expect.arrayContaining([en["pairing.enter"], en["pairing.pic.pasteWords"], en["pairing.paste"], "anchor", "lunar"]));
+    expect(texts[2]).toEqual([en["pairing.paired"]]);
+    // Each instance in the third picture is the app's own logo.
+    expect(pictures[2].querySelectorAll('image[href="/logo.svg"]')).toHaveLength(2);
+  });
+
+  it("show every word of the phrase in the frame the pictures rest on", async () => {
+    await renderTab();
+    const words = document.querySelectorAll('svg[data-step="1"] .glim-step-show-early');
+    expect(words).toHaveLength(12);
+    const moments = [...words].map((word) => Number((word as SVGElement).style.getPropertyValue("--step-at")));
+    expect(moments).toEqual([...moments].sort((a, b) => a - b));
+    expect(moments[0]).toBeGreaterThan(0.09);
+  });
+
+  it("walk one pointer through all three, outside any card's own picture", async () => {
+    await renderTab();
+    const pointers = document.querySelectorAll(".glim-step-pointer");
+    expect(pointers).toHaveLength(1);
+    expect(pointers[0].closest("svg[data-step]")).toBeNull();
+    expect(pointers[0].getAttribute("aria-hidden")).toBe("true");
   });
 });
 
@@ -320,7 +368,7 @@ describe("the badge and the members", () => {
     expect(stage()).toBe("searching");
     expect(screen.getByText(en["pairing.stateSearching"])).not.toBeNull();
     expect(screen.getByText("0:12")).not.toBeNull();
-    expect(screen.queryByText(en["pairing.paired"])).toBeNull();
+    expect(within(screen.getByTestId("members")).queryByText(en["pairing.paired"])).toBeNull();
   });
 
   it("turns to Still alone once the minute passes on the page's own clock", async () => {
@@ -346,10 +394,28 @@ describe("the badge and the members", () => {
     expect(screen.getByTestId("pair-state").textContent).toBe(en["pairing.paired"]);
     const rows = within(screen.getByTestId("members")).getAllByRole("listitem");
     expect(rows.map((r) => r.textContent)).toEqual([
-      `cellar${en["instances.thisInstance"]}`,
-      `attic${en["pairing.viaRelay"]}`,
-      `garage${en["pairing.direct"]}`,
+      `cellar${en["instances.thisInstance"]}${en["pairing.paired"]}`,
+      `attic${en["pairing.paired"]}${en["pairing.viaRelay"]}`,
+      `garage${en["pairing.paired"]}${en["pairing.direct"]}`,
     ]);
+  });
+
+  it("keeps the members out of the phrase card, which says what the words are for", async () => {
+    await renderTab();
+    expect(within(phraseCard()).queryByText("attic")).toBeNull();
+    expect(within(phraseCard()).getByText(en["pairing.pairedHint"])).not.toBeNull();
+    expect(
+      within(phraseCard()).getByLabelText(`${en["pairing.phraseTip"]} ${en["pairing.lead"]} ${en["pairing.keyNote"]}`),
+    ).not.toBeNull();
+  });
+
+  it("marks a phone that runs the app", async () => {
+    group = makeGroup({
+      members: [{ id: "m3", name: "Pixel 8", version: "", direct: false, relay: true, address: "", kind: "android" }],
+    });
+    await renderTab();
+    const row = within(screen.getByTestId("members")).getAllByRole("listitem")[1];
+    expect(row.textContent).toBe(`Pixel 8${en["fleet.kindAndroid"]}${en["pairing.paired"]}${en["pairing.viaRelay"]}`);
   });
 
   it("shows the words again only after the password in a window", async () => {
@@ -428,11 +494,12 @@ describe("after a minute alone", () => {
   it("says in one line that the relay is down and opens what to check", async () => {
     group = alone({ relay: { ...makeGroup().relay, connected: false } });
     await renderTab();
-    expect(screen.getByText(en["relay.notConnected"])).not.toBeNull();
-    expect(screen.queryByText(en["pairing.relayCheckFilter"])).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: en["pairing.relayCheckOpen"] }));
-    expect(screen.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
-    expect(screen.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
+    const card = within(phraseCard());
+    expect(card.getByText(en["relay.notConnected"])).not.toBeNull();
+    expect(card.queryByText(en["pairing.relayCheckFilter"])).toBeNull();
+    fireEvent.click(card.getByRole("button", { name: en["pairing.relayCheckOpen"] }));
+    expect(card.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
+    expect(card.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
   });
 });
 
@@ -447,14 +514,62 @@ describe("the word list", () => {
   });
 });
 
-function howItWorks(): HTMLButtonElement {
-  return screen.getByRole("button", { name: en["relay.howItWorks"] }) as HTMLButtonElement;
+describe("the instances card", () => {
+  it("offers a ZFS server without BombVault as its last row and connects one over SSH", async () => {
+    zfs = true;
+    await renderTab();
+    const row = screen.getByTestId("zfs-row");
+    expect(row.textContent).toContain(en["pairing.group.zfsTitle"]);
+    expect(row.textContent).toContain(en["pairing.group.zfsNone"]);
+    expect(within(row).getByLabelText(en["pairing.group.zfsTip"])).not.toBeNull();
+    expect(screen.getByTestId("members").compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(row).getByRole("button", { name: en["pairing.group.zfsConnect"] }));
+    });
+    expect(screen.getByRole("dialog", { name: en["zfs.replica.addServer"] })).not.toBeNull();
+  });
+
+  it("names the ZFS servers that are connected already", async () => {
+    zfs = true;
+    servers = [server(), server({ id: "old", name: "Old box" })];
+    await renderTab();
+    expect(screen.getByTestId("zfs-row").textContent).toContain("Backup-NAS, Old box");
+  });
+
+  it("has no ZFS row while the ZFS section is off", async () => {
+    servers = [server()];
+    await renderTab();
+    expect(screen.queryByTestId("zfs-row")).toBeNull();
+  });
+
+  it("draws the group as a network beside the list, with the roles between its members", async () => {
+    zfs = true;
+    servers = [server()];
+    roles = [memberRoles({ byMember: roleSide({ receiver: roleRequest({ state: "allowed" }) }) })];
+    await renderTab();
+    const picture = within(screen.getByTestId("net-picture"));
+    for (const name of ["cellar", "attic", "Backup-NAS"]) {
+      expect(picture.getAllByRole("button", { name }).length).toBeGreaterThan(0);
+    }
+    expect(screen.getByTestId("net-picture").querySelectorAll('[data-lane="out:receiver:on"]').length).toBeGreaterThan(0);
+  });
+
+  it("is only the list while this instance is alone", async () => {
+    group = outside();
+    await renderTab();
+    expect(screen.queryByTestId("net-picture")).toBeNull();
+    expect(within(screen.getByTestId("members")).getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.queryByTestId("pair-state")).toBeNull();
+  });
+});
+
+function routePicture(key: "relay.pic.relay" | "relay.pic.instance" | "relay.pic.direct"): HTMLElement | null {
+  return screen.queryByRole("img", { name: en[key] });
 }
 
 describe("relay card", () => {
-  it("says what the relay is for and whether it is connected", async () => {
+  it("says whether the relay is connected", async () => {
     await renderTab();
-    expect(screen.getByText(en["relay.lead"])).not.toBeNull();
     expect(screen.getByTestId("relay-state").textContent).toBe(en["instances.connected"]);
     cleanup();
     group = makeGroup({ relay: { ...makeGroup().relay, connected: false } });
@@ -470,59 +585,116 @@ describe("relay card", () => {
     group = outside({ relay: { ...makeGroup().relay, connected: false } });
     await renderTab();
     expect(screen.getByTestId("relay-state").textContent).toBe(en["relay.noGroup"]);
-    expect(screen.getByText(en["relay.noGroupLine"])).not.toBeNull();
+    expect(screen.queryByTestId("relay-check")).toBeNull();
   });
 
-  it("keeps the picture and what the relay sees behind a disclosure", async () => {
+  it("shows the route in use as a picture beside what it needs", async () => {
     await renderTab();
-    expect(howItWorks().getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("img", { name: en["relay.projectAlt"] })).toBeNull();
-    expect(screen.queryByText(en["relay.e2e"], { exact: false })).toBeNull();
-    await act(async () => {
-      fireEvent.click(howItWorks());
-    });
-    expect(howItWorks().getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("img", { name: en["relay.projectAlt"] })).not.toBeNull();
-    expect(screen.getByText(en["relay.projectSees"])).not.toBeNull();
+    expect(routePicture("relay.pic.relay")).not.toBeNull();
+    expect(screen.getByText("parleyport.halleluja.design", { exact: false })).not.toBeNull();
+    expect(screen.getByText(en["relay.projectNeed"])).not.toBeNull();
     expect(screen.getByText(en["relay.e2e"], { exact: false })).not.toBeNull();
   });
 
-  it("offers the three routes and starts on the stored one", async () => {
+  it("opens what the relay sees in a window", async () => {
     await renderTab();
-    for (const key of ["relay.project", "relay.own", "relay.off"] as const) {
-      expect(screen.getByRole("tab", { name: en[key] })).not.toBeNull();
-    }
+    expect(screen.queryByText(en["relay.projectSees"])).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: en["relay.sees.title"] }));
+    const win = dialog();
+    expect(within(win).getByText(en["relay.projectSees"])).not.toBeNull();
+    expect(within(win).getByText(en["relay.notSeesContent"])).not.toBeNull();
+    expect(within(win).getByText(en["relay.notSeesBackups"])).not.toBeNull();
+    fireEvent.click(within(win).getByRole("button", { name: en["common.close"] }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("says that nothing leaves the network where there is no relay to see anything", async () => {
+    group = makeGroup({ relay: noRelay() });
+    await renderTab();
+    fireEvent.click(screen.getByRole("button", { name: en["relay.sees.title"] }));
+    expect(within(dialog()).getByText(en["relay.offSees"])).not.toBeNull();
+    expect(within(dialog()).queryByText(en["relay.notSeesContent"])).toBeNull();
+  });
+
+  it("offers the four routes and starts on the stored one", async () => {
+    await renderTab();
+    const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
+    expect(tabs).toEqual([en["relay.project"], en["relay.own"], en["relay.instanceName"], en["relay.off"]]);
     expect(screen.getByRole("tab", { name: en["relay.project"] }).getAttribute("aria-selected")).toBe("true");
-    await act(async () => {
-      fireEvent.click(howItWorks());
-    });
-    expect(screen.getByRole("img", { name: en["relay.projectAlt"] })).not.toBeNull();
     expect(screen.queryByLabelText(en["relay.addressLabel"], { exact: false })).toBeNull();
   });
 
   it("switches the picture and saves the route when another is picked", async () => {
     await renderTab();
     await act(async () => {
-      fireEvent.click(howItWorks());
-    });
-    await act(async () => {
       fireEvent.click(screen.getByRole("tab", { name: en["relay.off"] }));
     });
     expect(relayCalls).toContainEqual({ mode: "off" });
-    expect(screen.getByRole("img", { name: en["relay.offAlt"] })).not.toBeNull();
+    expect(routePicture("relay.pic.direct")).not.toBeNull();
+    expect(routePicture("relay.pic.relay")).toBeNull();
     expect(screen.queryByTestId("own-relay")).toBeNull();
   });
 
-  it("shows the sources and the address field only for an own relay", async () => {
+  it("shows the address field and where to get a relay for an own relay", async () => {
     await renderTab();
     expect(screen.queryByTestId("own-relay")).toBeNull();
     await act(async () => {
       fireEvent.click(screen.getByRole("tab", { name: en["relay.own"] }));
     });
-    expect(screen.queryByTestId("own-relay")).not.toBeNull();
-    expect(screen.getByText(en["relay.containerName"], { selector: "span" })).not.toBeNull();
-    expect(screen.getByRole("switch", { name: en["relay.serve"] })).not.toBeNull();
+    const own = within(screen.getByTestId("own-relay"));
+    expect(own.getByText(en["relay.containerName"], { selector: "strong" })).not.toBeNull();
+    expect(own.getByText(en["relay.containerAlso"], { exact: false })).not.toBeNull();
+    expect(own.queryByRole("switch")).toBeNull();
     expect(document.getElementById("relay-address")).not.toBeNull();
+    expect(screen.getByText(en["relay.pic.selfHosted"])).not.toBeNull();
+  });
+
+  it("offers a paired BombVault as the relay, stored as an own relay", async () => {
+    await renderTab();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("tab", { name: en["relay.instanceName"] }));
+    });
+    expect(relayCalls).toEqual([{ mode: "own" }]);
+    expect(screen.getByRole("tab", { name: en["relay.instanceName"] }).getAttribute("aria-selected")).toBe("true");
+    expect(routePicture("relay.pic.instance")).not.toBeNull();
+    expect(screen.queryByTestId("own-relay")).toBeNull();
+    const route = within(screen.getByTestId("instance-relay"));
+    expect((document.getElementById("relay-address") as HTMLInputElement).placeholder).toContain("/relay/connect");
+    await act(async () => {
+      fireEvent.click(route.getByRole("switch", { name: en["relay.serve"] }));
+    });
+    expect(relayCalls).toContainEqual({ serve: true });
+  });
+
+  it("moves between the two own routes without saving the same mode twice", async () => {
+    await renderTab();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("tab", { name: en["relay.instanceName"] }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("tab", { name: en["relay.own"] }));
+    });
+    expect(relayCalls).toEqual([{ mode: "own" }]);
+    expect(screen.getByTestId("own-relay")).not.toBeNull();
+  });
+
+  it("starts on the BombVault route when the stored address belongs to a paired instance", async () => {
+    group = makeGroup({ relay: { ...makeGroup().relay, mode: "own", url: "wss://192.168.1.21:8443/relay" } });
+    await renderTab();
+    expect(screen.getByRole("tab", { name: en["relay.instanceName"] }).getAttribute("aria-selected")).toBe("true");
+    expect(routePicture("relay.pic.instance")).not.toBeNull();
+  });
+
+  it("says what to check while the relay is not connected", async () => {
+    await renderTab();
+    expect(screen.queryByTestId("relay-check")).toBeNull();
+    cleanup();
+    group = makeGroup({ relay: { ...makeGroup().relay, connected: false } });
+    await renderTab();
+    const check = within(screen.getByTestId("relay-check"));
+    expect(check.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
+    expect(check.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
+    expect(check.getByRole("button", { name: en["pairing.checkAgain"] })).not.toBeNull();
   });
 
   it("saves a typed address after a pause, without a save button", async () => {

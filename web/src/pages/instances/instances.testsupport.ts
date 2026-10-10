@@ -1,4 +1,15 @@
-import type { FleetPeer, GroupMember, MeshOffer, PullSourceView, ReceivedRepoStatus } from "../../lib/api";
+import type {
+  FleetPeer,
+  GroupMember,
+  MemberRoles,
+  MeshOffer,
+  PullSourceView,
+  ReceivedRepoStatus,
+  RoleRequest,
+  RoleSide,
+  SelfRoles,
+  ZFSRole,
+} from "../../lib/api";
 
 export const NOW_S = Math.floor(Date.now() / 1000);
 
@@ -87,3 +98,39 @@ export function meshOffer(over: Partial<MeshOffer> = {}): MeshOffer {
     ...over,
   };
 }
+
+export function roleRequest(over: Partial<RoleRequest> = {}): RoleRequest {
+  return {
+    id: "rr1",
+    state: "asked",
+    sections: ["containers", "flash"],
+    store: "rest",
+    askedAt: new Date((NOW_S - 600) * 1000).toISOString(),
+    decidedAt: "",
+    decidedBy: "",
+    ...over,
+  };
+}
+
+export function zfsRole(state: ZFSRole["state"], datasets: string[] = ["tank/appdata"]): ZFSRole {
+  return { state, items: datasets.map((dataset, i) => ({ id: `z${i + 1}`, dataset, state })) };
+}
+
+export function roleSide(over: Partial<RoleSide> = {}): RoleSide {
+  return { receiver: null, fetcher: null, zfs: null, ...over };
+}
+
+export function memberRoles(over: Partial<MemberRoles> = {}): MemberRoles {
+  return {
+    memberId: "m1",
+    name: "attic",
+    reachable: true,
+    answers: true,
+    byMember: roleSide(),
+    forMember: roleSide(),
+    asks: 0,
+    ...over,
+  };
+}
+
+export const NO_SELF_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [] };

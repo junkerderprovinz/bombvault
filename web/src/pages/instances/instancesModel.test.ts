@@ -1,23 +1,28 @@
-// One record per instance out of the lists the modules keep, the roles that
-// can be told from them, and the rows that belong to no card.
+// One record per instance out of the lists the modules keep and the roles the
+// server reports, and the rows that belong to no card.
 import { describe, expect, it } from "vitest";
 
-import { replica as replicaOf, receiveRequest } from "../../components/zfs/replica/replica.testsupport";
+import { replica as replicaOf } from "../../components/zfs/replica/replica.testsupport";
 import { destination } from "../../lib/placement.testsupport";
 import {
   fleetPeer as peer,
   groupMember as member,
+  memberRoles as roles,
   meshOffer as offer,
   NOW_S,
   pullSource as pull,
   receivedRepo as received,
+  roleRequest as request,
+  roleSide as side,
+  zfsRole,
 } from "./instances.testsupport";
 import {
   buildInstances,
   protectionFigures,
+  roleState,
+  roleStates,
   scorecardDue,
   SCORECARD_STALE_S,
-  servedNames,
   type InstancesData,
 } from "./instancesModel";
 
@@ -28,8 +33,7 @@ function data(over: Partial<InstancesData> = {}): InstancesData {
     received: [],
     pulls: [],
     offers: [],
-    requests: [],
-    logins: [],
+    roles: [],
     destinations: [],
     groupReceivers: [],
     replicas: [],
@@ -61,21 +65,34 @@ describe("the instances of the group", () => {
     const { instances } = buildInstances(
       data({ members: [], peers: [peer({ id: "old", memberId: "", needsPairing: true, url: "https://10.0.0.9:3443" })] }),
     );
-    expect(instances[0]).toMatchObject({ key: "old", needsPairing: true, address: "https://10.0.0.9:3443", roles: {} });
+    expect(instances[0]).toMatchObject({ key: "old", needsPairing: true, address: "https://10.0.0.9:3443" });
+    expect(instances[0].roles).toBeUndefined();
   });
 
-  it("makes a card for a member known only from its login or its request", () => {
+  it("makes a card for a member only a role names, by the name the request carries", () => {
     const { instances } = buildInstances(
       data({
         members: [],
         peers: [],
-        logins: [{ memberId: "m7", name: "barn", user: "barn-login", createdAt: 1 }],
-        requests: [receiveRequest({ peer: "m8", peerName: "shed" })],
+        roles: [roles({ memberId: "m7", name: "barn", reachable: false }), roles({ memberId: "m8", name: "" })],
       }),
     );
     expect(instances.map((i) => [i.key, i.name, i.connected])).toEqual([
       ["m7", "barn", false],
-      ["m8", "shed", false],
+      ["m8", "m8", false],
+    ]);
+  });
+
+  it("tells a member on this network from one behind the relay", () => {
+    const { instances } = buildInstances(
+      data({
+        members: [member(), member({ id: "m2", direct: false, relay: true })],
+        peers: [peer(), peer({ id: "p2", memberId: "m2", direct: false, relay: true })],
+      }),
+    );
+    expect(instances.map((i) => [i.connected, i.direct])).toEqual([
+      [true, true],
+      [true, false],
     ]);
   });
 });
@@ -100,19 +117,14 @@ describe("what belongs to an instance", () => {
     expect(unplaced.pulls.map((s) => s.id)).toEqual(["legacy"]);
   });
 
-  it("counts the requests that wait: asked replicas and open storage offers", () => {
+  it("counts what waits for an answer: the requests the server counted and the open storage offers", () => {
     const { instances } = buildInstances(
       data({
-        requests: [
-          receiveRequest({ id: "a", peer: "m1" }),
-          receiveRequest({ id: "b", peer: "m1", state: "allowed" }),
-          receiveRequest({ id: "c", peer: "m1", state: "refused" }),
-        ],
+        roles: [roles({ asks: 2 })],
         offers: [offer(), offer({ id: "o2", status: "accepted" })],
       }),
     );
-    expect(instances[0].asks).toBe(2);
-    expect(instances[0].requests.map((r) => r.id)).toEqual(["a", "b"]);
+    expect(instances[0].asks).toBe(3);
     expect(instances[0].offers.map((o) => o.id)).toEqual(["o1"]);
   });
 
@@ -129,72 +141,58 @@ describe("what belongs to an instance", () => {
 });
 
 describe("the roles an instance plays for this server", () => {
-  const offered = [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }];
+  it("reads each role from what the server reports: asked waits, allowed is on, anything else is off", () => {
+    expect(roleState(side({ receiver: request() }), "receiver")).toBe("waiting");
+    expect(roleState(side({ receiver: request({ state: "allowed" }) }), "receiver")).toBe("on");
+    expect(roleState(side({ fetcher: request({ state: "refused" }) }), "fetcher")).toBe("off");
+    expect(roleState(side({ fetcher: request({ state: "revoked" }) }), "fetcher")).toBe("off");
+    expect(roleState(side(), "fetcher")).toBe("off");
+    expect(roleState(side({ zfs: zfsRole("asked") }), "zfs")).toBe("waiting");
+    expect(roleState(side({ zfs: zfsRole("allowed") }), "zfs")).toBe("on");
+    expect(roleState(side({ zfs: zfsRole("off") }), "zfs")).toBe("off");
+    expect(roleState(undefined, "zfs")).toBe("off");
+  });
 
-  it("is a receiver when a destination lies on its receiving server", () => {
+  it("takes them from what the member does for this server, not the other way round", () => {
+    const { instances } = buildInstances(
+      data({
+        roles: [
+          roles({
+            byMember: side({ receiver: request({ state: "allowed" }), zfs: zfsRole("asked") }),
+            forMember: side({ fetcher: request({ state: "allowed" }) }),
+          }),
+        ],
+      }),
+    );
+    expect(roleStates(instances[0])).toEqual({ receiver: "on", fetcher: "off", zfs: "waiting" });
+  });
+
+  it("shows every role as off for an instance the server reports no roles for", () => {
+    expect(roleStates(buildInstances(data()).instances[0])).toEqual({ receiver: "off", fetcher: "off", zfs: "off" });
+  });
+
+  it("names the destination an active Receiver became, by its receiving server's address", () => {
+    const offered = [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }];
     const login = destination({ id: "d1", name: "attic", repo: "rest:http://192.168.1.21:8000/tower-login/" });
-    const { instances } = buildInstances(data({ groupReceivers: offered, destinations: [login] }));
-    expect(instances[0].roles.receiver).toBe("on");
-    expect(instances[0].destination?.id).toBe("d1");
+    const elsewhere = destination({ id: "d2", repo: "rest:http://192.168.1.210:8000/tower-login" });
+    const on = [roles({ byMember: side({ receiver: request({ state: "allowed" }) }) })];
+    const found = (over: Partial<InstancesData>) => buildInstances(data({ groupReceivers: offered, ...over })).instances[0].destination?.id;
+    expect(found({ roles: on, destinations: [elsewhere, login] })).toBe("d1");
+    expect(found({ roles: on, destinations: [elsewhere] })).toBeUndefined();
+    expect(found({ roles: on, destinations: null })).toBeUndefined();
+    expect(found({ roles: [roles({ byMember: side({ receiver: request() }) })], destinations: [login] })).toBeUndefined();
   });
 
-  it("is no receiver while no destination points at its receiving server", () => {
-    const elsewhere = destination({ repo: "rest:http://192.168.1.210:8000/tower-login" });
-    const { instances } = buildInstances(data({ groupReceivers: offered, destinations: [elsewhere] }));
-    expect(instances[0].roles.receiver).toBe("off");
-  });
-
-  it("is no receiver when it is connected and offers no receiving server", () => {
-    expect(buildInstances(data()).instances[0].roles.receiver).toBe("off");
-  });
-
-  it("leaves the receiver role open for an instance it cannot ask", () => {
-    const away = data({ members: [], peers: [peer({ direct: false, relay: false })] });
-    expect(buildInstances(away).instances[0].roles).not.toHaveProperty("receiver");
-    const relayOnly = data({ groupReceivers: [{ memberId: "m1", name: "attic", needsAddress: true }] });
-    expect(buildInstances(relayOnly).instances[0].roles).not.toHaveProperty("receiver");
-    const unread = data({ destinations: null });
-    expect(buildInstances(unread).instances[0].roles).not.toHaveProperty("receiver");
-  });
-
-  it("never claims to know whether an instance fetches from this server", () => {
-    const { instances } = buildInstances(data({ pulls: [pull()] }));
-    expect(instances[0].roles).not.toHaveProperty("fetcher");
-  });
-
-  it("follows the ZFS items that replicate to it: waiting while one still asks, on once allowed", () => {
-    const to = (peerState: "asked" | "allowed" | "refused", itemId: string) => ({
-      itemId,
-      dataset: `tank/${itemId}`,
-      replica: replicaOf({ target: { kind: "peer", id: "m1" }, peerState }),
-    });
-    const role = (replicas: InstancesData["replicas"]) => buildInstances(data({ replicas })).instances[0].roles.zfs;
-    expect(role([])).toBe("off");
-    expect(role([to("refused", "a")])).toBe("off");
-    expect(role([to("allowed", "a")])).toBe("on");
-    expect(role([to("allowed", "a"), to("asked", "b")])).toBe("waiting");
-    expect(role([{ itemId: "x", dataset: "tank/x", replica: replicaOf() }])).toBe("off");
+  it("keeps the ZFS items that replicate to it", () => {
+    const to = (id: string, itemId: string) => ({ itemId, dataset: `tank/${itemId}`, replica: replicaOf({ target: { kind: "peer", id } }) });
+    const { instances } = buildInstances(data({ replicas: [to("m1", "a"), to("m2", "b"), { itemId: "x", dataset: "tank/x", replica: replicaOf() }] }));
+    expect(instances[0].replicas.map((r) => r.itemId)).toEqual(["a"]);
   });
 
   it("gives the app no roles", () => {
     const { instances } = buildInstances(data({ members: [member({ kind: "android" })], peers: [peer({ kind: "android" })] }));
     expect(instances[0].app).toBe(true);
-    expect(instances[0].roles).toEqual({});
-  });
-});
-
-describe("what this server does for others", () => {
-  it("names the instances per role", () => {
-    const all = data({
-      members: [member(), member({ id: "m2", name: "barn" }), member({ id: "m3", name: "shed" })],
-      peers: [],
-      received: [received()],
-      logins: [{ memberId: "m2", name: "barn", user: "barn-login", createdAt: 1 }],
-      pulls: [pull({ memberId: "m3" })],
-      requests: [receiveRequest({ peer: "m2", state: "allowed" }), receiveRequest({ id: "rq2", peer: "m3" })],
-    });
-    const { instances } = buildInstances(all);
-    expect(servedNames(instances, all.logins)).toEqual({ receiver: ["attic", "barn"], fetcher: ["shed"], zfs: ["barn"] });
+    expect(instances[0].roles).toBeUndefined();
   });
 });
 

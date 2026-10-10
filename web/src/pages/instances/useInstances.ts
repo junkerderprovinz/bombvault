@@ -13,6 +13,7 @@ import {
   listMeshOffers,
   listPullSources,
   listReceivedRepos,
+  listRoles,
   listZFSDatasets,
   pollFleetPeer,
 } from "../../lib/api";
@@ -22,10 +23,11 @@ import type {
   FleetPeer,
   GroupMember,
   GroupReceiver,
+  MemberRoles,
   MeshOffer,
   PullSourceView,
   ReceivedRepoStatus,
-  ReceiverLogin,
+  SelfRoles,
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { FLEET_REFRESH_MS, scorecardDue, type InstancesData, type ItemReplica } from "./instancesModel";
@@ -50,22 +52,31 @@ export interface InstancesState {
   /** One line per list that could not be read. */
   errors: string[];
   self: Self | null;
+  /** For whom this server is Receiver, Fetcher and ZFS server. */
+  selfRoles: SelfRoles;
+  /** This server runs a receiving server. */
+  receiverServer: boolean;
   data: InstancesData;
   reloadPeers: () => Promise<void>;
   reloadOffers: () => Promise<void>;
   reloadReceived: () => Promise<void>;
   reloadPulls: () => Promise<void>;
-  reloadLogins: () => Promise<void>;
+  reloadRoles: () => Promise<void>;
+  reloadReplicas: () => Promise<void>;
+  reloadServer: () => Promise<void>;
 }
+
+const NO_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [] };
 
 function message(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
 /** useInstances reads what the modules that are on know about the group and
- *  keeps it fresh while the page is open. Asking who is connected costs no
- *  network traffic. A member's scorecard is fetched over the group only once
- *  it has gone stale, since that call may cross a relay. */
+ *  keeps it fresh while the page is open. Asking who is connected and where
+ *  the roles stand costs no network traffic. A member's scorecard is fetched
+ *  over the group only once it has gone stale, since that call may cross a
+ *  relay. */
 export function useInstances(modules: Modules | null): InstancesState {
   const { t } = useT();
   const { requests } = useReceiveRequests();
@@ -76,7 +87,9 @@ export function useInstances(modules: Modules | null): InstancesState {
   const [received, setReceived] = useState<ReceivedRepoStatus[]>([]);
   const [pulls, setPulls] = useState<PullSourceView[]>([]);
   const [offers, setOffers] = useState<MeshOffer[]>([]);
-  const [logins, setLogins] = useState<ReceiverLogin[]>([]);
+  const [roles, setRoles] = useState<MemberRoles[]>([]);
+  const [selfRoles, setSelfRoles] = useState<SelfRoles>(NO_ROLES);
+  const [receiverServer, setReceiverServer] = useState(false);
   const [destinations, setDestinations] = useState<Destination[] | null>(null);
   const [groupReceivers, setGroupReceivers] = useState<GroupReceiver[] | null>(null);
   const [replicas, setReplicas] = useState<ItemReplica[]>([]);
@@ -158,12 +171,43 @@ export function useInstances(modules: Modules | null): InstancesState {
     [note, t],
   );
 
-  const reloadLogins = useCallback(
+  const reloadServer = useCallback(
     (): Promise<void> =>
       getReceiverServer()
         .then((res) => {
-          if (res.ok) setLogins(res.server?.logins ?? []);
+          if (res.ok) setReceiverServer(Boolean(res.server));
         })
+        .catch(() => undefined),
+    [],
+  );
+
+  const reloadRoles = useCallback(
+    (): Promise<void> =>
+      listRoles()
+        .then((res) => {
+          if (res.ok) {
+            setRoles(res.members ?? []);
+            setSelfRoles(res.self ?? NO_ROLES);
+          }
+          note("roles", res.ok ? null : (res.error ?? t("instances.role.loadError")));
+        })
+        .catch((err) => note("roles", message(err, t("instances.role.loadError")))),
+    [note, t],
+  );
+
+  const reloadReplicas = useCallback(
+    (): Promise<void> =>
+      listZFSDatasets()
+        .then((res) =>
+          Promise.all(
+            (res.datasets ?? []).map((d) =>
+              getZFSReplica(d.id)
+                .then((replica): ItemReplica => ({ itemId: d.id, dataset: d.dataset, replica }))
+                .catch(() => null),
+            ),
+          ),
+        )
+        .then((found) => setReplicas(found.filter((r) => r !== null)))
         .catch(() => undefined),
     [],
   );
@@ -176,34 +220,22 @@ export function useInstances(modules: Modules | null): InstancesState {
         setGroupReceivers(recv.ok ? (recv.receivers ?? []) : null);
       })
       .catch(() => undefined);
-    const loadReplicas = zfs
-      ? listZFSDatasets()
-          .then((res) =>
-            Promise.all(
-              (res.datasets ?? []).map((d) =>
-                getZFSReplica(d.id)
-                  .then((replica): ItemReplica => ({ itemId: d.id, dataset: d.dataset, replica }))
-                  .catch(() => null),
-              ),
-            ),
-          )
-          .then((found) => setReplicas(found.filter((r) => r !== null)))
-          .catch(() => undefined)
-      : Promise.resolve();
     void Promise.all([
       loadSelf(),
       loadDestinations,
-      loadReplicas,
+      reloadRoles(),
+      zfs ? reloadReplicas() : undefined,
       fleet ? reloadPeers() : undefined,
       fleet ? reloadOffers() : undefined,
       receiver ? reloadReceived() : undefined,
-      receiver ? reloadLogins() : undefined,
+      receiver ? reloadServer() : undefined,
       pull ? reloadPulls() : undefined,
     ]).finally(() => setLoading(false));
 
     const refresh = () => {
       if (document.visibilityState !== "visible") return;
       void loadSelf();
+      void reloadRoles();
       if (fleet) void reloadPeers();
     };
     const id = setInterval(refresh, FLEET_REFRESH_MS);
@@ -212,7 +244,16 @@ export function useInstances(modules: Modules | null): InstancesState {
       clearInterval(id);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [ready, fleet, receiver, pull, zfs, loadSelf, reloadPeers, reloadOffers, reloadReceived, reloadLogins, reloadPulls]);
+  }, [ready, fleet, receiver, pull, zfs, loadSelf, reloadPeers, reloadOffers, reloadReceived, reloadServer, reloadPulls, reloadRoles, reloadReplicas]);
+
+  // An answer to a ZFS request changes the roles the server reports.
+  const answers = requests.map((r) => `${r.id}:${r.state}`).join(" ");
+  const seen = useRef(answers);
+  useEffect(() => {
+    if (seen.current === answers) return;
+    seen.current = answers;
+    void reloadRoles();
+  }, [answers, reloadRoles]);
 
   // A failure lands in the member's row, which the reload then shows.
   useEffect(() => {
@@ -237,15 +278,28 @@ export function useInstances(modules: Modules | null): InstancesState {
       received: receiver ? received : [],
       pulls: pull ? pulls : [],
       offers: fleet ? offers : [],
-      requests: receiver ? requests : [],
-      logins: receiver ? logins : [],
+      roles,
       destinations,
       groupReceivers,
       replicas: zfs ? replicas : [],
     }),
-    [members, peers, received, pulls, offers, requests, logins, destinations, groupReceivers, replicas, fleet, receiver, pull, zfs],
+    [members, peers, received, pulls, offers, roles, destinations, groupReceivers, replicas, fleet, receiver, pull, zfs],
   );
 
   const errors = useMemo(() => Object.values(failed), [failed]);
-  return { loading, errors, self, data, reloadPeers, reloadOffers, reloadReceived, reloadPulls, reloadLogins };
+  return {
+    loading,
+    errors,
+    self,
+    selfRoles,
+    receiverServer: receiver && receiverServer,
+    data,
+    reloadPeers,
+    reloadOffers,
+    reloadReceived,
+    reloadPulls,
+    reloadRoles,
+    reloadReplicas,
+    reloadServer,
+  };
 }

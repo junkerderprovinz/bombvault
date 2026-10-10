@@ -2972,6 +2972,100 @@ body {
   :root:not([data-motion="off"]) .glim-lock-gone {
     animation: glim-lock-gone var(--motion-scene-dur, 6s) linear infinite;
   }
+
+  /* The group as a network. The links draw in one after the other when the
+     picture first shows, and an arrow that joins later fades in by itself.
+     Nothing fills forwards, so pointing at an instance can still dim the
+     others. */
+  :root:not([data-motion="off"]) .glim-net-spoke:not(.glim-net-hub) {
+    animation: glim-fade-in var(--motion-content-dur, 220ms) ease-out backwards;
+    animation-delay: calc(var(--spoke-i, 0) * var(--motion-stagger-step, 30ms) * 4);
+  }
+  :root:not([data-motion="off"]) .glim-net-link {
+    animation: glim-net-draw var(--motion-ring-dur, 500ms) cubic-bezier(.3, 0, .2, 1) backwards;
+    animation-delay: calc(var(--spoke-i, 0) * var(--motion-stagger-step, 30ms) * 4);
+  }
+  :root:not([data-motion="off"]) .glim-net-lane {
+    animation: glim-fade-in var(--motion-ring-dur, 500ms) ease-out backwards;
+  }
+  :root:not([data-motion="off"]) .glim-net-dot {
+    animation: glim-net-travel calc(var(--motion-scene-dur, 6s) / 2) cubic-bezier(.4, 0, .6, 1) infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) / -14 * var(--lane-turn, 0));
+  }
+
+  /* The relay pictures. A letter that rests in the still picture gives way
+     to the ones that travel. */
+  :root:not([data-motion="off"]) .glim-letter-parked { display: none; }
+  :root:not([data-motion="off"]) .glim-letter {
+    --letter-loop: var(--motion-scene-dur, 6s);
+    offset-rotate: 0deg;
+    animation: glim-letter-arc var(--letter-loop) linear infinite backwards;
+  }
+  :root:not([data-motion="off"]) .glim-letter-direct {
+    --letter-loop: calc(var(--motion-scene-dur, 6s) * .4);
+    animation-name: glim-letter-direct;
+  }
+  :root:not([data-motion="off"]) .glim-letter-in { animation-name: glim-letter-in; }
+  :root:not([data-motion="off"]) .glim-letter-out { animation-name: glim-letter-out; }
+  :root:not([data-motion="off"]) .glim-letter-in .glim-letter-size {
+    animation: glim-letter-shrink var(--letter-loop) linear infinite backwards;
+  }
+  :root:not([data-motion="off"]) .glim-letter-out .glim-letter-size {
+    animation: glim-letter-grow var(--letter-loop) linear infinite backwards;
+  }
+  /* The way back starts when the way there is over. */
+  :root:not([data-motion="off"]) .glim-letter-back,
+  :root:not([data-motion="off"]) .glim-letter-back .glim-letter-size {
+    animation-delay: calc(var(--letter-loop) / 2);
+  }
+  :root:not([data-motion="off"]) .glim-letter-refused {
+    animation: glim-letter-refused calc(var(--motion-scene-dur, 6s) / 2) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-route-refusal {
+    animation: glim-route-refusal calc(var(--motion-scene-dur, 6s) / 2) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-relay-ring {
+    animation: glim-relay-ring calc(var(--motion-scene-dur, 6s) / 2) linear infinite backwards;
+  }
+  :root:not([data-motion="off"]) .glim-relay-hop {
+    animation: glim-relay-hop calc(var(--motion-scene-dur, 6s) / 2) linear infinite backwards;
+  }
+  /* An instance that serves as the relay takes one letter per pass, the one
+     that comes back. */
+  :root:not([data-motion="off"]) .glim-relay-home {
+    animation-duration: var(--motion-scene-dur, 6s);
+    animation-delay: calc(var(--motion-scene-dur, 6s) / 2);
+  }
+
+  /* The three step cards play one scene over two passes. --step-at is the
+     share of the loop at which a word shows or a button is pressed. */
+  :root:not([data-motion="off"]) :is(.glim-step-pic, .glim-step-pointer) {
+    --step-loop: calc(var(--motion-scene-dur, 6s) * 2);
+  }
+  :root:not([data-motion="off"]) .glim-step-show-early {
+    animation: glim-step-show-early var(--step-loop) linear infinite backwards;
+    animation-delay: calc(var(--step-loop) * var(--step-at, 0));
+  }
+  :root:not([data-motion="off"]) .glim-step-show-mid {
+    animation: glim-step-show-mid var(--step-loop) linear infinite backwards;
+    animation-delay: calc(var(--step-loop) * var(--step-at, 0));
+  }
+  :root:not([data-motion="off"]) .glim-step-press {
+    animation: glim-step-press var(--step-loop) linear infinite backwards;
+    animation-delay: calc(var(--step-loop) * var(--step-at, 0));
+  }
+  :root:not([data-motion="off"]) .glim-step-face-plain { animation: glim-step-face-plain var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-face-done { animation: glim-step-face-done var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-focus { animation: glim-step-focus var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-hint { animation: glim-step-hint var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-link { animation: glim-step-link var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-lock { animation: glim-step-lock var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-mail { animation: glim-step-mail var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-ring { animation: glim-step-ring var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-badge { animation: glim-step-badge var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-badge-pop { animation: glim-step-badge-pop var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-confetti { animation: glim-step-confetti var(--step-loop) linear infinite; }
+  :root:not([data-motion="off"]) .glim-step-pointer { animation: glim-step-pointer var(--step-loop) ease-in-out infinite; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3307,4 +3401,505 @@ body {
   0%, 36%   { opacity: 1; transform: none; }
   46%, 95%  { opacity: 0; transform: scale(0); }
   99%, 100% { opacity: 1; transform: none; }
+}
+
+/* The pairing group as a network: this server with everything paired or
+   connected around it, and an arrow for each role. The box holds a picture
+   for a wide place and one with everything on one side for a narrow one, and
+   its own width picks. The geometry is physical, so the text inside keeps one
+   direction. --net-ground is the surface the picture stands on. */
+.glim-net-box {
+  container: glim-net-box / inline-size;
+  min-width: 0;
+}
+.glim-net {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 32px;
+}
+/* The legend wraps below before it would squeeze the wide picture out. */
+.glim-net-pics {
+  container: glim-net-pics / inline-size;
+  flex: 1 1 35rem;
+  min-width: 0;
+  max-width: 760px;
+}
+.glim-net-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  direction: ltr;
+}
+.glim-net-narrow {
+  display: none;
+  max-width: 400px;
+  margin-inline: auto;
+}
+@container glim-net-pics (max-width: 559px) {
+  .glim-net-wide { display: none; }
+  .glim-net-narrow { display: block; }
+}
+.glim-logo-image { filter: drop-shadow(0 3px 3px rgb(0 0 0 / .28)); }
+.glim-net-link {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .6;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+.glim-net-spoke { transition: opacity var(--motion-control-dur, 150ms); }
+.glim-net-has .glim-net-spoke:not(.glim-net-hot, .glim-net-hub) { opacity: .35; }
+.glim-net-node {
+  cursor: pointer;
+  outline: none;
+}
+.glim-net-dim .glim-net-node { opacity: .5; }
+.glim-net-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0;
+  transition: opacity var(--motion-control-dur, 150ms);
+}
+.glim-net-hot .glim-net-ring,
+.glim-net-node:is(:hover, :focus-visible) .glim-net-ring { opacity: 1; }
+.glim-net-tile {
+  rx: min(var(--radius-control), 8px);
+  fill: var(--carbon-surface3);
+}
+.glim-net-tile-ink {
+  fill: var(--accent-text);
+  color: var(--accent-text);
+}
+.glim-net-tile-zfs { fill: var(--pic); }
+.glim-net-tile-zfs-ink { color: var(--net-ground, var(--carbon-surface2)); }
+.glim-net-label {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.3;
+  text-align: left;
+}
+.glim-net-label-end { text-align: right; }
+.glim-net-label-mid {
+  justify-content: flex-start;
+  text-align: center;
+}
+.glim-net-label b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--carbon-text);
+  overflow-wrap: anywhere;
+}
+.glim-net-label span {
+  font-size: 11px;
+  color: var(--carbon-text-muted);
+  overflow-wrap: anywhere;
+}
+/* A wide picture keeps a name on one line. A narrow one lets it wrap, since
+   a phone shows no text cut short. */
+.glim-net-wide .glim-net-label :is(b, span) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glim-net-narrow foreignObject { overflow: visible; }
+.glim-net-reach {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+}
+.glim-net-line {
+  fill: none;
+  stroke: var(--pic);
+  stroke-opacity: .7;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition:
+    stroke-width var(--motion-control-dur, 150ms),
+    stroke-opacity var(--motion-control-dur, 150ms);
+}
+.glim-net-wait .glim-net-line { stroke-dasharray: 4 5; }
+.glim-net-lane:hover .glim-net-line {
+  stroke-opacity: 1;
+  stroke-width: 3;
+}
+.glim-net-head,
+.glim-net-dot,
+.glim-net-badge { fill: var(--pic); }
+.glim-net-dot { opacity: 0; }
+.glim-net-badge-glyph { color: var(--net-ground, var(--carbon-surface2)); }
+/* A role that still waits keeps its glyph and loses its fill. */
+.glim-net-wait .glim-net-badge {
+  fill: var(--net-ground, var(--carbon-surface2));
+  stroke: var(--pic);
+  stroke-width: 1.5;
+}
+.glim-net-wait .glim-net-badge-glyph { color: var(--pic); }
+.glim-net-key {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  font-size: 12px;
+  color: var(--carbon-text-sub);
+}
+.glim-net-key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.glim-net-key-glyph {
+  display: inline-flex;
+  color: var(--accent-text);
+}
+.glim-net-key-glyph > svg {
+  width: 14px;
+  height: 14px;
+}
+.glim-net-key-wait {
+  width: 22px;
+  border-top: 2px dashed var(--carbon-text-muted);
+}
+@container glim-net-box (min-width: 960px) {
+  .glim-net-key {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+/* The entry beside the picture that stands for the instance pointed at. */
+.glim-net-entry { transition: box-shadow var(--motion-control-dur, 150ms); }
+.glim-net-entry-hot { box-shadow: inset 0 0 0 2px var(--accent); }
+@keyframes glim-net-draw {
+  from { stroke-dashoffset: 1; }
+}
+@keyframes glim-net-travel {
+  0%       { opacity: 0; transform: none; }
+  15%, 80% { opacity: 1; }
+  100%     { opacity: 0; transform: translate(var(--lane-dx, 0px), var(--lane-dy, 0px)); }
+}
+
+/* The relay pictures: who runs the relay, and that only sealed letters pass
+   it. Addresses stay out of the picture. */
+.glim-route > svg {
+  max-width: 440px;
+  margin-inline: auto;
+  direction: ltr;
+}
+.glim-route-area { rx: var(--radius-card); }
+.glim-route-caption {
+  font-size: 12px;
+  fill: var(--carbon-text-sub);
+}
+.glim-route-name {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--carbon-text);
+}
+.glim-route-pill {
+  rx: var(--radius-pill);
+  fill: var(--carbon-surface3);
+}
+.glim-route-pill-text {
+  font-size: 9.5px;
+  font-weight: 600;
+  fill: var(--carbon-text);
+}
+.glim-route-ground { fill: var(--carbon-surface3); }
+.glim-route-shackle {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 1;
+}
+.glim-route-blocked {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 3 5;
+}
+.glim-route-cross {
+  fill: none;
+  stroke: var(--status-fail-solid);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.glim-route-refusal {
+  fill: none;
+  stroke: var(--status-fail-solid);
+  stroke-width: 2;
+  opacity: 0;
+}
+.glim-letter { opacity: 0; }
+
+/* A letter covers about 457 units of its picture in one pass of the scene,
+   whatever its way. The 183 units of the arc take two fifths of a pass, the
+   91 units to or from a relay one fifth, and the 60 units between two
+   neighbours a third of their own loop, which is two fifths of a pass. */
+@keyframes glim-letter-arc {
+  0%, 4%    { offset-distance: 0%; opacity: 0; }
+  5%        { opacity: 1; }
+  44%       { offset-distance: 100%; opacity: 1; }
+  47%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes glim-letter-direct {
+  0%, 4%    { offset-distance: 0%; opacity: 0; }
+  6%        { opacity: 1; }
+  37%       { offset-distance: 100%; opacity: 1; }
+  42%, 100% { offset-distance: 100%; opacity: 0; }
+}
+/* A letter shrinks into the relay and another grows out of it on the far
+   side, so the two legs read as one letter passing through. */
+@keyframes glim-letter-in {
+  0%, 2%    { offset-distance: 0%; opacity: 0; }
+  3%        { opacity: 1; }
+  19.5%     { offset-distance: 88%; opacity: 1; }
+  22%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes glim-letter-out {
+  0%, 26%   { offset-distance: 0%; opacity: 0; }
+  28.5%     { offset-distance: 12%; opacity: 1; }
+  46%       { offset-distance: 100%; opacity: 1; }
+  49%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes glim-letter-shrink {
+  0%, 19.5% { transform: none; }
+  22%, 100% { transform: scale(.3); }
+}
+@keyframes glim-letter-grow {
+  0%, 26%     { transform: scale(.3); }
+  28.5%, 100% { transform: none; }
+}
+/* Without a relay a letter to the other network stops at the cross. */
+@keyframes glim-letter-refused {
+  0%        { opacity: 0; transform: translateX(-10px); }
+  2%        { opacity: 1; }
+  8%, 30%   { opacity: 1; transform: translateX(8px); }
+  42%, 100% { opacity: 0; transform: translateX(8px); }
+}
+@keyframes glim-route-refusal {
+  0%, 7%    { opacity: 0; transform: none; }
+  9%        { opacity: .7; transform: none; }
+  28%, 100% { opacity: 0; transform: scale(2.7); }
+}
+/* The relay answers a letter that arrives with a ring and a small hop. */
+@keyframes glim-relay-ring {
+  0%, 43%   { opacity: 0; transform: none; }
+  44%       { opacity: .6; transform: none; }
+  62%, 100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes glim-relay-hop {
+  0%, 44%   { transform: none; animation-timing-function: ease-out; }
+  50%       { transform: translateY(calc(var(--motion-scene-hop, 0px) * -.25)); animation-timing-function: ease-in; }
+  57%, 100% { transform: none; }
+}
+
+/* The pictures on the three step cards of the pairing page. Corners follow
+   the shape engine, and what sits on a filled shape is cut out of it in the
+   surface colour. */
+.glim-step-pic {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  direction: ltr;
+}
+.glim-step-tile,
+.glim-step-button { fill: var(--carbon-surface3); }
+.glim-step-tile,
+.glim-step-field,
+.glim-step-focus { rx: var(--radius-control); }
+.glim-step-corner { rx: calc(var(--radius-control) * .8); }
+.glim-step-button,
+.glim-step-word,
+.glim-step-badge-ground { rx: var(--radius-pill); }
+.glim-step-cut { color: var(--carbon-surface); }
+.glim-step-title {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--carbon-text);
+}
+.glim-step-word-tile { fill: var(--carbon-surface3); }
+.glim-step-word-field { fill: var(--carbon-surface2); }
+.glim-step-word-text {
+  font-size: 6.8px;
+  font-weight: 600;
+  fill: var(--carbon-text);
+}
+.glim-step-face { color: var(--carbon-text-sub); }
+.glim-step-face text {
+  font-size: 8.5px;
+  font-weight: 600;
+  fill: var(--carbon-text);
+}
+.glim-step-face-done {
+  color: var(--status-ok-text);
+  opacity: 0;
+}
+.glim-step-face-done text { fill: var(--status-ok-text); }
+.glim-step-press {
+  fill: #000;
+  opacity: 0;
+}
+.glim-step-field {
+  fill: var(--carbon-surface3);
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .5;
+  stroke-dasharray: 3 4;
+}
+.glim-step-focus {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 1.5;
+  opacity: 0;
+}
+.glim-step-hint {
+  font-size: 8px;
+  fill: var(--carbon-text-muted);
+  opacity: 0;
+}
+.glim-step-link {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.glim-step-mail,
+.glim-step-ring,
+.glim-step-confetti { opacity: 0; }
+.glim-step-ring {
+  fill: none;
+  stroke: var(--status-ok-solid);
+  stroke-width: 2;
+}
+.glim-step-badge-ground { fill: var(--status-ok-bg); }
+.glim-step-badge-ink { color: var(--status-ok-text); }
+.glim-step-badge-text {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--status-ok-text);
+}
+.glim-step-confetti-0 { fill: var(--pic); }
+.glim-step-confetti-1 { fill: var(--status-ok-solid); }
+.glim-step-confetti-2 { fill: #78a9ff; }
+.glim-step-confetti-3 { fill: #ff7eb6; }
+/* One pointer walks over all three cards, so it lives above their grid. The
+   page measures where its stops lie and hands them over as --at-*. */
+.glim-step-pointer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 0 0;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / .35));
+}
+.glim-step-pointer > svg { display: block; }
+
+/* A word shows at its own moment and stays until shortly before the loop
+   starts over. The first card's words come early in the loop, the second
+   card's in its middle. */
+@keyframes glim-step-show-early {
+  0%           { opacity: 0; }
+  1.2%, 80%    { opacity: 1; }
+  81.2%, 100%  { opacity: 0; }
+}
+@keyframes glim-step-show-mid {
+  0%           { opacity: 0; }
+  1.2%, 40%    { opacity: 1; }
+  41.2%, 100%  { opacity: 0; }
+}
+@keyframes glim-step-press {
+  0%       { opacity: 0; }
+  .8%      { opacity: .28; }
+  3%, 100% { opacity: 0; }
+}
+/* Copy answers the press with Copied for a while. */
+@keyframes glim-step-face-plain {
+  0%, 21.6%   { opacity: 1; }
+  21.8%, 36%  { opacity: 0; }
+  36.2%, 100% { opacity: 1; }
+}
+@keyframes glim-step-face-done {
+  0%, 21.8%   { opacity: 0; }
+  22%, 36%    { opacity: 1; }
+  36.2%, 100% { opacity: 0; }
+}
+@keyframes glim-step-focus {
+  0%, 44%    { opacity: 0; }
+  45.2%, 97% { opacity: 1; }
+  99%, 100%  { opacity: 0; }
+}
+@keyframes glim-step-hint {
+  0%, 52%   { opacity: 1; }
+  53%, 100% { opacity: 0; }
+}
+@keyframes glim-step-link {
+  0%, 70%    { opacity: 0; }
+  71.2%, 97% { opacity: 1; }
+  99%, 100%  { opacity: 0; }
+}
+@keyframes glim-step-lock {
+  0%, 72%    { opacity: 0; }
+  73.2%, 97% { opacity: 1; }
+  99%, 100%  { opacity: 0; }
+}
+@keyframes glim-step-mail {
+  0%, 72%     { opacity: 0; transform: none; }
+  72.5%       { opacity: 1; }
+  78%         { opacity: 1; transform: translateX(56px); }
+  78.5%, 100% { opacity: 0; transform: translateX(56px); }
+}
+@keyframes glim-step-ring {
+  0%, 79%   { opacity: 0; transform: none; }
+  79.1%     { opacity: .7; transform: none; }
+  86%, 100% { opacity: 0; transform: scale(3.7); }
+}
+@keyframes glim-step-badge {
+  0%, 79%    { opacity: 0; }
+  80.2%, 97% { opacity: 1; }
+  99%, 100%  { opacity: 0; }
+}
+@keyframes glim-step-badge-pop {
+  0%, 79%   { transform: scale(.4); }
+  81%       { transform: scale(1.18); }
+  83%, 100% { transform: none; }
+}
+/* A burst from the badge that rises, spins and falls over the card. */
+@keyframes glim-step-confetti {
+  0%, 79%   { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  79.1%     { opacity: 1; }
+  83%       { transform: translate(var(--peak-x, 0px), var(--peak-y, 0px)) rotate(calc(var(--spin, 0deg) * .3)); }
+  89%       { opacity: 1; }
+  93%, 100% { opacity: 0; transform: translate(var(--fall-x, 0px), var(--fall-y, 0px)) rotate(var(--spin, 0deg)); }
+}
+/* The pointer generates and copies the phrase on the first card, enters and
+   pastes it on the second, and waits on the third for the pair. */
+@keyframes glim-step-pointer {
+  0%         { opacity: 0; transform: translate(calc(var(--at-gen-x, 0px) - 60px), calc(var(--at-gen-y, 0px) + 40px)) scale(1); }
+  2%         { opacity: 1; transform: translate(calc(var(--at-gen-x, 0px) - 60px), calc(var(--at-gen-y, 0px) + 40px)) scale(1); }
+  8%         { transform: translate(var(--at-gen-x, 0px), var(--at-gen-y, 0px)) scale(1); }
+  9%         { transform: translate(var(--at-gen-x, 0px), var(--at-gen-y, 0px)) scale(.8); }
+  10.5%      { transform: translate(var(--at-gen-x, 0px), var(--at-gen-y, 0px)) scale(1); }
+  20%        { transform: translate(var(--at-copy-x, 0px), var(--at-copy-y, 0px)) scale(1); }
+  21%        { transform: translate(var(--at-copy-x, 0px), var(--at-copy-y, 0px)) scale(.8); }
+  22.5%, 31% { transform: translate(var(--at-copy-x, 0px), var(--at-copy-y, 0px)) scale(1); }
+  42%        { transform: translate(var(--at-enter-x, 0px), var(--at-enter-y, 0px)) scale(1); }
+  43%        { transform: translate(var(--at-enter-x, 0px), var(--at-enter-y, 0px)) scale(.8); }
+  44.5%      { transform: translate(var(--at-enter-x, 0px), var(--at-enter-y, 0px)) scale(1); }
+  50%        { transform: translate(var(--at-paste-x, 0px), var(--at-paste-y, 0px)) scale(1); }
+  51%        { transform: translate(var(--at-paste-x, 0px), var(--at-paste-y, 0px)) scale(.8); }
+  52.5%, 62% { transform: translate(var(--at-paste-x, 0px), var(--at-paste-y, 0px)) scale(1); }
+  74%        { transform: translate(var(--at-hold-x, 0px), var(--at-hold-y, 0px)) scale(1); }
+  80%, 95%   { opacity: 1; transform: translate(var(--at-done-x, 0px), var(--at-done-y, 0px)) scale(1); }
+  100%       { opacity: 0; transform: translate(var(--at-done-x, 0px), var(--at-done-y, 0px)) scale(1); }
 }

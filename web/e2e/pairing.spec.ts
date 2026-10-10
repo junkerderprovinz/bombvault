@@ -1,6 +1,7 @@
-// The Pairing tab, in German because its labels run longest. The layout test
-// checks that the step cards, the phrase card and the relay card fit at
-// 1280px and 390px. The flow tests stand in two instances with two pages and
+// The Pairing page, in German because its labels run longest. The layout test
+// checks that the step cards with their scene, the phrase card, the list of
+// instances and the relay card in its four forms fit at 1280px and 390px. The
+// flow tests stand in two instances with two pages and
 // a faked group API each, since a harness database is in no group: one where
 // both generate a phrase and are told after a minute how to merge
 // (https://github.com/junkerderprovinz/bombvault/issues/270), and one where
@@ -36,13 +37,14 @@ interface Instance {
   memberSeen: boolean;
   members: Member[];
   mode: string;
+  url: string;
   connected: boolean;
   /** Who a join with PHRASE finds in the group. */
   joinFinds: Member[];
 }
 
 function instance(name: string, over: Partial<Instance> = {}): Instance {
-  return { name, active: false, joinedAgo: 0, memberSeen: false, members: [], mode: "project", connected: true, joinFinds: [], ...over };
+  return { name, active: false, joinedAgo: 0, memberSeen: false, members: [], mode: "project", url: "", connected: true, joinFinds: [], ...over };
 }
 
 function view(f: Instance) {
@@ -55,7 +57,7 @@ function view(f: Instance) {
     members: f.members,
     relay: {
       mode: f.mode,
-      url: "wss://relay.familie-hofer.example.at",
+      url: f.url,
       projectUrl: "wss://parleyport.halleluja.design/relay/connect",
       connected: f.active && f.connected,
       serve: false,
@@ -63,17 +65,59 @@ function view(f: Instance) {
     },
     joinedAgo: f.active ? f.joinedAgo : 0,
     memberSeen: f.memberSeen,
+    selfAddress: "https://tower-linz.familie-hofer.example.at:3443",
+    selfAddressManual: false,
   };
 }
+
+const ZFS_SERVER = {
+  id: "nas",
+  name: "Backup-NAS im Keller",
+  host: "backup-nas.familie-hofer.example.at",
+  user: "bombvault-replica",
+  port: 22,
+  pool: "sicherung",
+  root: "sicherung/bombvault-replica",
+  enabled: true,
+  freeBytes: 3.1 * 1024 ** 4,
+  sizeBytes: 8 * 1024 ** 4,
+  usedBy: [],
+  folder: "tower-linz",
+  reachable: true,
+};
 
 async function stage(page: Page, f: Instance): Promise<void> {
   await page.route("**/api/settings", async (route) => {
     if (route.request().method() !== "GET") return route.fallback();
     const res = await route.fetch();
     const body = await res.json();
-    body.settings = { ...body.settings, receiverEnabled: true, fleetEnabled: true, pullEnabled: true };
+    body.settings = { ...body.settings, receiverEnabled: true, fleetEnabled: true, pullEnabled: true, zfsEnabled: true };
     await route.fulfill({ response: res, json: body });
   });
+  await page.route("**/api/group/roles", (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        members: f.members.map((m, i) => ({
+          memberId: m.id,
+          name: m.name,
+          reachable: true,
+          answers: true,
+          // The first member keeps this instance's copies, so the picture has an arrow.
+          byMember: {
+            receiver: i === 0 ? { id: "rr1", state: "allowed", sections: ["containers"], store: "rest", askedAt: "", decidedAt: "", decidedBy: "person" } : null,
+            fetcher: null,
+            zfs: null,
+          },
+          forMember: { receiver: null, fetcher: null, zfs: null },
+          asks: 0,
+        })),
+        self: { receiver: [], fetcher: [], zfs: [] },
+      },
+    }),
+  );
+  await page.route("**/api/zfs/replica/servers", (route) => route.fulfill({ json: [ZFS_SERVER] }));
+  await page.route("**/api/zfs/replica/key", (route) => route.fulfill({ json: { publicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBombVaultReplicaKeyForTheHarness bombvault-replica" } }));
   await page.route("**/api/group", async (route) => {
     if (route.request().method() === "DELETE") Object.assign(f, { active: false, joinedAgo: 0, memberSeen: false, members: [] });
     await route.fulfill({ json: view(f) });
@@ -89,8 +133,9 @@ async function stage(page: Page, f: Instance): Promise<void> {
     await route.fulfill({ json: view(f) });
   });
   await page.route("**/api/group/relay", async (route) => {
-    const patch = route.request().postDataJSON() as { mode?: string };
+    const patch = route.request().postDataJSON() as { mode?: string; url?: string };
     if (patch.mode) f.mode = patch.mode;
+    if (patch.url !== undefined) f.url = patch.url;
     await route.fulfill({ json: view(f) });
   });
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -147,6 +192,7 @@ async function open(page: Page, f: Instance, width = 1280): Promise<void> {
 }
 
 const phraseCard = (page: Page) => page.locator("[data-stage]");
+const pairState = (page: Page) => page.getByTestId("pair-state");
 const generate = (page: Page) => page.getByRole("button", { name: /Phrase generieren/ });
 const enter = (page: Page) => page.getByRole("button", { name: /Phrase eingeben/ });
 
@@ -164,35 +210,72 @@ for (const width of [1280, 390]) {
     for (const title of ["Erste Instanz", "Jede weitere", "Fertig"]) {
       await expect(page.getByRole("heading", { level: 2, name: new RegExp(title) })).toBeVisible();
     }
-    await expect(page.getByText("Schwiegereltern Tower Gmunden Keller")).toBeVisible();
-    await expect(phraseCard(page).getByText("Gekoppelt", { exact: true })).toBeVisible();
+    const list = page.getByTestId("members");
+    await expect(list.getByText("Schwiegereltern Tower Gmunden Keller")).toBeVisible();
+    await expect(pairState(page)).toHaveText("Gekoppelt");
+    // The list ends with the way in for a ZFS server that runs no BombVault.
+    const zfsRow = page.getByTestId("zfs-row");
+    await expect(zfsRow).toContainText("ZFS-Server ohne BombVault");
+    await expect(zfsRow).toContainText("Backup-NAS im Keller");
+    // Beside it the group stands as a network, with an arrow for the role.
+    const picture = page.getByTestId("net-picture");
+    await expect(picture.locator('[data-lane="out:receiver:on"]').first()).toBeAttached();
     await expectFits(page);
+    await zfsRow.getByRole("button", { name: "Per SSH verbinden" }).click();
+    const connect = page.getByRole("dialog", { name: "ZFS-Server hinzufügen" });
+    await expect(connect).toBeVisible();
+    await connect.getByRole("button", { name: "Abbrechen" }).click();
+    await expect(connect).toHaveCount(0);
+
+    // One pointer plays the scene over the three cards, and stands still
+    // where motion is reduced.
+    const pointing = () =>
+      page.evaluate(() => document.getAnimations().filter((a) => (a as CSSAnimation).animationName === "glim-step-pointer").length);
+    expect(await pointing()).toBe(1);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect(await pointing(), "the scene moves under reduced motion").toBe(0);
+    expect(await page.locator(".glim-step-pic").first().evaluate((svg) => svg.getAnimations({ subtree: true }).length)).toBe(0);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
 
     // The three cards sit side by side on the desktop and stack on a phone.
-    const tops = await page
-      .getByRole("heading", { level: 2, name: /Erste Instanz|Jede weitere|Fertig/ })
-      .evaluateAll((hs) => hs.map((h) => Math.round(h.getBoundingClientRect().top)));
+    // A title that wraps makes its heading taller, so the pictures are measured.
+    const tops = await page.locator("[data-step-frame]").evaluateAll((frames) => frames.map((f) => Math.round(f.getBoundingClientRect().top)));
+    expect(tops).toHaveLength(3);
     expect(new Set(tops).size).toBe(width === 1280 ? 1 : 3);
 
+    // The relay in its four forms, each with its picture.
+    await expect(page.getByRole("tab")).toHaveText(["Projekt-Relay", "Eigenes Relay", "BombVault-Instanz", "Kein Relay"]);
     await expect(page.locator("#relay-address")).toHaveCount(0);
+    await expect(page.getByRole("img", { name: /sprechen über das Relay/ })).toBeVisible();
     await page.getByRole("tab", { name: "Eigenes Relay" }).click();
     await expect(page.locator("#relay-address")).toBeVisible();
-    await expect(page.getByText("Woher du ein Relay bekommst")).toBeVisible();
+    await expect(page.getByTestId("own-relay")).toContainText("ParleyPort");
+    await expect(page.getByText("Selbst gehostet")).toBeVisible();
+    await settle(page);
+    await expectFits(page);
+    await page.getByRole("tab", { name: "BombVault-Instanz" }).click();
+    await expect(page.getByRole("img", { name: /ist selbst das Relay/ })).toBeVisible();
+    await expect(page.getByRole("switch", { name: "Als Relay dienen" })).toBeVisible();
+    await expect(page.locator("#relay-address")).toBeVisible();
     await settle(page);
     await expectFits(page);
     await page.getByRole("tab", { name: "Kein Relay" }).click();
     await expect(page.locator("#relay-address")).toHaveCount(0);
-    // The picture and what the relay sees open in place, and fit too.
-    await page.getByRole("button", { name: "Wie funktioniert das?" }).click();
-    await expect(page.getByRole("img", { name: /Instanz C in einem anderen Netz/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /ohne Relay nicht erreichbar/ })).toBeVisible();
     await settle(page);
     await expectFits(page);
+    // What the relay sees opens in a window.
+    await page.getByRole("button", { name: "Was das Relay sieht" }).click();
+    await expect(page.getByRole("dialog", { name: "Was das Relay sieht" })).toContainText("nichts verlässt dein Netzwerk");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
     // Alone, with the relay down: both hints and the paste field fit.
     Object.assign(f, { members: [], memberSeen: false, joinedAgo: 90, mode: "project", connected: false });
     await page.reload();
     await expect(phraseCard(page)).toHaveAttribute("data-stage", "alone");
     await expect(page.getByText("Relay nicht erreichbar", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("relay-check")).toContainText("parleyport.halleluja.design");
     await settle(page);
     await expectFits(page);
 
@@ -241,7 +324,27 @@ test("two instances that both generate a phrase are told after a minute how to b
   await pageB.getByRole("textbox", { name: "Die zwölf Wörter der anderen Instanz" }).fill(PHRASE);
   await pageB.getByRole("button", { name: "Koppeln" }).click();
   await expect(phraseCard(pageB)).toHaveAttribute("data-stage", "paired");
-  await expect(phraseCard(pageB).getByText("Gekoppelt", { exact: true })).toBeVisible();
+  await expect(pairState(pageB)).toHaveText("Gekoppelt");
+});
+
+test("a relay address on a paired instance opens the page on the BombVault route", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
+  const f = instance("Tower Linz", {
+    active: true,
+    members: [cellar],
+    memberSeen: true,
+    joinedAgo: 600,
+    mode: "own",
+    url: "wss://bombvault.familie-hofer.example.at/relay/connect",
+  });
+  await open(page, f);
+  await expect(page.getByRole("tab", { name: "BombVault-Instanz" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#relay-address")).toHaveValue("wss://bombvault.familie-hofer.example.at/relay/connect");
+  // A letter travels in the picture, at the pace the stylesheet sets.
+  const letters = await page.evaluate(() =>
+    document.getAnimations().filter((a) => (a as CSSAnimation).animationName === "glim-letter-arc").length,
+  );
+  expect(letters).toBe(2);
 });
 
 test("the second instance enters the phrase, pastes the numbered words and both read paired", async ({ page, context }, testInfo) => {
@@ -269,11 +372,11 @@ test("the second instance enters the phrase, pastes the numbered words and both 
   await expect(pageB.getByText("12 von 12 Wörtern")).toBeVisible();
   await expect(pair).toBeEnabled();
   await pair.click();
-  await expect(phraseCard(pageB).getByText("Gekoppelt", { exact: true })).toBeVisible();
-  await expect(pageB.getByText("Tower Linz", { exact: true }).last()).toBeVisible();
+  await expect(pairState(pageB)).toHaveText("Gekoppelt");
+  await expect(pageB.getByTestId("members").getByText("Tower Linz", { exact: true })).toBeVisible();
 
   Object.assign(a, { members: [{ id: "b", name: "Büro Linz", version: "v9.2.1", direct: true, relay: false }], memberSeen: true });
   await page.clock.fastForward(11_000);
   await expect(phraseCard(page)).toHaveAttribute("data-stage", "paired");
-  await expect(phraseCard(page).getByText("Gekoppelt", { exact: true })).toBeVisible();
+  await expect(pairState(page)).toHaveText("Gekoppelt");
 });

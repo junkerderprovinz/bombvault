@@ -52,6 +52,7 @@ export function server(overrides: Partial<ZFSReplicaServer> = {}): ZFSReplicaSer
     sizeBytes: 8 * 1024 ** 4,
     usedBy: [],
     folder: "tower",
+    reachable: true,
     ...overrides,
   };
 }

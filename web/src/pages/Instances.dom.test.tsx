@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-// The Instances page is a grid of cards: this server first, then every
-// paired instance and every ZFS server reached over SSH. Each module adds
-// what it knows and nothing is asked of a module that is off. The page asks
-// again by itself who is connected, and fetches a connected member's
-// scorecard once it has gone stale.
+// The Instances page is a picture of the group above a grid of cards: this
+// server first, then every paired instance and every ZFS server reached over
+// SSH. The tiles on a card switch what the instance does for this server,
+// read from the roles the server keeps. Each module adds what it knows and
+// nothing is asked of a module that is off. The page asks again by itself who
+// is connected, and fetches a connected member's scorecard once it has gone
+// stale.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
@@ -12,14 +14,29 @@ import { ToastProvider } from "../lib/toast";
 import type {
   FleetPeer,
   GroupMember,
+  MemberRoles,
   MeshOffer,
   PullSourceView,
   ReceivedRepoStatus,
-  ReceiverLogin,
+  RoleRequest,
+  SelfRoles,
   ZFSReceiveRequest,
+  ZFSReplica,
+  ZFSReplicaPatch,
   ZFSReplicaServer,
 } from "../lib/api";
-import { fleetPeer, groupMember, meshOffer, NOW_S, pullSource, receivedRepo } from "./instances/instances.testsupport";
+import {
+  fleetPeer,
+  groupMember,
+  memberRoles,
+  meshOffer,
+  NOW_S,
+  pullSource,
+  receivedRepo,
+  roleRequest,
+  roleSide,
+  zfsRole,
+} from "./instances/instances.testsupport";
 import { receiveRequest, replica, server } from "../components/zfs/replica/replica.testsupport";
 
 const peer = (over: Partial<FleetPeer>) => fleetPeer({ name: "DXP480T", lastPollVersion: "v8.0.0+main.e3db401", ...over });
@@ -31,15 +48,23 @@ let flags: Flags;
 let peers: FleetPeer[];
 let members: GroupMember[];
 let peersOk: boolean;
+let roles: MemberRoles[];
+let rolesOk: boolean;
+let selfRoles: SelfRoles;
+let serverRuns: boolean;
 let requests: ZFSReceiveRequest[];
 let servers: ZFSReplicaServer[];
 let received: ReceivedRepoStatus[];
 let pulls: PullSourceView[];
-let logins: ReceiverLogin[];
 let offers: MeshOffer[];
+let itemReplica: ZFSReplica;
+let askAnswer: Partial<RoleRequest>;
 const calls: string[] = [];
 const polled: string[] = [];
 const removed: string[] = [];
+const asked: [string, string, unknown][] = [];
+const withdrawn: [string, string][] = [];
+const patched: [string, ZFSReplicaPatch][] = [];
 
 function called(name: string): number {
   return calls.filter((c) => c === name).length;
@@ -53,7 +78,11 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
   return {
     ...actual,
-    getSettings: () => Promise.resolve({ ok: true, settings: flags }),
+    getSettings: () =>
+      Promise.resolve({
+        ok: true,
+        settings: { ...flags, containersEnabled: true, vmsEnabled: false, filesEnabled: false, flashEnabled: true, configEnabled: false },
+      }),
     getGroup: () =>
       answer("getGroup", { ok: true, active: members.length > 0, name: "cellar", selfAddress: "https://192.168.1.20:3443", members }),
     getHealth: () => Promise.resolve({ ok: true, version: "v9.2.1" }),
@@ -68,18 +97,35 @@ vi.mock("../lib/api", async (importOriginal) => {
       peers = peers.filter((p) => p.id !== id);
       return Promise.resolve({ ok: true });
     },
+    listRoles: () => answer("listRoles", rolesOk ? { ok: true, members: roles, self: selfRoles } : { ok: false, error: "the roles are locked" }),
+    askRole: (memberId: string, role: "receiver" | "fetcher", ask: unknown) => {
+      asked.push([memberId, role, ask]);
+      const request = roleRequest({ sections: (ask as { sections: RoleRequest["sections"] }).sections, ...askAnswer });
+      roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, [role]: request } } : r));
+      return Promise.resolve({ ok: true, request });
+    },
+    withdrawRole: (memberId: string, role: "receiver" | "fetcher") => {
+      withdrawn.push([memberId, role]);
+      roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, [role]: null } } : r));
+      return Promise.resolve({ ok: true, told: true });
+    },
     listMeshOffers: () => answer("listMeshOffers", { ok: true, offers }),
     listReceivedRepos: () => answer("listReceivedRepos", { ok: true, repos: received }),
     listPullSources: () => answer("listPullSources", { ok: true, sources: pulls }),
     getReceiverServer: () =>
       answer("getReceiverServer", {
         ok: true,
-        server: logins.length > 0 ? { logins, check: "protected", present: true, checkedAt: 0, url: "", user: "", hostPath: "" } : null,
+        server: serverRuns ? { logins: [], check: "protected", present: true, checkedAt: 0, url: "", user: "", hostPath: "" } : null,
       }),
     listDestinations: () => Promise.resolve({ ok: true, destinations: [] }),
     listGroupReceivers: () => Promise.resolve({ ok: true, receivers: [] }),
     listZFSDatasets: () => answer("listZFSDatasets", { ok: true, datasets: [{ id: "z1", dataset: "tank/appdata" }] }),
-    getZFSReplica: () => Promise.resolve(replica({ target: { kind: "peer", id: "m1" }, peerState: "allowed" })),
+    getZFSReplica: () => Promise.resolve(itemReplica),
+    patchZFSReplica: (id: string, patch: ZFSReplicaPatch) => {
+      patched.push([id, patch]);
+      itemReplica = { ...itemReplica, ...patch };
+      return Promise.resolve({ ok: true });
+    },
     listZFSReceiveRequests: () => Promise.resolve(requests),
     listZFSLocalPools: () => Promise.resolve([]),
     listZFSReplicaServers: () => Promise.resolve(servers),
@@ -123,9 +169,25 @@ function card(key: string): HTMLElement {
   return found;
 }
 
-function roles(of: HTMLElement): Record<string, string> {
+function tiles(of: HTMLElement): Record<string, string> {
   return Object.fromEntries([...of.querySelectorAll("[data-role]")].map((el) => [el.getAttribute("data-role"), el.textContent]));
 }
+
+function tile(key: string, role: string): HTMLButtonElement {
+  return card(key).querySelector(`button[data-role="${role}"]`) as HTMLButtonElement;
+}
+
+function question(): HTMLElement {
+  return screen.getByRole("dialog", { name: en["confirmDialog.title"] });
+}
+
+async function click(el: Element) {
+  await act(async () => {
+    fireEvent.click(el);
+  });
+}
+
+const allowed = (over: Partial<RoleRequest> = {}) => roleRequest({ state: "allowed", decidedBy: "person", ...over });
 
 beforeEach(() => {
   localStorage.clear();
@@ -134,15 +196,23 @@ beforeEach(() => {
   peers = [peer({})];
   members = [M1];
   peersOk = true;
+  roles = [memberRoles({ name: "DXP480T" })];
+  rolesOk = true;
+  selfRoles = { receiver: [], fetcher: [], zfs: [] };
+  serverRuns = false;
   requests = [];
   servers = [];
   received = [];
   pulls = [];
-  logins = [];
   offers = [];
+  itemReplica = replica({ target: { kind: "none", id: "" } });
+  askAnswer = {};
   calls.length = 0;
   polled.length = 0;
   removed.length = 0;
+  asked.length = 0;
+  withdrawn.length = 0;
+  patched.length = 0;
 });
 
 afterEach(() => {
@@ -196,6 +266,7 @@ describe("the instances grid", () => {
     expect(card("old").textContent).toContain(en["pairing.pairAgain"]);
     expect(within(card("old")).queryByRole("button", { name: en["fleet.details"] })).toBeNull();
     expect(within(card("old")).getByRole("button", { name: en["fleet.remove"] })).toBeTruthy();
+    expect(card("old").querySelector("[data-role]")).toBeNull();
   });
 
   it("prints the peer version once, not with a doubled v", async () => {
@@ -204,70 +275,349 @@ describe("the instances grid", () => {
     expect(card("m1").textContent).not.toMatch(/vv8\.0\.0/);
   });
 
-  it("counts the requests that wait on a card, and the count opens its details", async () => {
-    requests = [receiveRequest({ peer: "m1" }), receiveRequest({ id: "rq2", peer: "m1", item: "tank/media" })];
-    await renderPage();
-    const badge = within(card("m1")).getByRole("button", { name: countText(en["instances.requests"], "en", 2) });
-    await act(async () => {
-      fireEvent.click(badge);
-    });
-    expect(screen.getByRole("dialog", { name: "DXP480T" })).toBeTruthy();
-  });
-
-  it("shows no request count while nothing waits", async () => {
-    requests = [receiveRequest({ peer: "m1", state: "allowed" })];
-    await renderPage();
-    expect(card("m1").textContent).not.toContain("request");
-  });
-
-  it("says on this server's card whom it serves in each role", async () => {
-    received = [receivedRepo()];
-    requests = [receiveRequest({ peer: "m1", state: "allowed" })];
-    await renderPage();
-    expect(roles(card("self"))).toEqual({
-      receiver: en["receiver.title"] + "for DXP480T",
-      fetcher: en["instances.role.fetcher"] + en["instances.forNoOne"],
-      zfs: en["zfs.replica.servers.title"] + "for DXP480T",
-    });
-  });
-
-  it("shows a member's roles as far as they are known, and none as a switch", async () => {
-    flags.zfsEnabled = true;
-    await renderPage();
-    expect(roles(card("m1"))).toEqual({
-      receiver: en["receiver.title"] + en["zfs.replica.servers.off"],
-      zfs: en["zfs.replica.servers.title"] + en["instances.role.on"],
-    });
-    expect(within(card("m1")).queryByRole("switch")).toBeNull();
-    expect(card("m1").querySelector("button[data-role]")).toBeNull();
-  });
-
   it("removes a member only on the second click", async () => {
     await renderPage();
-    await act(async () => {
-      fireEvent.click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
-    });
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
     expect(removed).toEqual([]);
-    await act(async () => {
-      fireEvent.click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
-    });
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
     expect(removed).toEqual(["p1"]);
   });
 
   it("opens pairing in Settings from the button under the cards", async () => {
     await renderPage();
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["instances.pair"] }));
-    });
+    await click(screen.getByRole("button", { name: en["instances.pair"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
   it("opens this server's own dashboard from its card", async () => {
     await renderPage();
-    await act(async () => {
-      fireEvent.click(within(card("self")).getByRole("button", { name: en["instances.open"] }));
-    });
+    await click(within(card("self")).getByRole("button", { name: en["instances.open"] }));
     expect(screen.getByTestId("where").textContent).toBe("/dashboard");
+  });
+
+  it("says so when the roles could not be read, and still shows the cards", async () => {
+    rolesOk = false;
+    await renderPage();
+    expect(screen.getByText("the roles are locked")).toBeTruthy();
+    expect(tiles(card("m1")).receiver).toBe(en["receiver.title"] + en["zfs.replica.servers.off"]);
+  });
+});
+
+describe("requests from another instance", () => {
+  it("shows how many wait as a badge that is no control, and the details answer them", async () => {
+    roles = [memberRoles({ name: "DXP480T", asks: 2, forMember: roleSide({ receiver: roleRequest(), fetcher: roleRequest({ id: "rr2" }) }) })];
+    await renderPage();
+    const badge = within(card("m1")).getByText(countText(en["instances.requests"], "en", 2));
+    expect(badge.tagName).toBe("SPAN");
+    expect(badge.className).toContain("statusWarn");
+    expect(within(card("m1")).queryByRole("button", { name: /request/ })).toBeNull();
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.details"] }));
+    const win = screen.getByRole("dialog", { name: "DXP480T" });
+    expect(within(win).getAllByRole("button", { name: en["zfs.receive.allow"] })).toHaveLength(2);
+  });
+
+  it("shows no request count while nothing waits", async () => {
+    roles = [memberRoles({ name: "DXP480T", forMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    expect(card("m1").textContent).not.toContain("request");
+  });
+
+  it("counts a storage offer with the requests", async () => {
+    offers = [meshOffer({ from: "DXP480T" })];
+    await renderPage();
+    expect(card("m1").textContent).toContain(countText(en["instances.requests"], "en", 1));
+  });
+});
+
+describe("this server's own card", () => {
+  it("says for whom this server is Receiver, Fetcher and ZFS server, as the server reports it", async () => {
+    selfRoles = {
+      receiver: [
+        { memberId: "m1", name: "DXP480T" },
+        { memberId: "m2", name: "barn" },
+      ],
+      fetcher: [],
+      zfs: [{ memberId: "m9", name: "" }],
+    };
+    await renderPage();
+    expect(tiles(card("self"))).toEqual({
+      receiver: en["receiver.title"] + "for DXP480T, barn",
+      fetcher: en["instances.role.fetcher"] + en["instances.forNoOne"],
+      zfs: en["zfs.replica.servers.title"] + "for m9",
+    });
+    expect(card("self").querySelector("button[data-role]")).toBeNull();
+  });
+
+  it("does not take a received repository or a pull source for a role", async () => {
+    received = [receivedRepo()];
+    pulls = [pullSource()];
+    await renderPage();
+    expect(tiles(card("self")).receiver).toBe(en["receiver.title"] + en["instances.forNoOne"]);
+    expect(tiles(card("self")).fetcher).toBe(en["instances.role.fetcher"] + en["instances.forNoOne"]);
+  });
+
+  it("opens the receiving server only while this server runs one", async () => {
+    await renderPage();
+    expect(within(card("self")).queryByRole("button", { name: en["receiver.server.title"] })).toBeNull();
+    cleanup();
+    serverRuns = true;
+    await renderPage();
+    const before = called("getReceiverServer");
+    await click(within(card("self")).getByRole("button", { name: en["receiver.server.title"] }));
+    const opened = screen.getByRole("dialog", { name: en["receiver.server.title"] });
+    await click(within(opened).getByRole("button", { name: en["common.done"] }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(called("getReceiverServer")).toBe(before + 2);
+  });
+});
+
+describe("the role tiles of a paired instance", () => {
+  it("show Receiver, Fetcher and ZFS server as buttons with what each stands at", async () => {
+    flags.zfsEnabled = true;
+    roles = [
+      memberRoles({
+        name: "DXP480T",
+        byMember: roleSide({ receiver: allowed(), fetcher: roleRequest(), zfs: zfsRole("off") }),
+        // What this server does for the member is no business of these tiles.
+        forMember: roleSide({ zfs: zfsRole("allowed") }),
+      }),
+    ];
+    await renderPage();
+    expect(tiles(card("m1"))).toEqual({
+      receiver: en["receiver.title"] + en["instances.role.on"],
+      fetcher: en["instances.role.fetcher"] + en["instances.role.waiting"],
+      zfs: en["zfs.replica.servers.title"] + en["zfs.replica.servers.off"],
+    });
+    expect([tile("m1", "receiver"), tile("m1", "fetcher"), tile("m1", "zfs")].map((b) => b.getAttribute("data-state"))).toEqual([
+      "on",
+      "waiting",
+      "off",
+    ]);
+    expect(tile("m1", "fetcher").getAttribute("aria-pressed")).toBe("true");
+    expect(tile("m1", "fetcher").className).toContain("outline-dashed");
+    expect(tile("m1", "receiver").className).not.toContain("outline-dashed");
+  });
+
+  it("treat a declined or revoked request as off", async () => {
+    roles = [
+      memberRoles({
+        name: "DXP480T",
+        byMember: roleSide({ receiver: roleRequest({ state: "refused" }), fetcher: roleRequest({ state: "revoked" }) }),
+      }),
+    ];
+    await renderPage();
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("off");
+    expect(tile("m1", "fetcher").getAttribute("data-state")).toBe("off");
+  });
+
+  it("leave out the ZFS server while this server has no ZFS section and no replica there", async () => {
+    await renderPage();
+    expect(Object.keys(tiles(card("m1")))).toEqual(["receiver", "fetcher"]);
+  });
+
+  it("ask for a role that is off: the sections this server backs up, without ZFS data at first", async () => {
+    flags.zfsEnabled = true;
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
+    expect(dialog.textContent).toContain("DXP480T gets a request.");
+    const switches = within(dialog).getAllByRole("switch");
+    expect(switches.map((s) => [s.getAttribute("aria-label"), s.getAttribute("aria-checked")])).toEqual([
+      [en["jobs.containersSection"], "true"],
+      [en["jobs.flashSection"], "true"],
+      [en["jobs.zfsSection"], "false"],
+    ]);
+    await click(switches[1]);
+    await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
+    expect(asked).toEqual([["m1", "receiver", { sections: ["containers"] }]]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByText("DXP480T has to allow the request first.")).toBeTruthy();
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("waiting");
+    expect(tile("m1", "receiver").textContent).toContain(en["instances.role.waiting"]);
+  });
+
+  it("send nothing without a section", async () => {
+    await renderPage();
+    await click(tile("m1", "fetcher"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Fetcher" });
+    expect(dialog.textContent).toContain(en["instances.role.sectionsFetch"]);
+    for (const s of within(dialog).getAllByRole("switch")) {
+      if (s.getAttribute("aria-checked") === "true") await click(s);
+    }
+    await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
+    expect(asked).toEqual([]);
+    expect(within(dialog).getByText(en["instances.role.needSection"])).toBeTruthy();
+  });
+
+  it("change nothing when the dialog is cancelled", async () => {
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    await click(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.cancel"] }));
+    expect(asked).toEqual([]);
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("off");
+  });
+
+  it("withdraw a role that is on after saying what stops", async () => {
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    expect(question().textContent).toContain("Stop using DXP480T as Receiver?");
+    expect(question().textContent).toContain("This server stops sending off-site copies to DXP480T. What is there already stays there.");
+    expect(withdrawn).toEqual([]);
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(withdrawn).toEqual([["m1", "receiver"]]);
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("off");
+  });
+
+  it("take back a request that still waits the same way", async () => {
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ fetcher: roleRequest() }) })];
+    await renderPage();
+    await click(tile("m1", "fetcher"));
+    expect(question().textContent).toContain("DXP480T then fetches nothing more from this server.");
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(withdrawn).toEqual([["m1", "fetcher"]]);
+  });
+
+  it("keep a role that is on when the question is cancelled", async () => {
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    await click(within(question()).getByRole("button", { name: en["common.cancel"] }));
+    expect(withdrawn).toEqual([]);
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("on");
+  });
+});
+
+describe("an instance from before role requests", () => {
+  beforeEach(() => {
+    roles = [memberRoles({ name: "DXP480T", answers: false })];
+    askAnswer = { state: "allowed", decidedBy: "automatic" };
+  });
+
+  it("is told apart in the dialog: the role is active at once, and the button says so", async () => {
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
+    expect(dialog.textContent).toContain("DXP480T runs an older BombVault that cannot answer a request.");
+    expect(dialog.textContent).not.toContain("gets a request");
+    expect(within(dialog).queryByRole("button", { name: en["instances.role.send"] })).toBeNull();
+    await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
+    expect(asked).toHaveLength(1);
+    expect(screen.getByText("DXP480T is your Receiver now.")).toBeTruthy();
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("on");
+  });
+
+  it("cannot take ZFS replicas, which the dialog explains instead of asking", async () => {
+    flags.zfsEnabled = true;
+    await renderPage();
+    await click(tile("m1", "zfs"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as ZFS server" });
+    expect(dialog.textContent).toContain("Update it to BombVault 10");
+    expect(within(dialog).queryByRole("switch")).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: en["instances.role.send"] })).toBeNull();
+    await click(within(dialog).getByRole("button", { name: en["common.close"] }));
+    expect(patched).toEqual([]);
+  });
+});
+
+describe("the ZFS server role", () => {
+  beforeEach(() => {
+    flags.zfsEnabled = true;
+  });
+
+  it("points the picked ZFS entries at the instance, each asking on its own", async () => {
+    await renderPage();
+    await click(tile("m1", "zfs"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as ZFS server" });
+    expect(dialog.textContent).toContain("Each ZFS entry asks DXP480T on its own.");
+    expect(within(dialog).getByRole("switch", { name: "tank/appdata" }).getAttribute("aria-checked")).toBe("true");
+    await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
+    expect(patched).toEqual([["z1", { target: { kind: "peer", id: "m1" } }]]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("says where an entry replicates so far", async () => {
+    servers = [server()];
+    itemReplica = replica();
+    await renderPage();
+    await click(tile("m1", "zfs"));
+    expect(screen.getByRole("dialog").textContent).toContain("Replicates to Backup-NAS so far");
+  });
+
+  it("points the entries away again when the role is switched off", async () => {
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ zfs: zfsRole("allowed") }) })];
+    itemReplica = replica({ target: { kind: "peer", id: "m1" }, peerState: "allowed" });
+    await renderPage();
+    await click(tile("m1", "zfs"));
+    expect(question().textContent).toContain("No ZFS entry replicates to DXP480T any more.");
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(patched).toEqual([["z1", { target: { kind: "none", id: "" } }]]);
+  });
+});
+
+describe("a paired phone", () => {
+  beforeEach(() => {
+    members = [M1, groupMember({ id: "m3", name: "Pixel 8", kind: "android", address: "", direct: false, relay: true })];
+    peers = [peer({}), peer({ id: "p3", memberId: "m3", name: "Pixel 8", kind: "android", direct: false, relay: true, lastPollDomains: [] })];
+  });
+
+  it("is a card of its own, with no roles, no figures and no details", async () => {
+    await renderPage();
+    const phone = card("m3");
+    expect(phone.textContent).toContain("Pixel 8");
+    expect(phone.textContent).toContain(en["fleet.kindAndroid"]);
+    expect(phone.textContent).toContain(en["instances.connected"]);
+    expect(phone.querySelector("[data-role]")).toBeNull();
+    expect(phone.querySelector("img")).toBeNull();
+    expect(within(phone).queryByRole("button", { name: en["fleet.details"] })).toBeNull();
+    expect(within(phone).getByRole("button", { name: en["fleet.remove"] })).toBeTruthy();
+  });
+
+  it("stands in the net picture as a phone, with no arrows", async () => {
+    await renderPage();
+    const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m3"]')!;
+    expect(node.textContent).toContain(en["fleet.kindAndroid"]);
+    expect(node.querySelector("image")).toBeNull();
+    expect(node.querySelectorAll("[data-lane]")).toHaveLength(0);
+  });
+});
+
+describe("the net picture above the grid", () => {
+  it("stands before the cards and shows this server with every instance and ZFS server", async () => {
+    flags.zfsEnabled = true;
+    servers = [server()];
+    await renderPage();
+    const picture = screen.getByTestId("net-picture");
+    expect(picture.compareDocumentPosition(card("self")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const names = within(picture.querySelector(".glim-net-wide") as HTMLElement)
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("aria-label"));
+    expect(names).toEqual(["DXP480T", "Backup-NAS", "cellar"]);
+  });
+
+  it("draws the arrows of the roles the cards show, and a new one when a role is asked for", async () => {
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }), forMember: roleSide({ fetcher: roleRequest() }) })];
+    await renderPage();
+    const lanes = () =>
+      [...screen.getByTestId("net-picture").querySelectorAll(".glim-net-wide [data-lane]")].map((l) => l.getAttribute("data-lane"));
+    expect(lanes()).toEqual(["out:receiver:on", "in:fetcher:waiting"]);
+    await click(tile("m1", "fetcher"));
+    await click(within(screen.getByRole("dialog")).getByRole("button", { name: en["instances.role.send"] }));
+    expect(lanes()).toEqual(["out:receiver:on", "out:fetcher:waiting", "in:fetcher:waiting"]);
+  });
+
+  it("lights up the card of the instance the pointer is on in the picture", async () => {
+    await renderPage();
+    const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m1"] [role="button"]')!;
+    fireEvent.pointerOver(node);
+    expect(card("m1").className).toContain("glim-net-entry-hot");
+    expect(card("self").className).not.toContain("glim-net-entry-hot");
+  });
+
+  it("leaves out a row from before pairing, which is in no group", async () => {
+    peers = [peer({}), peer({ id: "old", memberId: "", name: "office", needsPairing: true })];
+    await renderPage();
+    expect(screen.getByTestId("net-picture").querySelector('[data-net="old"]')).toBeNull();
   });
 });
 
@@ -275,6 +625,7 @@ describe("an empty group", () => {
   beforeEach(() => {
     peers = [];
     members = [];
+    roles = [];
   });
 
   it("keeps this server's card and names the way to pair", async () => {
@@ -282,9 +633,8 @@ describe("an empty group", () => {
     expect(cards().map((c) => c.getAttribute("data-instance"))).toEqual(["self", "none"]);
     expect(card("none").textContent).toContain(en["instances.emptyTitle"]);
     expect(card("none").textContent).toContain(en["instances.emptyLead"]);
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["instances.pair"] }));
-    });
+    expect(screen.queryByTestId("net-picture")).toBeNull();
+    await click(screen.getByRole("button", { name: en["instances.pair"] }));
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
@@ -311,19 +661,15 @@ describe("rows that belong to no instance", () => {
   it("lets a row from before pairing choose its instance", async () => {
     received = [receivedRepo({ id: "old", name: "Office off-site", memberId: "", needsPairing: true })];
     await renderPage();
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["receiver.edit"] }));
-    });
+    await click(screen.getByRole("button", { name: en["receiver.edit"] }));
     const dialog = screen.getByRole("dialog", { name: en["receiver.editTitle"] });
     expect(within(dialog).getByText(en["receiver.member"])).toBeTruthy();
   });
 
   it("is no card while every row has its instance", async () => {
     received = [receivedRepo()];
-    offers = [meshOffer({ from: "DXP480T" })];
     await renderPage();
     expect(screen.queryByText(en["instances.unplaced.title"])).toBeNull();
-    expect(card("m1").textContent).toContain(countText(en["instances.requests"], "en", 1));
   });
 });
 
@@ -341,16 +687,27 @@ describe("ZFS servers without BombVault", () => {
     expect(nas.textContent).toContain(en["instances.overSsh"]);
     expect(nas.textContent).toContain("root@192.168.1.30");
     expect(nas.textContent).toContain("backup/bombvault-replica");
-    await act(async () => {
-      fireEvent.click(within(nas).getByRole("button", { name: en["instances.open"] }));
-    });
+    await click(within(nas).getByRole("button", { name: en["instances.open"] }));
     expect(screen.getByTestId("where").textContent).toBe("/instances/zfs/nas");
   });
 
-  it("say when one is switched off", async () => {
-    servers = [server({ enabled: false })];
+  it("say Connected when the server answered the last time it was asked", async () => {
+    await renderPage();
+    expect(within(card("zfs:nas")).getByText(en["instances.connected"])).toBeTruthy();
+  });
+
+  it("say Not connected when it did not answer", async () => {
+    servers = [server({ reachable: false })];
+    await renderPage();
+    expect(within(card("zfs:nas")).getByText(en["instances.notConnected"])).toBeTruthy();
+    expect(within(card("zfs:nas")).queryByText(en["instances.connected"])).toBeNull();
+  });
+
+  it("say Off for one that is switched off, whether it would answer or not", async () => {
+    servers = [server({ enabled: false, reachable: false })];
     await renderPage();
     expect(within(card("zfs:nas")).getByText(en["zfs.replica.servers.off"])).toBeTruthy();
+    expect(within(card("zfs:nas")).queryByText(en["instances.notConnected"])).toBeNull();
   });
 
   it("are not shown while the ZFS section is off", async () => {
@@ -364,21 +721,21 @@ describe("ZFS servers without BombVault", () => {
 describe("the modules behind the page", () => {
   it("asks only the receiver's lists when only the receiver is on", async () => {
     flags = { receiverEnabled: true, fleetEnabled: false, pullEnabled: false, zfsEnabled: false };
-    logins = [{ memberId: "m2", name: "barn", user: "barn-login", createdAt: 1 }];
+    roles = [memberRoles({ name: "DXP480T" }), memberRoles({ memberId: "m2", name: "barn", reachable: false, forMember: roleSide({ receiver: allowed() }) })];
     await renderPage();
     expect(called("listFleetPeers")).toBe(0);
     expect(called("listMeshOffers")).toBe(0);
     expect(called("listPullSources")).toBe(0);
     expect(called("listReceivedRepos")).toBe(1);
+    expect(called("listRoles")).toBe(1);
     expect(cards().map((c) => c.getAttribute("data-instance"))).toEqual(["self", "m1", "m2"]);
-    expect(within(card("self")).getByRole("button", { name: en["receiver.server.title"] })).toBeTruthy();
-    expect(roles(card("self")).receiver).toBe(en["receiver.title"] + "for barn");
     expect(within(card("m1")).queryByRole("button", { name: en["fleet.remove"] })).toBeNull();
     expect(within(card("m1")).getByRole("button", { name: en["fleet.details"] })).toBeTruthy();
   });
 
   it("asks only for the pull sources when only pulling is on", async () => {
     flags = { receiverEnabled: false, fleetEnabled: false, pullEnabled: true, zfsEnabled: false };
+    serverRuns = true;
     pulls = [pullSource()];
     await renderPage();
     expect(called("listFleetPeers")).toBe(0);
@@ -386,7 +743,6 @@ describe("the modules behind the page", () => {
     expect(called("getReceiverServer")).toBe(0);
     expect(called("listPullSources")).toBe(1);
     expect(within(card("self")).queryByRole("button", { name: en["receiver.server.title"] })).toBeNull();
-    expect(roles(card("self")).fetcher).toBe(en["instances.role.fetcher"] + "for DXP480T");
   });
 
   it("is only the way into pairing while all three are off", async () => {
@@ -394,6 +750,7 @@ describe("the modules behind the page", () => {
     await renderPage();
     expect(cards().map((c) => c.getAttribute("data-instance"))).toEqual(["none"]);
     expect(screen.getByText(en["instances.title"])).toBeTruthy();
+    expect(screen.queryByTestId("net-picture")).toBeNull();
   });
 
   it("says so when the members could not be read", async () => {
@@ -405,15 +762,40 @@ describe("the modules behind the page", () => {
 });
 
 describe("keeping the grid current", () => {
-  it("asks again who is connected while the page is open, with no button for it", async () => {
+  it("asks again who is connected and where the roles stand while the page is open, with no button for it", async () => {
     vi.useFakeTimers();
     await renderPage();
-    const before = called("listFleetPeers");
+    const before = [called("listFleetPeers"), called("listRoles")];
     await act(async () => {
       await vi.advanceTimersByTimeAsync(FLEET_REFRESH_MS);
     });
-    expect(called("listFleetPeers")).toBeGreaterThan(before);
+    expect(called("listFleetPeers")).toBeGreaterThan(before[0]);
+    expect(called("listRoles")).toBeGreaterThan(before[1]);
     expect(screen.queryByRole("button", { name: /poll/i })).toBeNull();
+  });
+
+  it("shows an answer the other side gave in the meantime", async () => {
+    vi.useFakeTimers();
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: roleRequest() }) })];
+    await renderPage();
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("waiting");
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }) })];
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(FLEET_REFRESH_MS);
+    });
+    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("on");
+  });
+
+  it("reads the roles again when a ZFS request was answered", async () => {
+    requests = [receiveRequest({ peer: "m1" })];
+    await renderPage();
+    const before = called("listRoles");
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.details"] }));
+    requests = [receiveRequest({ peer: "m1", state: "refused" })];
+    vi.spyOn(await import("../lib/api"), "decideZFSReceiveRequest").mockResolvedValue({ ok: true });
+    await click(within(screen.getByRole("dialog", { name: "DXP480T" })).getByRole("button", { name: en["zfs.receive.decline"] }));
+    await act(async () => undefined);
+    expect(called("listRoles")).toBeGreaterThan(before);
   });
 
   it("fetches the scorecard of a connected member once it is stale", async () => {
@@ -436,10 +818,11 @@ describe("an address with a hash", () => {
     expect(screen.getByTestId("where").textContent).toBe("/settings/pairing");
   });
 
-  it("opens the receiving server for #receiver and drops the hash", async () => {
+  it("opens the receiving server for #receiver and drops the hash, whether one runs yet or not", async () => {
     window.location.hash = "#receiver";
     await renderPage();
-    expect(screen.getByRole("dialog", { name: en["receiver.server.title"] })).toBeTruthy();
+    const win = screen.getByRole("dialog", { name: en["receiver.server.title"] });
+    expect(within(win).getByRole("button", { name: en["receiver.server.setUp"] })).toBeTruthy();
     expect(window.location.hash).toBe("");
   });
 
@@ -456,21 +839,5 @@ describe("an address with a hash", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(card("m1")).toBeTruthy();
     expect(window.location.hash).toBe("");
-  });
-});
-
-describe("the receiving server", () => {
-  it("opens from this server's card and reads the logins again when it closes", async () => {
-    await renderPage();
-    const before = called("getReceiverServer");
-    await act(async () => {
-      fireEvent.click(within(card("self")).getByRole("button", { name: en["receiver.server.title"] }));
-    });
-    const opened = screen.getByRole("dialog", { name: en["receiver.server.title"] });
-    await act(async () => {
-      fireEvent.click(within(opened).getByRole("button", { name: en["common.done"] }));
-    });
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(called("getReceiverServer")).toBe(before + 2);
   });
 });

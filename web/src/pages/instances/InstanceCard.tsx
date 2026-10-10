@@ -14,6 +14,33 @@ export function InstanceMark() {
   );
 }
 
+/** LogoImage is the same logo inside a picture, in user units. */
+export function LogoImage({ x, y, size }: { x: number; y: number; size: number }) {
+  const box = { x: x.toFixed(1), y: y.toFixed(1), width: size, height: size };
+  return (
+    <>
+      <image href="/logo.svg" {...box} className="glim-logo-image dark:hidden" />
+      <image href="/logo-light.svg" {...box} className="glim-logo-image hidden dark:inline" />
+    </>
+  );
+}
+
+/** The outline of a phone on a 16 unit grid, with its screen and button cut out. */
+export const PHONE_PATH =
+  "M5 .8h6a1.6 1.6 0 0 1 1.6 1.6v11.2a1.6 1.6 0 0 1-1.6 1.6H5a1.6 1.6 0 0 1-1.6-1.6V2.4A1.6 1.6 0 0 1 5 .8Zm.6 2.2v8.6h4.8V3Zm2.4 9.6a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6Z";
+
+/** PhoneMark stands where the logo would on the card of a phone that runs
+ *  the app. */
+export function PhoneMark() {
+  return (
+    <span className="grid h-[88px] w-16 shrink-0 place-items-center rounded-card bg-carbon-surface3 text-accentText">
+      <svg viewBox="0 0 16 16" width="34" height="34" fill="currentColor" aria-hidden="true">
+        <path fillRule="evenodd" d={PHONE_PATH} />
+      </svg>
+    </span>
+  );
+}
+
 /** GlyphMark stands where the logo would for something that is no BombVault:
  *  a glyph on the card's accent. */
 export function GlyphMark({ children }: { children: ReactNode }) {
@@ -48,6 +75,7 @@ export function InstanceCard({
   children,
   actions,
   index,
+  hot = false,
 }: {
   /** What the card stands for: "self", a member id or a ZFS server's id. */
   cardKey: string;
@@ -61,12 +89,17 @@ export function InstanceCard({
   actions?: ReactNode;
   /** Rainbow position by place in the grid. */
   index: number;
+  /** The pointer is on this instance in the net picture. */
+  hot?: boolean;
 }) {
   return (
     <div
       data-instance={cardKey}
+      data-net={cardKey}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
-      className="relative flex h-full flex-col overflow-hidden rounded-card bg-carbon-surface2 glim-hue glim-stagger-row"
+      className={`relative flex h-full flex-col overflow-hidden rounded-card bg-carbon-surface2 glim-hue glim-stagger-row glim-net-entry${
+        hot ? " glim-net-entry-hot" : ""
+      }`}
     >
       <div className="flex items-stretch">
         <div className="flex shrink-0 items-center ps-4">{mark ?? <InstanceMark />}</div>

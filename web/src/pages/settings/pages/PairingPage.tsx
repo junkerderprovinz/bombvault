@@ -24,8 +24,16 @@ export function PairingPage() {
 
       {pairingUsed && (
         <div id="pairing" className="flex scroll-mt-6 flex-col gap-10">
-          <PairingSection t={t} nextHue={nextHue} />
-          <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+          <PairingSection
+            t={t}
+            nextHue={nextHue}
+            zfs={settings.zfsEnabled}
+            instanceCard={(address, hueIndex) => (
+              <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={hueIndex}>
+                {address}
+              </FleetSettingsCard>
+            )}
+          />
         </div>
       )}
     </>

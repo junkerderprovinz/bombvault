@@ -1,246 +1,351 @@
-// The small pictures of the Pairing tab: one per step card and one per relay
-// route. They draw with the theme's own tokens, so they follow dark and light
-// and take the hue of the card they sit in through --accent.
-import { useId, type ReactNode } from "react";
+// The pictures of the pairing page: one per step card and one per relay
+// route. Each is drawn as the frame it rests on and set in motion by the
+// stylesheet, so it stands still wherever motion is off. They draw with the
+// theme's own tokens and take the hue of the card they sit in.
+import { useId, type CSSProperties, type ReactNode } from "react";
+import { IconCheck, IconCopy } from "../../../components/navGlyphs";
 import type { RelayMode } from "../../../lib/api";
+import type { useT } from "../../../lib/i18n";
+import { LogoImage } from "../../instances/InstanceCard";
+import type { RelayForm } from "./relayForm";
 
-const NODE = "var(--carbon-surface2)";
-const RELAY = "var(--carbon-surface3)";
-const INK = "var(--carbon-text)";
-const LABEL = "var(--carbon-text-sub)";
-const LINE = "var(--carbon-text-muted)";
-const KEY = "var(--accent)";
-const KEY_INK = "var(--accent-contrast)";
-const AREA = "color-mix(in srgb, var(--carbon-text) 6%, transparent)";
-const OK = "var(--status-ok-solid)";
+type T = ReturnType<typeof useT>["t"];
 
-/** The key: it only ever sits on an instance. */
-function Lock({ x, y }: { x: number; y: number }) {
+function At({ x, y, className, children }: { x: number; y: number; className?: string; children: ReactNode }) {
   return (
-    <g transform={`translate(${x} ${y})`}>
-      <circle r="9" fill={KEY} />
-      <rect x="-4" y="-1.2" width="8" height="6.4" rx="1.4" fill={KEY_INK} />
-      <path d="M-2.4 -1.2v-1.9a2.4 2.4 0 0 1 4.8 0v1.9" fill="none" stroke={KEY_INK} strokeWidth="1.5" />
-    </g>
-  );
-}
-
-/** A sealed message on its way. */
-function Envelope({ x, y }: { x: number; y: number }) {
-  return (
-    <g transform={`translate(${x} ${y})`}>
-      <rect x="-8" y="-6" width="16" height="12" rx="2.2" fill={KEY} />
-      <path d="M-6.2 -4 0 .9 6.2 -4" fill="none" stroke={KEY_INK} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-    </g>
-  );
-}
-
-function Instance({ x, y, label, dim = false }: { x: number; y: number; label: string; dim?: boolean }) {
-  return (
-    <g opacity={dim ? 0.45 : undefined}>
-      <rect x={x} y={y} width="56" height="44" rx="10" fill={NODE} />
-      <text x={x + 28} y={y + 28} textAnchor="middle" fontSize="17" fontWeight="700" fill={INK}>
-        {label}
-      </text>
-      <Lock x={x + 54} y={y + 2} />
-    </g>
-  );
-}
-
-function Line({ x1, x2, y, dashed = false }: { x1: number; x2: number; y: number; dashed?: boolean }) {
-  return (
-    <line x1={x1} y1={y} x2={x2} y2={y} stroke={LINE} strokeWidth="2" strokeLinecap="round" strokeDasharray={dashed ? "3 5" : undefined} />
-  );
-}
-
-function Caption({ x, y, children, anchor = "middle" }: { x: number; y: number; children: ReactNode; anchor?: "middle" | "start" }) {
-  return (
-    <text x={x} y={y} textAnchor={anchor} fontSize="12" fill={LABEL}>
+    <g transform={`translate(${x} ${y})`} className={className}>
       {children}
-    </text>
+    </g>
   );
 }
 
-export interface RouteDiagramLabels {
-  relay: string;
-  projectHost: string;
-  ownAddress: string;
-  yourNetwork: string;
-  otherNetwork: string;
-  yourLan: string;
-}
-
-/** RouteDiagram shows how a message travels on one relay route. */
-export function RouteDiagram({ mode, labels, alt }: { mode: RelayMode; labels: RouteDiagramLabels; alt: string }) {
-  let body: ReactNode;
-  if (mode === "off") {
-    body = (
-      <>
-        <rect x="2" y="8" width="170" height="96" rx="14" fill={AREA} />
-        <Caption x={14} y={26} anchor="start">
-          {labels.yourLan}
-        </Caption>
-        <Line x1={72} x2={106} y={58} />
-        <Envelope x={89} y={58} />
-        <Instance x={16} y={40} label="A" />
-        <Instance x={106} y={40} label="B" />
-        <Line x1={166} x2={196} y={62} dashed />
-        <path d="M176 56l8 8M184 56l-8 8" stroke={LINE} strokeWidth="2" strokeLinecap="round" />
-        <Instance x={200} y={40} label="C" dim />
-        <Caption x={228} y={100}>
-          {labels.otherNetwork}
-        </Caption>
-      </>
-    );
-  } else {
-    const project = mode === "project";
-    body = (
-      <>
-        <Line x1={64} x2={project ? 98 : 104} y={58} />
-        <Line x1={project ? 162 : 156} x2={196} y={58} />
-        {project ? (
-          <path d="M102 78h56a13 13 0 0 0 1-26A20 20 0 0 0 124 41 14 14 0 0 0 103 55 12 12 0 0 0 102 78z" fill={RELAY} />
-        ) : (
-          <rect x="104" y="37" width="52" height="42" rx="8" fill={RELAY} />
-        )}
-        <text x={project ? 131 : 130} y={project ? 68 : 62} textAnchor="middle" fontSize="11" fontWeight="600" fill={INK}>
-          {labels.relay}
-        </text>
-        <Envelope x={project ? 81 : 84} y={58} />
-        <Envelope x={project ? 179 : 176} y={58} />
-        <Instance x={8} y={36} label="A" />
-        <Instance x={196} y={36} label="B" />
-        <Caption x={130} y={22}>
-          {project ? labels.projectHost : labels.ownAddress}
-        </Caption>
-        <Caption x={36} y={100}>
-          {labels.yourNetwork}
-        </Caption>
-        <Caption x={224} y={100}>
-          {labels.otherNetwork}
-        </Caption>
-      </>
-    );
-  }
-  return (
-    <svg viewBox="0 0 272 108" role="img" aria-label={alt} className="block w-full h-auto max-w-[400px] justify-self-center mx-auto">
-      <g transform="translate(4 0)">{body}</g>
-    </svg>
-  );
-}
-
-/** Legend entries for the two symbols the diagrams use. */
-export function LegendKey() {
-  return (
-    <svg viewBox="-10 -10 20 20" width="20" height="20" aria-hidden="true">
-      <Lock x={0} y={0} />
-    </svg>
-  );
-}
-
-export function LegendMessage() {
-  return (
-    <svg viewBox="-10 -10 20 20" width="20" height="20" aria-hidden="true">
-      <Envelope x={0} y={0} />
-    </svg>
-  );
-}
-
-function Window({ x, y, w, h, label, lit }: { x: number; y: number; w: number; h: number; label: string; lit: boolean }) {
+/** A message between two instances. Each carries a small lock, since what
+ *  passes between them is sealed end to end. */
+function Letter() {
   return (
     <>
-      <rect x={x} y={y} width={w} height={h} rx="10" fill={NODE} />
-      <circle cx={x + 14} cy={y + 14} r="8" fill={lit ? KEY : RELAY} />
-      <text x={x + 14} y={y + 17.5} textAnchor="middle" fontSize="10" fontWeight="700" fill={lit ? KEY_INK : INK}>
+      <rect className="glim-scene-seal" x="-9" y="-6.5" width="18" height="13" rx="2.5" />
+      <path className="glim-scene-cut-line" d="M-6.8 -4.2 0 .8 6.8 -4.2" strokeLinejoin="round" strokeLinecap="round" />
+      <g transform="translate(7.5 5)">
+        <circle className="glim-route-ground" r="4.6" />
+        <rect className="glim-scene-seal" x="-2.1" y="-.7" width="4.2" height="3.4" rx=".8" />
+        <path className="glim-route-shackle" d="M-1.3 -.7v-1a1.3 1.3 0 0 1 2.6 0v1" />
+      </g>
+    </>
+  );
+}
+
+/** A letter on its way along a path, in sight only while the picture moves. */
+function Travel({ path, leg, back = false }: { path: string; leg: "direct" | "arc" | "in" | "out"; back?: boolean }) {
+  return (
+    <g
+      className={`glim-letter glim-letter-${leg}${back ? " glim-letter-back" : ""}`}
+      style={{ offsetPath: `path("${path}")` } as CSSProperties}
+    >
+      <g className="glim-letter-size">
+        <Letter />
+      </g>
+    </g>
+  );
+}
+
+/** Where a letter rests while the picture stands still. */
+function Parked({ x, y }: { x: number; y: number }) {
+  return (
+    <At x={x} y={y} className="glim-letter-parked">
+      <Letter />
+    </At>
+  );
+}
+
+function Area({ x, width, label }: { x: number; width: number; label: string }) {
+  return (
+    <>
+      <rect className="glim-scene-box glim-route-area" x={x} y="20" width={width} height="98" rx="18" />
+      <text className="glim-route-caption" x={x + width / 2} y="138" textAnchor="middle">
         {label}
       </text>
     </>
   );
 }
 
-/** Word pills in a grid: the first `filled` are typed, `cursor` is the one
- *  being typed. */
-function Words({
-  x0,
-  y0,
-  cols,
-  rows,
-  w,
-  h,
-  gx,
-  gy,
-  filled,
-  cursor = -1,
-}: {
-  x0: number;
-  y0: number;
-  cols: number;
-  rows: number;
-  w: number;
-  h: number;
-  gx: number;
-  gy: number;
-  filled: number;
-  cursor?: number;
-}) {
-  const out: ReactNode[] = [];
-  for (let i = 0; i < cols * rows; i++) {
-    const x = x0 + (i % cols) * (w + gx);
-    const y = y0 + Math.floor(i / cols) * (h + gy);
-    if (i === cursor) {
-      out.push(
-        <g key={i}>
-          <rect x={x + 0.75} y={y + 0.75} width={w - 1.5} height={h - 1.5} rx={h / 2} fill="none" stroke={KEY} strokeWidth="1.5" />
-          <path d={`M${x + 6} ${y + 2.5}v${h - 5}`} stroke={INK} strokeWidth="1.5" strokeLinecap="round" />
-        </g>,
-      );
-    } else {
-      out.push(<rect key={i} x={x} y={y} width={w} height={h} rx={h / 2} fill={i < filled ? KEY : RELAY} />);
-    }
-  }
-  return <>{out}</>;
+function Pill({ x, y, width, label }: { x: number; y: number; width: number; label: string }) {
+  return (
+    <At x={x} y={y}>
+      <rect className="glim-route-pill" x={-width / 2} y="-9" width={width} height="18" rx="6" />
+      <text className="glim-route-pill-text" y="3.5" textAnchor="middle">
+        {label}
+      </text>
+    </At>
+  );
 }
 
-/** StepPicture is the drawing on step card 1, 2 or 3. */
-export function StepPicture({ step }: { step: 1 | 2 | 3 }) {
+/** An instance in a route picture, by its middle. */
+function Vault({ x, faded = false }: { x: number; faded?: boolean }) {
+  return (
+    <g opacity={faded ? 0.45 : undefined}>
+      <LogoImage x={x - 28} y={42} size={56} />
+    </g>
+  );
+}
+
+const ROUTE_ALT = {
+  project: "relay.pic.relay",
+  own: "relay.pic.relay",
+  instance: "relay.pic.instance",
+  off: "relay.pic.direct",
+} as const;
+
+/** RouteDiagram shows how a message travels on one relay route. A letter
+ *  moves at one speed whatever the length of its way, and there and back play
+ *  one after the other. */
+export function RouteDiagram({ form, t }: { form: RelayForm; t: T }) {
+  const here = t("relay.diagramYourNetwork");
+  const there = t("relay.diagramOtherNetwork");
   let body: ReactNode;
-  if (step === 1) {
+  if (form === "off") {
     body = (
       <>
-        <Window x={40} y={6} w={120} h={108} label="A" lit />
-        <Words x0={54} y0={34} cols={3} rows={4} w={28} h={10} gx={5} gy={8} filled={12} />
+        <Area x={8} width={232} label={here} />
+        <Area x={268} width={84} label={there} />
+        <path className="glim-scene-flow" d="M98 70 L158 70" />
+        <path className="glim-route-blocked" d="M218 70 H280" />
+        <path className="glim-route-cross" d="M249 64l10 12M259 64l-10 12" />
+        <Vault x={68} />
+        <Vault x={188} />
+        <Vault x={310} faded />
+        <Travel path="M98 70 L158 70" leg="direct" />
+        <Travel path="M158 70 L98 70" leg="direct" back />
+        <At x={232} y={70}>
+          <g className="glim-letter-refused">
+            <Letter />
+          </g>
+        </At>
+        <At x={254} y={70}>
+          <circle className="glim-route-refusal" r="6" />
+        </At>
+        <Parked x={128} y={70} />
       </>
     );
-  } else if (step === 2) {
+  } else if (form === "instance") {
     body = (
       <>
-        <Window x={4} y={32} w={58} h={58} label="A" lit={false} />
-        <Words x0={12} y0={56} cols={3} rows={4} w={12} h={4} gx={3} gy={3} filled={12} />
-        <path d="M68 61h14" stroke={LINE} strokeWidth="2" strokeLinecap="round" />
-        <path d="M80 56l6 5-6 5" fill="none" stroke={LINE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <Window x={92} y={6} w={104} h={108} label="B" lit />
-        <Words x0={104} y0={34} cols={3} rows={4} w={24} h={10} gx={5} gy={8} filled={7} cursor={7} />
+        <Area x={8} width={104} label={here} />
+        <Area x={248} width={104} label={there} />
+        <path className="glim-scene-flow" d="M90 70 Q180 46 270 70" />
+        <At x={60} y={70}>
+          <circle className="glim-scene-ring glim-relay-ring glim-relay-home" r="34" />
+        </At>
+        <g className="glim-relay-hop glim-relay-home">
+          <Vault x={60} />
+        </g>
+        <Pill x={60} y={114} width={44} label={t("relay.diagramRelay")} />
+        <Vault x={300} />
+        <Travel path="M90 70 Q180 46 270 70" leg="arc" />
+        <Travel path="M270 70 Q180 46 90 70" leg="arc" back />
+        <Parked x={180} y={58} />
       </>
     );
   } else {
     body = (
       <>
-        <rect x="4" y="6" width="192" height="108" rx="16" fill={AREA} />
-        <Window x={16} y={34} w={64} h={62} label="A" lit />
-        <Words x0={26} y0={62} cols={3} rows={3} w={12} h={5} gx={3} gy={4} filled={9} />
-        <Window x={120} y={34} w={64} h={62} label="B" lit />
-        <Words x0={130} y0={62} cols={3} rows={3} w={12} h={5} gx={3} gy={4} filled={9} />
-        <path d="M80 65h40" stroke={LINE} strokeWidth="2" />
-        <Lock x={100} y={65} />
-        <g transform="translate(100 22)">
-          <circle r="10" fill={OK} />
-          <path d="M-4.4 .2-1.2 3.4 4.6-2.8" fill="none" stroke="var(--carbon-bg)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <Area x={8} width={104} label={here} />
+        <Area x={248} width={104} label={there} />
+        <path className="glim-scene-flow" d="M90 70 Q120 58 148 70 M212 70 Q240 82 270 70" />
+        <At x={180} y={70}>
+          <circle className="glim-scene-ring glim-relay-ring" r="30" />
+        </At>
+        <g className="glim-relay-hop">
+          <image href="/parleyport.svg" x="148" y="38" width="64" height="62" className="glim-logo-image" />
         </g>
+        <text className="glim-route-name" x="180" y="138" textAnchor="middle">
+          {t("relay.containerName")}
+        </text>
+        {form === "own" && <Pill x={180} y={155} width={84} label={t("relay.pic.selfHosted")} />}
+        <Vault x={60} />
+        <Vault x={300} />
+        <Travel path="M90 70 Q120 58 150 70 L180 70" leg="in" />
+        <Travel path="M180 70 L210 70 Q240 82 270 70" leg="out" />
+        <Travel path="M270 70 Q240 82 210 70 L180 70" leg="in" back />
+        <Travel path="M180 70 L150 70 Q120 58 90 70" leg="out" back />
+        <Parked x={120} y={64} />
+        <Parked x={240} y={76} />
       </>
     );
   }
   return (
-    <svg viewBox="0 0 200 120" aria-hidden="true" className="block w-full h-auto max-w-[230px] mx-auto">
+    <div className="glim-pic glim-scene glim-route" data-form={form}>
+      <svg viewBox="0 0 360 166" role="img" aria-label={t(ROUTE_ALT[form])}>
+        {body}
+      </svg>
+    </div>
+  );
+}
+
+/** The twelve words the step pictures show. They belong to no real group. */
+const SAMPLE_WORDS = ["anchor", "breeze", "candy", "dove", "ember", "fjord", "granite", "harbor", "island", "jade", "kiwi", "lunar"];
+
+/** When something on a step card happens, as a share of the scene's loop. */
+function at(share: number): CSSProperties {
+  return { "--step-at": share } as CSSProperties;
+}
+
+function Press({ x, y, width, height, rx, when }: { x: number; y: number; width: number; height: number; rx: number; when: number }) {
+  return <rect className="glim-step-press" x={x} y={y} width={width} height={height} rx={rx} style={at(when)} />;
+}
+
+/** The choice the phrase card shows, drawn small: its glyph tile and title. */
+function ChoiceTile({ glyph, title, when }: { glyph: "create" | "enter"; title: string; when: number }) {
+  return (
+    <>
+      <rect className="glim-step-tile" x="8" y="8" width="224" height="38" rx="9" />
+      <rect className="glim-scene-seal glim-step-corner" x="14" y="14" width="26" height="26" rx="7" />
+      <g transform="translate(17 17)" className="glim-step-cut">
+        <PhraseGlyph kind={glyph} size={20} />
+      </g>
+      <text className="glim-step-title" x="48" y="30.5">
+        {title}
+      </text>
+      <Press x={8} y={8} width={224} height={38} rx={9} when={when} />
+    </>
+  );
+}
+
+function WordGrid({
+  x0,
+  y0,
+  width,
+  gap,
+  from,
+  step,
+  span,
+  ground,
+}: {
+  x0: number;
+  y0: number;
+  width: number;
+  gap: number;
+  /** When the first word shows, and how long after it each next one does. */
+  from: number;
+  step: number;
+  span: "early" | "mid";
+  ground: "tile" | "field";
+}) {
+  return (
+    <>
+      {SAMPLE_WORDS.map((word, k) => {
+        const x = x0 + (k % 4) * (width + gap);
+        const y = y0 + Math.floor(k / 4) * 15;
+        return (
+          <g key={word} className={`glim-step-show-${span}`} style={at(from + k * step)}>
+            <rect className={`glim-step-word glim-step-word-${ground}`} x={x} y={y} width={width} height="12" rx="6" />
+            <text className="glim-step-word-text" x={x + width / 2} y={y + 8.5} textAnchor="middle">
+              {word}
+            </text>
+          </g>
+        );
+      })}
+    </>
+  );
+}
+
+function PictureButton({ label, done, when }: { label: string; done?: string; when: number }) {
+  const face = (text: string, glyph: ReactNode, className: string) => (
+    <g className={className}>
+      <g transform="translate(160 109) scale(.625)">{glyph}</g>
+      <text x="174" y="117.5">{text}</text>
+    </g>
+  );
+  return (
+    <>
+      <rect className="glim-step-button" x="152" y="104" width="80" height="20" rx="10" />
+      {face(label, <IconCopy />, done ? "glim-step-face glim-step-face-plain" : "glim-step-face")}
+      {done && face(done, <IconCheck />, "glim-step-face glim-step-face-done")}
+      <Press x={152} y={104} width={80} height={20} rx={10} when={when} />
+    </>
+  );
+}
+
+const CONFETTI = Array.from({ length: 28 }, (_, k) => {
+  const dx = ((k * 37) % 220) - 110;
+  return {
+    "--peak-x": `${dx / 2}px`,
+    "--peak-y": `${-26 - (k % 4) * 6}px`,
+    "--fall-x": `${dx}px`,
+    "--fall-y": `${30 + ((k * 53) % 75)}px`,
+    "--spin": `${k % 2 ? 360 : -360}deg`,
+  } as CSSProperties;
+});
+
+/** StepPicture is the drawing on step card 1, 2 or 3. The three play one
+ *  scene: a phrase is generated and copied on the first instance, pasted on
+ *  the next, and the two are paired. */
+export function StepPicture({ step, t }: { step: 1 | 2 | 3; t: T }) {
+  let body: ReactNode;
+  if (step === 1) {
+    body = (
+      <>
+        <ChoiceTile glyph="create" title={t("pairing.create")} when={0.09} />
+        <WordGrid x0={8} y0={56} width={50} gap={8.67} from={0.11} step={0.006} span="early" ground="tile" />
+        <PictureButton label={t("common.copy")} done={t("common.copied")} when={0.21} />
+      </>
+    );
+  } else if (step === 2) {
+    body = (
+      <>
+        <ChoiceTile glyph="enter" title={t("pairing.enter")} when={0.43} />
+        <rect className="glim-step-field" x="8" y="52" width="224" height="48" rx="9" />
+        <rect className="glim-step-focus" x="8" y="52" width="224" height="48" rx="9" />
+        <text className="glim-step-hint" x="120" y="80" textAnchor="middle">
+          {t("pairing.pic.pasteWords")}
+        </text>
+        <WordGrid x0={14} y0={56} width={48} gap={6} from={0.525} step={0.005} span="mid" ground="field" />
+        <PictureButton label={t("pairing.paste")} when={0.51} />
+      </>
+    );
+  } else {
+    body = (
+      <>
+        <path className="glim-route-blocked" d="M88 80 H152" />
+        <path className="glim-step-link" d="M88 80 H152" />
+        <LogoImage x={28} y={52} size={56} />
+        <LogoImage x={156} y={52} size={56} />
+        <At x={120} y={80}>
+          <g className="glim-step-lock">
+            <circle className="glim-scene-seal" r="9" />
+            <rect className="glim-scene-cut" x="-4" y="-1.2" width="8" height="6.4" rx="1.4" />
+            <path className="glim-scene-cut-line" d="M-2.4 -1.2v-1.9a2.4 2.4 0 0 1 4.8 0v1.9" />
+          </g>
+        </At>
+        <At x={92} y={80}>
+          <g className="glim-step-mail">
+            <Letter />
+          </g>
+        </At>
+        <At x={120} y={22}>
+          <circle className="glim-step-ring" r="14" />
+          <g className="glim-step-badge">
+            <g className="glim-step-badge-pop">
+              <rect className="glim-step-badge-ground" x="-50" y="-13" width="100" height="26" rx="13" />
+              <g transform="translate(-38 -6) scale(.75)" className="glim-step-badge-ink">
+                <IconCheck />
+              </g>
+              <text className="glim-step-badge-text" x="7" y="4.5" textAnchor="middle">
+                {t("pairing.paired")}
+              </text>
+            </g>
+          </g>
+          {CONFETTI.map((flight, k) => (
+            <g key={k} className="glim-step-confetti" style={flight}>
+              <rect className={`glim-step-confetti-${k % 4}`} x="-2" y="-3.5" width="4" height="7" rx="1" />
+            </g>
+          ))}
+        </At>
+      </>
+    );
+  }
+  return (
+    <svg viewBox="0 0 240 130" aria-hidden="true" data-step={step} className="glim-step-pic">
       {body}
     </svg>
   );
