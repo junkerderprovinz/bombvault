@@ -118,6 +118,7 @@ export default [
             "Flash.tsx": "PAGE_SHELL_RESPONSIVE",
             "Config.tsx": "PAGE_SHELL_RESPONSIVE",
             "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Backups.tsx": "PAGE_SHELL_RESPONSIVE",
             "ZFS.tsx": "PAGE_SHELL_RESPONSIVE",
             "Instances.tsx": "PAGE_SHELL_RESPONSIVE",
             "Settings.tsx": "PAGE_SHELL_RESPONSIVE",
