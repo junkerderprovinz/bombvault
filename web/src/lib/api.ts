@@ -2397,6 +2397,15 @@ export function tamperTest(
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
 
+/** POST /api/offsite/targets/{id}/tamper-test: the same probe as tamperTest
+ *  against one off-site target. The verdict is stored for that target and
+ *  comes back as lastTamper on its storage location. An unknown id is a 404. */
+export function tamperTestOffsiteTarget(
+  id: string
+): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/tamper-test`, { method: "POST" });
+}
+
 // ---------------------------------------------------------------------------
 // Remote primary repositories (issue #152)
 //

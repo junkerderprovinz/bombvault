@@ -326,6 +326,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/offsite/targets/{id}", h.handleUpdateOffsiteTarget)
 	mux.HandleFunc("DELETE /api/offsite/targets/{id}", h.handleDeleteOffsiteTarget)
 	mux.HandleFunc("POST /api/offsite/targets/{id}/test", h.handleTestOffsiteTarget)
+	mux.HandleFunc("POST /api/offsite/targets/{id}/tamper-test", h.handleTamperTestOffsiteTarget)
 	mux.HandleFunc("GET /api/offsite/targets/{id}/direct", h.handleGetDirectRepo)
 	mux.HandleFunc("POST /api/offsite/targets/{id}/direct/test", h.handleTestDirectLocation)
 	mux.HandleFunc("GET /api/offsite/providers", h.handleOffsiteProviders)

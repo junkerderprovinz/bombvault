@@ -427,6 +427,26 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}))
 }
 
+// handleTamperTestOffsiteTarget runs the append-only probe of
+// handleTamperTest against one off-site target and answers in the same shape.
+// POST /api/offsite/targets/{id}/tamper-test
+func (h *Handler) handleTamperTestOffsiteTarget(w http.ResponseWriter, r *http.Request) {
+	verdict, err := h.svc.RunTamperTestForTarget(r.Context(), r.PathValue("id"))
+	if errors.Is(err, store.ErrNotOffsiteTarget) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such off-site target"})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"testable":  verdict.Testable,
+		"protected": verdict.Protected,
+		"detail":    verdict.Detail,
+	}))
+}
+
 // followDestination gives t its destination's values for the named settings
 // and stops t keeping its own. The primary cannot follow: the domain's
 // off-site settings write its values on every save.
