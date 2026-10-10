@@ -86,6 +86,7 @@ describe('hover ramp', () => {
   it('never hovers a filled element to the tone below its own', () => {
     // Each hit names the class it should carry instead, because that depends
     // on which tier the element is resting on.
-    expect(offenders(), `hovers below its own tone at: ${offenders().join(', ')}`).toEqual([])
+    const found = offenders()
+    expect(found, `hovers below its own tone at: ${found.join(', ')}`).toEqual([])
   })
 })
