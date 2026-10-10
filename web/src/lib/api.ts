@@ -3319,6 +3319,27 @@ export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
   return fetchJSON("/api/rclone");
 }
 
+/** One setting of an rclone remote. `hidden` means the config holds a value
+ *  the server keeps to itself: a secret, or a setting it cannot tell from one. */
+export interface RcloneOption {
+  name: string;
+  value?: string;
+  hidden?: boolean;
+}
+
+/** One remote of the rclone config: its section without the secrets. */
+export interface RcloneSection {
+  name: string;
+  type: string;
+  options: RcloneOption[];
+}
+
+/** GET /api/rclone, read for the sections of the config. A location at
+ *  "rclone:<name>:<path>" uses the section called <name>. */
+export function getRcloneSections(): Promise<OkEnvelope & { sections?: RcloneSection[] }> {
+  return fetchJSON("/api/rclone");
+}
+
 /** POST /api/rclone — store the rclone config (encrypted). Empty conf clears it. */
 export function setRclone(conf: string): Promise<OkEnvelope> {
   return fetchJSON("/api/rclone", {

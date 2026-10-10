@@ -3648,9 +3648,10 @@ func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleRcloneInfo returns the configured rclone remote names (never secrets).
+// handleRcloneInfo returns the names of the configured rclone remotes and each
+// one's section of the config without its secrets.
 // GET /api/rclone
-func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) handleRcloneInfo(w http.ResponseWriter, r *http.Request) {
 	remotes, err := h.svc.RcloneRemotes()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -3659,7 +3660,12 @@ func (h *Handler) handleRcloneInfo(w http.ResponseWriter, _ *http.Request) {
 	if remotes == nil {
 		remotes = []string{}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"remotes": remotes}))
+	sections, err := h.svc.RcloneSections(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"remotes": remotes, "sections": sections}))
 }
 
 // handleSetRclone stores the rclone config (encrypted) and writes the on-disk

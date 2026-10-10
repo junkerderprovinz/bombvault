@@ -17450,6 +17450,26 @@ func (s *Service) RcloneRemotes() ([]string, error) {
 	return parseRcloneRemotes(string(plain)), nil
 }
 
+// RcloneSections returns the remotes of the stored rclone config, each with
+// its type and the options that hold no secret. Which options do is rclone's
+// own description of its backends, so while that cannot be read every value
+// stays hidden.
+func (s *Service) RcloneSections(ctx context.Context) ([]remotes.Section, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	conf, err := s.decodeRcloneConf(settings)
+	if err != nil {
+		return nil, err
+	}
+	backends, err := s.remotes().Backends(ctx)
+	if err != nil {
+		log.Printf("api: rclone does not describe its backends, so the options of its remotes stay hidden: %v", err)
+	}
+	return remotes.Redact(conf, backends), nil
+}
+
 // decodeRcloneConf returns the decrypted rclone config text stored in settings
 // (an empty/blank rclone_conf yields "", no error). Unlike RcloneRemotes it keeps
 // the full contents — used by the recovery kit, which needs the remote secrets.
