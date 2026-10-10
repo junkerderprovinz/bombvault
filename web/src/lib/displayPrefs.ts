@@ -29,6 +29,9 @@ const KEYS = [
   "bombvault.settingsOrder",
   // Which Settings pages also sit in the sidebar.
   "bombvault.navPins",
+  // Whether keeping fewer backups asks first. Someone who answered "don't ask
+  // again" should not be asked again on the next browser.
+  "bombvault.askKeepLess",
 ] as const;
 
 /** Fired on `window` once this browser has adopted the server's look.

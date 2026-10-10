@@ -4,7 +4,7 @@ import { IconCompressAuto, IconCompressMax, IconCompressOff } from "./glyphs";
 import { InfoBubble } from "./InfoBubble";
 import { Selector } from "./Selector";
 
-const MODES = [
+export const COMPRESSION_MODES = [
   { id: "off", labelKey: "settings.compression.off", Glyph: IconCompressOff },
   { id: "auto", labelKey: "settings.compression.auto", Glyph: IconCompressAuto },
   { id: "max", labelKey: "settings.compression.max", Glyph: IconCompressMax },
@@ -32,7 +32,7 @@ export function CompressionSelector({
         <InfoBubble tip={lockedReason ? `${t("settings.compressionInfo")} ${lockedReason}` : t("settings.compressionInfo")} />
       </span>
       <Selector
-        items={MODES.map(({ id, labelKey, Glyph }) => ({ id, label: t(labelKey), icon: <Glyph /> }))}
+        items={COMPRESSION_MODES.map(({ id, labelKey, Glyph }) => ({ id, label: t(labelKey), icon: <Glyph /> }))}
         label={t("settings.compression")}
         size="sm"
         select="one"

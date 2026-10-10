@@ -121,6 +121,8 @@ export default [
             "ZFS.tsx": "PAGE_SHELL_RESPONSIVE",
             "Instances.tsx": "PAGE_SHELL_RESPONSIVE",
             "Settings.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Storage.tsx": "PAGE_SHELL_RESPONSIVE",
+            "StorageLocation.tsx": "PAGE_SHELL_RESPONSIVE",
             // The Instances lanes, each rendered as a tab panel through
             // PAGE_SHELL_TABBED_RESPONSIVE.
             "Receiver.tsx": "PAGE_SHELL_RESPONSIVE",
