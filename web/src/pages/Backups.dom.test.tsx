@@ -1122,7 +1122,7 @@ describe("a right click on a row", () => {
     expect(picked()).toEqual(["Documents"]);
     await rightClick(row("plex"));
     await chooseFromMenu("Open");
-    expect(screen.getByText("at /containers")).toBeTruthy();
+    expect(screen.getByText("at /backups/container/plex")).toBeTruthy();
   });
 
   it("acts on the whole selection when the row is part of it", async () => {
@@ -1208,7 +1208,7 @@ describe("the notes above the list", () => {
     serve([...MIXED, DATABASE, entry({ key: "db-off", dbTier: "curated", dbDumpOff: true })]);
     await renderPage();
     const note = within(screen.getByTestId("dump-intro"));
-    expect(note.getByRole("link", { name: "immich_postgres" }).getAttribute("href")).toBe("/containers");
+    expect(note.getByRole("link", { name: "immich_postgres" }).getAttribute("href")).toBe("/backups/container/immich_postgres");
     await press(note.getByRole("button", { name: "Got it" }));
     expect(screen.queryByTestId("dump-intro")).toBeNull();
 
