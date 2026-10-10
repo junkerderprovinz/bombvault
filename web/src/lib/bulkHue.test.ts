@@ -24,6 +24,7 @@ function read(path: string): string {
 const EDITOR_DIRS: Record<string, string> = {
   "src/pages/Containers.tsx": "src/components/containers",
   "src/pages/VMs.tsx": "src/components/vms",
+  "src/pages/Files.tsx": "src/components/files",
 };
 
 /** The page together with the components it was split into. */

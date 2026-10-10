@@ -13,7 +13,7 @@ vi.mock("../lib/api", async () => {
   };
 });
 
-const { FileSetDialog } = await import("./Files");
+const { FileSetDialog } = await import("../components/files/FileSetDialog");
 const { countText, en } = await import("../lib/i18n");
 
 const t = ((key: TranslationKey, n?: number) => countText(en[key], "en", n)) as unknown as Parameters<typeof FileSetDialog>[0]["t"];
