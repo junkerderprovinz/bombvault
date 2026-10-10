@@ -322,6 +322,11 @@ type Service struct {
 	diskStat    func(path string) (diskStatResult, error)
 	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
 	sftpAbout   func(ctx context.Context, repo string) (aboutResult, error)
+	// probedVolumes holds what a capacity probe asked for by hand answered, by
+	// volume key and guarded by probedMu. The samples table is not the place
+	// for it: every volume in there is judged by the capacity rule.
+	probedMu      sync.Mutex
+	probedVolumes map[string]probedVolume
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
@@ -1733,17 +1738,26 @@ func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []st
 // retentionPolicy is the local keep-policy of a domain: its own when it has
 // one, the shared one otherwise.
 func (s *Service) retentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
-	k, own := settings.OwnRetention()[domain]
-	if !own {
-		k = store.RetentionKeep{
-			KeepLast:    settings.RetentionKeepLast,
-			KeepDaily:   settings.RetentionKeepDaily,
-			KeepWeekly:  settings.RetentionKeepWeekly,
-			KeepMonthly: settings.RetentionKeepMonthly,
-			KeepYearly:  settings.RetentionKeepYearly,
-		}
+	return keepPolicy(localKeep(settings, domain))
+}
+
+// localKeep is the domain's own local keep-policy when it has one, the shared
+// local one otherwise.
+func localKeep(settings store.Settings, domain string) store.RetentionKeep {
+	if k, own := settings.OwnRetention()[domain]; own {
+		return k
 	}
-	return keepPolicy(k)
+	return sharedLocalKeep(settings)
+}
+
+func sharedLocalKeep(settings store.Settings) store.RetentionKeep {
+	return store.RetentionKeep{
+		KeepLast:    settings.RetentionKeepLast,
+		KeepDaily:   settings.RetentionKeepDaily,
+		KeepWeekly:  settings.RetentionKeepWeekly,
+		KeepMonthly: settings.RetentionKeepMonthly,
+		KeepYearly:  settings.RetentionKeepYearly,
+	}
 }
 
 func keepPolicy(k store.RetentionKeep) restic.RetentionPolicy {

@@ -196,42 +196,10 @@ func (s *Service) repoCapacities(domain string) []repoCapacity {
 		return nil
 	}
 	targets := s.offsiteReplicationTargets(domain, settings)
-	var readings map[string]store.VolumeSample
+	reader := capacityReader{s: s}
 	out := make([]repoCapacity, 0, len(repos)+len(targets))
-	measure := func(c repoCapacity, loc string) repoCapacity {
-		c.Remote = restic.IsRemoteRepo(loc)
-		switch {
-		case !c.Remote:
-			// A folder with no repository in it yet may not be on the disk the
-			// repository will be on.
-			if localRepoMissing(loc) {
-				break
-			}
-			if res, sErr := s.diskStatFn()(loc); sErr == nil {
-				now := s.anomalies.nowUnix()
-				free, used, total := clampToInt64(res.Free), clampToInt64(res.Used), clampToInt64(res.Total)
-				c.At, c.Free, c.Used, c.Total = &now, &free, &used, &total
-				c.Source = volumeSource(res.FSType)
-			}
-		case remoteVolumeSource(loc) == "":
-			c.Unsupported = true
-		default:
-			if readings == nil {
-				readings = s.newestVolumeReadings()
-			}
-			if v, ok := readings[remoteVolumeKey(loc)]; ok {
-				c.At, c.Free, c.Total = &v.At, &v.FreeBytes, v.TotalBytes
-				c.Source = v.Source
-				if v.TotalBytes != nil {
-					used := *v.TotalBytes - v.FreeBytes
-					c.Used = &used
-				}
-			}
-		}
-		return c
-	}
 	for _, ref := range repos {
-		out = append(out, measure(repoCapacity{Name: s.refName(ref), Primary: ref.Own}, ref.Loc))
+		out = append(out, reader.measure(repoCapacity{Name: s.refName(ref), Primary: ref.Own}, ref.Loc))
 	}
 	for _, t := range targets {
 		c := repoCapacity{Name: scrubSafeName(t.Name), Offsite: true}
@@ -244,9 +212,60 @@ func (s *Service) repoCapacities(domain string) []repoCapacity {
 		if c.Name == "" {
 			c.Name = shortRepoName(loc)
 		}
-		out = append(out, measure(c, loc))
+		out = append(out, reader.measure(c, loc))
 	}
 	return out
+}
+
+// capacityReader measures repositories against one read of the stored remote
+// readings, made when the first remote asks for it.
+type capacityReader struct {
+	s        *Service
+	readings map[string]store.VolumeSample
+}
+
+// measure fills c with the room around the repository at loc.
+func (r *capacityReader) measure(c repoCapacity, loc string) repoCapacity {
+	s := r.s
+	c.Remote = restic.IsRemoteRepo(loc)
+	switch {
+	case !c.Remote:
+		// A folder with no repository in it yet may not be on the disk the
+		// repository will be on.
+		if localRepoMissing(loc) {
+			break
+		}
+		if res, sErr := s.diskStatFn()(loc); sErr == nil {
+			now := s.anomalies.nowUnix()
+			free, used, total := clampToInt64(res.Free), clampToInt64(res.Used), clampToInt64(res.Total)
+			c.At, c.Free, c.Used, c.Total = &now, &free, &used, &total
+			c.Source = volumeSource(res.FSType)
+		}
+	case remoteVolumeSource(loc) == "":
+		c.Unsupported = true
+	default:
+		if r.readings == nil {
+			r.readings = s.newestVolumeReadings()
+		}
+		key := remoteVolumeKey(loc)
+		v, ok := r.readings[key]
+		if p, probed := s.probedVolume(key); probed && p.sample.At >= v.At {
+			if p.unsupported {
+				c.Unsupported = true
+				break
+			}
+			v, ok = p.sample, true
+		}
+		if ok {
+			c.At, c.Free, c.Total = &v.At, &v.FreeBytes, v.TotalBytes
+			c.Source = v.Source
+			if v.TotalBytes != nil {
+				used := *v.TotalBytes - v.FreeBytes
+				c.Used = &used
+			}
+		}
+	}
+	return c
 }
 
 // newestVolumeReadings is the last stored reading of every volume inside the

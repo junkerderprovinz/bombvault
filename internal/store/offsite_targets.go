@@ -771,6 +771,31 @@ func (r *Repo) ItemsUsingNamedRepo(id string) (int, error) {
 	return n, nil
 }
 
+// NamedRepoDomains returns, by named repository id, the domains that keep
+// backups there: one of their items points at it, or their default home is it.
+func (r *Repo) NamedRepoDomains() (map[string][]string, error) {
+	rows, err := r.db.Query(`
+		SELECT repo, 'containers' FROM targets      WHERE repo <> ''
+		UNION SELECT repo, 'vms'   FROM vms          WHERE repo <> ''
+		UNION SELECT repo, 'files' FROM file_sets    WHERE repo <> ''
+		UNION SELECT repo, 'zfs'   FROM zfs_datasets WHERE repo <> ''
+		UNION SELECT home, domain  FROM placement_defaults WHERE home <> ''
+		ORDER BY 1, 2`)
+	if err != nil {
+		return nil, fmt.Errorf("NamedRepoDomains: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only rows
+	out := map[string][]string{}
+	for rows.Next() {
+		var id, domain string
+		if err := rows.Scan(&id, &domain); err != nil {
+			return nil, fmt.Errorf("NamedRepoDomains: %w", err)
+		}
+		out[id] = append(out[id], domain)
+	}
+	return out, rows.Err()
+}
+
 // GetOffsiteTarget returns the off-site REPLICATION DESTINATION (role =
 // 'offsite') with the given id. The bool is false (with a zero OffsiteTarget)
 // when no such row exists — including when id names a "primary" row: the

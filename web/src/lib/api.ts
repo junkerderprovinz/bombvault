@@ -6051,6 +6051,103 @@ export function destinationFolder(d: Destination, domain: OffsiteDomain): string
   return base.endsWith(":") ? base + folder : `${base}/${folder}`;
 }
 
+/** Which kind of object a storage location is read from. It leads the id. */
+export type StorageLocationObject = "path" | "repo" | "destination" | "target";
+
+/** One domain's use of a storage location: the home its backups are written
+ *  to, or a copy of them. */
+export interface StorageLocationSection {
+  domain: OffsiteDomain;
+  use: "home" | "copy";
+  /** The off-site target behind a copy, and behind a home that is a target's
+   *  direct repository. */
+  targetId?: string;
+  /** The named repository behind a home, absent for the domain path. */
+  repoId?: string;
+  where: string;
+  /** The target's switch for a copy, the repository's for a home in one, the
+   *  domain's own for its path. */
+  enabled: boolean;
+  /** The copy the domain's off-site settings describe. */
+  primary?: boolean;
+  immutable: boolean;
+  retention: RetentionKeep;
+  compression: Compression;
+  limitUpload: number;
+  limitDownload: number;
+  /** `at` is when the last copy that succeeded began, 0 when none has. */
+  lastCopy?: { at: number; ok: boolean; failingSince?: number };
+  lastTamper?: { domain: string; at: number; protected: boolean; detail: string };
+}
+
+/** The room on the volume a location sits on. A figure nobody measured is
+ *  absent. */
+export interface StorageLocationCapacity {
+  at?: number;
+  freeBytes?: number;
+  usedBytes?: number;
+  totalBytes?: number;
+  /** What measured it: statfs, smb, nfs, rclone or sftp. */
+  source?: string;
+  /** The backend reports no room at all (S3, B2, REST). */
+  unsupported?: boolean;
+  /** What the repositories here held at their last size sample. */
+  storedBytes?: number;
+  growthBytesPerWeek?: number;
+  weeksToFull?: number;
+}
+
+/** One place backups are kept: the folder the domain repositories sit in, a
+ *  named repository, a destination with its per-domain targets, or an
+ *  off-site target set up for one domain. */
+export interface StorageLocation {
+  /** The kind of object and its id, such as `destination:4f2a`. */
+  id: string;
+  object: StorageLocationObject;
+  kind: "local" | "offsite";
+  /** The provider a destination was set up with, "" when typed in. */
+  provider: string;
+  mark?: string;
+  /** What restic talks to: local, or the scheme of the address. */
+  backend: string;
+  name: string;
+  /** Path or address, without credentials. */
+  where: string;
+  credsRef?: string;
+  enabled: boolean;
+  offPremises: boolean;
+  sections: StorageLocationSection[];
+  /** What the location carries itself; absent where it has no value. */
+  retention?: RetentionKeep;
+  compression?: Compression;
+  limitUpload?: number;
+  limitDownload?: number;
+  protection: {
+    immutable: boolean;
+    /** The tamper test can probe it, which it can for a rest-server only. */
+    testable: boolean;
+    /** The oldest of the sections' last tests, protected only when all were. */
+    lastTamper?: { at: number; protected: boolean };
+  };
+  capacity: StorageLocationCapacity;
+}
+
+/** GET /api/storage/locations: every storage location with the room last
+ *  measured for it. Remotes are not asked here. */
+export function listStorageLocations(): Promise<OkEnvelope & { locations?: StorageLocation[] }> {
+  return fetchJSON("/api/storage/locations");
+}
+
+/** GET /api/storage/locations/{id}. With refreshCapacity the location's remote
+ *  is asked for its room first; a probe that fails leaves the last reading in
+ *  place and comes back in capacityError. */
+export function getStorageLocation(
+  id: string,
+  refreshCapacity = false
+): Promise<OkEnvelope & { location?: StorageLocation; capacityError?: string }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}${refreshCapacity ? "?refresh=capacity" : ""}`);
+}
+
 export type AnomalySeverity = "critical" | "warning" | "info";
 export type AnomalyState = "open" | "resolved" | "acknowledged" | "expected";
 export type AnomalyDetector =
