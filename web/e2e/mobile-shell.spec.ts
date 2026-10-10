@@ -263,7 +263,7 @@ test("the confirm sheet gives no point between its answers to the firing one", a
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the sheet replaces the dialog below the breakpoint");
   await bootWithoutServerLook(page);
 
-  await page.getByRole("button", { name: /Backup Everything/i }).click();
+  await page.getByRole("button", { name: /Back up everything now/i }).click();
   const sheet = page.getByRole("dialog");
   await expect(sheet).toBeVisible();
 

@@ -171,8 +171,8 @@ for (const route of DASHBOARD_ROUTES) {
     // signature (Button tone="accent" over the caller's w-full stage); no
     // desktop control carries it.
     await expect(page.locator("button.w-full.bg-accent")).toHaveCount(0);
-    // The Home thumb-zone trigger.
-    await expect(page.getByRole("button", { name: "Backup Everything" })).toHaveCount(0);
+    // The page's main action stands in the page action corner instead.
+    await expect(page.getByTestId("page-actions").getByRole("button", { name: "Back up everything now" })).toBeVisible();
   });
 }
 

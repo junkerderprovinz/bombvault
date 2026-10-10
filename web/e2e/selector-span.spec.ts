@@ -1,7 +1,7 @@
 // Every horizontal selector spans the card it sits in, and one in a toolbar
 // row hugs its segments. The track of a spanning selector is as wide as its
-// card's content box; the Theme picker and the Dashboard's backup history
-// strip stand for the page-level selectors on the desktop. The VMs sort strip
+// card's content box; the Theme picker and the overview's calendar strip
+// stand for the page-level selectors on the desktop. The VMs sort strip
 // in the phone's list toolbar stands for the toolbar ones: it stays as wide as
 // its own segments, well short of the toolbar.
 import { expect, test, type Locator, type Page } from "@playwright/test";
@@ -58,8 +58,15 @@ function widths(strip: Locator): Promise<{ track: number; box: number }> {
 }
 
 test("a card's selector spans the card's content box", async ({ page }, testInfo) => {
-  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the phone Dashboard has no history strip");
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the strips are measured at desktop width");
   await stage(page);
+  // The calendar is one of the cards a browser starts without.
+  await page.addInitScript(() =>
+    window.localStorage.setItem(
+      "bombvault.dashboardLayout",
+      JSON.stringify({ v: 2, order: ["heatmap"], hidden: [], widths: { heatmap: 6 }, heights: {} }),
+    ),
+  );
 
   await page.goto("/settings/look");
   const theme = page.getByRole("tablist", { name: "Theme" });
@@ -68,7 +75,7 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
   expect(Math.abs(themeWidths.track - themeWidths.box), JSON.stringify(themeWidths)).toBeLessThanOrEqual(1);
 
   await page.goto("/dashboard");
-  const history = page.getByRole("tablist", { name: "Backup health" });
+  const history = page.getByRole("tablist", { name: "Calendar" });
   await expect(history).toBeVisible();
   expect(await history.evaluate((el) => el.parentElement!.classList.contains("rounded-card"))).toBe(true);
   const historyWidths = await widths(history);

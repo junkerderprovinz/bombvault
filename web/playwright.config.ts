@@ -91,6 +91,7 @@ const testMatch = [
   "narrow-window.spec.ts",
   "backups-list.spec.ts",
   "storage.spec.ts",
+  "overview.spec.ts",
 ];
 
 for (const spec of testMatch) {
