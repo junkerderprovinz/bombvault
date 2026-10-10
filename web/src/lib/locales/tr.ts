@@ -7,7 +7,6 @@ const tr: Partial<Translations> = {
   "theme.light": "Açık",
 
   // Nav
-  "nav.dashboard": "Kontrol Paneli",
   "nav.containers": "Konteynerler",
   "nav.vms": "VM'ler",
   "nav.flash": "Flash",

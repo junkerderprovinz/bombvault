@@ -7,7 +7,6 @@ const lv: Partial<Translations> = {
   "theme.light": "Gaiša",
 
   // Nav
-  "nav.dashboard": "Vadības panelis",
   "nav.containers": "Konteineri",
   "nav.vms": "VM",
   "nav.flash": "Flash",

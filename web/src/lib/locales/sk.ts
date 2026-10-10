@@ -7,7 +7,6 @@ const sk: Partial<Translations> = {
   "theme.light": "Svetlý",
 
   // Nav
-  "nav.dashboard": "Prehľad",
   "nav.containers": "Kontajnery",
   "nav.vms": "VM",
   "nav.flash": "Flash",

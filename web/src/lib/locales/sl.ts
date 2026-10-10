@@ -7,7 +7,6 @@ const sl: Partial<Translations> = {
   "theme.light": "Svetla",
 
   // Nav
-  "nav.dashboard": "Nadzorna plošča",
   "nav.containers": "Vsebniki",
   "nav.vms": "VM-ji",
   "nav.flash": "Flash",

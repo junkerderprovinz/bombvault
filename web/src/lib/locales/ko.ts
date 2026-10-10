@@ -7,7 +7,6 @@ const ko: Partial<Translations> = {
   "theme.light": "밝게",
 
   // Nav
-  "nav.dashboard": "대시보드",
   "nav.containers": "컨테이너",
   "nav.vms": "가상 머신",
   "nav.flash": "플래시",

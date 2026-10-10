@@ -7,7 +7,6 @@ const id: Partial<Translations> = {
   "theme.light": "Terang",
 
   // Nav
-  "nav.dashboard": "Dasbor",
   "nav.containers": "Container",
   "nav.vms": "VM",
   "nav.flash": "Flash",

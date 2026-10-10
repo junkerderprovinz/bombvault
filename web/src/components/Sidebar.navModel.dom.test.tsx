@@ -1,28 +1,12 @@
 // @vitest-environment jsdom
-// Sidebar <-> navModel registry consistency.
+// The rail against the navigation registry. The rail renders from the registry,
+// and this pins what that has to mean on screen: every row it shows is a
+// registry entry the sidebar flag is on for, in registry order, with that
+// entry's route, its name and its glyph. Each of the three is read from a
+// different field, so swapping two entries' labels or glyphs fails here.
 //
-// Sidebar's header comment says the rail derives from the one ordered nav
-// registry (lib/navModel.ts), but the rail still evaluates its own hand-written
-// NavItem JSX (with a nextHue() counter and inline settings gates, which is the
-// part the registry cannot own; see navModel.ts's header). Two
-// lists describing one navigation is exactly the drift the registry exists to
-// kill, so this file pins the two together: whatever Sidebar renders must equal
-// destinations(settings) filtered to enabled; same routes, same order, same
-// gates; across gate combinations, and any divergence on either side fails
-// here instead of silently becoming a rail the registry no longer describes.
-//
-// Routes are read off the rendered anchors' href (NavLink renders `to` as
-// href), so the comparison is structural and never re-types the labels. The
-// footer's sign-out is a button, not a link, so every anchor in the render is
-// a nav destination and DOM order is the rail's order.
-//
-// The comparison is a triple: route +
-// accessible name + glyph markup. The rail still renders its own hand-written
-// literals (`label={t("nav.vms")} icon={<IconVM />}`), so href parity alone
-// passed forever with a rail whose label or glyph had drifted from the
-// registry's labelKey/icon for the same route; each lane of the triple is
-// read from a different field, so swapping labelKey/icon between two
-// registry entries, or retyping the rail's literals, goes red here.
+// Routes are read off the anchors' href. Sign out is a button, so every anchor
+// in the render is a destination and DOM order is the rail's order.
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -31,58 +15,24 @@ import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { I18nProvider, en } from "../lib/i18n";
 import type { Settings } from "../lib/api";
-import { destinations } from "../lib/navModel";
+import { destinations, sidebarDestinations } from "../lib/navModel";
+import { readNavPins, type NavPins } from "../lib/navPins";
 
-// The gate fields destinations() reads; the navModel.test.ts idiom (`as
-// Settings` partials) keeps every unused Settings field out of the fixtures.
-const ALL_OFF = {
-  vmsEnabled: false,
-  flashEnabled: false,
-  filesEnabled: false,
-  configEnabled: false,
-  receiverEnabled: false,
-  fleetEnabled: false,
-  pullEnabled: false,
-  zfsEnabled: false,
-  anomalyEnabled: false,
-} as Settings;
+const PINS_KEY = "bombvault.navPins";
 
-const ALL_ON = {
-  ...ALL_OFF,
-  vmsEnabled: true,
-  flashEnabled: true,
-  filesEnabled: true,
-  configEnabled: true,
-  receiverEnabled: true,
-  fleetEnabled: true,
-  pullEnabled: true,
-  zfsEnabled: true,
-  anomalyEnabled: true,
-} as Settings;
+const DETECTION_OFF = { anomalyEnabled: false } as Settings;
+const DETECTION_ON = { anomalyEnabled: true } as Settings;
+// Instances are pinned by default for an install that uses one of its modules.
+const WITH_FLEET = { anomalyEnabled: false, fleetEnabled: true } as Settings;
 
-// A mixed middle state: consecutive gated tabs split on/off around the list,
-// the shape most likely to expose an ordering or gate drift.
-const MIXED = {
-  ...ALL_OFF,
-  vmsEnabled: true,
-  filesEnabled: true,
-  pullEnabled: true,
-} as Settings;
-
-/** One nav row's full identity, the triple the rail must match the registry
- *  on: where it goes, what it is called, and what is drawn on it. */
 interface NavEntry {
   href: string;
   name: string;
   glyph: string;
 }
 
-/** Renders the Sidebar alone (no chrome siblings, so every anchor is a nav
- *  destination) and returns the destinations it rendered, in DOM order, each
- *  as its identity triple. The glyph is the anchor's serialized <svg>: the
- *  navGlyphs are deterministic function components (static paths, no ids, no
- *  randomness), so byte-identical markup is exactly component identity, and
- *  whitespace is collapsed to keep the comparison off formatting. */
+/** The destinations the rail rendered, in DOM order. The glyphs are static
+ *  function components, so equal markup means the same component. */
 function renderedNavEntries(settings: Settings | null): NavEntry[] {
   const { container } = render(
     <MemoryRouter initialEntries={["/"]}>
@@ -91,58 +41,67 @@ function renderedNavEntries(settings: Settings | null): NavEntry[] {
       </I18nProvider>
     </MemoryRouter>,
   );
-  const anchors = Array.from(container.querySelectorAll("a[href]"));
-  return anchors.map((a) => ({
+  return Array.from(container.querySelectorAll("a[href]")).map((a) => ({
     href: a.getAttribute("href") ?? "",
     name: (a.getAttribute("aria-label") ?? a.textContent ?? "").trim(),
     glyph: (a.querySelector("svg")?.outerHTML ?? "").replace(/\s+/g, " "),
   }));
 }
 
-/** The registry side of the triple, derived the way every consumer must:
- *  the en-table label for labelKey (what t() resolves to at render) and the
- *  registry icon rendered to static markup. */
 function registryNavEntries(settings: Settings | null): NavEntry[] {
-  return destinations(settings)
-    .filter((d) => d.enabled)
-    .map((d) => ({
-      href: d.to,
-      name: en[d.labelKey],
-      glyph: renderToStaticMarkup(createElement(d.icon)).replace(/\s+/g, " "),
-    }));
+  return sidebarDestinations(settings, readNavPins(settings)).map((d) => ({
+    href: d.to,
+    name: en[d.labelKey],
+    glyph: renderToStaticMarkup(createElement(d.icon)).replace(/\s+/g, " "),
+  }));
+}
+
+function pin(pins: Partial<NavPins>) {
+  localStorage.setItem(PINS_KEY, JSON.stringify(pins));
 }
 
 beforeEach(() => {
-  localStorage.removeItem("bv-lang");
+  localStorage.clear();
 });
 
 afterEach(cleanup);
 
-describe("Sidebar renders exactly the navModel registry", () => {
-  // Fixture-completeness guard: the
-  // hand-written ALL_ON has the same guard navModel.test.ts carries. Without
-  // it a NEW gate field read by destinations() but forgotten in the fixture
-  // leaves that entry disabled on both sides of the parity comparison, so every
-  // assertion stays green while the destination silently leaves the
-  // comparison. This turns that silence red, naming the mechanism.
-  it("the ALL_ON fixture really turns every gate on; no destination gated off", () => {
-    const stillOff = destinations(ALL_ON)
-      .filter((d) => !d.enabled)
+describe("Sidebar renders exactly the navigation registry", () => {
+  // A gate added to the registry and forgotten here would leave its entry
+  // hidden on both sides of the comparison, and every assertion would pass
+  // without it.
+  it("has a fixture that opens every gate", () => {
+    pin({ storage: true, instances: true });
+    const hidden = destinations(DETECTION_ON, readNavPins(DETECTION_ON))
+      .filter((d) => !d.sidebar)
       .map((d) => d.to);
-    expect(
-      stillOff,
-      "ALL_ON leaves destinations gated off; a gate field was added to " +
-        "navModel.ts but not to this file's fixture, so those destinations " +
-        "silently left the parity comparison. Add the field to ALL_ON."
-    ).toEqual([]);
+    expect(hidden, "entries no fixture of this file shows in the sidebar").toEqual([]);
   });
 
-  it.each([
-    ["every gate off", ALL_OFF],
-    ["every gate on", ALL_ON],
-    ["a mixed middle state", MIXED],
-    ["null settings (pre-boot)", null],
-  ])("%s: the rail's rows equal destinations(settings) filtered to enabled, in registry order, on route + name + glyph", (_name, settings) => {
-    expect(renderedNavEntries(settings)).toEqual(registryNavEntries(settings));
+  it.each<[string, Settings | null, Partial<NavPins> | null]>([
+    ["every gate closed", DETECTION_OFF, { storage: false, instances: false }],
+    ["every gate open", DETECTION_ON, { storage: true, instances: true }],
+    ["detection on, Instances pinned, storage locations unpinned", DETECTION_ON, { storage: false, instances: true }],
+    ["the default pins of an install with a fleet", WITH_FLEET, null],
+    ["settings that have not loaded", null, null],
+  ])("%s: the rows are the registry's sidebar entries, in order, on route, name and glyph", (_name, settings, pins) => {
+    if (pins) pin(pins);
+    const expected = registryNavEntries(settings);
+    expect(expected.length).toBeGreaterThan(0);
+    expect(renderedNavEntries(settings)).toEqual(expected);
+  });
+
+  it("shows no per-kind entry, whatever backup types are on", () => {
+    const everyKind = {
+      vmsEnabled: true,
+      flashEnabled: true,
+      filesEnabled: true,
+      zfsEnabled: true,
+      configEnabled: true,
+    } as Settings;
+    const hrefs = renderedNavEntries(everyKind).map((e) => e.href);
+    for (const route of ["/containers", "/vms", "/flash", "/files", "/zfs", "/config"]) {
+      expect(hrefs, `${route} left the sidebar`).not.toContain(route);
+    }
   });
 });

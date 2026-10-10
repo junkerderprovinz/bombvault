@@ -10,10 +10,10 @@
  *     destinations never leak into the sheet;
  *   - every row sits on the colour engine (glim-hue + its own --item-hue) and
  *     the current route's row is filled (accent fill + contrast ink); on
- *     /vms or /flash no bar slot is active, this row is, so a user is never
- *     lost (the locked Interaction Contract);
- *   - Settings is always a row, the permanent content that lets the bar's
- *     More trigger render unconditionally;
+ *     /storage or /instances no bar slot is active, this row is, so a user is
+ *     never lost;
+ *   - the storage locations are always a row, the permanent content that lets
+ *     the bar's More trigger render unconditionally;
  *   - the sign-out row is gated by authEnabled exactly like the desktop
  *     footer, sits last set off by spacing alone, is muted, and fires the
  *     Sidebar sign-out mechanism verbatim; best-effort logout then a
@@ -49,11 +49,9 @@ Object.defineProperty(globalThis, "location", {
 import { MoreSheet } from "./MoreSheet";
 import { hueVars } from "../../lib/appearance";
 
-// A fresh-DB-plus-two-tabs fixture, the navModel.test.ts idiom (`as Settings`
-// partials): only vms and flash are switched on, so moreDestinations() must
-// yield exactly VMs, Flash and the always-on Settings row; in that registry
-// order (Recovery rides the phone bar, not this sheet).
-const VMS_FLASH_ON = { vmsEnabled: true, flashEnabled: true } as Settings;
+// Detection on and a fleet, whose module pins Instances by default, so the
+// sheet holds all three of its rows.
+const ALL_ROWS = { anomalyEnabled: true, fleetEnabled: true } as Settings;
 
 /** Renders the open sheet under a router, plus a live pathname probe so the
  *  navigate assertion reads the router's own state instead of guessing. */
@@ -87,33 +85,47 @@ function sheet() {
 beforeEach(() => {
   logout.mockClear();
   reload.mockClear();
+  localStorage.clear();
 });
 afterEach(cleanup);
 
 describe("MoreSheet rows come from the one registry", () => {
   it("lists exactly moreDestinations(settings), in registry order", () => {
-    draw({ settings: VMS_FLASH_ON });
+    draw({ settings: ALL_ROWS });
     const labels = within(sheet())
       .getAllByRole("link")
       .map((row) => row.textContent);
-    expect(labels).toEqual(["VMs", "Flash", "Settings"]);
+    expect(labels).toEqual(["Anomalies", "Storage locations", "Instances"]);
   });
 
-  it("hides gated tabs like the desktop Sidebar and never shows bar destinations", () => {
+  it("hides the gated rows like the sidebar and never shows a bar destination", () => {
     draw({ settings: null, authEnabled: false });
-    // null settings = every gate off, so only the always-on Settings row
-    // remains: Recovery rides the phone bar and the gated tabs are off.
-    expect(within(sheet()).getAllByRole("link").map((row) => row.textContent)).toEqual(["Settings"]);
-    // Bar members (dashboard/containers/recovery on a fresh DB) are the
-    // bottom bar's slots; a second copy of them here would be the exact
-    // duplicate-destination drift the registry forbids.
-    expect(screen.queryByText("Dashboard")).toBeNull();
-    expect(screen.queryByText("Containers")).toBeNull();
-    expect(screen.queryByText("Recovery")).toBeNull();
+    // Without settings detection is off and Instances are not pinned, so only
+    // the storage locations remain.
+    expect(within(sheet()).getAllByRole("link").map((row) => row.textContent)).toEqual(["Storage locations"]);
+    // The bar's slots have no second copy here.
+    for (const slot of ["Overview", "Backups", "Restore", "Settings"]) {
+      expect(screen.queryByText(slot), slot).toBeNull();
+    }
+  });
+
+  it("lists the storage locations even when they are unpinned from the sidebar", () => {
+    localStorage.setItem("bombvault.navPins", JSON.stringify({ storage: false }));
+    draw({ settings: null });
+    expect(within(sheet()).getAllByRole("link").map((row) => row.textContent)).toEqual(["Storage locations"]);
+  });
+
+  it("drops Instances when they are unpinned, whatever modules are on", () => {
+    localStorage.setItem("bombvault.navPins", JSON.stringify({ instances: false }));
+    draw({ settings: ALL_ROWS });
+    expect(within(sheet()).getAllByRole("link").map((row) => row.textContent)).toEqual([
+      "Anomalies",
+      "Storage locations",
+    ]);
   });
 
   it("gives every row the 52px minimum height and the sheet its testid", () => {
-    draw({ settings: VMS_FLASH_ON });
+    draw({ settings: ALL_ROWS });
     for (const row of within(sheet()).getAllByRole("link")) {
       expect(row.className).toContain("min-h-[3.25rem]");
     }
@@ -122,14 +134,14 @@ describe("MoreSheet rows come from the one registry", () => {
 
 describe("MoreSheet rotation continuity", () => {
   it("starts the rows at the caller's offset, not at the palette's first colour", () => {
-    // 4 = a bar of three destination slots plus the More trigger: the sheet
+    // 5 = the bar's four destination slots plus the More trigger: the sheet
     // continues where the trigger left off (BottomNav passes
     // slots.length + 1).
-    draw({ settings: VMS_FLASH_ON, hueOffset: 4 });
+    draw({ settings: ALL_ROWS, hueOffset: 5 });
     const rows = within(sheet()).getAllByRole("link");
     const hues = rows.map((row) => (row as HTMLElement).style.getPropertyValue("--item-hue"));
     for (let i = 0; i < hues.length; i++) {
-      expect(hues[i]).toBe(String(hueVars(4 + i)["--item-hue"]));
+      expect(hues[i]).toBe(String(hueVars(5 + i)["--item-hue"]));
     }
     // The regression this pins: restarting at position 0 would give the
     // sheet's first row the bar's first slot's colour again.
@@ -137,30 +149,35 @@ describe("MoreSheet rotation continuity", () => {
   });
 
   it("defaults to position 0 when mounted standalone", () => {
-    draw({ settings: VMS_FLASH_ON });
+    draw({ settings: ALL_ROWS });
     const first = within(sheet()).getAllByRole("link")[0] as HTMLElement;
     expect(first.style.getPropertyValue("--item-hue")).toBe(String(hueVars(0)["--item-hue"]));
   });
 });
 
-describe("MoreSheet active row accents (the Interaction Contract)", () => {
+describe("MoreSheet active row accents", () => {
   it("fills the current route's row and not the others, the bar's own idiom", () => {
-    draw({ settings: VMS_FLASH_ON, path: "/vms" });
-    const active = within(sheet()).getByRole("link", { name: /vms/i });
+    draw({ settings: ALL_ROWS, path: "/storage" });
+    const active = within(sheet()).getByRole("link", { name: /storage locations/i });
     expect(active.className).toContain("bg-accent");
     expect(active.className).toContain("text-accentContrast");
     expect(active.className).toContain("glim-active");
     // Resting rows carry neither the fill nor the active marker; the accent
     // belongs to the one row whose route is current.
-    const resting = within(sheet()).getByRole("link", { name: /flash/i });
+    const resting = within(sheet()).getByRole("link", { name: /instances/i });
     expect(resting.className).not.toContain("bg-accent");
     expect(resting.className).not.toContain("glim-active");
+  });
+
+  it("keeps a row filled on the pages below it", () => {
+    draw({ settings: ALL_ROWS, path: "/storage/local" });
+    expect(within(sheet()).getByRole("link", { name: /storage locations/i }).className).toContain("glim-active");
   });
 });
 
 describe("MoreSheet colour engine", () => {
   it("every destination row sits on the engine: glim-hue plus its own --item-hue", () => {
-    draw({ settings: VMS_FLASH_ON });
+    draw({ settings: ALL_ROWS });
     const rows = within(sheet()).getAllByRole("link");
     const hues = rows.map((row) => (row as HTMLElement).style.getPropertyValue("--item-hue"));
     for (const hue of hues) {
@@ -173,9 +190,9 @@ describe("MoreSheet colour engine", () => {
     }
   });
 
-  it("holds Settings and no empty group with every gate off and no password", () => {
+  it("holds the storage locations and no empty group with every gate closed and no password", () => {
     draw({ settings: null, authEnabled: false });
-    expect(within(sheet()).getAllByRole("link").map((r) => r.textContent)).toEqual(["Settings"]);
+    expect(within(sheet()).getAllByRole("link").map((r) => r.textContent)).toEqual(["Storage locations"]);
     expect(within(sheet()).queryAllByRole("button")).toEqual([]);
     expect(sheet().children.length).toBe(1);
   });
@@ -188,7 +205,7 @@ describe("MoreSheet sign-out (the desktop mechanism, muted, last)", () => {
   });
 
   it("sits last in the sheet, set off by spacing alone, muted, with its glyph", () => {
-    draw({ settings: VMS_FLASH_ON, authEnabled: true });
+    draw({ settings: ALL_ROWS, authEnabled: true });
     const out = screen.getByRole("button", { name: /sign out/i });
     const content = sheet();
     expect(within(content).getByRole("button", { name: /sign out/i })).toBeTruthy();
@@ -220,11 +237,11 @@ describe("MoreSheet sign-out (the desktop mechanism, muted, last)", () => {
 
 describe("MoreSheet row navigation closes the sheet", () => {
   it("navigates to the row's route and closes so the destination is visible", async () => {
-    const { onClose } = draw({ settings: VMS_FLASH_ON });
+    const { onClose } = draw({ settings: ALL_ROWS });
     await act(async () => {
-      fireEvent.click(within(sheet()).getByRole("link", { name: /vms/i }));
+      fireEvent.click(within(sheet()).getByRole("link", { name: /instances/i }));
     });
-    expect(screen.getByTestId("path-probe").textContent).toBe("/vms");
+    expect(screen.getByTestId("path-probe").textContent).toBe("/instances");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

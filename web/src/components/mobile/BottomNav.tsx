@@ -18,24 +18,16 @@
 // token shows around the card); no border, ring or hairline anywhere on the
 // bar, because surfaces in this app are separated by tint, never by lines.
 //
-// Slots are never hand-typed: every destination slot is derived from the one
-// nav registry (lib/navModel.ts); same order, same settings gates. The
-// desktop rail keeps its own hand-written JSX (its render-order hue counter
-// and inline gates are the part the registry cannot own), so
-// the two listings are held equal by test rather than by construction:
-// Sidebar.navModel.dom.test.tsx fails the moment Sidebar and the registry
-// disagree about which destinations exist. The registry's `bar` members fill
-// the destination slots; the fifth slot is the More trigger, which opens the
-// MoreSheet (inside the BottomSheet primitive).
+// The slots come from the navigation registry (lib/navModel.ts), which the
+// sidebar renders from as well: Overview, Backups, Restore and Settings, in
+// the sidebar's order. The fifth slot is the More trigger, which opens the
+// MoreSheet with every other phone entry.
 //
-// More trigger: always rendered under the breakpoint, never gated on the
-// sheet's content. The sheet keeps content on every instance, because
-// Settings is always one of its rows, so a content-based emptiness rule would
-// have nothing to decide. The trigger announces itself to assistive tech
-// (haspopup/expanded, like any disclosure that opens a dialog) and reads as
-// active while the current route lives on the More side of the registry (the
-// gated tabs, Instances and Settings), so a user on one of those routes can
-// still see where they are.
+// The More trigger is always there. Its sheet always lists the storage
+// locations, so there is no empty sheet to hide it for. It announces itself as
+// a disclosure that opens a dialog and reads as active while the current page
+// belongs to one of the sheet's entries, so someone on such a page still sees
+// where they are.
 //
 // Label axis: the bar has its own axis in the control label engine
 // ("bottombar", lib/controls.ts); the same four modes as buttons/sidebar/
@@ -61,6 +53,9 @@
 // .glim-coin-tile.glim-active in index.css). Status colors never touch
 // controls; tokens only, no hex.
 //
+// Overview carries the count of what needs the person, in grey: the bar keeps
+// colour for the tab that is current.
+//
 // While a critical or warning finding is open, a dot in its tone sits on the
 // More trigger's glyph: the Anomalies row and its count live in the sheet, and
 // without the dot a phone would hide them one tap away. The count itself is
@@ -77,13 +72,16 @@ import { useState, type CSSProperties, type MouseEvent } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import type { Settings } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { barDestinations, moreDestinations, type NavDestination } from "../../lib/navModel";
+import { barDestinations, moreDestinations, onDestination, type NavDestination } from "../../lib/navModel";
+import { useNavCounts, type NavCount as Count } from "../../lib/navCounts";
+import { useNavPins } from "../../lib/navPins";
 import { hidesLabel, labelWidth } from "../../lib/controls";
 import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { useLoudAnomalies } from "../../lib/useAnomalies";
 import { IconMore } from "../navGlyphs";
+import { NavCount } from "../NavCount";
 import { MoreSheet } from "./MoreSheet";
 
 export interface BottomNavProps {
@@ -112,22 +110,17 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
   const { t } = useT();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
-  // The one registry, filtered to enabled bottom-bar destinations; the same
-  // derivation the Sidebar's order guarantee rides on.
-  const slots = barDestinations(settings);
+  const pins = useNavPins(settings);
+  const slots = barDestinations(settings, pins);
+  const counts = useNavCounts();
   // The bar's own label axis (see the header): hiding modes gate the caption,
   // reactive pairs with index.css's coarse-pointer at-rest reveal.
   const labelMode = useLabelMode("bottombar");
   const showLabel = !hidesLabel(labelMode);
   const reactive = labelMode === "reactive";
-  // The More trigger reads as active while the current route lives on the
-  // More side of the registry (the non-bar destinations, Settings
-  // included), the same "you can see where you are" contract the
-  // destination slots get from NavLink's isActive. One lookup, no special
-  // case: /settings is an always-enabled registry entry, so a literal
-  // `pathname === "/settings"` disjunct beside the lookup was dead code that
-  // could only ever drift from it.
-  const moreActive = moreDestinations(settings).some((d) => d.to === location.pathname);
+  // The trigger is filled for the pages its sheet leads to, including the
+  // pages below them, which is what NavLink does for the slots.
+  const moreActive = moreDestinations(settings, pins).some((d) => onDestination(location.pathname, d));
   // The More trigger's bubble: worded only in hiding modes, the same rule
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
@@ -186,6 +179,7 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
               key={d.to}
               destination={d}
               hueIndex={i}
+              count={d.count && counts[d.count]}
               labelMode={labelMode}
               onTap={(e) => tapDestination(e, d.to)}
             />
@@ -267,11 +261,13 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
 function BarSlot({
   destination,
   hueIndex,
+  count,
   labelMode,
   onTap,
 }: {
   destination: NavDestination;
   hueIndex: number;
+  count?: Count;
   labelMode: ReturnType<typeof useLabelMode>;
   onTap: (e: MouseEvent) => void;
 }) {
@@ -284,13 +280,17 @@ function BarSlot({
   // sidebar row's own mechanism; reactive mode needs none, since hovering
   // brings the word back.
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
+  const counted = count && count.value > 0 ? count : undefined;
+  // An aria-label replaces what the slot contains, the figure included, so a
+  // slot without a caption says both.
+  const hiddenName = counted ? `${label}, ${counted.label}` : label;
   return (
     <>
       <NavLink
         to={destination.to}
         onClick={onTap}
         ref={tooltip.ref}
-        aria-label={showLabel ? undefined : label}
+        aria-label={showLabel ? undefined : hiddenName}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
         className={({ isActive }) =>
@@ -315,8 +315,11 @@ function BarSlot({
                 changed, which is what keeps the narrow-viewport single-line /
                 no-overflow asserts and the 44px touch floor true by
                 construction. */}
-            <span className="flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
+            <span className="relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
               <Icon />
+              {counted && (
+                <NavCount count={counted} quiet size="corner" className="absolute -end-2.5 -top-1" />
+              )}
             </span>
             {/* 400 rest, 600 active; the caption's two sanctioned weights. */}
             <span

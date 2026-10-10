@@ -7,7 +7,6 @@ const ms: Partial<Translations> = {
   "theme.light": "Cerah",
 
   // Nav
-  "nav.dashboard": "Papan Pemuka",
   "nav.containers": "Bekas",
   "nav.vms": "VM",
   "nav.flash": "Flash",

@@ -7,7 +7,6 @@ const fi: Partial<Translations> = {
   "theme.light": "Vaalea",
 
   // Nav
-  "nav.dashboard": "Kojelauta",
   "nav.containers": "Kontit",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

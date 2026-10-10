@@ -7,7 +7,6 @@ const th: Partial<Translations> = {
   "theme.light": "สว่าง",
 
   // Nav
-  "nav.dashboard": "แดชบอร์ด",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

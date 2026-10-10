@@ -7,7 +7,6 @@ const vi: Partial<Translations> = {
   "theme.light": "Sáng",
 
   // Nav
-  "nav.dashboard": "Tổng quan",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

@@ -185,9 +185,9 @@ export default defineConfig({
     // never reuse whatever already listens on the harness port: a running dev
     // BombVault (real settings, enabled domains, a password) would silently
     // take the run's place: APP_KEY/DATA_DIR/HTTP_ONLY below would not be
-    // applied, and every fresh-DB assertion (auth off, bar = Dashboard,
-    // Recovery, Containers + More, sheet = Settings + the view toggle,
-    // sign-out absent) would be evaluated against foreign
+    // applied, and every fresh-DB assertion (auth off, bar = Overview,
+    // Backups, Restore, Settings + More, sheet = Anomalies + Storage
+    // locations, sign-out absent) would be evaluated against foreign
     // state. A loud "URL is already used" failure beats a green run against
     // the wrong server: kill the holder and re-run. (Reuse would also skip
     // `command` entirely, silently dropping the fresh-DB wipe, one more

@@ -7,7 +7,6 @@ const ro: Partial<Translations> = {
   "theme.light": "Luminos",
 
   // Nav
-  "nav.dashboard": "Panou principal",
   "nav.containers": "Containere",
   "nav.vms": "VM-uri",
   "nav.flash": "Flash",

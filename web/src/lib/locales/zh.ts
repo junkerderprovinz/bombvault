@@ -7,7 +7,6 @@ const zh: Partial<Translations> = {
   "theme.light": "浅色",
 
   // Nav
-  "nav.dashboard": "仪表板",
   "nav.containers": "容器",
   "nav.vms": "虚拟机",
   "nav.flash": "闪存",

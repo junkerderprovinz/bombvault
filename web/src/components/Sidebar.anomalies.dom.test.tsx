@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// The rail's anomalies entry. It sits right under Dashboard so an open
-// critical is visible above the fold whatever order the dashboard cards are
+// The rail's anomalies entry. It sits right under Overview so an open
+// critical is visible above the fold whatever order the overview's cards are
 // in, and it follows the detection switch, because a rail entry for a feature
 // nobody switched on is a dead end.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -64,10 +64,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the anomalies entry", () => {
-  it("follows Dashboard while detection is on", () => {
+  it("follows Overview while detection is on", () => {
     renderRail(settings(true));
     const labels = screen.getAllByRole("link").map((l) => l.textContent);
-    expect(labels.slice(0, 2)).toEqual([en["nav.dashboard"], en["nav.anomalies"]]);
+    expect(labels.slice(0, 2)).toEqual([en["nav.overview"], en["nav.anomalies"]]);
   });
 
   it("is gone while detection is off", () => {
@@ -104,6 +104,22 @@ describe("the anomalies entry", () => {
       { normalizer: (text) => text }
     );
     expect(count.textContent).toBe("1200");
+  });
+
+  it("fills the count with the entry's own colour instead of a status colour", async () => {
+    getAnomalySummary.mockResolvedValue({
+      ok: true,
+      summary: summary({ critical: 1, warning: 0, info: 0 }),
+    });
+    renderRail(settings(true));
+
+    const entry = await screen.findByRole("link", { name: new RegExp(en["nav.anomalies"]) });
+    const count = await within(entry).findByLabelText(en["anomaly.navCountAria"].replace("{n}", "1"));
+    // index.css paints `.glim-nav-count` from the accent the row's hue hands
+    // down, and turns the pair round under `.glim-active`.
+    expect(count.className).toContain("glim-nav-count");
+    expect(count.className).not.toContain("glim-nav-count--quiet");
+    expect(count.className).not.toMatch(/status|\bbg-|\btext-(?!dense|caption)/);
   });
 
   it("shows no count while nothing is open", async () => {

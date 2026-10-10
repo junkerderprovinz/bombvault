@@ -7,7 +7,6 @@ const gl: Partial<Translations> = {
   "theme.light": "Claro",
 
   // Nav
-  "nav.dashboard": "Panel",
   "nav.containers": "Contedores",
   "nav.vms": "MV",
   "nav.flash": "Flash",

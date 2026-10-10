@@ -7,7 +7,6 @@ const ru: Partial<Translations> = {
   "theme.light": "Светлая",
 
   // Nav
-  "nav.dashboard": "Панель",
   "nav.containers": "Контейнеры",
   "nav.vms": "Виртуальные машины",
   "nav.flash": "Flash",

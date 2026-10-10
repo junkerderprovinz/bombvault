@@ -1,25 +1,14 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
-import { Badge, type BadgeTone } from "./Badge";
-import { useLoudAnomalies } from "../lib/useAnomalies";
 import { useT } from "../lib/i18n";
 import { hueVars } from "../lib/appearance";
+import { sidebarDestinations, type NavDestination } from "../lib/navModel";
+import { useNavCounts, type NavCount as Count } from "../lib/navCounts";
+import { useNavPins } from "../lib/navPins";
 
-import {
-  IconContainers,
-  IconVM,
-  IconFiles,
-  IconZFS,
-  IconFleet,
-  IconDashboard,
-  IconRecovery,
-  IconFlash,
-  IconConfig,
-  IconGear,
-  IconAnomalies,
-} from "./navGlyphs";
 import { IconSignOut } from "./glyphs";
+import { NavCount } from "./NavCount";
 import { useLabelMode } from "../lib/useLabelMode";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
@@ -62,14 +51,10 @@ interface SidebarProps {
 }
 
 interface NavItem {
-  to: string;
-  label: string;
-  icon: React.ReactNode;
-  /** The row's rainbow position, assigned by the caller in render order. */
+  destination: NavDestination;
+  /** The row's rainbow position: its rank among the rows the rail shows. */
   hueIndex: number;
-  /** A figure beside the label, such as the open anomalies. It carries its
-   *  own name, because the bare number says nothing on its own. */
-  count?: { value: number; tone: BadgeTone; label: string };
+  count?: Count;
 }
 
 // Easter egg: idle, then wobble, then boom.
@@ -141,7 +126,10 @@ function railVars(i: number): CSSProperties {
 
 // NavItem is one destination row. On the current route glim-active switches the
 // icon tint off, because the filled badge already shows the hue.
-function NavItem({ to, label, icon, hueIndex, count }: NavItem) {
+function NavItem({ destination, hueIndex, count }: NavItem) {
+  const { t } = useT();
+  const label = t(destination.labelKey);
+  const Icon = destination.icon;
   // The rail has its own label axis: reducing it to glyphs changes the layout,
   // not just the density.
   const labelMode = useLabelMode("sidebar");
@@ -156,12 +144,12 @@ function NavItem({ to, label, icon, hueIndex, count }: NavItem) {
   return (
     <>
       <NavLink
-        to={to}
+        to={destination.to}
         ref={tooltip.ref}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
         className={({ isActive }) =>
-          `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
+          `${navBase} relative ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
         }
         style={
           {
@@ -170,15 +158,22 @@ function NavItem({ to, label, icon, hueIndex, count }: NavItem) {
           } as CSSProperties
         }
       >
-        {showIcon && icon}
+        {showIcon && <Icon />}
         {/* Hidden, never removed: without it the link has no accessible name.
             `sr-only` is absolutely positioned, so it leaves no gap beside the
             centred glyph. */}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
+        {/* A row without a visible label centres its glyph, and a figure in
+            the flow would push it aside. The reactive row keeps the figure at
+            its end, the narrow rail hangs it on the corner. */}
         {count && count.value > 0 && (
-          <Badge tone={count.tone} size="small" shape="pill" ariaLabel={count.label} className="ms-auto">
-            {count.value}
-          </Badge>
+          <NavCount
+            count={count}
+            size={showLabel || reactive ? "row" : "corner"}
+            className={
+              showLabel ? "ms-auto" : reactive ? "absolute end-3 top-1/2 -translate-y-1/2" : "absolute end-1 top-0.5"
+            }
+          />
         )}
       </NavLink>
       {tooltip.bubble}
@@ -241,16 +236,15 @@ export function Flag({ code }: { code: string }) {
 export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const { t } = useT();
   const navigate = useNavigate();
-  const vmsEnabled = settings?.vmsEnabled ?? false;
-  const flashEnabled = settings?.flashEnabled ?? false;
-  const configEnabled = settings?.configEnabled ?? false;
-  const filesEnabled = settings?.filesEnabled ?? false;
-  const zfsEnabled = settings?.zfsEnabled ?? false;
-  const receiverEnabled = settings?.receiverEnabled ?? false;
-  const fleetEnabled = settings?.fleetEnabled ?? false;
-  const pullEnabled = settings?.pullEnabled ?? false;
-  const anomaliesEnabled = settings?.anomalyEnabled ?? false;
-  const loudAnomalies = useLoudAnomalies();
+  const pins = useNavPins(settings);
+  const entries = sidebarDestinations(settings, pins);
+  const list = entries.filter((d) => !d.footer);
+  const foot = entries.filter((d) => d.footer);
+  const counts = useNavCounts();
+  // Every row of the rail takes the palette position of its rank, sign out
+  // included, so a hidden entry leaves no gap and the rows before it keep
+  // their colour.
+  const footHue = list.length + (authEnabled ? 1 : 0);
 
   // The brand block is GlimStone's: the mark centred above the name, smaller
   // and without the name in the narrow rail. The button's aria-label names it
@@ -265,7 +259,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
 
 
   // Easter egg: hold the logo and it wobbles, explodes and comes back. A short
-  // click still goes to the Dashboard; once the hold has fired, the click that
+  // click still goes to the overview; once the hold has fired, the click that
   // follows is swallowed.
   const [eggState, setEggState] = useState<EggState>("idle");
   const holdRef = useRef<number | null>(null);
@@ -330,7 +324,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
           apart. The two images switch with the theme through `dark:`. */}
       <button
         type="button"
-        aria-label={t("nav.dashboard")}
+        aria-label={t("nav.overview")}
         onClick={handleLogoClick}
         onPointerDown={startHold}
         onPointerUp={cancelHold}
@@ -411,7 +405,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         </span>
         {/* Removed rather than `sr-only`, unlike the other labels in the rail:
             the button's aria-label is its name, and a hidden copy would make a
-            screen reader say "Dashboard BombVault". Reactive keeps it in the
+            screen reader say "Overview BombVault". Reactive keeps it in the
             DOM to slide it back on hover, with aria-hidden for the same
             reason. */}
         {(railLabels || railReactive) && (
@@ -426,93 +420,18 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         )}
       </button>
 
-      {/* Every row of the rail, the footer included, takes the next palette
-          position in render order. A domain that is off short-circuits before
-          nextHue() runs, so hidden tabs leave no gap and the rows before them
-          keep their colour. */}
-      {(() => {
-        let hueSeq = 0;
-        const nextHue = () => hueSeq++;
-        return (
-          <>
-            <nav className="flex flex-col gap-1 p-3 flex-1">
-              <NavItem
-                to="/dashboard"
-                label={t("nav.dashboard")}
-                icon={<IconDashboard />}
-                hueIndex={nextHue()}
-              />
-              {/* Right under Dashboard: a finding that holds old backups back
-                  has to be reachable whatever order the dashboard cards are
-                  in. Detection is a feature switch, not a domain, so the row
-                  goes when it is off; the Settings card still links to the
-                  page for what was found earlier. */}
-              {anomaliesEnabled && (
-                <NavItem
-                  to="/anomalies"
-                  label={t("nav.anomalies")}
-                  icon={<IconAnomalies />}
-                  hueIndex={nextHue()}
-                  count={{
-                    value: loudAnomalies.count,
-                    tone: loudAnomalies.tone,
-                    label: t("anomaly.navCountAria").replace("{n}", loudAnomalies.count.toLocaleString()),
-                  }}
-                />
-              )}
-              <NavItem
-                to="/containers"
-                label={t("nav.containers")}
-                icon={<IconContainers />}
-                hueIndex={nextHue()}
-              />
-              {vmsEnabled && (
-                <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} hueIndex={nextHue()} />
-              )}
-              {flashEnabled && (
-                <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} hueIndex={nextHue()} />
-              )}
-              {filesEnabled && (
-                <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} hueIndex={nextHue()} />
-              )}
-              {zfsEnabled && (
-                <NavItem to="/zfs" label={t("nav.zfs")} icon={<IconZFS />} hueIndex={nextHue()} />
-              )}
-              {configEnabled && (
-                <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
-              )}
-              {/* Always visible: disaster recovery is a core flow.
-                  It sits below the backup types because it restores them. */}
-              <NavItem
-                to="/recovery"
-                label={t("nav.recovery")}
-                icon={<IconRecovery />}
-                hueIndex={nextHue()}
-              />
-              {/* Receiver, Fleet and Pull share one row. The Instances page
-                  shows only the tabs whose setting is on. */}
-              {(receiverEnabled || fleetEnabled || pullEnabled) && (
-                <NavItem
-                  to="/instances"
-                  label={t("instances.title")}
-                  icon={<IconFleet />}
-                  hueIndex={nextHue()}
-                />
-              )}
-            </nav>
+      <nav className="flex flex-col gap-1 p-3 flex-1">
+        {list.map((d, i) => (
+          <NavItem key={d.to} destination={d} hueIndex={i} count={d.count && counts[d.count]} />
+        ))}
+      </nav>
 
-            <div className="flex flex-col gap-1 p-3">
-              {authEnabled && <SidebarSignOut hueIndex={nextHue()} />}
-              <NavItem
-                to="/settings"
-                label={t("nav.settings")}
-                icon={<IconGear />}
-                hueIndex={nextHue()}
-              />
-            </div>
-          </>
-        );
-      })()}
+      <div className="flex flex-col gap-1 p-3">
+        {authEnabled && <SidebarSignOut hueIndex={list.length} />}
+        {foot.map((d, i) => (
+          <NavItem key={d.to} destination={d} hueIndex={footHue + i} count={d.count && counts[d.count]} />
+        ))}
+      </div>
     </aside>
   );
 }

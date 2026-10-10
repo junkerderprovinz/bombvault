@@ -8,6 +8,8 @@ import { Sidebar } from "./Sidebar";
 import { I18nProvider } from "../lib/i18n";
 import type { Settings } from "../lib/api";
 
+const PINS_KEY = "bombvault.navPins";
+
 function renderSidebar(initialEntries: string[] = ["/"], settings: Settings | null = null, authEnabled = false) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
@@ -19,7 +21,7 @@ function renderSidebar(initialEntries: string[] = ["/"], settings: Settings | nu
 }
 
 beforeEach(() => {
-  localStorage.removeItem("bv-lang");
+  localStorage.clear();
 });
 
 afterEach(() => {
@@ -30,10 +32,10 @@ describe("Sidebar nav rows carry a rainbow hue position", () => {
   it("every idle nav destination carries glim-hue and glim-hue-icon", () => {
     // "/" matches no NavLink target, so every link is idle.
     renderSidebar(["/"]);
-    const dashboard = screen.getByRole("link", { name: "Dashboard" });
-    const recovery = screen.getByRole("link", { name: "Recovery" });
+    const overview = screen.getByRole("link", { name: "Overview" });
+    const restore = screen.getByRole("link", { name: "Restore" });
     const settings = screen.getByRole("link", { name: "Settings" });
-    for (const link of [dashboard, recovery, settings]) {
+    for (const link of [overview, restore, settings]) {
       expect(link.className).toContain("glim-hue");
       expect(link.className).toContain("glim-hue-icon");
       // glim-nav-idle belongs to the footer rows only.
@@ -43,70 +45,73 @@ describe("Sidebar nav rows carry a rainbow hue position", () => {
 
   it("each idle nav item carries its own --item-hue, distinct by position", () => {
     renderSidebar(["/"]);
-    const dashboard = screen.getByRole("link", { name: "Dashboard" });
-    const recovery = screen.getByRole("link", { name: "Recovery" });
-    const containers = screen.getByRole("link", { name: "Containers" });
-    const dashHue = dashboard.style.getPropertyValue("--item-hue");
-    const recoveryHue = recovery.style.getPropertyValue("--item-hue");
-    const containersHue = containers.style.getPropertyValue("--item-hue");
-    expect(dashHue).toMatch(/^var\(--rb-[0-7]\)$/);
-    expect(recoveryHue).toMatch(/^var\(--rb-[0-7]\)$/);
-    expect(containersHue).toMatch(/^var\(--rb-[0-7]\)$/);
+    const hues = ["Overview", "Backups", "Restore"].map((name) =>
+      screen.getByRole("link", { name }).style.getPropertyValue("--item-hue")
+    );
+    for (const hue of hues) expect(hue).toMatch(/^var\(--rb-[0-7]\)$/);
     // Three consecutive positions in an 8-colour palette are pairwise distinct.
-    expect(new Set([dashHue, containersHue, recoveryHue]).size).toBe(3);
+    expect(new Set(hues).size).toBe(3);
   });
 
   it("the active destination carries glim-active and the accent fill, and keeps its --item-hue", () => {
     renderSidebar(["/dashboard"]);
-    const dashboard = screen.getByRole("link", { name: "Dashboard" });
-    expect(dashboard.className).toContain("glim-active");
-    expect(dashboard.className).toContain("bg-accent");
-    expect(dashboard.className).toContain("text-accentContrast");
-    expect(dashboard.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
+    const overview = screen.getByRole("link", { name: "Overview" });
+    expect(overview.className).toContain("glim-active");
+    expect(overview.className).toContain("bg-accent");
+    expect(overview.className).toContain("text-accentContrast");
+    expect(overview.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
 
-    const recovery = screen.getByRole("link", { name: "Recovery" });
-    expect(recovery.className).not.toContain("glim-active");
-    expect(recovery.className).not.toContain("bg-accent");
-    expect(recovery.className).toContain("glim-hue-icon");
+    const restore = screen.getByRole("link", { name: "Restore" });
+    expect(restore.className).not.toContain("glim-active");
+    expect(restore.className).not.toContain("bg-accent");
+    expect(restore.className).toContain("glim-hue-icon");
   });
 
-  it("shows the ZFS destination only once the domain is on, with a hue of its own", () => {
-    const { unmount } = renderSidebar(["/"], { filesEnabled: true } as unknown as Settings);
-    expect(screen.queryByRole("link", { name: "ZFS" })).toBeNull();
+  it("keeps an entry current on the pages below it", () => {
+    renderSidebar(["/storage/local"]);
+    expect(screen.getByRole("link", { name: "Storage locations" }).className).toContain("glim-active");
+    expect(screen.getByRole("link", { name: "Settings" }).className).not.toContain("glim-active");
+  });
+
+  it("shows Instances only while pinned, with a hue of its own", () => {
+    const { unmount } = renderSidebar(["/"]);
+    expect(screen.queryByRole("link", { name: "Instances" })).toBeNull();
     unmount();
 
-    renderSidebar(["/"], { filesEnabled: true, zfsEnabled: true } as unknown as Settings);
-    const zfs = screen.getByRole("link", { name: "ZFS" });
-    expect(zfs.getAttribute("href")).toBe("/zfs");
-    expect(zfs.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
-    expect(zfs.style.getPropertyValue("--item-hue")).not.toBe(
-      screen.getByRole("link", { name: "Folders" }).style.getPropertyValue("--item-hue")
+    localStorage.setItem(PINS_KEY, JSON.stringify({ instances: true }));
+    renderSidebar(["/"]);
+    const instances = screen.getByRole("link", { name: "Instances" });
+    expect(instances.getAttribute("href")).toBe("/instances");
+    expect(instances.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
+    expect(instances.style.getPropertyValue("--item-hue")).not.toBe(
+      screen.getByRole("link", { name: "Storage locations" }).style.getPropertyValue("--item-hue")
     );
   });
 
-  it("hiding VMs keeps the hues of the tabs before it and moves the ones after", () => {
-    // Only the domain flags this test needs; Sidebar reads no other field.
-    const allOn = {
-      vmsEnabled: true,
-      flashEnabled: true,
-      filesEnabled: true,
-    } as unknown as Settings;
-    const { unmount } = renderSidebar(["/"], allOn);
-    const dashboardHueOn = screen.getByRole("link", { name: "Dashboard" }).style.getPropertyValue("--item-hue");
-    const containersHueOn = screen.getByRole("link", { name: "Containers" }).style.getPropertyValue("--item-hue");
-    const flashHueOn = screen.getByRole("link", { name: "Flash" }).style.getPropertyValue("--item-hue");
-    const recoveryHueOn = screen.getByRole("link", { name: "Recovery" }).style.getPropertyValue("--item-hue");
+  it("hiding Anomalies keeps the hue of the row before it and moves the ones after", () => {
+    const hueOf = (name: string) => screen.getByRole("link", { name }).style.getPropertyValue("--item-hue");
+    const { unmount } = renderSidebar(["/"], { anomalyEnabled: true } as unknown as Settings);
+    const shown = { overview: hueOf("Overview"), backups: hueOf("Backups"), restore: hueOf("Restore") };
     unmount();
 
-    // Dashboard and Containers come before VMs and keep their hue. Flash and
-    // Recovery come after it and move up by one slot.
-    const vmsOff = { ...allOn, vmsEnabled: false } as unknown as Settings;
-    renderSidebar(["/"], vmsOff);
-    expect(screen.getByRole("link", { name: "Dashboard" }).style.getPropertyValue("--item-hue")).toBe(dashboardHueOn);
-    expect(screen.getByRole("link", { name: "Containers" }).style.getPropertyValue("--item-hue")).toBe(containersHueOn);
-    expect(screen.queryByRole("link", { name: "VMs" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Flash" }).style.getPropertyValue("--item-hue")).not.toBe(flashHueOn);
-    expect(screen.getByRole("link", { name: "Recovery" }).style.getPropertyValue("--item-hue")).not.toBe(recoveryHueOn);
+    renderSidebar(["/"], { anomalyEnabled: false } as unknown as Settings);
+    expect(screen.queryByRole("link", { name: "Anomalies" })).toBeNull();
+    expect(hueOf("Overview")).toBe(shown.overview);
+    expect(hueOf("Backups")).not.toBe(shown.backups);
+    expect(hueOf("Restore")).not.toBe(shown.restore);
+  });
+
+  it("unpinning the storage locations moves Settings up one position", () => {
+    const hueOf = (name: string) => screen.getByRole("link", { name }).style.getPropertyValue("--item-hue");
+    const { unmount } = renderSidebar(["/"]);
+    const pinned = { restore: hueOf("Restore"), settings: hueOf("Settings") };
+    unmount();
+
+    localStorage.setItem(PINS_KEY, JSON.stringify({ storage: false }));
+    renderSidebar(["/"]);
+    expect(screen.queryByRole("link", { name: "Storage locations" })).toBeNull();
+    expect(hueOf("Restore")).toBe(pinned.restore);
+    expect(hueOf("Settings")).not.toBe(pinned.settings);
   });
 });
 

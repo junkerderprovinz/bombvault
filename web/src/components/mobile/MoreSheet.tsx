@@ -1,13 +1,11 @@
 // MoreSheet; the mobile "More" sheet.
 //
-// The desktop rail's overflow surface, re-expressed for the thumb: the
-// destinations that do not own a bottom-bar slot; Settings among them; in
-// desktop Sidebar order. The row list is derived from the one nav registry
-// (lib/navModel.ts, via moreDestinations); never a second hand-written
-// ordering, which is the drift the registry exists to kill. The sheet is a
-// consumer of the BottomSheet primitive and fills only its body: title row,
-// close button, Escape/scrim dismissal, focus trap, scroll containment and
-// safe area are the primitive's contract, already proven there.
+// The phone entries that have no slot in the bottom bar, in the sidebar's
+// order: Anomalies while detection is on, the storage locations, and Instances
+// when pinned. The rows come from the navigation registry (lib/navModel.ts).
+// The sheet fills only the body of the BottomSheet primitive: title row, close
+// button, dismissal, focus trap, scroll containment and safe area are the
+// primitive's.
 //
 // Rows sit on the colour engine like every rail row: each carries
 // `glim-hue` + `hueVars(...)`, continuing the caller's rotation
@@ -15,13 +13,13 @@
 // position, so the sheet never replays the bar's colours), and the row
 // whose route is current is filled; the whole row takes the accent edge
 // to edge and its marks take the paired ink via currentColor; so a user who
-// landed on /vms or /flash is never lost: no bar slot is active there, this
-// row is. Active detection rides NavLink's isActive, the same
+// landed on /storage or /instances is never lost: no bar slot is active there,
+// this row is. Active detection rides NavLink's isActive, the same
 // className-by-isActive shape the rail's NavItem and the bar's slots use;
 // no parallel active-state bookkeeping.
 //
-// Settings is always among the rows, so the sheet has content on every
-// instance and the bar's More trigger can render unconditionally.
+// The storage locations are always among the rows, so the sheet has content on
+// every instance and the bar's More trigger can render unconditionally.
 //
 // Tap-on-active parity with the bar: tapping the already-current row scrolls
 // the scroller back to the top; the mechanism is Layout's
@@ -29,8 +27,9 @@
 // never queries the DOM for the scroller itself.
 //
 // The Anomalies row carries the rail's count of open critical and warning
-// findings, in the same badge, since this sheet is where a phone keeps that
-// row.
+// findings, since this sheet is where a phone keeps that row. Here the figure
+// wears its status colour: the row is a list entry, and nothing else on it
+// says how bad the findings are.
 //
 // Sign-out: the sidebar footer's row re-expressed at the bottom of the
 // sheet, visually muted (muted text token, power glyph) and with no
@@ -45,7 +44,8 @@ import { logout } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { hueVars } from "../../lib/appearance";
 import { moreDestinations } from "../../lib/navModel";
-import { useLoudAnomalies } from "../../lib/useAnomalies";
+import { useNavCounts } from "../../lib/navCounts";
+import { useNavPins } from "../../lib/navPins";
 import { Badge } from "../Badge";
 import { IconSignOut } from "../glyphs";
 import { BottomSheet } from "./BottomSheet";
@@ -80,8 +80,9 @@ const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 te
 export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTop, hueOffset = 0 }: MoreSheetProps) {
   const { t } = useT();
   const location = useLocation();
-  const rows = moreDestinations(settings);
-  const loudAnomalies = useLoudAnomalies();
+  const pins = useNavPins(settings);
+  const rows = moreDestinations(settings, pins);
+  const counts = useNavCounts();
 
   // The Sidebar footer's signOut, copied verbatim (Sidebar.tsx): best-effort
   // logout; a failed call must never trap the user in a signed-out UI;
@@ -105,6 +106,7 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
       <div data-testid="more-sheet" className="flex flex-col gap-1 py-2">
         {rows.map((d, i) => {
           const Icon = d.icon;
+          const count = d.count && counts[d.count];
           return (
             <NavLink
               key={d.to}
@@ -137,15 +139,9 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
                 <Icon />
               </span>
               <span className="min-w-0 truncate">{t(d.labelKey)}</span>
-              {d.to === "/anomalies" && loudAnomalies.count > 0 && (
-                <Badge
-                  tone={loudAnomalies.tone}
-                  size="small"
-                  shape="pill"
-                  ariaLabel={t("anomaly.navCountAria").replace("{n}", loudAnomalies.count.toLocaleString())}
-                  className="ms-auto shrink-0"
-                >
-                  {loudAnomalies.count}
+              {count && count.value > 0 && (
+                <Badge tone={count.tone} size="small" shape="pill" ariaLabel={count.label} className="ms-auto shrink-0">
+                  {count.value}
                 </Badge>
               )}
             </NavLink>

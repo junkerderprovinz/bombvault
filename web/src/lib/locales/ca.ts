@@ -7,7 +7,6 @@ const ca: Partial<Translations> = {
   "theme.light": "Clar",
 
   // Nav
-  "nav.dashboard": "Tauler",
   "nav.containers": "Contenidors",
   "nav.vms": "MV",
   "nav.flash": "Flash",

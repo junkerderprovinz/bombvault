@@ -7,7 +7,6 @@ const sv: Partial<Translations> = {
   "theme.light": "Ljust",
 
   // Nav
-  "nav.dashboard": "Översikt",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

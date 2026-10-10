@@ -20,7 +20,11 @@
 // exactness contract: the bar renders exactly the registry slots, the
 // enabled bar destinations plus the More trigger, nothing else (bar-exactness
 // test below).
-import { expect, test, type Page } from "@playwright/test";
+//
+// The count tests stage a coverage report, the one input of the Overview count
+// a fresh instance can be given without a backup, and read the colours the
+// browser computed: the pairing lives in index.css, which jsdom does not apply.
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 // The two device projects from playwright.config.ts. Everything else is a
 // desktop project.
@@ -65,25 +69,35 @@ test("the bar renders exactly the registry slots: enabled destinations + More, n
   // The slot row is the only child of the bar-card (the More sheet is a portal
   // to document.body, never a slot); the row's direct children are the slots.
   const slots = bar.locator("div.flex.h-14 > *");
-  // Fresh-DB gating is the environment under test: every domain gate off,
-  // files_enabled defaults false (internal/store/settings_test.go pins it),
-  // so the registry yields Dashboard, Recovery and Containers as bar
-  // destinations, plus the always-rendered More trigger = 4 slots. Settings
-  // lives in the More sheet, not the bar ("Recovery is what people open on a
-  // phone when something went wrong", so it rides the bar). The substance of
-  // the exactness contract is the exactness, the bar renders the enabled
-  // destinations + More and never a hand-added or leaked slot, per the one
-  // nav registry's gate semantics.
-  await expect(slots).toHaveCount(4);
-  await expect(bar.getByRole("link", { name: "Dashboard" })).toHaveCount(1);
-  await expect(bar.getByRole("link", { name: "Recovery" })).toHaveCount(1);
-  await expect(bar.getByRole("link", { name: "Containers" })).toHaveCount(1);
+  // The bar holds the registry's four bar destinations and the More trigger,
+  // in the sidebar's order, whatever the instance has switched on.
+  await expect(slots).toHaveCount(5);
+  // Overview may carry a count beside its name.
+  await expect(bar.getByRole("link")).toHaveText([/Overview/, "Backups", "Restore", "Settings"]);
+  await expect(bar.getByRole("link")).toHaveCount(4);
+  await expect(slots.nth(4)).toHaveRole("button");
   await expect(bar.getByRole("button", { name: "More" })).toHaveCount(1);
-  // And nothing else: zero destination links beyond the three named above,
-  // no gated destination (files among them) leaks into the bar while its
-  // desktop Sidebar gate is off, and Settings is not a bar destination.
-  await expect(bar.getByRole("link")).toHaveCount(3);
-  await expect(bar.getByRole("link", { name: "Settings" })).toHaveCount(0);
+  // And nothing else: the sheet's entries and the per-kind pages have no slot.
+  for (const name of ["Anomalies", "Storage locations", "Instances", "Containers"]) {
+    await expect(bar.getByRole("link", { name })).toHaveCount(0);
+  }
+});
+
+test("each bar slot leads to its page and reads as current there", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the bar exists below the breakpoint");
+  await bootWithoutServerLook(page);
+  const bar = page.getByTestId("bottom-nav");
+  for (const [name, path] of [
+    ["Backups", "/backups"],
+    ["Restore", "/recovery"],
+    ["Settings", "/settings"],
+    ["Overview", "/dashboard"],
+  ] as const) {
+    await bar.getByRole("link", { name }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}(/|$)`));
+    await expect(bar.getByRole("link", { name })).toHaveAttribute("aria-current", "page");
+    await expect(bar.locator('[aria-current="page"]')).toHaveCount(1);
+  }
 });
 
 test("the More sheet opens with the fresh-DB registry and closes via all three paths", async ({ page }, testInfo) => {
@@ -99,15 +113,13 @@ test("the More sheet opens with the fresh-DB registry and closes via all three p
   await moreTrigger.click();
   await expect(sheet).toBeVisible();
 
-  // Fresh-DB rows: every domain gate off and anomaly detection on, so the
-  // sheet holds exactly two destination links, Anomalies and Settings
-  // (Recovery rides the bar), and none of the bar destinations leak into it
-  // (the duplicate-destination drift the sheet's contract forbids).
-  await expect(sheet.getByRole("link", { name: "Anomalies" })).toBeVisible();
-  await expect(sheet.getByRole("link", { name: "Settings" })).toBeVisible();
-  expect(await sheet.getByRole("link").count()).toBe(2);
-  await expect(sheet.getByRole("link", { name: "Recovery" })).toHaveCount(0);
-  await expect(sheet.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+  // Fresh-DB rows: anomaly detection is on and no instance module is, so the
+  // sheet holds exactly two destination links, Anomalies and the storage
+  // locations, and none of the bar's destinations has a second copy in it.
+  await expect(sheet.getByRole("link")).toHaveText(["Anomalies", "Storage locations"]);
+  for (const name of ["Overview", "Backups", "Restore", "Settings", "Instances"]) {
+    await expect(sheet.getByRole("link", { name })).toHaveCount(0);
+  }
 
   // Close path 1 of 3: Escape (document-level, works wherever focus sits).
   await page.keyboard.press("Escape");
@@ -139,6 +151,152 @@ test("the More sheet opens with the fresh-DB registry and closes via all three p
     return active instanceof Element && active.closest('[role="dialog"]') !== null;
   });
   expect(focusInsideDialog).toBe(true);
+});
+
+test("a row of the More sheet opens its page and leaves the trigger filled", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the More trigger exists below the breakpoint");
+  await bootWithoutServerLook(page);
+  const bar = page.getByTestId("bottom-nav");
+  const moreTrigger = bar.getByRole("button", { name: "More" });
+  await expect(moreTrigger).not.toHaveAttribute("aria-current", "true");
+
+  await moreTrigger.click();
+  await page.getByTestId("more-sheet").getByRole("link", { name: "Storage locations" }).click();
+  await expect(page).toHaveURL(/\/storage$/);
+  await expect(page.getByTestId("more-sheet")).toHaveCount(0);
+  // No bar slot is current on a page of the sheet, so the trigger is.
+  await expect(moreTrigger).toHaveAttribute("aria-current", "true");
+  await expect(bar.locator('a[aria-current="page"]')).toHaveCount(0);
+
+  await moreTrigger.click();
+  await expect(page.getByTestId("more-sheet").getByRole("link", { name: "Storage locations" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+});
+
+test("the sidebar lists the navigation in order, with Settings at the foot", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the sidebar exists at and above the breakpoint");
+  await bootWithoutServerLook(page);
+  const rail = page.getByTestId("desktop-sidebar");
+  // A fresh instance has detection on, the storage locations pinned and no
+  // instance module, so Instances stays out.
+  await expect(rail.getByRole("link")).toHaveText([
+    // Overview may carry a count beside its name.
+    /^Overview/,
+    "Anomalies",
+    "Backups",
+    "Restore",
+    "Storage locations",
+    "Settings",
+  ]);
+  await expect(rail.getByRole("navigation").getByRole("link", { name: "Settings" })).toHaveCount(0);
+
+  for (const [name, path] of [
+    ["Backups", "/backups"],
+    ["Restore", "/recovery"],
+    ["Storage locations", "/storage"],
+    ["Anomalies", "/anomalies"],
+    ["Settings", "/settings"],
+    ["Overview", "/dashboard"],
+  ] as const) {
+    await rail.getByRole("link", { name }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}(/|$)`));
+    await expect(rail.getByRole("link", { name })).toHaveAttribute("aria-current", "page");
+    await expect(rail.locator('[aria-current="page"]')).toHaveCount(1);
+  }
+});
+
+// Two entries nothing backs up, so Overview carries a count on every project.
+async function stageTwoUnprotected(page: Page): Promise<void> {
+  await page.route("**/api/coverage", (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        coverage: {
+          domains: [
+            {
+              domain: "containers",
+              enabled: true,
+              total: 5,
+              protected: 3,
+              unprotected: [
+                { name: "gitea", reason: "not-set-up", neverBackedUp: true },
+                { name: "immich", reason: "no-schedule", neverBackedUp: false },
+              ],
+            },
+          ],
+          total: 5,
+          protected: 3,
+        },
+      },
+    }),
+  );
+}
+
+/** The colours the browser settled on for an entry, its glyph and its count. */
+async function entryColours(entry: Locator) {
+  // The staged entries have arrived once the count has reached them. Whatever
+  // else a fresh instance asks for comes on top.
+  await expect.poll(async () => Number(await entry.locator(".glim-nav-count").textContent())).toBeGreaterThanOrEqual(2);
+  return entry.evaluate(async (el) => {
+    // The glyph and the fill ease into their colours.
+    await Promise.all(
+      [el, ...el.querySelectorAll("*")].flatMap((node) => node.getAnimations()).map((a) => a.finished.catch(() => {})),
+    );
+    const count = getComputedStyle(el.querySelector(".glim-nav-count")!);
+    const row = getComputedStyle(el);
+    return {
+      countFill: count.backgroundColor,
+      countInk: count.color,
+      glyph: getComputedStyle(el.querySelector("svg")!).color,
+      rowFill: row.backgroundColor,
+      rowInk: row.color,
+    };
+  });
+}
+
+test("the count on Overview wears the entry's colours and turns them round on the current entry", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the sidebar's form of the count");
+  await stageTwoUnprotected(page);
+  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await page.goto("/backups");
+  const overview = page.getByTestId("desktop-sidebar").getByRole("link", { name: /^Overview/ });
+
+  const resting = await entryColours(overview);
+  expect(resting.countFill, "the count is filled with the colour of the entry's glyph").toBe(resting.glyph);
+  expect(resting.countInk).not.toBe(resting.countFill);
+
+  await overview.click();
+  await expect(overview).toHaveAttribute("aria-current", "page");
+  const current = await entryColours(overview);
+  expect(current.rowFill, "the current entry is filled with the colour the count had").toBe(resting.countFill);
+  expect(current.countFill, "on the current entry the count takes the fill's ink as its ground").toBe(current.rowInk);
+  expect(current.countInk, "and the fill's colour as its figure").toBe(current.rowFill);
+});
+
+test("the bar's count on Overview is grey and takes the fill's ink on the current tab", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the bar's form of the count");
+  await stageTwoUnprotected(page);
+  await page.route("**/api/display-prefs*", (route) => route.abort());
+  await page.goto("/backups");
+  const bar = page.getByTestId("bottom-nav");
+  // The count hangs on the glyph, which stands before the caption.
+  const overview = bar.getByRole("link", { name: /Overview$/ });
+
+  const resting = await entryColours(overview);
+  expect(resting.countFill, "a resting count is the grey of the resting captions").toBe(resting.rowInk);
+  expect(resting.countFill).not.toBe(resting.glyph);
+
+  await overview.click();
+  await expect(overview).toHaveAttribute("aria-current", "page");
+  const current = await entryColours(overview);
+  expect(current.countFill, "on the current tab the count takes the fill's ink as its ground").toBe(current.rowInk);
+  expect(current.countInk, "and the fill's colour as its figure").toBe(current.rowFill);
+
+  // The count hangs on the glyph and must not widen the bar.
+  const overflow = await bar.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
 });
 
 test("the More sheet floats as a card above the screen edges, like the bar", async ({ page }, testInfo) => {
@@ -244,7 +402,7 @@ test("tapping the already-active bar slot scrolls the scroller back to the top",
   // depth before it (asserted relative, so engine differences in the
   // absolute starting depth cannot flake it).
   const historyDepthBefore = await page.evaluate(() => history.length);
-  await page.getByTestId("bottom-nav").getByRole("link", { name: "Dashboard" }).click();
+  await page.getByTestId("bottom-nav").getByRole("link", { name: "Overview" }).click();
   await expect
     .poll(() => page.locator("#bv-main").evaluate((el) => el.scrollTop))
     .toBe(0);

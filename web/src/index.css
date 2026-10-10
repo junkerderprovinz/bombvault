@@ -1428,6 +1428,26 @@ body {
   color: inherit;
 }
 
+/* The figure on a navigation entry wears the colour of the entry's glyph, so it
+   follows the accent and every colour mode with it. The current entry is filled
+   with that colour itself, so there the pair is turned round: the fill's ink is
+   the ground and the accent the figure, at the contrast the two were paired
+   for. */
+.glim-nav-count {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.glim-active .glim-nav-count {
+  background: var(--accent-contrast);
+  color: var(--accent);
+}
+/* The phone's bar keeps colour for the tab that is current, so its figure rests
+   grey. */
+.glim-nav-count--quiet {
+  background: var(--carbon-text-muted);
+  color: var(--carbon-sidebar);
+}
+
 /* A tile carrying a brand mark, as in GlimStone's reference/tokens.css ("Brand
    tiles"). Under the pointer it fills with the brand's own colour (--tile), the
    same on both themes, and its name and mark take that colour's ink

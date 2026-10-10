@@ -7,7 +7,6 @@ const fa: Partial<Translations> = {
   "theme.light": "روشن",
 
   // Nav
-  "nav.dashboard": "داشبورد",
   "nav.containers": "کانتینرها",
   "nav.vms": "ماشین‌های مجازی",
   "nav.flash": "فلش",
