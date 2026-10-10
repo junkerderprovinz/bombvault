@@ -111,7 +111,7 @@ export function HealthHeatmapCard({
   };
 
   return (
-    <Card title={t("dashboard.healthTitle")} hueIndex={hueIndex}>
+    <Card title={t("overview.calendar.title")} hint={t("overview.calendar.hint")} hueIndex={hueIndex}>
       {/* Hued like every other selector. Two rainbow positions match the
           grid's fail and ok colours in the dark theme, which is harmless:
           every cell says its counts in text as well. */}
@@ -120,7 +120,7 @@ export function HealthHeatmapCard({
           id: d,
           label: domainLabel(d),
         }))}
-        label={t("dashboard.healthTitle")}
+        label={t("overview.calendar.title")}
         select="one"
         active={domain}
         onChange={(id) => setDomain(id as HeatDomain)}

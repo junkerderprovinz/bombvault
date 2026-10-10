@@ -30,7 +30,7 @@ import { SummaryCell } from "./SummaryCell";
  * logs exactly that and writes no snapshot), so without the domain condition
  * the result would name a moment at which nothing gets backed up.
  */
-function nextBackupFireAt(
+export function nextBackupFireAt(
   scheduleNext: ScheduleNext[],
   domains: DomainStatus[]
 ): { at: ScheduleNext | null; ms: number } {
@@ -76,8 +76,9 @@ export function NextRunCard({
   scheduleNext: ScheduleNext[];
   domains: DomainStatus[];
   loading: boolean;
-  /** True = the phone glance block; false = the summary tier's middle cell. */
+  /** True = the phone glance block; false = the summary card's middle cell. */
   dense: boolean;
+  /** The phone block's rainbow position. */
   hueIndex?: number;
 }) {
   // The same derivation both faces render; one source of truth
@@ -131,7 +132,7 @@ export function NextRunCard({
   }
 
   return (
-    <SummaryCell label={t("dashboard.summaryNextBackup")} hueIndex={hueIndex}>
+    <SummaryCell label={t("dashboard.summaryNextBackup")}>
       {loading ? (
         <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
       ) : (

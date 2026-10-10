@@ -22,16 +22,17 @@ import type { ProgressMap } from "../../lib/progress";
 import { useVisibilityGate } from "../../lib/useVisibilityGate";
 import { loadErrorMessage } from "../../lib/errors";
 import { useConfirm } from "../../lib/useConfirm";
+import { useIsDesktop } from "../../lib/useMediaQuery";
+import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
 import { CheckDraw } from "../CheckDraw";
 import { colorFor, glyphFor, glyphLabelKey } from "../ActivityLog";
 import { ProgressBar } from "../ProgressBar";
 import { SnapshotFileTree } from "../SnapshotFileTree";
-import { AnomalyWindow } from "../anomalies/AnomalyWindow";
-import { useIsDesktop } from "../../lib/useMediaQuery";
 import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 
-// RunDetailSheet; the full-screen run-detail sheet.
+// RunDetailSheet; the run's details: a full-screen sheet on a phone and a
+// window over the page at desktop widths, with the same content in both.
 //
 // Hosted component-locally by whichever surface owns the run row (the
 // container/file-set surfaces, the Dashboard): `<RunDetailSheet run={...} open

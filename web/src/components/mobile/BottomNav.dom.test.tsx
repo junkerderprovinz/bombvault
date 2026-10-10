@@ -26,17 +26,17 @@ import { MemoryRouter } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { I18nProvider } from "../../lib/i18n";
 import { hueVars } from "../../lib/appearance";
-import { AttentionProvider } from "../../lib/attention";
+import { AttentionProvider } from "../../lib/attentionProvider";
 import { AnomalyProvider } from "../../lib/useAnomalies";
-import type { AnomalySummary, Settings } from "../../lib/api";
+import type { AnomalySummary, BackupItem, Settings } from "../../lib/api";
 
 const getAnomalySummary = vi.fn();
-const getCoverage = vi.fn();
+const listItems = vi.fn();
 vi.mock("../../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   getAnomalySummary: () => getAnomalySummary(),
   listRuns: async () => ({ ok: true, runs: [] }),
-  getCoverage: () => getCoverage(),
+  listItems: () => listItems(),
 }));
 
 const PINS_KEY = "bombvault.navPins";
@@ -353,27 +353,24 @@ describe("BottomNav's More trigger and open findings", () => {
 describe("BottomNav's count on Overview", () => {
   const LABEL = "Things that need you: 2";
 
+  /** A container no schedule reaches and that has no backup. */
+  const leftOut = (name: string): BackupItem => ({
+    kind: "container",
+    key: name,
+    name,
+    included: false,
+    paused: false,
+    effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+    lastBackup: 0,
+    lastRunStatus: "",
+    sourceBytes: 1,
+    installed: true,
+    runs: [],
+  });
+
   async function drawWithUnprotected(path: string, mode?: string) {
     if (mode) localStorage.setItem("bv-labels-bottombar", mode);
-    getCoverage.mockResolvedValue({
-      ok: true,
-      coverage: {
-        domains: [
-          {
-            domain: "containers",
-            enabled: true,
-            total: 5,
-            protected: 3,
-            unprotected: [
-              { name: "gitea", reason: "not-set-up", neverBackedUp: true },
-              { name: "immich", reason: "no-schedule", neverBackedUp: false },
-            ],
-          },
-        ],
-        total: 5,
-        protected: 3,
-      },
-    });
+    listItems.mockResolvedValue({ ok: true, items: [leftOut("gitea"), leftOut("immich")], unlisted: [] });
     render(
       <MemoryRouter initialEntries={[path]}>
         <I18nProvider>

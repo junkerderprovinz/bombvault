@@ -27,8 +27,10 @@ async function openLog(page: Page) {
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
   await page.goto("/dashboard");
-  const card = page.locator("#bv-main h2", { hasText: "Aktivitätsprotokoll" }).locator("xpath=..");
-  const log = card.locator(".overflow-y-auto");
+  // The log stands behind the selector of the history card.
+  const card = page.locator("[data-grid-block='history']");
+  await card.getByRole("tab", { name: "Protokoll" }).click();
+  const log = card.getByTestId("activity-log").locator(".overflow-y-auto");
   await expect(log.getByText("container-59").first()).toBeAttached();
   return log;
 }

@@ -33,7 +33,15 @@ function tipText(t: T, fill: Fill): string {
  * share and a dashed line marks where the location is full. A location that
  * reports no size has no such line and open walls above the liquid.
  */
-export function Vessel({ capacity }: { capacity: StorageLocationCapacity }) {
+export function Vessel({
+  capacity,
+  forecast = true,
+}: {
+  capacity: StorageLocationCapacity;
+  /** Whether the line at the brim says when the location is full. Off where
+   *  the forecast stands beside the vessel already. */
+  forecast?: boolean;
+}) {
   const { t } = useT();
   const id = useId();
   const fill = fillOf(capacity);
@@ -42,7 +50,9 @@ export function Vessel({ capacity }: { capacity: StorageLocationCapacity }) {
   const bubble = useTipBubble(tip);
   const level = measured ? FLOOR - fill.share * (FLOOR - BRIM) : UNSIZED_LEVEL;
   const warn = measured && fill.warn;
-  const top = measured ? forecastText(t, fill.weeks) || t("storage.vessel.full") : t("storage.vessel.unknown");
+  const top = measured
+    ? (forecast && forecastText(t, fill.weeks)) || t("storage.vessel.full")
+    : t("storage.vessel.unknown");
   const amount = amountText(t, capacity);
   const wallsFrom = measured ? 3 : 17;
 
@@ -99,7 +109,7 @@ export function Vessel({ capacity }: { capacity: StorageLocationCapacity }) {
           )}
         </svg>
         <span className="flex min-w-0 flex-col justify-between text-start text-xs leading-4 md:min-w-[10.5rem]">
-          <span className={warn ? "text-statusWarn" : "text-carbon-textMuted"}>{top}</span>
+          <span className={warn && forecast ? "text-statusWarn" : "text-carbon-textMuted"}>{top}</span>
           <span className="text-sm tabular-nums text-carbon-textSub">{amount}</span>
         </span>
       </span>

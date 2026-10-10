@@ -374,10 +374,6 @@ async function stageDashboardForSweep(page: Page): Promise<void> {
   );
 }
 
-// The localized log-block title the sweep locates the card by
-// (activityLog.title; the de table inline in i18n.ts, fr in locales/fr.ts).
-const LOG_TITLE = { de: "Aktivitätsprotokoll", fr: "Journal d'activité" } as const;
-
 for (const locale of locales) {
   for (const width of widths) {
     const tag = `${locale} @ ${width}px`;
@@ -387,11 +383,10 @@ for (const locale of locales) {
       await stageDashboardForSweep(page);
       await bootSeededPage(page, locale, width);
 
-      const card = page
-        .locator("div.glim-notch-card")
-        .filter({ hasText: LOG_TITLE[locale] })
-        .filter({ visible: true });
-      await expect(card).toBeVisible();
+      // The log stands behind the second segment of the history card.
+      const card = page.locator("[data-grid-block='history']");
+      await card.getByRole("tab").nth(1).click();
+      await expect(card.getByTestId("activity-log").getByText("svc-00").first()).toBeVisible();
 
       await assertNoHorizontalPan(page, `${tag} /dashboard log`);
       await assertNothingClipped(page, `${tag} /dashboard log`);

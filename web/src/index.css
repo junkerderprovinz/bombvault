@@ -2975,6 +2975,14 @@ body {
       inset-inline-start var(--motion-tab-dur, 220ms) ease-out,
       width var(--motion-tab-dur, 220ms) ease-out;
   }
+  /* The status head of the overview while a backup runs: its ring fills with
+     the run's progress and the marker moves on to the next station. */
+  :root:not([data-motion="off"]) .glim-ring-progress {
+    transition: stroke-dashoffset var(--motion-tab-dur, 220ms) linear;
+  }
+  :root:not([data-motion="off"]) .glim-station-mover {
+    transition: inset-inline-start var(--motion-tab-dur, 220ms) ease-out;
+  }
   :root:not([data-motion="off"]) .glim-scene-flow {
     animation: glim-scene-stream calc(var(--motion-scene-dur, 6s) / 4) linear infinite;
   }

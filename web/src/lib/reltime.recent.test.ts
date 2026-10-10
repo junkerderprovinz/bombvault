@@ -26,4 +26,11 @@ describe("formatRecent", () => {
   it("gives the whole date and no time for another year", () => {
     expect(recent(at(2025, 12, 31))).toBe("31/12/2025");
   });
+
+  it("says tomorrow and names the weekday for what is coming up", () => {
+    expect(recent(at(2026, 10, 11, 3, 0))).toBe("tomorrow 03:00");
+    expect(recent(at(2026, 10, 11, 3, 0), "de")).toBe("morgen 03:00");
+    expect(recent(at(2026, 10, 14, 4, 0))).toBe("Wed 04:00");
+    expect(recent(at(2026, 10, 20, 4, 0))).toBe("20/10 04:00");
+  });
 });

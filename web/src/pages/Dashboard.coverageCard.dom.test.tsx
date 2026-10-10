@@ -14,14 +14,31 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { CoverageCard } from "./overview/CoverageCard";
 import { en } from "../lib/i18n";
-import type { CoverageReport } from "../lib/api";
+import type { BackupItem, CoverageReport } from "../lib/api";
+import { tallyEntries } from "../lib/protectionTally";
 
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<
   typeof CoverageCard
 >[0]["t"];
 
-function renderCard(coverage: CoverageReport | null, loading = false) {
-  return render(<CoverageCard t={t} coverage={coverage} loading={loading} />);
+function entry(key: string, lastBackup: number): BackupItem {
+  return {
+    kind: "container",
+    key,
+    name: key,
+    included: true,
+    paused: false,
+    effectiveSchedule: { kind: "domain", spec: "daily 03:00", alsoSpec: "" },
+    lastBackup,
+    lastRunStatus: "",
+    sourceBytes: null,
+    installed: true,
+    runs: [],
+  };
+}
+
+function renderCard(coverage: CoverageReport | null, loading = false, items: BackupItem[] = []) {
+  return render(<CoverageCard t={t} coverage={coverage} tally={tallyEntries(items)} loading={loading} />);
 }
 
 afterEach(cleanup);
@@ -126,6 +143,20 @@ describe("CoverageCard", () => {
     });
 
     expect(screen.getByText(en["coverage.allProtected"])).toBeTruthy();
+  });
+
+  // The report counts four kinds by schedule. The ratio is the one every other
+  // card shows, counted over the entries themselves.
+  it("takes its ratio from the entries, not from the report", () => {
+    renderCard(
+      { total: 40, protected: 3, domains: [] },
+      false,
+      [entry("plex", 1_700_000_000), entry("gitea", 0), entry("immich", 1_700_000_000)]
+    );
+
+    const ratio = en["coverage.ratio"].replace("{protected}", "2").replace("{total}", "3");
+    expect(screen.getByText(ratio)).toBeTruthy();
+    expect(screen.queryByText(/40/)).toBeNull();
   });
 });
 

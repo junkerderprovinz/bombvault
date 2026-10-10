@@ -1,6 +1,6 @@
 import type { Run } from "./api";
 
-// The kinds the error badge counts, and the outcome each one can clear. A dump
+// The kinds a failure counts for, and the outcome each one can clear. A dump
 // and an import stand apart from the item's backup, so a failed dump does not
 // hide a failed backup of the same container. A saved dump is left out: writing
 // a copy of an old dump into a folder says nothing about the database.
@@ -11,11 +11,6 @@ const ERROR_CLASSES: Record<string, string> = {
   dbdump: "dbdump",
   dbimport: "dbimport",
 };
-
-/** How many failures the error badge stands for. */
-export function unresolvedErrorCount(runs: Run[]): number {
-  return failedRunsNeedingAttention(runs).length;
-}
 
 /**
  * The failures that still ask for someone: the last completed run per target

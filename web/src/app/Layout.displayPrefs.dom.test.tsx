@@ -15,7 +15,10 @@ vi.mock("../lib/displayPrefs", async (importOriginal) => ({
   sync: () => syncSpy(),
 }));
 
-vi.mock("../lib/api", () => ({
+// The rest of the module stays real: the table of entry kinds takes its calls
+// from it when it is loaded.
+vi.mock("../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/api")>()),
   getAuth: async () => ({ ok: true, enabled: true, authed: authState.authed }),
   getSettings: async () => ({ ok: true, settings: null }),
   getHealth: async () => ({ ok: true, version: "v8.5.4" }),
@@ -39,7 +42,7 @@ vi.mock("../lib/api", () => ({
   getAnomalies: async () => ({ ok: true, anomalies: [], nextCursor: "" }),
   // The layout also counts what needs the person for the navigation.
   listRuns: async () => ({ ok: true, runs: [] }),
-  getCoverage: async () => ({ ok: true, coverage: { domains: [], total: 0, protected: 0 } }),
+  listItems: async () => ({ ok: true, items: [], unlisted: [] }),
 }));
 
 // Stubs for the heavy parts that play no role here.

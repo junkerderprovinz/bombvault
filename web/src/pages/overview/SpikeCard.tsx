@@ -46,7 +46,7 @@ export function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   const chipFor = (c: SpikeCheck) => (c.OK ? "ok" : c.BestEffort ? "info" : "failed");
 
   return (
-    <Card title={t("spike.title")} hueIndex={hueIndex}>
+    <Card title={t("spike.title")} hint={t("overview.spike.hint")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}

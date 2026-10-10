@@ -42,17 +42,18 @@ function startOfDay(ms: number): number {
 
 /**
  * formatRecent renders a unix timestamp as short as a list column needs it:
- * the clock time after "today" or "yesterday", after the weekday within a
- * week, and after the date within the year. An older one is the date alone.
+ * the clock time after "today", "yesterday" or "tomorrow", after the weekday
+ * within a week either way, and after the date within the year. Anything
+ * further off is the date alone.
  */
 export function formatRecent(unix: number, lang: string, now = Date.now()): string {
   const then = new Date(unix * 1000);
   const time = then.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
   const days = Math.round((startOfDay(now) - startOfDay(then.getTime())) / DAY_MS);
-  if (days === 0 || days === 1) {
+  if (Math.abs(days) <= 1) {
     return `${new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(-days, "day")} ${time}`;
   }
-  if (days > 1 && days < 7) return `${then.toLocaleDateString(lang, { weekday: "short" })} ${time}`;
+  if (Math.abs(days) < 7) return `${then.toLocaleDateString(lang, { weekday: "short" })} ${time}`;
   if (then.getFullYear() === new Date(now).getFullYear()) {
     return `${then.toLocaleDateString(lang, { day: "2-digit", month: "2-digit" })} ${time}`;
   }

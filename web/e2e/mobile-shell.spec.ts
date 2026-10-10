@@ -209,28 +209,23 @@ test("the sidebar lists the navigation in order, with Settings at the foot", asy
 
 // Two entries nothing backs up, so Overview carries a count on every project.
 async function stageTwoUnprotected(page: Page): Promise<void> {
-  await page.route("**/api/coverage", (route) =>
-    route.fulfill({
-      json: {
-        ok: true,
-        coverage: {
-          domains: [
-            {
-              domain: "containers",
-              enabled: true,
-              total: 5,
-              protected: 3,
-              unprotected: [
-                { name: "gitea", reason: "not-set-up", neverBackedUp: true },
-                { name: "immich", reason: "no-schedule", neverBackedUp: false },
-              ],
-            },
-          ],
-          total: 5,
-          protected: 3,
-        },
-      },
-    }),
+  const leftOut = (name: string) => ({
+    kind: "container",
+    key: name,
+    name,
+    included: false,
+    paused: false,
+    effectiveSchedule: { kind: "none", spec: "", alsoSpec: "", reason: "excluded" },
+    lastBackup: 0,
+    lastRunStatus: "",
+    sourceBytes: null,
+    state: "running",
+    installed: true,
+    runs: [],
+  });
+  await page.route(
+    (url) => url.pathname === "/api/items",
+    (route) => route.fulfill({ json: { ok: true, items: [leftOut("gitea"), leftOut("immich")], unlisted: [] } }),
   );
 }
 
@@ -421,7 +416,7 @@ test("the confirm sheet gives no point between its answers to the firing one", a
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the sheet replaces the dialog below the breakpoint");
   await bootWithoutServerLook(page);
 
-  await page.getByRole("button", { name: /Backup Everything/i }).click();
+  await page.getByRole("button", { name: /Back up everything now/i }).click();
   const sheet = page.getByRole("dialog");
   await expect(sheet).toBeVisible();
 
