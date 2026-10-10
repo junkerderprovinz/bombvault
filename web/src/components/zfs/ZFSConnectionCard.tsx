@@ -25,9 +25,30 @@ const NEEDS_KEY = new Set(["ssh-auth", "host-placeholder", "ssh-unreachable"]);
 // still lets them run; the card says what it costs.
 const CONNECTED = new Set(["ok", "host-fallback", "propagation-missing"]);
 
-/** ZFSConnectionCard reports whether zfs commands reach the server, and what
- *  to do when they do not. */
+/** zfsReaches says whether a connection result lets zfs commands through. */
+export function zfsReaches(result: ZFSConnectionResult): boolean {
+  return CONNECTED.has(result.code);
+}
+
+/** ZFSConnectionCard is ZFSConnectionStatus as a card of the ZFS page. */
 export function ZFSConnectionCard() {
+  const { t } = useT();
+  return (
+    <div className="relative glim-notch-card flex flex-col gap-3 bg-carbon-surface rounded-card p-5">
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>
+          {t("zfs.connection.title")}
+          <InfoBubble tip={t("zfs.connection.hint")} onAccent />
+        </Badge>
+      </h2>
+      <ZFSConnectionStatus />
+    </div>
+  );
+}
+
+/** ZFSConnectionStatus reports whether zfs commands reach the server, and
+ *  what to do when they do not. It tests the connection when it appears. */
+export function ZFSConnectionStatus() {
   const { t } = useT();
   const { push } = useToast();
   const [result, setResult] = useState<ZFSConnectionResult | null>(null);
@@ -80,14 +101,7 @@ export function ZFSConnectionCard() {
   const authorizeCmd = authorizeCommand(publicKey);
 
   return (
-    <div className="relative glim-notch-card flex flex-col gap-3 bg-carbon-surface rounded-card p-5">
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap>
-          {t("zfs.connection.title")}
-          <InfoBubble tip={t("zfs.connection.hint")} onAccent />
-        </Badge>
-      </h2>
-
+    <>
       {testing && <p className="text-sm text-carbon-textMuted">{t("zfs.connection.testing")}</p>}
 
       {!testing && !result && (
@@ -202,6 +216,6 @@ export function ZFSConnectionCard() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSORTMENT = {e["name"]: e for e in json.loads((ROOT / "scripts" / "glyphs.json").read_text(encoding="utf-8"))}
 
 # The assortment covers every app that speaks GlimStone. A name in neither list
-# is not generated: BombVault has no pause button and no captcha.
+# is not generated: BombVault has no captcha.
 ACTION = [
     "IconRefresh",
     "IconUpload",
@@ -30,6 +30,7 @@ ACTION = [
     "IconUnlock",
     "IconPrune",
     "IconPlay",
+    "IconPause",
     "IconStop",
     "IconBack",
     "IconForward",

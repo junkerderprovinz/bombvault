@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { createZFSDatasets, probeZFSDataset, zfsHostDatasets } from "../../lib/api";
@@ -33,10 +33,27 @@ function directChildren(entries: ZFSHostDataset[], root: string): string[] {
     .map((e) => e.dataset);
 }
 
-/** ZFSAddDialog turns the host's pools into items. It is the only place that
+/** What ZFSAddForm hands to the window it stands in. */
+export interface ZFSAddParts {
+  body: ReactNode;
+  /** The buttons of the step, null while there is nothing to decide. */
+  actions: ReactNode;
+  /** False once closing would leave freshly added items unprobed. */
+  closable: boolean;
+}
+
+/** ZFSAddForm turns the host's pools into items. It is the only place that
  *  probes snapshot access on add, so nobody leaves it with an item nobody has
- *  tried to read. */
-export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+ *  tried to read. The window around it is the caller's. */
+export function ZFSAddForm({
+  onClose,
+  onAdded,
+  children,
+}: {
+  onClose: () => void;
+  onAdded: () => void;
+  children: (parts: ZFSAddParts) => ReactNode;
+}) {
   const { t } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -131,170 +148,170 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
     onClose();
   }
 
-  const heading = t("zfs.add.title");
+  let body: ReactNode;
+  let actions: ReactNode = null;
+  if (results !== null) {
+    body = (
+      <div className="flex flex-col gap-2">
+        {results.map((res) => (
+          <p key={res.dataset} className={`text-sm ${res.id ? "text-carbon-text" : "text-statusFail"}`}>
+            {res.id
+              ? t("zfs.add.result.ok").replace("{dataset}", res.dataset)
+              : t("zfs.add.result.failed")
+                  .replace("{dataset}", res.dataset)
+                  .replace(
+                    "{reason}",
+                    zfsCodeSentence(t, res.code, {
+                      names: refusalNames(res.code, res.detail),
+                      max: host?.maxNameLength,
+                    }),
+                  )}
+          </p>
+        ))}
+        {probing !== "" && (
+          <p className="text-sm text-carbon-textMuted">{t("zfs.add.testing").replace("{dataset}", probing)}</p>
+        )}
+        {probed.map((item) =>
+          item.failed ? (
+            <p key={item.dataset} className="text-sm text-statusWarn">
+              {t("zfs.add.probeFailed").replace("{dataset}", item.dataset)}
+            </p>
+          ) : (
+            item.check && (
+              <div key={item.dataset} className="flex flex-col gap-1">
+                <p className="text-sm text-carbon-textSub">
+                  {zfsCodeSentence(t, item.check.code, {
+                    hostMountpoint: item.check.hostMountpoint,
+                    max: item.check.max,
+                    names: item.check.names,
+                  })}
+                </p>
+                <ZFSMemberList members={item.check.members} root={item.check.dataset} t={t} />
+              </div>
+            )
+          ),
+        )}
+      </div>
+    );
+    actions = (
+      <Button
+        label={t("zfs.add.done")}
+        labelKey="zfs.add.done"
+        tone="accent"
+        onClick={handleDone}
+        disabled={probing !== ""}
+      />
+    );
+  } else if (loading) {
+    body = <p className="text-sm text-carbon-textMuted">{t("zfs.add.loading")}</p>;
+  } else if (host === null || !host.available) {
+    body = (
+      <div className="flex flex-col items-start gap-2">
+        <p className="text-sm text-statusFail">{t("zfs.add.unavailable")}</p>
+        {host && <p className="text-sm text-carbon-textSub">{zfsCodeSentence(t, host.code, { target: host.target })}</p>}
+        <Button label={t("zfs.add.retry")} labelKey="zfs.add.retry" tone="neutral" onClick={load} />
+      </div>
+    );
+  } else {
+    body = (
+      <>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            aria-label={t("zfs.add.filter")}
+            placeholder={t("zfs.add.filter")}
+            spellCheck={false}
+            autoComplete="off"
+            className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+          />
+          <span className="text-xs text-carbon-textMuted">{t("zfs.add.selected", selected.size)}</span>
+        </div>
 
-  return createPortal(
+        <ZFSDatasetTree
+          entries={entries}
+          filter={filter}
+          selected={selected}
+          excluded={excluded}
+          onSelectRoot={(dataset, on) => void handleSelectRoot(dataset, on)}
+          onIncludeChild={handleIncludeChild}
+          maxNameLength={host.maxNameLength}
+          t={t}
+        />
+
+        {host.unusedZvols > 0 && (
+          <p className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
+            {t("zfs.add.unusedZvols", host.unusedZvols)}
+            <InfoBubble tip={t("zfs.unusedZvolsHint")} />
+          </p>
+        )}
+        {host.truncated && <p className="text-xs text-carbon-textMuted">{t("zfs.add.truncated", entries.length)}</p>}
+
+        <RepoPicker value={repo} onChange={setRepo} />
+      </>
+    );
+    actions = (
+      <>
+        <Button label={t("files.cancel")} labelKey="files.cancel" tone="neutral" onClick={onClose} disabled={submitting} />
+        <Button
+          label={t("zfs.add.submit").replace("{n}", String(selected.size))}
+          labelKey="zfs.add.submit"
+          tone="accent"
+          onClick={() => void handleSubmit()}
+          disabled={submitting || selected.size === 0}
+          busy={submitting}
+        />
+      </>
+    );
+  }
+
+  // The confirm dialog stands beside the frame and not inside it: a click in
+  // it would otherwise reach a backdrop's close handler.
+  return (
     <>
-      {/* The confirm dialog is a sibling of the backdrop, not a child: a click
-          inside it would otherwise reach the backdrop's close handler. */}
-      <div
-        className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-        onClick={results === null && !submitting ? onClose : undefined}
-      >
-      <div className="relative w-full max-w-3xl">
-        <h2 className="flex items-center px-5">
-          <Badge tone="heading" size="heading" wrap>
-            {heading}
-            <InfoBubble tip={t("zfs.add.hint")} onAccent />
-          </Badge>
-        </h2>
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={heading}
-          onClick={(e) => e.stopPropagation()}
-          className="flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl"
-        >
-          {results !== null ? (
-            <div className="flex flex-col gap-2">
-              {results.map((res) => (
-                <p key={res.dataset} className={`text-sm ${res.id ? "text-carbon-text" : "text-statusFail"}`}>
-                  {res.id
-                    ? t("zfs.add.result.ok").replace("{dataset}", res.dataset)
-                    : t("zfs.add.result.failed")
-                        .replace("{dataset}", res.dataset)
-                        .replace(
-                          "{reason}",
-                          zfsCodeSentence(t, res.code, {
-                            names: refusalNames(res.code, res.detail),
-                            max: host?.maxNameLength,
-                          }),
-                        )}
-                </p>
-              ))}
-              {probing !== "" && (
-                <p className="text-sm text-carbon-textMuted">
-                  {t("zfs.add.testing").replace("{dataset}", probing)}
-                </p>
-              )}
-              {probed.map((item) =>
-                item.failed ? (
-                  <p key={item.dataset} className="text-sm text-statusWarn">
-                    {t("zfs.add.probeFailed").replace("{dataset}", item.dataset)}
-                  </p>
-                ) : (
-                  item.check && (
-                    <div key={item.dataset} className="flex flex-col gap-1">
-                      <p className="text-sm text-carbon-textSub">
-                        {zfsCodeSentence(t, item.check.code, {
-                          hostMountpoint: item.check.hostMountpoint,
-                          max: item.check.max,
-                          names: item.check.names,
-                        })}
-                      </p>
-                      <ZFSMemberList members={item.check.members} root={item.check.dataset} t={t} />
-                    </div>
-                  )
-                ),
-              )}
-              <div className="flex items-center justify-end pt-1">
-                <Button
-                  label={t("zfs.add.done")}
-                  labelKey="zfs.add.done"
-                  tone="accent"
-                  onClick={handleDone}
-                  disabled={probing !== ""}
-                />
+      {children({ body, actions, closable: results === null && !submitting })}
+      {confirmDialog}
+    </>
+  );
+}
+
+/** ZFSAddDialog is ZFSAddForm in a dialog of its own. */
+export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const { t } = useT();
+  const heading = t("zfs.add.title");
+  return (
+    <ZFSAddForm onClose={onClose} onAdded={onAdded}>
+      {({ body, actions, closable }) =>
+        createPortal(
+          <div
+            className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
+            onClick={closable ? onClose : undefined}
+          >
+            <div className="relative w-full max-w-3xl">
+              <h2 className="flex items-center px-5">
+                <Badge tone="heading" size="heading" wrap>
+                  {heading}
+                  <InfoBubble tip={t("zfs.add.hint")} onAccent />
+                </Badge>
+              </h2>
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={heading}
+                onClick={(e) => e.stopPropagation()}
+                className="flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl"
+              >
+                {body}
+                {actions && (
+                  <div className="flex items-center justify-end gap-2 pt-1 max-md:flex-wrap">{actions}</div>
+                )}
               </div>
             </div>
-          ) : (
-            <>
-              {loading && <p className="text-sm text-carbon-textMuted">{t("zfs.add.loading")}</p>}
-
-              {!loading && (host === null || !host.available) && (
-                <div className="flex flex-col items-start gap-2">
-                  <p className="text-sm text-statusFail">{t("zfs.add.unavailable")}</p>
-                  {host && (
-                    <p className="text-sm text-carbon-textSub">
-                      {zfsCodeSentence(t, host.code, { target: host.target })}
-                    </p>
-                  )}
-                  <Button label={t("zfs.add.retry")} labelKey="zfs.add.retry" tone="neutral" onClick={load} />
-                </div>
-              )}
-
-              {!loading && host !== null && host.available && (
-                <>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <input
-                      type="text"
-                      value={filter}
-                      onChange={(e) => setFilter(e.target.value)}
-                      aria-label={t("zfs.add.filter")}
-                      placeholder={t("zfs.add.filter")}
-                      spellCheck={false}
-                      autoComplete="off"
-                      className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
-                    />
-                    <span className="text-xs text-carbon-textMuted">
-                      {t("zfs.add.selected", selected.size)}
-                    </span>
-                  </div>
-
-                  <ZFSDatasetTree
-                    entries={entries}
-                    filter={filter}
-                    selected={selected}
-                    excluded={excluded}
-                    onSelectRoot={(dataset, on) => void handleSelectRoot(dataset, on)}
-                    onIncludeChild={handleIncludeChild}
-                    maxNameLength={host.maxNameLength}
-                    t={t}
-                  />
-
-                  {host.unusedZvols > 0 && (
-                    <p className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
-                      {t("zfs.add.unusedZvols", host.unusedZvols)}
-                      <InfoBubble tip={t("zfs.unusedZvolsHint")} />
-                    </p>
-                  )}
-                  {host.truncated && (
-                    <p className="text-xs text-carbon-textMuted">
-                      {t("zfs.add.truncated", entries.length)}
-                    </p>
-                  )}
-
-                  <RepoPicker
-                    value={repo}
-                    onChange={setRepo}
-                  />
-
-                  <div className="flex items-center justify-end gap-2 pt-1 max-md:flex-wrap">
-                    <Button
-                      label={t("files.cancel")}
-                      labelKey="files.cancel"
-                      tone="neutral"
-                      onClick={onClose}
-                      disabled={submitting}
-                    />
-                    <Button
-                      label={t("zfs.add.submit").replace("{n}", String(selected.size))}
-                      labelKey="zfs.add.submit"
-                      tone="accent"
-                      onClick={() => void handleSubmit()}
-                      disabled={submitting || selected.size === 0}
-                      busy={submitting}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-      </div>
-      {confirmDialog}
-    </>,
-    document.body,
+          </div>,
+          document.body,
+        )
+      }
+    </ZFSAddForm>
   );
 }

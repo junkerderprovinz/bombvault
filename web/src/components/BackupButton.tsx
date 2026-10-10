@@ -4,7 +4,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
 import { busyPhraseKey, type ProgressStage, type ProgressState } from "../lib/progress";
 import { humanBytes } from "../lib/forecast";
-import type { useT } from "../lib/i18n";
+import type { TranslationKey, useT } from "../lib/i18n";
 import { Button } from "./Button";
 import { groupStage } from "../lib/controls";
 import { IconBackupNow } from "./Sidebar";
@@ -33,6 +33,30 @@ interface BackupButtonProps {
 // Per-browser acknowledgement of the stop warning. Storage keys keep the bv-
 // prefix, since renaming one resets every user's stored state.
 export const STOP_ACK_KEY = "bv-container-stop-ack";
+
+/**
+ * stopAcknowledged asks whether a container may be stopped for its backup,
+ * which takes minutes on a first full one. It asks once per browser: a warning
+ * on every press gets clicked away unread, and it is about how backups work,
+ * not about one container.
+ */
+export async function stopAcknowledged(
+  confirm: (message: string, options: { confirmKey: TranslationKey }) => Promise<boolean>,
+  t: T
+): Promise<boolean> {
+  try {
+    if (localStorage.getItem(STOP_ACK_KEY) === "1") return true;
+  } catch {
+    // Without storage it asks every time.
+  }
+  if (!(await confirm(t("containers.stopWarning"), { confirmKey: "containers.backupNow" }))) return false;
+  try {
+    localStorage.setItem(STOP_ACK_KEY, "1");
+  } catch {
+    // It asks again next time.
+  }
+  return true;
+}
 
 export function BackupButton({ name, t, onBackedUp, running, progress, onRunCorrelated }: BackupButtonProps) {
   // The server runs the backup detached and answers at once; the outcome comes
@@ -74,27 +98,8 @@ export function BackupButton({ name, t, onBackedUp, running, progress, onRunCorr
     }
   }, [state, push, t]);
 
-  // A container backup stops the container for the whole run, minutes on a
-  // first full backup. Only the first backup in this browser warns: a warning on
-  // every press gets clicked away unread, and it is about how backups work, not
-  // about one container.
   const confirmStopThenFire = useCallback(async () => {
-    let acked = false;
-    try {
-      acked = localStorage.getItem(STOP_ACK_KEY) === "1";
-    } catch {
-      // Without storage (private window, blocked site data) it asks every time.
-    }
-    if (!acked) {
-      const ok = await confirm(t("containers.stopWarning"), { confirmKey: "containers.backupNow" });
-      if (!ok) return;
-      try {
-        localStorage.setItem(STOP_ACK_KEY, "1");
-      } catch {
-        /* asks again next time */
-      }
-    }
-    await fire();
+    if (await stopAcknowledged(confirm, t)) await fire();
   }, [confirm, fire, t]);
 
   // The label stays fixed and busy states go into the tooltip; a changing

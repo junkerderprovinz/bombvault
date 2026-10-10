@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"maps"
+	"slices"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -78,4 +80,14 @@ func vmDefinitionHasBlockDisks(definition string) bool {
 		return true
 	}
 	return len(info.BlockDisks) > 0
+}
+
+// vmRenameHints is renameHints for VMs. The match runs over every live domain
+// to stay one-to-one, so a VM with backups of its own can come back matched and
+// is dropped here.
+func (s *Service) vmRenameHints(ctx context.Context, live []virshcli.VMInfo, notInstalled []store.VMTarget, hasBackup map[string]bool) map[string]RenameCandidate {
+	lacksBackup := slices.ContainsFunc(live, func(vm virshcli.VMInfo) bool { return !hasBackup[vm.Name] })
+	hints := s.suggestVMRenames(ctx, live, notInstalled, lacksBackup)
+	maps.DeleteFunc(hints, func(name string, _ RenameCandidate) bool { return hasBackup[name] })
+	return hints
 }

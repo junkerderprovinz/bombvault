@@ -40,6 +40,7 @@ const SORTS: (ListSort & { label: TranslationKey })[] = [
   { field: "name", reversed: true, label: "backups.sort.nameZa" },
   { field: "status", reversed: false, label: "backups.sort.problemsFirst" },
   { field: "status", reversed: true, label: "backups.sort.problemsLast" },
+  { field: "ip", reversed: false, label: "backups.sort.ip" },
   { field: "lastBackup", reversed: false, label: "backups.sort.newestFirst" },
   { field: "lastBackup", reversed: true, label: "backups.sort.oldestFirst" },
   { field: "size", reversed: false, label: "backups.sort.largestFirst" },
@@ -135,7 +136,7 @@ export function ListBar({
         value={query}
         onChange={onQuery}
         label={t("backups.search")}
-        placeholder={t("backups.searchPlaceholder")}
+        placeholder={t("backups.searchFor")}
       />
     </div>
   );

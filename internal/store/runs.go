@@ -1429,68 +1429,64 @@ func (r *Repo) NewestBackupOrigins(targetID, kind string, n int) (total, externa
 }
 
 // BackupStamp is what a list of items says about a target's backup history
-// without a query per item.
+// without a query per item. LastRunError is the error of the newest finished
+// backup, empty unless that one failed.
 type BackupStamp struct {
 	LastSuccessAt       int64
 	LastDurationSeconds int64
 	LastRunAt           int64
 	LastRunStatus       string
+	LastRunError        string
 }
 
-// LatestBackupsByTarget returns every target's newest backup stamps. Both
-// queries skip future stamps, which would otherwise win the ordering and hide
-// every correctly stamped run behind them.
-//
-// The bare columns beside max(finished_at) come from the row that matched it,
-// which is how each group arrives with its own started_at and status.
+// latestBackupsByTargetQuery seeks each target's newest finished backup and its
+// newest successful one off idx_runs_target_kind_started. Grouping the table by
+// target would read every run there is. Both seeks skip future stamps, which
+// would otherwise hide every correctly stamped run behind them.
+const latestBackupsByTargetQuery = `
+	SELECT series.target_id, good.finished_at, good.started_at, last.started_at, last.status, last.error
+	FROM (SELECT DISTINCT target_id FROM runs) AS series
+	JOIN runs AS last ON last.rowid = (
+		SELECT rowid FROM runs
+		WHERE target_id = series.target_id AND kind = 'backup'
+		  AND finished_at IS NOT NULL AND finished_at <= ?1
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT 1)
+	LEFT JOIN runs AS good ON good.rowid = (
+		SELECT rowid FROM runs
+		WHERE target_id = series.target_id AND kind = 'backup' AND status = 'success'
+		  AND finished_at IS NOT NULL AND finished_at <= ?1
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT 1)`
+
+// LatestBackupsByTarget returns every target's newest backup stamps. A target
+// without a finished backup is absent.
 func (r *Repo) LatestBackupsByTarget() (map[string]BackupStamp, error) {
+	rows, err := r.db.Query(latestBackupsByTargetQuery, saneStampCutoff())
+	if err != nil {
+		return nil, fmt.Errorf("LatestBackupsByTarget: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
 	out := map[string]BackupStamp{}
-	cutoff := saneStampCutoff()
-
-	success, err := r.db.Query(`
-		SELECT target_id, max(finished_at), started_at
-		FROM runs
-		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL`+sanePastStamp+`
-		GROUP BY target_id`, cutoff)
-	if err != nil {
-		return nil, fmt.Errorf("LatestBackupsByTarget: %w", err)
-	}
-	defer success.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
-
-	for success.Next() {
+	for rows.Next() {
 		var target string
-		var finishedAt, startedAt int64
-		if sErr := success.Scan(&target, &finishedAt, &startedAt); sErr != nil {
+		var goodFinished, goodStarted sql.NullInt64
+		var lastError sql.NullString
+		var stamp BackupStamp
+		if sErr := rows.Scan(&target, &goodFinished, &goodStarted, &stamp.LastRunAt, &stamp.LastRunStatus, &lastError); sErr != nil {
 			return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
 		}
-		out[target] = BackupStamp{LastSuccessAt: finishedAt, LastDurationSeconds: finishedAt - startedAt}
-	}
-	if sErr := success.Err(); sErr != nil {
-		return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
-	}
-
-	last, err := r.db.Query(`
-		SELECT target_id, max(finished_at), started_at, status
-		FROM runs
-		WHERE kind = 'backup' AND finished_at IS NOT NULL`+sanePastStamp+`
-		GROUP BY target_id`, cutoff)
-	if err != nil {
-		return nil, fmt.Errorf("LatestBackupsByTarget: %w", err)
-	}
-	defer last.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
-
-	for last.Next() {
-		var target, status string
-		var finishedAt, startedAt int64
-		if sErr := last.Scan(&target, &finishedAt, &startedAt, &status); sErr != nil {
-			return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
+		if goodFinished.Valid {
+			stamp.LastSuccessAt = goodFinished.Int64
+			stamp.LastDurationSeconds = goodFinished.Int64 - goodStarted.Int64
 		}
-		stamp := out[target]
-		stamp.LastRunAt = startedAt
-		stamp.LastRunStatus = status
+		if stamp.LastRunStatus == "failed" {
+			stamp.LastRunError = lastError.String
+		}
 		out[target] = stamp
 	}
-	return out, last.Err()
+	return out, rows.Err()
 }
 
 // LastRunsOfKind returns every target's newest finished run of one kind, so a
@@ -1538,7 +1534,7 @@ const recentRunsByTargetQuery = `
 	FROM (
 		SELECT r.target_id, r.id, r.kind, r.status, r.started_at,
 		       row_number() OVER (PARTITION BY r.target_id ORDER BY r.started_at DESC, r.rowid DESC) AS rank
-		FROM (SELECT DISTINCT target_id, kind FROM runs) AS series
+		FROM (SELECT DISTINCT target_id, kind FROM runs WHERE kind IN ('backup', 'import', 'restore')) AS series
 		JOIN runs AS r ON r.rowid IN (
 			SELECT rowid FROM runs
 			WHERE target_id = series.target_id AND kind = series.kind
@@ -1548,9 +1544,11 @@ const recentRunsByTargetQuery = `
 	WHERE rank <= ?
 	ORDER BY target_id, rank`
 
-// RecentRunsByTarget returns every target's newest perTarget runs of any kind,
-// newest first, so a list of items costs one query rather than one per item.
-// Ties on started_at fall to the row written last.
+// RecentRunsByTarget returns every target's newest perTarget runs that wrote a
+// backup or restored one, newest first, so a list of items costs one query
+// rather than one per item. Database dumps and maintenance runs are left out:
+// they would crowd the backups out of a short list. Ties on started_at fall to
+// the row written last.
 func (r *Repo) RecentRunsByTarget(perTarget int) (map[string][]RunBrief, error) {
 	rows, err := r.db.Query(recentRunsByTargetQuery, perTarget, perTarget)
 	if err != nil {

@@ -190,8 +190,8 @@
 
 /* The glyph tile of a list row (components/backups/BackupRow.tsx). It takes
    the row's ink, which rainbow turns into the row's hue, and fills with the
-   accent while the row is hovered or holds the focus. Reactive mode rests the
-   glyph like every other item glyph. */
+   accent while the row is hovered, holds the focus or is picked. Reactive
+   mode rests the glyph like every other item glyph. */
 .glim-row-glyph {
   color: var(--accent-text);
 }
@@ -200,11 +200,11 @@
     transition: background-color var(--motion-control-dur, 150ms) ease, color var(--motion-control-dur, 150ms) ease;
   }
 }
-.glim-hue:is(:hover, :focus-within) > .glim-row-glyph {
+.glim-hue:is(:hover, :focus-within, [data-picked]) > .glim-row-glyph {
   background-color: var(--accent);
   color: var(--accent-contrast);
 }
-[data-rainbow="reactive"] .glim-hue:not(:hover, :focus-within) > .glim-row-glyph {
+[data-rainbow="reactive"] .glim-hue:not(:hover, :focus-within, [data-picked]) > .glim-row-glyph {
   color: var(--carbon-text-muted);
 }
 
