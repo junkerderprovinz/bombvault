@@ -8,8 +8,7 @@
 // instead of cutting, the every-N-days field keeps three digits clear of its
 // steppers, and the MCP card's confirmations come up as a sheet. On the
 // desktop: the 40px rhythm and the rail with its names once there is room.
-// German, because its labels run longest; advanced mode on, so every expert
-// control is there too.
+// German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -327,7 +326,6 @@ async function stage(page: Page): Promise<void> {
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => {
     window.localStorage.setItem("bv-lang", "de");
-    window.localStorage.setItem("bombvault.advanced", "1");
   });
   // The real answer with the staged fields laid over it, so every field the
   // page reads exists. Writes still go through, and nothing here makes one.

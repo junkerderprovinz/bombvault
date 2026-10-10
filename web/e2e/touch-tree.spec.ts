@@ -47,7 +47,7 @@ const CONTAINERS_BODY = {
       state: "running",
       status: "Up 2 hours",
       ip: "172.18.0.5",
-      installed: true, // the folders editor is advanced && installed, this flag opens it
+      installed: true, // the folders editor needs an installed container
       includeInSchedule: true,
       lastBackup: null,
       lastBackupStarted: null,
@@ -117,11 +117,7 @@ async function stageContainerDomain(page: Page): Promise<void> {
   await page.route("**/api/containers/plex", (route) => route.fulfill({ json: { ok: true } }));
 }
 
-/** Boot the /containers page in advanced mode and open the folders editor.
- *  Advanced mode is seeded as a boot-time localStorage write (the SAME key
- *  the Advanced toggle owns, "bombvault.advanced" = "1"): the detail's
- *  folders editor is advanced+installed-only, and the display-prefs abort
- *  above means the server can never adopt or overwrite this look mid-run.
+/** Boot the /containers page and open the folders editor.
  *
  *  The phone surface is one stacked layout: there is no list-level "Backup
  *  folders" chip; the editor renders inside the card's stacked detail. So
@@ -129,7 +125,6 @@ async function stageContainerDomain(page: Page): Promise<void> {
  *  stacked. The geometry under test below is the SAME touch tree; only the
  *  door moved. */
 async function openFoldersEditor(page: Page): Promise<void> {
-  await page.addInitScript(() => localStorage.setItem("bombvault.advanced", "1"));
   await page.goto("/containers");
   await page.getByRole("button", { name: /^plex/ }).tap();
   await expect(page.getByRole("button", { name: "plex, Back" })).toBeVisible();

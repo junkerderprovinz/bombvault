@@ -481,7 +481,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               {configEnabled && (
                 <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
               )}
-              {/* Always visible: disaster recovery is a core, non-expert flow.
+              {/* Always visible: disaster recovery is a core flow.
                   It sits below the backup types because it restores them. */}
               <NavItem
                 to="/recovery"

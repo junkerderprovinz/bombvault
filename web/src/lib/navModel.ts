@@ -112,7 +112,7 @@ export function destinations(settings: Settings | null): NavDestination[] {
     { to: "/files", labelKey: "nav.files", icon: IconFiles, bar: true, enabled: settings?.filesEnabled ?? false },
     { to: "/zfs", labelKey: "nav.zfs", icon: IconZFS, bar: false, enabled: settings?.zfsEnabled ?? false },
     { to: "/config", labelKey: "nav.config", icon: IconConfig, bar: false, enabled: settings?.configEnabled ?? false },
-    // Always visible: disaster recovery is a core, non-expert flow. It sits
+    // Always visible: disaster recovery is a core flow. It sits
     // below the backup types because it restores them.
     { to: "/recovery", labelKey: "nav.recovery", icon: IconRecovery, bar: true, enabled: true },
     // Receiver, Fleet and Pull share one row. The Instances page shows only

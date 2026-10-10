@@ -369,8 +369,6 @@ async function bootGerman(page: Page, width: number, opts: Stage = {}): Promise<
   await stage(page, opts);
   await page.addInitScript(() => {
     window.localStorage.setItem("bv-lang", "de");
-    // Advanced mode puts every control of the page on screen.
-    window.localStorage.setItem("bombvault.advanced", "1");
   });
   await page.setViewportSize({ width, height: 800 });
   await page.goto("/zfs");
