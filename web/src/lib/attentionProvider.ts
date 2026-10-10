@@ -4,6 +4,7 @@ import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext } from
 import { needsOf } from "./needs";
 import { useAnomalySummary, useOpenAnomalies } from "./useAnomalies";
 import { useBackupItems } from "./useBackupItems";
+import { useStorageLocationsOnDemand } from "./useStorageLocations";
 
 const POLL_MS = 30000;
 // The activity log reads the runs at this rate, and two readers of one
@@ -21,13 +22,15 @@ export function recoveryKitDue(settings: KitSettings | null): boolean {
 }
 
 /**
- * AttentionProvider reads the entries and the runs for everything below it and
- * lists what needs the person. The findings and the settings come from the
- * readers the layout already has.
+ * AttentionProvider reads the entries, the runs and the storage locations for
+ * everything below it and lists what needs the person. The findings and the
+ * settings come from the readers the layout already has.
  */
 export function AttentionProvider({ settings, children }: { settings: Settings | null; children: ReactNode }) {
   const items = useBackupItems();
   const reloadItems = items.reload;
+  const locations = useStorageLocationsOnDemand();
+  const reloadLocations = locations.retry;
   const [runs, setRuns] = useState<Run[]>([]);
   const [runsReady, setRunsReady] = useState(false);
   const [runsFailed, setRunsFailed] = useState(false);
@@ -47,11 +50,17 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
       .finally(() => setRunsReady(true));
   }, []);
 
+  // Marking failures as dealt with can cover failed copies, which only the
+  // storage locations report.
   useEffect(() => {
+    const dealtWith = () => {
+      refreshRuns();
+      reloadLocations();
+    };
     refreshRuns();
-    window.addEventListener(ATTENTION_CHANGED_EVENT, refreshRuns);
-    return () => window.removeEventListener(ATTENTION_CHANGED_EVENT, refreshRuns);
-  }, [refreshRuns]);
+    window.addEventListener(ATTENTION_CHANGED_EVENT, dealtWith);
+    return () => window.removeEventListener(ATTENTION_CHANGED_EVENT, dealtWith);
+  }, [refreshRuns, reloadLocations]);
 
   const pollMs = watchers > 0 ? WATCHED_POLL_MS : POLL_MS;
   useEffect(() => {
@@ -61,15 +70,18 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
     return () => window.clearInterval(timer);
   }, [pollMs, refreshRuns]);
 
-  // The end of a run changes what protects its entry, and the entries are
-  // not polled.
+  // The end of a run changes what protects its entry, and the end of a copy
+  // what its storage location says of it. Neither list is polled.
   const lastEnd = runs.reduce((last, run) => Math.max(last, run.finishedAt ?? 0), 0);
   const seenEnd = useRef<number | null>(null);
   useEffect(() => {
     if (!runsReady) return;
-    if (seenEnd.current !== null && seenEnd.current !== lastEnd) reloadItems();
+    if (seenEnd.current !== null && seenEnd.current !== lastEnd) {
+      reloadItems();
+      reloadLocations();
+    }
     seenEnd.current = lastEnd;
-  }, [runsReady, lastEnd, reloadItems]);
+  }, [runsReady, lastEnd, reloadItems, reloadLocations]);
 
   // A page that mounts together with the provider finds the first reads under
   // way. Only a later visit has something older to replace.
@@ -83,19 +95,20 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
     if (firstReadsBack.current) {
       reloadItems();
       refreshRuns();
+      reloadLocations();
     }
     return () => setWatchers((n) => n - 1);
-  }, [reloadItems, refreshRuns]);
+  }, [reloadItems, refreshRuns, reloadLocations]);
 
   const kitDue = recoveryKitDue(settings);
   const anomalies = detection ? open : NO_FINDINGS;
   const needs = useMemo(
-    () => needsOf({ items: items.items, runs, anomalies, kitDue }),
-    [items.items, runs, anomalies, kitDue]
+    () => needsOf({ items: items.items, runs, locations: locations.locations, anomalies, kitDue }),
+    [items.items, runs, locations.locations, anomalies, kitDue]
   );
   const value = useMemo(
-    () => ({ needs, items, runs, runsReady, runsFailed, refreshRuns, watch }),
-    [needs, items, runs, runsReady, runsFailed, refreshRuns, watch]
+    () => ({ needs, items, runs, runsReady, runsFailed, refreshRuns, locations, watch }),
+    [needs, items, runs, runsReady, runsFailed, refreshRuns, locations, watch]
   );
 
   return createElement(

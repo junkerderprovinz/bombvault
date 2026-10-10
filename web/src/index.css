@@ -2983,6 +2983,10 @@ body {
   :root:not([data-motion="off"]) .glim-station-mover {
     transition: inset-inline-start var(--motion-tab-dur, 220ms) ease-out;
   }
+  /* The mark of the entry a pass has just finished drops onto the stack. */
+  :root:not([data-motion="off"]) .glim-mark-drop {
+    animation: glim-mark-drop var(--motion-block-dur, 420ms) cubic-bezier(.3, 0, .4, 1.5) backwards;
+  }
   :root:not([data-motion="off"]) .glim-scene-flow {
     animation: glim-scene-stream calc(var(--motion-scene-dur, 6s) / 4) linear infinite;
   }
@@ -3717,6 +3721,10 @@ body {
 }
 @keyframes glim-block-swell {
   40% { transform: scale(var(--motion-block-swell, 1)); }
+  to { transform: none; }
+}
+@keyframes glim-mark-drop {
+  from { opacity: 0; transform: translateY(calc(var(--motion-block-fall, 0px) * -.3)); }
   to { transform: none; }
 }
 @keyframes glim-parcel-hop {

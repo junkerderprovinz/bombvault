@@ -36,7 +36,7 @@ import { sectionsOf } from "./overview/protectionChecks";
 import { ProtectionWindow } from "./overview/ProtectionWindow";
 import { SpikeCard } from "./overview/SpikeCard";
 import { StatCardsRow } from "./overview/StatCardsRow";
-import { headlineOf, liveRunOf } from "./overview/headState";
+import { headlineOf, liveRunOf, passOf, passRuns } from "./overview/headState";
 import { StatusHead } from "./overview/StatusHead";
 import { StorageCard } from "./overview/StorageCard";
 import { SummaryTier } from "./overview/SummaryTier";
@@ -58,7 +58,7 @@ export function Dashboard() {
   const { t, lang } = useT();
   const isDesktop = useIsDesktop();
   const progress = useProgress();
-  const { needs, items: backupItems, runs, runsReady, runsFailed, refreshRuns } = useAttention();
+  const { needs, items: backupItems, runs, runsReady, runsFailed, refreshRuns, locations } = useAttention();
   const anomalySummary = useAnomalySummary().summary;
   const trial = useTrialRestore(t("verify.failed"));
 
@@ -152,6 +152,14 @@ export function Dashboard() {
     if (wasRunning.current && !running) refreshRuns();
     wasRunning.current = running;
   }, [running, refreshRuns]);
+
+  // The stream counts an entry of a pass as soon as it is through. Its mark
+  // waits for the run that says how it ended.
+  const pass = passOf(progress);
+  const passDone = pass?.done;
+  useEffect(() => {
+    if (passDone !== undefined) refreshRuns();
+  }, [passDone, refreshRuns]);
 
   // The window shows the freshest record of its run. A finished record wins
   // whichever feed carries it. Before that the watch's record wins while the
@@ -293,7 +301,7 @@ export function Dashboard() {
         />
       ),
     },
-    targets: { label: t("storage.title"), render: (hue) => <TargetsCard t={t} hueIndex={hue} /> },
+    targets: { label: t("storage.title"), render: (hue) => <TargetsCard t={t} list={locations} hueIndex={hue} /> },
     history: {
       label: t("overview.history.title"),
       render: (hue) => (
@@ -447,6 +455,8 @@ export function Dashboard() {
           sections={sections}
           nextRun={Number.isFinite(nextFire) ? Math.round(nextFire / 1000) : null}
           run={liveRun}
+          pass={pass}
+          passRuns={passRuns(runs)}
           onOpenRun={openLiveRun}
         />
 
@@ -506,7 +516,7 @@ export function Dashboard() {
         )}
         <EverythingAction
           t={t}
-          running={liveRun !== null}
+          running={liveRun !== null || pass !== null}
           hidden={arranging}
           onWatchRun={handleWatchRun}
           onArmFire={armFire}

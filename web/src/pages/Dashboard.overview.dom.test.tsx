@@ -5,11 +5,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
+import { listStorageLocations } from "../lib/api";
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
 import {
   FakeEventSource,
   domain,
+  failedCopy,
   finding,
   installMatchMedia,
   item,
@@ -352,7 +354,105 @@ describe("the status head", () => {
     expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
   });
 
-  it("follows a backup through its stations", async () => {
+  it("counts a failed off-site copy until somebody marks it as seen", async () => {
+    server.domains = [domain()];
+    server.items = [item()];
+    server.locations = [location({ id: "destination:box", kind: "offsite", name: "Storage Box", sections: [failedCopy()] })];
+    await renderPage();
+
+    expect(head().getByText("1 thing needs you")).toBeTruthy();
+    const row = within(within(cell("needs")).getByTestId("need-failed-copy"));
+    expect(row.getByText(/^Storage Box · Containers · since /)).toBeTruthy();
+
+    fireEvent.click(row.getByRole("button", { name: en["errorPanel.resolve"] }));
+    await act(async () => {});
+
+    expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
+    expect(shownCards()).not.toContain("needs");
+  });
+
+  it("reads the storage locations once for the count and for their card", async () => {
+    vi.mocked(listStorageLocations).mockClear();
+    server.locations = [location({ name: "Storage Box", sections: [failedCopy()] })];
+    await renderPage();
+
+    expect(within(cell("targets")).getByRole("link", { name: "Storage Box" })).toBeTruthy();
+    expect(within(cell("needs")).getByTestId("need-failed-copy")).toBeTruthy();
+    expect(listStorageLocations).toHaveBeenCalledTimes(1);
+  });
+
+  it("stands at the station the server names", async () => {
+    server.domains = [domain()];
+    server.items = [item()];
+    await renderPage();
+    const stream = FakeEventSource.last!;
+    const station = () => head().getByRole("img").getAttribute("aria-label");
+    const frame = (over: Record<string, unknown>) => ({ key: "container:plex", phase: "backup", percent: 0, active: true, ...over });
+
+    act(() => stream.send(frame({ step: "stop" })));
+    expect(station()).toBe(en["overview.station.stop"]);
+
+    act(() => stream.send(frame({ step: "read" })));
+    expect(station()).toBe(en["overview.station.read"]);
+
+    act(() => stream.send(frame({ step: "read", percent: 100, committed: true })));
+    expect(station()).toBe(en["overview.station.read"]);
+
+    act(() => stream.send(frame({ step: "start", percent: 100, committed: true })));
+    expect(station()).toBe(en["overview.station.start"]);
+  });
+
+  it("counts through a pass over everything and collects a mark for each entry it finished", async () => {
+    server.domains = [domain()];
+    server.items = [item()];
+    await renderPage();
+    const stream = FakeEventSource.last!;
+    const pass = (over: Record<string, unknown>) => ({ key: "everything", phase: "backup", active: true, total: 4, unit: "items", ...over });
+    const parent = run({ id: "all", domain: "everything", targetId: "everything", status: "running", finishedAt: null });
+    const ring = () => head().getByRole("button", { name: en["overview.head.viewRun"] }).textContent;
+    const marks = () => [...screen.getByTestId("pass-marks").children].map((mark) => mark.getAttribute("data-tone"));
+
+    act(() => stream.send(pass({ percent: 0 })));
+    expect(head().getByText("Backing up now: 0 of 4")).toBeTruthy();
+    expect(head().getByText(en["overview.head.preparing"])).toBeTruthy();
+    expect(ring()).toContain("0 %");
+    expect(marks()).toEqual([]);
+
+    act(() => stream.send({ key: "container:plex", phase: "backup", percent: 50, active: true, step: "read" }));
+    expect(head().getByText("plex").parentElement!.textContent).toBe("Backing up plex");
+    expect(head().getByRole("img").getAttribute("aria-label")).toBe(en["overview.station.read"]);
+    expect(ring()).toContain("13 %");
+
+    server.runs = [run({ id: "c1", groupId: "all" }), parent];
+    act(() => stream.send({ key: "container:plex", phase: "backup", percent: 100, active: false }));
+    act(() => stream.send(pass({ percent: 25, done: 1 })));
+    expect(head().getByText("Backing up now: 1 of 4")).toBeTruthy();
+    expect(ring()).toContain("25 %");
+    await waitFor(() => expect(marks()).toEqual(["ok"]));
+
+    server.runs = [run({ id: "c2", groupId: "all", status: "failed", target: "gitea" }), ...server.runs];
+    act(() => stream.send(pass({ percent: 50, done: 2 })));
+    await waitFor(() => expect(marks()).toEqual(["ok", "fail"]));
+    expect(screen.getByTestId("pass-marks").lastElementChild!.getAttribute("title")).toBe("gitea");
+  });
+
+  it("returns to the state sentence when the pass has ended", async () => {
+    server.domains = [domain()];
+    server.items = [item()];
+    await renderPage();
+    const stream = FakeEventSource.last!;
+
+    act(() => stream.send({ key: "everything", phase: "backup", percent: 50, active: true, done: 2, total: 4, unit: "items" }));
+    expect(head().getByText("Backing up now: 2 of 4")).toBeTruthy();
+    expect(within(screen.getByTestId("page-actions")).getByRole("button", { name: en["overview.head.backingUp"] })).toBeTruthy();
+
+    act(() => stream.send({ key: "everything", phase: "backup", percent: 100, active: false, done: 4, total: 4, unit: "items" }));
+
+    expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
+    expect(screen.queryByTestId("pass-marks")).toBeNull();
+  });
+
+  it("places a backup that names no step by its progress", async () => {
     server.domains = [domain()];
     server.items = [item()];
     await renderPage();

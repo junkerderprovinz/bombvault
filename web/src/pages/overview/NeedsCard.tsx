@@ -9,14 +9,27 @@ import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
 import { IconEye, IconRefresh } from "../../components/glyphs";
 import { IconBackupNow, IconCheck, IconDownload } from "../../components/navGlyphs";
 import { anomalyEntryName, anomalySentence } from "../../lib/anomalies";
-import { ApiError, ackRecoveryKit, downloadRecoveryKit, type AnomalyView, type BackupItem, type Run } from "../../lib/api";
+import {
+  ApiError,
+  ackFailedCopies,
+  ackRecoveryKit,
+  downloadRecoveryKit,
+  replicateOffsite,
+  type AnomalyView,
+  type BackupItem,
+  type Run,
+} from "../../lib/api";
+import { ATTENTION_CHANGED_EVENT } from "../../lib/attention";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { entryTarget } from "../../lib/backupList";
 import { useT } from "../../lib/i18n";
 import type { Need } from "../../lib/needs";
+import { formatList } from "../../lib/placement";
+import { formatRecent } from "../../lib/reltime";
 import { runTargetText } from "../../lib/runDisplay";
 import { runKindLabel } from "../../lib/runKind";
 import { isOwnReason, RunReasonText } from "../../lib/runReason";
+import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { Card } from "./Card";
 
@@ -60,6 +73,9 @@ function Row({
 const SUB = "text-sm text-carbon-textSub wrap-break-word";
 // The height a finger needs, for the actions of a row on a touch screen.
 const TOUCH = "pointer-coarse:[--btn-h:2.75rem]";
+// Three actions share a phone's row only with their labels cut short, so
+// each keeps the width of its label and the row breaks instead.
+const WRAPPING = `${TOUCH} max-md:basis-auto!`;
 const NAME_LINK = "min-w-0 wrap-anywhere hover:underline";
 
 function FailedRunRow({
@@ -197,6 +213,96 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
   );
 }
 
+function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t: T; lang: string }) {
+  const navigate = useNavigate();
+  const { push } = useToast();
+  const [busy, setBusy] = useState<"retry" | "resolve" | null>(null);
+  const { location, sections, since } = need;
+  const route = locationRoute(location.id);
+  const domains = [...new Set(sections.map((section) => section.domain))];
+
+  // The server copies a section to every location it has, which takes in the
+  // one that failed.
+  async function retry() {
+    setBusy("retry");
+    try {
+      const answers = await Promise.all(domains.map((domain) => replicateOffsite(domain)));
+      const refused = answers.find((res) => !res.ok);
+      if (refused) push(refused.error ?? t("offsite.replicateFailed"), "fail");
+      else push(t("offsite.replicateStarted"), "success");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("offsite.replicateFailed"), "fail");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function resolve() {
+    setBusy("resolve");
+    try {
+      const res = await ackFailedCopies(sections.flatMap((section) => section.targetId ?? []));
+      if (res.ok) window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
+      else push(t("common.saveFailed"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("common.saveFailed"), "fail");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Row
+      testid="need-failed-copy"
+      tone="fail"
+      title={
+        <Link to={route} className={NAME_LINK}>
+          {t("overview.needs.copyFailed")}
+        </Link>
+      }
+      actions={
+        <>
+          <Button
+            className={WRAPPING}
+            label={t("breakdown.retry")}
+            labelKey="breakdown.retry"
+            glyph={<IconRefresh />}
+            onClick={() => void retry()}
+            disabled={busy !== null}
+            busy={busy === "retry"}
+          />
+          <Button
+            className={WRAPPING}
+            label={t("zfs.replica.view")}
+            labelKey="zfs.replica.view"
+            glyph={<IconEye />}
+            onClick={() => navigate(route)}
+          />
+          <Button
+            className={WRAPPING}
+            label={t("errorPanel.resolve")}
+            labelKey="errorPanel.resolve"
+            glyph={<IconCheck />}
+            onClick={() => void resolve()}
+            disabled={busy !== null}
+            busy={busy === "resolve"}
+          />
+        </>
+      }
+    >
+      <p className={SUB}>
+        {[
+          location.name,
+          formatList(
+            lang,
+            domains.map((domain) => t(DOMAIN_LABEL[domain]))
+          ),
+          t("overview.needs.copySince").replace("{when}", formatRecent(since, lang)),
+        ].join(" · ")}
+      </p>
+    </Row>
+  );
+}
+
 function AnomalyRow({ finding, t, lang }: { finding: AnomalyView; t: T; lang: string }) {
   const navigate = useNavigate();
   const target = `/anomalies?scope=item:${encodeURIComponent(finding.targetId)}`;
@@ -278,8 +384,8 @@ function RecoveryKitRow({ t }: { t: T }) {
 
 /**
  * NeedsCard lists what waits for the person, each with the action that
- * settles it: a failed run, an entry nothing backs up, an anomaly, the
- * recovery kit.
+ * settles it: a failed run, an entry nothing backs up, a failed off-site
+ * copy, an anomaly, the recovery kit.
  */
 export function NeedsCard({
   needs,
@@ -314,6 +420,8 @@ export function NeedsCard({
                     onChanged={onItemsChanged}
                   />
                 );
+              case "failedCopy":
+                return <FailedCopyRow key={`copy:${need.location.id}`} need={need} t={t} lang={lang} />;
               case "anomaly":
                 return <AnomalyRow key={`finding:${need.finding.id}`} finding={need.finding} t={t} lang={lang} />;
               case "recoveryKit":

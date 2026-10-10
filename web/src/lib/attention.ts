@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect } from "react";
 import type { Run } from "./api";
 import type { Need } from "./needs";
 import type { BackupItems } from "./useBackupItems";
+import type { StorageLocationList } from "./useStorageLocations";
 
 /** Dispatched after a failure was dealt with, so the list follows without
  *  waiting for the next poll. */
@@ -23,6 +24,8 @@ export interface Attention {
   /** The last read of the runs failed. The runs read before stay in place. */
   runsFailed: boolean;
   refreshRuns: () => void;
+  /** The storage locations, read once for the count and for the page. */
+  locations: StorageLocationList;
 }
 
 const idle = () => undefined;
@@ -34,6 +37,7 @@ export const AttentionContext = createContext<Attention & { watch: () => () => v
   runsReady: false,
   runsFailed: false,
   refreshRuns: idle,
+  locations: { locations: [], loaded: false, failed: false, retry: idle },
   watch: () => idle,
 });
 
@@ -44,8 +48,8 @@ export const AttentionCountContext = createContext(0);
 /**
  * useAttention is for the page that shows the lists themselves. While it is
  * mounted the runs are read at the activity log's rate, and a visit brings
- * the entries and the runs up to date, because entries change on other pages
- * without an event.
+ * the entries, the runs and the storage locations up to date, because entries
+ * change on other pages without an event.
  */
 export function useAttention(): Attention {
   const { watch, ...attention } = useContext(AttentionContext);

@@ -10,7 +10,7 @@ import type { StorageLocation } from "../../lib/api";
 import { FORECAST_CAP_WEEKS, humanBytes } from "../../lib/forecast";
 import type { useT } from "../../lib/i18n";
 import { fillOf, locationRoute } from "../../lib/storageLocations";
-import { useStorageLocations } from "../../lib/useStorageLocations";
+import type { StorageLocationList } from "../../lib/useStorageLocations";
 import { Card } from "./Card";
 
 type T = ReturnType<typeof useT>["t"];
@@ -87,8 +87,8 @@ function LocationRow({ location, t }: { location: StorageLocation; t: T }) {
  * TargetsCard shows every storage location with how full it is and when it
  * would be full at the growth of the last weeks.
  */
-export function TargetsCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
-  const { locations, loaded, failed, retry } = useStorageLocations();
+export function TargetsCard({ t, list, hueIndex }: { t: T; list: StorageLocationList; hueIndex?: number }) {
+  const { locations, loaded, failed, retry } = list;
   return (
     <Card title={t("storage.title")} hint={t("overview.targets.hint")} hueIndex={hueIndex}>
       {failed && !loaded ? (

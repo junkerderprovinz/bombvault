@@ -4,10 +4,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
+import { useLocation } from "react-router-dom";
+
+import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { en } from "../lib/i18n";
 import type { Need } from "../lib/needs";
+import { formatRecent } from "../lib/reltime";
 import { NeedsCard } from "./overview/NeedsCard";
-import { finding, item, resetServer, run, server } from "./overview/overview.testsupport";
+import { DAY, NOW, failedCopy, finding, item, location, resetServer, run, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -25,8 +29,30 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+function Where() {
+  return <output>{useLocation().pathname}</output>;
+}
+
 function renderCard(needs: Need[]) {
-  render(inApp(<NeedsCard needs={needs} onErrors={onErrors} onItemsChanged={onItemsChanged} />));
+  render(
+    inApp(
+      <>
+        <NeedsCard needs={needs} onErrors={onErrors} onItemsChanged={onItemsChanged} />
+        <Where />
+      </>
+    )
+  );
+}
+
+/** The Storage Box with failed copies of the containers and the flash. */
+function failedBox(): Need & { is: "failedCopy" } {
+  const sections = [failedCopy(), failedCopy({ domain: "flash", targetId: "t-flash" })];
+  return {
+    is: "failedCopy",
+    location: location({ id: "destination:box", object: "destination", kind: "offsite", name: "Storage Box", sections }),
+    sections,
+    since: NOW - DAY,
+  };
 }
 
 const called = (name: string) => server.calls.filter((c) => c.name === name).map((c) => c.args);
@@ -109,6 +135,47 @@ describe("NeedsCard", () => {
     expect(row.getByRole("link", { name: en["backups.name.flash"] })).toBeTruthy();
     expect(row.queryByRole("button", { name: en["overview.needs.include"] })).toBeNull();
     expect(row.getByRole("button", { name: en["zfs.replica.view"] })).toBeTruthy();
+  });
+
+  it("says where an off-site copy failed, for which sections and since when", () => {
+    renderCard([failedBox()]);
+
+    const row = within(screen.getByTestId("need-failed-copy"));
+    const link = row.getByRole("link", { name: en["overview.needs.copyFailed"] });
+    expect(link.getAttribute("href")).toBe("/storage/destination%3Abox");
+    const since = en["overview.needs.copySince"].replace("{when}", formatRecent(NOW - DAY, "en"));
+    expect(row.getByText(`Storage Box · ${en["nav.containers"]} and ${en["nav.flash"]} · ${since}`)).toBeTruthy();
+  });
+
+  it("tries a failed copy again for each of its sections", async () => {
+    renderCard([failedBox()]);
+
+    fireEvent.click(within(screen.getByTestId("need-failed-copy")).getByRole("button", { name: en["breakdown.retry"] }));
+    await act(async () => {});
+
+    expect(called("replicateOffsite")).toEqual([["containers"], ["flash"]]);
+    expect(screen.getByText(en["offsite.replicateStarted"])).toBeTruthy();
+  });
+
+  it("opens the location of a failed copy", () => {
+    renderCard([failedBox()]);
+
+    fireEvent.click(within(screen.getByTestId("need-failed-copy")).getByRole("button", { name: en["zfs.replica.view"] }));
+
+    expect(screen.getByRole("status").textContent).toBe("/storage/destination%3Abox");
+  });
+
+  it("marks a failed copy as seen and says that the list has changed", async () => {
+    const changed = vi.fn();
+    window.addEventListener(ATTENTION_CHANGED_EVENT, changed);
+    renderCard([failedBox()]);
+
+    fireEvent.click(within(screen.getByTestId("need-failed-copy")).getByRole("button", { name: en["errorPanel.resolve"] }));
+    await act(async () => {});
+
+    expect(called("ackFailedCopies")).toEqual([[["t-containers", "t-flash"]]]);
+    expect(changed).toHaveBeenCalledOnce();
+    window.removeEventListener(ATTENTION_CHANGED_EVENT, changed);
   });
 
   it("names an anomaly's entry and says what it found", () => {
