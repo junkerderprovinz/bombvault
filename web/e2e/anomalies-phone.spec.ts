@@ -1,11 +1,12 @@
 // The Anomalies page, the phone Home's anomalies card and the More sheet's
 // count. A fresh harness database has detection off and no history, so
-// findings of every severity and kind, the watched items and the summary are
-// staged at the route layer. On the phones: the 24px card rhythm, no pan and
-// nothing past the edge with every card, line and panel open. On the desktop:
-// one card per item, the 40px rhythm, and the actions reaching the API with
-// the ids they name. German, because its labels run longest.
-import { expect, test, type Page } from "@playwright/test";
+// findings of every severity and kind, the watched items, their measurements
+// and the summary are staged at the route layer. On the phones: the 24px card
+// rhythm, no pan and nothing past the edge on the page or in a sheet. On the
+// desktop: one flat list, the 40px rhythm, the tiles, the selector, the windows,
+// and the actions reaching the API with the ids they name. German, because its
+// labels run longest.
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -234,9 +235,6 @@ const CLOSED = [
   }),
 ];
 
-/** The cards the open findings make: one per item, restore check series and disk. */
-const CARD_COUNT = new Set(FINDINGS.map((a) => a.targetId || `${a.scopeKind}:${a.scopeId}`)).size;
-
 function series(part: string, samples: number) {
   return {
     part,
@@ -347,6 +345,58 @@ function summary({ enabled = true, open = { critical: 3, warning: 6, info: 3 } }
   };
 }
 
+/** What the backups of an item measured: a steady size that the newest run
+ *  left, and for the item still learning three runs without a usual range. */
+function measured(targetId: string) {
+  const learning = targetId === "tg-learning";
+  const runs = learning ? 3 : 28;
+  return [
+    {
+      scopeKind: "item",
+      part: "",
+      failed: [{ runId: "run-failed", at: NOW - 6 * DAY - HOUR }],
+      quantities: [
+        {
+          quantity: "sourceBytes",
+          points: Array.from({ length: runs }, (_, i) => ({
+            runId: i === runs - 1 ? "run-1" : `run-old-${i}`,
+            at: NOW - HOUR - (runs - 1 - i) * DAY,
+            value: i === runs - 1 && !learning ? 2 * GB : (40 + Math.sin(i)) * GB,
+          })),
+          learning,
+          samples: learning ? 3 : 10,
+          needed: 10,
+          band: learning
+            ? null
+            : { low: { metric: "source_bytes_shrink", expected: 40 * GB, threshold: 20 * GB, samples: 14 }, high: null },
+        },
+      ],
+    },
+  ];
+}
+
+const CHANGES = {
+  state: "ready",
+  fromAt: NOW - 2 * DAY,
+  toAt: NOW - HOUR,
+  summary: {
+    total: { path: "", removedBytes: 38 * GB, removedFiles: 91_204, addedBytes: 0, addedFiles: 0, changedBytes: GB, changedFiles: 12 },
+    folders: [
+      {
+        path: "nextcloud_aio_volumes/datenbank/sicherung/archiv-2019-bis-2026",
+        removedBytes: 38 * GB,
+        removedFiles: 91_204,
+        addedBytes: 0,
+        addedFiles: 0,
+        changedBytes: 0,
+        changedFiles: 0,
+      },
+    ],
+    other: { path: "", removedBytes: 0, removedFiles: 0, addedBytes: 0, addedFiles: 0, changedBytes: GB, changedFiles: 12 },
+    focus: "nextcloud_aio_volumes/datenbank/sicherung/archiv-2019-bis-2026",
+  },
+};
+
 async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
   const enabled = s.enabled ?? true;
   const findings = s.findings ?? FINDINGS;
@@ -369,6 +419,11 @@ async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
       return route.fulfill({ json: { ok: true, anomalies: rows, nextCursor: "" } });
     },
   );
+  await page.route("**/api/anomalies/items/*/series", (route) => {
+    const targetId = decodeURIComponent(new URL(route.request().url()).pathname.split("/")[4]);
+    return route.fulfill({ json: { ok: true, series: measured(targetId) } });
+  });
+  await page.route("**/api/anomalies/*/changes*", (route) => route.fulfill({ json: { ok: true, changes: CHANGES } }));
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -424,36 +479,68 @@ async function expectNothingPansOrClips(page: Page): Promise<void> {
   await expect.soft(page.locator("#bv-main")).not.toContainText("`");
 }
 
+function findings(page: Page): Locator {
+  return page.locator("#bv-main li[id^='finding-']");
+}
+
+/** The finding filed under an item's name, the first of them if it has several. */
+function findingOf(page: Page, name: string): Locator {
+  return findings(page).filter({ hasText: name }).first();
+}
+
 async function openPage(page: Page, url = "/anomalies"): Promise<void> {
   await page.goto(url);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByRole("region", { name: NEXTCLOUD })).toBeVisible();
+  await expect(findingOf(page, NEXTCLOUD)).toBeVisible();
   await settle(page);
 }
 
-/** Opens every disclosure on the page: finding lines, monitoring panels, the
- *  quiet items and the closed findings. */
-async function openEverything(page: Page): Promise<void> {
-  // A select's trigger carries aria-expanded too, but opening one only
-  // floats its list; the disclosures are what change the layout.
-  const closed = page.locator("#bv-main button[aria-expanded='false']:not([role='combobox'])");
-  for (;;) {
-    if ((await closed.count()) === 0) break;
-    await closed.first().click();
-  }
+// A window is portalled to the body, outside #bv-main, so it gets its own
+// check: no box inside it may reach past the viewport.
+async function expectWindowFits(page: Page): Promise<void> {
+  const window = page.getByRole("dialog");
+  await expect(window).toBeVisible();
   await settle(page);
+  const past = await window.evaluate((root) => {
+    const vw = innerWidth;
+    return [...root.querySelectorAll("button, a, p, span, dt, dd, h3, svg, [role='combobox']")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && (r.right > vw + 1 || r.left < -1);
+      })
+      .map((el) => (el.getAttribute("aria-label") ?? el.textContent ?? el.tagName).trim().slice(0, 40));
+  });
+  expect.soft(past, "the window runs past the viewport edge").toEqual([]);
+}
+
+async function closeWindow(page: Page): Promise<void> {
+  await page.getByRole("dialog").getByRole("button", { name: "Schließen" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 for (const width of [320, 390]) {
-  test(`anomaly cards @ ${width}px: every kind, line and panel open fits`, async ({ page }, testInfo) => {
+  test(`anomalies @ ${width}px: every kind of finding, the rings and both windows fit`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await stage(page, width);
     await openPage(page);
-    await expect(page.getByRole("region")).toHaveCount(CARD_COUNT);
-    await openEverything(page);
-    await expect(page.getByText(`Notiz: ${NOTE}`)).toBeVisible();
-
+    await expect(findings(page)).toHaveCount(FINDINGS.length);
+    await expect(page.getByRole("button", { name: /^Jellyfin-Mediathek Wohnzimmer · / })).toBeVisible();
     expect.soft(await cardGap(page)).toBe("24px");
+    await expectNothingPansOrClips(page);
+
+    await findingOf(page, NEXTCLOUD).getByRole("button", { name: "Details" }).click();
+    await expect(page.getByRole("dialog").getByRole("img", { name: /Größe der Quelle je Sicherung/ })).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: /vergleichen/ }).click();
+    await expect(page.getByRole("dialog").getByText(/Fast alles davon liegt in/)).toBeVisible();
+    await expectWindowFits(page);
+
+    await page.getByRole("dialog").getByRole("button", { name: "Überwachung" }).click();
+    await expect(page.getByRole("dialog").getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
+    await expectWindowFits(page);
+    await closeWindow(page);
+
+    await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+    await expect(page.getByText(`Notiz: ${NOTE}`, { exact: false })).toBeVisible();
     await expectNothingPansOrClips(page);
   });
 
@@ -462,6 +549,7 @@ for (const width of [320, 390]) {
     await stage(page, width, { enabled: false, findings: [], closed: [], open: { critical: 0, warning: 0, info: 0 } });
     await page.goto("/anomalies");
     await expect(page.getByText("Die Anomalie-Erkennung ist ausgeschaltet.", { exact: false })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Einstellungen öffnen" })).toBeVisible();
     await expect(page.getByText("Keine offenen Anomalien.")).toBeVisible();
     await settle(page);
 
@@ -470,53 +558,87 @@ for (const width of [320, 390]) {
   });
 }
 
-test("anomaly cards read right to left without panning", async ({ page }, testInfo) => {
+test("the findings and a finding's window read right to left without panning", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the narrow column is where RTL overflows");
   await stage(page, 390, { lang: "ar" });
   await openPage(page);
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await openEverything(page);
   await expectNothingPansOrClips(page);
+
+  // Details leads the second group of a finding's buttons, whatever it is called.
+  await findingOf(page, NEXTCLOUD).locator(":scope > div:last-child > span:last-child button").first().click();
+  await expect(page.getByRole("dialog").getByRole("img")).toBeVisible();
+  await expectWindowFits(page);
 });
 
-test("a finding's line is big enough to tap on a phone", async ({ page }, testInfo) => {
+test("a learning ring is big enough to tap on a phone", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the larger targets follow the coarse pointer");
   await stage(page, 390);
   await openPage(page);
-  const line = page.getByRole("region", { name: NEXTCLOUD }).locator("button[aria-expanded]").first();
-  const box = (await line.boundingBox())!;
-  expect(box.height, "a finding's line is shorter than a fingertip").toBeGreaterThanOrEqual(43.5);
+  const ring = page.getByRole("button", { name: /^Jellyfin-Mediathek Wohnzimmer · / });
+  const box = (await ring.boundingBox())!;
+  expect(box.height, "a ring is shorter than a fingertip").toBeGreaterThanOrEqual(43.5);
+  expect(box.width, "a ring is narrower than a fingertip").toBeGreaterThanOrEqual(43.5);
 });
 
 test.describe("on the desktop", () => {
   test.skip(({ viewport, isMobile }) => isMobile || viewport?.width !== 1280, "the desktop checks run once, at 1280");
 
-  test("one card per item, in the 40px rhythm, worst first", async ({ page }) => {
+  test("one flat list in the 40px rhythm, worst first", async ({ page }) => {
     await stage(page, 1280);
     await openPage(page);
 
-    const cards = page.getByRole("region");
-    await expect(cards).toHaveCount(CARD_COUNT);
-    await expect(cards.first()).toHaveAttribute("aria-label", NEXTCLOUD);
-    const lines = page.getByRole("region", { name: NEXTCLOUD }).getByRole("button", { expanded: false });
-    await expect(lines.filter({ hasNotText: "Überwachung" })).toHaveCount(2);
+    await expect(findings(page)).toHaveCount(FINDINGS.length);
+    await expect(findings(page).first()).toContainText(NEXTCLOUD);
+    await expect(findings(page).first()).toContainText("Kritisch");
+    await expect(findings(page).last()).toContainText("Hinweis");
+    await expect(page.locator("#bv-main [aria-expanded]")).toHaveCount(0);
     expect(await cardGap(page)).toBe("40px");
     await expectNothingPansOrClips(page);
   });
 
-  test("a finding's line opens to the whole sentence and its actions", async ({ page }) => {
+  test("the first finding carries the page's one filled button, and it is the restore", async ({ page }) => {
     await stage(page, 1280);
     await openPage(page);
-    const nextcloud = page.getByRole("region", { name: NEXTCLOUD });
-    const line = nextcloud.getByRole("button", { name: /Fast leer/ });
-    await expect(line).toHaveAttribute("aria-expanded", "false");
-    await line.click();
-    await expect(line).toHaveAttribute("aria-expanded", "true");
-    await expect(nextcloud.getByText(new RegExp(`^${NEXTCLOUD} ist fast leer`))).toBeVisible();
-    await expect(nextcloud.getByRole("button", { name: "Als erwartet markieren" })).toBeVisible();
-    await expect(nextcloud.getByRole("button", { name: "Quittieren" })).toBeVisible();
-    // The card's own main action is the restore, so the line does not repeat it.
-    await expect(nextcloud.getByRole("button", { name: /wiederherstellen/ })).toHaveCount(1);
+    const restore = findings(page).first().getByRole("button", { name: /wiederherstellen/ });
+    await expect(restore).toBeVisible();
+    const filled = await page
+      .locator("#bv-main li[id^='finding-'] button")
+      .evaluateAll((all) => all.filter((b) => b.className.includes("bg-accent")).length);
+    expect(filled).toBe(1);
+
+    await restore.click();
+    await expect(page).toHaveURL(/\/containers\?restore=5f3a9c1e&at=\d+&item=Nextcloud_AIO/);
+  });
+
+  test("Details opens a window with the whole sentence, the curve and every action", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    await findingOf(page, NEXTCLOUD).getByRole("button", { name: "Details" }).click();
+
+    const window = page.getByRole("dialog");
+    await expect(window.getByText(new RegExp(`^${NEXTCLOUD} ist fast leer`))).toBeVisible();
+    await expect(window.getByRole("img", { name: /Größe der Quelle je Sicherung/ })).toBeVisible();
+    await expect(window.locator("[data-part='band']")).toHaveCount(1);
+    await expect(window.locator("[data-part='marked']")).toHaveCount(1);
+    await expect(window.locator("[data-part='failed']")).toHaveCount(1);
+    await expect(window.getByText("Üblicher Bereich: über", { exact: false })).toBeVisible();
+    await expect(window.getByRole("button", { name: "Als erwartet markieren" })).toBeVisible();
+    await expect(window.getByRole("button", { name: "Quittieren" })).toBeVisible();
+    await expect(window.getByRole("button", { name: /wiederherstellen/ })).toBeVisible();
+    await expectWindowFits(page);
+
+    await page.keyboard.press("Escape");
+    await expect(window).toHaveCount(0);
+  });
+
+  test("the comparison opens from the list and names the folder", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    await findingOf(page, "Fotoarchiv").getByRole("button", { name: /vergleichen/ }).click();
+    const window = page.getByRole("dialog");
+    await expect(window.getByText(/Fast alles davon liegt in/)).toBeVisible();
+    await expect(window.getByRole("button", { name: /vergleichen/ })).toHaveCount(0);
   });
 
   test("Alle N quittieren sends exactly that item's ids", async ({ page }) => {
@@ -528,55 +650,86 @@ test.describe("on the desktop", () => {
     });
     await openPage(page);
 
-    await page.getByRole("region", { name: PAPERLESS }).getByRole("button", { name: "Alle 2 quittieren" }).click();
+    const all = page.getByRole("button", { name: "Alle 2 quittieren" });
+    await expect(all).toHaveCount(2);
+    await findingOf(page, PAPERLESS).getByRole("button", { name: "Alle 2 quittieren" }).click();
     await expect.poll(() => sent.length).toBe(1);
     const paperless = FINDINGS.filter((a) => a.targetId === "tg-paperless").map((a) => a.id);
     expect(sent[0]).toEqual(paperless);
   });
 
-  test("a tile hides its severity and brings it back", async ({ page }) => {
+  test("a tile shows its severity, and All brings the rest back", async ({ page }) => {
     await stage(page, 1280);
     await openPage(page);
-    const tile = page.getByRole("group", { name: "Schweregrad" }).getByRole("button", { name: /Warnungen/ });
-    await expect(tile).toHaveAttribute("aria-pressed", "true");
-    await expect(tile).toContainText("6");
+    const tiles = page.getByRole("group", { name: "Schweregrad" });
+    const warnings = tiles.getByRole("button", { name: /^Warnungen/ });
+    await expect(tiles.getByRole("button")).toHaveCount(4);
+    await expect(tiles.getByRole("button", { name: /^Alle/ })).toHaveAttribute("aria-pressed", "true");
+    await expect(warnings).toHaveAttribute("aria-pressed", "false");
+    await expect(warnings).toContainText("6 offen");
 
-    await tile.click();
-    await expect(tile).toHaveAttribute("aria-pressed", "false");
-    await expect(page.getByRole("region", { name: "immich_postgres_datenbank" })).toHaveCount(0);
-    // A card keeps its findings of the severities still shown.
-    const paperless = page.getByRole("region", { name: PAPERLESS });
-    await expect(paperless.locator("button[aria-expanded]")).toHaveCount(1);
+    await warnings.click();
+    await expect(warnings).toHaveAttribute("aria-pressed", "true");
+    await expect(tiles.getByRole("button")).toHaveCount(4);
+    await expect(findings(page)).toHaveCount(6);
+    await expect(findingOf(page, "immich_postgres_datenbank")).toBeVisible();
+    // Only one of the item's two findings is a warning, so there is no pair to settle.
+    await expect(findings(page).filter({ hasText: PAPERLESS })).toHaveCount(1);
+    await expect(findingOf(page, PAPERLESS).getByRole("button", { name: /^Alle \d+ quittieren/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Jellyfin-Mediathek Wohnzimmer · / })).toHaveCount(0);
 
-    await tile.click();
-    await expect(page.getByRole("region", { name: "immich_postgres_datenbank" })).toBeVisible();
+    await tiles.getByRole("button", { name: /^Alle/ }).click();
+    await expect(findings(page)).toHaveCount(FINDINGS.length);
   });
 
-  test("the closed row lists what was settled, with its note", async ({ page }) => {
+  test("the selector lists what was closed, with its note", async ({ page }) => {
     await stage(page, 1280);
     await openPage(page);
-    const row = page.getByRole("button", { name: /Geschlossen in den letzten 30 Tagen/ });
-    await expect(row).toContainText(String(CLOSED.length));
-    await row.click();
-    await page.getByRole("button", { name: /^Home-Assistant-Konfiguration:/ }).click();
-    await expect(page.getByText(`Notiz: ${NOTE}`)).toBeVisible();
+    await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+
+    await expect(findings(page)).toHaveCount(CLOSED.length);
+    await expect(page.getByRole("group", { name: "Schweregrad" }).getByRole("button", { name: /^Alle/ })).toContainText(
+      `${CLOSED.length} geschlossen`,
+    );
+    const settled = findingOf(page, "Home-Assistant-Konfiguration");
+    await expect(settled.getByText(`Notiz: ${NOTE}`, { exact: false })).toBeVisible();
+    await expect(settled.getByText("Quittiert", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Quittieren" })).toHaveCount(0);
+
+    await page.getByRole("tab", { name: "Offen" }).click();
+    await expect(findings(page)).toHaveCount(FINDINGS.length);
   });
 
-  test("a link to one item opens its card and brings it into view", async ({ page }) => {
+  test("a link to an item with several findings brings the first into view", async ({ page }) => {
     await stage(page, 1280);
     await page.goto("/anomalies?scope=item:tg-paperless");
-    const paperless = page.getByRole("region", { name: PAPERLESS });
-    await expect(paperless.locator("button[aria-expanded='true']")).toHaveCount(2);
-    await expect(paperless).toBeInViewport();
-    await expect(
-      page.getByRole("region", { name: NEXTCLOUD }).locator("button[aria-expanded='true']"),
-    ).toHaveCount(0);
+    await expect(findingOf(page, PAPERLESS)).toBeInViewport();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
-  test("an item's badge on its own page leads to its card", async ({ page }) => {
+  test("an item's badge on its own page opens its only finding", async ({ page }) => {
     await stage(page, 1280);
     await page.goto("/anomalies?scope=item:tg-tank");
-    await expect(page.getByRole("region", { name: "tank" }).locator("button[aria-expanded='true']")).toHaveCount(1);
+    const window = page.getByRole("dialog");
+    await expect(window).toBeVisible();
+    await expect(window.getByText("tank/fotos/archiv/familienurlaube-suedtirol-2019-bis-2026").first()).toBeVisible();
+  });
+
+  test("a learning ring opens the item's monitoring, without a usual range while it learns", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    const ring = page.getByRole("button", { name: /^Jellyfin-Mediathek Wohnzimmer · / });
+    await expect(ring).toHaveAttribute("aria-label", /Lernt noch: 3 von 10 Sicherungen/);
+    await expect(ring.locator("circle[data-lit='true']")).toHaveCount(3);
+    await ring.click();
+
+    const window = page.getByRole("dialog");
+    await expect(window.getByText("Lernt noch: 3 von 10 Sicherungen")).toBeVisible();
+    await expect(window.getByRole("combobox", { name: "Empfindlichkeit" })).toBeVisible();
+    await expect(window.getByText("Üblicher Bereich: steht nach 10 Sicherungen fest")).toBeVisible();
+    await expect(window.locator("[data-part='band']")).toHaveCount(0);
+    await expect(window.locator("[data-part='to-learn']")).toHaveCount(7);
+    await closeWindow(page);
   });
 });
 

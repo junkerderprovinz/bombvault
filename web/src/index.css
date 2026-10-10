@@ -2054,6 +2054,12 @@ body {
 
   --motion-check-dur: 360ms;
 
+  /* A curve's line, and one part of a learning ring with the wait before the
+     next part. */
+  --motion-curve-dur: 1100ms;
+  --motion-ring-dur: 500ms;
+  --motion-ring-step: 160ms;
+
   --motion-content-dur: 220ms;
 
   --motion-tab-travel: 18px;
@@ -2128,6 +2134,10 @@ body {
 
   --motion-check-dur: 620ms;
 
+  --motion-curve-dur: 1800ms;
+  --motion-ring-dur: 800ms;
+  --motion-ring-step: 220ms;
+
   --motion-content-dur: 380ms;
 
   --motion-tab-travel: 34px;
@@ -2190,6 +2200,10 @@ body {
   --motion-wipe-dur: 160ms;
 
   --motion-check-dur: 200ms;
+
+  --motion-curve-dur: 500ms;
+  --motion-ring-dur: 250ms;
+  --motion-ring-step: 80ms;
 
   --motion-content-dur: 120ms;
 
@@ -2262,6 +2276,10 @@ body {
   --motion-wipe-dur: 0ms;
 
   --motion-check-dur: 0ms;
+
+  --motion-curve-dur: 0ms;
+  --motion-ring-dur: 0ms;
+  --motion-ring-step: 0ms;
 
   --motion-content-dur: 0ms;
 
@@ -2462,6 +2480,18 @@ body {
   to { stroke-dashoffset: 0; }
 }
 
+/* A curve's line, drawn from its oldest run to its newest. The path carries
+   `pathLength="1"`, as the checkmark does. */
+@keyframes glim-curve-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* One part of a learning ring growing along the ring from nothing. It ends on
+   the dash the circle itself declares. */
+@keyframes glim-ring-grow {
+  from { stroke-dasharray: 0 999; }
+}
+
 /* Content replacing its loading placeholder fades in. The two are different
    elements, so the new node plays this once without any tracking. */
 @keyframes glim-content-fade-in {
@@ -2616,6 +2646,10 @@ body {
    viewer sees it complete. The motion block starts it undrawn and animates
    it. */
 .glim-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
+
+/* A curve complete, for the same reason. The gap is longer than the line, so
+   an undrawn line leaves no round cap at its far end. */
+.glim-curve-line { stroke-dasharray: 1 2; stroke-dashoffset: 0; }
 
 /* The scrim and the blur are painted whatever the motion settings: they are
    what puts a window in front, not motion. Only the fade is gated. The blur
@@ -2774,6 +2808,30 @@ body {
   }
 
   .glim-content-fade { animation: glim-content-fade-in var(--motion-content-dur, 220ms) ease both; }
+
+  /* The usual part of a curve draws at an even pace and the part that leaves
+     the range follows in one quick stroke, so the run reads as a jump. The
+     marks on the line wait for it. */
+  .glim-curve-line {
+    stroke-dashoffset: 1.02;
+    animation: glim-curve-draw var(--motion-curve-dur, 1100ms) cubic-bezier(.4, 0, .6, 1) forwards;
+  }
+  .glim-curve-jump {
+    animation-duration: calc(var(--motion-curve-dur, 1100ms) / 4);
+    animation-delay: var(--motion-curve-dur, 1100ms);
+    animation-timing-function: cubic-bezier(.5, 0, .9, .6);
+  }
+  .glim-curve-mark {
+    animation: glim-fade-in var(--motion-fade-dur, 110ms) ease both;
+    animation-delay: var(--motion-curve-dur, 1100ms);
+  }
+
+  /* --ring-i counts the parts one backup added, so they grow one after the
+     other. */
+  .glim-ring-grow {
+    animation: glim-ring-grow var(--motion-ring-dur, 500ms) ease-out backwards;
+    animation-delay: calc(var(--ring-i, 0) * var(--motion-ring-step, 160ms));
+  }
 
   .glim-tab-slide {
     animation:

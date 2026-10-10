@@ -213,6 +213,11 @@ export function sortOpenAnomalies(list: AnomalyView[]): AnomalyView[] {
   );
 }
 
+/** Closed findings by severity, each severity in the order the server sent. */
+export function sortClosedAnomalies(list: AnomalyView[]): AnomalyView[] {
+  return [...list].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
+}
+
 function numberOf(details: AnomalyView["details"], key: string): number {
   const value = details[key];
   return typeof value === "number" ? value : 0;
@@ -429,7 +434,7 @@ const DOMAIN_PATH: Record<string, string> = {
   config: "/config",
 };
 
-export function anomalyItemPath(a: AnomalyView): string | undefined {
+export function anomalyItemPath(a: { domain: string }): string | undefined {
   return DOMAIN_PATH[a.domain];
 }
 
@@ -471,6 +476,48 @@ function metricValue(a: AnomalyView, value: number, t: TranslateAnomaly, locale:
   if (COUNT_METRICS.has(a.metric)) return count(value);
   if (a.metric === "capacity_low") return isolateLtr(`${Math.round(value * 100)}%`);
   return bytes(value);
+}
+
+const LEVEL_METRICS = new Set([
+  "new_data",
+  "source_bytes_shrink",
+  "source_bytes_growth",
+  "dump_bytes_shrink",
+  "dump_bytes_growth",
+  "source_files_shrink",
+  "duration_slower",
+  "dump_duration_slower",
+]);
+
+/**
+ * anomalyDeviation is how far a finding's run stood from the usual, as the
+ * figure a curve prints beside that run: a factor from twice the usual on, a
+ * percentage below that. New data is held to a ceiling rather than a level.
+ */
+export function anomalyDeviation(
+  a: AnomalyView,
+  t: TranslateAnomaly,
+  locale: string
+): { figure: string; versus: string } | null {
+  const ceiling = a.metric === "new_data";
+  const typical = ceiling ? numberOf(a.details, "refBytes") : a.expected;
+  if (!LEVEL_METRICS.has(a.metric) || typical <= 0) return null;
+  const ratio = a.observed / typical;
+  const figure =
+    ratio >= 2
+      ? fill(t("anomaly.curve.times"), {
+          n: new Intl.NumberFormat(locale, { maximumFractionDigits: ratio < 10 ? 1 : 0 }).format(ratio),
+        })
+      : new Intl.NumberFormat(locale, { style: "percent", signDisplay: "always", maximumFractionDigits: 0 }).format(
+          ratio - 1
+        );
+  return {
+    figure: isolateLtr(figure),
+    versus: fill(t(ceiling ? "anomaly.curve.atMost" : "anomaly.curve.about"), {
+      current: metricValue(a, a.observed, t, locale),
+      typical: metricValue(a, typical, t, locale),
+    }),
+  };
 }
 
 export type AnomalyFigure = [label: string, value: string];
@@ -522,30 +569,28 @@ export function anomalyFigures(
   return { main, more };
 }
 
-/** The open findings one card shows: an item with its dump and datasets, one
- *  restore check series, or one disk. */
-export interface AnomalyGroup {
-  key: string;
-  findings: AnomalyView[];
-  worst: AnomalySeverity;
-}
-
 /** A finding of an item, its dump or its datasets carries the item's target
  *  id; a restore check or a disk has none and is a series of its own. */
 export function anomalyGroupKey(a: AnomalyView): string {
   return a.targetId || `${a.scopeKind}:${a.scopeId}`;
 }
 
-/** Cards in the order a reader should get to them: the worst first, and among
- *  equals the one with the newest finding. */
-export function groupAnomalies(list: AnomalyView[]): AnomalyGroup[] {
-  const byKey = new Map<string, AnomalyView[]>();
-  for (const a of sortOpenAnomalies(list)) {
-    const key = anomalyGroupKey(a);
-    byKey.set(key, [...(byKey.get(key) ?? []), a]);
+/** What a finding is filed under: its item, or the kind of check that raised
+ *  it where no item stands behind it. */
+export function anomalyEntryName(a: AnomalyView, t: TranslateAnomaly): string {
+  if (a.scopeKind === "domain") return t("anomaly.detector.integrity");
+  if (a.scopeKind === "volume") return t("anomaly.detector.capacity");
+  return a.name || anomalyDomainsLabel(a.domain, t);
+}
+
+/** Which backup type a finding belongs to, and for a restore check which
+ *  copy it read. */
+export function anomalyWhere(a: AnomalyView, t: TranslateAnomaly): string {
+  const domains = anomalyDomainsLabel(a.domain, t);
+  if (a.scopeKind === "volume") return t("anomaly.card.volume").replace("{domains}", domains);
+  if (a.scopeKind === "domain") {
+    const offsite = a.metric === "drill_dr" || a.details.source === "offsite";
+    return `${domains} · ${a.targetName || t(offsite ? "source.offsite" : "source.local")}`;
   }
-  const newest = (g: AnomalyGroup) => Math.max(...g.findings.map((a) => a.lastSeenAt));
-  return [...byKey.entries()]
-    .map(([key, findings]) => ({ key, findings, worst: findings[0].severity }))
-    .sort((a, b) => SEVERITY_RANK[a.worst] - SEVERITY_RANK[b.worst] || newest(b) - newest(a));
+  return domains;
 }

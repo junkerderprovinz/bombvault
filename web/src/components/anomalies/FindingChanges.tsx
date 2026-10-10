@@ -1,7 +1,7 @@
 // Where a finding's backup differs from the last good one: which folders lost,
-// gained or changed files. Opening it is what asks the server to compare.
+// gained or changed files. Showing it is what asks the server to compare.
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { TranslateAnomaly } from "../../lib/anomalies";
 import { getAnomalyChanges, type AnomalyChanges, type AnomalyView, type ChangeFolder } from "../../lib/api";
@@ -9,10 +9,9 @@ import { humanBytes } from "../../lib/forecast";
 import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs } from "../../lib/reltime";
 import { Button } from "../Button";
-import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
 
-// How often an open panel asks again while the comparison runs.
+// How often the box asks again while the comparison runs.
 const POLL_MS = 2000;
 
 const COMPARABLE_METRICS = new Set([
@@ -30,16 +29,13 @@ export function findingHasChanges(a: AnomalyView): boolean {
 }
 
 export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }) {
-  const [open, setOpen] = useState(false);
   const [data, setData] = useState<AnomalyChanges | null>(null);
   // null while the request went through; otherwise the server's reason, empty
   // when the request itself failed.
   const [failure, setFailure] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
-  const panelId = useId();
 
   useEffect(() => {
-    if (!open) return;
     let alive = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = (again: boolean) => {
@@ -63,67 +59,45 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
       alive = false;
       clearTimeout(timer);
     };
-  }, [open, a.id, retry]);
+  }, [a.id, retry]);
 
   const failed = failure ?? (data?.state === "failed" ? (data.error ?? "") : null);
   const summary = data?.state === "ready" ? data.summary : undefined;
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5">
-        <Button
-          label={t("anomaly.changes.title")}
-          labelKey="anomaly.changes.title"
-          glyph={<IconDisclosure open={open} />}
-          tone="subtle"
-          onClick={() => setOpen((o) => !o)}
-          ariaExpanded={open}
-          ariaControls={panelId}
-          keepLabel
-          className="glim-btn-wrap"
-        />
-        <InfoBubble tip={t("anomaly.changes.hint")} />
-      </div>
-      {open && (
-        <div id={panelId} className="flex flex-col gap-2 text-sm">
-          {failed !== null && (
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-caption text-statusFail">{t("breakdown.failed").replace("{error}", failed)}</p>
-              <Button
-                label={t("breakdown.retry")}
-                labelKey="breakdown.retry"
-                tone="neutral"
-                onClick={() => setRetry((n) => n + 1)}
-              />
-            </div>
-          )}
-          {failed === null && !summary && (
-            <p role="status" className="text-caption text-carbon-textMuted">
-              {t("breakdown.running")}
+    <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 px-3.5 py-3 text-sm">
+      <p className="text-caption text-carbon-textSub">
+        {data?.fromAt && data.toAt
+          ? t("anomaly.changes.span")
+              .replace("{from}", isolateLtr(formatTs(data.fromAt)))
+              .replace("{to}", isolateLtr(formatTs(data.toAt)))
+          : t("anomaly.changes.title")}{" "}
+        <span className="inline-flex align-middle">
+          <InfoBubble tip={t("anomaly.changes.hint")} />
+        </span>
+      </p>
+      {failed !== null && (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-caption text-statusFail">{t("breakdown.failed").replace("{error}", failed)}</p>
+          <Button label={t("breakdown.retry")} labelKey="breakdown.retry" onClick={() => setRetry((n) => n + 1)} />
+        </div>
+      )}
+      {failed === null && !summary && (
+        <p role="status" className="text-caption text-carbon-textMuted">
+          {t("breakdown.running")}
+        </p>
+      )}
+      {failed === null && summary && (
+        <>
+          <TotalLine total={summary.total} t={t} />
+          {summary.focus && (
+            <p className="text-caption text-carbon-text wrap-anywhere">
+              {t("anomaly.changes.focus").replace("{path}", isolateLtr(`${summary.focus}/`))}
             </p>
           )}
-          {failed === null && summary && data && (
-            <>
-              {data.fromAt && data.toAt && (
-                <p className="text-caption text-carbon-textSub">
-                  {t("anomaly.changes.span")
-                    .replace("{from}", isolateLtr(formatTs(data.fromAt)))
-                    .replace("{to}", isolateLtr(formatTs(data.toAt)))}
-                </p>
-              )}
-              <TotalLine total={summary.total} t={t} />
-              {summary.focus && (
-                <p className="text-caption text-carbon-text wrap-anywhere">
-                  {t("anomaly.changes.focus").replace("{path}", isolateLtr(`${summary.focus}/`))}
-                </p>
-              )}
-              {summary.regenerable && (
-                <p className="text-caption text-carbon-textSub">{t("anomaly.changes.regenerable")}</p>
-              )}
-              {summary.partial && <p className="text-caption text-statusWarn">{t("breakdown.partial")}</p>}
-              <ChangeRows folders={summary.folders} other={summary.other} t={t} />
-            </>
-          )}
-        </div>
+          {summary.regenerable && <p className="text-caption text-carbon-textSub">{t("anomaly.changes.regenerable")}</p>}
+          {summary.partial && <p className="text-caption text-statusWarn">{t("breakdown.partial")}</p>}
+          <ChangeRows folders={summary.folders} other={summary.other} t={t} />
+        </>
       )}
     </div>
   );
