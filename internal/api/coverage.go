@@ -86,6 +86,9 @@ type CoverageDomain struct {
 	Total       int            `json:"total"`
 	Protected   int            `json:"protected"`
 	Unprotected []CoverageItem `json:"unprotected"`
+	// Declined counts the items the person said not to back up. They are in
+	// neither Total nor Unprotected.
+	Declined int `json:"declined"`
 }
 
 // CoverageReport is the whole answer.
@@ -96,6 +99,8 @@ type CoverageReport struct {
 	// is actually protected".
 	Total     int `json:"total"`
 	Protected int `json:"protected"`
+	// Declined counts what the person said not to back up, in the same domains.
+	Declined int `json:"declined"`
 }
 
 // Coverage builds the report.
@@ -105,12 +110,17 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 		return CoverageReport{}, err
 	}
 
+	declined, err := s.declinedBackups()
+	if err != nil {
+		return CoverageReport{}, err
+	}
+
 	report := CoverageReport{}
 	for _, d := range []CoverageDomain{
-		s.coverContainers(ctx, settings),
-		s.coverVMs(settings),
-		s.coverFileSets(settings),
-		s.coverZFSDatasets(settings),
+		s.coverContainers(ctx, settings, declined),
+		s.coverVMs(settings, declined),
+		s.coverFileSets(settings, declined),
+		s.coverZFSDatasets(settings, declined),
 	} {
 		if d.Unprotected == nil {
 			d.Unprotected = []CoverageItem{}
@@ -118,6 +128,7 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 		if d.Enabled {
 			report.Total += d.Total
 			report.Protected += d.Protected
+			report.Declined += d.Declined
 		}
 		report.Domains = append(report.Domains, d)
 	}
@@ -130,7 +141,7 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 // the host with no row has no include flag, no override and no backup, because
 // there is no row to hold any of them. Reading only stored rows would miss
 // exactly the item that most needs naming.
-func (s *Service) coverContainers(ctx context.Context, settings store.Settings) CoverageDomain {
+func (s *Service) coverContainers(ctx context.Context, settings store.Settings, declined declinedBackups) CoverageDomain {
 	out := CoverageDomain{Domain: "containers", Enabled: settings.ContainersEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
@@ -172,6 +183,11 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings) 
 		if !known && c.Labels[restoredFromLabel] != "" {
 			continue
 		}
+		eff := schedule.EffectiveContainerSchedule(row, settings)
+		if declined.holds("container", c.Name, eff) {
+			out.Declined++
+			continue
+		}
 		out.Total++
 		if !known {
 			out.Unprotected = append(out.Unprotected, CoverageItem{
@@ -180,7 +196,6 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings) 
 			continue
 		}
 		db, isDB := dbRows[c.Name]
-		eff := schedule.EffectiveContainerSchedule(row, settings)
 		if eff.Kind == schedule.EffectiveNone {
 			reason := reasonFor(row.IncludeInSchedule, row.ScheduleCadence, settings.PerItemSchedules)
 			if isDB {
@@ -238,7 +253,7 @@ func (s *Service) dbDumpGap(settings store.Settings, tg store.Target, db dbDumpR
 // not be the thing that starts doing that. The cost is that a VM defined on the
 // host but never added to BombVault is not named here the way an unknown
 // container is; the VM tab is where that one shows up.
-func (s *Service) coverVMs(settings store.Settings) CoverageDomain {
+func (s *Service) coverVMs(settings store.Settings, declined declinedBackups) CoverageDomain {
 	out := CoverageDomain{Domain: "vms", Enabled: settings.VMsEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
@@ -254,8 +269,13 @@ func (s *Service) coverVMs(settings store.Settings) CoverageDomain {
 		return out
 	}
 	for _, v := range rows {
+		eff := schedule.EffectiveVMSchedule(v, settings)
+		if declined.holds("vm", v.Name, eff) {
+			out.Declined++
+			continue
+		}
 		out.Total++
-		if schedule.EffectiveVMSchedule(v, settings).Kind != schedule.EffectiveNone {
+		if eff.Kind != schedule.EffectiveNone {
 			out.Protected++
 			continue
 		}
@@ -270,7 +290,7 @@ func (s *Service) coverVMs(settings store.Settings) CoverageDomain {
 
 // coverFileSets walks the stored sets; a file set has no existence outside
 // BombVault, so there is no "never added" case to find.
-func (s *Service) coverFileSets(settings store.Settings) CoverageDomain {
+func (s *Service) coverFileSets(settings store.Settings, declined declinedBackups) CoverageDomain {
 	out := CoverageDomain{Domain: "files", Enabled: settings.FilesEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
@@ -286,8 +306,13 @@ func (s *Service) coverFileSets(settings store.Settings) CoverageDomain {
 		return out
 	}
 	for _, fs := range sets {
+		eff := schedule.EffectiveFileSetSchedule(fs, settings)
+		if declined.holds("files", fs.ID, eff) {
+			out.Declined++
+			continue
+		}
 		out.Total++
-		if schedule.EffectiveFileSetSchedule(fs, settings).Kind != schedule.EffectiveNone {
+		if eff.Kind != schedule.EffectiveNone {
 			out.Protected++
 			continue
 		}
@@ -309,7 +334,7 @@ func (s *Service) coverFileSets(settings store.Settings) CoverageDomain {
 // carries system, Docker-layer, VM and share datasets that other domains cover
 // or that nobody wants backed up, so counting them here would make the card cry
 // wolf; the ZFS page lists them instead.
-func (s *Service) coverZFSDatasets(settings store.Settings) CoverageDomain {
+func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBackups) CoverageDomain {
 	out := CoverageDomain{Domain: "zfs", Enabled: settings.ZFSEnabled}
 	if !out.Enabled {
 		return out
@@ -321,8 +346,13 @@ func (s *Service) coverZFSDatasets(settings store.Settings) CoverageDomain {
 		return out
 	}
 	for _, d := range items {
+		eff := schedule.EffectiveZFSDatasetSchedule(d, settings)
+		if declined.holds(zfsDomain, d.ID, eff) {
+			out.Declined++
+			continue
+		}
 		out.Total++
-		if schedule.EffectiveZFSDatasetSchedule(d, settings).Kind == schedule.EffectiveNone {
+		if eff.Kind == schedule.EffectiveNone {
 			out.Unprotected = append(out.Unprotected, CoverageItem{
 				Name:          d.Dataset,
 				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),

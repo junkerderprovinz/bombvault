@@ -3685,6 +3685,9 @@ export interface BackupItem {
    *  entry they look renamed from, and the code of what gave it away. */
   renameFrom?: string;
   renameReason?: string;
+  /** True while the person does not want the item backed up and no schedule
+   *  reaches it. Such an item is not something that needs the person. */
+  backupDeclined?: boolean;
   /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
@@ -3714,6 +3717,21 @@ export interface BackupItemResponse {
  *  resolves with `ok: false`. */
 export function getBackupItem(kind: BackupItemKind, key: string): Promise<BackupItemResponse> {
   return fetchJSON(`/api/items/${encodeURIComponent(kind)}/${encodeURIComponent(key)}`);
+}
+
+/** PUT /api/items/{kind}/{key}/declined: says not to back an item up, or takes
+ *  that back. Only an item no schedule reaches can be declined, anything else
+ *  is refused with the code "scheduled". A schedule or a successful backup
+ *  ends it. Resolves with the item's row. */
+export function setBackupDeclined(
+  kind: BackupItemKind,
+  key: string,
+  declined: boolean
+): Promise<BackupItemResponse & { code?: "scheduled" }> {
+  return fetchJSON(`/api/items/${encodeURIComponent(kind)}/${encodeURIComponent(key)}/declined`, {
+    method: "PUT",
+    body: JSON.stringify({ declined }),
+  });
 }
 
 /** GET /api/runs for one item of GET /api/items: its runs of every kind,
@@ -6393,6 +6411,9 @@ export type CoverageDomain = {
   total: number;
   protected: number;
   unprotected: CoverageItem[];
+  /** How many items the person said not to back up. They are in neither
+   *  `total` nor `unprotected`. */
+  declined: number;
 };
 
 /** What on this server is not backed up by anything. */
@@ -6400,6 +6421,8 @@ export type CoverageReport = {
   domains: CoverageDomain[];
   total: number;
   protected: number;
+  /** `declined` over the switched-on domains. */
+  declined: number;
 };
 
 /**

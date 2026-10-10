@@ -135,19 +135,27 @@ type backupItemView struct {
 	ChangedSinceBackup []DefinitionChange `json:"changedSinceBackup,omitempty"`
 	// RenameFrom and RenameReason name the not-installed entry a live container
 	// or VM without backups of its own looks renamed from.
-	RenameFrom   string           `json:"renameFrom,omitempty"`
-	RenameReason string           `json:"renameReason,omitempty"`
-	Runs         []store.RunBrief `json:"runs"`
+	RenameFrom   string `json:"renameFrom,omitempty"`
+	RenameReason string `json:"renameReason,omitempty"`
+	// BackupDeclined is set while the person does not want the item backed up
+	// and no schedule reaches it.
+	BackupDeclined bool             `json:"backupDeclined,omitempty"`
+	Runs           []store.RunBrief `json:"runs"`
 }
 
 // itemHistory is what the runs table says about the items of one answer.
 type itemHistory struct {
-	stamps map[string]store.BackupStamp
-	sizes  map[string]int64
-	runs   map[string][]store.RunBrief
+	stamps   map[string]store.BackupStamp
+	sizes    map[string]int64
+	runs     map[string][]store.RunBrief
+	declined declinedBackups
 }
 
 func (h *Handler) readItemHistory() (itemHistory, error) {
+	declined, err := h.svc.declinedBackups()
+	if err != nil {
+		return itemHistory{}, err
+	}
 	stamps, err := h.store.LatestBackupsByTarget()
 	if err != nil {
 		return itemHistory{}, err
@@ -160,14 +168,15 @@ func (h *Handler) readItemHistory() (itemHistory, error) {
 	if err != nil {
 		return itemHistory{}, err
 	}
-	return itemHistory{stamps: stamps, sizes: sizes, runs: runs}, nil
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined}, nil
 }
 
 // readHistoryOf is readItemHistory for one target. An item without a stored
-// row has no id and no history.
+// row has no id and no runs.
 func (h *Handler) readHistoryOf(targetID string) (itemHistory, error) {
-	if targetID == "" {
-		return itemHistory{}, nil
+	declined, err := h.svc.declinedBackups()
+	if err != nil || targetID == "" {
+		return itemHistory{declined: declined}, err
 	}
 	stamps, err := h.store.LatestBackupsOf(targetID)
 	if err != nil {
@@ -181,7 +190,7 @@ func (h *Handler) readHistoryOf(targetID string) (itemHistory, error) {
 	if err != nil {
 		return itemHistory{}, err
 	}
-	return itemHistory{stamps: stamps, sizes: sizes, runs: runs}, nil
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs, declined: declined}, nil
 }
 
 func (hist itemHistory) row(kind, key string, f itemFacts) backupItemView {
@@ -196,6 +205,7 @@ func (hist itemHistory) row(kind, key string, f itemFacts) backupItemView {
 		LastBackup:        stamp.LastSuccessAt,
 		LastRunStatus:     stamp.LastRunStatus,
 		LastRunError:      stamp.LastRunError,
+		BackupDeclined:    hist.declined.holds(kind, key, f.Schedule),
 		Runs:              []store.RunBrief{},
 	}
 	if size, ok := hist.sizes[f.ID]; ok {

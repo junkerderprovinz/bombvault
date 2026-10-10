@@ -168,6 +168,11 @@ func (r *Repo) finishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("FinishRun: run %s not found", id)
 	}
+	if status == "success" {
+		if _, err := r.db.Exec(acceptBackupOfRun, id); err != nil {
+			return fmt.Errorf("FinishRun: %w", err)
+		}
+	}
 	r.notifyRunFinished(RunFinished{RunID: id})
 	return nil
 }

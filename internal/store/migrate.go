@@ -2900,6 +2900,19 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 		alreadySatisfied: columnPresent("offsite_runs", "acknowledged"),
 		sql:              `ALTER TABLE offsite_runs ADD COLUMN acknowledged INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// The entries somebody said not to back up, by the kind and key the
+		// backup list names them with. A container or VM can be on it without
+		// a row of its own.
+		version:          declinedMigration,
+		name:             "declined_backups",
+		alreadySatisfied: tablePresent("declined_backups"),
+		sql: `CREATE TABLE IF NOT EXISTS declined_backups (
+  kind TEXT NOT NULL,
+  key  TEXT NOT NULL,
+  PRIMARY KEY (kind, key)
+) WITHOUT ROWID;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3006,6 +3019,9 @@ const roleRequestMigration = 310
 // restoreFolderMigration numbers the restore folder per section, 325 and 326,
 // and the acknowledgement of a failed copy, 327.
 const restoreFolderMigration = 325
+
+// declinedMigration numbers the entries nobody wants backed up, 335.
+const declinedMigration = 335
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

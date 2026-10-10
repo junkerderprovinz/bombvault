@@ -252,6 +252,10 @@ func (r *Repo) DeleteFileSet(id string) error {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet: %w", err)
 	}
+	if _, err := tx.Exec(`DELETE FROM declined_backups WHERE kind = 'files' AND key = ?`, id); err != nil {
+		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+		return fmt.Errorf("DeleteFileSet declined: %w", err)
+	}
 	if name != "" {
 		if _, err := tx.Exec(`DELETE FROM offsite_copy_rules WHERE domain = 'files' AND identity = ?`, "fileset:"+name); err != nil {
 			tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
