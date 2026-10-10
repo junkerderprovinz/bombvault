@@ -6356,6 +6356,48 @@ export function forgetAnomalyExpectation(
   );
 }
 
+/** One edge of a usual range, in the figures a finding raised on it carries.
+ *  `metric` is the finding that edge raises. */
+export type AnomalyLimit = {
+  metric: string;
+  expected: number;
+  threshold: number;
+  samples: number;
+};
+
+/** One measured quantity of a series over time, oldest first. */
+export type AnomalyQuantity = {
+  quantity: "sourceBytes" | "sourceFiles" | "newDataBytes" | "resticMs";
+  /** `at` is when the backup was taken, the time the backup list shows. */
+  points: { runId: string; at: number; value: number }[];
+  learning: boolean;
+  samples: number;
+  needed: number;
+  /** Null while the rules are learning, unless an open finding already holds
+   *  the quantity to the level it started from. A side is null where no rule
+   *  watches that direction. */
+  band: { low: AnomalyLimit | null; high: AnomalyLimit | null } | null;
+};
+
+/** The measured history of one series of an item: its own backups, its
+ *  database dumps, or one dataset of its ZFS tree, which `part` then names. A
+ *  ZFS item's own series has no quantities, because its datasets carry them. */
+export type AnomalySeries = {
+  scopeKind: "item" | "dump" | "zfsds";
+  part: string;
+  quantities: AnomalyQuantity[];
+  /** Runs that failed and so left no measurement. */
+  failed: { runId: string; at: number }[];
+};
+
+/** GET /api/anomalies/items/{targetId}/series. An item detection does not
+ *  know is refused with code "not-found". */
+export function getAnomalyItemSeries(
+  targetId: string
+): Promise<OkEnvelope & { series: AnomalySeries[] }> {
+  return fetchJSON(`/api/anomalies/items/${encodeURIComponent(targetId)}/series`);
+}
+
 /** One MCP key as the settings card sees it. The key itself is handed out once
  *  at creation and never again; `hint` is what tells two of them apart. */
 export interface McpKeyView {

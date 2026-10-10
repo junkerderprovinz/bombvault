@@ -397,6 +397,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/anomalies/{id}/changes", h.handleAnomalyChanges)
 	mux.HandleFunc("POST /api/anomalies/acknowledge", h.handleAcknowledgeAnomalies)
 	mux.HandleFunc("POST /api/anomalies/expected", h.handleAnomaliesExpected)
+	mux.HandleFunc("GET /api/anomalies/items/{targetId}/series", h.handleAnomalyItemSeries)
 	mux.HandleFunc("PUT /api/anomalies/items/{targetId}/prefs", h.handleAnomalyItemPrefs)
 	mux.HandleFunc("DELETE /api/anomalies/items/{targetId}/expectations/{family}", h.handleForgetAnomalyExpectation)
 	// An SMB or WebDAV destination from a form instead of a hand-written rclone
