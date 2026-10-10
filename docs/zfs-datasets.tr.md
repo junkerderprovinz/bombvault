@@ -2,7 +2,7 @@
 
 **ZFS** sayfası ZFS veri kümelerinin yedeğini alır. Bir öğe, bir veri kümesi ile altındaki tüm veri kümeleridir. BombVault her yedek için tüm ağacın tek bir ZFS anlık görüntüsünü alır, böylece içindeki her veri kümesi aynı anda yakalanır. Ardından her veri kümesinin dosyalarını bu anlık görüntüden okur, bir klasörü nasıl saklıyorsa öyle restic ile saklar ve anlık görüntüyü hemen sonra kaldırır. Yedekler tekilleştirilmiştir, her birine göz atabilirsiniz ve tek tek dosyalar geri yüklenebilir.
 
-BombVault veri kümeleri için hiçbir zaman `zfs send` kullanmaz, hiçbir veri kümesini geri sarmaz ve hiçbirini yok etmez.
+Yedekleme restic'e hiçbir zaman bir akış göndermez ve hiçbir veri kümesini geri sarmaz. BombVault yalnızca kendi oluşturduğu anlık görüntüleri yok eder. İsteğe bağlı [replika](#replica) `zfs send` kullanan tek yerdir: veri kümelerini ikinci bir ZFS sunucusuna kopyalar ve yedeğe dokunmaz.
 
 ## Gereksinimler {#requirements}
 
@@ -102,6 +102,93 @@ Yeni bir havuza geri yüklemek için havuzu oluştur ve her veri kümesini yeni 
 
 Şifreli bir veri kümesi yalnızca anahtarı yüklüyken yedeklenir. Aksi halde bir uyarıyla atlanır; anahtarı `zfs load-key` ile yükleyin ve veri kümesini bağlayın. BombVault verileri şifresi çözülmüş olarak okur ve şifreli olan restic deposunda saklar. BombVault'ta şifrelemeyi kapattıysanız o depo şifreli değildir.
 
+## Replika {#replica}
+
+Replika, bir öğenin veri kümelerinin ikinci bir ZFS sunucusundaki kopyasıdır. BombVault onu `zfs send` ve `zfs receive` ile güncel tutar. İlk çalıştırma her şeyi gönderir, sonrasında yalnızca değişen bloklar gider. Diğer sunucuda kopyayı hemen bağlayabilirsiniz.
+
+Replika yedeğin yerini hiçbir zaman almaz. Eski sürümler, tek tek dosyalar ve denetim yine yedeklerden gelir ve replika yalnızca sizin belirlediğiniz sayıda anlık görüntü tutar. Güncel bir replika site dışı kopya sayılır, ama replikası olup yedeği olmayan bir öğe turuncu kalır.
+
+Öğenin ayarlarındaki **Replica** kartından açın. Orada replikanın nereye gideceğini, ne zaman çalışacağını (**After every backup** veya **Own plan**) ve hedefte kaç anlık görüntünün kalacağını seçersiniz. Kart her veri kümesini ve birimi durumuyla listeler, **Şimdi çoğalt** ise bir çalıştırma başlatır. Replika çalıştırmasının kendi kilidi vardır, bu yüzden uzun süren ilk aktarım yedekleri hiçbir zaman bekletmez.
+
+### Bir ZFS sunucusuna gönderme {#replica-push}
+
+ZFS ve SSH olan her makine alabilir, örneğin ikinci bir Unraid veya bir TrueNAS. BombVault'un orada çalışması gerekmez.
+
+1. **Örnekler, ZFS sunucuları** bölümünü açın ve **ZFS sunucusu ekle**'ye tıklayın.
+2. Adresi, kullanıcıyı ve portu girin. Pencere BombVault'un genel anahtarını gösterir. Onu sunucuda kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin. Unraid'de bu **Settings, Users, root, SSH keys** altındadır.
+3. Bağlantıyı sınayın. Pencere ardından sunucunun havuzlarını listeler. Birini seçin ve varsayılanı `<pool>/bombvault-replica` olan kökü belirleyin.
+4. Öğenin **Replica** kartında yeni sunucuyu seçin.
+
+root ile başka bir şey gerekmez. Kendi kullanıcısı olan biri için hedefin havuzunda şu izinler gerekir, pencere bunları da gösterir:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Kaynakta aynı türden bir kullanıcının öğenin en üstteki veri kümesinde şunlara ihtiyacı vardır:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+Bu yönde, öğeyi tutan BombVault sunucuda yazabilen bir anahtarı da tutar.
+
+BombVault, sunucunun ilk bağlantıda gösterdiği ana makine anahtarını kaydeder ve sonra başka her anahtarı reddeder. Sunucu yeniden kurulduysa sunucunun sayfasında **Ana makine anahtarını unut** düğmesine basın; sonraki bağlantı yeni anahtarı kaydeder.
+
+### Eşleştirilmiş bir örneğe gönderme {#replica-receive}
+
+Eşleştirilmiş bir BombVault replikayı kendisi alabilir. Kimse diğer ana makineye SSH erişimi kazanmaz ve hiçbir anahtar `authorized_keys` dosyasına girmez.
+
+1. Öğenin **Replica** kartında hedef olarak eşleştirilmiş örneği seçin. Kart, örnek yanıt verene kadar **Onay bekleniyor** gösterir.
+2. Alan örnekte **Örnekler**'i, ardından **Receive**'i açın. **ZFS** kartı isteği listeler. O sunucuda havuzu ve kökü, ayrıca kaç anlık görüntünün kalacağını seçin, sonra **İzin ver**'e veya **Reddet**'e basın.
+3. **İzin ver**'den sonra kaynak, başka herhangi bir hedefte olduğu gibi kendi planına göre gönderir.
+
+Alan örnek yalnızca onayın kapsadığını kabul eder: öğenin veri kümelerini, kendi köküne. `zfs receive` komutunu kendisi çalıştırır ve kaynağın orada bir şeyi silme ya da geri alma yolu yoktur. Bu yüzden kaynağı biri ele geçirse bile kopya korunur. Alan örnek kendi saklama kuralını uygular. Kaynak, istek gönderirken yalnızca bir kural önerir.
+
+Alan örnekteki **Revoke access** onayı istediğiniz zaman sona erdirir ve kaynağa bildirir. Kaynak onayın geri çekildiğini gösterir ve durur. Alan örneğin zaten elinde olanlar orada kalır. Reddedilen bir istek reddedilmiş kalır. Daha fazla veri kümesi için ya da bir iptalden sonra yeniden istek gerekir.
+
+Alan örnek HTTPS üzerinden yanıt vermelidir. Kaynak düz bir http adresine hiçbir şey göndermez, çünkü belirteç ve veriler ağdan şifrelenmeden geçerdi. Her aktarım ayrıca alan havuzun onda birini boş bırakır ve o kısma dokunmadan durur; böylece tek bir kaynak alan sunucunun havuzunu dolduramaz.
+
+### Verinin indiği yer {#replica-target}
+
+Her veri kümesi `<root>/<server>/<pool>/<path>` konumuna iner. Sunucu klasörü kaynak örneğin adıdır ve ilk aktarımda sabitlenir, bu yüzden havuz adı aynı olan iki sunucu birbirine karışmaz. Örneğin `tower` adlı bir sunucunun `cache/appdata` veri kümesi `backup/bombvault-replica/tower/cache/appdata` konumunda biter.
+
+Hedefteki kopya salt okunurdur ve bağlanmaz, bu yüzden o sunucuda hiçbir şeyi örtmez. ZFS özellikleri, bağlama noktası ile `sharenfs` ve `sharesmb` dışında birlikte gider. `reservation` ve `refreservation` ayırmaları da gitmez, bu yüzden kopya yalnızca verilerinin ihtiyaç duyduğu yeri kaplar.
+
+### Neler dahil {#replica-contents}
+
+Öğenin yedeklediği her şey dahildir, yedeğin atladığı altındaki birimler de. Öğede kapattığınız bir alt veri kümesi dışarıda kalır. Bir çalıştırmanın tüm veri kümeleri, yedekte olduğu gibi tek bir anlık görüntüden gelir.
+
+### Anlık görüntülerin ne kadar kaldığı {#replica-retention}
+
+Hedefte yeni bir replika 7 günlük ve 3 haftalık anlık görüntü tutar. Bunun yerine **Short**, **Dengeli** veya **Long**'u seçin ya da **Custom values**'ı ayarlayın. Orada yalnızca `bombvault-replica-<14 digits>` adlı anlık görüntüler kaldırılır ve iki tarafın da paylaştığı en yeni olan asla kaldırılmaz.
+
+Kaynakta BombVault yalnızca en son replika anlık görüntüsünü ve gönderdiği her durum için bir yer imi tutar. Yer imleri alan harcamaz. Sonraki aktarım onlardan başlar.
+
+### Replikada şifreli veri kümeleri {#replica-encryption}
+
+Şifreli bir veri kümesi ham olarak gönderilir. Hedefte şifreli kalır ve hedef anahtarı hiçbir zaman görmez. Anahtarı güvende tutun: bir geri yüklemeden sonra kopyayı açmak için ona ihtiyacınız vardır ve anahtarsız bir replika okunamaz.
+
+### Replikayı kullanma {#replica-use}
+
+Öğenin **Yedekler** sekmesini açın ve **Storage locations** kartındaki replika satırına tıklayın. Sayfa hedefteki anlık görüntüleri listeler ve komutları gerçek adlarınızla gösterir.
+
+Eski bir duruma bakmak için hedefte bir anlık görüntüyü klonlayın. Bir klon, bir şey değişene kadar yer kaplamaz ve replika olduğu gibi kalır:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Kaynak çökerse kopyayı hedefte normal, yazılabilir bir veri kümesine çevirin:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault bundan sonra yeni bir ilk çalıştırma başlatana kadar o veri kümesine replikayı durdurur.
+
+Bir durumu kaynağa geri getirmek için sayfada **Bring back as a new dataset**'e basın. BombVault anlık görüntüyü orijinalin yanında, adı `<dataset>-bombvault-restore-` artı bir zaman damgası olan yeni bir veri kümesine gönderir. Orijinalin üzerine asla yazmaz.
+
 ## Kalan anlık görüntüler {#leftover-snapshots}
 
 Bir yedeğin anlık görüntüsünün adı `<dataset>@bombvault-<14 rakam>` biçimindedir, örneğin `cache/appdata@bombvault-20260924021500` (UTC). BombVault onu yedekten hemen sonra kaldırır. Bu başarısız olursa, örneğin veri kümesi meşgul olduğu ya da BombVault durdurulduğu için, BombVault onu şu durumlarda kaldırır:
@@ -116,6 +203,8 @@ Yalnızca tam olarak `bombvault-` artı 14 rakamdan oluşan adlar kaldırılır.
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Bir replikanın anlık görüntüsü `<dataset>@bombvault-replica-<14 digits>` olarak adlandırılır ve kalıntı değildir. Kaynakta sonraki replika çalıştırması onun yerini alana kadar, hedefte ise saklama onu tuttuğu sürece kalır. Temizleyici ona hiçbir zaman dokunmaz, çünkü yalnızca `bombvault-` ve ardından tam olarak 14 rakam olan adlarla eşleşir.
 
 ## Anormallikler {#anomalies}
 

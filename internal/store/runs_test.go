@@ -185,6 +185,29 @@ func TestReapInterruptedRuns(t *testing.T) {
 	}
 }
 
+func TestAReapedReplicaRunEndsInItsReasonCode(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	replica, _ := r.StartRun("item", store.ZFSReplicaRunKind)
+	backup, _ := r.StartRun("item", "backup")
+	if _, err := r.ReapInterruptedRuns(); err != nil {
+		t.Fatal(err)
+	}
+	runs, err := r.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{replica: store.ReasonInterrupted + " [interrupted]", backup: store.ReasonInterrupted}
+	for _, run := range runs {
+		if run.Status != "failed" || run.Error != want[run.ID] {
+			t.Errorf("%s run = %s %q, want failed %q", run.Kind, run.Status, run.Error, want[run.ID])
+		}
+	}
+}
+
 func TestRunsSince(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

@@ -502,6 +502,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/zfs/datasets/{id}/files", h.handleListSnapshotFilesZFS)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/restore", h.handleRestoreZFS)
 	mux.HandleFunc("POST /api/zfs/discover", h.handleDiscoverZFS)
+	h.registerZFSReplicaRoutes(mux)
+	h.registerZFSReceiveRoutes(mux)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted

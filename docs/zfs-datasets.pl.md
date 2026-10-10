@@ -2,7 +2,7 @@
 
 Strona **ZFS** tworzy kopie zapasowe zbiorów danych ZFS. Element to jeden zbiór danych razem ze wszystkimi zbiorami danych pod nim. Przy każdej kopii BombVault robi jedną migawkę ZFS całego drzewa, więc każdy zbiór danych w nim zostaje uchwycony w tej samej chwili. Następnie odczytuje pliki każdego zbioru danych z tej migawki, zapisuje je za pomocą restic tak samo jak folder i od razu potem usuwa migawkę. Kopie są deduplikowane, każdą z nich możesz przeglądać, a pojedyncze pliki da się przywrócić.
 
-BombVault nigdy nie używa `zfs send` dla zbiorów danych, nigdy nie cofa zbioru danych do wcześniejszego stanu i nigdy żadnego nie niszczy.
+Kopia zapasowa nigdy nie wysyła strumienia do restic i nigdy nie cofa zbioru danych do wcześniejszego stanu. BombVault niszczy tylko migawki, które sam utworzył. Opcjonalna [replika](#replica) to jedyne miejsce, które używa `zfs send`: kopiuje zbiory danych na drugi serwer ZFS i nie dotyka kopii zapasowej.
 
 ## Wymagania {#requirements}
 
@@ -102,6 +102,93 @@ Aby przywrócić na nowy pool, utwórz pool i przywróć każdy zbiór danych do
 
 Zaszyfrowany zbiór danych jest kopiowany tylko wtedy, gdy jego klucz jest załadowany. W przeciwnym razie jest pomijany z ostrzeżeniem; załaduj klucz poleceniem `zfs load-key` i zamontuj zbiór danych. BombVault odczytuje dane odszyfrowane i zapisuje je w repozytorium restic, które jest zaszyfrowane. Jeśli wyłączyłeś szyfrowanie w BombVault, to repozytorium nie jest zaszyfrowane.
 
+## Replika {#replica}
+
+Replika to kopia zbiorów danych elementu na drugim serwerze ZFS. BombVault aktualizuje ją poleceniami `zfs send` i `zfs receive`. Pierwsze uruchomienie wysyła wszystko, potem przesyłane są tylko zmienione bloki. Na drugim serwerze możesz od razu zamontować kopię.
+
+Replika nigdy nie zastępuje kopii zapasowej. Starsze wersje, pojedyncze pliki i sprawdzanie nadal pochodzą z kopii zapasowych, a replika zachowuje tylko tyle migawek, ile ustawisz. Aktualna replika liczy się jako kopia poza siedzibą, ale element z repliką i bez kopii zapasowej pozostaje pomarańczowy.
+
+Włącz ją na karcie **Replica** w ustawieniach elementu. Tam wybierasz, dokąd trafia replika, kiedy działa (**After every backup** albo **Own plan**) i ile migawek zostaje na celu. Karta pokazuje każdy zbiór danych i każdy wolumen wraz ze stanem, a **Replikuj teraz** uruchamia przebieg. Przebieg repliki ma własną blokadę, więc długi pierwszy transfer nigdy nie wstrzymuje kopii zapasowych.
+
+### Wysyłanie na serwer ZFS {#replica-push}
+
+Odbierać może każda maszyna z ZFS i SSH, na przykład drugi Unraid albo TrueNAS. BombVault nie musi tam działać.
+
+1. Otwórz **Instancje, Serwery ZFS** i kliknij **Dodaj serwer ZFS**.
+2. Wpisz adres, użytkownika i port. Okno pokazuje klucz publiczny BombVault. Dodaj go do `~/.ssh/authorized_keys` tego użytkownika na serwerze. W Unraid znajdziesz to w **Settings, Users, root, SSH keys**.
+3. Przetestuj połączenie. Okno wyświetli wtedy pule serwera. Wybierz jedną i ustaw katalog główny, który domyślnie ma postać `<pool>/bombvault-replica`.
+4. Wybierz nowy serwer na karcie **Replica** elementu.
+
+Dla roota nic więcej nie jest potrzebne. Osobny użytkownik potrzebuje tych uprawnień na puli celu, które okno również pokazuje:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Na źródle taki sam użytkownik potrzebuje tych uprawnień na najwyższym zbiorze danych elementu:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+W tym kierunku BombVault, który przechowuje element, ma też klucz pozwalający pisać na serwerze.
+
+BombVault zapamiętuje klucz hosta, który serwer pokazuje przy pierwszym połączeniu, a później odrzuca każdy inny. Jeśli serwer został zainstalowany na nowo, naciśnij **Zapomnij klucz hosta** na stronie serwera, a następne połączenie zapamięta nowy klucz.
+
+### Wysyłanie do sparowanej instancji {#replica-receive}
+
+Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH do drugiego hosta i żaden klucz nie trafia do pliku `authorized_keys`.
+
+1. Na karcie **Replica** elementu wybierz sparowaną instancję jako cel. Karta pokazuje **Czeka na zatwierdzenie**, dopóki instancja nie odpowie.
+2. Na instancji odbierającej otwórz **Instancje**, potem **Odbieranie**. Karta **ZFS** wyświetla prośbę. Wybierz pulę i katalog główny na tym serwerze oraz liczbę migawek, które zostają, potem naciśnij **Zezwól** albo **Odrzuć**.
+3. Po **Zezwól** źródło wysyła według własnego harmonogramu, jak do każdego innego celu.
+
+Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę.
+
+**Revoke access** na instancji odbierającej w każdej chwili kończy zatwierdzenie i informuje o tym źródło, które pokazuje wtedy, że zatwierdzenie wycofano, i przestaje wysyłać. To, co instancja odbierająca już ma, zostaje u niej. Odrzucona prośba pozostaje odrzucona. Dodatkowe zbiory danych albo prośba po cofnięciu dostępu wymagają ponownego pytania.
+
+Instancja odbierająca musi odpowiadać przez HTTPS. Na zwykły adres http źródło nic nie wysyła, bo token i dane szłyby przez sieć niezaszyfrowane. Każdy transfer zostawia też wolną jedną dziesiątą puli odbierającej i zatrzymuje się, zanim by ją naruszył, więc jedno źródło nie zapełni puli serwera odbierającego.
+
+### Gdzie trafiają dane {#replica-target}
+
+Każdy zbiór danych trafia do `<root>/<server>/<pool>/<path>`. Folder serwera to nazwa instancji źródłowej, ustalona przy pierwszym transferze, więc dwa serwery z taką samą nazwą puli nigdy sobie nie przeszkadzają. Na przykład `cache/appdata` serwera o nazwie `tower` trafia do `backup/bombvault-replica/tower/cache/appdata`.
+
+Kopia na celu jest tylko do odczytu i nie jest zamontowana, więc niczego na tym serwerze nie przykrywa. Właściwości ZFS są przesyłane razem z danymi, z wyjątkiem punktu montowania oraz `sharenfs` i `sharesmb`. Rezerwacje `reservation` i `refreservation` również zostają po stronie źródła, więc kopia zajmuje tylko tyle miejsca, ile potrzebują jej dane.
+
+### Co jest uwzględnione {#replica-contents}
+
+Uwzględnione jest wszystko, co element kopiuje, a także znajdujące się pod nim wolumeny, które kopia zapasowa pomija. Zbiór danych podrzędny, który wyłączyłeś w elemencie, zostaje pominięty. Wszystkie zbiory danych jednego przebiegu pochodzą z jednej migawki, tak jak w kopii zapasowej.
+
+### Jak długo migawki zostają {#replica-retention}
+
+Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamiast tego wybrać **Short**, **Balanced** albo **Long**, albo ustawić **Custom values**. Usuwane są tam wyłącznie migawki o nazwie `bombvault-replica-<14 digits>`, i nigdy najnowsza, którą obie strony mają wspólną.
+
+Na źródle BombVault zachowuje tylko najnowszą migawkę repliki oraz zakładkę (bookmark) dla każdego wysłanego stanu. Zakładki nie zajmują miejsca. Następny transfer zaczyna się od nich.
+
+### Zaszyfrowane zbiory danych w replice {#replica-encryption}
+
+Zaszyfrowany zbiór danych jest wysyłany w postaci raw. Na celu pozostaje zaszyfrowany, a cel nigdy nie widzi klucza. Przechowuj klucz w bezpiecznym miejscu: jest potrzebny do otwarcia kopii po przywróceniu, a replika bez niego jest nieczytelna.
+
+### Korzystanie z repliki {#replica-use}
+
+Otwórz kartę **Kopie zapasowe** elementu i kliknij wiersz repliki na karcie **Storage locations**. Arkusz pokazuje migawki na celu oraz polecenia z Twoimi rzeczywistymi nazwami.
+
+Aby obejrzeć dawny stan, sklonuj migawkę na celu. Klon nie zajmuje miejsca, dopóki coś się nie zmieni, a replika pozostaje nietknięta:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Jeśli źródło ulegnie awarii, zamień kopię na celu w zwykły zbiór danych z możliwością zapisu:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault przestaje potem replikować do tego zbioru danych, dopóki nie uruchomisz nowego pierwszego przebiegu.
+
+Aby przywrócić stan na źródło, naciśnij w arkuszu **Bring back as a new dataset**. BombVault wysyła migawkę do nowego zbioru danych obok oryginału, o nazwie `<dataset>-bombvault-restore-` z dopisanym znacznikiem czasu. Nigdy nie nadpisuje oryginału.
+
 ## Pozostałe migawki {#leftover-snapshots}
 
 Migawka kopii nazywa się `<dataset>@bombvault-<14 cyfr>`, na przykład `cache/appdata@bombvault-20260924021500` (UTC). BombVault usuwa ją zaraz po kopii. Jeśli to się nie uda, na przykład dlatego, że zbiór danych jest zajęty albo BombVault został zatrzymany, BombVault usuwa ją:
@@ -116,6 +203,8 @@ Usuwane są tylko nazwy, które dokładnie odpowiadają `bombvault-` plus 14 cyf
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Migawka repliki nazywa się `<dataset>@bombvault-replica-<14 digits>` i nie jest pozostałością. Zostaje na źródle, dopóki następny przebieg repliki jej nie zastąpi, a na celu tak długo, jak trzyma ją retencja. Sprzątanie nigdy jej nie rusza, bo pasuje tylko do `bombvault-` z dokładnie 14 cyframi.
 
 ## Anomalie {#anomalies}
 

@@ -2,7 +2,8 @@
 // TrueNAS Scale, or a generic Docker host running libvirtd), used for virsh
 // over qemu+ssh:// and for copying NVRAM files. No libvirt path is
 // bind-mounted, so the container cannot interfere with the host's own VM
-// manager.
+// manager. A Conn from NewIsolated reaches any other host, such as the target
+// of a ZFS replica, with a key of its own.
 package sshconn
 
 import (
@@ -15,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -27,6 +29,8 @@ type Conn struct {
 
 	// explicitURI replaces the URI VirshURI would build; see VirshURI.
 	explicitURI string
+	isolated    bool   // set by NewIsolated
+	knownHosts  string // set by NewIsolated; empty means dir/known_hosts
 }
 
 // New returns a Conn that keeps its key under dataDir/ssh. An empty port
@@ -39,14 +43,44 @@ func New(host, user, port, dataDir, explicitURI string) *Conn {
 	return &Conn{Host: host, User: user, Port: port, dir: filepath.Join(dataDir, "ssh"), explicitURI: explicitURI}
 }
 
-func (c *Conn) keyPath() string        { return filepath.Join(c.dir, "id_ed25519") }
-func (c *Conn) knownHostsPath() string { return filepath.Join(c.dir, "known_hosts") }
+// NewIsolated returns a Conn to a host other than the libvirt one, with its
+// own key in keyDir and the host keys it pinned in the file knownHosts.
+// Several hosts can share one key that way and still pin each host apart. It
+// reads no ssh config file, so the identity WriteSSHConfig sets up for every
+// host never reaches it.
+func NewIsolated(host, user, port, keyDir, knownHosts string) *Conn {
+	if port == "" {
+		port = "22"
+	}
+	return &Conn{Host: host, User: user, Port: port, dir: keyDir, isolated: true, knownHosts: knownHosts}
+}
 
-// EnsureKey generates an ed25519 keypair on first use and reuses it thereafter.
+func (c *Conn) keyPath() string { return filepath.Join(c.dir, "id_ed25519") }
+
+func (c *Conn) knownHostsPath() string {
+	if c.knownHosts != "" {
+		return c.knownHosts
+	}
+	return filepath.Join(c.dir, "known_hosts")
+}
+
+// keygen serialises key creation. Isolated Conns share a key directory, and
+// two ssh-keygen runs into one path can leave a private key and a public key
+// from different runs.
+var keygen sync.Mutex
+
+// EnsureKey generates an ed25519 keypair on first use and reuses it
+// thereafter. It also creates the directory known_hosts goes in, since ssh
+// does not and would then pin nothing.
 func (c *Conn) EnsureKey() error {
 	if err := os.MkdirAll(c.dir, 0o700); err != nil {
 		return fmt.Errorf("sshconn: mkdir: %w", err)
 	}
+	if err := os.MkdirAll(filepath.Dir(c.knownHostsPath()), 0o700); err != nil {
+		return fmt.Errorf("sshconn: mkdir: %w", err)
+	}
+	keygen.Lock()
+	defer keygen.Unlock()
 	if _, err := os.Stat(c.keyPath()); err == nil {
 		return nil
 	}
@@ -86,15 +120,23 @@ func (c *Conn) VirshURI() string {
 // ConnectTimeout fails fast when the host is unreachable, for example from a
 // macvlan/br0 container that cannot route to it.
 func (c *Conn) sshArgs() []string {
-	return []string{
+	var args []string
+	if c.isolated {
+		// IdentitiesOnly keeps an agent's keys out as well. A replica stream
+		// has no deadline, so a host that drops off mid-stream has to end it
+		// within a minute rather than when TCP gives up hours later.
+		args = []string{"-F", "none", "-o", "IdentitiesOnly=yes",
+			"-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=4"}
+	}
+	return append(args,
 		"-i", c.keyPath(),
 		"-p", c.Port,
 		"-o", "BatchMode=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "ConnectTimeout=10",
-		"-o", "UserKnownHostsFile=" + c.knownHostsPath(),
-		c.User + "@" + c.Host,
-	}
+		"-o", "UserKnownHostsFile="+c.knownHostsPath(),
+		c.User+"@"+c.Host,
+	)
 }
 
 // shellQuote single-quotes s for the remote shell. OpenSSH joins the remote
@@ -132,7 +174,10 @@ var ErrForeignSSHConfig = errors.New("an ssh config BombVault did not write is i
 // The file is one Host * block, so it would redirect every ssh call of the
 // account. In the container that account is BombVault's own, but run on a
 // desktop it is a person's, which is why a file someone else wrote is never
-// replaced.
+// replaced. It stays Host * because restic's sftp backend and the SFTP free
+// space probe start plain ssh too, and the docs tell users to authorize this
+// key on their SFTP targets. A Conn to another host is built with NewIsolated
+// instead, which reads no config at all.
 func (c *Conn) WriteSSHConfig() error {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
@@ -268,9 +313,9 @@ func (c *Conn) WriteFile(ctx context.Context, path string, data []byte) error {
 // after reading, whether reading succeeded or not, to reap ssh and get its
 // exit status.
 func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser, func() error, error) {
-	cmd := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	stderr := &cappedBuffer{max: captureStderrLimit}
+	cmd.Stderr = stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, nil, fmt.Errorf("sshconn: stdout pipe for %q: %w", args[0], err)
@@ -280,26 +325,45 @@ func (c *Conn) StreamCommand(ctx context.Context, args ...string) (io.ReadCloser
 	}
 	wait := func() error {
 		if err := cmd.Wait(); err != nil {
-			return fmt.Errorf("sshconn: run %q: %s", args[0], strings.TrimSpace(stderr.String()))
+			return &RemoteError{Cmd: args[0], Stderr: strings.TrimSpace(stderr.buf.String()), Err: err}
 		}
 		return nil
 	}
 	return stdout, wait, nil
 }
 
+// stdinWaitDelay bounds how long RunWithStdin waits for its stdin copy once
+// the remote command is gone. The copy can sit in a read of a stream that has
+// stalled, and nothing reads what it would write anyway.
+const stdinWaitDelay = 5 * time.Second
+
 // RunWithStdin runs a command on the host over SSH with stdin streamed from rd,
 // such as a restic dump piped into `zfs receive`. It is the restore-side
 // counterpart of StreamCommand and blocks until the remote command exits.
 func (c *Conn) RunWithStdin(ctx context.Context, rd io.Reader, args ...string) error {
-	cmd := exec.CommandContext(ctx, "ssh", c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
 	cmd.Stdin = rd
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	cmd.WaitDelay = stdinWaitDelay
+	stderr := &cappedBuffer{max: captureStderrLimit}
+	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil { // stdout is discarded
-		return fmt.Errorf("sshconn: run %q: %s", args[0], strings.TrimSpace(stderr.String()))
+		return &RemoteError{Cmd: args[0], Stderr: strings.TrimSpace(stderr.buf.String()), Err: err}
 	}
 	return nil
 }
+
+// RemoteError is how a streamed command failed. Err keeps the exit status,
+// which tells a failing remote command from ssh itself failing, and Stderr is
+// what either of them said.
+type RemoteError struct {
+	Cmd    string
+	Stderr string
+	Err    error
+}
+
+func (e *RemoteError) Error() string { return fmt.Sprintf("sshconn: run %q: %s", e.Cmd, e.Stderr) }
+
+func (e *RemoteError) Unwrap() error { return e.Err }
 
 // Test verifies the SSH path reaches libvirt: runs `virsh -c <uri> list --all`.
 func (c *Conn) Test(ctx context.Context) error {

@@ -81,6 +81,8 @@ type settingsExport struct {
 	// them, and the import then leaves this instance's own settings alone.
 	HomeAssistant *homeAssistantExport `json:"homeAssistant,omitempty"`
 	MDNSEnabled   *bool                `json:"mdnsEnabled,omitempty"`
+	// ZFSReplica is nil in a file from a build without the replica.
+	ZFSReplica *zfsReplicaExport `json:"zfsReplica,omitempty"`
 	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
 	// a build without the ZFS domain, so its empty ZFS fields say nothing about
 	// the ZFS setup of the instance it is applied to.
@@ -334,6 +336,10 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		Idle:              idleToView(traffic),
 	}
 	if err := h.exportIntegrations(&exp); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.exportZFSReplica(&exp); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -809,6 +815,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return "invalid idle settings: " + err.Error()
 		}
 	}
+	if msg := zfsReplicaRefusal(exp); msg != "" {
+		return msg
+	}
 	return integrationsRefusal(exp)
 }
 
@@ -867,6 +876,7 @@ func exportGroups(exp settingsExport) []string {
 			groups = append(groups, "idle")
 		}
 	}
+	groups = append(groups, zfsReplicaGroups(exp)...)
 	return append(groups, integrationGroups(exp)...)
 }
 
@@ -1046,6 +1056,9 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 		}
 	}
 	if err := h.applyImportedIntegrations(exp); err != nil {
+		return err
+	}
+	if err := h.applyImportedZFSReplica(exp); err != nil {
 		return err
 	}
 

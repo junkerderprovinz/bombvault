@@ -2,7 +2,7 @@
 
 Siden **ZFS** tager sikkerhedskopier af ZFS-datasæt. Et element er ét datasæt sammen med alle datasæt under det. Til hver sikkerhedskopi tager BombVault ét ZFS-snapshot af hele træet, så hvert datasæt i det fanges i samme øjeblik. Derefter læser det filerne i hvert datasæt fra det snapshot, gemmer dem med restic på samme måde som en mappe og fjerner snapshottet lige bagefter. Sikkerhedskopierne er deduplikerede, du kan gennemse hver enkelt, og enkelte filer kan gendannes.
 
-BombVault bruger aldrig `zfs send` til datasæt, ruller aldrig et datasæt tilbage og sletter aldrig et.
+Sikkerhedskopien sender aldrig en strøm ind i restic og ruller aldrig et datasæt tilbage. BombVault sletter kun snapshots, som det selv har oprettet. Den valgfri [replika](#replica) er det eneste sted, der bruger `zfs send`: den kopierer datasættene til en anden ZFS-server og rører ikke sikkerhedskopien.
 
 ## Krav {#requirements}
 
@@ -102,6 +102,93 @@ For at gendanne til en ny pool opretter du poolen og gendanner hvert datasæt ti
 
 Et krypteret datasæt sikkerhedskopieres kun, mens dets nøgle er indlæst. Ellers springes det over med en advarsel; indlæs nøglen med `zfs load-key` og montér datasættet. BombVault læser dataene dekrypteret og gemmer dem i restics repository, som er krypteret. Har du slået kryptering fra i BombVault, er det repository det ikke.
 
+## Replika {#replica}
+
+En replika er en kopi af et elements datasæt på en anden ZFS-server. BombVault holder den ajour med `zfs send` og `zfs receive`. Den første kørsel sender alt, bagefter rejser kun de ændrede blokke. På den anden server kan du montere kopien med det samme.
+
+En replika erstatter aldrig sikkerhedskopien. Ældre versioner, enkelte filer og kontrollen kommer stadig fra sikkerhedskopierne, og replikaen beholder kun så mange snapshots, som du angiver. En aktuel replika tæller som en kopi uden for stedet, men et element med replika og uden sikkerhedskopi forbliver orange.
+
+Slå den til på kortet **Replica** i elementets indstillinger. Der vælger du, hvor replikaen skal hen, hvornår den kører (**After every backup** eller **Own plan**), og hvor mange snapshots der bliver på målet. Kortet oplister hvert datasæt og hvert volumen med dets tilstand, og **Replikér nu** starter en kørsel. En replikakørsel har sin egen lås, så en lang første overførsel aldrig holder sikkerhedskopierne tilbage.
+
+### Push til en ZFS-server {#replica-push}
+
+Enhver maskine med ZFS og SSH kan modtage, for eksempel en anden Unraid eller en TrueNAS. BombVault behøver ikke køre dér.
+
+1. Åbn **Instanser, ZFS-servere** og klik på **Tilføj ZFS-server**.
+2. Angiv adresse, bruger og port. Dialogen viser BombVaults offentlige nøgle. Føj den til brugerens `~/.ssh/authorized_keys` på serveren. På Unraid findes det under **Settings, Users, root, SSH keys**.
+3. Test forbindelsen. Dialogen oplister derefter serverens pools. Vælg én og angiv roden, som som standard er `<pool>/bombvault-replica`.
+4. Vælg den nye server på elementets kort **Replica**.
+
+Med root skal der ikke mere til. En bruger af sit eget skal bruge disse rettigheder på målets pool, som dialogen også viser:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+På kilden skal den samme slags bruger have disse på elementets øverste datasæt:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+I denne retning har den BombVault, der ejer elementet, også en nøgle, der kan skrive på serveren.
+
+BombVault gemmer den værtsnøgle, serveren viser ved første forbindelse, og afviser senere en anden. Hvis serveren er geninstalleret, så tryk på **Forget host key** på serverens side, så gemmer næste forbindelse den nye nøgle.
+
+### Send til en parret instans {#replica-receive}
+
+En parret BombVault kan modtage replikaen selv. Ingen får SSH-adgang til den anden vært, og der kommer ingen nøgle i en `authorized_keys`-fil.
+
+1. På elementets kort **Replica** vælger du den parrede instans som mål. Kortet viser **Venter på godkendelse**, indtil den svarer.
+2. På den modtagende instans åbner du **Instanser**, derefter **Modtag**. Kortet **ZFS** oplister anmodningen. Vælg pool og rod på den server og hvor mange snapshots der bliver, og tryk derefter på **Allow** eller **Decline**.
+3. Efter **Allow** sender kilden efter sin egen tidsplan, som til ethvert andet mål.
+
+Den modtagende instans accepterer kun det, godkendelsen dækker: elementets datasæt, ind i dens egen rod. Den kører selv `zfs receive`, og kilden kan ikke slette eller rulle noget tilbage dér. Kopien overlever altså en kilde, som nogen har overtaget. Den modtagende instans beholder sin egen opbevaring. Kilden foreslår kun en regel, når den spørger.
+
+**Revoke access** på den modtagende instans afslutter godkendelsen når som helst og giver kilden besked, som så viser, at godkendelsen er trukket tilbage, og stopper. Det, den modtagende instans allerede har, bliver liggende. En afvist anmodning forbliver afvist. Flere datasæt, eller en anmodning efter en tilbagekaldelse, spørger igen.
+
+Den modtagende instans skal svare over HTTPS. Til en ren http-adresse sender kilden ingenting, fordi tokenet og dataene ellers ville gå ukrypteret over nettet. Hver overførsel lader desuden en tiendedel af den modtagende pool være fri og stopper, før den ville tage af den, så én kilde ikke kan fylde den modtagende servers pool.
+
+### Hvor dataene havner {#replica-target}
+
+Hvert datasæt havner i `<root>/<server>/<pool>/<path>`. Servermappen er kildeinstansens navn, fastlagt ved den første overførsel, så to servere med samme poolnavn aldrig kommer i vejen for hinanden. For eksempel havner `cache/appdata` fra en server ved navn `tower` i `backup/bombvault-replica/tower/cache/appdata`.
+
+Kopien på målet er skrivebeskyttet og ikke monteret, så den aldrig dækker noget på den server. ZFS-egenskaber følger med, bortset fra monteringspunktet, `sharenfs` og `sharesmb`. Reservationerne `reservation` og `refreservation` bliver også tilbage, så kopien kun optager den plads, dens data kræver.
+
+### Hvad der kommer med {#replica-contents}
+
+Alt, hvad elementet sikkerhedskopierer, kommer med, og volumenerne under det også, som sikkerhedskopien springer over. Et underdatasæt, du har slået fra i elementet, bliver udenfor. Alle datasæt i en kørsel stammer fra ét snapshot, som i sikkerhedskopien.
+
+### Hvor længe snapshots bliver {#replica-retention}
+
+På målet beholder en ny replika 7 daglige og 3 ugentlige snapshots. Vælg i stedet **Short**, **Balanced** eller **Long**, eller angiv **Custom values**. Kun snapshots med navnet `bombvault-replica-<14 digits>` fjernes dér, og aldrig det nyeste, som begge sider deler.
+
+På kilden beholder BombVault kun det seneste replika-snapshot plus et bogmærke for hver tilstand, det har sendt. Bogmærker koster ingen plads. Næste overførsel starter fra dem.
+
+### Krypterede datasæt i en replika {#replica-encryption}
+
+Et krypteret datasæt sendes råt. Det forbliver krypteret på målet, og målet ser aldrig nøglen. Opbevar nøglen sikkert: du skal bruge den for at åbne kopien efter en gendannelse, og en replika uden den kan ikke læses.
+
+### Brug af replikaen {#replica-use}
+
+Åbn elementets fane **Sikkerhedskopier** og klik på replikarækken på kortet **Storage locations**. Arket oplister snapshotsene på målet og viser kommandoerne med dine rigtige navne.
+
+For at se en gammel tilstand kloner du et snapshot på målet. En klon fylder intet, før noget ændres, og replikaen forbliver urørt:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Hvis kilden svigter, gør du kopien på målet til et almindeligt datasæt, der kan skrives til:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault holder derefter op med at replikere til det datasæt, indtil du starter en ny første kørsel.
+
+For at få en tilstand tilbage til kilden trykker du på **Bring back as a new dataset** i arket. BombVault sender snapshottet ind i et nyt datasæt ved siden af originalen, med navnet `<dataset>-bombvault-restore-` plus et tidsstempel. Det skriver aldrig oven på originalen.
+
 ## Efterladte snapshots {#leftover-snapshots}
 
 Snapshottet af en sikkerhedskopi hedder `<dataset>@bombvault-<14 cifre>`, for eksempel `cache/appdata@bombvault-20260924021500` (UTC). BombVault fjerner det lige efter sikkerhedskopien. Lykkes det ikke, for eksempel fordi datasættet er optaget eller BombVault blev stoppet, fjerner BombVault det:
@@ -116,6 +203,8 @@ Kun navne, der præcis er `bombvault-` plus 14 cifre, fjernes. Sikkerhedssnapsho
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+En replikas snapshot hedder `<dataset>@bombvault-replica-<14 digits>` og er ikke en rest. Det bliver på kilden, indtil næste replikakørsel erstatter det, og på målet, så længe opbevaringen beholder det. Oprydningen rører det aldrig, fordi den kun matcher `bombvault-` efterfulgt af præcis 14 cifre.
 
 ## Afvigelser {#anomalies}
 

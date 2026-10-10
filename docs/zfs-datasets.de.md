@@ -2,7 +2,7 @@
 
 Die Seite **ZFS** sichert ZFS-Datasets. Ein Element ist ein Dataset zusammen mit jedem Dataset darunter. Für jedes Backup legt BombVault einen einzigen ZFS-Snapshot des ganzen Baums an, sodass jedes Dataset darin vom selben Augenblick stammt. Danach liest es die Dateien jedes Datasets aus diesem Snapshot, speichert sie mit restic so wie einen Ordner und entfernt den Snapshot gleich wieder. Die Backups sind dedupliziert, jedes lässt sich durchsuchen, und einzelne Dateien lassen sich wiederherstellen.
 
-BombVault nutzt für Datasets nie `zfs send`, rollt nie ein Dataset zurück und löscht nie eines.
+Das Backup schickt nie einen Stream in restic und rollt nie ein Dataset zurück. BombVault löscht nur Snapshots, die es selbst angelegt hat. Die optionale [Replik](#replica) ist die einzige Stelle, die `zfs send` nutzt: Sie kopiert die Datasets auf einen zweiten ZFS-Server und lässt das Backup unberührt.
 
 ## Voraussetzungen {#requirements}
 
@@ -102,6 +102,93 @@ Um auf einen neuen Pool wiederherzustellen, lege den Pool an und stelle jedes Da
 
 Ein verschlüsseltes Dataset wird nur gesichert, solange sein Schlüssel geladen ist. Sonst wird es mit einer Warnung übersprungen; lade den Schlüssel mit `zfs load-key` und hänge das Dataset ein. BombVault liest die Daten entschlüsselt und speichert sie im Repository von restic, das verschlüsselt ist. Hast du die Verschlüsselung in BombVault abgeschaltet, ist dieses Repository es nicht.
 
+## Replik {#replica}
+
+Eine Replik ist eine Kopie der Datasets eines Elements auf einem zweiten ZFS-Server. BombVault hält sie mit `zfs send` und `zfs receive` aktuell. Der erste Lauf überträgt alles, danach wandern nur noch die geänderten Blöcke. Auf dem anderen Server kannst du die Kopie sofort einhängen.
+
+Eine Replik ersetzt das Backup nie. Ältere Versionen, einzelne Dateien und die Prüfung kommen weiter aus den Backups, und die Replik behält nur so viele Snapshots, wie du einstellst. Eine aktuelle Replik zählt als Kopie außer Haus, aber ein Element mit Replik und ohne Backup bleibt orange.
+
+Schalte sie in der Karte **Replik** in den Einstellungen des Elements ein. Dort wählst du, wohin die Replik geht, wann sie läuft (**Nach jeder Sicherung** oder **Eigener Plan**) und wie viele Snapshots auf dem Ziel bleiben. Die Karte listet jedes Dataset und jedes Volume mit seinem Zustand, und **Jetzt replizieren** startet einen Lauf. Ein Replik-Lauf hat eine eigene Sperre, deshalb hält eine lange erste Übertragung die Backups nie auf.
+
+### Auf einen ZFS-Server schicken {#replica-push}
+
+Jede Maschine mit ZFS und SSH kann empfangen, zum Beispiel ein zweiter Unraid oder ein TrueNAS. BombVault muss dort nicht laufen.
+
+1. Öffne unter **Instanzen** den Tab **ZFS-Server** und klick auf **ZFS-Server hinzufügen**.
+2. Trag Adresse, Benutzer und Port ein. Der Dialog zeigt den öffentlichen Schlüssel von BombVault. Häng ihn auf dem Server an die Datei `~/.ssh/authorized_keys` des Benutzers. Auf einem Unraid geht das unter **Einstellungen, Benutzer, root, SSH-Schlüssel**.
+3. Teste die Verbindung. Der Dialog listet dann die Pools des Servers auf. Wähl einen aus und setz die Wurzel, die standardmäßig `<pool>/bombvault-replica` heißt.
+4. Wähl den neuen Server in der Karte **Replik** des Elements.
+
+Mit root braucht es nichts weiter. Ein eigener Benutzer braucht diese Rechte auf dem Pool des Ziels, die der Dialog ebenfalls zeigt:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+Auf der Quelle braucht ein solcher Benutzer diese Rechte auf dem obersten Dataset des Elements:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+In dieser Richtung hält das BombVault, das das Element besitzt, auch einen Schlüssel, der auf dem Server schreiben kann.
+
+BombVault speichert beim ersten Verbinden den Host-Schlüssel des Servers und lehnt später einen anderen ab. Wurde der Server neu aufgesetzt, drück auf der Seite des Servers **Host-Schlüssel vergessen**, dann speichert die nächste Verbindung den neuen Schlüssel.
+
+### An eine gekoppelte Instanz senden {#replica-receive}
+
+Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-Zugang zum anderen Host, und es landet kein Schlüssel in einer Datei `authorized_keys`.
+
+1. Wähl in der Karte **Replik** des Elements die gekoppelte Instanz als Ziel. Die Karte zeigt **Wartet auf Freigabe**, bis sie antwortet.
+2. Öffne auf der empfangenden Instanz **Instanzen**, dann **Empfangen**. Die Karte **ZFS** listet die Anfrage. Wähl Pool und Wurzel auf diesem Server und wie viele Snapshots bleiben, und drück dann **Erlauben** oder **Ablehnen**.
+3. Nach **Erlauben** sendet die Quelle nach ihrem eigenen Plan, wie bei jedem anderen Ziel.
+
+Die empfangende Instanz nimmt nur an, was die Freigabe abdeckt: die Datasets des Elements, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle kann dort nichts löschen oder zurückrollen. Die Kopie übersteht also auch eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt bei der Anfrage nur eine Regel vor.
+
+**Freigabe entziehen** auf der empfangenden Instanz beendet die Freigabe jederzeit und sagt es der Quelle, die dann anzeigt, dass die Freigabe zurückgezogen wurde, und aufhört. Was die empfangende Instanz schon hat, bleibt dort. Eine abgelehnte Anfrage bleibt abgelehnt. Für weitere Datasets oder nach einem Entzug fragt die Quelle erneut an.
+
+Die empfangende Instanz muss über HTTPS antworten. An eine reine http-Adresse schickt die Quelle nichts, weil Token und Daten sonst unverschlüsselt übers Netz gingen. Jede Übertragung lässt außerdem ein Zehntel des empfangenden Pools frei und hört auf, bevor sie es anbrechen würde. So kann eine einzelne Quelle den Pool des empfangenden Servers nicht füllen.
+
+### Wo die Daten landen {#replica-target}
+
+Jedes Dataset landet unter `<Wurzel>/<Server>/<Pool>/<Pfad>`. Der Serverordner ist der Name der Quell-Instanz, festgelegt bei der ersten Übertragung. So kommen sich zwei Server mit gleichem Pool-Namen nie in die Quere. Zum Beispiel liegt `cache/appdata` eines Servers namens `tower` unter `backup/bombvault-replica/tower/cache/appdata`.
+
+Die Kopie auf dem Ziel ist schreibgeschützt und nicht eingehängt, damit sie dort nichts überdeckt. ZFS-Eigenschaften werden mitgenommen, außer dem Einhängepunkt sowie `sharenfs` und `sharesmb`. Auch die Reservierungen `reservation` und `refreservation` bleiben zurück, die Kopie belegt also nur den Platz, den ihre Daten brauchen.
+
+### Was hineinkommt {#replica-contents}
+
+Hinein kommt alles, was das Element sichert, und auch die Volumes darunter, die das Backup überspringt. Ein Unter-Dataset, das du im Element abgeschaltet hast, bleibt draußen. Alle Datasets eines Laufs stammen aus einem Snapshot, wie beim Backup.
+
+### Wie lange Snapshots bleiben {#replica-retention}
+
+Auf dem Ziel behält eine neue Replik 7 tägliche und 3 wöchentliche Snapshots. Wähl stattdessen **Kurz**, **Ausgewogen** oder **Lang**, oder stell **Eigene Werte** ein. Dort werden nur Snapshots mit dem Namen `bombvault-replica-<14 Ziffern>` entfernt, und nie der neueste, den beide Seiten teilen.
+
+Auf der Quelle behält BombVault nur den letzten Replik-Snapshot, dazu ein Bookmark für jeden gesendeten Stand. Bookmarks brauchen keinen Platz. Die nächste Übertragung setzt dort an.
+
+### Verschlüsselte Datasets in einer Replik {#replica-encryption}
+
+Ein verschlüsseltes Dataset wird roh gesendet. Es bleibt auf dem Ziel verschlüsselt, und das Ziel sieht den Schlüssel nie. Heb den Schlüssel gut auf: Du brauchst ihn, um die Kopie nach einer Wiederherstellung zu öffnen, ohne ihn ist die Replik unlesbar.
+
+### Die Replik nutzen {#replica-use}
+
+Öffne am Element den Tab **Backups** und klick in der Karte **Speicherorte** auf die Zeile der Replik. Das Blatt listet die Snapshots auf dem Ziel und zeigt die Befehle mit deinen echten Namen.
+
+Um einen älteren Stand anzusehen, klone einen Snapshot auf dem Ziel. Ein Klon braucht keinen Platz, bis sich etwas ändert, und die Replik bleibt unberührt:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+Fällt die Quelle aus, machst du die Kopie auf dem Ziel zu einem normalen, beschreibbaren Dataset:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+Danach repliziert BombVault nicht mehr in dieses Dataset, bis du einen neuen ersten Lauf startest.
+
+Um einen Stand zurück auf die Quelle zu holen, drück im Blatt **Als neues Dataset zurückholen**. BombVault sendet den Snapshot in ein neues Dataset neben dem Original, benannt `<dataset>-bombvault-restore-` plus Zeitstempel. Das Original überschreibt es nie.
+
 ## Übrig gebliebene Snapshots {#leftover-snapshots}
 
 Der Snapshot eines Backups heißt `<dataset>@bombvault-<14 Ziffern>`, zum Beispiel `cache/appdata@bombvault-20260924021500` (UTC). BombVault entfernt ihn direkt nach dem Backup. Klappt das nicht, etwa weil das Dataset beschäftigt ist oder BombVault gestoppt wurde, entfernt BombVault ihn:
@@ -116,6 +203,8 @@ Entfernt werden nur Namen, die genau `bombvault-` plus 14 Ziffern lauten. Sicher
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+Der Snapshot einer Replik heißt `<dataset>@bombvault-replica-<14 Ziffern>` und ist kein Überrest. Er bleibt auf der Quelle, bis der nächste Replik-Lauf ihn ersetzt, und auf dem Ziel, solange die Aufbewahrung ihn behält. Der Aufräumer fasst ihn nie an, weil er nur `bombvault-` mit genau 14 Ziffern erkennt.
 
 ## Anomalien {#anomalies}
 

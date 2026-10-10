@@ -84,6 +84,7 @@ function zfsItem(): ZFSDatasetView {
     lastCheckAt: 1_700_000_000, leftoverCount: 0, safetyCount: 0, safetyOldestAt: 0,
     members: [member(ROOT, ""), member(CHILD, "plex")],
     effectiveSchedule: { kind: "domain", spec: "0 3 * * *", alsoSpec: "" },
+    sites: 1, rule321: "one-copy",
   };
 }
 

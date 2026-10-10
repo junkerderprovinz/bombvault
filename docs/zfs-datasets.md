@@ -2,7 +2,7 @@
 
 The **ZFS** page backs up ZFS datasets. An item is one dataset together with every dataset below it. For each backup BombVault takes one ZFS snapshot of the whole tree, so every dataset in it is captured at the same instant. It then reads each dataset's files from that snapshot and stores them with restic, the same way it stores a folder, and removes the snapshot right after. The backups are deduplicated, you can browse every one of them, and single files can be restored.
 
-BombVault never uses `zfs send` for datasets, never rolls a dataset back and never destroys one.
+The backup never sends a stream into restic and never rolls a dataset back. BombVault destroys only snapshots it created itself. The optional [replica](#replica) is the one place that uses `zfs send`: it copies the datasets to a second ZFS server and does not touch the backup.
 
 ## Requirements {#requirements}
 
@@ -102,6 +102,93 @@ To restore onto a new pool, create the pool and restore each dataset into a new 
 
 An encrypted dataset is backed up only while its key is loaded. Otherwise it is skipped with a warning; load the key with `zfs load-key` and mount the dataset. BombVault reads the data decrypted and stores it in restic's repository, which is encrypted. If you switched encryption off in BombVault, that repository is not.
 
+## Replica {#replica}
+
+A replica is a copy of an item's datasets on a second ZFS server. BombVault keeps it current with `zfs send` and `zfs receive`. The first run sends everything, after that only the changed blocks travel. On the other server you can mount the copy right away.
+
+A replica never replaces the backup. Older versions, single files and the check still come from the backups, and the replica keeps only as many snapshots as you set. A current replica counts as a copy off the premises, but an item with a replica and no backup stays orange.
+
+Switch it on in the **Replica** card of the item's settings. There you pick where the replica goes, when it runs (**After every backup** or **Own plan**) and how many snapshots stay on the target. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
+
+### Push to a ZFS server {#replica-push}
+
+Any machine with ZFS and SSH can receive, for example a second Unraid or a TrueNAS. BombVault does not have to run there.
+
+1. Open **Instances › ZFS servers** and click **Add ZFS server**.
+2. Enter address, user and port. The dialog shows BombVault's public key. Add it to the user's `~/.ssh/authorized_keys` on the server. On Unraid that is under **Settings, Users, root, SSH keys**.
+3. Test the connection. The dialog then lists the pools of the server. Pick one and set the root, which defaults to `<pool>/bombvault-replica`.
+4. Pick the new server in the **Replica** card of the item.
+
+With root nothing else is needed. A user of their own needs these permissions on the pool of the target, which the dialog also shows:
+
+```
+zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+```
+
+On the source the same kind of user needs these on the item's top dataset:
+
+```
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+```
+
+In this direction the BombVault that holds the item also holds a key that can write on the server.
+
+BombVault pins the host key the server shows on the first connection and refuses a different one later. If the server was reinstalled, press **Forget host key** on the server's page, and the next connection pins the new key.
+
+### Send to a paired instance {#replica-receive}
+
+A paired BombVault can receive the replica itself. Nobody gets SSH access to the other host, and no key goes into an `authorized_keys` file.
+
+1. In the **Replica** card of the item, pick the paired instance as the target. The card shows **Waiting for approval** until it answers.
+2. On the receiving instance, open **Instances**, then **Receive**. The **ZFS** card lists the request. Pick the pool and root on that server and how many snapshots stay, then press **Allow** or **Decline**.
+3. After **Allow** the source sends by its own plan, like for any other target.
+
+The receiving instance accepts only what the approval covers: the item's datasets, into its own root. It runs `zfs receive` itself, and the source has no way to delete or roll back anything there. So the copy survives a source that someone has taken over. The receiving instance keeps its own retention. The source only suggests a rule when it asks.
+
+**Revoke access** on the receiving instance ends the approval at any time and tells the source, which then shows that the approval was withdrawn and stops. What the receiving instance already holds stays there. A declined request stays declined. More datasets, or a request after a revoke, ask again.
+
+The receiving instance has to answer over HTTPS. The source sends nothing to a plain http address, since the token and the data would cross the network unencrypted. Each transfer also leaves a tenth of the receiving pool free and stops before it would eat into it, so one source cannot fill the pool of the receiving server.
+
+### Where the data lands {#replica-target}
+
+Each dataset lands at `<root>/<server>/<pool>/<path>`. The server folder is the name of the source instance, fixed at the first transfer, so two servers with the same pool name never get in each other's way. For example, `cache/appdata` of a server called `tower` ends up at `backup/bombvault-replica/tower/cache/appdata`.
+
+The copy on the target is read-only and not mounted, so it never covers anything on that server. ZFS properties travel along, except the mountpoint and `sharenfs` and `sharesmb`. The reservations `reservation` and `refreservation` stay behind as well, so the copy only takes the space its data needs.
+
+### What goes in {#replica-contents}
+
+Everything the item backs up goes in, and the volumes below it too, which the backup skips. A child dataset you switched off in the item stays out. All datasets of a run come from one snapshot, as in the backup.
+
+### How long snapshots stay {#replica-retention}
+
+On the target, a new replica keeps 7 daily and 3 weekly snapshots. Pick **Short**, **Balanced** or **Long** instead, or set **Custom values**. Only snapshots named `bombvault-replica-<14 digits>` are ever removed there, and never the newest one that both sides share.
+
+On the source, BombVault keeps only the latest replica snapshot, plus a bookmark for every state it has sent. Bookmarks cost no space. The next transfer starts from them.
+
+### Encrypted datasets in a replica {#replica-encryption}
+
+An encrypted dataset is sent raw. It stays encrypted on the target, and the target never sees the key. Keep the key safe: you need it to open the copy after a restore, and a replica without it is unreadable.
+
+### Using the replica {#replica-use}
+
+Open the item's **Backups** tab and click the replica row in the **Storage locations** card. The sheet lists the snapshots on the target and shows the commands with your real names.
+
+To look at an old state, clone a snapshot on the target. A clone takes no space until something changes, and the replica stays untouched:
+
+```
+zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100 backup/bombvault-replica/clone-appdata
+```
+
+If the source fails, turn the copy into a normal, writable dataset on the target:
+
+```
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+```
+
+BombVault stops replicating to that dataset afterwards, until you start a new first run.
+
+To get a state back to the source, press **Bring back as a new dataset** in the sheet. BombVault sends the snapshot into a new dataset next to the original, named `<dataset>-bombvault-restore-` plus a timestamp. It never writes over the original.
+
 ## Leftover snapshots {#leftover-snapshots}
 
 The snapshot of a backup is named `<dataset>@bombvault-<14 digits>`, for example `cache/appdata@bombvault-20260924021500` (UTC). BombVault removes it right after the backup. If that fails, for example because the dataset is busy or BombVault was stopped, BombVault removes it:
@@ -116,6 +203,8 @@ Only names that match exactly `bombvault-` plus 14 digits are removed. Safety sn
 ```
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
+
+The snapshot of a replica is named `<dataset>@bombvault-replica-<14 digits>` and is not a leftover. It stays on the source until the next replica run replaces it, and on the target as long as the retention keeps it. The sweeper never touches it, because it only matches `bombvault-` followed by exactly 14 digits.
 
 ## Anomalies {#anomalies}
 

@@ -1,6 +1,7 @@
 package zfs
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,6 +11,8 @@ const (
 	treeFields = 10
 	listFields = 11
 	snapFields = 3
+
+	replicaFields = 3
 )
 
 // ParseTree reads the listing of one item's tree. The first line must be the
@@ -139,6 +142,95 @@ func LeakedStamps(tree []ListEntry, snaps []SnapshotEntry) []string {
 		out = append(out, s.Name)
 	}
 	return out
+}
+
+// ParseReplicaPoints reads the listing of ReplicaPointsArgs. Every line has to
+// belong to dataset itself, so a listing of the wrong dataset can never
+// supply a base.
+func ParseReplicaPoints(out, dataset string) ([]ReplicaPoint, error) {
+	lines := splitLines(out)
+	points := make([]ReplicaPoint, 0, len(lines))
+	for _, line := range lines {
+		f := strings.Split(line, "\t")
+		if len(f) != replicaFields {
+			return nil, fmt.Errorf("zfs list of %q: %d fields, want %d", dataset, len(f), replicaFields)
+		}
+		rest, ok := strings.CutPrefix(f[0], dataset)
+		if !ok || len(rest) < 2 || (rest[0] != '@' && rest[0] != '#') {
+			return nil, fmt.Errorf("zfs list of %q returned %q, which is not one of its snapshots or bookmarks", dataset, f[0])
+		}
+		p := ReplicaPoint{Name: rest[1:], Bookmark: rest[0] == '#'}
+		var err error
+		if p.GUID, err = strconv.ParseUint(f[1], 10, 64); err != nil {
+			return nil, fmt.Errorf("zfs list of %q: guid of %q: %w", dataset, f[0], err)
+		}
+		if p.CreateTxg, err = strconv.ParseUint(f[2], 10, 64); err != nil {
+			return nil, fmt.Errorf("zfs list of %q: createtxg of %q: %w", dataset, f[0], err)
+		}
+		points = append(points, p)
+	}
+	return points, nil
+}
+
+// ParseEstimate reads the byte count of a zfs send -nvP dry run from its
+// closing "size" line. A resumed estimate prints the token's contents first.
+func ParseEstimate(out string) (int64, error) {
+	for _, line := range splitLines(out) {
+		if v, ok := strings.CutPrefix(line, "size\t"); ok {
+			n, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return 0, fmt.Errorf("zfs send -nvP: size %q: %w", v, err)
+			}
+			return n, nil
+		}
+	}
+	return 0, errors.New("zfs send -nvP printed no size line")
+}
+
+// ParseDatasetState reads the output of DatasetStateArgs. Every property has
+// to be there, so a dataset whose state could not be read in full is never
+// taken for one without a resume token.
+func ParseDatasetState(out string) (DatasetState, error) {
+	var s DatasetState
+	seen := 0
+	for _, line := range splitLines(out) {
+		prop, value, ok := strings.Cut(line, "\t")
+		if !ok {
+			return DatasetState{}, fmt.Errorf("zfs get %s: %q has no value", stateProps, line)
+		}
+		switch prop {
+		case "type":
+			s.Type = value
+		case "encryption":
+			s.Encryption = value
+		case "receive_resume_token":
+			tok, err := parseResumeToken(value)
+			if err != nil {
+				return DatasetState{}, err
+			}
+			s.ResumeToken = tok
+		default:
+			return DatasetState{}, fmt.Errorf("zfs get %s: unexpected property %q", stateProps, prop)
+		}
+		seen++
+	}
+	if seen != 3 {
+		return DatasetState{}, fmt.Errorf("zfs get %s: %d properties, want 3", stateProps, seen)
+	}
+	return s, nil
+}
+
+// parseResumeToken reads receive_resume_token. "-" is what zfs prints when
+// nothing is waiting to be resumed, and that comes back as "".
+func parseResumeToken(value string) (string, error) {
+	tok := strings.TrimSpace(value)
+	if tok == "-" {
+		return "", nil
+	}
+	if !resumeTokenRe.MatchString(tok) {
+		return "", fmt.Errorf("zfs get receive_resume_token: %.40q is not a token", tok)
+	}
+	return tok, nil
 }
 
 func splitLines(out string) []string {

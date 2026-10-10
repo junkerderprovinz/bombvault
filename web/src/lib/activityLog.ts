@@ -102,6 +102,7 @@ export const JOB_KEYS: Record<string, string> = {
   receiver: "activityLog.jobReceiver",
   fleet: "activityLog.jobFleet",
   pull: "activityLog.jobPull",
+  replica: "activityLog.jobReplica",
 };
 
 /** Translates a domain literal; an unknown one falls back to the raw string. */

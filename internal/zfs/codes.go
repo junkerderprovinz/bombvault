@@ -11,6 +11,7 @@ var AllCodes = []string{
 	"host-fallback",
 	"ssh-unreachable",
 	"ssh-auth",
+	"ssh-hostkey",
 	"zfs-not-found",
 	"zfs-permission",
 	"uri-mismatch",
@@ -63,6 +64,26 @@ var AllCodes = []string{
 	"new-dataset-not-visible",
 	"set-properties-failed",
 	"set-limits-failed",
+
+	// Replica
+	"resume-token-stale",
+	"target-changed",
+	"no-common-base",
+	"encryption-mismatch",
+	"in-use",
+	"target-owned",
+	"replica-off",
+	"server-disabled",
+	"domain-off",
+	"peer-waiting",
+	"peer-refused",
+	"peer-revoked",
+	"peer-unreachable",
+	"peer-insecure",
+	"request-changed",
+	"receive-off",
+	"stream-cut",
+	"interrupted",
 }
 
 // MemberOutcomes are the member states that are not problems. They carry their
