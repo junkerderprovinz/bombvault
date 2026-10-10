@@ -757,13 +757,7 @@ const fr: Partial<Translations> = {
   "hooks.post": "Commande post-sauvegarde",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Sauvegarde Flash",
-  "flash.backupTitle": "Sauvegarder le flash",
-  "flash.backupHint": "Capture toute la clé USB flash (/boot) : OS Unraid, licence, config de la matrice, partages, réseau et config des plugins.",
-  "flash.backupNow": "Sauvegarder le flash",
-  "flash.backingUp": "Sauvegarde…",
   "flash.download": "Télécharger (.zip)",
-  "flash.restoreNote": "La restauration télécharge un ZIP de l'instantané : le /boot en cours d'exécution n'est jamais touché. Glissez le .zip directement dans le créateur de clé USB d'Unraid, ou décompressez-le sur une clé USB neuve pour reconstruire votre flash. Seule exception : la restauration d'un plugin depuis Plugins, qui le réécrit dans le flash en cours d'exécution.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins de cette sauvegarde",
   "flash.pluginsHint": "Remet un seul plugin sur la clé en service : son fichier .plg, son dossier sous config/plugins et les fichiers de paquet que contient cette sauvegarde. Unraid l'installe au prochain démarrage, ou tout de suite via Plugins, Install Plugin.",

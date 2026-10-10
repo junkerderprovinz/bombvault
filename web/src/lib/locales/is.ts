@@ -1490,13 +1490,7 @@ const is: Partial<Translations> = {
   "vms.discoverHint": "Sýndarvél eytt úr Unraid (eða týnd eftir endurinnsetningu)? Endurbyggðu afritafærslu hennar úr geymslunni svo þú getir endurheimt hana.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-afritun",
-  "flash.backupTitle": "Afrita Flash",
-  "flash.backupHint": "Nær allri USB flash-einingunni (/boot): Unraid-stýrikerfi, leyfi, uppsetningu drifasafns, sameignum, netstillingum og viðbótarstillingum.",
-  "flash.backupNow": "Afrita Flash núna",
-  "flash.backingUp": "Afrita…",
   "flash.download": "Sækja (.zip)",
-  "flash.restoreNote": "Endurheimt sækir ZIP-skrá af snapshottinu. Ekki er hróflað við /boot í keyrslu. Settu .zip beint í Unraid USB-smíðatólið, eða dpakkaðu því á nýtt USB til að endurbyggja Flash-ið þitt. Undantekningin er endurheimt einnar viðbótar undir Viðbætur: hún er skrifuð aftur á Flash-ið í keyrslu.",
   "flash.plugins": "Viðbætur",
   "flash.pluginsTitle": "Viðbætur í þessu afriti",
   "flash.pluginsHint": "Setur eina viðbót aftur á virka flash-drifið: .plg-skrána, möppuna undir config/plugins og pakkaskrárnar sem þetta afrit geymir. Unraid setur hana upp við næstu ræsingu, eða strax undir Plugins, Install Plugin.",

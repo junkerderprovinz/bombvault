@@ -1490,13 +1490,7 @@ const ca: Partial<Translations> = {
   "vms.discoverHint": "MV eliminada d'Unraid (o perduda després d'una reinstal·lació)? Reconstrueix la seva entrada de còpia des de l'emmagatzematge per poder-la restaurar.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Còpia de Flash",
-  "flash.backupTitle": "Fes còpia del Flash",
-  "flash.backupHint": "Captura tota la unitat USB (/boot): SO Unraid, llicència, configuració de l'array, comparticions, xarxa i configuració de plugins.",
-  "flash.backupNow": "Fes còpia del Flash ara",
-  "flash.backingUp": "Fent còpia…",
   "flash.download": "Descarrega (.zip)",
-  "flash.restoreNote": "Restaurar descarrega un ZIP de l'instantani. El /boot en execució mai es toca. Posa el .zip directament al creador de USB d'Unraid, o descomprimeix-lo en un USB nou per reconstruir el teu Flash. L'excepció és restaurar un sol connector des de Connectors: s'escriu de nou al Flash en execució.",
   "flash.plugins": "Connectors",
   "flash.pluginsTitle": "Connectors d'aquesta còpia",
   "flash.pluginsHint": "Torna un sol connector al flaix en funcionament: el seu fitxer .plg, la seva carpeta a config/plugins i els fitxers de paquet que conté aquesta còpia. Unraid l'instal·la a la propera arrencada, o de seguida a Plugins, Install Plugin.",

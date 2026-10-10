@@ -757,13 +757,7 @@ const ar: Partial<Translations> = {
   "hooks.post": "أمر ما بعد النسخ الاحتياطي",
 
   // Flash (Unraid USB) backup
-  "flash.title": "نسخ Flash الاحتياطي",
-  "flash.backupTitle": "نسخ الفلاش احتياطياً",
-  "flash.backupHint": "يلتقط فلاش USB بالكامل (‎/boot): نظام Unraid والترخيص وإعداد المصفوفة والمشاركات وإعداد الشبكة والإضافات.",
-  "flash.backupNow": "نسخ الفلاش احتياطياً الآن",
-  "flash.backingUp": "جارٍ النسخ الاحتياطي…",
   "flash.download": "تنزيل (.zip)",
-  "flash.restoreNote": "يقوم الاستعادة بتنزيل ملف ZIP للقطة. لا يتم المساس بـ /boot قيد التشغيل أبدًا. ضع ملف .zip مباشرة في أداة إنشاء USB من Unraid، أو فك ضغطه على USB جديد لإعادة بناء الفلاش. الاستثناء هو استعادة إضافة واحدة من قسم الإضافات: فهي تُكتب مرة أخرى في الفلاش قيد التشغيل.",
   "flash.plugins": "الإضافات",
   "flash.pluginsTitle": "الإضافات في هذه النسخة",
   "flash.pluginsHint": "يعيد إضافة واحدة إلى ذاكرة الفلاش العاملة: ملف .plg الخاص بها ومجلدها ضمن config/plugins وملفات الحزم الموجودة في هذه النسخة. يثبّتها Unraid عند الإقلاع التالي، أو فورًا من Plugins، Install Plugin.",

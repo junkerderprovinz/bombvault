@@ -1490,13 +1490,7 @@ const ms: Partial<Translations> = {
   "vms.discoverHint": "VM dipadamkan daripada Unraid (atau hilang selepas pemasangan semula)? Bina semula entri sandarannya daripada storan supaya anda boleh memulihkannya.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Sandaran Flash",
-  "flash.backupTitle": "Sandarkan flash",
-  "flash.backupHint": "Menangkap keseluruhan USB flash (/boot): OS Unraid, lesen, konfigurasi array, perkongsian, rangkaian dan konfigurasi pemalam.",
-  "flash.backupNow": "Sandarkan flash sekarang",
-  "flash.backingUp": "Menyandarkan…",
   "flash.download": "Muat turun (.zip)",
-  "flash.restoreNote": "Pemulihan memuat turun ZIP snapshot. /boot yang sedang berjalan tidak sekali-kali disentuh. Letakkan .zip terus ke dalam pencipta USB Unraid, atau nyahzipkannya pada USB baharu untuk membina semula Flash anda. Pengecualiannya ialah memulihkan satu pemalam daripada Pemalam: ia ditulis semula ke Flash yang sedang berjalan.",
   "flash.plugins": "Pemalam",
   "flash.pluginsTitle": "Pemalam dalam sandaran ini",
   "flash.pluginsHint": "Memulangkan satu pemalam ke flash yang sedang berjalan: fail .plg, foldernya di bawah config/plugins dan fail pakej yang ada dalam sandaran ini. Unraid memasangnya pada but seterusnya, atau terus di Plugins, Install Plugin.",

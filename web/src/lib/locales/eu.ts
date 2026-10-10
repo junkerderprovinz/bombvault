@@ -1490,13 +1490,7 @@ const eu: Partial<Translations> = {
   "vms.discoverHint": "MB Unraid-etik ezabatuta (edo birinstalazio baten ondoren galduta)? Berreraiki bere babeskopia-sarrera biltegitik berrezarri ahal izateko.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash babeskopia",
-  "flash.backupTitle": "Egin Flash-en babeskopia",
-  "flash.backupHint": "USB Flash osoa (/boot) jasotzen du: Unraid OS, lizentzia, array konfigurazioa, partekatzeak, sarea eta plugin-konfigurazioa.",
-  "flash.backupNow": "Egin Flash-en babeskopia orain",
-  "flash.backingUp": "Babeskopia egiten…",
   "flash.download": "Deskargatu (.zip)",
-  "flash.restoreNote": "Berrezarpenak argazkiaren ZIP bat deskargatzen du. Exekutatzen ari den /boot ez da inoiz ukitzen. Jarri .zip zuzenean Unraid USB sortzailean, edo deskonprimitu USB berri batean zure Flash berreraikitzeko. Salbuespena Pluginak ataletik plugin bakar bat berrezartzea da: exekutatzen ari den Flash-era idazten da berriro.",
   "flash.plugins": "Pluginak",
   "flash.pluginsTitle": "Babeskopia honetako pluginak",
   "flash.pluginsHint": "Plugin bakar bat itzultzen du martxan dagoen flashera: bere .plg fitxategia, config/plugins azpiko karpeta eta babeskopia honek dituen pakete-fitxategiak. Unraidek hurrengo abiaraztean instalatzen du, edo berehala Plugins, Install Plugin atalean.",

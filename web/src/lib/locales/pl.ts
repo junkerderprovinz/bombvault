@@ -749,13 +749,7 @@ const pl: Partial<Translations> = {
   "hooks.post": "Polecenie po kopii",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Kopia Flash",
-  "flash.backupTitle": "Utwórz kopię Flash",
-  "flash.backupHint": "Przechwytuje cały pendrive USB (/boot): system Unraid, licencję, konfigurację macierzy, udziały, sieć i konfigurację wtyczek.",
-  "flash.backupNow": "Utwórz kopię Flash teraz",
-  "flash.backingUp": "Tworzenie kopii…",
   "flash.download": "Pobierz (.zip)",
-  "flash.restoreNote": "Przywracanie pobiera ZIP migawki. Działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash. Wyjątkiem jest przywrócenie pojedynczej wtyczki w sekcji Wtyczki: zostaje ona zapisana z powrotem na działający flash.",
   "flash.plugins": "Wtyczki",
   "flash.pluginsTitle": "Wtyczki w tej kopii",
   "flash.pluginsHint": "Przywraca jedną wtyczkę na działający pendrive: jej plik .plg, jej folder w config/plugins i pliki pakietów, które ma ta kopia. Unraid zainstaluje ją przy następnym starcie albo od razu w Plugins, Install Plugin.",

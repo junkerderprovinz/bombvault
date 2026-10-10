@@ -749,13 +749,7 @@ const ko: Partial<Translations> = {
   "hooks.pre": "백업 전 명령",
   "hooks.post": "백업 후 명령",
 
-  "flash.title": "플래시 백업",
-  "flash.backupTitle": "플래시 백업",
-  "flash.backupHint": "USB 플래시 전체(/boot)를 캡처합니다: Unraid OS, 라이선스, 배열 구성, 공유, 네트워크 및 플러그인 구성.",
-  "flash.backupNow": "지금 플래시 백업",
-  "flash.backingUp": "백업 중…",
   "flash.download": "다운로드 (.zip)",
-  "flash.restoreNote": "복원은 스냅샷의 ZIP을 다운로드합니다. 실행 중인 /boot은 절대 건드리지 않습니다. .zip을 Unraid USB 작성기에 바로 넣거나 새 USB에 압축 해제하여 플래시를 다시 구성하세요. 예외는 플러그인에서 플러그인 하나를 복원하는 경우로, 해당 플러그인은 실행 중인 플래시에 다시 기록됩니다.",
   "flash.plugins": "플러그인",
   "flash.pluginsTitle": "이 백업의 플러그인",
   "flash.pluginsHint": "플러그인 하나를 실행 중인 플래시에 되돌립니다. .plg 파일, config/plugins 아래의 폴더, 이 백업에 있는 패키지 파일이 대상입니다. Unraid는 다음 부팅 때 설치하거나, Plugins, Install Plugin에서 바로 설치합니다.",

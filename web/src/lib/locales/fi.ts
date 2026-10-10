@@ -757,13 +757,7 @@ const fi: Partial<Translations> = {
   "hooks.post": "Varmuuskopion jälkeinen komento",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-varmuuskopio",
-  "flash.backupTitle": "Varmuuskopioi flash",
-  "flash.backupHint": "Tallentaa koko USB-flashin (/boot): Unraid-käyttöjärjestelmä, lisenssi, array-määritys, jaot, verkko ja laajennusten määritys.",
-  "flash.backupNow": "Varmuuskopioi flash nyt",
-  "flash.backingUp": "Varmuuskopioidaan…",
   "flash.download": "Lataa (.zip)",
-  "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston. Käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi. Poikkeus on yksittäisen liitännäisen palautus kohdasta Liitännäiset: se kirjoitetaan takaisin käynnissä olevaan flashiin.",
   "flash.plugins": "Liitännäiset",
   "flash.pluginsTitle": "Tämän varmuuskopion liitännäiset",
   "flash.pluginsHint": "Palauttaa yhden liitännäisen käytössä olevalle flash-tikulle: sen .plg-tiedoston, sen kansion config/plugins-kansiossa ja pakettitiedostot, jotka tässä varmuuskopiossa ovat. Unraid asentaa sen seuraavassa käynnistyksessä tai heti kohdasta Plugins, Install Plugin.",

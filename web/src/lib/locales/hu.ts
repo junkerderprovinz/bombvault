@@ -757,13 +757,7 @@ const hu: Partial<Translations> = {
   "hooks.post": "Biztonsági mentés utáni parancs",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash biztonsági mentés",
-  "flash.backupTitle": "A flash biztonsági mentése",
-  "flash.backupHint": "Rögzíti a teljes USB flasht (/boot): Unraid OS, licenc, tömbkonfiguráció, megosztások, hálózat és bővítmény-konfiguráció.",
-  "flash.backupNow": "Flash biztonsági mentése most",
-  "flash.backingUp": "Mentés…",
   "flash.download": "Letöltés (.zip)",
-  "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját. A futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez. Kivétel egyetlen bővítmény visszaállítása a Bővítmények alatt: az visszakerül a futó flashre.",
   "flash.plugins": "Bővítmények",
   "flash.pluginsTitle": "Bővítmények ebben a biztonsági mentésben",
   "flash.pluginsHint": "Egyetlen bővítményt tesz vissza a futó flash-re: a .plg fájlját, a mappáját a config/plugins alatt és a csomagfájlokat, amelyek ebben a biztonsági mentésben vannak. Az Unraid a következő indításkor telepíti, vagy azonnal a Plugins, Install Plugin alatt.",

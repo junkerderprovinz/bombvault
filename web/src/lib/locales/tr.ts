@@ -757,13 +757,7 @@ const tr: Partial<Translations> = {
   "hooks.post": "Yedekleme sonrası komut",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash Yedeği",
-  "flash.backupTitle": "Flash'ı yedekle",
-  "flash.backupHint": "Tüm USB flash'ı (/boot) yakalar: Unraid işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması.",
-  "flash.backupNow": "Flash'ı şimdi yedekle",
-  "flash.backingUp": "Yedekleniyor…",
   "flash.download": "İndir (.zip)",
-  "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir. Çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın. İstisna, Eklentiler altından tek bir eklentiyi geri yüklemektir: o eklenti çalışan flash'a geri yazılır.",
   "flash.plugins": "Eklentiler",
   "flash.pluginsTitle": "Bu yedekteki eklentiler",
   "flash.pluginsHint": "Tek bir eklentiyi çalışan flash belleğe geri koyar: .plg dosyasını, config/plugins altındaki klasörünü ve bu yedekte bulunan paket dosyalarını. Unraid onu bir sonraki açılışta ya da hemen Plugins, Install Plugin altında kurar.",

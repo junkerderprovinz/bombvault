@@ -749,13 +749,7 @@ const zh: Partial<Translations> = {
   "hooks.pre": "备份前命令",
   "hooks.post": "备份后命令",
 
-  "flash.title": "Flash 备份",
-  "flash.backupTitle": "备份 Flash",
-  "flash.backupHint": "捕获整个 USB Flash（/boot）：Unraid OS、许可证、阵列配置、共享、网络和插件配置。",
-  "flash.backupNow": "立即备份 Flash",
-  "flash.backingUp": "备份中…",
   "flash.download": "下载 (.zip)",
-  "flash.restoreNote": "恢复会下载快照的 ZIP，运行中的 /boot 绝不会被改动。把 .zip 直接放进 Unraid USB 创建器，或解压到全新 U 盘以重建你的 flash。唯一的例外是在插件中恢复单个插件，它会被写回运行中的 flash。",
   "flash.plugins": "插件",
   "flash.pluginsTitle": "此备份中的插件",
   "flash.pluginsHint": "把单个插件放回正在运行的闪存盘：它的 .plg 文件、config/plugins 下的文件夹，以及此备份中的软件包文件。Unraid 会在下次启动时安装它，或在 Plugins、Install Plugin 中立即安装。",

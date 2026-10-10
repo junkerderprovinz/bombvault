@@ -1490,13 +1490,7 @@ const et: Partial<Translations> = {
   "vms.discoverHint": "VM Unraidist kustutatud (või kaotatud pärast uuesti paigaldamist)? Ehita selle varunduse kirje salvestusruumist uuesti üles, et saaksid selle taastada.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flashi varundus",
-  "flash.backupTitle": "Varunda flash",
-  "flash.backupHint": "Jäädvustab kogu USB-flashi (/boot): Unraidi OS, litsentsi, massiivi seadistuse, jagatud kaustad, võrgu- ja pluginaseaded.",
-  "flash.backupNow": "Varunda flash kohe",
-  "flash.backingUp": "Varundamine…",
   "flash.download": "Laadi alla (.zip)",
-  "flash.restoreNote": "Taastamine laadib alla hetktõmmise ZIP-faili. Töötavat /boot-i ei puudutata kunagi. Pane .zip otse Unraidi USB-looja sisse või paki see lahti uuel USB-l, et oma flash uuesti üles ehitada. Erand on üksiku plugina taastamine jaotises Pluginad: see kirjutatakse tagasi töötavale flashile.",
   "flash.plugins": "Pluginad",
   "flash.pluginsTitle": "Selle varukoopia pluginad",
   "flash.pluginsHint": "Paneb ühe plugina tagasi töötavale mälupulgale: selle .plg-faili, kausta config/plugins all ja paketifailid, mis selles varukoopias on. Unraid paigaldab selle järgmisel käivitusel või kohe menüüs Plugins, Install Plugin.",

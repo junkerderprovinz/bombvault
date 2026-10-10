@@ -194,8 +194,6 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "containers.discoverHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "settings.cacheHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "excludes.placeholder": EXCLUDES_PLACEHOLDER_LTR_FRAGMENTS,
-  "flash.backupHint": BOOT_VOLUME_LTR_FRAGMENTS,
-  "flash.restoreNote": BOOT_VOLUME_LTR_FRAGMENTS,
   "jobs.flashScheduleHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "settings.flashEnabledHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "notify.unraidPlatformMismatch": UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS,
@@ -218,7 +216,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
 
 /**
  * tLtr translates `key` and isolates its registered fragments in one step, so
- * a call site cannot forget the isolation: `tip={tLtr(t, "flash.backupHint")}`.
+ * a call site cannot forget the isolation: `tip={tLtr(t, "settings.flashEnabledHint")}`.
  * A key without fragments passes through unchanged. It returns withLtrIsolates'
  * plain string, which tip, hint, label and placeholder props need.
  */

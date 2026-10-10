@@ -284,7 +284,7 @@ describe("coverage: every en string that embeds a path is accounted for", () => 
 
   it("finds the path-bearing strings", () => {
     expect(withPaths.length).toBeGreaterThan(15);
-    expect(withPaths).toContain("flash.backupHint");
+    expect(withPaths).toContain("settings.flashEnabledHint");
     expect(withPaths).toContain("offsite.repoLocalHint");
   });
 

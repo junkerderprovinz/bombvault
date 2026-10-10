@@ -1490,13 +1490,7 @@ const hr: Partial<Translations> = {
   "vms.discoverHint": "VM izbrisan iz Unraida (ili izgubljen nakon ponovne instalacije)? Ponovno izgradite njegov unos sigurnosne kopije iz pohrane kako biste ga mogli vratiti.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash sigurnosna kopija",
-  "flash.backupTitle": "Sigurnosno kopiraj Flash",
-  "flash.backupHint": "Snima cijeli USB Flash (/boot): Unraid OS, licencu, konfiguraciju polja diskova, dijeljene mape, mrežu i konfiguraciju dodataka.",
-  "flash.backupNow": "Sigurnosno kopiraj Flash sada",
-  "flash.backingUp": "Izrada sigurnosne kopije…",
   "flash.download": "Preuzmi (.zip)",
-  "flash.restoreNote": "Vraćanje preuzima ZIP snimke. Pokrenuti /boot nikad se ne dira. Stavite .zip izravno u Unraid USB alat za izradu, ili ga raspakirajte na novi USB kako biste ponovno izgradili svoj Flash. Iznimka je vraćanje jednog dodatka iz Dodataka: on se ponovno zapisuje na pokrenuti Flash.",
   "flash.plugins": "Dodaci",
   "flash.pluginsTitle": "Dodaci u ovoj sigurnosnoj kopiji",
   "flash.pluginsHint": "Vraća jedan dodatak na aktivni flash: njegovu datoteku .plg, njegovu mapu u config/plugins i datoteke paketa koje ova kopija sadrži. Unraid ga instalira pri sljedećem pokretanju ili odmah pod Plugins, Install Plugin.",

@@ -751,13 +751,7 @@ const nl: Partial<Translations> = {
   "hooks.post": "Post-back-upcommando",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-back-up",
-  "flash.backupTitle": "De flash back-uppen",
-  "flash.backupHint": "Legt de volledige USB-flash (/boot) vast: Unraid-OS, licentie, array-config, shares, netwerk- en plug-inconfiguratie.",
-  "flash.backupNow": "Flash nu back-uppen",
-  "flash.backingUp": "Back-up maken…",
   "flash.download": "Downloaden (.zip)",
-  "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot. De actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen. De uitzondering is één plug-in herstellen onder Plug-ins: die wordt teruggeschreven naar de actieve flash.",
   "flash.plugins": "Plug-ins",
   "flash.pluginsTitle": "Plug-ins in deze back-up",
   "flash.pluginsHint": "Zet één plug-in terug op de draaiende flash: het .plg-bestand, de map onder config/plugins en de pakketbestanden die deze back-up bevat. Unraid installeert hem bij de volgende start, of meteen via Plugins, Install Plugin.",

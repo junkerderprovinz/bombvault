@@ -752,13 +752,7 @@ const uk: Partial<Translations> = {
   "hooks.post": "Команда після копії",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Копія Flash",
-  "flash.backupTitle": "Створити копію Flash",
-  "flash.backupHint": "Захоплює всю USB-флешку (/boot): ОС Unraid, ліцензію, конфігурацію масиву, спільні ресурси, мережу та конфігурацію плагінів.",
-  "flash.backupNow": "Створити копію Flash зараз",
-  "flash.backingUp": "Копіювання…",
   "flash.download": "Завантажити (.zip)",
-  "flash.restoreNote": "Відновлення завантажує ZIP знімка — робочий /boot ніколи не зачіпається. Передайте .zip прямо у створювач USB Unraid або розпакуйте його на нову флешку, щоб відтворити flash. Виняток становить відновлення одного плагіна в розділі «Плагіни»: він записується назад на робочу флешку.",
   "flash.plugins": "Плагіни",
   "flash.pluginsTitle": "Плагіни в цій копії",
   "flash.pluginsHint": "Повертає один плагін на робочу флешку: його файл .plg, його теку в config/plugins і файли пакетів, які є в цій копії. Unraid встановить його під час наступного завантаження або одразу через Plugins, Install Plugin.",

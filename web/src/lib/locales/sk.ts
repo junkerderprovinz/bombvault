@@ -1490,13 +1490,7 @@ const sk: Partial<Translations> = {
   "vms.discoverHint": "VM odstránený z Unraid (alebo stratený po opätovnej inštalácii)? Obnovte jeho záznam zálohovania z úložiska, aby ste ho mohli obnoviť.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Záloha Flash",
-  "flash.backupTitle": "Zálohovať Flash",
-  "flash.backupHint": "Zachytáva celú USB flash jednotku (/boot): OS Unraid, licenciu, konfiguráciu poľa, zdieľania, sieť a konfiguráciu doplnkov.",
-  "flash.backupNow": "Zálohovať Flash teraz",
-  "flash.backingUp": "Zálohuje sa…",
   "flash.download": "Stiahnuť (.zip)",
-  "flash.restoreNote": "Obnovenie stiahne ZIP snímky. Bežiace /boot sa nikdy nedotkne. Vložte .zip priamo do nástroja na tvorbu USB Unraid, alebo ho rozbaľte na nové USB, aby ste znova zostavili svoj Flash. Výnimkou je obnovenie jedného pluginu v časti Pluginy: zapíše sa späť do bežiaceho flashu.",
   "flash.plugins": "Pluginy",
   "flash.pluginsTitle": "Pluginy v tejto zálohe",
   "flash.pluginsHint": "Vráti jeden plugin na bežiaci flash: jeho súbor .plg, jeho priečinok v config/plugins a súbory balíkov, ktoré táto záloha obsahuje. Unraid ho nainštaluje pri ďalšom štarte, alebo hneď v Plugins, Install Plugin.",

@@ -755,13 +755,7 @@ const cs: Partial<Translations> = {
   "hooks.post": "Příkaz po záloze",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Záloha Flash",
-  "flash.backupTitle": "Zálohovat Flash",
-  "flash.backupHint": "Zachytí celý USB Flash (/boot): OS Unraid, licenci, konfiguraci pole, sdílené složky, síť a konfiguraci pluginů.",
-  "flash.backupNow": "Zálohovat Flash nyní",
-  "flash.backingUp": "Zálohuji…",
   "flash.download": "Stáhnout (.zip)",
-  "flash.restoreNote": "Obnovení stáhne ZIP snímku. Běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash. Výjimkou je obnovení jednoho pluginu v části Pluginy: ten se zapíše zpět do běžícího flashe.",
   "flash.plugins": "Pluginy",
   "flash.pluginsTitle": "Pluginy v této záloze",
   "flash.pluginsHint": "Vrátí jeden plugin na běžící flash: jeho soubor .plg, jeho složku v config/plugins a soubory balíčků, které tato záloha obsahuje. Unraid ho nainstaluje při příštím startu, nebo hned v Plugins, Install Plugin.",

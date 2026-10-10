@@ -749,13 +749,7 @@ const vi: Partial<Translations> = {
   "hooks.pre": "Lệnh trước sao lưu",
   "hooks.post": "Lệnh sau sao lưu",
 
-  "flash.title": "Sao lưu Flash",
-  "flash.backupTitle": "Sao lưu flash",
-  "flash.backupHint": "Chụp toàn bộ USB Flash (/boot): Unraid OS, giấy phép, cấu hình mảng, share, mạng và cấu hình plugin.",
-  "flash.backupNow": "Sao lưu flash ngay",
-  "flash.backingUp": "Đang sao lưu…",
   "flash.download": "Tải xuống (.zip)",
-  "flash.restoreNote": "Khôi phục sẽ tải về một tệp ZIP của ảnh chụp. Phân vùng /boot đang chạy không bao giờ bị đụng đến. Thả tệp .zip thẳng vào trình tạo USB của Unraid, hoặc giải nén nó vào một USB mới để dựng lại flash. Ngoại lệ là khôi phục một plugin riêng lẻ trong Plugin: plugin đó được ghi lại vào flash đang chạy.",
   "flash.plugins": "Plugin",
   "flash.pluginsTitle": "Plugin trong bản sao lưu này",
   "flash.pluginsHint": "Đưa một plugin trở lại flash đang chạy: tệp .plg, thư mục của nó trong config/plugins và các tệp gói mà bản sao lưu này có. Unraid cài đặt nó ở lần khởi động tiếp theo, hoặc ngay trong Plugins, Install Plugin.",

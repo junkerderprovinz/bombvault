@@ -749,13 +749,7 @@ const ja: Partial<Translations> = {
   "hooks.pre": "バックアップ前コマンド",
   "hooks.post": "バックアップ後コマンド",
 
-  "flash.title": "フラッシュバックアップ",
-  "flash.backupTitle": "フラッシュをバックアップ",
-  "flash.backupHint": "USB フラッシュ全体（/boot）を取得します：Unraid OS、ライセンス、アレイ設定、共有、ネットワーク、プラグイン設定。",
-  "flash.backupNow": "今すぐフラッシュをバックアップ",
-  "flash.backingUp": "バックアップ中…",
   "flash.download": "ダウンロード (.zip)",
-  "flash.restoreNote": "復元はスナップショットの ZIP をダウンロードします。実行中の /boot には一切触れません。.zip をそのまま Unraid の USB クリエーターに入れるか、新しい USB に展開してフラッシュを再構築してください。例外はプラグインから単一のプラグインを復元する場合で、そのプラグインは実行中のフラッシュに書き戻されます。",
   "flash.plugins": "プラグイン",
   "flash.pluginsTitle": "このバックアップのプラグイン",
   "flash.pluginsHint": "プラグインを1つだけ稼働中のフラッシュに戻します。.plg ファイル、config/plugins 以下のフォルダー、このバックアップにあるパッケージファイルが対象です。Unraid は次回の起動時に、または Plugins、Install Plugin からすぐにインストールします。",

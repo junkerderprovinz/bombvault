@@ -48,6 +48,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     zfsHostDatasets: vi.fn(),
     getZFSReplica: vi.fn(),
     checkRestore: vi.fn(),
+    flashDownloadURL: vi.fn(),
   };
 });
 
@@ -70,6 +71,8 @@ const getTimelinePlace = vi.mocked(api.getTimelinePlace);
 const getTimelineDeletePreview = vi.mocked(api.getTimelineDeletePreview);
 const listDbDumps = vi.mocked(api.listDbDumps);
 const zfsHostDatasets = vi.mocked(api.zfsHostDatasets);
+const checkRestore = vi.mocked(api.checkRestore);
+const flashDownloadURL = vi.mocked(api.flashDownloadURL);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -142,7 +145,8 @@ beforeEach(() => {
   listDbDumps.mockResolvedValue({ ok: true, dumps: [] });
   zfsHostDatasets.mockResolvedValue({ ok: false } as never);
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
-  vi.mocked(api.checkRestore).mockResolvedValue({ ok: false } as never);
+  checkRestore.mockResolvedValue({ ok: false } as never);
+  flashDownloadURL.mockReturnValue("#");
 });
 
 afterEach(() => {
@@ -268,6 +272,23 @@ describe("the list of backups", () => {
     await renderPage(path);
     await press(rows()[0]);
     expect(within(screen.getByRole("dialog")).getByRole("button", { name: action })).toBeTruthy();
+  });
+
+  it("downloads a flash backup from the place whose mark was pressed", async () => {
+    const both = timelineOf(RUNS, [{ ...BOX, state: "read" }]);
+    both.rows[0].places.push({ place: BOX.place, snapshotIds: ["b9b9b9b9"], tags: [] });
+    getTimeline.mockResolvedValue(both);
+    checkRestore.mockResolvedValue({ ok: true, ready: true, checks: [] } as never);
+    await renderPage("/backups/flash/flash");
+    expect(getTimeline).toHaveBeenCalledWith("flash", "flash");
+    await press(
+      within(rows()[0]).getByRole("button", { name: en["entry.list.restoreFrom"].replace("{place}", "Storage Box") })
+    );
+    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["flash.download"] }));
+    await waitFor(() => expect(flashDownloadURL).toHaveBeenCalledWith("b9b9b9b9", BOX.place));
+    expect(checkRestore).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "flash", snapshotId: "b9b9b9b9", source: BOX.place })
+    );
   });
 
   it("sends the self-backup to the emergency wizard", async () => {

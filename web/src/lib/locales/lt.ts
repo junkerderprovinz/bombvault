@@ -1490,13 +1490,7 @@ const lt: Partial<Translations> = {
   "vms.discoverHint": "VM ištrinta iš Unraid (arba prarasta po pakartotinio diegimo)? Atkurkite jos atsarginio kopijavimo įrašą iš saugyklos, kad galėtumėte ją atkurti.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash atsarginė kopija",
-  "flash.backupTitle": "Kopijuoti Flash",
-  "flash.backupHint": "Užfiksuoja visą USB Flash (/boot): Unraid OS, licenciją, masyvo konfigūraciją, bendrinamus aplankus, tinklą ir papildinių konfigūraciją.",
-  "flash.backupNow": "Kopijuoti Flash dabar",
-  "flash.backingUp": "Kopijuojama…",
   "flash.download": "Atsisiųsti (.zip)",
-  "flash.restoreNote": "Atkūrimas atsisiunčia momentinės kopijos ZIP. Veikiantis /boot niekada nekeičiamas. Įdėkite .zip tiesiai į Unraid USB kūrimo įrankį arba išpakuokite jį į naują USB, kad atkurtumėte savo Flash. Išimtis yra vieno papildinio atkūrimas iš Papildiniai: jis įrašomas atgal į veikiantį Flash.",
   "flash.plugins": "Papildiniai",
   "flash.pluginsTitle": "Papildiniai šioje atsarginėje kopijoje",
   "flash.pluginsHint": "Grąžina vieną papildinį į veikiančią atmintinę: jo .plg failą, jo aplanką config/plugins ir paketų failus, kuriuos turi ši kopija. Unraid jį įdiegia kito paleidimo metu arba iš karto per Plugins, Install Plugin.",

@@ -754,13 +754,7 @@ const ro: Partial<Translations> = {
   "hooks.post": "Comandă post-backup",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Backup Flash",
-  "flash.backupTitle": "Copiere de rezervă a flash-ului",
-  "flash.backupHint": "Capturează întregul flash USB (/boot): sistemul Unraid, licența, configurația array, partajările, rețeaua și configurația plugin-urilor.",
-  "flash.backupNow": "Copiază flash-ul acum",
-  "flash.backingUp": "Se copiază…",
   "flash.download": "Descarcă (.zip)",
-  "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului. /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul. Excepția este restaurarea unui singur plugin din Pluginuri: acesta este scris înapoi pe flash-ul în execuție.",
   "flash.plugins": "Pluginuri",
   "flash.pluginsTitle": "Pluginuri în acest backup",
   "flash.pluginsHint": "Pune un singur plugin înapoi pe stickul în funcțiune: fișierul .plg, dosarul său din config/plugins și fișierele de pachet pe care le conține acest backup. Unraid îl instalează la următoarea pornire sau imediat din Plugins, Install Plugin.",

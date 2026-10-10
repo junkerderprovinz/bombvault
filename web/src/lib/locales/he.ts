@@ -757,13 +757,7 @@ const he: Partial<Translations> = {
   "hooks.post": "פקודת בתר-גיבוי",
 
   // Flash (Unraid USB) backup
-  "flash.title": "גיבוי Flash",
-  "flash.backupTitle": "גבה את ה-flash",
-  "flash.backupHint": "לוכד את כל כונן ה-USB flash (‎/boot): מערכת Unraid, רישיון, תצורת מערך, שיתופים, רשת ותצורת תוספים.",
-  "flash.backupNow": "גבה flash עכשיו",
-  "flash.backingUp": "מגבה…",
   "flash.download": "הורדה (.zip)",
-  "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה. ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash. החריג הוא שחזור של תוסף יחיד מתוך תוספים: הוא נכתב בחזרה ל-flash הפעיל.",
   "flash.plugins": "תוספים",
   "flash.pluginsTitle": "תוספים בגיבוי הזה",
   "flash.pluginsHint": "מחזיר תוסף אחד לכונן הפלאש הפעיל: קובץ ה-.plg שלו, התיקייה שלו תחת config/plugins וקובצי החבילות שהגיבוי הזה מכיל. Unraid מתקין אותו באתחול הבא, או מיד דרך Plugins, Install Plugin.",

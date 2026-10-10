@@ -1490,13 +1490,7 @@ const lv: Partial<Translations> = {
   "vms.discoverHint": "VM izdzēsta no Unraid (vai pazaudēta pēc atkārtotas instalēšanas)? Atjaunojiet tās rezerves kopēšanas ierakstu no krātuves, lai varētu to atjaunot.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash rezerves kopija",
-  "flash.backupTitle": "Dublēt Flash",
-  "flash.backupHint": "Uztver visu USB Flash (/boot): Unraid OS, licenci, masīva konfigurāciju, koplietojumus, tīklu un spraudņu konfigurāciju.",
-  "flash.backupNow": "Dublēt Flash tagad",
-  "flash.backingUp": "Dublē…",
   "flash.download": "Lejupielādēt (.zip)",
-  "flash.restoreNote": "Atjaunošana lejupielādē momentuzņēmuma ZIP. Darbojošais /boot nekad netiek skarts. Ievietojiet .zip tieši Unraid USB izveidotājā vai izpakojiet to jaunā USB, lai atjaunotu savu Flash. Izņēmums ir viena spraudņa atjaunošana sadaļā Spraudņi: tas tiek ierakstīts atpakaļ darbojošajā Flash.",
   "flash.plugins": "Spraudņi",
   "flash.pluginsTitle": "Spraudņi šajā dublējumā",
   "flash.pluginsHint": "Atliek vienu spraudni atpakaļ uz strādājošās zibatmiņas: tā .plg failu, mapi zem config/plugins un pakotņu failus, kas ir šajā dublējumā. Unraid to instalē nākamajā startā vai uzreiz sadaļā Plugins, Install Plugin.",

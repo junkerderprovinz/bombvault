@@ -1490,13 +1490,7 @@ const id: Partial<Translations> = {
   "vms.discoverHint": "VM dihapus dari Unraid (atau hilang setelah pemasangan ulang)? Bangun kembali entri cadangannya dari penyimpanan agar Anda dapat memulihkannya.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Pencadangan Flash",
-  "flash.backupTitle": "Cadangkan flash",
-  "flash.backupHint": "Menangkap seluruh USB flash (/boot): OS Unraid, lisensi, konfigurasi array, share, jaringan, dan konfigurasi plugin.",
-  "flash.backupNow": "Cadangkan flash sekarang",
-  "flash.backingUp": "Mencadangkan…",
   "flash.download": "Unduh (.zip)",
-  "flash.restoreNote": "Pemulihan mengunduh ZIP dari snapshot. /boot yang sedang berjalan tidak pernah disentuh. Masukkan .zip langsung ke pembuat USB Unraid, atau ekstrak ke USB baru untuk membangun kembali flash Anda. Pengecualiannya adalah memulihkan satu plugin dari Plugin: plugin itu ditulis kembali ke flash yang sedang berjalan.",
   "flash.plugins": "Plugin",
   "flash.pluginsTitle": "Plugin dalam cadangan ini",
   "flash.pluginsHint": "Mengembalikan satu plugin ke flash yang sedang berjalan: file .plg, foldernya di config/plugins, dan file paket yang ada di cadangan ini. Unraid memasangnya saat boot berikutnya, atau langsung lewat Plugins, Install Plugin.",

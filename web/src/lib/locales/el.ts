@@ -757,13 +757,7 @@ const el: Partial<Translations> = {
   "hooks.post": "Εντολή μετά το αντίγραφο",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Αντίγραφο Flash",
-  "flash.backupTitle": "Αντίγραφο του flash",
-  "flash.backupHint": "Καταγράφει ολόκληρο το USB flash (/boot): λειτουργικό Unraid, άδεια, διαμόρφωση array, κοινόχρηστους πόρους, δίκτυο και διαμόρφωση plugin.",
-  "flash.backupNow": "Αντίγραφο flash τώρα",
-  "flash.backingUp": "Δημιουργία αντιγράφου…",
   "flash.download": "Λήψη (.zip)",
-  "flash.restoreNote": "Η επαναφορά κατεβάζει ένα ZIP του στιγμιότυπου. Το /boot που εκτελείται δεν αγγίζεται ποτέ. Ρίξτε το .zip απευθείας στο εργαλείο δημιουργίας USB του Unraid ή αποσυμπιέστε το σε ένα νέο USB για να αναδημιουργήσετε το flash. Εξαίρεση είναι η επαναφορά ενός μόνο προσθέτου από τα Πρόσθετα: γράφεται ξανά στο flash που εκτελείται.",
   "flash.plugins": "Πρόσθετα",
   "flash.pluginsTitle": "Πρόσθετα σε αυτό το αντίγραφο",
   "flash.pluginsHint": "Επαναφέρει ένα μόνο πρόσθετο στο flash που τρέχει: το αρχείο .plg, τον φάκελό του στο config/plugins και τα αρχεία πακέτων που περιέχει αυτό το αντίγραφο. Το Unraid το εγκαθιστά στην επόμενη εκκίνηση ή αμέσως από Plugins, Install Plugin.",

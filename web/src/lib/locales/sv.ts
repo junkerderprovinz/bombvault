@@ -757,13 +757,7 @@ const sv: Partial<Translations> = {
   "hooks.post": "Kommando efter säkerhetskopiering",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-säkerhetskopia",
-  "flash.backupTitle": "Säkerhetskopiera flashen",
-  "flash.backupHint": "Fångar hela USB-flashen (/boot): Unraid-OS, licens, array-config, resurser, nätverks- och plugin-config.",
-  "flash.backupNow": "Säkerhetskopiera flash nu",
-  "flash.backingUp": "Säkerhetskopierar…",
   "flash.download": "Ladda ner (.zip)",
-  "flash.restoreNote": "Återställning laddar ner en ZIP av ögonblicksbilden. Den körande /boot rörs aldrig. Lägg .zip-filen direkt i Unraids USB-skapare, eller packa upp den på ett nytt USB-minne för att bygga om din flash. Undantaget är att återställa ett enskilt plugin under Plugins: det skrivs tillbaka till den körande flashen.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins i den här säkerhetskopian",
   "flash.pluginsHint": "Lägger tillbaka ett enda plugin på flashminnet som används: dess .plg-fil, dess mapp under config/plugins och paketfilerna som den här kopian innehåller. Unraid installerar det vid nästa start, eller direkt under Plugins, Install Plugin.",

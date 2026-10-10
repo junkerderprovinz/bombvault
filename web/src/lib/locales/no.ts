@@ -754,13 +754,7 @@ const no: Partial<Translations> = {
   "hooks.post": "Post-sikkerhetskopikommando",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-sikkerhetskopi",
-  "flash.backupTitle": "Sikkerhetskopier flashen",
-  "flash.backupHint": "Fanger hele USB-flashen (/boot): Unraid-OS, lisens, array-config, delinger, nettverks- og plugin-config.",
-  "flash.backupNow": "Sikkerhetskopier flash nå",
-  "flash.backingUp": "Sikkerhetskopierer…",
   "flash.download": "Last ned (.zip)",
-  "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet. Den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt. Unntaket er å gjenopprette ett enkelt programtillegg under Programtillegg: det skrives tilbake til den kjørende flashen.",
   "flash.plugins": "Programtillegg",
   "flash.pluginsTitle": "Programtillegg i denne sikkerhetskopien",
   "flash.pluginsHint": "Legger ett programtillegg tilbake på flashminnet som er i bruk: .plg-filen, mappen under config/plugins og pakkefilene denne kopien inneholder. Unraid installerer det ved neste oppstart, eller med en gang under Plugins, Install Plugin.",

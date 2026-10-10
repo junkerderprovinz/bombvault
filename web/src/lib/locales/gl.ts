@@ -1490,13 +1490,7 @@ const gl: Partial<Translations> = {
   "vms.discoverHint": "MV eliminada de Unraid (ou perdida despois dunha reinstalación)? Reconstrúe a súa entrada de copia desde o almacenamento para poder restauraa.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Copia de Flash",
-  "flash.backupTitle": "Facer copia do Flash",
-  "flash.backupHint": "Captura toda a unidade USB (/boot): SO Unraid, licenza, configuración do array, comparticóns, rede e configuración de plugins.",
-  "flash.backupNow": "Facer copia do Flash agora",
-  "flash.backingUp": "Copiando…",
   "flash.download": "Descargar (.zip)",
-  "flash.restoreNote": "Restaurar descarga un ZIP da instantánea. O /boot en execución nunca se toca. Pon o .zip directamente no creador de USB de Unraid, ou descomprímeo nun USB novo para reconstruír o teu Flash. A excepción é restaurar un só complemento desde Complementos: escríbese de novo no Flash en execución.",
   "flash.plugins": "Complementos",
   "flash.pluginsTitle": "Complementos desta copia",
   "flash.pluginsHint": "Devolve un só complemento ao flash en uso: o seu ficheiro .plg, o seu cartafol en config/plugins e os ficheiros de paquete que contén esta copia. Unraid instálao no seguinte arranque, ou de inmediato en Plugins, Install Plugin.",

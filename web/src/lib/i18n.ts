@@ -1771,13 +1771,7 @@ export const en = {
   "vms.discoverHint": "VM deleted from Unraid (or lost after a reinstall)? Rebuild its backup entry from storage so you can restore it.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash Backup",
-  "flash.backupTitle": "Back up the flash",
-  "flash.backupHint": "Captures the entire USB flash (/boot): Unraid OS, license, array config, shares, network and plugin config.",
-  "flash.backupNow": "Back up flash now",
-  "flash.backingUp": "Backing up…",
   "flash.download": "Download (.zip)",
-  "flash.restoreNote": "Restore downloads a ZIP of the snapshot. The running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash. Restoring a single plugin under Plugins is the exception: it writes that plugin back into the running flash.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins in this backup",
   "flash.pluginsHint": "Puts one plugin back into the running flash: its .plg file, its folder under config/plugins and the package files this backup holds. Unraid installs it on the next boot, or right away under Plugins, Install Plugin.",
@@ -5990,13 +5984,7 @@ export const de: Translations = {
   "vms.discoverHint": "VM aus Unraid gelöscht (oder nach einer Neuinstallation verloren)? Baue ihren Backup-Eintrag aus dem Speicher neu auf, um sie wiederherzustellen.",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Flash-Backup",
-  "flash.backupTitle": "Flash sichern",
-  "flash.backupHint": "Sichert den kompletten USB-Stick (/boot): Unraid-OS, Lizenz, Array-Config, Shares, Netzwerk und Plugin-Config.",
-  "flash.backupNow": "Flash jetzt sichern",
-  "flash.backingUp": "Sichere…",
   "flash.download": "Download (.zip)",
-  "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter. Der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen. Ausnahme ist ein einzelnes Plugin, das du unter Plugins wiederherstellst: Es wird zurück in den laufenden Flash geschrieben.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins in diesem Backup",
   "flash.pluginsHint": "Legt ein einzelnes Plugin zurück in den laufenden Flash: seine .plg-Datei, seinen Ordner unter config/plugins und die Paketdateien, die dieses Backup enthält. Unraid installiert es beim nächsten Start oder sofort unter Plugins, Install Plugin.",

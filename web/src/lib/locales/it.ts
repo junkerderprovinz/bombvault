@@ -757,13 +757,7 @@ const it: Partial<Translations> = {
   "hooks.post": "Comando post-backup",
 
   // Flash (Unraid USB) backup
-  "flash.title": "Backup del Flash",
-  "flash.backupTitle": "Esegui backup del flash",
-  "flash.backupHint": "Cattura l'intera chiavetta USB flash (/boot): SO Unraid, licenza, configurazione array, condivisioni, rete e configurazione dei plugin.",
-  "flash.backupNow": "Backup del flash ora",
-  "flash.backingUp": "Backup in corso…",
   "flash.download": "Scarica (.zip)",
-  "flash.restoreNote": "Il ripristino scarica uno ZIP dello snapshot. Il /boot in esecuzione non viene mai toccato. Trascina il .zip direttamente nel creatore USB di Unraid, oppure estrailo su una chiavetta USB nuova per ricostruire il flash. L'eccezione è il ripristino di un singolo plugin da Plugin: viene riscritto nel flash in esecuzione.",
   "flash.plugins": "Plugin",
   "flash.pluginsTitle": "Plugin in questo backup",
   "flash.pluginsHint": "Rimette un singolo plugin nella chiavetta in uso: il suo file .plg, la sua cartella in config/plugins e i file dei pacchetti presenti in questo backup. Unraid lo installa al prossimo avvio, oppure subito da Plugins, Install Plugin.",
