@@ -65,7 +65,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported AFTER vi.mock so the component picks up the mocked client.
-const { ExcludesEditor } = await import("./Containers");
+const { ExcludesEditor } = await import("../components/containers/ExcludesEditor");
 
 function Harness() {
   const { t } = useT();

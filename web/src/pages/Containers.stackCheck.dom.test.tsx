@@ -45,7 +45,7 @@ vi.mock("../lib/api", async () => {
   };
 });
 
-const { StackCard } = await import("./Containers");
+const { StackCard } = await import("../components/containers/StackCard");
 const { en } = await import("../lib/i18n");
 
 const t = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof StackCard>[0]["t"];

@@ -89,7 +89,8 @@ function member(name: string): Container {
   };
 }
 
-const { Containers, StackCard } = await import("./Containers");
+const { Containers } = await import("./Containers");
+const { StackCard } = await import("../components/containers/StackCard");
 const { en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
 const { AdvancedProvider } = await import("../lib/advanced");
