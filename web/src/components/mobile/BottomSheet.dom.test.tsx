@@ -210,6 +210,33 @@ describe("BottomSheet", () => {
     expect(wentThrough).toBe(true);
     expect(document.activeElement).toBe(overOne);
   });
+
+  it("leaves the keys to a dialog opened from inside it", () => {
+    const onClose = vi.fn();
+    render(
+      <I18nProvider>
+        <BottomSheet open onClose={onClose} title={en["nav.more"]}>
+          <button>body one</button>
+        </BottomSheet>
+      </I18nProvider>,
+    );
+    const dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    dialog.innerHTML = "<button>inner</button>";
+    document.body.appendChild(dialog);
+    try {
+      const inner = dialog.querySelector("button")!;
+      inner.focus();
+      expect(fireEvent.keyDown(document, { key: "Tab" })).toBe(true);
+      expect(document.activeElement).toBe(inner);
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onClose).not.toHaveBeenCalled();
+    } finally {
+      dialog.remove();
+    }
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 // Extension contracts. PropsHarness forwards the additive props onto an

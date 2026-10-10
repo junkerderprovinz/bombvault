@@ -3,40 +3,42 @@
 // source is a short block that keeps its date and size in view.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, en } from "../lib/i18n";
-import { ToastProvider } from "../lib/toast";
-import { DESKTOP_QUERY } from "../lib/useMediaQuery";
+import { I18nProvider, en, useT } from "../../lib/i18n";
+import { ToastProvider } from "../../lib/toast";
+import type { ReceivedRepoStatus } from "../../lib/api";
+import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 
-vi.mock("../lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../lib/api")>();
+const repo: ReceivedRepoStatus = {
+  id: "r1",
+  name: "tower off-site",
+  repo: "rest:http://192.168.1.9:8000/tower",
+  deadManHours: 26,
+  checkCadence: "",
+  readDataPercent: 0,
+  lastCheckAt: 0,
+  lastCheckOk: null,
+  lastCheckError: "",
+  lastCheckReadData: false,
+  enabled: true,
+  createdAt: 0,
+  sortOrder: 0,
+  memberId: "member-1",
+  needsPairing: false,
+  lastReceived: "",
+  snapshotCount: 12,
+  reachable: true,
+};
+
+const checked: [string, boolean][] = [];
+
+vi.mock("../../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    listReceivedRepos: () =>
-      Promise.resolve({
-        ok: true,
-        repos: [
-          {
-            id: "r1",
-            name: "tower off-site",
-            repo: "rest:http://192.168.1.9:8000/tower",
-            deadManHours: 26,
-            checkCadence: "",
-            readDataPercent: 0,
-            lastCheckAt: 0,
-            lastCheckOk: null,
-            lastCheckError: "",
-            lastCheckReadData: false,
-            enabled: true,
-            createdAt: 0,
-            sortOrder: 0,
-            memberId: "member-1",
-            needsPairing: false,
-            lastReceived: "",
-            snapshotCount: 12,
-            reachable: true,
-          },
-        ],
-      }),
+    checkReceivedRepo: (id: string, readData: boolean) => {
+      checked.push([id, readData]);
+      return Promise.resolve({ ok: true, result: { ok: true, error: "", ranReadData: readData, at: 1 } });
+    },
     receiverInventory: () =>
       Promise.resolve({
         ok: true,
@@ -52,7 +54,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-const { Receiver } = await import("./Receiver");
+const { ReceivedRepoCard } = await import("./ReceivedRepoCard");
 
 // useIsDesktop keeps the first MediaQueryList it gets, so the stub answers
 // from a variable instead of being swapped per test.
@@ -70,23 +72,35 @@ window.matchMedia = ((query: string) => ({
   dispatchEvent: () => false,
 })) as unknown as typeof window.matchMedia;
 
-async function openInventory() {
+function Card({ over = {} }: { over?: Partial<ReceivedRepoStatus> }) {
+  const { t } = useT();
+  return <ReceivedRepoCard repo={{ ...repo, ...over }} t={t} index={0} onRefresh={() => undefined} onEdit={() => undefined} />;
+}
+
+async function renderCard(over?: Partial<ReceivedRepoStatus>) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <Receiver embedded />
+          <Card over={over} />
         </ToastProvider>
       </I18nProvider>,
     );
   });
+}
+
+async function openInventory() {
+  await renderCard();
   await act(async () => {
     fireEvent.click(await screen.findByRole("button", { name: en["receiver.details"] }));
   });
   await screen.findByText(en["receiver.total"]);
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  checked.length = 0;
+});
 
 describe("the received inventory", () => {
   it("is a table on the desktop", async () => {
@@ -106,5 +120,22 @@ describe("the received inventory", () => {
     expect(items[0].textContent).toContain(en["receiver.colLastReceived"]);
     expect(items[1].textContent).toContain(en["receiver.total"]);
     expect(items[1].textContent).toContain("3.0 GB");
+  });
+});
+
+describe("a received repository's card", () => {
+  it("checks the repository with the depth the switch says", async () => {
+    await renderCard();
+    fireEvent.click(screen.getByRole("switch", { name: en["receiver.deepCheck"] }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["receiver.checkNow"] }));
+    });
+    expect(checked).toEqual([["r1", true]]);
+    expect(await screen.findAllByText(en["receiver.checkOk"])).not.toHaveLength(0);
+  });
+
+  it("marks a row from before pairing", async () => {
+    await renderCard({ needsPairing: true, memberId: "" });
+    expect(screen.getByText(en["pairing.pairAgain"])).toBeTruthy();
   });
 });

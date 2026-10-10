@@ -21,9 +21,6 @@ const KEYS = [
   "bv-labels-tabs",
   "bv-labels-bottombar",
   "bv-lang",
-  // Whether a Fleet peer card shows its scorecard. Unlike a filter, losing it on
-  // a new browser is as annoying as losing the theme.
-  "bombvault.fleetDetailsOpen",
   // The order of the Settings rail, which a reader arranges once for good.
   "bombvault.settingsOrder",
   // Which Settings pages also sit in the sidebar.

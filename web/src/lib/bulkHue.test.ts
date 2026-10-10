@@ -12,8 +12,8 @@ const PAGES = [
   "src/pages/Containers.tsx",
   "src/pages/VMs.tsx",
   "src/pages/Files.tsx",
-  "src/pages/Fleet.tsx",
-  "src/pages/Receiver.tsx",
+  "src/pages/instances/InstanceCard.tsx",
+  "src/pages/instances/ReceivedRepoCard.tsx",
 ];
 
 function read(path: string): string {

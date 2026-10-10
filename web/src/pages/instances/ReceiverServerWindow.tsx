@@ -1,9 +1,9 @@
-// ReceiverServerCard sets up the append-only rest-server this box runs for its
-// pairing group, and shows how it stands once it runs: where members copy to,
-// whether it still refuses deletes, which members have a login of their own,
-// and the Unraid template that keeps it editable in the Docker tab.
+// ReceiverServerWindow sets up the append-only rest-server this box runs for
+// its pairing group, and shows how it stands once it runs: where members copy
+// to, whether it still refuses deletes, which members have a login of their
+// own, and the Unraid template that keeps it editable in the Docker tab.
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   RECEIVER_TEMPLATE_URL,
@@ -15,7 +15,6 @@ import {
   type ReceiverLogin,
   type ReceiverServer,
 } from "../../lib/api";
-import { hueVars } from "../../lib/appearance";
 import type { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
@@ -26,16 +25,14 @@ import { CopyBlock } from "../../components/CopyBlock";
 import { FolderBrowser } from "../../components/FolderBrowser";
 import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
+import { InstanceWindow } from "./InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
 
-// The receiver's colour on the Modules card, so the card reads as the module's.
-const HUE = 6;
-
 const INPUT = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-/** What setting up answered, kept only until the page is left: the password
- *  is not shown again. */
+/** What setting up answered, kept only until the window is closed: the
+ *  password is not shown again. */
 interface Fresh {
   password: string;
   template: "written" | "download" | "none";
@@ -54,7 +51,7 @@ function checkBadge(server: ReceiverServer, t: T) {
   }
 }
 
-export function ReceiverServerCard({ t }: { t: T }) {
+export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [server, setServer] = useState<ReceiverServer | null>(null);
@@ -126,29 +123,40 @@ export function ReceiverServerCard({ t }: { t: T }) {
     }
   }
 
-  if (!loaded) return null;
-
   return (
-    <section
-      className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-3"
-      style={hueVars(HUE) as CSSProperties}
-      aria-label={t("receiver.server.title")}
+    <InstanceWindow
+      title={t("receiver.server.title")}
+      hint={t("receiver.server.tip")}
+      onClose={onClose}
+      footer={
+        <>
+          {server && (
+            <>
+              <a href={RECEIVER_TEMPLATE_URL} download className="me-auto text-xs text-carbon-textSub underline">
+                {t("receiver.server.downloadTemplate")}
+              </a>
+              <Button
+                label={t("receiver.server.forget")}
+                labelKey="receiver.server.forget"
+                tone="neutral"
+                hint={t("receiver.server.forgetTip")}
+                onClick={() => void forget()}
+              />
+            </>
+          )}
+          <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={onClose} />
+        </>
+      }
     >
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={HUE}>
-          {t("receiver.server.title")}
-          <InfoBubble tip={t("receiver.server.tip")} onAccent />
-        </Badge>
-      </h2>
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
 
-      {!server && !error && (
+      {loaded && !server && !error && (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-carbon-textSub">{t("receiver.server.intro")}</p>
           <Button
             label={t("receiver.server.setUp")}
             labelKey="receiver.server.setUp"
-            tone="accent"
+            tone="neutral"
             onClick={() => setFormOpen(true)}
             className="self-start"
           />
@@ -170,6 +178,15 @@ export function ReceiverServerCard({ t }: { t: T }) {
                 {t("receiver.lastChecked").replace("{time}", () => relativeTime(t, server.checkedAt))}
               </span>
             )}
+            <Button
+              label={t("receiver.server.checkAgain")}
+              labelKey="receiver.server.checkAgain"
+              tone="neutral"
+              onClick={() => void runCheck()}
+              busy={checking}
+              disabled={checking}
+              className="ms-auto"
+            />
           </div>
           {server.check !== "protected" && server.checkDetail && (
             <p className="text-xs text-carbon-textSub wrap-break-word">{server.checkDetail}</p>
@@ -227,28 +244,6 @@ export function ReceiverServerCard({ t }: { t: T }) {
               )}
             </div>
           )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              label={t("receiver.server.checkAgain")}
-              labelKey="receiver.server.checkAgain"
-              tone="accent"
-              onClick={() => void runCheck()}
-              busy={checking}
-              disabled={checking}
-            />
-            <a href={RECEIVER_TEMPLATE_URL} download className="text-xs text-carbon-textSub underline">
-              {t("receiver.server.downloadTemplate")}
-            </a>
-            <Button
-              label={t("receiver.server.forget")}
-              labelKey="receiver.server.forget"
-              tone="neutral"
-              hint={t("receiver.server.forgetTip")}
-              onClick={() => void forget()}
-              className="ms-auto"
-            />
-          </div>
         </div>
       )}
 
@@ -265,7 +260,7 @@ export function ReceiverServerCard({ t }: { t: T }) {
           }}
         />
       )}
-    </section>
+    </InstanceWindow>
   );
 }
 

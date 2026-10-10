@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } fr
 import { createPortal } from "react-dom";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { InfoBubble } from "../InfoBubble";
 import { IconClose } from "../navGlyphs";
 import { useT } from "../../lib/i18n";
 
@@ -38,6 +39,8 @@ export interface BottomSheetProps {
   headerClose?: boolean;
   /** The sheet's heading, already translated by the caller. */
   title: ReactNode;
+  /** What the sheet is for, as the (i) in its heading. */
+  hint?: string;
   /** The sheet body. */
   children: ReactNode;
   /** Full-height variant (the run detail sheet): h-dvh, edge to edge,
@@ -69,7 +72,7 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 // and the keyboard would stop moving.
 const openPanels: RefObject<HTMLDivElement | null>[] = [];
 
-export function BottomSheet({ open, onClose, headerClose = true, title, children, fullHeight, footer, describedBy }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, headerClose = true, title, hint, children, fullHeight, footer, describedBy }: BottomSheetProps) {
   const { t } = useT();
   const titleId = useId();
   // panelRef roots the Tab trap; closeRef gets initial focus; triggerRef is restored on close (useConfirm.tsx's trio).
@@ -119,6 +122,10 @@ export function BottomSheet({ open, onClose, headerClose = true, title, children
     openPanels.push(panelRef);
     function onKeyDown(e: KeyboardEvent) {
       if (openPanels[openPanels.length - 1] !== panelRef) return;
+      // A dialog opened from inside the sheet stands after it in the document
+      // and has to get the keys: trapped here, Tab could never reach it.
+      const dialogs = document.querySelectorAll('[role="dialog"], [role="alertdialog"]');
+      if (dialogs[dialogs.length - 1] !== panelRef.current) return;
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
@@ -222,6 +229,7 @@ export function BottomSheet({ open, onClose, headerClose = true, title, children
           <h2 id={titleId} className="flex min-w-0 items-center">
             <Badge tone="heading" size="heading" wrap inFlow className="min-w-0">
               {title}
+              {hint && <InfoBubble tip={hint} onAccent />}
             </Badge>
           </h2>
           {/* Engine Button: shared tone table, tooltips and press motion

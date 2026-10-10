@@ -4,9 +4,9 @@
 // succeeded, failed and switched off each have their own wording.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, countText, en } from "../lib/i18n";
-import { ToastProvider } from "../lib/toast";
-import type { PullSourceView } from "../lib/api";
+import { I18nProvider, countText, en, useT } from "../../lib/i18n";
+import { ToastProvider } from "../../lib/toast";
+import type { PullSourceView } from "../../lib/api";
 
 const base: PullSourceView = {
   id: "p1",
@@ -28,14 +28,13 @@ const base: PullSourceView = {
   needsPairing: false,
 };
 
-let rows: PullSourceView[] = [base];
 const deleted: string[] = [];
+let refreshed = 0;
 
-vi.mock("../lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../lib/api")>();
+vi.mock("../../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    listPullSources: () => Promise.resolve({ ok: true, sources: rows }),
     deletePullSource: (id: string) => {
       deleted.push(id);
       return Promise.resolve({ ok: true });
@@ -43,14 +42,19 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-const { Pull } = await import("./Pull");
+const { PullSourceCard } = await import("./PullSourceCard");
 
-async function renderPull() {
+function Card({ source }: { source: PullSourceView }) {
+  const { t } = useT();
+  return <PullSourceCard source={source} t={t} index={0} onRefresh={() => refreshed++} onEdit={() => undefined} />;
+}
+
+async function renderCard(over: Partial<PullSourceView> = {}) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <Pull />
+          <Card source={{ ...base, ...over }} />
         </ToastProvider>
       </I18nProvider>
     );
@@ -58,8 +62,8 @@ async function renderPull() {
 }
 
 beforeEach(() => {
-  rows = [base];
   deleted.length = 0;
+  refreshed = 0;
   localStorage.clear();
 });
 
@@ -67,42 +71,38 @@ afterEach(cleanup);
 
 describe("pull source card", () => {
   it("reports the last result, not a fresh probe", async () => {
-    await renderPull();
+    await renderCard();
     expect(screen.queryByText(en["pull.pullOk"])).not.toBeNull();
     expect(screen.queryByText(countText(en["pull.snapshotsPulled"], "en", 7))).not.toBeNull();
   });
 
   it("says never pulled rather than guessing at a verdict", async () => {
-    rows = [{ ...base, lastPullOk: null, lastPullAt: 0, snapshotsPulled: 0 }];
-    await renderPull();
+    await renderCard({ lastPullOk: null, lastPullAt: 0, snapshotsPulled: 0 });
     expect(screen.queryByText(en["pull.neverPulled"])).not.toBeNull();
     expect(screen.queryByText(en["pull.pullOk"])).toBeNull();
   });
 
   it("shows the failure and its reason", async () => {
-    rows = [{ ...base, lastPullOk: false, lastPullError: "could not open the pull source" }];
-    await renderPull();
+    await renderCard({ lastPullOk: false, lastPullError: "could not open the pull source" });
     expect(screen.queryByText(en["pull.pullFailed"])).not.toBeNull();
     expect(screen.queryByText("could not open the pull source")).not.toBeNull();
   });
 
   it("a disabled source says so instead of reporting an old success", async () => {
     // lastPullOk is still true from before the source was switched off.
-    rows = [{ ...base, enabled: false }];
-    await renderPull();
+    await renderCard({ enabled: false });
     expect(screen.queryByText(en["pull.pullingOff"])).not.toBeNull();
     expect(screen.queryByText(en["pull.pullOk"])).toBeNull();
   });
 
   it("cannot be pulled from while it is switched off", async () => {
-    rows = [{ ...base, enabled: false }];
-    await renderPull();
+    await renderCard({ enabled: false });
     const btn = screen.getByRole("button", { name: en["pull.pullNow"] }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
   });
 
   it("removes only on the second click", async () => {
-    await renderPull();
+    await renderCard();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["receiver.remove"] }));
     });
@@ -111,5 +111,6 @@ describe("pull source card", () => {
       fireEvent.click(screen.getByRole("button", { name: en["offsite.targets.confirmRemove"] }));
     });
     expect(deleted).toEqual(["p1"]);
+    expect(refreshed).toBe(1);
   });
 });

@@ -1,37 +1,32 @@
-// Pull fetches backups out of another BombVault's repository into this one. It
-// follows Receiver.tsx, with one difference: a received repository is only
-// read, while a pull writes to this disk. So a source card leads with its last
-// result rather than a live probe, and removing a source touches neither
-// repository.
-import { useEffect, useState, type CSSProperties } from "react";
+// A pull source is another BombVault's repository this server fetches
+// snapshots out of. A received repository is only read, while a pull writes
+// to this disk. So a source card leads with its last result and not with a
+// live probe, and removing a source touches neither repository.
+import { useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+
+import { Badge } from "../../components/Badge";
+import { Button } from "../../components/Button";
+import { InfoBubble } from "../../components/InfoBubble";
+import { NumberField } from "../../components/NumberField";
+import { SelectField } from "../../components/SelectField";
+import { TestButton, VerdictLine } from "../../components/TestButton";
 import {
-  listPullSources,
   createPullSource,
-  updatePullSource,
   deletePullSource,
-  testPullSource,
   runPullSource,
-} from "../lib/api";
-import type { PullSourceView, PullSourceInput } from "../lib/api";
-import { useT } from "../lib/i18n";
-import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
-import { relativeTime } from "../lib/reltime";
-import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { NumberField } from "../components/NumberField";
-import { PageTitle } from "../components/PageTitle";
-import { IconReceiver } from "../components/Sidebar";
-import { Badge } from "../components/Badge";
-import { InfoBubble } from "../components/InfoBubble";
-import { MemberField } from "./instances/MemberField";
-import { SelectField } from "../components/SelectField";
-import { credSetLabel, useCloudCredSets } from "../lib/useCloudCredSets";
-import { useToast } from "../lib/toast";
-import { hueVars } from "../lib/appearance";
-import { Button } from "../components/Button";
-import { TestButton, VerdictLine } from "../components/TestButton";
-import { useTestVerdict } from "../lib/useTestVerdict";
-import { ToggleRow } from "./settings/shared";
+  testPullSource,
+  updatePullSource,
+} from "../../lib/api";
+import type { PullSourceInput, PullSourceView } from "../../lib/api";
+import { hueVars } from "../../lib/appearance";
+import { useT } from "../../lib/i18n";
+import { relativeTime } from "../../lib/reltime";
+import { useToast } from "../../lib/toast";
+import { credSetLabel, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { useTestVerdict } from "../../lib/useTestVerdict";
+import { ToggleRow } from "../settings/shared";
+import { MemberField } from "./MemberField";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -43,7 +38,7 @@ const inputCls =
 const DOMAINS = ["containers", "vms", "files", "zfs", "flash", "config"] as const;
 type PullDomain = (typeof DOMAINS)[number];
 
-function PullSourceCard({
+export function PullSourceCard({
   source,
   t,
   index,
@@ -101,7 +96,7 @@ function PullSourceCard({
 
   return (
     <div
-      className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-4 flex flex-col gap-3"
+      className="relative glim-notch-card glim-hue bg-carbon-background rounded-card p-4 flex flex-col gap-3"
       style={hueVars(index) as CSSProperties}
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -146,7 +141,7 @@ function PullSourceCard({
         <Button
           label={t("pull.pullNow")}
           labelKey="pull.pullNow"
-          tone="accent"
+          tone="neutral"
           onClick={() => void handlePull()}
           disabled={busy || test.running || !source.enabled}
           busy={busy}
@@ -189,14 +184,17 @@ function PullSourceCard({
   );
 }
 
-function PullDialog({
+export function PullDialog({
   initial,
+  member = "",
   t,
   onClose,
   onSaved,
 }: {
   /** null = create; a row = edit that source. */
   initial: PullSourceView | null;
+  /** The source instance a new source starts with. */
+  member?: string;
   t: T;
   onClose: () => void;
   onSaved: () => void;
@@ -204,7 +202,7 @@ function PullDialog({
   const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
-  const [memberId, setMemberId] = useState("");
+  const [memberId, setMemberId] = useState(initial ? "" : member);
   const [domain, setDomain] = useState<PullDomain>((initial?.domain as PullDomain) ?? "containers");
   const [cadence, setCadence] = useState(initial?.cadence ?? "");
   // The login for the storage the source repository lies on; the restic
@@ -400,114 +398,5 @@ function PullDialog({
       </div>
     </div>,
     document.body
-  );
-}
-
-/** With `embedded` the page is a tab of Instances, which owns the shell and
- *  the heading; the subtitle stays. */
-export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
-  const { t } = useT();
-  const [sources, setSources] = useState<PullSourceView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<PullSourceView | "new" | null>(null);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await listPullSources();
-      if (res.ok) {
-        setSources(res.sources ?? []);
-        setError(null);
-      } else {
-        setError(res.error ?? t("pull.saveError"));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("pull.saveError"));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
-
-  const showEmptyState = !loading && error === null && sources.length === 0;
-
-  return (
-    <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      {/* Nothing here is visible once the title is sr-only and the empty
-          state has hidden the Add button, so this row goes sr-only too and
-          leaves the flex layout: without it, an empty row still ate a gap
-          above the empty-state card. */}
-      <div
-        className={`flex items-start justify-between gap-4 flex-wrap${
-          showEmptyState ? " glim-page-title sr-only" : ""
-        }`}
-      >
-        {!embedded && <PageTitle>{t("pull.title")}</PageTitle>}
-        {!showEmptyState && (
-          <Button
-            label={t("pull.addSource")}
-            labelKey="pull.addSource"
-            tone="accent"
-            onClick={() => setDialog("new")}
-            className="shrink-0"
-          />
-        )}
-      </div>
-
-      {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
-      {error !== null && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
-
-      {showEmptyState && (
-        <div
-          className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-          style={hueVars(0) as CSSProperties}
-        >
-          <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
-              {t("pull.emptyTitle")}
-              <InfoBubble tip={t("pull.empty")} onAccent />
-            </Badge>
-          </h2>
-          <EmptyStateIcon icon={IconReceiver} />
-          <Button
-            label={t("pull.addSource")}
-            labelKey="pull.addSource"
-            tone="accent"
-            onClick={() => setDialog("new")}
-          />
-        </div>
-      )}
-
-      {!loading && sources.length > 0 && (
-        <div className="flex flex-col gap-3 glim-content-fade">
-          {sources.map((ps, i) => (
-            <PullSourceCard
-              key={ps.id}
-              source={ps}
-              t={t}
-              index={i}
-              onRefresh={() => void load()}
-              onEdit={() => setDialog(ps)}
-            />
-          ))}
-        </div>
-      )}
-
-      {dialog !== null && (
-        <PullDialog
-          initial={dialog === "new" ? null : dialog}
-          t={t}
-          onClose={() => setDialog(null)}
-          onSaved={() => {
-            setDialog(null);
-            void load();
-          }}
-        />
-      )}
-    </div>
   );
 }

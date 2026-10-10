@@ -10,6 +10,7 @@ import { Config } from "../pages/Config";
 import { Files } from "../pages/Files";
 import { ZFS } from "../pages/ZFS";
 import { Instances } from "../pages/Instances";
+import { ZFSServer } from "../pages/ZFSServer";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
@@ -41,13 +42,13 @@ export function AppRouter() {
               <Route path="/config" element={<Config />} />
               <Route path="/files" element={<Files />} />
               <Route path="/zfs" element={<ZFS />} />
-              {/* Receiver, Pull and Fleet are tabs of Instances. Their own
-                  paths stay as redirects because bookmarks, release notes and
-                  support answers link to them. */}
               <Route path="/instances" element={<Instances />} />
+              <Route path="/instances/zfs/:id" element={<ZFSServer />} />
+              {/* Bookmarks, release notes and support answers link to
+                  these three paths. */}
               <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
-              <Route path="/pull" element={<Navigate to="/instances#pull" replace />} />
-              <Route path="/fleet" element={<Navigate to="/instances#fleet" replace />} />
+              <Route path="/pull" element={<Navigate to="/instances" replace />} />
+              <Route path="/fleet" element={<Navigate to="/instances" replace />} />
               <Route path="/recovery" element={<Recovery />} />
               {/* Schedules are a Settings page; /jobs stays for existing links. */}
               <Route path="/jobs" element={<Navigate to="/settings/schedules" replace />} />

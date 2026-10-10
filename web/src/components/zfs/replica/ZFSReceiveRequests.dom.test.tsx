@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-// The receiving side of a ZFS replica. Nothing may arrive before someone here
-// allows it, an Allow has to carry exactly the pool, root and keep rule shown,
-// and taking the permission back needs a second answer.
+// The receiving side of a ZFS replica, as one instance's window shows it.
+// Nothing may arrive before someone here allows it, an Allow has to carry
+// exactly the pool, root and keep rule shown, and taking the permission back
+// needs a second answer.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { I18nProvider, en } from "../../../lib/i18n";
@@ -32,13 +33,13 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   };
 });
 
-const { ZFSReceiveCard } = await import("./ZFSReceiveCard");
+const { ZFSReceiveRequests } = await import("./ZFSReceiveRequests");
 
-function renderCard() {
+function renderCard(peer = "peer-1") {
   return render(
     <I18nProvider>
       <ToastProvider>
-        <ZFSReceiveCard />
+        <ZFSReceiveRequests peer={peer} />
       </ToastProvider>
     </I18nProvider>,
   );
@@ -64,6 +65,24 @@ describe("receiving a ZFS replica", () => {
   it("stays away while no request waits and none is allowed", async () => {
     requests = [receiveRequest({ state: "refused" }), receiveRequest({ id: "rq2", state: "revoked" })];
     const { container } = renderCard();
+    await act(async () => undefined);
+    expect(container.textContent).toBe("");
+  });
+
+  it("shows only the instance it was opened for", async () => {
+    requests = [
+      receiveRequest(),
+      receiveRequest({ id: "rq2", peer: "peer-2", peerName: "attic", sourceServer: "attic", item: "tank/media" }),
+      receiveRequest({ id: "rq3", peer: "peer-2", peerName: "attic", sourceServer: "attic", state: "allowed", root: "tank/bombvault-replica" }),
+    ];
+    renderCard("peer-2");
+    expect(await screen.findByText("attic wants to replicate tank/media here")).toBeTruthy();
+    expect(screen.getByText("cache/appdata from attic")).toBeTruthy();
+    expect(screen.queryByText("tower-2 wants to replicate cache/appdata here")).toBeNull();
+  });
+
+  it("stays away for an instance that asked for nothing", async () => {
+    const { container } = renderCard("peer-9");
     await act(async () => undefined);
     expect(container.textContent).toBe("");
   });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { decideZFSReceiveRequest, listZFSLocalPools, listZFSReceiveRequests, patchZFSReceiveRequest } from "../../../lib/api";
+import { decideZFSReceiveRequest, listZFSLocalPools, patchZFSReceiveRequest } from "../../../lib/api";
 import type { ZFSReceiveDecision, ZFSReceiveRequest, ZFSReplicaKeep, ZFSReplicaPool } from "../../../lib/api";
 import { humanBytes } from "../../../lib/forecast";
 import { useT } from "../../../lib/i18n";
@@ -9,7 +9,6 @@ import { useConfirm } from "../../../lib/useConfirm";
 import { useDebouncedSave } from "../../../lib/useDebouncedSave";
 import { useToast } from "../../../lib/toast";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
-import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { InfoBubble } from "../../InfoBubble";
 import { Selector } from "../../Selector";
@@ -17,6 +16,7 @@ import { IconCheck } from "../../Sidebar";
 import { IconZFS } from "../../navGlyphs";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { defaultRoot, examplePath, poolLabel, unixOf } from "./replicaModel";
+import { useReceiveRequests } from "./replicaStore";
 
 const inputCls = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
 
@@ -278,23 +278,18 @@ function ReceiveSlot({ request, onChanged }: { request: ZFSReceiveRequest; onCha
   );
 }
 
-/** ZFSReceiveCard is where this instance answers paired instances that want
- *  to send a ZFS replica into one of its pools, and keeps the ones it allowed.
- *  It stays away until the first request arrives. */
-export function ZFSReceiveCard() {
+/** ZFSReceiveRequests is where this instance answers one paired instance
+ *  that wants to send ZFS replicas into its pools, and keeps the ones it
+ *  allowed. The requests wait first. It renders nothing while that instance
+ *  has neither. */
+export function ZFSReceiveRequests({ peer }: { peer: string }) {
   const { t } = useT();
-  const [requests, setRequests] = useState<ZFSReceiveRequest[]>([]);
+  const { requests, reload } = useReceiveRequests();
   const [pools, setPools] = useState<ZFSReplicaPool[] | null>(null);
 
-  const reload = useCallback(() => {
-    listZFSReceiveRequests()
-      .then(setRequests)
-      .catch(() => undefined);
-  }, []);
-  useEffect(reload, [reload]);
-
-  const asked = requests.filter((r) => r.state === "asked");
-  const allowed = requests.filter((r) => r.state === "allowed");
+  const mine = requests.filter((r) => r.peer === peer);
+  const asked = mine.filter((r) => r.state === "asked");
+  const allowed = mine.filter((r) => r.state === "allowed");
   const needsPools = asked.length > 0;
 
   useEffect(() => {
@@ -307,13 +302,7 @@ export function ZFSReceiveCard() {
   if (asked.length === 0 && allowed.length === 0) return null;
 
   return (
-    <div className="relative glim-notch-card flex flex-col gap-3 bg-carbon-surface rounded-card p-5">
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap>
-          {t("zfs.receive.title")}
-          <InfoBubble tip={t("zfs.receive.hint")} onAccent />
-        </Badge>
-      </h2>
+    <>
       {asked.map((r) => (
         <AskedRequest key={r.id} request={r} pools={pools} onDecided={reload} />
       ))}
@@ -324,6 +313,6 @@ export function ZFSReceiveCard() {
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }

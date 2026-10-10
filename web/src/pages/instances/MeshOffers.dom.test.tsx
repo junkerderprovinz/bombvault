@@ -1,34 +1,33 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { renderWithProviders, targetPreview } from "../lib/placement.testsupport";
+import type { MeshOffer } from "../../lib/api";
+import { renderWithProviders, targetPreview } from "../../lib/placement.testsupport";
 
-const fake = await vi.hoisted(async () => (await import("../lib/placement.testsupport")).createPlacementApi());
+const fake = await vi.hoisted(async () => (await import("../../lib/placement.testsupport")).createPlacementApi());
 
-vi.mock("../lib/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../lib/api")>()),
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
   ...fake.api,
-  listFleetPeers: () => Promise.resolve({ ok: true, peers: [] }),
-  listMeshOffers: () =>
-    Promise.resolve({
-      ok: true,
-      offers: [
-        {
-          id: "o1",
-          from: "DXP480T",
-          suggestedDomain: "vms",
-          repo: "rest:http://192.0.2.5:8000/vms",
-          restUser: "bv",
-          status: "pending",
-          receivedAt: 1_758_170_400,
-        },
-      ],
-    }),
   getSettings: () =>
     Promise.resolve({ ok: true, settings: { fleetEnabled: true }, hostMountRoot: "/host/user", platform: "unraid" }),
 }));
 
-const { Fleet } = await import("./Fleet");
+const { MeshOffers } = await import("./MeshOffers");
+
+const offer: MeshOffer = {
+  id: "o1",
+  from: "DXP480T",
+  suggestedDomain: "vms",
+  repo: "rest:http://192.0.2.5:8000/vms",
+  restUser: "bv",
+  status: "pending",
+  receivedAt: 1_758_170_400,
+};
+
+function Row() {
+  return <MeshOffers offers={[offer]} onChanged={() => undefined} />;
+}
 
 describe("accepting a mesh offer", () => {
   beforeEach(() => fake.reset());
@@ -39,7 +38,7 @@ describe("accepting a mesh offer", () => {
       ok: true,
       preview: targetPreview({ formerlyExcluded: [{ identity: "vm:win11", skip: ["t-b2"] }] }),
     });
-    renderWithProviders(<Fleet />);
+    renderWithProviders(<Row />);
     fireEvent.click(await screen.findByRole("button", { name: "Accept" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("At its first run DXP480T receives every item not set to Local.");
@@ -53,7 +52,7 @@ describe("accepting a mesh offer", () => {
 
   it("locks Accept while the question is still being prepared", async () => {
     const answer = fake.hold("getNewTargetPreview");
-    renderWithProviders(<Fleet />);
+    renderWithProviders(<Row />);
     const button = await screen.findByRole("button", { name: "Accept" });
 
     fireEvent.click(button);
@@ -68,7 +67,7 @@ describe("accepting a mesh offer", () => {
 
   it("words a placement refusal of the accept in the reader's language", async () => {
     fake.reply("acceptMeshOffer", { ok: false, code: "copy-rule-taken", error: "copy rule taken" });
-    renderWithProviders(<Fleet />);
+    renderWithProviders(<Row />);
     fireEvent.click(await screen.findByRole("button", { name: "Accept" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText("That name already has copy rules of its own.")).toBeTruthy();
@@ -76,7 +75,7 @@ describe("accepting a mesh offer", () => {
   });
 
   it("accepts nothing when the question is cancelled", async () => {
-    renderWithProviders(<Fleet />);
+    renderWithProviders(<Row />);
     fireEvent.click(await screen.findByRole("button", { name: "Accept" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
