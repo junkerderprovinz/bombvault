@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RetentionKeep } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { setAskKeepLess, useAskKeepLess } from "../../lib/keepAsk";
-import { KEEP_PRESETS, lostByChange, presetOf, sampleBackups, type KeepCounts, type KeepPreset } from "../../lib/keepPlan";
+import { KEEP_PRESETS, presetOf, type KeepCounts, type KeepPreset } from "../../lib/keepPlan";
 import { keepCounts, retentionKeep } from "../../lib/storageLocations";
-import { useConfirm } from "../../lib/useConfirm";
-import { Card, ToggleRow } from "../../pages/settings/shared";
+import { Card } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
-import { InfoBubble } from "../InfoBubble";
 import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
-import { NumberSetting } from "./fields";
+import { KeepCountFields, useKeepLessQuestion } from "./keepFields";
 import { KeepTimeline } from "./KeepTimeline";
 import { Deviations, Rows, SettingRow } from "./rows";
 import type { LocationEdit } from "./useLocationEdit";
@@ -24,41 +22,16 @@ const MODES: { id: Mode; label: TranslationKey }[] = [
   { id: "custom", label: "storage.keep.custom" },
 ];
 
-const COUNTS: { label: TranslationKey; tip: TranslationKey }[] = [
-  { label: "storage.keep.count.last", tip: "storage.keep.tip.last" },
-  { label: "storage.keep.count.daily", tip: "storage.keep.tip.daily" },
-  { label: "storage.keep.count.weekly", tip: "storage.keep.tip.weekly" },
-  { label: "storage.keep.count.monthly", tip: "storage.keep.tip.monthly" },
-  { label: "storage.keep.count.yearly", tip: "storage.keep.tip.yearly" },
-];
-
 type T = ReturnType<typeof useT>["t"];
 
-function summary(t: T, keep: RetentionKeep): string {
+/** A rule's five counts as one sentence. */
+export function keepSummary(t: T, keep: RetentionKeep): string {
   return t("storage.keep.summary")
     .replace("{last}", String(keep.keepLast))
     .replace("{daily}", String(keep.keepDaily))
     .replace("{weekly}", String(keep.keepWeekly))
     .replace("{monthly}", String(keep.keepMonthly))
     .replace("{yearly}", String(keep.keepYearly));
-}
-
-/** The switch in the question itself. It reports up, because the answer is
- *  only stored once the question is answered with yes. */
-function DontAskAgain({ onChange }: { onChange: (quiet: boolean) => void }) {
-  const { t } = useT();
-  const [quiet, setQuiet] = useState(false);
-  return (
-    <ToggleRow
-      label={t("storage.keep.dontAsk")}
-      hint={t("storage.keep.dontAskHint")}
-      checked={quiet}
-      onChange={(next) => {
-        setQuiet(next);
-        onChange(next);
-      }}
-    />
-  );
 }
 
 /**
@@ -69,9 +42,8 @@ function DontAskAgain({ onChange }: { onChange: (quiet: boolean) => void }) {
 export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; retention: RetentionKeep; hueIndex: number }) {
   const { t } = useT();
   const { location, can, save, follow, busy } = edit;
-  const { confirm, confirmDialog } = useConfirm();
+  const less = useKeepLessQuestion();
   const ask = useAskKeepLess();
-  const backups = useMemo(() => sampleBackups(new Date()), []);
   const stored = keepCounts(retention);
   const storedKey = stored.join(",");
   const [draft, setDraft] = useState(stored);
@@ -97,24 +69,9 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
 
   async function apply(next: KeepCounts) {
     setDraft(next);
-    const lost = lostByChange(stored, next, backups).length;
-    if (asks && ask && lost > 0) {
-      let quiet = false;
-      const message = t("storage.keep.askLess")
-        .replace("{n}", String(lost))
-        .replace("{total}", String(backups.length))
-        .replace("{name}", () => location.name);
-      const yes = await confirm(message, {
-        confirmLabel: t("storage.keep.saveAnyway"),
-        confirmLabelKey: "storage.keep.saveAnyway",
-        cancelLabel: t("common.back"),
-        extra: <DontAskAgain onChange={(next) => (quiet = next)} />,
-      });
-      if (!yes) {
-        revert();
-        return;
-      }
-      if (quiet) setAskKeepLess(false);
+    if (asks && !(await less.agreed(stored, next, location.name))) {
+      revert();
+      return;
     }
     if (!(await save({ retention: retentionKeep(next) }))) revert();
   }
@@ -128,7 +85,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
 
   return (
     <Card title={t("storage.keep.title")} hint={t("storage.keep.hint")} hueIndex={hueIndex}>
-      {confirmDialog}
+      {less.dialog}
       {editable ? (
         <Selector
           items={MODES.map(({ id, label }) => ({ id, label: t(label) }))}
@@ -144,40 +101,26 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="neutral" wrap>
-            {mode === "custom" ? summary(t, retention) : t(`storage.keep.${mode}`)}
+            {mode === "custom" ? keepSummary(t, retention) : t(`storage.keep.${mode}`)}
           </Badge>
         </div>
       )}
 
       {editable && custom && (
-        <div className="flex flex-col gap-1.5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {COUNTS.map(({ label, tip }, i) => (
-              <div key={label} className="flex min-w-0 flex-col gap-1">
-                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                  {t(label)}
-                  <InfoBubble tip={t(tip)} />
-                </span>
-                <NumberSetting
-                  label={t(label)}
-                  value={draft[i]}
-                  disabled={busy}
-                  onCommit={(n) => void apply(latest.current.map((count, at) => (at === i ? n : count)) as KeepCounts)}
-                />
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-carbon-textMuted">{t("storage.keep.zero")}</p>
-        </div>
+        <KeepCountFields
+          counts={draft}
+          disabled={busy}
+          onCommit={(i, n) => void apply(latest.current.map((count, at) => (at === i ? n : count)) as KeepCounts)}
+        />
       )}
 
-      <KeepTimeline counts={draft} backups={backups} />
+      <KeepTimeline counts={draft} backups={less.backups} />
 
       <Rows>
         <Deviations
           location={location}
           setting="retention"
-          describe={(section) => summary(t, section.retention)}
+          describe={(section) => keepSummary(t, section.retention)}
           onFollow={follow}
           busy={busy}
         />

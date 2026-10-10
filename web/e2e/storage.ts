@@ -1,7 +1,9 @@
 // The storage locations a fresh harness database cannot have: one of each kind
 // of object, staged at the route layer with the records their pages write
-// through.
+// through, the defaults that say which section is backed up where, and the
+// providers a new location is set up with.
 import type { Page, Route } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 const NOW = Math.floor(Date.now() / 1000);
 const DAY = 86400;
@@ -42,6 +44,8 @@ export const LOCAL = {
     section({ domain: "containers", use: "home", where: "/mnt/user/backups/bombvault/containers", retention: KEEP_BALANCED }),
     section({ domain: "vms", use: "home", where: "/mnt/user/backups/bombvault/vms", retention: KEEP_OWN, own: ["retention"] }),
     section({ domain: "flash", use: "home", where: "/mnt/user/backups/bombvault/flash", retention: KEEP_BALANCED }),
+    section({ domain: "files", use: "home", where: "/mnt/user/backups/bombvault/files", retention: KEEP_BALANCED }),
+    section({ domain: "config", use: "home", where: "/mnt/user/backups/bombvault/selfbackup", retention: KEEP_BALANCED }),
   ],
   retention: KEEP_BALANCED,
   protection: { immutable: false, testable: false },
@@ -241,6 +245,80 @@ function destination(location: typeof STORAGE_BOX | typeof B2, id: string) {
   };
 }
 
+function defaultRow(domain: string, skip: string[]) {
+  return {
+    domain,
+    exists: true,
+    home: "",
+    homeKind: "domain",
+    homeOff: false,
+    skip,
+    paused: false,
+    confirmedAt: NOW - 30 * DAY,
+    counts: { follow: 3, own: 1, open: 0, chosenNoRun: 0 },
+    unreadable: false,
+  };
+}
+
+// Containers go to the Storage Box, folders to B2, and VMs stay local: their
+// only target is switched off.
+const DEFAULTS = [defaultRow("containers", []), defaultRow("vms", ["*"]), defaultRow("files", [])];
+
+const OPTION_TARGETS: Record<string, { id: string; name: string; enabled: boolean }[]> = {
+  containers: [{ id: "t-box-containers", name: STORAGE_BOX.name, enabled: true }],
+  vms: [{ id: "t-rest", name: REST.name, enabled: false }],
+  files: [{ id: "t-b2-files", name: B2.name, enabled: true }],
+};
+
+function options(domain: string) {
+  return {
+    domain,
+    unreadable: false,
+    paused: false,
+    homes: [
+      { id: "", name: "", location: `/mnt/user/backups/bombvault/${domain}`, kind: "domain", scheme: "" },
+      { id: "archive", name: ARCHIVE.name, location: ARCHIVE.where, kind: "local", scheme: "" },
+    ],
+    targets: OPTION_TARGETS[domain].map((t) => ({ ...t, primary: false, appendOnly: false, hint: "" })),
+    sendTo: OPTION_TARGETS[domain]
+      .filter((t) => t.enabled)
+      .map((t) => ({ kind: "direct", repoId: "", targetId: t.id, name: t.name, location: "" })),
+    segmentLocks: {},
+    default: DEFAULTS.find((row) => row.domain === domain),
+  };
+}
+
+/** What switching a target on or off for a section means, as the server counts it. */
+export const IMPACT = {
+  dropped: [],
+  added: [{ targetId: "t-new", name: B2.name, items: 7, snapshots: 32, unknown: false, uncheckable: [] }],
+  openTakeHome: 0,
+  home: "",
+  skip: [],
+};
+
+/** A container that copies by a rule of its own, so the page lists one entry
+ *  under Own choice. */
+export const OWN_ENTRY = "jellyfin";
+
+const CONTAINERS = [
+  { name: OWN_ENTRY, placement: { ...PLACEMENT, homeFollows: false, copiesFollow: false, skip: ["*"], segment: "local" } },
+  { name: "gitea", placement: { ...PLACEMENT, homeFollows: false } },
+];
+
+function provider(id: string, name: string, group: string, route: string, over: Record<string, unknown> = {}) {
+  return { id, name, backend: route === "rclone" ? id : "", group, route, auth: "login", ...over };
+}
+
+const PROVIDERS = [
+  provider("path", "Mounted path", "server", "path", { mark: "IconFolder", auth: "none" }),
+  provider("rest", "Rest server", "server", "rest", { mark: "IconShield", lock: true }),
+  provider("storagebox", "Hetzner Storage Box", "server", "rclone", { mark: "IconHetzner", auth: "sshkey" }),
+  provider("minio", "MinIO", "selfs3", "s3", { lock: true }),
+  provider("b2", "Backblaze B2", "storage", "s3", { mark: "IconBackblaze", lock: true }),
+  provider("gdrive", "Google Drive", "cloud", "rclone", { auth: "token" }),
+];
+
 const CRED_SETS = [
   { id: "set-b2", name: "B2 Fotos", s3KeyId: "0034f9e8d7c6", s3Region: "eu-central-003", restUser: "", s3StorageClass: "", s3SecretSet: true, restPasswordSet: false },
 ];
@@ -290,7 +368,10 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
   await page.route(
     (url) => url.pathname.startsWith("/api/offsite/destinations"),
     (route) => {
+      const { pathname } = new URL(route.request().url());
       if (route.request().method() === "PUT") return record(route, { ok: true, warnings: [] });
+      if (pathname.includes("/domains/")) return record(route, { ok: true, created: true, target: target("t-new", pathname.split("/").pop() ?? "", "b2") });
+      if (route.request().method() === "POST") return record(route, { ok: true, destination: { ...destination(B2, "new"), name: "Rest server" } });
       return route.fulfill({ json: { ok: true, destinations: [destination(STORAGE_BOX, "box"), destination(B2, "b2")] } });
     },
   );
@@ -311,6 +392,42 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
     }),
   );
   await page.route("**/api/repos/*", (route) => record(route, { ok: true }));
+  await page.route("**/api/placement/defaults", (route) => route.fulfill({ json: { ok: true, defaults: DEFAULTS } }));
+  await page.route(
+    (url) => url.pathname === "/api/placement/options",
+    (route) => {
+      const domain = new URL(route.request().url()).searchParams.get("domain") ?? "";
+      return route.fulfill({ json: { ok: true, options: options(domain) } });
+    },
+  );
+  await page.route(
+    (url) => url.pathname.startsWith("/api/placement/default/"),
+    (route) => record(route, { ok: true, impact: IMPACT }),
+  );
+  await page.route(
+    (url) => url.pathname === "/api/placement/new-target-preview",
+    (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          preview: { items: 7, formerlyExcluded: [{ identity: `container:${OWN_ENTRY}`, skip: ["*"] }], defaultExcludes: false, snapshots: 32, bytes: null, unreadable: [] },
+        },
+      }),
+  );
+  await page.route("**/api/containers", (route) => route.fulfill({ json: { ok: true, containers: CONTAINERS } }));
+  await page.route("**/api/containers/*", (route) => record(route, { ok: true, placement: PLACEMENT }));
+  await page.route(
+    (url) => url.pathname.startsWith("/api/items/") && url.pathname.endsWith("/placement/preview"),
+    (route) =>
+      route.fulfill({
+        json: { ok: true, added: [{ targetId: "t-box-containers", name: STORAGE_BOX.name, snapshots: 12, uncheckable: [] }], dropped: [] },
+      }),
+  );
+  await page.route("**/api/offsite/providers", (route) => route.fulfill({ json: { ok: true, providers: PROVIDERS, backends: {} } }));
+  await page.route("**/api/offsite/group-receivers", (route) =>
+    route.fulfill({ json: { ok: true, receivers: [{ memberId: "m-tower", name: "tower-2", url: "https://tower-2.local:8000", needsAddress: false }] } }),
+  );
+  await page.route("**/api/offsite/drafts/check", (route) => route.fulfill({ json: { ok: true, reachable: true, initialized: false } }));
   // The stored locale is the look, and the server's display prefs must not
   // overwrite it while the page boots.
   await page.route("**/api/display-prefs*", (route) => route.abort());

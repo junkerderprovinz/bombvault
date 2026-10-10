@@ -1,18 +1,31 @@
 // The Storage locations page: every place backups are kept, each with how full
-// it is, and what applies to the copies to all of them.
+// it is, which section is backed up to which of them, and what applies to the
+// copies to all of them.
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { IconForward } from "../components/glyphs";
+import { IconAdd } from "../components/navGlyphs";
+import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
+import { AddLocationWindow } from "../components/storage/AddLocationWindow";
+import { FlowCard } from "../components/storage/FlowCard";
 import { LocationMark } from "../components/storage/LocationMark";
+import { OwnChoiceCard } from "../components/storage/OwnChoiceCard";
 import { Vessel } from "../components/storage/Vessel";
 import type { StorageLocation } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { isPlacementDomain } from "../lib/placement";
+import { subscribePlacement } from "../lib/placementEvents";
+import { flowDomains } from "../lib/storageFlow";
 import { locationRoute, usedByText } from "../lib/storageLocations";
-import { useStorageLocations } from "../lib/useStorageLocations";
+import { subscribeOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useOwnChoices } from "../lib/useOwnChoices";
+import { usePlacementDefaults } from "../lib/usePlacementDefaults";
+import { storageLocationsChanged, useStorageLocations } from "../lib/useStorageLocations";
 import { useStreaming } from "../lib/useStreaming";
 import { Card, ToggleRow, hueCounter } from "./settings/shared";
 import { StreamingFields } from "./settings/StreamingCard";
@@ -88,7 +101,17 @@ function StreamingCard({ hueIndex }: { hueIndex: number }) {
 export function StoragePage() {
   const { t } = useT();
   const { locations, loaded, failed, retry } = useStorageLocations();
+  const defaults = usePlacementDefaults();
+  const sections = flowDomains(locations);
+  const own = useOwnChoices(sections.filter(isPlacementDomain), defaults.rows);
+  const [adding, setAdding] = useState(false);
   const nextHue = hueCounter();
+
+  // A location is one view of the targets and defaults the cards below write.
+  useEffect(() => {
+    const offs = [subscribeOffsiteTargets(storageLocationsChanged), subscribePlacement(storageLocationsChanged)];
+    return () => offs.forEach((off) => off());
+  }, []);
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
@@ -113,7 +136,13 @@ export function StoragePage() {
           </ul>
         )}
       </Card>
+      {sections.length > 0 && <FlowCard locations={locations} defaults={defaults} hueIndex={nextHue()} />}
+      {own.length > 0 && defaults.rows && <OwnChoiceCard entries={own} defaults={defaults.rows} hueIndex={nextHue()} />}
       <StreamingCard hueIndex={nextHue()} />
+      {adding && <AddLocationWindow domains={sections} defaults={defaults.rows} onClose={() => setAdding(false)} />}
+      <PageActions>
+        <PageAction label={t("storage.add.title")} glyph={<IconAdd />} primary onClick={() => setAdding(true)} />
+      </PageActions>
     </div>
   );
 }

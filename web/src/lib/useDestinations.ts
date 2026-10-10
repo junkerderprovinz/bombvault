@@ -1,11 +1,25 @@
 import { useEffect, useState } from "react";
-import { listDestinations, type Destination } from "./api";
+import { adoptIntoDestination, listDestinations, type Destination, type OkEnvelope } from "./api";
+import { offsiteTargetsChanged } from "./useOffsiteTargets";
 
 const DESTINATIONS_CHANGED = "bv:destinations-changed";
 
 /** Tells every mounted reader that destinations changed. */
 export function destinationsChanged(): void {
   window.dispatchEvent(new Event(DESTINATIONS_CHANGED));
+}
+
+/** Hangs a target typed in by hand on a destination and tells the readers of
+ *  both lists. The answer says whether the server took it. */
+export async function adoptTarget(destinationId: string, targetId: string): Promise<OkEnvelope> {
+  const res = await adoptIntoDestination(destinationId, targetId).catch(
+    (e: unknown): OkEnvelope => ({ ok: false, error: e instanceof Error ? e.message : undefined })
+  );
+  if (res.ok) {
+    destinationsChanged();
+    offsiteTargetsChanged();
+  }
+  return res;
 }
 
 /**

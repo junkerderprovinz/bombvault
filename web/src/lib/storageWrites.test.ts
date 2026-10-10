@@ -187,7 +187,7 @@ describe("saveLocation", () => {
 describe("followLocation", () => {
   it("asks the target's route to take one setting from the destination again", async () => {
     const flash = target({ id: "t2", domain: "flash" });
-    await followLocation(location(), { destination: DESTINATION, targets: [target(), flash] }, section({ domain: "flash", targetId: "t2" }), "compression");
+    await followLocation(location(), { destination: DESTINATION, targets: [target(), flash] }, section({ domain: "flash", targetId: "t2" }), ["compression"]);
     expect(updateOffsiteTarget).toHaveBeenCalledWith("t2", flash, undefined, ["compression"]);
   });
 
@@ -199,7 +199,7 @@ describe("followLocation", () => {
       platform: "",
     });
     const loc = location({ id: "path:abc", object: "path" });
-    await followLocation(loc, { targets: [] }, section({ domain: "vms", use: "home" }), "retention");
+    await followLocation(loc, { targets: [] }, section({ domain: "vms", use: "home" }), ["retention"]);
     expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ ownRetention: { flash: KEEP } }));
   });
 });

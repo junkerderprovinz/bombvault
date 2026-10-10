@@ -17,6 +17,7 @@ import { KeepCard } from "../components/storage/KeepCard";
 import { LocationMark } from "../components/storage/LocationMark";
 import { ProtectionCard } from "../components/storage/ProtectionCard";
 import { RcloneConfCard } from "../components/storage/RcloneConfCard";
+import { AdoptCard, RulesCard } from "../components/storage/RulesCard";
 import { useLocationEdit } from "../components/storage/useLocationEdit";
 import { TestButton, VerdictLine } from "../components/TestButton";
 import { testOffsiteTarget, testPrimaryRemote, type OkEnvelope, type StorageLocation } from "../lib/api";
@@ -122,6 +123,8 @@ function Location({ location, records }: { location: StorageLocation; records: L
       {location.object !== "path" && <ProtectionCard edit={edit} provider={provider} hueIndex={nextHue()} />}
       {takesCopies && <CopyCard edit={edit} hueIndex={nextHue()} />}
       {location.retention && <KeepCard edit={edit} retention={location.retention} hueIndex={nextHue()} />}
+      {(records.destination?.adoptable?.length ?? 0) > 0 && <AdoptCard edit={edit} hueIndex={nextHue()} />}
+      {location.object !== "target" && <RulesCard edit={edit} hueIndex={nextHue()} />}
     </>
   );
 }
