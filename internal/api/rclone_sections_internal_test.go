@@ -66,3 +66,31 @@ func TestTheRcloneAnswerOfAnEmptyConfigListsNothing(t *testing.T) {
 		t.Fatalf("answer = %v, want two empty lists", res)
 	}
 }
+
+func TestTheRcloneAnswerShowsTheSettingsRcloneClearsAndKeepsTheSecrets(t *testing.T) {
+	f := newPlacementFixture(t)
+	useFakeRclone(t, f.svc)
+	const obscured, s3Secret = "b2JzY3VyZWQtcGFzcw", "wJalrXUtnFEMI-secret"
+	conf := "[nas]\ntype = smb\nhost = nas.example.org\nport = 4450\npass = " + obscured + "\n\n" +
+		"[bucket]\ntype = s3\nprovider = Wasabi\naccess_key_id = AKIDSECRET\nsecret_access_key = " + s3Secret + "\n"
+	if err := f.svc.SetRcloneConf(conf); err != nil {
+		t.Fatal(err)
+	}
+
+	res := f.do("GET", "/api/rclone", nil)
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{obscured, s3Secret, "AKIDSECRET", "nas.example.org"} {
+		if strings.Contains(string(body), secret) {
+			t.Errorf("the answer carries %q: %s", secret, body)
+		}
+	}
+	for _, shown := range []string{`{"name":"port","value":"4450"}`, `{"name":"provider","value":"Wasabi"}`} {
+		if !strings.Contains(string(body), shown) {
+			t.Errorf("the answer lacks %s: %s", shown, body)
+		}
+	}
+}

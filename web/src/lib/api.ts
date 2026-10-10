@@ -6312,6 +6312,29 @@ export function updateDestination(
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(edit) });
 }
 
+/** A change to how a saved destination is reached. `settings` holds the
+ *  wizard's fields and is a patch: a field left out stays as stored, and an
+ *  empty one is removed unless the server does not show its value (a password,
+ *  a key), which only a new value replaces. `dir` is the bucket or folder. */
+export interface DestinationConnectionEdit {
+  settings?: Record<string, string>;
+  dir?: string;
+}
+
+/** PUT /api/offsite/destinations/{id}/connection. The server tests the changed
+ *  connection before it saves. A destination that holds backups keeps its
+ *  address, bucket and folder (code "destination-holds-backups"), and every
+ *  repository it holds has to open through the change ("backups-not-there"). */
+export function updateDestinationConnection(
+  id: string,
+  edit: DestinationConnectionEdit
+): Promise<OkEnvelope & { destination?: Destination; warnings?: SaveWarning[] }> {
+  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/connection`, {
+    method: "PUT",
+    body: JSON.stringify(edit),
+  });
+}
+
 export function deleteDestination(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

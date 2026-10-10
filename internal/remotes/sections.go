@@ -47,7 +47,7 @@ func Redact(conf string, backends map[string]Backend) []Section {
 		for _, o := range raw {
 			switch {
 			case o.Value == "":
-			case described && shown(backend, o.Name):
+			case described && Shown(backend, o.Name):
 				o.Value = userinfoRe.ReplaceAllString(o.Value, "://[redacted]@")
 			default:
 				o = SectionOption{Name: o.Name, Hidden: true}
@@ -81,8 +81,8 @@ func Redact(conf string, backends map[string]Backend) []Section {
 	return sections
 }
 
-// shown reports whether the value of a backend's option may leave the server.
-func shown(b Backend, name string) bool {
+// Shown reports whether the value of a backend's option may leave the server.
+func Shown(b Backend, name string) bool {
 	if secretNameRe.MatchString(name) {
 		return false
 	}
