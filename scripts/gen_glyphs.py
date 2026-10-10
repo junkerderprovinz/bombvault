@@ -96,6 +96,7 @@ NAV = [
     "IconTabRetention",
     "IconTabLook",
     "IconTabStorage",
+    "IconTabRecovery",
     "IconSchedules",
     "IconTabOffsite",
     "IconNotifications",
