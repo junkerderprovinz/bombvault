@@ -2972,6 +2972,37 @@ body {
   :root:not([data-motion="off"]) .glim-lock-gone {
     animation: glim-lock-gone var(--motion-scene-dur, 6s) linear infinite;
   }
+  :root:not([data-motion="off"]) .glim-flow-stroke {
+    transition:
+      stroke-opacity var(--motion-control-dur, 150ms) ease,
+      stroke-width var(--motion-control-dur, 150ms) ease;
+  }
+  :root:not([data-motion="off"]) .glim-flow-port {
+    transition: r var(--motion-control-dur, 150ms) ease;
+  }
+  :root:not([data-motion="off"]) .glim-flow-ring {
+    transition: opacity var(--motion-control-dur, 150ms) ease;
+  }
+  :root:not([data-motion="off"]) .glim-flow-parcel-near {
+    animation: glim-flow-near var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--flow-turn, 0) * .026);
+  }
+  :root:not([data-motion="off"]) .glim-flow-parcel-far {
+    animation: glim-flow-far var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--flow-turn, 0) * .026);
+  }
+  :root:not([data-motion="off"]) .glim-flow-parcel-through {
+    animation: glim-flow-through var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--flow-turn, 0) * .026);
+  }
+  :root:not([data-motion="off"]) .glim-flow-pulse-near {
+    animation: glim-flow-pulse-near var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--flow-turn, 0) * .026);
+  }
+  :root:not([data-motion="off"]) .glim-flow-pulse-far {
+    animation: glim-flow-pulse-far var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--flow-turn, 0) * .026);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3307,4 +3338,191 @@ body {
   0%, 36%   { opacity: 1; transform: none; }
   46%, 95%  { opacity: 0; transform: scale(0); }
   99%, 100% { opacity: 1; transform: none; }
+}
+
+/* Which section is backed up where, as one picture. A line takes the hue of
+   its section and is a switch: solid while on, dashed while off. */
+.glim-flow > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.glim-flow foreignObject > div {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--carbon-text);
+  font-size: 14px;
+}
+.glim-flow-head,
+.glim-flow-name { font-weight: 600; }
+.glim-flow-head { justify-content: center; }
+.glim-flow-section { gap: 14px; }
+.glim-flow-head > span:last-child,
+.glim-flow-name > span:last-child,
+.glim-flow-section > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glim-flow-band,
+.glim-flow-node {
+  rx: var(--radius-control);
+  fill: var(--carbon-surface2);
+}
+.glim-flow-off { opacity: .5; }
+.glim-flow-line {
+  cursor: pointer;
+  outline: none;
+}
+.glim-flow-line[aria-disabled] { cursor: default; }
+/* The line is thin, so a wider stroke nobody sees takes the pointer. */
+.glim-flow-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  pointer-events: stroke;
+}
+.glim-flow-stroke {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .35;
+  stroke-width: 1.5;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.glim-flow-on .glim-flow-stroke {
+  stroke: var(--pic);
+  stroke-opacity: .75;
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+.glim-flow-line:not([aria-disabled]):is(:hover, :focus-visible) .glim-flow-stroke {
+  stroke: var(--pic);
+  stroke-opacity: 1;
+  stroke-width: 3.5;
+}
+.glim-flow-line:focus-visible .glim-flow-stroke {
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 3px var(--pic));
+}
+.glim-flow-port {
+  fill: var(--carbon-surface);
+  stroke: var(--carbon-text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 3;
+}
+.glim-flow-on .glim-flow-port {
+  fill: var(--pic);
+  stroke: var(--carbon-surface2);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+.glim-flow-ring {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 2;
+  opacity: 0;
+  pointer-events: none;
+}
+.glim-flow-reach {
+  fill: transparent;
+  pointer-events: all;
+}
+.glim-flow-near:not([aria-disabled]):is(:hover, :focus-visible) .glim-flow-port { r: 8px; }
+.glim-flow-near:not([aria-disabled]):is(:hover, :focus-visible) .glim-flow-ring { opacity: .6; }
+.glim-flow-dock,
+.glim-flow-parcel { fill: var(--pic); }
+/* Parcels and their rings show only while they move. */
+.glim-flow-parcel {
+  offset-rotate: 0deg;
+  opacity: 0;
+}
+.glim-flow-pulse {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.glim-flow-stub path {
+  fill: none;
+  stroke: var(--status-fail-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.glim-flow-stub path:first-child { stroke-dasharray: 4 4; }
+.glim-flow foreignObject > .glim-flow-stub-label {
+  color: var(--status-fail-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.glim-flow-stub-label span {
+  padding: 2px 6px;
+  border-radius: calc(var(--radius-control) / 2);
+  background: var(--carbon-surface);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.glim-flow foreignObject > .glim-flow-lock {
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--carbon-surface);
+}
+.glim-flow-narrow foreignObject > div {
+  gap: 6px;
+  font-size: 13px;
+}
+.glim-flow-narrow foreignObject > .glim-flow-head,
+.glim-flow-narrow foreignObject > .glim-flow-name {
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  font-size: 12px;
+  text-align: center;
+}
+.glim-flow-narrow .glim-flow-name > span:last-child {
+  display: -webkit-box;
+  line-height: 1.15;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.glim-flow-narrow foreignObject > .glim-flow-stub-label { font-size: 12px; }
+
+/* A parcel sets out from the section, rests on the local band and goes on to
+   the off-site box. A section stored on no band sends it straight through. */
+@keyframes glim-flow-near {
+  0%        { offset-distance: 0%; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  28%       { offset-distance: 100%; opacity: 1; }
+  30%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes glim-flow-far {
+  0%, 38%   { offset-distance: 0%; opacity: 0; }
+  40%       { offset-distance: 0%; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  72%       { offset-distance: 100%; opacity: 1; }
+  74%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes glim-flow-through {
+  0%        { offset-distance: 0%; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  72%       { offset-distance: 100%; opacity: 1; }
+  74%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes glim-flow-pulse-near {
+  0%, 28%     { opacity: 0; transform: none; }
+  28.1%       { opacity: .7; transform: none; }
+  40%         { opacity: 0; transform: scale(3); }
+  40.1%, 100% { opacity: 0; transform: none; }
+}
+@keyframes glim-flow-pulse-far {
+  0%, 72%     { opacity: 0; transform: none; }
+  72.1%       { opacity: .7; transform: none; }
+  84%         { opacity: 0; transform: scale(3); }
+  84.1%, 100% { opacity: 0; transform: none; }
 }

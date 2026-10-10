@@ -8,6 +8,7 @@ const SIZES = {
   row: "h-10 w-10 [&_svg]:h-5 [&_svg]:w-5",
   head: "h-11 w-11 [&_svg]:h-6 [&_svg]:w-6",
   scene: "h-[22px] w-[22px] [&_svg]:h-3.5 [&_svg]:w-3.5",
+  chip: "h-[18px] w-[18px] [&_svg]:h-3 [&_svg]:w-3",
 } as const;
 
 /**

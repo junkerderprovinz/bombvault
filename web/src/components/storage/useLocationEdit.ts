@@ -5,11 +5,13 @@ import { pushSaveWarnings } from "../../lib/placementCodes";
 import {
   followLocation,
   saveLocation,
+  saveSection,
   writable,
   type LocationPatch,
   type LocationRecords,
   type LocationSetting,
   type SaveAnswer,
+  type SectionPatch,
 } from "../../lib/storageWrites";
 import { useToast } from "../../lib/toast";
 import { destinationsChanged } from "../../lib/useDestinations";
@@ -27,6 +29,10 @@ export interface LocationEdit {
    *  "saved". Resolves to whether the server took the change. */
   save: (patch: LocationPatch, done?: string) => Promise<boolean>;
   follow: (section: StorageLocationSection, setting: FollowedSetting) => void;
+  /** Gives a section a value of its own. Resolves like `save`. */
+  saveSection: (section: StorageLocationSection, patch: SectionPatch) => Promise<boolean>;
+  /** Gives back everything a section holds for itself. */
+  followAll: (section: StorageLocationSection) => void;
   busy: boolean;
 }
 
@@ -60,7 +66,10 @@ export function useLocationEdit(location: StorageLocation, records: LocationReco
     can: (setting) => settings.has(setting),
     save: (patch, done) =>
       write(() => saveLocation(location, records, patch), done ?? t("dest.saved").replace("{name}", () => patch.name ?? location.name)),
-    follow: (section, setting) => void write(() => followLocation(location, records, section, setting), t("storage.own.resetDone")),
+    follow: (section, setting) => void write(() => followLocation(location, records, section, [setting]), t("storage.own.resetDone")),
+    saveSection: (section, patch) =>
+      write(() => saveSection(location, records, section, patch), t("dest.saved").replace("{name}", () => location.name)),
+    followAll: (section) => void write(() => followLocation(location, records, section, section.own), t("storage.own.resetDone")),
     busy,
   };
 }

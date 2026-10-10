@@ -14,7 +14,8 @@ import { useToast } from "./toast";
 
 type T = ReturnType<typeof useT>["t"];
 
-function droppedText(t: T, d: DroppedTarget): string {
+/** What happens to the copies at a target an entry stops copying to. */
+export function droppedText(t: T, d: DroppedTarget): string {
   if (d.appendOnly) return t("placement.droppedAppendOnly").replace("{target}", () => d.name);
   if (d.copies === null) return t("placement.droppedKeepsUnknown").replace("{target}", () => d.name);
   return t("placement.droppedKeeps").replace("{target}", () => d.name).replace("{n}", String(d.copies));

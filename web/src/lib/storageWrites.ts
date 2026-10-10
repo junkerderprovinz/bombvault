@@ -129,17 +129,62 @@ export async function saveLocation(
   }
 }
 
-/** followLocation gives a section the location's value for `setting` back. */
-export async function followLocation(
+/** What a section can hold for itself instead of taking the location's value. */
+export interface SectionPatch {
+  retention?: RetentionKeep;
+  compression?: Compression;
+}
+
+export type SectionSetting = keyof SectionPatch;
+
+/**
+ * sectionSettings lists what the server lets a section hold for itself. A
+ * target made from a destination has its own keep-policy and compression,
+ * except the copy a domain's off-site settings describe. A domain that writes
+ * to a folder or a named repository has its own local keep-policy.
+ */
+export function sectionSettings(
+  location: StorageLocation,
+  records: LocationRecords,
+  section: StorageLocationSection
+): SectionSetting[] {
+  if (location.object === "destination") {
+    const derived = section.use === "copy" && !section.primary && records.targets.some((t) => t.id === section.targetId);
+    return derived ? ["retention", "compression"] : [];
+  }
+  const home = (location.object === "path" || location.object === "repo") && section.use === "home";
+  return home ? ["retention"] : [];
+}
+
+export async function saveSection(
   location: StorageLocation,
   records: LocationRecords,
   section: StorageLocationSection,
-  setting: FollowedSetting
+  patch: SectionPatch
 ): Promise<SaveAnswer> {
   if (location.object === "destination") {
     const target = records.targets.find((t) => t.id === section.targetId);
     if (!target) return { ok: false };
-    return updateOffsiteTarget(target.id, target, undefined, [setting]);
+    const { retention, ...rest } = patch;
+    return updateOffsiteTarget(target.id, { ...target, ...rest, ...(retention ? keepColumns(retention) : {}) });
+  }
+  if (!patch.retention) return { ok: false };
+  const read = await getSettings();
+  if (!read.ok) return read;
+  return putSettings({ ...read.settings, ownRetention: { ...read.settings.ownRetention, [section.domain]: patch.retention } });
+}
+
+/** followLocation gives a section the location's value for each of `settings` back. */
+export async function followLocation(
+  location: StorageLocation,
+  records: LocationRecords,
+  section: StorageLocationSection,
+  settings: FollowedSetting[]
+): Promise<SaveAnswer> {
+  if (location.object === "destination") {
+    const target = records.targets.find((t) => t.id === section.targetId);
+    if (!target) return { ok: false };
+    return updateOffsiteTarget(target.id, target, undefined, settings);
   }
   const read = await getSettings();
   if (!read.ok) return read;

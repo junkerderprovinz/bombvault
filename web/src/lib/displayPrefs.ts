@@ -28,6 +28,8 @@ const KEYS = [
   // Whether keeping fewer backups asks first. Someone who answered "don't ask
   // again" should not be asked again on the next browser.
   "bombvault.askKeepLess",
+  // The picture or the switches on the Storage locations page.
+  "bombvault.flowView",
 ] as const;
 
 /** Fired on `window` once this browser has adopted the server's look.

@@ -37,6 +37,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     updateDestination: vi.fn(),
     updateOffsiteTarget: vi.fn(),
     updateRepo: vi.fn(),
+    adoptIntoDestination: vi.fn(),
     getSettings: vi.fn(),
     putSettings: vi.fn(),
     getProviders: vi.fn(),
@@ -56,6 +57,7 @@ const listDestinations = vi.mocked(api.listDestinations);
 const updateDestination = vi.mocked(api.updateDestination);
 const updateOffsiteTarget = vi.mocked(api.updateOffsiteTarget);
 const updateRepo = vi.mocked(api.updateRepo);
+const adoptIntoDestination = vi.mocked(api.adoptIntoDestination);
 const getSettings = vi.mocked(api.getSettings);
 const putSettings = vi.mocked(api.putSettings);
 const getProviders = vi.mocked(api.getProviders);
@@ -254,7 +256,7 @@ describe("a destination", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Storage Box");
     expect(await screen.findByText("Hetzner Storage Box · Used by Containers and Flash")).toBeTruthy();
     expect(screen.getByText("268.0 GB of 1.0 TB")).toBeTruthy();
-    expect(cardTitles()).toEqual(["Connection", "rclone.conf", "Delete protection", "Copy", "How long to keep"]);
+    expect(cardTitles()).toEqual(["Connection", "rclone.conf", "Delete protection", "Copy", "How long to keep", "Rules per section"]);
     expect(within(card("rclone.conf")).getByText("[storagebox]")).toBeTruthy();
     expect(within(card("rclone.conf")).getByText("storagebox · nas")).toBeTruthy();
   });
@@ -418,7 +420,7 @@ describe("a folder on this host", () => {
   it("has only the cards a folder has", async () => {
     await renderPage("path:abc");
 
-    expect(cardTitles()).toEqual(["Connection", "How long to keep"]);
+    expect(cardTitles()).toEqual(["Connection", "How long to keep", "Rules per section"]);
     expect(screen.getByText("Local folder · Used by Containers and VMs")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Test connection" })).toBeNull();
     expect(getStorageLocation).toHaveBeenCalledTimes(1);
@@ -461,7 +463,7 @@ describe("a named repository", () => {
   it("shows the rule it ages by without offering to change it", async () => {
     await renderPage("repo:archive");
 
-    expect(cardTitles()).toEqual(["Connection", "Delete protection", "How long to keep"]);
+    expect(cardTitles()).toEqual(["Connection", "Delete protection", "How long to keep", "Rules per section"]);
     expect(screen.queryByRole("radiogroup", { name: "How long to keep" })).toBeNull();
     expect(within(card("How long to keep")).getByText("Balanced")).toBeTruthy();
   });
@@ -548,6 +550,180 @@ describe("the copy a section's off-site settings describe", () => {
         "This is the copy from the off-site field of Folders. You set its values in Settings, under Off-site and Retention. This page only shows them."
       )
     ).toBeTruthy();
+  });
+});
+
+describe("rules per section", () => {
+  function ruleRow(domain: string): HTMLElement {
+    return within(card("Rules per section")).getByText(domain).parentElement!.parentElement!;
+  }
+
+  async function openRules(domain: string): Promise<HTMLElement> {
+    await click(within(ruleRow(domain)).getByRole("button", { name: "Change rules" }));
+    return screen.findByRole("dialog", { name: `Rules for ${domain}` });
+  }
+
+  describe("on a destination", () => {
+    beforeEach(() =>
+      stage(
+        location({
+          sections: [
+            section({ domain: "containers", targetId: "t-containers", primary: true, own: ["retention", "compression", "limits", "enabled"] }),
+            section({ domain: "flash", targetId: "t-flash", retention: BALANCED, own: ["retention"] }),
+            section({ domain: "vms", targetId: "t-vms", where: "rclone:storagebox:bombvault/vms" }),
+          ],
+        }),
+        [target(), target({ id: "t-vms", domain: "vms" })]
+      )
+    );
+
+    it("says for each section whether it follows the location or holds rules of its own", async () => {
+      await renderPage("destination:box");
+
+      expect(ruleRow("VMs").textContent).toContain("Follows the storage location");
+      expect(ruleRow("Flash").textContent).toContain("Own rules: How long to keep");
+      expect(within(card("Rules per section")).getByRole("link", { name: "Open storage locations" }).getAttribute("href")).toBe("/storage");
+    });
+
+    it("offers the copy from a section's off-site field no window", async () => {
+      await renderPage("destination:box");
+
+      expect(within(ruleRow("Containers")).queryByRole("button", { name: "Change rules" })).toBeNull();
+      expect(within(ruleRow("VMs")).getByRole("button", { name: "Change rules" })).toBeTruthy();
+    });
+
+    it("gives a section its own compression through its target, and takes it back", async () => {
+      await renderPage("destination:box");
+      const window = await openRules("VMs");
+
+      expect(within(window).getByText("Apply only to VMs on Storage Box.")).toBeTruthy();
+      expect(within(window).getByText("rclone:storagebox:bombvault/vms")).toBeTruthy();
+      const compression = within(window).getByRole("radiogroup", { name: "Compression" });
+      expect(within(compression).getByRole("radio", { name: "Like the storage location" }).getAttribute("aria-checked")).toBe("true");
+
+      await click(within(compression).getByRole("radio", { name: "Maximum" }));
+      await waitFor(() => expect(updateOffsiteTarget).toHaveBeenCalledTimes(1));
+      expect(updateOffsiteTarget.mock.calls[0][0]).toBe("t-vms");
+      expect(updateOffsiteTarget.mock.calls[0][1]).toMatchObject({ compression: "max" });
+    });
+
+    it("lets a section keep fewer backups than its location only after the question", async () => {
+      await renderPage("destination:box");
+      const window = await openRules("VMs");
+
+      await click(within(within(window).getByRole("radiogroup", { name: "How long to keep" })).getByRole("radio", { name: "Custom values" }));
+      vi.useFakeTimers();
+      fireEvent.change(within(window).getByRole("spinbutton", { name: "Months" }), { target: { value: "2" } });
+      await act(async () => {
+        vi.runAllTimers();
+      });
+      vi.useRealTimers();
+
+      const question = await screen.findByText(/^Keep less\?/);
+      expect(updateOffsiteTarget).not.toHaveBeenCalled();
+      await click(within(question.closest("[role=dialog]") as HTMLElement).getByRole("button", { name: "Save anyway" }));
+      await waitFor(() => expect(updateOffsiteTarget).toHaveBeenCalledTimes(1));
+      expect(updateOffsiteTarget.mock.calls[0][0]).toBe("t-vms");
+      expect(updateOffsiteTarget.mock.calls[0][1]).toMatchObject({ retentionKeepDaily: 14, retentionKeepMonthly: 2 });
+    });
+
+    it("gives everything a section holds back to the location in one step", async () => {
+      await renderPage("destination:box");
+      const window = await openRules("Flash");
+
+      expect(within(within(window).getByRole("radiogroup", { name: "How long to keep" })).getByRole("radio", { name: "Custom values" }).getAttribute("aria-checked")).toBe("true");
+      await click(within(window).getByRole("button", { name: "Reset to the storage location" }));
+
+      await waitFor(() => expect(updateOffsiteTarget).toHaveBeenCalledTimes(1));
+      expect(updateOffsiteTarget.mock.calls[0][0]).toBe("t-flash");
+      expect(updateOffsiteTarget.mock.calls[0][3]).toEqual(["retention"]);
+    });
+
+    it("closes on Done", async () => {
+      await renderPage("destination:box");
+      const window = await openRules("VMs");
+      await click(within(window).getByRole("button", { name: "Done" }));
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  describe("on a folder of this host", () => {
+    beforeEach(() => stage(LOCAL, []));
+
+    it("writes a section's own local rule into the settings, and offers no compression of its own", async () => {
+      await renderPage("path:abc");
+      const window = await openRules("Containers");
+
+      expect(within(window).queryByRole("radiogroup", { name: "Compression" })).toBeNull();
+      await click(within(within(window).getByRole("radiogroup", { name: "How long to keep" })).getByRole("radio", { name: "Custom values" }));
+      vi.useFakeTimers();
+      fireEvent.change(within(window).getByRole("spinbutton", { name: "Days" }), { target: { value: "30" } });
+      await act(async () => {
+        vi.runAllTimers();
+      });
+      vi.useRealTimers();
+
+      await waitFor(() => expect(putSettings).toHaveBeenCalledTimes(1));
+      expect(putSettings.mock.calls[0][0].ownRetention).toEqual({ vms: SHORT, containers: { ...LONG, keepDaily: 30 } });
+    });
+
+    it("takes a section back to the shared rule", async () => {
+      await renderPage("path:abc");
+      const window = await openRules("VMs");
+
+      await click(within(within(window).getByRole("radiogroup", { name: "How long to keep" })).getByRole("radio", { name: "Like the storage location" }));
+
+      await waitFor(() => expect(putSettings).toHaveBeenCalledTimes(1));
+      expect(putSettings.mock.calls[0][0].ownRetention).toEqual({});
+    });
+  });
+
+  it("has no card where the location is the target of one section alone", async () => {
+    stage(REST, [target({ id: "t-rest", domain: "vms", destinationId: "" })]);
+    await renderPage("target:t-rest");
+
+    expect(cardTitles()).not.toContain("Rules per section");
+  });
+
+  it("says so when no section backs up to the location yet", async () => {
+    stage(location({ sections: [] }), []);
+    await renderPage("destination:box");
+
+    expect(within(card("Rules per section")).getByText("No section backs up here yet.")).toBeTruthy();
+    expect(within(card("Rules per section")).queryByRole("button", { name: "Change rules" })).toBeNull();
+  });
+});
+
+describe("a target typed in by hand under a destination", () => {
+  const LOOSE = { id: "t-loose", domain: "vms", name: "appdata-2024", repo: "rclone:storagebox:bombvault/appdata-2024", primary: false };
+
+  beforeEach(() => {
+    stage(location());
+    listDestinations.mockResolvedValue({ ok: true, destinations: [{ ...BOX, adoptable: [LOOSE] }] });
+    adoptIntoDestination.mockResolvedValue({ ok: true });
+  });
+
+  it("is offered with its address and taken over after a question", async () => {
+    await renderPage("destination:box");
+
+    const adopt = card("Already under this storage location");
+    expect(within(adopt).getByText("rclone:storagebox:bombvault/appdata-2024")).toBeTruthy();
+    await click(within(adopt).getByRole("button", { name: "Take over" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Should VMs follow the storage location Storage Box?");
+    expect(adoptIntoDestination).not.toHaveBeenCalled();
+    await click(within(dialog).getByRole("button", { name: "Take over" }));
+
+    await waitFor(() => expect(adoptIntoDestination).toHaveBeenCalledWith("box", "t-loose"));
+    expect(await screen.findByText("Now following Storage Box: VMs")).toBeTruthy();
+  });
+
+  it("leaves the card out where there is none", async () => {
+    listDestinations.mockResolvedValue({ ok: true, destinations: [BOX] });
+    await renderPage("destination:box");
+
+    expect(cardTitles()).not.toContain("Already under this storage location");
   });
 });
 

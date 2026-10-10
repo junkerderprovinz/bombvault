@@ -6334,7 +6334,7 @@ export function primaryFromDestination(
 /** The folder a destination keeps for a domain, as the server names it. The
  *  self-backup's folder is selfbackup, because config at the root of a
  *  rest-server is that server's own config file. */
-export function destinationFolder(d: Destination, domain: OffsiteDomain): string {
+export function destinationFolder(d: Pick<Destination, "repo">, domain: OffsiteDomain): string {
   const base = d.repo.trim().replace(/\/+$/, "");
   const folder = domain === "config" ? "selfbackup" : domain;
   return base.endsWith(":") ? base + folder : `${base}/${folder}`;
