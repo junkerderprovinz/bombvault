@@ -106,9 +106,12 @@ type backupItemView struct {
 	SourceBytes *int64 `json:"sourceBytes"`
 	// State and Installed are what Docker or libvirt say about a container or
 	// VM. Both are left out when the host was not asked or did not answer.
-	State        string           `json:"state,omitempty"`
-	Installed    *bool            `json:"installed,omitempty"`
-	Self         bool             `json:"self,omitempty"`
+	State     string `json:"state,omitempty"`
+	Installed *bool  `json:"installed,omitempty"`
+	Self      bool   `json:"self,omitempty"`
+	// RestoredFrom names the container this one is a copy of, when a restore
+	// created it next to that one.
+	RestoredFrom string           `json:"restoredFrom,omitempty"`
 	KindDisabled bool             `json:"kindDisabled,omitempty"`
 	Runs         []store.RunBrief `json:"runs"`
 }
@@ -266,6 +269,7 @@ func (h *Handler) containerItems(ctx context.Context, settings store.Settings, h
 		}
 		v := row(t)
 		v.State, v.Installed = c.State, &installed
+		v.RestoredFrom = c.Labels[restoredFromLabel]
 		rows = append(rows, v)
 	}
 	for _, t := range targets {
