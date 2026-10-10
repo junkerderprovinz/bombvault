@@ -1,40 +1,21 @@
 // The search index is written by hand, so this holds it to the source: every
-// card title a page draws in Settings.tsx, directly or through a card file in
-// this folder, has to be in that page's entry. It reads source; it does not
-// render.
+// card title a page draws, itself or through a card file in this folder, has
+// to be in that page's entry. It reads source; it does not render.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { pageSource } from "./pageSources.testsupport";
 import { SETTINGS_INDEX } from "./searchIndex";
 import { SETTINGS_PAGES } from "./settingsPages";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const PAGE_SOURCE = readFileSync(join(HERE, "..", "Settings.tsx"), "utf8");
-
-/** Every `{page === "X" && …}` block of Settings.tsx, brace-matched to its close. */
-function region(page: string): string {
-  const needle = `{page === "${page}" &&`;
-  let out = "";
-  for (let i = PAGE_SOURCE.indexOf(needle); i !== -1; i = PAGE_SOURCE.indexOf(needle, i + 1)) {
-    let depth = 0;
-    for (let j = i; j < PAGE_SOURCE.length; j++) {
-      if (PAGE_SOURCE[j] === "{") depth++;
-      else if (PAGE_SOURCE[j] === "}" && --depth === 0) {
-        out += PAGE_SOURCE.slice(i, j + 1);
-        break;
-      }
-    }
-  }
-  return out;
-}
-
 /** The keys passed as `title={t("…")}` to a Card in some source. */
 function cardTitles(source: string): string[] {
   return [...source.matchAll(/<Card\b[^>]*?\btitle=\{t\("([^"]+)"\)/g)].map((m) => m[1]);
 }
 
-/** Card titles drawn by the card files a region mounts, such as <NotifyCard>. */
+/** Card titles drawn by the card files a page mounts, such as <NotifyCard>. */
 function mountedTitles(source: string): string[] {
   const out: string[] = [];
   for (const [, name] of source.matchAll(/<([A-Z][A-Za-z]*Card)\b/g)) {
@@ -50,8 +31,8 @@ describe("the settings search index", () => {
   });
 
   it.each(SETTINGS_PAGES.map((p) => p.id))("knows every card the %s page draws", (page) => {
-    const drawn = region(page);
-    expect(drawn, `no {page === "${page}"} gate in Settings.tsx`).not.toBe("");
+    const drawn = pageSource(page);
+    expect(drawn, `nothing draws the ${page} page`).not.toBe("");
     const indexed = new Set(SETTINGS_INDEX[page].map((c) => c.title));
     const missing = [...new Set([...cardTitles(drawn), ...mountedTitles(drawn)])].filter((k) => !indexed.has(k as never));
     expect(missing).toEqual([]);
@@ -59,7 +40,7 @@ describe("the settings search index", () => {
 
   it("knows every keep rule of the retention grids with its (i)", () => {
     const grid = /\["\w+", "(settings\.retention\w+)", "(settings\.retention\w+Info)"\]/g;
-    expect(region("retention")).toContain("<RetentionRulesCard");
+    expect(pageSource("retention")).toContain("<RetentionRulesCard");
     const sectionSource = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
     const pageRules = [...sectionSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     const targetSource = readFileSync(join(HERE, "..", "..", "components", "OffsiteTargetsSection.tsx"), "utf8");
@@ -81,7 +62,7 @@ describe("the settings search index", () => {
 
   it("has the compression choice on every card that draws one", () => {
     const row = { key: "settings.compression", hint: "settings.compressionInfo" };
-    const storage = region("storage");
+    const storage = pageSource("storage");
     expect(storage).toContain("<PathModeSwitch");
     expect(storage).toContain("<ReposCard");
     const cards = [
@@ -96,7 +77,7 @@ describe("the settings search index", () => {
     ["schedules", "IdleCard"],
     ["offsite", "StreamingCard"],
   ] as const)("has every caption and (i) of the card the %s page mounts as %s", (page, file) => {
-    expect(region(page)).toContain(`<${file}`);
+    expect(pageSource(page)).toContain(`<${file}`);
     const source = readFileSync(join(HERE, `${file}.tsx`), "utf8");
     const [title] = cardTitles(source);
     const card = SETTINGS_INDEX[page].find((c) => c.title === title);
@@ -113,7 +94,7 @@ describe("the settings search index", () => {
   it.each(["ApiTokensCard", "HomeAssistantCard", "NetworkCard"])(
     "has every caption and (i) of the card the integrations page mounts as %s",
     (file) => {
-      expect(region("integrations")).toContain(`<${file}`);
+      expect(pageSource("integrations")).toContain(`<${file}`);
       const source = readFileSync(join(HERE, `${file}.tsx`), "utf8");
       const [title] = cardTitles(source);
       const card = SETTINGS_INDEX.integrations.find((c) => c.title === title);
@@ -134,7 +115,7 @@ describe("the settings search index", () => {
   );
 
   it("has every caption of the placement defaults card, its row of buttons and its fields", () => {
-    expect(region("storage")).toContain("<PlacementDefaultsCard");
+    expect(pageSource("storage")).toContain("<PlacementDefaultsCard");
     const card = SETTINGS_INDEX.storage.find((c) => c.title === "placementDefaults.title");
     expect(card, "placementDefaults.title on storage").toBeDefined();
     expect(card?.hint).toBe("placementDefaults.hint");

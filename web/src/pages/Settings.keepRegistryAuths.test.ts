@@ -1,7 +1,7 @@
 // keepRegistryAuths decides which registry rows an auto-save sends and whether
 // a row's token counts as stored. It is pure, so it runs without a DOM.
 import { describe, expect, it } from "vitest";
-import { keepRegistryAuths, markRegistryTokensStored } from "./Settings";
+import { keepRegistryAuths, markRegistryTokensStored } from "./settings/pages/ContainersPage";
 import type { RegistryAuthEntry } from "../lib/api";
 
 function entry(over: Partial<RegistryAuthEntry> = {}): RegistryAuthEntry {

@@ -29,6 +29,7 @@ const rules = (plugin as any).rules;
 
 const PAGE = "/repo/web/src/pages/Fleet.tsx";
 const SETTINGS = "/repo/web/src/pages/Settings.tsx";
+const SETTINGS_STORAGE = "/repo/web/src/pages/settings/pages/StoragePage.tsx";
 const LOGIN = "/repo/web/src/pages/Login.tsx";
 const COMPONENT = "/repo/web/src/components/Widget.tsx";
 
@@ -206,6 +207,9 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
     // smaller scale.
     { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED_RESPONSIVE}><div className="flex flex-col gap-1 max-w-40" /></div>; }`, filename: SETTINGS, options: shellOptions },
     { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED_RESPONSIVE}><div className="flex flex-col gap-1 text-xs max-w-xs" /></div>; }`, filename: SETTINGS, options: shellOptions },
+    // A settings page renders inside Settings.tsx's shell, so its own root
+    // needs none.
+    { code: `export function StoragePage() { return <div id="offsite" className="flex flex-col gap-6" />; }`, filename: SETTINGS_STORAGE, options: shellOptions },
   ],
   invalid: [
     {
@@ -291,6 +295,13 @@ export default Fleet;`,
       // A second, literal copy of the shell somewhere inside a shelled page.
       code: `export function Fleet() { return <div className={PAGE_SHELL}><div className="flex flex-col gap-10 max-w-6xl" /></div>; }`,
       filename: PAGE,
+      options: shellOptions,
+      errors: [{ messageId: "handRolled" }],
+    },
+    {
+      // The same copy inside a settings page.
+      code: `export function StoragePage() { return <><div className="flex flex-col gap-10 max-w-6xl" /></>; }`,
+      filename: SETTINGS_STORAGE,
       options: shellOptions,
       errors: [{ messageId: "handRolled" }],
     },
