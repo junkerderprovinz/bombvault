@@ -149,22 +149,15 @@ func probeQemuImg(_ Deps) (string, error) {
 	return first, nil
 }
 
-// probeRclone checks that rclone is on PATH.
+// probeRclone checks that rclone is on PATH. It asks for the plain version,
+// because "rclone version --check" contacts rclone.org.
 func probeRclone(_ Deps) (string, error) {
 	//nolint:gosec // G204: rclone is a known binary, no user input
-	out, err := exec.Command("rclone", "version", "--check").CombinedOutput()
+	out, err := exec.Command("rclone", "version").CombinedOutput()
 	if err != nil {
-		// rclone version --check exits non-zero when an update is available but
-		// the binary is present. Fall back to plain "rclone version".
-		out2, err2 := exec.Command("rclone", "version").CombinedOutput() //nolint:gosec
-		if err2 != nil {
-			return "", fmt.Errorf("rclone not found: %w", err2)
-		}
-		first := strings.SplitN(strings.TrimSpace(string(out2)), "\n", 2)[0]
-		return first, nil
+		return "", fmt.Errorf("rclone not found: %w", err)
 	}
-	first := strings.SplitN(strings.TrimSpace(string(out)), "\n", 2)[0]
-	return first, nil
+	return strings.SplitN(strings.TrimSpace(string(out)), "\n", 2)[0], nil
 }
 
 // probePathWritable checks that the container backup path is writable without
