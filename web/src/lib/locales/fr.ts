@@ -41,8 +41,6 @@ const fr: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Retour",
   "about.mail": "E-mail",
-  "mode.simpleView": "Vue simple",
-  "mode.advancedView": "Vue avancée",
   "nav.recovery": "Récupération",
   "nav.config": "Auto-sauvegarde",
 
@@ -916,7 +914,7 @@ const fr: Partial<Translations> = {
   "folders.cachedirScope": "S'applique à toute la sauvegarde de ce conteneur, pas seulement à ce dossier.",
   // Notifications
   "notify.title": "Notifications",
-  "notify.hint": "Soyez averti à la fin d'une sauvegarde, et choisissez ci-dessous les événements qui le déclenchent. Les notifications Unraid fonctionnent déjà en mode Simple ; d'autres canaux de diffusion (webhook, Matrix, Healthchecks, e-mail) se trouvent dans Avancé.",
+  "notify.hint": "Soyez averti à la fin d'une sauvegarde, et choisissez ci-dessous les événements qui le déclenchent.",
   "notify.on": "Notifier",
   "notify.onNever": "Jamais",
   "notify.onFailure": "Uniquement en cas d'échec",
@@ -1688,7 +1686,7 @@ const fr: Partial<Translations> = {
   "settings.search.count": "{n} correspondances",
   "settings.search.inHint": "trouvé dans l'explication",
   "settings.search.page": "Page",
-  "settings.search.notShown": "{name} n'est pas affiché en ce moment. Il apparaît dans la vue avancée ou dès que la fonction à laquelle il appartient est activée.",
+  "settings.search.notShown": "{name} n'est pas affiché en ce moment. Il apparaît dès que la fonction à laquelle il appartient est activée.",
   "settings.schedulesOptions": "Options de planning",
   "settings.schedulesOffsite": "Plannings de réplication hors site",
   "settings.schedulesSelfBackup": "Planning d'auto-sauvegarde",

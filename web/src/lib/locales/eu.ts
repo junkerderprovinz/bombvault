@@ -16,7 +16,6 @@ const eu: Partial<Translations> = {
   "nav.more": "Gehiago",
   "nav.mobileNavigation": "Mugikorreko nabigazioa",
 
-  // Mode toggle
   "about.title": "BombVault-i buruz",
   "about.body": "Zaldun bakarra, gurutzada bakarra: nahi nuen moduan existitzen ez ziren kode irekiko tresna dotoreak, ezer falta ez den arte eraikiak. Dena doan, konturik gabe, telemetriarik gabe, iragarkirik gabe eta ordainpeko mailarik gabe. Inon ez dago izartxorik. Irakurgai denik ez da inoiz zure harresietatik ateratzen. Arratsaldeetan eta asteburuetan forjatua, bihotzez eta setaz.",
   "about.coffee": "BombVault(e)k zure zerbitzarian edo ordenagailuan lekua irabazi badu, bota txanpon bat zure zaldunari: kostuak estaltzen laguntzen du eta proiektua bizirik mantentzen. Eta zaldun honen bihotza pixka bat azkarrago taupadaka jartzen du. Behean hiru bide daude, hartu ondoen datorkizuna.",
@@ -44,10 +43,6 @@ const eu: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Iritzia",
   "about.mail": "E-posta",
-
-  // Mode toggle
-  "mode.simpleView": "Ikuspegi soila",
-  "mode.advancedView": "Ikuspegi aurreratua",
 
   // Dashboard
   "dashboard.title": "Panela",
@@ -883,7 +878,7 @@ const eu: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (gordetako kredentzialak)",
   "rclone.save": "Gorde konfigurazioa",
   "notify.title": "Jakinarazpenak",
-  "notify.hint": "Jaso jakinarazpena babeskopia bat amaitzean, eta aukeratu behean zein gertaerak abiarazten duten. Unraid-en jakinarazpenak hemen funtzionatzen dute modu soilean; bidalketa-kanal gehiago (webhook, Matrix, Healthchecks, posta elektronikoa) Aurreratua atalean daude.",
+  "notify.hint": "Jaso jakinarazpena babeskopia bat amaitzean, eta aukeratu behean zein gertaerak abiarazten duten.",
   "notify.on": "Jakinarazi",
   "notify.onNever": "Inoiz ez",
   "notify.onFailure": "Errorea dagoenean bakarrik",
@@ -2054,7 +2049,7 @@ const eu: Partial<Translations> = {
   "settings.search.count": "{n} emaitza",
   "settings.search.inHint": "azalpenean aurkituta",
   "settings.search.page": "Orria",
-  "settings.search.notShown": "{name} ez dago une honetan pantailan. Ikuspegi aurreratuan agertzen da, edo dagokion eginbidea piztuta dagoenean.",
+  "settings.search.notShown": "{name} ez dago une honetan pantailan. Dagokion eginbidea piztuta dagoenean agertzen da.",
   "settings.schedulesOptions": "Egutegi-aukerak",
   "settings.schedulesOffsite": "Kanpoko errepikapenaren egutegiak",
   "settings.schedulesSelfBackup": "Autobabeskopiaren egutegia",

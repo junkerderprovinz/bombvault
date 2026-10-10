@@ -16,7 +16,6 @@ const hi: Partial<Translations> = {
   "nav.more": "और",
   "nav.mobileNavigation": "मोबाइल नेविगेशन",
 
-  // Mode toggle
   "about.title": "BombVault के बारे में",
   "about.body": "एक नाइट, एक अभियान: सुंदर ओपन-सोर्स औज़ार जो उस रूप में मौजूद नहीं थे जैसा मैं चाहता था, तब तक बनाए जाते हैं जब तक कुछ बाकी न रहे. सब कुछ मुफ़्त, बिना खाते, बिना टेलीमेट्री, बिना विज्ञापन और बिना किसी भुगतान वाले स्तर के. कहीं कोई तारांकन नहीं. पढ़ने लायक कुछ भी कभी तुम्हारी दीवारों से बाहर नहीं जाता. शामों और सप्ताहांतों में गढ़ा गया, दिल और ज़िद के साथ.",
   "about.coffee": "अगर BombVault ने तुम्हारे सर्वर या कंप्यूटर पर अपनी जगह बना ली है, तो अपने नाइट को एक सिक्का दो: इससे खर्च निकलता है और परियोजना ज़िंदा रहती है. और इस नाइट का दिल थोड़ा तेज़ धड़कता है. नीचे तीन रास्ते हैं, जो तुम्हें ठीक लगे वही चुनो.",
@@ -44,10 +43,6 @@ const hi: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "प्रतिक्रिया",
   "about.mail": "ईमेल",
-
-  // Mode toggle
-  "mode.simpleView": "सरल दृश्य",
-  "mode.advancedView": "उन्नत दृश्य",
 
   // Dashboard
   "dashboard.title": "डैशबोर्ड",
@@ -883,7 +878,7 @@ const hi: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (रखे गए क्रेडेंशियल)",
   "rclone.save": "कॉन्फ़िगरेशन सहेजें",
   "notify.title": "सूचनाएँ",
-  "notify.hint": "बैकअप पूरा होने पर सूचना पाएँ, और नीचे चुनें कि कौन-सी घटनाएँ इसे ट्रिगर करती हैं। Unraid सूचनाएँ यहाँ सरल मोड में काम करती हैं; अधिक डिलीवरी चैनल (webhook, Matrix, Healthchecks, ईमेल) Advanced में मिलते हैं।",
+  "notify.hint": "बैकअप पूरा होने पर सूचना पाएँ, और नीचे चुनें कि कौन-सी घटनाएँ इसे ट्रिगर करती हैं।",
   "notify.on": "सूचित करें",
   "notify.onNever": "कभी नहीं",
   "notify.onFailure": "केवल विफलता पर",
@@ -2054,7 +2049,7 @@ const hi: Partial<Translations> = {
   "settings.search.count": "{n} मेल",
   "settings.search.inHint": "व्याख्या में मिला",
   "settings.search.page": "पेज",
-  "settings.search.notShown": "{name} अभी स्क्रीन पर नहीं है। यह उन्नत दृश्य में दिखता है, या जब इससे जुड़ी सुविधा चालू हो।",
+  "settings.search.notShown": "{name} अभी स्क्रीन पर नहीं है। यह तब दिखता है जब इससे जुड़ी सुविधा चालू हो।",
   "settings.schedulesOptions": "शेड्यूल विकल्प",
   "settings.schedulesOffsite": "ऑफ़-साइट रेप्लिकेशन शेड्यूल",
   "settings.schedulesSelfBackup": "सेल्फ़-बैकअप शेड्यूल",

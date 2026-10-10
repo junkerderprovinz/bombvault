@@ -41,8 +41,6 @@ const nl: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Feedback",
   "about.mail": "E-mail",
-  "mode.simpleView": "Eenvoudige weergave",
-  "mode.advancedView": "Geavanceerde weergave",
   "nav.recovery": "Herstel",
 
   // Dashboard
@@ -910,7 +908,7 @@ const nl: Partial<Translations> = {
   "folders.cachedirScope": "Geldt voor de volledige back-up van deze container, niet alleen voor deze map.",
   // Notifications
   "notify.title": "Meldingen",
-  "notify.hint": "Krijg een melding wanneer een back-up klaar is, en kies hieronder welke gebeurtenissen dit activeren. Unraid-meldingen werken al in de eenvoudige modus; meer bezorgkanalen (webhook, Matrix, Healthchecks, e-mail) vind je bij Geavanceerd.",
+  "notify.hint": "Krijg een melding wanneer een back-up klaar is, en kies hieronder welke gebeurtenissen dit activeren.",
   "notify.on": "Melden",
   "notify.onNever": "Nooit",
   "notify.onFailure": "Alleen bij mislukking",
@@ -1685,7 +1683,7 @@ const nl: Partial<Translations> = {
   "settings.search.count": "{n} treffers",
   "settings.search.inHint": "gevonden in de uitleg",
   "settings.search.page": "Pagina",
-  "settings.search.notShown": "{name} is nu niet zichtbaar op het scherm. Het verschijnt in de geavanceerde weergave of zodra de bijbehorende functie is ingeschakeld.",
+  "settings.search.notShown": "{name} is nu niet zichtbaar op het scherm. Het verschijnt zodra de bijbehorende functie is ingeschakeld.",
   "settings.schedulesOptions": "Planningsopties",
   "settings.schedulesOffsite": "Off-site-replicatieschema's",
   "settings.schedulesSelfBackup": "Zelf-back-upschema",

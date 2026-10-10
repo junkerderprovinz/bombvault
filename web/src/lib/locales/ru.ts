@@ -41,8 +41,6 @@ const ru: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Отзыв",
   "about.mail": "Эл. почта",
-  "mode.simpleView": "Простой вид",
-  "mode.advancedView": "Расширенный вид",
   "nav.recovery": "Восстановление",
 
   // Dashboard
@@ -908,7 +906,7 @@ const ru: Partial<Translations> = {
   "folders.cachedirScope": "Применяется ко всей резервной копии этого контейнера, а не только к этой папке.",
   // Notifications
   "notify.title": "Уведомления",
-  "notify.hint": "Получайте уведомление по завершении резервного копирования и выберите ниже, какие события его вызывают. Уведомления Unraid уже работают в простом режиме; больше каналов доставки (webhook, Matrix, Healthchecks, email) находится в разделе «Расширенные».",
+  "notify.hint": "Получайте уведомление по завершении резервного копирования и выберите ниже, какие события его вызывают.",
   "notify.on": "Уведомлять",
   "notify.onNever": "Никогда",
   "notify.onFailure": "Только при сбое",
@@ -1683,7 +1681,7 @@ const ru: Partial<Translations> = {
   "settings.search.count": "{n} совпадений",
   "settings.search.inHint": "найдено в пояснении",
   "settings.search.page": "Страница",
-  "settings.search.notShown": "{name} сейчас не отображается на экране. Он появляется в расширенном виде или как только включается функция, к которой он относится.",
+  "settings.search.notShown": "{name} сейчас не отображается на экране. Он появляется, как только включается функция, к которой он относится.",
   "settings.schedulesOptions": "Настройки расписания",
   "settings.schedulesOffsite": "Расписания внешней репликации",
   "settings.schedulesSelfBackup": "Расписание самокопирования",

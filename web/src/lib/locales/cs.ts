@@ -41,8 +41,6 @@ const cs: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Zpětná vazba",
   "about.mail": "E-mail",
-  "mode.simpleView": "Jednoduché zobrazení",
-  "mode.advancedView": "Pokročilé zobrazení",
   "nav.recovery": "Obnova",
   "nav.config": "Autozáloha",
 
@@ -914,7 +912,7 @@ const cs: Partial<Translations> = {
   "folders.cachedirScope": "Platí pro celou zálohu tohoto kontejneru, nejen pro tuto složku.",
   // Notifications
   "notify.title": "Oznámení",
-  "notify.hint": "Nechte si poslat upozornění po dokončení zálohy a níže vyberte, jaké události ho spustí. Upozornění Unraid fungují už v jednoduchém režimu; další doručovací kanály (webhook, Matrix, Healthchecks, e-mail) najdete v Pokročilém.",
+  "notify.hint": "Nechte si poslat upozornění po dokončení zálohy a níže vyberte, jaké události ho spustí.",
   "notify.on": "Oznámit",
   "notify.onNever": "Nikdy",
   "notify.onFailure": "Pouze při selhání",
@@ -1686,7 +1684,7 @@ const cs: Partial<Translations> = {
   "settings.search.count": "{n} shody",
   "settings.search.inHint": "nalezeno ve vysvětlivce",
   "settings.search.page": "Stránka",
-  "settings.search.notShown": "{name} teď není na obrazovce. Zobrazí se v pokročilém zobrazení nebo jakmile se zapne funkce, ke které patří.",
+  "settings.search.notShown": "{name} teď není na obrazovce. Zobrazí se, jakmile se zapne funkce, ke které patří.",
   "settings.schedulesOptions": "Možnosti plánu",
   "settings.schedulesOffsite": "Plány replikace mimo lokalitu",
   "settings.schedulesSelfBackup": "Plán vlastního zálohování",

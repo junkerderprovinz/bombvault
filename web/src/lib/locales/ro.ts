@@ -41,8 +41,6 @@ const ro: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Feedback",
   "about.mail": "E-mail",
-  "mode.simpleView": "Vizualizare simplă",
-  "mode.advancedView": "Vizualizare avansată",
   "nav.recovery": "Recuperare",
 
   // Dashboard
@@ -913,7 +911,7 @@ const ro: Partial<Translations> = {
   "folders.cachedirScope": "Se aplică întregii copii de rezervă a acestui container, nu doar acestui folder.",
   // Notifications
   "notify.title": "Notificări",
-  "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă și alege mai jos ce evenimente o declanșează. Notificările Unraid funcționează deja în modul Simplu; mai multe canale de livrare (webhook, Matrix, Healthchecks, e-mail) se găsesc la Avansat.",
+  "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă și alege mai jos ce evenimente o declanșează.",
   "notify.on": "Notifică",
   "notify.onNever": "Niciodată",
   "notify.onFailure": "Doar la eșec",
@@ -1691,7 +1689,7 @@ const ro: Partial<Translations> = {
   "settings.search.count": "{n} potriviri",
   "settings.search.inHint": "găsit în explicație",
   "settings.search.page": "Pagină",
-  "settings.search.notShown": "{name} nu este vizibil pe ecran chiar acum. Apare în vizualizarea avansată sau imediat ce este activată funcția căreia îi aparține.",
+  "settings.search.notShown": "{name} nu este vizibil pe ecran chiar acum. Apare imediat ce este activată funcția căreia îi aparține.",
   "settings.schedulesOptions": "Opțiuni de programare",
   "settings.schedulesOffsite": "Programări de replicare externă",
   "settings.schedulesSelfBackup": "Programare de auto-backup",

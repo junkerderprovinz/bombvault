@@ -16,7 +16,6 @@ const hr: Partial<Translations> = {
   "nav.more": "Više",
   "nav.mobileNavigation": "Mobilna navigacija",
 
-  // Mode toggle
   "about.title": "O aplikaciji BombVault",
   "about.body": "Jedan vitez, jedan pohod: uredni alati otvorenog koda kojih u obliku kakav sam želio nije bilo, građeni dok ništa ne nedostaje. Sve besplatno, bez računa, bez telemetrije, bez reklama i bez plaćenih razina. Nigdje nijedne zvjezdice. Ništa čitljivo nikada ne napušta tvoje zidove. Kovano navečer i vikendima, sa srcem i tvrdoglavošću.",
   "about.coffee": "Ako je BombVault zaslužio mjesto na tvom poslužitelju ili računalu, baci novčić svom vitezu: pomaže pokriti troškove i održava projekt na životu. I srce ovog viteza kuca malo brže. Ispod su tri puta, uzmi onaj koji ti odgovara.",
@@ -44,10 +43,6 @@ const hr: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Povratna informacija",
   "about.mail": "E-pošta",
-
-  // Mode toggle
-  "mode.simpleView": "Jednostavan prikaz",
-  "mode.advancedView": "Napredni prikaz",
 
   // Dashboard
   "dashboard.title": "Nadzorna ploča",
@@ -883,7 +878,7 @@ const hr: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (zadržane vjerodajnice)",
   "rclone.save": "Spremi konfiguraciju",
   "notify.title": "Obavijesti",
-  "notify.hint": "Primite obavijest kad sigurnosna kopija završi, a u nastavku odaberite koji je događaji pokreću. Unraid obavijesti ovdje rade u jednostavnom načinu; više kanala isporuke (webhook, Matrix, Healthchecks, e-pošta) nalazi se u Napredno.",
+  "notify.hint": "Primite obavijest kad sigurnosna kopija završi, a u nastavku odaberite koji je događaji pokreću.",
   "notify.on": "Obavijesti",
   "notify.onNever": "Nikad",
   "notify.onFailure": "Samo kod greške",
@@ -2054,7 +2049,7 @@ const hr: Partial<Translations> = {
   "settings.search.count": "{n} podudaranja",
   "settings.search.inHint": "pronađeno u objašnjenju",
   "settings.search.page": "Stranica",
-  "settings.search.notShown": "{name} trenutačno se ne prikazuje na zaslonu. Prikazuje se u naprednom prikazu ili čim se uključi značajka kojoj pripada.",
+  "settings.search.notShown": "{name} trenutačno se ne prikazuje na zaslonu. Prikazuje se čim se uključi značajka kojoj pripada.",
   "settings.schedulesOptions": "Opcije rasporeda",
   "settings.schedulesOffsite": "Rasporedi izvanmrežnog repliciranja",
   "settings.schedulesSelfBackup": "Raspored samostalne sigurnosne kopije",

@@ -41,8 +41,6 @@ const pt: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Comentários",
   "about.mail": "E-mail",
-  "mode.simpleView": "Vista simples",
-  "mode.advancedView": "Vista avançada",
   "nav.recovery": "Recuperação",
 
   // Dashboard
@@ -913,7 +911,7 @@ const pt: Partial<Translations> = {
   "folders.cachedirScope": "Aplica-se a toda a cópia de segurança deste contentor, não apenas a esta pasta.",
   // Notifications
   "notify.title": "Notificações",
-  "notify.hint": "Seja notificado quando uma cópia terminar e escolha abaixo quais eventos a acionam. As notificações do Unraid já funcionam no modo Simples; mais canais de entrega (webhook, Matrix, Healthchecks, e-mail) estão em Avançado.",
+  "notify.hint": "Seja notificado quando uma cópia terminar e escolha abaixo quais eventos a acionam.",
   "notify.on": "Notificar",
   "notify.onNever": "Nunca",
   "notify.onFailure": "Apenas em caso de falha",
@@ -1688,7 +1686,7 @@ const pt: Partial<Translations> = {
   "settings.search.count": "{n} correspondências",
   "settings.search.inHint": "encontrado na explicação",
   "settings.search.page": "Página",
-  "settings.search.notShown": "{name} não está visível no ecrã neste momento. Aparece na vista avançada ou assim que a funcionalidade a que pertence estiver ativada.",
+  "settings.search.notShown": "{name} não está visível no ecrã neste momento. Aparece assim que a funcionalidade a que pertence estiver ativada.",
   "settings.schedulesOptions": "Opções de agendamento",
   "settings.schedulesOffsite": "Agendamentos de replicação externa",
   "settings.schedulesSelfBackup": "Agendamento de auto-backup",

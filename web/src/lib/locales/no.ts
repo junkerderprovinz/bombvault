@@ -41,8 +41,6 @@ const no: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Tilbakemelding",
   "about.mail": "E-post",
-  "mode.simpleView": "Enkel visning",
-  "mode.advancedView": "Avansert visning",
   "nav.recovery": "Gjenoppretting",
 
   // Dashboard
@@ -913,7 +911,7 @@ const no: Partial<Translations> = {
   "folders.cachedirScope": "Gjelder hele sikkerhetskopien av denne containeren, ikke bare denne mappen.",
   // Notifications
   "notify.title": "Varsler",
-  "notify.hint": "Få varsel når en sikkerhetskopi er ferdig, og velg nedenfor hvilke hendelser som utløser det. Unraid-varsler fungerer allerede i enkel modus; flere leveringskanaler (webhook, Matrix, Healthchecks, e-post) finner du under Avansert.",
+  "notify.hint": "Få varsel når en sikkerhetskopi er ferdig, og velg nedenfor hvilke hendelser som utløser det.",
   "notify.on": "Varsle",
   "notify.onNever": "Aldri",
   "notify.onFailure": "Kun ved feil",
@@ -1688,7 +1686,7 @@ const no: Partial<Translations> = {
   "settings.search.count": "{n} treff",
   "settings.search.inHint": "funnet i forklaringen",
   "settings.search.page": "Side",
-  "settings.search.notShown": "{name} vises ikke på skjermen akkurat nå. Den vises i den avanserte visningen eller så snart funksjonen den hører til, er slått på.",
+  "settings.search.notShown": "{name} vises ikke på skjermen akkurat nå. Den vises så snart funksjonen den hører til, er slått på.",
   "settings.schedulesOptions": "Tidsplanalternativer",
   "settings.schedulesOffsite": "Off-site-replikeringsplaner",
   "settings.schedulesSelfBackup": "Plan for selvsikkerhetskopiering",

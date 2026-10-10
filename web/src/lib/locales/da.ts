@@ -41,8 +41,6 @@ const da: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Tilbagemelding",
   "about.mail": "E-mail",
-  "mode.simpleView": "Enkel visning",
-  "mode.advancedView": "Avanceret visning",
   "nav.recovery": "Gendannelse",
   "nav.config": "Auto-sikkerhedskopi",
 
@@ -916,7 +914,7 @@ const da: Partial<Translations> = {
   "folders.cachedirScope": "Gælder for hele sikkerhedskopien af denne container, ikke kun denne mappe.",
   // Notifications
   "notify.title": "Notifikationer",
-  "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig, og vælg nedenfor hvilke hændelser der udløser det. Unraid-notifikationer virker allerede i Enkel tilstand; flere leveringskanaler (webhook, Matrix, Healthchecks, e-mail) findes under Avanceret.",
+  "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig, og vælg nedenfor hvilke hændelser der udløser det.",
   "notify.on": "Underret",
   "notify.onNever": "Aldrig",
   "notify.onFailure": "Kun ved fejl",
@@ -1688,7 +1686,7 @@ const da: Partial<Translations> = {
   "settings.search.count": "{n} match",
   "settings.search.inHint": "fundet i forklaringen",
   "settings.search.page": "Side",
-  "settings.search.notShown": "{name} vises ikke lige nu. Den vises i den avancerede visning, eller når den funktion, den hører til, er slået til.",
+  "settings.search.notShown": "{name} vises ikke lige nu. Den vises, når den funktion, den hører til, er slået til.",
   "settings.schedulesOptions": "Tidsplan-indstillinger",
   "settings.schedulesOffsite": "Off-site-replikerings-tidsplaner",
   "settings.schedulesSelfBackup": "Tidsplan for selv-sikkerhedskopiering",

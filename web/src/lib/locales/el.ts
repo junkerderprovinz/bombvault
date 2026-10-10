@@ -41,8 +41,6 @@ const el: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Σχόλια",
   "about.mail": "Email",
-  "mode.simpleView": "Απλή προβολή",
-  "mode.advancedView": "Σύνθετη προβολή",
   "nav.recovery": "Ανάκτηση",
   "nav.config": "Αυτο-αντίγραφο",
 
@@ -916,7 +914,7 @@ const el: Partial<Translations> = {
   "folders.cachedirScope": "Ισχύει για ολόκληρο το αντίγραφο ασφαλείας αυτού του container, όχι μόνο για αυτόν τον φάκελο.",
   // Notifications
   "notify.title": "Ειδοποιήσεις",
-  "notify.hint": "Λάβετε ειδοποίηση όταν ολοκληρωθεί ένα αντίγραφο και επιλέξτε παρακάτω ποια συμβάντα την ενεργοποιούν. Οι ειδοποιήσεις Unraid λειτουργούν ήδη σε απλή λειτουργία· περισσότερα κανάλια παράδοσης (webhook, Matrix, Healthchecks, email) βρίσκονται στις Ρυθμίσεις για προχωρημένους.",
+  "notify.hint": "Λάβετε ειδοποίηση όταν ολοκληρωθεί ένα αντίγραφο και επιλέξτε παρακάτω ποια συμβάντα την ενεργοποιούν.",
   "notify.on": "Ειδοποίηση",
   "notify.onNever": "Ποτέ",
   "notify.onFailure": "Μόνο σε αποτυχία",
@@ -1688,7 +1686,7 @@ const el: Partial<Translations> = {
   "settings.search.count": "{n} αντιστοιχίες",
   "settings.search.inHint": "βρέθηκε στην επεξήγηση",
   "settings.search.page": "Σελίδα",
-  "settings.search.notShown": "{name} δεν εμφανίζεται αυτή τη στιγμή. Εμφανίζεται στη σύνθετη προβολή ή μόλις ενεργοποιηθεί η λειτουργία στην οποία ανήκει.",
+  "settings.search.notShown": "{name} δεν εμφανίζεται αυτή τη στιγμή. Εμφανίζεται μόλις ενεργοποιηθεί η λειτουργία στην οποία ανήκει.",
   "settings.schedulesOptions": "Επιλογές προγραμματισμού",
   "settings.schedulesOffsite": "Προγραμματισμοί αναπαραγωγής εκτός τόπου",
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",

@@ -16,7 +16,6 @@ const id: Partial<Translations> = {
   "nav.more": "Lainnya",
   "nav.mobileNavigation": "Navigasi seluler",
 
-  // Mode toggle
   "about.title": "Tentang BombVault",
   "about.body": "Satu ksatria, satu perjalanan: perkakas sumber terbuka yang rapi, yang tidak ada dalam bentuk yang saya inginkan, dibangun sampai tidak ada yang kurang. Semuanya gratis, tanpa akun, tanpa telemetri, tanpa iklan dan tanpa tingkatan berbayar. Tidak ada tanda bintang di mana pun. Tidak ada yang terbaca pernah meninggalkan tembokmu sendiri. Ditempa pada malam hari dan akhir pekan, dengan hati dan kekeraskepalaan.",
   "about.coffee": "Kalau BombVault sudah pantas mendapat tempat di server atau komputermu, lemparkan koin untuk ksatriamu: itu membantu menutup biaya dan menjaga proyek tetap hidup. Dan itu membuat jantung ksatria ini berdetak sedikit lebih cepat. Di bawah ada tiga jalan, ambil yang cocok untukmu.",
@@ -44,10 +43,6 @@ const id: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Masukan",
   "about.mail": "Surel",
-
-  // Mode toggle
-  "mode.simpleView": "Tampilan sederhana",
-  "mode.advancedView": "Tampilan lanjutan",
 
   // Dashboard
   "dashboard.title": "Dasbor",
@@ -883,7 +878,7 @@ const id: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (kredensial yang dipertahankan)",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Notifikasi",
-  "notify.hint": "Dapatkan notifikasi saat pencadangan selesai, dan pilih di bawah peristiwa mana yang memicunya. Notifikasi Unraid berfungsi di sini pada mode Sederhana; lebih banyak saluran pengiriman (webhook, Matrix, Healthchecks, email) ada di Lanjutan.",
+  "notify.hint": "Dapatkan notifikasi saat pencadangan selesai, dan pilih di bawah peristiwa mana yang memicunya.",
   "notify.on": "Beri notifikasi",
   "notify.onNever": "Tidak pernah",
   "notify.onFailure": "Hanya saat gagal",
@@ -2054,7 +2049,7 @@ const id: Partial<Translations> = {
   "settings.search.count": "{n} hasil",
   "settings.search.inHint": "ditemukan di penjelasan",
   "settings.search.page": "Halaman",
-  "settings.search.notShown": "{name} sedang tidak tampil di layar. Ini muncul di tampilan lanjutan atau setelah fitur terkait diaktifkan.",
+  "settings.search.notShown": "{name} sedang tidak tampil di layar. Ini muncul setelah fitur terkait diaktifkan.",
   "settings.schedulesOptions": "Opsi jadwal",
   "settings.schedulesOffsite": "Jadwal replikasi off-site",
   "settings.schedulesSelfBackup": "Jadwal cadangan mandiri",

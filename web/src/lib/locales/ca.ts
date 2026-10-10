@@ -16,7 +16,6 @@ const ca: Partial<Translations> = {
   "nav.more": "Més",
   "nav.mobileNavigation": "Navegació mòbil",
 
-  // Mode toggle
   "about.title": "Quant a BombVault",
   "about.body": "Un sol cavaller, una croada: eines de codi obert ben fetes que no existien en la forma que jo volia, construïdes fins que no hi falti res. Tot gratuït, sense comptes, sense telemetria, sense anuncis i sense plans de pagament. Cap asterisc enlloc. Res llegible no surt mai de les teves pròpies muralles. Forjat als vespres i els caps de setmana, amb cor i tossuderia.",
   "about.coffee": "Si BombVault s'ha guanyat un lloc al teu servidor o ordinador, llança una moneda al teu cavaller: ajuda a cobrir els costos i manté viu el projecte. I fa que el cor d'aquest cavaller bategui una mica més de pressa. A sota hi ha tres camins, tria el que et vagi bé.",
@@ -44,10 +43,6 @@ const ca: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Comentaris",
   "about.mail": "Correu",
-
-  // Mode toggle
-  "mode.simpleView": "Vista senzilla",
-  "mode.advancedView": "Vista avançada",
 
   // Dashboard
   "dashboard.title": "Tauler",
@@ -883,7 +878,7 @@ const ca: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (credencials conservades)",
   "rclone.save": "Desa la configuració",
   "notify.title": "Notificacions",
-  "notify.hint": "Rep una notificació quan acabi una còpia, i tria a sota quins esdeveniments la disparen. Les notificacions d'Unraid funcionen aquí en el mode senzill; més canals de lliurament (webhook, Matrix, Healthchecks, correu) són a Avançat.",
+  "notify.hint": "Rep una notificació quan acabi una còpia, i tria a sota quins esdeveniments la disparen.",
   "notify.on": "Notifica",
   "notify.onNever": "Mai",
   "notify.onFailure": "Només en cas d'error",
@@ -2054,7 +2049,7 @@ const ca: Partial<Translations> = {
   "settings.search.count": "{n} coincidències",
   "settings.search.inHint": "trobat a l'explicació",
   "settings.search.page": "Pàgina",
-  "settings.search.notShown": "{name} no es mostra ara mateix. Apareix a la vista avançada o quan la funció a què pertany estigui activada.",
+  "settings.search.notShown": "{name} no es mostra ara mateix. Apareix quan la funció a què pertany estigui activada.",
   "settings.schedulesOptions": "Opcions d'horari",
   "settings.schedulesOffsite": "Horaris de replicació externa",
   "settings.schedulesSelfBackup": "Horari de l'autocòpia",

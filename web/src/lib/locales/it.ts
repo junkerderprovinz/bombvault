@@ -41,8 +41,6 @@ const it: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Riscontro",
   "about.mail": "Email",
-  "mode.simpleView": "Vista semplice",
-  "mode.advancedView": "Vista avanzata",
   "nav.recovery": "Ripristino",
   "nav.config": "Auto-backup",
 
@@ -916,7 +914,7 @@ const it: Partial<Translations> = {
   "folders.cachedirScope": "Si applica all'intero backup di questo contenitore, non solo a questa cartella.",
   // Notifications
   "notify.title": "Notifiche",
-  "notify.hint": "Ricevi una notifica al termine di un backup e scegli qui sotto quali eventi la attivano. Le notifiche Unraid funzionano già in modalità Semplice; altri canali di consegna (webhook, Matrix, Healthchecks, email) si trovano in Avanzate.",
+  "notify.hint": "Ricevi una notifica al termine di un backup e scegli qui sotto quali eventi la attivano.",
   "notify.on": "Notifica",
   "notify.onNever": "Mai",
   "notify.onFailure": "Solo in caso di errore",
@@ -1688,7 +1686,7 @@ const it: Partial<Translations> = {
   "settings.search.count": "{n} corrispondenze",
   "settings.search.inHint": "trovato nella spiegazione",
   "settings.search.page": "Pagina",
-  "settings.search.notShown": "{name} non è visibile in questo momento sullo schermo. Compare nella vista avanzata o non appena si attiva la funzione a cui appartiene.",
+  "settings.search.notShown": "{name} non è visibile in questo momento sullo schermo. Compare non appena si attiva la funzione a cui appartiene.",
   "settings.schedulesOptions": "Opzioni di pianificazione",
   "settings.schedulesOffsite": "Pianificazioni di replica off-site",
   "settings.schedulesSelfBackup": "Pianificazione di auto-backup",

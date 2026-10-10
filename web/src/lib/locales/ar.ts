@@ -41,8 +41,6 @@ const ar: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "ملاحظات",
   "about.mail": "بريد إلكتروني",
-  "mode.simpleView": "عرض بسيط",
-  "mode.advancedView": "عرض متقدم",
   "nav.recovery": "الاستعادة",
   "nav.config": "النسخ الذاتي",
 
@@ -916,7 +914,7 @@ const ar: Partial<Translations> = {
   "folders.cachedirScope": "ينطبق على النسخة الاحتياطية الكاملة لهذه الحاوية، وليس على هذا المجلد فقط.",
   // Notifications
   "notify.title": "الإشعارات",
-  "notify.hint": "احصل على إشعار عند انتهاء النسخ الاحتياطي، واختر أدناه الأحداث التي تُفعّله. تعمل إشعارات Unraid هنا في الوضع البسيط؛ مزيد من قنوات التسليم (Webhook وMatrix وHealthchecks والبريد الإلكتروني) تجدها ضمن الإعدادات المتقدمة.",
+  "notify.hint": "احصل على إشعار عند انتهاء النسخ الاحتياطي، واختر أدناه الأحداث التي تُفعّله.",
   "notify.on": "إشعار",
   "notify.onNever": "أبداً",
   "notify.onFailure": "عند الفشل فقط",
@@ -1691,7 +1689,7 @@ const ar: Partial<Translations> = {
   "settings.search.count": "{n} نتائج",
   "settings.search.inHint": "وُجد في الشرح",
   "settings.search.page": "الصفحة",
-  "settings.search.notShown": "{name} غير معروض حاليًا. يظهر في العرض المتقدم أو بمجرد تفعيل الميزة التي ينتمي إليها.",
+  "settings.search.notShown": "{name} غير معروض حاليًا. يظهر بمجرد تفعيل الميزة التي ينتمي إليها.",
   "settings.schedulesOptions": "خيارات الجدولة",
   "settings.schedulesOffsite": "جداول النسخ المتماثل خارج الموقع",
   "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",

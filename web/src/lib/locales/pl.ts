@@ -41,8 +41,6 @@ const pl: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Uwagi",
   "about.mail": "E-mail",
-  "mode.simpleView": "Widok prosty",
-  "mode.advancedView": "Widok zaawansowany",
   "nav.recovery": "Odzyskiwanie",
 
   // Dashboard
@@ -908,7 +906,7 @@ const pl: Partial<Translations> = {
   "folders.cachedirScope": "Dotyczy całej kopii zapasowej tego kontenera, a nie tylko tego folderu.",
   // Notifications
   "notify.title": "Powiadomienia",
-  "notify.hint": "Otrzymuj powiadomienie po zakończeniu kopii zapasowej i wybierz poniżej, które zdarzenia je wyzwalają. Powiadomienia Unraid działają już w trybie prostym; więcej kanałów dostarczania (webhook, Matrix, Healthchecks, e-mail) znajdziesz w trybie zaawansowanym.",
+  "notify.hint": "Otrzymuj powiadomienie po zakończeniu kopii zapasowej i wybierz poniżej, które zdarzenia je wyzwalają.",
   "notify.on": "Powiadom",
   "notify.onNever": "Nigdy",
   "notify.onFailure": "Tylko przy niepowodzeniu",
@@ -1683,7 +1681,7 @@ const pl: Partial<Translations> = {
   "settings.search.count": "{n} dopasowania",
   "settings.search.inHint": "znalezione w opisie",
   "settings.search.page": "Strona",
-  "settings.search.notShown": "{name} nie jest teraz widoczne na ekranie. Pojawia się w widoku zaawansowanym albo gdy włączona zostanie funkcja, do której należy.",
+  "settings.search.notShown": "{name} nie jest teraz widoczne na ekranie. Pojawia się, gdy włączona zostanie funkcja, do której należy.",
   "settings.schedulesOptions": "Opcje harmonogramu",
   "settings.schedulesOffsite": "Harmonogramy replikacji poza siedzibą",
   "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",

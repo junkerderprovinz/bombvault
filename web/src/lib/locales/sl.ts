@@ -16,7 +16,6 @@ const sl: Partial<Translations> = {
   "nav.more": "Več",
   "nav.mobileNavigation": "Mobilna navigacija",
 
-  // Mode toggle
   "about.title": "O programu BombVault",
   "about.body": "En vitez, en pohod: urejena odprtokodna orodja, ki jih v obliki, kakršno sem si želel, ni bilo, grajena, dokler nič ne manjka. Vse brezplačno, brez računov, brez telemetrije, brez oglasov in brez plačljivih ravni. Nikjer nobene zvezdice. Nič berljivega nikoli ne zapusti tvojih zidov. Kovano zvečer in ob koncih tedna, s srcem in trmo.",
   "about.coffee": "Če si je BombVault prislužil mesto na tvojem strežniku ali računalniku, vrzi kovanec svojemu vitezu: pomaga pokriti stroške in ohranja projekt pri življenju. In srce tega viteza bije malce hitreje. Spodaj so tri poti, izberi tisto, ki ti ustreza.",
@@ -44,10 +43,6 @@ const sl: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Povratna informacija",
   "about.mail": "E-pošta",
-
-  // Mode toggle
-  "mode.simpleView": "Enostaven prikaz",
-  "mode.advancedView": "Napredni prikaz",
 
   // Dashboard
   "dashboard.title": "Nadzorna plošča",
@@ -883,7 +878,7 @@ const sl: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (ohranjene poverilnice)",
   "rclone.save": "Shrani konfiguracijo",
   "notify.title": "Obvestila",
-  "notify.hint": "Prejmi obvestilo, ko se varnostno kopiranje konča, in spodaj izberi, kateri dogodki ga sprožijo. Unraidova obvestila tukaj delujejo v enostavnem načinu; več dostavnih kanalov (webhook, Matrix, Healthchecks, e-pošta) je pod Napredno.",
+  "notify.hint": "Prejmi obvestilo, ko se varnostno kopiranje konča, in spodaj izberi, kateri dogodki ga sprožijo.",
   "notify.on": "Obveščaj",
   "notify.onNever": "Nikoli",
   "notify.onFailure": "Samo ob napaki",
@@ -2041,7 +2036,7 @@ const sl: Partial<Translations> = {
   "settings.search.count": "{n} zadetki",
   "settings.search.inHint": "najdeno v razlagi",
   "settings.search.page": "Stran",
-  "settings.search.notShown": "{name} trenutno ni prikazano na zaslonu. Prikaže se v naprednem prikazu ali takoj, ko se vklopi funkcija, ki ji pripada.",
+  "settings.search.notShown": "{name} trenutno ni prikazano na zaslonu. Prikaže se takoj, ko se vklopi funkcija, ki ji pripada.",
   "settings.schedulesOptions": "Možnosti urnika",
   "settings.schedulesOffsite": "Urniki podvajanja na zunanjo kopijo",
   "settings.schedulesSelfBackup": "Urnik lastne varnostne kopije",

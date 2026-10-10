@@ -41,8 +41,6 @@ const ja: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "ご意見",
   "about.mail": "メール",
-  "mode.simpleView": "シンプル表示",
-  "mode.advancedView": "詳細表示",
   "nav.recovery": "リカバリー",
   "nav.config": "セルフバックアップ",
 
@@ -907,7 +905,7 @@ const ja: Partial<Translations> = {
   "folders.cachedirScope": "このコンテナのバックアップ全体に適用されます。このフォルダだけではありません。",
   // Notifications
   "notify.title": "通知",
-  "notify.hint": "バックアップ完了時に通知を受け取り、どのイベントで発火するかを下で選びます。Unraid通知はシンプルモードでも動作します。ほかの配信チャネル（Webhook、Matrix、Healthchecks、メール）は詳細設定にあります。",
+  "notify.hint": "バックアップ完了時に通知を受け取り、どのイベントで発火するかを下で選びます。",
   "notify.on": "通知する",
   "notify.onNever": "なし",
   "notify.onFailure": "失敗時のみ",
@@ -1679,7 +1677,7 @@ const ja: Partial<Translations> = {
   "settings.search.count": "{n}件の一致",
   "settings.search.inHint": "説明文の中で見つかりました",
   "settings.search.page": "ページ",
-  "settings.search.notShown": "{name} は今は画面に表示されていません。詳細表示に切り替えるか、対応する機能をオンにすると表示されます。",
+  "settings.search.notShown": "{name} は今は画面に表示されていません。対応する機能をオンにすると表示されます。",
   "settings.schedulesOptions": "スケジュールオプション",
   "settings.schedulesOffsite": "オフサイトレプリケーションスケジュール",
   "settings.schedulesSelfBackup": "セルフバックアップスケジュール",

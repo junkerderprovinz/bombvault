@@ -41,8 +41,6 @@ const zh: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "反馈",
   "about.mail": "邮件",
-  "mode.simpleView": "简单视图",
-  "mode.advancedView": "高级视图",
   "nav.recovery": "恢复",
   "nav.config": "自我备份",
 
@@ -907,7 +905,7 @@ const zh: Partial<Translations> = {
   "folders.cachedirScope": "适用于此容器的整个备份，而不仅仅是此文件夹。",
   // Notifications
   "notify.title": "通知",
-  "notify.hint": "在备份完成时获得通知，并在下方选择触发通知的事件。Unraid 通知在简单模式下即可使用；更多送达渠道（Webhook、Matrix、Healthchecks、邮件）位于高级设置中。",
+  "notify.hint": "在备份完成时获得通知，并在下方选择触发通知的事件。",
   "notify.on": "通知",
   "notify.onNever": "从不",
   "notify.onFailure": "仅在失败时",
@@ -1679,7 +1677,7 @@ const zh: Partial<Translations> = {
   "settings.search.count": "{n} 个匹配项",
   "settings.search.inHint": "在说明中找到",
   "settings.search.page": "页面",
-  "settings.search.notShown": "{name} 目前未显示在屏幕上。它会在高级视图中显示，或者在它所属的功能开启后显示。",
+  "settings.search.notShown": "{name} 目前未显示在屏幕上。它会在它所属的功能开启后显示。",
   "settings.schedulesOptions": "计划选项",
   "settings.schedulesOffsite": "异地复制计划",
   "settings.schedulesSelfBackup": "自备份计划",

@@ -16,7 +16,6 @@ const lv: Partial<Translations> = {
   "nav.more": "Vēl",
   "nav.mobileNavigation": "Mobilā navigācija",
 
-  // Mode toggle
   "about.title": "Par BombVault",
   "about.body": "Viens bruņinieks, viens karagājiens: glīti atvērtā koda rīki, kuru tādā veidā, kādu es gribēju, nebija, un tie tiek būvēti, līdz nekā netrūkst. Viss bez maksas, bez kontiem, bez telemetrijas, bez reklāmām un bez maksas līmeņiem. Nekur nevienas zvaigznītes. Nekas lasāms nekad neatstāj tavus paša mūrus. Kalts vakaros un nedēļas nogalēs, ar sirdi un spītību.",
   "about.coffee": "Ja BombVault ir nopelnījis vietu tavā serverī vai datorā, iemet monētu savam bruņiniekam: tā palīdz segt izmaksas un uztur projektu dzīvu. Un šī bruņinieka sirds sit mazliet ātrāk. Zemāk ir trīs ceļi, izvēlies sev piemērotāko.",
@@ -44,10 +43,6 @@ const lv: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Atsauksme",
   "about.mail": "E-pasts",
-
-  // Mode toggle
-  "mode.simpleView": "Vienkāršs skats",
-  "mode.advancedView": "Papildu skats",
 
   // Dashboard
   "dashboard.title": "Vadības panelis",
@@ -883,7 +878,7 @@ const lv: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (saglabātie akreditācijas dati)",
   "rclone.save": "Saglabāt konfigurāciju",
   "notify.title": "Paziņojumi",
-  "notify.hint": "Saņemiet paziņojumu, kad pabeigta rezerves kopija, un zemāk izvēlieties, kuri notikumi to izraisa. Unraid paziņojumi šeit darbojas vienkāršajā režīmā; vairāk piegādes kanālu (webhook, Matrix, Healthchecks, e-pasts) atrodas sadaļā Papildu.",
+  "notify.hint": "Saņemiet paziņojumu, kad pabeigta rezerves kopija, un zemāk izvēlieties, kuri notikumi to izraisa.",
   "notify.on": "Paziņot",
   "notify.onNever": "Nekad",
   "notify.onFailure": "Tikai neveiksmes gadījumā",
@@ -2054,7 +2049,7 @@ const lv: Partial<Translations> = {
   "settings.search.count": "{n} atbilstības",
   "settings.search.inHint": "atrasts skaidrojumā",
   "settings.search.page": "Lapa",
-  "settings.search.notShown": "{name} pašlaik nav redzams ekrānā. Tas parādās papildu skatā vai tiklīdz tiek ieslēgta funkcija, kurai tas pieder.",
+  "settings.search.notShown": "{name} pašlaik nav redzams ekrānā. Tas parādās, tiklīdz tiek ieslēgta funkcija, kurai tas pieder.",
   "settings.schedulesOptions": "Grafika opcijas",
   "settings.schedulesOffsite": "Attālinātas replicēšanas grafiki",
   "settings.schedulesSelfBackup": "Pašrezerves grafiks",
