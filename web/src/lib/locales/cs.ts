@@ -1003,7 +1003,6 @@ const cs: Partial<Translations> = {
   "recovery.freshNudgeCta": "Přejít na Obnovu",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Autozáloha",
   "config.settingsTitle": "Nastavení autozálohy",
   "config.settingsHint": "Chraňte vlastní konfiguraci BombVaultu (jeho databázi nastavení, přihlašovací údaje mimo lokalitu a SSH klíče), aby se čistá instalace mohla sama obnovit a navázat přesně tam, kde skončila.",
   "config.enabled": "Zálohovat nastavení BombVaultu",
@@ -1013,12 +1012,6 @@ const cs: Partial<Translations> = {
   "config.offsiteSchedule": "Plán mimo lokalitu",
   "config.offsiteMoved": "Externí kopie vlastní zálohy se nastavuje v Nastavení, Cíle, ve stejné kartě, jakou má každá jiná doména.",
   "config.pathMoved": "Umístění zálohy se nastavuje v Nastavení, Cíle, kde může být místní složkou nebo vzdáleným repozitářem s vlastními přihlašovacími údaji.",
-  "config.backupTitle": "Zálohovat nastavení nyní",
-  "config.backupHint": "Zachytí vlastní /config BombVaultu: databázi nastavení, přihlašovací údaje mimo lokalitu (rclone.conf) a pár klíčů SSH.",
-  "config.backupNow": "Zálohovat nastavení nyní",
-  "config.backingUp": "Zálohuji…",
-  "config.snapshotsTitle": "Zálohy nastavení",
-  "config.snapshotsHint": "Chcete-li tato nastavení obnovit na znovu sestaveném serveru, použijte kartu Obnova. Obnovení nastavení restartuje BombVault, aby se použila, takže patří tam spolu se zbytkem postupu zotavení po havárii.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Obnovit vlastní nastavení BombVaultu",

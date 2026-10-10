@@ -1524,7 +1524,6 @@ const lv: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Pievienojiet vismaz vienu age saņēmēju, citādi šifrētais eksports neizdosies.",
 
   // Config self-backup
-  "config.title": "Pašrezerve",
   "config.settingsTitle": "Pašrezerves iestatījumi",
   "config.settingsHint": "Aizsargā paša BombVault konfigurāciju (tā iestatījumu datubāzi, attālinātos akreditācijas datus un SSH atslēgas), lai jauna instalācija varētu pati sevi atjaunot un turpināt tieši no tās vietas, kur tā pārtrauca.",
   "config.enabled": "Dublēt BombVault iestatījumus",
@@ -1534,12 +1533,6 @@ const lv: Partial<Translations> = {
   "config.offsiteSchedule": "Attālinātais grafiks",
   "config.offsiteMoved": "Pašdublējuma attālināto kopiju iestata sadaļā Iestatījumi, Mērķi, tajā pašā kartē, kas ir katram citam domēnam.",
   "config.pathMoved": "Dublējuma atrašanās vietu iestata sadaļā Iestatījumi, Mērķi, kur tā var būt lokāla mape vai attāla krātuve ar saviem akreditācijas datiem.",
-  "config.backupTitle": "Dublēt iestatījumus tagad",
-  "config.backupHint": "Uztver paša BombVault /config: iestatījumu datubāzi, attālinātos akreditācijas datus (rclone.conf) un SSH atslēgu pāri.",
-  "config.backupNow": "Dublēt iestatījumus tagad",
-  "config.backingUp": "Dublē…",
-  "config.snapshotsTitle": "Iestatījumu rezerves kopijas",
-  "config.snapshotsHint": "Lai atjaunotu šos iestatījumus atjaunotā serverī, izmantojiet cilni Atkopšana. Iestatījumu atjaunošana restartē BombVault, lai tos piemērotu, tāpēc tas dzīvo tur kopā ar pārējo katastrofu atkopšanas plūsmu.",
 
   // Receiver dashboard
   "receiver.title": "Uztvērējs",

@@ -1546,7 +1546,6 @@ const he: Partial<Translations> = {
   "ransomware.replicationPaused": "ההעתקה מחוץ לאתר מושהית: אשרו את המיקום",
 
   // Config backup (BombVault's own settings)
-  "config.title": "גיבוי עצמי",
   "config.settingsTitle": "הגדרות גיבוי עצמי",
   "config.settingsHint": "הגן על התצורה של BombVault עצמו (מסד ההגדרות שלו, פרטי ההתחברות מחוץ לאתר ומפתחות ה-SSH) כדי שהתקנה חדשה תוכל לשחזר את עצמה ולהמשיך בדיוק מהמקום שבו הפסיקה.",
   "config.enabled": "גבה את ההגדרות של BombVault",
@@ -1556,12 +1555,6 @@ const he: Partial<Translations> = {
   "config.offsiteSchedule": "לוח זמנים מחוץ לאתר",
   "config.offsiteMoved": "העותק החיצוני של הגיבוי העצמי מוגדר תחת הגדרות, יעדים, באותו כרטיס שיש לכל תחום אחר.",
   "config.pathMoved": "מיקום הגיבוי נקבע תחת הגדרות, יעדים, שם הוא יכול להיות תיקייה מקומית או מאגר מרוחק עם פרטי גישה משלו.",
-  "config.backupTitle": "גבה את ההגדרות עכשיו",
-  "config.backupHint": "לוכד את ה-/config של BombVault עצמו: מסד ההגדרות, פרטי ההתחברות מחוץ לאתר (rclone.conf) וזוג מפתחות ה-SSH.",
-  "config.backupNow": "גבה את ההגדרות עכשיו",
-  "config.backingUp": "מגבה…",
-  "config.snapshotsTitle": "גיבויי הגדרות",
-  "config.snapshotsHint": "כדי לשחזר הגדרות אלה על שרת שנבנה מחדש, השתמש בלשונית ההתאוששות: שחזור ההגדרות מפעיל מחדש את BombVault כדי להחיל אותן, ולכן הוא נמצא שם יחד עם שאר תהליך ההתאוששות מאסון.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "תבניות החרגה",

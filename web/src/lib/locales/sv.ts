@@ -1021,7 +1021,6 @@ const sv: Partial<Translations> = {
   "recovery.configSkipped": "Överhoppat. Anslut dina säkerhetskopior manuellt nedan.",
 
   // Config Backup page
-  "config.title": "Auto-säkerhetskopia",
   "config.settingsTitle": "Inställningar för auto-säkerhetskopiering",
   "config.settingsHint": "Skydda BombVaults egen konfiguration (dess inställningsdatabas, off-site-uppgifter och SSH-nycklar), så att en ny installation kan återställa sig själv och fortsätta exakt där den slutade.",
   "config.enabled": "Säkerhetskopiera BombVaults inställningar",
@@ -1031,12 +1030,6 @@ const sv: Partial<Translations> = {
   "config.offsiteSchedule": "Off-site-schema",
   "config.offsiteMoved": "Den externa kopian av självsäkerhetskopian ställs in under Inställningar, Mål, i samma kort som alla andra domäner har.",
   "config.pathMoved": "Säkerhetskopieringsplatsen anges under Inställningar, Mål, där den kan vara en lokal mapp eller ett fjärrlager med egna autentiseringsuppgifter.",
-  "config.backupTitle": "Säkerhetskopiera inställningar nu",
-  "config.backupHint": "Fångar BombVaults egen /config: inställningsdatabasen, off-site-uppgifterna (rclone.conf) och SSH-nyckelparet.",
-  "config.backupNow": "Säkerhetskopiera inställningar nu",
-  "config.backingUp": "Säkerhetskopierar…",
-  "config.snapshotsTitle": "Inställningssäkerhetskopior",
-  "config.snapshotsHint": "För att återställa dessa inställningar på en ombyggd server, använd fliken Återställning. Att återställa inställningar startar om BombVault för att tillämpa dem, så det finns där tillsammans med resten av katastrofåterställningsflödet.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site-bandbredd",

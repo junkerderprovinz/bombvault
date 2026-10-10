@@ -1524,7 +1524,6 @@ const is: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Bættu við að minnsta kosti einum age-viðtakanda, annars mun dulkóðaði útflutningurinn mistakast.",
 
   // Config self-backup
-  "config.title": "Sjálfvirk afritun",
   "config.settingsTitle": "Stillingar sjálfvirkrar afritunar",
   "config.settingsHint": "Verndar eigin stillingar BombVault (stillingagagnagrunn þess, fjarlæg aðgangsgögn og SSH-lykla) svo ný uppsetning geti endurheimt sjálfa sig og haldið áfram nákvæmlega þar sem frá var horfið.",
   "config.enabled": "Afrita stillingar BombVault",
@@ -1534,12 +1533,6 @@ const is: Partial<Translations> = {
   "config.offsiteSchedule": "Fjarlæg tímaáætlun",
   "config.offsiteMoved": "Ytra afritið af sjálfsafritinu er sett upp undir Stillingar, Áfangastaðir, á sama spjaldi og öll önnur svið hafa.",
   "config.pathMoved": "Staðsetning afritsins er stillt undir Stillingar, Áfangastaðir, þar sem hún getur verið staðbundin mappa eða fjartengt safn með eigin auðkennum.",
-  "config.backupTitle": "Afrita stillingar núna",
-  "config.backupHint": "Nær eigin /config BombVault: stillingagagnagrunni, fjarlægum aðgangsgögnum (rclone.conf) og SSH-lykilpari.",
-  "config.backupNow": "Afrita stillingar núna",
-  "config.backingUp": "Afrita…",
-  "config.snapshotsTitle": "Afrit stillinga",
-  "config.snapshotsHint": "Til að endurheimta þessar stillingar á endurbyggðum netþjóni, notaðu Endurheimtar-flipann. Að endurheimta stillingar endurræsir BombVault til að beita þeim, og þess vegna er hann þar ásamt öðru ferli neyðarendurheimtar.",
 
   // Receiver dashboard
   "receiver.title": "Móttakandi",

@@ -1546,7 +1546,6 @@ const fr: Partial<Translations> = {
   "ransomware.replicationPaused": "copie hors site en pause : confirmez l'emplacement",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Auto-sauvegarde",
   "config.settingsTitle": "Réglages de l'auto-sauvegarde",
   "config.settingsHint": "Protégez la propre configuration de BombVault (sa base de réglages, ses identifiants hors site et ses clés SSH) pour qu'une installation neuve puisse se restaurer et reprendre exactement là où elle s'était arrêtée.",
   "config.enabled": "Sauvegarder les réglages de BombVault",
@@ -1556,12 +1555,6 @@ const fr: Partial<Translations> = {
   "config.offsiteSchedule": "Planning hors site",
   "config.offsiteMoved": "La copie hors site de l'auto-sauvegarde se configure dans Paramètres, Destinations, dans la même carte que tous les autres domaines.",
   "config.pathMoved": "L'emplacement de la sauvegarde se définit dans Paramètres, Destinations, où il peut être un dossier local ou un dépôt distant avec ses propres identifiants.",
-  "config.backupTitle": "Sauvegarder les réglages maintenant",
-  "config.backupHint": "Capture le /config propre à BombVault : la base de réglages, les identifiants hors site (rclone.conf) et la paire de clés SSH.",
-  "config.backupNow": "Sauvegarder les réglages maintenant",
-  "config.backingUp": "Sauvegarde…",
-  "config.snapshotsTitle": "Sauvegardes des réglages",
-  "config.snapshotsHint": "Pour restaurer ces réglages sur un serveur reconstruit, utilisez l'onglet Récupération : restaurer les réglages redémarre BombVault pour les appliquer, il se trouve donc là avec le reste du flux de récupération après sinistre.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Motifs d'exclusion",

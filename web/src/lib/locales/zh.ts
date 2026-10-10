@@ -1012,7 +1012,6 @@ const zh: Partial<Translations> = {
   "recovery.configSkipped": "已跳过。在下方手动附加你的备份。",
 
   // Config Backup page
-  "config.title": "自我备份",
   "config.settingsTitle": "自我备份设置",
   "config.settingsHint": "保护 BombVault 自身的配置（它的设置数据库、异地凭据和 SSH 密钥），这样全新安装就能自我还原并从上次中断处继续。",
   "config.enabled": "备份 BombVault 的设置",
@@ -1022,12 +1021,6 @@ const zh: Partial<Translations> = {
   "config.offsiteSchedule": "异地计划",
   "config.offsiteMoved": "自备份的异地副本在“设置”的“目标”中设置，与其他所有域使用同一张卡片。",
   "config.pathMoved": "备份位置在“设置”的“目标”中设定，可以是本地文件夹，也可以是拥有独立凭据的远程仓库。",
-  "config.backupTitle": "立即备份设置",
-  "config.backupHint": "捕获 BombVault 自身的 /config：设置数据库、异地凭据（rclone.conf）和 SSH 密钥对。",
-  "config.backupNow": "立即备份设置",
-  "config.backingUp": "备份中…",
-  "config.snapshotsTitle": "设置备份",
-  "config.snapshotsHint": "要将这些设置还原到重建的服务器上，请使用恢复标签页。还原设置会重启 BombVault 以应用它们，因此它与灾难恢复流程的其余部分放在一起。",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "异地带宽",

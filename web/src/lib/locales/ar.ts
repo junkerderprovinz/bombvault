@@ -1008,7 +1008,6 @@ const ar: Partial<Translations> = {
   "recovery.freshNudgeCta": "الانتقال إلى الاستعادة",
 
   // Config backup (BombVault's own settings)
-  "config.title": "النسخ الذاتي",
   "config.settingsTitle": "إعدادات النسخ الذاتي",
   "config.settingsHint": "احمِ إعدادات BombVault الخاصة (قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع ومفاتيح SSH) حتى يتمكن تثبيت جديد من استعادة نفسه ومتابعة العمل من حيث توقّف.",
   "config.enabled": "نسخ إعدادات BombVault احتياطياً",
@@ -1018,12 +1017,6 @@ const ar: Partial<Translations> = {
   "config.offsiteSchedule": "الجدول الزمني خارج الموقع",
   "config.offsiteMoved": "يتم إعداد النسخة الخارجية للنسخ الاحتياطي الذاتي ضمن الإعدادات، الوجهات، في البطاقة نفسها التي تملكها كل المجالات الأخرى.",
   "config.pathMoved": "يُضبط موقع النسخ الاحتياطي في الإعدادات، الوجهات، حيث يمكن أن يكون مجلدًا محليًا أو مستودعًا بعيدًا ببيانات اعتماد خاصة به.",
-  "config.backupTitle": "انسخ الإعدادات احتياطياً الآن",
-  "config.backupHint": "يلتقط /config الخاص بـ BombVault: قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع (rclone.conf) وزوج مفاتيح SSH.",
-  "config.backupNow": "انسخ الإعدادات احتياطياً الآن",
-  "config.backingUp": "جارٍ النسخ الاحتياطي…",
-  "config.snapshotsTitle": "نسخ الإعدادات الاحتياطية",
-  "config.snapshotsHint": "لاستعادة هذه الإعدادات على خادم مُعاد بناؤه، استخدم تبويب الاستعادة. استعادة الإعدادات تعيد تشغيل BombVault لتطبيقها، لذا فهي موجودة هناك مع بقية سير التعافي من الكوارث.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "استعادة إعدادات BombVault الخاصة",

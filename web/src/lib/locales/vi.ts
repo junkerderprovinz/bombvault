@@ -1012,7 +1012,6 @@ const vi: Partial<Translations> = {
   "recovery.configSkipped": "Đã bỏ qua. Đính kèm các bản sao lưu của bạn thủ công bên dưới.",
 
   // Config Backup page
-  "config.title": "Tự sao lưu",
   "config.settingsTitle": "Cài đặt tự sao lưu",
   "config.settingsHint": "Bảo vệ cấu hình của chính BombVault (cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site và khóa SSH) để một bản cài đặt mới có thể tự khôi phục và tiếp tục ngay từ chỗ đã dừng.",
   "config.enabled": "Sao lưu cài đặt của BombVault",
@@ -1022,12 +1021,6 @@ const vi: Partial<Translations> = {
   "config.offsiteSchedule": "Lịch trình off-site",
   "config.offsiteMoved": "Bản sao ngoài site của bản sao lưu tự thân được thiết lập trong Cài đặt, Đích sao lưu, trong cùng thẻ mà mọi miền khác đều có.",
   "config.pathMoved": "Vị trí sao lưu được đặt trong Cài đặt, Đích sao lưu, nơi nó có thể là thư mục cục bộ hoặc kho từ xa với thông tin đăng nhập riêng.",
-  "config.backupTitle": "Sao lưu cài đặt ngay",
-  "config.backupHint": "Chụp /config của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site (rclone.conf) và cặp khóa SSH.",
-  "config.backupNow": "Sao lưu cài đặt ngay",
-  "config.backingUp": "Đang sao lưu…",
-  "config.snapshotsTitle": "Bản sao lưu cài đặt",
-  "config.snapshotsHint": "Để khôi phục các cài đặt này lên một máy chủ dựng lại, hãy dùng tab Khôi phục. Việc khôi phục cài đặt sẽ khởi động lại BombVault để áp dụng chúng, nên nó nằm ở đó cùng với phần còn lại của quy trình khôi phục sau thảm họa.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Băng thông off-site",

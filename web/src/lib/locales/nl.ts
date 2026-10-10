@@ -1539,7 +1539,6 @@ const nl: Partial<Translations> = {
   "ransomware.replicationPaused": "kopie op afstand gepauzeerd: bevestig de plaatsing",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Zelf-back-up",
   "config.settingsTitle": "Zelf-back-upinstellingen",
   "config.settingsHint": "Bescherm BombVaults eigen configuratie (de instellingendatabase, off-site inloggegevens en SSH-sleutels), zodat een verse installatie zichzelf kan herstellen en precies verdergaat waar ze was gebleven.",
   "config.enabled": "BombVaults instellingen back-uppen",
@@ -1549,12 +1548,6 @@ const nl: Partial<Translations> = {
   "config.offsiteSchedule": "Off-site planning",
   "config.offsiteMoved": "De off-site kopie van de zelf-back-up stel je in onder Instellingen, Bestemmingen, in dezelfde kaart als elk ander domein.",
   "config.pathMoved": "De back-uplocatie stel je in onder Instellingen, Bestemmingen, waar het een lokale map of een externe repository met eigen inloggegevens kan zijn.",
-  "config.backupTitle": "Instellingen nu back-uppen",
-  "config.backupHint": "Legt BombVaults eigen /config vast: de instellingendatabase, off-site inloggegevens (rclone.conf) en het SSH-sleutelpaar.",
-  "config.backupNow": "Instellingen nu back-uppen",
-  "config.backingUp": "Back-up maken…",
-  "config.snapshotsTitle": "Instellingen-back-ups",
-  "config.snapshotsHint": "Om deze instellingen op een opnieuw opgebouwde server te herstellen, gebruik je het tabblad Herstel. Het herstellen van instellingen start BombVault opnieuw om ze toe te passen, dus het staat daar bij de rest van het noodherstel.",
   "nav.config": "Zelf-back-up",
   "settings.configEnabled": "Zelf-back-up",
   "settings.configEnabledHint": "BombVaults eigen instellingen, doelen en inloggegevens back-uppen, zodat een verse installatie ook zijn configuratie kan herstellen (zelf-back-up).",

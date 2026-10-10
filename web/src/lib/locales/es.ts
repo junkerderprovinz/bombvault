@@ -1013,7 +1013,6 @@ const es: Partial<Translations> = {
   "recovery.freshNudgeCta": "Ir a Recuperación",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Autocopia",
   "config.settingsTitle": "Ajustes de la autocopia",
   "config.settingsHint": "Protege la propia configuración de BombVault (su base de datos de ajustes, las credenciales externas y las claves SSH) para que una instalación nueva pueda restaurarse a sí misma y continuar justo donde lo dejó.",
   "config.enabled": "Copiar los ajustes de BombVault",
@@ -1023,12 +1022,6 @@ const es: Partial<Translations> = {
   "config.offsiteSchedule": "Calendario externo",
   "config.offsiteMoved": "La copia externa de la autocopia se configura en Ajustes, Destinos, en la misma tarjeta que tienen los demás dominios.",
   "config.pathMoved": "La ubicación de la copia se define en Ajustes, Destinos, donde puede ser una carpeta local o un repositorio remoto con credenciales propias.",
-  "config.backupTitle": "Copiar ajustes ahora",
-  "config.backupHint": "Captura el propio /config de BombVault: la base de datos de ajustes, las credenciales externas (rclone.conf) y el par de claves SSH.",
-  "config.backupNow": "Copiar ajustes ahora",
-  "config.backingUp": "Copiando…",
-  "config.snapshotsTitle": "Copias de configuración",
-  "config.snapshotsHint": "Para restaurar estos ajustes en un servidor reconstruido, usa la pestaña Recuperación. Restaurar los ajustes reinicia BombVault para aplicarlos, por eso vive ahí junto con el resto del flujo de recuperación ante desastres.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Restaurar la propia configuración de BombVault",

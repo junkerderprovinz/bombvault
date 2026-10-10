@@ -1524,7 +1524,6 @@ const hi: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "कम से कम एक age प्राप्तकर्ता जोड़ें, नहीं तो एन्क्रिप्टेड एक्सपोर्ट विफल हो जाएगा।",
 
   // Config self-backup
-  "config.title": "सेल्फ़-बैकअप",
   "config.settingsTitle": "सेल्फ़-बैकअप सेटिंग्स",
   "config.settingsHint": "BombVault की अपनी कॉन्फ़िगरेशन की रक्षा करता है (इसका सेटिंग्स डेटाबेस, ऑफ़-साइट क्रेडेंशियल्स और SSH कुंजियाँ) ताकि नई इंस्टॉलेशन खुद को रीस्टोर करके ठीक वहीं से जारी रह सके जहाँ छोड़ा था।",
   "config.enabled": "BombVault की सेटिंग्स का बैकअप लें",
@@ -1534,12 +1533,6 @@ const hi: Partial<Translations> = {
   "config.offsiteSchedule": "ऑफ़-साइट शेड्यूल",
   "config.offsiteMoved": "स्व-बैकअप की ऑफ-साइट प्रति सेटिंग्स, गंतव्य में सेट की जाती है, उसी कार्ड में जो हर दूसरे डोमेन के पास है।",
   "config.pathMoved": "बैकअप स्थान सेटिंग्स, गंतव्य में सेट किया जाता है, जहाँ यह एक स्थानीय फ़ोल्डर या अपने क्रेडेंशियल वाला रिमोट रिपॉज़िटरी हो सकता है।",
-  "config.backupTitle": "अभी सेटिंग्स का बैकअप लें",
-  "config.backupHint": "BombVault के अपने /config को कैप्चर करता है: सेटिंग्स डेटाबेस, ऑफ़-साइट क्रेडेंशियल्स (rclone.conf) और SSH कुंजी जोड़ा।",
-  "config.backupNow": "अभी सेटिंग्स का बैकअप लें",
-  "config.backingUp": "बैकअप लिया जा रहा है…",
-  "config.snapshotsTitle": "सेटिंग्स के बैकअप",
-  "config.snapshotsHint": "फिर से बनाए गए सर्वर पर इन सेटिंग्स को रीस्टोर करने के लिए, Recovery टैब का उपयोग करें। सेटिंग्स रीस्टोर करने से BombVault उन्हें लागू करने के लिए फिर से शुरू होता है, इसलिए यह बाकी डिज़ास्टर-रिकवरी फ़्लो के साथ वहीं रहता है।",
 
   // Receiver dashboard
   "receiver.title": "रिसीवर",

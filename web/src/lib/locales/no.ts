@@ -1542,7 +1542,6 @@ const no: Partial<Translations> = {
   "ransomware.replicationPaused": "ekstern kopiering satt på pause: bekreft plasseringen",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Auto-sikkerhetskopi",
   "config.settingsTitle": "Innstillinger for auto-sikkerhetskopi",
   "config.settingsHint": "Beskytt BombVaults egen konfigurasjon (innstillingsdatabasen, off-site-legitimasjonen og SSH-nøklene) så en fersk installasjon kan gjenopprette seg selv og fortsette akkurat der den slapp.",
   "config.enabled": "Sikkerhetskopier BombVaults innstillinger",
@@ -1552,12 +1551,6 @@ const no: Partial<Translations> = {
   "config.offsiteSchedule": "Off-site-tidsplan",
   "config.offsiteMoved": "Den eksterne kopien av selvsikkerhetskopien settes opp under Innstillinger, Mål, i det samme kortet alle andre domener har.",
   "config.pathMoved": "Sikkerhetskopiplasseringen angis under Innstillinger, Mål, der den kan være en lokal mappe eller et eksternt lager med egen legitimasjon.",
-  "config.backupTitle": "Sikkerhetskopier innstillinger nå",
-  "config.backupHint": "Fanger BombVaults eget /config: innstillingsdatabasen, off-site-legitimasjonen (rclone.conf) og SSH-nøkkelparet.",
-  "config.backupNow": "Sikkerhetskopier innstillinger nå",
-  "config.backingUp": "Sikkerhetskopierer…",
-  "config.snapshotsTitle": "Innstillings-sikkerhetskopier",
-  "config.snapshotsHint": "For å gjenopprette disse innstillingene på en gjenoppbygd server, bruk Gjenopprettings-fanen. Å gjenopprette innstillingene starter BombVault på nytt for å bruke dem, så det ligger der sammen med resten av katastrofegjenopprettingsflyten.",
   "nav.config": "Auto-sikkerhetskopi",
   "settings.configEnabled": "Auto-sikkerhetskopi",
   "settings.configEnabledHint": "Sikkerhetskopiér BombVaults egne innstillinger, mål og påloggingsdetaljer, slik at en fersk installasjon også kan gjenopprette konfigurasjonen sin (auto-sikkerhetskopi).",

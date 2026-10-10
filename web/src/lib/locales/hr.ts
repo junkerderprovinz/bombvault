@@ -1524,7 +1524,6 @@ const hr: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Dodajte barem jednog age primatelja, inače će šifrirani izvoz ne uspjeti.",
 
   // Config self-backup
-  "config.title": "Samostalna sigurnosna kopija",
   "config.settingsTitle": "Postavke samostalne sigurnosne kopije",
   "config.settingsHint": "Štiti vlastitu konfiguraciju BombVaulta (bazu podataka postavki, izvanmrežne vjerodajnice i SSH ključeve), kako bi se nova instalacija mogla sama vratiti i nastaviti točno ondje gdje je stala.",
   "config.enabled": "Sigurnosno kopiraj postavke BombVaulta",
@@ -1534,12 +1533,6 @@ const hr: Partial<Translations> = {
   "config.offsiteSchedule": "Izvanmrežni raspored",
   "config.offsiteMoved": "Vanjska kopija samo-sigurnosne kopije postavlja se u odjeljku „Postavke, Odredišta“, u istoj kartici koju ima svaka druga domena.",
   "config.pathMoved": "Lokacija sigurnosne kopije postavlja se u odjeljku „Postavke, Odredišta“, gdje može biti lokalna mapa ili udaljeni repozitorij s vlastitim vjerodajnicama.",
-  "config.backupTitle": "Sigurnosno kopiraj postavke sada",
-  "config.backupHint": "Snima vlastiti /config BombVaulta: bazu podataka postavki, izvanmrežne vjerodajnice (rclone.conf) i par SSH ključeva.",
-  "config.backupNow": "Sigurnosno kopiraj postavke sada",
-  "config.backingUp": "Izrada sigurnosne kopije…",
-  "config.snapshotsTitle": "Sigurnosne kopije postavki",
-  "config.snapshotsHint": "Za vraćanje ovih postavki na ponovno izgrađenom poslužitelju, koristite karticu Oporavak. Vraćanje postavki ponovno pokreće BombVault kako bi ih primijenio, stoga tu ostaje uz ostatak procesa oporavka od katastrofe.",
 
   // Receiver dashboard
   "receiver.title": "Prijamnik",

@@ -293,6 +293,7 @@ describe("the list of backups", () => {
 
   it("sends the self-backup to the emergency wizard", async () => {
     await renderPage("/backups/config/config");
+    expect(getTimeline).toHaveBeenCalledWith("config", "config");
     await press(rows()[0]);
     await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["entry.config.startRecovery"] }));
     expect(screen.getByText("at /recovery")).toBeTruthy();

@@ -1518,7 +1518,6 @@ const sl: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Dodaj vsaj enega prejemnika age, sicer bo šifriran izvoz spodletel.",
 
   // Config self-backup
-  "config.title": "Lastna varnostna kopija",
   "config.settingsTitle": "Nastavitve lastne varnostne kopije",
   "config.settingsHint": "Zaščiti lastno konfiguracijo BombVaulta (njegovo bazo nastavitev, poverilnice za zunanjo kopijo in SSH ključe), tako da lahko sveža namestitev obnovi sebe in nadaljuje tam, kjer je ostala.",
   "config.enabled": "Varnostno kopiraj nastavitve BombVaulta",
@@ -1528,12 +1527,6 @@ const sl: Partial<Translations> = {
   "config.offsiteSchedule": "Urnik zunanje kopije",
   "config.offsiteMoved": "Zunanjo kopijo varnostne kopije samega BombVaulta nastavite v razdelku Nastavitve, Cilji, v isti kartici, kot jo ima vsaka druga domena.",
   "config.pathMoved": "Mesto varnostne kopije nastavite v razdelku Nastavitve, Cilji, kjer je lahko lokalna mapa ali oddaljeno skladišče z lastnimi poverilnicami.",
-  "config.backupTitle": "Naredi varnostno kopijo nastavitev zdaj",
-  "config.backupHint": "Zajame lasten /config BombVaulta: bazo nastavitev, poverilnice za zunanjo kopijo (rclone.conf) in par SSH ključev.",
-  "config.backupNow": "Naredi varnostno kopijo nastavitev zdaj",
-  "config.backingUp": "Izdelovanje varnostne kopije…",
-  "config.snapshotsTitle": "Varnostne kopije nastavitev",
-  "config.snapshotsHint": "Za obnovitev teh nastavitev na obnovljenem strežniku uporabi zavihek Obnova. Obnovitev nastavitev znova zažene BombVault, da jih uveljavi, zato je tam, skupaj z ostalim postopkom obnovitve po katastrofi.",
 
   // Receiver dashboard
   "receiver.title": "Sprejemnik",

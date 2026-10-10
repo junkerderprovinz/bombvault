@@ -1549,7 +1549,6 @@ const hu: Partial<Translations> = {
   "ransomware.replicationPaused": "a telephelyen kívüli másolás szünetel: erősítsd meg az elhelyezést",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Önmentés",
   "config.settingsTitle": "Önmentés beállításai",
   "config.settingsHint": "Védd meg BombVault saját konfigurációját (a beállítás-adatbázisát, a telephelyen kívüli hitelesítő adatait és az SSH-kulcsait), hogy egy friss telepítés helyre tudja állítani magát, és pontosan ott folytassa, ahol abbahagyta.",
   "config.enabled": "BombVault beállításainak biztonsági mentése",
@@ -1559,12 +1558,6 @@ const hu: Partial<Translations> = {
   "config.offsiteSchedule": "Telephelyen kívüli ütemezés",
   "config.offsiteMoved": "Az önmentés telephelyen kívüli másolata a Beállítások, Célok alatt állítható be, ugyanabban a kártyában, amely minden más tartománynál is megvan.",
   "config.pathMoved": "A biztonsági mentés helye a Beállítások, Célok alatt adható meg, ahol lehet helyi mappa vagy saját hitelesítő adatokkal rendelkező távoli tároló.",
-  "config.backupTitle": "Beállítások biztonsági mentése most",
-  "config.backupHint": "Rögzíti BombVault saját /config mappáját: a beállítás-adatbázist, a telephelyen kívüli hitelesítő adatokat (rclone.conf) és az SSH-kulcspárt.",
-  "config.backupNow": "Beállítások biztonsági mentése most",
-  "config.backingUp": "Mentés…",
-  "config.snapshotsTitle": "Beállítások biztonsági mentései",
-  "config.snapshotsHint": "Ezeknek a beállításoknak egy újraépített szerverre való visszaállításához használd a Helyreállítás lapot. A beállítások visszaállítása újraindítja BombVaultot, hogy alkalmazza őket, ezért a többi vészhelyreállítási lépéssel együtt ott található.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Kizárási minták",

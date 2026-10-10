@@ -1524,7 +1524,6 @@ const ms: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Tambah sekurang-kurangnya seorang penerima age, jika tidak eksport tersulit akan gagal.",
 
   // Config self-backup
-  "config.title": "Sandaran Sendiri",
   "config.settingsTitle": "Tetapan Sandaran Sendiri",
   "config.settingsHint": "Melindungi konfigurasi BombVault sendiri (pangkalan data tetapannya, kelayakan luar tapak dan kunci SSH), supaya pemasangan baharu boleh memulihkan dirinya sendiri dan meneruskan tepat di tempat ia berhenti.",
   "config.enabled": "Sandarkan tetapan BombVault",
@@ -1534,12 +1533,6 @@ const ms: Partial<Translations> = {
   "config.offsiteSchedule": "Jadual luar tapak",
   "config.offsiteMoved": "Salinan luar tapak bagi sandaran sendiri disediakan di Tetapan, Destinasi, dalam kad yang sama seperti setiap domain lain.",
   "config.pathMoved": "Lokasi sandaran ditetapkan di Tetapan, Destinasi, di mana ia boleh menjadi folder tempatan atau repositori jauh dengan kelayakannya sendiri.",
-  "config.backupTitle": "Sandarkan tetapan sekarang",
-  "config.backupHint": "Menangkap /config milik BombVault sendiri: pangkalan data tetapan, kelayakan luar tapak (rclone.conf) dan pasangan kunci SSH.",
-  "config.backupNow": "Sandarkan tetapan sekarang",
-  "config.backingUp": "Menyandarkan…",
-  "config.snapshotsTitle": "Sandaran tetapan",
-  "config.snapshotsHint": "Untuk memulihkan tetapan ini pada pelayan yang dibina semula, gunakan tab Pemulihan. Memulihkan tetapan memulakan semula BombVault untuk menerapkannya, jadi ia terletak di sana bersama-sama aliran pemulihan bencana yang lain.",
 
   // Receiver dashboard
   "receiver.title": "Penerima",

@@ -1021,7 +1021,6 @@ const tr: Partial<Translations> = {
   "recovery.configSkipped": "Atlandı. Yedeklerinizi aşağıdan elle ekleyin.",
 
   // Config Backup page
-  "config.title": "Öz yedek",
   "config.settingsTitle": "Öz yedek ayarları",
   "config.settingsHint": "BombVault'un kendi yapılandırmasını (ayar veritabanı, site dışı kimlik bilgileri ve SSH anahtarları) koruyun; böylece yeni bir kurulum kendini geri yükleyip kaldığı yerden devam edebilir.",
   "config.enabled": "BombVault'un ayarlarını yedekle",
@@ -1031,12 +1030,6 @@ const tr: Partial<Translations> = {
   "config.offsiteSchedule": "Site dışı zamanlama",
   "config.offsiteMoved": "Kendi yedeğinin site dışı kopyası, diğer tüm alanlarda bulunan aynı kartta, Ayarlar, Hedefler altında yapılandırılır.",
   "config.pathMoved": "Yedekleme konumu Ayarlar, Hedefler altında belirlenir; burada yerel bir klasör ya da kendi kimlik bilgilerine sahip uzak bir depo olabilir.",
-  "config.backupTitle": "Ayarları şimdi yedekle",
-  "config.backupHint": "BombVault'un kendi /config'ini yakalar: ayar veritabanı, site dışı kimlik bilgileri (rclone.conf) ve SSH anahtar çifti.",
-  "config.backupNow": "Ayarları şimdi yedekle",
-  "config.backingUp": "Yedekleniyor…",
-  "config.snapshotsTitle": "Ayar yedekleri",
-  "config.snapshotsHint": "Bu ayarları yeniden oluşturulan bir sunucuya geri yüklemek için Kurtarma sekmesini kullanın. Ayarları geri yüklemek, bunları uygulamak için BombVault'u yeniden başlatır; bu yüzden felaket kurtarma akışının geri kalanıyla birlikte orada bulunur.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Site dışı bant genişliği",

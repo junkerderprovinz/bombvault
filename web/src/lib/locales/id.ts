@@ -1524,7 +1524,6 @@ const id: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Tambahkan setidaknya satu penerima age, jika tidak ekspor terenkripsi akan gagal.",
 
   // Config self-backup
-  "config.title": "Cadangan Mandiri",
   "config.settingsTitle": "Pengaturan Cadangan Mandiri",
   "config.settingsHint": "Melindungi konfigurasi BombVault sendiri (basis data pengaturannya, kredensial off-site, dan kunci SSH), sehingga instalasi baru dapat memulihkan dirinya sendiri dan melanjutkan tepat di titik terakhir.",
   "config.enabled": "Cadangkan pengaturan BombVault",
@@ -1534,12 +1533,6 @@ const id: Partial<Translations> = {
   "config.offsiteSchedule": "Jadwal off-site",
   "config.offsiteMoved": "Salinan off-site dari cadangan mandiri diatur di Pengaturan, Tujuan, dalam kartu yang sama seperti domain lainnya.",
   "config.pathMoved": "Lokasi cadangan diatur di Pengaturan, Tujuan, di mana ia bisa berupa folder lokal atau repositori jarak jauh dengan kredensialnya sendiri.",
-  "config.backupTitle": "Cadangkan pengaturan sekarang",
-  "config.backupHint": "Menangkap /config milik BombVault sendiri: basis data pengaturan, kredensial off-site (rclone.conf), dan pasangan kunci SSH.",
-  "config.backupNow": "Cadangkan pengaturan sekarang",
-  "config.backingUp": "Mencadangkan…",
-  "config.snapshotsTitle": "Cadangan pengaturan",
-  "config.snapshotsHint": "Untuk memulihkan pengaturan ini di server yang dibangun ulang, gunakan tab Pemulihan. Memulihkan pengaturan memulai ulang BombVault untuk menerapkannya, karena itu ia berada di sana bersama alur pemulihan bencana lainnya.",
 
   // Receiver dashboard
   "receiver.title": "Penerima",

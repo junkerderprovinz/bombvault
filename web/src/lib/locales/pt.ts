@@ -1542,7 +1542,6 @@ const pt: Partial<Translations> = {
   "ransomware.replicationPaused": "cópia externa em pausa: confirme a localização",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Auto-backup",
   "config.settingsTitle": "Definições do auto-backup",
   "config.settingsHint": "Proteja a configuração do próprio BombVault (a sua base de dados de definições, credenciais externas e chaves SSH) para que uma instalação nova se possa restaurar a si mesma e continuar exatamente de onde parou.",
   "config.enabled": "Fazer backup das definições do BombVault",
@@ -1552,12 +1551,6 @@ const pt: Partial<Translations> = {
   "config.offsiteSchedule": "Agendamento externo",
   "config.offsiteMoved": "A cópia externa do auto-backup é configurada em Definições, Destinos, no mesmo cartão que todos os outros domínios têm.",
   "config.pathMoved": "A localização da cópia define-se em Definições, Destinos, onde pode ser uma pasta local ou um repositório remoto com credenciais próprias.",
-  "config.backupTitle": "Fazer backup das definições agora",
-  "config.backupHint": "Captura o /config do próprio BombVault: a base de dados de definições, as credenciais externas (rclone.conf) e o par de chaves SSH.",
-  "config.backupNow": "Fazer backup das definições agora",
-  "config.backingUp": "A fazer backup…",
-  "config.snapshotsTitle": "Backups de definições",
-  "config.snapshotsHint": "Para restaurar estas definições num servidor reconstruído, use o separador Recuperação. Restaurar as definições reinicia o BombVault para as aplicar, por isso fica aí junto com o resto do fluxo de recuperação de desastres.",
   "nav.config": "Auto-backup",
   "settings.configEnabled": "Auto-backup",
   "settings.configEnabledHint": "Backup das próprias configurações, destinos e credenciais do BombVault, para que uma instalação nova também possa restaurar sua configuração (auto-backup).",

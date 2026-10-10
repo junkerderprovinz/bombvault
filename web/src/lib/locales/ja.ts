@@ -1537,7 +1537,6 @@ const ja: Partial<Translations> = {
   "ransomware.replicationPaused": "オフサイトの複製は一時停止中: 配置を確認してください",
 
   // Config backup (BombVault's own settings)
-  "config.title": "セルフバックアップ",
   "config.settingsTitle": "セルフバックアップ設定",
   "config.settingsHint": "BombVault 自身の構成（設定データベース、オフサイトの認証情報、SSH 鍵）を保護し、新規インストールが自身を復元して中断したところから再開できるようにします。",
   "config.enabled": "BombVault の設定をバックアップ",
@@ -1547,12 +1546,6 @@ const ja: Partial<Translations> = {
   "config.offsiteSchedule": "オフサイトスケジュール",
   "config.offsiteMoved": "セルフバックアップのオフサイトコピーは、設定の「保存先」で、他のすべてのドメインと同じカードから設定します。",
   "config.pathMoved": "バックアップ先は設定の「保存先」で指定します。ローカルフォルダーのほか、専用の認証情報を持つリモートリポジトリも指定できます。",
-  "config.backupTitle": "今すぐ設定をバックアップ",
-  "config.backupHint": "BombVault 自身の /config を取得します：設定データベース、オフサイトの認証情報（rclone.conf）、SSH 鍵ペア。",
-  "config.backupNow": "今すぐ設定をバックアップ",
-  "config.backingUp": "バックアップ中…",
-  "config.snapshotsTitle": "設定バックアップ",
-  "config.snapshotsHint": "これらの設定を再構築したサーバーに復元するには、リカバリータブを使用してください。設定を復元すると BombVault が再起動して適用するため、他の災害復旧フローと共にそこにあります。",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "除外パターン",

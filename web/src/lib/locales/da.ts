@@ -1005,7 +1005,6 @@ const da: Partial<Translations> = {
   "recovery.freshNudgeCta": "Gå til Gendannelse",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Auto-sikkerhedskopi",
   "config.settingsTitle": "Indstillinger for auto-sikkerhedskopi",
   "config.settingsHint": "Beskyt BombVaults egen konfiguration (dens indstillingsdatabase, off-site-legitimationsoplysninger og SSH-nøgler), så en frisk installation kan gendanne sig selv og fortsætte præcis, hvor den slap.",
   "config.enabled": "Sikkerhedskopiér BombVaults indstillinger",
@@ -1015,12 +1014,6 @@ const da: Partial<Translations> = {
   "config.offsiteSchedule": "Off-site-tidsplan",
   "config.offsiteMoved": "Den eksterne kopi af selv-backuppen opsættes under Indstillinger, Destinationer, i samme kort som alle andre domæner har.",
   "config.pathMoved": "Backupplaceringen angives under Indstillinger, Destinationer, hvor den kan være en lokal mappe eller et fjernlager med sine egne legitimationsoplysninger.",
-  "config.backupTitle": "Sikkerhedskopiér indstillinger nu",
-  "config.backupHint": "Fanger BombVaults eget /config: indstillingsdatabasen, off-site-legitimationsoplysninger (rclone.conf) og SSH-nøgleparret.",
-  "config.backupNow": "Sikkerhedskopiér indstillinger nu",
-  "config.backingUp": "Sikkerhedskopierer…",
-  "config.snapshotsTitle": "Indstillingssikkerhedskopier",
-  "config.snapshotsHint": "For at gendanne disse indstillinger på en genopbygget server skal du bruge fanen Gendannelse. Gendannelse af indstillinger genstarter BombVault for at anvende dem, så det hører til der sammen med resten af katastrofegendannelsesforløbet.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Gendan BombVaults egne indstillinger",

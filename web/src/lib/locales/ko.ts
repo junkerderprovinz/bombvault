@@ -1537,7 +1537,6 @@ const ko: Partial<Translations> = {
   "ransomware.replicationPaused": "외부 사본 일시 중지됨: 배치를 확인하세요",
 
   // Config backup (BombVault's own settings)
-  "config.title": "셀프 백업",
   "config.settingsTitle": "셀프 백업 설정",
   "config.settingsHint": "BombVault 자체 구성(설정 데이터베이스, 오프사이트 자격 증명, SSH 키)을 보호하여 새 설치본이 스스로 복원하고 중단된 지점에서 바로 이어갈 수 있도록 합니다.",
   "config.enabled": "BombVault 설정 백업",
@@ -1547,12 +1546,6 @@ const ko: Partial<Translations> = {
   "config.offsiteSchedule": "오프사이트 일정",
   "config.offsiteMoved": "자체 백업의 오프사이트 사본은 설정, 대상에서 다른 모든 도메인과 동일한 카드로 설정합니다.",
   "config.pathMoved": "백업 위치는 설정, 대상에서 지정하며, 로컬 폴더 또는 자체 자격 증명을 가진 원격 저장소를 사용할 수 있습니다.",
-  "config.backupTitle": "지금 설정 백업",
-  "config.backupHint": "BombVault 자체 /config를 캡처합니다: 설정 데이터베이스, 오프사이트 자격 증명(rclone.conf), SSH 키 쌍.",
-  "config.backupNow": "지금 설정 백업",
-  "config.backingUp": "백업 중…",
-  "config.snapshotsTitle": "설정 백업",
-  "config.snapshotsHint": "이 설정을 재구축된 서버에 복원하려면 복구 탭을 사용하세요. 설정을 복원하면 BombVault가 재시작되어 적용되므로, 나머지 재해 복구 흐름과 함께 그곳에 있습니다.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "제외 패턴",

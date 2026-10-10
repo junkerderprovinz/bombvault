@@ -1545,7 +1545,6 @@ const ro: Partial<Translations> = {
   "ransomware.replicationPaused": "copierea în afara locației este în pauză: confirmă amplasarea",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Auto-backup",
   "config.settingsTitle": "Setări auto-backup",
   "config.settingsHint": "Protejează propria configurație a BombVault (baza de date cu setări, credențialele off-site și cheile SSH) astfel încât o instalare nouă să se poată restaura singură și să continue exact de unde a rămas.",
   "config.enabled": "Fă backup setărilor BombVault",
@@ -1555,12 +1554,6 @@ const ro: Partial<Translations> = {
   "config.offsiteSchedule": "Programare off-site",
   "config.offsiteMoved": "Copia externă a auto-backupului se configurează în Setări, Destinații, în același card pe care îl are orice alt domeniu.",
   "config.pathMoved": "Locația copiei se stabilește în Setări, Destinații, unde poate fi un folder local sau un depozit la distanță cu propriile credențiale.",
-  "config.backupTitle": "Fă backup setărilor acum",
-  "config.backupHint": "Capturează propriul /config al BombVault: baza de date cu setări, credențialele off-site (rclone.conf) și perechea de chei SSH.",
-  "config.backupNow": "Fă backup setărilor acum",
-  "config.backingUp": "Se face backup…",
-  "config.snapshotsTitle": "Backupuri de setări",
-  "config.snapshotsHint": "Pentru a restaura aceste setări pe un server reconstruit, folosește fila Recuperare. Restaurarea setărilor repornește BombVault pentru a le aplica, așa că se află acolo împreună cu restul fluxului de recuperare în caz de dezastru.",
   "nav.config": "Auto-backup",
   "settings.configEnabled": "Auto-backup",
   "settings.configEnabledHint": "Copiere de rezervă a propriilor setări, ținte și date de autentificare ale BombVault, astfel încât o instalare nouă să poată restaura și configurația ei (auto-backup).",

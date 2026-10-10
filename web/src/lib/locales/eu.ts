@@ -1524,7 +1524,6 @@ const eu: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Gehitu gutxienez age hartzaile bat, bestela esportazio zifratuak huts egingo du.",
 
   // Config self-backup
-  "config.title": "Autobabeskopia",
   "config.settingsTitle": "Autobabeskopiaren ezarpenak",
   "config.settingsHint": "BombVaulten bere konfigurazioa babesten du (ezarpenen datu-basea, kanpoko kredentzialak eta SSH gakoak) instalazio berri batek bere burua berrezarri eta utzi zuen puntu berean jarraitu ahal izateko.",
   "config.enabled": "Egin BombVaulten ezarpenen babeskopia",
@@ -1534,12 +1533,6 @@ const eu: Partial<Translations> = {
   "config.offsiteSchedule": "Kanpoko egutegia",
   "config.offsiteMoved": "Auto-babeskopiaren kanpoko kopia Ezarpenak, Helmugak atalean konfiguratzen da, beste domeinu guztiek duten txartel berean.",
   "config.pathMoved": "Babeskopiaren kokapena Ezarpenak, Helmugak atalean ezartzen da, eta bertan karpeta lokala edo bere kredentzialak dituen urruneko biltegia izan daiteke.",
-  "config.backupTitle": "Egin ezarpenen babeskopia orain",
-  "config.backupHint": "BombVaulten bere /config jasotzen du: ezarpenen datu-basea, kanpoko kredentzialak (rclone.conf) eta SSH gako-parea.",
-  "config.backupNow": "Egin ezarpenen babeskopia orain",
-  "config.backingUp": "Babeskopia egiten…",
-  "config.snapshotsTitle": "Ezarpenen babeskopiak",
-  "config.snapshotsHint": "Ezarpen hauek berreraikitako zerbitzari batean berrezartzeko, erabili Berreskuratzea fitxa. Ezarpenak berrezartzeak BombVault berrabiarazten du aplikatzeko, horregatik bizi da hor gainerako hondamendi-berreskuratze fluxuarekin batera.",
 
   // Receiver dashboard
   "receiver.title": "Hartzailea",

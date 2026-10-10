@@ -1524,7 +1524,6 @@ const sk: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Pridajte aspoň jedného príjemcu age, inak šifrovaný export zlyhá.",
 
   // Config self-backup
-  "config.title": "Vlastná záloha",
   "config.settingsTitle": "Nastavenia vlastnej zálohy",
   "config.settingsHint": "Chráni vlastnú konfiguráciu BombVault (jeho databázu nastavení, externé poverenia a kľúče SSH), aby sa nová inštalácia mohla obnoviť sama a pokračovať presne tam, kde skončila.",
   "config.enabled": "Zálohovať nastavenia BombVault",
@@ -1534,12 +1533,6 @@ const sk: Partial<Translations> = {
   "config.offsiteSchedule": "Externý plán",
   "config.offsiteMoved": "Externá kópia vlastnej zálohy sa nastavuje v Nastaveniach, Ciele, v tej istej karte, akú má každá iná doména.",
   "config.pathMoved": "Umiestnenie zálohy sa nastavuje v Nastaveniach, Ciele, kde môže byť miestnym priečinkom alebo vzdialeným repozitárom s vlastnými prihlasovacími údajmi.",
-  "config.backupTitle": "Zálohovať nastavenia teraz",
-  "config.backupHint": "Zachytáva vlastné /config BombVault: databázu nastavení, externé poverenia (rclone.conf) a pár kľúčov SSH.",
-  "config.backupNow": "Zálohovať nastavenia teraz",
-  "config.backingUp": "Zálohuje sa…",
-  "config.snapshotsTitle": "Zálohy nastavení",
-  "config.snapshotsHint": "Na obnovenie týchto nastavení na znova zostavenom serveri použite kartu Obnovenie. Obnovenie nastavení reštartuje BombVault, aby ich uplatnil, preto sa nachádza tam spolu so zvyškom postupu obnovy po havárii.",
 
   // Receiver dashboard
   "receiver.title": "Prijímač",

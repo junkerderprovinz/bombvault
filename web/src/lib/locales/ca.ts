@@ -1524,7 +1524,6 @@ const ca: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Afegeix almenys un destinatari d'age, altrament l'exportació xifrada fallarà.",
 
   // Config self-backup
-  "config.title": "Autocòpia",
   "config.settingsTitle": "Configuració de l'autocòpia",
   "config.settingsHint": "Protegeix la configuració pròpia de BombVault (la base de dades de configuració, les credencials externes i les claus SSH) perquè una instal·lació nova es pugui restaurar sola i continuar exactament on ho va deixar.",
   "config.enabled": "Fes còpia de la configuració de BombVault",
@@ -1534,12 +1533,6 @@ const ca: Partial<Translations> = {
   "config.offsiteSchedule": "Horari extern",
   "config.offsiteMoved": "La còpia externa de l'autocòpia es configura a Configuració, Destinacions, a la mateixa targeta que té qualsevol altre domini.",
   "config.pathMoved": "La ubicació de la còpia es defineix a Configuració, Destinacions, on pot ser una carpeta local o un repositori remot amb credencials pròpies.",
-  "config.backupTitle": "Fes còpia de la configuració ara",
-  "config.backupHint": "Captura el /config propi de BombVault: la base de dades de configuració, les credencials externes (rclone.conf) i el parell de claus SSH.",
-  "config.backupNow": "Fes còpia de la configuració ara",
-  "config.backingUp": "Fent còpia…",
-  "config.snapshotsTitle": "Còpies de configuració",
-  "config.snapshotsHint": "Per restaurar aquesta configuració en un servidor reconstruït, fes servir la pestanya de Recuperació. Restaurar la configuració reinicia BombVault per aplicar-la, per això hi viu junt amb la resta del flux de recuperació d'avaries.",
 
   // Receiver dashboard
   "receiver.title": "Receptor",

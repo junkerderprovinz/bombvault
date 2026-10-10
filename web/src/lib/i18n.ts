@@ -1810,7 +1810,6 @@ export const en = {
 
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
-  "config.title": "Self-Backup",
   "config.settingsTitle": "Self-Backup settings",
   "config.settingsHint": "Protect BombVault's own configuration (its settings database, off-site credentials and SSH keys) so a fresh install can restore itself and pick up right where it left off.",
   "config.enabled": "Back up BombVault's settings",
@@ -1820,12 +1819,6 @@ export const en = {
   "config.offsiteSchedule": "Off-site schedule",
   "config.offsiteMoved": "The off-site copy of the self-backup is set up under Settings, Storage locations, in the same card every other domain has.",
   "config.pathMoved": "The backup location is set under Settings, Storage locations, where it can be a local folder or a remote repository with its own credentials.",
-  "config.backupTitle": "Back up settings now",
-  "config.backupHint": "Captures BombVault's own /config: the settings database, off-site credentials (rclone.conf) and SSH keypair.",
-  "config.backupNow": "Back up settings now",
-  "config.backingUp": "Backing up…",
-  "config.snapshotsTitle": "Settings backups",
-  "config.snapshotsHint": "To restore these settings onto a rebuilt server, use the Recovery tab: restoring settings restarts BombVault to apply them, so it lives there with the rest of the disaster-recovery flow.",
 
   // Receiver dashboard (read-only monitoring of an append-only off-site repo
   // another BombVault pushes to)
@@ -6019,7 +6012,6 @@ export const de: Translations = {
 
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.
-  "config.title": "Selbst-Backup",
   "config.settingsTitle": "Selbst-Backup-Einstellungen",
   "config.settingsHint": "Schützt BombVaults eigene Konfiguration (die Einstellungsdatenbank, Off-site-Zugangsdaten und SSH-Schlüssel), damit eine frische Installation sich selbst wiederherstellt und genau dort weitermacht, wo sie aufgehört hat.",
   "config.enabled": "BombVaults Einstellungen sichern",
@@ -6029,12 +6021,6 @@ export const de: Translations = {
   "config.offsiteSchedule": "Off-site-Zeitplan",
   "config.offsiteMoved": "Die Off-site-Kopie des Selbst-Backups richtest du unter Einstellungen, Speicherorte ein, in derselben Karte wie jede andere Domäne.",
   "config.pathMoved": "Den Backup-Ort stellst du unter Einstellungen, Speicherorte ein, dort kann er ein lokaler Ordner oder ein Remote-Repository mit eigenen Zugangsdaten sein.",
-  "config.backupTitle": "Einstellungen jetzt sichern",
-  "config.backupHint": "Erfasst BombVaults eigenes /config: die Einstellungsdatenbank, Off-site-Zugangsdaten (rclone.conf) und das SSH-Schlüsselpaar.",
-  "config.backupNow": "Einstellungen jetzt sichern",
-  "config.backingUp": "Sichere…",
-  "config.snapshotsTitle": "Einstellungs-Backups",
-  "config.snapshotsHint": "Um diese Einstellungen auf einem neu aufgesetzten Server wiederherzustellen, den Wiederherstellungs-Tab verwenden: das Wiederherstellen der Einstellungen startet BombVault neu, damit sie angewendet werden, daher liegt es dort beim übrigen Notfall-Ablauf.",
 
   // Empfänger-Dashboard (nur lesende Überwachung eines Append-only-Off-site-Repos,
   // in das ein anderes BombVault schiebt)

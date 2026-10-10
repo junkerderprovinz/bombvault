@@ -1546,7 +1546,6 @@ const it: Partial<Translations> = {
   "ransomware.replicationPaused": "copia off-site in pausa: conferma la collocazione",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Auto-backup",
   "config.settingsTitle": "Impostazioni dell'auto-backup",
   "config.settingsHint": "Proteggi la configurazione di BombVault (il suo database delle impostazioni, le credenziali off-site e le chiavi SSH) così che un'installazione nuova possa ripristinarsi e riprendere esattamente da dove si era interrotta.",
   "config.enabled": "Esegui il backup delle impostazioni di BombVault",
@@ -1556,12 +1555,6 @@ const it: Partial<Translations> = {
   "config.offsiteSchedule": "Calendario off-site",
   "config.offsiteMoved": "La copia esterna dell'auto-backup si configura in Impostazioni, Destinazioni, nella stessa scheda che hanno tutti gli altri domini.",
   "config.pathMoved": "La posizione del backup si imposta in Impostazioni, Destinazioni, dove può essere una cartella locale o un repository remoto con credenziali proprie.",
-  "config.backupTitle": "Esegui il backup delle impostazioni ora",
-  "config.backupHint": "Cattura il /config di BombVault: il database delle impostazioni, le credenziali off-site (rclone.conf) e la coppia di chiavi SSH.",
-  "config.backupNow": "Esegui il backup delle impostazioni ora",
-  "config.backingUp": "Backup in corso…",
-  "config.snapshotsTitle": "Backup delle impostazioni",
-  "config.snapshotsHint": "Per ripristinare queste impostazioni su un server ricostruito, usa la scheda Ripristino. Ripristinare le impostazioni riavvia BombVault per applicarle, quindi si trova lì insieme al resto del flusso di ripristino di emergenza.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Pattern di esclusione",

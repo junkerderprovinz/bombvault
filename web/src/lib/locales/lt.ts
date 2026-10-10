@@ -1524,7 +1524,6 @@ const lt: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Pridėkite bent vieną age gavėją, kitaip užšifruotas eksportas nepavyks.",
 
   // Config self-backup
-  "config.title": "Savarankiška atsarga",
   "config.settingsTitle": "Savarankiškos atsargos nustatymai",
   "config.settingsHint": "Saugo pačią BombVault konfigūraciją (jos nustatymų duomenų bazę, nuotolinius prisijungimo duomenis ir SSH raktus), kad naujas diegimas galėtų atkurti pats save ir tęsti nuo tos pačios vietos, kur baigė.",
   "config.enabled": "Kurti BombVault nustatymų atsarginę kopiją",
@@ -1534,12 +1533,6 @@ const lt: Partial<Translations> = {
   "config.offsiteSchedule": "Nuotolinis tvarkaraštis",
   "config.offsiteMoved": "Savarankiškos atsarginės kopijos nuotolinė kopija nustatoma skiltyje Nustatymai, Paskirties vietos, toje pačioje kortelėje kaip ir visos kitos sritys.",
   "config.pathMoved": "Atsarginės kopijos vieta nustatoma skiltyje Nustatymai, Paskirties vietos, kur ji gali būti vietinis aplankas arba nuotolinė saugykla su savo prisijungimo duomenimis.",
-  "config.backupTitle": "Kurti nustatymų atsarginę kopiją dabar",
-  "config.backupHint": "Užfiksuoja paties BombVault /config: nustatymų duomenų bazę, nuotolinius prisijungimo duomenis (rclone.conf) ir SSH raktų porą.",
-  "config.backupNow": "Kurti nustatymų atsarginę kopiją dabar",
-  "config.backingUp": "Kopijuojama…",
-  "config.snapshotsTitle": "Nustatymų atsarginės kopijos",
-  "config.snapshotsHint": "Norėdami atkurti šiuos nustatymus atkurtame serveryje, naudokite Atkūrimo skirtuką. Nustatymų atkūrimas iš naujo paleidžia BombVault, kad juos pritaikytų, todėl jis gyvena ten kartu su likusiu nelaimių atkūrimo procesu.",
 
   // Receiver dashboard
   "receiver.title": "Imtuvas",

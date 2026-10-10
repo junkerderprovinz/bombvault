@@ -1537,7 +1537,6 @@ const pl: Partial<Translations> = {
   "ransomware.replicationPaused": "kopiowanie poza lokalizację wstrzymane: potwierdź rozmieszczenie",
 
   // Config backup (BombVault's own settings)
-  "config.title": "Autokopia",
   "config.settingsTitle": "Ustawienia autokopii",
   "config.settingsHint": "Chroń własną konfigurację BombVault (jego bazę ustawień, poświadczenia off-site i klucze SSH), aby świeża instalacja mogła sama się przywrócić i podjąć pracę dokładnie tam, gdzie ją przerwano.",
   "config.enabled": "Twórz kopię ustawień BombVault",
@@ -1547,12 +1546,6 @@ const pl: Partial<Translations> = {
   "config.offsiteSchedule": "Harmonogram off-site",
   "config.offsiteMoved": "Kopię zewnętrzną autokopii konfiguruje się w Ustawieniach, Miejsca docelowe, w tej samej karcie, którą ma każda inna domena.",
   "config.pathMoved": "Lokalizację kopii ustawia się w Ustawieniach, Miejsca docelowe, gdzie może to być folder lokalny lub zdalne repozytorium z własnymi danymi logowania.",
-  "config.backupTitle": "Utwórz kopię ustawień teraz",
-  "config.backupHint": "Przechwytuje własne /config BombVault: bazę ustawień, poświadczenia off-site (rclone.conf) i parę kluczy SSH.",
-  "config.backupNow": "Utwórz kopię ustawień teraz",
-  "config.backingUp": "Tworzenie kopii…",
-  "config.snapshotsTitle": "Kopie ustawień",
-  "config.snapshotsHint": "Aby przywrócić te ustawienia na odbudowanym serwerze, użyj zakładki Odzyskiwanie. Przywrócenie ustawień restartuje BombVault, aby je zastosować, dlatego znajduje się tam wraz z resztą procesu odzyskiwania po awarii.",
   "nav.config": "Autokopia",
   "settings.configEnabled": "Autokopia",
   "settings.configEnabledHint": "Kopia zapasowa własnych ustawień, celów i danych uwierzytelniających BombVault, dzięki czemu świeża instalacja też może przywrócić swoją konfigurację (autokopia).",

@@ -1524,7 +1524,6 @@ const et: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Lisa vähemalt üks age saaja, muidu krüpteeritud eksport ebaõnnestub.",
 
   // Config self-backup
-  "config.title": "Iseenda varundus",
   "config.settingsTitle": "Iseenda varunduse seaded",
   "config.settingsHint": "Kaitseb BombVaulti enda seadistust (seadete andmebaasi, väliseid mandaate ja SSH-võtmeid), et värske paigaldus saaks ennast taastada ja jätkata täpselt sealt, kus pooleli jäi.",
   "config.enabled": "Varunda BombVaulti seaded",
@@ -1534,12 +1533,6 @@ const et: Partial<Translations> = {
   "config.offsiteSchedule": "Väline ajakava",
   "config.offsiteMoved": "Enda varunduse väline koopia seadistatakse jaotises Seaded, Sihtkohad, samal kaardil, mis on igal teisel domeenil.",
   "config.pathMoved": "Varunduse asukoht määratakse jaotises Seaded, Sihtkohad, kus see võib olla kohalik kaust või omaenda mandaatidega kaughoidla.",
-  "config.backupTitle": "Varunda seaded kohe",
-  "config.backupHint": "Jäädvustab BombVaulti enda /config: seadete andmebaasi, väliseid mandaate (rclone.conf) ja SSH-võtmepaari.",
-  "config.backupNow": "Varunda seaded kohe",
-  "config.backingUp": "Varundamine…",
-  "config.snapshotsTitle": "Seadete varundused",
-  "config.snapshotsHint": "Nende seadete taastamiseks ülesehitatud serveril kasuta Taaste vahekaarti. Seadete taastamine käivitab BombVaulti uuesti nende rakendamiseks, seetõttu elab see seal koos ülejäänud õnnetusjärgse taaste vooluga.",
 
   // Receiver dashboard
   "receiver.title": "Vastuvõtja",

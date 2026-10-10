@@ -189,7 +189,6 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "relay.instanceCert": RELAY_CONNECT_LTR_FRAGMENTS,
   "excludes.hint": EXCLUDES_HINT_LTR_FRAGMENTS,
   "recovery.foreignAppdataDestHint": FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
-  "config.backupHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "config.enabledHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "containers.discoverHint": CONFIG_VOLUME_LTR_FRAGMENTS,
   "settings.cacheHint": CONFIG_VOLUME_LTR_FRAGMENTS,
