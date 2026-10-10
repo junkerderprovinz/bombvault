@@ -752,6 +752,19 @@ export function getHealth(): Promise<{ ok: boolean; version?: string }> {
   return fetchJSON("/api/health");
 }
 
+/** The versions the Info page lists. A bundled tool is null when its version
+ *  could not be read. */
+export type ComponentVersions = {
+  bombvault: string;
+  restic: string | null;
+  rclone: string | null;
+};
+
+/** GET /api/versions */
+export function getVersions(): Promise<OkEnvelope & { versions: ComponentVersions }> {
+  return fetchJSON("/api/versions");
+}
+
 /**
  * Poll the lightest endpoint (GET /api/health) until BombVault is reachable
  * again after it restarts itself to apply a config restore (Recovery tab). It
