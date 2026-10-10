@@ -1,7 +1,7 @@
 // The Backups page: one list for everything that is backed up. A fresh harness
 // database has no entries of any kind, so the list, the settings switches and
 // the anomaly figures are staged at the route layer. On the desktop: tiles,
-// the bar above the list, rows that open their kind's page, and the page
+// the bar above the list, rows that open their entry's page, and the page
 // actions in their corner. On the phones: tiles as chips, no run strip, the
 // actions as glyphs above the bottom bar, and nothing past the edge. German,
 // because its labels run longest.
@@ -284,13 +284,13 @@ test("filter, sort and search work on the list", async ({ page }, testInfo) => {
   await expect(rows(page)).toHaveCount(ENTRY_COUNT);
 });
 
-test("a row opens the page of its kind", async ({ page }, testInfo) => {
+test("a row opens the page of its entry", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop list");
   await stage(page);
   await openList(page);
   // On the glyph and not on the name, to show the whole row is the link.
   await rows(page).filter({ hasText: "Dokumente" }).locator("svg").first().click();
-  await expect(page).toHaveURL(/\/files$/);
+  await expect(page).toHaveURL(/\/backups\/files\/a1$/);
 });
 
 test("the page actions rest in the content's corner and cover no row", async ({ page }, testInfo) => {

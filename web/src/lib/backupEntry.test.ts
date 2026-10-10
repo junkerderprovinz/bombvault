@@ -13,7 +13,6 @@ import {
   legacyRedirect,
   parseEntryPath,
   progressKey,
-  type EntryKind,
 } from "./backupEntry";
 
 const SET_ID = "0123456789abcdef0123456789abcdef";
