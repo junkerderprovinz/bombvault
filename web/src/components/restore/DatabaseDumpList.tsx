@@ -14,7 +14,6 @@ import {
   saveDbDumpTo,
   type DBDumpView,
 } from "../../lib/api";
-import { Advanced } from "../../lib/advanced";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { ENGINE_NAMES, importRefusedKey } from "../../lib/dbdump";
 import { humanBytes } from "../../lib/forecast";
@@ -267,9 +266,7 @@ function DumpRow({
           </span>
         ) : (
           <>
-            <Advanced>
-              <FormatPicker format={format} onChange={onFormat} t={t} />
-            </Advanced>
+            <FormatPicker format={format} onChange={onFormat} t={t} />
             <Button
               label={t("dbdump.download")}
               labelKey="dbdump.download"
@@ -280,19 +277,17 @@ function DumpRow({
               busy={preparing}
               className="shrink-0 glim-btn-wrap"
             />
-            <Advanced>
-              <Button
-                label={t("dbdump.saveToFolder")}
-                labelKey="dbdump.saveToFolder"
-                glyph={<IconRestore />}
-                tone="accent"
-                onClick={() => setSaveOpen((p) => !p)}
-                disabled={saving}
-                busy={saving}
-                title={saving ? t("dbdump.busySaving") : undefined}
-                className="shrink-0 glim-btn-wrap"
-              />
-            </Advanced>
+            <Button
+              label={t("dbdump.saveToFolder")}
+              labelKey="dbdump.saveToFolder"
+              glyph={<IconRestore />}
+              tone="accent"
+              onClick={() => setSaveOpen((p) => !p)}
+              disabled={saving}
+              busy={saving}
+              title={saving ? t("dbdump.busySaving") : undefined}
+              className="shrink-0 glim-btn-wrap"
+            />
             {importable && (
               <Button
                 key={shake}

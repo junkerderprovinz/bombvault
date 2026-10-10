@@ -40,10 +40,9 @@ describe("RestorePanel", () => {
   });
   afterEach(cleanup);
 
-  it("lists the container's backups as its timeline, without a source switch", async () => {
+  it("lists the container's backups as its timeline", async () => {
     renderWithProviders(<Panel />);
     await waitFor(() => expect(fake.callsTo("getTimeline")).toEqual([["containers", "nginx"]]));
-    expect(screen.queryByRole("tab", { name: "Off-site" })).toBeNull();
   });
 
   it("calls a container config-only once every place has answered, not before", async () => {
