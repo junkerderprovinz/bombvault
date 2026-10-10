@@ -49,9 +49,12 @@ const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 // English fallback instead of the stress-case strings.
 const LOCALE_STORAGE_KEY = "bv-lang";
 const MORE_LABEL = { de: "Mehr", fr: "Plus" } as const;
-// The sheet's fresh-DB stress-case row: Settings, the one always-on More
-// destination since Recovery moved into the bar (its equally long caption
-// stays covered by the bar-caption sweep below).
+// The sheet's row that is there on every instance: the storage locations. The
+// long captions ("Wiederherstellung", "Einstellungen", "Paramètres") stand in
+// the bar and are covered by the bar-caption sweep below.
+const STORAGE_LABEL = { de: "Speicherorte", fr: "Destinations" } as const;
+// A long bar caption per locale, to prove the sweep measures the stress case
+// and not an English fallback.
 const SETTINGS_LABEL = { de: "Einstellungen", fr: "Paramètres" } as const;
 
 // Explicit single-line box used for the height arithmetic (see header).
@@ -116,10 +119,10 @@ for (const locale of locales) {
             }),
           LINE_BOX,
         );
-      expect(
-        captionStats.length,
-        "the bar must carry caption labels to assert against",
-      ).toBeGreaterThan(0);
+      // Four destinations and More: the fullest bar there is, so every slot is
+      // at its narrowest here.
+      expect(captionStats.length, "the bar must carry all five captions to assert against").toBe(5);
+      expect(captionStats.map((s) => s.text)).toContain(SETTINGS_LABEL[locale]);
       for (const s of captionStats) {
         expect(s.height, `caption "${s.text}" must stay on one line`).toBeGreaterThan(0);
         expect(
@@ -141,12 +144,11 @@ for (const locale of locales) {
       ).toBeLessThanOrEqual(barOverflow.clientWidth + 1);
 
       // Same single-line contract inside the More sheet: open it and measure
-      // every destination row's label span (the long de/fr Settings label is
-      // the fresh-DB stress case; the sheet is where >1 row lands later).
+      // every destination row's label span.
       await moreTrigger.click();
       const sheet = page.getByTestId("more-sheet");
       await expect(sheet).toBeVisible();
-      await expect(sheet.getByRole("link", { name: SETTINGS_LABEL[locale] })).toBeVisible();
+      await expect(sheet.getByRole("link", { name: STORAGE_LABEL[locale] })).toBeVisible();
 
       const rowStats = await sheet
         .getByRole("link")

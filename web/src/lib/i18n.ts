@@ -59,7 +59,9 @@ export const en = {
   "theme.light": "Light",
 
   // Nav
-  "nav.dashboard": "Dashboard",
+  "nav.overview": "Overview",
+  "nav.attentionCountAria": "Things that need you: {n}",
+  "nav.restore": "Restore",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",
@@ -2285,7 +2287,7 @@ export const en = {
   "vm.ssh.guide": "Full setup & networking guide",
 
   // Guided Recovery tab. The `recovery.*` keys above belong to the encryption
-  // kit; the page heading reads `nav.recovery`, the same word as the sidebar.
+  // kit; the page heading reads `nav.recovery`.
   "nav.recovery": "Recovery",
   // Step 1 — connection / APP_KEY readability check
   "recovery.step1": "Can BombVault read your backups?",
@@ -4170,7 +4172,9 @@ export const de: Translations = {
   "theme.dark": "Dunkel",
   "theme.light": "Hell",
 
-  "nav.dashboard": "Dashboard",
+  "nav.overview": "Übersicht",
+  "nav.attentionCountAria": "Sachen, die dich brauchen: {n}",
+  "nav.restore": "Wiederherstellung",
   "nav.containers": "Container",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

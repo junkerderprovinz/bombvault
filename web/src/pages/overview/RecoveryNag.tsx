@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ackRecoveryKit, downloadRecoveryKit, getSettings } from "../../lib/api";
 import type { Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
+import { recoveryKitDue } from "../../lib/attention";
 import { Button } from "../../components/Button";
 
 // RecoveryNag asks the user to download and store the encryption recovery kit,
@@ -26,7 +27,7 @@ export function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]
   }, []);
 
   if (suppressed) return null;
-  if (!settings || !settings.encryptionEnabled || settings.recoveryKitAck) {
+  if (!settings || !recoveryKitDue(settings)) {
     return null;
   }
 
@@ -34,7 +35,11 @@ export function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]
     setDismissing(true);
     void ackRecoveryKit()
       .then((res) => {
-        if (res.ok) setSettings({ ...settings, recoveryKitAck: true });
+        if (!res.ok) return;
+        setSettings({ ...settings, recoveryKitAck: true });
+        // The layout holds its own copy of the settings, which the navigation
+        // counts the reminder from.
+        window.dispatchEvent(new Event("bv:settings-changed"));
       })
       .catch(() => {/* non-fatal */})
       .finally(() => setDismissing(false));

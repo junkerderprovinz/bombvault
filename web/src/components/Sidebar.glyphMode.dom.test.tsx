@@ -39,9 +39,9 @@ describe("glyph mode centres the rail", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar(true);
     const rows = railRows();
-    // Dashboard, Containers, Recovery, sign-out and Settings. The count keeps
-    // the loop below from passing on an empty list.
-    expect(rows.length).toBe(5);
+    // Overview, Backups, Restore, Storage locations, sign-out and Settings.
+    // The count keeps the loop below from passing on an empty list.
+    expect(rows.length).toBe(6);
     for (const row of rows) expect(row.className).toContain("justify-center");
   });
 
@@ -93,19 +93,19 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
   it("reveals a nav row's name on hover and on focus, with no native title", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
-    const dashboard = screen.getByRole("link", { name: "Dashboard" });
-    expect(dashboard.getAttribute("title")).toBeNull();
+    const overview = screen.getByRole("link", { name: "Overview" });
+    expect(overview.getAttribute("title")).toBeNull();
     expect(document.querySelector(".glim-bubble")).toBeNull();
 
-    fireEvent.mouseEnter(dashboard);
-    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Dashboard");
-    fireEvent.mouseLeave(dashboard);
+    fireEvent.mouseEnter(overview);
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Overview");
+    fireEvent.mouseLeave(overview);
     expect(document.querySelector(".glim-bubble")).toBeNull();
 
     // Keyboard focus shows it too, which a native title never does.
     fireEvent.keyDown(document.body, { key: "Tab" });
-    act(() => dashboard.focus());
-    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Dashboard");
+    act(() => overview.focus());
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Overview");
   });
 
   it("gives the sign-out row the same bubble", () => {
@@ -120,11 +120,11 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
   it("drops the wordmark and keeps the mark centred", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
-    const logo = screen.getByRole("button", { name: "Dashboard" });
+    const logo = screen.getByRole("button", { name: "Overview" });
     expect(logo.className).toContain("items-center");
     expect(screen.queryByText("BombVault")).toBeNull();
     // Removed, not `sr-only`: the button's own aria-label is the name, so a
-    // hidden copy would only make a screen reader say "Dashboard BombVault".
+    // hidden copy would only make a screen reader say "Overview BombVault".
     expect(logo.querySelector(".sr-only")).toBeNull();
   });
 
@@ -133,7 +133,7 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
       cleanup();
       setLabelMode("sidebar", mode);
       renderSidebar();
-      const logo = screen.getByRole("button", { name: "Dashboard" });
+      const logo = screen.getByRole("button", { name: "Overview" });
       expect(logo.className, mode).toContain("flex-col");
       expect(logo.lastElementChild?.textContent, mode).toBe("BombVault");
     }
@@ -143,7 +143,7 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
     setLabelMode("sidebar", "textGlyph");
     renderSidebar(true);
     for (const el of [
-      screen.getByRole("link", { name: "Dashboard" }),
+      screen.getByRole("link", { name: "Overview" }),
       screen.getByRole("button", { name: "Sign out" }),
     ]) {
       expect(el.getAttribute("title")).toBeNull();

@@ -7,7 +7,9 @@ const da: Partial<Translations> = {
   "theme.light": "Lyst",
 
   // Nav
-  "nav.dashboard": "Oversigt",
+  "nav.overview": "Oversigt",
+  "nav.attentionCountAria": "Kræver opmærksomhed: {n}",
+  "nav.restore": "Gendannelse",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

@@ -8,7 +8,7 @@ import { I18nProvider, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
 
 const { RunsCard } = await import("./overview/RunsCard");
-const { unresolvedErrorCount } = await import("./overview/runFailures");
+const { unresolvedErrorCount } = await import("../lib/runFailures");
 
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<
   typeof RunsCard

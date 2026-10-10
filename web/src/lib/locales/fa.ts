@@ -7,7 +7,9 @@ const fa: Partial<Translations> = {
   "theme.light": "روشن",
 
   // Nav
-  "nav.dashboard": "داشبورد",
+  "nav.overview": "بررسی اجمالی",
+  "nav.attentionCountAria": "نیازمند توجه: {n}",
+  "nav.restore": "بازیابی",
   "nav.containers": "کانتینرها",
   "nav.vms": "ماشین‌های مجازی",
   "nav.flash": "فلش",

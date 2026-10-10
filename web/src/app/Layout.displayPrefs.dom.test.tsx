@@ -37,6 +37,9 @@ vi.mock("../lib/api", () => ({
     },
   }),
   getAnomalies: async () => ({ ok: true, anomalies: [], nextCursor: "" }),
+  // The layout also counts what needs the person for the navigation.
+  listRuns: async () => ({ ok: true, runs: [] }),
+  getCoverage: async () => ({ ok: true, coverage: { domains: [], total: 0, protected: 0 } }),
 }));
 
 // Stubs for the heavy parts that play no role here.

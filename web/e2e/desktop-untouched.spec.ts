@@ -17,9 +17,9 @@
 //
 // The assertions run on the fresh-DB empty states the harness
 // boots (playwright.config.ts): this is a chrome/layout contract, never a
-// data contract. Gated destinations (/vms, /flash, ...) render their pages'
-// empty states: the route tree is not gated, only the nav entries are, so
-// every destination is directly reachable by goto (the Go SPA fallback,
+// data contract. The pages of the single backup types (/containers, /vms,
+// /flash, ...) have no entry in the sidebar and stay routed, so every one of
+// them is directly reachable by goto (the Go SPA fallback,
 // internal/api/spa.go, serves index.html for client routes).
 //
 // The second, per-page half: each page that has been given a phone face
@@ -50,6 +50,8 @@ const DESKTOP_PROJECTS = new Set(["desktop-1280", "desktop-768"]);
 const ROUTES = [
   "/dashboard",
   "/anomalies",
+  "/backups",
+  "/storage",
   "/containers",
   "/vms",
   "/flash",

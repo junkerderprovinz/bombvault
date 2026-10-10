@@ -7,7 +7,9 @@ const hr: Partial<Translations> = {
   "theme.light": "Svijetla",
 
   // Nav
-  "nav.dashboard": "Nadzorna ploča",
+  "nav.overview": "Pregled",
+  "nav.attentionCountAria": "Potrebna pažnja: {n}",
+  "nav.restore": "Vraćanje",
   "nav.containers": "Kontejneri",
   "nav.vms": "VM-ovi",
   "nav.flash": "Flash",

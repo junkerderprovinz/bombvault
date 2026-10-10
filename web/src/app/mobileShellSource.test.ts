@@ -480,6 +480,38 @@ describe("the chrome testids live in the mobile component sources", () => {
   });
 });
 
+// The sidebar, the bottom bar and the More sheet list the same navigation. They
+// stay one list only while each of them takes its rows from the registry, and a
+// row written by hand into one of them would be a destination the other two do
+// not know. Sign out is an action and no destination, so it may stand in the
+// source.
+describe("the chrome takes its destinations from the navigation registry", () => {
+  it.each([
+    ["Sidebar.tsx", sidebar, "sidebarDestinations("],
+    ["BottomNav.tsx", bottomNav, "barDestinations("],
+    ["MoreSheet.tsx", moreSheet, "moreDestinations("],
+  ] as const)("%s reads its rows through the registry", (name, source, derivation) => {
+    expect(
+      source.includes(derivation),
+      `${name} no longer calls ${derivation.slice(0, -1)}. Its rows have to come from ` +
+        "lib/navModel.ts, or the three surfaces can name, order and gate a destination differently."
+    ).toBe(true);
+  });
+
+  it.each([
+    ["Sidebar.tsx", sidebar],
+    ["BottomNav.tsx", bottomNav],
+    ["MoreSheet.tsx", moreSheet],
+  ] as const)("%s writes no route of its own into a link", (name, source) => {
+    const written = source.match(/\bto="\/[^"]*"/g) ?? [];
+    expect(
+      written,
+      `${name} links to ${written.join(", ")} by hand. Add the destination to ` +
+        "lib/navModel.ts instead, so every surface gets it."
+    ).toEqual([]);
+  });
+});
+
 // Filled-tab contract; the bottom bar's active tab is
 // filled, not accent-coloured text.
 //

@@ -345,6 +345,17 @@ export function IconTabStorage() {
   );
 }
 
+/** Recovery tab and rail entry, getting backups back. */
+export function IconTabRecovery() {
+  return (
+    <G box="0.5 0.5 13 13">
+      <path fillRule="evenodd" d="M7 .5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13Zm0 .9a5.6 5.6 0 1 1 0 11.2a5.6 5.6 0 1 1 0-11.2Z"/>
+      <path fillRule="evenodd" d="M7 3.2a3.8 3.8 0 1 0 0 7.6a3.8 3.8 0 1 0 0-7.6Zm0 .9a2.9 2.9 0 1 1 0 5.8a2.9 2.9 0 1 1 0-5.8Z"/>
+      <path d="M12.94 9.64A6.5 6.5 0 0 1 9.64 12.94L8.18 9.65A2.9 2.9 0 0 0 9.65 8.18ZM4.36 12.94A6.5 6.5 0 0 1 1.06 9.64L4.35 8.18A2.9 2.9 0 0 0 5.82 9.65ZM1.06 4.36A6.5 6.5 0 0 1 4.36 1.06L5.82 4.35A2.9 2.9 0 0 0 4.35 5.82ZM9.64 1.06A6.5 6.5 0 0 1 12.94 4.36L9.65 5.82A2.9 2.9 0 0 0 8.18 4.35Z"/>
+    </G>
+  );
+}
+
 /** Schedules, automation. */
 export function IconSchedules() {
   return (

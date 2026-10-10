@@ -1,10 +1,9 @@
-import type { Run } from "../../lib/api";
+import type { Run } from "./api";
 
 // The kinds the error badge counts, and the outcome each one can clear. A dump
-// and an import stand apart from the item's backup: a failed dump must not hide
-// a failed backup of the same container, and neither of them cancels the other.
-// A saved dump is missing on purpose, since writing a copy of an old dump into
-// a folder says nothing about the state of the database (#3).
+// and an import stand apart from the item's backup, so a failed dump does not
+// hide a failed backup of the same container. A saved dump is left out: writing
+// a copy of an old dump into a folder says nothing about the database.
 const ERROR_CLASSES: Record<string, string> = {
   backup: "item",
   restore: "item",
@@ -19,12 +18,10 @@ export function unresolvedErrorCount(runs: Run[]): number {
 }
 
 /**
- * The failures the error badge and the phone runs block stand for: the last
- * completed run per target and class, counting only the ones that failed
- * (#100). A target that has since succeeded drops out, and so does an
- * acknowledged failure (#126). `runs` arrives newest-first, and a still
- * running one is skipped so an in-flight retry does not hide the previous
- * result.
+ * The failures that still ask for someone: the last completed run per target
+ * and class, where that run failed and nobody acknowledged it. `runs` arrives
+ * newest first, and a running one is skipped so a retry in flight does not
+ * hide the result before it.
  */
 export function failedRunsNeedingAttention(runs: Run[]): Run[] {
   const latest = new Map<string, Run>();

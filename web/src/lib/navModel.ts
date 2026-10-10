@@ -1,150 +1,84 @@
-// Nav model; the one ordered navigation registry for the whole app.
+// The one ordered list of the app's navigation. The sidebar, the phone's bottom
+// bar and its More sheet are filters of it, so no two of them can name, order
+// or draw a destination differently.
 //
-// The mobile chrome (bottom bar, More sheet) derives its destinations from
-// this list. The desktop rail still evaluates its own hand-written NavItem
-// JSX (its render-order hue counter and inline settings gates are the part
-// this registry cannot own), so the rail and the registry are
-// two listings of one navigation, held equal by test rather than by
-// construction: Sidebar.navModel.dom.test.tsx renders the rail and compares
-// it against destinations(settings) filtered to enabled; any divergence on
-// either side fails there instead of silently shipping a rail this list no
-// longer describes. Extracted from Sidebar.tsx's inline destination JSX
-// (main <nav> list + footer Settings row): same order, same gates.
+// The list carries data and no colour. A rainbow position is an entry's rank
+// among the entries a surface shows, so each surface counts its rows as it
+// renders them. A position stored here would stay put when an entry is hidden,
+// and the rows after it would leave a gap in the palette.
 //
-// never assign hues here, ever. Sidebar's rainbow positions come from its own
-// `nextHue()` render counter, incremented in actual JSX evaluation order,
-// with each settings gate short-circuiting before the increment so a hidden
-// tab never burns a palette slot (the long-standing documented semantics;
-// see Sidebar.tsx's own header comment and the hueSeq/nextHue block comment
-// at the extraction site). A hue index precomputed in this list would be
-// frozen against the full registry, so hiding a gated tab could no
-// longer shift later tabs into earlier slots; the exact visible-rank
-// behaviour Sidebar.tabColor.dom.test.tsx pins. Hue assignment therefore
-// stays a render-time concern of each consumer; this module hands out data
-// (route, label, icon, bar membership, enabled) and nothing else, and
-// navModel.test.ts guards that no entry ever grows a hue/colour field.
-//
-// Pure and synchronous by contract: a plain function of already-loaded
-// Settings; no fetch, no timer, no shared mutable state; so chrome built on
-// it renders the moment Layout renders and performs no fetches of its own.
-// Gates never pre-filter the list: `destinations()` always returns
-// the full ordered registry with an `enabled` flag per entry, so a consumer
-// that needs render-order semantics (Sidebar's counter) skips disabled
-// entries itself, and a consumer that needs a concrete surface list uses the
-// `barDestinations`/`moreDestinations` filter derivations below; one list,
-// so the surfaces' relative order is structural, never maintained twice.
-//
-// One import exception, flagged here because it is load-bearing:
-// this lib module imports the glyph components from ../components/navGlyphs.
-// The registry must be the single source of label and icon data (that is the
-// point of extracting it; the Sidebar footer lookup and the mobile chrome
-// both read icons from here), a component reference needs no JSX, and lib
-// modules that render UI already cross this seam in-repo (useConfirm.tsx ->
-// ConfirmDialog, toast.tsx -> Toast, dashboardLayout.tsx -> IconTipButton).
-// Nothing else comes from components/, and api.ts is read type-only.
+// Settings and pins come in as arguments and nothing is fetched, so chrome
+// built on the list renders together with the layout. For the same reason the
+// module imports types and glyphs only and spells its routes out: the API
+// client stays out of everything that merely draws the navigation.
 import type { ComponentType } from "react";
 import type { Settings } from "./api";
 import type { TranslationKey } from "./i18n";
+import type { NavPins } from "./navPins";
+import { IconArchive } from "../components/glyphs";
 import {
   IconAnomalies,
-  IconContainers,
-  IconConfig,
   IconDashboard,
-  IconFiles,
   IconFleet,
-  IconFlash,
   IconGear,
-  IconRecovery,
-  IconVM,
-  IconZFS,
+  IconTabRecovery,
+  IconTabStorage,
 } from "../components/navGlyphs";
 
-/**
- * One navigation destination; the single source of route, label, icon and
- * gating data for every chrome surface that shows one (desktop Sidebar; the
- * mobile bottom bar and More sheet).
- */
+/** The figures an entry can carry beside its name: what needs the person, and
+ *  the open findings. */
+export type NavCountKind = "attention" | "anomalies";
+
 export interface NavDestination {
-  /** Route path; matches the frozen route table in app/router.tsx. */
   to: string;
-  /** Existing `nav.*` i18n key (en table in lib/i18n.ts), reused verbatim;
-   *  never a second copy of the label text. Typed as the translation-key
-   *  union itself, so a key that is not in the en table is a compile error,
-   *  not a runtime blank. */
   labelKey: TranslationKey;
-  /** The destination's glyph, as a component reference (no JSX here, which is
-   *  why this file stays .ts). Rendered by the consumer as `<d.icon />`. */
   icon: ComponentType;
-  /** Bottom-bar membership: dashboard, containers, files, recovery; the four
-   *  destinations a phone bar shows directly. Recovery rides the bar because
-   *  it is what people open on a phone when something went wrong; Settings
-   *  and every other destination reach mobile chrome through the More sheet.
-   *  Never a render filter by itself; barDestinations() below applies
-   *  `enabled` on top of this. */
+  count?: NavCountKind;
+  sidebar: boolean;
+  /** Stands at the foot of the sidebar, below sign out, instead of in its list. */
+  footer: boolean;
+  phone: boolean;
+  /** A slot of the phone's bottom bar. Every other phone entry waits in the
+   *  More sheet. */
   bar: boolean;
-  /** Whether the destination is currently on. Gates flip this flag and
-   *  nothing else: the full list is handed out unchanged so consumers decide
-   *  what an off entry means (Sidebar: skip before burning a hue slot;
-   *  bar/More: filtered out entirely). */
-  enabled: boolean;
 }
 
 /**
- * The full ordered navigation registry, in desktop Sidebar order: the three
- * always-on destinations, then the gated tabs each gated by its settings
- * field, then Settings (always on; Sidebar renders it in its footer group).
- *
- * `settings` is Sidebar's own prop type, `Settings | null`: null (or any
- * missing gate field; Sidebar's dom tests pass partial fixtures) means the
- * gate is off, matching the `?? false` defaults the Sidebar applies to the
- * same fields.
+ * The whole navigation in sidebar order. A gate only flips flags and never
+ * removes an entry, so every surface filters the same list and the order
+ * between any two entries is the same everywhere.
  */
-export function destinations(settings: Settings | null): NavDestination[] {
+export function destinations(settings: Settings | null, pins: NavPins): NavDestination[] {
+  // Detection is a switch, not a place, so its entry goes when it is off.
+  const detection = settings?.anomalyEnabled ?? false;
   return [
-    { to: "/dashboard", labelKey: "nav.dashboard", icon: IconDashboard, bar: true, enabled: true },
-    // Detection is a feature switch, not a domain, so the row goes when it is off.
-    { to: "/anomalies", labelKey: "nav.anomalies", icon: IconAnomalies, bar: false, enabled: settings?.anomalyEnabled ?? false },
-    { to: "/containers", labelKey: "nav.containers", icon: IconContainers, bar: true, enabled: true },
-    // The gated tabs appear only once their domain is enabled; the gate
-    // computes `enabled`, it does not remove the entry (see this file's header).
-    { to: "/vms", labelKey: "nav.vms", icon: IconVM, bar: false, enabled: settings?.vmsEnabled ?? false },
-    { to: "/flash", labelKey: "nav.flash", icon: IconFlash, bar: false, enabled: settings?.flashEnabled ?? false },
-    { to: "/files", labelKey: "nav.files", icon: IconFiles, bar: true, enabled: settings?.filesEnabled ?? false },
-    { to: "/zfs", labelKey: "nav.zfs", icon: IconZFS, bar: false, enabled: settings?.zfsEnabled ?? false },
-    { to: "/config", labelKey: "nav.config", icon: IconConfig, bar: false, enabled: settings?.configEnabled ?? false },
-    // Always visible: disaster recovery is a core flow. It sits
-    // below the backup types because it restores them.
-    { to: "/recovery", labelKey: "nav.recovery", icon: IconRecovery, bar: true, enabled: true },
-    // Receiver, Fleet and Pull share one row. The Instances page shows only
-    // the tabs whose setting is on.
-    { to: "/instances", labelKey: "instances.title", icon: IconFleet, bar: false, enabled: settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled || false },
-    { to: "/settings", labelKey: "nav.settings", icon: IconGear, bar: false, enabled: true },
+    { to: "/dashboard", labelKey: "nav.overview", icon: IconDashboard, count: "attention", sidebar: true, footer: false, phone: true, bar: true },
+    { to: "/anomalies", labelKey: "nav.anomalies", icon: IconAnomalies, count: "anomalies", sidebar: detection, footer: false, phone: detection, bar: false },
+    { to: "/backups", labelKey: "backups.title", icon: IconArchive, sidebar: true, footer: false, phone: true, bar: true },
+    { to: "/recovery", labelKey: "nav.restore", icon: IconTabRecovery, sidebar: true, footer: false, phone: true, bar: true },
+    // The two Settings pages that can be pinned to the sidebar. A phone always
+    // lists the storage locations, which keeps its More sheet from ever
+    // opening empty.
+    { to: "/storage", labelKey: "storage.title", icon: IconTabStorage, sidebar: pins.storage, footer: false, phone: true, bar: false },
+    { to: "/instances", labelKey: "instances.title", icon: IconFleet, sidebar: pins.instances, footer: false, phone: pins.instances, bar: false },
+    { to: "/settings", labelKey: "nav.settings", icon: IconGear, sidebar: true, footer: true, phone: true, bar: true },
   ];
 }
 
-/**
- * The bottom bar's destination slots: the registry filtered to enabled `bar`
- * entries. A one-line derivation of the one list, so the bar's relative order
- * always equals the desktop Sidebar's by construction.
- *
- * When `filesEnabled` is false the Files slot disappears and the bar renders
- * 3 destination slots + More; matching desktop Sidebar gating exactly, which
- * is what makes "a settings-gated tab never appears in mobile chrome when the
- * desktop Sidebar hides it" hold by construction rather than by a special
- * case.
- */
-export function barDestinations(settings: Settings | null): NavDestination[] {
-  return destinations(settings).filter((d) => d.bar && d.enabled);
+export function sidebarDestinations(settings: Settings | null, pins: NavPins): NavDestination[] {
+  return destinations(settings, pins).filter((d) => d.sidebar);
 }
 
-/**
- * The More sheet's destination list: the registry filtered to enabled
- * non-bar entries; the desktop Sidebar's order. Same derivation shape as
- * barDestinations, same structural order-parity guarantee. Settings is always
- * in this list, so the More sheet has a row even with every gate off, which is
- * why the bar's More trigger renders unconditionally rather than gating on
- * this list's length.
- */
-export function moreDestinations(settings: Settings | null): NavDestination[] {
-  return destinations(settings).filter((d) => !d.bar && d.enabled);
+export function barDestinations(settings: Settings | null, pins: NavPins): NavDestination[] {
+  return destinations(settings, pins).filter((d) => d.phone && d.bar);
+}
+
+export function moreDestinations(settings: Settings | null, pins: NavPins): NavDestination[] {
+  return destinations(settings, pins).filter((d) => d.phone && !d.bar);
+}
+
+/** onDestination reports whether a path is the destination or a page below it,
+ *  which is how a link to it decides that it is the current one. */
+export function onDestination(pathname: string, d: NavDestination): boolean {
+  return pathname === d.to || pathname.startsWith(`${d.to}/`);
 }

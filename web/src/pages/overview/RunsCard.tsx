@@ -16,7 +16,7 @@ import { RunAnomalyBadge } from "../../components/RunAnomalyBadge";
 import { SelectField } from "../../components/SelectField";
 import { Card } from "./Card";
 import { FailureCounter } from "./FailureCounter";
-import { failedRunsNeedingAttention } from "./runFailures";
+import { failedRunsNeedingAttention } from "../../lib/runFailures";
 
 /** The scrubbed, direction-fixed note a run shows under its summary: the
  *  reason a run failed or was skipped, or what a successful one has to add

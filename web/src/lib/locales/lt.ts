@@ -7,7 +7,9 @@ const lt: Partial<Translations> = {
   "theme.light": "Šviesi",
 
   // Nav
-  "nav.dashboard": "Skydelis",
+  "nav.overview": "Apžvalga",
+  "nav.attentionCountAria": "Reikia dėmesio: {n}",
+  "nav.restore": "Atkūrimas",
   "nav.containers": "Konteineriai",
   "nav.vms": "VM",
   "nav.flash": "Flash",

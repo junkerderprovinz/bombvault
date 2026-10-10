@@ -7,7 +7,9 @@ const bg: Partial<Translations> = {
   "theme.light": "Светла",
 
   // Nav
-  "nav.dashboard": "Табло",
+  "nav.overview": "Преглед",
+  "nav.attentionCountAria": "Нужно е внимание: {n}",
+  "nav.restore": "Възстановяване",
   "nav.containers": "Контейнери",
   "nav.vms": "ВМ",
   "nav.flash": "Flash",

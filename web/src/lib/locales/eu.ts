@@ -7,7 +7,9 @@ const eu: Partial<Translations> = {
   "theme.light": "Argia",
 
   // Nav
-  "nav.dashboard": "Panela",
+  "nav.overview": "Laburpena",
+  "nav.attentionCountAria": "Arreta behar du: {n}",
+  "nav.restore": "Berrezarpena",
   "nav.containers": "Edukiontziak",
   "nav.vms": "MB",
   "nav.flash": "Flash",

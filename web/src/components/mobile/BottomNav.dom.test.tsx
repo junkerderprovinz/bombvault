@@ -10,27 +10,36 @@
 //   - the More trigger is a disclosure: aria-haspopup="dialog" and
 //     aria-expanded that tracks the sheet's open state;
 //   - the More trigger reads as active (filled accent) exactly while the
-//     current route lives on the More side of the registry (Settings, the
-//     gated tabs) and never while a bar destination is current;
+//     current route belongs to one of the sheet's entries (Anomalies, the
+//     storage locations, Instances) and never while a bar destination is
+//     current;
+//   - Overview carries the count of what needs the person, in grey, and in the
+//     ink of the fill on the current slot;
 //   - every slot carries the colour engine (glim-hue + its own --item-hue)
 //     with the active/filled slot additionally carrying glim-active;
 //   - in glyph mode the slot's name lives in aria-label and opens the app's
 //     tip bubble (lib/useTipBubble), the sidebar's mechanism; the native
 //     title attribute is retired.
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { I18nProvider } from "../../lib/i18n";
 import { hueVars } from "../../lib/appearance";
+import { AttentionProvider } from "../../lib/attention";
 import { AnomalyProvider } from "../../lib/useAnomalies";
 import type { AnomalySummary, Settings } from "../../lib/api";
 
 const getAnomalySummary = vi.fn();
+const getCoverage = vi.fn();
 vi.mock("../../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   getAnomalySummary: () => getAnomalySummary(),
+  listRuns: async () => ({ ok: true, runs: [] }),
+  getCoverage: () => getCoverage(),
 }));
+
+const PINS_KEY = "bombvault.navPins";
 
 function draw(path: string, settings: Settings | null = null) {
   return render(
@@ -45,6 +54,10 @@ function draw(path: string, settings: Settings | null = null) {
 function bar() {
   return screen.getByTestId("bottom-nav");
 }
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 afterEach(cleanup);
 
@@ -70,14 +83,33 @@ describe("BottomNav bar-card", () => {
     expect(card!.className).not.toMatch(/border-\S+/);
   });
 
-  it("fresh-DB fixture renders the three enabled bar destinations plus the More trigger", () => {
+  it("renders Overview, Backups, Restore and Settings, in that order, plus the More trigger", () => {
     draw("/dashboard");
     const slots = bar().querySelectorAll("div.flex.h-14 > *");
-    expect(slots).toHaveLength(4);
-    expect(within(bar()).getByRole("link", { name: "Dashboard" })).toBeTruthy();
-    expect(within(bar()).getByRole("link", { name: "Recovery" })).toBeTruthy();
-    expect(within(bar()).getByRole("link", { name: "Containers" })).toBeTruthy();
-    expect(within(bar()).getByRole("button", { name: "More" })).toBeTruthy();
+    expect(slots).toHaveLength(5);
+    expect(within(bar()).getAllByRole("link").map((slot) => slot.textContent)).toEqual([
+      "Overview",
+      "Backups",
+      "Restore",
+      "Settings",
+    ]);
+    expect(slots[4]).toBe(within(bar()).getByRole("button", { name: "More" }));
+  });
+
+  it("keeps the same four slots whatever backup types, modules and pins are on", () => {
+    localStorage.setItem(PINS_KEY, JSON.stringify({ storage: true, instances: true }));
+    draw("/dashboard", {
+      anomalyEnabled: true,
+      vmsEnabled: true,
+      filesEnabled: true,
+      fleetEnabled: true,
+    } as Settings);
+    expect(within(bar()).getAllByRole("link").map((slot) => slot.getAttribute("href"))).toEqual([
+      "/dashboard",
+      "/backups",
+      "/recovery",
+      "/settings",
+    ]);
   });
 });
 
@@ -97,11 +129,11 @@ describe("BottomNav colour engine", () => {
 
   it("the active destination slot fills with the accent and carries glim-active; resting slots do not", () => {
     draw("/dashboard");
-    const active = within(bar()).getByRole("link", { name: "Dashboard" });
+    const active = within(bar()).getByRole("link", { name: "Overview" });
     expect(active.className).toContain("bg-accent");
     expect(active.className).toContain("text-accentContrast");
     expect(active.className).toContain("glim-active");
-    const resting = within(bar()).getByRole("link", { name: "Containers" });
+    const resting = within(bar()).getByRole("link", { name: "Backups" });
     expect(resting.className).not.toContain("bg-accent");
     expect(resting.className).not.toContain("glim-active");
   });
@@ -117,8 +149,8 @@ describe("BottomNav More trigger", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("is filled while a More-side route is current (Settings), not while a bar destination is", () => {
-    draw("/settings");
+  it("is filled while one of the sheet's pages is current, not while a bar destination is", () => {
+    draw("/storage");
     const onMoreRoute = within(bar()).getByRole("button", { name: "More" });
     expect(onMoreRoute.className).toContain("bg-accent");
     expect(onMoreRoute.className).toContain("glim-active");
@@ -126,28 +158,42 @@ describe("BottomNav More trigger", () => {
     // reader and forced colours; the destination slots get the same from
     // NavLink.
     expect(onMoreRoute.getAttribute("aria-current")).toBe("true");
-    cleanup();
-    draw("/dashboard");
-    const onBarRoute = within(bar()).getByRole("button", { name: "More" });
-    expect(onBarRoute.className).not.toContain("bg-accent");
-    expect(onBarRoute.className).not.toContain("glim-active");
-    expect(onBarRoute.getAttribute("aria-current")).toBeNull();
+    for (const barRoute of ["/dashboard", "/settings"]) {
+      cleanup();
+      draw(barRoute);
+      const onBarRoute = within(bar()).getByRole("button", { name: "More" });
+      expect(onBarRoute.className, barRoute).not.toContain("bg-accent");
+      expect(onBarRoute.className, barRoute).not.toContain("glim-active");
+      expect(onBarRoute.getAttribute("aria-current"), barRoute).toBeNull();
+    }
   });
 
-  it("is filled on a gated More-side route exactly while its gate is on: the registry lookup decides, never the path", () => {
-    // /vms has no literal in the trigger's active logic (the retired
-    // special-case disjunct did): its More-side membership is purely the
-    // enabled flag in the registry, so the gate flip is what this assertion
-    // rides.
-    draw("/vms", { vmsEnabled: true } as Settings);
-    const gateOn = within(bar()).getByRole("button", { name: "More" });
-    expect(gateOn.className).toContain("bg-accent");
-    expect(gateOn.getAttribute("aria-current")).toBe("true");
+  it("stays filled on a page below one of the sheet's entries", () => {
+    draw("/storage/local");
+    const trigger = within(bar()).getByRole("button", { name: "More" });
+    expect(trigger.className).toContain("bg-accent");
+    expect(trigger.getAttribute("aria-current")).toBe("true");
+  });
+
+  it("is filled on a gated route exactly while its gate is open: the registry decides, not the path", () => {
+    draw("/anomalies", { anomalyEnabled: true } as Settings);
+    const detectionOn = within(bar()).getByRole("button", { name: "More" });
+    expect(detectionOn.className).toContain("bg-accent");
+    expect(detectionOn.getAttribute("aria-current")).toBe("true");
     cleanup();
-    draw("/vms");
-    const gateOff = within(bar()).getByRole("button", { name: "More" });
-    expect(gateOff.className).not.toContain("bg-accent");
-    expect(gateOff.getAttribute("aria-current")).toBeNull();
+    draw("/anomalies");
+    const detectionOff = within(bar()).getByRole("button", { name: "More" });
+    expect(detectionOff.className).not.toContain("bg-accent");
+    expect(detectionOff.getAttribute("aria-current")).toBeNull();
+    cleanup();
+
+    localStorage.setItem(PINS_KEY, JSON.stringify({ instances: true }));
+    draw("/instances");
+    expect(within(bar()).getByRole("button", { name: "More" }).getAttribute("aria-current")).toBe("true");
+    cleanup();
+    localStorage.setItem(PINS_KEY, JSON.stringify({ instances: false }));
+    draw("/instances");
+    expect(within(bar()).getByRole("button", { name: "More" }).getAttribute("aria-current")).toBeNull();
   });
 
   it("hands the sheet a rotation position that continues the bar's, not a restart", () => {
@@ -196,7 +242,7 @@ describe("BottomNav label axis (bottombar)", () => {
   it("text mode shows every caption and names slots through their text alone", () => {
     drawInMode("text");
     const slots = allSlots();
-    expect(slots).toHaveLength(4);
+    expect(slots).toHaveLength(5);
     for (const slot of slots) {
       expect(slot.querySelector("span.sr-only")).toBeNull();
       expect(slot.querySelector("span.glim-label-reactive")).toBeNull();
@@ -204,7 +250,7 @@ describe("BottomNav label axis (bottombar)", () => {
       expect(slot.getAttribute("title")).toBeNull();
       expect(slot.style.getPropertyValue("--reactive-chars")).toBe("");
     }
-    expect(within(bar()).getByRole("link", { name: "Dashboard" })).toBeTruthy();
+    expect(within(bar()).getByRole("link", { name: "Overview" })).toBeTruthy();
   });
 
   it("glyph mode hides the captions and keeps every slot named (aria-label plus the tip bubble)", () => {
@@ -225,9 +271,9 @@ describe("BottomNav label axis (bottombar)", () => {
     }
     // The accessible names survive the hiding: role queries resolve through
     // aria-label exactly as assistive tech reads them.
-    expect(within(bar()).getByRole("link", { name: "Dashboard" })).toBeTruthy();
-    expect(within(bar()).getByRole("link", { name: "Recovery" })).toBeTruthy();
-    expect(within(bar()).getByRole("link", { name: "Containers" })).toBeTruthy();
+    for (const name of ["Overview", "Backups", "Restore", "Settings"]) {
+      expect(within(bar()).getByRole("link", { name })).toBeTruthy();
+    }
     expect(within(bar()).getByRole("button", { name: "More" })).toBeTruthy();
   });
 
@@ -301,5 +347,73 @@ describe("BottomNav's More trigger and open findings", () => {
   it("leaves it unmarked while detection is off, since the sheet has no Anomalies row then", async () => {
     const more = await drawWithFindings({ critical: 1, warning: 0, info: 0 }, false);
     expect(within(more).queryByTestId("more-anomaly-dot")).toBeNull();
+  });
+});
+
+describe("BottomNav's count on Overview", () => {
+  const LABEL = "Things that need you: 2";
+
+  async function drawWithUnprotected(path: string, mode?: string) {
+    if (mode) localStorage.setItem("bv-labels-bottombar", mode);
+    getCoverage.mockResolvedValue({
+      ok: true,
+      coverage: {
+        domains: [
+          {
+            domain: "containers",
+            enabled: true,
+            total: 5,
+            protected: 3,
+            unprotected: [
+              { name: "gitea", reason: "not-set-up", neverBackedUp: true },
+              { name: "immich", reason: "no-schedule", neverBackedUp: false },
+            ],
+          },
+        ],
+        total: 5,
+        protected: 3,
+      },
+    });
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <I18nProvider>
+          <AttentionProvider settings={null}>
+            <BottomNav settings={null} authEnabled={false} scrollMainToTop={() => undefined} />
+          </AttentionProvider>
+        </I18nProvider>
+      </MemoryRouter>,
+    );
+    await act(async () => {});
+  }
+
+  it("is grey on a resting slot", async () => {
+    await drawWithUnprotected("/backups");
+    const count = within(bar()).getByLabelText(LABEL);
+    expect(count.textContent).toBe("2");
+    expect(count.closest("a")?.getAttribute("href")).toBe("/dashboard");
+    // index.css rests `.glim-nav-count--quiet` on grey and gives it the fill's
+    // ink under `.glim-active`.
+    expect(count.className).toContain("glim-nav-count--quiet");
+    expect(count.className).not.toMatch(/status|\bbg-/);
+    expect(count.closest(".glim-active")).toBeNull();
+  });
+
+  it("stands inside the filled slot on the current tab", async () => {
+    await drawWithUnprotected("/dashboard");
+    const count = within(bar()).getByLabelText(LABEL);
+    expect(count.closest(".glim-active")).toBe(count.closest("a"));
+  });
+
+  it("is part of the slot's name when the caption is hidden", async () => {
+    await drawWithUnprotected("/backups", "glyph");
+    expect(within(bar()).getByRole("link", { name: `Overview, ${LABEL}` })).toBeTruthy();
+  });
+
+  it("shows on no other slot and is absent while nothing needs the person", async () => {
+    await drawWithUnprotected("/backups");
+    expect(within(bar()).getAllByLabelText(/Things that need you/)).toHaveLength(1);
+    cleanup();
+    draw("/backups");
+    expect(within(bar()).queryByLabelText(/Things that need you/)).toBeNull();
   });
 });
