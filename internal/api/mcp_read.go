@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -386,6 +386,10 @@ func mcpChangesOf(changes []DefinitionChange) []mcpChange {
 	return out
 }
 
+func mcpItemViewOf(f itemFacts) mcpItemView {
+	return mcpItemView{ID: f.ID, Name: f.Name, Included: f.Included, Paused: f.Paused, Schedule: f.Schedule.Kind}
+}
+
 func (v *mcpItemView) stamp(s store.BackupStamp) {
 	v.LastSuccessAt = s.LastSuccessAt
 	v.LastDurationSeconds = s.LastDurationSeconds
@@ -483,14 +487,8 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 		}
 		rows := make([]mcpItemView, 0, len(vms))
 		for _, vm := range vms {
-			view := mcpItemView{
-				ID:       vm.ID,
-				Name:     vm.Name,
-				Included: vm.IncludeInSchedule,
-				Paused:   schedule.PausedByOverride(vm.ScheduleCadence, settings.PerItemSchedules),
-				Schedule: schedule.EffectiveVMSchedule(vm, settings).Kind,
-				Stops:    mcpStops{Self: vm.Method != "live", Containers: []string{}, Known: true},
-			}
+			view := mcpItemViewOf(vmFacts(vm, settings))
+			view.Stops = mcpStops{Self: vm.Method != "live", Containers: []string{}, Known: true}
 			view.stamp(stamps[vm.ID])
 			rows = append(rows, view)
 		}
@@ -503,14 +501,8 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 		}
 		rows := make([]mcpItemView, 0, len(sets))
 		for _, set := range sets {
-			view := mcpItemView{
-				ID:       set.ID,
-				Name:     set.Name,
-				Included: set.Enabled,
-				Paused:   schedule.PausedByOverride(set.ScheduleCadence, settings.PerItemSchedules),
-				Schedule: schedule.EffectiveFileSetSchedule(set, settings).Kind,
-				Stops:    mcpStops{Containers: []string{}, Known: true},
-			}
+			view := mcpItemViewOf(fileSetFacts(set, settings))
+			view.Stops = mcpStops{Containers: []string{}, Known: true}
 			view.stamp(stamps[set.ID])
 			rows = append(rows, view)
 		}
@@ -552,7 +544,7 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 // failure leaves the rows in place without an installed flag: the stored items
 // are still what an operator asks about, and dropping them because the socket
 // was busy would read as "BombVault protects nothing".
-func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings, stamps map[string]store.BackupStamp, docker func() mcpDockerState) ([]mcpItemView, bool, error) {
+func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings, stamps map[string]store.BackupStamp, docker func() dockerState) ([]mcpItemView, bool, error) {
 	targets, err := h.store.ListTargets()
 	if err != nil {
 		return nil, false, err
@@ -580,14 +572,8 @@ func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings
 		if self != "" && t.ContainerName == self {
 			continue
 		}
-		view := mcpItemView{
-			ID:       t.ID,
-			Name:     t.ContainerName,
-			Included: t.IncludeInSchedule,
-			Paused:   schedule.PausedByOverride(t.ScheduleCadence, settings.PerItemSchedules),
-			Schedule: schedule.EffectiveContainerSchedule(t, settings).Kind,
-			Stops:    mcpStops{Containers: []string{}, Known: dockerAnswered},
-		}
+		view := mcpItemViewOf(containerFacts(t, settings))
+		view.Stops = mcpStops{Containers: []string{}, Known: dockerAnswered}
 		if dockerAnswered {
 			c, installed := live[t.ContainerName]
 			view.Installed = &installed
@@ -621,40 +607,17 @@ func isRunning(c dockercli.ContainerInfo) bool {
 	return strings.EqualFold(c.State, "running")
 }
 
-// mcpDockerState is the container list one call works from, and whether Docker
-// gave it.
-type mcpDockerState struct {
-	infos    []dockercli.ContainerInfo
-	live     map[string]dockercli.ContainerInfo
-	answered bool
-}
-
 // mcpDockerOnce asks Docker for its containers the first time a domain needs
 // them and hands every later domain the same answer, so one listing costs one
 // Docker call however many domains read what is running.
-func (h *Handler) mcpDockerOnce(ctx context.Context) func() mcpDockerState {
-	var state *mcpDockerState
-	return func() mcpDockerState {
-		if state != nil {
-			return *state
-		}
-		infos, err := h.docker.List(ctx)
-		if err != nil {
-			log.Printf("api: mcp: list_items: the container list is unavailable: %v", err)
-		}
-		live := make(map[string]dockercli.ContainerInfo, len(infos))
-		for _, c := range infos {
-			live[c.Name] = c
-		}
-		state = &mcpDockerState{infos: infos, live: live, answered: err == nil}
-		return *state
-	}
+func (h *Handler) mcpDockerOnce(ctx context.Context) func() dockerState {
+	return sync.OnceValue(func() dockerState { return h.listDocker(ctx) })
 }
 
 // mcpZFSItems lists the ZFS items off their stored rows. The host is never
 // asked: it may be switched off, and the rows already hold everything the
 // listing says. Docker is, but only when an item stops containers.
-func (h *Handler) mcpZFSItems(settings store.Settings, stamps map[string]store.BackupStamp, docker func() mcpDockerState) ([]mcpItemView, error) {
+func (h *Handler) mcpZFSItems(settings store.Settings, stamps map[string]store.BackupStamp, docker func() dockerState) ([]mcpItemView, error) {
 	datasets, err := h.store.ListZFSDatasets()
 	if err != nil {
 		return nil, err
@@ -662,15 +625,9 @@ func (h *Handler) mcpZFSItems(settings store.Settings, stamps map[string]store.B
 	rows := make([]mcpItemView, 0, len(datasets))
 	for _, d := range datasets {
 		code := d.LastCheckCode
-		view := mcpItemView{
-			ID:            d.ID,
-			Name:          d.Dataset,
-			Included:      d.Enabled,
-			Paused:        schedule.PausedByOverride(d.ScheduleCadence, settings.PerItemSchedules),
-			Schedule:      schedule.EffectiveZFSDatasetSchedule(d, settings).Kind,
-			LastCheckCode: &code,
-			Stops:         mcpStops{Containers: []string{}, Known: true},
-		}
+		view := mcpItemViewOf(zfsDatasetFacts(d, settings))
+		view.LastCheckCode = &code
+		view.Stops = mcpStops{Containers: []string{}, Known: true}
 		if len(d.StopContainers) > 0 {
 			state := docker()
 			view.Stops.Known = state.answered

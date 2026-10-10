@@ -475,6 +475,7 @@ func (h *Handler) Router() http.Handler {
 
 	// Placement of one container, VM or file set.
 	mux.HandleFunc("POST /api/items/{domain}/{name}/placement/preview", h.handlePreviewItemPlacement)
+	mux.HandleFunc("GET /api/items", h.handleListItems)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemovalPreview)
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemoval)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline", h.handleTimeline)

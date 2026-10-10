@@ -11968,6 +11968,15 @@ func definitionUUID(definition string) string {
 	return info.UUID
 }
 
+// vmDisplayName is the name a VM is shown under: its libvirt name everywhere
+// but on TrueNAS, where libvirt names are ids and FriendlyName resolves them.
+func vmDisplayName(vm virshcli.VMInfo, trueNAS bool) string {
+	if trueNAS {
+		return vm.FriendlyName
+	}
+	return vm.Name
+}
+
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
 // VMs with no virsh entry but with backup history appear as state="not-installed".
 func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
@@ -12057,11 +12066,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	hasOwnBackup := make(map[string]bool, len(infos))
 	needsRenameSuggestion := false
 	for _, vm := range infos {
-		displayName := vm.Name
-		if isTrueNAS {
-			displayName = vm.FriendlyName
-		}
-		v := VMView{Name: displayName, LibvirtName: vm.Name, State: vm.State, Method: "graceful", AliasConflicts: []string{}, Aliases: []string{}}
+		v := VMView{Name: vmDisplayName(vm, isTrueNAS), LibvirtName: vm.Name, State: vm.State, Method: "graceful", AliasConflicts: []string{}, Aliases: []string{}}
 		var run *store.Run
 		if t, ok := byName[vm.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)

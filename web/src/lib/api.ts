@@ -482,8 +482,13 @@ export interface Run {
   finishedAt: number | null;
   snapshotId: string;
   bytes: number;
+  /** What restic read during the run, null when the run measured nothing. */
+  sourceBytes?: number | null;
   error: string;
   acknowledged: boolean; // true once dismissed from the dashboard error panel (#126)
+  /** The parent run of the "back up everything" pass this run belongs to, ""
+   *  outside one. */
+  groupId?: string;
   target: string; // human target name (container/VM/file-set name, or "Unraid flash")
   // "container" | "vm" | "flash" | "config" | "files" | "zfs" | "everything" | "".
   // "everything" is the Backup Everything pass's PARENT run (see
@@ -3316,6 +3321,77 @@ export function getSizeBreakdown(
 
 export function listRuns(run?: string): Promise<ListRunsResponse> {
   return fetchJSON(run ? `/api/runs?run=${encodeURIComponent(run)}` : "/api/runs");
+}
+
+/** The kinds of GET /api/items. `Run.domain` names a run's item by the same
+ *  words. */
+export type BackupItemKind = "container" | "vm" | "files" | "zfs" | "flash" | "config";
+
+/** One run in the strip of a BackupItem. */
+export interface BackupItemRun {
+  id: string;
+  /** What ran: "backup", "dbdump", "restore" and so on. */
+  kind: string;
+  status: string;
+  startedAt: number;
+}
+
+/** A row from GET /api/items: a container, a VM, a folder set, a ZFS item, or
+ *  the single flash or configuration backup. */
+export interface BackupItem {
+  kind: BackupItemKind;
+  /** What the routes of the kind take: the container name, the libvirt name,
+   *  the id of a folder set or ZFS item, "flash" or "config". */
+  key: string;
+  /** The name to show. Flash and config carry their key here and the page
+   *  words them. */
+  name: string;
+  /** False once the item is taken out of the schedule. */
+  included: boolean;
+  /** True while the item's own schedule is "off" and per-item schedules are on. */
+  paused: boolean;
+  effectiveSchedule: EffectiveSchedule;
+  /** Unix seconds of the last successful backup, 0 for none. */
+  lastBackup: number;
+  /** Status of the last finished backup, "" for none. */
+  lastRunStatus: string;
+  /** What the newest measured backup read, null before the first. */
+  sourceBytes: number | null;
+  /** Containers and VMs: what Docker or libvirt reports. Absent when the host
+   *  was not asked or did not answer. */
+  state?: string;
+  /** Containers and VMs: false for an entry whose container or VM is gone
+   *  from the host. Absent like `state`. */
+  installed?: boolean;
+  /** True for BombVault's own container, which cannot back itself up. */
+  self?: boolean;
+  /** True while the kind is switched off in the settings. Flash and config
+   *  are not listed at all then. */
+  kindDisabled?: boolean;
+  /** The newest fourteen runs of any kind, newest first. */
+  runs: BackupItemRun[];
+}
+
+export interface ListItemsResponse {
+  ok: boolean;
+  items: BackupItem[];
+  /** Kinds whose host did not answer. Their rows are the stored entries
+   *  alone, so a container or VM BombVault has no entry for is missing. */
+  unlisted: BackupItemKind[];
+  error?: string;
+}
+
+/** GET /api/items: every item of every kind in one list. */
+export function listItems(): Promise<ListItemsResponse> {
+  return fetchJSON("/api/items");
+}
+
+/** GET /api/runs for one item of GET /api/items: its runs of every kind,
+ *  newest first, at most `limit` of them (500 without one). */
+export function listItemRuns(kind: BackupItemKind, key: string, limit?: number): Promise<ListRunsResponse> {
+  const q = new URLSearchParams({ itemKind: kind, itemKey: key });
+  if (limit !== undefined) q.set("limit", String(limit));
+  return fetchJSON(`/api/runs?${q.toString()}`);
 }
 
 /**
