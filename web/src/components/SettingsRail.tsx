@@ -65,6 +65,16 @@ export function SettingsRail({ items, active, label, onReorder }: SettingsRailPr
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const tiles = Array.from(list.current?.querySelectorAll<HTMLElement>("[data-rail-id]") ?? []);
     const here = tiles.indexOf(document.activeElement as HTMLElement);
+    // Alt with an arrow moves the tile itself, the keyboard's way to reorder.
+    if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      const ids = ordered.map((i) => i.id);
+      const to = here + (e.key === "ArrowDown" ? 1 : -1);
+      if (here < 0 || to < 0 || to >= ids.length) return;
+      e.preventDefault();
+      [ids[here], ids[to]] = [ids[to], ids[here]];
+      onReorder(ids);
+      return;
+    }
     const next =
       e.key === "ArrowDown"
         ? (here + 1) % tiles.length
