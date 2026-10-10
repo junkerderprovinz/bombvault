@@ -10,6 +10,7 @@ import type {
 } from "../../../lib/api";
 import { humanBytes } from "../../../lib/forecast";
 import type { TranslationKey } from "../../../lib/i18n";
+import { KEEP_PRESETS } from "../../../lib/keepPlan";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
 
 type Translate = (key: TranslationKey, n?: number) => string;
@@ -17,12 +18,6 @@ type Translate = (key: TranslationKey, n?: number) => string;
 /** The keep rule a new replica starts with: about a month of dailies and
  *  weeklies. */
 export const DEFAULT_KEEP: ZFSReplicaKeep = { preset: "own", own: [0, 7, 3, 0, 0] };
-
-export const KEEP_PRESETS: Record<Exclude<ZFSReplicaKeepPreset, "own">, ZFSReplicaKeepCounts> = {
-  short: [0, 7, 4, 3, 0],
-  balanced: [0, 7, 4, 6, 1],
-  long: [0, 14, 8, 12, 3],
-};
 
 export const KEEP_PRESET_KEY = {
   short: "zfs.replica.keep.short",
