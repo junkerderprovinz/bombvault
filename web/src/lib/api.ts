@@ -3490,6 +3490,13 @@ export function ackRuns(body: { ids?: string[]; all?: boolean }): Promise<{ ok: 
   return fetchJSON("/api/runs/ack", { method: "POST", body: JSON.stringify(body) });
 }
 
+/** POST /api/runs/ack for failed off-site copies, named by the target they
+ *  failed at (`targetId` of a location's section). A copy that fails
+ *  afterwards counts again. Returns how many failed copies it acknowledged. */
+export function ackFailedCopies(targetIds: string[]): Promise<{ ok: boolean; count?: number }> {
+  return fetchJSON("/api/runs/ack", { method: "POST", body: JSON.stringify({ copyTargets: targetIds }) });
+}
+
 /** GET /api/status — per-domain RPO (protection) status for the dashboard. */
 export function getStatus(): Promise<StatusResponse> {
   return fetchJSON("/api/status");
@@ -6470,8 +6477,9 @@ export interface StorageLocationSection {
   limitDownload: number;
   /** The settings the section holds itself instead of taking the location's. */
   own: FollowedSetting[];
-  /** `at` is when the last copy that succeeded began, 0 when none has. */
-  lastCopy?: { at: number; ok: boolean; failingSince?: number };
+  /** `at` is when the last copy that succeeded began, 0 when none has.
+   *  `acknowledged` means every copy that failed since was dismissed. */
+  lastCopy?: { at: number; ok: boolean; failingSince?: number; acknowledged?: boolean };
   lastTamper?: { domain: string; at: number; protected: boolean; detail: string };
 }
 

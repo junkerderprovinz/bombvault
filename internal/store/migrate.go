@@ -2892,6 +2892,14 @@ SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
 		alreadySatisfied: columnPresent("settings", "restore_folder_overrides"),
 		sql:              `ALTER TABLE settings ADD COLUMN restore_folder_overrides TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// A failed copy somebody has seen and dismissed, as runs carry it for
+		// a failed backup.
+		version:          restoreFolderMigration + 2,
+		name:             "offsite_runs_acknowledged",
+		alreadySatisfied: columnPresent("offsite_runs", "acknowledged"),
+		sql:              `ALTER TABLE offsite_runs ADD COLUMN acknowledged INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2995,7 +3003,8 @@ const locationMigration = 305
 // roles Receiver and Fetcher, 310 to 314.
 const roleRequestMigration = 310
 
-// restoreFolderMigration numbers the restore folder per section, 325 and 326.
+// restoreFolderMigration numbers the restore folder per section, 325 and 326,
+// and the acknowledgement of a failed copy, 327.
 const restoreFolderMigration = 325
 
 // Migrate applies any pending forward-only migrations to db.

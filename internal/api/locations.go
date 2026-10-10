@@ -102,6 +102,9 @@ type copyState struct {
 	OK bool  `json:"ok"`
 	// FailingSince is when the first failed copy after At began.
 	FailingSince int64 `json:"failingSince,omitempty"`
+	// Acknowledged means every copy that failed since At was dismissed. The
+	// next one that fails is not.
+	Acknowledged bool `json:"acknowledged,omitempty"`
 }
 
 // locationProtection is what keeps a location's backups from being deleted.
@@ -557,7 +560,12 @@ func (b *locationBuilder) lastCopy(t store.OffsiteTarget) *copyState {
 	if err != nil || (!found && failing == 0) {
 		return nil
 	}
-	return &copyState{At: run.StartedAt, OK: found && failing == 0, FailingSince: failing}
+	state := &copyState{At: run.StartedAt, OK: found && failing == 0, FailingSince: failing}
+	if failing != 0 {
+		open, err := b.s.store.FirstUnacknowledgedOffsiteFailureAfter(t.ID, run.StartedAt)
+		state.Acknowledged = err == nil && open == 0
+	}
+	return state
 }
 
 func (b *locationBuilder) lastTamper(domain, targetID string) *store.TamperTest {

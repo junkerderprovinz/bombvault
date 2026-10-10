@@ -4144,44 +4144,55 @@ func (h *Handler) mcpKeysBehind(runs []store.Run) map[string]store.MCPKey {
 	return out
 }
 
-// handleAckRuns marks failed runs as acknowledged so the dashboard's error panel
-// can dismiss them from the failure count (#126). POST /api/runs/ack with body
-// {"ids": []string (optional), "all": bool (optional)}: when `all` is set every
-// unacknowledged failed run is acknowledged; otherwise the given run ids (capped
-// at 5000, each a 32-hex opaque run id) are acknowledged. Responds {ok, count}.
+// handleAckRuns marks failed runs and failed off-site copies as acknowledged,
+// so the error panel stops counting them (#126). The body names runs by id and
+// copies by the target they failed at, at most 5000 of each, or sets all for
+// every failed run and copy that is not acknowledged yet. The count in the
+// answer is how many of either it changed.
+// POST /api/runs/ack
 func (h *Handler) handleAckRuns(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		IDs []string `json:"ids"`
-		All bool     `json:"all"`
+		IDs         []string `json:"ids"`
+		CopyTargets []string `json:"copyTargets"`
+		All         bool     `json:"all"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	ackRuns := func() (int64, error) { return h.store.AcknowledgeRuns(body.IDs) }
+	ackCopies := func() (int64, error) { return h.store.AcknowledgeFailedCopies(body.CopyTargets) }
 	if body.All {
-		n, err := h.store.AcknowledgeAllFailed()
-		if err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"count": n}))
+		ackRuns, ackCopies = h.store.AcknowledgeAllFailed, h.store.AcknowledgeAllFailedCopies
+	} else if msg := invalidAck(body.IDs, body.CopyTargets); msg != "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if len(body.IDs) > 5000 {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "too many ids"})
-		return
-	}
-	for _, id := range body.IDs {
-		if !validRunID(id) {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid run id"})
-			return
-		}
-	}
-	n, err := h.store.AcknowledgeRuns(body.IDs)
+	runs, err := ackRuns()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"count": n}))
+	copies, err := ackCopies()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"count": runs + copies}))
+}
+
+// invalidAck says what is wrong with the ids of an acknowledgement, "" for
+// nothing.
+func invalidAck(runIDs, copyTargets []string) string {
+	if len(runIDs) > 5000 || len(copyTargets) > 5000 {
+		return "too many ids"
+	}
+	if slices.ContainsFunc(runIDs, func(id string) bool { return !validRunID(id) }) {
+		return "invalid run id"
+	}
+	if slices.ContainsFunc(copyTargets, func(id string) bool { return !validOffsiteTargetID(id) }) {
+		return "invalid target id"
+	}
+	return ""
 }
 
 // handleStatus returns the per-domain RPO (protection) status for the dashboard's
