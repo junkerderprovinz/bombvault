@@ -263,6 +263,15 @@ describe("the size", () => {
     expect(size.getByRole("img", { name: en["entry.dedup.label"] })).toBeTruthy();
   });
 
+  it("does not deny the backup it has just named when the server has no folders to list", async () => {
+    await renderVerify("container/immich");
+    await waitFor(() => expect(getSizeBreakdown).toHaveBeenCalled());
+    const size = within(card(en["breakdown.title"]));
+    expect(size.getByRole("img", { name: en["entry.dedup.label"] })).toBeTruthy();
+    expect(size.queryByText(en["breakdown.none"])).toBeNull();
+    expect(size.queryByText(en["breakdown.running"])).toBeNull();
+  });
+
   it("asks at once for the folders of a kind that has them", async () => {
     await renderVerify("container/immich");
     await waitFor(() => expect(getSizeBreakdown).toHaveBeenCalledWith("containers", "immich", "", false));

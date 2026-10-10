@@ -104,7 +104,9 @@ export function SizeBreakdown({
               {t("breakdown.running")}
             </p>
           )}
-          {failed === null && data?.state === "none" && (
+          {/* A card that shows the breakdown at once has said what it knows
+              about the newest backup. Without folders to list it adds nothing. */}
+          {failed === null && data?.state === "none" && !expanded && (
             <p className="text-caption text-carbon-textMuted">{t("breakdown.none")}</p>
           )}
           {failed === null && data?.state === "ready" && (
