@@ -757,6 +757,41 @@ export function getHealth(): Promise<{ ok: boolean; version?: string }> {
   return fetchJSON("/api/health");
 }
 
+/** The versions the Info page lists. A bundled tool is null when its version
+ *  could not be read. */
+export type ComponentVersions = {
+  bombvault: string;
+  restic: string | null;
+  rclone: string | null;
+};
+
+/** GET /api/versions */
+export function getVersions(): Promise<OkEnvelope & { versions: ComponentVersions }> {
+  return fetchJSON("/api/versions");
+}
+
+export type UpdateCheck = {
+  current: string;
+  latest: string;
+  updateAvailable: boolean;
+  releaseUrl: string;
+};
+
+/** Why an update check could not run, the `code` of its refusal. A dev build
+ *  has no version to compare and asks nobody. */
+export type UpdateCheckRefusal = "dev-build" | "offline" | "rate-limited" | "bad-response";
+
+/**
+ * POST /api/update-check asks GitHub for the newest BombVault release. The
+ * server makes that call for this request and at no other time, so the page
+ * sends it only when the person presses the button.
+ */
+export function checkForUpdate(): Promise<
+  Omit<OkEnvelope, "code"> & { code?: UpdateCheckRefusal; update?: UpdateCheck }
+> {
+  return fetchJSON("/api/update-check", { method: "POST" });
+}
+
 /**
  * Poll the lightest endpoint (GET /api/health) until BombVault is reachable
  * again after it restarts itself to apply a config restore (Recovery tab). It
@@ -6575,6 +6610,48 @@ export function forgetAnomalyExpectation(
       `${encodeURIComponent(family)}?${query.toString()}`,
     { method: "DELETE" }
   );
+}
+
+/** One edge of a usual range, in the figures a finding raised on it carries.
+ *  `metric` is the finding that edge raises. */
+export type AnomalyLimit = {
+  metric: string;
+  expected: number;
+  threshold: number;
+  samples: number;
+};
+
+/** One measured quantity of a series over time, oldest first. */
+export type AnomalyQuantity = {
+  quantity: "sourceBytes" | "sourceFiles" | "newDataBytes" | "resticMs";
+  /** `at` is when the backup was taken, the time the backup list shows. */
+  points: { runId: string; at: number; value: number }[];
+  learning: boolean;
+  samples: number;
+  needed: number;
+  /** Null while the rules are learning, unless an open finding already holds
+   *  the quantity to the level it started from. A side is null where no rule
+   *  watches that direction. */
+  band: { low: AnomalyLimit | null; high: AnomalyLimit | null } | null;
+};
+
+/** The measured history of one series of an item: its own backups, its
+ *  database dumps, or one dataset of its ZFS tree, which `part` then names. A
+ *  ZFS item's own series has no quantities, because its datasets carry them. */
+export type AnomalySeries = {
+  scopeKind: "item" | "dump" | "zfsds";
+  part: string;
+  quantities: AnomalyQuantity[];
+  /** Runs that failed and so left no measurement. */
+  failed: { runId: string; at: number }[];
+};
+
+/** GET /api/anomalies/items/{targetId}/series. An item detection does not
+ *  know is refused with code "not-found". */
+export function getAnomalyItemSeries(
+  targetId: string
+): Promise<OkEnvelope & { series: AnomalySeries[] }> {
+  return fetchJSON(`/api/anomalies/items/${encodeURIComponent(targetId)}/series`);
 }
 
 /** One MCP key as the settings card sees it. The key itself is handed out once

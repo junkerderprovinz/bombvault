@@ -769,6 +769,32 @@ func (e *anomalyEngine) evaluateSeries(ctx context.Context, sc anomalyScope, p *
 	if !known {
 		return nil
 	}
+	in, state, err := e.readSeries(sc, ref, p)
+	if err != nil {
+		return err
+	}
+	if e.beforeWrite != nil {
+		e.beforeWrite(sc)
+	}
+	res := evaluateItem(in)
+	changes := applyFindings(scopeRef{
+		Kind: sc.Kind, ID: sc.ID, TargetID: ref.TargetID, Domain: ref.Domain,
+		Sensitivity: string(in.Sens),
+	}, res.Findings, res.Absent, state, p.now)
+
+	if err := e.apply(sc, changes); err != nil {
+		return err
+	}
+	e.recordScope(sc, anomalyScopeResult{
+		Learning: res.Learning, Typical: res.Typical, Runs: len(in.Series),
+		NewestAt: newestEligibleAt(in.Series), Selection: selectionRebaseAt(in.Series),
+	})
+	return ctx.Err()
+}
+
+// readSeries reads what the rules judge one item's backups or one container's
+// database dumps on, and the rows a previous pass left for the series.
+func (e *anomalyEngine) readSeries(sc anomalyScope, ref anomalyItemRef, p *anomalyPass) (itemInput, store.ScopeState, error) {
 	kind, series := "backup", seriesItem
 	switch {
 	case sc.Kind == anomalyScopeDump:
@@ -780,7 +806,7 @@ func (e *anomalyEngine) evaluateSeries(ctx context.Context, sc anomalyScope, p *
 
 	rows, err := e.svc.store.ItemSeries(sc.ID, kind, p.now, anomalySeriesRuns)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 	// A series that runs less often than every three days has fewer than ten
 	// backups in a month, and the rule then falls back to the newest ten of any
@@ -788,39 +814,22 @@ func (e *anomalyEngine) evaluateSeries(ctx context.Context, sc anomalyScope, p *
 	window, err := e.svc.store.NewDataWindow(sc.ID, kind,
 		min(from-anomalyNewDataDays*86400, p.now-anomalySeriesRuns*86400), p.now, anomalyNewDataMaxRows)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 	state, err := e.svc.store.AnomalyScopeState(sc.Kind, sc.ID)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 	expectations, err := e.svc.store.ListAnomalyExpectations(sc.Kind, sc.ID)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
-
-	sens := resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity)
-	if e.beforeWrite != nil {
-		e.beforeWrite(sc)
-	}
-	res := evaluateItem(itemInput{
+	return itemInput{
 		Kind: series, Domain: ref.Domain, Series: rows, NewData: window,
 		Open: openByMetric(state.Open), Expectations: byFamily(expectations),
-		Sens: sens, EvaluateFrom: from,
-	})
-	changes := applyFindings(scopeRef{
-		Kind: sc.Kind, ID: sc.ID, TargetID: ref.TargetID, Domain: ref.Domain,
-		Sensitivity: string(sens),
-	}, res.Findings, res.Absent, state, p.now)
-
-	if err := e.apply(sc, changes); err != nil {
-		return err
-	}
-	e.recordScope(sc, anomalyScopeResult{
-		Learning: res.Learning, Typical: res.Typical, Runs: len(rows),
-		NewestAt: newestEligibleAt(rows), Selection: selectionRebaseAt(rows),
-	})
-	return ctx.Err()
+		Sens:         resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity),
+		EvaluateFrom: from,
+	}, state, nil
 }
 
 // evaluateDataset judges one dataset of a ZFS tree against its own history,
@@ -835,23 +844,48 @@ func (e *anomalyEngine) evaluateDataset(ctx context.Context, sc anomalyScope, p 
 	if !known {
 		return nil
 	}
+	in, state, err := e.readDataset(sc, ref, p)
+	if err != nil {
+		return err
+	}
+	if e.beforeWrite != nil {
+		e.beforeWrite(sc)
+	}
+	res := evaluateItem(in)
+	changes := applyFindings(scopeRef{
+		Kind: sc.Kind, ID: sc.ID, TargetID: ref.TargetID, Domain: ref.Domain,
+		Sensitivity: string(in.Sens),
+	}, res.Findings, res.Absent, state, p.now)
+
+	if err := e.apply(sc, changes); err != nil {
+		return err
+	}
+	e.recordScope(sc, anomalyScopeResult{
+		Learning: res.Learning, Typical: res.Typical, Runs: len(in.Series),
+		NewestAt: newestEligibleAt(in.Series), Selection: selectionRebaseAt(in.Series), Owner: ref.TargetID,
+	})
+	return ctx.Err()
+}
+
+// readDataset is readSeries for one dataset of the tree ref backs up.
+func (e *anomalyEngine) readDataset(sc anomalyScope, ref anomalyItemRef, p *anomalyPass) (itemInput, store.ScopeState, error) {
 	from := e.evaluatedFrom(sc, p.now)
 
 	members, err := e.svc.store.DatasetSeries(sc.ID, p.now, anomalyNewDataMaxRows)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 	treeRuns, err := e.svc.store.ItemSeries(ref.TargetID, "backup", p.now, anomalySeriesRuns)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 	state, err := e.svc.store.AnomalyScopeState(sc.Kind, sc.ID)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 	expectations, err := e.svc.store.ListAnomalyExpectations(sc.Kind, sc.ID)
 	if err != nil {
-		return err
+		return itemInput{}, store.ScopeState{}, err
 	}
 
 	all := datasetRuns(members, treeRuns)
@@ -866,29 +900,12 @@ func (e *anomalyEngine) evaluateDataset(ctx context.Context, sc anomalyScope, p 
 			window = append(window, run)
 		}
 	}
-
-	sens := resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity)
-	if e.beforeWrite != nil {
-		e.beforeWrite(sc)
-	}
-	res := evaluateItem(itemInput{
+	return itemInput{
 		Kind: seriesDataset, Domain: ref.Domain, Series: rows, NewData: window,
 		Open: openByMetric(state.Open), Expectations: byFamily(expectations),
-		Sens: sens, EvaluateFrom: from,
-	})
-	changes := applyFindings(scopeRef{
-		Kind: sc.Kind, ID: sc.ID, TargetID: ref.TargetID, Domain: ref.Domain,
-		Sensitivity: string(sens),
-	}, res.Findings, res.Absent, state, p.now)
-
-	if err := e.apply(sc, changes); err != nil {
-		return err
-	}
-	e.recordScope(sc, anomalyScopeResult{
-		Learning: res.Learning, Typical: res.Typical, Runs: len(rows),
-		NewestAt: newestEligibleAt(rows), Selection: selectionRebaseAt(rows), Owner: ref.TargetID,
-	})
-	return ctx.Err()
+		Sens:         resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity),
+		EvaluateFrom: from,
+	}, state, nil
 }
 
 // evaluateDrillSeries judges the restore checks of one domain and source. Both
