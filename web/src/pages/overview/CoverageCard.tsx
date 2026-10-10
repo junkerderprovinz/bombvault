@@ -2,6 +2,7 @@ import type { CoverageReport } from "../../lib/api";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { unprotectedEntries } from "../../lib/attention";
+import type { Tally } from "../../lib/protectionTally";
 import { zfsCodeSentence, zfsFixKey } from "../../lib/zfsCodes";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Card } from "./Card";
@@ -14,19 +15,20 @@ import { Card } from "./Card";
  * is absent from every list and every error, so no traffic light turns amber
  * for it. This card names it.
  *
- * A switched-off backup type is left out of the ratio entirely. Counting an
- * operator VMs they chose not to back up would put a permanent red list
- * in front of a correctly configured server, and a card that cries wolf is a
- * card people hide.
+ * The ratio above the list counts entries as every other card does. The list
+ * itself comes from GET /api/coverage, which knows why the next scheduled run
+ * leaves something out.
  */
 export function CoverageCard({
   t,
   coverage,
+  tally,
   loading,
   hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   coverage: CoverageReport | null;
+  tally: Tally;
   loading: boolean;
   hueIndex?: number;
 }) {
@@ -49,22 +51,16 @@ export function CoverageCard({
   const rows = unprotectedEntries(coverage);
 
   return (
-    <Card title={t("coverage.title")} hueIndex={hueIndex}>
-      {/* The card says what it counts and what it leaves out on purpose, right
-          where it is read. Without it the ratio invites the wrong reading: a
-          switched-off backup type is missing from it on purpose. */}
-      <p className="mb-2 text-xs text-carbon-textSub">{t("coverage.hint")}</p>
+    <Card title={t("coverage.title")} hint={t("overview.coverage.hint")} hueIndex={hueIndex}>
       {loading ? (
         <p className="text-sm text-carbon-textSub">{t("folder.loading")}</p>
-      ) : rows.length === 0 ? (
-        <p className="text-sm text-carbon-textSub">{t("coverage.allProtected")}</p>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="text-xs text-carbon-textSub">
-            {t("coverage.ratio")
-              .replace("{protected}", String(coverage?.protected ?? 0))
-              .replace("{total}", String(coverage?.total ?? 0))}
+          <p className="flex items-center gap-1.5 text-base font-semibold tabular-nums text-carbon-text">
+            {t("coverage.ratio").replace("{protected}", String(tally.ok)).replace("{total}", String(tally.total))}
+            <InfoBubble tip={t("overview.coverage.countHint")} />
           </p>
+          {rows.length === 0 && <p className="text-sm text-carbon-textSub">{t("coverage.allProtected")}</p>}
           <ul className="flex flex-col gap-1">
             {rows.map((r) => (
               <li key={r.domain + ":" + r.name} className="flex flex-wrap items-baseline gap-x-2">

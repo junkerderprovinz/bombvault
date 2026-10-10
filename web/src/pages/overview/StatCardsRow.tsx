@@ -1,103 +1,49 @@
-import { useCallback, useEffect, useState } from "react";
-import { getSettings, listContainers, listRuns, listVMs } from "../../lib/api";
-import type { Settings } from "../../lib/api";
+import { useNavigate } from "react-router-dom";
+
 import type { useT } from "../../lib/i18n";
-import { ErrorDetailPanel } from "../../components/ErrorDetailPanel";
-import { FailureCounter } from "./FailureCounter";
-import { unresolvedErrorCount } from "../../lib/runFailures";
+import { NOT_INSTALLED, inSchedule, tilePath } from "../../lib/backupList";
+import type { Tally } from "../../lib/protectionTally";
+import { Card } from "./Card";
 import { StatCard } from "./StatCard";
 
-interface StatData {
-  containers: number;
-  vms: number;
-  activeJobs: number;
-  pausedJobs: number;
+/**
+ * StatCardsRow is the card of plain numbers. Each one counts the same entries
+ * as every other card, and the two that lead somewhere are buttons.
+ */
+export function StatCardsRow({
+  t,
+  hueIndex,
+  containers,
+  vms,
+  all,
+  errors,
+  onErrors,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
+  containers: Tally;
+  vms: Tally;
+  all: Tally;
+  /** Failed runs that are neither repeated with success nor acknowledged. */
   errors: number;
-  missingContainers: number;
-  missingVMs: number;
-}
-
-// computeStatData fetches the four inputs the stat cards need and derives the
-// tile values. It runs on mount and again after the error panel acknowledges
-// failures. If any fetch rejects it rejects, and the caller keeps the last
-// known data.
-async function computeStatData(): Promise<StatData> {
-  const [contRes, settingsRes, runsRes, vmsRes] = await Promise.all([
-    listContainers(),
-    getSettings(),
-    listRuns(),
-    listVMs(),
-  ]);
-  const containers = contRes.ok ? (contRes.containers ?? []) : [];
-  const settings: Settings | null = settingsRes.ok ? settingsRes.settings : null;
-  const runs = runsRes.ok ? (runsRes.runs ?? []) : [];
-  // listVMs fails or returns nothing while the VMs domain is off, which counts as none.
-  const vms = vmsRes.ok ? (vmsRes.vms ?? []) : [];
-
-  const installed = containers.filter((c) => c.installed);
-  const notInstalled = containers.filter((c) => !c.installed);
-  const vmsInstalled = vms.filter((v) => v.state !== "not-installed");
-  const vmsMissing = vms.filter((v) => v.state === "not-installed");
-  const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
-  const activeJobs = schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
-  const pausedJobs = !schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
-  const errors = unresolvedErrorCount(runs);
-
-  return {
-    containers: installed.length,
-    vms: vmsInstalled.length,
-    activeJobs,
-    pausedJobs,
-    errors,
-    missingContainers: notInstalled.length,
-    missingVMs: vmsMissing.length,
-  };
-}
-
-export function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
-  const [data, setData] = useState<StatData | null>(null);
-  const [errorPanelOpen, setErrorPanelOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    computeStatData()
-      .then((d) => {
-        if (active) setData(d);
-      })
-      .catch(() => {
-        // Non-fatal: stat cards stay null (not rendered)
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Re-run after the error panel acknowledges failures so the errors tile
-  // reflects the new count without a page reload.
-  const refresh = useCallback(() => {
-    computeStatData()
-      .then((d) => setData(d))
-      .catch(() => {
-        /* non-fatal: keep the current tile values */
-      });
-  }, []);
-
-  if (!data) return null;
-
+  onErrors: () => void;
+}) {
+  const navigate = useNavigate();
+  const scheduled = all.entries.filter(inSchedule).length;
   return (
-    <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        <StatCard label={t("dashboard.statContainers")} value={data.containers} />
-        <StatCard label={t("dashboard.statVMs")} value={data.vms} />
-        <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
-        <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
-        <FailureCounter t={t} count={data.errors} onOpen={() => setErrorPanelOpen(true)} />
-        <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
-        <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
+    <Card title={t("dashboard.blockStats")} hint={t("overview.stats.hint")} hueIndex={hueIndex}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-3">
+        <StatCard label={t("dashboard.statContainers")} value={containers.total} />
+        <StatCard label={t("dashboard.statVMs")} value={vms.total} />
+        <StatCard label={t("dashboard.statErrors")} value={errors} danger onClick={errors > 0 ? onErrors : undefined} />
+        <StatCard label={t("dashboard.statActiveJobs")} value={scheduled} />
+        <StatCard label={t("dashboard.statPausedJobs")} value={all.total - scheduled} />
+        <StatCard
+          label={t("containers.notInstalled")}
+          value={all.gone}
+          onClick={all.gone > 0 ? () => navigate(tilePath(NOT_INSTALLED)) : undefined}
+        />
       </div>
-      {errorPanelOpen && (
-        <ErrorDetailPanel onClose={() => setErrorPanelOpen(false)} onChanged={refresh} />
-      )}
-    </>
+    </Card>
   );
 }

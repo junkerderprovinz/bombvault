@@ -733,46 +733,61 @@ test.describe("on the desktop", () => {
   });
 });
 
-// The phone Home column, top to bottom, by its section headings.
-async function homeOrder(page: Page): Promise<string[]> {
-  return page
-    .locator("#bv-main h2")
-    .evaluateAll((hs) => hs.map((h) => (h.textContent ?? "").trim()).filter(Boolean));
+// The overview's cards, top to bottom.
+async function overviewOrder(page: Page): Promise<(string | null)[]> {
+  return page.locator("[data-grid-block]").evaluateAll((cells) => cells.map((c) => c.getAttribute("data-grid-block")));
 }
 
-test("the phone Home leads with the anomalies card while findings are open", async ({ page }, testInfo) => {
-  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the Home blocks replace the grid below 48rem");
+// The anomalies card is one of the cards a browser starts without, so the
+// layout that shows it is stored first.
+async function showAnomaliesCard(page: Page): Promise<void> {
+  await page.addInitScript(() =>
+    window.localStorage.setItem(
+      "bombvault.dashboardLayout",
+      JSON.stringify({ v: 2, order: ["anomalies", "needs", "protection", "targets", "history"], hidden: [], widths: {}, heights: {} }),
+    ),
+  );
+}
+
+test("the overview on a phone names open findings first, among what needs the person", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the one-column order is the phone's");
   await stage(page, 360);
+  await showAnomaliesCard(page);
   await page.goto("/dashboard");
-  await expect(page.getByText(NEXTCLOUD, { exact: false }).first()).toBeVisible();
+  const needs = page.locator("[data-grid-block='needs']");
+  await expect(needs.getByText(NEXTCLOUD, { exact: false }).first()).toBeVisible();
   await settle(page);
 
-  const order = await homeOrder(page);
-  expect(order[0]).toBe("Anomalien");
-  expect(order.filter((h) => h === "Anomalien")).toHaveLength(1);
+  // A phone keeps one order whatever the layout stores: what needs the
+  // person leads, and the anomalies card follows the history.
+  const order = await overviewOrder(page);
+  expect(order[0]).toBe("needs");
+  expect(order.filter((id) => id === "anomalies")).toHaveLength(1);
+  expect(order.indexOf("anomalies")).toBe(order.indexOf("history") + 1);
   await expect(page.getByRole("button", { name: "Quittieren" }).first()).toBeVisible();
   await expectNothingPansOrClips(page);
 });
 
-test("the phone Home keeps a quiet anomalies card below storage", async ({ page }, testInfo) => {
-  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the Home blocks replace the grid below 48rem");
+test("the overview on a phone keeps notes out of what needs the person", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the one-column order is the phone's");
   await stage(page, 360, { findings: [], open: { critical: 0, warning: 0, info: 2 } });
+  await showAnomaliesCard(page);
   await page.goto("/dashboard");
   await expect(page.getByText("Keine Anomalien in deinen Backups.")).toBeVisible();
 
-  const order = await homeOrder(page);
-  expect(order.indexOf("Anomalien")).toBe(order.indexOf("Speicher") + 1);
+  await expect(page.getByTestId("need-anomaly")).toHaveCount(0);
 });
 
-test("the dashboard on the desktop shows the anomalies card once, in its grid", async ({ page }, testInfo) => {
+test("the overview on the desktop shows the anomalies card once, where the layout puts it", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await stage(page, testInfo.project.use.viewport!.width);
+  await showAnomaliesCard(page);
   await page.goto("/dashboard");
-  await expect(page.getByText(NEXTCLOUD, { exact: false }).first()).toBeVisible();
+  await expect(page.locator("[data-grid-block='anomalies']").getByText(NEXTCLOUD, { exact: false }).first()).toBeVisible();
 
-  const order = await homeOrder(page);
-  expect(order.filter((h) => h === "Anomalien")).toHaveLength(1);
-  expect(order[0]).not.toBe("Anomalien");
+  const order = await overviewOrder(page);
+  expect(order.filter((id) => id === "anomalies")).toHaveLength(1);
+  expect(order[0]).toBe("anomalies");
 });
 
 test("the More sheet counts the open findings and the bar marks its trigger while there are any", async ({

@@ -1,240 +1,175 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { listRuns, getStatus, getCoverage, getScheduleNext } from "../lib/api";
-import type { Run, DomainStatus, CoverageReport, ScheduleNext } from "../lib/api";
-import { PageTitle } from "../components/PageTitle";
-import { useT } from "../lib/i18n";
-// The responsive page rhythm; gap-6 below the 48rem breakpoint, the
-// PAGE_SHELL gap-10 at and above (identical on desktop by construction).
-// Dashboard joins Containers/Files as a stated exception in eslint.config.js.
-import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
-import { useIsDesktop } from "../lib/useMediaQuery";
-import { OffsiteIndicator } from "../components/OffsiteIndicator";
+// The overview: one sentence on how the backups are doing, then the cards.
+// The first card lists what needs the person, the others can be arranged.
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+
+import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
-import { isFreshInstall } from "../lib/freshInstall";
-import { useDashboardLayout, CustomizableBlock } from "../lib/dashboardLayout";
-import { useReorder } from "../lib/dragLift";
-import { ActivityLog } from "../components/ActivityLog";
-import { useLoudAnomalies } from "../lib/useAnomalies";
-import { Badge } from "../components/Badge";
-import { IconPencil } from "../components/Sidebar";
-import { IconTipButton } from "../components/IconTipButton";
+import { IconCheck, IconPencil } from "../components/navGlyphs";
+import { PageAction, PageActions } from "../components/PageActions";
+import { PageTitle } from "../components/PageTitle";
 import { Button } from "../components/Button";
-import { CoverageCard } from "./overview/CoverageCard";
+import { IconRefresh } from "../components/glyphs";
+import { getCoverage, getScheduleNext, getSettings, getStatus, listRuns } from "../lib/api";
+import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
+import type { EntryKind } from "../lib/backupEntry";
+import { cardSpan, useDashboardLayout } from "../lib/dashboardLayout";
+import { isFreshInstall } from "../lib/freshInstall";
+import { useT } from "../lib/i18n";
+import { needsOf } from "../lib/needs";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { useProgress } from "../lib/progress";
+import { tallyEntries } from "../lib/protectionTally";
+import { failedRunsNeedingAttention } from "../lib/runFailures";
+import { useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useBackupItems } from "../lib/useBackupItems";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { AnomaliesBlock } from "./overview/AnomaliesCard";
-import { ProtectionCard } from "./overview/ProtectionCard";
-import { RansomwareCard } from "./overview/RansomwareCard";
-import { StatCardsRow } from "./overview/StatCardsRow";
-import { RunsCard } from "./overview/RunsCard";
-import { LastBackupsCard } from "./overview/LastBackupsCard";
+import { OVERVIEW_CARDS, OVERVIEW_MIGRATION, PHONE_ORDER } from "./overview/cards";
+import { CoverageCard } from "./overview/CoverageCard";
+import { EverythingAction } from "./overview/EverythingAction";
+import { FreshInstallNudge, RECOVERY_NUDGE_DISMISSED } from "./overview/FreshInstallNudge";
 import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
-import { NextRunCard } from "./overview/NextRunCard";
-import { SummaryTier } from "./overview/SummaryTier";
-import { StorageCard } from "./overview/StorageCard";
+import { HistoryCard, type HistoryView } from "./overview/HistoryCard";
+import { NeedsCard } from "./overview/NeedsCard";
+import { NextRunCard, nextBackupFireAt } from "./overview/NextRunCard";
+import { HiddenTray, OverviewGrid, type GridCard } from "./overview/OverviewGrid";
+import { ProtectionCard } from "./overview/ProtectionCard";
+import { sectionsOf } from "./overview/protectionChecks";
+import { ProtectionWindow } from "./overview/ProtectionWindow";
 import { SpikeCard } from "./overview/SpikeCard";
-import { RecoveryNag } from "./overview/RecoveryNag";
-import { RECOVERY_NUDGE_DISMISSED, FreshInstallNudge } from "./overview/FreshInstallNudge";
-import { PhoneEverythingTrigger } from "./overview/PhoneEverythingTrigger";
+import { StatCardsRow } from "./overview/StatCardsRow";
+import { headlineOf, liveRunOf } from "./overview/headState";
+import { StatusHead } from "./overview/StatusHead";
+import { StorageCard } from "./overview/StorageCard";
+import { SummaryTier } from "./overview/SummaryTier";
+import { TargetsCard } from "./overview/TargetsCard";
+import { useTrialRestore } from "./overview/useTrialRestore";
 
-// Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
-// so the summary tier's "Last result" cell and the Activity Log never disagree
-// about which domain is currently running.
-const SUMMARY_RUNS_POLL_MS = 10000;
-// Same cadence ActivityLog.tsx polls /api/schedule/next at, deliberately: two
-// widgets reading one endpoint at different rates can show two answers.
-const SUMMARY_SCHEDULE_POLL_MS = 30000;
+// The activity log polls the same two endpoints at these rates. Two readers of
+// one endpoint at different rates can show two answers.
+const RUNS_POLL_MS = 10000;
+const SCHEDULE_POLL_MS = 30000;
 
-// Mobile Home blocks; the glanceable phone surface.
-//
-// Below the 48rem breakpoint the desktop customizable block grid is replaced
-// by these blocks in a fixed order: identity (the page header above), next
-// run (NextRunCard dense), recent runs (RunsCard dense), repo health
-// (StorageCard dense), the anomalies card, the three safety cards
-// (RansomwareCard, then ProtectionCard and CoverageCard, which stays under
-// the protection card its hint points to), the self-contained ActivityLog
-// card, and the thumb-zone trigger that joins the page column's last child
-// (the StickyActionBar below). While a
-// critical or warning finding is open the anomalies card moves to the top,
-// because that is what a phone is opened for. The anomalies and safety cards
-// fit a phone column as they are and render their desktop face; the other
-// blocks are the desktop block of the same name at its second
-// density; one component per card, two faces (`dense`), so a
-// derivation or a fix lands on both faces in one place instead of drifting
-// between a desktop card and a private per-density phone copy (the previous
-// trio of phone-only cards drifted on exactly this seam). The phone density
-// contract: cards p-4, gap-4 between blocks, gap-2 inside a card, filled
-// section Badges (MobileSectionLabel) as headings.
-// Every consumer reads state the page has already fetched (runs,
-// scheduleNext, statusDomains, coverage) or the same endpoint a desktop card
-// already reads; zero new endpoints.
-//
-// Phone hues are static literals (0 to 3 down the column, shifted by one when
-// the anomalies card leads, 4 to 6 on the safety cards, 7 on the activity-log
-// card, and per-row positions inside a block's list), unlike the
-// desktop grid's running `nextHue()` counter: the phone order is fixed (not
-// user-customizable), so a static position is honest, and the phone faces
-// never render inside the desktop counter's pass; the desktop counter must
-// not observe a phone-only draw.
-//
-// Mount discipline: the blocks are JSX-gated on `!isDesktop` (jsdom's
-// matchMedia answers desktop, so these surfaces render only in real mobile
-// browsers/e2e), and the desktop grid is JSX-gated on `isDesktop` in return;
-// a CSS-hidden grid would stay mounted on the phone and its cards
-// (LastBackupsCard, the heatmap, StorageCard) would keep fetching behind the
-// user's back, doubling every phone load's round-trips. With both faces
-// JSX-gated exactly one surface is ever alive, and at the 48rem boundary the
-// two switches agree.
+const CARD = Object.fromEntries(OVERVIEW_CARDS.map((card) => [card.id, card]));
 
-// ---------------------------------------------------------------------------
-// Dashboard page
-// ---------------------------------------------------------------------------
+function liveRunIn(runs: Run[]): Run | undefined {
+  const running = runs.filter((r) => r.status === "running");
+  return running.find((r) => r.domain === "everything") ?? running[0];
+}
 
 export function Dashboard() {
-  const { t } = useT();
-  // The phone surface switch. Below the 48rem breakpoint the page renders the
-  // glanceable Home blocks instead of the desktop customizable grid;
-  // each face JSX-gated (see the Mobile Home blocks banner above for why a
-  // CSS-hidden grid would double the phone's fetches). jsdom's matchMedia
-  // answers desktop, so the mobile blocks stay e2e-only and every existing
-  // dom test sees the desktop page.
+  const { t, lang } = useT();
   const isDesktop = useIsDesktop();
-  const anomaliesLead = useLoudAnomalies().count > 0;
-  const lead = anomaliesLead ? 1 : 0;
+  const progress = useProgress();
+  const backupItems = useBackupItems();
+  const anomalySummary = useAnomalySummary().summary;
+  const openAnomalies = useOpenAnomalies().list;
+  const trial = useTrialRestore(t("verify.failed"));
 
-  // Component-local run-sheet host (the Containers.tsx contract): the
-  // recent-run rows open the shared RunDetailSheet for their own record here;
-  // no route (router.tsx frozen). The dismissal latch exists for the
-  // thumb-zone backup watch (the phone trigger below): once the user closes a
-  // sheet, later onRun polls refresh sheetRun but never re-open it; an
-  // explicit row tap or a new fire always re-arms.
+  // The run window is opened by a row of the history, by the status head
+  // while a run is under way, and by the watch of a pass started here. Once
+  // the person closes it, later watch polls refresh its run but do not open
+  // it again; a row or a new pass does.
   const [sheetRun, setSheetRun] = useState<Run | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetDismissed = useRef(false);
-  // The run id the watch last correlated: polls refresh the same run, so only
-  // a different id is a new fire; the latch's re-arm signal. Without it, one
-  // dismissal would silence every later "Backup Everything" press (the latch would
-  // never re-arm outside openRun), and the user would wait out the whole run
-  // for nothing but the terminal toast.
+  // Watch polls keep reporting the same run, so only another id is a new pass.
   const lastCorrelatedRun = useRef<string | null>(null);
-  // True from the user's confirm press until the watch correlates the pass it
-  // started. Within that window a correlation may steal the sheet from
-  // whatever run it currently shows (the deep-link contract); once spent, a
-  // poll tick re-reporting the same correlated run must not.
+  // True from the press on "Back up everything now" until the watch finds the
+  // pass it started. Only then may the watch take the window from another run.
   const fireArmed = useRef(false);
   const armFire = useCallback(() => {
     fireArmed.current = true;
   }, []);
-  const openRun = (run: Run) => {
+  // The run the watch last spoke about. While it is the one in the window,
+  // the watch's record is fresher than the polled list's.
+  const [watchOwnedRun, setWatchOwnedRun] = useState<string | null>(null);
+  const openRun = useCallback((run: Run) => {
     sheetDismissed.current = false;
-    // A fresh open also releases the watch's display ownership
-    // (watchOwnedRun, declared with displayedRun below): the run the user
-    // just opened is the polled list's to refresh until a live watch tick
-    // re-claims it, never the frozen record of a watch that has since
-    // stopped speaking about it.
     setWatchOwnedRun(null);
     setSheetRun(run);
     setSheetOpen(true);
-  };
-  // The watch's onRun, handed to the phone trigger. Replace the sheet's run
-  // only when (a) it shows nothing yet, (b) it shows this run already (the
-  // poll refresh that carries a running run to its terminal state), or (c)
-  // this correlation is the user's just-fired pass. Any other tick; the live
-  // everything watch re-reporting its run on every poll while the user reads
-  // a different run's sheet; must not yank the sheet back (the "sheet jumps
-  // back to the everything pass every two seconds" bug).
+  }, []);
   const handleWatchRun = useCallback((run: Run) => {
     const isNewCorrelation = lastCorrelatedRun.current !== run.id;
-    // Read the arm before spending it: the state updater below runs at commit
-    // time, after this function has returned.
+    // Read before it is spent: the updater below runs after this returns.
     const armed = fireArmed.current;
     lastCorrelatedRun.current = run.id;
-    // This tick's record is the freshest statement about this run; the sheet's
-    // resolution lets it outrank the slower page-list copy (see displayedRun).
     setWatchOwnedRun(run.id);
     if (isNewCorrelation) {
-      sheetDismissed.current = false; // new fire re-arms the deep-link
-      fireArmed.current = false; // the arm is spent on its correlation
+      sheetDismissed.current = false;
+      fireArmed.current = false;
     }
-    setSheetRun((prev) =>
-      prev == null || prev.id === run.id || (isNewCorrelation && armed) ? run : prev
-    );
+    setSheetRun((prev) => (prev == null || prev.id === run.id || (isNewCorrelation && armed) ? run : prev));
     if (!sheetDismissed.current) setSheetOpen(true);
   }, []);
+  const watchStopped = useCallback(() => {
+    setWatchOwnedRun(null);
+  }, []);
 
-  // Rotation past 48rem: the bottom sheet is a phone surface. Crossing to
-  // desktop clears the open state (and the latch) so the sheet cannot float
-  // over the desktop grid; the sheet host below carries the matching
-  // !isDesktop gate as the belt.
-  useEffect(() => {
-    if (isDesktop) {
-      setSheetRun(null);
-      setSheetOpen(false);
-      sheetDismissed.current = false;
-    }
-  }, [isDesktop]);
-
-  // Single /api/status fetch shared by the Protection + Ransomware cards (no
-  // duplicate round-trip — both cards read the same extended domain status).
   const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
-  // The last /api/status load refused or failed; cleared by the next
-  // success. The phone off-site line reads it to distinguish "checked, and
-  // genuinely no copy" from "never got an answer".
+  // A refused or failed read is not an answer: an empty list must not read as
+  // "nothing is switched on" or "no off-site copy".
   const [statusFailed, setStatusFailed] = useState(false);
   const [coverage, setCoverage] = useState<CoverageReport | null>(null);
   const [coverageLoading, setCoverageLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    const load = () => {
+      getStatus()
+        .then((res) => {
+          if (!active) return;
+          if (res.ok) setStatusDomains(res.domains ?? []);
+          setStatusFailed(!res.ok);
+        })
+        .catch(() => {
+          if (active) setStatusFailed(true);
+        })
+        .finally(() => {
+          if (active) setStatusLoading(false);
+        });
+      getCoverage()
+        .then((res) => {
+          if (active && res.ok) setCoverage(res.coverage);
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (active) setCoverageLoading(false);
+        });
+    };
+    load();
+    // A trial restore started here and a change in the settings both announce
+    // themselves with this event.
+    window.addEventListener("bv:settings-changed", load);
+    return () => {
+      active = false;
+      window.removeEventListener("bv:settings-changed", load);
+    };
+  }, []);
 
-  // Newest run for the summary tier's "Last result" cell. listRuns returns
-  // newest-first, so runs[0] is the latest. Polled (not fetched once) so the
-  // cell doesn't freeze on whatever domain happened to be running at page
-  // load — mirrors ActivityLog's own listRuns polling (same cadence) so both
-  // widgets stay in sync (#158: card stuck on a finished run while the
-  // Activity Log had already moved on to the next domain).
   const [runs, setRuns] = useState<Run[]>([]);
   const [runsReady, setRunsReady] = useState(false);
   const [runsFailed, setRunsFailed] = useState(false);
   const refreshRuns = useCallback(() => {
     listRuns()
       .then((res) => {
-        if (res.ok) {
-          setRuns(res.runs ?? []);
-          setRunsFailed(false);
-        } else {
-          setRunsFailed(true);
-        }
+        if (res.ok) setRuns(res.runs ?? []);
+        setRunsFailed(!res.ok);
       })
       .catch(() => setRunsFailed(true))
       .finally(() => setRunsReady(true));
   }, []);
   useEffect(() => {
     refreshRuns();
-    const id = setInterval(refreshRuns, SUMMARY_RUNS_POLL_MS);
+    const id = setInterval(refreshRuns, RUNS_POLL_MS);
     return () => clearInterval(id);
   }, [refreshRuns]);
 
-  // The sheet renders the freshest copy of its run. Two feeds write the two
-  // candidates, at different cadences: the page's polled listRuns state
-  // (10s) and the everything watch's onRun records (2s, delivered through
-  // handleWatchRun into sheetRun). Which one wins is decided by who last
-  // spoke about the id: once the watch has correlated the run the sheet
-  // shows, sheetRun is the freshest statement (it updates on every watch
-  // tick), and letting the slower list copy override it ghosted "Running"
-  // for up to 10s past the Done toast. A run the user opened from Recent
-  // runs and the watch does not track keeps the old resolution: the list
-  // copy refreshes the tap-time record on the page's own cadence. Resolving
-  // by id at render, not storing a frozen copy, is still the shape of it.
-  // (Placed after the runs state it reads.)
-  // State rather than a ref: releasing ownership has to reach the screen. As
-  // a ref the release changed nothing until some other update happened to
-  // re-render the page, so the sheet kept painting the frozen watch record.
-  // React bails out when the value does not change, so the per-tick claim
-  // below costs nothing.
-  const [watchOwnedRun, setWatchOwnedRun] = useState<string | null>(null);
+  // The window shows the freshest record of its run. A finished record wins
+  // whichever feed carries it. Before that the watch's record wins while the
+  // watch speaks about this run, and the polled list's otherwise.
   const listRun = sheetRun ? runs.find((r) => r.id === sheetRun.id) : undefined;
-  // A finished run has nothing left to say, so whichever feed carries the
-  // terminal record wins, whether or not the watch is still alive. That is
-  // what keeps the Done toast and the sheet on the same tick, and it is why
-  // the watch ending is safe to act on: only a chain that died without a
-  // terminal record hands the sheet back to the slower list.
   const displayedRun = !sheetRun
     ? null
     : sheetRun.finishedAt != null
@@ -243,25 +178,23 @@ export function Dashboard() {
         ? listRun
         : watchOwnedRun === sheetRun.id
           ? sheetRun
-          : listRun ?? sheetRun;
-  // The watch chain's end, reported by the trigger (the pending phase
-  // clearing): ownership is released so displayedRun falls back to the
-  // polled list again. A chain that died without delivering a terminal
-  // record, the watch's own timeout for instance, kept the sheet
-  // frozen on its last watch record ("Running") while the 10s list already
-  // showed the truth: the row behind the sheet flipping to Success under a
-  // sheet that never follows. openRun
-  // clears it the same way. Idempotent by construction: a later tick simply
-  // re-claims ownership.
-  const watchStopped = useCallback(() => {
-    setWatchOwnedRun(null);
-  }, []);
+          : (listRun ?? sheetRun);
 
-  // The scheduler's own "what fires next" list, for the summary tier's Next
-  // backup cell ([545], issue #187). Polled on the same 30s cadence
-  // ActivityLog uses for the identical endpoint — the two read the same source
-  // and must not be able to disagree with each other on screen, which was the
-  // whole complaint.
+  const openLiveRun = useCallback(() => {
+    const known = liveRunIn(runs);
+    if (known) {
+      openRun(known);
+      return;
+    }
+    // A run that started after the last poll is not in the list yet.
+    listRuns()
+      .then((res) => {
+        const found = res.ok ? liveRunIn(res.runs ?? []) : undefined;
+        if (found) openRun(found);
+      })
+      .catch(() => undefined);
+  }, [runs, openRun]);
+
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
   useEffect(() => {
     let active = true;
@@ -270,19 +203,16 @@ export function Dashboard() {
         .then((next) => {
           if (active) setScheduleNext(next);
         })
-        .catch(() => {/* non-fatal; the cell falls back to "not scheduled" */});
+        .catch(() => undefined);
     };
     load();
-    const id = setInterval(load, SUMMARY_SCHEDULE_POLL_MS);
+    const id = setInterval(load, SCHEDULE_POLL_MS);
     return () => {
       active = false;
       clearInterval(id);
     };
   }, []);
 
-  // Page-level banners are capped at one: the Fresh-install nudge wins over the
-  // Recovery-kit nag. Fresh dismissal persists in localStorage (shared key), and
-  // while Fresh is showing the Recovery nag is suppressed.
   const [freshDismissed, setFreshDismissed] = useState(() => {
     try {
       return localStorage.getItem(RECOVERY_NUDGE_DISMISSED) === "1";
@@ -294,621 +224,300 @@ export function Dashboard() {
     try {
       localStorage.setItem(RECOVERY_NUDGE_DISMISSED, "1");
     } catch {
-      /* storage unavailable — dismiss for this session only */
+      // Without storage the nudge is back on the next visit.
     }
     setFreshDismissed(true);
   };
   const freshShown = !statusLoading && !freshDismissed && isFreshInstall(statusDomains);
 
+  // The recovery kit is due while encryption is on and nobody has confirmed
+  // that the kit is stored.
+  const [kitOpen, setKitOpen] = useState(false);
   useEffect(() => {
     let active = true;
-    const load = () => {
-      getStatus()
-        .then((res) => {
-          if (active && res.ok) {
-            setStatusDomains(res.domains ?? []);
-            setStatusFailed(false);
-          } else if (active) {
-            // A refused read is a failed read: the phone off-site line has to
-            // say "could not load" instead of claiming "no off-site copy"
-            // from an empty list.
-            setStatusFailed(true);
-          }
-        })
-        .catch(() => {
-          if (active) setStatusFailed(true);
-        })
-        .finally(() => {
-          if (active) setStatusLoading(false);
-        });
-      // Same trigger as the status above: adding a container to a schedule, or
-      // switching a whole domain off, changes what is covered, and both of
-      // those dispatch bv:settings-changed.
-      getCoverage()
-        .then((res) => {
-          if (active && res.ok) setCoverage(res.coverage);
-        })
-        .catch(() => {/* non-fatal */})
-        .finally(() => {
-          if (active) setCoverageLoading(false);
-        });
-    };
-    load();
-    // Live-refresh when protection-relevant state changes elsewhere (e.g. a manual
-    // restore drill on the Settings page, which dispatches this event) so the
-    // scorecard pills reflect the new outcome without a page reload.
-    window.addEventListener("bv:settings-changed", load);
+    getSettings()
+      .then((res) => {
+        if (active && res.ok) setKitOpen(res.settings.encryptionEnabled && !res.settings.recoveryKitAck);
+      })
+      .catch(() => undefined);
     return () => {
       active = false;
-      window.removeEventListener("bv:settings-changed", load);
     };
   }, []);
 
-  // Heatmap → Activity Log drilldown: clicking a heatmap cell narrows the log
-  // to that LOCAL calendar day (ISO YYYY-MM-DD — the same en-CA local mapping
-  // the heatmap cells are keyed by) and scrolls the log card into view.
-  // Clicking the active day again — or the chip's × inside ActivityLog —
-  // clears it. State lives here because the two cards are independent,
-  // individually hideable dashboard blocks with no other shared parent.
-  const [logDayFilter, setLogDayFilter] = useState<string | null>(null);
-  const activityLogBlockRef = useRef<HTMLDivElement>(null);
-  const selectLogDay = (isoDay: string) => {
-    const next = logDayFilter === isoDay ? null : isoDay;
-    setLogDayFilter(next);
-    if (next === null) return; // toggled off; stay put, nothing to show
-    const el = activityLogBlockRef.current;
-    if (!el) return; // Activity Log block hidden via customize; filter still set
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
-  };
-
-  // A key's log on the MCP card links a run here as ?run=<id>. The log narrows
-  // to it and comes into view once, for the link that opened the page; clearing
-  // it drops the parameter, so a reload shows the whole log again.
-  const [logRunFilter, setLogRunFilter] = useState<string | null>(
-    () => new URLSearchParams(window.location.search).get("run") || null
-  );
-  useEffect(() => {
-    if (logRunFilter) activityLogBlockRef.current?.scrollIntoView?.({ block: "start" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // A day picked in the calendar and a run linked as ?run=<id> both narrow
+  // the log, so either one turns the history card to its log.
+  const [historyView, setHistoryView] = useState<HistoryView>("runs");
+  const [logDay, setLogDay] = useState<string | null>(null);
+  const [logRun, setLogRun] = useState<string | null>(() => new URLSearchParams(window.location.search).get("run") || null);
+  const historyRef = useRef<HTMLDivElement>(null);
   const clearLogRun = () => {
-    setLogRunFilter(null);
+    setLogRun(null);
     const url = new URL(window.location.href);
     url.searchParams.delete("run");
     window.history.replaceState(window.history.state, "", url);
   };
+  const selectLogDay = (isoDay: string) => {
+    const next = logDay === isoDay ? null : isoDay;
+    setLogDay(next);
+    if (next === null) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    historyRef.current?.scrollIntoView?.({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+  };
+  const narrowed = logDay !== null || logRun !== null;
+  const showHistoryView = (view: HistoryView) => {
+    setHistoryView(view);
+    if (view === "runs") {
+      setLogDay(null);
+      if (logRun !== null) clearLogRun();
+    }
+  };
+  // The link that opened the page brings its run into view once.
+  useEffect(() => {
+    if (logRun) historyRef.current?.scrollIntoView?.({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Customizable dashboard (#46) — everything below the heading + banners is a
-  // reorderable / hideable block, persisted per-browser via useDashboardLayout.
   const [editing, setEditing] = useState(false);
+  const [errorsOpen, setErrorsOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<EntryKind | null>(null);
 
-  // Ordered block list. Each block has a stable id, a label and a `render`
-  // callback that produces the node.
-  //
-  // `render` — GlimStone follow-up pass, jdp's live review of this page:
-  // "Cardtitelbadges sind falsch platziert. Alle sind nicht im
-  // Regenbogenmodus." Was `node: React.ReactNode`, a pre-built element
-  // constructed eagerly, in this array's own FIXED definition order — which
-  // cannot give a Card heading a correct rainbow position, because the
-  // block a user actually SEES at position N depends on their own persisted
-  // drag-reorder + hide/show state (`visibleBlocks` below), not this
-  // array's literal order. Deferred to a function so each Card's hueIndex
-  // can be assigned from the shared `nextHue()` counter (declared right
-  // before `visibleBlocks.map()` in the JSX below) at the point each block
-  // is ACTUALLY rendered, in the user's own current visible order — the
-  // exact same "own running counter, consumed in rendered order" contract
-  // Settings.tsx's `nextHue()` already uses, just passed through explicitly
-  // here instead of called inline, since the render order here isn't a
-  // static JSX literal the way Settings.tsx's tab bodies are.
-  //   Most blocks consume exactly one hue slot (one Card, one `nextHue()`
-  // call); "summary" consumes three (its own three SummaryCells, via the
-  // `nextHue` callback threaded into SummaryTier); "stats" consumes none
-  // (StatCardsRow's tiles have no heading badge of their own — nothing to
-  // hue).
-  const blocks: {
-    id: string;
-    label: string;
-    render: (nextHue: () => number) => React.ReactNode;
-  }[] = [
-    {
-      id: "summary",
+  const { items } = backupItems;
+  const tally = tallyEntries(items);
+  const sections = sectionsOf(statusDomains, items, progress, trial.running);
+  const needs = needsOf({
+    items,
+    runs,
+    anomalies: anomalySummary?.enabled ? openAnomalies : [],
+    kitDue: kitOpen && !freshShown,
+  });
+  const liveRun = liveRunOf(progress);
+  const nextFire = nextBackupFireAt(scheduleNext, statusDomains).ms;
+  const ready = !statusLoading && backupItems.loaded;
+  const statusMissing = statusFailed && statusDomains.length === 0;
+
+  const { layout, reorder, setVisibleOrder, toggleHidden, stepWidth, resize, autoHeight, reset } = useDashboardLayout(
+    OVERVIEW_CARDS,
+    OVERVIEW_MIGRATION
+  );
+  const arranging = editing && isDesktop;
+
+  const blocks: Record<string, { label: string; render: (hue: number) => ReactNode }> = {
+    needs: {
+      label: t("overview.needs.title"),
+      render: (hue) => (
+        <NeedsCard
+          needs={needs}
+          hueIndex={hue}
+          onErrors={() => setErrorsOpen(true)}
+          onItemsChanged={backupItems.reload}
+          onKitStored={() => setKitOpen(false)}
+        />
+      ),
+    },
+    protection: {
+      label: t("dashboard.protectionTitle"),
+      render: (hue) => (
+        <ProtectionCard
+          t={t}
+          lang={lang}
+          sections={sections}
+          loading={!ready}
+          failed={statusMissing}
+          hueIndex={hue}
+          onOpen={(section) => setOpenSection(section.kind)}
+        />
+      ),
+    },
+    targets: { label: t("storage.title"), render: (hue) => <TargetsCard t={t} hueIndex={hue} /> },
+    history: {
+      label: t("overview.history.title"),
+      render: (hue) => (
+        <div ref={historyRef} className="flex min-h-0 flex-1 scroll-mt-4 flex-col">
+          <HistoryCard
+            t={t}
+            lang={lang}
+            hueIndex={hue}
+            runs={runs}
+            loading={!runsReady}
+            failed={runsFailed}
+            view={narrowed ? "log" : historyView}
+            onView={showHistoryView}
+            logDay={logDay}
+            onClearLogDay={() => setLogDay(null)}
+            logRun={logRun}
+            onClearLogRun={clearLogRun}
+            onOpenRun={openRun}
+          />
+        </div>
+      ),
+    },
+    anomalies: { label: t("anomaly.title"), render: (hue) => <AnomaliesBlock t={t} hueIndex={hue} /> },
+    coverage: {
+      label: t("coverage.title"),
+      render: (hue) => (
+        <CoverageCard
+          t={t}
+          coverage={coverage}
+          tally={tally}
+          loading={coverageLoading || !backupItems.loaded}
+          hueIndex={hue}
+        />
+      ),
+    },
+    heatmap: {
+      label: t("overview.calendar.title"),
+      render: (hue) => <HealthHeatmapCard t={t} selectedDay={logDay} onSelectDay={selectLogDay} hueIndex={hue} />,
+    },
+    storage: {
+      label: t("dashboard.storageTitle"),
+      render: (hue) => (
+        <StorageCard
+          t={t}
+          hueIndex={hue}
+          dense={false}
+          domains={statusDomains}
+          statusLoading={statusLoading}
+          statusFailed={statusFailed}
+        />
+      ),
+    },
+    summary: {
       label: t("dashboard.blockSummary"),
-      // Three DIRECT nextHue() calls, eagerly resolved to plain numbers here
-      // rather than a `nextHue` function handed to SummaryTier to call from
-      // its own component body — see SummaryTier's own `healthHueIndex` doc
-      // for the live ordering bug that shape caused (React doesn't invoke a
-      // child component's body until after this whole `blocks` array/render
-      // pass has already returned, so calls made from inside SummaryTier ran
-      // AFTER every sibling block below had already consumed its own slot).
-      render: (nextHue) => (
+      render: (hue) => (
         <SummaryTier
           t={t}
           domains={statusDomains}
           scheduleNext={scheduleNext}
           loading={statusLoading}
           newestRun={runs[0] ?? null}
-          healthHueIndex={nextHue()}
-          nextBackupHueIndex={nextHue()}
-          lastResultHueIndex={nextHue()}
+          hueIndex={hue}
         />
       ),
     },
-    {
-      id: "activityLog",
-      label: t("activityLog.title"),
-      // The wrapper div carries the scroll anchor for the heatmap drilldown
-      // (scroll-mt keeps the card heading clear of the viewport's top edge).
-      render: (nextHue) => (
-        <div ref={activityLogBlockRef} className="scroll-mt-4">
-          <ActivityLog
-            dayFilter={logDayFilter}
-            onClearDayFilter={() => setLogDayFilter(null)}
-            runFilter={logRunFilter}
-            onClearRunFilter={clearLogRun}
-            hueIndex={nextHue()}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "stats",
+    stats: {
       label: t("dashboard.blockStats"),
-      render: () => <StatCardsRow t={t} />,
-    },
-    {
-      id: "protection",
-      label: t("dashboard.protectionTitle"),
-      render: (nextHue) => (
-        <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
-      ),
-    },
-    {
-      // Directly after protection, because the two answer halves of one
-      // question: that card says whether what IS scheduled ran on time, this
-      // one says what is not scheduled at all.
-      id: "coverage",
-      label: t("coverage.title"),
-      render: (nextHue) => (
-        <CoverageCard t={t} coverage={coverage} loading={coverageLoading} hueIndex={nextHue()} />
-      ),
-    },
-    {
-      // Beside coverage, because the two answer the same question from
-      // opposite ends: what nothing backs up, and what the backups say went
-      // wrong.
-      id: "anomalies",
-      label: t("anomaly.title"),
-      render: (nextHue) => <AnomaliesBlock t={t} hueIndex={nextHue()} />,
-    },
-    {
-      id: "ransomware",
-      label: t("ransomware.title"),
-      render: (nextHue) => (
-        <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
-      ),
-    },
-    // Last Backups and Run History are separate blocks (#50 follow-up) so each
-    // can be hidden, reordered and read at full width independently.
-    {
-      id: "lastBackups",
-      label: t("dashboard.lastBackups"),
-      render: (nextHue) => <LastBackupsCard t={t} hueIndex={nextHue()} />,
-    },
-    {
-      id: "runHistory",
-      label: t("run.historyTitle"),
-      // dense={false} = the desktop history-card face; the data comes from the
-      // page's polled listRuns (the phone face reads the same list; one
-      // fetch, one source, no disagreement).
-      render: (nextHue) => (
-        <RunsCard
+      render: (hue) => (
+        <StatCardsRow
           t={t}
-          hueIndex={nextHue()}
-          dense={false}
-          runs={runs}
-          loading={!runsReady}
-          failed={runsFailed}
-          refreshRuns={refreshRuns}
+          hueIndex={hue}
+          containers={tallyEntries(items, "container")}
+          vms={tallyEntries(items, "vm")}
+          all={tally}
+          errors={failedRunsNeedingAttention(runs).length}
+          onErrors={() => setErrorsOpen(true)}
         />
       ),
     },
-    {
-      id: "heatmap",
-      label: t("dashboard.healthTitle"),
-      render: (nextHue) => (
-        <HealthHeatmapCard t={t} selectedDay={logDayFilter} onSelectDay={selectLogDay} hueIndex={nextHue()} />
-      ),
-    },
-    {
-      id: "storage",
-      label: t("dashboard.storageTitle"),
-      render: (nextHue) => (
-        <StorageCard t={t} hueIndex={nextHue()} dense={false} domains={statusDomains} statusLoading={statusLoading} statusFailed={statusFailed} />
-      ),
-    },
-    {
-      id: "spike",
-      label: t("spike.title"),
-      render: (nextHue) => <SpikeCard t={t} hueIndex={nextHue()} />,
-    },
-  ];
+    spike: { label: t("spike.title"), render: (hue) => <SpikeCard t={t} hueIndex={hue} /> },
+  };
 
-  const defaultOrder = blocks.map((b) => b.id);
-  const { order, hidden, reorder, setVisibleOrder, toggleHidden, toggleWidth, getWidth, reset } =
-    useDashboardLayout(defaultOrder);
+  // The history shows where the layout hides it while the log is narrowed,
+  // or a link to a run would land on a page without its log. The card of
+  // what needs the person has nothing to show while nothing does, and stands
+  // empty only while the page is arranged.
+  const shows = (id: string) =>
+    (!layout.hidden.includes(id) || (id === "history" && narrowed)) && (id !== "needs" || needs.length > 0 || arranging);
+  const visible = (isDesktop ? layout.order : PHONE_ORDER).filter(shows);
+  const hiddenCards = layout.order.filter((id) => layout.hidden.includes(id)).map((id) => ({ id, label: blocks[id].label }));
 
-  // A persisted order can name a block that is gone, so unknown ids drop out.
-  const byId = new Map(blocks.map((b) => [b.id, b]));
-  const orderedAvailable = order
-    .map((id) => byId.get(id))
-    .filter((b): b is (typeof blocks)[number] => !!b);
-  // A link to one run shows the activity log even where the layout hides it,
-  // or the link would land on a page without the log it points to.
-  const shown = (id: string) => !hidden.has(id) || (id === "activityLog" && logRunFilter !== null);
-  const visibleBlocks = orderedAvailable.filter((b) => shown(b.id));
-  const hiddenBlocks = orderedAvailable.filter((b) => !shown(b.id));
-
-  // A card is carried by the grip in its control bar and lands in its gap;
-  // the move buttons are the keyboard's way to do the same.
-  const grid = useRef<HTMLDivElement>(null);
-  const drag = useReorder({
-    ids: visibleBlocks.map((b) => b.id),
-    container: grid,
-    attr: "data-grid-block",
-    axis: "x",
-    arm: "move",
-    enabled: editing,
-    onReorder: setVisibleOrder,
-  });
-  const byVisibleId = new Map(visibleBlocks.map((b) => [b.id, b]));
-  const carriedBlocks = drag.order
-    .map((id) => byVisibleId.get(id))
-    .filter((b): b is (typeof visibleBlocks)[number] => !!b);
-
-  return (
-    // GlimStone follow-up pass (live-review round, jdp emphatic: "Die
-    // Abstände der Cards passen nicht. Bitte systemweit anpassen!"): this
-    // page's own block-to-block rhythm was gap-6 (24px) — measured live via
-    // getBoundingClientRect, every adjacent pair of stacked cards sat exactly
-    // 24px apart, so it wasn't a mix of ad-hoc values WITHIN this page. The
-    // actual drift is against the rest of the app: Settings.tsx's own
-    // tab-panels wrapper already settled on gap-10 (40px) as "the same 40px
-    // rhythm every Card-to-Card gap already uses" (see that file's own
-    // comment, live-review round) and even bumped its heading-to-first-card
-    // gap to match it for the identical reason this pass now applies here —
-    // a smaller gap right before the first card read as visually mismatched
-    // next to the wider rhythm below it. Splitting this outer wrapper into
-    // its own gap-6 header/banner group plus an outer gap-10 mirrors that
-    // exact two-level structure (Settings' `hueSeq` comment calls out the
-    // same shared-counter pattern this page already reuses, for the same
-    // reason: matching an established convention beats reinventing one).
-    //   PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich
-    // breit machen?"): this page's `gap-10 max-w-6xl` is now that shared
-    // constant, unchanged in value — it is the page the app-wide 1152px was
-    // chosen FROM, because it owns the only content dense enough to have a
-    // measurable opinion about width (a md:grid-cols-2 block grid, 7-column
-    // container-query run rows, and the 7-across stat tier, whose
-    // longest German label needs exactly 136px of a 136px cell at 1024px —
-    // zero slack). Swapping the literal for the constant is what stops the
-    // other nine pages drifting away from it again. See lib/pageShell.ts.
-    //   The nested gap-6 group below stays: heading + banner are a tight pair
-    // that deliberately sits closer than the 40px Card rhythm, the same
-    // two-level shape Settings.tsx uses for its heading + tab strip.
-    // The responsive rhythm (gap-6 below 48rem, the PAGE_SHELL
-    // gap-10 at and above; identical on desktop by construction). See
-    // lib/pageShell.ts's PAGE_SHELL_RESPONSIVE and the eslint exceptions data.
-    <div className={PAGE_SHELL_RESPONSIVE}>
-      <div className="flex flex-col gap-6">
-      {/* Page heading — fixed (contextual, not customizable). The pencil in the
-          top-right corner toggles the customize/edit mode.
-            That pencil is `h-8 w-8` + centring, not the `p-2` it used to size
-          itself with. It is a square icon-only badge by every other measure
-          (the same rounded-pill tile, the same bg-carbon-surface2/hover
-          recipe as Settings' Registry add/remove and FolderBrowser's browse
-          badge), but it derived its own footprint from padding around an 18px
-          glyph and landed on 34px — measured live — where every other square
-          icon badge in the app is 32px. Two pixels, but exactly the drift the
-          one-size rule exists to stop: a call site sizing itself from its own
-          contents instead of taking the shared number. See Badge.tsx's "ONE
-          SIZE FOR SQUARE ICON BADGES" block. */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          {/* Identity header, mobile half: the app wordmark (the same
-              theme-switching mark pair the desktop sidebar renders) leads the
-              phone page; md+ never sees this row. "BombVault" is the brand
-              proper noun, not a translation unit; the same standing choice as
-              the logo marks' own alt text in Sidebar.tsx. */}
-          <div className="mb-2 flex items-center gap-2 md:hidden">
-            <img
-              src="/logo.svg"
-              alt=""
-              draggable={false}
-              className="h-6 w-6 object-contain block dark:hidden"
-            />
-            <img
-              src="/logo-light.svg"
-              alt=""
-              draggable={false}
-              className="h-6 w-6 object-contain hidden dark:block"
-            />
-            <span className="text-lg font-semibold tracking-tight text-carbon-text">
-              BombVault
-            </span>
-          </div>
-          <PageTitle>{t("dashboard.title")}</PageTitle>
-          <div className="flex flex-col gap-1">
-            <OffsiteIndicator domain="containers" withLabel />
-            <OffsiteIndicator domain="vms" withLabel />
-            <OffsiteIndicator domain="flash" withLabel />
-            <OffsiteIndicator domain="files" withLabel />
-            <OffsiteIndicator domain="zfs" withLabel />
-          </div>
-        </div>
-        {/* Real `.glim-bubble` tooltip, not the OS's native `title=` balloon
-            (whole-app sweep). This was the LAST icon-only control in the app
-            still naming itself with a bare `title=`/`aria-label` pair —
-            measured live on the deployed container: 32px, rounded-control,
-            and `title` present, while every other icon-only trigger (every
-            Badge `tip`, FolderBrowser's browse badge, Settings' registry and
-            copy badges, PathModeSwitch's and SourceToggle's segments) already
-            rendered the shared bubble. IconTipButton.tsx's own header is
-            explicit that a stray native `title=` on an icon-only trigger is
-            precisely the anti-pattern that file exists to replace, and
-            design-language's tooltip section calls the bubble unconditional
-            for a control with no visible text.
-              It stays a hand-rolled `h-8 w-8` button rather than becoming a
-            Badge, for the reason already recorded below: its background
-            legitimately flips between two states, and Badge's icon-only
-            tone="active" is unconditionally accent-filled. IconTipButton
-            takes the className verbatim, so both states survive
-            byte-identical and only the tooltip mechanism changes. `aria-pressed` is threaded
-            through IconTipButton's new optional prop so the toggle state is
-            not lost in the swap (this is a toggle, not a one-shot action).
-              32px and `rounded-pill` keep it matched to every other square
-            icon control app-wide and tracking the shape engine. */}
-        <IconTipButton
-          onClick={() => setEditing((v) => !v)}
-          tip={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
-          ariaPressed={editing}
-          /* The pencil toggles the customizable desktop grid's edit
-             mode; on phones that grid is replaced by the fixed Home block
-             order, so the control has nothing to edit and stays desktop-only.
-             md+ renders it exactly as before. */
-          className={`max-md:hidden shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-pill motion-safe:transition-colors ${
-            editing
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
-          }`}
-        >
-          {/* FILLED pencil (design-language.md "Icon glyphs", rule 218 —
-              already a closed silhouette under its old stroke, so it flips
-              directly: same path data, `fill="currentColor"`). The old
-              facet-highlight line is dropped rather than faked as a
-              surface-colour cutout — this button's own background flips
-              between `bg-carbon-surface2` and `bg-accent` (the `editing`
-              state above), so a cutout hard-coded to one of those two colours
-              would show a visible mismatched patch in the other; the plain
-              pencil silhouette alone already reads clearly as "edit" without
-              it.
-                This used to be an inline `<svg>` right here, and it was the
-              app's ONLY pencil. Files.tsx's own "Ordner-Set bearbeiten" badge
-              needed the same glyph (jdp's icon-badge round for that tab), and
-              the standing instruction there was to reuse this one rather than
-              draw a second — so the path moved verbatim into Sidebar.tsx's
-              shared icon set as IconPencil and this call site now renders that
-              component. Same silhouette; the only difference is that IconPencil
-              crops its viewBox to the ink (see its own comment for the measured
-              numbers and why), so this button's glyph goes from 11.34 × 10.58
-              px of ink at 18px to 12.20 × 11.39 px at the app's standard 16px
-              icon-badge glyph size — sub-pixel-per-axis in practice, and it
-              brings this one in line with every other 16px glyph in a 32px
-              tile. The button itself is untouched: it stays a hand-rolled
-              `h-8 w-8` rather than a Badge, because its background legitimately
-              flips between two states (`bg-accent` while editing,
-              `bg-carbon-surface2` at rest) and Badge's icon-only tone="active"
-              is unconditionally accent-filled. */}
-          <IconPencil />
-        </IconTipButton>
-      </div>
-
-      {/* Fresh/rebuilt install nudge to the guided Recovery tab — fixed
-          (contextual). Reuses the shared /api/status fetch below. */}
-      <FreshInstallNudge
-        t={t}
-        domains={statusDomains}
-        loading={statusLoading}
-        dismissed={freshDismissed}
-        onDismiss={dismissFresh}
-      />
-
-      {/* Recovery-kit nag — fixed (contextual): only while encryption is on and
-          the recovery kit is unstored. */}
-      <RecoveryNag t={t} suppressed={freshShown} />
-
-      {/* Customize controls — the pencil in the heading toggles edit mode; while
-          editing, the Reset button + hint appear here. */}
-      {editing && (
-        <div className="flex flex-col gap-2 max-md:hidden">
-          <Button
-            label={t("dashboard.resetLayout")}
-          labelKey="dashboard.resetLayout"
-            tone="neutral"
-            onClick={reset}
-            className="self-start"
-          />
-          <p className="text-xs text-carbon-textMuted">{t("dashboard.customizeHint")}</p>
-        </div>
-      )}
-      </div>
-
-      {/* The phone Home blocks; the glanceable surfaces in the contracted
-          order (identity header is the page header above). JSX-gated on
-          !isDesktop; see the Mobile Home blocks banner above for the mount
-          discipline, the density contract and why the hue positions are
-          static literals. The thumb-zone trigger joins as this column's last
-          child (the StickyActionBar below). */}
-      {!isDesktop && (
-        <div className="flex flex-col gap-4">
-          {anomaliesLead && <AnomaliesBlock t={t} hueIndex={0} />}
-          <NextRunCard dense t={t} hueIndex={lead} scheduleNext={scheduleNext} domains={statusDomains} loading={statusLoading} />
-          <RunsCard
+  // The heading of each card takes the next palette position in the order
+  // the cards stand on the page.
+  let hues = 0;
+  const cards: GridCard[] = visible.map((id) => ({
+    id,
+    label: blocks[id].label,
+    span: cardSpan(layout, CARD[id]),
+    height: layout.heights[id],
+    node: blocks[id].render(hues++),
+  }));
+  if (!isDesktop) {
+    // A phone gets the next run and the repositories at a glance, right
+    // under what needs the person.
+    const glance: GridCard[] = [
+      {
+        id: "nextRun",
+        label: t("dashboard.summaryNextBackup"),
+        span: 6,
+        node: <NextRunCard dense t={t} hueIndex={hues++} scheduleNext={scheduleNext} domains={statusDomains} loading={statusLoading} />,
+      },
+      {
+        id: "storageGlance",
+        label: t("dashboard.storageTitle"),
+        span: 6,
+        node: (
+          <StorageCard
             dense
             t={t}
-            hueIndex={lead + 1}
-            runs={runs}
-            loading={!runsReady}
-            failed={runsFailed}
-            refreshRuns={refreshRuns}
-            onOpenRun={openRun}
+            hueIndex={hues++}
+            domains={statusDomains}
+            statusLoading={statusLoading}
+            statusFailed={statusFailed}
           />
-          <StorageCard dense t={t} hueIndex={lead + 2} domains={statusDomains} statusLoading={statusLoading} statusFailed={statusFailed} />
-          {!anomaliesLead && <AnomaliesBlock t={t} hueIndex={3} />}
-          <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={4} />
-          <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={5} />
-          <CoverageCard t={t} coverage={coverage} loading={coverageLoading} hueIndex={6} />
-          {/* The activity log reaches mobile here; the component is
-              self-contained (own card chrome + heading, per its header
-              comment), so the mount is one line. dayFilter stays shared: a
-              heatmap tap narrows both presentations because they render the
-              same state. */}
-          <ActivityLog dayFilter={logDayFilter} onClearDayFilter={() => setLogDayFilter(null)} hueIndex={7} />
+        ),
+      },
+    ];
+    cards.splice(cards[0]?.id === "needs" ? 1 : 0, 0, ...glance);
+  }
+
+  const section = sections.find((s) => s.kind === openSection);
+
+  return (
+    <div className={PAGE_SHELL_RESPONSIVE}>
+      <div className="flex flex-col gap-6">
+        {/* "BombVault" is the product's name and is not translated. */}
+        <div className="flex items-center gap-2 md:hidden">
+          <img src="/logo.svg" alt="" draggable={false} className="block h-6 w-6 object-contain dark:hidden" />
+          <img src="/logo-light.svg" alt="" draggable={false} className="hidden h-6 w-6 object-contain dark:block" />
+          <span className="text-lg font-semibold tracking-tight text-carbon-text">BombVault</span>
         </div>
-      )}
+        <PageTitle>{t("dashboard.title")}</PageTitle>
+        <StatusHead
+          t={t}
+          lang={lang}
+          ready={ready}
+          failed={statusMissing || (backupItems.failed && !backupItems.loaded)}
+          headline={headlineOf({ needs: needs.length, tally, sections, notes: anomalySummary?.enabled ? anomalySummary.open.info : 0 })}
+          needs={needs.length}
+          tally={tally}
+          sections={sections}
+          nextRun={Number.isFinite(nextFire) ? Math.round(nextFire / 1000) : null}
+          run={liveRun}
+          onOpenRun={openLiveRun}
+        />
 
-      {/* Ordered, visible blocks in a responsive grid: full-width cards span
-          both columns, half-width cards flow two-per-row (request B). Below
-          grid is JSX-gated on isDesktop (see the max-md note by the gate
-          below); the phone reads the Home blocks above instead. The
-          width. The col-span lives on this wrapper div (not on
-          CustomizableBlock's own root) so it applies in both edit mode (where
-          CustomizableBlock renders its control-bar div) and view mode (where
-          it renders only `<>{children}</>`). In edit mode the wrapper is also
-          what lifts when a card is carried by its grip; the grid derives each
-          cell's span from order and width. */}
-      {/* hueSeq/nextHue — SAME page-wide running-counter pattern as
-          Settings.tsx's own `nextHue()` (see that file's own `hueSeq`
-          comment), just declared here instead of at the top of the return:
-          it must be freshly reset to 0 on every render (a stale count would
-          drift every heading's colour after any state change) AND consumed
-          in the ACTUAL rendered order of `visibleBlocks` below — the user's
-          own current drag-reorder/hide-show layout, not this file's fixed
-          `blocks` definition order (GlimStone follow-up pass, jdp: "Alle
-          sind nicht im Regenbogenmodus" — every heading on this page was
-          still the flat, un-hued Task-5 default; see the `blocks` array's
-          `blocks` array's
-          own `render` comment above for why a plain per-block literal index
-          can't do this and a shared counter can). Each block's own `render`
-          callback calls this DIRECTLY, once per real heading badge it owns,
-          right here in this synchronous pass (most blocks once; "summary"
-          three times, back-to-back, for its own three SummaryCells; "stats"
-          zero times — StatCardsRow has no heading to hue) — never by handing
-          the `nextHue` function itself to a child component to call later
-          from its own body: React doesn't actually invoke a child function
-          component until after THIS WHOLE render pass has returned, so a
-          call made from inside a child runs strictly after every direct
-          call made here, landing on the wrong (already-past-the-end)
-          indices — caught live the first time this shipped (see
-          SummaryTier's own `healthHueIndex` doc for the exact live numbers)
-          and fixed by resolving all three of its indices to plain numbers
-          right here, the same way every other block already does. */}
-      {/* The isDesktop JSX gate, not a max-md:hidden class: below the
-          breakpoint the desktop customizable grid must not merely be invisible
-          but unmounted; a CSS-hidden grid stays mounted, and its cards keep
-          fetching behind the user's back (the storage card re-reads its four
-          stats windows; the runs list and heatmap keep polling) on top of the
-          phone blocks' own reads, doubling every phone load's round-trips for
-          data the user cannot see. Gating both faces on the same isDesktop
-          (the phone column above uses its complement) means exactly one face
-          is ever alive, whichever way the breakpoint is crossed. At md+ the
-          gate is transparent, so the desktop grid is unchanged. */}
-      {isDesktop && (
-      <div
-        ref={grid}
-        className={`relative grid grid-cols-1 gap-10 md:grid-cols-2 ${drag.held !== null ? "glim-drag-armed" : ""}`}
-      >
-        {(() => {
-          let hueSeq = 0;
-          const nextHue = () => hueSeq++;
-          return carriedBlocks.map((b, i) => (
-            <div
-              key={b.id}
-              data-grid-block={b.id}
-              className={`${getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"} ${drag.look(b.id)}`}
-            >
-              <CustomizableBlock
-                id={b.id}
-                label={b.label}
-                index={i}
-                total={visibleBlocks.length}
-                isFirst={i === 0}
-                isLast={i === visibleBlocks.length - 1}
-                editing={editing}
-                onGripPointerDown={(e) => drag.press(e, b.id)}
-                /* Move relative to the visible neighbour, skipping hidden blocks
-                   in the stored order, so a single press always reorders. */
-                onMoveUp={() => {
-                  if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
-                }}
-                onMoveDown={() => {
-                  if (i < visibleBlocks.length - 1)
-                    reorder(b.id, visibleBlocks[i + 1].id);
-                }}
-                onHide={() => toggleHidden(b.id)}
-                width={getWidth(b.id)}
-                onToggleWidth={() => toggleWidth(b.id)}
-                t={t}
-              >
-                {b.render(nextHue)}
-              </CustomizableBlock>
-            </div>
-          ));
-        })()}
-      </div>
-      )}
+        <FreshInstallNudge
+          t={t}
+          domains={statusDomains}
+          loading={statusLoading}
+          dismissed={freshDismissed}
+          onDismiss={dismissFresh}
+        />
 
-      {/* Hidden-cards tray — only while editing and something is hidden. */}
-      {/* Desktop-only like the grid it serves: editing is only reachable
-          through the pencil, which the isDesktop gate unmounts on the phone.
-          max-md:hidden stays as the belt over the resize window where editing
-          is on and the viewport drops below the breakpoint before React
-          commits the unmount. */}
-      {editing && hiddenBlocks.length > 0 && (
-        <div className="relative flex max-md:hidden flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
-          <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {hiddenBlocks.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center gap-2 rounded-pill bg-carbon-surface2 px-2.5 py-1.5"
-              >
-                <span className="max-w-48 truncate text-xs text-carbon-textSub">
-                  {b.label}
-                </span>
-                <Button
-                  label={`${t("dashboard.showCard")} ${b.label}`}
-                  labelKey="dashboard.showCard"
-                  tone="neutral"
-                  onClick={() => toggleHidden(b.id)}
-                />
-              </div>
-            ))}
+        {arranging && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="min-w-0 flex-1 basis-80 text-xs text-carbon-textMuted">{t("overview.customizeHint")}</p>
+            <Button label={t("dashboard.resetLayout")} labelKey="dashboard.resetLayout" glyph={<IconRefresh />} onClick={reset} />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* The run detail sheet, hosted component-locally (the
-          Containers.tsx contract): opened by a recent-run row tap and by the
-          backup watch's onRun correlation (the thumb-zone trigger deep-links
-          the live run into the same sheet). A closed sheet stays closed
-          against later watch polls (the latch); an explicit row tap re-arms
-          it. Gated on !isDesktop like the rest of the phone surface: the
-          bottom sheet has no desktop form, and the rotation-clear effect
-          above empties the state anyway (the gate is the belt, the effect
-          the braces). */}
-      {!isDesktop && displayedRun && (
+      <OverviewGrid
+        cards={cards}
+        editing={arranging}
+        isDesktop={isDesktop}
+        t={t}
+        onReorder={setVisibleOrder}
+        onMove={reorder}
+        onHide={toggleHidden}
+        onStepWidth={stepWidth}
+        onResize={resize}
+        onAutoHeight={autoHeight}
+      />
+
+      {arranging && <HiddenTray cards={hiddenCards} t={t} onShow={toggleHidden} />}
+
+      {displayedRun && (
         <RunDetailSheet
           run={displayedRun}
           open={sheetOpen}
@@ -918,18 +527,28 @@ export function Dashboard() {
           }}
         />
       )}
+      {errorsOpen && <ErrorDetailPanel onClose={() => setErrorsOpen(false)} onChanged={refreshRuns} />}
+      {section && <ProtectionWindow section={section} trial={trial} t={t} onClose={() => setOpenSection(null)} />}
 
-      {/* Thumb-zone trigger; the watch, the confirm and the toasts live in the
-          child. Mounted at every width, because a rotation that unmounts it
-          strands a running pass: the watch dies with it and a fresh mount
-          comes up idle. Above the breakpoint the child renders no bar, so the
-          desktop tree carries no phone chrome. */}
-      <PhoneEverythingTrigger
-        t={t}
-        onWatchRun={handleWatchRun}
-        onArmFire={armFire}
-        onWatchStopped={watchStopped}
-      />
+      <PageActions>
+        {isDesktop && (
+          <PageAction
+            primary={editing}
+            label={t(editing ? "dashboard.customizeDone" : "dashboard.customize")}
+            glyph={editing ? <IconCheck /> : <IconPencil />}
+            onClick={() => setEditing((on) => !on)}
+          />
+        )}
+        <EverythingAction
+          t={t}
+          running={liveRun !== null}
+          hidden={arranging}
+          onWatchRun={handleWatchRun}
+          onArmFire={armFire}
+          onWatchStopped={watchStopped}
+          onOpenRun={openLiveRun}
+        />
+      </PageActions>
     </div>
   );
 }
