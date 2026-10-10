@@ -15,7 +15,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
   listRuns: () => Promise.resolve({ ok: true, runs: [] }),
 }));
 
-const { StackCard } = await import("./Containers");
+const { StackCard } = await import("../components/containers/StackCard");
 
 stubEventSource();
 

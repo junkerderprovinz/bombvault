@@ -3,7 +3,7 @@
 // pages. It isolates the `<Button …/>` block carrying a given labelKey and
 // asserts on that block alone, so a hueIndex on a neighbouring button cannot
 // satisfy it the way it would a line-wise regex.
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { BULK_HUE } from "./bulkHue";
@@ -20,6 +20,23 @@ function read(path: string): string {
   return readFileSync(path, "utf8");
 }
 
+// Editors and panels that live beside a page rather than in it.
+const EDITOR_DIRS: Record<string, string> = {
+  "src/pages/Containers.tsx": "src/components/containers",
+  "src/pages/VMs.tsx": "src/components/vms",
+  "src/pages/Files.tsx": "src/components/files",
+};
+
+/** The page together with the components it was split into. */
+function readWithEditors(path: string): string {
+  const dir = EDITOR_DIRS[path];
+  if (!dir || !existsSync(dir)) return read(path);
+  const parts = readdirSync(dir)
+    .filter((f) => f.endsWith(".tsx"))
+    .map((f) => read(`${dir}/${f}`));
+  return [read(path), ...parts].join("\n");
+}
+
 /** The `<Button …/>` block carrying this labelKey, or null. */
 function buttonBlock(source: string, labelKey: string): string | null {
   for (const m of source.matchAll(/<Button\b[\s\S]*?\/>/g)) {
@@ -30,7 +47,7 @@ function buttonBlock(source: string, labelKey: string): string | null {
 
 describe("list rows are not washed in their hue", () => {
   it.each(PAGES)("%s applies no glim-tint", (page) => {
-    const src = read(page);
+    const src = readWithEditors(page);
     // Only a className counts; a comment may still name the class.
     const applied = [...src.matchAll(/className=[^\n]*glim-tint/g)];
     expect(applied).toHaveLength(0);
@@ -58,7 +75,7 @@ describe("the bulk-action bars carry a palette position", () => {
   ];
 
   it.each(CASES)("%s: %s takes BULK_HUE.%s", (page, labelKey, hue) => {
-    const block = buttonBlock(read(page), labelKey);
+    const block = buttonBlock(readWithEditors(page), labelKey);
     expect(block).not.toBeNull();
     expect(block).toContain(`hueIndex={BULK_HUE.${hue}}`);
   });
@@ -66,9 +83,9 @@ describe("the bulk-action bars carry a palette position", () => {
   it("gives the same action the same colour on every page", () => {
     // Positions are keyed to the action, not counted per page, so "Back up
     // selected" has one colour everywhere.
-    const containers = buttonBlock(read("src/pages/Containers.tsx"), "containers.backupSelected");
-    const vms = buttonBlock(read("src/pages/VMs.tsx"), "vms.backupSelected");
-    const files = buttonBlock(read("src/pages/Files.tsx"), "files.backupAll");
+    const containers = buttonBlock(readWithEditors("src/pages/Containers.tsx"), "containers.backupSelected");
+    const vms = buttonBlock(readWithEditors("src/pages/VMs.tsx"), "vms.backupSelected");
+    const files = buttonBlock(readWithEditors("src/pages/Files.tsx"), "files.backupAll");
     for (const block of [containers, vms, files]) {
       expect(block).toContain("hueIndex={BULK_HUE.backup}");
     }

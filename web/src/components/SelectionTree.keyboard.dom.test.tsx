@@ -39,7 +39,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported after vi.mock so the components pick up the mocked client.
-const { FoldersEditor } = await import("../pages/Containers");
+const { FoldersEditor } = await import("../components/containers/FoldersEditor");
 
 const HOST_ROOT = "/mnt";
 const MOUNT = "/mnt/user/appdata/plex";

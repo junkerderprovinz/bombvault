@@ -51,10 +51,9 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported after vi.mock so the components get the mocked client.
-const FilesModule = await import("./Files");
-const { FileSetFoldersEditor, FileSetRow } = FilesModule;
-const fileSetEditorKey = FilesModule.fileSetEditorKey;
-const FileSetDialog = FilesModule.FileSetDialog;
+const { FileSetRow } = await import("./Files");
+const { FileSetFoldersEditor, fileSetEditorKey } = await import("../components/files/FileSetFoldersEditor");
+const { FileSetDialog } = await import("../components/files/FileSetDialog");
 
 const HOST_MOUNT_ROOT = "/host/user";
 const REL = "documents";

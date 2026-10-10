@@ -42,7 +42,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported after vi.mock so the components pick up the mocked client.
-const { FoldersEditor } = await import("../pages/Containers");
+const { FoldersEditor } = await import("../components/containers/FoldersEditor");
 const { SelectionTree } = await import("./SelectionTree");
 
 const HOST_ROOT = "/mnt";
