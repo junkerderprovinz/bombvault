@@ -3,15 +3,19 @@
 // no sentence for still has to say something.
 import { describe, expect, it } from "vitest";
 import {
+  anomalyDeviation,
   anomalyDomainsLabel,
+  anomalyEntryName,
   anomalyErrorText,
   anomalyFigures,
+  anomalyGroupKey,
   anomalyItemLabel,
   anomalySentence,
   anomalyShortLine,
   anomalySeverityTone,
   anomalyTimeSpan,
-  groupAnomalies,
+  anomalyWhere,
+  sortClosedAnomalies,
   sortOpenAnomalies,
   worstSeverity,
 } from "./anomalies";
@@ -506,41 +510,100 @@ describe("anomalyShortLine", () => {
   });
 });
 
-describe("groupAnomalies", () => {
-  it("puts an item's own findings, its dump's and its datasets' on one card", () => {
-    const groups = groupAnomalies([
-      view({ id: "a", targetId: "tg-1" }),
-      view({ id: "b", targetId: "tg-1", scopeKind: "dump" }),
-      view({ id: "c", targetId: "tg-1", scopeKind: "zfsds", part: "tank/x" }),
-      view({ id: "d", targetId: "tg-2" }),
-    ]);
-    expect(groups.map((g) => [g.key, g.findings.map((a) => a.id)])).toEqual([
-      ["tg-1", ["a", "b", "c"]],
-      ["tg-2", ["d"]],
-    ]);
+describe("anomalyGroupKey", () => {
+  it("files an item's own findings, its dump's and its datasets' under the item", () => {
+    const keys = [
+      view({ targetId: "tg-1" }),
+      view({ targetId: "tg-1", scopeKind: "dump" }),
+      view({ targetId: "tg-1", scopeKind: "zfsds", part: "tank/x" }),
+      view({ targetId: "tg-2" }),
+    ].map(anomalyGroupKey);
+    expect(keys).toEqual(["tg-1", "tg-1", "tg-1", "tg-2"]);
   });
 
-  it("gives each restore check series and each disk a card of its own", () => {
-    const groups = groupAnomalies([
-      view({ id: "a", targetId: "", scopeKind: "domain", scopeId: "containers:local" }),
-      view({ id: "b", targetId: "", scopeKind: "domain", scopeId: "files:local" }),
-      view({ id: "c", targetId: "", scopeKind: "volume", scopeId: "vol-1" }),
-    ]);
-    expect(groups.map((g) => g.key)).toEqual(["domain:containers:local", "domain:files:local", "volume:vol-1"]);
+  it("keeps each restore check series and each disk apart", () => {
+    const keys = [
+      view({ targetId: "", scopeKind: "domain", scopeId: "containers:local" }),
+      view({ targetId: "", scopeKind: "domain", scopeId: "files:local" }),
+      view({ targetId: "", scopeKind: "volume", scopeId: "vol-1" }),
+    ].map(anomalyGroupKey);
+    expect(keys).toEqual(["domain:containers:local", "domain:files:local", "volume:vol-1"]);
+  });
+});
+
+describe("anomalyEntryName", () => {
+  it("names the item, also for its dump and its datasets", () => {
+    expect(anomalyEntryName(view({}), t)).toBe("plex");
+    expect(anomalyEntryName(view({ scopeKind: "dump" }), t)).toBe("plex");
+    expect(anomalyEntryName(view({ scopeKind: "zfsds", name: "tank", part: "tank/media" }), t)).toBe("tank");
   });
 
-  it("orders cards by their worst finding, then by the newest", () => {
-    const groups = groupAnomalies([
-      view({ id: "a", targetId: "old", severity: "warning", lastSeenAt: 100 }),
-      view({ id: "b", targetId: "new", severity: "warning", lastSeenAt: 200 }),
-      view({ id: "c", targetId: "bad", severity: "info", lastSeenAt: 300 }),
-      view({ id: "d", targetId: "bad", severity: "critical", lastSeenAt: 50 }),
+  it("names the kind of check where no item stands behind a finding", () => {
+    expect(anomalyEntryName(view({ scopeKind: "domain", name: "", targetId: "" }), t)).toBe(
+      en["anomaly.detector.integrity"]
+    );
+    expect(anomalyEntryName(view({ scopeKind: "volume", name: "", targetId: "" }), t)).toBe(
+      en["anomaly.detector.capacity"]
+    );
+  });
+
+  it("falls back to the backup type for an item without a name", () => {
+    expect(anomalyEntryName(view({ name: "", domain: "flash" }), t)).toBe(en["dashboard.domainFlash"]);
+  });
+});
+
+describe("anomalyWhere", () => {
+  it("says which disk a capacity finding is about by what it holds", () => {
+    const a = view({ scopeKind: "volume", domain: "containers,vms" });
+    expect(anomalyWhere(a, t)).toBe(en["anomaly.card.volume"].replace("{domains}", "Containers, VMs"));
+  });
+
+  it("names the copy a restore check read", () => {
+    const check = { scopeKind: "domain" as const, domain: "files", metric: "drill_subset" };
+    expect(anomalyWhere(view({ ...check, targetName: "wasabi" }), t)).toContain("wasabi");
+    expect(anomalyWhere(view({ ...check, details: { source: "offsite" } }), t)).toContain(en["source.offsite"]);
+    expect(anomalyWhere(view(check), t)).toContain(en["source.local"]);
+  });
+});
+
+describe("sortClosedAnomalies", () => {
+  it("puts the worst first and keeps the server's order within a severity", () => {
+    const sorted = sortClosedAnomalies([
+      view({ id: "a", severity: "info" }),
+      view({ id: "b", severity: "warning" }),
+      view({ id: "c", severity: "critical" }),
+      view({ id: "d", severity: "warning" }),
     ]);
-    expect(groups.map((g) => [g.key, g.worst])).toEqual([
-      ["bad", "critical"],
-      ["new", "warning"],
-      ["old", "warning"],
-    ]);
+    expect(sorted.map((a) => a.id)).toEqual(["c", "b", "d", "a"]);
+  });
+});
+
+describe("anomalyDeviation", () => {
+  const GB = 1024 ** 3;
+
+  it("gives a factor from twice the usual on, against the ceiling for new data", () => {
+    const a = view({ metric: "new_data", observed: 12 * GB, details: { refBytes: 0.4 * GB } });
+    expect(anomalyDeviation(a, t, "en")).toEqual({
+      figure: isolateLtr(en["anomaly.curve.times"].replace("{n}", "30")),
+      versus: en["anomaly.curve.atMost"]
+        .replace("{current}", isolateLtr("12.0 GB"))
+        .replace("{typical}", isolateLtr("409.6 MB")),
+    });
+  });
+
+  it("gives a signed percentage below that, against the usual level", () => {
+    const shrunk = view({ metric: "source_bytes_shrink", observed: 2 * GB, expected: 16 * GB });
+    expect(anomalyDeviation(shrunk, t, "en")?.figure).toBe(isolateLtr("-88%"));
+    expect(anomalyDeviation(shrunk, t, "en")?.versus).toBe(
+      en["anomaly.curve.about"].replace("{current}", isolateLtr("2.0 GB")).replace("{typical}", isolateLtr("16.0 GB"))
+    );
+    const grown = view({ metric: "source_bytes_growth", observed: 12 * GB, expected: 10 * GB });
+    expect(anomalyDeviation(grown, t, "en")?.figure).toBe(isolateLtr("+20%"));
+  });
+
+  it("has nothing to say where a finding measures no level", () => {
+    expect(anomalyDeviation(view({ metric: "flaky", observed: 3, expected: 10 }), t, "en")).toBeNull();
+    expect(anomalyDeviation(view({ metric: "duration_slower", observed: 5000, expected: 0 }), t, "en")).toBeNull();
   });
 });
 

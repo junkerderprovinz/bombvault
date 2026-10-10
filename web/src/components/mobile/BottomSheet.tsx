@@ -37,7 +37,7 @@ export interface BottomSheetProps {
    *  stack puts ahead of the commit. */
   headerClose?: boolean;
   /** The sheet's heading, already translated by the caller. */
-  title: string;
+  title: ReactNode;
   /** The sheet body. */
   children: ReactNode;
   /** Full-height variant (the run detail sheet): h-dvh, edge to edge,
