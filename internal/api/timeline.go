@@ -45,8 +45,11 @@ type timelineMark struct {
 // is the restic.Identity of its snapshot, or the stamp of a ZFS run, whose mark
 // lists the snapshots of all its datasets.
 type timelineRow struct {
-	Key    string         `json:"key"`
-	Time   string         `json:"time"`
+	Key  string `json:"key"`
+	Time string `json:"time"`
+	// Size is what restic read for the backup, before deduplication and
+	// compression. It is absent where neither a run nor the snapshot recorded it.
+	Size   *int64         `json:"size,omitempty"`
 	Places []timelineMark `json:"places"`
 }
 
@@ -302,14 +305,46 @@ func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow 
 			continue
 		}
 		index[key] = len(rows)
-		rows = append(rows, timelineRow{Key: key, Time: snap.Time, Places: []timelineMark{{
+		row := timelineRow{Key: key, Time: snap.Time, Places: []timelineMark{{
 			Place:       place,
 			SnapshotIDs: []string{snap.ID},
 			Tags:        append([]string{}, snap.Tags...),
 			Incomplete:  it.incomplete(snap, own),
-		}}})
+		}}}
+		if !row.Places[0].Incomplete {
+			row.Size = recordedSize(append(it.disksOf(snap, own), snap))
+		}
+		rows = append(rows, row)
 	}
 	return rows
+}
+
+// disksOf returns the zvol disk snapshots a VM run wrote beside its own.
+func (it timelineItem) disksOf(run restic.Snapshot, own []restic.Snapshot) []restic.Snapshot {
+	group := vmRunTag(own, run.ID)
+	if group == "" {
+		return nil
+	}
+	var disks []restic.Snapshot
+	for _, snap := range own {
+		if it.isDisk(snap) && slices.Contains(snap.Tags, group) {
+			disks = append(disks, snap)
+		}
+	}
+	return disks
+}
+
+// recordedSize adds up what restic recorded as read on each snapshot. It is nil
+// when one of them carries no summary, as those written before restic 0.17.
+func recordedSize(snaps []restic.Snapshot) *int64 {
+	var total int64
+	for _, snap := range snaps {
+		if snap.Summary == nil {
+			return nil
+		}
+		total += clampToInt64(snap.Summary.TotalBytesProcessed)
+	}
+	return &total
 }
 
 // zfsRowsAt groups one place's snapshots by the run that wrote them, the root
@@ -319,6 +354,7 @@ func zfsRowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineR
 	rows := []timelineRow{}
 	index := map[string]int{}
 	held := map[string][]string{}
+	members := map[string][]restic.Snapshot{}
 	byDataset := slices.Clone(own)
 	slices.SortStableFunc(byDataset, func(a, b restic.Snapshot) int {
 		da, _ := zfsSnapshotDataset(a, it.zfsRoot)
@@ -347,13 +383,20 @@ func zfsRowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineR
 			}
 		}
 		dataset, _ := zfsSnapshotDataset(snap, it.zfsRoot)
-		held[stamp] = append(held[stamp], dataset)
+		// A dataset copied again after a tag lies here twice and counts once.
+		if !slices.Contains(held[stamp], dataset) {
+			held[stamp] = append(held[stamp], dataset)
+			members[stamp] = append(members[stamp], snap)
+		}
 	}
 	for i, row := range rows {
 		for dataset, outcome := range it.zfsRuns[row.Key] {
 			if outcome == outcomeBackedUp && !slices.Contains(held[row.Key], dataset) {
 				rows[i].Places[0].Incomplete = true
 			}
+		}
+		if !rows[i].Places[0].Incomplete {
+			rows[i].Size = recordedSize(members[row.Key])
 		}
 	}
 	slices.SortFunc(rows, func(a, b timelineRow) int { return cmp.Compare(b.Key, a.Key) })
@@ -386,6 +429,9 @@ func mergeRows(parts [][]timelineRow) []timelineRow {
 		for _, r := range rows {
 			if i, ok := index[r.Key]; ok {
 				out[i].Places = append(out[i].Places, r.Places...)
+				if out[i].Size == nil {
+					out[i].Size = r.Size
+				}
 				continue
 			}
 			index[r.Key] = len(out)
@@ -419,7 +465,50 @@ func (s *Service) Timeline(ctx context.Context, domain, key string) (timeline, e
 		parts = append(parts, rows)
 	}
 	out.Rows = mergeRows(parts)
+	measured, err := s.measuredSizes(domain, key)
+	if err != nil {
+		return timeline{}, err
+	}
+	withMeasuredSizes(out.Rows, measured)
 	return out, nil
+}
+
+// measuredSizes is what the item's runs read, by the key of the timeline row
+// each of them wrote. An item without a row has no runs.
+func (s *Service) measuredSizes(domain, key string) (map[string]int64, error) {
+	ofRow := func(id string, err error) (map[string]int64, error) {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		return s.store.BackupSizesBySnapshot(id)
+	}
+	switch domain {
+	case "containers":
+		t, err := s.store.GetTargetByContainer(key)
+		return ofRow(t.ID, err)
+	case "vms":
+		vm, err := s.store.GetVMTargetByName(key)
+		return ofRow(vm.ID, err)
+	case "files":
+		return s.store.BackupSizesBySnapshot(key)
+	case zfsDomain:
+		return s.store.ZFSBackupSizesByStamp(key)
+	}
+	return s.store.BackupSizesBySnapshot(domainRunTargetID(domain))
+}
+
+// withMeasuredSizes puts what a run measured in place of what the snapshots
+// say. The two agree where both exist; the run also knows the size of a backup
+// restic wrote no summary for.
+func withMeasuredSizes(rows []timelineRow, measured map[string]int64) {
+	for i, row := range rows {
+		if size, ok := measured[row.Key]; ok {
+			rows[i].Size = &size
+		}
+	}
 }
 
 // TimelinePlace reads one place of an item's timeline; its rows carry only that
@@ -444,6 +533,11 @@ func (s *Service) TimelinePlace(ctx context.Context, domain, key, place string) 
 		p = s.targetPlace(settings, t)
 	}
 	tp, rows := s.readPlace(ctx, it, p)
+	measured, err := s.measuredSizes(domain, key)
+	if err != nil {
+		return timelinePlace{}, nil, err
+	}
+	withMeasuredSizes(rows, measured)
 	return tp, rows, nil
 }
 

@@ -3233,6 +3233,11 @@ export interface TimelineMark {
 export interface TimelineRow {
   key: string;
   time: string;
+  /** Bytes restic read for the backup, before deduplication and compression:
+   *  what its run measured, else what restic 0.17 or later recorded on the
+   *  snapshots. Absent where neither exists, and for a VM or ZFS run of which
+   *  no place read holds every disk or dataset. */
+  size?: number;
   places: TimelineMark[];
 }
 

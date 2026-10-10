@@ -1847,3 +1847,88 @@ func TestLatestSourceBytesByTarget(t *testing.T) {
 		t.Fatalf("an unmeasured run carries SourceBytes = %d, want nil", *unmeasured.SourceBytes)
 	}
 }
+
+func TestBackupSizesBySnapshot(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	rows := []struct {
+		runRow
+		snapshot    string
+		sourceBytes any
+	}{
+		{runRow{id: "measured", targetID: "a", kind: "backup", status: "success", startedAt: 100}, "aaaa1111", 250},
+		{runRow{id: "empty", targetID: "a", kind: "backup", status: "success", startedAt: 200}, "bbbb2222", 0},
+		{runRow{id: "unmeasured", targetID: "a", kind: "backup", status: "success", startedAt: 300}, "cccc3333", nil},
+		{runRow{id: "restore", targetID: "a", kind: "restore", status: "success", startedAt: 400}, "aaaa1111", 7},
+		{runRow{id: "dump", targetID: "a", kind: "dbdump", status: "success", startedAt: 500}, "dddd4444", 5},
+		{runRow{id: "other", targetID: "b", kind: "backup", status: "success", startedAt: 100}, "eeee5555", 9},
+	}
+	for _, row := range rows {
+		insertRunRow(t, db, row.runRow)
+		if _, err := db.Exec(`UPDATE runs SET snapshot_id = ?, source_bytes = ? WHERE id = ?`, row.snapshot, row.sourceBytes, row.id); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := r.BackupSizesBySnapshot("a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := map[string]int64{"aaaa1111": 250, "bbbb2222": 0}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("sizes = %v, want %v", got, want)
+	}
+}
+
+func TestZFSBackupSizesByStampLeavesOutAPartlyMeasuredRun(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	item, err := r.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/apps", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	size := func(n int64) *int64 { return &n }
+	runs := []struct {
+		stamp   string
+		members []store.ZFSRunMember
+	}{
+		{"bombvault-20260101000000", []store.ZFSRunMember{
+			{Dataset: "tank/apps", Outcome: "backed-up", ResticSnapshot: "aaaa1111", SourceBytes: size(4000)},
+			{Dataset: "tank/apps/db", Outcome: "backed-up", ResticSnapshot: "aaaa2222", SourceBytes: size(900)},
+			{Dataset: "tank/apps/tmp", Outcome: "excluded"},
+		}},
+		{"bombvault-20260102000000", []store.ZFSRunMember{
+			{Dataset: "tank/apps", Outcome: "backed-up", ResticSnapshot: "bbbb1111", SourceBytes: size(4100)},
+			{Dataset: "tank/apps/db", Outcome: "backed-up", ResticSnapshot: "bbbb2222"},
+		}},
+	}
+	for _, run := range runs {
+		id, err := r.StartRun(item.ID, "backup")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := r.RecordZFSRun(id, item.ID, run.stamp, -1, ""); err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range run.members {
+			m.RunID = id
+			if err := r.AddZFSRunMember(m); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	got, err := r.ZFSBackupSizesByStamp(item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := map[string]int64{"bombvault-20260101000000": 4900}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("sizes = %v, want %v", got, want)
+	}
+}
