@@ -229,6 +229,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/group/address", h.handleGroupAddress)
 	mux.HandleFunc("POST /api/group/probe", h.handleGroupProbe)
 	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
+	h.registerRoleRoutes(mux)
 
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)

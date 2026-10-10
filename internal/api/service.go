@@ -279,6 +279,9 @@ type Service struct {
 	// roleSendMu lets one call about this instance's own role requests go
 	// out at a time, so a withdrawal cannot overtake the ask it takes back.
 	roleSendMu sync.Mutex
+	// roleRefreshedAt is when this instance last asked its members where its
+	// own role requests stand, in Unix nanoseconds.
+	roleRefreshedAt atomic.Int64
 	// zfsReceiveBusy holds the ids of the receive slots a stream is landing
 	// through, so a second stream into the same slot waits its turn.
 	zfsReceiveBusy sync.Map

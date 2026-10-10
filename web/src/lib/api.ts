@@ -5470,6 +5470,138 @@ export function memberRepos(id: string): Promise<OkEnvelope & { instanceName?: s
   return fetchJSON(`/api/group/members/${encodeURIComponent(id)}/repos`);
 }
 
+// Roles between paired instances: one asks another to be its Receiver or
+// Fetcher, and a person on the asked instance answers.
+
+/** The roles that go through a request. The ZFS server role has its own,
+ *  one per ZFS item. */
+export type RequestedRole = "receiver" | "fetcher";
+
+export type RoleRequestState = "asked" | "allowed" | "refused" | "revoked";
+
+/** The backup sections a role covers: what is sent to a Receiver, or what a
+ *  Fetcher may fetch. */
+export type RoleSection = "config" | "containers" | "files" | "flash" | "vms" | "zfs";
+
+/** Where a Receiver keeps the copies: its append-only rest-server or a
+ *  share. */
+export type RoleStore = "rest" | "share";
+
+export interface RoleRequest {
+  id: string;
+  state: RoleRequestState;
+  sections: RoleSection[];
+  /** Empty for a Fetcher, and for a Receiver carried over from a watched
+   *  repository at the upgrade. */
+  store: RoleStore | "";
+  askedAt: string;
+  /** Empty while the request waits. */
+  decidedAt: string;
+  /** Who settled it: a person on the asked instance ("person"), the other
+   *  instance ("member"), the upgrade that carried over an existing login or
+   *  pairing ("upgrade"), or nobody, for a member too old to answer
+   *  ("automatic"). */
+  decidedBy: "" | "person" | "member" | "upgrade" | "automatic";
+}
+
+/** One ZFS item's replica request. `id` is the item for a request this
+ *  instance sent and the receive request for one it got. Only a request this
+ *  instance sent can be "off". */
+export interface ZFSRoleItem {
+  id: string;
+  dataset: string;
+  state: ZFSPeerState;
+}
+
+/** The ZFS server role between two instances. Every item asks on its own;
+ *  `state` sums them up: waiting while any item waits, else allowed while
+ *  any is. */
+export interface ZFSRole {
+  state: ZFSPeerState;
+  items: ZFSRoleItem[];
+}
+
+/** The three roles in one direction. A role nobody asked for is null. */
+export interface RoleSide {
+  receiver: RoleRequest | null;
+  fetcher: RoleRequest | null;
+  zfs: ZFSRole | null;
+}
+
+export interface MemberRoles {
+  memberId: string;
+  name: string;
+  reachable: boolean;
+  /** False for a member from before role requests: asking it takes effect at
+   *  once, since nobody there can answer. */
+  answers: boolean;
+  /** What the member does for this instance. */
+  byMember: RoleSide;
+  /** What this instance does for the member. */
+  forMember: RoleSide;
+  /** How many of the member's requests wait for an answer here. */
+  asks: number;
+}
+
+export interface RoleHolder {
+  memberId: string;
+  name: string;
+}
+
+/** For whom this instance is Receiver, Fetcher and ZFS server. */
+export interface SelfRoles {
+  receiver: RoleHolder[];
+  fetcher: RoleHolder[];
+  zfs: RoleHolder[];
+}
+
+/** GET /api/group/roles - every member's roles in both directions. */
+export function listRoles(): Promise<OkEnvelope & { members?: MemberRoles[]; self?: SelfRoles }> {
+  return fetchJSON("/api/group/roles");
+}
+
+/** PUT /api/group/members/{id}/roles/{role} - ask a member for a role, or
+ *  change the sections of a request already sent. */
+export function askRole(
+  memberId: string,
+  role: RequestedRole,
+  ask: { sections: RoleSection[]; store?: RoleStore }
+): Promise<OkEnvelope & { request?: RoleRequest }> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/${role}`, {
+    method: "PUT",
+    body: JSON.stringify(ask),
+  });
+}
+
+/** DELETE /api/group/members/{id}/roles/{role} - take back a request this
+ *  instance sent. `told` is false when the member could not be reached; the
+ *  request is gone here either way. */
+export function withdrawRole(memberId: string, role: RequestedRole): Promise<OkEnvelope & { told?: boolean }> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/${role}`, { method: "DELETE" });
+}
+
+/** An allow names the sections exactly as the request it answers showed
+ *  them, and is refused with "request-changed" when the member has asked for
+ *  others since. Allowing a Receiver on an instance without a receiver is
+ *  refused with "no-receiver". */
+export type RoleDecision =
+  | { decision: "allow"; sections: RoleSection[] }
+  | { decision: "refuse" }
+  | { decision: "revoke" };
+
+/** POST /api/group/roles/requests/{id} - answer a member's request. `told`
+ *  is false when the member could not be reached; it learns the answer the
+ *  next time it asks. */
+export function decideRole(
+  id: string,
+  decision: RoleDecision
+): Promise<OkEnvelope & { request?: RoleRequest; told?: boolean }> {
+  return fetchJSON(`/api/group/roles/requests/${encodeURIComponent(id)}`, {
+    method: "POST",
+    body: JSON.stringify(decision),
+  });
+}
+
 // Fleet view API: the protection status of the other members of the group.
 
 export interface FleetPeer {
