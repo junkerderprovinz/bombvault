@@ -1473,7 +1473,6 @@ const hr: Partial<Translations> = {
   "containers.backupStartFailed": "Sigurnosna kopija se nije mogla pokrenuti",
   "containers.updateSettingFailed": "Postavka se nije mogla promijeniti",
   "vms.loadFailed": "VM-ovi se nisu mogli učitati",
-  "files.loadSetsFailed": "Skupovi mapa se nisu mogli učitati",
   "config.loadSettingsFailed": "Trenutne postavke se nisu mogle učitati",
   "dashboard.loadRunsFailed": "Izvršavanja se nisu mogla učitati",
 
@@ -2104,9 +2103,6 @@ const hr: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Mape",
-  "files.title": "Mape",
-  "files.setsTitle": "Skupovi mapa",
-  "files.empty": "Još nema skupova mapa. Dodajte mapu (dijeljene mape, dokumente, fotografije, bilo što ispod vaših montiranja), a BombVault je štiti kao i sve ostalo: rasporedi, izvanmrežne kopije, provjere cjelovitosti i vraćanja. Nije potreban zaseban alat za sigurnosnu kopiju datoteka.",
   "files.addSet": "Dodaj skup mapa",
   "files.editSet": "Uredi skup mapa",
   "files.name": "Naziv",
@@ -2129,7 +2125,6 @@ const hr: Partial<Translations> = {
   "files.pathMissing": "Mapa nije pronađena",
   "files.noPath": "Nije postavljena mapa",
   "files.noPathHint": "Ponovno izgrađeno iz sigurnosnih kopija bez mape. Postavite mapu za ponovnu sigurnosnu kopiju. Vraćanje u mapu već radi.",
-  "files.deleteSet": "Izbriši skup mapa",
   "files.deleteSetConfirm": "Ukloniti ovaj skup mapa s popisa? Njegove sigurnosne kopije ne brišu se i mogu se kasnije ponovno otkriti.",
   "files.deleteBackupsConfirm": "Izbrisati sve lokalne sigurnosne kopije ovog skupa mapa? Snimke se trajno uklanjaju, lokalni repozitorij se pročišćava, a skup se zaboravlja. Kopije na izvanmrežnim odredištima ostaju, a nijedan skup više ne zna za njih. To se ne može poništiti.",
   "files.restoreOriginal": "Vrati na izvornu lokaciju",
@@ -2138,9 +2133,7 @@ const hr: Partial<Translations> = {
   "files.restoreSelectFiles": "Odaberi datoteke",
   "files.restoreComplete": "Vraćanje dovršeno. Datoteke su zapisane.",
   "files.backupAll": "Sigurnosno kopiraj sve sada",
-  "files.discoverHint": "Izgubili ste popis skupova? Ponovno ga izgradite iz sigurnosnih kopija u pohrani.",
   "files.cancel": "Otkaži",
-  "files.addPreset": "Dodaj predložak: Konfiguracija sustava hosta",
   "files.addPresetHint": "Konzervativna polazna točka za konfiguraciju na razini hosta izvan vaših kontejnera, nije tvrdnja o potpunosti. Pregledajte mapu prije spremanja.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

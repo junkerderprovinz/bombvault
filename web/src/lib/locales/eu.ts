@@ -1473,7 +1473,6 @@ const eu: Partial<Translations> = {
   "containers.backupStartFailed": "Ezin izan da babeskopia abiarazi",
   "containers.updateSettingFailed": "Ezin izan da ezarpena aldatu",
   "vms.loadFailed": "Ezin izan dira MBak kargatu",
-  "files.loadSetsFailed": "Ezin izan dira karpeta-multzoak kargatu",
   "config.loadSettingsFailed": "Ezin izan dira uneko ezarpenak kargatu",
   "dashboard.loadRunsFailed": "Ezin izan dira exekuzioak kargatu",
 
@@ -2104,9 +2103,6 @@ const eu: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Karpetak",
-  "files.title": "Karpetak",
-  "files.setsTitle": "Karpeta-multzoak",
-  "files.empty": "Oraindik ez dago karpeta-multzorik. Gehitu karpeta bat (partekatzeak, dokumentuak, argazkiak, zure muntaketen azpiko edozer) eta BombVaultek gainerakoa bezala babesten du: egutegiak, kanpoko kopiak, osotasun-egiaztapenak eta berrezarpenak. Ez da fitxategi-babeskopiarako tresna bereizirik behar.",
   "files.addSet": "Gehitu karpeta-multzoa",
   "files.editSet": "Editatu karpeta-multzoa",
   "files.name": "Izena",
@@ -2129,7 +2125,6 @@ const eu: Partial<Translations> = {
   "files.pathMissing": "Karpeta ez da aurkitu",
   "files.noPath": "Karpetarik ez da ezarri",
   "files.noPathHint": "Karpetarik gabeko babeskopietatik berreraikita. Ezarri karpeta bat berriz babesteko. Karpeta batean berrezartzea jada funtzionatzen du.",
-  "files.deleteSet": "Ezabatu karpeta multzoa",
   "files.deleteSetConfirm": "Karpeta-multzo hau zerrendatik kendu nahi duzu? Bere babeskopiak ez dira ezabatzen eta geroago berriz aurki daitezke.",
   "files.deleteBackupsConfirm": "Karpeta-multzo honen babeskopia lokal guztiak ezabatu nahi dituzu? Argazkiak betiko ezabatzen dira, biltegi lokala garbitzen da eta multzoa ahaztu egiten da. Kanpoko helmugetako kopiak mantendu egiten dira, haiek ezagutzen dituen multzorik gabe. Hau ezin da desegin.",
   "files.restoreOriginal": "Berrezarri jatorrizko kokapenean",
@@ -2138,9 +2133,7 @@ const eu: Partial<Translations> = {
   "files.restoreSelectFiles": "Hautatu fitxategiak",
   "files.restoreComplete": "Berrezarpena osatuta: fitxategiak idatzi dira.",
   "files.backupAll": "Egin denen babeskopia orain",
-  "files.discoverHint": "Multzoen zerrenda galdu duzu? Berreraiki biltegiko babeskopietatik.",
   "files.cancel": "Utzi",
-  "files.addPreset": "Gehitu aurrezarpena: Ostalariaren sistema-konfigurazioa",
   "files.addPresetHint": "Zure edukiontzietatik kanpoko ostalari-mailako konfiguraziorako abiapuntu kontserbadore bat, ez osotasun-eskaera bat. Berrikusi karpeta gorde aurretik.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

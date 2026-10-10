@@ -864,7 +864,6 @@ const hu: Partial<Translations> = {
   "containers.backupStartFailed": "A biztonsági mentés indítása sikertelen",
   "containers.updateSettingFailed": "A beállítás módosítása sikertelen",
   "vms.loadFailed": "A VM-ek betöltése sikertelen",
-  "files.loadSetsFailed": "A mappakészletek betöltése sikertelen",
   "config.loadSettingsFailed": "A jelenlegi beállítások nem tölthetők be",
   "dashboard.loadRunsFailed": "A futások betöltése sikertelen",
 
@@ -1675,9 +1674,6 @@ const hu: Partial<Translations> = {
   "settings.registryAdd": "Registry hozzáadása",
   // Files domain (file-set backups, #62)
   "nav.files": "Mappák",
-  "files.title": "Mappák",
-  "files.setsTitle": "Mappakészletek",
-  "files.empty": "Még nincsenek mappakészletek. Adj hozzá egy mappát (megosztások, dokumentumok, fotók, bármi a csatolásaid alatt), és a BombVault ugyanúgy védi, mint minden mást: ütemezések, telephelyen kívüli másolatok, integritás-ellenőrzések és visszaállítások. Nincs szükség külön fájlmentő eszközre.",
   "files.addSet": "Mappakészlet hozzáadása",
   "files.editSet": "Mappakészlet szerkesztése",
   "files.name": "Név",
@@ -1700,7 +1696,6 @@ const hu: Partial<Translations> = {
   "files.pathMissing": "A mappa nem található",
   "files.noPath": "Nincs mappa beállítva",
   "files.noPathHint": "Mappa nélkül, biztonsági mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
-  "files.deleteSet": "Mappakészlet törlése",
   "files.deleteSetConfirm": "Eltávolítod ezt a mappakészletet a listáról? A biztonsági mentései nem törlődnek, és később újra felfedezhetők.",
   "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az összes helyi biztonsági mentését? A pillanatképek véglegesen törlődnek, a helyi tároló kitakarítódik, a készletet pedig elfelejti a rendszer. A telephelyen kívüli célokon lévő másolatok megmaradnak, de egyetlen készlet sem tud róluk. Ezt nem lehet visszavonni.",
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",
@@ -1709,9 +1704,7 @@ const hu: Partial<Translations> = {
   "files.restoreSelectFiles": "Fájlok kiválasztása",
   "files.restoreComplete": "Visszaállítás kész. A fájlok kiírásra kerültek.",
   "files.backupAll": "Összes biztonsági mentése most",
-  "files.discoverHint": "Elveszett a készletlista? Építsd újra a tárhely biztonsági mentéseiből.",
   "files.cancel": "Mégse",
-  "files.addPreset": "Előbeállítás hozzáadása: Rendszerkonfiguráció",
   "files.addPresetHint": "Óvatos kiindulópont a konténereken kívüli, host-szintű konfigurációhoz, nem teljességi igény. Mentés előtt ellenőrizd a mappát.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

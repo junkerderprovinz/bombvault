@@ -858,7 +858,6 @@ const nl: Partial<Translations> = {
   "containers.backupStartFailed": "Kon de back-up niet starten",
   "containers.updateSettingFailed": "Kon de instelling niet bijwerken",
   "vms.loadFailed": "Kon de VM's niet laden",
-  "files.loadSetsFailed": "Kon de mappensets niet laden",
   "config.loadSettingsFailed": "Kon de huidige instellingen niet laden",
   "dashboard.loadRunsFailed": "Kon de uitvoeringen niet laden",
 
@@ -1669,9 +1668,6 @@ const nl: Partial<Translations> = {
   "settings.registryAdd": "Registry toevoegen",
   // Files domain (file-set backups, #62)
   "nav.files": "Mappen",
-  "files.title": "Mappen",
-  "files.setsTitle": "Mappensets",
-  "files.empty": "Nog geen mappensets. Voeg een map toe (shares, documenten, foto's, alles onder je mounts), en BombVault beschermt hem zoals al het andere: planningen, off-site kopieën, integriteitscontroles en herstel. Geen aparte tool voor bestandsback-ups nodig.",
   "files.addSet": "Mappenset toevoegen",
   "files.editSet": "Mappenset bewerken",
   "files.name": "Naam",
@@ -1694,7 +1690,6 @@ const nl: Partial<Translations> = {
   "files.pathMissing": "Map niet gevonden",
   "files.noPath": "Geen map ingesteld",
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",
-  "files.deleteSet": "Mappenset verwijderen",
   "files.deleteSetConfirm": "Deze mappenset uit de lijst verwijderen? De back-ups worden niet verwijderd en kunnen later opnieuw worden ontdekt.",
   "files.deleteBackupsConfirm": "Alle lokale back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de lokale repository wordt opgeruimd en de set wordt vergeten. Kopieën op off-site-doelen blijven bestaan, zonder set die ze nog kent. Dit kan niet ongedaan worden gemaakt.",
   "files.restoreOriginal": "Herstellen op oorspronkelijke locatie",
@@ -1703,9 +1698,7 @@ const nl: Partial<Translations> = {
   "files.restoreSelectFiles": "Bestanden selecteren",
   "files.restoreComplete": "Herstel voltooid, de bestanden zijn weggeschreven.",
   "files.backupAll": "Nu alles back-uppen",
-  "files.discoverHint": "Setlijst kwijt? Bouw hem opnieuw op vanuit de back-ups in de opslag.",
   "files.cancel": "Annuleren",
-  "files.addPreset": "Preset toevoegen: Systeemconfiguratie",
   "files.addPresetHint": "Een voorzichtig startpunt voor configuratie op hostniveau buiten je containers, geen claim van volledigheid. Controleer de map voordat je opslaat.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

@@ -1473,7 +1473,6 @@ const hi: Partial<Translations> = {
   "containers.backupStartFailed": "बैकअप शुरू नहीं हो पाया",
   "containers.updateSettingFailed": "सेटिंग अपडेट नहीं हो पाई",
   "vms.loadFailed": "VM लोड नहीं हो पाईं",
-  "files.loadSetsFailed": "फ़ोल्डर सेट लोड नहीं हो पाए",
   "config.loadSettingsFailed": "मौजूदा सेटिंग्स लोड नहीं हो पाईं",
   "dashboard.loadRunsFailed": "रन लोड नहीं हो पाए",
 
@@ -2104,9 +2103,6 @@ const hi: Partial<Translations> = {
 
   // Files domain
   "nav.files": "फ़ोल्डर",
-  "files.title": "फ़ोल्डर",
-  "files.setsTitle": "फ़ोल्डर सेट",
-  "files.empty": "अभी तक कोई फ़ोल्डर सेट नहीं है। एक फ़ोल्डर जोड़ें (शेयर, दस्तावेज़, फ़ोटो, आपके माउंट के अंतर्गत कुछ भी) और BombVault इसे बाकी सब की तरह सुरक्षित करता है: शेड्यूल, ऑफ़-साइट कॉपियाँ, इंटीग्रिटी जाँच और रीस्टोर। किसी अलग फ़ाइल-बैकअप टूल की ज़रूरत नहीं।",
   "files.addSet": "फ़ोल्डर सेट जोड़ें",
   "files.editSet": "फ़ोल्डर सेट एडिट करें",
   "files.name": "नाम",
@@ -2129,7 +2125,6 @@ const hi: Partial<Translations> = {
   "files.pathMissing": "फ़ोल्डर नहीं मिला",
   "files.noPath": "कोई फ़ोल्डर सेट नहीं किया गया",
   "files.noPathHint": "बिना फ़ोल्डर वाले बैकअप से फिर से बनाया गया। फिर से बैकअप लेने के लिए एक फ़ोल्डर सेट करें। किसी फ़ोल्डर में रीस्टोर करना पहले से काम करता है।",
-  "files.deleteSet": "फ़ोल्डर सेट हटाएँ",
   "files.deleteSetConfirm": "इस फ़ोल्डर सेट को सूची से हटाएँ? इसके बैकअप हटाए नहीं जाते और बाद में फिर से खोजे जा सकते हैं।",
   "files.deleteBackupsConfirm": "इस फ़ोल्डर सेट के सभी लोकल बैकअप हटाएँ? स्नैपशॉट स्थायी रूप से हटा दिए जाते हैं, लोकल रिपॉज़िटरी प्रून की जाती है और सेट भुला दिया जाता है। ऑफ़-साइट गंतव्यों पर मौजूद कॉपियाँ बनी रहती हैं, पर कोई सेट उन्हें नहीं पहचानता। इसे पूर्ववत नहीं किया जा सकता।",
   "files.restoreOriginal": "मूल स्थान पर रीस्टोर करें",
@@ -2138,9 +2133,7 @@ const hi: Partial<Translations> = {
   "files.restoreSelectFiles": "फ़ाइलें चुनें",
   "files.restoreComplete": "रीस्टोर पूरा हुआ। फ़ाइलें लिखी जा चुकी हैं।",
   "files.backupAll": "अभी सभी का बैकअप लें",
-  "files.discoverHint": "सेट की सूची खो गई? इसे स्टोरेज में मौजूद बैकअप से फिर से बनाएँ।",
   "files.cancel": "रद्द करें",
-  "files.addPreset": "प्रीसेट जोड़ें: होस्ट सिस्टम कॉन्फ़िगरेशन",
   "files.addPresetHint": "आपके कंटेनरों के बाहर होस्ट-स्तर कॉन्फ़िगरेशन के लिए एक सतर्क शुरुआती बिंदु, पूर्णता का दावा नहीं। सहेजने से पहले फ़ोल्डर की समीक्षा करें।",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

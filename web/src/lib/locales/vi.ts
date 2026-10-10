@@ -855,7 +855,6 @@ const vi: Partial<Translations> = {
   "containers.backupStartFailed": "Không bắt đầu được việc sao lưu",
   "containers.updateSettingFailed": "Không cập nhật được cài đặt",
   "vms.loadFailed": "Không tải được VMs",
-  "files.loadSetsFailed": "Không tải được các bộ thư mục",
   "config.loadSettingsFailed": "Không thể tải cài đặt hiện tại",
   "dashboard.loadRunsFailed": "Không tải được các lần chạy",
 
@@ -1663,9 +1662,6 @@ const vi: Partial<Translations> = {
   "settings.registryAdd": "Thêm registry",
   // Files domain (file-set backups, #62)
   "nav.files": "Thư mục",
-  "files.title": "Thư mục",
-  "files.setsTitle": "Bộ thư mục",
-  "files.empty": "Chưa có bộ thư mục nào. Thêm một thư mục (chia sẻ, tài liệu, ảnh, bất cứ thứ gì dưới các điểm gắn kết của bạn) và BombVault sẽ bảo vệ nó như mọi thứ khác: lịch trình, bản sao off-site, kiểm tra tính toàn vẹn và khôi phục. Không cần công cụ sao lưu tập tin riêng.",
   "files.addSet": "Thêm bộ thư mục",
   "files.editSet": "Sửa bộ thư mục",
   "files.name": "Tên",
@@ -1688,7 +1684,6 @@ const vi: Partial<Translations> = {
   "files.pathMissing": "Không tìm thấy thư mục",
   "files.noPath": "Chưa đặt thư mục",
   "files.noPathHint": "Được dựng lại từ các bản sao lưu mà không có thư mục. Đặt một thư mục để sao lưu lại. Khôi phục vào thư mục đã hoạt động ngay.",
-  "files.deleteSet": "Xóa bộ thư mục",
   "files.deleteSetConfirm": "Gỡ bộ thư mục này khỏi danh sách? Các bản sao lưu của nó không bị xóa và có thể được phát hiện lại sau.",
   "files.deleteBackupsConfirm": "Xóa tất cả bản sao lưu cục bộ của bộ thư mục này? Các snapshot sẽ bị xóa vĩnh viễn, kho cục bộ được dọn dẹp và bộ thư mục bị quên đi. Các bản sao ở đích ngoài site vẫn được giữ lại, nhưng không còn bộ nào biết đến chúng. Không thể hoàn tác.",
   "files.restoreOriginal": "Khôi phục về vị trí gốc",
@@ -1697,9 +1692,7 @@ const vi: Partial<Translations> = {
   "files.restoreSelectFiles": "Chọn tệp",
   "files.restoreComplete": "Khôi phục hoàn tất. Các tập tin đã được ghi.",
   "files.backupAll": "Sao lưu tất cả ngay",
-  "files.discoverHint": "Mất danh sách bộ? Dựng lại nó từ các bản sao lưu trong bộ lưu trữ.",
   "files.cancel": "Hủy",
-  "files.addPreset": "Thêm cấu hình sẵn: Cấu hình hệ thống",
   "files.addPresetHint": "Một điểm khởi đầu thận trọng cho cấu hình cấp máy chủ bên ngoài các container của bạn, không phải là tuyên bố về tính đầy đủ. Hãy xem lại thư mục trước khi lưu.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

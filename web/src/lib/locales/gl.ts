@@ -1473,7 +1473,6 @@ const gl: Partial<Translations> = {
   "containers.backupStartFailed": "Non se puido iniciar a copia",
   "containers.updateSettingFailed": "Non se puido cambiar a opción",
   "vms.loadFailed": "Non se puideron cargar as MV",
-  "files.loadSetsFailed": "Non se puideron cargar os conxuntos de cartafoles",
   "config.loadSettingsFailed": "Non se puido cargar a configuración actual",
   "dashboard.loadRunsFailed": "Non se puideron cargar as execucións",
 
@@ -2104,9 +2103,6 @@ const gl: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Cartafoles",
-  "files.title": "Cartafoles",
-  "files.setsTitle": "Conxuntos de cartafoles",
-  "files.empty": "Aínda non hai conxuntos de cartafoles. Engade un cartafol (comparticóns, documentos, fotos, calquera cousa baixo as túas montaxes), e BombVault protéxeo como todo o demais: horarios, copias externas, comprobacións de integridade e restauracións. Non fai falta ningunha ferramenta separada de copia de ficheiros.",
   "files.addSet": "Engadir conxunto de cartafoles",
   "files.editSet": "Editar conxunto de cartafoles",
   "files.name": "Nome",
@@ -2129,7 +2125,6 @@ const gl: Partial<Translations> = {
   "files.pathMissing": "Cartafol non atopado",
   "files.noPath": "Non hai cartafol configurado",
   "files.noPathHint": "Reconstruído desde copias sen cartafol. Configura un cartafol para volver copiar. Restaurar nun cartafol xa funciona.",
-  "files.deleteSet": "Eliminar conxunto de cartafoles",
   "files.deleteSetConfirm": "Eliminar este conxunto de cartafoles da lista? As súas copias non se eliminan e pódense volver descubrir máis tarde.",
   "files.deleteBackupsConfirm": "Eliminar todas as copias locais deste conxunto de cartafoles? As instantáneas elimínanse para sempre, o repositorio local límpase e o conxunto esquécese. As copias nos destinos externos consérvanse, sen ningún conxunto que as coñeza. Isto non se pode desfacer.",
   "files.restoreOriginal": "Restaurar na localización orixinal",
@@ -2138,9 +2133,7 @@ const gl: Partial<Translations> = {
   "files.restoreSelectFiles": "Seleccionar ficheiros",
   "files.restoreComplete": "Restauración completa, os ficheiros escribíronse.",
   "files.backupAll": "Copiar todo agora",
-  "files.discoverHint": "Perdiches a lista de conxuntos? Reconstrúea a partir das copias no almacenamento.",
   "files.cancel": "Cancelar",
-  "files.addPreset": "Engadir predefinición: Configuración do sistema do host",
   "files.addPresetHint": "Un punto de partida conservador para a configuración a nivel de host fóra dos teus contedores, non unha pretensión de integridade. Revisa o cartafol antes de gardar.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

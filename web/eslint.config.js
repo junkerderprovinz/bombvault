@@ -114,7 +114,6 @@ export default [
             "Containers.tsx": "PAGE_SHELL_RESPONSIVE",
             "VMs.tsx": "PAGE_SHELL_RESPONSIVE",
             "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
-            "Files.tsx": "PAGE_SHELL_RESPONSIVE",
             "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
             "BackupEntry.tsx": "PAGE_SHELL_RESPONSIVE",
             "Backups.tsx": "PAGE_SHELL_RESPONSIVE",

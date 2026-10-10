@@ -855,7 +855,6 @@ const zh: Partial<Translations> = {
   "containers.backupStartFailed": "启动备份失败",
   "containers.updateSettingFailed": "更新设置失败",
   "vms.loadFailed": "加载虚拟机失败",
-  "files.loadSetsFailed": "加载文件夹集失败",
   "config.loadSettingsFailed": "无法加载当前设置",
   "dashboard.loadRunsFailed": "加载运行记录失败",
 
@@ -1663,9 +1662,6 @@ const zh: Partial<Translations> = {
   "settings.registryAdd": "添加镜像仓库",
   // Files domain (file-set backups, #62)
   "nav.files": "文件夹",
-  "files.title": "文件夹",
-  "files.setsTitle": "文件夹集",
-  "files.empty": "还没有文件夹集。添加一个文件夹（共享、文档、照片，挂载点下的任何内容），BombVault 会像保护其他内容一样保护它：计划任务、异地副本、完整性检查和恢复。无需单独的文件备份工具。",
   "files.addSet": "添加文件夹集",
   "files.editSet": "编辑文件夹集",
   "files.name": "名称",
@@ -1688,7 +1684,6 @@ const zh: Partial<Translations> = {
   "files.pathMissing": "找不到文件夹",
   "files.noPath": "未设置文件夹",
   "files.noPathHint": "从没有文件夹信息的备份中重建。设置文件夹后即可再次备份。恢复到文件夹现在就可用。",
-  "files.deleteSet": "删除文件夹集",
   "files.deleteSetConfirm": "从列表中移除此文件夹集？其备份不会被删除，之后可以重新发现。",
   "files.deleteBackupsConfirm": "删除此文件夹集的所有本地备份？快照将被永久移除，本地仓库将被清理，该文件夹集也会被遗忘。异地目标上的副本会保留，但不再有任何文件夹集知道它们。此操作无法撤销。",
   "files.restoreOriginal": "恢复到原始位置",
@@ -1697,9 +1692,7 @@ const zh: Partial<Translations> = {
   "files.restoreSelectFiles": "选择文件",
   "files.restoreComplete": "恢复完成，文件已写入。",
   "files.backupAll": "立即备份全部",
-  "files.discoverHint": "丢失了文件集列表？从存储中的备份重建它。",
   "files.cancel": "取消",
-  "files.addPreset": "添加预设：主机系统配置",
   "files.addPresetHint": "这是容器之外主机级配置的保守起点，并不代表完整性。保存前请检查文件夹。",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

@@ -864,7 +864,6 @@ const da: Partial<Translations> = {
   "containers.backupStartFailed": "Kunne ikke starte sikkerhedskopieringen",
   "containers.updateSettingFailed": "Kunne ikke opdatere indstillingen",
   "vms.loadFailed": "Kunne ikke indlæse VMs",
-  "files.loadSetsFailed": "Kunne ikke indlæse mappesættene",
   "config.loadSettingsFailed": "Kunne ikke indlæse de aktuelle indstillinger",
   "dashboard.loadRunsFailed": "Kunne ikke indlæse kørslerne",
 
@@ -1672,9 +1671,6 @@ const da: Partial<Translations> = {
   "settings.registryAdd": "Tilføj register",
   // Files domain (file-set backups, #62)
   "nav.files": "Mapper",
-  "files.title": "Mapper",
-  "files.setsTitle": "Mappesæt",
-  "files.empty": "Ingen mappesæt endnu. Tilføj en mappe (shares, dokumenter, fotos, hvad som helst under dine monteringer), og BombVault beskytter den som alt andet: tidsplaner, off-site-kopier, integritetstjek og gendannelser. Intet separat filbackupværktøj nødvendigt.",
   "files.addSet": "Tilføj mappesæt",
   "files.editSet": "Redigér mappesæt",
   "files.name": "Navn",
@@ -1697,7 +1693,6 @@ const da: Partial<Translations> = {
   "files.pathMissing": "Mappen blev ikke fundet",
   "files.noPath": "Ingen mappe angivet",
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
-  "files.deleteSet": "Slet mappesæt",
   "files.deleteSetConfirm": "Fjerne dette mappesæt fra listen? Dets sikkerhedskopier slettes ikke og kan genopdages senere.",
   "files.deleteBackupsConfirm": "Slet alle lokale sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, det lokale arkiv ryddes op, og sættet glemmes. Kopier på eksterne mål bevares, uden noget sæt der kender dem. Det kan ikke fortrydes.",
   "files.restoreOriginal": "Gendan på oprindelig placering",
@@ -1706,9 +1701,7 @@ const da: Partial<Translations> = {
   "files.restoreSelectFiles": "Vælg filer",
   "files.restoreComplete": "Gendannelse fuldført. Filerne er skrevet.",
   "files.backupAll": "Sikkerhedskopiér alt nu",
-  "files.discoverHint": "Mistet sætlisten? Genopbyg den fra sikkerhedskopierne i lageret.",
   "files.cancel": "Annuller",
-  "files.addPreset": "Tilføj forudindstilling: Systemkonfiguration",
   "files.addPresetHint": "Et forsigtigt udgangspunkt for konfiguration på værtsniveau uden for dine containere, ikke en påstand om fuldstændighed. Gennemgå mappen før du gemmer.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

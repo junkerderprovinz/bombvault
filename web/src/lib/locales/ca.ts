@@ -1473,7 +1473,6 @@ const ca: Partial<Translations> = {
   "containers.backupStartFailed": "No s'ha pogut iniciar la còpia",
   "containers.updateSettingFailed": "No s'ha pogut actualitzar l'opció",
   "vms.loadFailed": "No s'han pogut carregar les MV",
-  "files.loadSetsFailed": "No s'han pogut carregar els conjunts de carpetes",
   "config.loadSettingsFailed": "No s'ha pogut carregar la configuració actual",
   "dashboard.loadRunsFailed": "No s'han pogut carregar les execucions",
 
@@ -2104,9 +2103,6 @@ const ca: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Carpetes",
-  "files.title": "Carpetes",
-  "files.setsTitle": "Conjunts de carpetes",
-  "files.empty": "Encara no hi ha conjunts de carpetes. Afegeix una carpeta (comparticions, documents, fotos, qualsevol cosa sota els teus muntatges) i BombVault la protegeix com tota la resta: horaris, còpies externes, comprovacions d'integritat i restauracions. No cal cap eina separada de còpia de fitxers.",
   "files.addSet": "Afegeix conjunt de carpetes",
   "files.editSet": "Edita el conjunt de carpetes",
   "files.name": "Nom",
@@ -2129,7 +2125,6 @@ const ca: Partial<Translations> = {
   "files.pathMissing": "Carpeta no trobada",
   "files.noPath": "Cap carpeta configurada",
   "files.noPathHint": "Reconstruït des de còpies sense carpeta. Configura una carpeta per tornar a copiar. Restaurar a una carpeta ja funciona.",
-  "files.deleteSet": "Suprimeix el conjunt de carpetes",
   "files.deleteSetConfirm": "Vols eliminar aquest conjunt de carpetes de la llista? Les seves còpies no s'eliminen i es poden tornar a descobrir més endavant.",
   "files.deleteBackupsConfirm": "Vols eliminar totes les còpies locals d'aquest conjunt de carpetes? Els instantanis s'eliminen permanentment, el repositori local es neteja i el conjunt s'oblida. Les còpies als destins externs es conserven, sense cap conjunt que les conegui. Això no es pot desfer.",
   "files.restoreOriginal": "Restaura a la ubicació original",
@@ -2138,9 +2133,7 @@ const ca: Partial<Translations> = {
   "files.restoreSelectFiles": "Selecciona fitxers",
   "files.restoreComplete": "Restauració completa. Els fitxers s'han escrit.",
   "files.backupAll": "Fes còpia de tot ara",
-  "files.discoverHint": "Has perdut la llista de conjunts? Reconstrueix-la des de les còpies a l'emmagatzematge.",
   "files.cancel": "Cancel·la",
-  "files.addPreset": "Afegeix predefinit: Configuració del sistema de l'amfitrió",
   "files.addPresetHint": "Un punt de partida conservador per a la configuració a nivell d'amfitrió fora dels teus contenidors, no una pretensió de completesa. Revisa la carpeta abans de desar.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

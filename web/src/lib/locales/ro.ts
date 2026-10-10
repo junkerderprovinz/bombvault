@@ -861,7 +861,6 @@ const ro: Partial<Translations> = {
   "containers.backupStartFailed": "Pornirea copiei de rezervă a eșuat",
   "containers.updateSettingFailed": "Actualizarea setării a eșuat",
   "vms.loadFailed": "Încărcarea VM-urilor a eșuat",
-  "files.loadSetsFailed": "Încărcarea seturilor de foldere a eșuat",
   "config.loadSettingsFailed": "Nu s-au putut încărca setările curente",
   "dashboard.loadRunsFailed": "Încărcarea rulărilor a eșuat",
 
@@ -1675,9 +1674,6 @@ const ro: Partial<Translations> = {
   "settings.registryAdd": "Adaugă registru",
   // Files domain (file-set backups, #62)
   "nav.files": "Foldere",
-  "files.title": "Foldere",
-  "files.setsTitle": "Seturi de foldere",
-  "files.empty": "Încă nu există seturi de foldere. Adăugați un folder (partajări, documente, fotografii, orice se află sub montările dvs.), iar BombVault îl protejează ca pe orice altceva: programări, copii externe, verificări de integritate și restaurări. Nu este nevoie de un instrument separat de backup pentru fișiere.",
   "files.addSet": "Adaugă set de foldere",
   "files.editSet": "Editează setul de foldere",
   "files.name": "Nume",
@@ -1700,7 +1696,6 @@ const ro: Partial<Translations> = {
   "files.pathMissing": "Folderul nu a fost găsit",
   "files.noPath": "Niciun folder setat",
   "files.noPathHint": "Reconstruit din copiile de rezervă fără folder. Setați un folder pentru a-l copia din nou. Restaurarea într-un folder funcționează deja.",
-  "files.deleteSet": "Șterge setul de foldere",
   "files.deleteSetConfirm": "Eliminați acest set de foldere din listă? Copiile sale de rezervă nu sunt șterse și pot fi redescoperite mai târziu.",
   "files.deleteBackupsConfirm": "Ștergeți toate copiile de rezervă locale ale acestui set de foldere? Instantaneele sunt eliminate permanent, depozitul local este curățat, iar setul este uitat. Copiile de pe destinațiile externe rămân, fără vreun set care să le cunoască. Acțiunea nu poate fi anulată.",
   "files.restoreOriginal": "Restaurare în locația originală",
@@ -1709,9 +1704,7 @@ const ro: Partial<Translations> = {
   "files.restoreSelectFiles": "Selectează fișiere",
   "files.restoreComplete": "Restaurare finalizată. Fișierele au fost scrise.",
   "files.backupAll": "Copiază tot acum",
-  "files.discoverHint": "Ați pierdut lista de seturi? Reconstruiți-o din copiile de rezervă din stocare.",
   "files.cancel": "Anulare",
-  "files.addPreset": "Adaugă presetare: Configurația sistemului",
   "files.addPresetHint": "Un punct de plecare prudent pentru configurația la nivel de host, în afara containerelor tale, nu este o garanție de completitudine. Verifică folderul înainte de salvare.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

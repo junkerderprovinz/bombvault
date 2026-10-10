@@ -861,7 +861,6 @@ const no: Partial<Translations> = {
   "containers.backupStartFailed": "Kunne ikke starte sikkerhetskopieringen",
   "containers.updateSettingFailed": "Kunne ikke oppdatere innstillingen",
   "vms.loadFailed": "Kunne ikke laste VM-ene",
-  "files.loadSetsFailed": "Kunne ikke laste mappesettene",
   "config.loadSettingsFailed": "Kunne ikke laste de gjeldende innstillingene",
   "dashboard.loadRunsFailed": "Kunne ikke laste kjøringene",
 
@@ -1672,9 +1671,6 @@ const no: Partial<Translations> = {
   "settings.registryAdd": "Legg til register",
   // Files domain (file-set backups, #62)
   "nav.files": "Mapper",
-  "files.title": "Mapper",
-  "files.setsTitle": "Mappesett",
-  "files.empty": "Ingen mappesett ennå. Legg til en mappe (delinger, dokumenter, bilder, hva som helst under monteringene dine) og BombVault beskytter den som alt annet: tidsplaner, off-site-kopier, integritetssjekker og gjenoppretting. Ikke behov for et eget verktøy for filsikkerhetskopiering.",
   "files.addSet": "Legg til mappesett",
   "files.editSet": "Rediger mappesett",
   "files.name": "Navn",
@@ -1697,7 +1693,6 @@ const no: Partial<Translations> = {
   "files.pathMissing": "Fant ikke mappen",
   "files.noPath": "Ingen mappe angitt",
   "files.noPathHint": "Gjenoppbygd fra sikkerhetskopier uten mappe. Angi en mappe for å sikkerhetskopiere igjen. Gjenoppretting til en mappe virker allerede.",
-  "files.deleteSet": "Slett mappesett",
   "files.deleteSetConfirm": "Fjerne dette mappesettet fra listen? Sikkerhetskopiene slettes ikke og kan gjenoppdages senere.",
   "files.deleteBackupsConfirm": "Slette alle lokale sikkerhetskopier av dette mappesettet? Snapshotene fjernes permanent, det lokale repositoriet ryddes, og settet glemmes. Kopier på eksterne mål beholdes, uten noe sett som kjenner dem. Dette kan ikke angres.",
   "files.restoreOriginal": "Gjenopprett til opprinnelig plassering",
@@ -1706,9 +1701,7 @@ const no: Partial<Translations> = {
   "files.restoreSelectFiles": "Velg filer",
   "files.restoreComplete": "Gjenoppretting fullført. Filene er skrevet.",
   "files.backupAll": "Sikkerhetskopier alt nå",
-  "files.discoverHint": "Mistet settlisten? Bygg den opp igjen fra sikkerhetskopiene i lageret.",
   "files.cancel": "Avbryt",
-  "files.addPreset": "Legg til forhåndsinnstilling: Systemkonfigurasjon",
   "files.addPresetHint": "Et forsiktig utgangspunkt for konfigurasjon på vertsnivå utenfor containerne dine, ingen påstand om fullstendighet. Sjekk mappen før du lagrer.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

@@ -864,7 +864,6 @@ const fi: Partial<Translations> = {
   "containers.backupStartFailed": "Varmuuskopioinnin käynnistys epäonnistui",
   "containers.updateSettingFailed": "Asetuksen päivitys epäonnistui",
   "vms.loadFailed": "VM:ien lataus epäonnistui",
-  "files.loadSetsFailed": "Kansiojoukkojen lataus epäonnistui",
   "config.loadSettingsFailed": "Nykyisiä asetuksia ei voitu ladata",
   "dashboard.loadRunsFailed": "Ajojen lataus epäonnistui",
 
@@ -1672,9 +1671,6 @@ const fi: Partial<Translations> = {
   "settings.registryAdd": "Lisää rekisteri",
   // Files domain (file-set backups, #62)
   "nav.files": "Kansiot",
-  "files.title": "Kansiot",
-  "files.setsTitle": "Kansiojoukot",
-  "files.empty": "Ei vielä kansiojoukkoja. Lisää kansio (jaot, dokumentit, valokuvat, mikä tahansa liitostesi alla), ja BombVault suojaa sen kuten kaiken muunkin: aikataulut, etäkopiot, eheystarkistukset ja palautukset. Erillistä tiedostovarmuuskopiointityökalua ei tarvita.",
   "files.addSet": "Lisää kansiojoukko",
   "files.editSet": "Muokkaa kansiojoukkoa",
   "files.name": "Nimi",
@@ -1697,7 +1693,6 @@ const fi: Partial<Translations> = {
   "files.pathMissing": "Kansiota ei löydy",
   "files.noPath": "Kansiota ei asetettu",
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
-  "files.deleteSet": "Poista kansiojoukko",
   "files.deleteSetConfirm": "Poistetaanko tämä kansiojoukko luettelosta? Sen varmuuskopioita ei poisteta, ja ne voi löytää myöhemmin uudelleen.",
   "files.deleteBackupsConfirm": "Poistetaanko kaikki tämän kansiojoukon paikalliset varmuuskopiot? Tilannekuvat poistetaan pysyvästi, paikallinen arkisto siivotaan ja joukko unohdetaan. Etäkohteissa olevat kopiot säilyvät, mutta mikään joukko ei enää tunne niitä. Tätä ei voi perua.",
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",
@@ -1706,9 +1701,7 @@ const fi: Partial<Translations> = {
   "files.restoreSelectFiles": "Valitse tiedostot",
   "files.restoreComplete": "Palautus valmis. Tiedostot on kirjoitettu.",
   "files.backupAll": "Varmuuskopioi kaikki nyt",
-  "files.discoverHint": "Katosiko joukkoluettelo? Rakenna se uudelleen tallennustilan varmuuskopioista.",
   "files.cancel": "Peruuta",
-  "files.addPreset": "Lisää esiasetus: Järjestelmäasetukset",
   "files.addPresetHint": "Varovainen lähtökohta isäntätason asetuksille konttiesi ulkopuolella, ei täydellisyysväite. Tarkista kansio ennen tallennusta.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

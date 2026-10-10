@@ -864,7 +864,6 @@ const es: Partial<Translations> = {
   "containers.backupStartFailed": "No se pudo iniciar la copia",
   "containers.updateSettingFailed": "No se pudo cambiar el ajuste",
   "vms.loadFailed": "Error al cargar las VMs",
-  "files.loadSetsFailed": "Error al cargar los conjuntos de carpetas",
   "config.loadSettingsFailed": "No se pudieron cargar los ajustes actuales",
   "dashboard.loadRunsFailed": "Error al cargar las ejecuciones",
 
@@ -1670,9 +1669,6 @@ const es: Partial<Translations> = {
   "settings.registryAdd": "Añadir registro",
   // Files domain (file-set backups, #62)
   "nav.files": "Carpetas",
-  "files.title": "Carpetas",
-  "files.setsTitle": "Conjuntos de carpetas",
-  "files.empty": "Aún no hay conjuntos de carpetas. Añade una carpeta (shares, documentos, fotos, cualquier cosa bajo tus montajes) y BombVault la protege como todo lo demás: calendarios, copias externas, comprobaciones de integridad y restauraciones. No necesitas una herramienta de copias de archivos aparte.",
   "files.addSet": "Añadir conjunto de carpetas",
   "files.editSet": "Editar conjunto de carpetas",
   "files.name": "Nombre",
@@ -1695,7 +1691,6 @@ const es: Partial<Translations> = {
   "files.pathMissing": "Carpeta no encontrada",
   "files.noPath": "Sin carpeta definida",
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",
-  "files.deleteSet": "Eliminar conjunto de carpetas",
   "files.deleteSetConfirm": "¿Quitar este conjunto de carpetas de la lista? Sus copias no se eliminan y podrán redescubrirse más tarde.",
   "files.deleteBackupsConfirm": "¿Eliminar todas las copias locales de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio local se limpia y el conjunto se olvida. Las copias en destinos externos se conservan, sin ningún conjunto que las conozca. Esto no se puede deshacer.",
   "files.restoreOriginal": "Restaurar en la ubicación original",
@@ -1704,9 +1699,7 @@ const es: Partial<Translations> = {
   "files.restoreSelectFiles": "Seleccionar archivos",
   "files.restoreComplete": "Restauración completada: los archivos se han escrito.",
   "files.backupAll": "Copiar todo ahora",
-  "files.discoverHint": "¿Perdiste la lista de conjuntos? Reconstrúyela desde las copias del almacenamiento.",
   "files.cancel": "Cancelar",
-  "files.addPreset": "Añadir preset: Configuración del sistema",
   "files.addPresetHint": "Un punto de partida conservador para la configuración a nivel de host fuera de tus contenedores. No es una afirmación de completitud. Revisa la carpeta antes de guardar.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

@@ -864,7 +864,6 @@ const he: Partial<Translations> = {
   "containers.backupStartFailed": "לא ניתן היה להתחיל את הגיבוי",
   "containers.updateSettingFailed": "לא ניתן היה לעדכן את ההגדרה",
   "vms.loadFailed": "טעינת ה-VMs נכשלה",
-  "files.loadSetsFailed": "טעינת ערכות התיקיות נכשלה",
   "config.loadSettingsFailed": "לא ניתן היה לטעון את ההגדרות הנוכחיות",
   "dashboard.loadRunsFailed": "טעינת ההרצות נכשלה",
 
@@ -1672,9 +1671,6 @@ const he: Partial<Translations> = {
   "settings.registryAdd": "הוספת registry",
   // Files domain (file-set backups, #62)
   "nav.files": "תיקיות",
-  "files.title": "תיקיות",
-  "files.setsTitle": "ערכות תיקיות",
-  "files.empty": "אין עדיין ערכות תיקיות. הוסף תיקייה (שיתופים, מסמכים, תמונות, כל דבר תחת נקודות העיגון שלך), ו-BombVault יגן עליה כמו על כל השאר: לוחות זמנים, עותקים מחוץ לאתר, בדיקות תקינות ושחזורים. אין צורך בכלי גיבוי קבצים נפרד.",
   "files.addSet": "הוסף ערכת תיקיות",
   "files.editSet": "ערוך ערכת תיקיות",
   "files.name": "שם",
@@ -1697,7 +1693,6 @@ const he: Partial<Translations> = {
   "files.pathMissing": "התיקייה לא נמצאה",
   "files.noPath": "לא הוגדרה תיקייה",
   "files.noPathHint": "שוחזר מגיבויים ללא תיקייה. הגדר תיקייה כדי לגבות שוב. שחזור לתיקייה עובד כבר עכשיו.",
-  "files.deleteSet": "מחק ערכת תיקיות",
   "files.deleteSetConfirm": "להסיר את ערכת התיקיות הזו מהרשימה? הגיבויים שלה לא יימחקו וניתן לגלות אותם מחדש מאוחר יותר.",
   "files.deleteBackupsConfirm": "למחוק את כל הגיבויים המקומיים של ערכת התיקיות הזו? התצלומים יוסרו לצמיתות, המאגר המקומי ינוקה והערכה תישכח. העותקים ביעדים מחוץ לאתר נשארים, בלי ערכה שמכירה אותם. לא ניתן לבטל פעולה זו.",
   "files.restoreOriginal": "שחזור למיקום המקורי",
@@ -1706,9 +1701,7 @@ const he: Partial<Translations> = {
   "files.restoreSelectFiles": "בחירת קבצים",
   "files.restoreComplete": "השחזור הושלם, הקבצים נכתבו.",
   "files.backupAll": "גבה הכול עכשיו",
-  "files.discoverHint": "אבדה רשימת הערכות? בנה אותה מחדש מהגיבויים באחסון.",
   "files.cancel": "ביטול",
-  "files.addPreset": "הוספת תבנית מוכנה: תצורת המערכת",
   "files.addPresetHint": "נקודת התחלה שמרנית לתצורה ברמת המארח מחוץ למכולות שלך, לא טענה לשלמות. בדקו את התיקייה לפני השמירה.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

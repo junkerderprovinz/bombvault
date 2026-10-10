@@ -1473,7 +1473,6 @@ const lv: Partial<Translations> = {
   "containers.backupStartFailed": "Neizdevās sākt rezerves kopēšanu",
   "containers.updateSettingFailed": "Neizdevās mainīt iestatījumu",
   "vms.loadFailed": "Neizdevās ielādēt VM",
-  "files.loadSetsFailed": "Neizdevās ielādēt mapju kopas",
   "config.loadSettingsFailed": "Neizdevās ielādēt pašreizējos iestatījumus",
   "dashboard.loadRunsFailed": "Neizdevās ielādēt izpildījumus",
 
@@ -2104,9 +2103,6 @@ const lv: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Mapes",
-  "files.title": "Mapes",
-  "files.setsTitle": "Mapju kopas",
-  "files.empty": "Vēl nav mapju kopu. Pievienojiet mapi (koplietojumus, dokumentus, fotoattēlus, jebko zem jūsu piesaistēm), un BombVault to aizsargā tāpat kā visu pārējo: grafikus, attālinātas kopijas, integritātes pārbaudes un atjaunošanu. Atsevišķs failu rezerves kopēšanas rīks nav nepieciešams.",
   "files.addSet": "Pievienot mapju kopu",
   "files.editSet": "Rediģēt mapju kopu",
   "files.name": "Nosaukums",
@@ -2129,7 +2125,6 @@ const lv: Partial<Translations> = {
   "files.pathMissing": "Mape nav atrasta",
   "files.noPath": "Mape nav iestatīta",
   "files.noPathHint": "Atjaunots no rezerves kopijām bez mapes. Iestatiet mapi, lai atkal dublētu. Atjaunošana mapē jau darbojas.",
-  "files.deleteSet": "Dzēst mapju kopu",
   "files.deleteSetConfirm": "Noņemt šo mapju kopu no saraksta? Tās rezerves kopijas netiek dzēstas, un tās var atkal atklāt vēlāk.",
   "files.deleteBackupsConfirm": "Dzēst visas šīs mapju kopas vietējās rezerves kopijas? Momentuzņēmumi tiek neatgriezeniski noņemti, vietējais repozitorijs tiek iztīrīts, un kopa tiek aizmirsta. Kopijas attālinātajos mērķos paliek, bet neviena kopa par tām vairs nezina. To nevar atsaukt.",
   "files.restoreOriginal": "Atjaunot sākotnējā atrašanās vietā",
@@ -2138,9 +2133,7 @@ const lv: Partial<Translations> = {
   "files.restoreSelectFiles": "Atlasīt failus",
   "files.restoreComplete": "Atjaunošana pabeigta, faili ir ierakstīti.",
   "files.backupAll": "Dublēt visu tagad",
-  "files.discoverHint": "Pazaudējāt kopu sarakstu? Atjaunojiet to no krātuvē esošajām rezerves kopijām.",
   "files.cancel": "Atcelt",
-  "files.addPreset": "Pievienot sākotnējo iestatījumu: Saimniekdatora sistēmas konfigurācija",
   "files.addPresetHint": "Konservatīvs sākumpunkts saimniekdatora līmeņa konfigurācijai ārpus jūsu konteineriem, nav apgalvojums par pilnīgumu. Pārskatiet mapi pirms saglabāšanas.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

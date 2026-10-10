@@ -363,7 +363,7 @@ describe("FileSetFoldersEditor live save", () => {
     // have no reset.
     expect(
       screen.getByText(
-        "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+        "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
       ),
     ).toBeTruthy();
     // The shake nonce remounts the row, so it is queried again. It still
@@ -405,7 +405,7 @@ describe("FileSetFoldersEditor live save", () => {
     expect(screen.getByText("selection refused")).toBeTruthy();
     expect(
       screen.getByText(
-        "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+        "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
       ),
     ).toBeTruthy();
     // Only the failed toggle is undone on the current state: media is checked

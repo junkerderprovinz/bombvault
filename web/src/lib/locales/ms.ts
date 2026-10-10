@@ -1473,7 +1473,6 @@ const ms: Partial<Translations> = {
   "containers.backupStartFailed": "Gagal memulakan sandaran",
   "containers.updateSettingFailed": "Gagal mengemas kini tetapan",
   "vms.loadFailed": "Gagal memuatkan VM",
-  "files.loadSetsFailed": "Gagal memuatkan set folder",
   "config.loadSettingsFailed": "Tetapan semasa tidak dapat dimuatkan",
   "dashboard.loadRunsFailed": "Gagal memuatkan larian",
 
@@ -2104,9 +2103,6 @@ const ms: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Folder",
-  "files.title": "Folder",
-  "files.setsTitle": "Set folder",
-  "files.empty": "Belum ada set folder. Tambah folder (perkongsian, dokumen, foto, apa sahaja di bawah mount anda), dan BombVault melindunginya seperti yang lain: jadual, salinan luar tapak, semakan integriti dan pemulihan. Tiada alat sandaran fail berasingan diperlukan.",
   "files.addSet": "Tambah set folder",
   "files.editSet": "Edit set folder",
   "files.name": "Nama",
@@ -2129,7 +2125,6 @@ const ms: Partial<Translations> = {
   "files.pathMissing": "Folder tidak dijumpai",
   "files.noPath": "Tiada folder ditetapkan",
   "files.noPathHint": "Dibina semula daripada sandaran tanpa folder. Tetapkan folder untuk menyandarkan semula. Pemulihan ke folder sudah berfungsi.",
-  "files.deleteSet": "Padam set folder",
   "files.deleteSetConfirm": "Alih keluar set folder ini daripada senarai? Sandarannya tidak dipadamkan dan boleh ditemui semula kemudian.",
   "files.deleteBackupsConfirm": "Padam semua sandaran setempat set folder ini? Snapshot dipadamkan secara kekal, repositori setempat dibersihkan dan set itu dilupakan. Salinan di sasaran luar tapak tidak terjejas, tetapi tiada lagi set yang mengenalinya. Ini tidak boleh dibatalkan.",
   "files.restoreOriginal": "Pulihkan ke lokasi asal",
@@ -2138,9 +2133,7 @@ const ms: Partial<Translations> = {
   "files.restoreSelectFiles": "Pilih fail",
   "files.restoreComplete": "Pemulihan selesai, fail telah ditulis.",
   "files.backupAll": "Sandarkan semua sekarang",
-  "files.discoverHint": "Kehilangan senarai set? Bina semula daripada sandaran dalam storan.",
   "files.cancel": "Batal",
-  "files.addPreset": "Tambah praset: Konfigurasi sistem hos",
   "files.addPresetHint": "Titik permulaan yang berhati-hati untuk konfigurasi peringkat hos di luar bekas anda, bukan tuntutan kesempurnaan. Semak folder sebelum menyimpan.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

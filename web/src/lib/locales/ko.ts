@@ -855,7 +855,6 @@ const ko: Partial<Translations> = {
   "containers.backupStartFailed": "백업을 시작하지 못했습니다",
   "containers.updateSettingFailed": "설정을 변경하지 못했습니다",
   "vms.loadFailed": "VM을 불러오지 못했습니다",
-  "files.loadSetsFailed": "폴더 세트를 불러오지 못했습니다",
   "config.loadSettingsFailed": "현재 설정을 불러올 수 없습니다",
   "dashboard.loadRunsFailed": "실행 기록을 불러오지 못했습니다",
 
@@ -1663,9 +1662,6 @@ const ko: Partial<Translations> = {
   "settings.registryAdd": "레지스트리 추가",
   // Files domain (file-set backups, #62)
   "nav.files": "폴더",
-  "files.title": "폴더",
-  "files.setsTitle": "폴더 세트",
-  "files.empty": "아직 폴더 세트가 없습니다. 폴더를 추가하세요(공유 폴더, 문서, 사진 등 마운트 아래의 모든 것). BombVault가 다른 모든 것과 똑같이 보호합니다: 일정, 오프사이트 복사본, 무결성 검사, 복원. 별도의 파일 백업 도구가 필요 없습니다.",
   "files.addSet": "폴더 세트 추가",
   "files.editSet": "폴더 세트 편집",
   "files.name": "이름",
@@ -1688,7 +1684,6 @@ const ko: Partial<Translations> = {
   "files.pathMissing": "폴더를 찾을 수 없음",
   "files.noPath": "폴더가 설정되지 않음",
   "files.noPathHint": "폴더 정보 없이 백업에서 재구성되었습니다. 다시 백업하려면 폴더를 설정하세요. 폴더로 복원은 지금도 가능합니다.",
-  "files.deleteSet": "폴더 세트 삭제",
   "files.deleteSetConfirm": "이 폴더 세트를 목록에서 제거할까요? 백업은 삭제되지 않으며 나중에 다시 발견할 수 있습니다.",
   "files.deleteBackupsConfirm": "이 폴더 세트의 모든 로컬 백업을 삭제할까요? 스냅샷이 영구적으로 제거되고, 로컬 저장소가 정리되며, 세트는 잊힙니다. 오프사이트 대상의 사본은 유지되지만 이를 아는 세트는 남지 않습니다. 되돌릴 수 없습니다.",
   "files.restoreOriginal": "원래 위치로 복원",
@@ -1697,9 +1692,7 @@ const ko: Partial<Translations> = {
   "files.restoreSelectFiles": "파일 선택",
   "files.restoreComplete": "복원 완료. 파일이 기록되었습니다.",
   "files.backupAll": "지금 모두 백업",
-  "files.discoverHint": "세트 목록을 잃어버렸나요? 저장소의 백업에서 다시 구성하세요.",
   "files.cancel": "취소",
-  "files.addPreset": "프리셋 추가: 호스트 시스템 구성",
   "files.addPresetHint": "컨테이너 외부의 호스트 수준 구성을 위한 신중한 시작점입니다. 완전함을 보장하지 않습니다. 저장하기 전에 폴더를 확인하세요.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

@@ -864,7 +864,6 @@ const tr: Partial<Translations> = {
   "containers.backupStartFailed": "Yedekleme başlatılamadı",
   "containers.updateSettingFailed": "Ayar güncellenemedi",
   "vms.loadFailed": "VM'ler yüklenemedi",
-  "files.loadSetsFailed": "Klasör setleri yüklenemedi",
   "config.loadSettingsFailed": "Mevcut ayarlar yüklenemedi",
   "dashboard.loadRunsFailed": "Çalışmalar yüklenemedi",
 
@@ -1672,9 +1671,6 @@ const tr: Partial<Translations> = {
   "settings.registryAdd": "Registry ekle",
   // Files domain (file-set backups, #62)
   "nav.files": "Klasörler",
-  "files.title": "Klasörler",
-  "files.setsTitle": "Klasör setleri",
-  "files.empty": "Henüz klasör seti yok. Bir klasör ekleyin (paylaşımlar, belgeler, fotoğraflar, bağlama noktalarınızın altındaki her şey). BombVault onu diğer her şey gibi korur: zamanlamalar, site dışı kopyalar, bütünlük denetimleri ve geri yüklemeler. Ayrı bir dosya yedekleme aracına gerek yok.",
   "files.addSet": "Klasör seti ekle",
   "files.editSet": "Klasör setini düzenle",
   "files.name": "Ad",
@@ -1697,7 +1693,6 @@ const tr: Partial<Translations> = {
   "files.pathMissing": "Klasör bulunamadı",
   "files.noPath": "Klasör ayarlanmadı",
   "files.noPathHint": "Klasör olmadan yedeklerden yeniden oluşturuldu. Yeniden yedeklemek için bir klasör ayarlayın. Bir klasöre geri yükleme şimdiden çalışıyor.",
-  "files.deleteSet": "Klasör setini sil",
   "files.deleteSetConfirm": "Bu klasör seti listeden kaldırılsın mı? Yedekleri silinmez ve daha sonra yeniden keşfedilebilir.",
   "files.deleteBackupsConfirm": "Bu klasör setinin tüm yerel yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır, yerel depo temizlenir ve set unutulur. Site dışı hedeflerdeki kopyalar kalır, ancak artık onları bilen bir set olmaz. Bu geri alınamaz.",
   "files.restoreOriginal": "Orijinal konuma geri yükle",
@@ -1706,9 +1701,7 @@ const tr: Partial<Translations> = {
   "files.restoreSelectFiles": "Dosyaları seç",
   "files.restoreComplete": "Geri yükleme tamamlandı. Dosyalar yazıldı.",
   "files.backupAll": "Şimdi tümünü yedekle",
-  "files.discoverHint": "Set listesi mi kayboldu? Depolamadaki yedeklerden yeniden oluşturun.",
   "files.cancel": "İptal",
-  "files.addPreset": "Ön ayar ekle: Sistem yapılandırması",
   "files.addPresetHint": "Konteynerlerinizin dışındaki host düzeyi yapılandırma için temkinli bir başlangıç noktası. Eksiksizlik iddiası değildir. Kaydetmeden önce klasörü gözden geçirin.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

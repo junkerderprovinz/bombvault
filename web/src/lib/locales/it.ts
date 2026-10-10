@@ -864,7 +864,6 @@ const it: Partial<Translations> = {
   "containers.backupStartFailed": "Impossibile avviare il backup",
   "containers.updateSettingFailed": "Impossibile aggiornare l'impostazione",
   "vms.loadFailed": "Impossibile caricare le VM",
-  "files.loadSetsFailed": "Impossibile caricare i set di cartelle",
   "config.loadSettingsFailed": "Impossibile caricare le impostazioni attuali",
   "dashboard.loadRunsFailed": "Impossibile caricare le esecuzioni",
 
@@ -1672,9 +1671,6 @@ const it: Partial<Translations> = {
   "settings.registryAdd": "Aggiungi registry",
   // Files domain (file-set backups, #62)
   "nav.files": "Cartelle",
-  "files.title": "Cartelle",
-  "files.setsTitle": "Set di cartelle",
-  "files.empty": "Ancora nessun set di cartelle. Aggiungi una cartella (share, documenti, foto, qualsiasi cosa sotto i tuoi mount) e BombVault la protegge come tutto il resto: calendari, copie off-site, controlli d'integrità e ripristini. Nessuno strumento separato di backup dei file necessario.",
   "files.addSet": "Aggiungi set di cartelle",
   "files.editSet": "Modifica set di cartelle",
   "files.name": "Nome",
@@ -1697,7 +1693,6 @@ const it: Partial<Translations> = {
   "files.pathMissing": "Cartella non trovata",
   "files.noPath": "Nessuna cartella impostata",
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",
-  "files.deleteSet": "Elimina set di cartelle",
   "files.deleteSetConfirm": "Rimuovere questo set di cartelle dall'elenco? I suoi backup non vengono eliminati e potranno essere riscoperti in seguito.",
   "files.deleteBackupsConfirm": "Eliminare tutti i backup locali di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository locale viene ripulito e il set viene dimenticato. Le copie sulle destinazioni off-site restano, senza più alcun set che le conosca. L'operazione non è reversibile.",
   "files.restoreOriginal": "Ripristina nella posizione originale",
@@ -1706,9 +1701,7 @@ const it: Partial<Translations> = {
   "files.restoreSelectFiles": "Seleziona file",
   "files.restoreComplete": "Ripristino completato. I file sono stati scritti.",
   "files.backupAll": "Esegui il backup di tutto ora",
-  "files.discoverHint": "Elenco dei set perso? Ricostruiscilo dai backup nello storage.",
   "files.cancel": "Annulla",
-  "files.addPreset": "Aggiungi preset: Configurazione di sistema",
   "files.addPresetHint": "Un punto di partenza prudente per la configurazione a livello host al di fuori dei container, non è una garanzia di completezza. Controlla la cartella prima di salvare.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

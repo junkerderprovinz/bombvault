@@ -1473,7 +1473,6 @@ const is: Partial<Translations> = {
   "containers.backupStartFailed": "Ekki tókst að hefja afritun",
   "containers.updateSettingFailed": "Ekki tókst að uppfæra stillinguna",
   "vms.loadFailed": "Ekki tókst að hlaða sýndarvélum",
-  "files.loadSetsFailed": "Ekki tókst að hlaða möppusettum",
   "config.loadSettingsFailed": "Ekki tókst að hlaða núverandi stillingum",
   "dashboard.loadRunsFailed": "Ekki tókst að hlaða keyrslum",
 
@@ -2104,9 +2103,6 @@ const is: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Möppur",
-  "files.title": "Möppur",
-  "files.setsTitle": "Möppusett",
-  "files.empty": "Engin möppusett ennþá. Bættu við möppu (sameignum, skjölum, myndum, hverju sem er undir tengipunktum þínum) og BombVault verndar hana eins og allt annað: tímaáætlanir, fjarlæg afrit, heilleikaathuganir og endurheimt. Ekkert sérstakt skráaafritunartól er nauðsynlegt.",
   "files.addSet": "Bæta við möppusetti",
   "files.editSet": "Breyta möppusetti",
   "files.name": "Nafn",
@@ -2129,7 +2125,6 @@ const is: Partial<Translations> = {
   "files.pathMissing": "Mappa fannst ekki",
   "files.noPath": "Engin mappa stillt",
   "files.noPathHint": "Endurbyggt úr afritum án möppu. Stilltu möppu til að afrita aftur. Endurheimt í möppu virkar þegar.",
-  "files.deleteSet": "Eyða möppusetti",
   "files.deleteSetConfirm": "Fjarlægja þetta möppusett úr listanum? Afritum þess er ekki eytt og hægt er að finna þau aftur síðar.",
   "files.deleteBackupsConfirm": "Eyða öllum staðbundnum afritum þessa möppusetts? Skyndimyndunum er eytt varanlega, staðbundna geymslusafnið er hreinsað og settið gleymist. Afrit á fjarlægum áfangastöðum haldast, án nokkurs setts sem þekkir þau. Þetta verður ekki afturkallað.",
   "files.restoreOriginal": "Endurheimta á upprunalega staðinn",
@@ -2138,9 +2133,7 @@ const is: Partial<Translations> = {
   "files.restoreSelectFiles": "Velja skrár",
   "files.restoreComplete": "Endurheimt lokið. Skrárnar hafa verið skrifaðar.",
   "files.backupAll": "Afrita allt núna",
-  "files.discoverHint": "Týndir listanum yfir sett? Endurbyggðu hann úr afritunum í geymslunni.",
   "files.cancel": "Hætta við",
-  "files.addPreset": "Bæta við forstillingu: Kerfisstilling hýsils",
   "files.addPresetHint": "Íhaldssamur upphafspunktur fyrir stillingar á hýsilsstigi utan gáma þinna, ekki fullyrðing um að vera tæmandi. Yfirfarðu möppuna áður en þú vistar.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

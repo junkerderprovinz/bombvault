@@ -864,7 +864,6 @@ const th: Partial<Translations> = {
   "containers.backupStartFailed": "เริ่มการสำรองข้อมูลไม่สำเร็จ",
   "containers.updateSettingFailed": "อัปเดตการตั้งค่าไม่สำเร็จ",
   "vms.loadFailed": "โหลด VMs ไม่สำเร็จ",
-  "files.loadSetsFailed": "โหลดชุดโฟลเดอร์ไม่สำเร็จ",
   "config.loadSettingsFailed": "ไม่สามารถโหลดการตั้งค่าปัจจุบันได้",
   "dashboard.loadRunsFailed": "โหลดการทำงานไม่สำเร็จ",
 
@@ -1675,9 +1674,6 @@ const th: Partial<Translations> = {
   "settings.registryAdd": "เพิ่ม registry",
   // Files domain (file-set backups, #62)
   "nav.files": "โฟลเดอร์",
-  "files.title": "โฟลเดอร์",
-  "files.setsTitle": "ชุดโฟลเดอร์",
-  "files.empty": "ยังไม่มีชุดโฟลเดอร์ เพิ่มโฟลเดอร์ (แชร์ เอกสาร รูปภาพ อะไรก็ได้ภายใต้จุดเมานต์ของคุณ) แล้ว BombVault จะปกป้องมันเหมือนทุกอย่างอื่น: ตารางเวลา สำเนานอกสถานที่ การตรวจสอบความสมบูรณ์ และการกู้คืน ไม่ต้องใช้เครื่องมือสำรองไฟล์แยกต่างหาก",
   "files.addSet": "เพิ่มชุดโฟลเดอร์",
   "files.editSet": "แก้ไขชุดโฟลเดอร์",
   "files.name": "ชื่อ",
@@ -1700,7 +1696,6 @@ const th: Partial<Translations> = {
   "files.pathMissing": "ไม่พบโฟลเดอร์",
   "files.noPath": "ยังไม่ได้กำหนดโฟลเดอร์",
   "files.noPathHint": "สร้างขึ้นใหม่จากการสำรองข้อมูลโดยไม่มีโฟลเดอร์ กำหนดโฟลเดอร์เพื่อสำรองข้อมูลอีกครั้ง การกู้คืนไปยังโฟลเดอร์ใช้งานได้แล้ว",
-  "files.deleteSet": "ลบชุดโฟลเดอร์",
   "files.deleteSetConfirm": "นำชุดโฟลเดอร์นี้ออกจากรายการ? การสำรองข้อมูลของมันจะไม่ถูกลบและสามารถค้นพบใหม่ได้ภายหลัง",
   "files.deleteBackupsConfirm": "ลบการสำรองข้อมูลในเครื่องทั้งหมดของชุดโฟลเดอร์นี้? สแนปช็อตจะถูกลบอย่างถาวร รีพอสิทอรีในเครื่องจะถูกล้าง และชุดจะถูกลืม สำเนาที่ปลายทางนอกสถานที่ยังคงอยู่ แต่ไม่มีชุดใดรู้จักสำเนาเหล่านั้นอีก ไม่สามารถยกเลิกได้",
   "files.restoreOriginal": "กู้คืนไปยังตำแหน่งเดิม",
@@ -1709,9 +1704,7 @@ const th: Partial<Translations> = {
   "files.restoreSelectFiles": "เลือกไฟล์",
   "files.restoreComplete": "การกู้คืนเสร็จสมบูรณ์ เขียนไฟล์แล้ว",
   "files.backupAll": "สำรองข้อมูลทั้งหมดเดี๋ยวนี้",
-  "files.discoverHint": "รายการชุดหายไป? สร้างมันใหม่จากการสำรองข้อมูลในที่จัดเก็บ",
   "files.cancel": "ยกเลิก",
-  "files.addPreset": "เพิ่มค่าตั้งไว้ล่วงหน้า: การกำหนดค่าระบบ",
   "files.addPresetHint": "จุดเริ่มต้นแบบระมัดระวังสำหรับการกำหนดค่าระดับโฮสต์นอกคอนเทนเนอร์ของคุณ ไม่ได้อ้างว่าครบถ้วนสมบูรณ์ ตรวจสอบโฟลเดอร์ก่อนบันทึก",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

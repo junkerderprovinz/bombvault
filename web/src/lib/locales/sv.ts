@@ -864,7 +864,6 @@ const sv: Partial<Translations> = {
   "containers.backupStartFailed": "Kunde inte starta säkerhetskopieringen",
   "containers.updateSettingFailed": "Kunde inte uppdatera inställningen",
   "vms.loadFailed": "Kunde inte läsa in VMs",
-  "files.loadSetsFailed": "Kunde inte läsa in mappuppsättningarna",
   "config.loadSettingsFailed": "Kunde inte läsa in de aktuella inställningarna",
   "dashboard.loadRunsFailed": "Kunde inte läsa in körningarna",
 
@@ -1672,9 +1671,6 @@ const sv: Partial<Translations> = {
   "settings.registryAdd": "Lägg till register",
   // Files domain (file-set backups, #62)
   "nav.files": "Mappar",
-  "files.title": "Mappar",
-  "files.setsTitle": "Mappuppsättningar",
-  "files.empty": "Inga mappuppsättningar ännu. Lägg till en mapp (utdelningar, dokument, foton, vad som helst under dina monteringar), så skyddar BombVault den som allt annat: scheman, off-site-kopior, integritetskontroller och återställningar. Inget separat filbackupverktyg behövs.",
   "files.addSet": "Lägg till mappuppsättning",
   "files.editSet": "Redigera mappuppsättning",
   "files.name": "Namn",
@@ -1697,7 +1693,6 @@ const sv: Partial<Translations> = {
   "files.pathMissing": "Mappen hittades inte",
   "files.noPath": "Ingen mapp angiven",
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",
-  "files.deleteSet": "Ta bort mappuppsättning",
   "files.deleteSetConfirm": "Ta bort denna mappuppsättning från listan? Dess säkerhetskopior tas inte bort och kan återupptäckas senare.",
   "files.deleteBackupsConfirm": "Ta bort alla lokala säkerhetskopior för den här mappuppsättningen? Ögonblicksbilderna tas bort permanent, det lokala arkivet rensas och uppsättningen glöms bort. Kopior på mål utanför platsen finns kvar, utan någon uppsättning som känner till dem. Det går inte att ångra.",
   "files.restoreOriginal": "Återställ till ursprunglig plats",
@@ -1706,9 +1701,7 @@ const sv: Partial<Translations> = {
   "files.restoreSelectFiles": "Välj filer",
   "files.restoreComplete": "Återställning klar, filerna har skrivits.",
   "files.backupAll": "Säkerhetskopiera allt nu",
-  "files.discoverHint": "Förlorat listan med uppsättningar? Bygg om den från säkerhetskopiorna i lagringen.",
   "files.cancel": "Avbryt",
-  "files.addPreset": "Lägg till förinställning: Systemkonfiguration",
   "files.addPresetHint": "En försiktig utgångspunkt för konfiguration på värdnivå utanför dina containrar, inget anspråk på fullständighet. Granska mappen innan du sparar.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

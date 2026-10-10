@@ -856,7 +856,6 @@ const pl: Partial<Translations> = {
   "containers.backupStartFailed": "Nie udało się uruchomić kopii zapasowej",
   "containers.updateSettingFailed": "Nie udało się zmienić ustawienia",
   "vms.loadFailed": "Nie udało się załadować maszyn wirtualnych",
-  "files.loadSetsFailed": "Nie udało się załadować zestawów folderów",
   "config.loadSettingsFailed": "Nie udało się załadować bieżących ustawień",
   "dashboard.loadRunsFailed": "Nie udało się załadować uruchomień",
 
@@ -1667,9 +1666,6 @@ const pl: Partial<Translations> = {
   "settings.registryAdd": "Dodaj rejestr",
   // Files domain (file-set backups, #62)
   "nav.files": "Foldery",
-  "files.title": "Foldery",
-  "files.setsTitle": "Zestawy folderów",
-  "files.empty": "Nie ma jeszcze zestawów folderów. Dodaj folder (udziały, dokumenty, zdjęcia, cokolwiek pod Twoimi punktami montowania), a BombVault ochroni go jak wszystko inne: harmonogramy, kopie poza siedzibą, kontrole integralności i przywracanie. Osobne narzędzie do kopii plików nie jest potrzebne.",
   "files.addSet": "Dodaj zestaw folderów",
   "files.editSet": "Edytuj zestaw folderów",
   "files.name": "Nazwa",
@@ -1692,7 +1688,6 @@ const pl: Partial<Translations> = {
   "files.pathMissing": "Nie znaleziono folderu",
   "files.noPath": "Nie ustawiono folderu",
   "files.noPathHint": "Odbudowany z kopii zapasowych bez folderu. Ustaw folder, aby znów tworzyć kopie. Przywracanie do folderu działa już teraz.",
-  "files.deleteSet": "Usuń zestaw folderów",
   "files.deleteSetConfirm": "Usunąć ten zestaw folderów z listy? Jego kopie zapasowe nie zostaną usunięte i można je później odkryć ponownie.",
   "files.deleteBackupsConfirm": "Usunąć wszystkie lokalne kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, lokalne repozytorium oczyszczone, a zestaw zapomniany. Kopie w celach poza siedzibą pozostaną, ale żaden zestaw nie będzie o nich wiedział. Tego nie można cofnąć.",
   "files.restoreOriginal": "Przywróć do oryginalnej lokalizacji",
@@ -1701,9 +1696,7 @@ const pl: Partial<Translations> = {
   "files.restoreSelectFiles": "Wybierz pliki",
   "files.restoreComplete": "Przywracanie zakończone. Pliki zostały zapisane.",
   "files.backupAll": "Utwórz kopię wszystkiego teraz",
-  "files.discoverHint": "Utracono listę zestawów? Odbuduj ją z kopii zapasowych w magazynie.",
   "files.cancel": "Anuluj",
-  "files.addPreset": "Dodaj ustawienie: Konfiguracja systemu",
   "files.addPresetHint": "Ostrożny punkt wyjścia dla konfiguracji na poziomie hosta poza kontenerami, nie jest to gwarancja kompletności. Sprawdź folder przed zapisaniem.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

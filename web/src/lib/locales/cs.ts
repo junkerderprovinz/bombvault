@@ -862,7 +862,6 @@ const cs: Partial<Translations> = {
   "containers.backupStartFailed": "Nepodařilo se spustit zálohu",
   "containers.updateSettingFailed": "Nepodařilo se změnit nastavení",
   "vms.loadFailed": "Nepodařilo se načíst VMs",
-  "files.loadSetsFailed": "Nepodařilo se načíst sady složek",
   "config.loadSettingsFailed": "Nepodařilo se načíst aktuální nastavení",
   "dashboard.loadRunsFailed": "Nepodařilo se načíst běhy",
 
@@ -1670,9 +1669,6 @@ const cs: Partial<Translations> = {
   "settings.registryAdd": "Přidat registr",
   // Files domain (file-set backups, #62)
   "nav.files": "Složky",
-  "files.title": "Složky",
-  "files.setsTitle": "Sady složek",
-  "files.empty": "Zatím žádné sady složek. Přidejte složku (sdílení, dokumenty, fotky, cokoli pod vašimi připojeními) a BombVault ji ochrání jako všechno ostatní: plány, kopie mimo lokalitu, kontroly integrity a obnovy. Samostatný nástroj na zálohování souborů není potřeba.",
   "files.addSet": "Přidat sadu složek",
   "files.editSet": "Upravit sadu složek",
   "files.name": "Název",
@@ -1695,7 +1691,6 @@ const cs: Partial<Translations> = {
   "files.pathMissing": "Složka nenalezena",
   "files.noPath": "Složka není nastavena",
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
-  "files.deleteSet": "Smazat sadu složek",
   "files.deleteSetConfirm": "Odebrat tuto sadu složek ze seznamu? Její zálohy se nesmažou a lze je později znovu objevit.",
   "files.deleteBackupsConfirm": "Smazat všechny místní zálohy této sady složek? Snímky budou trvale odstraněny, místní repozitář se pročistí a sada bude zapomenuta. Kopie v cílech mimo lokalitu zůstanou, aniž by o nich věděla jakákoli sada. Tuto akci nelze vrátit zpět.",
   "files.restoreOriginal": "Obnovit na původní místo",
@@ -1704,9 +1699,7 @@ const cs: Partial<Translations> = {
   "files.restoreSelectFiles": "Vybrat soubory",
   "files.restoreComplete": "Obnova dokončena. Soubory byly zapsány.",
   "files.backupAll": "Zálohovat vše nyní",
-  "files.discoverHint": "Ztratili jste seznam sad? Znovu jej sestavte ze záloh v úložišti.",
   "files.cancel": "Zrušit",
-  "files.addPreset": "Přidat předvolbu: Systémová konfigurace",
   "files.addPresetHint": "Konzervativní výchozí bod pro konfiguraci na úrovni hostitele mimo kontejnery. Nejde o tvrzení úplnosti. Před uložením zkontrolujte složku.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

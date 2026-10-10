@@ -855,7 +855,6 @@ const ja: Partial<Translations> = {
   "containers.backupStartFailed": "バックアップを開始できませんでした",
   "containers.updateSettingFailed": "設定を変更できませんでした",
   "vms.loadFailed": "VM を読み込めませんでした",
-  "files.loadSetsFailed": "フォルダーセットを読み込めませんでした",
   "config.loadSettingsFailed": "現在の設定を読み込めませんでした",
   "dashboard.loadRunsFailed": "実行履歴を読み込めませんでした",
 
@@ -1663,9 +1662,6 @@ const ja: Partial<Translations> = {
   "settings.registryAdd": "レジストリを追加",
   // Files domain (file-set backups, #62)
   "nav.files": "フォルダー",
-  "files.title": "フォルダー",
-  "files.setsTitle": "フォルダーセット",
-  "files.empty": "フォルダーセットはまだありません。フォルダーを追加してください（共有、ドキュメント、写真など、マウント配下のあらゆるもの）。BombVault が他のものと同じように保護します：スケジュール、オフサイトコピー、整合性チェック、復元。別のファイルバックアップツールは不要です。",
   "files.addSet": "フォルダーセットを追加",
   "files.editSet": "フォルダーセットを編集",
   "files.name": "名前",
@@ -1688,7 +1684,6 @@ const ja: Partial<Translations> = {
   "files.pathMissing": "フォルダーが見つかりません",
   "files.noPath": "フォルダー未設定",
   "files.noPathHint": "フォルダー情報なしでバックアップから再構築されました。再びバックアップするにはフォルダーを設定してください。フォルダーへの復元は今すぐ使えます。",
-  "files.deleteSet": "フォルダーセットを削除",
   "files.deleteSetConfirm": "このフォルダーセットを一覧から削除しますか？バックアップは削除されず、後で再発見できます。",
   "files.deleteBackupsConfirm": "このフォルダーセットのローカルバックアップをすべて削除しますか？スナップショットは完全に削除され、ローカルリポジトリは整理され、セットは忘れられます。オフサイトの宛先にあるコピーは残りますが、それを把握するセットはなくなります。元に戻せません。",
   "files.restoreOriginal": "元の場所に復元",
@@ -1697,9 +1692,7 @@ const ja: Partial<Translations> = {
   "files.restoreSelectFiles": "ファイルを選択",
   "files.restoreComplete": "復元が完了しました。ファイルが書き込まれました。",
   "files.backupAll": "今すぐすべてバックアップ",
-  "files.discoverHint": "セット一覧を失いましたか？ストレージ内のバックアップから再構築できます。",
   "files.cancel": "キャンセル",
-  "files.addPreset": "プリセットを追加: ホストのシステム構成",
   "files.addPresetHint": "コンテナの外側にあるホストレベルの構成のための、控えめな出発点です。網羅性を保証するものではありません。保存前にフォルダを確認してください。",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

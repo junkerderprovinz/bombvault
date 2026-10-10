@@ -1754,7 +1754,6 @@ export const en = {
   "containers.backupStartFailed": "Failed to start backup",
   "containers.updateSettingFailed": "Failed to update setting",
   "vms.loadFailed": "Failed to load VMs",
-  "files.loadSetsFailed": "Failed to load folder sets",
   "config.loadSettingsFailed": "Could not load current settings",
   "dashboard.loadRunsFailed": "Failed to load runs",
 
@@ -2417,12 +2416,6 @@ export const en = {
   // The files.* KEY names, the "files" domain literal, routes and types are
   // technical identifiers and deliberately keep the historical name.
   "nav.files": "Folders",
-  "files.title": "Folders",
-  // Card-title Badge headline for the empty-state list card (GlimStone
-  // follow-up pass, "half-overlap card notch") — distinct from files.title
-  // (the page's own h1) since the two sit right on top of each other.
-  "files.setsTitle": "Folder sets",
-  "files.empty": "No folder sets yet. Add a folder (shares, documents, photos, anything under your mounts) and BombVault protects it like everything else: schedules, off-site copies, integrity checks and restores. No separate file-backup tool needed.",
   "files.addSet": "Add folder set",
   "files.editSet": "Edit folder set",
   "files.name": "Name",
@@ -2685,7 +2678,6 @@ export const en = {
   "files.pathMissing": "Folder not found",
   "files.noPath": "No folder set",
   "files.noPathHint": "Rebuilt from backups without a folder. Set a folder to back it up again. Restoring to a folder already works.",
-  "files.deleteSet": "Delete folder set",
   "files.deleteSetConfirm": "Remove this folder set from the list? Its backups are not deleted and can be rediscovered later.",
   "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restore to original location",
@@ -2694,24 +2686,17 @@ export const en = {
   "files.restoreSelectFiles": "Select files",
   "files.restoreComplete": "Restore complete: the files have been written.",
   "files.backupAll": "Back up all now",
-  "files.discoverHint": "Lost the set list? Rebuild it from the backups in storage.",
   "files.cancel": "Cancel",
   // "Host system config" preset (generic/TrueNAS only — Unraid already has the
   // flash domain for this). Platform-expansion plan Task 7.
-  "files.addPreset": "Add preset: Host system config",
   "files.addPresetHint": "A conservative starting point for host-level configuration outside your containers, not a claim of completeness. Review the folder before saving.",
-  // Phase 4 (INTEG-02): the Files-page selection tree, mounted per the UI-SPEC
-  // reuse contract with one root (the set's resolved Path, D-02). Copy is the
-  // UI-SPEC Copywriting Contract's en source of truth, pinned byte-exact by
-  // i18n.filesSelection.test.ts. Deliberately NOT the container folders.*
-  // wordings: folders.emptySelectionBlocked teaches "Reset selection", which
-  // does not exist here (D-06 - the files domain has no auto-detection to
-  // reset to, so the refusal orients to Delete folder set instead).
+  // The folder tree of a set. folders.emptySelectionBlocked teaches "Reset
+  // selection", which a set does not have, so its refusal names the removal.
   "files.foldersToggle": "Choose folders",
   "files.foldersHint":
     "Tick the folders this set covers. Untick a subfolder to leave it out; the count shows how many paths the next backup hands restic.",
   "files.emptySelectionBlocked":
-    "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+    "A set needs at least one folder, so the last tick cannot be removed. Use Remove from the list if you no longer want this set.",
   // A3: the dialog disclosure for plan 02's PATCH-time clear rule - changing
   // the set's folder clears the ticked selection (clear-wins precedence),
   // so the consequence is named before it happens. Rendered under the
@@ -5960,7 +5945,6 @@ export const de: Translations = {
   "containers.backupStartFailed": "Sicherung konnte nicht gestartet werden",
   "containers.updateSettingFailed": "Einstellung konnte nicht geändert werden",
   "vms.loadFailed": "VMs konnten nicht geladen werden",
-  "files.loadSetsFailed": "Ordnersets konnten nicht geladen werden",
   "config.loadSettingsFailed": "Aktuelle Einstellungen konnten nicht geladen werden",
   "dashboard.loadRunsFailed": "Läufe konnten nicht geladen werden",
 
@@ -6603,9 +6587,6 @@ export const de: Translations = {
   // Ordner-Domäne (Ordner-Set-Backups, #62) — der Ordner-Tab (Keys behalten
   // die historischen files.*-Namen; nur die angezeigten Werte heißen "Ordner")
   "nav.files": "Ordner",
-  "files.title": "Ordner",
-  "files.setsTitle": "Ordner-Sets",
-  "files.empty": "Noch keine Ordner-Sets. Füge einen Ordner hinzu (Shares, Dokumente, Fotos, alles unter deinen Mounts) und BombVault schützt ihn wie alles andere: Zeitpläne, Off-site-Kopien, Integritätsprüfungen und Wiederherstellungen. Kein separates Datei-Backup-Tool nötig.",
   "files.addSet": "Ordner-Set hinzufügen",
   "files.editSet": "Ordner-Set bearbeiten",
   "files.name": "Name",
@@ -6868,7 +6849,6 @@ export const de: Translations = {
   "files.pathMissing": "Ordner nicht gefunden",
   "files.noPath": "Kein Ordner gesetzt",
   "files.noPathHint": "Aus Backups ohne Ordner wiederaufgebaut. Setze einen Ordner, um wieder zu sichern. Die Wiederherstellung in einen Ordner funktioniert schon jetzt.",
-  "files.deleteSet": "Ordner-Set löschen",
   "files.deleteSetConfirm": "Dieses Ordner-Set aus der Liste entfernen? Seine Backups werden nicht gelöscht und können später wiederentdeckt werden.",
   "files.deleteBackupsConfirm": "Alle lokalen Backups dieses Ordner-Sets löschen? Die Snapshots werden dauerhaft entfernt, das lokale Repository wird aufgeräumt und das Set wird vergessen. Kopien an Off-site-Zielen bleiben erhalten, ohne ein Set, das sie kennt. Kann nicht rückgängig gemacht werden.",
   "files.restoreOriginal": "An den Originalort wiederherstellen",
@@ -6877,9 +6857,7 @@ export const de: Translations = {
   "files.restoreSelectFiles": "Dateien auswählen",
   "files.restoreComplete": "Wiederherstellung abgeschlossen: die Dateien wurden geschrieben.",
   "files.backupAll": "Alle jetzt sichern",
-  "files.discoverHint": "Set-Liste verloren? Baue sie aus den Backups im Speicher neu auf.",
   "files.cancel": "Abbrechen",
-  "files.addPreset": "Preset hinzufügen: Systemkonfiguration",
   "files.addPresetHint": "Ein vorsichtiger Ausgangspunkt für die Konfiguration auf Host-Ebene außerhalb deiner Container, kein Anspruch auf Vollständigkeit. Ordner vor dem Speichern prüfen.",
   // Phase 4 (INTEG-02): Auswahlbaum der Files-Seite (de-Übersetzungen der
   // en-Quelle oben). Bewusst NICHT die Container-Wortwahl von folders.*:
@@ -6889,7 +6867,7 @@ export const de: Translations = {
   "files.foldersHint":
     "Kreuze die Ordner an, die dieses Set abdecken soll. Wähle ein Unterverzeichnis ab, um es wegzulassen; die Zahl zeigt, wie viele Pfade die nächste Sicherung an restic übergibt.",
   "files.emptySelectionBlocked":
-    "Ein Set braucht mindestens einen Ordner, deshalb kann der letzte Haken nicht entfernt werden. Nutze Set entfernen, wenn du dieses Set nicht mehr brauchst.",
+    "Ein Set braucht mindestens einen Ordner, deshalb kann der letzte Haken nicht entfernt werden. Nutze Aus der Liste entfernen, wenn du dieses Set nicht mehr brauchst.",
   "files.pathChangeHint": "Wenn du den Ordner änderst, wird die angekreuzte Unterordner-Auswahl gelöscht.",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Ordner",

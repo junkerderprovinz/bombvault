@@ -1473,7 +1473,6 @@ const lt: Partial<Translations> = {
   "containers.backupStartFailed": "Nepavyko pradėti atsarginės kopijos kūrimo",
   "containers.updateSettingFailed": "Nepavyko pakeisti nustatymo",
   "vms.loadFailed": "Nepavyko įkelti VM",
-  "files.loadSetsFailed": "Nepavyko įkelti aplankų rinkinių",
   "config.loadSettingsFailed": "Nepavyko įkelti dabartinių nustatymų",
   "dashboard.loadRunsFailed": "Nepavyko įkelti vykdymų",
 
@@ -2104,9 +2103,6 @@ const lt: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Aplankai",
-  "files.title": "Aplankai",
-  "files.setsTitle": "Aplankų rinkiniai",
-  "files.empty": "Aplankų rinkinių dar nėra. Pridėkite aplanką (bendrinamus aplankus, dokumentus, nuotraukas, bet ką po jūsų prijungimais), ir BombVault jį saugo kaip ir viską kitą: tvarkaraščiais, nuotolinėmis kopijomis, vientisumo patikromis ir atkūrimais. Atskiro failų atsarginio kopijavimo įrankio nereikia.",
   "files.addSet": "Pridėti aplankų rinkinį",
   "files.editSet": "Redaguoti aplankų rinkinį",
   "files.name": "Pavadinimas",
@@ -2129,7 +2125,6 @@ const lt: Partial<Translations> = {
   "files.pathMissing": "Aplankas nerastas",
   "files.noPath": "Aplankas nenustatytas",
   "files.noPathHint": "Atkurta iš atsarginių kopijų be aplanko. Nustatykite aplanką, kad vėl kopijuotumėte. Atkūrimas į aplanką jau veikia.",
-  "files.deleteSet": "Ištrinti aplankų rinkinį",
   "files.deleteSetConfirm": "Pašalinti šį aplankų rinkinį iš sąrašo? Jo atsarginės kopijos netrinamos ir vėliau gali būti vėl rastos.",
   "files.deleteBackupsConfirm": "Ištrinti visas vietines šio aplankų rinkinio atsargines kopijas? Momentinės kopijos negrįžtamai pašalinamos, vietinė saugykla išvaloma, o rinkinys pamirštamas. Kopijos nuotolinėse paskirties vietose lieka, bet joks rinkinys apie jas nebežino. To atšaukti nebus galima.",
   "files.restoreOriginal": "Atkurti į pradinę vietą",
@@ -2138,9 +2133,7 @@ const lt: Partial<Translations> = {
   "files.restoreSelectFiles": "Pasirinkti failus",
   "files.restoreComplete": "Atkūrimas baigtas, failai įrašyti.",
   "files.backupAll": "Kopijuoti viską dabar",
-  "files.discoverHint": "Praradote rinkinių sąrašą? Atkurkite jį iš saugykloje esančių atsarginių kopijų.",
   "files.cancel": "Atšaukti",
-  "files.addPreset": "Pridėti išankstinį nustatymą: Pagrindinio kompiuterio sistemos konfigūracija",
   "files.addPresetHint": "Konservatyvus pradinis taškas pagrindinio kompiuterio lygio konfigūracijai už jūsų konteinerių ribų, ne teiginys apie išsamumą. Peržiūrėkite aplanką prieš išsaugant.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

@@ -1468,7 +1468,6 @@ const sl: Partial<Translations> = {
   "containers.backupStartFailed": "Varnostne kopije ni bilo mogoče zagnati",
   "containers.updateSettingFailed": "Nastavitve ni bilo mogoče spremeniti",
   "vms.loadFailed": "Nalaganje VM-jev ni uspelo",
-  "files.loadSetsFailed": "Nalaganje naborov map ni uspelo",
   "config.loadSettingsFailed": "Trenutnih nastavitev ni bilo mogoče naložiti",
   "dashboard.loadRunsFailed": "Nalaganje zagonov ni uspelo",
 
@@ -2089,9 +2088,6 @@ const sl: Partial<Translations> = {
 
   // Files domain (folder-set backups, #62)
   "nav.files": "Mape",
-  "files.title": "Mape",
-  "files.setsTitle": "Nabori map",
-  "files.empty": "Še ni naborov map. Dodaj mapo (souporabe, dokumente, fotografije, kar koli pod svojimi priklopnimi točkami) in BombVault jo zaščiti tako kot vse drugo: urniki, zunanje kopije, preverjanja celovitosti in obnovitve. Ločeno orodje za varnostno kopiranje datotek ni potrebno.",
   "files.addSet": "Dodaj nabor map",
   "files.editSet": "Uredi nabor map",
   "files.name": "Ime",
@@ -2114,7 +2110,6 @@ const sl: Partial<Translations> = {
   "files.pathMissing": "Mapa ni najdena",
   "files.noPath": "Ni nastavljene mape",
   "files.noPathHint": "Ponovno zgrajeno iz varnostnih kopij brez mape. Za ponovno varnostno kopiranje nastavi mapo. Obnovitev v mapo že deluje.",
-  "files.deleteSet": "Izbriši nabor map",
   "files.deleteSetConfirm": "Odstranim ta nabor map s seznama? Njegove varnostne kopije se ne izbrišejo in jih je mogoče pozneje ponovno odkriti.",
   "files.deleteBackupsConfirm": "Izbrišem vse lokalne varnostne kopije tega nabora map? Posnetki se trajno odstranijo, lokalni repozitorij se počisti, nabor pa se pozabi. Kopije na zunanjih ciljih ostanejo, vendar noben nabor več ne ve zanje. Tega ni mogoče razveljaviti.",
   "files.restoreOriginal": "Obnovi na izvorno lokacijo",
@@ -2123,9 +2118,7 @@ const sl: Partial<Translations> = {
   "files.restoreSelectFiles": "Izberi datoteke",
   "files.restoreComplete": "Obnovitev končana, datoteke so bile zapisane.",
   "files.backupAll": "Zdaj naredi varnostno kopijo vsega",
-  "files.discoverHint": "Izgubljen seznam naborov? Ponovno ga zgradi iz varnostnih kopij v shrambi.",
   "files.cancel": "Prekliči",
-  "files.addPreset": "Dodaj prednastavitev: Konfiguracija sistema gostitelja",
   "files.addPresetHint": "Previdno izhodišče za konfiguracijo na ravni gostitelja izven tvojih vsebnikov, ne trdi, da je popolno. Pred shranjevanjem preglej mapo.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

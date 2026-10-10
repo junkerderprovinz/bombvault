@@ -861,7 +861,6 @@ const pt: Partial<Translations> = {
   "containers.backupStartFailed": "Falha ao iniciar o backup",
   "containers.updateSettingFailed": "Falha ao atualizar a definição",
   "vms.loadFailed": "Falha ao carregar as VMs",
-  "files.loadSetsFailed": "Falha ao carregar os conjuntos de pastas",
   "config.loadSettingsFailed": "Não foi possível carregar as definições atuais",
   "dashboard.loadRunsFailed": "Falha ao carregar as execuções",
 
@@ -1672,9 +1671,6 @@ const pt: Partial<Translations> = {
   "settings.registryAdd": "Adicionar registry",
   // Files domain (file-set backups, #62)
   "nav.files": "Pastas",
-  "files.title": "Pastas",
-  "files.setsTitle": "Conjuntos de pastas",
-  "files.empty": "Ainda não há conjuntos de pastas. Adicione uma pasta (shares, documentos, fotos, qualquer coisa sob os seus mounts) e o BombVault protege-a como tudo o resto: agendamentos, cópias externas, verificações de integridade e restauro. Não é necessária uma ferramenta separada de backup de ficheiros.",
   "files.addSet": "Adicionar conjunto de pastas",
   "files.editSet": "Editar conjunto de pastas",
   "files.name": "Nome",
@@ -1697,7 +1693,6 @@ const pt: Partial<Translations> = {
   "files.pathMissing": "Pasta não encontrada",
   "files.noPath": "Nenhuma pasta definida",
   "files.noPathHint": "Reconstruído a partir dos backups sem pasta. Defina uma pasta para voltar a fazer backup. Restaurar para uma pasta já funciona.",
-  "files.deleteSet": "Eliminar conjunto de pastas",
   "files.deleteSetConfirm": "Remover este conjunto de pastas da lista? Os seus backups não são eliminados e podem ser redescobertos mais tarde.",
   "files.deleteBackupsConfirm": "Eliminar todos os backups locais deste conjunto de pastas? Os instantâneos são removidos permanentemente, o repositório local é limpo e o conjunto é esquecido. As cópias nos destinos externos mantêm-se, sem nenhum conjunto que as conheça. A ação não pode ser revertida.",
   "files.restoreOriginal": "Restaurar no local original",
@@ -1706,9 +1701,7 @@ const pt: Partial<Translations> = {
   "files.restoreSelectFiles": "Selecionar ficheiros",
   "files.restoreComplete": "Restauro concluído. Os ficheiros foram escritos.",
   "files.backupAll": "Fazer backup de tudo agora",
-  "files.discoverHint": "Perdeu a lista de conjuntos? Reconstrua-a a partir dos backups no armazenamento.",
   "files.cancel": "Cancelar",
-  "files.addPreset": "Adicionar predefinição: Configuração do sistema",
   "files.addPresetHint": "Um ponto de partida conservador para a configuração ao nível do host fora dos seus contêineres, não é uma garantia de integralidade. Revise a pasta antes de salvar.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

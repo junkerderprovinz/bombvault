@@ -864,7 +864,6 @@ const ar: Partial<Translations> = {
   "containers.backupStartFailed": "فشل بدء النسخ الاحتياطي",
   "containers.updateSettingFailed": "فشل تحديث الإعداد",
   "vms.loadFailed": "فشل تحميل VMs",
-  "files.loadSetsFailed": "فشل تحميل مجموعات المجلدات",
   "config.loadSettingsFailed": "تعذّر تحميل الإعدادات الحالية",
   "dashboard.loadRunsFailed": "فشل تحميل التشغيلات",
 
@@ -1675,9 +1674,6 @@ const ar: Partial<Translations> = {
   "settings.registryAdd": "إضافة سجل",
   // Files domain (file-set backups, #62)
   "nav.files": "المجلدات",
-  "files.title": "المجلدات",
-  "files.setsTitle": "مجموعات المجلدات",
-  "files.empty": "لا توجد مجموعات مجلدات بعد. أضف مجلداً (مشاركات، مستندات، صور، أي شيء ضمن نقاط التركيب لديك) وسيحميه BombVault مثل كل شيء آخر: جداول زمنية، نسخ خارج الموقع، فحوصات سلامة واستعادة. لا حاجة إلى أداة منفصلة للنسخ الاحتياطي للملفات.",
   "files.addSet": "إضافة مجموعة مجلدات",
   "files.editSet": "تعديل مجموعة المجلدات",
   "files.name": "الاسم",
@@ -1700,7 +1696,6 @@ const ar: Partial<Translations> = {
   "files.pathMissing": "المجلد غير موجود",
   "files.noPath": "لم يُحدَّد مجلد",
   "files.noPathHint": "أُعيد بناؤه من النسخ الاحتياطية دون مجلد. حدِّد مجلداً لنسخه احتياطياً من جديد. الاستعادة إلى مجلد تعمل بالفعل.",
-  "files.deleteSet": "حذف مجموعة المجلدات",
   "files.deleteSetConfirm": "إزالة مجموعة المجلدات هذه من القائمة؟ لن تُحذف نسخها الاحتياطية ويمكن اكتشافها مجدداً لاحقاً.",
   "files.deleteBackupsConfirm": "حذف جميع النسخ الاحتياطية المحلية لمجموعة المجلدات هذه؟ ستُزال اللقطات نهائياً ويُنظَّف المستودع المحلي وتُنسى المجموعة. تبقى النسخ في الوجهات خارج الموقع، دون مجموعة تعرفها. لا يمكن التراجع عن ذلك.",
   "files.restoreOriginal": "الاستعادة إلى الموقع الأصلي",
@@ -1709,9 +1704,7 @@ const ar: Partial<Translations> = {
   "files.restoreSelectFiles": "تحديد الملفات",
   "files.restoreComplete": "اكتملت الاستعادة. كُتبت الملفات.",
   "files.backupAll": "نسخ الكل احتياطياً الآن",
-  "files.discoverHint": "فقدت قائمة المجموعات؟ أعد بناءها من النسخ الاحتياطية في التخزين.",
   "files.cancel": "إلغاء",
-  "files.addPreset": "إضافة قالب جاهز: تهيئة النظام",
   "files.addPresetHint": "نقطة بداية متحفظة لتهيئة النظام على مستوى المضيف خارج الحاويات، وليست ادعاءً بالاكتمال. راجع المجلد قبل الحفظ.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

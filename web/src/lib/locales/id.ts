@@ -1473,7 +1473,6 @@ const id: Partial<Translations> = {
   "containers.backupStartFailed": "Pencadangan gagal dimulai",
   "containers.updateSettingFailed": "Pengaturan gagal diperbarui",
   "vms.loadFailed": "VM gagal dimuat",
-  "files.loadSetsFailed": "Set folder gagal dimuat",
   "config.loadSettingsFailed": "Pengaturan saat ini tidak dapat dimuat",
   "dashboard.loadRunsFailed": "Eksekusi gagal dimuat",
 
@@ -2104,9 +2103,6 @@ const id: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Folder",
-  "files.title": "Folder",
-  "files.setsTitle": "Set folder",
-  "files.empty": "Belum ada set folder. Tambahkan folder (share, dokumen, foto, apa pun di bawah mount Anda), dan BombVault melindunginya seperti yang lain: jadwal, salinan off-site, pemeriksaan integritas, dan pemulihan. Tidak diperlukan alat pencadangan file terpisah.",
   "files.addSet": "Tambah set folder",
   "files.editSet": "Edit set folder",
   "files.name": "Nama",
@@ -2129,7 +2125,6 @@ const id: Partial<Translations> = {
   "files.pathMissing": "Folder tidak ditemukan",
   "files.noPath": "Tidak ada folder yang diatur",
   "files.noPathHint": "Dibangun ulang dari cadangan tanpa folder. Atur folder untuk mencadangkan lagi. Pemulihan ke folder sudah berfungsi.",
-  "files.deleteSet": "Hapus set folder",
   "files.deleteSetConfirm": "Hapus set folder ini dari daftar? Cadangannya tidak dihapus dan dapat ditemukan kembali nanti.",
   "files.deleteBackupsConfirm": "Hapus semua cadangan lokal set folder ini? Snapshot dihapus secara permanen, repositori lokal dibersihkan, dan set dilupakan. Salinan di target off-site tetap ada, tanpa set yang mengenalinya lagi. Ini tidak dapat dibatalkan.",
   "files.restoreOriginal": "Pulihkan ke lokasi asli",
@@ -2138,9 +2133,7 @@ const id: Partial<Translations> = {
   "files.restoreSelectFiles": "Pilih file",
   "files.restoreComplete": "Pemulihan selesai. File telah ditulis.",
   "files.backupAll": "Cadangkan semua sekarang",
-  "files.discoverHint": "Kehilangan daftar set? Bangun kembali dari cadangan di penyimpanan.",
   "files.cancel": "Batal",
-  "files.addPreset": "Tambah preset: Konfigurasi sistem host",
   "files.addPresetHint": "Titik awal yang konservatif untuk konfigurasi tingkat host di luar container Anda, bukan klaim kelengkapan. Tinjau folder sebelum menyimpan.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

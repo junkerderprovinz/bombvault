@@ -1473,7 +1473,6 @@ const sk: Partial<Translations> = {
   "containers.backupStartFailed": "Zálohu sa nepodarilo spustiť",
   "containers.updateSettingFailed": "Nastavenie sa nepodarilo zmeniť",
   "vms.loadFailed": "VM sa nepodarilo načítať",
-  "files.loadSetsFailed": "Sady priečinkov sa nepodarilo načítať",
   "config.loadSettingsFailed": "Aktuálne nastavenia sa nepodarilo načítať",
   "dashboard.loadRunsFailed": "Behy sa nepodarilo načítať",
 
@@ -2104,9 +2103,6 @@ const sk: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Priečinky",
-  "files.title": "Priečinky",
-  "files.setsTitle": "Sady priečinkov",
-  "files.empty": "Zatiaľ žiadne sady priečinkov. Pridajte priečinok (zdieľania, dokumenty, fotografie, čokoľvek pod vašimi pripojeniami) a BombVault ho chráni ako čokoľvek iné: plány, externé kópie, kontroly integrity a obnovenie. Nie je potrebný samostatný nástroj na zálohovanie súborov.",
   "files.addSet": "Pridať sadu priečinkov",
   "files.editSet": "Upraviť sadu priečinkov",
   "files.name": "Názov",
@@ -2129,7 +2125,6 @@ const sk: Partial<Translations> = {
   "files.pathMissing": "Priečinok sa nenašiel",
   "files.noPath": "Priečinok nie je nastavený",
   "files.noPathHint": "Znova zostavené zo záloh bez priečinka. Nastavte priečinok, aby ste znova zálohovali. Obnovenie do priečinka už funguje.",
-  "files.deleteSet": "Odstrániť sadu priečinkov",
   "files.deleteSetConfirm": "Odstrániť túto sadu priečinkov zo zoznamu? Jej zálohy sa neodstránia a možno ich neskôr znova nájsť.",
   "files.deleteBackupsConfirm": "Odstrániť všetky lokálne zálohy tejto sady priečinkov? Snímky sa natrvalo odstránia, lokálny repozitár sa prečistí a sada sa zabudne. Kópie v externých cieľoch zostanú, no žiadna sada o nich už nebude vedieť. Túto akciu nie je možné vrátiť späť.",
   "files.restoreOriginal": "Obnoviť na pôvodné miesto",
@@ -2138,9 +2133,7 @@ const sk: Partial<Translations> = {
   "files.restoreSelectFiles": "Vybrať súbory",
   "files.restoreComplete": "Obnovenie dokončené, súbory boli zapísané.",
   "files.backupAll": "Zálohovať všetko teraz",
-  "files.discoverHint": "Prišli ste o zoznam sád? Obnovte ho zo záloh v úložisku.",
   "files.cancel": "Zrušiť",
-  "files.addPreset": "Pridať predvoľbu: Konfigurácia systému hostiteľa",
   "files.addPresetHint": "Konzervatívny východiskový bod pre konfiguráciu na úrovni hostiteľa mimo vašich kontajnerov, nie tvrdenie o úplnosti. Pred uložením skontrolujte priečinok.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

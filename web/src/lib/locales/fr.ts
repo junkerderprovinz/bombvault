@@ -864,7 +864,6 @@ const fr: Partial<Translations> = {
   "containers.backupStartFailed": "Échec du démarrage de la sauvegarde",
   "containers.updateSettingFailed": "Échec de la mise à jour du paramètre",
   "vms.loadFailed": "Échec du chargement des VMs",
-  "files.loadSetsFailed": "Échec du chargement des jeux de dossiers",
   "config.loadSettingsFailed": "Impossible de charger les paramètres actuels",
   "dashboard.loadRunsFailed": "Échec du chargement des exécutions",
 
@@ -1672,9 +1671,6 @@ const fr: Partial<Translations> = {
   "settings.registryAdd": "Ajouter un registre",
   // Files domain (file-set backups, #62)
   "nav.files": "Dossiers",
-  "files.title": "Dossiers",
-  "files.setsTitle": "Jeux de dossiers",
-  "files.empty": "Aucun jeu de dossiers pour l'instant. Ajoutez un dossier (partages, documents, photos, tout ce qui se trouve sous vos montages), et BombVault le protège comme tout le reste : plannings, copies hors site, contrôles d'intégrité et restaurations. Aucun outil de sauvegarde de fichiers séparé n'est nécessaire.",
   "files.addSet": "Ajouter un jeu de dossiers",
   "files.editSet": "Modifier le jeu de dossiers",
   "files.name": "Nom",
@@ -1697,7 +1693,6 @@ const fr: Partial<Translations> = {
   "files.pathMissing": "Dossier introuvable",
   "files.noPath": "Aucun dossier défini",
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",
-  "files.deleteSet": "Supprimer le jeu de dossiers",
   "files.deleteSetConfirm": "Retirer ce jeu de dossiers de la liste ? Ses sauvegardes ne sont pas supprimées et pourront être redécouvertes plus tard.",
   "files.deleteBackupsConfirm": "Supprimer toutes les sauvegardes locales de ce jeu de dossiers ? Les instantanés sont supprimés définitivement, le dépôt local est nettoyé et le jeu est oublié. Les copies sur les cibles hors site sont conservées, sans plus aucun jeu qui les connaisse. Cette action est irréversible.",
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",
@@ -1706,9 +1701,7 @@ const fr: Partial<Translations> = {
   "files.restoreSelectFiles": "Sélectionner des fichiers",
   "files.restoreComplete": "Restauration terminée, les fichiers ont été écrits.",
   "files.backupAll": "Tout sauvegarder maintenant",
-  "files.discoverHint": "Liste des jeux perdue ? Reconstruisez-la depuis les sauvegardes du stockage.",
   "files.cancel": "Annuler",
-  "files.addPreset": "Ajouter un préréglage : Configuration système",
   "files.addPresetHint": "Un point de départ prudent pour la configuration au niveau de l'hôte, en dehors de vos conteneurs. Ce n'est pas une garantie d'exhaustivité. Vérifiez le dossier avant d'enregistrer.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts

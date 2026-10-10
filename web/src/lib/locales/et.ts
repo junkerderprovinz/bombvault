@@ -1473,7 +1473,6 @@ const et: Partial<Translations> = {
   "containers.backupStartFailed": "Varunduse käivitamine ebaõnnestus",
   "containers.updateSettingFailed": "Seadistuse muutmine ebaõnnestus",
   "vms.loadFailed": "VM-ide laadimine ebaõnnestus",
-  "files.loadSetsFailed": "Kaustakomplektide laadimine ebaõnnestus",
   "config.loadSettingsFailed": "Praeguseid seadeid ei õnnestunud laadida",
   "dashboard.loadRunsFailed": "Käivituste laadimine ebaõnnestus",
 
@@ -2104,9 +2103,6 @@ const et: Partial<Translations> = {
 
   // Files domain
   "nav.files": "Kaustad",
-  "files.title": "Kaustad",
-  "files.setsTitle": "Kaustakomplektid",
-  "files.empty": "Kaustakomplekte pole veel. Lisa kaust (jagatud kaustad, dokumendid, fotod, ükskõik mis sinu haakepunktide all) ja BombVault kaitseb seda nagu kõike muud: ajakavad, välised koopiad, terviklikkuse kontrollid ja taastamised. Eraldi failivaruduse tööriista pole vaja.",
   "files.addSet": "Lisa kaustakomplekt",
   "files.editSet": "Muuda kaustakomplekti",
   "files.name": "Nimi",
@@ -2129,7 +2125,6 @@ const et: Partial<Translations> = {
   "files.pathMissing": "Kausta ei leitud",
   "files.noPath": "Kausta pole määratud",
   "files.noPathHint": "Ehitatud üles varundustest ilma kaustata. Määra kaust taasvarundamiseks. Taastamine kausta töötab juba.",
-  "files.deleteSet": "Kustuta kaustakomplekt",
   "files.deleteSetConfirm": "Kas eemaldada see kaustakomplekt loendist? Selle varundusi ei kustutata ja need saab hiljem uuesti leida.",
   "files.deleteBackupsConfirm": "Kas kustutada selle kaustakomplekti kõik kohalikud varundused? Hetktõmmised eemaldatakse jäädavalt, kohalik hoidla puhastatakse ja komplekt unustatakse. Koopiad välistes sihtkohtades jäävad alles, kuid ükski komplekt neid enam ei tunne. Seda ei saa tagasi võtta.",
   "files.restoreOriginal": "Taasta algsesse asukohta",
@@ -2138,9 +2133,7 @@ const et: Partial<Translations> = {
   "files.restoreSelectFiles": "Vali failid",
   "files.restoreComplete": "Taastamine lõpetatud: failid on kirjutatud.",
   "files.backupAll": "Varunda kõik kohe",
-  "files.discoverHint": "Kaotasid komplektide loendi? Ehita see salvestusruumis olevatest varundustest uuesti üles.",
   "files.cancel": "Loobu",
-  "files.addPreset": "Lisa eelseade: Hosti süsteemi seadistus",
   "files.addPresetHint": "Ettevaatlik lähtepunkt hosti tasandi seadistusele väljaspool sinu konteinereid, mitte täielikkuse lubadus. Vaata kaust enne salvestamist üle.",
 
   // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
