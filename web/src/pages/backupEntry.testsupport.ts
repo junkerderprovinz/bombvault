@@ -6,6 +6,8 @@ import type {
   BackupItem,
   Container,
   FileSetView,
+  PlacementDomain,
+  PlacementOptions,
   PlacementView,
   Run,
   Settings,
@@ -321,4 +323,29 @@ export function timelineOf(runs: Run[], more: TimelinePlace[] = []) {
       places: [{ place: "local", snapshotIds: [run.snapshotId], tags: [] }],
     }));
   return { ok: true, places: [LOCAL, ...more], rows };
+}
+
+/** The storage locations a kind can use: its own repository and one target. */
+export function placementOptions(domain: PlacementDomain): PlacementOptions {
+  return {
+    domain,
+    unreadable: false,
+    paused: false,
+    homes: [{ id: "", name: "", location: `/mnt/user/backups/${domain}`, kind: "domain", scheme: "" }],
+    targets: [{ id: "t1", name: "Storage Box", enabled: true, primary: false, appendOnly: false, hint: "" }],
+    sendTo: [],
+    segmentLocks: {} as PlacementOptions["segmentLocks"],
+    default: {
+      domain,
+      exists: true,
+      home: "",
+      homeKind: "domain",
+      homeOff: false,
+      skip: [],
+      paused: false,
+      confirmedAt: NOW,
+      counts: {} as PlacementOptions["default"]["counts"],
+      unreadable: false,
+    },
+  };
 }

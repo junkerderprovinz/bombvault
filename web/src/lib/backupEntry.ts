@@ -37,39 +37,41 @@ export interface EntryKindSpec {
   setIncluded?: (key: string, include: boolean) => Promise<OkEnvelope>;
 }
 
+// Each call is looked up when it is made. The paths of this module are read
+// by code that never starts a backup and need not have the calls at hand.
 export const ENTRY_KIND: Record<EntryKind, EntryKindSpec> = {
   container: {
     keyedBy: "name",
     legacyPath: "/containers",
     timelineDomain: "containers",
     placementDomain: "containers",
-    backup: backupNow,
-    setIncluded: setInclude,
+    backup: (name) => backupNow(name),
+    setIncluded: (name, include) => setInclude(name, include),
   },
   vm: {
     keyedBy: "name",
     legacyPath: "/vms",
     timelineDomain: "vms",
     placementDomain: "vms",
-    backup: backupVMNow,
-    setIncluded: setVMInclude,
+    backup: (name) => backupVMNow(name),
+    setIncluded: (name, include) => setVMInclude(name, include),
   },
   files: {
     keyedBy: "id",
     legacyPath: "/files",
     timelineDomain: "files",
     placementDomain: "files",
-    backup: backupFileSet,
+    backup: (id) => backupFileSet(id),
     setIncluded: (id, enabled) => patchFileSet(id, { enabled }),
   },
   zfs: {
     keyedBy: "id",
     legacyPath: "/zfs",
-    backup: backupZFSDataset,
+    backup: (id) => backupZFSDataset(id),
     setIncluded: (id, enabled) => patchZFSDataset(id, { enabled }),
   },
-  flash: { keyedBy: "kind", legacyPath: "/flash", timelineDomain: "flash", backup: backupFlashNow },
-  config: { keyedBy: "kind", legacyPath: "/config", timelineDomain: "config", backup: backupConfigNow },
+  flash: { keyedBy: "kind", legacyPath: "/flash", timelineDomain: "flash", backup: () => backupFlashNow() },
+  config: { keyedBy: "kind", legacyPath: "/config", timelineDomain: "config", backup: () => backupConfigNow() },
 };
 
 export function isEntryKind(value: string): value is EntryKind {

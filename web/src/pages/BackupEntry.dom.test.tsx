@@ -343,12 +343,12 @@ describe("the actions of the corner", () => {
   });
 
   it.each([
-    ["a VM", "/backups/vm/win11", backupVMNow, "win11"],
-    ["the flash drive", "/backups/flash/flash", backupFlashNow, "flash"],
-  ] as const)("starts the backup of %s without a question", async (_, path, call, key) => {
+    ["a VM", "/backups/vm/win11", backupVMNow, ["win11"]],
+    ["the flash drive", "/backups/flash/flash", backupFlashNow, []],
+  ] as const)("starts the backup of %s without a question", async (_, path, call, args) => {
     await renderPage(path);
     await press(corner().getByRole("button", { name: en["containers.backupNow"] }));
-    await waitFor(() => expect(call).toHaveBeenCalledWith(key));
+    await waitFor(() => expect(call).toHaveBeenCalledWith(...args));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 

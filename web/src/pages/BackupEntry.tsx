@@ -12,13 +12,14 @@ import { EntryCorner, EntryHeadActions } from "../components/entry/EntryActions"
 import { EntryHead } from "../components/entry/EntryHead";
 import { KindHead } from "../components/entry/KindHead";
 import { Note } from "../components/entry/Note";
+import { SettingsTab } from "../components/entry/SettingsTab";
 import { IconBack } from "../components/glyphs";
 import { IconDatabase, IconGear, IconTabIntegrity } from "../components/navGlyphs";
 import { PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
 import { Selector } from "../components/Selector";
-import type { Run, TimelineRow } from "../lib/api";
+import type { PlacementView, Run, TimelineRow } from "../lib/api";
 import { ENTRY_KIND, ENTRY_LIST_PATH, entryListPath, isEntryKind, type EntryKind } from "../lib/backupEntry";
 import { isGone, itemProgressKey } from "../lib/backupList";
 import { ENTRY_TABS, entryTabPath, parseEntryTab, type Entry, type EntryTab } from "../lib/entry";
@@ -97,10 +98,12 @@ function Loaded({
   entry,
   runs,
   reload,
+  setPlacement,
 }: {
   entry: Entry;
   runs: Run[];
   reload: () => void;
+  setPlacement: (placement: PlacementView) => void;
 }) {
   const { t } = useT();
   const location = useLocation();
@@ -217,6 +220,17 @@ function Loaded({
           />
         ))}
 
+      {!self && tab === "settings" && (
+        <SettingsTab
+          entry={entry}
+          name={name}
+          anomaly={anomaly}
+          onChanged={reload}
+          onPlacement={setPlacement}
+          nextHue={nextHue}
+        />
+      )}
+
       {!self && (
         <PageActions>
           <EntryCorner entry={entry} onChanged={reload} onRestoreNewest={openNewest} />
@@ -228,9 +242,9 @@ function Loaded({
 
 function EntryView({ kind, entryKey }: { kind: EntryKind; entryKey: string }) {
   const { t } = useT();
-  const { entry, runs, status, reload } = useEntry(kind, entryKey);
+  const { entry, runs, status, reload, setPlacement } = useEntry(kind, entryKey);
 
-  if (entry) return <Loaded entry={entry} runs={runs} reload={() => void reload()} />;
+  if (entry) return <Loaded entry={entry} runs={runs} reload={() => void reload()} setPlacement={setPlacement} />;
   return (
     <>
       <PageTitle>{t("backups.title")}</PageTitle>
