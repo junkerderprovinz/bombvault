@@ -44,9 +44,9 @@ const DESKTOP_PROJECTS = new Set(["desktop-1280", "desktop-768"]);
 
 // The route paths the loop pins, verbatim from the frozen route table
 // (web/src/app/router.tsx): every shell destination, plus /receiver and
-// /fleet, whose Navigate redirects land on /instances' hash lanes (the loop
-// rides them through). The pure redirects (/, /jobs, /pull) and the unlisted
-// /glyphs contact sheet are not destinations, so they are absent here.
+// /fleet, whose Navigate redirects land on /instances (the loop rides them
+// through). The pure redirects (/, /jobs, /pull) and the unlisted /glyphs
+// contact sheet are not destinations, so they are absent here.
 const ROUTES = [
   "/dashboard",
   "/anomalies",

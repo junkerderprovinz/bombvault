@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// The receiving server's card: the form sends what was entered and the card
-// shows the outsider's password once afterwards; a partner's login can be
-// revoked after a confirmation.
+// The receiving server's window: the form sends what was entered and the
+// window shows the outsider's password once afterwards; a partner's login can
+// be revoked after a confirmation.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en, useT } from "../../lib/i18n";
@@ -52,19 +52,21 @@ vi.mock("../../lib/api", async (importOriginal) => {
   };
 });
 
-const { ReceiverServerCard } = await import("./ReceiverServerCard");
+const { ReceiverServerWindow } = await import("./ReceiverServerWindow");
 
-function Card() {
+let closed = 0;
+
+function Opened() {
   const { t } = useT();
-  return <ReceiverServerCard t={t} />;
+  return <ReceiverServerWindow t={t} onClose={() => closed++} />;
 }
 
-async function renderCard() {
+async function renderWindow() {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <Card />
+          <Opened />
         </ToastProvider>
       </I18nProvider>,
     );
@@ -76,11 +78,12 @@ afterEach(() => {
   initial = null;
   sent.length = 0;
   revoked.length = 0;
+  closed = 0;
 });
 
-describe("ReceiverServerCard", () => {
+describe("ReceiverServerWindow", () => {
   it("sets up a receiver from the form and shows the outsider's password once", async () => {
-    await renderCard();
+    await renderWindow();
 
     fireEvent.click(screen.getByRole("button", { name: en["receiver.server.setUp"] }));
     expect(screen.getByRole("dialog", { name: en["receiver.server.setUp"] })).toBeTruthy();
@@ -96,7 +99,7 @@ describe("ReceiverServerCard", () => {
     });
 
     expect(sent).toEqual([{ folder: "user/restic", port: 8001, host: "" }]);
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("dialog", { name: en["receiver.server.setUp"] })).toBeNull();
     expect(screen.getByText(server.url)).toBeTruthy();
     expect(screen.getByText("vault-box")).toBeTruthy();
     expect(screen.getByText(en["receiver.server.protected"])).toBeTruthy();
@@ -107,7 +110,7 @@ describe("ReceiverServerCard", () => {
 
   it("revokes a partner's login after asking", async () => {
     initial = withPartners;
-    await renderCard();
+    await renderWindow();
     expect(screen.getByText("attic")).toBeTruthy();
     expect(screen.getByText("barn")).toBeTruthy();
 

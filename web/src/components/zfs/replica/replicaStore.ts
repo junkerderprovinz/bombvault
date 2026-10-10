@@ -4,8 +4,8 @@
 // screen reads it.
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
-import { getGroup, getZFSReplica, listZFSReplicaServers } from "../../../lib/api";
-import type { GroupState, ZFSReplica, ZFSReplicaServer } from "../../../lib/api";
+import { getGroup, getZFSReplica, listZFSReceiveRequests, listZFSReplicaServers } from "../../../lib/api";
+import type { GroupState, ZFSReceiveRequest, ZFSReplica, ZFSReplicaServer } from "../../../lib/api";
 import { useProgress, type ProgressState } from "../../../lib/progress";
 import { replicaProgressKey, replicaRestoreKey } from "./replicaModel";
 
@@ -85,6 +85,7 @@ function sharedResource<V>(load: (key: string) => Promise<V>) {
 const useReplicaResource = sharedResource(getZFSReplica);
 const useServersResource = sharedResource(() => listZFSReplicaServers());
 const useGroupResource = sharedResource<GroupState | null>(() => getGroup().then((g) => (g.ok ? g : null)));
+const useReceiveResource = sharedResource(() => listZFSReceiveRequests());
 
 // The server records a run and sends its notifications after the progress
 // has ended, and holds the item until then.
@@ -125,4 +126,12 @@ export function useReplicaServers(): { servers: ZFSReplicaServer[]; loaded: bool
  *  instance's own name, which names its folder on every target. */
 export function useGroup(): GroupState | null | undefined {
   return useGroupResource("group").value;
+}
+
+/** The replicas paired instances ask to send here, and the ones allowed. The
+ *  grid counts them per instance and an instance's window answers them, so
+ *  both read the one list. */
+export function useReceiveRequests(): { requests: ZFSReceiveRequest[]; reload: () => void } {
+  const { value, reload } = useReceiveResource("all");
+  return { requests: value ?? [], reload };
 }

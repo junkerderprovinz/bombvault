@@ -1,45 +1,34 @@
-// Receiver monitors the repositories other BombVault instances push off-site
-// copies to: snapshots per source, last-received time, an independent restic
-// check on this hardware and the dead man's switch. A repo is opened read-only
-// with the sending instance's restic password, which the server fetches over
-// the pairing group and never shows.
-
+// A received repository is one another BombVault pushes off-site copies to:
+// snapshots per source, last-received time, an independent restic check on
+// this hardware and the dead man's switch. It is opened read-only with the
+// sending instance's restic password, which the server fetches over the
+// pairing group and never shows.
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+
+import { Badge } from "../../components/Badge";
+import { Button } from "../../components/Button";
+import { IconDisclosure } from "../../components/IconDisclosure";
+import { InfoBubble } from "../../components/InfoBubble";
+import { NumberField } from "../../components/NumberField";
+import { Toggle } from "../../components/Toggle";
 import {
-  listReceivedRepos,
+  checkReceivedRepo,
   createReceivedRepo,
-  updateReceivedRepo,
   deleteReceivedRepo,
   receiverInventory,
-  checkReceivedRepo,
-} from "../lib/api";
-import type {
-  ReceivedRepoStatus,
-  ReceivedRepoInput,
-  ReceiverInventory,
-} from "../lib/api";
-import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
-import { useT } from "../lib/i18n";
-import { useIsDesktop } from "../lib/useMediaQuery";
-import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
-import { relativeTime } from "../lib/reltime";
-import { humanBytes } from "../lib/forecast";
-import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { NumberField } from "../components/NumberField";
-import { PageTitle } from "../components/PageTitle";
-import { IconReceiver } from "../components/Sidebar";
-import { Badge } from "../components/Badge";
-import { InfoBubble } from "../components/InfoBubble";
-import { MemberField } from "./instances/MemberField";
-import { ReceiverServerCard } from "./receiver/ReceiverServerCard";
-import { ZFSReceiveCard } from "../components/zfs/replica/ZFSReceiveCard";
-import { useToast } from "../lib/toast";
-import { hueVars } from "../lib/appearance";
-import { Button } from "../components/Button";
-import { Toggle } from "../components/Toggle";
-import { ToggleRow } from "./settings/shared";
-import { IconDisclosure } from "../components/IconDisclosure";
+  updateReceivedRepo,
+} from "../../lib/api";
+import type { ReceivedRepoInput, ReceivedRepoStatus, ReceiverInventory } from "../../lib/api";
+import { hueVars } from "../../lib/appearance";
+import { dbDumpNameOf, isDbDumpIdentity } from "../../lib/dbdump";
+import { humanBytes } from "../../lib/forecast";
+import { useT } from "../../lib/i18n";
+import { relativeTime } from "../../lib/reltime";
+import { useToast } from "../../lib/toast";
+import { useIsDesktop } from "../../lib/useMediaQuery";
+import { ToggleRow } from "../settings/shared";
+import { MemberField } from "./MemberField";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -158,7 +147,7 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
   );
 }
 
-function ReceivedRepoCard({
+export function ReceivedRepoCard({
   repo,
   t,
   onRefresh,
@@ -243,7 +232,7 @@ function ReceivedRepoCard({
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // Unlike ContainerRow, no glim-active: a check is a quick request, not a
       // tracked backup or restore job.
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
+      className="relative overflow-hidden bg-carbon-background rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
     >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0 max-md:basis-full">
@@ -297,7 +286,7 @@ function ReceivedRepoCard({
           key={shakeCheck}
           label={t("receiver.checkNow")}
           labelKey="receiver.checkNow"
-          tone="accent"
+          tone="neutral"
           onClick={() => void handleCheck()}
           disabled={checking}
           busy={checking}
@@ -351,7 +340,7 @@ function ReceivedRepoCard({
       </div>
 
       {open && (
-        <div className="rounded-card bg-carbon-background px-3 py-2">
+        <div className="rounded-card bg-carbon-surface px-3 py-2">
           <p className="text-xs font-medium text-carbon-textSub">{t("receiver.inventoryTitle")}</p>
           <InventoryPanel repo={repo} t={t} />
         </div>
@@ -360,14 +349,17 @@ function ReceivedRepoCard({
   );
 }
 
-function ReceiverDialog({
+export function ReceiverDialog({
   initial,
+  member = "",
   t,
   onClose,
   onSaved,
 }: {
   /** null = create; a status row = edit that repo. */
   initial: ReceivedRepoStatus | null;
+  /** The sending instance a new repo starts with. */
+  member?: string;
   t: T;
   onClose: () => void;
   onSaved: () => void;
@@ -375,7 +367,7 @@ function ReceiverDialog({
   const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
-  const [memberId, setMemberId] = useState("");
+  const [memberId, setMemberId] = useState(initial ? "" : member);
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
   const [checkCadence, setCheckCadence] = useState(initial?.checkCadence ?? "");
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
@@ -564,121 +556,5 @@ function ReceiverDialog({
       </div>
     </div>,
     document.body,
-  );
-}
-
-/** With `embedded`, the Instances page shows this as a tab and owns the outer
- *  shell and the heading, so the tab does not repeat the strip's label. */
-export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
-  const { t } = useT();
-  const [repos, setRepos] = useState<ReceivedRepoStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // null = closed; "new" = create dialog; a row = edit dialog for that repo.
-  const [dialog, setDialog] = useState<"new" | ReceivedRepoStatus | null>(null);
-
-  function loadRepos() {
-    return listReceivedRepos()
-      .then((res) => {
-        if (res.ok) {
-          setRepos(res.repos ?? []);
-          setError(null);
-        } else {
-          setError(res.error ?? t("receiver.loadError"));
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : t("receiver.loadError")));
-  }
-
-  useEffect(() => {
-    void loadRepos().finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // The empty state carries its own Add button, so the header one hides then.
-  const showEmptyState = !loading && !error && repos.length === 0;
-
-  return (
-    <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      {/* Nothing here is visible once the title is sr-only and the empty
-          state has hidden the Add button, so this row goes sr-only too and
-          leaves the flex layout: without it, an empty row still ate a gap
-          above the empty-state card. */}
-      <div
-        className={`flex items-start justify-between gap-4 flex-wrap${
-          showEmptyState ? " glim-page-title sr-only" : ""
-        }`}
-      >
-        {!embedded && <PageTitle>{t("receiver.title")}</PageTitle>}
-        {!showEmptyState && (
-          <Button
-            label={t("receiver.addRepo")}
-            labelKey="receiver.addRepo"
-            tone="accent"
-            onClick={() => setDialog("new")}
-            className="shrink-0"
-          />
-        )}
-      </div>
-
-      <ReceiverServerCard t={t} />
-
-      {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
-      {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
-
-      {/* Hue 0 cannot collide with a card's, since this only shows while the
-          list is empty. glim-hue sets the accent for the Add button, which
-          glim-notch-card alone does not. insetStart corrects the notch in a
-          centred card, see Badge.tsx. */}
-      {showEmptyState && (
-        <div
-          className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-          style={hueVars(0) as CSSProperties}
-        >
-          <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
-              {t("receiver.emptyTitle")}
-              <InfoBubble tip={t("receiver.empty")} onAccent />
-            </Badge>
-          </h2>
-          <EmptyStateIcon icon={IconReceiver} />
-          <Button
-            label={t("receiver.addRepo")}
-            labelKey="receiver.addRepo"
-            tone="accent"
-            onClick={() => setDialog("new")}
-          />
-        </div>
-      )}
-
-      {!loading && repos.length > 0 && (
-        <div className="flex flex-col gap-3 glim-content-fade">
-          {repos.map((r, i) => (
-            <ReceivedRepoCard
-              key={r.id}
-              repo={r}
-              t={t}
-              onRefresh={() => void loadRepos()}
-              onEdit={() => setDialog(r)}
-              index={i}
-            />
-          ))}
-        </div>
-      )}
-
-      <ZFSReceiveCard />
-
-      {dialog !== null && (
-        <ReceiverDialog
-          initial={dialog === "new" ? null : dialog}
-          t={t}
-          onClose={() => setDialog(null)}
-          onSaved={() => {
-            setDialog(null);
-            void loadRepos();
-          }}
-        />
-      )}
-    </div>
   );
 }
