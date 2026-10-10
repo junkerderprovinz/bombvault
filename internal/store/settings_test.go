@@ -687,3 +687,65 @@ func TestAnUndecodableOffsiteOverrideReadsAsNone(t *testing.T) {
 		t.Fatalf("OwnOffsiteRetention = %v, want none", got)
 	}
 }
+
+func TestRestoreFolderForPicksTheSectionsOwnFolderThenItsSubfolder(t *testing.T) {
+	own := func(m map[string]string) string {
+		var s store.Settings
+		s.SetOwnRestoreFolders(m)
+		return s.RestoreFolderOverrides
+	}
+	for _, tc := range []struct {
+		name     string
+		settings store.Settings
+		section  string
+		want     string
+	}{
+		{"the shared folder", store.Settings{RestoreFolder: "user/restore"}, "vms", "user/restore"},
+		{"a subfolder per section", store.Settings{RestoreFolder: "user/restore", RestoreFolderPerSection: true}, "vms", "user/restore/vms"},
+		{
+			"a folder of its own, whatever the switch says",
+			store.Settings{RestoreFolder: "user/restore", RestoreFolderPerSection: true, RestoreFolderOverrides: own(map[string]string{"vms": "user/domains"})},
+			"vms", "user/domains",
+		},
+		{
+			"another section's own folder changes nothing",
+			store.Settings{RestoreFolder: "user/restore", RestoreFolderOverrides: own(map[string]string{"vms": "user/domains"})},
+			"files", "user/restore",
+		},
+		{"no folder at all, switch on", store.Settings{RestoreFolderPerSection: true}, "vms", ""},
+		{"overrides that do not decode", store.Settings{RestoreFolder: "user/restore", RestoreFolderOverrides: "{not json"}, "vms", "user/restore"},
+	} {
+		if got := tc.settings.RestoreFolderFor(tc.section); got != tc.want {
+			t.Errorf("%s: RestoreFolderFor(%s) = %q, want %q", tc.name, tc.section, got, tc.want)
+		}
+	}
+}
+
+func TestSettingsKeepTheRestoreFolderOfEachSection(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.MutateSettings(func(s *store.Settings) error {
+		s.RestoreFolderPerSection = true
+		s.SetOwnRestoreFolders(map[string]string{"zfs": "user/zfs-restored"})
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.RestoreFolderPerSection || got.OwnRestoreFolders()["zfs"] != "user/zfs-restored" {
+		t.Fatalf("read back switch %v and own folders %v", got.RestoreFolderPerSection, got.OwnRestoreFolders())
+	}
+
+	if _, err := r.MutateSettings(func(s *store.Settings) error {
+		s.SetOwnRestoreFolders(nil)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got, err = r.GetSettings(); err != nil || got.RestoreFolderOverrides != "" {
+		t.Fatalf("an empty set left %q behind (%v)", got.RestoreFolderOverrides, err)
+	}
+}

@@ -226,6 +226,15 @@ export interface Settings {
   filesPath: string;
   zfsPath: string;
   restoreFolder: string;
+  /** Gives every section a subfolder of restoreFolder named after it. Left out
+   *  of a save, the stored switch stays. */
+  restoreFolderPerSection?: boolean;
+  /** The sections that restore into a folder of their own. An empty folder
+   *  puts its section back on the shared one. */
+  restoreFolderOverrides?: Partial<Record<OffsiteDomain, string>>;
+  /** Where a restore of each section into the restore folder lands, worked
+   *  out by the server from the three fields above. A save ignores it. */
+  restoreFolders?: Partial<Record<OffsiteDomain, string>>;
   // Flash zip export (#28): after each flash backup, also write the snapshot out
   // as a plain .zip to this folder for off-server sync. Keep=0 → a single
   // flash-latest.zip that's overwritten; Keep=N → keep the newest N timestamped

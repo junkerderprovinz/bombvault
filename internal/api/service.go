@@ -13383,15 +13383,10 @@ func (s *Service) dirNonEmptyFn() func(string) bool {
 	return dirNonEmpty
 }
 
-// foreignVMDestBase resolves the destination base directory (a container path)
-// for a cross-instance VM restore's disks. Resolution order, NEVER the source
-// pool: an explicit target subpath (the request Target) wins; else the configured
-// RestoreFolder (the settings default restore location); else the platform's
-// conventional local VM domains location under the host mount (see
-// platform.Platform.ForeignVMDestBase — Unraid's "user/domains" share;
-// generic's identity default). Target/RestoreFolder are relative subpaths
-// validated by paths.Resolve (no absolute path, no traversal), exactly like
-// the file-set to-folder restore.
+// foreignVMDestBase resolves the folder, as a container path, that the disks
+// of a VM from another instance are restored into: the request's target, else
+// the restore folder of the VMs section, else the platform's place for VM
+// disks under the host mount. It is never the pool the VM came from.
 func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -13400,20 +13395,14 @@ func (s *Service) foreignVMDestBase(target string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read settings: %w", err)
 	}
-	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+	if sub := settings.RestoreFolderFor("vms"); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
 	return s.platformFn().ForeignVMDestBase(path.Clean(s.cfg.HostMountRoot)), nil
 }
 
-// foreignContainerDestBase resolves the destination base directory (a container
-// path) a cross-instance container restore remaps appdata INTO — the container
-// counterpart of foreignVMDestBase (#125). Resolution order, NEVER the source
-// pool: an explicit request Target wins; else the configured RestoreFolder; else
-// the platform's conventional local appdata location under the host mount (see
-// platform.Platform.ForeignContainerDestBase — Unraid's "user/appdata" share;
-// generic's identity default). Target / RestoreFolder are relative subpaths
-// validated by paths.Resolve (no absolute path, no traversal).
+// foreignContainerDestBase is foreignVMDestBase for the appdata of a container
+// from another instance (#125).
 func (s *Service) foreignContainerDestBase(target string) (string, error) {
 	if sub := strings.TrimSpace(target); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
@@ -13422,7 +13411,7 @@ func (s *Service) foreignContainerDestBase(target string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read settings: %w", err)
 	}
-	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+	if sub := settings.RestoreFolderFor("containers"); sub != "" {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
 	return s.platformFn().ForeignContainerDestBase(path.Clean(s.cfg.HostMountRoot)), nil

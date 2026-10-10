@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
+	"strings"
 )
 
 // Settings mirrors the single-row settings table.
@@ -25,6 +27,14 @@ type Settings struct {
 	// RestoreFolder pre-fills the restore-to-folder picker. Like the backup
 	// paths it is relative to the host mount.
 	RestoreFolder string
+	// RestoreFolderPerSection gives every section a subfolder of RestoreFolder
+	// named after it.
+	RestoreFolderPerSection bool
+	// RestoreFolderOverrides is a JSON object of section name to the folder
+	// that section restores into instead. It is a string so Settings stays
+	// comparable; read and write it through OwnRestoreFolders and
+	// SetOwnRestoreFolders.
+	RestoreFolderOverrides string
 	// Off-site repo per domain. When set, a successful local backup is
 	// replicated there with `restic copy`; the local repo stays primary.
 	ContainersOffsite string
@@ -333,7 +343,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
 		       retention_keep_yearly, offsite_retention_keep_yearly,
 		       repo_compression, start_test_enabled, retention_overrides,
-		       offsite_retention_overrides
+		       offsite_retention_overrides,
+		       restore_folder_per_section, restore_folder_overrides
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -343,7 +354,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
 	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
-	var anomalyEnabled, anomalyRetentionHold, startTestEnabled int
+	var anomalyEnabled, anomalyRetentionHold, startTestEnabled, restorePerSection int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled, &zfsEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.ZFSPath, &s.RestoreFolder,
@@ -380,6 +391,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&startTestEnabled,
 		&s.RetentionOverrides,
 		&s.OffsiteRetentionOverrides,
+		&restorePerSection, &s.RestoreFolderOverrides,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -418,6 +430,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.FleetEnabled = fleetEnabled != 0
 	s.PullEnabled = pullEnabled != 0
 	s.DBDumpsEnabled = dbDumpsEnabled != 0
+	s.RestoreFolderPerSection = restorePerSection != 0
 	s.AnomalyEnabled = anomalyEnabled != 0
 	s.AnomalyRetentionHold = anomalyRetentionHold != 0
 	s.StartTestEnabled = startTestEnabled != 0
@@ -583,7 +596,9 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  repo_compression             = ?,
 		  start_test_enabled           = ?,
 		  retention_overrides          = ?,
-		  offsite_retention_overrides  = ?
+		  offsite_retention_overrides  = ?,
+		  restore_folder_per_section   = ?,
+		  restore_folder_overrides     = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -638,6 +653,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		boolInt(s.StartTestEnabled),
 		s.RetentionOverrides,
 		s.OffsiteRetentionOverrides,
+		boolInt(s.RestoreFolderPerSection),
+		s.RestoreFolderOverrides,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
@@ -650,6 +667,45 @@ func boolInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// OwnRestoreFolders returns the sections that restore into a folder of their
+// own. A value that does not decode reads as none, so a bad write falls back
+// to the shared folder.
+func (s Settings) OwnRestoreFolders() map[string]string {
+	m := map[string]string{}
+	if s.RestoreFolderOverrides != "" {
+		if err := json.Unmarshal([]byte(s.RestoreFolderOverrides), &m); err != nil {
+			return map[string]string{}
+		}
+	}
+	return m
+}
+
+// SetOwnRestoreFolders stores m as the sections' own restore folders. An empty
+// m puts every section back on the shared folder.
+func (s *Settings) SetOwnRestoreFolders(m map[string]string) {
+	if len(m) == 0 {
+		s.RestoreFolderOverrides = ""
+		return
+	}
+	b, _ := json.Marshal(m) // a map of strings always encodes
+	s.RestoreFolderOverrides = string(b)
+}
+
+// RestoreFolderFor returns where a restore of section lands when it goes to
+// the restore folder: the section's own folder, else its subfolder of
+// RestoreFolder when RestoreFolderPerSection is on, else RestoreFolder. Like
+// RestoreFolder it is relative to the host mount, and empty when none is set.
+func (s Settings) RestoreFolderFor(section string) string {
+	if own := s.OwnRestoreFolders()[section]; own != "" {
+		return own
+	}
+	base := strings.TrimSpace(s.RestoreFolder)
+	if base == "" || !s.RestoreFolderPerSection {
+		return base
+	}
+	return path.Join(base, section)
 }
 
 // CompressionFor returns the stored mode for key, or "" when none is stored.

@@ -2230,6 +2230,16 @@ type settingsView struct {
 	ConfigSchedule            string `json:"configSchedule"`
 	FilesSchedule             string `json:"filesSchedule"`
 	ZFSSchedule               string `json:"zfsSchedule"`
+	// RestoreFolderPerSection gives every section a subfolder of RestoreFolder
+	// named after it, and RestoreFolderOverrides holds the sections that
+	// restore into a folder of their own. Nil keeps what is stored, so a client
+	// or an export that does not know them changes neither.
+	RestoreFolderPerSection *bool             `json:"restoreFolderPerSection"`
+	RestoreFolderOverrides  map[string]string `json:"restoreFolderOverrides"`
+	// RestoreFolders is where a restore of each section into the restore
+	// folder lands. It is worked out from the settings above and never read
+	// back.
+	RestoreFolders map[string]string `json:"restoreFolders,omitempty"`
 	// Scheduled flash ZIP export: enable, destination folder (relative subpath
 	// under the mount root), and how many timestamped zips to keep (0 = a single
 	// overwriting flash-latest.zip).
@@ -2470,6 +2480,8 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
 		RetentionKeepYearly:         s.RetentionKeepYearly,
 		OwnRetention:                s.OwnRetention(),
+		RestoreFolderPerSection:     &s.RestoreFolderPerSection,
+		RestoreFolderOverrides:      s.OwnRestoreFolders(),
 		OwnOffsiteRetention:         s.OwnOffsiteRetention(),
 		Compression:                 compressionView(s),
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
@@ -2579,6 +2591,7 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	view := scrubGetSettingsSecrets(toView(s))
+	view.RestoreFolders = restoreFolders(s)
 	// Registry credentials (#106) live encrypted in the settings row, so toView
 	// (a pure store.Settings mapping) can't decode them — fill the view here.
 	// Tokens are secrets and never echoed; TokenSet reports presence.
@@ -2822,6 +2835,9 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 	// up front — it can never legitimately be a remote backend.
 	if v.RestoreFolder != "" && restic.IsRemoteRepo(v.RestoreFolder) {
 		return "restore folder must be a local path under the mount root"
+	}
+	if msg := rejectInvalidRestoreFolders(v.RestoreFolderOverrides, mountRoot); msg != "" {
+		return msg
 	}
 
 	// Local domain repos, plus any configured off-site repos (off-site may be
@@ -3072,6 +3088,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FilesPath = v.FilesPath
 		cur.ZFSPath = v.ZFSPath
 		cur.RestoreFolder = v.RestoreFolder
+		applyRestoreFolders(cur, v)
 		applyOffsiteSettings(cur, v)
 		pinLinkedPrimaries(cur, linked)
 		cur.ContainersSchedule = v.ContainersSchedule
