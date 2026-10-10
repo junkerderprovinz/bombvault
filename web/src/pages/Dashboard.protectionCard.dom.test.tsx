@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
 import type { DomainStatus } from "../lib/api";
-import { ProtectionCard } from "./Dashboard";
+import { ProtectionCard } from "./overview/ProtectionCard";
 
 function domain(over: Partial<DomainStatus> = {}): DomainStatus {
   return {

@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-import { AnomaliesCard } from "./Dashboard";
+import { AnomaliesCard } from "./overview/AnomaliesCard";
 import { AnomalyProvider, useOpenAnomalies } from "../lib/useAnomalies";
 import { ANOMALY_CHANGED_EVENT } from "../lib/anomalies";
 import { countText, en } from "../lib/i18n";
