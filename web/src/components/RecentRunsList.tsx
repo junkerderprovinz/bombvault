@@ -23,7 +23,7 @@ const LISTED_KINDS = new Set(["backup", "import"]);
 // accentText inside .glim-hue rows, so the dot keeps that contrast and stays a
 // status colour: in a resting reactive-rainbow row the rebound accent is the
 // same grey as the "skipped" dot.
-function statusDotClass(status: string): string {
+export function statusDotClass(status: string): string {
   switch (status.toLowerCase()) {
     case "success":
       return "bg-statusOkSolid";

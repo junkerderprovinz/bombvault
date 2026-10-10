@@ -13,6 +13,7 @@ import { EntryHead } from "../components/entry/EntryHead";
 import { KindHead } from "../components/entry/KindHead";
 import { Note } from "../components/entry/Note";
 import { SettingsTab } from "../components/entry/SettingsTab";
+import { VerifyTab } from "../components/entry/VerifyTab";
 import { IconBack } from "../components/glyphs";
 import { IconDatabase, IconGear, IconTabIntegrity } from "../components/navGlyphs";
 import { PageActions } from "../components/PageActions";
@@ -229,6 +230,10 @@ function Loaded({
           onPlacement={setPlacement}
           nextHue={nextHue}
         />
+      )}
+
+      {!self && tab === "verify" && (
+        <VerifyTab entry={entry} runs={runs} anomaly={anomaly} anomalyEnabled={anomalyEnabled} nextHue={nextHue} />
       )}
 
       {!self && (

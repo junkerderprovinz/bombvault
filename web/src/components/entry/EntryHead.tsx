@@ -44,7 +44,7 @@ function useReasonText(entry: Entry): string {
 
 function ltr(text: string, mono = false): ReactNode {
   return (
-    <span dir="ltr" className={`text-start wrap-anywhere${mono ? " font-mono" : ""}`}>
+    <span dir="ltr" className={`text-start wrap-anywhere ${mono ? "font-mono" : ""}`}>
       {text}
     </span>
   );
@@ -135,7 +135,7 @@ export function EntryHead({
   return (
     <div
       style={hueVars(kindHue(item.kind)) as CSSProperties}
-      className={`glim-hue flex flex-wrap items-center gap-x-4 gap-y-3${running ? " glim-active" : ""}`}
+      className={`glim-hue flex flex-wrap items-center gap-x-4 gap-y-3 ${running ? "glim-active" : ""}`}
     >
       <span className="glim-row-glyph flex h-10 w-10 flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-5 [&_svg]:w-5">
         <KindGlyph kind={item.kind} />

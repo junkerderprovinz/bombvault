@@ -112,7 +112,7 @@ export function BackupHistory({
             // A phone has room for every fourth date and no weekdays.
             const onPhone = (HISTORY_DAYS - 1 - i) % 4 === 0;
             return (
-              <span key={day.start} className={`flex flex-col leading-tight${onPhone ? "" : " max-md:invisible"}`}>
+              <span key={day.start} className={`flex flex-col leading-tight ${onPhone ? "" : "max-md:invisible"}`}>
                 <b className="font-semibold text-carbon-textSub capitalize max-md:hidden">
                   {last ? today : new Date(day.start).toLocaleDateString(lang, { weekday: "short" })}
                 </b>
