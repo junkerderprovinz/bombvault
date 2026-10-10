@@ -7,6 +7,9 @@ const tr: Partial<Translations> = {
   "theme.light": "Açık",
 
   // Nav
+  "nav.overview": "Genel bakış",
+  "nav.attentionCountAria": "Dikkat gerekiyor: {n}",
+  "nav.restore": "Geri yükleme",
   "nav.containers": "Konteynerler",
   "nav.vms": "VM'ler",
   "nav.flash": "Flash",

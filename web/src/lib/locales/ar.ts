@@ -7,6 +7,9 @@ const ar: Partial<Translations> = {
   "theme.light": "فاتح",
 
   // Nav
+  "nav.overview": "نظرة عامة",
+  "nav.attentionCountAria": "يحتاج إلى انتباه: {n}",
+  "nav.restore": "الاستعادة",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

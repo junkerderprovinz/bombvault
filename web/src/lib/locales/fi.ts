@@ -7,6 +7,9 @@ const fi: Partial<Translations> = {
   "theme.light": "Vaalea",
 
   // Nav
+  "nav.overview": "Yleiskatsaus",
+  "nav.attentionCountAria": "Vaatii huomiota: {n}",
+  "nav.restore": "Palautus",
   "nav.containers": "Kontit",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

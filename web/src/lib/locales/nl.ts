@@ -7,6 +7,9 @@ const nl: Partial<Translations> = {
   "theme.light": "Licht",
 
   // Nav
+  "nav.overview": "Overzicht",
+  "nav.attentionCountAria": "Aandacht nodig: {n}",
+  "nav.restore": "Herstel",
   "nav.containers": "Containers",
   "nav.vms": "VM's",
   "nav.flash": "Flash",

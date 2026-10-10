@@ -7,6 +7,9 @@ const et: Partial<Translations> = {
   "theme.light": "Hele",
 
   // Nav
+  "nav.overview": "Ülevaade",
+  "nav.attentionCountAria": "Vajab tähelepanu: {n}",
+  "nav.restore": "Taastamine",
   "nav.containers": "Konteinerid",
   "nav.vms": "VM-id",
   "nav.flash": "Flash",

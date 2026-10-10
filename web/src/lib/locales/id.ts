@@ -7,6 +7,9 @@ const id: Partial<Translations> = {
   "theme.light": "Terang",
 
   // Nav
+  "nav.overview": "Ringkasan",
+  "nav.attentionCountAria": "Perlu perhatian: {n}",
+  "nav.restore": "Pemulihan",
   "nav.containers": "Container",
   "nav.vms": "VM",
   "nav.flash": "Flash",

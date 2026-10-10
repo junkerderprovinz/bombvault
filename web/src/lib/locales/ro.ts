@@ -7,6 +7,9 @@ const ro: Partial<Translations> = {
   "theme.light": "Luminos",
 
   // Nav
+  "nav.overview": "Prezentare",
+  "nav.attentionCountAria": "Necesită atenție: {n}",
+  "nav.restore": "Restaurare",
   "nav.containers": "Containere",
   "nav.vms": "VM-uri",
   "nav.flash": "Flash",

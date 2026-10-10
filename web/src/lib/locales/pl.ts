@@ -7,6 +7,9 @@ const pl: Partial<Translations> = {
   "theme.light": "Jasny",
 
   // Nav
+  "nav.overview": "Przegląd",
+  "nav.attentionCountAria": "Wymaga uwagi: {n}",
+  "nav.restore": "Przywracanie",
   "nav.containers": "Containers",
   "nav.vms": "Maszyny wirtualne",
   "nav.flash": "Flash",

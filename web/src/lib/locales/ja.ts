@@ -7,6 +7,9 @@ const ja: Partial<Translations> = {
   "theme.light": "ライト",
 
   // Nav
+  "nav.overview": "概要",
+  "nav.attentionCountAria": "要注意：{n}",
+  "nav.restore": "復元",
   "nav.containers": "コンテナ",
   "nav.vms": "VM",
   "nav.flash": "フラッシュ",

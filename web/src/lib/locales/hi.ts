@@ -7,6 +7,9 @@ const hi: Partial<Translations> = {
   "theme.light": "लाइट",
 
   // Nav
+  "nav.overview": "अवलोकन",
+  "nav.attentionCountAria": "ध्यान देने की ज़रूरत है: {n}",
+  "nav.restore": "रीस्टोर",
   "nav.containers": "कंटेनर",
   "nav.vms": "VM",
   "nav.flash": "फ़्लैश",

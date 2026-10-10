@@ -7,6 +7,9 @@ const uk: Partial<Translations> = {
   "theme.light": "Світла",
 
   // Nav
+  "nav.overview": "Огляд",
+  "nav.attentionCountAria": "Потребує уваги: {n}",
+  "nav.restore": "Відновлення",
   "nav.containers": "Контейнери",
   "nav.vms": "Віртуальні машини",
   "nav.flash": "Flash",

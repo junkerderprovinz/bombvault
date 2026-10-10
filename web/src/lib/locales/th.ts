@@ -7,6 +7,9 @@ const th: Partial<Translations> = {
   "theme.light": "สว่าง",
 
   // Nav
+  "nav.overview": "ภาพรวม",
+  "nav.attentionCountAria": "ต้องการความสนใจ: {n}",
+  "nav.restore": "การกู้คืน",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

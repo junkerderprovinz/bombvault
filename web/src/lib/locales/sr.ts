@@ -7,6 +7,9 @@ const sr: Partial<Translations> = {
   "theme.light": "Светла",
 
   // Nav
+  "nav.overview": "Преглед",
+  "nav.attentionCountAria": "Потребна пажња: {n}",
+  "nav.restore": "Враћање",
   "nav.containers": "Контејнери",
   "nav.vms": "ВМ-ови",
   "nav.flash": "Flash",

@@ -7,6 +7,9 @@ const gl: Partial<Translations> = {
   "theme.light": "Claro",
 
   // Nav
+  "nav.overview": "Vista xeral",
+  "nav.attentionCountAria": "Precisa atención: {n}",
+  "nav.restore": "Restauración",
   "nav.containers": "Contedores",
   "nav.vms": "MV",
   "nav.flash": "Flash",

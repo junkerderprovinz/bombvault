@@ -7,6 +7,9 @@ const ms: Partial<Translations> = {
   "theme.light": "Cerah",
 
   // Nav
+  "nav.overview": "Ikhtisar",
+  "nav.attentionCountAria": "Memerlukan perhatian: {n}",
+  "nav.restore": "Pemulihan",
   "nav.containers": "Bekas",
   "nav.vms": "VM",
   "nav.flash": "Flash",

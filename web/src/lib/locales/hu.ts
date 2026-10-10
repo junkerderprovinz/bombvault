@@ -7,6 +7,9 @@ const hu: Partial<Translations> = {
   "theme.light": "Világos",
 
   // Nav
+  "nav.overview": "Áttekintés",
+  "nav.attentionCountAria": "Figyelmet igényel: {n}",
+  "nav.restore": "Visszaállítás",
   "nav.containers": "Konténerek",
   "nav.vms": "VM-ek",
   "nav.flash": "Flash",

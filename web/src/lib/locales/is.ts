@@ -7,6 +7,9 @@ const is: Partial<Translations> = {
   "theme.light": "Ljóst",
 
   // Nav
+  "nav.overview": "Yfirlit",
+  "nav.attentionCountAria": "Þarfnast athygli: {n}",
+  "nav.restore": "Endurheimt",
   "nav.containers": "Gámar",
   "nav.vms": "Sýndarvélar",
   "nav.flash": "Flash",

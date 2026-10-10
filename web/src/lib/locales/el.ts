@@ -7,6 +7,9 @@ const el: Partial<Translations> = {
   "theme.light": "Φωτεινό",
 
   // Nav
+  "nav.overview": "Επισκόπηση",
+  "nav.attentionCountAria": "Χρειάζεται προσοχή: {n}",
+  "nav.restore": "Επαναφορά",
   "nav.containers": "Containers",
   "nav.vms": "VMs",
   "nav.flash": "Flash",

@@ -7,6 +7,9 @@ const ko: Partial<Translations> = {
   "theme.light": "밝게",
 
   // Nav
+  "nav.overview": "개요",
+  "nav.attentionCountAria": "주의 필요: {n}",
+  "nav.restore": "복원",
   "nav.containers": "컨테이너",
   "nav.vms": "가상 머신",
   "nav.flash": "플래시",
