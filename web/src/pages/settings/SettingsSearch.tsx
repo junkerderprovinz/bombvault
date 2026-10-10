@@ -2,7 +2,7 @@
 // names, the card titles, the caption beside each control and the text behind
 // its (i), in the reader's language, and a result opens its page and marks the
 // card or row (see useSearchJump).
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IconSearch } from "../../components/glyphs";
 import { IconClose } from "../../components/navGlyphs";
@@ -11,7 +11,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useRevealOnScrollUp } from "./revealOnScrollUp";
 import { SETTINGS_INDEX, type SearchCard } from "./searchIndex";
-import type { SettingsPageDef, SettingsPageId } from "./settingsPages";
+import { FORMER_NAMES, FORMER_PAGES, type SettingsPageDef, type SettingsPageId } from "./settingsPages";
 
 /** Where a result leads: its page, and the card and row to mark there. */
 export interface SearchJump {
@@ -25,6 +25,10 @@ interface Item {
   pageName: string;
   name: string;
   cardName?: string;
+  /** Where a name from an earlier version leads, when not to the page's top. */
+  to?: string;
+  /** Set for a name a page carried in an earlier version. */
+  former?: boolean;
   /** Lower tiers sort first where the match is equally good. */
   tier: number;
   foldedName: string;
@@ -75,6 +79,26 @@ export function buildItems(t: (k: TranslationKey) => string, pages: SettingsPage
       }
     }
   }
+  const former = [
+    ...Object.entries(FORMER_PAGES).map(([id, f]) => ({ id, label: f.label, to: f.to })),
+    ...FORMER_NAMES.map((f) => ({ id: `${f.page}:${f.label}`, label: f.label, to: f.page as string })),
+  ];
+  for (const f of former) {
+    const page = pages.find((p) => p.id === f.to.split("#")[0]);
+    if (!page) continue;
+    const name = t(f.label);
+    items.push({
+      id: `former:${f.id}`,
+      page: page.id,
+      pageName: t(page.label),
+      name,
+      to: f.to,
+      former: true,
+      tier: 0,
+      foldedName: fold(name),
+      foldedProse: "",
+    });
+  }
   return items;
 }
 
@@ -112,7 +136,29 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
   const pinned =
     open || query !== "" || (typeof document !== "undefined" && document.activeElement === field.current);
   const { pathname } = useLocation();
-  const { revealed, barRef, hide } = useRevealOnScrollUp(pathname, pinned);
+  const { revealed, barRef, show, hide } = useRevealOnScrollUp(pathname, pinned);
+  const [summoned, setSummoned] = useState(0);
+
+  // A slash outside a field and Ctrl+K anywhere bring the search up with the
+  // cursor in it.
+  useEffect(() => {
+    function onKey(e: globalThis.KeyboardEvent) {
+      const el = e.target instanceof HTMLElement ? e.target : null;
+      const typing = !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+      const slash = e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !typing;
+      const palette = e.key.toLowerCase() === "k" && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
+      if (!slash && !palette) return;
+      e.preventDefault();
+      show();
+      setSummoned((n) => n + 1);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [show]);
+
+  useEffect(() => {
+    if (summoned > 0) field.current?.focus();
+  }, [summoned, revealed]);
 
   const items = useMemo(() => buildItems(t, pages), [t, pages]);
   const hits: Hit[] = useMemo(() => search(items, query), [items, query]);
@@ -126,7 +172,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
     setQuery("");
     setOpen(false);
     field.current?.blur();
-    navigate(`/settings/${item.page}`, { state: { jump } });
+    navigate(`/settings/${item.to ?? item.page}`, { state: { jump } });
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -243,7 +289,11 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
                   {(hit.item.cardName || hit.inHint || hit.item.tier === 0) && (
                     <span className="flex min-w-0 gap-2 text-[11px] text-carbon-textMuted">
                       <span className="truncate">
-                        {hit.item.tier === 0 ? t("settings.search.page") : hit.item.cardName}
+                        {hit.item.former
+                          ? t("tile.search.former").replace("{tab}", () => hit.item.pageName)
+                          : hit.item.tier === 0
+                            ? t("settings.search.page")
+                            : hit.item.cardName}
                       </span>
                       {hit.inHint && <span className="shrink-0">{t("settings.search.inHint")}</span>}
                     </span>

@@ -29,3 +29,23 @@ it("is one tab stop on the open page, and the arrow keys move the focus without 
   expect(document.activeElement).toBe(tile("general"));
   expect(screen.getByTestId("where").textContent).toBe("/settings/look");
 });
+
+it("moves the focused tile with Alt and an arrow, and stops at the ends", () => {
+  const orders: string[][] = [];
+  render(
+    <MemoryRouter initialEntries={["/settings/look"]}>
+      <SettingsRail items={ITEMS} active="look" label="Settings pages" onReorder={(ids) => orders.push(ids)} />
+    </MemoryRouter>
+  );
+  const tile = (name: string) => screen.getByRole("link", { name });
+
+  act(() => tile("look").focus());
+  fireEvent.keyDown(tile("look"), { key: "ArrowDown", altKey: true });
+  expect(orders).toEqual([["general", "storage", "look"]]);
+  fireEvent.keyDown(tile("look"), { key: "ArrowUp", altKey: true });
+  expect(orders[1]).toEqual(["look", "general", "storage"]);
+
+  act(() => tile("general").focus());
+  fireEvent.keyDown(tile("general"), { key: "ArrowUp", altKey: true });
+  expect(orders).toHaveLength(2);
+});

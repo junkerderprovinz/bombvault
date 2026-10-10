@@ -62,6 +62,8 @@ function baseSettings(): Settings {
     compression: {},
     defaultLanguage: "en",
     registryAuths: [],
+    ownRetention: {},
+    ownOffsiteRetention: {},
   } as unknown as Settings;
 }
 
@@ -95,7 +97,7 @@ const PLACEHOLDER = "rest:http://host:8000/repo";
 async function renderOffsitePage() {
   await act(async () => {
     render(
-      <MemoryRouter initialEntries={["/settings/offsite"]}>
+      <MemoryRouter initialEntries={["/settings/storage"]}>
         <Routes>
           <Route
             path="/settings/:page"

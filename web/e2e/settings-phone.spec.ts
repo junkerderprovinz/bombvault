@@ -75,8 +75,8 @@ const SETTINGS = {
   digestSchedule: "weekly Mon 08:00",
   perItemSchedules: true,
   registryAuths: [
-    { host: "ghcr.io", username: "junkerderprovinz", token: "", tokenSet: true },
-    { host: "registry.gitlab.example-company.internal:5050", username: "deploy-bot-readonly", token: "", tokenSet: true },
+    { host: "ghcr.io", username: "junkerderprovinz", token: "", tokenSet: true, kind: "ghcr" },
+    { host: "registry.gitlab.example-company.internal:5050", username: "deploy-bot-readonly", token: "", tokenSet: true, kind: "gitlab" },
   ],
 };
 
@@ -304,19 +304,18 @@ const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
 const PAGES = [
   ["general", "Allgemein"],
   ["look", "Aussehen"],
-  ["storage", "Speicher"],
-  ["retention", "Aufbewahrung"],
-  ["schedules", "Zeitpläne"],
-  ["containers", "Container"],
-  ["offsite", "Off-site"],
-  ["cloud", "Cloud-Zugänge"],
+  ["schedules", "Zeitplan"],
+  ["storage", "Speicherorte"],
+  ["restore", "Wiederherstellung"],
   ["notifications", "Benachrichtigungen"],
-  ["integrity", "Integrität"],
+  ["integrity", "Prüfung"],
   ["security", "Sicherheit"],
+  ["instances", "Instanzen"],
   ["pairing", "Kopplung"],
   ["integrations", "Anbindungen"],
   ["apps", "Apps"],
   ["system", "System"],
+  ["info", "Info"],
 ] as const;
 
 async function stage(page: Page): Promise<void> {
@@ -534,13 +533,13 @@ test("settings on a phone: the rail shows its glyphs alone and keeps their names
   expect((await railTiles(page)).belowWindow, "tiles below the window").toBe(0);
 });
 
-for (const [id, name, rows] of [
-  ["offsite", "Off-site", () => targets("containers").map((t) => t.name)],
-  ["cloud", "Cloud-Zugänge", () => CRED_SETS.map((c) => c.name)],
+for (const [what, rows] of [
+  ["off-site targets", () => targets("containers").map((t) => t.name)],
+  ["credential sets", () => CRED_SETS.map((c) => c.name)],
 ] as const) {
-  test(`settings ${id} on a phone: each row puts its actions under the name`, async ({ page }, testInfo) => {
+  test(`settings storage on a phone: each row of the ${what} puts its actions under the name`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-    await openPage(page, 320, id, name);
+    await openPage(page, 320, "storage", "Speicherorte");
     for (const rowName of rows()) {
       const edit = page.getByRole("button", { name: "Bearbeiten" });
       const row = page.locator(".rounded-card").filter({ hasText: rowName }).filter({ has: edit }).last();
@@ -554,23 +553,25 @@ for (const [id, name, rows] of [
 
 test("settings storage on a phone: a repository shows its whole name and address, each switch labelled once", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openPage(page, 320, "storage", "Speicher");
+  await openPage(page, 320, "storage", "Speicherorte");
 
+  // The off-site cards further down the tile name the repositories again.
+  const repos = page.locator('[data-search-card="Repositories"]');
   for (const r of REPOS) {
     for (const text of [r.name, r.repo]) {
-      const el = page.getByText(text, { exact: true });
+      const el = repos.getByText(text, { exact: true });
       await expect(el).toBeVisible();
       const cut = await el.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
       expect(cut, `"${text}" is cut off`).toBe(false);
     }
   }
-  const row = page.locator("div.rounded-card").filter({ hasText: REPOS[0].name }).last();
+  const row = repos.locator("div.rounded-card").filter({ hasText: REPOS[0].name }).last();
   await expect(row.getByText("Nur anhängen", { exact: true })).toHaveCount(1);
 });
 
 test("settings schedules on a phone: the every-N-days field shows three digits beside its steppers", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the steppers sit side by side under a coarse pointer");
-  await openPage(page, 320, "schedules", "Zeitpläne");
+  await openPage(page, 320, "schedules", "Zeitplan");
 
   const room = await page.locator("input.glim-num").evaluateAll((inputs) => {
     const input = inputs.find((el) => (el as HTMLInputElement).value === "120") as HTMLInputElement | undefined;

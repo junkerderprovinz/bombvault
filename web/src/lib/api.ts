@@ -413,6 +413,9 @@ export interface RegistryAuthEntry {
    *  token); tokenSet reports whether one is stored. */
   token: string;
   tokenSet: boolean;
+  /** The registry product the entry was added as, an id of REGISTRY_KINDS,
+   *  or "" for one added by its address alone. */
+  kind: string;
 }
 
 export type ScheduleZone = { name: string; offsetSeconds: number };

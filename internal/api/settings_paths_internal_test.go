@@ -15,24 +15,25 @@ import (
 // settingsPages are the English names of the pages in the Settings column,
 // as web/src/pages/settings/settingsPages.tsx lists them.
 var settingsPages = map[string]bool{
-	"General": true, "Look": true, "Storage": true, "Retention": true,
-	"Schedules": true, "Containers": true, "Off-site": true, "Cloud access": true,
-	"Notifications": true, "Integrity": true, "Security": true, "Pairing": true,
-	"Integrations": true, "System": true,
+	"General": true, "Look": true, "Schedule": true, "Storage locations": true,
+	"Restore": true, "Notifications": true, "Verify": true, "Security": true,
+	"Instances": true, "Pairing": true, "Integrations": true, "Apps": true,
+	"System": true, "Info": true,
 }
 
 // cardPages names the page each card a message points at lives on.
 var cardPages = map[string]string{
-	"MCP server":        "Integrations",
-	"API tokens":        "Integrations",
-	"Home Assistant":    "Integrations",
-	"Host SSH":          "Integrations",
-	"Repositories":      "Storage",
-	"Backup paths":      "Storage",
-	"Backup Everything": "Schedules",
+	"MCP server":         "Integrations",
+	"API tokens":         "Integrations",
+	"Home Assistant":     "Integrations",
+	"Host SSH":           "Integrations",
+	"Repositories":       "Storage locations",
+	"Backup paths":       "Storage locations",
+	"Placement defaults": "Storage locations",
+	"Backup Everything":  "Schedule",
 }
 
-var settingsPath = regexp.MustCompile(`Settings(?:, | > )(Cloud access|[A-Z][A-Za-z-]+)(?:(?:, | > )([A-Za-z][A-Za-z ]*[A-Za-z]))?`)
+var settingsPath = regexp.MustCompile(`Settings(?:, | > )(Storage locations|[A-Z][A-Za-z-]+)(?:(?:, | > )([A-Za-z][A-Za-z ]*[A-Za-z]))?`)
 
 // A message that sends somebody to a page the card is not on costs them a
 // search through all fourteen.

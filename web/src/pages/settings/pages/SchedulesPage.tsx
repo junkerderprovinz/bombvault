@@ -9,6 +9,10 @@ import {
 } from "../../../lib/api";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { IdleCard } from "../IdleCard";
+import { WeekCard } from "../WeekCard";
+import { BackupOrderPanel } from "../../../components/containers/BackupOrderPanel";
+import { NumberField } from "../../../components/NumberField";
+import { VMBackupOrderPanel } from "../../VMs";
 // Every cadence picker in settings edits a schedule that can count an
 // interval (#166): the six domains and Backup Everything from their last
 // successful backup, drills, tamper test and digest from schedule_job_runs.
@@ -28,6 +32,10 @@ import { tLtr } from "../../../lib/ltrFragments";
 import { IconBackupNow } from "../../../components/Sidebar";
 import { Card, ToggleRow, hueCounter } from "../shared";
 import { useSettings } from "../settingsStore";
+
+// autoSaveField reports through a toast, so its two callbacks have nothing to do here.
+const ignoreSaveState = () => undefined;
+const ignoreSaveError = () => undefined;
 
 function ContainersSection({
   settings,
@@ -607,12 +615,16 @@ export function SchedulesPage() {
     toggleConfigSchedule,
     configScheduleToggleBusy,
     configScheduleToggleShake,
+    autoSaveField,
+    mergedFieldBusy,
+    mergedFieldShake,
   } = useSettings();
 
   const nextHue = hueCounter();
 
   return (
     <>
+      <WeekCard settings={settings} hueIndex={nextHue()} />
       {/* Every cadence lives here, and every field saves as it changes. */}
       {/* A two-member list, so each toggle takes a local hueIndex (0, 1)
           independent of the card's own position. */}
@@ -763,7 +775,65 @@ export function SchedulesPage() {
         />
       </Card>
 
-      <IdleCard t={t} hueIndex={nextHue()} />
+      {/* The anchor old /settings/containers links land on. */}
+      <div id="order" className="flex scroll-mt-6 flex-col gap-6 md:gap-10">
+        {settings.containersEnabled && <BackupOrderPanel containers={containers} t={t} hueIndex={nextHue()} />}
+        {settings.vmsEnabled && <VMBackupOrderPanel vms={vms} t={t} hueIndex={nextHue()} />}
+        {settings.containersEnabled && (
+          <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
+            <ToggleRow
+              label={t("settings.restartHealthWait")}
+              hint={t("settings.restartHealthWaitHint")}
+              checked={settings.restartHealthWait}
+              onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
+              disabled={schedFieldBusy.restartHealthWait}
+              shakeNonce={schedFieldShake.restartHealthWait}
+              pulseNonce={fieldPulse.restartHealthWait}
+            />
+            {settings.restartHealthWait && (
+              <label className="flex flex-col gap-1 sm:w-1/2">
+                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("settings.restartHealthTimeoutLabel")}
+                  <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
+                </span>
+                <NumberField
+                  min={5}
+                  max={3600}
+                  value={settings.restartHealthTimeoutSec}
+                  // The server takes 5 to 3600, so a smaller number never reaches the state.
+                  onChange={(e) => scheduleField("restartHealthTimeoutSec", Math.max(5, parseInt(e.target.value, 10) || 0))}
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
+                />
+              </label>
+            )}
+          </Card>
+        )}
+      </div>
+
+      {settings.containersEnabled && (
+        <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
+          <ToggleRow
+            label={t("settings.pruneImageAfterUpdate")}
+            hint={t("settings.pruneImageAfterUpdateHint")}
+            checked={settings.pruneImageAfterUpdate}
+            onChange={(v) => void autoSaveField("pruneImageAfterUpdate", v, ignoreSaveState, ignoreSaveError)}
+            disabled={mergedFieldBusy.pruneImageAfterUpdate}
+            shakeNonce={mergedFieldShake.pruneImageAfterUpdate}
+            pulseNonce={fieldPulse.pruneImageAfterUpdate}
+          />
+          <ToggleRow
+            label={t("settings.reconcileUnraidStatus")}
+            hint={t("settings.reconcileUnraidStatusHint")}
+            checked={settings.reconcileUnraidUpdateStatus}
+            onChange={(v) => void autoSaveField("reconcileUnraidUpdateStatus", v, ignoreSaveState, ignoreSaveError)}
+            disabled={mergedFieldBusy.reconcileUnraidUpdateStatus}
+            shakeNonce={mergedFieldShake.reconcileUnraidUpdateStatus}
+            pulseNonce={fieldPulse.reconcileUnraidUpdateStatus}
+          />
+        </Card>
+      )}
+
+      {settings.containersEnabled && <IdleCard t={t} hueIndex={nextHue()} />}
     </>
   );
 }

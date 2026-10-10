@@ -3,7 +3,6 @@ import { RevealInput } from "../../../components/RevealInput";
 import { useReveal } from "../../../lib/useReveal";
 import { useT } from "../../../lib/i18n";
 import { tLtr } from "../../../lib/ltrFragments";
-import { SpikePanel } from "../../../components/SpikePanel";
 import { Card, ToggleRow, hueCounter, type SaveState } from "../shared";
 import { VMSSHCard } from "../VMSSHCard";
 import { DashboardWidgetCard } from "../DashboardWidgetCard";
@@ -38,6 +37,10 @@ export function IntegrationsPage() {
 
   return (
     <>
+      {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
+      <ApiTokensCard hueIndex={nextHue()} passwordSet={authEnabled} />
+      <HomeAssistantCard hueIndex={nextHue()} />
+      <NetworkCard hueIndex={nextHue()} />
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
         {/* The /metrics and bearer-token syntax can sit in a bubble: it is
             used right here, not typed into another page from memory. */}
@@ -94,22 +97,7 @@ export function IntegrationsPage() {
         }}
         hueIndex={nextHue()}
       />
-      {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
-      <ApiTokensCard hueIndex={nextHue()} passwordSet={authEnabled} />
-      <HomeAssistantCard hueIndex={nextHue()} />
-      <NetworkCard hueIndex={nextHue()} />
-
       <VMSSHCard t={t} hueIndex={nextHue()} />
-
-      {(() => {
-        // One hueIdx for the heading and SpikePanel's button.
-        const hueIdx = nextHue();
-        return (
-          <Card title={t("spike.title")} hueIndex={hueIdx}>
-            <SpikePanel t={t} hueIndex={hueIdx} />
-          </Card>
-        );
-      })()}
     </>
   );
 }

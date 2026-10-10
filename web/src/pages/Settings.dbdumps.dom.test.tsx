@@ -169,12 +169,12 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the switch for every database dump", () => {
-  it("sits with the domain switches", async () => {
+  it("has a card of its own on General, named after the containers it acts on", async () => {
     await renderGeneralPage();
 
-    const card = dumpsToggle().closest("div.rounded-card");
-    expect(card).toBeTruthy();
-    expect(within(card as HTMLElement).getByRole("switch", { name: en["settings.containersEnabled"] })).toBeTruthy();
+    const card = dumpsToggle().closest("[data-search-card]");
+    expect(card?.getAttribute("data-search-card")).toBe(en["nav.containers"]);
+    expect(screen.getByRole("switch", { name: en["settings.containersEnabled"] })).toBeTruthy();
   });
 
   it("names the databases that are left with no consistent copy", async () => {

@@ -3,8 +3,8 @@
 // resolves them through `t`, so it searches in the reader's language.
 //
 // It is written by hand, because cards take their strings through helpers and
-// from other files. searchIndex.test.ts checks every card title Settings.tsx
-// draws against it, page by page.
+// from other files. searchIndex.test.ts checks every card title a page draws
+// against it, page by page.
 import type { TranslationKey } from "../../lib/i18n";
 import type { SettingsPageId } from "./settingsPages";
 
@@ -64,29 +64,33 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       hint: "settings.domainsHint",
       rows: [
         { key: "settings.containersEnabled", hint: "settings.containersEnabledHint" },
-        { key: "settings.dbDumps", hint: "settings.dbDumpsHint" },
         { key: "settings.vmsEnabled", hint: "settings.vmsEnabledHint" },
         { key: "settings.flashEnabled", hint: "settings.flashEnabledHint" },
         { key: "settings.filesEnabled", hint: "settings.filesEnabledHint" },
         { key: "settings.zfsEnabled", hint: "settings.zfsEnabledHint" },
         { key: "settings.configEnabled", hint: "settings.configEnabledHint" },
-        { key: "receiver.title", hint: "settings.receiverEnabledHint" },
-        { key: "instances.title", hint: "settings.fleetEnabledHint" },
-        { key: "pull.title", hint: "settings.pullEnabledHint" },
       ],
     },
-    { title: "settings.language", rows: [] },
     {
-      title: "settings.quietToasts",
-      rows: [{ key: "settings.quietToasts", hint: "settings.quietToastsHint" }],
+      title: "nav.containers",
+      hint: "tile.general.containersHint",
+      rows: [{ key: "settings.dbDumps", hint: "settings.dbDumpsHint" }],
     },
-    { title: "about.title", rows: [] },
   ],
 
   look: [
-    { title: "settings.theme", rows: [] },
-    { title: "settings.shape", hint: "settings.shapeHint", rows: [] },
-    { title: "settings.motion", hint: "settings.motionHint", rows: [] },
+    {
+      title: "tile.look.title",
+      hint: "tile.look.hint",
+      rows: [
+        { key: "language.label" },
+        { key: "settings.theme" },
+        { key: "settings.shape", hint: "settings.shapeHint" },
+        { key: "settings.motion", hint: "settings.motionHint" },
+        { key: "settings.quietToasts", hint: "settings.quietToastsHint" },
+        { key: "tile.look.order", hint: "tile.look.orderHint" },
+      ],
+    },
     {
       title: "settings.labels",
       hint: "settings.labelsHint",
@@ -110,7 +114,82 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
   ],
 
+  schedules: [
+    { title: "tile.week.title", hint: "tile.week.hint", rows: [] },
+    {
+      title: "settings.schedulesOptions",
+      rows: [
+        { key: "settings.perItemSchedules", hint: "settings.perItemSchedulesHint" },
+        { key: "jobs.syncSchedules", hint: "jobs.syncSchedulesHint" },
+      ],
+    },
+    {
+      title: "settings.everythingTitle",
+      hint: "settings.everythingHint",
+      rows: [
+        { key: "hooks.title", hint: "settings.everythingHooksHint" },
+        { key: "hooks.pre" },
+        { key: "hooks.post" },
+      ],
+    },
+    { title: "jobs.containersSection", hint: "containers.scheduleHint", rows: [] },
+    { title: "jobs.vmsSection", hint: "jobs.vmIncludeHint", rows: [] },
+    { title: "jobs.flashSection", hint: "jobs.flashScheduleHint", rows: [] },
+    { title: "jobs.filesSection", hint: "jobs.filesIncludeHint", rows: [{ key: "files.enabled" }] },
+    { title: "jobs.zfsSection", hint: "jobs.zfsIncludeHint", rows: [{ key: "files.enabled" }] },
+    {
+      title: "settings.schedulesOffsite",
+      rows: [
+        { key: "nav.containers" },
+        { key: "nav.vms" },
+        { key: "nav.flash" },
+        { key: "nav.config" },
+        { key: "nav.files" },
+        { key: "nav.zfs" },
+      ],
+    },
+    {
+      title: "settings.schedulesSelfBackup",
+      hint: "config.scheduleHint",
+      rows: [{ key: "settings.schedulesSelfBackup" }],
+    },
+    {
+      title: "settings.missedSchedulesTitle",
+      rows: [{ key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" }],
+    },
+    { title: "backupOrder.title", hint: "backupOrder.hint", rows: [] },
+    { title: "vmBackupOrder.title", hint: "vmBackupOrder.hint", rows: [] },
+    {
+      title: "settings.restartHealthTitle",
+      rows: [
+        { key: "settings.restartHealthWait", hint: "settings.restartHealthWaitHint" },
+        { key: "settings.restartHealthTimeoutLabel", hint: "settings.restartHealthTimeoutHint" },
+      ],
+    },
+    {
+      title: "settings.imageMaintenanceTitle",
+      hint: "settings.imageMaintenanceHint",
+      rows: [
+        { key: "settings.pruneImageAfterUpdate", hint: "settings.pruneImageAfterUpdateHint" },
+        { key: "settings.reconcileUnraidStatus", hint: "settings.reconcileUnraidStatusHint" },
+      ],
+    },
+    {
+      title: "idle.title",
+      hint: "idle.hint",
+      rows: [
+        { key: "idle.cpu", hint: "idle.cpuHint" },
+        { key: "idle.net" },
+        { key: "idle.quiet", hint: "idle.quietHint" },
+      ],
+    },
+  ],
+
   storage: [
+    {
+      title: "settings.labels.sidebar",
+      rows: [{ key: "tile.sidebar.show", hint: "tile.sidebar.showHint" }],
+    },
     {
       title: "repos.title",
       hint: "repos.intro",
@@ -146,39 +225,8 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "settings.filesPath" },
         { key: "settings.zfsPath" },
         { key: "settings.compression", hint: "settings.compressionInfo" },
-        { key: "settings.restoreFolder", hint: "settings.restoreFolderHint" },
       ],
     },
-    {
-      title: "settings.cacheTitle",
-      hint: "settings.cacheHint",
-      rows: [{ key: "settings.cacheLimitLabel" }],
-    },
-    {
-      title: "settings.coresTitle",
-      hint: "settings.coresHint",
-      rows: [{ key: "settings.coresLabel" }],
-    },
-    {
-      title: "settings.exportsEncryptionTitle",
-      hint: "settings.exportsEncryptionHint",
-      rows: [
-        { key: "export.encrypt.enable", hint: "export.encrypt.hint" },
-        { key: "export.encrypt.recipients", hint: "export.encrypt.recipientsHint" },
-        { key: "settings.encryptionOn", hint: "settings.encryptionHint" },
-        { key: "settings.encryptionOff", hint: "settings.encryptionHint" },
-        { key: "recovery.title", hint: "recovery.why" },
-      ],
-      body: [
-        "export.encrypt.ageInfo",
-        "export.encrypt.enableHint",
-        "export.encrypt.kitSealed",
-        "settings.encryptionPasswordWhere",
-      ],
-    },
-  ],
-
-  retention: [
     {
       title: "settings.retentionLocalTitle",
       hint: "settings.retentionHint",
@@ -224,89 +272,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "retentionPreview.show" },
       ],
     },
-  ],
-
-  schedules: [
-    {
-      title: "settings.schedulesOptions",
-      rows: [
-        { key: "settings.perItemSchedules", hint: "settings.perItemSchedulesHint" },
-        { key: "jobs.syncSchedules", hint: "jobs.syncSchedulesHint" },
-      ],
-    },
-    {
-      title: "settings.everythingTitle",
-      hint: "settings.everythingHint",
-      rows: [
-        { key: "hooks.title", hint: "settings.everythingHooksHint" },
-        { key: "hooks.pre" },
-        { key: "hooks.post" },
-      ],
-    },
-    { title: "jobs.containersSection", hint: "containers.scheduleHint", rows: [] },
-    { title: "jobs.vmsSection", hint: "jobs.vmIncludeHint", rows: [] },
-    { title: "jobs.flashSection", hint: "jobs.flashScheduleHint", rows: [] },
-    { title: "jobs.filesSection", hint: "jobs.filesIncludeHint", rows: [{ key: "files.enabled" }] },
-    { title: "jobs.zfsSection", hint: "jobs.zfsIncludeHint", rows: [{ key: "files.enabled" }] },
-    {
-      title: "settings.schedulesOffsite",
-      rows: [
-        { key: "nav.containers" },
-        { key: "nav.vms" },
-        { key: "nav.flash" },
-        { key: "nav.config" },
-        { key: "nav.files" },
-        { key: "nav.zfs" },
-      ],
-    },
-    {
-      title: "settings.schedulesSelfBackup",
-      hint: "config.scheduleHint",
-      rows: [{ key: "settings.schedulesSelfBackup" }],
-    },
-    {
-      title: "settings.missedSchedulesTitle",
-      rows: [{ key: "settings.catchUpMissed", hint: "settings.catchUpMissedHint" }],
-    },
-    {
-      title: "idle.title",
-      hint: "idle.hint",
-      rows: [
-        { key: "idle.cpu", hint: "idle.cpuHint" },
-        { key: "idle.net" },
-        { key: "idle.quiet", hint: "idle.quietHint" },
-      ],
-    },
-  ],
-
-  containers: [
-    {
-      title: "settings.imageMaintenanceTitle",
-      hint: "settings.imageMaintenanceHint",
-      rows: [
-        { key: "settings.pruneImageAfterUpdate", hint: "settings.pruneImageAfterUpdateHint" },
-        { key: "settings.reconcileUnraidStatus", hint: "settings.reconcileUnraidStatusHint" },
-      ],
-    },
-    {
-      title: "settings.registriesTitle",
-      hint: "settings.registriesHint",
-      rows: [
-        { key: "settings.registryHost" },
-        { key: "settings.registryUser" },
-        { key: "settings.registryToken" },
-      ],
-    },
-    {
-      title: "settings.restartHealthTitle",
-      rows: [
-        { key: "settings.restartHealthWait", hint: "settings.restartHealthWaitHint" },
-        { key: "settings.restartHealthTimeoutLabel", hint: "settings.restartHealthTimeoutHint" },
-      ],
-    },
-  ],
-
-  offsite: [
     {
       title: "dest.title",
       hint: "dest.hint",
@@ -364,9 +329,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "streaming.hold", hint: "streaming.holdHint" },
       ],
     },
-  ],
-
-  cloud: [
     {
       title: "rclone.title",
       hint: "rclone.hint",
@@ -392,6 +354,28 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "cloud.credSets.title",
       hint: "cloud.credSets.hint",
       rows: [{ key: "cloud.credSets.name" }, { key: "cloud.storageClass.label" }],
+    },
+  ],
+
+  restore: [
+    {
+      title: "tile.restore.folders",
+      hint: "tile.restore.foldersHint",
+      rows: [{ key: "settings.restoreFolder", hint: "settings.restoreFolderHint" }],
+    },
+    {
+      title: "settings.registriesTitle",
+      hint: "settings.registriesHint",
+      rows: [
+        { key: "settings.registryHost" },
+        { key: "settings.registryUser" },
+        { key: "settings.registryToken" },
+      ],
+    },
+    {
+      title: "tile.restore.emergency",
+      rows: [{ key: "recovery.title", hint: "recovery.why" }],
+      body: ["tile.restore.verifyLine"],
     },
   ],
 
@@ -513,6 +497,30 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       hint: "auth.passkeysHint",
       rows: [{ key: "auth.passkeyNameLabel" }],
     },
+    {
+      title: "tile.crypt.title",
+      rows: [
+        { key: "settings.encryptionOn", hint: "settings.encryptionHint" },
+        { key: "settings.encryptionOff", hint: "settings.encryptionHint" },
+      ],
+      body: ["settings.encryptionPasswordWhere", "tile.crypt.line"],
+    },
+  ],
+
+  instances: [
+    {
+      title: "settings.labels.sidebar",
+      rows: [{ key: "tile.sidebar.show", hint: "tile.sidebar.showHint" }],
+    },
+    {
+      title: "tile.instances.modules",
+      hint: "tile.instances.modulesHint",
+      rows: [
+        { key: "instances.title", hint: "settings.fleetEnabledHint" },
+        { key: "receiver.title", hint: "settings.receiverEnabledHint" },
+        { key: "pull.title", hint: "settings.pullEnabledHint" },
+      ],
+    },
   ],
 
   pairing: [
@@ -552,18 +560,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   ],
 
   integrations: [
-    {
-      title: "settings.metrics",
-      rows: [
-        { key: "settings.metricsEnable", hint: "settings.metricsHint" },
-        { key: "settings.metricsToken" },
-      ],
-    },
-    {
-      title: "settings.widget",
-      hint: "settings.widgetHint",
-      rows: [{ key: "settings.widgetToken" }],
-    },
     {
       title: "mcp.title",
       hint: "mcp.hint",
@@ -606,6 +602,18 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [{ key: "mdns.enable" }],
     },
     {
+      title: "settings.metrics",
+      rows: [
+        { key: "settings.metricsEnable", hint: "settings.metricsHint" },
+        { key: "settings.metricsToken" },
+      ],
+    },
+    {
+      title: "settings.widget",
+      hint: "settings.widgetHint",
+      rows: [{ key: "settings.widgetToken" }],
+    },
+    {
       title: "vm.ssh.title",
       hint: "vm.ssh.desc",
       rows: [
@@ -614,7 +622,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "vm.ssh.setupTitle" },
       ],
     },
-    { title: "spike.title", rows: [] },
   ],
 
   apps: [
@@ -642,9 +649,35 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [
         { key: "settingsIO.exportHeading" },
         { key: "settingsIO.includeCreds" },
+        { key: "export.encrypt.enable", hint: "export.encrypt.hint" },
+        { key: "export.encrypt.recipients", hint: "export.encrypt.recipientsHint" },
         { key: "settingsIO.importHeading", hint: "settingsIO.importHint" },
-        { key: "diagnostics.heading", hint: "diagnostics.hint" },
+      ],
+      body: ["export.encrypt.ageInfo", "export.encrypt.enableHint", "export.encrypt.kitSealed"],
+    },
+    {
+      title: "tile.system.performance",
+      hint: "tile.system.performanceHint",
+      rows: [
+        { key: "settings.cacheLimitLabel", hint: "settings.cacheHint" },
+        { key: "settings.coresLabel", hint: "settings.coresHint" },
       ],
     },
+  ],
+
+  info: [
+    {
+      title: "about.version",
+      hint: "tile.info.versionHint",
+      rows: [{ key: "tile.info.check" }],
+      body: ["tile.info.glimstoneHint", "tile.info.resticHint", "tile.info.rcloneHint"],
+    },
+    {
+      title: "tile.info.help",
+      hint: "tile.info.helpHint",
+      rows: [{ key: "tile.info.manual" }, { key: "tile.info.bugReport" }],
+      body: ["about.report"],
+    },
+    { title: "about.title", rows: [], body: ["about.body"] },
   ],
 };

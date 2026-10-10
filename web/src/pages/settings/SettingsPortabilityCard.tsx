@@ -5,7 +5,6 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { IconDownload } from "../../components/Sidebar";
 import { IconUpload } from "../../components/glyphs";
 import {
-  downloadDiagnostics,
   excludeFromTarget,
   exportSettings,
   importSettingsPreview,
@@ -20,7 +19,7 @@ import { NewTargetPreviewLines } from "../../components/placement/NewTargetQuest
 import { domainLabel } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   domains: "settings.domains",
@@ -47,6 +46,7 @@ export function SettingsPortabilityCard({
   t,
   hueIndex,
   applyImport,
+  children,
 }: {
   t: ReturnType<typeof useT>["t"];
   hueIndex?: number;
@@ -54,11 +54,12 @@ export function SettingsPortabilityCard({
   // the whole configuration, so the page that holds the save baseline has to be
   // the one that performs it and adopts the result. See applyImportedSettings.
   applyImport: (fileText: string) => Promise<ImportSettingsResponse>;
+  /** What else belongs to an export, between it and the import. */
+  children?: ReactNode;
 }) {
   const { push } = useToast();
   const [includeCreds, setIncludeCreds] = useState(true);
   const [exporting, setExporting] = useState(false);
-  const [diagBusy, setDiagBusy] = useState(false);
   // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
   // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
   // action shows its message via a TOAST, never as permanent page text, and
@@ -91,19 +92,6 @@ export function SettingsPortabilityCard({
     setImportDone(false);
     setExclusions({});
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
-  async function handleDiagnostics() {
-    setDiagBusy(true);
-    // Backend-provided error text shown verbatim BY DESIGN, like the export
-    // above: the 403 refusal when no login password is set is the message the
-    // user needs, and it already says what to do about it.
-    const err = await downloadDiagnostics();
-    setDiagBusy(false);
-    if (err) {
-      push(err, "fail");
-      bumpShake("diagnostics");
-    }
   }
 
   async function handleExport() {
@@ -188,23 +176,10 @@ export function SettingsPortabilityCard({
 
   return (
     <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")} hueIndex={hueIndex}>
-      {/* EXPORT ---------------------------------------------------------- */}
       <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
         <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("settingsIO.exportHeading")}
         </h3>
-        {/* Was a raw hand-rolled <input type="checkbox"> + <label> — the last
-            remaining one in this file (every earlier instance of the same
-            anti-pattern was already converted to ToggleRow elsewhere on this
-            page, e.g. NotifyCard's scheduledSummary/notifyOnUpdate/unraid
-            rows above): a native checkbox never picks up the shape engine's
-            --radius-control/--radius-pill tokens (stays the browser's native
-            box shape in every round/soft/square mode) and never gets
-            ToggleRow's shake/hue plumbing. Converted to the shared
-            ToggleRow, matching every other toggle on this page. No
-            `hueIndex` — this is a genuinely LONE toggle in this Card with no
-            siblings of its own kind (ToggleRow's own hueIndex doc comment
-            carves out exactly this case). */}
         <ToggleRow
           label={t("settingsIO.includeCreds")}
           checked={includeCreds}
@@ -234,7 +209,8 @@ export function SettingsPortabilityCard({
         />
       </div>
 
-      {/* IMPORT ---------------------------------------------------------- */}
+      {children}
+
       <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
         <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("settingsIO.importHeading")}
@@ -368,29 +344,6 @@ export function SettingsPortabilityCard({
         )}
       </div>
 
-      {/* DIAGNOSTICS ------------------------------------------------------ */}
-      {/* Neighbour to export/import because it is the same idiom (a file goes
-          out), but a different purpose: this one is written to be read by
-          somebody else, which is why it is redacted and why it is never a
-          configuration backup. */}
-      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-        <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-          {t("diagnostics.heading")}
-          <InfoBubble tip={t("diagnostics.hint")} />
-        </h3>
-        <Button
-          key={shake.diagnostics || 0}
-          label={t("diagnostics.button")}
-          labelKey="diagnostics.button"
-          tone="neutral"
-          glyph={<IconDownload />}
-          onClick={() => void handleDiagnostics()}
-          disabled={busy}
-          busy={diagBusy}
-          title={diagBusy ? t("diagnostics.busy") : undefined}
-          className={`glim-btn-wrap self-start${shake.diagnostics ? " glim-shake" : ""}`}
-        />
-      </div>
     </Card>
   );
 }

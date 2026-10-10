@@ -3165,6 +3165,25 @@ body {
     transform-origin: center;
     animation: glim-block-swell calc(var(--motion-block-dur, 420ms) * .75) ease-out;
     animation-delay: calc(var(--block-i, 0) * var(--motion-block-step, 170ms) + var(--motion-block-dur, 420ms) * .8);
+
+  /* The pictures in the settings. A marked pack lights up as the scan passes
+     it, and the files drop into the sandbox one after the other. */
+  :root:not([data-motion="off"]) .glim-pack-hit {
+    animation: glim-pack-hit var(--motion-scene-dur, 6s) linear infinite backwards;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--pack-at, 0) * .7);
+  }
+  :root:not([data-motion="off"]) .glim-pack-scan {
+    animation: glim-pack-scan var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-sandbox-file {
+    animation: glim-sandbox-drop var(--motion-scene-dur, 6s) linear infinite backwards;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--file-turn, 0) * .08);
+  }
+  :root:not([data-motion="off"]) .glim-sandbox-pulse {
+    animation: glim-sandbox-pulse var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-week-now::before {
+    animation: glim-week-now calc(var(--motion-scene-dur, 6s) / 2.5) ease-in-out infinite;
   }
 }
 
@@ -3431,6 +3450,251 @@ body {
 }
 /* Without delete protection the pack is gone in the last frame. */
 .glim-lock-gone { opacity: 0; }
+
+/* The pictures in the settings: a backup as a hundred packs, the sandbox of a
+   trial restore, and what encryption leaves at a storage location. */
+.glim-pack {
+  rx: calc(var(--radius-control) / 5);
+  fill: var(--carbon-surface3);
+}
+.glim-pack.glim-scene-seal { fill: var(--pic); }
+.glim-pack-scan {
+  fill: var(--pic);
+  opacity: 0;
+}
+.glim-sandbox-sheet {
+  fill: var(--carbon-surface3);
+  stroke: var(--carbon-text-muted);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.glim-sandbox-line {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glim-sandbox-word {
+  font-size: 10.5px;
+  font-weight: 600;
+  fill: var(--carbon-text-sub);
+}
+.glim-sandbox-caption {
+  font-size: 10px;
+  fill: var(--carbon-text-sub);
+}
+.glim-sandbox-idle { fill: var(--carbon-surface3); }
+.glim-sandbox-idle-mark { fill: var(--carbon-text-muted); }
+.glim-crypt-kit { fill: var(--carbon-surface3); }
+.glim-crypt-kit-word {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--carbon-text);
+}
+.glim-crypt-key { color: var(--pic); }
+.glim-crypt-looker { color: var(--carbon-text-sub); }
+
+/* A registry's logo is an image. It keeps its own colours on a picker tile,
+   turns white where the tile lights up in the brand's colour, and a logo in
+   dark ink is flipped on a dark ground. */
+.glim-registry-pick .glim-readme-btn-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* The picker stands in a window, whose ground is the tiles' usual surface. */
+.glim-registry-pick .glim-readme-btn { background-color: var(--carbon-surface2); }
+.glim-registry-mark img {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+:root:not([data-theme="light"]) .glim-registry-dark .glim-readme-btn-mark img { filter: invert(1); }
+.glim-registry-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark img { filter: brightness(0) invert(1); }
+@media (hover: hover) {
+  .glim-registry-pick .group:hover > .glim-brand-tile .glim-readme-btn-mark img { filter: brightness(0) invert(1); }
+}
+
+/* The week of planned runs. Each kind of run has a colour of its own, which
+   says what it is and follows neither the accent nor the rainbow. */
+:root {
+  --week-backup: #78a9ff;
+  --week-copy: #3ddbd9;
+  --week-check: #42be65;
+  --week-probe: #be95ff;
+}
+[data-theme="light"] {
+  --week-backup: #0f62fe;
+  --week-copy: #007d79;
+  --week-check: #198038;
+  --week-probe: #8a3ffc;
+}
+.glim-week-backup { --week: var(--week-backup); }
+.glim-week-copy { --week: var(--week-copy); }
+.glim-week-check { --week: var(--week-check); }
+.glim-week-probe { --week: var(--week-probe); }
+.glim-week-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.glim-week-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 35rem;
+  padding-block: 4px;
+}
+.glim-week-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  align-items: center;
+}
+.glim-week-day {
+  font-size: var(--text-dense);
+  font-weight: 600;
+  color: var(--carbon-text-muted);
+}
+.glim-week-hours {
+  position: relative;
+  height: 15px;
+}
+.glim-week-hours span {
+  position: absolute;
+  top: 0;
+  translate: -50% 0;
+  font-size: 11px;
+  line-height: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--carbon-text-muted);
+}
+[dir="rtl"] .glim-week-hours span { translate: 50% 0; }
+.glim-week-hours span:first-child { translate: none; }
+.glim-week-hours span:last-child { translate: -100% 0; }
+[dir="rtl"] .glim-week-hours span:last-child { translate: 100% 0; }
+.glim-week-lane {
+  position: relative;
+  height: calc(var(--tracks, 1) * 11px + 7px);
+  border-radius: calc(var(--radius-control) / 2);
+  background-color: var(--carbon-surface2);
+  background-image: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--carbon-text-muted) 28%, transparent) 0 1px,
+    transparent 1px 12.5%
+  );
+}
+.glim-week-stroke {
+  position: absolute;
+  top: calc(4px + var(--track, 0) * 11px);
+  height: 8px;
+  min-width: 4px;
+  border-radius: 4px;
+  background: var(--week);
+  transition: opacity var(--motion-control-dur, 150ms);
+}
+.glim-week-stroke:focus-visible {
+  outline: 2px solid var(--carbon-text);
+  outline-offset: 1px;
+}
+.glim-week-dim { opacity: .22; }
+.glim-week-lit {
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--carbon-surface2), 0 0 0 3.5px var(--week);
+}
+.glim-week-crowd {
+  position: absolute;
+  inset-block: 0;
+  border-radius: calc(var(--radius-control) / 2);
+  background: color-mix(in srgb, var(--status-warn-solid) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-warn-solid) 60%, transparent);
+}
+.glim-week-now {
+  position: absolute;
+  inset-block: -3px;
+  z-index: 2;
+  width: 2px;
+  margin-inline-start: -1px;
+  border-radius: 1px;
+  background: var(--carbon-text);
+  pointer-events: none;
+}
+.glim-week-now::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  inset-inline-start: -2.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--carbon-text);
+}
+.glim-week-now i {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 6px;
+  translate: 0 -50%;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--carbon-text);
+  color: var(--carbon-surface);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.glim-week-now-late i {
+  inset-inline-start: auto;
+  inset-inline-end: 6px;
+}
+.glim-week-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-dense);
+  color: var(--carbon-text-sub);
+}
+.glim-week-legend:hover,
+.glim-week-legend:focus-visible {
+  background: var(--carbon-hover);
+  outline: none;
+}
+.glim-week-legend i {
+  width: 16px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--week);
+}
+
+@keyframes glim-pack-hit {
+  0%        { opacity: 0; }
+  2%, 80%   { opacity: 1; }
+  86%, 100% { opacity: 0; }
+}
+/* The bar crosses in the time the packs take to light up and is gone until
+   the next pass. */
+@keyframes glim-pack-scan {
+  0%        { opacity: 1; transform: translateX(-204px); }
+  70%       { opacity: 1; transform: none; }
+  72%, 100% { opacity: 0; transform: none; }
+}
+@keyframes glim-sandbox-drop {
+  0%, 8%    { opacity: 0; transform: translateY(-24px); animation-timing-function: ease-out; }
+  16%, 86%  { opacity: 1; transform: none; }
+  92%, 100% { opacity: 0; transform: none; }
+}
+@keyframes glim-sandbox-pulse {
+  0%, 45%   { opacity: 0; transform: none; }
+  45.1%     { opacity: .7; transform: none; }
+  70%, 100% { opacity: 0; transform: scale(1.8); }
+}
+@keyframes glim-week-now {
+  50% { scale: 1.35; }
+}
 
 @keyframes glim-scene-stream {
   to { stroke-dashoffset: -18; }

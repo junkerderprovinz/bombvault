@@ -87,3 +87,22 @@ func TestMergeRegistryAuths(t *testing.T) {
 		t.Fatalf("an empty list must clear all entries: %v %v", got, err)
 	}
 }
+
+func TestMergeRegistryAuthsKeepsTheKind(t *testing.T) {
+	got, err := mergeRegistryAuths([]registryAuthView{
+		{Host: "git.example.org", Username: "u", Token: "t", Kind: "gitea"},
+		{Host: "registry.example.org", Token: "t"},
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0].Kind != "gitea" || got[1].Kind != "" {
+		t.Fatalf("kinds = %q and %q, want gitea and none", got[0].Kind, got[1].Kind)
+	}
+
+	if _, err := mergeRegistryAuths([]registryAuthView{
+		{Host: "git.example.org", Token: "t", Kind: "<svg>"},
+	}, nil); err == nil || !strings.Contains(err.Error(), "invalid registry kind") {
+		t.Fatalf("a kind that is no id must be rejected, got %v", err)
+	}
+}

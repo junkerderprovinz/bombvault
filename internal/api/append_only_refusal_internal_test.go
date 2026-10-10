@@ -14,7 +14,7 @@ func TestEveryAppendOnlyFlagGetsItsOwnSentence(t *testing.T) {
 		want error
 		card string
 	}{
-		{appendOnlyNamedRepo, errOffsiteAppendOnly, "Settings, Storage, Repositories"},
+		{appendOnlyNamedRepo, errOffsiteAppendOnly, "Settings, Storage locations, Repositories"},
 		{appendOnlyPrimaryRemote, errAppendOnlyPrimaryRemote, "Remote safety settings"},
 		{appendOnlyUnreadable, errAppendOnlyUnknown, "could not be read"},
 	}
@@ -60,8 +60,8 @@ func TestNoAppendOnlyRefusalCarriesASlash(t *testing.T) {
 // it.
 func TestOffsiteDestinationRefusalIsItsOwnSentence(t *testing.T) {
 	msg := errAppendOnlyOffsiteTarget.Error()
-	if !strings.Contains(msg, "Off-site") {
-		t.Errorf("the off-site destination refusal does not name the off-site card: %q", msg)
+	if !strings.Contains(msg, "Settings, Storage locations") {
+		t.Errorf("the off-site destination refusal does not say where the switch is: %q", msg)
 	}
 	for _, other := range []error{errOffsiteAppendOnly, errAppendOnlyPrimaryRemote, errAppendOnlyUnknown} {
 		if other.Error() == msg {

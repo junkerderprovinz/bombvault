@@ -962,7 +962,7 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if strings.TrimSpace(exp.Settings.EverythingPreHook) != "" || strings.TrimSpace(exp.Settings.EverythingPostHook) != "" {
 		log.Print("api: settings import: the file carries Backup Everything pre/post-hook commands — NOT installed. " +
 			"A hook is a shell command this host runs, so it is set on the instance, never by an imported file. " +
-			"Enter it under Settings, Schedules, Backup Everything if you want it here.")
+			"Enter it under Settings, Schedule, Backup Everything if you want it here.")
 	}
 
 	// Same deal for a location whose credential the exporting instance stripped:

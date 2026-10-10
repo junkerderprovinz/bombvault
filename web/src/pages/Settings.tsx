@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { PageTitle } from "../components/PageTitle";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useT } from "../lib/i18n";
@@ -8,11 +8,10 @@ import { SettingsRail } from "../components/SettingsRail";
 import { SettingsSearch, jumpTarget, markHit, type SearchJump } from "./settings/SettingsSearch";
 import {
   FALLBACK_PAGE,
-  LEGACY_HASH,
   isSettingsPage,
   orderPages,
-  readLastPage,
-  readOrder,
+  redirectFor,
+  useSettingsOrder,
   writeLastPage,
   writeOrder,
   type SettingsPageId,
@@ -32,14 +31,8 @@ export function SettingsPage() {
   const page: SettingsPageId = isSettingsPage(param) ? param : FALLBACK_PAGE;
   const location = useLocation();
   const { hash } = location;
-  // /settings alone names no page: a legacy hash from an old link leads to the
-  // page holding that card, otherwise the page opened last.
-  const redirect = isSettingsPage(param)
-    ? null
-    : param === undefined
-      ? (LEGACY_HASH[hash.replace(/^#/, "")] ?? readLastPage())
-      : FALLBACK_PAGE;
-  const [order, setOrder] = useState(readOrder);
+  const redirect = redirectFor(param, hash);
+  const order = useSettingsOrder();
   const pages = orderPages(order);
   // A page slides in from the side its tile sits on in the rail.
   const shownPage = useRef(page);
@@ -123,10 +116,7 @@ export function SettingsPage() {
         items={pages.map((p) => ({ id: p.id, label: t(p.label), icon: p.icon, to: `/settings/${p.id}` }))}
         active={page}
         label={t("settings.railLabel")}
-        onReorder={(ids) => {
-          setOrder(ids);
-          writeOrder(ids);
-        }}
+        onReorder={writeOrder}
       />
       <div data-settings-content className={`${PAGE_SHELL_RESPONSIVE} min-w-0 flex-1`}>
       <PageTitle>{t("settings.title")}</PageTitle>

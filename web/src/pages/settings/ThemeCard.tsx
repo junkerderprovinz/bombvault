@@ -1,29 +1,18 @@
-import type { ResolvedTheme } from "../../lib/theme";
-import { Card } from "../settings/shared";
+import type { Theme } from "../../lib/theme";
 import { HUE_OFFSET, Selector } from "../../components/Selector";
-import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme } from "../../lib/theme";
-import { useEffect, useState } from "react";
+import { getTheme, setTheme } from "../../lib/theme";
+import { useState } from "react";
 import { useT } from "../../lib/i18n";
 
-// ThemeCard picks the light or dark theme. There is no segment for following
-// the system; lib/theme.ts has no UI path back to "system" yet.
-export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
-  // The stored default is "system", so the picker shows the resolved theme,
-  // the one actually painted.
-  const [theme, setThemeState] = useState(getResolvedTheme);
+/** ThemePicker chooses the light or the dark theme, or leaves it to the
+ *  device. */
+export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [theme, setThemeState] = useState(getTheme);
 
-  function selectTheme(next: ResolvedTheme) {
+  function selectTheme(next: Theme) {
     setTheme(next);
     setThemeState(next);
   }
-
-  // lib/theme.ts repaints the page when the OS flips under a "system"
-  // preference; this keeps the selected segment in step with it.
-  useEffect(() => {
-    return onSystemThemeChange(() => {
-      if (getTheme() === "system") setThemeState(getResolvedTheme());
-    });
-  }, []);
 
   // Both glyphs paint in currentColor like every other glyph, so a selected
   // segment flips them to the contrast ink. The sun's rays are thin filled
@@ -50,25 +39,26 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
     </svg>
   );
 
+  const systemIcon = (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <circle cx="10" cy="10" r="7.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 3.5a6.5 6.5 0 0 1 0 13Z" />
+    </svg>
+  );
+
   return (
-    <Card title={t("settings.theme")} hueIndex={hueIndex}>
-      <Selector
-        items={[
-          { id: "light", label: t("theme.light"), icon: sunIcon },
-          { id: "dark", label: t("theme.dark"), icon: moonIcon },
-        ]}
-        label={t("settings.theme")}
-        // This card sits in the same tab as the shape, motion and label
-        // selectors, so it takes its own start out of the shared table.
-        hueOffset={HUE_OFFSET.theme}
-        select="one"
-        active={theme}
-        onChange={(id) => selectTheme(id as ResolvedTheme)}
-        size="lg"
-        // Pins every segment to the widest one, floored at MIN_PINNED_WIDTH,
-        // like the other large pickers on this tab.
-        equalWidth
-      />
-    </Card>
+    <Selector
+      items={[
+        { id: "light", label: t("theme.light"), icon: sunIcon },
+        { id: "dark", label: t("theme.dark"), icon: moonIcon },
+        { id: "system", label: t("settings.tab.system"), icon: systemIcon },
+      ]}
+      label={t("settings.theme")}
+      hueOffset={HUE_OFFSET.theme}
+      select="one"
+      active={theme}
+      onChange={(id) => selectTheme(id as Theme)}
+      inline
+    />
   );
 }

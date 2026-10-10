@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// The module switches in the domains card carry the names of the tabs they
+// The module switches on the Instances tile carry the names of the tabs they
 // show under Instances, so a switch and its tab never go by two names.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
@@ -97,10 +97,10 @@ function stubResizeObserver() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderGeneralPage() {
+async function renderInstancesTile() {
   await act(async () => {
     render(
-      <MemoryRouter initialEntries={["/settings/general"]}>
+      <MemoryRouter initialEntries={["/settings/instances"]}>
         <Routes>
           <Route
             path="/settings/:page"
@@ -129,14 +129,14 @@ afterEach(() => {
 
 describe("module switches", () => {
   it("names receiver and pull after the Instances tabs they show", async () => {
-    await renderGeneralPage();
+    await renderInstancesTile();
     for (const key of ["receiver.title", "pull.title"] as const) {
       expect(screen.getByRole("switch", { name: en[key] })).not.toBeNull();
     }
   });
 
   it("names the fleet switch after the Instances page it shows", async () => {
-    await renderGeneralPage();
+    await renderInstancesTile();
     expect(screen.getByRole("switch", { name: en["instances.title"] })).not.toBeNull();
   });
 });

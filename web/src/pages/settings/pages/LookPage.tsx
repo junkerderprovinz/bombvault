@@ -1,6 +1,12 @@
 import { useRef, useState } from "react";
 import { AccentCard, IconResetArrow } from "../AccentCard";
-import { ThemeCard } from "../ThemeCard";
+import { ThemePicker } from "../ThemeCard";
+import { LanguagePicker } from "../LanguageCard";
+import { Button } from "../../../components/Button";
+import { IconRefresh } from "../../../components/glyphs";
+import { Rows, SettingRow } from "../../../components/storage/rows";
+import { useToast } from "../../../lib/toast";
+import { SETTINGS_PAGES, orderPages, useSettingsOrder, writeOrder } from "../settingsPages";
 import {
   CONTROL_AXES,
   LABEL_MODES,
@@ -60,6 +66,9 @@ function PaletteSwatch({
 
 export function LookPage() {
   const { t } = useT();
+  const { quiet, setQuiet } = useToast();
+  const order = useSettingsOrder();
+  const orderIsDefault = orderPages(order).every((p, i) => p.id === SETTINGS_PAGES[i].id);
 
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
   // The hidden leaf follows the storm below: found and counted in this
@@ -118,73 +127,85 @@ export function LookPage() {
 
   return (
     <>
-      <ThemeCard t={t} hueIndex={nextHue()} />
-
-      {/* Shape, the corner axis (lib/shape.ts). The segments carry no glyph:
-          each segment is drawn at the real radius, so the strip itself is the
-          preview, and a scaled-down stand-in beside it read as a weaker shape
-          than the one it named. */}
-      <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
-        <Selector
-          items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
-            id: s,
-            label: t(`settings.shape.${s}` as TranslationKey),
-          }))}
-          label={t("settings.shape")}
-          select="one"
-          active={shape}
-          onChange={(id) => {
-            const leaf = leafTap(leafClicks.current, id, shape);
-            if (leaf) setLeafFound(true);
-            const next = (leaf ?? id) as Shape;
-            setShapeLocal(next);
-            setShape(next);
-          }}
-          size="lg"
-          equalWidth
-          hueOffset={HUE_OFFSET.shape}
-        />
+      <Card title={t("tile.look.title")} hint={t("tile.look.hint")} hueIndex={nextHue()}>
+        <Rows>
+          <SettingRow label={t("language.label")}>
+            <LanguagePicker t={t} />
+          </SettingRow>
+          <SettingRow label={t("settings.theme")}>
+            <ThemePicker t={t} />
+          </SettingRow>
+          <SettingRow label={t("settings.shape")} hint={t("settings.shapeHint")}>
+            <Selector
+              items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
+                id: s,
+                label: t(`settings.shape.${s}` as TranslationKey),
+              }))}
+              label={t("settings.shape")}
+              select="one"
+              active={shape}
+              onChange={(id) => {
+                const leaf = leafTap(leafClicks.current, id, shape);
+                if (leaf) setLeafFound(true);
+                const next = (leaf ?? id) as Shape;
+                setShapeLocal(next);
+                setShape(next);
+              }}
+              inline
+              hueOffset={HUE_OFFSET.shape}
+            />
+          </SettingRow>
+          <SettingRow label={t("settings.motion")} hint={t("settings.motionHint")}>
+            <Selector
+              items={[...MOTION_INTENSITIES, ...(stormFound || motion === "storm" ? (["storm"] as const) : [])].map(
+                (m) => ({
+                  id: m,
+                  label: t(`settings.motion.${m}` as TranslationKey),
+                }),
+              )}
+              label={t("settings.motion")}
+              select="one"
+              active={motion}
+              onChange={(id) => {
+                // The gesture comes first: it fires on the level already
+                // chosen, a click that changes nothing else.
+                const storm = stormTap(stormClicks.current, id, motion);
+                if (storm) setStormFound(true);
+                const next = (storm ?? id) as MotionIntensity;
+                setMotionLocal(next);
+                setMotionIntensity(next);
+              }}
+              inline
+              hueOffset={HUE_OFFSET.motion}
+            />
+          </SettingRow>
+          <div className="py-3">
+            <ToggleRow
+              label={t("settings.quietToasts")}
+              hint={t("settings.quietToastsHint")}
+              checked={quiet}
+              onChange={setQuiet}
+            />
+          </div>
+          <SettingRow
+            label={t("tile.look.order")}
+            hint={t("tile.look.orderHint")}
+            note={t(orderIsDefault ? "tile.look.orderDefault" : "tile.look.orderOwn")}
+          >
+            <Button
+              label={t("placement.reset")}
+              labelKey="placement.reset"
+              glyph={<IconRefresh />}
+              disabled={orderIsDefault}
+              onClick={() => writeOrder([])}
+            />
+          </SettingRow>
+        </Rows>
       </Card>
 
-      {/* Motion intensity, built like the shape card: lib/motion.ts mirrors
-          lib/shape.ts, and the level applies at the app root without a Save. */}
-      <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
-        {/* The fourth level, storm, is hidden. It is offered while it is
-            chosen, since a picker that hid its current value would misstate
-            the interface, and otherwise only while this screen stays open,
-            which is why `stormFound` is component state and not storage. */}
-        <Selector
-          items={[...MOTION_INTENSITIES, ...(stormFound || motion === "storm" ? (["storm"] as const) : [])].map(
-            (m) => ({
-              id: m,
-              label: t(`settings.motion.${m}` as TranslationKey),
-            }),
-          )}
-          label={t("settings.motion")}
-          select="one"
-          active={motion}
-          onChange={(id) => {
-            // The gesture first, because it fires on the level already chosen
-            // and therefore on a click that changes nothing else.
-            const storm = stormTap(stormClicks.current, id, motion);
-            if (storm) setStormFound(true);
-            const next = (storm ?? id) as MotionIntensity;
-            setMotionLocal(next);
-            setMotionIntensity(next);
-          }}
-          size="lg"
-          equalWidth
-          hueOffset={HUE_OFFSET.motion}
-        />
-      </Card>
-
-      {/* Control labels (#178), how much of a control's identity is shown.
-          One selector per chrome surface rather than one switch, because the
-          right answer differs: a rail reduced to glyphs narrows the whole
-          page, tabs do not, and action buttons are a density preference.
-          Placed straight after Animations: both are per-viewer appearance
-          dials kept in this browser rather than server settings, and they
-          read as a pair. */}
+      {/* One selector per surface and not one switch, because the right
+          answer differs: a rail reduced to glyphs narrows the whole page, tabs
+          do not, and action buttons are a matter of density. */}
       <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-4">
           {CONTROL_AXES.map((axis, axisIndex) => (

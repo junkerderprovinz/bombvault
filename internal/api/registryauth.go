@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
@@ -23,6 +24,9 @@ type RegistryAuth struct {
 	Host     string `json:"host"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
+	// Kind is the registry product the entry was added as, such as "gitea".
+	// A self-hosted registry has no host to tell it by.
+	Kind string `json:"kind,omitempty"`
 }
 
 // RegistryAuths returns the stored registry credentials (empty when none).
@@ -124,6 +128,10 @@ func normalizeRegistryHost(host string) string {
 	return h
 }
 
+// registryKindRE is what a kind may look like. The interface owns the list of
+// kinds, so the server only keeps the value from being anything else.
+var registryKindRE = regexp.MustCompile(`^[a-z0-9-]{0,32}$`)
+
 // mergeRegistryAuths builds the list to store from the submitted entries. The
 // settings GET never returns tokens, so a blank token keeps the stored one for
 // that host, and hosts missing from the submission are dropped. Errors are
@@ -154,7 +162,11 @@ func mergeRegistryAuths(submitted []registryAuthView, stored []RegistryAuth) ([]
 		if token == "" {
 			return nil, fmt.Errorf("a token is required for registry %q", host)
 		}
-		out = append(out, RegistryAuth{Host: host, Username: strings.TrimSpace(v.Username), Token: token})
+		kind := strings.TrimSpace(v.Kind)
+		if !registryKindRE.MatchString(kind) {
+			return nil, fmt.Errorf("invalid registry kind %q", kind)
+		}
+		out = append(out, RegistryAuth{Host: host, Username: strings.TrimSpace(v.Username), Token: token, Kind: kind})
 	}
 	return out, nil
 }

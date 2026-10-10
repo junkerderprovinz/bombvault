@@ -2740,9 +2740,9 @@ func setOffsiteImmutableInSettings(s *store.Settings, domain string, immutable b
 // whose absolute-path regex redacts any slash-led token.
 var (
 	// A named repository (#204). Its toggle is on the Repositories card.
-	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Storage, Repositories, delete what you meant to delete, and switch it back on")
+	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Storage locations, Repositories, delete what you meant to delete, and switch it back on")
 	// An off-site destination. Its toggle is on the off-site destinations card.
-	errAppendOnlyOffsiteTarget = errors.New("this off-site destination is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Off-site, delete what you meant to delete, and switch it back on")
+	errAppendOnlyOffsiteTarget = errors.New("this off-site destination is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Storage locations, delete what you meant to delete, and switch it back on")
 	// A domain's own remote primary. Its toggle is in the Remote safety dialog
 	// beside that domain's backup path.
 	errAppendOnlyPrimaryRemote = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off in the Remote safety settings beside this domain's backup path, delete what you meant to delete, and switch it back on")

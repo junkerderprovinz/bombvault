@@ -1,17 +1,16 @@
 // @vitest-environment jsdom
-// LanguageCard, the UI-language picker at the top of Settings' Look tab: it opens and
-// closes, lists every language with its flag, switches through setLanguage()
-// and closes on Escape or an outside click.
+// LanguagePicker, the interface language on the Look page: it opens and
+// closes, lists every offered language and switches at once.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { LanguageCard } from "./settings/LanguageCard";
+import { LanguagePicker } from "./settings/LanguageCard";
 import { I18nProvider, useT } from "../lib/i18n";
 
 const STORAGE_KEY = "bv-lang";
 
 function Harness() {
   const { t } = useT();
-  return <LanguageCard t={t} />;
+  return <LanguagePicker t={t} />;
 }
 
 function renderCard() {
@@ -33,12 +32,11 @@ afterEach(() => {
   document.documentElement.removeAttribute("dir");
 });
 
-describe("LanguageCard", () => {
-  it("renders as a Card with the language heading and the current language on its trigger", () => {
+describe("LanguagePicker", () => {
+  it("names the current language on its trigger", () => {
     localStorage.setItem(STORAGE_KEY, "en");
     renderCard();
-    expect(screen.getByText("Language")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /English/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Language: English" })).toBeTruthy();
   });
 
   it("stands at a field's height, like the buttons beside fields", () => {

@@ -48,25 +48,26 @@ describe("the settings index in English", () => {
     search(items, query)
       .filter((h) => !h.inHint)
       .map((h) => `${h.item.page}: ${h.item.cardName ?? ""}`);
+  const copyCards = (hits: string[]) => hits.filter((h) => h.startsWith("storage: Off-site copy"));
 
   it("leads the yearly rule to both retention cards and to each off-site destination", () => {
     const hits = where("keep yearly");
-    expect(hits).toContain(`retention: ${en["settings.retentionLocalTitle"]}`);
-    expect(hits).toContain(`retention: ${en["settings.retentionOffsiteTitle"]}`);
-    expect(hits.filter((h) => h.startsWith("offsite: "))).toHaveLength(6);
-    expect(hits.every((h) => h.startsWith("retention: ") || h.startsWith("offsite: "))).toBe(true);
+    expect(hits).toContain(`storage: ${en["settings.retentionLocalTitle"]}`);
+    expect(hits).toContain(`storage: ${en["settings.retentionOffsiteTitle"]}`);
+    expect(copyCards(hits)).toHaveLength(6);
+    expect(hits.every((h) => h.startsWith("storage: "))).toBe(true);
   });
 
   it("leads compression to the backup paths, the named repositories and each off-site destination", () => {
     const hits = where("compression");
     expect(hits).toContain(`storage: ${en["settings.paths"]}`);
     expect(hits).toContain(`storage: ${en["repos.title"]}`);
-    expect(hits.filter((h) => h.startsWith("offsite: "))).toHaveLength(6);
+    expect(copyCards(hits)).toHaveLength(6);
   });
 
   it("leads each source's own rules to their retention card, by the phrase and by the source's name", () => {
-    const local = `retention: ${en["settings.retentionLocalTitle"]}`;
-    const offsite = `retention: ${en["settings.retentionOffsiteTitle"]}`;
+    const local = `storage: ${en["settings.retentionLocalTitle"]}`;
+    const offsite = `storage: ${en["settings.retentionOffsiteTitle"]}`;
     expect(where("own keep rules")).toContain(local);
     expect(where("own off-site keep rules")).toContain(offsite);
     expect(where("own off-site keep rules")).not.toContain(local);
@@ -75,16 +76,16 @@ describe("the settings index in English", () => {
   });
 
   it("finds the preview on its own card", () => {
-    expect(where(en["retentionPreview.show"])).toEqual([`retention: ${en["restore.preview"]}`]);
+    expect(where(en["retentionPreview.show"])).toEqual([`storage: ${en["restore.preview"]}`]);
   });
 
   it("finds a row by the words behind its (i)", () => {
-    const hit = search(items, "calendar years").find((h) => h.item.page === "retention");
+    const hit = search(items, "calendar years").find((h) => h.item.page === "storage");
     expect(hit?.inHint).toBe(true);
     expect(hit?.item.name).toBe(en["settings.retentionYearly"]);
   });
 
-  it("leads the idle limits to the Schedules page", () => {
+  it("leads the idle limits to the Schedule page", () => {
     const top = search(items, "idle before backup")[0];
     expect(top.item.page).toBe("schedules");
     expect(top.item.name).toBe(en["idle.title"]);
@@ -92,20 +93,20 @@ describe("the settings index in English", () => {
     expect(where("for at least")).toContain(`schedules: ${en["idle.title"]}`);
   });
 
-  it("leads Streaming first and its limits to the Off-site page", () => {
+  it("leads Streaming first and its limits to the Storage locations page", () => {
     const top = search(items, "streaming first")[0];
-    expect(top.item.page).toBe("offsite");
+    expect(top.item.page).toBe("storage");
     expect(top.item.name).toBe(en["streaming.title"]);
-    expect(where("upload limit while streaming")).toEqual([`offsite: ${en["streaming.title"]}`]);
-    expect(where("media servers")).toContain(`offsite: ${en["streaming.title"]}`);
-    expect(where("back to normal")).toContain(`offsite: ${en["streaming.title"]}`);
+    expect(where("upload limit while streaming")).toEqual([`storage: ${en["streaming.title"]}`]);
+    expect(where("media servers")).toContain(`storage: ${en["streaming.title"]}`);
+    expect(where("back to normal")).toContain(`storage: ${en["streaming.title"]}`);
   });
 
   it("finds the idle and streaming rows by the words behind their (i)", () => {
     const cpu = search(items, "docker stats").find((h) => h.item.page === "schedules");
     expect(cpu?.inHint).toBe(true);
     expect(cpu?.item.name).toBe(en["idle.cpu"]);
-    const servers = search(items, "image name").filter((h) => h.item.page === "offsite");
+    const servers = search(items, "image name").filter((h) => h.item.cardName === en["streaming.title"]);
     expect(servers.map((h) => h.item.name)).toContain(en["streaming.servers"]);
     expect(servers.every((h) => h.inHint)).toBe(true);
   });
@@ -127,5 +128,29 @@ describe("the settings index in English", () => {
     expect(port?.item.name).toBe(en["ha.tls"]);
     const local = search(items, "bombvault.local").filter((h) => h.item.page === "integrations");
     expect(local.map((h) => h.item.name)).toContain(en["mdns.title"]);
+  });
+
+  it("leads what moved to the tile that holds it", () => {
+    expect(where(en["settings.restoreFolder"])).toEqual([`restore: ${en["tile.restore.folders"]}`]);
+    expect(where(en["recovery.title"])).toContain(`restore: ${en["tile.restore.emergency"]}`);
+    expect(where(en["settings.registryHost"])).toEqual([`restore: ${en["settings.registriesTitle"]}`]);
+    expect(where(en["settings.cacheLimitLabel"])).toEqual([`system: ${en["tile.system.performance"]}`]);
+    expect(where(en["export.encrypt.enable"])).toEqual([`system: ${en["settingsIO.title"]}`]);
+    expect(where(en["settings.restartHealthWait"])).toEqual([`schedules: ${en["settings.restartHealthTitle"]}`]);
+    expect(where(en["settings.pruneImageAfterUpdate"])).toEqual([`schedules: ${en["settings.imageMaintenanceTitle"]}`]);
+    expect(where(en["pull.title"])).toContain(`instances: ${en["tile.instances.modules"]}`);
+    expect(where(en["tile.info.bugReport"])).toEqual([`info: ${en["tile.info.help"]}`]);
+    expect(search(items, en["tile.crypt.title"])[0].item.page).toBe("security");
+  });
+
+  it("finds a page by the name its tile carried before, and says where that went", () => {
+    const former = (query: string) => search(items, query).find((h) => h.item.former);
+    expect(former("off-site")?.item).toMatchObject({ page: "storage", to: "storage#offsite", name: en["settings.tab.offsite"] });
+    expect(former("retention")?.item).toMatchObject({ page: "storage", to: "storage#retention" });
+    expect(former("cloud access")?.item).toMatchObject({ page: "storage", to: "storage#cloud" });
+    expect(former("containers")?.item).toMatchObject({ page: "schedules", to: "schedules#order" });
+    expect(former("integrity")?.item.page).toBe("integrity");
+    expect(former("schedules")?.item.page).toBe("schedules");
+    expect(search(items, "off-site")[0].item.former).toBe(true);
   });
 });

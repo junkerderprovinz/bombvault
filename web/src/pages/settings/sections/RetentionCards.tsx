@@ -3,11 +3,13 @@ import { alsoDirectText } from "../../../lib/directRepo";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { RetentionPreview } from "../../../components/RetentionPreview";
 import { useT } from "../../../lib/i18n";
-import { Card, hueCounter, type SaveState } from "../shared";
+import { Card, type SaveState } from "../shared";
 import { RetentionRulesCard } from "../OwnRetentionCard";
 import { useSettings } from "../settingsStore";
 
-export function RetentionPage() {
+/** RetentionCards are the shared keep rules, local and off-site, and the
+ *  preview of what the next run deletes. */
+export function RetentionCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
   const {
     settings,
@@ -22,10 +24,8 @@ export function RetentionPage() {
   const [, setRetSaveState] = useState<SaveState>("idle");
   const [, setRetSaveError] = useState<string | null>(null);
 
-  const nextHue = hueCounter();
-
   return (
-    <>
+    <div id="retention" className="flex scroll-mt-6 flex-col gap-6 md:gap-10">
       {(["local", "offsite"] as const).map((scope) => (
         <RetentionRulesCard
           key={scope}
@@ -57,6 +57,6 @@ export function RetentionPage() {
         </div>
         <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
       </Card>
-    </>
+    </div>
   );
 }
