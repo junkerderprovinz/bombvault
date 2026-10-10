@@ -21,8 +21,6 @@ import { isRuntimeRefusal } from "../../lib/runReason";
 
 type T = ReturnType<typeof useT>["t"];
 
-// Stacks panel (compose-project restore)
-
 export interface StackGroup {
   project: string;
   members: Container[];
@@ -42,12 +40,11 @@ const STACK_DONE_GRACE_MS = 8000;
 // How often a stack card reads the run history for its members' outcomes.
 const STACK_RUNS_POLL_MS = 2000;
 
-// StackCard is one compose stack: its name, members, and (in a collapsible panel)
-// a "Restore stack" action that restores every member stopped, then optionally
-// starts them in dependency order. The restore is ASYNC on the server (the POST
-// only acks {started:true} and carries no member results), so on start the card
-// shows a sticky "restore started" hint; per-member outcomes land in the run
-// history. Synchronous validation errors (empty stack, busy, …) show inline.
+// StackCard is one compose stack: its name, its members and a collapsible
+// "Restore stack" action that restores every member stopped, then optionally
+// starts them in dependency order. The server runs the restore detached and
+// its answer carries no member results, so the card shows a "restore started"
+// note and reads the per-member outcomes from the run history.
 export function StackCard({
   group,
   onRestored,
@@ -79,10 +76,6 @@ export function StackCard({
   const targets = useOffsiteTargets("containers");
   const targetsRef = useRef(targets);
   targetsRef.current = targets;
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Restore button when the restore fails to even START (see run()'s own
-  // comment for why a started-then-running restore stays a durable inline
-  // status instead — the shake, like the toast, only covers the click itself).
   const [shake, setShake] = useState(0);
   const [started, setStarted] = useState(false);
   // The restore runs its members detached, so their outcomes are read back
@@ -90,13 +83,11 @@ export function StackCard({
   // member Docker refused for its GPU or runtime is offered again without them.
   const [watchFrom, setWatchFrom] = useState<Set<string> | null>(null);
   const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
-  // Terminal state for the stack restore: since StackCard drives no fire-and-
-  // watch of its own, we derive "finished" from the members' progress below.
+  // A stack restore has no progress entry of its own: members are restored one
+  // by one under their "container:<name>" keys, and `finished` is derived from
+  // those. Cancelling targets the synthetic "stack:<project>" key, which aborts
+  // the member loop at the current member.
   const [finished, setFinished] = useState(false);
-  // The stack restore has no aggregate progress bar (it restores members one by
-  // one under their own "container:<name>" keys). A member is "active" while it
-  // is being restored; cancelling targets the synthetic "stack:<project>" key,
-  // which aborts the member loop at the current member.
   const progress = useProgress();
   const anyMemberActive =
     started &&
@@ -104,18 +95,16 @@ export function StackCard({
       const p = progress[`container:${m.name}`];
       return !!p && p.active && p.phase === "restore";
     });
-  // Once we have seen a member go active, keep the cancel button up for the WHOLE
-  // restoring window (through the ~800ms linger + gap between sequential members)
-  // and only flip to a neutral "finished" once NO member has been active for a
-  // grace window longer than that gap — otherwise the cancel button flickered out
-  // between members and the "runs in background" banner stayed sticky forever.
+  // Once a member has been active the cancel button stays up through the gaps
+  // between sequential members. The restore counts as finished only after no
+  // member has been active for the grace window.
   const sawActive = useRef(false);
   const { confirm, confirmDialog } = useConfirm();
   useEffect(() => {
     if (!started) return;
     if (anyMemberActive) {
       sawActive.current = true;
-      return; // renewed activity — the cleanup below cleared any pending terminal
+      return; // the next member started; the cleanup dropped the pending timer
     }
     if (!sawActive.current) return; // nothing has run yet: don't finish early
     const timer = setTimeout(() => {
@@ -202,12 +191,6 @@ export function StackCard({
         setWatchFrom(new Set((before?.runs ?? []).map((r) => r.id)));
         onRestored(); // refresh the main list so run-state/orphan rows update
       } else {
-        // GlimStone follow-up pass (v8.0.0): a failure to even START the async
-        // restore is a one-shot action-failed notice, now a toast. `started` /
-        // `finished` above stay inline — once the restore DOES start, its
-        // progress and eventual completion are a durable, ongoing status (a
-        // background job with a Cancel button attached), not a one-shot ping;
-        // see the render below for the same reasoning applied to `finished`.
         push(res.error ?? t("settings.error"), "fail");
         setShake((n) => n + 1);
       }
@@ -222,10 +205,8 @@ export function StackCard({
   return (
     <div
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
-      // glim-hue owns the position; glim-tint washes the whole card with it,
-      // glim-stagger-row reuses the same `index` for the entrance stagger — the
-      // identical trio ContainerRow's own outer <div> carries above (see this
-      // function's own `index` doc comment).
+      // glim-stagger-row reads --row-i, so the entrance stagger follows the
+      // same index as the hue.
       className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-2 glim-hue glim-stagger-row"
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -238,14 +219,8 @@ export function StackCard({
             {group.members.map((m) => m.name).join(", ")}
           </p>
         </div>
-        {/* Disclosure toggle (icon only) so the sole "Restore stack" label is the
-            action button inside the panel.
-              IconTipButton, not a plain <button> + `title`: it carried both
-            an `aria-label` and a duplicate native `title` of the same string,
-            the OS-balloon pairing IconTipButton.tsx exists to replace. Same
-            tip, same handler, same chrome — and `ariaExpanded` (added to
-            IconTipButton for exactly this call site) keeps the disclosure
-            state this trigger has always exposed. */}
+        {/* Icon only, so the one "Restore stack" label on the card is the
+            action button inside the panel. */}
         <IconTipButton
           tip={t("stack.restore")}
           onClick={() => setOpen((p) => !p)}
@@ -280,16 +255,12 @@ export function StackCard({
             />
           </div>
 
-          {/* Async ack: the server runs the stack restore detached and the ack
-              carries no member results — per-member outcomes are in the run
-              history. The cancel button stays up for the whole restoring window
-              (no per-member flicker); once every member goes inactive the panel
-              flips to a neutral "finished" note (see the terminal effect above). */}
           {started && !busy && (
             <div className="flex flex-col gap-1">
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
               <p className="text-caption text-carbon-textMuted">{t("restore.bgHint")}</p>
-              {/* Whole-stack in-place restore — hard warning, keyed to the stack. */}
+              {/* A stack restore is in place, so cancelling gets the hard
+                  warning. */}
               <RestoreCancelButton cancelKey={`stack:${group.project}`} inPlace name={group.project} t={t} />
             </div>
           )}

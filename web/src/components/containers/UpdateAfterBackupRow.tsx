@@ -7,25 +7,11 @@ import { useToast } from "../../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
-// FoldersEditor lets the user choose which of a container's mapped folders get
-// backed up (appdata is the default), plus add custom paths under the host
-// mount. Collapsible; loads the mount list lazily on first open.
-// UpdateAfterBackupRow toggles the per-container "update after successful backup"
-// opt-in (#52): after a backup, BombVault pulls the image and recreates the
-// container only when a newer image is available (the fresh backup is the safety
-// net). Off by default.
-//
-// (jdp, live-review): the explanation used to sit as a
-// permanently-visible caption under the label — moved into a real "(i)"
-// InfoBubble instead, via the SAME shared `ToggleRow` Settings.tsx/Config.tsx/
-// Recovery.tsx already use for every other "label + hint bubble + flush-right
-// switch" row in this app (its own `hint` prop wires an InfoBubble internally
-// — see ToggleRow's own doc), rather than hand-rolling a second, bespoke
-// bubble treatment here. This row also grew the post-backup update-check
-// RESULT line (moved here from the top-right corner, where it used to sit
-// under "Letztes Backup" — see ContainerRow's own comment on that move): it
-// is live status data about THIS toggle's own last run, not static
-// explanatory text, so it stays visible prose, not a second bubble.
+// UpdateAfterBackupRow toggles the per-container "update after successful
+// backup" opt-in: after a backup, BombVault pulls the image and recreates the
+// container only when a newer image exists, with the fresh backup as the
+// safety net. The explanation sits in the hint bubble; the result of the last
+// check is status and stays visible under the toggle.
 export function UpdateAfterBackupRow({
   name,
   initial,
@@ -46,8 +32,6 @@ export function UpdateAfterBackupRow({
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed toggle toasts AND shakes, same mechanism as ToggleRow's shakeNonce.
   const [shake, setShake] = useState(0);
   useEffect(() => setEnabled(initial), [initial]);
 
@@ -72,21 +56,17 @@ export function UpdateAfterBackupRow({
     <div className="flex flex-col items-end gap-1">
       <ToggleRow
         label={t("update.afterBackup")}
-        // The old image is left behind on purpose, and Unraid's Docker page
-        // lists it as an "orphan image". A successful update therefore looks
-        // like wreckage from a failed one, and that is how it was reported
-        // (issue #193, after a first night with this on for every container).
-        // Said here rather than only in the docs, because this toggle is where
-        // someone decides to switch it on.
+        // The old image stays behind and Unraid's Docker page lists it as an
+        // "orphan image", which reads as the wreckage of a failed update
+        // (issue #193). The hint says so where the toggle gets switched on.
         hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}${databaseWarn ? ` ${t(databaseWarn)}` : ""}`}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}
         shakeNonce={shake}
       />
-      {/* Post-backup update-check signal (G4): only meaningful when the
-          opt-in is on and a check has actually completed. An up-to-date
-          check records no run, so this line is its only surface. */}
+      {/* An up-to-date check records no run, so this line is the only place
+          its result shows. */}
       {enabled && lastUpdateCheck > 0 && (
         <p className="text-xs text-carbon-textMuted text-end">
           {t("containers.updateCheckLabel")}: {relativeTime(t, lastUpdateCheck)}, {updateCheckResultText(t, lastUpdateResult)}
@@ -96,8 +76,6 @@ export function UpdateAfterBackupRow({
   );
 }
 
-// updateCheckResultText maps the stored update-check result literal to its
-// translated display text; an unknown literal falls back to the raw string.
 function updateCheckResultText(t: T, result: string): string {
   switch (result) {
     case "up-to-date":

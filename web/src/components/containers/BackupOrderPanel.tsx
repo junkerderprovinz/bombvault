@@ -11,20 +11,14 @@ import { useToast } from "../../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
-// Backup-order panel (#119) — manual per-container backup sequence
-
-// Per-browser: whether the backup-order card is collapsed (#124 — ptmorris1 has
-// many containers). Same "bombvault.*" localStorage convention as the other UI prefs.
 const BACKUP_ORDER_COLLAPSED_KEY = "bombvault.backupOrderCollapsed";
 
-// BackupOrderPanel lets the user arrange the order scheduled + batch backups run
-// in. The orderable set is the installed, schedule-included containers (never
-// BombVault itself). It hydrates once from the persisted order (GET
-// /api/containers/backup-order), then reconciles as containers come and go
-// without discarding an in-progress reorder. Save PUTs the whole displayed
-// sequence (authoritative: the list becomes the explicit order); Clear order
-// PUTs an empty list, returning every container to the most-overdue-first
-// tiebreak.
+// BackupOrderPanel arranges the order scheduled and batch backups run in. The
+// orderable set is the installed, schedule-included containers without
+// BombVault itself. It loads the saved order once, then follows containers
+// coming and going without discarding a reorder in progress. Save stores the
+// displayed sequence as the explicit order; clearing stores an empty list,
+// which returns every container to the most-overdue-first tiebreak.
 export function BackupOrderPanel({
   containers,
   t,
@@ -32,37 +26,19 @@ export function BackupOrderPanel({
 }: {
   containers: Container[];
   t: T;
-  /** Rainbow position for THIS panel's own heading notch — GlimStone
-   *  follow-up pass (jdp, live review, emphatic, fifth escalation of the
-   *  standing colour-engine rule: "Warum muss ich dich immer wieder extra
-   *  dran erinnern? Kannst du das jetzt nicht einfach selbst immer
-   *  machen?"): this panel's collapsible-header title was still a plain
-   *  `<span>`, never routed through Badge's tone="heading"/hueIndex the way
-   *  every other static Card heading in the app now is (Dashboard.tsx's
-   *  Card(), Config.tsx's Card, Settings.tsx's Card/ToggleRow, VMs.tsx's own
-   *  VMBackupOrderPanel — its exact twin, already fixed a commit ago).
-   *  Resolved by the caller's own `nextHue()` counter, called DIRECTLY at
-   *  the JSX call site (never handed down as a function for this component
-   *  to call from its own body — that exact shape is what caused the
-   *  SummaryTier regression earlier this session: React doesn't invoke a
-   *  child component's body until after the parent's own render pass has
-   *  already returned, so a `nextHue` prop called from inside a child lands
-   *  strictly after every sibling's own direct call already consumed its
-   *  slot). Omit for a genuine singleton — same rule as every other
-   *  `hueIndex` call site. */
+  /** Rainbow position of this panel's heading and accent. The caller resolves
+   *  it during its own render: a counter called from this component's body
+   *  would run after every sibling had already taken its slot. Omit for a
+   *  panel that stands alone. */
   hueIndex?: number;
 }) {
   const [savedOrder, setSavedOrder] = useState<ContainerOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // whichever button triggered the failed persist() — Save or Reset — kept as
-  // two separate nonces, mirroring VMs.tsx's identical VMBackupOrderPanel.
   const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
-  // #124: collapse the whole card, persisted per browser.
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(BACKUP_ORDER_COLLAPSED_KEY) === "1";
@@ -138,7 +114,7 @@ export function BackupOrderPanel({
       try {
         localStorage.setItem(BACKUP_ORDER_COLLAPSED_KEY, next ? "1" : "0");
       } catch {
-        /* private mode / quota — collapse just won't persist */
+        /* Without storage (private mode, quota) the choice is not kept. */
       }
       return next;
     });
@@ -175,61 +151,18 @@ export function BackupOrderPanel({
   if (savedOrder === null) return null;
 
   return (
-    // Rainbow-mode completeness sweep (jdp, live review, sixth escalation of
-    // this same standing rule on this exact panel: "Es sind nicht alle
-    // Buttons in den Regenbogen-Modus eingepflegt"): `.glim-hue` added below
-    // — `glim-notch-card` alone only wires the reactive-mode hover reveal on
-    // the heading Badge's own notch, it never redefines --accent/
-    // --focus-ring, so the "Save" button further down stayed the flat theme
-    // accent regardless of rainbow even after the title notch itself was
-    // fixed. Same hueIndex prop the Badge already uses.
-    //
-    // relative + glim-notch-card: same "half-overlap card notch" pattern
-    // every other real Card in this app uses (VMs.tsx's own
-    // VMBackupOrderPanel is the closest twin — a single div carrying both
-    // the visible surface AND the notch's positioned ancestor, no separate
-    // outer wrapper needed since this box has no overflow-hidden to clip the
-    // badge's own -11px poke above it). glim-notch-card is the hook
-    // index.css's card-wide reactive-hover rule keys off, so hovering
-    // anywhere on this panel (not just the tiny badge glyph) reveals its hue
-    // in reactive rainbow mode.
-    //   mt-4 (jdp: "Backup-Reihenfolge Card ist zu weit
-    // oben, der Abstand nach oben ist zu klein"): the page's own outer
-    // `flex flex-col gap-6` already puts a flat, uniform 24px between every
-    // top-level section — measured live, byte-identical both above AND below
-    // this panel (the controls row's own bottom edge to this div's own CSS
-    // box top, and this div's bottom to the next card's top, both exactly
-    // 24px). What actually reads as "too little" is this panel's OWN notch
-    // badge poking `-translate-y-1/2` ABOVE that box — measured live at 11px
-    // — which eats into the gap from the TOP side only (nothing pokes
-    // downward below the panel, so its own bottom gap is unaffected): the
-    // real visible whitespace between the controls row and the first
-    // painted pixel of this card (the badge) measured only 13px, barely
-    // half the page's other gaps. `mt-4` adds 16px on top of the existing
-    // 24px flex gap (margin and `gap` are independent and stack, they don't
-    // collapse into each other), landing the visible gap at ~29px —
-    // deliberately a bit MORE than the page's plain 24px rhythm, not just
-    // parity with it, matching jdp's own framing ("increase", not merely
-    // "restore").
+    // glim-notch-card only wires the hover reveal of the heading notch;
+    // glim-hue is what redefines the accent, so the Save button takes the
+    // panel's hue too. mt-4 makes up for the heading badge, which sits half
+    // above the box and would otherwise eat into the page's gap above it.
     <div
       className={`relative glim-notch-card bg-carbon-surface rounded-card p-4 mt-4 flex flex-col gap-3${
         hueIndex !== undefined ? " glim-hue" : ""
       }`}
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
-      {/* Title notch, always visible regardless of collapse state (matches
-          the PRE-fix behaviour, where title+count stayed visible collapsed
-          and only the hint hid) — moved OUT of the disclosure <button>
-          below: every real tone="heading" call site in this app keeps the
-          Badge as its <h2>'s SOLE child (Dashboard.tsx's Card()/SummaryCell,
-          Config.tsx's Card, this file's own notInstalledTitle below,
-          StacksPanel above) because size="heading" makes the badge
-          `position: absolute` — a flex-row sibling next to it would render
-          at the badge's own now-vacated in-flow slot instead of after it.
-          The count folds INSIDE the badge's own children instead (Badge's
-          span is `inline-flex gap-1`, built to hold more than one child),
-          same visual "title (N)" pairing as before, just now inheriting the
-          badge's own solid accent-fill/accentContrast ink. */}
+      {/* A heading badge is absolutely positioned, so a sibling in the h2
+          would render underneath it. The count goes inside the badge. */}
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
           {t("backupOrder.title")}
@@ -240,13 +173,8 @@ export function BackupOrderPanel({
           )}
         </Badge>
       </h2>
-      {/* Disclosure toggle, now chevron(+hint)-only: the title text that used
-          to double as this button's accessible name moved into the h2 notch
-          above, so `aria-label` keeps this control genuinely named rather
-          than falling back to nothing once its only other content
-          (`aria-hidden` chevron, hint text hidden while collapsed) has none
-          to offer. `w-full` (unchanged) keeps the full row clickable even
-          though the visible content is now just the chevron while collapsed. */}
+      {/* While collapsed the button holds only the aria-hidden chevron, so
+          the aria-label is what names it. */}
       <button
         type="button"
         onClick={toggleCollapsed}
@@ -303,12 +231,6 @@ export function BackupOrderPanel({
                   <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
                     {name}
                   </span>
-                  {/* IconTipButton, not plain <button> + `title` (whole-app
-                      sweep — VMs.tsx's identical reorder pair converted in
-                      the same pass). Both carried an `aria-label` plus a
-                      duplicate native `title`, i.e. the OS balloon
-                      IconTipButton.tsx exists to replace. Same tips, same
-                      handlers, same disabled chrome. */}
                   <IconTipButton
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
