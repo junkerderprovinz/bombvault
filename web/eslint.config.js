@@ -122,6 +122,8 @@ export default [
             "ZFS.tsx": "PAGE_SHELL_RESPONSIVE",
             "Instances.tsx": "PAGE_SHELL_RESPONSIVE",
             "Settings.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Storage.tsx": "PAGE_SHELL_RESPONSIVE",
+            "StorageLocation.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,

@@ -9,10 +9,11 @@ import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RcloneRemoteForm } from "../../components/RcloneRemoteForm";
 import { Card } from "../settings/shared";
-import { getRclone, setRclone } from "../../lib/api";
-import { useEffect, useState } from "react";
+import { setRclone } from "../../lib/api";
+import { useState } from "react";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { useRcloneRemotes } from "../../lib/useRcloneRemotes";
 
 export function RcloneCard({
   t,
@@ -26,7 +27,7 @@ export function RcloneCard({
   nested?: boolean;
 }) {
   const { push } = useToast();
-  const [remotes, setRemotes] = useState<string[]>([]);
+  const { remotes, refresh } = useRcloneRemotes();
   const [conf, setConf] = useState("");
   const [state, setState] = useState<SaveState>("idle");
   // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
@@ -37,17 +38,6 @@ export function RcloneCard({
   // save() — a fail toast already fired here, but nothing ever bumped a shake
   // nonce for the Save button. Same fix, same mechanism.
   const [shake, setShake] = useState(0);
-
-  function refresh() {
-    getRclone()
-      .then((r) => {
-        if (r.ok) setRemotes(r.remotes ?? []);
-      })
-      .catch(() => undefined);
-  }
-  useEffect(() => {
-    refresh();
-  }, []);
 
   // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms inline flash
   // is now a toast, same shape as the shared save() helper further down.

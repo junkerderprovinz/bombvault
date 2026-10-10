@@ -11,6 +11,8 @@ import { Files } from "../pages/Files";
 import { ZFS } from "../pages/ZFS";
 import { Instances } from "../pages/Instances";
 import { ZFSServer } from "../pages/ZFSServer";
+import { StoragePage } from "../pages/Storage";
+import { StorageLocationPage } from "../pages/StorageLocation";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
@@ -49,6 +51,8 @@ export function AppRouter() {
               <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
               <Route path="/pull" element={<Navigate to="/instances" replace />} />
               <Route path="/fleet" element={<Navigate to="/instances" replace />} />
+              <Route path="/storage" element={<StoragePage />} />
+              <Route path="/storage/:id" element={<StorageLocationPage />} />
               <Route path="/recovery" element={<Recovery />} />
               {/* Schedules are a Settings page; /jobs stays for existing links. */}
               <Route path="/jobs" element={<Navigate to="/settings/schedules" replace />} />

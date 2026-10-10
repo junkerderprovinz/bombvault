@@ -90,6 +90,7 @@ const testMatch = [
   "placement-phone.spec.ts",
   "narrow-window.spec.ts",
   "backups-list.spec.ts",
+  "storage.spec.ts",
 ];
 
 for (const spec of testMatch) {

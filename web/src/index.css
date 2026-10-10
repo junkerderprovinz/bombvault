@@ -858,6 +858,13 @@
   --heat-ok-1:                #a7f0ba;
   --heat-ok-2:                #6fdc8c;
   --heat-ok-3:                #42be65;
+
+  /* The retention timeline's bands: what a day, week, month and year rule
+     keeps. They stand next to each other, so each needs a colour of its own. */
+  --keep-band-daily:          #4589ff;  /* blue-50 */
+  --keep-band-weekly:         #08bdba;  /* teal-40 */
+  --keep-band-monthly:        #a56eff;  /* purple-50 */
+  --keep-band-yearly:         #ff7eb6;  /* magenta-40 */
 }
 
 [data-theme="light"] {
@@ -981,6 +988,11 @@
   --heat-ok-1:                #a7f0ba;  /* green-20 */
   --heat-ok-2:                #42be65;  /* green-40 */
   --heat-ok-3:                #198038;  /* green-60 */
+
+  --keep-band-daily:          #0f62fe;  /* blue-60 */
+  --keep-band-weekly:         #007d79;  /* teal-60 */
+  --keep-band-monthly:        #8a3ffc;  /* purple-60 */
+  --keep-band-yearly:         #d02670;  /* magenta-60 */
 }
 
 /* The theme without JavaScript. Normally index.html's inline script and
@@ -1022,6 +1034,10 @@
     --field-focus-well: #cdcdcd;
     --ink-mix: 45%;
     --status-offsite-text: #0043ce;
+    --keep-band-daily: #0f62fe;
+    --keep-band-weekly: #007d79;
+    --keep-band-monthly: #8a3ffc;
+    --keep-band-yearly: #d02670;
   }
 }
 
@@ -2062,7 +2078,10 @@ body {
      check    stroke draw of a checkmark
      content  fade-in of content replacing its loading placeholder
      tab      slide of a Settings tab change
-     wiggle   the rock of every item in a list being reordered */
+     wiggle   the rock of every item in a list being reordered
+     scene    one pass of a picture that explains itself in a loop, and how
+              high a parcel in it rises on its way
+     fill     the rise of the liquid in a vessel to its level */
   --motion-control-dur: 150ms;
 
   --motion-modal-dur: 260ms;
@@ -2101,6 +2120,11 @@ body {
 
   --motion-wiggle-dur: 280ms;
   --motion-wiggle-angle: .6deg;
+
+  --motion-scene-dur: 6s;
+  --motion-scene-hop: 21px;
+
+  --motion-fill-dur: 1100ms;
 
   /* The drag lift's scale and landing ("Reordering by dragging"). */
   --drag-lift-scale: 1.03;
@@ -2180,6 +2204,11 @@ body {
   --motion-wiggle-dur: 220ms;
   --motion-wiggle-angle: 1deg;
 
+  --motion-scene-dur: 4s;
+  --motion-scene-hop: 32px;
+
+  --motion-fill-dur: 1700ms;
+
   --drag-lift-scale: 1.06;
   --drag-settle-dur: 400ms;
 }
@@ -2246,6 +2275,11 @@ body {
 
   --motion-wiggle-dur: 360ms;
   --motion-wiggle-angle: .3deg;
+
+  --motion-scene-dur: 9s;
+  --motion-scene-hop: 8px;
+
+  --motion-fill-dur: 500ms;
 
   --drag-lift-scale: 1.015;
   --drag-settle-dur: 130ms;
@@ -2323,6 +2357,13 @@ body {
   /* A long period rather than none, with no angle, so nothing moves. */
   --motion-wiggle-dur: 400ms;
   --motion-wiggle-angle: 0deg;
+
+  /* The pictures stand still at this level; the numbers are the ones a
+     picture would hold its last frame with. */
+  --motion-scene-dur: 12s;
+  --motion-scene-hop: 0px;
+
+  --motion-fill-dur: 0ms;
 
   /* The lift keeps its shadow and its gap: it is a state, not motion. */
   --drag-lift-scale: 1;
@@ -2872,6 +2913,65 @@ body {
       glim-tab-slide var(--motion-tab-dur, 220ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both,
       glim-fade-in var(--motion-tab-dur, 220ms) ease-out both;
   }
+
+  /* The pictures of a storage location. Their markup is the last frame, so
+     without these rules each one stands still and still says what it shows. */
+  :root:not([data-motion="off"]) .glim-vessel-rise {
+    animation: glim-vessel-rise var(--motion-fill-dur, 1100ms) var(--motion-page-ease, ease-out) both;
+  }
+  :root:not([data-motion="off"]) .glim-vessel-liquid {
+    animation: glim-vessel-sway calc(var(--motion-fill-dur, 1100ms) * 1.2) linear 2;
+  }
+  :root:not([data-motion="off"]) .glim-keep-dot {
+    transition:
+      transform var(--motion-content-dur, 220ms) ease-out,
+      opacity var(--motion-content-dur, 220ms) ease-out;
+  }
+  :root:not([data-motion="off"]) .glim-keep-bar {
+    transition:
+      inset-inline-start var(--motion-tab-dur, 220ms) ease-out,
+      width var(--motion-tab-dur, 220ms) ease-out;
+  }
+  :root:not([data-motion="off"]) .glim-scene-flow {
+    animation: glim-scene-stream calc(var(--motion-scene-dur, 6s) / 4) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-parcel-fly {
+    animation:
+      glim-parcel-fly var(--motion-scene-dur, 6s) linear infinite,
+      glim-parcel-show var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--parcel-turn, 0) * .13);
+  }
+  :root:not([data-motion="off"]) .glim-parcel-hop {
+    animation: glim-parcel-hop var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--parcel-turn, 0) * .13);
+  }
+  :root:not([data-motion="off"]) .glim-parcel-ring {
+    animation: glim-parcel-ring var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--parcel-turn, 0) * .13);
+  }
+  :root:not([data-motion="off"]) .glim-lock-hand {
+    animation:
+      glim-lock-hand var(--motion-scene-dur, 6s) linear infinite,
+      glim-lock-hand-show var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-lock-press {
+    animation: glim-lock-press var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-lock-shake {
+    animation: glim-lock-shake var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-lock-badge {
+    animation: glim-lock-badge var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-lock-badge-pop {
+    animation: glim-lock-badge-pop var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-lock-ring {
+    animation: glim-lock-ring var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-lock-gone {
+    animation: glim-lock-gone var(--motion-scene-dur, 6s) linear infinite;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2959,4 +3059,252 @@ body {
   appearance: none;
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Pictures of a storage location: its fill level as a vessel, what a
+   retention rule keeps, a copy on its way and the delete lock. They draw in the
+   theme's own tokens and take the hue of the card they sit in. --pic is a
+   fill, so it stops halfway between the accent and the ink the accent turns
+   into as text: the accent itself on dark, a shade that holds on white on
+   light. It is mixed here, so a card whose accent rests muted in reactive mode
+   mutes its picture too. Corners come from the shape engine: the rx attribute
+   on a shape is only what a browser without the CSS property draws. */
+.glim-pic {
+  --pic: color-mix(in srgb, var(--accent) calc((var(--ink-mix) + 100%) / 2), black);
+}
+
+.glim-vessel-shape { rx: min(calc(var(--radius-control) / 2), 6px); }
+.glim-vessel-back { fill: var(--carbon-surface2); }
+.glim-vessel-liquid { fill: var(--pic); }
+.glim-vessel-warn .glim-vessel-liquid { fill: var(--status-warn-solid); }
+.glim-vessel-glass {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-width: 1.6;
+}
+.glim-vessel-glass-open { stroke-dasharray: 2 3; }
+.glim-vessel-full {
+  stroke: var(--carbon-text-sub);
+  stroke-width: 1.2;
+  stroke-dasharray: 2.5 2.5;
+}
+@keyframes glim-vessel-rise {
+  from { transform: translateY(var(--vessel-rise, 0px)); }
+  to   { transform: none; }
+}
+/* One wavelength of the surface, so the second pass starts where the first
+   ended. */
+@keyframes glim-vessel-sway {
+  from { transform: none; }
+  to   { transform: translateX(-12px); }
+}
+
+.glim-keep {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+}
+.glim-keep-dots {
+  display: grid;
+  grid-template-columns: repeat(var(--keep-n), minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  height: 28px;
+}
+.glim-keep-dot {
+  width: min(8px, 62%);
+  aspect-ratio: 1;
+  border-radius: var(--radius-pill);
+  background: var(--carbon-text-sub);
+  box-shadow: 0 0 0 2px var(--carbon-surface), 0 0 0 3.5px var(--band, transparent);
+}
+.glim-keep-dot.glim-keep-gone {
+  background: var(--carbon-text-muted);
+  opacity: .2;
+  transform: translateY(10px) scale(.6);
+  box-shadow: none;
+}
+.glim-keep-band-last { --band: var(--pic); }
+.glim-keep-band-daily { --band: var(--keep-band-daily); }
+.glim-keep-band-weekly { --band: var(--keep-band-weekly); }
+.glim-keep-band-monthly { --band: var(--keep-band-monthly); }
+.glim-keep-band-yearly { --band: var(--keep-band-yearly); }
+.glim-keep-band-all { --band: var(--carbon-text-muted); }
+.glim-keep-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.glim-keep-label::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: calc(var(--radius-control) / 4);
+  background: var(--band);
+}
+.glim-keep-track {
+  position: relative;
+  height: 8px;
+  border-radius: calc(var(--radius-control) / 3);
+  background: var(--carbon-surface2);
+}
+.glim-keep-bar {
+  position: absolute;
+  inset-block: 0;
+  border-radius: inherit;
+  background: var(--band);
+}
+@media (max-width: 600px) {
+  .glim-keep {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .glim-keep-gap { display: none; }
+  .glim-keep-label { margin-top: 4px; }
+  .glim-keep-dot { box-shadow: 0 0 0 1px var(--carbon-surface), 0 0 0 2.5px var(--band, transparent); }
+}
+
+.glim-scene > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.glim-scene-box {
+  rx: var(--radius-control);
+  fill: var(--carbon-surface2);
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .35;
+  stroke-dasharray: 3 5;
+}
+.glim-scene-box-locked {
+  stroke: var(--pic);
+  stroke-opacity: .8;
+  stroke-width: 1.5;
+  stroke-dasharray: none;
+}
+.glim-scene-pack { rx: calc(var(--radius-control) / 3); }
+.glim-scene-pack-old {
+  fill: var(--carbon-text-muted);
+  opacity: .5;
+}
+.glim-scene-pack-new { fill: var(--pic); }
+.glim-scene-pack-slot {
+  fill: none;
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .7;
+  stroke-dasharray: 3 3;
+}
+.glim-scene-flow,
+.glim-scene-arrow {
+  fill: none;
+  stroke: var(--pic);
+  stroke-opacity: .55;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glim-scene-flow { stroke-dasharray: 2 7; }
+.glim-scene-ring {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 2;
+  opacity: 0;
+}
+.glim-scene-ring-gone { stroke: var(--carbon-text-muted); }
+/* What sits inside a filled shape is cut out of it in the surface colour, so
+   it reads on every hue the fill can take. */
+.glim-scene-seal { fill: var(--pic); }
+.glim-scene-cut { fill: var(--carbon-surface); }
+.glim-scene-cut-line {
+  fill: none;
+  stroke: var(--carbon-surface);
+  stroke-width: 1.5;
+}
+.glim-scene-pointer {
+  fill: var(--carbon-text);
+  stroke: var(--carbon-surface);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.glim-scene-bin {
+  fill: var(--carbon-surface3);
+  stroke: var(--carbon-surface);
+  stroke-width: 1.5;
+}
+/* Without delete protection the pack is gone in the last frame. */
+.glim-lock-gone { opacity: 0; }
+
+@keyframes glim-scene-stream {
+  to { stroke-dashoffset: -18; }
+}
+/* A parcel waits at its source, crosses in a fifth of the pass and stays at
+   the storage location until the pass ends. Movement and fade run as two
+   animations, so the fade keeps a curve that cannot overshoot. */
+@keyframes glim-parcel-fly {
+  0%, 10%   { transform: translateX(var(--parcel-from, 0px)); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  30%, 100% { transform: none; }
+}
+@keyframes glim-parcel-hop {
+  0%, 10%   { transform: none; animation-timing-function: ease-out; }
+  20%       { transform: translateY(calc(var(--motion-scene-hop, 0px) * var(--parcel-hop, 1) * -1)); animation-timing-function: ease-in; }
+  30%, 100% { transform: none; }
+}
+@keyframes glim-parcel-show {
+  0%, 10%   { opacity: 0; }
+  12%, 90%  { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+@keyframes glim-parcel-ring {
+  0%, 30%   { opacity: 0; transform: none; }
+  30.1%     { opacity: .7; transform: none; }
+  37%, 100% { opacity: 0; transform: scale(2.25); }
+}
+/* The pointer comes in, presses the pack and, where the lock refuses, backs
+   off to where it rests. */
+@keyframes glim-lock-hand {
+  0%, 8%    { transform: translate(var(--hand-from-x, 0px), var(--hand-from-y, 0px)); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  30%, 52%  { transform: translate(var(--hand-hit-x, 0px), var(--hand-hit-y, 0px)); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  62%, 100% { transform: none; }
+}
+@keyframes glim-lock-hand-show {
+  0%, 6%    { opacity: 0; }
+  10%, 84%  { opacity: 1; }
+  90%, 100% { opacity: 0; }
+}
+@keyframes glim-lock-press {
+  0%, 32%   { transform: none; }
+  34%       { transform: scale(.8); }
+  38%, 100% { transform: none; }
+}
+@keyframes glim-lock-shake {
+  0%, 36%     { transform: none; }
+  38.5%       { transform: translateX(calc(var(--motion-shake-scale, 1) * -4px)); }
+  41%         { transform: translateX(calc(var(--motion-shake-scale, 1) * 4px)); }
+  43.5%       { transform: translateX(calc(var(--motion-shake-scale, 1) * -3px)); }
+  46%         { transform: translateX(calc(var(--motion-shake-scale, 1) * 3px)); }
+  48.5%, 100% { transform: none; }
+}
+@keyframes glim-lock-badge {
+  0%, 35.5% { opacity: 0; }
+  36%, 86%  { opacity: 1; }
+  92%, 100% { opacity: 0; }
+}
+@keyframes glim-lock-badge-pop {
+  0%, 36%   { transform: scale(.4); }
+  39%       { transform: scale(1.25); }
+  42%, 100% { transform: none; }
+}
+@keyframes glim-lock-ring {
+  0%, 36%   { opacity: 0; transform: none; }
+  36.1%     { opacity: .7; transform: none; }
+  46%, 100% { opacity: 0; transform: scale(2.6); }
+}
+@keyframes glim-lock-gone {
+  0%, 36%   { opacity: 1; transform: none; }
+  46%, 95%  { opacity: 0; transform: scale(0); }
+  99%, 100% { opacity: 1; transform: none; }
 }
