@@ -25,9 +25,9 @@ export function Card({
     // outer div, and insetStart restates the surface box's p-5 for it.
     // glim-notch-card lets a hover anywhere on the card reveal the heading's
     // hue in reactive mode, and glim-hue hands the same hue to the controls
-    // inside.
+    // inside. Both boxes grow, so the cards of one grid row end level.
     <div
-      className={`relative glim-notch-card${hueIndex !== undefined ? " glim-hue" : ""}`}
+      className={`relative flex min-h-0 min-w-0 flex-1 flex-col glim-notch-card${hueIndex !== undefined ? " glim-hue" : ""}`}
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       <h2 className="flex items-center">
@@ -36,7 +36,10 @@ export function Card({
           {hint && <InfoBubble tip={hint} onAccent />}
         </Badge>
       </h2>
-      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
+      {/* In a grid cell with a height of its own the box scrolls. The badge
+          sits above the box's edge and would be cut off if the card scrolled
+          as a whole. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-card bg-carbon-surface p-5 [[data-sized]_&]:overflow-y-auto">
         {children}
       </div>
     </div>

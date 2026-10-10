@@ -234,7 +234,7 @@ export function StorageCard({
   }
 
   return (
-    <Card title={t("dashboard.storageTitle")} hueIndex={hueIndex}>
+    <Card title={t("dashboard.storageTitle")} hint={t("overview.storage.hint")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}

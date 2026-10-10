@@ -22,6 +22,8 @@ import type { ProgressMap } from "../../lib/progress";
 import { useVisibilityGate } from "../../lib/useVisibilityGate";
 import { loadErrorMessage } from "../../lib/errors";
 import { useConfirm } from "../../lib/useConfirm";
+import { useIsDesktop } from "../../lib/useMediaQuery";
+import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
 import { CheckDraw } from "../CheckDraw";
 import { colorFor, glyphFor, glyphLabelKey } from "../ActivityLog";
@@ -29,7 +31,8 @@ import { ProgressBar } from "../ProgressBar";
 import { SnapshotFileTree } from "../SnapshotFileTree";
 import { BottomSheet } from "./BottomSheet";
 
-// RunDetailSheet; the full-screen run-detail sheet.
+// RunDetailSheet; the run's details: a full-screen sheet on a phone and a
+// window over the page at desktop widths, with the same content in both.
 //
 // Hosted component-locally by whichever surface owns the run row (the
 // container/file-set surfaces, the Dashboard): `<RunDetailSheet run={...} open
@@ -325,6 +328,7 @@ function SheetActionRow({
 
 export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
   const { t } = useT();
+  const isDesktop = useIsDesktop();
   const browseId = useId();
   const inFlight = isInFlight(run);
   const pKey = progressKeyFor(run);
@@ -617,19 +621,9 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
       </div>
     ) : undefined;
 
-  return (
-    <BottomSheet
-      open={open}
-      onClose={onClose}
-      fullHeight
-      // Title composes from existing keys only (runKindLabel + runTargetText;
-      // no new title key). The interpunct separator keeps user text free of
-      // dashes (the em-dash ban is lint-enforced and a hyphen reads as a
-      // hyphenation, not a separator).
-      title={`${runKindLabel(t, run.kind)} · ${runTargetText(t, run)}`}
-      footer={footerContent}
-    >
-      <div className="flex flex-col gap-4 py-4">
+  const title = `${runKindLabel(t, run.kind)} · ${runTargetText(t, run)}`;
+  const body = (
+      <>
         {/* Status headline: the shared status chip + completion time. The
             drawn check appears only on a fresh running→success transition
             observed while open (see the gate above). */}
@@ -765,7 +759,20 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
             so the sheet's JSX owns its lifecycle (the sheet-stack keyboard
             contract makes a confirm over a sheet safe). */}
         {confirmDialog}
-      </div>
+      </>
+  );
+
+  if (isDesktop) {
+    return (
+      <AnomalyWindow title={title} onClose={onClose}>
+        {body}
+        {footerContent}
+      </AnomalyWindow>
+    );
+  }
+  return (
+    <BottomSheet open={open} onClose={onClose} fullHeight title={title} footer={footerContent}>
+      <div className="flex flex-col gap-4 py-4">{body}</div>
     </BottomSheet>
   );
 }

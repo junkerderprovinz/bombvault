@@ -13,6 +13,7 @@ import {
   type CardSpan,
   type LayoutMigration,
 } from "./dashboardLayout";
+import { OVERVIEW_CARDS, OVERVIEW_MIGRATION, PHONE_ORDER } from "../pages/overview/cards";
 
 describe("mergeOrder", () => {
   it("keeps the order a user arranged", () => {
@@ -372,5 +373,57 @@ describe("migrateLayout", () => {
     const before = JSON.stringify(stored);
     migrateLayout(stored, CARDS, MIGRATION);
     expect(JSON.stringify(stored)).toBe(before);
+  });
+});
+
+describe("the overview's own cards", () => {
+  const stored = (layout: unknown) => migrateLayout(layout, OVERVIEW_CARDS, OVERVIEW_MIGRATION);
+  const visible = (layout: ReturnType<typeof stored>) => layout.order.filter((id) => !layout.hidden.includes(id));
+
+  it("show four cards under the status head in a browser with nothing stored", () => {
+    expect(visible(stored(null))).toEqual(["needs", "protection", "targets", "history"]);
+    expect(stored(null).hidden).toEqual(["anomalies", "coverage", "heatmap", "storage", "summary", "stats", "spike"]);
+  });
+
+  it("keep a layout arranged before the grid, with the merged cards in their old places", () => {
+    const layout = stored({
+      order: [
+        "summary",
+        "activityLog",
+        "stats",
+        "protection",
+        "coverage",
+        "anomalies",
+        "ransomware",
+        "lastBackups",
+        "runHistory",
+        "heatmap",
+        "storage",
+        "spike",
+      ],
+      hidden: ["spike", "ransomware", "runHistory"],
+      widths: { protection: "half", coverage: "half" },
+    });
+
+    expect(layout.order).toEqual([
+      "needs",
+      "summary",
+      "history",
+      "stats",
+      "protection",
+      "targets",
+      "coverage",
+      "anomalies",
+      "heatmap",
+      "storage",
+      "spike",
+    ]);
+    // The activity log was showing, so the history it became shows too.
+    expect(layout.hidden).toEqual(["spike"]);
+    expect(layout.widths).toEqual({ protection: 3, coverage: 3 });
+  });
+
+  it("know every card a phone orders", () => {
+    expect([...PHONE_ORDER].sort()).toEqual(OVERVIEW_CARDS.map((c) => c.id).sort());
   });
 });

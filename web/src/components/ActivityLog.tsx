@@ -1,9 +1,9 @@
-// The dashboard activity log: one scrollable, docker-logs-style list of
-// timestamped lines. Finished runs, live progress and the next scheduled run
-// share the list; lib/activityLog.ts merges, dedupes and orders them.
+// The activity log: one scrollable, docker-logs-style list of timestamped
+// lines under its filters. Finished runs, live progress and the next scheduled
+// run share the list; lib/activityLog.ts merges, dedupes and orders them. The
+// card around it is the caller's.
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { hueVars } from "../lib/appearance";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
@@ -15,7 +15,6 @@ import { SelectField } from "./SelectField";
 import type { TranslationKey } from "../lib/i18n";
 import { buildLogLines, domainLabel, filterLogLines, formatLogDate, LOG_FILTER_DOMAINS, LOG_FILTER_KINDS } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
-import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
 import { Button } from "./Button";
 import { useIsDesktop } from "../lib/useMediaQuery";
@@ -84,7 +83,6 @@ export function ActivityLog({
   onClearDayFilter,
   runFilter = null,
   onClearRunFilter,
-  hueIndex,
 }: {
   /** Local calendar day (YYYY-MM-DD) picked in the Dashboard heatmap, or null.
    *  Combines with the text, domain and type filters. */
@@ -94,9 +92,6 @@ export function ActivityLog({
   /** One run, linked from a key's log on the MCP card, or null. */
   runFilter?: string | null;
   onClearRunFilter?: () => void;
-  /** Rainbow position of the heading, from Dashboard's nextHue() counter.
-   *  Omit for the plain accent. */
-  hueIndex?: number;
 } = {}) {
   const { t } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
@@ -232,20 +227,7 @@ export function ActivityLog({
   };
 
   return (
-    // One box carries the position context, the notch hook and the padding, so
-    // the heading badge lines up with the content. Nothing needs clipping to the
-    // rounded corners, so unlike Dashboard's Card() there is no outer/inner split.
-    <div
-      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-3${
-        hueIndex !== undefined ? " glim-hue" : ""
-      }`}
-      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
-    >
-      {/* glim-hue on the card carries the rainbow accent to the focus rings
-          and the day chip; glim-notch-card does not set --accent. */}
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("activityLog.title")}</Badge>
-      </h2>
+    <div data-testid="activity-log" className="flex min-h-0 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="text"
@@ -301,7 +283,7 @@ export function ActivityLog({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
+          className="max-h-96 overflow-y-auto rounded-card bg-black/20 [[data-sized]_&]:max-h-none font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
         >
           {runGone && <p className="text-carbon-textMuted">{t("activityLog.runGone")}</p>}
           {runPending && <p className="text-carbon-textMuted">{t("activityLog.runStillGoing")}</p>}

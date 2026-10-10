@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// The backup history card's domain strip is the page-level selector: the
+// The calendar card's domain strip is the page-level selector: the
 // grooved well spanning the card, with its segments pinned to one width. A
 // row of loose chips docked in the card's corner is what it replaced.
 import { cleanup, render, screen } from "@testing-library/react";
@@ -21,7 +21,7 @@ afterEach(cleanup);
 describe("HealthHeatmapCard domain strip", () => {
   it("is the grooved well at the page-level scale, spanning the card", () => {
     render(<HealthHeatmapCard t={t} selectedDay={null} onSelectDay={() => {}} />);
-    const strip = screen.getByRole("tablist", { name: en["dashboard.healthTitle"] });
+    const strip = screen.getByRole("tablist", { name: en["overview.calendar.title"] });
     const classes = strip.className.split(/\s+/);
 
     expect(classes).toContain("bg-carbon-surface3");
@@ -36,7 +36,7 @@ describe("HealthHeatmapCard domain strip", () => {
 
   it("sits in the card's body rather than in a corner row of its own", () => {
     render(<HealthHeatmapCard t={t} selectedDay={null} onSelectDay={() => {}} />);
-    const strip = screen.getByRole("tablist", { name: en["dashboard.healthTitle"] });
+    const strip = screen.getByRole("tablist", { name: en["overview.calendar.title"] });
     expect(strip.parentElement!.className).toContain("rounded-card");
   });
 });

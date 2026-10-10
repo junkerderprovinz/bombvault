@@ -1,64 +1,14 @@
-// Customizable dashboard layout: card order, visibility and width per browser,
-// kept in localStorage. A card is carried by the grip in its control bar
-// (lib/dragLift.ts), with the move up/down buttons as the keyboard's way.
+// Customizable overview layout: card order, visibility, width and height per
+// browser, kept in localStorage. A card is carried by the grip in its control
+// bar (lib/dragLift.ts), with the move up/down buttons as the keyboard's way.
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type PointerEventHandler,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEventHandler, type ReactNode } from "react";
 import { IconTipButton } from "../components/IconTipButton";
 import type { TranslationKey } from "./i18n";
 
 const KEY = "bombvault.dashboardLayout";
 
 type T = (key: TranslationKey) => string;
-
-// CardWidth "half" puts two cards side by side in the Dashboard grid. Cards
-// that were never toggled are "full".
-export type CardWidth = "full" | "half";
-
-interface LayoutState {
-  order: string[];
-  hidden: Set<string>;
-  widths: Record<string, CardWidth>;
-}
-
-interface StoredLayout {
-  order: string[];
-  hidden: string[];
-  widths: Record<string, CardWidth>;
-}
-
-// readStored returns null for a missing or corrupt value. Entries of the wrong
-// type are dropped, so an unknown width falls back to full.
-function readStored(): StoredLayout | null {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    const obj = parsed as { order?: unknown; hidden?: unknown; widths?: unknown };
-    const order = Array.isArray(obj.order)
-      ? obj.order.filter((x): x is string => typeof x === "string")
-      : [];
-    const hidden = Array.isArray(obj.hidden)
-      ? obj.hidden.filter((x): x is string => typeof x === "string")
-      : [];
-    const widths: Record<string, CardWidth> = {};
-    if (obj.widths && typeof obj.widths === "object" && !Array.isArray(obj.widths)) {
-      for (const [id, w] of Object.entries(obj.widths as Record<string, unknown>)) {
-        if (w === "full" || w === "half") widths[id] = w;
-      }
-    }
-    return { order, hidden, widths };
-  } catch {
-    return null;
-  }
-}
 
 // mergeOrder drops stored ids that are no longer known and places every new
 // default id directly behind the card it follows by default, so a card added
@@ -273,60 +223,39 @@ export function migrateLayout(
   };
 }
 
+function readStored(): unknown {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * useDashboardLayout keeps the card order, hidden set and widths for this
- * browser. defaultOrder decides which ids are known: unknown stored ids are
- * ignored, and new ones are appended, visible.
+ * useDashboardLayout keeps the layout of the overview's cards for this
+ * browser. Whatever the browser stored is brought to the given cards once, on
+ * the first render.
  */
-export function useDashboardLayout(defaultOrder: string[]) {
-  const [state, setState] = useState<LayoutState>(() => {
-    const stored = readStored();
-    const known = new Set(defaultOrder);
-    const order = mergeOrder(stored?.order ?? [], defaultOrder);
-    const hidden = new Set((stored?.hidden ?? []).filter((id) => known.has(id)));
-    const widths: Record<string, CardWidth> = {};
-    for (const [id, w] of Object.entries(stored?.widths ?? {})) {
-      if (known.has(id)) widths[id] = w;
-    }
-    return { order, hidden, widths };
-  });
+export function useDashboardLayout(cards: CardDefault[], migration: LayoutMigration) {
+  const [layout, setLayout] = useState(() => migrateLayout(readStored(), cards, migration));
 
-  // Skip the initial render so a user who never customises gets no write.
-  const firstRun = useRef(true);
+  // Only a change is written, so a browser nobody arranged anything in keeps
+  // following the default.
+  const written = useRef(layout);
   useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
-      return;
-    }
+    if (written.current === layout) return;
+    written.current = layout;
     try {
-      const payload: StoredLayout = {
-        order: state.order,
-        hidden: Array.from(state.hidden),
-        widths: state.widths,
-      };
-      localStorage.setItem(KEY, JSON.stringify(payload));
+      localStorage.setItem(KEY, JSON.stringify(layout));
     } catch {
-      /* storage unavailable: keep the layout in memory for this session */
+      // Without storage the layout lasts until the page is left.
     }
-  }, [state]);
-
-  // move swaps with the adjacent id even when that one is hidden; drag-and-drop
-  // covers precise placement.
-  const move = useCallback((id: string, dir: -1 | 1) => {
-    setState((prev) => {
-      const idx = prev.order.indexOf(id);
-      if (idx < 0) return prev;
-      const swapIdx = idx + dir;
-      if (swapIdx < 0 || swapIdx >= prev.order.length) return prev;
-      const order = prev.order.slice();
-      [order[idx], order[swapIdx]] = [order[swapIdx], order[idx]];
-      return { order, hidden: prev.hidden, widths: prev.widths };
-    });
-  }, []);
+  }, [layout]);
 
   // Dragging down drops after the target, dragging up drops before it.
   const reorder = useCallback((draggedId: string, targetId: string) => {
-    setState((prev) => {
+    setLayout((prev) => {
       if (draggedId === targetId) return prev;
       const from = prev.order.indexOf(draggedId);
       const to = prev.order.indexOf(targetId);
@@ -334,69 +263,53 @@ export function useDashboardLayout(defaultOrder: string[]) {
       const order = prev.order.slice();
       order.splice(from, 1);
       const targetAt = order.indexOf(targetId);
-      const insertAt = from < to ? targetAt + 1 : targetAt;
-      order.splice(insertAt, 0, draggedId);
-      return { order, hidden: prev.hidden, widths: prev.widths };
+      order.splice(from < to ? targetAt + 1 : targetAt, 0, draggedId);
+      return { ...prev, order };
     });
   }, []);
 
   // A drop hands over the visible cards in their new order. The hidden ones
   // keep their places, and the visible ones fill the places visible cards held.
   const setVisibleOrder = useCallback((visible: string[]) => {
-    setState((prev) => {
+    setLayout((prev) => {
       const moving = new Set(visible);
       const next = visible.slice();
-      const order = prev.order.map((id) => (moving.has(id) ? (next.shift() ?? id) : id));
-      return { order, hidden: prev.hidden, widths: prev.widths };
+      return { ...prev, order: prev.order.map((id) => (moving.has(id) ? (next.shift() ?? id) : id)) };
     });
   }, []);
 
   const toggleHidden = useCallback((id: string) => {
-    setState((prev) => {
-      const hidden = new Set(prev.hidden);
-      if (hidden.has(id)) hidden.delete(id);
-      else hidden.add(id);
-      return { order: prev.order, hidden, widths: prev.widths };
+    setLayout((prev) => ({
+      ...prev,
+      hidden: prev.hidden.includes(id) ? prev.hidden.filter((x) => x !== id) : [...prev.hidden, id],
+    }));
+  }, []);
+
+  /** Steps from the width the card shows, which a packed row may have widened. */
+  const stepWidth = useCallback((id: string, shown: CardSpan) => {
+    setLayout((prev) => ({ ...prev, widths: { ...prev.widths, [id]: nextSpan(shown) } }));
+  }, []);
+
+  const resize = useCallback((id: string, span: CardSpan, height: number) => {
+    setLayout((prev) => ({
+      ...prev,
+      widths: { ...prev.widths, [id]: span },
+      heights: { ...prev.heights, [id]: snapHeight(height) },
+    }));
+  }, []);
+
+  const autoHeight = useCallback((id: string) => {
+    setLayout((prev) => {
+      if (prev.heights[id] === undefined) return prev;
+      const heights = { ...prev.heights };
+      delete heights[id];
+      return { ...prev, heights };
     });
   }, []);
 
-  const toggleWidth = useCallback((id: string) => {
-    setState((prev) => {
-      const current = prev.widths[id] ?? "full";
-      const widths = { ...prev.widths, [id]: current === "full" ? "half" : "full" } as Record<
-        string,
-        CardWidth
-      >;
-      return { order: prev.order, hidden: prev.hidden, widths };
-    });
-  }, []);
+  const reset = () => setLayout(defaultLayout(cards));
 
-  const reset = useCallback(() => {
-    setState({ order: defaultOrder.slice(), hidden: new Set<string>(), widths: {} });
-  }, [defaultOrder]);
-
-  const getVisibleIds = useCallback(
-    () => state.order.filter((id) => !state.hidden.has(id)),
-    [state]
-  );
-
-  const getWidth = useCallback(
-    (id: string): CardWidth => state.widths[id] ?? "full",
-    [state]
-  );
-
-  return {
-    order: state.order,
-    hidden: state.hidden,
-    getVisibleIds,
-    move,
-    reorder,
-    setVisibleOrder,
-    toggleHidden,
-    toggleWidth,
-    getWidth,
-    reset,
-  };
+  return { layout, reorder, setVisibleOrder, toggleHidden, stepWidth, resize, autoHeight, reset };
 }
 
 function GripIcon() {
@@ -453,6 +366,9 @@ const iconBtn =
   "rounded-pill p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
 
+// The share of the row a card takes, as its width button names it.
+const SPAN_FRACTION: Record<Exclude<CardSpan, 6>, string> = { 2: "⅓", 3: "½", 4: "⅔" };
+
 export interface CustomizableBlockProps {
   id: string;
   label: string;
@@ -466,16 +382,16 @@ export interface CustomizableBlockProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onHide: () => void;
-  width: CardWidth;
-  onToggleWidth: () => void;
+  /** The width the card shows in its row. */
+  span: CardSpan;
+  onStepWidth: () => void;
   t: T;
   children: ReactNode;
 }
 
 // CustomizableBlock renders its children unchanged outside edit mode. In edit
-// mode it adds a control bar and makes the block a drag source and drop
-// target. The width toggle does not size anything here: Dashboard reads it back
-// through getWidth() for the grid cell.
+// mode it adds the control bar the card is carried, moved, widened and hidden
+// by. The grid cell around it is what takes the width.
 export function CustomizableBlock({
   id,
   label,
@@ -488,16 +404,22 @@ export function CustomizableBlock({
   onMoveUp,
   onMoveDown,
   onHide,
-  width,
-  onToggleWidth,
+  span,
+  onStepWidth,
   t,
   children,
 }: CustomizableBlockProps) {
   if (!editing) return <>{children}</>;
 
+  const width = span === 6 ? t("overview.widthFull") : SPAN_FRACTION[span];
   return (
-    <div role="group" aria-label={`${label} (${index + 1}/${total})`} data-block-id={id} className="rounded-card">
-      <div className="mb-2 flex items-center gap-2 rounded-card bg-carbon-surface2 px-2 py-1.5">
+    <div
+      role="group"
+      aria-label={`${label} (${index + 1}/${total})`}
+      data-block-id={id}
+      className="flex min-h-0 flex-1 flex-col rounded-card"
+    >
+      <div className="mb-4 flex flex-none items-center gap-2 rounded-card bg-carbon-surface2 px-2 py-1.5">
         {/* The grip is for a pointer; the keyboard uses the arrows. */}
         <span
           className="shrink-0 cursor-grab touch-none select-none text-carbon-textMuted active:cursor-grabbing"
@@ -516,11 +438,7 @@ export function CustomizableBlock({
           <IconTipButton tip={t("dashboard.moveDown")} onClick={onMoveDown} disabled={isLast} className={iconBtn}>
             <ChevronDownIcon />
           </IconTipButton>
-          <IconTipButton
-            tip={width === "full" ? t("dashboard.makeHalfWidth") : t("dashboard.makeFullWidth")}
-            onClick={onToggleWidth}
-            className={iconBtn}
-          >
+          <IconTipButton tip={t("overview.widthStep").replace("{w}", width)} onClick={onStepWidth} className={iconBtn}>
             <ColumnsIcon />
           </IconTipButton>
           <IconTipButton tip={t("dashboard.hideCard")} onClick={onHide} className={iconBtn}>
