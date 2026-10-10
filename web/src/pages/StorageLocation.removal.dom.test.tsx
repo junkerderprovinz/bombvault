@@ -36,7 +36,6 @@ vi.mock("../lib/api", async (importOriginal) => {
     getProviders: vi.fn(),
     getCloud: vi.fn(),
     getCloudCredSets: vi.fn(),
-    getRclone: vi.fn(),
     getRcloneSections: vi.fn(),
   };
 });
@@ -140,7 +139,6 @@ beforeEach(() => {
   vi.mocked(api.getProviders).mockResolvedValue({ ok: true, providers: [] });
   vi.mocked(api.getCloud).mockResolvedValue({ ok: true });
   vi.mocked(api.getCloudCredSets).mockResolvedValue({ ok: true, sets: [] });
-  vi.mocked(api.getRclone).mockResolvedValue({ ok: true, remotes: ["storagebox"] });
   vi.mocked(api.getRcloneSections).mockResolvedValue({ ok: true, sections: [] });
   previewDestinationRemoval.mockResolvedValue({ ok: true, removal: PREVIEW });
   removeDestination.mockResolvedValue({ ok: true });

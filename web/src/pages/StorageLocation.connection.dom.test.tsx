@@ -35,7 +35,6 @@ vi.mock("../lib/api", async (importOriginal) => {
     getProviders: vi.fn(),
     getCloud: vi.fn(),
     getCloudCredSets: vi.fn(),
-    getRclone: vi.fn(),
     getRcloneSections: vi.fn(),
   };
 });
@@ -153,7 +152,6 @@ beforeEach(() => {
     ok: true,
     sets: [{ id: "set-b2", name: "Backblaze B2", s3KeyId: "003abc", s3Region: "eu-central-003", restUser: "", s3StorageClass: "", s3SecretSet: true, restPasswordSet: false }],
   });
-  vi.mocked(api.getRclone).mockResolvedValue({ ok: true, remotes: ["storagebox"] });
   getRcloneSections.mockResolvedValue({
     ok: true,
     sections: [

@@ -44,7 +44,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getCloud: vi.fn(),
     getCloudCredSets: vi.fn(),
     setCloudCredSets: vi.fn(),
-    getRclone: vi.fn(),
+    getRcloneSections: vi.fn(),
     testOffsiteTarget: vi.fn(),
     tamperTestOffsiteTarget: vi.fn(),
   };
@@ -63,7 +63,7 @@ const putSettings = vi.mocked(api.putSettings);
 const getProviders = vi.mocked(api.getProviders);
 const getCloud = vi.mocked(api.getCloud);
 const getCloudCredSets = vi.mocked(api.getCloudCredSets);
-const getRclone = vi.mocked(api.getRclone);
+const getRcloneSections = vi.mocked(api.getRcloneSections);
 const testOffsiteTarget = vi.mocked(api.testOffsiteTarget);
 const tamperTestOffsiteTarget = vi.mocked(api.tamperTestOffsiteTarget);
 
@@ -236,7 +236,13 @@ beforeEach(() => {
   getProviders.mockResolvedValue({ ok: true, providers: PROVIDERS });
   getCloud.mockResolvedValue({ ok: true, restUser: "tower" });
   getCloudCredSets.mockResolvedValue({ ok: true, sets: [] });
-  getRclone.mockResolvedValue({ ok: true, remotes: ["storagebox", "nas"] });
+  getRcloneSections.mockResolvedValue({
+    ok: true,
+    sections: [
+      { name: "storagebox", type: "sftp", options: [{ name: "host", value: "u123.your-storagebox.de" }, { name: "pass", hidden: true }] },
+      { name: "nas", type: "smb", options: [] },
+    ],
+  });
   testOffsiteTarget.mockResolvedValue({ ok: true, reachable: true, initialized: true });
   tamperTestOffsiteTarget.mockResolvedValue({ ok: true, testable: true, protected: true });
 });
@@ -257,8 +263,28 @@ describe("a destination", () => {
     expect(await screen.findByText("Hetzner Storage Box · Used by Containers and Flash")).toBeTruthy();
     expect(screen.getByText("268.0 GB of 1.0 TB")).toBeTruthy();
     expect(cardTitles()).toEqual(["Connection", "rclone.conf", "Delete protection", "Copy", "How long to keep", "Rules per section"]);
-    expect(within(card("rclone.conf")).getByText("[storagebox]")).toBeTruthy();
-    expect(within(card("rclone.conf")).getByText("storagebox · nas")).toBeTruthy();
+  });
+
+  it("shows its section of the rclone.conf without the secret, and nothing to type into", async () => {
+    await renderPage("destination:box");
+
+    const conf = card("rclone.conf");
+    expect(within(conf).getByText("[storagebox]")).toBeTruthy();
+    expect(within(conf).getByLabelText("[storagebox]").textContent).toBe(
+      ["type = sftp", "host = u123.your-storagebox.de", "pass = hidden"].join("\n")
+    );
+    expect(within(conf).getByText("storagebox · nas")).toBeTruthy();
+    expect(within(conf).queryByRole("textbox")).toBeNull();
+    expect(within(conf).queryByRole("button")).toBeNull();
+  });
+
+  it("names the remote alone when the config has no such section", async () => {
+    getRcloneSections.mockResolvedValue({ ok: true, sections: [{ name: "nas", type: "smb", options: [] }] });
+    await renderPage("destination:box");
+
+    const conf = card("rclone.conf");
+    expect(within(conf).getByText("[storagebox]")).toBeTruthy();
+    expect(within(conf).queryByLabelText("[storagebox]")).toBeNull();
   });
 
   it("asks the remote for its room once the page is up", async () => {
