@@ -4,7 +4,7 @@ import type { Settings } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { ErrorDetailPanel } from "../../components/ErrorDetailPanel";
 import { FailureCounter } from "./FailureCounter";
-import { unresolvedErrorCount } from "./runFailures";
+import { unresolvedErrorCount } from "../../lib/runFailures";
 import { StatCard } from "./StatCard";
 
 interface StatData {

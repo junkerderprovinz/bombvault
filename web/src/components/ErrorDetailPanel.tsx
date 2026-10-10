@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { listRuns, ackRuns } from "../lib/api";
+import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import type { Run } from "../lib/api";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
@@ -162,6 +163,7 @@ export function ErrorDetailPanel({
       .then(() => {
         load();
         onChanged?.();
+        window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
       })
       .catch(() => {
         /* leave the list as it is */

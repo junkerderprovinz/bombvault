@@ -7,6 +7,7 @@ import { useIsDesktop } from "../lib/useMediaQuery";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { AnomalyProvider } from "../lib/useAnomalies";
+import { AttentionProvider } from "../lib/attention";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
 
 // The last BombVault version this browser has seen. The "What's new" dialog
@@ -326,45 +327,43 @@ export function Layout() {
   // bottom bar's card each carry their own insets.
   //
   // Inside the gate, so a browser that may not enter polls nothing. The rail's
-  // count and the dashboard card read the same summary from here.
+  // counts and the dashboard cards read the same figures from here.
   return (
     <AnomalyProvider>
-      <div
-        ref={shellRef}
-        className={`flex h-dvh overflow-hidden bg-carbon-background ${
-          isDesktop
-            ? "gap-4 p-4 pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))]"
-            : "flex-col"
-        }`}
-      >
-        {/* the one chrome switch; exactly one chrome surface renders at a time.
-            The desktop branch is upstream's desktop tree verbatim (same Sidebar,
-            same frame gutter, same wrapper padding); the mobile branch is the
-            same scroller with the bottom bar as its flex sibling below it. The
-            hidden surface is not rendered at all, never CSS-hidden: a
-            display:none Sidebar would still run its subscriptions, dialogs and
-            label engine below the breakpoint. What'sNewDialog renders outside
-            the switch; it is a fixed-position dialog and belongs to both
-            shells. */}
-        {isDesktop ? (
-          <>
-            <Sidebar settings={settings} authEnabled={authEnabled} />
-            {scroller}
-          </>
-        ) : (
-          <>
-            {scroller}
-            <BottomNav
-              settings={settings}
-              authEnabled={authEnabled}
-              scrollMainToTop={scrollMainToTop}
-            />
-          </>
-        )}
-        {whatsNewVersion && (
-          <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
-        )}
-      </div>
+      <AttentionProvider settings={settings}>
+        <div
+          ref={shellRef}
+          className={`flex h-dvh overflow-hidden bg-carbon-background ${
+            isDesktop
+              ? "gap-4 p-4 pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))]"
+              : "flex-col"
+          }`}
+        >
+          {/* Exactly one chrome surface is rendered. The other is left out of
+              the tree instead of hidden with CSS: a display:none sidebar would
+              still run its subscriptions and its label engine below the
+              breakpoint. The dialog sits outside the switch because it belongs
+              to both shells. */}
+          {isDesktop ? (
+            <>
+              <Sidebar settings={settings} authEnabled={authEnabled} />
+              {scroller}
+            </>
+          ) : (
+            <>
+              {scroller}
+              <BottomNav
+                settings={settings}
+                authEnabled={authEnabled}
+                scrollMainToTop={scrollMainToTop}
+              />
+            </>
+          )}
+          {whatsNewVersion && (
+            <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
+          )}
+        </div>
+      </AttentionProvider>
     </AnomalyProvider>
   );
 }
