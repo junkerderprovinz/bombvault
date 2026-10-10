@@ -119,7 +119,8 @@ describe("receiving a ZFS replica", () => {
 
   it("reads the requests again and says so when the source asked for more since they were shown", async () => {
     renderCard();
-    await screen.findByText("tower-2 wants to replicate cache/appdata here");
+    // Allow refuses until a pool is on screen, so the pools have to be there first.
+    await screen.findByRole("radiogroup", { name: en["zfs.receive.pool"] });
     const members = ["cache/appdata", "cache/appdata/vm-disk", "cache/appdata/media"];
     decide = () => {
       requests = [receiveRequest({ members })];
