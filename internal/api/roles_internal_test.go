@@ -45,6 +45,17 @@ func roleWith(t *testing.T, in *instance, direction string, other *instance, rol
 	return req, ok
 }
 
+// allowRole has asker ask granter for a role and a person on granter allow it.
+func allowRole(t *testing.T, asker, granter *instance, role string, sections ...string) store.RoleRequest {
+	t.Helper()
+	askForRole(t, asker, granter, role, sections...)
+	req, ok := roleWith(t, granter, store.RoleRequestIn, asker, role)
+	if !ok {
+		t.Fatalf("the %s request did not arrive", role)
+	}
+	return answerRole(t, granter, req.ID, store.RoleAllowed)
+}
+
 func answerRole(t *testing.T, in *instance, id, state string) store.RoleRequest {
 	t.Helper()
 	req, told, err := in.svc.decideRole(context.Background(), id, store.RoleDecision{State: state})

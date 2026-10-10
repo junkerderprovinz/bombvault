@@ -37,11 +37,12 @@ var allRoleSections = []string{"config", "containers", "files", "flash", "vms", 
 
 var errRoleNeedsReceiver = errors.New("set up a receiver first: it is where the other instance's copies go")
 
-// predatesRoleRequests reports whether a member said it runs a version from
-// before role requests. A version that does not parse, as an unstamped build
-// reports, counts as current.
+// predatesRoleRequests reports whether a member said it runs a release from
+// before role requests. An unstamped build counts as current, and so does a
+// build between releases: it carries the last release's number with its branch
+// appended, which says nothing about what the build can do.
 func predatesRoleRequests(version string) bool {
-	return semver.IsValid(version) && semver.Compare(semver.MajorMinor(version), roleRequestsSince) < 0
+	return semver.IsValid(version) && semver.Build(version) == "" && semver.Compare(semver.MajorMinor(version), roleRequestsSince) < 0
 }
 
 type peerSenderKey struct{}
