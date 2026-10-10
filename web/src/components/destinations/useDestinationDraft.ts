@@ -28,7 +28,7 @@ export interface FormFields {
 }
 
 /** The fields of a provider's form as rclone describes them. */
-function formFields(p: Provider, backend: Backend | undefined): FormFields {
+export function formFields(p: Provider, backend: Backend | undefined): FormFields {
   const plain = (name: string, secret = false): BackendOption => ({
     name, help: "", required: true, secret, password: secret, advanced: false, essential: true, default: "",
   });

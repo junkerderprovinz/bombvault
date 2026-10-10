@@ -3,7 +3,9 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { storageClassOf } from "../../lib/storageWrites";
 import { Card } from "../../pages/settings/shared";
+import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
+import { IconPencil } from "../navGlyphs";
 import { SelectField } from "../SelectField";
 import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
@@ -24,10 +26,10 @@ function compressionLabel(mode: Compression): TranslationKey {
 
 /**
  * ConnectionCard says what a storage location is and where it lies, and holds
- * the settings that belong to the place as a whole. The address itself is
- * shown and not edited: a location that moved would start empty.
+ * the settings that belong to the place as a whole. The address is changed
+ * in a window of its own, which `onChange` opens where the location has one.
  */
-export function ConnectionCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: number }) {
+export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdit; onChange?: () => void; hueIndex: number }) {
   const { t } = useT();
   const { location, records, can, save, follow, busy } = edit;
   const local = location.backend === "local";
@@ -72,6 +74,9 @@ export function ConnectionCard({ edit, hueIndex }: { edit: LocationEdit; hueInde
           <code dir="ltr" className="min-w-0 break-all text-start font-mono text-xs text-carbon-textSub">
             {location.where}
           </code>
+          {onChange && (
+            <Button label={t("storage.add.change")} labelKey="storage.add.change" glyph={<IconPencil />} tone="neutral" onClick={onChange} />
+          )}
         </SettingRow>
 
         {location.compression !== undefined && (

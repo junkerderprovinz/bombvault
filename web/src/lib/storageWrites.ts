@@ -6,10 +6,12 @@ import {
   getSettings,
   putSettings,
   updateDestination,
+  updateDestinationConnection,
   updateOffsiteTarget,
   updateRepo,
   type Compression,
   type Destination,
+  type DestinationConnectionEdit,
   type FollowedSetting,
   type OffsiteTarget,
   type OkEnvelope,
@@ -127,6 +129,12 @@ export async function saveLocation(
       return putSettings({ ...read.settings, ...keepColumns(patch.retention) });
     }
   }
+}
+
+/** saveConnection changes how a destination is reached. The server tries the
+ *  changed connection first and answers with a code when it refuses. */
+export function saveConnection(location: StorageLocation, change: DestinationConnectionEdit): Promise<SaveAnswer> {
+  return updateDestinationConnection(idOf(location), change);
 }
 
 /** What a section can hold for itself instead of taking the location's value. */

@@ -2503,6 +2503,8 @@ export const en = {
   "placementCode.restPathTooDeep": "A rest-server creates repositories at most two folders deep, such as /files-direct or /user/files-direct. Choose a shorter path.",
   "placementCode.repoWrongKey": "There is already a restic repository here, and this instance's key does not open it. Choose an empty place, or use the APP_KEY it was created with.",
   "placementCode.repoUnopened": "The repository was set up but does not open, so nothing was saved. Check the place and its login, then try again.",
+  "placementCode.destinationHoldsBackups": "The location cannot move while something backs up here: everything written so far would stay behind, and the next backup would run into an empty repository. Add a second storage location and point the entries at it.",
+  "placementCode.backupsNotThere": "The backups stored here do not open through the changed connection, so nothing was saved. Check what you entered. If the backups have moved, add a second storage location for the new place.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -4325,6 +4327,9 @@ export const en = {
   "storage.add.leftOutHint": "These entries chose their own storage locations, so they do not get the new one on their own. Add it on each entry's page.",
   "storage.add.save": "Save storage location",
   "storage.add.sectionsFailed": "{name} is saved but could not be switched on for {list}. Switch it on under Storage locations.",
+  "storage.conn.change": "Change connection",
+  "storage.conn.title": "Change the connection of {name}",
+  "storage.conn.save": "Test and save",
   "overview.head.needs": "one={n} thing needs you|other={n} things need you",
   "overview.head.partly": "Not everything is protected yet",
   "overview.head.notes": "Backed up, with notes",
@@ -6698,6 +6703,8 @@ export const de: Translations = {
   "placementCode.restPathTooDeep": "Ein rest-server legt Repositorys höchstens zwei Ordner tief an, etwa /files-direct oder /user/files-direct. Wähle einen kürzeren Pfad.",
   "placementCode.repoWrongKey": "Hier liegt schon ein restic-Repository, und der Schlüssel dieser Instanz öffnet es nicht. Wähle einen leeren Ort oder nimm den APP_KEY, mit dem es angelegt wurde.",
   "placementCode.repoUnopened": "Das Repository wurde angelegt, lässt sich aber nicht öffnen, deshalb wurde nichts gespeichert. Prüfe den Ort und seine Anmeldung und versuch es noch einmal.",
+  "placementCode.destinationHoldsBackups": "Der Ort lässt sich nicht verschieben, solange hierher gesichert wird: alles bisher Geschriebene bliebe liegen, und die nächste Sicherung liefe in ein leeres Repository. Leg einen zweiten Speicherort an und zeig mit den Einträgen dorthin.",
+  "placementCode.backupsNotThere": "Die Sicherungen an diesem Ort lassen sich über die geänderte Verbindung nicht öffnen, deshalb wurde nichts gespeichert. Prüf deine Eingaben. Sind die Sicherungen umgezogen, leg für den neuen Ort einen zweiten Speicherort an.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",
@@ -8492,6 +8499,9 @@ export const de: Translations = {
   "storage.add.leftOutHint": "Diese Einträge haben ihre eigenen Speicherorte gewählt und bekommen den neuen deshalb nicht von selbst. Du nimmst ihn auf der Seite des Eintrags dazu.",
   "storage.add.save": "Speicherort speichern",
   "storage.add.sectionsFailed": "{name} ist gespeichert, ließ sich aber für {list} nicht einschalten. Das holst du unter Speicherorte nach.",
+  "storage.conn.change": "Verbindung ändern",
+  "storage.conn.title": "Verbindung von {name} ändern",
+  "storage.conn.save": "Testen und speichern",
   "overview.head.needs": "one={n} Sache braucht dich|other={n} Sachen brauchen dich",
   "overview.head.partly": "Noch nicht alles geschützt",
   "overview.head.notes": "Gesichert, mit Hinweisen",

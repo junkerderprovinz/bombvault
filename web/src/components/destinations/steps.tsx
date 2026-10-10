@@ -60,7 +60,7 @@ export const DESTINATION_WORDS: DestinationWords = {
 // rclone marks user names and account ids sensitive too, which is right for
 // its logs but would hide what someone is typing. A field is masked when it
 // holds a password or a secret.
-function masked(o: BackendOption): boolean {
+export function masked(o: BackendOption): boolean {
   return o.password || (/(secret|token|key|pass)/.test(o.name) && !o.name.endsWith("_id"));
 }
 
@@ -74,7 +74,17 @@ function fitNote(t: ReturnType<typeof useT>["t"], p: Provider, label: string): {
   return { text: t("dest.note.good") + (p.lock ? ` ${t("dest.note.lock")}` : ""), tone: "ok" };
 }
 
-function DraftField({ draft, option }: { draft: DestinationDraftState; option: BackendOption }) {
+/** One field of a provider's form. `kept` stands in an empty field whose
+ *  stored value the server does not show. */
+export function DraftField({
+  draft,
+  option,
+  kept,
+}: {
+  draft: Pick<DestinationDraftState, "picked" | "settings" | "setSetting">;
+  option: BackendOption;
+  kept?: string;
+}) {
   const { t } = useT();
   const { picked, settings, setSetting } = draft;
   const o = option;
@@ -100,7 +110,7 @@ function DraftField({ draft, option }: { draft: DestinationDraftState; option: B
         type={masked(o) ? "password" : "text"}
         value={settings[o.name] ?? ""}
         onChange={(e) => setSetting(o.name, e.target.value)}
-        placeholder={o.name === "url" ? picked?.urlHint ?? o.default : o.default}
+        placeholder={kept ?? (o.name === "url" ? picked?.urlHint ?? o.default : o.default)}
         autoComplete={masked(o) ? "new-password" : "off"}
         spellCheck={false}
         dir="ltr"
