@@ -12084,7 +12084,6 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	views := make([]VMView, 0, len(infos)+len(targets))
 	viewIndex := make(map[string]int, len(infos)) // live rows only
 	hasOwnBackup := make(map[string]bool, len(infos))
-	needsRenameSuggestion := false
 	for _, vm := range infos {
 		v := VMView{Name: vmDisplayName(vm, isTrueNAS), LibvirtName: vm.Name, State: vm.State, Method: "graceful", AliasConflicts: []string{}, Aliases: []string{}}
 		var run *store.Run
@@ -12101,24 +12100,17 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], unlisted)
 		v.homeBackups = homeCounts.at(home, vm.Name)
-		own := v.LastBackup != nil
-		hasOwnBackup[vm.Name] = own
-		if !own {
-			needsRenameSuggestion = true
-		}
+		hasOwnBackup[vm.Name] = v.LastBackup != nil
 		viewIndex[vm.Name] = len(views)
 		views = append(views, v)
 	}
 
-	// The match runs over every live domain to keep it one-to-one, so a VM
-	// with backups of its own can still come back matched and is skipped here.
-	for liveName, cand := range s.suggestVMRenames(ctx, infos, orphanTargets, needsRenameSuggestion && !snapTimesFailed) {
-		if hasOwnBackup[liveName] {
-			continue
-		}
-		if idx, ok := viewIndex[liveName]; ok {
-			views[idx].RenameFrom = cand.OldName
-			views[idx].RenameReason = cand.Reason
+	if !snapTimesFailed {
+		for liveName, cand := range s.vmRenameHints(ctx, infos, orphanTargets, hasOwnBackup) {
+			if idx, ok := viewIndex[liveName]; ok {
+				views[idx].RenameFrom = cand.OldName
+				views[idx].RenameReason = cand.Reason
+			}
 		}
 	}
 

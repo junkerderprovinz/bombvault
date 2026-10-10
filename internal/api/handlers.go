@@ -747,7 +747,6 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	views := make([]containerView, 0, len(infos)+len(targets))
 	viewIndex := make(map[string]int, len(infos)) // live rows only, for the rename-suggestion backfill below
 	hasOwnBackup := make(map[string]bool, len(infos))
-	needsRenameSuggestion := false
 	for _, c := range infos {
 		v := containerView{
 			Name:           c.Name,
@@ -799,23 +798,15 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		if t, ok := byName[c.Name]; ok && !v.Self && (run != nil || shapes[t.ID] != "") {
 			v.ChangedSinceBackup = h.svc.changesSinceBackup(r.Context(), c, t, shapes[t.ID])
 		}
-		own := v.LastBackup != nil
-		hasOwnBackup[c.Name] = own
-		if !own {
-			needsRenameSuggestion = true
-		}
+		hasOwnBackup[c.Name] = v.LastBackup != nil
 		viewIndex[c.Name] = len(views)
 		views = append(views, v)
 	}
 
-	// Rename suggestions need an orphan to match and a live container without
-	// backups to offer it to. When the backup times could not be read the pass
-	// is skipped, since a wrong suggestion is worse than none.
-	if len(orphanTargets) > 0 && needsRenameSuggestion && !snapTimesFailed {
-		for liveName, cand := range h.svc.suggestRenames(infos, orphanTargets) {
-			if hasOwnBackup[liveName] {
-				continue // the gate above is a global "worth trying" switch, not a per-row filter
-			}
+	// When the backup times could not be read the rename pass is skipped, since
+	// a wrong suggestion is worse than none.
+	if !snapTimesFailed {
+		for liveName, cand := range h.svc.renameHints(infos, orphanTargets, hasOwnBackup) {
 			if idx, ok := viewIndex[liveName]; ok {
 				views[idx].RenameFrom = cand.OldName
 				views[idx].RenameReason = cand.Reason
@@ -2605,11 +2596,14 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// when the browser runs on a different one.
 	zone, offset := time.Now().Zone()
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":            true,
-		"settings":      view,
-		"hostMountRoot": h.cfg.HostMountRoot,
-		"platform":      string(h.svc.platformFn().Kind()),
-		"scheduleZone":  map[string]any{"name": zone, "offsetSeconds": offset},
+		"ok":       true,
+		"settings": view,
+		// hostSourceRoot is the host's name for the folder mounted at
+		// hostMountRoot, so a page can show a path as the server knows it.
+		"hostMountRoot":  h.cfg.HostMountRoot,
+		"hostSourceRoot": h.cfg.HostSourceRoot,
+		"platform":       string(h.svc.platformFn().Kind()),
+		"scheduleZone":   map[string]any{"name": zone, "offsetSeconds": offset},
 	})
 }
 
@@ -5375,6 +5369,46 @@ func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// maxBatchVMs is far beyond any real VM count.
+const maxBatchVMs = 1000
+
+// handleBackupVMsAll starts a batch backup of the named VMs on the server and
+// returns at once, like handleBackupAll for containers. The SPA watches
+// "batch:vms" and each "vm:<name>" over SSE.
+// POST /api/vms/backup-all with body {"names": [...]}
+func (h *Handler) handleBackupVMsAll(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Names []string `json:"names"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if len(body.Names) == 0 {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no VMs selected"})
+		return
+	}
+	if len(body.Names) > maxBatchVMs {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many VMs"})
+		return
+	}
+	for _, name := range body.Names {
+		if !validVMName(name) {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid VM name"})
+			return
+		}
+	}
+	started, err := h.svc.StartBackupVMsAll(r.Context(), body.Names)
+	if err != nil {
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.Names)}))
 }
 
 func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {

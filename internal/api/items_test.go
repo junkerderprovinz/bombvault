@@ -14,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
@@ -25,7 +26,7 @@ import (
 func newItemsRouter(t *testing.T, d *fakeServiceDocker, v virshcli.Virsh) (http.Handler, *store.Repo, *api.Service) {
 	t.Helper()
 	dir := t.TempDir()
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, DataRootSegments: []string{"appdata"}}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, v, &fakeResticEngine{})
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
@@ -220,7 +221,7 @@ func TestListItemsScheduledAndPausedStates(t *testing.T) {
 	}
 }
 
-func TestListItemsCarriesTheNewestFourteenRuns(t *testing.T) {
+func TestListItemsCarriesTheNewestFourteenBackupsAndRestores(t *testing.T) {
 	h, st, _ := newItemsRouter(t, &fakeServiceDocker{}, fakeVirsh{})
 	enableEveryKind(t, st, nil)
 
@@ -235,29 +236,38 @@ func TestListItemsCarriesTheNewestFourteenRuns(t *testing.T) {
 	if err := st.FinishRunMeasured(measured, "success", "snap", 10, "", &store.RunMetrics{SourceBytes: 4096}, ""); err != nil {
 		t.Fatal(err)
 	}
+	// A database dump before every backup, as on a container with a database:
+	// the dumps must not take half the places.
 	type run struct{ id, kind, status string }
-	seeded := []run{{measured, "backup", "success"}}
-	for i := range 16 {
+	listed := []run{{measured, "backup", "success"}}
+	for i := range 20 {
+		seedRun(t, st, plex.ID, "dbdump", "success", store.RunMeta{})
 		r := run{kind: "backup", status: "success"}
-		switch i % 4 {
+		switch i % 5 {
 		case 1:
 			r.status = "failed"
 		case 3:
-			r.kind = "dbdump"
+			r.kind = "restore"
 		}
 		r.id = seedRun(t, st, plex.ID, r.kind, r.status, store.RunMeta{})
-		seeded = append(seeded, r)
+		listed = append(listed, r)
 	}
-	seedRun(t, st, broken.ID, "backup", "failed", store.RunMeta{})
+	failed, err := st.StartRun(broken.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(failed, "failed", "", 0, "the repository is locked"); err != nil {
+		t.Fatal(err)
+	}
 
 	rows, _ := listItems(t, h)
 	runs, _ := rows["container/plex"]["runs"].([]any)
 	if len(runs) != 14 {
-		t.Fatalf("plex carries %d runs, want 14 of its %d", len(runs), len(seeded))
+		t.Fatalf("plex carries %d runs, want 14 of its %d backups and restores", len(runs), len(listed))
 	}
 	for i, raw := range runs {
 		got, _ := raw.(map[string]any)
-		want := seeded[len(seeded)-1-i]
+		want := listed[len(listed)-1-i]
 		if got["id"] != want.id || got["kind"] != want.kind || got["status"] != want.status {
 			t.Fatalf("run %d is %v, want %+v", i, got, want)
 		}
@@ -271,9 +281,16 @@ func TestListItemsCarriesTheNewestFourteenRuns(t *testing.T) {
 	if at, _ := rows["container/plex"]["lastBackup"].(float64); at <= 0 {
 		t.Fatalf("plex reports lastBackup = %v after successful backups", rows["container/plex"]["lastBackup"])
 	}
+	if _, present := rows["container/plex"]["lastRunError"]; present {
+		t.Fatalf("plex carries an error though its last backup succeeded: %v", rows["container/plex"])
+	}
 
-	if got := rows["container/broken"]; got["lastRunStatus"] != "failed" || got["lastBackup"] != float64(0) {
+	got := rows["container/broken"]
+	if got["lastRunStatus"] != "failed" || got["lastBackup"] != float64(0) {
 		t.Fatalf("an item whose only backup failed reads as %v", got)
+	}
+	if got["lastRunError"] != "the repository is locked" {
+		t.Fatalf("the failed item carries the error %v, want the one its run recorded", got["lastRunError"])
 	}
 
 	idle := rows["container/idle"]
@@ -286,6 +303,193 @@ func TestListItemsCarriesTheNewestFourteenRuns(t *testing.T) {
 	if idle["lastRunStatus"] != "" || idle["lastBackup"] != float64(0) {
 		t.Fatalf("an item without runs reads as %v", idle)
 	}
+}
+
+func TestListItemsCarriesWhatAContainerRowExplains(t *testing.T) {
+	now := backedUpInspect()
+	now.ID = "new"
+	now.Config.Image = "alpine:3.22"
+	radarr := dockercli.ContainerInfo{
+		Name: "radarr", ID: "live-radarr", State: "running", IP: "192.168.20.31", Image: "linuxserver/radarr:latest",
+		Mounts: []dockercli.MountPoint{{Source: "/mnt/user/appdata/radarr", Destination: "/config"}},
+	}
+	docker := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{{ID: "new", Name: "app", State: "running", IP: "192.168.20.40", Image: "alpine:3.22"}, radarr},
+		inspect: now,
+	}
+	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
+	enableEveryKind(t, st, nil)
+
+	app := backedUpTarget(t, st, "app")
+	if err := st.SetBackedUpShape(app.ID, api.BackedUpShapeJSON(backedUpInspect())); err != nil {
+		t.Fatal(err)
+	}
+	for _, old := range []string{"app-old", "app-older"} {
+		if _, err := st.AddAliasAt("container", old, app.ID, 1700000000); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gone, err := marshalDefinition(model.Inspect{
+		ID:     "orphan-1",
+		Config: model.Config{Image: "linuxserver/radarr:4.7"},
+		Mounts: []model.Mount{{Type: "bind", Source: "/mnt/user/appdata/radarr", Destination: "/config"}},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(gone)}); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, _ := listItems(t, h)
+	row := rows["container/app"]
+	if row["ip"] != "192.168.20.40" || row["image"] != "alpine:3.22" {
+		t.Fatalf("app reports ip %v and image %v", row["ip"], row["image"])
+	}
+	former, _ := row["formerNames"].([]any)
+	if len(former) != 2 {
+		t.Fatalf("app reports the former names %v, want both", row["formerNames"])
+	}
+	changes, _ := row["changedSinceBackup"].([]any)
+	image := false
+	for _, raw := range changes {
+		if c, _ := raw.(map[string]any); c["field"] == "image" {
+			image = true
+		}
+	}
+	if !image {
+		t.Fatalf("app reports the changes %v, want the new image among them", changes)
+	}
+	if _, present := row["renameFrom"]; present {
+		t.Fatalf("a container with a backup of its own is offered a rename: %v", row)
+	}
+
+	row = rows["container/radarr"]
+	if row["renameFrom"] != "radarr-movies" || row["renameReason"] != "appdata-bind" {
+		t.Fatalf("radarr reports the hint %v / %v, want radarr-movies by appdata-bind", row["renameFrom"], row["renameReason"])
+	}
+	for _, field := range []string{"formerNames", "changedSinceBackup", "lastRunError"} {
+		if _, present := row[field]; present {
+			t.Fatalf("radarr carries %s though it has none: %v", field, row)
+		}
+	}
+
+	row = rows["container/radarr-movies"]
+	if row["image"] != "linuxserver/radarr:4.7" {
+		t.Fatalf("a container that is gone reports the image %v, want the one of its stored definition", row["image"])
+	}
+	if _, present := row["ip"]; present {
+		t.Fatalf("a container that is gone reports an address: %v", row)
+	}
+}
+
+func TestListItemsCarriesAContainersStackAndDatabase(t *testing.T) {
+	db := imageContainer("immich_postgres", "postgres:16")
+	db.Stack = "immich"
+	app := runningContainer("immich")
+	app.Stack = "immich"
+	docker := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{db, app},
+		inspects: map[string]model.Inspect{
+			"immich_postgres": {Config: model.Config{Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"}}},
+		},
+	}
+	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
+	enableEveryKind(t, st, nil)
+	seedTarget(t, st, "immich_postgres")
+	gone, err := marshalDefinition(model.Inspect{
+		Config: model.Config{Image: "redis:7", Labels: map[string]string{"com.docker.compose.project": "immich"}},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "immich_redis", Definition: string(gone)}); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, _ := listItems(t, h)
+	for _, id := range []string{"container/immich_postgres", "container/immich", "container/immich_redis"} {
+		if got := rows[id]["stack"]; got != "immich" {
+			t.Fatalf("%s reports the stack %v, want immich", id, got)
+		}
+	}
+	row := rows["container/immich_postgres"]
+	if row["dbTier"] != "curated" || row["dbDataCoverage"] == nil {
+		t.Fatalf("the Postgres container reads as %v, want a recognised database with a coverage", row)
+	}
+	if _, off := row["dbDumpsGlobalOff"]; off {
+		t.Fatalf("the Postgres container says dumps are off for everything: %v", row)
+	}
+	if _, present := rows["container/immich"]["dbTier"]; present {
+		t.Fatalf("a container without a database carries one: %v", rows["container/immich"])
+	}
+
+	s := mustSettings(t, st)
+	s.DBDumpsEnabled = false
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	rows, _ = listItems(t, h)
+	if rows["container/immich_postgres"]["dbDumpsGlobalOff"] != true {
+		t.Fatalf("with dumps switched off the Postgres container reads as %v", rows["container/immich_postgres"])
+	}
+}
+
+func TestListItemsCarriesAVMsFormerNamesAndRenameHint(t *testing.T) {
+	virsh := &renameSuggestVirsh{
+		vms: []virshcli.VMInfo{{Name: "win11", State: "running"}, {Name: "debian", State: "shut off"}},
+		xmlByName: map[string]string{
+			"win11":  vmRenameTestDomainXML(testVMUUID),
+			"debian": vmRenameTestDomainXML("0d0d0d0d-0000-4000-8000-000000000001"),
+		},
+	}
+	h, st, _ := newItemsRouter(t, &fakeServiceDocker{}, virsh)
+	enableEveryKind(t, st, nil)
+
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "windows-11", Method: "graceful", UUID: testVMUUID}); err != nil {
+		t.Fatal(err)
+	}
+	debian, err := st.UpsertVMTarget(store.VMTarget{Name: "debian", Method: "graceful"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAliasAt("vm", "debian-12", debian.ID, 1700000000); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, _ := listItems(t, h)
+	if row := rows["vm/win11"]; row["renameFrom"] != "windows-11" || row["renameReason"] != "libvirt-uuid" {
+		t.Fatalf("win11 reports the hint %v / %v, want windows-11 by libvirt-uuid", row["renameFrom"], row["renameReason"])
+	}
+	former, _ := rows["vm/debian"]["formerNames"].([]any)
+	if len(former) != 1 || former[0] != "debian-12" {
+		t.Fatalf("debian reports the former names %v, want debian-12", rows["vm/debian"]["formerNames"])
+	}
+}
+
+func TestBackupAllVMsStartsABatch(t *testing.T) {
+	h, st, svc := newItemsRouter(t, &fakeServiceDocker{}, fakeVirsh{})
+	enableEveryKind(t, st, nil)
+
+	refused := []struct{ body, why string }{
+		{`{"names":[]}`, "no VMs selected"},
+		{`{"names":["ok","../etc"]}`, "invalid VM name"},
+	}
+	for _, c := range refused {
+		w, body := doJSON(t, h, http.MethodPost, "/api/vms/backup-all", c.body)
+		if w.Code != http.StatusOK || body["ok"] != false || body["error"] != c.why {
+			t.Fatalf("POST /api/vms/backup-all %s: %d %v, want it refused with %q", c.body, w.Code, body, c.why)
+		}
+	}
+	if svc.BackupInProgress() {
+		t.Fatal("a refused batch left a backup running")
+	}
+
+	w, body := doJSON(t, h, http.MethodPost, "/api/vms/backup-all", `{"names":["alpha","bravo"]}`)
+	if w.Code != http.StatusOK || body["ok"] != true || body["started"] != float64(2) {
+		t.Fatalf("POST /api/vms/backup-all: %d %v, want two VMs started", w.Code, body)
+	}
+	waitForBackupDone(t, svc)
 }
 
 func TestListItemsKeepsAKindThatIsOffExceptFlashAndConfig(t *testing.T) {
@@ -508,5 +712,20 @@ func TestItemRoutesRequireSession(t *testing.T) {
 		if w.Code != http.StatusOK {
 			t.Fatalf("GET %s: status %d with a session, want 200", path, w.Code)
 		}
+	}
+}
+
+func TestSettingsNameTheHostsFolderBehindTheMount(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, HostSourceRoot: "/mnt"}
+	st := newMemStore(t)
+	docker := &fakeServiceDocker{}
+	svc := api.NewService(cfg, st, docker, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, docker, svc, sched, spike.DefaultProbes()).Router()
+
+	_, body := doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if body["hostMountRoot"] != dir || body["hostSourceRoot"] != "/mnt" {
+		t.Fatalf("settings name the mount %v and the host folder %v, want %q and /mnt", body["hostMountRoot"], body["hostSourceRoot"], dir)
 	}
 }

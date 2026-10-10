@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -102,14 +103,37 @@ type backupItemView struct {
 	EffectiveSchedule schedule.EffectiveSchedule `json:"effectiveSchedule"`
 	LastBackup        int64                      `json:"lastBackup"`
 	LastRunStatus     string                     `json:"lastRunStatus"`
+	// LastRunError is why the newest backup failed, empty unless it did.
+	LastRunError string `json:"lastRunError,omitempty"`
 	// SourceBytes is what the newest measured backup read, nil before the first.
 	SourceBytes *int64 `json:"sourceBytes"`
 	// State and Installed are what Docker or libvirt say about a container or
 	// VM. Both are left out when the host was not asked or did not answer.
-	State        string           `json:"state,omitempty"`
-	Installed    *bool            `json:"installed,omitempty"`
-	Self         bool             `json:"self,omitempty"`
-	KindDisabled bool             `json:"kindDisabled,omitempty"`
+	State        string `json:"state,omitempty"`
+	Installed    *bool  `json:"installed,omitempty"`
+	Self         bool   `json:"self,omitempty"`
+	KindDisabled bool   `json:"kindDisabled,omitempty"`
+	// IP, Image and Stack are a container's address, image and compose project.
+	// A container that is gone has no address, and its image and project are
+	// the ones its stored definition names.
+	IP    string `json:"ip,omitempty"`
+	Image string `json:"image,omitempty"`
+	Stack string `json:"stack,omitempty"`
+	// The database fields are set for a live container recognised as a database
+	// server, named and valued as on a row of GET /api/containers.
+	DBTier           string `json:"dbTier,omitempty"`
+	DBDumpOff        bool   `json:"dbDumpOff,omitempty"`
+	DBDumpLabelOff   bool   `json:"dbDumpLabelOff,omitempty"`
+	DBDumpsGlobalOff bool   `json:"dbDumpsGlobalOff,omitempty"`
+	DBDataCoverage   string `json:"dbDataCoverage,omitempty"`
+	// FormerNames are the names a container or VM had before, oldest link first.
+	FormerNames []string `json:"formerNames,omitempty"`
+	// ChangedSinceBackup is how a live container differs from its last good backup.
+	ChangedSinceBackup []DefinitionChange `json:"changedSinceBackup,omitempty"`
+	// RenameFrom and RenameReason name the not-installed entry a live container
+	// or VM without backups of its own looks renamed from.
+	RenameFrom   string           `json:"renameFrom,omitempty"`
+	RenameReason string           `json:"renameReason,omitempty"`
 	Runs         []store.RunBrief `json:"runs"`
 }
 
@@ -148,6 +172,7 @@ func (hist itemHistory) row(kind, key string, f itemFacts) backupItemView {
 		EffectiveSchedule: f.Schedule,
 		LastBackup:        stamp.LastSuccessAt,
 		LastRunStatus:     stamp.LastRunStatus,
+		LastRunError:      stamp.LastRunError,
 		Runs:              []store.RunBrief{},
 	}
 	if size, ok := hist.sizes[f.ID]; ok {
@@ -236,6 +261,27 @@ func (h *Handler) backupItems(ctx context.Context, settings store.Settings) (ite
 	return items, unlisted, nil
 }
 
+// formerNames reads the names the entries of a kind had before. A failed read
+// costs the list those names and nothing else.
+func (h *Handler) formerNames(kind string) aliasIndex {
+	aliases, err := h.store.ListAliases(kind)
+	if err != nil {
+		log.Printf("api: items: the former %s names are unavailable: %v", kind, err)
+		return nil
+	}
+	return newAliasIndex(aliases)
+}
+
+// storedImageAndStack reads the image and the compose project out of a
+// container's saved definition.
+func storedImageAndStack(t store.Target) (image, stack string) {
+	var def containerDefinition
+	if t.Definition == "" || json.Unmarshal([]byte(t.Definition), &def) != nil {
+		return "", ""
+	}
+	return def.Inspect.Config.Image, def.Inspect.Config.Labels["com.docker.compose.project"]
+}
+
 // containerItems lists the containers Docker knows, each with its stored entry
 // when it has one, followed by the entries whose container is gone. listed is
 // false when Docker did not answer.
@@ -250,33 +296,67 @@ func (h *Handler) containerItems(ctx context.Context, settings store.Settings, h
 	}
 	docker := h.listDocker(ctx)
 	self := h.svc.SelfContainerName(ctx)
+	former := h.formerNames("container")
+	shapes, err := h.store.BackedUpShapes()
+	if err != nil {
+		log.Printf("api: items: the change notice is unavailable: %v", err)
+	}
+	// Recognising a database inspects the container, which is not worth it for
+	// rows the page leaves out while containers are not backed up.
+	var databases map[string]dbDumpRow
+	if settings.ContainersEnabled {
+		databases = h.svc.dbDumpRows(ctx, docker.infos, byName)
+	}
 	row := func(t store.Target) backupItemView {
 		v := hist.row("container", t.ContainerName, containerFacts(t, settings))
 		v.Self = self != "" && t.ContainerName == self
 		v.KindDisabled = !settings.ContainersEnabled
+		v.FormerNames = former[t.ID]
 		return v
 	}
 
 	installed, gone := true, false
 	rows = make([]backupItemView, 0, len(docker.infos)+len(targets))
+	hasBackup := make(map[string]bool, len(docker.infos))
 	for _, c := range docker.infos {
-		t, ok := byName[c.Name]
-		if !ok {
+		t, stored := byName[c.Name]
+		if !stored {
 			t = store.Target{ContainerName: c.Name}
 		}
 		v := row(t)
 		v.State, v.Installed = c.State, &installed
+		v.IP, v.Image, v.Stack = c.IP, c.Image, c.Stack
+		if db, ok := databases[c.Name]; ok {
+			v.DBTier, v.DBDumpLabelOff, v.DBDataCoverage = db.Tier, db.LabelOff, db.Coverage
+			v.DBDumpOff = t.DBDumpOff
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+		}
+		hasBackup[c.Name] = v.LastBackup > 0
+		if stored && !v.Self && (hasBackup[c.Name] || shapes[t.ID] != "") {
+			v.ChangedSinceBackup = h.svc.changesSinceBackup(ctx, c, t, shapes[t.ID])
+		}
 		rows = append(rows, v)
 	}
+	var notInstalled []store.Target
 	for _, t := range targets {
 		if _, live := docker.live[t.ContainerName]; live {
 			continue
 		}
 		v := row(t)
+		v.Image, v.Stack = storedImageAndStack(t)
 		if docker.answered {
 			v.Installed = &gone
+			notInstalled = append(notInstalled, t)
 		}
 		rows = append(rows, v)
+	}
+	// The live rows stand first and in Docker's order, so a hint finds its row
+	// by the container's place in that list.
+	hints := h.svc.renameHints(docker.infos, notInstalled, hasBackup)
+	for i, c := range docker.infos {
+		if hint, ok := hints[c.Name]; ok {
+			rows[i].RenameFrom, rows[i].RenameReason = hint.OldName, hint.Reason
+		}
 	}
 	return rows, docker.answered, nil
 }
@@ -303,14 +383,17 @@ func (h *Handler) vmItems(ctx context.Context, settings store.Settings, hist ite
 		}
 		answered = vErr == nil
 	}
+	former := h.formerNames("vm")
 	row := func(t store.VMTarget) backupItemView {
 		v := hist.row("vm", t.Name, vmFacts(t, settings))
 		v.KindDisabled = !settings.VMsEnabled
+		v.FormerNames = former[t.ID]
 		return v
 	}
 
 	trueNAS := h.svc.platformFn().Kind() == platform.KindTrueNAS
 	live := make(map[string]bool, len(infos))
+	hasBackup := make(map[string]bool, len(infos))
 	installed, gone := true, false
 	rows = make([]backupItemView, 0, len(infos)+len(targets))
 	for _, vm := range infos {
@@ -322,8 +405,10 @@ func (h *Handler) vmItems(ctx context.Context, settings store.Settings, hist ite
 		v := row(t)
 		v.Name = vmDisplayName(vm, trueNAS)
 		v.State, v.Installed = vm.State, &installed
+		hasBackup[vm.Name] = v.LastBackup > 0
 		rows = append(rows, v)
 	}
+	var notInstalled []store.VMTarget
 	for _, t := range targets {
 		if live[t.Name] {
 			continue
@@ -331,8 +416,15 @@ func (h *Handler) vmItems(ctx context.Context, settings store.Settings, hist ite
 		v := row(t)
 		if answered {
 			v.Installed = &gone
+			notInstalled = append(notInstalled, t)
 		}
 		rows = append(rows, v)
+	}
+	hints := h.svc.vmRenameHints(ctx, infos, notInstalled, hasBackup)
+	for i, vm := range infos {
+		if hint, ok := hints[vm.Name]; ok {
+			rows[i].RenameFrom, rows[i].RenameReason = hint.OldName, hint.Reason
+		}
 	}
 	return rows, answered || !settings.VMsEnabled, nil
 }

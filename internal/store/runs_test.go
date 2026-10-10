@@ -1753,25 +1753,28 @@ func TestRunStartsNamesKnownRunsOnly(t *testing.T) {
 	}
 }
 
-func TestRecentRunsByTargetKeepsTheNewestOfEachTarget(t *testing.T) {
+func TestRecentRunsByTargetKeepsTheNewestBackupsAndRestores(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatal(err)
 	}
 	r := store.New(db)
 
-	// Three kinds per target and repeated start times, so the cut has to rank
-	// across kinds and break ties by the row written last.
-	kinds := []string{"backup", "dbdump", "restore"}
+	// Several kinds per target and repeated start times, so the cut has to rank
+	// across kinds and break ties by the row written last. Every other run is a
+	// database dump or a prune, which must not take a place.
+	kinds := []string{"backup", "dbdump", "restore", "prune", "import", "dbdump"}
+	listed := map[string]bool{"backup": true, "import": true, "restore": true}
 	statuses := []string{"success", "failed", "cancelled"}
-	for i := range 90 {
+	for i := range 180 {
 		target := fmt.Sprintf("t%d", i%3)
 		insertRunRow(t, db, runRow{
-			id: fmt.Sprintf("r%02d", i), targetID: target, kind: kinds[(i/3)%3], status: statuses[i%3],
+			id: fmt.Sprintf("r%03d", i), targetID: target, kind: kinds[(i/3)%len(kinds)], status: statuses[i%3],
 			startedAt: int64(1000 + (i*37)%50), finishedAt: 2000,
 		})
 	}
 	insertRunRow(t, db, runRow{id: "lone", targetID: "t3", kind: "backup", status: "running", startedAt: 1})
+	insertRunRow(t, db, runRow{id: "dump", targetID: "t4", kind: "dbdump", status: "success", startedAt: 1, finishedAt: 2})
 
 	all, err := r.ListRunsFiltered(store.RunFilter{})
 	if err != nil {
@@ -1780,7 +1783,7 @@ func TestRecentRunsByTargetKeepsTheNewestOfEachTarget(t *testing.T) {
 	const perTarget = 14
 	want := map[string][]store.RunBrief{}
 	for _, run := range all {
-		if len(want[run.TargetID]) < perTarget {
+		if listed[run.Kind] && len(want[run.TargetID]) < perTarget {
 			want[run.TargetID] = append(want[run.TargetID], store.RunBrief{ID: run.ID, Kind: run.Kind, Status: run.Status, StartedAt: run.StartedAt})
 		}
 	}
@@ -1794,6 +1797,9 @@ func TestRecentRunsByTargetKeepsTheNewestOfEachTarget(t *testing.T) {
 	}
 	if len(got["t0"]) != perTarget || len(got["t3"]) != 1 {
 		t.Fatalf("t0 has %d runs and t3 has %d, want %d and 1", len(got["t0"]), len(got["t3"]), perTarget)
+	}
+	if _, listed := got["t4"]; listed {
+		t.Fatalf("a target with nothing but a database dump is listed: %+v", got["t4"])
 	}
 }
 
