@@ -54,7 +54,7 @@ async function computeStatData(): Promise<StatData> {
   };
 }
 
-export function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanced: boolean }) {
+export function StatCardsRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [data, setData] = useState<StatData | null>(null);
   const [errorPanelOpen, setErrorPanelOpen] = useState(false);
 
@@ -86,22 +86,14 @@ export function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"];
 
   return (
     <>
-      <div className={`grid grid-cols-2 gap-3 ${advanced ? "sm:grid-cols-4 lg:grid-cols-7" : "sm:grid-cols-3"}`}>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         <StatCard label={t("dashboard.statContainers")} value={data.containers} />
         <StatCard label={t("dashboard.statVMs")} value={data.vms} />
-        {advanced && (
-          <>
-            <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
-            <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
-          </>
-        )}
+        <StatCard label={t("dashboard.statActiveJobs")} value={data.activeJobs} />
+        <StatCard label={t("dashboard.statPausedJobs")} value={data.pausedJobs} />
         <FailureCounter t={t} count={data.errors} onOpen={() => setErrorPanelOpen(true)} />
-        {advanced && (
-          <>
-            <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
-            <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
-          </>
-        )}
+        <StatCard label={t("dashboard.statMissingContainers")} value={data.missingContainers} danger />
+        <StatCard label={t("dashboard.statMissingVMs")} value={data.missingVMs} />
       </div>
       {errorPanelOpen && (
         <ErrorDetailPanel onClose={() => setErrorPanelOpen(false)} onChanged={refresh} />

@@ -25,7 +25,6 @@ import type { Settings, Container, VM, FileSetView, ZFSDatasetView } from "../..
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { tLtr } from "../../../lib/ltrFragments";
-import { useAdvanced } from "../../../lib/advanced";
 import { IconBackupNow } from "../../../components/Sidebar";
 import { Card, ToggleRow, hueCounter } from "../shared";
 import { useSettings } from "../settingsStore";
@@ -587,7 +586,6 @@ export function EverythingSection({
 
 export function SchedulesPage() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   const {
     settings,
     containers,
@@ -765,7 +763,7 @@ export function SchedulesPage() {
         />
       </Card>
 
-      {advanced && <IdleCard t={t} hueIndex={nextHue()} />}
+      <IdleCard t={t} hueIndex={nextHue()} />
     </>
   );
 }

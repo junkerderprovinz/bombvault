@@ -1,17 +1,11 @@
 // @vitest-environment jsdom
-// The language and the advanced view are React state read once when their
-// provider mounts, so both providers have to follow values adopted from the
-// server in place, without a reload.
+// The language is React state read once when its provider mounts, so the
+// provider has to follow a value adopted from the server in place, without a
+// reload.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { ADOPTED_EVENT } from "./displayPrefs";
-import { AdvancedProvider, useAdvanced } from "./advanced";
 import { I18nProvider, useT } from "./i18n";
-
-function AdvancedProbe() {
-  const { advanced } = useAdvanced();
-  return <span data-testid="mode">{advanced ? "advanced" : "simple"}</span>;
-}
 
 function LangProbe() {
   const { lang } = useT();
@@ -25,27 +19,6 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("adopting the server's look in a page that already booted", () => {
-  it("switches the advanced view without a reload", () => {
-    // An empty browser mounts the simple view.
-    render(
-      <AdvancedProvider>
-        <AdvancedProbe />
-      </AdvancedProvider>
-    );
-    expect(screen.getByTestId("mode").textContent).toBe("simple");
-
-    // What sync() does a moment later: writes the server's values, then says so.
-    localStorage.setItem("bombvault.advanced", "1");
-    act(() => {
-      window.dispatchEvent(new Event(ADOPTED_EVENT));
-    });
-
-    expect(
-      screen.getByTestId("mode").textContent,
-      "the advanced view was read once at mount and has to be read again"
-    ).toBe("advanced");
-  });
-
   it("switches the language without a reload", async () => {
     render(
       <I18nProvider>
@@ -54,6 +27,7 @@ describe("adopting the server's look in a page that already booted", () => {
     );
     expect(screen.getByTestId("lang").textContent).toBe("en");
 
+    // What sync() does a moment later: writes the server's values, then says so.
     localStorage.setItem("bv-lang", "de");
     await act(async () => {
       window.dispatchEvent(new Event(ADOPTED_EVENT));

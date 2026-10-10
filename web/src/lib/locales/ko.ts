@@ -41,8 +41,6 @@ const ko: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "의견",
   "about.mail": "메일",
-  "mode.simpleView": "간단히 보기",
-  "mode.advancedView": "고급 보기",
   "nav.recovery": "복구",
   "nav.config": "셀프 백업",
 
@@ -907,7 +905,7 @@ const ko: Partial<Translations> = {
   "folders.cachedirScope": "이 컨테이너의 전체 백업에 적용되며, 이 폴더에만 적용되는 것이 아닙니다.",
   // Notifications
   "notify.title": "알림",
-  "notify.hint": "백업이 완료되면 알림을 받고, 아래에서 어떤 이벤트에 발생시킬지 선택하세요. Unraid 알림은 간단 모드에서도 작동합니다. 웹훅, Matrix, Healthchecks, 이메일 등 더 많은 전달 채널은 고급 설정에 있습니다.",
+  "notify.hint": "백업이 완료되면 알림을 받고, 아래에서 어떤 이벤트에 발생시킬지 선택하세요.",
   "notify.on": "알림",
   "notify.onNever": "안 함",
   "notify.onFailure": "실패 시에만",
@@ -1679,7 +1677,7 @@ const ko: Partial<Translations> = {
   "settings.search.count": "일치 항목 {n}개",
   "settings.search.inHint": "설명에서 찾음",
   "settings.search.page": "페이지",
-  "settings.search.notShown": "{name} 항목은 지금 화면에 표시되지 않습니다. 고급 보기에서 보이거나, 해당 기능이 켜지면 나타납니다.",
+  "settings.search.notShown": "{name} 항목은 지금 화면에 표시되지 않습니다. 해당 기능이 켜지면 나타납니다.",
   "settings.schedulesOptions": "일정 옵션",
   "settings.schedulesOffsite": "오프사이트 복제 일정",
   "settings.schedulesSelfBackup": "자체 백업 일정",

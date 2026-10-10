@@ -4,7 +4,6 @@
 // as, what never gets a switch at all and what the submit sends.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { AdvancedProvider } from "../../lib/advanced";
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { ZFSCreateItem, ZFSCreateResult, ZFSHostDataset, ZFSHostResult } from "../../lib/api";
@@ -92,11 +91,9 @@ const onAdded = vi.fn();
 function renderDialog() {
   return render(
     <I18nProvider>
-      <AdvancedProvider>
-        <ToastProvider>
-          <ZFSAddDialog onClose={onClose} onAdded={onAdded} />
-        </ToastProvider>
-      </AdvancedProvider>
+      <ToastProvider>
+        <ZFSAddDialog onClose={onClose} onAdded={onAdded} />
+      </ToastProvider>
     </I18nProvider>,
   );
 }

@@ -41,8 +41,6 @@ const sv: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Synpunkter",
   "about.mail": "E-post",
-  "mode.simpleView": "Enkel vy",
-  "mode.advancedView": "Avancerad vy",
   "nav.recovery": "Återställning",
   "nav.config": "Auto-säkerhetskopia",
 
@@ -916,7 +914,7 @@ const sv: Partial<Translations> = {
   "folders.cachedirScope": "Gäller hela säkerhetskopieringen av denna container, inte bara denna mapp.",
   // Notifications
   "notify.title": "Aviseringar",
-  "notify.hint": "Få en avisering när en säkerhetskopiering är klar, och välj nedan vilka händelser som utlöser den. Unraid-aviseringar fungerar redan i enkelt läge; fler leveranskanaler (webhook, Matrix, Healthchecks, e-post) finns under Avancerat.",
+  "notify.hint": "Få en avisering när en säkerhetskopiering är klar, och välj nedan vilka händelser som utlöser den.",
   "notify.on": "Avisera",
   "notify.onNever": "Aldrig",
   "notify.onFailure": "Endast vid fel",
@@ -1688,7 +1686,7 @@ const sv: Partial<Translations> = {
   "settings.search.count": "{n} träffar",
   "settings.search.inHint": "hittades i förklaringen",
   "settings.search.page": "Sida",
-  "settings.search.notShown": "{name} visas inte på skärmen just nu. Den visas i den avancerade vyn eller så snart funktionen den hör till är påslagen.",
+  "settings.search.notShown": "{name} visas inte på skärmen just nu. Den visas så snart funktionen den hör till är påslagen.",
   "settings.schedulesOptions": "Schemaalternativ",
   "settings.schedulesOffsite": "Off-site-replikeringsscheman",
   "settings.schedulesSelfBackup": "Schema för självsäkerhetskopiering",

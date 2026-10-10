@@ -16,7 +16,6 @@ const ms: Partial<Translations> = {
   "nav.more": "Lagi",
   "nav.mobileNavigation": "Navigasi mudah alih",
 
-  // Mode toggle
   "about.title": "Perihal BombVault",
   "about.body": "Satu kesateria, satu ekspedisi: alat sumber terbuka yang kemas, yang tidak wujud dalam bentuk yang saya mahukan, dibina sehingga tiada apa yang kurang. Semuanya percuma, tanpa akaun, tanpa telemetri, tanpa iklan dan tanpa peringkat berbayar. Tiada tanda bintang di mana-mana. Tiada apa yang boleh dibaca pernah meninggalkan tembokmu sendiri. Ditempa pada waktu malam dan hujung minggu, dengan hati dan sifat degil.",
   "about.coffee": "Kalau BombVault sudah layak mendapat tempat pada pelayan atau komputermu, lemparkan syiling kepada kesateriamu: ia membantu menampung kos dan memastikan projek terus hidup. Ia juga membuat jantung kesateria ini berdegup sedikit lebih laju. Di bawah ada tiga jalan, ambil yang sesuai untukmu.",
@@ -44,10 +43,6 @@ const ms: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Maklum balas",
   "about.mail": "E-mel",
-
-  // Mode toggle
-  "mode.simpleView": "Paparan ringkas",
-  "mode.advancedView": "Paparan lanjutan",
 
   // Dashboard
   "dashboard.title": "Papan Pemuka",
@@ -883,7 +878,7 @@ const ms: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (kelayakan yang dikekalkan)",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Pemberitahuan",
-  "notify.hint": "Dapatkan pemberitahuan apabila sandaran selesai, dan pilih di bawah acara mana yang mencetuskannya. Pemberitahuan Unraid berfungsi di sini dalam mod Ringkas; lebih banyak saluran penghantaran (webhook, Matrix, Healthchecks, e-mel) terdapat di bawah Lanjutan.",
+  "notify.hint": "Dapatkan pemberitahuan apabila sandaran selesai, dan pilih di bawah acara mana yang mencetuskannya.",
   "notify.on": "Beritahu",
   "notify.onNever": "Tidak pernah",
   "notify.onFailure": "Hanya apabila gagal",
@@ -2054,7 +2049,7 @@ const ms: Partial<Translations> = {
   "settings.search.count": "{n} padanan",
   "settings.search.inHint": "ditemukan dalam penerangan",
   "settings.search.page": "Halaman",
-  "settings.search.notShown": "{name} tidak dipaparkan pada skrin sekarang. Ia dipaparkan dalam paparan lanjutan atau sebaik sahaja ciri yang berkaitan dihidupkan.",
+  "settings.search.notShown": "{name} tidak dipaparkan pada skrin sekarang. Ia dipaparkan sebaik sahaja ciri yang berkaitan dihidupkan.",
   "settings.schedulesOptions": "Pilihan jadual",
   "settings.schedulesOffsite": "Jadual replikasi luar tapak",
   "settings.schedulesSelfBackup": "Jadual sandaran sendiri",

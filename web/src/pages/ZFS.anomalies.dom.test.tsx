@@ -6,7 +6,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
@@ -127,15 +126,13 @@ async function renderPage(search = "") {
   await act(async () => {
     render(
       <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <MemoryRouter>
-              <AnomalyProvider>
-                <ZFS />
-              </AnomalyProvider>
-            </MemoryRouter>
-          </ToastProvider>
-        </AdvancedProvider>
+        <ToastProvider>
+          <MemoryRouter>
+            <AnomalyProvider>
+              <ZFS />
+            </AnomalyProvider>
+          </MemoryRouter>
+        </ToastProvider>
       </I18nProvider>,
     );
   });

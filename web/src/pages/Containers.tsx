@@ -17,7 +17,6 @@ import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
-import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
@@ -354,7 +353,7 @@ function tickedCountFrom(r: ContainerMountsResponse): number {
 
 /** The disclosure chips of one container card: the same block both faces of
  *  the page render: the desktop row and the phone detail share the Selector,
- *  the section set, the advanced+installed gating and the "has data" dots,
+ *  the section set, the installed gate and the "has data" dots,
  *  so the two faces cannot drift apart. The panes the chips open stay at the
  *  call site (the desktop stacks them in the card; the phone detail keeps
  *  its FoldersEditor permanently open and only chips the rest).
@@ -378,7 +377,6 @@ function ContainerSectionChips({
   trailing?: ReactNode;
   showFoldersChip?: boolean;
 }) {
-  const { advanced } = useAdvanced();
   const installed = container.installed;
   // "Has data configured" dots: the same three facts the three editors
   // render on the desktop card's chips.
@@ -388,11 +386,11 @@ function ContainerSectionChips({
   const configuredDot = (
     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-statusOk shrink-0" />
   );
-  // Advanced+installed-only sections mirror the exact gate their panes sit
+  // The sections of an installed container mirror the gate their panes sit
   // behind, so a chip never exists for a pane that could not render. Backups
   // (RestorePanel) is always offered: it works on a not-installed entry too.
   const sectionItems: SelectorItem[] = [];
-  if (advanced && installed) {
+  if (installed) {
     if (showFoldersChip) sectionItems.push({ id: "folders", label: t("folders.title") });
     sectionItems.push(
       { id: "stop", label: t("stophook.title"), icon: stopHasData ? configuredDot : undefined },
@@ -647,9 +645,7 @@ function MobileContainerDetail({
         </div>
       )}
       {installed && !self && (
-        <Advanced>
-          <ExportButton name={container.name} t={t} />
-        </Advanced>
+        <ExportButton name={container.name} t={t} />
       )}
       {/* The schedule block: the include switch, then the update-after row.
           A not-installed entry keeps the switch too, same as the desktop
@@ -658,20 +654,16 @@ function MobileContainerDetail({
       {installed && (
         <div className="flex flex-col gap-2">
           <IncludeToggle name={container.name} initial={container.includeInSchedule} onSaved={onIncludeSaved} />
-          {/* Outside Advanced: the dump is on by default and changes what a
-              backup does. */}
           <DatabaseDumpRow container={container} t={t} />
-          <Advanced when={installed}>
-            <UpdateAfterBackupRow
-              name={container.name}
-              initial={container.updateAfterBackup ?? false}
-              lastUpdateCheck={container.lastUpdateCheck}
-              lastUpdateResult={container.lastUpdateResult}
-              databaseWarn={updateWarnKey(container)}
-              t={t}
-            />
-            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
-          </Advanced>
+          <UpdateAfterBackupRow
+            name={container.name}
+            initial={container.updateAfterBackup ?? false}
+            lastUpdateCheck={container.lastUpdateCheck}
+            lastUpdateResult={container.lastUpdateResult}
+            databaseWarn={updateWarnKey(container)}
+            t={t}
+          />
+          <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
           <IdleWaitLine name={container.name} />
         </div>
       )}
@@ -686,9 +678,8 @@ function MobileContainerDetail({
       {/* The same editor the desktop row expands: one tree, one queue, zero
           forks. Keyed by container identity: switching targets can
           never inherit the previous container's mirror, browse cache or save
-          queue. Advanced+installed gating mirrors the desktop row's folders
-          chip exactly. */}
-      <Advanced when={installed}>
+          queue. The installed gate mirrors the desktop row's folders chip. */}
+      {installed && (
         <FoldersEditor
           key={container.name}
           name={container.name}
@@ -700,7 +691,7 @@ function MobileContainerDetail({
           anomalyEnabled={anomalyEnabled}
           treeViewportClassName="h-auto"
         />
-      </Advanced>
+      )}
       {!self && (
         <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
       )}
@@ -716,28 +707,30 @@ function MobileContainerDetail({
           onToggle={toggleSection}
           showFoldersChip={false}
         />
-        <Advanced when={installed}>
-          <StopContainersEditor
-            name={container.name}
-            initial={container.stopContainers ?? []}
-            installedContainers={installedContainers}
-            open={openSections.has("stop")}
-            t={t}
-          />
-          <ExcludesEditor
-            name={container.name}
-            initial={container.excludes ?? []}
-            open={openSections.has("excludes")}
-            t={t}
-          />
-          <HooksEditor
-            name={container.name}
-            initialPre={container.preHook}
-            initialPost={container.postHook}
-            open={openSections.has("hooks")}
-            t={t}
-          />
-        </Advanced>
+        {installed && (
+          <>
+            <StopContainersEditor
+              name={container.name}
+              initial={container.stopContainers ?? []}
+              installedContainers={installedContainers}
+              open={openSections.has("stop")}
+              t={t}
+            />
+            <ExcludesEditor
+              name={container.name}
+              initial={container.excludes ?? []}
+              open={openSections.has("excludes")}
+              t={t}
+            />
+            <HooksEditor
+              name={container.name}
+              initialPre={container.preHook}
+              initialPost={container.postHook}
+              open={openSections.has("hooks")}
+              t={t}
+            />
+          </>
+        )}
         <RestorePanel
           name={container.name}
           preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
@@ -958,8 +951,7 @@ export function ContainerRow({
                 onSaved={onIncludeSaved}
               />
               <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} progress={progress} />
-              {/* Plain tar+xml export is an advanced-only extra. */}
-              <Advanced><ExportButton name={container.name} t={t} /></Advanced>
+              <ExportButton name={container.name} t={t} />
             </>
           )}
         </div>
@@ -1004,20 +996,20 @@ export function ContainerRow({
             initial={container.includeInSchedule}
             onSaved={onIncludeSaved}
           />
-          {/* The dump row shows in both views: it is on by default and changes
-              what a backup does, so it must not hide behind advanced. */}
           <DatabaseDumpRow container={container} t={t} />
-          <Advanced when={installed}>
-            <UpdateAfterBackupRow
-              name={container.name}
-              initial={container.updateAfterBackup ?? false}
-              lastUpdateCheck={container.lastUpdateCheck}
-              lastUpdateResult={container.lastUpdateResult}
-              databaseWarn={updateWarnKey(container)}
-              t={t}
-            />
-            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
-          </Advanced>
+          {installed && (
+            <>
+              <UpdateAfterBackupRow
+                name={container.name}
+                initial={container.updateAfterBackup ?? false}
+                lastUpdateCheck={container.lastUpdateCheck}
+                lastUpdateResult={container.lastUpdateResult}
+                databaseWarn={updateWarnKey(container)}
+                t={t}
+              />
+              <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} onSaved={onIdleWaitSaved} />
+            </>
+          )}
           <IdleWaitLine name={container.name} />
         </div>
       </div>
@@ -1047,45 +1039,43 @@ export function ContainerRow({
           trailing={lastBackupText}
         />
 
-        {/* Content panes, in a fixed, predictable order regardless of which
-            chip was clicked last — each editor now takes `open` as a PROP
-            (from the shared `openSections` above) instead of owning its own
-            internal useState; see each editor's own comment. Still gated by
-            the same `<Advanced when={installed}>` the trigger row's own
-            `sectionItems` construction mirrors, so these stay entirely
-            unmounted (no wasted fetches/effects) whenever their chip
-            couldn't have been clicked in the first place. */}
-        <Advanced when={installed}>
-          <FoldersEditor
-            name={container.name}
-            stack={container.stack}
-            open={openSections.has("folders")}
-            t={t}
-            lastBackup={container.lastBackup}
-            anomaly={anomaly}
-            anomalyEnabled={anomalyEnabled}
-          />
-          <StopContainersEditor
-            name={container.name}
-            initial={container.stopContainers ?? []}
-            installedContainers={installedContainers}
-            open={openSections.has("stop")}
-            t={t}
-          />
-          <ExcludesEditor
-            name={container.name}
-            initial={container.excludes ?? []}
-            open={openSections.has("excludes")}
-            t={t}
-          />
-          <HooksEditor
-            name={container.name}
-            initialPre={container.preHook}
-            initialPost={container.postHook}
-            open={openSections.has("hooks")}
-            t={t}
-          />
-        </Advanced>
+        {/* Content panes in a fixed order, whichever chip was clicked last.
+            They mount only for an installed container, the gate
+            `sectionItems` uses, so a pane whose chip cannot exist runs no
+            fetches or effects. */}
+        {installed && (
+          <>
+            <FoldersEditor
+              name={container.name}
+              stack={container.stack}
+              open={openSections.has("folders")}
+              t={t}
+              lastBackup={container.lastBackup}
+              anomaly={anomaly}
+              anomalyEnabled={anomalyEnabled}
+            />
+            <StopContainersEditor
+              name={container.name}
+              initial={container.stopContainers ?? []}
+              installedContainers={installedContainers}
+              open={openSections.has("stop")}
+              t={t}
+            />
+            <ExcludesEditor
+              name={container.name}
+              initial={container.excludes ?? []}
+              open={openSections.has("excludes")}
+              t={t}
+            />
+            <HooksEditor
+              name={container.name}
+              initialPre={container.preHook}
+              initialPost={container.postHook}
+              open={openSections.has("hooks")}
+              t={t}
+            />
+          </>
+        )}
         <RestorePanel
           name={container.name}
           preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
@@ -1262,19 +1252,11 @@ export function Containers() {
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
-  // Advanced-mode flag read directly (not just via the <Advanced> wrapper
-  // below): BackupOrderPanel's own hueIndex must only be resolved via
-  // `nextHue()` when the panel will ACTUALLY render — a JSX child's props
-  // (including a `hueIndex={nextHue()}` expression) evaluate eagerly as
-  // part of building the <Advanced> element, regardless of whether
-  // <Advanced> itself goes on to render null. See VMs.tsx's identical
-  // `advanced`/VMBackupOrderPanel comment for the full reasoning.
-  const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   const [containers, setContainers] = useState<Container[]>([]);
-  // The idle wait is saved by its row; the list keeps the hours, so a row drawn
-  // again after the advanced view was off shows them.
+  // The idle wait is saved by its row; the list keeps the hours, so a row
+  // that mounts again shows them.
   function idleWaitSaved(name: string, hours: number) {
     setContainers((list) => list.map((c) => (c.name === name ? { ...c, idleWaitHours: hours } : c)));
   }
@@ -1702,23 +1684,13 @@ export function Containers() {
     }
   }
 
-  // hueSeq/nextHue (GlimStone follow-up pass — see Settings.tsx's own
-  // identical hueSeq/nextHue comment for the full reasoning): a plain,
-  // freshly-reset-every-render counter assigning 0,1,2,... to this page's
-  // heading notches in the exact order the JSX below actually evaluates each
-  // `hueIndex={nextHue()}` call, which for a `cond ? nextHue() : undefined`
-  // or `cond && (<Badge hueIndex={nextHue()} />)` short-circuit is also
-  // exactly the order those notches are, or would be, painted. Three heading
-  // notches exist on this page today, in render order: BackupOrderPanel's
-  // own (advanced-only, gated on `advanced` directly rather than trusting
-  // <Advanced> below), StacksPanel's own (gated on `stackGroups.length > 0`,
-  // since that panel returns null internally with no compose stacks present),
-  // and the not-installed section's (gated on `orphans.length > 0`, naturally
-  // short-circuited by the `&&` chain around it). Every call is made DIRECTLY
-  // at its JSX call site as a plain number, never handed down as a function
-  // for a child to call from its own body later — see SummaryTier's own
-  // regression, fixed earlier this session in Dashboard.tsx, for exactly why
-  // that shape breaks the ordering.
+  // A counter reset on every render gives this page's heading notches their
+  // hue in the order the JSX below calls `nextHue()`, which is the order they
+  // paint. Three headings take one: the backup order panel, the stacks panel
+  // (only with compose stacks, since it renders nothing without) and the
+  // not-installed section (only with orphans). Each call sits at its JSX call
+  // site and passes a number. A function handed to a child would run when the
+  // child renders, which is not the page's order.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
@@ -1856,47 +1828,20 @@ export function Containers() {
           </p>
         </div>
       )}
-      {/* Backup-order panel (#119) — advanced: arrange the scheduled/batch backup
-          sequence. It and the stacks panel below are standalone feature CARDS,
-          so they sit above the toolbar; the toolbar, the bulk action bar and
-          the list are one group and stay together (jdp, live review: "im VM-Tab
-          ist die Backup-Reihenfolge über dem Filter und im Container-Tab unter
-          dem Filter. Bitte überall gleich machen." — resolved in favour of the
-          VMs page's arrangement). Before this, the filter sat at the very top
-          and these two cards wedged themselves between it and the list it
-          filters, so on a host with compose stacks the user scrolled past two
-          unrelated cards to get from "Filter" to the filtered rows.
-          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
-          <Advanced>: a JSX child's own props (this `hueIndex` expression
-          included) evaluate eagerly as part of building the <Advanced>
-          element itself, before <Advanced> ever runs its own `advanced &&
-          when` check — so an unconditional `nextHue()` here would burn a
-          slot every render regardless of whether the panel actually paints,
-          landing every later heading's notch one index late whenever
-          Advanced mode is off. Gating on the same `advanced` flag read
-          directly above keeps the counter honest.
-          MOVING THIS BLOCK IS SAFE FOR THE HUE COUNTER only because the
-          toolbar it jumped over contains no `nextHue()` call of its own, and
-          because it moved together with the stacks panel — the two kept their
-          relative order, and both still precede the not-installed section's
-          own notch. Re-check that if a notch is ever added to the toolbar. */}
+      {/* The backup order panel (#119) arranges the scheduled and batch backup
+          sequence. It and the stacks panel below are cards of their own, so
+          they sit above the toolbar, as on the VMs page; the toolbar, the bulk
+          action bar and the list are one group and stay together. The toolbar
+          takes no hue position, so the two cards and the not-installed section
+          keep theirs wherever the toolbar sits. */}
       {!loading && !error && !listChromeHidden && (
-        <Advanced>
-          <BackupOrderPanel containers={containers} t={t} hueIndex={advanced ? nextHue() : undefined} />
-        </Advanced>
+        <BackupOrderPanel containers={containers} t={t} hueIndex={nextHue()} />
       )}
 
-      {/* Stacks panel — one card per detected compose stack, above the toolbar
-          with the backup-order card (see its comment above).
-          `stackGroups.length > 0 ? nextHue() : undefined`: StacksPanel
-          returns null internally (its own groupStacks() call, computed
-          again from the identical `containers` array) when there are no
-          multi-member stacks — the common case on most setups — so an
-          ungated `nextHue()` here would burn a slot on every render where
-          the panel paints nothing, landing the not-installed heading below
-          one index late. Gating on the parent's own precomputed
-          `stackGroups` (see its own comment above) keeps the counter
-          honest, same reasoning as BackupOrderPanel's `advanced` gate. */}
+      {/* One card per detected compose stack. StacksPanel renders nothing
+          without a multi-member stack, the common case, so it takes a hue
+          position only when `stackGroups` has one. An unconditional
+          `nextHue()` would shift the not-installed heading by one. */}
       {!loading && !error && !listChromeHidden && (
         <StacksPanel
           containers={containers}
@@ -1976,17 +1921,14 @@ export function Containers() {
               shakeBackupSelected ? " glim-shake" : ""
             }`}
           />
-          {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-          <Advanced>
-            <Button
-              label={t("containers.restoreSelected")}
-              labelKey="containers.restoreSelected"
-              hueIndex={BULK_HUE.restore}
-              tone="accent"
-              onClick={() => void restoreSelected()}
-              disabled={bulkBusy || running.active}
-            />
-          </Advanced>
+          <Button
+            label={t("containers.restoreSelected")}
+            labelKey="containers.restoreSelected"
+            hueIndex={BULK_HUE.restore}
+            tone="accent"
+            onClick={() => void restoreSelected()}
+            disabled={bulkBusy || running.active}
+          />
           <Button
             label={t("containers.clearSelection")}
             labelKey="containers.clearSelection"

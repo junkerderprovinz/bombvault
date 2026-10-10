@@ -41,8 +41,6 @@ const he: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "משוב",
   "about.mail": "אימייל",
-  "mode.simpleView": "תצוגה פשוטה",
-  "mode.advancedView": "תצוגה מתקדמת",
   "nav.recovery": "התאוששות",
   "nav.config": "גיבוי עצמי",
 
@@ -916,7 +914,7 @@ const he: Partial<Translations> = {
   "folders.cachedirScope": "חל על הגיבוי המלא של המכל הזה, לא רק על תיקייה זו.",
   // Notifications
   "notify.title": "התראות",
-  "notify.hint": "קבל התראה כשגיבוי מסתיים, ובחר למטה אילו אירועים מפעילים אותה. התראות Unraid פועלות כאן גם במצב פשוט; ערוצי מסירה נוספים (webhook, Matrix, Healthchecks, דוא\"ל) נמצאים תחת מתקדם.",
+  "notify.hint": "קבל התראה כשגיבוי מסתיים, ובחר למטה אילו אירועים מפעילים אותה.",
   "notify.on": "התראה",
   "notify.onNever": "אף פעם",
   "notify.onFailure": "רק בכישלון",
@@ -1688,7 +1686,7 @@ const he: Partial<Translations> = {
   "settings.search.count": "{n} התאמות",
   "settings.search.inHint": "נמצא בהסבר",
   "settings.search.page": "עמוד",
-  "settings.search.notShown": "{name} לא מוצג במסך כרגע. הוא מופיע בתצוגה המתקדמת או כשהתכונה שהוא שייך אליה מופעלת.",
+  "settings.search.notShown": "{name} לא מוצג במסך כרגע. הוא מופיע כשהתכונה שהוא שייך אליה מופעלת.",
   "settings.schedulesOptions": "אפשרויות תזמון",
   "settings.schedulesOffsite": "תזמוני שכפול מחוץ לאתר",
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",

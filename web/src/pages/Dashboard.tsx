@@ -8,7 +8,6 @@ import { useT } from "../lib/i18n";
 // Dashboard joins Containers/Files as a stated exception in eslint.config.js.
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useIsDesktop } from "../lib/useMediaQuery";
-import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
 import { isFreshInstall } from "../lib/freshInstall";
@@ -50,10 +49,10 @@ const SUMMARY_SCHEDULE_POLL_MS = 30000;
 // by these blocks in a fixed order: identity (the page header above), next
 // run (NextRunCard dense), recent runs (RunsCard dense), repo health
 // (StorageCard dense), the anomalies card, the three safety cards
-// (RansomwareCard, advanced view only as on the desktop, then ProtectionCard
-// and CoverageCard, which stays under the protection card its hint points
-// to), the self-contained ActivityLog card, and the thumb-zone trigger that
-// joins the page column's last child (the StickyActionBar below). While a
+// (RansomwareCard, then ProtectionCard and CoverageCard, which stays under
+// the protection card its hint points to), the self-contained ActivityLog
+// card, and the thumb-zone trigger that joins the page column's last child
+// (the StickyActionBar below). While a
 // critical or warning finding is open the anomalies card moves to the top,
 // because that is what a phone is opened for. The anomalies and safety cards
 // fit a phone column as they are and render their desktop face; the other
@@ -91,7 +90,6 @@ const SUMMARY_SCHEDULE_POLL_MS = 30000;
 
 export function Dashboard() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   // The phone surface switch. Below the 48rem breakpoint the page renders the
   // glanceable Home blocks instead of the desktop customizable grid;
   // each face JSX-gated (see the Mobile Home blocks banner above for why a
@@ -385,11 +383,8 @@ export function Dashboard() {
   // reorderable / hideable block, persisted per-browser via useDashboardLayout.
   const [editing, setEditing] = useState(false);
 
-  // Ordered block list. Each block has a stable id, a label, a `render`
-  // callback that produces the node (props preserved exactly from the
-  // original render) and an advancedOnly flag. advancedOnly blocks are
-  // dropped from BOTH the render and the customize list when not in Advanced
-  // view — their order/hidden state still persists.
+  // Ordered block list. Each block has a stable id, a label and a `render`
+  // callback that produces the node.
   //
   // `render` — GlimStone follow-up pass, jdp's live review of this page:
   // "Cardtitelbadges sind falsch platziert. Alle sind nicht im
@@ -414,7 +409,6 @@ export function Dashboard() {
   const blocks: {
     id: string;
     label: string;
-    advancedOnly?: boolean;
     render: (nextHue: () => number) => React.ReactNode;
   }[] = [
     {
@@ -460,7 +454,7 @@ export function Dashboard() {
     {
       id: "stats",
       label: t("dashboard.blockStats"),
-      render: () => <StatCardsRow t={t} advanced={advanced} />,
+      render: () => <StatCardsRow t={t} />,
     },
     {
       id: "protection",
@@ -490,7 +484,6 @@ export function Dashboard() {
     {
       id: "ransomware",
       label: t("ransomware.title"),
-      advancedOnly: true,
       render: (nextHue) => (
         <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
       ),
@@ -537,7 +530,6 @@ export function Dashboard() {
     {
       id: "spike",
       label: t("spike.title"),
-      advancedOnly: true,
       render: (nextHue) => <SpikeCard t={t} hueIndex={nextHue()} />,
     },
   ];
@@ -546,14 +538,11 @@ export function Dashboard() {
   const { order, hidden, reorder, setVisibleOrder, toggleHidden, toggleWidth, getWidth, reset } =
     useDashboardLayout(defaultOrder);
 
-  // Persisted order → concrete blocks. Unknown/stale ids are guarded out, and
-  // advancedOnly blocks are dropped while not in Advanced view.
+  // A persisted order can name a block that is gone, so unknown ids drop out.
   const byId = new Map(blocks.map((b) => [b.id, b]));
   const orderedAvailable = order
     .map((id) => byId.get(id))
-    .filter(
-      (b): b is (typeof blocks)[number] => !!b && (advanced || !b.advancedOnly)
-    );
+    .filter((b): b is (typeof blocks)[number] => !!b);
   // A link to one run shows the activity log even where the layout hides it,
   // or the link would land on a page without the log it points to.
   const shown = (id: string) => !hidden.has(id) || (id === "activityLog" && logRunFilter !== null);
@@ -599,7 +588,7 @@ export function Dashboard() {
     // constant, unchanged in value — it is the page the app-wide 1152px was
     // chosen FROM, because it owns the only content dense enough to have a
     // measurable opinion about width (a md:grid-cols-2 block grid, 7-column
-    // container-query run rows, and the Advanced 7-across stat tier, whose
+    // container-query run rows, and the 7-across stat tier, whose
     // longest German label needs exactly 136px of a 136px cell at 1024px —
     // zero slack). Swapping the literal for the constant is what stops the
     // other nine pages drifting away from it again. See lib/pageShell.ts.
@@ -775,7 +764,7 @@ export function Dashboard() {
           />
           <StorageCard dense t={t} hueIndex={lead + 2} domains={statusDomains} statusLoading={statusLoading} statusFailed={statusFailed} />
           {!anomaliesLead && <AnomaliesBlock t={t} hueIndex={3} />}
-          {advanced && <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={4} />}
+          <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={4} />
           <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={5} />
           <CoverageCard t={t} coverage={coverage} loading={coverageLoading} hueIndex={6} />
           {/* The activity log reaches mobile here; the component is
@@ -856,8 +845,8 @@ export function Dashboard() {
                 isLast={i === visibleBlocks.length - 1}
                 editing={editing}
                 onGripPointerDown={(e) => drag.press(e, b.id)}
-                /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
-                   blocks in the stored order) so a single press always reorders. */
+                /* Move relative to the visible neighbour, skipping hidden blocks
+                   in the stored order, so a single press always reorders. */
                 onMoveUp={() => {
                   if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
                 }}

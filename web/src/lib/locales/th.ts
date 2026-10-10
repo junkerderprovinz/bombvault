@@ -41,8 +41,6 @@ const th: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "ความเห็น",
   "about.mail": "อีเมล",
-  "mode.simpleView": "มุมมองแบบง่าย",
-  "mode.advancedView": "มุมมองขั้นสูง",
   "nav.recovery": "การกู้คืน",
   "nav.config": "สำรองข้อมูลตัวเอง",
 
@@ -916,7 +914,7 @@ const th: Partial<Translations> = {
   "folders.cachedirScope": "ใช้กับการสำรองข้อมูลทั้งหมดของคอนเทนเนอร์นี้ ไม่ใช่เฉพาะโฟลเดอร์นี้",
   // Notifications
   "notify.title": "การแจ้งเตือน",
-  "notify.hint": "รับการแจ้งเตือนเมื่อการสำรองข้อมูลเสร็จสิ้น และเลือกด้านล่างว่าเหตุการณ์ใดเป็นตัวกระตุ้น การแจ้งเตือนของ Unraid ทำงานได้แล้วในโหมดง่าย ส่วนช่องทางการส่งเพิ่มเติม (webhook, Matrix, Healthchecks, อีเมล) อยู่ในโหมดขั้นสูง",
+  "notify.hint": "รับการแจ้งเตือนเมื่อการสำรองข้อมูลเสร็จสิ้น และเลือกด้านล่างว่าเหตุการณ์ใดเป็นตัวกระตุ้น",
   "notify.on": "แจ้งเตือน",
   "notify.onNever": "ไม่เลย",
   "notify.onFailure": "เฉพาะเมื่อล้มเหลว",
@@ -1691,7 +1689,7 @@ const th: Partial<Translations> = {
   "settings.search.count": "ตรงกัน {n} รายการ",
   "settings.search.inHint": "พบในคำอธิบาย",
   "settings.search.page": "หน้า",
-  "settings.search.notShown": "{name} ยังไม่แสดงบนหน้าจอตอนนี้ จะปรากฏในมุมมองขั้นสูง หรือเมื่อฟีเจอร์ที่เกี่ยวข้องเปิดใช้งาน",
+  "settings.search.notShown": "{name} ยังไม่แสดงบนหน้าจอตอนนี้ จะปรากฏเมื่อฟีเจอร์ที่เกี่ยวข้องเปิดใช้งาน",
   "settings.schedulesOptions": "ตัวเลือกกำหนดการ",
   "settings.schedulesOffsite": "กำหนดการจำลองข้อมูลนอกสถานที่",
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",

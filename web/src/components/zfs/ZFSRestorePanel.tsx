@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { listSnapshotFilesZFS, restoreZFS, zfsRestorePoints } from "../../lib/api";
 import type { FileEntry, ZFSDatasetView, ZFSHostDataset, ZFSRestoreAck, ZFSRestorePoint } from "../../lib/api";
-import { Advanced, useAdvanced } from "../../lib/advanced";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -75,7 +74,6 @@ export function ZFSRestorePanel({
 }) {
   const { t } = useT();
   const { push } = useToast();
-  const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { flagged } = useOpenAnomalies();
   const [open, setOpen] = useState(preselect !== undefined);
@@ -316,7 +314,7 @@ export function ZFSRestorePanel({
   }));
 
   const datasetOptions = [
-    ...(advanced ? [{ value: WHOLE_TREE, label: t("zfs.restore.wholeTree") }] : []),
+    { value: WHOLE_TREE, label: t("zfs.restore.wholeTree") },
     ...(point?.members ?? []).map((m) => ({
       value: m.dataset,
       label: `${m.dataset} (${outcomeLabel(m.dataset, m.outcome)})`,
@@ -334,9 +332,7 @@ export function ZFSRestorePanel({
     },
     { id: "newDataset", label: t("zfs.restore.newDataset"), icon: <IconAdd />, disabled: !newDatasetPossible },
     { id: "folder", label: t("zfs.restore.toFolder"), icon: <IconFolder /> },
-    ...(advanced
-      ? [{ id: "select", label: t("zfs.restore.selectFiles"), icon: <IconSelectAll />, disabled: folderOnly }]
-      : []),
+    { id: "select", label: t("zfs.restore.selectFiles"), icon: <IconSelectAll />, disabled: folderOnly },
   ];
 
   const title = t("zfs.restore.title").replace("{dataset}", item.dataset);
@@ -357,15 +353,13 @@ export function ZFSRestorePanel({
           aria-label={title}
           className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-background p-3"
         >
-          <Advanced>
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-                {t("source.label")}
-                <InfoBubble tip={t("source.hint")} />
-              </span>
-              <SourceToggle source={source} onChange={setSource} disabled={loading} domain="zfs" />
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
+              {t("source.label")}
+              <InfoBubble tip={t("source.hint")} />
             </span>
-          </Advanced>
+            <SourceToggle source={source} onChange={setSource} disabled={loading} domain="zfs" />
+          </span>
 
           {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
           {error && <p className="text-xs text-statusFail">{error}</p>}

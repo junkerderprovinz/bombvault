@@ -41,8 +41,6 @@ const es: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Comentarios",
   "about.mail": "Correo",
-  "mode.simpleView": "Vista simple",
-  "mode.advancedView": "Vista avanzada",
   "nav.recovery": "Recuperación",
   "nav.config": "Autocopia",
 
@@ -916,7 +914,7 @@ const es: Partial<Translations> = {
   "folders.cachedirScope": "Se aplica a toda la copia de seguridad de este contenedor, no solo a esta carpeta.",
   // Notifications
   "notify.title": "Notificaciones",
-  "notify.hint": "Recibe un aviso cuando termine una copia y elige abajo qué eventos lo activan. Las notificaciones de Unraid ya funcionan en modo Simple; más canales de entrega (webhook, Matrix, Healthchecks, correo) están en Avanzado.",
+  "notify.hint": "Recibe un aviso cuando termine una copia y elige abajo qué eventos lo activan.",
   "notify.on": "Notificar",
   "notify.onNever": "Nunca",
   "notify.onFailure": "Solo en caso de fallo",
@@ -1686,7 +1684,7 @@ const es: Partial<Translations> = {
   "settings.search.count": "{n} coincidencias",
   "settings.search.inHint": "encontrado en la explicación",
   "settings.search.page": "Página",
-  "settings.search.notShown": "{name} no aparece en pantalla ahora mismo. Se muestra en la vista avanzada o en cuanto se active la función a la que pertenece.",
+  "settings.search.notShown": "{name} no aparece en pantalla ahora mismo. Se muestra en cuanto se active la función a la que pertenece.",
   "settings.schedulesOptions": "Opciones de programación",
   "settings.schedulesOffsite": "Programaciones de replicación externa",
   "settings.schedulesSelfBackup": "Programación de autocopia",

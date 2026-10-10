@@ -207,9 +207,9 @@ export function ProtectionCard({
                           with no second copy anywhere would show none of them
                           and say nothing at the point where it matters most.
                           That there is no second copy is the first fact about a
-                          backup, not an advanced one, so it shows here and not
-                          only in the advanced ransomware card. A repository
-                          marked off the premises counts as that second copy. */}
+                          backup, so it shows here and not only in the
+                          ransomware card. A repository marked off the premises
+                          counts as that second copy. */}
                       {!d.offsiteConfigured && !d.offPremisesCovered ? (
                         <div className="col-start-6 min-w-0">
                           <Badge tone="fail" className="whitespace-nowrap" title={t("dashboard.noOffsiteTitle")}>

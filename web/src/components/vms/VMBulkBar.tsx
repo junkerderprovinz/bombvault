@@ -1,6 +1,5 @@
 import { BULK_HUE } from "../../lib/bulkHue";
 import { useT } from "../../lib/i18n";
-import { Advanced } from "../../lib/advanced";
 import { Button } from "../Button";
 import { busyPhraseKey } from "../../lib/progress";
 
@@ -37,17 +36,14 @@ export function VMBulkBar({
         onClick={onBackup}
         disabled={busy || running.active}
       />
-      {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-      <Advanced>
-        <Button
-          label={t("vms.restoreSelected")}
-          labelKey="vms.restoreSelected"
-          hueIndex={BULK_HUE.restore}
-          tone="accent"
-          onClick={onRestore}
-          disabled={busy || running.active}
-        />
-      </Advanced>
+      <Button
+        label={t("vms.restoreSelected")}
+        labelKey="vms.restoreSelected"
+        hueIndex={BULK_HUE.restore}
+        tone="accent"
+        onClick={onRestore}
+        disabled={busy || running.active}
+      />
       <Button
         label={t("containers.clearSelection")}
         labelKey="containers.clearSelection"

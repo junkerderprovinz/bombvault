@@ -3,7 +3,6 @@ import { RevealInput } from "../../../components/RevealInput";
 import { useReveal } from "../../../lib/useReveal";
 import { useT } from "../../../lib/i18n";
 import { tLtr } from "../../../lib/ltrFragments";
-import { useAdvanced } from "../../../lib/advanced";
 import { SpikePanel } from "../../../components/SpikePanel";
 import { Card, ToggleRow, hueCounter, type SaveState } from "../shared";
 import { VMSSHCard } from "../VMSSHCard";
@@ -17,7 +16,6 @@ import { useSettings } from "../settingsStore";
 
 export function IntegrationsPage() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   const {
     settings,
     setSettings,
@@ -40,8 +38,6 @@ export function IntegrationsPage() {
 
   return (
     <>
-      {/* `advanced &&` inline, so a hidden card spends no hue slot. */}
-      {advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
         {/* The /metrics and bearer-token syntax can sit in a bubble: it is
             used right here, not typed into another page from memory. */}
@@ -83,10 +79,7 @@ export function IntegrationsPage() {
           />
         </label>
       </Card>
-      )}
 
-      {/* The dashboard widget is an end-user feature, so it is outside the */}
-      {/* advanced view, unlike the metrics. */}
       <DashboardWidgetCard
         t={t}
         tokenSet={settings.widgetTokenSet}
@@ -106,13 +99,9 @@ export function IntegrationsPage() {
       <HomeAssistantCard hueIndex={nextHue()} />
       <NetworkCard hueIndex={nextHue()} />
 
-      {/* Host SSH shows whenever VMs or ZFS are on, since their backups need it. */}
-      {(advanced || settings.vmsEnabled || settings.zfsEnabled) && (
-        <VMSSHCard t={t} hueIndex={nextHue()} />
-      )}
+      <VMSSHCard t={t} hueIndex={nextHue()} />
 
-      {/* `advanced &&` inline, so a hidden card spends no hue slot. */}
-      {advanced && (() => {
+      {(() => {
         // One hueIdx for the heading and SpikePanel's button.
         const hueIdx = nextHue();
         return (

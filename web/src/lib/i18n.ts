@@ -100,10 +100,6 @@ export const en = {
   "about.mailSubject": "Feedback",
   "about.version": "Version",
 
-  // Mode toggle
-  "mode.simpleView": "Simple view",
-  "mode.advancedView": "Advanced view",
-
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Recovery point",
@@ -1000,7 +996,7 @@ export const en = {
   "cloud.credSets.kept": "{name} (kept credentials)",
   "rclone.save": "Save config",
   "notify.title": "Notifications",
-  "notify.hint": "Get notified when a backup finishes, and choose which events trigger it below. Unraid notifications work here in Simple mode; more delivery channels (webhook, Matrix, Healthchecks, email) live under Advanced.",
+  "notify.hint": "Get notified when a backup finishes, and choose which events trigger it below.",
   "notify.on": "Notify",
   "notify.onNever": "Never",
   "notify.onFailure": "Only on failure",
@@ -2358,7 +2354,7 @@ export const en = {
   "settings.search.count": "{n} matches",
   "settings.search.inHint": "found in the explanation",
   "settings.search.page": "Page",
-  "settings.search.notShown": "{name} is not on screen right now. It shows in the advanced view or once the feature it belongs to is on.",
+  "settings.search.notShown": "{name} is not on screen right now. It shows once the feature it belongs to is on.",
   "settings.tab.schedules": "Schedules",
   "settings.tab.offsite": "Off-site",
   "settings.tab.notifications": "Notifications",
@@ -4012,8 +4008,6 @@ export const de: Translations = {
   "about.mailSubject": "Rückmeldung",
   "about.version": "Version",
 
-  "mode.simpleView": "Einfache Ansicht",
-  "mode.advancedView": "Erweiterte Ansicht",
 
   "dashboard.title": "Dashboard",
   "dashboard.summaryHealth": "Wiederherstellungspunkt",
@@ -4850,7 +4844,7 @@ export const de: Translations = {
   "cloud.credSets.kept": "{name} (behaltene Zugangsdaten)",
   "rclone.save": "Konfig speichern",
   "notify.title": "Benachrichtigungen",
-  "notify.hint": "Lass dich benachrichtigen, wenn ein Backup fertig ist, und lege unten fest, bei welchen Ereignissen. Unraid-Benachrichtigungen funktionieren bereits im einfachen Modus; weitere Versandkanäle (Webhook, Matrix, Healthchecks, E-Mail) findest du unter Erweitert.",
+  "notify.hint": "Lass dich benachrichtigen, wenn ein Backup fertig ist, und lege unten fest, bei welchen Ereignissen.",
   "notify.on": "Benachrichtigen",
   "notify.onNever": "Nie",
   "notify.onFailure": "Nur bei Fehler",
@@ -6037,7 +6031,7 @@ export const de: Translations = {
   "settings.search.count": "{n} Treffer",
   "settings.search.inHint": "im Erklärtext gefunden",
   "settings.search.page": "Seite",
-  "settings.search.notShown": "{name} ist gerade nicht zu sehen. Es erscheint in der erweiterten Ansicht oder sobald die zugehörige Funktion an ist.",
+  "settings.search.notShown": "{name} ist gerade nicht zu sehen. Es erscheint, sobald die zugehörige Funktion an ist.",
   "settings.tab.schedules": "Zeitpläne",
   "settings.tab.offsite": "Off-site",
   "settings.tab.notifications": "Benachrichtigungen",

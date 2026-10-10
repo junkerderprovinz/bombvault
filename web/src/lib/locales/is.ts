@@ -16,7 +16,6 @@ const is: Partial<Translations> = {
   "nav.more": "Meira",
   "nav.mobileNavigation": "Farsímaflakk",
 
-  // Mode toggle
   "about.title": "Um BombVault",
   "about.body": "Einn riddari, ein krossferð: falleg opin verkfæri sem voru ekki til í þeirri mynd sem ég vildi, smíðuð þar til ekkert vantar. Allt ókeypis, án aðganga, án fjarmælinga, án auglýsinga og án greiddra þrepa. Engin stjarna neins staðar. Ekkert læsilegt fer nokkurn tíma út fyrir þína eigin múra. Smíðað á kvöldin og um helgar, með hjarta og þrjósku.",
   "about.coffee": "Ef BombVault hefur unnið sér sess á þjóninum þínum eða tölvunni, kastaðu þá mynt til riddarans þíns: það hjálpar að standa straum af kostnaðinum og heldur verkefninu lifandi. Og það lætur hjarta þessa riddara slá aðeins hraðar. Hér fyrir neðan eru þrjár leiðir, taktu þá sem hentar þér.",
@@ -44,10 +43,6 @@ const is: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Ábendingar",
   "about.mail": "Tölvupóstur",
-
-  // Mode toggle
-  "mode.simpleView": "Einföld sýn",
-  "mode.advancedView": "Ítarleg sýn",
 
   // Dashboard
   "dashboard.title": "Stjórnborð",
@@ -883,7 +878,7 @@ const is: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (varðveitt aðgangsgögn)",
   "rclone.save": "Vista stillingu",
   "notify.title": "Tilkynningar",
-  "notify.hint": "Fáðu tilkynningu þegar afritun lýkur, og veldu hér að neðan hvaða atburðir kveikja á henni. Unraid-tilkynningar virka hér í einfalda hamnum; fleiri sendileiðir (webhook, Matrix, Healthchecks, tölvupóstur) eru undir Ítarlegt.",
+  "notify.hint": "Fáðu tilkynningu þegar afritun lýkur, og veldu hér að neðan hvaða atburðir kveikja á henni.",
   "notify.on": "Tilkynna",
   "notify.onNever": "Aldrei",
   "notify.onFailure": "Aðeins þegar mistekst",
@@ -2054,7 +2049,7 @@ const is: Partial<Translations> = {
   "settings.search.count": "{n} niðurstöður",
   "settings.search.inHint": "fannst í skýringunni",
   "settings.search.page": "Síða",
-  "settings.search.notShown": "{name} sést ekki á skjánum núna. Það birtist í ítarlegri sýn eða um leið og eiginleikinn sem það tilheyrir er kveiktur.",
+  "settings.search.notShown": "{name} sést ekki á skjánum núna. Það birtist um leið og eiginleikinn sem það tilheyrir er kveiktur.",
   "settings.schedulesOptions": "Valkostir tímaáætlunar",
   "settings.schedulesOffsite": "Tímaáætlanir fjarlægrar afritunar",
   "settings.schedulesSelfBackup": "Tímaáætlun sjálfvirkrar afritunar",

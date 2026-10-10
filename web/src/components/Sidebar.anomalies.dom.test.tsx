@@ -10,7 +10,6 @@ import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { I18nProvider, en } from "../lib/i18n";
-import { AdvancedProvider } from "../lib/advanced";
 import type { AnomalySummary, Settings } from "../lib/api";
 
 vi.mock("../lib/api", async () => {
@@ -46,11 +45,9 @@ function renderRail(s: Settings | null) {
   return render(
     <MemoryRouter initialEntries={["/"]}>
       <I18nProvider>
-        <AdvancedProvider>
-          <AnomalyProvider>
-            <Sidebar settings={s} authEnabled={false} />
-          </AnomalyProvider>
-        </AdvancedProvider>
+        <AnomalyProvider>
+          <Sidebar settings={s} authEnabled={false} />
+        </AnomalyProvider>
       </I18nProvider>
     </MemoryRouter>
   );

@@ -72,8 +72,6 @@ NAV = [
     "IconConfig",
     "IconAnomalies",
     "IconGear",
-    "IconViewSimple",
-    "IconViewAdvanced",
     "IconMore",
     "IconFolder",
     "IconLocal",

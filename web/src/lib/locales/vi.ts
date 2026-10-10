@@ -41,8 +41,6 @@ const vi: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Góp ý",
   "about.mail": "Email",
-  "mode.simpleView": "Chế độ xem đơn giản",
-  "mode.advancedView": "Chế độ xem nâng cao",
   "nav.recovery": "Khôi phục",
   "nav.config": "Tự sao lưu",
 
@@ -907,7 +905,7 @@ const vi: Partial<Translations> = {
   "folders.cachedirScope": "Áp dụng cho toàn bộ bản sao lưu của container này, không chỉ thư mục này.",
   // Notifications
   "notify.title": "Thông báo",
-  "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất, và chọn bên dưới sự kiện nào sẽ kích hoạt nó. Thông báo Unraid đã hoạt động ở chế độ Đơn giản; thêm các kênh gửi (webhook, Matrix, Healthchecks, email) có trong phần Nâng cao.",
+  "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất, và chọn bên dưới sự kiện nào sẽ kích hoạt nó.",
   "notify.on": "Thông báo",
   "notify.onNever": "Không bao giờ",
   "notify.onFailure": "Chỉ khi thất bại",
@@ -1679,7 +1677,7 @@ const vi: Partial<Translations> = {
   "settings.search.count": "{n} kết quả khớp",
   "settings.search.inHint": "tìm thấy trong phần giải thích",
   "settings.search.page": "Trang",
-  "settings.search.notShown": "{name} hiện không hiển thị trên màn hình. Nó sẽ hiện trong chế độ xem nâng cao hoặc ngay khi tính năng mà nó thuộc về được bật.",
+  "settings.search.notShown": "{name} hiện không hiển thị trên màn hình. Nó sẽ hiện ngay khi tính năng mà nó thuộc về được bật.",
   "settings.schedulesOptions": "Tùy chọn lịch trình",
   "settings.schedulesOffsite": "Lịch sao chép ngoài site",
   "settings.schedulesSelfBackup": "Lịch tự sao lưu",

@@ -16,7 +16,6 @@ const lt: Partial<Translations> = {
   "nav.more": "Daugiau",
   "nav.mobileNavigation": "Mobilioji navigacija",
 
-  // Mode toggle
   "about.title": "Apie BombVault",
   "about.body": "Vienas riteris, vienas žygis: tvarkingi atvirojo kodo įrankiai, kurių tokios formos, kokios norėjau, nebuvo, statomi tol, kol nieko netrūks. Viskas nemokama, be paskyrų, be telemetrijos, be reklamų ir be mokamų lygių. Niekur jokios žvaigždutės. Niekas skaitomo niekada neišeina už tavo paties sienų. Kalta vakarais ir savaitgaliais, su širdimi ir užsispyrimu.",
   "about.coffee": "Jei BombVault užsitarnavo vietą tavo serveryje ar kompiuteryje, mesk monetą savo riteriui: ji padeda padengti išlaidas ir palaiko projektą gyvą. Ir dėl jos šito riterio širdis plaka šiek tiek greičiau. Žemiau yra trys keliai, rinkis tau tinkamą.",
@@ -44,10 +43,6 @@ const lt: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Atsiliepimas",
   "about.mail": "El. paštas",
-
-  // Mode toggle
-  "mode.simpleView": "Paprastas rodinys",
-  "mode.advancedView": "Išplėstinis rodinys",
 
   // Dashboard
   "dashboard.title": "Skydelis",
@@ -883,7 +878,7 @@ const lt: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (išsaugoti prisijungimo duomenys)",
   "rclone.save": "Išsaugoti konfigūraciją",
   "notify.title": "Pranešimai",
-  "notify.hint": "Gaukite pranešimą, kai baigsis atsarginė kopija, ir apačioje pasirinkite, kokie įvykiai jį suaktyvina. Unraid pranešimai čia veikia paprastu režimu; daugiau pristatymo kanalų (webhook, Matrix, Healthchecks, el. paštas) yra Išplėstiniame skirtuke.",
+  "notify.hint": "Gaukite pranešimą, kai baigsis atsarginė kopija, ir apačioje pasirinkite, kokie įvykiai jį suaktyvina.",
   "notify.on": "Pranešti",
   "notify.onNever": "Niekada",
   "notify.onFailure": "Tik nesėkmės atveju",
@@ -2054,7 +2049,7 @@ const lt: Partial<Translations> = {
   "settings.search.count": "{n} atitikmenys",
   "settings.search.inHint": "rasta paaiškinime",
   "settings.search.page": "Puslapis",
-  "settings.search.notShown": "{name} šiuo metu nerodomas ekrane. Jis rodomas išplėstiniame rodinyje arba kai įjungiama funkcija, kuriai jis priklauso.",
+  "settings.search.notShown": "{name} šiuo metu nerodomas ekrane. Jis rodomas, kai įjungiama funkcija, kuriai jis priklauso.",
   "settings.schedulesOptions": "Tvarkaraščio parinktys",
   "settings.schedulesOffsite": "Nuotolinio replikavimo tvarkaraščiai",
   "settings.schedulesSelfBackup": "Savarankiškos atsargos tvarkaraštis",

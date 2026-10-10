@@ -41,8 +41,6 @@ const tr: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Geri bildirim",
   "about.mail": "E-posta",
-  "mode.simpleView": "Basit görünüm",
-  "mode.advancedView": "Gelişmiş görünüm",
   "nav.recovery": "Kurtarma",
   "nav.config": "Öz yedek",
 
@@ -916,7 +914,7 @@ const tr: Partial<Translations> = {
   "folders.cachedirScope": "Bu kapsayıcının yedeklemesinin tamamına uygulanır, yalnızca bu klasöre değil.",
   // Notifications
   "notify.title": "Bildirimler",
-  "notify.hint": "Bir yedekleme tamamlandığında bildirim alın ve aşağıda hangi olayların bunu tetikleyeceğini seçin. Unraid bildirimleri Basit modda zaten çalışır; daha fazla iletim kanalı (webhook, Matrix, Healthchecks, e-posta) Gelişmiş bölümünde bulunur.",
+  "notify.hint": "Bir yedekleme tamamlandığında bildirim alın ve aşağıda hangi olayların bunu tetikleyeceğini seçin.",
   "notify.on": "Bildir",
   "notify.onNever": "Asla",
   "notify.onFailure": "Yalnızca başarısızlıkta",
@@ -1688,7 +1686,7 @@ const tr: Partial<Translations> = {
   "settings.search.count": "{n} eşleşme",
   "settings.search.inHint": "açıklamada bulundu",
   "settings.search.page": "Sayfa",
-  "settings.search.notShown": "{name} şu anda ekranda görünmüyor. Gelişmiş görünümde görünür veya ait olduğu özellik açıldığında ortaya çıkar.",
+  "settings.search.notShown": "{name} şu anda ekranda görünmüyor. Ait olduğu özellik açıldığında görünür.",
   "settings.schedulesOptions": "Zamanlama seçenekleri",
   "settings.schedulesOffsite": "Site dışı çoğaltma zamanlamaları",
   "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",

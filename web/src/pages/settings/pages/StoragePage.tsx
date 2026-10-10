@@ -9,14 +9,12 @@ import { InfoBubble } from "../../../components/InfoBubble";
 import { Button } from "../../../components/Button";
 import { useT } from "../../../lib/i18n";
 import { tLtr } from "../../../lib/ltrFragments";
-import { useAdvanced } from "../../../lib/advanced";
 import { IconDownload } from "../../../components/Sidebar";
 import { Card, ToggleRow, hueCounter, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
 
 export function StoragePage() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   const {
     settings,
     setSettings,
@@ -175,10 +173,6 @@ export function StoragePage() {
 
       {/* The restic cache under /config survives restarts and would grow without */}
       {/* bound; per-repository caches are evicted after scheduled runs. */}
-      {/* `advanced &&` inline rather than the <Advanced> wrapper: the wrapper
-          takes its children already built, so nextHue() would spend a hue slot
-          on a hidden card and shift every later heading on the page. */}
-      {advanced && (
       <Card title={t("settings.cacheTitle")} hint={tLtr(t, "settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
@@ -199,13 +193,10 @@ export function StoragePage() {
           />
         </label>
       </Card>
-      )}
 
       {/* How much CPU a backup may take (#189), beside the cache card because
           both say how much of this machine BombVault may use. The cap reaches
-          each restic child as GOMAXPROCS; without it restic takes every core.
-          `advanced &&` inline for the same reason as the cache card. */}
-      {advanced && (
+          each restic child as GOMAXPROCS; without it restic takes every core. */}
       <Card title={t("settings.coresTitle")} hint={t("settings.coresHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.coresLabel")}</span>
@@ -223,7 +214,6 @@ export function StoragePage() {
           />
         </label>
       </Card>
-      )}
 
       {/* Plain-export encryption (age) and the repositories' own encryption. The */}
       {/* switches save at once; the recipients field is debounced. */}

@@ -11,7 +11,6 @@ import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useReorder } from "../lib/dragLift";
-import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -359,7 +358,6 @@ export function VMRow({
             source-aware delete for the off-site copy. */}
         {installed ? (
           <div className="ms-auto flex items-center gap-4 shrink-0">
-            {/* Never behind Advanced: it decides whether the VM is shut down. */}
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t("vm.method")}
@@ -374,8 +372,7 @@ export function VMRow({
                 onSaved={onIncludeSaved}
               />
               <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
-              {/* Plain export is an advanced-only extra. */}
-              <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
+              <VMExportButton name={vm.libvirtName} t={t} />
             </div>
           </div>
         ) : (
@@ -461,9 +458,7 @@ export function VMRow({
           </span>
         </div>
 
-        <Advanced>
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </Advanced>
+        <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
         <VMRestorePanel
           name={vm.libvirtName}
@@ -872,11 +867,6 @@ export function VMs() {
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
-  // Read directly rather than relying on <Advanced>: the order panel's
-  // hueIndex={nextHue()} is evaluated when the element is built, even if
-  // <Advanced> then renders nothing, so nextHue() may only run when the panel
-  // will render.
-  const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   // Any backup, restore or replication in flight disables the bulk start
@@ -1151,25 +1141,12 @@ export function VMs() {
         </div>
       )}
 
-      {/* VM backup-order panel (#119, VMs), advanced and desktop-only: a
-          drag-reorder editor has no phone face (mobile edits each VM's
-          schedule on the card's own sheet instead), and the phone never
-          mounts it, exactly one face per width.
-          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
-          <Advanced>: a JSX child's own props (this `hueIndex` expression
-          included) evaluate eagerly as part of building the <Advanced>
-          element itself, before <Advanced> ever runs its own `advanced &&
-          when` check, so an unconditional `nextHue()` here would burn a
-          slot every render regardless of whether the panel actually paints,
-          landing the not-installed section's own notch below one index late
-          whenever Advanced mode is off. Gating on the same `advanced` flag
-          read directly above keeps the counter honest: only increment for a
-          notch that will actually render, exactly like Dashboard.tsx's own
-          advancedOnly blocks pre-filtering before ever calling nextHue(). */}
+      {/* VM backup-order panel (#119, VMs), desktop-only: a drag-reorder
+          editor has no phone face (mobile edits each VM's schedule on the
+          card's own sheet instead), and the phone never mounts it, exactly
+          one face per width. */}
       {isDesktop && !loading && !error && (
-        <Advanced>
-          <VMBackupOrderPanel vms={vms} t={t} hueIndex={advanced ? nextHue() : undefined} />
-        </Advanced>
+        <VMBackupOrderPanel vms={vms} t={t} hueIndex={nextHue()} />
       )}
 
       {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all.
@@ -1422,7 +1399,7 @@ function MobileVMsBlock({
   /** The include-all switch's refresh: the page reloads its list. */
   onIncludeAllChanged: () => void;
   onIncludeSaved: (libvirtName: string, include: boolean) => void;
-  /** The full list payload, for the advanced backup order panel. */
+  /** The full list payload, for the backup order panel. */
   vms: VM[];
   anomalyOf: (libvirtName: string) => AnomalyItem | undefined;
   anomalyEnabled: boolean;
@@ -1574,9 +1551,7 @@ function MobileVMsBlock({
           )}
 
           {!loading && !error && !listChromeHidden && (
-            <Advanced>
-              <VMBackupOrderPanel vms={vms} t={t} hueIndex={0} />
-            </Advanced>
+            <VMBackupOrderPanel vms={vms} t={t} hueIndex={0} />
           )}
 
           {!loading && !listChromeHidden && selected.size > 0 && (
@@ -1861,9 +1836,7 @@ function MobileVMDetail({
                 if (!sheetDismissed.current) setSheetOpen(true);
               }}
             />
-            <Advanced>
-              <VMExportButton name={vm.libvirtName} t={t} />
-            </Advanced>
+            <VMExportButton name={vm.libvirtName} t={t} />
           </div>
         </div>
       )}
@@ -1901,9 +1874,7 @@ function MobileVMDetail({
             {`${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`}
           </span>
         </div>
-        <Advanced>
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </Advanced>
+        <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
         <VMRestorePanel
           name={vm.libvirtName}

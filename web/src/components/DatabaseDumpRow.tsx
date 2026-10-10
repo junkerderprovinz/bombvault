@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { setDbDumpEngine, setDbDumpOff, type Container, type DbEngine } from "../lib/api";
-import { useAdvanced } from "../lib/advanced";
 import { coverageKey, dumpLeftRunning, dumpWasCancelled, ENGINE_NAMES, remedyKey } from "../lib/dbdump";
 import { humanBytes } from "../lib/forecast";
 import type { TranslationKey, useT } from "../lib/i18n";
@@ -30,7 +29,6 @@ const OFF_CONFIRM_KEYS: Record<string, TranslationKey> = {
  * sends states and numbers; every sentence is built here.
  */
 export function DatabaseDumpRow({ container, t }: { container: Container; t: T }) {
-  const { advanced } = useAdvanced();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const lookalike = container.dbTier === "lookalike";
@@ -166,7 +164,7 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
         disabled={busy || forcedOff || forcedOn}
         shakeNonce={shake}
       />
-      {lookalike && on && advanced && (
+      {lookalike && on && (
         <SelectField
           label={t("dbdump.engineLabel")}
           value={chosenEngine}

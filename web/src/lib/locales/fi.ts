@@ -41,8 +41,6 @@ const fi: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Palautetta",
   "about.mail": "Sähköposti",
-  "mode.simpleView": "Yksinkertainen näkymä",
-  "mode.advancedView": "Edistynyt näkymä",
   "nav.recovery": "Palautus",
   "nav.config": "Itsevarmuuskopio",
 
@@ -916,7 +914,7 @@ const fi: Partial<Translations> = {
   "folders.cachedirScope": "Koskee koko tämän kontin varmuuskopiota, ei vain tätä kansiota.",
   // Notifications
   "notify.title": "Ilmoitukset",
-  "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu, ja valitse alta mitkä tapahtumat sen laukaisevat. Unraid-ilmoitukset toimivat jo yksinkertaisessa tilassa; lisää toimituskanavia (webhook, Matrix, Healthchecks, sähköposti) löytyy Lisäasetuksista.",
+  "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu, ja valitse alta mitkä tapahtumat sen laukaisevat.",
   "notify.on": "Ilmoita",
   "notify.onNever": "Ei koskaan",
   "notify.onFailure": "Vain epäonnistuessa",
@@ -1688,7 +1686,7 @@ const fi: Partial<Translations> = {
   "settings.search.count": "{n} osumaa",
   "settings.search.inHint": "löytyi selitteestä",
   "settings.search.page": "Sivu",
-  "settings.search.notShown": "{name} ei ole juuri nyt näkyvissä. Se näkyy edistyneessä näkymässä tai heti, kun siihen liittyvä ominaisuus on päällä.",
+  "settings.search.notShown": "{name} ei ole juuri nyt näkyvissä. Se näkyy heti, kun siihen liittyvä ominaisuus on päällä.",
   "settings.schedulesOptions": "Aikatauluasetukset",
   "settings.schedulesOffsite": "Etäreplikoinnin aikataulut",
   "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",

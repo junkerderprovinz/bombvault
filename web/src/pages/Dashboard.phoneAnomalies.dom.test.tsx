@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 // The order of the phone Home. Open critical and warning findings are what a
 // phone is opened for, so while any are open the anomalies card leads the
-// column; otherwise it waits below storage. The safety cards follow it, with
-// ransomware protection only in the advanced view, as on the desktop. Either
+// column; otherwise it waits below storage. The safety cards follow it. Either
 // way the hues run down the column in order, as static positions, and every
 // card appears once.
 //
@@ -13,7 +12,6 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import { AdvancedProvider } from "../lib/advanced";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 import type { AnomalySummary, DomainStatus } from "../lib/api";
@@ -80,13 +78,11 @@ beforeEach(() => {
     }
   );
   desktopMatches = false;
-  localStorage.setItem("bombvault.advanced", "1");
 });
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  localStorage.removeItem("bombvault.advanced");
 });
 
 function summary(open: AnomalySummary["open"], enabled = true): AnomalySummary {
@@ -111,11 +107,9 @@ async function renderHome(open: AnomalySummary["open"], enabled = true) {
     <MemoryRouter>
       <I18nProvider>
         <ToastProvider>
-          <AdvancedProvider>
-            <AnomalyProvider>
-              <Dashboard />
-            </AnomalyProvider>
-          </AdvancedProvider>
+          <AnomalyProvider>
+            <Dashboard />
+          </AnomalyProvider>
         </ToastProvider>
       </I18nProvider>
     </MemoryRouter>
@@ -182,18 +176,6 @@ describe("the phone Home's order", () => {
       en["dashboard.recentRuns"],
       en["dashboard.storageTitle"],
       en["anomaly.title"],
-    ]);
-  });
-
-  it("leaves ransomware protection to the advanced view and keeps the other hues in place", async () => {
-    localStorage.removeItem("bombvault.advanced");
-    await renderHome({ critical: 0, warning: 0, info: 0 });
-    expect(column()).toEqual([
-      { title: en["dashboard.summaryNextBackup"], hue: "var(--rb-0)" },
-      { title: en["dashboard.recentRuns"], hue: "var(--rb-1)" },
-      { title: en["dashboard.storageTitle"], hue: "var(--rb-2)" },
-      { title: en["anomaly.title"], hue: "var(--rb-3)" },
-      ...safetyCards.slice(1),
     ]);
   });
 });

@@ -16,7 +16,6 @@ const fa: Partial<Translations> = {
   "nav.more": "بیشتر",
   "nav.mobileNavigation": "ناوبری موبایل",
 
-  // Mode toggle
   "about.title": "درباره BombVault",
   "about.body": "یک شوالیه، یک لشکرکشی: ابزارهای متن‌باز خوش‌ساخت که در شکلی که می‌خواستم وجود نداشتند و ساخته می‌شوند تا چیزی کم نماند. همه‌چیز رایگان، بدون حساب کاربری، بدون تله‌متری، بدون تبلیغات و بدون نسخهٔ پولی. هیچ ستاره‌ای در هیچ‌کجا. هیچ چیز خواندنی هرگز از دیوارهای خودت بیرون نمی‌رود. در شب‌ها و آخر هفته‌ها ساخته شده، با دل و یک‌دندگی.",
   "about.coffee": "اگر BombVault جایش را روی سرور یا رایانه‌ات به دست آورده، سکه‌ای به شوالیه‌ات بینداز: به پوشش هزینه‌ها کمک می‌کند و پروژه را زنده نگه می‌دارد. و قلب این شوالیه را کمی تندتر می‌زند. پایین سه راه هست، هرکدام که برایت مناسب است.",
@@ -44,10 +43,6 @@ const fa: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "بازخورد",
   "about.mail": "ایمیل",
-
-  // Mode toggle
-  "mode.simpleView": "نمای ساده",
-  "mode.advancedView": "نمای پیشرفته",
 
   // Dashboard
   "dashboard.title": "داشبورد",
@@ -883,7 +878,7 @@ const fa: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (اطلاعات ورود نگه‌داشته‌شده)",
   "rclone.save": "ذخیره پیکربندی",
   "notify.title": "اعلان‌ها",
-  "notify.hint": "با پایان یک پشتیبان‌گیری اعلان دریافت کنید، و در زیر انتخاب کنید کدام رویدادها آن را فعال کنند. اعلان‌های Unraid در حالت ساده اینجا کار می‌کنند؛ کانال‌های تحویل بیشتر (webhook، Matrix، Healthchecks، ایمیل) زیر پیشرفته قرار دارند.",
+  "notify.hint": "با پایان یک پشتیبان‌گیری اعلان دریافت کنید، و در زیر انتخاب کنید کدام رویدادها آن را فعال کنند.",
   "notify.on": "اعلان بده",
   "notify.onNever": "هرگز",
   "notify.onFailure": "فقط در صورت خطا",
@@ -2054,7 +2049,7 @@ const fa: Partial<Translations> = {
   "settings.search.count": "{n} مورد",
   "settings.search.inHint": "در توضیح پیدا شد",
   "settings.search.page": "صفحه",
-  "settings.search.notShown": "{name} در حال حاضر روی صفحه نیست. در نمای پیشرفته نشان داده می‌شود یا وقتی ویژگی مربوط به آن روشن باشد.",
+  "settings.search.notShown": "{name} در حال حاضر روی صفحه نیست. وقتی ویژگی مربوط به آن روشن باشد نشان داده می‌شود.",
   "settings.schedulesOptions": "گزینه‌های زمان‌بندی",
   "settings.schedulesOffsite": "زمان‌بندی‌های همانندسازی خارج از محل",
   "settings.schedulesSelfBackup": "زمان‌بندی پشتیبان‌گیری خودکار",

@@ -13,7 +13,7 @@ type T = ReturnType<typeof useT>["t"];
 // UpdateAfterBackupRow toggles the per-container "update after successful backup"
 // opt-in (#52): after a backup, BombVault pulls the image and recreates the
 // container only when a newer image is available (the fresh backup is the safety
-// net). Off by default; advanced-only.
+// net). Off by default.
 //
 // (jdp, live-review): the explanation used to sit as a
 // permanently-visible caption under the label — moved into a real "(i)"

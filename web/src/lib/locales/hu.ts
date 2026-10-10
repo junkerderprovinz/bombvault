@@ -41,8 +41,6 @@ const hu: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Visszajelzés",
   "about.mail": "E-mail",
-  "mode.simpleView": "Egyszerű nézet",
-  "mode.advancedView": "Speciális nézet",
   "nav.recovery": "Helyreállítás",
   "nav.config": "Önmentés",
 
@@ -916,7 +914,7 @@ const hu: Partial<Translations> = {
   "folders.cachedirScope": "A konténer teljes biztonsági mentésére vonatkozik, nem csak erre a mappára.",
   // Notifications
   "notify.title": "Értesítések",
-  "notify.hint": "Kapj értesítést, amikor egy biztonsági mentés befejeződik, és válaszd ki alább, mely események váltják ki. Az Unraid-értesítések már Egyszerű módban is működnek; további kézbesítési csatornák (webhook, Matrix, Healthchecks, e-mail) a Speciálisban találhatók.",
+  "notify.hint": "Kapj értesítést, amikor egy biztonsági mentés befejeződik, és válaszd ki alább, mely események váltják ki.",
   "notify.on": "Értesítés",
   "notify.onNever": "Soha",
   "notify.onFailure": "Csak hiba esetén",
@@ -1691,7 +1689,7 @@ const hu: Partial<Translations> = {
   "settings.search.count": "{n} találat",
   "settings.search.inHint": "megtalálva a magyarázatban",
   "settings.search.page": "Oldal",
-  "settings.search.notShown": "A(z) {name} most nem látható a képernyőn. A speciális nézetben jelenik meg, vagy amint bekapcsolod a funkciót, amelyhez tartozik.",
+  "settings.search.notShown": "A(z) {name} most nem látható a képernyőn. Megjelenik, amint bekapcsolod a funkciót, amelyhez tartozik.",
   "settings.schedulesOptions": "Ütemezési beállítások",
   "settings.schedulesOffsite": "Telephelyen kívüli replikációs ütemezések",
   "settings.schedulesSelfBackup": "Önmentési ütemezés",

@@ -16,7 +16,6 @@ const sk: Partial<Translations> = {
   "nav.more": "Viac",
   "nav.mobileNavigation": "Mobilná navigácia",
 
-  // Mode toggle
   "about.title": "O aplikácii BombVault",
   "about.body": "Jeden rytier, jedna výprava: pekné open source nástroje, ktoré v podobe, akú som chcel, neexistovali, stavané, kým nič nechýba. Všetko zadarmo, bez účtov, bez telemetrie, bez reklám a bez platených verzií. Nikde žiadna hviezdička. Nič čitateľné nikdy neopustí tvoje vlastné múry. Kované po večeroch a cez víkendy, so srdcom a tvrdohlavosťou.",
   "about.coffee": "Ak si BombVault zaslúžil miesto na tvojom serveri alebo počítači, hoď groš svojmu rytierovi: pomôže pokryť náklady a udrží projekt nažive. A srdce tohto rytiera vďaka tomu bije o čosi rýchlejšie. Nižšie sú tri cesty, vyber si tú, ktorá ti vyhovuje.",
@@ -44,10 +43,6 @@ const sk: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Spätná väzba",
   "about.mail": "E-mail",
-
-  // Mode toggle
-  "mode.simpleView": "Jednoduché zobrazenie",
-  "mode.advancedView": "Pokročilé zobrazenie",
 
   // Dashboard
   "dashboard.title": "Prehľad",
@@ -883,7 +878,7 @@ const sk: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (ponechané poverenia)",
   "rclone.save": "Uložiť konfiguráciu",
   "notify.title": "Upozornenia",
-  "notify.hint": "Dostávajte upozornenie po dokončení zálohy a nižšie vyberte, ktoré udalosti ho spúšťajú. Upozornenia Unraid tu fungujú v jednoduchom režime; ďalšie kanály doručovania (webhook, Matrix, Healthchecks, e-mail) nájdete v Pokročilom.",
+  "notify.hint": "Dostávajte upozornenie po dokončení zálohy a nižšie vyberte, ktoré udalosti ho spúšťajú.",
   "notify.on": "Upozorniť",
   "notify.onNever": "Nikdy",
   "notify.onFailure": "Iba pri zlyhaní",
@@ -2054,7 +2049,7 @@ const sk: Partial<Translations> = {
   "settings.search.count": "{n} zhody",
   "settings.search.inHint": "nájdené vo vysvetlení",
   "settings.search.page": "Stránka",
-  "settings.search.notShown": "{name} teraz nie je na obrazovke. Zobrazí sa v pokročilom zobrazení alebo hneď ako sa zapne funkcia, ku ktorej patrí.",
+  "settings.search.notShown": "{name} teraz nie je na obrazovke. Zobrazí sa hneď, ako sa zapne funkcia, ku ktorej patrí.",
   "settings.schedulesOptions": "Možnosti plánu",
   "settings.schedulesOffsite": "Plány externej replikácie",
   "settings.schedulesSelfBackup": "Plán vlastnej zálohy",

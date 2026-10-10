@@ -16,7 +16,6 @@ const et: Partial<Translations> = {
   "nav.more": "Rohkem",
   "nav.mobileNavigation": "Mobiilne navigeerimine",
 
-  // Mode toggle
   "about.title": "Teave BombVaulti kohta",
   "about.body": "Üks rüütel, üks ristisõda: korralikud avatud lähtekoodiga tööriistad, mida sellisel kujul, nagu tahtsin, ei olnud, ehitatud seni, kuni midagi puudu ei ole. Kõik tasuta, ilma kontodeta, ilma telemeetriata, ilma reklaamideta ja ilma tasuliste tasemeteta. Mitte kusagil tärnikest. Miski loetav ei lahku kunagi sinu enda müüride vahelt. Sepistatud õhtuti ja nädalavahetustel, südame ja kangekaelsusega.",
   "about.coffee": "Kui BombVault on oma koha sinu serveris või arvutis välja teeninud, viska rüütlile münt: see aitab kulusid katta ja hoiab projekti elus. Ja see paneb selle rüütli südame veidi kiiremini põksuma. Allpool on kolm teed, vali endale sobiv.",
@@ -44,10 +43,6 @@ const et: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Tagasiside",
   "about.mail": "E-kiri",
-
-  // Mode toggle
-  "mode.simpleView": "Lihtvaade",
-  "mode.advancedView": "Täpsem vaade",
 
   // Dashboard
   "dashboard.title": "Töölaud",
@@ -883,7 +878,7 @@ const et: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (alles hoitud mandaat)",
   "rclone.save": "Salvesta seadistus",
   "notify.title": "Teavitused",
-  "notify.hint": "Saa teavitus, kui varundus lõpeb, ja vali allpool, millised sündmused selle käivitavad. Unraidi teavitused töötavad siin lihtsas režiimis; rohkem edastuskanaleid (veebihook, Matrix, Healthchecks, e-post) on jaotises Täpsem.",
+  "notify.hint": "Saa teavitus, kui varundus lõpeb, ja vali allpool, millised sündmused selle käivitavad.",
   "notify.on": "Teavita",
   "notify.onNever": "Mitte kunagi",
   "notify.onFailure": "Ainult vea korral",
@@ -2054,7 +2049,7 @@ const et: Partial<Translations> = {
   "settings.search.count": "{n} vastet",
   "settings.search.inHint": "leitud selgitusest",
   "settings.search.page": "Leht",
-  "settings.search.notShown": "{name} ei ole praegu ekraanil. See ilmub täpsemas vaates või niipea kui sellega seotud funktsioon on sisse lülitatud.",
+  "settings.search.notShown": "{name} ei ole praegu ekraanil. See ilmub niipea kui sellega seotud funktsioon on sisse lülitatud.",
   "settings.schedulesOptions": "Ajakava valikud",
   "settings.schedulesOffsite": "Välise replitseerimise ajakavad",
   "settings.schedulesSelfBackup": "Iseenda varunduse ajakava",

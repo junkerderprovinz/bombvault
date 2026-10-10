@@ -41,8 +41,6 @@ const uk: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Відгук",
   "about.mail": "Ел. пошта",
-  "mode.simpleView": "Простий вигляд",
-  "mode.advancedView": "Розширений вигляд",
   "nav.recovery": "Відновлення",
   "nav.config": "Автобекап",
 
@@ -911,7 +909,7 @@ const uk: Partial<Translations> = {
   "folders.cachedirScope": "Стосується всієї резервної копії цього контейнера, а не лише цієї папки.",
   // Notifications
   "notify.title": "Сповіщення",
-  "notify.hint": "Отримуйте сповіщення після завершення резервного копіювання і виберіть нижче, які події його викликають. Сповіщення Unraid уже працюють у простому режимі; більше каналів доставки (webhook, Matrix, Healthchecks, email) знаходяться в розширених налаштуваннях.",
+  "notify.hint": "Отримуйте сповіщення після завершення резервного копіювання і виберіть нижче, які події його викликають.",
   "notify.on": "Сповіщати",
   "notify.onNever": "Ніколи",
   "notify.onFailure": "Лише в разі збою",
@@ -1683,7 +1681,7 @@ const uk: Partial<Translations> = {
   "settings.search.count": "{n} збігів",
   "settings.search.inHint": "знайдено в поясненні",
   "settings.search.page": "Сторінка",
-  "settings.search.notShown": "{name} зараз не відображається на екрані. Він з'являється в розширеному вигляді або щойно вмикається функція, до якої він належить.",
+  "settings.search.notShown": "{name} зараз не відображається на екрані. Він з'являється, щойно вмикається функція, до якої він належить.",
   "settings.schedulesOptions": "Параметри розкладу",
   "settings.schedulesOffsite": "Розклади зовнішньої реплікації",
   "settings.schedulesSelfBackup": "Розклад самокопіювання",

@@ -2,14 +2,12 @@ import { useState } from "react";
 import { CadenceBuilder } from "../../../components/CadenceBuilder";
 import { ScheduleRow } from "../../../components/ScheduleBadge";
 import { useT } from "../../../lib/i18n";
-import { useAdvanced } from "../../../lib/advanced";
 import { NotifyCard } from "../NotifyCard";
 import { Card, ToggleRow, hueCounter, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
 
 export function NotificationsPage() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   const {
     settings,
     setSettings,
@@ -33,23 +31,13 @@ export function NotificationsPage() {
 
   return (
     <>
-      {/* The channel and Healthchecks cards only paint in the advanced view, so */}
-      {/* their hue positions are counted inside that condition and none is spent */}
-      {/* while it is off. */}
-      {(() => {
-        const settingsHue = nextHue();
-        const channelsHue = advanced ? nextHue() : undefined;
-        const healthchecksHue = advanced ? nextHue() : undefined;
-        return (
-          <NotifyCard
-            t={t}
-            platformKind={platformKind}
-            hueIndex={settingsHue}
-            channelsHueIndex={channelsHue}
-            healthchecksHueIndex={healthchecksHue}
-          />
-        );
-      })()}
+      <NotifyCard
+        t={t}
+        platformKind={platformKind}
+        hueIndex={nextHue()}
+        channelsHueIndex={nextHue()}
+        healthchecksHueIndex={nextHue()}
+      />
 
       {/* Weekly digest: one summary message per week through the channels
           above. One hueIdx feeds both the heading and the time picker. */}

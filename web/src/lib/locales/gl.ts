@@ -16,7 +16,6 @@ const gl: Partial<Translations> = {
   "nav.more": "Máis",
   "nav.mobileNavigation": "Navegación móbil",
 
-  // Mode toggle
   "about.title": "Sobre BombVault",
   "about.body": "Un só cabaleiro, unha cruzada: ferramentas de código aberto ben feitas que non existían na forma que eu quería, construídas ata que non falte nada. Todo de balde, sen contas, sen telemetría, sen anuncios e sen plans de pago. Ningún asterisco en ningures. Nada lexible sae nunca das túas propias murallas. Forxado polas noites e as fins de semana, con corazón e teimosía.",
   "about.coffee": "Se BombVault gañou un sitio no teu servidor ou computador, bótalle unha moeda ao teu cabaleiro: axuda a cubrir os custos e mantén vivo o proxecto. E fai que o corazón deste cabaleiro bata un pouco máis rápido. Abaixo hai tres camiños, colle o que che acaia.",
@@ -44,10 +43,6 @@ const gl: Partial<Translations> = {
   "about.repo": "GitHub",
   "about.mailSubject": "Comentarios",
   "about.mail": "Correo",
-
-  // Mode toggle
-  "mode.simpleView": "Vista sinxela",
-  "mode.advancedView": "Vista avanzada",
 
   // Dashboard
   "dashboard.title": "Panel",
@@ -883,7 +878,7 @@ const gl: Partial<Translations> = {
   "cloud.credSets.kept": "{name} (credenciais conservadas)",
   "rclone.save": "Gardar configuración",
   "notify.title": "Notificacións",
-  "notify.hint": "Recibe unha notificación cando remate unha copia, e escolle abaixo que eventos a activan. As notificacións de Unraid funcionan aquí no modo sinxelo; máis canles de entrega (webhook, Matrix, Healthchecks, correo) están en Avanzado.",
+  "notify.hint": "Recibe unha notificación cando remate unha copia, e escolle abaixo que eventos a activan.",
   "notify.on": "Notificar",
   "notify.onNever": "Nunca",
   "notify.onFailure": "Só en caso de erro",
@@ -2054,7 +2049,7 @@ const gl: Partial<Translations> = {
   "settings.search.count": "{n} coincidencias",
   "settings.search.inHint": "atopado na explicación",
   "settings.search.page": "Páxina",
-  "settings.search.notShown": "{name} non aparece en pantalla agora mesmo. Móstrase na vista avanzada ou en canto se active a función á que pertence.",
+  "settings.search.notShown": "{name} non aparece en pantalla agora mesmo. Móstrase en canto se active a función á que pertence.",
   "settings.schedulesOptions": "Opcións de horario",
   "settings.schedulesOffsite": "Horarios de replicación externa",
   "settings.schedulesSelfBackup": "Horario da autocopia",

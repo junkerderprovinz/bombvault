@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff, DBDumpView, DbDataCoverage } from "../lib/api";
 import type { useT } from "../lib/i18n";
-import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { SNAPSHOT_MISSING } from "../lib/timeline";
@@ -694,30 +693,25 @@ function SnapshotActions({
   preselected: boolean;
   t: T;
 }) {
-  const { advanced } = useAdvanced();
   const running = anyActive(useProgress());
   const [showRestore, setShowRestore] = useState(preselected);
-  // Basic mode offers only the in-place restore.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
-  const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
   // One radio group per row.
   const radioName = `restore-mode-${pick.row.key}`;
 
   return (
     <>
-      <Advanced>
-        <div className="hidden sm:flex">
-          <SnapshotTags
-            tags={pick.mark.tags}
-            snapshotId={pick.snapshotId}
-            containerName={containerName}
-            aliases={aliases}
-            source={pick.source}
-            onTagged={pick.refresh}
-            t={t}
-          />
-        </div>
-      </Advanced>
+      <div className="hidden sm:flex">
+        <SnapshotTags
+          tags={pick.mark.tags}
+          snapshotId={pick.snapshotId}
+          containerName={containerName}
+          aliases={aliases}
+          source={pick.source}
+          onTagged={pick.refresh}
+          t={t}
+        />
+      </div>
       {/* The tip repeats in a bubble: a title alone is out of reach for touch
           and keyboard. */}
       {paired && (
@@ -741,42 +735,40 @@ function SnapshotActions({
       />
       {showRestore && (
         <div className="basis-full mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
-          <Advanced>
-            <div className="flex flex-col gap-1.5">
-              <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
-                <input
-                  type="radio"
-                  name={radioName}
-                  checked={mode === "inPlace"}
-                  onChange={() => setMode("inPlace")}
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                {t("restore.mode.inPlace")}
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
-                <input
-                  type="radio"
-                  name={radioName}
-                  checked={mode === "files"}
-                  onChange={() => setMode("files")}
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                {t("restore.mode.files")}
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
-                <input
-                  type="radio"
-                  name={radioName}
-                  checked={mode === "toFolder"}
-                  onChange={() => setMode("toFolder")}
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                {t("restore.mode.toFolder")}
-              </label>
-            </div>
-          </Advanced>
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={radioName}
+                checked={mode === "inPlace"}
+                onChange={() => setMode("inPlace")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("restore.mode.inPlace")}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={radioName}
+                checked={mode === "files"}
+                onChange={() => setMode("files")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("restore.mode.files")}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
+              <input
+                type="radio"
+                name={radioName}
+                checked={mode === "toFolder"}
+                onChange={() => setMode("toFolder")}
+                style={{ accentColor: "var(--accent)" }}
+              />
+              {t("restore.mode.toFolder")}
+            </label>
+          </div>
 
-          {effectiveMode === "inPlace" && (
+          {mode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
               {(coverage === "live" || coverage === "none") && (
@@ -797,7 +789,7 @@ function SnapshotActions({
             </div>
           )}
 
-          {effectiveMode === "files" && (
+          {mode === "files" && (
             <div className="border-t border-carbon-border pt-2">
               <SnapshotFileBrowser
                 containerName={containerName}
@@ -811,7 +803,7 @@ function SnapshotActions({
             </div>
           )}
 
-          {effectiveMode === "toFolder" && (
+          {mode === "toFolder" && (
             <div className="border-t border-carbon-border pt-2">
               <RestoreToFolder
                 containerName={containerName}
@@ -875,9 +867,7 @@ export function RestorePanel({
     <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
       <RecentRunsList name={name} domain="container" t={t} />
       <SizeBreakdown domain="containers" item={name} t={t} />
-      <Advanced>
-        <CompareSnapshots containerName={name} t={t} />
-      </Advanced>
+      <CompareSnapshots containerName={name} t={t} />
       <Timeline
         domain="containers"
         itemKey={name}
@@ -908,12 +898,10 @@ export function RestorePanel({
           />
         )}
       />
-      <Advanced>
-        <div className="flex flex-wrap items-center gap-2 py-2 border-t border-carbon-border">
-          <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-          <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" />
-        </div>
-      </Advanced>
+      <div className="flex flex-wrap items-center gap-2 py-2 border-t border-carbon-border">
+        <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+        <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" />
+      </div>
       <DatabaseDumpList
         containerName={name}
         source={dumpSource}

@@ -11,8 +11,6 @@ export function CloudPage() {
 
   return (
     <>
-      {/* An rclone:, s3: or rest: target cannot work without these credentials, */}
-      {/* so they are not limited to the advanced view. */}
       <RcloneCard t={t} hueIndex={nextHue()} />
 
       <CloudCard t={t} hueIndex={nextHue()} />

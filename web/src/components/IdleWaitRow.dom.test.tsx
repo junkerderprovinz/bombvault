@@ -84,7 +84,7 @@ it("hands the saved hours up, so the row shows them again after it was hidden", 
     return (
       <>
         <button type="button" onClick={() => setShown((v) => !v)}>
-          advanced
+          toggle
         </button>
         {shown && <IdleWaitRow name="plex" initial={hours} onSaved={setHours} />}
       </>
@@ -95,7 +95,7 @@ it("hands the saved hours up, so the row shows them again after it was hidden", 
     fireEvent.click(screen.getByRole("switch", { name: new RegExp(en["idle.toggle"]) }));
   });
   expect(saved).toEqual([4]);
-  fireEvent.click(screen.getByRole("button", { name: "advanced" }));
-  fireEvent.click(screen.getByRole("button", { name: "advanced" }));
+  fireEvent.click(screen.getByRole("button", { name: "toggle" }));
+  fireEvent.click(screen.getByRole("button", { name: "toggle" }));
   expect(screen.getByRole("switch", { name: new RegExp(en["idle.toggle"]) }).getAttribute("aria-checked")).toBe("true");
 });
