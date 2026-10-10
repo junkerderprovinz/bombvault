@@ -4826,6 +4826,8 @@ export interface ZFSReplicaServer {
   usedBy: string[];
   /** The folder below root this instance's items land in. */
   folder: string;
+  /** The server answered when this list was read. */
+  reachable: boolean;
 }
 
 export interface ZFSReplicaServerInput {

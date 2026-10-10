@@ -3,9 +3,10 @@
 // and lists nothing). On the phones: the 24px rhythm, and with every remove
 // armed and an instance's window opened with everything in it, no pan, no
 // control past the viewport or its card, no text cut short and no stray
-// backtick, in the grid, the window, its dialogs and the empty state. On the
-// desktop: the 40px rhythm, cards of one size, and the addresses /receiver,
-// /pull and /fleet with their hash forms.
+// backtick, in the net picture, the grid, the window, its dialogs and the
+// empty state. On the desktop: the 40px rhythm, cards of one size, the net
+// picture in the arrangement that fits, a role asked for from its tile, and the
+// addresses /receiver, /pull and /fleet with their hash forms.
 // German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -294,6 +295,54 @@ const ZFS_SERVER = {
   sizeBytes: 8 * 1024 ** 4,
   usedBy: ["z1"],
   folder: "tower-linz",
+  reachable: true,
+};
+
+const roleRequest = (id: string, state: string, sections: string[]) => ({
+  id,
+  state,
+  sections,
+  store: "rest",
+  askedAt: iso(2 * 3600),
+  decidedAt: state === "asked" ? "" : iso(3600),
+  decidedBy: state === "asked" ? "" : "person",
+});
+
+const NO_ROLES = { receiver: null, fetcher: null, zfs: null };
+
+// The first member holds every state a tile and a row can show. The second
+// runs a release from before role requests.
+const ROLES = [
+  {
+    memberId: MEMBER,
+    name: MEMBER_NAME,
+    reachable: true,
+    answers: true,
+    byMember: {
+      receiver: roleRequest("rr1", "allowed", ["containers", "vms", "flash"]),
+      fetcher: roleRequest("rr2", "asked", ["containers"]),
+      zfs: { state: "allowed", items: [{ id: "z1", dataset: "cache/appdata", state: "allowed" }] },
+    },
+    forMember: {
+      receiver: roleRequest("rr3", "asked", ["containers", "vms", "files", "flash", "zfs", "config"]),
+      fetcher: roleRequest("rr4", "allowed", ["containers", "files"]),
+      zfs: {
+        state: "asked",
+        items: [
+          { id: "q1", dataset: "cache/appdata", state: "asked" },
+          { id: "q2", dataset: "cache/domains", state: "allowed" },
+        ],
+      },
+    },
+    asks: 2,
+  },
+  { memberId: "member-2", name: "Büro Linz", reachable: true, answers: false, byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
+];
+
+const SELF_ROLES = {
+  receiver: [],
+  fetcher: [{ memberId: MEMBER, name: MEMBER_NAME }],
+  zfs: [{ memberId: MEMBER, name: MEMBER_NAME }],
 };
 
 const REPLICA = {
@@ -346,6 +395,11 @@ async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> 
   await json("**/api/fleet/mesh-offers", { ok: true, offers: empty ? [] : OFFERS });
   await json("**/api/pull/sources", { ok: true, sources: empty ? [] : PULLS });
   await json("**/api/group", empty ? { ...GROUP, active: false, members: [] } : GROUP);
+  await json("**/api/group/roles", {
+    ok: true,
+    members: empty ? [] : ROLES,
+    self: empty ? { receiver: [], fetcher: [], zfs: [] } : SELF_ROLES,
+  });
   await json("**/api/group/members/*/repos", { ok: true, instanceName: MEMBER_NAME, repos: MEMBER_REPOS });
   await json("**/api/zfs/receive/requests", empty ? [] : ZFS_REQUESTS);
   await json("**/api/zfs/replica/local-pools", [{ name: "sicherung", sizeBytes: 8 * 1024 ** 4, freeBytes: 3.1 * 1024 ** 4 }]);
@@ -461,8 +515,16 @@ for (const width of [320, 360]) {
   test(`grid @ ${width}px: every remove armed, nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openPage(page, width);
-    await expect(card(page, MEMBER).getByRole("button", { name: "2 Anfragen" })).toBeVisible();
+    // Two requests and a storage offer wait. The count is a readout, and the
+    // Details button beside it is the way in.
+    await expect(card(page, MEMBER).getByText("3 Anfragen", { exact: true })).toBeVisible();
+    await expect(card(page, MEMBER).getByRole("button", { name: "3 Anfragen" })).toHaveCount(0);
     await expect(card(page, "zfs:nas")).toBeVisible();
+    await expect(card(page, "zfs:nas").getByText("Verbunden", { exact: true })).toBeVisible();
+    // A phone has room for one side of the net picture only.
+    await expect(page.locator("#bv-main .glim-net-narrow")).toBeVisible();
+    await expect(page.locator("#bv-main .glim-net-wide")).toBeHidden();
+    await expect(page.locator("#bv-main .glim-net-narrow").getByRole("button", { name: MEMBER_NAME })).toBeVisible();
     await expect(page.getByText("Ohne Instanz", { exact: true })).toBeVisible();
     await page.locator("#bv-main").getByRole("button", { name: "Details", exact: true }).last().click();
     await expect(page.locator("#bv-main").getByText("Gesamt", { exact: true })).toBeVisible();
@@ -479,6 +541,10 @@ for (const width of [320, 360]) {
       .locator("[data-role]")
       .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
     expect(new Set(tiles).size, "the role tiles left their row").toBe(1);
+    const states = await card(page, MEMBER)
+      .locator("button[data-role]")
+      .evaluateAll((els) => els.map((el) => `${el.getAttribute("data-role")}:${el.getAttribute("data-state")}`));
+    expect(states).toEqual(["receiver:on", "fetcher:waiting", "zfs:on"]);
   });
 
   test(`an instance's window @ ${width}px: everything open, nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
@@ -491,6 +557,11 @@ for (const width of [320, 360]) {
     const details = win.getByRole("button", { name: "Details", exact: true });
     for (let i = 0; i < (await details.count()); i++) await details.nth(i).click();
     await expect(win.getByText("Gesamt", { exact: true })).toHaveCount(2);
+    // Each role has its switch, and what the instance asks for stands with
+    // the ZFS request in one list.
+    await expect(win.getByRole("region", { name: /^Was Schwiegereltern/ }).getByRole("switch")).toHaveCount(3);
+    await expect(win.getByText("möchte seine Off-site-Kopien hier ablegen")).toBeVisible();
+    await expect(win.locator('[data-request="fetcher"]').getByRole("button", { name: "Freigabe entziehen" })).toBeVisible();
     await win.evaluate((el) => el.setAttribute("data-probe", ""));
     await armRemoves(page, "[data-probe]");
     await expectFits(page, "[data-probe]");
@@ -514,6 +585,10 @@ for (const width of [320, 360]) {
     await win.getByRole("button", { name: "Quelle hinzufügen" }).click();
     await expectDialogFits(page, "Quelle hinzufügen");
     await page.getByRole("dialog", { name: "Quelle hinzufügen" }).getByRole("button", { name: "Abbrechen" }).click();
+
+    await win.getByRole("region", { name: /^Was Schwiegereltern/ }).getByRole("button", { name: "Ändern" }).first().click();
+    await expectDialogFits(page, `${MEMBER_NAME} als Empfänger`);
+    await page.getByRole("dialog", { name: `${MEMBER_NAME} als Empfänger` }).getByRole("button", { name: "Abbrechen" }).click();
 
     await win.getByRole("button", { name: "Speicher anbieten" }).click();
     const offer = page.getByRole("dialog", { name: "Off-site-Speicher anbieten" });
@@ -568,6 +643,62 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
   // A name stays one line on the desktop, cut with an ellipsis if it must be.
   const name = card(page, MEMBER).locator("span.font-semibold").first();
   expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
+});
+
+test("the net picture on the desktop shows the group with an arrow per role", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
+  await openPage(page, testInfo.project.use.viewport!.width);
+  // Beside the sidebar the 768px window leaves the picture a phone's width.
+  const [shown, hidden] = testInfo.project.name === "desktop-1280" ? ["wide", "narrow"] : ["narrow", "wide"];
+  const picture = page.locator(`#bv-main .glim-net-${shown}`);
+  await expect(picture).toBeVisible();
+  await expect(page.locator(`#bv-main .glim-net-${hidden}`)).toBeHidden();
+  for (const name of ["Tower Linz", MEMBER_NAME, "Büro Linz", "Backup-NAS im Keller"]) {
+    await expect(picture.getByRole("button", { name })).toBeVisible();
+  }
+  const lanes = await picture.locator(`[data-net="${MEMBER}"] [data-lane]`).evaluateAll((els) => els.map((el) => el.getAttribute("data-lane")));
+  expect(lanes).toEqual(["out:receiver:on", "out:fetcher:waiting", "out:zfs:on", "in:receiver:waiting", "in:fetcher:on", "in:zfs:waiting"]);
+  await expect(page.locator("#bv-main .glim-net-key")).toContainText("Wartet auf Freigabe");
+  // An arrow that waits is dashed, one that is on is solid.
+  const dashes = await picture
+    .locator(`[data-net="${MEMBER}"] .glim-net-line`)
+    .evaluateAll((els) => els.map((el) => getComputedStyle(el).strokeDasharray !== "none"));
+  expect(dashes).toEqual([false, true, false, true, false, true]);
+  // Pointing at a node lights up its card.
+  await picture.getByRole("button", { name: MEMBER_NAME }).hover();
+  await expect(card(page, MEMBER)).toHaveClass(/glim-net-entry-hot/);
+  // A dot travels along every arrow that is on.
+  const travelling = () =>
+    page.evaluate(() => document.getAnimations().filter((a) => (a as CSSAnimation).animationName === "glim-net-travel").length);
+  expect(await travelling()).toBeGreaterThan(0);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(await travelling(), "the picture moves under reduced motion").toBe(0);
+});
+
+test("a role is asked for from its tile, and an older instance takes it at once", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
+  const sent: { url: string; body: unknown }[] = [];
+  await page.route("**/api/group/members/*/roles/*", async (route) => {
+    sent.push({ url: new URL(route.request().url()).pathname, body: route.request().postDataJSON() });
+    await route.fulfill({ json: { ok: true, request: roleRequest("rr9", "allowed", ["containers"]) } });
+  });
+  await openPage(page, testInfo.project.use.viewport!.width);
+  await card(page, "member-2").locator('button[data-role="receiver"]').click();
+  const dialog = page.getByRole("dialog", { name: "Büro Linz als Empfänger" });
+  await expect(dialog).toContainText("läuft ein älteres BombVault");
+  await expectDialogFits(page, "Büro Linz als Empfänger", { desktop: true });
+  await dialog.getByRole("button", { name: "Einschalten" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(sent).toHaveLength(1);
+  expect(sent[0].url).toBe("/api/group/members/member-2/roles/receiver");
+  await expect(page.getByText("Büro Linz ist jetzt dein Empfänger.")).toBeVisible();
+
+  // Switching one off says what stops before anything is sent.
+  await card(page, MEMBER).locator('button[data-role="receiver"]').click();
+  const question = page.getByRole("dialog", { name: "Bestätigen" });
+  await expect(question).toContainText("schickt keine Off-site-Kopien mehr an");
+  await question.getByRole("button", { name: "Abbrechen" }).click();
+  expect(sent).toHaveLength(1);
 });
 
 test("an instance's window on the desktop holds its cards and fits", async ({ page }, testInfo) => {

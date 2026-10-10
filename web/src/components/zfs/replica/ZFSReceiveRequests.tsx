@@ -281,15 +281,16 @@ function ReceiveSlot({ request, onChanged }: { request: ZFSReceiveRequest; onCha
 /** ZFSReceiveRequests is where this instance answers one paired instance
  *  that wants to send ZFS replicas into its pools, and keeps the ones it
  *  allowed. The requests wait first. It renders nothing while that instance
- *  has neither. */
-export function ZFSReceiveRequests({ peer }: { peer: string }) {
+ *  has neither. With `only` it draws one of the two parts, for a list that
+ *  holds other requests between them. */
+export function ZFSReceiveRequests({ peer, only }: { peer: string; only?: "asked" | "allowed" }) {
   const { t } = useT();
   const { requests, reload } = useReceiveRequests();
   const [pools, setPools] = useState<ZFSReplicaPool[] | null>(null);
 
   const mine = requests.filter((r) => r.peer === peer);
-  const asked = mine.filter((r) => r.state === "asked");
-  const allowed = mine.filter((r) => r.state === "allowed");
+  const asked = only === "allowed" ? [] : mine.filter((r) => r.state === "asked");
+  const allowed = only === "asked" ? [] : mine.filter((r) => r.state === "allowed");
   const needsPools = asked.length > 0;
 
   useEffect(() => {

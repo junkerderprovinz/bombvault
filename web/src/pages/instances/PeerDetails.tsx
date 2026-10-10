@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from "react";
 
-import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
+import { Toggle } from "../../components/Toggle";
+import { IconPencil } from "../../components/navGlyphs";
 import { ReplicaStatePill } from "../../components/zfs/replica/ReplicaStatePill";
 import { ZFSReceiveRequests } from "../../components/zfs/replica/ZFSReceiveRequests";
 import { isRunning } from "../../components/zfs/replica/replicaModel";
 import { checkFleetPeer, updateFleetPeer } from "../../lib/api";
-import type { PullSourceView, ReceivedRepoStatus } from "../../lib/api";
+import type { PullSourceView, ReceivedRepoStatus, RoleRequest, RoleSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
@@ -15,21 +16,33 @@ import { hueCounter, ToggleRow } from "../settings/shared";
 import { Facts } from "./InstanceCard";
 import { InstanceWindow, WindowCard } from "./InstanceWindow";
 import { MeshOffers, ProposeMeshDialog } from "./MeshOffers";
-import { PeerScorecard } from "./PeerScorecard";
+import { domainLabelKey, PeerScorecard } from "./PeerScorecard";
 import { PullDialog, PullSourceCard } from "./PullSourceCard";
 import { ReceivedRepoCard, ReceiverDialog } from "./ReceivedRepoCard";
 import { RemoveInstanceButton } from "./RemoveInstanceButton";
+import { useRoleSwitch } from "./RoleDialogs";
+import { RoleRequests } from "./RoleRequests";
 import { ROLES, ROLE_STATE_KEY } from "./RoleTile";
 import { ROLE_KINDS, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instancesModel";
 import type { InstancesState, Modules } from "./useInstances";
 
-const STATE_TONE: Record<RoleState, "active" | "warn" | "neutral"> = { on: "active", waiting: "warn", off: "neutral" };
-
-function RoleRow({ role, state, children }: { role: RoleKind; state: RoleState; children?: ReactNode }) {
+function RoleRow({
+  role,
+  state,
+  onToggle,
+  onChange,
+  children,
+}: {
+  role: RoleKind;
+  state: RoleState;
+  onToggle: () => void;
+  onChange: () => void;
+  children: ReactNode;
+}) {
   const { t } = useT();
   const { label, tip, glyph } = ROLES[role];
   return (
-    <li data-role={role} className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <li data-role={role} data-state={state} className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-carbon-surface3 text-accentText">
         {glyph}
       </span>
@@ -40,7 +53,19 @@ function RoleRow({ role, state, children }: { role: RoleKind; state: RoleState; 
         </span>
         {children}
       </span>
-      <Badge tone={STATE_TONE[state]}>{t(ROLE_STATE_KEY[state])}</Badge>
+      <span className="flex items-center gap-2">
+        {state !== "off" && (
+          <Button
+            label={t("instances.role.change")}
+            labelKey="instances.role.change"
+            glyph={<IconPencil />}
+            glyphOnly
+            tone="neutral"
+            onClick={onChange}
+          />
+        )}
+        <Toggle checked={state !== "off"} onChange={onToggle} label={t(label)} hideLabel />
+      </span>
     </li>
   );
 }
@@ -55,12 +80,18 @@ type Dialog =
  *  this server polls it, and the way to remove it. */
 export function PeerDetails({
   instance,
+  peers,
   modules,
+  sections,
   state,
   onClose,
 }: {
   instance: Instance;
+  /** Every instance of the grid, for the names a dialog shows. */
+  peers: Instance[];
   modules: Modules;
+  /** The sections this server backs up, which a role can cover. */
+  sections: RoleSection[];
   state: InstancesState;
   onClose: () => void;
 }) {
@@ -71,6 +102,7 @@ export function PeerDetails({
   const paired = memberId !== "" && !instance.needsPairing;
   const nextHue = hueCounter();
   const named = (key: TranslationKey) => t(key).replaceAll("{peer}", () => name);
+  const roles = useRoleSwitch({ instance, peers, sections, state });
 
   // A check outlasts any request, so the instance only confirms it started;
   // the verdict shows in its next scorecard.
@@ -96,7 +128,32 @@ export function PeerDetails({
     }
   }
 
-  const roles = ROLE_KINDS.filter((k) => instance.roles[k] !== undefined);
+  /** What a Receiver or Fetcher row says under the role's name. */
+  function requestLine(request: RoleRequest | null | undefined, role: RoleKind): ReactNode {
+    const covers = request?.sections.map((s) => t(domainLabelKey(s))).join(", ");
+    switch (request?.state) {
+      case "asked":
+        return <Facts items={[named("zfs.replica.peer.asked"), covers]} />;
+      case "allowed":
+        return (
+          <Facts
+            items={[
+              covers,
+              role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
+              request.decidedBy === "automatic" && named("instances.role.automatic"),
+            ]}
+          />
+        );
+      case "refused":
+        return named("instances.role.declined");
+      case "revoked":
+        return named("instances.role.revoked");
+      default:
+        return t(ROLE_STATE_KEY.off);
+    }
+  }
+
+  const shownRoles = ROLE_KINDS.filter((k) => k !== "zfs" || modules.zfs || instance.roles?.byMember.zfs);
   const canOffer = modules.fleet && peer !== undefined && paired;
 
   return (
@@ -127,19 +184,19 @@ export function PeerDetails({
         </>
       }
     >
-      {(roles.length > 0 || instance.offers.length > 0) && (
+      {paired && (
         <WindowCard title={named("instances.doesForServer")} hint={t("instances.role.diff")} hueIndex={nextHue()}>
           <MeshOffers offers={instance.offers} onChanged={() => void state.reloadOffers()} />
           <ul className="flex flex-col gap-4">
-            {roles.map((k) => (
-              <RoleRow key={k} role={k} state={instance.roles[k]!}>
-                {k === "receiver" && instance.destination && (
-                  <span className="text-xs text-carbon-textMuted">
-                    {t("instances.role.location").replace("{name}", () => instance.destination!.name)}
-                  </span>
+            {shownRoles.map((k) => (
+              <RoleRow key={k} role={k} state={roles.states[k]} onToggle={() => roles.toggle(k)} onChange={() => roles.change(k)}>
+                {k !== "zfs" && (
+                  <span className="text-xs text-carbon-textMuted wrap-anywhere">{requestLine(instance.roles?.byMember[k], k)}</span>
                 )}
                 {k === "zfs" && instance.replicas.length === 0 && (
-                  <span className="text-xs text-carbon-textMuted">{t("instances.role.noReplica")}</span>
+                  <span className="text-xs text-carbon-textMuted">
+                    {t(roles.states.zfs === "off" ? ROLE_STATE_KEY.off : "instances.role.noReplica")}
+                  </span>
                 )}
                 {k === "zfs" &&
                   instance.replicas.map((r) => (
@@ -158,7 +215,10 @@ export function PeerDetails({
 
       {paired && (
         <WindowCard title={named("instances.serverDoesFor")} hueIndex={nextHue()}>
-          {modules.receiver && <ZFSReceiveRequests peer={memberId} />}
+          <RoleRequests instance={instance} part="asked" state={state} onFetcherAllowed={() => setDialog({ kind: "pull", row: null })} />
+          {modules.receiver && <ZFSReceiveRequests peer={memberId} only="asked" />}
+          <RoleRequests instance={instance} part="allowed" state={state} onFetcherAllowed={() => undefined} />
+          {modules.receiver && <ZFSReceiveRequests peer={memberId} only="allowed" />}
           {instance.received.map((r, i) => (
             <ReceivedRepoCard
               key={r.id}
@@ -227,6 +287,7 @@ export function PeerDetails({
         </>
       )}
 
+      {roles.dialogs}
       {dialog?.kind === "received" && (
         <ReceiverDialog
           initial={dialog.row}

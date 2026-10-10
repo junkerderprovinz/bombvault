@@ -1,54 +1,42 @@
 // RelayCard picks how this instance reaches members on other networks: the
-// project relay, an own relay, or none. It leads with what a relay is for and
-// whether it is connected; each route gets one sentence and what it needs.
-// "How does it work?" opens three short sections: the route picture, what the
-// relay sees next to what it never does, and the encryption underneath both.
-// Every control saves on its own, as the rest of the settings do.
-import { useEffect, useId, useRef, useState } from "react";
+// project relay, an own relay, a paired BombVault that serves as one, or
+// none. Each route says in one sentence what it is and what it needs, beside
+// a picture of a message on its way. Every control saves on its own, as the
+// rest of the settings do.
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Card, ToggleRow } from "../shared";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
-import { IconDisclosure } from "../../../components/IconDisclosure";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { Selector } from "../../../components/Selector";
+import { IconEye, IconRefresh } from "../../../components/glyphs";
+import { IconClose } from "../../../components/navGlyphs";
 import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../../lib/api";
 import type { TranslationKey, useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { tLtr } from "../../../lib/ltrFragments";
-import { FactGlyph, LegendKey, LegendMessage, RouteDiagram, RouteGlyph } from "./pairingArt";
+import { PairingWindow } from "./PairingWindow";
+import { FactGlyph, RouteDiagram, RouteGlyph } from "./pairingArt";
 import { emphasize } from "./PairingSteps";
+import type { PairStage } from "./pairStage";
+import { relayForm, type RelayForm } from "./relayForm";
 
 type T = ReturnType<typeof useT>["t"];
 
-const MODES: RelayMode[] = ["project", "own", "off"];
+const FORMS: RelayForm[] = ["project", "own", "instance", "off"];
 
 // An own relay without TLS still works on a LAN, but its relay key then
 // travels in the clear, so the card says so.
 const PLAINTEXT_RELAY = /^(ws|http):\/\//i;
 
-const COPY: Record<RelayMode, { name: TranslationKey; sentence: TranslationKey; need?: TranslationKey; sees: TranslationKey; alt: TranslationKey }> = {
-  project: {
-    name: "relay.project",
-    sentence: "relay.projectSentence",
-    need: "relay.projectNeed",
-    sees: "relay.projectSees",
-    alt: "relay.projectAlt",
-  },
-  // No `need`: the two source cards right below already say what an own
-  // relay takes, in more detail than a one-line hint could.
-  own: {
-    name: "relay.own",
-    sentence: "relay.ownSentence",
-    sees: "relay.ownSees",
-    alt: "relay.ownAlt",
-  },
-  off: {
-    name: "relay.off",
-    sentence: "relay.offSentence",
-    need: "relay.offNeed",
-    sees: "relay.offSees",
-    alt: "relay.offAlt",
-  },
+const COPY: Record<
+  RelayForm,
+  { name: TranslationKey; glyph: "project" | "own" | "server" | "off"; sentence: TranslationKey; need: TranslationKey; sees: TranslationKey }
+> = {
+  project: { name: "relay.project", glyph: "project", sentence: "relay.projectSentence", need: "relay.projectNeed", sees: "relay.projectSees" },
+  own: { name: "relay.own", glyph: "own", sentence: "relay.ownRuns", need: "relay.ownNeed", sees: "relay.ownSees" },
+  instance: { name: "relay.instanceName", glyph: "server", sentence: "relay.instanceSub", need: "relay.instanceNeed", sees: "relay.ownSees" },
+  off: { name: "relay.off", glyph: "off", sentence: "relay.offSentence", need: "relay.offNeed", sees: "relay.offSees" },
 };
 
 function hostOf(url: string): string {
@@ -61,8 +49,8 @@ function hostOf(url: string): string {
 
 /** SelfAddressField is where this instance's own address on the local
  *  network is shown and, when it is wrong, corrected: prefilled from the
- *  browser, saved on its own like the rest of the card. */
-function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
+ *  browser and saved on its own. */
+export function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
   const [value, setValue] = useState(group.selfAddress);
   const [error, setError] = useState<string | null>(null);
   const editing = useRef(false);
@@ -103,7 +91,7 @@ function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="self-address" className="inline-flex items-center gap-1.5 text-sm font-medium text-carbon-text">
+      <label htmlFor="self-address" className="inline-flex items-center gap-1.5 text-xs text-carbon-textSub">
         {t("relay.selfAddressLabel")}
         <InfoBubble tip={t("relay.selfAddressTip")} />
       </label>
@@ -124,72 +112,30 @@ function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (
   );
 }
 
-function Fact({ glyph, label, text }: { glyph: "need" | "sees" | "search" | "shield"; label?: string; text: React.ReactNode }) {
+function Fact({ glyph, text }: { glyph: ReactNode; text: ReactNode }) {
   return (
     <p className="flex items-start gap-2 text-sm text-carbon-textSub">
-      <span className="text-carbon-textMuted">
-        <FactGlyph kind={glyph} />
-      </span>
-      <span>
-        {label && <strong className="font-semibold text-carbon-text">{label} </strong>}
-        {text}
-      </span>
+      <span className="text-carbon-textMuted">{glyph}</span>
+      <span className="min-w-0">{text}</span>
     </p>
   );
 }
 
-/** One of the two places an own relay can come from. */
-function Source({
-  icon,
-  onAccent,
-  name,
-  sub,
-  children,
-  address,
-  t,
-}: {
-  icon: React.ReactNode;
-  onAccent?: boolean;
-  name: string;
-  sub: string;
-  children: React.ReactNode;
-  address: string;
-  t: T;
-}) {
-  return (
-    <div className="flex flex-col gap-2.5 rounded-control bg-carbon-surface2 px-4 pb-4 pt-3.5">
-      <div className="flex items-center gap-3">
-        <span
-          className={`grid h-11 w-11 shrink-0 place-items-center rounded-control ${
-            onAccent ? "bg-accent text-accentContrast" : "bg-carbon-surface3 text-carbon-text"
-          }`}
-        >
-          {icon}
-        </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-carbon-text">{name}</span>
-          <span className="block text-xs text-carbon-textSub">{sub}</span>
-        </span>
-      </div>
-      {children}
-      <p className="mt-auto pt-0.5 text-xs text-carbon-textMuted">
-        {t("relay.addressAfter")}
-        <span dir="ltr" className="block font-mono text-carbon-textSub break-all">
-          {address}
-        </span>
-      </p>
-    </div>
-  );
-}
+const strong = (text: string) => <strong className="font-semibold text-carbon-text">{text} </strong>;
 
 export function RelayCard({
   group,
+  stage,
   onGroup,
+  onRefresh,
   t,
   hueIndex,
 }: {
   group: GroupState;
+  stage: PairStage;
   onGroup: (g: GroupState) => void;
+  /** Asks the server for the group again, for "Check again". */
+  onRefresh: () => void;
   t: T;
   hueIndex?: number;
 }) {
@@ -197,8 +143,10 @@ export function RelayCard({
   const [mode, setMode] = useState<RelayMode>(group.relay.mode);
   const [url, setUrl] = useState(group.relay.url);
   const [urlError, setUrlError] = useState<string | null>(null);
-  const [howOpen, setHowOpen] = useState(false);
-  const howId = useId();
+  // Which of the two own routes was picked here. The server stores one mode
+  // for both, so without a pick the address decides.
+  const [picked, setPicked] = useState<"own" | "instance" | null>(null);
+  const [seesOpen, setSeesOpen] = useState(false);
   const editing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -229,9 +177,14 @@ export function RelayCard({
     return false;
   }
 
-  function pick(next: RelayMode) {
-    setMode(next);
-    void save({ mode: next });
+  const relay = group.relay;
+  const form: RelayForm = mode !== "own" ? mode : (picked ?? relayForm({ ...relay, mode, url }, group.members));
+
+  function pick(next: RelayForm) {
+    const stored: RelayMode = next === "instance" ? "own" : next;
+    setPicked(next === "own" || next === "instance" ? next : null);
+    setMode(stored);
+    if (stored !== mode) void save({ mode: stored });
   }
 
   function typeUrl(v: string) {
@@ -246,196 +199,193 @@ export function RelayCard({
     }, 800);
   }
 
-  const copy = COPY[mode];
-  const relay = group.relay;
+  const copy = COPY[form];
+  const connected = group.active && form !== "off" && relay.connected;
   // The relay key comes from the twelve words, so the relay is only dialled
   // inside a group; before that there is nothing to be connected.
   const state =
-    mode === "off" ? (
+    form === "off" ? (
       <Badge tone="neutral" size="large">{t("relay.off")}</Badge>
     ) : !group.active ? (
       <Badge tone="neutral" size="large">{t("relay.noGroup")}</Badge>
     ) : relay.connected ? (
       <Badge tone="ok" size="large">{t("instances.connected")}</Badge>
     ) : (
-      <Badge tone="fail" size="large">{t("instances.notConnected")}</Badge>
+      <Badge tone="warn" size="large">{t("instances.notConnected")}</Badge>
     );
+
+  const address = (placeholder: string) => (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor="relay-address" className="inline-flex items-center gap-1.5 text-sm font-medium text-carbon-text">
+        {t("relay.addressLabel")}
+        <InfoBubble tip={t("relay.addressTip")} />
+      </label>
+      <input
+        id="relay-address"
+        type="url"
+        value={url}
+        onChange={(e) => typeUrl(e.target.value)}
+        spellCheck={false}
+        autoComplete="off"
+        placeholder={placeholder}
+        dir="ltr"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
+      />
+      {urlError && <p className="text-caption text-statusFail">{urlError}</p>}
+      {!urlError && PLAINTEXT_RELAY.test(url.trim()) && (
+        <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
+          {t("relay.plaintextWarning")}
+        </p>
+      )}
+    </div>
+  );
+
+  const [beforeHost, afterHost] = t("pairing.relayCheckProject").split("{host}");
 
   return (
     <Card title={t("relay.title")} hint={t("relay.hint")} hueIndex={hueIndex}>
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <p className="min-w-0 flex-[1_1_16rem] text-[15px] text-carbon-text">{t("relay.lead")}</p>
-        <span data-testid="relay-state">{state}</span>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="min-w-0 flex-[1_1_24rem]">
+          <Selector
+            items={FORMS.map((f) => ({ id: f, label: t(COPY[f].name), icon: <RouteGlyph kind={COPY[f].glyph} /> }))}
+            label={t("relay.title")}
+            select="one"
+            active={form}
+            onChange={(id) => pick(id as RelayForm)}
+            size="lg"
+            equalWidth
+          />
+        </div>
+        <span className="ms-auto flex flex-wrap items-center gap-2.5">
+          <Button
+            label={t("relay.sees.title")}
+            labelKey="relay.sees.title"
+            glyph={<IconEye />}
+            tone="neutral"
+            onClick={() => setSeesOpen(true)}
+          />
+          <span data-testid="relay-state">{state}</span>
+        </span>
       </div>
-      {mode !== "off" && !group.active && <p className="text-sm text-carbon-textSub">{t("relay.noGroupLine")}</p>}
 
-      <SelfAddressField group={group} onGroup={onGroup} t={t} />
-
-      <Selector
-        items={MODES.map((m) => ({ id: m, label: t(COPY[m].name), icon: <RouteGlyph kind={m} /> }))}
-        label={t("relay.title")}
-        select="one"
-        active={mode}
-        onChange={(id) => pick(id as RelayMode)}
-        size="lg"
-        equalWidth
-      />
-
-      <div className="flex flex-col gap-2">
-        <p className="text-sm text-carbon-textSub">
-          {mode === "project" ? t(copy.sentence).replace("{host}", hostOf(relay.projectUrl)) : t(copy.sentence)}
-        </p>
-        {copy.need && <Fact glyph="need" label={t("relay.needLabel")} text={t(copy.need)} />}
-      </div>
-
-      {mode === "own" && (
-        <div className="flex flex-col gap-3.5" data-testid="own-relay">
-          <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("relay.sourcesTitle")}</span>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Source
-              icon={<RouteGlyph kind="relay" />}
-              onAccent
-              name={t("relay.containerName")}
-              sub={t("relay.containerSub")}
-              address="wss://relay.example.org"
-              t={t}
-            >
-              <Fact glyph="search" text={emphasize(t("relay.containerFind"), "name", t("relay.containerName"))} />
-              <Fact glyph="shield" text={t("relay.containerCert")} />
-            </Source>
-            <Source
-              icon={<RouteGlyph kind="server" />}
-              name={t("relay.instanceName")}
-              sub={t("relay.instanceSub")}
-              address="wss://bombvault.example.org/relay/connect"
-              t={t}
-            >
-              <div className="rounded-control bg-carbon-surface px-3 py-2">
+      <div className="grid grid-cols-1 items-start gap-x-10 gap-y-5 lg:grid-cols-2" data-form={form}>
+        <div className="flex min-w-0 flex-col gap-3.5">
+          <Fact
+            glyph={<RouteGlyph kind="relay" />}
+            text={form === "project" ? t(copy.sentence).replace("{host}", hostOf(relay.projectUrl)) : t(copy.sentence)}
+          />
+          <Fact
+            glyph={<FactGlyph kind="need" />}
+            text={
+              <>
+                {strong(t("relay.needLabel"))}
+                {t(copy.need)}
+              </>
+            }
+          />
+          {form === "own" && (
+            <div className="flex flex-col gap-3.5" data-testid="own-relay">
+              {address("wss://relay.example.org")}
+              <Fact
+                glyph={<FactGlyph kind="search" />}
+                text={
+                  <>
+                    {emphasize(t("relay.containerFind"), "name", t("relay.containerName"))} {t("relay.containerAlso")}
+                  </>
+                }
+              />
+              <Fact glyph={<FactGlyph kind="shield" />} text={t("relay.containerCert")} />
+            </div>
+          )}
+          {form === "instance" && (
+            <div className="flex flex-col gap-3.5" data-testid="instance-relay">
+              <div>
                 <ToggleRow
                   label={t("relay.serve")}
                   hint={tLtr(t, "relay.serveHint")}
                   checked={relay.serve}
                   onChange={(v) => void save({ serve: v })}
                 />
-                {relay.serve && (
-                  <p className="mt-1 text-xs text-carbon-textMuted">
-                    {t("relay.serveClients", relay.serveClients)}
-                  </p>
-                )}
+                {relay.serve && <p className="mt-1 text-xs text-carbon-textMuted">{t("relay.serveClients", relay.serveClients)}</p>}
               </div>
+              {address("wss://bombvault.example.org/relay/connect")}
               <Fact
-                glyph="shield"
+                glyph={<FactGlyph kind="shield" />}
                 text={
                   <>
                     {tLtr(t, "relay.instanceCert")} <InfoBubble tip={t("relay.instanceCertTip")} />
                   </>
                 }
               />
-            </Source>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="relay-address" className="inline-flex items-center gap-1.5 text-sm font-medium text-carbon-text">
-              {t("relay.addressLabel")}
-              <InfoBubble tip={t("relay.addressTip")} />
-            </label>
-            <input
-              id="relay-address"
-              type="url"
-              value={url}
-              onChange={(e) => typeUrl(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="wss://relay.example.org"
-              dir="ltr"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
-            />
-            {urlError && <p className="text-caption text-statusFail">{urlError}</p>}
-            {!urlError && PLAINTEXT_RELAY.test(url.trim()) && (
-              <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-                {t("relay.plaintextWarning")}
+            </div>
+          )}
+          <Fact
+            glyph={<FactGlyph kind="lock" />}
+            text={
+              <>
+                {t("relay.e2e")} <InfoBubble tip={t("relay.e2eTip")} />
+              </>
+            }
+          />
+          {stage !== "unpaired" && form !== "off" && !connected && (
+            <section className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3.5 text-sm text-carbon-textSub" data-testid="relay-check">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("pairing.relayCheckOpen")}</h3>
+              <p>
+                {t("pairing.relayCheckLead")} <InfoBubble tip={t("pairing.relayCheckTip")} />
               </p>
-            )}
-          </div>
+              <ul className="flex list-disc flex-col gap-1 ps-5">
+                <li>
+                  {form === "project" ? (
+                    <>
+                      {beforeHost}
+                      <span dir="ltr" className="font-mono text-[0.92em] text-carbon-text">
+                        {hostOf(relay.projectUrl)}
+                      </span>
+                      {afterHost}
+                    </>
+                  ) : (
+                    t("pairing.relayCheckOwn")
+                  )}
+                </li>
+                <li>{t("pairing.relayCheckFilter")}</li>
+              </ul>
+              <div className="flex justify-end">
+                <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRefresh />} tone="neutral" onClick={onRefresh} />
+              </div>
+            </section>
+          )}
         </div>
-      )}
-
-      <div>
-        <Button
-          label={t("relay.howItWorks")}
-          labelKey="relay.howItWorks"
-          tone="neutral"
-          onClick={() => setHowOpen((v) => !v)}
-          ariaExpanded={howOpen}
-          ariaControls={howId}
-          glyph={<IconDisclosure open={howOpen} />}
-        />
+        <RouteDiagram form={form} t={t} />
       </div>
 
-      {howOpen && (
-        <div id={howId} className="flex flex-col gap-5 border-t border-carbon-border pt-4">
-          <section className="flex flex-col gap-3">
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("relay.howDoesTitle")}</h4>
-            <div className="grid grid-cols-1 items-center gap-5 md:grid-cols-2 md:gap-10">
-              <RouteDiagram
-                mode={mode}
-                alt={t(copy.alt)}
-                labels={{
-                  relay: t("relay.diagramRelay"),
-                  projectHost: hostOf(relay.projectUrl),
-                  ownAddress: t("relay.diagramOwnAddress"),
-                  yourNetwork: t("relay.diagramYourNetwork"),
-                  otherNetwork: t("relay.diagramOtherNetwork"),
-                  yourLan: t("relay.diagramYourLan"),
-                }}
-              />
-              <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-carbon-textSub">
-                <span className="inline-flex items-center gap-2">
-                  <LegendKey />
-                  {t("relay.legendKey")}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <LegendMessage />
-                  {t("relay.legendMessage")}
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Sees / does not see, side by side, so the one honest limit (the
-              routing metadata) sits right next to everything it does not
-              cost. */}
-          <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3.5">
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-carbon-text">
-                <FactGlyph kind="sees" />
-                {t("relay.seesLabel")}
-              </span>
-              <p className="text-sm text-carbon-textSub">{t(copy.sees)}</p>
-            </div>
-            <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3.5">
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-carbon-text">
-                <FactGlyph kind="hidden" />
-                {t("relay.notSeesLabel")}
-              </span>
-              <ul className="flex list-disc flex-col gap-1 ps-4 text-sm text-carbon-textSub">
+      {seesOpen && (
+        <PairingWindow
+          title={t("relay.sees.title")}
+          hueIndex={hueIndex}
+          onClose={() => setSeesOpen(false)}
+          footer={
+            <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={() => setSeesOpen(false)} />
+          }
+        >
+          <Fact
+            glyph={<FactGlyph kind="sees" />}
+            text={
+              <>
+                {strong(t("relay.seesLabel"))}
+                {t(copy.sees)}
+              </>
+            }
+          />
+          {form !== "off" && (
+            <>
+              <Fact glyph={<FactGlyph kind="hidden" />} text={strong(t("relay.notSeesLabel"))} />
+              <ul className="flex list-disc flex-col gap-1 ps-9 text-sm text-carbon-textSub">
                 <li>{t("relay.notSeesContent")}</li>
                 <li>{t("relay.notSeesBackups")}</li>
               </ul>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-2">
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("relay.encryptionTitle")}</h4>
-            <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
-              <span className="text-accentText">
-                <FactGlyph kind="lock" />
-              </span>
-              <span>
-                {t("relay.e2e")} <InfoBubble tip={t("relay.e2eTip")} />
-              </span>
-            </p>
-          </section>
-        </div>
+            </>
+          )}
+        </PairingWindow>
       )}
     </Card>
   );

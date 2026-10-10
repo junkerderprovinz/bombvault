@@ -18,7 +18,16 @@ import type { ItemReplica } from "./instancesModel";
 /** ZFSServerCards are the ZFS servers without BombVault, reached over SSH.
  *  They take replicas like a paired instance does, so they stand in the same
  *  grid, each opening its own page. */
-export function ZFSServerCards({ replicas, firstIndex }: { replicas: ItemReplica[]; firstIndex: number }) {
+export function ZFSServerCards({
+  replicas,
+  firstIndex,
+  hot,
+}: {
+  replicas: ItemReplica[];
+  firstIndex: number;
+  /** The key of the instance the pointer is on in the net picture. */
+  hot: string | null;
+}) {
   const { t } = useT();
   const navigate = useNavigate();
   const { servers, reload } = useReplicaServers();
@@ -41,7 +50,17 @@ export function ZFSServerCards({ replicas, firstIndex }: { replicas: ItemReplica
                 <IconZFS />
               </GlyphMark>
             }
-            badges={!s.enabled && <Badge tone="neutral" size="large">{t("zfs.replica.servers.off")}</Badge>}
+            badges={
+              !s.enabled ? (
+                <Badge tone="neutral" size="large">
+                  {t("zfs.replica.servers.off")}
+                </Badge>
+              ) : (
+                <Badge tone={s.reachable ? "ok" : "fail"} size="large">
+                  {t(s.reachable ? "instances.connected" : "instances.notConnected")}
+                </Badge>
+              )
+            }
             facts={
               <Facts
                 items={[
@@ -81,6 +100,7 @@ export function ZFSServerCards({ replicas, firstIndex }: { replicas: ItemReplica
               </>
             }
             index={firstIndex + i}
+            hot={hot === `zfs:${s.id}`}
           />
         );
       })}

@@ -1191,3 +1191,27 @@ func TestTheServerListSaysWhichFolderThisInstanceLandsIn(t *testing.T) {
 		t.Errorf("folder = %v, want the one the item fixed", got)
 	}
 }
+
+func TestTheServerListSaysWhetherEachServerAnswered(t *testing.T) {
+	r := newReplicaRig(t)
+	r.server.pools = "tank\t1000\t3000\n"
+	reachable := func() any {
+		_, _, list := r.call(http.MethodGet, "/api/zfs/replica/servers", "")
+		srv, _ := list[0].(map[string]any)
+		return srv["reachable"]
+	}
+	if got := reachable(); got != true {
+		t.Errorf("reachable = %v, want true for a server that reported its pools", got)
+	}
+	r.server.fail = &zfs.CmdError{Code: "ssh-unreachable", Stderr: "connection timed out"}
+	if got := reachable(); got != false {
+		t.Errorf("reachable = %v, want false for a server that did not answer", got)
+	}
+	r.server.fail = nil
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/replica/servers/"+r.srv.ID, `{"enabled":false}`); m["ok"] != true {
+		t.Fatalf("switching the server off = %v", m)
+	}
+	if got := reachable(); got != false {
+		t.Errorf("reachable = %v, want false for a server that is switched off and not asked", got)
+	}
+}

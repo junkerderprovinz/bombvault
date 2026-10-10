@@ -51,7 +51,18 @@ function checkBadge(server: ReceiverServer, t: T) {
   }
 }
 
-export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void }) {
+export function ReceiverServerWindow({
+  t,
+  lead,
+  onClose,
+}: {
+  t: T;
+  /** Why the window opened by itself. With it, setting up starts at once on
+   *  a box that runs no receiving server yet. */
+  lead?: string;
+  /** Says whether a receiving server runs when the window closes. */
+  onClose: (running: boolean) => void;
+}) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [server, setServer] = useState<ReceiverServer | null>(null);
@@ -76,13 +87,16 @@ export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void
           port: r.defaultPort ?? 8000,
           hostMountRoot: r.hostMountRoot ?? "/host/user",
         });
+        if (lead && !r.server) setFormOpen(true);
       })
       .catch((e: unknown) => alive && setError(e instanceof Error ? e.message : t("receiver.server.loadError")))
       .finally(() => alive && setLoaded(true));
     return () => {
       alive = false;
     };
-  }, [t]);
+  }, [t, lead]);
+
+  const close = () => onClose(server !== null);
 
   async function runCheck() {
     setChecking(true);
@@ -127,7 +141,7 @@ export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void
     <InstanceWindow
       title={t("receiver.server.title")}
       hint={t("receiver.server.tip")}
-      onClose={onClose}
+      onClose={close}
       footer={
         <>
           {server && (
@@ -144,7 +158,7 @@ export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void
               />
             </>
           )}
-          <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={onClose} />
+          <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={close} />
         </>
       }
     >
@@ -251,6 +265,7 @@ export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void
       {formOpen && (
         <ReceiverServerDialog
           t={t}
+          lead={lead}
           defaults={defaults}
           onClose={() => setFormOpen(false)}
           onDone={(s, f) => {
@@ -266,11 +281,13 @@ export function ReceiverServerWindow({ t, onClose }: { t: T; onClose: () => void
 
 function ReceiverServerDialog({
   t,
+  lead,
   defaults,
   onClose,
   onDone,
 }: {
   t: T;
+  lead?: string;
   defaults: { port: number; hostMountRoot: string };
   onClose: () => void;
   onDone: (server: ReceiverServer, fresh: Fresh) => void;
@@ -312,6 +329,7 @@ function ReceiverServerDialog({
           onClick={(e) => e.stopPropagation()}
           className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
         >
+          {lead && <p className="text-sm text-carbon-text">{lead}</p>}
           <p className="text-xs text-carbon-textSub">{t("receiver.server.formIntro")}</p>
           <FolderBrowser
             label={t("receiver.server.folder")}
@@ -348,8 +366,8 @@ function ReceiverServerDialog({
           <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
             <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} disabled={saving} />
             <Button
-              label={t("receiver.server.start")}
-              labelKey="receiver.server.start"
+              label={t(lead ? "receiver.server.startContinue" : "receiver.server.start")}
+              labelKey={lead ? "receiver.server.startContinue" : "receiver.server.start"}
               tone="accent"
               onClick={() => void submit()}
               disabled={!canSave}

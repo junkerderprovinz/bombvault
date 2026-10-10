@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // The receiving server's window: the form sends what was entered and the
 // window shows the outsider's password once afterwards; a partner's login can
-// be revoked after a confirmation.
+// be revoked after a confirmation. Opened because something needs a receiving
+// server, it starts with the form and says on closing whether one runs.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en, useT } from "../../lib/i18n";
@@ -54,19 +55,19 @@ vi.mock("../../lib/api", async (importOriginal) => {
 
 const { ReceiverServerWindow } = await import("./ReceiverServerWindow");
 
-let closed = 0;
+const closed: boolean[] = [];
 
-function Opened() {
+function Opened({ lead }: { lead?: string }) {
   const { t } = useT();
-  return <ReceiverServerWindow t={t} onClose={() => closed++} />;
+  return <ReceiverServerWindow t={t} lead={lead} onClose={(running) => closed.push(running)} />;
 }
 
-async function renderWindow() {
+async function renderWindow(lead?: string) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <Opened />
+          <Opened lead={lead} />
         </ToastProvider>
       </I18nProvider>,
     );
@@ -78,7 +79,7 @@ afterEach(() => {
   initial = null;
   sent.length = 0;
   revoked.length = 0;
-  closed = 0;
+  closed.length = 0;
 });
 
 describe("ReceiverServerWindow", () => {
@@ -106,6 +107,41 @@ describe("ReceiverServerWindow", () => {
     expect(screen.getByText(en["receiver.server.templateDownload"])).toBeTruthy();
     expect(screen.getByText("one-time-pw")).toBeTruthy();
     expect(screen.getByText(en["receiver.server.noLogins"])).toBeTruthy();
+  });
+
+  it("keeps the login for someone outside the group with the server it belongs to", async () => {
+    initial = server;
+    await renderWindow();
+    expect(screen.getByText(en["receiver.server.outsideUser"])).toBeTruthy();
+    expect(screen.getByText("vault-box")).toBeTruthy();
+    expect(screen.queryByRole("dialog", { name: en["receiver.server.setUp"] })).toBeNull();
+  });
+
+  it("starts with the form and says why when something needs a receiving server", async () => {
+    await renderWindow("This needs a receiving server.");
+    const form = screen.getByRole("dialog", { name: en["receiver.server.setUp"] });
+    expect(form.textContent).toContain("This needs a receiving server.");
+    fireEvent.change(screen.getByPlaceholderText("user/restic"), { target: { value: "user/restic" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["receiver.server.startContinue"] }));
+    });
+    expect(sent).toHaveLength(1);
+    expect(screen.getByText("one-time-pw")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: en["common.done"] }));
+    expect(closed).toEqual([true]);
+  });
+
+  it("says on closing that no server runs when the form was left", async () => {
+    await renderWindow("This needs a receiving server.");
+    fireEvent.click(screen.getByRole("button", { name: en["common.cancel"] }));
+    fireEvent.click(screen.getByRole("button", { name: en["common.done"] }));
+    expect(closed).toEqual([false]);
+  });
+
+  it("does not open the form by itself where a server already runs", async () => {
+    initial = server;
+    await renderWindow("This needs a receiving server.");
+    expect(screen.queryByRole("dialog", { name: en["receiver.server.setUp"] })).toBeNull();
   });
 
   it("revokes a partner's login after asking", async () => {

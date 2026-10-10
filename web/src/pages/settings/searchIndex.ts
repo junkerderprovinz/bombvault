@@ -518,11 +518,11 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   pairing: [
     { title: "pairing.title", rows: [], body: ["settings.pairingNeedsDomain"] },
     { title: "pairing.step1Title", rows: [], body: ["pairing.step1Body"] },
-    { title: "pairing.step2Title", rows: [], body: ["pairing.step2Body"] },
+    { title: "pairing.stepOtherTitle", rows: [], body: ["pairing.step2Body"] },
     { title: "pairing.step3Title", rows: [], body: ["pairing.step3Body"] },
     {
       title: "pairing.phraseTitle",
-      hint: "pairing.phraseHint",
+      hint: "pairing.phraseTip",
       rows: [
         { key: "pairing.passwordLabel" },
         { key: "pairing.wordsLabel" },
@@ -532,19 +532,22 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
-      title: "relay.title",
-      hint: "relay.hint",
-      rows: [
-        { key: "relay.selfAddressLabel", hint: "relay.selfAddressTip" },
-        { key: "relay.serve", hint: "relay.serveHint" },
-        { key: "relay.addressLabel", hint: "relay.addressTip" },
-      ],
-      body: ["relay.lead"],
+      title: "instances.title",
+      hint: "pairing.group.hint",
+      rows: [{ key: "pairing.group.zfsTitle", hint: "pairing.group.zfsTip" }],
     },
     {
       title: "settings.fleet",
       hint: "settings.fleetHint",
-      rows: [{ key: "settings.instanceName" }],
+      rows: [{ key: "settings.instanceName" }, { key: "relay.selfAddressLabel", hint: "relay.selfAddressTip" }],
+    },
+    {
+      title: "relay.title",
+      hint: "relay.hint",
+      rows: [
+        { key: "relay.serve", hint: "relay.serveHint" },
+        { key: "relay.addressLabel", hint: "relay.addressTip" },
+      ],
     },
   ],
 

@@ -35,11 +35,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 
 const { ZFSReceiveRequests } = await import("./ZFSReceiveRequests");
 
-function renderCard(peer = "peer-1") {
+function renderCard(peer = "peer-1", only?: "asked" | "allowed") {
   return render(
     <I18nProvider>
       <ToastProvider>
-        <ZFSReceiveRequests peer={peer} />
+        <ZFSReceiveRequests peer={peer} only={only} />
       </ToastProvider>
     </I18nProvider>,
   );
@@ -78,6 +78,17 @@ describe("receiving a ZFS replica", () => {
     renderCard("peer-2");
     expect(await screen.findByText("attic wants to replicate tank/media here")).toBeTruthy();
     expect(screen.getByText("cache/appdata from attic")).toBeTruthy();
+    expect(screen.queryByText("tower-2 wants to replicate cache/appdata here")).toBeNull();
+  });
+
+  it("draws only what waits, or only what was allowed, for a list that holds other requests between them", async () => {
+    requests = [receiveRequest(), receiveRequest({ id: "rq2", item: "tank/media", state: "allowed", root: "tank/bombvault-replica" })];
+    const waiting = renderCard("peer-1", "asked");
+    expect(await screen.findByText("tower-2 wants to replicate cache/appdata here")).toBeTruthy();
+    expect(screen.queryByText("tank/media from tower-2")).toBeNull();
+    waiting.unmount();
+    renderCard("peer-1", "allowed");
+    expect(await screen.findByText("tank/media from tower-2")).toBeTruthy();
     expect(screen.queryByText("tower-2 wants to replicate cache/appdata here")).toBeNull();
   });
 

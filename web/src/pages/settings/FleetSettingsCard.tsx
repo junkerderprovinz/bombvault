@@ -1,9 +1,10 @@
 // FleetSettingsCard holds this instance's name as the other members of its
-// pairing group show it, below the pairing cards on the same tab.
+// pairing group show it, and whatever else the pairing page says about this
+// instance.
 import { Settings } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { Card, type SaveState } from "./shared";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 export function FleetSettingsCard({
   t,
@@ -11,6 +12,7 @@ export function FleetSettingsCard({
   setSettings,
   save,
   hueIndex,
+  children,
 }: {
   t: ReturnType<typeof useT>["t"];
   settings: Settings;
@@ -21,6 +23,7 @@ export function FleetSettingsCard({
     setSaveError: (e: string | null) => void
   ) => Promise<boolean>;
   hueIndex?: number;
+  children?: ReactNode;
 }) {
   // save() reports the outcome in a toast, so only the setters are used.
   const [, setNameSaveState] = useState<SaveState>("idle");
@@ -48,6 +51,7 @@ export function FleetSettingsCard({
           className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
         />
       </div>
+      {children}
     </Card>
   );
 }

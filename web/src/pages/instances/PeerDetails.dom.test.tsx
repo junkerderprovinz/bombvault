@@ -1,16 +1,35 @@
 // @vitest-environment jsdom
-// The Details window of one instance: what it does for this server, what
-// this server does for it, its protection per section, whether it is polled,
-// and the way to remove it.
+// The Details window of one instance: what it does for this server, with a
+// switch per role, what this server does for it, with its requests to answer,
+// its protection per section, whether it is polled, and the way to remove it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { receiveRequest, replica } from "../../components/zfs/replica/replica.testsupport";
-import type { DomainStatus, PullSourceInput, ReceivedRepoInput, ZFSReceiveRequest } from "../../lib/api";
+import type {
+  DomainStatus,
+  MemberRoles,
+  PullSourceInput,
+  ReceivedRepoInput,
+  RoleDecision,
+  RoleRequest,
+  ZFSReceiveRequest,
+} from "../../lib/api";
 import { I18nProvider, en } from "../../lib/i18n";
 import { destination } from "../../lib/placement.testsupport";
 import { ToastProvider } from "../../lib/toast";
-import { fleetPeer, groupMember, meshOffer, NOW_S, pullSource, receivedRepo } from "./instances.testsupport";
+import {
+  fleetPeer,
+  groupMember,
+  memberRoles,
+  meshOffer,
+  NOW_S,
+  pullSource,
+  receivedRepo,
+  roleRequest,
+  roleSide,
+  zfsRole,
+} from "./instances.testsupport";
 import { buildInstances, type InstancesData } from "./instancesModel";
 import type { InstancesState, Modules } from "./useInstances";
 
@@ -23,6 +42,12 @@ const PEER = fleetPeer({
 const MEMBER = groupMember();
 
 let requests: ZFSReceiveRequest[] = [];
+let serverRuns = false;
+let decideAnswer: (id: string, decision: RoleDecision) => { ok: boolean; code?: string; error?: string } = () => ({ ok: true });
+const decided: [string, RoleDecision][] = [];
+const asked: [string, string, unknown][] = [];
+const withdrawn: [string, string][] = [];
+const serversSetUp: unknown[] = [];
 const checks: [string, string][] = [];
 const polledSet: [string, boolean][] = [];
 const removed: string[] = [];
@@ -40,6 +65,36 @@ vi.mock("../../lib/api", async (importOriginal) => {
     listZFSReceiveRequests: () => Promise.resolve(requests),
     listZFSLocalPools: () => Promise.resolve([{ name: "tank", sizeBytes: 1, freeBytes: 1 }]),
     listZFSReplicaServers: () => Promise.resolve([]),
+    decideRole: (id: string, decision: RoleDecision) => {
+      decided.push([id, decision]);
+      return Promise.resolve(decideAnswer(id, decision));
+    },
+    askRole: (memberId: string, role: string, ask: unknown) => {
+      asked.push([memberId, role, ask]);
+      return Promise.resolve({ ok: true, request: roleRequest() });
+    },
+    withdrawRole: (memberId: string, role: string) => {
+      withdrawn.push([memberId, role]);
+      return Promise.resolve({ ok: true, told: true });
+    },
+    getReceiverServer: () =>
+      Promise.resolve({
+        ok: true,
+        server: serverRuns ? { logins: [], check: "protected", present: true, checkedAt: 0, url: "", user: "outside", hostPath: "/mnt/user/restic" } : null,
+        defaultPort: 8000,
+        hostMountRoot: "/host/user",
+      }),
+    setUpReceiverServer: (input: unknown) => {
+      serversSetUp.push(input);
+      serverRuns = true;
+      return Promise.resolve({
+        ok: true,
+        server: { logins: [], check: "protected", present: true, checkedAt: 0, url: "", user: "outside", hostPath: "/mnt/user/restic" },
+        password: "kE7v-Qm2d",
+        template: "none",
+      });
+    },
+    browseDirs: () => Promise.resolve({ ok: true, path: "", parent: "", dirs: [] }),
     checkFleetPeer: (id: string, d: string) => {
       checks.push([id, d]);
       return Promise.resolve({ ok: true });
@@ -80,8 +135,7 @@ function data(over: Partial<InstancesData> = {}): InstancesData {
     received: [],
     pulls: [],
     offers: [],
-    requests,
-    logins: [],
+    roles: [],
     destinations: [],
     groupReceivers: [],
     replicas: [],
@@ -99,19 +153,30 @@ async function open(over: Partial<InstancesData> = {}, modules: Modules = ALL) {
     loading: false,
     errors: [],
     self: null,
+    selfRoles: { receiver: [], fetcher: [], zfs: [] },
+    receiverServer: serverRuns,
     data: all,
     reloadPeers: reload("peers"),
     reloadOffers: reload("offers"),
     reloadReceived: reload("received"),
     reloadPulls: reload("pulls"),
-    reloadLogins: reload("logins"),
+    reloadRoles: reload("roles"),
+    reloadReplicas: reload("replicas"),
+    reloadServer: reload("server"),
   };
   const instance = buildInstances(all).instances[0];
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <PeerDetails instance={instance} modules={modules} state={state} onClose={() => closed++} />
+          <PeerDetails
+            instance={instance}
+            peers={[instance]}
+            modules={modules}
+            sections={["containers", "flash"]}
+            state={state}
+            onClose={() => closed++}
+          />
         </ToastProvider>
       </I18nProvider>,
     );
@@ -123,8 +188,30 @@ function section(name: string): HTMLElement {
   return screen.getByRole("region", { name });
 }
 
+const does = () => section("What attic does for this server");
+const serves = () => section("What this server does for attic");
+const row = (role: string) => does().querySelector(`[data-role="${role}"]`) as HTMLElement;
+const by = (over: Parameters<typeof roleSide>[0]): MemberRoles[] => [memberRoles({ byMember: roleSide(over) })];
+const forPeer = (over: Parameters<typeof roleSide>[0], rest: Partial<MemberRoles> = {}): MemberRoles[] => [
+  memberRoles({ forMember: roleSide(over), ...rest }),
+];
+const allowed = (over: Partial<RoleRequest> = {}) =>
+  roleRequest({ state: "allowed", decidedBy: "person", decidedAt: new Date((NOW_S - 3600) * 1000).toISOString(), ...over });
+
+async function click(el: Element) {
+  await act(async () => {
+    fireEvent.click(el);
+  });
+}
+
 beforeEach(() => {
   requests = [];
+  serverRuns = false;
+  decideAnswer = () => ({ ok: true });
+  decided.length = 0;
+  asked.length = 0;
+  withdrawn.length = 0;
+  serversSetUp.length = 0;
   checks.length = 0;
   polledSet.length = 0;
   removed.length = 0;
@@ -152,50 +239,209 @@ describe("the head of the window", () => {
 });
 
 describe("what the instance does for this server", () => {
-  it("lists the roles that are known with their state, and explains how they differ", async () => {
-    await open();
-    const card = section("What attic does for this server");
-    expect(within(card).getByLabelText(en["instances.role.diff"])).toBeTruthy();
-    const rows = [...card.querySelectorAll("[data-role]")];
-    expect(rows.map((r) => r.getAttribute("data-role"))).toEqual(["receiver", "zfs"]);
-    expect(rows[0].textContent).toContain(en["zfs.replica.servers.off"]);
-    expect(within(card).getByLabelText(en["instances.role.receiverTip"])).toBeTruthy();
-    expect(within(card).getByText(en["instances.role.noReplica"])).toBeTruthy();
-    expect(within(card).queryByRole("switch")).toBeNull();
+  it("lists the three roles, each with a switch, and explains how they differ", async () => {
+    await open({ roles: by({ receiver: allowed(), fetcher: roleRequest() }) });
+    expect(within(does()).getByLabelText(en["instances.role.diff"])).toBeTruthy();
+    const rows = [...does().querySelectorAll("[data-role]")];
+    expect(rows.map((r) => [r.getAttribute("data-role"), r.getAttribute("data-state")])).toEqual([
+      ["receiver", "on"],
+      ["fetcher", "waiting"],
+      ["zfs", "off"],
+    ]);
+    const switches = within(does()).getAllByRole("switch");
+    expect(switches.map((sw) => [sw.getAttribute("aria-label"), sw.getAttribute("aria-checked")])).toEqual([
+      [en["receiver.title"], "true"],
+      [en["instances.role.fetcher"], "true"],
+      [en["zfs.replica.servers.title"], "false"],
+    ]);
+    expect(within(does()).getByLabelText(en["instances.role.receiverTip"])).toBeTruthy();
+  });
+
+  it("says what a role covers, and for one that waits, whom it waits for", async () => {
+    await open({ roles: by({ receiver: allowed(), fetcher: roleRequest({ sections: ["vms"] }) }) });
+    expect(row("receiver").textContent).toContain("Containers, Flash");
+    expect(row("fetcher").textContent).toContain("Waiting for attic to allow it · VMs");
+    expect(row("zfs").textContent).toContain(en["zfs.replica.servers.off"]);
+  });
+
+  it("says when the instance declined a request or took a role back", async () => {
+    await open({ roles: by({ receiver: roleRequest({ state: "refused" }), fetcher: roleRequest({ state: "revoked" }) }) });
+    expect(row("receiver").textContent).toContain("attic declined the request");
+    expect(row("receiver").getAttribute("data-state")).toBe("off");
+    expect(row("fetcher").textContent).toContain("attic revoked access");
+  });
+
+  it("says why a role is active that nobody there allowed", async () => {
+    await open({ roles: by({ receiver: allowed({ decidedBy: "automatic" }) }) });
+    expect(row("receiver").textContent).toContain("active without a request, because attic runs an older BombVault");
   });
 
   it("names the storage location its receiving server became", async () => {
     await open({
+      roles: by({ receiver: allowed() }),
       groupReceivers: [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }],
       destinations: [destination({ name: "Attic off-site", repo: "rest:http://192.168.1.21:8000/cellar-login" })],
     });
-    const row = section("What attic does for this server").querySelector('[data-role="receiver"]')!;
-    expect(row.textContent).toContain(en["instances.role.on"]);
-    expect(row.textContent).toContain("Storage location Attic off-site");
+    expect(row("receiver").textContent).toContain("Storage location Attic off-site");
   });
 
   it("lists the ZFS items that replicate to it, each with where it stands", async () => {
     await open({
+      roles: by({ zfs: zfsRole("asked", ["tank/appdata", "tank/media"]) }),
       replicas: [
         { itemId: "z1", dataset: "tank/appdata", replica: replica({ target: { kind: "peer", id: "m1" }, peerState: "allowed" }) },
         { itemId: "z2", dataset: "tank/media", replica: replica({ target: { kind: "peer", id: "m1" }, peerState: "asked", state: "waiting" }) },
       ],
     });
-    const row = section("What attic does for this server").querySelector('[data-role="zfs"]')!;
-    expect(row.textContent).toContain(en["instances.role.waiting"]);
-    expect(row.textContent).toContain("tank/appdata");
-    expect(row.textContent).toContain("Replicated 2 hours ago");
-    expect(row.textContent).toContain("tank/media");
+    expect(row("zfs").getAttribute("data-state")).toBe("waiting");
+    expect(row("zfs").textContent).toContain("tank/appdata");
+    expect(row("zfs").textContent).toContain("Replicated 2 hours ago");
+    expect(row("zfs").textContent).toContain("tank/media");
+  });
+
+  it("leaves out the ZFS server while this server has no ZFS section", async () => {
+    await open({}, { fleet: true, receiver: true, pull: true, zfs: false });
+    expect([...does().querySelectorAll("[data-role]")].map((r) => r.getAttribute("data-role"))).toEqual(["receiver", "fetcher"]);
+  });
+
+  it("asks for a role from its switch", async () => {
+    await open();
+    await click(within(row("fetcher")).getByRole("switch"));
+    const dialog = screen.getByRole("dialog", { name: "attic as Fetcher" });
+    await click(within(dialog).getByRole("button", { name: en["instances.role.send"] }));
+    expect(asked).toEqual([["m1", "fetcher", { sections: ["containers"] }]]);
+    expect(reloads).toContain("roles");
+  });
+
+  it("withdraws a role from its switch after the question", async () => {
+    await open({ roles: by({ receiver: allowed() }) });
+    await click(within(row("receiver")).getByRole("switch"));
+    const question = screen.getByRole("dialog", { name: en["confirmDialog.title"] });
+    await click(within(question).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(withdrawn).toEqual([["m1", "receiver"]]);
+    expect(reloads).toContain("roles");
+  });
+
+  it("changes the sections of a role that is asked for or on, and offers no change for one that is off", async () => {
+    await open({ roles: by({ receiver: allowed({ sections: ["flash"] }) }) });
+    expect(within(row("fetcher")).queryByRole("button", { name: en["instances.role.change"] })).toBeNull();
+    await click(within(row("receiver")).getByRole("button", { name: en["instances.role.change"] }));
+    const dialog = screen.getByRole("dialog", { name: "attic as Receiver" });
+    expect(within(dialog).getAllByRole("switch").map((sw) => sw.getAttribute("aria-checked"))).toEqual(["false", "true"]);
+    await click(within(dialog).getAllByRole("switch")[0]);
+    await click(within(dialog).getByRole("button", { name: en["settings.save"] }));
+    expect(asked).toEqual([["m1", "receiver", { sections: ["flash", "containers"] }]]);
+    expect(await screen.findByText(en["folders.saved"])).toBeTruthy();
   });
 
   it("shows the storage it offered, to accept or decline", async () => {
     await open({
       offers: [meshOffer()],
     });
-    const card = section("What attic does for this server");
-    expect(within(card).getByText("rest:http://192.168.1.21:8000/vms")).toBeTruthy();
-    expect(within(card).getByRole("button", { name: en["fleet.mesh.accept"] })).toBeTruthy();
-    expect(within(card).getByRole("button", { name: en["fleet.mesh.decline"] })).toBeTruthy();
+    expect(within(does()).getByText("rest:http://192.168.1.21:8000/vms")).toBeTruthy();
+    expect(within(does()).getByRole("button", { name: en["fleet.mesh.accept"] })).toBeTruthy();
+    expect(within(does()).getByRole("button", { name: en["fleet.mesh.decline"] })).toBeTruthy();
+  });
+});
+
+describe("requests from the instance", () => {
+  it("shows what it asks for, marked as a request, with Allow and Decline", async () => {
+    await open({ roles: forPeer({ receiver: roleRequest(), fetcher: roleRequest({ id: "rr2", sections: ["vms"] }) }, { asks: 2 }) });
+    const asks = [...serves().querySelectorAll("[data-request]")];
+    expect(asks.map((a) => a.getAttribute("data-request"))).toEqual(["receiver", "fetcher"]);
+    expect(asks[0].textContent).toContain(en["instances.request"]);
+    expect(asks[0].textContent).toContain("attic wants to keep its off-site copies here: Containers, Flash");
+    expect(asks[1].textContent).toContain("attic wants this server to fetch its backups: VMs");
+    expect(within(asks[0] as HTMLElement).getByText(en["instances.request"]).tagName).toBe("SPAN");
+  });
+
+  it("allows a Fetcher with the sections it showed, then asks what to fetch", async () => {
+    await open({ roles: forPeer({ fetcher: roleRequest({ sections: ["vms"] }) }) });
+    await click(within(serves()).getByRole("button", { name: en["zfs.receive.allow"] }));
+    expect(decided).toEqual([["rr1", { decision: "allow", sections: ["vms"] }]]);
+    expect(reloads).toContain("roles");
+    expect(screen.getByText("Allowed for attic.")).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: en["pull.addSource"] })).toBeTruthy();
+  });
+
+  it("declines a request", async () => {
+    await open({ roles: forPeer({ receiver: roleRequest() }) });
+    await click(within(serves()).getByRole("button", { name: en["zfs.receive.decline"] }));
+    expect(decided).toEqual([["rr1", { decision: "refuse" }]]);
+    expect(screen.getByText("attic gets no access.")).toBeTruthy();
+    expect(screen.queryByRole("dialog", { name: en["pull.addSource"] })).toBeNull();
+  });
+
+  it("leads to setting up a receiving server when a Receiver is allowed without one, then allows", async () => {
+    decideAnswer = () => (serverRuns ? { ok: true } : { ok: false, code: "no-receiver", error: "set up a receiver first" });
+    await open({ roles: forPeer({ receiver: roleRequest() }) });
+    await click(within(serves()).getByRole("button", { name: en["zfs.receive.allow"] }));
+    expect(screen.queryByText("set up a receiver first")).toBeNull();
+    const form = await screen.findByRole("dialog", { name: en["receiver.server.setUp"] });
+    expect(form.textContent).toContain(en["receiver.server.neededLead"]);
+    fireEvent.change(within(form).getByPlaceholderText("user/restic"), { target: { value: "user/restic" } });
+    await click(within(form).getByRole("button", { name: en["receiver.server.startContinue"] }));
+    expect(serversSetUp).toHaveLength(1);
+    // The password of the new server shows once, so its window stays until it is closed.
+    const win = screen.getByRole("dialog", { name: en["receiver.server.title"] });
+    expect(within(win).getByText("kE7v-Qm2d")).toBeTruthy();
+    await click(within(win).getByRole("button", { name: en["common.done"] }));
+    expect(decided).toEqual([
+      ["rr1", { decision: "allow", sections: ["containers", "flash"] }],
+      ["rr1", { decision: "allow", sections: ["containers", "flash"] }],
+    ]);
+    expect(reloads).toContain("server");
+    expect(screen.getByText("Allowed for attic.")).toBeTruthy();
+  });
+
+  it("does not allow when the set-up is left without a server", async () => {
+    decideAnswer = () => ({ ok: false, code: "no-receiver", error: "set up a receiver first" });
+    await open({ roles: forPeer({ receiver: roleRequest() }) });
+    await click(within(serves()).getByRole("button", { name: en["zfs.receive.allow"] }));
+    const form = await screen.findByRole("dialog", { name: en["receiver.server.setUp"] });
+    await click(within(form).getByRole("button", { name: en["common.cancel"] }));
+    await click(within(screen.getByRole("dialog", { name: en["receiver.server.title"] })).getByRole("button", { name: en["common.done"] }));
+    expect(decided).toHaveLength(1);
+  });
+
+  it("reads the request again when the instance has asked for other sections since", async () => {
+    decideAnswer = () => ({ ok: false, code: "request-changed", error: "asked for other sections" });
+    await open({ roles: forPeer({ receiver: roleRequest() }) });
+    await click(within(serves()).getByRole("button", { name: en["zfs.receive.allow"] }));
+    expect(screen.getByText("attic has since asked for other sections. Look at the request again.")).toBeTruthy();
+    expect(reloads).toContain("roles");
+  });
+
+  it("keeps an allowed role with when it was allowed, and takes it back after a question", async () => {
+    await open({ roles: forPeer({ receiver: allowed() }) });
+    const grant = serves().querySelector('[data-request="receiver"]') as HTMLElement;
+    expect(grant.textContent).toContain("Allowed 1 hour ago · Containers, Flash");
+    expect(grant.textContent).not.toContain(en["instances.request"]);
+    await click(within(grant).getByRole("button", { name: en["zfs.receive.revoke"] }));
+    const question = screen.getByRole("dialog", { name: en["confirmDialog.title"] });
+    expect(question.textContent).toContain("Revoke access for attic?");
+    expect(question.textContent).toContain("attic then cannot copy anything here any more.");
+    await click(within(question).getByRole("button", { name: en["zfs.receive.revokeConfirm"] }));
+    expect(decided).toEqual([["rr1", { decision: "revoke" }]]);
+    expect(screen.getByText(en["zfs.receive.revoked"])).toBeTruthy();
+  });
+
+  it("reads as one list with the ZFS requests: what waits first, then what was allowed", async () => {
+    requests = [
+      receiveRequest({ peer: "m1", peerName: "attic", sourceServer: "attic" }),
+      receiveRequest({ id: "rq2", peer: "m1", peerName: "attic", item: "cache/media", state: "allowed", pool: "tank", root: "tank/replica" }),
+    ];
+    await open({ roles: forPeer({ receiver: roleRequest(), fetcher: allowed({ id: "rr2" }) }) });
+    await screen.findByText("attic wants to replicate cache/appdata here");
+    const text = serves().textContent ?? "";
+    const order = [
+      "attic wants to keep its off-site copies here",
+      "attic wants to replicate cache/appdata here",
+      "Allowed 1 hour ago",
+      "cache/media from attic",
+    ].map((part) => text.indexOf(part));
+    expect(order.every((at) => at >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
 });
 
@@ -203,7 +449,7 @@ describe("what this server does for the instance", () => {
   it("shows its ZFS requests and no other instance's", async () => {
     requests = [receiveRequest({ peer: "m1", peerName: "attic", sourceServer: "attic" }), receiveRequest({ id: "rq2", peer: "m2", peerName: "barn", item: "tank/barn" })];
     await open();
-    const card = section("What this server does for attic");
+    const card = serves();
     expect(await within(card).findByText("attic wants to replicate cache/appdata here")).toBeTruthy();
     expect(within(card).queryByText(/barn wants/)).toBeNull();
   });
