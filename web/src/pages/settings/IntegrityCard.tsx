@@ -15,7 +15,6 @@ import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/Sour
 import { IconKey, IconPrune } from "../../components/glyphs";
 import { ProgressBar } from "../../components/ProgressBar";
 import { countProgressText, type ResolveName } from "../../lib/activityLog";
-import { useAdvanced } from "../../lib/advanced";
 import { heldTagLabels } from "../../lib/anomalies";
 import { Container, RestoreDrill, Settings, VM, checkDomain, getDrills, getStatus, listContainers, listVMs, pruneDomain, runDrill, tamperTest, unlockDomain } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -43,7 +42,6 @@ export function IntegrityCard({
   ) => Promise<boolean>;
   hueIndex?: number;
 }) {
-  const { advanced } = useAdvanced();
   const progressMap = useProgress();
   const resolveName: ResolveName = (key, params, count) => {
     let s = t(key as TranslationKey, count);
@@ -343,18 +341,13 @@ export function IntegrityCard({
       glyph: <IconKey />,
       busy: "…",
     },
-    // Prune deletes snapshots, so it stays behind Advanced.
-    ...(advanced
-      ? [
-          {
-            key: "prune" as Action,
-            label: t("integrity.prune"),
-            labelKey: "integrity.prune",
-            glyph: <IconPrune />,
-            busy: "…",
-          },
-        ]
-      : []),
+    {
+      key: "prune",
+      label: t("integrity.prune"),
+      labelKey: "integrity.prune",
+      glyph: <IconPrune />,
+      busy: "…",
+    },
   ];
 
   // Only a domain whose off-site repo is set and flagged immutable gets the

@@ -16,7 +16,6 @@ import type { Settings } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrFragments } from "../../../lib/ltrFragments";
-import { useAdvanced } from "../../../lib/advanced";
 import { IconCheck, IconSync, IconGear, IconClose } from "../../../components/Sidebar";
 import { Card, hueCounter, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
@@ -135,7 +134,6 @@ function OffsiteDomainBar({
 
 export function OffsitePage() {
   const { t } = useT();
-  const { advanced } = useAdvanced();
   const { settings, setSettings, savedBaseline, allTargets, save, debouncedSave } = useSettings();
 
   const [, setOffsiteSaveState] = useState<SaveState>("idle");
@@ -240,8 +238,6 @@ export function OffsitePage() {
       })}
       </div>
 
-      {/* `advanced &&` inline, so a hidden card spends no hue slot. */}
-      {advanced && (
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
         <div className="grid grid-cols-2 gap-3">
           {([
@@ -264,9 +260,8 @@ export function OffsitePage() {
           ))}
         </div>
       </Card>
-      )}
 
-      {advanced && <StreamingCard t={t} hueIndex={nextHue()} />}
+      <StreamingCard t={t} hueIndex={nextHue()} />
     </>
   );
 }

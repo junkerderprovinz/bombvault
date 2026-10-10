@@ -8,7 +8,6 @@ import { RevealInput } from "../../components/RevealInput";
 import { HUE_OFFSET, Selector } from "../../components/Selector";
 import { getNotify, setNotify, testNotify, type NotifyConfig } from "../../lib/api";
 import { tLtr } from "../../lib/ltrFragments";
-import { useAdvanced } from "../../lib/advanced";
 import { useEffect, useRef, useState } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
@@ -60,18 +59,10 @@ export function NotifyCard({
   // "truenas"). The mismatch banner below the Unraid toggle reads it.
   platformKind: string;
   hueIndex?: number;
-  // The channels card renders only in advanced mode, so the call site has to
-  // take this from a nextHue() call inside that same gate. An unconditional
-  // nextHue() would burn a slot with Advanced off and shift every later
-  // heading on the tab by one.
   channelsHueIndex?: number;
-  // Same rule as channelsHueIndex.
   healthchecksHueIndex?: number;
 }) {
   const { push } = useToast();
-  // Simple mode still gets notify-on-failure via Unraid; the extra channels
-  // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
-  const { advanced } = useAdvanced();
   const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
   const [, setState] = useState<SaveState>("idle");
   // The SMTP password / Matrix token are never sent to the browser; track whether
@@ -264,8 +255,6 @@ export function NotifyCard({
         {t("anomaly.settings.notifyCrossLink")}
       </Link>
 
-      {/* Test lives on this card rather than the channels card so it still
-          works with Advanced off. */}
       <VerdictLine verdict={test.verdict} />
       <div className="flex items-center gap-3 pt-1 flex-wrap">
         <TestButton
@@ -281,8 +270,7 @@ export function NotifyCard({
       </div>
     </Card>
 
-    {advanced && (
-      <Card title={t("notify.channelsTitle")} hint={t("notify.channelsHint")} hueIndex={channelsHueIndex}>
+    <Card title={t("notify.channelsTitle")} hint={t("notify.channelsHint")} hueIndex={channelsHueIndex}>
       {/* Each channel's toggle also gates the backend send, and its fields
           hide while it is off. The four channel toggles form one group for
           hueIndex, in the order they appear. */}
@@ -443,11 +431,9 @@ export function NotifyCard({
           </>
         )}
       </div>
-      </Card>
-    )}
+    </Card>
 
-    {advanced && (
-      <Card title={t("notify.healthchecksTitle")} hueIndex={healthchecksHueIndex}>
+    <Card title={t("notify.healthchecksTitle")} hueIndex={healthchecksHueIndex}>
       {/* The InfoBubble is a button, so clicking it inside the label opens
           the bubble rather than focusing the input. */}
       <label className={labelCls}>
@@ -510,8 +496,7 @@ export function NotifyCard({
           </label>
         ))}
       </div>
-      </Card>
-    )}
+    </Card>
     </>
   );
 }
