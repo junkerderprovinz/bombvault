@@ -2419,6 +2419,7 @@ type registryAuthView struct {
 	Username string `json:"username"`
 	Token    string `json:"token"`
 	TokenSet bool   `json:"tokenSet"`
+	Kind     string `json:"kind"`
 }
 
 func toView(s store.Settings) settingsView {
@@ -2590,7 +2591,7 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	view.RegistryAuths = make([]registryAuthView, 0, len(regs))
 	for _, a := range regs {
 		view.RegistryAuths = append(view.RegistryAuths, registryAuthView{
-			Host: a.Host, Username: a.Username, TokenSet: a.Token != "",
+			Host: a.Host, Username: a.Username, TokenSet: a.Token != "", Kind: a.Kind,
 		})
 	}
 	// Nest under "settings" so the GET response is shape-symmetric with the PUT
