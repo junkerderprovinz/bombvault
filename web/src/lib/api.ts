@@ -3703,6 +3703,19 @@ export function listItems(): Promise<ListItemsResponse> {
   return fetchJSON("/api/items");
 }
 
+export interface BackupItemResponse {
+  ok: boolean;
+  item?: BackupItem;
+  error?: string;
+}
+
+/** GET /api/items/{kind}/{key}: the row listItems has for one item. An item
+ *  nobody knows rejects with an ApiError of status 404; a load that failed
+ *  resolves with `ok: false`. */
+export function getBackupItem(kind: BackupItemKind, key: string): Promise<BackupItemResponse> {
+  return fetchJSON(`/api/items/${encodeURIComponent(kind)}/${encodeURIComponent(key)}`);
+}
+
 /** GET /api/runs for one item of GET /api/items: its runs of every kind,
  *  newest first, at most `limit` of them (500 without one). */
 export function listItemRuns(kind: BackupItemKind, key: string, limit?: number): Promise<ListRunsResponse> {

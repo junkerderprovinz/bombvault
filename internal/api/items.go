@@ -140,8 +140,7 @@ type backupItemView struct {
 	Runs         []store.RunBrief `json:"runs"`
 }
 
-// itemHistory is what the runs table says about every item, read once per
-// listing.
+// itemHistory is what the runs table says about the items of one answer.
 type itemHistory struct {
 	stamps map[string]store.BackupStamp
 	sizes  map[string]int64
@@ -158,6 +157,27 @@ func (h *Handler) readItemHistory() (itemHistory, error) {
 		return itemHistory{}, err
 	}
 	runs, err := h.store.RecentRunsByTarget(itemRunStrip)
+	if err != nil {
+		return itemHistory{}, err
+	}
+	return itemHistory{stamps: stamps, sizes: sizes, runs: runs}, nil
+}
+
+// readHistoryOf is readItemHistory for one target. An item without a stored
+// row has no id and no history.
+func (h *Handler) readHistoryOf(targetID string) (itemHistory, error) {
+	if targetID == "" {
+		return itemHistory{}, nil
+	}
+	stamps, err := h.store.LatestBackupsOf(targetID)
+	if err != nil {
+		return itemHistory{}, err
+	}
+	sizes, err := h.store.LatestSourceBytesOf(targetID)
+	if err != nil {
+		return itemHistory{}, err
+	}
+	runs, err := h.store.RecentRunsOf(targetID, itemRunStrip)
 	if err != nil {
 		return itemHistory{}, err
 	}
@@ -236,32 +256,122 @@ func (h *Handler) backupItems(ctx context.Context, settings store.Settings) (ite
 		return nil, nil, err
 	}
 	for _, set := range sets {
-		v := hist.row("files", set.ID, fileSetFacts(set, settings))
-		v.KindDisabled = !settings.FilesEnabled
-		items = append(items, v)
+		items = append(items, fileSetRow(hist, set, settings))
 	}
 	datasets, err := h.store.ListZFSDatasets()
 	if err != nil {
 		return nil, nil, err
 	}
 	for _, d := range datasets {
-		v := hist.row(zfsDomain, d.ID, zfsDatasetFacts(d, settings))
-		v.KindDisabled = !settings.ZFSEnabled
-		items = append(items, v)
+		items = append(items, zfsDatasetRow(hist, d, settings))
 	}
 	if settings.FlashEnabled {
-		items = append(items, hist.row("flash", "flash", itemFacts{
-			ID: store.FlashTargetID, Name: "flash", Included: true,
-			Schedule: schedule.EffectiveFlashSchedule(settings),
-		}))
+		items = append(items, flashRow(hist, settings))
 	}
 	if settings.ConfigEnabled {
-		items = append(items, hist.row("config", "config", itemFacts{
-			ID: store.ConfigTargetID, Name: "config", Included: true,
-			Schedule: schedule.EffectiveConfigSchedule(settings),
-		}))
+		items = append(items, configRow(hist, settings))
 	}
 	return items, unlisted, nil
+}
+
+func fileSetRow(hist itemHistory, set store.FileSet, settings store.Settings) backupItemView {
+	v := hist.row("files", set.ID, fileSetFacts(set, settings))
+	v.KindDisabled = !settings.FilesEnabled
+	return v
+}
+
+func zfsDatasetRow(hist itemHistory, d store.ZFSDataset, settings store.Settings) backupItemView {
+	v := hist.row(zfsDomain, d.ID, zfsDatasetFacts(d, settings))
+	v.KindDisabled = !settings.ZFSEnabled
+	return v
+}
+
+func flashRow(hist itemHistory, settings store.Settings) backupItemView {
+	return hist.row("flash", "flash", itemFacts{
+		ID: store.FlashTargetID, Name: "flash", Included: true,
+		Schedule: schedule.EffectiveFlashSchedule(settings),
+	})
+}
+
+func configRow(hist itemHistory, settings store.Settings) backupItemView {
+	return hist.row("config", "config", itemFacts{
+		ID: store.ConfigTargetID, Name: "config", Included: true,
+		Schedule: schedule.EffectiveConfigSchedule(settings),
+	})
+}
+
+var (
+	errNoSuchItem = errors.New("no such item")
+	// errHostSilent is an item no stored row names while its host did not say
+	// whether it exists.
+	errHostSilent = errors.New("the host did not answer, so the item cannot be looked up")
+)
+
+// handleGetItem serves GET /api/items/{kind}/{key}: the row GET /api/items has
+// for one item.
+func (h *Handler) handleGetItem(w http.ResponseWriter, r *http.Request) {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	item, err := h.backupItem(r.Context(), settings, r.PathValue("kind"), r.PathValue("key"))
+	switch {
+	case errors.Is(err, errNoSuchItem), errors.Is(err, errUnknownItemKind):
+		writeJSON(w, http.StatusNotFound, codedFailEnvelope(err, "not-found"))
+	case err != nil:
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"item": item}))
+	}
+}
+
+// backupItem builds one row of backupItems and reads no more than that row
+// needs: a folder set asks neither Docker nor libvirt, and the runs table is
+// read for one target.
+func (h *Handler) backupItem(ctx context.Context, settings store.Settings, kind, key string) (backupItemView, error) {
+	withHistory := func(targetID string, row func(itemHistory) backupItemView) (backupItemView, error) {
+		hist, err := h.readHistoryOf(targetID)
+		if err != nil {
+			return backupItemView{}, err
+		}
+		return row(hist), nil
+	}
+	notStored := func(err error) (backupItemView, error) {
+		if errors.Is(err, sql.ErrNoRows) {
+			return backupItemView{}, errNoSuchItem
+		}
+		return backupItemView{}, err
+	}
+	switch kind {
+	case "container":
+		return h.containerItem(ctx, settings, key)
+	case "vm":
+		return h.vmItem(ctx, settings, key)
+	case "files":
+		set, err := h.store.GetFileSet(key)
+		if err != nil {
+			return notStored(err)
+		}
+		return withHistory(set.ID, func(hist itemHistory) backupItemView { return fileSetRow(hist, set, settings) })
+	case zfsDomain:
+		d, err := h.store.GetZFSDataset(key)
+		if err != nil {
+			return notStored(err)
+		}
+		return withHistory(d.ID, func(hist itemHistory) backupItemView { return zfsDatasetRow(hist, d, settings) })
+	case "flash":
+		if key != kind || !settings.FlashEnabled {
+			return backupItemView{}, errNoSuchItem
+		}
+		return withHistory(store.FlashTargetID, func(hist itemHistory) backupItemView { return flashRow(hist, settings) })
+	case "config":
+		if key != kind || !settings.ConfigEnabled {
+			return backupItemView{}, errNoSuchItem
+		}
+		return withHistory(store.ConfigTargetID, func(hist itemHistory) backupItemView { return configRow(hist, settings) })
+	}
+	return backupItemView{}, errUnknownItemKind
 }
 
 // formerNames reads the names the entries of a kind had before. A failed read
@@ -285,152 +395,317 @@ func storedImageAndStack(t store.Target) (image, stack string) {
 	return def.Inspect.Config.Image, def.Inspect.Config.Labels["com.docker.compose.project"]
 }
 
-// containerItems lists the containers Docker knows, each with its stored entry
-// when it has one, followed by the entries whose container is gone. listed is
-// false when Docker did not answer.
-func (h *Handler) containerItems(ctx context.Context, settings store.Settings, hist itemHistory) (rows []backupItemView, listed bool, err error) {
+// containerSources is what the container rows of one answer are built from: the
+// stored entries, what Docker lists, and the facts read once for all of them.
+type containerSources struct {
+	settings store.Settings
+	targets  []store.Target
+	byName   map[string]store.Target
+	docker   dockerState
+	self     string
+	former   aliasIndex
+	shapes   map[string]string
+}
+
+func (h *Handler) readContainerSources(ctx context.Context, settings store.Settings) (containerSources, error) {
 	targets, err := h.store.ListTargets()
 	if err != nil {
-		return nil, false, err
+		return containerSources{}, err
 	}
 	byName := make(map[string]store.Target, len(targets))
 	for _, t := range targets {
 		byName[t.ContainerName] = t
 	}
-	docker := h.listDocker(ctx)
-	self := h.svc.SelfContainerName(ctx)
-	former := h.formerNames("container")
 	shapes, err := h.store.BackedUpShapes()
 	if err != nil {
 		log.Printf("api: items: the change notice is unavailable: %v", err)
 	}
-	// Recognising a database inspects the container, which is not worth it for
-	// rows the page leaves out while containers are not backed up.
-	var databases map[string]dbDumpRow
-	if settings.ContainersEnabled {
-		databases = h.svc.dbDumpRows(ctx, docker.infos, byName)
-	}
-	row := func(t store.Target) backupItemView {
-		v := hist.row("container", t.ContainerName, containerFacts(t, settings))
-		v.Self = self != "" && t.ContainerName == self
-		v.KindDisabled = !settings.ContainersEnabled
-		v.FormerNames = former[t.ID]
-		return v
-	}
+	return containerSources{
+		settings: settings,
+		targets:  targets,
+		byName:   byName,
+		docker:   h.listDocker(ctx),
+		self:     h.svc.SelfContainerName(ctx),
+		former:   h.formerNames("container"),
+		shapes:   shapes,
+	}, nil
+}
 
-	installed, gone := true, false
-	rows = make([]backupItemView, 0, len(docker.infos)+len(targets))
-	hasBackup := make(map[string]bool, len(docker.infos))
-	for _, c := range docker.infos {
-		t, stored := byName[c.Name]
-		if !stored {
-			t = store.Target{ContainerName: c.Name}
+// databases recognises the database servers among infos. That inspects each
+// container, which is not worth it for rows the page leaves out while
+// containers are not backed up.
+func (src containerSources) databases(ctx context.Context, svc *Service, infos []dockercli.ContainerInfo) map[string]dbDumpRow {
+	if !src.settings.ContainersEnabled {
+		return nil
+	}
+	return svc.dbDumpRows(ctx, infos, src.byName)
+}
+
+func (src containerSources) row(hist itemHistory, t store.Target) backupItemView {
+	v := hist.row("container", t.ContainerName, containerFacts(t, src.settings))
+	v.Self = src.self != "" && t.ContainerName == src.self
+	v.KindDisabled = !src.settings.ContainersEnabled
+	v.FormerNames = src.former[t.ID]
+	return v
+}
+
+// liveRow is the row of a container Docker lists, with its stored entry when
+// it has one.
+func (src containerSources) liveRow(ctx context.Context, svc *Service, hist itemHistory, c dockercli.ContainerInfo, databases map[string]dbDumpRow) backupItemView {
+	t, stored := src.byName[c.Name]
+	if !stored {
+		t = store.Target{ContainerName: c.Name}
+	}
+	installed := true
+	v := src.row(hist, t)
+	v.State, v.Installed = c.State, &installed
+	v.RestoredFrom = c.Labels[restoredFromLabel]
+	v.IP, v.Image, v.Stack = c.IP, c.Image, c.Stack
+	if db, ok := databases[c.Name]; ok {
+		v.DBTier, v.DBDumpLabelOff, v.DBDataCoverage = db.Tier, db.LabelOff, db.Coverage
+		v.DBDumpOff = t.DBDumpOff
+		v.DBDumpsGlobalOff = !src.settings.DBDumpsEnabled
+	}
+	if stored && !v.Self && (v.LastBackup > 0 || src.shapes[t.ID] != "") {
+		v.ChangedSinceBackup = svc.changesSinceBackup(ctx, c, t, src.shapes[t.ID])
+	}
+	return v
+}
+
+// goneRow is the row of a stored entry Docker does not list. Whether the
+// container is gone is known only when Docker answered.
+func (src containerSources) goneRow(hist itemHistory, t store.Target) backupItemView {
+	v := src.row(hist, t)
+	v.Image, v.Stack = storedImageAndStack(t)
+	if src.docker.answered {
+		gone := false
+		v.Installed = &gone
+	}
+	return v
+}
+
+// notInstalled returns the stored entries whose container is gone, none while
+// Docker did not answer.
+func (src containerSources) notInstalled() []store.Target {
+	if !src.docker.answered {
+		return nil
+	}
+	var out []store.Target
+	for _, t := range src.targets {
+		if _, live := src.docker.live[t.ContainerName]; !live {
+			out = append(out, t)
 		}
-		v := row(t)
-		v.State, v.Installed = c.State, &installed
-		v.RestoredFrom = c.Labels[restoredFromLabel]
-		v.IP, v.Image, v.Stack = c.IP, c.Image, c.Stack
-		if db, ok := databases[c.Name]; ok {
-			v.DBTier, v.DBDumpLabelOff, v.DBDataCoverage = db.Tier, db.LabelOff, db.Coverage
-			v.DBDumpOff = t.DBDumpOff
-			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
-		}
+	}
+	return out
+}
+
+// containerItems lists the containers Docker knows, each with its stored entry
+// when it has one, followed by the entries whose container is gone. listed is
+// false when Docker did not answer.
+func (h *Handler) containerItems(ctx context.Context, settings store.Settings, hist itemHistory) (rows []backupItemView, listed bool, err error) {
+	src, err := h.readContainerSources(ctx, settings)
+	if err != nil {
+		return nil, false, err
+	}
+	infos := src.docker.infos
+	databases := src.databases(ctx, h.svc, infos)
+
+	rows = make([]backupItemView, 0, len(infos)+len(src.targets))
+	hasBackup := make(map[string]bool, len(infos))
+	for _, c := range infos {
+		v := src.liveRow(ctx, h.svc, hist, c, databases)
 		hasBackup[c.Name] = v.LastBackup > 0
-		if stored && !v.Self && (hasBackup[c.Name] || shapes[t.ID] != "") {
-			v.ChangedSinceBackup = h.svc.changesSinceBackup(ctx, c, t, shapes[t.ID])
-		}
 		rows = append(rows, v)
 	}
-	var notInstalled []store.Target
-	for _, t := range targets {
-		if _, live := docker.live[t.ContainerName]; live {
-			continue
+	for _, t := range src.targets {
+		if _, live := src.docker.live[t.ContainerName]; !live {
+			rows = append(rows, src.goneRow(hist, t))
 		}
-		v := row(t)
-		v.Image, v.Stack = storedImageAndStack(t)
-		if docker.answered {
-			v.Installed = &gone
-			notInstalled = append(notInstalled, t)
-		}
-		rows = append(rows, v)
 	}
 	// The live rows stand first and in Docker's order, so a hint finds its row
 	// by the container's place in that list.
-	hints := h.svc.renameHints(docker.infos, notInstalled, hasBackup)
-	for i, c := range docker.infos {
+	hints := h.svc.renameHints(infos, src.notInstalled(), hasBackup)
+	for i, c := range infos {
 		if hint, ok := hints[c.Name]; ok {
 			rows[i].RenameFrom, rows[i].RenameReason = hint.OldName, hint.Reason
 		}
 	}
-	return rows, docker.answered, nil
+	return rows, src.docker.answered, nil
 }
 
-// vmItems is containerItems for VMs. libvirt is asked only while the VMs kind
-// is on, so a host without VMs is not dialled on every load, and listed is
-// false only when it was asked and did not answer. Key is the libvirt name and
-// Name what the platform shows for it.
-func (h *Handler) vmItems(ctx context.Context, settings store.Settings, hist itemHistory) (rows []backupItemView, listed bool, err error) {
+// containerItem is the row containerItems has for one container. Docker is
+// asked for its list, which is one call and what a rename hint is matched
+// against, but only this container is inspected.
+func (h *Handler) containerItem(ctx context.Context, settings store.Settings, name string) (backupItemView, error) {
+	src, err := h.readContainerSources(ctx, settings)
+	if err != nil {
+		return backupItemView{}, err
+	}
+	t, stored := src.byName[name]
+	c, live := src.docker.live[name]
+	if !stored && !live {
+		if !src.docker.answered {
+			return backupItemView{}, errHostSilent
+		}
+		return backupItemView{}, errNoSuchItem
+	}
+	hist, err := h.readHistoryOf(t.ID)
+	if err != nil {
+		return backupItemView{}, err
+	}
+	if !live {
+		return src.goneRow(hist, t), nil
+	}
+	v := src.liveRow(ctx, h.svc, hist, c, src.databases(ctx, h.svc, []dockercli.ContainerInfo{c}))
+	if v.LastBackup == 0 {
+		if hint, ok := h.svc.suggestRenames(src.docker.infos, src.notInstalled())[name]; ok {
+			v.RenameFrom, v.RenameReason = hint.OldName, hint.Reason
+		}
+	}
+	return v, nil
+}
+
+// vmSources is containerSources for VMs. libvirt is asked only while the VMs
+// kind is on, so a host without VMs is not dialled on every load.
+type vmSources struct {
+	settings store.Settings
+	targets  []store.VMTarget
+	byName   map[string]store.VMTarget
+	infos    []virshcli.VMInfo
+	live     map[string]virshcli.VMInfo
+	answered bool
+	former   aliasIndex
+	trueNAS  bool
+}
+
+func (h *Handler) readVMSources(ctx context.Context, settings store.Settings) (vmSources, error) {
 	targets, err := h.store.ListVMTargets()
+	if err != nil {
+		return vmSources{}, err
+	}
+	src := vmSources{
+		settings: settings,
+		targets:  targets,
+		byName:   make(map[string]store.VMTarget, len(targets)),
+		former:   h.formerNames("vm"),
+		trueNAS:  h.svc.platformFn().Kind() == platform.KindTrueNAS,
+	}
+	for _, t := range targets {
+		src.byName[t.Name] = t
+	}
+	if settings.VMsEnabled {
+		var vErr error
+		if src.infos, vErr = h.svc.virsh.List(ctx); vErr != nil {
+			log.Printf("api: items: the VM list is unavailable: %v", vErr)
+		}
+		src.answered = vErr == nil
+	}
+	src.live = make(map[string]virshcli.VMInfo, len(src.infos))
+	for _, vm := range src.infos {
+		src.live[vm.Name] = vm
+	}
+	return src, nil
+}
+
+func (src vmSources) row(hist itemHistory, t store.VMTarget) backupItemView {
+	v := hist.row("vm", t.Name, vmFacts(t, src.settings))
+	v.KindDisabled = !src.settings.VMsEnabled
+	v.FormerNames = src.former[t.ID]
+	return v
+}
+
+// liveRow is the row of a VM libvirt lists. Key is the libvirt name and Name
+// what the platform shows for it.
+func (src vmSources) liveRow(hist itemHistory, vm virshcli.VMInfo) backupItemView {
+	t, stored := src.byName[vm.Name]
+	if !stored {
+		t = store.VMTarget{Name: vm.Name}
+	}
+	installed := true
+	v := src.row(hist, t)
+	v.Name = vmDisplayName(vm, src.trueNAS)
+	v.State, v.Installed = vm.State, &installed
+	return v
+}
+
+func (src vmSources) goneRow(hist itemHistory, t store.VMTarget) backupItemView {
+	v := src.row(hist, t)
+	if src.answered {
+		gone := false
+		v.Installed = &gone
+	}
+	return v
+}
+
+func (src vmSources) notInstalled() []store.VMTarget {
+	if !src.answered {
+		return nil
+	}
+	var out []store.VMTarget
+	for _, t := range src.targets {
+		if _, live := src.live[t.Name]; !live {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// vmItems is containerItems for VMs. listed is false only when libvirt was
+// asked and did not answer.
+func (h *Handler) vmItems(ctx context.Context, settings store.Settings, hist itemHistory) (rows []backupItemView, listed bool, err error) {
+	src, err := h.readVMSources(ctx, settings)
 	if err != nil {
 		return nil, false, err
 	}
-	byName := make(map[string]store.VMTarget, len(targets))
-	for _, t := range targets {
-		byName[t.Name] = t
-	}
-	var infos []virshcli.VMInfo
-	answered := false
-	if settings.VMsEnabled {
-		var vErr error
-		if infos, vErr = h.svc.virsh.List(ctx); vErr != nil {
-			log.Printf("api: items: the VM list is unavailable: %v", vErr)
-		}
-		answered = vErr == nil
-	}
-	former := h.formerNames("vm")
-	row := func(t store.VMTarget) backupItemView {
-		v := hist.row("vm", t.Name, vmFacts(t, settings))
-		v.KindDisabled = !settings.VMsEnabled
-		v.FormerNames = former[t.ID]
-		return v
-	}
-
-	trueNAS := h.svc.platformFn().Kind() == platform.KindTrueNAS
-	live := make(map[string]bool, len(infos))
-	hasBackup := make(map[string]bool, len(infos))
-	installed, gone := true, false
-	rows = make([]backupItemView, 0, len(infos)+len(targets))
-	for _, vm := range infos {
-		live[vm.Name] = true
-		t, ok := byName[vm.Name]
-		if !ok {
-			t = store.VMTarget{Name: vm.Name}
-		}
-		v := row(t)
-		v.Name = vmDisplayName(vm, trueNAS)
-		v.State, v.Installed = vm.State, &installed
+	rows = make([]backupItemView, 0, len(src.infos)+len(src.targets))
+	hasBackup := make(map[string]bool, len(src.infos))
+	for _, vm := range src.infos {
+		v := src.liveRow(hist, vm)
 		hasBackup[vm.Name] = v.LastBackup > 0
 		rows = append(rows, v)
 	}
-	var notInstalled []store.VMTarget
-	for _, t := range targets {
-		if live[t.Name] {
-			continue
+	for _, t := range src.targets {
+		if _, live := src.live[t.Name]; !live {
+			rows = append(rows, src.goneRow(hist, t))
 		}
-		v := row(t)
-		if answered {
-			v.Installed = &gone
-			notInstalled = append(notInstalled, t)
-		}
-		rows = append(rows, v)
 	}
-	hints := h.svc.vmRenameHints(ctx, infos, notInstalled, hasBackup)
-	for i, vm := range infos {
+	hints := h.svc.vmRenameHints(ctx, src.infos, src.notInstalled(), hasBackup)
+	for i, vm := range src.infos {
 		if hint, ok := hints[vm.Name]; ok {
 			rows[i].RenameFrom, rows[i].RenameReason = hint.OldName, hint.Reason
 		}
 	}
-	return rows, answered || !settings.VMsEnabled, nil
+	return rows, src.answered || !settings.VMsEnabled, nil
+}
+
+// vmItem is the row vmItems has for one VM.
+func (h *Handler) vmItem(ctx context.Context, settings store.Settings, name string) (backupItemView, error) {
+	src, err := h.readVMSources(ctx, settings)
+	if err != nil {
+		return backupItemView{}, err
+	}
+	t, stored := src.byName[name]
+	vm, live := src.live[name]
+	if !stored && !live {
+		if settings.VMsEnabled && !src.answered {
+			return backupItemView{}, errHostSilent
+		}
+		return backupItemView{}, errNoSuchItem
+	}
+	hist, err := h.readHistoryOf(t.ID)
+	if err != nil {
+		return backupItemView{}, err
+	}
+	if !live {
+		return src.goneRow(hist, t), nil
+	}
+	v := src.liveRow(hist, vm)
+	if v.LastBackup == 0 {
+		if hint, ok := h.svc.suggestVMRenames(ctx, src.infos, src.notInstalled(), true)[name]; ok {
+			v.RenameFrom, v.RenameReason = hint.OldName, hint.Reason
+		}
+	}
+	return v, nil
 }
 
 var errUnknownItemKind = errors.New("unknown item kind")
