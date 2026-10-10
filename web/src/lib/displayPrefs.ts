@@ -27,6 +27,8 @@ const KEYS = [
   "bombvault.fleetDetailsOpen",
   // The order of the Settings rail, which a reader arranges once for good.
   "bombvault.settingsOrder",
+  // Which Settings pages also sit in the sidebar.
+  "bombvault.navPins",
 ] as const;
 
 /** Fired on `window` once this browser has adopted the server's look.
