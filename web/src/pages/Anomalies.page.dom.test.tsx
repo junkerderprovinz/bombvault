@@ -270,10 +270,10 @@ describe("the list", () => {
     expect(within(findings()[0]!).queryByText(en["anomaly.items.dumpSeries"])).toBeNull();
   });
 
-  it("leads from the name to the item's own page", async () => {
+  it("leads from the name to the page of the entry", async () => {
     serve([finding({ targetId: "tg-plex", name: "plex" })]);
     await renderPage();
-    expect(within(findings()[0]!).getByRole("link", { name: "plex" }).getAttribute("href")).toBe("/containers");
+    expect(within(findings()[0]!).getByRole("link", { name: "plex" }).getAttribute("href")).toBe("/backups/container/plex");
   });
 
   it("files a restore check and a disk under the kind of check and says what they cover", async () => {
@@ -462,7 +462,7 @@ describe("the way out of a finding", () => {
     expect(first!.className).toContain("bg-accent");
     expect(second!.className).not.toContain("bg-accent");
     await press(first!);
-    expect(screen.getByTestId("where").textContent).toBe("/containers?restore=snap-9&at=1700000000&item=plex");
+    expect(screen.getByTestId("where").textContent).toBe("/backups/container/plex?restore=snap-9&at=1700000000");
   });
 
   it("offers a warning's last good backup in its window", async () => {
@@ -472,7 +472,7 @@ describe("the way out of a finding", () => {
 
     const window = await openDetails(findings()[0]!);
     await press(within(window).getByRole("button", { name: restoreLabel }));
-    expect(screen.getByTestId("where").textContent).toBe("/containers?restore=snap-9&at=1700000000&item=plex");
+    expect(screen.getByTestId("where").textContent).toBe("/backups/container/plex?restore=snap-9&at=1700000000");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -493,7 +493,7 @@ describe("the way out of a finding", () => {
     const window = await openDetails(findings()[0]!);
     await press(within(window).getByRole("button", { name: restoreLabel }));
     expect(screen.getByTestId("where").textContent).toBe(
-      "/zfs?restore=snap-9&at=1700000000&item=tank%2Fmedia&dataset=tank%2Fmedia%2Fphotos"
+      "/backups/zfs/tg-tank?restore=snap-9&at=1700000000&dataset=tank%2Fmedia%2Fphotos"
     );
   });
 
@@ -948,12 +948,12 @@ describe("monitoring", () => {
     expect(within(window).queryByRole("button", { name: en["anomaly.openItem"] })).toBeNull();
   });
 
-  it("leads on to the item's own page", async () => {
+  it("leads on to the page of the entry", async () => {
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item({ domain: "vm", name: "win11" })] });
     await renderPage();
     const window = await openMonitoring("win11");
     await press(within(window).getByRole("button", { name: en["anomaly.openItem"] }));
-    expect(screen.getByTestId("where").textContent).toBe("/vms");
+    expect(screen.getByTestId("where").textContent).toBe("/backups/vm/win11");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 

@@ -5,45 +5,35 @@
 // dialog with a folder picker and one exclude pattern per line.
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { checkRestoreOnce, restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
-import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
-import { listFileSets, patchFileSet, deleteFileSet, deleteFileSetBackups, backupFileSet, backupFilesAll, restoreFileSet, listSnapshotFilesFileSet, restoreFileSetFiles, discoverFiles, getSettings, getFileSetPreset } from "../lib/api";
-import type { AnomalyItem, ItemChecks, FileSetView, PlacementView, FileEntry, FileSetPresetResponse } from "../lib/api";
+import { listFileSets, patchFileSet, deleteFileSet, deleteFileSetBackups, backupFileSet, backupFilesAll, discoverFiles, getSettings, getFileSetPreset } from "../lib/api";
+import type { AnomalyItem, ItemChecks, FileSetView, PlacementView, FileSetPresetResponse } from "../lib/api";
 import { PageTitle } from "../components/PageTitle";
 import { PlacementRow } from "../components/placement/PlacementRow";
 import { subscribePlacement } from "../lib/placementEvents";
 import { subscribeRepos } from "../lib/useNamedRepos";
-import type { RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
-import { FolderBrowser } from "../components/FolderBrowser";
 import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
-import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { SizeBreakdown } from "../components/SizeBreakdown";
-import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
-import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
-import { Selector, type SelectorItem } from "../components/Selector";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { ToggleRow } from "./settings/shared";
 import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
-import { IconRestore } from "../components/Sidebar";
 import { IconDisclosure } from "../components/IconDisclosure";
-import { SNAPSHOT_MISSING } from "../lib/timeline";
 import { Timeline } from "../components/timeline/Timeline";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { PauseButton, PausedBadge } from "../components/SchedulePause";
@@ -52,6 +42,7 @@ import { useItemChecks } from "../lib/useItemChecks";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 import { FileSetDialog } from "../components/files/FileSetDialog";
+import { FileSetRestoreControl } from "../components/files/FileSetRestoreControl";
 import { FileSetFoldersEditor, fileSetEditorKey } from "../components/files/FileSetFoldersEditor";
 
 type T = ReturnType<typeof useT>["t"];
@@ -179,314 +170,6 @@ function FileSetBackupButton({
           {state.message}
         </span>
       )}
-    </div>
-  );
-}
-
-// FileSetFileBrowser restores ticked files and folders from a snapshot into a
-// folder, like the container SnapshotFileBrowser. It never writes in place, so
-// it needs no confirm.
-function FileSetFileBrowser({
-  set,
-  snapshotId,
-  source,
-  hostMountRoot,
-  restoreFolder,
-  otherActive,
-  onMissing,
-  t,
-}: {
-  set: FileSetView;
-  snapshotId: string;
-  source: RepoSource;
-  hostMountRoot: string;
-  restoreFolder: string;
-  otherActive: { active: boolean; phase?: string };
-  onMissing: () => void;
-  t: T;
-}) {
-  const [files, setFiles] = useState<FileEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [folder, setFolder] = useState(restoreFolder);
-  const [restoredTarget, setRestoredTarget] = useState("");
-
-  const progressKey = `files:${set.name}`;
-  // One ref for useBackupWatch and, through RestoreProgress, the cancel button.
-  const cancelledRef = useRef(false);
-  const { state, fire, reset, isPending } = useBackupWatch({
-    progressKey,
-    kind: "restore",
-    matchRun: (r) => r.domain === "files" && r.target === set.name,
-    cancelledRef,
-    start: async () => {
-      const res = await restoreFileSetFiles(set.id, snapshotId, [...selected], folder.trim(), true, source);
-      if (res.code === SNAPSHOT_MISSING) onMissing();
-      if (res.ok) setRestoredTarget(res.target ?? "");
-      return res;
-    },
-  });
-  const prog = useProgress()[progressKey];
-  const blockedByOther = otherActive.active && !isPending;
-  const check = useRestoreCheck(
-    selected.size > 0 && folder.trim()
-      ? { kind: "fileSetFiles", name: set.id, snapshotId, source, paths: [...selected], targetPath: folder.trim() }
-      : null
-  );
-  const idle = isPending || state.phase === "success";
-
-  useEffect(() => {
-    setLoading(true);
-    listSnapshotFilesFileSet(set.id, snapshotId, source)
-      .then((res) => {
-        // The server's own reason, such as a stale repo lock, beats the
-        // generic message.
-        if (res.ok) setFiles(res.files ?? []);
-        else setError(loadErrorMessage(res, t("files.loadFailed")));
-      })
-      .catch(() => setError(t("files.loadFailed")))
-      .finally(() => setLoading(false));
-  }, [set.id, snapshotId, source, t]);
-
-  // A new selection or target clears the previous result.
-  function toggle(p: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(p)) next.delete(p);
-      else next.add(p);
-      return next;
-    });
-    reset();
-  }
-  function pickFolder(v: string) {
-    setFolder(v);
-    reset();
-  }
-
-  function handleRestoreSelected() {
-    if (selected.size === 0 || !folder.trim()) return;
-    void fire();
-  }
-
-  const count = selected.size;
-
-  return (
-    <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-2">
-      <p className="text-caption text-carbon-textMuted">{t("files.selectHint")}</p>
-      <SnapshotFileTree
-        files={files}
-        loading={loading}
-        error={error}
-        filter={filter}
-        onFilterChange={setFilter}
-        selected={selected}
-        onToggle={toggle}
-        t={t}
-      />
-
-      {/* Target folder and restore action, once something is ticked. */}
-      {count > 0 && (
-        <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
-          <FolderBrowser
-            label={t("restore.targetPath")}
-            value={folder}
-            hostMountRoot={hostMountRoot}
-            onChange={pickFolder}
-          />
-          {!idle && <RestoreCheckPanel check={check} t={t} />}
-          <div className="flex items-center gap-2">
-            <Button
-              label={t("files.restoreSelected").replace("{n}", String(count))}
-              labelKey="files.restoreSelected"
-              glyph={<IconRestore />}
-              tone="accent"
-              onClick={handleRestoreSelected}
-              disabled={isPending || blockedByOther || !folder.trim() || !check.ready}
-              busy={isPending}
-              title={isPending ? t("common.restoring") : undefined}
-              hint={idle ? undefined : restoreBlockReason(check, t)}
-              className="shrink-0"
-            />
-            {blockedByOther && (
-              <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
-            )}
-          </div>
-          <RestoreProgress
-            state={state}
-            isPending={isPending}
-            prog={prog}
-            cancelKey={progressKey}
-            inPlace={false}
-            name={set.name}
-            cancelledRef={cancelledRef}
-            successMessage={
-              restoredTarget
-                ? t("restore.restoredTo").replace("{path}", restoredTarget)
-                : t("files.restoreComplete")
-            }
-            t={t}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-type RestoreDest = "original" | "folder" | "select";
-
-function FileSetRestoreControl({
-  set,
-  snapshotId,
-  source,
-  hostMountRoot,
-  restoreFolder,
-  otherActive,
-  onMissing,
-  lead,
-  t,
-}: {
-  set: FileSetView;
-  snapshotId: string;
-  source: RepoSource;
-  hostMountRoot: string;
-  restoreFolder: string;
-  otherActive: { active: boolean; phase?: string };
-  onMissing: () => void;
-  /** The view's one accent restore goes to the timeline's lead row. */
-  lead: boolean;
-  t: T;
-}) {
-  // Without a path the server cannot restore in place, so only a folder works.
-  const noPath = set.path === "";
-  const [dest, setDest] = useState<RestoreDest>(noPath ? "folder" : "original");
-  // Seeded from the global default restore folder, as in the container panel.
-  const [targetPath, setTargetPath] = useState(restoreFolder);
-
-  const progressKey = `files:${set.name}`;
-  // One ref for useBackupWatch and, through RestoreProgress, the cancel button.
-  const cancelledRef = useRef(false);
-  const { state, fire, reset, isPending } = useBackupWatch({
-    progressKey,
-    kind: "restore",
-    matchRun: (r) => r.domain === "files" && r.target === set.name,
-    cancelledRef,
-    start: async () => {
-      const res = await restoreFileSet(set.id, snapshotId, true, dest === "folder" ? targetPath : "", source);
-      if (res.code === SNAPSHOT_MISSING) onMissing();
-      return res;
-    },
-  });
-  const prog = useProgress()[progressKey];
-  const blockedByOther = otherActive.active && !isPending;
-  const { confirm, confirmDialog } = useConfirm();
-  const [checking, setChecking] = useState(false);
-
-  // An old result would describe another destination, so a new choice clears
-  // it (a no-op while a restore runs).
-  useEffect(() => reset(), [dest, targetPath, reset]);
-
-  // Every snapshot row carries this control, so the pre-flight check runs on
-  // the click rather than for each row. In place it always asks; into a folder
-  // it only speaks up when the restore cannot work.
-  async function handleRestore() {
-    if (dest === "folder" && targetPath.trim() === "") return;
-    setChecking(true);
-    const check = await checkRestoreOnce({
-      kind: "fileSet",
-      name: set.id,
-      snapshotId,
-      source,
-      targetPath: dest === "folder" ? targetPath.trim() : "",
-    });
-    setChecking(false);
-    const refusal = restoreBlockReason(check, t);
-    const question = dest === "original" ? t("files.restoreOriginalConfirm") : refusal;
-    if (question !== undefined) {
-      const extra = <RestoreCheckPanel check={check} t={t} />;
-      if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
-    }
-    void fire();
-  }
-
-  const destItems: SelectorItem[] = [
-    { id: "original", label: t("files.restoreOriginal"), disabled: noPath, title: noPath ? t("files.noPathHint") : undefined },
-    { id: "folder", label: t("files.restoreToFolder") },
-    { id: "select", label: t("files.restoreSelectFiles") },
-  ];
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* The group reuses the "Restore" label, since the items name each
-            choice. buttonHeight gives the segments the height of the Restore
-            button beside them. */}
-        <Selector
-          items={destItems}
-          label={t("snapshots.restore")}
-          select="one"
-          active={dest}
-          buttonHeight
-          inline
-          onChange={(id) => setDest(id as RestoreDest)}
-          disabled={isPending}
-        />
-        {/* Selecting files brings its own controls in FileSetFileBrowser. */}
-        {dest !== "select" && (
-          <Button
-            label={t("snapshots.restore")}
-            labelKey="snapshots.restore"
-            tone={lead ? "accent" : "neutral"}
-            onClick={() => void handleRestore()}
-            disabled={isPending || checking || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
-            busy={isPending || checking}
-            title={isPending ? t("common.restoring") : undefined}
-            className="shrink-0"
-          />
-        )}
-        {blockedByOther && dest !== "select" && (
-          <span className="text-caption text-carbon-textMuted shrink-0">
-            {t(busyPhraseKey(otherActive.phase))}
-          </span>
-        )}
-      </div>
-      {/* Target folder picker for the non-destructive whole-set extract */}
-      {dest === "folder" && (
-        <FolderBrowser
-          label={t("restore.targetPath")}
-          value={targetPath}
-          hostMountRoot={hostMountRoot}
-          onChange={setTargetPath}
-        />
-      )}
-      {dest !== "select" && (
-        <RestoreProgress
-          state={state}
-          isPending={isPending}
-          prog={prog}
-          cancelKey={progressKey}
-          inPlace={dest === "original"}
-          name={set.name}
-          cancelledRef={cancelledRef}
-          successMessage={t("files.restoreComplete")}
-          t={t}
-        />
-      )}
-      {/* Selective restore: tick files/folders and restore just those to a folder. */}
-      {dest === "select" && (
-        <FileSetFileBrowser
-          set={set}
-          snapshotId={snapshotId}
-          source={source}
-          hostMountRoot={hostMountRoot}
-          restoreFolder={restoreFolder}
-          otherActive={otherActive}
-          onMissing={onMissing}
-          t={t}
-        />
-      )}
-      {confirmDialog}
     </div>
   );
 }

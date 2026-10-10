@@ -66,6 +66,7 @@ export function PageAction({
   disabled = false,
   busy = false,
   title,
+  shake = false,
 }: {
   label: string;
   /** Required, because a phone shows nothing else. */
@@ -76,6 +77,9 @@ export function PageAction({
   busy?: boolean;
   /** What changes about the action: that it runs, or why it cannot. */
   title?: string;
+  /** Plays the refusal. The caller keys the action on its failure count, so
+   *  every failure plays it again. */
+  shake?: boolean;
 }) {
   const isDesktop = useIsDesktop();
   return (
@@ -90,7 +94,7 @@ export function PageAction({
       disabled={disabled}
       busy={busy}
       title={title}
-      className="glim-btn-key"
+      className={shake ? "glim-btn-key glim-shake" : "glim-btn-key"}
     />
   );
 }

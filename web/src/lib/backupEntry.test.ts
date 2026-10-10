@@ -13,7 +13,6 @@ import {
   legacyRedirect,
   parseEntryPath,
   progressKey,
-  type EntryKind,
 } from "./backupEntry";
 
 const SET_ID = "0123456789abcdef0123456789abcdef";
@@ -194,41 +193,51 @@ describe("the links out of a finding", () => {
   }
   const ids: Record<string, string> = { Photos: SET_ID, "tank/appdata": ZFS_ID };
 
-  it.each(["container", "containers", "vm", "vms", "files", "zfs", "flash", "config"])(
-    "knows the page a %s finding links to as that kind's own page",
-    (domain) => {
-      const kind = kindOfDomain(domain)!;
-      expect(anomalyItemPath(finding({ domain }))).toBe(ENTRY_KIND[kind].legacyPath);
-    },
-  );
+  it.each([
+    ["container", "/backups/container/plex"],
+    ["containers", "/backups/container/plex"],
+    ["vm", "/backups/vm/plex"],
+    ["vms", "/backups/vm/plex"],
+    ["files", "/backups/files/t1"],
+    ["zfs", "/backups/zfs/t1"],
+    ["flash", "/backups/flash/flash"],
+    ["config", "/backups/config/config"],
+  ])("links a %s finding to its entry", (domain, path) => {
+    expect(anomalyItemPath(finding({ domain }))).toBe(path);
+  });
 
-  it.each<[string, Partial<AnomalyView>, EntryKind, string]>([
-    ["container", { domain: "containers" }, "container", "/backups/container/plex?restore=abc123&at=1700000000"],
+  it("links nothing for a finding that is not about an entry", () => {
+    expect(anomalyItemPath(finding({ domain: "" }))).toBeUndefined();
+  });
+
+  it.each<[string, Partial<AnomalyView>, string]>([
+    ["container", { domain: "containers" }, "/backups/container/plex?restore=abc123&at=1700000000"],
     [
       "database dump",
       { domain: "container", scopeKind: "dump" },
-      "container",
       "/backups/container/plex?restore=abc123&at=1700000000&dump=1",
     ],
-    ["VM", { domain: "vms", name: "win11" }, "vm", "/backups/vm/win11?restore=abc123&at=1700000000"],
+    ["VM", { domain: "vms", name: "win11" }, "/backups/vm/win11?restore=abc123&at=1700000000"],
     [
       "folder set",
-      { domain: "files", name: "Photos" },
-      "files",
+      { domain: "files", name: "Photos", targetId: SET_ID },
       `/backups/files/${SET_ID}?restore=abc123&at=1700000000`,
     ],
     [
       "ZFS member",
-      { domain: "zfs", name: "tank/appdata", scopeKind: "zfsds", part: "tank/appdata/db" },
-      "zfs",
+      { domain: "zfs", name: "tank/appdata", targetId: ZFS_ID, scopeKind: "zfsds", part: "tank/appdata/db" },
       `/backups/zfs/${ZFS_ID}?restore=abc123&at=1700000000&dataset=tank%2Fappdata%2Fdb`,
     ],
-    ["flash", { domain: "flash", name: "" }, "flash", "/backups/flash/flash?restore=abc123&at=1700000000"],
-    ["config", { domain: "config", name: "" }, "config", "/backups/config/config?restore=abc123&at=1700000000"],
-  ])("redirects the restore link of a %s finding to the entry", (_, over, kind, target) => {
-    const [path, search] = anomalyRestorePath(finding(over))!.split("?");
-    expect(path).toBe(ENTRY_KIND[kind].legacyPath);
-    expect(legacyRedirect(kind, `?${search}`, (name) => ids[name])).toBe(target);
+    ["flash", { domain: "flash", name: "" }, "/backups/flash/flash?restore=abc123&at=1700000000"],
+    ["config", { domain: "config", name: "" }, "/backups/config/config?restore=abc123&at=1700000000"],
+  ])("opens the entry of a %s finding on its last good backup", (_, over, target) => {
+    expect(anomalyRestorePath(finding(over))).toBe(target);
+  });
+
+  it("still redirects a restore link that names its entry on the kind's own page", () => {
+    expect(legacyRedirect("files", "?restore=abc123&at=1700000000&item=Photos", (name) => ids[name])).toBe(
+      `/backups/files/${SET_ID}?restore=abc123&at=1700000000`,
+    );
   });
 
   it("finds a folder set or ZFS item by the id a finding carries, without a lookup", () => {

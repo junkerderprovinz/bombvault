@@ -32,7 +32,7 @@ interface BackupButtonProps {
 
 // Per-browser acknowledgement of the stop warning. Storage keys keep the bv-
 // prefix, since renaming one resets every user's stored state.
-const STOP_ACK_KEY = "bv-container-stop-ack";
+export const STOP_ACK_KEY = "bv-container-stop-ack";
 
 export function BackupButton({ name, t, onBackedUp, running, progress, onRunCorrelated }: BackupButtonProps) {
   // The server runs the backup detached and answers at once; the outcome comes

@@ -2146,6 +2146,14 @@ body {
 
   --motion-fill-dur: 1100ms;
 
+  /* A block of a backup on its way into the repository: how long it falls,
+     the wait before the next one, how far it comes, and how much the block it
+     meets swells. */
+  --motion-block-dur: 420ms;
+  --motion-block-step: 170ms;
+  --motion-block-fall: 74px;
+  --motion-block-swell: 1.22;
+
   /* The drag lift's scale and landing ("Reordering by dragging"). */
   --drag-lift-scale: 1.03;
   --drag-settle-dur: 220ms;
@@ -2229,6 +2237,11 @@ body {
 
   --motion-fill-dur: 1700ms;
 
+  --motion-block-dur: 560ms;
+  --motion-block-step: 220ms;
+  --motion-block-fall: 74px;
+  --motion-block-swell: 1.4;
+
   --drag-lift-scale: 1.06;
   --drag-settle-dur: 400ms;
 }
@@ -2300,6 +2313,11 @@ body {
   --motion-scene-hop: 8px;
 
   --motion-fill-dur: 500ms;
+
+  --motion-block-dur: 260ms;
+  --motion-block-step: 90ms;
+  --motion-block-fall: 28px;
+  --motion-block-swell: 1.1;
 
   --drag-lift-scale: 1.015;
   --drag-settle-dur: 130ms;
@@ -2384,6 +2402,11 @@ body {
   --motion-scene-hop: 0px;
 
   --motion-fill-dur: 0ms;
+
+  --motion-block-dur: 0ms;
+  --motion-block-step: 0ms;
+  --motion-block-fall: 0px;
+  --motion-block-swell: 1;
 
   /* The lift keeps its shadow and its gap: it is a state, not motion. */
   --drag-lift-scale: 1;
@@ -3117,6 +3140,24 @@ body {
   :root:not([data-motion="off"]) .glim-step-badge-pop { animation: glim-step-badge-pop var(--step-loop) linear infinite; }
   :root:not([data-motion="off"]) .glim-step-confetti { animation: glim-step-confetti var(--step-loop) linear infinite; }
   :root:not([data-motion="off"]) .glim-step-pointer { animation: glim-step-pointer var(--step-loop) ease-in-out infinite; }
+
+  /* The deduplication picture plays once it is in view. --block-i is a
+     block's place in the order they fall in, and a block lands after four
+     fifths of its fall. */
+  :root:not([data-motion="off"]) .glim-dedup-play .glim-block-fall {
+    animation: glim-block-fall var(--motion-block-dur, 420ms) cubic-bezier(.55, 0, 1, 1) backwards;
+    animation-delay: calc(var(--block-i, 0) * var(--motion-block-step, 170ms));
+  }
+  :root:not([data-motion="off"]) .glim-dedup-play .glim-block-land {
+    animation: glim-fade-in var(--motion-fade-dur, 110ms) ease backwards;
+    animation-delay: calc(var(--block-i, 0) * var(--motion-block-step, 170ms) + var(--motion-block-dur, 420ms) * .8);
+  }
+  :root:not([data-motion="off"]) .glim-dedup-play .glim-block-swell {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: glim-block-swell calc(var(--motion-block-dur, 420ms) * .75) ease-out;
+    animation-delay: calc(var(--block-i, 0) * var(--motion-block-step, 170ms) + var(--motion-block-dur, 420ms) * .8);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3393,6 +3434,19 @@ body {
   0%, 10%   { transform: translateX(var(--parcel-from, 0px)); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
   30%, 100% { transform: none; }
 }
+/* A block falls into its slot and is gone once it has landed: what stays is
+   the block in the slot, which is the picture's markup. */
+@keyframes glim-block-fall {
+  from { opacity: 0; transform: translateY(calc(var(--motion-block-fall, 0px) * -1)); }
+  12% { opacity: 1; }
+  80% { opacity: 1; transform: none; }
+  to { opacity: 0; transform: none; }
+}
+@keyframes glim-block-swell {
+  40% { transform: scale(var(--motion-block-swell, 1)); }
+  to { transform: none; }
+}
+
 @keyframes glim-parcel-hop {
   0%, 10%   { transform: none; animation-timing-function: ease-out; }
   20%       { transform: translateY(calc(var(--motion-scene-hop, 0px) * var(--parcel-hop, 1) * -1)); animation-timing-function: ease-in; }

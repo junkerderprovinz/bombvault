@@ -14,7 +14,7 @@ import { useOpenAnomalies } from "../../lib/useAnomalies";
 
 type T = ReturnType<typeof useT>["t"];
 
-function VMSnapshotActions({
+export function VMSnapshotActions({
   pick,
   vmName,
   vmDisplayName,

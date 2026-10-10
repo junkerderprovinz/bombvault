@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./Layout";
 import { Dashboard } from "../pages/Dashboard";
 import { Anomalies } from "../pages/Anomalies";
+import { BackupEntryPage } from "../pages/BackupEntry";
 import { Backups } from "../pages/Backups";
 import { Containers } from "../pages/Containers";
 import { VMs } from "../pages/VMs";
@@ -17,7 +18,7 @@ import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
-import { ENTRY_LIST_PATH } from "../lib/backupEntry";
+import { ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -38,6 +39,7 @@ export function AppRouter() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/anomalies" element={<Anomalies />} />
               <Route path={ENTRY_LIST_PATH} element={<Backups />} />
+              <Route path={ENTRY_ROUTE} element={<BackupEntryPage />} />
               <Route path="/containers" element={<Containers />} />
               <Route path="/vms" element={<VMs />} />
               <Route path="/flash" element={<Flash />} />

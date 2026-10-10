@@ -2,7 +2,7 @@ import { useState } from "react";
 import { exportContainer } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { IconDownload } from "../Sidebar";
-import { Button } from "../Button";
+import { Button, type ButtonTone } from "../Button";
 import { groupStage } from "../../lib/controls";
 import { useToast } from "../../lib/toast";
 
@@ -13,7 +13,7 @@ type T = ReturnType<typeof useT>["t"];
 // folder next to the repo. The result stays inline under the button: it is the
 // destination path or the raw error, which the user may want to read or copy
 // after the failure toast has gone.
-export function ExportButton({ name, t }: { name: string; t: T }) {
+export function ExportButton({ name, t, tone = "accent" }: { name: string; t: T; tone?: ButtonTone }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
   const { push } = useToast();
@@ -50,7 +50,7 @@ export function ExportButton({ name, t }: { name: string; t: T }) {
         label={t("export.button")}
         labelKey="export.button"
         glyph={<IconDownload />}
-        tone="accent"
+        tone={tone}
         // Same width as the backup button beside it: both derive it from the
         // same two labels, so they match in every language.
         stage={groupStage([t("containers.backupNow"), t("export.button")])}

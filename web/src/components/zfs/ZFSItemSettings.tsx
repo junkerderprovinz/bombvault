@@ -26,6 +26,7 @@ export function ZFSItemSettings({
   anomaly,
   anomalyEnabled,
   series,
+  embedded = false,
 }: {
   item: ZFSDatasetView;
   t: T;
@@ -33,6 +34,9 @@ export function ZFSItemSettings({
   anomaly?: AnomalyItem;
   anomalyEnabled: boolean;
   series: ReadonlyMap<string, AnomalySeriesInfo>;
+  /** On the entry's page the replica and the anomaly settings have cards of
+   *  their own. */
+  embedded?: boolean;
 }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -204,9 +208,12 @@ export function ZFSItemSettings({
         )}
       </div>
 
-      <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-
-      <ReplicaCard itemId={item.id} name={item.dataset} />
+      {!embedded && (
+        <>
+          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+          <ReplicaCard itemId={item.id} name={item.dataset} />
+        </>
+      )}
 
       <ZFSExcludesEditor item={item} t={t} onSaved={onChanged} />
 

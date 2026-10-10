@@ -13,9 +13,12 @@ interface IncludeToggleProps {
   /** Hands the stored value to the page's list, which the card's Pause
    *  button and badge read. */
   onSaved?: (include: boolean) => void;
+  /** Another wording for the switch, with what it means in an (i) bubble. */
+  label?: string;
+  hint?: string;
 }
 
-export function IncludeToggle({ name, initial, save = setInclude, onSaved }: IncludeToggleProps) {
+export function IncludeToggle({ name, initial, save = setInclude, onSaved, label, hint }: IncludeToggleProps) {
   const { t } = useT();
   const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
@@ -48,7 +51,8 @@ export function IncludeToggle({ name, initial, save = setInclude, onSaved }: Inc
 
   return (
     <ToggleRow
-      label={t("containers.includeInSchedule")}
+      label={label ?? t("containers.includeInSchedule")}
+      hint={hint}
       checked={enabled}
       onChange={(next) => void handleChange(next)}
       disabled={busy}

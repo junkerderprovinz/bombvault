@@ -18,8 +18,20 @@ const POLL_MS = 2000;
  * newest backup and how much of each the latest backup added. Opening it is
  * what asks the server to work it out; a folder row opens one level further.
  */
-export function SizeBreakdown({ domain, item, t }: { domain: BreakdownDomain; item: string; t: T }) {
-  const [open, setOpen] = useState(false);
+export function SizeBreakdown({
+  domain,
+  item,
+  t,
+  expanded = false,
+}: {
+  domain: BreakdownDomain;
+  item: string;
+  t: T;
+  /** Shows the breakdown at once, without the button that folds it out, for
+   *  a card that is there for nothing else. */
+  expanded?: boolean;
+}) {
+  const [open, setOpen] = useState(expanded);
   const [path, setPath] = useState("");
   const [data, setData] = useState<Breakdown | null>(null);
   // null while the request went through; otherwise the server's reason, empty
@@ -58,20 +70,22 @@ export function SizeBreakdown({ domain, item, t }: { domain: BreakdownDomain; it
   const failed = failure ?? (data?.state === "failed" ? (data.error ?? "") : null);
   const crumbs = path === "" ? [] : path.split("/");
   return (
-    <div className="py-2 border-b border-carbon-border flex flex-col gap-2">
-      <div className="flex items-center gap-1.5">
-        <Button
-          label={t("breakdown.title")}
-          labelKey="breakdown.title"
-          glyph={<IconDisclosure open={open} />}
-          tone="subtle"
-          onClick={() => setOpen((o) => !o)}
-          ariaExpanded={open}
-          ariaControls={panelId}
-          keepLabel
-        />
-        <InfoBubble tip={t("breakdown.hint")} />
-      </div>
+    <div className={expanded ? "flex flex-col gap-2" : "py-2 border-b border-carbon-border flex flex-col gap-2"}>
+      {!expanded && (
+        <div className="flex items-center gap-1.5">
+          <Button
+            label={t("breakdown.title")}
+            labelKey="breakdown.title"
+            glyph={<IconDisclosure open={open} />}
+            tone="subtle"
+            onClick={() => setOpen((o) => !o)}
+            ariaExpanded={open}
+            ariaControls={panelId}
+            keepLabel
+          />
+          <InfoBubble tip={t("breakdown.hint")} />
+        </div>
+      )}
       {open && (
         <div id={panelId} className="flex flex-col gap-2 text-sm">
           {failed !== null && (
@@ -90,7 +104,9 @@ export function SizeBreakdown({ domain, item, t }: { domain: BreakdownDomain; it
               {t("breakdown.running")}
             </p>
           )}
-          {failed === null && data?.state === "none" && (
+          {/* A card that shows the breakdown at once has said what it knows
+              about the newest backup. Without folders to list it adds nothing. */}
+          {failed === null && data?.state === "none" && !expanded && (
             <p className="text-caption text-carbon-textMuted">{t("breakdown.none")}</p>
           )}
           {failed === null && data?.state === "ready" && (

@@ -27,7 +27,9 @@ import { CheckDraw } from "../CheckDraw";
 import { colorFor, glyphFor, glyphLabelKey } from "../ActivityLog";
 import { ProgressBar } from "../ProgressBar";
 import { SnapshotFileTree } from "../SnapshotFileTree";
-import { BottomSheet } from "./BottomSheet";
+import { AnomalyWindow } from "../anomalies/AnomalyWindow";
+import { useIsDesktop } from "../../lib/useMediaQuery";
+import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 
 // RunDetailSheet; the full-screen run-detail sheet.
 //
@@ -100,6 +102,23 @@ export interface RunDetailSheetProps {
   open: boolean;
   /** Called by every close path (BottomSheet's three paths call through). */
   onClose: () => void;
+  /** At desktop widths, show the run in a window over the page instead of a
+   *  sheet over the whole screen. */
+  windowed?: boolean;
+}
+
+/** The sheet, or with `windowed` at desktop widths a window that carries the
+ *  sheet's footer under its body. */
+function RunFrame({ windowed, ...sheet }: BottomSheetProps & { windowed: boolean }) {
+  const isDesktop = useIsDesktop();
+  if (!windowed || !isDesktop) return <BottomSheet {...sheet} />;
+  if (!sheet.open) return null;
+  return (
+    <AnomalyWindow title={sheet.title} onClose={sheet.onClose}>
+      {sheet.children}
+      {sheet.footer}
+    </AnomalyWindow>
+  );
 }
 
 // Same cadence ActivityLog.tsx's live tail re-renders at (its LIVE_TICK_MS):
@@ -323,7 +342,7 @@ function SheetActionRow({
   );
 }
 
-export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
+export function RunDetailSheet({ run, open, onClose, windowed = false }: RunDetailSheetProps) {
   const { t } = useT();
   const browseId = useId();
   const inFlight = isInFlight(run);
@@ -618,7 +637,8 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
     ) : undefined;
 
   return (
-    <BottomSheet
+    <RunFrame
+      windowed={windowed}
       open={open}
       onClose={onClose}
       fullHeight
@@ -766,6 +786,6 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
             contract makes a confirm over a sheet safe). */}
         {confirmDialog}
       </div>
-    </BottomSheet>
+    </RunFrame>
   );
 }

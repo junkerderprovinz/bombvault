@@ -81,7 +81,7 @@ function RunStrip({ tones, t }: { tones: RunTone[]; t: T }) {
   );
 }
 
-function runningLabel(progress: ProgressState, t: T): string {
+export function runningLabel(progress: ProgressState, t: T): string {
   if (progress.phase === "restore") return t("backups.status.restoring");
   if (progress.stage === "dbdump") {
     return t("dbdump.progress").replace("{bytes}", humanBytes(progress.bytes ?? 0));
