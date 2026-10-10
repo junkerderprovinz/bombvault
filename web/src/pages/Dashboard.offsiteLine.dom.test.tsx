@@ -17,7 +17,6 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import { AdvancedProvider } from "../lib/advanced";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 import type { DomainStatus } from "../lib/api";
 import { Dashboard } from "./Dashboard";
@@ -116,9 +115,7 @@ function renderPage() {
     <MemoryRouter>
       <I18nProvider>
         <ToastProvider>
-          <AdvancedProvider>
-            <Dashboard />
-          </AdvancedProvider>
+          <Dashboard />
         </ToastProvider>
       </I18nProvider>
     </MemoryRouter>

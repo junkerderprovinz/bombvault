@@ -3,7 +3,7 @@
 //
 // The width is 1152px (max-w-6xl) rather than 1024px because of Dashboard, the
 // densest page. Measured in German, the longest-label locale: at 1024px its
-// 7-across advanced stat tier gets 136px cells and "Speicherbelegung" needs
+// 7-across stat tier gets 136px cells and "Speicherbelegung" needs
 // exactly 136px, and the "jeden 3. Tag um 5:15 Uhr" schedule label truncates
 // (131px wanted, 124px given). At 1152px the cells are 154px and no page
 // breaks, reflows or overflows.
