@@ -4080,7 +4080,7 @@ export const en = {
   "entry.list.hint": "Click a snapshot to restore it. Click a storage location inside a snapshot to restore it from exactly there.",
   "entry.list.thisWeek": "This week",
   "entry.list.older": "Older",
-  "entry.list.keep": "You set how many snapshots BombVault keeps in the {location}.",
+  "entry.list.keep": "The {location} sets how many snapshots BombVault keeps.",
   "entry.list.keepLink": "storage location",
   "entry.list.empty": "No snapshots yet. Add {name} to the schedule or back it up now.",
   "entry.list.restoreFrom": "Restore from {place}",
