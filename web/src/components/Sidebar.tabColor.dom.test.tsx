@@ -6,16 +6,13 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { I18nProvider } from "../lib/i18n";
-import { AdvancedProvider } from "../lib/advanced";
 import type { Settings } from "../lib/api";
 
-function renderSidebar(initialEntries: string[] = ["/"], settings: Settings | null = null) {
+function renderSidebar(initialEntries: string[] = ["/"], settings: Settings | null = null, authEnabled = false) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <I18nProvider>
-        <AdvancedProvider>
-          <Sidebar settings={settings} />
-        </AdvancedProvider>
+        <Sidebar settings={settings} authEnabled={authEnabled} />
       </I18nProvider>
     </MemoryRouter>
   );
@@ -23,7 +20,6 @@ function renderSidebar(initialEntries: string[] = ["/"], settings: Settings | nu
 
 beforeEach(() => {
   localStorage.removeItem("bv-lang");
-  localStorage.removeItem("bombvault.advanced");
 });
 
 afterEach(() => {
@@ -115,25 +111,25 @@ describe("Sidebar nav rows carry a rainbow hue position", () => {
 });
 
 // glim-nav-idle decides when the colour appears, glim-hue which colour the row
-// owns, so the footer rows carry both.
+// owns, so the sign-out row carries both.
 describe("Sidebar footer rows carry a hue too", () => {
-  it("the view toggle carries glim-hue as well as glim-nav-idle, and a real hue", () => {
-    renderSidebar(["/"]);
-    const toggle = screen.getByRole("button", { name: "Simple view" });
-    expect(toggle.className).toContain("glim-nav-idle");
-    expect(toggle.className).toContain("glim-hue");
+  it("sign-out carries glim-hue as well as glim-nav-idle, and a real hue", () => {
+    renderSidebar(["/"], null, true);
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    expect(signOut.className).toContain("glim-nav-idle");
+    expect(signOut.className).toContain("glim-hue");
     // The class alone is not enough: without --item-hue the accent resolves
     // to nothing.
-    expect(toggle.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
+    expect(signOut.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
   });
 
   it("its hue continues the rail's own sequence rather than restarting", () => {
-    renderSidebar(["/"]);
+    renderSidebar(["/"], null, true);
     const settings = screen.getByRole("link", { name: "Settings" });
-    const toggle = screen.getByRole("button", { name: "Simple view" });
-    // Settings follows the toggle directly; equal hues would mean one of them
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    // Settings follows sign-out directly; equal hues would mean one of them
     // started a counter of its own.
-    expect(toggle.style.getPropertyValue("--item-hue")).not.toBe(
+    expect(signOut.style.getPropertyValue("--item-hue")).not.toBe(
       settings.style.getPropertyValue("--item-hue")
     );
   });

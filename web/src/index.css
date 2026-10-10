@@ -1861,11 +1861,9 @@ body {
   fill: currentColor;
 }
 
-/* SidebarControls' Simple/Advanced toggle follows the same glyph rule as
-   .glim-hue-icon, on the flat accent: it is the only one of its kind, so it
-   owns no palette position. Reactive mode needs its own rest/hover pair,
-   because without .glim-hue the reactive block cannot redefine --accent
-   here. */
+/* The rail's sign-out row follows the same glyph rule as .glim-hue-icon, on
+   the flat accent. Reactive mode needs its own rest/hover pair, because
+   without .glim-hue the reactive block cannot redefine --accent here. */
 .glim-nav-idle svg {
   transition: color 150ms ease;
   color: var(--accent);

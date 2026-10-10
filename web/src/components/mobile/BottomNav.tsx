@@ -29,15 +29,13 @@
 // MoreSheet (inside the BottomSheet primitive).
 //
 // More trigger: always rendered under the breakpoint, never gated on the
-// sheet's content. The sheet keeps content on every instance; the
-// Simple/Advanced view toggle (and, with a password set, sign-out) render
-// below the destination rows; so a content-based emptiness rule would only
-// make the trigger flicker in and out across settings flips while the sheet
-// it opens always has something to show. The trigger announces itself to
-// assistive tech (haspopup/expanded, like any disclosure that opens a
-// dialog) and reads as active while the current route lives on the More
-// side of the registry (the gated tabs, Instances and Settings), so a user
-// on one of those routes can still see where they are.
+// sheet's content. The sheet keeps content on every instance, because
+// Settings is always one of its rows, so a content-based emptiness rule would
+// have nothing to decide. The trigger announces itself to assistive tech
+// (haspopup/expanded, like any disclosure that opens a dialog) and reads as
+// active while the current route lives on the More side of the registry (the
+// gated tabs, Instances and Settings), so a user on one of those routes can
+// still see where they are.
 //
 // Label axis: the bar has its own axis in the control label engine
 // ("bottombar", lib/controls.ts); the same four modes as buttons/sidebar/

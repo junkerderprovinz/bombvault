@@ -155,24 +155,6 @@ export function IconGear() {
   );
 }
 
-/** Simple view. */
-export function IconViewSimple() {
-  return (
-    <G box="0 0 14 14">
-      <path fillRule="evenodd" d="M12.5 0h-2.375v14H12.5c0.8284 0 1.5 -0.6716 1.5 -1.5v-11c0 -0.828427 -0.6716 -1.5 -1.5 -1.5ZM8.875 7.625V14H1.5C0.671573 14 0 13.3284 0 12.5V7.625h8.875ZM0 6.375h8.875V0H1.5C0.671573 0 0 0.671573 0 1.5v4.875Z" clipRule="evenodd" />
-    </G>
-  );
-}
-
-/** Advanced view. */
-export function IconViewAdvanced() {
-  return (
-    <G box="0 0 14 14">
-      <path fillRule="evenodd" d="M1.5 0C0.671573 0 0 0.671573 0 1.5v1.375h14V1.5c0 -0.828427 -0.6716 -1.5 -1.5 -1.5h-11ZM0 8.37488V4.125h6.375v4.24988H0Zm0 1.25V12.5c0 0.8284 0.671573 1.5 1.5 1.5h4.875V9.62488H0Zm7.625 0V14H12.5c0.8284 0 1.5 -0.6716 1.5 -1.5V9.62488H7.625Zm6.375 -1.25V4.125H7.625v4.24988H14Z" clipRule="evenodd" />
-    </G>
-  );
-}
-
 /** More. */
 export function IconMore() {
   return (

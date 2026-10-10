@@ -4,7 +4,6 @@ import { logout, type Settings } from "../lib/api";
 import { Badge, type BadgeTone } from "./Badge";
 import { useLoudAnomalies } from "../lib/useAnomalies";
 import { useT } from "../lib/i18n";
-import { useAdvanced } from "../lib/advanced";
 import { hueVars } from "../lib/appearance";
 
 import {
@@ -17,8 +16,6 @@ import {
   IconRecovery,
   IconFlash,
   IconConfig,
-  IconViewSimple,
-  IconViewAdvanced,
   IconGear,
   IconAnomalies,
 } from "./navGlyphs";
@@ -56,8 +53,6 @@ export {
   IconRecovery,
   IconFlash,
   IconConfig,
-  IconViewSimple,
-  IconViewAdvanced,
 } from "./navGlyphs";
 
 interface SidebarProps {
@@ -240,45 +235,6 @@ export function Flag({ code }: { code: string }) {
       className={`fi fi-${code}`}
       style={{ width: "1.25em", height: "1em", display: "inline-block", flexShrink: 0 }}
     />
-  );
-}
-
-// SidebarControls is the Simple/Advanced view toggle in the footer.
-function SidebarControls({ hueIndex }: { hueIndex: number }) {
-  const { t } = useT();
-  const { advanced, setAdvanced } = useAdvanced();
-  const labelMode = useLabelMode("sidebar");
-  const showLabel = !hidesLabel(labelMode);
-  const showIcon = labelMode !== "text";
-  const reactive = labelMode === "reactive";
-  const view = advanced ? t("mode.advancedView") : t("mode.simpleView");
-  const tooltip = useTipBubble(showLabel || reactive ? undefined : view);
-
-  return (
-    <div className="flex flex-col gap-1">
-      {/* The label shows the current view; a click flips it. */}
-      <button
-        ref={tooltip.ref}
-        onClick={() => setAdvanced(!advanced)}
-        aria-pressed={advanced}
-        aria-describedby={tooltip.describedBy}
-        {...tooltip.handlers}
-        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
-        style={
-          {
-            ...railVars(hueIndex),
-            ...(reactive ? { "--reactive-chars": labelWidth(view) } : {}),
-          } as CSSProperties
-        }
-      >
-        {/* One glyph per view: in glyph mode the icon is all that tells the
-            two apart. */}
-        {showIcon && (advanced ? <IconViewAdvanced /> : <IconViewSimple />)}
-        {/* Hidden, never removed: the toggle keeps its accessible name. */}
-        <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{view}</span>
-      </button>
-      {tooltip.bubble}
-    </div>
   );
 }
 
@@ -547,7 +503,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
 
             <div className="flex flex-col gap-1 p-3">
               {authEnabled && <SidebarSignOut hueIndex={nextHue()} />}
-              <SidebarControls hueIndex={nextHue()} />
               <NavItem
                 to="/settings"
                 label={t("nav.settings")}

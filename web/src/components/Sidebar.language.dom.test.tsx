@@ -1,20 +1,17 @@
 // @vitest-environment jsdom
-// The language picker and the theme toggle live in Settings' General tab; the
-// sidebar footer keeps only the view toggle.
+// The language picker and the theme toggle live in Settings' General tab, not
+// in the sidebar footer.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { I18nProvider } from "../lib/i18n";
-import { AdvancedProvider } from "../lib/advanced";
 
 function renderSidebar() {
   return render(
     <MemoryRouter>
       <I18nProvider>
-        <AdvancedProvider>
-          <Sidebar settings={null} />
-        </AdvancedProvider>
+        <Sidebar settings={null} />
       </I18nProvider>
     </MemoryRouter>
   );
@@ -22,7 +19,6 @@ function renderSidebar() {
 
 beforeEach(() => {
   localStorage.removeItem("bv-lang");
-  localStorage.removeItem("bombvault.advanced");
 });
 
 afterEach(() => {
@@ -49,11 +45,5 @@ describe("Sidebar footer without language picker and theme toggle", () => {
   it("renders no theme toggle button", () => {
     renderSidebar();
     expect(screen.queryByTitle("Toggle theme")).toBeNull();
-  });
-
-  it("renders the Simple/Advanced view toggle", () => {
-    renderSidebar();
-    // AdvancedProvider starts in the simple view.
-    expect(screen.getByRole("button", { name: "Simple view" })).toBeTruthy();
   });
 });

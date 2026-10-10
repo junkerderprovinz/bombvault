@@ -43,11 +43,11 @@ describe("Sidebar sign-out", () => {
     expect(screen.getByRole("button", { name: /sign out/i })).toBeTruthy();
   });
 
-  it("sits above the view toggle", () => {
+  it("sits above Settings", () => {
     draw(true);
     const out = screen.getByRole("button", { name: /sign out/i });
-    const view = screen.getByRole("button", { name: /view/i });
-    expect(out.compareDocumentPosition(view) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const settings = screen.getByRole("link", { name: /settings/i });
+    expect(out.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("signs out and reloads to bring back the login screen", async () => {

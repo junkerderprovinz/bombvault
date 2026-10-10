@@ -20,13 +20,8 @@
 // className-by-isActive shape the rail's NavItem and the bar's slots use;
 // no parallel active-state bookkeeping.
 //
-// The Simple/Advanced view toggle sits at the bottom of the sheet next to
-// sign-out, the pair the desktop footer carries, minus Settings which is a
-// destination row up here. The toggle leads while the rail puts sign-out
-// first, because it renders unconditionally: leading with it keeps its
-// palette position fixed whether or not a password is set. It is also the
-// phone's only path to the advanced-only settings cards, and permanent
-// content is what lets the bar's More trigger render unconditionally.
+// Settings is always among the rows, so the sheet has content on every
+// instance and the bar's More trigger can render unconditionally.
 //
 // Tap-on-active parity with the bar: tapping the already-current row scrolls
 // the scroller back to the top; the mechanism is Layout's
@@ -48,13 +43,11 @@ import type { CSSProperties } from "react";
 import type { Settings } from "../../lib/api";
 import { logout } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { useAdvanced } from "../../lib/advanced";
 import { hueVars } from "../../lib/appearance";
 import { moreDestinations } from "../../lib/navModel";
 import { useLoudAnomalies } from "../../lib/useAnomalies";
 import { Badge } from "../Badge";
 import { IconSignOut } from "../glyphs";
-import { IconViewAdvanced, IconViewSimple } from "../navGlyphs";
 import { BottomSheet } from "./BottomSheet";
 
 export interface MoreSheetProps {
@@ -79,7 +72,7 @@ export interface MoreSheetProps {
   hueOffset?: number;
 }
 
-// One row (destination, view toggle or sign-out alike): 52px minimum height
+// One row (destination or sign-out alike): 52px minimum height
 // (min-h-[3.25rem], the iOS list cell measure); comfortably over the 44px
 // touch floor; the padding never carries the floor, the min-height does.
 const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 text-body hover:bg-carbon-hover";
@@ -87,7 +80,6 @@ const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 te
 export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTop, hueOffset = 0 }: MoreSheetProps) {
   const { t } = useT();
   const location = useLocation();
-  const { advanced, setAdvanced } = useAdvanced();
   const rows = moreDestinations(settings);
   const loudAnomalies = useLoudAnomalies();
 
@@ -101,15 +93,12 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
     g.location.reload();
   };
 
-  // Hue positions: one sequence through the sheet starting at hueOffset, the
-  // rail's render-order semantics (authEnabled=false leaves toggle and
-  // sign-out adjacent rather than burning a slot for an absent row). The
-  // offset is what keeps the sheet inside the bar's rotation: the bar's
-  // slots and the More trigger already consumed the palette's first
-  // positions, and replaying them here would paint the same colour twice on
-  // one screen.
-  const toggleHue = hueOffset + rows.length;
-  const signOutHue = hueOffset + rows.length + 1;
+  // Hue positions: one sequence through the sheet starting at hueOffset, in
+  // render order. The offset is what keeps the sheet inside the bar's
+  // rotation: the bar's slots and the More trigger already consumed the
+  // palette's first positions, and replaying them here would paint the same
+  // colour twice on one screen.
+  const signOutHue = hueOffset + rows.length;
 
   return (
     <BottomSheet open={open} onClose={onClose} title={t("nav.more")}>
@@ -162,32 +151,13 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
             </NavLink>
           );
         })}
-        {/* The bottom group: the view toggle, then sign-out; last row group
-            of the sheet, set off by spacing alone (the sheets carry no
-            lines). The toggle renders unconditionally: it is the phone's
-            only path to the advanced-only settings cards, and the bar's
-            More trigger counts on the sheet never running out of content. */}
-        <div className="mt-2 pt-2">
-          <button
-            type="button"
-            onClick={() => setAdvanced(!advanced)}
-            aria-pressed={advanced}
-            className={`${rowBase} w-full glim-hue glim-hue-icon text-carbon-text`}
-            style={hueVars(toggleHue) as CSSProperties}
-          >
-            {/* One glyph per state, one for each (the rail's convention):
-                the row shows the view it is currently in, and the label says
-                so; a click flips it. */}
-            <span className="flex h-5 w-5 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
-              {advanced ? <IconViewAdvanced /> : <IconViewSimple />}
-            </span>
-            <span className="min-w-0 truncate">{advanced ? t("mode.advancedView") : t("mode.simpleView")}</span>
-          </button>
-          {authEnabled && (
-            // The sign-out row: muted text token, visually quiet next to the
-            // rows above it, exactly as the desktop footer's row reads. The
-            // door glyph is the rail's; the power symbol means shutting a VM
-            // down.
+        {/* Sign-out is the last row of the sheet, set off by spacing alone
+            (the sheets carry no lines). Muted text token, visually quiet next
+            to the rows above it, exactly as the desktop footer's row reads.
+            The door glyph is the rail's; the power symbol means shutting a VM
+            down. */}
+        {authEnabled && (
+          <div className="mt-2 pt-2">
             <button
               type="button"
               onClick={() => void signOut()}
@@ -199,8 +169,8 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
               </span>
               <span className="min-w-0 truncate">{t("auth.logout")}</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </BottomSheet>
   );

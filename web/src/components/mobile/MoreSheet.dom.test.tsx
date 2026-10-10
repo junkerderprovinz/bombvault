@@ -12,10 +12,8 @@
  *     the current route's row is filled (accent fill + contrast ink); on
  *     /vms or /flash no bar slot is active, this row is, so a user is never
  *     lost (the locked Interaction Contract);
- *   - the Simple/Advanced view toggle is always rendered with its pressed
- *     state and current-view label; the phone's only path to the
- *     advanced-only settings cards, and the permanent content that lets the
- *     bar's More trigger render unconditionally;
+ *   - Settings is always a row, the permanent content that lets the bar's
+ *     More trigger render unconditionally;
  *   - the sign-out row is gated by authEnabled exactly like the desktop
  *     footer, sits last set off by spacing alone, is muted, and fires the
  *     Sidebar sign-out mechanism verbatim; best-effort logout then a
@@ -32,7 +30,6 @@ import { render, screen, cleanup, fireEvent, act, within } from "@testing-librar
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AnomalySummary, Settings } from "../../lib/api";
-import { AdvancedProvider } from "../../lib/advanced";
 import { AnomalyProvider } from "../../lib/useAnomalies";
 
 const logout = vi.fn(async () => ({ ok: true }));
@@ -71,15 +68,13 @@ function draw(
   const view = render(
     <MemoryRouter initialEntries={[opts.path ?? "/dashboard"]}>
       <PathProbe />
-      <AdvancedProvider>
-        <MoreSheet
-          open
-          onClose={onClose}
-          settings={opts.settings ?? null}
-          authEnabled={opts.authEnabled ?? false}
-          hueOffset={opts.hueOffset}
-        />
-      </AdvancedProvider>
+      <MoreSheet
+        open
+        onClose={onClose}
+        settings={opts.settings ?? null}
+        authEnabled={opts.authEnabled ?? false}
+        hueOffset={opts.hueOffset}
+      />
     </MemoryRouter>,
   );
   return { onClose, view };
@@ -92,7 +87,6 @@ function sheet() {
 beforeEach(() => {
   logout.mockClear();
   reload.mockClear();
-  localStorage.removeItem("bombvault.advanced");
 });
 afterEach(cleanup);
 
@@ -164,7 +158,7 @@ describe("MoreSheet active row accents (the Interaction Contract)", () => {
   });
 });
 
-describe("MoreSheet colour engine and view toggle", () => {
+describe("MoreSheet colour engine", () => {
   it("every destination row sits on the engine: glim-hue plus its own --item-hue", () => {
     draw({ settings: VMS_FLASH_ON });
     const rows = within(sheet()).getAllByRole("link");
@@ -179,17 +173,11 @@ describe("MoreSheet colour engine and view toggle", () => {
     }
   });
 
-  it("carries the Simple/Advanced view toggle: pressed state, current-view label, always present", () => {
-    draw({ settings: null });
-    const toggle = screen.getByRole("button", { name: "Simple view" });
-    expect(toggle.getAttribute("aria-pressed")).toBe("false");
-    expect(toggle.className).toContain("glim-hue");
-    fireEvent.click(toggle);
-    // Clicking flips the view; the label shows the view it just switched to.
-    expect(screen.getByRole("button", { name: "Advanced view" }).getAttribute("aria-pressed")).toBe("true");
-    // With every gate off (no destination rows beyond Settings) the toggle is
-    // still rendered; the permanent content the More trigger counts on.
+  it("holds Settings and no empty group with every gate off and no password", () => {
+    draw({ settings: null, authEnabled: false });
     expect(within(sheet()).getAllByRole("link").map((r) => r.textContent)).toEqual(["Settings"]);
+    expect(within(sheet()).queryAllByRole("button")).toEqual([]);
+    expect(sheet().children.length).toBe(1);
   });
 });
 
@@ -262,11 +250,9 @@ describe("MoreSheet's Anomalies row", () => {
     getAnomalySummary.mockResolvedValue({ ok: true, summary: summary(open) });
     render(
       <MemoryRouter initialEntries={["/dashboard"]}>
-        <AdvancedProvider>
-          <AnomalyProvider>
-            <MoreSheet open onClose={() => undefined} settings={{ anomalyEnabled: true } as Settings} authEnabled={false} />
-          </AnomalyProvider>
-        </AdvancedProvider>
+        <AnomalyProvider>
+          <MoreSheet open onClose={() => undefined} settings={{ anomalyEnabled: true } as Settings} authEnabled={false} />
+        </AnomalyProvider>
       </MemoryRouter>,
     );
     return within(sheet()).getByRole("link", { name: /anomalies/i });

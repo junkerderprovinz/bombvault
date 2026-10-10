@@ -6,22 +6,19 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { I18nProvider } from "../lib/i18n";
-import { AdvancedProvider } from "../lib/advanced";
 import { setLabelMode } from "../lib/controls";
 
-function renderSidebar() {
+function renderSidebar(authEnabled = false) {
   return render(
     <MemoryRouter initialEntries={["/"]}>
       <I18nProvider>
-        <AdvancedProvider>
-          <Sidebar settings={null} />
-        </AdvancedProvider>
+        <Sidebar settings={null} authEnabled={authEnabled} />
       </I18nProvider>
     </MemoryRouter>
   );
 }
 
-/** Every row of the rail, the view toggle included. */
+/** Every row of the rail, the footer included. */
 function railRows(): HTMLElement[] {
   return [
     ...document.querySelectorAll<HTMLElement>("aside .glim-nav-row"),
@@ -38,12 +35,12 @@ afterEach(() => {
 });
 
 describe("glyph mode centres the rail", () => {
-  it("centres every row, the view toggle included", () => {
+  it("centres every row, sign-out included", () => {
     setLabelMode("sidebar", "glyph");
-    renderSidebar();
+    renderSidebar(true);
     const rows = railRows();
-    // Dashboard, Recovery, Containers, the view toggle and Settings. The count
-    // keeps the loop below from passing on an empty list.
+    // Dashboard, Containers, Recovery, sign-out and Settings. The count keeps
+    // the loop below from passing on an empty list.
     expect(rows.length).toBe(5);
     for (const row of rows) expect(row.className).toContain("justify-center");
   });
@@ -111,14 +108,13 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Dashboard");
   });
 
-  it("gives the view toggle the same bubble, naming the current view", () => {
+  it("gives the sign-out row the same bubble", () => {
     setLabelMode("sidebar", "glyph");
-    renderSidebar();
-    // Simple is the default view, so that is the name currently on the row.
-    const toggle = screen.getByRole("button", { name: "Simple view" });
-    expect(toggle.getAttribute("title")).toBeNull();
-    fireEvent.mouseEnter(toggle);
-    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Simple view");
+    renderSidebar(true);
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    expect(signOut.getAttribute("title")).toBeNull();
+    fireEvent.mouseEnter(signOut);
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Sign out");
   });
 
   it("drops the wordmark and keeps the mark centred", () => {
@@ -145,10 +141,10 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
 
   it("says nothing on hover while the rows still show their own text", () => {
     setLabelMode("sidebar", "textGlyph");
-    renderSidebar();
+    renderSidebar(true);
     for (const el of [
       screen.getByRole("link", { name: "Dashboard" }),
-      screen.getByRole("button", { name: "Simple view" }),
+      screen.getByRole("button", { name: "Sign out" }),
     ]) {
       expect(el.getAttribute("title")).toBeNull();
       fireEvent.mouseEnter(el);
