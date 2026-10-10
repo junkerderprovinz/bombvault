@@ -4,7 +4,6 @@
 // unfilled placeholder when the snapshot does not record one.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { AdvancedProvider } from "../../lib/advanced";
 import { countText, I18nProvider, en } from "../../lib/i18n";
 import type { DBDumpView } from "../../lib/api";
 
@@ -81,19 +80,17 @@ function makeDump(over: Partial<DBDumpView> = {}): DBDumpView {
 function renderList(importStops: string[] = []) {
   return render(
     <I18nProvider>
-      <AdvancedProvider>
-        <DatabaseDumpList
-          containerName="immich_postgres"
-          source="local"
-          recognised
-          canImport
-          importStops={importStops}
-          hostMountRoot="/host/user"
-          defaultFolder="user/bombvault/restore"
-          reloadTick={0}
-          t={t}
-        />
-      </AdvancedProvider>
+      <DatabaseDumpList
+        containerName="immich_postgres"
+        source="local"
+        recognised
+        canImport
+        importStops={importStops}
+        hostMountRoot="/host/user"
+        defaultFolder="user/bombvault/restore"
+        reloadTick={0}
+        t={t}
+      />
     </I18nProvider>
   );
 }
@@ -130,11 +127,6 @@ function filled(key: keyof typeof en, params: Record<string, string>): string {
   return text;
 }
 
-/** Advanced mode holds the format picker, the save action and the tag chips. */
-function turnAdvancedOn() {
-  localStorage.setItem("bombvault.advanced", "1");
-}
-
 beforeEach(() => {
   listDbDumps.mockResolvedValue({ ok: true, dumps: [makeDump()] });
 });
@@ -167,7 +159,6 @@ describe("the database dump list", () => {
 
   it("offers nothing but delete on a damaged dump", async () => {
     listDbDumps.mockResolvedValue({ ok: true, dumps: [makeDump({ damaged: true })] });
-    turnAdvancedOn();
     renderList();
 
     await screen.findByText(en["dbdump.damagedBadge"]);
@@ -188,7 +179,6 @@ describe("the database dump list", () => {
   });
 
   it("downloads through an anchor that carries the chosen format", async () => {
-    turnAdvancedOn();
     const clicks: string[] = [];
     const click = vi
       .spyOn(HTMLAnchorElement.prototype, "click")
@@ -208,7 +198,6 @@ describe("the database dump list", () => {
   });
 
   it("watches the save as its own kind of run", async () => {
-    turnAdvancedOn();
     renderList();
 
     fireEvent.click(await screen.findByRole("button", { name: en["dbdump.saveToFolder"] }));
@@ -393,18 +382,16 @@ describe("the database dump list", () => {
 
     rerender(
       <I18nProvider>
-        <AdvancedProvider>
-          <DatabaseDumpList
-            containerName="plex"
-            source="local"
-            recognised={false}
-            canImport={false}
-            hostMountRoot="/host/user"
-            defaultFolder="user/bombvault/restore"
-            reloadTick={0}
-            t={t}
-          />
-        </AdvancedProvider>
+        <DatabaseDumpList
+          containerName="plex"
+          source="local"
+          recognised={false}
+          canImport={false}
+          hostMountRoot="/host/user"
+          defaultFolder="user/bombvault/restore"
+          reloadTick={0}
+          t={t}
+        />
       </I18nProvider>
     );
     await waitFor(() => expect(container.textContent).toBe(""));

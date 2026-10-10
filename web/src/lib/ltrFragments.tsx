@@ -140,6 +140,9 @@ export const APPRISE_ENDPOINT_LTR_FRAGMENTS = ["/notify/"] as const;
 /** The authorized-keys path the VM SSH card tells the user to append to. */
 export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as const;
 
+/** The key file the replica dialog tells the user to append to on a ZFS server. */
+export const REPLICA_KEY_PATH_LTR_FRAGMENTS = ["~/.ssh/authorized_keys"] as const;
+
 /** The Unraid user share, which the ZFS pages name as the mapping that hides
  *  snapshots. */
 export const USER_SHARE_LTR_FRAGMENTS = ["/mnt/user"] as const;
@@ -200,6 +203,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "settings.metricsEnable": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "settings.metricsHint": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "vm.ssh.publicKey": VM_SSH_KEY_PATH_LTR_FRAGMENTS,
+  "zfs.replica.add.authorizeHint": REPLICA_KEY_PATH_LTR_FRAGMENTS,
   "cadence.cronInvalid": CRON_EXAMPLE_LTR_FRAGMENTS,
   "zfs.code.shfs-only": USER_SHARE_LTR_FRAGMENTS,
   "zfs.fix.shfs-only": USER_SHARE_VS_MOUNT_ROOT_LTR_FRAGMENTS,

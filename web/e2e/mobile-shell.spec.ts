@@ -101,15 +101,13 @@ test("the More sheet opens with the fresh-DB registry and closes via all three p
 
   // Fresh-DB rows: every domain gate off and anomaly detection on, so the
   // sheet holds exactly two destination links, Anomalies and Settings
-  // (Recovery rides the bar), plus the Simple/Advanced view toggle, and none
-  // of the bar destinations leak into it (the duplicate-destination drift the
-  // sheet's contract forbids).
+  // (Recovery rides the bar), and none of the bar destinations leak into it
+  // (the duplicate-destination drift the sheet's contract forbids).
   await expect(sheet.getByRole("link", { name: "Anomalies" })).toBeVisible();
   await expect(sheet.getByRole("link", { name: "Settings" })).toBeVisible();
   expect(await sheet.getByRole("link").count()).toBe(2);
   await expect(sheet.getByRole("link", { name: "Recovery" })).toHaveCount(0);
   await expect(sheet.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
-  await expect(sheet.getByRole("button", { name: /view/i })).toHaveCount(1);
 
   // Close path 1 of 3: Escape (document-level, works wherever focus sits).
   await page.keyboard.press("Escape");

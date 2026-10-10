@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The MCP card is the only way to mint a key, so it sits on the Integrations
-// page in plain sight rather than behind Advanced.
+// page.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";

@@ -259,19 +259,70 @@ type absence struct {
 	Observed float64
 }
 
+// The quantities a series is measured in, named like the usual figures an item
+// carries.
+const (
+	quantitySourceBytes = "sourceBytes"
+	quantitySourceFiles = "sourceFiles"
+	quantityNewData     = "newDataBytes"
+	quantityDuration    = "resticMs"
+)
+
+// limit is one side of the range a rule treats as usual, in the figures a
+// finding raised on it carries.
+type limit struct {
+	Metric              string
+	Expected, Threshold float64
+	Samples             int
+}
+
+// baseline is one quantity of a series as its rule sees it: the measurements
+// oldest first, how many of them the rule learned from, and the limit on either
+// side, nil while that side is learning or unwatched. A rule that does not
+// watch this kind of series returns the zero value.
+type baseline struct {
+	Quantity  string
+	Points    []measurement
+	Samples   int
+	Low, High *limit
+}
+
+// usualLimit is the median of a rule's window and the threshold at ratio times
+// it. A window that is still learning has neither.
+func usualLimit(metric string, samples []measurement, ratio float64) *limit {
+	if len(samples) < anomalyMinSamples {
+		return nil
+	}
+	level := median(sampleValues(samples))
+	return &limit{Metric: metric, Expected: level, Threshold: ratio * level, Samples: len(samples)}
+}
+
+// standingLimit is the limit a metric is held against: the level its open
+// episode started from until the series is back there, the learned one
+// otherwise.
+func standingLimit(open map[string]store.Anomaly, metric string, learned *limit,
+	cleared func(expected float64) bool) *limit {
+	row, isOpen := open[metric]
+	if !isOpen || cleared(row.Expected) {
+		return learned
+	}
+	return &limit{Metric: metric, Expected: row.Expected, Threshold: row.Threshold, Samples: row.Samples}
+}
+
 // detectNewData raises the three rules around the data one backup added: an
 // unusual amount against the series' own history, a backup that stored most of
 // the source again, and a backup that found no parent at all. The findings come
-// back in run order, next to how many samples the newest run could learn from.
-func detectNewData(in itemInput, p sensParams) ([]finding, int) {
+// back in run order, next to what the newest run is held against.
+func detectNewData(in itemInput, p sensParams) ([]finding, baseline) {
 	// A dump is a full logical export every time, so there is no such thing as
 	// an unusual amount of new data in one.
 	if in.Kind == seriesDump || in.Kind == seriesTree {
-		return nil, 0
+		return nil, baseline{}
 	}
+	out := baseline{Quantity: quantityNewData, Points: newDataMeasurements(in.NewData)}
 	rows := oldestFirst(in.NewData)
 	if len(rows) == 0 {
-		return nil, 0
+		return nil, out
 	}
 
 	measuredOnly := in.Domain == anomalyDomainVM
@@ -304,7 +355,10 @@ func detectNewData(in itemInput, p sensParams) ([]finding, int) {
 			}
 		}
 	}
-	return found, min(len(newDataSamples(rows, isSample, len(rows)-1)), anomalyMinSamples)
+	newest := newDataSamples(rows, isSample, len(rows)-1)
+	out.Samples = min(len(newest), anomalyMinSamples)
+	out.High, _ = newDataLimit(rows, newest, p)
+	return found, out
 }
 
 // newDataSamples picks what run i is judged against: the eligible samples of
@@ -338,8 +392,39 @@ func newDataSamples(rows []store.SeriesRun, isSample []bool, i int) []int {
 // gigabyte, the spread sits between the modes and a real outlier scores below
 // one.
 func newDataSpike(rows []store.SeriesRun, samples []int, i int, p sensParams, ceiling float64) (finding, bool) {
-	if len(samples) < anomalyMinSamples {
+	usual, refRate := newDataLimit(rows, samples, p)
+	if usual == nil {
 		return finding{}, false
+	}
+
+	run := rows[i]
+	observed := float64(run.Bytes)
+	elapsed := elapsedBefore(rows, i)
+	rate := observed / float64(elapsed)
+	rateThreshold := p.NewDataMult * math.Max(refRate, float64(newDataRefFloor)/86400)
+	if observed < float64(p.NewDataFloor) || observed < usual.Threshold ||
+		rate < rateThreshold || observed <= ceiling {
+		return finding{}, false
+	}
+	return finding{
+		Metric: metricNewData, Severity: "warning",
+		RunID: run.ID, RunAt: run.StartedAt,
+		Observed: observed, Expected: usual.Expected, Threshold: usual.Threshold,
+		Samples: usual.Samples, Event: true,
+		Details: finiteDetails(map[string]any{
+			"refBytes":   usual.Expected,
+			"refRate":    refRate,
+			"rate":       rate,
+			"elapsedSec": elapsed,
+		}),
+	}, true
+}
+
+// newDataLimit is the amount a run's new data is held against, next to the rate
+// the same samples stored theirs at. Too few samples give neither.
+func newDataLimit(rows []store.SeriesRun, samples []int, p sensParams) (*limit, float64) {
+	if len(samples) < anomalyMinSamples {
+		return nil, 0
 	}
 	bytes := make([]float64, len(samples))
 	rates := make([]float64, len(samples))
@@ -347,30 +432,11 @@ func newDataSpike(rows []store.SeriesRun, samples []int, i int, p sensParams, ce
 		bytes[n] = float64(rows[j].Bytes)
 		rates[n] = float64(rows[j].Bytes) / float64(elapsedBefore(rows, j))
 	}
-	refBytes, refRate := newDataReference(bytes), newDataReference(rates)
-
-	run := rows[i]
-	observed := float64(run.Bytes)
-	elapsed := elapsedBefore(rows, i)
-	rate := observed / float64(elapsed)
-	threshold := p.NewDataMult * math.Max(refBytes, newDataRefFloor)
-	rateThreshold := p.NewDataMult * math.Max(refRate, float64(newDataRefFloor)/86400)
-	if observed < float64(p.NewDataFloor) || observed < threshold ||
-		rate < rateThreshold || observed <= ceiling {
-		return finding{}, false
-	}
-	return finding{
-		Metric: metricNewData, Severity: "warning",
-		RunID: run.ID, RunAt: run.StartedAt,
-		Observed: observed, Expected: refBytes, Threshold: threshold,
-		Samples: len(samples), Event: true,
-		Details: finiteDetails(map[string]any{
-			"refBytes":   refBytes,
-			"refRate":    refRate,
-			"rate":       rate,
-			"elapsedSec": elapsed,
-		}),
-	}, true
+	refBytes := newDataReference(bytes)
+	return &limit{
+		Metric: metricNewData, Expected: refBytes,
+		Threshold: p.NewDataMult * math.Max(refBytes, newDataRefFloor), Samples: len(samples),
+	}, newDataReference(rates)
 }
 
 // rewroteMostOfTheSource is true when at least half of everything the item backs
@@ -496,27 +562,25 @@ func oldestFirst(runs []store.SeriesRun) []store.SeriesRun {
 
 // detectSource watches how much a series backs up: a source that collapsed or
 // drained away, one that shrank or grew far beyond its own spread, and the same
-// rules on the file count. The number that comes back is how much history the
-// size rules could learn from.
-func detectSource(in itemInput, p sensParams) ([]finding, []absence, int) {
+// rules on the file count. The baselines come back one per rule, the size in
+// bytes first.
+func detectSource(in itemInput, p sensParams) ([]finding, []absence, []baseline) {
 	if in.Kind == seriesTree {
-		return nil, nil, 0
+		return nil, nil, nil
 	}
 	rows := oldestFirst(eligibleRuns(in.Series))
 	rebase := selectionRebaseAt(in.Series)
 
 	var found []finding
 	var absent []absence
-	learning := 0
-	for i, rule := range sourceRules(in.Kind, p) {
-		ruleFound, ruleAbsent, samples := rule.evaluate(in.Open, in.Expectations, rows, rebase, p)
+	var measured []baseline
+	for _, rule := range sourceRules(in.Kind, p) {
+		ruleFound, ruleAbsent, base := rule.evaluate(in.Open, in.Expectations, rows, rebase, p)
 		found = append(found, ruleFound...)
 		absent = append(absent, ruleAbsent...)
-		if i == 0 {
-			learning = min(samples, anomalyMinSamples)
-		}
+		measured = append(measured, base)
 	}
-	return found, absent, learning
+	return found, absent, measured
 }
 
 // sourceRules are the size metrics a series is watched on. A dump is one
@@ -524,6 +588,7 @@ func detectSource(in itemInput, p sensParams) ([]finding, []absence, int) {
 // file count to speak of.
 func sourceRules(kind seriesKind, p sensParams) []sizeRule {
 	bytes := sizeRule{
+		quantity:     quantitySourceBytes,
 		shrinkMetric: metricSourceBytesShrink, growthMetric: metricSourceBytesGrowth,
 		downFamily: familySourceBytesDown, upFamily: familySourceBytesUp,
 		value:         func(run store.SeriesRun) *int64 { return run.SourceBytes },
@@ -539,6 +604,7 @@ func sourceRules(kind seriesKind, p sensParams) []sizeRule {
 		return []sizeRule{bytes}
 	}
 	files := sizeRule{
+		quantity:      quantitySourceFiles,
 		shrinkMetric:  metricSourceFilesShrink,
 		downFamily:    familySourceFilesDown,
 		value:         func(run store.SeriesRun) *int64 { return run.SourceFiles },
@@ -553,6 +619,7 @@ func sourceRules(kind seriesKind, p sensParams) []sizeRule {
 // is too small to mean anything. A rule without a growth metric watches one
 // direction only.
 type sizeRule struct {
+	quantity                   string
 	shrinkMetric, growthMetric string
 	downFamily, upFamily       string
 	value                      func(store.SeriesRun) *int64
@@ -564,10 +631,11 @@ type sizeRule struct {
 }
 
 func (r sizeRule) evaluate(open map[string]store.Anomaly, expectations map[string]store.AnomalyExpectation,
-	rows []store.SeriesRun, rebase int64, p sensParams) ([]finding, []absence, int) {
+	rows []store.SeriesRun, rebase int64, p sensParams) ([]finding, []absence, baseline) {
 	samples := measurements(rows, r.value)
+	out := baseline{Quantity: r.quantity, Points: samples}
 	if len(samples) == 0 {
-		return nil, nil, 0
+		return nil, nil, out
 	}
 	current, prior := samples[len(samples)-1], samples[:len(samples)-1]
 
@@ -580,18 +648,20 @@ func (r sizeRule) evaluate(open map[string]store.Anomaly, expectations map[strin
 	if raised == nil {
 		raised = r.shrank(current, down, p)
 	}
-	found, absent := verdict(open, r.shrinkMetric, current, raised, func(expected float64) bool {
-		return current.value >= shrinkClearedFrac*expected
-	})
+	shrinkCleared := func(expected float64) bool { return current.value >= shrinkClearedFrac*expected }
+	found, absent := verdict(open, r.shrinkMetric, current, raised, shrinkCleared)
+	out.Samples = min(len(down), anomalyMinSamples)
+	out.Low = standingLimit(open, r.shrinkMetric, usualLimit(r.shrinkMetric, down, p.ShrinkRatio), shrinkCleared)
 
 	if r.growthMetric != "" {
 		up := newestSamples(samplesFrom(prior, max(rebase, expectations[r.upFamily].SinceAt)), anomalyWindow)
-		grownFound, grownAbsent := verdict(open, r.growthMetric, current, r.grew(current, up, p),
-			func(expected float64) bool { return current.value <= growthClearedFrac*expected })
+		growthCleared := func(expected float64) bool { return current.value <= growthClearedFrac*expected }
+		grownFound, grownAbsent := verdict(open, r.growthMetric, current, r.grew(current, up, p), growthCleared)
 		found = append(found, grownFound...)
 		absent = append(absent, grownAbsent...)
+		out.High = standingLimit(open, r.growthMetric, usualLimit(r.growthMetric, up, p.GrowthRatio), growthCleared)
 	}
-	return found, absent, len(down)
+	return found, absent, out
 }
 
 // collapsed is the data-loss rule: what the item backs up is a fraction of what
@@ -668,14 +738,14 @@ func (r sizeRule) lost(value, reference float64, p sensParams) bool {
 // collapsing: far under the level of its window, far enough in absolute terms
 // to matter, and outside the spread the series usually has.
 func (r sizeRule) shrank(current measurement, samples []measurement, p sensParams) *finding {
-	if len(samples) < anomalyMinSamples {
+	usual := usualLimit(r.shrinkMetric, samples, p.ShrinkRatio)
+	if usual == nil {
 		return nil
 	}
-	xs := sampleValues(samples)
-	level := median(xs)
-	spread := r.spread(xs, level)
+	level := usual.Expected
+	spread := r.spread(sampleValues(samples), level)
 	z := modifiedZ(current.value, level, spread)
-	if current.value >= p.ShrinkRatio*level || level-current.value < r.shrinkFloor || z > -p.K {
+	if current.value >= usual.Threshold || level-current.value < r.shrinkFloor || z > -p.K {
 		return nil
 	}
 	severity := "warning"
@@ -685,31 +755,31 @@ func (r sizeRule) shrank(current measurement, samples []measurement, p sensParam
 	f := &finding{
 		Metric: r.shrinkMetric, Severity: severity,
 		RunID: current.runID, RunAt: current.at,
-		Observed: current.value, Expected: level, Threshold: p.ShrinkRatio * level,
-		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+		Observed: current.value, Expected: level, Threshold: usual.Threshold,
+		Samples: usual.Samples, Details: levelDetails(current.value, level, spread, z),
 	}
-	f.dateOnset(samples, func(v float64) bool { return v < p.ShrinkRatio*level })
+	f.dateOnset(samples, func(v float64) bool { return v < usual.Threshold })
 	return f
 }
 
 // grew is the same rule in the other direction. A source that gained a lot is
 // worth a look and never an alarm: nothing is lost.
 func (r sizeRule) grew(current measurement, samples []measurement, p sensParams) *finding {
-	if len(samples) < anomalyMinSamples {
+	usual := usualLimit(r.growthMetric, samples, p.GrowthRatio)
+	if usual == nil {
 		return nil
 	}
-	xs := sampleValues(samples)
-	level := median(xs)
-	spread := r.spread(xs, level)
+	level := usual.Expected
+	spread := r.spread(sampleValues(samples), level)
 	z := modifiedZ(current.value, level, spread)
-	if current.value <= p.GrowthRatio*level || current.value-level < r.growthFloor || z < p.K {
+	if current.value <= usual.Threshold || current.value-level < r.growthFloor || z < p.K {
 		return nil
 	}
 	return &finding{
 		Metric: r.growthMetric, Severity: "warning",
 		RunID: current.runID, RunAt: current.at,
-		Observed: current.value, Expected: level, Threshold: p.GrowthRatio * level,
-		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+		Observed: current.value, Expected: level, Threshold: usual.Threshold,
+		Samples: usual.Samples, Details: levelDetails(current.value, level, spread, z),
 	}
 }
 
@@ -722,9 +792,9 @@ func (r sizeRule) spread(xs []float64, level float64) float64 {
 // detectDuration watches restic's own time for a series, the figure that leaves
 // out container stops, hooks and BombVault's own lock waits. A faster run is
 // never reported, and a live stall is the stall guard's business.
-func detectDuration(in itemInput, p sensParams) ([]finding, []absence, int) {
+func detectDuration(in itemInput, p sensParams) ([]finding, []absence, baseline) {
 	if in.Kind == seriesTree {
-		return nil, nil, 0
+		return nil, nil, baseline{}
 	}
 	metric, family := metricDurationSlower, familyDuration
 	if in.Kind == seriesDump {
@@ -732,34 +802,37 @@ func detectDuration(in itemInput, p sensParams) ([]finding, []absence, int) {
 	}
 	rows := oldestFirst(eligibleRuns(in.Series))
 	measured := measurements(rows, func(run store.SeriesRun) *int64 { return run.ResticMS })
+	out := baseline{Quantity: quantityDuration, Points: measured}
 	if len(measured) == 0 {
-		return nil, nil, 0
+		return nil, nil, out
 	}
 	current, prior := measured[len(measured)-1], measured[:len(measured)-1]
 	from := max(selectionRebaseAt(in.Series), in.Expectations[family].SinceAt)
 	samples := newestSamples(samplesFrom(prior, from), anomalyWindow)
 
-	found, absent := verdict(in.Open, metric, current, slowerRun(current, samples, metric, p),
-		func(expected float64) bool { return current.value <= durationClearedFrac*expected })
-	return found, absent, min(len(samples), anomalyMinSamples)
+	cleared := func(expected float64) bool { return current.value <= durationClearedFrac*expected }
+	found, absent := verdict(in.Open, metric, current, slowerRun(current, samples, metric, p), cleared)
+	out.Samples = min(len(samples), anomalyMinSamples)
+	out.High = standingLimit(in.Open, metric, usualLimit(metric, samples, p.DurRatio), cleared)
+	return found, absent, out
 }
 
 func slowerRun(current measurement, samples []measurement, metric string, p sensParams) *finding {
-	if len(samples) < anomalyMinSamples {
+	usual := usualLimit(metric, samples, p.DurRatio)
+	if usual == nil {
 		return nil
 	}
-	xs := sampleValues(samples)
-	level := median(xs)
-	spread := math.Max(math.Max(mad(xs, level), durationRelativeMADFloor*level), durationMADFloorMS)
+	level := usual.Expected
+	spread := math.Max(math.Max(mad(sampleValues(samples), level), durationRelativeMADFloor*level), durationMADFloorMS)
 	z := modifiedZ(current.value, level, spread)
-	if current.value < p.DurRatio*level || current.value-level < float64(p.DurFloorMS) || z < p.K {
+	if current.value < usual.Threshold || current.value-level < float64(p.DurFloorMS) || z < p.K {
 		return nil
 	}
 	return &finding{
 		Metric: metric, Severity: "warning",
 		RunID: current.runID, RunAt: current.at,
-		Observed: current.value, Expected: level, Threshold: p.DurRatio * level,
-		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+		Observed: current.value, Expected: level, Threshold: usual.Threshold,
+		Samples: usual.Samples, Details: levelDetails(current.value, level, spread, z),
 	}
 }
 
@@ -990,8 +1063,7 @@ func datasetSample(row store.SeriesRun, previous *store.SeriesRun) store.SeriesR
 func newestFinished(series []store.SeriesRun) []store.SeriesRun {
 	out := make([]store.SeriesRun, 0, reliabilityRuns)
 	for _, run := range series {
-		ownFailure := run.Status == "failed" && run.Error != store.ReasonInterrupted
-		if run.Status != "success" && !ownFailure {
+		if run.Status != "success" && !ownFailure(run) {
 			continue
 		}
 		out = append(out, run)
@@ -1000,6 +1072,12 @@ func newestFinished(series []store.SeriesRun) []store.SeriesRun {
 		}
 	}
 	return out
+}
+
+// ownFailure is a failed run the item answers for. One a restart cut short says
+// nothing about the item.
+func ownFailure(run store.SeriesRun) bool {
+	return run.Status == "failed" && run.Error != store.ReasonInterrupted
 }
 
 // measurement is what one run of a series measured for one metric.
@@ -1139,22 +1217,31 @@ type itemResult struct {
 	Absent   []absence
 	Learning learningInfo
 	Typical  typicalValues
+	// Baselines are the quantities this kind of series is measured in: the size
+	// rules' first, then new data, then duration.
+	Baselines []baseline
 }
 
 // evaluateItem runs every rule a series is watched by and reports what each of
 // them could learn from.
 func evaluateItem(in itemInput) itemResult {
 	p := paramsFor(in.Sens)
-	newData, newDataSamples := detectNewData(in, p)
-	source, sourceGone, sourceSamples := detectSource(in, p)
-	duration, durationGone, durationSamples := detectDuration(in, p)
+	newData, newDataBase := detectNewData(in, p)
+	source, sourceGone, sizeBases := detectSource(in, p)
+	duration, durationGone, durationBase := detectDuration(in, p)
 	reliability, reliabilityGone := detectReliability(in, p)
 
-	res := itemResult{
-		Learning: learningInfo{
-			NewData: newDataSamples, Source: sourceSamples, Duration: durationSamples,
-			Needed: anomalyMinSamples,
-		},
+	learned := learningInfo{
+		NewData: newDataBase.Samples, Duration: durationBase.Samples, Needed: anomalyMinSamples,
+	}
+	if len(sizeBases) > 0 {
+		learned.Source = sizeBases[0].Samples
+	}
+	res := itemResult{Learning: learned, Baselines: sizeBases}
+	for _, base := range []baseline{newDataBase, durationBase} {
+		if base.Quantity != "" {
+			res.Baselines = append(res.Baselines, base)
+		}
 	}
 	res.Findings = append(append(append(append(res.Findings, newData...), source...), duration...), reliability...)
 	res.Absent = append(append(append(res.Absent, sourceGone...), durationGone...), reliabilityGone...)
@@ -1163,10 +1250,10 @@ func evaluateItem(in itemInput) itemResult {
 	sizes := measurements(eligible, func(run store.SeriesRun) *int64 { return run.SourceBytes })
 	res.Learning.NoData = len(sizes) > 0 && slices.Max(sampleValues(sizes)) == 0
 	res.Typical = typicalValues{
-		SourceBytes: typicalOf(sizes, sourceSamples),
+		SourceBytes: typicalOf(sizes, learned.Source),
 		ResticMS: typicalOf(measurements(eligible,
-			func(run store.SeriesRun) *int64 { return run.ResticMS }), durationSamples),
-		NewDataBytes: typicalOf(newDataMeasurements(in.NewData), newDataSamples),
+			func(run store.SeriesRun) *int64 { return run.ResticMS }), learned.Duration),
+		NewDataBytes: typicalOf(newDataMeasurements(in.NewData), learned.NewData),
 	}
 	return res
 }

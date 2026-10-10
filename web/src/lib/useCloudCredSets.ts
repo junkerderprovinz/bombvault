@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import type { CloudCredSetInfo } from "./api";
-import { getCloudCredSets } from "./api";
+import type { CloudCredSet, CloudCredSetInfo, OkEnvelope, SaveWarning } from "./api";
+import { getCloudCredSets, setCloudCredSets } from "./api";
 import type { TranslationKey } from "./i18n";
 import { repoDisplayName } from "./directRepo";
 
@@ -12,6 +12,24 @@ const CRED_SETS_CHANGED = "bv:cred-sets-changed";
  */
 export function credSetsChanged(): void {
   window.dispatchEvent(new Event(CRED_SETS_CHANGED));
+}
+
+// credSetDraft blanks the secrets of a stored set. The backend keeps a stored
+// secret when the posted one is blank (matched by id), so resending untouched
+// sets this way preserves their keys.
+export function credSetDraft(s: CloudCredSetInfo): CloudCredSet {
+  return { id: s.id, name: s.name, s3KeyId: s.s3KeyId, s3Secret: "", s3Region: s.s3Region, restUser: s.restUser, restPassword: "", s3StorageClass: s.s3StorageClass };
+}
+
+/** saveCredSet stores one set among the stored ones and tells the readers.
+ *  The list is saved as a whole, so every other set goes along as a draft. */
+export async function saveCredSet(
+  stored: CloudCredSetInfo[],
+  set: CloudCredSet
+): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
+  const r = await setCloudCredSets([...stored.filter((s) => s.id !== set.id).map(credSetDraft), set]);
+  if (r.ok) credSetsChanged();
+  return r;
 }
 
 /** credSetLabel is how a set is named on screen. A set kept for a direct

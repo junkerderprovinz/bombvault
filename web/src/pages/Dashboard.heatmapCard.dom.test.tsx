@@ -5,7 +5,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { en } from "../lib/i18n";
-import { HealthHeatmapCard } from "./Dashboard";
+import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
 
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),

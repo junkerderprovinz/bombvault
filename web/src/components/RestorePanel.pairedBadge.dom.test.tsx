@@ -2,9 +2,8 @@
 // A snapshot taken together with a database dump says so, at its home and at
 // an off-site place, whose copy carries a new id and keeps the source id. The
 // tags that make the pairing possible stay out of the row.
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
@@ -72,21 +71,15 @@ async function renderPanel(over: Partial<PanelProps> = {}) {
   await act(async () => {
     render(
       <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <RestorePanel name="immich_postgres" t={t} open isDatabase dbCoverage="live" containerRunning {...over} />
-          </ToastProvider>
-        </AdvancedProvider>
+        <ToastProvider>
+          <RestorePanel name="immich_postgres" t={t} open isDatabase dbCoverage="live" containerRunning {...over} />
+        </ToastProvider>
       </I18nProvider>
     );
   });
 }
 
-beforeEach(() => localStorage.setItem("bombvault.advanced", "1"));
-afterEach(() => {
-  cleanup();
-  localStorage.removeItem("bombvault.advanced");
-});
+afterEach(cleanup);
 
 it("marks the snapshot the dump belongs to", async () => {
   await renderPanel();

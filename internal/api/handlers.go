@@ -4030,10 +4030,25 @@ func (h *Handler) runTargetMaps() (name, domain map[string]string) {
 	return name, domain
 }
 
+// runsWindow is how many runs GET /api/runs returns at most, and how many it
+// returns without a limit: enough for the dashboard's day filter to show
+// several days of history.
+const runsWindow = 500
+
+// handleRuns serves GET /api/runs: the newest runs of every item, or with
+// itemKind and itemKey those of one item of GET /api/items. limit lowers the
+// number of rows either way.
 func (h *Handler) handleRuns(w http.ResponseWriter, r *http.Request) {
-	// Return a generous window so the dashboard's day-filter can show several
-	// days of history, not just the latest handful.
-	runs, err := h.store.ListRuns(500)
+	q := r.URL.Query()
+	limit := runsWindow
+	if n, err := strconv.Atoi(q.Get("limit")); err == nil && n > 0 && n < runsWindow {
+		limit = n
+	}
+	if kind, key := q.Get("itemKind"), q.Get("itemKey"); kind != "" || key != "" {
+		h.writeItemRuns(w, kind, key, limit)
+		return
+	}
+	runs, err := h.store.ListRuns(limit)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -4049,6 +4064,23 @@ func (h *Handler) handleRuns(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": h.runViews(runs)})
+}
+
+func (h *Handler) writeItemRuns(w http.ResponseWriter, kind, key string, limit int) {
+	id, found, err := h.itemTargetID(kind, key)
+	if errors.Is(err, errUnknownItemKind) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown item kind"})
+		return
+	}
+	var runs []store.Run
+	if err == nil && found {
+		runs, err = h.store.ListRunsFiltered(store.RunFilter{TargetIDs: []string{id}, Limit: limit})
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": h.runViews(runs)})
 }
@@ -5215,6 +5247,11 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     automation. Every route but the OpenAPI description demands an API token
 //     inside serveAPIV1, with or without a login password. The token routes
 //     under /api/tokens stay session-protected.)
+//   - the receive slot routes under /api/zfs/receive/<slot>/  (another
+//     instance streams a ZFS replica through them. Each one demands the
+//     slot's bearer token and refuses anything outside the slot; the
+//     requests a person answers under /api/zfs/receive/requests stay
+//     session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -5282,7 +5319,7 @@ func authGatePublicPath(path string) bool {
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
 		return true
 	}
-	return strings.HasPrefix(path, apiV1Prefix)
+	return strings.HasPrefix(path, apiV1Prefix) || zfsReceiveSlotPath(path)
 }
 
 // ---------------------------------------------------------------------------

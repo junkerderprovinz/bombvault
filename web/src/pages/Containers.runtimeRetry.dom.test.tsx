@@ -89,17 +89,16 @@ function member(name: string): Container {
   };
 }
 
-const { Containers, StackCard } = await import("./Containers");
+const { Containers } = await import("./Containers");
+const { StackCard } = await import("../components/containers/StackCard");
 const { en } = await import("../lib/i18n");
 const { ToastProvider } = await import("../lib/toast");
-const { AdvancedProvider } = await import("../lib/advanced");
 
 const t = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof StackCard>[0]["t"];
 
 beforeEach(() => {
   runs = [];
   restore.mockClear();
-  localStorage.setItem("bombvault.advanced", "1");
 });
 
 afterEach(() => {
@@ -121,9 +120,7 @@ describe("restoring several containers", () => {
   it("offers the containers refused for their GPU the restore without it", async () => {
     render(
       <ToastProvider>
-        <AdvancedProvider>
-          <Containers />
-        </AdvancedProvider>
+        <Containers />
       </ToastProvider>,
     );
     fireEvent.click(await screen.findByRole("checkbox", { name: en["containers.selectAll"] }));

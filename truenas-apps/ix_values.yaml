@@ -1,7 +1,7 @@
 images:
   image:
     repository: ghcr.io/junkerderprovinz/bombvault
-    tag: 9.9.1
+    tag: 10.0.0
 
 consts:
   bombvault_container_name: bombvault

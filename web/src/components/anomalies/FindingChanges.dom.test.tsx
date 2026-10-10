@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// Opening the comparison asks the server to diff the last good backup against
+// Showing the comparison asks the server to diff the last good backup against
 // the first affected one; it polls while that runs and then names the folders.
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { countText, en } from "../../lib/i18n";
 import type { AnomalyChanges, AnomalyView } from "../../lib/api";
@@ -51,9 +51,8 @@ afterEach(() => {
 
 it("traces an index rebuild to its folder and says it can be excluded", async () => {
   getAnomalyChanges.mockResolvedValueOnce({ ok: true, changes: { state: "running" } }).mockResolvedValueOnce(indexRebuild());
-  render(<FindingChanges a={finding} t={t} />);
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: /Compare with the backup before/ }));
+    render(<FindingChanges a={finding} t={t} />);
   });
   expect(screen.getByRole("status").textContent).toBe("Working it out…");
   await act(async () => {

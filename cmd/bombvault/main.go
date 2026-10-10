@@ -406,6 +406,9 @@ func run() error {
 		_, bErr := svc.BackupZFSDataset(ctx, id)
 		return roundItemErr(bErr)
 	}, st.ListZFSDatasets)
+	scheduler.SetZFSReplicaJob(func(id string) error {
+		return svc.ReplicateZFSDataset(context.Background(), id)
+	})
 	// "Backup Everything": a 6th, independent pseudo-domain that loops over all
 	// five domains internally (internal/api/everything.go's BackupEverything),
 	// so — like SetFlashJob/SetConfigJob — the scheduled closure takes no

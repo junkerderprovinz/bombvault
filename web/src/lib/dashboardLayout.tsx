@@ -84,6 +84,195 @@ export function mergeOrder(stored: string[], defaultOrder: string[]): string[] {
   return merged;
 }
 
+export const LAYOUT_VERSION = 2;
+export const GRID_COLUMNS = 6;
+// A card takes a third, a half, two thirds or the whole row.
+export const CARD_SPANS = [2, 3, 4, 6] as const;
+export type CardSpan = (typeof CARD_SPANS)[number];
+export const MIN_CARD_HEIGHT = 140;
+export const CARD_HEIGHT_STEP = 20;
+
+/** CardDefault is a card's place in the default layout. */
+export interface CardDefault {
+  id: string;
+  span: CardSpan;
+  hidden?: boolean;
+}
+
+/**
+ * GridLayout is the stored layout of the six-column grid. widths and heights
+ * hold only the cards somebody resized: the others take their default span and
+ * their natural height.
+ */
+export interface GridLayout {
+  v: typeof LAYOUT_VERSION;
+  order: string[];
+  hidden: string[];
+  widths: Record<string, CardSpan>;
+  heights: Record<string, number>;
+}
+
+/** LayoutMigration says what became of the cards of an unversioned layout. */
+export interface LayoutMigration {
+  /** Old card id to the id that replaces it. Several ids may share one. */
+  renames: Record<string, string>;
+  /** Cards that are gone without a successor. */
+  drops: string[];
+}
+
+/** snapSpan returns the span nearest to a width in columns, the narrower one on a tie. */
+export function snapSpan(columns: number): CardSpan {
+  return CARD_SPANS.reduce((best, span) =>
+    Math.abs(span - columns) < Math.abs(best - columns) ? span : best
+  );
+}
+
+/** snapHeight rounds a height in pixels to the step and keeps it above the minimum. */
+export function snapHeight(px: number): number {
+  return Math.max(MIN_CARD_HEIGHT, Math.round(px / CARD_HEIGHT_STEP) * CARD_HEIGHT_STEP);
+}
+
+/** nextSpan steps to the next wider span and from the full row back to a third. */
+export function nextSpan(span: CardSpan): CardSpan {
+  return CARD_SPANS[(CARD_SPANS.indexOf(span) + 1) % CARD_SPANS.length];
+}
+
+/**
+ * packSpans widens the last card of every row by the columns the row leaves
+ * free, so hiding or moving a card never opens a gap. It takes the spans of
+ * the visible cards in order and leaves the stored widths alone.
+ */
+export function packSpans(spans: CardSpan[]): CardSpan[] {
+  const packed: number[] = spans.slice();
+  let used = 0;
+  spans.forEach((span, i) => {
+    if (used + span > GRID_COLUMNS) {
+      packed[i - 1] += GRID_COLUMNS - used;
+      used = 0;
+    }
+    used += span;
+  });
+  if (packed.length > 0) packed[packed.length - 1] += GRID_COLUMNS - used;
+  // Whatever a row of allowed spans leaves free widens its last card to
+  // another allowed span.
+  return packed as CardSpan[];
+}
+
+/** cardSpan is the width somebody gave the card, or its default. */
+export function cardSpan(layout: GridLayout, card: CardDefault): CardSpan {
+  return layout.widths[card.id] ?? card.span;
+}
+
+export function defaultLayout(cards: CardDefault[]): GridLayout {
+  return {
+    v: LAYOUT_VERSION,
+    order: cards.map((c) => c.id),
+    hidden: cards.filter((c) => c.hidden).map((c) => c.id),
+    widths: {},
+    heights: {},
+  };
+}
+
+function strings(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((x): x is string => typeof x === "string") : [];
+}
+
+function entries(value: unknown): [string, unknown][] {
+  return value && typeof value === "object" && !Array.isArray(value) ? Object.entries(value) : [];
+}
+
+function ofKnown<V>(sized: Record<string, V>, known: Set<string>): Record<string, V> {
+  return Object.fromEntries(Object.entries(sized).filter(([id]) => known.has(id)));
+}
+
+interface Arrangement {
+  order: string[];
+  hidden: Set<string>;
+  widths: Record<string, CardSpan>;
+}
+
+// rearrange applies the drops and renames to an unversioned layout. A card the
+// layout already has keeps its own place, visibility and width, and whatever is
+// renamed to it just goes. Otherwise the new card stands where the first of its
+// old cards stood, takes that one's width, and is hidden only if all were.
+function rearrange(stored: Arrangement, migration: LayoutMigration): Arrangement {
+  const dropped = new Set(migration.drops);
+  const kept = stored.order.filter((id) => !dropped.has(id));
+  const had = new Set(kept);
+  const order: string[] = [];
+  const shown = new Set<string>();
+  const widths: Record<string, CardSpan> = {};
+  for (const id of kept) {
+    const to = migration.renames[id] ?? id;
+    if (to !== id && had.has(to)) continue;
+    if (!order.includes(to)) order.push(to);
+    if (!stored.hidden.has(id)) shown.add(to);
+    if (widths[to] === undefined && stored.widths[id] !== undefined) widths[to] = stored.widths[id];
+  }
+  return { order, hidden: new Set(order.filter((id) => !shown.has(id))), widths };
+}
+
+/**
+ * migrateLayout turns whatever the browser stored into a layout for the given
+ * cards. Nothing stored, or nothing readable, gives the default. An
+ * unversioned layout keeps its order and hidden set, has its cards dropped and
+ * renamed as the migration says, and maps full and half to 6 and 3 columns. A
+ * card the stored layout does not know appears as the default has it, behind
+ * the card it follows by default, and the default's first card leads.
+ */
+export function migrateLayout(
+  stored: unknown,
+  cards: CardDefault[],
+  migration: LayoutMigration
+): GridLayout {
+  if (!stored || typeof stored !== "object") return defaultLayout(cards);
+  const raw = stored as {
+    v?: unknown;
+    order?: unknown;
+    hidden?: unknown;
+    widths?: unknown;
+    heights?: unknown;
+  };
+  if (raw.v !== undefined && raw.v !== LAYOUT_VERSION) return defaultLayout(cards);
+
+  let arranged: Arrangement = {
+    order: strings(raw.order),
+    hidden: new Set(strings(raw.hidden)),
+    widths: {},
+  };
+  const heights: Record<string, number> = {};
+  if (raw.v === LAYOUT_VERSION) {
+    for (const [id, w] of entries(raw.widths)) {
+      if (typeof w === "number" && Number.isFinite(w)) arranged.widths[id] = snapSpan(w);
+    }
+    for (const [id, h] of entries(raw.heights)) {
+      if (typeof h === "number" && Number.isFinite(h)) heights[id] = snapHeight(h);
+    }
+  } else {
+    for (const [id, w] of entries(raw.widths)) {
+      if (w === "full") arranged.widths[id] = 6;
+      else if (w === "half") arranged.widths[id] = 3;
+    }
+    arranged = rearrange(arranged, migration);
+  }
+
+  const ids = cards.map((c) => c.id);
+  const known = new Set(ids);
+  const had = new Set(arranged.order);
+  const hiddenByDefault = new Set(cards.filter((c) => c.hidden).map((c) => c.id));
+  // mergeOrder puts a card that nothing precedes at the end. The first card of
+  // the default belongs at the top, so it is seeded there.
+  const lead = ids.length > 0 && !had.has(ids[0]) ? [ids[0]] : [];
+  const order = mergeOrder([...lead, ...arranged.order], ids);
+  return {
+    v: LAYOUT_VERSION,
+    order,
+    hidden: order.filter((id) => (had.has(id) ? arranged.hidden.has(id) : hiddenByDefault.has(id))),
+    widths: ofKnown(arranged.widths, known),
+    heights: ofKnown(heights, known),
+  };
+}
+
 /**
  * useDashboardLayout keeps the card order, hidden set and widths for this
  * browser. defaultOrder decides which ids are known: unknown stored ids are

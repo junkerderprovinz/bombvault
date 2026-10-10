@@ -267,6 +267,7 @@ type Service struct {
 	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
 	zfsHostMu   sync.Mutex
 	zfsHostLast *zfsHostListing
+	replica     zfsReplicaRuntime
 	// rclone runs against the instance's own config file; rcloneConfMu keeps
 	// two edits of that file from dropping each other's remote.
 	rcloneOnce   sync.Once
@@ -275,6 +276,15 @@ type Service struct {
 	// receiverMu keeps two partners asking for a login at once from
 	// rewriting the receiver's htpasswd file over each other.
 	receiverMu sync.Mutex
+	// roleSendMu lets one call about this instance's own role requests go
+	// out at a time, so a withdrawal cannot overtake the ask it takes back.
+	roleSendMu sync.Mutex
+	// roleRefreshedAt is when this instance last asked its members where its
+	// own role requests stand, in Unix nanoseconds.
+	roleRefreshedAt atomic.Int64
+	// zfsReceiveBusy holds the ids of the receive slots a stream is landing
+	// through, so a second stream into the same slot waits its turn.
+	zfsReceiveBusy sync.Map
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
@@ -318,6 +328,11 @@ type Service struct {
 	diskStat    func(path string) (diskStatResult, error)
 	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
 	sftpAbout   func(ctx context.Context, repo string) (aboutResult, error)
+	// probedVolumes holds what a capacity probe asked for by hand answered, by
+	// volume key and guarded by probedMu. The samples table is not the place
+	// for it: every volume in there is judged by the capacity rule.
+	probedMu      sync.Mutex
+	probedVolumes map[string]probedVolume
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
@@ -1729,17 +1744,26 @@ func (s *Service) previewExcludes(raw []string, in model.Inspect, effective []st
 // retentionPolicy is the local keep-policy of a domain: its own when it has
 // one, the shared one otherwise.
 func (s *Service) retentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
-	k, own := settings.OwnRetention()[domain]
-	if !own {
-		k = store.RetentionKeep{
-			KeepLast:    settings.RetentionKeepLast,
-			KeepDaily:   settings.RetentionKeepDaily,
-			KeepWeekly:  settings.RetentionKeepWeekly,
-			KeepMonthly: settings.RetentionKeepMonthly,
-			KeepYearly:  settings.RetentionKeepYearly,
-		}
+	return keepPolicy(localKeep(settings, domain))
+}
+
+// localKeep is the domain's own local keep-policy when it has one, the shared
+// local one otherwise.
+func localKeep(settings store.Settings, domain string) store.RetentionKeep {
+	if k, own := settings.OwnRetention()[domain]; own {
+		return k
 	}
-	return keepPolicy(k)
+	return sharedLocalKeep(settings)
+}
+
+func sharedLocalKeep(settings store.Settings) store.RetentionKeep {
+	return store.RetentionKeep{
+		KeepLast:    settings.RetentionKeepLast,
+		KeepDaily:   settings.RetentionKeepDaily,
+		KeepWeekly:  settings.RetentionKeepWeekly,
+		KeepMonthly: settings.RetentionKeepMonthly,
+		KeepYearly:  settings.RetentionKeepYearly,
+	}
 }
 
 func keepPolicy(k store.RetentionKeep) restic.RetentionPolicy {
@@ -2787,6 +2811,9 @@ type DomainStatusEntry struct {
 	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
 	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
+	// ReplicaState is the ZFS replica line of the scorecard: "" with no item
+	// replicating, "ok", "stale" or "failed".
+	ReplicaState string `json:"replicaState,omitempty"`
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -3251,6 +3278,17 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			drillPeriod:       drillPeriod,
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
+		// Without a restic off-site, current replicas of every ZFS item are the
+		// domain's copy off the premises, and their age is its currency.
+		var replicaState string
+		if d.name == zfsDomain {
+			replicaState = s.zfsReplicaDomainState(now, settings)
+			if at, period, ok := s.zfsReplicaCoverage(now, settings); ok && !offsiteConfigured {
+				offsiteConfigured, offPremisesCovered = true, true
+				lastReplicationAt, lastReplicationOK = at, true
+				in.offsiteConfigured, in.lastReplicationAt, in.offsitePeriod = true, at, period
+			}
+		}
 		// protection (the chip) and checks (each row) are derived from the SAME
 		// protInputs. Tamper/Replication rows mirror the chip's red/amber branches
 		// exactly. The Drill row additionally honors the latest drill's OUTCOME (a
@@ -3296,6 +3334,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			DrillState:            checks.Drill,
 			EncryptionOn:          settings.EncryptionEnabled,
 			PruneStrategySet:      pruneStrategySet,
+			ReplicaState:          replicaState,
 		})
 		if d.name == "containers" {
 			out[len(out)-1].LastStartTest = lastStartTest
@@ -11949,6 +11988,15 @@ func definitionUUID(definition string) string {
 	return info.UUID
 }
 
+// vmDisplayName is the name a VM is shown under: its libvirt name everywhere
+// but on TrueNAS, where libvirt names are ids and FriendlyName resolves them.
+func vmDisplayName(vm virshcli.VMInfo, trueNAS bool) string {
+	if trueNAS {
+		return vm.FriendlyName
+	}
+	return vm.Name
+}
+
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
 // VMs with no virsh entry but with backup history appear as state="not-installed".
 func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
@@ -12038,11 +12086,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	hasOwnBackup := make(map[string]bool, len(infos))
 	needsRenameSuggestion := false
 	for _, vm := range infos {
-		displayName := vm.Name
-		if isTrueNAS {
-			displayName = vm.FriendlyName
-		}
-		v := VMView{Name: displayName, LibvirtName: vm.Name, State: vm.State, Method: "graceful", AliasConflicts: []string{}, Aliases: []string{}}
+		v := VMView{Name: vmDisplayName(vm, isTrueNAS), LibvirtName: vm.Name, State: vm.State, Method: "graceful", AliasConflicts: []string{}, Aliases: []string{}}
 		var run *store.Run
 		if t, ok := byName[vm.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)

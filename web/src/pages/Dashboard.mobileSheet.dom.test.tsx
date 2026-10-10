@@ -29,7 +29,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import { AdvancedProvider } from "../lib/advanced";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
 import type { Run } from "../lib/api";
 import { Dashboard } from "./Dashboard";
@@ -127,9 +126,7 @@ function renderPage() {
   return render(
     <I18nProvider>
       <ToastProvider>
-        <AdvancedProvider>
-          <Dashboard />
-        </AdvancedProvider>
+        <Dashboard />
       </ToastProvider>
     </I18nProvider>
   );

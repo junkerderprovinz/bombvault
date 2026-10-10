@@ -222,3 +222,122 @@ func TestLeakedStampsIgnoresZvolOnlyStamps(t *testing.T) {
 		}
 	}
 }
+
+// replicaPointsFixture is OpenZFS 2.4.3's answer to ReplicaPointsArgs on a
+// source member that keeps one snapshot and its bookmarks. The first guid is
+// above the int64 range.
+const replicaPointsFixture = "bvrsrc/item#bombvault-replica-20261009100000\t10427890388267139548\t23\n" +
+	"bvrsrc/item#bombvault-replica-20261009110000\t8746006163163025454\t32\n" +
+	"bvrsrc/item@autosnap_between\t2553962879828345657\t36\n" +
+	"bvrsrc/item@bombvault-replica-20261009120000\t9215629630613955310\t44\n"
+
+func TestParseReplicaPoints(t *testing.T) {
+	points, err := ParseReplicaPoints(replicaPointsFixture, "bvrsrc/item")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []ReplicaPoint{
+		{Name: "bombvault-replica-20261009100000", Bookmark: true, GUID: 10427890388267139548, CreateTxg: 23},
+		{Name: "bombvault-replica-20261009110000", Bookmark: true, GUID: 8746006163163025454, CreateTxg: 32},
+		{Name: "autosnap_between", GUID: 2553962879828345657, CreateTxg: 36},
+		{Name: "bombvault-replica-20261009120000", GUID: 9215629630613955310, CreateTxg: 44},
+	}
+	if len(points) != len(want) {
+		t.Fatalf("got %d points, want %d: %+v", len(points), len(want), points)
+	}
+	for i := range want {
+		if points[i] != want[i] {
+			t.Errorf("point %d = %+v, want %+v", i, points[i], want[i])
+		}
+	}
+
+	if points, err := ParseReplicaPoints("", "tank/r/item"); err != nil || len(points) != 0 {
+		t.Errorf("a dataset with no snapshots = %+v, %v", points, err)
+	}
+}
+
+func TestParseReplicaPointsRefusesAnotherDatasetsLines(t *testing.T) {
+	for name, out := range map[string]string{
+		"a sibling with the same prefix": "bvrsrc/item2@bombvault-replica-20261009100000\t1\t2\n",
+		"a child":                        "bvrsrc/item/child@bombvault-replica-20261009100000\t1\t2\n",
+		"the dataset itself":             "bvrsrc/item\t1\t2\n",
+		"an empty snapshot name":         "bvrsrc/item@\t1\t2\n",
+		"too few fields":                 "bvrsrc/item@bombvault-replica-20261009100000\t1\n",
+		"a guid that is not a number":    "bvrsrc/item@bombvault-replica-20261009100000\t-\t2\n",
+		"a negative createtxg":           "bvrsrc/item@bombvault-replica-20261009100000\t1\t-2\n",
+	} {
+		if points, err := ParseReplicaPoints(out, "bvrsrc/item"); err == nil {
+			t.Errorf("%s: ParseReplicaPoints = %+v, want an error", name, points)
+		}
+	}
+}
+
+func TestParseEstimate(t *testing.T) {
+	cases := []struct {
+		name string
+		out  string
+		want int64
+	}{
+		{"full", "full\tbvrsrc/item@bombvault-replica-20261009100000\t4216688\nsize\t4216688\n", 4216688},
+		{
+			"incremental with a snapshot in between",
+			"incremental\tbombvault-replica-20261009100000\tbvrsrc/item@autosnap_between\t1059376\n" +
+				"incremental\tautosnap_between\tbvrsrc/item@bombvault-replica-20261009110000\t624\nsize\t1060000\n",
+			1060000,
+		},
+		{
+			"from a bookmark",
+			"incremental\tbvrsrc/item#bombvault-replica-20261009110000\tbvrsrc/item@bombvault-replica-20261009120000\t1059376\nsize\t1059376\n",
+			1059376,
+		},
+		{
+			"resumed, after the token's contents",
+			"resume token contents:\nnvlist version: 0\n\tobject = 0x2\n\toffset = 0x7c0000\n\tbytes = 0x7e58c8\n" +
+				"\ttoguid = 0xf24502664a9c6705\n\ttoname = bvrsrc/item/child@bombvault-replica-20261009100000\n" +
+				"\tembedok = 1\n\tcompressok = 1\nfull\tbvrsrc/item/child@bombvault-replica-20261009100000\t42151336\nsize\t42151336\n",
+			42151336,
+		},
+	}
+	for _, c := range cases {
+		got, err := ParseEstimate(c.out)
+		if err != nil || got != c.want {
+			t.Errorf("%s: ParseEstimate = %d, %v, want %d", c.name, got, err, c.want)
+		}
+	}
+
+	for _, out := range []string{"", "full\tbvrsrc/item@x\t42\n", "size\tlots\n"} {
+		if n, err := ParseEstimate(out); err == nil {
+			t.Errorf("ParseEstimate(%q) = %d, want an error", out, n)
+		}
+	}
+}
+
+func TestParseDatasetState(t *testing.T) {
+	got, err := ParseDatasetState("type\tvolume\nencryption\taes-256-gcm\nreceive_resume_token\t" + resumeToken + "\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (DatasetState{Type: "volume", Encryption: "aes-256-gcm", ResumeToken: resumeToken}); got != want || !got.Encrypted() {
+		t.Errorf("ParseDatasetState = %+v, want %+v", got, want)
+	}
+	got, err = ParseDatasetState("type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ResumeToken != "" || got.Encrypted() {
+		t.Errorf("a plain dataset without a token = %+v", got)
+	}
+
+	for _, out := range []string{
+		"",
+		"type\tfilesystem\nencryption\toff\n",
+		"type\tfilesystem\nencryption\toff\nreceive_resume_token\tnone\n",
+		"type\tfilesystem\nencryption\toff\nreceive_resume_token\t" + resumeToken + " extra\n",
+		"type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\nmounted\tyes\n",
+		"cannot open 'tank/x': dataset does not exist",
+	} {
+		if s, err := ParseDatasetState(out); err == nil {
+			t.Errorf("ParseDatasetState(%q) = %+v, want an error", out, s)
+		}
+	}
+}

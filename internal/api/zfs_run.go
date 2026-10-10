@@ -421,6 +421,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Sum
 		return backup.Summary{}, runErr
 	}
 	s.queueFirstProbe(d.ID)
+	s.replicateAfterZFSBackup(ctx, d)
 	return sum, nil
 }
 

@@ -6,18 +6,11 @@ import { setCloudCredSets, type CloudCredSet, type CloudCredSetInfo } from "../.
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { pushSaveWarnings } from "../../lib/placementCodes";
-import { credSetLabel, credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { credSetDraft, credSetLabel, credSetsChanged, saveCredSet, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
 import { Card, type SaveState } from "./shared";
 import { useState } from "react";
-
-// toDraft blanks the secrets of a stored set. The backend keeps a stored
-// secret when the posted one is blank (matched by id), so resending untouched
-// sets this way preserves their keys.
-function toDraft(s: CloudCredSetInfo): CloudCredSet {
-  return { id: s.id, name: s.name, s3KeyId: s.s3KeyId, s3Secret: "", s3Region: s.s3Region, restUser: s.restUser, restPassword: "", s3StorageClass: s.s3StorageClass };
-}
 
 // CloudCredSetsCard manages additional named credential sets, so an off-site
 // target can use its own S3 or REST credentials instead of the shared set from
@@ -53,7 +46,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
     setState("idle");
   }
   function openEdit(s: CloudCredSetInfo) {
-    setEditing(toDraft(s));
+    setEditing(credSetDraft(s));
     setState("idle");
   }
   function closeEditor() {
@@ -67,14 +60,11 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
   async function save() {
     if (!editing) return;
     setState("saving");
-    const rest = sets.filter((s) => s.id !== editing.id).map(toDraft);
-    const next = [...rest, editing];
     try {
-      const r = await setCloudCredSets(next);
+      const r = await saveCredSet(sets, editing);
       if (r.ok) {
         setState("idle");
         closeEditor();
-        credSetsChanged();
         push(t("settings.saved"), "success");
         pushSaveWarnings(push, t, r.warnings);
       } else {
@@ -92,7 +82,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
   async function remove(id: string) {
     setRemovingId(id);
     try {
-      const next = sets.filter((s) => s.id !== id).map(toDraft);
+      const next = sets.filter((s) => s.id !== id).map(credSetDraft);
       const r = await setCloudCredSets(next);
       if (r.ok) {
         credSetsChanged();

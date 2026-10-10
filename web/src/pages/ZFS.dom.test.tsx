@@ -5,7 +5,6 @@
 // endpoint shows up here.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type {
@@ -145,6 +144,8 @@ function item(overrides: Partial<ZFSDatasetView>): ZFSDatasetView {
     safetyOldestAt: 0,
     members: [member({})],
     effectiveSchedule: { kind: "domain", spec: "0 3 * * *", alsoSpec: "" },
+    sites: 1,
+    rule321: "one-copy",
     ...overrides,
   };
 }
@@ -152,11 +153,9 @@ function item(overrides: Partial<ZFSDatasetView>): ZFSDatasetView {
 function renderPage() {
   return render(
     <I18nProvider>
-      <AdvancedProvider>
-        <ToastProvider>
-          <ZFS />
-        </ToastProvider>
-      </AdvancedProvider>
+      <ToastProvider>
+        <ZFS />
+      </ToastProvider>
     </I18nProvider>,
   );
 }
@@ -184,6 +183,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ZFS page", () => {
+  it("gives the entry the 3-2-1 verdict the server counted its replica into", async () => {
+    items = [item({ sites: 2, rule321: "met" })];
+    await renderWithItems();
+    expect(screen.getByText(en["placement.rule321Met"])).toBeTruthy();
+    expect(screen.getByText("At 2 sites")).toBeTruthy();
+  });
+
   it("builds the card from the root name, its mountpoint and the shared tiles", async () => {
     await renderWithItems();
     expect(screen.getByText("/mnt/cache/appdata")).toBeTruthy();
@@ -581,19 +587,10 @@ describe("ZFS page", () => {
     expect(screen.queryByText(/Volumes not used by any VM/)).toBeNull();
   });
 
-  it("keeps the expert controls out of basic mode", async () => {
+  it("offers the child datasets, excludes, commands and the probe", async () => {
     await renderWithItems();
     fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
     expect(screen.getByText(en["zfs.children"])).toBeTruthy();
-    expect(screen.queryByText(en["zfs.excludes"])).toBeNull();
-    expect(screen.queryByText(en["zfs.preSnapshot"])).toBeNull();
-    expect(screen.queryByRole("button", { name: en["zfs.probe"] })).toBeNull();
-  });
-
-  it("offers excludes, commands and the probe in advanced mode", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
-    await renderWithItems();
-    fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
     expect(screen.getByText(en["zfs.excludes"])).toBeTruthy();
     expect(screen.getByText(en["zfs.preSnapshot"])).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: en["zfs.probe"] }));
@@ -601,7 +598,6 @@ describe("ZFS page", () => {
   });
 
   it("takes snapshot commands only once a container is chosen to run them in", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
     await renderWithItems();
     fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
     const place = screen.getByRole("combobox", { name: en["zfs.hookContainer"] });
@@ -611,7 +607,6 @@ describe("ZFS page", () => {
   });
 
   it("offers the commands of an item that has a container for them", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
     items = [item({ hookContainer: "postgres", preSnapshot: "pg_backup_start" })];
     await renderWithItems();
     fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));

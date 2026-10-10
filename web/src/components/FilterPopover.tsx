@@ -22,10 +22,15 @@ export function FilterPopover({
   label,
   children,
   active = false,
+  align = "start",
 }: {
   label: string;
   children: ReactNode;
   active?: boolean;
+  /** Where the panel hangs: from the trigger's start, or with "row-end" from
+   *  the end of the nearest positioned ancestor. A toolbar that ends where the
+   *  page does takes the second, or the panel opens past the page. */
+  align?: "start" | "row-end";
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -73,7 +78,7 @@ export function FilterPopover({
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={align === "start" ? "relative" : ""}>
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -89,7 +94,7 @@ export function FilterPopover({
         <div
           role="dialog"
           aria-label={label}
-          className="absolute start-0 top-full z-20 mt-2 w-max min-w-[16rem] max-w-[min(90vw,26rem)] rounded-card bg-carbon-surface p-4 shadow-xl flex flex-col gap-4"
+          className={`absolute ${align === "start" ? "start-0" : "end-0"} top-full z-20 mt-2 w-max min-w-[16rem] max-w-[min(90vw,26rem)] rounded-card bg-carbon-surface p-4 shadow-xl flex flex-col gap-4`}
         >
           {children}
         </div>

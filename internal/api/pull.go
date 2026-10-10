@@ -112,6 +112,9 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if domain == "" {
 		return 0, errors.New("this pull source names no domain, so there is nowhere for its snapshots to land")
 	}
+	if err := s.fetcherRoleOpen(ps.MemberID, domain); err != nil {
+		return 0, err
+	}
 	settings, dest, err := s.domainRepoSource(domain, "local")
 	if err != nil {
 		return 0, fmt.Errorf("resolve the local %s repository: %w", domain, err)

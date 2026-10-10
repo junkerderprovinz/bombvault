@@ -482,8 +482,13 @@ export interface Run {
   finishedAt: number | null;
   snapshotId: string;
   bytes: number;
+  /** What restic read during the run, null when the run measured nothing. */
+  sourceBytes?: number | null;
   error: string;
   acknowledged: boolean; // true once dismissed from the dashboard error panel (#126)
+  /** The parent run of the "back up everything" pass this run belongs to, ""
+   *  outside one. */
+  groupId?: string;
   target: string; // human target name (container/VM/file-set name, or "Unraid flash")
   // "container" | "vm" | "flash" | "config" | "files" | "zfs" | "everything" | "".
   // "everything" is the Backup Everything pass's PARENT run (see
@@ -750,6 +755,41 @@ async function fetchJSON<T>(
 
 export function getHealth(): Promise<{ ok: boolean; version?: string }> {
   return fetchJSON("/api/health");
+}
+
+/** The versions the Info page lists. A bundled tool is null when its version
+ *  could not be read. */
+export type ComponentVersions = {
+  bombvault: string;
+  restic: string | null;
+  rclone: string | null;
+};
+
+/** GET /api/versions */
+export function getVersions(): Promise<OkEnvelope & { versions: ComponentVersions }> {
+  return fetchJSON("/api/versions");
+}
+
+export type UpdateCheck = {
+  current: string;
+  latest: string;
+  updateAvailable: boolean;
+  releaseUrl: string;
+};
+
+/** Why an update check could not run, the `code` of its refusal. A dev build
+ *  has no version to compare and asks nobody. */
+export type UpdateCheckRefusal = "dev-build" | "offline" | "rate-limited" | "bad-response";
+
+/**
+ * POST /api/update-check asks GitHub for the newest BombVault release. The
+ * server makes that call for this request and at no other time, so the page
+ * sends it only when the person presses the button.
+ */
+export function checkForUpdate(): Promise<
+  Omit<OkEnvelope, "code"> & { code?: UpdateCheckRefusal; update?: UpdateCheck }
+> {
+  return fetchJSON("/api/update-check", { method: "POST" });
 }
 
 /**
@@ -2397,6 +2437,15 @@ export function tamperTest(
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
 
+/** POST /api/offsite/targets/{id}/tamper-test: the same probe as tamperTest
+ *  against one off-site target. The verdict is stored for that target and
+ *  comes back as lastTamper on its storage location. An unknown id is a 404. */
+export function tamperTestOffsiteTarget(
+  id: string
+): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/tamper-test`, { method: "POST" });
+}
+
 // ---------------------------------------------------------------------------
 // Remote primary repositories (issue #152)
 //
@@ -2556,7 +2605,15 @@ export interface OffsiteTarget {
   /** The destination this target sits under, when it was derived from one. */
   destinationId?: string;
   provider?: string;
+  /** The settings a derived target holds itself instead of taking them from
+   *  its destination. Read-only: a save keeps what is stored, and
+   *  updateOffsiteTarget's follow gives settings back. */
+  own?: FollowedSetting[];
 }
+
+/** A setting a target derived from a destination takes from it unless it
+ *  holds a value of its own. */
+export type FollowedSetting = "retention" | "compression" | "limits" | "enabled";
 
 /** A named repository (#204): a location written down once in Settings and then
  *  PICKED by individual containers, VMs and folder sets, instead of typed into
@@ -2659,11 +2716,15 @@ export function createOffsiteTarget(
 export function updateOffsiteTarget(
   id: string,
   target: OffsiteTarget,
-  alsoExclude?: NewTargetExclusion
+  alsoExclude?: NewTargetExclusion,
+  /** Followed settings a derived target takes from its destination again,
+   *  whatever the target carries for them. Without it the target keeps every
+   *  one it is saved with another value for than the destination's. */
+  follow?: FollowedSetting[]
 ): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
+    body: JSON.stringify({ ...target, ...(alsoExclude ? { alsoExclude } : {}), ...(follow ? { follow } : {}) }),
   });
 }
 
@@ -3316,6 +3377,77 @@ export function getSizeBreakdown(
 
 export function listRuns(run?: string): Promise<ListRunsResponse> {
   return fetchJSON(run ? `/api/runs?run=${encodeURIComponent(run)}` : "/api/runs");
+}
+
+/** The kinds of GET /api/items. `Run.domain` names a run's item by the same
+ *  words. */
+export type BackupItemKind = "container" | "vm" | "files" | "zfs" | "flash" | "config";
+
+/** One run in the strip of a BackupItem. */
+export interface BackupItemRun {
+  id: string;
+  /** What ran: "backup", "dbdump", "restore" and so on. */
+  kind: string;
+  status: string;
+  startedAt: number;
+}
+
+/** A row from GET /api/items: a container, a VM, a folder set, a ZFS item, or
+ *  the single flash or configuration backup. */
+export interface BackupItem {
+  kind: BackupItemKind;
+  /** What the routes of the kind take: the container name, the libvirt name,
+   *  the id of a folder set or ZFS item, "flash" or "config". */
+  key: string;
+  /** The name to show. Flash and config carry their key here and the page
+   *  words them. */
+  name: string;
+  /** False once the item is taken out of the schedule. */
+  included: boolean;
+  /** True while the item's own schedule is "off" and per-item schedules are on. */
+  paused: boolean;
+  effectiveSchedule: EffectiveSchedule;
+  /** Unix seconds of the last successful backup, 0 for none. */
+  lastBackup: number;
+  /** Status of the last finished backup, "" for none. */
+  lastRunStatus: string;
+  /** What the newest measured backup read, null before the first. */
+  sourceBytes: number | null;
+  /** Containers and VMs: what Docker or libvirt reports. Absent when the host
+   *  was not asked or did not answer. */
+  state?: string;
+  /** Containers and VMs: false for an entry whose container or VM is gone
+   *  from the host. Absent like `state`. */
+  installed?: boolean;
+  /** True for BombVault's own container, which cannot back itself up. */
+  self?: boolean;
+  /** True while the kind is switched off in the settings. Flash and config
+   *  are not listed at all then. */
+  kindDisabled?: boolean;
+  /** The newest fourteen runs of any kind, newest first. */
+  runs: BackupItemRun[];
+}
+
+export interface ListItemsResponse {
+  ok: boolean;
+  items: BackupItem[];
+  /** Kinds whose host did not answer. Their rows are the stored entries
+   *  alone, so a container or VM BombVault has no entry for is missing. */
+  unlisted: BackupItemKind[];
+  error?: string;
+}
+
+/** GET /api/items: every item of every kind in one list. */
+export function listItems(): Promise<ListItemsResponse> {
+  return fetchJSON("/api/items");
+}
+
+/** GET /api/runs for one item of GET /api/items: its runs of every kind,
+ *  newest first, at most `limit` of them (500 without one). */
+export function listItemRuns(kind: BackupItemKind, key: string, limit?: number): Promise<ListRunsResponse> {
+  const q = new URLSearchParams({ itemKind: kind, itemKey: key });
+  if (limit !== undefined) q.set("limit", String(limit));
+  return fetchJSON(`/api/runs?${q.toString()}`);
 }
 
 /**
@@ -4059,6 +4191,10 @@ export interface ZFSDatasetView {
   safetyOldestAt: number;
   members: ZFSMemberView[];
   effectiveSchedule: EffectiveSchedule;
+  /** The 3-2-1 verdict PlacementObserved gives the other domains, with a
+   *  current replica counted as a copy off the premises. */
+  sites: number;
+  rule321: PlacementObserved["rule321"];
 }
 
 export interface ListZFSDatasetsResponse extends OkEnvelope {
@@ -4417,6 +4553,269 @@ export function previewZFSExcludes(
     method: "POST",
     body: JSON.stringify({ id, excludes }),
   });
+}
+
+/*
+ * ZFS replica: a block-exact copy of a ZFS item's datasets on a second ZFS
+ * host, kept current with incremental zfs send and receive. Times are RFC 3339
+ * strings and sizes are bytes. A refusal answers {ok:false, code} with a code
+ * from lib/zfsCodes.ts, as everywhere else in the ZFS API.
+ */
+
+/** A ZFS server a replica can go to. */
+export interface ZFSReplicaServer {
+  id: string;
+  name: string;
+  host: string;
+  user: string;
+  port: number;
+  pool: string;
+  /** The dataset below which every source server gets a folder of its own. */
+  root: string;
+  enabled: boolean;
+  freeBytes: number;
+  sizeBytes: number;
+  /** The ZFS items that replicate here, by id. */
+  usedBy: string[];
+  /** The folder below root this instance's items land in. */
+  folder: string;
+}
+
+export interface ZFSReplicaServerInput {
+  name: string;
+  host: string;
+  user: string;
+  port: number;
+  pool: string;
+  root: string;
+}
+
+export type ZFSReplicaServerPatch = Partial<ZFSReplicaServerInput> & { enabled?: boolean };
+
+/** One pool a ZFS server reports. */
+export interface ZFSReplicaPool {
+  name: string;
+  sizeBytes: number;
+  freeBytes: number;
+}
+
+export interface ZFSReplicaTestResult extends OkEnvelope {
+  code: string;
+  pools: ZFSReplicaPool[];
+}
+
+/** Where a replica goes: a ZFS server BombVault sends to, or a paired
+ *  instance that receives into a pool of its own. */
+export interface ZFSReplicaTarget {
+  kind: "server" | "peer" | "none";
+  id: string;
+}
+
+export type ZFSReplicaKeepPreset = "short" | "balanced" | "long" | "own";
+
+/** How many snapshots stay: the latest ones, then one per day, week, month
+ *  and year. */
+export type ZFSReplicaKeepCounts = [latest: number, daily: number, weekly: number, monthly: number, yearly: number];
+
+export interface ZFSReplicaKeep {
+  preset: ZFSReplicaKeepPreset;
+  own: ZFSReplicaKeepCounts;
+}
+
+export type ZFSReplicaState = "never" | "running" | "ok" | "failed" | "waiting";
+
+/** A snapshot kept on the target. */
+export interface ZFSReplicaSnapshot {
+  name: string;
+  created: string;
+}
+
+/** One dataset or volume of the item and where its copy lives. */
+export interface ZFSReplicaMember {
+  dataset: string;
+  volume: boolean;
+  targetPath: string;
+  state: ZFSReplicaState;
+  code: string;
+  lastBytes: number;
+}
+
+/** Where a request to receive a replica stands on the receiving instance. */
+export type ZFSReceiveState = "asked" | "allowed" | "refused" | "revoked";
+
+/** What a source learned of its request: the slot's state, or "off" while the
+ *  receiving instance has its Receiver module switched off. */
+export type ZFSPeerState = ZFSReceiveState | "off";
+
+/** One ZFS item's replica. */
+export interface ZFSReplica {
+  target: ZFSReplicaTarget;
+  afterBackup: boolean;
+  cadence: string;
+  keep: ZFSReplicaKeep;
+  state: ZFSReplicaState;
+  code: string;
+  lastRun: string;
+  lastBytes: number;
+  lastSeconds: number;
+  /** Newest first. */
+  snapshots: ZFSReplicaSnapshot[];
+  members: ZFSReplicaMember[];
+  /** What the paired instance answered; empty for any other target. */
+  peerState: ZFSPeerState | "";
+}
+
+export interface ZFSReplicaPatch {
+  target?: ZFSReplicaTarget;
+  afterBackup?: boolean;
+  cadence?: string;
+  keep?: ZFSReplicaKeep;
+}
+
+/** GET /api/zfs/replica/servers. */
+export function listZFSReplicaServers(): Promise<ZFSReplicaServer[]> {
+  return fetchJSON("/api/zfs/replica/servers");
+}
+
+/** POST /api/zfs/replica/servers, answering with the stored server. */
+export function createZFSReplicaServer(
+  server: ZFSReplicaServerInput
+): Promise<ZFSCodedEnvelope & Partial<ZFSReplicaServer>> {
+  return fetchJSON("/api/zfs/replica/servers", {
+    method: "POST",
+    body: JSON.stringify(server),
+  });
+}
+
+/** PATCH /api/zfs/replica/servers/{id}. A field left out keeps its value. */
+export function patchZFSReplicaServer(id: string, patch: ZFSReplicaServerPatch): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/replica/servers/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** DELETE /api/zfs/replica/servers/{id}. It is refused with "in-use" while an
+ *  item replicates there, unless `detach` points those items at no target. */
+export function deleteZFSReplicaServer(id: string, detach = false): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/replica/servers/${encodeURIComponent(id)}${detach ? "?detach=1" : ""}`, {
+    method: "DELETE",
+  });
+}
+
+/** GET /api/zfs/replica/key, the public key a ZFS server has to accept. */
+export function getZFSReplicaKey(): Promise<{ publicKey: string }> {
+  return fetchJSON("/api/zfs/replica/key");
+}
+
+/** POST /api/zfs/replica/servers/test: connect to a server that is not stored
+ *  yet and list its pools. */
+export function testZFSReplicaConnection(host: string, user: string, port: number): Promise<ZFSReplicaTestResult> {
+  return fetchJSON("/api/zfs/replica/servers/test", {
+    method: "POST",
+    body: JSON.stringify({ host, user, port }),
+  });
+}
+
+/** POST /api/zfs/replica/servers/{id}/test, the same for a stored server. */
+export function testZFSReplicaServer(id: string): Promise<ZFSReplicaTestResult> {
+  return fetchJSON(`/api/zfs/replica/servers/${encodeURIComponent(id)}/test`, { method: "POST" });
+}
+
+/** POST /api/zfs/replica/servers/{id}/forget-host-key: drop the host key
+ *  pinned for a server, so the next connection pins the one it presents. */
+export function forgetZFSReplicaHostKey(id: string): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/replica/servers/${encodeURIComponent(id)}/forget-host-key`, { method: "POST" });
+}
+
+/** GET /api/zfs/datasets/{id}/replica. */
+export function getZFSReplica(id: string): Promise<ZFSReplica> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica`);
+}
+
+/** PATCH /api/zfs/datasets/{id}/replica. A field left out keeps its value. */
+export function patchZFSReplica(id: string, patch: ZFSReplicaPatch): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** POST /api/zfs/datasets/{id}/replica/run. Answers at once; the run reports
+ *  on the "zfs-replica:<id>" progress key. */
+export function runZFSReplica(id: string): Promise<ZFSCodedEnvelope & { runId?: string }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/run`, { method: "POST" });
+}
+
+/** POST /api/zfs/datasets/{id}/replica/restore: send a snapshot back into a
+ *  new dataset next to the item's root, never over it, reporting on the
+ *  "zfs-replica-restore:<id>" progress key. keyNeeded says the copy arrives
+ *  encrypted and stays unmounted until its key is loaded. */
+export function restoreZFSReplica(
+  id: string,
+  snapshot: string
+): Promise<ZFSCodedEnvelope & { runId?: string; dataset?: string; keyNeeded?: boolean }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/restore`, {
+    method: "POST",
+    body: JSON.stringify({ snapshot }),
+  });
+}
+
+/** A paired instance's request to send a replica here, and the slot it gets
+ *  once allowed. */
+export interface ZFSReceiveRequest {
+  id: string;
+  /** The sending instance's id in the pairing group. */
+  peer: string;
+  peerName: string;
+  /** The folder name below the root, fixed at the first transfer. */
+  sourceServer: string;
+  /** The sending instance's ZFS item, by its root dataset. */
+  item: string;
+  members: string[];
+  proposedKeep: ZFSReplicaKeep;
+  state: ZFSReceiveState;
+  pool: string;
+  root: string;
+  keep: ZFSReplicaKeep;
+  askedAt: string;
+  decidedAt: string;
+  lastReceived: string;
+  bytes: number;
+}
+
+/** An allow names the item and members exactly as the request it answers
+ *  showed them, and is refused with "request-changed" when the source has
+ *  asked for others since. */
+export type ZFSReceiveDecision =
+  | { decision: "allow"; pool: string; root: string; keep: ZFSReplicaKeep; item: string; members: string[] }
+  | { decision: "refuse" }
+  | { decision: "revoke" };
+
+/** GET /api/zfs/receive/requests. */
+export function listZFSReceiveRequests(): Promise<ZFSReceiveRequest[]> {
+  return fetchJSON("/api/zfs/receive/requests");
+}
+
+/** POST /api/zfs/receive/requests/{id}. */
+export function decideZFSReceiveRequest(id: string, decision: ZFSReceiveDecision): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/receive/requests/${encodeURIComponent(id)}`, {
+    method: "POST",
+    body: JSON.stringify(decision),
+  });
+}
+
+/** PATCH /api/zfs/receive/requests/{id}: what an allowed slot keeps. */
+export function patchZFSReceiveRequest(id: string, keep: ZFSReplicaKeep): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/receive/requests/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ keep }),
+  });
+}
+
+/** GET /api/zfs/replica/local-pools, the pools of this server. */
+export function listZFSLocalPools(): Promise<ZFSReplicaPool[]> {
+  return fetchJSON("/api/zfs/replica/local-pools");
 }
 
 // ---------------------------------------------------------------------------
@@ -5071,6 +5470,138 @@ export function memberRepos(id: string): Promise<OkEnvelope & { instanceName?: s
   return fetchJSON(`/api/group/members/${encodeURIComponent(id)}/repos`);
 }
 
+// Roles between paired instances: one asks another to be its Receiver or
+// Fetcher, and a person on the asked instance answers.
+
+/** The roles that go through a request. The ZFS server role has its own,
+ *  one per ZFS item. */
+export type RequestedRole = "receiver" | "fetcher";
+
+export type RoleRequestState = "asked" | "allowed" | "refused" | "revoked";
+
+/** The backup sections a role covers: what is sent to a Receiver, or what a
+ *  Fetcher may fetch. */
+export type RoleSection = "config" | "containers" | "files" | "flash" | "vms" | "zfs";
+
+/** Where a Receiver keeps the copies: its append-only rest-server or a
+ *  share. */
+export type RoleStore = "rest" | "share";
+
+export interface RoleRequest {
+  id: string;
+  state: RoleRequestState;
+  sections: RoleSection[];
+  /** Empty for a Fetcher, and for a Receiver carried over from a watched
+   *  repository at the upgrade. */
+  store: RoleStore | "";
+  askedAt: string;
+  /** Empty while the request waits. */
+  decidedAt: string;
+  /** Who settled it: a person on the asked instance ("person"), the other
+   *  instance ("member"), the upgrade that carried over an existing login or
+   *  pairing ("upgrade"), or nobody, for a member too old to answer
+   *  ("automatic"). */
+  decidedBy: "" | "person" | "member" | "upgrade" | "automatic";
+}
+
+/** One ZFS item's replica request. `id` is the item for a request this
+ *  instance sent and the receive request for one it got. Only a request this
+ *  instance sent can be "off". */
+export interface ZFSRoleItem {
+  id: string;
+  dataset: string;
+  state: ZFSPeerState;
+}
+
+/** The ZFS server role between two instances. Every item asks on its own;
+ *  `state` sums them up: waiting while any item waits, else allowed while
+ *  any is. */
+export interface ZFSRole {
+  state: ZFSPeerState;
+  items: ZFSRoleItem[];
+}
+
+/** The three roles in one direction. A role nobody asked for is null. */
+export interface RoleSide {
+  receiver: RoleRequest | null;
+  fetcher: RoleRequest | null;
+  zfs: ZFSRole | null;
+}
+
+export interface MemberRoles {
+  memberId: string;
+  name: string;
+  reachable: boolean;
+  /** False for a member from before role requests: asking it takes effect at
+   *  once, since nobody there can answer. */
+  answers: boolean;
+  /** What the member does for this instance. */
+  byMember: RoleSide;
+  /** What this instance does for the member. */
+  forMember: RoleSide;
+  /** How many of the member's requests wait for an answer here. */
+  asks: number;
+}
+
+export interface RoleHolder {
+  memberId: string;
+  name: string;
+}
+
+/** For whom this instance is Receiver, Fetcher and ZFS server. */
+export interface SelfRoles {
+  receiver: RoleHolder[];
+  fetcher: RoleHolder[];
+  zfs: RoleHolder[];
+}
+
+/** GET /api/group/roles - every member's roles in both directions. */
+export function listRoles(): Promise<OkEnvelope & { members?: MemberRoles[]; self?: SelfRoles }> {
+  return fetchJSON("/api/group/roles");
+}
+
+/** PUT /api/group/members/{id}/roles/{role} - ask a member for a role, or
+ *  change the sections of a request already sent. */
+export function askRole(
+  memberId: string,
+  role: RequestedRole,
+  ask: { sections: RoleSection[]; store?: RoleStore }
+): Promise<OkEnvelope & { request?: RoleRequest }> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/${role}`, {
+    method: "PUT",
+    body: JSON.stringify(ask),
+  });
+}
+
+/** DELETE /api/group/members/{id}/roles/{role} - take back a request this
+ *  instance sent. `told` is false when the member could not be reached; the
+ *  request is gone here either way. */
+export function withdrawRole(memberId: string, role: RequestedRole): Promise<OkEnvelope & { told?: boolean }> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/${role}`, { method: "DELETE" });
+}
+
+/** An allow names the sections exactly as the request it answers showed
+ *  them, and is refused with "request-changed" when the member has asked for
+ *  others since. Allowing a Receiver on an instance without a receiver is
+ *  refused with "no-receiver". */
+export type RoleDecision =
+  | { decision: "allow"; sections: RoleSection[] }
+  | { decision: "refuse" }
+  | { decision: "revoke" };
+
+/** POST /api/group/roles/requests/{id} - answer a member's request. `told`
+ *  is false when the member could not be reached; it learns the answer the
+ *  next time it asks. */
+export function decideRole(
+  id: string,
+  decision: RoleDecision
+): Promise<OkEnvelope & { request?: RoleRequest; told?: boolean }> {
+  return fetchJSON(`/api/group/roles/requests/${encodeURIComponent(id)}`, {
+    method: "POST",
+    body: JSON.stringify(decision),
+  });
+}
+
 // Fleet view API: the protection status of the other members of the group.
 
 export interface FleetPeer {
@@ -5700,6 +6231,29 @@ export interface Destination {
   domains: string[];
   /** Targets typed in by hand whose repositories lie under it. */
   adoptable?: AdoptableTarget[];
+  /** The keep-policy, compression, limits and switch its domain targets take
+   *  unless they hold their own. */
+  retention: RetentionKeep;
+  compression: Compression;
+  limitUpload: number;
+  limitDownload: number;
+  enabled: boolean;
+  /** Counts as a site of its own. */
+  offPremises: boolean;
+}
+
+/** What can change on a saved destination. A setting that is left out stays
+ *  as it is. */
+export interface DestinationEdit {
+  name: string;
+  storageClass: string;
+  immutable: boolean;
+  retention?: RetentionKeep;
+  compression?: Compression;
+  limitUpload?: number;
+  limitDownload?: number;
+  enabled?: boolean;
+  offPremises?: boolean;
 }
 
 export interface AdoptableTarget {
@@ -5719,10 +6273,12 @@ export function createDestination(d: DestinationDraft): Promise<OkEnvelope & { d
   return fetchJSON("/api/offsite/destinations", { method: "POST", body: JSON.stringify(d) });
 }
 
+/** PUT /api/offsite/destinations/{id}. warnings say what the change means for
+ *  the direct repositories of its domain targets. */
 export function updateDestination(
   id: string,
-  edit: { name: string; storageClass: string; immutable: boolean }
-): Promise<OkEnvelope & { destination?: Destination }> {
+  edit: DestinationEdit
+): Promise<OkEnvelope & { destination?: Destination; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(edit) });
 }
 
@@ -5782,6 +6338,105 @@ export function destinationFolder(d: Destination, domain: OffsiteDomain): string
   const base = d.repo.trim().replace(/\/+$/, "");
   const folder = domain === "config" ? "selfbackup" : domain;
   return base.endsWith(":") ? base + folder : `${base}/${folder}`;
+}
+
+/** Which kind of object a storage location is read from. It leads the id. */
+export type StorageLocationObject = "path" | "repo" | "destination" | "target";
+
+/** One domain's use of a storage location: the home its backups are written
+ *  to, or a copy of them. */
+export interface StorageLocationSection {
+  domain: OffsiteDomain;
+  use: "home" | "copy";
+  /** The off-site target behind a copy, and behind a home that is a target's
+   *  direct repository. */
+  targetId?: string;
+  /** The named repository behind a home, absent for the domain path. */
+  repoId?: string;
+  where: string;
+  /** The target's switch for a copy, the repository's for a home in one, the
+   *  domain's own for its path. */
+  enabled: boolean;
+  /** The copy the domain's off-site settings describe. */
+  primary?: boolean;
+  immutable: boolean;
+  retention: RetentionKeep;
+  compression: Compression;
+  limitUpload: number;
+  limitDownload: number;
+  /** The settings the section holds itself instead of taking the location's. */
+  own: FollowedSetting[];
+  /** `at` is when the last copy that succeeded began, 0 when none has. */
+  lastCopy?: { at: number; ok: boolean; failingSince?: number };
+  lastTamper?: { domain: string; at: number; protected: boolean; detail: string };
+}
+
+/** The room on the volume a location sits on. A figure nobody measured is
+ *  absent. */
+export interface StorageLocationCapacity {
+  at?: number;
+  freeBytes?: number;
+  usedBytes?: number;
+  totalBytes?: number;
+  /** What measured it: statfs, smb, nfs, rclone or sftp. */
+  source?: string;
+  /** The backend reports no room at all (S3, B2, REST). */
+  unsupported?: boolean;
+  /** What the repositories here held at their last size sample. */
+  storedBytes?: number;
+  growthBytesPerWeek?: number;
+  weeksToFull?: number;
+}
+
+/** One place backups are kept: the folder the domain repositories sit in, a
+ *  named repository, a destination with its per-domain targets, or an
+ *  off-site target set up for one domain. */
+export interface StorageLocation {
+  /** The kind of object and its id, such as `destination:4f2a`. */
+  id: string;
+  object: StorageLocationObject;
+  kind: "local" | "offsite";
+  /** The provider a destination was set up with, "" when typed in. */
+  provider: string;
+  mark?: string;
+  /** What restic talks to: local, or the scheme of the address. */
+  backend: string;
+  name: string;
+  /** Path or address, without credentials. */
+  where: string;
+  credsRef?: string;
+  enabled: boolean;
+  offPremises: boolean;
+  sections: StorageLocationSection[];
+  /** What the location carries itself; absent where it has no value. */
+  retention?: RetentionKeep;
+  compression?: Compression;
+  limitUpload?: number;
+  limitDownload?: number;
+  protection: {
+    immutable: boolean;
+    /** The tamper test can probe it, which it can for a rest-server only. */
+    testable: boolean;
+    /** The oldest of the sections' last tests, protected only when all were. */
+    lastTamper?: { at: number; protected: boolean };
+  };
+  capacity: StorageLocationCapacity;
+}
+
+/** GET /api/storage/locations: every storage location with the room last
+ *  measured for it. Remotes are not asked here. */
+export function listStorageLocations(): Promise<OkEnvelope & { locations?: StorageLocation[] }> {
+  return fetchJSON("/api/storage/locations");
+}
+
+/** GET /api/storage/locations/{id}. With refreshCapacity the location's remote
+ *  is asked for its room first; a probe that fails leaves the last reading in
+ *  place and comes back in capacityError. */
+export function getStorageLocation(
+  id: string,
+  refreshCapacity = false
+): Promise<OkEnvelope & { location?: StorageLocation; capacityError?: string }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}${refreshCapacity ? "?refresh=capacity" : ""}`);
 }
 
 export type AnomalySeverity = "critical" | "warning" | "info";
@@ -6087,6 +6742,48 @@ export function forgetAnomalyExpectation(
       `${encodeURIComponent(family)}?${query.toString()}`,
     { method: "DELETE" }
   );
+}
+
+/** One edge of a usual range, in the figures a finding raised on it carries.
+ *  `metric` is the finding that edge raises. */
+export type AnomalyLimit = {
+  metric: string;
+  expected: number;
+  threshold: number;
+  samples: number;
+};
+
+/** One measured quantity of a series over time, oldest first. */
+export type AnomalyQuantity = {
+  quantity: "sourceBytes" | "sourceFiles" | "newDataBytes" | "resticMs";
+  /** `at` is when the backup was taken, the time the backup list shows. */
+  points: { runId: string; at: number; value: number }[];
+  learning: boolean;
+  samples: number;
+  needed: number;
+  /** Null while the rules are learning, unless an open finding already holds
+   *  the quantity to the level it started from. A side is null where no rule
+   *  watches that direction. */
+  band: { low: AnomalyLimit | null; high: AnomalyLimit | null } | null;
+};
+
+/** The measured history of one series of an item: its own backups, its
+ *  database dumps, or one dataset of its ZFS tree, which `part` then names. A
+ *  ZFS item's own series has no quantities, because its datasets carry them. */
+export type AnomalySeries = {
+  scopeKind: "item" | "dump" | "zfsds";
+  part: string;
+  quantities: AnomalyQuantity[];
+  /** Runs that failed and so left no measurement. */
+  failed: { runId: string; at: number }[];
+};
+
+/** GET /api/anomalies/items/{targetId}/series. An item detection does not
+ *  know is refused with code "not-found". */
+export function getAnomalyItemSeries(
+  targetId: string
+): Promise<OkEnvelope & { series: AnomalySeries[] }> {
+  return fetchJSON(`/api/anomalies/items/${encodeURIComponent(targetId)}/series`);
 }
 
 /** One MCP key as the settings card sees it. The key itself is handed out once

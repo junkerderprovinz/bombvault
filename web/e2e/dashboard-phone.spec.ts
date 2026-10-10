@@ -156,13 +156,11 @@ const COVERAGE_REPORT = {
 async function stage(page: Page, width?: number): Promise<void> {
   await page.route("**/api/status", (route) => route.fulfill({ json: { ok: true, domains: DOMAINS } }));
   await page.route("**/api/coverage", (route) => route.fulfill({ json: { ok: true, coverage: COVERAGE_REPORT } }));
-  // Same seeding as the other phone specs: the stored locale and view are the
-  // look, and the server's display prefs must not overwrite them mid-boot.
-  // The ransomware card belongs to the advanced view, on the desktop as here.
+  // Same seeding as the other phone specs: the stored locale is the look, and
+  // the server's display prefs must not overwrite it mid-boot.
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => {
     window.localStorage.setItem("bv-lang", "de");
-    window.localStorage.setItem("bombvault.advanced", "1");
   });
   if (width) await page.setViewportSize({ width, height: 800 });
 }
@@ -298,9 +296,8 @@ test("the Backup Everything bar stands on the page colour, not on a card-coloure
   expect(colours.band).not.toBe(colours.card);
 });
 
-// The desktop grid in its default layout with the advanced view on. The
-// recovery-kit banner above the grid comes and goes with the kit, so the list
-// starts at the grid.
+// The desktop grid in its default layout. The recovery-kit banner above the
+// grid comes and goes with the kit, so the list starts at the grid.
 const DESKTOP_GRID = [
   "Wiederherstellungspunkt",
   "Nächstes Backup",

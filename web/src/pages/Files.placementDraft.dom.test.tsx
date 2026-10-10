@@ -23,7 +23,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
   browse: () => Promise.resolve({ ok: true, status: "ok", truncated: false, dirs: [] }),
 }));
 
-const { FileSetDialog } = await import("./Files");
+const { FileSetDialog } = await import("../components/files/FileSetDialog");
 
 const BASE = { name: "Photos", path: "photos", excludes: [], enabled: true };
 

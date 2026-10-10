@@ -9,7 +9,6 @@ import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { I18nProvider, en } from "../lib/i18n";
-import { AdvancedProvider } from "../lib/advanced";
 import type { Settings } from "../lib/api";
 
 vi.mock("../lib/api", async () => {
@@ -31,11 +30,9 @@ function railLabels(settings: Partial<Settings>): (string | null)[] {
   render(
     <MemoryRouter initialEntries={["/"]}>
       <I18nProvider>
-        <AdvancedProvider>
-          <AnomalyProvider>
-            <Sidebar settings={settings as Settings} authEnabled={false} />
-          </AnomalyProvider>
-        </AdvancedProvider>
+        <AnomalyProvider>
+          <Sidebar settings={settings as Settings} authEnabled={false} />
+        </AnomalyProvider>
       </I18nProvider>
     </MemoryRouter>
   );

@@ -13,8 +13,8 @@
 //
 // Routes are read off the rendered anchors' href (NavLink renders `to` as
 // href), so the comparison is structural and never re-types the labels. The
-// footer's sign-out and view toggle are buttons, not links, so every anchor in
-// the render is a nav destination and DOM order is the rail's order.
+// footer's sign-out is a button, not a link, so every anchor in the render is
+// a nav destination and DOM order is the rail's order.
 //
 // The comparison is a triple: route +
 // accessible name + glyph markup. The rail still renders its own hand-written
@@ -30,7 +30,6 @@ import { cleanup, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { I18nProvider, en } from "../lib/i18n";
-import { AdvancedProvider } from "../lib/advanced";
 import type { Settings } from "../lib/api";
 import { destinations } from "../lib/navModel";
 
@@ -88,9 +87,7 @@ function renderedNavEntries(settings: Settings | null): NavEntry[] {
   const { container } = render(
     <MemoryRouter initialEntries={["/"]}>
       <I18nProvider>
-        <AdvancedProvider>
-          <Sidebar settings={settings} authEnabled={false} />
-        </AdvancedProvider>
+        <Sidebar settings={settings} authEnabled={false} />
       </I18nProvider>
     </MemoryRouter>,
   );
@@ -117,7 +114,6 @@ function registryNavEntries(settings: Settings | null): NavEntry[] {
 
 beforeEach(() => {
   localStorage.removeItem("bv-lang");
-  localStorage.removeItem("bombvault.advanced");
 });
 
 afterEach(cleanup);

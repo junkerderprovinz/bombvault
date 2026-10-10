@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -196,7 +197,7 @@ func isLocalHost(host string) bool {
 // peerRoutes exist here, so nothing else on this instance is reachable from
 // the group however the main router grows.
 func (s *Service) servePeer(ctx context.Context, call relay.ProxyCall) (status int, body []byte) {
-	req, err := http.NewRequestWithContext(ctx, call.Method, call.Path, bytes.NewReader(call.Body))
+	req, err := http.NewRequestWithContext(context.WithValue(ctx, peerSenderKey{}, call.Sender), call.Method, call.Path, bytes.NewReader(call.Body))
 	if err != nil {
 		return http.StatusBadRequest, nil
 	}
@@ -223,8 +224,10 @@ type peerRoute struct {
 // peerRoutes is everything a group member can reach on this instance: the
 // Fleet scorecard, a storage offer, the receiver this instance runs for the
 // group and a login on it, what receiver and pull pairing need, starting a
-// check, what runs here and how it looks for the Android app, a session for a
-// phone of the group, and the bare hello a blind probe gets.
+// check, a request to replicate a ZFS item here, asking this instance to be
+// Receiver or Fetcher with the answer and the withdrawal that go with it, what
+// runs here and how it looks for the Android app, a session for a phone of the
+// group, and the bare hello a blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -236,6 +239,10 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/receiver", (*Service).handlePeerReceiver},
 		{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
 		{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
+		{"POST /api/group/peer/zfs-receive", (*Service).handlePeerZFSReceive},
+		{"POST /api/group/peer/roles/ask", (*Service).handlePeerRoleAsk},
+		{"POST /api/group/peer/roles/answer", (*Service).handlePeerRoleAnswer},
+		{"POST /api/group/peer/roles/withdraw", (*Service).handlePeerRoleWithdraw},
 		{"GET /api/group/peer/activity", (*Service).handlePeerActivity},
 		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},
@@ -388,8 +395,9 @@ func (s *Service) handlePeerHello(w http.ResponseWriter, _ *http.Request) {
 }
 
 // peerPairing is what a member hands out so another member can watch or pull
-// its repositories: where they are and the restic password that opens them.
-// The APP_KEY never leaves the instance.
+// its repositories: where they are and, once the request between the two is
+// allowed, the restic password that opens them. The APP_KEY never leaves the
+// instance.
 type peerPairing struct {
 	OK             bool           `json:"ok"`
 	InstanceName   string         `json:"instanceName"`
@@ -407,8 +415,23 @@ type pairableRepo struct {
 }
 
 // handlePeerPairing answers a member that pairs a receiver or a pull source
-// with this instance. GET /api/group/peer/pairing
-func (s *Service) handlePeerPairing(w http.ResponseWriter, _ *http.Request) {
+// with this instance. It names the repositories of the sections this instance
+// asked the member to keep or to fetch, and adds the restic password once the
+// member has allowed that request. GET /api/group/peer/pairing
+func (s *Service) handlePeerPairing(w http.ResponseWriter, r *http.Request) {
+	caller, ok := s.peerCaller(r)
+	var grant pairingGrant
+	if ok {
+		var err error
+		if grant, err = s.pairingGrantFor(caller.ID); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if len(grant.sections) == 0 {
+		writeJSON(w, http.StatusOK, failEnvelope(errPeerNotAsked))
+		return
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -419,13 +442,12 @@ func (s *Service) handlePeerPairing(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, peerPairing{
-		OK:             true,
-		InstanceName:   instanceDisplayName(settings),
-		ResticPassword: s.resticPassword(),
-		Repos:          repos,
-		DirectURL:      s.selfDirectURL(),
-	})
+	repos = slices.DeleteFunc(repos, func(p pairableRepo) bool { return !slices.Contains(grant.sections, p.Domain) })
+	ans := peerPairing{OK: true, InstanceName: instanceDisplayName(settings), Repos: repos, DirectURL: s.selfDirectURL()}
+	if grant.password {
+		ans.ResticPassword = s.resticPassword()
+	}
+	writeJSON(w, http.StatusOK, ans)
 }
 
 // pairableRepos lists the locations another instance could reach: every
@@ -885,17 +907,26 @@ func (h *Handler) handleMemberRepos(w http.ResponseWriter, r *http.Request) {
 }
 
 // pairedPassword asks a member for its restic password and returns it sealed
-// under this instance's key, ready to store.
-func (s *Service) pairedPassword(ctx context.Context, memberID string) ([]byte, error) {
+// under this instance's key, ready to store. role is what this instance takes
+// for the member, Receiver or Fetcher: the member gives its password only to
+// an instance it asked for one of them.
+func (s *Service) pairedPassword(ctx context.Context, memberID, role string) ([]byte, error) {
 	if strings.TrimSpace(memberID) == "" {
 		return nil, errors.New("choose the instance this belongs to")
 	}
+	s.retellRoleAnswer(ctx, memberID, role)
 	var p peerPairing
 	if err := s.callMember(ctx, memberID, http.MethodGet, "/api/group/peer/pairing", nil, &p); err != nil {
 		return nil, err
 	}
+	if p.ResticPassword == "" {
+		return nil, errPasswordHeld
+	}
 	if !resticPasswordRe.MatchString(p.ResticPassword) {
 		return nil, errors.New("the other instance sent no usable restic password")
+	}
+	if err := s.grantOldMember(memberID, role); err != nil {
+		return nil, err
 	}
 	return secret.Encrypt(s.cfg.AppKey, []byte(p.ResticPassword))
 }

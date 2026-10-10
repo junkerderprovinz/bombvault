@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./Layout";
 import { Dashboard } from "../pages/Dashboard";
 import { Anomalies } from "../pages/Anomalies";
+import { Backups } from "../pages/Backups";
 import { Containers } from "../pages/Containers";
 import { VMs } from "../pages/VMs";
 import { Flash } from "../pages/Flash";
@@ -9,10 +10,14 @@ import { Config } from "../pages/Config";
 import { Files } from "../pages/Files";
 import { ZFS } from "../pages/ZFS";
 import { Instances } from "../pages/Instances";
+import { ZFSServer } from "../pages/ZFSServer";
+import { StoragePage } from "../pages/Storage";
+import { StorageLocationPage } from "../pages/StorageLocation";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
+import { ENTRY_LIST_PATH } from "../lib/backupEntry";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -32,19 +37,22 @@ export function AppRouter() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/anomalies" element={<Anomalies />} />
+              <Route path={ENTRY_LIST_PATH} element={<Backups />} />
               <Route path="/containers" element={<Containers />} />
               <Route path="/vms" element={<VMs />} />
               <Route path="/flash" element={<Flash />} />
               <Route path="/config" element={<Config />} />
               <Route path="/files" element={<Files />} />
               <Route path="/zfs" element={<ZFS />} />
-              {/* Receiver, Pull and Fleet are tabs of Instances. Their own
-                  paths stay as redirects because bookmarks, release notes and
-                  support answers link to them. */}
               <Route path="/instances" element={<Instances />} />
+              <Route path="/instances/zfs/:id" element={<ZFSServer />} />
+              {/* Bookmarks, release notes and support answers link to
+                  these three paths. */}
               <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
-              <Route path="/pull" element={<Navigate to="/instances#pull" replace />} />
-              <Route path="/fleet" element={<Navigate to="/instances#fleet" replace />} />
+              <Route path="/pull" element={<Navigate to="/instances" replace />} />
+              <Route path="/fleet" element={<Navigate to="/instances" replace />} />
+              <Route path="/storage" element={<StoragePage />} />
+              <Route path="/storage/:id" element={<StorageLocationPage />} />
               <Route path="/recovery" element={<Recovery />} />
               {/* Schedules are a Settings page; /jobs stays for existing links. */}
               <Route path="/jobs" element={<Navigate to="/settings/schedules" replace />} />

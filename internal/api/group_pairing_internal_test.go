@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,6 +54,7 @@ const testPassword = "hunter2"
 type instance struct {
 	appKey  string
 	session string
+	db      *sql.DB
 	st      *store.Repo
 	svc     *Service
 	h       *Handler
@@ -95,7 +97,7 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 	t.Cleanup(svc.StopGroup)
 	h := NewHandler(cfg, st, nil, svc, nil, nil)
 	session := secret.NewSessionToken(appKey, hash, "", time.Hour)
-	return &instance{appKey: appKey, session: session, st: st, svc: svc, h: h, router: h.Router(), engine: eng}
+	return &instance{appKey: appKey, session: session, db: db, st: st, svc: svc, h: h, router: h.Router(), engine: eng}
 }
 
 // do sends one JSON request through the instance's full router, gates
@@ -206,6 +208,8 @@ func TestReceiverPairingDeliversTheResticPasswordAndNeverTheAppKey(t *testing.T)
 	receiver := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	sender := newInstance(t, "attic", strings.Repeat("b2", 32))
 	pairThroughRelay(t, receiver, sender)
+	runReceiver(t, receiver)
+	allowRole(t, sender, receiver, store.RoleReceiver, "containers")
 	want := restickey.Derive(sender.appKey)
 	receiver.engine.want = want
 
@@ -238,6 +242,7 @@ func TestPullPairingDeliversTheResticPassword(t *testing.T) {
 	puller := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	source := newInstance(t, "attic", strings.Repeat("b2", 32))
 	pairThroughRelay(t, puller, source)
+	allowRole(t, source, puller, store.RoleFetcher, "containers")
 	puller.engine.want = restickey.Derive(source.appKey)
 
 	code, out := puller.do(t, http.MethodPost, "/api/pull/sources", map[string]any{
@@ -262,7 +267,11 @@ func TestPairingAnswerOnTheWireCarriesNoAppKey(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	status, body := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/pairing"})
+	const fetcher = "0123456789abcdef0123456789abcdef"
+	if _, err := in.st.SaveSentRoleRequest(store.RoleRequest{MemberID: fetcher, Role: store.RoleFetcher, Sections: []string{"containers"}, State: store.RoleAllowed}); err != nil {
+		t.Fatal(err)
+	}
+	status, body := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Sender: fetcher})
 	if status != http.StatusOK {
 		t.Fatalf("pairing answered %d: %s", status, body)
 	}

@@ -20,7 +20,7 @@
 // within Containers.tsx they must never survive.
 //
 // Node environment, no DOM: this reads source text, it does not render.
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,6 +28,13 @@ import { describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const containers = readFileSync(join(HERE, "Containers.tsx"), "utf8");
+const EDITORS_DIR = join(HERE, "..", "components", "containers");
+const editors = readdirSync(EDITORS_DIR)
+  .filter((f) => f.endsWith(".tsx"))
+  .map((f) => readFileSync(join(EDITORS_DIR, f), "utf8"))
+  .join("\n");
+const foldersEditor = readFileSync(join(EDITORS_DIR, "FoldersEditor.tsx"), "utf8");
+const pageAndEditors = containers + "\n" + editors;
 
 describe("the page renders ONE layout, never CSS-hidden twins", () => {
   it("is reading the real Containers page (self-guard)", () => {
@@ -41,7 +48,7 @@ describe("the page renders ONE layout, never CSS-hidden twins", () => {
   it("keeps both display-hiding utilities out of the source", () => {
     for (const needle of ["max-md:hidden", "md:hidden"]) {
       expect(
-        containers.includes(needle),
+        pageAndEditors.includes(needle),
         `Containers.tsx contains "${needle}". The page must render ONE layout ` +
           "for the viewport: the phone face and the desktop face are ternary- " +
           "gated in JSX, so exactly one of them exists in the DOM at a time. A " +
@@ -107,7 +114,7 @@ describe("the mobile toolbar is the shared ListToolbar", () => {
 
   it("keeps every hand-rolled toolbar signature out of the page", () => {
     expect(
-      containers.includes("sticky top-0"),
+      pageAndEditors.includes("sticky top-0"),
       "Containers.tsx contains a hand-rolled sticky chrome signature (the " +
         "`sticky top-0` classes). Sticky toolbar chrome belongs to ListToolbar " +
         "alone; a page-level copy would double the sticky bars on the phone " +
@@ -115,7 +122,7 @@ describe("the mobile toolbar is the shared ListToolbar", () => {
         "the shared toolbar instead."
     ).toBe(false);
     expect(
-      containers.includes("Search containers"),
+      pageAndEditors.includes("Search containers"),
       "Containers.tsx hard-codes the search placeholder string instead of the " +
         "placeholder KEY. User-visible text goes through i18n (lint-enforced) " +
         "and the literal copy would bypass the shared-key tie to the desktop " +
@@ -137,7 +144,7 @@ describe("the card list paginates through the shared load-more primitive", () =>
 
   it("keeps every auto-load or hand-windowed mechanism out of the page", () => {
     expect(
-      containers.includes("IntersectionObserver"),
+      pageAndEditors.includes("IntersectionObserver"),
       "Containers.tsx references IntersectionObserver. The card list NEVER " +
         "auto-loads: scrolling to the bottom must never append rows, the " +
         "Load-more button is the only way the window grows (proven from the " +
@@ -145,14 +152,14 @@ describe("the card list paginates through the shared load-more primitive", () =>
         "that contract bans."
     ).toBe(false);
     expect(
-      containers.includes('addEventListener("scroll"'),
+      pageAndEditors.includes('addEventListener("scroll"'),
       "Containers.tsx attaches a scroll listener. Same ban as the observer " +
         "above: the list never auto-loads on scroll, and a page-level scroll " +
         "listener would also fight the shell's own scroll restoration (the " +
         "saved list scroll position that Back restores)."
     ).toBe(false);
     expect(
-      containers.includes("slice(0,"),
+      pageAndEditors.includes("slice(0,"),
       "Containers.tsx hand-windows the list with slice(0, n). Windowing is " +
         "useLoadMore's job, its showMore/hasMore pair is what keeps the Load " +
         "more button honest. A parallel slice drifts from the button's state " +
@@ -164,7 +171,7 @@ describe("the card list paginates through the shared load-more primitive", () =>
 describe("the folder tree's interaction mode follows the pointer axis", () => {
   it("derives the tree's interaction mode from the coarse-pointer query", () => {
     expect(
-      containers.includes("const coarsePointer = useIsCoarsePointer();"),
+      foldersEditor.includes("const coarsePointer = useIsCoarsePointer();"),
       "Containers.tsx no longer reads the pointer axis through " +
         "useIsCoarsePointer. The folder tree's touch mode must follow the " +
         "POINTER (a coarse pointer gets the 44px touch tree, a fine pointer " +
@@ -172,7 +179,7 @@ describe("the folder tree's interaction mode follows the pointer axis", () => {
         "has a mouse, a large-tablet user has a finger."
     ).toBe(true);
     expect(
-      containers.includes('interactionMode={coarsePointer ? "touch" : "pointer"}'),
+      foldersEditor.includes('interactionMode={coarsePointer ? "touch" : "pointer"}'),
       "Containers.tsx no longer wires the selection tree's interactionMode " +
         "from the coarse-pointer query. This wiring is the touch-mode " +
         "contract in one line; the geometry e2e (touch-tree.spec.ts) only " +
@@ -182,7 +189,7 @@ describe("the folder tree's interaction mode follows the pointer axis", () => {
 
   it("never derives the interaction mode from the width breakpoint", () => {
     expect(
-      /interactionMode=\{[^}]*isDesktop/.test(containers),
+      /interactionMode=\{[^}]*isDesktop/.test(pageAndEditors),
       "Containers.tsx derives the folder tree's interactionMode from " +
         "useIsDesktop. The mode must follow the pointer axis, never the " +
         "width: at a width on the wrong side of the breakpoint the two " +

@@ -4,7 +4,6 @@
 // it, and the link from the finding opens the last good snapshot ready to go.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
 import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
@@ -100,13 +99,11 @@ async function renderPanel(over: Partial<PanelProps> = {}) {
   await act(async () => {
     render(
       <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <AnomalyProvider>
-              <RestorePanel name="plex" t={t} open {...over} />
-            </AnomalyProvider>
-          </ToastProvider>
-        </AdvancedProvider>
+        <ToastProvider>
+          <AnomalyProvider>
+            <RestorePanel name="plex" t={t} open {...over} />
+          </AnomalyProvider>
+        </ToastProvider>
       </I18nProvider>
     );
   });

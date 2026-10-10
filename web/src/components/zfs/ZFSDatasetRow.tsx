@@ -1,33 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import {
-  backupZFSDataset,
-  deleteBackupsZFSDataset,
-  deleteZFSDataset,
-  deleteZFSSafetySnapshot,
-  listContainers,
-  listZFSSafetySnapshots,
-  patchZFSDataset,
-  previewZFSExcludes,
-  probeZFSDataset,
-  sweepZFSDataset,
-  zfsRunMembers,
-} from "../../lib/api";
-import type {
-  AnomalyItem,
-  AnomalySeriesInfo,
-  Container,
-  ItemChecks,
-  Run,
-  ZFSDatasetPatch,
-  ZFSDatasetView,
-  ZFSExcludePreviewRow,
-  ZFSHostDataset,
-  ZFSRunDetail,
-  ZFSSafetySnapshot,
-} from "../../lib/api";
+import { backupZFSDataset, deleteZFSDataset, patchZFSDataset, sweepZFSDataset, zfsRunMembers } from "../../lib/api";
+import type { AnomalyItem, ItemChecks, Run, ZFSDatasetView, ZFSHostDataset, ZFSRunDetail } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
-import { useAdvanced } from "../../lib/advanced";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
@@ -36,7 +11,6 @@ import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { relativeTime, formatTs } from "../../lib/reltime";
 import type { RestoreRequest } from "../../lib/restoreRequest";
 import { useConfirm } from "../../lib/useConfirm";
-import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useToast } from "../../lib/toast";
 import { RunReasonText } from "../../lib/runReason";
 import { ZFS_CODE_VARS, zfsCodeSentence, zfsFixKey, zfsMemberKey, zfsRunReasonCode } from "../../lib/zfsCodes";
@@ -48,19 +22,20 @@ import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
 import { ItemAnomalyBadge } from "../ItemAnomalyBadge";
 import { ItemChecksLine } from "../ItemChecksLine";
-import { ItemAnomalySettings } from "../ItemAnomalySettings";
 import { ProgressBar } from "../ProgressBar";
 import { RecentRunsList } from "../RecentRunsList";
-import { RepoPicker } from "../RepoPicker";
-import { SelectField } from "../SelectField";
 import { IconBackupNow, IconPencil, IconTrash } from "../Sidebar";
 import { ToggleRow } from "../../pages/settings/shared";
 import { ZFSMemberList, zfsMemberActionable } from "./ZFSMemberList";
+import { ReplicaPlaceRow } from "./replica/ReplicaPlaceRow";
+import { ReplicaPlanLine } from "./replica/ReplicaPlanLine";
+import { ZFSSitesLine } from "./ZFSSitesLine";
 import { ZFSRestorePanel } from "./ZFSRestorePanel";
+import { ZFSItemSettings } from "./ZFSItemSettings";
+import { ZFSSafetySection } from "./ZFSSafetySection";
+import { failText } from "./failText";
 
 type T = ReturnType<typeof useT>["t"];
-
-const DAY = 24 * 60 * 60;
 
 // Codes that mean the last look at this item found nothing usable, as opposed
 // to one dataset of the tree the reader could mount or unlock.
@@ -120,12 +95,6 @@ function DeleteSafetyToggle({ label, sink }: { label: string; sink: { current: b
       }}
     />
   );
-}
-
-/** The message of a request the server turned away, for example while a ZFS
- *  run holds the domain. */
-function failText(t: T, err: unknown): string {
-  return err instanceof Error ? err.message : t("settings.error");
 }
 
 /** Why a run failed or stopped, in the reader's language where the code allows
@@ -204,423 +173,6 @@ function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t:
           {detail.hookDetail}
         </pre>
       )}
-    </div>
-  );
-}
-
-function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView; t: T; onRefresh: () => void }) {
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  const [open, setOpen] = useState(false);
-  const [snapshots, setSnapshots] = useState<ZFSSafetySnapshot[]>([]);
-
-  const title = t("zfs.safety.title", item.safetyCount);
-
-  function load() {
-    listZFSSafetySnapshots(item.id)
-      .then((res) => setSnapshots(res.snapshots ?? []))
-      .catch(() => undefined);
-  }
-
-  function handleOpen() {
-    const next = !open;
-    setOpen(next);
-    if (next) load();
-  }
-
-  async function handleDelete(snap: ZFSSafetySnapshot) {
-    const question = t("zfs.safety.deleteConfirm")
-      .replace("{name}", snap.name)
-      .replace("{dataset}", snap.dataset);
-    if (!(await confirm(question, { confirmKey: "common.delete" }))) return;
-    try {
-      const res = await deleteZFSSafetySnapshot(item.id, snap.dataset, snap.name);
-      if (res.ok) {
-        load();
-        onRefresh();
-      } else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-      }
-    } catch (err) {
-      push(failText(t, err), "fail");
-    }
-  }
-
-  const old = item.safetyOldestAt > 0 && Date.now() / 1000 - item.safetyOldestAt > 30 * DAY;
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={handleOpen}
-          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-11"
-        >
-          <IconDisclosure open={open} />
-          {title}
-        </button>
-        <InfoBubble tip={t("zfs.safety.hint")} />
-      </div>
-      {old && <p className="text-xs text-statusWarn">{t("zfs.safety.old")}</p>}
-      {open && (
-        <ul aria-label={title} className="flex flex-col gap-1">
-          {snapshots.map((snap) => (
-            <li key={`${snap.dataset}@${snap.name}`} className="flex items-center gap-2 text-xs">
-              <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate max-md:whitespace-normal max-md:wrap-anywhere">
-                {t("zfs.safety.row")
-                  .replace("{dataset}", `${snap.dataset}@${snap.name}`)
-                  .replace("{age}", relativeTime(t, snap.createdAt))
-                  .replace("{size}", humanBytes(snap.usedBytes))}
-              </span>
-              <Button
-                label={t("common.delete")}
-                labelKey="common.delete"
-                glyph={<IconTrash />}
-                tone="accent"
-                variant="icon"
-                onClick={() => void handleDelete(snap)}
-                className="ms-auto shrink-0"
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-      {confirmDialog}
-    </div>
-  );
-}
-
-function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; t: T; onSaved: () => void }) {
-  const { push } = useToast();
-  const [text, setText] = useState(item.excludes.join("\n"));
-  const [rows, setRows] = useState<ZFSExcludePreviewRow[]>([]);
-  const [refusal, setRefusal] = useState("");
-  const { debouncedSave } = useDebouncedSave();
-
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
-  const linesKey = lines.join("\n");
-
-  useEffect(() => {
-    if (linesKey === "") {
-      setRows([]);
-      return;
-    }
-    let alive = true;
-    const id = setTimeout(() => {
-      previewZFSExcludes(item.id, linesKey.split("\n"))
-        .then((res) => {
-          if (alive) setRows(res.rows ?? []);
-        })
-        .catch(() => undefined);
-    }, 400);
-    return () => {
-      alive = false;
-      clearTimeout(id);
-    };
-  }, [item.id, linesKey]);
-
-  function handleChange(next: string) {
-    setText(next);
-    const list = next.split("\n").map((l) => l.trim()).filter(Boolean);
-    debouncedSave(() => {
-      void patchZFSDataset(item.id, { excludes: list }).then((res) => {
-        if (res.ok) {
-          setRefusal("");
-          onSaved();
-        } else if (res.code) {
-          setRefusal(zfsCodeSentence(t, res.code, { names: list }));
-        } else {
-          push(res.error ?? t("excludes.error"), "fail");
-        }
-      });
-    });
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-        {t("zfs.excludes")}
-        <InfoBubble tip={tLtr(t, "zfs.excludesHint")} />
-      </span>
-      <textarea
-        dir="ltr"
-        rows={4}
-        value={text}
-        onChange={(e) => handleChange(e.target.value)}
-        aria-label={t("zfs.excludes")}
-        className="rounded-control bg-carbon-surface2 p-2 font-mono text-xs text-carbon-text text-start"
-      />
-      {refusal && <p className="text-xs text-statusFail">{refusal}</p>}
-      {rows.map((row) => (
-        <p key={row.pattern} className="text-caption text-carbon-textMuted">
-          <span dir="ltr" className="font-mono text-start">{row.pattern}</span>
-          {": "}
-          {t("zfs.excludeMatches", row.matches)}
-          {row.sample.length > 0 && ` (${row.sample.join(", ")})`}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-function ZFSItemSettings({
-  item,
-  t,
-  onChanged,
-  anomaly,
-  anomalyEnabled,
-  series,
-}: {
-  item: ZFSDatasetView;
-  t: T;
-  onChanged: () => void;
-  anomaly?: AnomalyItem;
-  anomalyEnabled: boolean;
-  series: ReadonlyMap<string, AnomalySeriesInfo>;
-}) {
-  const { advanced } = useAdvanced();
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  const [excluded, setExcluded] = useState(new Set(item.excludedChildren));
-  const [busy, setBusy] = useState(false);
-  const [containers, setContainers] = useState<Container[]>([]);
-  const [stopped, setStopped] = useState(item.stopContainers);
-  const [probing, setProbing] = useState(false);
-  const [pre, setPre] = useState(item.preSnapshot);
-  const [post, setPost] = useState(item.postSnapshot);
-  const { debouncedSave } = useDebouncedSave();
-
-  useEffect(() => {
-    listContainers()
-      .then((res) => setContainers(res.ok ? (res.containers ?? []) : []))
-      .catch(() => undefined);
-  }, []);
-
-  async function save(patch: ZFSDatasetPatch): Promise<boolean> {
-    setBusy(true);
-    try {
-      const res = await patchZFSDataset(item.id, patch);
-      if (res.ok) {
-        onChanged();
-        return true;
-      }
-      push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
-      return false;
-    } catch (err) {
-      push(failText(t, err), "fail");
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function toggleChild(dataset: string, include: boolean) {
-    const next = new Set(excluded);
-    if (include) next.delete(dataset);
-    else next.add(dataset);
-    setExcluded(next);
-    if (!(await save({ excludedChildren: [...next] }))) setExcluded(excluded);
-  }
-
-  async function dropStoredExclusion(dataset: string) {
-    const next = new Set(excluded);
-    next.delete(dataset);
-    setExcluded(next);
-    await save({ excludedChildren: [...next] });
-  }
-
-  async function setStopList(list: string[]) {
-    setStopped(list);
-    if (!(await save({ stopContainers: list }))) setStopped(stopped);
-  }
-
-  function saveHooks(nextPre: string, nextPost: string) {
-    debouncedSave(() => {
-      void save({ hookContainer: item.hookContainer, preSnapshot: nextPre, postSnapshot: nextPost });
-    });
-  }
-
-  async function handleProbe() {
-    setProbing(true);
-    try {
-      const res = await probeZFSDataset(item.id);
-      if (!res.ok) push(res.error ?? t("settings.error"), "fail");
-      onChanged();
-    } catch (err) {
-      push(failText(t, err), "fail");
-    } finally {
-      setProbing(false);
-    }
-  }
-
-  async function handleDeleteBackups() {
-    if (!(await confirm(t("zfs.deleteBackupsConfirm"), { confirmKey: "snapshots.deleteAll" }))) return;
-    try {
-      const res = await deleteBackupsZFSDataset(item.id);
-      if (res.ok) onChanged();
-      else push(res.error ?? t("common.deleteBackupsFailed"), "fail");
-    } catch (err) {
-      push(failText(t, err), "fail");
-    }
-  }
-
-  const known = new Set(item.members.map((m) => m.dataset));
-  const gone = [...excluded].filter((d) => !known.has(d));
-  const candidates = containers.filter((c) => !c.self && !stopped.includes(c.name));
-  const overlap = stopped.filter((n) => containers.some((c) => c.name === n && c.includeInSchedule));
-
-  return (
-    <div className="mt-1 flex flex-col gap-4 rounded-card bg-carbon-background p-3">
-      <div className="flex flex-col gap-1">
-        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          {t("zfs.children")}
-          <InfoBubble tip={t("zfs.childrenHint")} />
-        </span>
-        <div role="group" aria-label={t("zfs.children")}>
-          <ZFSMemberList
-            members={item.members}
-            root={item.dataset}
-            t={t}
-            excluded={excluded}
-            busy={busy}
-            onToggle={(dataset, include) => void toggleChild(dataset, include)}
-            series={series}
-            targetId={item.id}
-          />
-        </div>
-        {gone.map((dataset) => (
-          <p key={dataset} className="flex items-center gap-2 text-xs text-carbon-textMuted max-md:flex-wrap">
-            <span dir="ltr" className="font-mono text-start max-md:wrap-anywhere">{dataset}</span>
-            {t("zfs.excludedGone")}
-            <Button
-              label={t("zfs.removeMissing")}
-              labelKey="zfs.removeMissing"
-              tone="subtle"
-              onClick={() => void dropStoredExclusion(dataset)}
-            />
-          </p>
-        ))}
-      </div>
-
-      <RepoPicker
-        value={item.repo}
-        onChange={(next) => void save({ repo: next })}
-        locked={item.lastBackup > 0}
-        disabled={busy}
-      />
-
-      <div className="flex flex-col gap-1">
-        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          {t("zfs.stopContainers")}
-          <InfoBubble tip={t("zfs.stopContainersHint")} />
-        </span>
-        {stopped.length === 0 && (
-          <p className="text-xs text-carbon-textMuted">{t("zfs.stopContainersNone")}</p>
-        )}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {stopped.map((name) => (
-            <Badge key={name} tone="neutral" wrap>
-              {name}
-              <Button
-                label={t("offsite.targets.remove")}
-                labelKey="offsite.targets.remove"
-                tone="subtle"
-                variant="chip"
-                onClick={() => void setStopList(stopped.filter((n) => n !== name))}
-              />
-            </Badge>
-          ))}
-        </div>
-        <SelectField
-          value=""
-          label={t("zfs.stopContainersPlaceholder")}
-          onChange={(name) => void setStopList([...stopped, name])}
-          disabled={busy || candidates.length === 0}
-          className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text"
-          options={[
-            { value: "", label: t("zfs.stopContainersPlaceholder") },
-            ...candidates.map((c) => ({ value: c.name, label: c.name })),
-          ]}
-        />
-        {overlap.length > 0 && (
-          <p className="text-xs text-statusWarn">
-            {t("zfs.overlapContainers").replace("{names}", overlap.join(", "))}
-          </p>
-        )}
-      </div>
-
-      <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-
-      {advanced && (
-        <>
-          <ZFSExcludesEditor item={item} t={t} onSaved={onChanged} />
-
-          <div className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("zfs.hookContainer")}
-              <InfoBubble tip={t("zfs.hooksHint")} />
-            </span>
-            <SelectField
-              value={item.hookContainer}
-              label={t("zfs.hookContainer")}
-              onChange={(name) => void save({ hookContainer: name, preSnapshot: pre, postSnapshot: post })}
-              disabled={busy}
-              className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text"
-              options={[
-                { value: "", label: t("zfs.hookContainerNone") },
-                ...containers.filter((c) => !c.self).map((c) => ({ value: c.name, label: c.name })),
-              ]}
-            />
-            <label className="flex flex-col gap-1 text-sm text-carbon-text">
-              {t("zfs.preSnapshot")}
-              <input
-                dir="ltr"
-                value={pre}
-                onChange={(e) => {
-                  setPre(e.target.value);
-                  saveHooks(e.target.value, post);
-                }}
-                disabled={item.hookContainer === ""}
-                className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm text-carbon-text">
-              {t("zfs.postSnapshot")}
-              <input
-                dir="ltr"
-                value={post}
-                onChange={(e) => {
-                  setPost(e.target.value);
-                  saveHooks(pre, e.target.value);
-                }}
-                disabled={item.hookContainer === ""}
-                className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
-              />
-            </label>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              label={t("zfs.probe")}
-              labelKey="zfs.probe"
-              tone="neutral"
-              onClick={() => void handleProbe()}
-              disabled={probing}
-              busy={probing}
-              title={probing ? t("zfs.probing") : undefined}
-            />
-            <Button
-              label={t("snapshots.deleteAll")}
-              labelKey="snapshots.deleteAll"
-              tone="subtle"
-              onClick={() => void handleDeleteBackups()}
-              className="ms-auto"
-            />
-          </div>
-        </>
-      )}
-      {confirmDialog}
     </div>
   );
 }
@@ -852,6 +404,9 @@ export function ZFSDatasetRow({
       <p className="text-xs text-carbon-textMuted">
         {t("zfs.repoEffective").replace("{repo}", item.repoEffective)}
       </p>
+      <ReplicaPlanLine itemId={item.id} />
+      <ZFSSitesLine item={item} />
+      <ReplicaPlaceRow itemId={item.id} name={item.dataset} />
 
       {item.stopContainers.length > 0 && (
         <p className="text-xs text-carbon-textMuted">

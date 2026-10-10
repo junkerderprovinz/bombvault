@@ -118,14 +118,12 @@ export default [
             "Flash.tsx": "PAGE_SHELL_RESPONSIVE",
             "Config.tsx": "PAGE_SHELL_RESPONSIVE",
             "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Backups.tsx": "PAGE_SHELL_RESPONSIVE",
             "ZFS.tsx": "PAGE_SHELL_RESPONSIVE",
             "Instances.tsx": "PAGE_SHELL_RESPONSIVE",
             "Settings.tsx": "PAGE_SHELL_RESPONSIVE",
-            // The Instances lanes, each rendered as a tab panel through
-            // PAGE_SHELL_TABBED_RESPONSIVE.
-            "Receiver.tsx": "PAGE_SHELL_RESPONSIVE",
-            "Fleet.tsx": "PAGE_SHELL_RESPONSIVE",
-            "Pull.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Storage.tsx": "PAGE_SHELL_RESPONSIVE",
+            "StorageLocation.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,

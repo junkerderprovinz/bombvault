@@ -20,7 +20,7 @@ const digestWindow = 7 * 24 * time.Hour
 const digestMaxFailures = 5
 
 // digestKindOrder keeps the count lines in the same order every week.
-var digestKindOrder = []string{"backup", "dbdump", "dbdumpsave", "dbimport", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
+var digestKindOrder = []string{"backup", "dbdump", "dbdumpsave", "dbimport", "restore", "update", "prune", "verify", "offsite", "replica", "drill", "drdrill", "tamper", "export"}
 
 // digestKindCount is one kind's finished-run tally inside the digest window.
 type digestKindCount struct {
@@ -50,6 +50,8 @@ type digestStats struct {
 	BackupBytes int64
 	// Offsite carries one currency line per domain with an off-site repo.
 	Offsite []digestOffsiteLine
+	// Replicas carries one rendered currency line per replicating ZFS item.
+	Replicas []string
 	// Failures are up to digestMaxFailures pre-rendered "kind name: reason"
 	// lines (newest first); MoreFailures counts the collapsed remainder.
 	Failures     []string
@@ -178,6 +180,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		}
 		stats.Offsite = append(stats.Offsite, line)
 	}
+	stats.Replicas = s.zfsReplicaDigestLines(stats.Now, settings)
 
 	counts, _, err := s.store.OpenAnomalyCounts()
 	if err != nil {
@@ -250,6 +253,13 @@ func composeDigest(stats digestStats) string {
 			default:
 				fmt.Fprintf(&b, "- %s: current (last copy %s)\n", line.Domain, digestAge(stats.Now, line.LastOK))
 			}
+		}
+	}
+
+	if len(stats.Replicas) > 0 {
+		b.WriteString("ZFS replica currency:\n")
+		for _, line := range stats.Replicas {
+			b.WriteString(line + "\n")
 		}
 	}
 

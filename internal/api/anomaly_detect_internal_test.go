@@ -38,7 +38,8 @@ func newDataInput(rows []store.SeriesRun, evaluateFrom int64) itemInput {
 }
 
 func runNewData(in itemInput) ([]finding, int) {
-	return detectNewData(in, paramsFor(in.Sens))
+	found, base := detectNewData(in, paramsFor(in.Sens))
+	return found, base.Samples
 }
 
 func onlyFinding(t *testing.T, found []finding) finding {
@@ -647,7 +648,7 @@ func TestSourceCollapseFromSecondBackup(t *testing.T) {
 	history := byteRuns(1, anomalyNow-anomalyDay, flatSize(40<<30))
 	emptied := mkRun("emptied", anomalyNow, "success", 0, withSource(30<<20, 1000))
 
-	found, absent, learning := detectSource(sourceInput(after(emptied, history)), paramsFor(sensBalanced))
+	found, absent, bases := detectSource(sourceInput(after(emptied, history)), paramsFor(sensBalanced))
 	got := findingFor(t, found, metricSourceBytesShrink)
 	if got.Severity != "critical" || got.RunID != "emptied" {
 		t.Fatalf("finding = %+v", got)
@@ -658,7 +659,7 @@ func TestSourceCollapseFromSecondBackup(t *testing.T) {
 	if got.Observed != float64(30<<20) || got.Expected != float64(40<<30) {
 		t.Fatalf("finding = %+v", got)
 	}
-	if learning != 1 {
+	if learning := bases[0].Samples; learning != 1 {
 		t.Fatalf("learning = %d, want 1", learning)
 	}
 	absenceFor(t, absent, metricSourceFilesShrink)

@@ -12,7 +12,7 @@
 import { render, screen, cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { CoverageCard } from "./Dashboard";
+import { CoverageCard } from "./overview/CoverageCard";
 import { en } from "../lib/i18n";
 import type { CoverageReport } from "../lib/api";
 

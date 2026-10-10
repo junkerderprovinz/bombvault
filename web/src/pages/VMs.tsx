@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { listVMs, backupVMNow, restoreVM, setVMInclude, setVMIncludeAll, setVMMethod, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, getSettings } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, setVMInclude, setVMIncludeAll, deleteBackupsVM, forgetVM, discoverVMs, getVmBackupOrder, setVmBackupOrder, getSettings } from "../lib/api";
 import type { AnomalyItem, ItemChecks, VM, VmOrder, PlacementView, Run } from "../lib/api";
 import { PageTitle } from "../components/PageTitle";
 import { FilterPopover } from "../components/FilterPopover";
@@ -11,14 +11,10 @@ import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useReorder } from "../lib/dragLift";
-import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
-import { RestoreAction } from "../components/restore/RestoreAction";
-import { RecentRunsList } from "../components/RecentRunsList";
-import { SizeBreakdown } from "../components/SizeBreakdown";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconVM, IconRestore, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
+import { IconVM, IconBackupNow } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
@@ -28,7 +24,6 @@ import { FormerNames } from "../components/FormerNames";
 import { vmTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
-import { groupStage } from "../lib/controls";
 // The Containers page's schedule switch, saving through setVMInclude here.
 import { IncludeToggle } from "../components/IncludeToggle";
 import { PauseButton, PausedBadge } from "../components/SchedulePause";
@@ -42,7 +37,6 @@ import { useToast } from "../lib/toast";
 import { PlacementRow } from "../components/placement/PlacementRow";
 import { subscribePlacement } from "../lib/placementEvents";
 import { subscribeRepos } from "../lib/useNamedRepos";
-import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
 // The phone face's building blocks: the breakpoint hook, the ONE pagination
 // primitive, the shared mobile list chrome and the card block's surfaces.
 import { useIsDesktop } from "../lib/useMediaQuery";
@@ -56,8 +50,12 @@ import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
-import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
+import { VMMethodSelect } from "../components/vms/VMMethodSelect";
+import { VMRestorePanel } from "../components/vms/VMRestorePanel";
+import { VMBulkBar } from "../components/vms/VMBulkBar";
+import { VMExportButton } from "../components/vms/VMExportButton";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -159,133 +157,6 @@ function loadBackupFilterKey(): BackupFilterKey {
   );
 }
 
-// VMMethodSelect picks the per-VM backup method (graceful shutdown vs live
-// snapshot) via PATCH /api/vms/{name}.
-function VMMethodSelect({
-  name,
-  initial,
-  t,
-}: {
-  name: string;
-  initial: string;
-  t: ReturnType<typeof useT>["t"];
-}) {
-  const [method, setMethod] = useState(initial || "graceful");
-  const [busy, setBusy] = useState(false);
-  const { push } = useToast();
-
-  // Rows are keyed by libvirt name and do not remount, so re-seed when a list
-  // reload hands down a new value.
-  useEffect(() => setMethod(initial || "graceful"), [initial]);
-
-  async function handleChange(next: string) {
-    // Reverted on failure, so a rejected switch to "live" does not leave the
-    // UI promising no downtime while the next backup shuts the VM down.
-    const prev = method;
-    setMethod(next);
-    setBusy(true);
-    try {
-      const res = await setVMMethod(name, next);
-      if (!res.ok) {
-        setMethod(prev);
-        push(res.error ?? t("vm.method.saveFailed"), "fail");
-      }
-    } catch (err) {
-      setMethod(prev);
-      push(err instanceof Error ? err.message : t("vm.method.saveFailed"), "fail");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Both options stay visible with the active one filled, rather than one
-  // badge that cycles: this decides whether the VM is shut down for its
-  // backup, so the alternative should be in view. The tip names the method.
-  return (
-    <Selector
-      items={[
-        {
-          id: "graceful",
-          label: t("vm.method.graceful"),
-          icon: <IconPower />,
-          tip: t("vm.method.graceful"),
-        },
-        {
-          id: "live",
-          label: t("vm.method.live"),
-          icon: <IconLive />,
-          tip: t("vm.method.live"),
-        },
-      ]}
-      label={t("vm.method")}
-      size="sm"
-      select="one"
-      equalWidth
-      inline
-      disabled={busy}
-      active={method}
-      onChange={(id) => void handleChange(id)}
-    />
-  );
-}
-
-// VMExportButton keeps its result inline as well as toasting a failure, like
-// Containers.tsx's ExportButton: the destination path is something to copy
-// down, not a passing notice.
-function VMExportButton({ name, t }: { name: string; t: T }) {
-  const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
-  const { push } = useToast();
-  const [shake, setShake] = useState(0);
-  async function run() {
-    setState("pending");
-    setMsg(null);
-    try {
-      const r = await exportVM(name);
-      if (r.ok) {
-        setState("done");
-        setMsg(r.path ?? null);
-      } else {
-        setState("error");
-        const message = r.error ?? t("settings.error");
-        setMsg(message);
-        push(message, "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      setState("error");
-      const message = err instanceof Error ? err.message : t("settings.error");
-      setMsg(message);
-      push(message, "fail");
-      setShake((n) => n + 1);
-    }
-  }
-  return (
-    <div className="flex flex-col items-end gap-1">
-      {/* No hueIndex: the VMRow card already carries this VM's hue. The
-          column aligns to the end so the text hangs beneath the button at
-          the card edge. */}
-      <Button
-        key={shake}
-        label={t("export.button")}
-        labelKey="export.button"
-        glyph={<IconDownload />}
-        tone="accent"
-        // Shares its width stage with the backup button beside it.
-        stage={groupStage([t("containers.backupNow"), t("export.button")])}
-        onClick={() => void run()}
-        disabled={state === "pending"}
-        busy={state === "pending"}
-        className={shake ? "glim-shake" : ""}
-      />
-      {state === "done" && (
-        <span className="text-xs text-statusOk break-all text-end max-w-[18rem]">{t("export.exportedTo")} {msg}</span>
-      )}
-      {state === "error" && <span className="text-xs text-statusFail break-all text-end max-w-[18rem]">{msg}</span>}
-    </div>
-  );
-}
-
 // VMBackupButton is the VM counterpart of components/BackupButton.tsx. Results
 // arrive as toasts (a failure also shakes the button), and the reason it is
 // blocked by another run goes in the title. The toasts are raised here rather
@@ -362,158 +233,6 @@ function VMBackupButton({
       title={stateTip}
       className={shake ? "glim-shake" : ""}
     />
-  );
-}
-
-function VMSnapshotActions({
-  pick,
-  vmName,
-  vmDisplayName,
-  preselected,
-  t,
-}: {
-  pick: TimelinePick;
-  /** Raw libvirt name: drives the progress key and the restore action. */
-  vmName: string;
-  vmDisplayName?: string;
-  /** A finding's restore link asked for this backup, so its restore starts open. */
-  preselected: boolean;
-  t: T;
-}) {
-  const running = anyActive(useProgress());
-  const [showRestore, setShowRestore] = useState(preselected);
-  return (
-    <>
-      {pick.mark.tags.length > 0 && (
-        <span className="text-carbon-textMuted text-xs hidden sm:block">{pick.mark.tags.join(", ")}</span>
-      )}
-      <Button
-        label={t("restore.open")}
-        labelKey="restore.open"
-        glyph={<IconRestore />}
-        tone={pick.lead ? "accent" : "neutral"}
-        onClick={() => setShowRestore((p) => !p)}
-        className="shrink-0"
-      />
-      {showRestore && (
-        <div className="basis-full ps-24">
-          <RestoreAction
-            domain="vm"
-            name={vmName}
-            displayName={vmDisplayName}
-            snapshotId={pick.snapshotId}
-            source={pick.source}
-            otherActive={running}
-            successMessage={t("restore.completeVM")}
-            onMissing={pick.onMissing}
-            t={t}
-          />
-        </div>
-      )}
-    </>
-  );
-}
-
-function VMRestorePanel({
-  name,
-  displayName,
-  t,
-  open,
-  preselect = "",
-  preselectAt = 0,
-}: {
-  /** Raw libvirt name. Every call in this panel uses it, never displayName. */
-  name: string;
-  /** Display name shown in the restore cancel-confirm text; falls back to
-   *  name. */
-  displayName?: string;
-  t: T;
-  /** Owned by VMRow's `openSections`, as components/RestorePanel.tsx takes
-   *  `open` from ContainerRow, so both cards share one disclosure. */
-  open: boolean;
-  /** The snapshot a finding's restore link asked for. */
-  preselect?: string;
-  /** When that snapshot was taken, in Unix seconds. */
-  preselectAt?: number;
-}) {
-  const [reloadTick, setReloadTick] = useState(0);
-  const [deletingAll, setDeletingAll] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
-  const { flagged } = useOpenAnomalies();
-
-  // "Delete all" empties the local place, which is what the question it asks
-  // says; a copy at a target goes through its own row in the timeline. It
-  // fails as a toast, not inline. Bumping reloadTick remounts the timeline
-  // below under a fresh key, so it reads the place again instead of keeping
-  // the rows the delete just emptied.
-  async function handleDeleteAll() {
-    // TODO: name the stake in the confirmation ("N snapshots, X GB").
-    if (!(await confirm(t("snapshots.deleteAllConfirm"), { confirmKey: "snapshots.deleteAll" }))) return;
-    setDeletingAll(true);
-    deleteBackupsVM(name, "local")
-      .then((res) => {
-        if (!res.ok) {
-          push(res.error ?? t("common.deleteBackupsFailed"), "fail");
-          setShakeDeleteAll((n) => n + 1);
-        }
-      })
-      .catch(() => {
-        push(t("common.deleteBackupsFailed"), "fail");
-        setShakeDeleteAll((n) => n + 1);
-      })
-      .finally(() => {
-        setDeletingAll(false);
-        setReloadTick((n) => n + 1);
-      });
-  }
-
-  // Closed renders nothing at all: the trigger lives in VMRow, as it does for
-  // components/RestorePanel.tsx.
-  if (!open) return null;
-
-  return (
-    <>
-      <div className="rounded-card bg-carbon-background px-3 py-1">
-        <RecentRunsList name={name} domain="vm" t={t} />
-        <SizeBreakdown domain="vms" item={name} t={t} />
-        <Timeline
-          key={reloadTick}
-          domain="vms"
-          itemKey={name}
-          itemName={displayName ?? name}
-          open={open}
-          flagged={flagged}
-          request={preselect ? { snapshot: preselect, at: preselectAt } : undefined}
-          header={(rows) =>
-            rows.some((r) => r.places.some((m) => m.place === "local")) && (
-              <Button
-                key={shakeDeleteAll}
-                label={t("snapshots.deleteAll")}
-                labelKey="snapshots.deleteAll"
-                tone="neutral"
-                onClick={() => void handleDeleteAll()}
-                disabled={deletingAll}
-                busy={deletingAll}
-                title={deletingAll ? t("snapshots.deletingAll") : undefined}
-                className={`self-end my-1${shakeDeleteAll ? " glim-shake" : ""}`}
-              />
-            )
-          }
-          renderActions={(pick) => (
-            <VMSnapshotActions
-              pick={pick}
-              vmName={name}
-              vmDisplayName={displayName}
-              preselected={pick.row.key === preselect}
-              t={t}
-            />
-          )}
-        />
-      </div>
-      {confirmDialog}
-    </>
   );
 }
 
@@ -639,7 +358,6 @@ export function VMRow({
             source-aware delete for the off-site copy. */}
         {installed ? (
           <div className="ms-auto flex items-center gap-4 shrink-0">
-            {/* Never behind Advanced: it decides whether the VM is shut down. */}
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t("vm.method")}
@@ -654,8 +372,7 @@ export function VMRow({
                 onSaved={onIncludeSaved}
               />
               <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
-              {/* Plain export is an advanced-only extra. */}
-              <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
+              <VMExportButton name={vm.libvirtName} t={t} />
             </div>
           </div>
         ) : (
@@ -741,9 +458,7 @@ export function VMRow({
           </span>
         </div>
 
-        <Advanced>
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </Advanced>
+        <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
         <VMRestorePanel
           name={vm.libvirtName}
@@ -850,63 +565,6 @@ function VMSelectAll({ t, checked, onChange }: { t: T; checked: boolean; onChang
       />
       {t("containers.selectAll")}
     </label>
-  );
-}
-
-// VMBulkBar acts on the ticked VMs and is the same bar at both widths.
-function VMBulkBar({
-  t,
-  count,
-  busy,
-  running,
-  onBackup,
-  onRestore,
-  onClear,
-}: {
-  t: T;
-  count: number;
-  busy: boolean;
-  running: { active: boolean; phase?: string };
-  onBackup: () => void;
-  onRestore: () => void;
-  onClear: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
-      <span className="text-xs text-carbon-textSub">
-        {count} {t("containers.selectedCount")}
-      </span>
-      <Button
-        label={t("vms.backupSelected")}
-        labelKey="vms.backupSelected"
-        hueIndex={BULK_HUE.backup}
-        tone="accent"
-        onClick={onBackup}
-        disabled={busy || running.active}
-      />
-      {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-      <Advanced>
-        <Button
-          label={t("vms.restoreSelected")}
-          labelKey="vms.restoreSelected"
-          hueIndex={BULK_HUE.restore}
-          tone="accent"
-          onClick={onRestore}
-          disabled={busy || running.active}
-        />
-      </Advanced>
-      <Button
-        label={t("containers.clearSelection")}
-        labelKey="containers.clearSelection"
-        tone="neutral"
-        onClick={onClear}
-        disabled={busy}
-      />
-      {busy && <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>}
-      {!busy && running.active && (
-        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
-      )}
-    </div>
   );
 }
 
@@ -1209,11 +867,6 @@ export function VMs() {
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
-  // Read directly rather than relying on <Advanced>: the order panel's
-  // hueIndex={nextHue()} is evaluated when the element is built, even if
-  // <Advanced> then renders nothing, so nextHue() may only run when the panel
-  // will render.
-  const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   // Any backup, restore or replication in flight disables the bulk start
@@ -1488,25 +1141,12 @@ export function VMs() {
         </div>
       )}
 
-      {/* VM backup-order panel (#119, VMs), advanced and desktop-only: a
-          drag-reorder editor has no phone face (mobile edits each VM's
-          schedule on the card's own sheet instead), and the phone never
-          mounts it, exactly one face per width.
-          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
-          <Advanced>: a JSX child's own props (this `hueIndex` expression
-          included) evaluate eagerly as part of building the <Advanced>
-          element itself, before <Advanced> ever runs its own `advanced &&
-          when` check, so an unconditional `nextHue()` here would burn a
-          slot every render regardless of whether the panel actually paints,
-          landing the not-installed section's own notch below one index late
-          whenever Advanced mode is off. Gating on the same `advanced` flag
-          read directly above keeps the counter honest: only increment for a
-          notch that will actually render, exactly like Dashboard.tsx's own
-          advancedOnly blocks pre-filtering before ever calling nextHue(). */}
+      {/* VM backup-order panel (#119, VMs), desktop-only: a drag-reorder
+          editor has no phone face (mobile edits each VM's schedule on the
+          card's own sheet instead), and the phone never mounts it, exactly
+          one face per width. */}
       {isDesktop && !loading && !error && (
-        <Advanced>
-          <VMBackupOrderPanel vms={vms} t={t} hueIndex={advanced ? nextHue() : undefined} />
-        </Advanced>
+        <VMBackupOrderPanel vms={vms} t={t} hueIndex={nextHue()} />
       )}
 
       {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all.
@@ -1759,7 +1399,7 @@ function MobileVMsBlock({
   /** The include-all switch's refresh: the page reloads its list. */
   onIncludeAllChanged: () => void;
   onIncludeSaved: (libvirtName: string, include: boolean) => void;
-  /** The full list payload, for the advanced backup order panel. */
+  /** The full list payload, for the backup order panel. */
   vms: VM[];
   anomalyOf: (libvirtName: string) => AnomalyItem | undefined;
   anomalyEnabled: boolean;
@@ -1911,9 +1551,7 @@ function MobileVMsBlock({
           )}
 
           {!loading && !error && !listChromeHidden && (
-            <Advanced>
-              <VMBackupOrderPanel vms={vms} t={t} hueIndex={0} />
-            </Advanced>
+            <VMBackupOrderPanel vms={vms} t={t} hueIndex={0} />
           )}
 
           {!loading && !listChromeHidden && selected.size > 0 && (
@@ -2198,9 +1836,7 @@ function MobileVMDetail({
                 if (!sheetDismissed.current) setSheetOpen(true);
               }}
             />
-            <Advanced>
-              <VMExportButton name={vm.libvirtName} t={t} />
-            </Advanced>
+            <VMExportButton name={vm.libvirtName} t={t} />
           </div>
         </div>
       )}
@@ -2238,9 +1874,7 @@ function MobileVMDetail({
             {`${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`}
           </span>
         </div>
-        <Advanced>
-          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
-        </Advanced>
+        <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
         <VMRestorePanel
           name={vm.libvirtName}

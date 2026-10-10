@@ -26,7 +26,6 @@ vi.mock("../../lib/toast", () => ({
 }));
 
 import { IntegrityCard } from "./IntegrityCard";
-import { AdvancedProvider } from "../../lib/advanced";
 import { en } from "../../lib/i18n";
 
 // The card follows live progress, and jsdom has no EventSource.
@@ -47,11 +46,7 @@ function pruneBubbles(): Element[] {
 }
 
 function renderCard() {
-  return render(
-    <AdvancedProvider>
-      <IntegrityCard t={t} settings={settings} setSettings={() => {}} save={async () => true} />
-    </AdvancedProvider>
-  );
+  return render(<IntegrityCard t={t} settings={settings} setSettings={() => {}} save={async () => true} />);
 }
 
 // Presses a button the way a mouse does: the pointer first, which is what the
@@ -65,8 +60,6 @@ async function pointerPress(el: HTMLElement) {
 }
 
 beforeEach(() => {
-  // Prune is advanced-only, so the card shows it only with the mode on.
-  localStorage.setItem("bombvault.advanced", "1");
   pruneDomain.mockReset();
 });
 afterEach(() => {

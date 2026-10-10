@@ -24,6 +24,10 @@
 // routed page outside that scope would go unchecked, so
 // src/lib/uiConventions.test.ts resolves every route to its file and fails
 // when this rule would not see it.
+//
+// The settings pages in src/pages/settings/pages/ render inside Settings.tsx's
+// shell and have no root of their own to check, so only the second check
+// applies to them.
 import { baseUtility, escapeHatch, getAttr, hasException } from "./helpers.js";
 
 const RULE_ID = "page-uses-page-shell";
@@ -84,7 +88,8 @@ export default {
     const filename = (context.filename ?? context.getFilename() ?? "").replace(/\\/g, "/");
     const base = filename.slice(filename.lastIndexOf("/") + 1);
 
-    if (!/\/src\/pages\/[^/]+\.tsx$/.test(filename)) return {};
+    const settingsPage = /\/src\/pages\/settings\/pages\/[^/]+\.tsx$/.test(filename);
+    if (!settingsPage && !/\/src\/pages\/[^/]+\.tsx$/.test(filename)) return {};
     if (/\.test\.tsx$/.test(base)) return {};
 
     const exempt = Object.prototype.hasOwnProperty.call(exceptions, base);
@@ -220,6 +225,7 @@ export default {
       },
 
       "Program:exit"() {
+        if (settingsPage) return;
         if (candidates.length === 0) return; // no component named for the file
         for (const fn of candidates) {
           const returns = ownReturns(fn);

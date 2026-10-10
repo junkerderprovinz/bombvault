@@ -27,14 +27,14 @@ afterEach(() => {
 describe("collect", () => {
   it("takes the look and leaves the workspace alone", () => {
     localStorage.setItem("bv-theme", "light");
-    localStorage.setItem("bombvault.advanced", "1");
+    localStorage.setItem("bombvault.navPins", "cloud");
     // Sort orders and the password toggle belong to a page, not to the look.
     localStorage.setItem("bv-containers-sort", "name");
     localStorage.setItem("bv-password", "shown");
 
     const got = collect();
     expect(got["bv-theme"]).toBe("light");
-    expect(got["bombvault.advanced"]).toBe("1");
+    expect(got["bombvault.navPins"]).toBe("cloud");
     expect(got["bv-containers-sort"]).toBeUndefined();
     expect(got["bv-password"]).toBeUndefined();
   });
@@ -135,6 +135,21 @@ describe("sync", () => {
     expect(localStorage.getItem("bv-theme")).toBe("light");
     expect(localStorage.getItem("evil-key")).toBeNull();
   });
+
+  it("neither adopts nor sends back a view mode an older version stored", async () => {
+    localStorage.setItem("bv-theme", "dark");
+    const fetchMock = vi.fn().mockResolvedValue(
+      antwort({ ok: true, stored: true, prefs: { "bv-theme": "light", "bombvault.advanced": "1" } })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await sync();
+    save();
+
+    expect(localStorage.getItem("bombvault.advanced")).toBeNull();
+    const put = fetchMock.mock.calls.find((c) => c[1]?.method === "PUT");
+    expect(JSON.parse(put![1].body as string)).toEqual({ "bv-theme": "light" });
+  });
 });
 
 describe("save", () => {
@@ -154,6 +169,17 @@ describe("save", () => {
       "bv-theme": "light",
       "bv-motion": "subtle",
     });
+  });
+
+  it("leaves out a view mode this browser still holds from an older version", () => {
+    localStorage.setItem("bv-theme", "light");
+    localStorage.setItem("bombvault.advanced", "1");
+    const fetchMock = vi.fn().mockResolvedValue(antwort({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    save();
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({ "bv-theme": "light" });
   });
 
   it("does not throw when the server is unreachable", () => {

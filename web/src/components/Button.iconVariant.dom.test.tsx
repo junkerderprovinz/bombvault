@@ -57,3 +57,19 @@ it("leaves every other button alone", () => {
   render(<Button label="Back up" labelKey={null} glyph={<svg />} onClick={() => {}} />);
   expect(classes()).not.toContain("glim-btn-icon");
 });
+
+it("shows the glyph alone in every mode when asked to, and keeps its words as its name", () => {
+  for (const mode of ["text", "textGlyph", "glyph", "reactive"] as const) {
+    setLabelMode("buttons", mode);
+    render(<Button label="Add" labelKey={null} variant="icon" glyphOnly glyph={<svg />} onClick={() => {}} />);
+    expect(classes()).toContain("glim-btn-icon");
+    expect(screen.getByRole("button", { name: "Add" }).querySelector(".sr-only")?.textContent).toBe("Add");
+    cleanup();
+  }
+});
+
+it("keeps its words when it has no glyph to show instead", () => {
+  setLabelMode("buttons", "textGlyph");
+  render(<Button label="Add" labelKey={null} glyphOnly onClick={() => {}} />);
+  expect(screen.getByRole("button").querySelector(".glim-btn-label")?.textContent).toBe("Add");
+});

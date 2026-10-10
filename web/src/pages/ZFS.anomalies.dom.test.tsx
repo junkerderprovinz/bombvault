@@ -6,7 +6,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
@@ -84,6 +83,7 @@ function zfsItem(): ZFSDatasetView {
     lastCheckAt: 1_700_000_000, leftoverCount: 0, safetyCount: 0, safetyOldestAt: 0,
     members: [member(ROOT, ""), member(CHILD, "plex")],
     effectiveSchedule: { kind: "domain", spec: "0 3 * * *", alsoSpec: "" },
+    sites: 1, rule321: "one-copy",
   };
 }
 
@@ -126,15 +126,13 @@ async function renderPage(search = "") {
   await act(async () => {
     render(
       <I18nProvider>
-        <AdvancedProvider>
-          <ToastProvider>
-            <MemoryRouter>
-              <AnomalyProvider>
-                <ZFS />
-              </AnomalyProvider>
-            </MemoryRouter>
-          </ToastProvider>
-        </AdvancedProvider>
+        <ToastProvider>
+          <MemoryRouter>
+            <AnomalyProvider>
+              <ZFS />
+            </AnomalyProvider>
+          </MemoryRouter>
+        </ToastProvider>
       </I18nProvider>,
     );
   });

@@ -1,12 +1,12 @@
-// The ZFS page at phone width, with items, the host listing, restore points
-// and a running backup staged at the route layer (the harness has no pools).
-// On the phones: the 24px card rhythm, nothing past the edge and no text cut
-// off with every section of every item open, the add dialog and the delete
-// sheet inside the viewport, each item's actions on their own row below its
-// name, and disclosures large enough to tap. On the desktop: the 40px rhythm,
-// a header inside the window and on one line at 1280px, the actions beside
-// the name and the one-line rows the phone lets wrap. German, because its
-// labels run longest.
+// The ZFS page at phone width, with items, the host listing, restore points,
+// a replica and a running backup staged at the route layer (the harness has
+// no pools). On the phones: the 24px card rhythm, nothing past the edge and
+// no text cut off with every section of every item open, the add dialog and
+// the delete sheet inside the viewport, each item's actions on their own row
+// below its name, and disclosures large enough to tap. On the desktop: the
+// 40px rhythm, a header inside the window and on one line at 1280px, the
+// actions beside the name and the one-line rows the phone lets wrap. German,
+// because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -56,6 +56,8 @@ const item = (id: string, dataset: string, overrides: Record<string, unknown>) =
   safetyOldestAt: 0,
   members: [member(dataset, "", "backed-up")],
   effectiveSchedule: { kind: "domain", spec: "daily 03:30", alsoSpec: "" },
+  sites: 1,
+  rule321: "one-copy",
   ...overrides,
 });
 
@@ -70,6 +72,8 @@ const DATASETS = [
     excludedChildren: [`${NEXTCLOUD}/alte-kalender-und-kontakte-sicherung`],
     restartPending: ["nextcloud-aio-database"],
     lastBackup: NOW - 3600,
+    sites: 2,
+    rule321: "met",
     lastCheckCode: "leftover-snapshots",
     leftoverCount: 3,
     safetyCount: 2,
@@ -168,6 +172,57 @@ const RESTORE_POINTS = [
     })),
   },
 ];
+
+const REPLICA_SERVER = {
+  id: "nas",
+  name: "Backup-NAS im Keller",
+  host: "backup-nas.fritz.box",
+  user: "root",
+  port: 22,
+  pool: "backup",
+  root: "backup/bombvault-replica",
+  enabled: true,
+  freeBytes: 3.1 * 1024 ** 4,
+  sizeBytes: 8 * 1024 ** 4,
+  usedBy: [DATASETS[0].id],
+  folder: "tower",
+};
+
+const NO_REPLICA = {
+  target: { kind: "none", id: "" },
+  afterBackup: true,
+  cadence: "",
+  keep: { preset: "balanced", own: [0, 7, 4, 6, 0] },
+  state: "never",
+  code: "",
+  lastRun: "",
+  lastBytes: 0,
+  lastSeconds: 0,
+  snapshots: [],
+  members: [],
+  peerState: "",
+};
+
+const NEXTCLOUD_REPLICA = {
+  ...NO_REPLICA,
+  target: { kind: "server", id: REPLICA_SERVER.id },
+  state: "ok",
+  lastRun: new Date((NOW - 3500) * 1000).toISOString(),
+  lastBytes: 3.2e8,
+  lastSeconds: 74,
+  snapshots: [
+    { name: "bombvault-replica-20260927140600", created: new Date((NOW - 3500) * 1000).toISOString() },
+    { name: "bombvault-replica-20260926140600", created: new Date((NOW - DAY - 3500) * 1000).toISOString() },
+  ],
+  members: DATASETS[0].members.map((m) => ({
+    dataset: m.dataset,
+    volume: false,
+    targetPath: `${REPLICA_SERVER.root}/${REPLICA_SERVER.folder}/${m.dataset}`,
+    state: m.outcome === "backed-up" ? "ok" : "waiting",
+    code: "",
+    lastBytes: m.outcome === "backed-up" ? 6.4e7 : 0,
+  })),
+};
 
 const host = (dataset: string, overrides: Record<string, unknown> = {}) => ({
   dataset,
@@ -293,6 +348,11 @@ async function stage(page: Page, opts: Stage = {}): Promise<void> {
       },
     }),
   );
+  await page.route("**/api/zfs/replica/servers", (route) => route.fulfill({ json: [REPLICA_SERVER] }));
+  await page.route("**/api/zfs/datasets/*/replica", (route) => {
+    const replicating = route.request().url().includes(`/datasets/${DATASETS[0].id}/`);
+    return route.fulfill({ json: replicating ? NEXTCLOUD_REPLICA : NO_REPLICA });
+  });
   await page.route("**/api/runs", (route) => route.fulfill({ json: { ok: true, runs: RUNS } }));
   await page.route("**/api/anomalies/items", (route) => route.fulfill({ json: { ok: true, items: ANOMALY_ITEMS } }));
   if (opts.runningBackup) {
@@ -309,8 +369,6 @@ async function bootGerman(page: Page, width: number, opts: Stage = {}): Promise<
   await stage(page, opts);
   await page.addInitScript(() => {
     window.localStorage.setItem("bv-lang", "de");
-    // Advanced mode puts every control of the page on screen.
-    window.localStorage.setItem("bombvault.advanced", "1");
   });
   await page.setViewportSize({ width, height: 800 });
   await page.goto("/zfs");

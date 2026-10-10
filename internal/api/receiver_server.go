@@ -552,10 +552,19 @@ func (s *Service) reloadReceiver(ctx context.Context, rs store.ReceiverServer) {
 
 // receiverLoginFor returns the login of the group member memberID, creating it
 // on the first request. The login is tied to the member's id, so a member that
-// is renamed keeps it; name only labels it on the Receiver tab.
+// is renamed keeps it; name only labels it on the Receiver tab. Only a member
+// allowed as a sender gets one, and the check runs under the lock a revoke
+// takes, so a login cannot appear after its role was taken away.
 func (s *Service) receiverLoginFor(ctx context.Context, rs store.ReceiverServer, memberID, name string) (user, password string, err error) {
 	s.receiverMu.Lock()
 	defer s.receiverMu.Unlock()
+	role, ok, err := s.store.FindRoleRequest(store.RoleRequestIn, memberID, store.RoleReceiver)
+	if err != nil {
+		return "", "", err
+	}
+	if !ok || role.State != store.RoleAllowed {
+		return "", "", errPeerNotAllowed
+	}
 	l, ok, err := s.store.GetReceiverLogin(memberID)
 	if err != nil {
 		return "", "", err
@@ -652,8 +661,8 @@ type peerReceiverAnswer struct {
 }
 
 // handlePeerReceiver tells a member about the receiver this instance runs for
-// the group, and hands it a login of its own when it asks for one. A receiver
-// whose container is gone is not offered.
+// the group, and hands it a login of its own when it asks for one and is
+// allowed as a sender. A receiver whose container is gone is not offered.
 // POST /api/group/peer/receiver
 func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 	var in peerReceiverRequest
@@ -692,7 +701,15 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 	}
 	offer := &peerReceiver{InstanceName: instanceDisplayName(settings), Host: rs.Host, Port: rs.Port}
 	if in.Login {
-		offer.User, offer.Password, err = s.receiverLoginFor(r.Context(), rs, in.InstanceID, in.Name)
+		caller, ok := s.peerCaller(r)
+		if !ok || caller.ID != in.InstanceID {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the asking instance is not the one the group names for this call"})
+			return
+		}
+		offer.User, offer.Password, err = s.receiverLoginFor(r.Context(), rs, caller.ID, in.Name)
+		if errors.Is(err, errPeerNotAllowed) {
+			s.noteOldReceiverAsk(caller, in.Name)
+		}
 		if err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
@@ -793,8 +810,9 @@ type groupReceiverLogin struct {
 }
 
 // GroupReceiverLogin fetches this instance's own login on a member's
-// receiver, which the member creates the first time it is asked. Its URL ends
-// in the login, the one place rest-server lets that login write.
+// receiver, which the member creates the first time it is asked after it
+// allowed this instance as a sender. Its URL ends in the login, the one place
+// rest-server lets that login write.
 func (s *Service) GroupReceiverLogin(ctx context.Context, memberID string) (groupReceiverLogin, error) {
 	var member *group.Member
 	for _, m := range s.pairing().Members() {
@@ -817,6 +835,9 @@ func (s *Service) GroupReceiverLogin(ctx context.Context, memberID string) (grou
 	}
 	if groupReceiverFor(*member, *r).NeedsAddress {
 		return groupReceiverLogin{}, errReceiverNeedsAddress
+	}
+	if err := s.ensureReceiverRole(ctx, *member); err != nil {
+		return groupReceiverLogin{}, err
 	}
 	r, err = s.askReceiver(ctx, memberID, true)
 	if err != nil {
@@ -890,7 +911,7 @@ func (h *Handler) handleForgetReceiver(w http.ResponseWriter, _ *http.Request) {
 // handleRevokeReceiverLogin takes a group member's login off the receiver.
 // DELETE /api/receiver/server/logins/{id}
 func (h *Handler) handleRevokeReceiverLogin(w http.ResponseWriter, r *http.Request) {
-	if err := h.svc.RevokeReceiverLogin(r.Context(), r.PathValue("id")); err != nil {
+	if err := h.svc.revokeReceiverOf(r.Context(), r.PathValue("id")); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

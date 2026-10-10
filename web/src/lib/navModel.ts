@@ -112,7 +112,7 @@ export function destinations(settings: Settings | null): NavDestination[] {
     { to: "/files", labelKey: "nav.files", icon: IconFiles, bar: true, enabled: settings?.filesEnabled ?? false },
     { to: "/zfs", labelKey: "nav.zfs", icon: IconZFS, bar: false, enabled: settings?.zfsEnabled ?? false },
     { to: "/config", labelKey: "nav.config", icon: IconConfig, bar: false, enabled: settings?.configEnabled ?? false },
-    // Always visible: disaster recovery is a core, non-expert flow. It sits
+    // Always visible: disaster recovery is a core flow. It sits
     // below the backup types because it restores them.
     { to: "/recovery", labelKey: "nav.recovery", icon: IconRecovery, bar: true, enabled: true },
     // Receiver, Fleet and Pull share one row. The Instances page shows only
@@ -140,10 +140,8 @@ export function barDestinations(settings: Settings | null): NavDestination[] {
 /**
  * The More sheet's destination list: the registry filtered to enabled
  * non-bar entries; the desktop Sidebar's order. Same derivation shape as
- * barDestinations, same structural order-parity guarantee. With Recovery on
- * the bar this list can be empty (a fresh DB has every gate off): the More
- * sheet still never reads as empty, because the Simple/Advanced view toggle
- * (and, with a password set, sign-out) render below the rows; which is also
+ * barDestinations, same structural order-parity guarantee. Settings is always
+ * in this list, so the More sheet has a row even with every gate off, which is
  * why the bar's More trigger renders unconditionally rather than gating on
  * this list's length.
  */

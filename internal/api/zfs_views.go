@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -47,6 +48,10 @@ type ZFSDatasetView struct {
 	SafetyOldestAt    int64                      `json:"safetyOldestAt"`
 	Members           []ZFSMemberView            `json:"members"`
 	EffectiveSchedule schedule.EffectiveSchedule `json:"effectiveSchedule"`
+	// Sites and Rule321 are the 3-2-1 verdict the placement line gives the
+	// other domains, with a current replica as a copy off the premises.
+	Sites   int    `json:"sites"`
+	Rule321 string `json:"rule321"`
 }
 
 // ListZFSDatasetViews serves the page from the store alone. It asks the host
@@ -60,6 +65,7 @@ func (s *Service) ListZFSDatasetViews(_ context.Context) ([]ZFSDatasetView, erro
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
+	now := time.Now().Unix()
 	views := make([]ZFSDatasetView, 0, len(items))
 	for _, d := range items {
 		v := ZFSDatasetView{
@@ -96,6 +102,7 @@ func (s *Service) ListZFSDatasetViews(_ context.Context) ([]ZFSDatasetView, erro
 		if run, rErr := s.store.LastSuccessfulBackup(d.ID); rErr == nil && run != nil && run.FinishedAt != nil {
 			v.LastBackup = *run.FinishedAt
 		}
+		v.Sites, v.Rule321 = s.zfsItemSites(now, d, settings, v.LastBackup)
 		members, mErr := s.store.ListZFSMembers(d.ID)
 		if mErr != nil {
 			return nil, mErr

@@ -27,7 +27,6 @@ vi.mock("../../lib/toast", () => ({
 }));
 
 import { IntegrityCard } from "./IntegrityCard";
-import { AdvancedProvider } from "../../lib/advanced";
 import { en } from "../../lib/i18n";
 
 // The card follows live progress, and jsdom has no EventSource.
@@ -43,11 +42,7 @@ const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unkno
 const settings = { drDrillTarget: "", drDrillTargetVm: "" } as never;
 
 async function prune() {
-  render(
-    <AdvancedProvider>
-      <IntegrityCard t={t} settings={settings} setSettings={() => {}} save={async () => true} />
-    </AdvancedProvider>
-  );
+  render(<IntegrityCard t={t} settings={settings} setSettings={() => {}} save={async () => true} />);
   const button = (await screen.findAllByRole("button", { name: /^prune$/i }))[0];
   await act(async () => {
     fireEvent.click(button);
@@ -60,7 +55,6 @@ async function prune() {
 }
 
 beforeEach(() => {
-  localStorage.setItem("bombvault.advanced", "1");
   pruneDomain.mockReset();
   push.mockReset();
 });

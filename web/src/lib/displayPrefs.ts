@@ -21,19 +21,19 @@ const KEYS = [
   "bv-labels-tabs",
   "bv-labels-bottombar",
   "bv-lang",
-  "bombvault.advanced",
-  // Whether a Fleet peer card shows its scorecard. Unlike a filter, losing it on
-  // a new browser is as annoying as losing the theme.
-  "bombvault.fleetDetailsOpen",
   // The order of the Settings rail, which a reader arranges once for good.
   "bombvault.settingsOrder",
+  // Which Settings pages also sit in the sidebar.
+  "bombvault.navPins",
+  // Whether keeping fewer backups asks first. Someone who answered "don't ask
+  // again" should not be asked again on the next browser.
+  "bombvault.askKeepLess",
 ] as const;
 
 /** Fired on `window` once this browser has adopted the server's look.
- *  main.tsx re-applies the document-element axes, I18nProvider re-reads the
- *  language and AdvancedProvider the advanced view, which covers every key in
- *  KEYS. An event rather than a reload: a reload needs a loop guard, and a
- *  session-scoped guard also blocks the reload a restored tab needs. */
+ *  main.tsx re-applies the document-element axes and I18nProvider re-reads
+ *  the language. An event rather than a reload: a reload needs a loop guard,
+ *  and a session-scoped guard also blocks the reload a restored tab needs. */
 export const ADOPTED_EVENT = "bv-display-prefs-adopted";
 
 export type DisplayPrefs = Record<string, string>;

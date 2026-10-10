@@ -106,7 +106,7 @@ func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, exist
 	case memberID == "" && isCreate:
 		return store.PullSource{}, "choose the instance whose backups this box pulls"
 	case memberID != "":
-		enc, err := h.svc.pairedPassword(ctx, memberID)
+		enc, err := h.svc.pairedPassword(ctx, memberID, store.RoleFetcher)
 		if err != nil {
 			return store.PullSource{}, scrubError(err)
 		}

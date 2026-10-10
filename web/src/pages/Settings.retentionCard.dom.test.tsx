@@ -4,7 +4,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
@@ -80,11 +79,9 @@ async function renderRetention() {
         path: "/settings/:page",
         element: (
           <I18nProvider>
-            <AdvancedProvider>
-              <ToastProvider>
-                <SettingsPage />
-              </ToastProvider>
-            </AdvancedProvider>
+            <ToastProvider>
+              <SettingsPage />
+            </ToastProvider>
           </I18nProvider>
         ),
       },
@@ -107,7 +104,6 @@ const OFFSITE = en["settings.retentionOffsiteTitle"];
 const PREVIEW = en["restore.preview"];
 
 beforeEach(() => {
-  localStorage.setItem("bombvault.advanced", "1");
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
@@ -182,13 +178,6 @@ describe("the Retention page", () => {
     });
     await waitFor(() => expect(previews).toHaveLength(2));
     expect(previews).toEqual(expect.arrayContaining([["containers", undefined], ["containers", "offsite"]]));
-  });
-
-  it("leaves the Preview card out of the simple view", async () => {
-    localStorage.removeItem("bombvault.advanced");
-    await renderRetention();
-    expect(card(PREVIEW)).toBeNull();
-    expect(screen.queryByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") })).toBeNull();
   });
 
   it("links the additional off-site targets to the Off-site page", async () => {

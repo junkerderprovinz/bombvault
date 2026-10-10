@@ -4,7 +4,6 @@
 // reported: one sentence per coverage, never two that contradict each other.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
 import type { Container } from "../lib/api";
 
@@ -61,9 +60,7 @@ function makeContainer(over: Partial<Container> = {}): Container {
 function renderRow(over: Partial<Container> = {}) {
   return render(
     <I18nProvider>
-      <AdvancedProvider>
-        <DatabaseDumpRow container={makeContainer(over)} t={t} />
-      </AdvancedProvider>
+      <DatabaseDumpRow container={makeContainer(over)} t={t} />
     </I18nProvider>
   );
 }
@@ -226,11 +223,7 @@ describe("DatabaseDumpRow", () => {
     await waitFor(() => expect(setDbDumpEngine).toHaveBeenCalledWith("immich_postgres", ""));
   });
 
-  it("keeps the engine picker for the advanced view", async () => {
-    renderRow({ dbTier: "lookalike", dbEngine: "", dbSuggestedEngine: "mysql", dbDumpEngine: "mysql" });
-    expect(screen.queryByRole("combobox", { name: en["dbdump.engineLabel"] })).toBeNull();
-    cleanup();
-    localStorage.setItem("bombvault.advanced", "1");
+  it("offers the engine picker on a lookalike whose dump is on", async () => {
     renderRow({ dbTier: "lookalike", dbEngine: "", dbSuggestedEngine: "mysql", dbDumpEngine: "mysql" });
     const picker = screen.getByRole("combobox", { name: en["dbdump.engineLabel"] });
     await act(async () => {
@@ -249,7 +242,6 @@ describe("DatabaseDumpRow", () => {
   });
 
   it("shows the engine a lookalike is dumped with, and the one picked last", async () => {
-    localStorage.setItem("bombvault.advanced", "1");
     renderRow({ dbTier: "lookalike", dbEngine: "", dbSuggestedEngine: "mysql", dbDumpEngine: "" });
     await act(async () => {
       fireEvent.click(toggle());

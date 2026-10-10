@@ -1,213 +1,225 @@
-// One finding as a line: a dot for its severity, what happened, when, and a
-// chevron. Opened, it says the whole sentence, the figures and what can be
-// done about it. The card around it names the item, so an open finding's line
-// leaves the name out; a closed one stands in a plain list and keeps it.
+// One finding in the list: how bad it is, which item it is about, what
+// happened, and what can be done about it. The figures behind it open in a
+// window.
 
-import { useId, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { IconDisclosure } from "../IconDisclosure";
+import { IconCompare, IconInfo } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import {
+  ANOMALY_SEVERITY_LABEL,
   ANOMALY_STATE_LABEL,
-  anomalyErrorText,
-  anomalyFigures,
-  anomalyItemLabel,
+  anomalyEntryName,
   anomalyItemPath,
   anomalyRestorePath,
-  anomalySentence,
+  anomalySeverityTone,
   anomalyShortLine,
+  anomalyWhere,
   type TranslateAnomaly,
 } from "../../lib/anomalies";
-import type { AnomalyActionResult, AnomalySeverity, AnomalyView } from "../../lib/api";
-import { useT, type TranslationKey } from "../../lib/i18n";
+import type { AnomalySeverity, AnomalyView } from "../../lib/api";
+import { useT } from "../../lib/i18n";
 import { isolateLtr } from "../../lib/ltrFragments";
-import { formatTs, relativeTime } from "../../lib/reltime";
-import { useToast } from "../../lib/toast";
-import { useConfirm } from "../../lib/useConfirm";
-import { FindingChanges, findingHasChanges } from "./FindingChanges";
+import { formatTs } from "../../lib/reltime";
+import { findingHasChanges } from "./FindingChanges";
 
-export type FindingAction = (a: AnomalyView) => Promise<AnomalyActionResult>;
+/** Closes findings one way or the other and says whether it went through. */
+export type SettleFindings = (list: AnomalyView[], how: "acknowledge" | "expected") => Promise<boolean>;
 
-const SEVERITY_DOT: Record<AnomalySeverity, string> = {
-  critical: "bg-statusFailSolid",
-  warning: "bg-statusWarnSolid",
-  info: "bg-carbon-textMuted",
+// The bar on the leading edge, which flips sides with the reading direction.
+const EDGE: Record<AnomalySeverity, string> = {
+  critical:
+    "bg-statusFailBgSoft shadow-[inset_3px_0_0_var(--status-fail-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-fail-solid)]",
+  warning:
+    "bg-carbon-surface2 shadow-[inset_3px_0_0_var(--status-warn-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-warn-solid)]",
+  info: "bg-carbon-surface2 shadow-[inset_3px_0_0_var(--carbon-surface3)] rtl:shadow-[inset_-3px_0_0_var(--carbon-surface3)]",
 };
 
-function when(unix: number): string {
+export function findingWhen(unix: number): string {
   return isolateLtr(formatTs(unix));
+}
+
+/** The dump or the dataset a finding is about, beside the item's name. */
+export function SeriesTag({ a, t }: { a: AnomalyView; t: TranslateAnomaly }) {
+  if (a.scopeKind === "dump") {
+    return (
+      <Badge tone="neutral" size="small" className="shrink-0">
+        {t("anomaly.items.dumpSeries")}
+      </Badge>
+    );
+  }
+  if (a.scopeKind !== "zfsds" || !a.part) return null;
+  return (
+    <span dir="ltr" className="min-w-0 font-mono text-xs text-carbon-textSub text-start wrap-anywhere">
+      {a.part}
+    </span>
+  );
 }
 
 export function FindingLine({
   a,
   t,
-  open,
-  onToggle,
   closed = false,
-  restoreIsPrimary = false,
-  onAcknowledge,
-  onExpected,
+  lead = false,
+  siblings,
+  onSettle,
+  onDetails,
 }: {
   a: AnomalyView;
   t: TranslateAnomaly;
-  open: boolean;
-  onToggle: () => void;
-  /** A settled or resolved finding in the list below the cards. */
+  /** A settled or resolved finding, which offers its details and nothing else. */
   closed?: boolean;
-  /** The card already offers this finding's restore as its main action. */
-  restoreIsPrimary?: boolean;
-  onAcknowledge?: FindingAction;
-  onExpected?: FindingAction;
+  /** The first finding of the list, whose way out is the page's one filled button. */
+  lead?: boolean;
+  /** Every finding of the same item in the list, on the first of several. */
+  siblings?: AnomalyView[];
+  onSettle?: SettleFindings;
+  onDetails: (compare: boolean) => void;
 }) {
   const { lang } = useT();
-  const { confirm, confirmDialog } = useConfirm();
-  const { push } = useToast();
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const panelId = useId();
 
-  const label = anomalyItemLabel(a, t);
-  const line = anomalyShortLine(a, t, lang);
-  const figures = anomalyFigures(a, t, lang, when);
-  const restorePath = anomalyRestorePath(a);
-  const itemPath = anomalyItemPath(a);
+  const name = anomalyEntryName(a, t);
+  const itemPath = a.targetId ? anomalyItemPath(a) : undefined;
+  const restorePath = a.severity === "critical" ? anomalyRestorePath(a) : null;
   const recovered = a.severity === "critical" && a.recoveredAt > 0;
   const closedAt = a.ackedAt || a.resolvedAt;
 
-  async function run(action: FindingAction, confirmKey: TranslationKey) {
-    if (a.retentionHeld) {
-      if (!(await confirm(t("anomaly.releaseConfirm").replace("{name}", label), { confirmKey }))) return;
-    }
+  async function settle(list: AnomalyView[], how: "acknowledge" | "expected") {
+    if (!onSettle) return;
     setBusy(true);
     try {
-      const res = await action(a);
-      if (!res.ok) push(anomalyErrorText(res.code, t), "fail");
-    } catch {
-      push(anomalyErrorText(undefined, t), "fail");
+      await onSettle(list, how);
     } finally {
       setBusy(false);
     }
   }
 
-  const more = figures.more
-    .map(([term, value]) => t("anomaly.figure").replace("{label}", term).replace("{value}", value))
-    .join(" · ");
+  const facts = closed
+    ? [
+        closedAt > 0 && t("anomaly.closedAt").replace("{date}", findingWhen(closedAt)),
+        a.ackNote && `${t("anomaly.noteLabel")}: ${a.ackNote}`,
+      ]
+    : [
+        anomalyWhere(a, t),
+        a.occurrences > 1 && t("anomaly.occurrences", a.occurrences),
+        a.lastGood &&
+          t("anomaly.figure")
+            .replace("{label}", t("anomaly.detail.lastGood"))
+            .replace("{value}", findingWhen(a.lastGood.at)),
+      ];
 
   return (
-    <div className="flex flex-col">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
-        className="-mx-2 flex min-h-11 items-start gap-3 rounded-control px-2 py-2.5 text-start hover:bg-carbon-hover"
-      >
-        <span aria-hidden="true" className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[a.severity]}`} />
-        <span className="min-w-0 flex-1 text-sm text-carbon-text wrap-anywhere">
-          {closed && <span className="font-medium">{label}: </span>}
-          {!closed && line.series && (
-            <span
-              dir={a.scopeKind === "zfsds" ? "ltr" : undefined}
-              className={`text-carbon-textSub${a.scopeKind === "zfsds" ? " font-mono" : ""}`}
-            >
-              {line.series}:{" "}
-            </span>
-          )}
-          {line.text}
-        </span>
-        {recovered && !closed && (
-          <Badge tone="neutral" size="small" className="mt-0.5 shrink-0">
-            {t("anomaly.recovered")}
+    <li
+      id={`finding-${a.id}`}
+      className={`flex min-w-0 scroll-mt-10 flex-col gap-1.5 rounded-card px-4 pb-3.5 pt-3 max-sm:px-3 ${EDGE[a.severity]}`}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        {closed && (
+          <Badge tone={a.state === "resolved" ? "ok" : "neutral"} size="small" className="shrink-0">
+            {t(ANOMALY_STATE_LABEL[a.state])}
           </Badge>
         )}
-        {closed && (
-          <span className="mt-0.5 shrink-0 text-xs text-carbon-textSub">{t(ANOMALY_STATE_LABEL[a.state])}</span>
+        <Badge tone={anomalySeverityTone(a.severity)} size="small" className="shrink-0">
+          {t(ANOMALY_SEVERITY_LABEL[a.severity])}
+        </Badge>
+        {itemPath ? (
+          <Link
+            to={itemPath}
+            className="min-w-0 text-[15px] font-semibold text-carbon-text hover:text-accentText hover:underline wrap-anywhere"
+          >
+            {name}
+          </Link>
+        ) : (
+          <span className="min-w-0 text-[15px] font-semibold text-carbon-text wrap-anywhere">{name}</span>
         )}
-        <span className="mt-0.5 shrink-0 text-xs text-carbon-textSub max-sm:hidden">
-          {relativeTime(t, closed && closedAt ? closedAt : a.lastSeenAt)}
-        </span>
-        <span className="mt-1 shrink-0 text-carbon-textSub">
-          <IconDisclosure open={open} />
-        </span>
-      </button>
-
-      {open && (
-        <div id={panelId} className="flex flex-col gap-2 pb-3 ps-5 glim-content-fade">
-          <p className="text-sm text-carbon-textSub wrap-anywhere">{anomalySentence(a, t, lang)}</p>
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-            {figures.main.map(([term, value]) => (
-              <span key={term} className="inline-flex items-baseline gap-1.5">
-                <span className="text-carbon-textSub">{term}</span>
-                <span className="font-medium text-carbon-text">{value}</span>
-              </span>
-            ))}
-            {more && <InfoBubble tip={more} />}
-          </div>
-
-          {findingHasChanges(a) && <FindingChanges a={a} t={t} />}
-
-          {recovered && (
-            <p className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
+        <SeriesTag a={a} t={t} />
+        {recovered && !closed && (
+          <span className="inline-flex shrink-0 items-center gap-1">
+            <Badge tone="ok" size="small">
               {t("anomaly.recovered")}
-              <InfoBubble tip={t("anomaly.recoveredHint").replace("{date}", when(a.recoveredAt))} />
-            </p>
-          )}
+            </Badge>
+            <InfoBubble tip={t("anomaly.recoveredHint").replace("{date}", findingWhen(a.recoveredAt))} />
+          </span>
+        )}
+        <span className="ms-auto shrink-0 text-[13px] text-carbon-textMuted">{findingWhen(a.lastSeenAt)}</span>
+      </div>
 
-          {closed && (
-            <p className="flex flex-wrap items-baseline gap-x-3 text-xs text-carbon-textSub">
-              {closedAt > 0 && <span>{t("anomaly.closedAt").replace("{date}", when(closedAt))}</span>}
-              {a.ackNote && (
-                <span className="min-w-0 wrap-anywhere">
-                  {t("anomaly.noteLabel")}: {a.ackNote}
-                </span>
-              )}
-              {a.stillPresent && <span className="text-statusWarn">{t("anomaly.stillPresent")}</span>}
-            </p>
-          )}
+      <p className="text-sm text-carbon-text wrap-anywhere">{anomalyShortLine(a, t, lang).text}</p>
+      <p className="text-[13px] text-carbon-textMuted wrap-anywhere">{facts.filter(Boolean).join(" · ")}</p>
+      {closed && a.stillPresent && <p className="text-[13px] text-carbon-textMuted">{t("anomaly.stillPresent")}</p>}
+      {!closed && a.retentionHeld && <RetentionNote t={t} />}
 
-          {!closed && a.retentionHeld && <RetentionNote t={t} />}
-
-          {!closed && (
-            <div className="flex flex-wrap items-center gap-2">
-              {onExpected && a.expectable && (
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+        <span className="flex flex-wrap items-center gap-2 max-sm:w-full">
+          {!closed && onSettle && (
+            <>
+              <Button
+                label={t("anomaly.action.acknowledge")}
+                labelKey="anomaly.action.acknowledge"
+                onClick={() => void settle([a], "acknowledge")}
+                disabled={busy}
+                hint={t("anomaly.acknowledgeHint")}
+                className="glim-btn-wrap"
+              />
+              {a.expectable && (
                 <Button
                   label={t("anomaly.action.expected")}
                   labelKey="anomaly.action.expected"
-                  onClick={() => void run(onExpected, "anomaly.action.expected")}
+                  onClick={() => void settle([a], "expected")}
                   disabled={busy}
                   hint={t("anomaly.expectedHint")}
                   className="glim-btn-wrap"
                 />
               )}
-              {onAcknowledge && (
+              {siblings && (
                 <Button
-                  label={t("anomaly.action.acknowledge")}
-                  labelKey="anomaly.action.acknowledge"
-                  onClick={() => void run(onAcknowledge, "anomaly.action.acknowledge")}
+                  label={t("anomaly.action.acknowledgeAll").replace("{n}", siblings.length.toLocaleString())}
+                  labelKey="anomaly.action.acknowledgeAll"
+                  onClick={() => void settle(siblings, "acknowledge")}
                   disabled={busy}
-                  hint={t("anomaly.acknowledgeHint")}
                   className="glim-btn-wrap"
                 />
               )}
-              {restorePath && a.lastGood && !restoreIsPrimary && (
-                <Link to={restorePath} className="text-xs text-accentText hover:underline">
-                  {t("anomaly.action.restoreLastGood").replace("{date}", when(a.lastGood.at))}
-                </Link>
-              )}
-              {itemPath && a.targetId && (
-                <Link to={itemPath} className="text-xs text-accentText hover:underline">
-                  {t("anomaly.openItem")}
-                </Link>
-              )}
-            </div>
+            </>
           )}
-        </div>
-      )}
-      {confirmDialog}
-    </div>
+        </span>
+        <span className="flex flex-wrap items-center justify-end gap-2 max-sm:w-full">
+          <Button
+            label={t("fleet.details")}
+            labelKey="fleet.details"
+            glyph={<IconInfo />}
+            onClick={() => onDetails(false)}
+            className="glim-btn-wrap"
+          />
+          {!closed && restorePath && a.lastGood ? (
+            <Button
+              label={t("anomaly.action.restoreLastGood").replace("{date}", findingWhen(a.lastGood.at))}
+              labelKey="anomaly.action.restoreLastGood"
+              tone={lead ? "accent" : "neutral"}
+              onClick={() => navigate(restorePath)}
+              className="glim-btn-wrap"
+            />
+          ) : (
+            !closed &&
+            findingHasChanges(a) && (
+              <Button
+                label={t("anomaly.changes.title")}
+                labelKey="anomaly.changes.title"
+                glyph={<IconCompare />}
+                tone={lead ? "accent" : "neutral"}
+                onClick={() => onDetails(true)}
+                className="glim-btn-wrap"
+              />
+            )
+          )}
+        </span>
+      </div>
+    </li>
   );
 }
 

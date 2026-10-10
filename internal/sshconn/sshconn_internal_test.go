@@ -3,7 +3,9 @@ package sshconn
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -256,5 +258,144 @@ func TestRunCaptureKeepsStdoutAndStderrApart(t *testing.T) {
 	}
 	if stderr != "err-line" {
 		t.Errorf("stderr = %q", stderr)
+	}
+}
+
+// TestStreamsReportTheRemoteExitAndStderr fails the way zfs send -t does on a
+// stale token, which exits 255 like ssh itself; only the text tells them apart.
+func TestStreamsReportTheRemoteExitAndStderr(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell")
+	}
+	script := filepath.Join(t.TempDir(), "fake-ssh")
+	body := "#!/bin/sh\ncat >/dev/null\necho \"cannot resume send: 'a@b' used in the initial send no longer exists\" >&2\nexit 255\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: an executable stand-in for ssh
+		t.Fatal(err)
+	}
+	old := sshBinary
+	sshBinary = script
+	t.Cleanup(func() { sshBinary = old })
+	c := testConn(t)
+
+	check := func(name string, err error) {
+		t.Helper()
+		var re *RemoteError
+		if !errors.As(err, &re) {
+			t.Fatalf("%s: err = %v, want a RemoteError", name, err)
+		}
+		if !strings.HasPrefix(re.Stderr, "cannot resume send") {
+			t.Errorf("%s: stderr = %q", name, re.Stderr)
+		}
+		var exit *exec.ExitError
+		if !errors.As(err, &exit) || exit.ExitCode() != 255 {
+			t.Errorf("%s: the exit status is lost: %v", name, err)
+		}
+	}
+
+	rc, wait, err := c.StreamCommand(context.Background(), "zfs", "send", "-t", "1-ab-12-cd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(io.Discard, rc); err != nil {
+		t.Fatal(err)
+	}
+	check("StreamCommand", wait())
+	check("RunWithStdin", c.RunWithStdin(context.Background(), strings.NewReader("stream"), "zfs", "receive", "tank/x"))
+}
+
+func TestIsolatedConnReadsNoConfigAndOffersOnlyItsOwnKey(t *testing.T) {
+	dataDir := t.TempDir()
+	host := New("192.168.1.10", "root", "1004", dataDir, "")
+	keyDir := filepath.Join(dataDir, "ssh-replica", "t1")
+	c := NewIsolated("backup.lan", "replica", "", keyDir, "")
+
+	args := c.sshArgs()
+	if len(args) < 4 || args[0] != "-F" || args[1] != "none" {
+		t.Fatalf("sshArgs = %v, want -F none first", args)
+	}
+	joined := strings.Join(args, " ")
+	for _, want := range []string{"IdentitiesOnly=yes", "BatchMode=yes", "StrictHostKeyChecking=accept-new", "ConnectTimeout=10"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("sshArgs lost %q: %v", want, args)
+		}
+	}
+	if c.keyPath() != filepath.Join(keyDir, "id_ed25519") || c.knownHostsPath() != filepath.Join(keyDir, "known_hosts") {
+		t.Errorf("key %q and known_hosts %q are not in the Conn's own directory", c.keyPath(), c.knownHostsPath())
+	}
+	if strings.Contains(joined, host.keyPath()) || strings.Contains(joined, host.knownHostsPath()) {
+		t.Errorf("an isolated Conn carries the libvirt host's key or known_hosts: %v", args)
+	}
+	if got := args[len(args)-1]; got != "replica@backup.lan" {
+		t.Errorf("last arg = %q, want the destination", got)
+	}
+	if !strings.Contains(joined, "-p 22") {
+		t.Errorf("an empty port did not default to 22: %v", args)
+	}
+
+	if strings.Contains(strings.Join(host.sshArgs(), " "), "-F") {
+		t.Errorf("the libvirt Conn stopped reading its config: %v", host.sshArgs())
+	}
+}
+
+func TestIsolatedConnGivesUpOnAHostThatFallsSilent(t *testing.T) {
+	c := NewIsolated("backup.lan", "replica", "", t.TempDir(), "")
+	joined := strings.Join(c.sshArgs(), " ")
+	for _, want := range []string{"ServerAliveInterval=15", "ServerAliveCountMax=4"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("sshArgs lacks %q: %s", want, joined)
+		}
+	}
+}
+
+func TestIsolatedConnsShareAKeyAndPinTheirHostsApart(t *testing.T) {
+	keyDir := filepath.Join(t.TempDir(), "ssh-replica")
+	a := NewIsolated("a.lan", "root", "", keyDir, filepath.Join(keyDir, "s1", "known_hosts"))
+	b := NewIsolated("b.lan", "root", "", keyDir, filepath.Join(keyDir, "s2", "known_hosts"))
+	if a.keyPath() != b.keyPath() {
+		t.Errorf("keys %q and %q differ, want one shared key", a.keyPath(), b.keyPath())
+	}
+	if a.knownHostsPath() == b.knownHostsPath() {
+		t.Errorf("both hosts pin into %q", a.knownHostsPath())
+	}
+	if !strings.Contains(strings.Join(a.sshArgs(), " "), "UserKnownHostsFile="+a.knownHostsPath()) {
+		t.Errorf("sshArgs do not use the host's own known_hosts: %v", a.sshArgs())
+	}
+}
+
+// TestIsolatedConnResolvesToItsOwnKeyOnly asks the real ssh client what it
+// would use, so a default key file or an agent cannot slip in next to -i.
+func TestIsolatedConnResolvesToItsOwnKeyOnly(t *testing.T) {
+	if _, err := exec.LookPath(sshBinary); err != nil {
+		t.Skip("ssh not available")
+	}
+	c := NewIsolated("backup.lan", "replica", "2222", filepath.Join(t.TempDir(), "ssh-replica", "t1"), "")
+	// ssh drops an -i file that is not there and falls back to the defaults,
+	// so the key has to exist as it does after EnsureKey.
+	if err := os.MkdirAll(c.dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(c.keyPath(), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out, err := exec.Command(sshBinary, append([]string{"-G"}, c.sshArgs()...)...).Output() //nolint:gosec // G204: the argv is built from this test's own values
+	if err != nil {
+		t.Fatalf("ssh -G: %v", err)
+	}
+	var ids []string
+	identitiesOnly := false
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		if id, ok := strings.CutPrefix(line, "identityfile "); ok {
+			ids = append(ids, filepath.ToSlash(id))
+		}
+		if line == "identitiesonly yes" {
+			identitiesOnly = true
+		}
+	}
+	if len(ids) != 1 || !strings.HasSuffix(ids[0], "ssh-replica/t1/id_ed25519") {
+		t.Errorf("ssh would offer %q, want only the Conn's own key", ids)
+	}
+	if !identitiesOnly {
+		t.Error("ssh would still offer an agent's keys")
 	}
 }

@@ -229,6 +229,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/group/address", h.handleGroupAddress)
 	mux.HandleFunc("POST /api/group/probe", h.handleGroupProbe)
 	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
+	h.registerRoleRoutes(mux)
 
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)
@@ -326,6 +327,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/offsite/targets/{id}", h.handleUpdateOffsiteTarget)
 	mux.HandleFunc("DELETE /api/offsite/targets/{id}", h.handleDeleteOffsiteTarget)
 	mux.HandleFunc("POST /api/offsite/targets/{id}/test", h.handleTestOffsiteTarget)
+	mux.HandleFunc("POST /api/offsite/targets/{id}/tamper-test", h.handleTamperTestOffsiteTarget)
 	mux.HandleFunc("GET /api/offsite/targets/{id}/direct", h.handleGetDirectRepo)
 	mux.HandleFunc("POST /api/offsite/targets/{id}/direct/test", h.handleTestDirectLocation)
 	mux.HandleFunc("GET /api/offsite/providers", h.handleOffsiteProviders)
@@ -376,6 +378,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/settings/primary-remote/{domain}/tamper-test", h.handlePrimaryRemoteTamperTest)
 	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
+	mux.HandleFunc("GET /api/versions", h.handleVersions)
+	mux.HandleFunc("POST /api/update-check", h.handleUpdateCheck)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)
 	// Read-only probe of the configured repos that ALSO applies a DEFINITE
 	// result to Settings.EncryptionEnabled — POST, not GET, because of that
@@ -397,6 +401,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/anomalies/{id}/changes", h.handleAnomalyChanges)
 	mux.HandleFunc("POST /api/anomalies/acknowledge", h.handleAcknowledgeAnomalies)
 	mux.HandleFunc("POST /api/anomalies/expected", h.handleAnomaliesExpected)
+	mux.HandleFunc("GET /api/anomalies/items/{targetId}/series", h.handleAnomalyItemSeries)
 	mux.HandleFunc("PUT /api/anomalies/items/{targetId}/prefs", h.handleAnomalyItemPrefs)
 	mux.HandleFunc("DELETE /api/anomalies/items/{targetId}/expectations/{family}", h.handleForgetAnomalyExpectation)
 	// An SMB or WebDAV destination from a form instead of a hand-written rclone
@@ -405,6 +410,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/offsite/rclone-remote", h.handleAddRcloneRemote)
 	mux.HandleFunc("GET /api/history", h.handleHistory)
 	mux.HandleFunc("GET /api/stats", h.handleStats)
+	mux.HandleFunc("GET /api/storage/locations", h.handleListStorageLocations)
+	mux.HandleFunc("GET /api/storage/locations/{id}", h.handleGetStorageLocation)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 	mux.HandleFunc("POST /api/browse/mkdir", h.handleMkdir)
 	mux.HandleFunc("GET /api/progress", h.handleProgress)
@@ -475,6 +482,7 @@ func (h *Handler) Router() http.Handler {
 
 	// Placement of one container, VM or file set.
 	mux.HandleFunc("POST /api/items/{domain}/{name}/placement/preview", h.handlePreviewItemPlacement)
+	mux.HandleFunc("GET /api/items", h.handleListItems)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemovalPreview)
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemoval)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline", h.handleTimeline)
@@ -502,6 +510,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/zfs/datasets/{id}/files", h.handleListSnapshotFilesZFS)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/restore", h.handleRestoreZFS)
 	mux.HandleFunc("POST /api/zfs/discover", h.handleDiscoverZFS)
+	h.registerZFSReplicaRoutes(mux)
+	h.registerZFSReceiveRoutes(mux)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted

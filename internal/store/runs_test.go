@@ -185,6 +185,29 @@ func TestReapInterruptedRuns(t *testing.T) {
 	}
 }
 
+func TestAReapedReplicaRunEndsInItsReasonCode(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	replica, _ := r.StartRun("item", store.ZFSReplicaRunKind)
+	backup, _ := r.StartRun("item", "backup")
+	if _, err := r.ReapInterruptedRuns(); err != nil {
+		t.Fatal(err)
+	}
+	runs, err := r.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{replica: store.ReasonInterrupted + " [interrupted]", backup: store.ReasonInterrupted}
+	for _, run := range runs {
+		if run.Status != "failed" || run.Error != want[run.ID] {
+			t.Errorf("%s run = %s %q, want failed %q", run.Kind, run.Status, run.Error, want[run.ID])
+		}
+	}
+}
+
 func TestRunsSince(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -1727,5 +1750,100 @@ func TestRunStartsNamesKnownRunsOnly(t *testing.T) {
 	}
 	if len(starts) != 1 || starts[id] < before || starts[id] > time.Now().Unix() {
 		t.Fatalf("starts = %v", starts)
+	}
+}
+
+func TestRecentRunsByTargetKeepsTheNewestOfEachTarget(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// Three kinds per target and repeated start times, so the cut has to rank
+	// across kinds and break ties by the row written last.
+	kinds := []string{"backup", "dbdump", "restore"}
+	statuses := []string{"success", "failed", "cancelled"}
+	for i := range 90 {
+		target := fmt.Sprintf("t%d", i%3)
+		insertRunRow(t, db, runRow{
+			id: fmt.Sprintf("r%02d", i), targetID: target, kind: kinds[(i/3)%3], status: statuses[i%3],
+			startedAt: int64(1000 + (i*37)%50), finishedAt: 2000,
+		})
+	}
+	insertRunRow(t, db, runRow{id: "lone", targetID: "t3", kind: "backup", status: "running", startedAt: 1})
+
+	all, err := r.ListRunsFiltered(store.RunFilter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const perTarget = 14
+	want := map[string][]store.RunBrief{}
+	for _, run := range all {
+		if len(want[run.TargetID]) < perTarget {
+			want[run.TargetID] = append(want[run.TargetID], store.RunBrief{ID: run.ID, Kind: run.Kind, Status: run.Status, StartedAt: run.StartedAt})
+		}
+	}
+
+	got, err := r.RecentRunsByTarget(perTarget)
+	if err != nil {
+		t.Fatalf("RecentRunsByTarget: %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("RecentRunsByTarget = %+v, want %+v", got, want)
+	}
+	if len(got["t0"]) != perTarget || len(got["t3"]) != 1 {
+		t.Fatalf("t0 has %d runs and t3 has %d, want %d and 1", len(got["t0"]), len(got["t3"]), perTarget)
+	}
+}
+
+func TestLatestSourceBytesByTarget(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	rows := []struct {
+		runRow
+		sourceBytes any
+	}{
+		{runRow{id: "a-old", targetID: "a", kind: "backup", status: "success", startedAt: 100, finishedAt: 110}, 100},
+		{runRow{id: "a-good", targetID: "a", kind: "backup", status: "success", startedAt: 200, finishedAt: 210}, 250},
+		{runRow{id: "a-fail", targetID: "a", kind: "backup", status: "failed", startedAt: 300, finishedAt: 310}, 999},
+		{runRow{id: "a-unmeasured", targetID: "a", kind: "backup", status: "success", startedAt: 400, finishedAt: 410}, nil},
+		{runRow{id: "a-dump", targetID: "a", kind: "dbdump", status: "success", startedAt: 500, finishedAt: 510}, 5},
+		{runRow{id: "b-unmeasured", targetID: "b", kind: "backup", status: "success", startedAt: 100, finishedAt: 110}, nil},
+		{runRow{id: "c-empty", targetID: "c", kind: "backup", status: "success", startedAt: 100, finishedAt: 110}, 0},
+	}
+	for _, row := range rows {
+		insertRunRow(t, db, row.runRow)
+		if _, err := db.Exec(`UPDATE runs SET source_bytes = ? WHERE id = ?`, row.sourceBytes, row.id); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := r.LatestSourceBytesByTarget()
+	if err != nil {
+		t.Fatalf("LatestSourceBytesByTarget: %v", err)
+	}
+	want := map[string]int64{"a": 250, "c": 0}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("LatestSourceBytesByTarget = %v, want %v", got, want)
+	}
+
+	measured, err := r.GetRun("a-good")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if measured.SourceBytes == nil || *measured.SourceBytes != 250 {
+		t.Fatalf("a measured run carries SourceBytes = %v, want 250", measured.SourceBytes)
+	}
+	unmeasured, err := r.GetRun("a-unmeasured")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unmeasured.SourceBytes != nil {
+		t.Fatalf("an unmeasured run carries SourceBytes = %d, want nil", *unmeasured.SourceBytes)
 	}
 }

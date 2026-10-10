@@ -2697,6 +2697,185 @@ CREATE INDEX IF NOT EXISTS offsite_targets_destination ON offsite_targets(destin
   created_at   INTEGER NOT NULL DEFAULT 0
 );`,
 	},
+	{
+		// The ZFS hosts that items replicate to with zfs send and receive.
+		// key_dir holds the connection's own key and known_hosts and belongs to
+		// this instance, so the settings export leaves it out.
+		version: zfsReplicaMigration,
+		name:    "zfs_replica_servers",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_servers (
+  id         TEXT    PRIMARY KEY,
+  name       TEXT    NOT NULL DEFAULT '',
+  host       TEXT    NOT NULL DEFAULT '',
+  ssh_user   TEXT    NOT NULL DEFAULT 'root',
+  port       INTEGER NOT NULL DEFAULT 22,
+  pool       TEXT    NOT NULL DEFAULT '',
+  root       TEXT    NOT NULL DEFAULT '',
+  enabled    INTEGER NOT NULL DEFAULT 1,
+  key_dir    TEXT    NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
+		// How each ZFS item replicates. The keep default is DefaultZFSReplicaKeep.
+		// The replica_peer_ columns hold what the receiving instance of a peer
+		// target answered; its slot token is sealed with the APP_KEY.
+		// replica_folder is kept apart from zfs_replica_state, which a new
+		// target or a switch-off drops.
+		version:          zfsReplicaMigration + 1,
+		name:             "zfs_datasets_replica",
+		alreadySatisfied: columnPresent("zfs_datasets", "replica_target_kind"),
+		sql: `ALTER TABLE zfs_datasets ADD COLUMN replica_target_kind    TEXT    NOT NULL DEFAULT 'none';
+ALTER TABLE zfs_datasets ADD COLUMN replica_target_id      TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_after_backup   INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE zfs_datasets ADD COLUMN replica_cadence        TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_keep           TEXT    NOT NULL DEFAULT '{"preset":"own","own":[0,7,3,0,0]}';
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_state     TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_slot      TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_token_enc BLOB    NOT NULL DEFAULT x'';
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_base      TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_url       TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_peer_pin       TEXT    NOT NULL DEFAULT '';
+ALTER TABLE zfs_datasets ADD COLUMN replica_folder         TEXT    NOT NULL DEFAULT '';`,
+	},
+	{
+		// Where each member of a replicated item stands on its target. A ZFS
+		// guid is an unsigned 64-bit number, more than an INTEGER column holds,
+		// so the guids are text.
+		version: zfsReplicaMigration + 2,
+		name:    "zfs_replica_state",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_state (
+  item_id        TEXT    NOT NULL,
+  dataset        TEXT    NOT NULL,
+  target_path    TEXT    NOT NULL DEFAULT '',
+  volume         INTEGER NOT NULL DEFAULT 0,
+  source_base    TEXT    NOT NULL DEFAULT '',
+  source_guid    TEXT    NOT NULL DEFAULT '',
+  target_base    TEXT    NOT NULL DEFAULT '',
+  target_guid    TEXT    NOT NULL DEFAULT '',
+  created_parent INTEGER NOT NULL DEFAULT 0,
+  updated_at     INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (item_id, dataset)
+);`,
+	},
+	{
+		// One row per member per replica run, next to the runs row of kind
+		// replica.
+		version: zfsReplicaMigration + 3,
+		name:    "zfs_replica_runs",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_replica_runs (
+  run_id      TEXT    NOT NULL,
+  item_id     TEXT    NOT NULL,
+  dataset     TEXT    NOT NULL,
+  base        TEXT    NOT NULL DEFAULT '',
+  snapshot    TEXT    NOT NULL DEFAULT '',
+  bytes       INTEGER NOT NULL DEFAULT 0,
+  seconds     INTEGER NOT NULL DEFAULT 0,
+  resumed     INTEGER NOT NULL DEFAULT 0,
+  code        TEXT    NOT NULL DEFAULT '',
+  finished_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (run_id, dataset)
+);
+CREATE INDEX IF NOT EXISTS idx_zfs_replica_runs_item ON zfs_replica_runs(item_id);`,
+	},
+	{
+		// The receive slots this instance keeps for the ZFS items of other
+		// instances: what each one asked to replicate here, the answer, where
+		// it lands and the slot's sealed token. item_id is the source's item,
+		// so one source item has one slot here.
+		version: zfsReplicaMigration + 4,
+		name:    "zfs_receive_slots",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_receive_slots (
+  id            TEXT    PRIMARY KEY,
+  peer_id       TEXT    NOT NULL,
+  peer_name     TEXT    NOT NULL DEFAULT '',
+  item_id       TEXT    NOT NULL,
+  dataset       TEXT    NOT NULL DEFAULT '',
+  source_server TEXT    NOT NULL DEFAULT '',
+  members       TEXT    NOT NULL DEFAULT '[]',
+  proposed_keep TEXT    NOT NULL DEFAULT '{"preset":"own","own":[0,7,3,0,0]}',
+  pool          TEXT    NOT NULL DEFAULT '',
+  root          TEXT    NOT NULL DEFAULT '',
+  keep          TEXT    NOT NULL DEFAULT '{"preset":"own","own":[0,7,3,0,0]}',
+  token_enc     BLOB    NOT NULL DEFAULT x'',
+  state         TEXT    NOT NULL DEFAULT 'asked',
+  asked_at      INTEGER NOT NULL DEFAULT 0,
+  decided_at    INTEGER NOT NULL DEFAULT 0,
+  last_received INTEGER NOT NULL DEFAULT 0,
+  bytes         INTEGER NOT NULL DEFAULT 0,
+  last_snapshot TEXT    NOT NULL DEFAULT '',
+  UNIQUE (peer_id, item_id)
+);`,
+	},
+	{
+		// Which settings a target derived from a destination keeps for itself:
+		// at the upgrade every one it holds a different value for than its
+		// destination's row, so each target goes on with the values it has.
+		// The bits are OwnRetention, OwnCompression, OwnLimits and OwnEnabled.
+		// A destination counts as a site of its own, as every copy there does.
+		version:          locationMigration,
+		name:             "offsite_targets_own_settings",
+		alreadySatisfied: columnPresent("offsite_targets", "own_settings"),
+		sql: `ALTER TABLE offsite_targets ADD COLUMN own_settings INTEGER NOT NULL DEFAULT 0;
+UPDATE offsite_targets SET off_premises = 1 WHERE role = 'destination';
+UPDATE offsite_targets AS t SET own_settings = (
+  SELECT (t.retention_keep_last <> d.retention_keep_last OR t.retention_keep_daily <> d.retention_keep_daily
+          OR t.retention_keep_weekly <> d.retention_keep_weekly OR t.retention_keep_monthly <> d.retention_keep_monthly
+          OR t.retention_keep_yearly <> d.retention_keep_yearly)
+       + 2 * (replace(lower(trim(t.compression)), 'auto', '') <> replace(lower(trim(d.compression)), 'auto', ''))
+       + 4 * (t.limit_upload <> d.limit_upload OR t.limit_download <> d.limit_download)
+       + 8 * (t.enabled <> d.enabled)
+    FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination')
+ WHERE t.role = 'offsite'
+   AND EXISTS (SELECT 1 FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination');`,
+	},
+	{
+		// One instance asking another to be its Receiver or Fetcher, kept on
+		// both sides: direction 'in' is a member's request to this instance,
+		// 'out' what this instance asked a member and was answered.
+		version: roleRequestMigration,
+		name:    "role_requests",
+		sql: `CREATE TABLE IF NOT EXISTS role_requests (
+  id          TEXT    PRIMARY KEY,
+  direction   TEXT    NOT NULL,
+  member_id   TEXT    NOT NULL,
+  member_name TEXT    NOT NULL DEFAULT '',
+  role        TEXT    NOT NULL,
+  sections    TEXT    NOT NULL DEFAULT '[]',
+  store       TEXT    NOT NULL DEFAULT '',
+  state       TEXT    NOT NULL DEFAULT 'asked',
+  asked_at    INTEGER NOT NULL DEFAULT 0,
+  decided_at  INTEGER NOT NULL DEFAULT 0,
+  decided_by  TEXT    NOT NULL DEFAULT '',
+  UNIQUE (direction, member_id, role)
+);`,
+	},
+	{
+		// Every member that holds a receiver login, sends to a repository
+		// watched here or is pulled from keeps what it has: each becomes a
+		// request this instance allowed. A login or a watched repository says
+		// nothing about sections, so those cover all of them; a pull source
+		// names its own, and one without a domain pulls every section.
+		version: roleRequestMigration + 1,
+		name:    "role_requests_from_pairings",
+		sql: `INSERT OR IGNORE INTO role_requests (id, direction, member_id, member_name, role, sections, store, state, asked_at, decided_at, decided_by)
+SELECT lower(hex(randomblob(16))), 'in', l.member_id, l.member_name, 'receiver',
+       '["config","containers","files","flash","vms","zfs"]', 'rest', 'allowed', l.created_at, l.created_at, 'upgrade'
+  FROM receiver_logins l WHERE l.member_id <> '';
+INSERT OR IGNORE INTO role_requests (id, direction, member_id, member_name, role, sections, store, state, asked_at, decided_at, decided_by)
+SELECT lower(hex(randomblob(16))), 'in', rr.member_id,
+       coalesce((SELECT f.name FROM fleet_peers f WHERE f.member_id = rr.member_id LIMIT 1), ''), 'receiver',
+       '["config","containers","files","flash","vms","zfs"]', '', 'allowed', min(rr.created_at), min(rr.created_at), 'upgrade'
+  FROM received_repos rr WHERE rr.member_id <> '' GROUP BY rr.member_id;
+INSERT OR IGNORE INTO role_requests (id, direction, member_id, member_name, role, sections, store, state, asked_at, decided_at, decided_by)
+SELECT lower(hex(randomblob(16))), 'in', ps.member_id,
+       coalesce((SELECT f.name FROM fleet_peers f WHERE f.member_id = ps.member_id LIMIT 1), ''), 'fetcher',
+       CASE WHEN sum(ps.domain = '') > 0 THEN '["config","containers","files","flash","vms","zfs"]'
+            ELSE (SELECT json_group_array(d.domain) FROM (SELECT DISTINCT p.domain FROM pull_sources p
+                   WHERE p.member_id = ps.member_id ORDER BY p.domain) d) END,
+       '', 'allowed', min(ps.created_at), min(ps.created_at), 'upgrade'
+  FROM pull_sources ps WHERE ps.member_id <> '' GROUP BY ps.member_id;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2789,6 +2968,16 @@ const destinationMigration = 280
 // receiverServerMigration numbers the rest-server a receiving instance sets
 // up for its group, 290 to 299.
 const receiverServerMigration = 290
+
+// zfsReplicaMigration numbers the ZFS replica, 300 to 304.
+const zfsReplicaMigration = 300
+
+// locationMigration numbers what the storage locations add, 305 to 309.
+const locationMigration = 305
+
+// roleRequestMigration numbers the requests between paired instances for the
+// roles Receiver and Fetcher, 310 to 314.
+const roleRequestMigration = 310
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

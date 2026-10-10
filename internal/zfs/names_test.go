@@ -142,3 +142,76 @@ func TestStampFromPath(t *testing.T) {
 		}
 	}
 }
+
+func TestReplicaSnapshotNameIsUTCFourteenDigits(t *testing.T) {
+	cest := time.FixedZone("CEST", 2*60*60)
+	got := ReplicaSnapshotName(time.Date(2026, 10, 9, 12, 0, 0, 0, cest))
+	if want := "bombvault-replica-20261009100000"; got != want {
+		t.Errorf("ReplicaSnapshotName = %q, want %q", got, want)
+	}
+	if !IsReplicaSnapshot(got) {
+		t.Error("ReplicaSnapshotName does not satisfy IsReplicaSnapshot")
+	}
+	if at, ok := StampTime(got); !ok || !at.Equal(time.Date(2026, 10, 9, 10, 0, 0, 0, time.UTC)) {
+		t.Errorf("StampTime = %v, %v", at, ok)
+	}
+}
+
+func TestIsReplicaSnapshot(t *testing.T) {
+	for _, snap := range []string{
+		"",
+		"bombvault-replica-",
+		"bombvault-replica-2026100910000",
+		"bombvault-replica-202610091000000",
+		"bombvault-replica-20261009100000x",
+		"xbombvault-replica-20261009100000",
+		"bombvault-20261009100000",
+		"bombvault-prerestore-20261009100000",
+	} {
+		if IsReplicaSnapshot(snap) {
+			t.Errorf("IsReplicaSnapshot(%q) = true, want false", snap)
+		}
+	}
+}
+
+func TestBackupSweepNeverReachesReplicaNames(t *testing.T) {
+	replica := ReplicaSnapshotName(time.Date(2026, 10, 9, 10, 0, 0, 0, time.UTC))
+	if IsBombVaultSnapshot(replica) || IsPreRestoreSnapshot(replica) {
+		t.Fatalf("%q passes as a backup or safety snapshot", replica)
+	}
+
+	tree := []ListEntry{{Name: "cache/appdata", Type: "filesystem"}, {Name: "cache/appdata/db", Type: "filesystem"}}
+	snaps := []SnapshotEntry{
+		{Dataset: "cache/appdata", Name: replica},
+		{Dataset: "cache/appdata/db", Name: replica},
+		{Dataset: "cache/appdata", Name: "bombvault-20261009100000"},
+	}
+	if got := LeakedStamps(tree, snaps); len(got) != 1 || got[0] != "bombvault-20261009100000" {
+		t.Errorf("LeakedStamps = %q, want only the backup's leftover", got)
+	}
+	if args, err := DestroyRecursiveArgs("cache/appdata", replica); err == nil || args != nil {
+		t.Errorf("the backup's recursive destroy took a replica snapshot: %q, %v", args, err)
+	}
+	if _, ok := StampFromPath("/host/user/cache/appdata/.zfs/snapshot/" + replica); ok {
+		t.Error("StampFromPath read a replica snapshot as a backup run's")
+	}
+}
+
+func TestAnItemRootFitsItsReplicaSnapshot(t *testing.T) {
+	if len(ReplicaPrefix) > len(PreRestorePrefix) {
+		t.Fatalf("ReplicaPrefix is longer than PreRestorePrefix, so MaxDatasetNameLen no longer covers it")
+	}
+	root := strings.Repeat("a", MaxDatasetNameLen)
+	if !ReplicaNameFits(root) {
+		t.Fatalf("an item root of %d bytes does not fit its replica snapshot", len(root))
+	}
+	full := root + "@" + ReplicaSnapshotName(time.Now())
+	if len(full) > MaxSnapshotNameLen {
+		t.Fatalf("%d bytes, over ZFS's limit", len(full))
+	}
+
+	longest := strings.Repeat("m", MaxSnapshotNameLen-1-len(ReplicaPrefix)-stampLen)
+	if !ReplicaNameFits(longest) || ReplicaNameFits(longest+"m") {
+		t.Errorf("ReplicaNameFits is off by one at %d bytes", len(longest))
+	}
+}

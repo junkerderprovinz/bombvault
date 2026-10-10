@@ -8,7 +8,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import type { DomainStatus } from "../lib/api";
-import { RansomwareCard } from "./Dashboard";
+import { RansomwareCard } from "./overview/RansomwareCard";
 
 function domain(over: Partial<DomainStatus> = {}): DomainStatus {
   return {
