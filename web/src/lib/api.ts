@@ -3357,6 +3357,68 @@ export function diffBackups(
   return fetchJSON(`${backupPath(domain, key)}/diff${qs}`);
 }
 
+/** What to export of an entry's stored backups. tar and zip write the backup
+ *  snapshotId names as archives; repository copies it, or with no snapshotId
+ *  every backup of the entry, into a restic repository of its own. folder lies
+ *  below the host mount; empty is the export folder beside the repositories. */
+export interface ExportRequest {
+  form: "tar" | "zip" | "repository";
+  snapshotId?: string;
+  folder?: string;
+}
+
+/** The folder on the host and the files an export writes. A ZFS run gives one
+ *  archive per dataset and a VM run one more file per zvol disk; the repository
+ *  form names its folder, which has to be absent or empty. */
+export interface ExportPreview {
+  folder: string;
+  files: string[];
+  /** Files of the same name the export overwrites. */
+  replaces: string[];
+  /** How many backups the repository form copies. */
+  backups?: number;
+  /** What the archives hold before compression, absent when not known. */
+  bytes?: number;
+  /** "age": archives sealed for the export recipients of the settings.
+   *  "password": a repository that opens with this instance's restic password,
+   *  which the recovery kit shows. "none": plain archives, or a repository
+   *  without a password because encryption is off. */
+  encryption: "age" | "password" | "none";
+  /** The archive of a changed-block VM backup: each disk as numbered segment
+   *  files, which give the image when joined in order, beside their manifest. */
+  segments?: boolean;
+  /** The progress key of the running export, also what cancels it. */
+  key: string;
+}
+
+/** Names the folder and the files an export would write, and writes nothing. */
+export function previewBackupExport(
+  domain: TimelineDomain,
+  key: string,
+  request: ExportRequest,
+  source?: string
+): Promise<OkEnvelope & { export?: ExportPreview }> {
+  return fetchJSON(`${backupPath(domain, key)}/export/preview${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+/** Starts an export on the server. It runs as a run of kind "export" on the
+ *  entry and reports progress under the preview's key: a percentage for a tar
+ *  and a repository, bytes for a zip. */
+export function exportBackup(
+  domain: TimelineDomain,
+  key: string,
+  request: ExportRequest,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean; export?: ExportPreview }> {
+  return fetchJSON(`${backupPath(domain, key)}/export${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
 /** Whether a compose project's folder has a snapshot at a source. */
 export function getStackDir(project: string, source: string): Promise<OkEnvelope & { found?: boolean; time?: string }> {
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);

@@ -474,30 +474,16 @@ func (s *Service) Timeline(ctx context.Context, domain, key string) (timeline, e
 }
 
 // measuredSizes is what the item's runs read, by the key of the timeline row
-// each of them wrote. An item without a row has no runs.
+// each of them wrote.
 func (s *Service) measuredSizes(domain, key string) (map[string]int64, error) {
-	ofRow := func(id string, err error) (map[string]int64, error) {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		if err != nil {
-			return nil, err
-		}
-		return s.store.BackupSizesBySnapshot(id)
-	}
-	switch domain {
-	case "containers":
-		t, err := s.store.GetTargetByContainer(key)
-		return ofRow(t.ID, err)
-	case "vms":
-		vm, err := s.store.GetVMTargetByName(key)
-		return ofRow(vm.ID, err)
-	case "files":
-		return s.store.BackupSizesBySnapshot(key)
-	case zfsDomain:
+	if domain == zfsDomain {
 		return s.store.ZFSBackupSizesByStamp(key)
 	}
-	return s.store.BackupSizesBySnapshot(domainRunTargetID(domain))
+	id, err := s.runTargetID(domain, key)
+	if err != nil || id == "" {
+		return nil, err
+	}
+	return s.store.BackupSizesBySnapshot(id)
 }
 
 // withMeasuredSizes puts what a run measured in place of what the snapshots

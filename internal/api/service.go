@@ -133,6 +133,9 @@ type ResticEngine interface {
 	// (flash restore — a non-destructive zip download; the live /boot is never
 	// touched and no filesystem metadata is restored).
 	DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
+	// DumpTar streams the same subtree as a tar, which keeps owners, modes and
+	// links. The export of a stored backup writes it into an archive file.
+	DumpTar(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	// SnapshotsMeta lists the same snapshots with the counters restic stores on
 	// them. It is separate from Snapshots so the listings the SPA receives keep

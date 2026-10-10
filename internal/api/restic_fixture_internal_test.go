@@ -33,7 +33,12 @@ func newResticFixture(t *testing.T) *resticFixture {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("restic not on PATH")
 	}
-	dir := t.TempDir()
+	// restic records a path with its links followed, and the mount root has to
+	// be spelled the way the snapshots spell what lies below it.
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	db, err := store.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open store: %v", err)
@@ -54,7 +59,7 @@ func newResticFixture(t *testing.T) *resticFixture {
 		t.Fatal(err)
 	}
 	root := filepath.ToSlash(dir)
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, HostSourceRoot: "/mnt"}
 	dock := &placementDocker{installed: map[string]bool{}}
 	svc := NewService(cfg, st, dock, &placementVirsh{}, restic.Restic{Bin: "restic", CacheDir: filepath.Join(dir, "cache")})
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)

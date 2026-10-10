@@ -490,6 +490,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/timeline/{key}", h.handleTimelineDelete)
 	mux.HandleFunc("POST /api/items/{domain}/{name}/tag", h.handleTagBackup)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/diff", h.handleDiffBackups)
+	mux.HandleFunc("POST /api/items/{domain}/{name}/export/preview", h.handleExportPreview)
+	mux.HandleFunc("POST /api/items/{domain}/{name}/export", h.handleExportBackup)
 	// ZFS endpoints (the zfs domain: a dataset and the datasets below it, read
 	// from one recursive snapshot).
 	mux.HandleFunc("GET /api/zfs", h.handleListZFSDatasets)

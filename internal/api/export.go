@@ -156,70 +156,72 @@ func (s *Service) ExportContainer(ctx context.Context, name string) (string, err
 	return dir, nil
 }
 
-// writeTarGz writes a gzip-compressed tar of srcPaths to dest and returns the
-// path written. Entry names are relative to the host mount root, so extracting
-// the archive at the host's /mnt restores the original layout. Symlinks, devices
-// and other non-regular files are skipped. With recipients set, the stream is
-// age-encrypted and written to dest+".age".
-func (s *Service) writeTarGz(dest string, srcPaths []string, recipients []age.Recipient) (finalPath string, err error) {
-	// The archive goes to a temp file that is renamed only on success, so a
-	// failed export never replaces a previous good one. When encrypting, the temp
-	// file already holds ciphertext.
-	final := dest
+// publishExport writes one file of an export through write and puts it in
+// place once write has succeeded, so a failed export leaves an earlier good one
+// alone. With recipients the file is age-encrypted and named dest+".age". It
+// returns the path written.
+func publishExport(dest string, recipients []age.Recipient, write func(io.Writer) error) (final string, err error) {
+	final = dest
 	if len(recipients) > 0 {
 		final = dest + ".age"
 	}
 	tmp := final + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // G304: tmp is built from a validated name under the operator-configured export dir
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // G304: a checked file name under the export folder the operator chose
 	if err != nil {
 		return "", err
 	}
 	defer func() {
 		if err != nil {
 			_ = f.Close()
-			_ = os.Remove(tmp) //nolint:gosec // G703: tmp = final+".tmp"; final is built from a validResourceName-checked name under the operator-configured export dir
+			_ = os.Remove(tmp) //nolint:gosec // G703: the temp file opened above
 		}
 	}()
-
 	var sink io.Writer = f
-	var ageW io.WriteCloser
+	var sealed io.WriteCloser
 	if len(recipients) > 0 {
-		ageW, err = ageseal.WrapWriter(f, recipients)
-		if err != nil {
+		if sealed, err = ageseal.WrapWriter(f, recipients); err != nil {
 			return "", err
 		}
-		sink = ageW
+		sink = sealed
 	}
-	gz := gzip.NewWriter(sink)
-	tw := tar.NewWriter(gz)
-
-	root := filepath.Clean(s.cfg.HostMountRoot)
-	for _, p := range dedupPaths(srcPaths) {
-		if err = addToTar(tw, root, p); err != nil {
-			return "", err
-		}
+	if err = write(sink); err != nil {
+		return "", err
 	}
-	// Close tar, gzip, age and file in that order so every buffer is flushed
+	// age and the file are closed in that order, so every buffer is flushed
 	// before the rename.
-	if err = tw.Close(); err != nil {
-		return "", err
-	}
-	if err = gz.Close(); err != nil {
-		return "", err
-	}
-	if ageW != nil {
-		if err = ageW.Close(); err != nil {
+	if sealed != nil {
+		if err = sealed.Close(); err != nil {
 			return "", err
 		}
 	}
 	if err = f.Close(); err != nil {
 		return "", err
 	}
-	err = os.Rename(tmp, final) //nolint:gosec // G703: tmp/final are built from a validResourceName-checked name under the operator-configured export dir
-	if err != nil {
+	if err = os.Rename(tmp, final); err != nil { //nolint:gosec // G703: both names derive from the checked file name above
 		return "", err
 	}
 	return final, nil
+}
+
+// writeTarGz writes a gzip-compressed tar of srcPaths to dest and returns the
+// path written. Entry names are relative to the host mount root, so extracting
+// the archive at the host's /mnt restores the original layout. Symlinks, devices
+// and other non-regular files are skipped.
+func (s *Service) writeTarGz(dest string, srcPaths []string, recipients []age.Recipient) (string, error) {
+	root := filepath.Clean(s.cfg.HostMountRoot)
+	return publishExport(dest, recipients, func(w io.Writer) error {
+		gz := gzip.NewWriter(w)
+		tw := tar.NewWriter(gz)
+		for _, p := range dedupPaths(srcPaths) {
+			if err := addToTar(tw, root, p); err != nil {
+				return err
+			}
+		}
+		if err := tw.Close(); err != nil {
+			return err
+		}
+		return gz.Close()
+	})
 }
 
 // dedupPaths cleans the source paths and drops duplicates and any path nested

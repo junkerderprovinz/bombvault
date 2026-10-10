@@ -586,8 +586,18 @@ func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, po
 // snapshot selector + path go after -- (arg-injection guard); callers also
 // validate the id against the repo's snapshot list.
 func DumpZipArgs(repo, snapshotID, subfolder string, m Mode) []string {
+	return dumpArchiveArgs(repo, "zip", snapshotID, subfolder, m)
+}
+
+// DumpTarArgs is DumpZipArgs for a tar, which keeps owners, modes, links and
+// extended attributes where a zip keeps names, times and contents.
+func DumpTarArgs(repo, snapshotID, subfolder string, m Mode) []string {
+	return dumpArchiveArgs(repo, "tar", snapshotID, subfolder, m)
+}
+
+func dumpArchiveArgs(repo, format, snapshotID, subfolder string, m Mode) []string {
 	args := repoFlag(repo)
-	args = append(args, "dump", "-a", "zip")
+	args = append(args, "dump", "-a", format)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
@@ -2409,7 +2419,17 @@ func (r Restic) RestoreVerify(ctx context.Context, repo, snapshotID string, file
 // restore hits on an Unraid /mnt/user (FUSE) share, and the file drops straight
 // into the Unraid USB creator.
 func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
-	args := DumpZipArgs(repo, snapshotID, subfolder, m)
+	return r.dumpArchive(ctx, DumpZipArgs(repo, snapshotID, subfolder, m), w, m)
+}
+
+// DumpTar streams the snapshot subtree rooted at subfolder as a tar into w.
+// restic writes the archive as it reads the repository, so nothing is unpacked
+// to disk on the way.
+func (r Restic) DumpTar(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, m Mode) error {
+	return r.dumpArchive(ctx, DumpTarArgs(repo, snapshotID, subfolder, m), w, m)
+}
+
+func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m Mode) error {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)

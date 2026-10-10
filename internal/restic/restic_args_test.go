@@ -636,6 +636,14 @@ func TestDumpZipArgsEncrypted(t *testing.T) {
 	}
 }
 
+func TestDumpTarArgsDifferFromTheZipInTheFormatAlone(t *testing.T) {
+	got := DumpTarArgs("/repo", "abc123", "/host/user", Mode{Encrypted: true})
+	want := []string{"-r", "/repo", "dump", "-a", "tar", "--", "abc123:/host/user", "/"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestDumpZipArgsNoPassword(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: false})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--insecure-no-password", "--", "abc123:/host/boot", "/"}

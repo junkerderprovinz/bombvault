@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
@@ -20,6 +22,9 @@ var itemDomains = []string{"containers", "vms", "files", "flash", "config", zfsD
 // and the repository they are in.
 type backupSet struct {
 	domain string
+	// name is what the entry is called: its container, VM or folder set name,
+	// its root dataset, or the domain for flash and config.
+	name string
 	// noun is what a refusal calls the entry, empty where the repository holds
 	// nothing else.
 	noun  string
@@ -42,7 +47,7 @@ func (s *Service) backupsOf(ctx context.Context, domain, key, source string) (ba
 	if err != nil {
 		return backupSet{}, fmt.Errorf("read settings: %w", err)
 	}
-	set := backupSet{domain: domain}
+	set := backupSet{domain: domain, name: key}
 	switch domain {
 	case "containers":
 		if !validResourceName(key) {
@@ -65,7 +70,7 @@ func (s *Service) backupsOf(ctx context.Context, domain, key, source string) (ba
 		if gErr != nil {
 			return set, errFileSetNotFound
 		}
-		set.noun = "folder set"
+		set.noun, set.name = "folder set", fs.Name
 		if set.repo, err = s.fileSetRepoFor(settings, fs, source); err == nil {
 			set.snaps, err = s.SnapshotsFileSet(ctx, key, source)
 		}
@@ -82,7 +87,7 @@ func (s *Service) backupsOf(ctx context.Context, domain, key, source string) (ba
 		if gErr != nil {
 			return set, fmt.Errorf("load dataset: %w", gErr)
 		}
-		set.noun, set.zfsRoot = "dataset", d.Dataset
+		set.noun, set.name, set.zfsRoot = "dataset", d.Dataset, d.Dataset
 		if set.repo, err = s.zfsDatasetRepoFor(settings, d, source); err == nil {
 			set.snaps, err = s.zfsItemSnapshots(ctx, d, source)
 		}
@@ -120,6 +125,46 @@ func (set backupSet) together(snap restic.Snapshot) []restic.Snapshot {
 		}
 	}
 	return out
+}
+
+// backups counts the backups of the set. A ZFS run is one, however many
+// datasets it wrote.
+func (set backupSet) backups() int {
+	if set.zfsRoot == "" {
+		return len(set.snaps)
+	}
+	runs := map[string]bool{}
+	for _, sn := range set.snaps {
+		if stamp, ok := zfsStampOf(sn); ok {
+			runs[stamp] = true
+		}
+	}
+	return len(runs)
+}
+
+// runTargetID is the id the runs of an entry carry. It is empty for a
+// container or VM without a stored row, which has no runs.
+func (s *Service) runTargetID(domain, key string) (string, error) {
+	var id string
+	var err error
+	switch domain {
+	case "containers":
+		var t store.Target
+		t, err = s.store.GetTargetByContainer(key)
+		id = t.ID
+	case "vms":
+		var vm store.VMTarget
+		vm, err = s.store.GetVMTargetByName(key)
+		id = vm.ID
+	case "files", zfsDomain:
+		return key, nil
+	default:
+		return domainRunTargetID(domain), nil
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	return id, err
 }
 
 // zfsStampOf is the host snapshot a ZFS member snapshot was read from.

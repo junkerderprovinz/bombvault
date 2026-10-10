@@ -5835,6 +5835,10 @@ func (f *fakeResticEngine) DumpZip(_ context.Context, repo, snapshotID, subfolde
 	return zw.Close()
 }
 
+func (f *fakeResticEngine) DumpTar(context.Context, string, string, string, io.Writer, restic.Mode) error {
+	return errors.New("fakeResticEngine does not dump a tar")
+}
+
 func (f *fakeResticEngine) Snapshots(ctx context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
 	_, hasDeadline := ctx.Deadline()
 	f.snapshotsCtxDeadline = append(f.snapshotsCtxDeadline, hasDeadline)
