@@ -42,6 +42,9 @@ export interface ProgressState {
   // and `percent` stays 0.
   stage?: ProgressStage;
   bytes?: number;
+  // Where a backup that stops its container or VM stands. A backup that stops
+  // nothing sends none.
+  step?: BackupStep;
   // A container backup whose restore point is written and that only starts
   // its containers again. A cancel can no longer undo it.
   committed?: boolean;
@@ -76,6 +79,14 @@ const COUNT_UNITS: CountUnit[] = ["packs", "snapshots", "indexes", "files", "ite
 export type ProgressStage = "dbdump" | "dbdumpsave" | "dbimport";
 
 const STAGES: ProgressStage[] = ["dbdump", "dbdumpsave", "dbimport"];
+
+export type BackupStep = "stop" | "read" | "start";
+
+const STEPS: BackupStep[] = ["stop", "read", "start"];
+
+/** The key of a pass over everything. Its entry counts the pass's items in
+ *  `done` and `total`. */
+export const EVERYTHING_KEY = "everything";
 
 export type ProgressMap = Record<string, ProgressState>;
 
@@ -168,6 +179,7 @@ export function progressEntry(ev: ProgressFrame, now: number): ProgressState {
     snapshotTotal: ev.snapshotTotal,
     stage: ev.stage,
     bytes: ev.bytes,
+    step: ev.step,
     committed: ev.committed,
     throttle: ev.throttle,
     failed: ev.failed,
@@ -240,6 +252,7 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
     snapshotTotal: typeof ev.snapshotTotal === "number" ? ev.snapshotTotal : undefined,
     stage: ev.stage && STAGES.includes(ev.stage) ? ev.stage : undefined,
     bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
+    step: ev.step && STEPS.includes(ev.step) ? ev.step : undefined,
     committed: ev.committed === true ? true : undefined,
     throttle: ev.throttle === "now" || ev.throttle === "next" ? ev.throttle : undefined,
     failed: typeof ev.failed === "number" && ev.failed > 0 ? ev.failed : undefined,

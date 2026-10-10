@@ -4,6 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
+import { useAttention } from "../lib/attention";
 import { en } from "../lib/i18n";
 import { FakeEventSource, location, resetServer, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
@@ -33,8 +34,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The card with the list the page hands it. */
+function Card() {
+  return <TargetsCard t={t} list={useAttention().locations} />;
+}
+
 async function renderCard() {
-  render(inApp(<TargetsCard t={t} />));
+  render(inApp(<Card />));
   await act(async () => {});
 }
 

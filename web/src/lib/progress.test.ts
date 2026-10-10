@@ -4,7 +4,7 @@
 // Node environment: importing ./progress only defines functions, the
 // EventSource is created inside them.
 import { describe, expect, it } from "vitest";
-import { anyActive, busyPhraseKey, offsiteRunProgress, parseProgressFrame } from "./progress";
+import { EVERYTHING_KEY, anyActive, busyPhraseKey, offsiteRunProgress, parseProgressFrame, progressEntry } from "./progress";
 import type { ProgressState } from "./progress";
 
 function state(over: Partial<ProgressState>): ProgressState {
@@ -114,6 +114,23 @@ describe("parseProgressFrame", () => {
   it("carries the mark of a backup that only starts its containers again", () => {
     expect(parseProgressFrame('{"key":"container:plex","phase":"backup","percent":100,"active":true,"committed":true}')?.committed).toBe(true);
     expect(parseProgressFrame('{"key":"container:plex","phase":"backup","percent":40,"active":true}')?.committed).toBeUndefined();
+  });
+
+  it("carries the step of a backup that stops what it backs up, and drops one it does not know", () => {
+    const frame = (step: string) => parseProgressFrame(`{"key":"container:plex","phase":"backup","percent":0,"active":true,"step":"${step}"}`);
+    expect(["stop", "read", "start"].map((step) => frame(step)?.step)).toEqual(["stop", "read", "start"]);
+    expect(frame("thaw")?.step).toBeUndefined();
+    expect(parseProgressFrame('{"key":"files:Fotos","phase":"backup","percent":40,"active":true}')?.step).toBeUndefined();
+  });
+
+  it("keeps the step in the state a frame leaves", () => {
+    const frame = parseProgressFrame('{"key":"vm:win","phase":"backup","percent":12,"active":true,"step":"read"}')!;
+    expect(progressEntry(frame, 0).step).toBe("read");
+  });
+
+  it("carries the count of a pass over everything", () => {
+    const frame = parseProgressFrame('{"key":"everything","phase":"backup","percent":21.4,"active":true,"done":3,"total":14,"unit":"items"}');
+    expect(frame).toMatchObject({ key: EVERYTHING_KEY, done: 3, total: 14, unit: "items" });
   });
 
   it("carries a stream holding an off-site copy back, and drops a state it does not know", () => {

@@ -3,12 +3,14 @@ import type { CSSProperties, ReactNode } from "react";
 import { KIND_LABEL, KindGlyph } from "../../components/backups/kinds";
 import { IconShieldOn } from "../../components/glyphs";
 import { IconCloud, IconSchedules } from "../../components/navGlyphs";
+import type { Run } from "../../lib/api";
 import { kindOfDomain } from "../../lib/backupEntry";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { lastBackupOf, type Tally } from "../../lib/protectionTally";
 import { formatRecent } from "../../lib/reltime";
+import { runTargetText } from "../../lib/runDisplay";
 import { VERDICT, type CheckTone, type Section } from "./protectionChecks";
-import { STATIONS, type Headline, type LiveRun, type Station } from "./headState";
+import { STATIONS, passShare, type Headline, type LiveRun, type Pass, type Station } from "./headState";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -114,19 +116,20 @@ function ProgressRing({ percent, onOpen, t }: { percent: number; onOpen: () => v
 
 /**
  * StationStrip names where the run stands. An entry that is read while it
- * runs skips the stop and the start, and those two stand back.
+ * runs skips the stop and the start, and those two stand back. Between two
+ * entries of a pass nothing stands at a station.
  */
-function StationStrip({ run, t }: { run: LiveRun; t: T }) {
-  const at = STATIONS.indexOf(run.station);
+function StationStrip({ run, t }: { run: LiveRun | null; t: T }) {
+  const at = run ? STATIONS.indexOf(run.station) : -1;
   return (
     <div
       role="img"
-      aria-label={t(STATION_LABEL[run.station])}
-      className="relative mt-3 grid max-w-[26rem] grid-cols-4 pt-[30px]"
+      aria-label={t(run ? STATION_LABEL[run.station] : "overview.head.preparing")}
+      className="relative grid max-w-[26rem] min-w-0 flex-1 grid-cols-4 pt-[30px]"
     >
       <span className="absolute inset-x-[12.5%] top-[33px] h-0.5 rounded-full bg-carbon-surface3" />
       {STATIONS.map((station, i) => {
-        const skipped = !run.stops && (station === "stop" || station === "start");
+        const skipped = run !== null && !run.stops && (station === "stop" || station === "start");
         return (
           <span
             key={station}
@@ -141,12 +144,38 @@ function StationStrip({ run, t }: { run: LiveRun; t: T }) {
           </span>
         );
       })}
-      <span
-        className="glim-station-mover absolute top-0 -ms-3 flex h-6 w-6 items-center justify-center rounded-[7px] bg-accent text-accentContrast [&_svg]:h-4 [&_svg]:w-4"
-        style={{ insetInlineStart: `${12.5 + 25 * at}%` }}
-      >
-        {run.kind ? <KindGlyph kind={run.kind} /> : <IconCloud />}
+      {run && (
+        <span
+          className="glim-station-mover absolute top-0 -ms-3 flex h-6 w-6 items-center justify-center rounded-[7px] bg-accent text-accentContrast [&_svg]:h-4 [&_svg]:w-4"
+          style={{ insetInlineStart: `${12.5 + 25 * at}%` }}
+        >
+          {run.kind ? <KindGlyph kind={run.kind} /> : <IconCloud />}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * DoneStack collects one mark per backup a pass has finished. The headline
+ * carries the count, so the stack is a picture only.
+ */
+function DoneStack({ runs, t }: { runs: Run[]; t: T }) {
+  return (
+    <div aria-hidden="true" className="flex flex-none flex-col items-center gap-1.5 text-xs text-carbon-textMuted max-md:text-[11px]">
+      <span data-testid="pass-marks" className="flex min-h-[22px] w-[50px] flex-wrap-reverse content-start gap-0.5">
+        {runs.map((run, i) => (
+          <i
+            key={run.id}
+            data-tone={run.status === "success" ? "ok" : "fail"}
+            title={runTargetText(t, run)}
+            className={`h-1.5 w-2 rounded-sm ${run.status === "success" ? "bg-statusOkSolid" : "bg-statusFailSolid"}${
+              i === runs.length - 1 ? " glim-mark-drop" : ""
+            }`}
+          />
+        ))}
       </span>
+      {t("overview.station.done")}
     </div>
   );
 }
@@ -171,25 +200,57 @@ export interface StatusHeadProps {
   /** The next scheduled backup in Unix seconds, null without one. */
   nextRun: number | null;
   run: LiveRun | null;
+  /** The pass over everything while it runs. */
+  pass: Pass | null;
+  /** The backups that pass has finished, oldest first. */
+  passRuns: Run[];
   onOpenRun: () => void;
 }
 
 /**
  * StatusHead says in one sentence how the backups are doing, beside the ring
  * that shows how much is protected. While a backup or an off-site copy runs it
- * follows that run instead.
+ * follows that run instead, and during a pass over everything it counts the
+ * entries the pass is through.
  */
-export function StatusHead({ t, lang, ready, failed, headline, needs, tally, sections, nextRun, run, onOpenRun }: StatusHeadProps) {
+export function StatusHead({
+  t,
+  lang,
+  ready,
+  failed,
+  headline,
+  needs,
+  tally,
+  sections,
+  nextRun,
+  run,
+  pass,
+  passRuns,
+  onOpenRun,
+}: StatusHeadProps) {
   const last = lastBackupOf(tally);
   const copying = run !== null && run.kind === null;
+  const busy = run !== null || pass !== null;
 
   let title: string;
   let line: ReactNode;
-  if (run) {
-    title = t(copying ? "overview.head.copying" : "overview.head.backingUp");
-    line = (
+  if (busy) {
+    title = pass
+      ? t("overview.head.pass").replace("{done}", String(pass.done)).replace("{total}", String(pass.total))
+      : t(copying ? "overview.head.copying" : "overview.head.backingUp");
+    const name = run && <b className="font-semibold text-carbon-text">{runName(run, t)}</b>;
+    const [before, after] = t("overview.head.passItem").split("{name}");
+    line = !run ? (
+      t("overview.head.preparing")
+    ) : pass && !copying ? (
       <>
-        <b className="font-semibold text-carbon-text">{runName(run, t)}</b>
+        {before}
+        {name}
+        {after}
+      </>
+    ) : (
+      <>
+        {name}
         {run.step && (
           <>
             {" · "}
@@ -216,15 +277,20 @@ export function StatusHead({ t, lang, ready, failed, headline, needs, tally, sec
 
   return (
     <div data-testid="status-head" className="flex items-center gap-4 md:gap-5">
-      {run ? (
-        <ProgressRing percent={run.percent} onOpen={onOpenRun} t={t} />
+      {busy ? (
+        <ProgressRing percent={pass ? passShare(pass, run) : (run?.percent ?? 0)} onOpen={onOpenRun} t={t} />
       ) : (
         <ProtectionRing sections={ready ? sections : []} needs={ready ? needs : 0} anyBackup={tally.ok > 0} t={t} />
       )}
       <div className="min-w-0 flex-1">
         <p className="text-xl font-semibold leading-tight text-carbon-text md:text-2xl">{title}</p>
         {line && <p className="mt-1 text-sm text-carbon-textSub">{line}</p>}
-        {run && <StationStrip run={run} t={t} />}
+        {busy && (
+          <div className="mt-3 flex items-end gap-4 max-md:gap-2.5">
+            <StationStrip run={run} t={t} />
+            {pass && <DoneStack runs={passRuns} t={t} />}
+          </div>
+        )}
       </div>
     </div>
   );

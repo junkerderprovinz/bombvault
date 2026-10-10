@@ -4,7 +4,7 @@
 // route layer. The storage locations come from storage.ts.
 import type { Page } from "@playwright/test";
 
-import { LOCATIONS } from "./storage";
+import { LOCATIONS, STORAGE_BOX } from "./storage";
 
 export const NOW = Math.floor(Date.now() / 1000);
 const HOUR = 3600;
@@ -264,6 +264,14 @@ export const EVERYTHING_RUN = run("run-everything", {
   snapshotId: "",
   bytes: 0,
 });
+
+/** The Storage Box with copies of the containers and the flash that have failed since yesterday. */
+export const FAILING_BOX = {
+  ...STORAGE_BOX,
+  sections: STORAGE_BOX.sections.map((section) =>
+    section.domain === "config" ? section : { ...section, lastCopy: { at: NOW - 2 * DAY, ok: false, failingSince: NOW - DAY } },
+  ),
+};
 
 export interface Staged {
   /** Whether the page asked the server to back up everything. */

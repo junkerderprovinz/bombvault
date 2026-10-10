@@ -3,7 +3,8 @@
 // the page reads is staged at the route layer (overview.ts).
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { DRILL_DETAIL, openOverview, settle, stageOverview } from "./overview";
+import { DRILL_DETAIL, EVERYTHING_RUN, FAILING_BOX, RUNS, openOverview, settle, stageOverview } from "./overview";
+import { LOCATIONS, STORAGE_BOX } from "./storage";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 const LAYOUT_KEY = "bombvault.dashboardLayout";
@@ -182,6 +183,88 @@ test.describe("the grid of the overview", () => {
     await expect(head.getByRole("img", { name: "Read" })).toBeVisible();
     await expect(head.getByRole("button", { name: "View run" })).toContainText("42");
     await expect(page.getByTestId("page-actions").getByRole("button", { name: "Backing up now" })).toBeVisible();
+  });
+
+  test("stands at the station the server names, whatever the percentage says", async ({ page }) => {
+    await page.route("**/api/progress", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ key: "container:plex", phase: "backup", percent: 42, active: true, step: "stop" })}
+
+`,
+      }),
+    );
+    await openOverview(page);
+
+    await expect(page.getByTestId("status-head").getByRole("img", { name: "Stop" })).toBeVisible();
+  });
+
+  test("counts through a pass over everything and stacks a mark for each finished entry", async ({ page }) => {
+    const done = [
+      { ...RUNS[2], id: "pass-plex", groupId: EVERYTHING_RUN.id },
+      { ...RUNS[1], id: "pass-paperless", groupId: EVERYTHING_RUN.id },
+    ];
+    await stageOverview(page, undefined, { lang: "en", runs: [...done, EVERYTHING_RUN, ...RUNS] });
+    const frames = [
+      { key: "everything", phase: "backup", percent: 14, active: true, done: 2, total: 14, unit: "items" },
+      { key: "vm:Windows 11", phase: "backup", percent: 50, active: true, step: "read" },
+    ];
+    await page.route("**/api/progress", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: frames.map((frame) => `data: ${JSON.stringify(frame)}
+
+`).join(""),
+      }),
+    );
+    await openOverview(page);
+
+    const head = page.getByTestId("status-head");
+    await expect(head).toContainText("Backing up now: 2 of 14");
+    await expect(head).toContainText("Backing up Windows 11");
+    await expect(head.getByRole("img", { name: "Read" })).toBeVisible();
+    // Two entries of fourteen and half of the third.
+    await expect(head.getByRole("button", { name: "View run" })).toContainText("18");
+    const marks = head.getByTestId("pass-marks").locator("i");
+    await expect(marks).toHaveCount(2);
+    expect(await marks.evaluateAll((all) => all.map((mark) => mark.getAttribute("data-tone")))).toEqual(["fail", "ok"]);
+    // The stack stands beside the stations, not under them.
+    const strip = await box(head.getByRole("img", { name: "Read" }));
+    const stack = await box(head.getByTestId("pass-marks"));
+    expect(stack.x).toBeGreaterThanOrEqual(strip.x + strip.width);
+    expect(stack.y + stack.height).toBeLessThanOrEqual(strip.y + strip.height);
+  });
+
+  test("lists a failed off-site copy and counts it until it is marked as seen", async ({ page }) => {
+    let acked: string[] | null = null;
+    const locations = () => LOCATIONS.map((location) => (location !== STORAGE_BOX ? location : acked ? STORAGE_BOX : FAILING_BOX));
+    await page.route(
+      (url) => url.pathname === "/api/storage/locations",
+      (route) => route.fulfill({ json: { ok: true, locations: locations() } }),
+    );
+    await page.route("**/api/runs/ack", (route) => {
+      acked = route.request().postDataJSON().copyTargets;
+      return route.fulfill({ json: { ok: true, count: 2 } });
+    });
+    await openOverview(page);
+
+    const count = (n: number) => page.getByLabel(`Things that need you: ${n}`).first();
+    await expect(page.getByTestId("status-head")).toContainText("6 things need you");
+    await expect(count(6)).toBeVisible();
+    const row = page.getByTestId("need-failed-copy");
+    await expect(row).toContainText("Off-site copy failed");
+    await expect(row).toContainText("Storage Box · Containers and Flash · since ");
+    await expect(row.getByRole("button", { name: "Try again" })).toBeVisible();
+    await expect(row.getByRole("link", { name: "Off-site copy failed" })).toHaveAttribute("href", "/storage/destination%3Abox");
+
+    await row.getByRole("button", { name: "Resolve" }).click();
+
+    await expect(row).toHaveCount(0);
+    expect(acked).toEqual(["t-box-containers", "t-box-flash"]);
+    await expect(page.getByTestId("status-head")).toContainText("5 things need you");
+    await expect(count(5)).toBeVisible();
   });
 });
 
