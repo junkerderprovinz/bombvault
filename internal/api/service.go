@@ -1938,6 +1938,12 @@ func isBuiltInOffsiteTarget(settings store.Settings, domain string, t store.Offs
 // finding that says the source lost its data keeps its own item's snapshots
 // until the user has seen it. An empty hold is never held.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
+	// The backup before a restore would count against the policy and could
+	// age out the very snapshot that restore is about to read. The entry's
+	// next backup applies the policy to both.
+	if isBeforeRestore(ctx) {
+		return
+	}
 	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
 	if !p.Any() {
 		return
@@ -5906,7 +5912,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// are restarted only after the recreate. Only for a running, opted-in container;
 	// otherwise nil, so the dependents restart right after the backup (unchanged).
 	var whileDepsStopped func()
-	if tg.UpdateAfterBackup && in.Running {
+	if tg.UpdateAfterBackup && in.Running && !isBeforeRestore(ctx) {
 		whileDepsStopped = func() { s.updateContainerAfterBackup(ctx, name, in, tg.ID) }
 	}
 
@@ -5925,7 +5931,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		dumper = &dbDumpAdapter{
 			svc: s, engine: step.engine, docker: s.docker, mode: mode,
 			container: name, containerID: in.ID, progressKey: pkey, startedAt: startedAt,
-			extraTags: s.directTags(settings, "containers", repo),
+			extraTags: withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx)),
 		}
 	}
 	excludes := append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...)
@@ -5968,7 +5974,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// --, positionals after) — never through a shell.
 		Excludes:     excludes,
 		Docker:       s.docker,
-		Restic:       &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "containers", repo)},
+		Restic:       &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx))},
 		Templates:    templatesAdapter{},
 		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
 		DBDump:       dumpPlan,
@@ -8168,9 +8174,21 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 		s.registerCancel(key, cancel)
 		defer s.unregisterCancel(key)
 		var rerr error
-		if plan.beside != nil {
+		switch {
+		case plan.beside != nil:
 			rerr = s.executeRestoreBeside(rctx, name, plan)
-		} else {
+		case opts.BackupFirst:
+			restored := plan.snapshotID
+			if plan.recreateOnly {
+				restored = ""
+			}
+			rerr = s.backupBeforeRestore(rctx, key, plan.targetID, restored, func(ctx context.Context) error {
+				return s.saveContainerState(ctx, name)
+			})
+			if rerr == nil {
+				rerr = s.executeRestore(rctx, name, plan, opts.LeaveStopped)
+			}
+		default:
 			rerr = s.executeRestore(rctx, name, plan, opts.LeaveStopped)
 		}
 		if rerr != nil {
@@ -12505,10 +12523,10 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		TargetID:         tg.ID,
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
-		Restic:           &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "vms", repo)},
+		Restic:           &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx))},
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
-		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
+		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx))},
 	}
 	// With changed-block backups on, a running VM with qcow2 disks is read
 	// through the libvirt backup API instead; anything else keeps the method.
@@ -12577,7 +12595,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	classic := true
 	if blockPlan.host != nil {
 		var res backup.VMBlocksResult
-		res, err = s.backupVMBlocks(bctx, name, tg, blockPlan, repo, mode, s.directTags(settings, "vms", repo), deps.FormerNames, deps.Runs)
+		res, err = s.backupVMBlocks(bctx, name, tg, blockPlan, repo, mode, withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx)), deps.FormerNames, deps.Runs)
 		var unavailable *backup.BlocksUnavailableError
 		if errors.As(err, &unavailable) {
 			log.Printf("api: backup vm: %q: %v; backing it up the classic way", name, err) //nolint:gosec // G706: %q-quoted
@@ -13542,9 +13560,17 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 		s.registerCancel(key, cancel)
 		defer s.unregisterCancel(key)
 		var rerr error
-		if plan.beside != nil {
+		switch {
+		case plan.beside != nil:
 			rerr = s.executeRestoreVMBeside(rctx, name, plan)
-		} else {
+		case opts.BackupFirst:
+			rerr = s.backupBeforeRestore(rctx, key, plan.targetID, plan.snapshotID, func(ctx context.Context) error {
+				return s.saveVMState(ctx, name)
+			})
+			if rerr == nil {
+				rerr = s.executeRestoreVM(rctx, name, plan, opts.LeaveStopped)
+			}
+		default:
 			rerr = s.executeRestoreVM(rctx, name, plan, opts.LeaveStopped)
 		}
 		if rerr != nil {
@@ -13985,7 +14011,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "files", repo)},
+		Restic: &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "files", repo), beforeRestoreTags(ctx))},
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
@@ -14708,6 +14734,15 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
+		if opts.BackupFirst && plan.inPlace != "" {
+			err := s.backupBeforeRestore(rctx, rkey, plan.setID, plan.snapshotID, func(ctx context.Context) error {
+				return s.saveFileSetState(ctx, plan.setID)
+			})
+			if err != nil {
+				log.Printf("api: restore file set: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
+				return
+			}
+		}
 		runID = s.beginRestoreRunForTarget(plan.setID)
 		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		undo := func() {}

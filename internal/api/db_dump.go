@@ -674,7 +674,7 @@ func dbDumpReasonText(reasonID, detail string) string {
 // with it, by the same alias rule that decides which volume snapshots it owns.
 func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name, targetID string) {
 	p := s.retentionPolicyForRef(settings, "containers", s.refFor(settings, "containers", repo))
-	if !p.Any() || s.primaryIsImmutable("containers", repo) {
+	if !p.Any() || s.primaryIsImmutable("containers", repo) || isBeforeRestore(ctx) {
 		return
 	}
 	hold := anomalyScope{Kind: anomalyScopeDump, ID: targetID}

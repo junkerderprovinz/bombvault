@@ -62,6 +62,9 @@ type RestorePlan struct {
 	// Beside is set for a restore next to the original and says where its
 	// copy goes.
 	Beside *BesidePlan `json:"beside,omitempty"`
+	// BackupFirst is set when the restore backs up the current state before
+	// it replaces it.
+	BackupFirst *BackupFirstPlan `json:"backupFirst,omitempty"`
 }
 
 // PlanFile is one host path of the plan and how the restore changes it.

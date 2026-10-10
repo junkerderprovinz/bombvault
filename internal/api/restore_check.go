@@ -67,6 +67,9 @@ type RestoreCheckRequest struct {
 	// Target is "beside" for a container, VM or file set restored next to the
 	// original, and empty for the restore its endpoint does otherwise.
 	Target string `json:"target"`
+	// BackupFirst asks a restore that replaces the original to back up the
+	// current state first.
+	BackupFirst bool `json:"backupFirst"`
 }
 
 // Check line ids, statuses and the reasons the page turns into sentences.
@@ -91,6 +94,7 @@ const (
 	reasonRefused       = "refused"
 	reasonParentMissing = "parent-missing"
 	reasonNoNetwork     = "network-missing"
+	reasonGone          = "gone"
 )
 
 // CheckLine is one line of the pre-flight checklist. Detail carries the
@@ -231,6 +235,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		s.definitionChanges(ctx, scope, &plan)
 		plan.Shared = s.sharedFolders(ctx, scope)
 		plan.Beside = scope.beside
+		plan.BackupFirst = s.backupFirstPlan(ctx, req, scope)
 		out.Plan = &plan
 	}
 	out.Ready = true
@@ -238,6 +243,9 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		if c.Status == lineFail {
 			out.Ready = false
 		}
+	}
+	if first := plan.BackupFirst; first != nil && first.Status == lineFail {
+		out.Ready = false
 	}
 	return out, nil
 }

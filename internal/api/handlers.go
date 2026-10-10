@@ -1425,6 +1425,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		LeaveStopped   bool   `json:"leaveStopped"`
 		WithoutRuntime bool   `json:"withoutRuntime"`
 		Target         string `json:"target"`
+		BackupFirst    bool   `json:"backupFirst"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -1443,7 +1444,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
-		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside,
+		LeaveStopped: body.LeaveStopped, WithoutRuntime: body.WithoutRuntime, Beside: beside, BackupFirst: body.BackupFirst,
 	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -5415,6 +5416,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		Confirm      bool   `json:"confirm"`
 		LeaveStopped bool   `json:"leaveStopped"`
 		Target       string `json:"target"`
+		BackupFirst  bool   `json:"backupFirst"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -5432,7 +5434,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), RestoreOptions{
-		LeaveStopped: body.LeaveStopped, Beside: beside,
+		LeaveStopped: body.LeaveStopped, Beside: beside, BackupFirst: body.BackupFirst,
 	})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -6433,10 +6435,11 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID string `json:"snapshotId"`
-		TargetPath string `json:"targetPath"`
-		Confirm    bool   `json:"confirm"`
-		Target     string `json:"target"`
+		SnapshotID  string `json:"snapshotId"`
+		TargetPath  string `json:"targetPath"`
+		Confirm     bool   `json:"confirm"`
+		Target      string `json:"target"`
+		BackupFirst bool   `json:"backupFirst"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -6446,7 +6449,7 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside})
+	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside, BackupFirst: body.BackupFirst})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return

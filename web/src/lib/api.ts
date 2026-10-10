@@ -930,7 +930,17 @@ export type RestoreTarget = "beside";
  *  its snapshot. */
 export interface RestoreOptions {
   target?: RestoreTarget;
+  /** Back up the current state before a restore replaces it, so the replace
+   *  can be undone. The backup is an ordinary one whose snapshot carries the
+   *  tag BEFORE_RESTORE_TAG. When it fails the restore does not start, and the
+   *  recorded restore run says why. Ignored by a restore that replaces
+   *  nothing. */
+  backupFirst?: boolean;
 }
+
+/** The tag of a backup that a restore took of the state it was about to
+ *  replace. The short id of the restored snapshot follows after a colon. */
+export const BEFORE_RESTORE_TAG = "bv:before-restore";
 
 /** The restore a check describes, with what that restore's own endpoint takes. */
 export interface RestoreCheckRequest {
@@ -964,6 +974,8 @@ export interface RestoreCheckRequest {
   network?: string;
   /** Kinds "container", "vm" and "fileSet" only. */
   target?: RestoreTarget;
+  /** Kinds "container", "vm" and "fileSet": see RestoreOptions. */
+  backupFirst?: boolean;
 }
 
 export type CheckLineId = "repository" | "key" | "snapshot" | "space" | "network";
@@ -1004,6 +1016,22 @@ export interface RestorePlan {
   shared: { path: string; containers: string[] }[];
   /** Set for a restore with target "beside". */
   beside?: BesidePlan;
+  /** Set when the check asked for a backup first and the restore replaces
+   *  the original. */
+  backupFirst?: BackupFirstPlan;
+}
+
+/** What becomes of the backup before a restore: "ok" when it will be taken,
+ *  "skip" with reason "gone" when the entry is not on the host and has no
+ *  state to save, "fail" with the server's words in detail when it cannot be
+ *  taken, which also makes the check not ready. seconds and bytes are what the
+ *  entry's last backup took and added, 0 when there is none. */
+export interface BackupFirstPlan {
+  status: "ok" | "skip" | "fail";
+  reason?: "gone";
+  detail?: string;
+  seconds: number;
+  bytes: number;
 }
 
 /** Where a restore next to the original puts its copy. Paths are host paths. */

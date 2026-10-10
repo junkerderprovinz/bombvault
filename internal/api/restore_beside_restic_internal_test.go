@@ -32,7 +32,7 @@ func (r *restoreRig) seedPlex(t *testing.T) (store.Target, string) {
 	if err := os.Symlink("library.db", filepath.Join(r.root, "appdata/plex/current")); err != nil {
 		t.Fatal(err)
 	}
-	in := model.Inspect{ID: "id-plex", Name: "/plex", Config: model.Config{Image: plexImage}}
+	in := model.Inspect{ID: "id-plex", Name: "/plex", Running: true, Config: model.Config{Image: plexImage}}
 	in.HostConfig.Binds = []string{"/mnt/user/appdata/plex:/config", "/mnt/user/media:/media"}
 	in.Mounts = []model.Mount{
 		{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
@@ -48,8 +48,6 @@ func (r *restoreRig) seedPlex(t *testing.T) (store.Target, string) {
 	if _, err := r.svc.Backup(context.Background(), "plex"); err != nil {
 		t.Fatalf("seed backup: %v", err)
 	}
-	in.Running = true
-	r.docker.containers["plex"] = in
 	tg, err := r.st.GetTargetByContainer("plex")
 	if err != nil {
 		t.Fatal(err)

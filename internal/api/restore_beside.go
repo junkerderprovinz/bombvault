@@ -41,6 +41,9 @@ type RestoreOptions struct {
 	WithoutRuntime bool
 	// Beside restores a copy next to the original instead of over it.
 	Beside bool
+	// BackupFirst backs up the current state before a restore replaces it. A
+	// failed backup keeps the restore from starting.
+	BackupFirst bool
 }
 
 // restoreTarget reads the target of a restore request: in place when it names
