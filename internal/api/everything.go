@@ -12,9 +12,11 @@ import (
 	"log"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -109,6 +111,9 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		return EverythingSummary{}, fmt.Errorf("backup everything: start run: %w", err)
 	}
 
+	pass := s.beginEverythingPass(ctx, runID, settings)
+	defer pass.end()
+
 	// A failing step, even one that fails before any item, is recorded in its
 	// own result and does not stop the others.
 	//
@@ -117,12 +122,12 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	// host without an Unraid flash would fail the parent run on every pass, and
 	// FlashEnabled=false on Unraid would still create a flash repository.
 	steps := []everythingStep{
-		{"containers", settings.ContainersEnabled, func() EverythingDomainResult { return s.everythingRunContainers(ctx, runID, settings) }},
-		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, runID, settings) }},
-		{"flash", settings.FlashEnabled, func() EverythingDomainResult { return s.everythingRunFlash(ctx, runID) }},
-		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, runID, settings) }},
-		{zfsDomain, settings.ZFSEnabled, func() EverythingDomainResult { return s.everythingRunZFS(ctx, runID, settings) }},
-		{"config", settings.ConfigEnabled, func() EverythingDomainResult { return s.everythingRunConfig(ctx, runID) }},
+		{"containers", settings.ContainersEnabled, func() EverythingDomainResult { return s.everythingRunContainers(ctx, pass, settings) }},
+		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, pass, settings) }},
+		{"flash", settings.FlashEnabled, func() EverythingDomainResult { return s.everythingRunFlash(ctx, pass) }},
+		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, pass, settings) }},
+		{zfsDomain, settings.ZFSEnabled, func() EverythingDomainResult { return s.everythingRunZFS(ctx, pass, settings) }},
+		{"config", settings.ConfigEnabled, func() EverythingDomainResult { return s.everythingRunConfig(ctx, pass) }},
 	}
 	results := make([]EverythingDomainResult, 0, len(steps))
 	for _, step := range steps {
@@ -220,6 +225,137 @@ func (s *Service) StartBackupEverything(ctx context.Context) (bool, error) {
 // Tests poll it to wait for StartBackupEverything's goroutine.
 func (s *Service) EverythingInProgress() bool { return s.everythingActive.Load() }
 
+// everythingPass counts the items of a pass for its progress entry. The total
+// is planned before the first domain runs. A domain that finds another number
+// of items when its turn comes, because some are held back or the list
+// changed meanwhile, corrects it.
+type everythingPass struct {
+	svc       *Service
+	runID     string
+	startedAt int64
+	planned   map[string]int
+	done      int
+	total     int
+}
+
+// beginEverythingPass counts what the enabled domains would back up right now
+// and publishes the pass with that total.
+func (s *Service) beginEverythingPass(ctx context.Context, runID string, settings store.Settings) *everythingPass {
+	p := &everythingPass{svc: s, runID: runID, startedAt: time.Now().Unix(), planned: map[string]int{}}
+	skip := everythingSkips(ctx)
+	if settings.ContainersEnabled {
+		targets, _ := s.everythingContainers(ctx, settings)
+		p.planned["containers"] = len(targets)
+	}
+	if settings.VMsEnabled {
+		vms, _ := s.everythingVMs(ctx, settings)
+		p.planned["vms"] = len(vms)
+	}
+	if settings.FlashEnabled && !skip[store.FlashTargetID] {
+		p.planned["flash"] = 1
+	}
+	if settings.FilesEnabled {
+		sets, _ := s.everythingFileSets(ctx, settings)
+		p.planned["files"] = len(sets)
+	}
+	if settings.ZFSEnabled {
+		items, _ := s.everythingZFSItems(ctx, settings)
+		p.planned[zfsDomain] = len(items)
+	}
+	if settings.ConfigEnabled && !skip[store.ConfigTargetID] {
+		p.planned["config"] = 1
+	}
+	for _, n := range p.planned {
+		p.total += n
+	}
+	p.publish(true)
+	return p
+}
+
+// settle replaces what was planned for a domain with the number of items its
+// step is about to back up.
+func (p *everythingPass) settle(domain string, items int) {
+	if items == p.planned[domain] {
+		return
+	}
+	p.total += items - p.planned[domain]
+	p.planned[domain] = items
+	p.publish(true)
+}
+
+// itemDone counts one item as attempted, whatever came of it.
+func (p *everythingPass) itemDone() {
+	p.done++
+	p.publish(true)
+}
+
+func (p *everythingPass) end() { p.publish(false) }
+
+func (p *everythingPass) publish(active bool) {
+	if p.svc.progress == nil {
+		return
+	}
+	percent := 100.0
+	if active {
+		percent = 0
+		if p.total > 0 {
+			percent = float64(p.done) / float64(p.total) * 100
+		}
+	}
+	p.svc.progress.Publish(progress.Event{
+		Key: progress.EverythingKey, Phase: "backup", Active: active, StartedAt: p.startedAt,
+		Percent: percent, Done: int64(p.done), Total: int64(p.total), Unit: "items",
+	})
+}
+
+// everythingContainers lists the containers a pass backs up: those in the
+// schedule without a schedule of their own that the caller did not ask to
+// leave out.
+func (s *Service) everythingContainers(ctx context.Context, settings store.Settings) ([]store.Target, error) {
+	targets, err := s.store.ListTargetsScheduleOrder()
+	if err != nil {
+		return nil, err
+	}
+	skip := everythingSkips(ctx)
+	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules)
+	return slices.DeleteFunc(targets, func(t store.Target) bool { return skip[t.ID] || !t.IncludeInSchedule }), nil
+}
+
+// everythingVMs is everythingContainers for VMs.
+func (s *Service) everythingVMs(ctx context.Context, settings store.Settings) ([]store.VMTarget, error) {
+	vms, err := s.store.ListVMTargets()
+	if err != nil {
+		return nil, err
+	}
+	store.SortVMTargetsForRun(vms)
+	skip := everythingSkips(ctx)
+	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules)
+	return slices.DeleteFunc(vms, func(v store.VMTarget) bool { return skip[v.ID] || !v.IncludeInSchedule }), nil
+}
+
+// everythingFileSets is everythingContainers for file sets, which are in a
+// pass while they are enabled.
+func (s *Service) everythingFileSets(ctx context.Context, settings store.Settings) ([]store.FileSet, error) {
+	sets, err := s.store.ListFileSets()
+	if err != nil {
+		return nil, err
+	}
+	skip := everythingSkips(ctx)
+	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules)
+	return slices.DeleteFunc(sets, func(fs store.FileSet) bool { return skip[fs.ID] || !fs.Enabled }), nil
+}
+
+// everythingZFSItems is everythingFileSets for ZFS items.
+func (s *Service) everythingZFSItems(ctx context.Context, settings store.Settings) ([]store.ZFSDataset, error) {
+	items, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return nil, err
+	}
+	skip := everythingSkips(ctx)
+	items = schedule.DomainRunZFSDatasets(items, settings.PerItemSchedules)
+	return slices.DeleteFunc(items, func(d store.ZFSDataset) bool { return skip[d.ID] || !d.Enabled }), nil
+}
+
 // everythingRunCtx is the context the multi-item steps pass to each item's
 // backup: stamped with runID, and with inline off-site replication and
 // per-item Healthchecks and message notifications suppressed, as in main.go's
@@ -241,17 +377,16 @@ func everythingRunCtx(ctx context.Context, runID string) context.Context {
 // the semantics of schedule.RunContainersJob: items on their own per-item
 // schedule are left out, ErrContainerNotInstalled is a skip, and any other
 // error is recorded while the loop goes on.
-func (s *Service) everythingRunContainers(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
+func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingPass, settings store.Settings) EverythingDomainResult {
 	const domain = "containers"
-	targets, err := s.store.ListTargetsScheduleOrder()
+	targets, err := s.everythingContainers(ctx, settings)
 	if err != nil {
+		pass.settle(domain, 0)
 		log.Printf("api: backup everything: containers: list targets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
-	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules)
-	skip := everythingSkips(ctx)
-	targets = slices.DeleteFunc(targets, func(t store.Target) bool { return skip[t.ID] })
 	targets = s.holdEverythingContainers(ctx, targets)
+	pass.settle(domain, len(targets))
 	if !schedule.DomainRunHasWork(targets) {
 		return everythingDomainIdle(domain)
 	}
@@ -259,17 +394,16 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 	// The items and the summary below share one tally, so a dump that failed in
 	// summary mode is named in the one message the round sends.
 	ctx = withDBDumpTally(ctx)
-	runCtx := everythingRunCtx(ctx, runID)
+	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)
 	var attempted, failed int
 	var failures []schedule.ItemFailure
 	for _, t := range targets {
-		if !t.IncludeInSchedule {
-			continue
-		}
 		attempted++
-		if _, err := s.Backup(runCtx, t.ContainerName); err != nil {
+		_, err := s.Backup(runCtx, t.ContainerName)
+		pass.itemDone()
+		if err != nil {
 			if errors.Is(err, backup.ErrContainerNotInstalled) || IsBackupCancelled(err) {
 				continue // a removed container is a skip and already recorded; a cancel is no failure
 			}
@@ -290,32 +424,28 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 
 // everythingRunVMs is everythingRunContainers for VMs, with the semantics of
 // schedule.RunVMsJob (ErrVMNotInstalled is a skip).
-func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
+func (s *Service) everythingRunVMs(ctx context.Context, pass *everythingPass, settings store.Settings) EverythingDomainResult {
 	const domain = "vms"
-	vms, err := s.store.ListVMTargets()
+	vms, err := s.everythingVMs(ctx, settings)
+	pass.settle(domain, len(vms))
 	if err != nil {
 		log.Printf("api: backup everything: vms: list vm targets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
-	store.SortVMTargetsForRun(vms)
-	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules)
-	skip := everythingSkips(ctx)
-	vms = slices.DeleteFunc(vms, func(v store.VMTarget) bool { return skip[v.ID] })
 	if !schedule.DomainRunHasVMWork(vms) {
 		return everythingDomainIdle(domain)
 	}
 
-	runCtx := everythingRunCtx(ctx, runID)
+	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)
 	var attempted, failed int
 	var failures []schedule.ItemFailure
 	for _, v := range vms {
-		if !v.IncludeInSchedule {
-			continue
-		}
 		attempted++
-		if _, err := s.BackupVM(runCtx, v.Name); err != nil {
+		_, err := s.BackupVM(runCtx, v.Name)
+		pass.itemDone()
+		if err != nil {
 			if errors.Is(err, backup.ErrVMNotInstalled) || IsBackupCancelled(err) {
 				continue // a VM gone from the host is a skip and already logged; a cancel is no failure
 			}
@@ -335,31 +465,28 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 // everythingRunFiles is everythingRunContainers for file sets, with the
 // semantics of schedule.RunFilesJob: only enabled sets run, and a set with a
 // schedule of its own is left to it.
-func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
+func (s *Service) everythingRunFiles(ctx context.Context, pass *everythingPass, settings store.Settings) EverythingDomainResult {
 	const domain = "files"
-	sets, err := s.store.ListFileSets()
+	sets, err := s.everythingFileSets(ctx, settings)
+	pass.settle(domain, len(sets))
 	if err != nil {
 		log.Printf("api: backup everything: files: list file sets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
-	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules)
-	skip := everythingSkips(ctx)
-	sets = slices.DeleteFunc(sets, func(fs store.FileSet) bool { return skip[fs.ID] })
 	if !schedule.DomainRunHasFileWork(sets) {
 		return everythingDomainIdle(domain)
 	}
 
-	runCtx := everythingRunCtx(ctx, runID)
+	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)
 	var attempted, failed int
 	var failures []schedule.ItemFailure
 	for _, fs := range sets {
-		if !fs.Enabled {
-			continue
-		}
 		attempted++
-		if _, err := s.BackupFileSet(runCtx, fs.ID); err != nil {
+		_, err := s.BackupFileSet(runCtx, fs.ID)
+		pass.itemDone()
+		if err != nil {
 			if IsBackupCancelled(err) {
 				continue
 			}
@@ -378,30 +505,27 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings
 
 // everythingRunZFS runs the eligible ZFS items like everythingRunFiles does for
 // file sets.
-func (s *Service) everythingRunZFS(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
-	items, err := s.store.ListZFSDatasets()
+func (s *Service) everythingRunZFS(ctx context.Context, pass *everythingPass, settings store.Settings) EverythingDomainResult {
+	items, err := s.everythingZFSItems(ctx, settings)
+	pass.settle(zfsDomain, len(items))
 	if err != nil {
 		log.Printf("api: backup everything: zfs: list items: %v", err)
 		return everythingDomainFault(zfsDomain, err)
 	}
-	items = schedule.DomainRunZFSDatasets(items, settings.PerItemSchedules)
-	skip := everythingSkips(ctx)
-	items = slices.DeleteFunc(items, func(d store.ZFSDataset) bool { return skip[d.ID] })
 	if !schedule.DomainRunHasZFSWork(items) {
 		return everythingDomainIdle(zfsDomain)
 	}
 
-	runCtx := everythingRunCtx(ctx, runID)
+	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, zfsDomain)
 	var attempted, failed int
 	var failures []schedule.ItemFailure
 	for _, d := range items {
-		if !d.Enabled {
-			continue
-		}
 		attempted++
-		if _, err := s.BackupZFSDataset(runCtx, d.ID); err != nil {
+		_, err := s.BackupZFSDataset(runCtx, d.ID)
+		pass.itemDone()
+		if err != nil {
 			if IsBackupCancelled(err) {
 				continue
 			}
@@ -420,12 +544,14 @@ func (s *Service) everythingRunZFS(ctx context.Context, runID string, settings s
 
 // everythingRunFlash runs the flash backup like SetFlashJob's closure. A single
 // run has nothing to aggregate, so only WithRunGroup is applied.
-func (s *Service) everythingRunFlash(ctx context.Context, runID string) EverythingDomainResult {
+func (s *Service) everythingRunFlash(ctx context.Context, pass *everythingPass) EverythingDomainResult {
 	const domain = "flash"
 	if everythingSkips(ctx)[store.FlashTargetID] {
 		return everythingDomainIdle(domain)
 	}
-	if _, err := s.BackupFlash(WithRunGroup(ctx, runID)); err != nil {
+	_, err := s.BackupFlash(WithRunGroup(ctx, pass.runID))
+	pass.itemDone()
+	if err != nil {
 		if IsBackupCancelled(err) {
 			return everythingDomainIdle(domain)
 		}
@@ -437,12 +563,14 @@ func (s *Service) everythingRunFlash(ctx context.Context, runID string) Everythi
 
 // everythingRunConfig runs BombVault's own config backup like SetConfigJob's
 // closure.
-func (s *Service) everythingRunConfig(ctx context.Context, runID string) EverythingDomainResult {
+func (s *Service) everythingRunConfig(ctx context.Context, pass *everythingPass) EverythingDomainResult {
 	const domain = "config"
 	if everythingSkips(ctx)[store.ConfigTargetID] {
 		return everythingDomainIdle(domain)
 	}
-	if _, err := s.BackupConfig(WithRunGroup(ctx, runID)); err != nil {
+	_, err := s.BackupConfig(WithRunGroup(ctx, pass.runID))
+	pass.itemDone()
+	if err != nil {
 		if IsBackupCancelled(err) {
 			return everythingDomainIdle(domain)
 		}

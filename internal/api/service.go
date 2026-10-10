@@ -1210,6 +1210,16 @@ func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false, StartedAt: startedAt})
 }
 
+// backupStep returns the hook a backup calls at each of its steps, which moves
+// the progress entry under key there.
+func (s *Service) backupStep(key string) func(string) {
+	return func(step string) {
+		if s.progress != nil {
+			s.progress.SetStep(key, step)
+		}
+	}
+}
+
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
 // derives the password from APP_KEY; OFF uses a password-less repo.
 func (s *Service) ModeFor(settings store.Settings) restic.Mode {
@@ -5981,6 +5991,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		DBDumper:     dumper,
 		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
 		Committed:    func() { s.commitBackup(pkey, startedAt) },
+		Step:         s.backupStep(pkey),
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
@@ -12563,6 +12574,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// stands down.
 	orchestrated = true
 	bctx, startedAt := s.progBegin(ctx, vkey, "backup")
+	deps.Step = s.backupStep(vkey)
 	var sum backup.Summary
 	classic := true
 	if blockPlan.host != nil {

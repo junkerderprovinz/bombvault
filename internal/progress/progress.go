@@ -94,11 +94,22 @@ func CountSinkFrom(ctx context.Context) CountSink {
 	return nil
 }
 
+// The steps of a backup that stops what it backs up, in the order it takes them.
+const (
+	StepStop  = "stop"
+	StepRead  = "read"
+	StepStart = "start"
+)
+
+// EverythingKey is the key of a "Backup Everything" pass. Its events count the
+// items of the pass in Done and Total.
+const EverythingKey = "everything"
+
 // Event is one progress update for a target. Key is "container:<name>",
-// "vm:<name>", "flash" or "offsite:<domain>"; Phase is "backup", "restore",
-// "replicate" or "maintenance". Active is false on the final event. StartedAt
-// is the Unix time the run began, repeated on every event including the final
-// one so a client can show the elapsed time; 0 means unknown.
+// "vm:<name>", "flash", "offsite:<domain>" or EverythingKey; Phase is "backup",
+// "restore", "replicate" or "maintenance". Active is false on the final event.
+// StartedAt is the Unix time the run began, repeated on every event including
+// the final one so a client can show the elapsed time; 0 means unknown.
 //
 // SnapshotIndex and SnapshotTotal are set only for off-site replication.
 // restic copy restarts its percentage for every snapshot, so Percent then
@@ -113,7 +124,11 @@ type Event struct {
 	// Stage names a step inside the phase that reports bytes instead of a
 	// percentage, such as a database dump inside a container backup. Empty for
 	// the phase itself.
-	Stage         string `json:"stage,omitempty"`
+	Stage string `json:"stage,omitempty"`
+	// Step is where a backup that stops its container or VM stands: StepStop,
+	// StepRead or StepStart. A backup that stops nothing has none. The copy that
+	// follows runs under its own "offsite:<domain>" key.
+	Step          string `json:"step,omitempty"`
 	Bytes         int64  `json:"bytes,omitempty"`
 	StartedAt     int64  `json:"startedAt,omitempty"`
 	SnapshotIndex int    `json:"snapshotIndex,omitempty"`
@@ -122,8 +137,9 @@ type Event struct {
 	// starts its containers again, so it can no longer be cancelled.
 	Committed bool `json:"committed,omitempty"`
 	// Done, Total and Unit are set for a check or prune while restic counts
-	// through a step, and Remaining is the estimated seconds left in that step,
-	// 0 while there is too little to go by.
+	// through a step, and for a "Backup Everything" pass, which counts its
+	// items. Remaining is the estimated seconds left in a step of a check or
+	// prune, 0 while there is too little to go by.
 	Done      int64  `json:"done,omitempty"`
 	Total     int64  `json:"total,omitempty"`
 	Unit      string `json:"unit,omitempty"`
@@ -177,11 +193,33 @@ func (s *Store) Subscribe() (<-chan Event, func()) {
 }
 
 // Publish fans an Event out to all subscribers and updates the per-key latest
-// state (cleared when the Event is terminal, Active=false).
+// state (cleared when the Event is terminal, Active=false). An active event
+// that names no step takes the one its key is in, so a percentage update does
+// not have to know it.
 func (s *Store) Publish(e Event) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.publish(e)
+}
+
+// SetStep moves the run under key to step and publishes its latest event with
+// it. A stage belongs to the step it ran in and does not carry over.
+func (s *Store) SetStep(key, step string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	e, ok := s.last[key]
+	if !ok {
+		return
+	}
+	e.Step, e.Stage, e.Bytes = step, "", 0
+	s.publish(e)
+}
+
+func (s *Store) publish(e Event) {
 	if e.Active {
+		if e.Step == "" {
+			e.Step = s.last[e.Key].Step
+		}
 		s.last[e.Key] = e
 	} else {
 		delete(s.last, e.Key)

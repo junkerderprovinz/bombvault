@@ -270,7 +270,8 @@ func TestEverythingPassDoesNotCountACancelledItemAsFailed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res := s.everythingRunZFS(context.Background(), "", settings)
+	pass := s.beginEverythingPass(context.Background(), "", settings)
+	res := s.everythingRunZFS(context.Background(), pass, settings)
 
 	if res.Failed != 0 || len(res.Failures) != 0 {
 		t.Fatalf("the cancelled item counts as failed: %+v", res)
