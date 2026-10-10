@@ -26,7 +26,8 @@ const zfsReplicaCleanTimeout = 2 * time.Minute
 
 // ZFSReplicaServerView is a ZFS server as the settings show it, with the
 // size of its pool as it last answered, the items replicating there and the
-// folder below Root their members land in.
+// folder below Root their members land in. Reachable is set in a list and
+// says whether the server answered while the list was read.
 type ZFSReplicaServerView struct {
 	ID        string   `json:"id"`
 	Name      string   `json:"name"`
@@ -40,6 +41,7 @@ type ZFSReplicaServerView struct {
 	SizeBytes int64    `json:"sizeBytes"`
 	UsedBy    []string `json:"usedBy"`
 	Folder    string   `json:"folder"`
+	Reachable bool     `json:"reachable"`
 }
 
 func (v ZFSReplicaServerView) fields() map[string]any {
@@ -105,8 +107,9 @@ func (s *Service) ListZFSReplicaServers(ctx context.Context) ([]ZFSReplicaServer
 	}
 	lctx, cancel := context.WithTimeout(ctx, zfsReplicaListTimeout)
 	defer cancel()
+	answered := make([]bool, len(servers))
 	var wg sync.WaitGroup
-	for _, srv := range servers {
+	for i, srv := range servers {
 		if !srv.Enabled {
 			continue
 		}
@@ -115,13 +118,17 @@ func (s *Service) ListZFSReplicaServers(ctx context.Context) ([]ZFSReplicaServer
 			defer wg.Done()
 			if _, err := s.probeZFSReplicaServer(lctx, srv); err != nil {
 				log.Printf("api: zfs replica: server %s did not report its pool: %v", srv.Name, err)
+				return
 			}
+			answered[i] = true
 		}()
 	}
 	wg.Wait()
 	out := make([]ZFSReplicaServerView, 0, len(servers))
-	for _, srv := range servers {
-		out = append(out, s.zfsReplicaServerView(srv, users[srv.ID]))
+	for i, srv := range servers {
+		view := s.zfsReplicaServerView(srv, users[srv.ID])
+		view.Reachable = answered[i]
+		out = append(out, view)
 	}
 	return out, nil
 }
