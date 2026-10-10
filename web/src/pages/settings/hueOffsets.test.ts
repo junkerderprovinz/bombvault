@@ -11,13 +11,14 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { HUE_OFFSET } from "../../components/Selector";
 import { CONTROL_AXES } from "../../lib/controls";
+import { pageFiles, pageSource } from "./pageSources.testsupport";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SETTINGS_DIR = HERE;
 const SETTINGS_PAGE = join(HERE, "..", "Settings.tsx");
 
 function settingsSources(): { file: string; text: string }[] {
-  const out = [{ file: "Settings.tsx", text: readFileSync(SETTINGS_PAGE, "utf8") }];
+  const out = [{ file: "Settings.tsx", text: readFileSync(SETTINGS_PAGE, "utf8") }, ...pageFiles()];
   for (const name of readdirSync(SETTINGS_DIR)) {
     if (!/\.tsx$/.test(name) || /\.test\.tsx$/.test(name)) continue;
     out.push({ file: name, text: readFileSync(join(SETTINGS_DIR, name), "utf8") });
@@ -40,31 +41,6 @@ function selectorElements(text: string): string[] {
       else if (c === ">" && depth === 0) {
         out.push(text.slice(i, j + 1));
         break;
-      }
-    }
-  }
-  return out;
-}
-
-/** The union of the JSX each `page === "X"` gate renders in Settings.tsx:
- *  every `{page === "X" && …}` block, brace-matched to its own close. The
- *  rail sits outside all gates, so it never appears in a region; the groups
- *  below add it explicitly (it shows on every page). */
-function settingsPageRegion(page: string): string {
-  const text = readFileSync(SETTINGS_PAGE, "utf8");
-  const needle = `{page === "${page}" &&`;
-  let out = "";
-  for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) {
-    let depth = 0;
-    for (let j = i; j < text.length; j++) {
-      const c = text[j];
-      if (c === "{") depth++;
-      else if (c === "}") {
-        depth--;
-        if (depth === 0) {
-          out += text.slice(i, j + 1);
-          break;
-        }
       }
     }
   }
@@ -116,12 +92,13 @@ describe("settings selectors", () => {
 // fails here instead of silently protecting the wrong screen.
 
 /** Which hued selectors each page can show simultaneously. The rail is
- *  implicit; it renders on every page and is added by the test. A selector
- *  whose offset is a span (the label rows, one per control axis) is listed
- *  once with `span: true` and expanded below. `marker` is what must appear
- *  inside the page's gated JSX for the claim to be true (the offset
- *  expression for a selector inline in Settings.tsx, the card tag for one
- *  carried by a card file; whose `cardFile` must then name that key). */
+ *  implicit: it sits outside every page, renders on all of them and is
+ *  added by the test. A selector whose offset is a span (the label rows, one
+ *  per control axis) is listed once with `span: true` and expanded below.
+ *  `marker` is what must appear in the page's source for the claim to be
+ *  true (the offset expression for a selector the page draws itself, the
+ *  card tag for one carried by a card file; whose `cardFile` must then name
+ *  that key). */
 const PAGE_GROUPS: {
   page: string;
   selectors: { key: keyof typeof HUE_OFFSET; span?: boolean; marker: string; cardFile?: string }[];
@@ -133,7 +110,7 @@ const PAGE_GROUPS: {
       { key: "shape", marker: "HUE_OFFSET.shape" },
       { key: "motion", marker: "HUE_OFFSET.motion" },
       // ThemeCard's own picker; its file carries the Selector and the Look
-      // region mounts it.
+      // page mounts it.
       { key: "theme", marker: "<ThemeCard", cardFile: "ThemeCard.tsx" },
     ],
   },
@@ -152,17 +129,17 @@ describe("per-page palette starts", () => {
     const offenders: string[] = [];
     const sources = new Map(settingsSources().map(({ file, text }) => [file, text]));
     for (const group of PAGE_GROUPS) {
-      const region = settingsPageRegion(group.page);
+      const region = pageSource(group.page);
       if (region.length === 0) {
-        offenders.push(`page "${group.page}": no {page === "…"} gate found in Settings.tsx`);
+        offenders.push(`page "${group.page}": nothing draws it`);
         continue;
       }
       for (const sel of group.selectors) {
-        // The card/selector the group claims must actually render inside this
-        // page's gated JSX; a card moving pages must fail here, not silently
-        // protect the wrong screen.
+        // The card or selector the group claims has to be drawn by this
+        // page, so a card that moves pages fails here instead of leaving the
+        // group to protect the wrong screen.
         if (!region.includes(sel.marker)) {
-          offenders.push(`page "${group.page}": ${sel.marker} not found in its gated region`);
+          offenders.push(`page "${group.page}": ${sel.marker} not found in its source`);
         }
         // And the claimed key must be the one the selector really reads.
         if (sel.cardFile) {

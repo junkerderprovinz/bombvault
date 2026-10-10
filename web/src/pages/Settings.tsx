@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ApiError,
   backupEverythingNow,
-  downloadRecoveryKit,
   getAuth,
   patchFileSet,
   patchZFSDataset,
@@ -13,25 +12,17 @@ import {
   testOffsite,
 } from "../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
-import { alsoDirectText } from "../lib/directRepo";
-import { FolderBrowser } from "../components/FolderBrowser";
 import { AccentCard, IconResetArrow } from "./settings/AccentCard";
 import { PasskeyCard } from "./settings/PasskeyCard";
 import { TwoFactorCard } from "./settings/TwoFactorCard";
-import { LanguageCard } from "./settings/LanguageCard";
-import { ReposCard } from "./settings/ReposCard";
-import { PlacementDefaultsCard } from "./settings/PlacementDefaultsCard";
 import { ThemeCard } from "./settings/ThemeCard";
 import { RestoreChecksSection } from "./settings/RestoreChecksSection";
 import { AnomalyCard } from "./settings/AnomalyCard";
 import { useAnomalySummary } from "../lib/useAnomalies";
-import { RcloneCard } from "./settings/RcloneCard";
-import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { DestinationsCard } from "./settings/DestinationsCard";
 import { OffsiteLocationInput } from "../components/placement/OffsiteLocationInput";
-import { PathModeSwitch } from "../components/PathModeSwitch";
 import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
 import {
   CONTROL_AXES,
@@ -43,7 +34,6 @@ import {
 } from "../lib/controls";
 import { labelModeChanged } from "../lib/useLabelMode";
 import { InfoBubble } from "../components/InfoBubble";
-import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { PageTitle } from "../components/PageTitle";
 import { StreamingCard } from "./settings/StreamingCard";
@@ -66,11 +56,10 @@ import { Button } from "../components/Button";
 import { ScheduleRow, scheduleStatus } from "../components/ScheduleBadge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
-import type { Settings, Container, VM, FileSetView, RegistryAuthEntry, ZFSDatasetView } from "../lib/api";
+import type { Settings, Container, VM, FileSetView, ZFSDatasetView } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useToast } from "../lib/toast";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, tLtr, withLtrFragments } from "../lib/ltrFragments";
-import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
@@ -99,34 +88,26 @@ import {
   writeOrder,
   type SettingsPageId,
 } from "./settings/settingsPages";
-import {
-  IconAdd,
-  IconBackupNow,
-  IconDownload,
-  IconTrash,
-  IconCheck,
-  IconSync,
-  IconGear,
-  IconClose,
-} from "../components/Sidebar";
+import { IconBackupNow, IconCheck, IconSync, IconGear, IconClose } from "../components/Sidebar";
 import { NotifyCard } from "./settings/NotifyCard";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
-import { RetentionRulesCard } from "./settings/OwnRetentionCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
-import { FleetSettingsCard } from "./settings/FleetSettingsCard";
-import { PairingSection } from "./settings/pairing/PairingSection";
-import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
-import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
-import { AboutCard } from "./settings/AboutCard";
 import { DashboardWidgetCard } from "./settings/DashboardWidgetCard";
-import { ParleyPortCard, PhoneAppCard, WidgetAppCard } from "./settings/AppsCards";
 import { McpServerCard } from "./settings/McpServerCard";
 import { ApiTokensCard } from "./settings/ApiTokensCard";
 import { HomeAssistantCard } from "./settings/HomeAssistantCard";
 import { NetworkCard } from "./settings/NetworkCard";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { SettingsStoreContext, useSettingsStore } from "./settings/settingsStore";
+import { GeneralPage } from "./settings/pages/GeneralPage";
+import { StoragePage } from "./settings/pages/StoragePage";
+import { RetentionPage } from "./settings/pages/RetentionPage";
+import { ContainersPage } from "./settings/pages/ContainersPage";
+import { CloudPage } from "./settings/pages/CloudPage";
+import { PairingPage } from "./settings/pages/PairingPage";
+import { AppsPage } from "./settings/pages/AppsPage";
+import { SystemPage } from "./settings/pages/SystemPage";
 
 // PaletteSwatch is one editable colour in the rainbow palette editor. It opens
 // the shared colour popover instead of a native colour input, which would open
@@ -826,66 +807,22 @@ export function EverythingSection({
   );
 }
 
-// keepRegistryAuths is what the server should store for the registries card:
-// untouched blank rows dropped, and a freshly typed token marked stored so the
-// field shows the kept placeholder once the save lands. `auths` and `rowIds`
-// are index-aligned. It answers for the payload only: applied to the visible
-// list, it would delete a row the user has just added whenever a save from
-// another field lands.
-export function keepRegistryAuths(
-  auths: RegistryAuthEntry[],
-  rowIds: string[]
-): { auths: RegistryAuthEntry[]; rowIds: string[] } {
-  const kept = auths
-    .map((a, idx) => ({ a, idx }))
-    .filter(
-      ({ a }) =>
-        a.host.trim() !== "" ||
-        a.username.trim() !== "" ||
-        a.token.trim() !== ""
-    );
-  return {
-    auths: kept.map(({ a }) => ({
-      ...a,
-      tokenSet: a.tokenSet || a.token.trim() !== "",
-    })),
-    rowIds: kept.map(({ idx }) => rowIds[idx]),
-  };
-}
-
-// markRegistryTokensStored is what the screen shows once a registry save lands:
-// every row, including a blank one just added, with a freshly typed token
-// marked stored. It is keepRegistryAuths without the filter, kept as a separate
-// function because what gets persisted and what stays under the cursor are
-// different questions. A blank row leaves the screen when the user removes it
-// or reloads, since nothing persisted it.
-export function markRegistryTokensStored(
-  auths: RegistryAuthEntry[]
-): RegistryAuthEntry[] {
-  return auths.map((a) => ({
-    ...a,
-    tokenSet: a.tokenSet || a.token.trim() !== "",
-  }));
-}
-
 // bv-convention-exception: page-uses-page-shell: the rail stands beside the
 // page, and the content column next to it carries PAGE_SHELL_RESPONSIVE.
 export function SettingsPage() {
   const { t } = useT();
   const { summary: anomalySummary } = useAnomalySummary();
   const { advanced } = useAdvanced();
-  const { push, quiet, setQuiet } = useToast();
+  const { push } = useToast();
   const store = useSettingsStore();
   const {
     settings,
     setSettings,
     savedBaseline,
     loadError,
-    hostMountRoot,
     platformKind,
     confirmDialog,
     allTargets,
-    fieldDirects,
     authEnabled,
     setAuthEnabled,
     totpEnabled,
@@ -893,8 +830,6 @@ export function SettingsPage() {
     recoveryLeft,
     setRecoveryLeft,
     minPasswordLen,
-    registryRowIds,
-    setRegistryRowIds,
     containers,
     vms,
     fileSets,
@@ -902,18 +837,8 @@ export function SettingsPage() {
     loadFileSets,
     loadZFSItems,
     save,
-    saveOffsiteRetention,
     debouncedSave,
-    cancelDebounce,
-    applyImportedSettings,
     fieldPulse,
-    toggleDomainEnabled,
-    toggleDbDumps,
-    domainToggleBusy,
-    domainToggleShake,
-    autoSaveField,
-    mergedFieldBusy,
-    mergedFieldShake,
     autoSaveToggle,
     fieldBusy,
     fieldShake,
@@ -968,13 +893,6 @@ export function SettingsPage() {
 
   const revealMetricsToken = useReveal();
 
-  // Reveal state for the registry token rows. A hook cannot be called inside
-  // the rows' .map(), so this is one record at the top level, keyed by a stable
-  // row id rather than the array index: after a removal, an index key would
-  // show the row that slides into the slot already revealed, exposing a token
-  // nobody asked to see.
-  const [registryTokenVisible, setRegistryTokenVisible] = useState<Record<string, boolean>>({});
-
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
   // The hidden leaf follows the storm below: found and counted in this
   // screen's state, never in storage, so it is offered only while chosen or
@@ -1028,40 +946,10 @@ export function SettingsPage() {
     if (discoTap(discoClicks.current, on, { now: Date.now() })) setDiscoFound(true);
   }
 
-  // Save state per card. Only the setters are used, as the callbacks that
-  // autoSaveField and debouncedSave take.
-  const [, setEncSaveState] = useState<SaveState>("idle");
-  const [, setEncSaveError] = useState<string | null>(null);
-  // Recovery-kit download refusal (such as the fail-closed 403 "set a login
-  // password" answer when auth is off), shown next to the download button.
-  const [kitError, setKitError] = useState<string | null>(null);
-
-  const [, setPathSaveState] = useState<SaveState>("idle");
-  const [, setPathSaveError] = useState<string | null>(null);
-  const [, setExportEncSaveState] = useState<SaveState>("idle");
-  const [, setExportEncSaveError] = useState<string | null>(null);
-
   const [, setOffsiteSaveState] = useState<SaveState>("idle");
   const [, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
   const [offsiteWizard, setOffsiteWizard] = useState<OffsiteDomain | null>(null);
-
-  const [, setRetSaveState] = useState<SaveState>("idle");
-  const [, setRetSaveError] = useState<string | null>(null);
-
-  // Image cleanup, Unraid update-status reconciliation and registries (#56,
-  // #116, #106).
-  const [, setPruneSaveState] = useState<SaveState>("idle");
-  const [, setPruneSaveError] = useState<string | null>(null);
-  const [, setReconcileSaveState] = useState<SaveState>("idle");
-  const [, setReconcileSaveError] = useState<string | null>(null);
-  const [, setRegistrySaveState] = useState<SaveState>("idle");
-  const [, setRegistrySaveError] = useState<string | null>(null);
-
-  const [, setCacheSaveState] = useState<SaveState>("idle");
-  const [, setCacheSaveError] = useState<string | null>(null);
-  const [, setCoresSaveState] = useState<SaveState>("idle");
-  const [, setCoresSaveError] = useState<string | null>(null);
 
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
@@ -1080,28 +968,6 @@ export function SettingsPage() {
   // autoSaveToggle, which puts the old value back when the save is refused.
   const [, setAnomalySaveState] = useState<SaveState>("idle");
   const [, setAnomalySaveError] = useState<string | null>(null);
-
-  // saveRegistries is the registries' save, shared by the debounced field edit
-  // and the immediate row removal. It takes the (auths, rowIds) pair its callers
-  // have just computed rather than reading state, which would be one render
-  // stale.
-  //
-  // The PUT carries the trimmed list (keepRegistryAuths) while the screen keeps
-  // every row (markRegistryTokensStored), so a blank row just added survives a
-  // save triggered by typing in another row. The screen's half goes to save()
-  // as `echo` and is applied to the live list when the response lands: a list
-  // frozen at send time would delete rows added and revert characters typed
-  // during the round trip, and leave registryRowIds out of step with the rows
-  // on screen.
-  function saveRegistries(nextAuths: RegistryAuthEntry[], nextRowIds: string[]) {
-    const { auths } = keepRegistryAuths(nextAuths, nextRowIds);
-    void save(
-      { registryAuths: auths },
-      setRegistrySaveState,
-      setRegistrySaveError,
-      (live) => ({ registryAuths: markRegistryTokensStored(live.registryAuths) })
-    );
-  }
 
   // A hash such as /settings/integrity#anomalies names a card below the fold,
   // or a field that should take the cursor, and a search result names a card
@@ -1224,7 +1090,6 @@ export function SettingsPage() {
   // Only the current page's gates run, so the count starts at 0 on every page.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
-  const pairingUsed = settings.receiverEnabled || settings.fleetEnabled || settings.pullEnabled;
 
   return (
     <div className="flex flex-1 gap-3 md:gap-10">
@@ -1406,638 +1271,13 @@ export function SettingsPage() {
         </>
       )}
 
-      {page === "general" && (
-      <Card title={t("settings.domains")} hint={t("settings.domainsHint")} hueIndex={nextHue()}>
-        {/* Each row saves on click through toggleDomainEnabled. `disabled`
-            covers the row's own request in flight, so a second click cannot
-            race the first. */}
-        <ToggleRow
-          label={t("settings.containersEnabled")}
-          hint={t("settings.containersEnabledHint")}
-          checked={settings.containersEnabled}
-          onChange={(v) => void toggleDomainEnabled("containersEnabled", v)}
-          disabled={domainToggleBusy.containersEnabled}
-          shakeNonce={domainToggleShake.containersEnabled}
-          pulseNonce={fieldPulse.containersEnabled}
-          hueIndex={0}
-        />
-        {/* Indented under Containers: it only acts on containers, and reads as
-            a sub-option of that domain rather than a domain of its own. */}
-        <div className="ps-6">
-          <ToggleRow
-            label={t("settings.dbDumps")}
-            hint={t("settings.dbDumpsHint")}
-            checked={settings.dbDumpsEnabled}
-            onChange={(v) => void toggleDbDumps(v)}
-            disabled={domainToggleBusy.dbDumpsEnabled}
-            shakeNonce={domainToggleShake.dbDumpsEnabled}
-            pulseNonce={fieldPulse.dbDumpsEnabled}
-          />
-        </div>
-        <ToggleRow
-          label={t("settings.vmsEnabled")}
-          hint={t("settings.vmsEnabledHint")}
-          checked={settings.vmsEnabled}
-          onChange={(v) => void toggleDomainEnabled("vmsEnabled", v)}
-          disabled={domainToggleBusy.vmsEnabled}
-          shakeNonce={domainToggleShake.vmsEnabled}
-          pulseNonce={fieldPulse.vmsEnabled}
-          hueIndex={1}
-        />
-        <ToggleRow
-          label={t("settings.flashEnabled")}
-          hint={tLtr(t, "settings.flashEnabledHint")}
-          checked={settings.flashEnabled}
-          onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
-          disabled={domainToggleBusy.flashEnabled}
-          shakeNonce={domainToggleShake.flashEnabled}
-          pulseNonce={fieldPulse.flashEnabled}
-          hueIndex={2}
-        />
-        <ToggleRow
-          label={t("settings.filesEnabled")}
-          hint={t("settings.filesEnabledHint")}
-          checked={settings.filesEnabled}
-          onChange={(v) => void toggleDomainEnabled("filesEnabled", v)}
-          disabled={domainToggleBusy.filesEnabled}
-          shakeNonce={domainToggleShake.filesEnabled}
-          pulseNonce={fieldPulse.filesEnabled}
-          hueIndex={3}
-        />
-        <ToggleRow
-          label={t("settings.zfsEnabled")}
-          hint={t("settings.zfsEnabledHint")}
-          checked={settings.zfsEnabled}
-          onChange={(v) => void toggleDomainEnabled("zfsEnabled", v)}
-          disabled={domainToggleBusy.zfsEnabled}
-          shakeNonce={domainToggleShake.zfsEnabled}
-          pulseNonce={fieldPulse.zfsEnabled}
-          hueIndex={4}
-        />
-        <ToggleRow
-          label={t("settings.configEnabled")}
-          hint={t("settings.configEnabledHint")}
-          checked={settings.configEnabled}
-          onChange={(v) => void toggleDomainEnabled("configEnabled", v)}
-          disabled={domainToggleBusy.configEnabled}
-          shakeNonce={domainToggleShake.configEnabled}
-          pulseNonce={fieldPulse.configEnabled}
-          hueIndex={5}
-        />
-        <ToggleRow
-          label={t("receiver.title")}
-          hint={t("settings.receiverEnabledHint")}
-          checked={settings.receiverEnabled}
-          onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
-          disabled={domainToggleBusy.receiverEnabled}
-          shakeNonce={domainToggleShake.receiverEnabled}
-          pulseNonce={fieldPulse.receiverEnabled}
-          hueIndex={6}
-        />
-        {/* Named after Instances, not the Fleet page it shows: "Flotte" alone
-            does not say what this domain is. */}
-        <ToggleRow
-          label={t("instances.title")}
-          hint={t("settings.fleetEnabledHint")}
-          checked={settings.fleetEnabled}
-          onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
-          disabled={domainToggleBusy.fleetEnabled}
-          shakeNonce={domainToggleShake.fleetEnabled}
-          pulseNonce={fieldPulse.fleetEnabled}
-          hueIndex={7}
-        />
-        {/* Pull (#227) is the only one of the three that writes: it fetches
-            another instance's backups into this box's own repository. */}
-        <ToggleRow
-          label={t("pull.title")}
-          hint={t("settings.pullEnabledHint")}
-          checked={settings.pullEnabled}
-          onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}
-          disabled={domainToggleBusy.pullEnabled}
-          shakeNonce={domainToggleShake.pullEnabled}
-          pulseNonce={fieldPulse.pullEnabled}
-          hueIndex={8}
-        />
-      </Card>
-      )}
+      {page === "general" && <GeneralPage />}
 
-      {/* Above the domain paths: these are the places an individual
-          container, VM or folder set can be pointed at instead of the domain
-          path below, so the more specific answer is read first. */}
-      {page === "storage" && <ReposCard hueIndex={nextHue()} />}
-      {page === "storage" && <PlacementDefaultsCard hueIndex={nextHue()} />}
+      {page === "storage" && <StoragePage />}
 
-      {page === "storage" && (
-      <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
-        {/* Each field saves itself, debounced per field name like the
-            schedules page's cadence fields. The six PathModeSwitch rows are
-            one group with their own 0-based hueIndex, separate from this
-            card's heading. */}
-        <PathModeSwitch
-          label={t("settings.containersPath")}
-          domain="containers"
-          value={settings.containersPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, containersPath: v } : prev);
-            debouncedSave("containersPath", () =>
-              void save({ containersPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={0}
-        />
-        <PathModeSwitch
-          label={t("settings.vmsPath")}
-          domain="vms"
-          value={settings.vmsPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev);
-            debouncedSave("vmsPath", () =>
-              void save({ vmsPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={1}
-        />
-        <PathModeSwitch
-          label={t("settings.flashPath")}
-          domain="flash"
-          value={settings.flashPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, flashPath: v } : prev);
-            debouncedSave("flashPath", () =>
-              void save({ flashPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={2}
-        />
-        <PathModeSwitch
-          label={t("settings.configPath")}
-          domain="config"
-          value={settings.configPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, configPath: v } : prev);
-            debouncedSave("configPath", () =>
-              void save({ configPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={3}
-        />
-        <PathModeSwitch
-          label={t("settings.filesPath")}
-          domain="files"
-          value={settings.filesPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, filesPath: v } : prev);
-            debouncedSave("filesPath", () =>
-              void save({ filesPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={4}
-        />
-        <PathModeSwitch
-          label={t("settings.zfsPath")}
-          domain="zfs"
-          value={settings.zfsPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, zfsPath: v } : prev);
-            debouncedSave("zfsPath", () =>
-              void save({ zfsPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={5}
-        />
-        <FolderBrowser
-          label={t("settings.restoreFolder")}
-          value={settings.restoreFolder}
-          hostMountRoot={hostMountRoot}
-          hint={t("settings.restoreFolderHint")}
-          hueIndex={6}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev);
-            debouncedSave("restoreFolder", () =>
-              void save({ restoreFolder: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-        />
-      </Card>
-      )}
+      {page === "retention" && <RetentionPage />}
 
-      {page === "retention" &&
-        (["local", "offsite"] as const).map((scope) => (
-          <RetentionRulesCard
-            key={scope}
-            scope={scope}
-            settings={settings}
-            setSettings={setSettings}
-            save={(patch) => (scope === "offsite" ? saveOffsiteRetention(patch) : save(patch, setRetSaveState, setRetSaveError))}
-            debouncedSave={debouncedSave}
-            cancelDebounce={cancelDebounce}
-            t={t}
-            hueIndex={nextHue()}
-          >
-            {scope === "offsite" &&
-              fieldDirects.map((u) => (
-                <p key={u.target.id} className="text-xs text-carbon-textMuted">
-                  {alsoDirectText(t, u)}
-                </p>
-              ))}
-          </RetentionRulesCard>
-        ))}
-
-      {/* The answer the numbers above never give: which restore points the
-          next run is about to delete, locally and off-site. Advanced-only,
-          because it costs one restic call per item per repository and is a
-          question you ask on purpose rather than one a page should poll. */}
-      {page === "retention" && advanced && (
-      <Card title={t("restore.preview")} hueIndex={nextHue()}>
-        <div className="flex items-center gap-1 text-sm text-carbon-text">
-          {t("retentionPreview.title")}
-          <InfoBubble tip={t("retentionPreview.hint")} />
-        </div>
-        <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
-      </Card>
-      )}
-
-      {/* Image cleanup and Unraid's update status both feed the post-backup */}
-      {/* update (#56, #116), so they share a card. */}
-      {page === "containers" && (
-      <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("settings.pruneImageAfterUpdate")}
-          hint={t("settings.pruneImageAfterUpdateHint")}
-          checked={settings.pruneImageAfterUpdate}
-          onChange={(v) => void autoSaveField("pruneImageAfterUpdate", v, setPruneSaveState, setPruneSaveError)}
-          disabled={mergedFieldBusy.pruneImageAfterUpdate}
-          shakeNonce={mergedFieldShake.pruneImageAfterUpdate}
-          pulseNonce={fieldPulse.pruneImageAfterUpdate}
-        />
-        <ToggleRow
-          label={t("settings.reconcileUnraidStatus")}
-          hint={t("settings.reconcileUnraidStatusHint")}
-          checked={settings.reconcileUnraidUpdateStatus}
-          onChange={(v) => void autoSaveField("reconcileUnraidUpdateStatus", v, setReconcileSaveState, setReconcileSaveError)}
-          disabled={mergedFieldBusy.reconcileUnraidUpdateStatus}
-          shakeNonce={mergedFieldShake.reconcileUnraidUpdateStatus}
-          pulseNonce={fieldPulse.reconcileUnraidUpdateStatus}
-        />
-      </Card>
-      )}
-
-      {/* Registry logins (#106). The update pull reads them, but they are not */}
-      {/* image cleanup, so they have a card of their own. */}
-      {page === "containers" && (
-      <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={nextHue()}>
-        <div className="flex flex-col gap-3">
-          {settings.registryAuths.length === 0 && (
-            <p className="text-sm text-carbon-textMuted">
-              {t("settings.registriesEmpty")}
-            </p>
-          )}
-          {settings.registryAuths.map((entry, i) => {
-            // The fallback only guards an index mismatch that every mutation
-            // site below prevents by keeping the two arrays in step.
-            const rowId = registryRowIds[i] ?? `registry-row-fallback-${i}`;
-            return (
-            <div
-              key={rowId}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end"
-            >
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-carbon-textSub">
-                  {t("settings.registryHost")}
-                </span>
-                <input
-                  type="text"
-                  value={entry.host}
-                  placeholder="ghcr.io"
-                  onChange={(e) => {
-                    const host = e.target.value;
-                    const nextAuths = settings.registryAuths.map((a, j) =>
-                      j === i ? { ...a, host } : a
-                    );
-                    setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
-                    debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
-                  }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-carbon-textSub">
-                  {t("settings.registryUser")}
-                </span>
-                <input
-                  type="text"
-                  value={entry.username}
-                  autoComplete="off"
-                  onChange={(e) => {
-                    const username = e.target.value;
-                    const nextAuths = settings.registryAuths.map((a, j) =>
-                      j === i ? { ...a, username } : a
-                    );
-                    setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
-                    debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
-                  }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-carbon-textSub">
-                  {t("settings.registryToken")}
-                </span>
-                <RevealInput
-                  visible={!!registryTokenVisible[rowId]}
-                  onToggleVisible={() =>
-                    setRegistryTokenVisible((p) => ({ ...p, [rowId]: !p[rowId] }))
-                  }
-                  showLabel={t("common.showValue")}
-                  hideLabel={t("common.hideValue")}
-                  value={entry.token}
-                  autoComplete="new-password"
-                  placeholder={
-                    entry.tokenSet && entry.token === ""
-                      ? t("cloud.secretSet")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const token = e.target.value;
-                    const nextAuths = settings.registryAuths.map((a, j) =>
-                      j === i ? { ...a, token } : a
-                    );
-                    setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
-                    debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
-                  }}
-                  wrapperClassName="w-full"
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-                />
-              </label>
-              {/* No hueIndex needed: the card's wrapper carries `.glim-hue`,
-                  which redefines --color-accent for its subtree in rainbow
-                  mode, so the accent here is already the card's colour. */}
-              <Button
-                label={t("settings.registryRemove")}
-                labelKey="settings.registryRemove"
-                glyph={<IconTrash />}
-                tone="accent"
-                onClick={() => {
-                  // Removing a row is a discrete action, so it saves at once
-                  // and cancels any pending debounced save from this section,
-                  // so a stale pre-removal snapshot cannot land after it.
-                  const nextAuths = settings.registryAuths.filter((_, j) => j !== i);
-                  const nextRowIds = registryRowIds.filter((_, j) => j !== i);
-                  setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
-                  setRegistryRowIds(nextRowIds);
-                  // Drop this row's reveal-state entry too, so neither an id
-                  // nor a stray "revealed" flag survives to be picked up by
-                  // whatever row slides into this index next.
-                  setRegistryTokenVisible((prev) => {
-                    if (!(rowId in prev)) return prev;
-                    const next = { ...prev };
-                    delete next[rowId];
-                    return next;
-                  });
-                  cancelDebounce("registryAuths");
-                  saveRegistries(nextAuths, nextRowIds);
-                }}
-                className={"shrink-0"}
-              />
-            </div>
-            );
-          })}
-          <div className="flex justify-end">
-            <Button
-              label={t("settings.registryAdd")}
-              labelKey="settings.registryAdd"
-              glyph={<IconAdd />}
-              tone="accent"
-              onClick={() => {
-                setSettings((prev) => {
-                  if (!prev) return prev;
-                  const blank: RegistryAuthEntry = {
-                    host: "",
-                    username: "",
-                    token: "",
-                    tokenSet: false,
-                  };
-                  return { ...prev, registryAuths: [...prev.registryAuths, blank] };
-                });
-                // A new row gets a fresh id, so it cannot inherit a stale
-                // "revealed" flag from a removed row. It is not saved until a
-                // field in it is filled in; keepRegistryAuths drops it blank.
-                setRegistryRowIds((prev) => [...prev, randomId()]);
-              }}
-              className={"shrink-0"}
-            />
-          </div>
-        </div>
-      </Card>
-      )}
-
-      {/* Health-gated ordered restart (#119): containers stopped for a backup
-          restart in compose depends_on order, each healthy before its
-          dependents start. The wait also covers the post-backup update
-          recreate (internal/backup WhileDependentsStopped). */}
-      {page === "containers" && (
-      <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("settings.restartHealthWait")}
-          hint={t("settings.restartHealthWaitHint")}
-          checked={settings.restartHealthWait}
-          onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
-          disabled={schedFieldBusy.restartHealthWait}
-          shakeNonce={schedFieldShake.restartHealthWait}
-          pulseNonce={fieldPulse.restartHealthWait}
-        />
-        {settings.restartHealthWait && (
-          <label className="flex flex-col gap-1 sm:w-1/2">
-            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-              {t("settings.restartHealthTimeoutLabel")}
-              <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
-            </span>
-            <NumberField
-              min={5}
-              max={3600}
-              value={settings.restartHealthTimeoutSec}
-              onChange={(e) => {
-                const raw = (e.target as unknown as { value: string }).value;
-                // Clamp to the field minimum (5): never let a transient sub-5
-                // value sit in component state. The server clamps to 5..3600.
-                const n = Math.max(5, parseInt(raw, 10) || 0);
-                scheduleField("restartHealthTimeoutSec", n);
-              }}
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-            />
-          </label>
-        )}
-      </Card>
-      )}
-
-      {/* The restic cache under /config survives restarts and would grow without */}
-      {/* bound; per-repository caches are evicted after scheduled runs. */}
-      {/* `advanced &&` inline rather than the <Advanced> wrapper: the wrapper
-          takes its children already built, so nextHue() would spend a hue slot
-          on a hidden card and shift every later heading on the page. */}
-      {page === "storage" && advanced && (
-      <Card title={t("settings.cacheTitle")} hint={tLtr(t, "settings.cacheHint")} hueIndex={nextHue()}>
-        <label className="flex flex-col gap-1 sm:w-1/2">
-          <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
-          <NumberField
-            min={0}
-            value={settings.resticCacheMaxMB}
-            onChange={(e) => {
-              // Structural cast (cf. downloadRecoveryKit in api.ts): runtime-identical to
-              // e.target.value, but immune to the broken DOM lib resolution.
-              const raw = (e.target as unknown as { value: string }).value;
-              const n = Math.max(0, parseInt(raw, 10) || 0);
-              setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
-              debouncedSave("resticCacheMaxMB", () =>
-                void save({ resticCacheMaxMB: n }, setCacheSaveState, setCacheSaveError)
-              );
-            }}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-          />
-        </label>
-      </Card>
-      )}
-
-      {/* How much CPU a backup may take (#189), beside the cache card because
-          both say how much of this machine BombVault may use. The cap reaches
-          each restic child as GOMAXPROCS; without it restic takes every core.
-          `advanced &&` inline for the same reason as the cache card. */}
-      {page === "storage" && advanced && (
-      <Card title={t("settings.coresTitle")} hint={t("settings.coresHint")} hueIndex={nextHue()}>
-        <label className="flex flex-col gap-1 sm:w-1/2">
-          <span className="text-xs text-carbon-textSub">{t("settings.coresLabel")}</span>
-          <NumberField
-            min={0}
-            value={settings.backupCores}
-            onChange={(e) => {
-              const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-              setSettings((prev) => (prev ? { ...prev, backupCores: n } : prev));
-              debouncedSave("backupCores", () =>
-                void save({ backupCores: n }, setCoresSaveState, setCoresSaveError)
-              );
-            }}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-          />
-        </label>
-      </Card>
-      )}
-
-      {/* Plain-export encryption (age) and the repositories' own encryption. The */}
-      {/* switches save at once; the recipients field is debounced. */}
-      {page === "storage" && (
-      <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
-        <div className="flex flex-col gap-3">
-          <ToggleRow
-            label={t("export.encrypt.enable")}
-            hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")} ${t("export.encrypt.kitSealed")}`}
-            checked={settings.exportEncryptEnabled}
-            onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
-            disabled={mergedFieldBusy.exportEncryptEnabled}
-            shakeNonce={mergedFieldShake.exportEncryptEnabled}
-            pulseNonce={fieldPulse.exportEncryptEnabled}
-          />
-          {settings.exportEncryptEnabled && (
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
-              {/* The recipients hint stays visible text: it names the accepted
-                  key syntax, a reference to consult while pasting keys rather
-                  than a one-time explainer. */}
-              <textarea
-                value={settings.exportAgeRecipients}
-                spellCheck={false}
-                rows={3}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setSettings((prev) => prev ? { ...prev, exportAgeRecipients: v } : prev);
-                  debouncedSave("exportAgeRecipients", () =>
-                    void save({ exportAgeRecipients: v }, setExportEncSaveState, setExportEncSaveError)
-                  );
-                }}
-                placeholder={t("export.encrypt.recipientsPlaceholder")}
-                dir="ltr"
-                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
-              />
-              <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
-              {!settings.exportAgeRecipients.trim() && (
-                <span className="text-xs text-statusFail">{t("export.encrypt.recipientsRequired")}</span>
-              )}
-            </label>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {/* The live on/off state is the visible label, so the bubble only
-              explains the feature. */}
-          <ToggleRow
-            label={
-              settings.encryptionEnabled
-                ? t("settings.encryptionOn")
-                : t("settings.encryptionOff")
-            }
-            // "Password derived from APP_KEY" raises the question of where that
-            // password is, so the hint names the recovery kit.
-            hint={`${t("settings.encryptionHint")} ${t("settings.encryptionPasswordWhere")}`}
-            checked={settings.encryptionEnabled}
-            onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
-            disabled={mergedFieldBusy.encryptionEnabled}
-            shakeNonce={mergedFieldShake.encryptionEnabled}
-            pulseNonce={fieldPulse.encryptionEnabled}
-          />
-          {settings.encryptionEnabled && (
-            <div className="flex flex-col gap-2">
-              {/* recovery.why can sit in a bubble despite the data-loss risk it
-                  explains: the Dashboard's recovery banner does the reminding,
-                  and this is only context for the button. */}
-              <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-                {t("recovery.title")}
-                <InfoBubble tip={t("recovery.why")} />
-              </span>
-              <Button
-                label={t("recovery.download")}
-                labelKey="recovery.download"
-                glyph={<IconDownload />}
-                tone="accent"
-                onClick={() => {
-                  setKitError(null);
-                  void downloadRecoveryKit().then(setKitError);
-                }}
-                className={"self-end shrink-0"}
-              />
-              {kitError && (
-                // Backend error text shown verbatim (such as the fail-closed
-                // "set a login password" refusal when auth is off); the API
-                // answers in English and is not translated client-side.
-                <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
-              )}
-            </div>
-          )}
-        </div>
-      </Card>
-      )}
+      {page === "containers" && <ContainersPage />}
 
       {/* Off-site copies are part of the default view, since ransomware */}
       {/* protection depends on them. The id is the target of /settings/offsite. */}
@@ -2234,12 +1474,7 @@ export function SettingsPage() {
         <VMSSHCard t={t} hueIndex={nextHue()} />
       )}
 
-      {/* An rclone:, s3: or rest: target cannot work without these credentials, */}
-      {/* so they are not limited to the advanced view. */}
-      {page === "cloud" && <RcloneCard t={t} hueIndex={nextHue()} />}
-
-      {page === "cloud" && <CloudCard t={t} hueIndex={nextHue()} />}
-      {page === "cloud" && <CloudCredSetsCard t={t} hueIndex={nextHue()} />}
+      {page === "cloud" && <CloudPage />}
 
       {/* The channel and Healthchecks cards only paint in the advanced view, so */}
       {/* their hue positions are counted inside that condition and none is spent */}
@@ -2496,24 +1731,7 @@ export function SettingsPage() {
       {/* and it is not always available, so the card first explains when it is not. */}
       {page === "security" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
 
-      {/* Pairing only serves the domains that work over the group, so until
-          one of them is on the page says where to turn it on. */}
-      {page === "pairing" && !pairingUsed && (
-        <Card title={t("pairing.title")} hueIndex={nextHue()}>
-          <p className="text-sm text-carbon-textSub">{t("settings.pairingNeedsDomain")}</p>
-        </Card>
-      )}
-
-      {page === "pairing" && pairingUsed && (
-        <div id="pairing" className="flex scroll-mt-6 flex-col gap-10">
-          <PairingSection t={t} nextHue={nextHue} />
-          <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
-        </div>
-      )}
-
-      {/* Language and the look page's appearance axes belong to the person
-          and apply at once, without a Save. */}
-      {page === "general" && <LanguageCard t={t} hueIndex={nextHue()} />}
+      {page === "pairing" && <PairingPage />}
 
       {page === "look" && <ThemeCard t={t} hueIndex={nextHue()} />}
 
@@ -2756,38 +1974,9 @@ export function SettingsPage() {
       );
       })()}
 
-      {/* Quiet toasts is a client-side display preference, separate from the
-          server-side notification switch: muting a toast in this browser must
-          never change what a webhook receives. */}
-      {page === "general" && (
-      <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("settings.quietToasts")}
-          hint={t("settings.quietToastsHint")}
-          checked={quiet}
-          onChange={setQuiet}
-        />
-      </Card>
-      )}
+      {page === "apps" && <AppsPage />}
 
-      {page === "apps" && (
-        <>
-          <PhoneAppCard t={t} hueIndex={nextHue()} />
-          <ParleyPortCard t={t} hueIndex={nextHue()} />
-          <WidgetAppCard t={t} hueIndex={nextHue()} />
-        </>
-      )}
-
-      {/* Moves this instance's settings and off-site targets, credentials only */}
-      {/* when asked, to another install. Backups and history are never touched. */}
-      {page === "system" && (
-        <SettingsPortabilityCard t={t} hueIndex={nextHue()} applyImport={applyImportedSettings} />
-      )}
-
-      {/* About stays last on General: the card is a footer. */}
-      {page === "general" && (
-        <AboutCard hueIndex={nextHue()} />
-      )}
+      {page === "system" && <SystemPage />}
       </SettingsStoreContext.Provider>
       </div>
       {confirmDialog}

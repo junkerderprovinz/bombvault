@@ -19,7 +19,6 @@ import { directAsk, primaryDirects, retentionLowered } from "../../lib/directRep
 import type { Settings, Container, VM, FileSetView, ZFSDatasetView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { randomId } from "../../lib/uuid";
 import type { SaveState } from "./shared";
 
 /** The off-site rules a domain ages by: its own, or the shared ones. */
@@ -100,13 +99,6 @@ export function useSettingsStore() {
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [recoveryLeft, setRecoveryLeft] = useState<number | undefined>(undefined);
   const [minPasswordLen, setMinPasswordLen] = useState(12);
-  // registryRowIds pairs by index with settings.registryAuths and gives each
-  // row a client-only stable id for registryTokenVisible and the React key.
-  // Every change to the array's length or order updates both. It is not a
-  // field on the rows because the settings PUT decoder rejects unknown fields
-  // (DisallowUnknownFields in internal/api/handlers.go), which would break
-  // every settings save.
-  const [registryRowIds, setRegistryRowIds] = useState<string[]>([]);
 
   // Save state per card. Only the setters are used, as the callbacks that
   // autoSaveField and debouncedSave take.
@@ -183,11 +175,6 @@ export function useSettingsStore() {
   function installSettings(s: Settings) {
     setSettings(s);
     savedBaseline.current = s;
-    // A fresh GET carries no row ids, so one is minted per registry row here.
-    // randomId() rather than crypto.randomUUID(): the latter needs a secure
-    // context and would throw on a plain-HTTP origin, and a throw inside the
-    // mount load would take down the whole page (see lib/uuid.ts).
-    setRegistryRowIds(s.registryAuths.map(() => randomId()));
     // The sync toggle reads as on only when Containers, VMs, Flash, Folders
     // and ZFS already share one cadence that is not off. A domain that differs
     // keeps its own value until the next edit, so the toggle must not claim
@@ -746,8 +733,6 @@ export function useSettingsStore() {
     recoveryLeft,
     setRecoveryLeft,
     minPasswordLen,
-    registryRowIds,
-    setRegistryRowIds,
     containers,
     vms,
     fileSets,

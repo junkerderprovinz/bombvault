@@ -23,6 +23,14 @@ export function useOpenPasswordField(): () => void {
   return () => navigate(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
 }
 
+/** hueCounter hands out palette positions in call order. A page makes one per
+ *  render and calls it once for each card it draws, so the count starts at 0
+ *  on every page and a hidden card leaves no gap. */
+export function hueCounter(): () => number {
+  let next = 0;
+  return () => next++;
+}
+
 export function Card({
   title,
   hint,
@@ -38,7 +46,7 @@ export function Card({
   hint?: string;
   children: React.ReactNode;
   /** Rainbow position of the heading notch among the cards on the active
-   *  tab. Call sites take it from SettingsPage's nextHue() counter. */
+   *  tab. Call sites take it from their page's hueCounter(). */
   hueIndex?: number;
   /** Rendered inside another card that already provides the surface and the
    *  padding, as CloudCard and RcloneCard are in Recovery's step 3, so both
