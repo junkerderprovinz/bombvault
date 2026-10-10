@@ -196,7 +196,7 @@ func isLocalHost(host string) bool {
 // peerRoutes exist here, so nothing else on this instance is reachable from
 // the group however the main router grows.
 func (s *Service) servePeer(ctx context.Context, call relay.ProxyCall) (status int, body []byte) {
-	req, err := http.NewRequestWithContext(ctx, call.Method, call.Path, bytes.NewReader(call.Body))
+	req, err := http.NewRequestWithContext(context.WithValue(ctx, peerSenderKey{}, call.Sender), call.Method, call.Path, bytes.NewReader(call.Body))
 	if err != nil {
 		return http.StatusBadRequest, nil
 	}
@@ -223,9 +223,10 @@ type peerRoute struct {
 // peerRoutes is everything a group member can reach on this instance: the
 // Fleet scorecard, a storage offer, the receiver this instance runs for the
 // group and a login on it, what receiver and pull pairing need, starting a
-// check, a request to replicate a ZFS item here, what runs here and how it
-// looks for the Android app, a session for a phone of the group, and the bare
-// hello a blind probe gets.
+// check, a request to replicate a ZFS item here, asking this instance to be
+// Receiver or Fetcher with the answer and the withdrawal that go with it, what
+// runs here and how it looks for the Android app, a session for a phone of the
+// group, and the bare hello a blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -238,6 +239,9 @@ func peerRoutes() []peerRoute {
 		{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
 		{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
 		{"POST /api/group/peer/zfs-receive", (*Service).handlePeerZFSReceive},
+		{"POST /api/group/peer/roles/ask", (*Service).handlePeerRoleAsk},
+		{"POST /api/group/peer/roles/answer", (*Service).handlePeerRoleAnswer},
+		{"POST /api/group/peer/roles/withdraw", (*Service).handlePeerRoleWithdraw},
 		{"GET /api/group/peer/activity", (*Service).handlePeerActivity},
 		{"GET /api/group/peer/display-prefs", (*Service).handlePeerDisplayPrefs},
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},

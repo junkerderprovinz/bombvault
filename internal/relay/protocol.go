@@ -111,6 +111,10 @@ type ProxyCall struct {
 	// the receiver can refuse a frame it has run before or one that is old.
 	ID   string `json:"id"`
 	Sent int64  `json:"sent"`
+	// Sender is the instance id of the member that sealed the call. It is
+	// empty on a call from a member too old to say; on a direct call the
+	// signed header names that member instead.
+	Sender string `json:"sender,omitempty"`
 }
 
 // ProxyResponse is the wire form of the answer to one ProxyRequest.

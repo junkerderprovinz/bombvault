@@ -227,10 +227,10 @@ func (r *Repo) SaveSentRoleRequest(sent RoleRequest) (RoleRequest, error) {
 // settled stamps next with when and by whom its state was decided, keeping
 // the stamp of prev while the state is the same.
 func settled(next, prev RoleRequest) RoleRequest {
-	switch {
-	case next.State == RoleAsked:
+	switch next.State {
+	case RoleAsked:
 		next.DecidedAt, next.DecidedBy = 0, ""
-	case next.State == prev.State:
+	case prev.State:
 		next.DecidedAt, next.DecidedBy = prev.DecidedAt, prev.DecidedBy
 	default:
 		next.DecidedAt = time.Now().Unix()
