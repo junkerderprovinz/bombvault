@@ -7,7 +7,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
 
-const { RunsCard, unresolvedErrorCount } = await import("./Dashboard");
+const { RunsCard } = await import("./overview/RunsCard");
+const { unresolvedErrorCount } = await import("./overview/runFailures");
 
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<
   typeof RunsCard

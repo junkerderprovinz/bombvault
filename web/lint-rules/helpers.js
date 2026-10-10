@@ -220,7 +220,7 @@ const INTERACTIVE_TAGS = new Set([
 
 // A house convention occasionally has a real exception, and a bare
 // eslint-disable says nothing about why. Each rule honours a marker comment
-// directly above the offending element instead, as in pages/Dashboard.tsx:
+// directly above the offending element instead, as in pages/overview/HealthHeatmapCard.tsx:
 //
 //     {/* bv-convention-exception: control-reads-engine-tokens --
 //         the heat-map cell is a chart mark, not a control; its colour is the

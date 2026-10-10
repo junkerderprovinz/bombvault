@@ -65,7 +65,7 @@ Every exception in the app is one command away:
 grep -rn "bv-convention-exception" web/src
 ```
 
-There are three today, outside tests: `pages/Dashboard.tsx`'s heat-map cell for
+There are three today, outside tests: `pages/overview/HealthHeatmapCard.tsx`'s heat-map cell for
 `control-reads-engine-tokens`, and `components/NumberField.tsx` plus
 `components/SelectField.tsx` for `user-message-is-translated`, both of them SVG
 path data that is not a message at all.
