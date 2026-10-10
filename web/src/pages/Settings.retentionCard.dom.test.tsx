@@ -35,6 +35,11 @@ function baseSettings(): Settings {
     compression: {},
     defaultLanguage: "en",
     registryAuths: [],
+    vmsPath: "backups/vms",
+    flashPath: "backups/flash",
+    configPath: "backups/config",
+    filesPath: "backups/files",
+    zfsPath: "backups/zfs",
   } as unknown as Settings;
 }
 
@@ -86,7 +91,7 @@ async function renderRetention() {
         ),
       },
     ],
-    { initialEntries: ["/settings/retention"] }
+    { initialEntries: ["/settings/storage"] }
   );
   await act(async () => {
     render(<RouterProvider router={router} />);
@@ -128,11 +133,12 @@ afterEach(() => {
   localStorage.clear();
 });
 
-describe("the Retention page", () => {
-  it("draws a Local retention, an Off-site retention and a Preview card", async () => {
+describe("the retention cards of the Storage locations tile", () => {
+  it("draws a Local retention, an Off-site retention and a Preview card in a row", async () => {
     await renderRetention();
     const cards = [...document.querySelectorAll("[data-search-card]")].map((c) => c.getAttribute("data-search-card"));
-    expect(cards).toEqual([LOCAL, OFFSITE, PREVIEW]);
+    const at = cards.indexOf(LOCAL);
+    expect(cards.slice(at, at + 3)).toEqual([LOCAL, OFFSITE, PREVIEW]);
   });
 
   it("shows each card's shared rules and a switch per source, named by the source", async () => {
@@ -180,13 +186,13 @@ describe("the Retention page", () => {
     expect(previews).toEqual(expect.arrayContaining([["containers", undefined], ["containers", "offsite"]]));
   });
 
-  it("links the additional off-site targets to the Off-site page", async () => {
+  it("links the additional off-site targets to the off-site cards", async () => {
     const router = await renderRetention();
     const link = within(card(OFFSITE)).getByRole("link", { name: en["settings.retentionExtraTargets"] });
     await act(async () => {
       fireEvent.click(link);
     });
-    expect(router.state.location.pathname).toBe("/settings/offsite");
+    expect(router.state.location.pathname).toBe("/settings/storage");
   });
 
   it("puts the OR rule in both rules cards' (i) and the append-only note in the off-site one", async () => {

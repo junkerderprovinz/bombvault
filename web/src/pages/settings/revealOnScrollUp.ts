@@ -1,5 +1,6 @@
-// The settings search bar appears above the first card only when somebody
-// scrolls up for it, and changing settings page puts it away again.
+// The settings search bar appears above the first card when somebody scrolls
+// up for it or calls it with a key, and changing settings page puts it away
+// again.
 //
 // It listens for wheel as well as scroll because at the top of the page the
 // browser fires no scroll event; scroll still catches a scrollbar drag, a
@@ -78,5 +79,10 @@ export function useRevealOnScrollUp(resetKey: string, pinned: boolean) {
     }
   }, [revealed]);
 
-  return { revealed, barRef, hide: useCallback(() => setRevealed(false), []) };
+  return {
+    revealed,
+    barRef,
+    show: useCallback(() => setRevealed(true), []),
+    hide: useCallback(() => setRevealed(false), []),
+  };
 }

@@ -40,7 +40,7 @@ describe("the settings search index", () => {
 
   it("knows every keep rule of the retention grids with its (i)", () => {
     const grid = /\["\w+", "(settings\.retention\w+)", "(settings\.retention\w+Info)"\]/g;
-    expect(pageSource("retention")).toContain("<RetentionRulesCard");
+    expect(pageSource("storage")).toContain("<RetentionRulesCard");
     const sectionSource = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
     const pageRules = [...sectionSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     const targetSource = readFileSync(join(HERE, "..", "..", "components", "OffsiteTargetsSection.tsx"), "utf8");
@@ -48,14 +48,14 @@ describe("the settings search index", () => {
     expect(pageRules.map((r) => r.key)).toContain("settings.retentionYearly");
     expect(targetRules.map((r) => r.key)).toContain("settings.retentionYearly");
 
-    const sections = SETTINGS_INDEX.retention.filter(
+    const sections = SETTINGS_INDEX.storage.filter(
       (c) => c.title === "settings.retentionLocalTitle" || c.title === "settings.retentionOffsiteTitle"
     );
     expect(sections).toHaveLength(2);
     for (const section of sections) {
       for (const rule of pageRules) expect(section.rows).toContainEqual(rule);
     }
-    for (const card of SETTINGS_INDEX.offsite.filter((c) => c.title === "offsite.copyDomainTitle")) {
+    for (const card of SETTINGS_INDEX.storage.filter((c) => c.title === "offsite.copyDomainTitle")) {
       for (const rule of targetRules) expect(card.rows).toContainEqual(rule);
     }
   });
@@ -65,17 +65,16 @@ describe("the settings search index", () => {
     const storage = pageSource("storage");
     expect(storage).toContain("<PathModeSwitch");
     expect(storage).toContain("<ReposCard");
-    const cards = [
-      ...SETTINGS_INDEX.storage.filter((c) => c.title === "settings.paths" || c.title === "repos.title"),
-      ...SETTINGS_INDEX.offsite.filter((c) => c.title === "offsite.copyDomainTitle"),
-    ];
+    const cards = SETTINGS_INDEX.storage.filter(
+      (c) => c.title === "settings.paths" || c.title === "repos.title" || c.title === "offsite.copyDomainTitle"
+    );
     expect(cards).toHaveLength(8);
     for (const card of cards) expect(card.rows).toContainEqual(row);
   });
 
   it.each([
     ["schedules", "IdleCard"],
-    ["offsite", "StreamingCard"],
+    ["storage", "StreamingCard"],
   ] as const)("has every caption and (i) of the card the %s page mounts as %s", (page, file) => {
     expect(pageSource(page)).toContain(`<${file}`);
     const source = readFileSync(join(HERE, `${file}.tsx`), "utf8");
@@ -142,7 +141,7 @@ describe("the settings search index", () => {
 
   it("indexes each switch and the extra-targets line of the retention cards with its (i)", () => {
     const source = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
-    const rows = (title: string) => SETTINGS_INDEX.retention.find((c) => c.title === title)?.rows ?? [];
+    const rows = (title: string) => SETTINGS_INDEX.storage.find((c) => c.title === title)?.rows ?? [];
     for (const [section, key, hint] of [
       ["settings.retentionLocalTitle", "settings.ownRetention", "settings.ownRetentionToggleHint"],
       ["settings.retentionOffsiteTitle", "settings.ownOffsiteRetention", "settings.ownOffsiteRetentionToggleHint"],

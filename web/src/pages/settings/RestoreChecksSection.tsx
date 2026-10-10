@@ -4,6 +4,7 @@ import { Card, ToggleRow } from "../settings/shared";
 import { NumberField } from "../../components/NumberField";
 import { ScheduleRow } from "../../components/ScheduleBadge";
 import { useT } from "../../lib/i18n";
+import { PackGrid, SandboxPicture } from "./pictures";
 
 // RestoreChecksSection is the card for scheduled restore-verification drills.
 export function RestoreChecksSection({
@@ -93,6 +94,12 @@ export function RestoreChecksSection({
           className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
         />
       </label>
+      {settings.drillsEnabled && (
+        <div className="flex flex-wrap gap-x-6 gap-y-4">
+          <PackGrid percent={settings.drillsSubsetPct} />
+          <SandboxPicture startTest={settings.startTestEnabled} />
+        </div>
+      )}
     </Card>
   );
 }

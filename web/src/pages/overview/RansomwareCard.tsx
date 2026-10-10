@@ -221,7 +221,7 @@ export function RansomwareCard({
                           // type jump with whichever domain is faulted. The
                           // fail colour and the hover underline say both
                           // "wrong" and "clickable".
-                          <Link to="/settings/offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0 pointer-coarse:py-3">
+                          <Link to="/settings/storage#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0 pointer-coarse:py-3">
                             {row.label}
                           </Link>
                         ) : (

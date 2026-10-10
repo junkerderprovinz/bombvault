@@ -1,13 +1,12 @@
-import { Card } from "../settings/shared";
 import { DropdownListbox } from "../../components/DropdownListbox";
 import { Flag } from "../../components/Sidebar";
 import { useRef, useState } from "react";
 import { useT } from "../../lib/i18n";
 import { stepIndex } from "../../lib/selectScroll";
 
-// LanguageCard switches the UI language. It stands first on the Look tab, and
-// the choice is stored and applied at once, with no Save step.
-export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+/** LanguagePicker switches the language of the interface. The choice is
+ *  stored and applied at once. */
+export function LanguagePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const { lang, setLanguage, languages } = useT();
   const [open, setOpen] = useState(false);
   // On the button rather than a wrapper: DropdownListbox sizes the panel to
@@ -18,7 +17,6 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
   const current = languages.find((l) => l.code === lang) ?? languages[0];
 
   return (
-    <Card title={t("settings.language")} hueIndex={hueIndex}>
       <div className="inline-block">
         {/* A field's height, like the buttons beside fields, and a fixed width,
             which the panel takes over from the trigger; truncate keeps a long
@@ -69,6 +67,5 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
           ))}
         </DropdownListbox>
       </div>
-    </Card>
   );
 }

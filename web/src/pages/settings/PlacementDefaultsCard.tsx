@@ -433,7 +433,7 @@ export function PlacementDefaultsCard({ hueIndex }: { hueIndex?: number }) {
           <DefaultLine key={row.domain} row={row} hueOffset={HUE_OFFSET.placement + 3 * i} />
         ))}
         <Link
-          to="/settings/offsite"
+          to="/settings/storage#offsite"
           className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
         >
           {t("placementDefaults.othersOffsite")}

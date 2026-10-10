@@ -111,7 +111,7 @@ const PAGE_GROUPS: {
       { key: "motion", marker: "HUE_OFFSET.motion" },
       // ThemeCard's own picker; its file carries the Selector and the Look
       // page mounts it.
-      { key: "theme", marker: "<ThemeCard", cardFile: "ThemeCard.tsx" },
+      { key: "theme", marker: "<ThemePicker", cardFile: "ThemeCard.tsx" },
     ],
   },
   {

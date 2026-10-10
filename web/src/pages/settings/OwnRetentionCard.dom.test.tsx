@@ -167,7 +167,7 @@ describe("the off-site card", () => {
   it("sends additional targets to the Off-site page", () => {
     render(<Harness scope="offsite" initial={baseSettings()} />);
     const link = screen.getByRole("link", { name: en["settings.retentionExtraTargets"] });
-    expect(link.getAttribute("href")).toBe("/settings/offsite");
+    expect(link.getAttribute("href")).toBe("/settings/storage#offsite");
   });
 
   it("carries the append-only note in its (i), not as loose text", () => {

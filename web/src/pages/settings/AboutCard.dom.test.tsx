@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
-// The About card's order is a GlimStone standard shared by every app: each
-// sentence sits directly above the button it asks for. Moving one line breaks
-// that without failing a type check, so these tests assert position in the
-// document rather than presence. The card must also never name a contact route
-// it has no button for.
+// The order of the About content is a GlimStone standard shared by every app:
+// each sentence sits directly above the button it asks for. Moving one line
+// breaks that without failing a type check, so these tests assert position in
+// the document and not presence. The content must also never name a contact
+// route it has no button for. The Android app shows it as one card; the Info
+// page spreads the same parts over three.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
-import { AboutCard } from "./AboutCard";
+import { AboutContent } from "./AboutCard";
 
 // The card fetches the running version on mount; without it the footer is
 // only half rendered.
@@ -22,7 +23,7 @@ afterEach(cleanup);
 function renderCard() {
   return render(
     <I18nProvider>
-      <AboutCard />
+      <AboutContent />
     </I18nProvider>
   );
 }

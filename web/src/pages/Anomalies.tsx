@@ -413,7 +413,7 @@ function SensitivityHint({ t }: { t: T }) {
     <p className="text-xs text-carbon-textMuted">
       {before}
       <Link to={SETTINGS_PATH} className="underline hover:text-carbon-text">
-        {t("nav.settings")} › {t("settings.tab.integrity")}
+        {t("nav.settings")} › {t("activityLog.typeVerify")}
       </Link>
       {after}
     </p>

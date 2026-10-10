@@ -105,7 +105,7 @@ const { SettingsPage } = await import("./Settings");
 async function renderRetentionPage() {
   await act(async () => {
     render(
-      <MemoryRouter initialEntries={["/settings/retention"]}>
+      <MemoryRouter initialEntries={["/settings/storage"]}>
         <Routes>
           <Route
             path="/settings/:page"

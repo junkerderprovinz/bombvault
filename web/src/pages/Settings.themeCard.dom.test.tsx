@@ -1,18 +1,16 @@
 // @vitest-environment jsdom
-// ThemeCard, the light/dark Selector on Settings' General tab. Clicking a
-// segment sets that theme directly and persists it through setTheme(), the
-// active segment carries aria-selected, and while "system" is stored an OS
-// prefers-color-scheme change repaints it live.
+// ThemePicker, the Light, Dark and System segments on the Look page. A click
+// goes through lib/theme.ts, which stores the choice and paints the page.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ThemeCard } from "./settings/ThemeCard";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { ThemePicker } from "./settings/ThemeCard";
 import { I18nProvider, useT } from "../lib/i18n";
 
 const STORAGE_KEY = "bv-theme";
 
 function Harness() {
   const { t } = useT();
-  return <ThemeCard t={t} />;
+  return <ThemePicker t={t} />;
 }
 
 function renderCard() {
@@ -54,13 +52,12 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-theme");
 });
 
-describe("ThemeCard", () => {
-  it("renders as a Card with the theme heading and both segments always present", () => {
+describe("ThemePicker", () => {
+  it("offers Light, Dark and System under the name Theme", () => {
     localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
-    expect(screen.getByText("Theme")).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Light" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Dark" })).toBeTruthy();
+    const picker = screen.getByRole("tablist", { name: "Theme" });
+    expect(within(picker).getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Light", "Dark", "System"]);
   });
 
   it("the segment matching the current mode is the one marked selected", () => {
@@ -96,26 +93,21 @@ describe("ThemeCard", () => {
     expect(document.documentElement.getAttribute("data-theme")).toBe("light");
   });
 
-  it("with no stored preference (\"system\" default), the segment matching what the OS currently resolves to is selected", () => {
-    stubMatchMedia(true); // OS prefers dark
+  it("shows System as chosen while nothing is stored, whatever the device resolves it to", () => {
+    stubMatchMedia(true);
     renderCard();
-    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "System" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("false");
   });
 
-  it("while on \"system\", an OS-level prefers-color-scheme flip repaints the active segment live", () => {
-    stubMatchMedia(false); // OS starts light, no stored preference -> "system"
-    renderCard();
-    expect(screen.getByRole("tab", { name: "Light" }).getAttribute("aria-selected")).toBe("true");
-
-    // The OS flips to dark. The listener sets state outside any Testing
-    // Library helper, so act() makes React flush before the assertion.
+  it("leads back to the device's theme through the System segment", () => {
+    localStorage.setItem(STORAGE_KEY, "light");
     stubMatchMedia(true);
-    expect(changeListeners.length).toBeGreaterThan(0);
-    act(() => {
-      changeListeners.forEach((cb) => cb());
-    });
-
-    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("true");
+    renderCard();
+    fireEvent.click(screen.getByRole("tab", { name: "System" }));
+    expect(screen.getByRole("tab", { name: "System" }).getAttribute("aria-selected")).toBe("true");
+    expect(localStorage.getItem(STORAGE_KEY)).toBe("system");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
   });
 
   it("once explicitly set to \"light\", a later OS flip does not change the active segment", () => {

@@ -175,27 +175,28 @@ describe("a hint names a settings page as the column does", () => {
   const pageKeys: Record<string, keyof typeof en> = {
     General: "settings.tab.general",
     Look: "settings.tab.look",
-    Storage: "settings.tab.storage",
-    Retention: "settings.tab.retention",
-    Schedules: "settings.tab.schedules",
-    Containers: "nav.containers",
-    "Off-site": "settings.tab.offsite",
-    "Cloud access": "settings.tab.cloud",
+    Schedule: "settings.schedule",
+    "Storage locations": "storage.title",
+    Restore: "activityLog.typeRestore",
     Notifications: "settings.tab.notifications",
-    Integrity: "settings.tab.integrity",
+    Verify: "activityLog.typeVerify",
     Security: "settings.tab.security",
+    Instances: "instances.title",
     Pairing: "pairing.title",
     Integrations: "settings.tab.integrations",
+    Apps: "settings.tab.apps",
     System: "settings.tab.system",
+    Info: "activityLog.glyphInfo",
   };
-  // Windows has a Settings app with a System page of its own.
-  const notBombVault = new Set(["mcp.keyEnvTip", "mcp.certEnvTip"]);
+  // Windows has a Settings app with a System page of its own, and ChatGPT's
+  // settings have an Apps page.
+  const notBombVault = new Set(["mcp.keyEnvTip", "mcp.certEnvTip", "mcp.setupChatGPT"]);
 
   it("uses each language's own page name wherever English says Settings, Page", () => {
     const wrong: string[] = [];
     for (const [key, value] of Object.entries(en)) {
       if (notBombVault.has(key)) continue;
-      const pages = [...value.matchAll(/Settings, (Cloud access|[A-Z][A-Za-z-]+)/g)]
+      const pages = [...value.matchAll(/Settings, (Storage locations|[A-Z][A-Za-z-]+)/g)]
         .map((m) => m[1])
         .filter((p) => p in pageKeys);
       for (const [code, table] of Object.entries(locales)) {

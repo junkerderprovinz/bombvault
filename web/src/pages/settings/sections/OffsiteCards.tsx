@@ -17,7 +17,7 @@ import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrFragments } from "../../../lib/ltrFragments";
 import { IconCheck, IconSync, IconGear, IconClose } from "../../../components/Sidebar";
-import { Card, hueCounter, type SaveState } from "../shared";
+import { Card, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
 
 function ReplicateNowButton({
@@ -132,7 +132,9 @@ function OffsiteDomainBar({
   );
 }
 
-export function OffsitePage() {
+/** OffsiteCards are the destinations, each domain's off-site copy and the
+ *  limits all copies share. */
+export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
   const { settings, setSettings, savedBaseline, allTargets, save, debouncedSave } = useSettings();
 
@@ -144,13 +146,10 @@ export function OffsitePage() {
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
 
-  const nextHue = hueCounter();
-
   return (
     <>
-      {/* Off-site copies are part of the default view, since ransomware */}
-      {/* protection depends on them. The id is the target of /settings/offsite. */}
-      <div id="offsite" className="flex flex-col gap-6">
+      {/* The anchor old /settings/offsite links land on. */}
+      <div id="offsite" className="flex scroll-mt-6 flex-col gap-6">
       <DestinationsCard hueIndex={nextHue()} />
       {/* Self-backup ("config") is listed with the other domains (#176): the
           backend gives it its own off-site repo and targets like any other,

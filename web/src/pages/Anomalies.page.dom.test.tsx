@@ -1170,7 +1170,7 @@ describe("before and without findings", () => {
 
   it("says where sensitivity is set", async () => {
     await renderPage();
-    const link = screen.getByRole("link", { name: `${en["nav.settings"]} › ${en["settings.tab.integrity"]}` });
+    const link = screen.getByRole("link", { name: `${en["nav.settings"]} › ${en["activityLog.typeVerify"]}` });
     expect(link.getAttribute("href")).toBe("/settings/integrity#anomalies");
   });
 });

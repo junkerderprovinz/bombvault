@@ -203,7 +203,7 @@ export function RetentionRulesCard({
       {scope === "offsite" && <p className="text-sm text-carbon-textSub">{t("settings.retentionOffsiteScope")}</p>}
       {scope === "offsite" && (
         <Link
-          to="/settings/offsite"
+          to="/settings/storage#offsite"
           className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
         >
           {t("settings.retentionExtraTargets")}

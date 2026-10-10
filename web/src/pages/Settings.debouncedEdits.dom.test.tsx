@@ -1,16 +1,14 @@
 // @vitest-environment jsdom
 // The 800 ms debounce is the only thing that writes a Settings text field. An
-// edit still inside it has to survive leaving the page, a blank registry row
-// must not vanish while another row is edited, the registry list has to keep
-// what was typed during its own save, and an import must drop a pending edit
-// instead of letting it land behind the import. The page runs against a
-// mocked client, and the tests decide when each PUT resolves.
+// edit still inside it has to survive leaving the page, and an import must
+// drop a pending edit and not let it land behind the import. The page runs
+// against a mocked client, and the tests decide when each PUT resolves.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import type { RegistryAuthEntry, Settings } from "../lib/api";
+import type { Settings } from "../lib/api";
 
 function baseSettings(over: Partial<Settings> = {}): Settings {
   return {
@@ -172,13 +170,9 @@ function stubResizeObserver() {
   };
 }
 
-function registry(over: Partial<RegistryAuthEntry> = {}): RegistryAuthEntry {
-  return { host: "", username: "", token: "", tokenSet: false, ...over } as RegistryAuthEntry;
-}
-
-/** Every registry row's host input, in row order. */
-function hostInputs() {
-  return screen.getAllByLabelText(en["settings.registryHost"]) as HTMLInputElement[];
+/** The cache limit on the System page, a field that saves after a pause. */
+function cacheLimit() {
+  return screen.getByLabelText(en["settings.cacheLimitLabel"]) as HTMLInputElement;
 }
 
 beforeEach(() => {
@@ -198,13 +192,12 @@ afterEach(() => {
 
 describe("leaving the page with an edit still inside its debounce", () => {
   it("sends the edit instead of discarding it", async () => {
-    settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
+    settingsOnServer = baseSettings({ resticCacheMaxMB: 4096 });
     await renderPage();
-    await gotoPage("containers");
+    await gotoPage("system");
 
-    const host = hostInputs()[0];
     await act(async () => {
-      fireEvent.change(host, { target: { value: "registry.example.com" } });
+      fireEvent.change(cacheLimit(), { target: { value: "8192" } });
     });
 
     // Still well inside the 800ms window: nothing has been sent yet.
@@ -216,163 +209,23 @@ describe("leaving the page with an edit still inside its debounce", () => {
     });
 
     expect(putCalls.length).toBeGreaterThan(0);
-    const sent = putCalls[putCalls.length - 1].body as unknown as { registryAuths: RegistryAuthEntry[] };
-    expect(sent.registryAuths[0].host).toBe("registry.example.com");
+    expect(putCalls[putCalls.length - 1].body.resticCacheMaxMB).toBe(8192);
   });
 
   it("still sends it normally when the debounce is allowed to elapse", async () => {
-    settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
+    settingsOnServer = baseSettings({ resticCacheMaxMB: 4096 });
     await renderPage();
-    await gotoPage("containers");
+    await gotoPage("system");
 
     await act(async () => {
-      fireEvent.change(hostInputs()[0], { target: { value: "quay.io" } });
+      fireEvent.change(cacheLimit(), { target: { value: "2048" } });
     });
     await act(async () => {
       vi.advanceTimersByTime(900);
     });
 
     await waitFor(() => expect(putCalls).toHaveLength(1));
-    const sent = putCalls[0].body as unknown as { registryAuths: RegistryAuthEntry[] };
-    expect(sent.registryAuths[0].host).toBe("quay.io");
-  });
-});
-
-describe("a blank registry row while another row is being edited", () => {
-  it("stays on screen when the debounced save for a different row lands", async () => {
-    settingsOnServer = baseSettings({
-      registryAuths: [registry({ host: "ghcr.io", username: "old" })],
-    });
-    await renderPage();
-    await gotoPage("containers");
-
-    // Add a row: a blank one appears at the end and is not saved.
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
-    });
-    expect(hostInputs()).toHaveLength(2);
-
-    // Then go back and fix a typo in the first row's username.
-    const users = screen.getAllByLabelText(en["settings.registryUser"]) as HTMLInputElement[];
-    await act(async () => {
-      fireEvent.change(users[0], { target: { value: "corrected" } });
-    });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
-    });
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-
-    // The server is not asked to store the blank row...
-    const sent = putCalls[0].body as unknown as { registryAuths: RegistryAuthEntry[] };
-    expect(sent.registryAuths).toHaveLength(1);
-    expect(sent.registryAuths[0].username).toBe("corrected");
-
-    // ...and the row the user just added is still there, waiting to be filled in.
-    await act(async () => {
-      putCalls[0].resolve({ ok: true });
-    });
-    await waitFor(() => {
-      expect(hostInputs()).toHaveLength(2);
-    });
-    expect(hostInputs()[1].value).toBe("");
-  });
-
-  it("keeps the row ids aligned, so the blank row is still the one that was added", async () => {
-    settingsOnServer = baseSettings({
-      registryAuths: [registry({ host: "ghcr.io", username: "old" })],
-    });
-    await renderPage();
-    await gotoPage("containers");
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
-    });
-    await act(async () => {
-      fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
-    });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
-    });
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-    await act(async () => {
-      putCalls[0].resolve({ ok: true });
-    });
-
-    // Misaligned ids would send typing in the blank row to the first one.
-    await waitFor(() => expect(hostInputs()).toHaveLength(2));
-    await act(async () => {
-      fireEvent.change(hostInputs()[1], { target: { value: "docker.io" } });
-    });
-    expect(hostInputs()[0].value).toBe("ghcr.io/updated");
-    expect(hostInputs()[1].value).toBe("docker.io");
-  });
-});
-
-describe("editing the registry list while its save is in flight", () => {
-  it("keeps a row added after the PUT went out", async () => {
-    settingsOnServer = baseSettings({
-      registryAuths: [registry({ host: "ghcr.io", username: "old" })],
-    });
-    await renderPage();
-    await gotoPage("containers");
-
-    // Let the debounce elapse, so the PUT is in flight with its payload fixed.
-    await act(async () => {
-      fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
-    });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
-    });
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-
-    // A row added during the round trip, which the payload knows nothing
-    // about.
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
-    });
-    expect(hostInputs()).toHaveLength(2);
-
-    await act(async () => {
-      putCalls[0].resolve({ ok: true });
-    });
-
-    // The response must not carry the card back to the list it was sent with.
-    await waitFor(() => expect(hostInputs()).toHaveLength(2));
-    expect(hostInputs()[1].value).toBe("");
-
-    // ...and the row ids still line up, so typing into the new row reaches it.
-    await act(async () => {
-      fireEvent.change(hostInputs()[1], { target: { value: "docker.io" } });
-    });
-    expect(hostInputs()[0].value).toBe("ghcr.io/updated");
-    expect(hostInputs()[1].value).toBe("docker.io");
-  });
-
-  it("keeps characters typed after the PUT went out", async () => {
-    settingsOnServer = baseSettings({
-      registryAuths: [registry({ host: "ghcr.io" }), registry({ host: "quay.io" })],
-    });
-    await renderPage();
-    await gotoPage("containers");
-
-    await act(async () => {
-      fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
-    });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
-    });
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-
-    // Second row edited while the first row's write is still open.
-    await act(async () => {
-      fireEvent.change(hostInputs()[1], { target: { value: "quay.io/typed-mid-flight" } });
-    });
-    await act(async () => {
-      putCalls[0].resolve({ ok: true });
-    });
-
-    await waitFor(() => expect(hostInputs()[1].value).toBe("quay.io/typed-mid-flight"));
-    expect(hostInputs()[0].value).toBe("ghcr.io/updated");
+    expect(putCalls[0].body.resticCacheMaxMB).toBe(2048);
   });
 });
 
@@ -391,7 +244,7 @@ describe("importing settings while an edit is still inside its debounce", () => 
   }
 
   it("drops the pending edit even when an earlier save is holding the write queue", async () => {
-    settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
+    settingsOnServer = baseSettings({ resticCacheMaxMB: 4096 });
     await renderPage();
     await gotoPage("general");
 
@@ -402,18 +255,15 @@ describe("importing settings while an edit is still inside its debounce", () => 
     });
     await waitFor(() => expect(putCalls).toHaveLength(1));
 
-    // The user edits a registry host, arming the 800ms debounce...
-    await gotoPage("containers");
+    // The user edits the cache limit, arming the 800ms debounce...
+    await gotoPage("system");
     await act(async () => {
-      fireEvent.change(hostInputs()[0], { target: { value: "typed-before-import.example.com" } });
+      fireEvent.change(cacheLimit(), { target: { value: "7777" } });
     });
 
     // ...then imports a file. The server now holds a different configuration.
     await confirmImport();
-    settingsOnServer = baseSettings({
-      registryAuths: [registry({ host: "imported.example.com" })],
-      retentionKeepDaily: 30,
-    });
+    settingsOnServer = baseSettings({ resticCacheMaxMB: 1024, retentionKeepDaily: 30 });
     expect(importApplyCalls).toHaveLength(0); // still stuck behind the in-flight save
 
     // The debounce elapses while the import still waits its turn; the edit
@@ -437,26 +287,22 @@ describe("importing settings while an edit is still inside its debounce", () => 
     expect(putCalls).toHaveLength(1);
 
     // ...and the imported value is what the page now shows and holds.
-    await gotoPage("containers");
-    await waitFor(() => expect(hostInputs()[0].value).toBe("imported.example.com"));
+    await waitFor(() => expect(cacheLimit().value).toBe("1024"));
   });
 
   it("ignores a keystroke made while the import is being applied", async () => {
-    settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
+    settingsOnServer = baseSettings({ resticCacheMaxMB: 4096 });
     await renderPage();
 
     // Nothing is in flight, so the import starts at once and then waits on its
     // own request, the longer half of the same window.
     await confirmImport();
     await waitFor(() => expect(importApplyCalls).toHaveLength(1));
-    settingsOnServer = baseSettings({
-      registryAuths: [registry({ host: "imported.example.com" })],
-    });
+    settingsOnServer = baseSettings({ resticCacheMaxMB: 1024 });
 
     // The user keeps typing while the apply is still open.
-    await gotoPage("containers");
     await act(async () => {
-      fireEvent.change(hostInputs()[0], { target: { value: "typed-during-import.example.com" } });
+      fireEvent.change(cacheLimit(), { target: { value: "7777" } });
     });
     await act(async () => {
       vi.advanceTimersByTime(900);
@@ -469,16 +315,16 @@ describe("importing settings while an edit is still inside its debounce", () => 
     // That keystroke was typed against the configuration the import replaced,
     // so it must never reach the server.
     expect(putCalls).toHaveLength(0);
-    await waitFor(() => expect(hostInputs()[0].value).toBe("imported.example.com"));
+    await waitFor(() => expect(cacheLimit().value).toBe("1024"));
   });
 });
 
 describe("the yearly retention rule", () => {
   it("saves its count next to the other keep rules", async () => {
     await renderPage();
-    await gotoPage("retention");
+    await gotoPage("storage");
 
-    // The Local section comes first in the Retention card, the Off-site one follows.
+    // The local rules come first, the off-site ones follow.
     const label = screen.getAllByText(en["settings.retentionYearly"])[0].closest("label");
     const input = label?.querySelector("input") as HTMLInputElement;
     expect(input.value).toBe("0");
