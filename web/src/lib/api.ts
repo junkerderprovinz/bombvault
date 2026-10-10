@@ -2402,6 +2402,15 @@ export function tamperTest(
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
 
+/** POST /api/offsite/targets/{id}/tamper-test: the same probe as tamperTest
+ *  against one off-site target. The verdict is stored for that target and
+ *  comes back as lastTamper on its storage location. An unknown id is a 404. */
+export function tamperTestOffsiteTarget(
+  id: string
+): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/tamper-test`, { method: "POST" });
+}
+
 // ---------------------------------------------------------------------------
 // Remote primary repositories (issue #152)
 //
@@ -2561,7 +2570,15 @@ export interface OffsiteTarget {
   /** The destination this target sits under, when it was derived from one. */
   destinationId?: string;
   provider?: string;
+  /** The settings a derived target holds itself instead of taking them from
+   *  its destination. Read-only: a save keeps what is stored, and
+   *  updateOffsiteTarget's follow gives settings back. */
+  own?: FollowedSetting[];
 }
+
+/** A setting a target derived from a destination takes from it unless it
+ *  holds a value of its own. */
+export type FollowedSetting = "retention" | "compression" | "limits" | "enabled";
 
 /** A named repository (#204): a location written down once in Settings and then
  *  PICKED by individual containers, VMs and folder sets, instead of typed into
@@ -2664,11 +2681,15 @@ export function createOffsiteTarget(
 export function updateOffsiteTarget(
   id: string,
   target: OffsiteTarget,
-  alsoExclude?: NewTargetExclusion
+  alsoExclude?: NewTargetExclusion,
+  /** Followed settings a derived target takes from its destination again,
+   *  whatever the target carries for them. Without it the target keeps every
+   *  one it is saved with another value for than the destination's. */
+  follow?: FollowedSetting[]
 ): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
+    body: JSON.stringify({ ...target, ...(alsoExclude ? { alsoExclude } : {}), ...(follow ? { follow } : {}) }),
   });
 }
 
@@ -6043,6 +6064,29 @@ export interface Destination {
   domains: string[];
   /** Targets typed in by hand whose repositories lie under it. */
   adoptable?: AdoptableTarget[];
+  /** The keep-policy, compression, limits and switch its domain targets take
+   *  unless they hold their own. */
+  retention: RetentionKeep;
+  compression: Compression;
+  limitUpload: number;
+  limitDownload: number;
+  enabled: boolean;
+  /** Counts as a site of its own. */
+  offPremises: boolean;
+}
+
+/** What can change on a saved destination. A setting that is left out stays
+ *  as it is. */
+export interface DestinationEdit {
+  name: string;
+  storageClass: string;
+  immutable: boolean;
+  retention?: RetentionKeep;
+  compression?: Compression;
+  limitUpload?: number;
+  limitDownload?: number;
+  enabled?: boolean;
+  offPremises?: boolean;
 }
 
 export interface AdoptableTarget {
@@ -6062,10 +6106,12 @@ export function createDestination(d: DestinationDraft): Promise<OkEnvelope & { d
   return fetchJSON("/api/offsite/destinations", { method: "POST", body: JSON.stringify(d) });
 }
 
+/** PUT /api/offsite/destinations/{id}. warnings say what the change means for
+ *  the direct repositories of its domain targets. */
 export function updateDestination(
   id: string,
-  edit: { name: string; storageClass: string; immutable: boolean }
-): Promise<OkEnvelope & { destination?: Destination }> {
+  edit: DestinationEdit
+): Promise<OkEnvelope & { destination?: Destination; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(edit) });
 }
 
@@ -6125,6 +6171,105 @@ export function destinationFolder(d: Destination, domain: OffsiteDomain): string
   const base = d.repo.trim().replace(/\/+$/, "");
   const folder = domain === "config" ? "selfbackup" : domain;
   return base.endsWith(":") ? base + folder : `${base}/${folder}`;
+}
+
+/** Which kind of object a storage location is read from. It leads the id. */
+export type StorageLocationObject = "path" | "repo" | "destination" | "target";
+
+/** One domain's use of a storage location: the home its backups are written
+ *  to, or a copy of them. */
+export interface StorageLocationSection {
+  domain: OffsiteDomain;
+  use: "home" | "copy";
+  /** The off-site target behind a copy, and behind a home that is a target's
+   *  direct repository. */
+  targetId?: string;
+  /** The named repository behind a home, absent for the domain path. */
+  repoId?: string;
+  where: string;
+  /** The target's switch for a copy, the repository's for a home in one, the
+   *  domain's own for its path. */
+  enabled: boolean;
+  /** The copy the domain's off-site settings describe. */
+  primary?: boolean;
+  immutable: boolean;
+  retention: RetentionKeep;
+  compression: Compression;
+  limitUpload: number;
+  limitDownload: number;
+  /** The settings the section holds itself instead of taking the location's. */
+  own: FollowedSetting[];
+  /** `at` is when the last copy that succeeded began, 0 when none has. */
+  lastCopy?: { at: number; ok: boolean; failingSince?: number };
+  lastTamper?: { domain: string; at: number; protected: boolean; detail: string };
+}
+
+/** The room on the volume a location sits on. A figure nobody measured is
+ *  absent. */
+export interface StorageLocationCapacity {
+  at?: number;
+  freeBytes?: number;
+  usedBytes?: number;
+  totalBytes?: number;
+  /** What measured it: statfs, smb, nfs, rclone or sftp. */
+  source?: string;
+  /** The backend reports no room at all (S3, B2, REST). */
+  unsupported?: boolean;
+  /** What the repositories here held at their last size sample. */
+  storedBytes?: number;
+  growthBytesPerWeek?: number;
+  weeksToFull?: number;
+}
+
+/** One place backups are kept: the folder the domain repositories sit in, a
+ *  named repository, a destination with its per-domain targets, or an
+ *  off-site target set up for one domain. */
+export interface StorageLocation {
+  /** The kind of object and its id, such as `destination:4f2a`. */
+  id: string;
+  object: StorageLocationObject;
+  kind: "local" | "offsite";
+  /** The provider a destination was set up with, "" when typed in. */
+  provider: string;
+  mark?: string;
+  /** What restic talks to: local, or the scheme of the address. */
+  backend: string;
+  name: string;
+  /** Path or address, without credentials. */
+  where: string;
+  credsRef?: string;
+  enabled: boolean;
+  offPremises: boolean;
+  sections: StorageLocationSection[];
+  /** What the location carries itself; absent where it has no value. */
+  retention?: RetentionKeep;
+  compression?: Compression;
+  limitUpload?: number;
+  limitDownload?: number;
+  protection: {
+    immutable: boolean;
+    /** The tamper test can probe it, which it can for a rest-server only. */
+    testable: boolean;
+    /** The oldest of the sections' last tests, protected only when all were. */
+    lastTamper?: { at: number; protected: boolean };
+  };
+  capacity: StorageLocationCapacity;
+}
+
+/** GET /api/storage/locations: every storage location with the room last
+ *  measured for it. Remotes are not asked here. */
+export function listStorageLocations(): Promise<OkEnvelope & { locations?: StorageLocation[] }> {
+  return fetchJSON("/api/storage/locations");
+}
+
+/** GET /api/storage/locations/{id}. With refreshCapacity the location's remote
+ *  is asked for its room first; a probe that fails leaves the last reading in
+ *  place and comes back in capacityError. */
+export function getStorageLocation(
+  id: string,
+  refreshCapacity = false
+): Promise<OkEnvelope & { location?: StorageLocation; capacityError?: string }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}${refreshCapacity ? "?refresh=capacity" : ""}`);
 }
 
 export type AnomalySeverity = "critical" | "warning" | "info";

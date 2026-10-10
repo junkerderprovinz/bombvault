@@ -100,6 +100,69 @@ type OffsiteTarget struct {
 	Provider string
 	// DestinationID is the destination a domain's target was derived from.
 	DestinationID string
+	// Own names the settings a derived target keeps for itself.
+	Own OwnSettings
+}
+
+// OwnSettings names settings a target derived from a destination holds values
+// of its own for. A save of the destination leaves those alone and carries
+// the others into the target.
+type OwnSettings uint8
+
+// The numbers are stored and written by the migration that adds the column.
+const (
+	OwnRetention OwnSettings = 1 << iota
+	OwnCompression
+	OwnLimits
+	OwnEnabled
+)
+
+// FollowedSettings lists every setting a derived target can take from its
+// destination.
+var FollowedSettings = []OwnSettings{OwnRetention, OwnCompression, OwnLimits, OwnEnabled}
+
+// Keeps reports whether t holds setting itself instead of taking it from a
+// destination. The target in a domain's primary slot always does, since the
+// domain's off-site settings write it on every save.
+func (t OffsiteTarget) Keeps(setting OwnSettings) bool {
+	return t.DestinationID == "" || t.SortOrder == 0 || t.Own&setting != 0
+}
+
+// TakeFrom gives t the value d has for each of settings.
+func (t *OffsiteTarget) TakeFrom(d OffsiteTarget, settings OwnSettings) {
+	if settings&OwnRetention != 0 {
+		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly = d.RetentionKeepLast, d.RetentionKeepDaily, d.RetentionKeepWeekly
+		t.RetentionKeepMonthly, t.RetentionKeepYearly = d.RetentionKeepMonthly, d.RetentionKeepYearly
+	}
+	if settings&OwnCompression != 0 {
+		t.Compression = d.Compression
+	}
+	if settings&OwnLimits != 0 {
+		t.LimitUpload, t.LimitDownload = d.LimitUpload, d.LimitDownload
+	}
+	if settings&OwnEnabled != 0 {
+		t.Enabled = d.Enabled
+	}
+}
+
+// differingFrom returns the settings t and d hold different values for.
+func (t OffsiteTarget) differingFrom(d OffsiteTarget) OwnSettings {
+	var out OwnSettings
+	if t.RetentionKeepLast != d.RetentionKeepLast || t.RetentionKeepDaily != d.RetentionKeepDaily ||
+		t.RetentionKeepWeekly != d.RetentionKeepWeekly || t.RetentionKeepMonthly != d.RetentionKeepMonthly ||
+		t.RetentionKeepYearly != d.RetentionKeepYearly {
+		out |= OwnRetention
+	}
+	if mirroredCompression(t.Compression) != mirroredCompression(d.Compression) {
+		out |= OwnCompression
+	}
+	if t.LimitUpload != d.LimitUpload || t.LimitDownload != d.LimitDownload {
+		out |= OwnLimits
+	}
+	if t.Enabled != d.Enabled {
+		out |= OwnEnabled
+	}
+	return out
 }
 
 // remoteLocation is the SQL that asks of a location column what
@@ -151,6 +214,9 @@ const (
 // name, repo, schedule and enabled from t; its mirrored fields come from its
 // target instead. Saving a target mirrors its own fields, credentials aside,
 // into that companion in the same transaction.
+//
+// A target derived from a destination keeps every followed setting it is
+// saved with a different value for, on top of those t.Own names.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -169,10 +235,27 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var companionOf string
-	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`, t.ID, t.Role).Scan(&companionOf)
+	var companionOf, destinationID string
+	err = tx.QueryRow(`SELECT companion_of, destination_id FROM offsite_targets WHERE id = ? AND role = ?`,
+		t.ID, t.Role).Scan(&companionOf, &destinationID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if t.DestinationID != "" {
+		destinationID = t.DestinationID
+	}
+	if t.Role != RoleOffsite || destinationID == "" {
+		t.Own = 0
+	} else {
+		d, err := destinationTx(tx, destinationID)
+		switch {
+		case err == nil:
+			t.Own |= t.differingFrom(d)
+		case errors.Is(err, ErrNotDestination):
+			t.Own = 0
+		default:
+			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+		}
 	}
 	if companionOf != "" {
 		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ? AND role = ?`,
@@ -182,8 +265,9 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-			  companion_of, companion_lost, off_premises, retention_keep_yearly, compression, destination_id, provider)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			  companion_of, companion_lost, off_premises, retention_keep_yearly, compression, destination_id, provider,
+			  own_settings)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
@@ -205,13 +289,14 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  retention_keep_yearly  = excluded.retention_keep_yearly,
 			  compression            = excluded.compression,
 			  destination_id         = CASE excluded.destination_id WHEN '' THEN offsite_targets.destination_id ELSE excluded.destination_id END,
-			  provider               = CASE excluded.provider WHEN '' THEN offsite_targets.provider ELSE excluded.provider END
+			  provider               = CASE excluded.provider WHEN '' THEN offsite_targets.provider ELSE excluded.provider END,
+			  own_settings           = excluded.own_settings
 			WHERE offsite_targets.role = excluded.role`,
 			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
 			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
-			t.RetentionKeepYearly, t.Compression, t.DestinationID, t.Provider,
+			t.RetentionKeepYearly, t.Compression, t.DestinationID, t.Provider, t.Own,
 		)
 	}
 	if err != nil {
@@ -368,7 +453,8 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-	companion_of, companion_lost, off_premises, retention_keep_yearly, compression, provider, destination_id`
+	companion_of, companion_lost, off_premises, retention_keep_yearly, compression, provider, destination_id,
+	own_settings`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -771,6 +857,31 @@ func (r *Repo) ItemsUsingNamedRepo(id string) (int, error) {
 	return n, nil
 }
 
+// NamedRepoDomains returns, by named repository id, the domains that keep
+// backups there: one of their items points at it, or their default home is it.
+func (r *Repo) NamedRepoDomains() (map[string][]string, error) {
+	rows, err := r.db.Query(`
+		SELECT repo, 'containers' FROM targets      WHERE repo <> ''
+		UNION SELECT repo, 'vms'   FROM vms          WHERE repo <> ''
+		UNION SELECT repo, 'files' FROM file_sets    WHERE repo <> ''
+		UNION SELECT repo, 'zfs'   FROM zfs_datasets WHERE repo <> ''
+		UNION SELECT home, domain  FROM placement_defaults WHERE home <> ''
+		ORDER BY 1, 2`)
+	if err != nil {
+		return nil, fmt.Errorf("NamedRepoDomains: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only rows
+	out := map[string][]string{}
+	for rows.Next() {
+		var id, domain string
+		if err := rows.Scan(&id, &domain); err != nil {
+			return nil, fmt.Errorf("NamedRepoDomains: %w", err)
+		}
+		out[id] = append(out[id], domain)
+	}
+	return out, rows.Err()
+}
+
 // GetOffsiteTarget returns the off-site REPLICATION DESTINATION (role =
 // 'offsite') with the given id. The bool is false (with a zero OffsiteTarget)
 // when no such row exists — including when id names a "primary" row: the
@@ -944,6 +1055,7 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
 		&t.CompanionOf, &lost, &offPremises, &t.RetentionKeepYearly, &t.Compression, &t.Provider, &t.DestinationID,
+		&t.Own,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)

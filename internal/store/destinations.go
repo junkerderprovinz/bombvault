@@ -22,8 +22,9 @@ var ErrNotDestination = errors.New("no such destination")
 // ErrDestinationInUse is returned when a destination still has domain targets.
 var ErrDestinationInUse = errors.New("destination is in use")
 
-// destinationMirroredCols are the fields a domain target takes from its
-// destination on every save of the destination.
+// destinationMirroredCols are the fields every domain target takes from its
+// destination on each save of the destination. The settings FollowedSettings
+// lists are carried too, into the targets that do not keep their own.
 var destinationMirroredCols = []string{"name", "creds_ref", "storage_class", "immutable", "provider"}
 
 func destinationMirroredValues(d OffsiteTarget) []any {
@@ -72,13 +73,15 @@ func destinationTx(q queryer, id string) (OffsiteTarget, error) {
 
 // SaveDestination creates d, or updates the destination with its id and
 // carries name, credentials, storage class, append-only flag and provider into
-// every domain target derived from it. The location of a destination that has
-// domain targets cannot change: their repositories are already there.
+// every domain target derived from it, and its keep-policy, compression,
+// limits and switch into those that do not keep their own. A new destination
+// starts switched on and off the premises. The location of a destination that
+// has domain targets cannot change: their repositories are already there.
 func (r *Repo) SaveDestination(d OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(d.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
 	}
-	d.Role, d.Domain, d.Enabled = RoleDestination, "", true
+	d.Role, d.Domain = RoleDestination, ""
 	if d.CreatedAt == 0 {
 		d.CreatedAt = time.Now().Unix()
 	}
@@ -101,6 +104,7 @@ func (r *Repo) SaveDestination(d OffsiteTarget) (OffsiteTarget, error) {
 			d.CreatedAt = old.CreatedAt
 		} else {
 			d.ID = newID()
+			d.Enabled, d.OffPremises = true, true
 		}
 		if err := writeDestinationTx(tx, d); err != nil {
 			return err
@@ -118,15 +122,18 @@ func (r *Repo) SaveDestination(d OffsiteTarget) (OffsiteTarget, error) {
 // writeDestinationTx inserts or updates d and mirrors it into its domain
 // targets. A row of another role under the same id is left alone.
 func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
+	//nolint:gosec // G202: the column lists are built from the fixed followedCols names; every value travels in args.
 	_, err := tx.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable,
-		  enabled, created_at, sort_order, provider)
-		VALUES (?, '', ?, ?, ?, ?, ?, ?, 1, ?, 0, ?)
+		  created_at, sort_order, provider, off_premises, `+strings.Join(followedCols, ", ")+`)
+		VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 		  name = excluded.name, repo = excluded.repo, creds_ref = excluded.creds_ref,
-		  storage_class = excluded.storage_class, immutable = excluded.immutable, provider = excluded.provider
+		  storage_class = excluded.storage_class, immutable = excluded.immutable, provider = excluded.provider,
+		  off_premises = excluded.off_premises, `+assignments(followedCols, "excluded.")+`
 		WHERE offsite_targets.role = excluded.role`,
-		d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, boolInt(d.Immutable), d.CreatedAt, d.Provider)
+		slices.Concat([]any{d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, boolInt(d.Immutable),
+			d.CreatedAt, d.Provider, boolInt(d.OffPremises)}, followedValues(d))...)
 	if err != nil {
 		return err
 	}
@@ -136,9 +143,59 @@ func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
 	}
 	args := slices.Concat(destinationMirroredValues(d), []any{RoleOffsite, d.ID})
 	//nolint:gosec // G202: set is built from the fixed destinationMirroredCols names; every value travels in args.
-	_, err = tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
-		WHERE role = ? AND destination_id = ?`, args...)
-	return err
+	if _, err = tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
+		WHERE role = ? AND destination_id = ?`, args...); err != nil {
+		return err
+	}
+	derived, err := destinationTargetsQ(tx, d.ID)
+	if err != nil {
+		return err
+	}
+	for _, t := range derived {
+		// A value that only spells the destination's differently stays as written.
+		differs := t.differingFrom(d)
+		for _, setting := range FollowedSettings {
+			if differs&setting != 0 && !t.Keeps(setting) {
+				t.TakeFrom(d, setting)
+			}
+		}
+		//nolint:gosec // G202: the SET list is built from the fixed followedCols names; every value travels in args.
+		if _, err := tx.Exec(`UPDATE offsite_targets SET `+assignments(followedCols, "?")+` WHERE id = ? AND role = ?`,
+			slices.Concat(followedValues(t), []any{t.ID, RoleOffsite})...); err != nil {
+			return err
+		}
+		if err := mirrorTx(tx, t, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// followedCols are the columns behind FollowedSettings, in the order
+// followedValues returns them.
+var followedCols = []string{
+	"retention_keep_last", "retention_keep_daily", "retention_keep_weekly", "retention_keep_monthly",
+	"retention_keep_yearly", "compression", "limit_upload", "limit_download", "enabled",
+}
+
+func followedValues(t OffsiteTarget) []any {
+	return []any{
+		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
+		t.RetentionKeepYearly, t.Compression, t.LimitUpload, t.LimitDownload, boolInt(t.Enabled),
+	}
+}
+
+// assignments writes "col = value" for each column. A value that ends in a
+// dot is a table prefix and takes the column's name behind it.
+func assignments(cols []string, value string) string {
+	out := make([]string, len(cols))
+	for i, c := range cols {
+		out[i] = c + " = " + value
+		if strings.HasSuffix(value, ".") {
+			out[i] += c
+		}
+	}
+	return strings.Join(out, ", ")
 }
 
 // ImportDestinations writes the destinations of a settings file, each under
@@ -153,7 +210,7 @@ func (r *Repo) ImportDestinations(ds []OffsiteTarget) (kept []string, err error)
 			if d.ID == "" {
 				d.ID = newID()
 			}
-			d.Role, d.Domain, d.Enabled = RoleDestination, "", true
+			d.Role, d.Domain = RoleDestination, ""
 			old, err := destinationTx(tx, d.ID)
 			switch {
 			case err == nil:
@@ -207,7 +264,11 @@ func (r *Repo) DeleteUnusedDestinationsExcept(keep []string) error {
 
 // DestinationTargets returns the domain targets derived from a destination.
 func (r *Repo) DestinationTargets(id string) ([]OffsiteTarget, error) {
-	rows, err := r.db.Query(`SELECT `+offsiteTargetCols+` FROM offsite_targets
+	return destinationTargetsQ(r.db, id)
+}
+
+func destinationTargetsQ(q queryer, id string) ([]OffsiteTarget, error) {
+	rows, err := q.Query(`SELECT `+offsiteTargetCols+` FROM offsite_targets
 		WHERE role = ? AND destination_id = ? ORDER BY domain`, RoleOffsite, id)
 	if err != nil {
 		return nil, fmt.Errorf("DestinationTargets: %w", err)
@@ -231,8 +292,9 @@ func derivedCountTx(q queryer, id string) (int, error) {
 }
 
 // EnsureDestinationTarget returns the domain's target derived from the
-// destination, creating it at location when there is none. A new target is
-// added to the domain default's skip list and to every copy rule of the domain
+// destination, creating it at location when there is none. A new target
+// starts with the destination's keep-policy, compression, limits and switch
+// and follows it for all of them. It is added to the domain default's skip list and to every copy rule of the domain
 // that copies at all, in the same transaction, so ticking a destination for
 // one item does not start copies for the others. created reports whether the
 // target is new.
@@ -260,13 +322,14 @@ func (r *Repo) EnsureDestinationTarget(id, domain, location string) (t OffsiteTa
 		}
 		now := time.Now().Unix()
 		tid := newID()
+		//nolint:gosec // G202: the column list is built from the fixed followedCols names; every value travels in args.
 		_, err = tx.Exec(`
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable,
-			  enabled, created_at, sort_order, provider, destination_id)
-			SELECT ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, MAX(COALESCE(MAX(sort_order), 0) + 1, 1), ?, ?
+			  created_at, sort_order, provider, destination_id, `+strings.Join(followedCols, ", ")+`)
+			SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, MAX(COALESCE(MAX(sort_order), 0) + 1, 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 			  FROM offsite_targets WHERE role = ? AND domain = ?`,
-			tid, domain, d.Name, location, RoleOffsite, d.CredsRef, d.StorageClass, boolInt(d.Immutable),
-			now, d.Provider, id, RoleOffsite, domain)
+			slices.Concat([]any{tid, domain, d.Name, location, RoleOffsite, d.CredsRef, d.StorageClass, boolInt(d.Immutable),
+				now, d.Provider, id}, followedValues(d), []any{RoleOffsite, domain})...)
 		if err != nil {
 			return err
 		}
@@ -336,7 +399,8 @@ var (
 
 // AdoptIntoDestination hangs a domain target typed in by hand on a
 // destination. The target takes the destination's mirrored fields and keeps
-// its repository, retention and copy rules. For the target in the primary
+// its repository and copy rules, and its own value for every followed setting
+// the destination holds another one for. For the target in the primary
 // slot, settle brings the domain's off-site settings in line in the same
 // transaction, because they rewrite the primary slot on every save.
 func (r *Repo) AdoptIntoDestination(targetID, destID string, settle func(*Settings)) (OffsiteTarget, error) {
@@ -427,7 +491,7 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 			location, t.ID, RoleOffsite); err != nil {
 			return err
 		}
-		t.DestinationID = ""
+		t.DestinationID, t.Enabled = "", true
 		if out, err = followDestinationTx(tx, t, d); err != nil {
 			return err
 		}
@@ -445,12 +509,12 @@ func followDestinationTx(tx *sql.Tx, t, d OffsiteTarget) (OffsiteTarget, error) 
 	if t.DestinationID != "" {
 		return OffsiteTarget{}, ErrTargetFollowsDestination
 	}
-	t.DestinationID = d.ID
+	t.DestinationID, t.Own = d.ID, t.differingFrom(d)
 	t.Name, t.CredsRef, t.StorageClass, t.Immutable, t.Provider = d.Name, d.CredsRef, d.StorageClass, d.Immutable, d.Provider
 	if _, err := tx.Exec(`UPDATE offsite_targets SET destination_id = ?, name = ?, creds_ref = ?, storage_class = ?,
-		  immutable = ?, provider = ?
+		  immutable = ?, provider = ?, own_settings = ?
 		WHERE id = ? AND role = ?`,
-		t.DestinationID, t.Name, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Provider,
+		t.DestinationID, t.Name, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Provider, t.Own,
 		t.ID, RoleOffsite); err != nil {
 		return OffsiteTarget{}, err
 	}
@@ -472,7 +536,8 @@ func settleTx(tx *sql.Tx, settle func(*Settings)) error {
 // DetachFromDestination unhooks a target from the destination it follows.
 // The fields it took from the destination stay until its next save.
 func (r *Repo) DetachFromDestination(id string) error {
-	if _, err := r.db.Exec(`UPDATE offsite_targets SET destination_id = '' WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+	if _, err := r.db.Exec(`UPDATE offsite_targets SET destination_id = '', own_settings = 0 WHERE id = ? AND role = ?`,
+		id, RoleOffsite); err != nil {
 		return fmt.Errorf("DetachFromDestination: %w", err)
 	}
 	return nil

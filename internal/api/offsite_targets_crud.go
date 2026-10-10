@@ -1,8 +1,10 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -37,14 +39,49 @@ type offsiteTargetView struct {
 	// since toStoreTarget never maps it back: an import can read a companion
 	// link the file already describes, never create or change one.
 	CompanionOf string `json:"companionOf,omitempty"`
-	// OffPremises is set only on a named repository (RoleRepo): a destination
-	// carries no meaning for it, so the export leaves the field off entirely
-	// rather than send a value that means nothing there.
+	// OffPremises is set on a named repository and on a destination. A
+	// domain's target has no value of its own for it, so the field is left off
+	// there rather than sent with a value that means nothing.
 	OffPremises *bool `json:"offPremises,omitempty"`
 	// DestinationID and Provider are set on a target derived from a
 	// destination. Read-only, like CompanionOf.
 	DestinationID string `json:"destinationId,omitempty"`
 	Provider      string `json:"provider,omitempty"`
+	// Own names the settings a derived target holds itself instead of taking
+	// them from its destination: retention, compression, limits, enabled. Only
+	// the settings import reads it; a save of the target keeps what is stored
+	// and gives settings back through Follow.
+	Own []string `json:"own,omitempty"`
+}
+
+// ownSettingNames spells the followed settings the way the API does.
+var ownSettingNames = map[store.OwnSettings]string{
+	store.OwnRetention: "retention", store.OwnCompression: "compression",
+	store.OwnLimits: "limits", store.OwnEnabled: "enabled",
+}
+
+// keptSettings names the followed settings t holds itself.
+func keptSettings(t store.OffsiteTarget) []string {
+	out := []string{}
+	for _, setting := range store.FollowedSettings {
+		if t.Keeps(setting) {
+			out = append(out, ownSettingNames[setting])
+		}
+	}
+	return out
+}
+
+// parseOwnSettings reads a list of setting names as the API spells them.
+func parseOwnSettings(names []string) (store.OwnSettings, error) {
+	var out store.OwnSettings
+	for _, name := range names {
+		i := slices.IndexFunc(store.FollowedSettings, func(s store.OwnSettings) bool { return ownSettingNames[s] == name })
+		if i < 0 {
+			return 0, fmt.Errorf("%q is not a setting a target takes from its destination", name)
+		}
+		out |= store.FollowedSettings[i]
+	}
+	return out, nil
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
@@ -73,8 +110,11 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		DestinationID:        t.DestinationID,
 		Provider:             t.Provider,
 	}
-	if t.Role == store.RoleRepo {
+	if t.Role == store.RoleRepo || t.Role == store.RoleDestination {
 		v.OffPremises = &t.OffPremises
+	}
+	if t.DestinationID != "" {
+		v.Own = keptSettings(t)
 	}
 	return v
 }
@@ -95,6 +135,9 @@ type offsiteTargetBody struct {
 	// SortOrder shadows the view's so a missing one can be told apart from 0.
 	SortOrder   *int                `json:"sortOrder"`
 	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
+	// Follow names settings a derived target takes from its destination again,
+	// whatever the body carries for them.
+	Follow []string `json:"follow"`
 }
 
 // toStoreTarget floors the numeric fields at zero, trims the repo and
@@ -336,6 +379,13 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		t.Name, t.CredsRef, t.StorageClass, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Immutable
+		t.Own = existing.Own
+	}
+	if len(v.Follow) > 0 {
+		if err := h.followDestination(&t, existing, v.Follow); err != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
 	}
 	if moved {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
@@ -375,6 +425,48 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		"target":   offsiteTargetToView(stored),
 		"warnings": h.svc.targetSaveWarnings(r.Context(), existing, stored),
 	}))
+}
+
+// handleTamperTestOffsiteTarget runs the append-only probe of
+// handleTamperTest against one off-site target and answers in the same shape.
+// POST /api/offsite/targets/{id}/tamper-test
+func (h *Handler) handleTamperTestOffsiteTarget(w http.ResponseWriter, r *http.Request) {
+	verdict, err := h.svc.RunTamperTestForTarget(r.Context(), r.PathValue("id"))
+	if errors.Is(err, store.ErrNotOffsiteTarget) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such off-site target"})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"testable":  verdict.Testable,
+		"protected": verdict.Protected,
+		"detail":    verdict.Detail,
+	}))
+}
+
+// followDestination gives t its destination's values for the named settings
+// and stops t keeping its own. The primary cannot follow: the domain's
+// off-site settings write its values on every save.
+func (h *Handler) followDestination(t *store.OffsiteTarget, existing store.OffsiteTarget, names []string) error {
+	follow, err := parseOwnSettings(names)
+	if err != nil {
+		return err
+	}
+	d, ok, err := h.store.GetDestination(existing.DestinationID)
+	switch {
+	case err != nil:
+		return err
+	case !ok:
+		return errors.New("this target follows no destination")
+	case existing.SortOrder == 0:
+		return errors.New("the off-site settings of the domain decide these for its primary target")
+	}
+	t.TakeFrom(d, follow)
+	t.Own &^= follow
+	return nil
 }
 
 // handleDeleteOffsiteTarget removes an off-site target and its direct

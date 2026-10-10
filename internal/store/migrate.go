@@ -2807,6 +2807,28 @@ CREATE INDEX IF NOT EXISTS idx_zfs_replica_runs_item ON zfs_replica_runs(item_id
   UNIQUE (peer_id, item_id)
 );`,
 	},
+	{
+		// Which settings a target derived from a destination keeps for itself:
+		// at the upgrade every one it holds a different value for than its
+		// destination's row, so each target goes on with the values it has.
+		// The bits are OwnRetention, OwnCompression, OwnLimits and OwnEnabled.
+		// A destination counts as a site of its own, as every copy there does.
+		version:          locationMigration,
+		name:             "offsite_targets_own_settings",
+		alreadySatisfied: columnPresent("offsite_targets", "own_settings"),
+		sql: `ALTER TABLE offsite_targets ADD COLUMN own_settings INTEGER NOT NULL DEFAULT 0;
+UPDATE offsite_targets SET off_premises = 1 WHERE role = 'destination';
+UPDATE offsite_targets AS t SET own_settings = (
+  SELECT (t.retention_keep_last <> d.retention_keep_last OR t.retention_keep_daily <> d.retention_keep_daily
+          OR t.retention_keep_weekly <> d.retention_keep_weekly OR t.retention_keep_monthly <> d.retention_keep_monthly
+          OR t.retention_keep_yearly <> d.retention_keep_yearly)
+       + 2 * (replace(lower(trim(t.compression)), 'auto', '') <> replace(lower(trim(d.compression)), 'auto', ''))
+       + 4 * (t.limit_upload <> d.limit_upload OR t.limit_download <> d.limit_download)
+       + 8 * (t.enabled <> d.enabled)
+    FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination')
+ WHERE t.role = 'offsite'
+   AND EXISTS (SELECT 1 FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination');`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2900,8 +2922,11 @@ const destinationMigration = 280
 // up for its group, 290 to 299.
 const receiverServerMigration = 290
 
-// zfsReplicaMigration numbers the ZFS replica, 300 to 309.
+// zfsReplicaMigration numbers the ZFS replica, 300 to 304.
 const zfsReplicaMigration = 300
+
+// locationMigration numbers what the storage locations add, 305 to 309.
+const locationMigration = 305
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

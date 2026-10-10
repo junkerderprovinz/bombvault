@@ -57,7 +57,7 @@ func TestAFreshDatabaseNumbersTheReplicaBlockWithoutGaps(t *testing.T) {
 			t.Errorf("v%d = %q, want %q", zfsReplicaMigration+i, got, name)
 		}
 	}
-	for v := zfsReplicaMigration + len(want); v < zfsReplicaMigration+10; v++ {
+	for v := zfsReplicaMigration + len(want); v < locationMigration; v++ {
 		if name, ok := applied[v]; ok {
 			t.Errorf("v%d = %q, after the last replica migration", v, name)
 		}

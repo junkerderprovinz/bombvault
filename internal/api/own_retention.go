@@ -38,13 +38,17 @@ func applyOwnOffsiteRetention(cur *store.Settings, in map[string]store.Retention
 func clampKeeps(in map[string]store.RetentionKeep) map[string]store.RetentionKeep {
 	next := make(map[string]store.RetentionKeep, len(in))
 	for domain, k := range in {
-		next[domain] = store.RetentionKeep{
-			KeepLast:    max(0, k.KeepLast),
-			KeepDaily:   max(0, k.KeepDaily),
-			KeepWeekly:  max(0, k.KeepWeekly),
-			KeepMonthly: max(0, k.KeepMonthly),
-			KeepYearly:  max(0, k.KeepYearly),
-		}
+		next[domain] = clampKeep(k)
 	}
 	return next
+}
+
+func clampKeep(k store.RetentionKeep) store.RetentionKeep {
+	return store.RetentionKeep{
+		KeepLast:    max(0, k.KeepLast),
+		KeepDaily:   max(0, k.KeepDaily),
+		KeepWeekly:  max(0, k.KeepWeekly),
+		KeepMonthly: max(0, k.KeepMonthly),
+		KeepYearly:  max(0, k.KeepYearly),
+	}
 }

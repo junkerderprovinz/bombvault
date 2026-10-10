@@ -79,30 +79,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
 	}
-	defer func() {
-		if runID == "" {
-			return
-		}
-		// "skipped" means the test ran without a verdict: visible, but not red.
-		status := "success"
-		detail := verdict.Detail
-		switch {
-		case err != nil:
-			status = statusSkipped
-			detail = truncateRunErr(err)
-		case !verdict.Testable:
-			status = statusSkipped
-		case !verdict.Protected:
-			status = "failed"
-		}
-		const maxDetail = 500 // truncateRunErr's cap for runs.error
-		if len(detail) > maxDetail {
-			detail = detail[:maxDetail]
-		}
-		if fErr := s.store.FinishRun(runID, status, "", 0, detail); fErr != nil {
-			log.Printf("api: tamper %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
-		}
-	}()
+	defer func() { s.finishTamperRun(runID, "tamper "+domain, verdict, err) }()
 
 	// Testable if any destination is, protected only if every testable one
 	// refused the delete. An inconclusive probe contributes its error instead of
@@ -147,6 +124,65 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 		verdict.Detail = strings.Join(details, "; ")
 	}
 	return verdict, nil
+}
+
+// finishTamperRun settles the run row of a tamper test from its outcome.
+// label names the test in the log.
+func (s *Service) finishTamperRun(runID, label string, verdict TamperVerdict, err error) {
+	if runID == "" {
+		return
+	}
+	// "skipped" means the test ran without a verdict: visible, but not red.
+	status := "success"
+	detail := verdict.Detail
+	switch {
+	case err != nil:
+		status = statusSkipped
+		detail = truncateRunErr(err)
+	case !verdict.Testable:
+		status = statusSkipped
+	case !verdict.Protected:
+		status = "failed"
+	}
+	const maxDetail = 500 // truncateRunErr's cap for runs.error
+	if len(detail) > maxDetail {
+		detail = detail[:maxDetail]
+	}
+	if fErr := s.store.FinishRun(runID, status, "", 0, detail); fErr != nil {
+		log.Printf("api: %s: could not finish run record: %v", label, fErr) //nolint:gosec // G706: the label is a fixed word and a domain name
+	}
+}
+
+// RunTamperTestForTarget is RunTamperTest for one off-site target. The
+// verdict is recorded for that target alone, and the run row and the progress
+// line are the domain's, as for the test of every target at once.
+func (s *Service) RunTamperTestForTarget(ctx context.Context, id string) (verdict TamperVerdict, err error) {
+	target, ok, err := s.store.GetOffsiteTarget(id)
+	if err != nil {
+		return TamperVerdict{}, fmt.Errorf("read off-site target: %w", err)
+	}
+	if !ok {
+		return TamperVerdict{}, store.ErrNotOffsiteTarget
+	}
+	domain := target.Domain
+	defer s.lockTamper(domain)()
+	tkey := "tamper:" + domain
+	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
+	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
+	}
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "tamper")
+	if rErr != nil {
+		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
+		runID = ""
+	}
+	defer func() { s.finishTamperRun(runID, "tamper "+domain, verdict, err) }()
+
+	// Wrong or missing credentials get a 401, which is inconclusive.
+	creds, _ := s.decodeCloudFor(settings, target.CredsRef)
+	return s.runTamperTestForTarget(ctx, domain, target, creds)
 }
 
 // runTamperTestForTarget probes one off-site destination's delete path. A
