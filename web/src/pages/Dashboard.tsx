@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { listRuns, getSettings, getStatus, getCoverage, downloadRecoveryKit, ackRecoveryKit, getScheduleNext, backupEverythingNow, ApiError } from "../lib/api";
-import type { Run, Settings, DomainStatus, CoverageReport, ScheduleNext } from "../lib/api";
+import { listRuns, getStatus, getCoverage, getScheduleNext } from "../lib/api";
+import type { Run, DomainStatus, CoverageReport, ScheduleNext } from "../lib/api";
 import { PageTitle } from "../components/PageTitle";
 import { useT } from "../lib/i18n";
 // The responsive page rhythm; gap-6 below the 48rem breakpoint, the
@@ -12,17 +11,13 @@ import { useIsDesktop } from "../lib/useMediaQuery";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
-import { StickyActionBar } from "../components/mobile/StickyActionBar";
-import { useBackupWatch } from "../lib/backupWatch";
-import { useConfirm } from "../lib/useConfirm";
-import { useToast } from "../lib/toast";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock } from "../lib/dashboardLayout";
 import { useReorder } from "../lib/dragLift";
 import { ActivityLog } from "../components/ActivityLog";
 import { useLoudAnomalies } from "../lib/useAnomalies";
 import { Badge } from "../components/Badge";
-import { IconPencil, IconBackupNow } from "../components/Sidebar";
+import { IconPencil } from "../components/Sidebar";
 import { IconTipButton } from "../components/IconTipButton";
 import { Button } from "../components/Button";
 import { CoverageCard } from "./overview/CoverageCard";
@@ -37,6 +32,9 @@ import { NextRunCard } from "./overview/NextRunCard";
 import { SummaryTier } from "./overview/SummaryTier";
 import { StorageCard } from "./overview/StorageCard";
 import { SpikeCard } from "./overview/SpikeCard";
+import { RecoveryNag } from "./overview/RecoveryNag";
+import { RECOVERY_NUDGE_DISMISSED, FreshInstallNudge } from "./overview/FreshInstallNudge";
+import { PhoneEverythingTrigger } from "./overview/PhoneEverythingTrigger";
 
 // Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
 // so the summary tier's "Last result" cell and the Activity Log never disagree
@@ -45,163 +43,6 @@ const SUMMARY_RUNS_POLL_MS = 10000;
 // Same cadence ActivityLog.tsx polls /api/schedule/next at, deliberately: two
 // widgets reading one endpoint at different rates can show two answers.
 const SUMMARY_SCHEDULE_POLL_MS = 30000;
-
-// ---------------------------------------------------------------------------
-// Recovery-kit nag — shown only when encryption is ON and the kit has not been
-// acknowledged. Prompts the user to download + safely store the encryption
-// recovery kit so disaster recovery works even without a running BombVault.
-// ---------------------------------------------------------------------------
-
-function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppressed?: boolean }) {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [dismissing, setDismissing] = useState(false);
-  // Backend refusal text from the fetch-based kit download (null = no error).
-  const [kitError, setKitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    getSettings()
-      .then((res) => {
-        if (active && res.ok) setSettings(res.settings);
-      })
-      .catch(() => {/* non-fatal */});
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (suppressed) return null;
-  if (!settings || !settings.encryptionEnabled || settings.recoveryKitAck) {
-    return null;
-  }
-
-  const dismiss = () => {
-    setDismissing(true);
-    void ackRecoveryKit()
-      .then((res) => {
-        if (res.ok) setSettings({ ...settings, recoveryKitAck: true });
-      })
-      .catch(() => {/* non-fatal */})
-      .finally(() => setDismissing(false));
-  };
-
-  return (
-    <div className="rounded-card bg-statusWarnBg px-4 py-3 flex flex-col gap-2">
-      {/* Task 5 (rule 11): deliberately NOT a heading badge, and the one
-          outermost <h2> on this page that isn't — see Badge.tsx's file header
-          for the shared reasoning. Short version: this panel's own surface is
-          already a filled status wash (bg-statusWarnBg), so a "filled" badge
-          on top of it has nothing to fill against. Measured on the live page,
-          badge-fill vs. this panel: accent-soft 1.06:1 light / 1.39:1 dark,
-          warn-strong 1.00:1 light (the two warn-bg tokens share one value in
-          light mode) / 1.11:1 dark. Either way the fill reads as invisible,
-          so the badge would look like plain text wearing extra padding while
-          also throwing away the text-statusWarn colour that currently carries
-          the alert's meaning (8.62:1 against the panel). Rule 11's filled
-          badge presumes a neutral card surface underneath; this alert isn't
-          one. Revisit only if a genuine "badge on a status surface" token
-          pair ever exists. */}
-      <h2 className="text-sm font-semibold text-statusWarn">
-        {t("recovery.nagTitle")}
-      </h2>
-      <p className="text-xs text-statusWarn leading-relaxed">
-        {t("recovery.nagBody")}
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Fetch-based download (mirrors Settings): a raw <a download> would save
-            the 403 refusal body as the .md file when auth is off — the backend
-            fails closed for this export, so surface its message instead (#A1). */}
-        <button
-          type="button"
-          onClick={() => void downloadRecoveryKit().then(setKitError)}
-          className="rounded-pill bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
-        >
-          {t("recovery.download")}
-        </button>
-        {kitError && (
-          <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
-        )}
-        <Button
-          label={t("recovery.stored")}
-          labelKey="recovery.stored"
-          tone="neutral"
-          onClick={dismiss}
-          disabled={dismissing}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Fresh-install nudge — on a brand-new or rebuilt install (no domain has ever
-// backed up successfully) point the user at the guided Recovery tab to recover
-// their existing backups. Dismissible; the dismissal persists in localStorage.
-// The fresh signal is derived purely from the shared /api/status domains the
-// dashboard already fetched — no extra round-trip, and nothing is fetched or
-// computed once dismissed.
-// ---------------------------------------------------------------------------
-
-const RECOVERY_NUDGE_DISMISSED = "bombvault.recoveryNudgeDismissed";
-
-function FreshInstallNudge({
-  t,
-  domains,
-  loading,
-  dismissed,
-  onDismiss,
-}: {
-  t: ReturnType<typeof useT>["t"];
-  domains: DomainStatus[];
-  loading: boolean;
-  dismissed: boolean;
-  onDismiss: () => void;
-}) {
-  // Gate: do nothing (and read nothing) once dismissed or while status is still
-  // loading. Only then is the fresh predicate evaluated against shared data.
-  if (dismissed || loading) return null;
-  if (!isFreshInstall(domains)) return null;
-
-  return (
-    <div className="bg-carbon-surface rounded-card p-5 flex items-center gap-4">
-      <div className="flex-1 flex flex-col gap-1.5">
-        <p className="text-sm text-carbon-text">{t("recovery.freshNudge")}</p>
-        {/* Task 5 (rule 13): was a plain underline-on-hover text link, styled
-            with the raw accent colour and no fill at all. This card's own one
-            call-to-action functions as a primary action (rule 3 allows
-            exactly one solid-accent primary action per page/card), so it
-            takes the SAME filled rounded-pill/bg-accent/text-accentContrast
-            treatment every other primary button in this app already uses
-            (e.g. Config.tsx's Save button) — matching an established idiom
-            rather than routing through Badge's tone system, which has no
-            "primary CTA" tone of its own and isn't the right place to invent
-            one for a single call site. Under 48rem the CTA also takes the
-            app's link-as-control height (the same value the Config/Flash
-            destinations-gate links carry), staying a real touch target on a
-            phone; desktop keeps the engine's 32px control height. Still not
-            a Button: that renders a plain <button>, which cannot navigate. */}
-        <Link
-          to="/recovery"
-          className="self-start inline-flex items-center gap-1 rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity max-md:min-h-[2.75rem]"
-        >
-          {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
-        </Link>
-      </div>
-      {/* A chip normally rides inside a host pill whose row carries the touch
-          floor. This one is the card's only close control, loose in a flex
-          row, so below 48rem an ::after owned by the button widens its 18px
-          engine box by 14px on each side (46px in total). A padded wrapper
-          would only be dead zone. */}
-      <Button
-        label={t("common.close")}
-        labelKey="common.close"
-        variant="chip"
-        onClick={onDismiss}
-        className="shrink-0 max-md:relative max-md:after:absolute max-md:after:-inset-3.5 max-md:after:content-['']"
-      />
-    </div>
-  );
-}
 
 // Mobile Home blocks; the glanceable phone surface.
 //
@@ -243,149 +84,6 @@ function FreshInstallNudge({
 // user's back, doubling every phone load's round-trips. With both faces
 // JSX-gated exactly one surface is ever alive, and at the 48rem boundary the
 // two switches agree.
-
-// Phone thumb-zone trigger; the surface's one solid-accent control, and the
-// owner of the everything pass's fire-and-watch cycle. Mounted at every
-// width: unmounting it at 48rem killed the live watch the moment a phone
-// rotated to a landscape at or above the breakpoint (iPhone 15 is 852px,
-// Pixel 8 is 892px), and rotating back mounted a fresh hook in the idle
-// phase: the bar read ready while the pass was still running on the
-// server, with no sheet, no progress and no toast. The desktop cost is
-// bounded by the child itself: the bar is not rendered above the
-// breakpoint, the confirm dialog exists only while a confirm is pending,
-// and what remains mounted is one idle
-// progress subscription in a leaf component, not a page re-render per SSE
-// frame. Phone behavior is unchanged from when the watch lived on the page
-// component: same watch args, confirm-first press, deep-link into the run
-// sheet via the page's latch, and terminal toasts (at either width, since a
-// pass fired on a phone also reports its outcome after the rotation).
-function PhoneEverythingTrigger({
-  t,
-  onWatchRun,
-  onArmFire,
-  onWatchStopped,
-}: {
-  t: ReturnType<typeof useT>["t"];
-  /** Called on every watch poll with the correlated run; the page's
-   *  sheet-latch logic decides replace/keep/open (see handleWatchRun). */
-  onWatchRun: (run: Run) => void;
-  /** Called the moment the user confirms a fire; arms the page's deep-link
-   *  latch so the correlation of this pass may steal the sheet. */
-  onArmFire: () => void;
-  /** Called when the fire-and-watch chain ends (the pending phase clearing,
-   *  by terminal outcome or timeout). The page releases the watch's display
-   *  ownership at that moment (watchOwnedRun): only a live chain's records
-   *  are fresher than the polled list. */
-  onWatchStopped: () => void;
-}) {
-  // Thumb-zone trigger watch (BackupButton's semantics verbatim). The
-  // everything pass is async on the server, so the press only starts it
-  // ({ok:true,started:true} is never read for the outcome) and the watch
-  // resolves from the recorded run; baseline ids seeded from listRuns before
-  // firing (never a client clock), then polled until the pass's run turns
-  // terminal. `progressKey: ""` is the honest key: the everything parent run
-  // publishes no SSE entry of its own (its per-domain children do; see
-  // RunDetailSheet's progressKeyFor), so the watch resolves via the run-poll
-  // belt exactly like a target whose key never appears.
-  const startEverything = useCallback(async () => {
-    // The everything pass is single-flight server-side: a second press while
-    // one is already running surfaces as HTTP 409. The raw HTTP status text
-    // must never reach a toast; map it to the shared translated "already
-    // running" copy (Settings.tsx's runNow mapping) and return it as the
-    // start failure the hook already displays.
-    try {
-      return await backupEverythingNow();
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        return { ok: false, error: t("settings.everythingAlreadyRunning") };
-      }
-      throw err;
-    }
-  }, [t]);
-  const { state, fire, isPending } = useBackupWatch({
-    progressKey: "",
-    start: startEverything,
-    matchRun: (r) => r.domain === "everything",
-    onRun: onWatchRun,
-  });
-
-  // Terminal outcomes toast per BackupButton's contract ("failed action toasts
-  // And shakes its button"); success mirrors its snapshot-id form, falling back
-  // to plain Done when the parent run carries no snapshot (the everything pass
-  // aggregates its domains, so the parent snapshot is often empty; the
-  // container-specific configOnly fallback does not apply here). cancelled and
-  // skipped stay silent like BackupButton's cancelled arm: the deep-linked
-  // sheet is already showing the run's own record.
-  const { push } = useToast();
-  const [shake, setShake] = useState(0);
-  const seenPhase = useRef(state.phase);
-  useEffect(() => {
-    if (state.phase === seenPhase.current) return;
-    const was = seenPhase.current;
-    seenPhase.current = state.phase;
-    // Leaving "pending" is the chain's end (terminal outcome, timeout, or a
-    // reset). The page hears it before the toast arms: ownership and
-    // outcome travel together.
-    if (was === "pending" && state.phase !== "pending") onWatchStopped();
-    if (state.phase === "success") {
-      push(
-        state.snapshotId ? `${t("common.done")} · ${state.snapshotId.slice(0, 8)}` : t("common.done"),
-        "success"
-      );
-    } else if (state.phase === "error") {
-      push(state.message, "fail");
-      setShake((n) => n + 1);
-    }
-  }, [state, push, t, onWatchStopped]);
-
-  // The question stands between the press and the POST; useConfirm answers it
-  // in a sheet below the breakpoint and in the card above it. confirmKey makes
-  // the commit button name the outcome with the trigger's own words.
-  const isDesktop = useIsDesktop();
-  const { confirm, confirmDialog } = useConfirm();
-  const confirmThenFire = useCallback(async () => {
-    const ok = await confirm(t("home.newBackupConfirm"), {
-      confirmKey: "settings.everythingTitle",
-    });
-    if (!ok) return;
-    onArmFire();
-    await fire();
-  }, [confirm, fire, t, onArmFire]);
-
-  // StickyActionBar as the last direct child of the page column; sticky
-  // resolves against main#bv-main, so nothing may wrap it. Never a fab, never
-  // position:fixed. While the pass runs the button shows its busy spinner and
-  // is disabled; a failed start also shakes (the glim-shake key remount,
-  // Containers' Save-bar pattern).
-  //
-  // The bar is not rendered above the breakpoint, rather than hidden by CSS:
-  // the desktop tree carries no phone chrome at all, which is the contract
-  // Layout.tsx states for the Sidebar and the bar alike. The component itself
-  // stays mounted at every width, because that is what keeps the watch alive
-  // across a rotation; a pending confirmation also survives the flip, since
-  // useConfirm swaps the sheet for the card without dropping the promise.
-  return (
-    <>
-      {!isDesktop && (
-        <StickyActionBar>
-          <Button
-            key={shake}
-            label={t("settings.everythingTitle")}
-            labelKey="settings.everythingTitle"
-            glyph={<IconBackupNow />}
-            tone="accent"
-            keepLabel
-            disabled={isPending}
-            busy={isPending}
-            onClick={() => void confirmThenFire()}
-            className={`w-full min-h-[2.75rem] justify-center${shake ? " glim-shake" : ""}`}
-          />
-        </StickyActionBar>
-      )}
-      {confirmDialog}
-    </>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Dashboard page
