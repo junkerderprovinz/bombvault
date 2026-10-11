@@ -137,8 +137,8 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 		t.Fatalf("requests on the keeper: %+v", waiting)
 	}
 	attic.as(paired, func() {
-		if code, _ := attic.do(t, http.MethodGet, "/api/group/deposits", nil); code != http.StatusOK {
-			t.Fatalf("the paired session reads the page with %d", code)
+		if code, out := attic.do(t, http.MethodGet, "/api/group/deposits", nil); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
+			t.Fatalf("the deposits with the paired session: %d %v", code, out)
 		}
 		code, out := attic.do(t, http.MethodPost, "/api/group/deposits/releases/"+waiting[0].ID, map[string]any{"decision": "allow"})
 		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
