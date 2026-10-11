@@ -246,11 +246,13 @@ func TestAFetcherThatRevokesNoLongerGetsThePassword(t *testing.T) {
 	fetcher := newInstance(t, "attic", strings.Repeat("b2", 32))
 	pairThroughRelay(t, source, fetcher)
 	granted := allowRole(t, source, fetcher, store.RoleFetcher, "containers")
-	if p := oldWayPairing(t, source, fetcher.id(t)); !p.OK || p.ResticPassword != restickey.Derive(source.appKey) {
-		t.Fatalf("pairing while allowed = %+v", p)
+	var p peerPairing
+	if err := fetcher.svc.askPairing(context.Background(), source.id(t), &p); err != nil || p.ResticPassword != restickey.Derive(source.appKey) {
+		t.Fatalf("pairing while allowed = %+v, %v", p, err)
 	}
 	answerRole(t, fetcher, granted.ID, store.RoleRevoked)
-	if p := oldWayPairing(t, source, fetcher.id(t)); p.OK || p.ResticPassword != "" {
+	p = peerPairing{}
+	if err := fetcher.svc.askPairing(context.Background(), source.id(t), &p); err == nil || p.ResticPassword != "" {
 		t.Fatalf("pairing after the fetcher revoked = %+v, want nothing", p)
 	}
 }
