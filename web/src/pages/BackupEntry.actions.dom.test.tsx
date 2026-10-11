@@ -155,6 +155,27 @@ async function confirmWith(name: string) {
   await press(within(await screen.findByRole("dialog")).getByRole("button", { name }));
 }
 
+/** Opens the menu beside the entry's name. These entries list no backup, so no row has one. */
+async function openMenu() {
+  await press(button(en["nav.more"]));
+  return within(screen.getByRole("menu"));
+}
+
+async function choose(action: string) {
+  const menu = await openMenu();
+  await press(menu.getByRole("menuitem", { name: action }));
+}
+
+/** The entries the link window offers to take over. */
+async function linkable() {
+  await choose(en["entry.menu.link"]);
+  const window = screen.getByRole("dialog", { name: en["entry.menu.link"] });
+  return within(window)
+    .getAllByRole("listitem")
+    .map((row) => row.querySelector("span")?.textContent)
+    .sort();
+}
+
 // The display name and the libvirt name differ, as on TrueNAS, and only the
 // libvirt name reaches a route.
 const OLD_VM_KEY = "1_windows-10";
@@ -317,8 +338,9 @@ describe("a container that is gone", () => {
   it("offers Remove entry, not Delete all backups, while it has no backups", async () => {
     serveEntries(mocks, without());
     await renderPage("/backups/container/pihole");
-    expect(screen.queryByRole("button", { name: en["containers.deleteBackups"] })).toBeNull();
-    await press(button(en["vms.removeEntry"]));
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["containers.deleteBackups"] })).toBeNull();
+    await press(menu.getByRole("menuitem", { name: en["vms.removeEntry"] }));
     await confirmWith(en["vms.removeEntry"]);
     await waitFor(() => expect(forgetContainer).toHaveBeenCalledWith("pihole"));
     expect(deleteBackups).not.toHaveBeenCalled();
@@ -327,8 +349,9 @@ describe("a container that is gone", () => {
 
   it("offers Delete all backups, not Remove entry, once it has backups", async () => {
     await renderPage("/backups/container/pihole");
-    expect(screen.queryByRole("button", { name: en["vms.removeEntry"] })).toBeNull();
-    await press(button(en["containers.deleteBackups"]));
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["vms.removeEntry"] })).toBeNull();
+    await press(menu.getByRole("menuitem", { name: en["containers.deleteBackups"] }));
     await confirmWith(en["containers.deleteBackups"]);
     await waitFor(() => expect(deleteBackups).toHaveBeenCalledWith("pihole"));
     expect(forgetContainer).not.toHaveBeenCalled();
@@ -342,7 +365,7 @@ describe("a container that is gone", () => {
     });
     await renderPage("/backups/container/pihole");
     expect(screen.queryByText(en["takeover.looksLike"].replace("{old}", "pihole-old"))).toBeNull();
-    expect(screen.queryByRole("button", { name: en["takeover.link"] })).toBeNull();
+    expect((await openMenu()).queryByRole("menuitem", { name: en["entry.menu.link"] })).toBeNull();
   });
 });
 
@@ -359,8 +382,9 @@ describe("a VM that is gone", () => {
   it("offers Remove entry, not Delete all backups, while it has no backups", async () => {
     serveEntries(mocks, { items: [{ ...OLD_VM, lastBackup: 0 }], vms: [goneVM({ lastBackup: null })] });
     await renderPage(path);
-    expect(screen.queryByRole("button", { name: en["containers.deleteBackups"] })).toBeNull();
-    await press(button(en["vms.removeEntry"]));
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["containers.deleteBackups"] })).toBeNull();
+    await press(menu.getByRole("menuitem", { name: en["vms.removeEntry"] }));
     await confirmWith(en["vms.removeEntry"]);
     await waitFor(() => expect(forgetVM).toHaveBeenCalledWith(OLD_VM_KEY));
     expect(deleteBackupsVM).not.toHaveBeenCalled();
@@ -370,8 +394,9 @@ describe("a VM that is gone", () => {
   it("offers Delete all backups, not Remove entry, once it has backups", async () => {
     serveEntries(mocks, { items: [OLD_VM], vms: [goneVM()] });
     await renderPage(path);
-    expect(screen.queryByRole("button", { name: en["vms.removeEntry"] })).toBeNull();
-    await press(button(en["containers.deleteBackups"]));
+    const menu = await openMenu();
+    expect(menu.queryByRole("menuitem", { name: en["vms.removeEntry"] })).toBeNull();
+    await press(menu.getByRole("menuitem", { name: en["containers.deleteBackups"] }));
     await confirmWith(en["containers.deleteBackups"]);
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(OLD_VM_KEY, "local"));
     expect(forgetVM).not.toHaveBeenCalled();
@@ -399,7 +424,7 @@ describe("a VM", () => {
 
   it("deletes its local backups after the question that names them", async () => {
     await renderPage("/backups/vm/win11");
-    await press(button(en["entry.deleteLocal"]));
+    await choose(en["entry.deleteLocal"]);
     expect(within(await screen.findByRole("dialog")).getByText(en["snapshots.deleteAllConfirm"])).toBeTruthy();
     await confirmWith(en["snapshots.deleteAll"]);
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith("win11", "local"));
@@ -412,11 +437,13 @@ describe("a folder set", () => {
     expect(api.getTimeline).toHaveBeenCalledWith("files", SET_ID);
   });
 
-  it("deletes its local backups after the question that names them, and leaves for the list", async () => {
+  it("deletes its local backups after the way that names them is taken, and leaves for the list", async () => {
     await renderPage(`/backups/files/${SET_ID}`);
-    await press(button(en["snapshots.deleteAll"]));
-    expect(within(await screen.findByRole("dialog")).getByText(en["files.deleteBackupsConfirm"])).toBeTruthy();
-    await confirmWith(en["snapshots.deleteAll"]);
+    await choose(en["zfs.removeMissing"]);
+    const window = within(await screen.findByRole("dialog"));
+    expect(window.getByText(en["entry.remove.dropTextLocal"])).toBeTruthy();
+    await press(window.getByRole("radio", { name: new RegExp(`^${en["entry.remove.drop"]}`) }));
+    await confirmWith(en["entry.remove.dropGo"]);
     await waitFor(() => expect(deleteFileSetBackups).toHaveBeenCalledWith(SET_ID));
     expect(await screen.findByText("at /backups?kind=files")).toBeTruthy();
   });
@@ -424,7 +451,10 @@ describe("a folder set", () => {
   it("offers no deleting while it has no backup", async () => {
     serveEntries(mocks, { items: [{ ...PHOTOS, lastBackup: 0 }], fileSets: [fileSetView({ lastBackup: 0 })] });
     await renderPage(`/backups/files/${SET_ID}`);
-    expect(screen.queryByRole("button", { name: en["snapshots.deleteAll"] })).toBeNull();
+    await choose(en["zfs.removeMissing"]);
+    const window = within(await screen.findByRole("dialog"));
+    expect(window.getAllByRole("radio")).toHaveLength(1);
+    expect(window.queryByRole("radio", { name: new RegExp(`^${en["entry.remove.drop"]}`) })).toBeNull();
   });
 });
 
@@ -447,14 +477,7 @@ describe("taking over the entry of a renamed container", () => {
   it("offers to link by hand the entries whose container is gone, and no other", async () => {
     serveEntries(mocks, { containers: [fresh(), gone("gitea-old"), gone("lidarr-old")] });
     await renderPage("/backups/container/gitea");
-    await press(button(en["takeover.link"]));
-    await press(screen.getByRole("combobox", { name: en["takeover.formerEntry"] }));
-    expect(
-      screen
-        .getAllByRole("option")
-        .map((o) => o.textContent)
-        .sort()
-    ).toEqual(["gitea-old", "lidarr-old", "pihole"]);
+    expect(await linkable()).toEqual(["gitea-old", "lidarr-old", "pihole"]);
   });
 
   it("leaves out an entry whose name is another entry's former name", async () => {
@@ -462,27 +485,20 @@ describe("taking over the entry of a renamed container", () => {
       containers: [fresh(), containerView({ aliases: ["immich-old"] }), gone("immich-old"), gone("lidarr-old")],
     });
     await renderPage("/backups/container/gitea");
-    await press(button(en["takeover.link"]));
-    await press(screen.getByRole("combobox", { name: en["takeover.formerEntry"] }));
-    expect(
-      screen
-        .getAllByRole("option")
-        .map((o) => o.textContent)
-        .sort()
-    ).toEqual(["lidarr-old", "pihole"]);
+    expect(await linkable()).toEqual(["lidarr-old", "pihole"]);
   });
 
   it("offers no link to an entry that has backups of its own", async () => {
     await renderPage("/backups/container/immich");
-    expect(screen.queryByRole("button", { name: en["takeover.link"] })).toBeNull();
+    expect((await openMenu()).queryByRole("menuitem", { name: en["entry.menu.link"] })).toBeNull();
   });
 
   // An entry rebuilt from the storage carries its former names before its first run.
   it("offers no link to an entry with former names and no backup, and unlinks those on the Settings tab", async () => {
     serveEntries(mocks, { containers: [fresh({ aliases: ["gitea-old"] }), gone("lidarr-old")] });
     await renderPage("/backups/container/gitea?tab=settings");
-    expect(screen.queryByRole("button", { name: en["takeover.link"] })).toBeNull();
     expect(button(en["takeover.unlinkName"].replace("{old}", "gitea-old"))).toBeTruthy();
+    expect((await openMenu()).queryByRole("menuitem", { name: en["entry.menu.link"] })).toBeNull();
   });
 });
 
@@ -510,9 +526,7 @@ describe("taking over the entry of a renamed VM", () => {
       ],
     });
     await renderPage("/backups/vm/win11");
-    await press(button(en["takeover.link"]));
-    await press(screen.getByRole("combobox", { name: en["takeover.formerEntry"] }));
-    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([OLD_VM_KEY]);
+    expect(await linkable()).toEqual([OLD_VM_KEY]);
   });
 });
 
@@ -584,7 +598,7 @@ describe("BombVault's own container", () => {
     await renderPage("/backups/container/bombvault?tab=settings");
     expect(screen.getByText(en["backups.selfNote"])).toBeTruthy();
     expect(screen.queryByText(en["takeover.looksLike"].replace("{old}", "bombvault-old"))).toBeNull();
-    expect(screen.queryByRole("button", { name: en["takeover.link"] })).toBeNull();
+    expect(screen.queryByRole("button", { name: en["nav.more"] })).toBeNull();
     expect(screen.queryByText(en["placement.title"])).toBeNull();
   });
 });

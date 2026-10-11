@@ -107,7 +107,10 @@ for (const width of [320, 360]) {
     await page.setViewportSize({ width, height: 800 });
     await open(page, `/backups/zfs/${ZFS_ID}`, "tank/appdata");
 
-    await page.locator("#bv-main").getByRole("button", { name: "Aus der Liste entfernen" }).click();
+    // The menu beside the name stands before the menu of any backup.
+    await page.locator("#bv-main").getByRole("button", { name: "Mehr" }).first().click();
+    await page.getByRole("menuitem", { name: "Aus der Liste entfernen" }).click();
+    await expect(page.getByRole("dialog").getByRole("radio")).toHaveCount(2);
     await expectInsideScreen(page, width);
     await page.getByRole("dialog").getByRole("button", { name: "Abbrechen" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
