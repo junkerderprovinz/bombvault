@@ -3080,6 +3080,10 @@ const ms: Partial<Translations> = {
   // New target
   "newTarget.intro": "Pada larian pertamanya, {target} menerima setiap item yang tidak ditetapkan kepada Setempat.",
   "newTarget.moved": "Lokasi baharu {target} menerima seluruh sejarah.",
+  "newTarget.movedEmpty": "Lokasi baharu {target} belum mempunyai sandaran, jadi ia menerima seluruh sejarah. Jika anda hanya menukar cara mencapai storan yang sama, lokasi ini tidak membawa ke repositori lama.",
+  "newTarget.movedPartly": "Lokasi baharu {target} menerima apa yang belum ada padanya.",
+  "newTarget.movedHeld": "Lokasi baharu {target} sudah mempunyai sejarah ini, jadi tiada apa yang dihantar semula.",
+  "newTarget.held": "Sudah ada di sana: {n}",
   "newTarget.itemsContainers": "Item dan folder projek: {n}",
   "newTarget.items": "Item: {n}",
   "newTarget.snapshots": "Snapshot: sehingga {n}",

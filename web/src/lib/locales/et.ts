@@ -3080,6 +3080,10 @@ const et: Partial<Translations> = {
   // New target
   "newTarget.intro": "Esimesel käivitusel saab {target} iga üksuse, mis ei ole seatud Kohalikuks.",
   "newTarget.moved": "{target} uus asukoht saab kogu ajaloo.",
+  "newTarget.movedEmpty": "{target} uues asukohas pole veel varukoopiaid, seega saab see kogu ajaloo. Kui muutsid ainult teed sama salvestuskohani, ei vii see asukoht vana hoidlani.",
+  "newTarget.movedPartly": "{target} uus asukoht saab selle, mis tal veel puudub.",
+  "newTarget.movedHeld": "{target} uues asukohas on see ajalugu juba olemas, seega midagi uuesti ei saadeta.",
+  "newTarget.held": "Juba olemas: {n}",
   "newTarget.itemsContainers": "Üksused ja projektikaustad: {n}",
   "newTarget.items": "Üksused: {n}",
   "newTarget.snapshots": "Hetktõmmised: kuni {n}",

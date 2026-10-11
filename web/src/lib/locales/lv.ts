@@ -3080,6 +3080,10 @@ const lv: Partial<Translations> = {
   // New target
   "newTarget.intro": "Pirmajā palaišanas reizē {target} saņem katru vienumu, kas nav iestatīts uz Vietējs.",
   "newTarget.moved": "Jaunā {target} vieta saņem visu vēsturi.",
+  "newTarget.movedEmpty": "Jaunajā {target} vietā vēl nav dublējumu, tāpēc tā saņem visu vēsturi. Ja mainīji tikai ceļu uz to pašu krātuvi, šī vieta neved uz veco repozitoriju.",
+  "newTarget.movedPartly": "Jaunā {target} vieta saņem to, kas tai vēl trūkst.",
+  "newTarget.movedHeld": "Jaunajā {target} vietā šī vēsture jau ir, tāpēc nekas netiek sūtīts atkārtoti.",
+  "newTarget.held": "Jau tur: {n}",
   "newTarget.itemsContainers": "Vienumi un projekta mapes: {n}",
   "newTarget.items": "Vienumi: {n}",
   "newTarget.snapshots": "Momentuzņēmumi: līdz {n}",

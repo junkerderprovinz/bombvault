@@ -3080,6 +3080,10 @@ const bg: Partial<Translations> = {
   // New target
   "newTarget.intro": "При първото си изпълнение {target} получава всеки елемент, който не е зададен на Локално.",
   "newTarget.moved": "Новото място на {target} получава цялата история.",
+  "newTarget.movedEmpty": "Новото място на {target} още няма резервни копия, затова получава цялата история. Ако си променил само пътя до същото хранилище, това място не води до старото хранилище.",
+  "newTarget.movedPartly": "Новото място на {target} получава само това, което още му липсва.",
+  "newTarget.movedHeld": "Новото място на {target} вече съдържа тази история, затова нищо не се изпраща отново.",
+  "newTarget.held": "Вече там: {n}",
   "newTarget.itemsContainers": "Елементи и папки на проекти: {n}",
   "newTarget.items": "Елементи: {n}",
   "newTarget.snapshots": "Снапшоти: до {n}",

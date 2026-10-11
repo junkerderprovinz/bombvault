@@ -3069,6 +3069,10 @@ const fi: Partial<Translations> = {
   // New target
   "newTarget.intro": "Ensimmäisellä ajolla {target} saa jokaisen kohteen, jota ei ole asetettu Paikalliseksi.",
   "newTarget.moved": "Kohteen {target} uusi sijainti saa koko historian.",
+  "newTarget.movedEmpty": "Kohteen {target} uudessa sijainnissa ei ole vielä varmuuskopioita, joten se saa koko historian. Jos muutit vain reittiä samaan tallennustilaan, tämä sijainti ei johda vanhaan tietovarastoon.",
+  "newTarget.movedPartly": "Kohteen {target} uusi sijainti saa sen, mikä siltä vielä puuttuu.",
+  "newTarget.movedHeld": "Kohteen {target} uudessa sijainnissa on tämä historia jo, joten mitään ei lähetetä uudelleen.",
+  "newTarget.held": "Jo siellä: {n}",
   "newTarget.itemsContainers": "Kohteet ja projektikansiot: {n}",
   "newTarget.items": "Kohteet: {n}",
   "newTarget.snapshots": "Tilannevedokset: enintään {n}",

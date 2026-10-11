@@ -3080,6 +3080,10 @@ const lt: Partial<Translations> = {
   // New target
   "newTarget.intro": "Pirmojo paleidimo metu {target} gauna kiekvieną elementą, kuris nenustatytas į Vietinis.",
   "newTarget.moved": "Nauja {target} vieta gauna visą istoriją.",
+  "newTarget.movedEmpty": "Naujoje {target} vietoje dar nėra atsarginių kopijų, todėl ji gauna visą istoriją. Jei pakeitei tik kelią į tą pačią saugyklą, ši vieta neveda į senąją saugyklą.",
+  "newTarget.movedPartly": "Nauja {target} vieta gauna tai, ko jai dar trūksta.",
+  "newTarget.movedHeld": "Naujoje {target} vietoje ši istorija jau yra, todėl niekas nesiunčiama iš naujo.",
+  "newTarget.held": "Jau ten: {n}",
   "newTarget.itemsContainers": "Elementai ir projekto aplankai: {n}",
   "newTarget.items": "Elementai: {n}",
   "newTarget.snapshots": "Momentinės kopijos: iki {n}",

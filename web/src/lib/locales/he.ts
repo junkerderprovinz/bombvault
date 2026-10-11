@@ -3069,6 +3069,10 @@ const he: Partial<Translations> = {
   // New target
   "newTarget.intro": "בהרצה הראשונה שלו, {target} מקבל כל פריט שלא מוגדר למקומי.",
   "newTarget.moved": "המיקום החדש של {target} מקבל את כל ההיסטוריה.",
+  "newTarget.movedEmpty": "במיקום החדש של {target} עדיין אין גיבויים, ולכן הוא מקבל את כל ההיסטוריה. אם שינית רק את הדרך לאותו אחסון, המיקום הזה לא מוביל למאגר הישן.",
+  "newTarget.movedPartly": "המיקום החדש של {target} מקבל את מה שעדיין חסר לו.",
+  "newTarget.movedHeld": "במיקום החדש של {target} כבר יש את ההיסטוריה הזו, ולכן שום דבר לא נשלח שוב.",
+  "newTarget.held": "כבר שם: {n}",
   "newTarget.itemsContainers": "פריטים ותיקיות פרויקט: {n}",
   "newTarget.items": "פריטים: {n}",
   "newTarget.snapshots": "תצלומים: עד {n}",

@@ -3080,6 +3080,10 @@ const hr: Partial<Translations> = {
   // New target
   "newTarget.intro": "Pri prvom pokretanju {target} prima svaku stavku koja nije postavljena na Lokalno.",
   "newTarget.moved": "Nova lokacija za {target} prima cijelu povijest.",
+  "newTarget.movedEmpty": "Na novoj lokaciji za {target} još nema sigurnosnih kopija, pa prima cijelu povijest. Ako si promijenio samo put do iste pohrane, ova lokacija ne vodi do starog repozitorija.",
+  "newTarget.movedPartly": "Nova lokacija za {target} prima ono što joj još nedostaje.",
+  "newTarget.movedHeld": "Nova lokacija za {target} već ima ovu povijest, pa se ništa ne šalje ponovno.",
+  "newTarget.held": "Već tamo: {n}",
   "newTarget.itemsContainers": "Stavke i mape projekta: {n}",
   "newTarget.items": "Stavke: {n}",
   "newTarget.snapshots": "Snimke: do {n}",

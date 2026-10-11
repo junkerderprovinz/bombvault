@@ -3060,6 +3060,10 @@ const ja: Partial<Translations> = {
   // New target
   "newTarget.intro": "初回実行時、{target} はローカルに設定されていないすべての項目を受け取ります。",
   "newTarget.moved": "{target} の新しい保存先は履歴全体を受け取ります。",
+  "newTarget.movedEmpty": "{target} の新しい保存先にはまだバックアップがないため、履歴全体を受け取ります。同じストレージへの経路を変えただけなら、この保存先は古いリポジトリにつながっていません。",
+  "newTarget.movedPartly": "{target} の新しい保存先は、まだ持っていないものだけを受け取ります。",
+  "newTarget.movedHeld": "{target} の新しい保存先にはこの履歴がすでにあるため、何も再送されません。",
+  "newTarget.held": "保存済み: {n}",
   "newTarget.itemsContainers": "項目とプロジェクトフォルダー: {n}",
   "newTarget.items": "項目: {n}",
   "newTarget.snapshots": "スナップショット: 最大{n}",

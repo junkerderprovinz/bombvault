@@ -3069,6 +3069,10 @@ const da: Partial<Translations> = {
   // New target
   "newTarget.intro": "Ved sin første kørsel modtager {target} alle elementer, der ikke er sat til Lokal.",
   "newTarget.moved": "Den nye placering for {target} modtager hele historikken.",
+  "newTarget.movedEmpty": "Den nye placering for {target} har endnu ingen sikkerhedskopier, så den modtager hele historikken. Hvis du kun har ændret vejen til det samme lager, fører denne placering ikke til det gamle repository.",
+  "newTarget.movedPartly": "Den nye placering for {target} modtager det, den endnu mangler.",
+  "newTarget.movedHeld": "Den nye placering for {target} har allerede denne historik, så intet sendes igen.",
+  "newTarget.held": "Allerede der: {n}",
   "newTarget.itemsContainers": "Elementer og projektmapper: {n}",
   "newTarget.items": "Elementer: {n}",
   "newTarget.snapshots": "Øjeblikksbilleder: op til {n}",

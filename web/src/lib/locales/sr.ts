@@ -3064,6 +3064,10 @@ const sr: Partial<Translations> = {
   // New target
   "newTarget.intro": "При првом покретању {target} добија сваку ставку која није постављена на Локално.",
   "newTarget.moved": "Нова локација за {target} добија целу историју.",
+  "newTarget.movedEmpty": "На новој локацији за {target} још нема резервних копија, па добија целу историју. Ако си променио само пут до истог складишта, ова локација не води до старог репозиторијума.",
+  "newTarget.movedPartly": "Нова локација за {target} добија оно што јој још недостаје.",
+  "newTarget.movedHeld": "Нова локација за {target} већ има ову историју, па се ништа не шаље поново.",
+  "newTarget.held": "Већ тамо: {n}",
   "newTarget.itemsContainers": "Ставке и фасцикле пројекта: {n}",
   "newTarget.items": "Ставке: {n}",
   "newTarget.snapshots": "Снимци: до {n}",

@@ -3069,6 +3069,10 @@ const sv: Partial<Translations> = {
   // New target
   "newTarget.intro": "Vid sin första körning tar {target} emot varje objekt som inte är satt till Lokal.",
   "newTarget.moved": "Den nya platsen för {target} tar emot hela historiken.",
+  "newTarget.movedEmpty": "Den nya platsen för {target} har inga säkerhetskopior än, så den tar emot hela historiken. Om du bara har ändrat vägen till samma lagring leder den här platsen inte till det gamla förrådet.",
+  "newTarget.movedPartly": "Den nya platsen för {target} tar emot det som fortfarande saknas där.",
+  "newTarget.movedHeld": "Den nya platsen för {target} har redan den här historiken, så inget skickas igen.",
+  "newTarget.held": "Redan där: {n}",
   "newTarget.itemsContainers": "Objekt och projektmappar: {n}",
   "newTarget.items": "Objekt: {n}",
   "newTarget.snapshots": "Ögonblicksbilder: upp till {n}",

@@ -3072,6 +3072,10 @@ const hu: Partial<Translations> = {
   // New target
   "newTarget.intro": "Az első futáskor {target} minden olyan elemet megkap, amely nincs Helyire állítva.",
   "newTarget.moved": "A(z) {target} új helye megkapja a teljes előzményt.",
+  "newTarget.movedEmpty": "A(z) {target} új helyén még nincs biztonsági mentés, ezért megkapja a teljes előzményt. Ha csak az ugyanahhoz a tárolóhoz vezető utat változtattad meg, ez a hely nem a régi tárolóhoz vezet.",
+  "newTarget.movedPartly": "A(z) {target} új helye azt kapja meg, ami még hiányzik róla.",
+  "newTarget.movedHeld": "A(z) {target} új helyén ez az előzmény már megvan, ezért semmit nem küld újra.",
+  "newTarget.held": "Már ott van: {n}",
   "newTarget.itemsContainers": "Elemek és projektmappák: {n}",
   "newTarget.items": "Elemek: {n}",
   "newTarget.snapshots": "Pillanatképek: legfeljebb {n}",

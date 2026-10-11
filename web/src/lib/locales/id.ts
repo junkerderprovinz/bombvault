@@ -3080,6 +3080,10 @@ const id: Partial<Translations> = {
   // New target
   "newTarget.intro": "Pada proses pertamanya, {target} menerima setiap item yang tidak diatur ke Lokal.",
   "newTarget.moved": "Lokasi baru {target} menerima seluruh riwayat.",
+  "newTarget.movedEmpty": "Lokasi baru {target} belum berisi cadangan, jadi menerima seluruh riwayat. Jika kamu hanya mengubah cara menjangkau penyimpanan yang sama, lokasi ini tidak mengarah ke repositori lama.",
+  "newTarget.movedPartly": "Lokasi baru {target} menerima apa yang belum dimilikinya.",
+  "newTarget.movedHeld": "Lokasi baru {target} sudah berisi riwayat ini, jadi tidak ada yang dikirim ulang.",
+  "newTarget.held": "Sudah di sana: {n}",
   "newTarget.itemsContainers": "Item dan folder proyek: {n}",
   "newTarget.items": "Item: {n}",
   "newTarget.snapshots": "Snapshot: hingga {n}",

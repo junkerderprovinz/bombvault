@@ -3080,6 +3080,10 @@ const gl: Partial<Translations> = {
   // New target
   "newTarget.intro": "Na súa primeira execución, {target} recibe cada elemento que non está en Local.",
   "newTarget.moved": "A nova localización de {target} recibe todo o historial.",
+  "newTarget.movedEmpty": "A nova localización de {target} aínda non ten copias de seguridade, así que recibe todo o historial. Se só cambiaches como chegas ao mesmo almacenamento, esta localización non leva ao repositorio antigo.",
+  "newTarget.movedPartly": "A nova localización de {target} recibe o que aínda lle falta.",
+  "newTarget.movedHeld": "A nova localización de {target} xa ten este historial, así que non se volve enviar nada.",
+  "newTarget.held": "Xa está alí: {n}",
   "newTarget.itemsContainers": "Elementos e cartafoles de proxecto: {n}",
   "newTarget.items": "Elementos: {n}",
   "newTarget.snapshots": "Instantáneas: ata {n}",

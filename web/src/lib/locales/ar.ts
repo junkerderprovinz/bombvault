@@ -3072,6 +3072,10 @@ const ar: Partial<Translations> = {
   // New target
   "newTarget.intro": "عند أول تشغيل يحصل {target} على كل عنصر غير معيَّن على محلي.",
   "newTarget.moved": "الموقع الجديد لـ {target} يحصل على كامل السجل.",
+  "newTarget.movedEmpty": "لا توجد نسخ احتياطية في الموقع الجديد لـ {target} بعد، لذا يحصل على كامل السجل. إذا غيّرت فقط طريقة الوصول إلى نفس التخزين، فهذا الموقع لا يؤدي إلى المستودع القديم.",
+  "newTarget.movedPartly": "الموقع الجديد لـ {target} يحصل على ما ينقصه فقط.",
+  "newTarget.movedHeld": "الموقع الجديد لـ {target} يحتوي هذا السجل بالفعل، لذا لا يُرسل شيء من جديد.",
+  "newTarget.held": "موجود هناك بالفعل: {n}",
   "newTarget.itemsContainers": "العناصر ومجلدات المشروع: {n}",
   "newTarget.items": "العناصر: {n}",
   "newTarget.snapshots": "اللقطات: حتى {n}",

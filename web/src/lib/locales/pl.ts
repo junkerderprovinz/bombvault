@@ -3064,6 +3064,10 @@ const pl: Partial<Translations> = {
   // New target
   "newTarget.intro": "Przy pierwszym uruchomieniu {target} otrzymuje każdy element, który nie jest ustawiony na Lokalne.",
   "newTarget.moved": "Nowa lokalizacja {target} otrzymuje całą historię.",
+  "newTarget.movedEmpty": "W nowej lokalizacji {target} nie ma jeszcze kopii zapasowych, więc otrzymuje ona całą historię. Jeśli zmieniłeś tylko drogę do tego samego magazynu, ta lokalizacja nie prowadzi do starego repozytorium.",
+  "newTarget.movedPartly": "Nowa lokalizacja {target} otrzymuje to, czego jej jeszcze brakuje.",
+  "newTarget.movedHeld": "Nowa lokalizacja {target} ma już tę historię, więc nic nie jest wysyłane ponownie.",
+  "newTarget.held": "Już tam: {n}",
   "newTarget.itemsContainers": "Elementy i foldery projektu: {n}",
   "newTarget.items": "Elementy: {n}",
   "newTarget.snapshots": "Migawki: do {n}",

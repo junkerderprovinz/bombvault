@@ -3064,6 +3064,10 @@ const uk: Partial<Translations> = {
   // New target
   "newTarget.intro": "При першому запуску {target} отримує кожен елемент, що не встановлений на Локально.",
   "newTarget.moved": "Нове розташування {target} отримує всю історію.",
+  "newTarget.movedEmpty": "У новому розташуванні {target} ще немає резервних копій, тому воно отримує всю історію. Якщо ти змінив лише шлях до того самого сховища, це розташування не веде до старого репозиторію.",
+  "newTarget.movedPartly": "Нове розташування {target} отримує те, чого йому ще бракує.",
+  "newTarget.movedHeld": "У новому розташуванні {target} ця історія вже є, тому нічого не надсилається повторно.",
+  "newTarget.held": "Уже там: {n}",
   "newTarget.itemsContainers": "Елементи та папки проєктів: {n}",
   "newTarget.items": "Елементи: {n}",
   "newTarget.snapshots": "Знімки: до {n}",

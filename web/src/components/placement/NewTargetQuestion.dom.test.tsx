@@ -61,6 +61,34 @@ describe("the new target question", () => {
     expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "b2:new", "t1"]]);
   });
 
+  it("says nothing is sent again when the new location holds the history", async () => {
+    fake.reply("getNewTargetPreview", { ok: true, preview: targetPreview({ held: 420, bytes: 5 * 1024 ** 3 }) });
+    askWith({ domain: "vms", location: "b2:new", targetId: "t1", name: "B2", moved: true });
+    const text = (await screen.findByRole("dialog")).textContent;
+    expect(text).toContain("The new location of B2 holds this history already, so nothing is sent again.");
+    expect(text).toContain("Already there: 420");
+    expect(text).not.toContain("Snapshots:");
+    expect(text).not.toContain("Size:");
+  });
+
+  it("counts only what the new location is missing", async () => {
+    fake.reply("getNewTargetPreview", { ok: true, preview: targetPreview({ held: 400 }) });
+    askWith({ domain: "vms", location: "b2:new", targetId: "t1", name: "B2", moved: true });
+    const text = (await screen.findByRole("dialog")).textContent;
+    expect(text).toContain("The new location of B2 receives what it does not hold yet.");
+    expect(text).toContain("Snapshots: up to 20");
+    expect(text).toContain("Already there: 400");
+  });
+
+  it("warns when the new location holds no backups", async () => {
+    fake.reply("getNewTargetPreview", { ok: true, preview: targetPreview({ held: 0 }) });
+    askWith({ domain: "vms", location: "b2:new", targetId: "t1", name: "B2", moved: true });
+    const text = (await screen.findByRole("dialog")).textContent;
+    expect(text).toContain("this location does not lead to the old repository.");
+    expect(text).toContain("Snapshots: up to 420");
+    expect(text).not.toContain("Already there");
+  });
+
   it("sends the chosen exclusions along", async () => {
     fake.reply("getNewTargetPreview", {
       ok: true,

@@ -2990,6 +2990,9 @@ export interface TargetPreview {
   /** An upper bound from the last measurement; null when a source has none. */
   bytes: number | null;
   unreadable: string[];
+  /** How many of snapshots a moved target's new location holds already; null
+   *  when the target is not moving or the location could not be listed. */
+  held: number | null;
 }
 
 export interface TargetPreviewRow {

@@ -3060,6 +3060,10 @@ const zh: Partial<Translations> = {
   // New target
   "newTarget.intro": "首次运行时，{target} 会接收每个未设为本地的项目。",
   "newTarget.moved": "{target} 的新位置会接收全部历史记录。",
+  "newTarget.movedEmpty": "{target} 的新位置还没有任何备份，因此会接收全部历史记录。如果你只是更改了到同一存储的访问路径，这个位置并没有指向旧的存储库。",
+  "newTarget.movedPartly": "{target} 的新位置只接收它尚缺少的内容。",
+  "newTarget.movedHeld": "{target} 的新位置已有这些历史记录，因此不会重新发送任何内容。",
+  "newTarget.held": "已在那里：{n}",
   "newTarget.itemsContainers": "项目和项目文件夹：{n}",
   "newTarget.items": "项目：{n}",
   "newTarget.snapshots": "快照：最多 {n}",

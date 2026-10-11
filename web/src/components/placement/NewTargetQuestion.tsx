@@ -8,7 +8,7 @@ import {
   type TargetPreview,
 } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
-import { useT } from "../../lib/i18n";
+import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList, isPlacementDomain } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useConfirm } from "../../lib/useConfirm";
@@ -47,11 +47,14 @@ export function NewTargetPreviewLines({
 }) {
   const { t, lang } = useT();
   const formerly = preview.formerlyExcluded.map((e) => itemName(e.identity));
+  const held = preview.held ?? 0;
+  const sends = preview.snapshots - held;
   return (
     <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
       <p>{t(domain === "containers" ? "newTarget.itemsContainers" : "newTarget.items").replace("{n}", String(preview.items))}</p>
-      <p>{t("newTarget.snapshots").replace("{n}", String(preview.snapshots))}</p>
-      {preview.bytes !== null && <p>{t("newTarget.size").replace("{size}", humanBytes(preview.bytes))}</p>}
+      {(sends > 0 || held === 0) && <p>{t("newTarget.snapshots").replace("{n}", String(sends))}</p>}
+      {held > 0 && <p>{t("newTarget.held").replace("{n}", String(held))}</p>}
+      {preview.bytes !== null && sends > 0 && <p>{t("newTarget.size").replace("{size}", humanBytes(preview.bytes))}</p>}
       {preview.unreadable.length > 0 && (
         <p>{t("placement.uncheckable").replace("{list}", () => formatList(lang, preview.unreadable))}</p>
       )}
@@ -104,6 +107,15 @@ function ExclusionChoice({
   );
 }
 
+// A move to another route to the same storage sends nothing again, so the
+// question opens with what the new location holds.
+function introKey(moved: boolean, preview?: TargetPreview): TranslationKey {
+  if (!moved) return "newTarget.intro";
+  if (!preview || preview.held === null || preview.snapshots === 0) return "newTarget.moved";
+  if (preview.held === 0) return "newTarget.movedEmpty";
+  return preview.held < preview.snapshots ? "newTarget.movedPartly" : "newTarget.movedHeld";
+}
+
 /** useNewTargetQuestion asks before a target starts receiving a domain's
  *  history. Flash and config have no items to leave out and are not asked. */
 export function useNewTargetQuestion(): {
@@ -117,7 +129,6 @@ export function useNewTargetQuestion(): {
     async (q: NewTargetQuestion): Promise<NewTargetAnswer> => {
       const domain = q.domain;
       if (!isPlacementDomain(domain)) return { go: true, alsoExclude: null };
-      const intro = t(q.moved ? "newTarget.moved" : "newTarget.intro").replace("{target}", () => q.name);
       let res: OkEnvelope & { preview?: TargetPreview };
       try {
         res = await getNewTargetPreview(domain, q.location, q.targetId);
@@ -125,6 +136,7 @@ export function useNewTargetQuestion(): {
         res = { ok: false, error: err instanceof Error ? err.message : undefined };
       }
       const preview = res.preview;
+      const intro = t(introKey(q.moved, preview)).replace("{target}", () => q.name);
       if (!res.ok || !preview) {
         const reason = <p className="text-sm text-carbon-textSub">{placementErrorText(t, lang, res, "settings.error")}</p>;
         return (await confirm(intro, { extra: reason, cancelTone: "neutral" })) ? { go: true, alsoExclude: null } : { go: false };

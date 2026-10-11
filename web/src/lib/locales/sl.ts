@@ -3064,6 +3064,10 @@ const sl: Partial<Translations> = {
   // New target
   "newTarget.intro": "Ob prvem zagonu {target} prejme vsak element, ki ni nastavljen na Lokalno.",
   "newTarget.moved": "Nova lokacija {target} prejme celotno zgodovino.",
+  "newTarget.movedEmpty": "Na novi lokaciji {target} še ni varnostnih kopij, zato prejme celotno zgodovino. Če si spremenil samo pot do iste shrambe, ta lokacija ne vodi do starega repozitorija.",
+  "newTarget.movedPartly": "Nova lokacija {target} prejme to, kar ji še manjka.",
+  "newTarget.movedHeld": "Nova lokacija {target} to zgodovino že ima, zato se nič ne pošlje znova.",
+  "newTarget.held": "Že tam: {n}",
   "newTarget.itemsContainers": "Elementi in projektne mape: {n}",
   "newTarget.items": "Elementi: {n}",
   "newTarget.snapshots": "Posnetki: do {n}",

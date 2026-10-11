@@ -3060,6 +3060,10 @@ const vi: Partial<Translations> = {
   // New target
   "newTarget.intro": "Ở lần chạy đầu tiên, {target} nhận mọi mục không được đặt thành Cục bộ.",
   "newTarget.moved": "Vị trí mới của {target} nhận toàn bộ lịch sử.",
+  "newTarget.movedEmpty": "Vị trí mới của {target} chưa có bản sao lưu nào, nên sẽ nhận toàn bộ lịch sử. Nếu bạn chỉ đổi đường đến cùng một kho lưu trữ, vị trí này không dẫn đến kho cũ.",
+  "newTarget.movedPartly": "Vị trí mới của {target} chỉ nhận những gì nó còn thiếu.",
+  "newTarget.movedHeld": "Vị trí mới của {target} đã có lịch sử này, nên không gửi lại gì cả.",
+  "newTarget.held": "Đã có ở đó: {n}",
   "newTarget.itemsContainers": "Các mục và thư mục dự án: {n}",
   "newTarget.items": "Các mục: {n}",
   "newTarget.snapshots": "Snapshot: tối đa {n}",

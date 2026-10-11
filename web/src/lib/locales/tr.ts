@@ -3069,6 +3069,10 @@ const tr: Partial<Translations> = {
   // New target
   "newTarget.intro": "İlk çalıştırmasında {target}, Yerel olarak ayarlanmamış her ögeyi alır.",
   "newTarget.moved": "{target} için yeni konum tüm geçmişi alır.",
+  "newTarget.movedEmpty": "{target} için yeni konumda henüz yedek yok, bu yüzden tüm geçmişi alır. Yalnızca aynı depolamaya giden yolu değiştirdiysen, bu konum eski depoya çıkmıyor.",
+  "newTarget.movedPartly": "{target} için yeni konum yalnızca eksik olanı alır.",
+  "newTarget.movedHeld": "{target} için yeni konumda bu geçmiş zaten var, bu yüzden hiçbir şey yeniden gönderilmez.",
+  "newTarget.held": "Zaten orada: {n}",
   "newTarget.itemsContainers": "Ögeler ve proje klasörleri: {n}",
   "newTarget.items": "Ögeler: {n}",
   "newTarget.snapshots": "Anlık görüntüler: en fazla {n}",

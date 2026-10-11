@@ -3080,6 +3080,10 @@ const is: Partial<Translations> = {
   // New target
   "newTarget.intro": "Við fyrstu keyrslu fær {target} hvert atriði sem er ekki stillt á Staðbundið.",
   "newTarget.moved": "Nýja staðsetning {target} fær alla söguna.",
+  "newTarget.movedEmpty": "Á nýju staðsetningu {target} eru engin afrit enn, svo hún fær alla söguna. Ef þú breyttir aðeins leiðinni að sömu geymslu, leiðir þessi staðsetning ekki að gömlu safninu.",
+  "newTarget.movedPartly": "Nýja staðsetning {target} fær það sem hana vantar enn.",
+  "newTarget.movedHeld": "Nýja staðsetning {target} er þegar með þessa sögu, svo ekkert er sent aftur.",
+  "newTarget.held": "Þegar þar: {n}",
   "newTarget.itemsContainers": "Atriði og verkefnamöppur: {n}",
   "newTarget.items": "Atriði: {n}",
   "newTarget.snapshots": "Myndatökur: allt að {n}",

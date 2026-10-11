@@ -3069,6 +3069,10 @@ const it: Partial<Translations> = {
   // New target
   "newTarget.intro": "Alla sua prima esecuzione, {target} riceve ogni elemento non impostato su Locale.",
   "newTarget.moved": "La nuova posizione di {target} riceve l'intera cronologia.",
+  "newTarget.movedEmpty": "La nuova posizione di {target} non contiene ancora backup, quindi riceve l'intera cronologia. Se hai cambiato solo il modo di raggiungere lo stesso archivio, questa posizione non porta al vecchio repository.",
+  "newTarget.movedPartly": "La nuova posizione di {target} riceve ciò che le manca ancora.",
+  "newTarget.movedHeld": "La nuova posizione di {target} contiene già questa cronologia, quindi non viene inviato nulla di nuovo.",
+  "newTarget.held": "Già presenti: {n}",
   "newTarget.itemsContainers": "Elementi e cartelle di progetto: {n}",
   "newTarget.items": "Elementi: {n}",
   "newTarget.snapshots": "Snapshot: fino a {n}",
