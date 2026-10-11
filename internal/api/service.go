@@ -4909,6 +4909,18 @@ func isWrongKey(err error) bool {
 	return err != nil && strings.Contains(strings.ToLower(err.Error()), "wrong password or no key found")
 }
 
+// unreachableMarkers name failures to connect to a remote backend at all.
+var unreachableMarkers = []string{
+	"dial tcp", "no route to host", "connection refused", "network is unreachable",
+	"no such host", "i/o timeout", "temporary failure in name resolution",
+}
+
+// isUnreachable reports whether a restic open failure means the backend's host
+// could not be reached, which says nothing about what the location holds.
+func isUnreachable(err error) bool {
+	return err != nil && containsAny(strings.ToLower(err.Error()), unreachableMarkers)
+}
+
 // EnsureRepo makes sure the restic repo at repo is ready to use with the
 // configured encryption mode. It is idempotent and reconciles the mode:
 //
@@ -4945,8 +4957,14 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 	}
 	// Only a location that fails to open is asked why, so the probe costs
 	// nothing on the runs where the repository is there.
-	if openErr := s.engine.RepoOpensErr(ctx, repo, mode); isWrongKey(openErr) {
+	openErr := s.engine.RepoOpensErr(ctx, repo, mode)
+	if isWrongKey(openErr) {
 		return false, errRepoWrongKey
+	}
+	// An init against a host that does not answer only fails again, with a
+	// message that reads as if the location were empty.
+	if isUnreachable(openErr) {
+		return false, fmt.Errorf("could not reach the repository, so nothing was created there: %w", openErr)
 	}
 	// Opens with neither mode → not initialised (a brand-new location) OR its
 	// backing store vanished. Local repos need their directory; remote backends do not.
