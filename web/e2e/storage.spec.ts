@@ -5,10 +5,11 @@
 // every location's page. On the desktop: a row opens its location, a line of
 // the picture switches a section's default after its question, an entry goes
 // back to its default, a location is added in one window, a shorter rule asks
-// before it is saved, and a section gets rules of its own and gives them
-// back. German, because its labels run longest.
+// before it is saved, a section gets rules of its own and gives them back, a
+// destination's connection is changed and the destination removed, and a
+// section's folder is set. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
-import { B2, IMPACT, LOCAL, LOCATIONS, OWN_ENTRY, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
+import { B2, IMPACT, LOCAL, LOCATIONS, OWN_ENTRY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -263,6 +264,114 @@ test.describe("on the desktop", () => {
     await expect(page.getByText("Löschschutz (append-only)", { exact: true })).toBeVisible();
     await expect(page.getByRole("switch", { name: "Löschschutz (append-only)" })).toHaveCount(0);
     await expect(page.getByLabel(/Ein Ordner auf diesem Server kann das Löschen nicht verweigern/)).toBeVisible();
+  });
+
+  test("a destination's connection is changed in a window that sends what was typed", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await page.getByRole("button", { name: "Ändern", exact: true }).click();
+    const window = page.getByRole("dialog", { name: `Verbindung von ${STORAGE_BOX.name} ändern` });
+    await expect(window.getByLabel("Server")).toHaveValue("u123456.your-storagebox.de");
+    await expect(window.getByLabel("Passwort")).toHaveValue("");
+    await expect(window.getByRole("textbox", { name: /^Ordner/ })).toHaveValue("bombvault");
+    const save = window.getByRole("button", { name: "Testen und speichern" });
+    await expect(save).toBeDisabled();
+
+    await window.getByLabel("Server").fill("u999999.your-storagebox.de");
+    await save.click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(staged.writes).toEqual([
+      { method: "PUT", path: "/api/offsite/destinations/box/connection", body: { settings: { host: "u999999.your-storagebox.de" } } },
+    ]);
+  });
+
+  test("a refused change of the connection says what to do instead and keeps the window open", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    staged.connection = { ok: false, code: "destination-holds-backups", error: "this destination holds backups" };
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await page.getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Verbindung ändern" }).click();
+    const window = page.getByRole("dialog", { name: `Verbindung von ${STORAGE_BOX.name} ändern` });
+
+    await window.getByRole("textbox", { name: /^Ordner/ }).fill("anderswo");
+    await window.getByRole("button", { name: "Testen und speichern" }).click();
+    await expect(window.getByText("Leg einen zweiten Speicherort an und zeig mit den Einträgen dorthin.", { exact: false })).toBeVisible();
+    await expect(window.getByRole("button", { name: "Nicht verbunden" })).toBeVisible();
+    expect(staged.writes[0].body).toEqual({ dir: "anderswo" });
+  });
+
+  test("a destination is removed after the window said what is detached and what stays", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    await page.getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Speicherort entfernen" }).click();
+    const window = page.getByRole("dialog", { name: `${STORAGE_BOX.name} entfernen?` });
+    await expect(window.getByText("Speicherort entfernen, Sicherungen behalten")).toBeVisible();
+    await expect(window.getByRole("listitem")).toHaveCount(3);
+    await expect(window.getByRole("listitem").first()).toContainText("7 Einträge · 62 Sicherungen");
+    await expect(window.getByText("löschen", { exact: false })).toHaveCount(0);
+    expect(staged.writes).toEqual([]);
+
+    await window.getByRole("button", { name: "Speicherort entfernen" }).click();
+    await expect(page).toHaveURL(/\/storage$/);
+    expect(staged.writes).toEqual([{ method: "POST", path: "/api/offsite/destinations/box/removal", body: { expect: REMOVAL } }]);
+  });
+
+  test("the rclone.conf card shows the remote's section without its secret", async ({ page }) => {
+    await stageStorage(page, 1280);
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    const section = page.getByLabel("[storagebox]");
+    await expect(section).toContainText("type = sftp");
+    await expect(section).toContainText("host = u123456.your-storagebox.de");
+    await expect(section).toContainText("pass = verborgen");
+    await expect(page.getByText("storagebox · nas")).toBeVisible();
+  });
+
+  test("a section's folder is changed in a window on the page of its location", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.goto(locationUrl(LOCAL.id));
+    const row = page.getByRole("listitem").filter({ hasText: "/mnt/user/backups/bombvault/vms" });
+    await row.getByRole("button", { name: "Ändern" }).click();
+    const window = page.getByRole("dialog", { name: "VMs-Pfad" });
+    await window.getByRole("tab", { name: "Remote" }).click();
+    await window.getByPlaceholder("s3:bucket/path", { exact: false }).fill("rest:http://nas:8000/tower");
+    await window.getByRole("button", { name: "Fertig" }).click();
+
+    await expect.poll(() => staged.writes.length).toBe(1);
+    expect(staged.writes[0]).toMatchObject({ method: "PUT", path: "/api/settings", body: { vmsPath: "rest:http://nas:8000/tower" } });
+  });
+
+  test("the chosen media servers carry the round mark, and the list has no checkbox", async ({ page }) => {
+    await stageStorage(page, 1280);
+    await page.goto("/storage");
+    // The list closes when the page under it scrolls, and bringing the button
+    // into view scrolls it.
+    const picker = page.getByRole("button", { name: "Mediaserver auswählen" });
+    await picker.scrollIntoViewIfNeeded();
+    await expect(async () => {
+      await picker.click();
+      await expect(page.getByRole("option", { name: "jellyfin" })).toHaveAttribute("aria-selected", "true", { timeout: 1000 });
+    }).toPass();
+    await expect(page.locator('input[type="checkbox"]')).toHaveCount(0);
+  });
+
+  test("the settings tile keeps only the cards without a place on the storage pages", async ({ page }) => {
+    await stageStorage(page, 1280);
+    await page.goto("/settings/storage");
+    await expect(page.getByRole("heading", { name: "Off-site-Aufbewahrung" })).toBeAttached();
+    for (const moved of ["Backup-Pfade", "Ablage-Vorgaben", "Ziele", "Streaming", "Lokale Aufbewahrung"]) {
+      await expect(page.getByRole("heading", { name: moved, exact: true })).toHaveCount(0);
+    }
+    await page.getByRole("button", { name: "Öffnen" }).click();
+    await expect(page).toHaveURL(/\/storage$/);
+  });
+
+  test("the restore folder gets a subfolder per section and exceptions in the settings", async ({ page }) => {
+    await stageStorage(page, 1280);
+    await page.goto("/settings/restore");
+    await expect(page.getByRole("switch", { name: "Unterordner pro Bereich" })).toBeVisible();
+    await page.getByRole("button", { name: "Ausnahme", exact: true }).click();
+    await expect(page.getByRole("menuitem").first()).toBeVisible();
   });
 
   test("the tamper test runs against the location's own target", async ({ page }) => {
