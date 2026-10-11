@@ -3062,6 +3062,47 @@ body {
     animation-delay: calc(var(--block-i, 0) * var(--motion-block-step, 170ms) + var(--motion-block-dur, 420ms) * .8);
   }
 
+  /* The backup of a database container, as a loop. The dump travels to the
+     repository in two steps and the files in one, and what lies there at the
+     end shows from the moment both have arrived. */
+  :root:not([data-motion="off"]) .glim-dump-running {
+    animation: glim-dump-mid-out var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-paused {
+    animation: glim-dump-mid-in var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-badge {
+    animation: glim-dump-badge var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-ring {
+    animation: glim-dump-ring var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-sheet {
+    animation:
+      glim-dump-sheet-go var(--dump-dur) linear infinite,
+      glim-dump-sheet-show var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-sheet-grow {
+    animation: glim-dump-sheet-grow var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-name {
+    animation: glim-dump-name var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-pack {
+    animation:
+      glim-dump-pack-go var(--dump-dur) linear infinite,
+      glim-dump-pack-show var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-settle {
+    animation: glim-dump-settle var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-say-dump {
+    animation: glim-dump-say-dump var(--dump-dur) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-dump-say-files {
+    animation: glim-dump-say-files var(--dump-dur) linear infinite;
+  }
+
   /* The group as a network. The links draw in one after the other when the
      picture first shows, and an arrow that joins later fades in by itself.
      Nothing fills forwards, so pointing at an instance can still dim the
@@ -3452,6 +3493,10 @@ body {
 /* Without delete protection the pack is gone in the last frame. */
 .glim-lock-gone { opacity: 0; }
 
+/* One pass of the database backup picture tells three steps, so it takes
+   longer than the pass of a picture that tells one. */
+.glim-dump { --dump-dur: calc(var(--motion-scene-dur, 6s) * 1.8); }
+
 /* The pictures in the settings: a backup as a hundred packs, the sandbox of a
    trial restore, and what encryption leaves at a storage location. */
 .glim-pack {
@@ -3718,6 +3763,74 @@ body {
 @keyframes glim-block-swell {
   40% { transform: scale(var(--motion-block-swell, 1)); }
   to { transform: none; }
+}
+/* The container's state chip gives way to "paused" for the middle of the
+   pass, while its files are read. */
+@keyframes glim-dump-mid-out {
+  0%, 33%   { opacity: 1; }
+  34%, 57%  { opacity: 0; }
+  58%, 100% { opacity: 1; }
+}
+@keyframes glim-dump-mid-in {
+  0%, 33%   { opacity: 0; }
+  34%, 57%  { opacity: 1; }
+  58%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-badge {
+  0%, 5%    { transform: none; }
+  7%        { transform: scale(1.25); }
+  9%, 100%  { transform: none; }
+}
+@keyframes glim-dump-ring {
+  0%, 4.9%  { opacity: 0; transform: none; }
+  5%        { opacity: .7; transform: none; }
+  10%, 100% { opacity: 0; transform: scale(2); }
+}
+/* The dump leaves the database, waits between it and the repository as a
+   file, then goes on into its place. */
+@keyframes glim-dump-sheet-go {
+  0%, 8%    { transform: translateX(-122px); animation-timing-function: cubic-bezier(.3, 0, .4, 1); }
+  20%, 40%  { transform: translateX(-64px); animation-timing-function: cubic-bezier(.5, 0, .7, 1); }
+  55%, 100% { transform: none; }
+}
+@keyframes glim-dump-sheet-grow {
+  0%, 8%    { transform: scale(.65); }
+  20%, 40%  { transform: scale(1.6); }
+  55%, 100% { transform: none; }
+}
+@keyframes glim-dump-sheet-show {
+  0%, 8%    { opacity: 0; }
+  10%, 54%  { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-name {
+  0%, 20%     { opacity: 0; }
+  21.5%, 39%  { opacity: 1; }
+  40.5%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-pack-go {
+  0%, 40%   { transform: translateX(-118px); animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  55%, 100% { transform: none; }
+}
+@keyframes glim-dump-pack-show {
+  0%, 40%   { opacity: 0; }
+  41.5%, 54% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-settle {
+  0%, 55%     { opacity: 0; }
+  56.5%, 97%  { opacity: 1; }
+  98.5%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-say-dump {
+  0%, 3%      { opacity: 0; }
+  4.5%, 30%   { opacity: 1; }
+  31.5%, 100% { opacity: 0; }
+}
+@keyframes glim-dump-say-files {
+  0%, 32%     { opacity: 0; }
+  33.5%, 54%  { opacity: 1; }
+  55.5%, 100% { opacity: 0; }
 }
 @keyframes glim-parcel-hop {
   0%, 10%   { transform: none; animation-timing-function: ease-out; }
