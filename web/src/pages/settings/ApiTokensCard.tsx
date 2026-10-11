@@ -23,6 +23,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { keyLogId, McpKeyLog, type KeyLogWording } from "./McpKeyLog";
 import { Card, useOpenPasswordField } from "./shared";
 
@@ -71,6 +72,7 @@ type Fresh = { key: string; id: string; hint: string };
 export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; passwordSet?: boolean }) {
   const { t } = useT();
   const { push } = useToast();
+  const ownLogin = useOwnLogin();
   const openPasswordField = useOpenPasswordField();
   const [data, setData] = useState<ApiTokensResponse | null>(null);
   const [failed, setFailed] = useState(false);
@@ -136,7 +138,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     try {
       const res = await call();
       if (!res.ok) {
-        push(refusal(res), "fail");
+        if (!ownLogin.handled(res)) push(refusal(res), "fail");
         bumpShake(id);
         if (res.code === "mcp-key-not-found" || res.code === "mcp-key-needs-password") await reload();
         return null;
@@ -577,6 +579,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           onCancel={() => setPending(null)}
         />
       )}
+      {ownLogin.dialog}
     </Card>
   );
 }

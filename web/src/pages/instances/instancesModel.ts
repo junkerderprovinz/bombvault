@@ -126,7 +126,13 @@ export function roleStates(instance: Instance): Record<RoleKind, RoleState> {
 /** tooOldToKeep says an instance in reach runs a version that keeps no key
  *  deposit. An instance out of reach has not said either way. */
 export function tooOldToKeep(instance: Instance): boolean {
-  return instance.roles?.reachable === true && instance.roles.canKeep === false;
+  return instance.roles?.keep === "too-old";
+}
+
+/** unreachableToKeep says an instance could not be asked whether it keeps a
+ *  key deposit, so nothing is known about its version. */
+export function unreachableToKeep(instance: Instance): boolean {
+  return instance.roles?.keep === "unreachable";
 }
 
 function restAddress(location: string): string {

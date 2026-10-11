@@ -17,6 +17,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { depositSentence } from "../../lib/depositCodes";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { ToggleRow } from "../settings/shared";
 import { KeeperDialog } from "./KeeperDialogs";
@@ -295,6 +296,7 @@ export function useRoleSwitch({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [asking, setAsking] = useState<RoleKind | null>(null);
+  const ownLogin = useOwnLogin();
   const states = roleStates(instance);
 
   async function switchOff(role: RoleKind) {
@@ -311,9 +313,12 @@ export function useRoleSwitch({
     try {
       if (role === "keeper") {
         const res = await withdrawKeeper(instance.memberId);
-        if (!res.ok) push(depositSentence(t, res), "fail");
+        if (!res.ok) {
+          if (!ownLogin.handled(res)) push(depositSentence(t, res), "fail");
+        }
         // A keeper that did not hear still holds the deposit.
         else if (!res.told) push(t("keeper.notTold").replaceAll("{peer}", () => instance.name), "warn");
+        if (res.ok && res.codeGone) push(t("keeper.codeGone"), "warn");
         await state.reloadDeposits();
         return;
       }
@@ -341,6 +346,7 @@ export function useRoleSwitch({
   const dialogs = (
     <>
       {confirmDialog}
+      {ownLogin.dialog}
       {asking === "zfs" && (
         <ZFSRoleDialog instance={instance} replicas={state.data.replicas} peers={peers} onClose={() => setAsking(null)} onSent={sent} />
       )}

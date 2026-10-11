@@ -28,6 +28,7 @@ import { CLOUD_CLIENTS, KIND_LABEL, LOCAL_CLIENTS, OTHER_CLIENT, clientById, typ
 import { mcpUrl, type McpSnippetInput } from "../../lib/mcpSnippets";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { McpClientDialog, type FreshKey } from "./McpClientDialog";
 import { ClientMark } from "./McpClientMark";
 import { keyLogId, McpKeyLog } from "./McpKeyLog";
@@ -111,6 +112,7 @@ const FIRST_CALL_POLL_MS = 3000;
 export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; passwordSet?: boolean }) {
   const { t } = useT();
   const { push } = useToast();
+  const ownLogin = useOwnLogin();
   const openPasswordField = useOpenPasswordField();
   const [data, setData] = useState<McpKeysResponse | null>(null);
   const [lists, setLists] = useState(0);
@@ -226,7 +228,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     try {
       const res = await call();
       if (!res.ok) {
-        push(refusal(res), "fail");
+        if (!ownLogin.handled(res)) push(refusal(res), "fail");
         bumpShake(id);
         if (res.code === "mcp-key-not-found" || res.code === "mcp-key-needs-password") await reload();
         return null;
@@ -790,6 +792,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           onCancel={() => setPending(null)}
         />
       )}
+      {ownLogin.dialog}
     </Card>
   );
 }

@@ -271,6 +271,15 @@ describe("a client's setup dialog", () => {
     expect(within(dialog).getByText(/claude mcp add/).textContent).not.toContain("bvmcp_abcdef123456");
   });
 
+  it("asks for a sign-in at this instance when the phone app's session may not create a key", async () => {
+    await renderCard(payload(), payload());
+    createMcpKey.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" });
+    const dialog = await openClient("Claude Code", en["mcp.kindTerminal"]);
+    fireEvent.click(within(dialog).getByRole("button", { name: en["mcp.createKey"] }));
+    await waitFor(() => expect(screen.getAllByRole("dialog").at(-1)!.textContent).toContain(en["secrets.ownLoginNeeded"]));
+    expect(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+  });
+
   it("writes the new key into the configuration of a client that has to hold it", async () => {
     await renderCard(payload(), payload({ keys: [key({ label: "Zed", client: "zed" })] }));
     createMcpKey.mockResolvedValue({ ok: true, key: "bvmcp_abcdef123456", item: key({ label: "Zed", client: "zed" }) });

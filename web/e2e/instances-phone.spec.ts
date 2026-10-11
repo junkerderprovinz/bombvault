@@ -321,6 +321,7 @@ const ROLES = [
     reachable: true,
     answers: true,
     canKeep: true,
+    keep: "yes",
     byMember: {
       receiver: roleRequest("rr1", "allowed", ["containers", "vms", "flash"]),
       fetcher: roleRequest("rr2", "asked", ["containers"]),
@@ -341,7 +342,7 @@ const ROLES = [
     },
     asks: 3,
   },
-  { memberId: "member-2", name: "Büro Linz", reachable: true, answers: false, canKeep: false, byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
+  { memberId: "member-2", name: "Büro Linz", reachable: true, answers: false, canKeep: false, keep: "too-old", byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
 ];
 
 const SELF_ROLES = {
@@ -695,7 +696,7 @@ for (const width of [320, 360]) {
 
   test(`the key deposits @ ${width}px fit the screen, the recovery code included`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
-    await page.route("**/api/group/deposit/code", (route) => route.fulfill({ json: { ok: true, code: CODE } }));
+    await page.route("**/api/group/deposit/code", (route) => route.fulfill({ json: { ok: true, recoveryCode: CODE } }));
     await openPage(page, width);
     await card(page, "self").getByRole("button", { name: "Schlüssel-Hinterlegung" }).click();
     const win = page.getByRole("dialog", { name: "Schlüssel-Hinterlegung" });
@@ -731,7 +732,7 @@ for (const width of [320, 360]) {
     // Once it is current, the dialog says what the deposit is and what the
     // day it is used takes.
     await page.route("**/api/group/roles", (route) =>
-      route.fulfill({ json: { ok: true, members: [ROLES[0], { ...ROLES[1], answers: true, canKeep: true }], self: SELF_ROLES } }),
+      route.fulfill({ json: { ok: true, members: [ROLES[0], { ...ROLES[1], answers: true, canKeep: true, keep: "yes" }], self: SELF_ROLES } }),
     );
     await page.reload();
     await card(page, "member-2").locator('button[data-role="keeper"]').click();
@@ -830,7 +831,7 @@ test("a key deposit is made from its tile, and the recovery code stays until it 
     const keeper = { state: "held", at: iso(0) };
     deposits = { ...NO_DEPOSITS, codeSince: iso(0), sent: [{ memberId: MEMBER, name: MEMBER_NAME, state: "held", sentAt: iso(0) }] };
     members = [{ ...ROLES[0], byMember: { ...ROLES[0].byMember, keeper } }, ROLES[1]];
-    await route.fulfill({ json: { ok: true, keeper, code: CODE } });
+    await route.fulfill({ json: { ok: true, keeper, recoveryCode: CODE } });
   });
   await openPage(page, testInfo.project.use.viewport!.width);
   await page.route("**/api/group/roles", (route) => route.fulfill({ json: { ok: true, members, self: SELF_ROLES } }));

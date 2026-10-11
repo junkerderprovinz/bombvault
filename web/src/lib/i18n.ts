@@ -1824,7 +1824,7 @@ export const en = {
   "deposit.code.deposit-code": "The recovery code does not open this deposit.",
   "deposit.code.member-gone": "That instance is not reachable in the group right now.",
   "deposit.code.member-silent": "That instance did not answer.",
-  "deposit.code.backup-key-locked": "The key of the backups this server took over does not open, because APP_KEY changed after it was adopted. Upload the recovery kit again under Settings, Restore, or set APP_KEY back to what it was.",
+  "deposit.code.backup-key-locked": "The key of the backups this server took over does not open, because APP_KEY changed after it was adopted. Upload the recovery kit again on the Restore page under Emergency, or set APP_KEY back to what it was.",
   "deposit.code.release-decided": "The request is not waiting for an answer any more.",
   // Pairing: instances that share twelve words form a group, and the relay
   // carries their calls when they are on different networks.
@@ -4756,6 +4756,20 @@ export const en = {
   "emergency.code.keeper-too-old": "That instance runs a version that cannot keep a deposit. Update it first.",
   "pairing.forEmergency": "You came here from the emergency wizard. Join the group with its twelve words, then go back.",
   "pairing.backToEmergency": "Back to the emergency wizard",
+  "deposit.code.keeper-full": "That instance already keeps as many deposits as it can. Ask another instance of the group.",
+  "deposit.code.deposit-owner": "This deposit was not made by the server it was kept for, so it is not used.",
+  "deposit.code.deposit-unreadable": "What the recovery code opened is not a key deposit.",
+  "deposit.code.deposit-busy": "Too many recovery codes are being tried at once. Try again in a moment.",
+  "secrets.passwordNotSet": "Set a login password first, under Settings, Security. Without one this server hands out no key.",
+  "secrets.ownLoginNeeded": "This needs a sign-in at this instance's own web interface. The phone app's connection opens the pages, but no keys. Sign in here, then do it again.",
+  "secrets.signInHere": "Sign in here",
+  "keeper.state.changed": "Changed there",
+  "keeper.changedText": "{peer} held something this server did not send. Send the deposit again. If that keeps happening, take the Key keeper role away from {peer}.",
+  "keeper.tile.tooOld": "Too old",
+  "keeper.tile.unreachable": "Not reachable",
+  "keeper.unreachable": "{peer} cannot be reached right now. Whether it can keep a key deposit shows once {peer} answers again.",
+  "keeper.codeGone": "No instance keeps this server's deposit any more, so the recovery code opens nothing. The next deposit comes with a new code.",
+  "deposit.code.deposit-changed": "The instance held something other than the deposit this server sent, so somebody changed it there.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -6337,7 +6351,7 @@ export const de: Translations = {
   "deposit.code.deposit-code": "Der Wiederherstellungscode öffnet diese Hinterlegung nicht.",
   "deposit.code.member-gone": "Diese Instanz ist in der Gruppe gerade nicht erreichbar.",
   "deposit.code.member-silent": "Diese Instanz hat nicht geantwortet.",
-  "deposit.code.backup-key-locked": "Der Schlüssel der Sicherungen, die dieser Server übernommen hat, lässt sich nicht öffnen, weil sich der APP_KEY nach der Übernahme geändert hat. Lade das Recovery-Kit unter Einstellungen, Wiederherstellung erneut hoch oder setz den APP_KEY auf den alten Wert zurück.",
+  "deposit.code.backup-key-locked": "Der Schlüssel der Sicherungen, die dieser Server übernommen hat, lässt sich nicht öffnen, weil sich der APP_KEY nach der Übernahme geändert hat. Lade das Recovery-Kit auf der Seite Wiederherstellung unter Notfall erneut hoch oder setz den APP_KEY auf den alten Wert zurück.",
   "deposit.code.release-decided": "Die Anfrage wartet nicht mehr auf eine Antwort.",
   "pairing.title": "Kopplung",
   "pairing.howTitle": "So koppelst du",
@@ -9230,6 +9244,20 @@ export const de: Translations = {
   "emergency.code.keeper-too-old": "Diese Instanz läuft mit einer Version, die keine Hinterlegung verwahren kann. Aktualisiere sie zuerst.",
   "pairing.forEmergency": "Du kommst vom Notfall-Assistenten. Tritt der Gruppe mit ihren zwölf Wörtern bei und geh dann zurück.",
   "pairing.backToEmergency": "Zurück zum Notfall-Assistenten",
+  "deposit.code.keeper-full": "Diese Instanz verwahrt schon so viele Hinterlegungen, wie sie kann. Frag eine andere Instanz der Gruppe.",
+  "deposit.code.deposit-owner": "Diese Hinterlegung stammt nicht von dem Server, für den sie verwahrt wurde, und wird deshalb nicht benutzt.",
+  "deposit.code.deposit-unreadable": "Was der Wiederherstellungscode geöffnet hat, ist keine Schlüssel-Hinterlegung.",
+  "deposit.code.deposit-busy": "Gerade werden zu viele Wiederherstellungscodes auf einmal geprüft. Versuch es gleich noch einmal.",
+  "secrets.passwordNotSet": "Setz zuerst ein Login-Passwort unter Einstellungen, Sicherheit. Ohne Passwort gibt dieser Server keinen Schlüssel heraus.",
+  "secrets.ownLoginNeeded": "Dafür musst du dich an der Weboberfläche dieser Instanz selbst anmelden. Die Verbindung der Handy-App öffnet die Seiten, aber keine Schlüssel. Melde dich hier an und mach es dann noch einmal.",
+  "secrets.signInHere": "Hier anmelden",
+  "keeper.state.changed": "Dort verändert",
+  "keeper.changedText": "{peer} hatte etwas, das dieser Server nicht geschickt hat. Schick die Hinterlegung noch einmal. Passiert das wieder, nimm {peer} die Rolle Schlüsselhüter weg.",
+  "keeper.tile.tooOld": "Zu alt",
+  "keeper.tile.unreachable": "Nicht erreichbar",
+  "keeper.unreachable": "{peer} ist gerade nicht erreichbar. Ob dort eine Schlüssel-Hinterlegung möglich ist, zeigt sich, sobald {peer} wieder antwortet.",
+  "keeper.codeGone": "Keine Instanz verwahrt mehr die Hinterlegung dieses Servers, der Wiederherstellungscode öffnet also nichts mehr. Die nächste Hinterlegung bekommt einen neuen Code.",
+  "deposit.code.deposit-changed": "Die Instanz hatte etwas anderes als die Hinterlegung, die dieser Server geschickt hat. Dort hat also jemand sie verändert.",
 };
 
 // ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import { copyText } from "../../lib/clipboard";
 import { depositSentence } from "../../lib/depositCodes";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { ToggleRow } from "../settings/shared";
 import { RoleDialog } from "./RoleDialog";
 import { ROLES } from "./RoleTile";
@@ -83,6 +84,7 @@ export function KeeperDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
+  const ownLogin = useOwnLogin();
   const named = (key: TranslationKey) => t(key).replaceAll("{peer}", () => instance.name);
   const title = named("instances.role.asTitle").replace("{role}", t(ROLES.keeper.label));
   const tooOld = tooOldToKeep(instance);
@@ -93,14 +95,11 @@ export function KeeperDialog({
     try {
       const res = await askKeeper(instance.memberId);
       if (!res.ok) {
-        setError(depositSentence(t, res));
+        if (!ownLogin.handled(res)) setError(depositSentence(t, res));
         return;
       }
-      // An answer that is ok carries the new recovery code in the field a
-      // refusal carries its reason in.
-      const made: string | undefined = res.code;
-      if (made) {
-        setCode(made);
+      if (res.recoveryCode) {
+        setCode(res.recoveryCode);
         return;
       }
       push(named("keeper.made"), "success");
@@ -157,6 +156,7 @@ export function KeeperDialog({
       </div>
       <p className="text-sm text-carbon-textSub">{named("keeper.without")}</p>
       {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
+      {ownLogin.dialog}
     </RoleDialog>
   );
 }

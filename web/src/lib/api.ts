@@ -6223,20 +6223,6 @@ export type DepositRefusal =
 
 type DepositAnswer<T> = Omit<OkEnvelope, "code"> & { code?: DepositRefusal } & T;
 
-/** fetchKeyAction sends a call that hands out or creates key material. The
- *  server refuses one outright with a 403 and a sentence, as it does for the
- *  recovery kit on an instance without a login password, and the sentence is
- *  the answer. Any other failure is thrown as fetchJSON throws it. */
-async function fetchKeyAction<T>(path: string, options: RequestInit): Promise<T> {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json" } });
-  if (res.status === 403) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    if (body?.error) return { ok: false, error: body.error } as T;
-  }
-  if (!res.ok) throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
-  return res.json() as Promise<T>;
-}
-
 /** GET /api/group/deposits. */
 export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> {
   return fetchJSON("/api/group/deposits");

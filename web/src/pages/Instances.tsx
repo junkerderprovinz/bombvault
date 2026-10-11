@@ -31,7 +31,7 @@ import { useRoleSwitch } from "./instances/RoleDialogs";
 import { depositStateLabel, RoleTiles } from "./instances/RoleTile";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
-import { buildInstances, protectionFigures, ROLE_KINDS, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instances/instancesModel";
+import { buildInstances, protectionFigures, ROLE_KINDS, tooOldToKeep, unreachableToKeep, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instances/instancesModel";
 import { groupNodes } from "./instances/netModel";
 import { useInstances, type InstancesState, type Modules, type Self } from "./instances/useInstances";
 
@@ -151,9 +151,12 @@ function PeerCard({
   const roles = useRoleSwitch({ instance, peers, sections, state });
   const tiles: Partial<Record<RoleKind, RoleState>> = { ...roles.states };
   if (!modules.zfs && !instance.roles?.byMember.zfs) delete tiles.zfs;
-  // A deposit that is not current says so in place of the tile's own word.
+  // A deposit that is not current says so in place of the tile's own word,
+  // and so does an instance that cannot take one.
   const deposit = instance.roles?.byMember.keeper?.state;
-  const details = deposit && deposit !== "held" ? { keeper: depositStateLabel(t, deposit) } : undefined;
+  const cannotKeep = tooOldToKeep(instance) ? t("keeper.tile.tooOld") : unreachableToKeep(instance) ? t("keeper.tile.unreachable") : undefined;
+  const keeperDetail = deposit ? (deposit !== "held" ? depositStateLabel(t, deposit) : undefined) : cannotKeep;
+  const details = keeperDetail ? { keeper: keeperDetail } : undefined;
 
   const badges = (
     <>

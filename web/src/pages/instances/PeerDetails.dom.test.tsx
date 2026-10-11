@@ -354,7 +354,7 @@ describe("what the instance does for this server", () => {
   });
 
   it("says that an instance too old to keep a deposit has to be updated first", async () => {
-    await open({ roles: [memberRoles({ canKeep: false })] });
+    await open({ roles: [memberRoles({ canKeep: false, keep: "too-old" })] });
     expect(row("keeper").textContent).toContain("attic runs a version that cannot keep a key deposit. Update it first.");
   });
 

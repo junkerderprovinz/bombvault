@@ -32,7 +32,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    newDepositCode: () => answer("code", { code: NEW_CODE }),
+    newDepositCode: () => answer("code", { recoveryCode: NEW_CODE }),
     renewDeposits: () => answer("renew", {}),
     askKeeper: (memberId: string) => answer(`ask:${memberId}`, {}),
     decideRelease: (id: string, decision: string) => {
@@ -194,6 +194,14 @@ describe("this server's own deposit", () => {
     expect(reloads).toBe(1);
   });
 
+  it("says that the keeper holds something this server did not send, and sends the deposit again", async () => {
+    await open({ codeSince: SINCE, sent: [sentDeposit({ memberId: "m2", name: "barn", state: "changed" })] });
+    expect(keeper("m2").textContent).toContain(en["keeper.state.changed"]);
+    expect(keeper("m2").textContent).toContain(en["keeper.changedText"].replaceAll("{peer}", "barn"));
+    await click(within(keeper("m2")).getByRole("button", { name: en["keeper.sendNow"] }));
+    expect(sent).toEqual(["renew"]);
+  });
+
   it("says what a deposit deleted there means, and asks the keeper again on request", async () => {
     await open({ codeSince: SINCE, sent: [sentDeposit({ memberId: "m3", name: "shed", state: "declined" })] });
     expect(keeper("m3").textContent).toContain("The deposit was deleted on shed. shed takes a new one only when you ask again.");
@@ -316,6 +324,23 @@ describe("a request to hand a deposit out", () => {
     await click(within(request("rel1")).getByRole("button", { name: en["zfs.receive.allow"] }));
     expect(screen.getByText(en["deposit.code.release-decided"])).toBeTruthy();
     expect(reloads).toBe(1);
+  });
+
+  it("asks for a sign-in at this instance before the phone app's session allows one", async () => {
+    refusal = { ok: false, code: "own-login-needed", error: "sign in at this instance's web interface" };
+    await open({ releases: [depositRelease()] });
+    await click(within(request("rel1")).getByRole("button", { name: en["zfs.receive.allow"] }));
+    const ask = screen.getAllByRole("dialog").at(-1)!;
+    expect(ask.textContent).toContain(en["secrets.ownLoginNeeded"]);
+    expect(within(ask).getByRole("button", { name: en["secrets.signInHere"] })).toBeTruthy();
+    expect(screen.queryByText("sign in at this instance's web interface")).toBeNull();
+  });
+
+  it("says that a login password is needed before it allows one", async () => {
+    refusal = { ok: false, code: "password-not-set", error: "set a login password before handing out a key deposit" };
+    await open({ releases: [depositRelease()] });
+    await click(within(request("rel1")).getByRole("button", { name: en["zfs.receive.allow"] }));
+    expect(screen.getByText(en["secrets.passwordNotSet"])).toBeTruthy();
   });
 
   it("says in the server's words why it may not allow one", async () => {
