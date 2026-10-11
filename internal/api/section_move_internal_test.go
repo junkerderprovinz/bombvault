@@ -273,7 +273,57 @@ func TestTwoPlacesOfOneKindUnderDifferentSignInsCannotBeMovedBetween(t *testing.
 		t.Fatalf("answer = %v, want move-sign-in", res)
 	}
 
-	if env, ok := bothSignIns([]string{"AWS_ACCESS_KEY_ID=a"}, []string{"RESTIC_REST_USERNAME=bv", "AWS_ACCESS_KEY_ID=a"}); !ok || len(env) != 2 {
+	if env, ok := bothSignIns("s3:https://s3.example/bv", []string{"AWS_ACCESS_KEY_ID=a"}, "rest:https://box:8000/bv", []string{"RESTIC_REST_USERNAME=bv", "AWS_ACCESS_KEY_ID=a"}); !ok || len(env) != 2 {
 		t.Fatalf("an S3 place and a rest-server sharing what they share joined to %v, %v", env, ok)
+	}
+}
+
+func TestTheNewPlaceSeesTheOldPlacesLoginOnlyInTheCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	old, err := f.svc.SaveNewDestination(context.Background(), draftRequest{
+		Provider: "rest", Name: "Old", Settings: map[string]string{"url": "https://old:8000/bv", "user": "bv", "pass": "one"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vms := f.tickDestination(old, "vms")
+	f.hold(vms.Repo, snap("o1", 50, "vm:old"))
+	vault := f.destination("Vault", vaultRepo)
+	at := vaultRepo + "/vms"
+	f.eng.opens[at] = false
+
+	f.move(vms, vault)
+
+	for _, op := range []string{"init", "list", "check"} {
+		calls := f.eng.signIns[op+" "+at]
+		if len(calls) == 0 {
+			t.Fatalf("no %s ran at the new place", op)
+		}
+		for _, env := range calls {
+			if envValue(env, "RESTIC_REST_PASSWORD") != "" {
+				t.Fatalf("%s at the new place ran with the old place's login: %v", op, env)
+			}
+		}
+	}
+	if copies := f.eng.signIns["copy "+at]; len(copies) == 0 || envValue(copies[0], "RESTIC_REST_PASSWORD") != "one" {
+		t.Fatalf("the copy ran with %v, want the old place's login to read it", copies)
+	}
+}
+
+func TestAMoveThatWouldLendOnePlaceTheOthersLoginIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	ref, err := f.svc.addCredSet("Old", CloudCreds{S3KeyID: "old-key", S3Secret: "old-secret"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	old, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Old", Repo: "s3:https://old.example/bv", Provider: "aws", CredsRef: ref})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vms := f.tickDestination(old, "vms")
+	fresh := f.destination("New", "s3:https://new.example/bv")
+
+	if res := f.movePreview(vms, fresh); res["code"] != "move-sign-in" {
+		t.Fatalf("moving from an S3 place with a login to one without = %v, want move-sign-in", res)
 	}
 }

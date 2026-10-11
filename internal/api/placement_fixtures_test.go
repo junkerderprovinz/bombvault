@@ -506,6 +506,17 @@ type placementEngine struct {
 	// onCopy and onForget, when set, run before a Copy or a Forget by ids does
 	// anything, so a test can hold a run in the middle.
 	onCopy, onForget func()
+	// signIns lists the environment each Init, Snapshots, Check and Copy ran
+	// with, as "op location".
+	signIns map[string][][]string
+}
+
+func (e *placementEngine) signedIn(op, repo string, mode restic.Mode) {
+	if e.signIns == nil {
+		e.signIns = map[string][][]string{}
+	}
+	key := op + " " + filepath.ToSlash(repo)
+	e.signIns[key] = append(e.signIns[key], slices.Clone(mode.Env))
 }
 
 type copyCall struct {
@@ -531,11 +542,12 @@ type tagCall struct {
 	Add, Remove []string
 }
 
-func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
+func (e *placementEngine) Init(_ context.Context, repo string, mode restic.Mode) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.ensured = append(e.ensured, key)
+	e.signedIn("init", repo, mode)
 	if err := e.initErr[key]; err != nil {
 		return err
 	}
@@ -563,10 +575,11 @@ func (e *placementEngine) RepoOpensErr(ctx context.Context, repo string, mode re
 	return errors.New("repository does not exist: unable to open config file")
 }
 
-func (e *placementEngine) Snapshots(_ context.Context, repo string, _ restic.Mode) ([]restic.Snapshot, error) {
+func (e *placementEngine) Snapshots(_ context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error) {
 	e.mu.Lock()
 	key := filepath.ToSlash(repo)
 	e.lists[key]++
+	e.signedIn("list", repo, mode)
 	err := e.listErr[key]
 	snaps := slices.Clone(e.snaps[key])
 	hook := e.onSnapshots
@@ -582,7 +595,7 @@ func (e *placementEngine) Snapshots(_ context.Context, repo string, _ restic.Mod
 
 // Copy puts a copy with a new id and the source's identity at the destination
 // for every snapshot asked for that the destination does not hold yet.
-func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string, _ restic.Limits, _ restic.Mode) error {
+func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string, _ restic.Limits, mode restic.Mode) error {
 	if e.onCopy != nil {
 		e.onCopy()
 	}
@@ -590,6 +603,7 @@ func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string
 	defer e.mu.Unlock()
 	d, s := filepath.ToSlash(dest), filepath.ToSlash(src)
 	e.copies = append(e.copies, copyCall{Dest: d, Src: s, IDs: slices.Clone(ids)})
+	e.signedIn("copy", dest, mode)
 	if err := e.copyErr[s]; err != nil {
 		return err
 	}
@@ -653,11 +667,12 @@ func (e *placementEngine) Forget(_ context.Context, repo string, ids []string, _
 	return nil
 }
 
-func (e *placementEngine) Check(_ context.Context, repo string, _ restic.Mode) error {
+func (e *placementEngine) Check(_ context.Context, repo string, mode restic.Mode) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.checks = append(e.checks, key)
+	e.signedIn("check", repo, mode)
 	return e.checkErr[key]
 }
 

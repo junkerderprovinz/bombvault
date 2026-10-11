@@ -45,15 +45,35 @@ type movePlan struct {
 	sectionMove
 	target, dest store.OffsiteTarget
 	src, dst     string
-	// srcMode reads the old place. mode writes the new one and carries the
-	// sign-ins of both, because the copy reaches both from one process.
-	srcMode, mode restic.Mode
-	lim           restic.Limits
+	// srcMode reads the old place and mode the new one, each with its own
+	// sign-in. copyMode carries both: restic copy opens the two repositories in
+	// one process, and their backends read the sign-in from its environment.
+	srcMode, mode, copyMode restic.Mode
+	lim                     restic.Limits
 }
 
-// bothSignIns joins the backend credentials of two places. ok is false when
-// they set the same variable to different values.
-func bothSignIns(a, b []string) (env []string, ok bool) {
+// signInVars are the variables a restic backend reads its login from.
+var signInVars = map[string][]string{
+	"s3":   {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"},
+	"rest": {"RESTIC_REST_USERNAME", "RESTIC_REST_PASSWORD"},
+}
+
+// bothSignIns joins the backend credentials of two places for one restic
+// process. ok is false when they set one variable to different values, or
+// when the backend of one place reads a login variable that only the other
+// sets, which would sign it in with the other's login.
+func bothSignIns(aLoc string, a []string, bLoc string, b []string) (env []string, ok bool) {
+	lacks := func(loc string, own, other []string) bool {
+		for _, name := range signInVars[repoScheme(loc)] {
+			if envValue(own, name) == "" && envValue(other, name) != "" {
+				return true
+			}
+		}
+		return false
+	}
+	if lacks(aLoc, a, b) || lacks(bLoc, b, a) {
+		return nil, false
+	}
 	set := map[string]string{}
 	for _, kv := range a {
 		name, value, _ := strings.Cut(kv, "=")
@@ -141,7 +161,8 @@ func (s *Service) planMove(ctx context.Context, targetID, destID string) (movePl
 	arrived := t
 	arrived.Repo, arrived.CredsRef, arrived.StorageClass = to, d.CredsRef, d.StorageClass
 	plan.srcMode, plan.mode = s.offsiteModeForTarget(settings, t), s.offsiteModeForTarget(settings, arrived)
-	if plan.mode.Env, ok = bothSignIns(plan.mode.Env, plan.srcMode.Env); !ok {
+	plan.copyMode = plan.mode
+	if plan.copyMode.Env, ok = bothSignIns(plan.dst, plan.mode.Env, plan.src, plan.srcMode.Env); !ok {
 		return movePlan{}, errMoveSignIn
 	}
 
@@ -246,7 +267,7 @@ func (s *Service) copyPending(ctx context.Context, plan movePlan, startedAt int6
 			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: len(pending),
 		})
 	})
-	if _, err := s.copyInChunks(ctx, plan.Domain, plan.dst, plan.src, pending, plan.lim, plan.mode, 0); err != nil {
+	if _, err := s.copyInChunks(ctx, plan.Domain, plan.dst, plan.src, pending, plan.lim, plan.copyMode, 0); err != nil {
 		return fmt.Errorf("copy to %s: %w", plan.To, err)
 	}
 	return nil
