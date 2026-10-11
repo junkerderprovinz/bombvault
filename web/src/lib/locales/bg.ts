@@ -1809,7 +1809,7 @@ const bg: Partial<Translations> = {
   "fleet.remove": "Премахни",
   "fleet.removing": "Премахване…",
   "fleet.confirmRemove": "Потвърди премахването",
-  "instances.forgetKey": "Забрави ключа на този член",
+  "instances.forgetKey": "Забрави ключа",
   "instances.forgetKeyConfirm": "Потвърди забравянето",
   "instances.forgetKeyHint": "Използвай това, когато известният тук ключ не е собственият ключ на члена. При следващото подписано извикване на члена тази инстанция отново го пита за ключа му.",
   "instances.keyForgotten": "Ключът е забравен",

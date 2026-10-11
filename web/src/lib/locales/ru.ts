@@ -2847,7 +2847,7 @@ const ru: Partial<Translations> = {
   "fleet.remove": "Удалить",
   "fleet.removing": "Удаление…",
   "fleet.confirmRemove": "Подтвердить удаление",
-  "instances.forgetKey": "Забыть ключ этого участника",
+  "instances.forgetKey": "Забыть ключ",
   "instances.forgetKeyConfirm": "Подтвердить забывание",
   "instances.forgetKeyHint": "Используйте это, если известный здесь ключ не принадлежит самому участнику. В следующий раз, когда участник подпишет вызов, этот экземпляр снова запросит у него ключ.",
   "instances.keyForgotten": "Ключ забыт",

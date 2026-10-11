@@ -2850,7 +2850,7 @@ const fi: Partial<Translations> = {
   "fleet.remove": "Poista",
   "fleet.removing": "Poistetaan…",
   "fleet.confirmRemove": "Vahvista poisto",
-  "instances.forgetKey": "Unohda tämän jäsenen avain",
+  "instances.forgetKey": "Unohda avain",
   "instances.forgetKeyConfirm": "Vahvista unohtaminen",
   "instances.forgetKeyHint": "Käytä tätä, kun täällä tunnettu avain ei ole jäsenen oma. Seuraavalla kerralla, kun jäsen allekirjoittaa kutsun, tämä instanssi pyytää siltä avaimen uudelleen.",
   "instances.keyForgotten": "Avain unohdettu",

@@ -2850,7 +2850,7 @@ const no: Partial<Translations> = {
   "fleet.remove": "Fjern",
   "fleet.removing": "Fjerner…",
   "fleet.confirmRemove": "Bekreft fjerning",
-  "instances.forgetKey": "Glem nøkkelen til dette medlemmet",
+  "instances.forgetKey": "Glem nøkkelen",
   "instances.forgetKeyConfirm": "Bekreft glemming",
   "instances.forgetKeyHint": "Bruk dette når nøkkelen som er kjent her, ikke er medlemmets egen. Neste gang medlemmet signerer et kall, ber denne instansen om nøkkelen på nytt.",
   "instances.keyForgotten": "Nøkkelen er glemt",

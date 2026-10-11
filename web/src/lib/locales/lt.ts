@@ -1809,7 +1809,7 @@ const lt: Partial<Translations> = {
   "fleet.remove": "Pašalinti",
   "fleet.removing": "Šalinama…",
   "fleet.confirmRemove": "Patvirtinti pašalinimą",
-  "instances.forgetKey": "Pamiršti šio nario raktą",
+  "instances.forgetKey": "Pamiršti raktą",
   "instances.forgetKeyConfirm": "Patvirtinti pamiršimą",
   "instances.forgetKeyHint": "Naudok tai, kai čia žinomas raktas nėra paties nario raktas. Kitą kartą, kai narys pasirašys iškvietimą, šis egzempliorius vėl paprašys jo rakto.",
   "instances.keyForgotten": "Raktas pamirštas",

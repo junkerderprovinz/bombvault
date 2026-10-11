@@ -2850,7 +2850,7 @@ const da: Partial<Translations> = {
   "fleet.remove": "Fjern",
   "fleet.removing": "Fjerner…",
   "fleet.confirmRemove": "Bekræft fjernelse",
-  "instances.forgetKey": "Glem dette medlems nøgle",
+  "instances.forgetKey": "Glem nøglen",
   "instances.forgetKeyConfirm": "Bekræft at glemme",
   "instances.forgetKeyHint": "Brug dette, når den nøgle, der er kendt her, ikke er medlemmets egen. Næste gang medlemmet signerer et kald, beder denne instans om dets nøgle igen.",
   "instances.keyForgotten": "Nøglen er glemt",

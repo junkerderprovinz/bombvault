@@ -1803,7 +1803,7 @@ const sr: Partial<Translations> = {
   "fleet.remove": "Уклони",
   "fleet.removing": "Уклањање…",
   "fleet.confirmRemove": "Потврди уклањање",
-  "instances.forgetKey": "Заборави кључ овог члана",
+  "instances.forgetKey": "Заборави кључ",
   "instances.forgetKeyConfirm": "Потврди заборав",
   "instances.forgetKeyHint": "Користи ово када кључ познат овде није кључ самог члана. Следећи пут када члан потпише позив, ова инстанца поново тражи његов кључ.",
   "instances.keyForgotten": "Кључ је заборављен",

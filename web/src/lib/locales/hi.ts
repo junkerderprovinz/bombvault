@@ -1809,7 +1809,7 @@ const hi: Partial<Translations> = {
   "fleet.remove": "हटाएँ",
   "fleet.removing": "हटाया जा रहा है…",
   "fleet.confirmRemove": "हटाने की पुष्टि करें",
-  "instances.forgetKey": "इस सदस्य की कुंजी भूलें",
+  "instances.forgetKey": "कुंजी भूलें",
   "instances.forgetKeyConfirm": "भूलना पक्का करें",
   "instances.forgetKeyHint": "इसका उपयोग तब करें, जब यहाँ ज्ञात कुंजी सदस्य की अपनी न हो। सदस्य अगली बार जब कॉल पर हस्ताक्षर करेगा, तो यह इंस्टेंस उससे उसकी कुंजी फिर माँगेगा।",
   "instances.keyForgotten": "कुंजी भुला दी गई",

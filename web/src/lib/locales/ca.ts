@@ -1809,7 +1809,7 @@ const ca: Partial<Translations> = {
   "fleet.remove": "Elimina",
   "fleet.removing": "Eliminant…",
   "fleet.confirmRemove": "Confirma l'eliminació",
-  "instances.forgetKey": "Oblida la clau d'aquest membre",
+  "instances.forgetKey": "Oblida la clau",
   "instances.forgetKeyConfirm": "Confirma l'oblit",
   "instances.forgetKeyHint": "Fes-ho servir quan la clau coneguda aquí no és la del mateix membre. La propera vegada que el membre signi una crida, aquesta instància li torna a demanar la clau.",
   "instances.keyForgotten": "Clau oblidada",

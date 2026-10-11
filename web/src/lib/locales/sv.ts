@@ -2850,7 +2850,7 @@ const sv: Partial<Translations> = {
   "fleet.remove": "Ta bort",
   "fleet.removing": "Tar bort…",
   "fleet.confirmRemove": "Bekräfta borttagning",
-  "instances.forgetKey": "Glöm den här medlemmens nyckel",
+  "instances.forgetKey": "Glöm nyckeln",
   "instances.forgetKeyConfirm": "Bekräfta att glömma",
   "instances.forgetKeyHint": "Använd detta när nyckeln som är känd här inte är medlemmens egen. Nästa gång medlemmen signerar ett anrop ber den här instansen om nyckeln igen.",
   "instances.keyForgotten": "Nyckeln glömdes",

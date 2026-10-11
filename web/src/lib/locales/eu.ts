@@ -1809,7 +1809,7 @@ const eu: Partial<Translations> = {
   "fleet.remove": "Kendu",
   "fleet.removing": "Kentzen…",
   "fleet.confirmRemove": "Berretsi kentzea",
-  "instances.forgetKey": "Ahaztu kide honen gakoa",
+  "instances.forgetKey": "Ahaztu gakoa",
   "instances.forgetKeyConfirm": "Berretsi ahaztea",
   "instances.forgetKeyHint": "Erabili hau hemen ezagutzen den gakoa kidearena ez denean. Kideak hurrengoan dei bat sinatzen duenean, instantzia honek bere gakoa berriro eskatuko dio.",
   "instances.keyForgotten": "Gakoa ahaztu da",

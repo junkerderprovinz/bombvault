@@ -2851,7 +2851,7 @@ const hu: Partial<Translations> = {
   "fleet.remove": "Eltávolítás",
   "fleet.removing": "Eltávolítás…",
   "fleet.confirmRemove": "Eltávolítás megerősítése",
-  "instances.forgetKey": "A tag kulcsának elfelejtése",
+  "instances.forgetKey": "Kulcs elfelejtése",
   "instances.forgetKeyConfirm": "Elfelejtés megerősítése",
   "instances.forgetKeyHint": "Akkor használja, ha az itt ismert kulcs nem a tag saját kulcsa. Amikor a tag legközelebb aláír egy hívást, ez a példány újra elkéri tőle a kulcsát.",
   "instances.keyForgotten": "Kulcs elfelejtve",

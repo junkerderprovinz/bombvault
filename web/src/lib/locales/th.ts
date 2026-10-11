@@ -2851,7 +2851,7 @@ const th: Partial<Translations> = {
   "fleet.remove": "ลบ",
   "fleet.removing": "กำลังลบ…",
   "fleet.confirmRemove": "ยืนยันการลบ",
-  "instances.forgetKey": "ลืมคีย์ของสมาชิกนี้",
+  "instances.forgetKey": "ลืมคีย์",
   "instances.forgetKeyConfirm": "ยืนยันการลืม",
   "instances.forgetKeyHint": "ใช้เมื่อคีย์ที่รู้จักที่นี่ไม่ใช่คีย์ของสมาชิกเอง ครั้งหน้าที่สมาชิกลงนามการเรียก อินสแตนซ์นี้จะขอคีย์จากสมาชิกอีกครั้ง",
   "instances.keyForgotten": "ลืมคีย์แล้ว",

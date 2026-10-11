@@ -2841,7 +2841,7 @@ const zh: Partial<Translations> = {
   "fleet.remove": "移除",
   "fleet.removing": "正在移除…",
   "fleet.confirmRemove": "确认移除",
-  "instances.forgetKey": "忘记此成员的密钥",
+  "instances.forgetKey": "忘记密钥",
   "instances.forgetKeyConfirm": "确认忘记",
   "instances.forgetKeyHint": "当这里记录的密钥不是该成员自己的密钥时使用。该成员下次签署调用时，此实例会再次向它索取密钥。",
   "instances.keyForgotten": "已忘记密钥",

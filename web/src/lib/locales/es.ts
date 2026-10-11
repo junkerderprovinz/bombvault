@@ -2848,7 +2848,7 @@ const es: Partial<Translations> = {
   "fleet.remove": "Eliminar",
   "fleet.removing": "Eliminando…",
   "fleet.confirmRemove": "Confirmar eliminación",
-  "instances.forgetKey": "Olvidar la clave de este miembro",
+  "instances.forgetKey": "Olvidar la clave",
   "instances.forgetKeyConfirm": "Confirmar olvido",
   "instances.forgetKeyHint": "Úsalo cuando la clave conocida aquí no sea la del propio miembro. La próxima vez que el miembro firme una llamada, esta instancia le pide su clave de nuevo.",
   "instances.keyForgotten": "Clave olvidada",

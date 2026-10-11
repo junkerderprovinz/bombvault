@@ -2849,7 +2849,7 @@ const nl: Partial<Translations> = {
   "fleet.remove": "Verwijderen",
   "fleet.removing": "Verwijderen…",
   "fleet.confirmRemove": "Verwijderen bevestigen",
-  "instances.forgetKey": "Sleutel van dit lid vergeten",
+  "instances.forgetKey": "Sleutel vergeten",
   "instances.forgetKeyConfirm": "Vergeten bevestigen",
   "instances.forgetKeyHint": "Gebruik dit als de sleutel die hier bekend is niet de eigen sleutel van het lid is. De volgende keer dat het lid een aanroep ondertekent, vraagt deze instantie opnieuw om zijn sleutel.",
   "instances.keyForgotten": "Sleutel vergeten",

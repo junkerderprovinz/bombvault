@@ -2850,7 +2850,7 @@ const tr: Partial<Translations> = {
   "fleet.remove": "Kaldır",
   "fleet.removing": "Kaldırılıyor…",
   "fleet.confirmRemove": "Kaldırmayı onayla",
-  "instances.forgetKey": "Bu üyenin anahtarını unut",
+  "instances.forgetKey": "Anahtarı unut",
   "instances.forgetKeyConfirm": "Unutmayı onayla",
   "instances.forgetKeyHint": "Burada bilinen anahtar üyenin kendi anahtarı değilse bunu kullan. Üye bir sonraki çağrıyı imzaladığında bu örnek ondan anahtarını yeniden ister.",
   "instances.keyForgotten": "Anahtar unutuldu",

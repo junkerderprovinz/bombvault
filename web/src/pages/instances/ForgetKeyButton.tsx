@@ -36,7 +36,7 @@ export function ForgetKeyButton({ memberId }: { memberId: string }) {
       label={t(armed ? "instances.forgetKeyConfirm" : "instances.forgetKey")}
       labelKey={armed ? "instances.forgetKeyConfirm" : "instances.forgetKey"}
       tone="neutral"
-      title={t("instances.forgetKeyHint")}
+      hint={t("instances.forgetKeyHint")}
       onClick={() => (armed ? void forget() : setArmed(true))}
       disabled={busy}
       busy={busy}

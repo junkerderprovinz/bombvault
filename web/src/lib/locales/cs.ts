@@ -2848,7 +2848,7 @@ const cs: Partial<Translations> = {
   "fleet.remove": "Odebrat",
   "fleet.removing": "Odebírání…",
   "fleet.confirmRemove": "Potvrdit odebrání",
-  "instances.forgetKey": "Zapomenout klíč tohoto člena",
+  "instances.forgetKey": "Zapomenout klíč",
   "instances.forgetKeyConfirm": "Potvrdit zapomenutí",
   "instances.forgetKeyHint": "Použij to, když klíč známý zde není klíčem samotného člena. Při příštím podepsaném volání člena si tato instance řekne o jeho klíč znovu.",
   "instances.keyForgotten": "Klíč zapomenut",

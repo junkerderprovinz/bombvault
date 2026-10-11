@@ -2087,7 +2087,7 @@ export const en = {
   // Downgraded from window.confirm() to the two-click inline-confirm pattern
   // (form-engine Task 7) — same rationale as receiver.confirmRemove above.
   "fleet.confirmRemove": "Confirm remove",
-  "instances.forgetKey": "Forget this member's key",
+  "instances.forgetKey": "Forget key",
   "instances.forgetKeyConfirm": "Confirm forget",
   "instances.forgetKeyHint": "Use this when the key known here is not the member's own. The next time the member signs a call, this instance asks it for its key again.",
   "instances.keyForgotten": "Key forgotten",
@@ -6657,7 +6657,7 @@ export const de: Translations = {
   "fleet.remove": "Entfernen",
   "fleet.removing": "Wird entfernt…",
   "fleet.confirmRemove": "Entfernen bestätigen",
-  "instances.forgetKey": "Schlüssel dieses Mitglieds vergessen",
+  "instances.forgetKey": "Schlüssel vergessen",
   "instances.forgetKeyConfirm": "Vergessen bestätigen",
   "instances.forgetKeyHint": "Nimm das, wenn der hier bekannte Schlüssel nicht der des Mitglieds ist. Beim nächsten signierten Aufruf fragt diese Instanz das Mitglied wieder nach seinem Schlüssel.",
   "instances.keyForgotten": "Schlüssel vergessen",

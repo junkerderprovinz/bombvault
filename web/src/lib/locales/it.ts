@@ -2850,7 +2850,7 @@ const it: Partial<Translations> = {
   "fleet.remove": "Rimuovi",
   "fleet.removing": "Rimozione…",
   "fleet.confirmRemove": "Conferma rimozione",
-  "instances.forgetKey": "Dimentica la chiave di questo membro",
+  "instances.forgetKey": "Dimentica la chiave",
   "instances.forgetKeyConfirm": "Conferma di dimenticare",
   "instances.forgetKeyHint": "Usalo quando la chiave nota qui non è quella del membro stesso. La prossima volta che il membro firma una chiamata, questa istanza gli richiede di nuovo la chiave.",
   "instances.keyForgotten": "Chiave dimenticata",

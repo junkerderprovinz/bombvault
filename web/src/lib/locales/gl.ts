@@ -1809,7 +1809,7 @@ const gl: Partial<Translations> = {
   "fleet.remove": "Eliminar",
   "fleet.removing": "Eliminando…",
   "fleet.confirmRemove": "Confirmar eliminación",
-  "instances.forgetKey": "Esquecer a chave deste membro",
+  "instances.forgetKey": "Esquecer a chave",
   "instances.forgetKeyConfirm": "Confirmar esquecemento",
   "instances.forgetKeyHint": "Usa isto cando a chave coñecida aquí non sexa a do propio membro. A próxima vez que o membro asine unha chamada, esta instancia pídelle a chave de novo.",
   "instances.keyForgotten": "Chave esquecida",

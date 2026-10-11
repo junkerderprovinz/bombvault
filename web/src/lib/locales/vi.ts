@@ -2841,7 +2841,7 @@ const vi: Partial<Translations> = {
   "fleet.remove": "Xóa",
   "fleet.removing": "Đang xóa…",
   "fleet.confirmRemove": "Xác nhận xóa",
-  "instances.forgetKey": "Quên khóa của thành viên này",
+  "instances.forgetKey": "Quên khóa",
   "instances.forgetKeyConfirm": "Xác nhận quên",
   "instances.forgetKeyHint": "Dùng khi khóa được biết ở đây không phải khóa của chính thành viên. Lần tới thành viên ký một lệnh gọi, phiên bản này sẽ hỏi lại khóa của thành viên.",
   "instances.keyForgotten": "Đã quên khóa",

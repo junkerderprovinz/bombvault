@@ -1809,7 +1809,7 @@ const is: Partial<Translations> = {
   "fleet.remove": "Fjarlægja",
   "fleet.removing": "Fjarlægi…",
   "fleet.confirmRemove": "Staðfesta fjarlægingu",
-  "instances.forgetKey": "Gleyma lykli þessa félaga",
+  "instances.forgetKey": "Gleyma lykli",
   "instances.forgetKeyConfirm": "Staðfesta gleymsku",
   "instances.forgetKeyHint": "Notaðu þetta þegar lykillinn sem er þekktur hér er ekki lykill félagans sjálfs. Næst þegar félaginn undirritar kall biður þetta tilvik hann aftur um lykilinn.",
   "instances.keyForgotten": "Lyklinum var gleymt",

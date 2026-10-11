@@ -2850,7 +2850,7 @@ const el: Partial<Translations> = {
   "fleet.remove": "Αφαίρεση",
   "fleet.removing": "Αφαίρεση…",
   "fleet.confirmRemove": "Επιβεβαίωση αφαίρεσης",
-  "instances.forgetKey": "Ξεχάστε το κλειδί αυτού του μέλους",
+  "instances.forgetKey": "Ξεχάστε το κλειδί",
   "instances.forgetKeyConfirm": "Ναι, ξεχάστε το",
   "instances.forgetKeyHint": "Χρησιμοποιήστε το όταν το κλειδί που είναι γνωστό εδώ δεν είναι το δικό του μέλους. Την επόμενη φορά που το μέλος υπογράψει μια κλήση, αυτή η εγκατάσταση του ζητά ξανά το κλειδί του.",
   "instances.keyForgotten": "Το κλειδί ξεχάστηκε",

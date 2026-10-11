@@ -1809,7 +1809,7 @@ const lv: Partial<Translations> = {
   "fleet.remove": "Noņemt",
   "fleet.removing": "Noņem…",
   "fleet.confirmRemove": "Apstiprināt noņemšanu",
-  "instances.forgetKey": "Aizmirst šī dalībnieka atslēgu",
+  "instances.forgetKey": "Aizmirst atslēgu",
   "instances.forgetKeyConfirm": "Apstiprināt aizmiršanu",
   "instances.forgetKeyHint": "Izmantojiet to, kad šeit zināmā atslēga nav paša dalībnieka atslēga. Nākamreiz, kad dalībnieks parakstīs izsaukumu, šī instance atkal pieprasīs tā atslēgu.",
   "instances.keyForgotten": "Atslēga aizmirsta",

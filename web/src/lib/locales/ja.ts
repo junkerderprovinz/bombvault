@@ -2841,7 +2841,7 @@ const ja: Partial<Translations> = {
   "fleet.remove": "削除",
   "fleet.removing": "削除中…",
   "fleet.confirmRemove": "削除を確認",
-  "instances.forgetKey": "このメンバーのキーを忘れる",
+  "instances.forgetKey": "キーを忘れる",
   "instances.forgetKeyConfirm": "忘れることを確定",
   "instances.forgetKeyHint": "ここで認識されているキーがメンバー本人のものではないときに使います。次にメンバーが呼び出しに署名したとき、このインスタンスはメンバーにキーを改めて求めます。",
   "instances.keyForgotten": "キーを忘れました",

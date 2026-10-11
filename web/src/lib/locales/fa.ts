@@ -1809,7 +1809,7 @@ const fa: Partial<Translations> = {
   "fleet.remove": "حذف",
   "fleet.removing": "در حال حذف…",
   "fleet.confirmRemove": "تأیید حذف",
-  "instances.forgetKey": "فراموش کردن کلید این عضو",
+  "instances.forgetKey": "فراموش کردن کلید",
   "instances.forgetKeyConfirm": "تأیید فراموش کردن",
   "instances.forgetKeyHint": "از این گزینه وقتی استفاده کن که کلید شناخته‌شده در اینجا، کلید خود عضو نیست. دفعه بعد که عضو درخواستی را امضا کند، این نمونه دوباره کلیدش را از او می‌خواهد.",
   "instances.keyForgotten": "کلید فراموش شد",

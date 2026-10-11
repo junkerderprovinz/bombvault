@@ -1809,7 +1809,7 @@ const sk: Partial<Translations> = {
   "fleet.remove": "Odstrániť",
   "fleet.removing": "Odstraňuje sa…",
   "fleet.confirmRemove": "Potvrdiť odstránenie",
-  "instances.forgetKey": "Zabudnúť kľúč tohto člena",
+  "instances.forgetKey": "Zabudnúť kľúč",
   "instances.forgetKeyConfirm": "Potvrdiť zabudnutie",
   "instances.forgetKeyHint": "Použi to, keď kľúč známy tu nie je kľúčom samotného člena. Pri ďalšom podpísanom volaní člena si táto inštancia vypýta jeho kľúč znova.",
   "instances.keyForgotten": "Kľúč zabudnutý",

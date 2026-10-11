@@ -1809,7 +1809,7 @@ const et: Partial<Translations> = {
   "fleet.remove": "Eemalda",
   "fleet.removing": "Eemaldamine…",
   "fleet.confirmRemove": "Kinnita eemaldamine",
-  "instances.forgetKey": "Unusta selle liikme võti",
+  "instances.forgetKey": "Unusta võti",
   "instances.forgetKeyConfirm": "Kinnita unustamine",
   "instances.forgetKeyHint": "Kasuta seda, kui siin teada olev võti ei ole liikme enda oma. Järgmisel korral, kui liige allkirjastab kutse, küsib see eksemplar tema käest võtit uuesti.",
   "instances.keyForgotten": "Võti unustatud",

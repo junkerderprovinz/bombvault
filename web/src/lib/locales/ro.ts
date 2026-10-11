@@ -2851,7 +2851,7 @@ const ro: Partial<Translations> = {
   "fleet.remove": "Elimină",
   "fleet.removing": "Se elimină…",
   "fleet.confirmRemove": "Confirmă eliminarea",
-  "instances.forgetKey": "Uită cheia acestui membru",
+  "instances.forgetKey": "Uită cheia",
   "instances.forgetKeyConfirm": "Confirmă uitarea",
   "instances.forgetKeyHint": "Folosește asta când cheia cunoscută aici nu este cea proprie a membrului. Data viitoare când membrul semnează un apel, această instanță îi cere din nou cheia.",
   "instances.keyForgotten": "Cheia a fost uitată",

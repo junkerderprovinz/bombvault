@@ -2850,7 +2850,7 @@ const he: Partial<Translations> = {
   "fleet.remove": "הסרה",
   "fleet.removing": "מסיר…",
   "fleet.confirmRemove": "אישור הסרה",
-  "instances.forgetKey": "לשכוח את המפתח של חבר הקבוצה",
+  "instances.forgetKey": "שכחת המפתח",
   "instances.forgetKeyConfirm": "לאשר שכחה",
   "instances.forgetKeyHint": "לשימוש כשהמפתח שידוע כאן אינו המפתח של חבר הקבוצה עצמו. בפעם הבאה שהחבר יחתום על קריאה, המופע הזה יבקש ממנו את המפתח שוב.",
   "instances.keyForgotten": "המפתח נשכח",

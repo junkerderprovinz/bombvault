@@ -2841,7 +2841,7 @@ const ko: Partial<Translations> = {
   "fleet.remove": "제거",
   "fleet.removing": "제거 중…",
   "fleet.confirmRemove": "제거 확인",
-  "instances.forgetKey": "이 멤버의 키 잊기",
+  "instances.forgetKey": "키 잊기",
   "instances.forgetKeyConfirm": "잊기 확인",
   "instances.forgetKeyHint": "여기에 알려진 키가 멤버 본인의 키가 아닐 때 사용하세요. 멤버가 다음에 호출에 서명하면 이 인스턴스가 멤버에게 키를 다시 요청합니다.",
   "instances.keyForgotten": "키를 잊었습니다",

@@ -1809,7 +1809,7 @@ const id: Partial<Translations> = {
   "fleet.remove": "Hapus",
   "fleet.removing": "Menghapus…",
   "fleet.confirmRemove": "Konfirmasi penghapusan",
-  "instances.forgetKey": "Lupakan kunci anggota ini",
+  "instances.forgetKey": "Lupakan kunci",
   "instances.forgetKeyConfirm": "Konfirmasi lupakan",
   "instances.forgetKeyHint": "Gunakan ini saat kunci yang dikenal di sini bukan milik anggota itu sendiri. Saat anggota berikutnya menandatangani panggilan, instance ini meminta kuncinya lagi.",
   "instances.keyForgotten": "Kunci dilupakan",

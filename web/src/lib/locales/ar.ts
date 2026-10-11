@@ -2851,7 +2851,7 @@ const ar: Partial<Translations> = {
   "fleet.remove": "إزالة",
   "fleet.removing": "جارٍ الإزالة…",
   "fleet.confirmRemove": "تأكيد الإزالة",
-  "instances.forgetKey": "نسيان مفتاح هذا العضو",
+  "instances.forgetKey": "نسيان المفتاح",
   "instances.forgetKeyConfirm": "تأكيد النسيان",
   "instances.forgetKeyHint": "يُستخدم هذا إذا كان المفتاح المعروف هنا ليس مفتاح العضو نفسه. في المرة القادمة التي يوقّع فيها العضو طلبًا، يطلب هذا المثيل منه مفتاحه من جديد.",
   "instances.keyForgotten": "نُسي المفتاح",
