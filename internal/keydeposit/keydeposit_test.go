@@ -2,6 +2,7 @@ package keydeposit_test
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"regexp"
 	"strings"
@@ -107,5 +108,18 @@ func TestADepositOpensWithItsCodeAndNothingElse(t *testing.T) {
 	sealed[len(sealed)-1] ^= 1
 	if _, err := keydeposit.Open(sealed, code, salt); !errors.Is(err, keydeposit.ErrWrongCode) {
 		t.Fatalf("Open of a changed deposit = %v, want %v", err, keydeposit.ErrWrongCode)
+	}
+}
+
+// A deposit made under one build has to open under every later one, so the
+// way a code becomes a key is held to a value worked out once.
+func TestACodeGivesTheSameKeyInEveryVersion(t *testing.T) {
+	recipient, err := keydeposit.Recipient("01234-56789-ABCDE-FGHJK", []byte("0123456789abcdef"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "744bbed16c0bfb49c017cd0c4025e66c98f4dc647db9e538529a139eb735e571"
+	if got := hex.EncodeToString(recipient); got != want {
+		t.Fatalf("the key of the code is %s, want %s, so deposits made before would stay shut", got, want)
 	}
 }

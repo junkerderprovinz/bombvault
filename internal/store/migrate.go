@@ -2994,10 +2994,11 @@ CREATE INDEX IF NOT EXISTS idx_key_releases_requester ON key_releases(requester_
 	},
 	{
 		// This install's own side of its deposits: the public half of its
-		// recovery code, and which member holds what was last sealed.
-		version:          keyRolesMigration + 3,
-		name:             "key_deposits_sent",
-		alreadySatisfied: tablePresent("key_deposits_sent"),
+		// recovery code, and which member holds what was last sealed. Each
+		// statement leaves a table that is there alone, and a probe for one
+		// of the two would skip the other.
+		version: keyRolesMigration + 3,
+		name:    "key_deposits_sent",
 		sql: `CREATE TABLE IF NOT EXISTS key_deposit_identity (
   id         INTEGER PRIMARY KEY CHECK (id = 1),
   recipient  BLOB    NOT NULL,

@@ -291,3 +291,25 @@ func TestTheDepositCounterOnlyGrowsAndFollowsTheClock(t *testing.T) {
 		t.Fatalf("with the clock ahead the counter reads %d", next)
 	}
 }
+
+func TestADatabaseWithOneOfTheTwoDepositTablesGetsTheOther(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	for _, stmt := range []string{
+		`DROP TABLE key_deposit_identity`,
+		`DELETE FROM schema_migrations WHERE name = 'key_deposits_sent'`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	if err := db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE name = 'key_deposit_identity'`).Scan(&n); err != nil || n != 1 {
+		t.Fatalf("the identity table after migrating again: %d, %v", n, err)
+	}
+}
